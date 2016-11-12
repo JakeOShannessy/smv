@@ -1,6 +1,6 @@
 OPTS="-g -6"
 LIBDIR=.
-SRCDIR=$(LIBDIR)/../../../source
+SRCDIR=$(LIBDIR)/../../../Source
 
 .PHONY: clean all no_target
 
