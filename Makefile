@@ -1,7 +1,7 @@
 
 .PHONY: smv test clean
 
-BUILD_PLATFORM=mingw
+BUILD_PLATFORM=gnu_linux
 ifeq ($(BUILD_PLATFORM),mingw)
 SMV_BUILD_DIR = Build/smokeview/mingw_win_64
 endif
