@@ -5,6 +5,7 @@
 #include GLUT_H
 
 #include "smokeviewdefs.h"
+#include "histogram.h"
 #include "isodefs.h"
 #include "infoheader.h"
 #include "smokeheaders.h"
