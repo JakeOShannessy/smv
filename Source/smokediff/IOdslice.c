@@ -174,7 +174,7 @@ void diff_slices(FILE *stream_out){
     error1=1;
     error2a=1;
     error2b=1;
-    ResetHistogram(slice1->histogram);
+    ResetHistogram(slice1->histogram,NULL,NULL);
     FORTgetsliceframe(&unit1,&is1a,&is2a,&js1a,&js2a,&ks1a,&ks2a,&time1,qframe1,&slicetest1,&error1);
     if(error1==0 )FORTgetsliceframe(&unit2,&is1b,&is2b,&js1b,&js2b,&ks1b,&ks2b,&time2a,qframe2a,&slicetest2,&error2a);
     if(error2a==0)FORTgetsliceframe(&unit2,&is1b,&is2b,&js1b,&js2b,&ks1b,&ks2b,&time2b,qframe2b,&slicetest2,&error2b);
@@ -188,7 +188,7 @@ void diff_slices(FILE *stream_out){
       FREEMEMORY(qframeout);
       continue;
     }
-    UpdateHistogram(qframe1, nqframe1, slice1->histogram);
+    UpdateHistogram(qframe1, NULL,nqframe1, slice1->histogram);
     PRINTF("  Progress: ");
     FFLUSH();
 
@@ -250,7 +250,7 @@ void diff_slices(FILE *stream_out){
       if(error1!=0)break;
       FORTgetsliceframe(&unit1,&is1a,&is2a,&js1a,&js2a,&ks1a,&ks2a,&time1,qframe1,&slicetest1,&error1);
       if(error1!=0)break;
-      UpdateHistogram(qframe1, nqframe1, slice1->histogram);
+      UpdateHistogram(qframe1, NULL,nqframe1, slice1->histogram);
     }
     PRINTF("\n");
     FFLUSH();

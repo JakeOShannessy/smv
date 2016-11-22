@@ -235,7 +235,7 @@ void diff_boundaryes(FILE *stream_out){
       valmin=1000000000.0;
       valmax=-valmin;
 
-      ResetHistogram(boundary1->histogram);
+      ResetHistogram(boundary1->histogram,NULL,NULL);
 
       FORTgetpatchdata(&unit1, &boundary1->npatches,
         p1i1, p1i2, p1j1, p1j2, p1k1, p1k2, &patchtime1, pqq1, &npqq1, &error1);
@@ -286,7 +286,7 @@ void diff_boundaryes(FILE *stream_out){
             if(pq1[kk]>valmax)valmax=pq1[kk];
           }
         }
-        UpdateHistogram(pqq1, nsize1, boundary1->histogram);
+        UpdateHistogram(pqq1, NULL,nsize1, boundary1->histogram);
         FORToutpatchframe(&unit3, &npatches3,
                         p3i1, p3i2, p3j1, p3j2, p3k1, p3k2,
                         &patchtime1, pqq3, &error3);

@@ -1161,9 +1161,6 @@ typedef struct _slicedata {
   unsigned char *slicecomplevel;
   contour *line_contours;
   int nline_contours;
-  float *contour_areas;
-  int *contour_areas_percen;
-  int ncontour_areas;
   compdata *compindex;
   unsigned char *slicelevel;
   char menulabel[128];
@@ -1190,7 +1187,7 @@ typedef struct _slicedata {
   int reload;
   float delta_orig, dplane_min, dplane_max;
   int extreme_min, extreme_max;
-  histogramdata **histograms;
+  histogramdata *histograms;
   int nhistograms;
 } slicedata;
 
@@ -1203,9 +1200,6 @@ typedef struct _multislicedata {
   int ndirxyz[4];
   int nslices;
   int *islices;
-  float *contour_areas;
-  int *contour_areas_percen;
-  int ncontour_areas;
   char menulabel[128];
   char menulabel2[128];
 } multislicedata;

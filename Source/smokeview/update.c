@@ -134,36 +134,8 @@ void UpdateFrameNumber(int changetime){
         sd = sliceinfo+i;
         if(sd->timeslist==NULL)continue;
         sd->itime=sd->timeslist[itimes];
+        slice_time = sd->itime;
         if(sd->is_fed==1)showfed=1;
-      }
-      if(showfed==1){
-        fed_areas=NULL;
-        for(i=0;i<nmultisliceinfo;i++){
-          multislicedata *mslicei;
-          int itime;
-          int j;
-
-          mslicei = multisliceinfo + i;
-          if(mslicei->contour_areas_percen==NULL)continue;
-          if(fed_areas!=NULL){
-            fed_areas=NULL;
-            break;
-          }
-          for(j=0;j<mslicei->nslices;j++){
-            slicedata *slicej;
-
-            slicej = sliceinfo + mslicei->islices[j];
-            if(slicej->loaded==0||slicej->display==0)continue;
-            itime = slicej->itime;
-            if(mslicei->nslices==1){
-              fed_areas=slicej->contour_areas_percen+4*itime;
-            }
-            else{
-              fed_areas=mslicei->contour_areas_percen+4*itime;
-            }
-            break;
-          }
-        }
       }
     }
     if(show3dsmoke==1){
@@ -2023,5 +1995,9 @@ void UpdateDisplay(void){
   if(update_colorbar_select_index == 1 && colorbar_select_index >= 0 && colorbar_select_index <= 255){
     update_colorbar_select_index = 0;
     UpdateRGBColors(colorbar_select_index);
+  }
+  if (histograms_defined==0&&update_slice_hists == 1) {
+    update_slice_hists = 0;
+    UpdateSliceHist();
   }
 }

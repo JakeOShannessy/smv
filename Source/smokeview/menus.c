@@ -342,11 +342,11 @@ void ShowMultiSliceMenu(int value){
     }
     break;
   }
-  updateslicefilenum();
+  UpdateSliceFilenum();
   plotstate = GetPlotState(DYNAMIC_PLOTS);
 
-  updateglui();
-  updateslicelistindex(slicefilenum);
+  UpdateGlui();
+  UpdateSliceListIndex(slicefilenum);
   UpdateShow();
 }
 
@@ -1069,11 +1069,11 @@ void ShowHideSliceMenu(int value){
       sd->display=1;
     }
   }
-  updateslicefilenum();
+  UpdateSliceFilenum();
   plotstate=GetPlotState(DYNAMIC_PLOTS);
 
-  updateglui();
-  updateslicelistindex(slicefilenum);
+  UpdateGlui();
+  UpdateSliceListIndex(slicefilenum);
   UpdateShow();
 }
 
@@ -2590,8 +2590,8 @@ void LoadUnloadMenu(int value){
     glutPostRedisplay();
     showfiles=1-showfiles;
     updatemenu=1;
-    update_slice_menulabels();
-    update_vslice_menulabels();
+    UpdateSliceMenuLabels();
+    UpdateVsliceMenulabels();
     update_smoke3d_menulabels();
     update_patch_menulabels();
     update_iso_menulabels();
@@ -3858,9 +3858,6 @@ void LoadMultiSliceMenu(int value){
         if(slicei->skip == 1 && slicei->loaded == 1)UnloadSliceMenu(mslicei->islices[i]);
       }
       LoadAllMSlices(last_slice,mslicei);
-      if(mslicei->nslices>0&&mslicei->islices[0]>=nsliceinfo-nfedinfo){
-        output_mfed_csv(mslicei);
-      }
     }
     script_multislice=0;
   }
