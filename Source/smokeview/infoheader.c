@@ -4,11 +4,7 @@
 #include <string.h>
 #include GLUT_H
 
-#include "smokeviewdefs.h"
-#include "histogram.h"
-#include "isodefs.h"
 #include "infoheader.h"
-#include "smokeheaders.h"
 #include "smokeviewvars.h"
 
 // holds all of the information that will be printed to screen in the titlebox
