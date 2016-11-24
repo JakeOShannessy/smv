@@ -96,10 +96,10 @@ $(PTHREADS_LIB):
 # cp libpthreads.a "$LIBDIR"/.
 # #
 # # # LUA
-ifeq ($(BUILD_PLATFORM),mingw)
+ifeq ($(BUILD_PLATFORM),mingw_win_64)
 LUA_PLAT=mingw
 endif
-ifeq ($(BUILD_PLATFORM),gnu_linux)
+ifeq ($(BUILD_PLATFORM),gnu_linux_64)
 LUA_PLAT=linux
 endif
 LUA_DIR=$(SRCDIR)/lua-5.3.1
