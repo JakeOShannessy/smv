@@ -1,19 +1,16 @@
 
 .PHONY: smv test clean
 
-BUILD_PLATFORM=gnu_linux
-ifeq ($(BUILD_PLATFORM),mingw)
-SMV_BUILD_DIR = Build/smokeview/mingw_win_64
-endif
-ifeq ($(BUILD_PLATFORM),gnu_linux)
-SMV_BUILD_DIR = Build/smokeview/gnu_linux_64
-endif
+BUILD_PLATFORM=gnu_linux_64
+DEBUG_SUFFIX=
+BUILD_TARGET=$(BUILD_PLATFORM)$(DEBUG_SUFFIX)
+SMV_BUILD_DIR = Build/smokeview/$(BUILD_PLATFORM)
 
 smv:
-	cd $(SMV_BUILD_DIR) && $(MAKE) -j 4 ${SMV_MAKE_OPTS} LUA_SCRIPTING=${LUA_SCRIPTING} BUILD_PLATFORM=$(BUILD_PLATFORM) -f ../Makefile.alternative.make
+	cd $(SMV_BUILD_DIR) && $(MAKE) -j 4 ${SMV_MAKE_OPTS} LUA_SCRIPTING=${LUA_SCRIPTING} BUILD_PLATFORM=$(BUILD_PLATFORM) BUILD_TARGET=$(BUILD_TARGET) -f ../Makefile.alternative.make
 
 clean:
-	cd $(SMV_BUILD_DIR) && $(MAKE) BUILD_PLATFORM=$(BUILD_PLATFORM) -f ../Makefile.alternative.make clean
+	cd $(SMV_BUILD_DIR) && $(MAKE) BUILD_PLATFORM=$(BUILD_PLATFORM) BUILD_TARGET=$(BUILD_TARGET) -f ../Makefile.alternative.make clean
 
 test: smv
 	cd Verification/Scripting && ./tests.sh
