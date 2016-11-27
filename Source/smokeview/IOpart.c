@@ -633,8 +633,8 @@ void write_part_histogram(partdata *parti){
     float valminmax[2];
 
     histi = parti->histograms[i];
-    valminmax[0] = histi->valmin;
-    valminmax[1] = histi->valmax;
+    valminmax[0] = histi->val_min;
+    valminmax[1] = histi->val_max;
 
     fwrite(valminmax, sizeof(float), 2, STREAM_HIST);
     fwrite(&histi->nbuckets, sizeof(int), 1, STREAM_HIST);
@@ -848,9 +848,14 @@ void print_partprop(void){
     partpropdata *propi;
 
     propi = part5propinfo + i;
-    PRINTF("label=%s min=%f max=%f\n",propi->label->longlabel,propi->valmin,propi->valmax);
-    PRINTF("   glbmin=%f glbmax=%f\n",propi->global_min,propi->global_max);
-    PRINTF("   permin=%f permax=%f\n",propi->percentile_min,propi->percentile_max);
+    if(propi->label->longlabel, "uniform"){
+      PRINTF("label=%s\n", propi->label->longlabel);
+    }
+    else{
+      PRINTF("label=%s min=%f max=%f\n", propi->label->longlabel, propi->valmin, propi->valmax);
+      PRINTF("   glbmin=%f glbmax=%f\n", propi->global_min, propi->global_max);
+      PRINTF("   permin=%f permax=%f\n", propi->percentile_min, propi->percentile_max);
+    }
     PRINTF("\n");
   }
 }

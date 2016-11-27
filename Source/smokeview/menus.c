@@ -153,6 +153,7 @@
 
 #define MENU_TIMEVIEW -103
 #define SAVE_VIEWPOINT -101
+#define SAVE_VIEWPOINT_AS_STARTUP -106
 #define MENU_STARTUPVIEW -102
 #define MENU_OUTLINEVIEW -104
 #define MENU_SIZEPRESERVING -105
@@ -1396,21 +1397,13 @@ void OptionMenu(int value){
 /* ------------------ GetNextViewLabel ------------------------ */
 
 void GetNextViewLabel(char *label){
-  cameradata *ca;
   int i;
 
   for(i=1;;i++){
-    char view[256],*newview;
+    char view[256];
 
     sprintf(view,"view %i",i);
-    newview=NULL;
-    for(ca=camera_list_first.next;ca->next!=NULL;ca=ca->next){
-      if(strcmp(view,ca->name)==0){
-        newview=ca->name;
-        break;
-      }
-    }
-    if(newview==NULL){
+    if(GetCamera(view)==NULL){
       strcpy(label,view);
       return;
     }
@@ -1439,13 +1432,26 @@ void ResetMenu(int value){
   case MENU_TIMEVIEW:
     UpdateTimes();
     break;
+  case SAVE_VIEWPOINT_AS_STARTUP:
+    ResetMenu(SAVE_VIEWPOINT);
+    ResetMenu(MENU_STARTUPVIEW);
+    update_startup_view = 1;
+    break;
   case SAVE_VIEWPOINT:
-    GetNextViewLabel(view_label);
-    add_list_view(view_label);
+    {
+      cameradata *ca;
+
+      GetNextViewLabel(view_label);
+      add_list_view(view_label);
+      ca = GetCamera(view_label);
+      if(ca != NULL){
+        ResetMenu(ca->view_id);
+      }
+    }
     break;
   case MENU_STARTUPVIEW:
     if(selected_view==MENU_DUMMY)ResetMenu(SAVE_VIEWPOINT);
-    set_startup_view();
+    SetStartupView();
     break;
   default:
     ASSERT(value>=0);
@@ -2464,7 +2470,7 @@ void LoadUnloadMenu(int value){
       slicedata *slicei;
 
       slicei = sliceinfo + i;
-      readslice(slicei->file, i, UNLOAD, DEFER_SLICECOLOR,&errorcode);
+      ReadSlice(slicei->file, i, UNLOAD, DEFER_SLICECOLOR,&errorcode);
     }
     for(i = 0; i<nplot3dinfo; i++){
       readplot3d("",i,UNLOAD,&errorcode);
@@ -2509,7 +2515,7 @@ void LoadUnloadMenu(int value){
     }
     for(i=0;i<nvsliceinfo;i++){
       if(vsliceinfo[i].loaded==1){
-        readvslice(i,LOAD,&errorcode);
+        ReadVSlice(i,LOAD,&errorcode);
       }
     }
     if(nslice_loaded>1)last_slice_loaded = slice_loaded_list[nslice_loaded-1];
@@ -2535,7 +2541,7 @@ void LoadUnloadMenu(int value){
 
         set_slicecolor = DEFER_SLICECOLOR;
         if(i == last_slice_loaded)set_slicecolor = SET_SLICECOLOR;
-        readslice(slicei->file,i,LOAD,set_slicecolor,&errorcode);
+        ReadSlice(slicei->file,i,LOAD,set_slicecolor,&errorcode);
       }
     }
     islicetype=islicetype_save;
@@ -3088,19 +3094,19 @@ void UnloadVSliceMenu(int value){
   updatemenu=1;
   glutPostRedisplay();
   if(value>=0){
-    readvslice(value,UNLOAD,&errorcode);
+    ReadVSlice(value,UNLOAD,&errorcode);
   }
   else if(value==UNLOAD_ALL){
     for(i=0;i<nvsliceinfo;i++){
-      readvslice(i,UNLOAD,&errorcode);
+      ReadVSlice(i,UNLOAD,&errorcode);
     }
   }
   else if(value==-2){
     int unload_index;
 
-    unload_index=last_vslice_loadstack();
+    unload_index=LastVSliceLoadstack();
     if(unload_index>=0&&unload_index<nvsliceinfo){
-      readvslice(unload_index,UNLOAD,&errorcode);
+      ReadVSlice(unload_index,UNLOAD,&errorcode);
     }
   }
 }
@@ -3202,7 +3208,7 @@ void LoadVSliceMenu(int value){
   glutSetCursor(GLUT_CURSOR_WAIT);
   if(value==UNLOAD_ALL){
     for(i=0;i<nvsliceinfo;i++){
-      readvslice(i,UNLOAD,&errorcode);
+      ReadVSlice(i,UNLOAD,&errorcode);
     }
     return;
   }
@@ -3215,7 +3221,7 @@ void LoadVSliceMenu(int value){
     vslicedata *vslicei;
     slicedata *slicei;
 
-    readvslice(value, LOAD, &errorcode);
+    ReadVSlice(value, LOAD, &errorcode);
     vslicei = vsliceinfo + value;
     slicei = vslicei->val;
     if(script_multivslice==0&&slicei!=NULL&&scriptoutstream!=NULL){
@@ -3247,7 +3253,7 @@ void LoadVSliceMenu(int value){
       longlabel = slicei->label.longlabel;
       if(strcmp(longlabel,submenulabel)!=0)continue;
       if(dir!=0&&dir!=slicei->idir)continue;
-      readvslice(i,LOAD,&errorcode);
+      ReadVSlice(i,LOAD,&errorcode);
     }
   }
   glutSetCursor(GLUT_CURSOR_LEFT_ARROW);
@@ -3261,20 +3267,20 @@ void UnloadSliceMenu(int value){
   updatemenu=1;
   glutPostRedisplay();
   if(value>=0){
-    readslice("",value,UNLOAD,SET_SLICECOLOR,&errorcode);
+    ReadSlice("",value,UNLOAD,SET_SLICECOLOR,&errorcode);
   }
   else{
     if(value==UNLOAD_ALL){
       for(i=0;i<nsliceinfo;i++){
-        readslice("",i,UNLOAD,DEFER_SLICECOLOR,&errorcode);
+        ReadSlice("",i,UNLOAD,DEFER_SLICECOLOR,&errorcode);
       }
     }
     else if(value==UNLOAD_LAST){
       int unload_index;
 
-      unload_index=last_slice_loadstack();
+      unload_index=LastSliceLoadstack();
       if(unload_index>=0&&unload_index<nsliceinfo){
-        readslice("",unload_index,UNLOAD,SET_SLICECOLOR,&errorcode);
+        ReadSlice("",unload_index,UNLOAD,SET_SLICECOLOR,&errorcode);
       }
     }
   }
@@ -3651,10 +3657,10 @@ void LoadSlicei(int set_slicecolor, int value){
   }
   if(scriptoutstream == NULL || defer_file_loading == 0){
     if(value < nsliceinfo - nfedinfo){
-      readslice(slicei->file, value, LOAD, set_slicecolor, &errorcode);
+      ReadSlice(slicei->file, value, LOAD, set_slicecolor, &errorcode);
     }
     else{
-      readfed(value, LOAD, FED_SLICE, &errorcode);
+      ReadFed(value, LOAD, FED_SLICE, &errorcode);
     }
   }
   slicei->loading=0;
@@ -3673,7 +3679,7 @@ void LoadSliceMenu(int value){
   else{
     if(value==UNLOAD_ALL){
       for(i=0;i<nsliceinfo;i++){
-        readslice("",i,UNLOAD,DEFER_SLICECOLOR,&errorcode);
+        ReadSlice("",i,UNLOAD,DEFER_SLICECOLOR,&errorcode);
       }
     }
     else if(value==MENU_SHOWSLICE_INBLOCKAGE){
@@ -3714,7 +3720,7 @@ void LoadSliceMenu(int value){
         if(dir!=0&&dir!=slicei->idir)continue;
         set_slicecolor = DEFER_SLICECOLOR;
         if(i == last_slice)set_slicecolor = SET_SLICECOLOR;
-        readslice(slicei->file,i,LOAD,set_slicecolor,&errorcode);
+        ReadSlice(slicei->file,i,LOAD,set_slicecolor,&errorcode);
       }
     }
   }
@@ -7142,6 +7148,7 @@ updatemenu=0;
   {
     char line[256];
     cameradata *ca;
+    char *current_view=NULL;
 
     if(trainer_mode==1){
       if(visBlocks==visBLOCKOutline){
@@ -7152,9 +7159,29 @@ updatemenu=0;
       }
       glutAddMenuEntry("-",MENU_DUMMY);
     }
+    for(ca = camera_list_first.next; ca->next != NULL; ca = ca->next){
+      if(ca->view_id == selected_view){
+        current_view = ca->name;
+        break;
+      }
+    }
     if(trainer_mode==0){
-      glutAddMenuEntry(_("Save"),SAVE_VIEWPOINT);
-      glutAddMenuEntry(_("Set as Startup"),MENU_STARTUPVIEW);
+      char view_label[255], menu_label[255];
+
+      GetNextViewLabel(view_label);
+      sprintf(menu_label, "Save viewpoint as %s", view_label);
+
+      glutAddMenuEntry(menu_label,SAVE_VIEWPOINT);
+      if(current_view != NULL){
+        if(strcmp(current_view,startup_view_label)!=0){
+          sprintf(menu_label, "Apply %s at startup", current_view);
+          glutAddMenuEntry(menu_label, MENU_STARTUPVIEW);
+        }
+      }
+      else{
+        sprintf(menu_label, "Save viewpoint as %s and apply at startup", view_label);
+        glutAddMenuEntry(menu_label, SAVE_VIEWPOINT_AS_STARTUP);
+      }
       glutAddSubMenu(_("Zoom"),zoommenu);
       if(projection_type==1)glutAddMenuEntry(_("Switch to perspective view       ALT v"),MENU_SIZEPRESERVING);
       if(projection_type==0)glutAddMenuEntry(_("Switch to size preserving view   ALT v"),MENU_SIZEPRESERVING);
@@ -7171,6 +7198,9 @@ updatemenu=0;
       }
       else{
         strcat(line,ca->name);
+        if(strcmp(ca->name,startup_view_label)==0){
+          strcat(line," (startup view)");
+        }
       }
       glutAddMenuEntry(line,ca->view_id);
     }

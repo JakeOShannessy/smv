@@ -913,7 +913,6 @@ void ConvertSsf(void){
   /* ------------------ UpdateTimes ------------------------ */
 
 void UpdateTimes(void){
-  int ntimes2;
   float *timescopy;
   int i;
   float dt_MIN=100000.0;
@@ -994,14 +993,13 @@ void UpdateTimes(void){
     nglobal_times+=nzone_times;
   }
   if(ReadIsoFile==1&&visAIso!=0){
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<nisoinfo;i++){
       meshdata *meshi;
       isodata *ib;
 
-      meshi=meshinfo+i;
-      if(meshi->isofilenum<0)continue;
-      ib = isoinfo + meshi->isofilenum;
+      ib = isoinfo+i;
       if(ib->geomflag==1||ib->loaded==0)continue;
+      meshi=meshinfo + ib->blocknumber;
       nglobal_times+=meshi->niso_times;
     }
   }
@@ -1261,24 +1259,27 @@ void UpdateTimes(void){
 
   // end pass 2
 
-  // sort times array and remove duplicates
+  // sort times array
 
   if(nglobal_times>0)qsort( (float *)global_times, (size_t)nglobal_times, sizeof( float ), CompareFloat );
 
-  {
+  // remove duplicates
+
+  if(nglobal_times>0){
     int n,n2;
 
-    for(n2=1,ntimes2=nglobal_times,n=1;n<nglobal_times;n++){
+    n2 = 1;
+    for(n=1;n<nglobal_times;n++){
       if(ABS(global_times[n]-global_times[n-1])>dt_MIN/10.0){
-        global_times[n2]=global_times[n];
+        if(n!=n2)global_times[n2]=global_times[n];
         n2++;
       }
-      else{
-        ntimes2--;
-      }
+    }
+    nglobal_times = n2;
+    for(n = 1; n < nglobal_times; n++){
+      ASSERT(global_times[n] > global_times[n - 1]);
     }
   }
-  nglobal_times=ntimes2;
 
   // pass 3 - allocate memory for individual times array
 
@@ -1866,9 +1867,10 @@ void UpdateShowScene(void){
   if(update_startup_view == 1){
     cameradata *ca;
 
-    ca = GetCamera(label_startup_view);
+    ca = GetCamera(startup_view_label);
     if(ca != NULL){
       ResetMenu(ca->view_id);
+      startup_view_ini = ca->view_id;
     }
     update_rotation_center = 0;
     update_rotation_center_ini = 0;
