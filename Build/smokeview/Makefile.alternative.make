@@ -246,7 +246,7 @@ LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
 	$(LIB_DIR_PLAT)/libpng.a $(LIB_DIR_PLAT)/libz.a \
 	$(LIB_DIR_PLAT)/libglut.a
 FFLAGS    = -O0 -m64 -ggdb -Wall -x f95-cpp-input -D pp_GCC -D pp_noappend -ffree-form -frecord-marker=4 -fcheck=all -fbacktrace
-CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-write-strings -D pp_LINUX -D pp_GCC -Wno-unused-but-set-variable -Wno-comment
+CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-write-strings -D pp_LINUX -D pp_GCC -Wno-unused-but-set-variable -Wno-comment -Wno-unused-variable
 ifeq ($(LUA_SCRIPTING),true)
 CFLAGS    += -D pp_LUA
 SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
@@ -316,7 +316,7 @@ LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
 INC += -I $(SOURCE_DIR)/GLINC-mingw -I $(SOURCE_DIR)/pthreads
 FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC -D pp_noappend \
 							   -ffree-form -frecord-marker=4 -fno-underscoring
-CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW -std=gnu11
+CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW -std=gnu11 -Wno-write-strings
 # mingw_win_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW -fprofile-arcs -ftest-coverage std=
 ifeq ($(LUA_SCRIPTING),true)
 CFLAGS    += -D pp_LUA
