@@ -246,7 +246,7 @@ LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
 	$(LIB_DIR_PLAT)/libpng.a $(LIB_DIR_PLAT)/libz.a \
 	$(LIB_DIR_PLAT)/libglut.a
 FFLAGS    = -O0 -m64 -ggdb -Wall -x f95-cpp-input -D pp_GCC -D pp_noappend -ffree-form -frecord-marker=4 -fcheck=all -fbacktrace
-CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-write-strings -D pp_LINUX -D pp_GCC
+CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-write-strings -D pp_LINUX -D pp_GCC -Wno-unused-but-set-variable -Wno-comment
 ifeq ($(LUA_SCRIPTING),true)
 CFLAGS    += -D pp_LUA
 SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
