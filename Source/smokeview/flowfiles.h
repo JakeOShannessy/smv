@@ -26,9 +26,24 @@ typedef struct {
 /* --------------------------  csvdata ------------------------------------ */
 
 typedef struct {
+  char name[256];
+  char units[256];
+  size_t nvalues;
+  float *values;
+} vector;
+
+typedef struct {
+  vector *x;
+  vector *y;
+} dvector;
+
+typedef struct {
   char *file;
   int loaded, display;
   int type;
+  char *key;
+  size_t nvectors;
+  dvector *vectors;
 } csvdata;
 
 /* --------------------------  vertdata ------------------------------------ */

@@ -13,6 +13,8 @@
 #include "c_api.h"
 #include "lua_api.h"
 
+#include "csv.h"
+
 #include GLUT_H
 #include "gd.h"
 
@@ -583,6 +585,43 @@ int lua_get_devices(lua_State *L) {
   return 1;
 }
 
+int lua_create_vector(lua_State *L, dvector *dvector) {
+  lua_createtable(L, 0, 3);
+
+  lua_pushstring(L, dvector->y->name);
+  lua_setfield(L, -2, "name");
+
+  // // x-vector
+  lua_createtable(L, 0, 3);
+  lua_pushstring(L, dvector->x->name);
+  lua_setfield(L, -2, "name");
+  lua_pushstring(L, dvector->x->units);
+  lua_setfield(L, -2, "units");
+  lua_createtable(L, 0, dvector->x->nvalues);
+  for (size_t i = 0; i < dvector->x->nvalues; ++i) {
+    lua_pushnumber(L, i+1);
+    lua_pushnumber(L, dvector->x->values[i]);
+    lua_settable(L, -3);
+  }
+  lua_setfield(L, -2, "values");
+  lua_setfield(L, -2, "x");
+  // // y-vector
+  lua_createtable(L, 0, 3);
+  lua_pushstring(L, dvector->y->name);
+  lua_setfield(L, -2, "name");
+  lua_pushstring(L, dvector->y->units);
+  lua_setfield(L, -2, "units");
+  lua_createtable(L, 0, dvector->y->nvalues);
+  for (size_t i = 0; i < dvector->y->nvalues; ++i) {
+    lua_pushnumber(L, i+1);
+    lua_pushnumber(L, dvector->y->values[i]);
+    lua_settable(L, -3);
+  }
+  lua_setfield(L, -2, "values");
+  lua_setfield(L, -2, "y");
+  return 1;
+}
+
 /*
   Get the number of CSV files available to the model.
 */
@@ -591,6 +630,244 @@ int lua_get_ncsvinfo(lua_State *L) {
   return 1;
 }
 
+csvdata *get_csvinfo(const char *key) {
+  // Loop through csvinfo until we find the right entry
+  for (size_t i = 0; i < ncsvinfo; ++i) {
+    if(strcmp(csvinfo[i].key,key)==0){
+      return &csvinfo[i];
+    }
+  }
+  return NULL;
+}
+
+int lua_get_csventry(lua_State *L) {
+  const char *key = lua_tostring(L, -1);
+  fprintf(stderr, "key: %s\n", key);
+  csvdata *csventry = get_csvinfo(key);
+  fprintf(stderr, "csventry->file: %s\n", csventry->file);
+  lua_createtable(L, 0, 4);
+  lua_pushstring(L, csventry->file);
+  lua_setfield(L, -2, "file");
+
+  fprintf(stderr, "csventry->loaded: %d\n", csventry->loaded);
+  lua_pushboolean(L, csventry->loaded);
+  lua_setfield(L, -2, "loaded");
+
+  fprintf(stderr, "csventry->display: %d\n", csventry->display);
+  lua_pushboolean(L, csventry->display);
+  lua_setfield(L, -2, "display");
+
+  if(csventry->loaded) {
+    lua_createtable(L, 0, csventry->nvectors);
+    for (size_t j = 0; j < csventry->nvectors; j++) {
+      // Load vector data into lua.
+      // TODO: change to access indirectly rater than copying via stack
+      // printf("adding: %s\n", csventry->vectors[j].y->name);
+      lua_create_vector(L, &(csventry->vectors[j]));
+      lua_setfield(L, -2, csventry->vectors[j].y->name);
+    }
+    lua_setfield(L, -2, "vectors");
+  }
+  fprintf(stderr, "done for %s\n", key);
+  return 1;
+}
+
+void load_csv(csvdata *csventry) {
+  readcsv(csventry->file, &(csventry->vectors));
+  csventry->loaded = 1;
+}
+
+int lua_load_csv(lua_State *L) {
+  const char *key = lua_tostring(L, 1);
+  csvdata *csventry = get_csvinfo(key);
+  if(csventry == NULL)return 0;
+  size_t n = readcsv(csventry->file, &(csventry->vectors));
+  csventry->loaded = 1;
+  csventry->nvectors = n;
+  return 0;
+}
+
+// Create a table so that a metatable can be used.
+int lua_get_csvdata(lua_State *L) {
+  // L1 is the table
+  // L2 is the string key
+  const char *key = lua_tostring(L, 2);
+  // char *file = lua_tostring(L, 1);
+  csvdata *csventry = get_csvinfo(key);
+  // Check if the chosen csv data is loaded
+  if(!csventry->loaded) {
+    // Load the data.
+    load_csv(csventry);
+  }
+  // TODO: put userdata on stack
+  lua_pushlightuserdata(L, csventry->vectors);
+  return 1;
+}
+
+
+/*
+  Get the number of PL3D files available to the model.
+*/
+int lua_get_nplot3dinfo(lua_State *L) {
+  lua_pushnumber(L, nplot3dinfo);
+  return 1;
+}
+
+int lua_get_plot3dentry(lua_State *L) {
+  int lua_index = lua_tonumber(L, -1);
+  int index = lua_index-1;
+
+  // csvdata *csventry = get_csvinfo(key);
+  // fprintf(stderr, "csventry->file: %s\n", csventry->file);
+  lua_createtable(L, 0, 4);
+  lua_pushstring(L, plot3dinfo[index].file);
+  lua_setfield(L, -2, "file");
+
+  lua_pushstring(L, plot3dinfo[index].reg_file);
+  lua_setfield(L, -2, "reg_file");
+
+  lua_pushstring(L, plot3dinfo[index].comp_file);
+  lua_setfield(L, -2, "comp_file");
+
+  lua_pushstring(L, plot3dinfo[index].longlabel);
+  lua_setfield(L, -2, "longlabel");
+
+  lua_pushnumber(L, plot3dinfo[index].time);
+  lua_setfield(L, -2, "time");
+
+  lua_pushnumber(L, plot3dinfo[index].u);
+  lua_setfield(L, -2, "u");
+  lua_pushnumber(L, plot3dinfo[index].v);
+  lua_setfield(L, -2, "v");
+  lua_pushnumber(L, plot3dinfo[index].w);
+  lua_setfield(L, -2, "w");
+
+  lua_pushnumber(L, plot3dinfo[index].nvars);
+  lua_setfield(L, -2, "nvars");
+
+  lua_pushnumber(L, plot3dinfo[index].compression_type);
+  lua_setfield(L, -2, "compression_type");
+
+  lua_pushnumber(L, plot3dinfo[index].blocknumber);
+  lua_setfield(L, -2, "blocknumber");
+
+  lua_pushboolean(L, plot3dinfo[index].loaded);
+  lua_setfield(L, -2, "loaded");
+
+  lua_pushnumber(L, plot3dinfo[index].display);
+  lua_setfield(L, -2, "display");
+
+  lua_createtable(L, 0, 6);
+  for (int i = 0; i < 6; ++i) {
+    lua_pushnumber(L, i+1);
+
+    lua_createtable(L, 0, 3);
+    lua_pushstring(L, plot3dinfo[index].label[i].longlabel);
+    lua_setfield(L, -2, "longlabel");
+    lua_pushstring(L, plot3dinfo[index].label[i].shortlabel);
+    lua_setfield(L, -2, "shortlabel");
+    lua_pushstring(L, plot3dinfo[index].label[i].unit);
+    lua_setfield(L, -2, "unit");
+
+    lua_settable(L,-3);
+  }
+  lua_setfield(L, -2, "label");
+
+  // fprintf(stderr, "csventry->loaded: %d\n", csventry->loaded);
+  // lua_pushboolean(L, csventry->loaded);
+  // lua_setfield(L, -2, "loaded");
+
+  // fprintf(stderr, "csventry->display: %d\n", csventry->display);
+  // lua_pushboolean(L, csventry->display);
+  // lua_setfield(L, -2, "display");
+
+  // if(csventry->loaded) {
+  //   lua_createtable(L, 0, csventry->nvectors);
+  //   for (size_t j = 0; j < csventry->nvectors; j++) {
+  //     // Load vector data into lua.
+  //     // TODO: change to access indirectly rater than copying via stack
+  //     printf("adding: %s\n", csventry->vectors[j].y->name);
+  //     lua_create_vector(L, &(csventry->vectors[j]));
+  //     lua_setfield(L, -2, csventry->vectors[j].y->name);
+  //   }
+  //   lua_setfield(L, -2, "vectors");
+  // }
+  return 1;
+}
+
+int lua_get_plot3dinfo(lua_State *L) {
+  PRINTF("lua: initialising plot3d table\n");
+  lua_createtable(L, 0, nplot3dinfo);
+  int i;
+  for (i = 0; i < nplot3dinfo; i++) {
+    lua_pushnumber(L, i+1);
+    lua_get_plot3dentry(L);
+
+    lua_settable(L, -3);
+  }
+  return 1;
+}
+
+int lua_get_qdata_sum(lua_State *L) {
+  int meshnumber = lua_tonumber(L, 1);
+  meshdata mesh = meshinfo[meshnumber];
+  // fprintf(stderr, "mesh label: %s\n", mesh.label);
+  int ntotal = (mesh.ibar+1)*(mesh.jbar+1)*(mesh.kbar+1);
+  int vars = 5;
+  float totals[5];
+  totals[0] = 0.0;
+  totals[1] = 0.0;
+  totals[2] = 0.0;
+  totals[3] = 0.0;
+  totals[4] = 0.0;
+  for (int vari = 0; vari < 5; ++vari) {
+    int offset = vari*ntotal;
+    for (int k = 0; k <= mesh.kbar; ++k) {
+      for (int j = 0; j <= mesh.jbar; ++j) {
+        for (int i = 0; i <= mesh.ibar; ++i) {
+          int n = offset + k*(mesh.jbar+1)*(mesh.ibar+1) + j*(mesh.ibar+1) + i;
+          totals[vari] += mesh.qdata[n];
+        }
+      }
+    }
+  }
+  for (int vari = 0; vari < vars; ++vari) {
+    lua_pushnumber(L, totals[vari]);
+    // fprintf(stderr, "vartotal[%d] value: %.2f\n", vari,totals[vari]);
+  }
+  lua_pushnumber(L, ntotal);
+  return vars+1;
+}
+
+int lua_get_qdata_mean(lua_State *L) {
+  int meshnumber = lua_tonumber(L, 1);
+  meshdata mesh = meshinfo[meshnumber];
+  // fprintf(stderr, "mesh label: %s\n", mesh.label);
+  int ntotal = (mesh.ibar+1)*(mesh.jbar+1)*(mesh.kbar+1);
+  int vars = 5;
+  float totals[5];
+  totals[0] = 0.0;
+  totals[1] = 0.0;
+  totals[2] = 0.0;
+  totals[3] = 0.0;
+  totals[4] = 0.0;
+  for (int vari = 0; vari < 5; ++vari) {
+    int offset = vari*ntotal;
+    for (int k = 0; k <= mesh.kbar; ++k) {
+      for (int j = 0; j <= mesh.jbar; ++j) {
+        for (int i = 0; i <= mesh.ibar; ++i) {
+          int n = offset + k*(mesh.jbar+1)*(mesh.ibar+1) + j*(mesh.ibar+1) + i;
+          totals[vari] += mesh.qdata[n];
+        }
+      }
+    }
+  }
+  for (int vari = 0; vari < vars; ++vari) {
+    lua_pushnumber(L, totals[vari]/ntotal);
+    // fprintf(stderr, "vartotal[%d] value: %.2f\n", vari,totals[vari]);
+  }
+  return vars;
+}
 /*
   Load data about the loaded module into the lua interpreter.
   This initsmvdata is necessary to bring some data into the Lua interpreter
@@ -650,6 +927,30 @@ int lua_initsmvdata(lua_State *L) {
   // then set the metatable
   lua_setmetatable(L, -2);
   lua_setglobal(L, "csvinfo");
+
+  lua_get_plot3dinfo(L);
+  // plot3dinfo is currently on the stack
+  // add a metatable to it.
+  // first create the table
+  lua_createtable(L, 0, 1);
+  lua_pushcfunction (L, &lua_get_nplot3dinfo);
+  lua_setfield(L, -2, "__len");
+  // then set the metatable
+  lua_setmetatable(L, -2);
+  lua_setglobal(L, "plot3dinfo");
+
+  // lua_get_csvdata(L);
+  // // csvdata is currently on the stack
+  // // add a metatable to it.
+  // // first create the table
+  // lua_createtable(L, 0, 2);
+  // lua_pushcfunction (L, &lua_get_ncsvinfo);
+  // lua_setfield(L, -2, "__len");
+  // lua_pushcfunction (L, &lua_get_csvdata);
+  // lua_setfield(L, -2, "__index");
+  // // then set the metatable
+  // lua_setmetatable(L, -2);
+  // lua_setglobal(L, "csvdata");
 
   lua_pushstring(L, chidfilebase);
   lua_setglobal(L, "chid");
@@ -994,32 +1295,13 @@ int lua_get_csvinfo(lua_State *L) {
   lua_createtable(L, 0, ncsvinfo);
   int i;
   for (i = 0; i < ncsvinfo; i++) {
-    switch (csvinfo[i].type) {
-      case (CSVTYPE_HRR):
-        lua_pushstring(L, "hrr");
-        break;
-      case (CSVTYPE_DEVC):
-        lua_pushstring(L, "devc");
-        break;
-      case (CSVTYPE_EXT):
-        lua_pushstring(L, "ext");
-        break;
-      default:
-        lua_pushstring(L, "(unknown)");
-    }
-    lua_createtable(L, 0, 4);
-
-    lua_pushstring(L, csvinfo[i].file);
-    lua_setfield(L, -2, "file");
-
-    lua_pushboolean(L, csvinfo[i].loaded);
-    lua_setfield(L, -2, "loaded");
-
-    lua_pushboolean(L, csvinfo[i].display);
-    lua_setfield(L, -2, "display");
-
+    fprintf(stderr, "csvinfo[i].key: %s\n", csvinfo[i].key);
+    lua_pushstring(L, csvinfo[i].key);
+    lua_get_csventry(L);
 
     lua_settable(L, -3);
+    fprintf(stderr, "done csvinfo[i].key: %s\n", csvinfo[i].key);
+
   }
   return 1;
 }
@@ -4731,6 +5013,8 @@ void initLua() {
   lua_register(L, "get_units", lua_get_units);
   lua_register(L, "get_unitclass", lua_get_unitclass);
 
+  lua_register(L, "load_csv", lua_load_csv);
+
   lua_register(L, "set_units", lua_set_units);
   lua_register(L, "set_unitclasses", lua_set_unitclasses);
   lua_register(L, "set_zaxisangles", lua_set_zaxisangles);
@@ -4829,6 +5113,9 @@ void initLua() {
   lua_register(L, "slice_data_map_frames_count_greater", lua_slice_data_map_frames_count_greater);
   lua_register(L, "slice_data_map_frames_count_greater_eq", lua_slice_data_map_frames_count_greater_eq);
   lua_register(L, "slice_get_times", lua_slice_get_times);
+
+  lua_register(L, "get_qdata_sum",lua_get_qdata_sum);
+  lua_register(L, "get_qdata_mean",lua_get_qdata_mean);
 
   //add fdsprefix (the path plus  CHID) as a variable in the lua environment
   lua_pushstring(L, fdsprefix);

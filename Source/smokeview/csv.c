@@ -125,17 +125,3 @@ size_t readcsv(char *file, dvector **dvectors){
   fclose(stream);
   return n-1;
 }
-
-int main(int argc, char const *argv[]) {
-  dvector *dvectors;
-  size_t n = readcsv("testcsv.csv", &dvectors);
-  for (size_t k = 0; k < n; ++k) {
-    printf("Vector:\n");
-    printf("  xname: %s\n", dvectors[k].x->name);
-    printf("  xunits: %s\n", dvectors[k].x->units);
-    printf("  yname: %s\n", dvectors[k].y->name);
-    printf("  yunits: %s\n", dvectors[k].y->units);
-    printf("  nvalues: %zu\n", dvectors[k].x->nvalues);
-  }
-  return 0;
-}
