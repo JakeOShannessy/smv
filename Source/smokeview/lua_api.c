@@ -640,18 +640,46 @@ csvdata *get_csvinfo(const char *key) {
   return NULL;
 }
 
+int get_csvindex(const char *key) {
+  // Loop through csvinfo until we find the right entry
+  for (size_t i = 0; i < ncsvinfo; ++i) {
+    if(strcmp(csvinfo[i].key,key)==0){
+      return i;
+    }
+  }
+  return -1;
+}
+
+int access_csventry_prop(lua_State *L) {
+  // Take the index from the table.
+  lua_pushstring(L, "index");
+  lua_gettable(L, 1);
+  int index = lua_tonumber(L, -1);
+  const char *field = lua_tostring(L, 2);
+  if (strcmp(field,"loaded")==0) {
+    lua_pushboolean(L, csvinfo[index].loaded);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
 int lua_get_csventry(lua_State *L) {
   const char *key = lua_tostring(L, -1);
   fprintf(stderr, "key: %s\n", key);
   csvdata *csventry = get_csvinfo(key);
+  int index = get_csvindex(key);
   fprintf(stderr, "csventry->file: %s\n", csventry->file);
   lua_createtable(L, 0, 4);
   lua_pushstring(L, csventry->file);
   lua_setfield(L, -2, "file");
 
-  fprintf(stderr, "csventry->loaded: %d\n", csventry->loaded);
-  lua_pushboolean(L, csventry->loaded);
-  lua_setfield(L, -2, "loaded");
+  lua_pushnumber(L, index);
+  lua_setfield(L, -2, "index");
+
+  // fprintf(stderr, "csventry->loaded: %d\n", csventry->loaded);
+  // lua_pushboolean(L, csventry->loaded);
+  // lua_setfield(L, -2, "loaded");
 
   fprintf(stderr, "csventry->display: %d\n", csventry->display);
   lua_pushboolean(L, csventry->display);
@@ -668,8 +696,30 @@ int lua_get_csventry(lua_State *L) {
     }
     lua_setfield(L, -2, "vectors");
   }
+  // Create a metatable.
+  // TODO: this metatable might be more easily implemented directly in Lua.
+  lua_createtable(L, 0, 1);
+  lua_pushcfunction (L, &access_csventry_prop);
+  lua_setfield(L, -2, "__index");
+  // then set the metatable
+  lua_setmetatable(L, -2);
   fprintf(stderr, "done for %s\n", key);
   return 1;
+}
+
+
+int initcsvdata(lua_State *L) {
+  lua_get_csvinfo(L);
+  // csvinfo is currently on the stack
+  // add a metatable to it.
+  // first create the table
+  lua_createtable(L, 0, 1);
+  lua_pushcfunction (L, &lua_get_ncsvinfo);
+  lua_setfield(L, -2, "__len");
+  // then set the metatable
+  lua_setmetatable(L, -2);
+  lua_setglobal(L, "csvinfo");
+  return 0;
 }
 
 void load_csv(csvdata *csventry) {
@@ -684,6 +734,7 @@ int lua_load_csv(lua_State *L) {
   size_t n = readcsv(csventry->file, &(csventry->vectors));
   csventry->loaded = 1;
   csventry->nvectors = n;
+  initcsvdata(L);
   return 0;
 }
 
@@ -704,6 +755,19 @@ int lua_get_csvdata(lua_State *L) {
   return 1;
 }
 
+int access_pl3dentry_prop(lua_State *L) {
+  // Take the index from the table.
+  lua_pushstring(L, "index");
+  lua_gettable(L, 1);
+  int index = lua_tonumber(L, -1);
+  const char *field = lua_tostring(L, 2);
+  if (strcmp(field,"loaded")==0) {
+    lua_pushboolean(L, plot3dinfo[index].loaded);
+    return 1;
+  } else {
+    return 0;
+  }
+}
 
 /*
   Get the number of PL3D files available to the model.
@@ -717,9 +781,14 @@ int lua_get_plot3dentry(lua_State *L) {
   int lua_index = lua_tonumber(L, -1);
   int index = lua_index-1;
 
+
   // csvdata *csventry = get_csvinfo(key);
   // fprintf(stderr, "csventry->file: %s\n", csventry->file);
   lua_createtable(L, 0, 4);
+
+  lua_pushnumber(L, index);
+  lua_setfield(L, -2, "index");
+
   lua_pushstring(L, plot3dinfo[index].file);
   lua_setfield(L, -2, "file");
 
@@ -751,8 +820,9 @@ int lua_get_plot3dentry(lua_State *L) {
   lua_pushnumber(L, plot3dinfo[index].blocknumber);
   lua_setfield(L, -2, "blocknumber");
 
-  lua_pushboolean(L, plot3dinfo[index].loaded);
-  lua_setfield(L, -2, "loaded");
+  // The "loaded" value is accessed directly as it changes.
+  // lua_pushboolean(L, plot3dinfo[index].loaded);
+  // lua_setfield(L, -2, "loaded");
 
   lua_pushnumber(L, plot3dinfo[index].display);
   lua_setfield(L, -2, "display");
@@ -772,6 +842,15 @@ int lua_get_plot3dentry(lua_State *L) {
     lua_settable(L,-3);
   }
   lua_setfield(L, -2, "label");
+
+  // Create a metatable.
+  // TODO: this metatable might be more easily implemented directly in Lua
+  // so that we don't need to reimplement table access.
+  lua_createtable(L, 0, 1);
+  lua_pushcfunction (L, &access_pl3dentry_prop);
+  lua_setfield(L, -2, "__index");
+  // then set the metatable
+  lua_setmetatable(L, -2);
 
   // fprintf(stderr, "csventry->loaded: %d\n", csventry->loaded);
   // lua_pushboolean(L, csventry->loaded);
@@ -868,6 +947,39 @@ int lua_get_qdata_mean(lua_State *L) {
   }
   return vars;
 }
+
+int lua_get_global_time_n(lua_State *L) {
+  // argument 1 is the table, argument 2 is the index
+  int index = lua_tonumber(L, 2);
+  // fprintf(stderr, "finding global time for: %d\n", index);
+  if (index < 0 || index >= nglobal_times) {
+    return luaL_error(L, "%d is not a valid global time index\n", index);
+  }
+  lua_pushnumber(L, global_times[index]);
+  return 1;
+}
+
+// TODO: remove this from a hardcoded string.
+int setup_pl3dtables(lua_State *L) {
+  luaL_dostring(L,"\
+    pl3d = {}\
+    local allpl3dtimes = {}\
+    for i,v in ipairs(plot3dinfo) do\
+        if not allpl3dtimes[v.time] then allpl3dtimes[v.time] = {} end\
+        assert(not allpl3dtimes[v.time][v.blocknumber+1])\
+        allpl3dtimes[v.time][v.blocknumber+1] = v\
+    end\
+    local pl3dtimes = {}\
+    for k,v in pairs(allpl3dtimes) do\
+        pl3dtimes[#pl3dtimes+1] = {time = k, entries = v}\
+    end\
+    table.sort( pl3dtimes, function(a,b) return a.time < b.time end)\
+    pl3d.entries = plot3dinfo\
+    pl3d.frames = pl3dtimes"
+  );
+  return 0;
+}
+
 /*
   Load data about the loaded module into the lua interpreter.
   This initsmvdata is necessary to bring some data into the Lua interpreter
@@ -877,19 +989,25 @@ int lua_get_qdata_mean(lua_State *L) {
 // TODO: Consider converting most of these to userdata, rather than copying them
 // into the lua interpreter.
 int lua_initsmvdata(lua_State *L) {
-  lua_get_global_times(L);
+  lua_createtable(L, 0, 1);
+  // TODO: copying the array into lua allows for slightly faster access,
+  // but is less ergonomic, leave direct access as the default, with copying
+  // in cases where it is shown to be a useful speedup
+  // lua_get_global_times(L);
   // global_times is currently on the stack
   // add a metatable to it.
   // first create the table
   lua_createtable(L, 0, 1);
   lua_pushcfunction (L, &lua_get_nglobal_times);
   lua_setfield(L, -2, "__len");
+  lua_pushcfunction (L, &lua_get_global_time_n);
+  lua_setfield(L, -2, "__index");
   // then set the metatable
   lua_setmetatable(L, -2);
   lua_setglobal(L, "global_times");
 
-  lua_get_nmeshes(L);
-  lua_setglobal(L, "nmeshes");
+  // while the meshes themselve will rarely change, the information about them
+  // will change regularly. This is handled by the mesh table.
   lua_get_meshes(L);
   // meshes is currently on the stack
   // add a metatable to it.
@@ -901,6 +1019,7 @@ int lua_initsmvdata(lua_State *L) {
   lua_setmetatable(L, -2);
   lua_setglobal(L, "meshinfo");
 
+  // As with meshes the number and names of devices is unlikely to change
   lua_get_devices(L);
   // devices is currently on the stack
   // add a metatable to it.
@@ -917,16 +1036,7 @@ int lua_initsmvdata(lua_State *L) {
   lua_get_sliceinfo(L);
   lua_setglobal(L, "sliceinfo");
 
-  lua_get_csvinfo(L);
-  // csvinfo is currently on the stack
-  // add a metatable to it.
-  // first create the table
-  lua_createtable(L, 0, 1);
-  lua_pushcfunction (L, &lua_get_ncsvinfo);
-  lua_setfield(L, -2, "__len");
-  // then set the metatable
-  lua_setmetatable(L, -2);
-  lua_setglobal(L, "csvinfo");
+  initcsvdata(L);
 
   lua_get_plot3dinfo(L);
   // plot3dinfo is currently on the stack
@@ -938,6 +1048,9 @@ int lua_initsmvdata(lua_State *L) {
   // then set the metatable
   lua_setmetatable(L, -2);
   lua_setglobal(L, "plot3dinfo");
+
+  // set up tables to access pl3dinfo better
+  setup_pl3dtables(L);
 
   // lua_get_csvdata(L);
   // // csvdata is currently on the stack
@@ -1290,6 +1403,7 @@ int lua_get_sliceinfo(lua_State *L) {
   Build a Lua table with information on the CSV files available to the model.
 */
 // TODO: provide more information via this interface.
+// TODO: use metatables so that the most up-to-date information is retrieved.
 int lua_get_csvinfo(lua_State *L) {
   PRINTF("lua: initialising csv table\n");
   lua_createtable(L, 0, ncsvinfo);
