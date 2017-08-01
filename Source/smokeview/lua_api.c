@@ -669,7 +669,6 @@ int lua_get_csventry(lua_State *L) {
   fprintf(stderr, "key: %s\n", key);
   csvdata *csventry = get_csvinfo(key);
   int index = get_csvindex(key);
-  fprintf(stderr, "csventry->file: %s\n", csventry->file);
   lua_createtable(L, 0, 4);
   lua_pushstring(L, csventry->file);
   lua_setfield(L, -2, "file");
@@ -681,7 +680,6 @@ int lua_get_csventry(lua_State *L) {
   // lua_pushboolean(L, csventry->loaded);
   // lua_setfield(L, -2, "loaded");
 
-  fprintf(stderr, "csventry->display: %d\n", csventry->display);
   lua_pushboolean(L, csventry->display);
   lua_setfield(L, -2, "display");
 
@@ -703,7 +701,6 @@ int lua_get_csventry(lua_State *L) {
   lua_setfield(L, -2, "__index");
   // then set the metatable
   lua_setmetatable(L, -2);
-  fprintf(stderr, "done for %s\n", key);
   return 1;
 }
 
@@ -4726,7 +4723,7 @@ void addLuaPaths(lua_State *L) {
   return;
 }
 
-void initLua() {
+lua_State *initLua() {
   L = luaL_newstate();
 
   luaL_openlibs(L);
@@ -5248,6 +5245,7 @@ void initLua() {
   luaL_dostring(L, "require(\"smv\")");
   // luaL_loadfile(L, "smv.lua");
   // int luaL_1dofile (lua_State *L, const char *filename);
+  return L;
 
 }
 
