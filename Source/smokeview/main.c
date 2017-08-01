@@ -732,16 +732,18 @@ int main(int argc, char **argv){
   START_TIMER(startup_time);
   START_TIMER(read_time_elapsed);
 
-#ifdef pp_LUA
-  // Initialise the lua interpreter, it does not take control at this point
-  initLua();
-#endif
   return_code= SetupCase(argc,argv_sv);
   if(return_code==0&&update_bounds==1)return_code=Update_Bounds();
   if(return_code!=0)return 1;
   if(convert_ini==1){
     ReadINI(ini_from);
   }
+#ifdef pp_LUA
+  // Initialise the lua interpreter, it does not take control at this point
+  lua_State *L = initLua();
+  lua_initsmvdata(L);
+#endif
+
 
   STOP_TIMER(startup_time);
   PRINTF("\nStartup time: %.1f s\n", startup_time);
