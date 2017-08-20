@@ -1,6 +1,7 @@
 #include "options.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #include "smokeviewvars.h"
@@ -22,17 +23,17 @@ void AdjustDataBounds(const float *pdata, int local_skip, int ndata,
         return;
       }
 
-      for (n=0;n<NBUCKETS;n++){
+      for(n=0;n<NBUCKETS;n++){
         buckets[n]=0;
       }
-      for (n=local_skip;n<ndata;n++){
+      for(n=local_skip;n<ndata;n++){
         level=0;
         if(dp!=0.0f)level = CLAMP((int)((pdata[n] - *pmin)/dp),0,NBUCKETS-1);
         buckets[level]++;
       }
       alpha05 = (int)(percentile_level*ndata);
       total = 0;
-      for (n=0;n<NBUCKETS;n++){
+      for(n=0;n<NBUCKETS;n++){
         total += buckets[n];
         if(total>alpha05){
           nsmall=n;
@@ -40,7 +41,7 @@ void AdjustDataBounds(const float *pdata, int local_skip, int ndata,
         }
       }
       total = 0;
-      for (n=NBUCKETS;n>0;n--){
+      for(n=NBUCKETS;n>0;n--){
         total += buckets[n-1];
         if(total>alpha05){
           nbig=n;
@@ -104,6 +105,8 @@ void AdjustPart5Bounds(partdata *parti){
     histogramdata *histi;
 
     propi = part5propinfo + i;
+    if(strcmp(propi->label->shortlabel, "Uniform") == 0)continue;
+
     histi = &propi->histogram;
 
     propi->global_min = histi->val_min;
@@ -167,11 +170,11 @@ void AdjustPartBounds(const float *pdata, int particle_type, int droplet_type, c
         return;
       }
 
-      for (n=0;n<NBUCKETS;n++){
+      for(n=0;n<NBUCKETS;n++){
         buckets[n]=0;
       }
       ndata=0;
-      for (n=local_skip;n<ndataloop;n++){
+      for(n=local_skip;n<ndataloop;n++){
         level=0;
         if(isprink[n]==1){
           if(droplet_type==0)continue;
@@ -185,7 +188,7 @@ void AdjustPartBounds(const float *pdata, int particle_type, int droplet_type, c
       }
       alpha05 = (int)(percentile_level*ndata);
       total = 0;
-      for (n=0;n<NBUCKETS;n++){
+      for(n=0;n<NBUCKETS;n++){
         total += buckets[n];
         if(total>alpha05){
           nsmall=n;
@@ -193,7 +196,7 @@ void AdjustPartBounds(const float *pdata, int particle_type, int droplet_type, c
         }
       }
       total = 0;
-      for (n=NBUCKETS;n>0;n--){
+      for(n=NBUCKETS;n>0;n--){
         total += buckets[n-1];
         if(total>alpha05){
           nbig=n;
@@ -234,7 +237,7 @@ void AdjustPlot3DBounds(int plot3dvar, int setpmin, float *pmin, int setpmax, fl
         return;
       }
 
-      for (n=0;n<NBUCKETS;n++){
+      for(n=0;n<NBUCKETS;n++){
         buckets[n]=0;
       }
       for(i=0;i<nplot3dinfo;i++){
@@ -255,7 +258,7 @@ void AdjustPlot3DBounds(int plot3dvar, int setpmin, float *pmin, int setpmax, fl
       }
       alpha05 = (int)(percentile_level*ndata);
       total = 0;
-      for (n=0;n<NBUCKETS;n++){
+      for(n=0;n<NBUCKETS;n++){
         total += buckets[n];
         if(total>alpha05){
           nsmall=n;
@@ -263,7 +266,7 @@ void AdjustPlot3DBounds(int plot3dvar, int setpmin, float *pmin, int setpmax, fl
         }
       }
       total = 0;
-      for (n=NBUCKETS;n>0;n--){
+      for(n=NBUCKETS;n>0;n--){
         total += buckets[n-1];
         if(total>alpha05){
           nbig=n;
@@ -290,7 +293,7 @@ void GetZoneGlobalBounds(const float *pdata, int ndata, float *pglobalmin, float
 
     pmin2 = pdata[0];
     pmax2 = pmin2;
-    for (n=0;n<ndata;n++){
+    for(n=0;n<ndata;n++){
       val=*pdata++;
       pmin2=MIN(val,pmin2);
       pmax2=MAX(val,pmax2);

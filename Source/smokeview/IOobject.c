@@ -6,315 +6,13 @@
 
 #include "datadefs.h"
 #include "smokeviewvars.h"
+#include "IOobject.h"
 
-#define VEL_INVALID 0
-#define VEL_CARTESIAN 1
-#define VEL_POLAR 2
+static float *cos_long = NULL, *sin_long = NULL, *cos_lat = NULL, *sin_lat = NULL;
+static float specular[4] = {0.4,0.4,0.4,1.0};
+unsigned char *rgbimage = NULL;
+int rgbsize = 0;
 
-#define VECTOR_LINE 0
-#define VECTOR_ARROW 1
-#define VECTOR_OBJECT 2
-#define VECTOR_PROFILE 3
-
-#define CIRCLE_SEGS 12
-
-#define SV_TRANSLATE  100
-#define SV_ROTATEX    101
-#define SV_ROTATEY    102
-#define SV_ROTATEZ    103
-#define SV_SCALEXYZ   104
-#define SV_SCALE      105
-#define SV_SCALEAUTO  106
-#define SV_SCALEGRID  107
-#define SV_OFFSETX 108
-#define SV_OFFSETY 109
-#define SV_OFFSETZ 110
-#define SV_MULTIADDT 112
-#define SV_CLIP 113
-#define SV_MIRRORCLIP 114
-#define SV_PERIODICCLIP 115
-#define SV_ADD 116
-#define SV_SUB 117
-#define SV_MULT 118
-#define SV_DIV 119
-#define SV_GETT 120
-#define SV_IF 121
-#define SV_ELSE 122
-#define SV_ENDIF 123
-#define SV_GT 124
-#define SV_GE 125
-#define SV_LT 126
-#define SV_LE 127
-#define SV_AND 128
-#define SV_OR 129
-#define SV_ABS 130
-#define SV_EQ 131
-#define SV_ROTATEXYZ 132
-#define SV_GTRANSLATE  133
-#define SV_ROTATEAXIS 134
-#define SV_ROTATEEYE 135
-#define SV_INCLUDE 136
-#define SV_INCLUDEF 137
-#define SV_RANDXY 138
-#define SV_RANDXZ 139
-#define SV_RANDYZ 140
-#define SV_RANDXYZ 141
-#define SV_ORIENX 142
-#define SV_ORIENY 143
-#define SV_ORIENZ 144
-#define SV_CLIPX 146
-#define SV_CLIPY 147
-#define SV_CLIPZ 148
-#define SV_CLIPOFF 149
-
-#define SV_TRANSLATE_NUMARGS  3
-#define SV_ROTATEX_NUMARGS    1
-#define SV_ROTATEY_NUMARGS    1
-#define SV_ROTATEZ_NUMARGS    1
-#define SV_SCALEXYZ_NUMARGS   3
-#define SV_SCALEAUTO_NUMARGS  1
-#define SV_SCALEGRID_NUMARGS  1
-#define SV_SCALE_NUMARGS      1
-#define SV_OFFSETX_NUMARGS 1
-#define SV_OFFSETY_NUMARGS 1
-#define SV_OFFSETZ_NUMARGS 1
-#define SV_MULTIADDT_NUMARGS 3
-#define SV_CLIP_NUMARGS 4
-#define SV_MIRRORCLIP_NUMARGS 4
-#define SV_PERIODICCLIP_NUMARGS 4
-#define SV_ADD_NUMARGS 3
-#define SV_SUB_NUMARGS 3
-#define SV_MULT_NUMARGS 3
-#define SV_DIV_NUMARGS 3
-#define SV_GETT_NUMARGS 1
-#define SV_IF_NUMARGS 1
-#define SV_ELSE_NUMARGS 0
-#define SV_ENDIF_NUMARGS 0
-#define SV_GT_NUMARGS 3
-#define SV_GE_NUMARGS 3
-#define SV_LT_NUMARGS 3
-#define SV_LE_NUMARGS 3
-#define SV_AND_NUMARGS 3
-#define SV_OR_NUMARGS 3
-#define SV_ABS_NUMARGS 2
-#define SV_EQ_NUMARGS 2
-#define SV_ROTATEXYZ_NUMARGS 3
-#define SV_GTRANSLATE_NUMARGS  3
-#define SV_ROTATEAXIS_NUMARGS 4
-#define SV_ROTATEEYE_NUMARGS 0
-#define SV_INCLUDE_NUMARGS 1
-#define SV_INCLUDEF_NUMARGS 2
-#define SV_RANDXY_NUMARGS 1
-#define SV_RANDXZ_NUMARGS 1
-#define SV_RANDYZ_NUMARGS 1
-#define SV_RANDXYZ_NUMARGS 1
-#define SV_ORIENX_NUMARGS 3
-#define SV_ORIENY_NUMARGS 3
-#define SV_ORIENZ_NUMARGS 3
-#define SV_CLIPX_NUMARGS 4
-#define SV_CLIPY_NUMARGS 4
-#define SV_CLIPZ_NUMARGS 4
-#define SV_CLIPOFF_NUMARGS 0
-
-#define SV_TRANSLATE_NUMOUTARGS  0
-#define SV_ROTATEX_NUMOUTARGS    0
-#define SV_ROTATEY_NUMOUTARGS    0
-#define SV_ROTATEZ_NUMOUTARGS    0
-#define SV_SCALEXYZ_NUMOUTARGS   0
-#define SV_SCALEAUTO_NUMOUTARGS  0
-#define SV_SCALEGRID_NUMOUTARGS  0
-#define SV_SCALE_NUMOUTARGS      0
-#define SV_OFFSETX_NUMOUTARGS 0
-#define SV_OFFSETY_NUMOUTARGS 0
-#define SV_OFFSETZ_NUMOUTARGS 0
-#define SV_MULTIADDT_NUMOUTARGS 1
-#define SV_CLIP_NUMOUTARGS 1
-#define SV_MIRRORCLIP_NUMOUTARGS 1
-#define SV_PERIODICCLIP_NUMOUTARGS 1
-#define SV_ADD_NUMOUTARGS 1
-#define SV_SUB_NUMOUTARGS 1
-#define SV_MULT_NUMOUTARGS 1
-#define SV_DIV_NUMOUTARGS 1
-#define SV_GETT_NUMOUTARGS 1
-#define SV_IF_NUMOUTARGS 0
-#define SV_ELSE_NUMOUTARGS 0
-#define SV_ENDIF_NUMOUTARGS 0
-#define SV_GT_NUMOUTARGS 1
-#define SV_GE_NUMOUTARGS 1
-#define SV_LT_NUMOUTARGS 1
-#define SV_LE_NUMOUTARGS 1
-#define SV_AND_NUMOUTARGS 1
-#define SV_OR_NUMOUTARGS 1
-#define SV_ABS_NUMOUTARGS 1
-#define SV_EQ_NUMOUTARGS 0
-#define SV_ROTATEXYZ_NUMOUTARGS 0
-#define SV_GTRANSLATE_NUMOUTARGS  0
-#define SV_ROTATEAXIS_NUMOUTARGS 0
-#define SV_ROTATEEYE_NUMOUTARGS 0
-#define SV_INCLUDE_NUMOUTARGS 0
-#define SV_INCLUDEF_NUMOUTARGS 0
-#define SV_RANDXY_NUMOUTARGS 0
-#define SV_RANDXZ_NUMOUTARGS 0
-#define SV_RANDYZ_NUMOUTARGS 0
-#define SV_RANDXYZ_NUMOUTARGS 0
-#define SV_ORIENX_NUMOUTARGS 0
-#define SV_ORIENY_NUMOUTARGS 0
-#define SV_ORIENZ_NUMOUTARGS 0
-#define SV_CLIPX_NUMOUTARGS 0
-#define SV_CLIPY_NUMOUTARGS 0
-#define SV_CLIPZ_NUMOUTARGS 0
-#define SV_CLIPOFF_NUMOUTARGS 0
-
-#define SV_DRAWCUBE      200
-#define SV_DRAWSPHERE    201
-#define SV_DRAWDISK      202
-#define SV_DRAWLINE      203
-#define SV_DRAWCIRCLE    204
-#define SV_DRAWTRUNCCONE 205
-#define SV_DRAWNOTCHPLATE 206
-#define SV_DRAWRING      207
-#define SV_DRAWCONE      208
-#define SV_DRAWHEXDISK   209
-#define SV_DRAWPOLYDISK  210
-#define SV_DRAWPOINT     211
-#define SV_DRAWARC       212
-#define SV_DRAWCDISK     213
-#define SV_DRAWTSPHERE   214
-#define SV_DRAWARCDISK   215
-#define SV_DRAWSQUARE    216
-#define SV_DRAWVENT      217
-#define SV_DRAWCUBEC     218
-#define SV_DRAWHSPHERE   219
-#define SV_DRAWTRIBLOCK   220
-#define SV_DRAWFILLEDCIRCLE    221
-
-#define SV_DRAWCUBE_NUMARGS      1
-#define SV_DRAWSPHERE_NUMARGS    1
-#define SV_DRAWDISK_NUMARGS      2
-#define SV_DRAWLINE_NUMARGS      6
-#define SV_DRAWCIRCLE_NUMARGS    1
-#define SV_DRAWFILLEDCIRCLE_NUMARGS    1
-#define SV_DRAWTRUNCCONE_NUMARGS 3
-#define SV_DRAWNOTCHPLATE_NUMARGS 4
-#define SV_DRAWRING_NUMARGS      3
-#define SV_DRAWCONE_NUMARGS      2
-#define SV_DRAWHEXDISK_NUMARGS   2
-#define SV_DRAWPOLYDISK_NUMARGS   3
-#define SV_DRAWPOINT_NUMARGS     0
-#define SV_DRAWARC_NUMARGS       2
-#define SV_DRAWCDISK_NUMARGS     2
-#define SV_DRAWTSPHERE_NUMARGS   2
-#define SV_DRAWARCDISK_NUMARGS   3
-#define SV_DRAWSQUARE_NUMARGS 1
-#define SV_DRAWVENT_NUMARGS 2
-#define SV_DRAWCUBEC_NUMARGS      1
-#define SV_DRAWHSPHERE_NUMARGS    1
-#define SV_DRAWTRIBLOCK_NUMARGS    2
-
-#define SV_DRAWCUBE_NUMOUTARGS      0
-#define SV_DRAWSPHERE_NUMOUTARGS    0
-#define SV_DRAWDISK_NUMOUTARGS      0
-#define SV_DRAWLINE_NUMOUTARGS      0
-#define SV_DRAWCIRCLE_NUMOUTARGS    0
-#define SV_DRAWFILLEDCIRCLE_NUMOUTARGS    0
-#define SV_DRAWTRUNCCONE_NUMOUTARGS 0
-#define SV_DRAWNOTCHPLATE_NUMOUTARGS 0
-#define SV_DRAWRING_NUMOUTARGS      0
-#define SV_DRAWCONE_NUMOUTARGS      0
-#define SV_DRAWHEXDISK_NUMOUTARGS   0
-#define SV_DRAWPOLYDISK_NUMOUTARGS   0
-#define SV_DRAWPOINT_NUMOUTARGS     0
-#define SV_DRAWARC_NUMOUTARGS       0
-#define SV_DRAWCDISK_NUMOUTARGS     0
-#define SV_DRAWTSPHERE_NUMOUTARGS   0
-#define SV_DRAWARCDISK_NUMOUTARGS   0
-#define SV_DRAWSQUARE_NUMOUTARGS 0
-#define SV_DRAWVENT_NUMOUTARGS 0
-#define SV_DRAWCUBEC_NUMOUTARGS      0
-#define SV_DRAWHSPHERE_NUMOUTARGS    0
-#define SV_DRAWTRIBLOCK_NUMOUTARGS    0
-
-#define SV_PUSH       300
-#define SV_POP        301
-#define SV_SETRGB   302
-#define SV_SETRGBVAL   303
-#define SV_SETBW      304
-#define SV_SETLINEWIDTH 305
-#define SV_SETPOINTSIZE 306
-#define SV_SETCOLOR   307
-#define SV_GETTEXTUREINDEX 308
-
-#define SV_NO_OP      999
-
-#define SV_PUSH_NUMARGS       0
-#define SV_POP_NUMARGS        0
-#define SV_SETRGB_NUMARGS   3
-#define SV_SETRGBVAL_NUMARGS   3
-#define SV_SETBW_NUMARGS      1
-#define SV_SETLINEWIDTH_NUMARGS 1
-#define SV_SETPOINTSIZE_NUMARGS 1
-#define SV_SETCOLOR_NUMARGS   1
-#define SV_GETTEXTUREINDEX_NUMARGS 2
-#define SV_NO_OP_NUMARGS 0
-
-#define SV_PUSH_NUMOUTARGS       0
-#define SV_POP_NUMOUTARGS        0
-#define SV_SETRGB_NUMOUTARGS   0
-#define SV_SETRGBVAL_NUMOUTARGS   0
-#define SV_SETBW_NUMOUTARGS      0
-#define SV_SETLINEWIDTH_NUMOUTARGS 0
-#define SV_SETPOINTSIZE_NUMOUTARGS 0
-#define SV_SETCOLOR_NUMOUTARGS   0
-#define SV_GETTEXTUREINDEX_NUMOUTARGS 1
-#define SV_NO_OP_NUMOUTARGS 0
-
-
-#define SV_ERR -1
-
-#define NLAT device_sphere_segments
-#define NLONG (2*device_sphere_segments)
-
-#define TOKEN_FLOAT 0
-#define TOKEN_COMMAND 1
-#define TOKEN_GETVAL 2
-#define TOKEN_STRING 3
-#define TOKEN_TEXTURE 4
-
-char *parse_device_frame(char *buffer, FILE *stream, int *eof, sv_object_frame *frame);
-void reporterror(char *buffer, char *token, int numargs_found, int numargs_expected);
-float get_point2box_dist(float boxmin[3], float boxmax[3], float p1[3], float p2[3]);
-
-void drawsphereseg(float anglemin, float anglemax, float rmin, float rmax);
-void rotateeye(void);
-void rotateaxis(float angle, float ax, float ay, float az);
-void rotatexyz(float x, float y, float z);
-void drawcone(float d1, float height, unsigned char *rgbcolor);
-void drawtrunccone(float d1, float d2, float height, unsigned char *rgbcolor);
-void drawline(float *xyz1, float *xyz2, unsigned char *rgbcolor);
-void drawarc(float angle, float diameter, unsigned char *rgbcolor);
-void drawpoint(unsigned char *rgbcolor);
-void drawsphere(float diameter, unsigned char *rgbcolor);
-void drawhsphere(float diameter, unsigned char *rgbcolor);
-void drawtriblock(float size, float height, unsigned char *rgbcolor);
-void drawtsphere(int texture_index, float diameter, unsigned char *rgbcolor);
-void drawcube(float size, unsigned char *rgbcolor);
-void drawsquare(float size, unsigned char *rgbcolor);
-void drawvent(float width, float height, unsigned char *rgbcolor);
-void drawcdisk(float diameter, float height, unsigned char *rgbcolor);
-void drawdisk(float diameter, float height, unsigned char *rgbcolor);
-void drawarcdisk(float angle, float diameter, float height, unsigned char *rgbcolor);
-void drawhexdisk(float diameter, float height, unsigned char *rgbcolor);
-void drawpolydisk(int nsides, float diameter, float height, unsigned char *rgbcolor);
-void drawring(float d_inner, float d_outer, float height, unsigned char *rgbcolor);
-void drawnotchplate(float diameter, float height, float notchheight, float direction, unsigned char *rgbcolor);
-void draw_SVOBJECT(sv_object *object, int frame_index_local, propdata *prop, int recurse_level, float *valrgb, int vis_override);
-void free_object(sv_object *object);
-void freecircle(circdata *circinfo);
-
-static float *cos_long=NULL, *sin_long=NULL, *cos_lat=NULL, *sin_lat=NULL;
-static float specular[4]={0.4,0.4,0.4,1.0};
-unsigned char *rgbimage=NULL;
-int rgbsize=0;
 
 /* ------------------ get_world_eyepos ------------------------ */
 
@@ -392,12 +90,14 @@ void getsmokesensors(void){
       val=-1;
     }
     else{
+      unsigned char *rgbpixel;
+
       index=row*width+col;
-      val=rgbimage[3*index];
+      rgbpixel = rgbimage + 3 * index;
+      val=TOBW(rgbpixel);
     }
     devicei->visval=val;
   }
-
 }
 
 /* ----------------------- getdevice_screencoords ----------------------------- */
@@ -405,7 +105,6 @@ void getsmokesensors(void){
 void getdevice_screencoords(void){
   double mv_setup[16], projection_setup[16];
   GLint viewport_setup[4];
-//  double d_ijk[3];
   int i;
   int doit;
 
@@ -416,8 +115,10 @@ void getdevice_screencoords(void){
 
     devicei = deviceinfo + i;
     label = devicei->object->label;
-    if(STRCMP(label,"smokesensor")!=0)continue;
-    doit=1;
+    if(STRCMP(label,"smokesensor")==0){
+      doit=1;
+      break;
+    }
   }
   if(doit==0)return;
 
@@ -711,127 +412,174 @@ void Output_Device_Val(devicedata *devicei){
   }
 }
 
-/* ----------------------- draw_pilot ----------------------------- */
+#define GLVERTEX2F(x,y) \
+if(orientation==WINDROSE_XY){\
+  glVertex3f((x), (y), 0.0);\
+}\
+else if(orientation==WINDROSE_XZ){\
+  glVertex3f((x), 0.0, (y));\
+}\
+else{\
+  glVertex3f(0.0, (x), (y));\
+}
 
-#ifdef pp_PILOT
-void draw_pilot1(void){
+/* ----------------------- DrawWindRose ----------------------------- */
+
+void DrawWindRose(windrosedata *wr,int orientation){
+  int itheta,icirc;
+  float *xyz;
+  histogramdata *hist;
+  float dtheta,maxr;
+
+  if(wr==NULL)return;
+  xyz = wr->xyz;
+  hist = wr->histogram+orientation;
+  if(scale_windrose==WINDROSE_LOCALSCALE){
+    maxr = hist->bucket_maxr;
+  }
+  else{
+    maxr = maxr_windrose;
+  }
+  glEnable(GL_LIGHTING);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, block_ambient2);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+  glEnable(GL_COLOR_MATERIAL);
+
+  glPushMatrix();
+  glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
+  glTranslatef(xyz[0], xyz[1], xyz[2]);
+
+  dtheta = DEG2RAD*360.0/(float)(hist->ntheta+1);
+  glBegin(GL_TRIANGLES);
+  for(itheta = 0;itheta<hist->ntheta;itheta++){
+    int ir;
+    float theta, theta2;
+    float rval, rval2;
+
+    theta  = (float)itheta*dtheta;
+    theta2 = (float)(itheta+1)*dtheta;
+    rval = 0.0;
+    for(ir = 0;ir<hist->nr;ir++){
+      int color_index;
+      float drval;
+      int k, nk;
+      float dk;
+      float angle_offset;
+
+      //  (rval,theta2)     (rval2,theta2)
+      //  (rval,theta)     (rval2,theta)
+      //   d05              0.05
+      //   radius_windrose (maxr/ntotal)
+
+      color_index  = CLAMP(255*(float)(ir+0.5)/(float)hist->nr, 0, 255);
+      drval  = radius_windrose*hist->buckets_polar[ir+  itheta*hist->nr]/maxr;
+      rval2 = rval + drval;
+
+      nk = RAD2DEG*(theta2-theta);
+      dk = (theta2-theta)/(float)nk;
+      angle_offset = 0.0;
+      if(windstate_windrose == WINDROSE_HEADING)angle_offset = PI;
+
+      for(k = 0;k<nk;k++){
+        float angle1, angle2;
+        float x11, x12, x21, x22;
+        float y11, y12, y21, y22;
+
+        angle1 = theta +     (float)k*dk + angle_offset;
+        angle2 = theta + (float)(k+1)*dk + angle_offset;
+
+        x11 = rval*cos(angle1);
+        x12 = rval2*cos(angle1);
+        x21 = rval*cos(angle2);
+        x22 = rval2*cos(angle2);
+        y11 = rval*sin(angle1);
+        y12 = rval2*sin(angle1);
+        y21 = rval*sin(angle2);
+        y22 = rval2*sin(angle2);
+
+        glColor3fv(rgb_slice+4*color_index);
+        GLVERTEX2F(x11, y11);
+        GLVERTEX2F(x12, y12);
+        GLVERTEX2F(x22, y22);
+
+        GLVERTEX2F(x11, y11);
+        GLVERTEX2F(x22, y22);
+        GLVERTEX2F(x12, y12);
+
+        GLVERTEX2F(x11, y11);
+        GLVERTEX2F(x22, y22);
+        GLVERTEX2F(x21, y21);
+
+        GLVERTEX2F(x11, y11);
+        GLVERTEX2F(x21, y21);
+        GLVERTEX2F(x22, y22);
+      }
+      rval = rval2;
+    }
+  }
+  glEnd();
+
+  if(showref_windrose==1){
+    unsigned char uc_foregroundcolor[4];
+
+    uc_foregroundcolor[0] = 255 * foregroundcolor[0];
+    uc_foregroundcolor[1] = 255 * foregroundcolor[1];
+    uc_foregroundcolor[2] = 255 * foregroundcolor[2];
+    uc_foregroundcolor[3] = 255 * foregroundcolor[3];
+
+    if(orientation == WINDROSE_XZ)glRotatef(90.0, 1.0, 0.0, 0.0);
+    if(orientation == WINDROSE_YZ)glRotatef(90.0, 0.0, 1.0, 0.0);
+    glTranslatef(0.0,0.0,0.001);
+    glLineWidth(2.0);
+    for(icirc = 1;icirc<100;icirc++){
+      float scalei,scalei_normalized,diameter;
+      char scale_percen[256];
+
+      scalei=(float)icirc*(float)scale_increment_windrose/100.0;
+      if(scalei > (float)scale_max_windrose/100.0)continue;
+      scalei_normalized = scalei/(maxr/hist->ntotal);
+      if(scalei_normalized>1.0)break;
+      diameter = 2.0*radius_windrose*scalei_normalized;
+      drawcircle(diameter, uc_foregroundcolor, &windrose_circ);
+      if(showlabels_windrose == 1){
+        sprintf(scale_percen, "%.0f%s", 100.0*scalei, "%");
+        Output3Text(foregroundcolor, 0.01 + diameter / 2.0, 0.0, 0.0, scale_percen);
+      }
+    }
+    glTranslatef(0.0, 0.0, -0.002);
+    for(icirc = 1;icirc<100;icirc++){
+      float scalei, scalei_normalized, diameter;
+
+      scalei=(float)icirc*(float)scale_increment_windrose/100.0;
+      if(scalei > (float)scale_max_windrose/100.0)continue;
+      scalei_normalized = scalei /(maxr/hist->ntotal);
+      if(scalei_normalized>1.0)break;
+      diameter = 2.0*radius_windrose*scalei_normalized;
+      drawcircle(diameter, uc_foregroundcolor, &windrose_circ);
+    }
+  }
+  glPopMatrix();
+  glDisable(GL_LIGHTING);
+}
+
+/* ----------------------- DrawWindRosesDevices ----------------------------- */
+
+void DrawWindRosesDevices(void){
   int i;
 
-  if(showtime == 1 && itimes >= 0 && itimes<nglobal_times&&vispilot == 1 && nvdeviceinfo>0){
-    glEnable(GL_LIGHTING);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, block_ambient2);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
-    glEnable(GL_COLOR_MATERIAL);
+  for(i = 0;i<nvdeviceinfo;i++){
+    vdevicedata *vdevi;
+    windrosedata *wr;
 
-    glPushMatrix();
-    glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-    glTranslatef(-xbar0, -ybar0, -zbar0);
-    glColor3fv(foregroundcolor);
-    glLineWidth(vectorlinewidth);
-    for(i = 0; i < nvdeviceinfo; i++){
-      vdevicedata *vdevi;
-      float *xyz;
-      int k;
-      pilotdata *piloti;
-      float dangle;
-
-      vdevi = vdeviceinfo + i;
-      if(vdevi->unique == 0)continue;
-      xyz = vdevi->valdev->xyz;
-
-      piloti = &(vdevi->pilotinfo);
-
-      dangle = 360.0 / (float)piloti->nbuckets;
-      glBegin(GL_LINES);
-      for(k = 0; k < piloti->nbuckets; k++){
-        float angle, cosang, sinang;
-
-        angle = (float)k*dangle;
-        cosang = cos(DEG2RAD*angle);
-        sinang = sin(DEG2RAD*angle);
-        glVertex3f(xyz[0], xyz[1], xyz[2]);
-        glVertex3f(xyz[0] - SCALE2FDS(piloti->fraction[k])*cosang, xyz[1] - SCALE2FDS(piloti->fraction[k])*sinang, xyz[2]);
-      }
-      glEnd();
-    }
-    glPopMatrix();
-    glDisable(GL_LIGHTING);
+    vdevi = vdeviceinfo + i;
+    if(vdevi->display==0||vdevi->unique==0)continue;
+    wr = &vdevi->windroseinfo;
+    if(visxy_windrose == 1)DrawWindRose(wr, WINDROSE_XY);
+    if(visxz_windrose == 1)DrawWindRose(wr, WINDROSE_XZ);
+    if(visyz_windrose == 1)DrawWindRose(wr, WINDROSE_YZ);
   }
 }
-
-/* ----------------------- draw_pilot2 ----------------------------- */
-
-void draw_pilot2(void){
-  int i;
-
-  if(showtime == 1 && itimes >= 0 && itimes<nglobal_times&&vispilot == 1 && nvdeviceinfo>0){
-    glEnable(GL_LIGHTING);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, block_ambient2);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
-    glEnable(GL_COLOR_MATERIAL);
-
-    glPushMatrix();
-    glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-    glTranslatef(-xbar0, -ybar0, -zbar0);
-    glColor3fv(foregroundcolor);
-    glLineWidth(vectorlinewidth);
-    for(i = 0; i < nvdeviceinfo; i++){
-      vdevicedata *vdevi;
-      float *xyz;
-      int k;
-      pilotdata *piloti;
-      float dangle;
-
-      vdevi = vdeviceinfo + i;
-      if(vdevi->unique == 0)continue;
-      xyz = vdevi->valdev->xyz;
-
-      piloti = &(vdevi->pilotinfo);
-
-      dangle = 360.0 / (float)piloti->nbuckets;
-      glBegin(GL_LINES);
-      for(k = 0; k < piloti->nbuckets; k++){
-        float angle, cosang, sinang;
-        int kk;
-
-        kk = k;
-        angle = (float)kk*dangle;
-        cosang = cos(DEG2RAD*angle);
-        sinang = sin(DEG2RAD*angle);
-        glVertex3f(xyz[0] - SCALE2FDS(piloti->fraction[kk])*cosang, xyz[1] - SCALE2FDS(piloti->fraction[kk])*sinang, xyz[2]);
-
-        kk = k+1;
-        if(kk == piloti->nbuckets - 1)kk = 0;
-        angle = (float)kk*dangle;
-        cosang = cos(DEG2RAD*angle);
-        sinang = sin(DEG2RAD*angle);
-        glVertex3f(xyz[0] - SCALE2FDS(piloti->fraction[kk])*cosang, xyz[1] - SCALE2FDS(piloti->fraction[kk])*sinang, xyz[2]);
-      }
-      glEnd();
-    }
-    glPopMatrix();
-    glDisable(GL_LIGHTING);
-  }
-}
-
-/* ----------------------- draw_pilot ----------------------------- */
-
-void draw_pilot(void){
-  switch(pilot_viewtype){
-  case 0:
-    draw_pilot1();
-    break;
-  case 1:
-    draw_pilot2();
-    break;
-  default:
-    ASSERT(FFALSE);
-    break;
-  }
-}
-#endif
 
 /* ----------------------- draw_devices ----------------------------- */
 
@@ -1267,6 +1015,27 @@ void draw_devices(void){
       glEnd();
       glPopMatrix();
     }
+    if(devicei->is_beam == 1&&showbeam_as_line==1){
+      unsigned char uc_foregroundcolor[3], uc_beamcolor[3], *bc;
+
+      if(use_beamcolor == 1){
+        uc_beamcolor[0] = beam_color[0];
+        uc_beamcolor[1] = beam_color[1];
+        uc_beamcolor[2] = beam_color[2];
+        bc = uc_beamcolor;
+      }
+      else{
+        uc_foregroundcolor[0] = 255 * foregroundcolor[0];
+        uc_foregroundcolor[1] = 255 * foregroundcolor[1];
+        uc_foregroundcolor[2] = 255 * foregroundcolor[2];
+        bc = uc_foregroundcolor;
+      }
+      glPopMatrix();
+      glLineWidth(beam_line_width);
+      drawline(devicei->xyz1, devicei->xyz2, bc);
+      glPushMatrix();
+      glTranslatef(xyz[0],xyz[1],xyz[2]);
+    }
     dpsi=0.0;
     if((active_smokesensors==1&&show_smokesensors!=SMOKESENSORS_HIDDEN&&STRCMP(devicei->object->label,"smokesensor")==0)||
        STRCMP(devicei->object->label,"thermocouple")==0
@@ -1652,26 +1421,26 @@ void draw_SVOBJECT(sv_object *object_dev, int iframe_local, propdata *prop, int 
         glRotatef(RAD2DEG*angle,axis[0],axis[1],axis[2]);
       }
       break;
-   	case SV_INCLUDE:
-	  case SV_INCLUDEF:
-	    {
+    case SV_INCLUDE:
+    case SV_INCLUDEF:
+      {
         sv_object *included_object;
         int iframe_local2;
-	      char *object_name;
+        char *object_name;
 
-	      if(toki->included_object==NULL){
-	        if(toki->command==SV_INCLUDEF){
-	          iframe_local2=arg[0];
-		      }
-	        else{
+        if(toki->included_object==NULL){
+          if(toki->command==SV_INCLUDEF){
+            iframe_local2=arg[0];
+          }
+          else{
             iframe_local2=0;
-		      }
+          }
           object_name = (toki-1)->string;
           included_object = get_SVOBJECT_type(object_name,missing_device);
-	        toki->included_frame=iframe_local2;
-	        toki->included_object=included_object;
+          toki->included_frame=iframe_local2;
+          toki->included_object=included_object;
         }
-	      else{
+        else{
           iframe_local2=toki->included_frame;
           included_object = toki->included_object;
         }
@@ -1785,7 +1554,7 @@ void draw_SVOBJECT(sv_object *object_dev, int iframe_local, propdata *prop, int 
         ci->clip_ymax=-1;
         ci->clip_zmin=-1;
         ci->clip_zmax=-1;
-        setClipPlanes(ci,CLIP_ON);
+        SetClipPlanes(ci,CLIP_ON);
       }
       break;
     case SV_CLIPY:
@@ -1801,7 +1570,7 @@ void draw_SVOBJECT(sv_object *object_dev, int iframe_local, propdata *prop, int 
         ci->clip_xmax=-1;
         ci->clip_zmin=-1;
         ci->clip_zmax=-1;
-        setClipPlanes(ci,CLIP_ON);
+        SetClipPlanes(ci,CLIP_ON);
       }
       break;
     case SV_CLIPZ:
@@ -1817,11 +1586,11 @@ void draw_SVOBJECT(sv_object *object_dev, int iframe_local, propdata *prop, int 
         ci->clip_xmin=-1;
         ci->clip_ymin=-1;
         ci->clip_ymax=-1;
-        setClipPlanes(ci,CLIP_ON);
+        SetClipPlanes(ci,CLIP_ON);
       }
       break;
     case SV_CLIPOFF:
-      setClipPlanes(NULL,CLIP_OFF);
+      SetClipPlanes(NULL,CLIP_OFF);
       break;
     case SV_MIRRORCLIP:
       {
@@ -2113,7 +1882,7 @@ void draw_SVOBJECT(sv_object *object_dev, int iframe_local, propdata *prop, int 
       if(setbw==1){
         float grey;
 
-        grey = color2bw(arg);
+        grey = TOBW(arg);
         rgbcolor[0]=grey;
         rgbcolor[1]=grey;
         rgbcolor[2]=grey;
@@ -2799,18 +2568,17 @@ void drawfilledcircle(float diameter,unsigned char *rgbcolor, circdata *circinfo
 
 void drawcircle(float diameter,unsigned char *rgbcolor, circdata *circinfo){
   int i;
-  int ncirc;
   float *xcirc, *ycirc;
 
   if(circinfo->ncirc==0)Init_Circle(CIRCLE_SEGS,circinfo);
-  ncirc = circinfo->ncirc;
   xcirc = circinfo->xcirc;
   ycirc = circinfo->ycirc;
 
-  glBegin(GL_LINE_LOOP);
+  glBegin(GL_LINES);
   if(rgbcolor!=NULL)glColor3ubv(rgbcolor);
-  for(i=0;i<ncirc;i++){
-    glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0,0.0);
+  for(i=0;i<circinfo->ncirc;i++){
+    glVertex3f(diameter*xcirc[  i]/2.0, diameter*ycirc[  i]/2.0,0.0);
+    glVertex3f(diameter*xcirc[i+1]/2.0, diameter*ycirc[i+1]/2.0, 0.0);
   }
   glEnd();
 }
@@ -3633,22 +3401,22 @@ void drawdisk(float diameter, float height, unsigned char *rgbcolor){
 
     for(i=0;i<ncirc;i++){
       glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0,0.0);
-	  glVertex3f(                    0.0,                    0.0,0.0);
+      glVertex3f(                    0.0,                    0.0,0.0);
 
-	  glVertex3f(                    0.0,                    0.0,0.0);
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,0.0);
+      glVertex3f(                    0.0,                    0.0,0.0);
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,0.0);
 
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,0.0);
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,0.0);
       glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0,0.0);
     }
     for(i=0;i<ncirc;i++){
       glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0, height);
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height);
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height);
 
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height);
-	  glVertex3f(                    0.0,                    0.0, height);
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height);
+      glVertex3f(                    0.0,                    0.0, height);
 
-	  glVertex3f(                    0.0,                    0.0, height);
+      glVertex3f(                    0.0,                    0.0, height);
       glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0, height);
     }
     glEnd();
@@ -3822,15 +3590,15 @@ void drawcdisk(float diameter, float height, unsigned char *rgbcolor){
 
     for(i=0;i<ncirc;i++){
       glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0,-height/2.00); // 1
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,-height/2.0); // 2
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,-height/2.0); // 2
 
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,-height/2.0); // 2
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height/2.0); // 3
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,-height/2.0); // 2
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height/2.0); // 3
 
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height/2.0); // 3
-	  glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0, height/2.0); // 4
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height/2.0); // 3
+      glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0, height/2.0); // 4
 
-	  glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0, height/2.0); // 4
+      glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0, height/2.0); // 4
       glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0,-height/2.00); // 1
     }
     glEnd();
@@ -3860,22 +3628,22 @@ void drawcdisk(float diameter, float height, unsigned char *rgbcolor){
 
     for(i=0;i<ncirc;i++){
       glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0,-height/2.0);
-	  glVertex3f(                    0.0,                    0.0,-height/2.0);
+      glVertex3f(                    0.0,                    0.0,-height/2.0);
 
-	  glVertex3f(                    0.0,                    0.0,-height/2.0);
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,-height/2.0);
+      glVertex3f(                    0.0,                    0.0,-height/2.0);
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,-height/2.0);
 
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,-height/2.0);
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0,-height/2.0);
       glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0,-height/2.0);
     }
     for(i=0;i<ncirc;i++){
       glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0, height/2.0);
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height/2.0);
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height/2.0);
 
-	  glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height/2.0);
-	  glVertex3f(                    0.0,                    0.0, height/2.0);
+      glVertex3f(diameter*xcirc[i+1]/2.0,diameter*ycirc[i+1]/2.0, height/2.0);
+      glVertex3f(                    0.0,                    0.0, height/2.0);
 
-	  glVertex3f(                    0.0,                    0.0, height/2.0);
+      glVertex3f(                    0.0,                    0.0, height/2.0);
       glVertex3f(diameter*xcirc[  i]/2.0,diameter*ycirc[  i]/2.0, height/2.0);
     }
     glEnd();
@@ -5285,8 +5053,8 @@ char *parse_device_frame(char *buffer, FILE *stream, int *eof, sv_object_frame *
 
       toki->type=TOKEN_COMMAND;
       error_code=get_token_id(toki->token, &toki->command, &toki->nvars, &toki->noutvars, &use_displaylist);
-	    toki->included_frame=0;
-	    toki->included_object=NULL;
+      toki->included_frame=0;
+      toki->included_object=NULL;
       if(error_code==1){
         frame->error=1;
         fprintf(stderr,"*** Error: unable to identify the command, %s, while parsing:\n\n",toki->token);
@@ -5696,6 +5464,11 @@ void setup_tree_devices(void){
     ntreedeviceinfo=0;
   }
 
+  if(nztreedeviceinfo>0){
+    FREEMEMORY(ztreedeviceinfo);
+    nztreedeviceinfo = 0;
+  }
+
   qsort((vdevicedata **)vdevices_sorted,3*(size_t)nvdeviceinfo,sizeof(vdevicesortdata),comparev3devices);
 
   ntreedeviceinfo = 1;
@@ -5734,6 +5507,61 @@ void setup_tree_devices(void){
     }
     treei->n = n;
     max_device_tree=MAX(max_device_tree,n);
+  }
+
+  for(i = 0; i<ntreedeviceinfo; i++){
+    int j, nz;
+    vdevicedata *vd;
+    float *xyz = NULL;
+
+    treei = treedeviceinfo+i;
+    nz = 0;
+    for(j = treei->first; j<=treei->last; j++){
+      vdevicesortdata *vdevsorti;
+
+      vdevsorti = vdevices_sorted + j;
+      if(vdevsorti->dir==ZDIR){
+        vd = vdevsorti->vdeviceinfo;
+        if(vd->unique==0)continue;
+        xyz = NULL;
+        if(xyz==NULL&&vd->udev!=NULL)xyz = vd->udev->xyz;
+        if(xyz==NULL&&vd->vdev!=NULL)xyz = vd->vdev->xyz;
+        if(xyz==NULL&&vd->wdev!=NULL)xyz = vd->wdev->xyz;
+        if(xyz!=NULL){
+          treei->xyz = xyz;
+          nz++;
+        }
+      }
+    }
+    if(nz>0)nztreedeviceinfo++;
+    treei->nz = nz;
+  }
+
+  if(nztreedeviceinfo>0)NewMemory((void **)&ztreedeviceinfo, nztreedeviceinfo*sizeof(treedevicedata *));
+
+  nztreedeviceinfo=0;
+  for(i = 0; i<ntreedeviceinfo; i++){
+    int j, nz;
+    vdevicedata *vd;
+    float *xyz;
+
+    treei = treedeviceinfo+i;
+    nz = 0;
+    for(j = treei->first; j<=treei->last; j++){
+      vdevicesortdata *vdevsorti;
+
+      vdevsorti = vdevices_sorted + j;
+      if(vdevsorti->dir==ZDIR){
+        vd = vdevsorti->vdeviceinfo;
+        if(vd->unique==0)continue;
+        xyz = NULL;
+        if(xyz==NULL&&vd->udev!=NULL)xyz = vd->udev->xyz;
+        if(xyz==NULL&&vd->vdev!=NULL)xyz = vd->vdev->xyz;
+        if(xyz==NULL&&vd->wdev!=NULL)xyz = vd->wdev->xyz;
+        if(xyz!=NULL)nz++;
+      }
+    }
+    if(nz>0)ztreedeviceinfo[nztreedeviceinfo++] = treei;
   }
 }
 
@@ -5926,6 +5754,27 @@ void read_device_data(char *file, int filetype, int loadstatus){
   FREEMEMORY(devices);
 }
 
+/* ----------------------- get_vel_device ----------------------------- */
+
+devicedata *get_vel_device(float *xyzval, char *device_label, int device_type){
+  int j;
+
+  for(j = 0;j<nvel_devices;j++){
+    devicedata *devj;
+    float *xyz;
+
+    devj = vel_devices[j];
+    if(devj->filetype!=device_type)continue;
+    xyz = devj->xyz;
+    if(strcmp(devj->quantity, device_label)!=0)continue;
+    if(ABS(xyz[0]-xyzval[0])>EPSDEV)continue;
+    if(ABS(xyz[1]-xyzval[1])>EPSDEV)continue;
+    if(ABS(xyz[2]-xyzval[2])>EPSDEV)continue;
+    return devj;
+  }
+  return NULL;
+}
+
 /* ----------------------- get_device ----------------------------- */
 
 devicedata *get_device(float *xyzval, char *device_label, int device_type){
@@ -6022,25 +5871,18 @@ int is_dup_device_label(int index, int direction){
   return 0;
 }
 
-/* ----------------------- SummarizeDeviceWindData ----------------------------- */
+/* ----------------------- DeviceData2WindRose ----------------------------- */
 
-#ifdef pp_PILOT
-#ifdef pp_WINDROSE
-void SummarizeDeviceWindData(int nbuckets, int nr, int ntheta, int flag){
-#else
-void SummarizeDeviceWindData(int nbuckets){
-#endif
+void DeviceData2WindRose(int nr, int ntheta, int flag){
   int i;
-  float dangle;
 
-  dangle = 360.0 / (float)nbuckets;
+  maxr_windrose = 0.0;
   for(i = 0; i < nvdeviceinfo; i++){
     vdevicedata *vdevicei;
     devicedata *udev, *vdev, *wdev;
     devicedata *angledev, *veldev;
-    int j, ibucket;
-  	pilotdata *piloti;
-    float *vel, *fraction;
+    windrosedata *windrosei;
+    int ndevs = 0, nvals;
 
     vdevicei = vdeviceinfo + i;
     udev = vdevicei->udev;
@@ -6049,105 +5891,77 @@ void SummarizeDeviceWindData(int nbuckets){
     angledev = vdevicei->angledev;
     veldev = vdevicei->veldev;
 
-    piloti = &(vdevicei->pilotinfo);
-
-    vel = piloti->vel;
-    fraction = piloti->fraction;
-    vel = piloti->vel;
-    FREEMEMORY(fraction);
-    FREEMEMORY(vel);
-    NewMemory((void **)&fraction, nbuckets*sizeof(float));
-    NewMemory((void **)&vel, nbuckets*sizeof(float));
-    piloti->vel = vel;
-    piloti->fraction = fraction;
-    piloti->nbuckets = nbuckets;
-
-    for(j = 0; j < nbuckets; j++){
-      piloti->fraction[j] = 0.0;
-      piloti->vel[j] = 0.0;
+    windrosei = &(vdevicei->windroseinfo);
+    if(udev != NULL){
+      ndevs++;
+      nvals = udev->nvals;
     }
-    piloti->total = 0;
-    if(udev != NULL&&vdev != NULL){
-      int nvals;
+    if(vdev != NULL){
+      nvals = vdev->nvals;
+      ndevs++;
+    }
+    if(wdev != NULL){
+      nvals = wdev->nvals;
+      ndevs++;
+    }
+    if(ndevs>1){
+      float rmin, rmax;
+      histogramdata *histogram;
+      int  j;
 
-      nvals = MIN(udev->nvals, vdev->nvals);
-      if(wdev!=NULL)nvals = MIN(nvals, wdev->nvals);
-      for(j = 0; j<nvals; j++){
-        float uval, vval, wval = 0.0, vel, veluv, angle;
+      if(udev != NULL)nvals = MIN(nvals, udev->nvals);
+      if(vdev != NULL)nvals = MIN(nvals, vdev->nvals);
+      if(wdev != NULL)nvals = MIN(nvals, wdev->nvals);
+      windrosei->xyz = udev->xyz;
 
-        uval = udev->vals[j];
-        vval = vdev->vals[j];
-        if(wdev != NULL)wval = wdev->vals[j];
-        vel = sqrt(uval*uval + vval*vval + wval*wval);
-        veluv = sqrt(uval*uval + vval*vval);
-        if(veluv>0.0){
-          angle = fmod(180.0 + atan2(vval, uval)*RAD2DEG + dangle/2.0, 360.0);
-          ibucket = CLAMP(angle / dangle, 0, nbuckets-1);
-          piloti->fraction[ibucket]++;
-          piloti->vel[ibucket] += vel;
-        }
-      }
-#ifdef pp_WINDROSE
-      {
-        float rmin, rmax;
-        histogramdata *histogram;
+      for(j = 0;j < 3;j++){
+        float *uvals, *vvals;
 
-        histogram = &(piloti->histogram);
+        histogram = windrosei->histogram+j;
         if(flag != FIRST_TIME){
           FreeHistogramPolar(histogram);
         }
-        InitHistogramPolar(histogram, nr, ntheta,NULL,NULL);
-        Get2DBounds(udev->vals, vdev->vals, nvals, &rmin, &rmax, HIST_COMPUTE_BOUNDS);
-        CopyUV2Histogram(udev->vals,vdev->vals,nvals,rmin,rmax,histogram);
+        InitHistogramPolar(histogram, nr, ntheta, NULL, NULL);
+        uvals = NULL;
+        vvals = NULL;
+        switch (j){
+          case 0:
+            if(udev!=NULL)uvals = udev->vals;
+            if(vdev!=NULL)vvals = vdev->vals;
+            break;
+          case 1:
+            if(udev!=NULL)uvals = udev->vals;
+            if(wdev!=NULL)vvals = wdev->vals;
+            break;
+          case 2:
+            if(vdev!=NULL)uvals = vdev->vals;
+            if(wdev!=NULL)vvals = wdev->vals;
+            break;
+        }
+        if(uvals == NULL||vvals == NULL)continue;
+        Get2DBounds(uvals, vvals, nvals, &rmin, &rmax);
+        CopyUV2Histogram(uvals, vvals, nvals, rmin, rmax, histogram);
+        maxr_windrose = MAX(maxr_windrose, histogram->bucket_maxr);
       }
-#endif
     }
-    else if(angledev != NULL&&veldev != NULL){
-      int nvals;
+    if(angledev != NULL&&veldev != NULL){
+      float rmin, rmax;
+      histogramdata *histogram;
 
       nvals = MIN(angledev->nvals, veldev->nvals);
-      for(j = 0; j < nvals; j++){
-        float vel, angle;
 
-        angle = angledev->vals[j];
-        vel = veldev->vals[j];
-        angle = fmod(angle + dangle/2.0, 360.0);
-        ibucket = CLAMP(angle / dangle, 0, nbuckets-1);
-        piloti->fraction[ibucket]++;
-        piloti->vel[ibucket] += vel;
+      windrosei->xyz = angledev->xyz;
+      histogram = windrosei->histogram;
+      if(flag != FIRST_TIME){
+        FreeHistogramPolar(histogram);
       }
-#ifdef pp_WINDROSE
-      {
-        float rmin, rmax;
-        histogramdata *histogram;
-
-        histogram = &(piloti->histogram);
-        if(flag != FIRST_TIME){
-          FreeHistogramPolar(histogram);
-        }
-        InitHistogramPolar(histogram, nr, ntheta,NULL,NULL);
-        GetPolarBounds(veldev->vals, nvals, &rmin, &rmax, HIST_COMPUTE_BOUNDS);
-        CopyPolar2Histogram(veldev->vals,angledev->vals,nvals,rmin,rmax,histogram);
-      }
-#endif
-    }
-    else{
-      continue;
-    }
-    for(j = 0; j<nbuckets; j++){
-      piloti->total += piloti->fraction[j];
-      if(piloti->fraction[j]>0.0){
-        piloti->vel[j] /= piloti->fraction[j];
-      }
-    }
-    if(piloti->total > 0){
-      for(j = 0; j < nbuckets; j++){
-        piloti->fraction[j] /= piloti->total;
-      }
+      InitHistogramPolar(histogram, nr, ntheta,NULL,NULL);
+      GetPolarBounds(veldev->vals, nvals, &rmin, &rmax);
+      CopyPolar2Histogram(veldev->vals,angledev->vals,nvals,rmin,rmax,histogram);
+      maxr_windrose = MAX(maxr_windrose, histogram->bucket_maxr);
     }
   }
 }
-#endif
 
 /* ----------------------- setup_device_data ----------------------------- */
 
@@ -6169,71 +5983,68 @@ void setup_device_data(void){
     devicedata *devi,*devj;
     float *xyzval;
 
-    devi = deviceinfo + i;
-    xyzval=devi->xyz;
-    devi->vdevice=NULL;
+    if(ndeviceinfo>1000&&i%100==0)PRINTF("processing device %i of %i\n", i, ndeviceinfo);
+    devi = deviceinfo+i;
+    xyzval = devi->xyz;
+    devi->vdevice = NULL;
 
-    vdevi = vdeviceinfo + nvdeviceinfo;
+    vdevi = vdeviceinfo+nvdeviceinfo;
     vdevi->valdev = devi;
-    vdevi->udev=NULL;
-    vdevi->vdev=NULL;
-    vdevi->wdev=NULL;
-    vdevi->angledev=NULL;
-    vdevi->veldev=NULL;
-    vdevi->sd_angledev=NULL;
-    vdevi->sd_veldev=NULL;
-    vdevi->colordev=NULL;
-#ifdef pp_PILOT
-    vdevi->pilotinfo.vel=NULL;
-    vdevi->pilotinfo.fraction=NULL;
-    vdevi->pilotinfo.nbuckets=0;
-#endif
+    vdevi->udev = NULL;
+    vdevi->vdev = NULL;
+    vdevi->wdev = NULL;
+    vdevi->angledev = NULL;
+    vdevi->veldev = NULL;
+    vdevi->sd_angledev = NULL;
+    vdevi->sd_veldev = NULL;
+    vdevi->colordev = NULL;
 
-    devj = get_device(xyzval,"VELOCITY",CSV_EXP);
+    devj = get_device(xyzval, "VELOCITY", CSV_EXP);
     if(devj!=NULL){
-      vdevi->veldev=devj;
-      vdevi->filetype=CSV_EXP;
+      vdevi->veldev = devj;
+      vdevi->filetype = CSV_EXP;
     }
 
-    devj = get_device(xyzval,"SD_VELOCITY",CSV_EXP);
+    devj = get_device(xyzval, "SD_VELOCITY", CSV_EXP);
     if(devj!=NULL){
-      vdevi->sd_veldev=devj;
-      vdevi->filetype=CSV_EXP;
+      vdevi->sd_veldev = devj;
+      vdevi->filetype = CSV_EXP;
     }
 
-    devj = get_device(xyzval,"ANGLE",CSV_EXP);
+    devj = get_device(xyzval, "ANGLE", CSV_EXP);
     if(devj!=NULL){
-      vdevi->angledev=devj;
-      vdevi->filetype=CSV_EXP;
+      vdevi->angledev = devj;
+      vdevi->filetype = CSV_EXP;
     }
 
-    devj = get_device(xyzval,"SD_ANGLE",CSV_EXP);
+    devj = get_device(xyzval, "SD_ANGLE", CSV_EXP);
     if(devj!=NULL){
-      vdevi->sd_angledev=devj;
-      vdevi->filetype=CSV_EXP;
+      vdevi->sd_angledev = devj;
+      vdevi->filetype = CSV_EXP;
     }
 
-    devj = get_device(xyzval,"U-VELOCITY",CSV_FDS);
+    devj = get_device(xyzval, "U-VELOCITY", CSV_FDS);
     if(devj!=NULL){
-      vdevi->udev=devj;
-      vdevi->filetype=CSV_FDS;
+      vdevi->udev = devj;
+      vdevi->filetype = CSV_FDS;
     }
 
-    devj = get_device(xyzval,"V-VELOCITY",CSV_FDS);
+    devj = get_device(xyzval, "V-VELOCITY", CSV_FDS);
     if(devj!=NULL){
-      vdevi->vdev=devj;
-      vdevi->filetype=CSV_FDS;
+      vdevi->vdev = devj;
+      vdevi->filetype = CSV_FDS;
     }
 
-    devj = get_device(xyzval,"W-VELOCITY",CSV_FDS);
+    devj = get_device(xyzval, "W-VELOCITY", CSV_FDS);
     if(devj!=NULL){
-      vdevi->wdev=devj;
-      vdevi->filetype=CSV_FDS;
+      vdevi->wdev = devj;
+      vdevi->filetype = CSV_FDS;
     }
 
     if(vdevi->udev!=NULL||vdevi->vdev!=NULL||vdevi->wdev!=NULL||
       vdevi->angledev!=NULL||vdevi->veldev!=NULL){
       vdevi->unique=1;
+      vdevi->display = 1;
       nvdeviceinfo++;
     }
   }
@@ -6397,14 +6208,7 @@ void setup_device_data(void){
   setup_tree_devices();
   update_colordevs();
 
-  // convert velocities to pilot chart format
-#ifdef pp_PILOT
-#ifdef pp_WINDROSE
-  SummarizeDeviceWindData(npilot_buckets,npilot_nr,npilot_ntheta,FIRST_TIME);
-#else
-  SummarizeDeviceWindData(npilot_buckets);
-#endif
-#endif
+  DeviceData2WindRose(nr_windrose,ntheta_windrose,FIRST_TIME);
 
   FREEMEMORY(vals);
   FREEMEMORY(valids);
@@ -6430,7 +6234,7 @@ int read_object_defs(char *file){
 
   stream=fopen(file,"r");
   if(stream==NULL)return 0;
-  PRINTF("Processing object file:  %s\n",file);
+  PRINTF("processing object file: %s\n",file);
 
   firstdef=-1;
   buffer_ptr=NULL;
@@ -6593,7 +6397,8 @@ int read_object_defs(char *file){
       objecti=objecti->next;
     }
   }
-  PRINTF("Object file processing complete\n\n");
+  PRINTF("complete");
+  PRINTF("\n\n");
   return ndevices;
 }
 
@@ -7174,7 +6979,7 @@ void init_device_plane(devicedata *devicei){
     rgbcolor[1]=0.0;
     rgbcolor[2]=0.0;
     rgbcolor[3]=1.0;
-    devicei->color=getcolorptr(rgbcolor);
+    devicei->color=GetColorPtr(rgbcolor);
   }
   colorindex=0;
   for(i=0;i<nmeshes;i++){
@@ -7186,7 +6991,7 @@ void init_device_plane(devicedata *devicei){
     int nodeindexes[8], closestnodes[18];
     float vals[8];
 
-    InitIsosurface(devicei->plane_surface[i],level,devicei->color,colorindex);
+    InitIsoSurface(devicei->plane_surface[i],level,devicei->color,colorindex);
     devicei->plane_surface[i]->cullfaces=1;
 
     meshi = meshinfo + i;
@@ -7219,90 +7024,17 @@ void init_device_plane(devicedata *devicei){
     yy[1]=meshi->xyz_bar[YYY];
     zz[1]=meshi->xyz_bar[ZZZ];
 
-    GetIsobox(xx, yy, zz, vals, NULL, nodeindexes, level,
+    GetIsoHexaHedron(xx, yy, zz, vals, NULL, nodeindexes, level,
               xvert, yvert, zvert, NULL, closestnodes, &nvert, triangles, &ntriangles);
 
     UpdateIsosurface(devicei->plane_surface[i], xvert, yvert, zvert, NULL,
                      closestnodes, nvert, triangles, ntriangles);
     GetNormalSurface(devicei->plane_surface[i]);
-    CompressIsosurface(devicei->plane_surface[i],1,
+    CompressIsoSurface(devicei->plane_surface[i],1,
           xbar0,2*xbar,ybar0,2*ybar,zbar0,zbar);
     SmoothIsoSurface(devicei->plane_surface[i]);
   }
 
-}
-
-/* ----------------------- init_device ----------------------------- */
-
-void init_device(devicedata *devicei, float *xyz, float *xyzn, int state0, int nparams, float *params, char *labelptr){
-  float norm;
-  int i;
-
-  devicei->nvals=0;
-  devicei->filetype=-1;
-  devicei->in_zone_csv=0;
-  devicei->in_devc_csv=0;
-  devicei->labelptr=devicei->label;
-  devicei->color=NULL;
-  devicei->line_width=1.0;
-  if(labelptr!=NULL){
-    strcpy(devicei->label,labelptr);
-  }
-  if(STRCMP(devicei->object->label,"plane")==0){
-    float color[4];
-
-    NewMemory( (void **)&devicei->plane_surface,nmeshes*sizeof(isosurface *));
-    for(i=0;i<nmeshes;i++){
-      NewMemory( (void **)&devicei->plane_surface[i],sizeof(isosurface));
-    }
-    if(nparams>=3){
-      color[0]=params[0];
-      color[1]=params[1];
-      color[2]=params[2];
-      color[3]=1.0;
-      devicei->color=getcolorptr(color);
-    }
-    if(nparams>=4){
-      devicei->line_width=params[3];
-    }
-  }
-  else{
-    devicei->plane_surface=NULL;
-  }
-  if(xyz!=NULL){
-    devicei->xyz[0]=xyz[0];
-    devicei->xyz[1]=xyz[1];
-    devicei->xyz[2]=xyz[2];
-  }
-  norm = sqrt(xyzn[0]*xyzn[0]+xyzn[1]*xyzn[1]+xyzn[2]*xyzn[2]);
-  if(norm!=0.0){
-    devicei->xyznorm[0]=xyzn[0]/norm;
-    devicei->xyznorm[1]=xyzn[1]/norm;
-    devicei->xyznorm[2]=xyzn[2]/norm;
-  }
-  else{
-    devicei->xyznorm[0]=0.0;
-    devicei->xyznorm[1]=0.0;
-    devicei->xyznorm[2]=1.0;
-  }
-  devicei->times=NULL;
-  devicei->vals=NULL;
-  devicei->nstate_changes=0;
-  devicei->istate_changes=0;
-  devicei->act_times=NULL;
-  devicei->state_values=NULL;
-  devicei->showstatelist=NULL;
-  devicei->act_time=-1.0;
-  devicei->device_mesh=NULL;
-  devicei->state0=state0;
-  devicei->nparams=nparams;
-  devicei->params=params;
-  devicei->ival=0;
-  if(nparams>0&&params!=NULL){
-    for(i=0;i<nparams;i++){
-      devicei->params[i]=params[i];
-    }
-  }
 }
 
 /* ----------------------- get_indep_var_indices ----------------------------- */
@@ -7455,9 +7187,9 @@ void parse_object_string(char *string,char **tokens, int *ntokens){
         int j;
         sv_object *included_object;
         int iframe_local;
-	      char *object_name;
-	      int nparms;
-	      sv_object_frame *frame;
+        char *object_name;
+        int nparms;
+        sv_object_frame *frame;
         int len2;
 
         object_name=tokens_tail[ntail-2];

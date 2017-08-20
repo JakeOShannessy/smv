@@ -13,8 +13,7 @@
 #include "smokeviewvars.h"
 #include "histogram.h"
 #include "compress.h"
-
-void draw_SVOBJECT(sv_object *object, int frame_index_local, propdata *prop, int recurse_level,float *valrgb, int vis_override);
+#include "IOobject.h"
 
 #define READPASS 1
 #define READFAIL 0
@@ -27,7 +26,7 @@ if(returncode==READPASS){\
   if(ferror(PART5FILE)==1||feof(PART5FILE)==1)returncode=READFAIL;\
 }\
 if(returncode==READPASS){\
-  if(endianswitch==1)endian_switch(var,size);\
+  if(endianswitch==1)EndianSwitch(var,size);\
   FSEEK(PART5FILE,4,SEEK_CUR);\
   if(ferror(PART5FILE)==1||feof(PART5FILE)==1)returncode=READFAIL;\
 }
@@ -313,7 +312,7 @@ void get_part_histogram(partdata *parti){
   for(i = 0; i < npart5prop; i++){
     ResetHistogram(parti->histograms[i],NULL,NULL);
   }
-  if(file_exists(parti->hist_file)==1&&get_histfile_status(parti)==HIST_OK){
+  if(FILE_EXISTS(parti->hist_file)==YES&&get_histfile_status(parti)==HIST_OK){
     read_part_histogram(parti);
     return;
   }
@@ -352,9 +351,9 @@ void get_part_histogram(partdata *parti){
   write_part_histogram(parti);
 }
 
-/* ------------------ get_allpart_histogram ------------------------ */
+/* ------------------ GetPartHistogram ------------------------ */
 
-void get_allpart_histogram(void){
+void GetPartHistogram(int flag){
   int i, update;
 
   // will update histograms the first time called
@@ -367,22 +366,30 @@ void get_allpart_histogram(void){
       partdata *parti;
 
       parti = partinfo + i;
-      if(get_histfile_status(parti)==HIST_OLD){
-        update = 1;
-        break;
+      if(flag == PARTFILE_LOADALL ||
+        (flag == PARTFILE_RELOADALL&&parti->loaded == 1) ||
+        (flag >= 0 && i == flag)){
+        if(get_histfile_status(parti) == HIST_OLD){
+          update = 1;
+          break;
+        }
       }
     }
     if(update == 0)return;
   }
 
   force_UpdateHistograms = 0;
-  npartframes_max=get_min_partframes();
+  npartframes_max=GetMinPartFrames(flag);
 
   for(i = 0; i < npartinfo; i++){
     partdata *parti;
 
     parti = partinfo + i;
-    get_part_histogram(parti);
+    if(flag == PARTFILE_LOADALL ||
+      (flag == PARTFILE_RELOADALL&&parti->loaded == 1) ||
+      (flag >= 0 && i == flag)){
+      get_part_histogram(parti);
+    }
   }
   for(i = 0; i < npart5prop; i++){
     partpropdata *propi;
@@ -395,18 +402,24 @@ void get_allpart_histogram(void){
     int j;
 
     parti = partinfo + i;
-    for(j = 0; j < npart5prop; j++){
-      partpropdata *propj;
 
-      propj = part5propinfo + j;
-      MergeHistogram(&propj->histogram, parti->histograms[j],MERGE_BOUNDS);
+    parti = partinfo + i;
+    if(flag == PARTFILE_LOADALL ||
+      (flag == PARTFILE_RELOADALL&&parti->loaded == 1)||
+      (flag >= 0 && i == flag)){
+      for(j = 0; j < npart5prop; j++){
+        partpropdata *propj;
+
+        propj = part5propinfo + j;
+        MergeHistogram(&propj->histogram, parti->histograms[j], MERGE_BOUNDS);
+      }
     }
   }
 }
 
 /* ------------------ get_partdata ------------------------ */
 
-void get_partdata(partdata *parti, int partframestep_local, int nf_all, float *delta_time, FILE_SIZE *file_size, int data_type){
+void get_partdata(partdata *parti, int partframestep_local, int nf_all, float *read_time, FILE_SIZE *file_size, int data_type){
   FILE *PART5FILE;
   int one;
   int endianswitch=0;
@@ -424,14 +437,13 @@ void get_partdata(partdata *parti, int partframestep_local, int nf_all, float *d
   int count;
   int count2;
   int first_frame=1;
-  int local_starttime=0, local_stoptime=0;
 
   reg_file=parti->reg_file;
 
   PART5FILE=fopen(reg_file,"rb");
   if(PART5FILE==NULL)return;
 
-  if(file_size!=NULL)*file_size=get_filesize(reg_file);
+  if(file_size!=NULL)*file_size= GetFILESize(reg_file);
   FSEEK(PART5FILE,4,SEEK_CUR);fread(&one,4,1,PART5FILE);FSEEK(PART5FILE,4,SEEK_CUR);
   if(one!=1)endianswitch=1;
 
@@ -457,7 +469,9 @@ void get_partdata(partdata *parti, int partframestep_local, int nf_all, float *d
   datacopy = parti->data5;
   count=0;
   count2=-1;
-  local_starttime = glutGet(GLUT_ELAPSED_TIME);
+  if(read_time != NULL){
+    START_TIMER(*read_time);
+  }
   for(;;){
     int doit;
 
@@ -606,15 +620,15 @@ void get_partdata(partdata *parti, int partframestep_local, int nf_all, float *d
 
   }
 wrapup:
-  local_stoptime = glutGet(GLUT_ELAPSED_TIME);
-  if(delta_time!=NULL)*delta_time=(local_stoptime-local_starttime)/1000.0;
+  if(read_time != NULL){
+    STOP_TIMER(*read_time);
+  }
   update_all_partvis(parti);
   CheckMemory;
   FREEMEMORY(numtypes);
   FREEMEMORY(numpoints);
   fclose(PART5FILE);
 }
-
 
 /* ------------------ write_part_histogram ------------------------ */
 
@@ -638,6 +652,7 @@ void write_part_histogram(partdata *parti){
 
     fwrite(valminmax, sizeof(float), 2, STREAM_HIST);
     fwrite(&histi->nbuckets, sizeof(int), 1, STREAM_HIST);
+
     if(sizeof(int)*histi->nbuckets>ncompressed_bucketsMAX){
       ncompressed_bucketsMAX = sizeof(int)*histi->nbuckets;
       FREEMEMORY(compressed_buckets);
@@ -848,7 +863,7 @@ void print_partprop(void){
     partpropdata *propi;
 
     propi = part5propinfo + i;
-    if(propi->label->longlabel, "uniform"){
+    if(strcmp(propi->label->longlabel, "uniform")==0){
       PRINTF("label=%s\n", propi->label->longlabel);
     }
     else{
@@ -1061,7 +1076,6 @@ int get_npartframes(partdata *parti){
   FILE *stream;
   char buffer[256];
   float time_local;
-  //int count;
   char *reg_file, *size_file;
   int i;
   int stat_sizefile, stat_regfile;
@@ -1091,10 +1105,12 @@ int get_npartframes(partdata *parti){
     lensize=strlen(size_file);
     if(parti->evac==1){
       angle_flag=1;
+      PRINTF("Sizing evac data: %s\n", reg_file);
       FORTfcreate_part5sizefile(reg_file,size_file, &angle_flag, &redirect, &error, lenreg,lensize);
     }
     else{
       angle_flag=0;
+      PRINTF("Sizing particle data: %s\n", reg_file);
       FORTfcreate_part5sizefile(reg_file,size_file, &angle_flag, &redirect, &error, lenreg,lensize);
     }
   }
@@ -1122,9 +1138,9 @@ int get_npartframes(partdata *parti){
   return nframes_all;
 }
 
-/* ------------------ get_min_partframes ------------------------ */
+/* ------------------ GetMinPartFrames ------------------------ */
 
-int get_min_partframes(void){
+int GetMinPartFrames(int flag){
   int i;
   int min_frames=-1;
 
@@ -1133,13 +1149,18 @@ int get_min_partframes(void){
     int nframes;
 
     parti = partinfo + i;
-    nframes = get_npartframes(parti);
-    if(nframes>0){
-      if(min_frames==-1){
-        min_frames=nframes;
-      }
-      else{
-        if(nframes!=-1&&nframes<min_frames)min_frames=nframes;
+    if(flag == PARTFILE_LOADALL ||
+      (flag == PARTFILE_RELOADALL&&parti->loaded == 1) ||
+      (flag >= 0 && i == flag)){
+
+      nframes = get_npartframes(parti);
+      if(nframes > 0){
+        if(min_frames == -1){
+          min_frames = nframes;
+        }
+        else{
+          if(nframes != -1 && nframes < min_frames)min_frames = nframes;
+        }
       }
     }
   }
@@ -1175,10 +1196,12 @@ void get_partheader(partdata *parti, int partframestep_local, int *nf_all){
     lensize = strlen(size_file);
     if(parti->evac == 1){
       angle_flag = 1;
+      PRINTF("Sizing evac data: %s\n", reg_file);
       FORTfcreate_part5sizefile(reg_file, size_file, &angle_flag, &redirect, &error, lenreg, lensize);
     }
     else{
       angle_flag = 0;
+      PRINTF("Sizing particle data: %s\n", reg_file);
       FORTfcreate_part5sizefile(reg_file, size_file, &angle_flag, &redirect, &error, lenreg, lensize);
     }
   }
@@ -1363,12 +1386,11 @@ void readpart(char *file, int ifile, int loadflag, int data_type, int *errorcode
   int error=0;
   partdata *parti;
   int nf_all;
-  int local_starttime0, local_stoptime0;
-  float delta_time0, delta_time;
+  float total_time,read_time;
   FILE_SIZE file_size;
   int j;
 
-  local_starttime0 = glutGet(GLUT_ELAPSED_TIME);
+  START_TIMER(total_time);
 
   ASSERT(ifile>=0&&ifile<npartinfo);
   parti=partinfo+ifile;
@@ -1426,16 +1448,12 @@ void readpart(char *file, int ifile, int loadflag, int data_type, int *errorcode
     return;
   }
 
-  if(data_type == HISTDATA){
-    PRINTF("Updating histogram for: %s\n", file);
-  }
-  else{
-    PRINTF("Sizing particle data: %s\n", file);
-  }
+  if(data_type == HISTDATA)PRINTF("Updating histogram for: %s\n", file);
   get_partheader(parti, partframestep, &nf_all);
 
   if(data_type == PARTDATA)PRINTF("Loading particle data: %s\n", file);
-  get_partdata(parti,partframestep, nf_all, &delta_time, &file_size,data_type);
+  get_partdata(parti,partframestep, nf_all, &read_time, &file_size,data_type);
+  if(data_type==HISTDATA)return;
   UpdateGlui();
 
 #ifdef pp_MEMPRINT
@@ -1460,45 +1478,50 @@ void readpart(char *file, int ifile, int loadflag, int data_type, int *errorcode
 
   parti->loaded = 1;
   parti->display = 1;
-  update_partcolorbounds(parti);
-  UpdateGlui();
-#ifdef pp_MEMPRINT
-  if(data_type==PARTDATA)PRINTF("After particle file load: \n");
-  PrintMemoryInfo;
+#ifdef pp_PARTDEFER
+  if(parti->compute_bounds_color == 1){
 #endif
-  if(parti->evac==0){
-    visParticles=1;
-    ReadPartFile=1;
+    if(data_type == PARTDATA)update_partcolorbounds(parti);
+    UpdateGlui();
+#ifdef pp_MEMPRINT
+    if(data_type == PARTDATA)PRINTF("After particle file load: \n");
+    PrintMemoryInfo;
+#endif
+    if(parti->evac == 0){
+      visParticles = 1;
+      ReadPartFile = 1;
+    }
+    else{
+      visEvac = 1;
+      ReadEvacFile = 1;
+    }
+
+    parttype = 0;
+    Part_CB_Init();
+    ParticlePropShowMenu(part5colorindex);
+    plotstate = GetPlotState(DYNAMIC_PLOTS);
+    UpdateTimes();
+    UpdatePart5Extremes();
+    updatemenu = 1;
+    Idle_CB();
+#ifdef pp_PARTDEFER
   }
-  else{
-    visEvac=1;
-    ReadEvacFile=1;
-  }
+#endif
 
-  parttype=0;
-  Part_CB_Init();
-  ParticlePropShowMenu(part5colorindex);
-  plotstate=GetPlotState(DYNAMIC_PLOTS);
-  UpdateTimes();
-  UpdatePart5Extremes();
-  updatemenu=1;
-  Idle_CB();
+  STOP_TIMER(total_time);
 
-  local_stoptime0 = glutGet(GLUT_ELAPSED_TIME);
-  delta_time0 = (local_stoptime0-local_starttime0)/1000.0;
-
-  if(file_size!=0&&delta_time>0.0){
+  if(file_size!=0&&read_time>0.0){
     float loadrate;
 
-    loadrate = ((float)file_size*8.0/1000000.0)/delta_time;
+    loadrate = ((float)file_size*8.0/1000000.0)/read_time;
     if(data_type==PARTDATA)PRINTF(" %.1f MB loaded in %.2f s - rate: %.1f Mb/s",
-    (float)file_size/1000000.,delta_time,loadrate);
+    (float)file_size/1000000.,read_time,loadrate);
   }
   else{
     if(data_type==PARTDATA)PRINTF(" %.1f MB downloaded in %.2f s",
-    (float)file_size/1000000.,delta_time);
+    (float)file_size/1000000.,read_time);
   }
-  if(data_type==PARTDATA)PRINTF(" (overhead: %.2f s)\n", delta_time0-delta_time);
+  if(data_type==PARTDATA)PRINTF(" (overhead: %.2f s)\n", total_time-read_time);
 
   glutPostRedisplay();
 }
@@ -2082,9 +2105,9 @@ void update_part_menulabels(void){
       }
       lenlabel=strlen(parti->menulabel);
       if(nmeshes>1){
-	    meshdata *partmesh;
+        meshdata *partmesh;
 
-		partmesh = meshinfo + parti->blocknumber;
+        partmesh = meshinfo + parti->blocknumber;
         sprintf(label,"%s",partmesh->label);
         if(lenlabel>0)STRCAT(parti->menulabel,", ");
         STRCAT(parti->menulabel,label);

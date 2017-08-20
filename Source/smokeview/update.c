@@ -12,8 +12,6 @@
 #include "smokeviewvars.h"
 #include "compress.h"
 
-void ParticleStreakShowMenu(int var);
-
 /* ------------------ CompareFloat ------------------------ */
 
 int CompareFloat( const void *arg1, const void *arg2 ){
@@ -28,10 +26,10 @@ int CompareFloat( const void *arg1, const void *arg2 ){
 
 /* ------------------ UpdateHrrinfo ------------------------ */
 
-void UpdateHrrinfo(int vis) {
-  if(hrrinfo != NULL) {
+void UpdateHrrinfo(int vis){
+  if(hrrinfo != NULL){
     hrrinfo->display = vis;
-	UpdateTimes();
+    UpdateTimes();
   }
 }
 
@@ -61,13 +59,14 @@ void UpdateFrameNumber(int changetime){
       for(imesh=0;imesh<nmeshes;imesh++){
         meshdata *meshi;
         volrenderdata *vr;
-        slicedata *fireslice, *smokeslice;
+        slicedata *fireslice, *smokeslice, *lightslice;
         int j;
 
         meshi = meshinfo + imesh;
         vr = &(meshi->volrenderinfo);
         fireslice=vr->fireslice;
         smokeslice=vr->smokeslice;
+        lightslice=vr->lightslice;
         if(fireslice==NULL||smokeslice==NULL)continue;
         if(vr->loaded==0||vr->display==0)continue;
         vr->itime = vr->timeslist[itimes];
@@ -75,6 +74,7 @@ void UpdateFrameNumber(int changetime){
           if(vr->dataready[j]==1)break;
         }
         vr->itime=j;
+
         if(smokeslice!=NULL&&vr->itime>=0){
           if(vr->is_compressed==1||load_volcompressed==1){
             unsigned char *c_smokedata_compressed;
@@ -94,6 +94,7 @@ void UpdateFrameNumber(int changetime){
           }
           CheckMemory;
         }
+
         if(fireslice!=NULL&&vr->itime>=0){
           if(vr->is_compressed==1||load_volcompressed==1){
             unsigned char *c_firedata_compressed;
@@ -114,6 +115,28 @@ void UpdateFrameNumber(int changetime){
           }
           CheckMemory;
         }
+
+        if(lightslice!=NULL&&vr->itime>=0){
+          if(vr->is_compressed==1||load_volcompressed==1){
+            unsigned char *c_lightdata_compressed;
+            uLongf framesize;
+            float timeval;
+
+            c_lightdata_compressed = vr->lightdataptrs[vr->itime];
+            framesize = lightslice->nslicei*lightslice->nslicej*lightslice->nslicek;
+            uncompress_volsliceframe(c_lightdata_compressed,
+                           vr->lightdata_view, framesize, &timeval,
+                           vr->c_lightdata_view);
+
+            vr->lightdataptr = vr->lightdata_view;
+            CheckMemory;
+          }
+          else{
+            if(runscript==0)vr->lightdataptr = vr->lightdataptrs[vr->itime];
+          }
+          CheckMemory;
+        }
+
       }
     }
     for(i=0;i<ngeominfoptrs;i++){
@@ -124,7 +147,6 @@ void UpdateFrameNumber(int changetime){
       geomi->itime=geomi->timeslist[itimes];
     }
     if(showslice==1||showvslice==1){
-      int showfed=0;
       int ii;
 
       for(ii=0;ii<nslice_loaded;ii++){
@@ -135,7 +157,6 @@ void UpdateFrameNumber(int changetime){
         if(sd->timeslist==NULL)continue;
         sd->itime=sd->timeslist[itimes];
         slice_time = sd->itime;
-        if(sd->is_fed==1)showfed=1;
       }
     }
     if(show3dsmoke==1){
@@ -147,10 +168,10 @@ void UpdateFrameNumber(int changetime){
         smoke3di->ismoke3d_time=smoke3di->timeslist[itimes];
         if(smoke3di->ismoke3d_time!=smoke3di->lastiframe){
           smoke3di->lastiframe=smoke3di->ismoke3d_time;
-          updatesmoke3d(smoke3di);
+          UpdateSmoke3D(smoke3di);
         }
       }
-      if(nsmoke3dinfo>0)mergesmoke3dcolors(NULL);
+      if(nsmoke3dinfo>0)MergeSmoke3DColors(NULL);
     }
     if(showpatch==1){
       for(i=0;i<npatchinfo;i++){
@@ -169,6 +190,7 @@ void UpdateFrameNumber(int changetime){
         meshdata *meshi;
 
         meshi = meshinfo+i;
+        if(meshi->patchfilenum < 0||meshi->patchfilenum>npatchinfo-1)continue;
         patchi=patchinfo + meshi->patchfilenum;
         if(patchi->filetype==PATCH_GEOMETRY||meshi->patch_times==NULL||meshi->patch_timeslist==NULL)continue;
         meshi->patch_itime=meshi->patch_timeslist[itimes];
@@ -248,8 +270,8 @@ void UpdateShow(void){
   {
     tourdata *touri;
 
-    if(ntours>0){
-      for(i=0;i<ntours;i++){
+    if(ntourinfo>0){
+      for(i=0;i<ntourinfo;i++){
         touri = tourinfo + i;
         if(touri->display==1){
           showtours=1;
@@ -621,7 +643,7 @@ void SynchTimes(void){
 
   /* synchronize tour times */
 
-    for(j=0;j<ntours;j++){
+    for(j=0;j<ntourinfo;j++){
       tourdata *tourj;
 
       tourj = tourinfo + j;
@@ -905,7 +927,7 @@ void ConvertSsf(void){
     char *tofile;
 
     tofile = ssf_from;
-    copyfile(".",tempfile,tofile,REPLACE_FILE);
+    CopyFILE(".",tempfile,tofile,REPLACE_FILE);
     UNLINK(tempfile);
   }
 }
@@ -913,9 +935,9 @@ void ConvertSsf(void){
   /* ------------------ UpdateTimes ------------------------ */
 
 void UpdateTimes(void){
-  float *timescopy;
   int i;
-  float dt_MIN=100000.0;
+  int nglobal_times_copy;
+  float *global_times_copy = NULL;
 
   FREEMEMORY(geominfoptrs);
   ngeominfoptrs=0;
@@ -945,7 +967,7 @@ void UpdateTimes(void){
   if(visShooter!=0&&shooter_active==1){
     nglobal_times+=nshooter_frames;
   }
-  for(i=0;i<ntours;i++){
+  for(i=0;i<ntourinfo;i++){
     tourdata *touri;
 
     touri = tourinfo + i;
@@ -1026,133 +1048,80 @@ void UpdateTimes(void){
       }
     }
   }
+  CheckMemory;
 
   // end pass 1
 
-  CheckMemory;
   FREEMEMORY(global_times);
-  if(nglobal_times>0)NewMemory((void **)&global_times,nglobal_times*sizeof(float));
-  timescopy=global_times;
+  if(nglobal_times > 0){
+    NewMemory((void **)&global_times, nglobal_times * sizeof(float));
+    NewMemory((void **)&global_times_copy, nglobal_times * sizeof(float));
+  }
 
   // pass 2 - merge times arrays
 
+  nglobal_times_copy = 0;
   for(i=0;i<ngeominfoptrs;i++){
     geomdata *geomi;
-    int n;
 
     geomi = geominfoptrs[i];
     if(geomi->loaded==0||geomi->display==0)continue;
-    for(n=0;n<geomi->ntimes;n++){
-      float t_diff;
-
-      *timescopy++=geomi->times[n];
-      t_diff = timescopy[-1]-timescopy[-2];
-      if(n>0&&t_diff<dt_MIN&&t_diff>0.0){
-        dt_MIN=t_diff;
-      }
-    }
+    memcpy(global_times + nglobal_times_copy, geomi->times, geomi->ntimes * sizeof(float));
+    nglobal_times_copy += geomi->ntimes;
   }
   if(visTerrainType!=TERRAIN_HIDDEN){
     for(i=0;i<nterraininfo;i++){
       terraindata *terri;
-      int n;
 
       terri = terraininfo + i;
       if(terri->loaded==0)continue;
-      for(n=0;n<terri->ntimes;n++){
-        float t_diff;
-
-        *timescopy++=terri->times[n];
-        t_diff = timescopy[-1]-timescopy[-2];
-        if(n>0&&t_diff<dt_MIN&&t_diff>0.0){
-          dt_MIN=t_diff;
-        }
-      }
+      memcpy(global_times + nglobal_times_copy, terri->times, terri->ntimes * sizeof(float));
+      nglobal_times_copy += terri->ntimes;
     }
   }
   if(visShooter!=0&&shooter_active==1){
     for(i=0;i<nshooter_frames;i++){
-      float t_diff;
-
-      *timescopy++=shoottimeinfo[i].time;
-
-      t_diff = timescopy[-1]-timescopy[-2];
-      if(i>0&&t_diff<dt_MIN&&t_diff>0.0){
-        dt_MIN=t_diff;
-      }
+      global_times[nglobal_times_copy++]=shoottimeinfo[i].time;
     }
-    CheckMemory;
   }
 
-  for(i=0;i<ntours;i++){
+  for(i=0;i<ntourinfo;i++){
     tourdata *touri;
-    int n;
 
     touri = tourinfo + i;
     if(touri->display==0)continue;
-    for(n=0;n<touri->ntimes;n++){
-      float t_diff;
-
-      *timescopy++=touri->path_times[n];
-      t_diff = timescopy[-1]-timescopy[-2];
-      if(n>0&&t_diff<dt_MIN&&t_diff>0.0){
-        dt_MIN=t_diff;
-      }
-    }
+    memcpy(global_times + nglobal_times_copy, touri->path_times, touri->ntimes * sizeof(float));
+    nglobal_times_copy += touri->ntimes;
   }
 
   tmax_part=0.0;
   for(i=0;i<npartinfo;i++){
     partdata *parti;
-    int n;
 
     parti = partinfo + i;
     if(parti->loaded==0)continue;
-    for(n=0;n<parti->ntimes;n++){
-      float t_diff;
-
-      *timescopy++=parti->times[n];
-      t_diff = timescopy[-1]-timescopy[-2];
-      if(n>0&&t_diff<dt_MIN&&t_diff>0.0){
-        dt_MIN=t_diff;
-      }
-    }
+    memcpy(global_times + nglobal_times_copy, parti->times, parti->ntimes * sizeof(float));
+    nglobal_times_copy += parti->ntimes;
     tmax_part=MAX(parti->times[parti->ntimes-1],tmax_part);
   }
 
   for(i=0;i<nsliceinfo;i++){
     slicedata *sd;
-    int n;
 
     sd = sliceinfo + i;
     if(sd->loaded==1||sd->vloaded==1){
-      for(n=0;n<sd->ntimes;n++){
-        float t_diff;
-
-        *timescopy++=sd->times[n];
-        t_diff = timescopy[-1]-timescopy[-2];
-        if(n>0&&t_diff<dt_MIN&&t_diff>0.0){
-          dt_MIN=t_diff;
-        }
-      }
+      memcpy(global_times + nglobal_times_copy, sd->times, sd->ntimes * sizeof(float));
+      nglobal_times_copy += sd->ntimes;
     }
   }
 
   for(i=0;i<npatchinfo;i++){
     patchdata *patchi;
-    int n;
 
     patchi = patchinfo + i;
     if(patchi->loaded==1&&patchi->filetype==PATCH_GEOMETRY){
-      for(n=0;n<patchi->ngeom_times;n++){
-        float t_diff;
-
-        *timescopy++=patchi->geom_times[n];
-        t_diff = timescopy[-1]-timescopy[-2];
-        if(n>0&&t_diff<dt_MIN&&t_diff>0.0){
-          dt_MIN=t_diff;
-        }
-      }
+      memcpy(global_times + nglobal_times_copy, patchi->geom_times, patchi->ngeom_times * sizeof(float));
+      nglobal_times_copy += patchi->ngeom_times;
     }
   }
   for(i=0;i<nmeshes;i++){
@@ -1165,17 +1134,8 @@ void UpdateTimes(void){
     if(filenum!=-1){
       patchi = patchinfo + filenum;
       if(patchi->loaded==1&&patchi->filetype!=PATCH_GEOMETRY){
-        int n;
-
-        for(n=0;n<meshi->npatch_times;n++){
-          float t_diff;
-
-          *timescopy++=meshi->patch_times[n];
-          t_diff = timescopy[-1]-timescopy[-2];
-          if(n>0&&t_diff<dt_MIN&&t_diff>0.0){
-            dt_MIN=t_diff;
-          }
-        }
+        memcpy(global_times + nglobal_times_copy, meshi->patch_times, meshi->npatch_times * sizeof(float));
+        nglobal_times_copy += meshi->npatch_times;
       }
     }
   }
@@ -1183,103 +1143,93 @@ void UpdateTimes(void){
     for(i=0;i<nmeshes;i++){
       volrenderdata *vr;
       meshdata *meshi;
-      int n;
 
       meshi=meshinfo + i;
       vr = &meshi->volrenderinfo;
       if(vr->smokeslice==NULL)continue;
       if(vr->loaded==0||vr->display==0)continue;
-      for(n=0;n<vr->ntimes;n++){
-        float t_diff;
-
-        *timescopy++=vr->times[n];
-        if(n>0){
-          t_diff = timescopy[-1]-timescopy[-2];
-          if(t_diff<dt_MIN&&t_diff>0.0){
-            dt_MIN=t_diff;
-          }
-        }
-      }
+      memcpy(global_times + nglobal_times_copy, vr->times, vr->ntimes * sizeof(float));
+      nglobal_times_copy += vr->ntimes;
     }
   }
   if(ReadZoneFile==1&&visZone==1){
-    int n;
-
-    for(n=0;n<nzone_times;n++){
-      float t_diff;
-
-      *timescopy++=zone_times[n];
-      t_diff = timescopy[-1]-timescopy[-2];
-      if(n>0&&t_diff<dt_MIN&&t_diff>0.0){
-        dt_MIN=t_diff;
-      }
-    }
+    memcpy(global_times + nglobal_times_copy, zone_times, nzone_times * sizeof(float));
+    nglobal_times_copy += nzone_times;
   }
   if(ReadIsoFile==1&&visAIso!=0){
     for(i=0;i<nisoinfo;i++){
       meshdata *meshi;
       isodata *ib;
-      int n;
 
       ib = isoinfo+i;
       if(ib->geomflag==1||ib->loaded==0)continue;
       meshi=meshinfo + ib->blocknumber;
-      for(n=0;n<meshi->niso_times;n++){
-        float t_diff;
-
-        *timescopy++=meshi->iso_times[n];
-        t_diff = timescopy[-1]-timescopy[-2];
-        if(n>0&&t_diff<dt_MIN&&t_diff>0.0){
-          dt_MIN=t_diff;
-        }
-      }
+      memcpy(global_times + nglobal_times_copy, meshi->iso_times, meshi->niso_times * sizeof(float));
+      nglobal_times_copy += meshi->niso_times;
     }
   }
-  {
-    smoke3ddata *smoke3di;
+  if(Read3DSmoke3DFile==1&&vis3DSmoke3D==1){
+    for(i=0;i<nsmoke3dinfo;i++){
+      smoke3ddata *smoke3di;
 
-    if(Read3DSmoke3DFile==1&&vis3DSmoke3D==1){
-      for(i=0;i<nsmoke3dinfo;i++){
-        int n;
-
-        smoke3di = smoke3dinfo + i;
-        if(smoke3di->loaded==0)continue;
-        for(n=0;n<smoke3di->ntimes;n++){
-          float t_diff;
-
-          *timescopy++=smoke3di->times[n];
-          t_diff = timescopy[-1]-timescopy[-2];
-          if(n>0&&t_diff<dt_MIN&&t_diff>0.0){
-            dt_MIN=t_diff;
-          }
-        }
-      }
+      smoke3di = smoke3dinfo + i;
+      if(smoke3di->loaded==0)continue;
+      memcpy(global_times + nglobal_times_copy, smoke3di->times, smoke3di->ntimes * sizeof(float));
+      nglobal_times_copy += smoke3di->ntimes;
     }
   }
+  CheckMemory;
+
+  ASSERT(nglobal_times==nglobal_times_copy);
 
   // end pass 2
 
-  // sort times array
-
-  if(nglobal_times>0)qsort( (float *)global_times, (size_t)nglobal_times, sizeof( float ), CompareFloat );
-
-  // remove duplicates
+  // sort and remove duplicates
 
   if(nglobal_times>0){
-    int n,n2;
+    int n,to,from;
 
-    n2 = 1;
-    for(n=1;n<nglobal_times;n++){
-      if(ABS(global_times[n]-global_times[n-1])>dt_MIN/10.0){
-        if(n!=n2)global_times[n2]=global_times[n];
-        n2++;
+    memcpy(global_times_copy, global_times, nglobal_times * sizeof(float));
+
+    qsort((float *)global_times_copy, (size_t)nglobal_times, sizeof(float), CompareFloat);
+    CheckMemory;
+
+#define DT_EPS 0.0001
+
+    to = 1;
+    global_times[0]=global_times_copy[0];
+    for(from=1;from<nglobal_times;from++){
+      if(ABS(global_times_copy[from]-global_times_copy[from-1])>DT_EPS){
+        global_times[to]=global_times_copy[from];
+        to++;
       }
     }
-    nglobal_times = n2;
-    for(n = 1; n < nglobal_times; n++){
-      ASSERT(global_times[n] > global_times[n - 1]);
+    nglobal_times = to;
+    FREEMEMORY(global_times_copy);
+
+    for(n = 0; n < nglobal_times-1; n++){
+      int it;
+
+      if(global_times[n] < global_times[n+1])continue;
+      timearray_test++;
+      fprintf(stderr, "*** Error: time array out of order at position %i, nglobal_times=%i times=", n+1,nglobal_times);
+      if(timearray_test == 1){
+        for(it = 0; it < nglobal_times; it++){
+          fprintf(stderr," %f", global_times[it]);
+        }
+        fprintf(stderr, "\n");
+      }
+      else if(timearray_test > 1){
+        for(it = 0; it < MIN(nglobal_times, 10); it++){
+          fprintf(stderr, " %f", global_times[it]);
+        }
+        fprintf(stderr, "......\n");
+      }
+      break;
     }
   }
+  CheckMemory;
+
 
   // pass 3 - allocate memory for individual times array
 
@@ -1304,7 +1254,7 @@ void UpdateTimes(void){
     FREEMEMORY(parti->timeslist);
     if(nglobal_times>0)NewMemory((void **)&parti->timeslist,nglobal_times*sizeof(int));
   }
-  for(i=0;i<ntours;i++){
+  for(i=0;i<ntourinfo;i++){
     tourdata *touri;
 
     touri=tourinfo + i;
@@ -1426,6 +1376,7 @@ void UpdateTimes(void){
 
   FREEMEMORY(targtimeslist);
   if(nglobal_times>0)NewMemory((void **)&targtimeslist,  nglobal_times*sizeof(int));
+  CheckMemory;
 
   // end pass 3
 
@@ -1577,23 +1528,23 @@ void UpdateTimes(void){
 
   /* determine visibility of each circular vent at each time step */
 
-  for (i = 0; i<nmeshes; i++) {
+  for(i = 0; i<nmeshes; i++){
     int j;
     meshdata *meshi;
 
     meshi = meshinfo + i;
     if(meshi->cventinfo == NULL)continue;
-    for (j = 0; j<meshi->ncvents; j++) {
+    for(j = 0; j<meshi->ncvents; j++){
       cventdata *cvi;
 
       cvi = meshi->cventinfo + j;
       if(cvi->showtime == NULL)continue;
       FREEMEMORY(cvi->showtimelist);
-      if(nglobal_times>0) {
+      if(nglobal_times>0){
         int k;
 
         NewMemory((void **)&cvi->showtimelist, nglobal_times * sizeof(int));
-        for (k = 0; k<nglobal_times; k++) {
+        for(k = 0; k<nglobal_times; k++){
           int listindex;
 
           cvi->showtimelist[k] = 1;
@@ -1621,6 +1572,7 @@ void UpdateTimes(void){
       break;
     }
   }
+  CheckMemory;
 }
 
 /* ------------------ GetPlotState ------------------------ */
@@ -1705,7 +1657,7 @@ int GetPlotState(int choice){
         if(zonei->loaded==0||zonei->display==0)continue;
         return DYNAMIC_PLOTS;
       }
-      for(i=0;i<ntours;i++){
+      for(i=0;i<ntourinfo;i++){
         tourdata *touri;
 
         touri = tourinfo + i;
@@ -1851,18 +1803,18 @@ void UpdateColorTable(colortabledata *ctableinfo, int nctableinfo){
 
 void UpdateShowScene(void){
   if(update_playmovie==1){
-    enable_disable_playmovie();
+    EnableDisablePlayMovie();
     update_playmovie = 0;
   }
-  update_render_start_button();
+  UpdateRenderStartButton();
   if(update_makemovie == 1)MakeMovie();
   if(compute_fed == 1)DefineAllFEDs();
   if(restart_time == 1){
     restart_time = 0;
     ResetItimes0();
   }
-  if(loadfiles_at_startup==1&&update_load_Files == 1){
-    load_Files();
+  if(loadfiles_at_startup==1&&update_load_files == 1){
+    LoadFiles();
   }
   if(update_startup_view == 1){
     cameradata *ca;
@@ -1880,7 +1832,7 @@ void UpdateShowScene(void){
     Update_Tourlist();
   }
   if(update_gslice == 1){
-    update_gslice_parms();
+    UpdateGsliceParms();
   }
 #define MESH_LIST 4
   if(update_rotation_center == 1){
@@ -1941,7 +1893,7 @@ void UpdateDisplay(void){
   UNLOCK_IBLANK
   if(update_have_gvec == 1){
     update_have_gvec = 0;
-    update_gvec_down(1);
+    UpdateGvecDown(1);
   }
   if(update_smokecolorbar == 1){
     update_smokecolorbar = 0;
@@ -1970,10 +1922,10 @@ void UpdateDisplay(void){
     ZoomMenu(zoomindex);
   }
   if(update_makeiblank_smoke3d == 1){
-    makeiblank_smoke3d();
+    MakeIBlankSmoke3D();
   }
 #ifdef pp_CULL
-  if(update_initcull == 1)initcull(cullsmoke);
+  if(update_initcull == 1)InitCull(cullsmoke);
 #endif
   if(update_streaks == 1 && ReadPartFile == 1){
     ParticleStreakShowMenu(streak_index);
@@ -1981,7 +1933,7 @@ void UpdateDisplay(void){
   }
   if(update_screensize == 1){
     update_screensize = 0;
-    update_windowsizelist();
+    UpdateWindowSizeList();
     ResizeWindow(screenWidthINI, screenHeightINI);
   }
   if(updatemenu == 1 && usemenu == 1 && menustatus == GLUT_MENU_NOT_IN_USE){
@@ -1998,8 +1950,15 @@ void UpdateDisplay(void){
     update_colorbar_select_index = 0;
     UpdateRGBColors(colorbar_select_index);
   }
-  if (histograms_defined==0&&update_slice_hists == 1) {
+  if(histograms_defined==0&&update_slice_hists == 1){
     update_slice_hists = 0;
     UpdateSliceHist();
+  }
+  if(update_vol_lights==1){
+    update_vol_lights = 0;
+    InitAllLightFractions(xyz_light_global, light_type_global);
+  }
+  if(update_windrose_showhide==1){
+    UpdateWindRoseDevices(UPDATE_WINDROSE_DEVICE);
   }
 }

@@ -3,21 +3,26 @@ local load  = {}
 
 require("constants")
 
+-- Load all slices for which matchFunc returns true.
 function load.slice(matchFunc)
     local nslices = 0
+    local slice_indices = {}
     for key,value in pairs(sliceinfo) do
         if (matchFunc(value)) then
             load.datafile(value.file)
             nslices = nslices + 1
+            slice_indices[#slice_indices+1] = key
         end
     end
     if (nslices > 0) then
         print(nslices .. " slice loaded")
-        return 0
+        return 0, slice_indices
     end
-    error("No matching slices were found.")
+    print("No matching slices were found.")
+    return 1
 end
 
+-- Load all vector slices for which matchFunc returns true.
 function load.vslice(matchFunc)
     for key,value in pairs(sliceinfo) do
         if (matchFunc(value)) then
@@ -27,15 +32,13 @@ function load.vslice(matchFunc)
 end
 
 function load.namedslice(name)
-    return load.slice(function(slice)
+    local result, indices = load.slice(function(slice)
         return (slice.label == name)
     end)
-end
-
-function load.namedvslice(name)
-    return load.vslice(function(slice)
-        return (slice.label == name)
-    end)
+    if (result ~= 0) then
+        error("Slice named " .. name .. " could not be found.")
+    end
+    return result, indices
 end
 
 local function findCellDimension(mesh,axis,distance)
@@ -53,9 +56,9 @@ local function findCellDimension(mesh,axis,distance)
     else
         error("invalid axis")
     end
-    -- TODO: account for being slightly out
+    -- TODO: Account for being slightly out.
     for i=0,bar-2,1 do
-        if (orig_plt[i] < distance and distance < orig_plt[i+1]) then
+        if (orig_plt[i] <= distance and distance <= orig_plt[i+1]) then
             return (orig_plt[i+1]-orig_plt[i])
         end
     end
@@ -64,22 +67,22 @@ local function findCellDimension(mesh,axis,distance)
 end
 
 function load.slice_std(slice_type, axis, distance)
-    -- validate inputs
+    -- Validate inputs.
     assert(type(slice_type) == "string", "slice_type must be a string")
     assert(type(axis) == "number", "axis must be a number")
     assert(axis == 1 or axis == 2 or axis == 3, "axis must be 1, 2, or 3")
     assert(type(distance) == "number", "distance must be a number")
-    -- load applicable slices
-    return load.slice(function(slice)
-            local meshnumber = slice.blocknumber
-            local mesh = meshinfo[meshnumber]
-            -- find the cell size at the specified location
-            local cellWidth = findCellDimension(mesh, axis, distance)
-            -- go a quarter cell in either direction
-            return (cellWidth and slice.longlabel == slice_type
-                and slice.idir == axis
-                and (slice.position_orig > (distance-cellWidth*0.25)) and (slice.position_orig < (distance+cellWidth*0.25)))
-        end)
+    -- Load applicable slices.
+    load.slice(function(slice)
+        local meshnumber = slice.blocknumber
+        local mesh = meshinfo[meshnumber]
+        -- Find the cell size at the specified location.
+        local cellWidth = findCellDimension(mesh, axis, distance)
+        -- Go a quarter cell in either direction.
+        return (cellWidth and slice.longlabel == slice_type
+            and slice.idir == axis
+            and (slice.position_orig > (distance-cellWidth*0.25)) and (slice.position_orig < (distance+cellWidth*0.25)))
+    end)
 end
 
 -- TODO: load using path relative to simulation directory
@@ -92,6 +95,7 @@ function load.datafile(filename)
     return errorcode
 end
 
+-- Load a file as a vector slice by filename.
 function load.vdatafile(filename)
     local errorcode = loadvdatafile(filename)
     if errorcode == 1 then
@@ -101,6 +105,7 @@ function load.vdatafile(filename)
     return errorcode
 end
 
+-- Load a tour with the name @name@.
 function load.tour(name)
     local errorcode = loadtour(name)
     if errorcode == 1 then

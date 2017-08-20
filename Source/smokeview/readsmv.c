@@ -7,6 +7,7 @@
 #include <math.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include GLUT_H
 #include <pthread.h>
@@ -16,7 +17,23 @@
 #include "smokeviewvars.h"
 #include "IOvolsmoke.h"
 
+#ifdef pp_READBUFFER
 #define BREAK \
+      if(readfile_option==READBUFFER){\
+        break;\
+      }\
+      else{\
+        if((stream->stream==stream->stream1&&stream->stream2==NULL)||stream->stream==stream->stream2)break;\
+        stream->stream=stream->stream2;\
+        continue;\
+      }
+#else
+#define BREAK \
+      if((stream==stream1&&stream2==NULL)||stream==stream2)break;\
+      stream=stream2;\
+      continue
+#endif
+#define BREAK2 \
       if((stream==stream1&&stream2==NULL)||stream==stream2)break;\
       stream=stream2;\
       continue
@@ -270,10 +287,10 @@ void UpdateINIList(void){
 
   strcpy(filter,fdsprefix);
   strcat(filter,"*.ini");
-  free_filelist(ini_filelist,&nini_filelist);
-  nini_filelist=get_nfilelist(".",filter);
+  FreeFileList(ini_filelist,&nini_filelist);
+  nini_filelist=GetFileListSize(".",filter);
   if(nini_filelist>0){
-    get_filelist(".",filter,nini_filelist,&ini_filelist);
+    MakeFileList(".",filter,nini_filelist,NO,&ini_filelist);
 
     for(i=0;i<nini_filelist;i++){
       filelistdata *filei;
@@ -296,6 +313,14 @@ void FreeLabels(flowlabels *flowlabel){
 /* ------------------ InitMesh ------------------------ */
 
 void InitMesh(meshdata *meshi){
+  meshi->light_fraction = NULL;
+  meshi->uc_light_fraction = NULL;
+  meshi->is_extface[0] = 1;
+  meshi->is_extface[1] = 1;
+  meshi->is_extface[2] = 1;
+  meshi->is_extface[3] = 1;
+  meshi->is_extface[4] = 1;
+  meshi->is_extface[5] = 1;
   meshi->ncutcells = 0;
   meshi->cutcells = NULL;
   meshi->slice_min[0] = 1.0;
@@ -321,8 +346,13 @@ void InitMesh(meshdata *meshi){
 #ifdef pp_GPU
   meshi->smoke_texture_buffer = NULL;
   meshi->smoke_texture_id = -1;
+
   meshi->fire_texture_buffer = NULL;
   meshi->fire_texture_id = -1;
+
+  meshi->light_texture_buffer = NULL;
+  meshi->light_texture_id = -1;
+
   meshi->slice3d_texture_buffer = NULL;
   meshi->slice3d_texture_id = -1;
   meshi->slice3d_c_buffer = NULL;
@@ -516,16 +546,51 @@ void InitMesh(meshdata *meshi){
   meshi->select_max = 0;
 }
 
+/* ------------------ GetCloseVent ------------------------ */
+
+ventdata *GetCloseVent(meshdata *ventmesh, int ivent){
+  ventdata *close_vent, *vdummy_start;
+  int i;
+
+  close_vent = ventmesh->ventinfo+ivent;
+  if(close_vent->dir2==XDIR&&close_vent->imin>0&&close_vent->imax<ventmesh->ibar)return close_vent;
+  if(close_vent->dir2==YDIR&&close_vent->jmin>0&&close_vent->jmax<ventmesh->jbar)return close_vent;
+  if(close_vent->dir2==ZDIR&&close_vent->kmin>0&&close_vent->kmax<ventmesh->kbar)return close_vent;
+  vdummy_start = ventmesh->ventinfo+ventmesh->nvents-ventmesh->ndummyvents;
+  for(i = 0;i<ventmesh->ndummyvents;i++){
+    ventdata *vi;
+
+    vi = vdummy_start+i;
+    if(close_vent->imin==vi->imin&&close_vent->imax==vi->imax&&
+       close_vent->jmin==vi->jmin&&close_vent->jmax==vi->jmax&&
+       close_vent->kmin==vi->kmin&&close_vent->kmax==vi->kmax
+      ){
+      return vi;
+    }
+  }
+  return close_vent;
+}
+
 /* ------------------ ReadSMVDynamic ------------------------ */
 
 void ReadSMVDynamic(char *file){
-  FILE *stream;
   int ioffset;
   float time_local;
   int i;
   int nn_plot3d=0,iplot3d=0;
   int do_pass2=0, do_pass3=0, minmaxpl3d=0;
   int nplot3dinfo_old;
+#ifdef pp_READBUFFER
+  bufferstreamdata streaminfo, *stream=&streaminfo;
+#else
+  FILE *stream=NULL;
+#endif
+
+#ifdef pp_READBUFFER
+  if(readfile_option==READBUFFER){
+    stream->fileinfo = File2Buffer(file);\
+  }
+#endif
 
   nplot3dinfo_old=nplot3dinfo;
 
@@ -548,8 +613,17 @@ void ReadSMVDynamic(char *file){
   }
   nplot3dinfo=0;
 
+#ifdef pp_READBUFFER
+  if(readfile_option==READFILE){
+    stream->stream1 = fopen(file, "r");
+    stream->stream2 = NULL;
+    stream->stream = stream->stream1;
+    if(stream->stream==NULL)return;
+  }
+#else
   stream=fopen(file,"r");
   if(stream==NULL)return;
+#endif
   for(i=0;i<nmeshes;i++){
     meshdata *meshi;
     int j;
@@ -571,7 +645,7 @@ void ReadSMVDynamic(char *file){
       FREEMEMORY(vi->showhide);
       FREEMEMORY(vi->showtime);
     }
-    for (j = 0; j<meshi->ncvents; j++) {
+    for(j = 0; j<meshi->ncvents; j++){
       cventdata *cvi;
 
       cvi = meshi->cventinfo + j;
@@ -596,7 +670,7 @@ void ReadSMVDynamic(char *file){
   for(;;){
     char buffer[255],buffer2[255];
 
-    if(fgets(buffer,255,stream)==NULL)break;
+    if(FGETS(buffer,255,stream)==NULL)break;
     if(strncmp(buffer," ",1)==0||buffer[0]==0)continue;
   /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -615,6 +689,7 @@ void ReadSMVDynamic(char *file){
 
     if(Match(buffer,"PL3D") == 1){
       do_pass2=1;
+      if(setup_only==1)continue;
       nplot3dinfo++;
       continue;
 
@@ -625,7 +700,7 @@ void ReadSMVDynamic(char *file){
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
     if(Match(buffer,"OPEN_VENT") == 1||Match(buffer,"CLOSE_VENT")==1||
-       Match(buffer, "OPEN_CVENT") == 1 || Match(buffer, "CLOSE_CVENT") == 1) {
+       Match(buffer, "OPEN_CVENT") == 1 || Match(buffer, "CLOSE_CVENT") == 1){
       meshdata *meshi;
       int len;
       int showvent, blocknumber, tempval, isvent;
@@ -660,23 +735,23 @@ void ReadSMVDynamic(char *file){
         }
       }
       meshi=meshinfo + blocknumber;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
       if(tempval<0)continue;
-      if(isvent == 1) {
+      if(isvent == 1){
         if(meshi->ventinfo == NULL || tempval >= meshi->nvents)continue;
       }
-      else {
+      else{
         if(meshi->cventinfo == NULL || tempval >= meshi->ncvents)continue;
       }
-      if(isvent == 1) {
+      if(isvent == 1){
         ventdata *vi;
 
-        vi = meshi->ventinfo + tempval;
+        vi = GetCloseVent(meshi, tempval);
         vi->nshowtime++;
       }
-      else {
+      else{
         cventdata *cvi;
 
         cvi = meshi->cventinfo + tempval;
@@ -707,7 +782,7 @@ void ReadSMVDynamic(char *file){
         if(blocktemp>0&&blocktemp<=nmeshes)blocknumber = blocktemp-1;
       }
       meshi=meshinfo + blocknumber;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
       if(tempval<0||tempval>=meshi->nbptrs)continue;
@@ -728,7 +803,7 @@ void ReadSMVDynamic(char *file){
       int act_state;
 
       do_pass2=1;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f %i",&idevice,&act_time,&act_state);
       idevice--;
       if(idevice>=0&&idevice<ndeviceinfo){
@@ -760,7 +835,7 @@ void ReadSMVDynamic(char *file){
         if(blocktemp>0&&blocktemp<=nmeshes)blocknumber = blocktemp-1;
       }
       meshi=meshinfo + blocknumber;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&nn,&time_local);
       if(meshi->theat!=NULL && nn>=1 && nn <= meshi->nheat){
         int idev;
@@ -803,7 +878,7 @@ void ReadSMVDynamic(char *file){
         if(blocktemp>0&&blocktemp<=nmeshes)blocknumber = blocktemp-1;
       }
       meshi=meshinfo + blocknumber;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&nn,&time_local);
       if(meshi->tspr!=NULL && nn <= meshi->nspr && nn > 0){
         int idev;
@@ -836,7 +911,7 @@ void ReadSMVDynamic(char *file){
       int count=0;
       int nn;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&nn,&time_local);
       for(idev=0;idev<ndeviceinfo;idev++){
         devicedata *devicei;
@@ -882,14 +957,14 @@ void ReadSMVDynamic(char *file){
   }
 
   ioffset=0;
-  rewind(stream);
+  REWIND(stream);
 
   // ------------------------------- pass 2 dynamic - start ------------------------------------
 
   while(do_pass2==1){
     char buffer[255],buffer2[255];
 
-    if(fgets(buffer,255,stream)==NULL)break;
+    if(FGETS(buffer,255,stream)==NULL)break;
     if(strncmp(buffer," ",1)==0||buffer[0]==0)continue;
   /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -910,6 +985,7 @@ void ReadSMVDynamic(char *file){
       int len,blocknumber,blocktemp;
       char *bufferptr;
 
+      if(setup_only==1)continue;
       if(minmaxpl3d==1)do_pass3=1;
       nn_plot3d++;
       TrimBack(buffer);
@@ -928,7 +1004,7 @@ void ReadSMVDynamic(char *file){
       else{
         time_local=-1.0;
       }
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         nplot3dinfo--;
         break;
       }
@@ -952,7 +1028,7 @@ void ReadSMVDynamic(char *file){
       STRCPY(plot3di->comp_file,bufferptr);
       STRCAT(plot3di->comp_file,".svz");
 
-      if(file_exists(plot3di->comp_file)==1){
+      if(FILE_EXISTS_CASEDIR(plot3di->comp_file)==YES){
         plot3di->compression_type=COMPRESSED_ZLIB;
         plot3di->file=plot3di->comp_file;
       }
@@ -964,53 +1040,53 @@ void ReadSMVDynamic(char *file){
       plot3di->compression_type=UNCOMPRESSED;
       plot3di->file=plot3di->reg_file;
 
-      if(file_exists(plot3di->file)==0){
-        int n;
-
-        for(n=0;n<5;n++){
-          if(ReadLabels(&plot3di->label[n],stream)==2)return;
-        }
-        nplot3dinfo--;
-      }
-      else{
+      if(fast_startup==1||FILE_EXISTS_CASEDIR(plot3di->file)==YES){
         int n;
 
         plot3di->u = -1;
         plot3di->v = -1;
         plot3di->w = -1;
-        for(n=0;n<5;n++){
-          if(ReadLabels(&plot3di->label[n],stream)==2)return;
-          if(STRCMP(plot3di->label[n].shortlabel,"U-VEL") == 0){
+        for(n = 0;n<5;n++){
+          if(ReadLabels(&plot3di->label[n], stream, NULL)==2)return;
+          if(STRCMP(plot3di->label[n].shortlabel, "U-VEL")==0){
             plot3di->u = n;
           }
-          if(STRCMP(plot3di->label[n].shortlabel,"V-VEL") == 0){
+          if(STRCMP(plot3di->label[n].shortlabel, "V-VEL")==0){
             plot3di->v = n;
           }
-          if(STRCMP(plot3di->label[n].shortlabel,"W-VEL") == 0){
+          if(STRCMP(plot3di->label[n].shortlabel, "W-VEL")==0){
             plot3di->w = n;
           }
         }
         if(plot3di->u>-1||plot3di->v>-1||plot3di->w>-1){
-          plot3di->nvars=mxplot3dvars;
+          plot3di->nvars = mxplot3dvars;
         }
         else{
-          plot3di->nvars=5;
+          plot3di->nvars = 5;
         }
-        if(NewMemory((void **)&plot3di->label[5].longlabel,6)==0)return;
-        if(NewMemory((void **)&plot3di->label[5].shortlabel,6)==0)return;
-        if(NewMemory((void **)&plot3di->label[5].unit,4)==0)return;
+        if(NewMemory((void **)&plot3di->label[5].longlabel, 6)==0)return;
+        if(NewMemory((void **)&plot3di->label[5].shortlabel, 6)==0)return;
+        if(NewMemory((void **)&plot3di->label[5].unit, 4)==0)return;
 
-        STRCPY(plot3di->label[5].longlabel,"Speed");
-        STRCPY(plot3di->label[5].shortlabel,"Speed");
-        STRCPY(plot3di->label[5].unit,"m/s");
+        STRCPY(plot3di->label[5].longlabel, "Speed");
+        STRCPY(plot3di->label[5].shortlabel, "Speed");
+        STRCPY(plot3di->label[5].unit, "m/s");
 
-        STRCPY(plot3di->longlabel,"");
-        for(n=0;n<5;n++){
-          STRCAT(plot3di->longlabel,plot3di->label[n].shortlabel);
-          if(n!=4)STRCAT(plot3di->longlabel,", ");
+        STRCPY(plot3di->longlabel, "");
+        for(n = 0;n<5;n++){
+          STRCAT(plot3di->longlabel, plot3di->label[n].shortlabel);
+          if(n!=4)STRCAT(plot3di->longlabel, ", ");
         }
 
         iplot3d++;
+      }
+      else{
+        int n;
+
+        for(n = 0;n<5;n++){
+          if(ReadLabels(&plot3di->label[n], stream, NULL)==2)return;
+        }
+        nplot3dinfo--;
       }
       continue;
     }
@@ -1020,7 +1096,7 @@ void ReadSMVDynamic(char *file){
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
     if(Match(buffer,"OPEN_VENT") == 1||Match(buffer,"CLOSE_VENT")==1||
-       Match(buffer, "OPEN_CVENT") == 1 || Match(buffer, "CLOSE_CVENT") == 1) {
+       Match(buffer, "OPEN_CVENT") == 1 || Match(buffer, "CLOSE_CVENT") == 1){
       meshdata *meshi;
       int len,showvent,blocknumber,tempval,isvent;
 
@@ -1053,45 +1129,45 @@ void ReadSMVDynamic(char *file){
         }
       }
       meshi=meshinfo + blocknumber;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
-      if(isvent == 1) {
+      if(isvent == 1){
         ventdata *vi;
 
         if(meshi->ventinfo == NULL || tempval < 0 || tempval >= meshi->nvents)continue;
-        vi = meshi->ventinfo + tempval;
-        if(vi->showtime == NULL) {
+        vi = GetCloseVent(meshi, tempval);
+        if(vi->showtime == NULL){
           NewMemory((void **)&vi->showtime, (vi->nshowtime + 1) * sizeof(float));
           NewMemory((void **)&vi->showhide, (vi->nshowtime + 1) * sizeof(unsigned char));
           vi->nshowtime = 1;
           vi->showtime[0] = 0.0;
           vi->showhide[0] = 1;
         }
-        if(showvent == 1) {
+        if(showvent == 1){
           vi->showhide[vi->nshowtime] = 1;
         }
-        else {
+        else{
           vi->showhide[vi->nshowtime] = 0;
         }
         vi->showtime[vi->nshowtime++] = time_local;
       }
-      else {
+      else{
         cventdata *cvi;
 
         if(meshi->cventinfo == NULL || tempval < 0 || tempval >= meshi->ncvents)continue;
         cvi = meshi->cventinfo + tempval;
-        if(cvi->showtime == NULL) {
+        if(cvi->showtime == NULL){
           NewMemory((void **)&cvi->showtime, (cvi->nshowtime + 1) * sizeof(float));
           NewMemory((void **)&cvi->showhide, (cvi->nshowtime + 1) * sizeof(unsigned char));
           cvi->nshowtime = 1;
           cvi->showtime[0] = 0.0;
           cvi->showhide[0] = 1;
         }
-        if(showvent == 1) {
+        if(showvent == 1){
           cvi->showhide[cvi->nshowtime] = 1;
         }
-        else {
+        else{
           cvi->showhide[cvi->nshowtime] = 0;
         }
         cvi->showtime[cvi->nshowtime++] = time_local;
@@ -1121,7 +1197,7 @@ void ReadSMVDynamic(char *file){
       showobst=0;
       if(Match(buffer,"SHOW_OBST") == 1)showobst=1;
       meshi=meshinfo + blocknumber;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
       if(tempval<0||tempval>=meshi->nbptrs)continue;
@@ -1164,7 +1240,7 @@ void ReadSMVDynamic(char *file){
       float act_time;
       int act_state=1;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f %i",&idevice,&act_time,&act_state);
       idevice--;
       if(idevice>=0&&idevice<ndeviceinfo){
@@ -1191,14 +1267,14 @@ void ReadSMVDynamic(char *file){
 
   // ------------------------------- pass 2 dynamic - end ------------------------------------
 
-  rewind(stream);
+  REWIND(stream);
 
   // ------------------------------- pass 3 dynamic - start ------------------------------------
 
   while(do_pass3==1){
     char buffer[255];
 
-    if(fgets(buffer,255,stream)==NULL)break;
+    if(FGETS(buffer,255,stream)==NULL)break;
     if(strncmp(buffer," ",1)==0||buffer[0]==0)continue;
   /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1210,14 +1286,14 @@ void ReadSMVDynamic(char *file){
       float valmin[5], valmax[5];
       float percentile_min[5], percentile_max[5];
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       strcpy(file2,buffer);
       file_ptr = file2;
       TrimBack(file2);
       file_ptr = TrimFront(file2);
 
       for(i=0;i<5;i++){
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%f %f %f %f",valmin +i,valmax+i, percentile_min+i,percentile_max+i);
       }
 
@@ -1238,8 +1314,7 @@ void ReadSMVDynamic(char *file){
       continue;
     }
   }
-
-  fclose(stream);
+  FCLOSE(stream);
   update_plot3d_menulabels();
   init_plot3dtimelist();
 }
@@ -1294,10 +1369,96 @@ propdata *GetPropID(char *prop_id){
   return NULL;
 }
 
-/* ------------------ parse_device_keyword ------------------------ */
+/* ----------------------- InitDevice ----------------------------- */
 
-void parse_device_keyword(FILE *stream, devicedata *devicei){
+void InitDevice(devicedata *devicei, float *xyz, int is_beam, float *xyz1, float *xyz2, float *xyzn, int state0, int nparams, float *params, char *labelptr){
+  float norm;
+  int i;
+
+  devicei->nvals = 0;
+  devicei->filetype = -1;
+  devicei->in_zone_csv = 0;
+  devicei->in_devc_csv = 0;
+  devicei->labelptr = devicei->label;
+  devicei->color = NULL;
+  devicei->line_width = 1.0;
+  if(labelptr != NULL){
+    strcpy(devicei->label, labelptr);
+  }
+  if(STRCMP(devicei->object->label, "plane") == 0){
+    float color[4];
+
+    NewMemory((void **)&devicei->plane_surface, nmeshes * sizeof(isosurface *));
+    for(i = 0; i < nmeshes; i++){
+      NewMemory((void **)&devicei->plane_surface[i], sizeof(isosurface));
+    }
+    if(nparams >= 3){
+      color[0] = params[0];
+      color[1] = params[1];
+      color[2] = params[2];
+      color[3] = 1.0;
+      devicei->color = GetColorPtr(color);
+    }
+    if(nparams >= 4){
+      devicei->line_width = params[3];
+    }
+  }
+  else{
+    devicei->plane_surface = NULL;
+  }
+  if(xyz != NULL){
+    devicei->xyz[0] = xyz[0];
+    devicei->xyz[1] = xyz[1];
+    devicei->xyz[2] = xyz[2];
+  }
+  if(xyz1 != NULL){
+    devicei->xyz1[0] = xyz1[0];
+    devicei->xyz1[1] = xyz1[1];
+    devicei->xyz1[2] = xyz1[2];
+  }
+  if(xyz2 != NULL){
+    devicei->xyz2[0] = xyz2[0];
+    devicei->xyz2[1] = xyz2[1];
+    devicei->xyz2[2] = xyz2[2];
+  }
+  if(is_beam == 1)have_beam = 1;
+  devicei->is_beam = is_beam;
+  norm = sqrt(xyzn[0] * xyzn[0] + xyzn[1] * xyzn[1] + xyzn[2] * xyzn[2]);
+  if(norm != 0.0){
+    devicei->xyznorm[0] = xyzn[0] / norm;
+    devicei->xyznorm[1] = xyzn[1] / norm;
+    devicei->xyznorm[2] = xyzn[2] / norm;
+  }
+  else{
+    devicei->xyznorm[0] = 0.0;
+    devicei->xyznorm[1] = 0.0;
+    devicei->xyznorm[2] = 1.0;
+  }
+  devicei->times = NULL;
+  devicei->vals = NULL;
+  devicei->nstate_changes = 0;
+  devicei->istate_changes = 0;
+  devicei->act_times = NULL;
+  devicei->state_values = NULL;
+  devicei->showstatelist = NULL;
+  devicei->act_time = -1.0;
+  devicei->device_mesh = NULL;
+  devicei->state0 = state0;
+  devicei->nparams = nparams;
+  devicei->params = params;
+  devicei->ival = 0;
+  if(nparams > 0 && params != NULL){
+    for(i = 0; i < nparams; i++){
+      devicei->params[i] = params[i];
+    }
+  }
+}
+
+/* ------------------ ParseDevicekeyword ------------------------ */
+
+void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
   float xyz[3]={0.0,0.0,0.0}, xyzn[3]={0.0,0.0,0.0};
+  float xyz1[3] = { 0.0,0.0,0.0 }, xyz2[3] = { 0.0,0.0,0.0 };
   int state0=0;
   int nparams=0, nparams_textures=0;
   char *labelptr, *prop_id;
@@ -1305,9 +1466,10 @@ void parse_device_keyword(FILE *stream, devicedata *devicei){
   char buffer[255],*buffer3;
   int i;
   char *tok1, *tok2, *tok3;
+  int is_beam=0;
 
   devicei->type=DEVICE_DEVICE;
-  fgets(buffer,255,stream);
+  FGETS(buffer,255,stream);
   TrimCommas(buffer);
 
   tok1=strtok(buffer,"%");
@@ -1338,11 +1500,22 @@ void parse_device_keyword(FILE *stream, devicedata *devicei){
   devicei->params=NULL;
   devicei->times=NULL;
   devicei->vals=NULL;
-  fgets(buffer,255,stream);
+  FGETS(buffer,255,stream);
   TrimCommas(buffer);
 
   sscanf(buffer,"%f %f %f %f %f %f %i %i %i",
     xyz,xyz+1,xyz+2,xyzn,xyzn+1,xyzn+2,&state0,&nparams,&nparams_textures);
+
+  labelptr = strchr(buffer, '#'); // read in coordinates of beam detector
+  if(labelptr != NULL){
+    sscanf(labelptr + 1, "%f %f %f %f %f %f", xyz1, xyz1 + 1, xyz1 + 2, xyz2, xyz2 + 1, xyz2 + 2);
+    if(strcmp(devicei->quantity, "PATH OBSCURATION") == 0 ||
+      strcmp(devicei->quantity, "TRANSMISSION") == 0){
+      is_beam = 1;
+    }
+  }
+  devicei->is_beam = is_beam;
+
   GetLabels(buffer,-1,&prop_id,NULL,prop_buffer);
   devicei->prop=GetPropID(prop_id);
   if(prop_id!=NULL&&devicei->prop!=NULL&&devicei->prop->smv_object!=NULL){
@@ -1379,7 +1552,7 @@ void parse_device_keyword(FILE *stream, devicedata *devicei){
   }
 
   if(nparams<=0){
-    init_device(devicei,xyz,xyzn,state0,0,NULL,labelptr);
+    InitDevice(devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,0,NULL,labelptr);
   }
   else{
     float *params,*pc;
@@ -1389,22 +1562,149 @@ void parse_device_keyword(FILE *stream, devicedata *devicei){
     NewMemory((void **)&params,(nsize+devicei->ntextures)*sizeof(float));
     pc=params;
     for(i=0;i<nsize/6;i++){
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       TrimCommas(buffer);
 
       sscanf(buffer,"%f %f %f %f %f %f",pc,pc+1,pc+2,pc+3,pc+4,pc+5);
       pc+=6;
     }
-    init_device(devicei,xyz,xyzn,state0,nparams,params,labelptr);
+    InitDevice(devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,nparams,params,labelptr);
   }
   GetElevAz(devicei->xyznorm,&devicei->dtheta,devicei->rotate_axis,NULL);
   if(nparams_textures>0){
-    fgets(buffer,255,stream);
+    FGETS(buffer,255,stream);
     TrimCommas(buffer);
     TrimBack(buffer);
     buffer3=TrimFront(buffer);
     NewMemory((void **)&devicei->texturefile,strlen(buffer3)+1);
     strcpy(devicei->texturefile,buffer3);
+  }
+}
+
+/* ------------------ ParseDevicekeyword2 ------------------------ */
+
+void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
+  float xyz[3] = {0.0,0.0,0.0}, xyzn[3] = {0.0,0.0,0.0};
+  float xyz1[3] = {0.0,0.0,0.0}, xyz2[3] = {0.0,0.0,0.0};
+  int state0 = 0;
+  int nparams = 0, nparams_textures = 0;
+  char *labelptr, *prop_id;
+  char prop_buffer[255];
+  char buffer[255], *buffer3;
+  int i;
+  char *tok1, *tok2, *tok3;
+  int is_beam = 0;
+
+  devicei->type = DEVICE_DEVICE;
+  fgets(buffer, 255, stream);
+  TrimCommas(buffer);
+
+  tok1 = strtok(buffer, "%");
+  tok1 = TrimFrontBack(tok1);
+
+  tok2 = strtok(NULL, "%");
+  tok2 = TrimFrontBack(tok2);
+
+  tok3 = strtok(NULL, "%");
+  tok3 = TrimFrontBack(tok3);
+
+  strcpy(devicei->quantity, "");
+  if(tok2!=NULL){
+    strcpy(devicei->quantity, tok2);
+  }
+
+  if(strlen(tok1)>=4&&strncmp(tok1, "null", 4)==0){
+    strcpy(devicei->label, "null");
+  }
+  else{
+    strcpy(devicei->label, tok1);
+  }
+  devicei->object = get_SVOBJECT_type(tok1, missing_device);
+  if(devicei->object==missing_device&&tok3!=NULL){
+    devicei->object = get_SVOBJECT_type(tok3, missing_device);
+  }
+  if(devicei->object==missing_device)have_missing_objects = 1;
+  devicei->params = NULL;
+  devicei->times = NULL;
+  devicei->vals = NULL;
+  fgets(buffer, 255, stream);
+  TrimCommas(buffer);
+
+  sscanf(buffer, "%f %f %f %f %f %f %i %i %i",
+    xyz, xyz+1, xyz+2, xyzn, xyzn+1, xyzn+2, &state0, &nparams, &nparams_textures);
+
+  labelptr = strchr(buffer, '#'); // read in coordinates of a possible beam detector
+  if(labelptr!=NULL){
+    sscanf(labelptr+1, "%f %f %f %f %f %f", xyz1, xyz1+1, xyz1+2, xyz2, xyz2+1, xyz2+2);
+    if(strcmp(devicei->quantity, "PATH OBSCURATION") == 0||
+       strcmp(devicei->quantity, "TRANSMISSION") == 0){
+      is_beam = 1;
+    }
+  }
+  devicei->is_beam = is_beam;
+
+  GetLabels(buffer, -1, &prop_id, NULL, prop_buffer);
+  devicei->prop = GetPropID(prop_id);
+  if(prop_id!=NULL&&devicei->prop!=NULL&&devicei->prop->smv_object!=NULL){
+    devicei->object = devicei->prop->smv_object;
+  }
+  else{
+    NewMemory((void **)&devicei->prop, sizeof(propdata));
+    InitProp(devicei->prop, 1, devicei->label);
+    devicei->prop->smv_object = devicei->object;
+    devicei->prop->smv_objects[0] = devicei->prop->smv_object;
+  }
+  if(nparams_textures<0)nparams_textures = 0;
+  if(nparams_textures>1)nparams_textures = 1;
+  devicei->ntextures = nparams_textures;
+  if(nparams_textures>0){
+    NewMemory((void **)&devicei->textureinfo, sizeof(texturedata));
+  }
+  else{
+    devicei->textureinfo = NULL;
+    devicei->texturefile = NULL;
+  }
+
+  labelptr = strchr(buffer, '%');
+  if(labelptr!=NULL){
+    TrimBack(labelptr);
+    if(strlen(labelptr)>1){
+      labelptr++;
+      labelptr = TrimFront(labelptr);
+      if(strlen(labelptr)==0)labelptr = NULL;
+    }
+    else{
+      labelptr = NULL;
+    }
+  }
+
+  if(nparams<=0){
+    InitDevice(devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, 0, NULL, labelptr);
+  }
+  else{
+    float *params, *pc;
+    int nsize;
+
+    nsize = 6*((nparams-1)/6+1);
+    NewMemory((void **)&params, (nsize+devicei->ntextures)*sizeof(float));
+    pc = params;
+    for(i = 0;i<nsize/6;i++){
+      fgets(buffer, 255, stream);
+      TrimCommas(buffer);
+
+      sscanf(buffer, "%f %f %f %f %f %f", pc, pc+1, pc+2, pc+3, pc+4, pc+5);
+      pc += 6;
+    }
+    InitDevice(devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, nparams, params, labelptr);
+  }
+  GetElevAz(devicei->xyznorm, &devicei->dtheta, devicei->rotate_axis, NULL);
+  if(nparams_textures>0){
+    fgets(buffer, 255, stream);
+    TrimCommas(buffer);
+    TrimBack(buffer);
+    buffer3 = TrimFront(buffer);
+    NewMemory((void **)&devicei->texturefile, strlen(buffer3)+1);
+    strcpy(devicei->texturefile, buffer3);
   }
 }
 
@@ -1414,7 +1714,6 @@ int GetInpf(char *file, char *file2){
   FILE *stream=NULL,*stream1=NULL,*stream2=NULL;
   char buffer[255],*bufferptr;
   int len;
-  STRUCTSTAT statbuffer;
 
   if(file==NULL)return 1;
   stream1=fopen(file,"r");
@@ -1429,15 +1728,15 @@ int GetInpf(char *file, char *file2){
   stream=stream1;
   for(;;){
     if(feof(stream)!=0){
-      BREAK;
+      BREAK2;
     }
     if(fgets(buffer,255,stream)==NULL){
-      BREAK;
+      BREAK2;
     }
     if(strncmp(buffer," ",1)==0)continue;
     if(Match(buffer,"INPF") == 1){
       if(fgets(buffer,255,stream)==NULL){
-        BREAK;
+        BREAK2;
       }
       bufferptr=TrimFrontBack(buffer);
 
@@ -1445,9 +1744,8 @@ int GetInpf(char *file, char *file2){
       FREEMEMORY(fds_filein);
       if(NewMemory((void **)&fds_filein,(unsigned int)(len+1))==0)return 2;
       STRCPY(fds_filein,bufferptr);
-      if(STAT(fds_filein,&statbuffer)!=0){
+      if(FILE_EXISTS_CASEDIR(fds_filein)==NO){
         FreeMemory(fds_filein);
-        fds_filein=NULL;
       }
 
       if(chidfilebase==NULL){
@@ -1464,21 +1762,21 @@ int GetInpf(char *file, char *file2){
         NewMemory((void **)&hrr_csv_filename,(unsigned int)(strlen(chidfilebase)+8+1));
         STRCPY(hrr_csv_filename,chidfilebase);
         STRCAT(hrr_csv_filename,"_hrr.csv");
-        if(STAT(hrr_csv_filename,&statbuffer)!=0){
+        if(FILE_EXISTS_CASEDIR(hrr_csv_filename)==NO){
           FREEMEMORY(hrr_csv_filename);
         }
 
         NewMemory((void **)&devc_csv_filename,(unsigned int)(strlen(chidfilebase)+9+1));
         STRCPY(devc_csv_filename,chidfilebase);
         STRCAT(devc_csv_filename,"_devc.csv");
-        if(STAT(devc_csv_filename,&statbuffer)!=0){
+        if(FILE_EXISTS_CASEDIR(devc_csv_filename)==NO){
           FREEMEMORY(devc_csv_filename);
         }
 
         NewMemory((void **)&exp_csv_filename,(unsigned int)(strlen(chidfilebase)+8+1));
         STRCPY(exp_csv_filename,chidfilebase);
         STRCAT(exp_csv_filename,"_exp.csv");
-        if(STAT(exp_csv_filename,&statbuffer)!=0){
+        if(FILE_EXISTS_CASEDIR(exp_csv_filename)==NO){
           FREEMEMORY(exp_csv_filename);
         }
       }
@@ -1495,7 +1793,6 @@ void InitTextures(void){
   // get texture filename from SURF and device info
   int i;
 
-  PRINTF("     Loading surface textures\n");
   ntextures = 0;
   for(i=0;i<nsurfinfo;i++){
     surfdata *surfi;
@@ -1574,20 +1871,17 @@ void InitTextures(void){
       else{
         filename=texti->file;
       }
-      PRINTF("       Loading texture: %s",filename);
       glGenTextures(1,&texti->name);
       glBindTexture(GL_TEXTURE_2D,texti->name);
       floortex=ReadPicture(texti->file,&texwid,&texht,0);
       if(floortex==NULL){
-         PRINTF("%s",_(" - failed"));
-         PRINTF("\n");
-         continue;
+        PRINTF("***Error: Texture %s failed to load\n", filename);
+        continue;
       }
       errorcode=gluBuild2DMipmaps(GL_TEXTURE_2D,4, texwid, texht, GL_RGBA, GL_UNSIGNED_BYTE, floortex);
       if(errorcode!=0){
         FREEMEMORY(floortex);
-         PRINTF("%s",_(" - failed"));
-         PRINTF("\n");
+        PRINTF("***Error: Texture %s failed to load\n", filename);
         continue;
       }
       FREEMEMORY(floortex);
@@ -1596,8 +1890,6 @@ void InitTextures(void){
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
       texti->loaded=1;
-      PRINTF("%s",_(" - completed"));
-      PRINTF("\n");
     }
   }
 
@@ -1607,8 +1899,6 @@ void InitTextures(void){
   }
 
   // define colorbar textures
-
-  PRINTF("%s",_("       Loading colorbar texture"));
 
  // glActiveTexture(GL_TEXTURE0);
   glGenTextures(1,&texture_colorbar_id);
@@ -1706,11 +1996,10 @@ void InitTextures(void){
 
   CheckMemory;
 
-  PRINTF("%s"," - completed\n");
 #ifdef pp_GPU
 #ifdef pp_GPUDEPTH
   if(use_graphics==1){
-    createDepthTexture();
+    CreateDepthTexture();
   }
 #endif
 #endif
@@ -1725,7 +2014,6 @@ void InitTextures(void){
     tt->loaded=0;
     tt->used=0;
     tt->display=0;
-    PRINTF("%s","     Loading terrain texture");
 
     glGenTextures(1,&tt->name);
     glBindTexture(GL_TEXTURE_2D,tt->name);
@@ -1734,12 +2022,11 @@ void InitTextures(void){
     if(tt->file!=NULL){
       PRINTF(": %s",tt->file);
       floortex=ReadPicture(tt->file,&texwid,&texht,0);
+      if(floortex==NULL)PRINTF("***Error: Texture file %s failed to load\n",tt->file);
     }
     if(floortex!=NULL){
       errorcode=gluBuild2DMipmaps(GL_TEXTURE_2D,4, texwid, texht, GL_RGBA, GL_UNSIGNED_BYTE, floortex);
-    }
-    if(errorcode!=0){
-      PRINTF("%s"," - failed\n");
+      if(errorcode!=0)PRINTF("***Error: Texture file %s failed to load\n",tt->file);
     }
     FREEMEMORY(floortex);
     if(errorcode==0){
@@ -1748,11 +2035,8 @@ void InitTextures(void){
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
       tt->loaded=1;
-      PRINTF("%s"," - completed\n");
     }
-
   }
-  PRINTF("     Surface texture loading completed\n");
 }
 
 /* ------------------ UpdateBoundInfo ------------------------ */
@@ -1892,9 +2176,9 @@ void UpdateEndianInfo(void){
   }
 
 #ifndef WIN32
-  if(endian_smv!=getendian()){
+  if(endian_smv!=GetEndian()){
     fprintf(stderr,"*** Warning: Smokeview is running on a ");
-    if(getendian()==1){
+    if(GetEndian()==1){
       fprintf(stderr," little endian computer\n");
     }
     else{
@@ -2481,22 +2765,16 @@ void UpdateMeshCoords(void){
 
 /* ------------------ IsSliceDup ------------------------ */
 
-int IsSliceDup(slicedata *sd){
+int IsSliceDup(slicedata *sd, int nslice){
   int i;
 
-  if(sd->is1<0||sd->is2<0)return 0;
-  if(sd->js1<0||sd->js2<0)return 0;
-  if(sd->ks1<0||sd->ks2<0)return 0;
-  for(i=0;i<nsliceinfo-1;i++){
+  for(i=0;i<nslice-1;i++){
     slicedata *slicei;
 
     slicei = sliceinfo + i;
-    if(slicei->is1<0||slicei->is2<0)continue;
-    if(slicei->js1<0||slicei->js2<0)continue;
-    if(slicei->ks1<0||slicei->ks2<0)continue;
-    if(slicei->is1!=sd->is1||slicei->is2!=sd->is2)continue;
-    if(slicei->js1!=sd->js1||slicei->js2!=sd->js2)continue;
-    if(slicei->ks1!=sd->ks1||slicei->ks2!=sd->ks2)continue;
+    if(slicei->ijk_min[0]!=sd->ijk_min[0]||slicei->ijk_max[0]!=sd->ijk_max[0])continue;
+    if(slicei->ijk_min[1]!=sd->ijk_min[1]||slicei->ijk_max[1]!=sd->ijk_max[1])continue;
+    if(slicei->ijk_min[2]!=sd->ijk_min[2]||slicei->ijk_max[2]!=sd->ijk_max[2])continue;
     if(strcmp(slicei->label.longlabel,sd->label.longlabel)!=0)continue;
     if(slicei->slicetype!=sd->slicetype)continue;
     if(slicei->blocknumber!=sd->blocknumber)continue;
@@ -2722,7 +3000,7 @@ void ReadDeviceHeader(char *file, devicedata *devices, int ndevices){
       break;
     }
     if(strcmp(buffer, "DEVICE") == 0){
-      parse_device_keyword(stream, devicecopy);
+      ParseDevicekeyword2(stream, devicecopy);
       devicecopy++;
     }
   }
@@ -2904,7 +3182,7 @@ void ParseDatabase(char *file){
 
       slashptr = strstr(buffer, "/");
       if(slashptr!=NULL)strcpy(buffer2, buffer);
-	  buffer3 = buffer2;
+      buffer3 = buffer2;
       while(slashptr!=NULL){
         fgets(buffer, 1000, stream);
         lenbuffer = strlen(buffer);
@@ -3017,6 +3295,7 @@ void ReadZVentData(zventdata *zvi, char *buffer, int flag){
   float color[4];
   roomdata *roomi;
   int roomfrom=-1, roomto=-1;
+  int vertical_vent_type=0;
   float area_fraction = 1.0;
 
   color[0]=1.0;
@@ -3024,22 +3303,21 @@ void ReadZVentData(zventdata *zvi, char *buffer, int flag){
   color[2]=1.0;
   color[3]=1.0;
   if(flag==ZVENT_2ROOM){
-    sscanf(buffer, "%i %i %f %f %f %f %f %f %f %f %f %f",
+    sscanf(buffer, "%i %i %f %f %f %f %f %f %i",
       &roomfrom, &roomto, xyz, xyz + 1, xyz + 2, xyz + 3, xyz + 4, xyz + 5,
-      color, color + 1, color + 2, &area_fraction
+      &vertical_vent_type
   );
   }
   else{
-    sscanf(buffer, "%i %f %f %f %f %f %f %f %f %f %f",
-      &roomfrom, xyz, xyz + 1, xyz + 2, xyz + 3, xyz + 4, xyz + 5,
-      color, color + 1, color + 2, &area_fraction);
+    sscanf(buffer, "%i %f %f %f %f %f %f",
+      &roomfrom, xyz, xyz + 1, xyz + 2, xyz + 3, xyz + 4, xyz + 5);
     roomto = roomfrom;
   }
 
   if(roomfrom<1 || roomfrom>nrooms)roomfrom = nrooms + 1;
   roomi = roominfo + roomfrom - 1;
   zvi->room1 = roomi;
-  if (roomto<1 || roomto>nrooms)roomto = nrooms + 1;
+  if(roomto<1 || roomto>nrooms)roomto = nrooms + 1;
   zvi->room2 = roominfo + roomto - 1;
   zvi->x0 = roomi->x0 + xyz[0];
   zvi->x1 = roomi->x0 + xyz[1];
@@ -3047,13 +3325,18 @@ void ReadZVentData(zventdata *zvi, char *buffer, int flag){
   zvi->y1 = roomi->y0 + xyz[3];
   zvi->z0 = roomi->z0 + xyz[4];
   zvi->z1 = roomi->z0 + xyz[5];
+  zvi->xcen = (zvi->x0 + zvi->x1)/2.0;
+  zvi->ycen = (zvi->y0 + zvi->y1)/2.0;
   dxyz[0] = ABS(xyz[0] - xyz[1]);
   dxyz[1] = ABS(xyz[2] - xyz[3]);
   dxyz[2] = ABS(xyz[4] - xyz[5]);
   zvi->area = 1.0;
+  zvi->vertical_vent_type = vertical_vent_type;
   if(dxyz[0] > 0.0)zvi->area *= dxyz[0];
   if(dxyz[1] > 0.0)zvi->area *= dxyz[1];
   if(dxyz[2] > 0.0)zvi->area *= dxyz[2];
+  zvi->radius = sqrt(zvi->area/PI);
+
   // see which side of room vent is closest too
   if(dxyz[0] < MIN(dxyz[1], dxyz[2])){
     if(ABS(zvi->x0 - roomi->x0) < ABS(zvi->x0 - roomi->x1)){
@@ -3080,20 +3363,115 @@ void ReadZVentData(zventdata *zvi, char *buffer, int flag){
       zvi->wall = TOP_WALL;
     }
   }
-  zvi->color = getcolorptr(color);
+  zvi->color = GetColorPtr(color);
   zvi->area_fraction = area_fraction;
 }
 
-  /* ------------------ ReadSMV ------------------------ */
+/* ------------------ SetupMeshWalls ------------------------ */
+
+void SetupMeshWalls(void){
+  int i;
+  int ncount = 0;
+
+  for(i = 0; i < nmeshes; i++){
+    meshdata *meshi;
+    float xyz[3], *bmin, *bmax, bmid[3];
+    int *is_extface;
+
+    meshi = meshinfo + i;
+    bmin = meshi->boxmin;
+    bmax = meshi->boxmax;
+    is_extface = meshi->is_extface;
+
+    bmid[0] = (bmin[0] + bmax[0]) / 2.0;
+    bmid[1] = (bmin[1] + bmax[1]) / 2.0;
+    bmid[2] = (bmin[2] + bmax[2]) / 2.0;
+
+#define EPSMESH 0.001
+    xyz[0] = bmin[0] - EPSMESH;
+    xyz[1] = bmid[1];
+    xyz[2] = bmid[2];
+    if(GetMesh(xyz) != NULL){
+      is_extface[0] = 0;
+      ncount++;
+    }
+
+    xyz[0] = bmax[0] + EPSMESH;
+    xyz[1] = bmid[1];
+    xyz[2] = bmid[2];
+    if(GetMesh(xyz) != NULL){
+      is_extface[1] = 0;
+      ncount++;
+    }
+
+    xyz[0] = bmid[0];
+    xyz[1] = bmin[1] - EPSMESH;
+    xyz[2] = bmid[2];
+    if(GetMesh(xyz) != NULL){
+      is_extface[2] = 0;
+      ncount++;
+    }
+
+    xyz[0] = bmid[0];
+    xyz[1] = bmax[1] + EPSMESH;
+    xyz[2] = bmid[2];
+    if(GetMesh(xyz) != NULL){
+      is_extface[3] = 0;
+      ncount++;
+    }
+
+    xyz[0] = bmid[0];
+    xyz[1] = bmid[1];
+    xyz[2] = bmin[2] - EPSMESH;
+    if(GetMesh(xyz) != NULL){
+      is_extface[4] = 0;
+      ncount++;
+    }
+
+    xyz[0] = bmid[0];
+    xyz[1] = bmid[1];
+    xyz[2] = bmax[2] + EPSMESH;
+    if(GetMesh(xyz) != NULL){
+      is_extface[5] = 0;
+      ncount++;
+    }
+  }
+}
+
+/* ------------------ MakeFileLists ------------------------ */
+
+void MakeFileLists(void){
+  char filter_casedir[256], filter_casename[256];
+
+  // create list of all files for the case being visualized (casename*.* )
+
+  strcpy(filter_casename, "");
+  if(fdsprefix != NULL&&strlen(fdsprefix) > 0){
+    strcat(filter_casename, fdsprefix);
+    strcat(filter_casename, "*");
+  }
+
+  // create a list of all files in the current directory
+
+  nfilelist_casename = GetFileListSize(".", filter_casename);
+  MakeFileList(".", filter_casename, nfilelist_casename, YES, &filelist_casename);
+
+  strcpy(filter_casedir, "");
+  nfilelist_casedir = GetFileListSize(".", filter_casedir);
+  MakeFileList(".", filter_casedir, nfilelist_casedir, YES, &filelist_casedir);
+}
+
+/* ------------------ ReadSMV ------------------------ */
 
 int ReadSMV(char *file, char *file2){
 
 /* read the .smv file */
-
+  float read_time, processing_time, wrapup_time, getfilelist_time;
+  float pass0_time, pass1_time, pass2_time, pass3_time, pass4_time, pass5_time;
   int have_zonevents,nzventsnew=0;
   int unit_start=20;
   devicedata *devicecopy;
-  int do_pass4=0;
+  int do_pass4=0, do_pass5=0;
   int roomdefined=0;
   int errorcode;
   int noGRIDpresent=1,startpass;
@@ -3110,8 +3488,39 @@ int ReadSMV(char *file, char *file2){
   int setGRID=0;
   int  i;
 
+  char buffer[256],buffer2[256],*bufferptr;
+#ifdef pp_READBUFFER
+  bufferstreamdata streaminfo, *stream=&streaminfo;
+#else
   FILE *stream=NULL,*stream1=NULL,*stream2=NULL;
-  char buffer[255],buffer2[255],*bufferptr;
+#endif
+
+  START_TIMER(processing_time);
+
+  START_TIMER(getfilelist_time);
+  MakeFileLists();
+  STOP_TIMER(getfilelist_time);
+
+  START_TIMER(pass0_time);
+  START_TIMER(read_time);
+
+#ifdef pp_READBUFFER
+  if(readfile_option==READBUFFER){
+    stream->fileinfo = File2Buffer(file);
+    if(stream->fileinfo!=NULL&&file2!=NULL){
+      bufferstreamdata streaminfo2, *stream2 = &streaminfo2;
+
+      stream2->fileinfo = File2Buffer(file2);
+      if(stream2->fileinfo!=NULL){
+        AppendFileBuffer(stream->fileinfo, stream2->fileinfo);
+      }
+      FreeFileBuffer(stream2->fileinfo);
+    }
+  }
+#endif
+
+  STOP_TIMER(read_time);
+  STOP_TIMER(read_time_elapsed);
 
   npropinfo=1; // the 0'th prop is the default human property
   navatar_colors=0;
@@ -3301,7 +3710,7 @@ int ReadSMV(char *file, char *file2){
 
       for(i=0;i<nsmoke3dinfo;i++){
         smoke3di = smoke3dinfo + i;
-        freesmoke3d(smoke3di);
+        FreeSmoke3D(smoke3di);
         FREEMEMORY(smoke3di->comp_file);
         FREEMEMORY(smoke3di->reg_file);
       }
@@ -3403,8 +3812,8 @@ int ReadSMV(char *file, char *file2){
 
   nvents=0;
   setPDIM=0;
-  endian_smv = getendian();
-  endian_native = getendian();
+  endian_smv = GetEndian();
+  endian_native = GetEndian();
   endian_data=endian_native;
   FREEMEMORY(LESsystem);
   FREEMEMORY(LESendian);
@@ -3433,7 +3842,7 @@ int ReadSMV(char *file, char *file2){
   if(cadgeominfo!=NULL)FreeCADInfo();
 
   if(file==NULL){
-    initvars();
+    InitVars();
     return -1;  // finished  unloading memory from previous case
   }
 
@@ -3442,26 +3851,46 @@ int ReadSMV(char *file, char *file2){
   if(NewMemory((void **)&LESendian,4)==0)return 2;
   STRCPY(LESendian,"");
 
-  stream1=fopen(file,"r");
+#ifdef pp_READBUFFER
+  if(readfile_option==READFILE){
+    stream->stream1 = fopen(file, "r");
+    stream->stream2 = NULL;
+    if(stream->stream1==NULL)return 1;
+    stream->stream=stream->stream1;
+    if(file2!=NULL){
+      stream->stream2 = fopen(file2, "r");
+      if(stream->stream2==NULL){
+        fclose(stream->stream1);
+        return 1;
+      }
+    }
+  }
+#else
+  stream1 = fopen(file, "r");
   if(stream1==NULL)return 1;
   if(file2!=NULL){
-    stream2=fopen(file2,"r");
+    stream2 = fopen(file2, "r");
     if(stream2==NULL){
       fclose(stream1);
       return 1;
     }
   }
   stream=stream1;
+#endif
 
-  smv_modtime=file_modtime(file);
+  smv_modtime= FileModtime(file);
 
-  PRINTF(_("processing smokeview file: %s\n"),file);
+  PRINTF(_("processing smokeview file:"));
+  PRINTF(_(" %s\n"), file);
+  STOP_TIMER(pass0_time );
 
 /*
    ************************************************************************
-   ************************ start of pass 1 *********************************
+   ************************ start of pass 1 *******************************
    ************************************************************************
  */
+
+  START_TIMER(pass1_time);
 
   nvents=0;
   igrid=0;
@@ -3469,13 +3898,13 @@ int ReadSMV(char *file, char *file2){
   ntc_total=0;
   nspr_total=0;
   nheat_total=0;
-  PRINTF("%s",_("   pass 1 started"));
+  PRINTF("%s",_("  pass 1"));
   PRINTF("\n");
   for(;;){
-    if(feof(stream)!=0){
+    if(FEOF(stream)!=0){
       BREAK;
     }
-    if(fgets(buffer,255,stream)==NULL){
+    if(FGETS(buffer,255,stream)==NULL){
       BREAK;
     }
     TrimBack(buffer);
@@ -3488,7 +3917,7 @@ int ReadSMV(char *file, char *file2){
 
 
     if(Match(buffer, "IBLANK")==1){
-      fgets(buffer, 255, stream);
+      FGETS(buffer, 255, stream);
       if(iblank_set_on_commandline==0){
         sscanf(buffer, "%i", &use_iblank);
         use_iblank = CLAMP(use_iblank, 0, 1);
@@ -3496,7 +3925,7 @@ int ReadSMV(char *file, char *file2){
       continue;
     }
     if(Match(buffer,"GVEC") == 1){
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f",gvecphys,gvecphys+1,gvecphys+2);
       gvecunit[0]=gvecphys[0];
       gvecunit[1]=gvecphys[1];
@@ -3512,26 +3941,26 @@ int ReadSMV(char *file, char *file2){
       int nfiles;
       char *file_ptr,*type_ptr;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       TrimBack(buffer);
       type_ptr=TrimFront(buffer);
 
-      fgets(buffer2,255,stream);
+      FGETS(buffer2,255,stream);
       TrimBack(buffer2);
       file_ptr=TrimFront(buffer2);
       nfiles=1;
       if(strcmp(type_ptr,"hrr")==0){
-        if(file_exists(file_ptr)==0)nfiles=0;
+        if(FILE_EXISTS_CASEDIR(file_ptr)==NO)nfiles=0;
       }
       else if(strcmp(type_ptr,"devc")==0){
-        if(file_exists(file_ptr)==0)nfiles=0;
+        if(FILE_EXISTS_CASEDIR(file_ptr)==NO)nfiles=0;
       }
       else if(strcmp(type_ptr,"ext")==0){
         if(strchr(file_ptr,'*')==NULL){
-          if(file_exists(file_ptr)==0)nfiles=0;
+          if(FILE_EXISTS_CASEDIR(file_ptr)==NO)nfiles=0;
         }
         else{
-          nfiles = get_nfilelist(".",file_ptr);
+          nfiles = GetFileListSize(".",file_ptr);
         }
       }
       else{
@@ -3544,7 +3973,9 @@ int ReadSMV(char *file, char *file2){
       ngeomdiaginfo++;
       continue;
     }
-    if(Match(buffer, "GEOM") == 1){
+    if(Match(buffer, "GEOM") == 1 ||
+       Match(buffer, "BGEOM") == 1 ||
+       Match(buffer, "SGEOM") == 1){
       ngeominfo++;
       continue;
     }
@@ -3557,21 +3988,21 @@ int ReadSMV(char *file, char *file2){
       continue;
     }
     if(Match(buffer,"ALBEDO") == 1){
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%f",&smoke_albedo);
       smoke_albedo = CLAMP(smoke_albedo, 0.0, 1.0);
       smoke_albedo_base = smoke_albedo;
       continue;
     }
     if(Match(buffer, "NORTHANGLE")==1){
-      fgets(buffer, 255, stream);
+      FGETS(buffer, 255, stream);
       sscanf(buffer, "%f", &northangle);
       northangle = CLAMP(northangle, -180.0, 180.0);
       have_northangle = 1;
       continue;
     }
     if(Match(buffer,"AVATAR_COLOR")==1){
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&navatar_colors);
       if(navatar_colors<0)navatar_colors=0;
       if(navatar_colors>0){
@@ -3581,7 +4012,7 @@ int ReadSMV(char *file, char *file2){
         acolor=avatar_colors;
         for(i=0;i<navatar_colors;i++){
           int irgb[3];
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           irgb[0]=0;
           irgb[1]=0;
           irgb[2]=0;
@@ -3611,7 +4042,7 @@ int ReadSMV(char *file, char *file2){
       NewMemory((void **)&terrain_texture,sizeof(texturedata));
       tt = terrain_texture;
       autoterrain=1;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&visTerrainType);
       visTerrainType=CLAMP(visTerrainType,0,4);
       if(visTerrainType==TERRAIN_HIDDEN){
@@ -3625,22 +4056,26 @@ int ReadSMV(char *file, char *file2){
       }
 
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       buff2 = TrimFront(buffer);
       TrimBack(buff2);
       len_buffer = strlen(buff2);
+      if(len_buffer>0&&strcmp(buff2, "xxxnull")!=0){
 
-      NewMemory((void **)&tt->file,(len_buffer+1)*sizeof(char));
-      strcpy(tt->file,buff2);
-
+        NewMemory((void **)&tt->file, (len_buffer+1)*sizeof(char));
+        strcpy(tt->file, buff2);
+      }
+      else{
+        tt->file = NULL;
+      }
       continue;
     }
     if(
       (Match(buffer,"DEVICE") == 1)&&
       (Match(buffer,"DEVICE_ACT") != 1)
       ){
-      fgets(buffer,255,stream);
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
+      FGETS(buffer,255,stream);
       ndeviceinfo++;
       continue;
     }
@@ -3652,12 +4087,12 @@ int ReadSMV(char *file, char *file2){
     ){
       int local_ntc;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&local_ntc);
       if(local_ntc<0)local_ntc=0;
       ndeviceinfo+=local_ntc;
       for(i=0;i<local_ntc;i++){
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
       }
       continue;
     }
@@ -3665,7 +4100,7 @@ int ReadSMV(char *file, char *file2){
       int lenbuffer;
       char *buffptr;
 
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       TrimBack(buffer);
@@ -3680,7 +4115,7 @@ int ReadSMV(char *file, char *file2){
         strcpy(fds_version,"unknown");
       }
 
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       TrimBack(buffer);
@@ -3697,7 +4132,7 @@ int ReadSMV(char *file, char *file2){
       continue;
     }
     if(Match(buffer,"TOFFSET")==1){
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       sscanf(buffer,"%f %f %f",texture_origin,texture_origin+1,texture_origin+2);
@@ -3711,7 +4146,7 @@ int ReadSMV(char *file, char *file2){
 
     if(Match(buffer,"CADTEXTUREPATH") == 1||
        Match(buffer,"TEXTUREDIR") == 1){
-         if(fgets(buffer,255,stream)==NULL){
+         if(FGETS(buffer,255,stream)==NULL){
            BREAK;
          }
       TrimBack(buffer);
@@ -3729,7 +4164,7 @@ int ReadSMV(char *file, char *file2){
     }
 
     if(Match(buffer,"VIEWTIMES") == 1){
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       sscanf(buffer,"%f %f %i",&view_tstart,&view_tstop,&view_ntimes);
@@ -3778,7 +4213,7 @@ int ReadSMV(char *file, char *file2){
     if(Match(buffer,"PDIM") == 1){
       npdim++;
       setPDIM=1;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f %f %f %f",&xbar0,&xbar,&ybar0,&ybar,&zbar0,&zbar);
       continue;
     }
@@ -3800,6 +4235,7 @@ int ReadSMV(char *file, char *file2){
     }
     if(Match(buffer,"PRT5")==1||Match(buffer,"EVA5")==1
       ){
+      if(setup_only == 1)continue;
       npartinfo++;
       continue;
     }
@@ -3809,18 +4245,19 @@ int ReadSMV(char *file, char *file2){
         (Match(buffer, "SLFL") == 1) ||
         (Match(buffer,"SLCT") == 1)
       ){
+      if(setup_only == 1)continue;
       nsliceinfo++;
       nslicefiles=nsliceinfo;
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       continue;
@@ -3831,6 +4268,7 @@ int ReadSMV(char *file, char *file2){
       Match(buffer,"SMOKF3D") == 1||
       Match(buffer,"VSMOKF3D") == 1
       ){
+      if(setup_only==1)continue;
       nsmoke3dinfo++;
       continue;
     }
@@ -3843,10 +4281,12 @@ int ReadSMV(char *file, char *file2){
       continue;
     }
     if(Match(buffer, "BNDF") == 1 || Match(buffer, "BNDC") == 1 || Match(buffer, "BNDE") == 1 || Match(buffer, "BNDS") == 1){
+      if(setup_only == 1)continue;
       npatchinfo++;
       continue;
     }
     if(Match(buffer,"ISOF") == 1||Match(buffer,"TISOF")==1||Match(buffer,"ISOG") == 1){
+      if(setup_only == 1)continue;
       nisoinfo++;
       continue;
     }
@@ -3871,18 +4311,23 @@ int ReadSMV(char *file, char *file2){
       nzventsnew++;
       continue;
     }
-    if (Match(buffer, "HVENTPOS") == 1 || Match(buffer, "VVENTPOS") == 1 || Match(buffer, "MVENTPOS") == 1) {
+    if(Match(buffer, "HVENTPOS") == 1 || Match(buffer, "VVENTPOS") == 1 || Match(buffer, "MVENTPOS") == 1){
       nzventsnew++;
       continue;
     }
 
   }
 
+  STOP_TIMER(pass1_time);
+
+
 /*
    ************************************************************************
    ************************ end of pass 1 *********************************
    ************************************************************************
  */
+
+  START_TIMER(pass2_time);
 
  if(fds_version==NULL){
    NewMemory((void **)&fds_version,7+1);
@@ -3932,7 +4377,7 @@ int ReadSMV(char *file, char *file2){
    rgb_class[1]=0.0;
    rgb_class[2]=0.0;
    rgb_class[3]=1.0;
-   partclassi->rgb=getcolorptr(rgb_class);
+   partclassi->rgb=GetColorPtr(rgb_class);
 
    partclassi->ntypes=0;
    partclassi->xyz=NULL;
@@ -3988,7 +4433,7 @@ int ReadSMV(char *file, char *file2){
   FREEMEMORY(supermeshinfo);
   if(NewMemory((void **)&supermeshinfo,nmeshes*sizeof(supermeshdata))==0)return 2;
   meshinfo->plot3dfilenum=-1;
-  update_current_mesh(meshinfo);
+  UpdateCurrentMesh(meshinfo);
   for(i=0;i<nmeshes;i++){
     meshdata *meshi;
     supermeshdata *smeshi;
@@ -4126,7 +4571,7 @@ int ReadSMV(char *file, char *file2){
     s_color[1]=matli->color[1];
     s_color[2]=matli->color[2];
     s_color[3]=matli->color[3];
-    matli->color = getcolorptr(s_color);
+    matli->color = GetColorPtr(s_color);
   }
 
   if(cadgeominfo!=NULL)FreeCADInfo();
@@ -4167,7 +4612,7 @@ int ReadSMV(char *file, char *file2){
 
 /*
    ************************************************************************
-   ************************ start of pass 2 *********************************
+   ************************ start of pass 2 *******************************
    ************************************************************************
  */
 
@@ -4179,16 +4624,18 @@ int ReadSMV(char *file, char *file2){
   nmatlinfo=1;
   noutlineinfo=0;
   if(noffset==0)ioffset=1;
-  rewind(stream1);
+
+#ifdef pp_READBUFFER
+  REWIND(stream);
+#else
+  REWIND(stream1);
   if(stream2!=NULL)rewind(stream2);
   stream=stream1;
-  PRINTF("%s",_("   pass 1"));
-  PRINTF("%s",_(" completed"));
-  PRINTF("\n");
-  PRINTF("%s",_("   pass 2 started"));
+#endif
+  PRINTF("%s",_("  pass 2"));
   PRINTF("\n");
   for(;;){
-    if(feof(stream)!=0){
+    if(FEOF(stream)!=0){
       BREAK;
     }
     if(noGRIDpresent==1&&startpass==1){
@@ -4196,7 +4643,7 @@ int ReadSMV(char *file, char *file2){
       startpass=0;
     }
     else{
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       TrimBack(buffer);
@@ -4212,30 +4659,30 @@ int ReadSMV(char *file, char *file2){
       char *type_ptr, *file_ptr;
       int nfiles=1;
 
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       TrimBack(buffer);
       type_ptr=TrimFront(buffer);
 
-      if(fgets(buffer2,255,stream)==NULL){
+      if(FGETS(buffer2,255,stream)==NULL){
         BREAK;
       }
       TrimBack(buffer2);
       file_ptr=TrimFront(buffer2);
       nfiles=1;
       if(strcmp(type_ptr,"hrr")==0){
-        if(file_exists(file_ptr)==0)nfiles=0;
+        if(FILE_EXISTS_CASEDIR(file_ptr)==NO)nfiles=0;
       }
       else if(strcmp(type_ptr,"devc")==0){
-        if(file_exists(file_ptr)==0)nfiles=0;
+        if(FILE_EXISTS_CASEDIR(file_ptr)==NO)nfiles=0;
       }
       else if(strcmp(type_ptr,"ext")==0){
         if(strchr(file_ptr,'*')==NULL){
-          if(file_exists(file_ptr)==0)nfiles=0;
+          if(FILE_EXISTS_CASEDIR(file_ptr)==NO)nfiles=0;
         }
         else{
-          nfiles = get_nfilelist(".",file_ptr);
+          nfiles = GetFileListSize(".",file_ptr);
         }
       }
       else{
@@ -4249,7 +4696,7 @@ int ReadSMV(char *file, char *file2){
       csvi->display=0;
 
       if(strcmp(type_ptr,"hrr")==0){
-        if(file_exists(file_ptr)==1){
+        if(FILE_EXISTS_CASEDIR(file_ptr)==YES){
           csvi->type=CSVTYPE_HRR;
           NewMemory((void **)&csvi->file,strlen(file_ptr)+1);
           strcpy(csvi->file,file_ptr);
@@ -4259,7 +4706,7 @@ int ReadSMV(char *file, char *file2){
         }
       }
       else if(strcmp(type_ptr,"devc")==0){
-        if(file_exists(file_ptr)==1){
+        if(FILE_EXISTS_CASEDIR(file_ptr)==YES){
           csvi->type=CSVTYPE_DEVC;
           NewMemory((void **)&csvi->file,strlen(file_ptr)+1);
           strcpy(csvi->file,file_ptr);
@@ -4270,7 +4717,7 @@ int ReadSMV(char *file, char *file2){
       }
       else if(strcmp(type_ptr,"ext")==0){
         if(strchr(file_ptr,'*')==NULL){
-          if(file_exists(file_ptr)==1){
+          if(FILE_EXISTS_CASEDIR(file_ptr)==YES){
             csvi->type=CSVTYPE_EXT;
             NewMemory((void **)&csvi->file,strlen(file_ptr)+1);
             strcpy(csvi->file,file_ptr);
@@ -4283,8 +4730,8 @@ int ReadSMV(char *file, char *file2){
           filelistdata *filelist;
           int nfilelist;
 
-          nfilelist = get_nfilelist(".",file_ptr);
-          nfiles=get_filelist(".",file_ptr,nfilelist,&filelist);
+          nfilelist = GetFileListSize(".",file_ptr);
+          nfiles= MakeFileList(".",file_ptr,nfilelist,NO,&filelist);
           for(i=0;i<nfiles;i++){
             csvi = csvinfo + ncsvinfo + i;
             csvi->loaded=0;
@@ -4293,7 +4740,7 @@ int ReadSMV(char *file, char *file2){
             NewMemory((void **)&csvi->file,strlen(filelist[i].file)+1);
             strcpy(csvi->file,filelist[i].file);
           }
-          free_filelist(filelist,&nfilelist);
+          FreeFileList(filelist,&nfilelist);
         }
       }
       else{
@@ -4316,19 +4763,19 @@ int ReadSMV(char *file, char *file2){
       geomdiagi = geomdiaginfo + ngeomdiaginfo;
       ngeomdiaginfo++;
 
-      fgets(buffer, 255, stream);
+      FGETS(buffer, 255, stream);
       TrimBack(buffer);
       buffptr = TrimFront(buffer);
       NewMemory((void **)&geomdiagi->geomfile, strlen(buffptr) + 1);
       strcpy(geomdiagi->geomfile, buffptr);
 
       NewMemory((void **)&geomdiagi->geom, sizeof(geomdata));
-      init_geom(geomdiagi->geom,GEOM_GEOM,NOT_FDSBLOCK);
+      InitGeom(geomdiagi->geom,GEOM_GEOM,NOT_FDSBLOCK);
 
       NewMemory((void **)&geomdiagi->geom->file, strlen(buffptr) + 1);
       strcpy(geomdiagi->geom->file, buffptr);
 
-      fgets(buffer, 255, stream);
+      FGETS(buffer, 255, stream);
       TrimBack(buffer);
       buffptr = TrimFront(buffer);
       NewMemory((void **)&geomdiagi->geomdatafile, strlen(buffptr) + 1);
@@ -4340,7 +4787,9 @@ int ReadSMV(char *file, char *file2){
     +++++++++++++++++++++++++++++ GEOM ++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
-    if(Match(buffer,"GEOM") == 1){
+    if(Match(buffer, "GEOM") == 1 ||
+       Match(buffer, "BGEOM") == 1 ||
+       Match(buffer, "SGEOM") == 1){
       geomdata *geomi;
       char *buff2;
       int ngeomobjinfo=0;
@@ -4356,10 +4805,17 @@ int ReadSMV(char *file, char *file2){
         buff2 = buffer+5;
         sscanf(buff2,"%i",&ngeomobjinfo);
       }
+      if(Match(buffer, "BGEOM") == 1){
+        InitGeom(geomi, GEOM_BOUNDARY, NOT_FDSBLOCK);
+      }
+      else if(Match(buffer, "SGEOM") == 1){
+        InitGeom(geomi, GEOM_SLICE, NOT_FDSBLOCK);
+      }
+      else{
+        InitGeom(geomi, GEOM_GEOM, FDSBLOCK);
+      }
 
-      init_geom(geomi,GEOM_GEOM,FDSBLOCK);
-
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       TrimBack(buffer);
       buff2 = TrimFront(buffer);
       NewMemory((void **)&geomi->file,strlen(buff2)+1);
@@ -4377,7 +4833,7 @@ int ReadSMV(char *file, char *file2){
           geomobji->texture_name=NULL;
           geomobji->texture_mapping=TEXTURE_RECTANGULAR;
 
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
 
           texture_mapping = TrimFront(buffer);
           if(texture_mapping!=NULL)texture_vals = strchr(texture_mapping,' ');
@@ -4420,7 +4876,7 @@ int ReadSMV(char *file, char *file2){
 
       iobst++;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&nobsts);
 
 
@@ -4432,12 +4888,12 @@ int ReadSMV(char *file, char *file2){
       is_block_terrain=meshi->is_block_terrain;
 
       for(nn=0;nn<nobsts;nn++){
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
       }
       for(nn=0;nn<nobsts;nn++){
         int ijk2[6],colorindex_local=0,blocktype_local=-1;
 
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%i %i %i %i %i %i %i %i",ijk2,ijk2+1,ijk2+2,ijk2+3,ijk2+4,ijk2+5,&colorindex_local,&blocktype_local);
         if(blocktype_local>=0&&(blocktype_local&8)==8){
           is_block_terrain[nn]=1;
@@ -4468,20 +4924,20 @@ int ReadSMV(char *file, char *file2){
 
       propi = propinfo + npropinfo;
 
-      if(fgets(proplabel,255,stream)==NULL){
+      if(FGETS(proplabel,255,stream)==NULL){
         BREAK;  // prop label
       }
       TrimBack(proplabel);
       fbuffer=TrimFront(proplabel);
 
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;  // number of smokeview_id's
       }
       sscanf(buffer,"%i",&nsmokeview_ids);
 
       InitProp(propi,nsmokeview_ids,fbuffer);
       for(i=0;i<nsmokeview_ids;i++){
-        if(fgets(buffer,255,stream)==NULL){
+        if(FGETS(buffer,255,stream)==NULL){
           BREAK; // smokeview_id
         }
         TrimBack(buffer);
@@ -4495,7 +4951,7 @@ int ReadSMV(char *file, char *file2){
       propi->smv_object=propi->smv_objects[0];
       propi->smokeview_id=propi->smokeview_ids[0];
 
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK; // keyword_values
       }
       sscanf(buffer,"%i",&propi->nvars_indep);
@@ -4516,7 +4972,7 @@ int ReadSMV(char *file, char *file2){
           propi->svals[i]=NULL;
           propi->vars_indep[i]=NULL;
           propi->fvals[i]=0.0;
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           equal=strchr(buffer,'=');
           if(equal!=NULL){
             char *buf1, *buf2, *keyword, *val;
@@ -4585,7 +5041,7 @@ int ReadSMV(char *file, char *file2){
 
   //    terri = terraininfo + nterraininfo;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %i %f %f %i",&xmin, &xmax, &nx, &ymin, &ymax, &ny);
       // must implement new form for defining terrain surfaces
       //initterrain(stream, NULL, terri, xmin, xmax, nx, ymin, ymax, ny);
@@ -4610,7 +5066,7 @@ int ReadSMV(char *file, char *file2){
       partclassi = partclassinfo + npartclassinfo;
       partclassi->kind=PARTICLES;
       if(Match(buffer,"CLASS_OF_HUMANS") == 1)partclassi->kind=HUMANS;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
 
       GetLabels(buffer,partclassi->kind,&device_ptr,&prop_id,prop_buffer);
       if(prop_id!=NULL){
@@ -4649,17 +5105,17 @@ int ReadSMV(char *file, char *file2){
         STRCPY(partclassi->name,TrimFront(buffer));
       }
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f",rgb_class,rgb_class+1,rgb_class+2);
       rgb_class[3]=1.0;
-      partclassi->rgb=getcolorptr(rgb_class);
+      partclassi->rgb=GetColorPtr(rgb_class);
 
       partclassi->ntypes=0;
       partclassi->xyz=NULL;
       partclassi->maxpoints=0;
       partclassi->labels=NULL;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&partclassi->ntypes);
       partclassi->ntypes+=2;
       partclassi->nvars_dep=partclassi->ntypes-2+3; // subtract off two "dummies" at beginning and add 3 at end for r,g,b
@@ -4700,7 +5156,7 @@ int ReadSMV(char *file, char *file2){
           labelj->longlabel=NULL;
           labelj->shortlabel=NULL;
           labelj->unit=NULL;
-          ReadLabels(labelj,stream);
+          ReadLabels(labelj,stream,NULL);
           partclassi->vars_dep[j-2]=labelj->shortlabel;
           if(strcmp(labelj->shortlabel,"DIAMETER")==0){
             partclassi->col_diameter=j-2;
@@ -4735,7 +5191,7 @@ int ReadSMV(char *file, char *file2){
       if(device_ptr!=NULL){
         float diameter, length, azimuth, elevation;
 
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%f %f %f %f",&diameter,&length,&azimuth,&elevation);
         partclassi->diameter=diameter;
         partclassi->length=length;
@@ -4773,7 +5229,7 @@ int ReadSMV(char *file, char *file2){
         tstart_stop = labeli->tstart_stop;
 
         labeli->labeltype=TYPE_SMV;
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         frgbtemp[0]=-1.0;
         frgbtemp[1]=-1.0;
         frgbtemp[2]=-1.0;
@@ -4791,7 +5247,7 @@ int ReadSMV(char *file, char *file2){
         else{
           labeli->useforegroundcolor=0;
         }
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         TrimBack(buffer);
         bufferptr = TrimFront(buffer);
 
@@ -4828,13 +5284,13 @@ int ReadSMV(char *file, char *file2){
         nbarst=&ticki->nbars;
         dxyz = ticki->dxyz;
 
-        if(fgets(buffer,255,stream)==NULL){
+        if(FGETS(buffer,255,stream)==NULL){
           BREAK;
         }
         *nbarst=0;
         sscanf(buffer,"%f %f %f %f %f %f %i",begt,begt+1,begt+2,endt,endt+1,endt+2,nbarst);
         if(*nbarst<1)*nbarst=1;
-        if(fgets(buffer,255,stream)==NULL){
+        if(FGETS(buffer,255,stream)==NULL){
           BREAK;
         }
         {
@@ -4914,7 +5370,7 @@ int ReadSMV(char *file, char *file2){
 
       noutlineinfo++;
       outlinei = outlineinfo + noutlineinfo - 1;
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       sscanf(buffer,"%i",&outlinei->nlines);
@@ -4926,7 +5382,7 @@ int ReadSMV(char *file, char *file2){
         NewMemory((void **)&outlinei->y2,outlinei->nlines*sizeof(float));
         NewMemory((void **)&outlinei->z2,outlinei->nlines*sizeof(float));
         for(i=0;i<outlinei->nlines;i++){
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           sscanf(buffer,"%f %f %f %f %f %f",
             outlinei->x1+i,outlinei->y1+i, outlinei->z1+i,
             outlinei->x2+i,outlinei->y2+i, outlinei->z2+i
@@ -4942,9 +5398,8 @@ int ReadSMV(char *file, char *file2){
   */
     if(Match(buffer,"CADGEOM") == 1){
       size_t len;
-      STRUCTSTAT statbuffer;
 
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       bufferptr=TrimFrontBack(buffer);
@@ -4952,17 +5407,14 @@ int ReadSMV(char *file, char *file2){
       cadgeominfo[ncadgeom].order=NULL;
       cadgeominfo[ncadgeom].quad=NULL;
       cadgeominfo[ncadgeom].file=NULL;
-      if(STAT(bufferptr,&statbuffer)==0){
+      if(FILE_EXISTS_CASEDIR(bufferptr)==YES){
         if(NewMemory((void **)&cadgeominfo[ncadgeom].file,(unsigned int)(len+1))==0)return 2;
         STRCPY(cadgeominfo[ncadgeom].file,bufferptr);
-        PRINTF("%s %s",_("     reading cad file: "),bufferptr);
-        PRINTF("%s\n",bufferptr);
         ReadCADGeom(cadgeominfo+ncadgeom);
-        PRINTF("     CAD file reading completed\n");
         ncadgeom++;
       }
       else{
-        PRINTF(_("   CAD geometry file: %s could not be opened"),bufferptr);
+        PRINTF(_("***Error: CAD geometry file: %s could not be opened"),bufferptr);
         PRINTF("\n");
       }
       continue;
@@ -4982,7 +5434,7 @@ int ReadSMV(char *file, char *file2){
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
     if(Match(buffer,"SURFDEF") == 1){
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       bufferptr=TrimFrontBack(buffer);
       strcpy(surfacedefaultlabel,TrimFront(bufferptr));
       continue;
@@ -5006,6 +5458,7 @@ int ReadSMV(char *file, char *file2){
       int filetype=C_GENERATED;
       int blocknumber;
 
+      if(setup_only==1)continue;
       if(Match(buffer,"SMOKF3D") == 1||Match(buffer,"VSMOKF3D") == 1){
         filetype=FORTRAN_GENERATED;
       }
@@ -5033,7 +5486,7 @@ int ReadSMV(char *file, char *file2){
         sscanf(buffer3,"%i",&blocknumber);
         blocknumber--;
       }
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         nsmoke3dinfo--;
         BREAK;
       }
@@ -5045,9 +5498,11 @@ int ReadSMV(char *file, char *file2){
 
         smoke3di = smoke3dinfo + ismoke3d;
 
-        if(nsmoke3dinfo>50&&(ismoke3d%100==0||ismoke3d==nsmoke3dinfo-1)){
+#ifdef _DEBUG
+        if(nsmoke3dinfo>500&&(ismoke3d%100==0||ismoke3d==nsmoke3dinfo-1)){
           PRINTF("     examining %i'st 3D smoke file\n",ismoke3dcount);
         }
+#endif
         ismoke3dcount++;
 
         if(NewMemory((void **)&smoke3di->reg_file,(unsigned int)(len+1))==0)return 2;
@@ -5093,22 +5548,22 @@ int ReadSMV(char *file, char *file2){
         if(NewMemory((void **)&smoke3di->comp_file,(unsigned int)(len+1))==0)return 2;
         STRCPY(smoke3di->comp_file,buffer2);
 
-        if(file_exists(smoke3di->comp_file)==1){
+        if(FILE_EXISTS_CASEDIR(smoke3di->comp_file)==YES){
           smoke3di->file=smoke3di->comp_file;
           smoke3di->is_zlib=1;
         }
         else{
           smoke3di->file=smoke3di->reg_file;
         }
-        if(file_exists(smoke3di->file)==1){
-          if(ReadLabels(&smoke3di->label,stream)==2)return 2;
+        if(FILE_EXISTS_CASEDIR(smoke3di->file)==YES){
+          if(ReadLabels(&smoke3di->label,stream,NULL)==2)return 2;
           if(strcmp(smoke3di->label.longlabel,"HRRPUV")==0){
             show_hrrcutoff_active=1;
           }
           ismoke3d++;
         }
         else{
-          if(ReadLabels(&smoke3di->label,stream)==2)return 2;
+          if(ReadLabels(&smoke3di->label,stream,NULL)==2)return 2;
           nsmoke3dinfo--;
         }
         if(strncmp(smoke3di->label.shortlabel,"soot",4)==0){
@@ -5137,12 +5592,11 @@ int ReadSMV(char *file, char *file2){
       int s_type;
       float temp_ignition,emis,t_width, t_height;
       size_t len;
-      STRUCTSTAT statbuffer;
       char *buffer3;
 
       surfi = surfinfo + nsurfinfo;
       InitSurface(surfi);
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       TrimBack(buffer);
       len=strlen(buffer);
       NewMemory((void **)&surfi->surfacelabel,(len+1)*sizeof(char));
@@ -5166,9 +5620,9 @@ int ReadSMV(char *file, char *file2){
       s_color[2]=surfi->color[2];
       //s_color[3]=1.0;
       s_color[3]=surfi->color[3];
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f",&temp_ignition,&emis);
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f %f %f %f %f %f",
         &s_type,&t_width, &t_height,s_color,s_color+1,s_color+2,s_color+3);
 
@@ -5182,7 +5636,7 @@ int ReadSMV(char *file, char *file2){
           s_color[2]=-s_color[2];
         }
       }
-      surfi->color = getcolorptr(s_color);
+      surfi->color = GetColorPtr(s_color);
       if(s_color[3]<0.99){
         surfi->transparent=1;
       }
@@ -5194,7 +5648,7 @@ int ReadSMV(char *file, char *file2){
       surfi->texturefile=NULL;
       surfi->textureinfo=NULL;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       TrimBack(buffer);
       buffer3 = TrimFront(buffer);
       {
@@ -5202,17 +5656,17 @@ int ReadSMV(char *file, char *file2){
         char texturebuffer[1024];
 
         found_texture=0;
-        if(texturedir!=NULL&&STAT(buffer3,&statbuffer)!=0){
+        if(texturedir!=NULL&&FILE_EXISTS_CASEDIR(buffer3)==NO){
           STRCPY(texturebuffer,texturedir);
           STRCAT(texturebuffer,dirseparator);
           STRCAT(texturebuffer,buffer3);
-          if(STAT(texturebuffer,&statbuffer)==0){
+          if(FILE_EXISTS_CASEDIR(texturebuffer)==YES){
             if(NewMemory((void **)&surfi->texturefile,strlen(texturebuffer)+1)==0)return 2;
             STRCPY(surfi->texturefile,texturebuffer);
             found_texture=1;
           }
         }
-        if(STAT(buffer3,&statbuffer)==0){
+        if(FILE_EXISTS_CASEDIR(buffer3)==YES){
           len=strlen(buffer3);
           if(NewMemory((void **)&surfi->texturefile,(unsigned int)(len+1))==0)return 2;
           STRCPY(surfi->texturefile,buffer3);
@@ -5238,7 +5692,7 @@ int ReadSMV(char *file, char *file2){
       matli = matlinfo + nmatlinfo;
       InitMatl(matli);
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       TrimBack(buffer);
       len=strlen(buffer);
       NewMemory((void **)&matli->matllabel,(len+1)*sizeof(char));
@@ -5248,7 +5702,7 @@ int ReadSMV(char *file, char *file2){
       s_color[1]=matli->color[1];
       s_color[2]=matli->color[2];
       s_color[3]=matli->color[3];
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f %f",s_color,s_color+1,s_color+2,s_color+3);
 
       s_color[0]=CLAMP(s_color[0],0.0,1.0);
@@ -5256,7 +5710,7 @@ int ReadSMV(char *file, char *file2){
       s_color[2]=CLAMP(s_color[2],0.0,1.0);
       s_color[3]=CLAMP(s_color[3],0.0,1.0);
 
-      matli->color = getcolorptr(s_color);
+      matli->color = GetColorPtr(s_color);
 
       nmatlinfo++;
       continue;
@@ -5314,7 +5768,7 @@ int ReadSMV(char *file, char *file2){
         kbartemp=2;
       }
       else{
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%i %i %i %i",&ibartemp,&jbartemp,&kbartemp,&mesh_type);
       }
       if(ibartemp<1)ibartemp=1;
@@ -5367,7 +5821,7 @@ int ReadSMV(char *file, char *file2){
       int n;
 
       zonei = zoneinfo + izone_local;
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         nzoneinfo--;
         BREAK;
       }
@@ -5378,7 +5832,7 @@ int ReadSMV(char *file, char *file2){
 
       buffer_csvptr=buffer_csv;
       strcpy(buffer_csv,bufferptr);
-      filename=get_zonefilename(buffer_csvptr);
+      filename= GetZoneFileName(buffer_csvptr);
       if(filename!=NULL)period=strrchr(filename,'.');
       if(filename!=NULL&&period!=NULL&&strcmp(period,".csv")==0){
         zonei->csv=1;
@@ -5387,14 +5841,14 @@ int ReadSMV(char *file, char *file2){
       else{
         zonei->csv=0;
         zonecsv=0;
-        filename=get_zonefilename(bufferptr);
+        filename= GetZoneFileName(bufferptr);
       }
 
       if(filename==NULL){
         int nn;
 
         for(nn=0;nn<4;nn++){
-          if(ReadLabels(&zonei->label[nn],stream)==2){
+          if(ReadLabels(&zonei->label[nn],stream,NULL)==2){
             return 2;
           }
         }
@@ -5405,7 +5859,7 @@ int ReadSMV(char *file, char *file2){
         NewMemory((void **)&zonei->file,(unsigned int)(len+1));
         STRCPY(zonei->file,filename);
         for(n=0;n<4;n++){
-          if(ReadLabels(&zonei->label[n],stream)==2){
+          if(ReadLabels(&zonei->label[n],stream,NULL)==2){
             return 2;
           }
         }
@@ -5441,12 +5895,12 @@ int ReadSMV(char *file, char *file2){
       iroom++;
       roomi = roominfo + iroom - 1;
       roomi->valid=0;
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       sscanf(buffer,"%f %f %f",&roomi->dx,&roomi->dy,&roomi->dz);
       roomi->valid=1;
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         roomi->x0=0.0;
         roomi->y0=0.0;
         roomi->z0=0.0;
@@ -5469,15 +5923,16 @@ int ReadSMV(char *file, char *file2){
       continue;
     }
   }
+
+  STOP_TIMER(pass2_time);
+
 /*
    ************************************************************************
    ************************ end of pass 2 *********************************
    ************************************************************************
  */
 
-  PRINTF("%s",_("   pass 2 "));
-  PRINTF("%s",_("completed"));
-  PRINTF("\n");
+  START_TIMER(pass3_time);
 
   CheckMemory;
   ParseDatabase(database_filename);
@@ -5550,23 +6005,27 @@ int ReadSMV(char *file, char *file2){
     devicecopy=deviceinfo;;
   }
   ndeviceinfo=0;
-  rewind(stream1);
+#ifdef pp_READBUFFER
+  REWIND(stream);
+#else
+  REWIND(stream1);
   if(stream2!=NULL)rewind(stream2);
   stream=stream1;
-  PRINTF("%s",_("   pass 3 started"));
+#endif
+  PRINTF("%s",_("  pass 3"));
   PRINTF("\n");
 
   /*
    ************************************************************************
-   ************************ start of pass 3 ******************************
+   ************************ start of pass 3 *******************************
    ************************************************************************
  */
 
   for(;;){
-    if(feof(stream)!=0){
+    if(FEOF(stream)!=0){
       BREAK;
     }
-    if(fgets(buffer,255,stream)==NULL){
+    if(FGETS(buffer,255,stream)==NULL){
       BREAK;
     }
     TrimBack(buffer);
@@ -5577,7 +6036,7 @@ int ReadSMV(char *file, char *file2){
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
     if(Match(buffer,"AMBIENT")==1){
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       sscanf(buffer,"%f %f %f",&pref,&pamb,&tamb);
@@ -5596,7 +6055,7 @@ int ReadSMV(char *file, char *file2){
       imesh=CLAMP(imesh-1,0,nmeshes-1);
       meshi = meshinfo + imesh;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&ncutcells);
       meshi->ncutcells=ncutcells;
 
@@ -5605,7 +6064,7 @@ int ReadSMV(char *file, char *file2){
         for(i=0;i<1+(ncutcells-1)/15;i++){
           int cc[15],j;
 
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           for(j=0;j<15;j++){
             cc[j]=0;
           }
@@ -5642,7 +6101,7 @@ int ReadSMV(char *file, char *file2){
       devicedata *devicei;
 
       devicei = deviceinfo + ndeviceinfo;
-      parse_device_keyword(stream,devicei);
+      ParseDevicekeyword(stream,devicei);
       CheckMemory;
       ndeviceinfo++;
       continue;
@@ -5660,7 +6119,7 @@ int ReadSMV(char *file, char *file2){
 
       if(ioffset==0)ioffset=1;
       meshi=meshinfo + ioffset - 1;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->ntc=tempval;
@@ -5671,7 +6130,7 @@ int ReadSMV(char *file, char *file2){
 
         for(nn=0;nn<meshi->ntc;nn++){
           float *xyz, *xyznorm;
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
 
           strcpy(devicecopy->label,"");
           xyz = devicecopy->xyz;
@@ -5708,7 +6167,7 @@ int ReadSMV(char *file, char *file2){
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-          init_device(devicecopy,xyz,xyznorm,0,0,NULL,"target");
+          InitDevice(devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,"target");
           devicecopy->prop=NULL;
 
           devicecopy++;
@@ -5728,7 +6187,7 @@ int ReadSMV(char *file, char *file2){
       int tempval;
 
       meshi=meshinfo + ioffset - 1;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->nspr=tempval;
@@ -5755,7 +6214,7 @@ int ReadSMV(char *file, char *file2){
           float *xyznorm;
           float normdenom;
 
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           xyznorm = devicecopy->xyznorm;
           xyznorm[0]=0.0;
           xyznorm[1]=0.0;
@@ -5785,7 +6244,7 @@ int ReadSMV(char *file, char *file2){
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-          init_device(devicecopy,NULL,xyznorm,0,0,NULL,NULL);
+          InitDevice(devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
 
           devicecopy++;
           ndeviceinfo++;
@@ -5807,7 +6266,7 @@ int ReadSMV(char *file, char *file2){
       int  nn;
 
       meshi=meshinfo + ioffset - 1;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->nheat=tempval;
@@ -5833,7 +6292,7 @@ int ReadSMV(char *file, char *file2){
         for(nn=0;nn<meshi->nheat;nn++){
           float *xyznorm;
           float normdenom;
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           xyznorm=devicecopy->xyznorm;
           xyznorm[0]=0.0;
           xyznorm[1]=0.0;
@@ -5863,7 +6322,7 @@ int ReadSMV(char *file, char *file2){
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-          init_device(devicecopy,NULL,xyznorm,0,0,NULL,NULL);
+          InitDevice(devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
           devicecopy->prop=NULL;
 
           devicecopy++;
@@ -5885,7 +6344,7 @@ int ReadSMV(char *file, char *file2){
       char *device_label;
       int nn;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&sdnum);
       if(sdnum<0)sdnum=0;
       for(nn=0;nn<sdnum;nn++){
@@ -5897,7 +6356,7 @@ int ReadSMV(char *file, char *file2){
         xyznorm[1]=0.0;
         xyznorm[2]=-1.0;
         device_label=get_device_label(buffer);
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%f %f %f %f %f %f",xyz,xyz+1,xyz+2,xyznorm,xyznorm+1,xyznorm+2);
         devicecopy->type = DEVICE_SMOKE;
         devicecopy->act_time=-1.0;
@@ -5922,7 +6381,7 @@ int ReadSMV(char *file, char *file2){
         }
         GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-        init_device(devicecopy,xyz,xyznorm,0,0,NULL,NULL);
+        InitDevice(devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
 
         devicecopy++;
         ndeviceinfo++;
@@ -5931,11 +6390,16 @@ int ReadSMV(char *file, char *file2){
       continue;
     }
   }
+
+  STOP_TIMER(pass3_time);
+
   /*
    ************************************************************************
-   ************************ end of pass 3 ******************************
+   ************************ end of pass 3 *********************************
    ************************************************************************
  */
+
+  START_TIMER(pass4_time);
 
   // look for DEVICE entries in "experimental" spread sheet files
 
@@ -6024,23 +6488,24 @@ int ReadSMV(char *file, char *file2){
 
 /*
    ************************************************************************
-   ************************ start of pass 4 *********************************
+   ************************ start of pass 4 *******************************
    ************************************************************************
  */
 
-  rewind(stream1);
+#ifdef pp_READBUFFER
+  REWIND(stream);
+#else
+  REWIND(stream1);
   if(stream2!=NULL)rewind(stream2);
   stream=stream1;
-  PRINTF("%s",_("   pass 3 "));
-  PRINTF("%s",_("completed"));
-  PRINTF("\n");
-  PRINTF("%s",_("   pass 4 started"));
+#endif
+  PRINTF("%s",_("  pass 4"));
   PRINTF("\n");
   startpass=1;
   CheckMemory;
 
   for(;;){
-    if(feof(stream)!=0){
+    if(FEOF(stream)!=0){
       BREAK;
     }
 
@@ -6054,7 +6519,7 @@ int ReadSMV(char *file, char *file2){
         startpass=0;
       }
       else{
-        if(fgets(buffer,255,stream)==NULL){
+        if(FGETS(buffer,255,stream)==NULL){
           BREAK;
         }
         if(strncmp(buffer," ",1)==0||buffer[0]==0)continue;
@@ -6076,7 +6541,7 @@ int ReadSMV(char *file, char *file2){
       partclassi = partclassinfo + npartclassinfo;
       partclassi->kind=PARTICLES;
       if(Match(buffer,"CLASS_OF_HUMANS") == 1)partclassi->kind=HUMANS;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
 
       GetLabels(buffer,partclassi->kind,&device_ptr,&prop_id,prop_buffer);
       partclassi->prop=GetPropID(prop_id);
@@ -6094,14 +6559,14 @@ int ReadSMV(char *file, char *file2){
     if(Match(buffer,"HRRPUVCUT") == 1){
       int nhrrpuvcut;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&nhrrpuvcut);
       if(nhrrpuvcut>=1){
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%f",&global_hrrpuv_cutoff);
         load_hrrpuv_cutoff = global_hrrpuv_cutoff;
         for(i=1;i<nhrrpuvcut;i++){
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
         }
       }
       continue;
@@ -6116,7 +6581,7 @@ int ReadSMV(char *file, char *file2){
 
       ioffset++;
       meshi=meshinfo+ioffset-1;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f",meshi->offset,meshi->offset+1,meshi->offset+2);
       continue;
     }
@@ -6135,7 +6600,7 @@ int ReadSMV(char *file, char *file2){
        Match(buffer, "HVENTGEOM")==1||
        Match(buffer, "VVENTGEOM")==1||
        Match(buffer, "MVENTGEOM")==1))have_zonevents=1;
-    if (nzventsnew > 0 && (
+    if(nzventsnew > 0 && (
       Match(buffer, "HVENTPOS") == 1 ||
       Match(buffer, "VVENTPOS") == 1 ||
       Match(buffer, "MVENTPOS") == 1))have_zonevents = 2;
@@ -6154,7 +6619,7 @@ int ReadSMV(char *file, char *file2){
       if(Match(buffer,"VFLOWGEOM")==1||Match(buffer,"VVENTGEOM")==1)vent_type=VFLOW_VENT;
       if(Match(buffer, "MFLOWGEOM") == 1 || Match(buffer, "MVENTGEOM") == 1)vent_type = MFLOW_VENT;
       zvi->vent_type=vent_type;
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       color[0]=1.0;
@@ -6210,7 +6675,7 @@ int ReadSMV(char *file, char *file2){
         default:
           ASSERT(FFALSE);
         }
-        zvi->color = getcolorptr(color);
+        zvi->color = GetColorPtr(color);
         zvi->area_fraction = area_fraction;
       }
       else if(vent_type==VFLOW_VENT){
@@ -6248,8 +6713,10 @@ int ReadSMV(char *file, char *file2){
           zvi->z1 = roomi->z1;
         }
         switch(vertical_vent_type){
-        case 1:
-        case 2:
+        case ZONEVENT_SQUARE:
+        case ZONEVENT_CIRCLE:
+          zvi->xcen = xcen;
+          zvi->ycen = ycen;
           zvi->x0 = xcen - ventside/2.0;
           zvi->x1 = xcen + ventside/2.0;
           zvi->y0 = ycen - ventside/2.0;
@@ -6263,7 +6730,7 @@ int ReadSMV(char *file, char *file2){
         zvi->vertical_vent_type = vertical_vent_type;
         zvi->area = vent_area;
         zvi->area_fraction = area_fraction;
-        zvi->color = getcolorptr(color);
+        zvi->color = GetColorPtr(color);
       }
       else if(vent_type==MFLOW_VENT){
         nzmvents++;
@@ -6283,7 +6750,7 @@ int ReadSMV(char *file, char *file2){
       zvi = zventinfo + nzvents - 1;
 
       zvi->vent_type = vent_type;
-      if(fgets(buffer, 255, stream) == NULL){
+      if(FGETS(buffer, 255, stream) == NULL){
         BREAK;
       }
 
@@ -6315,7 +6782,7 @@ int ReadSMV(char *file, char *file2){
       int roomnumber;
 
       ifire++;
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       firei = fireinfo + ifire - 1;
@@ -6348,7 +6815,7 @@ int ReadSMV(char *file, char *file2){
       meshi=meshinfo+ipdim-1;
       meshrgb = meshi->meshrgb;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f %f %f %f %f %f %f",&xbar0,&xbar,&ybar0,&ybar,&zbar0,&zbar,meshrgb,meshrgb+1,meshrgb+2);
 
       if(meshrgb[0]!=0.0||meshrgb[1]!=0.0||meshrgb[2]!=0.0){
@@ -6367,7 +6834,7 @@ int ReadSMV(char *file, char *file2){
       meshi->xyz_bar0[ZZZ]=zbar0;
       meshi->xyz_bar[ZZZ] =zbar;
       meshi->zcen =(zbar+zbar0)/2.0;
-      initBoxClipInfo(&(meshi->box_clipinfo),xbar0,xbar,ybar0,ybar,zbar0,zbar);
+      InitBoxClipInfo(&(meshi->box_clipinfo),xbar0,xbar,ybar0,ybar,zbar0,zbar);
       if(ntrnx==0){
         int nn;
 
@@ -6404,13 +6871,13 @@ int ReadSMV(char *file, char *file2){
       itrnx++;
       xpltcopy=meshinfo[itrnx-1].xplt;
       ibartemp=meshinfo[itrnx-1].ibar;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i ",&idummy);
       for(nn=0;nn<idummy;nn++){
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
       }
       for(nn=0;nn<=ibartemp;nn++){
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%i %f",&idummy,xpltcopy);xpltcopy++;
       }
       continue;
@@ -6428,14 +6895,14 @@ int ReadSMV(char *file, char *file2){
       itrny++;
       ypltcopy=meshinfo[itrny-1].yplt;
       jbartemp=meshinfo[itrny-1].jbar;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i ",&idummy);
       for(nn=0;nn<idummy;nn++){
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
       }
       for(nn=0;nn<=jbartemp;nn++){
 //        if(jbartemp==2&&nn==2)continue;
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%i %f",&idummy,ypltcopy);
         ypltcopy++;
       }
@@ -6454,13 +6921,13 @@ int ReadSMV(char *file, char *file2){
       itrnz++;
       zpltcopy=meshinfo[itrnz-1].zplt;
       kbartemp=meshinfo[itrnz-1].kbar;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i ",&idummy);
       for(nn=0;nn<idummy;nn++){
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
       }
       for(nn=0;nn<=kbartemp;nn++){
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%i %f",&idummy,zpltcopy);zpltcopy++;
       }
       continue;
@@ -6479,7 +6946,7 @@ typedef struct {
   float base_height;
 */
     if(Match(buffer,"TREE") == 1){
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       if(ntreeinfo!=0)continue;
       sscanf(buffer,"%i",&ntreeinfo);
       if(ntreeinfo>0){
@@ -6492,7 +6959,7 @@ typedef struct {
           treei->time_char=-1.0;
           treei->time_complete=-1.0;
           xyz = treei->xyz;
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           sscanf(buffer,"%f %f %f %f %f %f %f",
             xyz,xyz+1,xyz+2,
             &treei->trunk_diam,&treei->tree_height,
@@ -6512,7 +6979,7 @@ typedef struct {
       treedata *treei;
 
       if(ntreeinfo==0)continue;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i %i %f",&tree_index,&tree_state,&tree_time);
       if(tree_index>=1&&tree_index<=ntreeinfo){
         treei = treeinfo + tree_index - 1;
@@ -6543,7 +7010,7 @@ typedef struct {
 
       CheckMemoryOff;
       iobst++;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&n_blocks);
 
       meshi=meshinfo+iobst-1;
@@ -6572,7 +7039,7 @@ typedef struct {
         blockagedata *bc;
 
         if(autoterrain==1&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           continue;
         }
         nn++;
@@ -6580,7 +7047,7 @@ typedef struct {
         NewMemory((void **)&meshi->blockageinfoptrs[nn],sizeof(blockagedata));
         bc=meshi->blockageinfoptrs[nn];
         InitObst(bc,surfacedefault,nn+1,iobst-1);
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         TrimBack(buffer);
         for(i=0;i<6;i++){
           s_num[i]=-1;
@@ -6657,7 +7124,7 @@ typedef struct {
         int colorindex, blocktype;
 
         if(autoterrain==1&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           continue;
         }
         nn++;
@@ -6683,7 +7150,7 @@ typedef struct {
         r g b           colors used if colorindex==-3
         */
 
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         ijk = bc->ijk;
         sscanf(buffer,"%i %i %i %i %i %i %i %i",
           ijk,ijk+1,ijk+2,ijk+3,ijk+4,ijk+5,
@@ -6737,14 +7204,14 @@ typedef struct {
             colorindex=-3;
           }
           if(s_color[0]>=0.0&&s_color[1]>=0.0&&s_color[2]>=0.0){
-            bc->color=getcolorptr(s_color);
+            bc->color=GetColorPtr(s_color);
           }
           bc->nnodes=(ijk[1]+1-ijk[0])*(ijk[3]+1-ijk[2])*(ijk[5]+1-ijk[4]);
           bc->useblockcolor=1;
         }
         else{
           if(colorindex>=0){
-            bc->color = getcolorptr(rgb[nrgb+colorindex]);
+            bc->color = GetColorPtr(rgb[nrgb+colorindex]);
             bc->useblockcolor=1;
             bc->usecolorindex=1;
             bc->colorindex=colorindex;
@@ -6807,7 +7274,7 @@ typedef struct {
       int j;
 
       icvent++;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&ncv);
 
       meshi = meshinfo + icvent - 1;
@@ -6846,7 +7313,7 @@ typedef struct {
         t_origin[0]=texture_origin[0];
         t_origin[1]=texture_origin[1];
         t_origin[2]=texture_origin[2];
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%f %f %f %f %f %f %i %i %f %f %f",
           &cvi->xmin,&cvi->xmax,&cvi->ymin,&cvi->ymax,&cvi->zmin,&cvi->zmax,
           &cvi->cvent_id,s_num,t_origin,t_origin+1,t_origin+2);
@@ -6905,7 +7372,7 @@ typedef struct {
         s_color[3]=vcolor[3];
         venttype=-99;
 
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%i %i %i %i %i %i %i %i %f %f %f",
           &cvi->imin,&cvi->imax,&cvi->jmin,&cvi->jmax,&cvi->kmin,&cvi->kmax,
           &ventindex,&venttype,s2_color,s2_color+1,s2_color+2);
@@ -6933,7 +7400,7 @@ typedef struct {
           cvi->useventcolor=1;
         }
         s_color[3]=1.0; // set color to opaque until CVENT transparency is implemented
-        cvi->color = getcolorptr(s_color);
+        cvi->color = GetColorPtr(s_color);
       }
       continue;
     }
@@ -6984,7 +7451,7 @@ typedef struct {
         nVENT=1;
       }
       else{
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
       }
       ndummyvents=0;
       sscanf(buffer,"%i %i",&nvents,&ndummyvents);
@@ -7032,7 +7499,7 @@ typedef struct {
           t_origin[0]=texture_origin[0];
           t_origin[1]=texture_origin[1];
           t_origin[2]=texture_origin[2];
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           sscanf(buffer,"%f %f %f %f %f %f %i %i %f %f %f",
                  &vi->xmin,&vi->xmax,&vi->ymin,&vi->ymax,&vi->zmin,&vi->zmax,
                  &vi->vent_id,s_num,t_origin,t_origin+1,t_origin+2);
@@ -7117,7 +7584,7 @@ typedef struct {
           s2_color[2]=-1.0;
           s2_color[3]=1.0;
 
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           sscanf(buffer,"%i %i %i %i %i %i %i %i %f %f %f %f",
                &iv1,&iv2,&jv1,&jv2,&kv1,&kv2,
                &ventindex,&venttype,
@@ -7148,7 +7615,7 @@ typedef struct {
             vi->useventcolor=1;
             updateindexcolors=1;
           }
-          vi->color = getcolorptr(s_color);
+          vi->color = GetColorPtr(s_color);
         }
         else{
           iv1=0;
@@ -7260,10 +7727,9 @@ typedef struct {
       partdata *parti;
       int blocknumber;
       size_t len;
-      STRUCTSTAT statbuffer;
       char *buffer3;
 
-
+      if(setup_only == 1)continue;
       nn_part++;
 
       parti = partinfo + ipart;
@@ -7299,7 +7765,10 @@ typedef struct {
       parti->blocknumber=blocknumber;
       parti->seq_id=nn_part;
       parti->autoload=0;
-      if(fgets(buffer,255,stream)==NULL){
+#ifdef pp_PARTDEFER
+      parti->compute_bounds_color = 1;
+#endif
+      if(FGETS(buffer,255,stream)==NULL){
         npartinfo--;
         BREAK;
       }
@@ -7320,9 +7789,9 @@ typedef struct {
       STRCPY(parti->hist_file, bufferptr);
       STRCAT(parti->hist_file, ".hist");
 
-      // parti->size_file can't be written to, then put it in a world writeable temp directory
+      // parti->size_file can't be written to, then put it in a world writable temp directory
 
-      if(file_exists(parti->size_file)==0&&can_write_to_dir(".")==0&&smokeviewtempdir!=NULL){
+      if(FILE_EXISTS_CASEDIR(parti->size_file)==NO&&curdir_writable ==NO&&smokeviewtempdir!=NULL){
         len = strlen(smokeviewtempdir)+strlen(bufferptr)+1+3+1;
         FREEMEMORY(parti->size_file);
         if(NewMemory((void **)&parti->size_file,(unsigned int)len)==0)return 2;
@@ -7332,9 +7801,9 @@ typedef struct {
         STRCAT(parti->size_file,".sz");
       }
 
-      // parti->hist_file can't be written to, then put it in a world writeable temp directory
+      // parti->hist_file can't be written to, then put it in a world writable temp directory
 
-      if(file_exists(parti->hist_file) == 0 && can_write_to_dir(".") == 0 && smokeviewtempdir != NULL){
+      if(FILE_EXISTS_CASEDIR(parti->hist_file) == NO && curdir_writable == NO && smokeviewtempdir != NULL){
         len = strlen(smokeviewtempdir) + strlen(bufferptr) + 1 + 5 + 1;
         FREEMEMORY(parti->hist_file);
         if(NewMemory((void **)&parti->hist_file, (unsigned int)len) == 0)return 2;
@@ -7349,13 +7818,13 @@ typedef struct {
       STRCPY(parti->comp_file,bufferptr);
       STRCAT(parti->comp_file,".svz");
 
-      if(STAT(parti->comp_file,&statbuffer)==0){
+      if(FILE_EXISTS_CASEDIR(parti->comp_file)==YES){
         parti->compression_type=COMPRESSED_ZLIB;
         parti->file=parti->comp_file;
       }
       else{
         parti->compression_type=UNCOMPRESSED;
-        if(STAT(parti->reg_file,&statbuffer)==0){
+        if(FILE_EXISTS_CASEDIR(parti->reg_file)==YES){
           parti->file=parti->reg_file;
         }
         else{
@@ -7378,7 +7847,7 @@ typedef struct {
       parti->data5=NULL;
       parti->partclassptr=NULL;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&parti->nclasses);
       if(parti->nclasses>0){
         if(parti->file!=NULL)NewMemory((void **)&parti->partclassptr,parti->nclasses*sizeof(partclassdata *));
@@ -7386,7 +7855,7 @@ typedef struct {
           int iclass;
           int ic,iii;
 
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           if(parti->file==NULL)continue;
           sscanf(buffer,"%i",&iclass);
           if(iclass<1)iclass=1;
@@ -7413,11 +7882,11 @@ typedef struct {
         NewMemory((void **)&parti->partclassptr,sizeof(partclassdata *));
           parti->partclassptr[i]=partclassinfo + parti->nclasses;
       }
-      if(parti->file==NULL||STAT(parti->file,&statbuffer)!=0){
-        npartinfo--;
+      if(fast_startup==1||(parti->file!=NULL&&FILE_EXISTS_CASEDIR(parti->file)==YES)){
+        ipart++;
       }
       else{
-        ipart++;
+        npartinfo--;
       }
       continue;
     }
@@ -7429,7 +7898,7 @@ typedef struct {
     if(Match(buffer,"SYST") == 1){
       size_t len;
 
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       len=strlen(buffer);
@@ -7445,7 +7914,7 @@ typedef struct {
     if(Match(buffer,"ENDIAN") == 1){
       size_t len;
 
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       len=strlen(buffer);
@@ -7458,12 +7927,12 @@ typedef struct {
     ++++++++++++++++++++++ ENDF ++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
-    /* ENDF superscedes ENDIAN */
+    /* ENDF supercedes ENDIAN */
     if(Match(buffer,"ENDF") == 1){
       FILE *ENDIANfile;
       size_t len;
 
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       bufferptr=TrimFrontBack(buffer);
@@ -7472,7 +7941,7 @@ typedef struct {
       strcpy(endian_filename,bufferptr);
       ENDIANfile = fopen(endian_filename,"rb");
       if(ENDIANfile!=NULL){
-        endian_native = getendian();
+        endian_native = GetEndian();
         FSEEK(ENDIANfile,4,SEEK_SET);
         fread(&endian_data,4,1,ENDIANfile);
         fclose(ENDIANfile);
@@ -7489,9 +7958,8 @@ typedef struct {
   */
     if(Match(buffer,"CHID") == 1){
       size_t len;
-      STRUCTSTAT statbuffer;
 
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
       bufferptr=TrimFrontBack(buffer);
@@ -7504,7 +7972,7 @@ typedef struct {
         NewMemory((void **)&hrr_csv_filename,(unsigned int)(strlen(chidfilebase)+8+1));
         STRCPY(hrr_csv_filename,chidfilebase);
         STRCAT(hrr_csv_filename,"_hrr.csv");
-        if(STAT(hrr_csv_filename,&statbuffer)!=0){
+        if(FILE_EXISTS_CASEDIR(hrr_csv_filename)==NO){
           FREEMEMORY(hrr_csv_filename);
         }
       }
@@ -7522,16 +7990,25 @@ typedef struct {
         (Match(buffer, "SLFL") == 1) ||
         (Match(buffer,"SLCT") == 1)
       ){
-      int terrain=0, cellcenter=0, facecenter=0, fire_line=0;
+      char *slicelabelptr, slicelabel[256], *sliceparms, *sliceoffsetptr;
       float above_ground_level=0.0;
-      slicedata *sd;
-      char *slicelabelptr, slicelabel[256];
+      float sliceoffset_fds=0.0;
+      int terrain=0, cellcenter=0, facecenter=0, fire_line=0;
       int has_reg, has_comp;
       int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
-      int ii1=-1, ii2=-1, jj1=-1, jj2=-1, kk1=-1, kk2=-1;
-      char *sliceparms;
+      int ii1 = -1, ii2 = -1, jj1 = -1, jj2 = -1, kk1 = -1, kk2 = -1;
       int blocknumber;
+      slicedata *sd;
       size_t len;
+
+      if(setup_only == 1)continue;
+
+      sliceoffsetptr = strchr(buffer, '$');
+      if(sliceoffsetptr!=NULL){
+        *sliceoffsetptr = 0;
+        sliceoffsetptr++;
+        sscanf(sliceoffsetptr, "%f", &sliceoffset_fds);
+      }
 
       sliceparms=strchr(buffer,'&');
       if(sliceparms!=NULL){
@@ -7580,7 +8057,7 @@ typedef struct {
         sscanf(buffer3,"%i %f",&blocknumber,&above_ground_level);
         blocknumber--;
       }
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         nsliceinfo--;
         BREAK;
       }
@@ -7588,7 +8065,8 @@ typedef struct {
       bufferptr=TrimFrontBack(buffer);
       len=strlen(bufferptr);
 
-      sd = sliceinfo_copy;
+      sd = sliceinfo + nn_slice - 1;
+      sd->sliceoffset_fds = sliceoffset_fds;
       sd->reg_file=NULL;
       sd->comp_file=NULL;
       sd->vol_file=NULL;
@@ -7605,26 +8083,23 @@ typedef struct {
         sd->slicetype = SLICE_FACE_CENTER;
       }
 
-      if(nslicefiles>100&&(islicecount%100==1||nslicefiles==islicecount)){
-        PRINTF("     examining %i'th slice file\n",islicecount);
-      }
       islicecount++;
       strcpy(buffer2,bufferptr);
       strcat(buffer2,".svz");
       has_reg=0;
       has_comp=0;
-      if(file_exists(buffer2)==1)has_comp=1;
-      if(has_comp==0&&file_exists(bufferptr)==1)has_reg=1;
+      if(lookfor_zip==1&&FILE_EXISTS_CASEDIR(buffer2)==YES)has_comp=1;
+      if(has_comp==0&&(fast_startup==1||FILE_EXISTS_CASEDIR(bufferptr)==YES))has_reg=1;
       if(has_reg==0&&has_comp==0){
         nsliceinfo--;
         nslicefiles--;
-        if(fgets(buffer,255,stream)==NULL){
+        if(FGETS(buffer,255,stream)==NULL){
           BREAK;
         }
-        if(fgets(buffer,255,stream)==NULL){
+        if(FGETS(buffer,255,stream)==NULL){
           BREAK;
         }
-        if(fgets(buffer,255,stream)==NULL){
+        if(FGETS(buffer,255,stream)==NULL){
           BREAK;
         }
         continue;
@@ -7646,16 +8121,16 @@ typedef struct {
       }
 
       if(sd->slicetype==SLICE_TERRAIN){
-        if(ReadLabelsTerrain(&sd->label,stream)==2)return 2;
+        if(ReadLabels(&sd->label,stream,"(terrain)")==2)return 2;
       }
       else if(sd->slicetype==SLICE_CELL_CENTER){
-        if(ReadLabelsCellCenter(&sd->label,stream)==2)return 2;
+        if(ReadLabels(&sd->label,stream,"(cell centered)")==2)return 2;
       }
       else if(sd->slicetype == SLICE_FACE_CENTER){
-        if(ReadLabelsFaceCenter(&sd->label, stream) == 2)return 2;
+        if(ReadLabels(&sd->label, stream,"(face centered)") == 2)return 2;
       }
       else{
-        if(ReadLabels(&sd->label,stream)==2)return 2;
+        if(ReadLabels(&sd->label,stream,NULL)==2)return 2;
       }
 
 
@@ -7665,7 +8140,7 @@ typedef struct {
         strcpy(volfile,bufferptr);
         strcat(volfile,".svv");
         sd->vol_file=NULL;
-        if(file_exists(volfile)==1){
+        if(FILE_EXISTS_CASEDIR(volfile)==YES){
           NewMemory((void **)&sd->vol_file,(unsigned int)(len+4+1));
           STRCPY(sd->vol_file,volfile);
           have_volcompressed=1;
@@ -7684,6 +8159,20 @@ typedef struct {
         NewMemory((void **)&sd->slicelabel,lenslicelabel);
         strcpy(sd->slicelabel,slicelabel);
       }
+#ifdef pp_SLICELOAD
+      sd->is1=ii1;
+      sd->is2=ii2;
+      sd->js1=jj1;
+      sd->js2=jj2;
+      sd->ks1=kk1;
+      sd->ks2=kk2;
+      sd->ijk_min[0] = ii1;
+      sd->ijk_max[0] = ii2;
+      sd->ijk_min[1] = jj1;
+      sd->ijk_max[1] = jj2;
+      sd->ijk_min[2] = kk1;
+      sd->ijk_max[2] = kk2;
+#else
       sd->is1=i1;
       sd->is2=i2;
       sd->js1=j1;
@@ -7691,21 +8180,22 @@ typedef struct {
       sd->ks1=k1;
       sd->ks2=k2;
       if(ii1>=0){
-        sd->ijk_min[0]=ii1;
-        sd->ijk_max[0]=ii2;
-        sd->ijk_min[1]=jj1;
-        sd->ijk_max[1]=jj2;
-        sd->ijk_min[2]=kk1;
-        sd->ijk_max[2]=kk2;
+        sd->ijk_min[0] = ii1;
+        sd->ijk_max[0] = ii2;
+        sd->ijk_min[1] = jj1;
+        sd->ijk_max[1] = jj2;
+        sd->ijk_min[2] = kk1;
+        sd->ijk_max[2] = kk2;
       }
       else{
-        sd->ijk_min[0]=i1;
-        sd->ijk_max[0]=i2;
-        sd->ijk_min[1]=j1;
-        sd->ijk_max[1]=j2;
-        sd->ijk_min[2]=k1;
-        sd->ijk_max[2]=k2;
+        sd->ijk_min[0] = i1;
+        sd->ijk_max[0] = i2;
+        sd->ijk_min[1] = j1;
+        sd->ijk_max[1] = j2;
+        sd->ijk_min[2] = k1;
+        sd->ijk_max[2] = k2;
       }
+#endif
       sd->is_fed=0;
       sd->above_ground_level=above_ground_level;
       sd->seq_id=nn_slice;
@@ -7717,7 +8207,12 @@ typedef struct {
       sd->compindex=NULL;
       sd->slicecomplevel=NULL;
       sd->qslicedata_compressed=NULL;
-      sd->volslice=0;
+      if(i1!=i2&&j1!=j2&&k1!=k2){
+        sd->volslice=1;
+      }
+      else{
+        sd->volslice = 0;
+      }
       sd->times=NULL;
       sd->slicelevel=NULL;
       sd->iqsliceframe=NULL;
@@ -7738,7 +8233,7 @@ typedef struct {
         meshi = meshinfo + blocknumber;
         sd->mesh_type=meshi->mesh_type;
       }
-      if(IsSliceDup(sd)==1){
+      if(IsSliceDup(sd,nn_slice)==1){
         FREEMEMORY(sd->reg_file);
         FREEMEMORY(sd->comp_file);
         FREEMEMORY(sd->vol_file);
@@ -7746,6 +8241,7 @@ typedef struct {
 
         nsliceinfo--;
         nslicefiles--;
+        nn_slice--;
         continue;
       }
       sliceinfo_copy++;
@@ -7761,8 +8257,9 @@ typedef struct {
       int version;
       int blocknumber;
       size_t len;
-      STRUCTSTAT statbuffer;
+      char *geom_fdsfiletype;
 
+      if(setup_only == 1)continue;
       nn_patch++;
 
       TrimBack(buffer);
@@ -7786,22 +8283,25 @@ typedef struct {
 
       patchi->version=version;
       strcpy(patchi->scale, "");
+      patchi->geom_fdsfiletype=NULL;
       patchi->filetype = PATCH_NODE_CENTER;
+      patchi->geom_smvfiletype = PATCH_STRUCTURED;
       if(Match(buffer,"BNDC") == 1){
         patchi->filetype = PATCH_CELL_CENTER;
-        cellcenter_bound_active=1;
       }
       if(Match(buffer,"BNDE") == 1){
         patchi->filetype=PATCH_GEOMETRY;
+        patchi->geom_smvfiletype=PATCH_GEOMETRY_BOUNDARY;
         patchi->slice = 0;
       }
       if(Match(buffer, "BNDS") == 1){
         char *sliceparms;
 
         patchi->filetype = PATCH_GEOMETRY;
+        patchi->geom_smvfiletype = PATCH_GEOMETRY_SLICE;
         patchi->slice = 1;
-        sliceparms = strchr(buffer, '&');
 
+        sliceparms = strchr(buffer, '&');
         if(sliceparms != NULL){
           int ijk[6],j;
 
@@ -7812,9 +8312,23 @@ typedef struct {
             patchi->ijk[j]=ijk[j];
           }
         }
+
+        geom_fdsfiletype = strchr(buffer, '#');
+        if(geom_fdsfiletype != NULL){
+          int len_geom_fdsfiletype;
+
+          geom_fdsfiletype++;
+          geom_fdsfiletype[-1] = 0;
+          geom_fdsfiletype = TrimFrontBack(geom_fdsfiletype);
+          len_geom_fdsfiletype = strlen(geom_fdsfiletype);
+          if(len_geom_fdsfiletype>0){
+            NewMemory((void **)&patchi->geom_fdsfiletype,(unsigned int)(len_geom_fdsfiletype+1));
+            strcpy(patchi->geom_fdsfiletype,geom_fdsfiletype);
+          }
+        }
       }
 
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         npatchinfo--;
         BREAK;
       }
@@ -7832,7 +8346,7 @@ typedef struct {
       STRCPY(patchi->size_file,bufferptr);
 //      STRCAT(patchi->size_file,".szz"); when we actully use file check both .sz and .szz extensions
 
-      if(STAT(patchi->comp_file,&statbuffer)==0){
+      if(FILE_EXISTS_CASEDIR(patchi->comp_file)==YES){
         patchi->compression_type=COMPRESSED_ZLIB;
         patchi->file=patchi->comp_file;
       }
@@ -7846,7 +8360,7 @@ typedef struct {
       if(patchi->filetype==PATCH_GEOMETRY){
         int igeom;
 
-        if(fgets(buffer,255,stream)==NULL){
+        if(FGETS(buffer,255,stream)==NULL){
           npatchinfo--;
           BREAK;
         }
@@ -7860,7 +8374,7 @@ typedef struct {
           if(strcmp(geomi->file,patchi->geomfile)==0){
             patchi->geominfo=geomi;
             if(patchi->slice == 0){
-              geomi->geomtype = GEOM_GEOM;
+              geomi->geomtype = GEOM_BOUNDARY;
               geomi->fdsblock = FDSBLOCK;
             }
             else{
@@ -7896,15 +8410,15 @@ typedef struct {
       patchi->setchopmax=0;
       patchi->chopmax=0.0;
       meshinfo[blocknumber].patchfilenum=-1;
-      if(STAT(patchi->file,&statbuffer)==0){
+      if(fast_startup==1||FILE_EXISTS_CASEDIR(patchi->file)==YES){
         if(patchi->filetype==PATCH_CELL_CENTER){
-          if(ReadLabelsCellCenter(&patchi->label,stream)==2)return 2;
+          if(ReadLabels(&patchi->label,stream,"(cell centered)")==2)return 2;
         }
         else if(patchi->filetype==PATCH_NODE_CENTER){
-          if(ReadLabels(&patchi->label,stream)==2)return 2;
+          if(ReadLabels(&patchi->label,stream,NULL)==2)return 2;
         }
         else if(patchi->filetype==PATCH_GEOMETRY){
-          if(ReadLabels(&patchi->label,stream)==2)return 2;
+          if(ReadLabels(&patchi->label,stream,"(geometry)")==2)return 2;
         }
         NewMemory((void **)&patchi->histogram,sizeof(histogramdata));
         InitHistogram(patchi->histogram,NHIST_BUCKETS, NULL, NULL);
@@ -7914,7 +8428,7 @@ typedef struct {
         if(trainer_mode==0){
           fprintf(stderr,"*** Error: The file %s does not exist\n",buffer);
         }
-        if(ReadLabels(&patchi->label,stream)==2)return 2;
+        if(ReadLabels(&patchi->label,stream,NULL)==2)return 2;
         npatchinfo--;
       }
       continue;
@@ -7933,9 +8447,9 @@ typedef struct {
       char tbuffer[255], *tbufferptr;
       int blocknumber;
       size_t len;
-      STRUCTSTAT statbuffer;
       char *buffer3;
 
+      if(setup_only == 1)continue;
       isoi = isoinfo + iiso;
       isoi->isof_index = nn_iso%nisos_per_mesh;
       nn_iso++;
@@ -7961,7 +8475,7 @@ typedef struct {
         sscanf(buffer3,"%i",&blocknumber);
         blocknumber--;
       }
-      if(fgets(buffer,255,stream)==NULL){
+      if(FGETS(buffer,255,stream)==NULL){
         nisoinfo--;
         BREAK;
       }
@@ -7988,7 +8502,7 @@ typedef struct {
       NewMemory((void **)&isoi->geominfo,sizeof(geomdata));
       nmemory_ids++;
       isoi->geominfo->memory_id=nmemory_ids;
-      init_geom(isoi->geominfo,GEOM_ISO,NOT_FDSBLOCK);
+      InitGeom(isoi->geominfo,GEOM_ISO,NOT_FDSBLOCK);
 
       bufferptr=TrimFrontBack(buffer);
 
@@ -8002,7 +8516,7 @@ typedef struct {
       STRCAT(isoi->size_file,".sz");
 
       if(dataflag==1&&geomflag==1){
-        if(fgets(tbuffer,255,stream)==NULL){
+        if(FGETS(tbuffer,255,stream)==NULL){
           nisoinfo--;
           BREAK;
         }
@@ -8012,10 +8526,10 @@ typedef struct {
         strcpy(isoi->tfile,tbufferptr);
       }
 
-      if(STAT(isoi->reg_file,&statbuffer)==0){
+      if(fast_startup==1||FILE_EXISTS_CASEDIR(isoi->reg_file)==YES){
         get_isolevels=1;
         isoi->file=isoi->reg_file;
-        if(ReadLabels(&isoi->surface_label,stream)==2)return 2;
+        if(ReadLabels(&isoi->surface_label,stream,NULL)==2)return 2;
         if(geomflag==1){
           int ntimes_local;
           geomdata *geomi;
@@ -8041,7 +8555,7 @@ typedef struct {
           getisolevels(isoi->file,dataflag,&isoi->levels,&isoi->colorlevels,&isoi->nlevels);
         }
         if(dataflag==1){
-          if(ReadLabels(&isoi->color_label,stream)==2)return 2;
+          if(ReadLabels(&isoi->color_label,stream,NULL)==2)return 2;
         }
         iiso++;
       }
@@ -8051,9 +8565,9 @@ typedef struct {
           fprintf(stderr,"*** Error: the file %s does not exist\n",buffer);
         }
 
-        if(ReadLabels(&isoi->surface_label,stream)==2)return 2;
+        if(ReadLabels(&isoi->surface_label,stream,NULL)==2)return 2;
         if(dataflag==1){
-          if(ReadLabels(&isoi->color_label,stream)==2)return 2;
+          if(ReadLabels(&isoi->color_label,stream,NULL)==2)return 2;
         }
         nisoinfo--;
       }
@@ -8090,11 +8604,15 @@ typedef struct {
 
   }
 
+  STOP_TIMER(pass4_time);
+
 /*
    ************************************************************************
    ************************ end of pass 4 *********************************
    ************************************************************************
  */
+
+  START_TIMER(pass5_time);
 
   if(autoterrain==1){
     float zbarmin;
@@ -8130,27 +8648,29 @@ typedef struct {
 
   /*
    ************************************************************************
-   ************************ start of pass 5 *********************************
+   ************************ start of pass 5 *******************************
    ************************************************************************
  */
 
-  rewind(stream1);
+#ifdef pp_READBUFFER
+  REWIND(stream);
+#else
+  REWIND(stream1);
   if(stream2!=NULL)rewind(stream2);
   stream=stream1;
-  PRINTF("%s",_("   pass 4 "));
-  PRINTF("%s",_("completed"));
-  PRINTF("\n");
+#endif
   if(do_pass4==1||autoterrain==1){
-    PRINTF("%s",_("   pass 5 started"));
+    do_pass5 = 1;
+    PRINTF("%s",_("  pass 5"));
     PRINTF("\n");
   }
 
   while((autoterrain==1||do_pass4==1)){
-    if(feof(stream)!=0){
+    if(FEOF(stream)!=0){
       BREAK;
     }
 
-    if(fgets(buffer,255,stream)==NULL){
+    if(FGETS(buffer,255,stream)==NULL){
       BREAK;
     }
     if(strncmp(buffer," ",1)==0||buffer[0]==0)continue;
@@ -8166,13 +8686,13 @@ typedef struct {
       float valmin, valmax;
       float percentile_min, percentile_max;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       strcpy(file2_local,buffer);
       file_ptr = file2_local;
       TrimBack(file2_local);
       file_ptr = TrimFront(file2_local);
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f %f",&valmin,&valmax,&percentile_min,&percentile_max);
 
       for(i=0;i<npatchinfo;i++){
@@ -8197,13 +8717,13 @@ typedef struct {
       float valmin, valmax;
       float percentile_min, percentile_max;
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       strcpy(file2_local,buffer);
       file_ptr = file2_local;
       TrimBack(file2_local);
       file_ptr = TrimFront(file2_local);
 
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f %f",&valmin,&valmax,&percentile_min,&percentile_max);
 
       for(i=0;i<nsliceinfo;i++){
@@ -8232,7 +8752,7 @@ typedef struct {
 
       nOBST++;
       iobst++;
-      fgets(buffer,255,stream);
+      FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&n_blocks);
 
 
@@ -8242,7 +8762,7 @@ typedef struct {
       meshi=meshinfo+iobst-1;
 
       for(nn=0;nn<n_blocks;nn++){
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
       }
       nxcell = meshi->ibar;
       nn=-1;
@@ -8252,12 +8772,12 @@ typedef struct {
         float block_zmax;
 
         if(meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==0){
-          fgets(buffer,255,stream);
+          FGETS(buffer,255,stream);
           continue;
         }
         nn++;
 
-        fgets(buffer,255,stream);
+        FGETS(buffer,255,stream);
         sscanf(buffer,"%i %i %i %i %i %i",ijk2,ijk2+1,ijk2+2,ijk2+3,ijk2+4,&kmax);
         block_zmax = meshi->zplt[kmax];
         for(ii=ijk2[0];ii<ijk2[1];ii++){
@@ -8273,30 +8793,30 @@ typedef struct {
       continue;
     }
   }
-
-  if(do_pass4==1||autoterrain==1){
-    PRINTF("%s",_("   pass 5 "));
-    PRINTF("%s",_("completed"));
-    PRINTF("\n");
-  }
-
-  PRINTF("%s processing completed\n",file);
-  PRINTF("\n");
-  PRINTF("%s",_("beginning wrap up "));
-  PRINTF("\n");
   PrintMemoryInfo;
+  if(do_pass5==1){
+    STOP_TIMER(pass5_time);
+  }
+  else{
+    pass5_time = 0.0;
+  }
 
 /*
    ************************************************************************
    ************************ wrap up ***************************************
    ************************************************************************
  */
+
+  STOP_TIMER(processing_time);
+  START_TIMER(wrapup_time);
+
+  PRINTF("  wrapping up\n");
   CheckMemory;
   update_isocolors();
   CheckMemory;
 
   //RemoveDupBlockages();
-  initcullgeom(cullgeom);
+  InitCullGeom(cullgeom);
   InitEvacProp();
 
   UpdateINIList();
@@ -8319,11 +8839,11 @@ typedef struct {
   if(nzoneinfo>0)setup_zone_devs();
 
 
-  init_multi_threading();
+  InitMultiThreading();
 
   init_partprop();
 
-  init_clip();
+  InitClip();
 
   if(noutlineinfo>0){
     highlight_flag=2;
@@ -8386,9 +8906,11 @@ typedef struct {
   shooter_fps=10;
   shooter_vel_type=1;
 
-  update_plotxyz_all();
+  UpdatePlotxyzAll();
 
   UpdateVSlices();
+  if(update_slice==1)return 3;
+
   GetGSliceParams();
 
   active_smokesensors=0;
@@ -8397,7 +8919,7 @@ typedef struct {
     char *label;
 
     devicei = deviceinfo + i;
-    devicei->device_mesh=getmesh_nofail(devicei->xyz);
+    devicei->device_mesh= GetMeshNoFail(devicei->xyz);
     label = devicei->object->label;
     if(strcmp(label,"smokesensor")==0){
       active_smokesensors=1;
@@ -8407,9 +8929,9 @@ typedef struct {
     }
   }
 
-  makeiblank_carve();
-  makeiblank_smoke3d();
-  makeiblank_all();
+  MakeIBlankCarve();
+  MakeIBlankSmoke3D();
+  MakeIBlankAll();
 #ifdef pp_THREADIBLANK
   if(runscript == 1){
     JOIN_IBLANK
@@ -8432,9 +8954,13 @@ typedef struct {
 
   // close .smv file
 
-  fclose(stream1);
+#ifdef pp_READBUFFER
+  FCLOSE(stream);
+#else
+  FCLOSE(stream1);
   if(stream2!=NULL)fclose(stream2);
-  stream=NULL;
+  stream = NULL;
+#endif
 
   UpdateSelectFaces();
   UpdateSliceTypes();
@@ -8463,7 +8989,7 @@ typedef struct {
   }
   update_terrain(1,vertical_factor);
   update_terrain_colors();
-  update_smoke3d_menulabels();
+  UpdateSmoke3DMenuLabels();
   UpdateVSliceTypes();
   update_patch_menulabels();
   update_iso_menulabels();
@@ -8493,14 +9019,14 @@ typedef struct {
     nchanged_idlist=ntotal;
   }
 
-  init_volrender();
-  init_volrender_surface(FIRSTCALL);
+  InitVolRender();
+  InitVolRenderSurface(FIRSTCALL);
 
 #ifdef pp_CULL
 
   // define data structures used to speed up 3d smoke drawing (by culling non-visible smoke planes)
 
-  if(cullactive==1)initcull(cullsmoke);
+  if(cullactive==1)InitCull(cullsmoke);
 #endif
   update_mesh_terrain();
 
@@ -8510,10 +9036,35 @@ typedef struct {
   update_triangles(GEOM_STATIC,GEOM_UPDATE_ALL);
   get_faceinfo();
 
-  PRINTF("%s",_("wrap up completed"));
+  SetupMeshWalls();
+
+  PRINTF("%s",_("complete"));
   PRINTF("\n\n");
   PrintMemoryInfo;
 
+  STOP_TIMER(wrapup_time);
+  PRINTF("\n");
+  PRINTF(".smv Processing Times\n");
+  PRINTF("---------------------\n");
+
+#ifdef pp_TIMINGS
+#define ALWAYS 1==1||
+#else
+#define ALWAYS
+#endif
+
+  if(ALWAYS read_time>1.0)         PRINTF(".smv file(net): %.1f s\n", read_time);
+  if(ALWAYS getfilelist_time>1.0)  PRINTF("      filelist: %.1f s\n", getfilelist_time);
+  if(ALWAYS read_time_elapsed>1.0) PRINTF(".smv file(cum): %.1f s\n", read_time_elapsed);
+  if(ALWAYS pass0_time>1.0)        PRINTF("         setup: %.1f s\n", pass0_time);
+  if(ALWAYS pass1_time>1.0)        PRINTF("        pass 1: %.1f s\n", pass1_time);
+  if(ALWAYS pass2_time>1.0)        PRINTF("        pass 2: %.1f s\n", pass2_time);
+  if(ALWAYS pass3_time>1.0)        PRINTF("        pass 3: %.1f s\n", pass3_time);
+  if(ALWAYS pass4_time>1.0)        PRINTF("        pass 4: %.1f s\n", pass4_time);
+  if(ALWAYS pass5_time>1.0)        PRINTF("        pass 5: %.1f s\n", pass5_time);
+                         PRINTF("all passes: %.1f s\n", processing_time);
+  if(ALWAYS wrapup_time>1.0)    PRINTF("   wrap up: %.1f s\n", wrapup_time);
+  PRINTF("\n");
   return 0;
 }
 
@@ -8623,6 +9174,8 @@ int ReadINI2(char *inifile, int localfile){
   updatefacelists = 1;
 
   if((stream = fopen(inifile, "r")) == NULL)return 1;
+  PRINTF("%s", _("processing config file: "));
+  PRINTF("%s\n", inifile);
 
   for(i = 0; i<nunitclasses_ini; i++){
     f_units *uc;
@@ -8637,8 +9190,6 @@ int ReadINI2(char *inifile, int localfile){
     UpdateINIList();
   }
 
-  PRINTF("%s", _("processing config file: "));
-  PRINTF("%s\n", inifile);
   if(localfile == 1){
     update_selectedtour_index = 0;
   }
@@ -8658,6 +9209,13 @@ int ReadINI2(char *inifile, int localfile){
       continue;
     }
 #endif
+    if(Match(buffer, "SHOWPATCH")==1){
+      fgets(buffer, 255, stream);
+      sscanf(buffer, " %i %i %i %i %i %i %i",
+        &show_patch_solid, &show_patch_outline, &show_patch_verts, &show_patch_insolid, &show_patch_ingas,
+        &show_patch_incutcell, &show_patch_cutcell_polygon);
+      continue;
+    }
     if(Match(buffer, "NORTHANGLE") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i", &vis_northangle);
@@ -8674,7 +9232,7 @@ int ReadINI2(char *inifile, int localfile){
       vis_ztree = CLAMP(vis_ztree, 0, 1);
       continue;
     }
-    if(Match(buffer, "COLORBAR_SPLIT") == 1) {
+    if(Match(buffer, "COLORBAR_SPLIT") == 1){
       int ii;
 
       fgets(buffer, 255, stream);
@@ -8726,7 +9284,7 @@ int ReadINI2(char *inifile, int localfile){
     if(Match(buffer, "SHOWDEVICEVALS") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i %i %i %i %i %i %i %i",
-        &showdeviceval, &showvdeviceval, &devicetypes_index, &colordeviceval, &vectortype, &vispilot, &showdevicetype, &showdeviceunit);
+        &showdeviceval, &showvdeviceval, &devicetypes_index, &colordeviceval, &vectortype, &viswindrose, &showdevicetype, &showdeviceunit);
       devicetypes_index = CLAMP(devicetypes_index, 0, ndevicetypes - 1);
       update_glui_devices();
       continue;
@@ -8808,7 +9366,29 @@ int ReadINI2(char *inifile, int localfile){
       ONEORZERO(load_at_rendertimes);
       fire_opacity_factor = CLAMP(fire_opacity_factor, 1.0, 10.0);
       mass_extinct = CLAMP(mass_extinct, 100.0, 100000.0);
-      init_volrender_surface(NOT_FIRSTCALL);
+      InitVolRenderSurface(NOT_FIRSTCALL);
+      continue;
+    }
+    if(Match(buffer, "WINDROSEDEVICE")==1){
+      fgets(buffer, 255, stream);
+      sscanf(buffer," %i %i %i %i %i %i %i",
+        &viswindrose, &showref_windrose, &visxy_windrose, &visxz_windrose, &visyz_windrose, &windstate_windrose, &showlabels_windrose);
+      viswindrose         = CLAMP(viswindrose, 0, 1);
+      showref_windrose    = CLAMP(showref_windrose, 0, 1);
+      visxy_windrose      = CLAMP(visxy_windrose, 0, 1);
+      visxz_windrose      = CLAMP(visxz_windrose, 0, 1);
+      visyz_windrose      = CLAMP(visyz_windrose, 0, 1);
+      windstate_windrose  = CLAMP(windstate_windrose, 0, 1);
+      showlabels_windrose = CLAMP(showlabels_windrose, 0, 1);
+
+      fgets(buffer, 255, stream);
+      sscanf(buffer," %i %i %i %f %i %i",    &nr_windrose, &ntheta_windrose, &scale_windrose, &radius_windrose, &scale_increment_windrose, &scale_max_windrose);
+      nr_windrose              = ABS(nr_windrose);
+      ntheta_windrose          = ABS(ntheta_windrose);
+      radius_windrose          = ABS(radius_windrose);
+      scale_windrose           = CLAMP(scale_windrose,0,1);
+      scale_increment_windrose = CLAMP(scale_increment_windrose, 1, 50);
+      scale_max_windrose       = CLAMP(scale_max_windrose, 0, 100);
       continue;
     }
     if(Match(buffer, "BOUNDARYTWOSIDE") == 1){
@@ -8892,7 +9472,7 @@ int ReadINI2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", dc, dc + 1, dc + 2);
       dc[3] = 1.0;
-      direction_color_ptr = getcolorptr(direction_color);
+      direction_color_ptr = GetColorPtr(direction_color);
       UpdateSliceMenuShow();
       update_evac_parms();
       continue;
@@ -8914,8 +9494,9 @@ int ReadINI2(char *inifile, int localfile){
     }
     if(Match(buffer, "VECCONTOURS") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &show_slices_and_vectors);
-      ONEORZERO(show_slices_and_vectors);
+      sscanf(buffer, "%i %i", &show_node_slices_and_vectors,&show_cell_slices_and_vectors);
+      ONEORZERO(show_node_slices_and_vectors);
+      ONEORZERO(show_cell_slices_and_vectors);
       continue;
     }
     if(Match(buffer, "ISOTRAN2") == 1){
@@ -9054,12 +9635,18 @@ int ReadINI2(char *inifile, int localfile){
       sscanf(buffer, "%f %f %f", treecharcolor, treecharcolor + 1, treecharcolor + 2);
       for(i = 0; i<3; i++){
         treecolor[i] = CLAMP(treecolor[i], 0.0, 1.0);
+        treecolor_uc[i] = 255 * treecolor[i];
         treecharcolor[i] = CLAMP(treecharcolor[i], 0.0, 1.0);
+        treecharcolor_uc[i] = 255 * treecharcolor[i];
         trunccolor[i] = CLAMP(trunccolor[i], 0.0, 1.0);
+        trunccolor_uc[i] = 255 * trunccolor[i];
       }
       treecolor[3] = 1.0;
       treecharcolor[3] = 1.0;
       trunccolor[3] = 1.0;
+      treecolor_uc[3] = 255;
+      treecharcolor_uc[3] = 255;
+      trunccolor_uc[3] = 255;
       continue;
     }
     if(Match(buffer, "TRAINERVIEW") == 1){
@@ -9148,14 +9735,14 @@ int ReadINI2(char *inifile, int localfile){
     if(Match(buffer, "SKYBOX") == 1){
       skyboxdata *skyi;
 
-      free_skybox();
+      FreeSkybox();
       nskyboxinfo = 1;
       NewMemory((void **)&skyboxinfo, nskyboxinfo*sizeof(skyboxdata));
       skyi = skyboxinfo;
 
       for(i = 0; i<6; i++){
         fgets(buffer, 255, stream);
-        loadskytexture(buffer, skyi->face + i);
+        LoadSkyTexture(buffer, skyi->face + i);
       }
     }
     if(Match(buffer, "C_PLOT3D") == 1){
@@ -9189,7 +9776,7 @@ int ReadINI2(char *inifile, int localfile){
       if(devicenorm_length<0.0 || devicenorm_length>1.0)devicenorm_length = 0.1;
       continue;
     }
-    if(Match(buffer, "SHOWHRRLABEL") == 1) {
+    if(Match(buffer, "SHOWHRRLABEL") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &visHRRlabel);
       ONEORZERO(visHRRlabel);
@@ -9212,7 +9799,7 @@ int ReadINI2(char *inifile, int localfile){
     if(Match(buffer, "SHOWSLICEINOBST") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &show_slice_in_obst);
-      ONEORZERO(show_slice_in_obst);
+      show_slice_in_obst=CLAMP(show_slice_in_obst,0,2);
       continue;
     }
     if(Match(buffer, "SKIPEMBEDSLICE") == 1){
@@ -9247,9 +9834,9 @@ int ReadINI2(char *inifile, int localfile){
         for(i = 0; i<n3dsmokes; i++){
           fgets(buffer, 255, stream);
           sscanf(buffer, "%i", &seq_id);
-          get_startup_plot3d(seq_id);
+          GetStartupPlot3d(seq_id);
         }
-        update_load_Files = 1;
+        update_load_files = 1;
         continue;
       }
       if(Match(buffer, "VSLICEAUTO") == 1){
@@ -9261,9 +9848,9 @@ int ReadINI2(char *inifile, int localfile){
         for(i = 0; i<n3dsmokes; i++){
           fgets(buffer, 255, stream);
           sscanf(buffer, "%i", &seq_id);
-          get_startup_vslice(seq_id);
+          GetStartupVSlice(seq_id);
         }
-        update_load_Files = 1;
+        update_load_files = 1;
         continue;
       }
       if(Match(buffer, "SLICEAUTO") == 1){
@@ -9275,9 +9862,9 @@ int ReadINI2(char *inifile, int localfile){
         for(i = 0; i<n3dsmokes; i++){
           fgets(buffer, 255, stream);
           sscanf(buffer, "%i", &seq_id);
-          get_startup_slice(seq_id);
+          GetStartupSlice(seq_id);
         }
-        update_load_Files = 1;
+        update_load_files = 1;
         continue;
       }
     if(Match(buffer, "MSLICEAUTO") == 1){
@@ -9298,7 +9885,7 @@ int ReadINI2(char *inifile, int localfile){
           mslicei->autoload = 1;
         }
       }
-      update_load_Files = 1;
+      update_load_files = 1;
       continue;
     }
     if(Match(buffer, "PARTAUTO") == 1){
@@ -9310,9 +9897,9 @@ int ReadINI2(char *inifile, int localfile){
       for(i = 0; i<n3dsmokes; i++){
         fgets(buffer, 255, stream);
         sscanf(buffer, "%i", &seq_id);
-        get_startup_part(seq_id);
+        GetStartupPart(seq_id);
       }
-      update_load_Files = 1;
+      update_load_files = 1;
       continue;
     }
     if(Match(buffer, "ISOAUTO") == 1){
@@ -9324,9 +9911,9 @@ int ReadINI2(char *inifile, int localfile){
       for(i = 0; i<n3dsmokes; i++){
         fgets(buffer, 255, stream);
         sscanf(buffer, "%i", &seq_id);
-        get_startup_iso(seq_id);
+        GetStartupISO(seq_id);
       }
-      update_load_Files = 1;
+      update_load_files = 1;
       continue;
     }
     if(Match(buffer, "S3DAUTO") == 1){
@@ -9338,9 +9925,9 @@ int ReadINI2(char *inifile, int localfile){
       for(i = 0; i<n3dsmokes; i++){
         fgets(buffer, 255, stream);
         sscanf(buffer, "%i", &seq_id);
-        get_startup_smoke(seq_id);
+        GetStartupSmoke(seq_id);
       }
-      update_load_Files = 1;
+      update_load_files = 1;
       continue;
     }
     if(Match(buffer, "PATCHAUTO") == 1){
@@ -9352,9 +9939,9 @@ int ReadINI2(char *inifile, int localfile){
       for(i = 0; i<n3dsmokes; i++){
         fgets(buffer, 255, stream);
         sscanf(buffer, "%i", &seq_id);
-        get_startup_patch(seq_id);
+        GetStartupPatch(seq_id);
       }
-      update_load_Files = 1;
+      update_load_files = 1;
       continue;
     }
     if(Match(buffer, "LOADFILESATSTARTUP") == 1){
@@ -9376,7 +9963,7 @@ int ReadINI2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &projection_type);
       Motion_CB(PROJECTION);
-      update_projection_type();
+      UpdateProjectionType();
       continue;
     }
     if(Match(buffer, "V_PARTICLES") == 1){
@@ -9392,6 +9979,12 @@ int ReadINI2(char *inifile, int localfile){
       strcpy(short_label, "");
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i %f %i %f %s", &ivmin, &vmin, &ivmax, &vmax, short_label);
+
+#define MAXVAL 100000000.0
+#define MINVAL -100000000.0
+
+      if(vmax > MAXVAL)vmax = 1.0;
+      if(vmin < MINVAL)vmin = 0.0;
 
       if(npart5prop>0){
         int label_index = 0;
@@ -9648,6 +10241,12 @@ int ReadINI2(char *inifile, int localfile){
       sscanf(buffer, "%i %f %i %f %s", &settargetmin, &targetmin, &settargetmax, &targetmax, buffer2);
       continue;
     }
+    if(Match(buffer, "ZONEVIEW") == 1){
+      fgets(buffer, 255, stream);
+      sscanf(buffer, "%f", &zone_hvac_diam);
+      if(zone_hvac_diam < 0.0)zone_hvac_diam = 0.0;
+      continue;
+    }
     if(Match(buffer, "OUTLINEMODE") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i %i", &highlight_flag, &outline_color_flag);
@@ -9859,7 +10458,7 @@ int ReadINI2(char *inifile, int localfile){
       sscanf(buffer, "%f ", &plot3dlinewidth);
       continue;
     }
-    if (Match(buffer, "VECTORCOLOR") == 1) {
+    if(Match(buffer, "VECTORCOLOR") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i ", &color_vector_black);
       continue;
@@ -9937,7 +10536,7 @@ int ReadINI2(char *inifile, int localfile){
       sscanf(buffer, "%i", &visVents);
       continue;
     }
-    if (Match(buffer, "SHOWROOMS") == 1) {
+    if(Match(buffer, "SHOWROOMS") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &visCompartments);
       continue;
@@ -9969,7 +10568,7 @@ int ReadINI2(char *inifile, int localfile){
     }
     if(Match(buffer, "MOVIEFILETYPE") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %i %i", &movie_filetype,&movie_framerate,&movie_bitrate);
+      sscanf(buffer, "%i %i %i %i", &movie_filetype,&movie_framerate,&movie_bitrate,&quicktime_compatibility);
       continue;
     }
     if(Match(buffer, "RENDERFILELABEL") == 1){
@@ -10123,7 +10722,7 @@ int ReadINI2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", ventcolor_temp, ventcolor_temp + 1, ventcolor_temp + 2);
       ventcolor_temp[3] = 1.0;
-      ventcolor = getcolorptr(ventcolor_temp);
+      ventcolor = GetColorPtr(ventcolor_temp);
       updatefaces = 1;
       updateindexcolors = 1;
       continue;
@@ -10166,11 +10765,13 @@ int ReadINI2(char *inifile, int localfile){
     if(Match(buffer, "BACKGROUNDCOLOR") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", backgroundbasecolor, backgroundbasecolor + 1, backgroundbasecolor + 2);
+      SetColorControls();
       continue;
     }
     if(Match(buffer, "FOREGROUNDCOLOR") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", foregroundbasecolor, foregroundbasecolor + 1, foregroundbasecolor + 2);
+      SetColorControls();
       continue;
     }
     if(Match(buffer, "BLOCKCOLOR") == 1){
@@ -10179,7 +10780,7 @@ int ReadINI2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", blockcolor_temp, blockcolor_temp + 1, blockcolor_temp + 2);
       blockcolor_temp[3] = 1.0;
-      block_ambient2 = getcolorptr(blockcolor_temp);
+      block_ambient2 = GetColorPtr(blockcolor_temp);
       updatefaces = 1;
       updateindexcolors = 1;
       continue;
@@ -10189,6 +10790,18 @@ int ReadINI2(char *inifile, int localfile){
       sscanf(buffer, "%i", &blocklocation);
       continue;
     }
+    if(Match(buffer, "BEAM") == 1){
+      fgets(buffer, 255, stream);
+      sscanf(buffer, "%i %f %i %i %i %i",
+          &showbeam_as_line,&beam_line_width,&use_beamcolor,beam_color,beam_color+1,beam_color+2);
+      showbeam_as_line = CLAMP(showbeam_as_line,0,1);
+      use_beamcolor = CLAMP(use_beamcolor,0,1);
+      beam_color[0] = CLAMP(beam_color[0], 0, 255);
+      beam_color[1] = CLAMP(beam_color[1], 0, 255);
+      beam_color[2] = CLAMP(beam_color[2], 0, 255);
+      continue;
+    }
+
     if(Match(buffer, "BLOCKSHININESS") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f", &block_shininess);
@@ -10202,7 +10815,7 @@ int ReadINI2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", blockspec_temp, blockspec_temp + 1, blockspec_temp + 2);
       blockspec_temp[3] = 1.0;
-      block_specular2 = getcolorptr(blockspec_temp);
+      block_specular2 = GetColorPtr(blockspec_temp);
       updatefaces = 1;
       updateindexcolors = 1;
       continue;
@@ -10328,7 +10941,7 @@ int ReadINI2(char *inifile, int localfile){
     }
     if(Match(buffer, "SHOWVZONE") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &visVZone);
+      sscanf(buffer, "%i %i", &visVZone, &show_zonelower);
       continue;
     }
     if(Match(buffer, "SHOWZONEFIRE") == 1){
@@ -10363,7 +10976,7 @@ int ReadINI2(char *inifile, int localfile){
 
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i %i %i", &render_window_size, &nrender_rows, &nheight360_temp);
-      if (nheight360_temp > 0) {
+      if(nheight360_temp > 0){
         nheight360 = nheight360_temp;
         nwidth360 = 2 * nheight360;
       }
@@ -10452,6 +11065,12 @@ int ReadINI2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%d", &light_enabled1);
       UpdateLIGHTS = 1;
+      continue;
+    }
+    if(Match(buffer, "LIGHTFACES") == 1){
+      fgets(buffer, 255, stream);
+      sscanf(buffer, "%d", &light_faces);
+      ONEORZERO(light_faces);
       continue;
     }
     if(Match(buffer, "LIGHTPOS0") == 1){
@@ -10643,7 +11262,7 @@ int ReadINI2(char *inifile, int localfile){
       InitCameraList();
       InsertCamera(&camera_list_first, camera_ini, bufferptr);
 
-      enable_reset_saved_view();
+      EnableResetSavedView();
       ci->dirty = 1;
       ci->defined = 1;
       continue;
@@ -10852,7 +11471,7 @@ int ReadINI2(char *inifile, int localfile){
 
       /*
       +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      ++++++++++++++++++++++ GENCOLORBAR ++++++++++++++++++++++++++
+      ++++++++++++++++++++++ GCOLORBAR ++++++++++++++++++++++++++++
       +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       */
 
@@ -10866,11 +11485,10 @@ int ReadINI2(char *inifile, int localfile){
         ncolorbarini = 0;
         sscanf(buffer, "%i", &ncolorbarini);
 
-        InitDefaultColorbars();
+        ncolorbarini = MAX(ncolorbarini, 0);
+        InitDefaultColorbars(ncolorbarini);
 
         ncolorbars = ndefaultcolorbars + ncolorbarini;
-        if(ncolorbarini>0)ResizeMemory((void **)&colorbarinfo, ncolorbars*sizeof(colorbardata));
-
         for(n = ndefaultcolorbars; n<ncolorbars; n++){
           char *cb_buffptr;
 
@@ -10902,7 +11520,9 @@ int ReadINI2(char *inifile, int localfile){
             cbi->rgb_node[nn + 2] = b1;
           }
           RemapColorbar(cbi);
+          UpdateColorbarSplits(cbi);
         }
+        continue;
       }
 
       if(Match(buffer, "TOURCOLORS") == 1){
@@ -10943,6 +11563,33 @@ int ReadINI2(char *inifile, int localfile){
 // ---------------------------------------------------------------------------------------------------------
 //   keywords below are 'local', only in the casename.ini file
 // ---------------------------------------------------------------------------------------------------------
+
+#define WINDROSE_PER_ROW 10
+      if(Match(buffer, "WINDROSESHOWHIDE")==1){
+        int i1, i2, *vals, nrows;
+
+        FREEMEMORY(windrose_showhide);
+        nwindrose_showhide = 0;
+        fgets(buffer, 255, stream);
+        sscanf(buffer, " %i", &nwindrose_showhide);
+        if(nwindrose_showhide>0){
+          nrows = ((nwindrose_showhide-1)/WINDROSE_PER_ROW+1);
+          NewMemory((void **)&windrose_showhide, nrows*WINDROSE_PER_ROW*sizeof(int));
+          for(vals=windrose_showhide,i=0;i<nrows;i++,vals+=WINDROSE_PER_ROW){
+            int j;
+
+            i1 = WINDROSE_PER_ROW*i;
+            i2 = MIN(i1+WINDROSE_PER_ROW,nwindrose_showhide);
+            fgets(buffer, 255, stream);
+            sscanf(buffer, " %i %i %i %i %i %i %i %i %i %i ",
+              vals,vals+1,vals+2,vals+3,vals+4,vals+5,vals+6,vals+7,vals+8,vals+9);
+            for(j=i1;j<i2;j++){
+              windrose_showhide[j] = CLAMP(vals[j-i1],0,1);
+            }
+          }
+          update_windrose_showhide = 1;
+        }
+      }
 
       if(Match(buffer, "SMOKE3DCUTOFFS") == 1){
         fgets(buffer, 255, stream);
@@ -11156,7 +11803,7 @@ int ReadINI2(char *inifile, int localfile){
             float *rgbtemp;
 
             rgbtemp = ticki->rgb;
-            VECEQCONS(rgbtemp, -1.0);
+            VEC3EQCONS(rgbtemp, -1.0);
             ticki->width = -1.0;
             sscanf(buffer, "%f %i %f %f %f %f", &ticki->dlength, &ticki->dir, rgbtemp, rgbtemp + 1, rgbtemp + 2, &ticki->width);
             if(rgbtemp[0]<0.0 || rgbtemp[0]>1.0 ||
@@ -11178,7 +11825,7 @@ int ReadINI2(char *inifile, int localfile){
             length = 1.0;
           }
           ticki->length = sqrt(length);
-          VECEQCONS(dxyz, 0.0);
+          VEC3EQCONS(dxyz, 0.0);
           switch(ticki->dir){
           case XLEFT:
           case XRIGHT:
@@ -11315,8 +11962,8 @@ int ReadINI2(char *inifile, int localfile){
         tours_flag = 0;
         if(Match(buffer, "TOURS") == 1)tours_flag = 1;
         if(tours_flag == 1){
-          if(ntours > 0){
-            for(i = 0; i < ntours; i++){
+          if(ntourinfo > 0){
+            for(i = 0; i < ntourinfo; i++){
               tourdata *touri;
 
               touri = tourinfo + i;
@@ -11324,14 +11971,14 @@ int ReadINI2(char *inifile, int localfile){
             }
             FREEMEMORY(tourinfo);
           }
-          ntours = 0;
+          ntourinfo = 0;
 
           fgets(buffer, 255, stream);
-          sscanf(buffer, "%i", &ntours);
-          ntours++;
-          if(ntours > 0){
-            if(NewMemory((void **)&tourinfo, ntours*sizeof(tourdata)) == 0)return 2;
-            for(i = 0; i < ntours; i++){
+          sscanf(buffer, "%i", &ntourinfo);
+          ntourinfo++;
+          if(ntourinfo > 0){
+            if(NewMemory((void **)&tourinfo, ntourinfo*sizeof(tourdata)) == 0)return 2;
+            for(i = 0; i < ntourinfo; i++){
               tourdata *touri;
 
               touri = tourinfo + i;
@@ -11346,7 +11993,7 @@ int ReadINI2(char *inifile, int localfile){
             tourdata *touri;
             int glui_avatar_index_local;
 
-            for(i = 1; i < ntours; i++){
+            for(i = 1; i < ntourinfo; i++){
               int j;
 
               touri = tourinfo + i;
@@ -11419,7 +12066,7 @@ int ReadINI2(char *inifile, int localfile){
             }
           }
           if(tours_flag == 1){
-            for(i = 0; i < ntours; i++){
+            for(i = 0; i < ntourinfo; i++){
               tourdata *touri;
 
               touri = tourinfo + i;
@@ -11436,7 +12083,7 @@ int ReadINI2(char *inifile, int localfile){
             if(viewalltours == 1)TourMenu(MENU_TOUR_SHOWALL);
           }
           else{
-            ntours = 0;
+            ntourinfo = 0;
           }
           strcpy(buffer, "1.00000 1.00000 2.0000 0");
           TrimMZeros(buffer);
@@ -11478,14 +12125,14 @@ int ReadINI(char *inifile){
 
   // check if config files read in earlier were modifed later
 
-  if(is_file_newer(smvprogini_ptr,INIfile)==1){
-    PRINTF("*** Warning: The configuration file %s is newer than %s \n\n",smvprogini_ptr,INIfile);
+  if(IsFileNewer(smvprogini_ptr,INIfile)==1){
+    PRINTF("*** Warning: The configuration file,\n   %s,\n   is newer than %s \n\n",smvprogini_ptr,INIfile);
   }
-  if(is_file_newer(smvprogini_ptr,caseini_filename)==1){
-    PRINTF("*** Warning: The configuration file %s is newer than %s \n\n",smvprogini_ptr,caseini_filename);
+  if(IsFileNewer(smvprogini_ptr,caseini_filename)==1){
+    PRINTF("*** Warning: The configuration file,\n   %s,\n   is newer than %s \n\n",smvprogini_ptr,caseini_filename);
   }
-  if(is_file_newer(INIfile,caseini_filename)==1){
-    PRINTF("*** Warning: The configuration file %s is newer than %s \n\n",INIfile,caseini_filename);
+  if(IsFileNewer(INIfile,caseini_filename)==1){
+    PRINTF("*** Warning: The configuration file,\n   %s,\n   is newer than %s \n\n",INIfile,caseini_filename);
   }
 
   // read in config files if they exist
@@ -11493,20 +12140,41 @@ int ReadINI(char *inifile){
   // smokeview.ini ini in install directory
 
   if(smvprogini_ptr!=NULL){
-    if(ReadINI2(smvprogini_ptr,0)==2)return 2;
+    int returnval;
+
+    returnval = ReadINI2(smvprogini_ptr, 0);
+    if(returnval==2)return 2;
+    if(returnval == 0){
+      PRINTF("complete");
+      PRINTF("\n");
+    }
     update_terrain_options();
   }
 
   // smokeview.ini in case directory
 
   if(INIfile!=NULL){
-    if(ReadINI2(INIfile,0)==2)return 2;
+    int returnval;
+
+    returnval = ReadINI2(INIfile, 0);
+    if(returnval==2)return 2;
+    if(returnval == 0){
+      PRINTF("complete");
+      PRINTF("\n");
+    }
   }
 
   // read in casename.ini
 
   if(caseini_filename!=NULL){
-    if(ReadINI2(caseini_filename,1)==2)return 2;
+    int returnval;
+
+    returnval = ReadINI2(caseini_filename, 1);
+    if(returnval==2)return 2;
+    if(returnval == 0){
+      PRINTF("complete");
+      PRINTF("\n");
+    }
   }
 
   // read in ini file specified in script
@@ -11515,6 +12183,10 @@ int ReadINI(char *inifile){
     int return_code;
 
     return_code = ReadINI2(inifile,1);
+    if(return_code == 0){
+      PRINTF("complete");
+      PRINTF("\n");
+    }
 
     if(return_code==1||return_code==2){
       if(inifile==NULL){
@@ -11531,7 +12203,7 @@ int ReadINI(char *inifile){
   UpdateGlui();
   if(showall_textures==1)TextureShowMenu(MENU_TEXTURE_SHOWALL);
   if(ncolorbars<=ndefaultcolorbars){
-    InitDefaultColorbars();
+    InitDefaultColorbars(0);
   }
   updatezoommenu=1;
   GetSliceParams2();
@@ -11662,7 +12334,7 @@ void WriteINILocal(FILE *fileout){
   fprintf(fileout, " %i\n", loadfiles_at_startup);
   fprintf(fileout, "MSCALE\n");
   fprintf(fileout, " %f %f %f\n", mscale[0], mscale[1], mscale[2]);
-  put_startup_smoke3d(fileout);
+  PutStartupSmoke3d(fileout);
   if(npart5prop > 0){
     fprintf(fileout, "PART5PROPDISP\n");
     for(i = 0; i < npart5prop; i++){
@@ -11754,7 +12426,7 @@ void WriteINILocal(FILE *fileout){
     }
   }
   fprintf(fileout, "SHOWDEVICEVALS\n");
-  fprintf(fileout, " %i %i %i %i %i %i %i %i\n", showdeviceval, showvdeviceval, devicetypes_index, colordeviceval, vectortype, vispilot, showdevicetype,showdeviceunit);
+  fprintf(fileout, " %i %i %i %i %i %i %i %i\n", showdeviceval, showvdeviceval, devicetypes_index, colordeviceval, vectortype, viswindrose, showdevicetype,showdeviceunit);
   fprintf(fileout, "SHOWMISSINGOBJECTS\n");
   fprintf(fileout, " %i\n", show_missing_objects);
   fprintf(fileout, "SMOKE3DCUTOFFS\n");
@@ -11778,16 +12450,16 @@ void WriteINILocal(FILE *fileout){
   fprintf(fileout, "TOURINDEX\n");
   fprintf(fileout, " %i\n", selectedtour_index);
   startup_count = 0;
-  for(i = 0; i < ntours; i++){
+  for(i = 0; i < ntourinfo; i++){
     tourdata *touri;
 
     touri = tourinfo + i;
     if(touri->startup == 1)startup_count++;
   }
-  if(startup_count < ntours){
+  if(startup_count < ntourinfo){
     fprintf(fileout, "TOURS\n");
-    fprintf(fileout, " %i\n", ntours - startup_count);
-    for(i = 0; i < ntours; i++){
+    fprintf(fileout, " %i\n", ntourinfo - startup_count);
+    for(i = 0; i < ntourinfo; i++){
       tourdata *touri;
       keyframe *framei;
       int j;
@@ -11986,6 +12658,8 @@ void WriteINILocal(FILE *fileout){
   if(nzoneinfo > 0){
     fprintf(fileout, "V_ZONE\n");
     fprintf(fileout, " %i %f %i %f\n", setzonemin, zoneusermin, setzonemax, zoneusermax);
+    fprintf(fileout, "ZONEVIEW\n");
+    fprintf(fileout, " %f\n", zone_hvac_diam);
   }
 
 }
@@ -12084,8 +12758,8 @@ void WriteINI(int flag,char *filename){
   fprintf(fileout, "HEATONCOLOR\n");
   fprintf(fileout, " %f %f %f\n", heatoncolor[0], heatoncolor[1], heatoncolor[2]);
   fprintf(fileout, "ISOCOLORS\n");
-	fprintf(fileout," %f %f : shininess, default opaqueness\n",iso_shininess, iso_transparency);
-	fprintf(fileout," %f %f %f : specular\n",iso_specular[0],iso_specular[1],iso_specular[2]);
+  fprintf(fileout," %f %f : shininess, default opaqueness\n",iso_shininess, iso_transparency);
+  fprintf(fileout," %f %f %f : specular\n",iso_specular[0],iso_specular[1],iso_specular[2]);
   fprintf(fileout," %i : number of levels\n",MAX_ISO_COLORS);
   for(i=0;i<MAX_ISO_COLORS;i++){
     fprintf(fileout, " %f %f %f %f", iso_colors[4*i], iso_colors[4*i+1], iso_colors[4*i+2], iso_colors[4*i+3]);
@@ -12111,6 +12785,8 @@ void WriteINI(int flag,char *filename){
   fprintf(fileout, " %i\n", light_enabled0);
   fprintf(fileout, "LIGHT1\n");
   fprintf(fileout, " %i\n", light_enabled1);
+  fprintf(fileout, "LIGHTFACES\n");
+  fprintf(fileout, " %i\n", light_faces);
   fprintf(fileout, "LIGHTMODELLOCALVIEWER\n");
   fprintf(fileout, " %i\n", lightmodel_localviewer);
   fprintf(fileout, "LIGHTMODELSEPARATESPECULARCOLOR\n");
@@ -12176,7 +12852,7 @@ void WriteINI(int flag,char *filename){
   fprintf(fileout, "USENEWDRAWFACE\n");
   fprintf(fileout, " %i\n", use_new_drawface);
   fprintf(fileout, "VECCONTOURS\n");
-  fprintf(fileout, " %i\n", show_slices_and_vectors);
+  fprintf(fileout, " %i %i\n", show_node_slices_and_vectors,show_cell_slices_and_vectors);
   fprintf(fileout, "VECLENGTH\n");
   fprintf(fileout, " %i %f 1.0\n", 4, vecfactor);
   fprintf(fileout, "VECTORCOLOR\n");
@@ -12240,6 +12916,8 @@ void WriteINI(int flag,char *filename){
   fprintf(fileout, " %i\n", axislabels_smooth);
   fprintf(fileout, "BLOCKLOCATION\n");
   fprintf(fileout, " %i\n", blocklocation);
+  fprintf(fileout, "BEAM\n");
+  fprintf(fileout, " %i %f %i %i %i %i\n", showbeam_as_line,beam_line_width,use_beamcolor,beam_color[0], beam_color[1], beam_color[2]);
   fprintf(fileout, "BOUNDARYTWOSIDE\n");
   fprintf(fileout, " %i\n", showpatch_both);
   fprintf(fileout, "CLIP\n");
@@ -12367,6 +13045,10 @@ void WriteINI(int flag,char *filename){
 #endif
   fprintf(fileout, "SHOWOPENVENTS\n");
   fprintf(fileout, " %i %i\n", visOpenVents, visOpenVentsAsOutline);
+  fprintf(fileout, "SHOWPATCH\n");
+  fprintf(fileout, " %i %i %i %i %i %i %i\n",
+     show_patch_solid, show_patch_outline, show_patch_verts, show_patch_insolid,
+     show_patch_ingas, show_patch_incutcell, show_patch_cutcell_polygon);
   fprintf(fileout, "SHOWOTHERVENTS\n");
   fprintf(fileout, " %i\n", visOtherVents);
   fprintf(fileout, "SHOWSENSORS\n");
@@ -12415,7 +13097,7 @@ void WriteINI(int flag,char *filename){
   fprintf(fileout, " %i\n", visWalls);
   fprintf(fileout, "SKIPEMBEDSLICE\n");
   fprintf(fileout, " %i\n", skip_slice_in_embedded_mesh);
-#ifdef pp_SLICEUP
+#ifdef pp_SLICEDUP
   fprintf(fileout, "SLICEDUP\n");
   fprintf(fileout, " %i %i\n", slicedup_option, vectorslicedup_option);
 #endif
@@ -12455,6 +13137,24 @@ void WriteINI(int flag,char *filename){
   fprintf(fileout, " %f %f %f %f %f %f %f\n",
     temperature_min, temperature_cutoff, temperature_max, fire_opacity_factor, mass_extinct, gpu_vol_factor, nongpu_vol_factor
     );
+  fprintf(fileout, "WINDROSEDEVICE\n");
+  fprintf(fileout, " %i %i %i %i %i %i %i\n",
+    viswindrose, showref_windrose, visxy_windrose, visxz_windrose, visyz_windrose, windstate_windrose, showlabels_windrose);
+  fprintf(fileout, " %i %i %i %f %i %i\n", nr_windrose, ntheta_windrose, scale_windrose, radius_windrose, scale_increment_windrose, scale_max_windrose);
+  {
+    if(nwindrose_showhide > 0){
+      int i;
+
+      UpdateWindRoseDevices(UPDATE_WINDROSE_SHOWHIDE);
+      fprintf(fileout, "WINDROSESHOWHIDE\n");
+      fprintf(fileout, " %i\n", nwindrose_showhide);
+      for(i = 0; i < nwindrose_showhide; i++){
+        fprintf(fileout, " %i", windrose_showhide[i]);
+        if((i+1)%WINDROSE_PER_ROW==0)fprintf(fileout, "\n");
+      }
+      fprintf(fileout, "\n");
+    }
+  }
   fprintf(fileout, "ZOOM\n");
   fprintf(fileout, " %i %f\n", zoomindex, zoom);
 
@@ -12476,7 +13176,7 @@ void WriteINI(int flag,char *filename){
   fprintf(fileout, "RENDERFILETYPE\n");
   fprintf(fileout," %i %i\n",render_filetype,movie_filetype);
   fprintf(fileout, "MOVIEFILETYPE\n");
-  fprintf(fileout," %i %i %i\n",movie_filetype,movie_framerate,movie_bitrate);
+  fprintf(fileout," %i %i %i %i\n",movie_filetype,movie_framerate,movie_bitrate,quicktime_compatibility);
   if(nskyboxinfo>0){
     int iskybox;
     skyboxdata *skyi;
@@ -12604,7 +13304,7 @@ void WriteINI(int flag,char *filename){
   fprintf(fileout, "SHOWSZONE\n");
   fprintf(fileout, " %i\n", visSZone);
   fprintf(fileout, "SHOWVZONE\n");
-  fprintf(fileout, " %i\n", visVZone);
+  fprintf(fileout, " %i %i\n", visVZone, show_zonelower);
   fprintf(fileout, "SHOWZONEFIRE\n");
   fprintf(fileout, " %i\n", viszonefire);
 
@@ -12691,11 +13391,18 @@ void WriteINI(int flag,char *filename){
       if(use_graphics == 1){
         char version_label[256];
         char *glversion = NULL;
+        char *glshadeversion = NULL;
 
         glversion = (char *)glGetString(GL_VERSION);
         if(glversion != NULL){
           strcpy(version_label, "OpenGL Version: ");
           strcat(version_label, glversion);
+          fprintf(fileout, "# %s\n", version_label);
+        }
+        glshadeversion=(char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
+        if(glshadeversion != NULL){
+          strcpy(version_label, "  GLSL Version: ");
+          strcat(version_label, glshadeversion);
           fprintf(fileout, "# %s\n", version_label);
         }
       }

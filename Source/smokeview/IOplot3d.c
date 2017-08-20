@@ -7,8 +7,7 @@
 
 #include "update.h"
 #include "smokeviewvars.h"
-
-void update_glui_plot3d(void);
+#include "IOobject.h"
 
 /* ------------------ plot3dcompare  ------------------------ */
 
@@ -41,13 +40,11 @@ void readplot3d(char *file, int ifile, int flag, int *errorcode){
   int nx, ny, nz;
   int pn;
   FILE_SIZE plot3dfilelen;
-  int local_starttime=0, local_stoptime=0;
   FILE_SIZE file_size=0;
-  int local_starttime0=0, local_stoptime0=0;
-  float delta_time, delta_time0;
+  float read_time, total_time;
 
   CheckMemory;
-  local_starttime0 = glutGet(GLUT_ELAPSED_TIME);
+  START_TIMER(total_time);
   *errorcode=0;
 
   ASSERT(ifile>=0&&ifile<nplot3dinfo);
@@ -56,7 +53,7 @@ void readplot3d(char *file, int ifile, int flag, int *errorcode){
 
   highlight_mesh=p->blocknumber;
   meshi=meshinfo+highlight_mesh;
-  update_current_mesh(meshi);
+  UpdateCurrentMesh(meshi);
 
 
   if(flag==UNLOAD){
@@ -79,8 +76,8 @@ void readplot3d(char *file, int ifile, int flag, int *errorcode){
   FREEMEMORY(meshi->dx_xz); FREEMEMORY(meshi->dy_xz); FREEMEMORY(meshi->dz_xz);
   FREEMEMORY(meshi->dx_yz); FREEMEMORY(meshi->dy_yz); FREEMEMORY(meshi->dz_yz);
 
-  freesurface(&meshi->currentsurf);
-  freesurface(&meshi->currentsurf2);
+  FreeSurface(&meshi->currentsurf);
+  FreeSurface(&meshi->currentsurf2);
   FreeContour(&meshi->plot3dcontour1);
   FreeContour(&meshi->plot3dcontour2);
   FreeContour(&meshi->plot3dcontour3);
@@ -203,10 +200,10 @@ void readplot3d(char *file, int ifile, int flag, int *errorcode){
      return;
   }
 
-  file_size=get_filesize(file);
+  file_size= GetFILESize(file);
   plot3dfilelen = strlen(file);
   PRINTF("Loading plot3d data: %s\n",file);
-  local_starttime = glutGet(GLUT_ELAPSED_TIME);
+  START_TIMER(read_time);
   if(p->compression_type==UNCOMPRESSED){
     FORTgetplot3dq(file,&nx,&ny,&nz,meshi->qdata,&error,&isotest,plot3dfilelen);
   }
@@ -215,10 +212,9 @@ void readplot3d(char *file, int ifile, int flag, int *errorcode){
     readplot3d("",ifile,UNLOAD,&error);
     return;
   }
+  STOP_TIMER(read_time);
   if(p->compression_type==COMPRESSED_ZLIB){
   }
-  local_stoptime = glutGet(GLUT_ELAPSED_TIME);
-  delta_time = (local_stoptime-local_starttime)/1000.0;
   p->loaded=1;
   p->display=1;
   speedmax = -1.;
@@ -293,7 +289,7 @@ void readplot3d(char *file, int ifile, int flag, int *errorcode){
     }
     UpdateGlui();
   }
-  for (nn=0;nn<numplot3dvars;nn++){
+  for(nn=0;nn<numplot3dvars;nn++){
     if(nplot3dinfo>0){
       shortp3label[nn] = plot3dinfo[ifile].label[nn].shortlabel;
       unitp3label[nn] = plot3dinfo[ifile].label[nn].unit;
@@ -372,19 +368,18 @@ void readplot3d(char *file, int ifile, int flag, int *errorcode){
   UpdateTimes();
   UpdateUnitDefs();
   Idle_CB();
-  local_stoptime0 = glutGet(GLUT_ELAPSED_TIME);
-  delta_time0=(local_stoptime0-local_starttime0)/1000.0;
+  STOP_TIMER(total_time);
 
-  if(file_size!=0&&delta_time>0.0){
+  if(file_size!=0&&read_time>0.0){
     float loadrate;
 
-    loadrate = ((float)file_size*8.0/1000000.0)/delta_time;
+    loadrate = ((float)file_size*8.0/1000000.0)/read_time;
     PRINTF(" %.1f MB loaded in %.2f s - rate: %.1f Mb/s (overhead: %.2f s)\n",
-    (float)file_size/1000000.,delta_time,loadrate,delta_time0-delta_time);
+    (float)file_size/1000000.,read_time,loadrate,total_time-read_time);
   }
   else{
     PRINTF(" %.1f MB downloaded in %.2f s (overhead: %.2f s)",
-    (float)file_size/1000000.,delta_time,delta_time0-delta_time);
+    (float)file_size/1000000.,read_time,total_time-read_time);
   }
   if(p->compression_type==COMPRESSED_ZLIB||cache_qdata==0){
     cache_qdata=0;
@@ -1315,12 +1310,12 @@ void updatesurface(void){
     level = p3min[plotn-1] + (colorindex+0.5)*(p3max[plotn-1]-p3min[plotn-1])/((float)nrgb-2.0f);
     isolevelindex=colorindex;
     isolevelindex2=colorindex;
-    freesurface(currentsurfptr);
-    InitIsosurface(currentsurfptr, level, rgb_plot3d_contour[colorindex],-999);
-    GetIsosurface(currentsurfptr,qdata+(plotn-1)*plot3dsize,NULL,iblank_cell,level,dlevel,
+    FreeSurface(currentsurfptr);
+    InitIsoSurface(currentsurfptr, level, rgb_plot3d_contour[colorindex],-999);
+    GetIsoSurface(currentsurfptr,qdata+(plotn-1)*plot3dsize,NULL,iblank_cell,level,dlevel,
       xplt,ibar+1,yplt,jbar+1,zplt,kbar+1);
     GetNormalSurface(currentsurfptr);
-    CompressIsosurface(currentsurfptr,1,
+    CompressIsoSurface(currentsurfptr,1,
         xplt[0],xplt[ibar],
         yplt[0],yplt[jbar],
         zplt[0],zplt[kbar]);
@@ -1331,12 +1326,12 @@ void updatesurface(void){
       if(colorindex2<0)colorindex2=nrgb-2;
       if(colorindex2>nrgb-2)colorindex2=0;
       level2 = p3min[plotn-1] + colorindex2*(p3max[plotn-1]-p3min[plotn-1])/((float)nrgb-2.0f);
-      freesurface(currentsurf2ptr);
-      InitIsosurface(currentsurf2ptr, level2, rgb_plot3d_contour[colorindex2],-999);
-      GetIsosurface(currentsurf2ptr,qdata+(plotn-1)*plot3dsize,NULL,iblank_cell,level2,dlevel,
+      FreeSurface(currentsurf2ptr);
+      InitIsoSurface(currentsurf2ptr, level2, rgb_plot3d_contour[colorindex2],-999);
+      GetIsoSurface(currentsurf2ptr,qdata+(plotn-1)*plot3dsize,NULL,iblank_cell,level2,dlevel,
         xplt,ibar+1,yplt,jbar+1,zplt,kbar+1);
       GetNormalSurface(currentsurf2ptr);
-      CompressIsosurface(currentsurf2ptr,1,
+      CompressIsoSurface(currentsurf2ptr,1,
         xplt[0],xplt[ibar],
         yplt[0],yplt[jbar],
         zplt[0],zplt[kbar]);
@@ -1795,7 +1790,6 @@ void updateshowstep(int val, int slicedir){
 
 /* ------------------ drawgrid ------------------------ */
 
-void drawsphere(float diameter, unsigned char *rgbcolor);
 void drawgrid(const meshdata *meshi){
   int i, j, k;
   float *xplt, *yplt, *zplt;

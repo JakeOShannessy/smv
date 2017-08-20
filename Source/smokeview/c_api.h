@@ -47,6 +47,7 @@ void plot3dprops(int variable_index, int showvector, int vector_length_index,
 void loadplot3d(int meshnumber, float time_local);
 void loadiso(const char *type);
 void loadslice(const char *type, int axis, float distance);
+void loadsliceindex(int index);
 void loadvslice(const char *type, int axis, float distance);
 void unloadall();
 void unloadtour();
@@ -279,7 +280,6 @@ int set_sprinklerabssize(float v); // SPRINKLERABSSIZE
 int set_streaklinewidth(float v); // STREAKLINEWIDTH
 int set_ticklinewidth(float v); // TICKLINEWIDTH
 int set_usenewdrawface(int v); // USENEWDRAWFACE
-int set_veccontours(int v); // VECCONTOURS
 int set_veclength(int a, float b, float c); // VECLENGTH
 int set_vectorlinewidth(float a, float b); // VECTORLINEWIDTH
 int set_vectorpointsize(float v); // VECTORPOINTSIZE

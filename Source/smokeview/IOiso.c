@@ -8,9 +8,6 @@
 #include "update.h"
 #include "smokeviewvars.h"
 
-void sync_isobounds(int isottype);
-void unloadiso(meshdata *gb);
-
 /* ------------------ getisolevels ------------------------ */
 
 void getisolevels(const char *isofile, int dataflag, float **levelsptr, float ***colorlevelsptr, int *nisolevels){
@@ -45,7 +42,6 @@ void getisolevels(const char *isofile, int dataflag, float **levelsptr, float **
     colorlevels[i]=NULL;
   }
   *colorlevelsptr=colorlevels;
-
 }
 
 /* ------------------ getisosizes ------------------------ */
@@ -161,6 +157,54 @@ void readiso_geom_wrapup(void){
   Idle_CB();
 }
 
+/* ------------------ unloadiso ------------------------ */
+
+void unloadiso(meshdata *meshi){
+  isosurface *asurface;
+  isodata *ib;
+  int nloaded = 0;
+  int i;
+  meshdata *meshi2;
+
+  if(meshi->isofilenum == -1)return;
+  ib = isoinfo + meshi->isofilenum;
+  if(meshi->niso_times > 0 && meshi->nisolevels > 0){
+    if(meshi->animatedsurfaces != NULL){
+      for(i = 0;i < meshi->niso_times*meshi->nisolevels;i++){
+        asurface = meshi->animatedsurfaces + i;
+        FREEMEMORY(asurface->iso_triangles);
+        FREEMEMORY(asurface->iso_vertices);
+      }
+    }
+    CheckMemoryOff;
+    FREEMEMORY(meshi->iso_times);
+    FREEMEMORY(meshi->animatedsurfaces);
+    FREEMEMORY(meshi->showlevels);
+  }
+  meshi->niso_times = 0;
+  FREEMEMORY(ib->normaltable);
+
+  unload_iso_trans();
+
+  ib->loaded = 0;
+  ib->display = 0;
+  plotstate = GetPlotState(DYNAMIC_PLOTS);
+  meshi->isofilenum = -1;
+  for(i = 0;i < nmeshes;i++){
+    meshi2 = meshinfo + i;
+    if(meshi2->isofilenum != -1)nloaded++;
+  }
+  if(nloaded == 0){
+    ReadIsoFile = 0;
+  }
+
+  UpdateTimes();
+  updatemenu = 1;
+  Idle_CB();
+
+  return;
+}
+
 /* ------------------ readiso_geom ------------------------ */
 
 void readiso_geom(const char *file, int ifile, int load_flag, int *geom_frame_index, int *errorcode){
@@ -189,7 +233,7 @@ void readiso_geom(const char *file, int ifile, int load_flag, int *geom_frame_in
   surfi = surfinfo + nsurfinfo+1;
   update_isocolors();
   if(strcmp(isoi->surface_label.shortlabel,"hrrpuv")==0){
-    surfi->color=getcolorptr(hrrpuv_iso_color);
+    surfi->color=GetColorPtr(hrrpuv_iso_color);
   }
 
   meshi->isofilenum=ifile;
@@ -237,6 +281,98 @@ void readiso_geom(const char *file, int ifile, int load_flag, int *geom_frame_in
 
 }
 
+/* ------------------ SyncIsoBounds ------------------------ */
+
+void SyncIsoBounds(int isottype){
+  int i, ncount;
+  int firsttime = 1;
+  float tmin_local, tmax_local;
+
+  // find number of iso-surfaces with values
+
+  ncount = 0;
+  for(i = 0;i < nisoinfo;i++){
+    isodata *isoi;
+
+    isoi = isoinfo + i;
+    if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
+    if(iisottype != getisottype(isoi))continue;
+    ncount++;
+  }
+  if(ncount <= 1)return;
+
+  // find min and max bounds for valued iso-surfaces
+
+  for(i = 0;i < nisoinfo;i++){
+    isodata *isoi;
+
+    isoi = isoinfo + i;
+    if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
+    if(iisottype != getisottype(isoi))continue;
+    if(firsttime == 1){
+      firsttime = 0;
+      tmin_local = isoi->tmin;
+      tmax_local = isoi->tmax;
+    }
+    else{
+      if(tmin_local < isoi->tmin)isoi->tmin = tmin_local;
+      if(tmax_local > isoi->tmax)isoi->tmax = tmax_local;
+    }
+  }
+
+  // set min and max bounds for valued iso-surfaces
+
+  for(i = 0;i < nisoinfo;i++){
+    isodata *isoi;
+
+    isoi = isoinfo + i;
+    if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
+    if(iisottype != getisottype(isoi))continue;
+    isoi->tmin = tmin_local;
+    isoi->tmax = tmax_local;
+  }
+
+  // rescale all data
+
+  for(i = 0;i < nisoinfo;i++){
+    isodata *isoi;
+    meshdata *meshi;
+    int ii;
+    isosurface *asurface;
+
+    isoi = isoinfo + i;
+    if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
+    if(iisottype != getisottype(isoi))continue;
+
+    meshi = meshinfo + isoi->blocknumber;
+    asurface = meshi->animatedsurfaces;
+
+    for(ii = 0;ii < meshi->niso_times;ii++){
+      int j;
+
+      for(j = 0;j < meshi->nisolevels;j++){
+        float tcolor, tcolor0, tcolorfactor;
+        int kk;
+
+        if(isoi->tmax > isoi->tmin){
+          tcolor0 = (asurface->tmin - isoi->tmin) / (isoi->tmax - isoi->tmin);
+          tcolorfactor = (asurface->tmax - asurface->tmin) / 65535.;
+          tcolorfactor /= (isoi->tmax - isoi->tmin);
+        }
+        else{
+          tcolor0 = 0.5;
+          tcolorfactor = 0.0;
+        }
+        for(kk = 0;kk < asurface->nvertices;kk++){
+          tcolor = tcolor0 + asurface->tvertices[kk] * tcolorfactor;
+          asurface->color8[kk] = (unsigned char)(CLAMP(tcolor, 0.0, 1.0) * 255);
+        }
+        asurface++;
+      }
+    }
+  }
+}
+
 /* ------------------ readiso_orig ------------------------ */
 
 void readiso_orig(const char *file, int ifile, int flag, int *errorcode){
@@ -251,6 +387,7 @@ void readiso_orig(const char *file, int ifile, int flag, int *errorcode){
   int break_frame;
   int skip_local;
   float *fed_colors[3];
+  float read_time, total_time;
 
   int blocknumber;
   int error;
@@ -259,12 +396,9 @@ void readiso_orig(const char *file, int ifile, int flag, int *errorcode){
   meshdata *meshi;
   isodata *ib;
 
-  int local_starttime=0, local_stoptime=0;
   FILE_SIZE file_size=0;
-  int local_starttime0=0, local_stoptime0=0;
-  float delta_time, delta_time0;
 
-  local_starttime0 = glutGet(GLUT_ELAPSED_TIME);
+  START_TIMER(total_time);
 
   ASSERT(ifile>=0&&ifile<nisoinfo);
   ib = isoinfo+ifile;
@@ -303,7 +437,7 @@ void readiso_orig(const char *file, int ifile, int flag, int *errorcode){
     &meshi->isolevels, &meshi->nisolevels, &meshi->niso_times,
     &ib->tmin, &ib->tmax, endian_data);
 
-  file_size=get_filesize(file);
+  file_size= GetFILESize(file);
 
   if(meshi->isolevels==NULL){
     readiso("",ifile,UNLOAD,NULL,&error);
@@ -359,9 +493,9 @@ void readiso_orig(const char *file, int ifile, int flag, int *errorcode){
     float fed_yellow[]={1.0,1.0,0.0,1.0};
     float fed_red[]={1.0,0.0,0.0,1.0};
 
-    fed_colors[0]=getcolorptr(fed_blue);
-    fed_colors[1]=getcolorptr(fed_yellow);
-    fed_colors[2]=getcolorptr(fed_red);
+    fed_colors[0]=GetColorPtr(fed_blue);
+    fed_colors[1]=GetColorPtr(fed_yellow);
+    fed_colors[2]=GetColorPtr(fed_red);
   }
 
   asurface=meshi->animatedsurfaces;
@@ -369,7 +503,7 @@ void readiso_orig(const char *file, int ifile, int flag, int *errorcode){
   iitime=0;
   itime=0;
   time_max = -1000000.0;
-  local_starttime = glutGet(GLUT_ELAPSED_TIME);
+  START_TIMER(read_time);
   for(;;){
     int skip_frame;
     int ntri_total;
@@ -590,7 +724,7 @@ void readiso_orig(const char *file, int ifile, int flag, int *errorcode){
           v1=isotrii->v1->xyz;
           v2=isotrii->v2->xyz;
           v3=isotrii->v3->xyz;
-          calcNormal2f(v1,v2,v3,out,&area);
+          CalcNormal2f(v1,v2,v3,out,&area);
 
           vertnorm = vertnorms + 3*(isotrii->v1-asurface->iso_vertices);
           vertnorm[0] += out[0]*area;
@@ -637,8 +771,7 @@ void readiso_orig(const char *file, int ifile, int flag, int *errorcode){
   PRINTF("size verts=%i tris=%i\n",(int)(ntotal_isoverts*sizeof(isovert)),(int)(ntotal_isotris*sizeof(isotri)/3));
 #endif
 
-  local_stoptime = glutGet(GLUT_ELAPSED_TIME);
-  delta_time = (local_stoptime-local_starttime)/1000.0;
+  STOP_TIMER(read_time);
   fclose(isostream);
   if(*errorcode!=0){
     unloadiso(meshi);
@@ -659,7 +792,7 @@ void readiso_orig(const char *file, int ifile, int flag, int *errorcode){
   CheckMemory;
   if(ib->dataflag==1){
     iisottype = getisottype(ib);
-    sync_isobounds(iisottype);
+    SyncIsoBounds(iisottype);
     setisolabels(ib->tmin, ib->tmax, ib, errorcode);
     CheckMemory;
   }
@@ -671,19 +804,18 @@ void readiso_orig(const char *file, int ifile, int flag, int *errorcode){
 #endif
   Idle_CB();
 
-  local_stoptime0 = glutGet(GLUT_ELAPSED_TIME);
-  delta_time0=(local_stoptime0-local_starttime0)/1000.0;
+  STOP_TIMER(total_time);
 
-  if(file_size!=0&&delta_time>0.0){
+  if(file_size!=0&&read_time>0.0){
     float loadrate;
 
-    loadrate = ((float)file_size*8.0/1000000.0)/delta_time;
+    loadrate = ((float)file_size*8.0/1000000.0)/read_time;
     PRINTF(" %.1f MB loaded in %.2f s - rate: %.1f Mb/s (overhead: %.2f s)\n",
-    (float)file_size/1000000.,delta_time,loadrate,delta_time0-delta_time);
+    (float)file_size/1000000.,read_time,loadrate,total_time - read_time);
   }
   else{
     PRINTF(" %.1f MB downloaded in %.2f s (overhead: %.2f s)",
-    (float)file_size/1000000.,delta_time,delta_time0-delta_time);
+    (float)file_size/1000000.,read_time,total_time-read_time);
   }
 
   glutPostRedisplay();
@@ -743,54 +875,6 @@ void unload_iso_trans(void){
 
   niso_trans=0;
   niso_opaques=0;
-}
-
-/* ------------------ unloadiso ------------------------ */
-
-void unloadiso(meshdata *meshi){
-  isosurface *asurface;
-  isodata *ib;
-  int nloaded=0;
-  int i;
-  meshdata *meshi2;
-
-  if(meshi->isofilenum==-1)return;
-  ib = isoinfo + meshi->isofilenum;
-  if(meshi->niso_times>0&&meshi->nisolevels>0){
-    if(meshi->animatedsurfaces!=NULL){
-      for(i=0;i<meshi->niso_times*meshi->nisolevels;i++){
-        asurface=meshi->animatedsurfaces+i;
-        FREEMEMORY(asurface->iso_triangles);
-        FREEMEMORY(asurface->iso_vertices);
-      }
-    }
-    CheckMemoryOff;
-    FREEMEMORY(meshi->iso_times);
-    FREEMEMORY(meshi->animatedsurfaces);
-    FREEMEMORY(meshi->showlevels);
-  }
-  meshi->niso_times=0;
-  FREEMEMORY(ib->normaltable);
-
-  unload_iso_trans();
-
-  ib->loaded=0;
-  ib->display=0;
-  plotstate=GetPlotState(DYNAMIC_PLOTS);
-  meshi->isofilenum=-1;
-  for(i=0;i<nmeshes;i++){
-    meshi2 = meshinfo+i;
-    if(meshi2->isofilenum!=-1)nloaded++;
-  }
-  if(nloaded==0){
-    ReadIsoFile=0;
-  }
-
-  UpdateTimes();
-  updatemenu=1;
-  Idle_CB();
-
-  return;
 }
 
 /* ------------------ drawiso_orig ------------------------ */
@@ -1069,7 +1153,7 @@ void drawstaticiso(const isosurface *asurface,int surfacetype,
 
     col = asurface->color;
     if(setbw==1){
-      rgbtemp[0]=0.299*col[0]+0.587*col[1]+0.114*col[2];
+      rgbtemp[0] = TOBW(col);
       rgbtemp[1]=rgbtemp[0];
       rgbtemp[2]=rgbtemp[0];
     }
@@ -1255,7 +1339,7 @@ void drawstaticiso(const isosurface *asurface,int surfacetype,
         glVertex3fv(vv3);
         glVertex3fv(vv3n);
       }
-		  else{
+      else{
         for(k=0;k<3;k++){
           vv1n[k]=vv1[k]+norm[k]/(8.*32768.)/4.0;
           vv2n[k]=vv2[k]+norm[k]/(8.*32768.)/4.0;
@@ -1402,9 +1486,9 @@ void update_iso_menulabels(void){
       isoi = isoinfo + i;
       STRCPY(isoi->menulabel,isoi->surface_label.longlabel);
       if(nmeshes>1){
-	      meshdata *isomesh;
+        meshdata *isomesh;
 
-		    isomesh = meshinfo + isoi->blocknumber;
+        isomesh = meshinfo + isoi->blocknumber;
         sprintf(label,"%s",isomesh->label);
         STRCAT(isoi->menulabel,", ");
         STRCAT(isoi->menulabel,label);
@@ -1457,98 +1541,6 @@ void setisolabels(float smin, float smax,
   scale=sb->scale;
   GetIsoLabels(smin,smax,nrgb,
                 sb->colorlabels,&scale,sb->levels256);
-}
-
-/* ------------------ sync_isobounds ------------------------ */
-
-void sync_isobounds(int isottype){
-  int i,ncount;
-  int firsttime=1;
-  float tmin_local, tmax_local;
-
-  // find number of iso-surfaces with values
-
-  ncount=0;
-  for(i=0;i<nisoinfo;i++){
-    isodata *isoi;
-
-    isoi = isoinfo + i;
-    if(isoi->loaded==0||isoi->type!=iisotype||isoi->dataflag==0)continue;
-    if(iisottype!=getisottype(isoi))continue;
-    ncount++;
-  }
-  if(ncount<=1)return;
-
-  // find min and max bounds for valued iso-surfaces
-
-  for(i=0;i<nisoinfo;i++){
-    isodata *isoi;
-
-    isoi = isoinfo + i;
-    if(isoi->loaded==0||isoi->type!=iisotype||isoi->dataflag==0)continue;
-    if(iisottype!=getisottype(isoi))continue;
-    if(firsttime==1){
-      firsttime=0;
-      tmin_local=isoi->tmin;
-      tmax_local=isoi->tmax;
-    }
-    else{
-      if(tmin_local<isoi->tmin)isoi->tmin=tmin_local;
-      if(tmax_local>isoi->tmax)isoi->tmax=tmax_local;
-    }
-  }
-
-  // set min and max bounds for valued iso-surfaces
-
-  for(i=0;i<nisoinfo;i++){
-    isodata *isoi;
-
-    isoi = isoinfo + i;
-    if(isoi->loaded==0||isoi->type!=iisotype||isoi->dataflag==0)continue;
-    if(iisottype!=getisottype(isoi))continue;
-    isoi->tmin=tmin_local;
-    isoi->tmax=tmax_local;
-  }
-
-  // rescale all data
-
-  for(i=0;i<nisoinfo;i++){
-    isodata *isoi;
-    meshdata *meshi;
-    int ii;
-    isosurface *asurface;
-
-    isoi = isoinfo + i;
-    if(isoi->loaded==0||isoi->type!=iisotype||isoi->dataflag==0)continue;
-    if(iisottype!=getisottype(isoi))continue;
-
-    meshi = meshinfo + isoi->blocknumber;
-    asurface=meshi->animatedsurfaces;
-
-    for(ii=0;ii<meshi->niso_times;ii++){
-      int j;
-
-      for(j=0;j<meshi->nisolevels;j++){
-        float tcolor, tcolor0, tcolorfactor;
-        int kk;
-
-        if(isoi->tmax>isoi->tmin){
-          tcolor0 = (asurface->tmin-isoi->tmin)/(isoi->tmax-isoi->tmin);
-          tcolorfactor = (asurface->tmax-asurface->tmin)/65535.;
-          tcolorfactor /= (isoi->tmax-isoi->tmin);
-        }
-        else{
-          tcolor0=0.5;
-          tcolorfactor=0.0;
-        }
-        for(kk=0;kk<asurface->nvertices;kk++){
-          tcolor = tcolor0 + asurface->tvertices[kk]*tcolorfactor;
-          asurface->color8[kk] = (unsigned char)(CLAMP(tcolor,0.0,1.0)*255);
-        }
-        asurface++;
-      }
-    }
-  }
 }
 
 /* ------------------ compare_iso_triangles ------------------------ */

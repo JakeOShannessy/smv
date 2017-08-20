@@ -94,7 +94,7 @@ void Init(void){
   CopyCamera(camera_external_save,camera_external);
   UpdateGluiViewList();
 
-  //reset_glui_view(i_view_list);
+  //ResetGluiView(i_view_list);
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_NORMALIZE);
@@ -116,22 +116,22 @@ void Init(void){
   mat_ambient2[3] = 1.0;
   mat_specular2[3] = 1.0;
 
-  reset_glui_view(startup_view_ini);
+  ResetGluiView(startup_view_ini);
   UpdateShow();
 }
 
-/* ------------------ init_lang ------------------------ */
+/* ------------------ InitLang ------------------------ */
 
 #ifdef pp_LANG
-void init_lang(void){
+void InitLang(void){
   int maxlangs, nlangs;
   filelistdata *filelistinfo;
   int i;
 
   nlanglistinfo=0;
-  maxlangs = get_nfilelist(smokeview_bindir,"*.po");
+  maxlangs = GetFileListSize(smokeview_bindir,"*.po");
   if(maxlangs==0)return;
-  nlangs = get_filelist(smokeview_bindir,"*.po", maxlangs, &filelistinfo);
+  nlangs = MakeFileList(smokeview_bindir,"*.po", maxlangs, NO, &filelistinfo);
   if(nlangs==0)return;
   for(i=0;i<nlangs;i++){
     char *file;
@@ -190,16 +190,16 @@ void init_lang(void){
 }
 #endif
 
-/* ------------------ readboundini ------------------------ */
+/* ------------------ ReadBoundINI ------------------------ */
 
-void readboundini(void){
+void ReadBoundINI(void){
   FILE *stream = NULL;
   char *fullfilename = NULL;
 
   if(boundini_filename == NULL)return;
-  fullfilename = get_filename(smokeviewtempdir, boundini_filename, tempdir_flag);
+  fullfilename = GetFileName(smokeviewtempdir, boundini_filename, tempdir_flag);
   if(fullfilename != NULL)stream = fopen(fullfilename, "r");
-  if(stream == NULL || is_file_newer(smv_filename, fullfilename) == 1){
+  if(stream == NULL || IsFileNewer(smv_filename, fullfilename) == 1){
     if(stream != NULL)fclose(stream);
     FREEMEMORY(fullfilename);
     return;
@@ -234,7 +234,7 @@ void readboundini(void){
         if(lenbuffer2 != 0 &&
           strcmp(patchi->label.shortlabel, buffer2ptr) == 0 &&
           patchi->filetype == filetype&&
-          is_file_newer(boundini_filename, patchi->file) == 1){
+          IsFileNewer(boundini_filename, patchi->file) == 1){
           bounddata *boundi;
 
           boundi = &patchi->bounds;
@@ -252,9 +252,9 @@ void readboundini(void){
   return;
 }
 
-/* ------------------ setup_case ------------------------ */
+/* ------------------ SetupCase ------------------------ */
 
-int setup_case(int argc, char **argv){
+int SetupCase(int argc, char **argv){
   int return_code;
   char *input_file;
 
@@ -291,6 +291,9 @@ int setup_case(int argc, char **argv){
     case 0:
       ReadSMVDynamic(input_file);
       break;
+    case 3:
+      return 3;
+      break;
     default:
       ASSERT(FFALSE);
   }
@@ -303,15 +306,15 @@ int setup_case(int argc, char **argv){
 
   CheckMemory;
   ReadINI(NULL);
-  readboundini();
+  ReadBoundINI();
   if(use_graphics==0)return 0;
 #ifdef pp_LANG
-  init_lang();
+  InitLang();
 #endif
 
-  if(ntours==0)setup_tour();
+  if(ntourinfo==0)setup_tour();
   glui_colorbar_setup(mainwindow_id);
-  glui_motion_setup(mainwindow_id);
+  gluiMotionSetup(mainwindow_id);
   glui_bounds_setup(mainwindow_id);
   glui_shooter_setup(mainwindow_id);
   glui_geometry_setup(mainwindow_id);
@@ -343,13 +346,12 @@ int setup_case(int argc, char **argv){
   // intialise info header
   initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash,
                        chidfilebase);
-  PRINTF("initialised titlea: %s\n", titleinfo.titleline);
   return 0;
 }
 
-/* ------------------ setup_glut ------------------------ */
+/* ------------------ SetupGlut ------------------------ */
 
-void setup_glut(int argc, char **argv){
+void SetupGlut(int argc, char **argv){
   int i;
   char *smoketempdir;
   size_t lensmoketempdir;
@@ -367,18 +369,29 @@ void setup_glut(int argc, char **argv){
 
   smoketempdir=getenv("SVTEMPDIR");
   if(smoketempdir==NULL)smoketempdir=getenv("svtempdir");
-  if(smoketempdir==NULL)smoketempdir=getenv("TEMP");
-  if(smoketempdir==NULL)smoketempdir=getenv("temp");
-  if(smoketempdir==NULL){
+  if(smoketempdir == NULL){
+    char *homedir;
+
+    homedir = getenv("HOME");
+    if(homedir != NULL){
+      NewMemory((void **)&smoketempdir, strlen(homedir) + strlen(dirseparator) + strlen(".smokeview") + 1);
+      strcpy(smoketempdir, homedir);
+      strcat(smoketempdir, dirseparator);
+      strcat(smoketempdir, ".smokeview");
+      if(FileExistsOrig(smoketempdir)==NO){
+        if(MKDIR(smoketempdir)!=0){
+          FREEMEMORY(smoketempdir);
+        }
+      }
+    }
+  }
+
+  if(smoketempdir == NULL){
     NewMemory((void **)&smoketempdir,8);
-#ifdef pp_LINUX
-    strcpy(smoketempdir,"/tmp");
-#endif
-#ifdef pp_OSX
-    strcpy(smoketempdir,"/tmp");
-#endif
 #ifdef WIN32
     strcpy(smoketempdir,"c:\temp");
+#else
+    strcpy(smoketempdir, "/tmp");
 #endif
   }
 
@@ -386,7 +399,7 @@ void setup_glut(int argc, char **argv){
     lensmoketempdir = strlen(smoketempdir);
     if(NewMemory((void **)&smokeviewtempdir,(unsigned int)(lensmoketempdir+2))!=0){
       STRCPY(smokeviewtempdir,smoketempdir);
-      if(strncmp(smokeviewtempdir+lensmoketempdir-1,dirseparator,1)!=0){
+      if(smokeviewtempdir[lensmoketempdir-1]!=dirseparator[0]){
         STRCAT(smokeviewtempdir,dirseparator);
       }
       PRINTF("%s",_("Scratch directory:"));
@@ -394,7 +407,7 @@ void setup_glut(int argc, char **argv){
     }
   }
 #ifdef pp_BETA
-  fprintf(stderr,"%s\n",_("*** This version of Smokeview is intended for review and testing ONLY. ***"));
+  fprintf(stderr,"%s\n",_("\n*** This version of Smokeview is intended for review and testing ONLY. ***"));
 #endif
 
 #ifdef pp_OSX
@@ -402,9 +415,9 @@ void setup_glut(int argc, char **argv){
 #endif
   if(use_graphics==1){
     PRINTF("\n");
-    PRINTF("%s",_("Initializing Glut\n"));
+    PRINTF("%s\n",_("initializing Glut"));
     glutInit(&argc, argv);
-    PRINTF("%s\n",_("Glut initialization completed\n"));
+    PRINTF("%s\n",_("complete"));
   }
 #ifdef pp_OSX
   chdir(workingdir);
@@ -412,7 +425,7 @@ void setup_glut(int argc, char **argv){
 
   if(use_graphics==1){
 #ifdef _DEBUG
-    PRINTF("%s",_("Initializing Smokeview graphics window - "));
+    PRINTF("%s",_("initializing Smokeview graphics window - "));
 #endif
     glutInitWindowSize(screenWidth, screenHeight);
 #ifdef _DEBUG
@@ -454,9 +467,9 @@ void setup_glut(int argc, char **argv){
   rgb_plot3d_contour[nrgb-1]=&rgb_full[255][0];
 }
 
-/* ------------------ get_opengl_version ------------------------ */
+/* ------------------ GetOpenGLVersion ------------------------ */
 
-int get_opengl_version(char *version_label){
+int GetOpenGLVersion(char *version_label){
   const GLubyte *version_string;
   char version_label2[256];
   int i;
@@ -487,7 +500,7 @@ void InitOpenGL(void){
   int type;
   int err;
 
-  PRINTF("%s",_("Initializing OpenGL\n"));
+  PRINTF("%s\n",_("initializing OpenGL"));
 
   type = GLUT_RGB|GLUT_DEPTH;
   if(buffertype==GLUT_DOUBLE){
@@ -511,6 +524,9 @@ void InitOpenGL(void){
 
 #ifdef _DEBUG
   PRINTF("%s",_("   Initializing Glut display mode - "));
+#endif
+#ifdef pp_OSXGLUT32
+  type|=GLUT_3_2_CORE_PROFILE;
 #endif
   glutInitDisplayMode(type);
 #ifdef _DEBUG
@@ -543,7 +559,7 @@ void InitOpenGL(void){
   PRINTF("%s\n",_("initialized"));
 #endif
 
-  opengl_version = get_opengl_version(opengl_version_label);
+  opengl_version = GetOpenGLVersion(opengl_version_label);
 
   err=0;
  #ifdef pp_GPU
@@ -560,7 +576,7 @@ void InitOpenGL(void){
       err=1;
     }
     else{
-      err=init_shaders();
+      err= InitShaders();
     }
 #ifdef _DEBUG
     if(err==0){
@@ -574,7 +590,7 @@ void InitOpenGL(void){
 #endif
 #ifdef pp_CULL
   if(err==0){
-    err=init_cull_exts();
+    err= InitCullExts();
 #ifdef _DEBUG
     if(err==0){
       PRINTF("%s\n",_("   Culling extension initialization succeeded"));
@@ -612,12 +628,12 @@ void InitOpenGL(void){
     if(nblueshift<0)nblueshift=0;
   }
   opengldefined=1;
-  PRINTF("%s",_("OpenGL initialization completed\n\n"));
+  PRINTF("%s\n\n",_("complete"));
 }
 
-/* ------------------ set_3dsmoke_startup ------------------------ */
+/* ------------------ Set3DSmokeStartup ------------------------ */
 
- void set_3dsmoke_startup(void){
+ void Set3DSmokeStartup(void){
    int i;
 
     for(i=0;i<nvsliceinfo;i++){
@@ -706,70 +722,9 @@ void InitOpenGL(void){
     }
  }
 
- /* ------------------ clear_3dsmoke_startup ------------------------ */
+ /* ------------------ PutStartupSmoke3d ------------------------ */
 
- void clear_3dsmoke_startup(void){
-   int i;
-
-    for(i=0;i<nvsliceinfo;i++){
-      vslicedata *vslicei;
-
-      vslicei = vsliceinfo + i;
-
-      vslicei->autoload=0;
-    }
-
-    for(i=0;i<npartinfo;i++){
-      partdata *parti;
-
-      parti = partinfo + i;
-
-      parti->autoload=0;
-    }
-
-    for(i=0;i<nplot3dinfo;i++){
-      plot3ddata *plot3di;
-
-      plot3di = plot3dinfo + i;
-
-      plot3di->autoload=0;
-    }
-
-    for(i=0;i<nsmoke3dinfo;i++){
-      smoke3ddata *smoke3di;
-
-      smoke3di = smoke3dinfo + i;
-
-      smoke3di->autoload=0;
-    }
-
-    for(i=0;i<npatchinfo;i++){
-      patchdata *patchi;
-
-      patchi = patchinfo + i;
-
-      patchi->autoload=0;
-    }
-
-    for(i=0;i<nisoinfo;i++){
-      isodata *isoi;
-
-      isoi = isoinfo + i;
-
-      isoi->autoload=0;
-    }
-    for(i=0;i<nsliceinfo;i++){
-      slicedata *slicei;
-
-      slicei = sliceinfo + i;
-
-      slicei->autoload=0;
-    }
- }
-
- /* ------------------ put_startup_smoke3d ------------------------ */
-
-  void put_startup_smoke3d(FILE *fileout){
+  void PutStartupSmoke3d(FILE *fileout){
    int i;
    int nstartup;
 
@@ -953,9 +908,9 @@ void InitOpenGL(void){
    fprintf(fileout," %i \n",compress_autoloaded);
  }
 
- /* ------------------ get_startup_part ------------------------ */
+ /* ------------------ GetStartupPart ------------------------ */
 
-  void get_startup_part(int seq_id){
+  void GetStartupPart(int seq_id){
     int i;
     for(i=0;i<npartinfo;i++){
       partdata *parti;
@@ -968,9 +923,9 @@ void InitOpenGL(void){
     }
   }
 
- /* ------------------ get_startup_plot3d ------------------------ */
+ /* ------------------ GetStartupPlot3d ------------------------ */
 
-  void get_startup_plot3d(int seq_id){
+  void GetStartupPlot3d(int seq_id){
     int i;
     for(i=0;i<nplot3dinfo;i++){
       plot3ddata *plot3di;
@@ -983,9 +938,9 @@ void InitOpenGL(void){
     }
   }
 
- /* ------------------ get_startup_patch ------------------------ */
+ /* ------------------ GetStartupPatch ------------------------ */
 
-  void get_startup_patch(int seq_id){
+  void GetStartupPatch(int seq_id){
     int i;
     for(i=0;i<npatchinfo;i++){
       patchdata *patchi;
@@ -998,9 +953,9 @@ void InitOpenGL(void){
     }
   }
 
- /* ------------------ get_startup_smoke ------------------------ */
+ /* ------------------ GetStartupSmoke ------------------------ */
 
-  void get_startup_smoke(int seq_id){
+  void GetStartupSmoke(int seq_id){
     int i;
     for(i=0;i<nsmoke3dinfo;i++){
       smoke3ddata *smoke3di;
@@ -1015,9 +970,9 @@ void InitOpenGL(void){
   }
 
 
- /* ------------------ get_startup_iso ------------------------ */
+ /* ------------------ GetStartupISO ------------------------ */
 
-  void get_startup_iso(int seq_id){
+  void GetStartupISO(int seq_id){
     int i;
     for(i=0;i<nisoinfo;i++){
       isodata *isoi;
@@ -1031,9 +986,9 @@ void InitOpenGL(void){
     }
   }
 
- /* ------------------ get_startup_slice ------------------------ */
+ /* ------------------ GetStartupSlice ------------------------ */
 
-  void get_startup_slice(int seq_id){
+  void GetStartupSlice(int seq_id){
     int i;
     for(i=0;i<nsliceinfo;i++){
       slicedata *slicei;
@@ -1047,9 +1002,9 @@ void InitOpenGL(void){
     }
   }
 
- /* ------------------ get_startup_vslice ------------------------ */
+ /* ------------------ GetStartupVSlice ------------------------ */
 
-  void get_startup_vslice(int seq_id){
+  void GetStartupVSlice(int seq_id){
     int i;
     for(i=0;i<nvsliceinfo;i++){
       vslicedata *vslicei;
@@ -1063,9 +1018,9 @@ void InitOpenGL(void){
     }
   }
 
- /* ------------------ load_Files ------------------------ */
+ /* ------------------ LoadFiles ------------------------ */
 
-  void load_Files(void){
+  void LoadFiles(void){
     int i;
     int errorcode;
 
@@ -1082,7 +1037,7 @@ void InitOpenGL(void){
         readplot3d(plot3di->file,i,LOAD,&errorcode);
       }
     }
-    npartframes_max=get_min_partframes();
+    npartframes_max=GetMinPartFrames(PARTFILE_RELOADALL);
     for(i=0;i<npartinfo;i++){
       partdata *parti;
 
@@ -1154,8 +1109,8 @@ void InitOpenGL(void){
       smoke3ddata *smoke3di;
 
       smoke3di = smoke3dinfo + i;
-      if(smoke3di->autoload==0&&smoke3di->loaded==1)readsmoke3d(i,UNLOAD,&errorcode);
-      if(smoke3di->autoload==1)readsmoke3d(i,LOAD,&errorcode);
+      if(smoke3di->autoload==0&&smoke3di->loaded==1)ReadSmoke3D(i,UNLOAD,&errorcode);
+      if(smoke3di->autoload==1)ReadSmoke3D(i,LOAD,&errorcode);
     }
     for(i=0;i<npatchinfo;i++){
       patchdata *patchi;
@@ -1167,14 +1122,14 @@ void InitOpenGL(void){
     force_redisplay=1;
     UpdateFrameNumber(0);
     updatemenu=1;
-    update_load_Files=0;
+    update_load_files=0;
     hide_glui_alert();
     TrainerViewMenu(trainerview);
   }
 
-/* ------------------ init_texturedir ------------------------ */
+/* ------------------ InitTextureDir ------------------------ */
 
-void init_texturedir(void){
+void InitTextureDir(void){
   char *texture_buffer;
   size_t texture_len;
 
@@ -1194,17 +1149,28 @@ void init_texturedir(void){
   }
 }
 
-/* ------------------ initvars ------------------------ */
+/* ------------------ InitVars ------------------------ */
 
-void initvars(void){
+void InitVars(void){
   int i;
+
+  curdir_writable = Writable(".");
+  windrose_circ.ncirc=0;
+  Init_Circle(180, &windrose_circ);
+
+  object_circ.ncirc=0;
+  cvent_circ.ncirc=0;
 
 #ifdef pp_RENDER360_DEBUG
   NewMemory((void **)&screenvis, nscreeninfo * sizeof(int));
-  for (i = 0; i < nscreeninfo; i++) {
+  for(i = 0; i < nscreeninfo; i++){
     screenvis[i] = 1;
   }
 #endif
+
+  beam_color[0] = 255 * foregroundcolor[0];
+  beam_color[1] = 255 * foregroundcolor[1];
+  beam_color[2] = 255 * foregroundcolor[2];
 
   cos_geom_max_angle = cos(DEG2RAD*geom_max_angle);
   if(movie_filetype==WMV){
@@ -1296,31 +1262,31 @@ void initvars(void){
   mat_specular_orig[1]=0.5f;
   mat_specular_orig[2]=0.2f;
   mat_specular_orig[3]=1.0f;
-  mat_specular2=getcolorptr(mat_specular_orig);
+  mat_specular2=GetColorPtr(mat_specular_orig);
 
   mat_ambient_orig[0] = 0.5f;
   mat_ambient_orig[1] = 0.5f;
   mat_ambient_orig[2] = 0.2f;
   mat_ambient_orig[3] = 1.0f;
-  mat_ambient2=getcolorptr(mat_ambient_orig);
+  mat_ambient2=GetColorPtr(mat_ambient_orig);
 
   ventcolor_orig[0]=1.0;
   ventcolor_orig[1]=0.0;
   ventcolor_orig[2]=1.0;
   ventcolor_orig[3]=1.0;
-  ventcolor=getcolorptr(ventcolor_orig);
+  ventcolor=GetColorPtr(ventcolor_orig);
 
   block_ambient_orig[0] = 1.0;
   block_ambient_orig[1] = 0.8;
   block_ambient_orig[2] = 0.4;
   block_ambient_orig[3] = 1.0;
-  block_ambient2=getcolorptr(block_ambient_orig);
+  block_ambient2=GetColorPtr(block_ambient_orig);
 
   block_specular_orig[0] = 0.0;
   block_specular_orig[1] = 0.0;
   block_specular_orig[2] = 0.0;
   block_specular_orig[3] = 1.0;
-  block_specular2=getcolorptr(block_specular_orig);
+  block_specular2=GetColorPtr(block_specular_orig);
 
   for(i=0;i<256;i++){
     boundarylevels256[i]=(float)i/255.0;
@@ -1368,7 +1334,7 @@ void initvars(void){
   direction_color[2]=139.0/255.0;
   direction_color[3]=1.0;
 
-  direction_color_ptr=getcolorptr(direction_color);
+  direction_color_ptr=GetColorPtr(direction_color);
   show_slice_terrain=0;
 
   shooter_uvw[0]=0.0;
@@ -1559,9 +1525,6 @@ void initvars(void){
   settmax_p=0, settmax_b=0, settmax_s=0, settmax_z=0, settmax_i=0;
   tmin_p=1., tmin_b=1., tmin_s=1., tmin_z=1., tmin_i=1.;
   tmax_p=0., tmax_b=0., tmax_s=0., tmax_z=0., tmax_i=0.;
-  patchmin=1., patchmax=0.;
-  targetmin=1.0, targetmax=0.0;
-  partmin=1., partmax=0., slicemin=1., slicemax=0.;
   speedmax=0.0;
   hrrpuv_max_smv=1200.0;
   FlowDir=1,ClipDir=1;
@@ -1759,6 +1722,11 @@ void initvars(void){
   backgroundbasecolor[2]=0.0;
   backgroundbasecolor[3]=1.0;
 
+  glui_backgroundbasecolor[0] = 255 * backgroundbasecolor[0];
+  glui_backgroundbasecolor[1] = 255 * backgroundbasecolor[1];
+  glui_backgroundbasecolor[2] = 255 * backgroundbasecolor[2];
+  glui_backgroundbasecolor[3] = 255 * backgroundbasecolor[3];
+
   backgroundcolor[0]=0.0;
   backgroundcolor[1]=0.0;
   backgroundcolor[2]=0.0;
@@ -1768,6 +1736,11 @@ void initvars(void){
   foregroundbasecolor[1]=1.0;
   foregroundbasecolor[2]=1.0;
   foregroundbasecolor[3]=1.0;
+
+  glui_foregroundbasecolor[0] = 255 * foregroundbasecolor[0];
+  glui_foregroundbasecolor[1] = 255 * foregroundbasecolor[1];
+  glui_foregroundbasecolor[2] = 255 * foregroundbasecolor[2];
+  glui_foregroundbasecolor[3] = 255 * foregroundbasecolor[3];
 
   foregroundcolor[0]=1.0;
   foregroundcolor[1]=1.0;
@@ -2125,7 +2098,7 @@ void initvars(void){
   for(i = 0; i < MAX_ISO_COLORS; i++){
     float graylevel;
 
-    graylevel = color2bw(iso_colors+4*i);
+    graylevel = TOBW(iso_colors+4*i);
     iso_colorsbw[4*i+0] = graylevel;
     iso_colorsbw[4*i+1] = graylevel;
     iso_colorsbw[4*i+2] = graylevel;
@@ -2199,9 +2172,9 @@ void initvars(void){
   }
 }
 
-/* ------------------ copy_args ------------------------ */
+/* ------------------ CopyArgs ------------------------ */
 
-void copy_args(int *argc, char **aargv, char ***argv_sv){
+void CopyArgs(int *argc, char **aargv, char ***argv_sv){
 #ifdef WIN32
   char *filename=NULL;
   char **argv=NULL;

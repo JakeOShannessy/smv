@@ -9,9 +9,9 @@
 #define EXPMIN -1
 #define EXPMAX 3
 
-/* ------------------ getBoundaryColors ------------------------ */
+/* ------------------ GetBoundaryColors ------------------------ */
 
-void getBoundaryColors(float *t, int nt, unsigned char *it,
+void GetBoundaryColors(float *t, int nt, unsigned char *it,
               int settmin, float *ttmin, int settmax, float *ttmax,
               float *tmin_arg, float *tmax_arg,
               int ndatalevel, int nlevel,
@@ -91,7 +91,7 @@ void getBoundaryColors(float *t, int nt, unsigned char *it,
   }
   range = local_tmax - local_tmin;
   factor = range/(nlevel-2);
-  for (n=1;n<nlevel-2;n++){
+  for(n=1;n<nlevel-2;n++){
     tval = local_tmin + (n-1)*factor;
     Num2String(&labels[n][0],tval);
   }
@@ -104,9 +104,9 @@ void getBoundaryColors(float *t, int nt, unsigned char *it,
   Num2String(&labels[nlevel-1][0],tval);
 }
 
-/* ------------------ getBoundaryColors2 ------------------------ */
+/* ------------------ GetBoundaryColors2 ------------------------ */
 
-void getBoundaryColors2(float *t, int nt, unsigned char *it,
+void GetBoundaryColors2(float *t, int nt, unsigned char *it,
               int settmin, float *ttmin, int settmax, float *ttmax,
               float *tmin_arg, float *tmax_arg,
               int ndatalevel,
@@ -173,7 +173,7 @@ void WriteBoundINI(void){
   int i;
 
   if(boundini_filename == NULL)return;
-  fullfilename = get_filename(smokeviewtempdir, boundini_filename, tempdir_flag);
+  fullfilename = GetFileName(smokeviewtempdir, boundini_filename, tempdir_flag);
 
   if(fullfilename == NULL)return;
 
@@ -251,9 +251,9 @@ void UpdatePatchBounds(patchdata *patchi){
   FreeHistogram(&full_histogram);
 }
 
-/* ------------------ getBoundaryColors3 ------------------------ */
+/* ------------------ GetBoundaryColors3 ------------------------ */
 
-void getBoundaryColors3(patchdata *patchi, float *t, int nt, unsigned char *it,
+void GetBoundaryColors3(patchdata *patchi, float *t, int nt, unsigned char *it,
               int settmin, float *ttmin, int settmax, float *ttmax,
               float *tmin_arg, float *tmax_arg,
               int nlevel,
@@ -341,7 +341,7 @@ void getBoundaryColors3(patchdata *patchi, float *t, int nt, unsigned char *it,
   }
   range = new_tmax - new_tmin;
   factor = range/(nlevel-2);
-  for (n=1;n<nlevel-2;n++){
+  for(n=1;n<nlevel-2;n++){
     tval = new_tmin + (n-1)*factor;
     Num2String(&labels[n][0],tval);
   }
@@ -372,7 +372,7 @@ void UpdateAllPatchColors(void){
 
     npatchvals = meshi->npatch_times*meshi->npatchsize;
 
-    getBoundaryColors3(patchi,meshi->patchval, npatchvals, meshi->cpatchval,
+    GetBoundaryColors3(patchi,meshi->patchval, npatchvals, meshi->cpatchval,
     setpatchmin,&patchmin, setpatchmax,&patchmax,
     &patchmin_global, &patchmax_global,
     nrgb, colorlabelpatch,patchi->scale,boundarylevels256,
@@ -380,9 +380,9 @@ void UpdateAllPatchColors(void){
   }
 }
 
-/* ------------------ getBoundaryLabels ------------------------ */
+/* ------------------ GetBoundaryLabels ------------------------ */
 
-void getBoundaryLabels(
+void GetBoundaryLabels(
               float local_tmin, float local_tmax,
               char **labels, char *scale, float *tvals256, int nlevel){
   int n;
@@ -410,7 +410,7 @@ void getBoundaryLabels(
   }
   range = local_tmax - local_tmin;
   factor = range/(nlevel-2);
-  for (n=1;n<nlevel-2;n++){
+  for(n=1;n<nlevel-2;n++){
     tval = local_tmin + (n-1)*factor;
     Num2String(&labels[n][0],tval);
   }
@@ -715,7 +715,7 @@ void GetPart5Colors(partdata *parti, int nlevel, int convert_flag){
     range = local_tmax - local_tmin;
 
     factor = range/(nlevel-2);
-    for (n=1;n<nlevel-2;n++){
+    for(n=1;n<nlevel-2;n++){
       tval = local_tmin + (n-1)*factor;
       Num2String(&labels[n][0],tval);
     }
@@ -804,7 +804,7 @@ void GetZoneColors(const float *t, int nt, unsigned char *it,
   }
   range = local_tmax - local_tmin;
   factor = range/(nlevel-2);
-  for (n=1;n<nlevel-2;n++){
+  for(n=1;n<nlevel-2;n++){
     tval = local_tmin + (n-1)*factor;
     Num2String(&labels[n][0],tval);
   }
@@ -958,7 +958,7 @@ void GetPlot3DColors(int plot3dvar, int settmin, float *ttmin, int settmax, floa
   range = local_tmax-local_tmin;
   dt = range/(float)(nlevel-1);
   dtorig = (tmaxorig-tminorig)/(float)(nlevel-1);
-  for (n=0;n<nlevel-1;n++){
+  for(n=0;n<nlevel-1;n++){
     tval = local_tmin + n*dt;
     Num2String(&labels[n][0],tval);
     Num2String(&labelsiso[n][0],tval+dt/2.0);
@@ -1064,7 +1064,7 @@ void GetSliceColors(const float *t, int nt, unsigned char *it,
 
   range = local_tmax-local_tmin;
   dt = range/(float)(nlevel-2);
-  for (n=1;n<nlevel-1;n++){
+  for(n=1;n<nlevel-1;n++){
     tval = local_tmin + (n-1)*dt;
     Num2String(&labels[n][0],tval);
   }
@@ -1111,7 +1111,7 @@ void GetSliceLabels(float local_tmin, float local_tmax, int nlevel,
 
   range = local_tmax-local_tmin;
   dt = range/(float)(nlevel-2);
-  for (n=1;n<nlevel-1;n++){
+  for(n=1;n<nlevel-1;n++){
     tval = local_tmin + (n-1)*dt;
     Num2String(&labels[n][0],tval);
   }
@@ -1155,7 +1155,7 @@ void GetIsoLabels(float local_tmin, float local_tmax, int nlevel,
 
   range = local_tmax-local_tmin;
   dt = range/(float)(nlevel-2);
-  for (n=1;n<nlevel-1;n++){
+  for(n=1;n<nlevel-1;n++){
     tval = local_tmin + (n-1)*dt;
     Num2String(&labels[n][0],tval);
   }
@@ -1270,7 +1270,7 @@ void InitRGB(void){
   if(use_transparency_data==1)transparent_level_local=transparent_level;
 
   if(setbw==0){
-    colorconvert(TO_COLOR);
+    ConvertColor(TO_COLOR);
     if(nrgb_ini !=0){
       nrgb = nrgb_ini;
       for(n=0;n<nrgb_ini;n++){
@@ -1290,7 +1290,7 @@ void InitRGB(void){
     }
   }
   else{
-    colorconvert(TO_BW);
+    ConvertColor(TO_BW);
     for(n=0;n<nrgb;n++){
       rgb[n][0] = bw_base[n][0];
       rgb[n][1] = bw_base[n][1];
@@ -1381,14 +1381,14 @@ void UpdateSmokeColormap(int option){
         fire1 = fire_cb + 3 * nn2;
         fire2 = fire1 + 3;
         if(firecolormap_type == FIRECOLORMAP_CONSTRAINT&&val <= valcut){
-          smoke_color1[0] = fire1[0]*(1 - smoke_albedo) + smoke_albedo;
-          smoke_color1[1] = fire1[1]*(1 - smoke_albedo) + smoke_albedo;
-          smoke_color1[2] = fire1[2]*(1 - smoke_albedo) + smoke_albedo;
+          smoke_color1[0] = fire1[0];
+          smoke_color1[1] = fire1[1];
+          smoke_color1[2] = fire1[2];
           fire1 = smoke_color1;
-          
-          smoke_color2[0] = fire2[0]*(1 - smoke_albedo) + smoke_albedo;
-          smoke_color2[1] = fire2[1]*(1 - smoke_albedo) + smoke_albedo;
-          smoke_color2[2] = fire2[2]*(1 - smoke_albedo) + smoke_albedo;
+
+          smoke_color2[0] = fire2[0];
+          smoke_color2[1] = fire2[1];
+          smoke_color2[2] = fire2[2];
           fire2 = smoke_color2;
         }
         rgb_colormap[4*n]  =(1.0-factor)*fire1[0]+factor*fire2[0];
@@ -1886,19 +1886,9 @@ void GetRGB(unsigned int val, unsigned char *rr, unsigned char *gg, unsigned cha
   return;
 }
 
-/* ------------------ color2bw ------------------------ */
+/* ------------------ GetColorPtr ------------------------ */
 
-float color2bw(const float *color){
-  float returnval;
-
-  returnval = 0.299*color[0] + 0.587*color[1] + 0.114*color[2];
-  return returnval;
-}
-
-
-/* ------------------ getcolorptr ------------------------ */
-
-float *getcolorptr(const float *color){
+float *GetColorPtr(const float *color){
   colordata *colorptr,*oldlastcolor,*lastcolor;
 
   int i;
@@ -1909,7 +1899,7 @@ float *getcolorptr(const float *color){
       firstcolor->color[i]=color[i];
       firstcolor->full_color[i]=color[i];
     }
-    firstcolor->bw_color[0] = color2bw(color);
+    firstcolor->bw_color[0] = TOBW(color);
     firstcolor->bw_color[1] = firstcolor->bw_color[0];
     firstcolor->bw_color[2] = firstcolor->bw_color[0];
     firstcolor->bw_color[3] = color[3];
@@ -1932,7 +1922,7 @@ float *getcolorptr(const float *color){
     lastcolor->color[i]=color[i];
     lastcolor->full_color[i]=color[i];
   }
-  lastcolor->bw_color[0] = 0.299*color[0]+0.587*color[1]+0.114*color[2];
+  lastcolor->bw_color[0] = TOBW(color);
   lastcolor->bw_color[1] = lastcolor->bw_color[0];
   lastcolor->bw_color[2] = lastcolor->bw_color[0];
   lastcolor->bw_color[3] = color[3];
@@ -1940,9 +1930,9 @@ float *getcolorptr(const float *color){
   return lastcolor->color;
 }
 
-/* ------------------ colorconvert ------------------------ */
+/* ------------------ ConvertColor ------------------------ */
 
-void colorconvert(int flag){
+void ConvertColor(int flag){
   colordata *colorptr;
   extern colordata *firstcolor;
 

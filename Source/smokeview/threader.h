@@ -15,18 +15,18 @@
 // setup LOCKS
 
 #ifdef pp_THREAD
-  #define LOCK_COMPRESS pthread_mutex_lock(&mutexCOMPRESS);
-  #define UNLOCK_COMPRESS pthread_mutex_unlock(&mutexCOMPRESS);
-  #define LOCK_VOLLOAD pthread_mutex_lock(&mutexVOLLOAD);
-  #define UNLOCK_VOLLOAD pthread_mutex_unlock(&mutexVOLLOAD);
+  #define LOCK_COMPRESS     pthread_mutex_lock(&mutexCOMPRESS);
+  #define UNLOCK_COMPRESS   pthread_mutex_unlock(&mutexCOMPRESS);
+  #define LOCK_VOLLOAD      pthread_mutex_lock(&mutexVOLLOAD);
+  #define UNLOCK_VOLLOAD    pthread_mutex_unlock(&mutexVOLLOAD);
 #ifdef pp_THREADIBLANK
-  #define LOCK_IBLANK pthread_mutex_lock(&mutexIBLANK);
-  #define UNLOCK_IBLANK pthread_mutex_unlock(&mutexIBLANK);
-  #define JOIN_IBLANK pthread_join(makeiblank_thread_id,NULL);
+  #define LOCK_IBLANK       pthread_mutex_lock(&mutexIBLANK);
+  #define UNLOCK_IBLANK     pthread_mutex_unlock(&mutexIBLANK);
+  #define JOIN_IBLANK       pthread_join(makeiblank_thread_id,NULL);
 #else
-#define LOCK_IBLANK
-#define UNLOCK_IBLANK
-#define JOIN_IBLANK
+  #define LOCK_IBLANK
+  #define UNLOCK_IBLANK
+  #define JOIN_IBLANK
 #endif
 #else
   #define LOCK_COMPRESS
@@ -39,7 +39,7 @@
 #endif
 
 #ifdef pp_THREAD
-void mt_read_volsmoke_allframes_allmeshes2(void);
+void mt_ReadVolsmokeAllFramesAllMeshes2(void);
 #endif
 
 // define mutex's and thread_ids

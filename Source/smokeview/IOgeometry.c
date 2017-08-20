@@ -13,8 +13,6 @@ edgedata *edge_list;
 tridata *triangle_list;
 tetdata *volume_list;
 
-void Volume_CB(int var);
-
 /* ------------------ CalcTriNormal ------------------------ */
 
 void CalcTriNormal(float *v1, float *v2, float *v3, float *norm){
@@ -515,9 +513,9 @@ void draw_geom(int flag, int timestate){
           v0 = xyzptr[facelist[3 * k]];
           v1 = xyzptr[facelist[3 * k + 1]];
           v2 = xyzptr[facelist[3 * k + 2]];
-          VECDIFF3(v1m0, v1, v0);
-          VECDIFF3(v2m0, v2, v0);
-          VECDIFF3(v2m1, v2, v1);
+          VEC3DIFF(v1m0, v1, v0);
+          VEC3DIFF(v2m0, v2, v0);
+          VEC3DIFF(v2m1, v2, v1);
           CROSS(vcross, v1m0, v2m0);
 
           for(kk = 0; kk < 3; kk++){
@@ -533,8 +531,8 @@ void draw_geom(int flag, int timestate){
       }
       glEnd();
       glDisable(GL_COLOR_MATERIAL);
-	  glDisable(GL_LIGHTING);
-	  glPopMatrix();
+      glDisable(GL_LIGHTING);
+      glPopMatrix();
     }
 
       // draw volume outline
@@ -645,9 +643,9 @@ void draw_geom(int flag, int timestate){
             pknorm = pk->vert_norm;
             xyzval = xyzptr[ind[k]];
 
-            VECEQ3(xyzval2, pknorm);
+            VEC3EQ(xyzval2, pknorm);
             VEC3MA(xyzval2, geom_outline_offset);
-            VECADD3(xyzval2, xyzval2, xyzval);
+            VEC3ADD(xyzval2, xyzval2, xyzval);
             glVertex3fv(xyzval2);
           }
         }
@@ -822,7 +820,7 @@ void draw_geom(int flag, int timestate){
 
     // geometry diagnostics
 
-    if(geomlisti->nedges>0 && (highlight_edge0 == 1||highlight_edge1 == 1 || highlight_edge2 == 1 || highlight_edgeother == 1)) {
+    if(geomlisti->nedges>0 && (highlight_edge0 == 1||highlight_edge1 == 1 || highlight_edge2 == 1 || highlight_edgeother == 1)){
       int ii;
 
       glPushMatrix();
@@ -830,7 +828,7 @@ void draw_geom(int flag, int timestate){
       glTranslatef(-xbar0, -ybar0, -zbar0);
       glBegin(GL_LINES);
 
-      for (ii = 0; ii < geomlisti->nedges; ii++) {
+      for(ii = 0; ii < geomlisti->nedges; ii++){
         edgedata *edgei;
         float *xyz0, *xyz1;
         vertdata *v0, *v1;
@@ -844,13 +842,13 @@ void draw_geom(int flag, int timestate){
            (highlight_edge1==1&&edgei->ntriangles==1)||
            (highlight_edge2==1&&edgei->ntriangles==2)||
            (highlight_edgeother==1&&edgei->ntriangles>2)){
-          if(edgei->ntriangles > 2) {
+          if(edgei->ntriangles > 2){
             glColor3fv(cyan);
           }
-          else if(edgei->ntriangles == 1) {
+          else if(edgei->ntriangles == 1){
             glColor3fv(green);
           }
-          else {
+          else{
             glColor3fv(blue);
           }
           glVertex3fv(xyz0);
@@ -862,7 +860,7 @@ void draw_geom(int flag, int timestate){
       glPopMatrix();
 
     }
-    if(geomlisti->nverts>0 && highlight_vertexdup == 1) {
+    if(geomlisti->nverts>0 && highlight_vertexdup == 1){
       int ii;
 
       glPushMatrix();
@@ -873,11 +871,11 @@ void draw_geom(int flag, int timestate){
 
       glColor3fv(magenta);
 
-      for (ii = 0; ii < geomlisti->nverts; ii++) {
+      for(ii = 0; ii < geomlisti->nverts; ii++){
         vertdata *verti;
 
         verti = geomlisti->verts + ii;
-        if(verti->isdup == 1) {
+        if(verti->isdup == 1){
           float *xyz;
 
           xyz = verti->xyz;
@@ -913,18 +911,14 @@ void smooth_geom_normals(geomlistdata *geomlisti, int geomtype){
 
     verti = geomlisti->verts + i;
     norm = verti->vert_norm;
-    norm[0] = 0.0;
-    norm[1] = 0.0;
-    norm[2] = 0.0;
+    VEC3EQCONS(norm,0.0);
     for(k = 0; k < verti->ntriangles; k++){
       float *normk;
       tridata *trianglei;
 
       trianglei = verti->triangles[k];
       normk = trianglei->tri_norm;
-      norm[0] += normk[0];
-      norm[1] += normk[1];
-      norm[2] += normk[2];
+      VEC3ADD(norm,norm,normk);
     }
     ReduceToUnit(norm);
 
@@ -949,9 +943,7 @@ void smooth_geom_normals(geomlistdata *geomlisti, int geomtype){
       vertj = trianglei->verts[j];
       norm = trianglei->vert_norm + 3 * j;
       if(vertj->ntriangles>0){
-        norm[0] = 0.0;
-        norm[1] = 0.0;
-        norm[2] = 0.0;
+        VEC3EQCONS(norm,0.0);
       }
       else{
         norm[0] = 0.0;
@@ -961,15 +953,18 @@ void smooth_geom_normals(geomlistdata *geomlisti, int geomtype){
       for(k = 0; k<vertj->ntriangles; k++){
         tridata *trianglek;
         float *tri_normk, cosang;
+        float lengthi, lengthk;
 
         trianglek = vertj->triangles[k];
         if(trianglek->exterior == 0)continue;
         tri_normk = trianglek->tri_norm;
-        cosang = DOT3(tri_normk, tri_normi)/(NORM3(tri_normk)*NORM3(tri_normi));
-        if(use_max_angle==0||geomtype==GEOM_ISO||cosang>cos_geom_max_angle){ // smooth using all triangles if an isosurface
-          norm[0] += tri_normk[0];
-          norm[1] += tri_normk[1];
-          norm[2] += tri_normk[2];
+        lengthk = NORM3(tri_normk);
+        lengthi = NORM3(tri_normi);
+        if(lengthk > 0.0&&lengthi > 0.0){
+          cosang = DOT3(tri_normk, tri_normi) / (lengthi*lengthk);
+          if(use_max_angle == 0 || geomtype == GEOM_ISO || cosang > cos_geom_max_angle){ // smooth using all triangles if an isosurface
+            VEC3ADD(norm, norm, tri_normk);
+          }
         }
       }
       ReduceToUnit(norm);
@@ -1144,7 +1139,7 @@ void update_triangles(int flag,int update){
           vertdata *verti;
 
           verti = geomlisti->verts+i;
-          verti->on_mesh_boundary = on_mesh_boundary(verti->xyz);
+          verti->on_mesh_boundary = OnMeshBoundary(verti->xyz);
           if(verti->on_mesh_boundary==1)nsurface_verts++;
         }
       }
@@ -1193,9 +1188,7 @@ void update_triangles(int flag,int update){
           verti = surface_verts[iii];
           xyzi = verti->xyz;
           normi = verti->vert_norm;
-          avgnorm[0] = normi[0];
-          avgnorm[1] = normi[1];
-          avgnorm[2] = normi[2];
+          VEC3EQ(avgnorm,normi);
           match_verts[iii] = iii;
           for(jjj = iii+1; jjj<nsurface_verts; jjj++){
             vertdata *vertj;
@@ -1208,9 +1201,7 @@ void update_triangles(int flag,int update){
 #define POINTEPS 0.001
             if(ABS(xyzi[0]-xyzj[0])<POINTEPS&&ABS(xyzi[1]-xyzj[1])<POINTEPS&&ABS(xyzi[2]-xyzj[2])<POINTEPS){
               match_verts[jjj] = iii;
-              avgnorm[0] += normj[0];
-              avgnorm[1] += normj[1];
-              avgnorm[2] += normj[2];
+              VEC3ADD(avgnorm,avgnorm,normj);
             }
           }
           ReduceToUnit(avgnorm);
@@ -1221,9 +1212,7 @@ void update_triangles(int flag,int update){
 
               vertj = surface_verts[jjj];
               normj = vertj->vert_norm;
-              normj[0] = avgnorm[0];
-              normj[1] = avgnorm[1];
-              normj[2] = avgnorm[2];
+              VEC3EQ(normj,avgnorm);
             }
           }
         }
@@ -1263,7 +1252,7 @@ void update_triangles(int flag,int update){
 #define FORTREAD(var,count,STREAM) FSEEK(STREAM,4,SEEK_CUR);\
                            returncode=fread(var,4,count,STREAM);\
                            if(returncode!=count)returncode=0;\
-                           if(endianswitch==1&&returncode!=0)endian_switch(var,count);\
+                           if(endianswitch==1&&returncode!=0)EndianSwitch(var,count);\
                            FSEEK(STREAM,4,SEEK_CUR)
 
 #define FORTREADBR(var,count,STREAM) FORTREAD(var,(count),STREAM);if(returncode==0)break;
@@ -1767,10 +1756,11 @@ void read_geom2(geomdata *geomi, int load_flag, int type, int *errorcode){
       FORTREADBR(ijk,3*ntris,stream);
       FORTREADBR(surf_ind,ntris,stream);
       FORTREADBR(texture_coords,6*ntris,stream);
+      CheckMemory;
       if(type==GEOM_ISO)offset=nsurfinfo;
       for(ii=0;ii<ntris;ii++){
         surfdata *surfi;
-        int k;
+        int k, surf_index;
 
         for(k=0;k<3;k++){
           triangles[ii].verts[k]=verts+ijk[3*ii+k]-1;
@@ -1780,7 +1770,13 @@ void read_geom2(geomdata *geomi, int load_flag, int type, int *errorcode){
           triangles[ii].tverts[k]=texture_coords[6*ii+k];
         }
 
-        surfi=surfinfo + surf_ind[ii]+offset;
+        if(type==GEOM_ISO){
+          surf_index = surf_ind[ii] + offset;
+        }
+        else{
+          surf_index = (surf_ind[ii] & 3) + offset;
+        }
+        surfi=surfinfo + surf_index;
         triangles[ii].surf=surfi;
         triangles[ii].insolid = surf_ind[ii];
         triangles[ii].textureinfo=surfi->textureinfo;
@@ -1837,21 +1833,17 @@ void reorder_face(int *faces){
   face_temp[4]=faces[1];
   if(faces[0]<=MIN(faces[1],faces[2]))return;
   if(faces[1]<=MIN(faces[0],faces[2])){
-    faces[0]=face_temp[1];
-    faces[1]=face_temp[2];
-    faces[2]=face_temp[3];
+    VEC3EQ(faces,face_temp);
     return;
   }
-  faces[0]=face_temp[2];
-  faces[1]=face_temp[3];
-  faces[2]=face_temp[4];
+  VEC3EQ(faces,face_temp);
 }
 
 /* ------------------ Compare_Verts2 ------------------------ */
 
 #define VERT_EPS 0.001
 
-int Compare_Verts2(const void *arg1, const void *arg2) {
+int Compare_Verts2(const void *arg1, const void *arg2){
   vertdata *vert1, *vert2;
   float *xyz1, *xyz2;
 
@@ -1874,7 +1866,7 @@ int Compare_Verts2(const void *arg1, const void *arg2) {
 
 /* ------------------ Compare_Edges ------------------------ */
 
-int Compare_Edges(const void *arg1, const void *arg2) {
+int Compare_Edges(const void *arg1, const void *arg2){
   edgedata *edge1, *edge2;
   int *v1, *v2;
 
@@ -1893,7 +1885,7 @@ int Compare_Edges(const void *arg1, const void *arg2) {
 
 /* ------------------ Compare_Edges2 ------------------------ */
 
-int Compare_Edges2(edgedata *edge1, edgedata *edge2) {
+int Compare_Edges2(edgedata *edge1, edgedata *edge2){
   int *v1, *v2;
 
   v1 = edge1->vert_index;
@@ -1974,7 +1966,7 @@ int Compare_Volume_Faces(const void *arg1, const void *arg2){
 
 /* ------------------ get_edge ------------------------ */
 
-edgedata *get_edge(edgedata *edges, int nedges, int iv1, int iv2) {
+edgedata *get_edge(edgedata *edges, int nedges, int iv1, int iv2){
   int iresult;
   edgedata ei, *elow, *emid, *ehigh;
   int low, mid, high;
@@ -1996,12 +1988,12 @@ edgedata *get_edge(edgedata *edges, int nedges, int iv1, int iv2) {
 
   low = 0;
   high = nedges - 1;
-  while(high - low > 1) {
+  while(high - low > 1){
     mid = (low + high) / 2;
     emid = edges + mid;
     iresult = Compare_Edges2(&ei, emid);
     if(iresult == 0)return emid;
-    if(iresult > 0) {
+    if(iresult > 0){
       low = mid;
     }
     else{
@@ -2137,7 +2129,7 @@ void classify_geom(geomdata *geomi,int *geom_frame_index){
 
       FREEMEMORY(facelist_index);
     }
-    if(ntriangles > 0) {
+    if(ntriangles > 0){
       edgedata *edges, *edges2;
       tridata *triangles;
       int ii;
@@ -2153,11 +2145,11 @@ void classify_geom(geomdata *geomi,int *geom_frame_index){
 
       nedgelist_index = 3 * ntris;
       NewMemory((void **)&edgelist_index, nedgelist_index * sizeof(int));
-      for (ii = 0; ii < nedgelist_index; ii++) {
+      for(ii = 0; ii < nedgelist_index; ii++){
         edgelist_index[ii] = ii;
       }
 
-      for (ii = 0; ii<ntris; ii++) {
+      for(ii = 0; ii<ntris; ii++){
         int i0, i1, i2;
 
         i0 = triangles[ii].vert_index[0];
@@ -2182,7 +2174,7 @@ void classify_geom(geomdata *geomi,int *geom_frame_index){
       edges2[nedges].vert_index[0] = edges[edgelist_index[nedges]].vert_index[0];
       edges2[nedges].vert_index[1] = edges[edgelist_index[nedges]].vert_index[1];
       nedges++;
-      for (ii = 1; ii < nedgelist_index; ii++) {
+      for(ii = 1; ii < nedgelist_index; ii++){
         int jj;
 
         if(Compare_Edges(edgelist_index + ii - 1, edgelist_index + ii)==0)continue;
@@ -2198,13 +2190,13 @@ void classify_geom(geomdata *geomi,int *geom_frame_index){
       FREEMEMORY(edges);
       edges = edges2;
 
-      for (ii = 0; ii < nedges; ii++) {
+      for(ii = 0; ii < nedges; ii++){
         edges[ii].ntriangles = 0;
       }
 
       // count triangles associated with each edge
 
-      for (ii = 0; ii<ntris; ii++) {
+      for(ii = 0; ii<ntris; ii++){
         edgedata *edgei;
         int *vi;
 
@@ -2221,11 +2213,11 @@ void classify_geom(geomdata *geomi,int *geom_frame_index){
       ntri1 = 0;
       ntri2 = 0;
       ntri_other = 0;
-      for (ii = 0; ii < nedges; ii++) {
+      for(ii = 0; ii < nedges; ii++){
         edgedata *edgei;
 
         edgei = edges + ii;
-        switch (edgei->ntriangles) {
+        switch (edgei->ntriangles){
         case 0:
           ntri0++;
           break;
@@ -2246,11 +2238,10 @@ void classify_geom(geomdata *geomi,int *geom_frame_index){
 //      printf("        0 connected triangle: %i\n", ntri0);
 //      printf("        1 connected triangle: %i\n", ntri1);
 //      printf("        2 connected triangle: %i\n", ntri2);
-//      printf("3 or more connected triangle: %i\n", ntri_other);
+//      printf("3 or more connected triangle: %i\n", ntri_other);      FREEMEMORY(edgelist_index);
 #endif
-      FREEMEMORY(edgelist_index);
     }
-    if(nverts > 0) {
+    if(nverts > 0){
       int *vertlist_index, nvertlist_index = 0;
       vertdata *verts;
       int ii, ndups;
@@ -2258,19 +2249,19 @@ void classify_geom(geomdata *geomi,int *geom_frame_index){
       verts = geomlisti->verts;
       nvertlist_index = nverts;
       NewMemory((void **)&vertlist_index, nvertlist_index * sizeof(int));
-      for (ii = 0; ii < nvertlist_index; ii++) {
+      for(ii = 0; ii < nvertlist_index; ii++){
         vertlist_index[ii] = ii;
       }
       vert_list = verts;
       qsort(vertlist_index, nvertlist_index, sizeof(int), Compare_Verts2);
-      for (ii = 0; ii < nvertlist_index; ii++) {
+      for(ii = 0; ii < nvertlist_index; ii++){
         vertdata *vi;
 
         vi = verts + ii;
         vi->isdup = 0;
       }
-      for (ii = 1; ii < nvertlist_index; ii++) {
-        if(Compare_Verts2(vertlist_index + ii - 1, vertlist_index + ii) == 0) {
+      for(ii = 1; ii < nvertlist_index; ii++){
+        if(Compare_Verts2(vertlist_index + ii - 1, vertlist_index + ii) == 0){
           vertdata *v1, *v2;
           int jj1, jj2;
 
@@ -2284,7 +2275,7 @@ void classify_geom(geomdata *geomi,int *geom_frame_index){
         }
       }
       ndups = 0;
-      for (ii = 0; ii < nvertlist_index; ii++) {
+      for(ii = 0; ii < nvertlist_index; ii++){
         vertdata *vi;
 
         vi = verts + ii;
@@ -2296,7 +2287,7 @@ void classify_geom(geomdata *geomi,int *geom_frame_index){
 //      printf("duplicates: %i\n", ndups);
 //      printf("  (eps=%f m)\n", VERT_EPS);
 #endif
-      FREEMEMORY(vertlist_index);
+        FREEMEMORY(vertlist_index);
     }
   }
 }
@@ -2369,11 +2360,15 @@ void read_geomdata(int ifile, int load_flag, int *errorcode){
   }
 
   //get_geomdata_header(file,&ntimes,&nvals);
-  endian_smv = getendian();
+  endian_smv = GetEndian();
   lenfile = strlen(file);
 
   FORTgetembeddatasize(file, &ntimes_local, &nvals, &error, lenfile);
 
+  if(nvals==0){
+    PRINTF("***warning: no data in %s\n", file);
+    return;
+  }
   if(nvals>0&&ntimes_local>0){
     NewMemory((void **)&patchi->geom_nstatics,ntimes_local*sizeof(int));
     NewMemory((void **)&patchi->geom_ndynamics,ntimes_local*sizeof(int));
@@ -2419,7 +2414,7 @@ void read_geomdata(int ifile, int load_flag, int *errorcode){
       return;
     }
   }
-  getBoundaryColors3(patchi,patchi->geom_vals, patchi->geom_nvals, patchi->geom_ivals,
+  GetBoundaryColors3(patchi,patchi->geom_vals, patchi->geom_nvals, patchi->geom_ivals,
     setpatchmin,&patchmin, setpatchmax,&patchmax,
     &patchmin_global, &patchmax_global,
     nrgb, colorlabelpatch,patchi->scale,boundarylevels256,
@@ -2472,7 +2467,7 @@ void draw_test_clip(void){
     glEnable(GL_COLOR_MATERIAL);
   }
 
-  initTetraClipInfo(&tetra_clipinfo,v1,v2,v3,v4);
+  InitTetraClipInfo(&tetra_clipinfo,v1,v2,v3,v4);
 
   xmin = box_bounds;
   xmax = box_bounds+1;
@@ -2510,7 +2505,7 @@ void draw_test_clip(void){
     if(npolys>10){
       PRINTF("***error: nface=%i should not be bigger than 10\n",npolys);
     }
-    initBoxClipInfo(&box_clipinfo,*xmin,*xmax,*ymin,*ymax,*zmin,*zmax);
+    InitBoxClipInfo(&box_clipinfo,*xmin,*xmax,*ymin,*ymax,*zmin,*zmax);
     if(box_state[0]!=-1)box_clipinfo.clip_xmin=0;
     if(box_state[1]!=-1)box_clipinfo.clip_xmax=0;
     if(box_state[2]!=-1)box_clipinfo.clip_ymin=0;
@@ -2532,7 +2527,7 @@ void draw_test_clip(void){
 
   // draw box
 
-  setClipPlanes(&tetra_clipinfo,CLIP_ON_DENORMAL);
+  SetClipPlanes(&tetra_clipinfo,CLIP_ON_DENORMAL);
   glPushMatrix();
   glTranslatef(*xmin,*ymin,*zmin);
   glScalef(ABS(*xmax-*xmin),ABS(*ymax-*ymin),ABS(*zmax-*zmin));
@@ -2633,13 +2628,13 @@ void draw_test_clip(void){
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
   glTranslatef(-xbar0,-ybar0,-zbar0);
-  setClipPlanes(&box_clipinfo,CLIP_ON_DENORMAL);
-  drawfilled2tetra(v1,v3,v2,v4,tetra0color,tetra1color,tetra2color,tetra3color,tetrabox_vis+6);
+  SetClipPlanes(&box_clipinfo,CLIP_ON_DENORMAL);
+  DrawFilled2Tetra(v1,v3,v2,v4,tetra0color,tetra1color,tetra2color,tetra3color,tetrabox_vis+6);
 
   glPopMatrix();
   // tetrahedron
 
-  setClipPlanes(NULL,CLIP_OFF);
+  SetClipPlanes(NULL,CLIP_OFF);
   glDisable(GL_LIGHTING);
   glDisable(GL_COLOR_MATERIAL);
 }
@@ -2685,7 +2680,7 @@ void draw_test_outline(void){
 
   Antialias(ON);
   glLineWidth(tetra_line_thickness);
-  drawtetra_outline(v1,v2,v3,v4,tetracoloroutline);
+  DrawTetraOutline(v1,v2,v3,v4,tetracoloroutline);
   Antialias(OFF);
 
   glPopMatrix();
@@ -3022,9 +3017,12 @@ void draw_geomdata(int flag, patchdata *patchi, int geom_type){
           color_index = ivals[j];
           color = rgb_patch + 4 * color_index;
           if(patchi->slice == 1){
-            if(trianglei->insolid == IN_CUTCELL && show_patch_incutcell == 0)continue;
-            if(trianglei->insolid == IN_SOLID && show_patch_insolid == 0)continue;
-            if(trianglei->insolid==IN_GAS&&show_patch_ingas==0)continue;
+            int insolid;
+
+            insolid = trianglei->insolid & 3;
+            if(insolid == IN_CUTCELL && show_patch_incutcell == 0)continue;
+            if(insolid == IN_SOLID   && show_patch_insolid == 0)continue;
+            if(insolid == IN_GAS     && show_patch_ingas==0)continue;
             glColor4f(color[0], color[1], color[2], transparent_level);
           }
           else{
@@ -3057,10 +3055,13 @@ void draw_geomdata(int flag, patchdata *patchi, int geom_type){
 
           color_index = ivals[j];
           color = rgb_patch + 4 * color_index;
-          if(patchi->slice == 1){
-            if(trianglei->insolid==IN_CUTCELL&&show_patch_incutcell==0)continue;
-            if(trianglei->insolid == IN_SOLID && show_patch_insolid == 0)continue;
-            if(trianglei->insolid == IN_GAS && show_patch_ingas == 0)continue;
+          if(patchi->filetype == PATCH_GEOMETRY){
+            int insolid;
+
+            insolid = trianglei->insolid & 3;
+            if(insolid == IN_CUTCELL && show_patch_incutcell==0)continue;
+            if(insolid == IN_SOLID   && show_patch_insolid == 0)continue;
+            if(insolid == IN_GAS     && show_patch_ingas == 0)continue;
             glColor4f(color[0], color[1], color[2], transparent_level);
           }
           else{
@@ -3131,12 +3132,28 @@ void draw_geomdata(int flag, patchdata *patchi, int geom_type){
           float *xyzptr[3];
           tridata *trianglei;
           int color_index;
+          int show_edge1=1, show_edge2=1, show_edge3 = 1;
 
           trianglei = geomlisti->triangles + j;
-          if(patchi->slice==1){
-            if(trianglei->insolid == IN_CUTCELL && show_patch_incutcell == 0)continue;
-            if(trianglei->insolid == IN_SOLID && show_patch_insolid == 0)continue;
-            if(trianglei->insolid==IN_GAS&&show_patch_ingas==0)continue;
+          if(patchi->filetype==PATCH_GEOMETRY){
+            int insolid;
+
+            insolid = trianglei->insolid & 3;
+            if(insolid == IN_CUTCELL && show_patch_incutcell == 0)continue;
+            if(insolid == IN_SOLID   && show_patch_insolid == 0)continue;
+            if(insolid == IN_GAS     && show_patch_ingas == 0)continue;
+            if(show_patch_cutcell_polygon == 1){
+              int insolid4, insolid8, insolid16;
+
+              insolid4 = trianglei->insolid&4;
+              if(insolid4  ==  4)show_edge1 = 0;
+
+              insolid8 = trianglei->insolid&8;
+              if(insolid8  ==  8)show_edge2 = 0;
+
+              insolid16 = trianglei->insolid&16;
+              if(insolid16 == 16)show_edge3 = 0;
+            }
           }
 
           color_index = ivals[j];
@@ -3152,14 +3169,20 @@ void draw_geomdata(int flag, patchdata *patchi, int geom_type){
           xyzptr[1] = trianglei->verts[1]->xyz;
           xyzptr[2] = trianglei->verts[2]->xyz;
 
-          glVertex3fv(xyzptr[0]);
-          glVertex3fv(xyzptr[1]);
+          if(show_edge1==1){
+            glVertex3fv(xyzptr[0]);
+            glVertex3fv(xyzptr[1]);
+          }
 
-          glVertex3fv(xyzptr[1]);
-          glVertex3fv(xyzptr[2]);
+          if(show_edge2==1){
+            glVertex3fv(xyzptr[1]);
+            glVertex3fv(xyzptr[2]);
+          }
 
-          glVertex3fv(xyzptr[2]);
-          glVertex3fv(xyzptr[0]);
+          if(show_edge3==1){
+            glVertex3fv(xyzptr[2]);
+            glVertex3fv(xyzptr[0]);
+          }
         }
       glEnd();
       glPopMatrix();
@@ -3196,9 +3219,12 @@ void draw_geomdata(int flag, patchdata *patchi, int geom_type){
         trianglei = geomlisti->triangles + j;
 
         if(patchi->slice==1){
-          if(trianglei->insolid == IN_CUTCELL && show_patch_incutcell == 0)continue;
-          if(trianglei->insolid == IN_SOLID && show_patch_insolid == 0)continue;
-          if(trianglei->insolid==IN_GAS&&show_patch_ingas==0)continue;
+          int insolid;
+
+          insolid = trianglei->insolid & 3;
+          if(insolid == IN_CUTCELL && show_patch_incutcell == 0)continue;
+          if(insolid == IN_SOLID   && show_patch_insolid == 0)continue;
+          if(insolid == IN_GAS     && show_patch_ingas==0)continue;
         }
         if(show_patch_solid == 1||show_patch_outline==1){
           glColor4fv(foregroundcolor);
@@ -3243,7 +3269,18 @@ int CompareTransparentTriangles(const void *arg1, const void *arg2){
 
 void GetGeomInfoPtrs(geomdata ***geominfoptrs_local,int *ngeominfoptrs_local){
   geomdata **gptr;
-  int i,count=0;
+  int i, count = 0, hide_geom = 0;
+
+  hide_geom = 0;
+  for(i = 0;i < npatchinfo;i++){
+    patchdata *patchi;
+
+    patchi = patchinfo + i;
+    if(patchi->geom_smvfiletype == PATCH_GEOMETRY_BOUNDARY && patchi->loaded == 1 && patchi->display == 1){
+      hide_geom = 1;
+      break;
+    }
+  }
 
   count=0;
   for(i=0;i<ngeominfo;i++){
@@ -3251,6 +3288,8 @@ void GetGeomInfoPtrs(geomdata ***geominfoptrs_local,int *ngeominfoptrs_local){
 
     geomi = geominfo + i;
     if(geomi->loaded==0||geomi->display==0)continue;
+    if(geomi->geomtype!=GEOM_GEOM)continue;
+    if(hide_geom==1&&geomi->geomtype==GEOM_GEOM)continue;
     count++;
   }
   for(i=0;i<nisoinfo;i++){
@@ -3278,6 +3317,8 @@ void GetGeomInfoPtrs(geomdata ***geominfoptrs_local,int *ngeominfoptrs_local){
 
     geomi = geominfo + i;
     if(geomi->loaded==0||geomi->display==0)continue;
+    if(geomi->geomtype!=GEOM_GEOM)continue;
+    if(hide_geom == 1 && geomi->geomtype == GEOM_GEOM)continue;
     *gptr++=geomi;
   }
   for(i=0;i<nisoinfo;i++){
@@ -3315,6 +3356,9 @@ void ShowHideSortGeometry(float *mm){
       geomdata *geomi;
 
       geomi = geominfoptrs[i];
+
+      // reject unwanted geometry
+
       if( (geomi->fdsblock == NOT_FDSBLOCK && geomi->geomtype!=GEOM_ISO)|| geomi->patchactive == 1)continue;
       for(itime = 0; itime < 2; itime++){
         if(itime == 0){
@@ -3393,9 +3437,9 @@ void ShowHideSortGeometry(float *mm){
   }
 }
 
-/* ------------------ init_geom ------------------------ */
+/* ------------------ InitGeom ------------------------ */
 
-void init_geom(geomdata *geomi,int geomtype, int fdsblock){
+void InitGeom(geomdata *geomi,int geomtype, int fdsblock){
   geomi->file=NULL;
   geomi->display=0;
   geomi->loaded=0;
@@ -3416,7 +3460,7 @@ void init_geom(geomdata *geomi,int geomtype, int fdsblock){
 }
 /* ------------------ rotateu2v ------------------------ */
 
-void rotateu2v(float *u, float *v, float *axis, float *angle) {
+void rotateu2v(float *u, float *v, float *axis, float *angle){
   float sum, cosangle, normu, normv;
 
   /*
@@ -3429,14 +3473,14 @@ void rotateu2v(float *u, float *v, float *axis, float *angle) {
   sum = NORM3(axis);
   normu = NORM3(u);
   normv = NORM3(v);
-  if(sum>0.0&&normu>0.0&&normv>0.0) {
+  if(sum>0.0&&normu>0.0&&normv>0.0){
     axis[0] /= sum;
     axis[1] /= sum;
     axis[2] /= sum;
     cosangle = CLAMP(DOT3(u, v) / (normu*normv), -1.0, 1.0);
     *angle = acos(cosangle);
   }
-  else {
+  else{
     axis[0] = 0.0;
     axis[1] = 0.0;
     axis[2] = 1.0;
@@ -3446,7 +3490,7 @@ void rotateu2v(float *u, float *v, float *axis, float *angle) {
 
 /* ------------------ angleaxis2quat ------------------------ */
 
-void angleaxis2quat(float angle, float *axis, float *quat) {
+void angleaxis2quat(float angle, float *axis, float *quat){
   float sum;
   float cosang, sinang;
 
@@ -3455,7 +3499,7 @@ void angleaxis2quat(float angle, float *axis, float *quat) {
 
   sum = sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
 
-  if(sum>0.0) {
+  if(sum>0.0){
     cosang = cos(angle / 2.0);
     sinang = sin(angle / 2.0);
 
@@ -3464,7 +3508,7 @@ void angleaxis2quat(float angle, float *axis, float *quat) {
     quat[2] = axis[1] * sinang / sum;
     quat[3] = axis[2] * sinang / sum;
   }
-  else {
+  else{
     quat[0] = 1.0;
     quat[1] = 0.0;
     quat[2] = 0.0;
@@ -3474,7 +3518,7 @@ void angleaxis2quat(float angle, float *axis, float *quat) {
 
 /* ------------------ quat2rot------------------ */
 
-void quat2rot(float quat[4], float rot[16]) {
+void quat2rot(float quat[4], float rot[16]){
   float w, x, y, z, sum;
 
   sum = sqrt(quat[0] * quat[0] + quat[1] * quat[1] + quat[2] * quat[2] + quat[3] * quat[3]);
@@ -3506,7 +3550,7 @@ void quat2rot(float quat[4], float rot[16]) {
 
 /* ------------------ mult_quat ------------------------ */
 
-void mult_quat(float x[4], float y[4], float z[4]) {
+void mult_quat(float x[4], float y[4], float z[4]){
   float z2[4];
 
   z2[0] = x[0] * y[0] - x[1] * y[1] - x[2] * y[2] - x[3] * y[3];
@@ -3521,11 +3565,11 @@ void mult_quat(float x[4], float y[4], float z[4]) {
 
 /* ------------------ normalize_quat ------------------------ */
 
-void normalize_quat(float x[4]) {
+void normalize_quat(float x[4]){
   float sum;
 
   sum = sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2] + x[3] * x[3]);
-  if(sum>0.0) {
+  if(sum>0.0){
     x[0] /= sum;
     x[1] /= sum;
     x[2] /= sum;
@@ -3535,7 +3579,7 @@ void normalize_quat(float x[4]) {
 
 /* ------------------ xyz2azelev ------------------------ */
 
-void xyz2azelev(float *xyz, float *azimuth, float *elevation) {
+void xyz2azelev(float *xyz, float *azimuth, float *elevation){
   float norm3;
 
   // x = ||xyz||cos(az)*cos(elev)
@@ -3544,10 +3588,10 @@ void xyz2azelev(float *xyz, float *azimuth, float *elevation) {
   // elev=asin(z/||xyz||)
   // az=atan(y/x)
   norm3 = NORM3(xyz);
-  if(norm3>0.00001&&ABS(xyz[2] / norm3) <= 1.0) {
+  if(norm3>0.00001&&ABS(xyz[2] / norm3) <= 1.0){
     *elevation = RAD2DEG*asin(xyz[2] / norm3);
   }
-  else {
+  else{
     *elevation = 0.0;
   }
   *azimuth = RAD2DEG*atan2(xyz[1], xyz[0]);

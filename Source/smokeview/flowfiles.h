@@ -564,15 +564,15 @@ typedef struct _isodata {
 
 typedef struct _volrenderdata {
   char *rendermeshlabel;
-  struct _slicedata *smokeslice, *fireslice;
   int is_compressed;
-  unsigned char *c_smokedata_view, *c_firedata_view;
-  float *smokedata_full, *firedata_full;
-  float *smokedata_view, *firedata_view;
-  LINT *firepos, *smokepos;
-  void *smokedataptr, *firedataptr;
-  void **smokedataptrs, **firedataptrs;
-  int *nsmokedata_compressed, *nfiredata_compressed;
+  struct _slicedata   *smokeslice,            *fireslice,            *lightslice;
+  unsigned char *c_smokedata_view,      *c_firedata_view,      *c_lightdata_view;
+  int      *nsmokedata_compressed, *nfiredata_compressed, *nlightdata_compressed;
+  float           *smokedata_full,        *firedata_full,        *lightdata_full;
+  float           *smokedata_view,        *firedata_view,        *lightdata_view;
+  LINT                  *smokepos,              *firepos,              *lightpos;
+  void              *smokedataptr,          *firedataptr,          *lightdataptr;
+  void            **smokedataptrs,        **firedataptrs,        **lightdataptrs;
   float *times;
   int *dataready;
   int itime, ntimes, times_defined;
@@ -596,8 +596,9 @@ typedef struct _meshdata {
   terraindata *terrain;
   int mesh_type;
 #ifdef pp_GPU
-  GLuint smoke_texture_id,fire_texture_id,blockage_texture_id;
-  float *smoke_texture_buffer,*fire_texture_buffer;
+  GLuint blockage_texture_id;
+  GLuint     smoke_texture_id,     fire_texture_id,     light_texture_id;
+  float *smoke_texture_buffer,*fire_texture_buffer,*light_texture_buffer;
   GLuint slice3d_texture_id;
   float *slice3d_texture_buffer,*slice3d_c_buffer;
 #endif
@@ -612,6 +613,7 @@ typedef struct _meshdata {
   float x0, x1, y0, y1, z0, z1;
   int drawsides[7];
   int extsides[7]; // 1 if on exterior side of a supermesh, 0 otherwise
+  int is_extface[6]; // 1 if face i adjacent to extior, 0 if adjacent to another mesh
   int inside;
   float boxmin[3], boxmax[3], dbox[3], boxeps[3], dcell, dcell3[3];
   float slice_min[3], slice_max[3];
@@ -728,6 +730,8 @@ typedef struct _meshdata {
   clipdata box_clipinfo;
 
   unsigned char *merge_color,*merge_alpha;
+  float *light_fraction;
+  unsigned char *uc_light_fraction;
 
   char *label;
 
@@ -753,8 +757,9 @@ typedef struct _meshdata {
 
 typedef struct _supermeshdata {
 #ifdef pp_GPU
-  GLuint smoke_texture_id,fire_texture_id,blockage_texture_id;
-  float *smoke_texture_buffer,*fire_texture_buffer;
+  GLuint blockage_texture_id;
+  GLuint smoke_texture_id,         fire_texture_id,     light_texture_id;
+  float *smoke_texture_buffer,*fire_texture_buffer,*light_texture_buffer;
 #endif
   float *f_iblank_cell;
   float boxmin_scaled[3], boxmax_scaled[3];
@@ -896,7 +901,7 @@ typedef struct _device{
   texturedata *textureinfo;
   char *texturefile;
   int ntextures;
-  float xyz[3], eyedist;
+  float xyz[3], xyz1[3], xyz2[3], eyedist;
   float val;
   float xyzplot[3];
   float xyznorm[3];
@@ -915,27 +920,21 @@ typedef struct _device{
   propdata *prop;
   sv_object *object;
   struct _vdevicedata *vdevice;
-  int type;
+  int type, is_beam;
 } devicedata;
 
-#ifdef pp_PILOT
-/* --------------------------  pilot ------------------------------------ */
+/* --------------------------  windrosedata ------------------------------------ */
 
 typedef struct {
-  histogramdata histogram;
-  int nbuckets;
-  float total, *fraction,*vel;
-} pilotdata;
-#endif
+  histogramdata histogram[3];
+  float *xyz;
+} windrosedata;
 
 /* --------------------------  vdevicedata ------------------------------------ */
 
 typedef struct _vdevicedata {
-  int unique;
-  int filetype;
-#ifdef pp_PILOT
-  pilotdata pilotinfo;
-#endif
+  int unique, filetype, display;
+  windrosedata windroseinfo;
   devicedata *udev,*vdev,*wdev,*valdev,*colordev,*veldev,*angledev,*sd_veldev,*sd_angledev;
 } vdevicedata;
 
@@ -950,7 +949,8 @@ typedef struct {
 /* --------------------------  treedevicedata ------------------------------------ */
 
 typedef struct {
-  int first, last, n;
+  int first, last, n, nz;
+  float *xyz;
 } treedevicedata;
 
 /* --------------------------  camviewdata ------------------------------------ */
@@ -1089,6 +1089,9 @@ typedef struct {
   int blocknumber, num_memblocks;
   int *timeslist, ntimes, itime;
   int data_type;
+#ifdef pp_PARTDEFER
+  int compute_bounds_color;
+#endif
 
   float zoffset, *times;
 
@@ -1174,10 +1177,10 @@ typedef struct _slicedata {
   int ijk_min[3], ijk_max[3];
   float xmin,xmax,ymin,ymax,zmin,zmax;
   float xyz_min[3], xyz_max[3];
-  int nsliceii;
+  int nsliceijk;
   int *timeslist;
   int idir;
-  float sliceoffset;
+  float sliceoffset, sliceoffset_fds;
   int nslicei, nslicej, nslicek;
   int nslicex, nslicey;
   int ndirxyz[4];
@@ -1302,11 +1305,11 @@ typedef struct {
   int seq_id, autoload;
   char *file,*size_file;
   char *comp_file, *reg_file;
-  char *geomfile;
+  char *geomfile, *geom_fdsfiletype;
   geomdata *geominfo;
   //int *patchsize;
   int version;
-  int filetype, slice;
+  int filetype, geom_smvfiletype, slice;
   int type;
   int inuse,inuse_getbounds;
   int unit_start;
@@ -1329,8 +1332,7 @@ typedef struct {
   int geom_nvals, ngeom_times;
   flowlabels label;
   char scale[31];
-  char menulabel[128];
-  char gslicedir[50];
+  char menulabel[128], menulabel_base[128], gslicedir[50];
   int ijk[6];
   int extreme_min, extreme_max;
   time_t modtime;
@@ -1386,6 +1388,7 @@ typedef struct {
   int wall, nslab;
   float x0, y0, z0;
   float x1, y1, z1;
+  float xcen, ycen, radius;
   float vmin, vmax;
   float g_vmin, g_vmax;
   roomdata *room1, *room2;

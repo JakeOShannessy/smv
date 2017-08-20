@@ -13,7 +13,7 @@ pdfdata pdfmerge,pdfframe;
 
 #define FORTREAD(var,size) FSEEK(BOUNDARYFILE,4,SEEK_CUR);\
                            returncode=fread(var,4,size,BOUNDARYFILE);\
-                           if(endianswitch==1)endian_switch(var,size);\
+                           if(endianswitch==1)EndianSwitch(var,size);\
                            FSEEK(BOUNDARYFILE,4,SEEK_CUR)
 
 /* ------------------ clean_boundary ------------------------ */
@@ -138,7 +138,7 @@ int convert_boundary(patch *patchi, int *thread_index){
   if(strlen(shortlabel)>0)strcat(filetype,shortlabel);
   TrimBack(filetype);
 
-  if(getfileinfo(boundary_file,NULL,NULL)!=0){
+  if(GetFileInfo(boundary_file,NULL,NULL)!=0){
     fprintf(stderr,"*** Warning: The file %s does not exist\n",boundary_file);
     return 0;
   }
@@ -402,8 +402,8 @@ wrapup:
   fclose(boundarysizestream);
   {
     char before_label[256],after_label[256];
-    getfilesizelabel(sizebefore,before_label);
-    getfilesizelabel(sizeafter,after_label);
+    GetFileSizeLabel(sizebefore,before_label);
+    GetFileSizeLabel(sizeafter,after_label);
 #ifdef pp_THREAD
     patchi->compressed=1;
     sprintf(patchi->summary,"compressed from %s to %s (%4.1f%s reduction)",before_label,after_label,(float)sizebefore/(float)sizeafter,GLOBx);
@@ -540,7 +540,7 @@ void update_patch_hist(void){
   int i;
   int endiandata;
 
-  endiandata=getendian();
+  endiandata=GetEndian();
   if(endianswitch==1)endiandata=1-endiandata;
 
   for(i=0;i<npatchinfo;i++){
@@ -633,7 +633,7 @@ void Get_Boundary_Bounds(void){
 
   int endiandata;
 
-  endiandata=getendian();
+  endiandata=GetEndian();
   if(endianswitch==1)endiandata=1-endiandata;
 
   PRINTF("Determining boundary file bounds\n");

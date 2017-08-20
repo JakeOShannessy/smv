@@ -12,8 +12,6 @@
 
 #define RENDER_START 3
 
-void UpdateMenu(void);
-
 /* ------------------ get_newscriptfilename ------------------------ */
 
 void get_newscriptfilename(char *newscriptfilename){
@@ -276,7 +274,7 @@ int get_script_keyword_index(char *keyword){
   if(MatchUpper(keyword,"PARTCLASSTYPE") == MATCH)return SCRIPT_PARTCLASSTYPE;
   if(MatchUpper(keyword,"PLOT3DPROPS") == MATCH)return SCRIPT_PLOT3DPROPS;
   if(MatchUpper(keyword,"RENDERALL") == MATCH)return SCRIPT_RENDERALL;
-  if (MatchUpper(keyword, "RENDER360ALL") == MATCH)return SCRIPT_RENDER360ALL;
+  if(MatchUpper(keyword, "RENDER360ALL") == MATCH)return SCRIPT_RENDER360ALL;
   if(MatchUpper(keyword,"RENDERCLIP") == MATCH)return SCRIPT_RENDERCLIP;
   if(MatchUpper(keyword,"RENDERDIR") == MATCH)return SCRIPT_RENDERDIR;
   if(MatchUpper(keyword,"RENDERTYPE") == MATCH)return SCRIPT_RENDERTYPE;
@@ -291,6 +289,7 @@ int get_script_keyword_index(char *keyword){
   if(MatchUpper(keyword,"SETTIMEVAL") == MATCH)return SCRIPT_SETTIMEVAL;
   if(MatchUpper(keyword,"SETVIEWPOINT") == MATCH)return SCRIPT_SETVIEWPOINT;
   if(MatchUpper(keyword,"SHOWPLOT3DDATA") == MATCH)return SCRIPT_SHOWPLOT3DDATA;
+  if(MatchUpper(keyword,"SHOWSMOKESENSORS")==MATCH)return SCRIPT_SHOWSMOKESENSORS;
   if(MatchUpper(keyword,"UNLOADALL") == MATCH)return SCRIPT_UNLOADALL;
   if(MatchUpper(keyword,"UNLOADTOUR") == MATCH)return SCRIPT_UNLOADTOUR;
   if(MatchUpper(keyword,"VOLSMOKERENDERALL") == MATCH)return SCRIPT_VOLSMOKERENDERALL;
@@ -479,6 +478,9 @@ int compile_script(char *scriptfile){
 
 // CBARNORMAL:
       case SCRIPT_CBARNORMAL:
+
+// SHOWSMOKESENSORS
+      case SCRIPT_SHOWSMOKESENSORS:
         break;
 
 // RENDERSIZE
@@ -613,8 +615,8 @@ int compile_script(char *scriptfile){
 
         SETcval2;
         break;
-        
-        // VOLSMOKERENDERALL
+
+// VOLSMOKERENDERALL
 //  skip (int) start_frame (int)
 // file name base (char) (or blank to use smokeview default)
       case SCRIPT_VOLSMOKERENDERALL:
@@ -894,17 +896,17 @@ void script_renderall(scriptdata *scripti){
 
 /* ------------------ script_render360all ------------------------ */
 
-void script_render360all(scriptdata *scripti) {
+void script_render360all(scriptdata *scripti){
   int skip_local;
 
 
-  if (script_startframe>0)scripti->ival3 = script_startframe;
-  if (startframe0 >= 0)scripti->ival3 = startframe0;
+  if(script_startframe>0)scripti->ival3 = script_startframe;
+  if(startframe0 >= 0)scripti->ival3 = startframe0;
   first_frame_index = scripti->ival3;
   itimes = first_frame_index;
 
-  if (script_skipframe>0)scripti->ival = script_skipframe;
-  if (skipframe0>0)scripti->ival = skipframe0;
+  if(script_skipframe>0)scripti->ival = script_skipframe;
+  if(skipframe0>0)scripti->ival = skipframe0;
   skip_local = MAX(1, scripti->ival);
 
   PRINTF("script: Rendering every %i frame(s) starting at frame %i\n\n", skip_local, scripti->ival3);
@@ -931,11 +933,11 @@ void script_loadvolsmokeframe(scriptdata *scripti, int flag){
 
       meshi = meshinfo + i;
       vr = &meshi->volrenderinfo;
-      free_volsmoke_frame(vr, framenum);
-      read_volsmoke_frame(vr, framenum, &first);
+      FreeVolsmokeFrame(vr, framenum);
+      ReadVolsmokeFrame(vr, framenum, &first);
       if(vr->times_defined == 0){
         vr->times_defined = 1;
-        get_volsmoke_all_times(vr);
+        GetVolsmokeAllTimes(vr);
       }
       vr->loaded = 1;
       vr->display = 1;
@@ -1097,7 +1099,7 @@ void script_loadparticles(scriptdata *scripti){
 
   PRINTF("script: loading particles files\n\n");
 
-  npartframes_max=get_min_partframes();
+  npartframes_max=GetMinPartFrames(PARTFILE_LOADALL);
   for(i=0;i<npartinfo;i++){
     partdata *parti;
 
@@ -1174,7 +1176,7 @@ void script_loadvolsmoke(scriptdata *scripti){
   imesh = scripti->ival;
   if(imesh==-1){
     read_vol_mesh=VOL_READALL;
-    read_volsmoke_allframes_allmeshes2(NULL);
+    ReadVolsmokeAllFramesAllMeshes2(NULL);
   }
   else if(imesh>=0&&imesh<nmeshes){
     meshdata *meshi;
@@ -1182,7 +1184,7 @@ void script_loadvolsmoke(scriptdata *scripti){
 
     meshi = meshinfo + imesh;
     vr = &meshi->volrenderinfo;
-    read_volsmoke_allframes(vr);
+    ReadVolsmokeAllFrames(vr);
   }
 }
 
@@ -1201,7 +1203,7 @@ void script_load3dsmoke(scriptdata *scripti){
 
     smoke3di = smoke3dinfo + i;
     if(MatchUpper(smoke3di->label.longlabel,scripti->cval) == MATCH){
-      readsmoke3d(i,LOAD,&errorcode);
+      ReadSmoke3D(i,LOAD,&errorcode);
       if(scripti->cval!=NULL&&strlen(scripti->cval)>0){
         FREEMEMORY(loaded_file);
         NewMemory((void **)&loaded_file,strlen(scripti->cval)+1);
@@ -1370,7 +1372,7 @@ void script_loadtour(scriptdata *scripti){
 
   PRINTF("script: loading tour %s\n\n",scripti->cval);
 
-  for(i=0;i<ntours;i++){
+  for(i=0;i<ntourinfo;i++){
     tourdata *touri;
 
     touri = tourinfo + i;
@@ -1402,11 +1404,11 @@ void script_loadboundary(scriptdata *scripti, int meshnum){
     patchdata *patchi;
 
     patchi = patchinfo + i;
-    if (meshnum == -1 || patchi->blocknumber + 1 == meshnum) {
-      if (strcmp(patchi->label.longlabel, scripti->cval) == 0) {
+    if(meshnum == -1 || patchi->blocknumber + 1 == meshnum){
+      if(strcmp(patchi->label.longlabel, scripti->cval) == 0){
         LOCK_COMPRESS
           readpatch(i, LOAD, &errorcode);
-        if (scripti->cval != NULL&&strlen(scripti->cval) > 0) {
+        if(scripti->cval != NULL&&strlen(scripti->cval) > 0){
           FREEMEMORY(loaded_file);
           NewMemory((void **)&loaded_file, strlen(scripti->cval) + 1);
           strcpy(loaded_file, scripti->cval);
@@ -1483,13 +1485,89 @@ void script_plot3dprops(scriptdata *scripti){
     for(i=0;i<nmeshes;i++){
       gbi = meshinfo + i;
       if(gbi->plot3dfilenum==-1)continue;
-      update_current_mesh(gbi);
+      UpdateCurrentMesh(gbi);
       updateplotslice(XDIR);
       updateplotslice(YDIR);
       updateplotslice(ZDIR);
     }
-    update_current_mesh(gbsave);
+    UpdateCurrentMesh(gbsave);
   }
+}
+
+/* ------------------ script_showsmokesensors ------------------------ */
+
+void script_showsmokesensors(scriptdata *scripti){
+  int i,j;
+  FILE *stream_smokesensors;
+  int nsmokesensors;
+  float sensor_time=0.0;
+
+  // count smokesensors
+  
+  nsmokesensors=0;
+  for(i=0;i<ndeviceinfo;i++){
+    devicedata *devicei;
+
+    devicei = deviceinfo + i;
+    if(STRCMP(devicei->object->label,"smokesensor")==0)nsmokesensors++;
+  }
+  if(nsmokesensors == 0)return;
+
+  // first time, create a file to put smokesensor values in
+
+  if(file_smokesensors==NULL){
+    NewMemory((void **)&file_smokesensors,strlen(fdsprefix)+17+1);
+    strcpy(file_smokesensors,fdsprefix);
+    strcat(file_smokesensors,"_ss.csv");
+    stream_smokesensors = fopen(file_smokesensors, "w");
+
+    fprintf(stream_smokesensors, "s,");
+    for(i = 1;i < nsmokesensors-1;i++){
+      fprintf(stream_smokesensors, ",");
+    }
+    fprintf(stream_smokesensors, "\n");
+
+    j = 0;
+    fprintf(stream_smokesensors, "Time,");
+    for(i = 0;i < ndeviceinfo;i++){
+      devicedata *devicei;
+
+      devicei = deviceinfo + i;
+      if(STRCMP(devicei->object->label, "smokesensor") == 0){
+        j++;
+        if(j == nsmokesensors){
+          fprintf(stream_smokesensors, "%s\n",devicei->label);
+        }
+        else{
+          fprintf(stream_smokesensors, "%s,", devicei->label);
+        }
+      }
+    }
+  }
+  else{
+    stream_smokesensors = fopen(file_smokesensors, "a");
+  }
+
+  if(global_times!=NULL&&itimes>=0&&itimes<nglobal_times){
+    sensor_time = global_times[itimes];
+  }
+  fprintf(stream_smokesensors,"%f,",sensor_time);
+  j = 0;
+  for(i=0;i<ndeviceinfo;i++){
+    devicedata *devicei;
+
+    devicei = deviceinfo + i;
+    if(STRCMP(devicei->object->label,"smokesensor")==0){
+      j++;
+      if(j==nsmokesensors){
+        fprintf(stream_smokesensors,"%i\n",devicei->visval);
+      }
+      else{
+        fprintf(stream_smokesensors,"%i,",devicei->visval);
+      }
+    }
+  }
+  fclose(stream_smokesensors);
 }
 
 /* ------------------ script_showplot3ddata ------------------------ */
@@ -1504,7 +1582,7 @@ void script_showplot3ddata(scriptdata *scripti){
   if(imesh<0||imesh>nmeshes-1)return;
 
   meshi = meshinfo + imesh;
-  update_current_mesh(meshi);
+  UpdateCurrentMesh(meshi);
 
   dir = CLAMP(scripti->ival2,XDIR,ISO);
 
@@ -1617,13 +1695,13 @@ void script_loadfile(scriptdata *scripti){
       return;
     }
   }
-  npartframes_max=get_min_partframes();
+  npartframes_max=GetMinPartFrames(PARTFILE_LOADALL);
   for(i=0;i<npartinfo;i++){
     partdata *parti;
 
     parti = partinfo + i;
     if(strcmp(parti->file,scripti->cval)==0){
-      readpart(parti->file,i,LOAD,PARTDATA,&errorcode);
+      LoadParticleMenu(i);
       return;
     }
   }
@@ -1642,7 +1720,7 @@ void script_loadfile(scriptdata *scripti){
 
     smoke3di = smoke3dinfo + i;
     if(strcmp(smoke3di->file,scripti->cval)==0){
-      readsmoke3d(i,LOAD,&errorcode);
+      ReadSmoke3D(i,LOAD,&errorcode);
       return;
     }
   }
@@ -1705,7 +1783,7 @@ void script_loadplot3d(scriptdata *scripti){
     }
   }
   UpdateRGBColors(COLORBAR_INDEX_NONE);
-  set_labels_controls();
+  SetLabelControls();
   if(count==0)fprintf(stderr,"*** Error: Plot3d file failed to load\n");
 
   //UpdateMenu();
@@ -1804,15 +1882,24 @@ void script_settimeval(scriptdata *scripti){
   float timeval;
   int i,imin;
   float valmin;
+  char message[255];
 
   timeval = scripti->fval;
+  updatetimes_debug = message;
+  UpdateTimes();
+  updatetimes_debug = NULL;
   PRINTF("script: setting time to %f\n\n",timeval);
   if(global_times!=NULL&&nglobal_times>0){
-    if(timeval<global_times[0])timeval=global_times[0];
-    if(timeval>global_times[nglobal_times-1]-0.0001){
+    float mintime, maxtime;
+
+    mintime = global_times[0];
+    if(timeval < mintime)timeval = mintime;
+
+    maxtime = global_times[nglobal_times - 1] - 0.0001;
+    if(timeval>maxtime){
       float dt;
 
-      dt = timeval-(global_times[nglobal_times-1]-0.0001);
+      dt = timeval-maxtime;
       if(nglobal_times>1&&dt>global_times[1]-global_times[0]){
         fprintf(stderr,"*** Error: data not available at time requested\n");
         fprintf(stderr,"           time: %f s, min time: %f, max time: %f s, number of times: %i\n",
@@ -1825,7 +1912,7 @@ void script_settimeval(scriptdata *scripti){
         if(loaded_file!=NULL)fprintf(stderr,"           loaded file: %s\n",loaded_file);
         if(script_labelstring!=NULL)fprintf(stderr,"                 label: %s\n",script_labelstring);
       }
-      timeval=global_times[nglobal_times-1]-0.0001;
+      timeval=maxtime;
     }
     valmin=ABS(global_times[0]-timeval);
     imin=0;
@@ -1970,27 +2057,27 @@ int run_script(void){
       break;
     case SCRIPT_RENDERTYPE:
       if(STRCMP(scripti->cval, "JPG")==0){
-        update_render_type(JPEG);
+        UpdateRenderType(JPEG);
       }
       else{
-        update_render_type(PNG);
+        UpdateRenderType(PNG);
       }
       break;
     case SCRIPT_MOVIETYPE:
       if(STRCMP(scripti->cval, "WMV") == 0){
-        update_movie_type(WMV);
+        UpdateMovieType(WMV);
       }
       if(STRCMP(scripti->cval, "MP4") == 0){
-        update_movie_type(MP4);
+        UpdateMovieType(MP4);
       }
       else{
-        update_movie_type(AVI);
+        UpdateMovieType(AVI);
       }
       break;
     case SCRIPT_RENDERDIR:
       if(scripti->cval!=NULL&&strlen(scripti->cval)>0){
         script_dir_path=scripti->cval;
-        if(can_write_to_dir(script_dir_path)==0){
+        if(Writable(script_dir_path)==NO){
           fprintf(stderr,"*** Error: Cannot write to the RENDERDIR directory: %s\n",script_dir_path);
         }
         PRINTF("script: setting render path to %s\n",script_dir_path);
@@ -2092,6 +2179,9 @@ int run_script(void){
       break;
     case SCRIPT_PARTCLASSCOLOR:
       script_partclasscolor(scripti);
+      break;
+    case SCRIPT_SHOWSMOKESENSORS:
+      script_showsmokesensors(scripti);
       break;
     case SCRIPT_SHOWPLOT3DDATA:
       script_showplot3ddata(scripti);

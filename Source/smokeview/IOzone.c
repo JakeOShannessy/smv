@@ -8,8 +8,7 @@
 #include "string_util.h"
 #include "update.h"
 #include "smokeviewvars.h"
-
-void drawtrunccone(float d1, float d2, float height, unsigned char *rgbcolor);
+#include "IOobject.h"
 
 /* ------------------ getzonesizecsv ------------------------ */
 
@@ -648,6 +647,9 @@ void readzone(int ifile, int flag, int *errorcode){
   FREEMEMORY(zonefdiam);
   FREEMEMORY(zonefbase);
   FREEMEMORY(izonetu);
+#ifdef pp_ZONETL
+  FREEMEMORY(izonetl);
+#endif
   FREEMEMORY(zoneodl);
   FREEMEMORY(zoneodu);
   FREEMEMORY(zoneslab_n);
@@ -786,6 +788,13 @@ void readzone(int ifile, int flag, int *errorcode){
       *errorcode=1;
       return;
     }
+#ifdef pp_ZONETL
+    FREEMEMORY(izonetl);
+    if(NewMemory((void **)&izonetl, ntotal * sizeof(unsigned char)) == 0){
+      *errorcode = 1;
+      return;
+    }
+#endif
   }
   else{
     return;
@@ -852,6 +861,10 @@ void readzone(int ifile, int flag, int *errorcode){
   update_glui_zonebounds();
   GetZoneColors(zonetu, ntotal, izonetu, zonemin, zonemax, nrgb, nrgb_full,
     colorlabelzone, zonescale, zonelevels256);
+#ifdef pp_ZONETL
+  GetZoneColors(zonetl, ntotal, izonetl, zonemin, zonemax, nrgb, nrgb_full,
+    colorlabelzone, zonescale, zonelevels256);
+#endif
 
   ReadZoneFile=1;
   visZone=1;
@@ -1051,21 +1064,21 @@ void drawroomgeom(void){
 
 /* draw the frame */
 
-  if (visCompartments == 1) {
+  if(visCompartments == 1){
     Antialias(ON);
     glBegin(GL_LINES);
 
-    for (i = 0; i < nrooms; i++) {
+    for(i = 0; i < nrooms; i++){
       roomdata *roomi;
       float xroom0, yroom0, zroom0, xroom, yroom, zroom;
 
-      if (zone_highlight == 1 && zone_highlight_room == i) {
+      if(zone_highlight == 1 && zone_highlight_room == i){
         glEnd();
         glLineWidth(5.0*linewidth);
         glBegin(GL_LINES);
         glColor3f(1.0, 0.0, 0.0);
       }
-      else {
+      else{
         glEnd();
         glLineWidth(linewidth);
         glBegin(GL_LINES);
@@ -1136,61 +1149,88 @@ void drawroomgeom(void){
       y2 = zvi->y1;
       z1 = zvi->z0;
       z2 = zvi->z1;
-      glColor4fv(zvi->color);
       if(zvi->vent_type == MFLOW_VENT){
         glPushMatrix();
         glTranslatef(x2, y2, z2);
-        void drawsphere(float diameter, float *color);
-        drawsphere(0.02, NULL);
+        {
+          unsigned char hvac_sphere_color[3];
+
+          hvac_sphere_color[0] = 255 * foregroundcolor[0];
+          hvac_sphere_color[1] = 255 * foregroundcolor[1];
+          hvac_sphere_color[2] = 255 * foregroundcolor[2];
+          drawsphere(SCALE2SMV(zone_hvac_diam), hvac_sphere_color);
+        }
         glPopMatrix();
+        glLineWidth(2.0*ventlinewidth);
       }
-      glLineWidth(ventlinewidth);
-      glBegin(GL_LINE_LOOP);
-      switch(zvi->wall){
-      case LEFT_WALL:
-      case RIGHT_WALL:
-        xx = x1;
-        if(zvi->wall==RIGHT_WALL)xx = x2;
+      else{
+        glLineWidth(ventlinewidth);
+      }
+      glColor4fv(zvi->color);
+      if(zvi->vent_type==VFLOW_VENT&&zvi->vertical_vent_type==ZONEVENT_CIRCLE){
+        unsigned char uc_color[4];
+        float zz;
 
-        p = xyz;
-        *p++ = xx, *p++ = y1, *p++ = z1;
-        *p++ = xx, *p++ = y2, *p++ = z1;
-        *p++ = xx, *p++ = y2, *p++ = z2;
-        *p++ = xx, *p++ = y1, *p++ = z2;
-        DRAWZONEVENT2;
-        break;
-
-      case FRONT_WALL:
-      case BACK_WALL:
-        yy = y1;
-        if(zvi->wall==BACK_WALL)yy = y2;
-
-        p = xyz;
-        *p++ = x1, *p++ = yy, *p++ = z1;
-        *p++ = x2, *p++ = yy, *p++ = z1;
-        *p++ = x2, *p++ = yy, *p++ = z2;
-        *p++ = x1, *p++ = yy, *p++ = z2;
-        DRAWZONEVENT2;
-        break;
-
-      case BOTTOM_WALL:
-      case TOP_WALL:
         zz = z1;
         if(zvi->wall==TOP_WALL)zz = z2;
 
-        p = xyz;
-        *p++ = x1, *p++ = y1, *p++ = zz;
-        *p++ = x2, *p++ = y1, *p++ = zz;
-        *p++ = x2, *p++ = y2, *p++ = zz;
-        *p++ = x1, *p++ = y2, *p++ = zz;
-        DRAWZONEVENT2;
-        break;
-
-      default:
-        ASSERT(FFALSE);
-        break;
+        glPushMatrix();
+        glTranslatef(NORMALIZE_X(zvi->xcen), NORMALIZE_Y(zvi->ycen), zz);
+        uc_color[0] = zvi->color[0]*255;
+        uc_color[1] = zvi->color[1]*255;
+        uc_color[2] = zvi->color[2]*255;
+        uc_color[3] = zvi->color[3]*255;
+        drawcircle(2.0*SCALE2SMV(zvi->radius), uc_color, &cvent_circ);
+        glPopMatrix();
       }
-      glEnd();
+      else{
+        glBegin(GL_LINE_LOOP);
+        switch(zvi->wall){
+        case LEFT_WALL:
+        case RIGHT_WALL:
+          xx = x1;
+          if(zvi->wall==RIGHT_WALL)xx = x2;
+
+          p = xyz;
+          *p++ = xx, *p++ = y1, *p++ = z1;
+          *p++ = xx, *p++ = y2, *p++ = z1;
+          *p++ = xx, *p++ = y2, *p++ = z2;
+          *p++ = xx, *p++ = y1, *p++ = z2;
+          DRAWZONEVENT2;
+          break;
+
+        case FRONT_WALL:
+        case BACK_WALL:
+          yy = y1;
+          if(zvi->wall==BACK_WALL)yy = y2;
+
+          p = xyz;
+          *p++ = x1, *p++ = yy, *p++ = z1;
+          *p++ = x2, *p++ = yy, *p++ = z1;
+          *p++ = x2, *p++ = yy, *p++ = z2;
+          *p++ = x1, *p++ = yy, *p++ = z2;
+          DRAWZONEVENT2;
+          break;
+
+        case BOTTOM_WALL:
+        case TOP_WALL:
+          zz = z1;
+          if(zvi->wall==TOP_WALL)zz = z2;
+
+          p = xyz;
+          *p++ = x1, *p++ = y1, *p++ = zz;
+          *p++ = x2, *p++ = y1, *p++ = zz;
+          *p++ = x2, *p++ = y2, *p++ = zz;
+          *p++ = x1, *p++ = y2, *p++ = zz;
+          DRAWZONEVENT2;
+          break;
+
+        default:
+          ASSERT(FFALSE);
+          break;
+        }
+        glEnd();
+      }
     }
   }
 }
@@ -1891,12 +1931,12 @@ void drawfiredata(void){
           deltaz = SCALE2SMV(zonefbasebase[i]);
           maxheight=roomi->z1-roomi->z0-deltaz;
           flameheight = SCALE2SMV(zonefheightbase[i]);
-          setClipPlanes(&(meshi->box_clipinfo),CLIP_ON);
+          SetClipPlanes(&(meshi->box_clipinfo),CLIP_ON);
           glPushMatrix();
           glTranslatef(firei->absx,firei->absy,roomi->z0+deltaz);
           DrawFirePlume(diameter,flameheight,maxheight);
           glPopMatrix();
-          setClipPlanes(&(meshi->box_clipinfo),CLIP_OFF);
+          SetClipPlanes(&(meshi->box_clipinfo),CLIP_OFF);
         }
       }
       else{
@@ -1912,12 +1952,12 @@ void drawfiredata(void){
           maxheight=roomi->z1-firei->absz;
           flameheight = SCALE2SMV((0.23f*pow((double)qdot,(double)0.4)/(1.0f+2.0f*0.268f)));
           diameter = 2.0*flameheight*0.268f;
-          setClipPlanes(&(meshi->box_clipinfo),CLIP_ON);
+          SetClipPlanes(&(meshi->box_clipinfo),CLIP_ON);
           glPushMatrix();
           glTranslatef(firei->absx,firei->absy,firei->absz);
           DrawFirePlume(diameter,flameheight,maxheight);
           glPopMatrix();
-          setClipPlanes(&(meshi->box_clipinfo),CLIP_OFF);
+          SetClipPlanes(&(meshi->box_clipinfo),CLIP_OFF);
         }
       }
     }
@@ -1931,11 +1971,17 @@ void drawfiredata(void){
 void drawroomdata(void){
   float xroom0, yroom0, zroom0, xroom, yroom, zroom;
   float *zoneylaybase,dy;
-  unsigned char *hazardcolorbase, *zonecolorbase;
+  unsigned char *hazardcolorbase, *zonecolorbaseU;
+#ifdef pp_ZONETL
+  unsigned char *zonecolorbaseL;
+#endif
   float ylay;
-  float *colorv;
-  unsigned char color;
+  float *colorvU;
   unsigned char *izonetubase;
+#ifdef pp_ZONETL
+  unsigned char *izonetlbase;
+  float *colorvL;
+#endif
   int i;
 
   if(zone_times[0]>global_times[itimes])return;
@@ -1944,14 +1990,20 @@ void drawroomdata(void){
   if(use_transparency_data==1)TransparentOn();
 
   izonetubase = izonetu + izone*nrooms;
+#ifdef pp_ZONETL
+  izonetlbase = izonetl + izone*nrooms;
+#endif
   hazardcolorbase = hazardcolor + izone*nrooms;
   zoneylaybase = zoneylay + izone*nrooms;
 
   if(zonecolortype==ZONEHAZARD_COLOR){
-    zonecolorbase=hazardcolorbase;
+    zonecolorbaseU=hazardcolorbase;
   }
   else{
-    zonecolorbase=izonetubase;
+    zonecolorbaseU=izonetubase;
+#ifdef pp_ZONETL
+    zonecolorbaseL = izonetlbase;
+#endif
   }
 
 #ifdef pp_GPU
@@ -1961,16 +2013,24 @@ void drawroomdata(void){
 #endif
   for(i=0;i<nrooms;i++){
     roomdata *roomi;
+    unsigned char colorU;
+#ifdef pp_ZONETL
+    unsigned char colorL;
+#endif
 
     roomi = roominfo + i;
 
     ylay = *(zoneylaybase+i);
-    color = *(zonecolorbase+i);
+    colorU = *(zonecolorbaseU+i);
     if(zonecolortype==ZONEHAZARD_COLOR){
-      colorv = rgbhazard[color];
+      colorvU = rgbhazard[colorU];
     }
     else{
-      colorv = rgb_full[color];
+      colorvU = rgb_full[colorU];
+#ifdef pp_ZONETL
+      colorL = *(zonecolorbaseL+i);
+      colorvL = rgb_full[colorL];
+#endif
     }
     xroom0 = roomi->x0;
     yroom0 = roomi->y0;
@@ -1994,7 +2054,7 @@ void drawroomdata(void){
     }
     else{
       if(visHZone==1){
-        glColor4fv(colorv);
+        glColor4fv(colorvU);
         glBegin(GL_QUADS);
         glVertex3f(xroom0,yroom0,ylay+zroom0);
         glVertex3f(xroom,yroom0,ylay+zroom0);
@@ -2003,12 +2063,20 @@ void drawroomdata(void){
         glEnd();
       }
       if(visVZone==1){
-        glColor4fv(colorv);
         glBegin(GL_QUADS);
+        glColor4fv(colorvU);
         glVertex3f(xroom0,yroom0+dy,ylay+zroom0);
         glVertex3f(xroom,yroom0+dy,ylay+zroom0);
         glVertex3f(xroom, yroom0+dy,zroom);
         glVertex3f(xroom0,yroom0+dy,zroom);
+
+        if(show_zonelower == 1&&zonecolortype!=ZONEHAZARD_COLOR){
+          glColor4fv(colorvL);
+          glVertex3f(xroom0, yroom0 + dy, zroom0);
+          glVertex3f(xroom, yroom0 + dy, zroom0);
+          glVertex3f(xroom, yroom0 + dy, zroom0 + ylay);
+          glVertex3f(xroom0, yroom0 + dy, zroom0 + ylay);
+        }
         glEnd();
       }
     }

@@ -26,11 +26,15 @@ $QFDS -d Visualization slicemask.fds
 $QFDS -d Visualization smoke_sensor.fds
 $QFDS -d Visualization smoke_test.fds
 $QFDS -d Visualization smoke_test2.fds
+$QFDS -d Visualization smoke_test3.fds
+$QFDS -d Visualization smoke_test_geom.fds
 $QFDS -d Visualization sprinkler_many.fds
 $QFDS -d Visualization thouse5.fds
 $QFDS -d Visualization thouse5delta.fds
+$QFDS -d Visualization tour.fds
 $QFDS -d Visualization transparency.fds
 $QFDS -d Visualization vcirctest.fds
 $QFDS -d Visualization vcirctest2.fds
 $QFDS -d Visualization version.fds
 $QFDS -d Visualization version2.fds
+$QFDS -d Visualization windrose.fds

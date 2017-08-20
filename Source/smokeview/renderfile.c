@@ -13,30 +13,16 @@
 
 #define RENDER_START 3
 
-/* ------------------ does_movie_exist ------------------------ */
-
-int does_movie_exist(char *mov_name, char *moviefile){
-  char *movie;
-
-  if(mov_name == NULL || strlen(mov_name) < 1)return 0;
-  TrimBack(mov_name);
-  movie = TrimFront(mov_name);
-  strcpy(moviefile, movie);
-  strcat(moviefile, ".mp4");
-  if(file_exists(moviefile) == 1)return 1;
-  return 0;
-}
-
 /* ------------------ PlayMovie ------------------------ */
 
 void PlayMovie(void){
   char command_line[1024], moviefile_path[1024];
 
   if(play_movie_now==0)return;
-  if(file_exists(GetMovieFilePath(moviefile_path)) == 1){
+  if(FILE_EXISTS(GetMovieFilePath(moviefile_path)) == YES){
     strcpy(command_line, "ffplay ");
     strcat(command_line,moviefile_path);
-    psystem(command_line);
+    PSystem(command_line);
   }
   else{
     PRINTF("*** Error: the movie file, %s, does not exist\n", moviefile_path);
@@ -88,7 +74,7 @@ void MakeMovie(void){
   strcpy(frame0, render_file_base);
   strcat(frame0, "_0001");
   strcat(frame0, image_ext);
-  if(runscript==0&&file_exists(frame0)==0){
+  if(runscript==0&& FILE_EXISTS(frame0)==NO){
     Render_CB(RENDER_START);
     return;
   }
@@ -104,7 +90,7 @@ void MakeMovie(void){
   }
   else{
     strcpy(overwrite_flag, "");
-    if(file_exists(moviefile_path) == 1&&script_dir_path==NULL){
+    if(FILE_EXISTS(moviefile_path) == YES&&script_dir_path==NULL){
        PRINTF("*** Warning: The movie file %s exists.  Set movie overwrite checkbox in movie dialog box.\n",moviefile_path);
        make_movie_now=0;
     }
@@ -129,6 +115,9 @@ void MakeMovie(void){
       sprintf(bitrate_label," -b %ik ",movie_bitrate);
       strcat(command_line,bitrate_label);
     }
+    if(quicktime_compatibility == 1){
+      strcat(command_line, " -pix_fmt yuv420p ");
+    }
     strcat(command_line, moviefile_path);
 
 // make movie
@@ -138,8 +127,8 @@ void MakeMovie(void){
 
 // enable movie making button
 
-  enable_disable_makemovie(ON);
-  enable_disable_playmovie();
+  EnableDisableMakeMovie(ON);
+  EnableDisablePlayMovie();
 
   update_makemovie = 0;
 }
@@ -243,8 +232,8 @@ void GetRenderFileName(int view_mode, char **renderfile_dir_ptr, char *renderfil
 
   // directory
 
-  if(can_write_to_dir(renderfile_dir) == 0){
-    if(can_write_to_dir(smokeviewtempdir) == 1){
+  if(Writable(renderfile_dir) == NO){
+    if(Writable(smokeviewtempdir) == YES){
       strcpy(renderfile_dir, smokeviewtempdir);
     }
     else{
@@ -369,7 +358,7 @@ void OutputSliceData(void){
       PRINTF("  Slice data unavailable for output\n");
       continue;
     }
-    data = sd->qslicedata + sd->itime*sd->nsliceii;
+    data = sd->qslicedata + sd->itime*sd->nsliceijk;
     strcpy(datafile, sd->file);
     ext = strstr(datafile, ".");
     if(ext != NULL){
@@ -523,7 +512,7 @@ int MergeRenderScreenBuffers(int nscreen_rows, GLubyte **screenbuffers){
     }
   }
   strcat(renderfile_base,ext);
-  renderfile=get_filename(smokeviewtempdir,renderfile_base,tempdir_flag);
+  renderfile= GetFileName(smokeviewtempdir,renderfile_base,tempdir_flag);
   if(renderfile==NULL){
     fprintf(stderr,"*** Error: unable to write to %s",renderfile_base);
     return 1;
@@ -668,9 +657,9 @@ unsigned int GetScreenMap360LR(int side, float *xyz){
 }
 
 #ifdef pp_RENDER360_DEBUG
-/* ------------------ draw_screeninfo ------------------------ */
+/* ------------------ DrawScreenInfo ------------------------ */
 
-void draw_screeninfo(void){
+void DrawScreenInfo(void){
   int i;
   int j;
 
@@ -786,7 +775,7 @@ void SetupScreeninfo(void){
       up[1] = 0.0;
       up[2] = 1.0;
     }
-    else {
+    else{
       float denom;
 
       denom = sqrt(1.0 + cose*cose/(sine*sine));
@@ -801,7 +790,7 @@ void SetupScreeninfo(void){
       right[1] = sina;
       right[2] = 0.0;
     }
-    else {
+    else{
       right[0] = cosa;
       right[1] = -sina;
       right[2] = 0.0;
@@ -888,7 +877,7 @@ int MergeRenderScreenBuffers360(void){
   if(scriptoutstream != NULL&&current_script_command != NULL&&current_script_command->cval2 != NULL){
     strcpy(renderfile2, current_script_command->cval2);
   }
-  else {
+  else{
     strcpy(renderfile2, fdsprefix);
   }
   if(RenderTime == 1){
@@ -899,7 +888,7 @@ int MergeRenderScreenBuffers360(void){
     seqnum++;
   }
   strcat(renderfile_base, ext);
-  renderfile = get_filename(smokeviewtempdir, renderfile_base, tempdir_flag);
+  renderfile = GetFileName(smokeviewtempdir, renderfile_base, tempdir_flag);
   if(renderfile == NULL){
     fprintf(stderr, "*** Error: unable to write to %s", renderfile_base);
     return 1;
@@ -1039,10 +1028,10 @@ int SmokeviewImage2File(char *directory, char *RENDERfilename, int rendertype, i
   height2 = height_end-height_beg;
 
   if(directory==NULL){
-    renderfile=get_filename(smokeviewtempdir,RENDERfilename,tempdir_flag);
+    renderfile= GetFileName(smokeviewtempdir,RENDERfilename,tempdir_flag);
   }
   else{
-    renderfile=get_filename(directory,RENDERfilename,1);
+    renderfile= GetFileName(directory,RENDERfilename,1);
   }
   if(renderfile == NULL){
     fprintf(stderr,"*** Error: Unable to write to %s\n",RENDERfilename);
@@ -1199,10 +1188,9 @@ unsigned char *ReadPicture(char *filename, int *width, int *height, int printfla
   unsigned char *returncode;
   char *filebuffer=NULL;
   int allocated;
-  STRUCTSTAT statbuffer;
 
   if(filename==NULL)return NULL;
-  if(STAT(filename,&statbuffer)==0){
+  if(FILE_EXISTS(filename)==YES){
     filebuffer=filename;
     allocated=0;
   }

@@ -7,37 +7,6 @@
 
 #include "smokeviewvars.h"
 
-/* ------------------ allocate_shooter ------------------------ */
-
-int  allocate_shooter(void){
-  int mem_points, mem_frames;
-
-  FREEMEMORY(shootpointinfo);
-  FREEMEMORY(shoottimeinfo);
-
-  mem_points=max_shooter_points*sizeof(shootpointdata);
-  mem_frames=nshooter_frames*sizeof(shoottimedata);
-
-  PRINTF("shooter point memory requirements\n");
-  PRINTF("max_shooter_points=%i mem=%i\n",max_shooter_points,mem_points);
-  PRINTF("nshooter_frames=%i mem=%i\n",nshooter_frames,mem_frames);
-
-  if(  mem_points<=0||mem_frames<=0||
-#ifdef _DEBUG
-       mem_points>=2000000000||mem_frames>2000000000||
-#endif
-    NewMemory((void **)&shootpointinfo,mem_points)==0||
-    NewMemory((void **)&shoottimeinfo,mem_frames)==0){
-    FREEMEMORY(shootpointinfo);
-    FREEMEMORY(shoottimeinfo);
-    shooter_active=0;
-    PRINTF("shooter point memory allocation failed\n");
-    return 1;
-  }
-  return 0;
-
-}
-
 /* ------------------ get_shooter_vel ------------------------ */
 
 void get_shooter_vel(float *uvw, float *xyz){
@@ -90,7 +59,7 @@ void increment_shooter_data(shootpointdata *pold, shootpointdata *pnew, float dt
       float dvelmin;
 
       get_shooter_vel(uvw_air,xyznew);
-      meshpoint = getmesh_nofail(xyznew);
+      meshpoint = GetMeshNoFail(xyznew);
       if(meshpoint==NULL)meshpoint=meshinfo;
       grid_vel =  sqrt(uvwnew[0]*uvwnew[0]+uvwnew[1]*uvwnew[1]+uvwnew[2]*uvwnew[2]);
       if(grid_vel<0.01)grid_vel=0.01;
@@ -120,7 +89,7 @@ void increment_shooter_data(shootpointdata *pold, shootpointdata *pnew, float dt
       xyznew[2] += dt*uvwnew[2];
     }
     pnew[i].visible=1;
-    if(getmesh_nofail(xyznew)==NULL)pnew[i].visible=0;
+    if(GetMeshNoFail(xyznew)==NULL)pnew[i].visible=0;
   }
   shooter_active=1;
 }

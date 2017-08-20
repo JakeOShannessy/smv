@@ -91,32 +91,48 @@
   (xy)[2] = (x)[0]*(y)[1] - (y)[0]*(x)[1]
 #endif
 
-#ifndef VECEQ3
-#define VECEQ3(y,x)\
+#ifndef VEC3EQ
+#define VEC3EQ(y,x)\
   (y)[0]=(x)[0];\
   (y)[1]=(x)[1];\
   (y)[2]=(x)[2]
 #endif
 
-#ifndef VECEQCONS
-#define VECEQCONS(y,x)\
+#ifndef VEC3EQCONS
+#define VEC3EQCONS(y,x)\
   (y)[0]=(x);\
   (y)[1]=(x);\
   (y)[2]=(x)
 #endif
 
-#ifndef VECADD3
-#define VECADD3(ypx,x,y)\
+#ifndef VEC3ADD
+#define VEC3ADD(ypx,x,y)\
   (ypx)[0]=(y)[0]+(x)[0];\
   (ypx)[1]=(y)[1]+(x)[1];\
   (ypx)[2]=(y)[2]+(x)[2]
 #endif
 
-#ifndef VECDIFF3
-#define VECDIFF3(ymx,y,x)\
+#ifndef VEC3DIFF
+#define VEC3DIFF(ymx,y,x)\
   (ymx)[0]=(y)[0]-(x)[0];\
   (ymx)[1]=(y)[1]-(x)[1];\
   (ymx)[2]=(y)[2]-(x)[2]
+#endif
+
+#ifndef VEC4EQ
+#define VEC4EQ(y,x)\
+  (y)[0] = (x)[0];\
+  (y)[1] = (x)[1];\
+  (y)[2] = (x)[2];\
+  (y)[3] = (x)[3]
+#endif
+
+#ifndef VEC4EQCONS
+#define VEC4EQCONS(y,x)\
+  (y)[0]=(x);\
+  (y)[1]=(x);\
+  (y)[2]=(x);\
+  (y)[3]=(x)
 #endif
 
 #ifndef DOT3
@@ -201,7 +217,7 @@
 #endif
 
 #ifndef GETINDEX
-#define GETINDEX(ival,xval,xmin,dx,nx) ival = ((xval)-(xmin))/(dx); ival = CLAMP(ival,0,(nx)-1)
+#define GETINDEX(xval,xmin,dx,nx) CLAMP(((xval)-(xmin))/(dx),0,(nx)-1)
 #endif
 
 #ifndef IJCIRC

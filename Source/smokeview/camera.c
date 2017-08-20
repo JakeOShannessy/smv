@@ -186,7 +186,7 @@ void CopyCamera(cameradata *to, cameradata *from){
   memcpy(to,from,sizeof(cameradata));
   if(to==camera_current){
     zoom=camera_current->zoom;
-    update_glui_zoom();
+    UpdateGluiZoom();
   }
   to->dirty=1;
   if(to==camera_current&&updateclipvals==0){
@@ -206,14 +206,14 @@ void UpdateCamera(cameradata *ca){
   if(ca==camera_current){
     rotation_type=ca->rotation_type;
     if(ca->rotation_index>=0&&ca->rotation_index<nmeshes){
-      update_current_mesh(meshinfo + ca->rotation_index);
+      UpdateCurrentMesh(meshinfo + ca->rotation_index);
     }
     else{
-      update_current_mesh(meshinfo);
+      UpdateCurrentMesh(meshinfo);
     }
     highlight_mesh = current_mesh-meshinfo;
     handle_rotation_type(EYE_CENTERED);
-    update_meshlist1(ca->rotation_index);
+    UpdateMeshList1(ca->rotation_index);
     update_trainer_moves();
 
     ca->clip_mode=clip_mode;
@@ -229,8 +229,67 @@ void UpdateCamera(cameradata *ca){
     ca->ymax=clipinfo.ymax;
     ca->zmax=clipinfo.zmax;
   }
-  update_glui_set_view_xyz(ca->eye);
+  UpdateGluiSetViewXYZ(ca->eye);
   ca->dirty=0;
+}
+
+/* ------------------ CompareCameras ------------------------ */
+
+#define IS_EXT 0
+#define IS_INT 1
+#define IS_OTHER 2
+int CompareCameras(const void *arg1, const void *arg2){
+  cameradata *x, *y;
+  int x_state=IS_OTHER, y_state=IS_OTHER;
+
+  x = *(cameradata **)arg1;
+  y = *(cameradata **)arg2;
+
+  /*
+      ext  int   other
+ext    0   -1     -1
+int    1    0     -1
+other  1    1    strcmp
+  */
+
+  if(strcmp(x->name, "external") == 0)x_state = IS_EXT;
+  if(strcmp(x->name, "internal") == 0)x_state = IS_INT;
+
+  if(strcmp(y->name,"external") == 0)y_state = IS_EXT;
+  if(strcmp(y->name, "internal") == 0)y_state = IS_INT;
+
+  if(x_state == IS_EXT){
+    if(y_state == IS_EXT)return 0;
+    return -1;
+  }
+  else if(x_state == IS_INT){
+    if(y_state == IS_EXT)return 1;
+    if(y_state == IS_INT)return 0;
+    return -1;
+  }
+  else{
+    if(y_state == IS_OTHER)return strcmp(x->name, y->name);
+    return 1;
+  }
+}
+
+/* ------------------ SortCameras ------------------------ */
+
+void SortCameras(void){
+  cameradata *ca;
+  int i;
+
+  FREEMEMORY(cameras_sorted);
+  ncameras_sorted=0;
+  for(ca = camera_list_first.next; ca->next != NULL; ca = ca->next){
+    ncameras_sorted++;
+  }
+  if(ncameras_sorted == 0)return;
+  NewMemory((void **)&cameras_sorted, ncameras_sorted*sizeof(cameradata *));
+  for(i=0,ca = camera_list_first.next; ca->next != NULL; ca = ca->next,i++){
+    cameras_sorted[i] = ca;
+  }
+  qsort((cameradata **)cameras_sorted, (size_t)ncameras_sorted, sizeof(cameradata *), CompareCameras);
 }
 
 /* ------------------ InsertCamera ------------------------ */

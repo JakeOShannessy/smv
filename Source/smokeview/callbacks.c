@@ -26,20 +26,20 @@
 
 /* ------------------ get_index ------------------------ */
 
-int get_index(float x, int dir, float *plotxyz, int nplotxyz){
+int get_index(float val, int dir, float *plotxyz, int nplotxyz){
   int i;
   int return_index=0;
   float min_val,vali;
 
   switch(dir){
     case XDIR:
-      x=NORMALIZE_X(x);
+      val=NORMALIZE_X(val);
       break;
     case YDIR:
-      x=NORMALIZE_Y(x);
+      val=NORMALIZE_Y(val);
       break;
     case ZDIR:
-      x=NORMALIZE_X(x);
+      val=NORMALIZE_Z(val);
       break;
     default:
       ASSERT(FFALSE);
@@ -47,10 +47,10 @@ int get_index(float x, int dir, float *plotxyz, int nplotxyz){
   }
 
   if(plotxyz!=NULL){
-    min_val=ABS(x-plotxyz[0]);
+    min_val=ABS(val-plotxyz[0]);
     return_index=0;
     for(i=1;i<nplotxyz;i++){
-      vali = ABS(x-plotxyz[i]);
+      vali = ABS(val-plotxyz[i]);
       if(vali<min_val){
         return_index=i;
         min_val = vali;
@@ -338,7 +338,7 @@ void mouse_edit_blockage(int button, int state, int x, int y){
     highlight_block=sd->blockage;
     highlight_mesh=sd->mesh;
     meshi = meshinfo + highlight_mesh;
-    update_current_mesh(meshi);
+    UpdateCurrentMesh(meshi);
     bchighlight_old=bchighlight;
     bchighlight = meshi->blockageinfoptrs[highlight_block];
     for(i=0;i<6;i++){
@@ -572,6 +572,35 @@ int get_colorbar_index(int flag, int x, int y){
   return CB_SELECT_CONTINUE;
 }
 
+#ifdef pp_GLUTGET
+#define GLUTGETMODIFIERS glutGetModifiersNew
+int glutGetModifiersNew(void){
+  int modifier;
+
+  switch(alt_ctrl_key_state){
+  case KEY_NONE:
+    modifier = glutGetModifiers();
+    break;
+  case KEY_CTRL:
+    modifier = GLUT_ACTIVE_CTRL;
+    break;
+  case KEY_ALT:
+    modifier = GLUT_ACTIVE_ALT;
+    break;
+  default:
+    modifier = glutGetModifiers();
+    ASSERT(FFALSE);
+    break;
+  }
+#ifdef _DEBUG
+  printf("modifier=%i\n", modifier);
+#endif
+  return modifier;
+}
+#else
+#define GLUTGETMODIFIERS glutGetModifiers
+#endif
+
 /* ------------------ colorbar_click ------------------------ */
 
 int colorbar_click(int x, int y){
@@ -582,7 +611,7 @@ int colorbar_click(int x, int y){
     int state;
 
     colorbar_select_index=colorbar_index;
-    state=glutGetModifiers();
+    state=GLUTGETMODIFIERS();
     if(state==GLUT_ACTIVE_CTRL&&current_colorbar!=NULL&&current_colorbar->nsplits==1){
       colorbar_splitdrag=1;
     }
@@ -662,7 +691,7 @@ void update_mouseinfo(int flag, int xm, int ym){
       mi->direction[1]=0;
       mi->angle = 0.0;
       mi->lastangle=0.0;
-      mi->lasttime = glutGet(GLUT_ELAPSED_TIME)/1000.0;
+      START_TIMER(mi->lasttime);
       mi->xcurrent[0] = (float)(mi->current[0]-screenWidth/2)/(float)maxWH;
       mi->xcurrent[1] = (float)(mi->current[1]-screenHeight/2)/(float)maxWH;
       mi->angle=atan2(mi->xcurrent[1],mi->xcurrent[0]);
@@ -681,7 +710,7 @@ void update_mouseinfo(int flag, int xm, int ym){
       delta_distance=0.0;
       break;
     case MOUSE_MOTION:
-      thistime_local=glutGet(GLUT_ELAPSED_TIME)/1000.0;
+      START_TIMER(thistime_local);
       mi->current[0]=xm;
       mi->current[1]=ym;
       if(thistime_local-mi->lasttime>0.2){
@@ -783,6 +812,11 @@ void update_mouseinfo(int flag, int xm, int ym){
 void mouse_CB(int button, int state, int xm, int ym){
   float *eye_xyz;
 
+#ifdef pp_GLUTGET
+  if(state == GLUT_UP){
+    alt_ctrl_key_state = KEY_NONE;
+  }
+#endif
   if(rotation_type==ROTATION_3AXIS){
     if(state==GLUT_DOWN){
       update_mouseinfo(MOUSE_DOWN,xm,ym);
@@ -811,7 +845,7 @@ void mouse_CB(int button, int state, int xm, int ym){
     eye_xyz0[0]=eye_xyz[0];
     eye_xyz0[1]=eye_xyz[1];
     eye_xyz0[2]=eye_xyz[2];
-    update_translate();
+    UpdateTranslate();
     timebar_drag=0;
     colorbar_drag=0;
     colorbar_splitdrag=0;
@@ -825,7 +859,7 @@ void mouse_CB(int button, int state, int xm, int ym){
   // check for double click for translating/rotating 3D slice plane
 
   if(vis_gslice_data==1||show_gslice_triangles==1||show_gslice_triangulation==1){
-    this_mouse_time=glutGet(GLUT_ELAPSED_TIME)/1000.0;
+    START_TIMER(this_mouse_time);
     if(this_mouse_time-last_mouse_time<0.5){
       gslice_xyz0[0]=gslice_xyz[0];
       gslice_xyz0[1]=gslice_xyz[1];
@@ -862,7 +896,7 @@ void mouse_CB(int button, int state, int xm, int ym){
     if(canrestorelastview==0){
       updatemenu=1;
       canrestorelastview=1;
-      enable_reset_saved_view();
+      EnableResetSavedView();
     }
     switch(button){
       case GLUT_MIDDLE_BUTTON:
@@ -872,7 +906,7 @@ void mouse_CB(int button, int state, int xm, int ym){
         state=GLUT_ACTIVE_ALT;
         break;
       default:
-        state=glutGetModifiers();
+        state=GLUTGETMODIFIERS();
         break;
     }
     switch(state){
@@ -969,7 +1003,7 @@ void Drag_Tour_Node(int xm, int ym){
   float screen_perm[9];
 
   if(showtour_dialog==1&&edittour==1&&selected_frame!=NULL){
-    get_screen_mapping(selected_frame->nodeval.eye,screen_perm);
+    GetScreenMapping(selected_frame->nodeval.eye,screen_perm);
   }
   else{
     return;
@@ -1037,7 +1071,7 @@ void Move_Gen_Slice(int xm, int ym){
         delev = 360.0*dym/(float)screenHeight;
         gslice_normal_azelev[0] += daz;
         gslice_normal_azelev[1] += delev;
-        update_gslice_parms();
+        UpdateGsliceParms();
         start_xyz0[0]=xm;
         start_xyz0[1]=ym;
       }
@@ -1059,7 +1093,7 @@ void Move_Gen_Slice(int xm, int ym){
         gslice_xyz0[1] = gslice_xyz[1];
         mouse_down_xy0[0]=xm;
         mouse_down_xy0[1]=ym;
-        update_gslice_parms();
+        UpdateGsliceParms();
       }
       break;
     case KEY_ALT:
@@ -1070,7 +1104,7 @@ void Move_Gen_Slice(int xm, int ym){
         yy = yy/(float)screenHeight;
 
         gslice_xyz[2] = gslice_xyz0[2] - DENORMALIZE_Z(4*(xyzbox-NORMALIZE_Z(gslice_xyz0[2]))*yy);
-        update_gslice_parms();
+        UpdateGsliceParms();
       }
       break;
     case KEY_SHIFT:
@@ -1186,7 +1220,7 @@ void Move_Scene(int xm, int ym){
 int throttle_gpu(void){
   float fps;
 
-  thisMOTIONtime=glutGet(GLUT_ELAPSED_TIME)/1000.0;
+  START_TIMER(thisMOTIONtime);
   fps = MOTIONnframes/(thisMOTIONtime-lastMOTIONtime);
   if(fps>GPU_VOLframemax)return 1;
   MOTIONnframes++;
@@ -1238,7 +1272,7 @@ void motion_CB(int xm, int ym){
     update_mouseinfo(MOUSE_MOTION,xm,ym);
   }
   if((rotation_type==ROTATION_2AXIS||rotation_type==ROTATION_3AXIS)&&gvec_down==1&&key_state == KEY_NONE){
-    update_gvec_down(0);
+    UpdateGvecDown(0);
   }
   Move_Scene(xm,ym);
 }
@@ -1247,6 +1281,9 @@ void motion_CB(int xm, int ym){
 
 void keyboard_up_CB(unsigned char key, int x, int y){
   resetclock=1;
+#ifdef pp_GLUTGET
+  alt_ctrl_key_state = KEY_NONE;
+#endif
 }
 
 #ifdef pp_GPU_CULL_STATE
@@ -1303,7 +1340,7 @@ void keyboard(unsigned char key, int flag){
   int keystate=0;
 
   if(flag==FROM_CALLBACK){
-    keystate = 6&glutGetModifiers();
+    keystate = (GLUT_ACTIVE_ALT|GLUT_ACTIVE_CTRL)&GLUTGETMODIFIERS();
     if(scriptoutstream!=NULL&&key!='t'&&key!='r'&&key!='R'&&key!=' '&&key!='-'){
       fprintf(scriptoutstream,"KEYBOARD\n");
       switch(keystate){
@@ -1364,12 +1401,12 @@ void keyboard(unsigned char key, int flag){
         for(i=0;i<nmeshes;i++){
           gbi = meshinfo + i;
           if(gbi->plot3dfilenum==-1)continue;
-          update_current_mesh(gbi);
+          UpdateCurrentMesh(gbi);
           updateplotslice(XDIR);
           updateplotslice(YDIR);
           updateplotslice(ZDIR);
         }
-        update_current_mesh(gbsave);
+        UpdateCurrentMesh(gbsave);
       }
       break;
     case 'A':
@@ -1440,7 +1477,7 @@ void keyboard(unsigned char key, int flag){
             if(nsmoke3dinfo>0&&cullactive==1&&gpuactive==1){
               cullsmoke=1-cullsmoke;
               update_smoke3dflags();
-              initcull(cullsmoke);
+              InitCull(cullsmoke);
               print_gpu_cull_state();
             }
             if(cullactive==0||gpuactive==0)cullsmoke=0;
@@ -1449,6 +1486,10 @@ void keyboard(unsigned char key, int flag){
       }
       break;
     case 'd':
+#ifdef pp_GLUTGET
+      alt_ctrl_key_state = KEY_CTRL;
+#endif
+      break;
     case 'D':
       if(key2=='d'&&showtour_dialog==1&&edittour==1){
         add_delete_keyframe(DELETE_KEYFRAME);
@@ -1480,18 +1521,19 @@ void keyboard(unsigned char key, int flag){
       default:
         rotation_type++;
         if(rotation_type>3)rotation_type=0;
-        rotation_type_CB(rotation_type);
-        update_rotation_type(rotation_type);
+        RotationTypeCB(rotation_type);
+        UpdateRotationType(rotation_type);
         handle_rotation_type(ROTATION_2AXIS);
       }
       break;
     case 'f':
       switch(keystate){
       case GLUT_ACTIVE_ALT:
-        DialogMenu(DIALOG_BOUNDS); // file/bounds dialog
-        break;
       case GLUT_ACTIVE_CTRL:
       default:
+#ifdef pp_GLUTGET
+        alt_ctrl_key_state = KEY_ALT;
+#endif
         break;
       }
       break;
@@ -1612,11 +1654,16 @@ void keyboard(unsigned char key, int flag){
       }
       break;
     case 'i':
-    case 'I':
       if(cache_qdata==1){
         handleiso();
         return;
       }
+      break;
+    case 'I':
+      show_slice_in_obst++;
+      if(show_slice_in_obst>2)show_slice_in_obst = 0;
+      UpdateShowSliceInObst();
+      updatemenu = 1;
       break;
     case 'j':
     case 'J':
@@ -1661,7 +1708,7 @@ void keyboard(unsigned char key, int flag){
         if(nmeshes>1){
           highlight_mesh++;
           if(highlight_mesh>nmeshes-1)highlight_mesh=0;
-          update_current_mesh(meshinfo+highlight_mesh);
+          UpdateCurrentMesh(meshinfo+highlight_mesh);
         }
       }
       break;
@@ -1747,7 +1794,7 @@ void keyboard(unsigned char key, int flag){
       break;
     case 'P':
       cursorPlot3D=1-cursorPlot3D;
-      update_cursor_checkbox();
+      UpdateCursorCheckbox();
       break;
     case 'q':
     case 'Q':
@@ -1778,11 +1825,11 @@ void keyboard(unsigned char key, int flag){
         }
 
         if(render_360 == 1)render_mode = RENDER_360;
-        if (render_mode!=RENDER_360) {
-          if (strncmp((const char *)&key2, "r", 1) == 0) {
+        if(render_mode!=RENDER_360){
+          if(strncmp((const char *)&key2, "r", 1) == 0){
             render_mode = RENDER_XYSINGLE;
           }
-          else {
+          else{
             render_mode = RENDER_XYMULTI;
           }
         }
@@ -1984,7 +2031,7 @@ void keyboard(unsigned char key, int flag){
           }
           else{
             vis_gslice_data = 1 - vis_gslice_data;
-            update_gslice_parms();
+            UpdateGsliceParms();
           }
           break;
       }
@@ -2212,7 +2259,7 @@ void handle_rotation_type(int flag){
     ASSERT(FFALSE);
     break;
   }
-  showhide_translate(rotation_type);
+  ShowHideTranslate(rotation_type);
   rotation_type_old = rotation_type;
   return;
 }
@@ -2230,7 +2277,7 @@ void update_clipplanes(void){
     }
   }
   if(clip_mode==CLIP_OFF){
-    setClipPlanes(NULL,CLIP_OFF);
+    SetClipPlanes(NULL,CLIP_OFF);
   }
 }
 
@@ -2409,7 +2456,7 @@ void handle_move_keys(int  key){
   INC_Z=INC_XY;
   INC_ANGLE = 5*INC_ANGLE0;
 
-  state=glutGetModifiers();
+  state=GLUTGETMODIFIERS();
   switch(state){
   case GLUT_ACTIVE_CTRL:
     key_state = KEY_CTRL;
@@ -2430,7 +2477,7 @@ void handle_move_keys(int  key){
         case KEY_ALT:
           dx = INC_XY*(cos_azimuth);
           dy = INC_XY*(sin_azimuth);
-          getnewpos(eye_xyz,dx,-dy,0.0,1.0);
+          GetNewPos(eye_xyz,dx,-dy,0.0,1.0);
           break;
         case KEY_SHIFT:
         case KEY_CTRL:
@@ -2451,7 +2498,7 @@ void handle_move_keys(int  key){
         float local_speed_factor=1.0;
 
         if(key_state==KEY_SHIFT)local_speed_factor=4.0;
-        getnewpos(eye_xyz,dx,-dy,0.0,local_speed_factor);
+        GetNewPos(eye_xyz,dx,-dy,0.0,local_speed_factor);
       }
       break;
     case GLUT_KEY_LEFT:
@@ -2459,7 +2506,7 @@ void handle_move_keys(int  key){
         case KEY_ALT:
           dx = INC_XY*(cos_azimuth);
           dy = INC_XY*(sin_azimuth);
-          getnewpos(eye_xyz,-dx,dy,0.0,1.0);
+          GetNewPos(eye_xyz,-dx,dy,0.0,1.0);
           break;
         case KEY_SHIFT:
         case KEY_CTRL:
@@ -2477,10 +2524,10 @@ void handle_move_keys(int  key){
       dx = INC_XY*(cos_azimuth);
       dy = INC_XY*(sin_azimuth);
       if(key_state==KEY_SHIFT){
-        getnewpos(eye_xyz,-dx,dy,0.0,4.0);
+        GetNewPos(eye_xyz,-dx,dy,0.0,4.0);
       }
       else{
-        getnewpos(eye_xyz,-dx,dy,0.0,1.0);
+        GetNewPos(eye_xyz,-dx,dy,0.0,1.0);
       }
       break;
     case GLUT_KEY_DOWN:
@@ -2493,7 +2540,7 @@ void handle_move_keys(int  key){
       if(key_state==KEY_SHIFT)local_speed_factor=4.0;
         dx = INC_XY*(sin_azimuth);
         dy = INC_XY*(cos_azimuth);
-        getnewpos(eye_xyz,-dx,-dy,0.0,local_speed_factor);
+        GetNewPos(eye_xyz,-dx,-dy,0.0,local_speed_factor);
       }
       break;
     case GLUT_KEY_UP:
@@ -2506,7 +2553,7 @@ void handle_move_keys(int  key){
         if(key_state==KEY_SHIFT)local_speed_factor=4.0;
         dx = INC_XY*(sin_azimuth);
         dy = INC_XY*(cos_azimuth);
-        getnewpos(eye_xyz,dx,dy,0.0,local_speed_factor);
+        GetNewPos(eye_xyz,dx,dy,0.0,local_speed_factor);
       }
       break;
     case GLUT_KEY_PAGE_UP:
@@ -2541,7 +2588,7 @@ void handle_move_keys(int  key){
     eye_xyz0[0]=eye_xyz[0];
     eye_xyz0[1]=eye_xyz[1];
     eye_xyz0[2]=eye_xyz[2];
-    update_translate();
+    UpdateTranslate();
   }
 }
 
@@ -2640,7 +2687,7 @@ void Idle_CB(void){
   CheckMemory;
   glutSetWindow(mainwindow_id);
   UpdateShow();
-  thistime = glutGet(GLUT_ELAPSED_TIME);
+  START_TICKS(thistime);
   thisinterval = thistime - lasttime;
   frame_count++;
 
@@ -2684,10 +2731,10 @@ void Reshape_CB(int width, int height){
   if(strcmp(camera_current->name,"external")==0&&in_external==1){
     SetViewPoint(RESTORE_EXTERIOR_VIEW);
   }
-  update_windowsizelist();
+  UpdateWindowSizeList();
 #ifdef pp_GPU
 #ifdef pp_GPUDEPTH
-  createDepthTexture();
+  CreateDepthTexture();
 #endif
 #endif
 }
@@ -2695,21 +2742,18 @@ void Reshape_CB(int width, int height){
 /* ------------------ reset_gltime ------------------------ */
 
 void reset_gltime(void){
-  int inttime;
-
   if(showtime!=1)return;
   reset_frame=itimes;
-  inttime  = glutGet(GLUT_ELAPSED_TIME);
-  reset_time = (float)inttime/1000.0;
+  START_TIMER(reset_time);
   if(global_times!=NULL&&nglobal_times>0){
     start_frametime=global_times[0];
     stop_frametime=global_times[nglobal_times-1];
   }
 }
 
-/* ------------------ update_current_mesh ------------------------ */
+/* ------------------ UpdateCurrentMesh ------------------------ */
 
-void update_current_mesh(meshdata *meshi){
+void UpdateCurrentMesh(meshdata *meshi){
   current_mesh=meshi;
   loaded_isomesh=get_loaded_isomesh();
   update_iso_showlevels();
@@ -2758,7 +2802,7 @@ int DoStereo(void){
     nscreens = 1;
     if(render_mode == RENDER_360&&rendering_status==RENDER_ON){
       nscreens = nscreeninfo;
-      if (screeninfo == NULL || update_screeninfo == 1)SetupScreeninfo();
+      if(screeninfo == NULL || update_screeninfo == 1)SetupScreeninfo();
     }
 
     for(i = 0; i < nscreens; i++){
@@ -2783,7 +2827,7 @@ int DoStereo(void){
         screenWidth=screenWidth_save;
       }
       if(render_mode == RENDER_360 && rendering_status == RENDER_ON)screeni->screenbuffer = GetScreenBuffer();
-      if (buffertype == DOUBLE_BUFFER)glutSwapBuffers();
+      if(buffertype == DOUBLE_BUFFER)glutSwapBuffers();
     }
     if(rendering_status == RENDER_ON){
       if(render_mode == RENDER_360){
@@ -2901,16 +2945,16 @@ int DoStereo(void){
 
 #ifdef pp_LUA
 /* ------------------ DoScriptLua ------------------------ */
-void DoScriptLua(void) {
+void DoScriptLua(void){
   int script_return_code;
-  if(runluascript == 1) {
+  if(runluascript == 1){
     if(!luascript_loaded && strlen(luascript_filename)>0)
       load_script(luascript_filename);
     runluascript = 0;
     PRINTF("running lua script section\n");
     fflush(stdout);
     script_return_code = runLuaScript();
-    if(script_return_code != LUA_OK && script_return_code != LUA_YIELD && exit_on_script_crash) {
+    if(script_return_code != LUA_OK && script_return_code != LUA_YIELD && exit_on_script_crash){
         exit(1);
     }
   }
@@ -2921,12 +2965,12 @@ void DoScriptLua(void) {
 #ifdef pp_LUA_SSF
 void DoScript(void){
   int script_return_code;
-  if(runscript == 1) {
+  if(runscript == 1){
       runscript = 0;
       PRINTF("running ssf script instruction\n");
       fflush(stdout);
       script_return_code = runSSFScript();
-      if(script_return_code != LUA_OK && script_return_code != LUA_YIELD && exit_on_script_crash) {
+      if(script_return_code != LUA_OK && script_return_code != LUA_YIELD && exit_on_script_crash){
           exit(1);
       }
     }
@@ -2941,7 +2985,7 @@ void DoScript(void){
   if(nscriptinfo>0&&current_script_command!=NULL&&(script_step==0||(script_step==1&&script_step_now==1))){
     script_step_now=0;
 #ifndef WIN32
-    if(file_exists(stop_filename)){
+    if(FILE_EXISTS(stop_filename)==YES){
       fprintf(stderr,"*** Warning: stop file found.  Remove before running smokeview script\n");
       exit(0);
     }
@@ -2983,7 +3027,7 @@ void DoScript(void){
         script_loadvolsmokeframe2();
         remove_frame=current_script_command->remove_frame;
         if(remove_frame>=0){
-          unload_volsmoke_frame_allmeshes(remove_frame);
+          UnloadVolsmokeFrameAllMeshes(remove_frame);
         }
       }
       if(current_script_command->command==SCRIPT_ISORENDERALL){
@@ -2992,7 +3036,7 @@ void DoScript(void){
         script_loadisoframe2(current_script_command);
         remove_frame = current_script_command->remove_frame;
         if(remove_frame>=0){
-          //unload_volsmoke_frame_allmeshes(remove_frame);
+          //UnloadVolsmokeFrameAllMeshes(remove_frame);
         }
       }
     }
@@ -3070,12 +3114,12 @@ void Display_CB(void){
         }
         FREEMEMORY(screenbuffers);
       }
-      if (render_mode == RENDER_360){
+      if(render_mode == RENDER_360){
         int i;
 
         glDrawBuffer(GL_BACK);
 
-        if (screeninfo == NULL||update_screeninfo==1)SetupScreeninfo();
+        if(screeninfo == NULL||update_screeninfo==1)SetupScreeninfo();
 
         for(i = 0; i < nscreeninfo; i++){
           screendata *screeni;
@@ -3083,7 +3127,7 @@ void Display_CB(void){
           screeni = screeninfo + i;
           ShowScene(DRAWSCENE, VIEW_CENTER, 0, 0, 0, screeni);
           screeni->screenbuffer = GetScreenBuffer();
-          if (buffertype == DOUBLE_BUFFER)glutSwapBuffers();
+          if(buffertype == DOUBLE_BUFFER)glutSwapBuffers();
         }
         MergeRenderScreenBuffers360();
 

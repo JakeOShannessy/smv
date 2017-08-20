@@ -1,7 +1,3 @@
-! $Date$
-! $Revision$
-! $Author$
-
 !  WRITE(LU_GEOM) ONE
 !  WRITE(LU_GEOM) VERSION
 !  WRITE(LU_GEOM) STIME  ! first time step
@@ -285,14 +281,14 @@ end do
 return
 end subroutine getdata1
 
-!  ------------------ getdirval ------------------------
+!  ------------------ getslicefiledirection ------------------------
 
-subroutine getdirval(is1,is2,js1,js2,ks1,ks2,idir,joff,koff)
+subroutine getslicefiledirection(is1,is2,iis1, iis2, js1,js2,ks1,ks2,idir,joff,koff,volslice)
 implicit none
 integer :: nxsp, nysp, nzsp
 integer, intent(in) :: is1, js1, ks1
 integer, intent(inout) :: is2, js2, ks2
-integer, intent(out) :: idir, koff, joff
+integer, intent(out) :: iis1, iis2, idir, koff, joff, volslice
 integer :: imin
 
 nxsp = is2 + 1 - is1
@@ -300,9 +296,13 @@ nysp = js2 + 1 - js1
 nzsp = ks2 + 1 - ks1
 joff=0
 koff=0
+volslice=0
+iis1 = is1
+iis2 = is2
 if(is1.ne.is2.and.js1.ne.js2.and.ks1.ne.ks2)then
   idir=1
   is2 = is1
+  volslice=1
   return
 endif
 imin = min(nxsp,nysp,nzsp)
@@ -327,13 +327,12 @@ if(is1.eq.is2.and.js1.eq.js2)then
    koff=1
 endif
 return
-end subroutine getdirval
+end subroutine getslicefiledirection
 
 !  ------------------ writeslicedata ------------------------
 
 subroutine writeslicedata(file_unit,slicefilename,is1,is2,js1,js2,ks1,ks2,qdata,times,ntimes,redirect_flag)
 implicit none
-
 
 integer, intent(in) :: file_unit
 character(len=*),intent(in) :: slicefilename
@@ -380,6 +379,56 @@ close(file_unit)
 return
 end subroutine writeslicedata
 
+!  ------------------ writeslicedata2 ------------------------
+
+subroutine writeslicedata2(file_unit,slicefilename,&
+   longlabel,shortlabel,unitlabel,&
+   is1,is2,js1,js2,ks1,ks2,qdata,times,ntimes)
+implicit none
+
+integer, intent(in) :: file_unit
+character(len=*),intent(in) :: slicefilename, longlabel, shortlabel, unitlabel
+integer, intent(in) :: is1, is2, js1, js2, ks1, ks2
+real, intent(in), dimension(*) :: qdata
+real, intent(in), dimension(*) :: times
+integer, intent(in) :: ntimes
+
+logical :: connected
+integer :: error
+character(len=30) :: longlabel30, shortlabel30, unitlabel30
+integer :: ibeg, iend, nframe
+integer :: nxsp, nysp, nzsp
+integer :: i,ii
+inquire(unit=file_unit,opened=connected)
+if(connected)close(file_unit)
+
+open(unit=file_unit,file=trim(slicefilename),form="unformatted",action="write")
+
+longlabel30 = trim(longlabel)
+shortlabel30 = trim(shortlabel)
+unitlabel30 = trim(unitlabel)
+
+write(file_unit,iostat=error)longlabel30
+write(file_unit,iostat=error)shortlabel30
+write(file_unit,iostat=error)unitlabel30
+
+write(file_unit,iostat=error)is1, is2, js1, js2, ks1, ks2
+nxsp = is2 + 1 - is1
+nysp = js2 + 1 - js1
+nzsp = ks2 + 1 - ks1
+nframe=nxsp*nysp*nzsp
+do i = 1, ntimes
+  write(file_unit)times(i)
+  ibeg=1+(i-1)*nframe
+  iend=i*nframe
+  write(file_unit)(qdata(ii),ii=ibeg,iend)
+end do
+
+close(file_unit)
+
+return
+end subroutine writeslicedata2
+
 !  ------------------ getslicedata ------------------------
 
 subroutine getslicedata(file_unit,slicefilename,shortlabel,&
@@ -414,8 +463,9 @@ integer :: lenshort, lenunits
 character(len=3) :: blank
 logical :: connected, load
 integer :: ii, kk
-integer :: joff, koff
+integer :: joff, koff, volslice
 integer :: count
+integer :: iis1, iis2
 
 lu11 = file_unit
 joff = 0
@@ -469,7 +519,7 @@ endif
 nxsp = is2 + 1 - is1
 nysp = js2 + 1 - js1
 nzsp = ks2 + 1 - ks1
-call getdirval(is1,is2,js1,js2,ks1,ks2,idir,joff,koff)
+call getslicefiledirection(is1,is2,iis1,iis2,js1,js2,ks1,ks2,idir,joff,koff,volslice)
 
 allocate(qq(nxsp,nysp+joff,nzsp+koff))
 

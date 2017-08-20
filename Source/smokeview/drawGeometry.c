@@ -390,9 +390,9 @@ void DrawCircVentsExactSolid(int option){
         ventmin=cvi->boxmin;
         ventmax=cvi->boxmax;
 
-        initBoxClipInfo(&circleclip,ventmin[0],ventmax[0],ventmin[1],ventmax[1],ventmin[2],ventmax[2]);
+        InitBoxClipInfo(&circleclip,ventmin[0],ventmax[0],ventmin[1],ventmax[1],ventmin[2],ventmax[2]);
         MergeClipPlanes(&circleclip,&clipinfo);
-        setClipPlanes(&circleclip,CLIP_ON_DENORMAL);
+        SetClipPlanes(&circleclip,CLIP_ON_DENORMAL);
       }
       glTranslatef(x0,yy0,z0);
       switch(cvi->dir){
@@ -443,7 +443,7 @@ void DrawCircVentsExactSolid(int option){
         if(cvi->type==VENT_OUTLINE)drawrectangle(width,height,vcolor);
       }
       glPopMatrix();
-      if(option==VENT_CIRCLE)setClipPlanes(&clipinfo,CLIP_ON);
+      if(option==VENT_CIRCLE)SetClipPlanes(&clipinfo,CLIP_ON);
     }
   }
 }
@@ -500,9 +500,9 @@ void DrawCircVentsExactOutline(int option){
         ventmin=cvi->boxmin;
         ventmax=cvi->boxmax;
 
-        initBoxClipInfo(&circleclip,ventmin[0],ventmax[0],ventmin[1],ventmax[1],ventmin[2],ventmax[2]);
+        InitBoxClipInfo(&circleclip,ventmin[0],ventmax[0],ventmin[1],ventmax[1],ventmin[2],ventmax[2]);
         MergeClipPlanes(&circleclip,&clipinfo);
-        setClipPlanes(&circleclip,CLIP_ON_DENORMAL);
+        SetClipPlanes(&circleclip,CLIP_ON_DENORMAL);
       }
       glTranslatef(x0,yy0,z0);
       switch(cvi->dir){
@@ -551,7 +551,7 @@ void DrawCircVentsExactOutline(int option){
         drawrectangle(width,height,vcolor);
       }
       glPopMatrix();
-      if(option==VENT_CIRCLE)setClipPlanes(&clipinfo,CLIP_ON);
+      if(option==VENT_CIRCLE)SetClipPlanes(&clipinfo,CLIP_ON);
     }
   }
 }
@@ -606,7 +606,7 @@ void UpdateIndexColors(void){
       if(bc->usecolorindex==1){
         colorindex=bc->colorindex;
         if(colorindex>=0){
-          bc->color = getcolorptr(rgb[nrgb+colorindex]);
+          bc->color = GetColorPtr(rgb[nrgb+colorindex]);
         }
       }
     }
@@ -621,7 +621,7 @@ void UpdateIndexColors(void){
         s_color[1]=rgb[nrgb+colorindex][1];
         s_color[2]=rgb[nrgb+colorindex][2];
         s_color[3]=1.0;
-        vi->color = getcolorptr(s_color);
+        vi->color = GetColorPtr(s_color);
       }
     }
   }
@@ -2530,7 +2530,7 @@ void SetCullVis(void){
   int imesh;
 
   if(update_initcullgeom==1){
-    initcullgeom(cullgeom);
+    InitCullGeom(cullgeom);
     UpdateFaceLists();
   }
   for(imesh=0;imesh<nmeshes;imesh++){
@@ -3729,7 +3729,6 @@ void AllocateFaces(){
     }
     fprintf(stderr,"*** Error: memory allocation error\n");
   }
-  PRINTF("\n");
 }
 
 /* ------------------ CompareBlock ------------------------ */
@@ -4719,14 +4718,14 @@ void DrawBlockages(int mode, int trans_flag){
       cd=cadgeominfo+i;
       if(cd->version==1){
         if(trans_flag==DRAW_TRANSPARENT)continue;
-        if(clip_mode==CLIP_BLOCKAGES)setClipPlanes(&clipinfo,CLIP_ON);
+        if(clip_mode==CLIP_BLOCKAGES)SetClipPlanes(&clipinfo,CLIP_ON);
         DrawCADGeom(cd);
-        if(clip_mode==CLIP_BLOCKAGES)setClipPlanes(NULL,CLIP_OFF);
+        if(clip_mode==CLIP_BLOCKAGES)SetClipPlanes(NULL,CLIP_OFF);
       }
       else if(cd->version==2){
-        if(clip_mode==CLIP_BLOCKAGES)setClipPlanes(&clipinfo,CLIP_ON);
+        if(clip_mode==CLIP_BLOCKAGES)SetClipPlanes(&clipinfo,CLIP_ON);
         DrawCAD2Geom(cd,trans_flag);
-        if(clip_mode==CLIP_BLOCKAGES)setClipPlanes(NULL,CLIP_OFF);
+        if(clip_mode==CLIP_BLOCKAGES)SetClipPlanes(NULL,CLIP_OFF);
       }
       ntriangles+=2*cd->nquads;
     }
@@ -4835,7 +4834,7 @@ void GetDrawingParms(int *drawing_transparent, int *drawing_blockage_transparent
 }
 
 /* ------------------ DrawFacesOLD ------------------------ */
-
+// add option to turn off lighting when verifying smoke
 void DrawFacesOLD(){
   float *new_color,*old_color=NULL;
   int **showtimelist_handle, *showtimelist;
@@ -4847,11 +4846,13 @@ void DrawFacesOLD(){
     int j;
 
     glEnable(GL_CULL_FACE);
-    glEnable(GL_LIGHTING);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
-    glEnable(GL_COLOR_MATERIAL);
+    if(light_faces==1){
+      glEnable(GL_LIGHTING);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
+      glEnable(GL_COLOR_MATERIAL);
+    }
     glBegin(GL_TRIANGLES);
     for(j=0;j<nmeshes;j++){
       meshdata *meshi;
@@ -4914,17 +4915,21 @@ void DrawFacesOLD(){
       }
     }
     glEnd();
-    glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LIGHTING);
+    if(light_faces==1){
+      glDisable(GL_COLOR_MATERIAL);
+      glDisable(GL_LIGHTING);
+   }
   }
   if(nface_normals_double>0){
     int j;
 
-    glEnable(GL_LIGHTING);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
-    glEnable(GL_COLOR_MATERIAL);
+    if(light_faces==1){
+      glEnable(GL_LIGHTING);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
+      glEnable(GL_COLOR_MATERIAL);
+    }
     if(cullfaces==1)glDisable(GL_CULL_FACE);
     glBegin(GL_QUADS);
     for(j=0;j<nmeshes;j++){
@@ -4986,8 +4991,10 @@ void DrawFacesOLD(){
     }
     glEnd();
     if(cullfaces==1)glEnable(GL_CULL_FACE);
-    glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LIGHTING);
+    if(light_faces==1){
+      glDisable(GL_COLOR_MATERIAL);
+      glDisable(GL_LIGHTING);
+    }
   }
   if(nface_outlines>0){
     int j;
@@ -5054,12 +5061,16 @@ void DrawFacesOLD(){
   if(nface_textures>0){
     int j;
 
-    glEnable(GL_LIGHTING);
-    glEnable(GL_COLOR_MATERIAL);
+    if(light_faces==1){
+      glEnable(GL_LIGHTING);
+      glEnable(GL_COLOR_MATERIAL);
+    }
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,enable_texture_lighting? GL_MODULATE : GL_REPLACE);
-    glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
+    if(light_faces==1){
+      glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
+      glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
+    }
     glEnable(GL_TEXTURE_2D);
     glColor4ub(255, 255, 255, 255);
     for(j=0;j<nmeshes;j++){
@@ -5113,15 +5124,17 @@ void DrawFacesOLD(){
 
     }
     glDisable(GL_TEXTURE_2D);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_COLOR_MATERIAL);
+    if(light_faces==1){
+      glDisable(GL_LIGHTING);
+      glDisable(GL_COLOR_MATERIAL);
+    }
   }
   if(show_triangle_count==1)printf("obst/vent triangles: %i\n",n_geom_triangles);
 }
 
-/* ------------------ initcullgeom ------------------------ */
+/* ------------------ InitCullGeom ------------------------ */
 
-void initcullgeom(int cullgeomflag){
+void InitCullGeom(int cullgeomflag){
   culldata *culli;
   int imesh;
 

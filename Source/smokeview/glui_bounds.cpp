@@ -7,41 +7,9 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "MALLOC.h"
 
 int nevacloaded, nplot3dloaded, nsmoke3dloaded, nisoloaded, nsliceloaded, nvsliceloaded, npartloaded, npatchloaded;
-
-extern "C" void set_memcheck(int index);
-extern "C" void colorbar_global2local(void);
-extern "C" void Plot3D_CB(int var);
-extern "C" void FileShow_CB(int var);
-
-#ifdef pp_MEMDEBUG
-void Memcheck_CB(int val);
-#endif
-void SETslicemax(int setslicemax, float slicemax, int setslicechopmax, float slicechopmax);
-void SETslicemin(int setslicemin, float slicemin, int setslicechopmin, float slicechopmin);
-void Bounds_DLG_CB(int var);
-void Part_CB(int var);
-void Bound_CB(int var);
-extern "C" void IsoCB(int var);
-void Smoke3D_CB(int var);
-void Time_CB(int var);
-void Script_CB(int var);
-void boundmenu(GLUI_Rollout **ROLLOUT_bound, GLUI_Rollout **ROLLOUT_chop, GLUI_Panel *PANEL_panel, char *button_title,
-          GLUI_EditText **EDIT_con_min,GLUI_EditText **EDIT_con_max,
-          GLUI_RadioGroup **RADIO_con_setmin,GLUI_RadioGroup **RADIO_con_setmax,
-          GLUI_Checkbox **CHECKBOX_con_setchopmin, GLUI_Checkbox **CHECKBOX_con_setchopmax,
-          GLUI_EditText **EDIT_con_chopmin, GLUI_EditText **EDIT_con_chopmax,
-          GLUI_StaticText **STATIC_con_min_unit,GLUI_StaticText **STATIC_con_max_unit,
-          GLUI_StaticText **STATIC_con_cmin_unit,GLUI_StaticText **STATIC_con_cmax_unit,
-          GLUI_Button **BUTTON_update, GLUI_Button **BUTTON_reload,
-          int *setminval, int *setmaxval,
-          float *minval, float *maxval,
-          int *setchopminval, int *setchopmaxval,
-          float *chopminval, float *chopmaxval,
-          int updatebounds,
-          int truncatebounds,
-          GLUI_Update_CB FILE_CB);
 
 GLUI_Rollout *ROLLOUT_slice_bound=NULL;
 GLUI_Rollout *ROLLOUT_slice_chop=NULL;
@@ -87,6 +55,7 @@ GLUI_Rollout *ROLLOUT_zone_bound=NULL;
 #define SHOWPATCH_BOTH 24
 #define HIDEPATCHSURFACE 25
 #define DATA_transparent 26
+#define ALLFILERELOAD 27
 #define UNLOAD_QDATA 203
 #define SET_TIME 204
 #define TBOUNDS 205
@@ -96,9 +65,7 @@ GLUI_Rollout *ROLLOUT_zone_bound=NULL;
 #define DATA_EVAC_COLORING 209
 #define SLICE_VECTORSKIP 210
 #define PLOT3D_VECTORSKIP 211
-#ifdef pp_SLICEDUP
 #define UPDATE_SLICEDUPS 212
-#endif
 #define UPDATE_HISTOGRAM 213
 #define INIT_HISTOGRAM 214
 
@@ -197,7 +164,7 @@ GLUI_Rollout *ROLLOUT_config = NULL;
 GLUI_Rollout *ROLLOUT_boundary = NULL;
 GLUI_Rollout *ROLLOUT_autoload=NULL;
 GLUI_Rollout *ROLLOUT_compress=NULL;
-GLUI_Rollout *ROLLOUT_plot3d=NULL,*ROLLOUT_evac=NULL,*ROLLOUT_part=NULL,*ROLLOUT_slice=NULL,*ROLLOUT_bound=NULL,*ROLLOUT_iso=NULL;
+GLUI_Rollout *ROLLOUT_plot3d=NULL,*ROLLOUT_part=NULL,*ROLLOUT_slice=NULL,*ROLLOUT_bound=NULL,*ROLLOUT_iso=NULL;
 GLUI_Rollout *ROLLOUT_iso_colors = NULL;
 GLUI_Rollout *ROLLOUT_smoke3d=NULL,*ROLLOUT_volsmoke3d=NULL;
 GLUI_Rollout *ROLLOUT_time=NULL,*ROLLOUT_colorbar=NULL;
@@ -208,18 +175,15 @@ GLUI_Rollout *ROLLOUT_slice_average = NULL;
 GLUI_Rollout *ROLLOUT_slice_histogram = NULL;
 GLUI_Rollout *ROLLOUT_slice_vector = NULL;
 GLUI_Rollout *ROLLOUT_line_contour = NULL;
-#ifdef pp_SLICEDUP
 GLUI_Rollout *ROLLOUT_slicedups = NULL;
-#endif
 GLUI_Rollout *ROLLOUT_vector = NULL;
 GLUI_Rollout *ROLLOUT_isosurface = NULL;
 
-#ifdef pp_SLICEDUP
-GLUI_Panel *PANEL_slicedup;
-GLUI_Panel *PANEL_vectorslicedup;
-#endif
-GLUI_Panel *PANEL_iso_eachlevel;
-GLUI_Panel *PANEL_iso_alllevels;
+GLUI_Panel *PANEL_sliceshow=NULL;
+GLUI_Panel *PANEL_slicedup = NULL;
+GLUI_Panel *PANEL_vectorslicedup = NULL;
+GLUI_Panel *PANEL_iso_eachlevel = NULL;
+GLUI_Panel *PANEL_iso_alllevels = NULL;
 GLUI_Panel *PANEL_files = NULL;
 GLUI_Panel *PANEL_bounds = NULL;
 GLUI_Panel *PANEL_zone_a=NULL, *PANEL_zone_b=NULL;
@@ -297,8 +261,8 @@ GLUI_Checkbox *CHECKBOX_histogram_show_numbers=NULL;
 GLUI_Checkbox *CHECKBOX_histogram_show_graph=NULL;
 GLUI_Checkbox *CHECKBOX_histogram_show_outline=NULL;
 GLUI_Checkbox *CHECKBOX_color_vector_black = NULL;
-GLUI_Checkbox *CHECKBOX_show_slice_in_obst=NULL;
-GLUI_Checkbox *CHECKBOX_show_slices_and_vectors=NULL;
+GLUI_Checkbox *CHECKBOX_show_node_slices_and_vectors=NULL;
+GLUI_Checkbox *CHECKBOX_show_cell_slices_and_vectors=NULL;
 GLUI_Checkbox *CHECKBOX_cache_boundarydata=NULL;
 GLUI_Checkbox *CHECKBOX_showpatch_both=NULL;
 GLUI_Checkbox *CHECKBOX_showchar=NULL, *CHECKBOX_showonlychar;
@@ -334,11 +298,9 @@ GLUI_Checkbox *CHECKBOX_use_tload_end=NULL;
 GLUI_Checkbox *CHECKBOX_use_tload_skip=NULL;
 GLUI_Checkbox *CHECKBOX_research_mode=NULL;
 
-
-#ifdef pp_SLICEDUP
+GLUI_RadioGroup *RADIO_show_slice_in_obst=NULL;
 GLUI_RadioGroup *RADIO_slicedup = NULL;
 GLUI_RadioGroup *RADIO_vectorslicedup = NULL;
-#endif
 GLUI_RadioGroup *RADIO_histogram_static=NULL;
 GLUI_RadioGroup *RADIO_showhide = NULL;
 GLUI_RadioGroup *RADIO_contour_type = NULL;
@@ -392,9 +354,7 @@ GLUI_StaticText *STATIC_plot3d_cmax_unit=NULL;
 #define SLICE_VECTOR_ROLLOUT 1
 #define LINE_CONTOUR_ROLLOUT 2
 #define SLICE_HISTOGRAM_ROLLOUT 3
-#ifdef pp_SLICEDUP
 #define SLICE_DUP_ROLLOUT 4
-#endif
 
 #define VECTOR_ROLLOUT 0
 #define ISOSURFACE_ROLLOUT 1
@@ -409,21 +369,15 @@ GLUI_StaticText *STATIC_plot3d_cmax_unit=NULL;
 #define MEMCHECK_ROLLOUT 7
 
 procdata boundprocinfo[8], fileprocinfo[8], plot3dprocinfo[2], isoprocinfo[2];
-#ifdef pp_SLICEDUP
-procdata sliceprocinfo[4];
-#else
-procdata sliceprocinfo[3];
-#endif
+procdata sliceprocinfo[5];
 int nboundprocinfo = 0, nfileprocinfo = 0, nsliceprocinfo=0, nplot3dprocinfo=0, nisoprocinfo=0;
 
-#ifdef pp_SLICEDUP
 /* ------------------ update_iso_controls ------------------------ */
 
 extern "C" void update_slicedup_dialog(void){
   if(RADIO_slicedup != NULL)RADIO_slicedup->set_int_val(slicedup_option);
   if(RADIO_vectorslicedup != NULL)RADIO_vectorslicedup->set_int_val(vectorslicedup_option);
 }
-#endif
 
 /* ------------------ update_iso_controls ------------------------ */
 
@@ -447,13 +401,12 @@ extern "C" void UpdateHistogramType(void){
   CHECKBOX_histogram_show_graph->set_int_val(histogram_show_graph);
   CHECKBOX_histogram_show_numbers->set_int_val(histogram_show_numbers);
   CHECKBOX_histogram_show_outline->set_int_val(histogram_show_outline);
-  
 }
 
-/* ------------------ update_show_slice_in_obst ------------------------ */
+/* ------------------ UpdateShowSliceInObst ------------------------ */
 
-extern "C" void update_show_slice_in_obst(void){
-  CHECKBOX_show_slice_in_obst->set_int_val(show_slice_in_obst);
+extern "C" void UpdateShowSliceInObst(void){
+  RADIO_show_slice_in_obst->set_int_val(show_slice_in_obst);
 }
 
 /* ------------------ update_iso_colorlevel ------------------------ */
@@ -466,31 +419,31 @@ extern "C" void update_iso_colorlevel(void){
 /* ------------------ Plot3d_Rollout_CB ------------------------ */
 
 void Plot3d_Rollout_CB(int var){
-  toggle_rollout(plot3dprocinfo, nplot3dprocinfo, var);
+  ToggleRollout(plot3dprocinfo, nplot3dprocinfo, var);
 }
 
 /* ------------------ Slice_Rollout_CB ------------------------ */
 
 void Slice_Rollout_CB(int var){
-  toggle_rollout(sliceprocinfo, nsliceprocinfo, var);
+  ToggleRollout(sliceprocinfo, nsliceprocinfo, var);
 }
 
 /* ------------------ Iso_Rollout_CB ------------------------ */
 
 void Iso_Rollout_CB(int var){
-  toggle_rollout(isoprocinfo, nisoprocinfo, var);
+  ToggleRollout(isoprocinfo, nisoprocinfo, var);
 }
 
 /* ------------------ Bound_Rollout_CB ------------------------ */
 
 void Bound_Rollout_CB(int var){
-  toggle_rollout(boundprocinfo, nboundprocinfo, var);
+  ToggleRollout(boundprocinfo, nboundprocinfo, var);
 }
 
 /* ------------------ File_Rollout_CB ------------------------ */
 
 void File_Rollout_CB(int var){
-  toggle_rollout(fileprocinfo, nfileprocinfo, var);
+  ToggleRollout(fileprocinfo, nfileprocinfo, var);
 }
 
 /* ------------------ update_glui_zonebounds ------------------------ */
@@ -708,11 +661,780 @@ extern "C" void UpdateColorTableList(int ncolortableinfo_old){
   }
 }
 
+/* ------------------ FileShow_CB ------------------------ */
+
+extern "C" void FileShow_CB(int var){
+  updatemenu = 1;
+  switch(var){
+  case  FILESHOW_plot3d:
+    switch(showhide_option){
+    case SHOWALL_FILES:
+    case SHOWONLY_FILE:
+      Plot3DShowMenu(SHOWALL_PLOT3D);
+      break;
+    case HIDEALL_FILES:
+      Plot3DShowMenu(HIDEALL_PLOT3D);
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    break;
+  case FILESHOW_evac:
+    switch(showhide_option){
+    case SHOWALL_FILES:
+      EvacShowMenu(SHOWALL_EVAC);
+      break;
+    case SHOWONLY_FILE:
+      EvacShowMenu(SHOWALL_EVAC);
+      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
+      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
+      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
+      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
+      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
+      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
+      break;
+    case HIDEALL_FILES:
+      EvacShowMenu(HIDEALL_EVAC);
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    break;
+  case  FILESHOW_particle:
+    switch(showhide_option){
+    case SHOWALL_FILES:
+      ParticleShowMenu(SHOWALL_PARTICLE);
+      break;
+    case SHOWONLY_FILE:
+      ParticleShowMenu(SHOWALL_PARTICLE);
+      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
+      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
+      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
+      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
+      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
+      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
+      break;
+    case HIDEALL_FILES:
+      ParticleShowMenu(HIDEALL_PARTICLE);
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    break;
+  case  FILESHOW_slice:
+    switch(showhide_option){
+    case SHOWALL_FILES:
+      ShowHideSliceMenu(SHOWALL_SLICE);
+      break;
+    case SHOWONLY_FILE:
+      ShowHideSliceMenu(SHOWALL_SLICE);
+      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
+      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
+      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
+      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
+      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
+      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
+      break;
+    case HIDEALL_FILES:
+      ShowHideSliceMenu(HIDEALL_SLICE);
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    break;
+  case  FILESHOW_vslice:
+    switch(showhide_option){
+    case SHOWALL_FILES:
+      ShowVSliceMenu(SHOWALL_VSLICE);
+      break;
+    case SHOWONLY_FILE:
+      ShowVSliceMenu(SHOWALL_VSLICE);
+      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
+      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
+      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
+      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
+      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
+      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
+      break;
+    case HIDEALL_FILES:
+      ShowHideSliceMenu(HIDEALL_SLICE);
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    break;
+  case  FILESHOW_boundary:
+    switch(showhide_option){
+    case SHOWALL_FILES:
+      ShowPatchMenu(SHOWALL_BOUNDARY);
+      break;
+    case SHOWONLY_FILE:
+      ShowPatchMenu(SHOWALL_BOUNDARY);
+      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
+      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
+      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
+      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
+      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
+      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
+      break;
+    case HIDEALL_FILES:
+      ShowPatchMenu(HIDEALL_BOUNDARY);
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    break;
+  case  FILESHOW_3dsmoke:
+    switch(showhide_option){
+    case SHOWALL_FILES:
+      Smoke3DShowMenu(SHOWALL_SMOKE3D);
+      break;
+    case SHOWONLY_FILE:
+      Smoke3DShowMenu(SHOWALL_SMOKE3D);
+      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
+      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
+      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
+      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
+      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
+      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
+      break;
+    case HIDEALL_FILES:
+      Smoke3DShowMenu(HIDEALL_SMOKE3D);
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    break;
+  case  FILESHOW_isosurface:
+    switch(showhide_option){
+    case SHOWALL_FILES:
+      IsoShowMenu(SHOWALL_ISO);
+      break;
+    case SHOWONLY_FILE:
+      IsoShowMenu(SHOWALL_ISO);
+      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
+      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
+      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
+      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
+      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
+      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
+      break;
+    case HIDEALL_FILES:
+      IsoShowMenu(HIDEALL_ISO);
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    break;
+  default:
+    break;
+  }
+}
+
+#ifdef pp_MEMDEBUG
+
+/* ------------------ Memcheck_CB ------------------------ */
+
+void Memcheck_CB(int var){
+  switch(var){
+  case MEMCHECK:
+    set_memcheck(list_memcheck_index);
+    break;
+  default:
+    ASSERT(FFALSE);
+    break;
+  }
+}
+#endif
+
+/* ------------------ Bounds_DLG_CB ------------------------ */
+
+void Bounds_DLG_CB(int var){
+  switch(var){
+  case CLOSE_BOUNDS:
+    glui_bounds->hide();
+    updatemenu = 1;
+    break;
+  case SAVE_SETTINGS:
+    WriteINI(LOCAL_INI, NULL);
+    break;
+  case COMPRESS_FILES:
+    PRINTF("compressing\n");
+    break;
+  default:
+    ASSERT(FFALSE);
+    break;
+  }
+}
+
+/* ------------------ Bound_CB ------------------------ */
+
+void Bound_CB(int var){
+  int i;
+
+  switch(var){
+  case SHOWPATCH_BOTH:
+    updatefacelists = 1;
+    updatehiddenfaces = 1;
+    break;
+  case CACHE_BOUNDARYDATA:
+    if(cache_boundarydata == 0){
+      BUTTON_updatebound->disable();
+    }
+    else{
+      BUTTON_updatebound->enable();
+    }
+    break;
+  case VALMAX:
+  case VALMIN:
+    break;
+  case HIDEPATCHSURFACE:
+    updatefacelists = 1;
+    break;
+  case FRAMELOADING:
+    boundframestep = boundframeskip + 1;
+    boundzipstep = boundzipskip + 1;
+    updatemenu = 1;
+    break;
+  case CHOPUPDATE:
+    UpdateChopColors();
+    break;
+  case SETCHOPMINVAL:
+    UpdateChopColors();
+    local2globalpatchbounds(patchlabellist[list_patch_index]);
+    switch(setpatchchopmin){
+    case DISABLE:
+      EDIT_patch_chopmin->disable();
+      break;
+    case ENABLE:
+      EDIT_patch_chopmin->enable();
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    update_hidepatchsurface();
+    break;
+  case SETCHOPMAXVAL:
+    UpdateChopColors();
+    local2globalpatchbounds(patchlabellist[list_patch_index]);
+    switch(setpatchchopmax){
+    case DISABLE:
+      EDIT_patch_chopmax->disable();
+      break;
+    case ENABLE:
+      EDIT_patch_chopmax->enable();
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    update_hidepatchsurface();
+    break;
+  case CHOPVALMIN:
+    ASSERT(EDIT_patch_min != NULL);
+    EDIT_patch_min->set_float_val(patchmin);
+    local2globalpatchbounds(patchlabellist[list_patch_index]);
+    UpdateChopColors();
+    break;
+  case CHOPVALMAX:
+    ASSERT(EDIT_patch_max != NULL);
+    EDIT_patch_max->set_float_val(patchmax);
+    local2globalpatchbounds(patchlabellist[list_patch_index]);
+    UpdateChopColors();
+    break;
+  case SHOWCHAR:
+    if(CHECKBOX_showchar != NULL&&CHECKBOX_showonlychar != NULL){
+      if(vis_threshold == 1){
+        CHECKBOX_showonlychar->enable();
+      }
+      else{
+        CHECKBOX_showonlychar->disable();
+      }
+    }
+    updatemenu = 1;
+    updatefacelists = 1;
+    break;
+  case FILETYPEINDEX:
+    local2globalpatchbounds(patchlabellist[list_patch_index_old]);
+    global2localpatchbounds(patchlabellist[list_patch_index]);
+
+    EDIT_patch_min->set_float_val(patchmin);
+    EDIT_patch_max->set_float_val(patchmax);
+    EDIT_patch_chopmin->set_float_val(patchchopmin);
+    EDIT_patch_chopmax->set_float_val(patchchopmax);
+
+    Bound_CB(SETVALMIN);
+    Bound_CB(SETVALMAX);
+    if(RADIO_patch_setmin != NULL)RADIO_patch_setmin->set_int_val(setpatchmin);
+    if(RADIO_patch_setmax != NULL)RADIO_patch_setmax->set_int_val(setpatchmax);
+    if(CHECKBOX_patch_setchopmin != NULL)CHECKBOX_patch_setchopmin->set_int_val(setpatchchopmin);
+    if(CHECKBOX_patch_setchopmax != NULL)CHECKBOX_patch_setchopmax->set_int_val(setpatchchopmax);
+
+    switch(setpatchchopmin){
+    case DISABLE:
+      EDIT_patch_chopmin->disable();
+      break;
+    case ENABLE:
+      EDIT_patch_chopmin->enable();
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    switch(setpatchchopmax){
+    case DISABLE:
+      EDIT_patch_chopmax->disable();
+      break;
+    case ENABLE:
+      EDIT_patch_chopmax->enable();
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+
+    list_patch_index_old = list_patch_index;
+    update_hidepatchsurface();
+    break;
+  case SETVALMIN:
+    switch(setpatchmin){
+    case PERCENTILE_MIN:
+    case GLOBAL_MIN:
+      EDIT_patch_min->disable();
+      break;
+    case SET_MIN:
+      EDIT_patch_min->enable();
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    Bound_CB(FILEUPDATE);
+    break;
+  case SETVALMAX:
+    switch(setpatchmax){
+    case PERCENTILE_MAX:
+    case GLOBAL_MAX:
+      EDIT_patch_max->disable();
+      break;
+    case SET_MAX:
+      EDIT_patch_max->enable();
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    Bound_CB(FILEUPDATE);
+    break;
+  case FILEUPDATE:
+    local2globalpatchbounds(patchlabellist[list_patch_index]);
+    break;
+  case FILEUPDATEDATA:
+    UpdateAllPatchColors();
+    break;
+  case FILERELOAD:
+    Bound_CB(FILEUPDATE);
+    for(i = 0;i < npatchinfo;i++){
+      patchdata *patchi;
+
+      patchi = patchinfo + i;
+      if(patchi->loaded == 0)continue;
+      LoadPatchMenu(i);
+    }
+    EDIT_patch_min->set_float_val(patchmin);
+    EDIT_patch_max->set_float_val(patchmax);
+    break;
+  case COMPRESS_FILES:
+    CompressSVZip();
+    break;
+  case COMPRESS_AUTOLOADED:
+    updatemenu = 1;
+    break;
+  case OVERWRITE:
+    if(overwrite_all == 1){
+      CHECKBOX_erase_all->set_int_val(0);
+    }
+    updatemenu = 1;
+    break;
+  case ERASE:
+    if(erase_all == 1){
+      CHECKBOX_overwrite_all->set_int_val(0);
+    }
+    updatemenu = 1;
+    break;
+  case STARTUP:
+    Bounds_DLG_CB(SAVE_SETTINGS);
+    break;
+  case SAVE_FILE_LIST:
+    Set3DSmokeStartup();
+    Bounds_DLG_CB(SAVE_SETTINGS);
+    break;
+  case LOAD_FILES:
+    LoadFiles();
+    break;
+  default:
+    ASSERT(FFALSE);
+    break;
+  }
+}
+
+/* ------------------ Smoke3D_CB ------------------------ */
+
+void Smoke3D_CB(int var){
+  switch(var){
+  case FRAMELOADING:
+    smoke3dframestep = smoke3dframeskip + 1;
+    smoke3dzipstep = smoke3dzipskip + 1;
+    updatemenu = 1;
+    break;
+  default:
+    ASSERT(FFALSE);
+    break;
+  }
+}
+
+/* ------------------ Time_CB ------------------------ */
+
+void Time_CB(int var){
+
+  updatemenu = 1;
+  switch(var){
+  case SET_TIME:
+    settimeval(glui_time);
+    break;
+  case TBOUNDS:
+    if(use_tload_begin == 1 || use_tload_end == 1 || use_tload_skip == 1){
+      update_tbounds();
+    }
+    break;
+  case TBOUNDS_USE:
+    if(use_tload_begin == 1){
+      SPINNER_tload_begin->enable();
+    }
+    else{
+      SPINNER_tload_begin->disable();
+    }
+    if(use_tload_end == 1){
+      SPINNER_tload_end->enable();
+    }
+    else{
+      SPINNER_tload_end->disable();
+    }
+    if(use_tload_skip == 1){
+      SPINNER_tload_skip->enable();
+    }
+    else{
+      SPINNER_tload_skip->disable();
+    }
+    update_tbounds();
+    break;
+  case RELOAD_DATA:
+    ReloadMenu(RELOAD_NOW);
+    break;
+  default:
+    ASSERT(FFALSE);
+    break;
+  }
+}
+
+/* ------------------ Script_CB ------------------------ */
+
+void Script_CB(int var){
+  char label[1024];
+  char *name;
+  int id;
+  int len, i;
+  int set_renderlabel;
+
+  switch(var){
+  case SCRIPT_STEP_NOW:
+    keyboard('^', FROM_SMOKEVIEW);
+    break;
+  case SCRIPT_CANCEL_NOW:
+    current_script_command = NULL;
+    runscript = 0;
+    first_frame_index = 0;
+    skip_render_frames = 0;
+    script_startframe = -1;
+    script_skipframe = -1;
+    script_step = 0;
+    glui_script_enable();
+    rendering_status = RENDER_OFF;
+    break;
+  case SCRIPT_RENDER_DIR:
+    strcpy(label, script_renderdir);
+    TrimBack(label);
+    name = TrimFront(label);
+    set_renderlabel = 0;
+    if(name != NULL&&strlen(name) != strlen(script_renderdir)){
+      strcpy(script_renderdir, name);
+      set_renderlabel = 1;
+    }
+    name = script_renderdir;
+    len = strlen(script_renderdir);
+    if(len == 0)break;
+    for(i = 0;i < len;i++){
+#ifdef WIN32
+      if(name[i] == '/'){
+        set_renderlabel = 1;
+        name[i] = '\\';
+      }
+#else
+      if(name[i] == '\\'){
+        set_renderlabel = 1;
+        name[i] = '/';
+      }
+#endif
+    }
+#ifdef WIN32
+    if(name[len - 1] != '\\'){
+      set_renderlabel = 1;
+      strcat(name, dirseparator);
+    }
+#else
+    if(name[len - 1] != '/'){
+      set_renderlabel = 1;
+      strcat(name, dirseparator);
+    }
+#endif
+    if(set_renderlabel == 1){
+      EDIT_renderdir->set_text(script_renderdir);
+    }
+    break;
+  case SCRIPT_RENDER:
+    keyboard('r', FROM_SMOKEVIEW);
+    break;
+  case SCRIPT_RENDER_SUFFIX:
+  {
+    char *suffix;
+
+    TrimBack(script_renderfilesuffix);
+    suffix = TrimFront(script_renderfilesuffix);
+    strcpy(script_renderfile, "");
+    if(strlen(suffix) > 0){
+      strcpy(script_renderfile, fdsprefix);
+      strcat(script_renderfile, "_");
+      strcat(script_renderfile, suffix);
+      strcpy(label, _d("Render: "));
+      strcat(label, script_renderfile);
+    }
+    else{
+      strcpy(label, _d("Render"));
+    }
+    BUTTON_script_render->set_name(label);
+  }
+  break;
+  case SCRIPT_START:
+    ScriptMenu(SCRIPT_START_RECORDING);
+    break;
+  case SCRIPT_STOP:
+    ScriptMenu(SCRIPT_STOP_RECORDING);
+    break;
+  case SCRIPT_RUNSCRIPT:
+    name = 5 + BUTTON_script_runscript->name;
+    PRINTF("running script: %s\n", name);
+    ScriptMenu(LIST_scriptlist->get_int_val());
+    break;
+  case SCRIPT_LIST:
+    id = LIST_scriptlist->get_int_val();
+    name = get_scriptfilename(id);
+    if(name != NULL&&strlen(name) > 0){
+      strcpy(label, _d("Run: "));
+      strcat(label, name);
+      BUTTON_script_runscript->set_name(label);
+    }
+    break;
+  case SCRIPT_SAVEINI:
+    name = 5 + BUTTON_script_saveini->name;
+    if(strlen(name) > 0){
+      inifiledata *inifile;
+
+      strcpy(script_filename, name);
+      inifile = insert_inifile(name);
+      WriteINI(SCRIPT_INI, script_filename);
+      if(inifile != NULL&&LIST_ini_list != NULL){
+        LIST_ini_list->add_item(inifile->id, inifile->file);
+      }
+    }
+    WriteINI(LOCAL_INI, NULL);
+    break;
+  case SCRIPT_LOADINI:
+  {
+    char *ini_filename;
+
+    id = LIST_ini_list->get_int_val();
+    ini_filename = get_inifilename(id);
+    if(ini_filename == NULL)break;
+    if(strcmp(ini_filename, caseini_filename) == 0){
+      ReadINI(NULL);
+    }
+    else if(id >= 0){
+      char *script_filename2;
+
+      if(strlen(ini_filename) == 0)break;
+      script_filename2 = script_filename;
+      strcpy(script_filename, ini_filename);
+      windowresized = 0;
+      ReadINI(script_filename2);
+    }
+    if(scriptoutstream != NULL){
+      fprintf(scriptoutstream, "LOADINIFILE\n");
+      fprintf(scriptoutstream, " %s\n", ini_filename);
+    }
+  }
+  break;
+  case SCRIPT_STEP:
+    UpdateScriptStep();
+    updatemenu = 1;
+    break;
+  case SCRIPT_FILE_LOADING:
+    updatemenu = 1;
+    break;
+  case SCRIPT_EDIT_INI:
+    strcpy(label, _d("Save "));
+    strcat(label, fdsprefix);
+    TrimBack(script_inifile_suffix);
+    if(strlen(script_inifile_suffix) > 0){
+      strcat(label, "_");
+      strcat(label, script_inifile_suffix);
+    }
+    strcat(label, ".ini");
+    BUTTON_script_saveini->set_name(label);
+    break;
+  case SCRIPT_SETSUFFIX:
+    break;
+  default:
+    ASSERT(FFALSE);
+    break;
+  }
+}
+
+/* ------------------ boundmenu ------------------------ */
+
+void boundmenu(GLUI_Rollout **bound_rollout, GLUI_Rollout **chop_rollout, GLUI_Panel *PANEL_panel, char *button_title,
+  GLUI_EditText **EDIT_con_min, GLUI_EditText **EDIT_con_max,
+  GLUI_RadioGroup **RADIO_con_setmin, GLUI_RadioGroup **RADIO_con_setmax,
+  GLUI_Checkbox **CHECKBOX_con_setchopmin, GLUI_Checkbox **CHECKBOX_con_setchopmax,
+  GLUI_EditText **EDIT_con_chopmin, GLUI_EditText **EDIT_con_chopmax,
+  GLUI_StaticText **STATIC_con_min_unit, GLUI_StaticText **STATIC_con_max_unit,
+  GLUI_StaticText **STATIC_con_cmin_unit, GLUI_StaticText **STATIC_con_cmax_unit,
+  GLUI_Button **BUTTON_update, GLUI_Button **BUTTON_reload,
+
+  int *setminval, int *setmaxval,
+  float *minval, float *maxval,
+  int *setchopminval, int *setchopmaxval,
+  float *chopminval, float *chopmaxval,
+  int updatebounds,
+  int truncatebounds,
+  GLUI_Update_CB FILE_CB){
+
+  GLUI_Panel *PANEL_a, *PANEL_b, *PANEL_c;
+  GLUI_Rollout *PANEL_e = NULL, *PANEL_g = NULL;
+  GLUI_Panel *PANEL_f = NULL, *PANEL_h = NULL;
+
+  PANEL_g = glui_bounds->add_rollout_to_panel(PANEL_panel, _d("Bound data"), false);
+  if(bound_rollout != NULL)*bound_rollout = PANEL_g;
+
+  PANEL_a = glui_bounds->add_panel_to_panel(PANEL_g, "", GLUI_PANEL_NONE);
+
+  *EDIT_con_min = glui_bounds->add_edittext_to_panel(PANEL_a, "", GLUI_EDITTEXT_FLOAT, minval, VALMIN, FILE_CB);
+  if(*setminval == 0){
+    (*EDIT_con_min)->disable();
+  }
+  glui_bounds->add_column_to_panel(PANEL_a, false);
+
+  if(STATIC_con_min_unit != NULL){
+    *STATIC_con_min_unit = glui_bounds->add_statictext_to_panel(PANEL_a, "xx");
+    glui_bounds->add_column_to_panel(PANEL_a, false);
+    (*STATIC_con_min_unit)->set_w(10);
+  }
+
+  *RADIO_con_setmin = glui_bounds->add_radiogroup_to_panel(PANEL_a, setminval, SETVALMIN, FILE_CB);
+  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmin, _d("percentile min"));
+  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmin, _d("set min"));
+  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmin, _d("global min"));
+
+  PANEL_b = glui_bounds->add_panel_to_panel(PANEL_g, "", GLUI_PANEL_NONE);
+
+  *EDIT_con_max = glui_bounds->add_edittext_to_panel(PANEL_b, "", GLUI_EDITTEXT_FLOAT, maxval, VALMAX, FILE_CB);
+  if(*setminval == 0){
+    (*EDIT_con_max)->disable();
+  }
+  glui_bounds->add_column_to_panel(PANEL_b, false);
+
+  if(STATIC_con_max_unit != NULL){
+    *STATIC_con_max_unit = glui_bounds->add_statictext_to_panel(PANEL_b, "yy");
+    glui_bounds->add_column_to_panel(PANEL_b, false);
+    (*STATIC_con_max_unit)->set_w(10);
+  }
+
+  *RADIO_con_setmax = glui_bounds->add_radiogroup_to_panel(PANEL_b, setmaxval, SETVALMAX, FILE_CB);
+  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmax, _d("percentile max"));
+  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmax, _d("set max"));
+  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmax, _d("global max"));
+
+  PANEL_c = glui_bounds->add_panel_to_panel(PANEL_g, "", GLUI_PANEL_NONE);
+
+  if(updatebounds == UPDATE_BOUNDS){
+    glui_bounds->add_button_to_panel(PANEL_c, _d("Update"), FILEUPDATE, FILE_CB);
+  }
+  else if(updatebounds == RELOAD_BOUNDS){
+    glui_bounds->add_button_to_panel(PANEL_c, button_title, FILERELOAD, FILE_CB);
+  }
+  else{
+    BUTTON_updatebound = glui_bounds->add_button_to_panel(PANEL_c, _d("Update using cached data"), FILEUPDATEDATA, FILE_CB);
+    BUTTON_reloadbound = glui_bounds->add_button_to_panel(PANEL_c, button_title, FILERELOAD, FILE_CB);
+  }
+
+  if(EDIT_con_chopmin != NULL&&EDIT_con_chopmax != NULL&&CHECKBOX_con_setchopmin != NULL&&CHECKBOX_con_setchopmax != NULL){
+    PANEL_e = glui_bounds->add_rollout_to_panel(PANEL_panel, _d("Truncate data"), false);
+    if(chop_rollout != NULL)*chop_rollout = PANEL_e;
+
+    PANEL_f = glui_bounds->add_panel_to_panel(PANEL_e, "", GLUI_PANEL_NONE);
+
+    *EDIT_con_chopmin = glui_bounds->add_edittext_to_panel(PANEL_f, "", GLUI_EDITTEXT_FLOAT, chopminval, CHOPVALMIN, FILE_CB);
+    glui_bounds->add_column_to_panel(PANEL_f, false);
+
+    if(STATIC_con_cmin_unit != NULL){
+      *STATIC_con_cmin_unit = glui_bounds->add_statictext_to_panel(PANEL_f, "xx");
+      (*STATIC_con_cmin_unit)->set_w(10);
+      glui_bounds->add_column_to_panel(PANEL_f, false);
+    }
+    *CHECKBOX_con_setchopmin = glui_bounds->add_checkbox_to_panel(PANEL_f, _d("Below"), setchopminval, SETCHOPMINVAL, FILE_CB);
+
+    PANEL_h = glui_bounds->add_panel_to_panel(PANEL_e, "", GLUI_PANEL_NONE);
+
+    *EDIT_con_chopmax = glui_bounds->add_edittext_to_panel(PANEL_h, "", GLUI_EDITTEXT_FLOAT, chopmaxval, CHOPVALMAX, FILE_CB);
+    glui_bounds->add_column_to_panel(PANEL_h, false);
+
+    if(STATIC_con_cmax_unit != NULL){
+      *STATIC_con_cmax_unit = glui_bounds->add_statictext_to_panel(PANEL_h, "xx");
+      glui_bounds->add_column_to_panel(PANEL_h, false);
+      (*STATIC_con_cmax_unit)->set_w(10);
+    }
+    *CHECKBOX_con_setchopmax = glui_bounds->add_checkbox_to_panel(PANEL_h, _d("Above"), setchopmaxval, SETCHOPMAXVAL, FILE_CB);
+
+    if(truncatebounds == TRUNCATE_BOUNDS){
+      glui_bounds->add_button_to_panel(PANEL_e, _d("Update"), CHOPUPDATE, FILE_CB);
+    }
+  }
+}
+
 /* ------------------ glui_bounds_setup ------------------------ */
 
 extern "C" void glui_bounds_setup(int main_window){
   int i;
   int nradio;
+  int have_part, have_evac;
 
   update_glui_bounds=0;
   if(glui_bounds!=NULL){
@@ -829,7 +1551,7 @@ extern "C" void glui_bounds_setup(int main_window){
 
       file = scriptfile->file;
       if(file == NULL)continue;
-      if(file_exists(file) == 0)continue;
+      if(FILE_EXISTS(file) == NO)continue;
       len = strlen(file);
       if(len <= 0)continue;
 
@@ -856,7 +1578,7 @@ extern "C" void glui_bounds_setup(int main_window){
     inifiledata *inifile;
 
     for(inifile = first_inifile.next; inifile->next != NULL; inifile = inifile->next){
-      if(inifile->file != NULL&&file_exists(inifile->file) == 1){
+      if(inifile->file != NULL&&FILE_EXISTS(inifile->file) == YES){
         if(ini_index == -2)ini_index = inifile->id;
         LIST_ini_list->add_item(inifile->id, inifile->file);
       }
@@ -1075,9 +1797,20 @@ extern "C" void glui_bounds_setup(int main_window){
 
   /* Particle File Bounds  */
 
-  if(npartinfo>0&&nevac!=npartinfo){
+  have_part = 0;
+  have_evac = 0;
+  if(npartinfo > 0 && nevac != npartinfo)have_part = 1;
+  if(nevac > 0)have_evac = 1;
+  if(have_part==1||have_evac==1){
+  char label[100];
+
+  strcpy(label, "");
+  if(have_part == 1)strcat(label, "Particle");
+  if(have_part == 1 && have_evac == 1)strcat(label, "/");
+  if(have_evac == 1)strcat(label, "Evac");
+
     glui_active=1;
-    ROLLOUT_part = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,"Particle",false,PART_ROLLOUT,Bound_Rollout_CB);
+    ROLLOUT_part = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,label,false,PART_ROLLOUT,Bound_Rollout_CB);
     ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_part, PART_ROLLOUT);
 
     if(npart5prop>0){
@@ -1112,7 +1845,10 @@ extern "C" void glui_bounds_setup(int main_window){
     {
       char boundmenulabel[100];
 
-      strcpy(boundmenulabel,"Reload Particle File(s)");
+      strcpy(boundmenulabel, "Reload ");
+      strcat(boundmenulabel, label);
+      strcat(boundmenulabel, " File");
+      if(npartinfo > 1)strcat(boundmenulabel, "s");
       boundmenu(&ROLLOUT_part_bound,&ROLLOUT_part_chop,ROLLOUT_part,boundmenulabel,
         &EDIT_part_min,&EDIT_part_max,&RADIO_part_setmin,&RADIO_part_setmax,
         &CHECKBOX_part_setchopmin, &CHECKBOX_part_setchopmax,
@@ -1124,35 +1860,29 @@ extern "C" void glui_bounds_setup(int main_window){
         &setpartchopmin,&setpartchopmax,&partchopmin,&partchopmax,
         RELOAD_BOUNDS,DONT_TRUNCATE_BOUNDS,
         Part_CB);
-        Part_CB(FILETYPEINDEX);
-        SPINNER_partpointsize=glui_bounds->add_spinner_to_panel(ROLLOUT_part,_d("Particle size"),GLUI_SPINNER_FLOAT,
-          &partpointsize);
-        SPINNER_partpointsize->set_float_limits(1.0,100.0);
-        SPINNER_streaklinewidth=glui_bounds->add_spinner_to_panel(ROLLOUT_part,_d("Streak line width"),GLUI_SPINNER_FLOAT,
-          &streaklinewidth);
-        SPINNER_streaklinewidth->set_float_limits(1.0,100.0);
+      Part_CB(FILETYPEINDEX);
+      SPINNER_partpointsize=glui_bounds->add_spinner_to_panel(ROLLOUT_part,_d("Particle size"),GLUI_SPINNER_FLOAT,&partpointsize);
+      SPINNER_partpointsize->set_float_limits(1.0,100.0);
+      SPINNER_streaklinewidth=glui_bounds->add_spinner_to_panel(ROLLOUT_part,_d("Streak line width"),GLUI_SPINNER_FLOAT,&streaklinewidth);
+      SPINNER_streaklinewidth->set_float_limits(1.0,100.0);
 
-        SPINNER_partstreaklength=glui_bounds->add_spinner_to_panel(ROLLOUT_part,_d("Streak length (s)"),GLUI_SPINNER_FLOAT,
-          &float_streak5value,STREAKLENGTH,Part_CB);
-        SPINNER_partstreaklength->set_float_limits(0.0,tmax_part);
+      SPINNER_partstreaklength=glui_bounds->add_spinner_to_panel(ROLLOUT_part,_d("Streak length (s)"),GLUI_SPINNER_FLOAT,&float_streak5value,STREAKLENGTH,Part_CB);
+      SPINNER_partstreaklength->set_float_limits(0.0,tmax_part);
 
-        CHECKBOX_showtracer=glui_bounds->add_checkbox_to_panel(ROLLOUT_part,_d("Always show tracers"),&show_tracers_always,
-          TRACERS,Part_CB);
+      CHECKBOX_showtracer=glui_bounds->add_checkbox_to_panel(ROLLOUT_part,_d("Always show tracers"),&show_tracers_always,TRACERS,Part_CB);
     }
   }
 
-  if(nevac>0){
+  if(have_evac==1){
     glui_active=1;
-    ROLLOUT_evac = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,"Evacuation",false,EVAC_ROLLOUT,Bound_Rollout_CB);
-    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_evac, EVAC_ROLLOUT);
 
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_evac,_d("Select avatar"),&select_avatar);
-    CHECKBOX_show_evac_slices=glui_bounds->add_checkbox_to_panel(ROLLOUT_evac,"Show slice menus",&show_evac_slices,SHOW_EVAC_SLICES,Slice_CB);
-    PANEL_evac_direction=glui_bounds->add_panel_to_panel(ROLLOUT_evac,_d("Direction vectors"));
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_part,_d("Select avatar"),&select_avatar);
+    CHECKBOX_show_evac_slices=glui_bounds->add_checkbox_to_panel(ROLLOUT_part,"Show slice menus",&show_evac_slices,SHOW_EVAC_SLICES,Slice_CB);
+    PANEL_evac_direction=glui_bounds->add_panel_to_panel(ROLLOUT_part,_d("Direction vectors"));
     CHECKBOX_constant_coloring=glui_bounds->add_checkbox_to_panel(PANEL_evac_direction,_d("Constant coloring"),&constant_evac_coloring,SHOW_EVAC_SLICES,Slice_CB);
     CHECKBOX_data_coloring=glui_bounds->add_checkbox_to_panel(PANEL_evac_direction,_d("Data coloring"),&data_evac_coloring,DATA_EVAC_COLORING,Slice_CB);
     CHECKBOX_show_evac_color=glui_bounds->add_checkbox_to_panel(PANEL_evac_direction,_d("Show colorbar (when data coloring)"),&show_evac_colorbar,SHOW_EVAC_SLICES,Slice_CB);
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_evac,_d("View from selected Avatar"),&view_from_selected_avatar);
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_part,_d("View from selected Avatar"),&view_from_selected_avatar);
   }
 
   /* Plot3D file bounds */
@@ -1289,7 +2019,7 @@ extern "C" void glui_bounds_setup(int main_window){
       if(view_tstop>tttmax)tttmax=view_tstop;
       SPINNER_sliceaverage->set_float_limits(0.0,tttmax);
     }
-    glui_bounds->add_button_to_panel(ROLLOUT_slice_average,"Reload",FILERELOAD,Slice_CB);
+    glui_bounds->add_button_to_panel(ROLLOUT_slice_average,"Reload",ALLFILERELOAD,Slice_CB);
 
     ROLLOUT_slice_vector = glui_bounds->add_rollout_to_panel(ROLLOUT_slice, _d("Vector"), false, SLICE_VECTOR_ROLLOUT, Slice_Rollout_CB);
     ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_slice_vector, SLICE_VECTOR_ROLLOUT);
@@ -1305,7 +2035,8 @@ extern "C" void glui_bounds_setup(int main_window){
     SPINNER_slicevectorskip->set_int_limits(1,4);
     CHECKBOX_color_vector_black = glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_vector, _d("Color black"), &color_vector_black);
 
-    CHECKBOX_show_slices_and_vectors=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_vector,_d("Show contours"),&show_slices_and_vectors);
+    CHECKBOX_show_node_slices_and_vectors=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_vector,_d("Show vectors and node centered slices"),&show_node_slices_and_vectors);
+    CHECKBOX_show_node_slices_and_vectors=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_vector,_d("Show vectors and cell centered slices"),&show_cell_slices_and_vectors);
     ROLLOUT_line_contour = glui_bounds->add_rollout_to_panel(ROLLOUT_slice, _d("Line Contours"), false, LINE_CONTOUR_ROLLOUT, Slice_Rollout_CB);
     ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_line_contour, LINE_CONTOUR_ROLLOUT);
 
@@ -1332,7 +2063,6 @@ extern "C" void glui_bounds_setup(int main_window){
     if(n_embedded_meshes>0){
       CHECKBOX_skip_subslice=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice,_d("Skip coarse sub-slice"),&skip_slice_in_embedded_mesh);
     }
-#ifdef pp_SLICEDUP
     if(nslicedups > 0){
       ROLLOUT_slicedups = glui_bounds->add_rollout_to_panel(ROLLOUT_slice, _d("Duplicates"), false, SLICE_DUP_ROLLOUT, Slice_Rollout_CB);
       ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_slicedups, SLICE_DUP_ROLLOUT);
@@ -1349,13 +2079,17 @@ extern "C" void glui_bounds_setup(int main_window){
       glui_bounds->add_radiobutton_to_group(RADIO_vectorslicedup, _d("Keep fine"));
       glui_bounds->add_radiobutton_to_group(RADIO_vectorslicedup, _d("Keep coarse"));
     }
-#endif
 
     SPINNER_transparent_level = glui_bounds->add_spinner_to_panel(ROLLOUT_slice, _d("Transparent level"), GLUI_SPINNER_FLOAT, &transparent_level, TRANSPARENTLEVEL, Slice_CB);
     SPINNER_transparent_level->set_float_limits(0.0, 1.0);
 
-	CHECKBOX_show_slice_in_obst=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, "Include data within blockages", &show_slice_in_obst,SLICE_IN_OBST,Slice_CB);
-	if(nfedinfo>0){
+    PANEL_sliceshow = glui_bounds->add_panel_to_panel(ROLLOUT_slice, "show slice", true);
+    RADIO_show_slice_in_obst = glui_bounds->add_radiogroup_to_panel(PANEL_sliceshow, &show_slice_in_obst, SLICE_IN_OBST, Slice_CB);
+    glui_bounds->add_radiobutton_to_group(RADIO_show_slice_in_obst, _d("gas"));
+    glui_bounds->add_radiobutton_to_group(RADIO_show_slice_in_obst, _d("gas and solid"));
+    glui_bounds->add_radiobutton_to_group(RADIO_show_slice_in_obst, _d("solid"));
+
+    if(nfedinfo>0){
       glui_bounds->add_checkbox_to_panel(ROLLOUT_slice,"Regenerate FED data",&regenerate_fed);
     }
     CHECKBOX_research_mode=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice,_d("Research display mode"),&research_mode,RESEARCH_MODE,Slice_CB);
@@ -1432,117 +2166,6 @@ extern "C" void compress_onoff(int flag){
     default:
       ASSERT(FFALSE);
       break;
-  }
-}
-
-/* ------------------ boundmenu ------------------------ */
-
-void boundmenu(GLUI_Rollout **bound_rollout,GLUI_Rollout **chop_rollout, GLUI_Panel *PANEL_panel, char *button_title,
-          GLUI_EditText **EDIT_con_min,GLUI_EditText **EDIT_con_max,
-          GLUI_RadioGroup **RADIO_con_setmin,GLUI_RadioGroup **RADIO_con_setmax,
-          GLUI_Checkbox **CHECKBOX_con_setchopmin, GLUI_Checkbox **CHECKBOX_con_setchopmax,
-          GLUI_EditText **EDIT_con_chopmin, GLUI_EditText **EDIT_con_chopmax,
-          GLUI_StaticText **STATIC_con_min_unit,GLUI_StaticText **STATIC_con_max_unit,
-          GLUI_StaticText **STATIC_con_cmin_unit,GLUI_StaticText **STATIC_con_cmax_unit,
-          GLUI_Button **BUTTON_update, GLUI_Button **BUTTON_reload,
-
-          int *setminval, int *setmaxval,
-          float *minval, float *maxval,
-          int *setchopminval, int *setchopmaxval,
-          float *chopminval, float *chopmaxval,
-          int updatebounds,
-          int truncatebounds,
-          GLUI_Update_CB FILE_CB){
-
-  GLUI_Panel *PANEL_a,*PANEL_b,*PANEL_c;
-  GLUI_Rollout *PANEL_e=NULL,*PANEL_g=NULL;
-  GLUI_Panel *PANEL_f=NULL, *PANEL_h=NULL;
-
-  PANEL_g = glui_bounds->add_rollout_to_panel(PANEL_panel,_d("Bound data"),false);
-  if(bound_rollout!=NULL)*bound_rollout=PANEL_g;
-
-  PANEL_a = glui_bounds->add_panel_to_panel(PANEL_g,"",GLUI_PANEL_NONE);
-
-  *EDIT_con_min = glui_bounds->add_edittext_to_panel(PANEL_a,"",GLUI_EDITTEXT_FLOAT,minval,VALMIN,FILE_CB);
-  if(*setminval==0){
-    (*EDIT_con_min)->disable();
-  }
-  glui_bounds->add_column_to_panel(PANEL_a,false);
-
-  if(STATIC_con_min_unit!=NULL){
-    *STATIC_con_min_unit=glui_bounds->add_statictext_to_panel(PANEL_a,"xx");
-    glui_bounds->add_column_to_panel(PANEL_a,false);
-    (*STATIC_con_min_unit)->set_w(10);
-  }
-
-  *RADIO_con_setmin = glui_bounds->add_radiogroup_to_panel(PANEL_a,setminval,SETVALMIN,FILE_CB);
-  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmin,_d("percentile min"));
-  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmin,_d("set min"));
-  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmin,_d("global min"));
-
-  PANEL_b = glui_bounds->add_panel_to_panel(PANEL_g,"",GLUI_PANEL_NONE);
-
-  *EDIT_con_max = glui_bounds->add_edittext_to_panel(PANEL_b,"",GLUI_EDITTEXT_FLOAT,maxval,VALMAX,FILE_CB);
-  if(*setminval==0){
-    (*EDIT_con_max)->disable();
-  }
-  glui_bounds->add_column_to_panel(PANEL_b,false);
-
-  if(STATIC_con_max_unit!=NULL){
-    *STATIC_con_max_unit=glui_bounds->add_statictext_to_panel(PANEL_b,"yy");
-    glui_bounds->add_column_to_panel(PANEL_b,false);
-    (*STATIC_con_max_unit)->set_w(10);
-  }
-
-  *RADIO_con_setmax = glui_bounds->add_radiogroup_to_panel(PANEL_b,setmaxval,SETVALMAX,FILE_CB);
-  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmax,_d("percentile max"));
-  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmax,_d("set max"));
-  glui_bounds->add_radiobutton_to_group(*RADIO_con_setmax,_d("global max"));
-
-  PANEL_c = glui_bounds->add_panel_to_panel(PANEL_g,"",GLUI_PANEL_NONE);
-
-  if(updatebounds==UPDATE_BOUNDS){
-    glui_bounds->add_button_to_panel(PANEL_c,_d("Update"),FILEUPDATE,FILE_CB);
-  }
-  else if(updatebounds==RELOAD_BOUNDS){
-    glui_bounds->add_button_to_panel(PANEL_c,button_title,FILERELOAD,FILE_CB);
-  }
-  else{
-    BUTTON_updatebound=glui_bounds->add_button_to_panel(PANEL_c,_d("Update using cached data"),FILEUPDATEDATA,FILE_CB);
-    BUTTON_reloadbound=glui_bounds->add_button_to_panel(PANEL_c,button_title,FILERELOAD,FILE_CB);
-  }
-
-  if(EDIT_con_chopmin!=NULL&&EDIT_con_chopmax!=NULL&&CHECKBOX_con_setchopmin!=NULL&&CHECKBOX_con_setchopmax!=NULL){
-    PANEL_e = glui_bounds->add_rollout_to_panel(PANEL_panel,_d("Truncate data"),false);
-    if(chop_rollout!=NULL)*chop_rollout=PANEL_e;
-
-    PANEL_f = glui_bounds->add_panel_to_panel(PANEL_e,"",GLUI_PANEL_NONE);
-
-    *EDIT_con_chopmin = glui_bounds->add_edittext_to_panel(PANEL_f,"",GLUI_EDITTEXT_FLOAT,chopminval,CHOPVALMIN,FILE_CB);
-    glui_bounds->add_column_to_panel(PANEL_f,false);
-
-    if(STATIC_con_cmin_unit!=NULL){
-      *STATIC_con_cmin_unit=glui_bounds->add_statictext_to_panel(PANEL_f,"xx");
-      (*STATIC_con_cmin_unit)->set_w(10);
-      glui_bounds->add_column_to_panel(PANEL_f,false);
-    }
-    *CHECKBOX_con_setchopmin=glui_bounds->add_checkbox_to_panel(PANEL_f,_d("Below"),setchopminval,SETCHOPMINVAL,FILE_CB);
-
-    PANEL_h = glui_bounds->add_panel_to_panel(PANEL_e,"",GLUI_PANEL_NONE);
-
-    *EDIT_con_chopmax = glui_bounds->add_edittext_to_panel(PANEL_h,"",GLUI_EDITTEXT_FLOAT,chopmaxval,CHOPVALMAX,FILE_CB);
-    glui_bounds->add_column_to_panel(PANEL_h,false);
-
-    if(STATIC_con_cmax_unit!=NULL){
-      *STATIC_con_cmax_unit=glui_bounds->add_statictext_to_panel(PANEL_h,"xx");
-      glui_bounds->add_column_to_panel(PANEL_h,false);
-      (*STATIC_con_cmax_unit)->set_w(10);
-    }
-    *CHECKBOX_con_setchopmax=glui_bounds->add_checkbox_to_panel(PANEL_h,_d("Above"),setchopmaxval,SETCHOPMAXVAL,FILE_CB);
-
-    if(truncatebounds==TRUNCATE_BOUNDS){
-      glui_bounds->add_button_to_panel(PANEL_e,_d("Update"),CHOPUPDATE,FILE_CB);
-    }
   }
 }
 
@@ -1910,7 +2533,7 @@ extern "C" void IsoCB(int var){
     for(i = 0; i < MAX_ISO_COLORS; i++){
       float graylevel;
 
-      graylevel = color2bw(iso_colors+4*i);
+      graylevel = TOBW(iso_colors+4*i);
       iso_colorsbw[4 * i + 0] = graylevel;
       iso_colorsbw[4 * i + 1] = graylevel;
       iso_colorsbw[4 * i + 2] = graylevel;
@@ -1931,18 +2554,6 @@ extern "C" void IsoCB(int var){
   case  ISO_OUTLINE:
   case ISO_POINTS:
     visAIso= 1*show_iso_solid + 2*show_iso_outline + 4*show_iso_verts;
-    updatemenu=1;
-    break;
-  default:
-    ASSERT(FFALSE);
-    break;
-  }
-}
-void Smoke3D_CB(int var){
-  switch(var){
-  case FRAMELOADING:
-    smoke3dframestep=smoke3dframeskip+1;
-    smoke3dzipstep=smoke3dzipskip+1;
     updatemenu=1;
     break;
   default:
@@ -1982,406 +2593,6 @@ extern "C"  void glui_script_disable(void){
     BUTTON_script_setsuffix->disable();
     EDIT_ini->disable();
   }
-
-  /* ------------------ Script_CB ------------------------ */
-
-  void Script_CB(int var){
-    char label[1024];
-    char *name;
-    int id;
-    int len,i;
-    int set_renderlabel;
-
-    switch(var){
-    case SCRIPT_STEP_NOW:
-      keyboard('^',FROM_SMOKEVIEW);
-      break;
-    case SCRIPT_CANCEL_NOW:
-      current_script_command=NULL;
-      runscript=0;
-      first_frame_index=0;
-      skip_render_frames=0;
-      script_startframe=-1;
-      script_skipframe=-1;
-      script_step=0;
-      glui_script_enable();
-      rendering_status=RENDER_OFF;
-      break;
-    case SCRIPT_RENDER_DIR:
-      strcpy(label,script_renderdir);
-      TrimBack(label);
-      name = TrimFront(label);
-      set_renderlabel=0;
-      if(name!=NULL&&strlen(name)!=strlen(script_renderdir)){
-        strcpy(script_renderdir,name);
-        set_renderlabel=1;
-      }
-      name=script_renderdir;
-      len = strlen(script_renderdir);
-      if(len==0)break;
-      for(i=0;i<len;i++){
-#ifdef WIN32
-        if(name[i]=='/'){
-          set_renderlabel=1;
-          name[i]='\\';
-        }
-#else
-        if(name[i]=='\\'){
-          set_renderlabel=1;
-          name[i]='/';
-        }
-#endif
-      }
-#ifdef WIN32
-      if(name[len-1]!='\\'){
-        set_renderlabel=1;
-        strcat(name,dirseparator);
-      }
-#else
-      if(name[len-1]!='/'){
-        set_renderlabel=1;
-        strcat(name,dirseparator);
-      }
-#endif
-      if(set_renderlabel==1){
-        EDIT_renderdir->set_text(script_renderdir);
-      }
-      break;
-    case SCRIPT_RENDER:
-      keyboard('r',FROM_SMOKEVIEW);
-      break;
-    case SCRIPT_RENDER_SUFFIX:
-    {
-      char *suffix;
-
-      TrimBack(script_renderfilesuffix);
-      suffix = TrimFront(script_renderfilesuffix);
-      strcpy(script_renderfile,"");
-      if(strlen(suffix)>0){
-        strcpy(script_renderfile,fdsprefix);
-        strcat(script_renderfile,"_");
-        strcat(script_renderfile,suffix);
-        strcpy(label,_d("Render: "));
-        strcat(label,script_renderfile);
-      }
-      else{
-        strcpy(label,_d("Render"));
-      }
-      BUTTON_script_render->set_name(label);
-    }
-      break;
-    case SCRIPT_START:
-      ScriptMenu(SCRIPT_START_RECORDING);
-      break;
-    case SCRIPT_STOP:
-      ScriptMenu(SCRIPT_STOP_RECORDING);
-      break;
-    case SCRIPT_RUNSCRIPT:
-      name = 5+BUTTON_script_runscript->name;
-      PRINTF("running script: %s\n",name);
-      ScriptMenu(LIST_scriptlist->get_int_val());
-      break;
-    case SCRIPT_LIST:
-      id = LIST_scriptlist->get_int_val();
-      name = get_scriptfilename(id);
-      if(name!=NULL&&strlen(name)>0){
-        strcpy(label,_d("Run: "));
-        strcat(label,name);
-        BUTTON_script_runscript->set_name(label);
-      }
-      break;
-    case SCRIPT_SAVEINI:
-      name = 5+BUTTON_script_saveini->name;
-      if(strlen(name)>0){
-        inifiledata *inifile;
-
-        strcpy(script_filename,name);
-        inifile=insert_inifile(name);
-        WriteINI(SCRIPT_INI,script_filename);
-        if(inifile!=NULL&&LIST_ini_list!=NULL){
-          LIST_ini_list->add_item(inifile->id,inifile->file);
-        }
-      }
-      WriteINI(LOCAL_INI,NULL);
-      break;
-    case SCRIPT_LOADINI:
-      {
-        char *ini_filename;
-
-        id = LIST_ini_list->get_int_val();
-        ini_filename = get_inifilename(id);
-        if(ini_filename==NULL)break;
-        if(strcmp(ini_filename,caseini_filename)==0){
-          ReadINI(NULL);
-        }
-        else if(id>=0){
-          char *script_filename2;
-
-          if(strlen(ini_filename)==0)break;
-          script_filename2=script_filename;
-          strcpy(script_filename,ini_filename);
-          windowresized=0;
-          ReadINI(script_filename2);
-        }
-        if(scriptoutstream!=NULL){
-          fprintf(scriptoutstream,"LOADINIFILE\n");
-          fprintf(scriptoutstream," %s\n",ini_filename);
-        }
-      }
-      break;
-    case SCRIPT_STEP:
-      UpdateScriptStep();
-      updatemenu=1;
-      break;
-    case SCRIPT_FILE_LOADING:
-      updatemenu=1;
-      break;
-    case SCRIPT_EDIT_INI:
-      strcpy(label,_d("Save "));
-      strcat(label,fdsprefix);
-      TrimBack(script_inifile_suffix);
-      if(strlen(script_inifile_suffix)>0){
-        strcat(label,"_");
-        strcat(label,script_inifile_suffix);
-      }
-      strcat(label,".ini");
-      BUTTON_script_saveini->set_name(label);
-      break;
-    case SCRIPT_SETSUFFIX:
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-  }
-
-#ifdef pp_MEMDEBUG
-
-/* ------------------ Memcheck_CB ------------------------ */
-
-  void Memcheck_CB(int var){
-  switch(var){
-    case MEMCHECK:
-      set_memcheck(list_memcheck_index);
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-}
-#endif
-
-/* ------------------ Bound_CB ------------------------ */
-
-void Bound_CB(int var){
-  int i;
-
-  switch(var){
-  case SHOWPATCH_BOTH:
-    updatefacelists=1;
-    updatehiddenfaces=1;
-    break;
-  case CACHE_BOUNDARYDATA:
-    if(cache_boundarydata==0){
-      BUTTON_updatebound->disable();
-    }
-    else{
-      BUTTON_updatebound->enable();
-    }
-    break;
-  case VALMAX:
-  case VALMIN:
-    break;
-  case HIDEPATCHSURFACE:
-    updatefacelists=1;
-    break;
-  case FRAMELOADING:
-    boundframestep=boundframeskip+1;
-    boundzipstep=boundzipskip+1;
-    updatemenu=1;
-    break;
-  case CHOPUPDATE:
-    UpdateChopColors();
-    break;
-  case SETCHOPMINVAL:
-    UpdateChopColors();
-    local2globalpatchbounds(patchlabellist[list_patch_index]);
-    switch(setpatchchopmin){
-      case DISABLE:
-      EDIT_patch_chopmin->disable();
-      break;
-      case ENABLE:
-      EDIT_patch_chopmin->enable();
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    update_hidepatchsurface();
-    break;
-  case SETCHOPMAXVAL:
-    UpdateChopColors();
-    local2globalpatchbounds(patchlabellist[list_patch_index]);
-    switch(setpatchchopmax){
-      case DISABLE:
-        EDIT_patch_chopmax->disable();
-        break;
-      case ENABLE:
-        EDIT_patch_chopmax->enable();
-        break;
-      default:
-        ASSERT(FFALSE);
-        break;
-    }
-    update_hidepatchsurface();
-    break;
-  case CHOPVALMIN:
-    ASSERT(EDIT_patch_min!=NULL);
-    EDIT_patch_min->set_float_val(patchmin);
-    local2globalpatchbounds(patchlabellist[list_patch_index]);
-    UpdateChopColors();
-    break;
-  case CHOPVALMAX:
-    ASSERT(EDIT_patch_max!=NULL);
-    EDIT_patch_max->set_float_val(patchmax);
-    local2globalpatchbounds(patchlabellist[list_patch_index]);
-    UpdateChopColors();
-    break;
-  case SHOWCHAR:
-    if(CHECKBOX_showchar!=NULL&&CHECKBOX_showonlychar!=NULL){
-      if(vis_threshold==1){
-        CHECKBOX_showonlychar->enable();
-      }
-      else{
-        CHECKBOX_showonlychar->disable();
-      }
-    }
-    updatemenu=1;
-    updatefacelists=1;
-    break;
-  case FILETYPEINDEX:
-    local2globalpatchbounds(patchlabellist[list_patch_index_old]);
-    global2localpatchbounds(patchlabellist[list_patch_index]);
-
-    EDIT_patch_min->set_float_val(patchmin);
-    EDIT_patch_max->set_float_val(patchmax);
-    EDIT_patch_chopmin->set_float_val(patchchopmin);
-    EDIT_patch_chopmax->set_float_val(patchchopmax);
-
-    Bound_CB(SETVALMIN);
-    Bound_CB(SETVALMAX);
-    if(RADIO_patch_setmin!=NULL)RADIO_patch_setmin->set_int_val(setpatchmin);
-    if(RADIO_patch_setmax!=NULL)RADIO_patch_setmax->set_int_val(setpatchmax);
-    if(CHECKBOX_patch_setchopmin!=NULL)CHECKBOX_patch_setchopmin->set_int_val(setpatchchopmin);
-    if(CHECKBOX_patch_setchopmax!=NULL)CHECKBOX_patch_setchopmax->set_int_val(setpatchchopmax);
-
-    switch(setpatchchopmin){
-      case DISABLE:
-        EDIT_patch_chopmin->disable();
-        break;
-      case ENABLE:
-        EDIT_patch_chopmin->enable();
-        break;
-      default:
-        ASSERT(FFALSE);
-        break;
-    }
-    switch(setpatchchopmax){
-      case DISABLE:
-        EDIT_patch_chopmax->disable();
-        break;
-      case ENABLE:
-        EDIT_patch_chopmax->enable();
-        break;
-      default:
-        ASSERT(FFALSE);
-        break;
-    }
-
-    list_patch_index_old = list_patch_index;
-    update_hidepatchsurface();
-    break;
-  case SETVALMIN:
-    switch(setpatchmin){
-    case PERCENTILE_MIN:
-    case GLOBAL_MIN:
-      EDIT_patch_min->disable();
-      break;
-    case SET_MIN:
-      EDIT_patch_min->enable();
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    Bound_CB(FILEUPDATE);
-    break;
-  case SETVALMAX:
-    switch(setpatchmax){
-    case PERCENTILE_MAX:
-    case GLOBAL_MAX:
-      EDIT_patch_max->disable();
-      break;
-    case SET_MAX:
-      EDIT_patch_max->enable();
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    Bound_CB(FILEUPDATE);
-    break;
-  case FILEUPDATE:
-    local2globalpatchbounds(patchlabellist[list_patch_index]);
-    break;
-  case FILEUPDATEDATA:
-    UpdateAllPatchColors();
-    break;
-  case FILERELOAD:
-    Bound_CB(FILEUPDATE);
-    for(i=0;i<npatchinfo;i++){
-      patchdata *patchi;
-
-      patchi=patchinfo+i;
-      if(patchi->loaded==0)continue;
-      LoadPatchMenu(i);
-    }
-    EDIT_patch_min->set_float_val(patchmin);
-    EDIT_patch_max->set_float_val(patchmax);
-    break;
-  case COMPRESS_FILES:
-    compress_svzip();
-    break;
-  case COMPRESS_AUTOLOADED:
-    updatemenu=1;
-    break;
-  case OVERWRITE:
-    if(overwrite_all==1){
-      CHECKBOX_erase_all->set_int_val(0);
-    }
-    updatemenu=1;
-    break;
-  case ERASE:
-    if(erase_all==1){
-      CHECKBOX_overwrite_all->set_int_val(0);
-    }
-    updatemenu=1;
-    break;
-  case STARTUP:
-    Bounds_DLG_CB(SAVE_SETTINGS);
-    break;
-  case SAVE_FILE_LIST:
-    set_3dsmoke_startup();
-    Bounds_DLG_CB(SAVE_SETTINGS);
-    break;
-  case LOAD_FILES:
-      load_Files();
-    break;
-  default:
-    ASSERT(FFALSE);
-    break;
-  }
-}
 
 /* ------------------ updatepatchlistindex ------------------------ */
 
@@ -2647,6 +2858,7 @@ void Part_CB(int var){
      if(EDIT_part_min!=NULL&&setpartmin==SET_MIN)Part_CB(SETVALMIN);
      if(EDIT_part_max!=NULL&&setpartmax==SET_MAX)Part_CB(SETVALMAX);
      LoadParticleMenu(PARTFILE_RELOADALL);
+     LoadEvacMenu(EVACFILE_LOADALL);
      UpdateGlui();
      ParticlePropShowMenu(prop_index_SAVE);
     }
@@ -2657,48 +2869,24 @@ void Part_CB(int var){
   }
 }
 
-/* ------------------ Time_CB ------------------------ */
+/* ------------------ SETslicemin ------------------------ */
 
-void Time_CB(int var){
+void SETslicemin(int setslicemin_local, float slicemin_local, int setslicechopmin_local, float slicechopmin_local){
+  if(slicebounds == NULL)return;
+  slicebounds[list_slice_index].setvalmin = setslicemin_local;
+  slicebounds[list_slice_index].valmin = slicemin_local;
+  slicebounds[list_slice_index].setchopmin = setslicechopmin_local;
+  slicebounds[list_slice_index].chopmin = slicechopmin_local;
+}
 
-  updatemenu=1;
-  switch(var){
-  case SET_TIME:
-    settimeval(glui_time);
-    break;
-  case TBOUNDS:
-    if(use_tload_begin==1||use_tload_end==1||use_tload_skip==1){
-      update_tbounds();
-    }
-    break;
-  case TBOUNDS_USE:
-    if(use_tload_begin==1){
-      SPINNER_tload_begin->enable();
-    }
-    else{
-      SPINNER_tload_begin->disable();
-    }
-    if(use_tload_end==1){
-      SPINNER_tload_end->enable();
-    }
-    else{
-      SPINNER_tload_end->disable();
-    }
-    if(use_tload_skip==1){
-      SPINNER_tload_skip->enable();
-    }
-    else{
-      SPINNER_tload_skip->disable();
-    }
-    update_tbounds();
-    break;
-  case RELOAD_DATA:
-    ReloadMenu(RELOAD_NOW);
-    break;
-  default:
-    ASSERT(FFALSE);
-    break;
-  }
+/* ------------------ SETslicemax ------------------------ */
+
+void SETslicemax(int setslicemax_local, float slicemax_local, int setslicechopmax_local, float slicechopmax_local){
+  if(slicebounds == NULL)return;
+  slicebounds[list_slice_index].setvalmax = setslicemax_local;
+  slicebounds[list_slice_index].valmax = slicemax_local;
+  slicebounds[list_slice_index].setchopmax = setslicechopmax_local;
+  slicebounds[list_slice_index].chopmax = slicechopmax_local;
 }
 
 /* ------------------ Slice_CB ------------------------ */
@@ -2715,8 +2903,8 @@ extern "C" void Slice_CB(int var){
     histograms_defined = 0;
     return;
   }
-  if (var == INIT_HISTOGRAM){
-    if (histogram_show_graph == 1 || histogram_show_numbers == 1) {
+  if(var == INIT_HISTOGRAM){
+    if(histogram_show_graph == 1 || histogram_show_numbers == 1){
       update_slice_hists = 1;
       visColorbar = 1;
     }
@@ -2748,22 +2936,28 @@ extern "C" void Slice_CB(int var){
     return;
   }
   switch(var){
-#ifdef pp_SLICEDUP
     case UPDATE_SLICEDUPS:
     updatemenu = 1;
     break;
-#endif
     case SLICE_VECTORSKIP:
       if(SPINNER_plot3dvectorskip!=NULL)SPINNER_plot3dvectorskip->set_int_val(vectorskip);
       break;
     case ZONEVALMIN:
       GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, nrgb, nrgb_full,
         colorlabelzone, zonescale, zonelevels256);
+#ifdef pp_ZONETL
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, nrgb, nrgb_full,
+        colorlabelzone, zonescale, zonelevels256);
+#endif
       zoneusermin=zonemin;
       break;
     case ZONEVALMAX:
       GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, nrgb, nrgb_full,
         colorlabelzone, zonescale, zonelevels256);
+#ifdef pp_ZONETL
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, nrgb, nrgb_full,
+        colorlabelzone, zonescale, zonelevels256);
+#endif
       zoneusermax=zonemax;
       break;
     case SETZONEVALMIN:
@@ -2778,6 +2972,10 @@ extern "C" void Slice_CB(int var){
       }
       GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, nrgb, nrgb_full,
         colorlabelzone, zonescale, zonelevels256);
+#ifdef pp_ZONETL
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, nrgb, nrgb_full,
+        colorlabelzone, zonescale, zonelevels256);
+#endif
       break;
     case SETZONEVALMAX:
       if(setzonemax==SET_MAX){
@@ -2791,6 +2989,10 @@ extern "C" void Slice_CB(int var){
       }
       GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, nrgb, nrgb_full,
         colorlabelzone, zonescale, zonelevels256);
+#ifdef pp_ZONETL
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, nrgb, nrgb_full,
+        colorlabelzone, zonescale, zonelevels256);
+#endif
       break;
     case COLORBAR_LIST2:
       if(selectedcolorbar_index2 == bw_colorbar_index){
@@ -2801,7 +3003,7 @@ extern "C" void Slice_CB(int var){
         setbwdata = 0;
       }
       IsoCB(ISO_COLORS);
-      set_labels_controls();
+      SetLabelControls();
       break;
     case RESEARCH_MODE:
       for(i=0;i<nsliceinfo;i++){
@@ -2820,7 +3022,7 @@ extern "C" void Slice_CB(int var){
 
         // slice files
 
-        if (nsliceloaded > 0) {
+        if(nsliceloaded > 0){
           setslicemin_save = setslicemin;
           slicemin_save = slicemin;
           setslicemin = GLOBAL_MIN;
@@ -2834,7 +3036,7 @@ extern "C" void Slice_CB(int var){
 
         // boundary files
 
-        if (npatchloaded > 0) {
+        if(npatchloaded > 0){
           setpatchmin_save = setpatchmin;
           patchmin_save = patchmin;
           setpatchmin = GLOBAL_MIN;
@@ -2865,7 +3067,7 @@ extern "C" void Slice_CB(int var){
         // plot3d files
 
         if(nplot3dloaded>0){
-          for (i = 0; i < MAXPLOT3DVARS; i++) {
+          for(i = 0; i < MAXPLOT3DVARS; i++){
             setp3min_save[i] = setp3min[i];
             p3min_save[i] = p3min[i];
             setp3min[i] = GLOBAL_MIN;
@@ -2887,7 +3089,7 @@ extern "C" void Slice_CB(int var){
 
         // slice files
 
-        if (nsliceloaded > 0) {
+        if(nsliceloaded > 0){
           setslicemin = setslicemin_save;
           Slice_CB(SETVALMIN);
           slicemin = slicemin_save;
@@ -2901,7 +3103,7 @@ extern "C" void Slice_CB(int var){
 
         // boundary files
 
-        if (npatchloaded > 0) {
+        if(npatchloaded > 0){
           setpatchmin = setpatchmin_save;
           Bound_CB(SETVALMIN);
           patchmin = patchmin_save;
@@ -2916,7 +3118,7 @@ extern "C" void Slice_CB(int var){
 
         // particle files
 
-        if (npartloaded > 0) {
+        if(npartloaded > 0){
           setpartmin = setpartmin_save;
           Part_CB(SETVALMIN);
           partmin = partmin_save;
@@ -2944,8 +3146,8 @@ extern "C" void Slice_CB(int var){
 
         // Plot3D files
 
-        if (nplot3dloaded > 0) {
-          for (i = 0; i < MAXPLOT3DVARS; i++) {
+        if(nplot3dloaded > 0){
+          for(i = 0; i < MAXPLOT3DVARS; i++){
             setp3min[i] = setp3min_save[i];
             p3min[i] = p3min_save[i];
 
@@ -3193,19 +3395,21 @@ extern "C" void Slice_CB(int var){
       for(ii = nslice_loaded - 1; ii >= 0; ii--){
         i = slice_loaded_list[ii];
         sd = sliceinfo + i;
-        if(sd->type != islicetype)continue;
-        last_slice = i;
-        break;
+        if(sd->type == islicetype){
+          last_slice = i;
+          break;
+        }
       }
       for(ii = 0; ii < nslice_loaded; ii++){
         int set_slicecolor;
 
         i = slice_loaded_list[ii];
         sd = sliceinfo + i;
-        if(sd->type != islicetype)continue;
-        set_slicecolor = DEFER_SLICECOLOR;
-        if(i == last_slice)set_slicecolor = SET_SLICECOLOR;
-        ReadSlice("", i, RESETBOUNDS, set_slicecolor, &error);
+        if(sd->type == islicetype){
+          set_slicecolor = DEFER_SLICECOLOR;
+          if(i == last_slice)set_slicecolor = SET_SLICECOLOR;
+          ReadSlice("", i, RESETBOUNDS, set_slicecolor, &error);
+        }
       }
     break;
   case FILERELOAD:
@@ -3218,30 +3422,13 @@ extern "C" void Slice_CB(int var){
     }
     UpdateGlui();
     break;
+  case ALLFILERELOAD:
+    ReloadAllSliceFiles();
+    break;
   default:
     ASSERT(FFALSE);
     break;
   }
-}
-
-/* ------------------ SETslicemin ------------------------ */
-
-void SETslicemin(int setslicemin_local, float slicemin_local,int setslicechopmin_local, float slicechopmin_local){
-  if(slicebounds==NULL)return;
-  slicebounds[list_slice_index].setvalmin=setslicemin_local;
-  slicebounds[list_slice_index].valmin=slicemin_local;
-  slicebounds[list_slice_index].setchopmin=setslicechopmin_local;
-  slicebounds[list_slice_index].chopmin=slicechopmin_local;
-}
-
-/* ------------------ SETslicemax ------------------------ */
-
-void SETslicemax(int setslicemax_local, float slicemax_local,int setslicechopmax_local, float slicechopmax_local){
-  if(slicebounds==NULL)return;
-  slicebounds[list_slice_index].setvalmax=setslicemax_local;
-  slicebounds[list_slice_index].valmax=slicemax_local;
-  slicebounds[list_slice_index].setchopmax=setslicechopmax_local;
-  slicebounds[list_slice_index].chopmax=slicechopmax_local;
 }
 
 /* ------------------ UpdateSliceList ------------------------ */
@@ -3282,26 +3469,6 @@ extern "C" void UpdateSliceListIndex(int sfn){
 
 extern "C" void UpdateGlui(void){
   GLUI_Master.sync_live_all();
-}
-
-/* ------------------ Bounds_DLG_CB ------------------------ */
-
-void Bounds_DLG_CB(int var){
-  switch(var){
-  case CLOSE_BOUNDS:
-    glui_bounds->hide();
-    updatemenu=1;
-    break;
-  case SAVE_SETTINGS:
-    WriteINI(LOCAL_INI,NULL);
-    break;
-  case COMPRESS_FILES:
-    PRINTF("compressing\n");
-    break;
-  default:
-    ASSERT(FFALSE);
-    break;
-  }
 }
 
 /* ------------------ show_glui_bounds ------------------------ */
@@ -3508,185 +3675,6 @@ extern "C" void update_tbounds(void){
   IsoCB(FRAMELOADING);
   Part_CB(FRAMELOADING);
   Slice_CB(FRAMELOADING);
-}
-
-
-/* ------------------ FileShow_CB ------------------------ */
-
-extern "C" void FileShow_CB(int var){
-  updatemenu = 1;
-  switch(var){
-  case  FILESHOW_plot3d:
-    switch(showhide_option){
-    case SHOWALL_FILES:
-    case SHOWONLY_FILE:
-      Plot3DShowMenu(SHOWALL_PLOT3D);
-      break;
-    case HIDEALL_FILES:
-      Plot3DShowMenu(HIDEALL_PLOT3D);
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    break;
-  case FILESHOW_evac:
-    switch(showhide_option){
-    case SHOWALL_FILES:
-      EvacShowMenu(SHOWALL_EVAC);
-      break;
-    case SHOWONLY_FILE:
-      EvacShowMenu(SHOWALL_EVAC);
-      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
-      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
-      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
-      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
-      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
-      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
-      break;
-    case HIDEALL_FILES:
-      EvacShowMenu(HIDEALL_EVAC);
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    break;
-  case  FILESHOW_particle:
-    switch(showhide_option){
-    case SHOWALL_FILES:
-      ParticleShowMenu(SHOWALL_PARTICLE);
-      break;
-    case SHOWONLY_FILE:
-      ParticleShowMenu(SHOWALL_PARTICLE);
-      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
-      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
-      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
-      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
-      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
-      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
-      break;
-    case HIDEALL_FILES:
-      ParticleShowMenu(HIDEALL_PARTICLE);
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    break;
-  case  FILESHOW_slice:
-    switch(showhide_option){
-    case SHOWALL_FILES:
-      ShowHideSliceMenu(SHOWALL_SLICE);
-      break;
-    case SHOWONLY_FILE:
-      ShowHideSliceMenu(SHOWALL_SLICE);
-      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
-      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
-      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
-      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
-      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
-      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
-      break;
-    case HIDEALL_FILES:
-      ShowHideSliceMenu(HIDEALL_SLICE);
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    break;
-  case  FILESHOW_vslice:
-    switch(showhide_option){
-    case SHOWALL_FILES:
-      ShowVSliceMenu(SHOWALL_VSLICE);
-      break;
-    case SHOWONLY_FILE:
-      ShowVSliceMenu(SHOWALL_VSLICE);
-      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
-      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
-      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
-      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
-      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
-      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
-      break;
-    case HIDEALL_FILES:
-      ShowHideSliceMenu(HIDEALL_SLICE);
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    break;
-  case  FILESHOW_boundary:
-    switch(showhide_option){
-    case SHOWALL_FILES:
-      ShowPatchMenu(SHOWALL_BOUNDARY);
-      break;
-    case SHOWONLY_FILE:
-      ShowPatchMenu(SHOWALL_BOUNDARY);
-      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
-      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
-      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
-      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
-      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
-      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
-      break;
-    case HIDEALL_FILES:
-      ShowPatchMenu(HIDEALL_BOUNDARY);
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    break;
-  case  FILESHOW_3dsmoke:
-    switch(showhide_option){
-    case SHOWALL_FILES:
-      Smoke3DShowMenu(SHOWALL_SMOKE3D);
-      break;
-    case SHOWONLY_FILE:
-      Smoke3DShowMenu(SHOWALL_SMOKE3D);
-      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
-      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
-      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
-      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
-      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
-      if(nisoloaded != 0)IsoShowMenu(HIDEALL_ISO);
-      break;
-    case HIDEALL_FILES:
-      Smoke3DShowMenu(HIDEALL_SMOKE3D);
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    break;
-  case  FILESHOW_isosurface:
-    switch(showhide_option){
-    case SHOWALL_FILES:
-      IsoShowMenu(SHOWALL_ISO);
-      break;
-    case SHOWONLY_FILE:
-      IsoShowMenu(SHOWALL_ISO);
-      if(nevacloaded != 0)EvacShowMenu(HIDEALL_EVAC);
-      if(nsmoke3dloaded != 0)Smoke3DShowMenu(HIDEALL_SMOKE3D);
-      if(npatchloaded != 0)ShowPatchMenu(HIDEALL_BOUNDARY);
-      if(npartloaded != 0)ParticleShowMenu(HIDEALL_PARTICLE);
-      if(nvsliceloaded != 0)ShowVSliceMenu(HIDEALL_VSLICE);
-      if(nsliceloaded != 0)ShowHideSliceMenu(HIDEALL_SLICE);
-      break;
-    case HIDEALL_FILES:
-      IsoShowMenu(HIDEALL_ISO);
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    break;
-  default:
-    break;
-  }
 }
 
 /* ------------------ update_fileload  ------------------------ */

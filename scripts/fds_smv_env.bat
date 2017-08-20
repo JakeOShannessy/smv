@@ -1,45 +1,51 @@
 @echo off
 
-:: ---- official FDS and smokeview version strings
+:: ---- version: official FDS and smokeview ----
 set fds_version=6.5.3
-set smv_version=6.4.1
+set smv_version=6.4.4
 
-:: ---- test FDS and smokeview version strings
-set smv_revision=SMV6.4.1-16-g975c1cf
-set fds_revision=02a6097
+:: ---- revision: test FDS and smokeview ----
+set smv_revision=unknown
+set fds_revision=unknown
+if exist %userprofile%\smv_revision.txt (
+  set /p smv_revision=<%userprofile%\smv_revision.txt
+)
+if exist %userprofile%\fds_revision.txt (
+  set /p fds_revision=<%userprofile%\fds_revision.txt
+)
 
-:: ---- for obtaining log entries
-set smvlogdate="7-Oct-2016"
+:: ---- log entry date ----
+set smvlogdate="11-Apr-2017"
 
-:: PC repo
+:: ---- repo locations ----
 
+::*** PC
 set svn_root=%userprofile%\FireModels_fork
 set fdswikirepo=%svn_root%\wikis
 set svn_drive=c:
 
-:: Linux/OSX repo
-
+::*** Linux/OSX
 set linux_svn_root=FireModels_fork
+set compiler_dir=fire-notes/INSTALL/LIBS/LINUX/LIB64_i17u2
+set misc_dir=fire-notes/INSTALL/LIBS/LINUX/LIB64
 
-:: firebot/smokebot repos
+::*** firebot/smokebot
+set firebotrepo=/home2/smokevis2/firebot/FireModels_central
+set smokebotrepo=/home/smokebot/FireModels_central
 
-set firebotrepo=/home4/firebot/FireModels_central
-set smokebotrepo=/home4/smokebot/FireModels_central
+:: ---- hostnames ----
 
-:: Linux user and host name
-
-set linux_hostname=burn.el.nist.gov
+::*** linux
+set linux_hostname=blaze.nist.gov
 set linux_username=%username%
 set linux_logon=%linux_username%@%linux_hostname%
 
-:: OSX user and host name
-
-set osx_hostname=bluesky.el.nist.gov
+::*** OSX
+set osx_hostname=ignis.el.nist.gov
 set osx_username=%username%
 set osx_logon=%osx_username%@%osx_hostname%
 
-:: FDS/Smokeview version
-
+:: ---- FDS/Smokeview version ----
 set fdssmv_major_version=6
 set fds_edition=FDS6
 set smv_edition=SMV6

@@ -38,7 +38,7 @@
 #endif
 
 #ifndef GETINDEX
-#define GETINDEX(ival,xval,xmin,dx,nx) ival = ((xval)-(xmin))/(dx); ival = CLAMP(ival,0,(nx)-1)
+#define GETINDEX(xval,xmin,dx,nx) CLAMP(((xval)-(xmin))/(dx),0,(nx)-1)
 #endif
 
 
@@ -245,7 +245,7 @@ typedef struct {
 //************* headers
 //***********************
 
-void init_volrender(void);
+void InitVolRender(void);
 void print_summary(void);
 void *compress_all(void *arg);
 void mt_compress_all(void);
@@ -255,12 +255,12 @@ void rand_sphere_dir(float xyz[3]);
 float rand_1d(float xmin, float xmax);
 void rand_2d(float xy[2], float xmin, float xmax, float ymin, float ymax);
 void rand_3d(float xyz[3], float xmin, float xmax, float ymin, float ymax, float zmin, float zmax);
-void get_startup_slice(int seq_id);
-void get_startup_smoke(int seq_id);
-void get_startup_patch(int seq_id);
+void GetStartupSlice(int seq_id);
+void GetStartupSmoke(int seq_id);
+void GetStartupPatch(int seq_id);
 unsigned int uncompress_rle(unsigned char *buffer_in, int nchars_in, unsigned char *buffer_out);
 int ReadSMV(char *file);
-int getendian(void);
+int GetEndian(void);
 int convert_slice(slice *slicei, int *thread_index);
 slice *getslice(char *string);
 void *compress_slices(void *arg);
@@ -270,7 +270,6 @@ int slicedup(slice *slicej, int islice);
 void *compress_plot3ds(void *arg);
 void initpdf(pdfdata *pdf);
 void makesvd(char *destdir, char *smvfile);
-void Usage(char *prog);
 void getpdf(float *vals, int nvals, pdfdata *pdf);
 void mergepdf(pdfdata *pdf1, pdfdata *pdf2, pdfdata *pdfmerge);
 void SmoothLabel(float *a, float *b, int n);
@@ -286,7 +285,6 @@ int convertable_part(part *parti);
 void *compress_patches(void *arg);
 patch *getpatch(char *string);
 int patchdup(patch *patchj, int ipatch);
-int ReadLabels(flowlabels *flowlabel, FILE *stream);
 void ReadINI(char *file);
 void ReadINI2(char *file2);
 void Get_Boundary_Bounds(void);
@@ -302,18 +300,18 @@ void initvolrender(void);
 void getsliceparms_c(char *file, int *ni, int *nj, int *nk);
 
 
-#define FORTgetpartheader1 _F(getpartheader1)
-#define FORTgetpartheader2 _F(getpartheader2)
-#define FORTgetpartdataframe _F(getpartdataframe)
-#define FORTclosefortranfile _F(closefortranfile)
+#define FORTgetpartheader1     _F(getpartheader1)
+#define FORTgetpartheader2     _F(getpartheader2)
+#define FORTgetpartdataframe   _F(getpartdataframe)
+#define FORTclosefortranfile   _F(closefortranfile)
 #define FORTgetboundaryheader1 _F(getboundaryheader1)
 #define FORTgetboundaryheader2 _F(getboundaryheader2)
-#define FORTopenboundary _F(openboundary)
-#define FORTgetpatchdata _F(getpatchdata)
-#define FORTopenslice _F(openslice)
-#define FORTopenpart _F(openpart)
-#define FORTgetsliceframe _F(getsliceframe)
-#define FORTget_file_unit _F(get_file_unit)
+#define FORTopenboundary       _F(openboundary)
+#define FORTgetpatchdata       _F(getpatchdata)
+#define FORTopenslice          _F(openslice)
+#define FORTopenpart           _F(openpart)
+#define FORTgetsliceframe      _F(getsliceframe)
+#define FORTget_file_unit      _F(get_file_unit)
 
 #ifdef WIN32
 #define STDCALLF extern void _stdcall
