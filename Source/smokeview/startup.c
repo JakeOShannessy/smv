@@ -18,9 +18,6 @@
 void Init(void){
   int i;
 
-
-  curdir_writable = Writable(".");
-
   FREEMEMORY(plotiso);
   NewMemory((void **)&plotiso,mxplot3dvars*sizeof(int));
 
@@ -97,7 +94,7 @@ void Init(void){
   CopyCamera(camera_external_save,camera_external);
   UpdateGluiViewList();
 
-  //reset_glui_view(i_view_list);
+  //ResetGluiView(i_view_list);
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_NORMALIZE);
@@ -119,7 +116,7 @@ void Init(void){
   mat_ambient2[3] = 1.0;
   mat_specular2[3] = 1.0;
 
-  reset_glui_view(startup_view_ini);
+  ResetGluiView(startup_view_ini);
   UpdateShow();
 }
 
@@ -317,7 +314,7 @@ int SetupCase(int argc, char **argv){
 
   if(ntourinfo==0)setup_tour();
   glui_colorbar_setup(mainwindow_id);
-  glui_motion_setup(mainwindow_id);
+  gluiMotionSetup(mainwindow_id);
   glui_bounds_setup(mainwindow_id);
   glui_shooter_setup(mainwindow_id);
   glui_geometry_setup(mainwindow_id);
@@ -372,18 +369,29 @@ void SetupGlut(int argc, char **argv){
 
   smoketempdir=getenv("SVTEMPDIR");
   if(smoketempdir==NULL)smoketempdir=getenv("svtempdir");
-  if(smoketempdir==NULL)smoketempdir=getenv("TEMP");
-  if(smoketempdir==NULL)smoketempdir=getenv("temp");
-  if(smoketempdir==NULL){
+  if(smoketempdir == NULL){
+    char *homedir;
+
+    homedir = getenv("HOME");
+    if(homedir != NULL){
+      NewMemory((void **)&smoketempdir, strlen(homedir) + strlen(dirseparator) + strlen(".smokeview") + 1);
+      strcpy(smoketempdir, homedir);
+      strcat(smoketempdir, dirseparator);
+      strcat(smoketempdir, ".smokeview");
+      if(FileExistsOrig(smoketempdir)==NO){
+        if(MKDIR(smoketempdir)!=0){
+          FREEMEMORY(smoketempdir);
+        }
+      }
+    }
+  }
+
+  if(smoketempdir == NULL){
     NewMemory((void **)&smoketempdir,8);
-#ifdef pp_LINUX
-    strcpy(smoketempdir,"/tmp");
-#endif
-#ifdef pp_OSX
-    strcpy(smoketempdir,"/tmp");
-#endif
 #ifdef WIN32
     strcpy(smoketempdir,"c:\temp");
+#else
+    strcpy(smoketempdir, "/tmp");
 #endif
   }
 
@@ -391,7 +399,7 @@ void SetupGlut(int argc, char **argv){
     lensmoketempdir = strlen(smoketempdir);
     if(NewMemory((void **)&smokeviewtempdir,(unsigned int)(lensmoketempdir+2))!=0){
       STRCPY(smokeviewtempdir,smoketempdir);
-      if(strncmp(smokeviewtempdir+lensmoketempdir-1,dirseparator,1)!=0){
+      if(smokeviewtempdir[lensmoketempdir-1]!=dirseparator[0]){
         STRCAT(smokeviewtempdir,dirseparator);
       }
       PRINTF("%s",_("Scratch directory:"));
@@ -1146,6 +1154,7 @@ void InitTextureDir(void){
 void InitVars(void){
   int i;
 
+  curdir_writable = Writable(".");
   windrose_circ.ncirc=0;
   Init_Circle(180, &windrose_circ);
 

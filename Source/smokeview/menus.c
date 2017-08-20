@@ -118,6 +118,7 @@
 #define MENU_ISOSHOW_SMOOTH 4
 #define MENU_ISOSHOW_NORMALS 5
 
+#define MENU_ZONE_2DTEMP2 21
 #define MENU_ZONE_2DTEMP 6
 #define MENU_ZONE_2DHAZARD 5
 #define MENU_ZONE_3DSMOKE 7
@@ -1234,7 +1235,7 @@ void DialogMenu(int value){
   case DIALOG_SCALING:
   case DIALOG_VIEW:
   case DIALOG_WINDOW:
-    show_glui_motion(value);
+    ShowGluiMotion(value);
     break;
   case DIALOG_TICKS:
   case DIALOG_COLORING:
@@ -1289,7 +1290,7 @@ void DialogMenu(int value){
     hide_glui_shooter();
     hide_glui_display();
     hide_glui_bounds();
-    hide_glui_motion();
+    HideGluiMotion();
     hide_glui_tour();
     hide_glui_clip();
     hide_glui_wui();
@@ -1327,12 +1328,12 @@ void ZoomMenu(int value){
     if(projection_type!=0){
       camera_current->projection_type=projection_type;
       SetViewPoint(RESTORE_EXTERIOR_VIEW);
-      update_projection_type();
+      UpdateProjectionType();
     }
   }
   else if(zoomindex==UPDATE_PROJECTION){
     camera_current->projection_type=projection_type;
-    update_projection_type();
+    UpdateProjectionType();
     if(projection_type==0){
       UpdateCameraYpos(camera_current);
     }
@@ -1348,11 +1349,11 @@ void ZoomMenu(int value){
     if(projection_type!=0){
       SetViewPoint(RESTORE_EXTERIOR_VIEW_ZOOM);
       camera_current->projection_type=projection_type;
-      update_projection_type();
+      UpdateProjectionType();
     }
   }
   camera_current->zoom=zoom;
-  update_glui_zoom();
+  UpdateGluiZoom();
 }
 
 /* ------------------ ApertureMenu ------------------------ */
@@ -1487,7 +1488,7 @@ void ResetMenu(int value){
       cameradata *ca;
 
       GetNextViewLabel(view_label);
-      add_list_view(view_label);
+      AddListView(view_label);
       ca = GetCamera(view_label);
       if(ca != NULL){
         ResetMenu(ca->view_id);
@@ -1501,7 +1502,7 @@ void ResetMenu(int value){
   default:
     ASSERT(value>=0);
     if(value<100000){
-      reset_glui_view(value);
+      ResetGluiView(value);
       if(scriptoutstream!=NULL){
         fprintf(scriptoutstream,"SETVIEWPOINT\n");
         fprintf(scriptoutstream," %s\n",camera_current->name);
@@ -1518,8 +1519,8 @@ void ResetMenu(int value){
 /* ------------------ RenderState ------------------------ */
 
 void RenderState(int onoff){
-  rendering_status=onoff;
   if(onoff==RENDER_ON){
+    rendering_status = onoff;
     update_screeninfo = 1;
     saveW=screenWidth;
     saveH=screenHeight;
@@ -1536,6 +1537,8 @@ void RenderState(int onoff){
     }
   }
   else{
+    if(rendering_status==RENDER_OFF)return;
+    rendering_status = onoff;
     Enable360Zoom();
     render_mode = RENDER_XYSINGLE;
     setScreenSize(&saveW,&saveH);
@@ -1557,7 +1560,7 @@ void RenderMenu(int value){
   }
   if(value>=10000&&value<=10005){
     nrender_rows=value-10000;
-    update_nrender_rows();
+    UpdateNRenderRows();
     return;
   }
   switch(value){
@@ -1606,11 +1609,11 @@ void RenderMenu(int value){
     break;
   case RenderLABELframenumber:
     render_label_type=RENDER_LABEL_FRAMENUM;
-    update_glui_filelabel(render_label_type);
+    UpdateGluiFileLabel(render_label_type);
     break;
   case RenderLABELtime:
     render_label_type=RENDER_LABEL_TIME;
-    update_glui_filelabel(render_label_type);
+    UpdateGluiFileLabel(render_label_type);
     break;
   case RenderPNG:
      render_filetype=PNG;
@@ -1653,7 +1656,7 @@ void RenderMenu(int value){
     render_times = RENDER_ALLTIMES;
     break;
   }
-  update_nrender_rows();
+  UpdateNRenderRows();
 }
 
 /* ------------------ EvacShowMenu ------------------------ */
@@ -2583,7 +2586,7 @@ void ReloadAllSliceFiles(void){
     i = slice_loaded_list[ii];
     slicei = sliceinfo + i;
     set_slicecolor = DEFER_SLICECOLOR;
-    if(i == nslice_loaded-1)set_slicecolor = SET_SLICECOLOR;
+    if(ii == nslice_loaded-1)set_slicecolor = SET_SLICECOLOR;
     ReadSlice(slicei->file, i, LOAD, set_slicecolor, &errorcode);
   }
   islicetype = islicetype_save;
@@ -4748,8 +4751,8 @@ void BlockageMenu(int value){
 void RotateTypeMenu(int value){
   if(value==MENU_DUMMY)return;
   rotation_type = value;
-  update_rotation_type(rotation_type);
-  rotation_type_CB(rotation_type);
+  UpdateRotationType(rotation_type);
+  RotationTypeCB(rotation_type);
   updatemenu=1;
   glutPostRedisplay();
 }
@@ -4856,6 +4859,9 @@ void ZoneShowMenu(int value){
     visZone=1;
     break;
   case MENU_ZONE_2DTEMP:
+  case MENU_ZONE_2DTEMP2:
+    show_zonelower = 1;
+    if(value==MENU_ZONE_2DTEMP)show_zonelower = 0;
     zonecolortype=ZONETEMP_COLOR;
     visSZone=0;
     if(visVZone==0&&visHZone==0)visVZone=1;
@@ -6320,24 +6326,27 @@ updatemenu=0;
     glutAddMenuEntry(_("Layers"),MENU_DUMMY);
     glutAddMenuEntry(_("   Representation:"),MENU_DUMMY);
     if(visZone==1&&zonecolortype==ZONETEMP_COLOR){
-      glutAddMenuEntry(_("      *Temperature"), MENU_ZONE_2DTEMP);
-#ifdef pp_HAZARD
+      if(show_zonelower==1){
+        glutAddMenuEntry(_("      Temperature(upper)"), MENU_ZONE_2DTEMP);
+        glutAddMenuEntry(_("      *Temperature(upper/lower)"), MENU_ZONE_2DTEMP2);
+      }
+      else{
+        glutAddMenuEntry(_("      *Temperature(upper)"), MENU_ZONE_2DTEMP);
+        glutAddMenuEntry(_("      Temperature(upper/lower)"), MENU_ZONE_2DTEMP2);
+      }
       glutAddMenuEntry(_("      Hazard"), MENU_ZONE_2DHAZARD);
-#endif
-      glutAddMenuEntry(_("      Smoke"), 7);
+      glutAddMenuEntry(_("      Smoke"), MENU_ZONE_3DSMOKE);
     }
     else if(visZone==1&&zonecolortype==ZONEHAZARD_COLOR){
-      glutAddMenuEntry(_("      Temperature"), MENU_ZONE_2DTEMP);
-#ifdef pp_HAZARD
+      glutAddMenuEntry(_("      Temperature(upper)"), MENU_ZONE_2DTEMP);
+      glutAddMenuEntry(_("      Temperature(upper/lower)"), MENU_ZONE_2DTEMP2);
       glutAddMenuEntry(_("      *Hazard"), MENU_ZONE_2DHAZARD);
-#endif
       glutAddMenuEntry(_("      Smoke"), MENU_ZONE_3DSMOKE);
     }
     else{
-      glutAddMenuEntry(_("      Temperature"), MENU_ZONE_2DTEMP);
-#ifdef pp_HAZARD
+      glutAddMenuEntry(_("      Temperature(upper)"), MENU_ZONE_2DTEMP);
+      glutAddMenuEntry(_("      Temperature(upper/lower)"), MENU_ZONE_2DTEMP2);
       glutAddMenuEntry(_("      Hazard"), MENU_ZONE_2DHAZARD);
-#endif
       glutAddMenuEntry(_("      *Smoke"), MENU_ZONE_3DSMOKE);
     }
     glutAddMenuEntry(_("   Orientation:"), MENU_DUMMY);

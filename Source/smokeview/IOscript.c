@@ -1485,12 +1485,12 @@ void script_plot3dprops(scriptdata *scripti){
     for(i=0;i<nmeshes;i++){
       gbi = meshinfo + i;
       if(gbi->plot3dfilenum==-1)continue;
-      update_current_mesh(gbi);
+      UpdateCurrentMesh(gbi);
       updateplotslice(XDIR);
       updateplotslice(YDIR);
       updateplotslice(ZDIR);
     }
-    update_current_mesh(gbsave);
+    UpdateCurrentMesh(gbsave);
   }
 }
 
@@ -1582,7 +1582,7 @@ void script_showplot3ddata(scriptdata *scripti){
   if(imesh<0||imesh>nmeshes-1)return;
 
   meshi = meshinfo + imesh;
-  update_current_mesh(meshi);
+  UpdateCurrentMesh(meshi);
 
   dir = CLAMP(scripti->ival2,XDIR,ISO);
 
@@ -2057,21 +2057,21 @@ int run_script(void){
       break;
     case SCRIPT_RENDERTYPE:
       if(STRCMP(scripti->cval, "JPG")==0){
-        update_render_type(JPEG);
+        UpdateRenderType(JPEG);
       }
       else{
-        update_render_type(PNG);
+        UpdateRenderType(PNG);
       }
       break;
     case SCRIPT_MOVIETYPE:
       if(STRCMP(scripti->cval, "WMV") == 0){
-        update_movie_type(WMV);
+        UpdateMovieType(WMV);
       }
       if(STRCMP(scripti->cval, "MP4") == 0){
-        update_movie_type(MP4);
+        UpdateMovieType(MP4);
       }
       else{
-        update_movie_type(AVI);
+        UpdateMovieType(AVI);
       }
       break;
     case SCRIPT_RENDERDIR:

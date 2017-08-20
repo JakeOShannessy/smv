@@ -419,31 +419,31 @@ extern "C" void update_iso_colorlevel(void){
 /* ------------------ Plot3d_Rollout_CB ------------------------ */
 
 void Plot3d_Rollout_CB(int var){
-  toggle_rollout(plot3dprocinfo, nplot3dprocinfo, var);
+  ToggleRollout(plot3dprocinfo, nplot3dprocinfo, var);
 }
 
 /* ------------------ Slice_Rollout_CB ------------------------ */
 
 void Slice_Rollout_CB(int var){
-  toggle_rollout(sliceprocinfo, nsliceprocinfo, var);
+  ToggleRollout(sliceprocinfo, nsliceprocinfo, var);
 }
 
 /* ------------------ Iso_Rollout_CB ------------------------ */
 
 void Iso_Rollout_CB(int var){
-  toggle_rollout(isoprocinfo, nisoprocinfo, var);
+  ToggleRollout(isoprocinfo, nisoprocinfo, var);
 }
 
 /* ------------------ Bound_Rollout_CB ------------------------ */
 
 void Bound_Rollout_CB(int var){
-  toggle_rollout(boundprocinfo, nboundprocinfo, var);
+  ToggleRollout(boundprocinfo, nboundprocinfo, var);
 }
 
 /* ------------------ File_Rollout_CB ------------------------ */
 
 void File_Rollout_CB(int var){
-  toggle_rollout(fileprocinfo, nfileprocinfo, var);
+  ToggleRollout(fileprocinfo, nfileprocinfo, var);
 }
 
 /* ------------------ update_glui_zonebounds ------------------------ */
@@ -2945,11 +2945,19 @@ extern "C" void Slice_CB(int var){
     case ZONEVALMIN:
       GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, nrgb, nrgb_full,
         colorlabelzone, zonescale, zonelevels256);
+#ifdef pp_ZONETL
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, nrgb, nrgb_full,
+        colorlabelzone, zonescale, zonelevels256);
+#endif
       zoneusermin=zonemin;
       break;
     case ZONEVALMAX:
       GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, nrgb, nrgb_full,
         colorlabelzone, zonescale, zonelevels256);
+#ifdef pp_ZONETL
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, nrgb, nrgb_full,
+        colorlabelzone, zonescale, zonelevels256);
+#endif
       zoneusermax=zonemax;
       break;
     case SETZONEVALMIN:
@@ -2964,6 +2972,10 @@ extern "C" void Slice_CB(int var){
       }
       GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, nrgb, nrgb_full,
         colorlabelzone, zonescale, zonelevels256);
+#ifdef pp_ZONETL
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, nrgb, nrgb_full,
+        colorlabelzone, zonescale, zonelevels256);
+#endif
       break;
     case SETZONEVALMAX:
       if(setzonemax==SET_MAX){
@@ -2977,6 +2989,10 @@ extern "C" void Slice_CB(int var){
       }
       GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, nrgb, nrgb_full,
         colorlabelzone, zonescale, zonelevels256);
+#ifdef pp_ZONETL
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, nrgb, nrgb_full,
+        colorlabelzone, zonescale, zonelevels256);
+#endif
       break;
     case COLORBAR_LIST2:
       if(selectedcolorbar_index2 == bw_colorbar_index){

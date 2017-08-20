@@ -19,12 +19,15 @@ GLUI_Spinner *SPINNER_clip_zmax=NULL, *SPINNER_clip_zmin=NULL;
 GLUI_Checkbox *CHECKBOX_clip_xmin=NULL, *CHECKBOX_clip_xmax=NULL;
 GLUI_Checkbox *CHECKBOX_clip_ymin=NULL, *CHECKBOX_clip_ymax=NULL;
 GLUI_Checkbox *CHECKBOX_clip_zmin=NULL, *CHECKBOX_clip_zmax=NULL;
+GLUI_Checkbox *CHECKBOX_clip_rotate = NULL;
+GLUI_Checkbox *CHECKBOX_clip_show_rotation_center2 = NULL;
 
 GLUI_Panel *PANEL_clip_lower=NULL, *PANEL_clip_upper=NULL, *PANEL_clip=NULL,*panel_wrapup=NULL;
 GLUI_Panel *PANEL_clipx=NULL, *PANEL_clipX=NULL;
 GLUI_Panel *PANEL_clipy=NULL, *PANEL_clipY=NULL;
 GLUI_Panel *PANEL_clipz=NULL, *PANEL_clipZ=NULL;
 GLUI_Panel *PANEL_blockageview=NULL;
+GLUI_Panel *PANEL_rotation_center = NULL;
 
 GLUI_Listbox *LIST_mesh=NULL;
 
@@ -41,6 +44,8 @@ GLUI_Button *BUTTON_clip_2=NULL;
 #define CLIP_xupper 3
 #define CLIP_yupper 4
 #define CLIP_zupper 5
+#define CLIP_ROTATE 6
+#define CLIP_SHOW_ROTATE2 7
 
 #define CLIP_all 12
 
@@ -58,6 +63,10 @@ GLUI_Button *BUTTON_clip_2=NULL;
 #define SAVE_SETTINGS 98
 #define CLIP_MESH 80
 
+extern "C" void UpdateShowRotationCenter2(void){
+  if(CHECKBOX_clip_show_rotation_center2!=NULL)CHECKBOX_clip_show_rotation_center2->set_int_val(show_rotation_center);
+}
+
 /* ------------------ CLIP_CB ------------------------ */
 
 void CLIP_CB(int var){
@@ -65,6 +74,17 @@ void CLIP_CB(int var){
 
   glutPostRedisplay();
   switch(var){
+  case CLIP_ROTATE:
+    if(clip_rotate==0){
+      UpdateGluiRotateAbout(nmeshes);
+    }
+    else{
+      UpdateGluiRotateAbout(ROTATE_ABOUT_CLIPPING_CENTER);
+    }
+    break;
+  case CLIP_SHOW_ROTATE2:
+    UpdateShowRotationCenter();
+    break;
   case CLIP_MESH:
     if(clip_mesh == 0){
       set_clip_controls(DEFAULT_VALS);
@@ -171,6 +191,7 @@ void CLIP_CB(int var){
     ASSERT(FFALSE);
     break;
   }
+  if(glui_rotation_index==ROTATE_ABOUT_CLIPPING_CENTER)UpdateRotationIndex(ROTATE_ABOUT_CLIPPING_CENTER);
   if(var >= CLIP_xlower&&var <= CLIP_zupper){
     Clip2Cam(camera_current);
   }
@@ -262,6 +283,9 @@ extern "C" void glui_clip_setup(int main_window){
   RADIOBUTTON_clip_1c=glui_clip->add_radiobutton_to_group(radio_clip,_d("Clip blockages"));
   RADIOBUTTON_clip_1c=glui_clip->add_radiobutton_to_group(radio_clip,_d("Clip data"));
 
+  PANEL_rotation_center = glui_clip->add_panel_to_panel(PANEL_clip,"rotation center");
+  CHECKBOX_clip_rotate = glui_clip->add_checkbox_to_panel(PANEL_rotation_center,"center of clipping planes", &clip_rotate, CLIP_ROTATE, CLIP_CB);
+  CHECKBOX_clip_show_rotation_center2 = glui_clip->add_checkbox_to_panel(PANEL_rotation_center, "Show", &show_rotation_center, CLIP_SHOW_ROTATE2, CLIP_CB);
   glui_clip->add_column_to_panel(PANEL_clip,false);
 
   PANEL_clip_upper = glui_clip->add_panel_to_panel(PANEL_clip,_d("Clip upper"));
