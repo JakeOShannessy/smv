@@ -70,7 +70,7 @@ size_t readcsv(char *file, dvector **dvectors){
   size_t x = 0;
   bufptr = strsep(&buffer, ",\n");
   while(bufptr != NULL) {
-    fprintf(stderr, "unit[%d]: %s\n", x, bufptr);
+    fprintf(stderr, "unit[%zu]: %s\n", x, bufptr);
     x++;
     bufptr = strsep(&buffer, ",\n");
   }
@@ -85,7 +85,7 @@ size_t readcsv(char *file, dvector **dvectors){
   bufptr = strsep(&bufferdup, ",\n");
   size_t j = 0;
   while(bufptr != NULL) {
-    fprintf(stderr, "unitsbufptr[%d]: %s\n", j, bufptr);
+    fprintf(stderr, "unitsbufptr[%zu]: %s\n", j, bufptr);
     strcpy(vectors[j].units, bufptr);
     bufptr = strsep(&bufferdup, ",\n");
     j++;
@@ -104,7 +104,7 @@ size_t readcsv(char *file, dvector **dvectors){
   bufptr = strsep(&buffer, ",\n");
   j = 0;
   while(bufptr != NULL) {
-    fprintf(stderr, "name[%d]: %s\n", j, bufptr);
+    fprintf(stderr, "name[%zu]: %s\n", j, bufptr);
     strcpy(vectors[j].name, simpleunquote(bufptr));
     bufptr = strsep(&buffer, ",\n");
     j++;
