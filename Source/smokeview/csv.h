@@ -1,4 +1,3 @@
-#include GLUT_H
 #include "smokeviewvars.h"
 #include "flowfiles.h"
 
