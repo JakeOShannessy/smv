@@ -410,7 +410,7 @@ viewed may not match the time requested when using the
 
 The colourbar is controlled using the \lstinline{view.colorbar} table. The colorbar table includes the following options:
 
-flip: A boolean value to determine if the colorbar is flipped. Can be set or
+\lstinline{flip}: A boolean value to determine if the colorbar is flipped. Can be set or
 read.
 
 \begin{lstlisting}[style=lua]
@@ -424,7 +424,7 @@ end
 
 %texture_flag: a function which sets the texture flag
 
-index: An integer value which determines the value of the contour in the
+\lstinline{index}: An integer value which determines the value of the contour in the
 colourbar. When set to nil there is no contour. The integer value is from 0-255.
 Can be set or read. If a particular contour value (with respect to the units
 shown) is required, the \lstinline{bounds} information can be used to calculate
@@ -439,10 +439,10 @@ render()
 view.colorbar.index = nil
 \end{lstlisting}
 
-show: A boolean value which determines if the colorbar is shown. Can be set or
+\lstinline{show}: A boolean value which determines if the colorbar is shown. Can be set or
 read.
 
-colors: A table of colours used in the colorbar. Can be set or read. WARNING:
+\lstinline{colors}: A table of colours used in the colorbar. Can be set or read. WARNING:
 liable to signifcant changes.
 
 \subsection{Clipping}
@@ -517,20 +517,21 @@ containing the data necessary to set up the cameras.
 The \lstinline{view.color} table includes a number of options governing colour
 and lighting in the view space. The options are as follows:
 
-ambientlight(r,g,b): Set the ambient light value.
+\begin{itemize}
+\item \lstinline{ambientlight(r,g,b)}: Set the ambient light value.
 
-backgroundcolor(r,g,b): Set the background colour.
+\item \lstinline{backgroundcolor(r,g,b)}: Set the background colour.
 
-blockcolor(r,g,b): Set the block colour.
+\item \lstinline{blockcolor(r,g,b)}: Set the block colour.
 
-blockshininess(v): Set the blockshininess value.
+\item \lstinline{blockshininess(v)}: Set the blockshininess value.
 
-blockspecular(r,g,b): Set the block specular colour.
+\item \lstinline{blockspecular(r,g,b)}: Set the block specular colour.
 
-boundcolor(r,g,b): Set the bound colour.
+\item \lstinline{boundcolor(r,g,b)}: Set the bound colour.
 
-diffuselight(r,g,b): Set the diffuse light colour.
-
+\item \lstinline{diffuselight(r,g,b)}: Set the diffuse light colour.
+\end{itemize}
 \subsection{Miscellaneous View Options}
 
 There are a large number of view options in Smokeview, most of which are
@@ -578,6 +579,10 @@ In other cases the \lstinline{load.slice(matchFunc)} function is useful, where
 matchFunc is a function which takes the slice information as an argument and
 returns a boolean which determines whether to load each data file or not.
 
+3D Smoke files (including HRRPUV) can be loaded using
+\lstinline{load3dsmoke(type)}, where \lstinline{type} is something like
+\lstinline{SOOT MASS FRACTION} or \lstinline{HRRPUV}.
+
 \section{Rendering and Output}
 
 The basic rendering command is the \lstinline[style=lua]{render()} function,
@@ -615,9 +620,48 @@ variables.
 The CHID of the currently loaded simulation is stored in \lstinline{chid}.
 
 Information on the meshes is stored in the \lstinline{meshinfo} table. Indices
-in this table match the MESH indices (i.e. from 1).
+in this table match the MESH indices (i.e. from 1). For example, if we want to
+look at the what meshes we have in our mesh we could use the following script:
 
-Information on slices is stored in the \lstinline{sliceinfo} table.
+\begin{lstlisting}[style=lua]
+    print(string.format("CHID: %s", chid))
+    print(string.format("----------------------------------------------------------------"))
+    print(string.format("#\t|\tMeshId.\t|\t# Cells\t|\tI-J-K"))
+    print(string.format("----------------------------------------------------------------"))
+    local totalCells = 0
+    for k,mesh in ipairs(meshinfo) do
+        local nCells = mesh.ibar * mesh.jbar * mesh.kbar
+        totalCells = totalCells + nCells
+        print(string.format("%d\t|\t%s\t|\t%d\t|\t%d-%d-%d", k, mesh.label, nCells,
+                            mesh.ibar, mesh.jbar, mesh.kbar))
+    end
+    print(string.format("----------------------------------------------------------------"))
+    print(string.format("Total\t|\t    \t|\t%d\t|", totalCells))
+    print(string.format("----------------------------------------------------------------"))
+    exit()
+\end{lstlisting}
+
+An example result of this script might be:
+
+\begin{lstlisting}
+    CHID: ExampleModel
+    ----------------------------------------------------------------
+    #       |       MeshId. |       # Cells |       I-J-K
+    ----------------------------------------------------------------
+    1       |       Mesh02  |       275808  |       102-52-52
+    2       |       Mesh03  |       102752  |       38-52-52
+    3       |       Mesh04  |       65520   |       63-40-26
+    4       |       Mesh05  |       70434   |       63-43-26
+    5       |       Mesh06  |       75166   |       49-59-26
+    6       |       Mesh07  |       308672  |       106-56-52
+    7       |       Mesh08  |       110656  |       38-56-52
+    ----------------------------------------------------------------
+    Total   |               |       1009008 |
+    ----------------------------------------------------------------
+\end{lstlisting}
+
+Information on slices is stored in the \lstinline{sliceinfo} table, and the
+operation is similar.
 
 \section{Accessing and Post-Processing Data}
 
