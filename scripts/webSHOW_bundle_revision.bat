@@ -1,6 +1,6 @@
 @echo off
 
-:: batch file to output smokeview release version 
+:: batch file to output git repo revision string
 
 :: setup environment variables (defining where repository resides etc) 
 
@@ -19,8 +19,15 @@ goto:eof
 call %envfile%
 
 %svn_drive%
-cd %svn_root%\smv\Build\smokeview\intel_win_64
+set CURDIR=%CD%
+cd %svn_root%\smv
+echo.
+echo smv revision:
+type %userprofile%\smv_revision.txt
 
-smokeview_win_64 -v
-
+cd %svn_root%\fds
+echo.
+echo fds revision:
+type %userprofile%\fds_revision.txt
+cd %CURDIR%
 pause

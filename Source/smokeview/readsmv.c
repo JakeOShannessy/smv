@@ -7996,7 +7996,6 @@ typedef struct {
       float sliceoffset_fds=0.0;
       int terrain=0, cellcenter=0, facecenter=0, fire_line=0;
       int has_reg, has_comp;
-      int i1=-1, i2=-1, j1=-1, j2=-1, k1=-1, k2=-1;
       int ii1 = -1, ii2 = -1, jj1 = -1, jj2 = -1, kk1 = -1, kk2 = -1;
       int blocknumber;
       slicedata *sd;
@@ -8208,7 +8207,7 @@ typedef struct {
       sd->compindex=NULL;
       sd->slicecomplevel=NULL;
       sd->qslicedata_compressed=NULL;
-      if(i1!=i2&&j1!=j2&&k1!=k2){
+      if(sd->is1!=sd->is2&&sd->js1!=sd->js2&&sd->ks1!=sd->ks2){
         sd->volslice=1;
       }
       else{
@@ -8233,7 +8232,12 @@ typedef struct {
 
         meshi = meshinfo + blocknumber;
         sd->mesh_type=meshi->mesh_type;
+        sd->full_mesh = NO;
+        if(sd->is2 - sd->is1 == meshi->ibar &&
+           sd->js2 - sd->js1 == meshi->jbar &&
+           sd->ks2 - sd->ks1 == meshi->kbar)sd->full_mesh = YES;
       }
+
       if(IsSliceDup(sd,nn_slice)==1){
         FREEMEMORY(sd->reg_file);
         FREEMEMORY(sd->comp_file);
@@ -9284,8 +9288,8 @@ int ReadINI2(char *inifile, int localfile){
     }
     if(Match(buffer, "SHOWDEVICEVALS") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, " %i %i %i %i %i %i %i %i",
-        &showdeviceval, &showvdeviceval, &devicetypes_index, &colordeviceval, &vectortype, &viswindrose, &showdevicetype, &showdeviceunit);
+      sscanf(buffer, " %i %i %i %i %i %i %i %i %i",
+        &showdevice_val, &showvdevice_val, &devicetypes_index, &colordevice_val, &vectortype, &viswindrose, &showdevice_type, &showdevice_unit,&showdevice_id);
       devicetypes_index = CLAMP(devicetypes_index, 0, ndevicetypes - 1);
       update_glui_devices();
       continue;
@@ -12427,7 +12431,7 @@ void WriteINILocal(FILE *fileout){
     }
   }
   fprintf(fileout, "SHOWDEVICEVALS\n");
-  fprintf(fileout, " %i %i %i %i %i %i %i %i\n", showdeviceval, showvdeviceval, devicetypes_index, colordeviceval, vectortype, viswindrose, showdevicetype,showdeviceunit);
+  fprintf(fileout, " %i %i %i %i %i %i %i %i %i\n", showdevice_val, showvdevice_val, devicetypes_index, colordevice_val, vectortype, viswindrose, showdevice_type,showdevice_unit,showdevice_id);
   fprintf(fileout, "SHOWMISSINGOBJECTS\n");
   fprintf(fileout, " %i\n", show_missing_objects);
   fprintf(fileout, "SMOKE3DCUTOFFS\n");

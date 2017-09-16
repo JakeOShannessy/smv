@@ -52,7 +52,9 @@ function install_smv(args){
 <button onclick="run_script('\\smv\\scripts\\webUPDATErepos.bat')">Update</button>
 <button onclick="run_script('\\smv\\scripts\\webSHOW_revisions.bat')">Show</button>
 </td></tr>
-<tr><th>Revision</th><td align=center><button onclick="run_script('\\smv\\scripts\\webSET_bundle_revision.bat')">Set</button><button onclick="run_script('\\smv\\scripts\\SHOW_bundle_revision.bat')">Show</button></td></tr>
+<tr><th>Revision</th><td align=center>
+<button onclick="run_script('\\smv\\scripts\\webSET_bundle_revision.bat')">Set</button>
+<button onclick="run_script('\\smv\\scripts\\webSHOW_bundle_revision.bat')">Show</button></td></tr>
 <tr><th align=center>Release<br>notes</th>
 <td align=center>
 <button onclick="run_script('\\smv\\scripts\\webGET_smvlog.bat')">Add</button>
@@ -65,7 +67,7 @@ function install_smv(args){
 <p id="demo"></p>
 
 <p><table border=on>
-<tr><th colspan=4>Libraries/Utilities</th></tr>
+<tr><th colspan=4>Libraries</th></tr>
 <tr>
 <th></th>
 <th>Windows</th>
@@ -78,6 +80,16 @@ function install_smv(args){
 <td align=center><button onclick="build_libs('windows')">Build</button></td>
 <td align=center><button onclick="build_libs('linux')">Build</button></td>
 <td align=center><button onclick="build_libs('osx')">Build</button></td>
+</tr>
+</table>
+
+<p><table border=on>
+<tr><th colspan=4>Utilities</th></tr>
+<tr>
+<th></th>
+<th>Windows</th>
+<th>Linux</th>
+<th>OSX</th>
 </tr>
 
 <tr>
@@ -179,11 +191,6 @@ function install_smv(args){
 <td align=center><button onclick="install_smv('windows test')">Install</button></td>
 <td align=center><button onclick="install_smv('linux test')">Install</button></td>
 <td align=center><button onclick="install_smv('osx test')">Install</button></td>
-</tr>
-
-<tr>
-<td align=center COLSPAN=3><button onclick="run_script('\\smv\\scripts\\webGET_smv_version.bat')">Revision</button></td>
-<td align=center COLSPAN=3><button onclick="run_script('\\smv\\scripts\\webGET_smvtest_version.bat')">Revision</button></td>
 </tr>
 
 <tr>

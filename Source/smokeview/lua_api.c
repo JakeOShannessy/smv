@@ -27,6 +27,113 @@ int lua_displayCB(lua_State *L);
 #define snprintf _snprintf
 #endif
 
+void ParseCommandline(int argc, char **argv);
+void Usage(char *prog,int option);
+
+int ProgramSetupLua(lua_State *L, int argc, char **argv_sv) {
+  char *progname;
+  InitVars();
+  if(argc==1)DisplayVersionInfo("Smokeview ");
+
+  if(argc==0||argc==1)return 0;
+
+  progname=argv_sv[0];
+
+  ParseCommonOptions(argc, argv_sv);
+  if(show_help==1){
+    Usage("smokeview",HELP_SUMMARY);
+    return 1;
+}
+  if(show_version==1){
+    PRINTVERSION("smokeview", argv_sv[0]);
+    return 1;
+  }
+
+  prog_fullpath = progname;
+#ifdef pp_LUA
+  smokeview_bindir_abs=getprogdirabs(progname,&smokeviewpath);
+#endif
+  ParseCommandline(argc, argv_sv);
+  if(smokeview_bindir==NULL){
+    smokeview_bindir= GetProgDir(progname,&smokeviewpath);
+  }
+  InitTextureDir();
+  smokezippath= GetSmokeZipPath(smokeview_bindir);
+#ifdef pp_ffmpeg
+#ifdef WIN32
+  have_ffmpeg = HaveProg("ffmpeg -version> Nul 2>Nul");
+  have_ffplay = HaveProg("ffplay -version> Nul 2>Nul");
+#else
+  have_ffmpeg = HaveProg("ffmpeg -version >/dev/null 2>/dev/null");
+  have_ffplay = HaveProg("ffplay -version >/dev/null 2>/dev/null");
+#endif
+#endif
+  DisplayVersionInfo("Smokeview ");
+
+  return 0;
+}
+
+// TODO: needs to be passed the commandline strings to pass to GLUT.
+int lua_SetupGLUT(lua_State *L) {
+  int argc = lua_tonumber(L, 1);
+  char **argv_sv = lua_topointer(L, 2);
+  SetupGlut(argc,argv_sv);
+  return 0;
+}
+
+int lua_SetupCase(lua_State *L) {
+  int argc = lua_tonumber(L, 1);
+  char **argv_sv = lua_topointer(L, 2);
+  int return_code = SetupCase(argc,argv_sv);
+  lua_pushnumber(L, return_code);
+  return 1;
+}
+
+int RunLuaBranch(lua_State *L, int argc, char **argv) {
+  int return_code;
+  char **argv_sv;
+  SetStdOut(stdout);
+  initMALLOC();
+  InitRandAB(1000000);
+  CopyArgs(&argc, argv, &argv_sv);
+  // Setup the program, including parsing commandline arguments. Does not
+  // initialise any graphical components.
+  ProgramSetupLua(L, argc, argv_sv);
+  // From here on out, control is passed to the lua interpreter. All further
+  // setup, including graphical display setup, is handled (or at least
+  // triggered) by the interpreter.
+  // TODO: currently the commands are issued here via C, but they are designed
+  // such that they can be issued from lua.
+  // Setup glut. TODO: this is currently done via to C because the commandline
+  // arguments are required for glutInit.
+
+  lua_pushnumber(L, argc);
+  lua_pushlightuserdata(L, argv_sv);
+  lua_SetupGLUT(L);
+  START_TIMER(startup_time);
+  START_TIMER(read_time_elapsed);
+  // Load information about smokeview into the lua interpreter.
+  lua_initsmvproginfo(L);
+
+  // return_code= SetupCase(argc,argv_sv);
+  lua_pushnumber(L, argc);
+  lua_pushlightuserdata(L, argv_sv);
+  lua_SetupCase(L);
+  return_code = lua_tonumber(L,-1);
+  fprintf(stderr, "SetupCase return code: %d\n", return_code);
+  if(return_code==0&&update_bounds==1)return_code=Update_Bounds();
+  if(return_code!=0)return 1;
+  if(convert_ini==1){
+    ReadINI(ini_from);
+  }
+  // Load information about the case into the lua interpreter.
+  lua_initsmvdata(L);
+
+  STOP_TIMER(startup_time);
+  PRINTF("\nStartup time: %.1f s\n", startup_time);
+  glutMainLoop();
+}
+
 /* ------------------ load_script ------------------------ */
 // There are two options for scripting, Lua and SSF. Which is run is set here
 // based on the commandline arguments. If either (exclusive) of these values
@@ -1078,6 +1185,7 @@ int lua_initsmvproginfo(lua_State *L) {
   char githash[256];
 
   GetProgVersion(version);
+  addLuaPaths(L);
   // getGitHash(githash);
 
   lua_createtable(L, 0, 6);
@@ -4727,8 +4835,7 @@ lua_State *initLua() {
   L = luaL_newstate();
 
   luaL_openlibs(L);
-  lua_initsmvproginfo(L);
-  addLuaPaths(L);
+
   lua_register(L, "set_slice_bound_min", lua_set_slice_bound_min);
   lua_register(L, "set_slice_bound_max", lua_set_slice_bound_max);
   lua_register(L, "get_slice_bound_min", lua_get_slice_bound_min);
@@ -5246,7 +5353,6 @@ lua_State *initLua() {
   // luaL_loadfile(L, "smv.lua");
   // int luaL_1dofile (lua_State *L, const char *filename);
   return L;
-
 }
 
 // int luaopen_smv(lua_State *L){

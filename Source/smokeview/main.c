@@ -684,7 +684,17 @@ int main(int argc, char **argv){
   char **argv_sv;
   int return_code;
   char *progname;
-
+#ifdef pp_LUA
+  // If we are using lua, let lua take control here.
+  // Initialise the lua interpreter, it does not take control at this point
+  lua_State *L = initLua();
+  // This code branch gives more control to the interpreter during startup.
+  RunLuaBranch(L, argc, argv);
+  // All of the below code is run by the lua interpreter, therefore if we want
+  // to use the lua interpreter we ignore the code below and exit once the lua
+  // run is complete.
+  return 0;
+#endif
   SetStdOut(stdout);
   initMALLOC();
   InitRandAB(1000000);
@@ -699,7 +709,7 @@ int main(int argc, char **argv){
   if(show_help==1){
     Usage("smokeview",HELP_SUMMARY);
     return 1;
-}
+  }
   if(show_version==1){
     PRINTVERSION("smokeview", argv_sv[0]);
     return 1;
@@ -735,12 +745,6 @@ int main(int argc, char **argv){
   if(convert_ini==1){
     ReadINI(ini_from);
   }
-#ifdef pp_LUA
-  // Initialise the lua interpreter, it does not take control at this point
-  lua_State *L = initLua();
-  lua_initsmvdata(L);
-#endif
-
 
   STOP_TIMER(startup_time);
   PRINTF("\nStartup time: %.1f s\n", startup_time);
