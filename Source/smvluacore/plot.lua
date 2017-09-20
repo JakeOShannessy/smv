@@ -1,48 +1,5 @@
-local csv = require("csv")
 local gp = require('gnuplot')
 local lfs = require('lfs')
-
--- TODO: get csv information from the SMV file. This may require a more
--- fundamental change to smokeview.
-function getCSVFile( suffix )
-    local directory = "."
-    local filename = chid .. "_" .. suffix .. ".csv"
-    return getCSVFileFromFilePath(filename)
-end
-
-function getCSVColes(csvf)
-    return getCSVFileFromFilePath(csvf.file)
-end
-
-function getCSVFileFromFilePath(filepath)
-    -- Do a first run to determine the header indices.
-    local f = assert(csv.open(filepath))
-    local linenumber = 0
-    local cols = {}
-    for fields in f:lines() do
-    linenumber = linenumber + 1
-    if (linenumber == 1)
-        then
-          for colnum, colunits in ipairs(fields) do
-            cols[colnum] = {values = {}}
-            cols[colnum].units = colunits
-          end
-        elseif (linenumber == 2)
-          then
-            for colnum, colname in ipairs(fields) do
-                -- print(colname)
-                cols[colnum].name = colname
-            end
-        else
-          for i,v in ipairs(fields) do
-            -- print(v)
-            cols[i].values[linenumber - 2] = tonumber(v)
-          end
-    end
-    end
-    f:close()
-    return cols
-end
 
 function createDV(cols, colXIndex, colYIndex, name)
     return {x = cols[colXIndex], y = cols[colYIndex], name = name}
