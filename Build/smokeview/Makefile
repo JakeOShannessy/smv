@@ -77,6 +77,8 @@ SMVLUACORE_FILES = $(SMVLUACORE_DIR)/smv.lua $(SMVLUACORE_DIR)/ssf.lua \
 	$(SMVLUACORE_DIR)/view.lua $(SMVLUACORE_DIR)/tour.lua \
 	$(SMVLUACORE_DIR)/iniparser.lua $(SMVLUACORE_DIR)/inioptions.lua \
 	$(SMVLUACORE_DIR)/unload.lua $(SMVLUACORE_DIR)/constants.lua \
+	$(SMVLUACORE_DIR)/gnuplot.lua $(SMVLUACORE_DIR)/plot.lua \
+	$(SMVLUACORE_DIR)/pl3d.lua \
 	$(SMVLUACORE_DIR)/camera.lua $(SMVLUACORE_DIR)/window.lua
 
 smvluacore: $(SMVLUACORE_FILES)
