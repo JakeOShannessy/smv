@@ -231,7 +231,7 @@ end
 
 function plotHRRDV(plotDir, hrrDV, name, offset)
     local slowDV,mediumDV,fastDV,ultrafastDV = createStdHRRCurves(hrrDV, offset)
-    plotDV(plotDir, {slowDV,mediumDV,fastDV,ultrafastDV,hrrDV}, "HRR")
+    plotDV(plotDir, {hrrDV,slowDV,mediumDV,fastDV,ultrafastDV}, "HRR")
 end
 
 function printVec(vec)
