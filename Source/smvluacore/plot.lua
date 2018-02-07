@@ -229,9 +229,27 @@ function createStdHRRCurves(dv, offset)
     return slowDV, mediumDV, fastDV, ultrafastDV
 end
 
-function plotHRRDV(plotDir, hrrDV, name, offset)
-    local slowDV,mediumDV,fastDV,ultrafastDV = createStdHRRCurves(hrrDV, offset)
-    plotDV(plotDir, {hrrDV,slowDV,mediumDV,fastDV,ultrafastDV}, "HRR")
+function plotHRRDV(plotDir, hrrDV, name, offset, config)
+    local vecs
+    if hrrDV.x and hrrDV.y then
+        print(hrrDV.name)
+        local slowDV,mediumDV,fastDV,ultrafastDV = createStdHRRCurves(hrrDV, offset)
+        vecs = {hrrDV,slowDV,mediumDV,fastDV,ultrafastDV}
+    else
+        -- TODO: find the best set of x points from each HRR DV, instead of using
+        -- hrrDV[1]
+        print(hrrDV[1].name)
+        local slowDV,mediumDV,fastDV,ultrafastDV = createStdHRRCurves(hrrDV[1], offset)
+        vecs = hrrDV
+        for i,v in ipairs({slowDV,mediumDV,fastDV,ultrafastDV}) do
+            print(i, v.name)
+            vecs[#vecs+1] = v
+        end
+        for i,v in ipairs(vecs) do
+            print(i, v.name)
+        end
+    end
+    return plotDV(plotDir, vecs, name, config)
 end
 
 function printVec(vec)
