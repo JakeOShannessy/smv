@@ -6,7 +6,6 @@ echo "Generates figures for Smokeview verification suite"
 echo ""
 echo "Options"
 echo "-d - use debug version of smokeview"
-echo "-g - only generate geometry case images"
 echo "-h - display this message"
 echo "-i - use installed version of smokeview"
 echo "-I - compiler (intel or gnu)"
@@ -64,7 +63,7 @@ make_helpinfo_files()
   $SMOKEZIP -v         > smokezip.version
   $SMOKEDIFF -v        > smokediff.version
   $BACKGROUND -version > background.version
-  $DEM2FDS -version    > background.version
+  $DEM2FDS -version    > dem2fds.version
   $WIND2FDS            > wind2fds.version
 }
 
@@ -81,7 +80,6 @@ DEBUG=
 TEST=
 use_installed="0"
 RUN_SMV=1
-RUN_GEOM=0
 RUN_WUI=1
 
 while getopts 'dghiI:s:tWY' OPTION
@@ -89,11 +87,6 @@ do
 case $OPTION  in
   d)
    DEBUG=_db
-   ;;
-  g)
-   RUN_SMV=0
-   RUN_GEOM=1
-   RUN_WUI=0
    ;;
   h)
    usage;
@@ -117,12 +110,10 @@ case $OPTION  in
   ;;
   W)
    RUN_SMV=0
-   RUN_GEOM=0
    RUN_WUI=1
    ;;
   Y)
    RUN_SMV=1
-   RUN_GEOM=0
    RUN_WUI=1
    ;;
 esac
@@ -142,14 +133,14 @@ if [ "$use_installed" == "1" ] ; then
   export SMOKEDIFF=smokediff
   export WIND2FDS=wind2fds
   export BACKGROUND=background
-  export DEM2FDS=background
+  export DEM2FDS=dem2fds
 else
   export SMV=$SVNROOT/smv/Build/smokeview/${COMPILER}_$VERSION2/smokeview_$VERSION
   export SMOKEZIP=$SVNROOT/smv/Build/smokezip/${COMPILER}_$VERSION2/smokezip_$VERSION2
   export SMOKEDIFF=$SVNROOT/smv/Build/smokediff/${COMPILER}_$VERSION2/smokediff_$VERSION2
   export WIND2FDS=$SVNROOT/smv/Build/wind2fds/${COMPILER}_$VERSION2/wind2fds_$VERSION2
   export BACKGROUND=$SVNROOT/smv/Build/background/${COMPILER}_$VERSION2/background
-  export DEM2FDS=$SVNROOT/smv/Build/dem2fds/${COMPILER}_$VERSION2/dem2fds$VERSION2
+  export DEM2FDS=$SVNROOT/smv/Build/dem2fds/${COMPILER}_$VERSION2/dem2fds_$VERSION2
 fi
 SMOKEBOT=$SVNROOT/bot/Smokebot/run_smokebot.sh
 FIREBOT=$SVNROOT/bot/Firebot/run_firebot.sh
@@ -190,7 +181,6 @@ make_helpinfo_files $SMVUG/SCRIPT_FIGURES
 make_helpinfo_files $SMVUTILG/SCRIPT_FIGURES
 
 rm -f $SUMMARY/images/*.png
-source ~/.bashrc_fds
 
 cd $SMVVG/SCRIPT_FIGURES
 rm -f *.version
@@ -243,12 +233,6 @@ if [ "$RUN_WUI" == "1" ] ; then
   source $STARTX
   cd $SVNROOT/smv/Verification
   scripts/WUI_Cases.sh
-  source $STOPX
-fi
-if [ "$RUN_GEOM" == "1" ] ; then
-  source $STARTX
-  cd $SVNROOT/smv/Verification
-  scripts/GEOM_Cases.sh
   source $STOPX
 fi
 

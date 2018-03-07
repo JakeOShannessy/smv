@@ -104,7 +104,7 @@ float GetScatterFraction(float *view_vec, float *light_vec,float param,int phase
 
 /* ----------------------- GetSmokeColor ----------------------------- */
 
-void GetSmokeColor(float *smoke_tran, float **smoke_color, float *light_fractionptr, float dlength, float xyz[3], meshdata *meshi, int *inobst, char *blank_local){
+void GetSmokeColor(float *smoke_tran, float **smoke_color, float *scaled_intensity, float *light_fractionptr, float dlength, float xyz[3], meshdata *meshi, int *inobst, char *blank_local){
   int i, j, k;
   int ijk;
   float *vv;
@@ -167,6 +167,7 @@ void GetSmokeColor(float *smoke_tran, float **smoke_color, float *light_fraction
     }
   }
 
+  *scaled_intensity = 1.0;
   if(firedata_local!=NULL){
     float dtemp;
 
@@ -176,9 +177,15 @@ void GetSmokeColor(float *smoke_tran, float **smoke_color, float *light_fraction
       index = GETINDEX(temperature, temperature_min, dtemp, (MAXSMOKERGB/2));
     }
     else{
+      float ratio;
+
       dtemp = (temperature_max-temperature_cutoff)/(MAXSMOKERGB/2);
-      index = GETINDEX(temperature, temperature_cutoff, dtemp, (MAXSMOKERGB/2));
+      index = GETINDEX(temperature+voltemp_offset, temperature_cutoff, dtemp, (MAXSMOKERGB/2));
       index += (MAXSMOKERGB/2);
+      if(temperature>voltemp_factor){
+        ratio = (273.0+temperature)/(273.0+voltemp_factor);
+        *scaled_intensity = ratio*ratio*ratio*ratio;
+      }
     }
     *smoke_color = rgb_volsmokecolormap+4*index;
   }
@@ -748,7 +755,7 @@ int GetVolsmokeNFrames(volrenderdata *vr){
                                                  // nframes = (totalsize - skip_local)/(12 + framesize);
 
     nframes = 0;
-    filesize = GetFILESize(smokeslice->reg_file);
+    filesize = GetFileSizeSMV(smokeslice->reg_file);
     if(filesize>0){
       nframes = (int)(filesize-skip_local)/(int)(12+framesize);
     }
@@ -868,6 +875,10 @@ void InitVolRender(void){
         NewMemory((void **)&vr->nsmokedata_compressed,vr->ntimes*sizeof(int));
         NewMemory((void **)&vr->nlightdata_compressed, vr->ntimes*sizeof(int));
 
+        vr->firedataptr = NULL;
+        vr->smokedataptr = NULL;
+        vr->lightdataptr = NULL;
+
         for(j=0;j<vr->ntimes;j++){
           vr->firedataptrs[j]  = NULL;
           vr->smokedataptrs[j] = NULL;
@@ -957,7 +968,7 @@ void IntegrateSmokeColors(float *integrated_smokecolor, float *xyzvert, float dl
     boxmax = meshi->boxmax_scaled;
   }
 
-  // xyz(t) = xyzvert + t*(xyzvert - xyzeyeorig )
+  // xyz(t) = xyzvert + t*(xyzvert - eye_position_fds )
   // integrate from t=0 to t=t_intersect_min  (if outside mesh)
   //     ie from vertex to nearest wall along a line from the eye position
   //        intersecting the vertex position
@@ -965,16 +976,16 @@ void IntegrateSmokeColors(float *integrated_smokecolor, float *xyzvert, float dl
   //     ie from the eye position to the vertex position
 
   if(meshi->inside==1){
-    vert_beg=xyzeyeorig;
+    vert_beg=eye_position_fds;
     vert_end=xyzvert;
   }
   else{
     vert_beg=xyzvert;
     vert_end=xyzvals;
 
-    dx = xyzvert[0] - xyzeyeorig[0];
-    dy = xyzvert[1] - xyzeyeorig[1];
-    dz = xyzvert[2] - xyzeyeorig[2];
+    dx = xyzvert[0] - eye_position_fds[0];
+    dy = xyzvert[1] - eye_position_fds[1];
+    dz = xyzvert[2] - eye_position_fds[2];
     for(i=1;i<4;i++){
       int ii;
       float diffmin,diffmax,denom;
@@ -982,7 +993,7 @@ void IntegrateSmokeColors(float *integrated_smokecolor, float *xyzvert, float dl
       ii=i-1;
       diffmin = boxmin[ii]-xyzvert[ii];
       diffmax = boxmax[ii]-xyzvert[ii];
-      denom = xyzvert[ii]-xyzeyeorig[ii];
+      denom = xyzvert[ii]-eye_position_fds[ii];
       if(iwall!=-i&&denom<0.0){
         t_intersect = diffmin/denom;
         if(t_intersect<t_intersect_min){
@@ -1056,7 +1067,7 @@ void IntegrateSmokeColors(float *integrated_smokecolor, float *xyzvert, float dl
   alphahat=0.0;
   last_xi = 0.5;
   for(xi = 0.5;xi+0.0001<(float)nsteps;){
-    float factor, alphai;
+    float factor, alphai, scaled_intensity;
     int inobst;
 
     factor = xi/(float)nsteps;
@@ -1069,13 +1080,13 @@ void IntegrateSmokeColors(float *integrated_smokecolor, float *xyzvert, float dl
       if(xyz_mesh==NULL)break;
       blank_local = NULL;
       if(block_volsmoke==1)blank_local=xyz_mesh->c_iblank_cell;
-      GetSmokeColor(&smoke_transparency,&smoke_color, &smoke_light_fraction,
+      GetSmokeColor(&smoke_transparency,&smoke_color, &scaled_intensity, &smoke_light_fraction,
                          dlength,xyz, xyz_mesh, &inobst, blank_local);
     }
     else{
       blank_local = NULL;
       if(block_volsmoke==1)blank_local=meshi->c_iblank_cell;
-      GetSmokeColor(&smoke_transparency,&smoke_color, &smoke_light_fraction,
+      GetSmokeColor(&smoke_transparency,&smoke_color, &scaled_intensity, &smoke_light_fraction,
                          dlength, xyz, meshi, &inobst, blank_local);
     }
     if(vol_adaptive==1&&xi>0.5){
@@ -1113,7 +1124,7 @@ void IntegrateSmokeColors(float *integrated_smokecolor, float *xyzvert, float dl
       float uvec[3], vvec[3];
 
       if(scatter_type_glui!=ISOTROPIC){
-        VEC3DIFF(uvec,xyz,xyzeyeorig);
+        VEC3DIFF(uvec,xyz,eye_position_fds);
         if(light_type_glui==LOCAL_LIGHT){
           VEC3DIFF(vvec,xyz,xyz_light_glui);
         }
@@ -1124,20 +1135,33 @@ void IntegrateSmokeColors(float *integrated_smokecolor, float *xyzvert, float dl
 
       scatter_fraction = GetScatterFraction(uvec, vvec, scatter_param, scatter_type_glui);
       light_factor = alphai*light_intensity*smoke_light_fraction*scatter_fraction/255.0;
-      integrated_smokecolor[0] += alphai*tauhat*(smoke_color[0] + light_factor*light_color[0]);
-      integrated_smokecolor[1] += alphai*tauhat*(smoke_color[1] + light_factor*light_color[1]);
-      integrated_smokecolor[2] += alphai*tauhat*(smoke_color[2] + light_factor*light_color[2]);
+      integrated_smokecolor[0] += alphai*tauhat*(scaled_intensity*smoke_color[0] + light_factor*light_color[0]);
+      integrated_smokecolor[1] += alphai*tauhat*(scaled_intensity*smoke_color[1] + light_factor*light_color[1]);
+      integrated_smokecolor[2] += alphai*tauhat*(scaled_intensity*smoke_color[2] + light_factor*light_color[2]);
     }
     else{
-      integrated_smokecolor[0] += alphai*tauhat*smoke_color[0];
-      integrated_smokecolor[1] += alphai*tauhat*smoke_color[1];
-      integrated_smokecolor[2] += alphai*tauhat*smoke_color[2];
+      integrated_smokecolor[0] += alphai*tauhat*scaled_intensity*smoke_color[0];
+      integrated_smokecolor[1] += alphai*tauhat*scaled_intensity*smoke_color[1];
+      integrated_smokecolor[2] += alphai*tauhat*scaled_intensity*smoke_color[2];
     }
     tauhat *= smoke_transparency;
   }
+#define MAXABS3(x) (MAX(ABS((x)[0]),MAX(ABS((x)[1]),ABS((x)[2]))))
+
   if(alphahat>0.0){
-    VEC3DA(integrated_smokecolor,alphahat);
-    integrated_smokecolor[3]=alphahat;
+    float maxval;
+    float *sc;
+
+    sc = integrated_smokecolor;
+    maxval = MAXABS3(sc);
+    if(maxval > 0.0){
+      sc[0] /= maxval;
+      sc[1] /= maxval;
+      sc[2] /= maxval;
+      alphahat *= maxval;
+    }
+    alphahat = CLAMP(alphahat, 0.0, 1.0);
+    sc[3]=alphahat;
     if(volbw==1){
       float gray;
 
@@ -1379,9 +1403,9 @@ void DrawLightDirections(void){
   glPopMatrix();
 }
 
-  /* ------------------ DrawSmoke3DVOLdebug ------------------------ */
+  /* ------------------ DrawSmoke3dVolDebug ------------------------ */
 
-void DrawSmoke3DVOLdebug(void){
+void DrawSmoke3dVolDebug(void){
   int ii;
 
   for(ii=0;ii<nvolfacelistinfo;ii++){
@@ -1549,9 +1573,9 @@ void DrawSmoke3DVOLdebug(void){
   glEnd();
 }
 
-/* ------------------ DrawSmoke3DVOL ------------------------ */
+/* ------------------ DrawSmoke3dVol ------------------------ */
 
-void DrawSmoke3DVOL(void){
+void DrawSmoke3dVol(void){
   int iwall;
   int ii;
 
@@ -2024,9 +2048,9 @@ void UpdateVolsmokeTexture(meshdata *meshi){
   glActiveTexture(GL_TEXTURE0);
 }
 
-/* ------------------ DrawSmoke3DGPUVOL ------------------------ */
+/* ------------------ DrawSmoke3dGpuVol ------------------------ */
 
-void DrawSmoke3DGPUVOL(void){
+void DrawSmoke3dGpuVol(void){
 
   int iwall;
   meshdata *meshold=NULL;
@@ -2053,7 +2077,7 @@ void DrawSmoke3DGPUVOL(void){
   glUniform1i(GPUvol_depthtexture,4);
   glUniform2f(GPUvol_screensize,(float)screenWidth,(float)screenHeight);
   glUniform2f(GPUvol_nearfar,fnear,ffar);
-  SNIFF_ERRORS("after DrawSmoke3DGPUVOL A");
+  SNIFF_ERRORS("after DrawSmoke3dGpuVol A");
 #endif
   glUniform3f(GPUvol_light_position, xyz_light_glui[0],xyz_light_glui[1],xyz_light_glui[2]);
   glUniform1i(GPUvol_light_type, light_type_glui);
@@ -2064,7 +2088,7 @@ void DrawSmoke3DGPUVOL(void){
   glUniform3f(GPUvol_light_color, (float)light_color[0], (float)light_color[1], (float)light_color[2]);
   glUniform1i(GPUvol_use_light, use_light);
 
-  glUniform3f(GPUvol_eyepos,xyzeyeorig[0],xyzeyeorig[1],xyzeyeorig[2]);
+  glUniform3f(GPUvol_eyepos,eye_position_fds[0],eye_position_fds[1],eye_position_fds[2]);
   glUniform1f(GPUvol_xyzmaxdiff,xyzmaxdiff);
   glUniform1f(GPUvol_gpu_vol_factor,gpu_vol_factor);
   glUniform1f(GPUvol_fire_opacity_factor,fire_opacity_factor);
@@ -2075,8 +2099,10 @@ void DrawSmoke3DGPUVOL(void){
   glUniform1f(GPUvol_temperature_cutoff,temperature_cutoff);
   glUniform1f(GPUvol_temperature_max,temperature_max);
   glUniform1i(GPUvol_block_volsmoke,block_volsmoke);
+  glUniform1f(GPUvol_voltemp_factor, voltemp_factor);
+  glUniform1f(GPUvol_voltemp_offset, voltemp_offset);
 
-  SNIFF_ERRORS("after DrawSmoke3DGPUVOL before update textures");
+  SNIFF_ERRORS("after DrawSmoke3dGpuVol before update textures");
   if(use_transparency_data==1)TransparentOn();
   for(ii=0;ii<nvolfacelistinfo;ii++){
     volrenderdata *vr;
@@ -2137,7 +2163,7 @@ void DrawSmoke3DGPUVOL(void){
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-    SNIFF_ERRORS("before DrawSmoke3DGPUVOL gpu defines");
+    SNIFF_ERRORS("before DrawSmoke3dGpuVol gpu defines");
     if(newmesh==1){
       glUniform1i(GPUvol_inside,inside);
       if(combine_meshes==1){
@@ -2178,7 +2204,7 @@ void DrawSmoke3DGPUVOL(void){
 
       meshold=meshi;
     }
-    SNIFF_ERRORS("after DrawSmoke3DGPUVOL before loop");
+    SNIFF_ERRORS("after DrawSmoke3dGpuVol before loop");
     glBegin(GL_TRIANGLES);
 
     switch(iwall){
@@ -2251,7 +2277,7 @@ void DrawSmoke3DGPUVOL(void){
     }
     glEnd();
   }
-  SNIFF_ERRORS("after DrawSmoke3DGPUVOL after loop");
+  SNIFF_ERRORS("after DrawSmoke3dGpuVol after loop");
   if(use_transparency_data==1)TransparentOff();
 }
 
@@ -2363,11 +2389,9 @@ void GetVolsmokeAllTimes(volrenderdata *vr){
 
 void FreeVolsmokeFrame(volrenderdata *vr, int framenum){
   int i;
-  void *smokedataptr, *firedataptr, *lightdataptr;
 
-//  for(i=0;i<vr->ntimes;i++){
   for(i=0;i<framenum;i++){
-    if(i==framenum)continue;
+    void *smokedataptr, *firedataptr, *lightdataptr;
 
     smokedataptr=vr->smokedataptrs[i];
     FREEMEMORY(smokedataptr);
@@ -2490,7 +2514,7 @@ void ReadVolsmokeFrame(volrenderdata *vr, int framenum, int *first){
       float valmin=0.0;
 
     // one,file version,ndata_compressed,nbytes 1/2/4,ndata_uncompressed,time_local,valmin,valmax,data ....
-      compress_volsliceframe(smokeframe_data, framesize, time_local, &valmin, NULL,
+      CompressVolSliceFrame(smokeframe_data, framesize, time_local, &valmin, NULL,
                   &c_smokedata_compressed, &n_smokedata_compressed);
       size_after+=n_smokedata_compressed;
       vr->smokedataptrs[framenum]=c_smokedata_compressed;
@@ -2551,7 +2575,7 @@ void ReadVolsmokeFrame(volrenderdata *vr, int framenum, int *first){
         if(vr->is_compressed==1){
           float valmin=20.0, valmax=1400.0;
 
-          compress_volsliceframe(fireframe_data, framesize,  time_local, &valmin, &valmax,
+          CompressVolSliceFrame(fireframe_data, framesize,  time_local, &valmin, &valmax,
                   &c_firedata_compressed, &n_firedata_compressed);
           size_after+=n_firedata_compressed;
           vr->firedataptrs[framenum]=c_firedata_compressed;
@@ -2604,7 +2628,7 @@ void ReadVolsmokeFrame(volrenderdata *vr, int framenum, int *first){
         if(vr->is_compressed==1){
           float valmin = 20.0, valmax = 1400.0;
 
-          compress_volsliceframe(lightframe_data, framesize, time_local, &valmin, &valmax,
+          CompressVolSliceFrame(lightframe_data, framesize, time_local, &valmin, &valmax,
             &c_lightdata_compressed, &n_lightdata_compressed);
           size_after += n_lightdata_compressed;
           vr->lightdataptrs[framenum] = c_lightdata_compressed;
@@ -2643,7 +2667,7 @@ void ReadVolsmokeFrame(volrenderdata *vr, int framenum, int *first){
   CheckMemory;
   vr->dataready[framenum]=1;
   if(vr->is_compressed==1&&load_volcompressed==0){
-    PRINTF(" (%4.1f%s reduction)",(float)size_before/(float)size_after,"X");
+    PRINTF(" (%4.1f%s)",(float)size_before/(float)size_after,"X");
   }
   PRINTF("\n");
 }
@@ -2992,7 +3016,7 @@ void ReadVolsmokeAllFramesAllMeshes(void){
   UpdateTimes();
 #ifdef pp_THREAD
   if(use_multi_threading==1){
-    mt_ReadVolsmokeAllFramesAllMeshes2();
+    MtReadVolsmokeAllFramesAllMeshes2();
   }
   else{
     ReadVolsmokeAllFramesAllMeshes2(NULL);

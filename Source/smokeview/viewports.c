@@ -121,15 +121,15 @@ void GetViewportInfo(void){
   // timebar viewport dimensions
 
   doit=0;
-  if(
-    ((visTimelabel == 1 || visFramelabel == 1 || visHRRlabel == 1 || visTimebar == 1) &&showtime==1)||
-    (showtime==1&&(visFramerate==1||(vis_slice_average==1&&show_slice_average&&slice_average_flag==1))||
-    (hrrpuv_loaded==1&&show_hrrcutoff==1&&current_mesh!=NULL)
-    )
+  if(showtime==1){
+    if(visTimelabel == 1 || visFramelabel == 1 || visHRRlabel == 1 || visTimebar == 1)doit=1;
+    if(doit==0&&hrrpuv_loaded==1&&show_hrrcutoff==1&&current_mesh!=NULL)doit=1;
+    if(doit==0&&visFramerate==1)doit=1;
+    if(doit==0&&vis_slice_average==1&&show_slice_average&&slice_average_flag==1)doit=1;
+  }
 #ifdef pp_memstatus
-    ||visAvailmemory==1
+  if(doit==0&&visAvailmemory==1)doit=1;
 #endif
-    )doit=1;
 
   VP_timebar.left = titlesafe_offset;
   VP_timebar.down = titlesafe_offset;
@@ -243,9 +243,9 @@ void GetViewportInfo(void){
   VP_scene.text_width = text_width;
   VP_scene.left=titlesafe_offset;
   VP_scene.down=titlesafe_offset+MAX(VP_timebar.height,VP_info.height);
-  VP_scene.width=screenWidth-2*titlesafe_offset-VP_colorbar.width;
+  VP_scene.width=MAX(1,screenWidth-2*titlesafe_offset-VP_colorbar.width);
   if(dohist==1)VP_scene.width+=colorbar_label_width/2;
-  VP_scene.height=screenHeight-MAX(VP_timebar.height,VP_info.height)-VP_title.height - 2*titlesafe_offset;
+  VP_scene.height=MAX(1,screenHeight-MAX(VP_timebar.height,VP_info.height)-VP_title.height - 2*titlesafe_offset);
   VP_scene.right = VP_scene.left + VP_scene.width;
   VP_scene.top = VP_scene.down + VP_scene.height;
 
@@ -258,9 +258,9 @@ void GetViewportInfo(void){
 
 }
 
- /* ------------------------ SUB_portortho ------------------------- */
+ /* ------------------------ SubPortOrtho ------------------------- */
 
-int SUB_portortho(int quad,
+int SubPortOrtho(int quad,
                   portdata *p,
                    GLdouble portx_left, GLdouble portx_right, GLdouble portx_down, GLdouble portx_top,
                    GLint screen_left, GLint screen_down
@@ -297,16 +297,16 @@ int SUB_portortho(int quad,
     port_right = p->left + p->width;
     port_top = p->down + p->height;
 
-    subport_left =  MAX( nrender_rows*p->left,subwindow_left);
-    subport_right = MIN(nrender_rows*port_right,subwindow_right);
-    subport_down =  MAX( nrender_rows*p->down,subwindow_down);
-    subport_top =   MIN(  nrender_rows*port_top,subwindow_top);
+    subport_left =  MAX( resolution_multiplier*p->left,subwindow_left);
+    subport_right = MIN(resolution_multiplier*port_right,subwindow_right);
+    subport_down =  MAX( resolution_multiplier*p->down,subwindow_down);
+    subport_top =   MIN(  resolution_multiplier*port_top,subwindow_top);
     if(subport_left>=subport_right||subport_down>=subport_top)return 0;
 
-    subportx_left = CONV(subport_left,nrender_rows*p->left,nrender_rows*port_right,portx_left,portx_right);
-    subportx_right = CONV(subport_right,nrender_rows*p->left,nrender_rows*port_right,portx_left,portx_right);
-    subportx_down = CONV(subport_down,nrender_rows*p->down,nrender_rows*port_top,portx_down,portx_top);
-    subportx_top = CONV(subport_top,nrender_rows*p->down,nrender_rows*port_top,portx_down,portx_top);
+    subportx_left = CONV(subport_left,resolution_multiplier*p->left,resolution_multiplier*port_right,portx_left,portx_right);
+    subportx_right = CONV(subport_right,resolution_multiplier*p->left,resolution_multiplier*port_right,portx_left,portx_right);
+    subportx_down = CONV(subport_down,resolution_multiplier*p->down,resolution_multiplier*port_top,portx_down,portx_top);
+    subportx_top = CONV(subport_top,resolution_multiplier*p->down,resolution_multiplier*port_top,portx_down,portx_top);
 
     subport_left -= icol*screenWidth;
     subport_right -= icol*screenWidth;
@@ -333,9 +333,9 @@ int SUB_portortho(int quad,
 }
 
 
-/* ------------------------ SUB_portortho2 ------------------------- */
+/* ------------------------ SubPortOrtho2 ------------------------- */
 
-int SUB_portortho2(int quad,
+int SubPortOrtho2(int quad,
                   portdata *p,
                   GLint screen_left, GLint screen_down
                   ){
@@ -376,16 +376,16 @@ int SUB_portortho2(int quad,
     port_right = p->left + p->width;
     port_top = p->down + p->height;
 
-    subport_left =  MAX( nrender_rows*p->left,subwindow_left);
-    subport_right = MIN(nrender_rows*port_right,subwindow_right);
-    subport_down =  MAX( nrender_rows*p->down,subwindow_down);
-    subport_top =   MIN(  nrender_rows*port_top,subwindow_top);
+    subport_left =  MAX( resolution_multiplier*p->left,subwindow_left);
+    subport_right = MIN(resolution_multiplier*port_right,subwindow_right);
+    subport_down =  MAX( resolution_multiplier*p->down,subwindow_down);
+    subport_top =   MIN(  resolution_multiplier*port_top,subwindow_top);
     if(subport_left>=subport_right||subport_down>=subport_top)return 0;
 
-    subportx_left = CONV(subport_left,nrender_rows*p->left,nrender_rows*port_right,portx_left,portx_right);
-    subportx_right = CONV(subport_right,nrender_rows*p->left,nrender_rows*port_right,portx_left,portx_right);
-    subportx_down = CONV(subport_down,nrender_rows*p->down,nrender_rows*port_top,portx_down,portx_top);
-    subportx_top = CONV(subport_top,nrender_rows*p->down,nrender_rows*port_top,portx_down,portx_top);
+    subportx_left = CONV(subport_left,resolution_multiplier*p->left,resolution_multiplier*port_right,portx_left,portx_right);
+    subportx_right = CONV(subport_right,resolution_multiplier*p->left,resolution_multiplier*port_right,portx_left,portx_right);
+    subportx_down = CONV(subport_down,resolution_multiplier*p->down,resolution_multiplier*port_top,portx_down,portx_top);
+    subportx_top = CONV(subport_top,resolution_multiplier*p->down,resolution_multiplier*port_top,portx_down,portx_top);
 
     subport_left -= icol*screenWidth;
     subport_right -= icol*screenWidth;
@@ -411,9 +411,9 @@ int SUB_portortho2(int quad,
   return 1;
 }
 
-/* ------------------------ SUB_portfrustum ------------------------- */
+/* ------------------------ SubPortFrustum ------------------------- */
 
-int SUB_portfrustum(int quad,
+int SubPortFrustum(int quad,
                    portdata *p,
                    GLdouble portx_left, GLdouble portx_right,
                    GLdouble portx_down, GLdouble portx_top,
@@ -462,16 +462,16 @@ int SUB_portfrustum(int quad,
     port_right = p->left + p->width;
     port_top = p->down + p->height;
 
-    subport_left =  MAX( nrender_rows*p->left,subwindow_left);
-    subport_right = MIN(nrender_rows*port_right,subwindow_right);
-    subport_down =  MAX( nrender_rows*p->down,subwindow_down);
-    subport_top =   MIN(  nrender_rows*port_top,subwindow_top);
+    subport_left =  MAX( resolution_multiplier*p->left,subwindow_left);
+    subport_right = MIN(resolution_multiplier*port_right,subwindow_right);
+    subport_down =  MAX( resolution_multiplier*p->down,subwindow_down);
+    subport_top =   MIN(  resolution_multiplier*port_top,subwindow_top);
     if(subport_left>=subport_right||subport_down>=subport_top)return 0;
 
-    subportx_left = CONV(subport_left,nrender_rows*p->left,nrender_rows*port_right,portx_left,portx_right);
-    subportx_right = CONV(subport_right,nrender_rows*p->left,nrender_rows*port_right,portx_left,portx_right);
-    subportx_down = CONV(subport_down,nrender_rows*p->down,nrender_rows*port_top,portx_down,portx_top);
-    subportx_top = CONV(subport_top,nrender_rows*p->down,nrender_rows*port_top,portx_down,portx_top);
+    subportx_left = CONV(subport_left,resolution_multiplier*p->left,resolution_multiplier*port_right,portx_left,portx_right);
+    subportx_right = CONV(subport_right,resolution_multiplier*p->left,resolution_multiplier*port_right,portx_left,portx_right);
+    subportx_down = CONV(subport_down,resolution_multiplier*p->down,resolution_multiplier*port_top,portx_down,portx_top);
+    subportx_top = CONV(subport_top,resolution_multiplier*p->down,resolution_multiplier*port_top,portx_down,portx_top);
 
     subport_left -= icol*screenWidth;
     subport_right -= icol*screenWidth;
@@ -519,7 +519,7 @@ void ViewportClip(int quad, GLint screen_left, GLint screen_down){
   x_down=0.0;
   x_top=screenHeight;
 
-  if(SUB_portortho(quad,&VP_fullscreen,x_left, x_right, x_down, x_top,screen_left, screen_down)==0)return;
+  if(SubPortOrtho(quad,&VP_fullscreen,x_left, x_right, x_down, x_top,screen_left, screen_down)==0)return;
 
    c_left = render_clip_left-3;
    c_right = screenWidth + 3 - render_clip_right;
@@ -562,7 +562,7 @@ void ViewportInfo(int quad, GLint screen_left, GLint screen_down){
   float xyz[3];
   int info_lines=0;
 
-  if(SUB_portortho2(quad,&VP_info,screen_left, screen_down)==0)return;
+  if(SubPortOrtho2(quad,&VP_info,screen_left, screen_down)==0)return;
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -691,7 +691,7 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
   int right_label_pos,timebar_right_pos;
   int timebar_left_pos;
 
-  if(SUB_portortho2(quad,&VP_timebar,screen_left,screen_down)==0)return;
+  if(SubPortOrtho2(quad,&VP_timebar,screen_left,screen_down)==0)return;
 
   timebar_left_width = GetStringWidth("Time: 1234.11");
   timebar_right_width = GetStringWidth("Frame rate: 99.99");
@@ -727,18 +727,22 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
   if(hrrpuv_loaded==1&&show_hrrcutoff==1&&current_mesh!=NULL){
     char hrrcut_label[256];
     int ihrrcut;
+    float x1, x2, y1, y2;
+    float f_red, f_green, f_blue;
 
     ihrrcut = (int)(global_hrrpuv_cutoff+0.5);
 
     sprintf(hrrcut_label,">%i (kW/m3)",ihrrcut);
     OutputText(right_label_pos+5+h_space,3*v_space+2*VP_timebar.text_height,hrrcut_label);
 
-    glBegin(GL_QUADS);
     if(firecolormap_type == 0){
-      glColor3f(fire_red / 255.0, fire_green / 255.0, fire_blue / 255.0);
+      f_red = (float)fire_red / 255.0;
+      f_green = (float)fire_green / 255.0;
+      f_blue = (float)fire_blue / 255.0;
+      glColor3f(f_red, f_green, f_blue);
     }
     else{
-      float f_red, f_green, f_blue, *colors;
+      float *colors;
       int icolor;
 
       if(strcmp(fire_colorbar->label, "fire") == 0){
@@ -759,10 +763,18 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
       glColor3f(f_red, f_green, f_blue);
     }
 
-    glVertex3f(right_label_pos+h_space-20,5+2*VP_timebar.text_height   ,0.0);
-    glVertex3f(right_label_pos+h_space   ,5+2*VP_timebar.text_height   ,0.0);
-    glVertex3f(right_label_pos+h_space   ,5+2*VP_timebar.text_height+20,0.0);
-    glVertex3f(right_label_pos+h_space-20,5+2*VP_timebar.text_height+20,0.0);
+    x1 = (float)(right_label_pos + h_space - 20);
+    x2 = x1 + (float)20;
+    y1 = (float)(5 + 2*VP_timebar.text_height);
+    y2 = y1 + (float)20;
+
+    glBegin(GL_TRIANGLES);
+    glVertex3f(x1,y1,0.0);
+    glVertex3f(x2,y1,0.0);
+    glVertex3f(x2,y2,0.0);
+    glVertex3f(x1, y1, 0.0);
+    glVertex3f(x2, y2, 0.0);
+    glVertex3f(x1, y2, 0.0);
     glEnd();
   }
 #ifdef pp_memstatus
@@ -799,7 +811,7 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
 /* --------------------- ViewportColorbar ------------------------- */
 
 void ViewportColorbar(int quad, GLint screen_left, GLint screen_down){
-  if(SUB_portortho2(quad,&VP_colorbar,screen_left, screen_down)==0)return;
+  if(SubPortOrtho2(quad,&VP_colorbar,screen_left, screen_down)==0)return;
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -812,7 +824,7 @@ void ViewportColorbar(int quad, GLint screen_left, GLint screen_down){
 
 void ViewportTitle(int quad, GLint screen_left, GLint screen_down){
 
-  if(SUB_portortho2(quad,&VP_title,screen_left,screen_down)==0)return;
+  if(SubPortOrtho2(quad,&VP_title,screen_left,screen_down)==0)return;
 
 
 
@@ -1008,7 +1020,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
     FrustumAsymmetry = -0.5*EyeSeparation*fnear / SCALE2SMV(fzero);
   }
 
-  if(SUB_portfrustum(quad,&VP_scene,
+  if(SubPortFrustum(quad,&VP_scene,
     (double)(fleft+FrustumAsymmetry),(double)(fright+FrustumAsymmetry),(double)fdown,(double)fup,(double)fnear,(double)ffar,
     screen_left, screen_down)==0)return;
 
@@ -1152,23 +1164,23 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       u[0] = 0.0;
       u[1] = 0.0;
       u[2] = 1.0;
-      rotateu2v(user_zaxis, u, axis, &angle);
+      RotateU2V(user_zaxis, u, axis, &angle);
       glRotatef(RAD2DEG*angle, axis[0], axis[1], axis[2]);
       glRotatef(zaxis_angles[2], u[0], u[1], u[2]);
     }
 
-    glTranslatef(-xcen,-ycen,-zcen);
+    glTranslatef(-xcen*mscale[0],-ycen*mscale[1],-zcen*mscale[1]);
 
     glGetFloatv(GL_MODELVIEW_MATRIX,modelview_scratch);
     MatMultMat(inverse_modelview_setup,modelview_scratch,modelview_current);
 
-    get_world_eyepos(modelview_scratch, world_eyepos,scaled_eyepos);
+    GetWorldEyePos(modelview_scratch, world_eyepos,scaled_eyepos);
 
     if(show_gslice_triangles==1||SHOW_gslice_data==1){
       UpdateGslicePlanes();
     }
     if(nrooms>0){
-      getzonesmokedir(modelview_scratch);
+      GetZoneSmokeDir(modelview_scratch);
     }
     if(nvolrenderinfo>0&&showvolrender==1&&usevolrender==1){
       GetVolSmokeDir(modelview_scratch);
@@ -1196,13 +1208,16 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       }
 #endif
     }
+    else if(showslice==1&&(showall_3dslices==1||nslice_loaded>1)){
+      GetSmokeDir(modelview_scratch);
+    }
     if(nface_transparent>0&&sort_transparent_faces==1)SortTransparentFaces(modelview_scratch);
-    if(showiso==1)Update_Isotris(0);
+    if(showiso==1)UpdateIsoTriangles(0);
     FREEMEMORY(geominfoptrs);
     ngeominfoptrs=0;
     GetGeomInfoPtrs(&geominfoptrs,&ngeominfoptrs);
     if(ngeominfoptrs>0)ShowHideSortGeometry(modelview_scratch);
-    if(showiso==1&&sort_iso_triangles==1&&niso_trans>0)Sort_Iso_Triangles(modelview_scratch);
+    if(showiso==1&&sort_iso_triangles==1&&niso_trans>0)SortIsoTriangles(modelview_scratch);
 
     glScalef(mscale[0],mscale[1],mscale[2]);
     ExtractFrustum();

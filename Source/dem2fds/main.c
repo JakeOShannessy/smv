@@ -29,14 +29,14 @@ void Usage(char *prog, int option){
   fprintf(stdout, "  -elevdir dir - directory containing elevation files (if different than -dir directory)\n");
   fprintf(stdout, "  -geom     - represent terrain using using &GEOM keywords (experimental)\n");
   fprintf(stdout, "  -obst     - represent terrain using &OBST keywords \n");
-  UsageCommon(prog, HELP_SUMMARY);
+  UsageCommon(HELP_SUMMARY);
   if(option == HELP_ALL){
     fprintf(stdout, "  -elevs    - output elevations, do not create an FDS input file\n");
     fprintf(stdout, "  -matl matl_id - specify a MATL ID for use with the -geom option \n");
     fprintf(stdout, "  -overlap - assume that there is a 300 pixel overlap between maps.\n");
     fprintf(stdout, "  -show     - highlight image and fds scenario boundaries\n");
     fprintf(stdout, "  -surf surf_id - specify surf ID for use with OBSTs or geometry \n");
-    UsageCommon(prog, HELP_ALL);
+    UsageCommon(HELP_ALL);
   }
 }
 
@@ -58,6 +58,9 @@ int main(int argc, char **argv){
   strcpy(file_default, "terrain");
   strcpy(image_dir, ".");
   strcpy(elev_dir, "");
+#ifdef pp_CSVF
+  strcpy(csv_file, "");
+#endif
   strcpy(surf_id, "surf1");
   strcpy(matl_id, "matl1");
 
@@ -179,8 +182,8 @@ int main(int argc, char **argv){
     strcpy(elev_dir, image_dir);
   }
   if(casename == NULL)casename = file_default;
-  if(GetElevations(casename,&fds_elevs) == 1) {
-    GenerateFDSInputFile(casename, &fds_elevs, gen_fds);
+  if(GetElevations(casename, &fds_elevs)==1) {
+     GenerateFDSInputFile(casename, &fds_elevs, gen_fds);
   }
   return 0;
 }

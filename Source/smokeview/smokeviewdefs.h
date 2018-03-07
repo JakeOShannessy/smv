@@ -7,6 +7,20 @@ void _Sniff_Errors(char *whereat);
 #define SNIFF_ERRORS(f)
 #endif
 
+#define RENDER_START 3
+#define RENDER_START_NORMAL 12
+#define RENDER_START_360 10
+
+#define COLORBAR_SET 18
+#define COLORBAR_RGB 2
+
+#define DLG_3DSMOKE 0
+#define DLG_BOUNDARY 1
+#define DLG_SLICE 2
+#define DLG_PART 3
+#define DLG_PLOT3D 4
+#define DLG_ISO 5
+
 #define ZONEVENT_CIRCLE 1
 #define ZONEVENT_SQUARE 2
 
@@ -158,6 +172,7 @@ void _Sniff_Errors(char *whereat);
 #define AVI 0
 #define MP4 1
 #define WMV 2
+#define MOV 3
 
 #define EXTERNAL_LIST_ID 1
 
@@ -194,9 +209,8 @@ void _Sniff_Errors(char *whereat);
 #define RENDER_OFF 0
 
 // render_mode values:
-#define RENDER_XYSINGLE 0
-#define RENDER_XYMULTI 1
-#define RENDER_360 2
+#define RENDER_NORMAL 0
+#define RENDER_360 1
 
 // render_times values:
 #define RENDER_SINGLETIME 0
@@ -392,6 +406,8 @@ void _Sniff_Errors(char *whereat);
 #define EYE_CENTERED 1
 #define ROTATION_1AXIS 2
 #define ROTATION_3AXIS 3
+#define MENU_MOTION_SETTINGS 4
+#define MENU_MOTION_GRAVITY_VECTOR 5
 
 #define FIRSTCALL 1
 #define NOT_FIRSTCALL 0
@@ -428,6 +444,8 @@ void _Sniff_Errors(char *whereat);
 #define DYNAMIC_PLOTS 2
 #define DYNAMIC_PLOTS_NORECURSE 4
 
+#define DISPLAY_PLOT3D 996
+#define TOGGLESHOW_PLOT3D 995
 #define SHOWALL_PLOT3D 998
 #define HIDEALL_PLOT3D 999
 #define SHOWALL_BOUNDARY 998
@@ -435,6 +453,7 @@ void _Sniff_Errors(char *whereat);
 #define SHOW_CHAR 997
 #define HIDEALL_PARTICLE 4
 #define SHOWALL_PARTICLE 3
+#define TOGGLE_ISO  10003
 #define HIDEALL_ISO 10002
 #define SHOWALL_ISO 10001
 #define HIDEALL_EVAC 4
@@ -558,13 +577,20 @@ void _Sniff_Errors(char *whereat);
 
 #define NTARGTIMES 100
 
-#define RELOAD_NOW 0
-#define STOP_RENDERING -1
+#define RELOAD_ALL_NOW 0
+#define RELOAD_INCREMENTAL_NOW -2
+#define RELOAD_SWITCH -4
+#define STOP_RELOADING -1
+#define RELOAD_MODE_INCREMENTAL -5
+#define RELOAD_MODE_ALL -6
+#define RELOAD_SMV_FILE -7
 
+#define RELOAD_INCREMENTAL_ALL 9
 #define RELOADALL 4
 #define UNLOADALL 1
 #define SHOWFILES 5
 #define REDIRECT 6
+#define SHOWMESHMENUS 7
 
 #define SCRIPT_START_RECORDING2 -6
 #define SCRIPT_START_RECORDING -2
@@ -573,6 +599,7 @@ void _Sniff_Errors(char *whereat);
 #define SCRIPT_STEP -5
 #define SCRIPT_CONTINUE -7
 #define SCRIPT_CANCEL -8
+#define MENU_SCRIPT_SETTINGS -9
 
 #define DRAWSCENE 1
 #define SELECTOBJECT 2
@@ -611,6 +638,12 @@ void _Sniff_Errors(char *whereat);
 #define HIDEALL_SMOKE3D HIDE_ALL
 #define HIDEALL_VSLICE HIDE_ALL
 #define SHOWALL_VSLICE SHOW_ALL
+#define TOGGLE_SMOKE3D  -3
+#define SET_SMOKE3D -4
+
+#define SHOW_VOLSMOKE -2
+#define HIDE_VOLSMOKE -1
+#define TOGGLE_VOLSMOKE -3
 
 #define MAXPOINTS 50000000
 #define INCFRAMES 20
@@ -620,6 +653,11 @@ void _Sniff_Errors(char *whereat);
 #define MAXSMOKERGB 256
 #define StepOn 10000
 #define RenderCancel 999
+#define RenderStart 990
+#define RenderStartHIGHRES 988
+#define RenderStartORIGRES 987
+#define RenderStart360 986
+#define Render360 989
 #define RENDER_CURRENT_SINGLE 998
 #define RENDER_CURRENT_MULTIPLE 978
 #define RENDER_CURRENT_360 991
@@ -632,6 +670,7 @@ void _Sniff_Errors(char *whereat);
 #define LABELLEN 30
 #define RenderLABELframenumber 980
 #define RenderLABELtime 979
+#define MENU_RENDER_SETTINGS 900
 
 #define EXTERIORwallmenu -1
 #define INTERIORwallmenu -2
@@ -670,6 +709,7 @@ void _Sniff_Errors(char *whereat);
 #define RENDER_VOLUME 1
 
 #define COLORBAR_FLIP -2
+#define COLORBAR_AUTOFLIP -6
 #define COLORBAR_TOGGLE_BW -12
 #define COLORBAR_CONTINUOUS -17
 #define COLORBAR_STEPPED -18
@@ -679,10 +719,12 @@ void _Sniff_Errors(char *whereat);
 #define COLORBAR_TRANSPARENT -13
 #define COLORBAR_RESET -4
 #define COLORBAR_TOGGLE_BW_DATA -21
+#define MENU_COLORBAR_SETTINGS -22
 
 #define LOAD 0
 #define UNLOAD 1
 #define RESETBOUNDS 2
+#define RELOAD 3
 
 #define MAKE_SIZEFILE 0
 #define GET_DATA 1
@@ -693,6 +735,7 @@ void _Sniff_Errors(char *whereat);
 #define SMALL_FONT 0
 #define LARGE_FONT 1
 #define SCALED_FONT 2
+#define MENU_FONT_SETTINGS 3
 
 #define FFALSE 0
 #define TTRUE 1
@@ -738,6 +781,7 @@ void _Sniff_Errors(char *whereat);
 #define MENU_LABEL_hrr 16
 #define MENU_LABEL_northangle 21
 #define MENU_LABEL_chid 22
+#define MENU_LABEL_SETTINGS 23
 
 #define MENU_TRAINER_smoke 1
 #define MENU_TRAINER_temp 2
@@ -760,7 +804,8 @@ void _Sniff_Errors(char *whereat);
 #define DIALOG_SHOOTER 27
 #define DIALOG_SMOKEZIP 24
 #define DIALOG_STEREO 19
-#define DIALOG_TOUR 21
+#define DIALOG_TOUR_SHOW 21
+#define DIALOG_TOUR_HIDE 44
 #define DIALOG_TRAINER 25
 #define DIALOG_WUI 26
 #define DIALOG_SHOWFILES 33
@@ -787,7 +832,7 @@ void _Sniff_Errors(char *whereat);
 #define MENU_TOUR_VIEWFROMROUTE -5
 #define MENU_TOUR_NEW -12
 #define MENU_TOUR_CLEARALL -13
-#define MENU_TOUR_EDIT -14
+#define MENU_TOUR_SETTINGS -14
 
 #define MENU_TEXTURE_SHOWALL -1
 #define MENU_TEXTURE_HIDEALL -2

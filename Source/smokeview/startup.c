@@ -92,7 +92,7 @@ void Init(void){
   InitCameraList();
   AddDefaultViews();
   CopyCamera(camera_external_save,camera_external);
-  UpdateGluiViewList();
+  UpdateGluiCameraViewList();
 
   //ResetGluiView(i_view_list);
 
@@ -196,8 +196,8 @@ void ReadBoundINI(void){
   FILE *stream = NULL;
   char *fullfilename = NULL;
 
-  if(boundini_filename == NULL)return;
-  fullfilename = GetFileName(smokeviewtempdir, boundini_filename, tempdir_flag);
+  if(boundinfo_filename == NULL)return;
+  fullfilename = GetFileName(smokeviewtempdir, boundinfo_filename, tempdir_flag);
   if(fullfilename != NULL)stream = fopen(fullfilename, "r");
   if(stream == NULL || IsFileNewer(smv_filename, fullfilename) == 1){
     if(stream != NULL)fclose(stream);
@@ -234,7 +234,7 @@ void ReadBoundINI(void){
         if(lenbuffer2 != 0 &&
           strcmp(patchi->label.shortlabel, buffer2ptr) == 0 &&
           patchi->filetype == filetype&&
-          IsFileNewer(boundini_filename, patchi->file) == 1){
+          IfFirstLineBlank(boundinfo_filename) == 1){
           bounddata *boundi;
 
           boundi = &patchi->bounds;
@@ -273,8 +273,8 @@ int SetupCase(int argc, char **argv){
     }
     return_code=ReadSMV(input_file,iso_filename);
     if(return_code==0){
-      show_glui_trainer();
-      show_glui_alert();
+      ShowGluiTrainer();
+      ShowGluiAlert();
     }
   }
   else{
@@ -305,27 +305,27 @@ int SetupCase(int argc, char **argv){
   SetUnitVis();
 
   CheckMemory;
-  ReadINI(NULL);
+  ReadIni(NULL);
   ReadBoundINI();
   if(use_graphics==0)return 0;
 #ifdef pp_LANG
   InitLang();
 #endif
 
-  if(ntourinfo==0)setup_tour();
-  glui_colorbar_setup(mainwindow_id);
-  gluiMotionSetup(mainwindow_id);
-  glui_bounds_setup(mainwindow_id);
-  glui_shooter_setup(mainwindow_id);
-  glui_geometry_setup(mainwindow_id);
-  glui_clip_setup(mainwindow_id);
-  glui_wui_setup(mainwindow_id);
-  glui_labels_setup(mainwindow_id);
-  glui_device_setup(mainwindow_id);
-  glui_tour_setup(mainwindow_id);
-  glui_alert_setup(mainwindow_id);
-  glui_stereo_setup(mainwindow_id);
-  glui_3dsmoke_setup(mainwindow_id);
+  if(ntourinfo==0)SetupTour();
+  GluiColorbarSetup(mainwindow_id);
+  GluiMotionSetup(mainwindow_id);
+  GluiBoundsSetup(mainwindow_id);
+  GluiShooterSetup(mainwindow_id);
+  GluiGeometrySetup(mainwindow_id);
+  GluiClipSetup(mainwindow_id);
+  GluiWuiSetup(mainwindow_id);
+  GluiLabelsSetup(mainwindow_id);
+  GluiDeviceSetup(mainwindow_id);
+  GluiTourSetup(mainwindow_id);
+  GluiAlertSetup(mainwindow_id);
+  GluiStereoSetup(mainwindow_id);
+  Glui3dSmokeSetup(mainwindow_id);
 
   if(UpdateLIGHTS==1)UpdateLights(light_position0,light_position1);
 
@@ -335,13 +335,13 @@ int SetupCase(int argc, char **argv){
   glutShowWindow();
   glutSetWindowTitle(fdsprefix);
   Init();
-  glui_trainer_setup(mainwindow_id);
+  GluiTrainerSetup(mainwindow_id);
   glutDetachMenu(GLUT_RIGHT_BUTTON);
   InitMenus(LOAD);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
   if(trainer_mode==1){
-    show_glui_trainer();
-    show_glui_alert();
+    ShowGluiTrainer();
+    ShowGluiAlert();
   }
   // intialise info header
   initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash,
@@ -389,7 +389,7 @@ void SetupGlut(int argc, char **argv){
   if(smoketempdir == NULL){
     NewMemory((void **)&smoketempdir,8);
 #ifdef WIN32
-    strcpy(smoketempdir,"c:\temp");
+    strcpy(smoketempdir,"c:\\temp");
 #else
     strcpy(smoketempdir, "/tmp");
 #endif
@@ -441,7 +441,7 @@ void SetupGlut(int argc, char **argv){
       TRAINER_WIDTH=300;
       scrW = glutGet(GLUT_SCREEN_WIDTH)-TRAINER_WIDTH;
       scrH = glutGet(GLUT_SCREEN_HEIGHT)-50;
-      setScreenSize(&scrW,&scrH);
+      SetScreenSize(&scrW,&scrH);
       max_screenWidth = screenWidth;
       max_screenHeight = screenHeight;
     }
@@ -545,14 +545,14 @@ void InitOpenGL(void){
 #ifdef _DEBUG
   PRINTF("%s",_("   Initializing callbacks - "));
 #endif
-  glutSpecialUpFunc(specialkeyboard_up_CB);
-  glutKeyboardUpFunc(keyboard_up_CB);
-  glutKeyboardFunc(keyboard_CB);
-  glutMouseFunc(mouse_CB);
-  glutSpecialFunc(specialkeyboard_CB);
-  glutMotionFunc(motion_CB);
-  glutReshapeFunc(Reshape_CB);
-  glutDisplayFunc(Display_CB);
+  glutSpecialUpFunc(SpecialKeyboardUpCB);
+  glutKeyboardUpFunc(KeyboardUpCB);
+  glutKeyboardFunc(KeyboardCB);
+  glutMouseFunc(MouseCB);
+  glutSpecialFunc(SpecialKeyboardCB);
+  glutMotionFunc(MouseDragCB);
+  glutReshapeFunc(ReshapeCB);
+  glutDisplayFunc(DisplayCB);
   glutVisibilityFunc(NULL);
   glutMenuStatusFunc(MenuStatus_CB);
 #ifdef _DEBUG
@@ -938,9 +938,9 @@ void InitOpenGL(void){
     }
   }
 
- /* ------------------ GetStartupPatch ------------------------ */
+ /* ------------------ GetStartupBoundary ------------------------ */
 
-  void GetStartupPatch(int seq_id){
+  void GetStartupBoundary(int seq_id){
     int i;
     for(i=0;i<npatchinfo;i++){
       patchdata *patchi;
@@ -1024,17 +1024,17 @@ void InitOpenGL(void){
     int i;
     int errorcode;
 
-//    show_glui_alert();
+//    ShowGluiAlert();
     for(i=0;i<nplot3dinfo;i++){
       plot3ddata *plot3di;
 
       plot3di = plot3dinfo + i;
       if(plot3di->autoload==0&&plot3di->loaded==1){
-        readplot3d(plot3di->file,i,UNLOAD,&errorcode);
+        ReadPlot3d(plot3di->file,i,UNLOAD,&errorcode);
       }
       if(plot3di->autoload==1){
         ReadPlot3dFile=1;
-        readplot3d(plot3di->file,i,LOAD,&errorcode);
+        ReadPlot3d(plot3di->file,i,LOAD,&errorcode);
       }
     }
     npartframes_max=GetMinPartFrames(PARTFILE_RELOADALL);
@@ -1042,27 +1042,27 @@ void InitOpenGL(void){
       partdata *parti;
 
       parti = partinfo + i;
-      if(parti->autoload==0&&parti->loaded==1)readpart(parti->file, i, UNLOAD, PARTDATA,&errorcode);
-      if(parti->autoload==1)readpart(parti->file, i, UNLOAD, PARTDATA,&errorcode);
+      if(parti->autoload==0&&parti->loaded==1)ReadPart(parti->file, i, UNLOAD, PARTDATA,&errorcode);
+      if(parti->autoload==1)ReadPart(parti->file, i, UNLOAD, PARTDATA,&errorcode);
     }
     for(i=0;i<npartinfo;i++){
       partdata *parti;
 
       parti = partinfo + i;
-      if(parti->autoload==0&&parti->loaded==1)readpart(parti->file, i, UNLOAD, PARTDATA,&errorcode);
-      if(parti->autoload==1)readpart(parti->file, i, LOAD, PARTDATA,&errorcode);
+      if(parti->autoload==0&&parti->loaded==1)ReadPart(parti->file, i, UNLOAD, PARTDATA,&errorcode);
+      if(parti->autoload==1)ReadPart(parti->file, i, LOAD, PARTDATA,&errorcode);
     }
     update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
     for(i = 0; i<nisoinfo; i++){
       isodata *isoi;
 
       isoi = isoinfo + i;
-      if(isoi->autoload==0&&isoi->loaded==1)readiso(isoi->file,i,UNLOAD,NULL,&errorcode);
+      if(isoi->autoload==0&&isoi->loaded==1)ReadIso(isoi->file,i,UNLOAD,NULL,&errorcode);
       if(isoi->autoload == 1){
-        readiso(isoi->file, i, LOAD,NULL, &errorcode);
+        ReadIso(isoi->file, i, LOAD,NULL, &errorcode);
       }
     }
-    if(update_readiso_geom_wrapup == UPDATE_ISO_ALL_NOW)readiso_geom_wrapup();
+    if(update_readiso_geom_wrapup == UPDATE_ISO_ALL_NOW)ReadIsoGeomWrapup();
     update_readiso_geom_wrapup = UPDATE_ISO_OFF;
     for(i = 0; i<nvsliceinfo; i++){
       vslicedata *vslicei;
@@ -1102,28 +1102,28 @@ void InitOpenGL(void){
       terraindata *terri;
 
       terri = terraininfo + i;
-      if(terri->autoload==0&&terri->loaded==1)readterrain(terri->file,i,UNLOAD,&errorcode);
-      if(terri->autoload==1&&terri->loaded==0)readterrain(terri->file,i,LOAD,&errorcode);
+      if(terri->autoload==0&&terri->loaded==1)ReadTerrain(terri->file,i,UNLOAD,&errorcode);
+      if(terri->autoload==1&&terri->loaded==0)ReadTerrain(terri->file,i,LOAD,&errorcode);
     }
     for(i=0;i<nsmoke3dinfo;i++){
       smoke3ddata *smoke3di;
 
       smoke3di = smoke3dinfo + i;
-      if(smoke3di->autoload==0&&smoke3di->loaded==1)ReadSmoke3D(i,UNLOAD,&errorcode);
-      if(smoke3di->autoload==1)ReadSmoke3D(i,LOAD,&errorcode);
+      if(smoke3di->autoload==0&&smoke3di->loaded==1)ReadSmoke3d(i,UNLOAD,&errorcode);
+      if(smoke3di->autoload==1)ReadSmoke3d(i,LOAD,&errorcode);
     }
     for(i=0;i<npatchinfo;i++){
       patchdata *patchi;
 
       patchi = patchinfo + i;
-      if(patchi->autoload==0&&patchi->loaded==1)readpatch(i,UNLOAD,&errorcode);
-      if(patchi->autoload==1)readpatch(i,LOAD,&errorcode);
+      if(patchi->autoload==0&&patchi->loaded==1)ReadBoundary(i,UNLOAD,&errorcode);
+      if(patchi->autoload==1)ReadBoundary(i,LOAD,&errorcode);
     }
     force_redisplay=1;
     UpdateFrameNumber(0);
     updatemenu=1;
     update_load_files=0;
-    hide_glui_alert();
+    HideGluiAlert();
     TrainerViewMenu(trainerview);
   }
 
@@ -1149,6 +1149,16 @@ void InitTextureDir(void){
   }
 }
 
+/* ------------------ InitScriptError ------------------------ */
+
+void InitScriptErrorFiles(void){
+  if(smokeview_bindir != NULL){
+    NewMemory((void **)&script_error1_filename, strlen(smokeview_bindir)+strlen("script_error1.png") + 1);
+    strcpy(script_error1_filename, smokeview_bindir);
+    strcat(script_error1_filename, "script_error1.png");
+  }
+}
+
 /* ------------------ InitVars ------------------------ */
 
 void InitVars(void){
@@ -1156,7 +1166,7 @@ void InitVars(void){
 
   curdir_writable = Writable(".");
   windrose_circ.ncirc=0;
-  Init_Circle(180, &windrose_circ);
+  InitCircle(180, &windrose_circ);
 
   object_circ.ncirc=0;
   cvent_circ.ncirc=0;
@@ -1166,6 +1176,10 @@ void InitVars(void){
   for(i = 0; i < nscreeninfo; i++){
     screenvis[i] = 1;
   }
+#endif
+
+#ifdef pp_SPECTRAL
+  GetBlackBodyColors(300.0,1200.0, blackbody_colors, 256);
 #endif
 
   beam_color[0] = 255 * foregroundcolor[0];
@@ -1669,7 +1683,6 @@ void InitVars(void){
   tload_end=1.0;
   tload_skip=0;
 
-  defaulttour_loaded=0;
   blockages_dirty=0;
   usetextures=0;
   canrestorelastview=0;
@@ -1832,12 +1845,11 @@ void InitVars(void){
   start_xyz0[2]=0.0;
   glui_move_mode=-1;
 
-  timeoffset=0.0;
-  update_tourlist=0;
+  update_tour_list =0;
   desired_view_height=1.5;
   resetclock=1,initialtime=0;
   realtime_flag=0;
-  islicetype=-1,islicetype_save=-1,ipatchtype=-1;
+  islicetype=-1,islicetype_save=-1,iboundarytype=-1;
   iisotype=-1;
 
 
@@ -1862,14 +1874,12 @@ void InitVars(void){
   show_path_knots=0;
   keyframe_snap=0;
   tourviewtype=0;
-  tourlocus_type=0;
   tourrad_avatar=0.1;
   dirtycircletour=0;
   view_tstart=0.0, view_tstop=100.0;
   tour_constant_vel=0;
   tour_bias=0.0,tour_continuity=0.0;
   view_ntimes=1000;
-  glui_avatar_index=0;
   iavatar_evac=0;
   viewtourfrompath=0,viewalltours=0,viewanytours=0,edittour=0;
   tour_usecurrent=0;
@@ -2158,9 +2168,9 @@ void InitVars(void){
     int iii;
 
     for(iii=0;iii<7;iii++){
-      visPatchType[iii]=0;
+      vis_boundary_type[iii]=0;
     }
-    visPatchType[0]=1;
+    vis_boundary_type[0]=1;
     for(iii=0;iii<MAXPLOT3DVARS;iii++){
       setp3min[iii]=PERCENTILE_MIN;
       p3min[iii]=1.0f;

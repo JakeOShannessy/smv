@@ -6,6 +6,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <math.h>
+#ifdef pp_OSX
+#include <unistd.h>
+#endif
 #ifdef WIN32
 #include <dirent_win.h>
 #else
@@ -740,7 +743,7 @@ void GetProgVersion(char *PROGversion){
   strcpy(PROGversion,PROGVERSION);
 }
 
-/* ------------------ setisolabels ------------------------ */
+/* ------------------ SetLabelsIso ------------------------ */
 
 int SetLabelsIso(flowlabels *flowlabel, char *longlabel, char *shortlabel, char *unit, float *levels, int nlevels){
   char buffer[255];
@@ -1062,6 +1065,14 @@ unsigned int DiffDate(char *token, char *tokenbase){
   return difft;
 }
 
+#ifdef pp_BETA
+  #define SET_VERSIONTITLE
+#else
+#ifndef pp_OFFICIAL_RELEASE
+  #define SET_VERSIONTITLE
+#endif
+#endif
+
 /* ------------------ GetBaseTitle ------------------------ */
 
 void GetBaseTitle(char *progname, char *title_base){
@@ -1080,16 +1091,11 @@ void GetBaseTitle(char *progname, char *title_base){
 
   strcat(title_base, " ");
   strcat(title_base, version);
-#ifdef pp_BETA
-  strcat(title_base, "(");
+
+#ifdef SET_VERSIONTITLE
+  if(strcmp(version,"")!=0)strcat(title_base, "(");
   strcat(title_base, git_version);
-  strcat(title_base, ")");
-#else
-#ifndef pp_OFFICIAL_RELEASE
-  strcat(title_base, "(");
-  strcat(title_base, git_version);
-  strcat(title_base, ")");
-#endif
+  if(strcmp(version,"")!=0)strcat(title_base, ")");
 #endif
   strcat(title_base, " - ");
 }
@@ -1266,7 +1272,7 @@ unsigned char *GetHashSHA256(char *file){
 
 /* ------------------ UsageCommon ------------------------ */
 
-void UsageCommon(char *prog, int option){
+void UsageCommon(int option){
   if(option == HELP_SUMMARY){
     PRINTF("  -help      - display help summary\n");
     PRINTF("  -help_all  - display all help info\n");
@@ -1338,7 +1344,7 @@ void ParseCommonOptions(int argc, char **argv){
 #ifdef pp_HASH
 void PRINTversion(char *progname, char *progfullpath, int option){
 #else
-void PRINTversion(char *progname, char *progfullpath){
+void PRINTversion(char *progname){
 #endif
   char version[256];
   char githash[256];
@@ -1351,7 +1357,9 @@ void PRINTversion(char *progname, char *progfullpath){
 
   PRINTF("\n");
   PRINTF("%s\n\n", releasetitle);
-  PRINTF("Version          : %s\n", version);
+  if(strcmp(version, "") != 0){
+    PRINTF("Version          : %s\n", version);
+  }
   PRINTF("Revision         : %s\n", githash);
   PRINTF("Revision Date    : %s\n", gitdate);
   PRINTF("Compilation Date : %s %s\n", __DATE__, __TIME__);
@@ -1361,7 +1369,6 @@ void PRINTversion(char *progname, char *progfullpath){
   PRINTF("Compiler         : %s\n", pp_COMPVER);
 
 #ifdef pp_HASH
-#ifndef _DEBUG
   if(option==HASH_MD5||option==HASH_ALL){
     unsigned char *hash = NULL;
 
@@ -1383,7 +1390,6 @@ void PRINTversion(char *progname, char *progfullpath){
     if(hash!=NULL)PRINTF("Checksum(SHA256) : %s\n", hash);
     FREEMEMORY(hash);
   }
-#endif
 #endif
 #ifdef WIN32
   PRINTF("Platform         : WIN64 ");

@@ -160,7 +160,7 @@ int convert_plot3d(plot3d *plot3di){
         plot3dframe_uncompressed[kk++]=ival;
       }
     }
-    compress_zlib(plot3dframe_compressed,&ncompressed_zlib,plot3dframe_uncompressed,5*framesize);
+    CompressZLIB(plot3dframe_compressed,&ncompressed_zlib,plot3dframe_uncompressed,5*framesize);
     sizeafter=16+ncompressed_zlib;
     sizebefore=5*framesize*sizeof(float);
   }
@@ -211,11 +211,11 @@ int convert_plot3d(plot3d *plot3di){
     GetFileSizeLabel(sizeafter,after_label);
 #ifdef pp_THREAD
     LOCK_PRINT;
-    PRINTF("\n%s\n  compressed from %s to %s (%4.1f%s reduction)\n\n",plot3di->file,before_label,after_label,(float)sizebefore/(float)sizeafter,GLOBx);
+    PRINTF("\n%s\n  %s -> %s (%4.1f%s)\n",plot3di->file,before_label,after_label,(float)sizebefore/(float)sizeafter,GLOBx);
     UNLOCK_PRINT;
 #else
     PRINTF("Sizes: original=%s, ",before_label);
-    PRINTF("compressed=%s (%4.1f%s reduction)\n",after_label,(float)sizebefore/(float)sizeafter,GLOBx);
+    PRINTF("compressed=%s (%4.1f%s)\n",after_label,(float)sizebefore/(float)sizeafter,GLOBx);
 #endif
   }
 

@@ -30,7 +30,7 @@ void Usage(char *prog,int option){
   PRINTF("%s\n", _(" -bindir dir    - specify location of smokeview bin directory"));
   PRINTF("%s\n", _(" -ini           - output smokeview parameter values to smokeview.ini"));
   PRINTF("%s\n", _(" -runscript     - run the script file casename.ssf"));
-  UsageCommon(prog, HELP_SUMMARY);
+  UsageCommon(HELP_SUMMARY);
   if(option==HELP_ALL){
     PRINTF("\n%s\n", _("Other options:"));
 #ifdef pp_READBUFFER
@@ -57,12 +57,12 @@ void Usage(char *prog,int option){
     PRINTF("%s\n", _(" -startframe n  - start rendering at frame n"));
     PRINTF("%s\n", _(" -stereo        - activate stereo mode"));
     PRINTF("%s\n", _(" -tempdir       - forces output files to be written to the temporary directory"));
-    PRINTF("%s\n", _(" -update_bounds - calculate boundary file bounds and save to casename.bini"));
+    PRINTF("%s\n", _(" -update_bounds - calculate boundary file bounds and save to casename.binfo"));
     PRINTF("%s\n", _(" -update_slice  - calculate slice file parameters"));
     PRINTF("%s\n", _(" -update        - equivalent to -update_bounds and -update_slice"));
     PRINTF("%s\n", _(" -update_ini case.ini - update case.ini to the current format"));
     PRINTF("%s\n", _(" -volrender     - generate images of volume rendered smoke and fire"));
-    UsageCommon(prog, HELP_ALL);
+    UsageCommon(HELP_ALL);
   }
 
   if(showbuild == 1){
@@ -78,6 +78,9 @@ void Usage(char *prog,int option){
 #endif
 #ifdef pp_BETA
     strcat(label, ", pp_BETA");
+#endif
+#ifdef pp_COLORBARFLIP
+    strcat(label, ", pp_COLORBARFLIP");
 #endif
 #ifdef pp_COMPRESS
     strcat(label, ", pp_COMPRESS");
@@ -157,17 +160,11 @@ void Usage(char *prog,int option){
 #ifdef pp_PARTTEST
     strcat(label, ", pp_PARTTEST");
 #endif
-#ifdef pp_QUICKTIME
-    strcat(label, ", pp_QUICKTIME");
-#endif
 #ifdef pp_READBUFFER
     strcat(label, ", pp_READBUFFER");
 #endif
 #ifdef pp_release
     strcat(label, ", pp_release");
-#endif
-#ifdef pp_RENDER360
-    strcat(label, ", pp_RENDER360");
 #endif
 #ifdef pp_RENDER360_DEBUG
     strcat(label, ", pp_RENDER360_DEBUG");
@@ -180,9 +177,6 @@ void Usage(char *prog,int option){
 #endif
 #ifdef pp_SLICELOAD
     strcat(label, ", pp_SLICELOAD");
-#endif
-#ifdef pp_SLICEDUP
-    strcat(label, ", pp_SLICEDUP");
 #endif
 #ifdef pp_THREAD
     strcat(label, ", pp_THREAD");
@@ -227,7 +221,7 @@ void ParseCommandline(int argc, char **argv){
     InitCameraList();
     InitOpenGL();
     UpdateRGBColors(COLORBAR_INDEX_NONE);
-    WriteINI(GLOBAL_INI, NULL);
+    WriteIni(GLOBAL_INI, NULL);
     exit(0);
   }
 
@@ -235,7 +229,7 @@ void ParseCommandline(int argc, char **argv){
     InitCameraList();
     use_graphics = 0;
     UpdateRGBColors(COLORBAR_INDEX_NONE);
-    WriteINI(GLOBAL_INI, NULL);
+    WriteIni(GLOBAL_INI, NULL);
     exit(0);
   }
   strcpy(SMVFILENAME, "");
@@ -320,7 +314,7 @@ void ParseCommandline(int argc, char **argv){
   }
 
   FREEMEMORY(log_filename);
-  NewMemory((void **)&log_filename, len_casename + 7 + 1);
+  NewMemory((void **)&log_filename, len_casename + strlen(".smvlog") + 1);
   STRCPY(log_filename, fdsprefix);
   STRCAT(log_filename, ".smvlog");
 
@@ -329,10 +323,10 @@ void ParseCommandline(int argc, char **argv){
   STRCPY(caseini_filename, fdsprefix);
   STRCAT(caseini_filename, ini_ext);
 
-  FREEMEMORY(boundini_filename);
-  NewMemory((void **)&boundini_filename, len_casename + 5 + 1);
-  STRCPY(boundini_filename, fdsprefix);
-  STRCAT(boundini_filename, ".bini");
+  FREEMEMORY(boundinfo_filename);
+  NewMemory((void **)&boundinfo_filename, len_casename + strlen(".binfo") + 1);
+  STRCPY(boundinfo_filename, fdsprefix);
+  STRCAT(boundinfo_filename, ".binfo");
 
   if(smv_filename == NULL){
     NewMemory((void **)&smv_filename, (unsigned int)(len_casename + 6));
@@ -344,7 +338,7 @@ void ParseCommandline(int argc, char **argv){
       STRCPY(scriptbuffer, fdsprefix);
       STRCAT(scriptbuffer, ".ssf");
       if(default_script == NULL&&FILE_EXISTS(scriptbuffer) == YES){
-        default_script = insert_scriptfile(scriptbuffer);
+        default_script = InsertScriptFile(scriptbuffer);
       }
     }
 #ifdef pp_LUA
@@ -374,17 +368,17 @@ void ParseCommandline(int argc, char **argv){
     fed_filename = GetFileName(smokeviewtempdir, fed_filename_base, tempdir_flag);
   }
   if(stop_filename == NULL){
-    NewMemory((void **)&stop_filename, (unsigned int)(len_casename + 6));
+    NewMemory((void **)&stop_filename, (unsigned int)(len_casename + strlen(".stop") + 1));
     STRCPY(stop_filename, fdsprefix);
     STRCAT(stop_filename, ".stop");
   }
   if(sliceinfo_filename == NULL){
-    NewMemory((void **)&sliceinfo_filename, strlen(fdsprefix) + 11 + 1);
+    NewMemory((void **)&sliceinfo_filename, strlen(fdsprefix) + strlen(".sinfo") + 1);
     STRCPY(sliceinfo_filename, fdsprefix);
-    STRCAT(sliceinfo_filename, "_slice.info");
+    STRCAT(sliceinfo_filename, ".sinfo");
   }
   if(deviceinfo_filename==NULL){
-    NewMemory((void **)&deviceinfo_filename, strlen(fdsprefix)+12+1);
+    NewMemory((void **)&deviceinfo_filename, strlen(fdsprefix)+strlen("_device.info")+1);
     STRCPY(deviceinfo_filename, fdsprefix);
     STRCAT(deviceinfo_filename, "_device.info");
   }
@@ -395,7 +389,7 @@ void ParseCommandline(int argc, char **argv){
   {
     FILE *stream_iso = NULL;
 
-    NewMemory((void **)&iso_filename, len_casename + 7 + 1);
+    NewMemory((void **)&iso_filename, len_casename + strlen(".isosmv") + 1);
     STRCPY(iso_filename, fdsprefix);
     STRCAT(iso_filename, ".isosmv");
     stream_iso = fopen(iso_filename, "r");
@@ -610,7 +604,7 @@ void ParseCommandline(int argc, char **argv){
         scriptfiledata *sfd;
 
         strcpy(scriptbuffer, argv[i]);
-        sfd = insert_scriptfile(scriptbuffer);
+        sfd = InsertScriptFile(scriptbuffer);
         if(sfd != NULL)default_script = sfd;
         runscript = 1;
       }
@@ -724,6 +718,7 @@ int main(int argc, char **argv){
     smokeview_bindir= GetProgDir(progname,&smokeviewpath);
   }
   InitTextureDir();
+  InitScriptErrorFiles();
   smokezippath= GetSmokeZipPath(smokeview_bindir);
 #ifdef pp_ffmpeg
 #ifdef WIN32
@@ -743,7 +738,7 @@ int main(int argc, char **argv){
   if(return_code==0&&update_bounds==1)return_code=Update_Bounds();
   if(return_code!=0)return 1;
   if(convert_ini==1){
-    ReadINI(ini_from);
+    ReadIni(ini_from);
   }
 
   STOP_TIMER(startup_time);
