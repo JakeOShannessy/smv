@@ -248,6 +248,16 @@ int lua_gsliceview(lua_State *L) {
   return 0;
 }
 
+int lua_showplot3ddata(lua_State *L) {
+  int meshnumber = lua_tonumber(L, 1);
+  int plane_orientation = lua_tonumber(L, 2);
+  int display = lua_toboolean(L, 3);
+  int showhide = lua_toboolean(L, 4);
+  float position = lua_tonumber(L, 5);
+  ShowPlot3dData(meshnumber, plane_orientation, display, showhide, position, 0);
+  return 0;
+}
+
 int lua_gslicepos(lua_State *L) {
   float x = lua_tonumber(L, 1);
   float y = lua_tonumber(L, 2);
@@ -558,6 +568,14 @@ int lua_get_nglobal_times(lua_State *L) {
 */
 int lua_get_nmeshes(lua_State *L) {
   lua_pushnumber(L, nmeshes);
+  return 1;
+}
+
+/*
+  Get the number of particle files in the loaded model.
+*/
+int lua_get_npartinfo(lua_State *L) {
+  lua_pushnumber(L, npartinfo);
   return 1;
 }
 
@@ -1272,6 +1290,101 @@ int lua_slice_get_times(lua_State *L) {
   }
   return 1;
 }
+
+
+
+int lua_get_part(lua_State *L) {
+  // This should push a lightuserdata onto the stack which is a pointer to the
+  // partdata. This takes the index of the part (in the partinfo array) as an
+  // argument.
+  // Get the index of the slice as an argument to the lua function.
+  int part_index = lua_tonumber(L, 1);
+  // Get the pointer to the slicedata struct.
+  partdata *part = &partinfo[part_index];
+  // Push the pointer onto the lua stack as lightuserdata.
+  lua_pushlightuserdata(L, part);
+  // lua_newuserdata places the data on the stack, so return a single stack
+  // item.
+  return 1;
+}
+
+// pass in the part data
+int lua_get_part_npoints(lua_State *L) {
+  partdata *parti = (partdata *)lua_touserdata(L, 1);
+  if (!parti->loaded) {
+    return luaL_error(L, "particle file %s not loaded", parti->file);
+  }
+
+  // Create a table with an entry for x, y and name
+  lua_createtable(L, 3, 0);
+
+  lua_pushstring(L, "name");
+  lua_pushstring(L, "(unknown)");
+  lua_settable(L, -3);
+
+  // x entries
+  lua_pushstring(L, "x");
+  lua_createtable(L, 3, 0);
+
+  lua_pushstring(L, "units");
+  lua_pushstring(L, "s");
+  lua_settable(L, -3);
+
+  lua_pushstring(L, "name");
+  lua_pushstring(L, "Time");
+  lua_settable(L, -3);
+
+  lua_pushstring(L, "values");
+  lua_createtable(L, parti->ntimes, 0);
+
+  // Create a table with an entry for each time
+  for (int index = 0; index < parti->ntimes; index++) {
+    part5data *part5 = parti->data5 + index*parti->nclasses;
+    // fprintf(stderr, "%d particles at time %.2f s (%.2f s)\n", part5->npoints, part5->time,parti->times[index]);
+    // sum += part5->npoints;
+
+    // use a 1-indexed array to match lua
+    lua_pushnumber(L, index+1);
+    lua_pushnumber(L, part5->time);
+    lua_settable(L, -3);
+  }
+  lua_settable(L, -3);
+  lua_settable(L, -3);
+
+  // y entries
+  lua_pushstring(L, "y");
+  lua_createtable(L, 3, 0);
+
+  lua_pushstring(L, "units");
+  lua_pushstring(L, "#");
+  lua_settable(L, -3);
+
+  lua_pushstring(L, "name");
+  lua_pushstring(L, "# Particles");
+  lua_settable(L, -3);
+
+  lua_pushstring(L, "values");
+  lua_createtable(L, parti->ntimes, 0);
+
+  // Create a table with an entry for each time
+  for (int index = 0; index < parti->ntimes; index++) {
+    part5data *part5 = parti->data5 + index*parti->nclasses;
+    // fprintf(stderr, "%d particles at time %.2f s (%.2f s)\n", part5->npoints, part5->time,parti->times[index]);
+    // sum += part5->npoints;
+
+    // use a 1-indexed array to match lua
+    lua_pushnumber(L, index+1);
+    lua_pushnumber(L, part5->npoints);
+    lua_settable(L, -3);
+  }
+  lua_settable(L, -3);
+  lua_settable(L, -3);
+
+  // Return a table of values.
+  return 1;
+}
+
+// int lua_get_all_part_
 
 int lua_slice_data_map_frames(lua_State *L) {
   // The first argument to this function is the slice pointer. This function
@@ -4848,6 +4961,7 @@ lua_State *initLua() {
   lua_register(L, "renderC", lua_render);
   lua_register(L, "render_var", lua_render_var);
   lua_register(L, "gsliceview", lua_gsliceview);
+  lua_register(L, "showplot3ddata", lua_showplot3ddata);
   lua_register(L, "gslicepos", lua_gslicepos);
   lua_register(L, "gsliceorien", lua_gsliceorien);
   lua_register(L, "settourkeyframe", lua_settourkeyframe);
@@ -5311,6 +5425,7 @@ lua_State *initLua() {
   lua_register(L, "clear_title_lines", lua_clear_title_lines);
 
   lua_register(L, "get_nglobal_times", lua_get_nglobal_times);
+  lua_register(L, "get_npartinfo", lua_get_npartinfo);
 
   lua_register(L, "get_slice", lua_get_slice);
   lua_register(L, "slice_get_label", lua_slice_get_label);
@@ -5322,6 +5437,9 @@ lua_State *initLua() {
   lua_register(L, "slice_data_map_frames_count_greater", lua_slice_data_map_frames_count_greater);
   lua_register(L, "slice_data_map_frames_count_greater_eq", lua_slice_data_map_frames_count_greater_eq);
   lua_register(L, "slice_get_times", lua_slice_get_times);
+
+  lua_register(L, "get_part", lua_get_part);
+  lua_register(L, "get_part_npoints", lua_get_part_npoints);
 
   lua_register(L, "get_qdata_sum",lua_get_qdata_sum);
   lua_register(L, "get_qdata_mean",lua_get_qdata_mean);

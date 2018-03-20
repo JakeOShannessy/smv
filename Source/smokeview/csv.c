@@ -97,8 +97,9 @@ size_t readcsv(char *file, dvector **dvectors){
   // Read data into buffer for names (the second line). This only reads up to
   // a line (or max buffer size)
   free(buffer);
-  // TODO: why are we reallocating this?
+  // // TODO: why are we reallocating this?
   buffer = malloc(BUFFERSIZE*sizeof(char));
+  // buffer = {0};
   if(fgets(buffer, BUFFERSIZE, stream) == NULL){
     fprintf(stderr, "fgets failed\n");
     return 0;
@@ -109,6 +110,7 @@ size_t readcsv(char *file, dvector **dvectors){
   bufptr = strsep(&buffer, ",\n");
   j = 0;
   while(bufptr != NULL) {
+    fprintf(stderr, "name[%d]: %s\n", j, bufptr);
     strcpy(vectors[j].name, simpleunquote(bufptr));
     bufptr = strsep(&buffer, ",\n");
     j++;

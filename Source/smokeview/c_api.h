@@ -13,6 +13,8 @@ void renderclip(int flag, int left, int right, int bottom, int top);
 int render(const char *filename);
 void gsliceview(int data, int show_triangles, int show_triangulation,
                 int show_normal);
+void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
+                           int showhide, float position, int isolevel);
 void gslicepos(float x, float y, float z);
 void gsliceorien(float az, float elev);
 void settourkeyframe(float keyframe_time);

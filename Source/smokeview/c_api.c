@@ -1434,6 +1434,7 @@ void loadparticles(const char *name){
   UpdateFrameNumber(0);
   updatemenu=1;
 }
+
 /* ------------------ partclasscolor ------------------------ */
 
 void partclasscolor(const char *color){
@@ -1537,60 +1538,57 @@ void plot3dprops(int variable_index, int showvector, int vector_length_index,
 //
 // void script_showplot3ddata(int meshnumber, int plane_orientation, int display,
 //                            float position) {
-//   meshdata *meshi;
-//   int imesh, dir, showhide;
-//   float val;
-//   int isolevel;
-//
-//   imesh = scripti->ival-1;
-//   if(imesh<0||imesh>nmeshes-1)return;
-//
-//   meshi = meshinfo + imesh;
-//   update_current_mesh(meshi);
-//
-//   dir = scripti->ival2;
-//   if(dir<1)dir=1;
-//   if(dir>4)dir=4;
-//
-//   plotn=scripti->ival3;
-//
-//   showhide = scripti->ival4;
-//   val = scripti->fval;
-//
-//   switch(dir){
-//     case 1:
-//       visx_all=showhide;
-//       iplotx_all=get_index(val,1,plotx_all,nplotx_all);
-//       next_xindex(1,0);
-//       next_xindex(-1,0);
-//       break;
-//     case 2:
-//       visy_all=showhide;
-//       iploty_all=get_index(val,2,ploty_all,nploty_all);
-//       next_yindex(1,0);
-//       next_yindex(-1,0);
-//       break;
-//     case 3:
-//       visz_all=showhide;
-//       iplotz_all=get_index(val,3,plotz_all,nplotz_all);
-//       next_zindex(1,0);
-//       next_zindex(-1,0);
-//       break;
-//     case 4:
-//       isolevel=scripti->ival5;
-//       plotiso[plotn-1]=isolevel;
-//       updateshowstep(showhide,ISO);
-//       updatesurface();
-//       updatemenu=1;
-//       break;
-//     default:
-//       ASSERT(FFALSE);
-//       break;
-//   }
-//   updateplotslice(dir);
-//
-// }
+/* ------------------ ScriptShowPlot3dData ------------------------ */
 
+void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
+                           int showhide, float position, int isolevel) {
+  meshdata *meshi;
+  int dir;
+  float val;
+
+  if(meshnumber<0||meshnumber>nmeshes-1)return;
+
+  meshi = meshinfo + meshnumber;
+  UpdateCurrentMesh(meshi);
+
+  dir = CLAMP(plane_orientation,XDIR,ISO);
+
+  plotn=display;
+
+  val = position;
+
+  switch(dir){
+    case XDIR:
+      visx_all=showhide;
+      iplotx_all=GetGridIndex(val,XDIR,plotx_all,nplotx_all);
+      NextXIndex(1,0);
+      NextXIndex(-1,0);
+      break;
+    case YDIR:
+      visy_all=showhide;
+      iploty_all=GetGridIndex(val,YDIR,ploty_all,nploty_all);
+      NextYIndex(1,0);
+      NextYIndex(-1,0);
+      break;
+    case ZDIR:
+      visz_all=showhide;
+      iplotz_all=GetGridIndex(val,ZDIR,plotz_all,nplotz_all);
+      NextZIndex(1,0);
+      NextZIndex(-1,0);
+      break;
+    case ISO:
+      plotiso[plotn-1]=isolevel;
+      UpdateShowStep(showhide,ISO);
+      UpdateSurface();
+      updatemenu=1;
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+  }
+  UpdatePlotSlice(dir);
+
+}
 
 /* ------------------ loadplot3d ------------------------ */
 
