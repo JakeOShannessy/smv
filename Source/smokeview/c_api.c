@@ -1554,7 +1554,7 @@ void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
   dir = CLAMP(plane_orientation,XDIR,ISO);
 
   plotn=display;
-
+  printf("show plotn: %d\n", plotn);
   val = position;
 
   switch(dir){
@@ -1587,7 +1587,10 @@ void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
       break;
   }
   UpdatePlotSlice(dir);
-
+  // UpdateAllPlotSlices();
+  // if(visiso==1&&cache_qdata==1)UpdateSurface();
+  // UpdatePlot3dListIndex();
+  // glutPostRedisplay();
 }
 
 /* ------------------ loadplot3d ------------------------ */
@@ -4005,6 +4008,39 @@ int set_v_plot3d(int n3d, int minFlags[], int minVals[], int maxFlags[],
   }
   return 0;
 } // V_PLOT3D
+
+int set_pl3d_bound_min(int pl3dValueIndex, int set, float value) {
+    printf("setting pl3d min bound ");
+    if(set) {printf("ON");} else {printf("OFF");}
+    printf(" with value of %f\n", value);
+    setp3min[pl3dValueIndex] = set;
+    p3min[pl3dValueIndex] = value;
+    setp3min_temp = set;
+    p3min_temp = value;
+    // TODO: remove this reload and hardcoded value
+    Plot3DBoundCB(7);
+}
+
+int set_pl3d_bound_max(int pl3dValueIndex, int set, float value) {
+    printf("setting pl3d max bound ");
+    if(set) {printf("ON");} else {printf("OFF");}
+    printf(" with value of %f\n", value);
+    setp3max[pl3dValueIndex] = set;
+    p3max[pl3dValueIndex] = value;
+    setp3max_temp = set;
+    p3max_temp = value;
+    // TODO: remove this reload and hardcoded value
+    Plot3DBoundCB(7);
+}
+
+int find_pl3d_quantity_index(char *quantityName) {
+  for(int i = 0; i<mxplot3dvars; i++){
+     if(!strcmp(quantityName, plot3dinfo[i].menulabel)) {
+       return i;
+     }
+  }
+  return -1;
+}
 
 int set_tload(int beginFlag, float beginVal, int endFlag, int endVal,
               int skipFlag, int skipVal) {

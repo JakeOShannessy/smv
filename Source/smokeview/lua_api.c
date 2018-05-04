@@ -251,7 +251,7 @@ int lua_gsliceview(lua_State *L) {
 int lua_showplot3ddata(lua_State *L) {
   int meshnumber = lua_tonumber(L, 1);
   int plane_orientation = lua_tonumber(L, 2);
-  int display = lua_toboolean(L, 3);
+  int display = lua_tonumber(L, 3);
   int showhide = lua_toboolean(L, 4);
   float position = lua_tonumber(L, 5);
   ShowPlot3dData(meshnumber, plane_orientation, display, showhide, position, 0);
@@ -888,6 +888,22 @@ int access_pl3dentry_prop(lua_State *L) {
   } else {
     return 0;
   }
+}
+
+int lua_set_pl3d_bound_min(lua_State *L) {
+  int pl3dValueIndex = lua_tonumber(L, 1);
+  int set = lua_toboolean(L, 2);
+  float value = lua_tonumber(L, 3);
+  set_pl3d_bound_min(pl3dValueIndex, set, value);
+  return 0;
+}
+
+int lua_set_pl3d_bound_max(lua_State *L) {
+  int pl3dValueIndex = lua_tonumber(L, 1);
+  int set = lua_toboolean(L, 2);
+  float value = lua_tonumber(L, 3);
+  set_pl3d_bound_max(pl3dValueIndex, set, value);
+  return 0;
 }
 
 /*
@@ -5337,6 +5353,9 @@ lua_State *initLua() {
   lua_register(L, "get_unitclass", lua_get_unitclass);
 
   lua_register(L, "load_csv", lua_load_csv);
+
+  lua_register(L, "set_pl3d_bound_min", lua_set_pl3d_bound_min);
+  lua_register(L, "set_pl3d_bound_max", lua_set_pl3d_bound_max);
 
   lua_register(L, "set_units", lua_set_units);
   lua_register(L, "set_unitclasses", lua_set_unitclasses);

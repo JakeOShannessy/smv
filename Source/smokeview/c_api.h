@@ -518,6 +518,8 @@ int set_c_plot3d(int n3d, int minFlags[], int minVals[], int maxFlags[],
                  int maxVals[]); // C_PLOT3D
 int set_v_plot3d(int n3d, int minFlags[], int minVals[], int maxFlags[],
                  int maxVals[]); // V_PLOT3D
+int set_pl3d_bound_min(int pl3dValueIndex, int set, float value);
+int set_pl3d_bound_max(int pl3dValueIndex, int set, float value);
 int set_tload(int beginFlag, float beginVal, int endFlag, int endVal,
               int skipFlag, int skipVal); // TLOAD
 int set_v5_particles(int minFlag, float minValue, int maxFlag, float maxValue,

@@ -1905,6 +1905,7 @@ void Keyboard(unsigned char key, int flag){
       if(plotn>numplot3dvars){
         plotn=1;
       }
+      printf("plotn: %d\n", plotn);
       UpdateAllPlotSlices();
       if(visiso==1&&cache_qdata==1)UpdateSurface();
       UpdatePlot3dListIndex();
