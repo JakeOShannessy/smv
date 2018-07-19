@@ -33,35 +33,32 @@ if "%buildtype%" == "release" (
 %svn_drive%
 
 if "%platform%" == "windows" (
-  cd %svn_root%\smv\uploads
+  cd %svn_root%\smv\Build\Bundle\uploads
   if "%buildtype%" == "test" (
     echo Running Smokeview installer:  %smv_revision%_win64.exe
-    pause
     call %smv_revision%_win64.exe
   )
   if "%buildtype%" == "release" (
     echo Running Smokeview installer: %smv_version%_win64.exe
-    pause
     call %smv_version%_win64.exe
   )
-  pause
   goto eof
 )
 if "%platform%" == "linux" (
   if "%buildtype%" == "test" (
-    plink %linux_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/uploads %smv_revision%_linux64.sh y
+    plink %linux_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/Build/Bundle/uploads %smv_revision%_linux64.sh y
   )
   if "%buildtype%" == "release" (
-    plink %linux_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/uploads %smv_version%_linux64.sh y
+    plink %linux_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/Build/Bundle/uploads %smv_version%_linux64.sh y
   )
   goto eof
 )
 if "%platform%" == "osx" (
   if "%buildtype%" == "test" (
-    plink %osx_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/uploads %smv_revision%_osx64.sh y
+    plink %osx_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/Build/Bundle/uploads %smv_revision%_osx64.sh y
   )
   if "%buildtype%" == "release" (
-    plink %osx_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/uploads %smv_version%_osx64.sh y
+    plink %osx_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/Build/Bundle/uploads %smv_version%_osx64.sh y
   )
   goto eof
 )

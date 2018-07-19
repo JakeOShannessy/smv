@@ -7,6 +7,17 @@ void _Sniff_Errors(char *whereat);
 #define SNIFF_ERRORS(f)
 #endif
 
+#define PROJECTION_PERSPECTIVE  0
+#define PROJECTION_ORTHOGRAPHIC 1
+#define ALL_FRAMES -1
+
+#define INIT 0
+#define UPDATE 1
+
+#define TIMEBAR_OVERLAP_ALWAYS 0
+#define TIMEBAR_OVERLAP_NEVER 1
+#define TIMEBAR_OVERLAP_AUTO 2
+
 #define RENDER_START 3
 #define RENDER_START_NORMAL 12
 #define RENDER_START_360 10
@@ -142,9 +153,16 @@ void _Sniff_Errors(char *whereat);
 #ifndef UPDATE_SMOKEFIRE_COLORS
 #define UPDATE_SMOKEFIRE_COLORS 54
 #endif
-#define SOOT 1
-#define FIRE 2
-#define WATER 3
+
+#define MAXSMOKETYPES 4
+#define SOOT     0
+#define HRRPUV   1
+#define TEMP     2
+#define CO2      3
+#define SOOT_2   1
+#define HRRPUV_2 2
+#define TEMP_2   4
+#define CO2_2    8
 
 #define NELEV_ZONE 100
 
@@ -248,16 +266,26 @@ void _Sniff_Errors(char *whereat);
     else if( clipon==1&&clip_data==0){UNCLIP;}\
   }
 
-#define GAS 1
-#define SOLID 0
-#define GASGAS 2
+#define GAS        1
+#define SOLID      0
+#define GASGAS     2
 #define SOLIDSOLID 0
-#define SOLIDGAS 1
-#define GASSOLID 1
+#define SOLIDGAS   1
+#define GASSOLID   1
 
-#define IN_GAS 0
-#define IN_SOLID 1
+#define IN_GAS     0
+#define IN_SOLID   1
 #define IN_CUTCELL 2
+
+#define IN_GAS_GLUI     0
+#define IN_SOLID_GLUI   1
+#define IN_CUTCELL_GLUI 2
+
+#define MAX_CELL_TYPES 3
+
+#define IMMERSED_POLYGON  0
+#define IMMERSED_TRIANGLE 1
+#define IMMERSED_HIDDEN   2
 
 #define EMBED_YES 0
 #define EMBED_NO  1
@@ -279,6 +307,7 @@ void _Sniff_Errors(char *whereat);
 #define FROM_SMOKEVIEW 0
 #define FROM_CALLBACK 1
 #define FROM_SCRIPT 2
+#define FROM_SMOKEVIEW_ALT 3
 
 #define STEPS_PER_DEG 10.0
 
@@ -408,6 +437,8 @@ void _Sniff_Errors(char *whereat);
 #define ROTATION_3AXIS 3
 #define MENU_MOTION_SETTINGS 4
 #define MENU_MOTION_GRAVITY_VECTOR 5
+#define MENU_MOTION_Z_VECTOR 6
+#define MENU_MOTION_SHOW_VECTORS 7
 
 #define FIRSTCALL 1
 #define NOT_FIRSTCALL 0
@@ -448,6 +479,8 @@ void _Sniff_Errors(char *whereat);
 #define TOGGLESHOW_PLOT3D 995
 #define SHOWALL_PLOT3D 998
 #define HIDEALL_PLOT3D 999
+#define GLUI_SHOWALL_BOUNDARY 994
+#define GLUI_HIDEALL_BOUNDARY 993
 #define SHOWALL_BOUNDARY 998
 #define HIDEALL_BOUNDARY 999
 #define SHOW_CHAR 997
@@ -552,6 +585,10 @@ void _Sniff_Errors(char *whereat);
 #define WINDROSE_DIRECTION 0
 #define WINDROSE_HEADING 1
 
+#define WINDROSE_POINT 0
+#define WINDROSE_STEPPED 1
+#define WINDROSE SLIDING 2
+
 #define CLOSE_WINDOW -2
 #define UPDATE_WINDOW -3
 #define CANCEL_WINDOW -4
@@ -630,6 +667,10 @@ void _Sniff_Errors(char *whereat);
 #define MAX_SOLID 3
 #define HIDE_ALL -1
 #define SHOW_ALL -2
+#define GLUI_HIDEALL -5
+#define GLUI_SHOWALL -6
+#define GLUI_HIDEALL_SLICE GLUI_HIDEALL
+#define GLUI_SHOWALL_SLICE GLUI_SHOWALL
 #define UNLOAD_ALL -1
 #define LOAD_ALL -2
 #define SHOWALL_SLICE SHOW_ALL
@@ -640,6 +681,8 @@ void _Sniff_Errors(char *whereat);
 #define SHOWALL_VSLICE SHOW_ALL
 #define TOGGLE_SMOKE3D  -3
 #define SET_SMOKE3D -4
+#define GLUI_SHOWALL_VSLICE GLUI_SHOWALL
+#define GLUI_HIDEALL_VSLICE GLUI_HIDEALL
 
 #define SHOW_VOLSMOKE -2
 #define HIDE_VOLSMOKE -1
@@ -703,7 +746,6 @@ void _Sniff_Errors(char *whereat);
 
 #define FIRECOLORMAP_DIRECT 0
 #define FIRECOLORMAP_CONSTRAINT 1
-#define FIRECOLORMAP_NOCONSTRAINT 2
 
 #define RENDER_SLICE 0
 #define RENDER_VOLUME 1
@@ -713,6 +755,9 @@ void _Sniff_Errors(char *whereat);
 #define COLORBAR_TOGGLE_BW -12
 #define COLORBAR_CONTINUOUS -17
 #define COLORBAR_STEPPED -18
+#define COLORBAR_LINES -19
+#define COLORBAR_HORIZONTAL -23
+#define COLORBAR_VERTICAL -24
 #define COLORBAR_LINES -19
 #define COLORBAR_HIGHLIGHT_BELOW -7
 #define COLORBAR_HIGHLIGHT_ABOVE -20
@@ -758,7 +803,8 @@ void _Sniff_Errors(char *whereat);
 #define VOL_UNLOAD -2
 #define VOL_READNONE -3
 
-#define MENU_LABEL_colorbar 0
+#define MENU_LABEL_colorbar_vertical 0
+#define MENU_LABEL_colorbar_horizontal 24
 #define MENU_LABEL_timebar 1
 #define MENU_LABEL_title 2
 #define MENU_LABEL_framerate 3
@@ -772,7 +818,7 @@ void _Sniff_Errors(char *whereat);
 #define MENU_LABEL_hmslabel 13
 #define MENU_LABEL_grid 14
 #define MENU_LABEL_sliceaverage 15
-#define MENU_LABEL_hrrcutoff 17
+#define MENU_LABEL_firecutoff 17
 #define MENU_LABEL_userticks 18
 #define MENU_LABEL_gversion 20
 #define MENU_LABEL_ShowAll 4

@@ -168,7 +168,7 @@ void UpdateFrameNumber(int changetime){
         smoke3di->ismoke3d_time=smoke3di->timeslist[itimes];
         if(smoke3di->ismoke3d_time!=smoke3di->lastiframe){
           smoke3di->lastiframe=smoke3di->ismoke3d_time;
-          UpdateSmoke3d(smoke3di);
+          UpdateSmoke3D(smoke3di);
         }
       }
       if(nsmoke3dinfo>0)MergeSmoke3dColors(NULL);
@@ -227,6 +227,7 @@ void UpdateShow(void){
   int slicecolorbarflag;
   int shooter_flag;
 
+  have_fire = HaveFire();
   showtime=0;
   showtime2=0;
   showplot3d=0;
@@ -591,24 +592,29 @@ void UpdateShow(void){
     }
   }
 
-  numColorbars=0;
-  if(ReadEvacFile==1)numColorbars++;
-  if(ReadPartFile==1)numColorbars++;
-  if(plotstate==DYNAMIC_PLOTS&&(slicecolorbarflag==1||vslicecolorbarflag==1))numColorbars++;
-  if(plotstate==DYNAMIC_PLOTS&&patchflag==1&&wc_flag==0)numColorbars++;
-  if(plotstate==DYNAMIC_PLOTS&&ReadZoneFile==1)numColorbars++;
+  num_colorbars=0;
+  if(ReadEvacFile==1)num_colorbars++;
+  if(ReadPartFile==1)num_colorbars++;
+  if(plotstate==DYNAMIC_PLOTS&&(slicecolorbarflag==1||vslicecolorbarflag==1))num_colorbars++;
+  if(plotstate==DYNAMIC_PLOTS&&patchflag==1&&wc_flag==0)num_colorbars++;
+  if(plotstate==DYNAMIC_PLOTS&&ReadZoneFile==1)num_colorbars++;
   if(plotstate==DYNAMIC_PLOTS&&tisoflag==1){
     showiso_colorbar=1;
-    numColorbars++;
+    num_colorbars++;
   }
-  if(ReadPlot3dFile==1&&numColorbars==0)numColorbars=1;
-  /* note: animated iso-contours do not need a colorbar,
-           so we don't test for isosurface files */
-  drawColorLabel=0;
-  if((showtime==1||showplot3d==1)&&visColorbar==1)drawColorLabel=1;
-  if(drawColorLabel==1&&olddrawColorLabel==0)updatemenu=1;
-  if(drawColorLabel==0&&olddrawColorLabel==1)updatemenu=1;
-  olddrawColorLabel=drawColorLabel;
+  if(ReadPlot3dFile==1&&num_colorbars==0)num_colorbars=1;
+  
+  // note: animated iso-contours do not need a colorbar, so we don't test for isosurface files
+
+  if ((showtime == 1 || showplot3d == 1) && (visColorbarVertical == 1|| visColorbarHorizontal == 1)) {
+    if(old_draw_colorlabel == 0)updatemenu = 1;
+    old_draw_colorlabel = 1;
+  }
+  else {
+    if(old_draw_colorlabel == 1)updatemenu = 1;
+    old_draw_colorlabel = 0;
+  }
+
   if(showtime2==1)showtime=1;
   if(plotstate==DYNAMIC_PLOTS&&stept==1){
     glutIdleFunc(IdleCB);
@@ -1194,7 +1200,7 @@ void UpdateTimes(void){
     qsort((float *)global_times_copy, (size_t)nglobal_times, sizeof(float), CompareFloat);
     CheckMemory;
 
-#define DT_EPS 0.0001
+#define DT_EPS 0.00001
 
     to = 1;
     global_times[0]=global_times_copy[0];
@@ -1865,7 +1871,7 @@ void UpdateShowScene(void){
   }
   if(force_isometric == 1){
     force_isometric = 0;
-    projection_type = 1;
+    projection_type = PROJECTION_ORTHOGRAPHIC;
     camera_current->projection_type = projection_type;
     ZoomMenu(UPDATE_PROJECTION);
   }
@@ -1883,7 +1889,6 @@ void UpdateShowScene(void){
   if(updatefacelists==1)UpdateFaceLists();
 }
 
-#ifdef pp_COLORBARFLIP
 /* ------------------ UpdateFlippedColorbar ------------------------ */
 
 void UpdateFlippedColorbar(void){
@@ -1905,7 +1910,6 @@ void UpdateFlippedColorbar(void){
     ColorbarMenu(COLORBAR_FLIP);
   }
 }
-#endif
 
 /* ------------------ UpdateDisplay ------------------------ */
 #define TERRAIN_FIRE_LINE_UPDATE 39
@@ -1918,16 +1922,14 @@ void UpdateDisplay(void){
     update_setvents=0;
   }
   UNLOCK_IBLANK
-  if(update_have_gvec == 1){
-    update_have_gvec = 0;
-    UpdateGvecDown(gvec_down);
+  if(update_zaxis_custom == 1){
+    update_zaxis_custom = 0;
+    UpdateZAxisCustom();
   }
-#ifdef pp_COLORBARFLIP
   if(update_flipped_colorbar == 1){
     update_flipped_colorbar = 0;
     UpdateFlippedColorbar();
   }
-#endif
   if(update_smokecolorbar == 1){
     update_smokecolorbar = 0;
     SmokeColorbarMenu(fire_colorbar_index);

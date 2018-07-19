@@ -356,6 +356,7 @@ int ReadSMV(FILE *streamsmv, FILE *stream_out, casedata *smvcase){
       char full_file[1024];
       FILE_SIZE filesize;
 
+      time_local = 0.0;
       if(strlen(buffer)>4){
         sscanf(buffer+4,"%f %i",&time_local,&meshnumber);
       }
@@ -625,7 +626,11 @@ int ReadSMV(FILE *streamsmv, FILE *stream_out, casedata *smvcase){
        Match(buffer,"SMOKE3D")==1||
        Match(buffer,"SMOKF3D")==1||
        Match(buffer,"VSMOKF3D")==1||
-       Match(buffer,"PART")==1||
+#ifdef pp_CO2SMOKE
+       Match(buffer, "SMOKG3D") == 1 ||
+       Match(buffer, "VSMOKG3D") == 1 ||
+#endif
+      Match(buffer, "PART") == 1 ||
        Match(buffer,"EVAC")==1||
        Match(buffer,"PRT5")==1||
        Match(buffer,"EVA5")==1

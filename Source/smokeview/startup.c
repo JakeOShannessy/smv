@@ -120,76 +120,6 @@ void Init(void){
   UpdateShow();
 }
 
-/* ------------------ InitLang ------------------------ */
-
-#ifdef pp_LANG
-void InitLang(void){
-  int maxlangs, nlangs;
-  filelistdata *filelistinfo;
-  int i;
-
-  nlanglistinfo=0;
-  maxlangs = GetFileListSize(smokeview_bindir,"*.po");
-  if(maxlangs==0)return;
-  nlangs = MakeFileList(smokeview_bindir,"*.po", maxlangs, NO, &filelistinfo);
-  if(nlangs==0)return;
-  for(i=0;i<nlangs;i++){
-    char *file;
-    filelistdata *filelisti;
-
-    filelisti = filelistinfo + i;
-    file=filelisti->file;
-    if(strstr(file,"template")!=NULL||filelisti->type==1)continue;
-    nlanglistinfo++;
-  }
-  if(nlanglistinfo==0)return;
-  NewMemory((void **)&langlistinfo,nlanglistinfo*sizeof(langlistdata));
-  nlanglistinfo=0;
-  for(i=0;i<nlangs;i++){
-    char *file;
-    filelistdata *filelisti;
-    langlistdata *langi;
-    int len;
-    char *lang_code;
-
-    langi = langlistinfo + nlanglistinfo;
-    filelisti = filelistinfo + i;
-    file=filelisti->file;
-    if(strstr(file,"template")!=NULL||filelisti->type==1)continue;
-    TrimBack(file);
-    file=TrimFront(file);
-    len=strlen(file);
-    langi->file=file;
-    strncpy(langi->lang_code,file+len-5,2);
-    langi->lang_code[2]='\0';
-    lang_code=langi->lang_code;
-    if(strcmp(lang_code,"fr")==0){
-      strcpy(langi->lang_name,_("French"));
-    }
-    else if(strcmp(lang_code,"it")==0){
-      strcpy(langi->lang_name,_("Italian"));
-    }
-    else if(strcmp(lang_code,"de")==0){
-      strcpy(langi->lang_name,_("German"));
-    }
-    else if(strcmp(lang_code,"pl")==0){
-      strcpy(langi->lang_name,_("Polish"));
-    }
-    else if(strcmp(lang_code,"es")==0){
-      strcpy(langi->lang_name,_("Spanish"));
-    }
-    else if(strcmp(lang_code, "ru")==0){
-      strcpy(langi->lang_name, _("Russian"));
-    }
-    else{
-      strcpy(langi->lang_name,langi->lang_code);
-    }
-    nlanglistinfo++;
-  }
-  InitTranslate(smokeview_bindir,tr_name);
-}
-#endif
-
 /* ------------------ ReadBoundINI ------------------------ */
 
 void ReadBoundINI(void){
@@ -293,7 +223,6 @@ int SetupCase(int argc, char **argv){
       break;
     case 3:
       return 3;
-      break;
     default:
       ASSERT(FFALSE);
   }
@@ -309,7 +238,7 @@ int SetupCase(int argc, char **argv){
   ReadBoundINI();
   if(use_graphics==0)return 0;
 #ifdef pp_LANG
-  InitLang();
+  InitTranslate(smokeview_bindir, tr_name);
 #endif
 
   if(ntourinfo==0)SetupTour();
@@ -407,7 +336,7 @@ void SetupGlut(int argc, char **argv){
     }
   }
 #ifdef pp_BETA
-  fprintf(stderr,"%s\n",_("\n*** This version of Smokeview is intended for review and testing ONLY. ***"));
+  fprintf(stderr,"%s\n","\n*** This version of Smokeview is intended for review and testing ONLY. ***");
 #endif
 
 #ifdef pp_OSX
@@ -580,11 +509,11 @@ void InitOpenGL(void){
     }
 #ifdef _DEBUG
     if(err==0){
-      PRINTF("%s\n",_("   GPU shader initialization succeeded"));
+      PRINTF("%s\n",_("  GPU shader initialization succeeded"));
     }
 #endif
     if(err!=0){
-      PRINTF("%s\n",_("   GPU shader initialization failed"));
+      PRINTF("%s\n",_("  GPU shader initialization failed"));
     }
   }
 #endif
@@ -593,11 +522,11 @@ void InitOpenGL(void){
     err= InitCullExts();
 #ifdef _DEBUG
     if(err==0){
-      PRINTF("%s\n",_("   Culling extension initialization succeeded"));
+      PRINTF("%s\n",_("  Culling extension initialization succeeded"));
     }
 #endif
     if(err!=0){
-      PRINTF("%s\n",_("   Culling extension initialization failed"));
+      PRINTF("%s\n",_("  Culling extension initialization failed"));
     }
   }
 #endif
@@ -724,7 +653,7 @@ void InitOpenGL(void){
 
  /* ------------------ PutStartupSmoke3d ------------------------ */
 
-  void PutStartupSmoke3d(FILE *fileout){
+  void PutStartupSmoke3D(FILE *fileout){
    int i;
    int nstartup;
 
@@ -925,7 +854,7 @@ void InitOpenGL(void){
 
  /* ------------------ GetStartupPlot3d ------------------------ */
 
-  void GetStartupPlot3d(int seq_id){
+  void GetStartupPlot3D(int seq_id){
     int i;
     for(i=0;i<nplot3dinfo;i++){
       plot3ddata *plot3di;
@@ -1030,11 +959,11 @@ void InitOpenGL(void){
 
       plot3di = plot3dinfo + i;
       if(plot3di->autoload==0&&plot3di->loaded==1){
-        ReadPlot3d(plot3di->file,i,UNLOAD,&errorcode);
+        ReadPlot3D(plot3di->file,i,UNLOAD,&errorcode);
       }
       if(plot3di->autoload==1){
         ReadPlot3dFile=1;
-        ReadPlot3d(plot3di->file,i,LOAD,&errorcode);
+        ReadPlot3D(plot3di->file,i,LOAD,&errorcode);
       }
     }
     npartframes_max=GetMinPartFrames(PARTFILE_RELOADALL);
@@ -1109,8 +1038,8 @@ void InitOpenGL(void){
       smoke3ddata *smoke3di;
 
       smoke3di = smoke3dinfo + i;
-      if(smoke3di->autoload==0&&smoke3di->loaded==1)ReadSmoke3d(i,UNLOAD,&errorcode);
-      if(smoke3di->autoload==1)ReadSmoke3d(i,LOAD,&errorcode);
+      if(smoke3di->autoload==0&&smoke3di->loaded==1)ReadSmoke3D(ALL_FRAMES,i,UNLOAD,&errorcode);
+      if(smoke3di->autoload==1)ReadSmoke3D(ALL_FRAMES,i,LOAD,&errorcode);
     }
     for(i=0;i<npatchinfo;i++){
       patchdata *patchi;
@@ -1486,8 +1415,6 @@ void InitVars(void){
 
   glui_active=0;
 
-  drawColorLabel=0;
-  olddrawColorLabel=0;
   vis3DSmoke3D=1;
   smokeskip=1;
   smokeskipm1=0;
@@ -1587,7 +1514,6 @@ void InitVars(void){
   ntrnx=0, ntrny=0, ntrnz=0,npdim=0,nmeshes=0,clip_mesh=0;
   noffset=0;
   visLabels=0;
-  showallslicevectors=0;
   framerate=-1.0;
   itimes=0, itimeold=-999, seqnum=0,RenderTime=0; RenderTimeOld=0; itime_save=-1;
   nopart=1;
@@ -1665,7 +1591,6 @@ void InitVars(void){
   nrgb2_ini=0;
   rgb_white=NRGB, rgb_yellow=NRGB+1, rgb_blue=NRGB+2, rgb_red=NRGB+3;
   rgb_green=NRGB+4, rgb_magenta=NRGB+5, rgb_cyan=NRGB+6, rgb_black=NRGB+7;
-  numColorbars=0;
   setbw=0;
   setbwSAVE=setbw;
   background_flip=1;
@@ -1797,7 +1722,7 @@ void InitVars(void){
   right_blue=1.0;
   apertureindex=1;
   zoomindex=2;
-  projection_type=0;
+  projection_type=PROJECTION_PERSPECTIVE;
   apertures[0]=30.;
   apertures[1]=45.;
   apertures[2]=60.;
@@ -1873,12 +1798,9 @@ void InitVars(void){
   updateindexcolors=0;
   show_path_knots=0;
   keyframe_snap=0;
-  tourviewtype=0;
   tourrad_avatar=0.1;
   dirtycircletour=0;
   view_tstart=0.0, view_tstop=100.0;
-  tour_constant_vel=0;
-  tour_bias=0.0,tour_continuity=0.0;
   view_ntimes=1000;
   iavatar_evac=0;
   viewtourfrompath=0,viewalltours=0,viewanytours=0,edittour=0;

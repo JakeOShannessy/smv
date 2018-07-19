@@ -80,7 +80,7 @@ void ShowScene2(int mode, int view_mode, int quad, GLint s_left, GLint s_down){
 
     /* ++++++++++++++++++++++++ draw circular vents +++++++++++++++++++++++++ */
 
-    if(ncvents>0 && visCircularVents != VENT_HIDE){
+    if(ncvents>0 && visCircularVents != VENT_HIDE && showpatch==0){
       CLIP_GEOMETRY;
       DrawCircVents(visCircularVents);
     }
@@ -119,7 +119,7 @@ void ShowScene2(int mode, int view_mode, int quad, GLint s_left, GLint s_down){
 
     /* ++++++++++++++++++++++++ draw ticks +++++++++++++++++++++++++ */
 
-    if(showgravity == 1){
+    if(showgravity_vector == 1){
       UNCLIP;
       DrawGravityAxis();
       SNIFF_ERRORS("after drawaxis");
@@ -425,9 +425,11 @@ void ShowScene2(int mode, int view_mode, int quad, GLint s_left, GLint s_down){
   /* ++++++++++++++++++++++++ draw slice files +++++++++++++++++++++++++ */
 
   if((show_node_slices_and_vectors == 1 || show_cell_slices_and_vectors==1) || (showslice == 1 && use_transparency_data == 1)){
-    CLIP_VALS;
-    DrawSliceFrame();
-    SNIFF_ERRORS("after DrawSliceFrame");
+    if(nslice_loaded>0){
+      CLIP_VALS;
+      DrawSliceFrame();
+      SNIFF_ERRORS("after DrawSliceFrame");
+    }
   }
 
   /* ++++++++++++++++++++++++ draw transparent blockages +++++++++++++++++++++++++ */
@@ -490,9 +492,9 @@ void ShowScene(int mode, int view_mode, int quad, GLint s_left, GLint s_down, sc
       SNIFF_ERRORS("after ViewportTimebar");
     }
 
-    if(VP_colorbar.doit == 1){
-      ViewportColorbar(quad, s_left, s_down);
-      SNIFF_ERRORS("after ViewportColorbar");
+    if(VP_vcolorbar.doit == 1){
+      ViewportVerticalColorbar(quad, s_left, s_down);
+      SNIFF_ERRORS("after ViewportVerticalColorbar");
     }
 
     if(VP_title.doit == 1){

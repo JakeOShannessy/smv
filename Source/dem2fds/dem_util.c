@@ -224,13 +224,10 @@ int GetColor(float llong, float llat, elevdata *imageinfo, int nimageinfo) {
 
 /* ------------------ GenerateMapImage ------------------------ */
 
-void GenerateMapImage(char *elevfile, elevdata *fds_elevs, elevdata *imageinfo, int nimageinfo) {
+void GenerateMapImage(char *image_file, elevdata *fds_elevs, elevdata *imageinfo, int nimageinfo) {
   int nrows, ncols, j;
   gdImagePtr RENDERimage;
   float dx, dy;
-  char imagefile[1024];
-  FILE *stream;
-  char *ext;
 
   ncols = 2000;
   nrows = ncols*fds_elevs->ymax / fds_elevs->xmax;
@@ -337,34 +334,33 @@ void GenerateMapImage(char *elevfile, elevdata *fds_elevs, elevdata *imageinfo, 
     }
   }
 
-  strcpy(imagefile, elevfile);
-  ext = strrchr(imagefile, '.');
-  if(ext != NULL)ext[0] = 0;
-  strcat(imagefile, ".png");
-  stream = fopen(imagefile, "wb");
-  if(stream != NULL)gdImagePng(RENDERimage, stream);
+  {
+    FILE *stream=NULL;
+
+    if(image_file!=NULL)stream = fopen(image_file, "wb");
+    if(stream != NULL)gdImagePng(RENDERimage, stream);
+  }
   gdImageDestroy(RENDERimage);
 }
 
 /* ------------------ GetElevations ------------------------ */
 
-int GetElevations(char *elevfile, elevdata *fds_elevs){
+int GetElevations(char *input_file, char *image_file, elevdata *fds_elevs){
   int nelevinfo, nimageinfo, i, j;
   filelistdata *headerfiles, *imagefiles;
   FILE *stream_in;
   elevdata *elevinfo, *imageinfo;
   int kbar;
-  int longlat_defined = 0;
   int nlongs = 100, nlats = 100;
   float dlat, dlong;
-  int count, *have_vals, have_data = 0;
-  float valmin, valmax, *vals;
+  int count, *have_vals;
+  float valmin=0.0, valmax=1.0, *vals;
   char *ext;
   float longref = -1000.0, latref = -1000.0;
   float xref = 0.0, yref = 0.0;
   float xmax = -1000.0, ymax = -1000.0, zmin = -1000.0, zmax = -1000.0;
   float *longlats = NULL, *longlatsorig;
-  float image_long_min, image_long_max, image_lat_min, image_lat_max;
+  float image_long_min=0.0, image_long_max=1.0, image_lat_min=0.0, image_lat_max=1.0;
   float fds_long_min, fds_long_max, fds_lat_min, fds_lat_max;
   int longlatref_mode = LONGLATREF_NONE;
   int xymax_defined=0;
@@ -447,7 +443,7 @@ int GetElevations(char *elevfile, elevdata *fds_elevs){
     }
   }
   fprintf(stderr, "\nmap properties:\n");
-  fprintf(stderr, "        input file: %s\n", elevfile);
+  fprintf(stderr, "        input file: %s\n", input_file);
   fprintf(stderr, "         image dir: %s\n", image_dir);
   fprintf(stderr, "     elevation dir: %s\n", elev_dir);
   if(nimageinfo > 0){
@@ -543,9 +539,9 @@ int GetElevations(char *elevfile, elevdata *fds_elevs){
     fclose(stream_in);
   }
 
-  stream_in = fopen(elevfile, "r");
+  stream_in = fopen(input_file, "r");
   if(stream_in == NULL) {
-    fprintf(stderr, "***error: unable to open file %s for input\n", elevfile);
+    fprintf(stderr, "***error: unable to open file %s for input\n", input_file);
     return 0;
   }
 
@@ -563,6 +559,11 @@ int GetElevations(char *elevfile, elevdata *fds_elevs){
     buffer2 = TrimFrontBack(buffer);
     if(strlen(buffer2) == 0)continue;
 
+    if (Match(buffer, "BUFF_DIST") == 1) {
+      if (fgets(buffer, LEN_BUFFER, stream_in) == NULL)break;
+      sscanf(buffer, "%f", &buff_dist);
+      continue;
+    }
     if(Match(buffer, "GRID") == 1){
       nlongs = 10;
       nlats = 10;
@@ -639,7 +640,6 @@ int GetElevations(char *elevfile, elevdata *fds_elevs){
     }
 
     if(Match(buffer, "LONGLATMINMAX") == 1){
-      have_data = 1;
       fds_long_min = -1000.0;
       fds_long_max = -1000.0;
       fds_lat_min = -1000.0;
@@ -667,7 +667,6 @@ int GetElevations(char *elevfile, elevdata *fds_elevs){
       exi->ymin = -1.0;
       exi->ymax = -1.0;
       sscanf(buffer, "%f %f %f %f", &exi->xmin, &exi->ymin, &exi->xmax, &exi->ymax);
-      longlat_defined = 1;
       continue;
     }
   }
@@ -680,7 +679,6 @@ int GetElevations(char *elevfile, elevdata *fds_elevs){
   }
 
   if(show_maps==1){
-    have_data = 1;
     longlatref_mode = LONGLATREF_MINMAX;
     longref = (image_long_min + image_long_max) / 2.0;
     latref = (image_lat_min + image_lat_max) / 2.0;
@@ -794,35 +792,41 @@ int GetElevations(char *elevfile, elevdata *fds_elevs){
   FREEMEMORY(have_vals);
   FREEMEMORY(longlatsorig);
 
-  GenerateMapImage(elevfile, fds_elevs, imageinfo, nimageinfo);
+  GenerateMapImage(image_file, fds_elevs, imageinfo, nimageinfo);
   return 1;
 }
 
 /* ------------------ GenerateFDSInputFile ------------------------ */
 
-void GenerateFDSInputFile(char *casename, elevdata *fds_elevs, int option){
+void GenerateFDSInputFile(char *casename, char *casename_fds, elevdata *fds_elevs, int option){
   char output_file[LEN_BUFFER], *ext;
   char basename[LEN_BUFFER];
+
+  char casename_fds_basename[LEN_BUFFER];
   int nlong, nlat, nz;
   int i, j;
-  float llat1, llat2, llong1, llong2;
   float xmax, ymax, zmin, zmax;
   float *xgrid, *ygrid;
   int count;
   int ibar, jbar, kbar;
   float *vals, *valsp1;
   FILE *streamout = NULL;
+  char *last;
 
-  strcpy(basename, casename);
+  strcpy(casename_fds_basename, casename_fds);
+  last = strrchr(casename_fds_basename, '.');
+  if(last != NULL)last[0] = 0;
+
+  strcpy(basename, casename_fds_basename);
   ext = strrchr(basename, '.');
   if(ext != NULL)ext[0] = 0;
 
-  strcpy(output_file, basename);
   if(elev_file==1){
+    strcpy(output_file, basename);
     strcat(output_file, ".elev");
   }
   else{
-    strcat(output_file, ".fds");
+    strcpy(output_file, casename_fds);
   }
   streamout = fopen(output_file, "w");
   if(streamout == NULL){
@@ -830,12 +834,8 @@ void GenerateFDSInputFile(char *casename, elevdata *fds_elevs, int option){
     return;
   }
 
-  llong1 = fds_elevs->long_min;
-  llong2 = fds_elevs->long_max;
   nlong = fds_elevs->ncols;
 
-  llat1 = fds_elevs->lat_min;
-  llat2 = fds_elevs->lat_max;
   nlat = fds_elevs->nrows;
 
   zmin = fds_elevs->zmin;
@@ -858,7 +858,7 @@ void GenerateFDSInputFile(char *casename, elevdata *fds_elevs, int option){
 
   NewMemory((void **)&ygrid, sizeof(float)*(jbar + 1));
   for(i = 0; i < jbar + 1; i++){
-    ygrid[i] = ymax*(float)(jbar - 1 - i) / (float)jbar;
+    ygrid[i] = ymax*(float)(jbar - i) / (float)jbar;
   }
 
   if(elev_file == 0) {
@@ -879,13 +879,13 @@ void GenerateFDSInputFile(char *casename, elevdata *fds_elevs, int option){
 
   if(option == FDS_GEOM){
     fprintf(streamout, "&MATL ID = '%s', DENSITY = 1000., CONDUCTIVITY = 1., SPECIFIC_HEAT = 1., RGB = 122,117,48 /\n",matl_id);
-    fprintf(streamout, "&SURF ID = '%s', RGB = 122,117,48 TEXTURE_MAP='%s.png' /\n", surf_id, basename);
+    fprintf(streamout, "&SURF ID = '%s', RGB = 122,117,48 TEXTURE_MAP='%s.png' /\n", surf_id1, basename);
     fprintf(streamout, "&GEOM ID='terrain', SURF_ID='%s',MATL_ID='%s',\nIJK=%i,%i,XB=%f,%f,%f,%f,\nZVALS=\n",
-      surf_id,matl_id,nlong, nlat, 0.0, xmax, 0.0, ymax);
+      surf_id1,matl_id,nlong, nlat, 0.0, xmax, 0.0, ymax);
     count = 1;
     for(j = 0; j < jbar + 1; j++){
       for(i = 0; i < ibar + 1; i++){
-        fprintf(streamout, " %f,", vals[count - 1]);
+        fprintf(streamout, " %f,", vals[(jbar-j)*(ibar+1)+i]);
         if(count % 10 == 0)fprintf(streamout, "\n");
         count++;
       }
@@ -894,7 +894,8 @@ void GenerateFDSInputFile(char *casename, elevdata *fds_elevs, int option){
   }
 
   if(option == FDS_OBST){
-    fprintf(streamout, "&SURF ID = '%s', RGB = 122,117,48 /\n", surf_id);
+    fprintf(streamout, "&SURF ID = '%s', RGB = 122,117,48 /\n", surf_id1);
+    fprintf(streamout, "&SURF ID = '%s', RGB = 122,117,48 /\n", surf_id2);
     count = 0;
     valsp1 = vals + nlong;
     for(j = 0; j < jbar; j++){
@@ -925,7 +926,12 @@ void GenerateFDSInputFile(char *casename, elevdata *fds_elevs, int option){
         x2 = MAX(xgrid[i], xgrid[i+1]);
         y1 = MIN(ygrid[j], ygrid[j+1]);
         y2 = MAX(ygrid[j], ygrid[j+1]);
-        fprintf(streamout, "&OBST XB=%f,%f,%f,%f,0.0,%f SURF_ID='%s'/\n",x1,x2,y1,y2,vavg,surf_id);
+        if (ABS(x1) < buff_dist || ABS(x2 - xmax) < buff_dist || ABS(y1) < buff_dist || ABS(y2 - ymax) < buff_dist) {
+          fprintf(streamout, "&OBST XB=%f,%f,%f,%f,0.0,%f SURF_ID='%s'/\n", x1, x2, y1, y2, vavg, surf_id2);
+        }
+        else {
+          fprintf(streamout, "&OBST XB=%f,%f,%f,%f,0.0,%f SURF_ID='%s'/\n", x1, x2, y1, y2, vavg, surf_id1);
+        }
         count++;
       }
       count++;

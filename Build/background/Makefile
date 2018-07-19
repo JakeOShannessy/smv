@@ -68,15 +68,6 @@ intel_linux_64 : exe       = background
 intel_linux_64 : $(obj)
 	$(CC) -o $(bin)/$(exe) $(obj) 
 
-# ------------- gnu Linux 32 ----------------
-
-gnu_linux_32 : CFLAGS    = -O2 -Wall -D pp_GCC -D pp_LINUX $(GITINFO) $(GNU_COMPINFO)
-gnu_linux_32 : CC        = gcc
-gnu_linux_32 : exe       = background
-
-gnu_linux_32: $(obj)
-	$(CC) -o $(bin)/$(exe) $(obj) -lm
-
 # ------------- gnu Linux 64 ----------------
 
 gnu_linux_64 : CFLAGS    = -O2 -m64 -Wall -D pp_GCC -D pp_LINUX $(GITINFO) $(GNU_COMPINFO)
@@ -103,6 +94,16 @@ gnu_osx_64 : exe       = background
 
 gnu_osx_64 : $(obj)
 	$(CC) -m64 -o $(bin)/$(exe) $(obj)  -lm
+
+# ------------- gnu OSX debug ----------------
+
+gnu_osx_64_db : CFLAGS    = -O0 -m64 -Wall -D pp_OSX -Wno-deprecated-declarations -Wno-write-strings $(GNU_COMPINFO) $(GITINFO)
+gnu_osx_64_db : CC        = gcc
+gnu_osx_64_db : exe       = background_db
+
+gnu_osx_64_db : $(obj)
+	$(CC) -m64 -o $(bin)/$(exe) $(obj)  -lm
+
 
 #-------------- compile sring_util.c so revision strings are updated -----------
 

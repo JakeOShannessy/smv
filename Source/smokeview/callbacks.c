@@ -617,11 +617,11 @@ void CheckTimeBound(void){
 
 int GetColorbarIndex(int flag, int x, int y){
 
-  if(flag==0||(colorbar_left_pos<=x&&x<=colorbar_right_pos)){
+  if(flag==0||(vcolorbar_left_pos<=x&&x<=vcolorbar_right_pos)){
       y = screenHeight - y;
-      if(colorbar_down_pos<=y&&y<=colorbar_top_pos){
+      if(vcolorbar_down_pos<=y&&y<=vcolorbar_top_pos){
         int index;
-        index = CLAMP(255*(float)(y-colorbar_down_pos)/(float)(colorbar_top_pos - colorbar_down_pos),0,255);
+        index = CLAMP(255*(float)(y-vcolorbar_down_pos)/(float)(vcolorbar_top_pos - vcolorbar_down_pos),0,255);
         return index;
       }
       else{
@@ -988,8 +988,9 @@ void MouseCB(int button, int state, int xm, int ym){
         break;
       case GLUT_ACTIVE_SHIFT:
         key_state = KEY_SHIFT;
-        start_xyz0[0]=xm;
-        start_xyz0[1]=ym;
+        eye_xyz0[0] = eye_xyz[0];
+        eye_xyz0[1] = eye_xyz[1];
+        aperture_glui0 = aperture_glui;
         touring=0;
         break;
       default:
@@ -1321,6 +1322,23 @@ void MoveScene(int xm, int ym){
       viewz = eye_xyz[2] - delz;
       break;
     case KEY_SHIFT:
+      if(rotation_type!=EYE_CENTERED&&lock_mouse_aperture==0){
+        float dx;
+
+        xx = xm - mouse_down_xy0[0];
+        xx = xx / (float)screenWidth;
+        dx = (xyzbox+eye_xyz0[0])*xx;
+        eye_xyz[0] = eye_xyz0[0] + dx;
+        eye_xyz0[0]=eye_xyz[0];
+        mouse_down_xy0[0]=xm;
+      }
+      yy = ym - mouse_down_xy0[1];
+      yy = yy / (float)screenHeight;
+      aperture_glui = CLAMP(aperture_glui0 + aperture_max*yy,aperture_min,aperture_max);
+#define APERTURE 15
+#define ZOOM 12
+      SceneMotionCB(APERTURE);
+      SceneMotionCB(ZOOM);
       break;
     default:
       ASSERT(FFALSE);
@@ -1384,12 +1402,8 @@ void MouseDragCB(int xm, int ym){
     DragColorbarEditNode(xm, ym);
     return;
   }
-
   if(rotation_type==ROTATION_3AXIS&&(key_state == KEY_NONE||key_state == KEY_SHIFT)){
     UpdateMouseInfo(MOUSE_MOTION,xm,ym);
-  }
-  if((rotation_type==ROTATION_2AXIS||rotation_type==ROTATION_3AXIS)&&gvec_down==1&&key_state == KEY_NONE){
-    UpdateGvecDown(0);
   }
   MoveScene(xm,ym);
 }
@@ -1475,6 +1489,9 @@ void Keyboard(unsigned char key, int flag){
   }
   else if(flag==FROM_SCRIPT){
     keystate=script_keystate;
+  }
+  else if(flag==FROM_SMOKEVIEW_ALT){
+    keystate=GLUT_ACTIVE_ALT;
   }
   glutPostRedisplay();
   key2 = (char)key;
@@ -1724,7 +1741,7 @@ void Keyboard(unsigned char key, int flag){
         else{
           histogram_show_graph = 1;
           histogram_show_numbers = 1;
-          visColorbar = 1;
+          visColorbarVertical = 1;
           update_slice_hists = 1;
         }
         UpdateHistogramType();
@@ -1942,8 +1959,8 @@ void Keyboard(unsigned char key, int flag){
           return;
         }
 
-        if(strncmp((const char *)&key2, "R", 1&&keystate!=GLUT_ACTIVE_ALT)==0){
-          resolution_multiplier = MAX(2, resolution_multiplier);
+        if(strncmp((const char *)&key2, "R", 1)==0&&keystate!=GLUT_ACTIVE_ALT){
+          resolution_multiplier = glui_resolution_multiplier;
         }
         else{
           resolution_multiplier = 1;
@@ -1960,11 +1977,9 @@ void Keyboard(unsigned char key, int flag){
         if(strncmp((const char *)&key2, "R", 1)==0||render_mode==RENDER_360){
           rflag=1;
         }
-        else{
-          if(render_from_menu==0){
-            renderW=0;
-            renderH=0;
-          }
+        else if(render_size_index==2){
+          renderW=0;
+          renderH=0;
         }
         if(scriptoutstream!=NULL){
           if(nglobal_times>0){
@@ -2054,7 +2069,6 @@ void Keyboard(unsigned char key, int flag){
           fprintf(scriptoutstream," %s\n",script_renderfile);
         }
         RenderState(RENDER_ON);
-        render_from_menu=0;
       }
       break;
     case 's':
@@ -2105,7 +2119,7 @@ void Keyboard(unsigned char key, int flag){
           }
         }
         if(stept == 1){
-          if(render_skip!=RENDER_CURRENT_SINGLE)render_skip = 1;
+          //if(render_skip!=RENDER_CURRENT_SINGLE)render_skip = 1;
         }
         else{
           itime_save = -1;
@@ -2224,6 +2238,52 @@ void Keyboard(unsigned char key, int flag){
       break;
     case '@':
       cell_center_text = 1 - cell_center_text;
+      break;
+    case '.':
+      lock_mouse_aperture = 1 - lock_mouse_aperture;
+      break;
+    case ':':
+      timebar_overlap++;
+      if (timebar_overlap > 2)timebar_overlap = 0;
+      UpdateTimebarOverlap();
+      printf("overlap time/colorbar region: ");
+      switch(timebar_overlap){
+      case 0:
+        printf("always\n");
+        break;
+      case 1:
+        printf("never\n");
+        break;
+      case 2:
+        printf("only if time/colorbar hidden\n");
+        break;
+      }
+      break;
+ // toggle_colorbar   state
+ //    0              hidden
+ //    1              vertical
+ //    2->max         horizontal
+    case ',':
+      {
+        int maxtoggle;
+
+        maxtoggle = MAX(3, 2 + CountColorbars());
+        toggle_colorbar++;
+        if(toggle_colorbar >= maxtoggle)toggle_colorbar = 0;
+        if(toggle_colorbar == 0) {
+          visColorbarVertical = 0;
+          visColorbarHorizontal = 0;
+        }
+        else if(toggle_colorbar == 1) {
+          visColorbarVertical = 1;
+          visColorbarHorizontal = 0;
+        }
+        else {
+          visColorbarVertical = 0;
+          visColorbarHorizontal = 1;
+        }
+      }
+      updatemenu = 1;
       break;
     case '#':
       WriteIni(LOCAL_INI,NULL);
@@ -2829,6 +2889,7 @@ void IdleCB(void){
   float thisinterval;
   int redisplay=0;
 
+  if(render_status == RENDER_ON && from_DisplayCB==0)return;
   CheckMemory;
   glutSetWindow(mainwindow_id);
   UpdateShow();
@@ -2861,6 +2922,12 @@ void SetScreenSize(int *width, int *height){
   }
   if(height!=NULL){
     screenHeight=MAX(*height,1);
+  }
+  {
+    int width_low, height_low, width_high, height_high;
+
+    GetRenderResolution(&width_low, &height_low, &width_high, &height_high);
+    UpdateRenderRadioButtons(width_low, height_low, width_high, height_high);
   }
 }
 
@@ -3213,12 +3280,20 @@ void DoScript(void){
   }
   else{
     first_frame_index=0;
-    skip_render_frames=0;
     script_startframe=-1;
     script_skipframe=-1;
   }
 }
 #endif
+
+/* ------------------ IdleDisplay ------------------------ */
+
+void IdleDisplay(void){
+// when rendering files, onlyl call Idle routine from DisplayCB callback
+  from_DisplayCB=1;
+  IdleCB();
+  from_DisplayCB=0;
+}
 
 /* ------------------ DisplayCB ------------------------ */
 
@@ -3245,6 +3320,8 @@ void DisplayCB(void){
     }
     else{
       int stop_rendering;
+
+      IdleDisplay();
 
       stop_rendering = 1;
       if(plotstate==DYNAMIC_PLOTS && nglobal_times>0){

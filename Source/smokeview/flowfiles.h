@@ -72,8 +72,8 @@ typedef struct _tridata {
   unsigned char skinny;
   float distance, *color, tverts[6], tri_norm[3], vert_norm[9];
   struct _texturedata *textureinfo;
-  struct _surfdata *surf;
-  int vert_index[3], exterior, geomtype, insolid;
+  struct _surfdata *geomsurf;
+  int vert_index[3], exterior, geomtype, insolid, outside_domain;
   vertdata *verts[3];
   edgedata *edges[3];
 } tridata;
@@ -580,6 +580,16 @@ typedef struct _isodata {
 typedef struct _volrenderdata {
   char *rendermeshlabel;
   int is_compressed;
+#ifdef pp_VOLCO2
+  struct _slicedata   *smokeslice,            *fireslice,            *lightslice,            *co2slice;
+  unsigned char *c_smokedata_view,      *c_firedata_view,      *c_lightdata_view,      *c_co2data_view;
+  int      *nsmokedata_compressed, *nfiredata_compressed, *nlightdata_compressed, *nco2data_compressed;
+  float           *smokedata_full,        *firedata_full,        *lightdata_full,        *co2data_full;
+  float           *smokedata_view,        *firedata_view,        *lightdata_view,        *co2data_view;
+  LINT                  *smokepos,              *firepos,              *lightpos,              *co2pos;
+  void              *smokedataptr,          *firedataptr,          *lightdataptr,          *co2dataptr;
+  void            **smokedataptrs,        **firedataptrs,        **lightdataptrs,        **co2dataptrs;
+#else
   struct _slicedata   *smokeslice,            *fireslice,            *lightslice;
   unsigned char *c_smokedata_view,      *c_firedata_view,      *c_lightdata_view;
   int      *nsmokedata_compressed, *nfiredata_compressed, *nlightdata_compressed;
@@ -588,6 +598,7 @@ typedef struct _volrenderdata {
   LINT                  *smokepos,              *firepos,              *lightpos;
   void              *smokedataptr,          *firedataptr,          *lightdataptr;
   void            **smokedataptrs,        **firedataptrs,        **lightdataptrs;
+#endif
   float *times;
   int *dataready;
   int itime, ntimes, times_defined;
@@ -833,13 +844,11 @@ typedef struct _keyframe {
   float noncon_time, con_time, disp_time;
   pathdata nodeval;
   float keyview_xyz[3],keyview_xyz2[3];
+  float eye[3];
   float total_distance, distance;
   float s_eye[3], s_az, s_elev, s_zoom, s_xyz_view[3];
   float d_eye[3], d_az, d_elev, d_zoom, d_xyz_view[3];
-  float bias, continuity, tension;
-  float bank;
   float az_path;
-  float s1, s2, d1, d2;
   struct _keyframe *next,*prev;
 } keyframe;
 
@@ -855,10 +864,9 @@ typedef struct _tourdata {
   float global_dist, local_dist;
   int *timeslist;
   int ntimes,nkeyframes;
-  int display,periodic,global_tension_flag;
+  int display,periodic;
   int startup;
   int isDefault;
-  float global_tension;
 } tourdata;
 
 /* --------------------------  tokendata ------------------------------------ */
@@ -950,7 +958,8 @@ typedef struct _windrosedata {
 
 typedef struct _vdevicedata {
   int unique, filetype, display;
-  windrosedata windroseinfo;
+  int nwindroseinfo;
+  windrosedata *windroseinfo;
   devicedata *udev,*vdev,*wdev,*valdev,*colordev,*veldev,*angledev,*sd_veldev,*sd_angledev;
 } vdevicedata;
 
@@ -1110,6 +1119,7 @@ typedef struct _partdata {
 #endif
 
   float zoffset, *times;
+  FILE_SIZE reg_file_size;
 
   char menulabel[128];
 
@@ -1130,6 +1140,9 @@ typedef struct _compdata {
 
 typedef struct _menudata {
   int menuvar;
+#ifdef pp_DEBUG_SUBMENU
+  int *menuvar_ptr;
+#endif
   char label[256];
 } menudata;
 
@@ -1152,9 +1165,7 @@ typedef struct _slicedata {
   char *comp_file, *reg_file, *vol_file;
   char *slicelabel;
   int compression_type;
-#ifdef pp_COLORBARFLIP
   int colorbar_autoflip;
-#endif
   int ncompressed;
   int slicetype;
   struct _multislicedata *mslice;
@@ -1283,25 +1294,33 @@ typedef struct _smokedata {
   unsigned char *frame_in, *frame_out, *view_tmp, *comp_all, **frame_comp_list;
 } smokedata;
 
-/* --------------------------  smoke3ddata ------------------------------------ */
+
+/* --------------------------  smokestatedata ------------------------------------ */
+
+typedef struct {
+  int loaded, index;
+  unsigned char *color;
+} smokestatedata;
+
+  /* --------------------------  smoke3ddata ------------------------------------ */
 
 typedef struct _smoke3ddata {
   int seq_id,autoload;
   char *file;
   char *comp_file, *reg_file;
   int filetype;
-  int loaded, display, request_load, d_display;
+  int loaded, display, request_load, primary_file;
   int is_zlib;
-  int soot_loaded,water_loaded,hrrpuv_loaded;
+  smokestatedata smokestate[MAXSMOKETYPES];
   int blocknumber;
-  int type;
+  int type,type2;
   int is1, is2, js1, js2, ks1, ks2;
   int compression_type;
   flowlabels label;
   char menulabel[128];
   float *times;
   int *use_smokeframe;
-  int fire_alpha;
+  int fire_alpha, co2_alpha;
   int *timeslist;
   int ntimes,ntimes_old,ismoke3d_time,lastiframe,ntimes_full;
   int nchars_uncompressed;
@@ -1314,8 +1333,6 @@ typedef struct _smoke3ddata {
   unsigned char *smoke_comp_all;
   unsigned char *frame_all_zeros;
   smokedata smoke, light;
-  unsigned char *hrrpuv_color, *water_color, *soot_color;
-  int hrrpuv_index, water_index, soot_index;
   int dir;
 } smoke3ddata;
 
@@ -1355,7 +1372,7 @@ typedef struct _patchdata {
   int geom_nvals, ngeom_times;
   flowlabels label;
   char scale[31];
-  char menulabel[128], menulabel_base[128], gslicedir[50];
+  char menulabel[128], menulabel_base[128], menulabel_suffix[128], gslicedir[50];
   int ijk[6];
   int extreme_min, extreme_max;
   time_t modtime;

@@ -2,9 +2,10 @@
 
 :: ---- FDS and smokeview version ----
 
-set fds_version=FDS6.6.0
-set smv_version=SMV6.6.3
-set fds_debug=1
+set fds_version=FDS6.7.0
+set smv_version=SMV6.7.1
+set fds_debug=0
+set fds_edition=FDS6
 
 :: ---- FDS and smokeview revision ----
 
@@ -19,7 +20,7 @@ if exist %userprofile%\.bundle\fds_revision.txt (
 
 :: ---- log entry date ----
 
-set smvlogdate="13-Feb-2018"
+set smvlogdate="19-Jun-2018"
 
 :: ---- repo locations ----
 
@@ -30,15 +31,19 @@ set svn_drive=c:
 
 ::*** Linux/OSX
 set linux_svn_root=FireModels_fork
-set compiler_dir=fire-notes/INSTALL/LINUX/INTEL_17u4
-set misc_dir=fire-notes/INSTALL/LIBS/LINUX/LIB64
 
-:: ---- MPI library locations ----
+:: ---- MPI version ----
 
 :: set to INTEL if using Intel MPI library
+
 set linux_mpi_version=INTEL
 set osx_mpi_version=3.0.0
-::set osx_mpi_version=1.8.4
+
+:: ---- lib/bin locations ----
+
+set INTEL_LIB_DIR=/var/local/bundle/INTEL/INTEL_18u2/LIB
+set INTEL_BIN_DIR=/var/local/bundle/INTEL/INTEL_18u2/bin64
+set OS_LIB_DIR=/var/local/bundle/OSLIBS/LINUX
 
 :: ---- Guide locations ----
 
@@ -68,7 +73,7 @@ set linux_username=%username%
 set linux_logon=%linux_username%@%linux_hostname%
 
 ::*** OSX
-set osx_hostname=ignis.el.nist.gov
+set osx_hostname=floga.el.nist.gov
 ::set osx_hostname=192.168.1.13
 set osx_username=%username%
 set osx_logon=%osx_username%@%osx_hostname%
