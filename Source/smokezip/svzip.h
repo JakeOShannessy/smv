@@ -58,6 +58,36 @@
 #endif
 #endif
 
+#ifdef pp_SMOKE3D_FORT
+#ifndef C_FILE
+#define C_FILE 0
+#endif
+#ifndef FORTRAN_FILE
+#define FORTRAN_FILE 1
+#endif
+
+#define FORTSMOKEREAD(var,size, count,STREAM,option) \
+                           if(option==1){FSEEK(STREAM,4,SEEK_CUR);}\
+                           fread(var,size,count,STREAM);\
+                           if(option==1){FSEEK(STREAM,4,SEEK_CUR);}
+
+#define FORTSMOKEREADBR(var,size, count,STREAM,option) \
+                           if(option==1){FSEEK(STREAM,4,SEEK_CUR);}\
+                           returncode=fread(var,size,count,STREAM);\
+                           if(returncode!=count||returncode==0)break;\
+                           if(option==1){FSEEK(STREAM,4,SEEK_CUR);}
+#else
+#define FORTSMOKEREAD(var,size, count,STREAM,option) \
+                           fread(var,size,count,STREAM)
+
+#define FORTSMOKEREADBR(var,size, count,STREAM,option) \
+                           returncode=fread(var,size,count,STREAM);\
+                           if(returncode!=count||returncode==0){
+                             break;\
+                           }
+#endif
+
+
 //***********************
 //************* structures
 //***********************
@@ -165,6 +195,9 @@ typedef struct {
 typedef struct {
   char *file,*filebase;
   int unit_start;
+#ifdef pp_SMOKE3D_FORT
+  int file_type;
+#endif
   char summary[1024];
   int compressed;
   int inuse,is_soot;
@@ -252,13 +285,13 @@ void mt_compress_all(void);
 void RandABsdir(float xyz[3], int dir);
 void rand_cone_dir(float xyz[3], float dir[3], float mincosangle);
 void rand_sphere_dir(float xyz[3]);
-float rand_1d(float xmin, float xmax);
-void rand_2d(float xy[2], float xmin, float xmax, float ymin, float ymax);
-void rand_3d(float xyz[3], float xmin, float xmax, float ymin, float ymax, float zmin, float zmax);
+float Rand1D(float xmin, float xmax);
+void Rand2D(float xy[2], float xmin, float xmax, float ymin, float ymax);
+void Rand3D(float xyz[3], float xmin, float xmax, float ymin, float ymax, float zmin, float zmax);
 void GetStartupSlice(int seq_id);
 void GetStartupSmoke(int seq_id);
-void GetStartupPatch(int seq_id);
-unsigned int uncompress_rle(unsigned char *buffer_in, int nchars_in, unsigned char *buffer_out);
+void GetStartupBoundary(int seq_id);
+unsigned int UnCompressRLE(unsigned char *buffer_in, int nchars_in, unsigned char *buffer_out);
 int ReadSMV(char *file);
 int GetEndian(void);
 int convert_slice(slice *slicei, int *thread_index);
@@ -311,7 +344,6 @@ void getsliceparms_c(char *file, int *ni, int *nj, int *nk);
 #define FORTopenslice          _F(openslice)
 #define FORTopenpart           _F(openpart)
 #define FORTgetsliceframe      _F(getsliceframe)
-#define FORTget_file_unit      _F(get_file_unit)
 
 #ifdef WIN32
 #define STDCALLF extern void _stdcall
@@ -319,7 +351,6 @@ void getsliceparms_c(char *file, int *ni, int *nj, int *nk);
 #define STDCALLF extern void
 #endif
 
-STDCALLF FORTget_file_unit(int *file_unit,int *file_unit_start);
 STDCALLF FORTopenpart(char *partfilename, int *unit, int *error, FILE_SIZE lenfile);
 STDCALLF FORTgetpartheader1(int *unit, int *nclasses, int *fdsversion, int *size);
 STDCALLF FORTgetpartheader2(int *unit, int *nclasses, int *nquantities, int *size);

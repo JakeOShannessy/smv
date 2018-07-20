@@ -1,5 +1,5 @@
 
-#*** Smokeview, VMakefile ***
+# Smokeview makefile
 
 #To use this Makefile cd to a sub-directory and type make_smv.sh or make_smv.bat
 
@@ -11,7 +11,10 @@ SMV_TESTFLAG =
 SMV_TESTSTRING =
 SMV_PROFILEFLAG =
 SMV_PROFILESTRING =
+COMP_VERSION =
 LUA_SCRIPTING =
+QUARTZ =
+
 ifeq ($(shell echo "check_quotes"),"check_quotes")
   GIT_HASH := $(shell ..\..\..\Utilities\Scripts\githash)
   GIT_DATE := $(shell ..\..\..\Utilities\Scripts\gitlog)
@@ -20,6 +23,16 @@ else
   GIT_DATE := $(shell git log -1 --format=%cd)
 endif
 GITINFO=-Dpp_GITHASH=\"$(GIT_HASH)\" -Dpp_GITDATE=\""$(GIT_DATE)\""
+
+ifeq ($(shell echo "check_quotes"),"check_quotes")
+  INTEL_COMPVERSION := $(shell ..\..\..\Utilities\Scripts\intel_compversion)
+  GNU_COMPVERSION := $(shell ..\..\..\Utilities\Scripts\gnu_compversion)
+else
+  INTEL_COMPVERSION := $(shell ../../../Utilities/Scripts/intel_compversion.sh)
+  GNU_COMPVERSION := $(shell ../../../Utilities/Scripts/gnu_compversion.sh)
+endif
+INTEL_COMPINFO=-Dpp_COMPVER=\"$(INTEL_COMPVERSION)\"
+GNU_COMPINFO=-Dpp_COMPVER=\"$(GNU_COMPVERSION)\"
 
 #----------------------------------------------------------------------------
 # Should not need to edit lines below except to add or 'debug' target entries
@@ -42,7 +55,7 @@ obj = main.o menus.o IOscript.o IOshooter.o glui_devices.o glui_shooter.o glui_w
       glui_colorbar.o skybox.o file_util.o string_util.o startup.o glui_trainer.o\
       shaders.o unit.o threader.o histogram.o translate.o update.o viewports.o\
       smv_geometry.o showscene.o glew.o infoheader.o  md5.o sha1.o sha256.o\
-      fdsmodules.o gsmv.o getdata.o getsizes.o
+      fdsmodules.o gsmv.o getdata.o
 
 ifeq ($(LUA_SCRIPTING),true)
 obj += c_api.o lua_api.o
@@ -50,7 +63,13 @@ endif
 
 objwin = $(obj:.o=.obj)
 
-INC = -I $(SOURCE_DIR)/glut-3.7.6 -I $(SOURCE_DIR)/glui_v2_1_beta -I $(SOURCE_DIR)/gd-2.0.15 -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview -I $(SOURCE_DIR)/glew -I $(SOURCE_DIR)/zlib128
+ifeq ($(QUARTZ),true)
+INC = -I /usr/X11/include
+else
+INC = -I $(SOURCE_DIR)/glut-3.7.6
+endif
+
+INC += -I $(SOURCE_DIR)/glui_v2_1_beta -I $(SOURCE_DIR)/gd-2.0.15 -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview -I $(SOURCE_DIR)/glew -I $(SOURCE_DIR)/zlib128
 WININC = -I $(SOURCE_DIR)/GLINC -I $(SOURCE_DIR)/pthreads
 
 ifeq ($(LUA_SCRIPTING),true)
@@ -75,21 +94,20 @@ smvluacore: $(SMVLUACORE_FILES)
 
 #--- windows
 
-WIN_LIBS = user32.lib gdi32.lib comdlg32.lib shell32.lib
-
-WIN_LIBDIR = $(LIB_DIR)/intel_win_64
-SMV_LIBS_WIN = $(WIN_LIBDIR)\glui.lib $(WIN_LIBDIR)\glut32.lib $(WIN_LIBDIR)\gd.lib $(WIN_LIBDIR)\jpeg.lib $(WIN_LIBDIR)\png.lib $(WIN_LIBDIR)\zlib.lib $(WIN_LIBDIR)\pthreads.lib
+WIN32_LIBS = user32.lib gdi32.lib comdlg32.lib shell32.lib
+SMV_WIN_LIBDIR = $(LIB_DIR)/intel_win_64
+SMV_LIBS_WIN = $(SMV_WIN_LIBDIR)\glui.lib $(SMV_WIN_LIBDIR)\glut32.lib $(SMV_WIN_LIBDIR)\gd.lib $(SMV_WIN_LIBDIR)\jpeg.lib $(SMV_WIN_LIBDIR)\png.lib $(SMV_WIN_LIBDIR)\zlib.lib $(SMV_WIN_LIBDIR)\pthreads.lib
 
 #--- OSX
 
 SMV_LIBS_OSX = -lglui -lgd -ljpeg -lpng -lz
+INTEL_LIBS_OSX = $(IFORT_COMPILER_LIB)/libifcoremt.a $(IFORT_COMPILER_LIB)/libifport.a
 
 #--- Linux
 
 SMV_LIBS_LINUX = $(SMV_LIBS_OSX) -lglut
 SYSTEM_LIBS_LINUX = -lpthread -lX11 -lXmu -lGLU -lGL -lm
-INTEL_LIBS_LINUX = $(IFORT_COMPILER_LIB)/intel64/libifcore.a  $(IFORT_COMPILER_LIB)/intel64/libirc.a
-
+INTEL_LIBS_LINUX =$(IFORT_COMPILER_LIB)/libifcore.a $(IFORT_COMPILER_LIB)/libifport.a
 
 #*** General Purpose Rules ***
 
@@ -134,7 +152,7 @@ ms_win_64 : FC        = ifort
 ms_win_64 : exe       = smokeview_win_$(SMV_TESTSTRING)64
 
 ms_win_64 : $(objwin)
-	$(CPP) -o $(bin)/$(exe) $(LFLAGS) $(objwin) $(WIN_LIBS) $(SMV_LIBS_WIN)
+	$(CPP) -o $(bin)/$(exe) $(LFLAGS) $(objwin) $(WIN32_LIBS) $(SMV_LIBS_WIN)
 
 # note: use /fpscomp:general option to allow smokeview to read files being currently written to by FDS
 #       (instead of the non-standard SHARED keyword in a FORTRAN OPEN statement)
@@ -142,8 +160,8 @@ ms_win_64 : $(objwin)
 # ------------- intel_win_64_db ----------------
 
 intel_win_64_db : INC += $(WININC) -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview
-intel_win_64_db : FFLAGS    = /Od /iface:stdref /fpp -D WIN32 /Z7 /nologo /fpscomp:general /debug:full /extend_source:132 /warn:unused /warn:nointerfaces /Qtrapuv /fp:strict /fp:except /traceback /check:all /stand:f08
-intel_win_64_db : CFLAGS    = /Od /W4 /debug:full /Z7 -D _DEBUG -D WIN32 -D pp_INTEL -D _CONSOLE -D X64 -D GLEW_STATIC -D PTW32_STATIC_LIB $(SMV_TESTFLAG) $(GITINFO)
+intel_win_64_db : FFLAGS    = /Od /iface:stdref /fpp -D WIN32 -D pp_INTEL /Z7 /nologo /fpscomp:general /debug:full /extend_source:132 /warn:unused /warn:nointerfaces /Qtrapuv /fp:strict /fp:except /traceback /check:all /stand:f08
+intel_win_64_db : CFLAGS    = /Od /W4 /debug:full /Z7 -D _DEBUG -D WIN32 -D pp_INTEL -D _CONSOLE -D X64 -D GLEW_STATIC -D PTW32_STATIC_LIB $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO)
 intel_win_64_db : LFLAGS    = /F32768000 /DEBUG
 intel_win_64_db : CC        = icl
 intel_win_64_db : CPP       = icl
@@ -151,7 +169,7 @@ intel_win_64_db : FC        = ifort
 intel_win_64_db : exe       = smokeview_win_$(SMV_TESTSTRING)64_db
 
 intel_win_64_db : $(objwin)
-	$(CPP) -o $(bin)/$(exe) $(LFLAGS) $(objwin) $(WIN_LIBS) $(SMV_LIBS_WIN)
+	$(CPP) -o $(bin)/$(exe) $(LFLAGS) $(objwin) $(WIN32_LIBS) $(SMV_LIBS_WIN)
 
 # ------------- intel_win_64 ----------------
 
@@ -159,8 +177,8 @@ intel_win_64 : INC += $(WININC) -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokevi
 ifeq ($(LUA_SCRIPTING),true)
 intel_win_64 : INC += -I $(SOURCE_DIR)/lua-5.3.1/src
 endif
-intel_win_64 : FFLAGS    = -O2 /iface:stdref /fpp -D WIN32 /fpscomp:general
-intel_win_64 : CFLAGS    = -O1 -D WIN32 -D pp_INTEL -D _CONSOLE -D X64 -D GLEW_STATIC -D PTW32_STATIC_LIB $(SMV_TESTFLAG) $(GITINFO)
+intel_win_64 : FFLAGS    = -O2 /iface:stdref /fpp -D WIN32 -D pp_INTEL  /fpscomp:general
+intel_win_64 : CFLAGS    = -O1 -D WIN32 -D pp_INTEL -D _CONSOLE -D X64 -D GLEW_STATIC -D PTW32_STATIC_LIB $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO)
 intel_win_64 : LIBLUA    =
 ifeq ($(LUA_SCRIPTING),true)
 intel_win_64 : CFLAGS    += -D pp_LUA
@@ -175,7 +193,7 @@ intel_win_64 : FC        = ifort
 intel_win_64 : exe       = smokeview_win_$(SMV_TESTSTRING)64
 
 intel_win_64 : $(objwin)
-	$(CPP) -o $(bin)/$(exe) $(LFLAGS) $(objwin) $(WIN_LIBS) $(SMV_LIBS_WIN) $(LIBLUA)
+	$(CPP) -o $(bin)/$(exe) $(LFLAGS) $(objwin) $(WIN32_LIBS) $(SMV_LIBS_WIN) $(LIBLUA)
 
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV  Linux VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
@@ -190,8 +208,8 @@ intel_win_64 : $(objwin)
 
 intel_linux_64 : LIB_DIR_PLAT = $(LIB_DIR)/intel_linux_64
 intel_linux_64 : LIBS_PLAT =
-intel_linux_64 : FFLAGS    = -O0 -traceback -m64 -static-intel -fpp $(SMV_PROFILEFLAG)
-intel_linux_64 : CFLAGS    = -O0 -traceback -m64 -static-intel -D pp_LINUX -D pp_INTEL $(SMV_TESTFLAG) $(SMV_PROFILEFLAG) $(GITINFO)
+intel_linux_64 : FFLAGS    = -O0 -traceback -m64 -static-intel -D pp_INTEL  -fpp $(SMV_PROFILEFLAG)
+intel_linux_64 : CFLAGS    = -O0 -traceback -m64 -static-intel -D pp_LINUX -D pp_INTEL $(SMV_TESTFLAG) $(SMV_PROFILEFLAG) $(GITINFO) $(INTEL_COMPINFO)
 intel_linux_64 : LIBLUA    =
 ifeq ($(LUA_SCRIPTING),true)
 intel_linux_64 : CFLAGS    += -D pp_LUA
@@ -199,7 +217,7 @@ intel_linux_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.a
 intel_linux_64 : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
 intel_linux_64 : LIBLUA    += $(LIB_DIR_PLAT)/liblua.a -ldl
 endif
-intel_linux_64 : LFLAGS    = -m64 -static-intel $(SMV_PROFILEFLAG)
+intel_linux_64 : LFLAGS    = -m64 -static-intel $(INTEL_LIBS_LINUX) $(SMV_PROFILEFLAG)
 intel_linux_64 : CC        = icc
 intel_linux_64 : CPP       = icpc
 intel_linux_64 : FC        = ifort
@@ -212,9 +230,9 @@ intel_linux_64 : $(obj)  $(if $(LUA_SCRIPTING),smvluacore)
 
 # ------------- intel_linux_64_db ----------------
 
-intel_linux_64_db : FFLAGS    = -O0 -m64 -static-intel -traceback -g -fpe0 -fltconsistency -WB -fpp -stand:f08 $(SMV_PROFILEFLAG)
-intel_linux_64_db : CFLAGS    = -O0 -g -m64 -static-intel $(SMV_TESTFLAG) -D _DEBUG -D pp_LINUX -D pp_INTEL $(SMV_PROFILEFLAG) -traceback -Wall -Wextra -check=stack,uninit -fp-stack-check -fp-trap-all=divzero,invalid,overflow -ftrapuv -Wuninitialized -Wunused-function -Wunused-variable $(GITINFO)
-intel_linux_64_db : LFLAGS    = -m64 -static-intel -traceback $(SMV_PROFILEFLAG)
+intel_linux_64_db : FFLAGS    = -O0 -m64 -static-intel -traceback -g -fpe0 -fltconsistency -D pp_INTEL  -WB -fpp -stand:f08 $(SMV_PROFILEFLAG)
+intel_linux_64_db : CFLAGS    = -O0 -g -m64 -static-intel $(SMV_TESTFLAG) -D _DEBUG -D pp_LINUX -D pp_INTEL $(SMV_PROFILEFLAG) -traceback -Wall -Wextra -check=stack,uninit -fp-stack-check -fp-trap-all=divzero,invalid,overflow -ftrapuv -Wuninitialized -Wunused-function -Wunused-variable $(GITINFO) $(INTEL_COMPINFO)
+intel_linux_64_db : LFLAGS    = -m64 -static-intel $(INTEL_LIBS_LINUX) -traceback $(SMV_PROFILEFLAG)
 intel_linux_64_db : CC        = icc
 intel_linux_64_db : CPP       = icpc
 intel_linux_64_db : FC        = ifort
@@ -226,7 +244,7 @@ intel_linux_64_db : $(obj)
 # ------------- gnu_linux_64_db ----------------
 
 gnu_linux_64_db : FFLAGS    = -O0 -m64 -ggdb -Wall -x f95-cpp-input -D pp_GCC -ffree-form -frecord-marker=4 -fcheck=all -fbacktrace
-gnu_linux_64_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-write-strings -D _DEBUG -D pp_LINUX -D pp_GCC
+gnu_linux_64_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO)
 gnu_linux_64_db : LFLAGS    = -m64
 gnu_linux_64_db : CC        = gcc
 gnu_linux_64_db : CPP       = g++
@@ -241,7 +259,7 @@ gnu_linux_64_db : $(obj)
 gnu_linux_64 : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
 gnu_linux_64 : LIBS_PLAT =
 gnu_linux_64 : FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC -ffree-form -frecord-marker=4
-gnu_linux_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D pp_GCC -Wno-write-strings
+gnu_linux_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) -Wno-write-strings $(GNU_COMPINFO) $(GITINFO)
 ifeq ($(LUA_SCRIPTING),true)
 gnu_linux_64 : CFLAGS    += -D pp_LUA
 gnu_linux_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.a
@@ -257,35 +275,6 @@ gnu_linux_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
 	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
 		$(SMV_LIBS_LINUX) -lgfortran $(SYSTEM_LIBS_LINUX) \
 		$(if $(LUA_SCRIPTING),$(LIB_DIR_PLAT)/liblua.a -ldl)
-
-# ------------- gnu_linux_32 ----------------
-
-gnu_linux_32 : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_32
-gnu_linux_32 : LIBS_PLAT =
-gnu_linux_32 : FFLAGS    = -O0 -x f95-cpp-input -D pp_GCC -ffree-form -frecord-marker=4 $(SMV_PROFILEFLAG)
-gnu_linux_32 : CFLAGS    = -O0 -D pp_LINUX -D pp_GCC -Wno-write-strings $(SMV_TESTFLAG) $(SMV_PROFILEFLAG) $(GITINFO)
-gnu_linux_32 : LFLAGS    = $(SMV_PROFILEFLAGS)
-gnu_linux_32 : CC        = gcc
-gnu_linux_32 : CPP       = g++
-gnu_linux_32 : FC        = gfortran
-gnu_linux_32 : exe       = smokeview_linux_$(SMV_TESTSTRING)32$(SMV_PROFILESTRING)
-
-gnu_linux_32 : $(obj)
-	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
-		$(SMV_LIBS_LINUX) -lgfortran $(SYSTEM_LIBS_LINUX)
-
-# ------------- gnu_linux_32_db ----------------
-
-gnu_linux_32_db : FFLAGS    = -O0 -ggdb -Wall -x f95-cpp-input -D pp_GCC -ffree-form -frecord-marker=4 -fcheck=all -fbacktrace
-gnu_linux_32_db : CFLAGS    = -O0 -ggdb -Wall -Wno-write-strings -Wno-comment -Wno-unused-function -D _DEBUG -D pp_LINUX -D pp_GCC
-gnu_linux_32_db : LFLAGS    =
-gnu_linux_32_db : CC        = gcc
-gnu_linux_32_db : CPP       = g++
-gnu_linux_32_db : FC        = gfortran
-gnu_linux_32_db : exe       = smokeview_linux_$(SMV_TESTSTRING)32_db
-
-gnu_linux_32_db : $(obj)
-	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR)/gnu_linux_32 $(SMV_LIBS_LINUX) -lgfortran $(SYSTEM_LIBS_LINUX)
 
 # ------------- mingw_win_64 ----------------
 
@@ -319,14 +308,12 @@ mingw_win_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV   OSX   VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 
-OSX_INTEL_LIBS = $(IFORT_COMPILER_LIB)/libifcoremt.a $(IFORT_COMPILER_LIB)/libimf.a $(IFORT_COMPILER_LIB)/libirc.a $(IFORT_COMPILER_LIB)/libsvml.a
-
 # ------------- intel_osx_64 ----------------
 
 intel_osx_64 : LIB_DIR_PLAT = $(LIB_DIR)/intel_osx_64
 intel_osx_64 : LIBS_PLAT =
-intel_osx_64 : FFLAGS    = -O0 -m64 -static-intel -fpp -D pp_OSX -mmacosx-version-min=10.4
-intel_osx_64 : CFLAGS    = -O0 -m64 -static-intel -D pp_OSX  -D pp_INTEL -mmacosx-version-min=10.4 $(SMV_TESTFLAG) $(GITINFO)
+intel_osx_64 : FFLAGS    = -O0 -m64 -traceback -static-intel -fpp -D pp_INTEL -D pp_OSX -mmacosx-version-min=10.7
+intel_osx_64 : CFLAGS    = -O0 -m64 -traceback -static-intel -D pp_OSX -D pp_INTEL -mmacosx-version-min=10.7 $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO)
 intel_osx_64 : LIBLUA    =
 ifeq ($(LUA_SCRIPTING),true)
 intel_osx_64 : CFLAGS    += -D pp_LUA
@@ -334,7 +321,7 @@ intel_osx_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.a
 intel_osx_64 : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
 intel_osx_64 : LIBLUA    += $(LIB_DIR_PLAT)/liblua.a -ldl
 endif
-intel_osx_64 : LFLAGS    = -m64 -static-intel -framework OpenGL -framework GLUT -mmacosx-version-min=10.4
+intel_osx_64 : LFLAGS    = -m64 -traceback -static-intel -framework OpenGL -framework GLUT -mmacosx-version-min=10.7
 intel_osx_64 : CC        = icc
 intel_osx_64 : CPP       = icpc
 intel_osx_64 : FC        = ifort
@@ -342,25 +329,48 @@ intel_osx_64 : exe       = smokeview_osx_$(SMV_TESTSTRING)64
 
 intel_osx_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
 	icpc -o $(bin)/$(exe) $(LFLAGS) $(obj)  -L $(LIB_DIR_PLAT) $(SMV_LIBS_OSX) \
-        $(OSX_INTEL_LIBS) $(LIBLUA)
+        $(INTEL_LIBS_OSX) $(LIBLUA)
+
+# ------------- intel_osx_64q ----------------
+
+intel_osx_64q : LIB_DIR_PLAT = $(LIB_DIR)/intel_osx_64
+intel_osx_64q : LIBS_PLAT =
+intel_osx_64q : FFLAGS    = -O0 -m64 -static-intel -fpp -D pp_INTEL -D pp_OSX -mmacosx-version-min=10.7
+intel_osx_64q : CFLAGS    = -O0 -m64 -static-intel -I /usr/X11/include -D pp_QUARTZ -D pp_OSX -D pp_INTEL -mmacosx-version-min=10.7 $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO)
+intel_osx_64q : LIBLUA    =
+ifeq ($(LUA_SCRIPTING),true)
+intel_osx_64q : CFLAGS    += -D pp_LUA
+intel_osx_64q : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.a
+intel_osx_64q : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
+intel_osx_64q : LIBLUA    += $(LIB_DIR_PLAT)/liblua.a -ldl
+endif
+intel_osx_64q : LFLAGS    = -m64 -static-intel -L/usr/X11/lib -lX11 -lXmu -lGLU -lGL -mmacosx-version-min=10.7
+intel_osx_64q : CC        = icc
+intel_osx_64q : CPP       = icpc
+intel_osx_64q : FC        = ifort
+intel_osx_64q : exe       = smokeview_osx_$(SMV_TESTSTRING)64q
+
+intel_osx_64q : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
+	icpc -o $(bin)/$(exe) $(LFLAGS) $(obj)  -L $(LIB_DIR_PLAT) $(SMV_LIBS_OSX) -lglut \
+        $(INTEL_LIBS_OSX) $(LIBLUA)
 
 # ------------- intel_osx_64_db ----------------
 
-intel_osx_64_db : FFLAGS    = -O0 -m64 -static-intel -fpp -D pp_OSX -mmacosx-version-min=10.4 -stand:f08
-intel_osx_64_db : CFLAGS    = -O0 -g -m64 -static-intel -D _DEBUG -D pp_OSX  -D pp_INTEL -mmacosx-version-min=10.4 $(SMV_TESTFLAG) -Wall -Wextra -check=stack,uninit -fp-stack-check -fp-trap-all=divzero,invalid,overflow -ftrapuv -Wuninitialized -Wunused-function -Wunused-variable $(GITINFO)
-intel_osx_64_db : LFLAGS    = -m64 -static-intel -framework OpenGL -framework GLUT -mmacosx-version-min=10.4
+intel_osx_64_db : FFLAGS    = -O0 -g -m64 -traceback -static-intel -fpp      -D pp_OSX -D pp_INTEL -mmacosx-version-min=10.7 -stand:f08
+intel_osx_64_db : CFLAGS    = -O0 -g -m64 -traceback -static-intel -D _DEBUG -D pp_OSX -D pp_INTEL -mmacosx-version-min=10.7 $(SMV_TESTFLAG) -Wall -Wextra -check=stack,uninit -fp-stack-check -fp-trap-all=divzero,invalid,overflow -ftrapuv -Wuninitialized -Wunused-function -Wunused-variable $(GITINFO) $(INTEL_COMPINFO)
+intel_osx_64_db : LFLAGS    = -m64 -traceback -static-intel -framework OpenGL -framework GLUT -mmacosx-version-min=10.7
 intel_osx_64_db : CC        = icc
 intel_osx_64_db : CPP       = icpc
 intel_osx_64_db : FC        = ifort
 intel_osx_64_db : exe       = smokeview_osx_$(SMV_TESTSTRING)64_db
 
 intel_osx_64_db : $(obj)
-	icpc -o $(bin)/$(exe) $(LFLAGS) $(obj)  -L $(LIB_DIR)/intel_osx_64 $(SMV_LIBS_OSX) $(OSX_INTEL_LIBS)
+	icpc -o $(bin)/$(exe) $(LFLAGS) $(obj)  -L $(LIB_DIR)/intel_osx_64 $(SMV_LIBS_OSX) $(INTEL_LIBS_OSX)
 
 # ------------- gnu_osx_64_db ----------------
 
 gnu_osx_64_db : FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC -ffree-form
-gnu_osx_64_db : CFLAGS    = -O0 -m64 -D _DEBUG -D pp_OSX -Wno-write-strings
+gnu_osx_64_db : CFLAGS    = -O0 -m64 -D _DEBUG -D pp_OSX -D pp_GCC $(SMV_TESTFLAG) -Wall -Wno-deprecated-declarations -Wno-write-strings $(GNU_COMPINFO) $(GITINFO)
 gnu_osx_64_db : LFLAGS    = -m64 -framework OpenGL -framework GLUT
 gnu_osx_64_db : CC        = gcc
 gnu_osx_64_db : CPP       = g++
@@ -373,7 +383,7 @@ gnu_osx_64_db : $(obj)
 # ------------- gnu_osx_64 ----------------
 
 gnu_osx_64 : FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC -ffree-form
-gnu_osx_64 : CFLAGS    = -O0 -m64 -D pp_OSX -Wno-write-strings
+gnu_osx_64 : CFLAGS    = -O0 -m64 -D pp_OSX -D pp_GCC $(SMV_TESTFLAG) -Wno-write-strings $(GNU_COMPINFO) $(GITINFO)
 gnu_osx_64 : LFLAGS    = -m64 -framework OpenGL -framework GLUT
 gnu_osx_64 : CC        = gcc
 gnu_osx_64 : CPP       = g++

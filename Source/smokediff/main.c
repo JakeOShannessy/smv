@@ -35,7 +35,7 @@ void Usage(char *prog, int option){
   PRINTF("  resolutions in smv_case2 must be integer multiples of the corresponding x, y, z mesh\n");
   PRINTF("  resolutions in smv_case1 when differencing slice files.\n\n");
 
-  UsageCommon(prog, HELP_SUMMARY);
+  UsageCommon(HELP_SUMMARY);
 
   if(option == HELP_ALL){
     PRINTF("  -s1 dir1 - directory containing case smv_case1.smv\n");
@@ -46,7 +46,7 @@ void Usage(char *prog, int option){
     PRINTF("  -ns      - do not difference slice files\n");
     PRINTF("  -smv     - view case in smokeview when differencing is complete\n");
     PRINTF("  -type label - difference only data of type label (in boundary and slice files)\n");
-    UsageCommon(prog, HELP_ALL);
+    UsageCommon(HELP_ALL);
   }
   PRINTF("\n  smv_case1,smv_case2 - Two smokeview cases to compare.\n");
 }
@@ -188,6 +188,7 @@ int main(int argc, char **argv){
     }
   }
 
+  smoke1=NULL;
   strcpy(smv1_out,"");
   if(smv1!=NULL){
     strcat(smv1_out,smv1);
@@ -279,7 +280,7 @@ int main(int argc, char **argv){
   fclose(stream_in2);
 
   if(no_plot3d==0){
-    setup_plot3d(stream_out);
+    SetupPlot3D(stream_out);
     diff_plot3ds(stream_out);
   }
   if(no_slice==0){

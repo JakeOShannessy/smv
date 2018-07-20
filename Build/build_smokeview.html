@@ -28,7 +28,7 @@ function build_utilprog(args){
   MyObject.Run(get_fullpath("../../fds/Utilities/Scripts/webBUILDutilprog.bat ",args));
 }
 function package_smv(args){
-  MyObject.Run(get_fullpath("../scripts/webPACKAGEsmv.bat ",args));
+  MyObject.Run(get_fullpath("../Build/Bundle/scripts/webPACKAGEsmv.bat ",args));
 }
 function install_smv(args){
   MyObject.Run(get_fullpath("../scripts/webINSTALLsmv.bat ",args));
@@ -52,7 +52,12 @@ function install_smv(args){
 <button onclick="run_script('\\smv\\scripts\\webUPDATErepos.bat')">Update</button>
 <button onclick="run_script('\\smv\\scripts\\webSHOW_revisions.bat')">Show</button>
 </td></tr>
-<tr><th>Revision</th><td align=center><button onclick="run_script('\\smv\\scripts\\webSET_bundle_revision.bat')">Set</button><button onclick="run_script('\\smv\\scripts\\SHOW_bundle_revision.bat')">Show</button></td></tr>
+<tr><th>Revision</th><td align=center>
+<button onclick="run_script('\\smv\\scripts\\webSET_bundle_revision.bat')">Set</button>
+<button onclick="run_script('\\smv\\scripts\\webSHOW_bundle_revision.bat')">Show</button></td></tr>
+<tr><th>Branch</th><td align=center>
+<button onclick="run_script('\\smv\\scripts\\webSET_branches.bat')">Set master</button>
+<button onclick="run_script('\\smv\\scripts\\webSHOW_branches.bat')">Show</button></td></tr>
 <tr><th align=center>Release<br>notes</th>
 <td align=center>
 <button onclick="run_script('\\smv\\scripts\\webGET_smvlog.bat')">Add</button>
@@ -65,19 +70,27 @@ function install_smv(args){
 <p id="demo"></p>
 
 <p><table border=on>
-<tr><th colspan=4>Libraries/Utilities</th></tr>
+<tr><th colspan=3>Libraries</th></tr>
 <tr>
-<th></th>
 <th>Windows</th>
 <th>Linux</th>
 <th>OSX</th>
 </tr>
 
 <tr>
-<th>Libraries</th>
 <td align=center><button onclick="build_libs('windows')">Build</button></td>
 <td align=center><button onclick="build_libs('linux')">Build</button></td>
 <td align=center><button onclick="build_libs('osx')">Build</button></td>
+</tr>
+</table>
+
+<p><table border=on>
+<tr><th colspan=4>Utilities</th></tr>
+<tr>
+<th></th>
+<th>Windows</th>
+<th>Linux</th>
+<th>OSX</th>
 </tr>
 
 <tr>
@@ -150,40 +163,38 @@ function install_smv(args){
 <p><table border=on>
 <tr><th colspan=6>Smokeview</th></tr>
 
-<tr><th colspan=3>Release</th><th colspan=3>Test</th></tr>
+<tr>
+<th colspan=3>Test</th>
+<th colspan=3>Release</th>
+</tr>
 
 <tr><th>Windows</th><th>Linux</th><th>OSX</th><th>Windows</th><th>Linux</th><th>OSX</th></tr>
 
 <tr>
-<td align=center><button onclick="build_smv('windows release')">Build</button></td>
-<td align=center><button onclick="build_smv('linux release')">Build</button></td>
-<td align=center><button onclick="build_smv('osx release')">Build</button></td>
 <td align=center><button onclick="build_smv('windows test')">Build</button></td>
 <td align=center><button onclick="build_smv('linux test')">Build</button></td>
 <td align=center><button onclick="build_smv('osx test')">Build</button></td>
+<td align=center><button onclick="build_smv('windows release')">Build</button></td>
+<td align=center><button onclick="build_smv('linux release')">Build</button></td>
+<td align=center><button onclick="build_smv('osx release')">Build</button></td>
 </tr>
 
 <tr>
-<td align=center><button onclick="package_smv('windows release')">Bundle</button></td>
-<td align=center><button onclick="package_smv('linux release')">Bundle</button></td>
-<td align=center><button onclick="package_smv('osx release')">Bundle</button></td>
 <td align=center><button onclick="package_smv('windows test')">Bundle</button></td>
 <td align=center><button onclick="package_smv('linux test')">Bundle</button></td>
 <td align=center><button onclick="package_smv('osx test')">Bundle</button></td>
+<td align=center><button onclick="package_smv('windows release')">Bundle</button></td>
+<td align=center><button onclick="package_smv('linux release')">Bundle</button></td>
+<td align=center><button onclick="package_smv('osx release')">Bundle</button></td>
 </tr>
 
 <tr>
-<td align=center><button onclick="install_smv('windows release')">Install</button></td>
-<td align=center><button onclick="install_smv('linux release')">Install</button></td>
-<td align=center><button onclick="install_smv('osx release')">Install</button></td>
 <td align=center><button onclick="install_smv('windows test')">Install</button></td>
 <td align=center><button onclick="install_smv('linux test')">Install</button></td>
 <td align=center><button onclick="install_smv('osx test')">Install</button></td>
-</tr>
-
-<tr>
-<td align=center COLSPAN=3><button onclick="run_script('\\smv\\scripts\\webGET_smv_version.bat')">Revision</button></td>
-<td align=center COLSPAN=3><button onclick="run_script('\\smv\\scripts\\webGET_smvtest_version.bat')">Revision</button></td>
+<td align=center><button onclick="install_smv('windows release')">Install</button></td>
+<td align=center><button onclick="install_smv('linux release')">Install</button></td>
+<td align=center><button onclick="install_smv('osx release')">Install</button></td>
 </tr>
 
 <tr>
@@ -192,14 +203,16 @@ function install_smv(args){
 
 </table>
 
-<h3>Other</h3>
-<ul>
-<li><button onclick="run_script('\\smv\\scripts\\webEDIT_build_smokeview.bat')">Edit this page</button> 
-<li><button onclick="run_script('\\smv\\scripts\\webCOPYhome2config.bat')">settings ===>> repo</button>
-<li><button onclick="run_script('\\smv\\scripts\\webCOPYconfig2home.bat')">settings <<=== repo</button>
-<li><button onclick="run_script('\\smv\\scripts\\webTEST_setup.bat')">Test web scripts</button>
-<li><a href="getting_started.html">FDS/Smokeview build page checklist</a>
-</ul>
+<p><table border=on>
+<tr><th>Other</th></tr>
+<tr><td align=center><button onclick="run_script('\\smv\\scripts\\webEDIT_build_smokeview.bat')">Edit this page</button></td></tr> 
+<tr><td align=center><button onclick="run_script('\\smv\\scripts\\webCOPYhome2config.bat')">settings ===>> repo</button></td></tr>
+<tr><td align=center><button onclick="run_script('\\smv\\scripts\\webCOPYconfig2home.bat')">settings <<=== repo</button></td></tr>
+<tr><td align=center><button onclick="run_script('\\smv\\scripts\\webTEST_setup.bat')">Test web scripts</button></td></tr>
+</table>
+
+<p><a href="getting_started.html">FDS/Smokeview build page checklist</a>
+
 
 <p><hr>
 

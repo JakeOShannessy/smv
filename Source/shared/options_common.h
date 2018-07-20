@@ -3,7 +3,13 @@
 
 //*** options: all platforms
 
+#ifndef _DEBUG
 #define pp_HASH   // md5, sha1 and sha255 hashing
+#endif
+
+#ifdef pp_INTEL
+#define pp_FSEEK
+#endif
 
 //*** options: windows
 
@@ -25,7 +31,7 @@
 #ifdef pp_HASH
 #define PRINTVERSION(a,b) PRINTversion(a,b,hash_option)
 #else
-#define PRINTVERSION(a,b) PRINTversion(a,b)
+#define PRINTVERSION(a,b) PRINTversion(a)
 #endif
 
 //*** options: Mac
@@ -55,6 +61,21 @@
 #else
 #define _F(name) name
 #endif
+#endif
+
+// debugging macros
+
+#ifdef pp_TRACE
+#define BTRACE \
+  printf("entering, file: %s, line: %d\n",__FILE__,__LINE__)
+#define TTRACE \
+  printf("in, file: %s, line: %d\n",__FILE__,__LINE__)
+#define ETRACE \
+  printf("leaving, file: %s, line: %d\n",__FILE__,__LINE__)
+#else
+#define BTRACE
+#define TTRACE
+#define ETRACE
 #endif
 
 #define FILE_SIZE unsigned long long
@@ -93,11 +114,17 @@
 #define SVDECL(var,val)  var
 #endif
 
+
+#define GLUT_H <GL/glut.h>
 #ifdef pp_OSX
+#undef  GLUT_H
 #define GLUT_H <GLUT/glut.h>
-#else
+#endif
+#ifdef pp_QUARTZ
+#undef  GLUT_H
 #define GLUT_H <GL/glut.h>
 #endif
+
 #include "lint.h"
 
 #endif

@@ -83,7 +83,10 @@ MMEXTERN pthread_mutex_t mutexSLICE_BOUND,mutexPATCH_BOUND,mutexPART2ISO,mutexPR
 #define ResizeMemoryMemID(f,g,h) _ResizeMemory((f),(g),(h),(#f),__FILE__,__LINE__)
 #endif
 
-#define NEWMEMORY(f,g) NewMemory((void **)&(f),(g))
+#define NewResizeMemory(f,g) ((f)==NULL ? NewMemory((void **)&f,g) : ResizeMemory((void **)&f,g))
+
+#define NEWMEMORY(f,g)       NewMemory((void **)&(f),(g))
+#define RESIZEMEMORY(f,g) ResizeMemory((void **)&(f),(g))
 
 #ifdef pp_memstatus
 #ifdef WIN32
@@ -99,7 +102,7 @@ void _memorystatus(unsigned int size,unsigned int *availmem, unsigned int *memus
 #endif
 
 #ifdef pp_MEMPRINT
-void _PrintMemoryInfo(void);
+EXTERNCPP void _PrintMemoryInfo(void);
 #define PrintMemoryInfo _PrintMemoryInfo()
 #else
 #define PrintMemoryInfo

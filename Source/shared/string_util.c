@@ -6,6 +6,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <math.h>
+#ifdef pp_OSX
+#include <unistd.h>
+#endif
 #ifdef WIN32
 #include <dirent_win.h>
 #else
@@ -22,6 +25,14 @@
 
 
 unsigned int *random_ints, nrandom_ints;
+
+/* ----------------------- AppendString ----------------------------- */
+
+char *AppendString(char *S1, char *S2) {
+  strcpy(append_string, S1);
+  strcat(append_string, S2);
+  return append_string;
+}
 
 /* ----------------------- InitRandAB ----------------------------- */
 
@@ -241,7 +252,7 @@ void TrimCommas(char *line){
   char *c;
 
   for(c = line + strlen(line) - 1;c>=line;c--){
-    if(isspace(*c))continue;
+    if(isspace((unsigned char)(*c)))continue;
     if(strncmp(c,",",1)!=0)break;
     *c=' ';
   }
@@ -260,7 +271,7 @@ void TrimBack(char *line){
   len = strlen(line);
   if(len==0)return;
   for(c=line+len-1; c>=line; c--){
-    if(isspace(*c))continue;
+    if(isspace((unsigned char)(*c)))continue;
     *(c+1)='\0';
     return;
   }
@@ -276,7 +287,7 @@ char *TrimFront(char *line){
   char *c;
 
   for(c=line;c<=line+strlen(line)-1;c++){
-    if(!isspace(*c))return c;
+    if(!isspace((unsigned char)(*c)))return c;
   }
   return line;
 }
@@ -617,7 +628,7 @@ int Match(char *buffer, const char *key){
   lenbuffer=strlen(buffer);
   if(lenbuffer<lenkey)return NOTMATCH; // buffer shorter than key so no match
   if(strncmp(buffer,key,lenkey) != 0)return NOTMATCH; // key doesn't match buffer so no match
-  if(lenbuffer>lenkey&&!isspace(buffer[lenkey]))return NOTMATCH;
+  if(lenbuffer>lenkey&&!isspace((unsigned char)buffer[lenkey]))return NOTMATCH;
   return MATCH;
 }
 
@@ -636,7 +647,7 @@ int MatchUpper(char *buffer, const char *key){
   for(i=0;i<lenkey;i++){
     if(toupper(buffer[i])!=toupper(key[i]))return NOTMATCH;
   }
-  if(lenbuffer>lenkey&&!isspace(buffer[lenkey]))return NOTMATCH;
+  if(lenbuffer>lenkey&&!isspace((unsigned char)buffer[lenkey]))return NOTMATCH;
   return MATCH;
 }
 
@@ -740,7 +751,7 @@ void GetProgVersion(char *PROGversion){
   strcpy(PROGversion,PROGVERSION);
 }
 
-/* ------------------ setisolabels ------------------------ */
+/* ------------------ SetLabelsIso ------------------------ */
 
 int SetLabelsIso(flowlabels *flowlabel, char *longlabel, char *shortlabel, char *unit, float *levels, int nlevels){
   char buffer[255];
@@ -818,6 +829,25 @@ int SetLabels(flowlabels *flowlabel, char *longlabel, char *shortlabel, char *un
   len=strlen(buffer);
   if(NewMemory((void **)&flowlabel->unit,(unsigned int)(len+1))==0)return LABEL_ERR;
   STRCPY(flowlabel->unit,buffer);
+
+  return LABEL_OK;
+}
+
+/* ------------------ AppendLabels ------------------------ */
+
+int AppendLabels(flowlabels *flowlabel, char *suffix_label){
+  size_t newlen;
+  char *longlabel;
+
+  if(flowlabel==NULL || flowlabel->longlabel==NULL)return LABEL_OK;
+  if(suffix_label == NULL || strlen(suffix_label)==0)return LABEL_OK;
+
+  newlen = strlen(flowlabel->longlabel) + strlen(suffix_label);
+  if(NewMemory((void **)&longlabel, (unsigned int)(newlen+1)) == 0)return LABEL_ERR;
+  STRCPY(longlabel,flowlabel->longlabel);
+  STRCAT(longlabel, suffix_label);
+  FREEMEMORY(flowlabel->longlabel);
+  flowlabel->longlabel=longlabel;
 
   return LABEL_OK;
 }
@@ -1062,6 +1092,14 @@ unsigned int DiffDate(char *token, char *tokenbase){
   return difft;
 }
 
+#ifdef pp_BETA
+  #define SET_VERSIONTITLE
+#else
+#ifndef pp_OFFICIAL_RELEASE
+  #define SET_VERSIONTITLE
+#endif
+#endif
+
 /* ------------------ GetBaseTitle ------------------------ */
 
 void GetBaseTitle(char *progname, char *title_base){
@@ -1080,16 +1118,11 @@ void GetBaseTitle(char *progname, char *title_base){
 
   strcat(title_base, " ");
   strcat(title_base, version);
-#ifdef pp_BETA
-  strcat(title_base, "(");
+
+#ifdef SET_VERSIONTITLE
+  if(strcmp(version,"")!=0)strcat(title_base, "(");
   strcat(title_base, git_version);
-  strcat(title_base, ")");
-#else
-#ifndef pp_OFFICIAL_RELEASE
-  strcat(title_base, "(");
-  strcat(title_base, git_version);
-  strcat(title_base, ")");
-#endif
+  if(strcmp(version,"")!=0)strcat(title_base, ")");
 #endif
   strcat(title_base, " - ");
 }
@@ -1266,7 +1299,7 @@ unsigned char *GetHashSHA256(char *file){
 
 /* ------------------ UsageCommon ------------------------ */
 
-void UsageCommon(char *prog, int option){
+void UsageCommon(int option){
   if(option == HELP_SUMMARY){
     PRINTF("  -help      - display help summary\n");
     PRINTF("  -help_all  - display all help info\n");
@@ -1333,12 +1366,13 @@ void ParseCommonOptions(int argc, char **argv){
 #endif
   }
 }
+
 /* ------------------ version ------------------------ */
 
 #ifdef pp_HASH
 void PRINTversion(char *progname, char *progfullpath, int option){
 #else
-void PRINTversion(char *progname, char *progfullpath){
+void PRINTversion(char *progname){
 #endif
   char version[256];
   char githash[256];
@@ -1351,34 +1385,39 @@ void PRINTversion(char *progname, char *progfullpath){
 
   PRINTF("\n");
   PRINTF("%s\n\n", releasetitle);
-  PRINTF("Version          : %s\n", version);
+  if(strcmp(version, "") != 0){
+    PRINTF("Version          : %s\n", version);
+  }
   PRINTF("Revision         : %s\n", githash);
   PRINTF("Revision Date    : %s\n", gitdate);
   PRINTF("Compilation Date : %s %s\n", __DATE__, __TIME__);
+#ifndef pp_COMPVER
+#define pp_COMPVER "unknown"
+#endif
+  PRINTF("Compiler         : %s\n", pp_COMPVER);
+
 #ifdef pp_HASH
-#ifndef _DEBUG
   if(option==HASH_MD5||option==HASH_ALL){
     unsigned char *hash = NULL;
 
     hash = GetHashMD5(progfullpath);
-    if(hash!=NULL)PRINTF("MD5 hash         : %s\n", hash);
+    if(hash!=NULL)PRINTF("Checksum(MD5)    : %s\n", hash);
     FREEMEMORY(hash);
   }
   if(option==HASH_SHA1||option==HASH_ALL){
     unsigned char *hash = NULL;
 
     hash = GetHashSHA1(progfullpath);
-    if(hash!=NULL)PRINTF("SHA1 hash        : %s\n", hash);
+    if(hash!=NULL)PRINTF("Checksum(SHA1)   : %s\n", hash);
     FREEMEMORY(hash);
   }
   if(option==HASH_SHA256||option==HASH_ALL){
     unsigned char *hash = NULL;
 
     hash = GetHashSHA256(progfullpath);
-    if(hash!=NULL)PRINTF("SHA256 hash      : %s\n", hash);
+    if(hash!=NULL)PRINTF("Checksum(SHA256) : %s\n", hash);
     FREEMEMORY(hash);
   }
-#endif
 #endif
 #ifdef WIN32
   PRINTF("Platform         : WIN64 ");
@@ -1396,8 +1435,3 @@ void PRINTversion(char *progname, char *progfullpath){
   PRINTF("Platform         : LINUX64\n");
 #endif
 }
-
-
-
-
-

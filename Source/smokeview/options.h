@@ -12,27 +12,30 @@
 #ifdef pp_BETA
   #define PROGVERSION "Test"
 #else
-  #define PROGVERSION "6.5.4"
+  #define PROGVERSION ""
 #endif
 
 //*** options: all platforms
 
-#define pp_ZONETL
+#define pp_CLIP         // test frustum near/far clip planes
 #define pp_DRAWISO      // turn on drawing routines
 #define pp_ffmpeg       // support compression
 #define pp_FILELIST     // use list of file names
+#define pp_LANG         // support other languages
+
 //#define pp_PARTDEFER    // defer particle bound and coloring until last particle file is loaded
+//#define pp_SPECTRAL
 
 #define pp_GPU          // support the GPU
 #ifdef pp_GPU
+#ifndef pp_OSX
 #define pp_CULL         // pp_GPU directive must also be set
+#endif
 #define pp_GPUTHROTTLE  // pp_GPU directive must also be set
 #endif
 
 //#define pp_PARTTEST   // for debugging, set particle values to 100*parti->seq_id + small random number
 #define pp_READBUFFER   // read .smv file from a memory buffer
-#define pp_RENDER360    // render 360 images
-#define pp_SLICELOAD     // use slice file parameters found in .smv file to construct menus
 
 #define pp_THREAD       // turn on multi-threading
 #ifdef pp_THREAD
@@ -43,7 +46,6 @@
 //*** options: windows
 
 #ifdef WIN32
-#define pp_LANG         // support other languages
 #define pp_DEG          // output degree symbol
 #define pp_memstatus
 #define pp_COMPRESS     // support for smokezip
@@ -52,25 +54,27 @@
 //*** options: Linux
 
 #ifdef pp_LINUX
-#define pp_LANG         // support other languages
 #define pp_DEG          // output degree symbol
 #endif
 
 //*** options: Mac
 
 #ifdef pp_OSX
-#define pp_QUICKTIME    // add option to make .avi files compatible with quicktime
 #define pp_GLUTGET      // use d and f key in place of CTRL and ALT key
 // #define pp_OSXGLUT32 // used to test advanced OpenGL profile on mac
 #endif
 
 //*** options: options being tested on all platforms
 
-#ifdef pp_BETA
+#ifdef pp_BETA   
+#define pp_DEBUG_SUBMENU       // debug output and testing for building menus
+//#define pp_SMOKE3D_LOAD_TEST // load 3d smoke for all meshes for each time step 
+//#define pp_SMOKEALPHA        // experimental smoke alpha settings
 #define pp_SHOWTERRAIN
-#define pp_GEOMTEST      // used to test tetrahedron box intersections
+#define pp_GEOMTEST            // used to test tetrahedron box intersections
 #define pp_TIMINGS
 //#define pp_GPUDEPTH
+//#define pp_SMOKETEST         // experimental smoke dialog box entries
 #endif
 
 //*** options: for debugging

@@ -18,6 +18,87 @@
 
 int cull_count=0;
 
+/* ------------------ UpdateSmoke3dFileParms ------------------------ */
+
+void UpdateSmoke3dFileParms(void) {
+  int i;
+
+  nsootfiles = 0;
+  nsootloaded = 0;
+  nhrrpuvfiles = 0;
+  nhrrpuvloaded = 0;
+  ntempfiles = 0;
+  ntemploaded = 0;
+  nco2files = 0;
+  nco2loaded = 0;
+  for (i = 0; i < nsmoke3dinfo; i++) {
+    smoke3ddata *smoke3di;
+
+    smoke3di = smoke3dinfo + i;
+    switch (smoke3di->type) {
+    case SOOT:
+      if (smoke3di->loaded == 1)nsootloaded++;
+      nsootfiles++;
+      break;
+    case HRRPUV:
+      if (smoke3di->loaded == 1)nhrrpuvloaded++;
+      nhrrpuvfiles++;
+      break;
+    case TEMP:
+      if (smoke3di->loaded == 1)ntemploaded++;
+      ntempfiles++;
+      break;
+    case CO2:
+      if (smoke3di->loaded == 1)nco2loaded++;
+      nco2files++;
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+  }
+}
+
+/* ------------------ UpdateOpacityMap ------------------------ */
+
+void UpdateOpacityMap(void){
+  int i;
+
+  unsigned char alpha;
+  int ival0, ival1, ival2, ival3;
+  float dx, *xplt;
+  float ods[3];
+
+  update_opacity_map=0;
+
+  ods[0]  = slicehrrpuv_lower;
+  ods[1]  = slicehrrpuv_middle;
+  ods[2]  = slicehrrpuv_upper;
+
+  ival0 = 0;
+  ival1 = slicehrrpuv_cut1;
+  ival2 = slicehrrpuv_cut2;
+  ival3 = 256;
+
+  xplt = meshinfo->xplt_orig;
+  dx = xplt[1] - xplt[0];
+
+  alpha = CLAMP(255*(1.0-pow(0.5, dx/MAX(ods[0],0.001))), 0, 255);
+  for(i = ival0;i<ival1;i++){
+    opacity_map[i] = alpha;
+  }
+
+  alpha = CLAMP(255*(1.0-pow(0.5, dx/MAX(ods[1],0.001))), 0, 255);
+  for(i = ival1;i<ival2;i++){
+    opacity_map[i] = alpha;
+  }
+
+  alpha = CLAMP(255*(1.0-pow(0.5, dx/MAX(ods[2],0.001))), 0, 255);
+  for(i = ival2;i<ival3;i++){
+    opacity_map[i] = alpha;
+  }
+}
+
 /* ------------------ AdjustAlpha ------------------------ */
 
 unsigned char AdjustAlpha(unsigned char alpha, float factor){
@@ -41,7 +122,7 @@ unsigned char AdjustAlpha(unsigned char alpha, float factor){
   return alpha;
 }
 
-//              alphaf_out[n]=AdjustAlpha(ALPHAIN, xyzeyeorig, xp, ASPECTRATIO, NORM, NORMTYPE);
+//              alphaf_out[n]=AdjustAlpha(ALPHAIN, eye_position_fds, xp, ASPECTRATIO, NORM, NORMTYPE);
 
 // -------------------------- ADJUSTALPHA ----------------------------------
 
@@ -572,7 +653,6 @@ void LightFractions2File(meshdata *meshi){
   int meshnum;
   char smvlight_file[256];
   FILE *slicesmv = NULL;
-  int fileunit = 20;
   int is1, is2, js1, js2, ks1, ks2;
   volrenderdata *vr;
 
@@ -615,7 +695,7 @@ void LightFractions2File(meshdata *meshi){
   fprintf(slicesmv, " %s\n", unitlabel);
   fclose(slicesmv);
 
-  FORTwriteslicedata2(&fileunit, slicefile, longlabel, shortlabel, unitlabel,
+  FORTwriteslicedata2(slicefile, longlabel, shortlabel, unitlabel,
     &is1, &is2, &js1, &js2, &ks1, &ks2,
     meshi->light_fraction, vr->times, &vr->ntimes, len_slicefile, len_longlabel, len_shortlabel, len_unitlabel);
 }
@@ -636,35 +716,27 @@ void InitAllLightFractions(float *xyz_light, int light_type){
 }
 
 
-/* ------------------ IsFireOrSoot ------------------------ */
+/* ------------------ IsSmokeComponentPresent ------------------------ */
 
-int IsFireOrSoot(smoke3ddata *smoke3di){
-  smoke3ddata *soot=NULL, *fire=NULL;
-  int is_fire, is_soot;
-  int return_val;
+int IsSmokeComponentPresent(smoke3ddata *smoke3di){
+  int i;
 
-  is_soot=0;
-  if(smoke3di->soot_index!=-1)soot = smoke3dinfo + smoke3di->soot_index;
-  if(soot!=NULL&&soot->loaded==1&&soot->display==1){
-    is_soot=1;
-    if(soot->frame_all_zeros[soot->ismoke3d_time]==1)is_soot=0;
+  for(i = 0;i < MAXSMOKETYPES;i++){
+    smoke3ddata *smoke_component;
+
+    if(smoke3di->smokestate[i].index == -1)continue;
+    smoke_component = smoke3dinfo + smoke3di->smokestate[i].index;
+    if(smoke_component->loaded != 1 || smoke_component->display != 1)continue;
+    if(smoke_component->frame_all_zeros[smoke_component->ismoke3d_time] == 1)continue;
+    return 1;
   }
-
-  is_fire=0;
-  if(smoke3di->hrrpuv_index!=-1)fire = smoke3dinfo + smoke3di->hrrpuv_index;
-  if(fire!=NULL&&fire->loaded==1&&fire->display==1){
-    is_fire=1;
-    if(fire->frame_all_zeros[fire->ismoke3d_time]==1)is_fire=0;
-  }
-  return_val=0;
-  if(is_soot==1||is_fire==1)return_val=1;
-  return return_val;
+  return 0;
 }
 #ifdef pp_CULL
 
-/* ------------------ DrawSmoke3DCULL ------------------------ */
+/* ------------------ DrawSmoke3dCull ------------------------ */
 
-void DrawSmoke3DCULL(void){
+void DrawSmoke3dCull(void){
   int i, j, k, n, nn;
   float constval, x1, x3, z1, z3, yy1, y3;
   int is1, is2, js1, js2, ks1;
@@ -695,7 +767,7 @@ void DrawSmoke3DCULL(void){
   if(cullfaces==1)glDisable(GL_CULL_FACE);
   TransparentOn();
 
-  SNIFF_ERRORS("before DrawSmoke3DCULL");
+  SNIFF_ERRORS("before DrawSmoke3dCull");
   value[0] = 255;
   value[1] = 255;
   value[2] = 255;
@@ -716,7 +788,7 @@ void DrawSmoke3DCULL(void){
   xyzindex2[5] = 3;
 
   CheckMemory;
-  SNIFF_ERRORS("in DrawSmoke3DCULL 1");
+  SNIFF_ERRORS("in DrawSmoke3dCull 1");
   glBegin(GL_TRIANGLES);
   mesh_old = NULL;
   for(nn = 0;nn<ncullplaneinfo;nn++){
@@ -733,10 +805,10 @@ void DrawSmoke3DCULL(void){
       if(nterraininfo>0){
         znode_offset = meshi->terrain->znode_offset;
       }
-      SNIFF_ERRORS("in DrawSmoke3DCULL 4");
+      SNIFF_ERRORS("in DrawSmoke3dCull 4");
       smoke3di = meshi->cull_smoke3d;
 
-      firecolor = smoke3di->hrrpuv_color;
+      firecolor = smoke3di->smokestate[HRRPUV].color;
 
       xplt = meshi->xplt;
       yplt = meshi->yplt;
@@ -792,8 +864,8 @@ void DrawSmoke3DCULL(void){
       {
         smoke3ddata *sooti = NULL;
 
-        if(smoke3di->soot_index>=0){
-          sooti = smoke3dinfo+smoke3di->soot_index;
+        if(smoke3di->smokestate[SOOT].index >=0){
+          sooti = smoke3dinfo+smoke3di->smokestate[SOOT].index;
         }
         if(sooti!=NULL&&sooti->display==1){
           have_smoke = 1;
@@ -814,7 +886,7 @@ void DrawSmoke3DCULL(void){
       glBegin(GL_TRIANGLES);
     }
 
-    if(IsFireOrSoot(smoke3di)==0)continue;
+    if(IsSmokeComponentPresent(smoke3di)==0)continue;
     switch(meshi->smokedir){
 
       // +++++++++++++++++++++++++++++++++++ DIR 1 +++++++++++++++++++++++++++++++++++++++
@@ -1357,7 +1429,7 @@ void DrawSmoke3DCULL(void){
     }
   }
   glEnd();
-  SNIFF_ERRORS("in DrawSmoke3DCULL 12");
+  SNIFF_ERRORS("in DrawSmoke3dCull 12");
   TransparentOff();
   if(cullfaces==1)glEnable(GL_CULL_FACE);
   SNIFF_ERRORS("after drawsmokecull");
@@ -1366,7 +1438,7 @@ void DrawSmoke3DCULL(void){
 #endif
 
 #ifdef pp_GPU
-/* ------------------ DrawSmoke3DGPU ------------------------ */
+/* ------------------ DrawSmoke3dGpu ------------------------ */
 
 void DrawSmoke3DGPU(smoke3ddata *smoke3di){
   int i, j, k, n;
@@ -1401,13 +1473,13 @@ void DrawSmoke3DGPU(smoke3ddata *smoke3di){
   meshi = meshinfo+smoke3di->blocknumber;
   if(meshvisptr[meshi-meshinfo]==0)return;
 
-  firecolor = smoke3di->hrrpuv_color;
+  firecolor = smoke3di->smokestate[HRRPUV].color;
 
   {
     smoke3ddata *sooti = NULL;
 
-    if(smoke3di->soot_index>=0){
-      sooti = smoke3dinfo+smoke3di->soot_index;
+    if(smoke3di->smokestate[SOOT].index >=0){
+      sooti = smoke3dinfo+smoke3di->smokestate[SOOT].index;
     }
     if(sooti!=NULL&&sooti->display==1){
       have_smoke = 1;
@@ -2491,7 +2563,7 @@ void DrawSmoke3DGPU(smoke3ddata *smoke3di){
 }
 
 #endif
-/* ------------------ DrawSmoke3D ------------------------ */
+/* ------------------ DrawSmoke3d ------------------------ */
 
 void DrawSmoke3D(smoke3ddata *smoke3di){
   int i, j, k, n;
@@ -2529,7 +2601,7 @@ void DrawSmoke3D(smoke3ddata *smoke3di){
 
   if(meshi->merge_alpha==NULL||meshi->update_smoke3dcolors==1){
     meshi->update_smoke3dcolors = 0;
-    MergeSmoke3DColors(smoke3di);
+    MergeSmoke3dColors(smoke3di);
   }
   mergealphaptr = meshi->merge_alpha;
   mergecolorptr = meshi->merge_color;
@@ -4282,9 +4354,9 @@ void DrawSmoke3D(smoke3ddata *smoke3di){
   }
   TransparentOff();
   if(cullfaces==1)glEnable(GL_CULL_FACE);
-  //  PRINTF("majorcull=%i minorcull=%i\n",majorcull,minorcull);
 }
 
+#ifdef pp_CULL
 /* ------------------ SetPixelCountOrthog ------------------------ */
 
 void SetPixelCountOrthog(meshdata *meshi){
@@ -4453,13 +4525,14 @@ void SetPixelCount(void){
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   }
 }
+#endif
 
 /* ------------------ DrawSmokeFrame ------------------------ */
 
 void DrawSmokeFrame(void){
   CheckMemory;
   if(showvolrender==1&&smoke3dVoldebug==1){
-    DrawSmoke3DVOLdebug();
+    DrawSmoke3dVolDebug();
   }
 #ifdef pp_GPU
   if(usegpu==1){
@@ -4473,7 +4546,7 @@ void DrawSmokeFrame(void){
 #endif
 #ifdef pp_CULL
   if(usegpu==1&&cullsmoke==1&&showvolrender==0){
-    DrawSmoke3DCULL();
+    DrawSmoke3dCull();
   }
   else{
 #else
@@ -4482,13 +4555,20 @@ void DrawSmokeFrame(void){
     int i;
 
     if(showvolrender==0){
+      int blend_mode;
+
+      blend_mode = 0;
+      if(usegpu==0&&hrrpuv_max_blending==1){
+        blend_mode = 1;
+        glBlendEquation(GL_MAX);
+      }
       for(i=0;i<nsmoke3dinfo;i++){
         smoke3ddata *smoke3di;
 
         smoke3di = smoke3dinfo_sorted[i];
         if(smoke3di->loaded==0||smoke3di->display==0)continue;
-        if(smoke3di->d_display==0)continue;
-        if(IsFireOrSoot(smoke3di)==0)continue;
+        if(smoke3di->primary_file==0)continue;
+        if(IsSmokeComponentPresent(smoke3di)==0)continue;
 
 #ifdef pp_GPU
         if(usegpu==1){
@@ -4501,22 +4581,25 @@ void DrawSmokeFrame(void){
         DrawSmoke3D(smoke3di);
 #endif
       }
+      if(blend_mode==1){
+        glBlendEquation(GL_FUNC_ADD);
+      }
     }
     if(showvolrender==1){
 #ifdef pp_GPU
       if(usegpu==1){
       //  glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
-        SNIFF_ERRORS("before DrawSmoke3DGPUVOL");
-        DrawSmoke3DGPUVOL();
-        SNIFF_ERRORS("after DrawSmoke3DGPUVOL");
+        SNIFF_ERRORS("before DrawSmoke3dGpuVol");
+        DrawSmoke3DGPUVol();
+        SNIFF_ERRORS("after DrawSmoke3dGpuVol");
       //  glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
       }
       else{
-        DrawSmoke3DVOL();
-        SNIFF_ERRORS("after DrawSmoke3DVOL");
+        DrawSmoke3DVol();
+        SNIFF_ERRORS("after DrawSmoke3dVol");
       }
 #else
-      DrawSmoke3DVOL();
+      DrawSmoke3DVol();
 #endif
     }
   }
@@ -4533,32 +4616,35 @@ void DrawSmokeFrame(void){
   SNIFF_ERRORS("after drawsmoke");
 }
 
-/* ------------------ GetSmoke3DSizes ------------------------ */
+/* ------------------ SkipSmokeFrames ------------------------ */
 
-int GetSmoke3DSizes(int fortran_skip, char *smokefile, int version, float **timelist_found, int **use_smokeframe,
-  int *nchars_smoke_uncompressed,
-  int **nchars_smoke_compressed_found,
-  int **nchars_smoke_compressed_full,
-  float *maxval,
-  int *ntimes_found, int *ntimes_full){
-  char smoke_sizefilename[1024], smoke_sizefilename2[1024], buffer[255];
+void SkipSmokeFrames(FILE *SMOKE3DFILE, int nsteps, int fortran_skip){
+  int i;
+
+  if(nsteps==0)return;
+  for(i=0;i<nsteps;i++){
+    float time_local;
+    int nchars[2], skip_local;
+
+    SKIP; fread(&time_local, 4, 1, SMOKE3DFILE); SKIP;
+    if(feof(SMOKE3DFILE)!=0)break;
+    SKIP; fread(nchars, 4, 2, SMOKE3DFILE); SKIP;
+    skip_local = ABS(nchars[1]);
+    SKIP; FSEEK(SMOKE3DFILE, skip_local, SEEK_CUR); SKIP;
+  }
+}
+
+/* ------------------ GetSmokeFileSize ------------------------ */
+
+FILE *GetSmokeFileSize(char *smokefile, int fortran_skip, int version){
+  FILE *SMOKE_SIZE, *SMOKE3DFILE;
+  char smoke_sizefilename[1024], smoke_sizefilename2[1024];
+  int lentext;
   char *textptr;
-  FILE *SMOKE_SIZE = NULL;
-  FILE *SMOKE3DFILE;
-  int nframes_found;
-  float time_local, time_max, *time_found = NULL;
-  int *use_smokeframe_full;
-  int nch_uncompressed, nch_smoke_compressed;
-  int *nch_smoke_compressed_full = NULL;
-  int *nch_smoke_compressed_found = NULL;
   int nxyz[8];
   int nchars[2];
+  float time_local;
   int skip_local;
-  int iframe_local;
-  int dummy;
-  int ntimes_full2;
-  size_t lentext;
-  int iii;
 
   // try .sz
   strcpy(smoke_sizefilename, smokefile);
@@ -4578,67 +4664,156 @@ int GetSmoke3DSizes(int fortran_skip, char *smokefile, int version, float **time
     strcat(smoke_sizefilename, ".sz");
     SMOKE_SIZE = fopen(smoke_sizefilename, "r");
   }
+  if (SMOKE_SIZE != NULL)return SMOKE_SIZE;
 
-  if(SMOKE_SIZE == NULL){
-    // neither .sz or .szz so try in tempdir
-    strcpy(smoke_sizefilename, smokefile);
-    strcat(smoke_sizefilename, ".sz");
+  // wasn't able to read the size file so try creating a new one
+
+  strcpy(smoke_sizefilename, smokefile);
+  strcat(smoke_sizefilename, ".sz");
+  SMOKE_SIZE = fopen(smoke_sizefilename, "w");
+  if(SMOKE_SIZE == NULL&&smokeviewtempdir != NULL){
+    strcpy(smoke_sizefilename2, smokeviewtempdir);
+    strcat(smoke_sizefilename2, smoke_sizefilename);
+    strcpy(smoke_sizefilename, smoke_sizefilename2);
     SMOKE_SIZE = fopen(smoke_sizefilename, "w");
-    if(SMOKE_SIZE == NULL&&smokeviewtempdir != NULL){
-      strcpy(smoke_sizefilename2, smokeviewtempdir);
-      strcat(smoke_sizefilename2, smoke_sizefilename);
-      strcpy(smoke_sizefilename, smoke_sizefilename2);
-      SMOKE_SIZE = fopen(smoke_sizefilename, "w");
-    }
-    if(SMOKE_SIZE == NULL)return 1;  // can't write size file in temp directory so give up
-    SMOKE3DFILE = fopen(smokefile, "rb");
-    if(SMOKE3DFILE == NULL){
-      fclose(SMOKE_SIZE);
-      return 1;
-    }
-
-    SKIP; fread(nxyz, 4, 8, SMOKE3DFILE); SKIP;
-
-    if(version != 1)version = 0;
-    fprintf(SMOKE_SIZE, "%i\n", version);
-
-    time_max = -1000000.0;
-    for(;;){
-      int nframeboth;
-
-      SKIP; fread(&time_local, 4, 1, SMOKE3DFILE); SKIP;
-      if(feof(SMOKE3DFILE) != 0)break;
-      SKIP; fread(nchars, 4, 2, SMOKE3DFILE); SKIP;
-      if(version == 0){ // uncompressed data
-        fprintf(SMOKE_SIZE, "%f %i %i\n", time_local, nchars[0], nchars[1]);
-      }
-      else{  // compressed data
-        int nlightdata;
-
-        // time, nframeboth, ncompressed_rle, ncompressed_zlib, nlightdata
-        // ncompessed_zlib and nlightdata are negative if there is radiance data present
-
-        if(nchars[1] < 0){  // light data present
-          nframeboth = nchars[0];
-          nlightdata = -nchars[0] / 2;
-          fprintf(SMOKE_SIZE, "%f %i %i %i %i \n", time_local, nframeboth, -1, nchars[1], nlightdata);
-        }
-        else{
-          nframeboth = nchars[0];
-          nlightdata = 0;
-          fprintf(SMOKE_SIZE, "%f %i %i %i %i \n", time_local, nframeboth, -1, nchars[1], nlightdata);
-        }
-      }
-      skip_local = ABS(nchars[1]);
-      SKIP; FSEEK(SMOKE3DFILE, skip_local, SEEK_CUR); SKIP;
-    }
-
-    fclose(SMOKE3DFILE);
-    fclose(SMOKE_SIZE);
-    SMOKE_SIZE = fopen(smoke_sizefilename, "r");
   }
-  if(SMOKE_SIZE == NULL)return 1;
+  if(SMOKE_SIZE == NULL)return NULL;  // can't write size file in temp directory so give up
+  SMOKE3DFILE = fopen(smokefile, "rb");
+  if(SMOKE3DFILE == NULL){
+    fclose(SMOKE_SIZE);
+    return NULL;
+  }
 
+  SKIP; fread(nxyz, 4, 8, SMOKE3DFILE); SKIP;
+
+  if(version != 1)version = 0;
+  fprintf(SMOKE_SIZE, "%i\n", version);
+
+  for(;;){
+    int nframeboth;
+
+    SKIP; fread(&time_local, 4, 1, SMOKE3DFILE); SKIP;
+    if(feof(SMOKE3DFILE) != 0)break;
+    SKIP; fread(nchars, 4, 2, SMOKE3DFILE); SKIP;
+    if(version == 0){ // uncompressed data
+      fprintf(SMOKE_SIZE, "%f %i %i\n", time_local, nchars[0], nchars[1]);
+    }
+    else{  // compressed data
+      int nlightdata;
+
+      // time, nframeboth, ncompressed_rle, ncompressed_zlib, nlightdata
+      // ncompessed_zlib and nlightdata are negative if there is radiance data present
+
+      if(nchars[1] < 0){  // light data present
+        nframeboth = nchars[0];
+        nlightdata = -nchars[0] / 2;
+        fprintf(SMOKE_SIZE, "%f %i %i %i %i \n", time_local, nframeboth, -1, nchars[1], nlightdata);
+      }
+      else{
+        nframeboth = nchars[0];
+        nlightdata = 0;
+        fprintf(SMOKE_SIZE, "%f %i %i %i %i \n", time_local, nframeboth, -1, nchars[1], nlightdata);
+      }
+    }
+    skip_local = ABS(nchars[1]);
+    SKIP; FSEEK(SMOKE3DFILE, skip_local, SEEK_CUR); SKIP;
+  }
+
+  fclose(SMOKE3DFILE);
+  fclose(SMOKE_SIZE);
+  SMOKE_SIZE = fopen(smoke_sizefilename, "r");
+  return SMOKE_SIZE;
+}
+
+
+/* ------------------ GetSmoke3DTimeStepsMin ------------------------ */
+
+int GetSmoke3DTimeStepsMin(int smoketype) {
+  int i, minstep=-1;
+
+  for (i = 0; i < nsmoke3dinfo; i++) {
+    smoke3ddata *smoke3di;
+    int nsteps, nsteps_found;
+
+    smoke3di = smoke3dinfo + i;
+    if ((smoke3di->type2&smoketype) != 0) {
+      int fortran_skip;
+
+      fortran_skip = 0;
+      if(smoke3di->filetype==FORTRAN_GENERATED&&smoke3di->is_zlib==0)fortran_skip = 4;
+      GetSmoke3DTimeSteps(fortran_skip, smoke3di->file, smoke3di->compression_type, &nsteps_found, &nsteps);
+      if(minstep==-1){
+        minstep = nsteps;
+      }
+      else{
+        minstep = MIN(minstep,nsteps);
+      }
+    }
+  }
+  return minstep;
+}
+
+/* ------------------ GetSmoke3DTimeSteps ------------------------ */
+
+void GetSmoke3DTimeSteps(int fortran_skip, char *smokefile, int version, int *ntimes_found, int *ntimes_full){
+  char buffer[255];
+  FILE *SMOKE_SIZE = NULL;
+  int nframes_found;
+  float time_local, time_max;
+  int iframe_local;
+  int iii;
+
+  *ntimes_found = 0;
+  *ntimes_full = 0;
+
+  SMOKE_SIZE = GetSmokeFileSize(smokefile,fortran_skip,version);
+  if(SMOKE_SIZE == NULL)return;
+
+  nframes_found = 0;
+  iframe_local = -1;
+  time_max = -1000000.0;
+  fgets(buffer, 255, SMOKE_SIZE);
+  iii = 0;
+  while(!feof(SMOKE_SIZE)){
+    if(fgets(buffer, 255, SMOKE_SIZE) == NULL)break;
+    sscanf(buffer, "%f", &time_local);
+    iframe_local++;
+    if(time_local <= time_max)continue;
+    if(use_tload_end == 1 && time_local > tload_end)break;
+    if(iii%smoke3dframestep == 0 && (use_tload_begin == 0 || time_local >= tload_begin)){
+      nframes_found++;
+      time_max = time_local;
+    }
+    iii++;
+  }
+  if(nframes_found > 0){
+    *ntimes_found = nframes_found;
+    *ntimes_full = iframe_local + 1;
+  }
+  fclose(SMOKE_SIZE);
+  return;
+}
+
+/* ------------------ GetSmoke3DSizes ------------------------ */
+
+int GetSmoke3DSizes(int fortran_skip, char *smokefile, int version, float **timelist_found, int **use_smokeframe,
+  int *nchars_smoke_uncompressed, int **nchars_smoke_compressed_found, int **nchars_smoke_compressed_full, float *maxval, int *ntimes_found, int *ntimes_full){
+
+  char buffer[255];
+  FILE *SMOKE_SIZE = NULL;
+  int nframes_found;
+  float time_local, time_max, *time_found = NULL;
+  int *use_smokeframe_full;
+  int nch_uncompressed, nch_smoke_compressed;
+  int *nch_smoke_compressed_full = NULL;
+  int *nch_smoke_compressed_found = NULL;
+  int iframe_local;
+  int dummy;
+  int ntimes_full2;
+  int iii;
+
+  SMOKE_SIZE = GetSmokeFileSize(smokefile,fortran_skip,version);
+  if(SMOKE_SIZE == NULL)return 1;
   nframes_found = 0;
   iframe_local = -1;
   time_max = -1000000.0;
@@ -4666,10 +4841,15 @@ int GetSmoke3DSizes(int fortran_skip, char *smokefile, int version, float **time
   *ntimes_found = nframes_found;
   *ntimes_full = iframe_local + 1;
 
-  NewMemory((void **)&use_smokeframe_full, *ntimes_full * sizeof(float));
-  NewMemory((void **)&time_found, nframes_found * sizeof(float));
-  NewMemory((void **)&nch_smoke_compressed_full, (*ntimes_full) * sizeof(int));
-  NewMemory((void **)&nch_smoke_compressed_found, (*ntimes_found) * sizeof(int));
+  use_smokeframe_full=*use_smokeframe;
+  time_found =*timelist_found;
+  nch_smoke_compressed_full =*nchars_smoke_compressed_full;
+  nch_smoke_compressed_found=*nchars_smoke_compressed_found;
+
+  NewResizeMemory(       use_smokeframe_full, (*ntimes_full)  * sizeof(int));
+  NewResizeMemory(                time_found, nframes_found   * sizeof(float));
+  NewResizeMemory( nch_smoke_compressed_full, (*ntimes_full)  * sizeof(int));
+  NewResizeMemory(nch_smoke_compressed_found, (*ntimes_found) * sizeof(int));
 
   *use_smokeframe = use_smokeframe_full;
   *timelist_found = time_found;
@@ -4720,7 +4900,7 @@ int GetSmoke3DSizes(int fortran_skip, char *smokefile, int version, float **time
   return 0;
 }
 
-/* ------------------ FreeSmoke3D ------------------------ */
+/* ------------------ FreeSmoke3d ------------------------ */
 
 void FreeSmoke3D(smoke3ddata *smoke3di){
 
@@ -4747,7 +4927,7 @@ int GetSmoke3DVersion(smoke3ddata *smoke3di){
   char *file;
   int fortran_skip = 0;
 
-  if(smoke3di->filetype==FORTRAN_GENERATED)fortran_skip = 4;
+  if(smoke3di->filetype==FORTRAN_GENERATED&&smoke3di->is_zlib==0)fortran_skip = 4;
 
   file = smoke3di->comp_file;
   SMOKE3D_COMPFILE = fopen(file, "rb");
@@ -4783,11 +4963,12 @@ void SetSmokeColorFlags(void){
 
   for(i = 0;i<nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
+    int j;
 
-    smoke3di = smoke3dinfo+i;
-    smoke3di->soot_loaded = 0;
-    smoke3di->water_loaded = 0;
-    smoke3di->hrrpuv_loaded = 0;
+    smoke3di = smoke3dinfo + i;
+    for(j = 0;j < MAXSMOKETYPES;j++){
+      smoke3di->smokestate[j].loaded = 0;
+    }
   }
 
   for(i = 0;i<nsmoke3dinfo;i++){
@@ -4795,34 +4976,23 @@ void SetSmokeColorFlags(void){
     int j;
 
     smoke3di = smoke3dinfo+i;
-    smoke3di->water_color = NULL;
-    smoke3di->hrrpuv_color = NULL;
-    smoke3di->soot_color = NULL;
-    smoke3di->water_index = -1;
-    smoke3di->hrrpuv_index = -1;
-    smoke3di->soot_index = -1;
+    for(j = 0;j < MAXSMOKETYPES;j++){
+      smoke3di->smokestate[j].color = NULL;
+      smoke3di->smokestate[j].index = -1;
+    }
     if(smoke3di->loaded==0)continue;
 
-    switch(smoke3di->type){
-    case SOOT:
-      smoke3di->soot_color = smoke3di->smokeframe_in;
-      smoke3di->soot_index = i;
-      break;
-    case FIRE:
-      smoke3di->hrrpuv_color = smoke3di->smokeframe_in;
-      smoke3di->hrrpuv_index = i;
-      break;
-    case WATER:
-      smoke3di->water_color = smoke3di->smokeframe_in;
-      smoke3di->water_index = i;
-      break;
-    default:
+    if(smoke3di->type >= 0 && smoke3di->type < MAXSMOKETYPES){
+      smoke3di->smokestate[smoke3di->type].color = smoke3di->smokeframe_in;
+      smoke3di->smokestate[smoke3di->type].index = i;
+    }
+    else{
       ASSERT(FFALSE);
-      break;
     }
 
     for(j = 0;j<nsmoke3dinfo;j++){
       smoke3ddata *smoke3dj;
+      int k;
 
       if(i==j)continue;
       smoke3dj = smoke3dinfo+j;
@@ -4835,26 +5005,16 @@ void SetSmokeColorFlags(void){
       if(smoke3di->ks1!=smoke3dj->ks1)continue;
       if(smoke3di->ks2!=smoke3dj->ks2)continue;
 
-      switch(smoke3dj->type){
-      case SOOT:
-        smoke3di->soot_color = smoke3dj->smokeframe_in;
-        smoke3di->soot_index = j;
-        break;
-      case FIRE:
-        smoke3di->hrrpuv_color = smoke3dj->smokeframe_in;
-        smoke3di->hrrpuv_index = j;
-        break;
-      case WATER:
-        smoke3di->water_color = smoke3dj->smokeframe_in;
-        smoke3di->water_index = j;
-        break;
-      default:
-        ASSERT(FFALSE);
-        break;
+      if(smoke3dj->type >= 0 && smoke3dj->type < MAXSMOKETYPES){
+        smoke3di->smokestate[smoke3dj->type].color = smoke3dj->smokeframe_in;
+        smoke3di->smokestate[smoke3dj->type].index = j;
       }
-      if(smoke3di->soot_color!=NULL)smoke3dj->soot_loaded = 1;
-      if(smoke3di->water_color!=NULL)smoke3dj->water_loaded = 1;
-      if(smoke3di->hrrpuv_color!=NULL)smoke3dj->hrrpuv_loaded = 1;
+      else{
+        ASSERT(FFALSE);
+      }
+      for(k = 0;k < MAXSMOKETYPES;k++){
+        if(smoke3di->smokestate[k].color != NULL)smoke3dj->smokestate[k].loaded = 1;
+      }
     }
   }
   for(i = 0;i<nsmoke3dinfo;i++){
@@ -4871,7 +5031,7 @@ void SetSmokeColorFlags(void){
 
 /* ------------------ ReadSmoke3D ------------------------ */
 
-void ReadSmoke3D(int ifile,int flag, int *errorcode){
+void ReadSmoke3D(int iframe,int ifile,int flag, int *errorcode){
   smoke3ddata *smoke3di;
   FILE *SMOKE3DFILE;
   int error;
@@ -4883,33 +5043,53 @@ void ReadSmoke3D(int ifile,int flag, int *errorcode){
   int nxyz[8];
   int nchars[2];
   int nframes_found=0;
+  int frame_start, frame_end;
+  char smoketype[100];
 
   float time_local;
   char compstring[128];
   meshdata *meshi;
-  int fortran_skip;
+  int fortran_skip=0;
 
+#ifndef pp_FSEEK
+  if(flag==RELOAD)flag = LOAD;
+#endif
   START_TIMER(total_time);
   ASSERT(ifile>=0&&ifile<nsmoke3dinfo);
   smoke3di = smoke3dinfo + ifile;
-  if(smoke3di->filetype==FORTRAN_GENERATED){
-    fortran_skip=4;
-  }
-  else{
-    fortran_skip=0;
+  if(smoke3di->filetype==FORTRAN_GENERATED&&smoke3di->is_zlib==0)fortran_skip=4;
+
+  switch(smoke3di->type){
+  case HRRPUV:
+    strcpy(smoketype, "hrrpuv");
+    break;
+  case TEMP:
+    strcpy(smoketype, "temperature");
+    break;
+  case CO2:
+    strcpy(smoketype, "CO2");
+    break;
+  case SOOT:
+    strcpy(smoketype, "soot");
+    break;
+  default:
+    strcpy(smoketype, "unknown");
+    ASSERT(FFALSE);
+    break;
   }
 
-
-  if(smoke3di->loaded==1){
+  if(smoke3di->loaded==1&&flag!=RELOAD){
     FreeSmoke3D(smoke3di);
     smoke3di->loaded=0;
     smoke3di->display=0;
-    smoke3di->d_display=0;
+    smoke3di->primary_file=0;
   }
 
   meshi=meshinfo+smoke3di->blocknumber;
-  FREEMEMORY(meshi->merge_alpha);
-  FREEMEMORY(meshi->merge_color);
+  if(flag!=RELOAD){
+    FREEMEMORY(meshi->merge_alpha);
+    FREEMEMORY(meshi->merge_color);
+  }
 
   if(flag==UNLOAD){
     plotstate=GetPlotState(DYNAMIC_PLOTS);
@@ -4919,16 +5099,21 @@ void ReadSmoke3D(int ifile,int flag, int *errorcode){
     smoke3di->request_load = 0;
 
     hrrpuv_loaded=0;
+    temp_loaded = 0;
     for(j=0;j<nsmoke3dinfo;j++){
       smoke3ddata *smoke3dj;
 
       smoke3dj = smoke3dinfo + j;
       if(smoke3dj->loaded==1){
         Read3DSmoke3DFile=1;
-        if(strcmp(smoke3dj->label.longlabel,"HRRPUV")==0){
+        if(smoke3dj->type==HRRPUV){
           hrrpuv_loaded=1;
+          break;
         }
-        break;
+        if (smoke3dj->type == TEMP) {
+          temp_loaded = 1;
+          break;
+        }
       }
     }
     if(meshi->iblank_smoke3d != NULL){
@@ -4956,16 +5141,39 @@ void ReadSmoke3D(int ifile,int flag, int *errorcode){
 #ifdef pp_CULL
     if(cullactive==1)update_initcull=1;
 #endif
+    UpdateSmoke3dFileParms();
     return;
+  }
+  if(smoke3di->type == HRRPUV||smoke3di->type==TEMP){
+    // if we are loading an HRRPUV then unload all TEMP's
+    if(smoke3di->type == HRRPUV&&ntemploaded > 0)printf("unloading all smoke3d temperature files\n");
+
+    // if we are loading a TEMP then unload all HRRPUV's
+    if(smoke3di->type == TEMP&&nhrrpuvloaded > 0)printf("unloading all  smoke3d hrrpuv files\n");
+
+    for(j = 0; j<nsmoke3dinfo; j++) {
+      smoke3ddata *smoke3dj;
+      int error2;
+
+      smoke3dj = smoke3dinfo + j;
+      if(smoke3di != smoke3dj&&smoke3dj->loaded == 1){
+        if((smoke3di->type == TEMP&&smoke3dj->type == HRRPUV) ||
+          (smoke3di->type == HRRPUV&&smoke3dj->type == TEMP)){
+          printf("unloading %s\n", smoke3dj->file);
+          ReadSmoke3D(iframe,j, UNLOAD, &error2);
+        }
+      }
+    }
   }
 
   if(smoke3di->compression_type==UNKNOWN){
     smoke3di->compression_type=GetSmoke3DVersion(smoke3di);
-    UpdateSmoke3DMenuLabels();
+    UpdateSmoke3dMenuLabels();
   }
 
   CheckMemory;
   smoke3di->request_load = 1;
+  smoke3di->ntimes_old = smoke3di->ntimes;
   if(GetSmoke3DSizes(skip_global,smoke3di->file,smoke3di->compression_type,&smoke3di->times, &smoke3di->use_smokeframe,
                  &smoke3di->nchars_uncompressed,
                  &smoke3di->nchars_compressed_smoke,
@@ -4973,21 +5181,21 @@ void ReadSmoke3D(int ifile,int flag, int *errorcode){
                  &smoke3di->maxval,
                  &smoke3di->ntimes,
                  &smoke3di->ntimes_full)==1){
-    ReadSmoke3D(ifile,UNLOAD,&error);
+    ReadSmoke3D(iframe,ifile,UNLOAD,&error);
     *errorcode=1;
     fprintf(stderr,"*** Error: problems sizing 3d smoke data for %s\n",smoke3di->file);
     return;
   }
   if(smoke3di->maxval>=0.0){
-    if(smoke3di->type == FIRE&&smoke3di->maxval<=load_hrrpuv_cutoff){
-      ReadSmoke3D(ifile,UNLOAD,&error);
+    if(smoke3di->type == HRRPUV&&smoke3di->maxval<=load_hrrpuv_cutoff){
+      ReadSmoke3D(iframe,ifile,UNLOAD,&error);
       *errorcode=0;
       PRINTF("*** HRRPUV file: %s skipped\n",smoke3di->file);
       PRINTF("    maximum HRRPUV %f<=%f in mesh %s\n", smoke3di->maxval,load_hrrpuv_cutoff,meshi->label);
       return;
     }
     if(smoke3di->type == SOOT&&smoke3di->maxval<=load_3dsmoke_cutoff){
-      ReadSmoke3D(ifile,UNLOAD,&error);
+      ReadSmoke3D(iframe,ifile,UNLOAD,&error);
       *errorcode=0;
       PRINTF("*** Soot file: %s skipped\n",smoke3di->file);
       PRINTF("    maximum soot opacity %f<=%f in  mesh %s\n", smoke3di->maxval,load_3dsmoke_cutoff, meshi->label);
@@ -4996,14 +5204,14 @@ void ReadSmoke3D(int ifile,int flag, int *errorcode){
   }
   CheckMemory;
   if(
-     NewMemory((void **)&smoke3di->smokeframe_comp_list,smoke3di->ntimes_full*sizeof(unsigned char *))==0||
-     NewMemory((void **)&smoke3di->frame_all_zeros,smoke3di->ntimes_full*sizeof(unsigned char))==0||
-     NewMemory((void **)&smoke3di->smokeframe_in,smoke3di->nchars_uncompressed*sizeof(unsigned char))==0||
-     NewMemory((void **)&smoke3di->smokeview_tmp,smoke3di->nchars_uncompressed*sizeof(unsigned char))==0||
-     NewMemory((void **)&smoke3di->smokeframe_out,smoke3di->nchars_uncompressed*sizeof(unsigned char))==0||
-     NewMemory((void **)&meshi->merge_color,4*smoke3di->nchars_uncompressed*sizeof(unsigned char))==0||
-     NewMemory((void **)&meshi->merge_alpha,smoke3di->nchars_uncompressed*sizeof(unsigned char))==0){
-     ReadSmoke3D(ifile,UNLOAD,&error);
+     NewResizeMemory(smoke3di->smokeframe_comp_list,smoke3di->ntimes_full*sizeof(unsigned char *))==0||
+     NewResizeMemory(smoke3di->frame_all_zeros,     smoke3di->ntimes_full*sizeof(unsigned char))==0||
+     NewResizeMemory(smoke3di->smokeframe_in,       smoke3di->nchars_uncompressed*sizeof(unsigned char))==0||
+     NewResizeMemory(smoke3di->smokeview_tmp,       smoke3di->nchars_uncompressed*sizeof(unsigned char))==0||
+     NewResizeMemory(smoke3di->smokeframe_out,      smoke3di->nchars_uncompressed*sizeof(unsigned char))==0||
+     NewResizeMemory(meshi->merge_color,          4*smoke3di->nchars_uncompressed*sizeof(unsigned char))==0||
+     NewResizeMemory(meshi->merge_alpha,            smoke3di->nchars_uncompressed*sizeof(unsigned char))==0){
+     ReadSmoke3D(iframe,ifile,UNLOAD,&error);
      *errorcode=1;
      fprintf(stderr,"*** Error: problems allocating memory for 3d smoke file: %s\n",smoke3di->file);
      return;
@@ -5020,8 +5228,8 @@ void ReadSmoke3D(int ifile,int flag, int *errorcode){
       ncomp_smoke_total_skipped+=smoke3di->nchars_compressed_smoke_full[i];
     }
   }
-  if(NewMemory((void **)&smoke3di->smoke_comp_all,ncomp_smoke_total_skipped*sizeof(unsigned char))==0){
-    ReadSmoke3D(ifile,UNLOAD,&error);
+  if(NewResizeMemory(smoke3di->smoke_comp_all,ncomp_smoke_total_skipped*sizeof(unsigned char))==0){
+    ReadSmoke3D(iframe,ifile,UNLOAD,&error);
     *errorcode=1;
      fprintf(stderr,"*** Error: problems allocating memory for 3d smoke file: %s\n",smoke3di->file);
     return;
@@ -5040,10 +5248,10 @@ void ReadSmoke3D(int ifile,int flag, int *errorcode){
 
 // read in data
 
-  file_size= GetFILESize(smoke3di->file);
+  file_size= GetFileSizeSMV(smoke3di->file);
   SMOKE3DFILE=fopen(smoke3di->file,"rb");
   if(SMOKE3DFILE==NULL){
-    ReadSmoke3D(ifile,UNLOAD,&error);
+    ReadSmoke3D(iframe,ifile,UNLOAD,&error);
     *errorcode=1;
     return;
   }
@@ -5059,10 +5267,25 @@ void ReadSmoke3D(int ifile,int flag, int *errorcode){
 
   // read smoke data
 
-  iii=0;
-  nframes_found=0;
   START_TIMER(read_time);
-  for(i=0;i<smoke3di->ntimes_full;i++){
+  if (iframe == ALL_FRAMES) {
+    if (flag == RELOAD&&smoke3di->ntimes_old > 0) {
+      SkipSmokeFrames(SMOKE3DFILE, smoke3di->ntimes_old, fortran_skip);
+      frame_start = smoke3di->ntimes_old;
+    }
+    else {
+      frame_start = 0;
+    }
+    frame_end = smoke3di->ntimes_full;
+  }
+  else {
+    SkipSmokeFrames(SMOKE3DFILE, iframe, fortran_skip);
+    frame_start = iframe;
+    frame_end = iframe+1;
+  }
+  iii = frame_start;
+  nframes_found = frame_start;
+  for(i=frame_start;i<frame_end;i++){
     SKIP;fread(&time_local,4,1,SMOKE3DFILE);SKIP;
     if(feof(SMOKE3DFILE)!=0||(use_tload_end==1&&time_local>tload_end)){
       smoke3di->ntimes_full=i;
@@ -5071,7 +5294,7 @@ void ReadSmoke3D(int ifile,int flag, int *errorcode){
     }
     if(use_tload_begin==1&&time_local<tload_begin)smoke3di->use_smokeframe[i]=0;
     if(smoke3di->use_smokeframe[i]==1){
-      PRINTF("3D smoke/fire time=%.2f",time_local);
+      PRINTF("%s time=%.2f mesh:%s",smoketype,time_local,meshi->label);
     }
     SKIP;fread(nchars,4,2,SMOKE3DFILE);SKIP;
     if(feof(SMOKE3DFILE)!=0){
@@ -5119,19 +5342,19 @@ void ReadSmoke3D(int ifile,int flag, int *errorcode){
   smoke3di->loaded=1;
   smoke3di->display=1;
   SetSmokeColorFlags();
-  if(strcmp(smoke3di->label.longlabel,"HRRPUV")==0){
-    hrrpuv_loaded=1;
-  }
+  if(smoke3di->type == HRRPUV)hrrpuv_loaded=1;
+  if(smoke3di->type == TEMP)temp_loaded = 1;
 
   Read3DSmoke3DFile=1;
   update_makeiblank_smoke3d=1;
   plotstate=GetPlotState(DYNAMIC_PLOTS);
+  UpdateSmoke3dFileParms();
   UpdateTimes();
 #ifdef pp_CULL
     if(cullactive==1)InitCull(cullsmoke);
 #endif
-  Smoke3d_CB(UPDATE_SMOKEFIRE_COLORS);
-  Idle_CB();
+  Smoke3dCB(UPDATE_SMOKEFIRE_COLORS);
+  IdleCB();
   STOP_TIMER(total_time);
 
   if(file_size!=0&&read_time>0.0){
@@ -5152,7 +5375,51 @@ void ReadSmoke3D(int ifile,int flag, int *errorcode){
   *errorcode = 0;
 }
 
-/* ------------------ UpdateSmoke3D ------------------------ */
+/* ------------------ ReadSmoke3DAllMeshes ------------------------ */
+
+void ReadSmoke3DAllMeshes(int iframe, int smoketype, int *errorcode) {
+  int i;
+
+  for (i = 0; i < nsmoke3dinfo; i++) {
+    smoke3ddata *smoke3di;
+
+    smoke3di = smoke3dinfo + i;
+    if (smoke3di->type != smoketype)continue;
+    ReadSmoke3D(iframe, i, LOAD, errorcode);
+  }
+}
+
+/* ------------------ ReadSmoke3DAllMeshesAllTimes ------------------------ */
+
+void ReadSmoke3DAllMeshesAllTimes(int smoketype2, int *errorcode) {
+  int i, ntimes, itime;
+
+  ntimes = GetSmoke3DTimeStepsMin(smoketype2);
+  for (itime = 0; itime < ntimes; itime++) {
+    for (i = 0; i < nsmoke3dinfo; i++) {
+      smoke3ddata *smoke3di;
+
+      smoke3di = smoke3dinfo + i;
+      switch (smoke3di->type){
+        case SOOT:
+          if((smoketype2&SOOT_2)!=0)ReadSmoke3DAllMeshes(itime, SOOT, errorcode);
+          break;
+        case HRRPUV:
+          if((smoketype2&HRRPUV_2)!=0)ReadSmoke3DAllMeshes(itime, HRRPUV, errorcode);
+          break;
+        case TEMP:
+          if((smoketype2&TEMP_2)!=0)ReadSmoke3DAllMeshes(itime, TEMP, errorcode);
+          break;
+        case CO2:
+          if((smoketype2&CO2_2)!=0)ReadSmoke3DAllMeshes(itime, CO2, errorcode);
+          break;
+      }
+    }
+  }
+
+}
+
+/* ------------------ UpdateSmoke3d ------------------------ */
 
 void UpdateSmoke3D(smoke3ddata *smoke3di){
   int iframe_local;
@@ -5164,10 +5431,10 @@ void UpdateSmoke3D(smoke3ddata *smoke3di){
   countout=smoke3di->nchars_uncompressed;
   switch(smoke3di->compression_type){
   case RLE:
-    countout = uncompress_rle(smoke3di->smokeframe_comp_list[iframe_local],countin,smoke3di->smokeframe_in);
+    countout = UnCompressRLE(smoke3di->smokeframe_comp_list[iframe_local],countin,smoke3di->smokeframe_in);
     break;
   case ZLIB:
-    uncompress_zlib(
+    UnCompressZLIB(
       smoke3di->smokeframe_in,&countout,
       smoke3di->smokeframe_comp_list[iframe_local],countin);
     break;
@@ -5191,13 +5458,22 @@ void UpdateSmoke3D(smoke3ddata *smoke3di){
   ASSERT(countout==smoke3di->nchars_uncompressed);
 }
 
-/* ------------------ MergeSmoke3DColors ------------------------ */
+/* ------------------ MergeSmoke3dColors ------------------------ */
 
-void MergeSmoke3DColors(smoke3ddata *smoke3dset){
+void MergeSmoke3dColors(smoke3ddata *smoke3dset){
   int i,j;
-  int i_hrrpuv_cutoff;
+  int i_smoke3d_cutoff;
+  int fire_index = HRRPUV;
 
-  i_hrrpuv_cutoff=254*global_hrrpuv_cutoff/hrrpuv_max_smv;
+  if(have_fire==HRRPUV){
+    i_smoke3d_cutoff = 254 * global_hrrpuv_cutoff/hrrpuv_max_smv;
+  }
+  else if(have_fire==TEMP){
+    i_smoke3d_cutoff = 254*((global_temp_cutoff - global_temp_min)/(global_temp_max- global_temp_min));
+  }
+  else{
+    i_smoke3d_cutoff = 255;
+  }
 
 #ifdef pp_CULL
   for(i=0;i<nmeshes;i++){
@@ -5209,28 +5485,31 @@ void MergeSmoke3DColors(smoke3ddata *smoke3dset){
 #endif
 
   for(i=0;i<nsmoke3dinfo;i++){
-    smoke3ddata *smoke3di;
-    smoke3ddata *smoke_soot;
+    smoke3ddata *smoke3di, *smoke_soot;
 
     smoke3di=smoke3dinfo + i;
     if(smoke3dset!=NULL&&smoke3dset!=smoke3di)continue;
-    smoke3di->d_display=0;
+    smoke3di->primary_file=0;
     if(smoke3di->loaded==0||smoke3di->display==0)continue;
     smoke_soot=NULL;
     switch(smoke3di->type){
     case SOOT:
-      smoke3di->d_display=1;
+      smoke3di->primary_file=1;
       break;
-    case FIRE:
-      if(smoke3di->soot_index!=-1)smoke_soot=smoke3dinfo + smoke3di->soot_index;
-      if(smoke3di->soot_loaded==0||(smoke_soot!=NULL&&smoke_soot->display==0)){
-        smoke3di->d_display=1;
+    case HRRPUV:
+      if(smoke3di->smokestate[SOOT].index!=-1)smoke_soot=smoke3dinfo + smoke3di->smokestate[SOOT].index;
+      if(smoke3di->smokestate[SOOT].loaded==0||(smoke_soot!=NULL&&smoke_soot->display==0)){
+        smoke3di->primary_file=1;
       }
       break;
-    case WATER:
-      if(smoke3di->soot_loaded==0&&smoke3di->hrrpuv_loaded==0){
-        smoke3di->d_display=1;
+    case TEMP:
+      if (smoke3di->smokestate[SOOT].index != -1)smoke_soot = smoke3dinfo + smoke3di->smokestate[SOOT].index;
+      if (smoke3di->smokestate[SOOT].loaded == 0 || (smoke_soot != NULL&&smoke_soot->display == 0)) {
+        smoke3di->primary_file = 1;
       }
+      fire_index = TEMP;
+      break;
+    case CO2:
       break;
     default:
       ASSERT(FFALSE);
@@ -5241,19 +5520,20 @@ void MergeSmoke3DColors(smoke3ddata *smoke3dset){
   for(i=0;i<nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
     meshdata *meshi;
-    float fire_alpha;
-    unsigned char *firecolor,*sootcolor;
+    float fire_alpha, co2_alpha;
+    unsigned char *firecolor,*sootcolor,*co2color;
     unsigned char *mergecolor,*mergealpha;
     float firesmokeval[3];
+    int i_hrrpuv_offset=0;
 
     smoke3di = smoke3dinfo + i;
     if(smoke3dset!=NULL&&smoke3dset!=smoke3di)continue;
-    if(smoke3di->loaded==0||smoke3di->d_display==0)continue;
+    if(smoke3di->loaded==0||smoke3di->primary_file==0)continue;
     meshi=meshinfo+smoke3di->blocknumber;
 #ifdef pp_CULL
     meshi->cull_smoke3d=smoke3di;
 #endif
-    i_hrrpuv_cutoff=254*global_hrrpuv_cutoff/hrrpuv_max_smv;
+    if(smoke3d_testsmoke==1)i_hrrpuv_offset = 254*slicehrrpuv_offset/hrrpuv_max_smv;
 
     if(fire_halfdepth<=0.0){
       smoke3di->fire_alpha=255;
@@ -5263,26 +5543,42 @@ void MergeSmoke3DColors(smoke3ddata *smoke3dset){
     }
     fire_alpha=smoke3di->fire_alpha;
 
+    if (co2_halfdepth <= 0.0) {
+      smoke3di->co2_alpha = 255;
+    }
+    else {
+      smoke3di->co2_alpha = 255 * (1.0 - pow(0.5, meshi->dx / co2_halfdepth));
+    }
+    co2_alpha = smoke3di->co2_alpha;
+
     firecolor=NULL;
     sootcolor=NULL;
-    if(smoke3di->hrrpuv_color!=NULL){
-      firecolor=smoke3di->hrrpuv_color;
-      if(smoke3di->hrrpuv_index!=-1){
+    co2color = NULL;
+    if(smoke3di->smokestate[fire_index].color!=NULL){
+      firecolor=smoke3di->smokestate[fire_index].color;
+      if(smoke3di->smokestate[fire_index].index !=-1){
         smoke3ddata *smoke3dref;
 
-        smoke3dref=smoke3dinfo + smoke3di->hrrpuv_index;
+        smoke3dref=smoke3dinfo + smoke3di->smokestate[fire_index].index;
         if(smoke3dref->display==0)firecolor=NULL;
       }
     }
-    if(smoke3di->soot_color!=NULL){
-      sootcolor=smoke3di->soot_color;
-      if(smoke3di->soot_index!=-1){
+    if(smoke3di->smokestate[SOOT].color !=NULL){
+      sootcolor=smoke3di->smokestate[SOOT].color;
+      if(smoke3di->smokestate[SOOT].index !=-1){
         smoke3ddata *smoke3dref;
 
-        smoke3dref=smoke3dinfo + smoke3di->soot_index;
-        if(smoke3dref->display==0){
-          sootcolor=NULL;
-        }
+        smoke3dref=smoke3dinfo + smoke3di->smokestate[SOOT].index;
+        if(smoke3dref->display==0)sootcolor=NULL;
+      }
+    }
+    if(smoke3di->smokestate[CO2].color != NULL){
+      co2color = smoke3di->smokestate[CO2].color;
+      if(smoke3di->smokestate[CO2].index != -1){
+        smoke3ddata *smoke3dref;
+
+        smoke3dref = smoke3dinfo + smoke3di->smokestate[CO2].index;
+        if(smoke3dref->display == 0)co2color = NULL;
       }
     }
 #ifdef pp_GPU
@@ -5297,36 +5593,73 @@ void MergeSmoke3DColors(smoke3ddata *smoke3dset){
 
     mergecolor=meshi->merge_color;
     mergealpha=meshi->merge_alpha;
-    firesmokeval[0] = 0.0;
-    firesmokeval[1] = 0.0;
-    firesmokeval[2] = 0.0;
+    firesmokeval[0] = (float)smoke_red/255.0;
+    firesmokeval[1] = (float)smoke_green/255.0;
+    firesmokeval[2] = (float)smoke_blue/255.0;
     ASSERT(firecolor!=NULL||sootcolor!=NULL);
     for(j=0;j<smoke3di->nchars_uncompressed;j++){
       float *firesmoke_color;
+      float soot_val, f1, f2;
 
 // set color
 
+      f1 = 1.0;
+      f2 = 0.0;
       if(firecolor!=NULL){
-        firesmoke_color=rgb_slicesmokecolormap+4*firecolor[j];
+        int fire_index;
+
+        fire_index = CLAMP(firecolor[j]+i_hrrpuv_offset,0,254);
+        firesmoke_color=rgb_slicesmokecolormap+4*fire_index;
       }
       else{
         firesmoke_color=firesmokeval;
       }
-      *mergecolor++ = 255*firesmoke_color[0];
-      *mergecolor++ = 255*firesmoke_color[1];
-      *mergecolor++ = 255*firesmoke_color[2];
+      if(co2color != NULL&&firecolor != NULL&&sootcolor!=NULL){
+        float denom;
+
+        f1 = ABS(sootfactor)*sootcolor[j];
+        f2 = ABS(co2factor)*co2color[j];
+        denom = f1+f2;
+        if(denom>0.0){
+          f1/=denom;
+          f2/=denom;
+        }
+        else{
+          f1 = 1.0;
+          f2 = 0.0;
+        }
+        *mergecolor++ = f2*(float)global_co2color[0]   + f1*255*firesmoke_color[0];
+        *mergecolor++ = f2*(float)global_co2color[1]   + f1*255*firesmoke_color[1];
+        *mergecolor++ = f2*(float)global_co2color[2]   + f1*255*firesmoke_color[2];
+      }
+      else{
+        *mergecolor++ = 255 * firesmoke_color[0];
+        *mergecolor++ = 255 * firesmoke_color[1];
+        *mergecolor++ = 255 * firesmoke_color[2];
+      }
       mergecolor++;
 
 // set opacity
 
-      if(firecolor!=NULL&&firecolor[j]>i_hrrpuv_cutoff){
-        *mergealpha++=fire_alpha;
-      }
-      else if(sootcolor!=NULL){
-       *mergealpha++=(sootcolor[j]>>smoke3d_thick);
+      if(sootcolor!=NULL){
+        soot_val=(sootcolor[j]>>smoke3d_thick);
       }
       else{
-       *mergealpha++=0;
+        soot_val=1;
+      }
+      if(firecolor!=NULL&&firecolor[j]>i_smoke3d_cutoff){
+        if(smoke3d_testsmoke==0){
+          *mergealpha++=f1*fire_alpha+f2*co2_alpha;
+        }
+        else{
+          *mergealpha++= CLAMP(opacity_map[firecolor[j]],0,255);
+        }
+      }
+      else if(sootcolor!=NULL){
+        *mergealpha++=soot_val;
+      }
+      else{
+        *mergealpha++=0;
       }
     }
   }
@@ -5371,18 +5704,28 @@ int InitCullExts(void){
 }
 #endif
 
-/* ------------------ UpdateSmoke3DMenuLabels ------------------------ */
+/* ------------------ UpdateSmoke3dMenuLabels ------------------------ */
 
-void UpdateSmoke3DMenuLabels(void){
+void UpdateSmoke3dMenuLabels(void){
   int i;
   smoke3ddata *smoke3di;
   char meshlabel[128];
 
   for(i=0;i<nsmoke3dinfo;i++){
     smoke3di = smoke3dinfo + i;
-    STRCPY(smoke3di->menulabel,smoke3di->label.longlabel);
+    STRCPY(smoke3di->menulabel, "");
+    if(nmeshes > 1){
+      meshdata *smokemesh;
+
+      smokemesh = meshinfo + smoke3di->blocknumber;
+      sprintf(meshlabel, "%s", smokemesh->label);
+      STRCAT(smoke3di->menulabel, meshlabel);
+    }
+    else{
+      STRCAT(smoke3di->menulabel,smoke3di->label.longlabel);
+    }
     if(showfiles==1){
-      STRCAT(smoke3di->menulabel,", ");
+      if(strcmp(smoke3di->menulabel, "") != 0)STRCAT(smoke3di->menulabel, ", ");
       STRCAT(smoke3di->menulabel,smoke3di->file);
     }
     switch(smoke3di->compression_type){
@@ -5398,15 +5741,6 @@ void UpdateSmoke3DMenuLabels(void){
     default:
       ASSERT(FFALSE);
       break;
-    }
-//    len=strlen(smoke3di->menulabel);
-    if(nmeshes>1){
-      meshdata *smokemesh;
-
-      smokemesh = meshinfo + smoke3di->blocknumber;
-      sprintf(meshlabel,"%s",smokemesh->label);
-      STRCAT(smoke3di->menulabel," - ");
-      STRCAT(smoke3di->menulabel,meshlabel);
     }
   }
 }
@@ -6311,11 +6645,12 @@ void GetPixelCount(void){
   int i;
   int icull;
 
+  if(have_setpixelcount==0)return;
   for(i=0;i<nmeshes;i++){
     meshi = meshinfo + i;
 
     if(meshi->culldefined==0)continue;
-    if(show_cullports==0&&have_setpixelcount==1){
+    if(show_cullports==0){
       for(icull=0;icull<meshi->ncullinfo;icull++){
         culldata *culli;
 
@@ -6344,19 +6679,135 @@ void GetPixelCount(void){
 #ifdef _DEBUG
   if(update_initcullplane==1)PRINTF("pixel count has changed - 1\n");
 #endif
+  have_setpixelcount = 0;
 }
 #endif
 
-/* ------------------ HaveFire ------------------------ */
+#ifdef pp_SPECTRAL
+/* ------------------ SpectralDensity ------------------------ */
 
-int HaveFire(void){
-  int i;
+double SpectralDensity(double  temperature, double lambda){
+  double val;
+  const double c1 = 1.19104e-16, c2 = 0.014387774;
+  float arg1, AA;
 
-  for(i = 0; i<nsmoke3dinfo; i++){
-    smoke3ddata *smoke3di;
+  // temperature K
+  // lambda m
+  // c1  =  2*h*c^2  m^4 kg/s^3   W m^2
+  // c2 - hc/kB  m K
+  // where
+  // c== speed of light = 299792458 m/s
+  // h== plank constant = 6.62607 * 10^-34 m^2 kg/s
+  // kB == boltzman constant = 1.38065*10^-23 m^2kg/(s^2 K )
+  // compute: spectral_density(plank's law)=(c1/lambda^5)*(1.0/(exp(c2/(lambda*T))-1.0) = (c1/lambda^5)*A/(1-A)
+  // where A=exp(-c2/(lambda*T))
 
-    smoke3di = smoke3dinfo+i;
-    if(smoke3di->loaded==1&&smoke3di->type==FIRE)return 1;
-  }
-  return 0;
+  arg1 = c2/(lambda*temperature);
+  AA = exp(-arg1);
+  val = c1 / pow(lambda, 5.0);
+  val *= (AA / (1.0 - AA));
+  return val;
 }
+
+/* ------------------ GetBlackBodyColors ------------------------ */
+
+#define NVALS 89
+void GetBlackBodyColors(float tmin, float tmax, float *intensities, int n){
+  int i;
+  float dtemp=0.0;
+  float dlambda;
+  float lambda_min = 390.0;
+  float lambda_max = 830.0;
+
+  if(intensities==NULL)NewMemory((void **)&intensities, 4*n*sizeof(float));
+
+  // https://en.wikipedia.org/wiki/CIE_1931_color_space#Color_matching_functions
+  // 390 nm to 830 nm
+    float xhat[NVALS] = {
+      2.95E-03,7.64E-03,1.88E-02,4.20E-02,8.28E-02,1.40E-01,2.08E-01,2.69E-01,3.28E-01,3.69E-01,
+      4.03E-01,4.04E-01,3.93E-01,3.48E-01,3.01E-01,2.53E-01,1.91E-01,1.28E-01,7.59E-02,3.84E-02,
+      1.40E-02,3.45E-03,5.65E-03,1.56E-02,3.78E-02,7.54E-02,1.20E-01,1.76E-01,2.38E-01,3.05E-01,
+      3.84E-01,4.63E-01,5.37E-01,6.23E-01,7.12E-01,8.02E-01,8.93E-01,9.72E-01,1.03E+00,1.11E+00,
+      1.15E+00,1.16E+00,1.15E+00,1.11E+00,1.05E+00,9.62E-01,8.63E-01,7.60E-01,6.41E-01,5.29E-01,
+      4.32E-01,3.50E-01,2.71E-01,2.06E-01,1.54E-01,1.14E-01,8.28E-02,5.95E-02,4.22E-02,2.95E-02,
+      2.03E-02,1.41E-02,9.82E-03,6.81E-03,4.67E-03,3.19E-03,2.21E-03,1.52E-03,1.06E-03,7.40E-04,
+      5.15E-04,3.63E-04,2.56E-04,1.81E-04,1.29E-04,9.17E-05,6.58E-05,4.71E-05,3.41E-05,2.47E-05,
+      1.79E-05,1.31E-05,9.57E-06,7.04E-06,5.17E-06,3.82E-06,2.84E-06,2.11E-06,1.58E-06
+    };
+
+    float yhat[NVALS] = {
+      4.08E-04,1.08E-03,2.59E-03,5.47E-03,1.04E-02,1.71E-02,2.58E-02,3.53E-02,4.70E-02,6.05E-02,
+      7.47E-02,8.82E-02,1.04E-01,1.20E-01,1.41E-01,1.70E-01,2.00E-01,2.31E-01,2.68E-01,3.11E-01,
+      3.55E-01,4.15E-01,4.78E-01,5.49E-01,6.25E-01,7.01E-01,7.79E-01,8.38E-01,8.83E-01,9.23E-01,
+      9.67E-01,9.89E-01,9.91E-01,1.00E+00,9.94E-01,9.85E-01,9.64E-01,9.29E-01,8.78E-01,8.37E-01,
+      7.87E-01,7.27E-01,6.63E-01,5.97E-01,5.28E-01,4.60E-01,3.95E-01,3.35E-01,2.75E-01,2.22E-01,
+      1.78E-01,1.41E-01,1.08E-01,8.14E-02,6.03E-02,4.43E-02,3.21E-02,2.30E-02,1.63E-02,1.14E-02,
+      7.80E-03,5.43E-03,3.78E-03,2.62E-03,1.80E-03,1.23E-03,8.50E-04,5.88E-04,4.10E-04,2.86E-04,
+      1.99E-04,1.41E-04,9.93E-05,7.04E-05,5.02E-05,3.58E-05,2.57E-05,1.85E-05,1.34E-05,9.72E-06,
+      7.07E-06,5.16E-06,3.79E-06,2.79E-06,2.06E-06,1.52E-06,1.14E-06,8.48E-07,6.35E-07
+    };
+
+    float zhat[NVALS] = {
+      1.32E-02,3.42E-02,8.51E-02,1.93E-01,3.83E-01,6.57E-01,9.93E-01,1.31E+00,1.62E+00,1.87E+00,
+      2.08E+00,2.13E+00,2.13E+00,1.95E+00,1.77E+00,1.58E+00,1.31E+00,1.01E+00,7.52E-01,5.55E-01,
+      3.98E-01,2.91E-01,2.08E-01,1.39E-01,8.85E-02,5.82E-02,3.78E-02,2.43E-02,1.54E-02,9.75E-03,
+      6.08E-03,3.77E-03,2.32E-03,1.43E-03,8.78E-04,5.41E-04,3.34E-04,2.08E-04,1.30E-04,8.18E-05,
+      5.21E-05,3.35E-05,2.18E-05,1.43E-05,9.53E-06,6.43E-06,0.00E+00,0.00E+00,0.00E+00,0.00E+00,
+      0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,
+      0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,
+      0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,
+      0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00,0.00E+00
+    };
+
+  tmin += 273.15E0; // convert from C to K
+  tmax += 273.15E0;
+  lambda_min /= 1.0E9;
+  lambda_max /= 1.0E9;
+  dlambda = (lambda_max-lambda_min)/(float)(NVALS-1);
+  if(n>1)dtemp = (tmax-tmin)/(float)n;
+  for(i = 0;i<n;i++){
+    float temp, vals[4];
+    int j;
+
+    temp = tmin+i*dtemp;
+
+    vals[0] = 0.0;
+    vals[1] = 0.0;
+    vals[2] = 0.0;
+    for(j = 0;j<NVALS;j++){      // trapezoidal rule
+      float lambda, intensity;
+
+      lambda = lambda_min+(float)j*dlambda;
+      intensity = SpectralDensity((double)temp, (double)lambda);
+      if(j==0||j==NVALS-1){
+        vals[0] += xhat[j]*intensity/2.0;
+        vals[1] += yhat[j]*intensity/2.0;
+        vals[2] += zhat[j]*intensity/2.0;
+      }
+      else{
+        vals[0] += xhat[j]*intensity;
+        vals[1] += yhat[j]*intensity;
+        vals[2] += zhat[j]*intensity;
+      }
+    }
+    vals[0] *= dlambda;
+    vals[1] *= dlambda;
+    vals[2] *= dlambda;
+
+    vals[3] = MAX3(vals[0], vals[1], vals[2]);
+    if(vals[3]!=0.0){
+      vals[0] /= vals[3]/255.0;
+      vals[1] /= vals[3]/255.0;
+      vals[2] /= vals[3]/255.0;
+    }
+
+    intensities[4*i+0] = vals[0];
+    intensities[4*i+1] = vals[1];
+    intensities[4*i+2] = vals[2];
+    intensities[4*i+3] = vals[3];
+#ifdef _DEBUG
+    printf("%f %f %f %f %f\n", temp-273.15, vals[0], vals[1], vals[2], vals[3]);
+#endif
+  }
+}
+#endif

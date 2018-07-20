@@ -48,12 +48,12 @@ void OutputSText3(float x, float y, float z, char *string){
   v[0]=world_eyepos[0]-x;
   v[1]=world_eyepos[1]-y;
   v[2]=world_eyepos[2]-z;
-  rotateu2v(u,v,axis,&angle);
+  RotateU2V(u,v,axis,&angle);
   theta=atan2(v[0],-v[1])*RAD2DEG;
-  angleaxis2quat(theta*DEG2RAD,u,quatz);
-  angleaxis2quat(angle,axis,quateye);
-  mult_quat(quateye,quatz,quateye);
-  quat2rot(quateye,rot);
+  AngleAxis2Quat(theta*DEG2RAD,u,quatz);
+  AngleAxis2Quat(angle,axis,quateye);
+  MultQuat(quateye,quatz,quateye);
+  Quat2Rot(quateye,rot);
 
   glRotatef(90.0,cos(theta*DEG2RAD),sin(theta*DEG2RAD),0.0);
   glRotatef(theta,u[0],u[1],u[2]);
@@ -81,9 +81,9 @@ void OutputSText2r(float x, float y, float z, char *string){
   glPushMatrix();
   scale_x = port_unit_width*(scaled_font2d_height2width*(float)scaled_font2d_height/(float)104.76)/(float)port_pixel_width;
   scale_y = port_unit_height*((float)scaled_font2d_height/(float)152.38)/(float)port_pixel_height;
-  if(render_mode==RENDER_XYMULTI&&nrender_rows>0){
-    scale_x *= (float)nrender_rows;
-    scale_y *= (float)nrender_rows;
+  if(render_mode==RENDER_NORMAL&&resolution_multiplier>1&&render_status==RENDER_ON){
+    scale_x *= (float)resolution_multiplier;
+    scale_y *= (float)resolution_multiplier;
   }
   glTranslatef(x-scale_x*total_width,y,z);
   glScalef(scale_x,scale_y,1.0);
@@ -108,9 +108,9 @@ void OutputSText2(float x, float y, float z, char *string){
   glPushMatrix();
   scale_x = (25.0/36.0)*port_unit_width*(scaled_font2d_height2width*(float)scaled_font2d_height/(float)104.76)/(float)port_pixel_width;
   scale_y = (12.0/18.0)*(25.0/18.0)*port_unit_height*((float)scaled_font2d_height/(float)152.38)/(float)port_pixel_height;
-  if(render_mode == RENDER_XYMULTI&&nrender_rows > 0){
-    scale_x *= (float)nrender_rows;
-    scale_y *= (float)nrender_rows;
+  if(render_mode == RENDER_NORMAL&&resolution_multiplier > 1&&render_status==RENDER_ON){
+    scale_x *= (float)resolution_multiplier;
+    scale_y *= (float)resolution_multiplier;
   }
   glTranslatef(x,y,z);
   glScalef(scale_x,scale_y,1.0);
@@ -318,7 +318,6 @@ labeldata *LabelGet(char *name){
 
   if(name==NULL)return NULL;
   for(thislabel=label_first_ptr->next;thislabel->next!=NULL;thislabel=thislabel->next){
-    if(thislabel->name==NULL)return NULL;
     if(strcmp(thislabel->name,name)==0)return thislabel;
   }
   return NULL;
@@ -448,8 +447,8 @@ labeldata *LabelInsert(labeldata *labeltemp){
 /* ----------------------- ScaleFont2D ----------------------------- */
 
 void ScaleFont2D(void){
-  if(render_mode != RENDER_XYSINGLE){
-    glLineWidth((float)nrender_rows*(float)scaled_font2d_thickness);
+  if(render_mode == RENDER_360){
+    glLineWidth((float)resolution_multiplier*(float)scaled_font2d_thickness);
   }
   else{
     glLineWidth((float)scaled_font2d_thickness);
@@ -459,8 +458,8 @@ void ScaleFont2D(void){
 /* ----------------------- ScaleFont3D ----------------------------- */
 
 void ScaleFont3D(void){
-  if(render_mode != RENDER_XYSINGLE){
-    glLineWidth((float)nrender_rows*(float)scaled_font3d_thickness);
+  if(render_mode == RENDER_360){
+    glLineWidth((float)resolution_multiplier*(float)scaled_font3d_thickness);
   }
   else{
     glLineWidth((float)scaled_font3d_thickness);

@@ -191,10 +191,12 @@ char *GetFileName(char *temp_dir, char *file, int flag){
   }
   if(file_out==NULL&&temp_dir!=NULL&&Writable(temp_dir)==YES){
     NewMemory((void **)&file_out,strlen(temp_dir)+1+strlen(file2)+1);
-    strcpy(file_out,"");
-    strcat(file_out,temp_dir);
-    strcat(file_out,dirseparator);
-    strcat(file_out,file);
+    strcpy(file_out, "");
+    if(strcmp(temp_dir, ".")!=0){
+      strcat(file_out, temp_dir);
+      strcat(file_out, dirseparator);
+    }
+    strcat(file_out, file);
   }
   return file_out;
 }
@@ -211,7 +213,50 @@ void FullFile(char *file_out, char *dir, char *file){
   strcat(file_out,file2);
 }
 
-/* ------------------ FileCat ------------------------ */
+/* ------------------ StreamCopy ------------------------ */
+
+unsigned int StreamCopy(FILE *stream_in, FILE *stream_out, int flag){
+  int c;
+  unsigned int nchars = 0;
+
+  if(stream_in == NULL || stream_out == NULL)return 0;
+
+  rewind(stream_in);
+  c = fgetc(stream_in);
+  while(c != EOF){
+    if(flag == 0)return 1;
+    fputc(c, stream_out);
+    c = fgetc(stream_in);
+    nchars++;
+  }
+  return nchars;
+}
+
+/* ------------------ FileCopy ------------------------ */
+
+void FileCopy(char *file_in, char *file_out){
+  FILE *stream_in, *stream_out;
+  int c;
+
+  if(file_in == NULL || file_out == NULL)return;
+  stream_in = fopen(file_in, "rb");
+  if(stream_in == NULL)return;
+  stream_out = fopen(file_out, "wb");
+  if(stream_out == NULL){
+    fclose(stream_in);
+    return;
+  }
+
+  c = fgetc(stream_in);
+  while(c != EOF){
+    fputc(c, stream_out);
+    c = fgetc(stream_in);
+  }
+  fclose(stream_in);
+  fclose(stream_out);
+}
+
+  /* ------------------ FileCat ------------------------ */
 
 int FileCat(char *file_in1, char *file_in2, char *file_out){
   char buffer[FILE_BUFFER];
@@ -321,6 +366,33 @@ int Writable(char *dir){
 #endif
 }
 
+/* ------------------ IfFirstLineBlank ------------------------ */
+
+int IfFirstLineBlank(char *file){
+
+  // returns 1 if first line of file is blank
+
+  STRUCTSTAT statbuff1;
+  int statfile1;
+  FILE *stream = NULL;
+  char buffer[255], *buffptr;
+
+  if(file==NULL)return 1;
+
+  statfile1 = STAT(file, &statbuff1);
+  if(statfile1!=0)return 1;
+
+  stream = fopen(file, "r");
+  if(stream==NULL||fgets(buffer, 255, stream)==NULL){
+    if(stream!=NULL)fclose(stream);
+    return 1;
+  }
+  fclose(stream);
+  buffptr = TrimFrontBack(buffer);
+  if(strlen(buffptr)==0)return 1;
+  return 0;
+}
+
 /* ------------------ IsFileNewer ------------------------ */
 
 int IsFileNewer(char *file1, char *file2){
@@ -361,9 +433,9 @@ int GetFileInfo(char *filename, char *source_dir, FILE_SIZE *filesize){
   return statfile;
 }
 
-/* ------------------ GetFileSize ------------------------ */
+/* ------------------ GetFileSizeSMV ------------------------ */
 
-FILE_SIZE GetFILESize(const char *filename){
+FILE_SIZE GetFileSizeSMV(const char *filename){
   STRUCTSTAT statbuffer;
   int statfile;
   FILE_SIZE return_val;
@@ -390,6 +462,7 @@ char *FgetsBuffer(filedata *fileinfo,char *buffer,int size){
   char *file_buffer, *from, *to;
   int iline, i;
 
+  if(fileinfo==NULL)return NULL;
   iline = fileinfo->iline;
   if(iline>=fileinfo->nlines)return NULL;
   file_buffer = fileinfo->lines[iline];
@@ -407,6 +480,7 @@ char *FgetsBuffer(filedata *fileinfo,char *buffer,int size){
 /* ------------------ RewindFileBuffer ------------------------ */
 
 void RewindFileBuffer(filedata *fileinfo){
+  if(fileinfo==NULL)return;
   fileinfo->iline=0;
 }
 
@@ -485,7 +559,7 @@ filedata *File2Buffer(char *filename){
   FILE *stream;
 
   if(FILE_EXISTS(filename)==NO)return NULL;
-  filesize = GetFILESize(filename);
+  filesize = GetFileSizeSMV(filename);
   if(filesize==0)return NULL;
   stream = fopen(filename,"rb");
   if(stream==NULL)return NULL;
@@ -493,6 +567,7 @@ filedata *File2Buffer(char *filename){
   if(NewMemory((void **)&buffer, filesize+1)==0){
     FREEMEMORY(fileinfo);
     readfile_option = READFILE;
+    fclose(stream);
     return NULL;
   }
   fread(buffer, sizeof(char), filesize, stream);
@@ -517,7 +592,7 @@ filedata *File2Buffer(char *filename){
       buffer[i]=' ';   //  if a \r is found set it to a blank character
       continue;
     }
-    if(ch=='\n'||ch==EOF){
+    if(ch=='\n'||ch==EOF||ch==0){
       buffer[i]=0;
       nlines++;
     }
@@ -568,10 +643,7 @@ int FileExists(char *filename){
   if(filename == NULL)return NO;
 #ifdef pp_FILELIST
   if(filelist != NULL&&nfilelist>0){
-    if(FileInList(filename, filelist, nfilelist, filelist2, nfilelist2) == NULL){
-      return NO;
-    }
-    else{
+    if(FileInList(filename, filelist, nfilelist, filelist2, nfilelist2) != NULL){
       return YES;
     }
   }
@@ -608,11 +680,8 @@ int GetFileListSize(const char *path, char *filter){
     perror("opendir");
     return 0;
   }
-  while( (entry = readdir(dp)) ){
-    if(((entry->d_type==DT_REG||entry->d_type==DT_UNKNOWN)&&MatchWild(entry->d_name,filter)==1)){
-      maxfiles++;
-      continue;
-    }
+  while( (entry = readdir(dp))!=NULL ){
+    if(((entry->d_type==DT_REG||entry->d_type==DT_UNKNOWN)&&MatchWild(entry->d_name,filter)==1))maxfiles++;
   }
   closedir(dp);
   return maxfiles;
@@ -659,19 +728,18 @@ int MakeFileList(const char *path, char *filter, int maxfiles, int sort_files, f
   // DT_DIR - is a directory
   // DT_REG - is a regular file
 
+  if (maxfiles == 0) {
+    *filelist = NULL;
+    return 0;
+  }
   dp = opendir(path);
   if(dp == NULL){
     perror("opendir");
     *filelist=NULL;
     return 0;
   }
-  if(maxfiles==0){
-    closedir(dp);
-    *filelist=NULL;
-    return 0;
-  }
   NewMemory((void **)&flist,maxfiles*sizeof(filelistdata));
-  while( (entry = readdir(dp))&&nfiles<maxfiles ){
+  while( (entry = readdir(dp))!=NULL&&nfiles<maxfiles ){
     if((entry->d_type==DT_REG||entry->d_type==DT_UNKNOWN)&&MatchWild(entry->d_name,filter)==1){
       char *file;
       filelistdata *flisti;
@@ -684,11 +752,11 @@ int MakeFileList(const char *path, char *filter, int maxfiles, int sort_files, f
       nfiles++;
     }
   }
+  closedir(dp);
   if(sort_files == YES&&nfiles>0){
     qsort((filelistdata *)flist, (size_t)nfiles, sizeof(filelistdata), CompareFileList);
   }
   *filelist=flist;
-  closedir(dp);
   return nfiles;
 }
 

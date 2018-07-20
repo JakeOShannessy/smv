@@ -113,8 +113,8 @@ int mesh_Match(meshdata *mesh1, meshdata *mesh2);
 int ReadSMV(FILE *streamsmv, FILE *stream_out, casedata *smvcase);
 void setup_boundary(FILE *stream_out);
 void setup_slice(FILE *stream_out);
-void setup_plot3d(FILE *stream_out);
-plot3d *getplot3d(plot3d *plot3din, casedata *case2);
+void SetupPlot3D(FILE *stream_out);
+plot3d *GetPlot3D(plot3d *plot3din, casedata *case2);
 slice *getslice(slice *slicein, casedata *case2);
 boundary *getboundary(boundary *boundaryin, casedata *case2);
 void diff_boundaryes(FILE *stream_out);
@@ -139,9 +139,7 @@ int getpatchindex(int in1, boundary *boundaryin, boundary *boundaryout);
 #define FORToutboundaryheader  _F(outboundaryheader)
 #define FORToutpatchframe      _F(outpatchframe)
 #define FORTendianout          _F(endianout)
-#define FORTget_file_unit      _F(get_file_unit)
 
-STDCALLF FORTget_file_unit(int *file_unit, int *file_unit_start);
 STDCALLF FORToutpatchframe(int *lunit, int *npatch,
                           int *pi1, int *pi2, int *pj1, int *pj2, int *pk1, int *pk2,
                           float *patchtime, float *pqq, int *error);

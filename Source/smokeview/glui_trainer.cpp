@@ -46,29 +46,29 @@ GLUI_StaticText *STATIC_alert=NULL;
 
 GLUI *glui_alert=NULL;
 
-/* ------------------ update_glui_viewlist ------------------------ */
+/* ------------------ SetGLuiViewListManual ------------------------ */
 
-extern "C" void update_glui_viewlist(void){
+extern "C" void SetGLuiViewListManual(void){
   if(trainer_viewpoints!=-1){
     LIST_viewpoint->set_int_val(-1);
   }
 }
 
-/* ------------------ show_glui_alert ------------------------ */
+/* ------------------ ShowGluiAlert ------------------------ */
 
-extern "C" void show_glui_alert(void){
+extern "C" void ShowGluiAlert(void){
   if(glui_alert!=NULL)glui_alert->show();
 }
 
-/* ------------------ hide_glui_alert ------------------------ */
+/* ------------------ HideGluiAlert ------------------------ */
 
-extern "C" void hide_glui_alert(void){
+extern "C" void HideGluiAlert(void){
   if(glui_alert!=NULL)glui_alert->hide();
 }
 
-/* ------------------ glui_alert_setup ------------------------ */
+/* ------------------ GluiAlertSetup ------------------------ */
 
-extern "C" void glui_alert_setup(int main_window){
+extern "C" void GluiAlertSetup(int main_window){
   update_glui_alert=0;
   if(glui_alert!=NULL){
     glui_alert->close();
@@ -76,12 +76,12 @@ extern "C" void glui_alert_setup(int main_window){
   }
   glui_alert = GLUI_Master.create_glui("",0,screenWidth/2,screenHeight/2);
   glui_alert->hide();
-  STATIC_alert = glui_alert->add_statictext(_d("Loading smoke and fire data"));
+  STATIC_alert = glui_alert->add_statictext(_("Loading smoke and fire data"));
 }
 
-/* ------------------ hide_glui_trainer ------------------------ */
+/* ------------------ HideGluiTrainer ------------------------ */
 
-extern "C" void hide_glui_trainer(void){
+extern "C" void HideGluiTrainer(void){
   if(glui_trainer!=NULL){
     glui_trainer->hide();
     showtrainer_dialog=0;
@@ -89,9 +89,9 @@ extern "C" void hide_glui_trainer(void){
   }
 }
 
-/* ------------------ show_glui_trainer ------------------------ */
+/* ------------------ ShowGluiTrainer ------------------------ */
 
-extern "C" void show_glui_trainer(void){
+extern "C" void ShowGluiTrainer(void){
   if(glui_trainer!=NULL){
     glui_trainer->show();
     showtrainer_dialog=1;
@@ -99,9 +99,9 @@ extern "C" void show_glui_trainer(void){
   }
 }
 
-/* ------------------ update_trainer_outline ------------------------ */
+/* ------------------ UpdateTrainerOutline ------------------------ */
 
-extern "C" void update_trainer_outline(void){
+extern "C" void UpdateTrainerOutline(void){
   if(visBlocks==visBLOCKOutline){
     trainer_outline=0;
   }
@@ -111,9 +111,9 @@ extern "C" void update_trainer_outline(void){
   if(CHECKBOX_outline!=NULL)CHECKBOX_outline->set_int_val(trainer_outline);
 }
 
-/* ------------------ update_trainer_moves ------------------------ */
+/* ------------------ UpdateTrainerMoves ------------------------ */
 
-extern "C" void update_trainer_moves(void){
+extern "C" void UpdateTrainerMoves(void){
   float *eye_xyz;
   float *az, *elev;
 
@@ -140,16 +140,16 @@ extern "C" void update_trainer_moves(void){
   }
 }
 
-/* ------------------ TRAINER_CB ------------------------ */
+/* ------------------ TrainerCB ------------------------ */
 
-void TRAINER_CB(int var){
+void TrainerCB(int var){
 
   switch(var){
     int i;
 
   case TRAINER_PAUSE:
     stept = trainer_pause;
-    keyboard('t', FROM_SMOKEVIEW);
+    Keyboard('t', FROM_SMOKEVIEW);
     break;
   case TOGGLE_VIEW:
     if(ntrainer_viewpoints <= 0)break;
@@ -158,7 +158,7 @@ void TRAINER_CB(int var){
       trainer_viewpoints = ntrainer_viewpoints;
     }
     LIST_viewpoint->set_int_val(trainer_viewpoints);
-    TRAINER_CB(TRAINERVIEWPOINTS);
+    TrainerCB(TRAINERVIEWPOINTS);
     break;
   case TRAINERVIEWPOINTS:
     if(trainer_viewpoints != -1){
@@ -169,7 +169,7 @@ void TRAINER_CB(int var){
 
       viewpoint_save = trainer_viewpoints;
       LIST_trainerpath->set_int_val(-1);
-      TRAINER_CB(TRAINERPATH);
+      TrainerCB(TRAINERPATH);
       if(viewpoint_save != -11){
         LIST_viewpoint->set_int_val(viewpoint_save);
         ResetMenu(viewpoint_save);
@@ -186,7 +186,7 @@ void TRAINER_CB(int var){
     ResetMenu(MENU_OUTLINEVIEW);
     break;
   case TRAINERPATH:
-    TRAINER_CB(MOVETYPE);
+    TrainerCB(MOVETYPE);
     if(trainer_viewpoints != 1){
       LIST_viewpoint->set_int_val(-1);
     }
@@ -197,18 +197,18 @@ void TRAINER_CB(int var){
         CHECKBOX_pause->set_int_val(trainer_pause);
         TourMenu(MENU_TOUR_MANUAL);
         rotation_type = ROTATION_2AXIS;
-        handle_rotation_type(ROTATION_2AXIS);
+        HandleRotationType(ROTATION_2AXIS);
         from_glui_trainer = 1;
         trainee_location = 0;
       }
-      TRAINER_CB(MOVETYPE);
+      TrainerCB(MOVETYPE);
       break;
     case -2:
       break;
     default:
       if(rotation_type != EYE_CENTERED){
         rotation_type = EYE_CENTERED;
-        handle_rotation_type(ROTATION_2AXIS);
+        HandleRotationType(ROTATION_2AXIS);
       }
       for(i = 0;i < ntourinfo;i++){
         tourdata *touri;
@@ -223,7 +223,7 @@ void TRAINER_CB(int var){
     break;
   case MOVETYPE:
     rotation_type = ROTATION_2AXIS;
-    handle_rotation_type(ROTATION_2AXIS);
+    HandleRotationType(ROTATION_2AXIS);
     SetViewPoint(RESTORE_EXTERIOR_VIEW);
     break;
   case LOAD_SMOKE:
@@ -244,7 +244,7 @@ void TRAINER_CB(int var){
       }
     }
     UpdateChopColors();
-    colorbarflip = 1;
+    colorbar_flip = 1;
     ColorbarMenu(COLORBAR_FLIP);
     break;
   case LOAD_OXY:
@@ -262,7 +262,7 @@ void TRAINER_CB(int var){
       }
     }
     UpdateChopColors();
-    colorbarflip = 0;
+    colorbar_flip = 0;
     ColorbarMenu(COLORBAR_FLIP);
     break;
   default:
@@ -271,9 +271,9 @@ void TRAINER_CB(int var){
   }
 }
 
-/* ------------------ ROTATE_CB ------------------------ */
+/* ------------------ RotateCB ------------------------ */
 
-void ROTATE_CB(int var){
+void RotateCB(int var){
 
   float *eye_xyz, *az, *elev;
 
@@ -284,7 +284,7 @@ void ROTATE_CB(int var){
 
   if(rotation_type != ROTATION_2AXIS){
     rotation_type = ROTATION_2AXIS;
-    handle_rotation_type(ROTATION_2AXIS);
+    HandleRotationType(ROTATION_2AXIS);
     SetViewPoint(RESTORE_EXTERIOR_VIEW);
   }
 
@@ -293,7 +293,7 @@ void ROTATE_CB(int var){
   }
   if(trainer_path != -1){
     LIST_trainerpath->set_int_val(-1);
-    TRAINER_CB(TRAINERPATH);
+    TrainerCB(TRAINERPATH);
   }
   switch(var){
   case TRAINER_AZ_ELEV:
@@ -314,9 +314,9 @@ void ROTATE_CB(int var){
   camera_current->dirty = 1;
 }
 
-/* ------------------ glui_trainer_setup ------------------------ */
+/* ------------------ GluiTrainerSetup ------------------------ */
 
-extern "C" void glui_trainer_setup(int main_window){
+extern "C" void GluiTrainerSetup(int main_window){
 
   update_glui_trainer=0;
   if(glui_trainer!=NULL){
@@ -324,27 +324,27 @@ extern "C" void glui_trainer_setup(int main_window){
     glui_trainer=NULL;
   }
   if(glui_trainer!=NULL)glui_trainer->close();
-  glui_trainer = GLUI_Master.create_glui(_d("Demonstrator"),0,screenWidth+12,0);
+  glui_trainer = GLUI_Master.create_glui(_("Demonstrator"),0,screenWidth+12,0);
   if(showgluitrainer==0)glui_trainer->hide();
 
   glui_trainer->set_main_gfx_window( main_window );
-  PANEL_smokeview = glui_trainer->add_panel(_d("Data"));
-  BUTTON_smoke3d = glui_trainer->add_button_to_panel(PANEL_smokeview,_d("Smoke/Fire"),LOAD_SMOKE,TRAINER_CB);
+  PANEL_smokeview = glui_trainer->add_panel(_("Data"));
+  BUTTON_smoke3d = glui_trainer->add_button_to_panel(PANEL_smokeview,_("Smoke/Fire"),LOAD_SMOKE,TrainerCB);
   if(AnySmoke(NULL)==0)BUTTON_smoke3d->disable();
-  BUTTON_temp = glui_trainer->add_button_to_panel(PANEL_smokeview,_d("Temperature"),LOAD_TEMP,TRAINER_CB);
+  BUTTON_temp = glui_trainer->add_button_to_panel(PANEL_smokeview,_("Temperature"),LOAD_TEMP,TrainerCB);
   if(AnySlices("TEMPERATURE")==0)BUTTON_temp->disable();
-  BUTTON_oxy = glui_trainer->add_button_to_panel(PANEL_smokeview,_d("Oxygen"),LOAD_OXY,TRAINER_CB);
-  if(AnySlices("oxygen")==0&&AnySlices(_d("oxygen VOLUME FRACTION"))==0){
+  BUTTON_oxy = glui_trainer->add_button_to_panel(PANEL_smokeview,_("Oxygen"),LOAD_OXY,TrainerCB);
+  if(AnySlices("oxygen")==0&&AnySlices(_("oxygen VOLUME FRACTION"))==0){
     BUTTON_oxy->disable();
   }
 
   PANEL_explore = glui_trainer->add_panel("Explore",true);
 
   trainer_path=-1;
-  LIST_trainerpath = glui_trainer->add_listbox_to_panel(PANEL_explore,_d("Path:"),&trainer_path,TRAINERPATH,TRAINER_CB);
+  LIST_trainerpath = glui_trainer->add_listbox_to_panel(PANEL_explore,_("Path:"),&trainer_path,TRAINERPATH,TrainerCB);
   {
     int i;
-    LIST_trainerpath->add_item(-1,_d("Manual"));
+    LIST_trainerpath->add_item(-1,_("Manual"));
     LIST_trainerpath->add_item(-2,"-");
     for(i=0;i<ntourinfo;i++){
       tourdata *touri;
@@ -354,7 +354,7 @@ extern "C" void glui_trainer_setup(int main_window){
     }
   }
 
-  LIST_viewpoint = glui_trainer->add_listbox_to_panel(PANEL_explore,_d("Viewpoint:"),&trainer_viewpoints,TRAINERVIEWPOINTS,TRAINER_CB);
+  LIST_viewpoint = glui_trainer->add_listbox_to_panel(PANEL_explore,_("Viewpoint:"),&trainer_viewpoints,TRAINERVIEWPOINTS,TrainerCB);
   {
     cameradata *ca;
 
@@ -374,28 +374,28 @@ extern "C" void glui_trainer_setup(int main_window){
       if(ca->view_id>=1)ntrainer_viewpoints++;
     }
   }
-  BUTTON_toggle_view = glui_trainer->add_button_to_panel(PANEL_explore,_d("Toggle View"),TOGGLE_VIEW,TRAINER_CB);
+  BUTTON_toggle_view = glui_trainer->add_button_to_panel(PANEL_explore,_("Toggle View"),TOGGLE_VIEW,TrainerCB);
   if(ntrainer_viewpoints<=2)BUTTON_toggle_view->disable();
 
-  CHECKBOX_outline = glui_trainer->add_checkbox_to_panel(PANEL_explore,_d("Show walls"),&trainer_outline,TRAINEROUTLINE,TRAINER_CB);
-  CHECKBOX_pause = glui_trainer->add_checkbox_to_panel(PANEL_explore,_d("Pause"),&trainer_pause,TRAINER_PAUSE,TRAINER_CB);
+  CHECKBOX_outline = glui_trainer->add_checkbox_to_panel(PANEL_explore,_("Show walls"),&trainer_outline,TRAINEROUTLINE,TrainerCB);
+  CHECKBOX_pause = glui_trainer->add_checkbox_to_panel(PANEL_explore,_("Pause"),&trainer_pause,TRAINER_PAUSE,TrainerCB);
 
-  update_trainer_outline();
-  PANEL_move = glui_trainer->add_panel_to_panel(PANEL_explore,_d("Move"),false);
-  TRANSLATE_leftright_inout = glui_trainer->add_translation_to_panel(PANEL_move,_d("Horizontal"),
-    GLUI_TRANSLATION_XY,trainer_xzy,TRAINER_LEFTRIGHT_INOUT,ROTATE_CB);
+  UpdateTrainerOutline();
+  PANEL_move = glui_trainer->add_panel_to_panel(PANEL_explore,_("Move"),false);
+  TRANSLATE_leftright_inout = glui_trainer->add_translation_to_panel(PANEL_move,_("Horizontal"),
+    GLUI_TRANSLATION_XY,trainer_xzy,TRAINER_LEFTRIGHT_INOUT, RotateCB);
   glui_trainer->add_column_to_panel(PANEL_move,false);
 
-  TRANSLATE_updown = glui_trainer->add_translation_to_panel(PANEL_move,_d("Vertical"),
-    GLUI_TRANSLATION_Y,trainer_xzy+2,TRAINER_UPDOWN,ROTATE_CB);
+  TRANSLATE_updown = glui_trainer->add_translation_to_panel(PANEL_move,_("Vertical"),
+    GLUI_TRANSLATION_Y,trainer_xzy+2,TRAINER_UPDOWN, RotateCB);
   glui_trainer->add_column_to_panel(PANEL_move,false);
 
-  TRANSLATE_az_elev = glui_trainer->add_translation_to_panel(PANEL_move,_d("Rotate"),
-    GLUI_TRANSLATION_XY,trainer_ab,TRAINER_AZ_ELEV,ROTATE_CB);
+  TRANSLATE_az_elev = glui_trainer->add_translation_to_panel(PANEL_move,_("Rotate"),
+    GLUI_TRANSLATION_XY,trainer_ab,TRAINER_AZ_ELEV, RotateCB);
 
-  update_trainer_moves();
+  UpdateTrainerMoves();
 
-  TRAINER_CB(MOVETYPE);
-  TRAINER_CB(TRAINERVIEWPOINTS);
+  TrainerCB(MOVETYPE);
+  TrainerCB(TRAINERVIEWPOINTS);
 
 }
