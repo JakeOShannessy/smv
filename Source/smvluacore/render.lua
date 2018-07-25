@@ -126,6 +126,19 @@ function rendermany(start, final, interval, ...)
     end
 end
 
+function rendermanytime(start, final, interval, ...)
+    print("luascript: Rendering every " .. interval ..
+        " seconds starting at time " .. start .. " until " .. final .. "\n")
+    -- local nframes = get_nglobal_times()
+    -- local adjFinal = nframes - 1
+    -- if final > (nframes-1) then final = final end
+    for i=start,final,interval do
+        settime(i)
+        time = i
+        render(...)
+    end
+end
+
 
 function renderall(...)
     rendermany(0,smv.getfinalframe(),1,...)

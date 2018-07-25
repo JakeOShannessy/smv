@@ -117,6 +117,8 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
   // return_code= SetupCase(argc,argv_sv);
   lua_pushnumber(L, argc);
   lua_pushlightuserdata(L, argv_sv);
+  // TODO: only set up a case if one is specified, otherwise leave it to the
+  // interpreter to call this.
   lua_SetupCase(L);
   return_code = lua_tonumber(L,-1);
 
