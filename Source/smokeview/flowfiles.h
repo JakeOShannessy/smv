@@ -559,7 +559,6 @@ typedef struct _isodata {
   int is_fed;
   feddata *fedptr;
   int type;
-  int num_memblocks;
   int setvalmin, setvalmax;
   float valmin, valmax;
   int firstshort;
@@ -1109,14 +1108,10 @@ typedef struct _part5data {
 
 typedef struct _partdata {
   char *file, *comp_file, *size_file, *reg_file, *hist_file;
-  int seq_id, autoload, loaded, display, reload;
+  int seq_id, autoload, loaded, request_load, display, reload, finalize;
   int sort_tags_loaded, compression_type, evac;
-  int blocknumber, num_memblocks;
+  int blocknumber;
   int *timeslist, ntimes, itime;
-  int data_type;
-#ifdef pp_PARTDEFER
-  int compute_bounds_color;
-#endif
 
   float zoffset, *times;
   FILE_SIZE reg_file_size;
@@ -1163,11 +1158,14 @@ typedef struct _slicedata {
   char *file;
   char *size_file;
   char *comp_file, *reg_file, *vol_file;
+#ifdef pp_SLICEGEOM
+  char *geom_file;
+#endif
   char *slicelabel;
   int compression_type;
   int colorbar_autoflip;
   int ncompressed;
-  int slicetype;
+  int slicefile_type;
   struct _multislicedata *mslice;
   int is_fed;
   feddata *fedptr;
@@ -1177,10 +1175,9 @@ typedef struct _slicedata {
   char slicedir[50];
   int loaded, loading, display;
   int loaded_save, display_save;
-  int num_memblocks;
   float position_orig;
   int blocknumber;
-  int firstshort;
+  int firstshort_slice;
   int vec_comp;
   int skip;
   int setvalmin, setvalmax;
@@ -1216,13 +1213,14 @@ typedef struct _slicedata {
   int nslicex, nslicey;
   int ndirxyz[4];
   int nslicetotal;
-  int type;
+  int slicefile_labelindex;
   int vloaded;
   int reload;
   float delta_orig, dplane_min, dplane_max;
   int extreme_min, extreme_max;
   histogramdata *histograms;
   int nhistograms;
+  struct _patchdata *patchgeom;
 } slicedata;
 
 /* --------------------------  multislicedata ------------------------------------ */
@@ -1230,7 +1228,7 @@ typedef struct _slicedata {
 typedef struct _multislicedata {
   int mesh_type;
   int seq_id, autoload;
-  int loaded,display,type;// possible problem with 'type'
+  int loaded,display,mslicefile_labelindex;// possible problem with 'type'
   int ndirxyz[4];
   int nslices;
   int *islices;
@@ -1243,7 +1241,7 @@ typedef struct _multislicedata {
 typedef struct _multivslicedata {
   int mesh_type;
   int seq_id, autoload;
-  int loaded,display,type;
+  int loaded,display,mvslicefile_labelindex;
   int nvslices;
   int ndirxyz[4];
   int *ivslices;
@@ -1254,7 +1252,7 @@ typedef struct _multivslicedata {
 /* --------------------------  boundsdata ------------------------------------ */
 
 typedef struct _boundsdata {
-  char *datalabel;
+  char *shortlabel;
   int setvalmin, setvalmax;
   int setchopmin, setchopmax;
   float line_contour_min;
@@ -1280,8 +1278,8 @@ typedef struct _vslicedata {
   int skip;
   int loaded,display;
   float valmin, valmax;
-  int type,vec_type;
-  int slicetype;
+  int vslicefile_type;
+  int vslicefile_labelindex;
   char menulabel[128];
   char menulabel2[128];
 } vslicedata;
@@ -1309,7 +1307,7 @@ typedef struct _smoke3ddata {
   char *file;
   char *comp_file, *reg_file;
   int filetype;
-  int loaded, display, request_load, primary_file;
+  int loaded, finalize, display, request_load, primary_file;
   int is_zlib;
   smokestatedata smokestate[MAXSMOKETYPES];
   int blocknumber;
@@ -1342,20 +1340,20 @@ typedef struct _patchdata {
   int seq_id, autoload;
   char *file,*size_file;
   char *comp_file, *reg_file;
-  char *geomfile, *geom_fdsfiletype;
+  char *geomfile, *filetype_label;
   geomdata *geominfo;
   //int *patchsize;
   int skip,dir;
   float xyz_min[3], xyz_max[3];
   int ntimes, ntimes_old;
   int version;
-  int filetype, geom_smvfiletype, slice;
-  int type;
+  int patch_filetype, structured;
+  int shortlabel_index;
+  int boundary;
   int inuse,inuse_getbounds;
   int unit_start;
   int firstshort;
   int compression_type;
-  int num_memblocks;
   int setvalmin, setvalmax;
   float valmin, valmax;
   int setchopmin, setchopmax;
@@ -1387,7 +1385,6 @@ typedef struct _plot3ddata {
   char *file,*reg_file,*comp_file;
   int compression_type;
   float time;
-  int num_memblocks;
   int u, v, w, nvars;
   float diff_valmin[5], diff_valmax[5];
   int extreme_min[6], extreme_max[6];
