@@ -607,6 +607,13 @@ typedef struct _volrenderdata {
   int loaded, display;
 } volrenderdata;
 
+/* --------------------------  meshplanedata ------------------------------------ */
+
+typedef struct _meshplanedata {
+  float verts[6*3],verts_smv[6*3];
+  int triangles[4*3], nverts, ntriangles;
+} meshplanedata;
+
 /* --------------------------  mesh ------------------------------------ */
 
 typedef struct _meshdata {
@@ -756,6 +763,7 @@ typedef struct _meshdata {
   clipdata box_clipinfo;
 
   unsigned char *merge_color,*merge_alpha;
+  unsigned char *smokecolor_ptr, *smokealpha_ptr;
   float *light_fraction;
   unsigned char *uc_light_fraction;
 
@@ -774,12 +782,17 @@ typedef struct _meshdata {
 
   volrenderdata volrenderinfo;
 
-  float gslice_verts[6*3];
-  int gslice_nverts,gslice_triangles[4*3],gslice_ntriangles;
+  meshplanedata gsliceinfo;
+  meshplanedata *smokeplaneinfo;
+  int nsmokeplaneinfo;
+  float verts[24];
+  float vert_dists[8], vert_distmin, vert_distmax;
+  int nverts;
+
   int s_offset[3];
 } meshdata;
 
-/* --------------------------  supermeshdata ------------------------------------ */
+  /* --------------------------  supermeshdata ------------------------------------ */
 
 typedef struct _supermeshdata {
 #ifdef pp_GPU
@@ -1161,6 +1174,7 @@ typedef struct _slicedata {
 #ifdef pp_SLICEGEOM
   char *geom_file;
 #endif
+  int finalized;
   char *slicelabel;
   int compression_type;
   int colorbar_autoflip;
