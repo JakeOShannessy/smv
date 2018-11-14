@@ -1554,6 +1554,65 @@ int lua_slice_data_map_frames_count_greater_eq(lua_State *L) {
   return 1;
 }
 
+// Pushes a value from a slice onto the stack (a single slice, not multi).
+// The arguments are
+// 1. int framenumber
+// 2. int i
+// 3. int j
+// 4. ink k
+// The slice index is stored as part of a closure.
+int getslicedata(lua_State *L) {
+  // The offset in the global sliceinfo table of the slice.
+  int slice_index = lua_tonumber(L, lua_upvalueindex(1));
+  // The time frame to use
+  int f = lua_tonumber(L, 1);
+  // The offsets into the mesh requested (NOT the data array)
+  int i = lua_tonumber(L, 2);
+  int j = lua_tonumber(L, 3);
+  int k = lua_tonumber(L, 4);
+  // // print all the times
+  // for (int i; i < sliceinfo[slice_index].ntimes; i++) {
+  //   fprintf(stderr, "t:%.2f s\n", sliceinfo[slice_index].times[i]);
+  // }
+  // fprintf(stderr, "f:%d i:%d j:%d  k:%d\n", f, i,j,k);
+
+  int imax = sliceinfo[slice_index].ijk_max[0];
+  int jmax = sliceinfo[slice_index].ijk_max[1];
+  int kmax = sliceinfo[slice_index].ijk_max[2];
+
+  int di = sliceinfo[slice_index].nslicei;
+  int dj = sliceinfo[slice_index].nslicej;
+  int dk = sliceinfo[slice_index].nslicek;
+  // fprintf(stderr, "imax:%d jmax:%d  kmax:%d\n", imax,jmax,kmax);
+  // Check that the offsets do not exceed the bounds of a single data frame
+  if (i>imax || j>jmax || k>kmax) {
+    fprintf(stderr, "ERROR: offsets exceed bounds");
+    exit(1);
+  }
+  // Convert the offsets into the mesh into offsets into the data array
+  int i_offset = i - sliceinfo[slice_index].ijk_min[0];
+  int j_offset = j - sliceinfo[slice_index].ijk_min[1];
+  int k_offset = k - sliceinfo[slice_index].ijk_min[2];
+  // fprintf(stderr, "i_offset:%d j_offset:%d  k_offset:%d\n", i_offset,j_offset,k_offset);
+
+  // Offset into a single frame
+  int offset = (di*dj)*k_offset+di*j_offset+i_offset;
+  int framesize = di*dj*dk;
+  float val = sliceinfo[slice_index].qslicedata[offset+f*framesize];
+  // for (int x; x < framesize*sliceinfo[slice_index].ntimes; x++) {
+  //   printf("x:%d - %.2f\n", x, sliceinfo[slice_index].qslicedata[x]);
+  // }
+  // fprintf(stderr, "i_offset:%d j_offset:%d  k_offset:%d\n", i_offset,j_offset,k_offset);
+  // printf("offset: %d\n", offset);
+  // printf("framesize: %d\n", framesize);
+  // printf("nframes: %d\n", sliceinfo[slice_index].ntimes);
+  // printf("total_offset: %d\n", offset+f*framesize);
+  // printf("total_max: %d\n", framesize*sliceinfo[slice_index].ntimes);
+  // lua_pushstring(L,sliceinfo[slice_index].file);
+  lua_pushnumber(L,val);
+  return 1;
+}
+
 /*
   Build a Lua table with information on the slices of the model.
 */
@@ -1564,7 +1623,7 @@ int lua_get_sliceinfo(lua_State *L) {
   int i;
   for (i = 0; i < nsliceinfo; i++) {
     lua_pushnumber(L, i+1);
-    lua_createtable(L, 0, 19);
+    lua_createtable(L, 0, 21);
 
     if(sliceinfo[i].slicelabel != NULL) {
       lua_pushstring(L, sliceinfo[i].slicelabel);
@@ -1628,6 +1687,18 @@ int lua_get_sliceinfo(lua_State *L) {
 
     lua_pushstring(L, sliceinfo[i].slicedir);
     lua_setfield(L, -2, "slicedir");
+
+    // can't be done until loaded
+    // lua_pushnumber(L, sliceinfo[i].ntimes);
+    // lua_setfield(L, -2, "ntimes");
+
+    // Push the slice index so that getslicedata knows which slice to operate
+    // on.
+    lua_pushnumber(L,i);
+    // Push a closure which has been provided with the first argument (the slice
+    // index)
+    lua_pushcclosure(L, getslicedata, 1);
+    lua_setfield(L, -2, "getdata");
 
     lua_settable(L, -3);
   }
