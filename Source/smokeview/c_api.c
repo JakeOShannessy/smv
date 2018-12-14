@@ -1369,15 +1369,28 @@ void load3dsmoke(const char *smoke_type){
   int i;
   int errorcode;
   int count=0;
+  int lastsmoke;
 
   FREEMEMORY(loaded_file);
   PRINTF("script: loading smoke3d files of type: %s\n\n",smoke_type);
+
+  for(i = nsmoke3dinfo-1;i >=0;i--){
+    smoke3ddata *smoke3di;
+
+    smoke3di = smoke3dinfo + i;
+    if(MatchUpper(smoke3di->label.longlabel, smoke_type) == MATCH){
+      lastsmoke = i;
+      break;
+    }
+  }
 
   for(i=0;i<nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
 
     smoke3di = smoke3dinfo + i;
-    if(MatchUpper(smoke3di->label.longlabel,smoke_type)==1){
+    if(MatchUpper(smoke3di->label.longlabel,smoke_type) == MATCH){
+      smoke3di->finalize = 0;
+      if(lastsmoke == i)smoke3di->finalize = 1;
       ReadSmoke3D(ALL_FRAMES,i,LOAD,&errorcode);
       if(smoke_type!=NULL&&strlen(smoke_type)>0){
         FREEMEMORY(loaded_file);
@@ -1387,8 +1400,10 @@ void load3dsmoke(const char *smoke_type){
       count++;
     }
   }
-  if(count==0)fprintf(stderr,"*** Error: Smoke3d files of type %s failed to "
-                      "load\n",smoke_type);
+  if(count == 0){
+    fprintf(stderr, "*** Error: Smoke3d files of type %s failed to load\n", smoke_type);
+    if(stderr2!=NULL)fprintf(stderr2, "*** Error: Smoke3d files of type %s failed to load\n", smoke_type);
+  }
   force_redisplay=1;
   updatemenu=1;
 
