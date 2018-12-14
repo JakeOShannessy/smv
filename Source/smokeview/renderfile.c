@@ -56,6 +56,7 @@ void MakeMovie(void){
   char moviefile_path[1024],overwrite_flag[10],image_ext[10], movie_frames[1024];
   int make_movie_now=1;
 
+  if(output_ffmpeg_command==1)make_movie_now = 0;
 // wait to make movie until after images are rendered
 
   if(render_status == RENDER_ON)return;
@@ -94,8 +95,8 @@ void MakeMovie(void){
     }
   }
 
-
-  if(make_movie_now==1){
+  if(make_movie_now==1||output_ffmpeg_command==1){
+    char power_label[100];
 // construct name of frames used to make movie
 
     strcpy(movie_frames, render_file_base);
@@ -106,21 +107,39 @@ void MakeMovie(void){
 
     sprintf(command_line, "ffmpeg %s -r %i -i ", overwrite_flag,movie_framerate);
     strcat(command_line, movie_frames);
-    strcat(command_line, " ");
-    {
-      char bitrate_label[100];
 
-      sprintf(bitrate_label," -b %ik ",movie_bitrate);
-      strcat(command_line,bitrate_label);
+    if(movie_filetype==MP4||movie_filetype==MOV){ // use -crf for MP4 and MOV, use -b for AVI and WMV
+      strcat(command_line, " -vcodec libx264 ");
+      sprintf(power_label, " -crf %i ", movie_crf);
     }
-    if(quicktime_compatibility == 1){
-      strcat(command_line, " -pix_fmt yuv420p ");
+    else{
+      sprintf(power_label, " -b:v %ik ", movie_bitrate);
     }
+    strcat(command_line, power_label);
+
+    if(movie_filetype==MP4||movie_filetype==MOV)strcat(command_line, " -pix_fmt yuv420p ");
     strcat(command_line, moviefile_path);
 
 // make movie
+    if(output_ffmpeg_command==1){
+      if(ffmpeg_command_filename!=NULL){
+        FILE *stream_ffmpeg=NULL;
 
-    system(command_line);
+        stream_ffmpeg = fopen(ffmpeg_command_filename,"w");
+        if(stream_ffmpeg!=NULL){
+#ifdef WIN32
+          fprintf(stream_ffmpeg,"@echo off\n");
+#else
+          fprintf(stream_ffmpeg,"#!/bin/bash\n");
+#endif
+          fprintf(stream_ffmpeg,"%s\n",command_line);
+          fclose(stream_ffmpeg);
+        }
+      }
+      printf("%s\n", command_line);
+      output_ffmpeg_command=0;
+    }
+    if(make_movie_now==1)system(command_line);
   }
 
 // enable movie making button
@@ -618,45 +637,57 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
 
 /* ------------------ GetScreenMap360 ------------------------ */
 
-unsigned int GetScreenMap360(float *xyz){
+unsigned int GetScreenMap360(float *xyz, float *xx, float *yy){
+  screendata *screeni;
   int ibuff;
   float xyznorm;
+  int maxbuff;
+  float maxcos, cosangle;
+  float *view, *up, *right, t;
+  float A, B;
 
   xyznorm = sqrt(xyz[0] * xyz[0] + xyz[1] * xyz[1] + xyz[2] * xyz[2]);
 
   for(ibuff = 0; ibuff < nscreeninfo; ibuff++){
-    screendata *screeni;
-    float *view, *up, *right, t;
-    float A, B;
-    float cosangle;
-
-    screeni = screeninfo + ibuff;
+    screeni = screeninfo+ibuff;
     view = screeni->view;
-    up = screeni->up;
-    right = screeni->right;
     cosangle = DOT3(view, xyz) / xyznorm;
-    if(cosangle <= screeni->cosmax-0.001)continue;
-
-    t = DOT3(xyz,view);
-    A = DOT3(xyz, right)/t;
-    B = DOT3(xyz, up)/t;
-
-    {
-      int ix, iy, index;
-      unsigned int return_val;
-
-      ix = screeni->nwidth*(screeni->width / 2.0 + A) / screeni->width;
-      if(ix<0||ix>screeni->nwidth-1)continue;
-
-      iy = screeni->nheight*(screeni->height / 2.0 + B) / screeni->height;
-      if(iy<0||iy>screeni->nheight - 1)continue;
-
-      index = iy*screeni->nwidth + ix;
-      return_val = ((ibuff+1) << 24) |  index;
-      return return_val;
+    if(ibuff==0){
+      maxbuff = 0;
+      maxcos = cosangle;
+    }
+    else{
+      if(cosangle>maxcos){
+        maxcos = cosangle;
+        maxbuff = ibuff;
+      }
     }
   }
-  return 0;
+
+  ibuff = maxbuff;
+  screeni = screeninfo + ibuff;
+  view = screeni->view;
+  up = screeni->up;
+  right = screeni->right;
+
+  t = DOT3(xyz,view);
+  A = DOT3(xyz, right)/t;
+  B = DOT3(xyz, up)/t;
+
+  {
+    int index;
+    unsigned int return_val;
+
+    *xx = screeni->nwidth*(screeni->width / 2.0 + A) / screeni->width;
+    *xx = CLAMP(*xx,0,screeni->nwidth-1);
+
+    *yy = screeni->nheight*(screeni->height / 2.0 + B) / screeni->height;
+    *yy = CLAMP(*yy,0,screeni->nheight - 1);
+
+    index = (int)(*yy)*screeni->nwidth + (int)(*xx);
+    return_val = ((ibuff+1) << 24) |  index;
+    return return_val;
+  }
 }
 
 
@@ -715,12 +746,14 @@ void DrawScreenInfo(void){
   glScalef(0.5,0.5,0.5);
   glTranslatef(1.0,1.0,1.0);
 
+  glLineWidth(10.0);
   glBegin(GL_LINES);
   for(i = 0; i < nscreeninfo; i++){
     screendata *screeni;
     float xyz[12];
     float *view, *right, *up;
 
+    if(screenvis[i]==0)continue;
     screeni = screeninfo + i;
     view = screeni->view;
     right = screeni->right;
@@ -733,6 +766,7 @@ void DrawScreenInfo(void){
       xyz[j+9] = view[j] - right[j] / 2.0 + up[j] / 2.0
         ;
     }
+    glColor3f(0.0, 0.0, 0.0);
     glVertex3fv(xyz);
     glVertex3fv(xyz+3);
     glVertex3fv(xyz+3);
@@ -742,6 +776,10 @@ void DrawScreenInfo(void){
     glVertex3fv(xyz+9);
     glVertex3fv(xyz);
   }
+  glEnd();
+  glBegin(GL_POINT);
+  glPointSize(10.0);
+  glVertex3f(0.0,0.0,0.0);
   glEnd();
   glPopMatrix();
 }
@@ -848,7 +886,11 @@ void SetupScreeninfo(void){
   }
 
   FREEMEMORY(screenmap360);
+  FREEMEMORY(screenmap360IX);
+  FREEMEMORY(screenmap360IY);
   NewMemory((void **)&screenmap360, nwidth360*nheight360 * sizeof(unsigned int));
+  NewMemory((void **)&screenmap360IX, nwidth360*nheight360*sizeof(float));
+  NewMemory((void **)&screenmap360IY, nwidth360*nheight360*sizeof(float));
   {
     int i,j;
     float *cos_az, *sin_az, *cos_elev, *sin_elev;
@@ -889,7 +931,10 @@ void SetupScreeninfo(void){
           screenmap360[j*nwidth360 + nazimuth + i] = GetScreenMap360LR(RIGHT, xyz);
         }
         else{
-          screenmap360[j*nwidth360 + i] = GetScreenMap360(xyz);
+          int ij;
+
+          ij = j*nwidth360+i;
+          screenmap360[ij] = GetScreenMap360(xyz,screenmap360IX+ij, screenmap360IY+ij);
         }
       }
     }
@@ -940,22 +985,59 @@ int MergeRenderScreenBuffers360(void){
   ijk360 = 0;
   for(j=0;j<nheight360;j++){
     for(i=0;i<nwidth360;i++){
-      GLubyte *p;
-      int ibuff, ijk, rgb_local;
+      GLubyte *p00, *p01, *p10, *p11;
+      int ibuff, rgb_local;
       screendata *screeni;
       unsigned int r, g, b;
+      float xx, yy;
+      int ix, iy;
+      int ix2, iy2;
+      float fx, fy;
 
       ibuff = screenmap360[ijk360] >> 24;
       if(ibuff == 0)continue;
       ibuff--;
       screeni = screeninfo + ibuff;
 
-      ijk = screenmap360[ijk360] & 0xffffff;
-      p = screeni->screenbuffer+3*ijk;
-      r= *p++;
-      g= *p++;
-      b= *p++;
+      xx = screenmap360IX[ijk360];
+      ix = xx;
+      ix2 = CLAMP(ix+1,0,screeni->nwidth-1);
+      fx = 0.0;
+      if(ix2>ix)fx=xx-(float)ix;
+
+      yy = screenmap360IY[ijk360];
+      iy = yy;
+      iy2 = CLAMP(iy+1,0,screeni->nheight-1);
+      fy = 0.0;
+      if(iy2>iy)fy=yy-(float)yy;
+
+#define AVG2(f,p0,p1) ((1.0-f)*(float)(p0) + (f)*(float)(p1))
+#define AVG4(fx,fy,p00,p01,p10,p11) ((1.0-fy)*AVG2(fx,p00,p10)+(fy)*AVG2(fx,p01,p11))
+
+#ifdef pp_RENDER360_DEBUG
+      if(debug_360==1&&(j%debug_360_skip_y==0||i%debug_360_skip_x==0)){
+        rgb_local = 128<<8|128;
+      }
+      else{
+        p00  = screeni->screenbuffer+3*(iy*screeni->nwidth + ix);
+        p01  = screeni->screenbuffer+3*(iy*screeni->nwidth + ix2);
+        p10  = screeni->screenbuffer+3*(iy2*screeni->nwidth + ix);
+        p11  = screeni->screenbuffer+3*(iy2*screeni->nwidth + ix2);
+        r = AVG4(fx,fy,p00[0],p01[0],p10[0],p11[0]);
+        g = AVG4(fx,fy,p00[1],p01[1],p10[1],p11[1]);
+        b = AVG4(fx,fy,p00[2],p01[2],p10[2],p11[2]);
+        rgb_local = (r<<16)|(g<<8)|b;
+      }
+#else
+      p00  = screeni->screenbuffer+3*(iy*screeni->nwidth + ix);
+      p01  = screeni->screenbuffer+3*(iy*screeni->nwidth + ix2);
+      p10  = screeni->screenbuffer+3*(iy2*screeni->nwidth + ix);
+      p11  = screeni->screenbuffer+3*(iy2*screeni->nwidth + ix2);
+      r = AVG4(fx,fy,p00[0],p01[0],p10[0],p11[0]);
+      g = AVG4(fx,fy,p00[1],p01[1],p10[1],p11[1]);
+      b = AVG4(fx,fy,p00[2],p01[2],p10[2],p11[2]);
       rgb_local = (r<<16)|(g<<8)|b;
+#endif
       screenbuffer360[ijk360]=rgb_local;
       ijk360++;
     }

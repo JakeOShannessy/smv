@@ -1,11 +1,14 @@
 #ifndef SMOKEVIEWDEFS_H_DEFINED
 #define SMOKEVIEWDEFS_H_DEFINED
 #ifdef _DEBUG
-void _Sniff_Errors(char *whereat);
-#define SNIFF_ERRORS(f) _Sniff_Errors(f)
+void _Sniff_Errors(char *whereat, char *file, int line);
+#define SNIFF_ERRORS(f) _Sniff_Errors(f,__FILE__,__LINE__)
 #else
 #define SNIFF_ERRORS(f)
 #endif
+
+#define ENABLE_LIGHTING if(use_lighting==1)glEnable(GL_LIGHTING)
+#define DISABLE_LIGHTING if(use_lighting==1)glDisable(GL_LIGHTING)
 
 #ifdef pp_DPRINT
 #define DPRINT printf("line: %i file: %s \n",__LINE__,__FILE__)
@@ -164,6 +167,10 @@ void _Sniff_Errors(char *whereat);
 #define TEMP_2   4
 #define CO2_2    8
 
+#define VSOOT 0
+#define VFIRE 1
+#define VCO2  2
+
 #define NELEV_ZONE 100
 
 #define UPDATE_ISO_OFF 0
@@ -182,6 +189,7 @@ void _Sniff_Errors(char *whereat);
 #define MAX_MSLABS 2
 
 #define MAKE_MOVIE 28
+#define OUTPUT_FFMPEG 129
 
 #define PNG 0
 #define JPEG 1
@@ -393,6 +401,9 @@ void _Sniff_Errors(char *whereat);
 #define SCRIPT_LOADSLICEM 221
 #define SCRIPT_LOADVSLICEM 222
 #define SCRIPT_SHOWSMOKESENSORS 223
+#define SCRIPT_SMOKEFRAMES    224
+#define SCRIPT_RGBTEST        225
+#define SCRIPT_POSVIEW        226
 
 #define SCRIPT_SETTIMEVAL 301
 #define SCRIPT_SETVIEWPOINT 302
@@ -578,6 +589,10 @@ void _Sniff_Errors(char *whereat);
 #define KMIN 4
 #define KMAX 5
 
+#define WINDROSE_USE_DT      0
+#define WINDROSE_USE_TMINMAX 1
+#define WINDROSE_USE_NEITHER 2
+
 #define WINDROSE_XY 0
 #define WINDROSE_XZ 1
 #define WINDROSE_YZ 2
@@ -684,6 +699,24 @@ void _Sniff_Errors(char *whereat);
 #define GLUI_SHOWALL_VSLICE GLUI_SHOWALL
 #define GLUI_HIDEALL_VSLICE GLUI_HIDEALL
 
+#define RENDER_RESOLUTION_320x240 0
+#define RENDER_RESOLUTION_640x480 1
+#define RENDER_RESOLUTION_CURRENT 2
+#define RENDER_RESOLUTION_HIGH    3
+#define RENDER_RESOLUTION_360     4
+
+#define SMOKE3D_ORIG  0
+#define SMOKE3D_NEW   1
+#define SMOKE3D_DIAG  2
+
+#define SMOKE_OUTLINE_TRIANGLE 0
+#define SMOKE_TRIANGULATION    1
+#define SMOKE_OUTLINE_POLYGON  2
+
+#define SMOKE3D_ZEROS_SOME    0
+#define SMOKE3D_ZEROS_ALL     1
+#define SMOKE3D_ZEROS_UNKNOWN 2
+
 #define SHOW_VOLSMOKE -2
 #define HIDE_VOLSMOKE -1
 #define TOGGLE_VOLSMOKE -3
@@ -766,6 +799,7 @@ void _Sniff_Errors(char *whereat);
 #define COLORBAR_RESET -4
 #define COLORBAR_TOGGLE_BW_DATA -21
 #define MENU_COLORBAR_SETTINGS -22
+#define USE_LIGHTING -25
 
 #define LOAD 0
 #define UNLOAD 1

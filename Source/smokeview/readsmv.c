@@ -348,27 +348,40 @@ void InitMesh(meshdata *meshi){
   meshi->iploty_all = NULL;
   meshi->iplotz_all = NULL;
 #ifdef pp_GPU
+#ifdef pp_GPUSMOKE
+  meshi->update_smokebox = 0;
+  meshi->smoke_verts  = NULL;
+  meshi->smoke_vals   = NULL;
+  meshi->smoke_tris   = NULL;
+  meshi->smoke_ntris  = 0;
+  meshi->smoke_nverts = 0;
+  meshi->max_verts = 0;
+  meshi->max_tris = 0;
+
+  meshi->smoke_texture_id = 0;
   meshi->smoke_texture_buffer = NULL;
-  meshi->smoke_texture_id = -1;
 
+  meshi->fire_texture_id = 0;
   meshi->fire_texture_buffer = NULL;
-  meshi->fire_texture_id = -1;
 
-  meshi->light_texture_buffer = NULL;
-  meshi->light_texture_id = -1;
+  meshi->co2_texture_id = 0;
+  meshi->co2_texture_buffer = NULL;
+#endif
+
+  meshi->volsmoke_texture_buffer = NULL;
+  meshi->volsmoke_texture_id = 0;
+
+  meshi->volfire_texture_buffer = NULL;
+  meshi->volfire_texture_id = 0;
+
+  meshi->vollight_texture_buffer = NULL;
+  meshi->vollight_texture_id = 0;
 
   meshi->slice3d_texture_buffer = NULL;
-  meshi->slice3d_texture_id = -1;
+  meshi->slice3d_texture_id = 0;
   meshi->slice3d_c_buffer = NULL;
 #endif
   meshi->mesh_offset_ptr = NULL;
-#ifdef pp_CULL
-  meshi->cullinfo = NULL;
-  meshi->culldefined = 0;
-  meshi->cullQueryId = NULL;
-  meshi->cull_smoke3d = NULL;
-  meshi->smokedir_old = -100;
-#endif
   meshi->cullgeominfo = NULL;
   meshi->is_bottom = 1;
   meshi->blockvis = 1;
@@ -2439,31 +2452,31 @@ void UpdateMeshCoords(void){
   box_corners[0][0] = 0.0;
   box_corners[0][1] = 0.0;
   box_corners[0][2] = 0.0;
-  
+
   box_corners[1][0] = xbar;
   box_corners[1][1] = 0.0;
   box_corners[1][2] = 0.0;
-  
+
   box_corners[2][0] = xbar;
   box_corners[2][1] = ybar;
   box_corners[2][2] = 0.0;
-  
+
   box_corners[3][0] = 0.0;
   box_corners[3][1] = ybar;
   box_corners[3][2] = 0.0;
-  
+
   box_corners[4][0] = 0.0;
   box_corners[4][1] = 0.0;
   box_corners[4][2] = zbar;
-  
+
   box_corners[5][0] = xbar;
   box_corners[5][1] = 0.0;
   box_corners[5][2] = zbar;
-  
+
   box_corners[6][0] = xbar;
   box_corners[6][1] = ybar;
   box_corners[6][2] = zbar;
-  
+
   box_corners[7][0] = 0.0;
   box_corners[7][1] = ybar;
   box_corners[7][2] = zbar;
@@ -4379,7 +4392,7 @@ int ReadSMV(char *file, char *file2){
       npatchinfo++;
       continue;
     }
-    if(Match(buffer,"ISOF") == 1||Match(buffer,"TISOF")==1||Match(buffer,"ISOG") == 1){
+    if(Match(buffer,"ISOF") == 1||Match(buffer,"TISOF")==1||Match(buffer,"ISOG") == 1||Match(buffer, "TISOG")==1){
       if(setup_only == 1||smoke3d_only==1)continue;
       nisoinfo++;
       continue;
@@ -5006,7 +5019,7 @@ int ReadSMV(char *file, char *file2){
 
     if(Match(buffer,"PROP") == 1){
       propdata *propi;
-      char *fbuffer;
+      char *file_buffer;
       char proplabel[255];
       int lenbuf;
       int ntextures_local;
@@ -5019,23 +5032,23 @@ int ReadSMV(char *file, char *file2){
         BREAK;  // prop label
       }
       TrimBack(proplabel);
-      fbuffer=TrimFront(proplabel);
+      file_buffer=TrimFront(proplabel);
 
       if(FGETS(buffer,255,stream)==NULL){
         BREAK;  // number of smokeview_id's
       }
       sscanf(buffer,"%i",&nsmokeview_ids);
 
-      InitProp(propi,nsmokeview_ids,fbuffer);
+      InitProp(propi,nsmokeview_ids, file_buffer);
       for(i=0;i<nsmokeview_ids;i++){
         if(FGETS(buffer,255,stream)==NULL){
           BREAK; // smokeview_id
         }
         TrimBack(buffer);
-        fbuffer=TrimFront(buffer);
-        lenbuf=strlen(fbuffer);
+        file_buffer =TrimFront(buffer);
+        lenbuf=strlen(file_buffer);
         NewMemory((void **)&smokeview_id,lenbuf+1);
-        strcpy(smokeview_id,fbuffer);
+        strcpy(smokeview_id, file_buffer);
         propi->smokeview_ids[i]=smokeview_id;
         propi->smv_objects[i]=GetSmvObjectType(propi->smokeview_ids[i],missing_device);
       }
@@ -5516,7 +5529,8 @@ int ReadSMV(char *file, char *file2){
         // Allocate space for the values
         NewMemory((void **)&rampi->values,2*(rampi->nentries)*sizeof(float));
         // Next we want to read in all the entries
-        for (int j = 0; j < rampi->nentries; j++) {
+        int j;
+        for (j = 0; j < rampi->nentries; j++) {
           if(FGETS(buffer,255,stream)==NULL){
             BREAK;
           }
@@ -5670,7 +5684,8 @@ int ReadSMV(char *file, char *file2){
         smoke3di->nchars_compressed_smoke_full=NULL;
         smoke3di->maxval = -1.0;
         smoke3di->frame_all_zeros=NULL;
-
+        smoke3di->smoke_boxmin=NULL;
+        smoke3di->smoke_boxmax=NULL;
         smoke3di->display=0;
         smoke3di->loaded=0;
         smoke3di->finalize = 0;
@@ -8161,6 +8176,8 @@ typedef struct {
 #ifdef pp_SLICEGEOM
       int slicegeom=0;
 #endif
+      int slcf_index = 0;
+      char *char_slcf_index;
       int has_reg, has_comp;
       int ii1 = -1, ii2 = -1, jj1 = -1, jj2 = -1, kk1 = -1, kk2 = -1;
       int blocknumber;
@@ -8169,6 +8186,13 @@ typedef struct {
       int read_slice_header=0;
 
       if(setup_only == 1||smoke3d_only==1)continue;
+
+      char_slcf_index = strchr(buffer, '!');
+      if(char_slcf_index!=NULL){
+        *char_slcf_index = 0;
+        char_slcf_index++;
+        sscanf(char_slcf_index, "%i", &slcf_index);
+      }
 
       sliceoffsetptr = strchr(buffer, '$');
       if(sliceoffsetptr!=NULL){
@@ -8251,7 +8275,8 @@ typedef struct {
 
       sd = sliceinfo + nn_slice - 1;
 
-      sd->finalized = 1;
+      sd->slcf_index = slcf_index;
+      sd->finalize = 1;
       sd->ntimes = 0;
       sd->ntimes_old = 0;
       sd->globalmax = -1.0e30;
@@ -8763,22 +8788,24 @@ typedef struct {
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
 
-    if(Match(buffer,"ISOF") == 1||Match(buffer,"TISOF")==1||Match(buffer,"ISOG") == 1){
+    if(Match(buffer,"ISOF") == 1||Match(buffer,"TISOF")==1||Match(buffer,"ISOG") == 1||Match(buffer, "TISOG")==1){
       isodata *isoi;
       int get_isolevels;
       int dataflag=0,geomflag=0;
       char tbuffer[255], *tbufferptr;
       int blocknumber;
       size_t len;
-      char *buffer3;
+      char *buffer3,*ext;
+      int fds_skip = 1;
+      float fds_delta = -1.0;
 
       if(setup_only == 1||smoke3d_only==1)continue;
       isoi = isoinfo + iiso;
       isoi->isof_index = nn_iso%nisos_per_mesh;
       nn_iso++;
 
-      if(Match(buffer, "TISOF") == 1)dataflag = 1;
-      if(Match(buffer,"ISOG")==1)geomflag=1;
+      if(Match(buffer, "TISOF") == 1||Match(buffer, "TISOG") == 1)dataflag = 1;
+      if(Match(buffer,"ISOG")==1||Match(buffer,"TISOG")==1)geomflag=1;
       TrimBack(buffer);
       len=strlen(buffer);
 
@@ -8790,7 +8817,7 @@ typedef struct {
       }
       if(len>5&&dataflag==0){
         buffer3=buffer+4;
-        sscanf(buffer3,"%i",&blocknumber);
+        sscanf(buffer3,"%i %i %f",&blocknumber,&fds_skip,&fds_delta);
         blocknumber--;
       }
       if(len>6&&dataflag==1){
@@ -8803,6 +8830,8 @@ typedef struct {
         BREAK;
       }
 
+      isoi->fds_skip = fds_skip;
+      isoi->fds_delta = fds_delta;
       isoi->tfile=NULL;
       isoi->seq_id=nn_iso;
       isoi->autoload=0;
@@ -8816,6 +8845,12 @@ typedef struct {
       isoi->levels=NULL;
       isoi->is_fed=0;
       isoi->memory_id = ++nmemory_ids;
+#ifdef pp_TISO
+      isoi->geom_nstatics = NULL;
+      isoi->geom_ndynamics=NULL;
+      isoi->geom_times=NULL;
+      isoi->geom_vals=NULL;
+#endif
 
       isoi->normaltable=NULL;
       isoi->color_label.longlabel=NULL;
@@ -8833,6 +8868,12 @@ typedef struct {
 
       NewMemory((void **)&isoi->reg_file,(unsigned int)(len+1));
       STRCPY(isoi->reg_file,bufferptr);
+
+      ext = strrchr(bufferptr, '.');
+      if(ext!=NULL)*ext = 0;
+      NewMemory((void **)&isoi->topo_file, (unsigned int)(strlen(bufferptr)+5+1));
+      STRCPY(isoi->topo_file, bufferptr);
+      strcat(isoi->topo_file, ".niso");
 
       NewMemory((void **)&isoi->size_file,(unsigned int)(len+3+1));
       STRCPY(isoi->size_file,bufferptr);
@@ -8853,13 +8894,29 @@ typedef struct {
         get_isolevels=1;
         isoi->file=isoi->reg_file;
         if(ReadLabels(&isoi->surface_label,stream,NULL)==2)return 2;
+        if(isoi->fds_delta>0.0){  // only append delete parameter if it is > 0.0
+          char delta_label[100];
+
+          sprintf(delta_label, "%f", isoi->fds_delta);
+          TrimZeros(delta_label);
+          strcat(isoi->surface_label.longlabel, "(");
+          strcat(isoi->surface_label.longlabel, delta_label);
+          strcat(isoi->surface_label.longlabel, ")");
+        }
+        if(isoi->fds_skip!=1){  // only append skip parameter if it is > 1
+          char skip_label[100];
+
+          sprintf(skip_label, "/%i", isoi->fds_skip);
+          strcat(isoi->surface_label.longlabel, skip_label);
+        }
         if(geomflag==1){
           int ntimes_local;
           geomdata *geomi;
           float **colorlevels,*levels;
 
-          isoi->geominfo->file=isoi->file;
           geomi = isoi->geominfo;
+          geomi->file=isoi->file;
+          geomi->topo_file = isoi->topo_file;
           geomi->file=isoi->file;
           ReadGeomHeader(geomi,NULL,&ntimes_local);
           isoi->nlevels=geomi->nfloat_vals;
@@ -9364,12 +9421,6 @@ typedef struct {
   InitVolRenderSurface(FIRSTCALL);
   radius_windrose = 0.2*xyzmaxdiff;
 
-#ifdef pp_CULL
-
-  // define data structures used to speed up 3d smoke drawing (by culling non-visible smoke planes)
-
-  if(cullactive==1)InitCull(cullsmoke);
-#endif
   UpdateMeshTerrain(); // xxslow
 
   ReadAllGeom();
@@ -9586,11 +9637,6 @@ int ReadIni2(char *inifile, int localfile){
     if(Match(buffer, "FREEZEVOLSMOKE")==1){
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i %i", &freeze_volsmoke,&autofreeze_volsmoke);
-      continue;
-    }
-    if(Match(buffer, "SHOWMESHMENUS")==1){
-      fgets(buffer, 255, stream);
-      sscanf(buffer, " %i", &show_meshmenus);
       continue;
     }
     if(Match(buffer, "GEOMBOUNDARYPROPS")==1){
@@ -10016,6 +10062,16 @@ int ReadIni2(char *inifile, int localfile){
       sscanf(buffer, "%i %i", &show_smokesensors, &test_smokesensors);
       continue;
     }
+#ifdef pp_GPUSMOKE
+    if(Match(buffer, "SMOKETYPE")==1){
+      fgets(buffer, 255, stream);
+      sscanf(buffer, "%i %i %f %f %i %i %i", &use_newsmoke, &smoke_mesh_aligned, &smoke3d_delta_par, &smoke3d_delta_multiple,
+                                             &use_smokebox, &smokebox_buffer, &update_smokeplanes);
+      config_update_smokeplanes=1;
+      update_smoketype_vals=1;
+      continue;
+    }
+#endif
 #ifdef pp_GPU
     if(gpuactive == 1 && Match(buffer, "USEGPU") == 1){
       fgets(buffer, 255, stream);
@@ -10741,7 +10797,11 @@ int ReadIni2(char *inifile, int localfile){
     }
     if(Match(buffer, "LOADINC") == 1){
       fgets(buffer, 255, stream);
+#ifdef pp_CSLICE
+      sscanf(buffer, "%i %i", &load_incremental,&use_cslice);
+#else
       sscanf(buffer, "%i", &load_incremental);
+#endif
       continue;
     }
     if(Match(buffer, "MSCALE") == 1){
@@ -10972,7 +11032,14 @@ int ReadIni2(char *inifile, int localfile){
     }
     if(Match(buffer, "SHOWVENTFLOW") == 1){
       fgets(buffer, 255, stream);
+#ifdef pp_VENTPROFILE
       sscanf(buffer, "%i %i %i %i %i", &visVentHFlow, &visventslab, &visventprofile, &visVentVFlow, &visVentMFlow);
+#else
+      {
+        int dummy;
+        sscanf(buffer, "%i %i %i %i %i", &visVentHFlow, &visventslab, &dummy, &visVentVFlow, &visVentMFlow);
+      }
+#endif
       continue;
     }
     if(Match(buffer, "SHOWVENTS") == 1){
@@ -11011,8 +11078,10 @@ int ReadIni2(char *inifile, int localfile){
       continue;
     }
     if(Match(buffer, "MOVIEFILETYPE") == 1){
+      int quicktime_dummy;
+
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %i %i %i", &movie_filetype,&movie_framerate,&movie_bitrate,&quicktime_compatibility);
+      sscanf(buffer, "%i %i %i %i %i", &movie_filetype,&movie_framerate,&movie_bitrate,&quicktime_dummy,&movie_crf);
       continue;
     }
     if(Match(buffer, "RENDERFILELABEL") == 1){
@@ -11481,7 +11550,8 @@ int ReadIni2(char *inifile, int localfile){
     }
     if(Match(buffer, "SHOWCOLORBARS") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &visColorbarVertical);
+      sscanf(buffer, "%i", &visColorbarVertical_val);
+      update_visColorbarVertical=1;
       continue;
     }
     if(Match(buffer, "EYEVIEW") == 1){
@@ -11499,18 +11569,6 @@ int ReadIni2(char *inifile, int localfile){
       sscanf(buffer, "%i", &titlesafe_offsetBASE);
       continue;
     }
-    if(Match(buffer, "LIGHT0") == 1){
-      fgets(buffer, 255, stream);
-      sscanf(buffer, "%d", &light_enabled0);
-      UpdateLIGHTS = 1;
-      continue;
-    }
-    if(Match(buffer, "LIGHT1") == 1){
-      fgets(buffer, 255, stream);
-      sscanf(buffer, "%d", &light_enabled1);
-      UpdateLIGHTS = 1;
-      continue;
-    }
     if(Match(buffer, "LIGHTFACES") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%d", &light_faces);
@@ -11519,40 +11577,21 @@ int ReadIni2(char *inifile, int localfile){
     }
     if(Match(buffer, "LIGHTPOS0") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%f %f %f %f", light_position0, light_position0 + 1, light_position0 + 2, light_position0 + 3);
-      UpdateLIGHTS = 1;
+      sscanf(buffer, "%f %f %f %f %i", light_position0, light_position0 + 1, light_position0 + 2, light_position0 + 3, &use_light0);
+      DENORMALIZE_XYZ(light_position0, light_position0);
       continue;
     }
     if(Match(buffer, "LIGHTPOS1") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%f %f %f %f", light_position1, light_position1 + 1, light_position1 + 2, light_position1 + 3);
-      UpdateLIGHTS = 1;
+      sscanf(buffer, "%f %f %f %f %i", light_position1, light_position1 + 1, light_position1 + 2, light_position1 + 3, &use_light1);
+      DENORMALIZE_XYZ(light_position1, light_position1);
       continue;
     }
-    if(Match(buffer, "LIGHTMODELLOCALVIEWER") == 1){
-      int temp;
-      fgets(buffer, 255, stream);
-      sscanf(buffer, "%d", &temp);
-      lightmodel_localviewer = temp == 0 ? GL_FALSE : GL_TRUE;
-      UpdateLIGHTS = 1;
-      continue;
-    }
-    if(Match(buffer, "LIGHTMODELSEPARATESPECULARCOLOR") == 1){
-      fgets(buffer, 255, stream);
-      sscanf(buffer, "%d", &lightmodel_separatespecularcolor);
-      UpdateLIGHTS = 1;
-      continue;
-    }
-    if(Match(buffer, "AMBIENTLIGHT") == 1){
+    if(Match(buffer, "LIGHTPROP") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", ambientlight, ambientlight + 1, ambientlight + 2);
-      UpdateLIGHTS = 1;
-      continue;
-    }
-    if(Match(buffer, "DIFFUSELIGHT") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", diffuselight, diffuselight + 1, diffuselight + 2);
-      UpdateLIGHTS = 1;
       continue;
     }
     if(Match(buffer, "LABELSTARTUPVIEW") == 1){
@@ -11756,7 +11795,7 @@ int ReadIni2(char *inifile, int localfile){
       int nn, n_iso_c = 0;
 
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%f %f", &iso_shininess, &iso_transparency);
+      sscanf(buffer, "%f %f %i %i", &iso_shininess, &iso_transparency, &iso_transparency_option, &iso_opacity_change);
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", iso_specular, iso_specular + 1, iso_specular + 2);
       fgets(buffer, 255, stream);
@@ -11811,17 +11850,7 @@ int ReadIni2(char *inifile, int localfile){
       }
       if(Match(buffer, "SMOKECULL") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
-#ifdef pp_CULL
-        if(gpuactive == 1){
-          sscanf(buffer, "%i", &cullsmoke);
-          if(cullsmoke != 0)cullsmoke = 1;
-        }
-        else{
-          cullsmoke = 0;
-        }
-#else
         sscanf(buffer, "%i", &smokecullflag);
-#endif
         continue;
       }
       if(Match(buffer, "SMOKESKIP") == 1){
@@ -12021,23 +12050,23 @@ int ReadIni2(char *inifile, int localfile){
       if(Match(buffer, "WINDROSESHOWHIDE")==1){
         int i1, i2, *vals, nrows;
 
-        FREEMEMORY(windrose_showhide);
-        nwindrose_showhide = 0;
+        FREEMEMORY(windrosez_showhide);
+        nwindrosez_showhide = 0;
         fgets(buffer, 255, stream);
-        sscanf(buffer, " %i", &nwindrose_showhide);
-        if(nwindrose_showhide>0){
-          nrows = ((nwindrose_showhide-1)/WINDROSE_PER_ROW+1);
-          NewMemory((void **)&windrose_showhide, nrows*WINDROSE_PER_ROW*sizeof(int));
-          for(vals=windrose_showhide,i=0;i<nrows;i++,vals+=WINDROSE_PER_ROW){
+        sscanf(buffer, " %i", &nwindrosez_showhide);
+        if(nwindrosez_showhide>0){
+          nrows = ((nwindrosez_showhide-1)/WINDROSE_PER_ROW+1);
+          NewMemory((void **)&windrosez_showhide, nrows*WINDROSE_PER_ROW*sizeof(int));
+          for(vals=windrosez_showhide,i=0;i<nrows;i++,vals+=WINDROSE_PER_ROW){
             int j;
 
             i1 = WINDROSE_PER_ROW*i;
-            i2 = MIN(i1+WINDROSE_PER_ROW,nwindrose_showhide);
+            i2 = MIN(i1+WINDROSE_PER_ROW,nwindrosez_showhide);
             fgets(buffer, 255, stream);
             sscanf(buffer, " %i %i %i %i %i %i %i %i %i %i ",
               vals,vals+1,vals+2,vals+3,vals+4,vals+5,vals+6,vals+7,vals+8,vals+9);
             for(j=i1;j<i2;j++){
-              windrose_showhide[j] = CLAMP(vals[j-i1],0,1);
+              windrosez_showhide[j] = CLAMP(vals[j-i1],0,1);
             }
           }
           update_windrose_showhide = 1;
@@ -13137,8 +13166,6 @@ void WriteIni(int flag,char *filename){
 
   fprintf(fileout,"   *** COLOR/LIGHTING ***\n\n");
 
-  fprintf(fileout, "AMBIENTLIGHT\n");
-  fprintf(fileout, " %f %f %f\n", ambientlight[0], ambientlight[1], ambientlight[2]);
   fprintf(fileout, "BACKGROUNDCOLOR\n");
   fprintf(fileout, " %f %f %f\n", backgroundbasecolor[0], backgroundbasecolor[1], backgroundbasecolor[2]);
   fprintf(fileout, "BLOCKCOLOR\n");
@@ -13172,8 +13199,6 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %f %f %f\n", splitvals[0], splitvals[1], splitvals[2]);
   fprintf(fileout,"CO2COLOR\n");
   fprintf(fileout," %i %i %i", global_co2color[0],global_co2color[1],global_co2color[2]);
-  fprintf(fileout, "DIFFUSELIGHT\n");
-  fprintf(fileout, " %f %f %f\n", diffuselight[0], diffuselight[1], diffuselight[2]);
   fprintf(fileout, "DIRECTIONCOLOR\n");
   fprintf(fileout, " %f %f %f\n", direction_color[0], direction_color[1], direction_color[2]);
   fprintf(fileout, "FLIP\n");
@@ -13185,7 +13210,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "HEATONCOLOR\n");
   fprintf(fileout, " %f %f %f\n", heatoncolor[0], heatoncolor[1], heatoncolor[2]);
   fprintf(fileout, "ISOCOLORS\n");
-  fprintf(fileout," %f %f : shininess, default opaqueness\n",iso_shininess, iso_transparency);
+  fprintf(fileout," %f %f %i %i : shininess, default opaqueness\n",iso_shininess, iso_transparency, iso_transparency_option, iso_opacity_change);
   fprintf(fileout," %f %f %f : specular\n",iso_specular[0],iso_specular[1],iso_specular[2]);
   fprintf(fileout," %i : number of levels\n",MAX_ISO_COLORS);
   for(i=0;i<MAX_ISO_COLORS;i++){
@@ -13208,20 +13233,27 @@ void WriteIni(int flag,char *filename){
         rgbi->color[0], rgbi->color[1], rgbi->color[2], rgbi->color[3], percen, rgbi->label);
     }
   }
-  fprintf(fileout, "LIGHT0\n");
-  fprintf(fileout, " %i\n", light_enabled0);
-  fprintf(fileout, "LIGHT1\n");
-  fprintf(fileout, " %i\n", light_enabled1);
   fprintf(fileout, "LIGHTFACES\n");
   fprintf(fileout, " %i\n", light_faces);
-  fprintf(fileout, "LIGHTMODELLOCALVIEWER\n");
-  fprintf(fileout, " %i\n", lightmodel_localviewer);
-  fprintf(fileout, "LIGHTMODELSEPARATESPECULARCOLOR\n");
-  fprintf(fileout, " %i\n", lightmodel_separatespecularcolor);
-  fprintf(fileout, "LIGHTPOS0\n");
-  fprintf(fileout, " %f %f %f %f\n", light_position0[0], light_position0[1], light_position0[2], light_position0[3]);
-  fprintf(fileout, "LIGHTPOS1\n");
-  fprintf(fileout, " %f %f %f %f\n", light_position1[0], light_position1[1], light_position1[2], light_position1[3]);
+  {
+    float pos0[4];
+
+    NORMALIZE_XYZ(pos0, light_position0);
+
+    fprintf(fileout, "LIGHTPOS0\n");
+    fprintf(fileout, " %f %f %f %f %i\n", pos0[0], pos0[1], pos0[2], light_position0[3],use_light0);
+  }
+  {
+    float pos1[4];
+
+    NORMALIZE_XYZ(pos1, light_position1);
+
+    fprintf(fileout, "LIGHTPOS1\n");
+    fprintf(fileout, " %f %f %f %f %i\n", pos1[0], pos1[1], pos1[2], light_position1[3], use_light1);
+  }
+  fprintf(fileout, "LIGHTPROP\n");
+  fprintf(fileout, " %f %f %f\n", ambientlight[0], ambientlight[1], ambientlight[2]);
+  fprintf(fileout, " %f %f %f\n", diffuselight[0], diffuselight[1], diffuselight[2]);
   fprintf(fileout, "SENSORCOLOR\n");
   fprintf(fileout, " %f %f %f\n", sensorcolor[0], sensorcolor[1], sensorcolor[2]);
   fprintf(fileout, "SENSORNORMCOLOR\n");
@@ -13323,7 +13355,11 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "ISOZIPSTEP\n");
   fprintf(fileout, " %i\n", isozipstep);
   fprintf(fileout, "LOADINC\n");
+#ifdef pp_CSLICE
+  fprintf(fileout, " %i %i\n", load_incremental,use_cslice);
+#else
   fprintf(fileout, " %i\n", load_incremental);
+#endif
   fprintf(fileout, "NOPART\n");
   fprintf(fileout, " %i\n", nopart);
   fprintf(fileout, "SHOWFEDAREA\n");
@@ -13555,6 +13591,11 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i %i %i\n", slicedup_option, vectorslicedup_option, boundaryslicedup_option);
   fprintf(fileout, "SMOKESENSORS\n");
   fprintf(fileout, " %i %i\n", show_smokesensors, test_smokesensors);
+#ifdef pp_GPUSMOKE
+  fprintf(fileout, "SMOKETYPE\n");
+  fprintf(fileout, " %i %i %f %f %i %i %i\n",  use_newsmoke, smoke_mesh_aligned, smoke3d_delta_par, smoke3d_delta_multiple,
+                                               use_smokebox, smokebox_buffer, update_smokeplanes);
+#endif
 #ifdef pp_LANG
   fprintf(fileout, "STARTUPLANG\n");
   fprintf(fileout, " %s\n", startup_lang_code);
@@ -13576,7 +13617,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "TRAINERVIEW\n");
   fprintf(fileout, " %i\n", trainerview);
   fprintf(fileout, "TRANSPARENT\n");
-  fprintf(fileout, " %i %f\n", use_transparency_data, transparent_level);
+  fprintf(fileout, " %i %f %i %i\n", use_transparency_data, transparent_level, iso_transparency_option, iso_opacity_change);
   fprintf(fileout, "TREEPARMS\n");
   fprintf(fileout, " %i %i %i %i\n", mintreesize,vis_xtree,vis_ytree,vis_ztree);
   fprintf(fileout, "TWOSIDEDVENTS\n");
@@ -13589,14 +13630,14 @@ void WriteIni(int flag,char *filename){
     windrose_first,windrose_next);
   fprintf(fileout, " %i %i %i %f %i %i\n", nr_windrose, ntheta_windrose, scale_windrose, radius_windrose, scale_increment_windrose, scale_max_windrose);
   {
-    if(nwindrose_showhide > 0){
+    if(nwindrosez_showhide > 0){
       int ii;
 
       UpdateWindRoseDevices(UPDATE_WINDROSE_SHOWHIDE);
       fprintf(fileout, "WINDROSESHOWHIDE\n");
-      fprintf(fileout, " %i\n", nwindrose_showhide);
-      for(ii = 0; ii < nwindrose_showhide; ii++){
-        fprintf(fileout, " %i", windrose_showhide[ii]);
+      fprintf(fileout, " %i\n", nwindrosez_showhide);
+      for(ii = 0; ii < nwindrosez_showhide; ii++){
+        fprintf(fileout, " %i", windrosez_showhide[ii]);
         if((ii+1)%WINDROSE_PER_ROW==0)fprintf(fileout, "\n");
       }
       fprintf(fileout, "\n");
@@ -13622,8 +13663,6 @@ void WriteIni(int flag,char *filename){
   }
   fprintf(fileout, "LABELSTARTUPVIEW\n");
   fprintf(fileout, " %s\n", startup_view_label);
-  fprintf(fileout, "SHOWMESHMENUS\n");
-  fprintf(fileout, " %i\n", show_meshmenus);
   fprintf(fileout, "RENDERCLIP\n");
   fprintf(fileout, " %i %i %i %i %i\n",
     clip_rendered_scene, render_clip_left, render_clip_right, render_clip_bottom, render_clip_top);
@@ -13632,7 +13671,12 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "RENDERFILETYPE\n");
   fprintf(fileout," %i %i\n",render_filetype,movie_filetype);
   fprintf(fileout, "MOVIEFILETYPE\n");
-  fprintf(fileout," %i %i %i %i\n",movie_filetype,movie_framerate,movie_bitrate,quicktime_compatibility);
+  {
+    int quicktime_dummy=1;
+
+    fprintf(fileout, "MOVIEFILETYPE\n");
+    fprintf(fileout," %i %i %i %i %i\n",movie_filetype,movie_framerate,movie_bitrate,quicktime_dummy,movie_crf);
+  }
   if(nskyboxinfo>0){
     int iskybox;
     skyboxdata *skyi;
@@ -13725,11 +13769,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "SMOKECOLOR\n");
   fprintf(fileout, " %i %i %i\n", smoke_red, smoke_green, smoke_blue);
   fprintf(fileout, "SMOKECULL\n");
-#ifdef pp_CULL
-  fprintf(fileout," %i\n",cullsmoke);
-#else
   fprintf(fileout," %i\n",smokecullflag);
-#endif
   if(ABS(smoke_albedo - smoke_albedo_base) > 0.001){
     fprintf(fileout, "SMOKEALBEDO\n");
     fprintf(fileout, " %f\n", smoke_albedo);
@@ -13942,5 +13982,3 @@ void GetElevAz(float *xyznorm,float *dtheta,float *rotate_axis, float *dpsi){
     if(xyznorm2[0]<0.0)*dpsi=-(*dpsi);
   }
 }
-
-

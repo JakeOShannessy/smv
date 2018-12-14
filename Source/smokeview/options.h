@@ -17,6 +17,9 @@
 
 //*** options: all platforms
 
+//#define pp_WINDROSE_AVG // average windrose data
+#define pp_LIGHTING   // dialog box to specify opengl lighting parameters
+//#define pp_VENTPROFILE  // show original zonefire vent flow profile (calculated in smokeview)
 #define pp_GPUSMOKE     // code to speed up 3d smoke using the gpu
 //#define pp_SMOKEDIAG    // output smoke3d diagnostics (number of meshes, total trianles, triangles drawn)
 //#define pp_GEOMPRINT  // output geometry info
@@ -28,15 +31,14 @@
 #define pp_ffmpeg       // support compression
 #define pp_FILELIST     // use list of file names
 #define pp_LANG         // support other languages
+#define pp_TISO         // color isosurfaces with a 2nd quantity
+#define pp_SLICE_USE_ID     // use slcf index
+//#define pp_ISOTIME      // output iso load times
 
 //#define pp_SPECTRAL
 
 #define pp_GPU          // support the GPU
 #ifdef pp_GPU
-#ifndef pp_OSX
-// turn off smoke culling for now
-//#define pp_CULL         // pp_GPU directive must also be set
-#endif
 #define pp_GPUTHROTTLE  // pp_GPU directive must also be set
 #endif
 
@@ -70,11 +72,16 @@
 // #define pp_OSXGLUT32 // used to test advanced OpenGL profile on mac
 #endif
 
-//*** options: options being tested on all platforms
+//*** options: all platforms
+
+//#define pp_3DSMOKE_MULTI    // show menus that load more than one 3d smoke type (example soot/hrrpuv/co2 )
+#define pp_CSLICE             // read slice files using C
+
+//*** options: options being test on all platforms
 
 #ifdef pp_BETA   
 #define pp_DEBUG_SUBMENU       // debug output and testing for building menus
-//#define pp_SMOKE3D_LOADTEST // load 3d smoke for all meshes for each time step 
+//#define pp_SMOKE3D_LOADTEST  // load 3d smoke for all meshes for each time step 
 //#define pp_SMOKEALPHA        // experimental smoke alpha settings
 #define pp_SHOWTERRAIN
 #define pp_GEOMTEST            // used to test tetrahedron box intersections

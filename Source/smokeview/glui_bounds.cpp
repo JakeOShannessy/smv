@@ -74,6 +74,14 @@ GLUI_Rollout *ROLLOUT_zone_bound=NULL;
 #define UPDATE_HISTOGRAM 213
 #define INIT_HISTOGRAM 214
 #define UPDATE_BOUNDARYSLICEDUPS 215
+#define ISO_TRANSPARENCY_OPTION 216
+#ifdef pp_TISO
+#define ISO_COLORBAR_LIST 217
+#endif
+
+#define ISO_TRANSPARENT_CONSTANT 0
+#define ISO_TRANSPARENT_VARYING  1
+#define ISO_OPAQUE               2
 
 #define SCRIPT_START 31
 #define SCRIPT_STOP 32
@@ -166,6 +174,9 @@ GLUI_Button *BUTTON_BOUNDARY = NULL;
 GLUI_Button *BUTTON_ISO = NULL;
 
 GLUI_Listbox *LIST_colortable = NULL;
+#ifdef pp_TISO
+GLUI_Listbox *LIST_iso_colorbar = NULL;
+#endif
 
 #ifdef pp_MEMDEBUG
 GLUI_Rollout *ROLLOUT_memcheck=NULL;
@@ -196,6 +207,7 @@ GLUI_Rollout *ROLLOUT_vector = NULL;
 GLUI_Rollout *ROLLOUT_isosurface = NULL;
 GLUI_Rollout *ROLLOUT_boundary_settings = NULL;
 
+GLUI_Panel *PANEL_slice_smoke = NULL;
 GLUI_Panel *PANEL_immersed = NULL;
 GLUI_Panel *PANEL_immersed_region = NULL;
 GLUI_Panel *PANEL_immersed_drawas = NULL;
@@ -303,7 +315,6 @@ GLUI_Checkbox *CHECKBOX_show_evac_slices=NULL;
 GLUI_Checkbox *CHECKBOX_constant_coloring=NULL;
 GLUI_Checkbox *CHECKBOX_show_evac_color=NULL;
 GLUI_Checkbox *CHECKBOX_data_coloring=NULL;
-GLUI_Checkbox *CHECKBOX_transparentflag2=NULL;
 GLUI_Checkbox *CHECKBOX_sort2=NULL;
 GLUI_Checkbox *CHECKBOX_smooth2=NULL;
 GLUI_Checkbox *CHECKBOX_overwrite_all=NULL;
@@ -326,6 +337,7 @@ GLUI_Checkbox *CHECKBOX_use_tload_end=NULL;
 GLUI_Checkbox *CHECKBOX_use_tload_skip=NULL;
 GLUI_Checkbox *CHECKBOX_research_mode=NULL;
 
+GLUI_RadioGroup *RADIO_transparency_option=NULL;
 GLUI_RadioGroup *RADIO_slice_celltype=NULL;
 GLUI_RadioGroup *RADIO_slice_edgetype=NULL;
 GLUI_RadioGroup *RADIO_show_slice_in_obst=NULL;
@@ -408,6 +420,12 @@ int nboundprocinfo = 0, nfileprocinfo = 0, nsliceprocinfo=0, nplot3dprocinfo=0, 
 extern "C" void LoadIncrementalCB1(int var){
   if(CHECKBOX_boundary_load_incremental!=NULL)CHECKBOX_boundary_load_incremental->set_int_val(load_incremental);
   if(CHECKBOX_slice_load_incremental!=NULL)CHECKBOX_slice_load_incremental->set_int_val(load_incremental);
+}
+
+/* ------------------ UpdateVectorpointsize ------------------------ */
+
+extern "C" void UpdateVectorpointsize(void){
+  if(SPINNER_vectorpointsize!=NULL)SPINNER_vectorpointsize->set_int_val(vectorpointsize);
 }
 
 /* ------------------ UpdateSliceDupDialog ------------------------ */
@@ -1907,7 +1925,11 @@ extern "C" void GluiBoundsSetup(int main_window){
     ROLLOUT_iso_color = glui_bounds->add_rollout_to_panel(ROLLOUT_iso, "Color/transparency", false, ISO_ROLLOUT_COLOR, IsoRolloutCB);
     ADDPROCINFO(isoprocinfo, nisoprocinfo, ROLLOUT_iso_color, ISO_ROLLOUT_COLOR);
 
-    CHECKBOX_transparentflag2 = glui_bounds->add_checkbox_to_panel(ROLLOUT_iso_color, _("Use transparency"), &use_transparency_data, DATA_transparent, SliceBoundCB);
+    RADIO_transparency_option = glui_bounds->add_radiogroup_to_panel(ROLLOUT_iso_color, &iso_transparency_option,ISO_TRANSPARENCY_OPTION,IsoBoundCB);
+    glui_bounds->add_radiobutton_to_group(RADIO_transparency_option, _("transparent(constant)"));
+    glui_bounds->add_radiobutton_to_group(RADIO_transparency_option, _("transparent(varying)"));
+    glui_bounds->add_radiobutton_to_group(RADIO_transparency_option, _("opaque"));
+    IsoBoundCB(ISO_TRANSPARENCY_OPTION);
 
     PANEL_iso_alllevels = glui_bounds->add_panel_to_panel(ROLLOUT_iso_color, "All levels", true);
 
@@ -1931,6 +1953,24 @@ extern "C" void GluiBoundsSetup(int main_window){
     SPINNER_iso_colors[3]->set_int_limits(1, 255, GLUI_LIMIT_CLAMP);
     IsoBoundCB(ISO_LEVEL);
     IsoBoundCB(ISO_COLORS);
+
+#ifdef pp_TISO
+    if(ncolorbars>0){
+      LIST_iso_colorbar = glui_bounds->add_listbox_to_panel(ROLLOUT_iso_color, "colormap:", &iso_colorbar_index, ISO_COLORBAR_LIST, IsoBoundCB);
+      for(i = 0; i<ncolorbars; i++){
+        colorbardata *cbi;
+
+        cbi = colorbarinfo+i;
+        cbi->label_ptr = cbi->label;
+        LIST_iso_colorbar->add_item(i, cbi->label_ptr);
+      }
+      LIST_iso_colorbar->set_int_val(iso_colorbar_index);
+      IsoBoundCB(ISO_COLORBAR_LIST);
+    }
+    glui_bounds->add_spinner_to_panel(ROLLOUT_iso_color, "min:", GLUI_SPINNER_FLOAT, &iso_valmin);
+    glui_bounds->add_spinner_to_panel(ROLLOUT_iso_color, "max:", GLUI_SPINNER_FLOAT, &iso_valmax);
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_iso_color,_("Show"),&show_iso_color);
+#endif
   }
 
   /* Particle File Bounds  */
@@ -2203,9 +2243,9 @@ extern "C" void GluiBoundsSetup(int main_window){
 
     SPINNER_vectorpointsize = glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector, _("Point size"), GLUI_SPINNER_FLOAT,
       &vectorpointsize,UPDATE_VECTOR,SliceBoundCB);
-    SPINNER_vectorpointsize->set_float_limits(1.0,10.0);
+    SPINNER_vectorpointsize->set_float_limits(1.0,20.0);
     SPINNER_vectorlinewidth=glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector,_("Vector width"),GLUI_SPINNER_FLOAT,&vectorlinewidth,UPDATE_VECTOR,SliceBoundCB);
-    SPINNER_vectorlinewidth->set_float_limits(1.0,10.0);
+    SPINNER_vectorlinewidth->set_float_limits(1.0,20.0);
     SPINNER_vectorlinelength=glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector,_("Vector length"),GLUI_SPINNER_FLOAT,&vecfactor,UPDATE_VECTOR,SliceBoundCB);
     SPINNER_vectorlinelength->set_float_limits(0.0,20.0);
     SPINNER_slicevectorskip=glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector,_("Vector skip"),GLUI_SPINNER_INT,&vectorskip,SLICE_VECTORSKIP,SliceBoundCB);
@@ -2262,16 +2302,22 @@ extern "C" void GluiBoundsSetup(int main_window){
     }
     CHECKBOX_research_mode=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice,_("Research display mode"),&research_mode,RESEARCH_MODE,SliceBoundCB);
     glui_bounds->add_checkbox_to_panel(ROLLOUT_slice,_("Output data to file"),&output_slicedata);
-#ifdef pp_SMOKETEST
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("show all 3D slices"), &showall_3dslices);
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("max blending"), &slices3d_max_blending);
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("opacity adjustment"), &slice_opacity_adjustment);
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("sort slices"), &sort_slices);
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("show sorted slice labels"), &show_sort_labels);
-#endif
+
 #ifdef pp_FSEEK
     glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("incremental data loading"), &load_incremental,SLICE_LOAD_INCREMENTAL,LoadIncrementalCB);
     LoadIncrementalCB(SLICE_LOAD_INCREMENTAL);
+#endif
+#ifdef pp_CSLICE
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("Use C for slice input"), &use_cslice);
+#endif
+    PANEL_slice_smoke = glui_bounds->add_panel_to_panel(ROLLOUT_slice, "slice fire", true);
+    glui_bounds->add_checkbox_to_panel(PANEL_slice_smoke, _("max blending"), &slices3d_max_blending);
+    glui_bounds->add_checkbox_to_panel(PANEL_slice_smoke, _("show all 3D slices"), &showall_3dslices);
+
+#ifdef pp_SMOKETEST
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("opacity adjustment"), &slice_opacity_adjustment);
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("sort slices"), &sort_slices);
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("show sorted slice labels"), &show_sort_labels);
 #endif
     SliceBoundCB(FILETYPEINDEX);
   }
@@ -2665,6 +2711,31 @@ extern "C" void IsoBoundCB(int var){
   float *iso_color;
 
   switch(var){
+#ifdef pp_TISO
+  case ISO_COLORBAR_LIST:
+    iso_colorbar = colorbarinfo + iso_colorbar_index;
+    ColorbarMenu(iso_colorbar_index);
+    updatemenu = 1;
+    update_texturebar = 1;
+    break;
+#endif
+  case ISO_TRANSPARENCY_OPTION:
+    switch(iso_transparency_option){
+      case ISO_TRANSPARENT_CONSTANT:
+        use_transparency_data=1;
+        iso_opacity_change=0;
+        break;
+      case ISO_TRANSPARENT_VARYING:
+        use_transparency_data=1;
+        iso_opacity_change=1;
+        break;
+      case ISO_OPAQUE:
+        use_transparency_data=0;
+        iso_opacity_change=1;
+        break;
+    }
+    SliceBoundCB(DATA_transparent);
+    break;
   case COLORTABLE_LIST:
     if(i_colortable_list>=0){
       colortabledata *cti;
@@ -2706,7 +2777,7 @@ extern "C" void IsoBoundCB(int var){
     IsoBoundCB(ISO_COLORS);
     break;
   case ISO_TRANSPARENCY:
-    iso_transparency = ((float)glui_iso_transparency + 0.1) / 255.0;
+    iso_transparency = CLAMP(((float)glui_iso_transparency + 0.1) / 255.0,0.0,1.0);
     break;
   case ISO_COLORS:
     iso_color = iso_colors+4*(glui_iso_level-1);
@@ -3108,7 +3179,6 @@ extern "C" void SliceBoundCB(int var){
     return;
   }
   if(var==DATA_transparent){
-    if(CHECKBOX_transparentflag2!=NULL)CHECKBOX_transparentflag2->set_int_val(use_transparency_data);
     UpdateTransparency();
     UpdateChopColors();
     UpdateIsoControls();

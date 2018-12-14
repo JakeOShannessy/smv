@@ -256,7 +256,9 @@ int SetupCase(int argc, char **argv){
   GluiStereoSetup(mainwindow_id);
   Glui3dSmokeSetup(mainwindow_id);
 
-  if(UpdateLIGHTS==1)UpdateLights(light_position0,light_position1);
+  UpdateLights(light_position0, light_position1);
+  NORMALIZE_XYZ(light_position0, light_position0);
+  NORMALIZE_XYZ(light_position1, light_position1);
 
   glutReshapeWindow(screenWidth,screenHeight);
 
@@ -517,19 +519,6 @@ void InitOpenGL(void){
     }
   }
 #endif
-#ifdef pp_CULL
-  if(err==0){
-    err= InitCullExts();
-#ifdef _DEBUG
-    if(err==0){
-      PRINTF("%s\n",_("  Culling extension initialization succeeded"));
-    }
-#endif
-    if(err!=0){
-      PRINTF("%s\n",_("  Culling extension initialization failed"));
-    }
-  }
-#endif
 
   light_position0[0]=1.0f;
   light_position0[1]=1.0f;
@@ -540,9 +529,6 @@ void InitOpenGL(void){
   light_position1[1]=1.0f;
   light_position1[2]=4.0f;
   light_position1[3]=0.f;
-
-  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
-  UpdateLights(light_position0,light_position1);
 
   {
     glGetIntegerv(GL_RED_BITS,&nredbits);
@@ -1390,13 +1376,6 @@ void InitVars(void){
   show_slice_average=0;
   vis_slice_average=1;
   slice_average_interval=10.0;
-#ifdef pp_CULL
-  cullsmoke=1;
-  cullplaneinfo=NULL;
-  ncullplaneinfo=0;
-  have_setpixelcount=0;
-  update_initcullplane=1;
-#endif
 
   show_transparent_vents=1;
   maxtourframes=500;
@@ -1405,7 +1384,6 @@ void InitVars(void){
   stretch_var_white=0;
   move_var=0;
 
-  snifferrornumber=0;
   xyz_dir=0;
   which_face=2;
   showfontmenu=1;
@@ -1418,7 +1396,6 @@ void InitVars(void){
   nrooms=0;
   nzoneinfo=0;
   nfires=0;
-  UpdateLIGHTS=1;
 
   windowsize_pointer=0;
   fontindex=0;
@@ -1787,7 +1764,6 @@ void InitVars(void){
   auto_user_tick_placement=1;
 
   smoke_extinct=7.600,smoke_dens=.50,smoke_pathlength=1.0;
-  smoketest=0,show_smoketest=0;
   showall_textures=0;
 
   do_threshold=0;
@@ -1859,15 +1835,12 @@ void InitVars(void){
   showfiles=0;
 
   smokecullflag=1;
-  smokedrawtest=0,smokedrawtest2=0;
   visMAINmenus=0;
   smoke3d_thick=0;
 #ifdef pp_GPU
   smoke3d_rthick=1.0;
   usegpu=0;
 #endif
-  smokedrawtest_nummin=1;
-  smokedrawtest_nummax=1;
   ijkbarmax=5;
   blockage_as_input=0;
   blockage_snapped=1;
@@ -1936,12 +1909,10 @@ void InitVars(void){
   light_position1[2] =  1.0f;
   light_position1[3] =  0.0f;
 
-
   ambientlight[0] = 0.6f;
   ambientlight[1] = 0.6f;
   ambientlight[2] = 0.6f;
   ambientlight[3] = 1.0f;
-
 
   diffuselight[0] = 0.50f;
   diffuselight[1] = 0.50f;
@@ -2007,7 +1978,6 @@ void InitVars(void){
   iso_colors[37] = 0.0;
   iso_colors[38] = 0.0;
 
-  iso_transparency = 0.8;
   glui_iso_transparency = CLAMP(255 * iso_transparency+0.1, 1, 255);
   for(i = 0; i < N_ISO_COLORS; i++){
     iso_colors[4 * i + 3] = iso_transparency;

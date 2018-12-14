@@ -572,6 +572,36 @@ float FrExp10(float x, int *exp10){
   return mantissa;
 }
 
+/* ------------------ GetFloatLabel ------------------------ */
+
+char *GetFloatLabel(float val, char *label){
+  if(val>=1000000.0){
+    sprintf(label,"%.1fM", val/1000000.0);
+  }
+  else if(val>=1000.0&&val<1000000.0){
+    sprintf(label, "%.1fK", val/1000.0);
+  }
+  else{
+    sprintf(label, "%f", val);
+  }
+  return label;
+}
+
+/* ------------------ GetIntLabel ------------------------ */
+
+char *GetIntLabel(int val, char *label){
+  if(val>=1000000){
+    sprintf(label, "%.1fM", (float)val/1000000.0);
+  }
+  else if(val>=1000&&val<1000000){
+    sprintf(label, "%.1fK", (float)val/1000.0);
+  }
+  else{
+    sprintf(label, "%i", val);
+  }
+  return label;
+}
+
 /* ------------------ GetString ------------------------ */
 
 char *GetString(char *buffer){
@@ -934,6 +964,7 @@ int ReadLabels(flowlabels *flowlabel, BFILE *stream, char *suffix_label){
   char buffer2[255], *buffer;
   size_t len;
   int len_suffix_label = 0;
+  int len_skip_label = 10;  // add extra space to label in case there is an isosurface skip parameter
 
   if(FGETS(buffer2,255,stream)==NULL){
     strcpy(buffer2,"*");
@@ -944,7 +975,7 @@ int ReadLabels(flowlabels *flowlabel, BFILE *stream, char *suffix_label){
   TrimBack(buffer);
   len=strlen(buffer);
   if(suffix_label!=NULL)len_suffix_label = strlen(suffix_label);
-  if(NewMemory((void **)&flowlabel->longlabel,(unsigned int)(len+len_suffix_label+1))==0)return LABEL_ERR;
+  if(NewMemory((void **)&flowlabel->longlabel,(unsigned int)(len+len_suffix_label+len_skip_label+1))==0)return LABEL_ERR;
   STRCPY(flowlabel->longlabel,buffer);
   if(suffix_label!=NULL&&strlen(suffix_label)>0)STRCAT(flowlabel->longlabel, suffix_label);
 
@@ -1394,8 +1425,8 @@ void UsageCommon(int option){
 
 /* ------------------ ParseCommonOptions ------------------------ */
 
-void ParseCommonOptions(int argc, char **argv){
-  int i, no_minus;
+int ParseCommonOptions(int argc, char **argv){
+  int i, no_minus,first_arg=0;
 
   no_minus = 0;
   for(i = 1; i<argc; i++){
@@ -1403,6 +1434,10 @@ void ParseCommonOptions(int argc, char **argv){
 
     argi = argv[i];
     if(argi==NULL||argi[0]!='-'){
+      if(first_arg==0){
+        first_arg = i;
+        return first_arg;
+      }
       no_minus = 1;
       continue;
     }
@@ -1441,6 +1476,7 @@ void ParseCommonOptions(int argc, char **argv){
     }
 #endif
   }
+  return first_arg;
 }
 
 /* ------------------ version ------------------------ */

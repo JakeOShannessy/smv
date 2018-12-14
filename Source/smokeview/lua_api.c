@@ -712,6 +712,7 @@ int lua_get_devices(lua_State *L) {
 }
 
 int lua_create_vector(lua_State *L, dvector *dvector) {
+  size_t i;
   lua_createtable(L, 0, 3);
 
   lua_pushstring(L, dvector->y->name);
@@ -724,7 +725,7 @@ int lua_create_vector(lua_State *L, dvector *dvector) {
   lua_pushstring(L, dvector->x->units);
   lua_setfield(L, -2, "units");
   lua_createtable(L, 0, dvector->x->nvalues);
-  for (size_t i = 0; i < dvector->x->nvalues; ++i) {
+  for (i = 0; i < dvector->x->nvalues; ++i) {
     lua_pushnumber(L, i+1);
     lua_pushnumber(L, dvector->x->values[i]);
     lua_settable(L, -3);
@@ -738,7 +739,7 @@ int lua_create_vector(lua_State *L, dvector *dvector) {
   lua_pushstring(L, dvector->y->units);
   lua_setfield(L, -2, "units");
   lua_createtable(L, 0, dvector->y->nvalues);
-  for (size_t i = 0; i < dvector->y->nvalues; ++i) {
+  for (i = 0; i < dvector->y->nvalues; ++i) {
     lua_pushnumber(L, i+1);
     lua_pushnumber(L, dvector->y->values[i]);
     lua_settable(L, -3);
@@ -758,7 +759,8 @@ int lua_get_ncsvinfo(lua_State *L) {
 
 csvdata *get_csvinfo(const char *key) {
   // Loop through csvinfo until we find the right entry
-  for (size_t i = 0; i < ncsvinfo; ++i) {
+  size_t i;
+  for (i = 0; i < ncsvinfo; ++i) {
     if(strcmp(csvinfo[i].key,key)==0){
       return &csvinfo[i];
     }
@@ -768,7 +770,8 @@ csvdata *get_csvinfo(const char *key) {
 
 int get_csvindex(const char *key) {
   // Loop through csvinfo until we find the right entry
-  for (size_t i = 0; i < ncsvinfo; ++i) {
+  size_t i;
+  for (i = 0; i < ncsvinfo; ++i) {
     if(strcmp(csvinfo[i].key,key)==0){
       return i;
     }
@@ -811,7 +814,8 @@ int lua_get_csventry(lua_State *L) {
 
   if(csventry->loaded) {
     lua_createtable(L, 0, csventry->nvectors);
-    for (size_t j = 0; j < csventry->nvectors; j++) {
+    size_t j;
+    for (j = 0; j < csventry->nvectors; j++) {
       // Load vector data into lua.
       // TODO: change to access indirectly rater than copying via stack
       // printf("adding: %s\n", csventry->vectors[j].y->name);
@@ -919,6 +923,7 @@ int lua_get_nplot3dinfo(lua_State *L) {
 int lua_get_plot3dentry(lua_State *L) {
   int lua_index = lua_tonumber(L, -1);
   int index = lua_index-1;
+  int i;
 
 
   // csvdata *csventry = get_csvinfo(key);
@@ -967,7 +972,7 @@ int lua_get_plot3dentry(lua_State *L) {
   lua_setfield(L, -2, "display");
 
   lua_createtable(L, 0, 6);
-  for (int i = 0; i < 6; ++i) {
+  for (i = 0; i < 6; ++i) {
     lua_pushnumber(L, i+1);
 
     lua_createtable(L, 0, 3);
@@ -1028,6 +1033,7 @@ int lua_get_plot3dinfo(lua_State *L) {
 
 int lua_get_qdata_sum(lua_State *L) {
   int meshnumber = lua_tonumber(L, 1);
+  int vari, i, j, k;
   meshdata mesh = meshinfo[meshnumber];
   // fprintf(stderr, "mesh label: %s\n", mesh.label);
   int ntotal = (mesh.ibar+1)*(mesh.jbar+1)*(mesh.kbar+1);
@@ -1038,18 +1044,18 @@ int lua_get_qdata_sum(lua_State *L) {
   totals[2] = 0.0;
   totals[3] = 0.0;
   totals[4] = 0.0;
-  for (int vari = 0; vari < 5; ++vari) {
+  for (vari = 0; vari < 5; ++vari) {
     int offset = vari*ntotal;
-    for (int k = 0; k <= mesh.kbar; ++k) {
-      for (int j = 0; j <= mesh.jbar; ++j) {
-        for (int i = 0; i <= mesh.ibar; ++i) {
+    for (k = 0; k <= mesh.kbar; ++k) {
+      for (j = 0; j <= mesh.jbar; ++j) {
+        for (i = 0; i <= mesh.ibar; ++i) {
           int n = offset + k*(mesh.jbar+1)*(mesh.ibar+1) + j*(mesh.ibar+1) + i;
           totals[vari] += mesh.qdata[n];
         }
       }
     }
   }
-  for (int vari = 0; vari < vars; ++vari) {
+  for (vari = 0; vari < vars; ++vari) {
     lua_pushnumber(L, totals[vari]);
     // fprintf(stderr, "vartotal[%d] value: %.2f\n", vari,totals[vari]);
   }
@@ -1059,6 +1065,7 @@ int lua_get_qdata_sum(lua_State *L) {
 
 int lua_get_qdata_mean(lua_State *L) {
   int meshnumber = lua_tonumber(L, 1);
+  int vari, i, j, k;
   meshdata mesh = meshinfo[meshnumber];
   // fprintf(stderr, "mesh label: %s\n", mesh.label);
   int ntotal = (mesh.ibar+1)*(mesh.jbar+1)*(mesh.kbar+1);
@@ -1069,18 +1076,18 @@ int lua_get_qdata_mean(lua_State *L) {
   totals[2] = 0.0;
   totals[3] = 0.0;
   totals[4] = 0.0;
-  for (int vari = 0; vari < 5; ++vari) {
+  for (vari = 0; vari < 5; ++vari) {
     int offset = vari*ntotal;
-    for (int k = 0; k <= mesh.kbar; ++k) {
-      for (int j = 0; j <= mesh.jbar; ++j) {
-        for (int i = 0; i <= mesh.ibar; ++i) {
+    for (k = 0; k <= mesh.kbar; ++k) {
+      for (j = 0; j <= mesh.jbar; ++j) {
+        for (i = 0; i <= mesh.ibar; ++i) {
           int n = offset + k*(mesh.jbar+1)*(mesh.ibar+1) + j*(mesh.ibar+1) + i;
           totals[vari] += mesh.qdata[n];
         }
       }
     }
   }
-  for (int vari = 0; vari < vars; ++vari) {
+  for (vari = 0; vari < vars; ++vari) {
     lua_pushnumber(L, totals[vari]/ntotal);
     // fprintf(stderr, "vartotal[%d] value: %.2f\n", vari,totals[vari]);
   }
@@ -1174,6 +1181,9 @@ int lua_initsmvdata(lua_State *L) {
   // works without the need for a metatable
   lua_get_sliceinfo(L);
   lua_setglobal(L, "sliceinfo");
+
+  lua_get_rampinfo(L);
+  lua_setglobal(L, "rampinfo");
 
   initcsvdata(L);
 
@@ -1296,12 +1306,13 @@ int lua_slice_get_data(lua_State *L) {
 }
 
 int lua_slice_get_times(lua_State *L) {
+  int i;
   // get the lightuserdata from the stack, which is a pointer to the 'slicedata'
   slicedata *slice = (slicedata *)lua_touserdata(L, 1);
   // Push a lightuserdata (a pointer) onto the lua stack that points to the
   // qslicedata.
   lua_createtable(L, slice->ntimes, 0);
-  for (int i = 0; i < slice->ntimes; i++) {
+  for (i = 0; i < slice->ntimes; i++) {
     lua_pushnumber(L, i+1);
     lua_pushnumber(L, slice->times[i]);
     lua_settable(L, -3);
@@ -1328,6 +1339,7 @@ int lua_get_part(lua_State *L) {
 
 // pass in the part data
 int lua_get_part_npoints(lua_State *L) {
+  int index;
   partdata *parti = (partdata *)lua_touserdata(L, 1);
   if (!parti->loaded) {
     return luaL_error(L, "particle file %s not loaded", parti->file);
@@ -1356,7 +1368,7 @@ int lua_get_part_npoints(lua_State *L) {
   lua_createtable(L, parti->ntimes, 0);
 
   // Create a table with an entry for each time
-  for (int index = 0; index < parti->ntimes; index++) {
+  for (index = 0; index < parti->ntimes; index++) {
     part5data *part5 = parti->data5 + index*parti->nclasses;
     // fprintf(stderr, "%d particles at time %.2f s (%.2f s)\n", part5->npoints, part5->time,parti->times[index]);
     // sum += part5->npoints;
@@ -1385,7 +1397,7 @@ int lua_get_part_npoints(lua_State *L) {
   lua_createtable(L, parti->ntimes, 0);
 
   // Create a table with an entry for each time
-  for (int index = 0; index < parti->ntimes; index++) {
+  for (index = 0; index < parti->ntimes; index++) {
     part5data *part5 = parti->data5 + index*parti->nclasses;
     // fprintf(stderr, "%d particles at time %.2f s (%.2f s)\n", part5->npoints, part5->time,parti->times[index]);
     // sum += part5->npoints;
@@ -1417,7 +1429,8 @@ int lua_slice_data_map_frames(lua_State *L) {
   // The second argument is the function to be called on each frame.
   lua_createtable(L, slice->ntimes, 0);
   // framenumber is the index of the frame (0-based).
-  for (int framenumber = 0; framenumber < slice->ntimes; framenumber++) {
+  int framenumber;
+  for (framenumber = 0; framenumber < slice->ntimes; framenumber++) {
     // duplicate the function so that we can use it and keep it
     lua_pushvalue (L, 2);
     // Push the first frame onto the stack by first putting them into a lua
@@ -1430,7 +1443,8 @@ int lua_slice_data_map_frames(lua_State *L) {
     // this table method is more flexible but slower
     lua_createtable(L, framepoints, 0);
     // pointnumber is the index of the data point in the frame (0-based).
-    for (int pointnumber = 0; pointnumber < framepoints; pointnumber++) {
+    int pointnumber;
+    for (pointnumber = 0; pointnumber < framepoints; pointnumber++) {
       // adjust the index to start from 1
       lua_pushnumber(L, pointnumber+1);
       lua_pushnumber(L, qslicedata[framenumber*framepoints+pointnumber]);
@@ -1460,9 +1474,11 @@ int lua_slice_data_map_frames_count_less(lua_State *L) {
   // Pointer to the first frame.
   float *qslicedata = slice->qslicedata;
   lua_createtable(L, slice->ntimes, 0);
-  for (int framenumber = 0; framenumber < slice->ntimes; framenumber++) {
+  int framenumber;
+  for (framenumber = 0; framenumber < slice->ntimes; framenumber++) {
     int count = 0;
-    for (int pointnumber = 0; pointnumber < framepoints; pointnumber++) {
+    int pointnumber;
+    for (pointnumber = 0; pointnumber < framepoints; pointnumber++) {
       if (*qslicedata < threshold) {
         count++;
       }
@@ -1486,9 +1502,11 @@ int lua_slice_data_map_frames_count_less_eq(lua_State *L) {
   // Pointer to the first frame.
   float *qslicedata = slice->qslicedata;
   lua_createtable(L, slice->ntimes, 0);
-  for (int framenumber = 0; framenumber < slice->ntimes; framenumber++) {
+  int framenumber;
+  for (framenumber = 0; framenumber < slice->ntimes; framenumber++) {
     int count = 0;
-    for (int pointnumber = 0; pointnumber < framepoints; pointnumber++) {
+    int pointnumber;
+    for (pointnumber = 0; pointnumber < framepoints; pointnumber++) {
       if (*qslicedata <= threshold) {
         count++;
       }
@@ -1512,9 +1530,11 @@ int lua_slice_data_map_frames_count_greater(lua_State *L) {
   // Pointer to the first frame.
   float *qslicedata = slice->qslicedata;
   lua_createtable(L, slice->ntimes, 0);
-  for (int framenumber = 0; framenumber < slice->ntimes; framenumber++) {
+  int framenumber;
+  for (framenumber = 0; framenumber < slice->ntimes; framenumber++) {
     int count = 0;
-    for (int pointnumber = 0; pointnumber < framepoints; pointnumber++) {
+    int pointnumber;
+    for (pointnumber = 0; pointnumber < framepoints; pointnumber++) {
       if (*qslicedata > threshold) {
         count++;
       }
@@ -1538,9 +1558,11 @@ int lua_slice_data_map_frames_count_greater_eq(lua_State *L) {
   // Pointer to the first frame.
   float *qslicedata = slice->qslicedata;
   lua_createtable(L, slice->ntimes, 0);
-  for (int framenumber = 0; framenumber < slice->ntimes; framenumber++) {
+  int framenumber;
+  for (framenumber = 0; framenumber < slice->ntimes; framenumber++) {
     int count = 0;
-    for (int pointnumber = 0; pointnumber < framepoints; pointnumber++) {
+    int pointnumber;
+    for (pointnumber = 0; pointnumber < framepoints; pointnumber++) {
       if (*qslicedata >= threshold) {
         count++;
       }
@@ -1699,6 +1721,43 @@ int lua_get_sliceinfo(lua_State *L) {
     // index)
     lua_pushcclosure(L, getslicedata, 1);
     lua_setfield(L, -2, "getdata");
+
+    lua_settable(L, -3);
+  }
+  return 1;
+}
+
+/*
+  Build a Lua table with information on the ramps of the model.
+*/
+// TODO: change this to use userdata instead
+int lua_get_rampinfo(lua_State *L) {
+  PRINTF("lua: initialising ramp table\n");
+  lua_createtable(L, 0, nrampinfo);
+  int i;
+  for (i = 0; i < nrampinfo; i++) {
+    lua_pushnumber(L, i+1);
+    lua_createtable(L, 0, 3);
+
+    if(rampinfo[i].name != NULL) {
+      lua_pushstring(L, rampinfo[i].name);
+      lua_setfield(L, -2, "name");
+    }
+
+    lua_createtable(L, 0, rampinfo[i].nentries);
+    int j;
+    for (j = 0; j < rampinfo[i].nentries; j++) {
+      lua_createtable(L, 0, 2);
+
+      lua_pushnumber(L, rampinfo[i].values[2*j]);
+      lua_setfield(L, -2, "t");
+
+      lua_pushnumber(L, rampinfo[i].values[2*j+1]);
+      lua_setfield(L, -2, "f");
+
+      lua_seti(L, -2, j+1);
+    }
+    lua_setfield(L, -2, "entries");
 
     lua_settable(L, -3);
   }
@@ -2820,20 +2879,6 @@ int lua_set_colortable(lua_State *L) {
   return 0;
 }
 
-int lua_set_light0(lua_State *L) {
-  int v = lua_tonumber(L, 1);
-  int return_code = set_light0(v);
-  lua_pushnumber(L, return_code);
-  return 1;
-}
-
-int lua_set_light1(lua_State *L) {
-  int v = lua_tonumber(L, 1);
-  int return_code = set_light1(v);
-  lua_pushnumber(L, return_code);
-  return 1;
-}
-
 int lua_set_lightpos0(lua_State *L) {
   float a = lua_tonumber(L, 1);
   float b = lua_tonumber(L, 2);
@@ -2850,20 +2895,6 @@ int lua_set_lightpos1(lua_State *L) {
   float c = lua_tonumber(L, 3);
   float d = lua_tonumber(L, 4);
   int return_code = set_lightpos1(a, b, c, d);
-  lua_pushnumber(L, return_code);
-  return 1;
-}
-
-int lua_set_lightmodellocalviewer(lua_State *L) {
-  int v = lua_tonumber(L, 1);
-  int return_code = set_lightmodellocalviewer(v);
-  lua_pushnumber(L, return_code);
-  return 1;
-}
-
-int lua_set_lightmodelseparatespecularcolor(lua_State *L) {
-  int v = lua_tonumber(L, 1);
-  int return_code = set_lightmodelseparatespecularcolor(v);
   lua_pushnumber(L, return_code);
   return 1;
 }
@@ -4104,6 +4135,7 @@ int lua_get_units(lua_State *L) {
 }
 
 int lua_set_units(lua_State *L) {
+  int i;
   fprintf(stderr, "set_units\n");
   const char *unitclassname = lua_tostring(L, 1);
   const char *unitname = lua_tostring(L, 2);
@@ -4112,14 +4144,14 @@ int lua_set_units(lua_State *L) {
 
   int unitclass_index;
   int unit_index;
-  for (int i=0; i < nunitclasses_default; i++) {
+  for (i=0; i < nunitclasses_default; i++) {
     fprintf(stderr, "set_units_loop (unitclassname): %s\n", unitclasses[i].unitclass);
     if (strcmp(unitclasses[i].unitclass,unitclassname)==0) {
       unitclass_index = i;
       break;
     }
   }
-  for (int i=0; i < unitclasses[unitclass_index].nunits; i++) {
+  for (i=0; i < unitclasses[unitclass_index].nunits; i++) {
     if (strcmp(unitclasses[unitclass_index].units[i].unit,unitname)==0) {
       unit_index = i;
       break;
@@ -5243,13 +5275,8 @@ lua_State *initLua() {
   lua_register(L, "set_heatoncolor", lua_set_heatoncolor);
   lua_register(L, "set_isocolors", lua_set_isocolors);
   lua_register(L, "set_colortable", lua_set_colortable);
-  lua_register(L, "set_light0", lua_set_light0);
-  lua_register(L, "set_light1", lua_set_light1);
   lua_register(L, "set_lightpos0", lua_set_lightpos0);
   lua_register(L, "set_lightpos1", lua_set_lightpos1);
-  lua_register(L, "set_lightmodellocalviewer", lua_set_lightmodellocalviewer);
-  lua_register(L, "set_lightmodelseparatespecularcolor",
-               lua_set_lightmodelseparatespecularcolor);
   lua_register(L, "set_sensorcolor", lua_set_sensorcolor);
   lua_register(L, "set_sensornormcolor", lua_set_sensornormcolor);
   lua_register(L, "set_bw", lua_set_bw);

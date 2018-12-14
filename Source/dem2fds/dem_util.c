@@ -257,7 +257,7 @@ void GenerateMapImage(char *image_file, elevdata *fds_elevs, elevdata *imageinfo
   if(show_maps == 1){
     int i;
 
-    // draw outline of each terrain map (downloaded form usgs website)
+    // draw outline of each terrain map (downloaded from USGS website)
 
     for(i = 0; i < nimageinfo; i++) {
       elevdata *imagei;
@@ -639,7 +639,14 @@ int GetElevations(char *input_file, char *image_file, elevdata *fds_elevs){
       continue;
     }
 
-    if(Match(buffer, "LONGLATMINMAX") == 1){
+    if(Match(buffer, "MESH")==1){
+      if(fgets(buffer, LEN_BUFFER, stream_in)==NULL)break;
+      sscanf(buffer, "%i %i", &nmeshx, &nmeshy);
+      nmeshx = MAX(1, nmeshx);
+      nmeshy = MAX(1, nmeshy);
+    }
+
+    if(Match(buffer, "LONGLATMINMAX")==1){
       fds_long_min = -1000.0;
       fds_long_max = -1000.0;
       fds_lat_min = -1000.0;
@@ -865,7 +872,28 @@ void GenerateFDSInputFile(char *casename, char *casename_fds, elevdata *fds_elev
   }
 
   fprintf(streamout, "&HEAD CHID='%s', TITLE='created from %s' /\n", basename,casename);
-  fprintf(streamout, "&MESH IJK = %i, %i, %i, XB = 0.0, %f, 0.0, %f, %f, %f /\n", ibar, jbar, kbar, xmax, ymax, zmin, zmax);
+
+  NewMemory((void **)&xplt, (nmeshx+1)*sizeof(float));
+  xplt[0] = 0.0;
+  for(i = 1;i<nmeshx-1;i++){
+    xplt[i] = xmax*(float)i/(float)nmeshx;
+  }
+  xplt[nmeshx] = xmax;
+
+  NewMemory((void **)&yplt, (nmeshy+1)*sizeof(float));
+  yplt[0] = 0.0;
+  for(i = 1;i<nmeshy-1;i++){
+    yplt[i] = ymax*(float)i/(float)nmeshy;
+  }
+  yplt[nmeshy] = ymax;
+
+  for(j = 0; j<nmeshy; j++){
+    for(i = 0; i<nmeshx; i++){
+      fprintf(streamout, "&MESH IJK = %i, %i, %i, XB = %f, %f, %f, %f, %f, %f /\n",
+      ibar, jbar, kbar, xplt[i],xplt[i+1],yplt[j],yplt[j+1], zmin, zmax);
+    }
+  }
+
   if(option == FDS_OBST) {
     fprintf(streamout, "&MISC TERRAIN_CASE = .TRUE., TERRAIN_IMAGE = '%s.png' /\n", basename);
   }

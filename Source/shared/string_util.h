@@ -49,9 +49,11 @@ typedef struct {
 
 // vvvvvvvvvvvvvvvvvvvvvvvv headers vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
+EXTERNCPP char          *GetFloatLabel(float val, char *label);
+EXTERNCPP char          *GetIntLabel(int val, char *label);
 EXTERNCPP char          *AppendString(char *S1, char *S2);
 EXTERNCPP void           UsageCommon(int option);
-EXTERNCPP void           ParseCommonOptions(int argc, char **argv);
+EXTERNCPP int            ParseCommonOptions(int argc, char **argv);
 EXTERNCPP void           InitRandAB(int size);
 EXTERNCPP float          RandAB(int seed, float minval, float maxval);
 EXTERNCPP void           ToLower(char *string);

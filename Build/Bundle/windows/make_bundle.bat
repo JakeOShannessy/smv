@@ -28,13 +28,15 @@ set BUILDDIR=intel_win_%platform%
 
 set version=%smv_version%
 set smvbuild=%svn_root%\smv\Build\smokeview\%BUILDDIR%
-set forbundle=%svn_root%\smv\for_bundle
+set forbundle=%svn_root%\smv\Build\Bundle\for_bundle
 set smvscripts=%svn_root%\smv\scripts
 set svzipbuild=%svn_root%\smv\Build\smokezip\%BUILDDIR%
 set dem2fdsbuild=%svn_root%\smv\Build\dem2fds\%BUILDDIR%
 set svdiffbuild=%svn_root%\smv\Build\smokediff\%BUILDDIR%
 set bgbuild=%svn_root%\smv\Build\background\intel_win_64
 set hashfilebuild=%svn_root%\smv\Build\hashfile\%BUILDDIR%
+set flushfilebuild=%svn_root%\smv\Build\flush\%BUILDDIR%
+set timep=%svn_root%\smv\Build\timep\%BUILDDIR%
 set windbuild=%svn_root%\smv\Build\wind2fds\%BUILDDIR%
 set sh2bat=%svn_root%\smv\Build\sh2bat\intel_win_64
 set gettime=%svn_root%\smv\Build\get_time\%BUILDDIR%
@@ -66,11 +68,13 @@ copy %forbundle%\*.png %smvdir%\.>Nul
 
 CALL :COPY  %forbundle%\volrender.ssf %smvdir%\volrender.ssf
 
-CALL :COPY  %svzipbuild%\smokezip_win_%platform%.exe    %smvdir%\smokezip.exe
-CALL :COPY  %svdiffbuild%\smokediff_win_%platform%.exe  %smvdir%\smokediff.exe
-CALL :COPY  %dem2fdsbuild%\dem2fds_win_%platform%.exe   %smvdir%\dem2fds.exe
 CALL :COPY  %bgbuild%\background.exe                    %smvdir%\background.exe
+CALL :COPY  %dem2fdsbuild%\dem2fds_win_%platform%.exe   %smvdir%\dem2fds.exe
+CALL :COPY  %windbuild%\flush_win_%platform%.exe        %smvdir%\flush.exe
 CALL :COPY  %hashfilebuild%\hashfile_win_%platform%.exe %smvdir%\hashfile.exe
+CALL :COPY  %svdiffbuild%\smokediff_win_%platform%.exe  %smvdir%\smokediff.exe
+CALL :COPY  %svzipbuild%\smokezip_win_%platform%.exe    %smvdir%\smokezip.exe
+CALL :COPY  %windbuild%\timep_win_%platform%.exe        %smvdir%\timep.exe
 CALL :COPY  %windbuild%\wind2fds_win_%platform%.exe     %smvdir%\wind2fds.exe
 
 set curdir=%CD%

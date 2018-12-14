@@ -18,11 +18,6 @@
 #ifdef pp_GPU
 #define pp_GPU_CULL_STATE
 #endif
-#ifdef pp_CULL
-#ifndef pp_GPU_CULL_STATE
-#define pp_GPU_CULL_STATE
-#endif
-#endif
 
 /* ------------------ GetGridIndex ------------------------ */
 
@@ -263,7 +258,7 @@ void MouseEditColorbar(int button, int state, int x, int y){
 
   glDisable(GL_BLEND);
   glShadeModel(GL_FLAT);
-  glDisable(GL_LIGHTING);
+  DISABLE_LIGHTING;
   glDisable(GL_DITHER);
   glDisable(GL_FOG);
   glDisable(GL_TEXTURE_1D);
@@ -291,7 +286,7 @@ void MouseEditColorbar(int button, int state, int x, int y){
     ColorbarCB(COLORBAR_SET);
   }
   glEnable(GL_BLEND);
-  glEnable(GL_LIGHTING);
+  ENABLE_LIGHTING;
   glShadeModel(GL_SMOOTH);
   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, block_specular2);
@@ -312,7 +307,7 @@ void MouseEditTour(int button, int state, int x, int y){
   glDisable(GL_BLEND);
   glDisable(GL_DITHER);
   glDisable(GL_FOG);
-  glDisable(GL_LIGHTING);
+  DISABLE_LIGHTING;
   glDisable(GL_TEXTURE_1D);
   glDisable(GL_TEXTURE_2D);
   glShadeModel(GL_FLAT);
@@ -353,7 +348,7 @@ void MouseEditTour(int button, int state, int x, int y){
   }
   glShadeModel(GL_SMOOTH);
   glEnable(GL_BLEND);
-  glEnable(GL_LIGHTING);
+  ENABLE_LIGHTING;
 }
 
 /* ------------------ MouseEditBlockage ------------------------ */
@@ -367,7 +362,7 @@ void MouseEditBlockage(int button, int state, int x, int y){
   glDisable(GL_BLEND);
   glDisable(GL_DITHER);
   glDisable(GL_FOG);
-  glDisable(GL_LIGHTING);
+  DISABLE_LIGHTING;
   glDisable(GL_TEXTURE_1D);
   glDisable(GL_TEXTURE_2D);
   glShadeModel(GL_FLAT);
@@ -407,7 +402,7 @@ void MouseEditBlockage(int button, int state, int x, int y){
 
     glShadeModel(GL_SMOOTH);
     glEnable(GL_BLEND);
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
 
     switch(sd->dir){
       case DOWN_X:
@@ -456,7 +451,7 @@ void MouseSelectDevice(int button, int state, int x, int y){
   glDisable(GL_BLEND);
   glDisable(GL_DITHER);
   glDisable(GL_FOG);
-  glDisable(GL_LIGHTING);
+  DISABLE_LIGHTING;
   glDisable(GL_TEXTURE_1D);
   glDisable(GL_TEXTURE_2D);
   glShadeModel(GL_FLAT);
@@ -489,7 +484,7 @@ void MouseSelectDevice(int button, int state, int x, int y){
     }
     glShadeModel(GL_SMOOTH);
     glEnable(GL_BLEND);
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
   }
 }
 
@@ -504,7 +499,7 @@ void MouseSelectAvatar(int button, int state, int x, int y){
   glDisable(GL_BLEND);
   glDisable(GL_DITHER);
   glDisable(GL_FOG);
-  glDisable(GL_LIGHTING);
+  DISABLE_LIGHTING;
   glDisable(GL_TEXTURE_1D);
   glDisable(GL_TEXTURE_2D);
   glShadeModel(GL_FLAT);
@@ -525,7 +520,7 @@ void MouseSelectAvatar(int button, int state, int x, int y){
     selected_avatar_tag=val;
     glShadeModel(GL_SMOOTH);
     glEnable(GL_BLEND);
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
   }
 }
 
@@ -1422,24 +1417,6 @@ void KeyboardUpCB(unsigned char key, int x, int y){
 
 void PrintGPUCullState(void){
   char gpu_label[128];
-#ifdef pp_CULL
-  char cull_label[128];
-
-  if(cullactive==1){
-    if(cullsmoke==1&&usegpu==1){
-      strcpy(cull_label,"Smoke culling in use.");
-    }
-    else if(cullsmoke==1&&usegpu==0){
-      strcpy(cull_label,"Smoke culling not in use (available if GPU activates).");
-    }
-    else{
-      strcpy(cull_label,"Smoke culling not in use.");
-    }
-  }
-  else{
-    strcpy(cull_label,"Smoke culling not available.");
-  }
-#endif
 #ifdef pp_GPU
   if(gpuactive==1){
     if(usegpu==1){
@@ -1453,9 +1430,6 @@ void PrintGPUCullState(void){
     strcpy(gpu_label,"GPU not available.");
   }
   PRINTF("%s ",gpu_label);
-#endif
-#ifdef pp_CULL
-  PRINTF("%s",cull_label);
 #endif
   PRINTF("\n");
 }
@@ -1606,17 +1580,6 @@ void Keyboard(unsigned char key, int flag){
               PRINTF("room %i\n",zone_highlight_room+1);
             }
           }
-#ifdef pp_CULL
-          else{
-            if(nsmoke3dinfo>0&&cullactive==1&&gpuactive==1){
-              cullsmoke=1-cullsmoke;
-              UpdateSmoke3dFlags();
-              InitCull(cullsmoke);
-              PrintGPUCullState();
-            }
-            if(cullactive==0||gpuactive==0)cullsmoke=0;
-          }
-#endif
       }
       break;
     case 'd':
@@ -1819,10 +1782,7 @@ void Keyboard(unsigned char key, int flag){
     case 'l':
       if(nsmoke3dinfo>0){
         smokecullflag=1-smokecullflag;
-        if(smokecullflag==0){
-          smokedrawtest=1-smokedrawtest;
-        }
-        PRINTF("smokecullflag=%i\n smokedrawtest=%i\n",smokecullflag,smokedrawtest);
+        PRINTF("smokecullflag=%i\n",smokecullflag);
         UpdateSmoke3dFlags();
         return;
       }
@@ -2283,6 +2243,18 @@ void Keyboard(unsigned char key, int flag){
           visColorbarHorizontal = 1;
         }
       }
+      updatemenu = 1;
+      break;
+    case '<':
+      vectorpointsize+=2;
+      if(vectorpointsize>20.0)vectorpointsize = 1.0;
+      UpdateVectorpointsize();
+      updatemenu = 1;
+      break;
+    case '>':
+      vectorpointsize-=2;
+      if(vectorpointsize<1.0)vectorpointsize = 20.0;
+      UpdateVectorpointsize();
       updatemenu = 1;
       break;
     case '#':
@@ -3153,7 +3125,7 @@ int DoStereo(void){
       glLoadIdentity();
 
       glEnable(GL_BLEND);
-      glDisable(GL_LIGHTING);
+      DISABLE_LIGHTING;
       glDisable(GL_COLOR_MATERIAL);
       glDisable(GL_DITHER);
 
@@ -3170,7 +3142,7 @@ int DoStereo(void){
     }
     Render(VIEW_CENTER);
     if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_DITHER);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -3226,27 +3198,29 @@ void DoScript(void){
       exit(0);
     }
 #endif
-    if(current_script_command->command==SCRIPT_VOLSMOKERENDERALL){\
-      if(current_script_command->exit==0){
-        RenderState(RENDER_ON);
+    if(current_script_command>=scriptinfo){
+      if(current_script_command->command==SCRIPT_VOLSMOKERENDERALL){
+        if(current_script_command->exit==0){
+          RenderState(RENDER_ON);
+        }
+        else{
+          RenderState(RENDER_OFF);
+          current_script_command->first = 1;
+          current_script_command->exit = 0;
+        }
       }
-      else{
-        RenderState(RENDER_OFF);
-        current_script_command->first=1;
-        current_script_command->exit=0;
+      if(current_script_command->command==SCRIPT_ISORENDERALL){
+          if(current_script_command->exit==0){
+            RenderState(RENDER_ON);
+          }
+          else{
+            RenderState(RENDER_OFF);
+            current_script_command->first = 1;
+            current_script_command->exit = 0;
+          }
       }
     }
-    if(current_script_command->command==SCRIPT_ISORENDERALL){\
-      if(current_script_command->exit==0){
-        RenderState(RENDER_ON);
-      }
-      else{
-        RenderState(RENDER_OFF);
-        current_script_command->first=1;
-        current_script_command->exit=0;
-      }
-    }
-    if(render_status==RENDER_OFF){  // don't advance command if Smokeview is executing a RENDERALL command
+    if(render_status==RENDER_OFF){   // don't advance command if Smokeview is executing a RENDERALL command
       current_script_command++;
       script_render_flag= RunScript();
       if(runscript==2&&noexit==0&&current_script_command==NULL){
@@ -3316,6 +3290,10 @@ void DisplayCB(void){
     if(render_status==RENDER_OFF){
       glDrawBuffer(GL_BACK);
       ShowScene(DRAWSCENE,VIEW_CENTER,0,0,0,NULL);
+      if(update_rgb_test==1){
+        update_rgb_test = 0;
+        RGBTest();
+      }
       if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
     }
     else{

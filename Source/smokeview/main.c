@@ -87,9 +87,6 @@ void Usage(char *prog,int option){
 #ifdef pp_COMPRESS
     strcat(label, ", pp_COMPRESS");
 #endif
-#ifdef pp_CULL
-    strcat(label, ", pp_CULL");
-#endif
 #ifdef pp_DEG
     strcat(label, ", pp_DEG");
 #endif
@@ -358,6 +355,16 @@ void ParseCommandline(int argc, char **argv){
     if(FILE_EXISTS(fds_filein) == NO){
       FREEMEMORY(fds_filein);
     }
+  }
+  if(ffmpeg_command_filename == NULL){
+    NewMemory((void **)&ffmpeg_command_filename, (unsigned int)(len_casename + 12));
+    STRCPY(ffmpeg_command_filename, fdsprefix);
+    STRCAT(ffmpeg_command_filename, "_ffmpeg");
+#ifdef WIN32
+    STRCAT(ffmpeg_command_filename,".bat");
+#else
+    STRCAT(ffmpeg_command_filename,".sh");
+#endif
   }
   if(fed_filename == NULL){
     STRCPY(fed_filename_base, fdsprefix);

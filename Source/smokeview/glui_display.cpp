@@ -68,7 +68,18 @@ GLUI_Spinner *SPINNER_northangle_position_y = NULL;
 GLUI_Spinner *SPINNER_northangle_position_z = NULL;
 GLUI_Spinner *SPINNER_sliceoffset_factor=NULL;
 GLUI_Spinner *SPINNER_ventoffset_factor=NULL;
+#ifdef pp_LIGHTING
+GLUI_Spinner *SPINNER_amb_red=NULL;
+GLUI_Spinner *SPINNER_amb_green=NULL;
+GLUI_Spinner *SPINNER_amb_blue=NULL;
+GLUI_Spinner *SPINNER_amb_grey=NULL;
+GLUI_Spinner *SPINNER_diff_red=NULL;
+GLUI_Spinner *SPINNER_diff_green=NULL;
+GLUI_Spinner *SPINNER_diff_blue=NULL;
+GLUI_Spinner *SPINNER_diff_grey=NULL;
+#endif
 
+GLUI_Checkbox *CHECKBOX_use_lighting=NULL;
 GLUI_Checkbox *CHECKBOX_labels_showtick = NULL;
 GLUI_Checkbox *CHECKBOX_labels_meshlabel = NULL;
 GLUI_Checkbox *CHECKBOX_labels_version=NULL;
@@ -126,7 +137,16 @@ GLUI_Rollout *ROLLOUT_general=NULL;
 GLUI_Rollout *ROLLOUT_north = NULL;
 GLUI_Rollout *ROLLOUT_extreme2 = NULL;
 GLUI_Rollout *ROLLOUT_split = NULL;
+#ifdef pp_LIGHTING
+GLUI_Rollout *ROLLOUT_light2 = NULL;
+#endif
 
+#ifdef pp_LIGHTING
+GLUI_Panel *PANEL_position0=NULL;
+GLUI_Panel *PANEL_position1 = NULL;
+GLUI_Panel *PANEL_ambient=NULL;
+GLUI_Panel *PANEL_diffuse=NULL;
+#endif
 GLUI_Panel *PANEL_timebar_overlap = NULL;
 GLUI_Panel *PANEL_split1L = NULL, *PANEL_split1H = NULL;
 GLUI_Panel *PANEL_split2L = NULL, *PANEL_split2H = NULL;
@@ -222,6 +242,13 @@ GLUI_Button *BUTTON_label_4=NULL;
 
 #define COLORBAR_SMOOTH 113
 #define COLORBAND 115
+#define CB_USE_LIGHTING 120
+#ifdef pp_LIGHTING
+#define COLOR_AMB_GREY 116
+#define COLOR_DIFF_GREY 117
+#define COLOR_AMB_RGB 118
+#define COLOR_DIFF_RGB 119
+#endif
 
 #define COLORBAR_LIST2 112
 #define DATA_transparent 26
@@ -236,9 +263,22 @@ int cb_up_rgb[3],cb_down_rgb[3];
 #define FONTS_ROLLOUT 2
 #define TICKS_ROLLOUT 3
 #define LABELS_ROLLOUT 4
+#ifdef pp_LIGHTING
+#define LIGHT_ROLLOUT 5
+#endif
 
+#ifdef pp_LIGHTING
+procdata displayprocinfo[6];
+#else
 procdata displayprocinfo[5];
+#endif
 int ndisplayprocinfo = 0;
+
+/* ------------------ UpdateUseLighting ------------------------ */
+
+extern "C" void UpdateUseLighting(void) {
+  CHECKBOX_use_lighting->set_int_val(use_lighting);
+}
 
 /* ------------------ UpdateTimebarOverlap ------------------------ */
 
@@ -454,6 +494,51 @@ void TextLabelsCB(int var){
   }
 }
 
+/* ------------------ ColorCB ------------------------ */
+#ifdef pp_LIGHTING
+extern "C" void ColorCB(int var){
+  int i;
+
+  switch (var){
+  case COLOR_AMB_RGB:
+    for(i = 0; i<3; i++){
+      ambientlight[i] = (float)glui_ambientlight[i]/255.0;
+    }
+    glui_ambientgrey = CLAMP(255*TOBW(ambientlight),0,255);
+    SPINNER_amb_grey->set_int_val(glui_ambientgrey);
+    break;
+  case COLOR_DIFF_RGB:
+    for(i = 0; i<3; i++){
+      diffuselight[i] = (float)glui_diffuselight[i]/255.0;
+    }
+    glui_diffusegrey = CLAMP(255*TOBW(diffuselight),0,255);
+    SPINNER_diff_grey->set_int_val(glui_diffusegrey);
+    break;
+  case COLOR_AMB_GREY:
+    for(i = 0; i<3; i++){
+      glui_ambientlight[i] = glui_ambientgrey;
+      ambientlight[i] = CLAMP((float)glui_ambientgrey/255.0,0.0,1.0);
+    }
+    for(i = 0; i<3; i++){
+      ambientlight[i] = CLAMP((float)glui_ambientlight[i]/255.0,0.0,1.0);
+    }
+    SPINNER_amb_red->set_int_val(glui_ambientgrey);
+    SPINNER_amb_green->set_int_val(glui_ambientgrey);
+    SPINNER_amb_blue->set_int_val(glui_ambientgrey);
+  break;
+  case COLOR_DIFF_GREY:
+    for(i = 0; i<3; i++){
+      glui_diffuselight[i] = glui_diffusegrey;
+      diffuselight[i] = (float)glui_diffusegrey/255.0;
+    }
+    SPINNER_diff_red->set_int_val(glui_diffusegrey);
+    SPINNER_diff_green->set_int_val(glui_diffusegrey);
+    SPINNER_diff_blue->set_int_val(glui_diffusegrey);
+  break;
+  }
+}
+#endif
+
 /* ------------------ SplitCB ------------------------ */
 
 extern "C" void SplitCB(int var){
@@ -637,6 +722,7 @@ extern "C" void GluiLabelsSetup(int main_window){
   SPINNER_labels_transparency_data->set_w(0);
   SPINNER_labels_transparency_data->set_float_limits(0.0, 1.0, GLUI_LIMIT_CLAMP);
   CHECKBOX_axislabels_smooth = glui_labels->add_checkbox_to_panel(PANEL_cb11, _("Smooth colorbar labels"), &axislabels_smooth, COLORBAR_SMOOTH, SliceBoundCB);
+  CHECKBOX_use_lighting = glui_labels->add_checkbox_to_panel(PANEL_cb11, _("Lighting"), &use_lighting, CB_USE_LIGHTING, LabelsCB);
 
 
   PANEL_extreme = glui_labels->add_panel_to_panel(ROLLOUT_coloring,"",GLUI_PANEL_NONE);
@@ -722,6 +808,55 @@ extern "C" void GluiLabelsSetup(int main_window){
     }
   }
   SplitCB(SPLIT_COLORBAR);
+
+#ifdef pp_LIGHTING
+  ROLLOUT_light2 = glui_labels->add_rollout("Light",false,LIGHT_ROLLOUT,DisplayRolloutCB);
+  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_light2, LIGHT_ROLLOUT);
+
+  {
+    int i;
+
+    for(i = 0; i<3;i++){
+      glui_ambientlight[i] = CLAMP(255*ambientlight[i],0,255);
+      glui_diffuselight[i] = CLAMP(255*diffuselight[i],0,255);
+    }
+  }
+  glui_ambientgrey = 255*ambientgrey;
+  glui_diffusegrey = 255*diffusegrey;
+  PANEL_ambient = glui_labels->add_panel_to_panel(ROLLOUT_light2, "background/ambient");
+  SPINNER_amb_red = glui_labels->add_spinner_to_panel(PANEL_ambient, _("red:"), GLUI_SPINNER_INT, glui_ambientlight,COLOR_AMB_RGB,ColorCB);
+  SPINNER_amb_green = glui_labels->add_spinner_to_panel(PANEL_ambient, _("green:"), GLUI_SPINNER_INT, glui_ambientlight+1,COLOR_AMB_RGB,ColorCB);
+  SPINNER_amb_blue = glui_labels->add_spinner_to_panel(PANEL_ambient, _("blue:"), GLUI_SPINNER_INT, glui_ambientlight+2,COLOR_AMB_RGB,ColorCB);
+  SPINNER_amb_grey = glui_labels->add_spinner_to_panel(PANEL_ambient, _("grey:"), GLUI_SPINNER_INT, &glui_ambientgrey,COLOR_AMB_GREY,ColorCB);
+  SPINNER_amb_red->set_int_limits(0,255);
+  SPINNER_amb_green->set_int_limits(0, 255);
+  SPINNER_amb_blue->set_int_limits(0, 255);
+  SPINNER_amb_grey->set_int_limits(0, 255);
+  ColorCB(COLOR_AMB_RGB);
+
+  PANEL_diffuse = glui_labels->add_panel_to_panel(ROLLOUT_light2, "light/diffuse");
+  SPINNER_diff_red = glui_labels->add_spinner_to_panel(PANEL_diffuse, _("red:"), GLUI_SPINNER_INT, glui_diffuselight,COLOR_DIFF_RGB,ColorCB);
+  SPINNER_diff_green = glui_labels->add_spinner_to_panel(PANEL_diffuse, _("green:"), GLUI_SPINNER_INT, glui_diffuselight+1,COLOR_DIFF_RGB,ColorCB);
+  SPINNER_diff_blue = glui_labels->add_spinner_to_panel(PANEL_diffuse, _("blue:"), GLUI_SPINNER_INT, glui_diffuselight+2,COLOR_DIFF_RGB,ColorCB);
+  SPINNER_diff_grey = glui_labels->add_spinner_to_panel(PANEL_diffuse, _("grey:"), GLUI_SPINNER_INT, &glui_diffusegrey,COLOR_DIFF_GREY,ColorCB);
+  SPINNER_diff_red->set_int_limits(0,255);
+  SPINNER_diff_green->set_int_limits(0, 255);
+  SPINNER_diff_blue->set_int_limits(0, 255);
+  SPINNER_diff_grey->set_int_limits(0, 255);
+  ColorCB(COLOR_DIFF_RGB);
+
+  PANEL_position0 = glui_labels->add_panel_to_panel(ROLLOUT_light2, "light 1");
+  glui_labels->add_checkbox_to_panel(PANEL_position0, _("light 1"), &use_light0);
+  glui_labels->add_spinner_to_panel(PANEL_position0, _("x:"), GLUI_SPINNER_FLOAT, light_position0);
+  glui_labels->add_spinner_to_panel(PANEL_position0, _("y:"), GLUI_SPINNER_FLOAT, light_position0+1);
+  glui_labels->add_spinner_to_panel(PANEL_position0, _("z:"), GLUI_SPINNER_FLOAT, light_position0+2);
+
+  PANEL_position1 = glui_labels->add_panel_to_panel(ROLLOUT_light2, "light 2");
+  glui_labels->add_checkbox_to_panel(PANEL_position1, _("light 2"), &use_light1);
+  glui_labels->add_spinner_to_panel(PANEL_position1, _("x:"), GLUI_SPINNER_FLOAT, light_position1);
+  glui_labels->add_spinner_to_panel(PANEL_position1, _("y:"), GLUI_SPINNER_FLOAT, light_position1+1);
+  glui_labels->add_spinner_to_panel(PANEL_position1, _("z:"), GLUI_SPINNER_FLOAT, light_position1+2);
+#endif
 
   // -------------- Fonts -------------------
 
@@ -1035,6 +1170,7 @@ extern "C" void LabelsCB(int var){
     break;
 #endif
 
+  case CB_USE_LIGHTING:
   case LABELS_shownorth:
   case LABELS_version:
   case LABELS_meshlabel:
@@ -1151,7 +1287,7 @@ extern "C" void UpdateColorbarFlip(void){
 /* ------------------ UpdateColorbarList2 ------------------------ */
 
 extern "C" void UpdateColorbarList2(void){
-  LIST_colorbar2->set_int_val(selectedcolorbar_index2);
+  if(LIST_colorbar2!=NULL)LIST_colorbar2->set_int_val(selectedcolorbar_index2);
 }
 
 /* ------------------ AddColorbarList2 ------------------------ */
@@ -1181,7 +1317,7 @@ extern "C" void UpdateAxisLabelsSmooth(void){
 /* ------------------ UpdateTransparency ------------------------ */
 
 extern "C" void UpdateTransparency(void){
-  CHECKBOX_transparentflag->set_int_val(use_transparency_data);
+  if(CHECKBOX_transparentflag!=NULL)CHECKBOX_transparentflag->set_int_val(use_transparency_data);
 }
 
 /* ------------------ ExtremeCB ------------------------ */

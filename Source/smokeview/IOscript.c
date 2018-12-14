@@ -283,6 +283,7 @@ int GetScriptKeywordIndex(char *keyword){
   if(MatchUpper(keyword,"RENDERDOUBLEONCE") == MATCH)return SCRIPT_RENDERDOUBLEONCE;
   if(MatchUpper(keyword,"RENDERONCE") == MATCH)return SCRIPT_RENDERONCE;
   if(MatchUpper(keyword,"RENDERSTART") == MATCH)return SCRIPT_RENDERSTART;
+  if(MatchUpper(keyword, "RGBTEST")==MATCH)return SCRIPT_RGBTEST;
   if(MatchUpper(keyword,"SCENECLIP") == MATCH)return SCRIPT_SCENECLIP;
   if(MatchUpper(keyword,"SETTOURKEYFRAME") == MATCH)return SCRIPT_SETTOURKEYFRAME;
   if(MatchUpper(keyword,"SETTOURVIEW") == MATCH)return SCRIPT_SETTOURVIEW;
@@ -290,8 +291,10 @@ int GetScriptKeywordIndex(char *keyword){
   if(MatchUpper(keyword,"SETVIEWPOINT") == MATCH)return SCRIPT_SETVIEWPOINT;
   if(MatchUpper(keyword,"SHOWPLOT3DDATA") == MATCH)return SCRIPT_SHOWPLOT3DDATA;
   if(MatchUpper(keyword,"SHOWSMOKESENSORS")==MATCH)return SCRIPT_SHOWSMOKESENSORS;
+  if(MatchUpper(keyword, "SMOKEFRAMES")==MATCH)return SCRIPT_SMOKEFRAMES;
   if(MatchUpper(keyword,"UNLOADALL") == MATCH)return SCRIPT_UNLOADALL;
   if(MatchUpper(keyword,"UNLOADTOUR") == MATCH)return SCRIPT_UNLOADTOUR;
+  if(MatchUpper(keyword, "POSVIEW")==MATCH)return SCRIPT_POSVIEW;
   if(MatchUpper(keyword,"VOLSMOKERENDERALL") == MATCH)return SCRIPT_VOLSMOKERENDERALL;
   if(MatchUpper(keyword, "ISORENDERALL")==MATCH)return SCRIPT_ISORENDERALL;
   if(MatchUpper(keyword, "XSCENECLIP")==MATCH)return SCRIPT_XSCENECLIP;
@@ -755,6 +758,14 @@ int CompileScript(char *scriptfile){
         }
         break;
 
+// POSVIEW
+//  use_custom (int) xpos (float) ypos (float) zpos (float) az (float) elev (float)
+      case SCRIPT_POSVIEW:
+        SETbuffer;
+
+          sscanf(buffer, "%i %f %f %f %f %f", &scripti->ival, &scripti->fval, &scripti->fval2, &scripti->fval3, &scripti->fval4, &scripti->fval5);
+        break;
+
 // SHOWPLOT3DDATA
 //  mesh number (int) orientation (int)  value (0/1) (int) position (float)
       case SCRIPT_SHOWPLOT3DDATA:
@@ -841,7 +852,21 @@ int CompileScript(char *scriptfile){
         SETfval;
         break;
 
-// GSLICEVIEW
+// SMOKEFRAMES
+//  num (int) usesubset (int)
+      case SCRIPT_SMOKEFRAMES:
+        SETbuffer;
+        sscanf(buffer,"%i %i %i",&scripti->ival,&scripti->ival2,&scripti->ival3);
+        break;
+
+// RGBTEST
+//  x y z r g b delta
+      case SCRIPT_RGBTEST:
+        SETbuffer;
+        sscanf(buffer, "%f %f %f %i %i %i %i", &scripti->fval, &scripti->fval2, &scripti->fval3, &scripti->ival, &scripti->ival2, &scripti->ival3, &scripti->ival4);
+        break;
+        
+        // GSLICEVIEW
 // show_gslice (int) show_triangles (int)  show_triangulation (int) show_normals (int)
       case SCRIPT_GSLICEVIEW:
         SETbuffer;
@@ -1369,15 +1394,25 @@ void ScriptLoadSlice(scriptdata *scripti){
     }
     for(j=0;j<mslicei->nslices;j++){
       slicedata *slicej;
+      int finalize_save;
+      slicedata *slicei;
 
+      slicei = sliceinfo+mslicei->islices[j];
+      finalize_save = slicei->finalize;
+      if(j==mslicei->nslices-1){
+        slicei->finalize = 1;
+      }
+      else{
+        slicei->finalize = 0;
+      }
       LoadSliceMenu(mslicei->islices[j]);
+      slicei->finalize = finalize_save;
       FREEMEMORY(loaded_file);
       slicej = sliceinfo + mslicei->islices[j];
       if(slicej->file != NULL&&strlen(slicej->file) > 0){
         NewMemory((void **)&loaded_file, strlen(slicej->file) + 1);
         strcpy(loaded_file, slicej->file);
       }
-
       count++;
     }
     break;
@@ -1448,7 +1483,19 @@ void ScriptLoadVSlice(scriptdata *scripti){
       if(ABS(slicei->position_orig - scripti->fval) > slicei->delta_orig)continue;
     }
     for(j=0;j<mvslicei->nvslices;j++){
+      vslicedata *vslicei;
+      int finalize_save;
+
+      vslicei = vsliceinfo+mvslicei->ivslices[j];
+      finalize_save = vslicei->finalize;
+      if(j==mvslicei->nvslices-1){
+        vslicei->finalize = 1;
+      }
+      else{
+        vslicei->finalize = 0;
+      }
       LoadVSliceMenu(mvslicei->ivslices[j]);
+      vslicei->finalize = finalize_save;
       count++;
     }
     break;
@@ -1712,6 +1759,23 @@ void ScriptShowSmokeSensors(scriptdata *scripti){
     }
   }
   fclose(stream_smokesensors);
+}
+
+/* ------------------ ScriptPosView ------------------------ */
+
+#define CUSTOM_VIEW 43
+#define SET_VIEW_XYZ 22
+
+void ScriptPosView(scriptdata *scripti){
+  set_view_xyz[0]      = scripti->fval;
+  set_view_xyz[1]      = scripti->fval2;
+  set_view_xyz[2]      = scripti->fval3;
+  customview_azimuth   = scripti->fval4;
+  customview_elevation = scripti->fval5;
+  use_customview       = scripti->ival;
+  SceneMotionCB(CUSTOM_VIEW);
+  SceneMotionCB(SET_VIEW_XYZ);
+  UpdatePosView();
 }
 
 /* ------------------ ScriptShowPlot3dData ------------------------ */
@@ -2167,6 +2231,30 @@ void SetTimeVal(float timeval){
   }
 }
 
+/* ------------------ ScriptSmokeframes ------------------------ */
+#define SMOKE_NEW 77
+
+void ScriptSmokeframes(scriptdata *scripti){
+  smoke_num = scripti->ival;
+  smoke_subset = scripti->ival2;
+  use_newsmoke = scripti->ival3;
+  Smoke3dCB(SMOKE_NEW);
+}
+
+/* ------------------ ScriptRGBtest ------------------------ */
+
+void ScriptRGBtest(scriptdata *scripti){
+  update_rgb_test = 1;
+  rgb_test_xyz[0] = scripti->fval;
+  rgb_test_xyz[1] = scripti->fval2;
+  rgb_test_xyz[2] = scripti->fval3;
+  NORMALIZE_XYZ(rgb_test_xyz, rgb_test_xyz);
+  rgb_test_rgb[0] = scripti->ival;
+  rgb_test_rgb[1] = scripti->ival2;
+  rgb_test_rgb[2] = scripti->ival3;
+  rgb_test_delta  = scripti->ival4;
+  use_lighting = 0;
+}
 /* ------------------ ScriptSetViewpoint ------------------------ */
 
 void ScriptSetViewpoint(scriptdata *scripti){
@@ -2372,8 +2460,8 @@ int RunScript(void){
     case SCRIPT_SHOWPLOT3DDATA:
       ScriptShowPlot3dData(scripti);
       break;
-    case SCRIPT_PLOT3DPROPS:
-      ScriptPlot3dProps(scripti);
+    case SCRIPT_POSVIEW:
+      ScriptPosView(scripti);
       break;
     case SCRIPT_PARTCLASSTYPE:
       ScriptPartClassType(scripti);
@@ -2435,6 +2523,12 @@ int RunScript(void){
       break;
     case SCRIPT_SETVIEWPOINT:
       ScriptSetViewpoint(scripti);
+      break;
+    case SCRIPT_SMOKEFRAMES:
+      ScriptSmokeframes(scripti);
+      break;
+    case SCRIPT_RGBTEST:
+      ScriptRGBtest(scripti);
       break;
     case SCRIPT_GSLICEVIEW:
       ScriptGSliceView(scripti);

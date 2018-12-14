@@ -73,6 +73,9 @@ typedef struct _tridata {
   float distance, *color, tverts[6], tri_norm[3], vert_norm[9];
   struct _texturedata *textureinfo;
   struct _surfdata *geomsurf;
+#ifdef pp_TISO
+  struct _geomlistdata *geomlisti;
+#endif
   int vert_index[3], exterior, geomtype, insolid, outside_domain;
   vertdata *verts[3];
   edgedata *edges[3];
@@ -94,6 +97,7 @@ typedef struct _geomlistdata {
   int nverts,nedges,ntriangles,nvolumes;
   float *zORIG;
   vertdata *verts;
+  float *vertvals;
   tridata *triangles, **triangleptrs;
   edgedata *edges;
   tetdata *volumes;
@@ -112,7 +116,8 @@ typedef struct _geomobjdata {
 /* --------------------------  geomdata ------------------------------------ */
 
 typedef struct _geomdata {
-  char *file;
+  char *file, *topo_file;
+  int cache_defined;
   int memory_id, loaded, display;
   float *float_vals;
   int *int_vals, nfloat_vals, nint_vals;
@@ -217,7 +222,7 @@ typedef struct _scriptdata {
   char command_label[32];
   int ival,ival2,ival3,ival4,ival5;
   char *cval,*cval2;
-  float fval,fval2,fval3;
+  float fval,fval2,fval3,fval4,fval5;
   int exit,first,remove_frame;
 } scriptdata;
 
@@ -559,9 +564,11 @@ typedef struct _feddata {
 typedef struct _isodata {
   int seq_id, autoload;
   int isof_index;
-  char *reg_file, *size_file;
+  char *reg_file, *size_file, *topo_file;
   short *normaltable;
   int memory_id;
+  int fds_skip;
+  float fds_delta;
   int nnormaltable;
   char *file,*tfile;
   int dataflag,geomflag;
@@ -581,6 +588,11 @@ typedef struct _isodata {
   float *levels, **colorlevels;
   int nlevels;
   char menulabel[128];
+#ifdef pp_TISO
+  int *geom_nstatics, *geom_ndynamics;
+  float *geom_times;
+  float *geom_vals;
+#endif
 } isodata;
 
 /* --------------------------  volrenderdata ------------------------------------ */
@@ -620,7 +632,13 @@ typedef struct _volrenderdata {
 
 typedef struct _meshplanedata {
   float verts[6*3],verts_smv[6*3];
+  float norm0[4*3], norm1[4*3];
+  int have_vals[3];
   int triangles[4*3], nverts, ntriangles;
+  float *vals2, *verts2;
+  int *tris2, nverts2, ntris2;
+  int polys[10], npolys;
+  int drawsmoke;
 } meshplanedata;
 
 /* --------------------------  mesh ------------------------------------ */
@@ -638,8 +656,16 @@ typedef struct _meshdata {
   int mesh_type;
 #ifdef pp_GPU
   GLuint blockage_texture_id;
-  GLuint     smoke_texture_id,     fire_texture_id,     light_texture_id;
-  float *smoke_texture_buffer,*fire_texture_buffer,*light_texture_buffer;
+#ifdef pp_GPUSMOKE
+  GLuint smoke_texture_id, fire_texture_id, co2_texture_id;
+  float *smoke_texture_buffer, *fire_texture_buffer, *co2_texture_buffer;
+  float *smoke_verts, *smoke_vals;
+  int max_tris, max_verts;
+  int *smoke_tris, smoke_ntris, smoke_nverts;
+  int update_smokebox;
+#endif
+  GLuint     volsmoke_texture_id,     volfire_texture_id,     vollight_texture_id;
+  float *volsmoke_texture_buffer,*volfire_texture_buffer,*vollight_texture_buffer;
   GLuint slice3d_texture_id;
   float *slice3d_texture_buffer,*slice3d_c_buffer;
 #endif
@@ -781,14 +807,6 @@ typedef struct _meshdata {
   int ncullgeominfo,nxyzgeomcull[3],nxyzskipgeomcull[3];
   struct _culldata *cullgeominfo;
 
-#ifdef pp_CULL
-  int ncullinfo;
-  struct _culldata *cullinfo;
-  GLuint *cullQueryId;
-  int culldefined;
-  struct _smoke3ddata *cull_smoke3d;
-#endif
-
   volrenderdata volrenderinfo;
 
   meshplanedata gsliceinfo;
@@ -806,8 +824,8 @@ typedef struct _meshdata {
 typedef struct _supermeshdata {
 #ifdef pp_GPU
   GLuint blockage_texture_id;
-  GLuint smoke_texture_id,         fire_texture_id,     light_texture_id;
-  float *smoke_texture_buffer,*fire_texture_buffer,*light_texture_buffer;
+  GLuint volsmoke_texture_id,         volfire_texture_id,     vollight_texture_id;
+  float *volsmoke_texture_buffer,*volfire_texture_buffer,*vollight_texture_buffer;
 #endif
   float *f_iblank_cell;
   float boxmin_scaled[3], boxmax_scaled[3];
@@ -835,20 +853,6 @@ typedef struct _culldata {
   meshdata *cull_mesh;
   int npixels,npixels_old;
 } culldata;
-
-#ifdef pp_CULL
-/* --------------------------  cullplanedata ------------------------------------ */
-
-typedef struct _cullplanedata {
-  int   ibeg, iend, jbeg, jend, kbeg, kend;
-  float xmin, xmax, ymin, ymax, zmin, zmax;
-  float norm[3];
-  int dir;
-  culldata *cull;
-  meshdata *cull_mesh;
-} cullplanedata;
-
-#endif
 
 /* --------------------------  pathdata ------------------------------------ */
 
@@ -1183,7 +1187,8 @@ typedef struct _slicedata {
 #ifdef pp_SLICEGEOM
   char *geom_file;
 #endif
-  int finalized;
+  int finalize;
+  int slcf_index;
   char *slicelabel;
   int compression_type;
   int colorbar_autoflip;
@@ -1299,6 +1304,7 @@ typedef struct _vslicedata {
   int volslice;
   int iu, iv, iw, ival;
   int skip;
+  int finalize;
   int loaded,display;
   float valmin, valmax;
   int vslicefile_type;
@@ -1353,6 +1359,7 @@ typedef struct _smoke3ddata {
   unsigned char *smokeview_tmp;
   unsigned char *smoke_comp_all;
   unsigned char *frame_all_zeros;
+  float *smoke_boxmin, *smoke_boxmax;
   smokedata smoke, light;
   int dir;
 } smoke3ddata;

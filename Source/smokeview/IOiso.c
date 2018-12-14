@@ -147,11 +147,21 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
 /* ------------------ ReadIsoGeomWrapup ------------------------ */
 
 void ReadIsoGeomWrapup(void){
+#ifdef pp_ISOTIME
+  float wrapup_time;
+#endif
+
   update_readiso_geom_wrapup=UPDATE_ISO_OFF;
   ngeominfoptrs = 0;
   GetGeomInfoPtrs(&geominfoptrs, &ngeominfoptrs);
+#ifdef pp_ISOTIME
+  START_TIMER(wrapup_time);
+#endif
   UpdateTriangles(GEOM_DYNAMIC,GEOM_UPDATE_ALL);
-
+#ifdef pp_ISOTIME
+  STOP_TIMER(wrapup_time);
+  printf("iso wrapup time=%f\n", wrapup_time);
+#endif
   UpdateTimes();
   GetFaceInfo();
   IdleCB();
@@ -207,6 +217,14 @@ void UnloadIso(meshdata *meshi){
     FREEMEMORY(meshi->animatedsurfaces);
     FREEMEMORY(meshi->showlevels);
   }
+#ifdef pp_TISO
+  if(ib->dataflag==1){
+    FREEMEMORY(ib->geom_nstatics);
+    FREEMEMORY(ib->geom_ndynamics);
+    FREEMEMORY(ib->geom_times);
+    FREEMEMORY(ib->geom_vals);
+  }
+#endif
   meshi->niso_times = 0;
   FREEMEMORY(ib->normaltable);
 
@@ -266,10 +284,48 @@ FILE_SIZE ReadIsoGeom(const char *file, int ifile, int load_flag, int *geom_fram
 
   return_filesize=ReadGeom(geomi,load_flag,GEOM_ISO,geom_frame_index,errorcode);
   FREEMEMORY(geominfoptrs);
-  if(load_flag == UNLOAD){
+
+  if(load_flag==UNLOAD){
+#ifdef pp_TISO
+    FREEMEMORY(isoi->geom_vals);
+#endif
     meshi->isofilenum = -1;
     return 0;
   }
+
+#ifdef pp_TISO
+  if(isoi->dataflag==1){
+    int filesize;
+    int lenfile, ntimes_local, nvals;
+    int i;
+    float *valptr;
+
+    lenfile = strlen(isoi->tfile);
+    FORTgetgeomdatasize(isoi->tfile, &ntimes_local, &nvals, &error, lenfile);
+
+    if(nvals>0&&ntimes_local>0){
+      NewMemory((void **)&isoi->geom_nstatics, ntimes_local*sizeof(int));
+      NewMemory((void **)&isoi->geom_ndynamics, ntimes_local*sizeof(int));
+      NewMemory((void **)&isoi->geom_times, ntimes_local*sizeof(float));
+      NewMemory((void **)&isoi->geom_vals, nvals*sizeof(float));
+    }
+
+    FORTgetgeomdata(isoi->tfile, &ntimes_local, &nvals, isoi->geom_times,
+      isoi->geom_nstatics, isoi->geom_ndynamics, isoi->geom_vals, &filesize, &error, lenfile);
+    return_filesize += filesize;
+    FREEMEMORY(isoi->geom_nstatics);
+    FREEMEMORY(isoi->geom_times);
+    valptr = isoi->geom_vals;
+    for(i = 0; i<ntimes_local; i++){
+      geomlistdata *geomlisti;
+
+      geomlisti = geomi->geomlistinfo+i;
+      geomlisti->vertvals = valptr;
+      valptr += isoi->geom_ndynamics[i];
+    }
+    FREEMEMORY(isoi->geom_ndynamics);
+  }
+#endif
 
   surfi = surfinfo + nsurfinfo+1;
   UpdateIsoColors();
@@ -940,7 +996,7 @@ void DrawIsoOrig(int tranflag){
 
     glPushAttrib(GL_LIGHTING_BIT);
     if(iso_lighting==1){
-      glEnable(GL_LIGHTING);
+      ENABLE_LIGHTING;
       glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,iso_specular);
       glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,iso_shininess);
       glEnable(GL_COLOR_MATERIAL);
@@ -1019,7 +1075,7 @@ void DrawIsoOrig(int tranflag){
     asurface = meshi->animatedsurfaces + meshi->iso_itime*meshi->nisolevels;
 
     glPushAttrib(GL_LIGHTING_BIT);
-    Antialias(ON);
+    AntiAliasLine(ON);
     glLineWidth(isolinewidth);
     glBegin(GL_LINES);
     for(i=0;i<niso_trans;i++){
@@ -1077,14 +1133,14 @@ void DrawIsoOrig(int tranflag){
       glVertex3fv(xyz1);
     }
     glEnd();
-    Antialias(OFF);
+    AntiAliasLine(OFF);
     glPopAttrib();
   }
 
   if((visAIso&4)==4){
     asurface = meshi->animatedsurfaces + meshi->iso_itime*meshi->nisolevels;
 
-    Antialias(ON);
+    AntiAliasLine(ON);
     glPointSize(isopointsize);
     asurface--;
     glBegin(GL_POINTS);
@@ -1131,7 +1187,7 @@ void DrawIsoOrig(int tranflag){
       glVertex3fv(xyz3);
     }
     glEnd();
-    Antialias(OFF);
+    AntiAliasLine(OFF);
   }
 }
 
@@ -1212,7 +1268,7 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
     if(asurface->cullfaces==1)glDisable(GL_CULL_FACE);
     glPushAttrib(GL_LIGHTING_BIT);
     if(surfacetype==SURFACE_SOLID){
-      glEnable(GL_LIGHTING);
+      ENABLE_LIGHTING;
       glEnable(GL_COLOR_MATERIAL);
     }
     glBegin(GL_TRIANGLES);
@@ -1266,7 +1322,7 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
     if(asurface->cullfaces==1)glEnable(GL_CULL_FACE);
     if(surfacetype==SURFACE_SOLID){
       glDisable(GL_COLOR_MATERIAL);
-      glDisable(GL_LIGHTING);
+      DISABLE_LIGHTING;
     }
 
     glPopAttrib();
@@ -1275,7 +1331,7 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
 
   if(surfacetype==SURFACE_OUTLINE){
     glPushMatrix();
-    Antialias(ON);
+    AntiAliasLine(ON);
     glLineWidth(line_width);
     glBegin(GL_LINES);
     glColor3fv(asurface->color);
@@ -1301,13 +1357,13 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
       glVertex3fv(vv1);
     }
     glEnd();
-    Antialias(OFF);
+    AntiAliasLine(OFF);
     glPopMatrix();
   }
 
   if(surfacetype==SURFACE_POINTS){
     glPushMatrix();
-    Antialias(ON);
+    AntiAliasLine(ON);
     glPointSize(plot3dpointsize);
     glBegin(GL_POINTS);
     glColor3fv(asurface->color);
@@ -1324,14 +1380,14 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
       glVertex3fv(vv1);
     }
     glEnd();
-    Antialias(OFF);
+    AntiAliasLine(OFF);
     glPopMatrix();
   }
 
   if(show_iso_normal==1){
 
     glPushMatrix();
-    Antialias(ON);
+    AntiAliasLine(ON);
     glLineWidth(line_width);
     glBegin(GL_LINES);
     glColor3f((float)1.,(float)1.,(float)1.);
@@ -1382,7 +1438,7 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
       }
     }
     glEnd();
-    Antialias(OFF);
+    AntiAliasLine(OFF);
     glPopMatrix();
   }
 }

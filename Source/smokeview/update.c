@@ -187,19 +187,24 @@ void UpdateFrameNumber(int changetime){
       }
     }
     if(show3dsmoke==1){
-      for(i=0;i<nsmoke3dinfo;i++){
-        smoke3ddata *smoke3di;
+      if(nsmoke3dinfo > 0){
+        for(i = 0;i < nsmoke3dinfo;i++){
+          smoke3ddata *smoke3di;
 
-        smoke3di = smoke3dinfo + i;
-        if(smoke3di->loaded==0||smoke3di->display==0)continue;
-        smoke3di->ismoke3d_time=smoke3di->timeslist[itimes];
-        if(IsSmokeComponentPresent(smoke3di)==0)continue;
-        if(smoke3di->ismoke3d_time!=smoke3di->lastiframe){
-          smoke3di->lastiframe=smoke3di->ismoke3d_time;
-          UpdateSmoke3D(smoke3di);
+          smoke3di = smoke3dinfo + i;
+          if(smoke3di->loaded == 0 || smoke3di->display == 0)continue;
+          smoke3di->ismoke3d_time = smoke3di->timeslist[itimes];
+          if(IsSmokeComponentPresent(smoke3di) == 0)continue;
+          if(smoke3di->ismoke3d_time != smoke3di->lastiframe){
+            smoke3di->lastiframe = smoke3di->ismoke3d_time;
+            UpdateSmoke3D(smoke3di);
+          }
+        }
+        if(use_newsmoke==SMOKE3D_ORIG||use_newsmoke==SMOKE3D_NEW){
+          MergeSmoke3D(NULL);
+          PrintMemoryInfo;
         }
       }
-      if(nsmoke3dinfo>0)MergeSmoke3D(NULL);
     }
     if(showpatch==1){
       for(i=0;i<npatchinfo;i++){
@@ -619,7 +624,7 @@ void UpdateShow(void){
   if(plotstate==DYNAMIC_PLOTS&&(slicecolorbarflag==1||vslicecolorbarflag==1))num_colorbars++;
   if(plotstate==DYNAMIC_PLOTS&&patchflag==1&&wall_cell_color_flag==0)num_colorbars++;
   if(plotstate==DYNAMIC_PLOTS&&ReadZoneFile==1)num_colorbars++;
-  if(plotstate==DYNAMIC_PLOTS&&tisoflag==1){
+  if(plotstate==DYNAMIC_PLOTS&&tisoflag==1&&1==0){ // disable isosurface colorbar label for now
     showiso_colorbar=1;
     num_colorbars++;
   }
@@ -1842,6 +1847,13 @@ void UpdateColorTable(colortabledata *ctableinfo, int nctableinfo){
 /* ------------------ UpdateShowScene ------------------------ */
 
 void UpdateShowScene(void){
+  if(update_smoketype_vals==1){
+    update_smoketype_vals = 0;
+#define SMOKE_NEW 77
+#define SMOKE_DELTA_MULTIPLE 78
+    Smoke3dCB(SMOKE_NEW);
+    Smoke3dCB(SMOKE_DELTA_MULTIPLE);
+  }
   if(update_opacity_map==1){
     UpdateOpacityMap();
   }
@@ -1850,7 +1862,7 @@ void UpdateShowScene(void){
     update_playmovie = 0;
   }
   UpdateRenderStartButton();
-  if(update_makemovie == 1)MakeMovie();
+  if(update_makemovie == 1||output_ffmpeg_command==1)MakeMovie();
   if(compute_fed == 1)DefineAllFEDs();
   if(restart_time == 1){
     restart_time = 0;
@@ -1950,7 +1962,13 @@ void UpdateFlippedColorbar(void){
 
 void UpdateDisplay(void){
 
-  LOCK_IBLANK
+  LOCK_IBLANK;
+ #ifdef pp_TISO
+  if(update_texturebar==1){
+    update_texturebar = 0;
+    UpdateTexturebar();
+  }
+#endif
   if(update_setvents==1){
     SetVentDirs();
     update_setvents=0;
@@ -1995,9 +2013,6 @@ void UpdateDisplay(void){
     MakeIBlankSmoke3D();
   }
 #endif
-#ifdef pp_CULL
-  if(update_initcull == 1)InitCull(cullsmoke);
-#endif
   if(update_streaks == 1 && ReadPartFile == 1){
     ParticleStreakShowMenu(streak_index);
     update_streaks = 0;
@@ -2035,5 +2050,9 @@ void UpdateDisplay(void){
   if(update_research_mode == 1){
     update_research_mode = 0;
     UpdateResearchMode();
+  }
+  if(update_visColorbarVertical==1){
+    update_visColorbarVertical = 0;
+    visColorbarVertical = visColorbarVertical_val;
   }
 }

@@ -634,7 +634,7 @@ void DrawOutlines(void){
   int i;
 
   if(noutlineinfo<=0)return;
-  Antialias(ON);
+  AntiAliasLine(ON);
   glLineWidth(linewidth);
   glBegin(GL_LINES);
   glColor3fv(foregroundcolor);
@@ -657,7 +657,7 @@ void DrawOutlines(void){
     }
   }
   glEnd();
-  Antialias(OFF);
+  AntiAliasLine(OFF);
 }
 /* ------------------ DrawCBox ------------------------ */
 
@@ -1759,7 +1759,7 @@ void DrawCADGeom(const cadgeomdata *cd){
   lastcolor=rgbtemp;
   if(cullfaces==1)glDisable(GL_CULL_FACE);
 
-  glEnable(GL_LIGHTING);
+  ENABLE_LIGHTING;
   glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
   glEnable(GL_COLOR_MATERIAL);
@@ -1801,7 +1801,7 @@ void DrawCADGeom(const cadgeomdata *cd){
   }
   glEnd();
   glDisable(GL_COLOR_MATERIAL);
-  glDisable(GL_LIGHTING);
+  DISABLE_LIGHTING;
   SNIFF_ERRORS("DrawCADGeom");
   if(cullfaces==1)glEnable(GL_CULL_FACE);
 
@@ -1824,7 +1824,7 @@ void DrawCAD2Geom(const cadgeomdata *cd, int trans_flag){
   glEnable(GL_COLOR_MATERIAL);
   glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
-  glEnable(GL_LIGHTING);
+  ENABLE_LIGHTING;
   if(trans_flag==DRAW_TRANSPARENT)TransparentOn();
   glBegin(GL_QUADS);
   colorindex=0;
@@ -1975,7 +1975,7 @@ void DrawCAD2Geom(const cadgeomdata *cd, int trans_flag){
     glDisable(GL_TEXTURE_2D);
   }
 
-  glDisable(GL_LIGHTING);
+  DISABLE_LIGHTING;
   glDisable(GL_COLOR_MATERIAL);
   if(trans_flag==DRAW_TRANSPARENT)TransparentOff();
   if(cullfaces==1){
@@ -2545,47 +2545,13 @@ void SetCullVis(void){
       float xx[2], yy[2], zz[2];
 
       culli = meshi->cullgeominfo+iport;
-      culli->vis=0;
-
       xx[0] = NORMALIZE_X(culli->xbeg);
       xx[1] = NORMALIZE_X(culli->xend);
       yy[0] = NORMALIZE_Y(culli->ybeg);
       yy[1] = NORMALIZE_Y(culli->yend);
       zz[0] = NORMALIZE_Z(culli->zbeg);
       zz[1] = NORMALIZE_Z(culli->zend);
-
-      if(PointInFrustum(xx[0],yy[0],zz[0])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[1],yy[0],zz[0])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[0],yy[1],zz[0])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[1],yy[1],zz[0])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[0],yy[0],zz[1])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[1],yy[0],zz[1])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[0],yy[1],zz[1])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[1],yy[1],zz[1])==1){
-        culli->vis=1;
-        continue;
-      }
+      culli->vis = BoxInFrustum(xx,yy,zz);
     }
   }
 }
@@ -3069,7 +3035,7 @@ void DrawSelectFaces(){
   int i;
   int color_index=0;
 
-  glDisable(GL_LIGHTING);
+  DISABLE_LIGHTING;
   glBegin(GL_QUADS);
   for(i=0;i<nmeshes;i++){
     int j;
@@ -3155,7 +3121,7 @@ void DrawFaces(){
   if(nface_normals_single>0){
     int j;
 
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
     glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
@@ -3219,12 +3185,12 @@ void DrawFaces(){
     }
     glEnd();
     glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LIGHTING);
+    DISABLE_LIGHTING;
   }
   if(nface_normals_double>0){
     int j;
 
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
     glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
@@ -3291,13 +3257,13 @@ void DrawFaces(){
     glEnd();
     if(cullfaces==1)glEnable(GL_CULL_FACE);
     glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LIGHTING);
+    DISABLE_LIGHTING;
   }
   if(nface_outlines>0){
     int j;
 
-    glDisable(GL_LIGHTING);
-    Antialias(ON);
+    DISABLE_LIGHTING;
+    AntiAliasLine(ON);
     glLineWidth(linewidth);
     glBegin(GL_LINES);
     for(j=0;j<nmeshes;j++){
@@ -3349,11 +3315,11 @@ void DrawFaces(){
       }
     }
     glEnd();
-    Antialias(OFF);
+    AntiAliasLine(OFF);
   }
   if(nface_textures>0){
     int j;
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
     glEnable(GL_COLOR_MATERIAL);
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,enable_texture_lighting? GL_MODULATE : GL_REPLACE);
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
@@ -3412,7 +3378,7 @@ void DrawFaces(){
     }
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_TEXTURE_2D);
-    glDisable(GL_LIGHTING);
+    DISABLE_LIGHTING;
   }
 }
 
@@ -3474,7 +3440,7 @@ void DrawTransparentFaces(){
   if(nface_transparent>0){
     int i;
 
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
     glEnable(GL_COLOR_MATERIAL);
@@ -3541,14 +3507,14 @@ void DrawTransparentFaces(){
       glVertex3fv(vertices+9);
     }
     glEnd();
-    glDisable(GL_LIGHTING);
+    DISABLE_LIGHTING;
     glDisable(GL_COLOR_MATERIAL);
   }
 
   if(nface_transparent_double>0){
     int j;
 
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
     glEnable(GL_COLOR_MATERIAL);
@@ -3596,7 +3562,7 @@ void DrawTransparentFaces(){
     glEnd();
     if(cullfaces==1)glEnable(GL_CULL_FACE);
     glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LIGHTING);
+    DISABLE_LIGHTING;
   }
 
   if(drawing_transparent==1)TransparentOff();
@@ -4016,7 +3982,7 @@ void DrawDemo(int nlat, int nlong){
     case 5:
 //#define COLOR(x) (1.0+((x)-0.2143)/0.3)/2.0
 #define COLOR(x) 0.0
-      glEnable(GL_LIGHTING);
+      ENABLE_LIGHTING;
       glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
       glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
       glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,specular);
@@ -4088,7 +4054,7 @@ void DrawDemo(int nlat, int nlong){
           glEnd();
         }
       }
-      glDisable(GL_LIGHTING);
+      DISABLE_LIGHTING;
       glDisable(GL_COLOR_MATERIAL);
       break;
     default:
@@ -4851,12 +4817,13 @@ void DrawFacesOLD(){
 
     glEnable(GL_CULL_FACE);
     if(light_faces==1){
-      glEnable(GL_LIGHTING);
+      ENABLE_LIGHTING;
       glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
       glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
       glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
       glEnable(GL_COLOR_MATERIAL);
     }
+    AntiAliasSurface(ON);
     glBegin(GL_TRIANGLES);
     for(j=0;j<nmeshes;j++){
       meshdata *meshi;
@@ -4919,22 +4886,24 @@ void DrawFacesOLD(){
       }
     }
     glEnd();
+    AntiAliasSurface(OFF);
     if(light_faces==1){
       glDisable(GL_COLOR_MATERIAL);
-      glDisable(GL_LIGHTING);
+      DISABLE_LIGHTING;
    }
   }
   if(nface_normals_double>0){
     int j;
 
     if(light_faces==1){
-      glEnable(GL_LIGHTING);
+      ENABLE_LIGHTING;
       glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
       glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
       glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
       glEnable(GL_COLOR_MATERIAL);
     }
     if(cullfaces==1)glDisable(GL_CULL_FACE);
+    AntiAliasLine(ON);
     glBegin(GL_QUADS);
     for(j=0;j<nmeshes;j++){
       meshdata *meshi;
@@ -4994,17 +4963,18 @@ void DrawFacesOLD(){
       }
     }
     glEnd();
+    AntiAliasLine(OFF);
     if(cullfaces==1)glEnable(GL_CULL_FACE);
     if(light_faces==1){
       glDisable(GL_COLOR_MATERIAL);
-      glDisable(GL_LIGHTING);
+      DISABLE_LIGHTING;
     }
   }
   if(nface_outlines>0){
     int j;
 
-    glDisable(GL_LIGHTING);
-    Antialias(ON);
+    DISABLE_LIGHTING;
+    AntiAliasLine(ON);
     glLineWidth(linewidth);
     glBegin(GL_LINES);
     for(j=0;j<nmeshes;j++){
@@ -5063,13 +5033,13 @@ void DrawFacesOLD(){
       }
     }
     glEnd();
-    Antialias(OFF);
+    AntiAliasLine(OFF);
   }
   if(nface_textures>0){
     int j;
 
     if(light_faces==1){
-      glEnable(GL_LIGHTING);
+      ENABLE_LIGHTING;
       glEnable(GL_COLOR_MATERIAL);
     }
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,enable_texture_lighting? GL_MODULATE : GL_REPLACE);
@@ -5132,7 +5102,7 @@ void DrawFacesOLD(){
     }
     glDisable(GL_TEXTURE_2D);
     if(light_faces==1){
-      glDisable(GL_LIGHTING);
+      DISABLE_LIGHTING;
       glDisable(GL_COLOR_MATERIAL);
     }
   }

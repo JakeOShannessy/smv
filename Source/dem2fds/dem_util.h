@@ -51,3 +51,5 @@ SVEXTERN char surf_id1[1024], surf_id2[1024], matl_id[1024];
 SVEXTERN int SVDECL(nexcludeinfo, 0);
 SVEXTERN excludedata SVDECL(*excludeinfo, NULL);
 SVEXTERN float SVDECL(buff_dist, 10.0);
+SVEXTERN int   SVDECL(nmeshx,1), SVDECL(nmeshy,1);
+SVEXTERN float   SVDECL(*xplt, NULL), SVDECL(*yplt, NULL);

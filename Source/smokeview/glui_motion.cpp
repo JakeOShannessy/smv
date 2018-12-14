@@ -14,12 +14,14 @@
 
 #define TRANSLATE_XY 101
 #define ROTATE_2AXIS 102
-#define GLUI_Z 2
-#define MESH_LIST 4
-#define EYE_ROTATE 5
-#define EYE_ROTATE_90 6
-#define EYELEVEL 7
-#define FLOORLEVEL 8
+#define GLUI_Z         2
+#define MESH_LIST      4
+#define EYE_ROTATE     5
+#define EYE_ROTATE_90  6
+#define EYELEVEL       7
+#define FLOORLEVEL     8
+#define ROTATE_90    103
+#define RESET_VIEW   104
 
 #define LABEL_VIEW 4
 
@@ -55,9 +57,9 @@
 #define WINDOW_COLORS 33
 #define COLOR_FLIP 34
 #define CLIP_SHOW_ROTATE 35
-#define QUICKTIME_COMPATIBILITY 40
 #define ZAXIS_UP 41
 #define NEARFARCLIP 42
+#define CUSTOM_VIEW 43
 
 #define RENDER_TYPE 0
 #define RENDER_RESOLUTION 1
@@ -69,6 +71,7 @@
 #define MOVIE_FILETYPE 7
 #define RENDER_MODE 8
 #define RENDER_START_TOP 13
+#define RENDER_DEBUG_360 14
 
 #define SLICE_ROLLOUT 0
 #define VIEWPOINTS_ROLLOUT 1
@@ -79,16 +82,23 @@
 #define ROTATION_ROLLOUT 6
 #define ORIENTATION_ROLLOUT 7
 #define MOVIE_ROLLOUT 8
+#define VIEW_ROLLOUT 9
+
 #define RENDER_360CB 9
 
 #ifdef pp_DEG
 unsigned char deg360[] = { '3','6','0',DEG_SYMBOL,0 };
+unsigned char deg90[] = {'9', '0', DEG_SYMBOL, 0};
 #else
 unsigned char deg360[] = { '3','6','0',0 };
+unsigned char deg90[] = {'9', '0', 0};
 #endif
 
 GLUI *glui_motion=NULL;
 
+GLUI_Panel *PANEL_360 = NULL;
+GLUI_Panel *PANEL_360_debug = NULL;
+GLUI_Panel *PANEL_custom_view=NULL;
 GLUI_Panel *PANEL_render_file = NULL;
 GLUI_Panel *PANEL_render_format = NULL;
 GLUI_Panel *PANEL_movie_type = NULL;
@@ -113,6 +123,7 @@ GLUI_Panel *PANEL_specify=NULL;
 GLUI_Panel *PANEL_change_zaxis=NULL;
 GLUI_Panel *PANEL_colors=NULL;
 
+GLUI_Rollout *ROLLOUT_view = NULL;
 GLUI_Rollout *ROLLOUT_image_size = NULL;
 GLUI_Rollout *ROLLOUT_name = NULL;
 GLUI_Rollout *ROLLOUT_rotation_type = NULL;
@@ -133,7 +144,12 @@ GLUI_Rollout *ROLLOUT_upper = NULL;
 GLUI_Rollout *ROLLOUT_background = NULL;
 GLUI_Rollout *ROLLOUT_foreground = NULL;
 
-
+GLUI_Spinner *SPINNER_360_skip_x=NULL;
+GLUI_Spinner *SPINNER_360_skip_y=NULL;
+GLUI_Spinner *SPINNER_movie_crf = NULL;
+GLUI_Spinner *SPINNER_bitrate = NULL;
+GLUI_Spinner *SPINNER_customview_elevation=NULL;
+GLUI_Spinner *SPINNER_customview_azimuth=NULL;
 GLUI_Spinner *SPINNER_resolution_multiplier=NULL;
 GLUI_Spinner *SPINNER_clip_left=NULL;
 GLUI_Spinner *SPINNER_clip_right=NULL;
@@ -159,7 +175,6 @@ GLUI_Spinner *SPINNER_xcenCUSTOM=NULL;
 GLUI_Spinner *SPINNER_ycenCUSTOM=NULL;
 GLUI_Spinner *SPINNER_zcenCUSTOM=NULL;
 GLUI_Spinner *SPINNER_framerate = NULL;
-GLUI_Spinner *SPINNER_bitrate = NULL;
 GLUI_Spinner *SPINNER_window_height360=NULL;
 GLUI_Spinner *SPINNER_foreground_red=NULL;
 GLUI_Spinner *SPINNER_foreground_green=NULL;
@@ -168,6 +183,8 @@ GLUI_Spinner *SPINNER_background_red=NULL;
 GLUI_Spinner *SPINNER_background_green=NULL;
 GLUI_Spinner *SPINNER_background_blue=NULL;
 
+GLUI_Checkbox *CHECKBOX_use_customview=NULL;
+GLUI_Checkbox *CHECKBOX_custom_view = NULL;
 GLUI_Checkbox *CHECKBOX_clip_show_rotation_center = NULL;
 GLUI_Checkbox *CHECKBOX_render360 = NULL;
 #ifdef pp_RENDER360_DEBUG
@@ -206,12 +223,12 @@ GLUI_RadioButton *RADIOBUTTON_1e=NULL;
 GLUI_RadioButton *RADIOBUTTON_1f=NULL;
 GLUI_RadioButton *RADIOBUTTON_1g=NULL;
 
+GLUI_Button *BUTTON_rotate90=NULL;
 GLUI_Button *BUTTON_90_z=NULL,*BUTTON_eyelevel=NULL, *BUTTON_floorlevel=NULL, *BUTTON_reset_saved_view=NULL;
 GLUI_Button *BUTTON_replace_view=NULL,*BUTTON_add_view=NULL,*BUTTON_delete_view=NULL;
 GLUI_Button *BUTTON_startup=NULL,*BUTTON_cycle_views=NULL;
 GLUI_Button *BUTTON_snap=NULL;
 GLUI_Button *BUTTON_render_start=NULL ;
-GLUI_Button *BUTTON_render_stop = NULL;
 GLUI_Button *BUTTON_motion_1=NULL;
 GLUI_Button *BUTTON_motion_2=NULL;
 GLUI_Button *BUTTON_window_update=NULL;
@@ -232,7 +249,7 @@ GLUI_Listbox *LIST_windowsize=NULL;
 GLUI_Listbox *LIST_mesh2=NULL;
 GLUI_Listbox *LIST_render_skip=NULL;
 
-procdata motionprocinfo[9];
+procdata motionprocinfo[10];
 int nmotionprocinfo = 0;
 
 /* ------------------ UpdateRenderRadioButtons ------------------------ */
@@ -254,6 +271,17 @@ extern "C" void UpdateRenderRadioButtons(int width_low, int height_low, int widt
   }
 }
 
+/* ------------------ UpdatePosView ------------------------ */
+
+extern "C" void UpdatePosView(void){
+  SPINNER_set_view_x->set_float_val(set_view_xyz[0]);
+  SPINNER_set_view_y->set_float_val(set_view_xyz[1]);
+  SPINNER_set_view_z->set_float_val(set_view_xyz[2]);
+  SPINNER_customview_azimuth->set_float_val(customview_azimuth);
+  SPINNER_customview_elevation->set_float_val(customview_elevation);
+  CHECKBOX_use_customview->set_int_val(use_customview);
+}
+
 /* ------------------ UpdateZAxisCustom ------------------------ */
 
 extern "C" void UpdateZAxisCustom(void){
@@ -265,20 +293,6 @@ extern "C" void UpdateZAxisCustom(void){
 
 extern "C" void UpdateShowRotationCenter(void){
   if(CHECKBOX_show_rotation_center!=NULL)CHECKBOX_show_rotation_center->set_int_val(show_rotation_center);
-}
-
-/* ------------------ EnableDisableStartButtons ------------------------ */
-
-extern "C" void EnableDisableStartButtons(int val){
-  if(ROLLOUT_render!=NULL){
-    if(val==ENABLE){
-      ROLLOUT_render->enable();
-    }
-    else{
-      ROLLOUT_render->disable();
-      BUTTON_render_stop->enable();
-    }
-  }
 }
 
 /* ------------------ UpdateGluiRotateAbout ------------------------ */
@@ -927,6 +941,29 @@ extern "C" void GluiMotionSetup(int main_window){
   ROTATE_eye_z->set_speed(180.0/(float)screenWidth);
   ROTATE_eye_z->disable();
 
+  ROLLOUT_view = glui_motion->add_rollout_to_panel(PANEL_motion, _("Position/View"), false, VIEW_ROLLOUT, MotionRolloutCB);
+  ADDPROCINFO(motionprocinfo, nmotionprocinfo, ROLLOUT_view, VIEW_ROLLOUT);
+
+  PANEL_specify = glui_motion->add_panel_to_panel(ROLLOUT_view, _("Position"));
+
+  SPINNER_set_view_x = glui_motion->add_spinner_to_panel(PANEL_specify, "x:", GLUI_SPINNER_FLOAT,   set_view_xyz, SET_VIEW_XYZ, SceneMotionCB);
+  SPINNER_set_view_y = glui_motion->add_spinner_to_panel(PANEL_specify, "y:", GLUI_SPINNER_FLOAT, set_view_xyz+1, SET_VIEW_XYZ, SceneMotionCB);
+  SPINNER_set_view_z = glui_motion->add_spinner_to_panel(PANEL_specify, "z:", GLUI_SPINNER_FLOAT, set_view_xyz+2, SET_VIEW_XYZ, SceneMotionCB);
+
+  PANEL_custom_view = glui_motion->add_panel_to_panel(ROLLOUT_view, _("View"));
+
+  CHECKBOX_use_customview = glui_motion->add_checkbox_to_panel(PANEL_custom_view,_("Use azimuth/elevation"),&use_customview, CUSTOM_VIEW, SceneMotionCB);
+  SPINNER_customview_azimuth = glui_motion->add_spinner_to_panel(PANEL_custom_view,"azimuth:",GLUI_SPINNER_FLOAT,&customview_azimuth,CUSTOM_VIEW,SceneMotionCB);
+  SPINNER_customview_elevation = glui_motion->add_spinner_to_panel(PANEL_custom_view,"elevation:", GLUI_SPINNER_FLOAT, &customview_elevation, CUSTOM_VIEW, SceneMotionCB);
+  //glui_motion->add_spinner_to_panel(PANEL_custom_view,"     up:", GLUI_SPINNER_FLOAT, &customview_up, CUSTOM_VIEW, SceneMotionCB);
+  {
+    char rotate_label[100];
+
+    sprintf(rotate_label,"%s rotate",deg90);
+    BUTTON_rotate90 = glui_motion->add_button_to_panel(PANEL_custom_view, rotate_label, ROTATE_90, SceneMotionCB);
+  }
+  glui_motion->add_button_to_panel(PANEL_custom_view, "Reset", RESET_VIEW, SceneMotionCB);
+
   ROLLOUT_rotation_type = glui_motion->add_rollout_to_panel(PANEL_motion,_("Specify Rotation"),false,ROTATION_ROLLOUT,MotionRolloutCB);
   ADDPROCINFO(motionprocinfo, nmotionprocinfo, ROLLOUT_rotation_type, ROTATION_ROLLOUT);
 
@@ -975,14 +1012,8 @@ extern "C" void GluiMotionSetup(int main_window){
 
   //glui_motion->add_column(false);
 
-  ROLLOUT_orientation=glui_motion->add_rollout_to_panel(PANEL_motion,_("Specify Orientation"),false,ORIENTATION_ROLLOUT,MotionRolloutCB);
+  ROLLOUT_orientation=glui_motion->add_rollout_to_panel(PANEL_motion,_("Orientation"),false,ORIENTATION_ROLLOUT,MotionRolloutCB);
   ADDPROCINFO(motionprocinfo, nmotionprocinfo, ROLLOUT_orientation, ORIENTATION_ROLLOUT);
-
-  PANEL_specify = glui_motion->add_panel_to_panel(ROLLOUT_orientation, _("eye"));
-
-  SPINNER_set_view_x=glui_motion->add_spinner_to_panel(PANEL_specify,"x:",GLUI_SPINNER_FLOAT,set_view_xyz,SET_VIEW_XYZ,SceneMotionCB);
-  SPINNER_set_view_y=glui_motion->add_spinner_to_panel(PANEL_specify,"y:",GLUI_SPINNER_FLOAT,set_view_xyz+1,SET_VIEW_XYZ,SceneMotionCB);
-  SPINNER_set_view_z=glui_motion->add_spinner_to_panel(PANEL_specify,"z:",GLUI_SPINNER_FLOAT,set_view_xyz+2,SET_VIEW_XYZ,SceneMotionCB);
 
   PANEL_change_zaxis = glui_motion->add_panel_to_panel(ROLLOUT_orientation,_("z axis"));
 
@@ -1149,7 +1180,7 @@ extern "C" void GluiMotionSetup(int main_window){
 
 
   BUTTON_render_start = glui_motion->add_button_to_panel(ROLLOUT_render, _("Start rendering"), RENDER_START_TOP, RenderCB);
-  BUTTON_render_stop = glui_motion->add_button_to_panel(ROLLOUT_render, _("Stop rendering"), RENDER_STOP, RenderCB);
+  glui_motion->add_button_to_panel(ROLLOUT_render, _("Stop rendering"), RENDER_STOP, RenderCB);
 
   ROLLOUT_name = glui_motion->add_rollout_to_panel(ROLLOUT_render, "File name/type", false);
   EDIT_render_file_base = glui_motion->add_edittext_to_panel(ROLLOUT_name, "prefix:", GLUI_EDITTEXT_TEXT, render_file_base);
@@ -1197,17 +1228,20 @@ extern "C" void GluiMotionSetup(int main_window){
   SPINNER_resolution_multiplier = glui_motion->add_spinner_to_panel(ROLLOUT_image_size, "multiplier:", GLUI_SPINNER_INT, &glui_resolution_multiplier, RENDER_MULTIPLIER, RenderCB);
   SPINNER_resolution_multiplier->set_int_limits(2, 10);
   RenderCB(RENDER_MULTIPLIER);
-  {
-    char label[100];
 
-    sprintf(label, "%s height ", deg360);
-
-    SPINNER_window_height360 = glui_motion->add_spinner_to_panel(ROLLOUT_image_size, label, GLUI_SPINNER_INT, &nheight360, RENDER_360CB, RenderCB);
-    SPINNER_window_height360->set_int_limits(100, max_screenHeight);
-    RenderCB(RENDER_360CB);
-  }
+  PANEL_360 = glui_motion->add_panel_to_panel(ROLLOUT_image_size, (char *)deg360, true);
+  SPINNER_window_height360 = glui_motion->add_spinner_to_panel(PANEL_360, "height", GLUI_SPINNER_INT, &nheight360, RENDER_360CB, RenderCB);
+  SPINNER_window_height360->set_int_limits(100, max_screenHeight);
+  RenderCB(RENDER_360CB);
+  glui_motion->add_spinner_to_panel(PANEL_360, "margin", GLUI_SPINNER_INT, &margin360_size);
 
 #ifdef pp_RENDER360_DEBUG
+  PANEL_360_debug = glui_motion->add_panel_to_panel(PANEL_360, "grid", true);
+  glui_motion->add_checkbox_to_panel(PANEL_360_debug, "show", &debug_360);
+  SPINNER_360_skip_x = glui_motion->add_spinner_to_panel(PANEL_360_debug, "horizontal skip", GLUI_SPINNER_INT, &debug_360_skip_x, RENDER_DEBUG_360, RenderCB);
+  SPINNER_360_skip_y = glui_motion->add_spinner_to_panel(PANEL_360_debug, "vertical skip", GLUI_SPINNER_INT, &debug_360_skip_y, RENDER_DEBUG_360, RenderCB);
+  RenderCB(RENDER_DEBUG_360);
+
   NewMemory((void **)&CHECKBOX_screenvis, nscreeninfo * sizeof(GLUI_Checkbox *));
 
   ROLLOUT_screenvis = glui_motion->add_rollout_to_panel(ROLLOUT_render, "screenvis", false);
@@ -1288,13 +1322,14 @@ extern "C" void GluiMotionSetup(int main_window){
     RADIOBUTTON_movie_type[1]=glui_motion->add_radiobutton_to_group(RADIO_movie_type, "mp4");
     RADIOBUTTON_movie_type[2]=glui_motion->add_radiobutton_to_group(RADIO_movie_type, "wmv");
     RADIOBUTTON_movie_type[3]=glui_motion->add_radiobutton_to_group(RADIO_movie_type, "mov");
-    glui_motion->add_checkbox_to_panel(ROLLOUT_make_movie, "Quicktime compatibility", &quicktime_compatibility,QUICKTIME_COMPATIBILITY,RenderCB);
-    RenderCB(QUICKTIME_COMPATIBILITY);
-    RenderCB(MOVIE_FILETYPE);
     SPINNER_framerate = glui_motion->add_spinner_to_panel(ROLLOUT_make_movie, "Frame rate", GLUI_SPINNER_INT, &movie_framerate);
     SPINNER_framerate->set_int_limits(1, 100);
+    SPINNER_movie_crf = glui_motion->add_spinner_to_panel(ROLLOUT_make_movie, "quality", GLUI_SPINNER_INT, &movie_crf);
+    SPINNER_movie_crf->set_int_limits(0,51);
     SPINNER_bitrate = glui_motion->add_spinner_to_panel(ROLLOUT_make_movie, "Bit rate (Kb/s)", GLUI_SPINNER_INT, &movie_bitrate);
-    SPINNER_bitrate->set_int_limits(100, 20000);
+    SPINNER_bitrate->set_int_limits(1, 100000);
+    glui_motion->add_button_to_panel(ROLLOUT_make_movie, "Output ffmpeg command", OUTPUT_FFMPEG, RenderCB);
+    RenderCB(MOVIE_FILETYPE);
   }
 
   CHECKBOX_cursor_blockpath=glui_motion->add_checkbox(_("Map cursor keys for Plot3D use"),&cursorPlot3D,CURSOR,SceneMotionCB);
@@ -1565,6 +1600,47 @@ extern "C" void SceneMotionCB(int var){
   int *rotation_index;
   int i;
 
+  if(var==RESET_VIEW){
+    customview_elevation = 0.0;
+    customview_azimuth = 0.0;
+    SPINNER_customview_azimuth->set_float_val(customview_azimuth);
+    SPINNER_customview_elevation->set_float_val(customview_elevation);
+    SceneMotionCB(CUSTOM_VIEW);
+    return;
+  }
+  if(var==ROTATE_90){
+    customview_azimuth=fmod(customview_azimuth+90.0,360.0);
+    SPINNER_customview_azimuth->set_float_val(customview_azimuth);
+    SceneMotionCB(CUSTOM_VIEW);
+    return;
+  }
+  if(var==CUSTOM_VIEW){
+    if(use_customview==1){
+      float *view, *up, *right;
+      float c_az, c_elev;
+
+      NewMemory((void **)&screenglobal, sizeof(screendata));
+      view = screenglobal->view;
+      up = screenglobal->up;
+      right = screenglobal->right;
+
+      c_az = -customview_azimuth;
+      c_elev = -customview_elevation;
+      view[0] = -sin(DEG2RAD*c_az)*cos(DEG2RAD*c_elev);
+      view[1] = cos(DEG2RAD*c_az)*cos(DEG2RAD*c_elev);
+      view[2] = -sin(DEG2RAD*c_elev);
+      up[0] = cos(DEG2RAD*customview_up);
+      up[1] = 0.0;
+      up[2] = sin(DEG2RAD*customview_up);
+      right[0] = sin(DEG2RAD*customview_up);
+      right[1] = 0.0;
+      right[2] = cos(DEG2RAD*customview_up);
+    }
+    else{
+      FREEMEMORY(screenglobal);
+    }
+    return;
+  }
   if(var == NEARFARCLIP){
     if(nearclip<0.0){
       nearclip=0.001;
@@ -2082,35 +2158,6 @@ void RenderCB(int var){
 
   updatemenu=1;
   switch(var){
-    case QUICKTIME_COMPATIBILITY:
-    {
-      int call_movie_filetype=0;
-
-      if(quicktime_compatibility==1){
-        RADIOBUTTON_movie_type[AVI]->disable();
-        RADIOBUTTON_movie_type[MP4]->enable();
-        RADIOBUTTON_movie_type[WMV]->disable();
-        RADIOBUTTON_movie_type[MOV]->enable();
-        if(movie_filetype==AVI||movie_filetype==WMV){
-          call_movie_filetype = 1;
-          movie_filetype=MP4;
-          RADIO_movie_type->set_int_val(movie_filetype);
-        }
-      }
-      else{
-        RADIOBUTTON_movie_type[AVI]->enable();
-        RADIOBUTTON_movie_type[MP4]->enable();
-        RADIOBUTTON_movie_type[WMV]->enable();
-        RADIOBUTTON_movie_type[MOV]->disable();
-        if(movie_filetype==MOV){
-          call_movie_filetype = 1;
-          movie_filetype=AVI;
-          RADIO_movie_type->set_int_val(movie_filetype);
-        }
-      }
-      if(call_movie_filetype==1)RenderCB(MOVIE_FILETYPE);
-    }
-    break;
     case RENDER_360CB:
       nwidth360 = nheight360*2;
       sprintf(widthlabel,"width: %i",nwidth360);
@@ -2129,6 +2176,9 @@ void RenderCB(int var){
     case PLAY_MOVIE:
       PlayMovie();
       break;
+    case OUTPUT_FFMPEG:
+      output_ffmpeg_command=1;
+      break;
     case MAKE_MOVIE:
       if(have_ffmpeg == 0){
         PRINTF("*** Error: The movie generating program ffmpeg is not available\n");
@@ -2141,6 +2191,18 @@ void RenderCB(int var){
     case RENDER_LABEL:
     case RENDER_TYPE:
       break;
+#ifdef pp_RENDER360_DEBUG
+    case RENDER_DEBUG_360:
+      if(debug_360_skip_x<2){
+        debug_360_skip_x = 2;
+        SPINNER_360_skip_x->set_int_val(2);
+      }
+      if(debug_360_skip_y<2){
+        debug_360_skip_y = 2;
+        SPINNER_360_skip_y->set_int_val(2);
+      }
+      break;
+#endif
     case RENDER_MULTIPLIER:
       {
         int width_low, height_low, width_high, height_high;
@@ -2153,15 +2215,23 @@ void RenderCB(int var){
       switch (movie_filetype){
       case AVI:
         strcpy(movie_ext, ".avi");
+        SPINNER_movie_crf->disable();
+        SPINNER_bitrate->enable();
         break;
       case MP4:
         strcpy(movie_ext, ".mp4");
-        break;\
+        SPINNER_movie_crf->enable();
+        SPINNER_bitrate->disable();
+        break;
       case WMV:
         strcpy(movie_ext, ".wmv");
+        SPINNER_movie_crf->disable();
+        SPINNER_bitrate->enable();
         break;
       case MOV:
         strcpy(movie_ext, ".mov");
+        SPINNER_movie_crf->enable();
+        SPINNER_bitrate->disable();
         break;
       default:
         ASSERT(FFALSE);
@@ -2204,31 +2274,31 @@ void RenderCB(int var){
       break;
     case RENDER_START_TOP:
       switch (render_resolution){
-      case 0:
+      case RENDER_RESOLUTION_320x240:
         resolution_multiplier = 1;
         render_size_index=Render320;
         RenderCB(RENDER_RESOLUTION);
         RenderCB(RENDER_START_NORMAL);
         break;
-      case 1:
+      case RENDER_RESOLUTION_640x480:
         resolution_multiplier = 1;
         render_size_index=Render640;
         RenderCB(RENDER_RESOLUTION);
         RenderCB(RENDER_START_NORMAL);
         break;
-      case 2:
+      case RENDER_RESOLUTION_CURRENT:
         resolution_multiplier = 1;
         render_size_index=RenderWindow;
         RenderCB(RENDER_RESOLUTION);
         RenderCB(RENDER_START_NORMAL);
         break;
-      case 3:
+      case RENDER_RESOLUTION_HIGH:
         resolution_multiplier = glui_resolution_multiplier;
         render_size_index=RenderWindow;
         RenderCB(RENDER_RESOLUTION);
         RenderCB(RENDER_START_HIGHRES);
         break;
-      case 4:
+      case RENDER_RESOLUTION_360:
         render_size_index=RenderWindow;
         resolution_multiplier = 1;
         RenderCB(RENDER_RESOLUTION);

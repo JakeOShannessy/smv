@@ -8,7 +8,7 @@
 #include "string_util.h"
 #include "update.h"
 #include "smokeviewvars.h"
-#include "IOobject.h"
+#include "IOobjects.h"
 
 /* ------------------ GetZoneSizeCsv ------------------------ */
 
@@ -982,7 +982,7 @@ void DrawRoomGeom(void){
 /* draw the frame */
 
   if(visCompartments == 1){
-    Antialias(ON);
+    AntiAliasLine(ON);
     glBegin(GL_LINES);
 
     for(i = 0; i < nrooms; i++){
@@ -1048,7 +1048,7 @@ void DrawRoomGeom(void){
       glVertex3f(xroom0, yroom, zroom);
     }
     glEnd();
-    Antialias(OFF);
+    AntiAliasLine(OFF);
   }
 
   if(visVents==1){

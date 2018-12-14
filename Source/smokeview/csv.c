@@ -48,6 +48,8 @@ char *simpleunquote(char *string){
 
 // This is built for FDS CSV file in paticular.
 size_t readcsv(char *file, dvector **dvectors){
+  size_t k;
+  size_t i;
   FILE *stream;
   fprintf(stderr, "reading: %s\n", file);
   // Open the file.
@@ -118,7 +120,7 @@ size_t readcsv(char *file, dvector **dvectors){
 
   // Initialise the value arrays with an initial assumption of INIT_VEC_SIZE,
   // setting nvalues to zero.
-  for (size_t k = 0; k < n; ++k) {
+  for (k = 0; k < n; ++k) {
     // Initialise memory.
     float *vec = malloc(INIT_VEC_SIZE*sizeof(float));
     // Assign to vector.
@@ -133,7 +135,7 @@ size_t readcsv(char *file, dvector **dvectors){
     if(l>=current_vec_size){
       // Allocate larger arrays
       current_vec_size = current_vec_size + INIT_VEC_SIZE;
-      for (size_t k = 0; k < n; k++) {
+      for (k = 0; k < n; k++) {
         vectors[k].values = realloc(vectors[k].values,
                                     current_vec_size*sizeof(float));
         if(vectors[k].values==NULL) {
@@ -147,7 +149,7 @@ size_t readcsv(char *file, dvector **dvectors){
     buffer = malloc(BUFFERSIZE*sizeof(char));
     if(fgets(buffer, BUFFERSIZE, stream) == NULL)break;
     bufptr = strsep(&buffer, ",\n");
-    size_t k = 0;
+    k = 0;
     while(bufptr != NULL) {
       sscanf(bufptr,"%f", &vectors[k].values[l]);
       vectors[k].nvalues = l+1;
@@ -157,7 +159,7 @@ size_t readcsv(char *file, dvector **dvectors){
     l++;
   }
   *dvectors = malloc((n-1)*sizeof(dvector));
-  for (size_t i = 0; i < n-1; ++i) {
+  for (i = 0; i < n-1; ++i) {
     (*dvectors)[i].x = &vectors[0];
     (*dvectors)[i].y = &vectors[i+1];
   }
