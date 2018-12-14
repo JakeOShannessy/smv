@@ -288,12 +288,12 @@ int loadfile(const char *filename) {
       return errorcode;
     }
   }
-  npartframes_max=GetMinPartFrames(PARTFILE_LOADALL);
   for(i=0;i<npartinfo;i++){
     partdata *parti;
 
     parti = partinfo + i;
     if(strcmp(parti->file,filename)==0){
+      npartframes_max=GetMinPartFrames(PARTFILE_LOADALL);
       ReadPart(parti->file,i,LOAD,&errorcode);
       return errorcode;
     }
