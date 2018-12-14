@@ -5520,7 +5520,6 @@ int ReadSMV(char *file, char *file2){
           if(FGETS(buffer,255,stream)==NULL){
             BREAK;
           }
-          fprintf(stderr, "%s\n", buffer);
           sscanf(buffer, "%f %f", &rampi->values[2*j], &rampi->values[2*j+1]);
         }
       }
