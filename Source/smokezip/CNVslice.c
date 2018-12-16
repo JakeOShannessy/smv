@@ -182,7 +182,7 @@ int convert_volslice(slice *slicei, int *thread_index){
         ASSERT(0);
       }
       CheckMemory;
-      compress_volsliceframe(sliceframe_data, framesize, time_local, valmin, valmax,
+      CompressVolSliceFrame(sliceframe_data, framesize, time_local, valmin, valmax,
                 &compressed_data_out, &ncompressed_data_out);
       CheckMemory;
       sizeafter+=ncompressed_data_out;
@@ -241,12 +241,12 @@ int convert_volslice(slice *slicei, int *thread_index){
     GetFileSizeLabel(sizeafter,after_label);
 #ifdef pp_THREAD
     slicei->vol_compressed=1;
-    sprintf(slicei->volsummary,"compressed from %s to %s (%4.1f%s reduction)",before_label,after_label,(float)sizebefore/(float)sizeafter,GLOBx);
+    sprintf(slicei->volsummary,"%s -> %s (%4.1f%s)",before_label,after_label,(float)sizebefore/(float)sizeafter,GLOBx);
     threadinfo[*thread_index].stat=-1;
 #else
     PRINTF("  records=%i, ",count);
     PRINTF("Sizes: original=%s, ",before_label);
-    PRINTF("compressed=%s (%4.1f%s reduction)\n\n",after_label,(float)sizebefore/(float)sizeafter,GLOBx);
+    PRINTF("compressed=%s (%4.1f%s)\n\n",after_label,(float)sizebefore/(float)sizeafter,GLOBx);
 #endif
   }
 
@@ -256,7 +256,7 @@ int convert_volslice(slice *slicei, int *thread_index){
 
 /* ------------------ convert_slice ------------------------ */
 
-// unsigned int uncompress_rle(unsigned char *buffer_in, int nchars_in, unsigned char *buffer_out)
+// unsigned int UnCompressRLE(unsigned char *buffer_in, int nchars_in, unsigned char *buffer_out)
 
 int convert_slice(slice *slicei, int *thread_index){
 
@@ -664,7 +664,7 @@ int convert_slice(slice *slicei, int *thread_index){
 
       //int compress (Bytef *dest,   uLongf *destLen, const Bytef *source, uLong sourceLen);
       ncompressed_zlib=ncompressed_save;
-      returncode=compress_zlib(sliceframe_compressed,&ncompressed_zlib,sliceframe_uncompressed,framesize);
+      returncode=CompressZLIB(sliceframe_compressed,&ncompressed_zlib,sliceframe_uncompressed,framesize);
 
       file_loc=FTELL(slicestream);
       fwrite(&time_local,4,1,slicestream);
@@ -701,12 +701,12 @@ wrapup:
     GetFileSizeLabel(sizeafter,after_label);
 #ifdef pp_THREAD
     slicei->compressed=1;
-    sprintf(slicei->summary,"compressed from %s to %s (%4.1f%s reduction)",before_label,after_label,(float)sizebefore/(float)sizeafter,GLOBx);
+    sprintf(slicei->summary,"%s to %s (%4.1f%s)",before_label,after_label,(float)sizebefore/(float)sizeafter,GLOBx);
     threadinfo[*thread_index].stat=-1;
 #else
     PRINTF("  records=%i, ",count);
     PRINTF("Sizes: original=%s, ",before_label);
-    PRINTF("compressed=%s (%4.1f%s reduction)\n\n",after_label,(float)sizebefore/(float)sizeafter,GLOBx);
+    PRINTF("compressed=%s (%4.1f%s)\n\n",after_label,(float)sizebefore/(float)sizeafter,GLOBx);
 #endif
   }
 
@@ -899,7 +899,6 @@ void update_slice_hist(void){
     lenfile=strlen(slicei->file);
 
     LOCK_COMPRESS;
-    FORTget_file_unit(&unit1,&slicei->unit_start);
     FORTopenslice(slicei->file,&unit1,&is1,&is2,&js1,&js2,&ks1,&ks2,&error1,lenfile);
     UNLOCK_COMPRESS;
 

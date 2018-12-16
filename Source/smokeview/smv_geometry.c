@@ -272,7 +272,10 @@ int ClosestNodeIndex(float val,float *vals,int nvals, float eps){
   if(val<vals[0])return -1;
   if(val>vals[nvals-1])return -1;
   for(j=0;j<nvals-1;j++){
-    if(vals[j]<=val&&val<vals[j+1])return j;
+    if(vals[j] <= val&&val <= vals[j + 1]){
+      if(ABS(vals[j] - val) < ABS(vals[j + 1] - val))return j;
+      return j+1;
+    }
   }
   return nvals-1;
 }
@@ -283,6 +286,20 @@ void UpdatePlotxyzAll(void){
   int i;
   float *xp, *yp, *zp;
   float dxyz_min=100000.0;
+
+  for(i = 0;i < nmeshes;i++){
+    meshdata *meshi;
+    float *xplt, *yplt, *zplt, *dxyz;
+
+    meshi = meshinfo + i;
+    xplt = meshi->xplt_orig;
+    yplt = meshi->yplt_orig;
+    zplt = meshi->zplt_orig;
+    dxyz = meshi->dxyz;
+    dxyz[0] = ABS(xplt[1] - xplt[0]);
+    dxyz[1] = ABS(yplt[1] - yplt[0]);
+    dxyz[2] = ABS(zplt[1] - zplt[0]);
+  }
 
   FREEMEMORY(plotx_all);
   FREEMEMORY(ploty_all);
@@ -298,6 +315,24 @@ void UpdatePlotxyzAll(void){
     nploty_all+=(meshi->jbar+1);
     nplotz_all+=(meshi->kbar+1);
   }
+  NewMemory((void **)&plotx_list, nplotx_all*sizeof(int));
+  for(i=0;i<nplotx_all;i++){
+    plotx_list[i] = 0;
+  }
+  nplotx_list =  0;
+
+  NewMemory((void **)&ploty_list, nploty_all*sizeof(int));
+  for(i=0;i<nploty_all;i++){
+    ploty_list[i] = 1;
+  }
+  nploty_list = 0;
+
+  NewMemory((void **)&plotz_list, nplotz_all*sizeof(int));
+  for(i=0;i<nplotz_all;i++){
+    plotz_list[i] = 0;
+  }
+  nplotz_list = 0;
+
   NewMemory((void **)&plotx_all,nplotx_all*sizeof(float));
   NewMemory((void **)&ploty_all,nploty_all*sizeof(float));
   NewMemory((void **)&plotz_all,nplotz_all*sizeof(float));
@@ -356,7 +391,7 @@ void UpdatePlotxyzAll(void){
 
       meshi->iplotx_all[j]=-1;
       val = plotx_all[j];
-      ival = ClosestNodeIndex(val,meshi->xplt,meshi->ibar+1,dxyz_min);
+        ival = ClosestNodeIndex(val,meshi->xplt,meshi->ibar+1,dxyz_min);
       if(ival<0)continue;
       meshi->iplotx_all[j]=ival;
     }
@@ -408,21 +443,45 @@ void UpdatePlotxyzAll(void){
     if(ival<0)continue;
     iplotz_all = ival;
   }
+
+  nplotx_list = 0;
+  for(i=0;i<nplotx_all;i++){
+    plotx_list[i] = i;
+    nplotx_list++;
+  }
+
+  nploty_list = 0;
+  for(i = 0;i<nploty_all;i++){
+    ploty_list[i] = i;
+    nploty_list++;
+  }
+
+  nplotz_list = 0;
+  for(i = 0;i<nplotz_all;i++){
+    plotz_list[i] = i;
+    nplotz_list++;
+  }
 }
 
 #define MESHEPS 0.001
 
 /* ------------------ GetMesh ------------------------ */
 
-meshdata *GetMesh(float *xyz){
+meshdata *GetMesh(float *xyz, meshdata *guess){
   int i;
 
-  for(i=0;i<nmeshes;i++){
+  for(i=-1;i<nmeshes;i++){
     meshdata *meshi;
     int ibar, jbar, kbar;
     float *xplt, *yplt, *zplt;
 
-    meshi = meshinfo+i;
+    if(i == -1){
+      if(guess == NULL)continue;
+      meshi = guess;
+    }
+    else{
+      meshi = meshinfo + i;
+    }
 
     ibar = meshi->ibar;
     jbar = meshi->jbar;
@@ -685,18 +744,64 @@ void ExtractFrustum(void){
    }
 }
 
-/* ------------------ PointInFrustum ------------------------ */
+/* ------------------ FDSPointInFrustum ------------------------ */
 
-int PointInFrustum( float x, float y, float z){
-   if( frustum[0][0]*x + frustum[0][1]*y + frustum[0][2]*z + frustum[0][3] <= 0 )return 0;
-   if( frustum[1][0]*x + frustum[1][1]*y + frustum[1][2]*z + frustum[1][3] <= 0 )return 0;
-   if( frustum[2][0]*x + frustum[2][1]*y + frustum[2][2]*z + frustum[2][3] <= 0 )return 0;
-   if( frustum[3][0]*x + frustum[3][1]*y + frustum[3][2]*z + frustum[3][3] <= 0 )return 0;
-   if( frustum[4][0]*x + frustum[4][1]*y + frustum[4][2]*z + frustum[4][3] <= 0 )return 0;
-   if( frustum[5][0]*x + frustum[5][1]*y + frustum[5][2]*z + frustum[5][3] <= 0 )return 0;
-   return 1;
+int FDSPointInFrustum(float *xyz){
+  int i;
+  float xyz_smv[3];
+
+  xyz_smv[0] = NORMALIZE_X(xyz[0]);
+  xyz_smv[1] = NORMALIZE_Y(xyz[1]);
+  xyz_smv[2] = NORMALIZE_Z(xyz[2]);
+
+  for(i = 0; i<6; i++){
+    if(DOT3(frustum[i], xyz_smv)+frustum[i][3]<=0)return 0;
+  }
+  return 1;
 }
 
+/* ------------------ PointInFrustum ------------------------ */
+
+int PointInFrustum(float *xyz){
+  int i;
+
+  for(i = 0; i<6; i++){
+    if(DOT3(frustum[i], xyz)+frustum[i][3]<=0)return 0;
+  }
+  return 1;
+}
+
+/* ------------------ PointInTriangle ------------------------ */
+
+int PointInTriangle(float *v1, float *v2, float *v3){
+  if(PointInFrustum(v1)==1)return 1;
+  if(PointInFrustum(v2)==1)return 1;
+  if(PointInFrustum(v3)==1)return 1;
+  return 0;
+}
+
+/* ------------------ BoxInFrustum ------------------------ */
+
+int BoxInFrustum(float *xx, float *yy, float *zz){
+  int i;
+  float xyz[3];
+
+  for(i=0;i<2;i++){
+    int j;
+
+    xyz[0] = xx[i];
+    for(j=0;j<2;j++){
+      int k;
+
+      xyz[1] = yy[j];
+      for(k=0;k<2;k++){
+        xyz[2] = zz[k];
+        if(PointInFrustum(xyz)==1)return 1;
+      }
+    }
+  }
+  return 0;
+}
 /* ------------------ RectangleInFrustum ------------------------ */
 
 int RectangleInFrustum( float *x11, float *x12, float *x22, float *x21){
@@ -765,19 +870,6 @@ void GetInverse(float *m, float *mi){
   vi[0]=-(mi[0]*v[0]+mi[4]*v[1]+ mi[8]*v[2])*vi[3];
   vi[1]=-(mi[1]*v[0]+mi[5]*v[1]+ mi[9]*v[2])*vi[3];
   vi[2]=-(mi[2]*v[0]+mi[6]*v[1]+mi[10]*v[2])*vi[3];
-}
-
-/* ------------------ CompareVolFaceListData ------------------------ */
-
-int CompareVolFaceListData( const void *arg1, const void *arg2 ){
-  volfacelistdata *vi, *vj;
-
-  vi = *(volfacelistdata **)arg1;
-  vj = *(volfacelistdata **)arg2;
-
-  if(vi->dist2<vj->dist2)return 1;
-  if(vi->dist2>vj->dist2)return -1;
-  return 0;
 }
 
 /* ------------------ GetScreenMapping ------------------------ */
@@ -884,463 +976,6 @@ void GetScreenMapping(float *xyz0, float *screen_perm){
   PRINTF("%f %f %f\n",screen_perm[6],screen_perm[7],screen_perm[8]);
   PRINTF("\n");
 #endif
-}
-
-  /* ------------------ GetVolSmokeDir ------------------------ */
-
-void GetVolSmokeDir(float *mm){
-    /*
-      ( m0 m4 m8  m12 ) (x)    (0)
-      ( m1 m5 m9  m13 ) (y)    (0)
-      ( m2 m6 m10 m14 ) (z)  = (0)
-      ( m3 m7 m11 m15 ) (1)    (1)
-
-       ( m0 m4  m8 )      (m12)
-   Q=  ( m1 m5  m9 )  u = (m13)
-       ( m2 m6 m10 )      (m14)
-
-       ( m0 m1  m2 )
- Q^T=  ( m4 m5  m6 )
-       ( m8 m9 m10 )
-
-           ( M_x  0    0  )
-       M = ( 0   M_y   0  )
-           ( 0    0   M_z )
-
-      (Q   u) (M) (x)     (0)
-      (v^T 1) (1) (y)   = (1)
-
-      m3=m7=m11=0, v^T=0, y=1   QMx+u=0 => x=-inv(M)Q^Tu
-
-            ( m0 m1  m2 ) (m12)   ( m0*m12 + m1*m13 +  m2*m14 )/M_x
-       x = -( m4 m5  m6 ) (m13) = ( m4*m12 + m5*m13 +  m6*m14 )/M_y
-            ( m8 m9 m10 ) (m14)   ( m8*m12 + m9*m13 + m10*m14 )/M_z
-
-    */
-  int i,ii,j;
-  float norm[3];
-  float eyedir[3];
-  float cosdir;
-  float angles[7];
-
-  volfacelistdata *vi;
-
-  if(freeze_volsmoke==1)return;
-
-  xyzeyeorig[0] = -DOT3(mm+0,mm+12)/mscale[0];
-  xyzeyeorig[1] = -DOT3(mm+4,mm+12)/mscale[1];
-  xyzeyeorig[2] = -DOT3(mm+8,mm+12)/mscale[2];
-
-  for(j=0;j<nmeshes;j++){
-    meshdata *meshj;
-    int *inside;
-    int *drawsides;
-    float x0, x1, yy0, yy1, z0, z1;
-    float xcen, ycen, zcen;
-
-    meshj = meshinfo + j;
-
-    inside = &meshj->inside;
-    drawsides = meshj->drawsides;
-
-    x0 = meshj->x0;
-    x1 = meshj->x1;
-    yy0 = meshj->y0;
-    yy1 = meshj->y1;
-    z0 = meshj->z0;
-    z1 = meshj->z1;
-    xcen = meshj->xcen;
-    ycen = meshj->ycen;
-    zcen = meshj->zcen;
-
-    *inside=0;
-    if(
-      xyzeyeorig[0]>x0&&xyzeyeorig[0]<x1&&
-      xyzeyeorig[1]>yy0&&xyzeyeorig[1]<yy1&&
-      xyzeyeorig[2]>z0&&xyzeyeorig[2]<z1
-      ){
-      for(i=-3;i<=3;i++){
-        if(i==0)continue;
-        drawsides[i+3]=1;
-      }
-      *inside=1;
-      continue;
-    }
-
-    for(i=-3;i<=3;i++){
-      if(i==0)continue;
-      ii = ABS(i);
-      norm[0]=0.0;
-      norm[1]=0.0;
-      norm[2]=0.0;
-      switch(ii){
-      case XDIR:
-        if(i<0){
-          norm[0]=-1.0;
-          eyedir[0]=x0;
-        }
-        else{
-          norm[0]=1.0;
-          eyedir[0]=x1;
-        }
-        eyedir[1]=ycen;
-        eyedir[2]=zcen;
-        break;
-      case YDIR:
-        eyedir[0]=xcen;
-        if(i<0){
-          norm[1]=-1.0;
-          eyedir[1]=yy0;
-        }
-        else{
-          norm[1]=1.0;
-          eyedir[1]=yy1;
-        }
-        eyedir[2]=zcen;
-        break;
-      case ZDIR:
-        eyedir[0]=xcen;
-        eyedir[1]=ycen;
-        if(i<0){
-          norm[2]=-1.0;
-          eyedir[2]=z0;
-        }
-        else{
-          norm[2]=1.0;
-          eyedir[2]=z1;
-        }
-        break;
-      default:
-        ASSERT(FFALSE);
-        break;
-      }
-      VEC3DIFF(eyedir,xyzeyeorig,eyedir);
-      normalize(eyedir,3);
-      cosdir = CLAMP(DOT3(eyedir,norm),-1.0,1.0);
-      cosdir=acos(cosdir)*RAD2DEG;
-      if(cosdir<0.0)cosdir=-cosdir;
-      angles[3+i]=cosdir;
-    }
-    for(i=-3;i<=3;i++){
-      if(i==0)continue;
-      if(angles[i+3]<90.0){
-        drawsides[i+3]=1;
-      }
-      else{
-        drawsides[i+3]=0;
-      }
-    }
-  }
-
-  // turn off drawing for mesh sides that are on the inside of a supermesh
-  if(combine_meshes==1){
-    for(i=0;i<nmeshes;i++){
-      meshdata *meshi;
-      int *drawsides,*extsides;
-      int jj;
-
-      meshi = meshinfo + i;
-      drawsides = meshi->drawsides;
-      extsides = meshi->extsides;
-      for(jj=0;jj<7;jj++){
-        if(extsides[jj]==0){
-          drawsides[jj]=0;
-        }
-      }
-    }
-    for(i=0;i<nsupermeshinfo;i++){
-      supermeshdata *smesh;
-
-      smesh = supermeshinfo + i;
-      for(j=0;j<7;j++){
-        smesh->drawsides[j]=0;
-      }
-      for(j=0;j<smesh->nmeshes;j++){
-        meshdata *meshj;
-        int k;
-
-        meshj = smesh->meshes[j];
-        for(k=0;k<7;k++){
-          if(meshj->extsides[k]==1&&meshj->drawsides[k]==1)smesh->drawsides[k]=1;
-        }
-      }
-    }
-  }
-
-  vi = volfacelistinfo;
-  nvolfacelistinfo=0;
-  for(i=0;i<nmeshes;i++){
-    meshdata *meshi;
-    int facemap[7]={12,6,0,0,3,9,15};
-    volrenderdata *vr;
-    int *drawsides;
-
-    meshi = meshinfo + i;
-
-    drawsides = meshi->drawsides;
-
-    vr = &(meshi->volrenderinfo);
-    if(vr->firedataptr==NULL&&vr->smokedataptr==NULL)continue;
-    if(vr->loaded==0||vr->display==0)continue;
-    for(j=-3;j<=3;j++){
-      float dx, dy, dz;
-      float *xyz;
-
-      if(j==0)continue;
-      if(drawsides[j+3]==0)continue;
-      vi->facemesh=meshi;
-      vi->iwall=j;
-      xyz=meshi->face_centers+facemap[j+3];
-
-      dx = xyz[0]-xyzeyeorig[0];
-      dy = xyz[1]-xyzeyeorig[1];
-      dz = xyz[2]-xyzeyeorig[2];
-      vi->dist2=dx*dx+dy*dy+dz*dz;
-      vi->xyz=xyz;
-      vi++;
-      nvolfacelistinfo++;
-    }
-  }
-  if(nvolfacelistinfo>0){
-    for(i=0;i<nvolfacelistinfo;i++){
-      volfacelistinfoptrs[i]=volfacelistinfo + i;
-    }
-    qsort((volfacelistdata *)volfacelistinfoptrs,nvolfacelistinfo,sizeof(volfacelistdata *), CompareVolFaceListData);
-  }
-}
-
-/* ------------------ GetSmokeDir ------------------------ */
-
-void GetSmokeDir(float *mm){
-    /*
-      ( m0 m4 m8  m12 ) (x)    (0)
-      ( m1 m5 m9  m13 ) (y)    (0)
-      ( m2 m6 m10 m14 ) (z)  = (0)
-      ( m3 m7 m11 m15 ) (1)    (1)
-
-       ( m0 m4  m8 )      (m12)
-   Q=  ( m1 m5  m9 )  u = (m13)
-       ( m2 m6 m10 )      (m14)
-
-      (Q   u) (x)     (0)
-      (v^T 1) (y)   = (1)
-
-      m3=m7=m11=0, v^T=0, y=1   Qx+u=0 => x=-Q^Tu
-    */
-  int i,ii,j;
-  meshdata *meshj;
-  float norm[3],scalednorm[3];
-  float normdir[3];
-  float absangle,cosangle,minangle;
-  int iminangle;
-  float dx, dy, dz;
-  float factor;
-
-  xyzeyeorig[0] = -DOT3(mm+0,mm+12)/mscale[0];
-  xyzeyeorig[1] = -DOT3(mm+4,mm+12)/mscale[1];
-  xyzeyeorig[2] = -DOT3(mm+8,mm+12)/mscale[2];
-
-  for(j=0;j<nmeshes;j++){
-    meshj = meshinfo + j;
-
-    minangle=1000.0;
-    iminangle=-10;
-    meshj->dx=meshj->xplt_orig[1]-meshj->xplt_orig[0];
-    meshj->dy=meshj->yplt_orig[1]-meshj->yplt_orig[0];
-    meshj->dz=meshj->zplt_orig[1]-meshj->zplt_orig[0];
-    meshj->dxy=meshj->dx*meshj->dx+meshj->dy*meshj->dy;
-    meshj->dxy=sqrt(meshj->dxy)/2.0;
-    meshj->dxz=meshj->dx*meshj->dx+meshj->dz*meshj->dz;
-    meshj->dxz=sqrt(meshj->dxz)/2.0;
-    meshj->dyz=meshj->dy*meshj->dy+meshj->dz*meshj->dz;
-    meshj->dyz=sqrt(meshj->dyz)/2.0;
-
-    meshj->dy/=meshj->dx;
-    meshj->dz/=meshj->dx;
-    meshj->dxy/=meshj->dx;
-    meshj->dxz/=meshj->dx;
-    meshj->dyz/=meshj->dx;
-    meshj->dx=1.0;
-
-    if(smokedrawtest2==1){
-      meshj->norm[0]=1.0;
-       meshj->norm[1]=0.0;
-       meshj->norm[2]=0.0;
-       meshj->smokedir=1;
-       continue;
-    }
-
-    for(i=-9;i<=9;i++){
-      if(i==0)continue;
-      ii = ABS(i);
-      norm[0]=0.0;
-      norm[1]=0.0;
-      norm[2]=0.0;
-      switch(ii){
-      case XDIR:
-        if(i<0)norm[0]=-1.0;
-        if(i>0)norm[0]=1.0;
-        break;
-      case YDIR:
-        if(i<0)norm[1]=-1.0;
-        if(i>0)norm[1]=1.0;
-        break;
-      case ZDIR:
-        if(i<0)norm[2]=-1.0;
-        if(i>0)norm[2]=1.0;
-        break;
-      case 4:
-        dx = meshj->xplt_orig[1]-meshj->xplt_orig[0];
-        dy = meshj->yplt_orig[1]-meshj->yplt_orig[0];
-        factor= dx*dx+dy*dy;
-        if(factor==0.0){
-          factor=1.0;
-        }
-        else{
-          factor=1.0/sqrt(factor);
-        }
-        if(i<0){
-          norm[0]=-dy*factor;
-          norm[1]=-dx*factor;
-        }
-        else{
-          norm[0]=dy*factor;
-          norm[1]=dx*factor;
-        }
-        break;
-      case 5:
-        dx = meshj->xplt_orig[1]-meshj->xplt_orig[0];
-        dy = meshj->yplt_orig[1]-meshj->yplt_orig[0];
-        factor= dx*dx+dy*dy;
-        if(factor==0.0){
-          factor=1.0;
-        }
-        else{
-          factor=1.0/sqrt(factor);
-        }
-        if(i<0){
-          norm[0]= dy*factor;
-          norm[1]=-dx*factor;
-        }
-        else{
-          norm[0]=-dy*factor;
-          norm[1]= dx*factor;
-        }
-        break;
-      case 6:
-        dy = meshj->yplt_orig[1]-meshj->yplt_orig[0];
-        dz = meshj->zplt_orig[1]-meshj->zplt_orig[0];
-        factor= dz*dz+dy*dy;
-        if(factor==0.0){
-          factor=1.0;
-        }
-        else{
-          factor=1.0/sqrt(factor);
-        }
-        if(i<0){
-          norm[1]=-dz*factor;
-          norm[2]=-dy*factor;
-        }
-        else{
-          norm[1]=dz*factor;
-          norm[2]=dy*factor;
-        }
-        break;
-      case 7:
-        dy = meshj->yplt_orig[1]-meshj->yplt_orig[0];
-        dz = meshj->zplt_orig[1]-meshj->zplt_orig[0];
-        factor= dz*dz+dy*dy;
-        if(factor==0.0){
-          factor=1.0;
-        }
-        else{
-          factor=1.0/sqrt(factor);
-        }
-        if(i<0){
-          norm[1]= dz*factor;
-          norm[2]=-dy*factor;
-        }
-        else{
-          norm[1]=-dz*factor;
-          norm[2]= dy*factor;
-        }
-        break;
-      case 8:
-        dx = meshj->xplt_orig[1]-meshj->xplt_orig[0];
-        dz = meshj->zplt_orig[1]-meshj->zplt_orig[0];
-        factor= dz*dz+dx*dx;
-        if(factor==0.0){
-          factor=1.0;
-        }
-        else{
-          factor=1.0/sqrt(factor);
-        }
-        if(i<0){
-          norm[0]=-dz*factor;
-          norm[2]=-dx*factor;
-        }
-        else{
-          norm[0]=dz*factor;
-          norm[2]=dx*factor;
-        }
-        break;
-      case 9:
-        dx = meshj->xplt_orig[1]-meshj->xplt_orig[0];
-        dz = meshj->zplt_orig[1]-meshj->zplt_orig[0];
-        factor= dx*dx+dz*dz;
-        if(factor==0.0){
-          factor=1.0;
-        }
-        else{
-          factor=1.0/sqrt(factor);
-        }
-        if(i<0){
-          norm[0]= dz*factor;
-          norm[2]=-dx*factor;
-        }
-        else{
-          norm[0]=-dz*factor;
-          norm[2]= dx*factor;
-        }
-        break;
-      default:
-        ASSERT(FFALSE);
-        break;
-      }
-      scalednorm[0]=norm[0]*mscale[0];
-      scalednorm[1]=norm[1]*mscale[1];
-      scalednorm[2]=norm[2]*mscale[2];
-
-      normdir[0] = DOT3SKIP(mm,4,scalednorm,1);
-      normdir[1] = DOT3SKIP(mm+1,4,scalednorm,1);
-      normdir[2] = DOT3SKIP(mm+2,4,scalednorm,1);
-
-      cosangle = normdir[2] / NORM3(normdir);
-      cosangle = CLAMP(cosangle,-1.0,1.0);
-      absangle=acos(cosangle)*RAD2DEG;
-      if(absangle<0.0)absangle=-absangle;
-      if(absangle<minangle){
-        iminangle=i;
-        minangle=absangle;
-        meshj->norm[0]=norm[0];
-        meshj->norm[1]=norm[1];
-        meshj->norm[2]=norm[2];
-      }
-    }
-    meshj->smokedir=iminangle;
-#ifdef pp_CULL
-    if(meshj->smokedir!=meshj->smokedir_old){
-      meshj->smokedir_old=meshj->smokedir;
-      update_initcullplane=1;
-#ifdef _DEBUG
-      PRINTF("mesh dir has changed\n");
-#endif
-    }
-#endif
-    if(demo_mode!=0){
-      meshj->smokedir=1;
-    }
-  }
 }
 
 /* ------------------ GetInterval ------------------------ */
@@ -1512,6 +1147,7 @@ int MakeIBlankCarve(void){
       xplt = meshi->xplt_orig;
       yplt = meshi->yplt_orig;
       zplt = meshi->zplt_orig;
+      k2 = 0;
       for(ii=0;ii<nx;ii++){
         if(xplt[ii]<=meshj->boxmin[0]&&meshj->boxmin[0]<xplt[ii+1]){
           i1=ii;

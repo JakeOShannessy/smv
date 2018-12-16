@@ -11,8 +11,6 @@
 #include GLUT_H
 #include "gd.h"
 
-#define RENDER_START 3
-
 /* ------------------ PlayMovie ------------------------ */
 
 void PlayMovie(void){
@@ -58,9 +56,10 @@ void MakeMovie(void){
   char moviefile_path[1024],overwrite_flag[10],image_ext[10], movie_frames[1024];
   int make_movie_now=1;
 
+  if(output_ffmpeg_command==1)make_movie_now = 0;
 // wait to make movie until after images are rendered
 
-  if(rendering_status == RENDER_ON)return;
+  if(render_status == RENDER_ON)return;
 
   if(render_filetype==JPEG){
     strcpy(image_ext, ".jpg");
@@ -75,7 +74,7 @@ void MakeMovie(void){
   strcat(frame0, "_0001");
   strcat(frame0, image_ext);
   if(runscript==0&& FILE_EXISTS(frame0)==NO){
-    Render_CB(RENDER_START);
+    RenderCB(RENDER_START_NORMAL);
     return;
   }
 
@@ -96,8 +95,8 @@ void MakeMovie(void){
     }
   }
 
-
-  if(make_movie_now==1){
+  if(make_movie_now==1||output_ffmpeg_command==1){
+    char power_label[100];
 // construct name of frames used to make movie
 
     strcpy(movie_frames, render_file_base);
@@ -108,21 +107,39 @@ void MakeMovie(void){
 
     sprintf(command_line, "ffmpeg %s -r %i -i ", overwrite_flag,movie_framerate);
     strcat(command_line, movie_frames);
-    strcat(command_line, " ");
-    {
-      char bitrate_label[100];
 
-      sprintf(bitrate_label," -b %ik ",movie_bitrate);
-      strcat(command_line,bitrate_label);
+    if(movie_filetype==MP4||movie_filetype==MOV){ // use -crf for MP4 and MOV, use -b for AVI and WMV
+      strcat(command_line, " -vcodec libx264 ");
+      sprintf(power_label, " -crf %i ", movie_crf);
     }
-    if(quicktime_compatibility == 1){
-      strcat(command_line, " -pix_fmt yuv420p ");
+    else{
+      sprintf(power_label, " -b:v %ik ", movie_bitrate);
     }
+    strcat(command_line, power_label);
+
+    if(movie_filetype==MP4||movie_filetype==MOV)strcat(command_line, " -pix_fmt yuv420p ");
     strcat(command_line, moviefile_path);
 
 // make movie
+    if(output_ffmpeg_command==1){
+      if(ffmpeg_command_filename!=NULL){
+        FILE *stream_ffmpeg=NULL;
 
-    system(command_line);
+        stream_ffmpeg = fopen(ffmpeg_command_filename,"w");
+        if(stream_ffmpeg!=NULL){
+#ifdef WIN32
+          fprintf(stream_ffmpeg,"@echo off\n");
+#else
+          fprintf(stream_ffmpeg,"#!/bin/bash\n");
+#endif
+          fprintf(stream_ffmpeg,"%s\n",command_line);
+          fclose(stream_ffmpeg);
+        }
+      }
+      printf("%s\n", command_line);
+      output_ffmpeg_command=0;
+    }
+    if(make_movie_now==1)system(command_line);
   }
 
 // enable movie making button
@@ -133,10 +150,34 @@ void MakeMovie(void){
   update_makemovie = 0;
 }
 
+/* ------------------ ResetRenderResolution ------------------------ */
+
+void ResetRenderResolution(int *width_low, int *height_low, int *width_high, int *height_high) {
+  *width_low = screenWidth;
+  *height_low = screenHeight;
+  *width_high = *width_low*MAX(2, resolution_multiplier);
+  *height_high = *height_low*MAX(2, resolution_multiplier);
+}
+
+/* ------------------ GetRenderResolution ------------------------ */
+
+void GetRenderResolution(int *width_low, int *height_low, int *width_high, int *height_high) {
+  if (render_status==RENDER_OFF||renderW == 0 || renderH == 0) {
+    *width_low = screenWidth;
+    *height_low = screenHeight;
+  }
+  else {
+    *width_low = renderW;
+    *height_low = renderH;
+  }
+  *width_high = *width_low*MAX(2, glui_resolution_multiplier);
+  *height_high = *height_low*MAX(2, glui_resolution_multiplier);
+}
+
 /* ------------------ Render ------------------------ */
 
 void Render(int view_mode){
-  if(rendering_status == RENDER_OFF)return;
+  if(render_status == RENDER_OFF)return;
   if(current_script_command!=NULL&&(current_script_command->command==SCRIPT_VOLSMOKERENDERALL||current_script_command->command==SCRIPT_ISORENDERALL)){
     int command;
 
@@ -156,7 +197,7 @@ void Render(int view_mode){
       }
     }
   }
-  if(render_times == RENDER_ALLTIMES && rendering_status == RENDER_ON&&render_mode == RENDER_XYSINGLE && plotstate == DYNAMIC_PLOTS && nglobal_times > 0){
+  if(render_times == RENDER_ALLTIMES && render_status == RENDER_ON&&render_mode == RENDER_NORMAL && plotstate == DYNAMIC_PLOTS && nglobal_times > 0){
     if(itimes>=0&&itimes<nglobal_times&&
      ((render_frame[itimes] == 0&&stereotype==STEREO_NONE)||(render_frame[itimes]<2&&stereotype!=STEREO_NONE))
      ){
@@ -164,17 +205,15 @@ void Render(int view_mode){
       RenderFrame(view_mode);
     }
     else{
-      ASSERT(RenderSkip>0);
+      ASSERT(render_skip>0);
       RenderState(RENDER_OFF);
-      RenderSkip=1;
     }
   }
 
   if(render_times == RENDER_SINGLETIME){
     RenderFrame(view_mode);
-    if(render_mode == RENDER_XYSINGLE){
+    if(render_mode == RENDER_NORMAL){
       RenderState(RENDER_OFF);
-      RenderSkip=1;
       SNIFF_ERRORS("after render");
     }
   }
@@ -187,16 +226,15 @@ void Render(int view_mode){
 
 /* ------------------ GetRenderFileName ------------------------ */
 
-void GetRenderFileName(int view_mode, char **renderfile_dir_ptr, char *renderfile_dir, char *renderfile_full){
+int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full){
   char renderfile_name[1024], renderfile_suffix[1024], *renderfile_ext;
   int use_scriptfile;
 
   // construct filename for image to be rendered
 
-  strcpy(renderfile_dir, "");
+  strcpy(renderfile_dir, ".");
   strcpy(renderfile_suffix, "");
   use_scriptfile = 0;
-  *renderfile_dir_ptr = NULL;
 
   // filename base
 
@@ -225,7 +263,6 @@ void GetRenderFileName(int view_mode, char **renderfile_dir_ptr, char *renderfil
       }
       else{
         strcpy(renderfile_dir, script_dir_path);
-        *renderfile_dir_ptr = renderfile_dir;
       }
     }
   }
@@ -237,8 +274,14 @@ void GetRenderFileName(int view_mode, char **renderfile_dir_ptr, char *renderfil
       strcpy(renderfile_dir, smokeviewtempdir);
     }
     else{
-      fprintf(stderr, "*** Error: unable to output render file\n");
-      return;
+      if(smokeviewtempdir!=NULL&&strlen(smokeviewtempdir)>0){
+        fprintf(stderr, "*** Error: unable to render screen image to either directories %s or %s\n",
+        renderfile_dir,smokeviewtempdir);
+      }
+      else{
+        fprintf(stderr, "*** Error: unable to render screen image to directory %s \n",renderfile_dir);
+      }
+      return 1;
     }
   }
 
@@ -259,12 +302,7 @@ void GetRenderFileName(int view_mode, char **renderfile_dir_ptr, char *renderfil
       image_num = seqnum;
     }
     else{
-      if(skip_render_frames == 1){
-        image_num = itimes;
-      }
-      else{
-        image_num = itimes / RenderSkip;
-      }
+      image_num = itimes;
     }
     if(render_label_type == RENDER_LABEL_FRAMENUM || RenderTime == 0){
       float time_local;
@@ -276,7 +314,7 @@ void GetRenderFileName(int view_mode, char **renderfile_dir_ptr, char *renderfil
       else{
         sprintf(suffix, "%04i", image_num);
       }
-      code = getplot3dtime(&time_local);
+      code = GetPlot3dTime(&time_local);
       if(code == 1 && render_label_type == RENDER_LABEL_TIME){
         char timelabel_local[20], *timelabelptr, dt = 1.0;
 
@@ -332,6 +370,7 @@ void GetRenderFileName(int view_mode, char **renderfile_dir_ptr, char *renderfil
   strcpy(renderfile_full, renderfile_name);
   if(strlen(renderfile_suffix) > 0)strcat(renderfile_full, renderfile_suffix);
   strcat(renderfile_full, renderfile_ext);
+  return 0;
 }
 
 /* ------------------ OutputSliceData ------------------------ */
@@ -351,7 +390,7 @@ void OutputSliceData(void){
   for(ii = 0; ii < nslice_loaded; ii++){
     i = slice_loaded_list[ii];
     sd = sliceinfo + i;
-    if(sd->display == 0 || sd->type != islicetype)continue;
+    if(sd->display == 0 || sd->slicefile_labelindex != slicefile_labelindex)continue;
     if(sd->times[0] > global_times[itimes])continue;
 
     if(sd->qslicedata == NULL){
@@ -423,7 +462,6 @@ void RenderFrame(int view_mode){
 
   int woffset=0,hoffset=0;
   int screenH;
-  char *renderfile_dir_ptr;
 
 #ifdef WIN32
   SetThreadExecutionState(ES_DISPLAY_REQUIRED); // reset display idle timer to prevent screen saver from activating
@@ -439,9 +477,9 @@ void RenderFrame(int view_mode){
     if(view_mode == VIEW_RIGHT)woffset = screenWidth;
   }
 
-  GetRenderFileName(view_mode, &renderfile_dir_ptr, renderfile_dir, renderfile_full);
+  if(GetRenderFileName(view_mode, renderfile_dir, renderfile_full)!=0)return;
 
-  SmokeviewImage2File(renderfile_dir_ptr,renderfile_full,render_filetype,woffset,screenWidth,hoffset,screenH);
+  SmokeviewImage2File(renderfile_dir,renderfile_full,render_filetype,woffset,screenWidth,hoffset,screenH);
   if(RenderTime==1&&output_slicedata==1){
     OutputSliceData();
   }
@@ -471,75 +509,104 @@ GLubyte *GetScreenBuffer(void){
 
 /* ------------------ MergeRenderScreenBuffers ------------------------ */
 
-int MergeRenderScreenBuffers(int nscreen_rows, GLubyte **screenbuffers){
+int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
 
-  char *renderfile,renderfile_base[1024],renderfile2[1024];
-  char *ext;
+  char renderfile[1024], renderfile_dir[1024], renderfullfile[1024];
   FILE *RENDERfile=NULL;
-  GLubyte *p;
   gdImagePtr RENDERimage;
   unsigned int r, g, b;
   int i,j,rgb_local;
-  int nscreen_cols;
   int irow;
+  int clip_left, clip_right, clip_bottom, clip_top;
+  int clip_left_hat, clip_right_hat, clip_bottom_hat, clip_top_hat;
+  int width_hat, height_hat;
 
-  nscreen_cols=nscreen_rows;
-  switch(render_filetype){
-  case PNG:
-    ext=ext_png;
-    break;
-  case JPEG:
-    ext=ext_jpg;
-    break;
-  default:
-    render_filetype=PNG;
-    ext=ext_png;
-    break;
+  if(render_filetype!=PNG&&render_filetype!=JPEG)render_filetype=PNG;
+
+  if(GetRenderFileName(VIEW_CENTER, renderfile_dir, renderfile)!=0)return 1;
+
+  strcpy(renderfullfile,"");
+  if(strcmp(renderfile_dir,".")!=0){
+    int len;
+
+    strcat(renderfullfile,renderfile_dir);
+    len = strlen(renderfile_dir);
+    if(len>0&&renderfile_dir[len-1]!=dirseparator[0])strcat(renderfullfile,dirseparator);
+  }
+  strcat(renderfullfile,renderfile);
+
+  if(script_viewpoint_found==NO&&current_script_command!=NULL){
+    FileCopy(script_error1_filename,renderfullfile);
+    return 0;
   }
 
-  if(current_script_command!=NULL&&current_script_command->cval2!=NULL){
-    strcpy(renderfile2,current_script_command->cval2);
-    strcpy(renderfile_base, renderfile2);
+  RENDERfile = fopen(renderfullfile, "wb");
+  if(RENDERfile == NULL){
+    fprintf(stderr, "*** Error: unable to render screen image to %s", renderfullfile);
+    return 1;
+  }
+
+  if(clip_rendered_scene==1){
+    clip_left = render_clip_left;
+    clip_right = screenWidth - render_clip_right-1;
+    clip_left_hat = nfactor*clip_left;
+    clip_right_hat = nfactor*(clip_right+1) - 1;
+
+    clip_bottom = render_clip_bottom;
+    clip_top = screenHeight - render_clip_top - 1;
+    clip_bottom_hat = nfactor*clip_bottom;
+    clip_top_hat = nfactor*(clip_top+1)-1;
+
+    width_hat = clip_right_hat - clip_left_hat + 1;
+    height_hat = clip_top_hat - clip_bottom_hat + 1;
   }
   else{
-    strcpy(renderfile2,fdsprefix);
-    if(RenderTime == 1){
-      sprintf(renderfile_base, "%s_%04i", renderfile2, itimes / RenderSkip);
-    }
-    if(RenderTime == 0){
-      sprintf(renderfile_base, "%s_s%04i", renderfile2, seqnum);
-      seqnum++;
-    }
-  }
-  strcat(renderfile_base,ext);
-  renderfile= GetFileName(smokeviewtempdir,renderfile_base,tempdir_flag);
-  if(renderfile==NULL){
-    fprintf(stderr,"*** Error: unable to write to %s",renderfile_base);
-    return 1;
-  }
-  RENDERfile = fopen(renderfile, "wb");
-  PRINTF("Rendering to: %s .",renderfile);
-  if(RENDERfile == NULL){
-    fprintf(stderr,"*** Error: unable to write to %s",renderfile);
-    FREEMEMORY(renderfile);
-    return 1;
-  }
-  RENDERimage = gdImageCreateTrueColor(nscreen_cols*screenWidth,nscreen_rows*screenHeight);
+    clip_left = 0;
+    clip_right = screenWidth - 1;
+    clip_left_hat = 0;
+    clip_right_hat = nfactor*screenWidth - 1;
 
-  p = *screenbuffers++;
-  for(irow=0;irow<nscreen_rows;irow++){
-    int icol;
+    clip_bottom = 0;
+    clip_top = screenHeight - 1;
+    clip_bottom_hat = 0;
+    clip_top_hat = nfactor*screenHeight - 1;
 
-    for(icol=0;icol<nscreen_cols;icol++){
-      for(i = (nscreen_rows-irow)*screenHeight-1 ; i>=(nscreen_rows-irow-1)*screenHeight; i--){
-        for(j=icol*screenWidth;j<(icol+1)*screenWidth;j++){
+    width_hat = nfactor*screenWidth;
+    height_hat = nfactor*screenHeight;
+  }
+
+  PRINTF("Rendering to: %s .", renderfullfile);
+  RENDERimage = gdImageCreateTrueColor(width_hat,height_hat);
+
+  for(irow=0;irow<nfactor;irow++){
+    int icol, imin, imax;
+
+    imin = irow*screenHeight;
+    imax = (irow+1)*screenHeight;
+
+    for(icol=0;icol<nfactor;icol++){
+      GLubyte *p;
+      int jmin, jmax;
+
+      jmin = icol*screenWidth;
+      jmax = (icol+1)*screenWidth;
+
+      p = *screenbuffers++;
+      if(clip_rendered_scene==1&&
+            (jmax<clip_left_hat||jmin>clip_right_hat||imax<clip_bottom_hat||imin>clip_top_hat)){
+            continue;
+      }
+
+      for(i=imin; i<imax; i++){
+        for(j=jmin; j<jmax; j++){
           r=*p++; g=*p++; b=*p++;
-          rgb_local = (r<<16)|(g<<8)|b;
-          gdImageSetPixel(RENDERimage,j,i,rgb_local);
-
+          if(clip_rendered_scene==0||
+            (clip_left_hat<=j&&j<=clip_right_hat&&clip_bottom_hat<=i&&i<=clip_top_hat)){
+            rgb_local = (r<<16)|(g<<8)|b;
+            gdImageSetPixel(RENDERimage,j-clip_left_hat,clip_top_hat - i,rgb_local);
+          }
         }
       }
-      p=*screenbuffers++;
     }
   }
 
@@ -561,9 +628,11 @@ int MergeRenderScreenBuffers(int nscreen_rows, GLubyte **screenbuffers){
   /* free up memory used by both OpenGL and GIF images */
 
   gdImageDestroy(RENDERimage);
-  FREEMEMORY(renderfile);
   if(render_frame != NULL&&itimes >= 0 && itimes < nglobal_times){
     render_frame[itimes]++;
+  }
+  if(RenderTime==1&&output_slicedata==1){
+    OutputSliceData();
   }
   PRINTF(" Completed\n");
   return 0;
@@ -571,45 +640,57 @@ int MergeRenderScreenBuffers(int nscreen_rows, GLubyte **screenbuffers){
 
 /* ------------------ GetScreenMap360 ------------------------ */
 
-unsigned int GetScreenMap360(float *xyz){
+unsigned int GetScreenMap360(float *xyz, float *xx, float *yy){
+  screendata *screeni;
   int ibuff;
   float xyznorm;
+  int maxbuff;
+  float maxcos, cosangle;
+  float *view, *up, *right, t;
+  float A, B;
 
   xyznorm = sqrt(xyz[0] * xyz[0] + xyz[1] * xyz[1] + xyz[2] * xyz[2]);
 
   for(ibuff = 0; ibuff < nscreeninfo; ibuff++){
-    screendata *screeni;
-    float *view, *up, *right, t;
-    float A, B;
-    float cosangle;
-
-    screeni = screeninfo + ibuff;
+    screeni = screeninfo+ibuff;
     view = screeni->view;
-    up = screeni->up;
-    right = screeni->right;
     cosangle = DOT3(view, xyz) / xyznorm;
-    if(cosangle <= screeni->cosmax-0.001)continue;
-
-    t = DOT3(xyz,view);
-    A = DOT3(xyz, right)/t;
-    B = DOT3(xyz, up)/t;
-
-    {
-      int ix, iy, index;
-      unsigned int return_val;
-
-      ix = screeni->nwidth*(screeni->width / 2.0 + A) / screeni->width;
-      if(ix<0||ix>screeni->nwidth-1)continue;
-
-      iy = screeni->nheight*(screeni->height / 2.0 + B) / screeni->height;
-      if(iy<0||iy>screeni->nheight - 1)continue;
-
-      index = iy*screeni->nwidth + ix;
-      return_val = ((ibuff+1) << 24) |  index;
-      return return_val;
+    if(ibuff==0){
+      maxbuff = 0;
+      maxcos = cosangle;
+    }
+    else{
+      if(cosangle>maxcos){
+        maxcos = cosangle;
+        maxbuff = ibuff;
+      }
     }
   }
-  return 0;
+
+  ibuff = maxbuff;
+  screeni = screeninfo + ibuff;
+  view = screeni->view;
+  up = screeni->up;
+  right = screeni->right;
+
+  t = DOT3(xyz,view);
+  A = DOT3(xyz, right)/t;
+  B = DOT3(xyz, up)/t;
+
+  {
+    int index;
+    unsigned int return_val;
+
+    *xx = screeni->nwidth*(screeni->width / 2.0 + A) / screeni->width;
+    *xx = CLAMP(*xx,0,screeni->nwidth-1);
+
+    *yy = screeni->nheight*(screeni->height / 2.0 + B) / screeni->height;
+    *yy = CLAMP(*yy,0,screeni->nheight - 1);
+
+    index = (int)(*yy)*screeni->nwidth + (int)(*xx);
+    return_val = ((ibuff+1) << 24) |  index;
+    return return_val;
+  }
 }
 
 
@@ -668,12 +749,14 @@ void DrawScreenInfo(void){
   glScalef(0.5,0.5,0.5);
   glTranslatef(1.0,1.0,1.0);
 
+  glLineWidth(10.0);
   glBegin(GL_LINES);
   for(i = 0; i < nscreeninfo; i++){
     screendata *screeni;
     float xyz[12];
     float *view, *right, *up;
 
+    if(screenvis[i]==0)continue;
     screeni = screeninfo + i;
     view = screeni->view;
     right = screeni->right;
@@ -686,6 +769,7 @@ void DrawScreenInfo(void){
       xyz[j+9] = view[j] - right[j] / 2.0 + up[j] / 2.0
         ;
     }
+    glColor3f(0.0, 0.0, 0.0);
     glVertex3fv(xyz);
     glVertex3fv(xyz+3);
     glVertex3fv(xyz+3);
@@ -695,6 +779,10 @@ void DrawScreenInfo(void){
     glVertex3fv(xyz+9);
     glVertex3fv(xyz);
   }
+  glEnd();
+  glBegin(GL_POINT);
+  glPointSize(10.0);
+  glVertex3f(0.0,0.0,0.0);
   glEnd();
   glPopMatrix();
 }
@@ -717,7 +805,7 @@ void SetupScreeninfo(void){
     float sina, cosa;
     float cose, sine;
     float aspect_ratio;
-    float aperture_width, aperture_height;
+    float aperture_width, aperture_height, aperture_diagonal;
 
     aperture_width = 45.0;
     screeni = screeninfo + ibuf;
@@ -727,8 +815,11 @@ void SetupScreeninfo(void){
     screeni->width=2.0*tan(DEG2RAD*aperture_width/2.0);
     screeni->height = screeni->width / aspect_ratio;
     aperture_height = 2.0*RAD2DEG*atan(screeni->height / 2.0);
-    screeni->cosmax = 1.0 / sqrt(screeni->height*screeni->height + screeni->width*screeni->width);
+    aperture_diagonal = 2.0*atan(sqrt(screeni->height*screeni->height+screeni->width*screeni->width)/2.0);
+    screeni->cosmax = cos(aperture_diagonal/2.0);
 
+    azimuth = 0.0;
+    elevation = 0.0;
     if(ibuf == 0){
       azimuth = 0.0;
       elevation = -90;
@@ -798,7 +889,11 @@ void SetupScreeninfo(void){
   }
 
   FREEMEMORY(screenmap360);
+  FREEMEMORY(screenmap360IX);
+  FREEMEMORY(screenmap360IY);
   NewMemory((void **)&screenmap360, nwidth360*nheight360 * sizeof(unsigned int));
+  NewMemory((void **)&screenmap360IX, nwidth360*nheight360*sizeof(float));
+  NewMemory((void **)&screenmap360IY, nwidth360*nheight360*sizeof(float));
   {
     int i,j;
     float *cos_az, *sin_az, *cos_elev, *sin_elev;
@@ -839,7 +934,10 @@ void SetupScreeninfo(void){
           screenmap360[j*nwidth360 + nazimuth + i] = GetScreenMap360LR(RIGHT, xyz);
         }
         else{
-          screenmap360[j*nwidth360 + i] = GetScreenMap360(xyz);
+          int ij;
+
+          ij = j*nwidth360+i;
+          screenmap360[ij] = GetScreenMap360(xyz,screenmap360IX+ij, screenmap360IY+ij);
         }
       }
     }
@@ -854,52 +952,32 @@ void SetupScreeninfo(void){
 
 int MergeRenderScreenBuffers360(void){
 
-  char *renderfile, renderfile_base[1024], renderfile2[1024];
-  char *ext;
+  char renderfile[1024], renderfullfile[1024], renderfile_dir[1024];
   FILE *RENDERfile = NULL;
   gdImagePtr RENDERimage;
   int i, j, ijk360;
   int *screenbuffer360;
 
-  switch (render_filetype){
-  case PNG:
-    ext = ext_png;
-    break;
-  case JPEG:
-    ext = ext_jpg;
-    break;
-  default:
-    render_filetype = PNG;
-    ext = ext_png;
-    break;
-  }
+  if(render_filetype!=PNG&&render_filetype!=JPEG)render_filetype=PNG;
 
-  if(scriptoutstream != NULL&&current_script_command != NULL&&current_script_command->cval2 != NULL){
-    strcpy(renderfile2, current_script_command->cval2);
+  if(GetRenderFileName(VIEW_CENTER, renderfile_dir, renderfile)!=0)return 1;
+
+  strcpy(renderfullfile,"");
+  if(strcmp(renderfile_dir,".")!=0){
+    int len;
+
+    strcat(renderfullfile,renderfile_dir);
+    len = strlen(renderfile_dir);
+    if(len>0&&renderfile_dir[len-1]!=dirseparator[0])strcat(renderfullfile,dirseparator);
   }
-  else{
-    strcpy(renderfile2, fdsprefix);
-  }
-  if(RenderTime == 1){
-    sprintf(renderfile_base, "%s_%04i", renderfile2, itimes / RenderSkip);
-  }
-  if(RenderTime == 0){
-    sprintf(renderfile_base, "%s_s%04i", renderfile2, seqnum);
-    seqnum++;
-  }
-  strcat(renderfile_base, ext);
-  renderfile = GetFileName(smokeviewtempdir, renderfile_base, tempdir_flag);
-  if(renderfile == NULL){
-    fprintf(stderr, "*** Error: unable to write to %s", renderfile_base);
-    return 1;
-  }
-  RENDERfile = fopen(renderfile, "wb");
-  PRINTF("Rendering to: %s .", renderfile);
+  strcat(renderfullfile,renderfile);
+
+  RENDERfile = fopen(renderfullfile, "wb");
   if(RENDERfile == NULL){
-    fprintf(stderr, "*** Error: unable to write to %s", renderfile);
-    FREEMEMORY(renderfile);
+    fprintf(stderr, "*** Error: unable to render screen image to %s", renderfullfile);
     return 1;
   }
+  PRINTF("Rendering to: %s .", renderfullfile);
   RENDERimage = gdImageCreateTrueColor(nwidth360, nheight360);
   NewMemory((void **)&screenbuffer360,nwidth360*nheight360 * sizeof(int));
 
@@ -910,22 +988,59 @@ int MergeRenderScreenBuffers360(void){
   ijk360 = 0;
   for(j=0;j<nheight360;j++){
     for(i=0;i<nwidth360;i++){
-      GLubyte *p;
-      int ibuff, ijk, rgb_local;
+      GLubyte *p00, *p01, *p10, *p11;
+      int ibuff, rgb_local;
       screendata *screeni;
       unsigned int r, g, b;
+      float xx, yy;
+      int ix, iy;
+      int ix2, iy2;
+      float fx, fy;
 
       ibuff = screenmap360[ijk360] >> 24;
       if(ibuff == 0)continue;
       ibuff--;
       screeni = screeninfo + ibuff;
 
-      ijk = screenmap360[ijk360] & 0xffffff;
-      p = screeni->screenbuffer+3*ijk;
-      r= *p++;
-      g= *p++;
-      b= *p++;
+      xx = screenmap360IX[ijk360];
+      ix = xx;
+      ix2 = CLAMP(ix+1,0,screeni->nwidth-1);
+      fx = 0.0;
+      if(ix2>ix)fx=xx-(float)ix;
+
+      yy = screenmap360IY[ijk360];
+      iy = yy;
+      iy2 = CLAMP(iy+1,0,screeni->nheight-1);
+      fy = 0.0;
+      if(iy2>iy)fy=yy-(float)yy;
+
+#define AVG2(f,p0,p1) ((1.0-f)*(float)(p0) + (f)*(float)(p1))
+#define AVG4(fx,fy,p00,p01,p10,p11) ((1.0-fy)*AVG2(fx,p00,p10)+(fy)*AVG2(fx,p01,p11))
+
+#ifdef pp_RENDER360_DEBUG
+      if(debug_360==1&&(j%debug_360_skip_y==0||i%debug_360_skip_x==0)){
+        rgb_local = 128<<8|128;
+      }
+      else{
+        p00  = screeni->screenbuffer+3*(iy*screeni->nwidth + ix);
+        p01  = screeni->screenbuffer+3*(iy*screeni->nwidth + ix2);
+        p10  = screeni->screenbuffer+3*(iy2*screeni->nwidth + ix);
+        p11  = screeni->screenbuffer+3*(iy2*screeni->nwidth + ix2);
+        r = AVG4(fx,fy,p00[0],p01[0],p10[0],p11[0]);
+        g = AVG4(fx,fy,p00[1],p01[1],p10[1],p11[1]);
+        b = AVG4(fx,fy,p00[2],p01[2],p10[2],p11[2]);
+        rgb_local = (r<<16)|(g<<8)|b;
+      }
+#else
+      p00  = screeni->screenbuffer+3*(iy*screeni->nwidth + ix);
+      p01  = screeni->screenbuffer+3*(iy*screeni->nwidth + ix2);
+      p10  = screeni->screenbuffer+3*(iy2*screeni->nwidth + ix);
+      p11  = screeni->screenbuffer+3*(iy2*screeni->nwidth + ix2);
+      r = AVG4(fx,fy,p00[0],p01[0],p10[0],p11[0]);
+      g = AVG4(fx,fy,p00[1],p01[1],p10[1],p11[1]);
+      b = AVG4(fx,fy,p00[2],p01[2],p10[2],p11[2]);
       rgb_local = (r<<16)|(g<<8)|b;
+#endif
       screenbuffer360[ijk360]=rgb_local;
       ijk360++;
     }
@@ -956,7 +1071,6 @@ int MergeRenderScreenBuffers360(void){
   /* free up memory used by both OpenGL and GIF images */
 
   gdImageDestroy(RENDERimage);
-  FREEMEMORY(renderfile);
   FREEMEMORY(screenbuffer360);
   if(render_frame!=NULL&&itimes>=0&&itimes<nglobal_times){
     render_frame[itimes]++;
@@ -1034,12 +1148,12 @@ int SmokeviewImage2File(char *directory, char *RENDERfilename, int rendertype, i
     renderfile= GetFileName(directory,RENDERfilename,1);
   }
   if(renderfile == NULL){
-    fprintf(stderr,"*** Error: Unable to write to %s\n",RENDERfilename);
+    fprintf(stderr,"*** Error: unable to render screen image to %s", RENDERfilename);
     return 1;
   }
   RENDERfile = fopen(renderfile, "wb");
   if(RENDERfile == NULL){
-    fprintf(stderr,"*** Error: Unable to write to %s\n",renderfile);
+    fprintf(stderr,"*** Error: unable to render screen image to %s", renderfile);
     return 1;
   }
   NewMemory((void **)&OpenGLimage,width2 * height2 * sizeof(GLubyte) * 3);

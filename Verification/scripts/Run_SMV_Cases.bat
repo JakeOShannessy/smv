@@ -5,7 +5,6 @@ set size=_64
 set svn_drive=c:
 set DEBUG=
 set SCRIPT_DIR=%CD%
-set rungeomcases=1
 set runwuicases=1
 set runsmvcases=1
 set rundebug=0
@@ -41,8 +40,8 @@ set RUNCFAST_E=call %SVNROOT%\fds\Verification\scripts\erase_stop.bat
 
 :: VVVVVVVVVVVV set parameters VVVVVVVVVVVVVVVVVVVVVV
 
-set FDSBASE=fds_mpi_win%size%%DEBUG%.exe
-set FDSEXE=%SVNROOT%\fds\Build\mpi_intel_win%size%%DEBUG%\%FDSBASE%
+set FDSBASE=fds_impi_win%size%%DEBUG%.exe
+set FDSEXE=%SVNROOT%\fds\Build\impi_intel_win%size%%DEBUG%\%FDSBASE%
 set CFASTEXE=%SVNROOT%\cfast\Build\CFAST\intel_win%size%\cfast7_win%size%.exe
 set WIND2FDSEXE=%SVNROOT%\smv\Build\wind2fds\intel_win%size%\wind2fds_win%size%.exe
 
@@ -85,10 +84,6 @@ if "%runsmvcases%" == "1" (
   echo creating case list from SMV_Cases.sh
   %SH2BAT% SMV_Cases.sh SMV_Cases.bat
 )
-if "%rungeomcases%" == "1" (
-  echo creating case list from GEOM_Cases.sh
-  %SH2BAT% GEOM_Cases.sh GEOM_Cases.bat
-)
 if "%runwuicases%" == "1" (
   echo creating case list from WUI_Cases.sh
   %SH2BAT% WUI_Cases.sh WUI_Cases.bat
@@ -122,10 +117,6 @@ if "%runsmvcases%" == "1" (
   echo erasing SMV cases
   call %SCRIPT_DIR%\SMV_Cases.bat
 )
-if "%rungeomcases%" == "1" (
-  echo erasing GEOM cases
-  call %SCRIPT_DIR%\GEOM_Cases.bat
-)
 if "%runwuicases%" == "1" (
   echo erasing WUI cases
   call %SCRIPT_DIR%\WUI_Cases.bat
@@ -140,10 +131,6 @@ SET RUNCFAST=%RUNCFAST_R%
 if "%runsmvcases%" == "1" (
   echo running SMV cases
   call %SCRIPT_DIR%\SMV_Cases.bat
-)
-if "%rungeomcases%" == "1" (
-  echo running GEOM cases
-  call %SCRIPT_DIR%\GEOM_Cases.bat
 )
 if "%runwuicases%" == "1" (
   echo running WUI cases
@@ -203,23 +190,15 @@ exit /b
    set DEBUG=_db
    set rundebug=1
  )
- if /I "%1" EQU "-geom" (
-   set valid=1
-   set runwuicases=0
-   set runsmvcases=0
-   set rungeomcases=1
- )
  if /I "%1" EQU "-smvwui" (
    set valid=1
    set runwuicases=1
    set runsmvcases=1
-   set rungeomcases=0
  )
  if /I "%1" EQU "-wui" (
    set valid=1
    set runwuicases=1
    set runsmvcases=0
-   set rungeomcases=0
  )
  shift
  if %valid% == 0 (
@@ -239,7 +218,6 @@ echo Run_SMV_Cases [options]
 echo. 
 echo -help  - display this message
 echo -debug - run with debug FDS
-echo -geom  - run only geom cases
 echo -wui   - run only WUI cases
 exit /b
 

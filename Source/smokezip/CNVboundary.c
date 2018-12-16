@@ -355,7 +355,7 @@ int convert_boundary(patch *patchi, int *thread_index){
 
       //int compress (Bytef *dest,   uLongf *destLen, const Bytef *source, uLong sourceLen);
       ncompressed_zlib=ncompressed_zlibSAVE;
-      returncode=compress_zlib(compressed_boundarybuffer, &ncompressed_zlib, full_boundarybuffer, npatchfull);
+      returncode=CompressZLIB(compressed_boundarybuffer, &ncompressed_zlib, full_boundarybuffer, npatchfull);
       if(returncode!=0){
         fprintf(stderr,"*** Error: compress returncode=%i\n",returncode);
       }
@@ -406,12 +406,12 @@ wrapup:
     GetFileSizeLabel(sizeafter,after_label);
 #ifdef pp_THREAD
     patchi->compressed=1;
-    sprintf(patchi->summary,"compressed from %s to %s (%4.1f%s reduction)",before_label,after_label,(float)sizebefore/(float)sizeafter,GLOBx);
+    sprintf(patchi->summary,"%s -> %s (%4.1f%s)",before_label,after_label,(float)sizebefore/(float)sizeafter,GLOBx);
     threadinfo[*thread_index].stat=-1;
 #else
     PRINTF("  records=%i, ",count);
     PRINTF("Sizes: original=%s, ",before_label);
-    PRINTF("compressed=%s (%4.1f%s reduction)\n\n",after_label,(float)sizebefore/(float)sizeafter,GLOBx);
+    PRINTF("compressed=%s (%4.1f%s)\n\n",after_label,(float)sizebefore/(float)sizeafter,GLOBx);
 #endif
   }
 
@@ -572,7 +572,6 @@ void update_patch_hist(void){
     pk2 = patchi->pk2;
 
     LOCK_COMPRESS;
-    FORTget_file_unit(&unit1,&patchi->unit_start);
     FORTopenboundary(patchi->file,&unit1,&patchi->version,&error1,lenfile);
     UNLOCK_COMPRESS;
 
@@ -584,9 +583,10 @@ void update_patch_hist(void){
     ResetHistogram(patchi->histogram,NULL,NULL);
     while(error1==0){
       int ndummy;
+      int file_size;
 
       FORTgetpatchdata(&unit1, &patchi->npatches,
-        pi1, pi2, pj1, pj2, pk1, pk2, &patchtime1, patchframe, &ndummy,&error1);
+        pi1, pi2, pj1, pj2, pk1, pk2, &patchtime1, patchframe, &ndummy,&file_size, &error1);
       UpdateHistogram(patchframe, NULL,patchframesize, patchi->histogram);
     }
     LOCK_COMPRESS;

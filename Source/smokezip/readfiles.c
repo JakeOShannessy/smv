@@ -41,7 +41,17 @@ int ReadSMV(char *smvfile){
     ++++++++++++++++++++++ SMOKE3D ++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
+#ifdef pp_SMOKE3D_FORT
+    if(Match(buffer,"SMOKE3D") == 1||
+       Match(buffer, "SMOKF3D") == 1||
+       Match(buffer, "VSMOKE3D")==1||
+       Match(buffer, "VSMOKF3D")==1
+       ||Match(buffer, "SMOKG3D") == 1 ||
+       Match(buffer, "VSMOKG3D") == 1
+       ){
+#else
     if(Match(buffer,"SMOKE3D") == 1){
+#endif
       nsmoke3dinfo++;
       continue;
     }
@@ -381,7 +391,17 @@ int ReadSMV(char *smvfile){
     ++++++++++++++++++++++ SMOKE3D ++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
+#ifdef pp_SMOKE3D_FORT
+    if(Match(buffer,"SMOKE3D") == 1||
+       Match(buffer, "SMOKF3D") == 1||
+       Match(buffer, "VSMOKE3D") == 1 ||
+       Match(buffer, "VSMOKF3D")==1
+       ||Match(buffer, "SMOKG3D") == 1 ||
+      Match(buffer, "VSMOKG3D") == 1
+      ){
+#else
     if(Match(buffer,"SMOKE3D") == 1){
+#endif
       smoke3d *smoke3di;
       FILE_SIZE filesize;
       int filelen;
@@ -395,6 +415,15 @@ int ReadSMV(char *smvfile){
       smoke3di->inuse=0;
       smoke3di->compressed=0;
       smoke3di->smokemesh=meshinfo + ioffset - 1;
+#ifdef pp_SMOKE3D_FORT
+      smoke3di->file_type = C_FILE;
+      if(
+        Match(buffer, "SMOKF3D") == 1 || Match(buffer, "VSMOKF3D") == 1
+        ||Match(buffer, "SMOKG3D") == 1 || Match(buffer, "VSMOKG3D") == 1
+        ){
+        smoke3di->file_type = FORTRAN_FILE;
+      }
+#endif
 
       if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
       TrimBack(buffer);
@@ -1104,7 +1133,7 @@ void ReadINI2(char *inifile){
       for(i=0;i<n3dsmokes;i++){
         fgets(buffer,BUFFERSIZE,stream);
         sscanf(buffer,"%i",&seq_id);
-        GetStartupPatch(seq_id);
+        GetStartupBoundary(seq_id);
       }
       continue;
     }
@@ -1114,9 +1143,9 @@ void ReadINI2(char *inifile){
 
 }
 
- /* ------------------ GetStartupPatch ------------------------ */
+ /* ------------------ GetStartupBoundary ------------------------ */
 
-  void GetStartupPatch(int seq_id){
+  void GetStartupBoundary(int seq_id){
     int i;
     for(i=0;i<npatchinfo;i++){
       patch *patchi;

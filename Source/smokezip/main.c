@@ -34,7 +34,7 @@ void Usage(char *prog, int option){
   PRINTF("  -t nthread - Compress nthread files at a time (up to %i)\n", NTHREADS_MAX);
 #endif
 
-  UsageCommon(prog, HELP_SUMMARY);
+  UsageCommon(HELP_SUMMARY);
   if(option == HELP_ALL){
     PRINTF("overwrite options:\n");
     PRINTF("  -f  - overwrites all compressed files\n");
@@ -85,7 +85,7 @@ void Usage(char *prog, int option){
     PRINTF("        and creates the .svd file which activates the Smokeview demonstrator\n");
     PRINTF("        mode.\n");
     PRINTF("  -skip skipval - skip frames when compressing files\n\n");
-    UsageCommon(prog, HELP_ALL);
+    UsageCommon(HELP_ALL);
   }
 }
 
@@ -626,8 +626,8 @@ void print_summary(void){
       slicei = sliceinfo + i;
       if(slicei->compressed==0)continue;
       label=&slicei->label;
-      PRINTF("%s (%s)\n  %s\n",slicei->file,label->longlabel,slicei->summary);
-      PRINTF("  using: min=%f %s, max=%f %s \n\n",slicei->valmin,label->unit,slicei->valmax,label->unit);
+      PRINTF("%s  (%s)\n %s\n",slicei->file,label->longlabel,slicei->summary);
+      PRINTF("  min=%f %s, max=%f %s \n",slicei->valmin,label->unit,slicei->valmax,label->unit);
     }
   }
 
@@ -663,7 +663,7 @@ void print_summary(void){
 
       smoke3di = smoke3dinfo + i;
       if(smoke3di->compressed==0)continue;
-      PRINTF("%s\n  %s\n\n",smoke3di->file,smoke3di->summary);
+      PRINTF("%s\n  %s\n",smoke3di->file,smoke3di->summary);
     }
   }
 
@@ -683,7 +683,7 @@ void print_summary(void){
       if(patchi->compressed==0)continue;
       label=&patchi->label;
       PRINTF("%s (%s)\n  %s\n",patchi->file,label->longlabel,patchi->summary);
-      PRINTF("  using: min=%f %s, max=%f %s \n\n",patchi->valmin,label->unit,patchi->valmax,label->unit);
+      PRINTF("  min=%f %s, max=%f %s \n",patchi->valmin,label->unit,patchi->valmax,label->unit);
     }
   }
 

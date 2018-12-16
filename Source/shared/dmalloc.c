@@ -54,7 +54,6 @@ void _memorystatus(unsigned int size,unsigned int *availmem,unsigned int *physme
       int memsize;
 
       memsize = stat.dwAvailPhys/(1024*1024);
-      fprintf(stderr,"*** Available Memory: %i M \n",memsize);
     }
 #endif
     if(size!=0&&size>stat.dwAvailPhys-0.1*stat.dwTotalPhys){
@@ -181,10 +180,6 @@ mallocflag _NewMemoryNOTHREAD(void **ppv, size_t size, int memory_id){
 void FreeAllMemory(int memory_id){
   MMdata *thisptr, *nextptr;
   int infoblocksize;
-#ifdef _DEBUG
-  int count = 0, count2 = 0;
-  int nblocks = 0;
-#endif
 
   LOCK_MEM;
   infoblocksize=(sizeof(MMdata)+3)/4;
@@ -197,7 +192,6 @@ void FreeAllMemory(int memory_id){
     // so, nextptr (which is thisptr->next) must be defined before it is freed
     nextptr = thisptr->next;
     if(thisptr->next == NULL || thisptr->marker != markerByte)break;
-    nblocks++;
     thisptr = nextptr;
   }
 #endif
@@ -210,34 +204,11 @@ void FreeAllMemory(int memory_id){
     if(thisptr->next == NULL || thisptr->marker != markerByte)break;
     if(memory_id == 0 || thisptr->memory_id == memory_id){
       FreeMemoryNOTHREAD((char *)thisptr + infoblocksize);
-#ifdef _DEBUG
-      count2++;
-#endif
     }
-#ifdef _DEBUG
-    count++;
-    if(count % 1000 == 0&&count2!=0)printf("unloading %i blocks out of %i\n", count2, nblocks);
-#endif
     thisptr = nextptr;
   }
   UNLOCK_MEM;
 }
-
-#ifdef pp_MEMPRINT
-/* ------------------ _PrintMemoryInfo ------------------------ */
-
-void _PrintMemoryInfo(void){
-  MMdata *thisptr;
-  int n = 0;
-  LINT size = 0;
-
-  for(thisptr = MMfirstptr->next;thisptr->next!=NULL;thisptr=thisptr->next){
-    size += thisptr->size;
-    n++;
-  }
-  PRINTF("nblocks=%i sizeblocks=%llu\n", n, size);
-}
-#endif
 
 /* ------------------ FreeMemory ------------------------ */
 
@@ -580,9 +551,10 @@ void _CheckMemory(void){
 void _CheckMemoryNOTHREAD(void){
   blockinfo *pbi;
   if(checkmemoryflag==0)return;
-  for(pbi = pbiHead; pbi != NULL; pbi = pbi->pbiNext)
-  {
-  if(sizeofDebugByte!=0)ASSERT((char)*(pbi->pb+pbi->size)==(char)debugByte);
+  for(pbi = pbiHead; pbi != NULL; pbi = pbi->pbiNext){
+    if(sizeofDebugByte!=0){
+      ASSERT((char)*(pbi->pb+pbi->size)==(char)debugByte);
+    }
   }
   return;
 }
@@ -623,7 +595,9 @@ void FreeBlockInfo(bbyte *pbToFree){
     pbiPrev = pbi;
   }
   ASSERT(pbi != NULL);
-  if(sizeofDebugByte!=0)ASSERT((char)*(pbi->pb+pbi->size)==(char)debugByte);
+  if(sizeofDebugByte!=0){
+    ASSERT((char)*(pbi->pb+pbi->size)==(char)debugByte);
+  }
   free(pbi);
 }
 
@@ -648,7 +622,9 @@ size_t sizeofBlock(bbyte *pb){
 
   pbi = GetBlockInfo(pb);
   ASSERT(pb==pbi->pb);
-  if(sizeofDebugByte!=0)ASSERT((char)*(pbi->pb+pbi->size)==(char)debugByte);
+  if(sizeofDebugByte!=0){
+    ASSERT((char)*(pbi->pb+pbi->size)==(char)debugByte);
+  }
   return(pbi->size);
 }
 
@@ -665,7 +641,9 @@ mallocflag _ValidPointer(void *pv, size_t size){
 
   ASSERT(fPtrLessEq(pb+size,pbi->pb + pbi->size));
 
-  if(sizeofDebugByte!=0)ASSERT((char)*(pbi->pb+pbi->size)==(char)debugByte);
+  if(sizeofDebugByte!=0){
+    ASSERT((char)*(pbi->pb+pbi->size)==(char)debugByte);
+  }
   return(1);
 }
 

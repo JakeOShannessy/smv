@@ -125,6 +125,14 @@ int parse_smv_filepath(const char *smv_filepath, char *fdsprefix,
 // --------- show/hide label options--------
 
 // colorbar
+void set_colorbar_visibility_vertical(int setting);
+int get_colorbar_visibility_vertical();
+void toggle_colorbar_visibility_vertical();
+
+void set_colorbar_visibility_horizontal(int setting);
+int get_colorbar_visibility_horizontal();
+void toggle_colorbar_visibility_horizontal();
+
 void set_colorbar_visibility(int setting);
 int get_colorbar_visibility();
 void toggle_colorbar_visibility();
@@ -247,10 +255,6 @@ int set_heatoffcolor(float r, float g, float b); // HEATOFFCOLOR
 int set_heatoncolor(float r, float g, float b); // HEATONCOLOR
 int set_isocolors(float shininess, float default_opaueness, float specular[3], int nlevels, float colors[][4]);
 int set_colortable(int ncolors, int colors[][4], char **names);
-int set_light0(int setting); // LIGHT0
-int set_light1(int setting); // LIGHT1
-int set_lightmodellocalviewer(int setting); // LIGHTMODELLOCALVIEWER
-int set_lightmodelseparatespecularcolor(int setting); // LIGHTMODELSEPARATESPECULARCOLOR
 int set_lightpos0(float x, float y, float z, float w); // LIGHTPOS0
 int set_lightpos1(float x, float y, float z, float w); // LIGHTPOS1
 int set_sensorcolor(float r, float g, float b); // SENSORCOLOR
@@ -471,8 +475,6 @@ int set_viewtourfrompath(int v); // VIEWTOURFROMPATH
 // --  ------------ local ini settings ------------
 
 int set_avatarevac(int v); // AVATAREVAC
-int set_geometrytest(int a, int b, float c, float d, int vals[],
-                     float b1Vals[], float b2Vals[], float b3Vals[]); // GEOMETRYTEST
 int set_devicevectordimensions(float baselength, float basediameter,
                                float headlength, float headdiameter); // DEVICEVECTORDIMENSIONS
 int set_devicebounds(float a, float b); // DEVICEBOUNDS

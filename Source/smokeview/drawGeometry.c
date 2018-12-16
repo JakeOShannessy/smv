@@ -435,12 +435,12 @@ void DrawCircVentsExactSolid(int option){
           break;
       }
       if(option==VENT_CIRCLE){
-        if(cvi->type==VENT_SOLID)drawfilledcircle(2.0*cvi->radius,vcolor,&cvent_circ);
-        if(cvi->type==VENT_OUTLINE)drawcircle(2.0*cvi->radius,vcolor,&cvent_circ);
+        if(cvi->type==VENT_SOLID)DrawFilledCircle(2.0*cvi->radius,vcolor,&cvent_circ);
+        if(cvi->type==VENT_OUTLINE)DrawCircle(2.0*cvi->radius,vcolor,&cvent_circ);
       }
       if(option==VENT_RECTANGLE){
-        if(cvi->type==VENT_SOLID)drawfilledrectangle(width,height,vcolor);
-        if(cvi->type==VENT_OUTLINE)drawrectangle(width,height,vcolor);
+        if(cvi->type==VENT_SOLID)DrawFilledRectangle(width,height,vcolor);
+        if(cvi->type==VENT_OUTLINE)DrawRectangle(width,height,vcolor);
       }
       glPopMatrix();
       if(option==VENT_CIRCLE)SetClipPlanes(&clipinfo,CLIP_ON);
@@ -545,10 +545,10 @@ void DrawCircVentsExactOutline(int option){
           break;
       }
       if(option==VENT_CIRCLE){
-        drawcircle(2.0*cvi->radius,vcolor,&cvent_circ);
+        DrawCircle(2.0*cvi->radius,vcolor,&cvent_circ);
       }
       if(option==VENT_RECTANGLE){
-        drawrectangle(width,height,vcolor);
+        DrawRectangle(width,height,vcolor);
       }
       glPopMatrix();
       if(option==VENT_CIRCLE)SetClipPlanes(&clipinfo,CLIP_ON);
@@ -634,7 +634,7 @@ void DrawOutlines(void){
   int i;
 
   if(noutlineinfo<=0)return;
-  Antialias(ON);
+  AntiAliasLine(ON);
   glLineWidth(linewidth);
   glBegin(GL_LINES);
   glColor3fv(foregroundcolor);
@@ -657,7 +657,7 @@ void DrawOutlines(void){
     }
   }
   glEnd();
-  Antialias(OFF);
+  AntiAliasLine(OFF);
 }
 /* ------------------ DrawCBox ------------------------ */
 
@@ -764,7 +764,7 @@ void GetBlockVals(  float *xmin, float *xmax,
 void SetCVentDirs(void){
   int ii;
 
-  Init_Circle(90,&cvent_circ);
+  InitCircle(90,&cvent_circ);
   for(ii=0;ii<nmeshes;ii++){
     meshdata *meshi;
     int ibar, jbar;
@@ -992,6 +992,8 @@ void SetCVentDirs(void){
           ny = cvi->jmax - cvi->jmin;
           break;
         default:
+          nx = 0;
+          ny = 0;
           ASSERT(FFALSE);
           break;
       }
@@ -1757,7 +1759,7 @@ void DrawCADGeom(const cadgeomdata *cd){
   lastcolor=rgbtemp;
   if(cullfaces==1)glDisable(GL_CULL_FACE);
 
-  glEnable(GL_LIGHTING);
+  ENABLE_LIGHTING;
   glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
   glEnable(GL_COLOR_MATERIAL);
@@ -1799,7 +1801,7 @@ void DrawCADGeom(const cadgeomdata *cd){
   }
   glEnd();
   glDisable(GL_COLOR_MATERIAL);
-  glDisable(GL_LIGHTING);
+  DISABLE_LIGHTING;
   SNIFF_ERRORS("DrawCADGeom");
   if(cullfaces==1)glEnable(GL_CULL_FACE);
 
@@ -1822,7 +1824,7 @@ void DrawCAD2Geom(const cadgeomdata *cd, int trans_flag){
   glEnable(GL_COLOR_MATERIAL);
   glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
-  glEnable(GL_LIGHTING);
+  ENABLE_LIGHTING;
   if(trans_flag==DRAW_TRANSPARENT)TransparentOn();
   glBegin(GL_QUADS);
   colorindex=0;
@@ -1973,7 +1975,7 @@ void DrawCAD2Geom(const cadgeomdata *cd, int trans_flag){
     glDisable(GL_TEXTURE_2D);
   }
 
-  glDisable(GL_LIGHTING);
+  DISABLE_LIGHTING;
   glDisable(GL_COLOR_MATERIAL);
   if(trans_flag==DRAW_TRANSPARENT)TransparentOff();
   if(cullfaces==1){
@@ -2088,7 +2090,7 @@ void ObstOrVent2Faces(const meshdata *meshi,blockagedata *bc,
   xplt = meshi->xplt;
   yplt = meshi->yplt;
   zplt = meshi->zplt;
-  ASSERT(bc!=NULL&&vi==NULL||bc==NULL&&vi!=NULL);
+  ASSERT((bc!=NULL&&vi==NULL)||(bc==NULL&&vi!=NULL));
   if(bc!=NULL){
     jend=6;
     xminmax[0] = xplt[bc->ijk[IMIN]];
@@ -2543,47 +2545,13 @@ void SetCullVis(void){
       float xx[2], yy[2], zz[2];
 
       culli = meshi->cullgeominfo+iport;
-      culli->vis=0;
-
       xx[0] = NORMALIZE_X(culli->xbeg);
       xx[1] = NORMALIZE_X(culli->xend);
       yy[0] = NORMALIZE_Y(culli->ybeg);
       yy[1] = NORMALIZE_Y(culli->yend);
       zz[0] = NORMALIZE_Z(culli->zbeg);
       zz[1] = NORMALIZE_Z(culli->zend);
-
-      if(PointInFrustum(xx[0],yy[0],zz[0])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[1],yy[0],zz[0])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[0],yy[1],zz[0])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[1],yy[1],zz[0])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[0],yy[0],zz[1])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[1],yy[0],zz[1])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[0],yy[1],zz[1])==1){
-        culli->vis=1;
-        continue;
-      }
-      if(PointInFrustum(xx[1],yy[1],zz[1])==1){
-        culli->vis=1;
-        continue;
-      }
+      culli->vis = BoxInFrustum(xx,yy,zz);
     }
   }
 }
@@ -2811,7 +2779,7 @@ void UpdateFaceLists(void){
       if(facej->bc!=NULL&&facej->bc->prop!=NULL&&facej->bc->prop->blockvis==0)continue;
       if(ClipFace(&clipinfo,facej)==1)continue;
 
-      if(showedit_dialog == 1 && geomtest_option == NO_TEST && j<vent_offset){
+      if(showedit_dialog == 1 && j<vent_offset){
         if(facej->show_bothsides==0)meshi->face_normals_single[n_normals_single++]=facej;
         if(facej->show_bothsides==1)meshi->face_normals_double[n_normals_double++]=facej;
         continue;
@@ -3067,7 +3035,7 @@ void DrawSelectFaces(){
   int i;
   int color_index=0;
 
-  glDisable(GL_LIGHTING);
+  DISABLE_LIGHTING;
   glBegin(GL_QUADS);
   for(i=0;i<nmeshes;i++){
     int j;
@@ -3120,7 +3088,7 @@ void DrawSelectFaces(){
         showtimelist_handle = facei->showtimelist_handle;\
         showtimelist = *showtimelist_handle;\
         if(showtimelist!=NULL&&showtimelist[itimes]==0)continue;\
-        if(showedit_dialog==0||geomtest_option!=NO_TEST){\
+        if(showedit_dialog==0){\
           new_color=facei->color;\
         }\
         else{\
@@ -3153,7 +3121,7 @@ void DrawFaces(){
   if(nface_normals_single>0){
     int j;
 
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
     glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
@@ -3172,7 +3140,7 @@ void DrawFaces(){
       glNormal3f(-1.0,0.0,0.0);
       face_START=meshi->face_normals_single_DOWN_X;
       for(i=0;i<meshi->nface_normals_single_DOWN_X;i++){
-        DRAWFACE(scaled_eyepos[0]>facepos[0],down_color)
+        DRAWFACE(smv_eyepos[0]>facepos[0],down_color)
       }
 
       // UP_X faces
@@ -3180,7 +3148,7 @@ void DrawFaces(){
       glNormal3f(1.0,0.0,0.0);
       face_START=meshi->face_normals_single_UP_X;
       for(i=0;i<meshi->nface_normals_single_UP_X;i++){
-        DRAWFACE(scaled_eyepos[0]<facepos[0],up_color)
+        DRAWFACE(smv_eyepos[0]<facepos[0],up_color)
       }
 
       // DOWN_Y faces
@@ -3188,7 +3156,7 @@ void DrawFaces(){
       glNormal3f(0.0,-1.0,0.0);
       face_START=meshi->face_normals_single_DOWN_Y;
       for(i=0;i<meshi->nface_normals_single_DOWN_Y;i++){
-        DRAWFACE(scaled_eyepos[1]>facepos[1],down_color)
+        DRAWFACE(smv_eyepos[1]>facepos[1],down_color)
       }
 
       // UP_Y faces
@@ -3196,7 +3164,7 @@ void DrawFaces(){
       glNormal3f(0.0,1.0,0.0);
       face_START=meshi->face_normals_single_UP_Y;
       for(i=0;i<meshi->nface_normals_single_UP_Y;i++){
-        DRAWFACE(scaled_eyepos[1]<facepos[1],up_color)
+        DRAWFACE(smv_eyepos[1]<facepos[1],up_color)
       }
 
       // DOWN_Z faces
@@ -3204,7 +3172,7 @@ void DrawFaces(){
       glNormal3f(0.0,0.0,-1.0);
       face_START=meshi->face_normals_single_DOWN_Z;
       for(i=0;i<meshi->nface_normals_single_DOWN_Z;i++){
-        DRAWFACE(scaled_eyepos[2]>facepos[2],down_color)
+        DRAWFACE(smv_eyepos[2]>facepos[2],down_color)
       }
 
       // UP_Z faces
@@ -3212,17 +3180,17 @@ void DrawFaces(){
       glNormal3f(0.0,0.0,1.0);
       face_START=meshi->face_normals_single_UP_Z;
       for(i=0;i<meshi->nface_normals_single_UP_Z;i++){
-        DRAWFACE(scaled_eyepos[2]<facepos[2],up_color)
+        DRAWFACE(smv_eyepos[2]<facepos[2],up_color)
       }
     }
     glEnd();
     glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LIGHTING);
+    DISABLE_LIGHTING;
   }
   if(nface_normals_double>0){
     int j;
 
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
     glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
@@ -3248,7 +3216,7 @@ void DrawFaces(){
         showtimelist_handle = facei->showtimelist_handle;
         showtimelist = *showtimelist_handle;
         if(showtimelist!=NULL&&showtimelist[itimes]==0)continue;
-        if(showedit_dialog == 0 || geomtest_option != NO_TEST){
+        if(showedit_dialog == 0){
           new_color=facei->color;
         }
         else{
@@ -3289,13 +3257,13 @@ void DrawFaces(){
     glEnd();
     if(cullfaces==1)glEnable(GL_CULL_FACE);
     glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LIGHTING);
+    DISABLE_LIGHTING;
   }
   if(nface_outlines>0){
     int j;
 
-    glDisable(GL_LIGHTING);
-    Antialias(ON);
+    DISABLE_LIGHTING;
+    AntiAliasLine(ON);
     glLineWidth(linewidth);
     glBegin(GL_LINES);
     for(j=0;j<nmeshes;j++){
@@ -3347,11 +3315,11 @@ void DrawFaces(){
       }
     }
     glEnd();
-    Antialias(OFF);
+    AntiAliasLine(OFF);
   }
   if(nface_textures>0){
     int j;
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
     glEnable(GL_COLOR_MATERIAL);
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,enable_texture_lighting? GL_MODULATE : GL_REPLACE);
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
@@ -3410,7 +3378,7 @@ void DrawFaces(){
     }
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_TEXTURE_2D);
-    glDisable(GL_LIGHTING);
+    DISABLE_LIGHTING;
   }
 }
 
@@ -3472,7 +3440,7 @@ void DrawTransparentFaces(){
   if(nface_transparent>0){
     int i;
 
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
     glEnable(GL_COLOR_MATERIAL);
@@ -3491,7 +3459,7 @@ void DrawTransparentFaces(){
       showtimelist_handle = facei->showtimelist_handle;
       showtimelist = *showtimelist_handle;
       if(showtimelist!=NULL&&showtimelist[itimes]==0)continue;
-      if(showedit_dialog == 0 || geomtest_option != NO_TEST){
+      if(showedit_dialog == 0){
         new_color=facei->color;
       }
       else{
@@ -3539,14 +3507,14 @@ void DrawTransparentFaces(){
       glVertex3fv(vertices+9);
     }
     glEnd();
-    glDisable(GL_LIGHTING);
+    DISABLE_LIGHTING;
     glDisable(GL_COLOR_MATERIAL);
   }
 
   if(nface_transparent_double>0){
     int j;
 
-    glEnable(GL_LIGHTING);
+    ENABLE_LIGHTING;
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
     glEnable(GL_COLOR_MATERIAL);
@@ -3594,7 +3562,7 @@ void DrawTransparentFaces(){
     glEnd();
     if(cullfaces==1)glEnable(GL_CULL_FACE);
     glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_LIGHTING);
+    DISABLE_LIGHTING;
   }
 
   if(drawing_transparent==1)TransparentOff();
@@ -4014,7 +3982,7 @@ void DrawDemo(int nlat, int nlong){
     case 5:
 //#define COLOR(x) (1.0+((x)-0.2143)/0.3)/2.0
 #define COLOR(x) 0.0
-      glEnable(GL_LIGHTING);
+      ENABLE_LIGHTING;
       glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
       glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
       glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,specular);
@@ -4086,7 +4054,7 @@ void DrawDemo(int nlat, int nlong){
           glEnd();
         }
       }
-      glDisable(GL_LIGHTING);
+      DISABLE_LIGHTING;
       glDisable(GL_COLOR_MATERIAL);
       break;
     default:
@@ -4132,7 +4100,80 @@ void InitUserTicks(void){
 
   user_tick_length=0.1;
   user_tick_width=2.0;
+  user_tick_direction = 1.0;
+}
 
+/* ------------------ GetTickDir ------------------------ */
+
+int GetTickDir(float *mm){
+  /*
+  ( m0 m4 m8  m12 ) (x)    (0)
+  ( m1 m5 m9  m13 ) (y)    (0)
+  ( m2 m6 m10 m14 ) (z)  = (0)
+  ( m3 m7 m11 m15 ) (1)    (1)
+
+  ( m0 m4  m8 )      (m12)
+  Q=  ( m1 m5  m9 )  u = (m13)
+  ( m2 m6 m10 )      (m14)
+
+  (Q   u) (x)     (0)
+  (v^T 1) (y)   = (1)
+
+  m3=m7=m11=0, v^T=0, y=1   Qx+u=0 => x=-Q^Tu
+  */
+  int i, ii;
+  float norm[3], scalednorm[3];
+  float normdir[3];
+  float absangle, cosangle, minangle;
+  int iminangle;
+
+  eye_position_fds[0] = -(mm[0] * mm[12] + mm[1] * mm[13] + mm[2] * mm[14]) / mscale[0];
+  eye_position_fds[1] = -(mm[4] * mm[12] + mm[5] * mm[13] + mm[6] * mm[14]) / mscale[1];
+  eye_position_fds[2] = -(mm[8] * mm[12] + mm[9] * mm[13] + mm[10] * mm[14]) / mscale[2];
+
+  minangle = 1000000.0;
+
+  for(i = -3;i <= 3;i++){
+    if(i == 0)continue;
+    ii = ABS(i);
+    norm[0] = 0.0;
+    norm[1] = 0.0;
+    norm[2] = 0.0;
+    switch(ii){
+    case XDIR:
+      if(i<0)norm[1] = -1.0;
+      if(i>0)norm[1] = 1.0;
+      break;
+    case YDIR:
+      if(i<0)norm[0] = -1.0;
+      if(i>0)norm[0] = 1.0;
+      break;
+    case ZDIR:
+      if(i<0)norm[2] = -1.0;
+      if(i>0)norm[2] = 1.0;
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+    }
+    scalednorm[0] = norm[0] * mscale[0];
+    scalednorm[1] = norm[1] * mscale[1];
+    scalednorm[2] = norm[2] * mscale[2];
+
+    normdir[0] = mm[0] * scalednorm[0] + mm[4] * scalednorm[1] + mm[8] * scalednorm[2];
+    normdir[1] = mm[1] * scalednorm[0] + mm[5] * scalednorm[1] + mm[9] * scalednorm[2];
+    normdir[2] = mm[2] * scalednorm[0] + mm[6] * scalednorm[1] + mm[10] * scalednorm[2];
+
+    cosangle = normdir[2] / sqrt(normdir[0] * normdir[0] + normdir[1] * normdir[1] + normdir[2] * normdir[2]);
+    cosangle = CLAMP(cosangle, -1.0, 1.0);
+    absangle = acos(cosangle)*RAD2DEG;
+    absangle = ABS(absangle);
+    if(absangle<minangle){
+      iminangle = i;
+      minangle = absangle;
+    }
+  }
+  return iminangle;
 }
 
 /* ------------------ DrawUserTicks ------------------------ */
@@ -4142,11 +4183,13 @@ void DrawUserTicks(void){
   float xyz[3],xyz2[3];
   float tick_origin[3], step[3];
   int show_tick_x, show_tick_y, show_tick_z;
+  float fds_tick_length;
 
 #define MIN_DTICK 0.0
 #define TEXT_FACTOR 1.5
 
-  user_tick_option=get_tick_dir(modelview_scratch);
+  user_tick_option=GetTickDir(modelview_scratch);
+  fds_tick_length = user_tick_direction*SCALE2FDS(user_tick_length);
 
   if(auto_user_tick_placement==0){
     tick_origin[0]=user_tick_origin[0];
@@ -4268,13 +4311,13 @@ void DrawUserTicks(void){
       xyz[2]=tick_origin[2];
       if(user_tick_option==ZDIR){
         xyz2[0]=xyz[0];
-        xyz2[1]=xyz[1]-SCALE2FDS(user_tick_length);
+        xyz2[1]=xyz[1]-fds_tick_length;
         xyz2[2]=xyz[2];
       }
       else{
         xyz2[0]=xyz[0];
         xyz2[1]=xyz[1];
-        xyz2[2]=xyz[2]-SCALE2FDS(user_tick_length);
+        xyz2[2]=xyz[2]-fds_tick_length;
       }
       if(i==0){
         glVertex3fv(xyz);
@@ -4303,13 +4346,13 @@ void DrawUserTicks(void){
         xyz[2]=tick_origin[2];
         if(user_tick_option==ZDIR){
           xyz2[0]=xyz[0];
-          xyz2[1]=xyz[1]-SCALE2FDS(user_tick_length)/2.0;
+          xyz2[1]=xyz[1]-fds_tick_length/2.0;
           xyz2[2]=xyz[2];
         }
         else{
           xyz2[0]=xyz[0];
           xyz2[1]=xyz[1];
-          xyz2[2]=xyz[2]-SCALE2FDS(user_tick_length)/2.0;
+          xyz2[2]=xyz[2]-fds_tick_length/2.0;
         }
         glVertex3fv(xyz);
         glVertex3fv(xyz2);
@@ -4326,13 +4369,13 @@ void DrawUserTicks(void){
       xyz[2]=tick_origin[2];
       if(user_tick_option==ZDIR){
         xyz2[0]=xyz[0];
-        xyz2[1]=xyz[1]-TEXT_FACTOR*SCALE2FDS(user_tick_length);
+        xyz2[1]=xyz[1]-TEXT_FACTOR*fds_tick_length;
         xyz2[2]=xyz[2];
       }
       else{
         xyz2[0]=xyz[0];
         xyz2[1]=xyz[1];
-        xyz2[2]=xyz[2]-TEXT_FACTOR*SCALE2FDS(user_tick_length);
+        xyz2[2]=xyz[2]-TEXT_FACTOR*fds_tick_length;
       }
       sprintf(label,"%5.1f",GetUnitVal("Distance",xyz[0]));
       TrimZeros(label);
@@ -4357,14 +4400,14 @@ void DrawUserTicks(void){
         )continue;
       xyz[2]=tick_origin[2];
       if(user_tick_option==ZDIR){
-        xyz2[0]=xyz[0]-SCALE2FDS(user_tick_length);
+        xyz2[0]=xyz[0]-fds_tick_length;
         xyz2[1]=xyz[1];
         xyz2[2]=xyz[2];
       }
       else{
         xyz2[0]=xyz[0];
         xyz2[1]=xyz[1];
-        xyz2[2]=xyz[2]-SCALE2FDS(user_tick_length);
+        xyz2[2]=xyz[2]-fds_tick_length;
       }
       if(i==0){
         glVertex3fv(xyz);
@@ -4392,14 +4435,14 @@ void DrawUserTicks(void){
           )continue;
         xyz[2]=tick_origin[2];
         if(user_tick_option==ZDIR){
-          xyz2[0]=xyz[0]-SCALE2FDS(user_tick_length)/2.0;
+          xyz2[0]=xyz[0]-fds_tick_length/2.0;
           xyz2[1]=xyz[1];
           xyz2[2]=xyz[2];
         }
         else{
           xyz2[0]=xyz[0];
           xyz2[1]=xyz[1];
-          xyz2[2]=xyz[2]-SCALE2FDS(user_tick_length)/2.0;
+          xyz2[2]=xyz[2]-fds_tick_length/2.0;
         }
         glVertex3fv(xyz);
         glVertex3fv(xyz2);
@@ -4419,14 +4462,14 @@ void DrawUserTicks(void){
       xyz[2]=tick_origin[2];
       xyz2[0]=xyz[0];
       if(user_tick_option==ZDIR){
-        xyz2[0]=xyz[0]-TEXT_FACTOR*SCALE2FDS(user_tick_length);
+        xyz2[0]=xyz[0]-TEXT_FACTOR*fds_tick_length;
         xyz2[1]=xyz[1];
         xyz2[2]=xyz[2];
       }
       else{
         xyz2[0]=xyz[0];
         xyz2[1]=xyz[1];
-        xyz2[2]=xyz[2]-TEXT_FACTOR*SCALE2FDS(user_tick_length);
+        xyz2[2]=xyz[2]-TEXT_FACTOR*fds_tick_length;
       }
       sprintf(label,"%5.1f",GetUnitVal("Distance",xyz[1]));
       TrimZeros(label);
@@ -4451,10 +4494,10 @@ void DrawUserTicks(void){
         )continue;
       if(user_tick_option==YDIR){
         xyz2[0]=xyz[0];
-        xyz2[1]=xyz[1]-SCALE2FDS(user_tick_length);
+        xyz2[1]=xyz[1]-fds_tick_length;
       }
       else{
-        xyz2[0]=xyz[0]-SCALE2FDS(user_tick_length);
+        xyz2[0]=xyz[0]-fds_tick_length;
         xyz2[1]=xyz[1];
       }
       xyz2[2]=xyz[2];
@@ -4485,10 +4528,10 @@ void DrawUserTicks(void){
           )continue;
         if(user_tick_option==YDIR){
           xyz2[0]=xyz[0];
-          xyz2[1]=xyz[1]-SCALE2FDS(user_tick_length)/2.0;
+          xyz2[1]=xyz[1]-fds_tick_length/2.0;
         }
         else{
-          xyz2[0]=xyz[0]-SCALE2FDS(user_tick_length)/2.0;
+          xyz2[0]=xyz[0]-fds_tick_length/2.0;
           xyz2[1]=xyz[1];
         }
         xyz2[2]=xyz[2];
@@ -4510,10 +4553,10 @@ void DrawUserTicks(void){
         )continue;
       if(user_tick_option==YDIR){
         xyz2[0]=xyz[0];
-        xyz2[1]=xyz[1]-TEXT_FACTOR*SCALE2FDS(user_tick_length);
+        xyz2[1]=xyz[1]-TEXT_FACTOR*fds_tick_length;
       }
       else{
-        xyz2[0]=xyz[0]-TEXT_FACTOR*SCALE2FDS(user_tick_length);
+        xyz2[0]=xyz[0]-TEXT_FACTOR*fds_tick_length;
         xyz2[1]=xyz[1];
       }
       xyz2[2]=xyz[2];
@@ -4524,79 +4567,6 @@ void DrawUserTicks(void){
   }
 
   glPopMatrix();
-}
-
-/* ------------------ get_tick_dir ------------------------ */
-
-int get_tick_dir(float *mm){
-    /*
-      ( m0 m4 m8  m12 ) (x)    (0)
-      ( m1 m5 m9  m13 ) (y)    (0)
-      ( m2 m6 m10 m14 ) (z)  = (0)
-      ( m3 m7 m11 m15 ) (1)    (1)
-
-       ( m0 m4  m8 )      (m12)
-   Q=  ( m1 m5  m9 )  u = (m13)
-       ( m2 m6 m10 )      (m14)
-
-      (Q   u) (x)     (0)
-      (v^T 1) (y)   = (1)
-
-      m3=m7=m11=0, v^T=0, y=1   Qx+u=0 => x=-Q^Tu
-    */
-  int i,ii;
-  float norm[3],scalednorm[3];
-  float normdir[3];
-  float absangle,cosangle,minangle;
-  int iminangle;
-
-  xyzeyeorig[0] = -(mm[0]*mm[12]+mm[1]*mm[13]+ mm[2]*mm[14])/mscale[0];
-  xyzeyeorig[1] = -(mm[4]*mm[12]+mm[5]*mm[13]+ mm[6]*mm[14])/mscale[1];
-  xyzeyeorig[2] = -(mm[8]*mm[12]+mm[9]*mm[13]+mm[10]*mm[14])/mscale[2];
-
-  minangle=1000000.0;
-
-  for(i=-3;i<=3;i++){
-    if(i==0)continue;
-    ii = ABS(i);
-    norm[0]=0.0;
-    norm[1]=0.0;
-    norm[2]=0.0;
-    switch(ii){
-    case XDIR:
-      if(i<0)norm[1]=-1.0;
-      if(i>0)norm[1]=1.0;
-      break;
-    case YDIR:
-      if(i<0)norm[0]=-1.0;
-      if(i>0)norm[0]=1.0;
-      break;
-    case ZDIR:
-      if(i<0)norm[2]=-1.0;
-      if(i>0)norm[2]=1.0;
-      break;
-    default:
-      ASSERT(FFALSE);
-      break;
-    }
-    scalednorm[0]=norm[0]*mscale[0];
-    scalednorm[1]=norm[1]*mscale[1];
-    scalednorm[2]=norm[2]*mscale[2];
-
-    normdir[0] = mm[0]*scalednorm[0] + mm[4]*scalednorm[1] + mm[8]*scalednorm[2];
-    normdir[1] = mm[1]*scalednorm[0] + mm[5]*scalednorm[1] + mm[9]*scalednorm[2];
-    normdir[2] = mm[2]*scalednorm[0] + mm[6]*scalednorm[1] + mm[10]*scalednorm[2];
-
-    cosangle = normdir[2]/sqrt(normdir[0]*normdir[0]+normdir[1]*normdir[1]+normdir[2]*normdir[2]);
-    cosangle = CLAMP(cosangle,-1.0,1.0);
-    absangle=acos(cosangle)*RAD2DEG;
-    absangle=ABS(absangle);
-    if(absangle<minangle){
-      iminangle=i;
-      minangle=absangle;
-    }
-  }
-  return iminangle;
 }
 
 /* ------------------ DrawGravityAxis ------------------------ */
@@ -4626,7 +4596,7 @@ void DrawGravityAxis(void){
   glVertex3f(xbar/2.0+gvecunit[0],ybar/2.0+gvecunit[1],zbar/2.0+gvecunit[2]);
 
   glEnd();
-  Output3Text(foregroundcolor, xbar / 2.0, ybar / 2.0, zbar / 2.0 + 0.5, "x");
+  Output3Text(foregroundcolor, xbar / 2.0, ybar / 2.0, zbar / 2.0 + 0.5, "z");
   Output3Text(foregroundcolor, xbar / 2.0, ybar / 2.0 + 0.5, zbar / 2.0, "y");
   Output3Text(foregroundcolor, xbar / 2.0 + 0.5, ybar / 2.0, zbar / 2.0, "x");
   Output3Text(foregroundcolor, xbar / 2.0 + gvecunit[0], ybar / 2.0 + gvecunit[1], zbar / 2.0 + gvecunit[2], "g");
@@ -4694,7 +4664,7 @@ void DrawBlockages(int mode, int trans_flag){
   if(trans_flag!=DRAW_TRANSPARENT&&blocklocation!=BLOCKlocation_cad){
     if(mode==SELECTOBJECT){
       if(blockageSelect==1){
-        get_geom_dialog_state();
+        GetGeomDialogState();
         if(structured_isopen == 1 && unstructured_isopen == 0){
           DrawSelectFaces();
           return;
@@ -4740,7 +4710,7 @@ void LevelScene(int level_x, int level_y, float *quat){
 
     elev = camera_current->az_elev+1;
     *elev = 0.0;
-    update_trainer_moves();
+    UpdateTrainerMoves();
     camera_current->dirty=1;
   }
 
@@ -4789,7 +4759,7 @@ void SnapScene(void){
     ielev = (*elev-DELTA/2.0)/DELTA;
   }
   *elev = (int)(DELTA*ielev);
-  update_trainer_moves();
+  UpdateTrainerMoves();
   camera_current->dirty=1;
 
   if(rotation_type==ROTATION_3AXIS&&key_state == KEY_NONE){
@@ -4808,7 +4778,7 @@ void SnapScene(void){
     quat_general[1]=0.0;
     quat_general[2]=0.0;
     quat_general[3]=sin(DEG2RAD*angle/2.0);
-    quat2rot(quat_general,quat_rotation);
+    Quat2Rot(quat_general,quat_rotation);
   }
 
 }
@@ -4847,12 +4817,13 @@ void DrawFacesOLD(){
 
     glEnable(GL_CULL_FACE);
     if(light_faces==1){
-      glEnable(GL_LIGHTING);
+      ENABLE_LIGHTING;
       glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
       glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
       glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
       glEnable(GL_COLOR_MATERIAL);
     }
+    AntiAliasSurface(ON);
     glBegin(GL_TRIANGLES);
     for(j=0;j<nmeshes;j++){
       meshdata *meshi;
@@ -4874,7 +4845,7 @@ void DrawFacesOLD(){
         showtimelist_handle = facei->showtimelist_handle;
         showtimelist = *showtimelist_handle;
         if(showtimelist!=NULL&&showtimelist[itimes]==0)continue;
-        if(showedit_dialog == 0 || geomtest_option != NO_TEST){
+        if(showedit_dialog == 0){
           new_color=facei->color;
         }
         else{
@@ -4915,22 +4886,24 @@ void DrawFacesOLD(){
       }
     }
     glEnd();
+    AntiAliasSurface(OFF);
     if(light_faces==1){
       glDisable(GL_COLOR_MATERIAL);
-      glDisable(GL_LIGHTING);
+      DISABLE_LIGHTING;
    }
   }
   if(nface_normals_double>0){
     int j;
 
     if(light_faces==1){
-      glEnable(GL_LIGHTING);
+      ENABLE_LIGHTING;
       glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
       glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
       glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
       glEnable(GL_COLOR_MATERIAL);
     }
     if(cullfaces==1)glDisable(GL_CULL_FACE);
+    AntiAliasLine(ON);
     glBegin(GL_QUADS);
     for(j=0;j<nmeshes;j++){
       meshdata *meshi;
@@ -4951,7 +4924,7 @@ void DrawFacesOLD(){
         showtimelist_handle = facei->showtimelist_handle;
         showtimelist = *showtimelist_handle;
         if(showtimelist!=NULL&&showtimelist[itimes]==0)continue;
-        if(showedit_dialog == 0 || geomtest_option != NO_TEST){
+        if(showedit_dialog == 0){
           new_color=facei->color;
         }
         else{
@@ -4990,17 +4963,18 @@ void DrawFacesOLD(){
       }
     }
     glEnd();
+    AntiAliasLine(OFF);
     if(cullfaces==1)glEnable(GL_CULL_FACE);
     if(light_faces==1){
       glDisable(GL_COLOR_MATERIAL);
-      glDisable(GL_LIGHTING);
+      DISABLE_LIGHTING;
     }
   }
   if(nface_outlines>0){
     int j;
 
-    glDisable(GL_LIGHTING);
-    Antialias(ON);
+    DISABLE_LIGHTING;
+    AntiAliasLine(ON);
     glLineWidth(linewidth);
     glBegin(GL_LINES);
     for(j=0;j<nmeshes;j++){
@@ -5009,6 +4983,9 @@ void DrawFacesOLD(){
 
       meshi = meshinfo + j;
       if(meshi->blockvis==0)continue;
+#ifdef pp_GPUSMOKE
+      if(show3dsmoke==1&&plane_all_mesh_outlines==0&&IsSmokeInMesh(meshi)==0)continue;
+#endif
       for(i=0;i<meshi->nface_outlines;i++){
         facedata *facei;
         float *vertices;
@@ -5056,13 +5033,13 @@ void DrawFacesOLD(){
       }
     }
     glEnd();
-    Antialias(OFF);
+    AntiAliasLine(OFF);
   }
   if(nface_textures>0){
     int j;
 
     if(light_faces==1){
-      glEnable(GL_LIGHTING);
+      ENABLE_LIGHTING;
       glEnable(GL_COLOR_MATERIAL);
     }
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,enable_texture_lighting? GL_MODULATE : GL_REPLACE);
@@ -5125,7 +5102,7 @@ void DrawFacesOLD(){
     }
     glDisable(GL_TEXTURE_2D);
     if(light_faces==1){
-      glDisable(GL_LIGHTING);
+      DISABLE_LIGHTING;
       glDisable(GL_COLOR_MATERIAL);
     }
   }

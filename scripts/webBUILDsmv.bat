@@ -29,21 +29,25 @@ set type=
 if "%buildtype%" == "test" (
    set type=-t
 )
+if "%buildtype%" == "testinc" (
+   set type=-t
+   set inc=inc
+)
 if "%buildtype%" == "release" (
    set type=-r
 )
 
 if "%platform%" == "windows" (
   cd %svn_root%\smv\Build\smokeview\intel_win_64
-  call make_smv %type%
+  call make_smokeview %type% web %inc%
   goto eof
 )
 if "%platform%" == "linux" (
-  plink %linux_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/Build/smokeview/intel_linux_64 make_smv.sh %type%
+  plink %linux_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/Build/smokeview/intel_linux_64 make_smokeview.sh %type%
   goto eof
 )
 if "%platform%" == "osx" (
-  plink %osx_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/Build/smokeview/intel_osx_64 make_smv.sh %type%
+  plink %osx_logon% %linux_svn_root%/smv/scripts/run_command.sh smv/Build/smokeview/intel_osx_64 make_smokeview.sh %type%
   goto eof
 )
 

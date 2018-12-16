@@ -14,16 +14,15 @@
 
 /* ------------------ _Sniff_Errors ------------------------ */
 
-void _Sniff_Errors(char *whereat){
+void _Sniff_Errors(char *whereat, char *file, int line){
   int error;
 
   while((error=glGetError())!=GL_NO_ERROR){
     char *glu_error;
 
     glu_error=(char *)gluErrorString((unsigned int)error);
-    fprintf(stderr,"*** Error: OpenGL error:%s, where:%s %i\n",
-      glu_error,whereat,snifferrornumber);
-      snifferrornumber++;
+    fprintf(stderr,"\n*** Error: OpenGL error:%s, %s \n file:%s line: %i\n",
+      glu_error,whereat,file,line);
   }
 }
 
@@ -32,53 +31,63 @@ void _Sniff_Errors(char *whereat){
 void UpdateLights(float *pos1, float *pos2){
   int i;
   GLfloat ambientlight2[4], diffuselight2[4];
-  int lightCount;
-  float div;
 
-  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, lightmodel_localviewer == 0? GL_FALSE : GL_TRUE);
-  glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, lightmodel_separatespecularcolor == 0? GL_SINGLE_COLOR : GL_SEPARATE_SPECULAR_COLOR);
+  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
+  glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 
-  lightCount = 0;
-  if(light_enabled0){
-    ++lightCount;
-  }
-  if(light_enabled1){
-    ++lightCount;
+  if(use_light0==1||use_light1==1){
+    float num_lights;
+
+    num_lights = use_light0 + use_light1;
+    for(i = 0;i<3;i++){
+      ambientlight2[i] = ambientlight[i]/num_lights;
+      diffuselight2[i] = diffuselight[i]/num_lights;
+    }
+    ambientlight2[3] = 1.0;
+    diffuselight2[3] = 1.0;
   }
 
-  div = lightCount > 0? 1.0f/(float)lightCount : 1.0f;
-  for(i=0;i<3;i++){
-    ambientlight2[i]=ambientlight[i]*div;
-    diffuselight2[i]=diffuselight[i]*div;
-  }
-  ambientlight2[3]=1.0;
-  diffuselight2[3]=1.0;
-  if(light_enabled0){
-    glLightfv(GL_LIGHT0,GL_DIFFUSE,diffuselight2);
-    glLightfv(GL_LIGHT0,GL_AMBIENT,ambientlight2);
-    if(pos1!=NULL)glLightfv(GL_LIGHT0,GL_POSITION,pos1);
+  if(use_light0==1){
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuselight2);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambientlight2);
+    glLightfv(GL_LIGHT0, GL_POSITION, pos1);
     glEnable(GL_LIGHT0);
   }
   else{
     glDisable(GL_LIGHT0);
   }
 
-  if(light_enabled1){
-    glLightfv(GL_LIGHT1,GL_DIFFUSE,diffuselight2);
-    glLightfv(GL_LIGHT1,GL_AMBIENT,ambientlight2);
-    if(pos2!=NULL)glLightfv(GL_LIGHT1,GL_POSITION,pos2);
+  if(use_light1==1){
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuselight2);
+    glLightfv(GL_LIGHT1, GL_AMBIENT, ambientlight2);
+    glLightfv(GL_LIGHT1, GL_POSITION, pos2);
     glEnable(GL_LIGHT1);
   }
   else{
     glDisable(GL_LIGHT1);
   }
-
-  UpdateLIGHTS=0;
 }
 
-/* ------------------ antialias ------------------------ */
+/* ------------------ AntiAliasSurface ------------------------ */
 
-void Antialias(int flag){
+void AntiAliasSurface(int flag){
+  if(antialiasflag==ON&&1==0){ // disable this routine for now
+    if(flag==ON){
+//      glBlendFunc( GL_SRC_ALPHA_SATURATE, GL_ONE );
+      glEnable( GL_BLEND );
+      glEnable( GL_POLYGON_SMOOTH );
+    }
+    if(flag==OFF){
+      glDisable(GL_BLEND);
+      glDisable( GL_POLYGON_SMOOTH );
+    }
+  }
+}
+
+/* ------------------ AntiAliasLine ------------------------ */
+
+void AntiAliasLine(int flag){
   if(antialiasflag==1){
     if(flag==1){
       glEnable(GL_LINE_SMOOTH);
@@ -128,7 +137,7 @@ void SetViewPoint(int option){
     CopyCamera(camera_current,camera_external);
     camera_current->rotation_type=rotation_type_save;
     camera_current->projection_type=projection_type_save;
-    if(camera_current->projection_type==1){
+    if(camera_current->projection_type==PROJECTION_ORTHOGRAPHIC){
       camera_current->eye[1]=camera_current->isometric_y;
     }
     break;
@@ -166,17 +175,17 @@ void SetViewPoint(int option){
     axis[1]=0.0;
     axis[2]=1.0;
 
-    angleaxis2quat(azimuth,axis,quat_temp);
+    AngleAxis2Quat(azimuth,axis,quat_temp);
 
     axis[0]=x;
     axis[1]=y;
     axis[2]=0.0;
 
-    angleaxis2quat(acos(z),axis,quat_general);
+    AngleAxis2Quat(acos(z),axis,quat_general);
 
-    mult_quat(quat_temp,quat_general,quat_general);
+    MultQuat(quat_temp,quat_general,quat_general);
 
-    quat2rot(quat_general,quat_rotation);
+    Quat2Rot(quat_general,quat_rotation);
   }
   if(option==RESTORE_EXTERIOR_VIEW_ZOOM)camera_current->zoom=zooms[zoomindex];
   zoom=camera_current->zoom;
@@ -198,7 +207,7 @@ void InitVolrenderScript(char *prefix, char *tour_label, int startframe, int ski
     STRCAT(volrender_scriptname,"_volrender.ssf");
   }
 
-  sfd = insert_scriptfile(volrender_scriptname);
+  sfd = InsertScriptFile(volrender_scriptname);
   if(sfd!=NULL)default_script=sfd;
   script_stream=fopen(volrender_scriptname,"w");
   if(script_stream!=NULL){

@@ -30,7 +30,7 @@ void Usage(char *prog,int option){
   PRINTF("%s\n", _(" -bindir dir    - specify location of smokeview bin directory"));
   PRINTF("%s\n", _(" -ini           - output smokeview parameter values to smokeview.ini"));
   PRINTF("%s\n", _(" -runscript     - run the script file casename.ssf"));
-  UsageCommon(prog, HELP_SUMMARY);
+  UsageCommon(HELP_SUMMARY);
   if(option==HELP_ALL){
     PRINTF("\n%s\n", _("Other options:"));
 #ifdef pp_READBUFFER
@@ -42,6 +42,9 @@ void Usage(char *prog,int option){
     PRINTF("%s\n", _(" -demo          - use demonstrator mode of Smokeview"));
     PRINTF("%s\n", _(" -fast          - assume slice files exist in order to reduce startup time"));
     PRINTF("%s\n", _(" -fed           - pre-calculate all FED slice files"));
+#ifdef pp_LANG
+    PRINTF("%s\n", _(" -lang xx       - where xx is de, es, fr, it for German, Spanish, French or Italian"));
+#endif
     PRINTF("%s\n", _(" -ng_ini        - non-graphics version of -ini."));
 #ifdef pp_READBUFFER
     PRINTF("%s\n", _(" -no_buffer     - scan .smv file using file I/O rather from memory"));
@@ -49,20 +52,22 @@ void Usage(char *prog,int option){
     PRINTF("%s\n", _(" -setup         - only show geometry"));
     PRINTF("%s\n", _(" -script scriptfile - run the script file scriptfile"));
 #ifdef pp_LUA
-    PRINTF("%s\n", _(" -runluascript  - run the lua script file casename.lua"));
-    PRINTF("%s\n", _(" -luascript scriptfile - run the Lua script file scriptfile"));
-    PRINTF("%s\n", _(" -killscript    - exit smokeview (with an error code) if the script fails"));
+    PRINTF("%s\n", " -runluascript  - run the lua script file casename.lua");
+    PRINTF("%s\n", " -luascript scriptfile - run the Lua script file scriptfile");
+    PRINTF("%s\n", " -killscript    - exit smokeview (with an error code) if the script fails");
 #endif
+    PRINTF("%s\n", _(" -sizes         - output files sizes then exit"));
     PRINTF("%s\n", _(" -skipframe n   - render every n frames"));
+    PRINTF("%s\n", _(" -smoke3d       - only show 3d smoke"));
     PRINTF("%s\n", _(" -startframe n  - start rendering at frame n"));
     PRINTF("%s\n", _(" -stereo        - activate stereo mode"));
     PRINTF("%s\n", _(" -tempdir       - forces output files to be written to the temporary directory"));
-    PRINTF("%s\n", _(" -update_bounds - calculate boundary file bounds and save to casename.bini"));
+    PRINTF("%s\n", _(" -update_bounds - calculate boundary file bounds and save to casename.binfo"));
     PRINTF("%s\n", _(" -update_slice  - calculate slice file parameters"));
     PRINTF("%s\n", _(" -update        - equivalent to -update_bounds and -update_slice"));
     PRINTF("%s\n", _(" -update_ini case.ini - update case.ini to the current format"));
     PRINTF("%s\n", _(" -volrender     - generate images of volume rendered smoke and fire"));
-    UsageCommon(prog, HELP_ALL);
+    UsageCommon(HELP_ALL);
   }
 
   if(showbuild == 1){
@@ -82,9 +87,6 @@ void Usage(char *prog,int option){
 #ifdef pp_COMPRESS
     strcat(label, ", pp_COMPRESS");
 #endif
-#ifdef pp_CULL
-    strcat(label, ", pp_CULL");
-#endif
 #ifdef pp_DEG
     strcat(label, ", pp_DEG");
 #endif
@@ -99,9 +101,6 @@ void Usage(char *prog,int option){
 #endif
 #ifdef pp_GCC
     strcat(label, ", pp_GCC");
-#endif
-#ifdef pp_GEOMTEST
-    strcat(label, ", pp_GEOMTEST");
 #endif
 #ifdef pp_GLUTGET
     strcat(label, ", pp_GLUTGET");
@@ -157,17 +156,11 @@ void Usage(char *prog,int option){
 #ifdef pp_PARTTEST
     strcat(label, ", pp_PARTTEST");
 #endif
-#ifdef pp_QUICKTIME
-    strcat(label, ", pp_QUICKTIME");
-#endif
 #ifdef pp_READBUFFER
     strcat(label, ", pp_READBUFFER");
 #endif
 #ifdef pp_release
     strcat(label, ", pp_release");
-#endif
-#ifdef pp_RENDER360
-    strcat(label, ", pp_RENDER360");
 #endif
 #ifdef pp_RENDER360_DEBUG
     strcat(label, ", pp_RENDER360_DEBUG");
@@ -178,12 +171,7 @@ void Usage(char *prog,int option){
 #ifdef pp_SHOWTERRAIN
     strcat(label, ", pp_SHOWTERRAIN");
 #endif
-#ifdef pp_SLICELOAD
     strcat(label, ", pp_SLICELOAD");
-#endif
-#ifdef pp_SLICEDUP
-    strcat(label, ", pp_SLICEDUP");
-#endif
 #ifdef pp_THREAD
     strcat(label, ", pp_THREAD");
 #endif
@@ -227,7 +215,7 @@ void ParseCommandline(int argc, char **argv){
     InitCameraList();
     InitOpenGL();
     UpdateRGBColors(COLORBAR_INDEX_NONE);
-    WriteINI(GLOBAL_INI, NULL);
+    WriteIni(GLOBAL_INI, NULL);
     exit(0);
   }
 
@@ -235,7 +223,7 @@ void ParseCommandline(int argc, char **argv){
     InitCameraList();
     use_graphics = 0;
     UpdateRGBColors(COLORBAR_INDEX_NONE);
-    WriteINI(GLOBAL_INI, NULL);
+    WriteIni(GLOBAL_INI, NULL);
     exit(0);
   }
   strcpy(SMVFILENAME, "");
@@ -320,7 +308,7 @@ void ParseCommandline(int argc, char **argv){
   }
 
   FREEMEMORY(log_filename);
-  NewMemory((void **)&log_filename, len_casename + 7 + 1);
+  NewMemory((void **)&log_filename, len_casename + strlen(".smvlog") + 1);
   STRCPY(log_filename, fdsprefix);
   STRCAT(log_filename, ".smvlog");
 
@@ -329,10 +317,10 @@ void ParseCommandline(int argc, char **argv){
   STRCPY(caseini_filename, fdsprefix);
   STRCAT(caseini_filename, ini_ext);
 
-  FREEMEMORY(boundini_filename);
-  NewMemory((void **)&boundini_filename, len_casename + 5 + 1);
-  STRCPY(boundini_filename, fdsprefix);
-  STRCAT(boundini_filename, ".bini");
+  FREEMEMORY(boundinfo_filename);
+  NewMemory((void **)&boundinfo_filename, len_casename + strlen(".binfo") + 1);
+  STRCPY(boundinfo_filename, fdsprefix);
+  STRCAT(boundinfo_filename, ".binfo");
 
   if(smv_filename == NULL){
     NewMemory((void **)&smv_filename, (unsigned int)(len_casename + 6));
@@ -344,7 +332,7 @@ void ParseCommandline(int argc, char **argv){
       STRCPY(scriptbuffer, fdsprefix);
       STRCAT(scriptbuffer, ".ssf");
       if(default_script == NULL&&FILE_EXISTS(scriptbuffer) == YES){
-        default_script = insert_scriptfile(scriptbuffer);
+        default_script = InsertScriptFile(scriptbuffer);
       }
     }
 #ifdef pp_LUA
@@ -368,23 +356,33 @@ void ParseCommandline(int argc, char **argv){
       FREEMEMORY(fds_filein);
     }
   }
+  if(ffmpeg_command_filename == NULL){
+    NewMemory((void **)&ffmpeg_command_filename, (unsigned int)(len_casename + 12));
+    STRCPY(ffmpeg_command_filename, fdsprefix);
+    STRCAT(ffmpeg_command_filename, "_ffmpeg");
+#ifdef WIN32
+    STRCAT(ffmpeg_command_filename,".bat");
+#else
+    STRCAT(ffmpeg_command_filename,".sh");
+#endif
+  }
   if(fed_filename == NULL){
     STRCPY(fed_filename_base, fdsprefix);
     STRCAT(fed_filename_base, ".fed_smv");
     fed_filename = GetFileName(smokeviewtempdir, fed_filename_base, tempdir_flag);
   }
   if(stop_filename == NULL){
-    NewMemory((void **)&stop_filename, (unsigned int)(len_casename + 6));
+    NewMemory((void **)&stop_filename, (unsigned int)(len_casename + strlen(".stop") + 1));
     STRCPY(stop_filename, fdsprefix);
     STRCAT(stop_filename, ".stop");
   }
   if(sliceinfo_filename == NULL){
-    NewMemory((void **)&sliceinfo_filename, strlen(fdsprefix) + 11 + 1);
+    NewMemory((void **)&sliceinfo_filename, strlen(fdsprefix) + strlen(".sinfo") + 1);
     STRCPY(sliceinfo_filename, fdsprefix);
-    STRCAT(sliceinfo_filename, "_slice.info");
+    STRCAT(sliceinfo_filename, ".sinfo");
   }
   if(deviceinfo_filename==NULL){
-    NewMemory((void **)&deviceinfo_filename, strlen(fdsprefix)+12+1);
+    NewMemory((void **)&deviceinfo_filename, strlen(fdsprefix)+strlen("_device.info")+1);
     STRCPY(deviceinfo_filename, fdsprefix);
     STRCAT(deviceinfo_filename, "_device.info");
   }
@@ -395,7 +393,7 @@ void ParseCommandline(int argc, char **argv){
   {
     FILE *stream_iso = NULL;
 
-    NewMemory((void **)&iso_filename, len_casename + 7 + 1);
+    NewMemory((void **)&iso_filename, len_casename + strlen(".isosmv") + 1);
     STRCPY(iso_filename, fdsprefix);
     STRCAT(iso_filename, ".isosmv");
     stream_iso = fopen(iso_filename, "r");
@@ -449,6 +447,10 @@ void ParseCommandline(int argc, char **argv){
     else if(strncmp(argv[i], "-demo", 5) == 0){
       demo_option = 1;
     }
+    else if(strncmp(argv[1], "-sizes", 6)==0){
+      update_filesizes = 1;
+      use_graphics = 0;
+    }
     else if(strncmp(argv[i], "-stereo", 7) == 0){
       stereoactive = 1;
       stereotype = STEREO_TIME;
@@ -466,7 +468,6 @@ void ParseCommandline(int argc, char **argv){
         langlen = strlen(lang);
         NewMemory((void **)&tr_name, langlen + 48 + 1);
         strcpy(tr_name, lang);
-        show_lang_menu = 1;
       }
     }
 #endif
@@ -518,6 +519,9 @@ void ParseCommandline(int argc, char **argv){
     else if(strncmp(argv[i], "-isotest", 8) == 0){
       isotest = 1;
     }
+    else if(strncmp(argv[i], "-smoke3d", 8) == 0){
+      smoke3d_only = 1;
+    }
 #ifdef _DEBUG
     else if(strncmp(argv[i], "-tempdir", 8) == 0){
       tempdir_flag = 1;
@@ -566,6 +570,7 @@ void ParseCommandline(int argc, char **argv){
     }
     else if(strncmp(argv[i], "-runscript", 10) == 0){
       from_commandline = 1;
+      iso_multithread=0;
 #ifdef pp_LUA
       strcpy(script_filename, "");
 #endif
@@ -574,6 +579,7 @@ void ParseCommandline(int argc, char **argv){
 #ifdef pp_LUA
     else if(strncmp(argv[i], "-runluascript", 13) == 0){
       from_commandline = 1;
+      iso_multithread=0;
       strcpy(luascript_filename, "");
       strncpy(luascript_filename, fdsprefix, 1020);
       strcat(luascript_filename, ".lua");
@@ -604,13 +610,14 @@ void ParseCommandline(int argc, char **argv){
     }
     else if(strncmp(argv[i], "-script", 7) == 0){
       from_commandline = 1;
+      iso_multithread=0;
       ++i;
       if(i < argc){
         char scriptbuffer[256];
         scriptfiledata *sfd;
 
         strcpy(scriptbuffer, argv[i]);
-        sfd = insert_scriptfile(scriptbuffer);
+        sfd = InsertScriptFile(scriptbuffer);
         if(sfd != NULL)default_script = sfd;
         runscript = 1;
       }
@@ -618,6 +625,7 @@ void ParseCommandline(int argc, char **argv){
 #ifdef pp_LUA
     else if(strncmp(argv[i], "-luascript", 10) == 0){
       from_commandline = 1;
+      iso_multithread=0;
       ++i;
       if(i < argc){
         strncpy(luascript_filename, argv[i], 1024);
@@ -684,7 +692,17 @@ int main(int argc, char **argv){
   char **argv_sv;
   int return_code;
   char *progname;
-
+#ifdef pp_LUA
+  // If we are using lua, let lua take control here.
+  // Initialise the lua interpreter, it does not take control at this point
+  lua_State *L = initLua();
+  // This code branch gives more control to the interpreter during startup.
+  return_code = RunLuaBranch(L, argc, argv);
+  // All of the below code is run by the lua interpreter, therefore if we want
+  // to use the lua interpreter we ignore the code below and exit once the lua
+  // run is complete.
+  return return_code;
+#endif
   SetStdOut(stdout);
   initMALLOC();
   InitRandAB(1000000);
@@ -699,7 +717,7 @@ int main(int argc, char **argv){
   if(show_help==1){
     Usage("smokeview",HELP_SUMMARY);
     return 1;
-}
+  }
   if(show_version==1){
     PRINTVERSION("smokeview", argv_sv[0]);
     return 1;
@@ -714,6 +732,7 @@ int main(int argc, char **argv){
     smokeview_bindir= GetProgDir(progname,&smokeviewpath);
   }
   InitTextureDir();
+  InitScriptErrorFiles();
   smokezippath= GetSmokeZipPath(smokeview_bindir);
 #ifdef pp_ffmpeg
 #ifdef WIN32
@@ -729,15 +748,11 @@ int main(int argc, char **argv){
   START_TIMER(startup_time);
   START_TIMER(read_time_elapsed);
 
-#ifdef pp_LUA
-  // Initialise the lua interpreter, it does not take control at this point
-  initLua();
-#endif
   return_code= SetupCase(argc,argv_sv);
   if(return_code==0&&update_bounds==1)return_code=Update_Bounds();
   if(return_code!=0)return 1;
   if(convert_ini==1){
-    ReadINI(ini_from);
+    ReadIni(ini_from);
   }
 
   STOP_TIMER(startup_time);

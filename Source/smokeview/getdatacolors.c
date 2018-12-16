@@ -165,15 +165,15 @@ void GetBoundaryColors2(float *t, int nt, unsigned char *it,
   }
 }
 
-/* ------------------ WriteBoundINI ------------------------ */
+/* ------------------ WriteBoundIni ------------------------ */
 
-void WriteBoundINI(void){
+void WriteBoundIni(void){
   FILE *stream = NULL;
   char *fullfilename = NULL;
   int i;
 
-  if(boundini_filename == NULL)return;
-  fullfilename = GetFileName(smokeviewtempdir, boundini_filename, tempdir_flag);
+  if(boundinfo_filename == NULL)return;
+  fullfilename = GetFileName(smokeviewtempdir, boundinfo_filename, tempdir_flag);
 
   if(fullfilename == NULL)return;
 
@@ -190,7 +190,7 @@ void WriteBoundINI(void){
       patchdata *patchj;
 
       patchj = patchinfo + j;
-      if(patchi->type == patchj->type&&patchi->filetype == patchj->filetype){
+      if(patchi->shortlabel_index == patchj->shortlabel_index&&patchi->patch_filetype == patchj->patch_filetype){
         skipi = 1;
         break;
       }
@@ -206,15 +206,15 @@ void WriteBoundINI(void){
       }
     }
     fprintf(stream, "B_BOUNDARY\n");
-    fprintf(stream, " %f %f %f %f %i %s\n", boundi->global_min, boundi->percentile_min, boundi->percentile_max, boundi->global_max, patchi->filetype, patchi->label.shortlabel);
+    fprintf(stream, " %f %f %f %f %i %s\n", boundi->global_min, boundi->percentile_min, boundi->percentile_max, boundi->global_max, patchi->patch_filetype, patchi->label.shortlabel);
   }
   if(stream != NULL)fclose(stream);
   FREEMEMORY(fullfilename);
 }
 
-/* ------------------ UpdatePatchBounds ------------------------ */
+/* ------------------ UpdateBoundaryBounds ------------------------ */
 
-void UpdatePatchBounds(patchdata *patchi){
+void UpdateBoundaryBounds(patchdata *patchi){
   histogramdata full_histogram;
   bounddata *boundi;
   int j;
@@ -227,7 +227,7 @@ void UpdatePatchBounds(patchdata *patchi){
     patchdata *patchj;
 
     patchj=patchinfo+j;
-    if(patchj->type!=patchi->type||patchj->filetype!=patchi->filetype)continue;
+    if(patchi->boundary!=patchj->boundary || patchi->patch_filetype != patchj->patch_filetype || patchj->shortlabel_index != patchi->shortlabel_index)continue;
     MergeHistogram(&full_histogram,patchj->histogram,MERGE_BOUNDS);
   }
 
@@ -242,18 +242,19 @@ void UpdatePatchBounds(patchdata *patchi){
     patchdata *patchj;
 
     patchj=patchinfo+j;
-    if(patchi==patchj||patchj->type!=patchi->type||patchj->filetype!=patchi->filetype)continue;
+    if (patchi == patchj)continue;
+    if(patchi->boundary != patchj->boundary || patchi->patch_filetype != patchj->patch_filetype || patchj->shortlabel_index !=patchi->shortlabel_index)continue;
 
     boundj = &patchj->bounds;
     memcpy(boundj,boundi,sizeof(bounddata));
   }
-  WriteBoundINI();
+  WriteBoundIni();
   FreeHistogram(&full_histogram);
 }
 
 /* ------------------ GetBoundaryColors3 ------------------------ */
 
-void GetBoundaryColors3(patchdata *patchi, float *t, int nt, unsigned char *it,
+void GetBoundaryColors3(patchdata *patchi, float *t, int start, int nt, unsigned char *it,
               int settmin, float *ttmin, int settmax, float *ttmax,
               float *tmin_arg, float *tmax_arg,
               int nlevel,
@@ -266,7 +267,7 @@ void GetBoundaryColors3(patchdata *patchi, float *t, int nt, unsigned char *it,
   int itt;
   float new_tmin, new_tmax, tmin2, tmax2;
 
-  UpdatePatchBounds(patchi);
+  UpdateBoundaryBounds(patchi);
 
   CheckMemory;
   tmin2=patchi->bounds.global_min;
@@ -301,10 +302,13 @@ void GetBoundaryColors3(patchdata *patchi, float *t, int nt, unsigned char *it,
   range = new_tmax - new_tmin;
   factor = 0.0f;
   if(range!=0.0f)factor = (float)(255-2*extreme_data_offset)/range;
-  for(n=0;n<nt;n++){
+
+  t+=start;
+  it+=start;
+  for(n=start;n<nt;n++){
     float val;
 
-    val = *t;
+    val = *t++;
 
     if(val<new_tmin){
       itt=0;
@@ -318,7 +322,6 @@ void GetBoundaryColors3(patchdata *patchi, float *t, int nt, unsigned char *it,
       itt=extreme_data_offset+(int)(factor*(val-new_tmin));
     }
     *it++=CLAMP(itt,colorbar_offset,255-colorbar_offset);
-    t++;
   }
   CheckMemory;
   STRCPY(scale,"");
@@ -354,9 +357,9 @@ void GetBoundaryColors3(patchdata *patchi, float *t, int nt, unsigned char *it,
   Num2String(&labels[nlevel-1][0],tval);
 }
 
-/* ------------------ UpdateAllPatchColors ------------------------ */
+/* ------------------ UpdateAllBoundaryColors ------------------------ */
 
-void UpdateAllPatchColors(void){
+void UpdateAllBoundaryColors(void){
   int i;
 
   for(i=0;i<nmeshes;i++){
@@ -372,7 +375,7 @@ void UpdateAllPatchColors(void){
 
     npatchvals = meshi->npatch_times*meshi->npatchsize;
 
-    GetBoundaryColors3(patchi,meshi->patchval, npatchvals, meshi->cpatchval,
+    GetBoundaryColors3(patchi,meshi->patchval, 0, npatchvals, meshi->cpatchval,
     setpatchmin,&patchmin, setpatchmax,&patchmax,
     &patchmin_global, &patchmax_global,
     nrgb, colorlabelpatch,patchi->scale,boundarylevels256,
@@ -454,7 +457,7 @@ void UpdatePart5Extremes(void){
         for(k=2;k<partclassi->ntypes;k++){
           partpropdata *prop_id;
 
-          prop_id = get_partprop(partclassi->labels[k].longlabel);
+          prop_id = GetPartProp(partclassi->labels[k].longlabel);
           if(prop_id==NULL)continue;
 
           if(strcmp(partclassi->labels[k].longlabel,"HUMAN_COLOR")==0){
@@ -502,7 +505,7 @@ void GetPart5Colors(partdata *parti, int nlevel, int convert_flag){
       for(k=2;k<partclassi->ntypes;k++){
         partpropdata *prop_id;
 
-        prop_id = get_partprop(partclassi->labels[k].longlabel);
+        prop_id = GetPartProp(partclassi->labels[k].longlabel);
         if(prop_id==NULL)continue;
 
         if(strcmp(partclassi->labels[k].longlabel,"HUMAN_COLOR")==0){
@@ -629,9 +632,9 @@ void GetPart5Colors(partdata *parti, int nlevel, int convert_flag){
         int m;
         partpropdata *prop_U, *prop_V, *prop_W;
 
-        prop_U = get_partprop(partclassi->labels[partclassi->col_u_vel+2].longlabel);
-        prop_V = get_partprop(partclassi->labels[partclassi->col_v_vel+2].longlabel);
-        prop_W = get_partprop(partclassi->labels[partclassi->col_w_vel+2].longlabel);
+        prop_U = GetPartProp(partclassi->labels[partclassi->col_u_vel+2].longlabel);
+        prop_V = GetPartProp(partclassi->labels[partclassi->col_v_vel+2].longlabel);
+        prop_W = GetPartProp(partclassi->labels[partclassi->col_w_vel+2].longlabel);
         if(prop_U!=NULL&&prop_V!=NULL&&prop_W!=NULL){
           float umax, vmax, wmax;
 
@@ -666,14 +669,12 @@ void GetPart5Colors(partdata *parti, int nlevel, int convert_flag){
   }
 // erase data memory in a separate loop (so all "columns" are available when doing any conversions)
   datacopy = parti->data5;
-  if(parti->data_type == PARTDATA){
-    for(i = 0; i < parti->ntimes; i++){
-      int j;
+  for(i = 0; i < parti->ntimes; i++){
+    int j;
 
-      for(j = 0; j < parti->nclasses; j++){
-        FREEMEMORY(datacopy->rvals);
-        datacopy++;
-      }
+    for(j = 0; j < parti->nclasses; j++){
+      FREEMEMORY(datacopy->rvals);
+      datacopy++;
     }
   }
   for(i=0;i<npart5prop;i++){
@@ -1237,8 +1238,8 @@ void UpdateTexturebar(void){
   SNIFF_ERRORS("UpdateTexturebar - glTexImage1D (rgb_iso) ");
 
   glBindTexture(GL_TEXTURE_1D,slicesmoke_colormap_id);
-  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_slicesmokecolormap);
-  SNIFF_ERRORS("UpdateTexturebar - glTexImage1D (rgb_slicesmokecolormap) ");
+  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_slicesmokecolormap_01);
+  SNIFF_ERRORS("UpdateTexturebar - glTexImage1D (rgb_slicesmokecolormap_01) ");
 
   glBindTexture(GL_TEXTURE_1D,volsmoke_colormap_id);
   glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_volsmokecolormap);
@@ -1251,7 +1252,7 @@ void UpdateTexturebar(void){
     SNIFF_ERRORS("UpdateTexturebar - glTexSubImage1D (rgb_volsmokecolormap) ");
     glActiveTexture(GL_TEXTURE0);
   }
-  if(gpuactive==1&&SHOW_gslice_data==1){
+  if(gpuactive==1&&SHOW_gslice_data==1&& slice3d_colormap_id_defined==1){
     glActiveTexture(GL_TEXTURE4);
     glTexSubImage1D(GL_TEXTURE_1D,0,0,256,GL_RGBA,GL_FLOAT, rgb_slice);
     SNIFF_ERRORS("updatecolors after glTexSubImage1D (rgb_slice)");
@@ -1300,6 +1301,23 @@ void InitRGB(void){
   }
 }
 
+/* ------------------ HaveFire ------------------------ */
+
+int HaveFire(void) {
+  int i;
+
+  for (i = 0; i < nsmoke3dinfo; i++) {
+    smoke3ddata *smoke3di;
+
+    smoke3di = smoke3dinfo + i;
+    if (smoke3di->loaded == 1) {
+      if (smoke3di->type == HRRPUV)return HRRPUV;
+      if (smoke3di->type == TEMP)return TEMP;
+    }
+  }
+  return 0;
+}
+
 /* ------------------ UpdateSmokeColormap ------------------------ */
 
 void UpdateSmokeColormap(int option){
@@ -1309,21 +1327,21 @@ void UpdateSmokeColormap(int option){
   float *fire_cb;
   float val, valmin, valmax, valcut;
   int icut;
-  float *rgb_colormap;
-  int have_fire;
+  float *rgb_colormap=NULL;
 
   have_fire = HaveFire();
-  if(option==RENDER_SLICE){
+  if(have_fire==HRRPUV&&option==RENDER_SLICE){
     valmin=global_hrrpuv_min;
     valcut=global_hrrpuv_cutoff;
     valmax=global_hrrpuv_max;
-    rgb_colormap = rgb_slicesmokecolormap;
+    rgb_colormap = rgb_slicesmokecolormap_01;
   }
   else{
-    valmin=temperature_min;
-    valcut=temperature_cutoff;
-    valmax=temperature_max;
+    valmin = global_temp_min;
+    valcut = global_temp_cutoff;
+    valmax = global_temp_max;
     rgb_colormap = rgb_volsmokecolormap;
+    if(have_fire == TEMP)rgb_colormap=rgb_slicesmokecolormap_01;
   }
   icut = (MAXSMOKERGB-1)*((valcut-valmin)/(valmax-valmin));
   icut = CLAMP(icut,2,(MAXSMOKERGB-3));
@@ -1354,7 +1372,6 @@ void UpdateSmokeColormap(int option){
         }
       }
       break;
-    case FIRECOLORMAP_NOCONSTRAINT:
     case FIRECOLORMAP_CONSTRAINT:
       for(n=0;n<MAXSMOKERGB;n++){
         float n2,factor;
@@ -1365,10 +1382,20 @@ void UpdateSmokeColormap(int option){
         val = valmin + (float)n*(valmax-valmin)/(float)(MAXSMOKERGB-1);
         if(firecolormap_type==FIRECOLORMAP_CONSTRAINT){
           if(val<=valcut){
-            n2 = 1+127*(val-valmin)/(valcut-valmin);
+            if(valcut>valmin){
+              n2 = 1+127*(val-valmin)/(valcut-valmin);
+            }
+            else{
+              n2 = 1;
+            }
           }
           else{
-            n2 = 128 + 126*(val-valcut)/(valmax-valcut);
+            if(valmax>valcut){
+              n2 = 128 + 126*(val-valcut)/(valmax-valcut);
+            }
+            else{
+              n2 = 128;
+            }
           }
         }
         else{
@@ -1505,7 +1532,7 @@ void UpdateRGBColors(int colorbar_index){
       }
     }
   }
-  if(colorbarflip==1){
+  if(colorbar_flip==1){
     {
       int nnn;
 
@@ -1755,11 +1782,11 @@ void UpdateChopColors(void){
       }
     }
   }
-  if(slicebounds!=NULL&&islicetype!=-1){
+  if(slicebounds!=NULL&&slicefile_labelindex!=-1){
     float smin, smax;
 
-    smin=slicebounds[islicetype].valmin;
-    smax=slicebounds[islicetype].valmax;
+    smin=slicebounds[slicefile_labelindex].valmin;
+    smax=slicebounds[slicefile_labelindex].valmax;
 
     if(setslicechopmin==1){
       ichopmin=nrgb_full*(slicechopmin-smin)/(smax-smin);
