@@ -244,6 +244,10 @@ gnu_linux_64_db : CPP       = g++
 gnu_linux_64_db : FC        = gfortran
 gnu_linux_64_db : exe       = smokeview_linux_$(SMV_TESTSTRING)64_db
 
+# ------------- gnu_linux_64 ----------------
+
+ifeq ($(BUILD_TARGET),gnu_linux_64)
+
 LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
 LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
 	$(LIB_DIR_PLAT)/libgd.a $(LIB_DIR_PLAT)/libjpeg.a \
@@ -273,33 +277,6 @@ $(LIBS_PLAT):
 	@echo Making lib: $(notdir $@)
 	cd $(LIB_DIR_PLAT) && $(MAKE) -f ../Makefile $(notdir $@)
 endif
-
-# ------------- gnu_linux_64 ----------------
-
-ifeq ($(BUILD_TARGET),gnu_linux_64)
-
-LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
-LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
-	$(LIB_DIR_PLAT)/libgd.a $(LIB_DIR_PLAT)/libjpeg.a \
-	$(LIB_DIR_PLAT)/libpng.a $(LIB_DIR_PLAT)/libz.a \
-	$(LIB_DIR_PLAT)/libglut.a
-FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC -ffree-form -frecord-marker=4
-CFLAGS    = -O0 -m64 -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) -Wno-write-strings $(GNU_COMPINFO) $(GITINFO)
-ifeq ($(LUA_SCRIPTING),true)
-gnu_linux_64 : CFLAGS    += -D pp_LUA
-gnu_linux_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.a
-gnu_linux_64 : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
-endif
-gnu_linux_64 : LFLAGS    = -m64
-gnu_linux_64 : CC        = gcc
-gnu_linux_64 : CPP       = g++
-gnu_linux_64 : FC        = gfortran
-gnu_linux_64 : exe       = smokeview_linux_$(SMV_TESTSTRING)64
-
-gnu_linux_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
-	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
-		$(SMV_LIBS_LINUX) -lgfortran $(SYSTEM_LIBS_LINUX) \
-		$(if $(LUA_SCRIPTING),$(LIB_DIR_PLAT)/liblua.a -ldl)
 
 # ------------- mingw_win_64 ----------------
 
@@ -424,11 +401,6 @@ gnu_osx_64 : $(obj)
 .PHONY : clean
 clean:
 	rm -f *.o *.mod *.lua *.dll *.so
-
-#-------------- force compilation of string_util.c -----------
-
-string_util.o:	.FORCE
-string_util.obj:	.FORCE
 
 .FORCE:
 
