@@ -80,8 +80,6 @@ ifeq ($(LUA_SCRIPTING),true)
 INC += -I $(SOURCE_DIR)/lua-5.3.1/src
 endif
 
-default: ${BUILD_TARGET}
-
 SMVLUACORE_DIR = $(SOURCE_DIR)/smvluacore
 SMVLUACORE_FILES = $(SMVLUACORE_DIR)/smv.lua $(SMVLUACORE_DIR)/ssf.lua \
 	$(SMVLUACORE_DIR)/ssfparser.lua $(SMVLUACORE_DIR)/ssfcommands.lua \
@@ -95,7 +93,6 @@ SMVLUACORE_FILES = $(SMVLUACORE_DIR)/smv.lua $(SMVLUACORE_DIR)/ssf.lua \
 smvluacore: $(SMVLUACORE_FILES)
 	cp $(SMVLUACORE_FILES) .
 # cannot use $^ here
-
 
 # ------------- libraries used by smokeview -------------------
 
@@ -244,27 +241,49 @@ gnu_linux_64_db : CPP       = g++
 gnu_linux_64_db : FC        = gfortran
 gnu_linux_64_db : exe       = smokeview_linux_$(SMV_TESTSTRING)64_db
 
-# ------------- gnu_linux_64 ----------------
-
-ifeq ($(BUILD_TARGET),gnu_linux_64)
-
-LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
-LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
+gnu_linux_64_db : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
+gnu_linux_64_db : LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
 	$(LIB_DIR_PLAT)/libgd.a $(LIB_DIR_PLAT)/libjpeg.a \
 	$(LIB_DIR_PLAT)/libpng.a $(LIB_DIR_PLAT)/libz.a \
 	$(LIB_DIR_PLAT)/libglut.a
-FFLAGS    = -O0 -m64 -ggdb -Wall -x f95-cpp-input -D pp_GCC -ffree-form -frecord-marker=4 -fcheck=all -fbacktrace
-CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO)
+
 ifeq ($(LUA_SCRIPTING),true)
-CFLAGS    += -D pp_LUA
-SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
-LIBS_PLAT += $(LIB_DIR_PLAT)/liblua.a $(LIB_DIR_PLAT)/lpeg.so
+gnu_linux_64_db : CFLAGS    += -D pp_LUA
+gnu_linux_64_db : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
+gnu_linux_64_db : LIBS_PLAT += $(LIB_DIR_PLAT)/liblua.a $(LIB_DIR_PLAT)/lpeg.so
 endif
-LFLAGS    = -m64
-CC        = gcc
-CPP       = g++
-FC        = gfortran
-exe       = smokeview_linux_$(SMV_TESTSTRING)64_db
+
+gnu_linux_64_db : $(exe) $(if $(LUA_SCRIPTING),$(SMVLUACORE_FILES))
+
+$(exe) : $(obj) $(LIBS_PLAT)
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
+		$(SMV_LIBS_LINUX) -lgfortran $(SYSTEM_LIBS_LINUX) \
+		$(if $(LUA_SCRIPTING),$(LIB_DIR_PLAT)/liblua.a -ldl)
+
+$(LIBS_PLAT):
+	@echo Making lib: $(notdir $@)
+	cd $(LIB_DIR_PLAT) && $(MAKE) -f ../Makefile $(notdir $@)
+
+# ------------- gnu_linux_64 ----------------
+
+
+gnu_linux_64 : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
+gnu_linux_64 : LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
+	$(LIB_DIR_PLAT)/libgd.a $(LIB_DIR_PLAT)/libjpeg.a \
+	$(LIB_DIR_PLAT)/libpng.a $(LIB_DIR_PLAT)/libz.a \
+	$(LIB_DIR_PLAT)/libglut.a
+gnu_linux_64 : FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC -ffree-form -frecord-marker=4
+gnu_linux_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) -Wno-write-strings $(GNU_COMPINFO) $(GITINFO)
+ifeq ($(LUA_SCRIPTING),true)
+gnu_linux_64 : CFLAGS    += -D pp_LUA
+gnu_linux_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/liblua.a $(LIB_DIR_PLAT)/lpeg.so
+gnu_linux_64 : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
+endif
+gnu_linux_64 : LFLAGS    = -m64
+gnu_linux_64 : CC        = gcc
+gnu_linux_64 : CPP       = g++
+gnu_linux_64 : FC        = gfortran
+gnu_linux_64 : exe       = smokeview_linux_$(SMV_TESTSTRING)64
 
 gnu_linux_64 : $(exe) $(if $(LUA_SCRIPTING),$(SMVLUACORE_FILES))
 
@@ -276,7 +295,6 @@ $(exe) : $(obj) $(LIBS_PLAT)
 $(LIBS_PLAT):
 	@echo Making lib: $(notdir $@)
 	cd $(LIB_DIR_PLAT) && $(MAKE) -f ../Makefile $(notdir $@)
-endif
 
 # ------------- mingw_win_64 ----------------
 
@@ -285,38 +303,50 @@ mingw_win_64 : LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
 	$(LIB_DIR_PLAT)/libgd.a $(LIB_DIR_PLAT)/libjpeg.a \
 	$(LIB_DIR_PLAT)/libpng.a $(LIB_DIR_PLAT)/libz.a \
 	$(LIB_DIR_PLAT)/libglutwin.a
-INC += -I $(SOURCE_DIR)/GLINC-mingw -I $(SOURCE_DIR)/pthreads
-FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC \
-							   -ffree-form -frecord-marker=4
-CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW -std=gnu11 -Wno-write-strings
-# mingw_win_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW
+mingw_win_64 : INC += -I $(SOURCE_DIR)/GLINC-mingw -I $(SOURCE_DIR)/pthreads
+mingw_win_64 : FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC \
+						       -ffree-form -frecord-marker=4
+mingw_win_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW
 ifeq ($(LUA_SCRIPTING),true)
 mingw_win_64 : CFLAGS    += -D pp_LUA
 mingw_win_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.dll
 mingw_win_64 : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.dll
+mingw_win_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.dll $(LIB_DIR_PLAT)/lpeg.dll
 endif
-mingw_win_64 : LFLAGS    = -m64 -static-libgcc -static-libstdc++
+mingw_win_64 : LFLAGS    = -m64 -static-libgcc -static-libstdc++ -lgcov
 mingw_win_64 : CC        = gcc
 mingw_win_64 : CPP       = g++
 mingw_win_64 : FC        = gfortran
-mingw_win_64 : exe       = smokeview_mingw_$(SMV_TESTSTRING)64
+mingw_win_64 : exe       = smokeview_mingw_$(SMV_TESTSTRING)64.exe
+mingw_win_64 : execn     = $(bin)/$(exe)
 
-mingw_win_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
+mingw_win_64 : excn = smokeview_mingw_64.exe
+
+mingw_win_64 : $(excn) $(if $(LUA_SCRIPTING),$(SMVLUACORE_FILES))
+	@echo $(GITINFO)
+	@echo $^
+
+$(excn): $(obj) $(LIBS_PLAT)
 	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
 		$(($(LUA_SCRIPTING),true),-I $(SOURCE_DIR)/lua-5.3.1/src) \
 		$(LIBS_PLAT) -lgfortran -lm -lopengl32 -lglu32 \
 		-lgdi32 -lwinmm -lcomdlg32 -lpthread
 
+$(LIBS_PLAT):
+	@echo Making lib: $(notdir $@)
+	cd $(LIB_DIR_PLAT) && $(MAKE) -f ../Makefile $(notdir $@)
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV   OSX   VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+
+OSX_INTEL_LIBS = $(IFORT_COMPILER_LIB)/libifcoremt.a $(IFORT_COMPILER_LIB)/libimf.a $(IFORT_COMPILER_LIB)/libirc.a $(IFORT_COMPILER_LIB)/libsvml.a
 
 # ------------- intel_osx_64 ----------------
 
 intel_osx_64 : LIB_DIR_PLAT = $(LIB_DIR)/intel_osx_64
 intel_osx_64 : LIBS_PLAT =
-intel_osx_64 : FFLAGS    = -O0 -m64 -traceback -static-intel -fpp -D pp_INTEL -D pp_OSX -mmacosx-version-min=10.7
-intel_osx_64 : CFLAGS    = -O0 -m64 -traceback -static-intel -D pp_OSX -D pp_INTEL -mmacosx-version-min=10.7 $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO)
+intel_osx_64 : FFLAGS    = -O0 -m64 -static-intel -fpp -D pp_OSX -mmacosx-version-min=10.4
+intel_osx_64 : CFLAGS    = -O0 -m64 -static-intel -D pp_OSX  -D pp_INTEL -mmacosx-version-min=10.4 $(SMV_TESTFLAG) $(SMV_PROFILEFLAG) $(GITINFO)
 intel_osx_64 : LIBLUA    =
 ifeq ($(LUA_SCRIPTING),true)
 intel_osx_64 : CFLAGS    += -D pp_LUA
@@ -324,11 +354,11 @@ intel_osx_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.a
 intel_osx_64 : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
 intel_osx_64 : LIBLUA    += $(LIB_DIR_PLAT)/liblua.a -ldl
 endif
-intel_osx_64 : LFLAGS    = -m64 -traceback -static-intel -framework OpenGL -framework GLUT -mmacosx-version-min=10.7
+intel_osx_64 : LFLAGS    = -m64 -static-intel -framework OpenGL -framework GLUT -mmacosx-version-min=10.4
 intel_osx_64 : CC        = icc
 intel_osx_64 : CPP       = icpc
 intel_osx_64 : FC        = ifort
-intel_osx_64 : exe       = smokeview_osx_$(SMV_TESTSTRING)64
+intel_osx_64 : exe       = smokeview_osx_$(SMV_TESTSTRING)64 $(SMV_PROFILESTRING)
 
 intel_osx_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
 	icpc -o $(bin)/$(exe) $(LFLAGS) $(obj)  -L $(LIB_DIR_PLAT) $(SMV_LIBS_OSX) \
@@ -400,7 +430,10 @@ gnu_osx_64 : $(obj)
 
 .PHONY : clean
 clean:
-	rm -f *.o *.mod *.lua *.dll *.so
+	-rm -f *.o *.mod *.lua *.dll *.so *.exe
+	-rm -f *.gcno *.gcda
+	-rm -f $(LIBS_PLAT)
+	cd $(LIB_DIR_PLAT) && $(MAKE) -f ../Makefile $@
 
 .FORCE:
 
