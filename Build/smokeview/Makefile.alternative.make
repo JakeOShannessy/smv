@@ -38,8 +38,6 @@ endif
 INTEL_COMPINFO=-Dpp_COMPVER=\"$(INTEL_COMPVERSION)\"
 GNU_COMPINFO=-Dpp_COMPVER=\"$(GNU_COMPVERSION)\"
 
-default: ${BUILD_TARGET}
-
 #----------------------------------------------------------------------------
 # Should not need to edit lines below except to add or 'debug' target entries
 
@@ -82,6 +80,8 @@ ifeq ($(LUA_SCRIPTING),true)
 INC += -I $(SOURCE_DIR)/lua-5.3.1/src
 endif
 
+default: ${BUILD_TARGET}
+
 SMVLUACORE_DIR = $(SOURCE_DIR)/smvluacore
 SMVLUACORE_FILES = $(SMVLUACORE_DIR)/smv.lua $(SMVLUACORE_DIR)/ssf.lua \
 	$(SMVLUACORE_DIR)/ssfparser.lua $(SMVLUACORE_DIR)/ssfcommands.lua \
@@ -95,6 +95,7 @@ SMVLUACORE_FILES = $(SMVLUACORE_DIR)/smv.lua $(SMVLUACORE_DIR)/ssf.lua \
 smvluacore: $(SMVLUACORE_FILES)
 	cp $(SMVLUACORE_FILES) .
 # cannot use $^ here
+
 
 # ------------- libraries used by smokeview -------------------
 
@@ -243,15 +244,47 @@ gnu_linux_64_db : CPP       = g++
 gnu_linux_64_db : FC        = gfortran
 gnu_linux_64_db : exe       = smokeview_linux_$(SMV_TESTSTRING)64_db
 
-gnu_linux_64_db : $(obj)
-	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR)/gnu_linux_64 $(SMV_LIBS_LINUX) -lgfortran $(SYSTEM_LIBS_LINUX)
+LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
+LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
+	$(LIB_DIR_PLAT)/libgd.a $(LIB_DIR_PLAT)/libjpeg.a \
+	$(LIB_DIR_PLAT)/libpng.a $(LIB_DIR_PLAT)/libz.a \
+	$(LIB_DIR_PLAT)/libglut.a
+FFLAGS    = -O0 -m64 -ggdb -Wall -x f95-cpp-input -D pp_GCC -ffree-form -frecord-marker=4 -fcheck=all -fbacktrace
+CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO)
+ifeq ($(LUA_SCRIPTING),true)
+CFLAGS    += -D pp_LUA
+SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
+LIBS_PLAT += $(LIB_DIR_PLAT)/liblua.a $(LIB_DIR_PLAT)/lpeg.so
+endif
+LFLAGS    = -m64
+CC        = gcc
+CPP       = g++
+FC        = gfortran
+exe       = smokeview_linux_$(SMV_TESTSTRING)64_db
+
+gnu_linux_64_db : $(exe) $(if $(LUA_SCRIPTING),$(SMVLUACORE_FILES))
+
+$(exe) : $(obj) $(LIBS_PLAT)
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
+		$(SMV_LIBS_LINUX) -lgfortran $(SYSTEM_LIBS_LINUX) \
+		$(if $(LUA_SCRIPTING),$(LIB_DIR_PLAT)/liblua.a -ldl)
+
+$(LIBS_PLAT):
+	@echo Making lib: $(notdir $@)
+	cd $(LIB_DIR_PLAT) && $(MAKE) -f ../Makefile $(notdir $@)
+endif
 
 # ------------- gnu_linux_64 ----------------
 
-gnu_linux_64 : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
-gnu_linux_64 : LIBS_PLAT =
-gnu_linux_64 : FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC -ffree-form -frecord-marker=4
-gnu_linux_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) -Wno-write-strings $(GNU_COMPINFO) $(GITINFO)
+ifeq ($(BUILD_TARGET),gnu_linux_64)
+
+LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
+LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
+	$(LIB_DIR_PLAT)/libgd.a $(LIB_DIR_PLAT)/libjpeg.a \
+	$(LIB_DIR_PLAT)/libpng.a $(LIB_DIR_PLAT)/libz.a \
+	$(LIB_DIR_PLAT)/libglut.a
+FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC -ffree-form -frecord-marker=4
+CFLAGS    = -O0 -m64 -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) -Wno-write-strings $(GNU_COMPINFO) $(GITINFO)
 ifeq ($(LUA_SCRIPTING),true)
 gnu_linux_64 : CFLAGS    += -D pp_LUA
 gnu_linux_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.a
@@ -275,10 +308,11 @@ mingw_win_64 : LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
 	$(LIB_DIR_PLAT)/libgd.a $(LIB_DIR_PLAT)/libjpeg.a \
 	$(LIB_DIR_PLAT)/libpng.a $(LIB_DIR_PLAT)/libz.a \
 	$(LIB_DIR_PLAT)/libglutwin.a
-mingw_win_64 : INC += -I $(SOURCE_DIR)/GLINC-mingw -I $(SOURCE_DIR)/pthreads
-mingw_win_64 : FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC \
-						       -ffree-form -frecord-marker=4
-mingw_win_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW
+INC += -I $(SOURCE_DIR)/GLINC-mingw -I $(SOURCE_DIR)/pthreads
+FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC \
+							   -ffree-form -frecord-marker=4
+CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW -std=gnu11 -Wno-write-strings
+# mingw_win_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW
 ifeq ($(LUA_SCRIPTING),true)
 mingw_win_64 : CFLAGS    += -D pp_LUA
 mingw_win_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.dll
