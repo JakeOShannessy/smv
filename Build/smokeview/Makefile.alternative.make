@@ -266,7 +266,7 @@ CPP       = g++
 FC        = gfortran
 exe       = smokeview_linux_$(SMV_TESTSTRING)64_db
 
-gnu_linux_64_db : $(exe) $(if $(LUA_SCRIPTING),$(SMVLUACORE_FILES))
+gnu_linux_64 : $(exe) $(if $(LUA_SCRIPTING),$(SMVLUACORE_FILES))
 
 $(exe) : $(obj) $(LIBS_PLAT)
 	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
