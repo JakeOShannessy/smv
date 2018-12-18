@@ -11,16 +11,15 @@ makelibs()
   fi
 }
 
-makelibs libgd.a 
-makelibs libglui.a 
+makelibs libgd.a
+makelibs libglui.a
 if [ "`uname`" != "Darwin" ]; then
-makelibs libglut.a 
+makelibs libglut.a
 fi
-makelibs libjpeg.a 
-makelibs libpng.a 
-makelibs libz.a 
+makelibs libjpeg.a
+makelibs libpng.a
+makelibs libz.a
 if [ "$LUA" == "lua" ];then
 makelibs liblua.a
 makelibs lpeg.so
 fi
-

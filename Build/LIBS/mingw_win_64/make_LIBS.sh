@@ -43,7 +43,12 @@ export TARGET=mingw
 ./makelib.sh $OPTS
 cp src/lua53.dll $LIBDIR/.
 
-# LPEG # Lua parsing libarary to parse SSF files
+# LPEG # Lua parsing library to parse SSF files
 cd $SRCDIR/lpeg-1.0.0
 ./makelib.sh $OPTS
 cp lpeg.dll $LIBDIR/.
+
+# LFS # Lua library for interacting with the filesystem
+cd $SRCDIR/luafilesystem
+./makelib.sh $OPTS
+cp lfs.dll $LIBDIR/.

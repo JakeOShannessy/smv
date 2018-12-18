@@ -1,0 +1,4 @@
+[submodule "Source/luafilesystem"]
+	path = Source/luafilesystem
+	url = https://github.com/keplerproject/luafilesystem.git
+	branch = 1.7
