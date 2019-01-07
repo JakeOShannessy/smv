@@ -71,6 +71,8 @@ local special = {
     yformat     = 'set format y "%s"',
     width       = false,
     height      = false,
+    fname       = false,
+    fsize       = false,
 }
 
 -- outputs that should be persistent
