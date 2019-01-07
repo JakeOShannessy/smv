@@ -1,3 +1,4 @@
+PROJECT_DIRECTORY=luafilesystem
 T= lfs
 
 CONFIG= ./config
@@ -5,20 +6,20 @@ EXT=.dll
 
 include $(CONFIG)
 
-SRCS= src/$T.c
-OBJS= src/$T.o
+SRCS= $(PROJECT_DIRECTORY)/src/$T.c
+OBJS= $(PROJECT_DIRECTORY)/src/$T.o
 
-lib: src/lfs.so
+lib: $(PROJECT_DIRECTORY)/src/lfs$(EXT)
 
-src/lfs.so: $(OBJS)
+$(PROJECT_DIRECTORY)/src/lfs$(EXT): $(OBJS)
 	MACOSX_DEPLOYMENT_TARGET="10.3"; export MACOSX_DEPLOYMENT_TARGET; $(CC) $(LIB_OPTION) -L$(LUA_LIBDIR) -o lfs$(EXT) $(OBJS) -llua53
 
 test: lib
-	LUA_CPATH=./src/?.so lua tests/test.lua
+	LUA_CPATH=$(PROJECT_DIRECTORY)/src/?.so lua $(PROJECT_DIRECTORY)/tests/test.lua
 
 install:
 	mkdir -p $(LUA_LIBDIR)
-	cp src/lfs.so $(LUA_LIBDIR)
+	cp $(PROJECT_DIRECTORY)/src/lfs.so $(LUA_LIBDIR)
 
 clean:
-	rm -f src/lfs.so $(OBJS)
+	rm -f $(PROJECT_DIRECTORY)/src/lfs.so $(OBJS)
