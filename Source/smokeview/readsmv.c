@@ -8850,6 +8850,7 @@ typedef struct {
       isoi->geom_ndynamics=NULL;
       isoi->geom_times=NULL;
       isoi->geom_vals=NULL;
+      isoi->histogram = NULL;
 #endif
 
       isoi->normaltable=NULL;
