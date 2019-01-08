@@ -188,14 +188,32 @@ function gnuplot.codegen(g, cmd, path)
     return table.concat(code, '\n')
 end
 
+osname = ""
+
+if package.config:sub(1,1) == "\\" then
+    osname = "windows"
+else
+    osname = "not windows"
+end
+
 function gnuplot.do_plot(g, cmd, path)
     local code = gnuplot.codegen(g, cmd, path)
     local name = write_temp_file( code )
     local opt = ""
     if persist[g._type] then opt = '--persist' end
-    local command = string.format("%s %s %s",  gnuplot.bin, opt, name)
-    os.execute( command )
-
+    -- A hack to use 'start' on windows to get around path issues.
+    local startstring = ""
+    if osname == "windows" then
+        startstring = "start \"plotting\" /w"
+    end
+    print(string.format("os: %s", osname))
+    local command = string.format("%s %s %s %s", startstring, gnuplot.bin, opt, name)
+    print(string.format("command: %s", command))
+    local success
+    local result
+    local err_code
+    success, result, err_code = os.execute( command )
+    if not success then error(string.format("plot failed with %d", err_code)) end
     return g
 end
 
