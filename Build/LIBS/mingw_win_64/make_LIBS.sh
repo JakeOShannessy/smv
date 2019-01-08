@@ -49,6 +49,6 @@ cd $SRCDIR/lpeg-1.0.0
 cp lpeg.dll $LIBDIR/.
 
 # LFS # Lua library for interacting with the filesystem
-cd $SRCDIR/luafilesystem
+cd $SRCDIR/lfs
 ./makelib.sh $OPTS
 cp lfs.dll $LIBDIR/.
