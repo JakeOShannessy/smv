@@ -48,3 +48,8 @@ cd $SRCDIR/lpeg-1.0.0
 export TARGET=linux
 ./makelib.sh $OPTS
 cp lpeg.so $LIBDIR/.
+
+# LFS # Lua library for interacting with the filesystem
+cd $SRCDIR/lfs
+./makelib.sh $OPTS
+cp lfs.so $LIBDIR/.
