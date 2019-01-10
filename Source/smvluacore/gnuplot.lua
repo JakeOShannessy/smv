@@ -204,7 +204,7 @@ function gnuplot.do_plot(g, cmd, path)
     -- A hack to use 'start' on windows to get around path issues.
     local startstring = ""
     if osname == "windows" then
-        startstring = "start \"plotting\" /w"
+        startstring = "start \"plotting\" /w /b"
     end
     print(string.format("os: %s", osname))
     local command = string.format("%s %s %s %s", startstring, gnuplot.bin, opt, name)
