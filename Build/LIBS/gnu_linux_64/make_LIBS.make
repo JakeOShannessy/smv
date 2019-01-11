@@ -61,7 +61,7 @@ lpeg.so: liblua.a
 # LFS # Lua library for interacting with the filesystem
 lfs.so: liblua.a
 	cd $(SRCDIR)/lfs; \
-		export TARGET=linux
+		export TARGET=linux; \
 		./makelib.sh $(OPTS); \
 		cp lfs.so $(LIBDIR)/.
 
