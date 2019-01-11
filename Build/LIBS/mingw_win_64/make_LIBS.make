@@ -2,7 +2,7 @@ OPTS="-g -6"
 LIBDIR=$(shell pwd)
 SRCDIR=$(LIBDIR)/../../../Source
 
-all: libgd.a libglui.a libglutwin.a libjpeg.a libpng.a libz.a lua53.dll lpeg.dll
+all: libgd.a libglui.a libglutwin.a libjpeg.a libpng.a libz.a lua53.dll lpeg.dll lfs.dll
 
 # GD
 libgd.a:
@@ -58,5 +58,11 @@ lpeg.dll: liblua.a
 		export TARGET=mingw; \
 		./makelib.sh $(OPTS); \
 		cp lpeg.dll $(LIBDIR)/.
+
+# LFS # Lua library for interacting with the filesystem
+lfs.dll: liblua.a
+	cd $(SRCDIR)/lfs; \
+		./makelib.sh $(OPTS); \
+		cp lfs.dll $(LIBDIR)/.
 
 .PHONY: all
