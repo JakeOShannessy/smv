@@ -3,4 +3,4 @@ rm -f *.o
 source ../scripts/setopts.sh $*
 
 rm -f *.o
-eval make COMPILER=${COMPILER} SIZE=${SIZE}
+eval make COMPILER=${COMPILER} SIZE=${SIZE} ${TARGET}

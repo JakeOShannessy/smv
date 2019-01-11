@@ -2,7 +2,7 @@ OPTS="-g"
 LIBDIR=$(shell pwd)
 SRCDIR=$(LIBDIR)/../../../Source
 
-all: libgd.a libglui.a libglut.a libjpeg.a libpng.a libz.a liblua.a lpeg.so
+all: libgd.a libglui.a libglut.a libjpeg.a libpng.a libz.a liblua.a lpeg.so lfs.so
 
 # GD
 libgd.a:
@@ -57,5 +57,12 @@ lpeg.so: liblua.a
 		export TARGET=linux; \
 		./makelib.sh $(OPTS); \
 		cp lpeg.so $(LIBDIR)/.
+
+# LFS # Lua library for interacting with the filesystem
+lfs.so: liblua.a
+	cd $(SRCDIR)/lfs; \
+		export TARGET=linux
+		./makelib.sh $(OPTS); \
+		cp lfs.so $(LIBDIR)/.
 
 .PHONY: all

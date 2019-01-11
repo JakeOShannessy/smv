@@ -11,6 +11,9 @@ OBJS= $(PROJECT_DIRECTORY)/src/$T.o
 
 lib: $(PROJECT_DIRECTORY)/src/lfs$(EXT)
 
+linux: EXT = .so
+linux: lib
+
 $(PROJECT_DIRECTORY)/src/lfs$(EXT): $(OBJS)
 	MACOSX_DEPLOYMENT_TARGET="10.3"; export MACOSX_DEPLOYMENT_TARGET; $(CC) $(LIB_OPTION) -L$(LUA_LIBDIR) -o lfs$(EXT) $(OBJS) -llua53
 
