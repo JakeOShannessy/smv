@@ -71,17 +71,53 @@ int ProgramSetupLua(lua_State *L, int argc, char **argv_sv) {
   return 0;
 }
 
+// We can only take strings from the Lua interpreter as consts, as they are
+// 'owned' by the Lua code and we should not change them in C. This function
+// creates a copy that we can change in C.
+char **copy_argv(const int argc, const char * const *argv_sv) {
+  char **argv_sv_non_const;
+  // Allocate pointers for list of smokeview arguments
+  NewMemory((void **)&argv_sv_non_const,argc*sizeof(char *));
+  // Allocate space for each smokeview argument
+  int i;
+  for (i = 0; i < argc; i++) {
+    int length = strlen(argv_sv[i]);
+    NewMemory((void **)&argv_sv_non_const[i],(length+1)*sizeof(char));
+    strcpy(argv_sv_non_const[i], argv_sv[i]);
+  }
+  return argv_sv_non_const;
+}
+
+// The corresponding function to free the memory allocated by copy_argv
+void free_argv(const int argc, char **argv_sv_non_const) {
+  // Free the memory allocated for each argument
+  int i;
+  for (i = 0; i < argc; i++) {
+    FREEMEMORY(argv_sv_non_const[i]);
+  }
+  // Free the memory allocated for the array
+  FREEMEMORY(argv_sv_non_const);
+}
+
 int lua_SetupGLUT(lua_State *L) {
   int argc = lua_tonumber(L, 1);
-  char **argv_sv = lua_topointer(L, 2);
-  SetupGlut(argc,argv_sv);
+  const char * const *argv_sv = lua_topointer(L, 2);
+  // Here we must copy the arguments received from the Lua interperter to
+  // allow them to be non-const (i.e. let the C code modify them).
+  char **argv_sv_non_const = copy_argv(argc, argv_sv);
+  SetupGlut(argc, argv_sv_non_const);
+  free_argv(argc, argv_sv_non_const);
   return 0;
 }
 
 int lua_SetupCase(lua_State *L) {
   int argc = lua_tonumber(L, 1);
-  char **argv_sv = lua_topointer(L, 2);
-  int return_code = SetupCase(argc,argv_sv);
+  const char * const *argv_sv = lua_topointer(L, 2);
+  // Here we must copy the arguments received from the Lua interperter to
+  // allow them to be non-const (i.e. let the C code modify them).
+  char **argv_sv_non_const = copy_argv(argc, argv_sv);
+  int return_code = SetupCase(argc,argv_sv_non_const);
+  free_argv(argc, argv_sv_non_const);
   lua_pushnumber(L, return_code);
   return 1;
 }
