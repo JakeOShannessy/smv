@@ -74,8 +74,8 @@ int ProgramSetupLua(lua_State *L, int argc, char **argv_sv) {
 }
 
 int lua_SetupGLUT(lua_State *L) {
-  int argc = lua_tonumber(L, 1);
-  char **argv_sv = lua_topointer(L, 2);
+  int argc = lua_tonumber(L, -2);
+  char **argv_sv = lua_topointer(L, -1);
   SetupGlut(argc,argv_sv);
   return 0;
 }
