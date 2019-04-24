@@ -14,8 +14,8 @@ lib: $(PROJECT_DIRECTORY)/src/lfs$(EXT)
 linux: EXT = .so
 linux: lib
 
-$(PROJECT_DIRECTORY)/src/lfs$(EXT): $(OBJS)
-	MACOSX_DEPLOYMENT_TARGET="10.3"; export MACOSX_DEPLOYMENT_TARGET; $(CC) $(LIB_OPTION) -L$(LUA_LIBDIR) -o lfs$(EXT) $(OBJS) -llua53
+$(PROJECT_DIRECTORY)/src/lfs$(EXT): $(SRCS)
+	MACOSX_DEPLOYMENT_TARGET="10.3"; export MACOSX_DEPLOYMENT_TARGET; $(CC) $(LIB_OPTION) -L$(LUA_LIBDIR) -o lfs$(EXT) $(OBJS)
 
 test: lib
 	LUA_CPATH=$(PROJECT_DIRECTORY)/src/?.so lua $(PROJECT_DIRECTORY)/tests/test.lua

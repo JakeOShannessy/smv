@@ -284,7 +284,7 @@ gnu_linux_64 : FC        = gfortran
 gnu_linux_64 : exe       = smokeview_linux_$(SMV_TESTSTRING)64
 
 gnu_linux_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
-	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -Wl,-E -L $(LIB_DIR_PLAT) \
 		$(SMV_LIBS_LINUX) -lgfortran $(SYSTEM_LIBS_LINUX) \
 		$(if $(LUA_SCRIPTING),$(LIB_DIR_PLAT)/liblua.a -ldl)
 
