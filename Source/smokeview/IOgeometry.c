@@ -285,7 +285,6 @@ void GetGeomZBounds(float *zmin, float *zmax){
     }
   }
 }
-#ifdef pp_TISO
 
 /* ------------------ TextureOff ------------------------ */
 
@@ -305,7 +304,6 @@ int TextureOn(GLuint texture_id,int *texture_first){
   glBindTexture(GL_TEXTURE_1D, texture_id);
   return 1;
 }
-#endif
 
 /* ------------------ DrawGeom ------------------------ */
 
@@ -321,9 +319,7 @@ void DrawGeom(int flag, int timestate){
   float last_transparent_level=-1.0;
   int ntris;
   tridata **tris;
-#ifdef pp_TISO
   int texture_state = OFF, texture_first=1;
-#endif
 
   if(flag == DRAW_OPAQUE){
     ntris=nopaque_triangles;
@@ -341,11 +337,9 @@ void DrawGeom(int flag, int timestate){
 
     if(flag==DRAW_TRANSPARENT&&use_transparency_data==1)TransparentOn();
 
-#ifdef pp_TISO
     if(usetexturebar==1&&texture_state==OFF){
       texture_state=TextureOn(texture_iso_colorbar_id,&texture_first);
     }
-#endif
 
     if(cullfaces == 1)glDisable(GL_CULL_FACE);
     glEnable(GL_NORMALIZE);
@@ -359,6 +353,7 @@ void DrawGeom(int flag, int timestate){
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
     glTranslatef(-xbar0,-ybar0,-zbar0);
+    glTranslatef(geom_delx, geom_dely, geom_delz);
     glBegin(GL_TRIANGLES);
     for(i=0;i<ntris;i++){
       tridata *trianglei;
@@ -401,13 +396,11 @@ void DrawGeom(int flag, int timestate){
       if(geom_force_transparent == 1)transparent_level_local = geom_transparency;
       if(iso_opacity_change==0||trianglei->geomtype!=GEOM_ISO){
         if(color!=last_color||ABS(last_transparent_level-transparent_level_local)>0.001){
-#ifdef pp_TISO
           if(texture_state==ON){
             glEnd();
             texture_state = TextureOff();
             glBegin(GL_TRIANGLES);
           }
-#endif
           glColor4f(color[0], color[1], color[2], transparent_level_local);
           last_color = color;
           last_transparent_level = transparent_level_local;
@@ -430,14 +423,11 @@ void DrawGeom(int flag, int timestate){
           float *vnorm, *vpos;
           float factor;
           float transparent_level_local_new;
-#ifdef pp_TISO
           geomlistdata *geomlisti=NULL;
           float *vertvals=NULL;
           float texture_val;
-#endif
 
           vertj = trianglei->verts[j];
-#ifdef pp_TISO
           geomlisti = trianglei->geomlisti;
           if(geomlisti!=NULL)vertvals=geomlisti->vertvals;
           if(show_iso_color==1&&vertvals!=NULL){
@@ -451,7 +441,6 @@ void DrawGeom(int flag, int timestate){
             colorbar_index = CLAMP((int)(255.0*texture_val),0,255);
             color = rgb_iso+4*colorbar_index;
           }
-#endif
           if(iso_opacity_change==1&&trianglei->geomtype==GEOM_ISO){
           // v1 = xyz - fds_eyepos vector from eye to vertex
           // v2 = vert_norm        normal vector from vertex
@@ -470,7 +459,6 @@ void DrawGeom(int flag, int timestate){
             factor = ABS(DOT3(v1,v2));
             transparent_level_local_new = CLAMP(transparent_level_local,0.0,1.0);
             if(factor!=0.0&&transparent_level_local<1.0)transparent_level_local_new = 1.0 - pow(1.0-transparent_level_local,1.0/factor);
-#ifdef pp_TISO
             if(usetexturebar==1&&show_iso_color==1&&vertvals!=NULL&&trianglei->geomtype!=GEOM_GEOM){
               if(texture_state==OFF){
                 glEnd();
@@ -487,9 +475,6 @@ void DrawGeom(int flag, int timestate){
               }
               glColor4f(color[0], color[1], color[2], transparent_level_local_new);
             }
-#else
-            glColor4f(color[0], color[1], color[2], transparent_level_local_new);
-#endif
           }
           glNormal3fv(trianglei->vert_norm+3*j);
           glVertex3fv(vertj->xyz);
@@ -497,11 +482,9 @@ void DrawGeom(int flag, int timestate){
       }
     }
     glEnd();
-#ifdef pp_TISO
     if(usetexturebar==1&&texture_state==ON){
       texture_state=TextureOff();
     }
-#endif
 
     if(visGeomTextures == 1 || show_texture_1dimage == 1){
       texturedata *lasttexture;
@@ -616,6 +599,7 @@ void DrawGeom(int flag, int timestate){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
       glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(geom_delx, geom_dely, geom_delz);
 
       glEnable(GL_NORMALIZE);
       glShadeModel(GL_SMOOTH);
@@ -696,6 +680,7 @@ void DrawGeom(int flag, int timestate){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
       glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(geom_delx, geom_dely, geom_delz);
       glDisable(GL_COLOR_MATERIAL);
       DISABLE_LIGHTING;
       glLineWidth(20.0);
@@ -757,6 +742,7 @@ void DrawGeom(int flag, int timestate){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
       glTranslatef(-xbar0,-ybar0,-zbar0);
+      glTranslatef(geom_delx, geom_dely, geom_delz);
       if(geomi->geomtype==GEOM_ISO){
         glLineWidth(isolinewidth);
         line_offset = iso_outline_offset;
@@ -837,6 +823,7 @@ void DrawGeom(int flag, int timestate){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
       glTranslatef(-xbar0,-ybar0,-zbar0);
+      glTranslatef(geom_delx, geom_dely, geom_delz);
       glPointSize(6.0);
       glBegin(GL_POINTS);
       for(j=0;j<geomlisti->nverts;j++){
@@ -863,6 +850,7 @@ void DrawGeom(int flag, int timestate){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
       glTranslatef(-xbar0,-ybar0,-zbar0);
+      glTranslatef(geom_delx, geom_dely, geom_delz);
       glLineWidth(geom_linewidth);
       glBegin(GL_LINES);
       glColor3fv(blue);
@@ -938,6 +926,7 @@ void DrawGeom(int flag, int timestate){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
       glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(geom_delx, geom_dely, geom_delz);
       glLineWidth(geom_linewidth);
       glBegin(GL_LINES);
       glColor3fv(blue);
@@ -1016,6 +1005,7 @@ void DrawGeom(int flag, int timestate){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
       glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(geom_delx, geom_dely, geom_delz);
       glLineWidth(geom_linewidth);
       glBegin(GL_LINES);
 
@@ -1057,6 +1047,7 @@ void DrawGeom(int flag, int timestate){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
       glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(geom_delx, geom_dely, geom_delz);
       glPointSize(5.0);
       glBegin(GL_POINTS);
 
@@ -1784,9 +1775,7 @@ void ReadAllGeom(void){
 
 void InitGeomlist(geomlistdata *geomlisti){
   geomlisti->verts = NULL;
-#ifdef pp_TISO
   geomlisti->vertvals = NULL;
-#endif
   geomlisti->triangles = NULL;
   geomlisti->triangleptrs = NULL;
   geomlisti->connected_triangles = NULL;
@@ -2604,7 +2593,7 @@ void ClassifyGeom(geomdata *geomi,int *geom_frame_index){
           break;
         }
       }
-#ifdef XXX
+#ifdef XXXXXXX
 //      printf("\n\nedges\n");
 //      printf("                       total: %i\n", nedges);
 //      printf("        0 connected triangle: %i\n", ntri0);
@@ -2653,7 +2642,7 @@ void ClassifyGeom(geomdata *geomi,int *geom_frame_index){
         vi = verts + ii;
         if(vi->isdup == 1)ndups++;
       }
-#ifdef XXX
+#ifdef XXXXXX
 //      printf("\nvertices\n");
 //      printf("\n   total: %i\n", nverts);
 //      printf("duplicates: %i\n", ndups);
@@ -2926,8 +2915,7 @@ void DrawGeomData(int flag, patchdata *patchi, int geom_type){
     for(i = 0; i < 1; i++){
       geomdata *geomi;
       geomlistdata *geomlisti;
-      int ntris;
-      int j;
+      int ntris, j, enable_lighting;
 
       geomi = patchi->geominfo;
       if(geomi == NULL || geomi->display == 0 || geomi->loaded == 0)continue;
@@ -2937,9 +2925,15 @@ void DrawGeomData(int flag, patchdata *patchi, int geom_type){
       else{
         geomlisti = geomi->geomlistinfo + geomi->itime;
       }
-     if(geomlisti->norms_defined==0){
+      if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY&&geomdata_lighting==1){
+        enable_lighting = 1;
+      }
+      else{
+        enable_lighting = 0;
+      }
+      if(geomlisti->norms_defined==0&&enable_lighting==1){
         UpdatePatchGeomTriangles(patchi, geom_type);
-     }
+      }
 
       ntris = geomlisti->ntriangles;
       if(ntris == 0)continue;
@@ -2948,7 +2942,7 @@ void DrawGeomData(int flag, patchdata *patchi, int geom_type){
 
       glEnable(GL_NORMALIZE);
       glShadeModel(GL_SMOOTH);
-      if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY&&geomdata_lighting==1){
+      if(enable_lighting==1){
         ENABLE_LIGHTING;
       }
       else{
@@ -3111,10 +3105,8 @@ void DrawGeomData(int flag, patchdata *patchi, int geom_type){
       glEnd();
       glPopMatrix();
       glDisable(GL_COLOR_MATERIAL);
-      if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY){
-      if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY&&geomdata_lighting==1){
-          DISABLE_LIGHTING;
-        }
+      if(enable_lighting==1){
+        DISABLE_LIGHTING;
       }
       if(flag == DRAW_TRANSPARENT&&use_transparency_data == 1 && patchi->patch_filetype == PATCH_GEOMETRY_SLICE)TransparentOff();
     }
@@ -3382,6 +3374,7 @@ void GetGeomInfoPtrs(int flag){
       break;
     }
   }
+  if(show_geom_bndf==1)hide_geom = 0;
 
   // count size of geominfoptrs array
 
@@ -3427,7 +3420,7 @@ void GetGeomInfoPtrs(int flag){
 
 /* ------------------ ShowHideSortGeometry ------------------------ */
 
-void ShowHideSortGeometry(float *mm){
+void ShowHideSortGeometry(int sort_geom, float *mm){
   int i;
   int count_transparent,count_opaque;
   int itime;
@@ -3477,9 +3470,7 @@ void ShowHideSortGeometry(float *mm){
           if(tri->geomsurf->transparent_level >= 1.0)is_opaque = 1;
           if(geom_force_transparent == 1)is_opaque = 0;
           isurf = tri->geomsurf - surfinfo - nsurfinfo - 1;
-#ifdef pp_TISO
           tri->geomlisti = geomlisti;
-#endif
           if((geomi->geomtype==GEOM_ISO&&showlevels != NULL&&showlevels[isurf] == 0) || tri->geomsurf->transparent_level <= 0.0){
             continue;
           }
@@ -3498,7 +3489,7 @@ void ShowHideSortGeometry(float *mm){
             if(iter==1)transparent_triangles[count_transparent] = tri;
             count_transparent++;
           }
-          if(iter==0&&sort_geometry == 1){
+          if(iter==0&&sort_geom == 1){
             xyz1 = tri->verts[0]->xyz;
             xyz2 = tri->verts[1]->xyz;
             xyz3 = tri->verts[2]->xyz;
@@ -3529,7 +3520,7 @@ void ShowHideSortGeometry(float *mm){
   }
   ntransparent_triangles = count_transparent;
   nopaque_triangles = count_opaque;
-  if(sort_geometry==1&&ntransparent_triangles>0){
+  if(sort_geom==1&&ntransparent_triangles>0){
     qsort((isotri **)transparent_triangles, (size_t)ntransparent_triangles, sizeof(tridata **), CompareTransparentTriangles);
   }
 }

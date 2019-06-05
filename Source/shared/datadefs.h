@@ -2,11 +2,14 @@
 #define DATADEFS_H_DEFINED
 
 #ifndef ADDPROCINFO
-#define ADDPROCINFO(procinfo,nprocinfo,proc,proc_id) \
+#define ADDPROCINFO(procinfo,nprocinfo,proc,proc_id,dialog_id) \
   procinfo[nprocinfo].rollout = proc; \
   procinfo[nprocinfo].rollout_id = proc_id; \
-  nprocinfo++
+  procinfo[nprocinfo].dialog = dialog_id; \
+  (nprocinfo)++
 #endif
+
+#define INSERT_ROLLOUT(a,b) InsertRollout(a,b)
 
 #define ONEORZERO(val) if(val!=0)val=1
 

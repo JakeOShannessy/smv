@@ -36,6 +36,11 @@ endif
 INTEL_COMPINFO=-Dpp_COMPVER=\"$(INTEL_COMPVERSION)\"
 GNU_COMPINFO=-Dpp_COMPVER=\"$(GNU_COMPVERSION)\"
 
+.rc.obj:
+	windres $^ -o $@
+%.obj : %.rc
+	windres $^ -o $@
+
 #----------------------------------------------------------------------------
 # Should not need to edit lines below except to add or 'debug' target entries
 
@@ -49,7 +54,7 @@ bin = .
 obj = main.o menus.o IOscript.o IOshooter.o glui_objects.o glui_shooter.o glui_wui.o\
       csphere.o colortimebar.o smv_endian.o camera.o IOgeometry.o IOwui.o\
       IOobjects.o IOtour.o glui_display.o glui_tour.o getdatacolors.o smokeview.o\
-      output.o renderfile.o isobox.o getdatabounds.o readsmv.o scontour2d.o\
+      output.o renderimage.o renderhtml.o isobox.o getdatabounds.o readsmv.o scontour2d.o\
       glui_smoke.o glui_clip.o glui_stereo.o glui_geometry.o glui_motion.o\
       glui_bounds.o dmalloc.o interp.o assert.o \
       compress.o IOvolsmoke.o IOsmoke.o IOplot3d.o IOslice.o IOboundary.o\
@@ -58,6 +63,10 @@ obj = main.o menus.o IOscript.o IOshooter.o glui_objects.o glui_shooter.o glui_w
       shaders.o unit.o threader.o histogram.o translate.o update.o viewports.o\
       smv_geometry.o showscene.o glew.o infoheader.o  md5.o sha1.o sha256.o\
       fdsmodules.o gsmv.o getdata.o
+
+ifeq ($(ICON),icon)
+obj += resource.o
+endif
 
 ifeq ($(LUA_SCRIPTING),true)
 obj += c_api.o lua_api.o csv.o
@@ -201,7 +210,7 @@ gnu_win_64 : FC        = gfortran
 gnu_win_64 : exe       = smokeview_win_$(SMV_TESTSTRING)64
 
 gnu_win_64 : $(obj)
-	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) 
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)
 
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV  Linux VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
@@ -299,7 +308,7 @@ mingw_win_64 : LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
 mingw_win_64 : INC += -I $(SOURCE_DIR)/GLINC-mingw -I $(SOURCE_DIR)/pthreads -I $(SOURCE_DIR)/GLUTINC/glut
 mingw_win_64 : FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC \
 						       -ffree-form -frecord-marker=4
-mingw_win_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW
+mingw_win_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW -Wno-write-strings
 ifeq ($(LUA_SCRIPTING),true)
 mingw_win_64 : CFLAGS    += -D pp_LUA
 mingw_win_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.dll
@@ -343,12 +352,14 @@ intel_osx_64 : CFLAGS    += -D pp_LUA
 intel_osx_64 : SMVLUACORE_FILES += $(LIB_DIR)/intel_osx_64/lpeg.so
 intel_osx_64 : LIBLUA    += $(LIB_DIR)/intel_osx_64/liblua.a -ldl
 endif
-intel_osx_64 : LFLAGS    = -m64 -L$(LIB_DIR)/intel_osx_64 $(SMV_LIBS_OSX) -L $(GLIBDIR) -lgfortran -traceback -static-intel -mmacosx-version-min=10.7
+# remove following from LFLAGS line
+# -L $(GLIBDIR) -lgfortran
+intel_osx_64 : LFLAGS    = -m64 -L$(LIB_DIR)/intel_osx_64 $(SMV_LIBS_OSX) -traceback -static-intel -mmacosx-version-min=10.7
 ifeq ($(GLUT),freeglut)
 intel_osx_64 : LFLAGS   += -L /opt/X11/lib -lX11 -lXmu -lGLU -lGL
 else
 ifeq ($(QUARTZ),framework)
-intel_osx_64 : LFLAGS   += -framework OpenGL -framework GLUT 
+intel_osx_64 : LFLAGS   += -framework OpenGL -framework GLUT
 else
 intel_osx_64 : LFLAGS   += -L /opt/X11/lib -lX11 -lXmu -lGLU -lGL
 endif
@@ -363,17 +374,25 @@ intel_osx_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
 
 # ------------- intel_osx_64_db ----------------
 
-intel_osx_64_db : DYNLIB_EXT = .so
-intel_osx_64_db : FFLAGS    = -O0 -g -m64 -traceback -static-intel -fpp      -D pp_OSX -D pp_INTEL -mmacosx-version-min=10.7 -stand:f08
-intel_osx_64_db : CFLAGS    = -O0 -g -m64 -traceback -static-intel -D _DEBUG -D pp_OSX -D pp_INTEL -mmacosx-version-min=10.7 $(SMV_TESTFLAG) -Wall -Wextra -check=stack,uninit -fp-stack-check -fp-trap-all=divzero,invalid,overflow -ftrapuv -Wuninitialized -Wunused-function -Wunused-variable $(GITINFO) $(INTEL_COMPINFO)
-intel_osx_64_db : LFLAGS    = -m64 -traceback -static-intel -framework OpenGL -framework GLUT -mmacosx-version-min=10.7
+intel_osx_64_db : FFLAGS    = -O0 -g -m64 -traceback -static-intel -fpp     -D pp_OSX -D pp_INTEL -mmacosx-version-min=10.7 -stand:f08
+intel_osx_64_db : CFLAGS    = -O0 -g -m64 -traceback -static-intel -D _DEBUG -D pp_OSX -D pp_INTEL -mmacosx-version-min=10.7 $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO)
+intel_osx_64_db : LFLAGS    = -m64 -L$(LIB_DIR)/intel_osx_64 $(SMV_LIBS_OSX) -traceback -static-intel -mmacosx-version-min=10.7
+ifeq ($(GLUT),freeglut)
+intel_osx_64_db : LFLAGS   += -L /opt/X11/lib -lX11 -lXmu -lGLU -lGL
+else
+ifeq ($(QUARTZ),framework)
+intel_osx_64_db : LFLAGS   += -framework OpenGL -framework GLUT
+else
+intel_osx_64_db : LFLAGS   += -L /opt/X11/lib -lX11 -lXmu -lGLU -lGL
+endif
+endif
 intel_osx_64_db : CC        = icc
 intel_osx_64_db : CPP       = icpc
 intel_osx_64_db : FC        = ifort
 intel_osx_64_db : exe       = smokeview_osx_$(SMV_TESTSTRING)64_db
 
 intel_osx_64_db : $(obj)
-	icpc -o $(bin)/$(exe) $(LFLAGS) $(obj)  -L $(LIB_DIR)/intel_osx_64 $(SMV_LIBS_OSX) $(INTEL_LIBS_OSX)
+	icpc -o $(bin)/$(exe) $(obj) $(LFLAGS) $(INTEL_LIBS_OSX)
 
 # ------------- gnu_osx_64_db ----------------
 
@@ -384,7 +403,7 @@ gnu_osx_64_db : CFLAGS    = -O0 -m64 -D _DEBUG -D pp_OSX -D pp_GCC $(SMV_TESTFLA
 ifneq ($(GLIBDIR),)
 gnu_osx_64 : GLIBDIROPT = -L$(GLIBDIR)
 else
-gnu_osx_64 : GLIBDIROPT = 
+gnu_osx_64 : GLIBDIROPT =
 endif
 gnu_osx_64_db : LFLAGS    = -m64 -framework OpenGL -framework GLUT
 gnu_osx_64_db : CC        = gcc
@@ -404,9 +423,9 @@ gnu_osx_64 : CFLAGS    = -O0 -m64 -D pp_OSX -D pp_GCC $(SMV_TESTFLAG) -Wno-write
 ifneq ($(GLIBDIR),)
 gnu_osx_64 : GLIBDIROPT = -L$(GLIBDIR)
 else
-gnu_osx_64 : GLIBDIROPT = 
+gnu_osx_64 : GLIBDIROPT =
 endif
-gnu_osx_64 : LFLAGS    = -m64 -L$(LIB_DIR)/gnu_osx_64 $(SMV_LIBS_OSX) $(GLIBDIROPT) -lgfortran 
+gnu_osx_64 : LFLAGS    = -m64 -L$(LIB_DIR)/gnu_osx_64 $(SMV_LIBS_OSX) $(GLIBDIROPT) -lgfortran
 ifeq ($(GLUT),freeglut)
 gnu_osx_64 : LFLAGS   += -L /opt/X11/lib -lX11 -lXmu -lGLU -lGL
 gnu_osx_64 : CFLAGS   += -D FREEGLUT_STATIC

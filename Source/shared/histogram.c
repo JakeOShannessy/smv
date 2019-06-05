@@ -182,6 +182,9 @@ void CopyVals2Histogram(float *vals, char *mask, float *weight, int nvals, histo
   float dbucket;
   int first=1;
   float nnvals=0.0;
+#ifdef pp_PARTDEBUG  
+  int have_inf = 0;
+#endif
 
 // initialize
 
@@ -202,6 +205,13 @@ void CopyVals2Histogram(float *vals, char *mask, float *weight, int nvals, histo
     else{
       nnvals++;
     }
+#ifdef pp_PARTDEBUG
+    if(isinf(vals[i])){
+      vals[i] = 0.0;
+      have_inf = 1;
+      printf("%i ", i);
+    }
+#endif
     if(first==1){
       valmin=vals[i];
       valmax=vals[i];
@@ -211,6 +221,9 @@ void CopyVals2Histogram(float *vals, char *mask, float *weight, int nvals, histo
     valmin=MIN(vals[i],valmin);
     valmax=MAX(vals[i],valmax);
   }
+#ifdef pp_PARTDEBUG
+  if(have_inf==1)printf("\n\n");
+#endif
 
 // record unmasked data in histogram
 
@@ -378,12 +391,6 @@ void InitHistogramPolar(histogramdata *histogram, int nr, int ntheta, float *rmi
   ResetHistogramPolar(histogram,rmin,rmax);
 }
 
-/* ------------------ FreeHistogramPolar ------------------------ */
-
-void FreeHistogramPolar(histogramdata *histogram){
-  FREEMEMORY(histogram->buckets_polar);
-}
-
 /* ------------------ Get2DBounds ------------------------ */
 
 int Get2DBounds(float *times, float *uvals, float *vvals, int nvals, float tmin, float tmax, float *rmin, float *rmax){
@@ -447,7 +454,7 @@ void CopyUV2Histogram(float *times, float *uvals, float *vvals, int nvals, float
     r = sqrt(u*u + v*v);
     histogram->val_min = MIN(histogram->val_min, r);
     histogram->val_max = MAX(histogram->val_max, r);
-    theta = FMOD360(RAD2DEG*atan2(v, u));
+    theta = fmod(RAD2DEG*atan2(v, u)+180.0/(float)histogram->ntheta,360.0);
 
     ir = 0;
     if(rmax>rmin)ir = CLAMP(histogram->nr*(r - rmin) / (rmax - rmin),0,histogram->nr-1);

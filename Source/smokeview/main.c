@@ -7,14 +7,37 @@
 #include <sys/stat.h>
 #include GLUT_H
 
-//   dummy
-
 #include "string_util.h"
 #include "smokeviewvars.h"
 
 #ifdef pp_LUA
 #include "c_api.h"
 #include "lua_api.h"
+#endif
+
+#ifdef pp_OSX
+/* ------------------ GetScreenHeight ------------------------ */
+
+int GetScreenHeight(void){
+  FILE *stream;
+  char command[1000], height_file[1000], *full_height_file, buffer[255];
+  int screen_height=-1;
+
+  strcpy(command,"system_profiler SPDisplaysDataType | grep Resolution | awk '{print $4}' >& ");
+  strcpy(height_file, fdsprefix);
+  strcat(height_file, ".hgt");
+  full_height_file = GetFileName(smokeviewtempdir, height_file, NOT_FORCE_IN_DIR);
+  strcat(command,full_height_file);
+  system(command);
+  stream = fopen(full_height_file,"r");
+  if(stream!=NULL){
+    fgets(buffer, 255, stream);
+    sscanf(buffer, "%i", &screen_height);
+    fclose(stream);
+  }
+  FREEMEMORY(full_height_file);
+  return screen_height;
+}
 #endif
 
 /* ------------------ Usage ------------------------ */
@@ -42,6 +65,9 @@ void Usage(char *prog,int option){
     PRINTF("%s\n", _(" -demo          - use demonstrator mode of Smokeview"));
     PRINTF("%s\n", _(" -fast          - assume slice files exist in order to reduce startup time"));
     PRINTF("%s\n", _(" -fed           - pre-calculate all FED slice files"));
+#ifdef pp_HTML
+    PRINTF("%s\n", _(" -html          - output html version of smokeview scene"));
+#endif
 #ifdef pp_LANG
     PRINTF("%s\n", _(" -lang xx       - where xx is de, es, fr, it for German, Spanish, French or Italian"));
 #endif
@@ -49,6 +75,8 @@ void Usage(char *prog,int option){
 #ifdef pp_READBUFFER
     PRINTF("%s\n", _(" -no_buffer     - scan .smv file using file I/O rather from memory"));
 #endif
+    PRINTF("%s\n", _(" -scriptrenderdir dir - directory containing script rendered images"));
+    PRINTF("%s\n", _("                  (override directory specified by RENDERDIR script keyword)"));
     PRINTF("%s\n", _(" -setup         - only show geometry"));
     PRINTF("%s\n", _(" -script scriptfile - run the script file scriptfile"));
 #ifdef pp_LUA
@@ -56,12 +84,14 @@ void Usage(char *prog,int option){
     PRINTF("%s\n", " -luascript scriptfile - run the Lua script file scriptfile");
     PRINTF("%s\n", " -killscript    - exit smokeview (with an error code) if the script fails");
 #endif
+#ifdef pp_HTML
+    PRINTF("%s\n", _(" -runhtmlscript - run the script file casename.ssf without using graphics"));
+#endif
     PRINTF("%s\n", _(" -sizes         - output files sizes then exit"));
     PRINTF("%s\n", _(" -skipframe n   - render every n frames"));
     PRINTF("%s\n", _(" -smoke3d       - only show 3d smoke"));
     PRINTF("%s\n", _(" -startframe n  - start rendering at frame n"));
     PRINTF("%s\n", _(" -stereo        - activate stereo mode"));
-    PRINTF("%s\n", _(" -tempdir       - forces output files to be written to the temporary directory"));
     PRINTF("%s\n", _(" -update_bounds - calculate boundary file bounds and save to casename.binfo"));
     PRINTF("%s\n", _(" -update_slice  - calculate slice file parameters"));
     PRINTF("%s\n", _(" -update        - equivalent to -update_bounds and -update_slice"));
@@ -92,9 +122,6 @@ void Usage(char *prog,int option){
 #endif
 #ifdef pp_DRAWISO
     strcat(label, ", pp_DRAWISO");
-#endif
-#ifdef pp_ffmpeg
-    strcat(label, ", pp_ffmpeg");
 #endif
 #ifdef pp_FILELIST
     strcat(label, ", pp_FILELIST");
@@ -200,7 +227,7 @@ void ParseCommandline(int argc, char **argv){
   int i, len_casename;
   int iarg;
   size_t len_memory;
-  char *argi;
+  char *argi, *smv_ext;
   char SMVFILENAME[1024];
   int smv_parse;
 
@@ -211,15 +238,14 @@ void ParseCommandline(int argc, char **argv){
   if(argc == 1){
     exit(1);
   }
-  if(strncmp(argv[1], "-ini", 3) == 0){
+  if(strncmp(argv[1], "-ini", 4) == 0){
     InitCameraList();
     InitOpenGL();
     UpdateRGBColors(COLORBAR_INDEX_NONE);
     WriteIni(GLOBAL_INI, NULL);
     exit(0);
   }
-
-  if(strncmp(argv[1], "-ng_ini", 6) == 0){
+  if(strncmp(argv[1], "-ng_ini", 7) == 0){
     InitCameraList();
     use_graphics = 0;
     UpdateRGBColors(COLORBAR_INDEX_NONE);
@@ -249,7 +275,7 @@ void ParseCommandline(int argc, char **argv){
         iarg++;
       }
       if(strncmp(argi, "-convert_ini", 12) == 0 ||
-        strncmp(argi, "-convert_ssf", 12) == 0){
+         strncmp(argi, "-convert_ssf", 12) == 0){
         iarg += 2;
       }
 
@@ -268,13 +294,20 @@ void ParseCommandline(int argc, char **argv){
   len_casename = (int)strlen(argi);
   CheckMemory;
   FREEMEMORY(fdsprefix);
-  len_memory = len_casename + strlen(part_ext) + 100;
+  len_memory = len_casename + strlen(".part") + 100;
   NewMemory((void **)&fdsprefix, (unsigned int)len_memory);
   STRCPY(fdsprefix, argi);
   strcpy(movie_name, fdsprefix);
   strcpy(render_file_base, fdsprefix);
+  strcpy(html_file_base, fdsprefix);
+  smv_ext = strstr(html_file_base, ".smv");
+  if(smv_ext!=NULL)*smv_ext = 0;
   FREEMEMORY(trainer_filename);
   FREEMEMORY(test_filename);
+
+#ifdef pp_OSX
+  monitor_screen_height = GetScreenHeight();
+#endif
 
   strcpy(input_filename_ext, "");
 
@@ -313,9 +346,16 @@ void ParseCommandline(int argc, char **argv){
   STRCAT(log_filename, ".smvlog");
 
   FREEMEMORY(caseini_filename);
-  NewMemory((void **)&caseini_filename, len_casename + strlen(ini_ext) + 1);
+  NewMemory((void **)&caseini_filename, len_casename + strlen(".ini") + 1);
   STRCPY(caseini_filename, fdsprefix);
-  STRCAT(caseini_filename, ini_ext);
+  STRCAT(caseini_filename, ".ini");
+
+#ifdef pp_HTML
+  FREEMEMORY(html_filename);
+  NewMemory((void **)&html_filename, len_casename+strlen(".html")+1);
+  STRCPY(html_filename, fdsprefix);
+  STRCAT(html_filename, ".html");
+#endif
 
   FREEMEMORY(boundinfo_filename);
   NewMemory((void **)&boundinfo_filename, len_casename + strlen(".binfo") + 1);
@@ -369,7 +409,7 @@ void ParseCommandline(int argc, char **argv){
   if(fed_filename == NULL){
     STRCPY(fed_filename_base, fdsprefix);
     STRCAT(fed_filename_base, ".fed_smv");
-    fed_filename = GetFileName(smokeviewtempdir, fed_filename_base, tempdir_flag);
+    fed_filename = GetFileName(smokeviewtempdir, fed_filename_base, NOT_FORCE_IN_DIR);
   }
   if(stop_filename == NULL){
     NewMemory((void **)&stop_filename, (unsigned int)(len_casename + strlen(".stop") + 1));
@@ -421,6 +461,9 @@ void ParseCommandline(int argc, char **argv){
     if(strncmp(argv[i], "-update_bounds", 14) == 0){
       use_graphics = 0;
       update_bounds = 1;
+    }
+    else if(strncmp(argv[i], "-no_graphics", 12)==0){
+      use_graphics = 0;
     }
     else if(strncmp(argv[i], "-update_slice", 13)==0){
       use_graphics = 0;
@@ -522,12 +565,7 @@ void ParseCommandline(int argc, char **argv){
     else if(strncmp(argv[i], "-smoke3d", 8) == 0){
       smoke3d_only = 1;
     }
-#ifdef _DEBUG
-    else if(strncmp(argv[i], "-tempdir", 8) == 0){
-      tempdir_flag = 1;
-    }
-#endif
-    else if(strncmp(argv[i], "-h", 2) == 0&&strncmp(argv[i], "-help_all", 9)!=0){
+    else if(strncmp(argv[i], "-h", 2) == 0&&strncmp(argv[i], "-help_all", 9)!=0&&strncmp(argv[1], "-html", 5)!=0){
       Usage(argv[0],HELP_SUMMARY);
       exit(0);
     }
@@ -576,6 +614,14 @@ void ParseCommandline(int argc, char **argv){
 #endif
       runscript = 1;
     }
+#ifdef pp_HTML
+    else if(strncmp(argv[i], "-runhtmlscript", 14)==0){
+      from_commandline = 1;
+      use_graphics = 0;
+      iso_multithread = 0;
+      runhtmlscript = 1;
+    }
+#endif
 #ifdef pp_LUA
     else if(strncmp(argv[i], "-runluascript", 13) == 0){
       from_commandline = 1;
@@ -590,6 +636,20 @@ void ParseCommandline(int argc, char **argv){
       exit_on_script_crash = 1;
     }
 #endif
+    else if(strncmp(argv[i], "-scriptrenderdir", 16)==0){
+      int nrenderdir;
+      char *renderdir;
+
+      i++;
+      if(i<argc){
+        renderdir = argv[i];
+        nrenderdir = strlen(renderdir);
+        if(nrenderdir>0){
+          NewMemory((void **)&script_renderdir_cmd, nrenderdir+1);
+          strcpy(script_renderdir_cmd, renderdir);
+        }
+      }
+    }
     else if(strncmp(argv[i], "-skipframe", 10) == 0){
       from_commandline = 1;
       ++i;
@@ -734,14 +794,12 @@ int main(int argc, char **argv){
   InitTextureDir();
   InitScriptErrorFiles();
   smokezippath= GetSmokeZipPath(smokeview_bindir);
-#ifdef pp_ffmpeg
 #ifdef WIN32
   have_ffmpeg = HaveProg("ffmpeg -version> Nul 2>Nul");
   have_ffplay = HaveProg("ffplay -version> Nul 2>Nul");
 #else
   have_ffmpeg = HaveProg("ffmpeg -version >/dev/null 2>/dev/null");
   have_ffplay = HaveProg("ffplay -version >/dev/null 2>/dev/null");
-#endif
 #endif
   DisplayVersionInfo("Smokeview ");
   SetupGlut(argc,argv_sv);
@@ -754,9 +812,21 @@ int main(int argc, char **argv){
   if(convert_ini==1){
     ReadIni(ini_from);
   }
+#ifdef pp_HTML
+  if(runhtmlscript==1){
+    DoScriptHtml();
+  }
+#endif
 
   STOP_TIMER(startup_time);
+#ifdef pp_HTML
+  if(runhtmlscript==1){
+    PRINTF("\nTime: %.1f s\n", startup_time);
+    return 0;
+  }
+#endif
   PRINTF("\nStartup time: %.1f s\n", startup_time);
+
   glutMainLoop();
   return 0;
 }

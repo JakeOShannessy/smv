@@ -20,6 +20,7 @@ typedef struct _lanlistdata {
 #ifdef CPP
 typedef struct _procdata {
   GLUI_Rollout *rollout;
+  GLUI *dialog;
   int rollout_id;
 } procdata;
 #endif
@@ -73,9 +74,7 @@ typedef struct _tridata {
   float distance, *color, tverts[6], tri_norm[3], vert_norm[9], area;
   struct _texturedata *textureinfo;
   struct _surfdata *geomsurf;
-#ifdef pp_TISO
   struct _geomlistdata *geomlisti;
-#endif
   int vert_index[3], exterior, geomtype, insolid, outside_domain;
   vertdata *verts[3];
   edgedata *edges[3];
@@ -196,6 +195,16 @@ typedef struct _inifiledata {
   char *file;
 } inifiledata;
 
+/* --------------------------  rolloutlistdata ------------------------------------ */
+
+#ifdef CPP
+typedef struct _rolloutlistdata {
+  struct _rolloutlistdata *prev, *next;
+  GLUI_Rollout *rollout;
+  GLUI *dialog;
+} rolloutlistdata;
+#endif
+
 /* --------------------------  scriptfiledata ------------------------------------ */
 
 typedef struct _scriptfiledata {
@@ -221,6 +230,7 @@ typedef struct _scriptdata {
   int command;
   char command_label[32];
   int ival,ival2,ival3,ival4,ival5;
+  int need_graphics;
   char *cval,*cval2;
   float fval,fval2,fval3,fval4,fval5;
   int exit,first,remove_frame;
@@ -588,14 +598,12 @@ typedef struct _isodata {
   float *levels, **colorlevels;
   int nlevels;
   char menulabel[128];
-#ifdef pp_TISO
   int *geom_nstatics, *geom_ndynamics;
   float *geom_times, *geom_vals;
   float geom_globalmin, geom_globalmax;
   float geom_percentilemin, geom_percentilemax;
   int geom_nvals;
   histogramdata *histogram;
-#endif
 } isodata;
 
 /* --------------------------  volrenderdata ------------------------------------ */
@@ -667,6 +675,7 @@ typedef struct _meshdata {
   int *smoke_tris, smoke_ntris, smoke_nverts;
   int update_smokebox;
 #endif
+  struct _smoke3ddata *smoke3d_soot, *smoke3d_hrrpuv, *smoke3d_temp, *smoke3d_co2;
   GLuint     volsmoke_texture_id,     volfire_texture_id,     vollight_texture_id;
   float *volsmoke_texture_buffer,*volfire_texture_buffer,*vollight_texture_buffer;
   GLuint slice3d_texture_id;
@@ -762,7 +771,7 @@ typedef struct _meshdata {
   contour **patch_contours;
   int *blockonpatch;
   struct _meshdata **meshonpatch;
-  struct _meshdata *nabors[6];
+  struct _meshdata *nabors[6], *above;
   struct _supermeshdata *super;
   int *ptype;
   int *boundary_row, *boundary_col, *blockstart;
@@ -1184,19 +1193,16 @@ typedef struct _hrrdata {
 typedef struct _slicedata {
   int mesh_type;
   int seq_id, autoload;
-  char *file;
-  char *size_file;
+  char *file, *size_file, *bound_file;
   char *comp_file, *reg_file, *vol_file;
-#ifdef pp_SLICEGEOM
   char *geom_file;
-#endif
   int finalize;
   int slcf_index;
   char *slicelabel;
   int compression_type;
   int colorbar_autoflip;
   int ncompressed;
-  int slicefile_type;
+  int slice_filetype;
   struct _multislicedata *mslice;
   int is_fed;
   feddata *fedptr;
@@ -1290,6 +1296,7 @@ typedef struct _boundsdata {
   float line_contour_max;
   int line_contour_num;
   float valmin, valmax;
+  float global_valmin, global_valmax;
   float chopmin, chopmax;
   float valmin_data,valmax_data;
   char colorlabels[12][11];
@@ -1310,7 +1317,7 @@ typedef struct _vslicedata {
   int finalize;
   int loaded,display;
   float valmin, valmax;
-  int vslicefile_type;
+  int vslice_filetype;
   int vslicefile_labelindex;
   char menulabel[128];
   char menulabel2[128];
@@ -1371,7 +1378,7 @@ typedef struct _smoke3ddata {
 
 typedef struct _patchdata {
   int seq_id, autoload;
-  char *file,*size_file;
+  char *file,*size_file,*bound_file;
   char *comp_file, *reg_file;
   char *geomfile, *filetype_label;
   geomdata *geominfo;

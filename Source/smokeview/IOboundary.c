@@ -1697,9 +1697,10 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
       ext_wall=0;
       mesh_boundary = NO;
       if(j1==0&&j2==jbartemp&&k1==0&&k2==kbartemp){
-        if(i1==0||i2==ibartemp){
+        if((i1==0       &&meshi->nabors[MLEFT]==NULL)||
+           (i2==ibartemp&&meshi->nabors[MRIGHT]==NULL)
+           ){
           mesh_boundary = YES;
-//xxx
           if(is_extface[0]==1&&i1 == 0){
             ext_wall = 1;
             meshi->boundarytype[n] = LEFTwall;
@@ -1796,7 +1797,9 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
       ext_wall=0;
       mesh_boundary = NO;
       if(i1==0&&i2==ibartemp&&k1==0&&k2==kbartemp){
-        if(j1==0||j2==jbartemp){
+        if((j1==0       &&meshi->nabors[MFRONT]==NULL)||
+           (j2==jbartemp&&meshi->nabors[MBACK]==NULL)
+           ){
           mesh_boundary = YES;
           if(is_extface[2]==1&&j1 == 0){
             ext_wall = 1;
@@ -1893,7 +1896,9 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
       ext_wall=0;
       mesh_boundary = NO;
       if(i1==0&&i2==ibartemp&&j1==0&&j2==jbartemp){
-        if(k1==0||k2==kbartemp){
+        if((k1==0       &&meshi->nabors[MDOWN]==NULL)||
+           (k2==kbartemp&&meshi->nabors[MUP]==NULL)
+           ){
           mesh_boundary = YES;
           if(is_extface[4]==1&&k1 == 0){
             ext_wall = 1;
@@ -2323,11 +2328,10 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
  else{
    PRINTF(" - %.0f kB in %.1f s\n", (float)return_filesize / 1000., total_time);
   }
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   return return_filesize;
 }
 
-#ifdef pp_GEOMC
 /* ------------------ ReadGeomDataSize ------------------------ */
 
 void GetGeomDataSize(char *filename,int *ntimes,int *nvars,int *error){
@@ -2450,8 +2454,6 @@ FILE_SIZE GetGeomData(char *filename, int ntimes, int nvals, float *times, int *
   return file_size;
 }
 
-#endif
-
 /* ------------------ ReadGeomData ------------------------ */
 
 FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int *errorcode){
@@ -2506,16 +2508,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
   //GetGeomDataHeader(file,&ntimes,&nvals);
   endian_smv = GetEndian();
 
-#ifdef pp_GEOMC
   GetGeomDataSize(file, &ntimes_local, &nvals, &error);
-#else
-  {
-    int lenfile;
-
-    lenfile=strlen(file);
-    FORTgetgeomdatasize(file, &ntimes_local, &nvals, &error, lenfile);
-  }
-#endif
 
   if(nvals==0){
     if(load_flag!=UPDATE_HIST)PRINTF(" - no data\n");
@@ -2532,18 +2525,8 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
   }
 
   if(load_flag == UPDATE_HIST){
-#ifdef pp_GEOMC
     GetGeomData(file, ntimes_local, nvals, patchi->geom_times,
       patchi->geom_nstatics, patchi->geom_ndynamics, patchi->geom_vals, &error);
-#else
-    {
-    int filesize,lenfile;
-
-    lenfile=strlen(file);
-    FORTgetgeomdata(file, &ntimes_local, &nvals, patchi->geom_times,
-      patchi->geom_nstatics, patchi->geom_ndynamics, patchi->geom_vals, &filesize, &error, lenfile);
-    }
-#endif
     ResetHistogram(patchi->histogram, NULL, NULL);
     UpdateHistogram(patchi->geom_vals, NULL, nvals, patchi->histogram);
     CompleteHistogram(patchi->histogram);
@@ -2553,18 +2536,8 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     int filesize;
 
     PRINTF("Loading %s(%s)", file,patchi->label.shortlabel);
-#ifdef pp_GEOMC
     filesize=GetGeomData(file, ntimes_local, nvals, patchi->geom_times,
       patchi->geom_nstatics, patchi->geom_ndynamics, patchi->geom_vals, &error);
-#else
-    {
-      int lenfile;
-
-      lenfile=strlen(file);
-      FORTgetgeomdata(file, &ntimes_local, &nvals, patchi->geom_times,
-        patchi->geom_nstatics, patchi->geom_ndynamics, patchi->geom_vals, &filesize, &error, lenfile);
-    }
-#endif
     return_filesize += filesize;
   }
 
@@ -2734,8 +2707,10 @@ void Global2LocalBoundaryBounds(const char *key){
       patchchopmax=patchi->chopmax;
       setpatchchopmin=patchi->setchopmin;
       setpatchchopmax=patchi->setchopmax;
+
       patchmin_unit = (unsigned char *)patchi->label.unit;
       patchmax_unit = patchmin_unit;
+
       UpdateGluiBoundaryUnits();
       UpdateHideBoundarySurface();
 
@@ -2991,7 +2966,6 @@ void DrawBoundaryTexture(const meshdata *meshi){
       }
     }
     drawit=0;
-// xxx
     if(vis_boundaries[n]==1&&patchdir[n]<0){
       if(boundarytype[n]==INTERIORwall||showpatch_both==0){
         drawit=1;

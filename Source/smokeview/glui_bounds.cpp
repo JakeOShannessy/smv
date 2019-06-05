@@ -79,9 +79,7 @@ GLUI_Rollout *ROLLOUT_zone_bound=NULL;
 #define INIT_HISTOGRAM 214
 #define UPDATE_BOUNDARYSLICEDUPS 215
 #define ISO_TRANSPARENCY_OPTION 216
-#ifdef pp_TISO
 #define ISO_COLORBAR_LIST 217
-#endif
 #define ISO_OUTLINE_IOFFSET 218
 
 #define ISO_TRANSPARENT_CONSTANT 0
@@ -102,10 +100,16 @@ GLUI_Rollout *ROLLOUT_zone_bound=NULL;
 #define SCRIPT_STEP_NOW 44
 #define SCRIPT_CANCEL_NOW 45
 
-#define BOUNDARY_OUTPUT_ROLLOUT    0
-#define BOUNDARY_THRESHOLD_ROLLOUT 1
-#define BOUNDARY_DUPLICATE_ROLLOUT 2
-#define BOUNDARY_SETTINGS_ROLLOUT  3
+#define PARTICLE_BOUND             0
+#define PARTICLE_CHOP              1
+#define PARTICLE_SETTINGS          2
+
+#define BOUNDARY_BOUND             0
+#define BOUNDARY_CHOP              1
+#define BOUNDARY_OUTPUT_ROLLOUT    2
+#define BOUNDARY_THRESHOLD_ROLLOUT 3
+#define BOUNDARY_DUPLICATE_ROLLOUT 4
+#define BOUNDARY_SETTINGS_ROLLOUT  5
 
 #define ZONEVALMIN 50
 #define ZONEVALMAX 51
@@ -179,9 +183,7 @@ GLUI_Button *BUTTON_BOUNDARY = NULL;
 GLUI_Button *BUTTON_ISO = NULL;
 
 GLUI_Listbox *LIST_colortable = NULL;
-#ifdef pp_TISO
 GLUI_Listbox *LIST_iso_colorbar = NULL;
-#endif
 
 #ifdef pp_MEMDEBUG
 GLUI_Rollout *ROLLOUT_memcheck=NULL;
@@ -193,7 +195,10 @@ GLUI_Rollout *ROLLOUT_iso_bounds;
 GLUI_Rollout *ROLLOUT_iso_color; 
 GLUI_Rollout *ROLLOUT_script = NULL;
 GLUI_Rollout *ROLLOUT_config = NULL;
-GLUI_Rollout *ROLLOUT_boundary = NULL;
+GLUI_Rollout *ROLLOUT_boundary_bound = NULL;
+GLUI_Rollout *ROLLOUT_boundary_chop = NULL;
+GLUI_Rollout *ROLLOUT_plot3d_bound = NULL;
+GLUI_Rollout *ROLLOUT_plot3d_chop = NULL;
 GLUI_Rollout *ROLLOUT_autoload=NULL;
 GLUI_Rollout *ROLLOUT_compress=NULL;
 GLUI_Rollout *ROLLOUT_plot3d=NULL,*ROLLOUT_part=NULL,*ROLLOUT_slice=NULL,*ROLLOUT_bound=NULL,*ROLLOUT_iso=NULL;
@@ -212,6 +217,7 @@ GLUI_Rollout *ROLLOUT_slicedups = NULL;
 GLUI_Rollout *ROLLOUT_vector = NULL;
 GLUI_Rollout *ROLLOUT_isosurface = NULL;
 GLUI_Rollout *ROLLOUT_boundary_settings = NULL;
+GLUI_Rollout *ROLLOUT_particle_settings=NULL;
 
 GLUI_Panel *PANEL_iso1 = NULL; 
 GLUI_Panel *PANEL_iso2 = NULL;
@@ -233,7 +239,6 @@ GLUI_Panel *PANEL_zone_a=NULL, *PANEL_zone_b=NULL;
 GLUI_Panel *PANEL_evac_direction=NULL;
 GLUI_Panel *PANEL_pan1=NULL;
 GLUI_Panel *PANEL_pan2=NULL;
-GLUI_Panel *PANEL_pan3=NULL;
 GLUI_Panel *PANEL_run=NULL;
 GLUI_Panel *PANEL_record=NULL;
 GLUI_Panel *PANEL_script1=NULL;
@@ -408,15 +413,19 @@ GLUI_StaticText *STATIC_plot3d_cmax_unit=NULL;
 #define ISO_ROLLOUT_SETTINGS 1
 #define ISO_ROLLOUT_COLOR 2
 
-#define SLICE_AVERAGE_ROLLOUT 0
-#define SLICE_VECTOR_ROLLOUT 1
-#define LINE_CONTOUR_ROLLOUT 2
-#define SLICE_HISTOGRAM_ROLLOUT 3
-#define SLICE_DUP_ROLLOUT 4
-#define SLICE_SETTINGS_ROLLOUT 5
+#define SLICE_BOUND             0
+#define SLICE_CHOP              1
+#define SLICE_AVERAGE_ROLLOUT   2
+#define SLICE_VECTOR_ROLLOUT    3
+#define LINE_CONTOUR_ROLLOUT    4
+#define SLICE_HISTOGRAM_ROLLOUT 5
+#define SLICE_DUP_ROLLOUT       6
+#define SLICE_SETTINGS_ROLLOUT  7
 
-#define VECTOR_ROLLOUT 0
-#define ISOSURFACE_ROLLOUT 1
+#define PLOT3D_BOUND              0
+#define PLOT3D_CHOP               1
+#define PLOT3D_VECTOR_ROLLOUT     2
+#define PLOT3D_ISOSURFACE_ROLLOUT 3
 
 #define LOAD_ROLLOUT 0
 #define SHOWHIDE_ROLLOUT 1
@@ -427,10 +436,10 @@ GLUI_StaticText *STATIC_plot3d_cmax_unit=NULL;
 #define TIME_ROLLOUT 6
 #define MEMCHECK_ROLLOUT 7
 
-procdata boundprocinfo[8], fileprocinfo[8], plot3dprocinfo[2], isoprocinfo[3], subboundprocinfo[4], sliceprocinfo[6];
-int nboundprocinfo = 0, nfileprocinfo = 0, nsliceprocinfo=0, nplot3dprocinfo=0, nisoprocinfo=0, nsubboundprocinfo=0;
-
-#ifdef pp_TISO
+procdata  boundprocinfo[8],   fileprocinfo[8],   plot3dprocinfo[4];
+int      nboundprocinfo = 0, nfileprocinfo = 0, nplot3dprocinfo=0;
+procdata  isoprocinfo[3], subboundprocinfo[6], sliceprocinfo[8], particleprocinfo[3];
+int      nisoprocinfo=0, nsubboundprocinfo=0, nsliceprocinfo=0, nparticleprocinfo=0;
 
 /* ------------------ UpdateListIsoColorobar ------------------------ */
 
@@ -453,7 +462,6 @@ extern "C" void UpdateGluiIsoBounds(void){
     if(EDIT_iso_valmax!=NULL)EDIT_iso_valmax->set_float_val(glui_iso_valmax);
   }
 }
-#endif
 
 /* ------------------ LoadIncrementalCB1 ------------------------ */
 
@@ -520,6 +528,12 @@ extern "C" void UpdateShowSliceInObst(void){
 extern "C" void UpdateIsoColorlevel(void){
   IsoBoundCB(ISO_LEVEL);
   IsoBoundCB(ISO_COLORS);
+}
+
+/* ------------------ ParticleRolloutCB ------------------------ */
+
+void ParticleRolloutCB(int var){
+  ToggleRollout(particleprocinfo, nparticleprocinfo, var);
 }
 
 /* ------------------ Plot3dRolloutCB ------------------------ */
@@ -1514,24 +1528,30 @@ void BoundMenu(GLUI_Rollout **bound_rollout, GLUI_Rollout **chop_rollout, GLUI_P
   float *chopminval, float *chopmaxval,
   int updatebounds,
   int truncatebounds,
-  GLUI_Update_CB FILE_CB){
+  GLUI_Update_CB FILE_CB,
+
+  GLUI_Update_CB PROC_CB, procdata *procinfo, int *nprocinfo){
 
   GLUI_Panel *PANEL_a, *PANEL_b, *PANEL_c;
   GLUI_Rollout *PANEL_e = NULL, *PANEL_g = NULL;
   GLUI_Panel *PANEL_f = NULL, *PANEL_h = NULL;
 
-  PANEL_g = glui_bounds->add_rollout_to_panel(PANEL_panel, _("Bound data"), false);
-  if(bound_rollout != NULL)*bound_rollout = PANEL_g;
+  PANEL_g = glui_bounds->add_rollout_to_panel(PANEL_panel, _("Bound data"), false, 0, PROC_CB);
+  INSERT_ROLLOUT(PANEL_g, glui_bounds);
+  if(bound_rollout!=NULL){
+    *bound_rollout = PANEL_g;
+    ADDPROCINFO(procinfo, *nprocinfo, PANEL_g, 0, glui_bounds);
+  }
 
   PANEL_a = glui_bounds->add_panel_to_panel(PANEL_g, "", GLUI_PANEL_NONE);
 
   *EDIT_con_min = glui_bounds->add_edittext_to_panel(PANEL_a, "", GLUI_EDITTEXT_FLOAT, minval, VALMIN, FILE_CB);
-  if(*setminval == 0){
+  if(*setminval==0){
     (*EDIT_con_min)->disable();
   }
   glui_bounds->add_column_to_panel(PANEL_a, false);
 
-  if(STATIC_con_min_unit != NULL){
+  if(STATIC_con_min_unit!=NULL){
     *STATIC_con_min_unit = glui_bounds->add_statictext_to_panel(PANEL_a, "xx");
     glui_bounds->add_column_to_panel(PANEL_a, false);
     (*STATIC_con_min_unit)->set_w(10);
@@ -1545,12 +1565,12 @@ void BoundMenu(GLUI_Rollout **bound_rollout, GLUI_Rollout **chop_rollout, GLUI_P
   PANEL_b = glui_bounds->add_panel_to_panel(PANEL_g, "", GLUI_PANEL_NONE);
 
   *EDIT_con_max = glui_bounds->add_edittext_to_panel(PANEL_b, "", GLUI_EDITTEXT_FLOAT, maxval, VALMAX, FILE_CB);
-  if(*setminval == 0){
+  if(*setminval==0){
     (*EDIT_con_max)->disable();
   }
   glui_bounds->add_column_to_panel(PANEL_b, false);
 
-  if(STATIC_con_max_unit != NULL){
+  if(STATIC_con_max_unit!=NULL){
     *STATIC_con_max_unit = glui_bounds->add_statictext_to_panel(PANEL_b, "yy");
     glui_bounds->add_column_to_panel(PANEL_b, false);
     (*STATIC_con_max_unit)->set_w(10);
@@ -1563,10 +1583,10 @@ void BoundMenu(GLUI_Rollout **bound_rollout, GLUI_Rollout **chop_rollout, GLUI_P
 
   PANEL_c = glui_bounds->add_panel_to_panel(PANEL_g, "", GLUI_PANEL_NONE);
 
-  if(updatebounds == UPDATE_BOUNDS){
+  if(updatebounds==UPDATE_BOUNDS){
     glui_bounds->add_button_to_panel(PANEL_c, _("Update"), FILEUPDATE, FILE_CB);
   }
-  else if(updatebounds == RELOAD_BOUNDS){
+  else if(updatebounds==RELOAD_BOUNDS){
     glui_bounds->add_button_to_panel(PANEL_c, button_title, FILERELOAD, FILE_CB);
   }
   else{
@@ -1574,16 +1594,20 @@ void BoundMenu(GLUI_Rollout **bound_rollout, GLUI_Rollout **chop_rollout, GLUI_P
     BUTTON_reloadbound = glui_bounds->add_button_to_panel(PANEL_c, button_title, FILERELOAD, FILE_CB);
   }
 
-  if(EDIT_con_chopmin != NULL&&EDIT_con_chopmax != NULL&&CHECKBOX_con_setchopmin != NULL&&CHECKBOX_con_setchopmax != NULL){
-    PANEL_e = glui_bounds->add_rollout_to_panel(PANEL_panel, _("Truncate data"), false);
-    if(chop_rollout != NULL)*chop_rollout = PANEL_e;
+  if(EDIT_con_chopmin!=NULL&&EDIT_con_chopmax!=NULL&&CHECKBOX_con_setchopmin!=NULL&&CHECKBOX_con_setchopmax!=NULL){
+    PANEL_e = glui_bounds->add_rollout_to_panel(PANEL_panel, _("Truncate data"), false, 1, PROC_CB);
+    INSERT_ROLLOUT(PANEL_e, glui_bounds);
+    if(chop_rollout!=NULL){
+      *chop_rollout = PANEL_e;
+      ADDPROCINFO(procinfo, *nprocinfo, PANEL_e, 1, glui_bounds);
+    }
 
     PANEL_f = glui_bounds->add_panel_to_panel(PANEL_e, "", GLUI_PANEL_NONE);
 
     *EDIT_con_chopmin = glui_bounds->add_edittext_to_panel(PANEL_f, "", GLUI_EDITTEXT_FLOAT, chopminval, CHOPVALMIN, FILE_CB);
     glui_bounds->add_column_to_panel(PANEL_f, false);
 
-    if(STATIC_con_cmin_unit != NULL){
+    if(STATIC_con_cmin_unit!=NULL){
       *STATIC_con_cmin_unit = glui_bounds->add_statictext_to_panel(PANEL_f, "xx");
       (*STATIC_con_cmin_unit)->set_w(10);
       glui_bounds->add_column_to_panel(PANEL_f, false);
@@ -1595,14 +1619,14 @@ void BoundMenu(GLUI_Rollout **bound_rollout, GLUI_Rollout **chop_rollout, GLUI_P
     *EDIT_con_chopmax = glui_bounds->add_edittext_to_panel(PANEL_h, "", GLUI_EDITTEXT_FLOAT, chopmaxval, CHOPVALMAX, FILE_CB);
     glui_bounds->add_column_to_panel(PANEL_h, false);
 
-    if(STATIC_con_cmax_unit != NULL){
+    if(STATIC_con_cmax_unit!=NULL){
       *STATIC_con_cmax_unit = glui_bounds->add_statictext_to_panel(PANEL_h, "xx");
       glui_bounds->add_column_to_panel(PANEL_h, false);
       (*STATIC_con_cmax_unit)->set_w(10);
     }
     *CHECKBOX_con_setchopmax = glui_bounds->add_checkbox_to_panel(PANEL_h, _("Above"), setchopmaxval, SETCHOPMAXVAL, FILE_CB);
 
-    if(truncatebounds == TRUNCATE_BOUNDS){
+    if(truncatebounds==TRUNCATE_BOUNDS){
       glui_bounds->add_button_to_panel(PANEL_e, _("Update"), CHOPUPDATE, FILE_CB);
     }
   }
@@ -1627,7 +1651,8 @@ extern "C" void GluiBoundsSetup(int main_window){
   PANEL_files = glui_bounds->add_panel("Files", true);
 
   ROLLOUT_autoload = glui_bounds->add_rollout_to_panel(PANEL_files,_("Auto load"), false, LOAD_ROLLOUT, FileRolloutCB);
-  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_autoload, LOAD_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_autoload, glui_bounds);
+  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_autoload, LOAD_ROLLOUT, glui_bounds);
 
   glui_bounds->add_checkbox_to_panel(ROLLOUT_autoload, _("Auto load at startup"),
     &loadfiles_at_startup, STARTUP, BoundBoundCB);
@@ -1638,7 +1663,8 @@ extern "C" void GluiBoundsSetup(int main_window){
 
   if(npartinfo > 0 || nsliceinfo > 0 || nvsliceinfo > 0 || nisoinfo > 0 || npatchinfo || nsmoke3dinfo > 0 || nplot3dinfo > 0){
     ROLLOUT_showhide = glui_bounds->add_rollout_to_panel(PANEL_files,_("Show/Hide"), false, SHOWHIDE_ROLLOUT, FileRolloutCB);
-    ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_showhide, SHOWHIDE_ROLLOUT);
+    INSERT_ROLLOUT(ROLLOUT_showhide, glui_bounds);
+    ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_showhide, SHOWHIDE_ROLLOUT, glui_bounds);
 
     RADIO_showhide = glui_bounds->add_radiogroup_to_panel(ROLLOUT_showhide, &showhide_option);
     glui_bounds->add_radiobutton_to_group(RADIO_showhide, _("Show"));
@@ -1666,7 +1692,8 @@ extern "C" void GluiBoundsSetup(int main_window){
 #ifdef pp_COMPRESS
   if(smokezippath != NULL && (npatchinfo > 0 || nsmoke3dinfo > 0 || nsliceinfo > 0)){
     ROLLOUT_compress = glui_bounds->add_rollout_to_panel(PANEL_files,_("Compress"), false, COMPRESS_ROLLOUT, FileRolloutCB);
-    ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_compress, COMPRESS_ROLLOUT);
+    INSERT_ROLLOUT(ROLLOUT_compress, glui_bounds);
+    ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_compress, COMPRESS_ROLLOUT, glui_bounds);
 
     CHECKBOX_erase_all = glui_bounds->add_checkbox_to_panel(ROLLOUT_compress, _("Erase compressed files"),
       &erase_all, ERASE, BoundBoundCB);
@@ -1699,7 +1726,8 @@ extern "C" void GluiBoundsSetup(int main_window){
 #endif
 
   ROLLOUT_script = glui_bounds->add_rollout_to_panel(PANEL_files,_("Scripts"), false, SCRIPT_ROLLOUT, FileRolloutCB);
-  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_script, SCRIPT_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_script, glui_bounds);
+  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_script, SCRIPT_ROLLOUT, glui_bounds);
 
   PANEL_script1 = glui_bounds->add_panel_to_panel(ROLLOUT_script, _("Script files"), false);
   PANEL_record = glui_bounds->add_panel_to_panel(PANEL_script1, _("Record"), true);
@@ -1739,7 +1767,8 @@ extern "C" void GluiBoundsSetup(int main_window){
   }
 
   ROLLOUT_config = glui_bounds->add_rollout_to_panel(PANEL_files, "Config", false, CONFIG_ROLLOUT, FileRolloutCB);
-  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_config, CONFIG_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_config, glui_bounds);
+  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_config, CONFIG_ROLLOUT, glui_bounds);
 
   PANEL_script2a = glui_bounds->add_panel_to_panel(ROLLOUT_config, "", false);
   EDIT_ini = glui_bounds->add_edittext_to_panel(PANEL_script2a, "suffix:", GLUI_EDITTEXT_TEXT, script_inifile_suffix, SCRIPT_EDIT_INI, ScriptCB);
@@ -1781,13 +1810,14 @@ extern "C" void GluiBoundsSetup(int main_window){
 
   PANEL_bounds = glui_bounds->add_panel("Bounds",true);
   ROLLOUT_filebounds = glui_bounds->add_rollout_to_panel(PANEL_bounds,_("Data"), false, FILEBOUNDS_ROLLOUT, FileRolloutCB);
-  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_filebounds, FILEBOUNDS_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_filebounds, glui_bounds);
+  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_filebounds, FILEBOUNDS_ROLLOUT, glui_bounds);
 
   /*  zone (cfast) */
 
   if(nzoneinfo>0){
     ROLLOUT_zone_bound = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,_("Upper layer temperature"),false,ZONE_ROLLOUT,BoundRolloutCB);
-    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_zone_bound, ZONE_ROLLOUT);
+    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_zone_bound, ZONE_ROLLOUT, glui_bounds);
 
     PANEL_zone_a = glui_bounds->add_panel_to_panel(ROLLOUT_zone_bound,"",GLUI_PANEL_NONE);
 
@@ -1825,7 +1855,8 @@ extern "C" void GluiBoundsSetup(int main_window){
 
   if(nsmoke3dinfo>0||nvolrenderinfo>0){
     ROLLOUT_smoke3d = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,_("3D smoke"),false,SMOKE3D_ROLLOUT,BoundRolloutCB);
-    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_smoke3d, SMOKE3D_ROLLOUT);
+    INSERT_ROLLOUT(ROLLOUT_smoke3d, glui_bounds);
+    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_smoke3d, SMOKE3D_ROLLOUT, glui_bounds);
   }
 
   // ----------------------------------- Boundary ----------------------------------------
@@ -1833,7 +1864,8 @@ extern "C" void GluiBoundsSetup(int main_window){
   if(npatchinfo>0){
     glui_active=1;
     ROLLOUT_bound = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,_("Boundary"),false,BOUNDARY_ROLLOUT,BoundRolloutCB);
-    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_bound, BOUNDARY_ROLLOUT);
+    INSERT_ROLLOUT(ROLLOUT_bound, glui_bounds);
+    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_bound, BOUNDARY_ROLLOUT, glui_bounds);
 
     nradio=0;
     for(i=0;i<npatchinfo;i++){
@@ -1858,7 +1890,7 @@ extern "C" void GluiBoundsSetup(int main_window){
       glui_bounds->add_column_to_panel(ROLLOUT_bound,false);
     }
 
-    BoundMenu(&ROLLOUT_boundary,NULL,ROLLOUT_bound,_("Reload Boundary File(s)"),
+    BoundMenu(&ROLLOUT_boundary_bound,&ROLLOUT_boundary_chop,ROLLOUT_bound,_("Reload Boundary File(s)"),
       &EDIT_patch_min,&EDIT_patch_max,&RADIO_patch_setmin,&RADIO_patch_setmax,
       &CHECKBOX_patch_setchopmin, &CHECKBOX_patch_setchopmax,
       &EDIT_patch_chopmin, &EDIT_patch_chopmax,
@@ -1869,13 +1901,17 @@ extern "C" void GluiBoundsSetup(int main_window){
       &setpatchchopmin, &setpatchchopmax,
       &patchchopmin, &patchchopmax,
       UPDATERELOAD_BOUNDS,DONT_TRUNCATE_BOUNDS,
-      BoundBoundCB);
+      BoundBoundCB,
+      SubBoundRolloutCB,subboundprocinfo,&nsubboundprocinfo);
+
     UpdateBoundaryListIndex2(patchinfo->label.shortlabel);
     UpdateHideBoundarySurface();
     BoundBoundCB(CACHE_BOUNDARYDATA);
 
-    ROLLOUT_outputpatchdata = glui_bounds->add_rollout_to_panel(ROLLOUT_bound,_("Output data"),false,BOUNDARY_OUTPUT_ROLLOUT,SubBoundRolloutCB);
-    ADDPROCINFO(subboundprocinfo, nsubboundprocinfo, ROLLOUT_outputpatchdata, BOUNDARY_OUTPUT_ROLLOUT);
+    ROLLOUT_outputpatchdata = glui_bounds->add_rollout_to_panel(ROLLOUT_bound,_("Output data"),false,
+             BOUNDARY_OUTPUT_ROLLOUT,SubBoundRolloutCB);
+    INSERT_ROLLOUT(ROLLOUT_outputpatchdata, glui_bounds);
+    ADDPROCINFO(subboundprocinfo, nsubboundprocinfo, ROLLOUT_outputpatchdata, BOUNDARY_OUTPUT_ROLLOUT, glui_bounds);
 
     glui_bounds->add_checkbox_to_panel(ROLLOUT_outputpatchdata,_("Output data to file"),&output_patchdata);
 
@@ -1895,7 +1931,8 @@ extern "C" void GluiBoundsSetup(int main_window){
 
     if(activate_threshold==1){
       ROLLOUT_boundary_temp_threshold = glui_bounds->add_rollout_to_panel(ROLLOUT_bound,_("Temperature threshold"),false,BOUNDARY_THRESHOLD_ROLLOUT,SubBoundRolloutCB);
-      ADDPROCINFO(subboundprocinfo, nsubboundprocinfo, ROLLOUT_boundary_temp_threshold, BOUNDARY_THRESHOLD_ROLLOUT);
+      INSERT_ROLLOUT(ROLLOUT_boundary_temp_threshold, glui_bounds);
+      ADDPROCINFO(subboundprocinfo, nsubboundprocinfo, ROLLOUT_boundary_temp_threshold, BOUNDARY_THRESHOLD_ROLLOUT, glui_bounds);
 
       CHECKBOX_showchar=glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_temp_threshold,_("Show"),&vis_threshold,SHOWCHAR,BoundBoundCB);
       CHECKBOX_showonlychar=glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_temp_threshold,_("Show only threshold"),&vis_onlythreshold,SHOWCHAR,BoundBoundCB);
@@ -1911,7 +1948,8 @@ extern "C" void GluiBoundsSetup(int main_window){
     }
 
     ROLLOUT_boundary_settings = glui_bounds->add_rollout_to_panel(ROLLOUT_bound, _("Settings"),false, BOUNDARY_SETTINGS_ROLLOUT, SubBoundRolloutCB);
-    ADDPROCINFO(subboundprocinfo, nsubboundprocinfo, ROLLOUT_boundary_settings, BOUNDARY_SETTINGS_ROLLOUT);
+    INSERT_ROLLOUT(ROLLOUT_boundary_settings, glui_bounds);
+    ADDPROCINFO(subboundprocinfo, nsubboundprocinfo, ROLLOUT_boundary_settings, BOUNDARY_SETTINGS_ROLLOUT, glui_bounds);
 
     if(ngeom_data > 0){
       glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_settings, _("shaded"), &show_boundary_shaded);
@@ -1932,7 +1970,8 @@ extern "C" void GluiBoundsSetup(int main_window){
 
     if(nboundaryslicedups > 0){
       ROLLOUT_boundary_duplicates = glui_bounds->add_rollout_to_panel(ROLLOUT_bound, "Duplicates", false,BOUNDARY_DUPLICATE_ROLLOUT,SubBoundRolloutCB);
-      ADDPROCINFO(subboundprocinfo, nsubboundprocinfo, ROLLOUT_boundary_duplicates, BOUNDARY_DUPLICATE_ROLLOUT);
+      INSERT_ROLLOUT(ROLLOUT_boundary_duplicates, glui_bounds);
+      ADDPROCINFO(subboundprocinfo, nsubboundprocinfo, ROLLOUT_boundary_duplicates, BOUNDARY_DUPLICATE_ROLLOUT, glui_bounds);
 
       RADIO_boundaryslicedup = glui_bounds->add_radiogroup_to_panel(ROLLOUT_boundary_duplicates, &boundaryslicedup_option,UPDATE_BOUNDARYSLICEDUPS,BoundBoundCB);
       glui_bounds->add_radiobutton_to_group(RADIO_boundaryslicedup, _("Keep all"));
@@ -1945,11 +1984,12 @@ extern "C" void GluiBoundsSetup(int main_window){
 
   if(nisoinfo>0){
     ROLLOUT_iso = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds, "Isosurface", false, ISO_ROLLOUT, BoundRolloutCB);
-    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_iso, ISO_ROLLOUT);
+    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_iso, ISO_ROLLOUT, glui_bounds);
 
     if(niso_bounds>0){
       ROLLOUT_iso_bounds = glui_bounds->add_rollout_to_panel(ROLLOUT_iso, "Bound data", true, ISO_ROLLOUT_BOUNDS, IsoRolloutCB);
-      ADDPROCINFO(isoprocinfo, nisoprocinfo, ROLLOUT_iso_bounds, ISO_ROLLOUT_BOUNDS);
+      INSERT_ROLLOUT(ROLLOUT_iso_bounds, glui_bounds);
+      ADDPROCINFO(isoprocinfo, nisoprocinfo, ROLLOUT_iso_bounds, ISO_ROLLOUT_BOUNDS, glui_bounds);
 
       PANEL_iso1 = glui_bounds->add_panel_to_panel(ROLLOUT_iso_bounds, "", GLUI_PANEL_NONE);
       EDIT_iso_valmin = glui_bounds->add_edittext_to_panel(PANEL_iso1, "", GLUI_EDITTEXT_FLOAT, &glui_iso_valmin, ISO_VALMIN, IsoBoundCB);
@@ -1971,7 +2011,8 @@ extern "C" void GluiBoundsSetup(int main_window){
     }
 
     ROLLOUT_iso_settings = glui_bounds->add_rollout_to_panel(ROLLOUT_iso, "Settings", true, ISO_ROLLOUT_SETTINGS, IsoRolloutCB);
-    ADDPROCINFO(isoprocinfo, nisoprocinfo, ROLLOUT_iso_settings, ISO_ROLLOUT_SETTINGS);
+    INSERT_ROLLOUT(ROLLOUT_iso_settings, glui_bounds);
+    ADDPROCINFO(isoprocinfo, nisoprocinfo, ROLLOUT_iso_settings, ISO_ROLLOUT_SETTINGS, glui_bounds);
 
     visAIso = show_iso_shaded*1+show_iso_outline*2+show_iso_points*4;
     CHECKBOX_show_iso_shaded = glui_bounds->add_checkbox_to_panel(ROLLOUT_iso_settings, _("shaded"), &show_iso_shaded, ISO_SURFACE, IsoBoundCB);
@@ -1994,7 +2035,8 @@ extern "C" void GluiBoundsSetup(int main_window){
     glui_bounds->add_checkbox_to_panel(ROLLOUT_iso_settings, _("wrapup in background"), &iso_multithread);
 
     ROLLOUT_iso_color = glui_bounds->add_rollout_to_panel(ROLLOUT_iso, "Color/transparency", false, ISO_ROLLOUT_COLOR, IsoRolloutCB);
-    ADDPROCINFO(isoprocinfo, nisoprocinfo, ROLLOUT_iso_color, ISO_ROLLOUT_COLOR);
+    INSERT_ROLLOUT(ROLLOUT_iso_color, glui_bounds);
+    ADDPROCINFO(isoprocinfo, nisoprocinfo, ROLLOUT_iso_color, ISO_ROLLOUT_COLOR, glui_bounds);
 
     RADIO_transparency_option = glui_bounds->add_radiogroup_to_panel(ROLLOUT_iso_color, &iso_transparency_option,ISO_TRANSPARENCY_OPTION,IsoBoundCB);
     glui_bounds->add_radiobutton_to_group(RADIO_transparency_option, _("transparent(constant)"));
@@ -2025,7 +2067,6 @@ extern "C" void GluiBoundsSetup(int main_window){
     IsoBoundCB(ISO_LEVEL);
     IsoBoundCB(ISO_COLORS);
 
-#ifdef pp_TISO
     if(ncolorbars>0){
       LIST_iso_colorbar = glui_bounds->add_listbox_to_panel(ROLLOUT_iso_color, "colormap:", &iso_colorbar_index, ISO_COLORBAR_LIST, IsoBoundCB);
       for(i = 0; i<ncolorbars; i++){
@@ -2041,7 +2082,6 @@ extern "C" void GluiBoundsSetup(int main_window){
     glui_bounds->add_spinner_to_panel(ROLLOUT_iso_color, "min:", GLUI_SPINNER_FLOAT, &iso_valmin);
     glui_bounds->add_spinner_to_panel(ROLLOUT_iso_color, "max:", GLUI_SPINNER_FLOAT, &iso_valmax);
     glui_bounds->add_checkbox_to_panel(ROLLOUT_iso_color,_("Show"),&show_iso_color);
-#endif
   }
 
   /* Particle File Bounds  */
@@ -2060,7 +2100,8 @@ extern "C" void GluiBoundsSetup(int main_window){
 
     glui_active=1;
     ROLLOUT_part = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,label,false,PART_ROLLOUT,BoundRolloutCB);
-    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_part, PART_ROLLOUT);
+    INSERT_ROLLOUT(ROLLOUT_part, glui_bounds);
+    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_part, PART_ROLLOUT, glui_bounds);
 
     if(npart5prop>0){
       ipart5prop=0;
@@ -2108,17 +2149,24 @@ extern "C" void GluiBoundsSetup(int main_window){
         &setpartmin,&setpartmax,&partmin,&partmax,
         &setpartchopmin,&setpartchopmax,&partchopmin,&partchopmax,
         RELOAD_BOUNDS,DONT_TRUNCATE_BOUNDS,
-        PartBoundCB);
+        PartBoundCB,
+        ParticleRolloutCB,particleprocinfo,&nparticleprocinfo
+      );
       PartBoundCB(FILETYPEINDEX);
-      SPINNER_partpointsize=glui_bounds->add_spinner_to_panel(ROLLOUT_part,_("Particle size"),GLUI_SPINNER_FLOAT,&partpointsize);
+      ROLLOUT_particle_settings = glui_bounds->add_rollout_to_panel(ROLLOUT_part,"Settings",false,
+        PARTICLE_SETTINGS, ParticleRolloutCB);
+      INSERT_ROLLOUT(ROLLOUT_particle_settings, glui_bounds);
+      ADDPROCINFO(particleprocinfo, nparticleprocinfo, ROLLOUT_particle_settings, PARTICLE_SETTINGS, glui_bounds);
+
+      SPINNER_partpointsize=glui_bounds->add_spinner_to_panel(ROLLOUT_particle_settings,_("Particle size"),GLUI_SPINNER_FLOAT,&partpointsize);
       SPINNER_partpointsize->set_float_limits(1.0,100.0);
-      SPINNER_streaklinewidth=glui_bounds->add_spinner_to_panel(ROLLOUT_part,_("Streak line width"),GLUI_SPINNER_FLOAT,&streaklinewidth);
+      SPINNER_streaklinewidth=glui_bounds->add_spinner_to_panel(ROLLOUT_particle_settings,_("Streak line width"),GLUI_SPINNER_FLOAT,&streaklinewidth);
       SPINNER_streaklinewidth->set_float_limits(1.0,100.0);
 
-      SPINNER_partstreaklength=glui_bounds->add_spinner_to_panel(ROLLOUT_part,_("Streak length (s)"),GLUI_SPINNER_FLOAT,&float_streak5value,STREAKLENGTH,PartBoundCB);
+      SPINNER_partstreaklength=glui_bounds->add_spinner_to_panel(ROLLOUT_particle_settings,_("Streak length (s)"),GLUI_SPINNER_FLOAT,&float_streak5value,STREAKLENGTH,PartBoundCB);
       SPINNER_partstreaklength->set_float_limits(0.0,tmax_part);
 
-      CHECKBOX_showtracer=glui_bounds->add_checkbox_to_panel(ROLLOUT_part,_("Always show tracers"),&show_tracers_always,TRACERS,PartBoundCB);
+      CHECKBOX_showtracer=glui_bounds->add_checkbox_to_panel(ROLLOUT_particle_settings,_("Always show tracers"),&show_tracers_always,TRACERS,PartBoundCB);
     }
   }
 
@@ -2139,17 +2187,34 @@ extern "C" void GluiBoundsSetup(int main_window){
   if(nplot3dinfo>0){
     glui_active=1;
     ROLLOUT_plot3d = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,"Plot3D",false,PLOT3D_ROLLOUT,BoundRolloutCB);
-    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_plot3d, PLOT3D_ROLLOUT);
+    INSERT_ROLLOUT(ROLLOUT_plot3d, glui_bounds);
+    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_plot3d, PLOT3D_ROLLOUT, glui_bounds);
 
     RADIO_p3 = glui_bounds->add_radiogroup_to_panel(ROLLOUT_plot3d,&list_p3_index,FILETYPEINDEX,Plot3DBoundCB);
     for(i=0;i<mxplot3dvars;i++){
       glui_bounds->add_radiobutton_to_group(RADIO_p3,plot3dinfo[0].label[i].shortlabel);
     }
-    CHECKBOX_cache_qdata=glui_bounds->add_checkbox_to_panel(ROLLOUT_plot3d,_("Cache Plot3D data"),&cache_qdata,UNLOAD_QDATA,Plot3DBoundCB);
+    CHECKBOX_cache_qdata = glui_bounds->add_checkbox_to_panel(ROLLOUT_plot3d, _("Cache Plot3D data"), &cache_qdata, UNLOAD_QDATA, Plot3DBoundCB);
+    glui_bounds->add_column_to_panel(ROLLOUT_plot3d,false);
 
-    PANEL_pan3 = glui_bounds->add_panel_to_panel(ROLLOUT_plot3d,"",GLUI_PANEL_NONE);
-    ROLLOUT_vector = glui_bounds->add_rollout_to_panel(PANEL_pan3,_("Vector"),false,VECTOR_ROLLOUT, Plot3dRolloutCB);
-    ADDPROCINFO(plot3dprocinfo, nplot3dprocinfo, ROLLOUT_vector, VECTOR_ROLLOUT);
+
+    BoundMenu(&ROLLOUT_plot3d_bound, &ROLLOUT_plot3d_chop, ROLLOUT_plot3d, "Reload Plot3D file(s)",
+      &EDIT_p3_min, &EDIT_p3_max, &RADIO_p3_setmin, &RADIO_p3_setmax,
+      &CHECKBOX_p3_setchopmin, &CHECKBOX_p3_setchopmax,
+      &EDIT_p3_chopmin, &EDIT_p3_chopmax,
+      &STATIC_plot3d_min_unit, &STATIC_plot3d_max_unit,
+      &STATIC_plot3d_cmin_unit, &STATIC_plot3d_cmax_unit,
+      NULL, NULL,
+      &setp3min_temp, &setp3max_temp, &p3min_temp, &p3max_temp,
+      &setp3chopmin_temp, &setp3chopmax_temp, &p3chopmin_temp, &p3chopmax_temp,
+      RELOAD_BOUNDS, TRUNCATE_BOUNDS,
+      Plot3DBoundCB,
+      Plot3dRolloutCB,plot3dprocinfo,&nplot3dprocinfo
+    );
+
+    ROLLOUT_vector = glui_bounds->add_rollout_to_panel(ROLLOUT_plot3d,_("Vector"),false,PLOT3D_VECTOR_ROLLOUT, Plot3dRolloutCB);
+    INSERT_ROLLOUT(ROLLOUT_vector, glui_bounds);
+    ADDPROCINFO(plot3dprocinfo, nplot3dprocinfo, ROLLOUT_vector, PLOT3D_VECTOR_ROLLOUT, glui_bounds);
 
     glui_bounds->add_checkbox_to_panel(ROLLOUT_vector,_("Show vectors"),&visVector,UPDATEPLOT,Plot3DBoundCB);
     SPINNER_plot3d_vectorpointsize=glui_bounds->add_spinner_to_panel(ROLLOUT_vector,_("Point size"),GLUI_SPINNER_FLOAT,&vectorpointsize,UPDATE_VECTOR,Plot3DBoundCB);
@@ -2161,8 +2226,9 @@ extern "C" void GluiBoundsSetup(int main_window){
     SPINNER_plot3dvectorskip=glui_bounds->add_spinner_to_panel(ROLLOUT_vector,_("Vector skip"),GLUI_SPINNER_INT,&vectorskip,PLOT3D_VECTORSKIP,Plot3DBoundCB);
     SPINNER_plot3dvectorskip->set_int_limits(1,4);
 
-    ROLLOUT_isosurface = glui_bounds->add_rollout_to_panel(ROLLOUT_plot3d,"Isosurface",false,ISOSURFACE_ROLLOUT, Plot3dRolloutCB);
-    ADDPROCINFO(plot3dprocinfo, nplot3dprocinfo, ROLLOUT_isosurface, ISOSURFACE_ROLLOUT);
+    ROLLOUT_isosurface = glui_bounds->add_rollout_to_panel(ROLLOUT_plot3d,"Isosurface",false,PLOT3D_ISOSURFACE_ROLLOUT, Plot3dRolloutCB);
+    INSERT_ROLLOUT(ROLLOUT_isosurface, glui_bounds);
+    ADDPROCINFO(plot3dprocinfo, nplot3dprocinfo, ROLLOUT_isosurface, PLOT3D_ISOSURFACE_ROLLOUT, glui_bounds);
 
     PANEL_pan1 = glui_bounds->add_panel_to_panel(ROLLOUT_isosurface,"",GLUI_PANEL_NONE);
 
@@ -2188,17 +2254,7 @@ extern "C" void GluiBoundsSetup(int main_window){
     p3chopmin_temp=p3chopmin[0];
     p3chopmax_temp=p3chopmax[0];
     glui_bounds->add_column_to_panel(ROLLOUT_plot3d,false);
-    BoundMenu(NULL,NULL,ROLLOUT_plot3d,"Reload Plot3D file(s)",
-      &EDIT_p3_min,&EDIT_p3_max,&RADIO_p3_setmin,&RADIO_p3_setmax,
-      &CHECKBOX_p3_setchopmin, &CHECKBOX_p3_setchopmax,
-      &EDIT_p3_chopmin, &EDIT_p3_chopmax,
-      &STATIC_plot3d_min_unit,&STATIC_plot3d_max_unit,
-      &STATIC_plot3d_cmin_unit,&STATIC_plot3d_cmax_unit,
-      NULL,NULL,
-      &setp3min_temp,&setp3max_temp,&p3min_temp,&p3max_temp,
-      &setp3chopmin_temp, &setp3chopmax_temp,&p3chopmin_temp,&p3chopmax_temp,
-      RELOAD_BOUNDS,TRUNCATE_BOUNDS,
-      Plot3DBoundCB);
+
     Plot3DBoundCB(FILETYPEINDEX);
     Plot3DBoundCB(UNLOAD_QDATA);
   }
@@ -2210,7 +2266,8 @@ extern "C" void GluiBoundsSetup(int main_window){
 
     glui_active=1;
     ROLLOUT_slice = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,"Slice",false,SLICE_ROLLOUT,BoundRolloutCB);
-    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_slice, SLICE_ROLLOUT);
+    INSERT_ROLLOUT(ROLLOUT_slice, glui_bounds);
+    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_slice, SLICE_ROLLOUT, glui_bounds);
 
     RADIO_slice = glui_bounds->add_radiogroup_to_panel(ROLLOUT_slice,&list_slice_index,FILETYPEINDEX,SliceBoundCB);
 
@@ -2241,10 +2298,13 @@ extern "C" void GluiBoundsSetup(int main_window){
       &setslicechopmin, &setslicechopmax,
       &slicechopmin, &slicechopmax,
       UPDATE_BOUNDS,DONT_TRUNCATE_BOUNDS,
-      SliceBoundCB);
+      SliceBoundCB,
+      SliceRolloutCB, sliceprocinfo, &nsliceprocinfo
+  );
 
     ROLLOUT_slice_histogram = glui_bounds->add_rollout_to_panel(ROLLOUT_slice, _("Histogram"), false, SLICE_HISTOGRAM_ROLLOUT, SliceRolloutCB);
-    ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_slice_histogram, SLICE_HISTOGRAM_ROLLOUT);
+    INSERT_ROLLOUT(ROLLOUT_slice_histogram, glui_bounds);
+    ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_slice_histogram, SLICE_HISTOGRAM_ROLLOUT, glui_bounds);
 
     RADIO_histogram_static = glui_bounds->add_radiogroup_to_panel(ROLLOUT_slice_histogram,&histogram_static);
     glui_bounds->add_radiobutton_to_group(RADIO_histogram_static,_("each time"));
@@ -2258,20 +2318,80 @@ extern "C" void GluiBoundsSetup(int main_window){
     CHECKBOX_histogram_show_outline=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_histogram, _("outline"), &histogram_show_outline);
 
     ROLLOUT_slice_average=glui_bounds->add_rollout_to_panel(ROLLOUT_slice,_("Average data"),false,SLICE_AVERAGE_ROLLOUT,SliceRolloutCB);
-    ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_slice_average, SLICE_AVERAGE_ROLLOUT);
+    INSERT_ROLLOUT(ROLLOUT_slice_average, glui_bounds);
+    ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_slice_average, SLICE_AVERAGE_ROLLOUT, glui_bounds);
 
     CHECKBOX_average_slice=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_average,_("Average slice data"),&slice_average_flag);
     SPINNER_sliceaverage=glui_bounds->add_spinner_to_panel(ROLLOUT_slice_average,_("Time interval"),GLUI_SPINNER_FLOAT,&slice_average_interval);
-    {
-      float tttmax=120.0;
-
-      if(view_tstop>tttmax)tttmax=view_tstop;
-      SPINNER_sliceaverage->set_float_limits(0.0,tttmax);
-    }
+    SPINNER_sliceaverage->set_float_limits(0.0,MAX(120.0,tour_tstop));
     glui_bounds->add_button_to_panel(ROLLOUT_slice_average,_("Reload"),ALLFILERELOAD,SliceBoundCB);
 
+    ROLLOUT_slice_vector = glui_bounds->add_rollout_to_panel(ROLLOUT_slice, _("Vector"), false, SLICE_VECTOR_ROLLOUT, SliceRolloutCB);
+    INSERT_ROLLOUT(ROLLOUT_slice_vector, glui_bounds);
+    ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_slice_vector, SLICE_VECTOR_ROLLOUT, glui_bounds);
+
+    SPINNER_vectorpointsize = glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector, _("Point size"), GLUI_SPINNER_FLOAT,
+      &vectorpointsize,UPDATE_VECTOR,SliceBoundCB);
+    SPINNER_vectorpointsize->set_float_limits(1.0,20.0);
+    SPINNER_vectorlinewidth=glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector,_("Vector width"),GLUI_SPINNER_FLOAT,&vectorlinewidth,UPDATE_VECTOR,SliceBoundCB);
+    SPINNER_vectorlinewidth->set_float_limits(1.0,20.0);
+    SPINNER_vectorlinelength=glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector,_("Vector length"),GLUI_SPINNER_FLOAT,&vecfactor,UPDATE_VECTOR,SliceBoundCB);
+    SPINNER_vectorlinelength->set_float_limits(0.0,20.0);
+    SPINNER_slicevectorskip=glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector,_("Vector skip"),GLUI_SPINNER_INT,&vectorskip,SLICE_VECTORSKIP,SliceBoundCB);
+    SPINNER_slicevectorskip->set_int_limits(1,4);
+    CHECKBOX_color_vector_black = glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_vector, _("Color black"), &color_vector_black);
+
+    CHECKBOX_show_node_slices_and_vectors=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_vector,_("Show vectors and node centered slices"),&show_node_slices_and_vectors);
+    CHECKBOX_show_node_slices_and_vectors=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_vector,_("Show vectors and cell centered slices"),&show_cell_slices_and_vectors);
+    ROLLOUT_line_contour = glui_bounds->add_rollout_to_panel(ROLLOUT_slice, _("Line contours"), false, LINE_CONTOUR_ROLLOUT, SliceRolloutCB);
+    INSERT_ROLLOUT(ROLLOUT_line_contour, glui_bounds);
+    ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_line_contour, LINE_CONTOUR_ROLLOUT, glui_bounds);
+
+    slice_line_contour_min = 0.0;
+    slice_line_contour_max=1.0;
+    SPINNER_line_contour_min=glui_bounds->add_spinner_to_panel(ROLLOUT_line_contour,_("Min"),GLUI_SPINNER_FLOAT,
+      &slice_line_contour_min,LINE_CONTOUR_VALUE,SliceBoundCB);
+    SPINNER_line_contour_max=glui_bounds->add_spinner_to_panel(ROLLOUT_line_contour,_("Max"),GLUI_SPINNER_FLOAT,
+      &slice_line_contour_max,LINE_CONTOUR_VALUE,SliceBoundCB);
+    slice_line_contour_num=1;
+    SPINNER_line_contour_num=glui_bounds->add_spinner_to_panel(ROLLOUT_line_contour,_("Number of contours"),GLUI_SPINNER_INT,
+      &slice_line_contour_num,LINE_CONTOUR_VALUE,SliceBoundCB);
+    SPINNER_line_contour_width=glui_bounds->add_spinner_to_panel(ROLLOUT_line_contour,_("contour width"),GLUI_SPINNER_FLOAT,&slice_line_contour_width);
+    SPINNER_line_contour_width->set_float_limits(1.0,10.0);
+      RADIO_contour_type = glui_bounds->add_radiogroup_to_panel(ROLLOUT_line_contour,&slice_contour_type);
+    glui_bounds->add_radiobutton_to_group(RADIO_contour_type,_("line"));
+#ifdef _DEBUG
+    glui_bounds->add_radiobutton_to_group(RADIO_contour_type,_("stepped"));
+#endif
+
+    BUTTON_update_line_contour=glui_bounds->add_button_to_panel(ROLLOUT_line_contour,_("Update contours"),UPDATE_LINE_CONTOUR_VALUE,SliceBoundCB);
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_line_contour,_("Show contours"),&vis_slice_contours);
+
+    if(n_embedded_meshes>0){
+      CHECKBOX_skip_subslice=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice,_("Skip coarse sub-slice"),&skip_slice_in_embedded_mesh);
+    }
+    if(nslicedups > 0){
+      ROLLOUT_slicedups = glui_bounds->add_rollout_to_panel(ROLLOUT_slice, _("Duplicates"), false, SLICE_DUP_ROLLOUT, SliceRolloutCB);
+      INSERT_ROLLOUT(ROLLOUT_slicedups, glui_bounds);
+      ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_slicedups, SLICE_DUP_ROLLOUT, glui_bounds);
+
+      PANEL_slicedup = glui_bounds->add_panel_to_panel(ROLLOUT_slicedups,"slices",true);
+      RADIO_slicedup = glui_bounds->add_radiogroup_to_panel(PANEL_slicedup, &slicedup_option,UPDATE_SLICEDUPS,SliceBoundCB);
+      glui_bounds->add_radiobutton_to_group(RADIO_slicedup, _("Keep all"));
+      glui_bounds->add_radiobutton_to_group(RADIO_slicedup, _("Keep fine"));
+      glui_bounds->add_radiobutton_to_group(RADIO_slicedup, _("Keep coarse"));
+
+      PANEL_vectorslicedup = glui_bounds->add_panel_to_panel(ROLLOUT_slicedups,"vector slices",true);
+      RADIO_vectorslicedup = glui_bounds->add_radiogroup_to_panel(PANEL_vectorslicedup, &vectorslicedup_option, UPDATE_SLICEDUPS, SliceBoundCB);
+      glui_bounds->add_radiobutton_to_group(RADIO_vectorslicedup, _("Keep all"));
+      glui_bounds->add_radiobutton_to_group(RADIO_vectorslicedup, _("Keep fine"));
+      glui_bounds->add_radiobutton_to_group(RADIO_vectorslicedup, _("Keep coarse"));
+    }
+
+
     ROLLOUT_boundimmersed = glui_bounds->add_rollout_to_panel(ROLLOUT_slice, "Settings",false,SLICE_SETTINGS_ROLLOUT,SliceRolloutCB);
-    ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_boundimmersed, SLICE_SETTINGS_ROLLOUT);
+    INSERT_ROLLOUT(ROLLOUT_boundimmersed, glui_bounds);
+    ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_boundimmersed, SLICE_SETTINGS_ROLLOUT, glui_bounds);
 
     if(ngeom_data > 0){
       PANEL_immersed = glui_bounds->add_panel_to_panel(ROLLOUT_boundimmersed, "slice(geometry)", true);
@@ -2309,94 +2429,36 @@ extern "C" void GluiBoundsSetup(int main_window){
     SPINNER_transparent_level = glui_bounds->add_spinner_to_panel(ROLLOUT_boundimmersed, _("Transparent level"), GLUI_SPINNER_FLOAT, &transparent_level, TRANSPARENTLEVEL, SliceBoundCB);
     SPINNER_transparent_level->set_float_limits(0.0, 1.0);
 
-    ROLLOUT_slice_vector = glui_bounds->add_rollout_to_panel(ROLLOUT_slice, _("Vector"), false, SLICE_VECTOR_ROLLOUT, SliceRolloutCB);
-    ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_slice_vector, SLICE_VECTOR_ROLLOUT);
-
-    SPINNER_vectorpointsize = glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector, _("Point size"), GLUI_SPINNER_FLOAT,
-      &vectorpointsize,UPDATE_VECTOR,SliceBoundCB);
-    SPINNER_vectorpointsize->set_float_limits(1.0,20.0);
-    SPINNER_vectorlinewidth=glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector,_("Vector width"),GLUI_SPINNER_FLOAT,&vectorlinewidth,UPDATE_VECTOR,SliceBoundCB);
-    SPINNER_vectorlinewidth->set_float_limits(1.0,20.0);
-    SPINNER_vectorlinelength=glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector,_("Vector length"),GLUI_SPINNER_FLOAT,&vecfactor,UPDATE_VECTOR,SliceBoundCB);
-    SPINNER_vectorlinelength->set_float_limits(0.0,20.0);
-    SPINNER_slicevectorskip=glui_bounds->add_spinner_to_panel(ROLLOUT_slice_vector,_("Vector skip"),GLUI_SPINNER_INT,&vectorskip,SLICE_VECTORSKIP,SliceBoundCB);
-    SPINNER_slicevectorskip->set_int_limits(1,4);
-    CHECKBOX_color_vector_black = glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_vector, _("Color black"), &color_vector_black);
-
-    CHECKBOX_show_node_slices_and_vectors=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_vector,_("Show vectors and node centered slices"),&show_node_slices_and_vectors);
-    CHECKBOX_show_node_slices_and_vectors=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_vector,_("Show vectors and cell centered slices"),&show_cell_slices_and_vectors);
-    ROLLOUT_line_contour = glui_bounds->add_rollout_to_panel(ROLLOUT_slice, _("Line contours"), false, LINE_CONTOUR_ROLLOUT, SliceRolloutCB);
-    ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_line_contour, LINE_CONTOUR_ROLLOUT);
-
-    slice_line_contour_min = 0.0;
-    slice_line_contour_max=1.0;
-    SPINNER_line_contour_min=glui_bounds->add_spinner_to_panel(ROLLOUT_line_contour,_("Min"),GLUI_SPINNER_FLOAT,
-      &slice_line_contour_min,LINE_CONTOUR_VALUE,SliceBoundCB);
-    SPINNER_line_contour_max=glui_bounds->add_spinner_to_panel(ROLLOUT_line_contour,_("Max"),GLUI_SPINNER_FLOAT,
-      &slice_line_contour_max,LINE_CONTOUR_VALUE,SliceBoundCB);
-    slice_line_contour_num=1;
-    SPINNER_line_contour_num=glui_bounds->add_spinner_to_panel(ROLLOUT_line_contour,_("Number of contours"),GLUI_SPINNER_INT,
-      &slice_line_contour_num,LINE_CONTOUR_VALUE,SliceBoundCB);
-    SPINNER_line_contour_width=glui_bounds->add_spinner_to_panel(ROLLOUT_line_contour,_("contour width"),GLUI_SPINNER_FLOAT,&slice_line_contour_width);
-    SPINNER_line_contour_width->set_float_limits(1.0,10.0);
-      RADIO_contour_type = glui_bounds->add_radiogroup_to_panel(ROLLOUT_line_contour,&slice_contour_type);
-    glui_bounds->add_radiobutton_to_group(RADIO_contour_type,_("line"));
-#ifdef _DEBUG
-    glui_bounds->add_radiobutton_to_group(RADIO_contour_type,_("stepped"));
-#endif
-
-    BUTTON_update_line_contour=glui_bounds->add_button_to_panel(ROLLOUT_line_contour,_("Update contours"),UPDATE_LINE_CONTOUR_VALUE,SliceBoundCB);
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_line_contour,_("Show contours"),&vis_slice_contours);
-
-    if(n_embedded_meshes>0){
-      CHECKBOX_skip_subslice=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice,_("Skip coarse sub-slice"),&skip_slice_in_embedded_mesh);
-    }
-    if(nslicedups > 0){
-      ROLLOUT_slicedups = glui_bounds->add_rollout_to_panel(ROLLOUT_slice, _("Duplicates"), false, SLICE_DUP_ROLLOUT, SliceRolloutCB);
-      ADDPROCINFO(sliceprocinfo, nsliceprocinfo, ROLLOUT_slicedups, SLICE_DUP_ROLLOUT);
-
-      PANEL_slicedup = glui_bounds->add_panel_to_panel(ROLLOUT_slicedups,"slices",true);
-      RADIO_slicedup = glui_bounds->add_radiogroup_to_panel(PANEL_slicedup, &slicedup_option,UPDATE_SLICEDUPS,SliceBoundCB);
-      glui_bounds->add_radiobutton_to_group(RADIO_slicedup, _("Keep all"));
-      glui_bounds->add_radiobutton_to_group(RADIO_slicedup, _("Keep fine"));
-      glui_bounds->add_radiobutton_to_group(RADIO_slicedup, _("Keep coarse"));
-
-      PANEL_vectorslicedup = glui_bounds->add_panel_to_panel(ROLLOUT_slicedups,"vector slices",true);
-      RADIO_vectorslicedup = glui_bounds->add_radiogroup_to_panel(PANEL_vectorslicedup, &vectorslicedup_option, UPDATE_SLICEDUPS, SliceBoundCB);
-      glui_bounds->add_radiobutton_to_group(RADIO_vectorslicedup, _("Keep all"));
-      glui_bounds->add_radiobutton_to_group(RADIO_vectorslicedup, _("Keep fine"));
-      glui_bounds->add_radiobutton_to_group(RADIO_vectorslicedup, _("Keep coarse"));
-    }
-
+    //---
     if(nfedinfo>0){
-      glui_bounds->add_checkbox_to_panel(ROLLOUT_slice,"Regenerate FED data",&regenerate_fed);
+      glui_bounds->add_checkbox_to_panel(ROLLOUT_boundimmersed, "Regenerate FED data", &regenerate_fed);
     }
-    CHECKBOX_research_mode=glui_bounds->add_checkbox_to_panel(ROLLOUT_slice,_("Research display mode"),&research_mode,RESEARCH_MODE,SliceBoundCB);
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice,_("Output data to file"),&output_slicedata);
+    CHECKBOX_research_mode = glui_bounds->add_checkbox_to_panel(ROLLOUT_boundimmersed, _("Research display mode"), &research_mode, RESEARCH_MODE, SliceBoundCB);
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_boundimmersed, _("Output data to file"), &output_slicedata);
 
 #ifdef pp_FSEEK
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("incremental data loading"), &load_incremental,SLICE_LOAD_INCREMENTAL,LoadIncrementalCB);
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_boundimmersed, _("incremental data loading"), &load_incremental, SLICE_LOAD_INCREMENTAL, LoadIncrementalCB);
     LoadIncrementalCB(SLICE_LOAD_INCREMENTAL);
 #endif
-#ifdef pp_CSLICE
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("Use C for slice input"), &use_cslice);
-#endif
-    PANEL_slice_smoke = glui_bounds->add_panel_to_panel(ROLLOUT_slice, "slice fire", true);
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_boundimmersed, _("Use C for slice input"), &use_cslice);
+    PANEL_slice_smoke = glui_bounds->add_panel_to_panel(ROLLOUT_boundimmersed, "slice fire", true);
     glui_bounds->add_checkbox_to_panel(PANEL_slice_smoke, _("max blending"), &slices3d_max_blending);
     glui_bounds->add_checkbox_to_panel(PANEL_slice_smoke, _("show all 3D slices"), &showall_3dslices);
 
 #ifdef pp_SMOKETEST
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("opacity adjustment"), &slice_opacity_adjustment);
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("sort slices"), &sort_slices);
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_slice, _("show sorted slice labels"), &show_sort_labels);
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_boundimmersed, _("opacity adjustment"), &slice_opacity_adjustment);
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_boundimmersed, _("sort slices"), &sort_slices);
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_boundimmersed, _("show sorted slice labels"), &show_sort_labels);
 #endif
+
     SliceBoundCB(FILETYPEINDEX);
   }
 
   // ----------------------------------- Time ----------------------------------------
 
   ROLLOUT_time = glui_bounds->add_rollout_to_panel(PANEL_bounds,"Time", false, TIME_ROLLOUT, FileRolloutCB);
-  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_time, TIME_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_time, glui_bounds);
+  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_time, TIME_ROLLOUT, glui_bounds);
 
   PANEL_time1a = glui_bounds->add_panel_to_panel(ROLLOUT_time,"",false);
   SPINNER_timebounds=glui_bounds->add_spinner_to_panel(PANEL_time1a,_("Time:"),GLUI_SPINNER_FLOAT,&glui_time);
@@ -2432,7 +2494,8 @@ extern "C" void GluiBoundsSetup(int main_window){
 
 #ifdef pp_MEMDEBUG
   ROLLOUT_memcheck = glui_bounds->add_rollout(_("Memory check"),false,MEMCHECK_ROLLOUT,FileRolloutCB);
-  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_memcheck, MEMCHECK_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_memcheck, glui_bounds);
+  ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_memcheck, MEMCHECK_ROLLOUT, glui_bounds);
 
   list_memcheck_index = 0;
   RADIO_memcheck = glui_bounds->add_radiogroup_to_panel(ROLLOUT_memcheck,&list_memcheck_index,MEMCHECK, MemcheckCB);
@@ -2785,14 +2848,12 @@ extern "C" void IsoBoundCB(int var){
   case ISO_OUTLINE_IOFFSET:
     iso_outline_offset = (float)iso_outline_ioffset/1000.0;
   break;
-#ifdef pp_TISO
   case ISO_COLORBAR_LIST:
     iso_colorbar = colorbarinfo + iso_colorbar_index;
     ColorbarMenu(iso_colorbar_index);
     updatemenu = 1;
     update_texturebar = 1;
     break;
-#endif
   case ISO_TRANSPARENCY_OPTION:
     switch(iso_transparency_option){
       case ISO_TRANSPARENT_CONSTANT:
@@ -3815,6 +3876,7 @@ extern "C" void SliceBoundCB(int var){
 /* ------------------ UpdateSliceList ------------------------ */
 
 extern "C" void UpdateSliceList(int index){
+  if(glui_defined==0)return;
   RADIO_slice->set_int_val(index);
 }
 
@@ -3822,17 +3884,19 @@ extern "C" void UpdateSliceList(int index){
 
 extern "C" void UpdateSliceListIndex(int sfn){
   int i;
-  int slicefile_type;
+  int slice_filetype;
   slicedata *sd;
+
+  if(glui_defined==0)return;
   if(sfn<0){
     UpdateSliceFilenum();
     sfn=slicefilenum;
   }
   if(sfn < 0)return;
   sd = sliceinfo+sfn;
-  slicefile_type = GetSliceBoundsIndex(sd);
-  if(slicefile_type>=0&&slicefile_type<nslicebounds){
-    i = slicefile_type;
+  slice_filetype = GetSliceBoundsIndex(sd);
+  if(slice_filetype>=0&&slice_filetype<nslicebounds){
+    i = slice_filetype;
     RADIO_slice->set_int_val(i);
     SetSliceBounds(i);
     list_slice_index=i;
@@ -3947,13 +4011,13 @@ extern "C" void ShowBoundsDialog(int type){
 /* ------------------ EnableBoundaryGlui ------------------------ */
 
 extern "C" void EnableBoundaryGlui(void){
-  ROLLOUT_boundary->enable();
+  ROLLOUT_boundary_bound->enable();
 }
 
 /* ------------------ DisableBoundaryGlui ------------------------ */
 
 extern "C" void DisableBoundaryGlui(void){
-  ROLLOUT_boundary->disable();
+  ROLLOUT_boundary_bound->disable();
 }
 
 /* ------------------ UpdateOverwrite ------------------------ */
@@ -3966,7 +4030,7 @@ extern "C" void UpdateOverwrite(void){
 /* ------------------ HideGluiBounds ------------------------ */
 
 extern "C" void HideGluiBounds(void){
-  if(glui_bounds!=NULL)glui_bounds->hide();
+  CloseRollouts(glui_bounds);
 }
 
 /* ------------------ UpdateVectorWidgets ------------------------ */

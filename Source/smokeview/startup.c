@@ -15,7 +15,7 @@
 
 /* ------------------ Init ------------------------ */
 
-void Init(void){
+void InitMisc(void){
   int i;
 
   FREEMEMORY(plotiso);
@@ -107,10 +107,6 @@ void Init(void){
   thistime=0;
   lasttime=0;
 
-  /* define colorbar */
-
-  UpdateRGBColors(COLORBAR_INDEX_NONE);
-
   block_ambient2[3] = 1.0;
   block_specular2[3] = 1.0;
   mat_ambient2[3] = 1.0;
@@ -127,7 +123,7 @@ void ReadBoundINI(void){
   char *fullfilename = NULL;
 
   if(boundinfo_filename == NULL)return;
-  fullfilename = GetFileName(smokeviewtempdir, boundinfo_filename, tempdir_flag);
+  fullfilename = GetFileName(smokeviewtempdir, boundinfo_filename, NOT_FORCE_IN_DIR);
   if(fullfilename != NULL)stream = fopen(fullfilename, "r");
   if(stream == NULL || IsFileNewer(smv_filename, fullfilename) == 1){
     if(stream != NULL)fclose(stream);
@@ -236,12 +232,17 @@ int SetupCase(int argc, char **argv){
   CheckMemory;
   ReadIni(NULL);
   ReadBoundINI();
+
+  UpdateRGBColors(COLORBAR_INDEX_NONE);
+
   if(use_graphics==0)return 0;
+  glui_defined = 1;
 #ifdef pp_LANG
   InitTranslate(smokeview_bindir, tr_name);
 #endif
 
   if(ntourinfo==0)SetupTour();
+  InitRolloutList();
   GluiColorbarSetup(mainwindow_id);
   GluiMotionSetup(mainwindow_id);
   GluiBoundsSetup(mainwindow_id);
@@ -257,15 +258,13 @@ int SetupCase(int argc, char **argv){
   Glui3dSmokeSetup(mainwindow_id);
 
   UpdateLights(light_position0, light_position1);
-  NORMALIZE_XYZ(light_position0, light_position0);
-  NORMALIZE_XYZ(light_position1, light_position1);
 
   glutReshapeWindow(screenWidth,screenHeight);
 
   glutSetWindow(mainwindow_id);
   glutShowWindow();
   glutSetWindowTitle(fdsprefix);
-  Init();
+  InitMisc();
   GluiTrainerSetup(mainwindow_id);
   glutDetachMenu(GLUT_RIGHT_BUTTON);
   InitMenus(LOAD);
@@ -274,7 +273,7 @@ int SetupCase(int argc, char **argv){
     ShowGluiTrainer();
     ShowGluiAlert();
   }
-  // intialise info header
+  // initialize info header
   initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash,
                        chidfilebase);
   return 0;
@@ -292,9 +291,19 @@ void SetupGlut(int argc, char **argv){
 
 // get smokeview bin directory from argv[0] which contains the full path of the smokeview binary
 
+  // create full path for smokeview.ini file
+
   NewMemory((void **)&smokeviewini,    (unsigned int)(strlen(smokeview_bindir)+14));
   STRCPY(smokeviewini,smokeview_bindir);
   STRCAT(smokeviewini,"smokeview.ini");
+
+  // create full path for html template file
+
+#ifdef pp_HTML
+  NewMemory((void **)&smokeview_html, (unsigned int)(strlen(smokeview_bindir)+strlen("smokeview.html")+1));
+  STRCPY(smokeview_html, smokeview_bindir);
+  STRCAT(smokeview_html, "smokeview.html");
+#endif
 
   startup_pass=2;
 
@@ -476,6 +485,11 @@ void InitOpenGL(void){
 #ifdef _DEBUG
   PRINTF("%s",_("   Initializing callbacks - "));
 #endif
+  {
+    GLint m[4];
+    glGetIntegerv(GL_VIEWPORT, m);
+    printf("%i %i %i %i\n", m[0], m[1], m[2], m[3]);
+  }
   glutSpecialUpFunc(SpecialKeyboardUpCB);
   glutKeyboardUpFunc(KeyboardUpCB);
   glutKeyboardFunc(KeyboardCB);
@@ -1536,7 +1550,7 @@ void InitVars(void){
   ncadgeom=0;
   visFloor=0, visFrame=1;
   visNormalEditColors=1;
-  visWalls=0, visGrid=0, visCeiling=0, cursorPlot3D=0;
+  visWalls=0, visGrid=0, visCeiling=0;
   visSensor=1, visSensorNorm=1, hasSensorNorm=0;
   partframestep=1, sliceframestep=1, boundframestep=1;
   partframeskip=0, sliceframeskip=0, boundframeskip=0;
@@ -1726,8 +1740,6 @@ void InitVars(void){
   titlesafe_offsetBASE=45;
   reset_frame=0;
   reset_time=0.0,start_frametime=0.0,stop_frametime=0.0;
-  reset_time_flag=0;
-
   nsorted_surfidlist=0;
 
   overwrite_all=0,erase_all=0;
@@ -1735,8 +1747,6 @@ void InitVars(void){
   strcpy(ext_png,".png");
   strcpy(ext_jpg,".jpg");
   render_filetype=PNG;
-  strcpy(part_ext,".part");
-  strcpy(ini_ext,".ini");
 
   start_xyz0[0]=0.0;
   start_xyz0[1]=0.0;
@@ -1772,8 +1782,6 @@ void InitVars(void){
   keyframe_snap=0;
   tourrad_avatar=0.1;
   dirtycircletour=0;
-  view_tstart=0.0, view_tstop=100.0;
-  view_ntimes=1000;
   iavatar_evac=0;
   viewtourfrompath=0,viewalltours=0,viewanytours=0,edittour=0;
   tour_usecurrent=0;
@@ -1797,9 +1805,6 @@ void InitVars(void){
   updateUpdateFrameRateMenu=0;
   ntextures=0;
   nskyboxinfo=0;
-  part5show=1;
-  streak5show=0;
-  update_streaks=0;
 
   streak_rvalue[0]=0.25;
   streak_rvalue[1]=0.5;
@@ -1815,7 +1820,6 @@ void InitVars(void){
   if(streak_index>=0)float_streak5value=streak_rvalue[streak_index];
 
   streak5step=0;
-  showstreakhead=1;
   npartclassinfo=0;
   noutlineinfo=0;
   nmultisliceinfo=0;

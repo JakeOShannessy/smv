@@ -37,16 +37,6 @@ slicedata *gslice;
                            if(endianswitch==1)EndianSwitch(var,size);\
                            FSEEK(RLESLICEFILE,4,SEEK_CUR)
 
-#define GET_SLICE_COLOR(color,index) \
-     if(sd->constant_color==NULL){\
-       int i11;\
-       i11 = sd->iqsliceframe[(index)];\
-       color = rgb_slice + 4*i11;\
-     }\
-     else{\
-       color = sd->constant_color;\
-     }
-
 #define GET_VAL(U,VAL,n) \
          VAL=0.0;           \
          if(U!=NULL){       \
@@ -1476,11 +1466,11 @@ void GetSliceHists(slicedata *sd){
         n++;
         slice_mask0[n] = 0;
         slice_weight0[n] = dx*dy*dz;
-        if(sd->slicefile_type == SLICE_CELL_CENTER &&
+        if(sd->slice_filetype == SLICE_CELL_CENTER &&
           ((k == 0 && sd->nslicek != 1) || (j == 0 && sd->nslicej != 1) || (i == 0 && sd->nslicei != 1)))continue;
         if(show_slice_in_obst == ONLY_IN_GAS){
-          if(sd->slicefile_type != SLICE_CELL_CENTER&& iblank_node != NULL&&iblank_node[IJKNODE(sd->is1 + i, sd->js1 + j, sd->ks1 + k)] == SOLID)continue;
-          if(sd->slicefile_type == SLICE_CELL_CENTER&& iblank_cell != NULL&&iblank_cell[IJKCELL(sd->is1 + i - 1, sd->js1 + j - 1, sd->ks1 + k - 1)] == EMBED_YES)continue;
+          if(sd->slice_filetype != SLICE_CELL_CENTER&& iblank_node != NULL&&iblank_node[IJKNODE(sd->is1 + i, sd->js1 + j, sd->ks1 + k)] == SOLID)continue;
+          if(sd->slice_filetype == SLICE_CELL_CENTER&& iblank_cell != NULL&&iblank_cell[IJKCELL(sd->is1 + i - 1, sd->js1 + j - 1, sd->ks1 + k - 1)] == EMBED_YES)continue;
         }
         slice_mask0[n] = 1;
       }
@@ -1820,7 +1810,7 @@ void SetSliceColors(float smin, float smax,
 
   *errorcode = 0;
   scale = sb->scale;
-  if(sd->slicefile_type == SLICE_GEOM){
+  if(sd->slice_filetype == SLICE_GEOM){
     patchdata *patchgeom;
 
     patchgeom = sd->patchgeom;
@@ -1892,8 +1882,8 @@ int SliceCompare( const void *arg1, const void *arg2 ){
   if(slicei->menu_show<slicej->menu_show)return 1;
   if(slicei->mesh_type<slicej->mesh_type)return -1;
   if(slicei->mesh_type>slicej->mesh_type)return 1;
-  if(slicei->slicefile_type<slicej->slicefile_type)return -1;
-  if(slicei->slicefile_type>slicej->slicefile_type)return 1;
+  if(slicei->slice_filetype<slicej->slice_filetype)return -1;
+  if(slicei->slice_filetype>slicej->slice_filetype)return 1;
 
   if( strncmp(slicei->label.longlabel,"VE",2)==0){
     if(
@@ -2211,14 +2201,14 @@ int NewMultiSlice(slicedata *sdold,slicedata *sd){
       ||ABS(sd->position_orig-sdold->position_orig)>delta_orig
 #endif
       ||sd->mesh_type!=sdold->mesh_type
-      ||sd->slicefile_type!=sdold->slicefile_type
+      ||sd->slice_filetype!=sdold->slice_filetype
         ){
       return 1;
     }
   }
   else{
     if(strcmp(sd->label.shortlabel,sdold->label.shortlabel)!=0
-      ||sd->mesh_type!=sdold->mesh_type||sd->slicefile_type!=sdold->slicefile_type
+      ||sd->mesh_type!=sdold->mesh_type||sd->slice_filetype!=sdold->slice_filetype
         ){
       return 1;
     }
@@ -2468,15 +2458,15 @@ void UpdateFedinfo(void){
     fedi->fed_index = -1;
     fedi->loaded = 0;
     fedi->display = 0;
-    if(slicei->slicefile_type != SLICE_CELL_CENTER&&strcmp(slicei->label.longlabel, "CARBON DIOXIDE VOLUME FRACTION") != 0)continue;
-    if(slicei->slicefile_type == SLICE_CELL_CENTER&&strcmp(slicei->label.longlabel, "CARBON DIOXIDE VOLUME FRACTION(cell centered)") != 0)continue;
+    if(slicei->slice_filetype != SLICE_CELL_CENTER&&strcmp(slicei->label.longlabel, "CARBON DIOXIDE VOLUME FRACTION") != 0)continue;
+    if(slicei->slice_filetype == SLICE_CELL_CENTER&&strcmp(slicei->label.longlabel, "CARBON DIOXIDE VOLUME FRACTION(cell centered)") != 0)continue;
     fedi->co2_index = i;
     for(j = 0; j < nsliceinfo; j++){
       slicedata *slicej;
 
       slicej = sliceinfo + j;
-      if(slicei->slicefile_type != SLICE_CELL_CENTER&&strcmp(slicej->label.longlabel, "CARBON MONOXIDE VOLUME FRACTION") != 0)continue;
-      if(slicei->slicefile_type == SLICE_CELL_CENTER&&strcmp(slicej->label.longlabel, "CARBON MONOXIDE VOLUME FRACTION(cell centered)") != 0)continue;
+      if(slicei->slice_filetype != SLICE_CELL_CENTER&&strcmp(slicej->label.longlabel, "CARBON MONOXIDE VOLUME FRACTION") != 0)continue;
+      if(slicei->slice_filetype == SLICE_CELL_CENTER&&strcmp(slicej->label.longlabel, "CARBON MONOXIDE VOLUME FRACTION(cell centered)") != 0)continue;
       if(slicei->blocknumber != slicej->blocknumber)continue;
       if(slicei->is1 != slicej->is1 || slicei->is2 != slicej->is2)continue;
       if(slicei->js1 != slicej->js1 || slicei->js2 != slicej->js2)continue;
@@ -2489,8 +2479,8 @@ void UpdateFedinfo(void){
       slicedata *slicej;
 
       slicej = sliceinfo + j;
-      if(slicei->slicefile_type != SLICE_CELL_CENTER&&strcmp(slicej->label.longlabel, "OXYGEN VOLUME FRACTION") != 0)continue;
-      if(slicei->slicefile_type == SLICE_CELL_CENTER&&strcmp(slicej->label.longlabel, "OXYGEN VOLUME FRACTION(cell centered)") != 0)continue;
+      if(slicei->slice_filetype != SLICE_CELL_CENTER&&strcmp(slicej->label.longlabel, "OXYGEN VOLUME FRACTION") != 0)continue;
+      if(slicei->slice_filetype == SLICE_CELL_CENTER&&strcmp(slicej->label.longlabel, "OXYGEN VOLUME FRACTION(cell centered)") != 0)continue;
       if(slicei->blocknumber != slicej->blocknumber)continue;
       if(slicei->is1 != slicej->is1 || slicei->is2 != slicej->is2)continue;
       if(slicei->js1 != slicej->js1 || slicei->js2 != slicej->js2)continue;
@@ -2566,8 +2556,8 @@ void UpdateFedinfo(void){
 
     sd->is_fed = 1;
     sd->fedptr = fedi;
-    sd->slicefile_type = co2->slicefile_type;
-    if(sd->slicefile_type == SLICE_CELL_CENTER){
+    sd->slice_filetype = co2->slice_filetype;
+    if(sd->slice_filetype == SLICE_CELL_CENTER){
       SetLabels(&(sd->label), "Fractional effective dose(cell centered)", "FED", " ");
     }
     else{
@@ -2609,7 +2599,7 @@ void UpdateFedinfo(void){
     ext = strrchr(filename_base, '.');
     *ext = 0;
     strcat(filename_base, "_fed.sf");
-    filename = GetFileName(smokeviewtempdir, filename_base, tempdir_flag);
+    filename = GetFileName(smokeviewtempdir, filename_base, NOT_FORCE_IN_DIR);
     NewMemory((void **)&fedi->fed_slice->reg_file, strlen(filename) + 1);
     strcpy(sd->reg_file, filename);
     FREEMEMORY(filename);
@@ -2663,7 +2653,7 @@ void UpdateFedinfo(void){
       ext = strrchr(filename_base, '.');
       *ext = 0;
       strcat(filename_base, "_fed.iso");
-      filename = GetFileName(smokeviewtempdir, filename_base, tempdir_flag);
+      filename = GetFileName(smokeviewtempdir, filename_base, NOT_FORCE_IN_DIR);
       NewMemory((void **)&isoi->reg_file, strlen(filename) + 1);
       strcpy(isoi->reg_file, filename);
       FREEMEMORY(filename);
@@ -2718,8 +2708,8 @@ void UpdateSliceDirCount(void){
       if(slicej->idir < 1)continue;
       if(slicej->volslice == 1)continue;
       if(strcmp(slicej->label.longlabel, slicei->label.longlabel) != 0)continue;
-      if((slicej->slicefile_type == SLICE_CELL_CENTER&&slicei->slicefile_type != SLICE_CELL_CENTER) ||
-        (slicej->slicefile_type != SLICE_CELL_CENTER&&slicei->slicefile_type == SLICE_CELL_CENTER))continue;
+      if((slicej->slice_filetype == SLICE_CELL_CENTER&&slicei->slice_filetype != SLICE_CELL_CENTER) ||
+         (slicej->slice_filetype != SLICE_CELL_CENTER&&slicei->slice_filetype == SLICE_CELL_CENTER))continue;
       mslicei->ndirxyz[slicej->idir]++;
     }
   }
@@ -2744,8 +2734,8 @@ void UpdateSliceDirCount(void){
       if(slicej->volslice == 1)continue;
       if(strcmp(slicej->label.longlabel, slicei->label.longlabel) != 0)continue;
       //if(slicej->cellcenter!=slicei->cellcenter)continue;
-      if((slicej->slicefile_type == SLICE_CELL_CENTER&&slicei->slicefile_type != SLICE_CELL_CENTER) ||
-        (slicej->slicefile_type != SLICE_CELL_CENTER&&slicei->slicefile_type == SLICE_CELL_CENTER))continue;
+      if((slicej->slice_filetype == SLICE_CELL_CENTER&&slicei->slice_filetype != SLICE_CELL_CENTER) ||
+         (slicej->slice_filetype != SLICE_CELL_CENTER&&slicei->slice_filetype == SLICE_CELL_CENTER))continue;
       slicei->ndirxyz[slicej->idir]++;
     }
   }
@@ -2867,7 +2857,7 @@ void GetSliceParams(void){
       if(sd->is1==sd->is2||(sd->js1!=sd->js2&&sd->ks1!=sd->ks2)){
         sd->idir=1;
         position = meshi->xplt_orig[is1];
-        if(sd->slicefile_type==SLICE_CELL_CENTER){
+        if(sd->slice_filetype==SLICE_CELL_CENTER){
           float *xp;
 
           is2=is1-1;
@@ -2898,7 +2888,7 @@ void GetSliceParams(void){
 
         sd->idir = 2;
         position = meshi->yplt_orig[js1];
-        if(sd->slicefile_type==SLICE_CELL_CENTER){
+        if(sd->slice_filetype==SLICE_CELL_CENTER){
           float *yp;
 
           js2=js1-1;
@@ -2920,7 +2910,7 @@ void GetSliceParams(void){
 
         sd->idir = 3;
         position = meshi->zplt_orig[ks1];
-        if(sd->slicefile_type==SLICE_CELL_CENTER){
+        if(sd->slice_filetype==SLICE_CELL_CENTER){
           float *zp;
 
           ks2=ks1-1;
@@ -2934,7 +2924,7 @@ void GetSliceParams(void){
         else{
           sd->delta_orig=(meshi->zplt_orig[ks1+1]-meshi->zplt_orig[ks1])/2.0;
         }
-        if(sd->slicefile_type==SLICE_TERRAIN){
+        if(sd->slice_filetype==SLICE_TERRAIN){
           position=sd->above_ground_level;
           sprintf(sd->slicedir,"AGL=%f",position);
         }
@@ -3152,13 +3142,13 @@ void UpdateVSlices(void){
     vd->iw=-1;
     vd->ival=i;
     vd->vslicefile_labelindex=sdi->slicefile_labelindex;
-    vd->vslicefile_type=sdi->slicefile_type;
-    if(vd->vslicefile_type==SLICE_CELL_CENTER){
+    vd->vslice_filetype=sdi->slice_filetype;
+    if(vd->vslice_filetype==SLICE_CELL_CENTER){
       for(j=0;j<nsliceinfo;j++){
         slicedata *sdj;
 
         sdj = sliceinfo+j;
-        if(sdj->slicefile_type!=SLICE_CELL_CENTER)continue;
+        if(sdj->slice_filetype!=SLICE_CELL_CENTER)continue;
         if(sdi->blocknumber!=sdj->blocknumber)continue;
         if(sdi->is1!=sdj->is1||sdi->is2!=sdj->is2||sdi->js1!=sdj->js1)continue;
         if(sdi->js2!=sdj->js2||sdi->ks1!=sdj->ks1||sdi->ks2!=sdj->ks2)continue;
@@ -3167,12 +3157,12 @@ void UpdateVSlices(void){
         if(sdj->vec_comp==3)vd->iw=j;
       }
     }
-    else if(vd->vslicefile_type == SLICE_GEOM){
+    else if(vd->vslice_filetype == SLICE_GEOM){
       for(j=0;j<nsliceinfo;j++){
         slicedata *sdj;
 
         sdj = sliceinfo+j;
-        if(sdj->slicefile_type!=SLICE_GEOM)continue;
+        if(sdj->slice_filetype!=SLICE_GEOM)continue;
         if(sdi->blocknumber!=sdj->blocknumber)continue;
         if(sdi->is1!=sdj->is1||sdi->is2!=sdj->is2||sdi->js1!=sdj->js1)continue;
         if(sdi->js2!=sdj->js2||sdi->ks1!=sdj->ks1||sdi->ks2!=sdj->ks2)continue;
@@ -3186,7 +3176,7 @@ void UpdateVSlices(void){
         slicedata *sdj;
 
         sdj = sliceinfo + j;
-        if (sdj->slicefile_type == SLICE_CELL_CENTER|| sdj->slicefile_type == SLICE_GEOM)continue;
+        if (sdj->slice_filetype == SLICE_CELL_CENTER|| sdj->slice_filetype == SLICE_GEOM)continue;
         if (sdi->blocknumber != sdj->blocknumber)continue;
         if (sdi->is1 != sdj->is1 || sdi->is2 != sdj->is2 || sdi->js1 != sdj->js1)continue;
         if (sdi->js2 != sdj->js2 || sdi->ks1 != sdj->ks1 || sdi->ks2 != sdj->ks2)continue;
@@ -3300,8 +3290,8 @@ void UpdateVSlices(void){
       if(slicej->idir<1)continue;
       if(slicej->volslice==1)continue;
       if(strcmp(slicej->label.longlabel,slicei->label.longlabel)!=0)continue;
-      if((slicej->slicefile_type==SLICE_CELL_CENTER&&slicei->slicefile_type!=SLICE_CELL_CENTER)||
-         (slicej->slicefile_type!=SLICE_CELL_CENTER&&slicei->slicefile_type==SLICE_CELL_CENTER))continue;
+      if((slicej->slice_filetype==SLICE_CELL_CENTER&&slicei->slice_filetype!=SLICE_CELL_CENTER)||
+         (slicej->slice_filetype!=SLICE_CELL_CENTER&&slicei->slice_filetype==SLICE_CELL_CENTER))continue;
       mvslicei->ndirxyz[slicej->idir]++;
     }
   }
@@ -3565,7 +3555,7 @@ void GetSliceDataBounds(slicedata *sd, float *pmin, float *pmax){
   meshdata *meshi;
 
 
-  if(sd->slicefile_type == SLICE_GEOM){
+  if(sd->slice_filetype == SLICE_GEOM){
     pdata = sd->patchgeom->geom_vals;
     ndata = sd->patchgeom->geom_nvals;
     *pmin = pdata[0];
@@ -3600,13 +3590,13 @@ void GetSliceDataBounds(slicedata *sd, float *pmin, float *pmax){
       for(i=0;i<sd->nslicei;i++){
         n++;
         slice_mask0[n]=0;
-        if(sd->slicefile_type==SLICE_CELL_CENTER&&((k==0&&sd->nslicek!=1)||(j==0&&sd->nslicej!=1)||(i==0&&sd->nslicei!=1)))continue;
+        if(sd->slice_filetype==SLICE_CELL_CENTER&&((k==0&&sd->nslicek!=1)||(j==0&&sd->nslicej!=1)||(i==0&&sd->nslicei!=1)))continue;
         if(show_slice_in_obst == ONLY_IN_GAS){
-          if(sd->slicefile_type!=SLICE_CELL_CENTER&& iblank_node!=NULL){
+          if(sd->slice_filetype!=SLICE_CELL_CENTER&& iblank_node!=NULL){
 //            if(iblank_node[IJKNODE(sd->is1+i, sd->js1+j, sd->ks1+k)]==SOLID)continue;
             if(ib_node[i]==SOLID)continue;
           }
-          if(sd->slicefile_type==SLICE_CELL_CENTER&& iblank_cell!=NULL){
+          if(sd->slice_filetype==SLICE_CELL_CENTER&& iblank_cell!=NULL){
 //            if(iblank_cell[IJKCELL(sd->is1+i-1, sd->js1+j-1, sd->ks1+k-1)]==EMBED_YES)continue;
             if(ib_cell[i]==EMBED_YES)continue;
           }
@@ -3725,7 +3715,7 @@ void AdjustSliceBounds(const slicedata *sd, float *pmin, float *pmax){
   float *pdata;
   int ndata;
 
-  if(sd->slicefile_type==SLICE_GEOM){
+  if(sd->slice_filetype==SLICE_GEOM){
     pdata = sd->patchgeom->geom_vals;
     ndata = sd->patchgeom->geom_nvals;
   }
@@ -3993,7 +3983,6 @@ void GetSliceFileDirection(int is1, int *is2ptr, int *iis1ptr, int *iis2ptr, int
 
 /* ------------------ GetSliceSizes ------------------------ */
 
-#ifdef pp_CSLICE
 void GetSliceSizes(char *slicefilenameptr, int *nsliceiptr, int *nslicejptr, int *nslicekptr, int *ntimesptr, int sliceframestep_arg,
   int *errorptr, int settmin_s_arg, int settmax_s_arg, float tmin_s_arg, float tmax_s_arg, int *headersizeptr, int *framesizeptr){
 
@@ -4279,7 +4268,6 @@ FILE_SIZE GetSliceData(char *slicefilename, int *is1ptr, int *is2ptr, int *js1pt
   FREEMEMORY(qq);
   return file_size;
 }
-#endif
 
   /* ------------------ ReadSlice ------------------------ */
 
@@ -4434,7 +4422,6 @@ FILE_SIZE ReadSlice(char *file, int ifile, int flag, int set_slicecolor, int *er
 
     if(sd->compression_type == UNCOMPRESSED){
       sd->ntimes_old = sd->ntimes;
-#ifdef pp_CSLICE
       if(use_cslice==1){
         GetSliceSizes(file, &sd->nslicei, &sd->nslicej, &sd->nslicek, &sd->ntimes, sliceframestep, &error,
           settmin_s, settmax_s, tmin_s, tmax_s, &headersize, &framesize);
@@ -4444,11 +4431,6 @@ FILE_SIZE ReadSlice(char *file, int ifile, int flag, int set_slicecolor, int *er
           &settmin_s, &settmax_s, &tmin_s, &tmax_s, &headersize, &framesize,
           strlen(file));
       }
-#else
-      FORTgetslicesizes(file, &sd->nslicei, &sd->nslicej, &sd->nslicek, &sd->ntimes, &sliceframestep, &error,
-        &settmin_s, &settmax_s, &tmin_s, &tmax_s, &headersize, &framesize,
-        strlen(file));
-#endif
     }
     else if(sd->compression_type == COMPRESSED_ZLIB){
       if(
@@ -4535,7 +4517,6 @@ FILE_SIZE ReadSlice(char *file, int ifile, int flag, int set_slicecolor, int *er
         qmax = -1.0e30;
       }
       if(sd->ntimes > ntimes_slice_old){
-#ifdef pp_CSLICE
         if(use_cslice==1){
           return_filesize =
             GetSliceData(file, &sd->is1, &sd->is2, &sd->js1, &sd->js2, &sd->ks1, &sd->ks2, &sd->idir,
@@ -4550,13 +4531,6 @@ FILE_SIZE ReadSlice(char *file, int ifile, int flag, int set_slicecolor, int *er
             &settmin_s, &settmax_s, &tmin_s, &tmax_s, &file_size, strlen(file));
           return_filesize = (FILE_SIZE)file_size;
         }
-#else
-        FORTgetslicedata(file,
-          &sd->is1, &sd->is2, &sd->js1, &sd->js2, &sd->ks1, &sd->ks2, &sd->idir,
-          &qmin, &qmax, sd->qslicedata, sd->times, &ntimes_slice_old, &sd->ntimes, &sliceframestep,
-          &settmin_s, &settmax_s, &tmin_s, &tmax_s, &file_size, strlen(file));
-          return_filesize = (FILE_SIZE)file_size;
-#endif
       }
 #ifdef pp_MEMDEBUG
       ASSERT(ValidPointer(sd->qslicedata, sizeof(float)*sd->nslicei*sd->nslicej*sd->nslicek*sd->ntimes));
@@ -4691,7 +4665,7 @@ FILE_SIZE ReadSlice(char *file, int ifile, int flag, int set_slicecolor, int *er
   }
   CheckMemory;
 
-  if(sd->slicefile_type == SLICE_CELL_CENTER){
+  if(sd->slice_filetype == SLICE_CELL_CENTER){
     usetexturebar = 0;
   }
   sd->loaded = 1;
@@ -4810,7 +4784,7 @@ FILE_SIZE ReadSlice(char *file, int ifile, int flag, int set_slicecolor, int *er
     histogram_show_numbers=0;
   }
   showall_slices=1;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   return return_filesize;
 }
 
@@ -4951,7 +4925,8 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int flag){
     plotx = sd->is1;
     ploty = sd->js1;
     plotz = sd->ks1;
-    iimin = plotx;
+    //tentative fix (was iimin = plotx) to FDS issue 7266
+    iimin = plotx+1;
   }
 
   ibar = meshi->ibar;
@@ -5004,8 +4979,7 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int flag){
         if(show_slice_in_obst == ONLY_IN_GAS   && iblank_cell != NULL&&iblank_cell[IJKCELL(plotx-1, j, k)] != GAS)continue;
         if(skip_slice_in_embedded_mesh == 1 && iblank_embed != NULL&&iblank_embed[IJKCELL(plotx, j, k)] == EMBED_YES)continue;
 
-        index_cell = (plotx + 1 - incx - iimin)*sd->nslicej*sd->nslicek + (j + 1 - sd->js1)*sd->nslicek + k + 1 - sd->ks1;
-
+        index_cell = (plotx+1-incx-iimin)*sd->nslicej*sd->nslicek + (j+1-sd->js1)*sd->nslicek + k+1-sd->ks1;
         i33 = 4 * sd->iqsliceframe[index_cell];
         z1 = zplt[k];
         z3 = zplt[k + 1];
@@ -5047,7 +5021,7 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int flag){
           n+1 (y1,z3) n2+1 (y3,z3)
           n (y1,z1)     n2 (y3,z1)
           */
-          index_cell = (plotx + 1 - incx - iimin)*sd->nslicej*sd->nslicek + (j + 1 - sd->js1)*sd->nslicek + k + 1 - sd->ks1;
+          index_cell = (plotx+1-incx-iimin)*sd->nslicej*sd->nslicek + (j+1-sd->js1)*sd->nslicek + k+1-sd->ks1;
 
           GET_VAL(sd, val, index_cell);
           Output3Val(constval, (yy1 + y3) / 2.0, (z1 + z3) / 2.0, val);
@@ -5093,7 +5067,8 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int flag){
         if(show_slice_in_obst == ONLY_IN_SOLID && iblank_cell != NULL&&iblank_cell[IJKCELL(i, ploty-1, k)] == GAS)continue;
         if(show_slice_in_obst == ONLY_IN_GAS   && iblank_cell != NULL&&iblank_cell[IJKCELL(i, ploty-1, k)] != GAS)continue;
         if(skip_slice_in_embedded_mesh == 1 && iblank_embed != NULL&&iblank_embed[IJKCELL(i, ploty, k)] == EMBED_YES)continue;
-        index_cell = (i + incx - sd->is1)*sd->nslicej*sd->nslicek + (ploty + 1 - incy - sd->js1)*sd->nslicek + k + 1 - sd->ks1;
+
+        index_cell = (i+incx-sd->is1)*sd->nslicej*sd->nslicek + (ploty+1-incy-sd->js1)*sd->nslicek + k+1-sd->ks1;
         i33 = 4 * sd->iqsliceframe[index_cell];
         z1 = zplt[k];
         z3 = zplt[k + 1];
@@ -5130,7 +5105,7 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int flag){
           if(show_slice_in_obst == ONLY_IN_GAS   && iblank_cell != NULL&&iblank_cell[IJKCELL(i, ploty-1, k)] != GAS)continue;
           if(skip_slice_in_embedded_mesh == 1 && iblank_embed != NULL&&iblank_embed[IJKCELL(i, ploty, k)] == EMBED_YES)continue;
 
-          index_cell = (i + incx - sd->is1)*sd->nslicej*sd->nslicek + (ploty + 1 - incy - sd->js1)*sd->nslicek + k + 1 - sd->ks1;
+          index_cell = (i+incx-sd->is1)*sd->nslicej*sd->nslicek + (ploty+1-incy-sd->js1)*sd->nslicek + k+1-sd->ks1;
           z1 = zplt[k];
           z3 = zplt[k + 1];
           /*
@@ -5184,7 +5159,7 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int flag){
         if(show_slice_in_obst == ONLY_IN_GAS   && iblank_cell != NULL&&iblank_cell[IJKCELL(i, j, plotz-1)] != GAS)continue;
         if(skip_slice_in_embedded_mesh == 1 && iblank_embed != NULL&&iblank_embed[IJKCELL(i, j, plotz)] == EMBED_YES)continue;
 
-        index_cell = (i + 1 - sd->is1)*sd->nslicej*sd->nslicek + (j + incy - sd->js1)*sd->nslicek + plotz + 1 - incz - sd->ks1;
+        index_cell = (i+1-sd->is1)*sd->nslicej*sd->nslicek + (j+incy-sd->js1)*sd->nslicek + plotz+1-incz-sd->ks1;
         i33 = 4 * sd->iqsliceframe[index_cell];
         yy1 = yplt[j];
         y3 = yplt[j + 1];
@@ -5221,7 +5196,7 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int flag){
           if(show_slice_in_obst == ONLY_IN_GAS   && iblank_cell != NULL&&iblank_cell[IJKCELL(i, j, plotz-1)] != GAS)continue;
           if(skip_slice_in_embedded_mesh == 1 && iblank_embed != NULL&&iblank_embed[IJKCELL(i, j, plotz)] == EMBED_YES)continue;
 
-          index_cell = (i + 1 - sd->is1)*sd->nslicej*sd->nslicek + (j + incy - sd->js1)*sd->nslicek + plotz + 1 - incz - sd->ks1;
+          index_cell = (i+1-sd->is1)*sd->nslicej*sd->nslicek + (j+incy-sd->js1)*sd->nslicek + plotz+1-incz-sd->ks1;
           yy1 = yplt[j];
           y3 = yplt[j + 1];
           /*
@@ -6447,7 +6422,19 @@ void DrawSliceFrame(){
 
   SortLoadedSliceList();
 
-  for(ii=0;ii<nslice_loaded;ii++){
+#ifdef pp_SLICE_DEBUG
+// debug output
+  printf("DrawSliceFrame ntimes: ");
+  for(ii = 0; ii<nsliceinfo; ii++){
+    slicedata *slicei;
+
+    slicei = sliceinfo+ii;
+    if(slicei->loaded==0||slicei->display==0)continue;
+    printf("%i ", slicei->ntimes);
+  }
+  printf("\n");
+#endif
+  for(ii = 0; ii<nslice_loaded; ii++){
     slicedata *sd;
     int i;
     meshdata *slicemesh;
@@ -6459,13 +6446,13 @@ void DrawSliceFrame(){
     if(sd->slicefile_labelindex!=slicefile_labelindex)continue;
     if(sd->display==0){
       if(showvslice==0)continue;
-      if(sd->slicefile_type==SLICE_NODE_CENTER&&show_node_slices_and_vectors==0)continue;
-      if(sd->slicefile_type==SLICE_CELL_CENTER||sd->slicefile_type==SLICE_FACE_CENTER){
+      if(sd->slice_filetype==SLICE_NODE_CENTER&&show_node_slices_and_vectors==0)continue;
+      if(sd->slice_filetype==SLICE_CELL_CENTER||sd->slice_filetype==SLICE_FACE_CENTER){
         if(show_cell_slices_and_vectors==0)continue;
       }
     }
     if(sd->times[0]>global_times[itimes])continue;
-    if(sd->slicefile_type != SLICE_GEOM){
+    if(sd->slice_filetype != SLICE_GEOM){
       if(sd->compression_type==COMPRESSED_ZLIB){
         UncompressSliceDataFrame(sd,sd->itime);
         sd->iqsliceframe=sd->slicecomplevel;
@@ -6579,7 +6566,7 @@ void DrawSliceFrame(){
         continue;
       }
 
-      switch(sd->slicefile_type){
+      switch(sd->slice_filetype){
       case SLICE_NODE_CENTER:
         if(orien==0){
           if(usetexturebar!=0){
@@ -6633,7 +6620,7 @@ void DrawSliceFrame(){
         break;
       }
     }
-    if(orien==1&&sd->slicefile_type==SLICE_NODE_CENTER){
+    if(orien==1&&sd->slice_filetype==SLICE_NODE_CENTER){
       if(usetexturebar!=0){
         DrawVolAllSlicesTextureDiag(sd,direction);
         SNIFF_ERRORS("after DrawVolAllSlicesTextureDiag");
@@ -7719,10 +7706,10 @@ void DrawVSliceFrame(void){
       w->qslice = w->qslicedata + w->itime*w->nsliceijk;
     }
 
-    if(vd->vslicefile_type==SLICE_TERRAIN){
+    if(vd->vslice_filetype==SLICE_TERRAIN){
       DrawVVolSliceTerrain(vd);
     }
-    else if(vd->vslicefile_type==SLICE_CELL_CENTER){
+    else if(vd->vslice_filetype==SLICE_CELL_CENTER){
         DrawVVolSliceCellCenter(vd);
     }
     else{

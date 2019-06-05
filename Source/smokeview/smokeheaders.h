@@ -5,14 +5,28 @@
 #include "gd.h"
 #endif
 
+EXTERNCPP void ShrinkDialogs(void);
+#ifdef CPP
+EXTERNCPP void InsertRollout(GLUI_Rollout *rollout, GLUI *dialog);
+EXTERNCPP void CloseRollouts(GLUI *dialog);
+#endif
+
+EXTERNCPP void InitRolloutList(void);
+EXTERNCPP void UpdateFireCutoffs(void);
+EXTERNCPP void UpdateCO2ColorbarList(int value);
+EXTERNCPP void UpdateCo2Blending(void);
+EXTERNCPP int GetTourFrame(tourdata *touri, int itime);
+EXTERNCPP int MeshConnect(meshdata *mesh_from, int val, meshdata *mesh_to);
+EXTERNCPP void InitNabors(void);
+#ifdef pp_HTML
+EXTERNCPP int Smv2Html(char *html_out, int option, int from_where);
+#endif
 EXTERNCPP void UpdateBackgroundFlip(int flip);
 EXTERNCPP void UpdateBackgroundFlip2(int flip);
 EXTERNCPP void UpdateVectorpointsize(void);
-#ifdef pp_TISO
 EXTERNCPP void UpdateGluiIsoBounds(void);
 EXTERNCPP void UpdateListIsoColorobar(void);
 EXTERNCPP void UpdateTexturebar(void);
-#endif
 EXTERNCPP void UpdatePosView(void);
 EXTERNCPP void UpdateUseLighting(void);
 #ifdef pp_GPUSMOKE
@@ -227,7 +241,7 @@ EXTERNCPP void GetBoundaryParams(void);
 EXTERNCPP void GetSliceParams2(void);
 
 EXTERNCPP void DrawWindRosesDevices(void);
-EXTERNCPP void DeviceData2WindRose(int nr, int ntheta, int flag);
+EXTERNCPP void DeviceData2WindRose(int nr, int ntheta);
 EXTERNCPP void DefineAllFEDs(void);
 EXTERNCPP void UpdateTourState(void);
 EXTERNCPP void UpdateEditTour(void);
@@ -255,6 +269,7 @@ EXTERNCPP void DrawFilledRectangle(float width, float height, unsigned char *rgb
 EXTERNCPP void DrawRectangle(float width, float height, unsigned char *rgbcolor);
 EXTERNCPP void DrawCircVents(int option);
 EXTERNCPP void UpdateSmokeColormap(int option);
+EXTERNCPP void UpdateCO2Colormap(void);
 EXTERNCPP void DefineVolsmokeTextures(void);
 EXTERNCPP void SetColorbarListIndex(int val);
 EXTERNCPP int  GetColorbarListIndex(void);
@@ -347,7 +362,10 @@ EXTERNCPP void DrawDevicesVal(void);
 EXTERNCPP void GetSmokeSensors(void);
 EXTERNCPP void AddNewTour(void);
 EXTERNCPP void StartScript(void);
-EXTERNCPP int  RunScript(void);
+EXTERNCPP int RunScriptCommand(scriptdata *script_command);
+#ifdef pp_HTML
+EXTERNCPP void DoScriptHtml(void);
+#endif
 EXTERNCPP int  CompileScript(char *scriptfile);
 EXTERNCPP scriptfiledata *InsertScriptFile(char *file);
 #ifdef pp_LUA
@@ -512,7 +530,6 @@ EXTERNCPP void FreeSkybox(void);
 EXTERNCPP void DrawSkybox(void);
 EXTERNCPP void LoadSkyTexture(char *filebase, texturedata *texti);
 EXTERNCPP void UncompressBoundaryDataFrame(meshdata *meshi,int frame_index);
-EXTERNCPP void GetScreenRGB(float *xyz, int *rgbcolor);
 EXTERNCPP void RGBTest(void);
 EXTERNCPP void UpdateCADTextCoords(cadquad *quadi);
 EXTERNCPP void UpdateIndexColors(void);
@@ -522,7 +539,7 @@ EXTERNCPP void SetTour(tourdata *thetour);
 EXTERNCPP void UpdatePlot3dDisplay(void);
 EXTERNCPP void UpdateSmoke3dFlags(void);
 EXTERNCPP void MergeSmoke3D(smoke3ddata *smoke3dset);
-EXTERNCPP void ShowHideSortGeometry(float *mm);
+EXTERNCPP void ShowHideSortGeometry(int sort_geom, float *mm);
 EXTERNCPP void SortTransparentFaces(float *mm);
 EXTERNCPP void GetScreenMapping(float *xyz0, float *screen_perm);
 EXTERNCPP culldata *GetFacePort(meshdata *meshi, facedata *facei);
@@ -570,7 +587,6 @@ EXTERNCPP void InitCamera(cameradata *camera_data,char *name);
 EXTERNCPP void CopyCamera(cameradata *to, cameradata *from);
 EXTERNCPP void UpdateCamera(cameradata *ca);
 EXTERNCPP void UpdateProjectionType(void);
-EXTERNCPP void UpdateCursorCheckbox(void);
 EXTERNCPP void UpdateClipAll(void);
 EXTERNCPP void GetInverse(float *m, float *mi);
 EXTERNCPP void MatMultMat(float *m1, float *m2, float *m3);
@@ -735,7 +751,6 @@ EXTERNCPP void UpdateSurface(void);
 EXTERNCPP void WindowStatus(int state);
 EXTERNCPP void SetVentDirs(void);
 EXTERNCPP void SetCVentDirs(void);
-EXTERNCPP void ObstOrVent2Faces(const meshdata *gb,blockagedata *bc, ventdata *vi, facedata *faceptr,int facetype);
 EXTERNCPP void UpdateHiddenFaces(void);
 EXTERNCPP void UpdateSelectFaces(void);
 EXTERNCPP void UpdateSelectBlocks(void);

@@ -214,7 +214,6 @@ void DrawPart(const partdata *parti){
         vistype = current_property->class_present[partclass_index];
         class_vis = current_property->class_vis[partclass_index];
 
-
         if(vistype == 0 || datacopy->npoints <= 0 || (vistype == 1 && class_vis == 0)){
           if(show_tracers_always == 0 || partclassi->ntypes > 2){
             datacopy++;
@@ -845,93 +844,6 @@ int GetSizeFileStatus(partdata *parti){
   return 0;
 }
 
-/* ------------------ ReadPartHistogram ------------------------ */
-
-void ReadPartHistogram(partdata *parti){
-  FILE *STREAM_HIST = NULL;
-  int i, *buckets = NULL, nbucketsmax = 0;
-  float valminmax[2];
-  unsigned char *compressed_buckets = NULL;
-  int ncompressed_bucketsMAX = 0;
-  uLongf ncompressed_buckets, nbuckets, nbuffer;
-
-  STREAM_HIST = fopen(parti->hist_file, "rb");
-  if(STREAM_HIST == NULL)return;
-
-  if(parti->histograms == NULL){
-    NewMemory((void **)&parti->histograms, parti->nclasses * sizeof(histogramdata *));
-    for(i = 0; i < npart5prop; i++){
-      NewMemory((void **)&parti->histograms[i], parti->nclasses * sizeof(histogramdata));
-    }
-  }
-
-  for(i = 0; i < npart5prop; i++){
-    histogramdata *histi;
-
-    fread(valminmax, sizeof(float), 2, STREAM_HIST);
-    fread(&nbuckets, sizeof(int), 1, STREAM_HIST);
-    if(nbuckets > nbucketsmax){
-      nbucketsmax = nbuckets;
-      FREEMEMORY(buckets);
-      NewMemory((void **)&buckets, (1.02*nbucketsmax + 600) * sizeof(int));
-    }
-    fread(&ncompressed_buckets, sizeof(uLongf), 1, STREAM_HIST);
-    if(ncompressed_buckets > ncompressed_bucketsMAX){
-      ncompressed_bucketsMAX = ncompressed_buckets;
-      FREEMEMORY(compressed_buckets);
-      NewMemory((void **)&compressed_buckets, 1.02*ncompressed_bucketsMAX + 600);
-    }
-    fread(compressed_buckets, sizeof(unsigned char), ncompressed_buckets, STREAM_HIST);
-
-    nbuffer = (1.02*nbucketsmax + 600) * sizeof(int);
-    UnCompressZLIB((unsigned char *)buckets, &nbuffer, compressed_buckets, ncompressed_buckets);
-    nbuckets = nbuffer / 4;
-
-    histi = parti->histograms[i];
-    CopyBuckets2Histogram(buckets, nbuckets, valminmax[0], valminmax[1], histi);
-  }
-  FREEMEMORY(buckets);
-  fclose(STREAM_HIST);
-}
-
-/* ------------------ WritePartHistogram ------------------------ */
-
-void WritePartHistogram(partdata *parti){
-  FILE *STREAM_HIST = NULL;
-  int i;
-  unsigned char *compressed_buckets = NULL;
-  int ncompressed_bucketsMAX = 0;
-  uLongf ncompressed_buckets;
-
-  STREAM_HIST = fopen(parti->hist_file, "wb");
-  if(STREAM_HIST == NULL)return;
-
-  for(i = 0; i < npart5prop; i++){
-    histogramdata *histi;
-    float valminmax[2];
-
-    histi = parti->histograms[i];
-    valminmax[0] = histi->val_min;
-    valminmax[1] = histi->val_max;
-
-    fwrite(valminmax, sizeof(float), 2, STREAM_HIST);
-    fwrite(&histi->nbuckets, sizeof(int), 1, STREAM_HIST);
-
-    if(sizeof(int)*histi->nbuckets > ncompressed_bucketsMAX){
-      ncompressed_bucketsMAX = sizeof(int)*histi->nbuckets;
-      FREEMEMORY(compressed_buckets);
-      NewMemory((void **)&compressed_buckets, 1.02*ncompressed_bucketsMAX + 600);
-    }
-
-    ncompressed_buckets = 1.02*ncompressed_bucketsMAX + 600;
-    CompressZLIB(compressed_buckets, &ncompressed_buckets, (unsigned char *)histi->buckets, histi->nbuckets * sizeof(unsigned int));
-
-    fwrite(&ncompressed_buckets, sizeof(uLongf), 1, STREAM_HIST);
-    fwrite(compressed_buckets, sizeof(unsigned char), ncompressed_buckets, STREAM_HIST);
-  }
-  fclose(STREAM_HIST);
-}
-
  /* ------------------ CreatePart5SizeFile ------------------------ */
 void CreatePart5SizeFile(char *part5file, char *part5sizefile, int angle_flag, int *error){
   FILE *PART5FILE, *streamout;
@@ -1204,6 +1116,24 @@ void GetPartData(partdata *parti, int partframestep_local, int nf_all, FILE_SIZE
 #endif
 
           FORTPART5READ(datacopy->rvals, nparts*numtypes[2 * i]);
+#ifdef pp_PARTDEBUG
+          {
+            int have_inf=0, ii;
+            float *val;
+
+            val = datacopy->rvals;
+            for(ii = 0;ii<nparts*numtypes[2*i];ii++){
+              if(isinf(val[ii]))have_inf = 1;
+            }
+            if(have_inf==1){
+              printf(" time=%f class=%i inf indices: ",time_local,i);
+              for(ii = 0;ii<nparts*numtypes[2*i];ii++){
+                if(isinf(val[ii]))printf(" %i",ii);
+              }
+              printf("\n\n");
+            }
+          }
+#endif
 
 #ifdef pp_PARTTEST
           for(jjj = 0; jjj < numtypes[2 * i]; jjj++){
@@ -2026,8 +1956,8 @@ FILE_SIZE ReadPart(char *file, int ifile, int loadflag, int *errorcode){
     updatemenu = 1;
     IdleCB();
     glutPostRedisplay();
-    STOP_TIMER(load_time);
   }
+  STOP_TIMER(load_time);
   if(file_size>1000000000){
     PRINTF(" - %.1f GB/%.1f s\n", (float)file_size/1000000000., load_time);
   }

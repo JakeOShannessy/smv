@@ -619,12 +619,7 @@ void ViewportInfo(int quad, GLint screen_left, GLint screen_down){
     sprintf(buff_label,"%f",plotval);
     TrimZeros(buff_label);
     strcat(buff_label," m");
-    if(cursorPlot3D==1){
-      sprintf(slicelabel,"*x: %i, ",iplotval);
-    }
-    else{
-      sprintf(slicelabel,"x: %i, ",iplotval);
-    }
+    sprintf(slicelabel,"x: %i, ",iplotval);
     strcat(slicelabel,buff_label);
     if(visgridloc==1){
       OutputText(VP_info.left+h_space,VP_info.down+v_space, slicelabel);
@@ -649,12 +644,7 @@ void ViewportInfo(int quad, GLint screen_left, GLint screen_down){
     sprintf(buff_label,"%f",plotval);
     TrimZeros(buff_label);
     strcat(buff_label," m");
-    if(cursorPlot3D==1){
-      sprintf(slicelabel,"*y: %i, ",iplotval);
-    }
-    else{
-      sprintf(slicelabel,"y: %i, ",iplotval);
-    }
+    sprintf(slicelabel,"y: %i, ",iplotval);
     strcat(slicelabel,buff_label);
     if(visgridloc==1){
       OutputText(VP_info.left+h_space,VP_info.down+v_space+info_lines*(v_space+VP_info.text_height), slicelabel);
@@ -679,12 +669,7 @@ void ViewportInfo(int quad, GLint screen_left, GLint screen_down){
     sprintf(buff_label,"%f",plotval);
     TrimZeros(buff_label);
     strcat(buff_label," m");
-    if(cursorPlot3D==1){
-      sprintf(slicelabel,"*z: %i, ",iplotval);
-    }
-    else{
-      sprintf(slicelabel,"z: %i, ",iplotval);
-    }
+    sprintf(slicelabel,"z: %i, ",iplotval);
     strcat(slicelabel,buff_label);
     if(visgridloc==1){
       OutputText(VP_info.left+h_space,VP_info.down+v_space+info_lines*(v_space+VP_info.text_height), slicelabel);
@@ -773,10 +758,10 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down) {
     }
     OutputText(right_label_pos+5+h_space,3*v_space+2*VP_timebar.text_height,cutoff_label);
 
-    if(firecolormap_type == 0){
-      f_red = (float)fire_red / 255.0;
-      f_green = (float)fire_green / 255.0;
-      f_blue = (float)fire_blue / 255.0;
+    if(fire_colormap_type == 0){
+      f_red   = (float)fire_color_int255[0] / 255.0;
+      f_green = (float)fire_color_int255[1] / 255.0;
+      f_blue  = (float)fire_color_int255[2] / 255.0;
       glColor3f(f_red, f_green, f_blue);
     }
     else{
@@ -1618,7 +1603,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       pathdata *pj;
 
       touri = tourinfo + selectedtour_index;
-      frame_index = touri->timeslist[itimes];
+      frame_index = GetTourFrame(touri,itimes);
       if(keyframe_snap==1&&selected_frame!=NULL){
         pj=&selected_frame->nodeval;
       }
@@ -1675,7 +1660,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       pathdata *pj;
 
       touri = tourinfo + selectedtour_index;
-      frame_index = touri->timeslist[itimes];
+      frame_index = GetTourFrame(touri,itimes);
       if(keyframe_snap==1&&selected_frame!=NULL){
         pj=&selected_frame->nodeval;
       }
@@ -1768,7 +1753,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       if(plotstate==DYNAMIC_PLOTS&&selected_tour!=NULL&&selected_tour->timeslist!=NULL){
         if((viewtourfrompath==1&&selectedtour_index>=0)||keyframe_snap==1){
           touri = tourinfo + selectedtour_index;
-          frame_index = touri->timeslist[itimes];
+          frame_index = GetTourFrame(touri,itimes);
           if(keyframe_snap==1&&selected_frame!=NULL){
             pj=&selected_frame->nodeval;
           }
@@ -1910,7 +1895,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
     LOCK_TRIANGLES;
     GetGeomInfoPtrs(0);
     UNLOCK_TRIANGLES;
-    if(ngeominfoptrs>0)ShowHideSortGeometry(modelview_scratch);
+    if(ngeominfoptrs>0)ShowHideSortGeometry(sort_geometry,modelview_scratch);
     if(showiso==1&&sort_iso_triangles==1&&niso_trans>0)SortIsoTriangles(modelview_scratch);
 
     glScalef(mscale[0],mscale[1],mscale[2]);

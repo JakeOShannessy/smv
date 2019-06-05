@@ -26,8 +26,9 @@ GLUI_Panel *PANEL_clip_lower=NULL, *PANEL_clip_upper=NULL, *PANEL_clip=NULL,*pan
 GLUI_Panel *PANEL_clipx=NULL, *PANEL_clipX=NULL;
 GLUI_Panel *PANEL_clipy=NULL, *PANEL_clipY=NULL;
 GLUI_Panel *PANEL_clipz=NULL, *PANEL_clipZ=NULL;
-GLUI_Panel *PANEL_blockageview=NULL;
 GLUI_Panel *PANEL_rotation_center = NULL;
+
+GLUI_Rollout *PANEL_blockageview = NULL;
 
 GLUI_Listbox *LIST_mesh=NULL;
 
@@ -62,6 +63,8 @@ GLUI_Button *BUTTON_clip_2=NULL;
 #define CLIP_CLOSE 99
 #define SAVE_SETTINGS 98
 #define CLIP_MESH 80
+
+/* ------------------ UpdateShowRotationCenter2 ------------------------ */
 
 extern "C" void UpdateShowRotationCenter2(void){
   if(CHECKBOX_clip_show_rotation_center2!=NULL)CHECKBOX_clip_show_rotation_center2->set_int_val(show_rotation_center);
@@ -189,6 +192,35 @@ void ClipCB(int var){
     break;
   default:
     ASSERT(FFALSE);
+    break;
+  }
+  switch(var){
+  case SPINNER_xlower:
+  case SPINNER_xupper:
+  case SPINNER_ylower:
+  case SPINNER_yupper:
+  case SPINNER_zlower:
+  case SPINNER_zupper:
+  case CLIP_xlower:
+  case CLIP_ylower:
+  case CLIP_zlower:
+  case CLIP_xupper:
+  case CLIP_yupper:
+  case CLIP_zupper:
+  case CLIP_all:
+    camera_current->clip_mode = clip_mode;
+    camera_current->clip_xmin = clipinfo.clip_xmin;
+    camera_current->clip_xmax = clipinfo.clip_xmax;
+    camera_current->clip_ymin = clipinfo.clip_ymin;
+    camera_current->clip_ymax = clipinfo.clip_ymax;
+    camera_current->clip_zmin = clipinfo.clip_zmin;
+    camera_current->clip_zmax = clipinfo.clip_zmax;
+    camera_current->xmin = clipinfo.xmin;
+    camera_current->xmax = clipinfo.xmax;
+    camera_current->ymin = clipinfo.ymin;
+    camera_current->ymax = clipinfo.ymax;
+    camera_current->zmin = clipinfo.zmin;
+    camera_current->zmax = clipinfo.zmax;
     break;
   }
   if(glui_rotation_index==ROTATE_ABOUT_CLIPPING_CENTER)UpdateRotationIndex(ROTATE_ABOUT_CLIPPING_CENTER);
@@ -323,6 +355,7 @@ extern "C" void GluiClipSetup(int main_window){
 #define MAXCLIPROWS 40
 
       PANEL_blockageview = glui_clip->add_rollout_to_panel(PANEL_clip, "Hide blockages", false);
+      INSERT_ROLLOUT(PANEL_blockageview, glui_clip);
       ncolumns = nblocks / MAXCLIPROWS + 1;
 
       for(i = 0;i < nmeshes;i++){
@@ -366,8 +399,7 @@ extern "C" void GluiClipSetup(int main_window){
 /* ------------------ HideGluiClip ------------------------ */
 
 extern "C" void HideGluiClip(void){
-  if(glui_clip!=NULL)glui_clip->hide();
-  updatemenu=1;
+  CloseRollouts(glui_clip);
 }
 
 /* ------------------ ShowGluiClip ------------------------ */

@@ -7,6 +7,17 @@ void _Sniff_Errors(char *whereat, char *file, int line);
 #define SNIFF_ERRORS(f)
 #endif
 
+#define MLEFT 0
+#define MFRONT 1
+#define MDOWN 2
+#define MRIGHT 3
+#define MBACK 4
+#define MUP 5
+#define MEPS 0.1
+
+#define GLUTPOSTREDISPLAY  if(use_graphics==1)glutPostRedisplay()
+#define GLUTSETCURSOR(val) if(use_graphics==1)glutSetCursor(val)
+
 #define ENABLE_LIGHTING if(use_lighting==1&&lighting_on==0){glEnable(GL_LIGHTING);lighting_on=1;}
 #define DISABLE_LIGHTING if(use_lighting==1&&lighting_on==1){glDisable(GL_LIGHTING);lighting_on=0;}
 
@@ -362,25 +373,30 @@ void _Sniff_Errors(char *whereat, char *file, int line);
 #define DOUBLE_BUFFER 2
 #define SINGLE_BUFFER 1
 
-#define SCRIPT_RENDERONCE 101
-#define SCRIPT_RENDERDOUBLEONCE 102
-#define SCRIPT_RENDERALL 103
-#define SCRIPT_RENDER360ALL 119
-#define SCRIPT_VOLSMOKERENDERALL 104
-#define SCRIPT_RENDERDIR 105
-#define SCRIPT_RENDERCLIP 106
-#define SCRIPT_SCENECLIP 107
-#define SCRIPT_XSCENECLIP 108
-#define SCRIPT_YSCENECLIP 109
-#define SCRIPT_ZSCENECLIP 110
-#define SCRIPT_CBARFLIP 111
-#define SCRIPT_CBARNORMAL 112
-#define SCRIPT_RENDERSTART 113
-#define SCRIPT_MAKEMOVIE 114
-#define SCRIPT_RENDERTYPE 115
-#define SCRIPT_RENDERSIZE 116
-#define SCRIPT_MOVIETYPE 117
-#define SCRIPT_ISORENDERALL 118
+#define SCRIPT_RENDERONCE        101
+#ifdef pp_HTML
+#define SCRIPT_RENDERHTMLONCE    102
+#define SCRIPT_RENDERHTMLALL     105
+#define SCRIPT_RENDERHTMLDIR     109
+#endif
+#define SCRIPT_RENDERDOUBLEONCE  103
+#define SCRIPT_RENDERALL         104
+#define SCRIPT_RENDER360ALL      106
+#define SCRIPT_VOLSMOKERENDERALL 107
+#define SCRIPT_RENDERDIR         108
+#define SCRIPT_RENDERCLIP        110
+#define SCRIPT_SCENECLIP         111
+#define SCRIPT_XSCENECLIP        112
+#define SCRIPT_YSCENECLIP        113
+#define SCRIPT_ZSCENECLIP        114
+#define SCRIPT_CBARFLIP          115
+#define SCRIPT_CBARNORMAL        116
+#define SCRIPT_RENDERSTART       117
+#define SCRIPT_MAKEMOVIE         118
+#define SCRIPT_RENDERTYPE        119
+#define SCRIPT_RENDERSIZE        120
+#define SCRIPT_MOVIETYPE         121
+#define SCRIPT_ISORENDERALL      122
 
 #define SCRIPT_LOADFILE 201
 #define SCRIPT_LOADVFILE 202
@@ -605,7 +621,7 @@ void _Sniff_Errors(char *whereat, char *file, int line);
 
 #define WINDROSE_POINT 0
 #define WINDROSE_STEPPED 1
-#define WINDROSE SLIDING 2
+#define WINDROSE_SLIDING 2
 
 #define CLOSE_WINDOW -2
 #define UPDATE_WINDOW -3
@@ -749,6 +765,12 @@ void _Sniff_Errors(char *whereat, char *file, int line);
 #define RenderLABELframenumber 980
 #define RenderLABELtime 979
 #define MENU_RENDER_SETTINGS 900
+#ifdef pp_HTML
+#define RenderHTML 985
+#define RenderHTMLALL 984
+#define CURRENT_TIME 0
+#define ALL_TIMES 1
+#endif
 
 #define ShowEXTERIORwallmenu -1
 #define HideEXTERIORwallmenu -19
@@ -782,6 +804,9 @@ void _Sniff_Errors(char *whereat, char *file, int line);
 
 #define FIRECOLORMAP_DIRECT 0
 #define FIRECOLORMAP_CONSTRAINT 1
+
+#define CO2_RGB      0
+#define CO2_COLORBAR 1
 
 #define RENDER_SLICE 0
 #define RENDER_VOLUME 1
@@ -907,6 +932,7 @@ void _Sniff_Errors(char *whereat, char *file, int line);
 #define DIALOG_SCALING 41
 #define DIALOG_WINDOW 42
 #define DIALOG_MOVIE 43
+#define DIALOG_SHRINKALL -3
 
 #define UNLOAD_LAST -2
 

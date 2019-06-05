@@ -27,6 +27,11 @@ GLUI_Spinner *SPINNER_LB_tick_xdir=NULL;
 GLUI_Spinner *SPINNER_LB_tick_ydir=NULL;
 GLUI_Spinner *SPINNER_LB_tick_zdir=NULL;
 
+GLUI_Spinner *SPINNER_light_az0=NULL;
+GLUI_Spinner *SPINNER_light_az1=NULL;
+GLUI_Spinner *SPINNER_light_elev0=NULL;
+GLUI_Spinner *SPINNER_light_elev1=NULL;
+
 GLUI_Spinner *SPINNER_down_red=NULL,*SPINNER_down_green=NULL,*SPINNER_down_blue=NULL;
 GLUI_Spinner *SPINNER_up_red=NULL,*SPINNER_up_green=NULL,*SPINNER_up_blue=NULL;
 GLUI_Spinner *SPINNER_colorsplit[12];
@@ -68,7 +73,6 @@ GLUI_Spinner *SPINNER_northangle_position_y = NULL;
 GLUI_Spinner *SPINNER_northangle_position_z = NULL;
 GLUI_Spinner *SPINNER_sliceoffset_factor=NULL;
 GLUI_Spinner *SPINNER_ventoffset_factor=NULL;
-#ifdef pp_LIGHTING
 GLUI_Spinner *SPINNER_amb_red=NULL;
 GLUI_Spinner *SPINNER_amb_green=NULL;
 GLUI_Spinner *SPINNER_amb_blue=NULL;
@@ -77,7 +81,10 @@ GLUI_Spinner *SPINNER_diff_red=NULL;
 GLUI_Spinner *SPINNER_diff_green=NULL;
 GLUI_Spinner *SPINNER_diff_blue=NULL;
 GLUI_Spinner *SPINNER_diff_grey=NULL;
-#endif
+GLUI_Spinner *SPINNER_spec_red = NULL;
+GLUI_Spinner *SPINNER_spec_green = NULL;
+GLUI_Spinner *SPINNER_spec_blue = NULL;
+GLUI_Spinner *SPINNER_spec_grey = NULL;
 
 GLUI_Checkbox *CHECKBOX_use_lighting=NULL;
 GLUI_Checkbox *CHECKBOX_labels_showtick = NULL;
@@ -137,16 +144,16 @@ GLUI_Rollout *ROLLOUT_general=NULL;
 GLUI_Rollout *ROLLOUT_north = NULL;
 GLUI_Rollout *ROLLOUT_extreme2 = NULL;
 GLUI_Rollout *ROLLOUT_split = NULL;
-#ifdef pp_LIGHTING
 GLUI_Rollout *ROLLOUT_light2 = NULL;
-#endif
 
-#ifdef pp_LIGHTING
+GLUI_Panel *PANEL_light=NULL;
 GLUI_Panel *PANEL_position0=NULL;
 GLUI_Panel *PANEL_position1 = NULL;
 GLUI_Panel *PANEL_ambient=NULL;
 GLUI_Panel *PANEL_diffuse=NULL;
-#endif
+GLUI_Panel *PANEL_specular = NULL;
+GLUI_Panel *PANEL_positional = NULL;
+GLUI_Panel *PANEL_positional2 = NULL;
 GLUI_Panel *PANEL_timebar_overlap = NULL;
 GLUI_Panel *PANEL_split1L = NULL, *PANEL_split1H = NULL;
 GLUI_Panel *PANEL_split2L = NULL, *PANEL_split2H = NULL;
@@ -243,12 +250,13 @@ GLUI_Button *BUTTON_label_4=NULL;
 #define COLORBAR_SMOOTH 113
 #define COLORBAND 115
 #define CB_USE_LIGHTING 120
-#ifdef pp_LIGHTING
 #define COLOR_AMB_GREY 116
 #define COLOR_DIFF_GREY 117
 #define COLOR_AMB_RGB 118
 #define COLOR_DIFF_RGB 119
-#endif
+#define COLOR_SPEC_RGB 120
+#define COLOR_SPEC_GREY 121
+#define LIGHT_POSITION 122
 
 #define COLORBAR_LIST2 112
 #define DATA_transparent 26
@@ -263,15 +271,9 @@ int cb_up_rgb[3],cb_down_rgb[3];
 #define FONTS_ROLLOUT 2
 #define TICKS_ROLLOUT 3
 #define LABELS_ROLLOUT 4
-#ifdef pp_LIGHTING
 #define LIGHT_ROLLOUT 5
-#endif
 
-#ifdef pp_LIGHTING
 procdata displayprocinfo[6];
-#else
-procdata displayprocinfo[5];
-#endif
 int ndisplayprocinfo = 0;
 
 /* ------------------ UpdateBackgroundFlip ------------------------ */
@@ -501,11 +503,27 @@ void TextLabelsCB(int var){
 }
 
 /* ------------------ ColorCB ------------------------ */
-#ifdef pp_LIGHTING
+
 extern "C" void ColorCB(int var){
   int i;
 
   switch (var){
+  case LIGHT_POSITION:
+    light_position0[0] = (xyzmaxdiff/2.0)*cos(DEG2RAD*glui_light_az0)*cos(DEG2RAD*glui_light_elev0);
+    light_position0[1] = (xyzmaxdiff/2.0)*sin(DEG2RAD*glui_light_az0)*cos(DEG2RAD*glui_light_elev0);
+    light_position0[2] = (xyzmaxdiff/2.0)*sin(DEG2RAD*glui_light_elev0);
+
+    light_position1[0] = (xyzmaxdiff/2.0)*cos(DEG2RAD*glui_light_az1)*cos(DEG2RAD*glui_light_elev1);
+    light_position1[1] = (xyzmaxdiff/2.0)*sin(DEG2RAD*glui_light_az1)*cos(DEG2RAD*glui_light_elev1);
+    light_position1[2] = (xyzmaxdiff/2.0)*sin(DEG2RAD*glui_light_elev1);
+    break;
+  case COLOR_SPEC_RGB:
+    for(i = 0; i<3; i++){
+      specularlight[i] = (float)glui_specularlight[i]/255.0;
+    }
+    glui_speculargrey = CLAMP(255*TOBW(specularlight), 0, 255);
+    SPINNER_spec_grey->set_int_val(glui_speculargrey);
+    break;
   case COLOR_AMB_RGB:
     for(i = 0; i<3; i++){
       ambientlight[i] = (float)glui_ambientlight[i]/255.0;
@@ -519,6 +537,18 @@ extern "C" void ColorCB(int var){
     }
     glui_diffusegrey = CLAMP(255*TOBW(diffuselight),0,255);
     SPINNER_diff_grey->set_int_val(glui_diffusegrey);
+    break;
+  case COLOR_SPEC_GREY:
+    for(i = 0; i<3; i++){
+      glui_specularlight[i] = glui_speculargrey;
+      specularlight[i] = CLAMP((float)glui_speculargrey/255.0, 0.0, 1.0);
+    }
+    for(i = 0; i<3; i++){
+      ambientlight[i] = CLAMP((float)glui_ambientlight[i]/255.0, 0.0, 1.0);
+    }
+    SPINNER_spec_red->set_int_val(glui_speculargrey);
+    SPINNER_spec_green->set_int_val(glui_speculargrey);
+    SPINNER_spec_blue->set_int_val(glui_speculargrey);
     break;
   case COLOR_AMB_GREY:
     for(i = 0; i<3; i++){
@@ -543,7 +573,6 @@ extern "C" void ColorCB(int var){
   break;
   }
 }
-#endif
 
 /* ------------------ SplitCB ------------------------ */
 
@@ -585,7 +614,8 @@ extern "C" void GluiLabelsSetup(int main_window){
   // -------------- General Settings -------------------
 
   ROLLOUT_general = glui_labels->add_rollout(_("General"),true,GENERAL_ROLLOUT,DisplayRolloutCB);
-  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_general, GENERAL_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_general, glui_labels);
+  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_general, GENERAL_ROLLOUT, glui_labels);
 
   PANEL_gen1=glui_labels->add_panel_to_panel(ROLLOUT_general,"",GLUI_PANEL_NONE);
 
@@ -654,6 +684,7 @@ extern "C" void GluiLabelsSetup(int main_window){
 
   if(have_northangle==1){
     ROLLOUT_north = glui_labels->add_rollout_to_panel(PANEL_gen3,_("North direction"),false);
+    INSERT_ROLLOUT(ROLLOUT_north, glui_labels);
     CHECKBOX_shownorth=glui_labels->add_checkbox_to_panel(ROLLOUT_north,_("show"),&vis_northangle,LABELS_shownorth,LabelsCB);
     SPINNER_northangle_position_x = glui_labels->add_spinner_to_panel(ROLLOUT_north, "x:", GLUI_SPINNER_FLOAT, northangle_position);
     SPINNER_northangle_position_y = glui_labels->add_spinner_to_panel(ROLLOUT_north, "y:", GLUI_SPINNER_FLOAT, northangle_position+1);
@@ -686,7 +717,8 @@ extern "C" void GluiLabelsSetup(int main_window){
   // -------------- Data coloring -------------------
 
   ROLLOUT_coloring = glui_labels->add_rollout("Color",false,COLORING_ROLLOUT,DisplayRolloutCB);
-  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_coloring,COLORING_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_coloring, glui_labels);
+  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_coloring,COLORING_ROLLOUT, glui_labels);
 
   if(ncolorbars>0){
     int i;
@@ -735,9 +767,11 @@ extern "C" void GluiLabelsSetup(int main_window){
 
   if(use_data_extremes==1){
     ROLLOUT_extreme2 = glui_labels->add_rollout_to_panel(PANEL_extreme,"Highlight extreme data",false);
+    INSERT_ROLLOUT(ROLLOUT_extreme2, glui_labels);
   }
   else{
     ROLLOUT_extreme2 = glui_labels->add_rollout_to_panel(PANEL_extreme,"Highlight extreme data (not supported with OpenGL 1.x)",false);
+    INSERT_ROLLOUT(ROLLOUT_extreme2, glui_labels);
   }
 
   PANEL_extreme_min = glui_labels->add_panel_to_panel(ROLLOUT_extreme2,"",GLUI_PANEL_NONE);
@@ -772,6 +806,7 @@ extern "C" void GluiLabelsSetup(int main_window){
   ColorbarGlobal2Local();
 
   ROLLOUT_split = glui_labels->add_rollout_to_panel(ROLLOUT_coloring, "Define split colorbar",false);
+  INSERT_ROLLOUT(ROLLOUT_split, glui_labels);
   PANEL_split1H = glui_labels->add_panel_to_panel(ROLLOUT_split, "color below split");
 
   SPINNER_colorsplit[3] = glui_labels->add_spinner_to_panel(PANEL_split1H, _("red"), GLUI_SPINNER_INT, colorsplit+3, SPLIT_COLORBAR, SplitCB);
@@ -815,9 +850,9 @@ extern "C" void GluiLabelsSetup(int main_window){
   }
   SplitCB(SPLIT_COLORBAR);
 
-#ifdef pp_LIGHTING
   ROLLOUT_light2 = glui_labels->add_rollout("Light",false,LIGHT_ROLLOUT,DisplayRolloutCB);
-  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_light2, LIGHT_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_light2, glui_labels);
+  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_light2, LIGHT_ROLLOUT, glui_labels);
 
   {
     int i;
@@ -829,7 +864,10 @@ extern "C" void GluiLabelsSetup(int main_window){
   }
   glui_ambientgrey = 255*ambientgrey;
   glui_diffusegrey = 255*diffusegrey;
-  PANEL_ambient = glui_labels->add_panel_to_panel(ROLLOUT_light2, "background/ambient");
+  glui_speculargrey = 255*speculargrey;
+
+  PANEL_light = glui_labels->add_panel_to_panel(ROLLOUT_light2, "",false);
+  PANEL_ambient = glui_labels->add_panel_to_panel(PANEL_light, "background/ambient");
   SPINNER_amb_red = glui_labels->add_spinner_to_panel(PANEL_ambient, _("red:"), GLUI_SPINNER_INT, glui_ambientlight,COLOR_AMB_RGB,ColorCB);
   SPINNER_amb_green = glui_labels->add_spinner_to_panel(PANEL_ambient, _("green:"), GLUI_SPINNER_INT, glui_ambientlight+1,COLOR_AMB_RGB,ColorCB);
   SPINNER_amb_blue = glui_labels->add_spinner_to_panel(PANEL_ambient, _("blue:"), GLUI_SPINNER_INT, glui_ambientlight+2,COLOR_AMB_RGB,ColorCB);
@@ -840,7 +878,9 @@ extern "C" void GluiLabelsSetup(int main_window){
   SPINNER_amb_grey->set_int_limits(0, 255);
   ColorCB(COLOR_AMB_RGB);
 
-  PANEL_diffuse = glui_labels->add_panel_to_panel(ROLLOUT_light2, "light/diffuse");
+  glui_labels->add_column_to_panel(PANEL_light,false);
+
+  PANEL_diffuse = glui_labels->add_panel_to_panel(PANEL_light, "light/diffuse");
   SPINNER_diff_red = glui_labels->add_spinner_to_panel(PANEL_diffuse, _("red:"), GLUI_SPINNER_INT, glui_diffuselight,COLOR_DIFF_RGB,ColorCB);
   SPINNER_diff_green = glui_labels->add_spinner_to_panel(PANEL_diffuse, _("green:"), GLUI_SPINNER_INT, glui_diffuselight+1,COLOR_DIFF_RGB,ColorCB);
   SPINNER_diff_blue = glui_labels->add_spinner_to_panel(PANEL_diffuse, _("blue:"), GLUI_SPINNER_INT, glui_diffuselight+2,COLOR_DIFF_RGB,ColorCB);
@@ -851,23 +891,45 @@ extern "C" void GluiLabelsSetup(int main_window){
   SPINNER_diff_grey->set_int_limits(0, 255);
   ColorCB(COLOR_DIFF_RGB);
 
-  PANEL_position0 = glui_labels->add_panel_to_panel(ROLLOUT_light2, "light 1");
-  glui_labels->add_checkbox_to_panel(PANEL_position0, _("light 1"), &use_light0);
-  glui_labels->add_spinner_to_panel(PANEL_position0, _("x:"), GLUI_SPINNER_FLOAT, light_position0);
-  glui_labels->add_spinner_to_panel(PANEL_position0, _("y:"), GLUI_SPINNER_FLOAT, light_position0+1);
-  glui_labels->add_spinner_to_panel(PANEL_position0, _("z:"), GLUI_SPINNER_FLOAT, light_position0+2);
-
-  PANEL_position1 = glui_labels->add_panel_to_panel(ROLLOUT_light2, "light 2");
-  glui_labels->add_checkbox_to_panel(PANEL_position1, _("light 2"), &use_light1);
-  glui_labels->add_spinner_to_panel(PANEL_position1, _("x:"), GLUI_SPINNER_FLOAT, light_position1);
-  glui_labels->add_spinner_to_panel(PANEL_position1, _("y:"), GLUI_SPINNER_FLOAT, light_position1+1);
-  glui_labels->add_spinner_to_panel(PANEL_position1, _("z:"), GLUI_SPINNER_FLOAT, light_position1+2);
+#ifdef pp_SPECULAR
+  PANEL_specular = glui_labels->add_panel_to_panel(ROLLOUT_light2, "specular");
+  SPINNER_spec_red = glui_labels->add_spinner_to_panel(PANEL_specular, _("red:"), GLUI_SPINNER_INT, glui_specularlight, COLOR_SPEC_RGB, ColorCB);
+  SPINNER_spec_green = glui_labels->add_spinner_to_panel(PANEL_specular, _("green:"), GLUI_SPINNER_INT, glui_specularlight+1, COLOR_SPEC_RGB, ColorCB);
+  SPINNER_spec_blue = glui_labels->add_spinner_to_panel(PANEL_specular, _("blue:"), GLUI_SPINNER_INT, glui_specularlight+2, COLOR_SPEC_RGB, ColorCB);
+  SPINNER_spec_grey = glui_labels->add_spinner_to_panel(PANEL_specular, _("grey:"), GLUI_SPINNER_INT, &glui_speculargrey, COLOR_SPEC_GREY, ColorCB);
+  SPINNER_spec_red->set_int_limits(0, 255);
+  SPINNER_spec_green->set_int_limits(0, 255);
+  SPINNER_spec_blue->set_int_limits(0, 255);
+  SPINNER_spec_grey->set_int_limits(0, 255);
 #endif
+
+  PANEL_positional = glui_labels->add_panel_to_panel(ROLLOUT_light2, "direction");
+  glui_labels->add_checkbox_to_panel(PANEL_positional, "show directions", &drawlights);
+
+
+  PANEL_positional2 = glui_labels->add_panel_to_panel(PANEL_positional, "",false);
+  PANEL_position0 = glui_labels->add_panel_to_panel(PANEL_positional2, "light 1");
+  glui_labels->add_checkbox_to_panel(PANEL_position0, _("show"), &use_light0);
+  SPINNER_light_az0 = glui_labels->add_spinner_to_panel(PANEL_position0,   "azimuth:", GLUI_SPINNER_FLOAT, &glui_light_az0,LIGHT_POSITION,ColorCB);
+  SPINNER_light_elev0 = glui_labels->add_spinner_to_panel(PANEL_position0, "elevation:", GLUI_SPINNER_FLOAT, &glui_light_elev0,LIGHT_POSITION,ColorCB);
+  SPINNER_light_az0->set_float_limits(-360.0,360.0);
+  SPINNER_light_elev0->set_float_limits(-90.0,90.0);
+
+  glui_labels->add_column_to_panel(PANEL_positional2,false);
+
+  PANEL_position1 = glui_labels->add_panel_to_panel(PANEL_positional2, "light 2");
+  glui_labels->add_checkbox_to_panel(PANEL_position1, "show", &use_light1);
+  SPINNER_light_az1 = glui_labels->add_spinner_to_panel(PANEL_position1,   "azimuth:", GLUI_SPINNER_FLOAT, &glui_light_az1,LIGHT_POSITION,ColorCB);
+  SPINNER_light_elev1 = glui_labels->add_spinner_to_panel(PANEL_position1, "elevation:", GLUI_SPINNER_FLOAT, &glui_light_elev1,LIGHT_POSITION,ColorCB);
+  SPINNER_light_az1->set_float_limits(-360.0,360.0);
+  SPINNER_light_elev1->set_float_limits(-90.0,90.0);
+  ColorCB(LIGHT_POSITION);
 
   // -------------- Fonts -------------------
 
   ROLLOUT_font = glui_labels->add_rollout("Fonts",false,FONTS_ROLLOUT,DisplayRolloutCB);
-  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_font, FONTS_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_font, glui_labels);
+  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_font, FONTS_ROLLOUT, glui_labels);
 
   RADIO_fontsize = glui_labels->add_radiogroup_to_panel(ROLLOUT_font,&fontindex,LABELS_fontsize,LabelsCB);
   RADIOBUTTON_label_1a=glui_labels->add_radiobutton_to_group(RADIO_fontsize,_("small"));
@@ -892,7 +954,8 @@ extern "C" void GluiLabelsSetup(int main_window){
   // -------------- User tick settings -------------------
 
   ROLLOUT_user_tick = glui_labels->add_rollout("User ticks",false,TICKS_ROLLOUT,DisplayRolloutCB);
-  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_user_tick, TICKS_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_user_tick, glui_labels);
+  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_user_tick, TICKS_ROLLOUT, glui_labels);
 
   PANEL_tick1 = glui_labels->add_panel_to_panel(ROLLOUT_user_tick,_("Display"),true);
   PANEL_tick1a = glui_labels->add_panel_to_panel(PANEL_tick1,"",false);
@@ -954,7 +1017,8 @@ extern "C" void GluiLabelsSetup(int main_window){
 
   gl=&LABEL_local;
   ROLLOUT_user_labels = glui_labels->add_rollout("Labels + Ticks",false,LABELS_ROLLOUT,DisplayRolloutCB);
-  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_user_labels, LABELS_ROLLOUT);
+  INSERT_ROLLOUT(ROLLOUT_user_labels, glui_labels);
+  ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_user_labels, LABELS_ROLLOUT, glui_labels);
 
   PANEL_LB_panel1 = glui_labels->add_panel_to_panel(ROLLOUT_user_labels,"",GLUI_PANEL_NONE);
 
@@ -1028,6 +1092,7 @@ extern "C" void GluiLabelsSetup(int main_window){
   CHECKBOX_LB_label_use_foreground=glui_labels->add_checkbox_to_panel(PANEL_LB_color,_("Use foreground color"),&gl->useforegroundcolor,LB_FOREGROUND,TextLabelsCB);
 
   ROLLOUT_LB_tick0 = glui_labels->add_rollout_to_panel(ROLLOUT_user_labels, "tick",false);
+  INSERT_ROLLOUT(ROLLOUT_LB_tick0, glui_labels);
   CHECKBOX_labels_showtick = glui_labels->add_checkbox_to_panel(ROLLOUT_LB_tick0, "show tick", &gl->show_tick, LB_SHOW_TICK, TextLabelsCB);
   PANEL_LB_tick = glui_labels->add_panel_to_panel(ROLLOUT_LB_tick0, "",GLUI_PANEL_NONE);
   SPINNER_LB_tick_xbeg = glui_labels->add_spinner_to_panel(PANEL_LB_tick, "x", GLUI_SPINNER_FLOAT, gl->tick_begin, LB_TICK_XYZ, TextLabelsCB);
@@ -1056,8 +1121,7 @@ extern "C" void GluiLabelsSetup(int main_window){
 /* ------------------ HideGluiDisplay ------------------------ */
 
 extern "C" void HideGluiDisplay(void){
-  if(glui_labels!=NULL)glui_labels->hide();
-  updatemenu=1;
+  CloseRollouts(glui_labels);
 }
 
 /* ------------------ ShowGluiDisplay ------------------------ */
