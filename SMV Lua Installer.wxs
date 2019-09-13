@@ -85,6 +85,7 @@
                                 <File Id='lpeg' Name='lpeg.dll' Source='Build/smokeview/mingw_win_64/lpeg.dll'></File>
                                 <File Id='libwinpthread' Name='libwinpthread-1.dll' Source='libwinpthread-1.dll'></File>
                                 <File Id='lua53' Name='lua53.dll' Source='Source/lua-5.3.1/src/lua53.dll'></File>
+                                <File Id='readout_pres' Name='readout_pres.exe' Source='readout_pres.exe'></File>
                             </Component>
                         </Directory>
                     </Directory>
