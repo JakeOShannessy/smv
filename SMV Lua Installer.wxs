@@ -1,0 +1,108 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<?define ProductVersion = "1.0.4"?>
+<?define ProductUpgradeCode = "1940d8a1-c842-442f-bf5d-00a570219bdb"?>
+
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+    <Product Name='Smokeview Lua $(var.ProductVersion)'
+             Id='*'
+             UpgradeCode="$(var.ProductUpgradeCode)"
+             Language='1033'
+             Version='$(var.ProductVersion)'
+             Manufacturer='Jake'>
+        <Package Id='*'
+                 Keywords='Installer'
+                 Description="Smokeview Lua Installer"
+                 Comments='A modified smokeview with the ability to run Lua scripts.'
+                 Manufacturer='Jake'
+                 InstallerVersion='100'
+                 Languages='1033'
+                 Compressed='yes' />
+        <Condition Message="You need to be an administrator to install this product.">Privileged</Condition>
+        <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' />
+        <Property Id='DiskPrompt' Value="Smokeview Lua Installer" />
+        <Upgrade Id="$(var.ProductUpgradeCode)">
+            <UpgradeVersion Minimum="$(var.ProductVersion)" OnlyDetect="yes" Property="NEWERVERSIONDETECTED"/>
+            <UpgradeVersion Minimum="0.0.0" Maximum="$(var.ProductVersion)" IncludeMinimum="yes" IncludeMaximum="no" Property="OLDERVERSIONBEINGUPGRADED"/>
+        </Upgrade>
+        <Condition Message="A newer version of this software is already installed.">NOT NEWERVERSIONDETECTED</Condition>
+
+        <Directory Id='TARGETDIR' Name='SourceDir'>
+            <Directory Id='ProgramFilesFolder' Name='PFiles'>
+                <Directory Id='Fireng' Name='Fireng'>
+                    <Directory Id='INSTALLDIR' Name='Smokeview Lua'>
+                        <Component Id='SMVLuaScript' Guid='69f8aba5-7eca-44e8-8319-9fd23d71af9b'>
+                            <Environment Id="PATH" Name="PATH" Value="[INSTALLDIR]" Permanent="yes" Part="last" Action="set" System="yes" />
+                            <File Id='SMVLuaScriptCMD' Name='smvlua.cmd' Source='smvlua.cmd' KeyPath='yes'>
+                            </File>
+                        </Component>
+                        <Directory Id='BINDIR' Name='bin'>
+                            <!-- <Component Id='QuickMon' Guid='1ab03b30-4375-4d2d-9dcc-56d139bc6943'> -->
+                                <!-- <File Id='QuickMonEXE' Name='FDSQuickMon.exe' Source='dist/FDSQuickMon.exe' KeyPath='yes'>
+                                </File> -->
+                                <!-- <RegistryKey Id='SMVFileTypeReg' Root='HKLM' Key='SOFTWARE\Classes\.smv' ForceDeleteOnUninstall="yes">
+                                    <RegistryValue Type='string' Value="smvDoc"/>
+                                </RegistryKey> -->
+                                <!-- <RegistryKey Id='SMVFileTypeRegOther' Root='HKLM' Key='SOFTWARE\Classes\SystemFileAssociations\.smv\Shell\QuickChart\Command' ForceDeleteOnUninstall="yes">
+                                    <RegistryValue Type='string' Value="&quot;[BINDIR]\FDSQuickMon.exe&quot; &quot;%1&quot;"/>
+                                </RegistryKey> -->
+                                <!-- <RegistryKey Id='SMVFileTypeNameReg' Root='HKLM' Key='SOFTWARE\Classes\smvDoc' ForceDeleteOnUninstall="yes">
+                                    <RegistryValue Type='string' Value="Smokeview File"/>
+                                </RegistryKey> -->
+                                <!-- <RegistryKey Id='QuickMonContextMenuReg' Root='HKLM' Key='SOFTWARE\Classes\smvDoc\Shell\QuickChart\command' ForceDeleteOnUninstall="yes">
+                                    <RegistryValue Type='string' Value="&quot;[BINDIR]\FDSQuickMon.exe&quot; &quot;%1&quot;"/>
+                                </RegistryKey> -->
+                            <!-- </Component> -->
+                            <!-- <Component Id='DetAct' Guid='39230750-a65f-4768-87bd-4ad212640dc6'>
+                                <File Id='DetActEXE' Name='DetectionActivation.exe' Source='FDSUtilities/dist/build/DetectionActivation/DetectionActivation.exe' KeyPath='yes'>
+                                </File>
+                            </Component> -->
+                            <Component Id='SMVLuaComponent' Guid='767754dc-8fe5-4cbf-920e-6051e321312f'>
+                                <File Id='SMVLuaEXE' Name='smvlua.exe' Source='Build/smokeview/mingw_win_64/smokeview_mingw_64.exe' KeyPath='yes'>
+                                </File>
+                            </Component>
+                            <Component Id='CommonRender' Guid='c9eb176c-5dbb-46f4-b0bd-c81e48de8055'>
+                                <File Id='bounds' Name='bounds.lua' Source='Source/smvluacore/bounds.lua' KeyPath='yes'></File>
+                                <File Id='camera' Name='camera.lua' Source='Source/smvluacore/camera.lua'></File>
+                                <File Id='clipping' Name='clipping.lua' Source='Source/smvluacore/clipping.lua'></File>
+                                <File Id='constants' Name='constants.lua' Source='Source/smvluacore/constants.lua'></File>
+                                <File Id='gnuplotlua' Name='gnuplot.lua' Source='Source/smvluacore/gnuplot.lua'></File>
+                                <File Id='inioptions' Name='inioptions.lua' Source='Source/smvluacore/inioptions.lua'></File>
+                                <File Id='iniparser' Name='iniparser.lua' Source='Source/smvluacore/iniparser.lua'></File>
+                                <File Id='json' Name='json.lua' Source='Source/smvluacore/json.lua'></File>
+                                <File Id='load' Name='load.lua' Source='Source/smvluacore/load.lua'></File>
+                                <File Id='pl3d' Name='pl3d.lua' Source='Source/smvluacore/pl3d.lua'></File>
+                                <File Id='plot' Name='plot.lua' Source='Source/smvluacore/plot.lua'></File>
+                                <File Id='render' Name='render.lua' Source='Source/smvluacore/render.lua'></File>
+                                <File Id='smv' Name='smv.lua' Source='Source/smvluacore/smv.lua'></File>
+                                <File Id='ssf' Name='ssf.lua' Source='Source/smvluacore/ssf.lua'></File>
+                                <File Id='ssfcommands' Name='ssfcommands.lua' Source='Source/smvluacore/ssfcommands.lua'></File>
+                                <File Id='ssfparser' Name='ssfparser.lua' Source='Source/smvluacore/ssfparser.lua'></File>
+                                <File Id='tour' Name='tour.lua' Source='Source/smvluacore/tour.lua'></File>
+                                <File Id='unload' Name='unload.lua' Source='Source/smvluacore/unload.lua'></File>
+                                <File Id='view' Name='view.lua' Source='Source/smvluacore/view.lua'></File>
+                                <File Id='window' Name='window.lua' Source='Source/smvluacore/window.lua'></File>
+                                <File Id='lfs' Name='lfs.dll' Source='Build/smokeview/mingw_win_64/lfs.dll'></File>
+                                <File Id='lpeg' Name='lpeg.dll' Source='Build/smokeview/mingw_win_64/lpeg.dll'></File>
+                                <File Id='libwinpthread' Name='libwinpthread-1.dll' Source='libwinpthread-1.dll'></File>
+                                <File Id='lua53' Name='lua53.dll' Source='Source/lua-5.3.1/src/lua53.dll'></File>
+                            </Component>
+                        </Directory>
+                    </Directory>
+                </Directory>
+            </Directory>
+        </Directory>
+        <InstallExecuteSequence>
+            <RemoveExistingProducts After="InstallValidate"/>
+        </InstallExecuteSequence>
+        <Feature Id='SMVLuaFeature' Level='1'>
+            <ComponentRef Id='SMVLuaScript' />
+            <ComponentRef Id='SMVLuaComponent' />
+            <ComponentRef Id='CommonRender' />
+        </Feature>
+        <!-- <Feature Id='Fute' Level='1'>
+            <ComponentRef Id='FuteComponent' />
+            <ComponentRef Id='FuteScript' />
+            <ComponentRef Id='CommonRender' />
+        </Feature> -->
+    </Product>
+</Wix>
