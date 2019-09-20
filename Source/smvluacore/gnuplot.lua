@@ -202,13 +202,7 @@ function gnuplot.do_plot(g, cmd, path)
     local opt = ""
     if persist[g._type] then opt = '--persist' end
     -- A hack to use 'start' on windows to get around path issues.
-    local startstring = ""
-    if osname == "windows" then
-        startstring = "start \"plotting\" /w /b"
-    end
-    print(string.format("os: %s", osname))
-    local command = string.format("%s %s %s %s", startstring, gnuplot.bin, opt, name)
-    print(string.format("command: %s", command))
+    local command = string.format("%s %s %s", gnuplot.bin, opt, name)
     local success
     local result
     local err_code
