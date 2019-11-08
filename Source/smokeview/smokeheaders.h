@@ -1,6 +1,8 @@
 #ifndef SMOKEHEADERS_H_DEFINED
 #define SMOKEHEADERS_H_DEFINED
 
+#include <GL/gl.h>
+
 #ifdef pp_LUA
 #include "gd.h"
 #endif

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <float.h>
 
 #include "lua.h"
 #include "lualib.h"
@@ -1063,6 +1064,92 @@ int lua_get_qdata_sum(lua_State *L) {
   return vars+1;
 }
 
+// Sum bounded data in a given mesh
+int lua_get_qdata_sum_bounded(lua_State *L) {
+  int meshnumber = lua_tonumber(L, 1);
+  int vari, i, j, k;
+  int i1, i2, j1, j2, k1, k2;
+  i1 = lua_tonumber(L, 2);
+  i2 = lua_tonumber(L, 3);
+  j1 = lua_tonumber(L, 4);
+  j2 = lua_tonumber(L, 5);
+  k1 = lua_tonumber(L, 6);
+  k2 = lua_tonumber(L, 7);
+  meshdata mesh = meshinfo[meshnumber];
+  // fprintf(stderr, "mesh label: %s\n", mesh.label);
+  int ntotal = (mesh.ibar+1)*(mesh.jbar+1)*(mesh.kbar+1);
+  int bounded_total = (i2-i1+1)*(j2-j1+1)*(k2-k1+1);
+  int vars = 5;
+  float totals[5];
+  totals[0] = 0.0;
+  totals[1] = 0.0;
+  totals[2] = 0.0;
+  totals[3] = 0.0;
+  totals[4] = 0.0;
+  for (vari = 0; vari < 5; ++vari) {
+    int offset = vari*ntotal;
+    for (k = k1; k <= k2; ++k) {
+      for (j = j1; j <= j2; ++j) {
+        for (i = i1; i <= i2; ++i) {
+          int n = offset + k*(mesh.jbar+1)*(mesh.ibar+1) + j*(mesh.ibar+1) + i;
+          totals[vari] += mesh.qdata[n];
+        }
+      }
+    }
+  }
+
+  for (vari = 0; vari < vars; ++vari) {
+    lua_pushnumber(L, totals[vari]);
+    // fprintf(stderr, "vartotal[%d] value: %.2f\n", vari,totals[vari]);
+  }
+  lua_pushnumber(L, bounded_total);
+  return vars+1;
+}
+
+// Sum bounded data in a given mesh
+int lua_get_qdata_max_bounded(lua_State *L) {
+  int meshnumber = lua_tonumber(L, 1);
+  int vari, i, j, k;
+  int i1, i2, j1, j2, k1, k2;
+  i1 = lua_tonumber(L, 2);
+  i2 = lua_tonumber(L, 3);
+  j1 = lua_tonumber(L, 4);
+  j2 = lua_tonumber(L, 5);
+  k1 = lua_tonumber(L, 6);
+  k2 = lua_tonumber(L, 7);
+  meshdata mesh = meshinfo[meshnumber];
+  // fprintf(stderr, "mesh label: %s\n", mesh.label);
+  int ntotal = (mesh.ibar+1)*(mesh.jbar+1)*(mesh.kbar+1);
+  int bounded_total = (i2-i1+1)*(j2-j1+1)*(k2-k1+1);
+  int vars = 5;
+  float maxs[5];
+  maxs[0] = -1*FLT_MAX;
+  maxs[1] = -1*FLT_MAX;
+  maxs[2] = -1*FLT_MAX;
+  maxs[3] = -1*FLT_MAX;
+  maxs[4] = -1*FLT_MAX;
+  for (vari = 0; vari < 5; ++vari) {
+    int offset = vari*ntotal;
+    for (k = k1; k <= k2; ++k) {
+      for (j = j1; j <= j2; ++j) {
+        for (i = i1; i <= i2; ++i) {
+          int n = offset + k*(mesh.jbar+1)*(mesh.ibar+1) + j*(mesh.ibar+1) + i;
+          if (maxs[vari] < mesh.qdata[n]) {
+            maxs[vari] = mesh.qdata[n];
+          }
+        }
+      }
+    }
+  }
+
+  for (vari = 0; vari < vars; ++vari) {
+    lua_pushnumber(L, maxs[vari]);
+    // fprintf(stderr, "vartotal[%d] value: %.2f\n", vari,totals[vari]);
+  }
+  lua_pushnumber(L, bounded_total);
+  return vars+1;
+}
+
 int lua_get_qdata_mean(lua_State *L) {
   int meshnumber = lua_tonumber(L, 1);
   int vari, i, j, k;
@@ -1618,12 +1705,16 @@ int getslicedata(lua_State *L) {
   // fprintf(stderr, "i_offset:%d j_offset:%d  k_offset:%d\n", i_offset,j_offset,k_offset);
 
   // Offset into a single frame
-  int offset = (di*dj)*k_offset+di*j_offset+i_offset;
+  int offset = (dk*dj)*i_offset+dk*j_offset+k_offset;
   int framesize = di*dj*dk;
   float val = sliceinfo[slice_index].qslicedata[offset+f*framesize];
-  // for (int x; x < framesize*sliceinfo[slice_index].ntimes; x++) {
+  // int x;
+  // for (x = 0; x < framesize*sliceinfo[slice_index].ntimes; x++) {
   //   printf("x:%d - %.2f\n", x, sliceinfo[slice_index].qslicedata[x]);
   // }
+  // fprintf(stderr, "i_min:%d j_min:%d  k_min:%d\n", sliceinfo[slice_index].ijk_min[0],sliceinfo[slice_index].ijk_min[1],sliceinfo[slice_index].ijk_min[2]);
+  // fprintf(stderr, "i_min:%d j_min:%d  k_min:%d\n", imax, jmax, kmax);
+  // fprintf(stderr, "di:%d dj:%d  dk:%d\n", di, dj, dk);
   // fprintf(stderr, "i_offset:%d j_offset:%d  k_offset:%d\n", i_offset,j_offset,k_offset);
   // printf("offset: %d\n", offset);
   // printf("framesize: %d\n", framesize);
@@ -5540,6 +5631,8 @@ lua_State *initLua() {
   lua_register(L, "get_part_npoints", lua_get_part_npoints);
 
   lua_register(L, "get_qdata_sum",lua_get_qdata_sum);
+  lua_register(L, "get_qdata_sum_bounded",lua_get_qdata_sum_bounded);
+  lua_register(L, "get_qdata_max_bounded",lua_get_qdata_max_bounded);
   lua_register(L, "get_qdata_mean",lua_get_qdata_mean);
 
   //add fdsprefix (the path plus  CHID) as a variable in the lua environment

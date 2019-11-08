@@ -3552,7 +3552,7 @@ void MakeFileLists(void){
 
 /* ------------------ ReadSMV ------------------------ */
 
-int ReadSMV(char *file, char *file2){
+int ReadSMV(char *file, char *file2) {
 
 /* read the .smv file */
   float read_time, processing_time, wrapup_time, getfilelist_time;
@@ -11906,7 +11906,7 @@ int ReadIni2(char *inifile, int localfile){
       }
       if(Match(buffer, "TOURCIRCLE") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
-        sscanf(buffer,"%f %f %f %f %f %f %f %f", 
+        sscanf(buffer,"%f %f %f %f %f %f %f %f",
           tour_circular_center+0, tour_circular_center+1, tour_circular_center+2,
           tour_circular_view+0, tour_circular_view+1, tour_circular_view+2,
           &tour_circular_radius, &tour_circular_angle0);
@@ -12856,8 +12856,8 @@ void WriteIniLocal(FILE *fileout){
   }
 
   fprintf(fileout, "TOURCIRCLE\n");
-  fprintf(fileout, "%f %f %f %f %f %f %f %f", 
-    tour_circular_center[0], 
+  fprintf(fileout, "%f %f %f %f %f %f %f %f",
+    tour_circular_center[0],
     tour_circular_center[1], tour_circular_center[2],
     tour_circular_view[0], tour_circular_view[1], tour_circular_view[2],
     tour_circular_radius, tour_circular_angle0);
