@@ -152,6 +152,12 @@ function plotMultiDV( dir, dvs, title, opts)
             g[k] = v
         end
     end
+    if not g.fname then
+        g.fname = "Arial"
+    end
+    if not g.fsize then
+        g.fsize = 8
+    end
     for i,dv in ipairs(dvs) do
         local arr = {  -- plot from an 'array-like' thing in memory. Could be a
                         -- numlua matrix, for example.
