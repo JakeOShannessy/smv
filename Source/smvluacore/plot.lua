@@ -152,10 +152,10 @@ function plotMultiDV( dir, dvs, title, opts)
             g[k] = v
         end
     end
-    if not g.fname then
+    if (not opts) or (not opts.fname) then
         g.fname = "Arial"
     end
-    if not g.fsize then
+    if (not opts) or (not opts.fsize) then
         g.fsize = 8
     end
     for i,dv in ipairs(dvs) do
