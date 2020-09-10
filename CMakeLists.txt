@@ -17,21 +17,23 @@ find_package(GLUT)
 if (NOT GLUT_FOUND)
     message(STATUS "Local GLUT not found, using vendored freeglut")
     set(GLUT_INCLUDE_DIR "Source/freeglut-3.2.1/include")
-    set(GLUT_LIBRARIES "../Source/freeglut-3.2.1/lib/freeglut_staticd")
-    set(GLUT_glut_LIBRARY_DEBUG "../Source/freeglut-3.2.1/lib/freeglut_staticd")
-    set(GLUT_glut_LIBRARY_RELEASE "../Source/freeglut-3.2.1/lib/freeglut_static")
+    set(GLUT_LIBRARIES "Source/freeglut-3.2.1/lib/freeglut_staticd")
+    set(GLUT_glut_LIBRARY_DEBUG "Source/freeglut-3.2.1/lib/freeglut_staticd")
+    set(GLUT_glut_LIBRARY_RELEASE "Source/freeglut-3.2.1/lib/freeglut_static")
     # message( "GLUT_LIBRARIES=${GLUT_LIBRARIES}")
 endif ()
 include_directories( ${OPENGL_INCLUDE_DIRS}  ${GLUT_INCLUDE_DIR} )
+add_subdirectory(Source/freeglut-3.2.1)
 add_subdirectory(Source/glui)
 add_subdirectory(Source/libgd)
 add_subdirectory(Source/glew-2.1.0/build/cmake)
 add_subdirectory(Source/zlib-1.2.11)
+add_subdirectory(Source/lua-5.3.1)
 
 
 option(FREEGLUT_STATIC "Statically link freeglut" on)
 if (FREEGLUT_STATIC)
-  add_definitions(-DFREEGLUT_STATIC)
+    add_definitions(-DFREEGLUT_STATIC)
 endif ()
 
 add_executable(Smokeview Source/smokeview/main.c
@@ -48,6 +50,13 @@ add_executable(Smokeview Source/smokeview/main.c
     Source/smokeview/smv_geometry.c Source/smokeview/showscene.c Source/smokeview/infoheader.c  Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
     Source/smokeview/fdsmodules.f90 Source/smokeview/gsmv.f90 Source/smokeview/getdata.f90
 )
+option(LUA "Include lua scripting" on)
+if (LUA)
+    add_definitions(-Dpp_LUA)
+    # If we are including the lua interpreter, include the appropriate sources.
+    target_sources(Smokeview PRIVATE Source/smokeview/lua_api.c Source/smokeview/c_api.c Source/smokeview/csv.c)
+endif ()
+
 add_dependencies(${PROJECT_NAME} zlibstatic)
 target_link_libraries(Smokeview
     libgd_static
@@ -56,6 +65,7 @@ target_link_libraries(Smokeview
     # ${GLUT_glut_LIBRARY_DEBUG}
     glui_static
     glew_s
+    liblua
     zlibstatic
 )
 target_include_directories(Smokeview PRIVATE
@@ -67,4 +77,5 @@ target_include_directories(Smokeview PRIVATE
     Source/libgd/src
     Source/glew-2.1.0/include/GL
     Source/glui/include/GL
+    Source/lua-5.3.1/src
 )
