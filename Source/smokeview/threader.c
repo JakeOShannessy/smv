@@ -186,7 +186,7 @@ void PSystem(char *commandline){
 }
 #else
 void PSystem(char *commandline){
-  system(commandline)
+  system(commandline);
 }
 #endif
 
@@ -208,7 +208,7 @@ void MakeIBlankAll(void){
 void MakeIBlankAll(void){
   MakeIBlank();
   SetCVentDirs();
-  update_set_vents=1;
+  update_setvents=1;
 }
 #endif
 
