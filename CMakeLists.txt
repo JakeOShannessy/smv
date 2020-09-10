@@ -5,6 +5,8 @@ project(Smokeview LANGUAGES C CXX)
 #enable_language( Fortran )
 add_definitions(-DBGDWIN32)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ".")
+
 option(BUILD_SHARED_LIBS off)
 option(BUILD_STATIC_LIBS on)
 set(BUILD_STATIC_LIBS on force)
@@ -57,10 +59,15 @@ if (LUA)
     target_sources(Smokeview PRIVATE Source/smokeview/lua_api.c Source/smokeview/c_api.c Source/smokeview/csv.c)
 endif ()
 
+option(MULTITHREADED "Use multithreading via pthreads" on)
+if (MULTITHREADED)
+    add_definitions(-Dpp_THREAD)
+    #TODO: throw an appropriate error message if we can't use pthreads.
+endif ()
+
 add_dependencies(${PROJECT_NAME} zlibstatic)
 target_link_libraries(Smokeview
     libgd_static
-    # freeglut-3.2.1/lib/freeglut_staticd.lib
     ${GLUT_LIBRARIES}
     # ${GLUT_glut_LIBRARY_DEBUG}
     glui_static
