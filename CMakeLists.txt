@@ -9,7 +9,7 @@ option(BUILD_SHARED_LIBS off)
 option(BUILD_STATIC_LIBS on)
 set(BUILD_STATIC_LIBS on force)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib" CACHE PATH "Single Directory for all Libraries")
-
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 set(CMAKE_SYSTEM_NAME Generic)
 find_package(OpenGL REQUIRED)
