@@ -2463,6 +2463,7 @@ int set_sensornormcolor(float r, float g, float b) {
 int set_bw(int geo_setting, int data_setting) {
   setbw = geo_setting;
   setbwdata = data_setting;
+  return 0;
 } // SETBW
 
 int set_sprinkleroffcolor(float r, float g, float b) {
@@ -3925,7 +3926,7 @@ int set_c_particles(int minFlag, float minValue, int maxFlag, float maxValue,
    label = "";
   }
   int l = strlen(label);
-  char label_copy[l+1];
+  char *label_copy = malloc(sizeof(char)*(l+1));
   // convert to mutable string (mainly to avoid discard const warnings)
   strcpy(label_copy, label);
   if(npart5prop>0){
@@ -3941,6 +3942,7 @@ int set_c_particles(int minFlag, float minValue, int maxFlag, float maxValue,
       propi->chopmax = maxValue;
     }
   }
+  free(label_copy);
   return 0;
 }
 
@@ -4084,7 +4086,7 @@ int set_v5_particles(int minFlag, float minValue, int maxFlag, float maxValue,
    label = "";
   }
   int l = strlen(label);
-  char label_copy[l+1];
+  char *label_copy = malloc(sizeof(char)*(l+1));
   // convert to mutable string (mainly to avoid discard const warnings)
   strcpy(label_copy, label);
   if(npart5prop>0){
@@ -4129,6 +4131,7 @@ int set_v5_particles(int minFlag, float minValue, int maxFlag, float maxValue,
       }
     }
   }
+  free(label_copy);
   return 0;
 }
 

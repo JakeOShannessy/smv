@@ -19,7 +19,11 @@
 #include GLUT_H
 #include "gd.h"
 
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 
 lua_State* L;
 int lua_displayCB(lua_State *L);
@@ -1670,7 +1674,7 @@ int lua_slice_data_map_frames_count_greater_eq(lua_State *L) {
 // 3. int j
 // 4. ink k
 // The slice index is stored as part of a closure.
-int getslicedata(lua_State *L) {
+int lua_getslicedata(lua_State *L) {
   // The offset in the global sliceinfo table of the slice.
   int slice_index = lua_tonumber(L, lua_upvalueindex(1));
   // The time frame to use
@@ -1679,9 +1683,12 @@ int getslicedata(lua_State *L) {
   int i = lua_tonumber(L, 2);
   int j = lua_tonumber(L, 3);
   int k = lua_tonumber(L, 4);
-  // // print all the times
-  // for (int i; i < sliceinfo[slice_index].ntimes; i++) {
-  //   fprintf(stderr, "t:%.2f s\n", sliceinfo[slice_index].times[i]);
+  printf("getting slice data: %d, %d, %d-%d-%d\n", slice_index, f, i, j, k);
+  // print all the times
+  // printf("times: %d\n", sliceinfo[slice_index].ntimes);
+  // int n = 0;
+  // for (n; n < sliceinfo[slice_index].ntimes; n++) {
+  //   fprintf(stderr, "t:%.2f s\n", sliceinfo[slice_index].times[n]);
   // }
   // fprintf(stderr, "f:%d i:%d j:%d  k:%d\n", f, i,j,k);
 
@@ -1810,7 +1817,7 @@ int lua_get_sliceinfo(lua_State *L) {
     lua_pushnumber(L,i);
     // Push a closure which has been provided with the first argument (the slice
     // index)
-    lua_pushcclosure(L, getslicedata, 1);
+    lua_pushcclosure(L, lua_getslicedata, 1);
     lua_setfield(L, -2, "getdata");
 
     lua_settable(L, -3);
@@ -2775,15 +2782,16 @@ int lua_set_colorbar_colors(lua_State *L) {
   }
   int i;
   float *color;
-  float colors[ncolors][3];
+  float *colors = malloc(sizeof(float)*ncolors*3);
   for (i = 1; i <= ncolors; i++) {
     lua_pushnumber(L, i);
     lua_gettable(L, 1);
-    get_color(L, -1, colors[i-1]);
+    get_color(L, -1, &colors[i-1]);
   }
 
   int return_code = set_colorbar_colors(ncolors, colors);
   lua_pushnumber(L, return_code);
+  free(colors);
   return 1;
 }
 
@@ -2820,15 +2828,16 @@ int lua_set_color2bar_colors(lua_State *L) {
   }
   int i;
   float *color;
-  float colors[ncolors][3];
+  float *colors = malloc(sizeof(float)*ncolors*3);
   for (i = 1; i <= ncolors; i++) {
     lua_pushnumber(L, i);
     lua_gettable(L,-2);
-    get_color(L, -1, colors[i-1]);
+    get_color(L, -1, &colors[i-1]);
   }
 
   int return_code = set_color2bar_colors(ncolors, colors);
   lua_pushnumber(L, return_code);
+  free(colors);
   return 1;
 }
 
@@ -2925,7 +2934,7 @@ int lua_set_isocolors(lua_State *L) {
   }
   int i;
   float *color;
-  float colors[ncolors][3];
+  float *colors = malloc(sizeof(float)*ncolors*3);
   for (i = 1; i <= ncolors; i++) {
     if (!lua_istable(L, 4)) {
       fprintf(stderr, "isocolor table is not present\n");
@@ -2933,7 +2942,7 @@ int lua_set_isocolors(lua_State *L) {
     }
     lua_pushnumber(L, i);
     lua_gettable(L, 4);
-    get_color(L, -1, colors[i-1]);
+    get_color(L, -1, &colors[i-1]);
   }
   // for (i = 0; i < ncolors; i++) {
   //   printf("%d: %f %f %f\n", i,
@@ -2941,6 +2950,7 @@ int lua_set_isocolors(lua_State *L) {
   // }
   // specular = lua_tonumber(L, 3);
   // int return_code = set_diffuselight(r, g, b);
+  free(colors);
   return 0;
 }
 
@@ -2955,18 +2965,20 @@ int lua_set_colortable(lua_State *L) {
     ncolors++;
   }
   // initialise arrays using the above count info
-  float colors[ncolors][3];
-  char names[ncolors][255];
+  float *colors = malloc(sizeof(float)*ncolors*3);
+  char *names = malloc(sizeof(char)*ncolors*255);
   /* table is in the stack at index 't' */
   lua_pushnil(L);  /* first key */
   while (lua_next(L, 1) != 0) {
     /* uses 'key' (at index -2) and 'value' (at index -1) */
     strncpy(names[i], lua_tostring(L, -2), 255);
-    get_color(L, -1, colors[i]);
+    get_color(L, -1, &colors[i]);
     /* removes 'value'; keeps 'key' for next iteration */
     lua_pop(L, 1);
     i++;
   }
+  free(colors);
+  free(names);
   return 0;
 }
 
@@ -3530,7 +3542,7 @@ int lua_set_meshvis(lua_State *L) {
     n++;
   }
   // initialise arrays using the above count info
-  int vals[n];
+  int *vals = malloc(sizeof(int)*n);
   /* table is in the stack at index 't' */
   lua_pushnil(L);  /* first key */
   while (lua_next(L, 1) != 0) {
@@ -3540,6 +3552,7 @@ int lua_set_meshvis(lua_State *L) {
     i++;
   }
   int return_code = set_meshvis(n, vals);
+  free(vals);
   return 0;
 }
 
@@ -4267,7 +4280,7 @@ int lua_set_unitclasses(lua_State *L) {
     lua_pop(L,1);
     n++;
   }
-  int indices[n];
+  int *indices = malloc(sizeof(int)*n);
   lua_pushnil(L);
   while(lua_next(L,-2)!=0) {
     indices[i] = lua_tonumber(L, -1);
@@ -4276,6 +4289,7 @@ int lua_set_unitclasses(lua_State *L) {
   }
   int return_code = set_unitclasses(n, indices);
   lua_pushnumber(L, return_code);
+  free(indices);
   return 1;
 }
 
@@ -4721,7 +4735,7 @@ int lua_set_sliceauto(lua_State *L) {
     n++;
   }
   int i = 0;
-  int vals[n];
+  int *vals = malloc(sizeof(int)*n);
   lua_pushnil(L);
   while(lua_next(L, -2) != 0) {
     vals[i] = lua_tonumber(L, -1);
@@ -4730,6 +4744,7 @@ int lua_set_sliceauto(lua_State *L) {
   }
   int return_code = set_sliceauto(n, vals);
   lua_pushnumber(L, return_code);
+  free(vals);
   return 1;
 }
 
@@ -4741,7 +4756,7 @@ int lua_set_msliceauto(lua_State *L) {
     n++;
   }
   int i = 0;
-  int vals[n];
+  int *vals = malloc(sizeof(int)*n);
   lua_pushnil(L);
   while(lua_next(L, -2) != 0) {
     vals[i] = lua_tonumber(L, -1);
@@ -4750,6 +4765,7 @@ int lua_set_msliceauto(lua_State *L) {
   }
   int return_code = set_msliceauto(n, vals);
   lua_pushnumber(L, return_code);
+  free(vals);
   return 1;
 }
 
@@ -4816,17 +4832,18 @@ int lua_set_propindex(lua_State *L) {
     n++;
   }
   int i = 0;
-  int vals[n][2];
+  int stride = 2;
+  int *vals = malloc(sizeof(int)*n*stride);
   lua_pushnil(L);
   while(lua_next(L, -2) != 0) {
     lua_pushnumber(L, 1);
     lua_gettable(L, -2);
-    vals[i][0] = lua_tonumber(L, -1);
+    vals[i*stride+0] = lua_tonumber(L, -1);
     lua_pop(L, 1);
 
     lua_pushnumber(L, 1);
     lua_gettable(L, -2);
-    vals[i][1] = lua_tonumber(L, -1);
+    vals[i*stride+1] = lua_tonumber(L, -1);
     lua_pop(L, 1);
 
     lua_pop(L, 1);
@@ -4879,7 +4896,7 @@ int lua_set_showdevices(lua_State *L) {
     n++;
   }
   int i = 0;
-  const char *names[n];
+  char *names = malloc(sizeof(char*)*n);
   lua_pushnil(L);
   while(lua_next(L, -2) != 0) {
     names[i] = lua_tostring(L, -1);
@@ -4888,6 +4905,7 @@ int lua_set_showdevices(lua_State *L) {
   }
   int return_code = set_showdevices(n, names);
   lua_pushnumber(L, return_code);
+  free(names);
   return 1;
 } // SHOWDEVICES
 
@@ -5098,7 +5116,7 @@ void addLuaPaths(lua_State *L) {
   int pathType = lua_getfield(L, -1, "path");
   const char *oldPath = lua_tostring(L, -1);
   int newLength = strlen(oldPath) + 1 + strlen(smokeview_bindir_abs) + 1 + 5 +1;
-  char newPath[newLength];
+  char *newPath = malloc(sizeof(char)*newLength);
   strcpy(newPath, oldPath);
   strcat(newPath,";");
   strcat(newPath,smokeview_bindir_abs);
@@ -5107,13 +5125,13 @@ void addLuaPaths(lua_State *L) {
   lua_pushstring(L, newPath);
   lua_setfield(L, -3, "path");
   lua_pop(L, 1); // pop the now redundant "path" variable from the stack
-
+  free(newPath);
   // package.cpath is a path variable where Lua modules may be found,
   // typically binary (C based) files such as .dll or .so.
   int cpathType = lua_getfield(L, -1, "cpath");
   const char *oldCPath = lua_tostring(L, -1);
   int newLengthC = strlen(oldCPath) + 1 + 2*strlen(smokeview_bindir_abs) + 2*1 + 10 +1;
-  char newCPath[newLengthC];
+  char *newCPath = malloc(sizeof(char)*newLengthC);
   strcpy(newCPath, oldCPath);
   strcat(newCPath,";");
   strcat(newCPath,smokeview_bindir_abs);
@@ -5125,6 +5143,7 @@ void addLuaPaths(lua_State *L) {
   lua_pushstring(L, newCPath);
   lua_setfield(L, -3, "cpath");
   lua_pop(L, 1); // pop the now redundant "cpath" variable from the stack
+  free(newCPath);
   return;
 }
 
