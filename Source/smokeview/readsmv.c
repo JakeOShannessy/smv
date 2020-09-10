@@ -10,7 +10,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include GLUT_H
+#ifdef pp_THREAD
 #include <pthread.h>
+#endif
 
 #include "smv_endian.h"
 #include "update.h"

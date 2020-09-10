@@ -20,7 +20,9 @@ void PlayMovie(void){
   if(FILE_EXISTS(GetMovieFilePath(moviefile_path)) == YES){
     strcpy(command_line, "ffplay ");
     strcat(command_line,moviefile_path);
+#ifdef pp_THREAD
     PSystem(command_line);
+#endif
   }
   else{
     PRINTF("*** Error: the movie file, %s, does not exist\n", moviefile_path);
