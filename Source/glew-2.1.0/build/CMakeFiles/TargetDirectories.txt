@@ -1,0 +1,10 @@
+C:/jakedoc/Projects/smv/Source/glew-2.1.0/build/CMakeFiles/glewinfo.dir
+C:/jakedoc/Projects/smv/Source/glew-2.1.0/build/CMakeFiles/glew.dir
+C:/jakedoc/Projects/smv/Source/glew-2.1.0/build/CMakeFiles/glew_s.dir
+C:/jakedoc/Projects/smv/Source/glew-2.1.0/build/CMakeFiles/uninstall.dir
+C:/jakedoc/Projects/smv/Source/glew-2.1.0/build/CMakeFiles/visualinfo.dir
+C:/jakedoc/Projects/smv/Source/glew-2.1.0/build/CMakeFiles/edit_cache.dir
+C:/jakedoc/Projects/smv/Source/glew-2.1.0/build/CMakeFiles/rebuild_cache.dir
+C:/jakedoc/Projects/smv/Source/glew-2.1.0/build/CMakeFiles/list_install_components.dir
+C:/jakedoc/Projects/smv/Source/glew-2.1.0/build/CMakeFiles/install/local.dir
+C:/jakedoc/Projects/smv/Source/glew-2.1.0/build/CMakeFiles/install.dir

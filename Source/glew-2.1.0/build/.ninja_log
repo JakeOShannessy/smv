@@ -1,0 +1,22 @@
+# ninja log v5
+5	185	6213731346245777	CMakeFiles/glewinfo.dir/glewinfo.rc.res	adaaa19bd76e90d5
+42	207	6213731346465191	CMakeFiles/visualinfo.dir/visualinfo.rc.res	7a7f4de6405f65e1
+33	215	6213731346475170	CMakeFiles/glew_s.dir/glew.rc.res	3b0b06100b1763ab
+31	194	6213731346305618	CMakeFiles/glew.dir/glew.rc.res	6eb42ba30c05253e
+1	6823	6213731412638677	CMakeFiles/glewinfo.dir/C_/jakedoc/Projects/smv/Source/glew-2.1.0/src/glewinfo.c.obj	4c353eab0602a29a
+40	354	6213731348001082	CMakeFiles/visualinfo.dir/C_/jakedoc/Projects/smv/Source/glew-2.1.0/src/visualinfo.c.obj	558b3c6b51073a64
+37	3912	6213731383426333	CMakeFiles/glew_s.dir/C_/jakedoc/Projects/smv/Source/glew-2.1.0/src/glew.c.obj	7816f9e8122a8c6e
+28	3841	6213731382718231	CMakeFiles/glew.dir/C_/jakedoc/Projects/smv/Source/glew-2.1.0/src/glew.c.obj	f1ec2185ff5f9284
+45	327	6213734051981104	CMakeFiles/visualinfo.dir/C_/jakedoc/Projects/smv/Source/glew-2.1.0/src/visualinfo.c.obj	48b264f0edf64319
+41	349	6213734052150670	CMakeFiles/visualinfo.dir/visualinfo.rc.res	76dd22c025c8e92c
+39	350	6213734052150670	CMakeFiles/glew_s.dir/glew.rc.res	23b95e8a783184ed
+35	351	6213734052130710	CMakeFiles/glew.dir/glew.rc.res	6a220c4af8bef947
+32	356	6213734052200523	CMakeFiles/glewinfo.dir/glewinfo.rc.res	881ee297477905e1
+25	428	6213734053008379	CMakeFiles/glewinfo.dir/C_/jakedoc/Projects/smv/Source/glew-2.1.0/src/glewinfo.c.obj	c169dde9f3ed937c
+29	541	6213734054135353	CMakeFiles/glew.dir/C_/jakedoc/Projects/smv/Source/glew-2.1.0/src/glew.c.obj	f2cd799d973097c3
+37	545	6213734054165277	CMakeFiles/glew_s.dir/C_/jakedoc/Projects/smv/Source/glew-2.1.0/src/glew.c.obj	c44fd48e2773f356
+546	626	6213734054873369	lib/libglew32d.lib	d487e614c64e16fa
+541	814	6213734056837192	bin/glew32d.dll	d3e140e73e47b82c
+541	814	6213734056837192	lib/glew32d.lib	d3e140e73e47b82c
+816	1066	6213734059360434	bin/visualinfo.exe	16d86bf301dbdadc
+814	1344	6213734062126025	bin/glewinfo.exe	1f5eeb0a22d0e0d3
