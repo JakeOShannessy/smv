@@ -7,6 +7,10 @@ add_definitions(-DBGDWIN32)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ".")
 
+add_definitions(-DWIN32)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 option(BUILD_SHARED_LIBS off)
 option(BUILD_STATIC_LIBS on)
 set(BUILD_STATIC_LIBS on force)
