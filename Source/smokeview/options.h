@@ -45,7 +45,6 @@
 //#define pp_PARTTEST   // for debugging, set particle values to 100*parti->seq_id + small random number
 #define pp_READBUFFER   // read .smv file from a memory buffer
 
-#define pp_THREAD       // turn on multi-threading
 #ifdef pp_THREAD
 #define pp_THREADIBLANK // construct iblank arrays in background
 #endif
@@ -77,7 +76,7 @@
 #ifdef pp_BETA
 //#define pp_SLICE_DEBUG         // slice debug output
 #define pp_DEBUG_SUBMENU       // debug output and testing for building menus
-//#define pp_SMOKE3D_LOADTEST  // load 3d smoke for all meshes for each time step 
+//#define pp_SMOKE3D_LOADTEST  // load 3d smoke for all meshes for each time step
 //#define pp_SMOKEALPHA        // experimental smoke alpha settings
 #define pp_SHOWTERRAIN
 #define pp_TIMINGS
@@ -92,4 +91,3 @@
 #endif
 
 #endif
-
