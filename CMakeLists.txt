@@ -7,22 +7,37 @@ if (WIN32)
     add_definitions(-D_WIN32)
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif (WIN32)
+    # enable_language( Fortran )
+    set(CMAKE_Fortran_PREPROCESS_SOURCE "<CMAKE_Fortran_COMPILER> -cpp <DEFINES> <FLAGS> -E <SOURCE> -o <PREPROCESSED_SOURCE>")
+    set(CMAKE_Fortran_COMPILE_OBJECT "<CMAKE_Fortran_COMPILER> -fpreprocessed <FLAGS> -c <SOURCE> -o <OBJECT>")
+    include(CMakeAddFortranSubdirectory)
+    cmake_add_fortran_subdirectory(Source/smokeview NO_EXTERNAL_INSTALL)
+endif ()
 
 if (UNIX)
     add_definitions(pp_LINUX)
+    remove_definitions(pp_INTEL)
+    add_definitions((pp_GCC))
+    set(CMAKE_Fortran_FLAGS "-cpp")
     enable_language( Fortran )
-endif (UNIX)
-
+endif ()
+add_definitions(-Dpp_FSEEK)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ".")
 
 option(BUILD_SHARED_LIBS off)
 option(BUILD_STATIC_LIBS on)
 set(BUILD_STATIC_LIBS on force)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib" CACHE PATH "Single Directory for all Libraries")
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 
-set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_BUILD_TYPE "Release")
+
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-incompatible-ms-struct")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-incompatible-ms-struct")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+
+# set(CMAKE_SYSTEM_NAME Generic)
 find_package(OpenGL REQUIRED)
 message( "OPENGL_LIBRARIES=${OPENGL_LIBRARIES}")
 find_package(GLUT)
@@ -61,7 +76,7 @@ add_executable(Smokeview Source/smokeview/main.c
     Source/smokeview/glui_colorbar.cpp Source/smokeview/skybox.c Source/shared/file_util.c Source/shared/string_util.c Source/smokeview/startup.c Source/smokeview/glui_trainer.cpp
     Source/smokeview/shaders.c Source/smokeview/unit.c Source/smokeview/threader.c Source/shared/histogram.c Source/shared/translate.c Source/smokeview/update.c Source/smokeview/viewports.c
     Source/smokeview/smv_geometry.c Source/smokeview/showscene.c Source/smokeview/infoheader.c  Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
-    Source/smokeview/fdsmodules.f90 Source/smokeview/gsmv.f90 Source/smokeview/getdata.f90
+    # Source/smokeview/fdsmodules.f90 Source/smokeview/gsmv.f90 Source/smokeview/getdata.f90
 )
 option(LUA "Include lua scripting" on)
 if (LUA)
@@ -84,6 +99,7 @@ target_link_libraries(Smokeview
     glew_s
     liblua
     zlibstatic
+    smv_fortw
 )
 if (WIN32)
     target_link_libraries(Smokeview libgd_static)
