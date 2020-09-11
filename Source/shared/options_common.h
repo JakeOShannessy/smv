@@ -66,6 +66,8 @@
 #ifndef _F
 #ifdef pp_append
 #define _F(name) name ## _
+#elif _WIN32
+#define _F(name) name ## _
 #else
 #define _F(name) name
 #endif
@@ -136,4 +138,3 @@
 #include "lint.h"
 
 #endif
-
