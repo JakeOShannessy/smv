@@ -5,7 +5,7 @@
 #include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 #include GLUT_H
@@ -2947,7 +2947,7 @@ void ReloadAllSliceFiles(void){
       load_size+=ReadSlice(slicei->file,i,LOAD,set_slicecolor,&errorcode);
     }
     file_count++;
-  } 
+  }
   STOP_TIMER(load_time);
   PRINT_LOADTIMES;
   slicefile_labelindex = slicefile_labelindex_save;
@@ -4255,7 +4255,7 @@ void LoadSmoke3DMenu(int value){
   else if(value == MENU_SMOKE_SOOT_HRRPUV){
     if(smoke3d_load_test == 1){
       int errorcode;
-      
+
       ReadSmoke3DAllMeshesAllTimes(SOOT|HRRPUV, &errorcode);
     }
     else{
@@ -4275,7 +4275,7 @@ void LoadSmoke3DMenu(int value){
   else if(value == MENU_SMOKE_SOOT_TEMP){
     if(smoke3d_load_test==1){
       int errorcode;
- 
+
       ReadSmoke3DAllMeshesAllTimes(SOOT|TEMP, &errorcode);
     }
     else{
