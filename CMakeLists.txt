@@ -121,6 +121,6 @@ target_include_directories(Smokeview PRIVATE
     freeglut-3.2.1/include
     Source/libgd/src
     Source/glew-2.1.0/include/GL
-    Source/glui/include/GL
+    Source/glui_v2_1_beta
     Source/lua-5.3.1/src
 )
