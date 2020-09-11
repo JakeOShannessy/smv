@@ -2,3 +2,6 @@
 	path = Source/lfs/luafilesystem
 	url = https://github.com/keplerproject/luafilesystem.git
 	branch = 1.7
+[submodule "Source/glfw"]
+	path = Source/glfw
+	url = https://github.com/glfw/glfw.git
