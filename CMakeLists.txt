@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
 project(Smokeview LANGUAGES C CXX)
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+
 if (WIN32)
     add_definitions(-DBGDWIN32)
     add_definitions(-DWIN32)
@@ -12,6 +16,9 @@ if (WIN32)
     set(CMAKE_Fortran_COMPILE_OBJECT "<CMAKE_Fortran_COMPILER> -fpreprocessed <FLAGS> -c <SOURCE> -o <OBJECT>")
     include(CMakeAddFortranSubdirectory)
     cmake_add_fortran_subdirectory(Source/smokeview NO_EXTERNAL_INSTALL)
+    set(MULTITHREADED_DEFAULT off)
+else ()
+    set(MULTITHREADED_DEFAULT on)
 endif ()
 
 if (UNIX)
@@ -27,7 +34,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ".")
 option(BUILD_SHARED_LIBS off)
 option(BUILD_STATIC_LIBS on)
 set(BUILD_STATIC_LIBS on force)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 
 set(CMAKE_BUILD_TYPE "Release")
 
@@ -42,7 +48,7 @@ find_package(OpenGL REQUIRED)
 message( "OPENGL_LIBRARIES=${OPENGL_LIBRARIES}")
 find_package(GLUT)
 if (NOT GLUT_FOUND)
-    #TODO need to handle debug vs releae
+    #TODO need to handle debug vs release
     message(STATUS "Local GLUT not found, using vendored freeglut")
     set(GLUT_INCLUDE_DIR "Source/freeglut-3.2.1/include")
     set(GLUT_LIBRARIES "Source/freeglut-3.2.1/lib/freeglut_static")
@@ -85,7 +91,7 @@ if (LUA)
     target_sources(Smokeview PRIVATE Source/smokeview/lua_api.c Source/smokeview/c_api.c Source/smokeview/csv.c)
 endif ()
 
-option(MULTITHREADED "Use multithreading via pthreads" on)
+option(MULTITHREADED "Use multithreading via pthreads" ${MULTITHREADED_DEFAULT})
 if (MULTITHREADED)
     add_definitions(-Dpp_THREAD)
     #TODO: throw an appropriate error message if we can't use pthreads.
