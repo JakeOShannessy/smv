@@ -1,15 +1,20 @@
 cmake_minimum_required(VERSION 3.10)
 project(Smokeview LANGUAGES C CXX)
 
-#set(CMAKE_Fortran_COMPILER C:/msys64/mingw64/bin/gfortran.exe)
-#enable_language( Fortran )
-add_definitions(-DBGDWIN32)
+if (WIN32)
+    add_definitions(-DBGDWIN32)
+    add_definitions(-DWIN32)
+    add_definitions(-D_WIN32)
+    set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif (WIN32)
+
+if (UNIX)
+    add_definitions(pp_LINUX)
+    enable_language( Fortran )
+endif (UNIX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ".")
-
-add_definitions(-DWIN32)
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_SHARED_LIBS off)
 option(BUILD_STATIC_LIBS on)
@@ -19,11 +24,13 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 set(CMAKE_SYSTEM_NAME Generic)
 find_package(OpenGL REQUIRED)
+message( "OPENGL_LIBRARIES=${OPENGL_LIBRARIES}")
 find_package(GLUT)
 if (NOT GLUT_FOUND)
+    #TODO need to handle debug vs releae
     message(STATUS "Local GLUT not found, using vendored freeglut")
     set(GLUT_INCLUDE_DIR "Source/freeglut-3.2.1/include")
-    set(GLUT_LIBRARIES "Source/freeglut-3.2.1/lib/freeglut_staticd")
+    set(GLUT_LIBRARIES "Source/freeglut-3.2.1/lib/freeglut_static")
     set(GLUT_glut_LIBRARY_DEBUG "Source/freeglut-3.2.1/lib/freeglut_staticd")
     set(GLUT_glut_LIBRARY_RELEASE "Source/freeglut-3.2.1/lib/freeglut_static")
     # message( "GLUT_LIBRARIES=${GLUT_LIBRARIES}")
@@ -71,7 +78,6 @@ endif ()
 
 add_dependencies(${PROJECT_NAME} zlibstatic)
 target_link_libraries(Smokeview
-    libgd_static
     ${GLUT_LIBRARIES}
     # ${GLUT_glut_LIBRARY_DEBUG}
     glui_static
@@ -79,6 +85,12 @@ target_link_libraries(Smokeview
     liblua
     zlibstatic
 )
+if (WIN32)
+    target_link_libraries(Smokeview libgd_static)
+elseif (UNIX)
+    target_link_libraries(Smokeview gd)
+endif ()
+
 target_include_directories(Smokeview PRIVATE
     Source/smokeview
     Source/shared
