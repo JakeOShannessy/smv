@@ -1,24 +1,28 @@
-cmake_minimum_required(VERSION 3.10)
-project(Smokeview LANGUAGES C CXX)
+cmake_minimum_required(VERSION 3.17)
+project(Smokeview LANGUAGES C CXX Fortran)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
-if (WIN32)
-    add_definitions(-DBGDWIN32)
-    add_definitions(-DWIN32)
-    add_definitions(-D_WIN32)
-    set(CMAKE_CXX_STANDARD 14)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (MSYS)
     # enable_language( Fortran )
-    set(CMAKE_Fortran_PREPROCESS_SOURCE "<CMAKE_Fortran_COMPILER> -cpp <DEFINES> <FLAGS> -E <SOURCE> -o <PREPROCESSED_SOURCE>")
-    set(CMAKE_Fortran_COMPILE_OBJECT "<CMAKE_Fortran_COMPILER> -fpreprocessed <FLAGS> -c <SOURCE> -o <OBJECT>")
-    include(CMakeAddFortranSubdirectory)
-    cmake_add_fortran_subdirectory(Source/smokeview NO_EXTERNAL_INSTALL)
-    set(MULTITHREADED_DEFAULT off)
-else ()
     set(MULTITHREADED_DEFAULT on)
+# else if (WIN32)
+#     add_definitions(-DBGDWIN32)
+#     add_definitions(-DWIN32)
+#     add_definitions(-D_WIN32)
+#     set(CMAKE_CXX_STANDARD 14)
+#     # set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#     # set(CMAKE_Fortran_PREPROCESS ON FORCE)
+#     # enable_language( Fortran )
+#     set(CMAKE_Fortran_PREPROCESS_SOURCE "<CMAKE_Fortran_COMPILER> -cpp <DEFINES> <FLAGS> -E <SOURCE> -o <PREPROCESSED_SOURCE>" CACHE STRING "S" FORCE)
+#     set(CMAKE_Fortran_COMPILE_OBJECT "<CMAKE_Fortran_COMPILER> -fpreprocessed <FLAGS> -c <SOURCE> -o <OBJECT>" CACHE STRING "S" FORCE)
+#     include(CMakeAddFortranSubdirectory)
+#     cmake_add_fortran_subdirectory(Source/smokeview Smokeview_fortw  "-GNinja" NO_EXTERNAL_INSTALL)
+#     set(MULTITHREADED_DEFAULT off)
+# else ()
+#     set(MULTITHREADED_DEFAULT on)
 endif ()
 
 if (UNIX)
@@ -26,8 +30,9 @@ if (UNIX)
     remove_definitions(pp_INTEL)
     add_definitions((pp_GCC))
     set(CMAKE_Fortran_FLAGS "-cpp")
-    enable_language( Fortran )
+    # enable_language( Fortran )
 endif ()
+remove_definitions(-Dpp_INTEL)
 add_definitions(-Dpp_FSEEK)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ".")
 
@@ -38,14 +43,21 @@ set(BUILD_STATIC_LIBS on force)
 set(CMAKE_BUILD_TYPE "Release")
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-incompatible-ms-struct")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-incompatible-ms-struct")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-incompatible-ms-struct")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-incompatible-ms-struct")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 
 # set(CMAKE_SYSTEM_NAME Generic)
 find_package(OpenGL REQUIRED)
 message( "OPENGL_LIBRARIES=${OPENGL_LIBRARIES}")
+# set(CMAKE_PREFIX_PATH "C:/msys64/mingw64/lib")
+# set(CMAKE_PREFIX_PATH "C:/msys64/mingw64/include")
+# set(GLUT_INCLUDE_DIR "C:/msys64/mingw64/include")
+set(GLUT_glut_LIBRARY_RELEASE "C:/msys64/mingw64/lib/freeglut_static")
+set(GLUT_glut_LIBRARY_DEBUG "C:/msys64/mingw64/lib/freeglut_static")
+set(GLUT_glut_LIBRARY "C:/msys64/mingw64/lib/freeglut_static")
+set(GLUT_INCLUDE_DIR "C:/msys64/mingw64/include")
 find_package(GLUT)
 if (NOT GLUT_FOUND)
     #TODO need to handle debug vs release
@@ -55,14 +67,15 @@ if (NOT GLUT_FOUND)
     set(GLUT_glut_LIBRARY_DEBUG "Source/freeglut-3.2.1/lib/freeglut_staticd")
     set(GLUT_glut_LIBRARY_RELEASE "Source/freeglut-3.2.1/lib/freeglut_static")
     # message( "GLUT_LIBRARIES=${GLUT_LIBRARIES}")
+    add_subdirectory(Source/freeglut-3.2.1)
 endif ()
 include_directories( ${OPENGL_INCLUDE_DIRS}  ${GLUT_INCLUDE_DIR} )
-add_subdirectory(Source/freeglut-3.2.1)
 add_subdirectory(Source/glui_v2_1_beta)
 add_subdirectory(Source/libgd)
-add_subdirectory(Source/glew-2.1.0/build/cmake)
+add_subdirectory(Source/glew-2.2.0/build/cmake)
 add_subdirectory(Source/zlib-1.2.11)
 add_subdirectory(Source/lua-5.3.1)
+add_subdirectory(Source/glfw)
 
 
 option(FREEGLUT_STATIC "Statically link freeglut" on)
@@ -75,7 +88,7 @@ add_executable(Smokeview Source/smokeview/main.c
     Source/shared/csphere.c Source/smokeview/colortimebar.c Source/shared/smv_endian.c Source/smokeview/camera.c Source/smokeview/IOgeometry.c Source/smokeview/IOwui.c
     Source/smokeview/IOobjects.c Source/smokeview/IOtour.c Source/smokeview/glui_display.cpp Source/smokeview/glui_tour.cpp Source/smokeview/getdatacolors.c Source/smokeview/smokeview.c
     Source/smokeview/output.c Source/smokeview/renderimage.c Source/smokeview/renderhtml.c Source/shared/isobox.c Source/smokeview/getdatabounds.c Source/smokeview/readsmv.c Source/smokeview/scontour2d.c
-    Source/smokeview/glui_smoke.cpp Source/smokeview/glui_clip.cpp Source/smokeview/glui_stereo.cpp Source/smokeview/glui_geometry.cpp Source/smokeview/glui_motion.cpp
+    Source/smokeview/glui_smoke.cpp Source/smokeview/glui_clip.cpp Source/smokeview/glui_stereo.cpp Source/smokeview/glui_geometry.cpp Source/smokeview/glui_motion.cpp Source/smokeview/dialog_motion.c
     Source/smokeview/glui_bounds.cpp Source/shared/dmalloc.c Source/shared/interp.c Source/shared/assert.c
     Source/shared/compress.c Source/smokeview/IOvolsmoke.c Source/smokeview/IOsmoke.c Source/smokeview/IOplot3d.c Source/smokeview/IOslice.c Source/smokeview/IOboundary.c
     Source/smokeview/IOpart.c Source/smokeview/IOzone.c Source/smokeview/IOiso.c Source/smokeview/callbacks.c Source/smokeview/drawGeometry.c
@@ -84,6 +97,10 @@ add_executable(Smokeview Source/smokeview/main.c
     Source/smokeview/smv_geometry.c Source/smokeview/showscene.c Source/smokeview/infoheader.c  Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
     # Source/smokeview/fdsmodules.f90 Source/smokeview/gsmv.f90 Source/smokeview/getdata.f90
 )
+if (NOT MSVC)
+    target_compile_options(Smokeview PRIVATE -Wno-incompatible-ms-struct -Wno-deprecated-declarations)
+endif ()
+
 option(LUA "Include lua scripting" on)
 if (LUA)
     add_definitions(-Dpp_LUA)
@@ -106,6 +123,8 @@ target_link_libraries(Smokeview
     liblua
     zlibstatic
     smv_fortw
+    glfw3
+    libui
 )
 if (WIN32)
     target_link_libraries(Smokeview libgd_static)
@@ -120,7 +139,9 @@ target_include_directories(Smokeview PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/Source/zlib-1.2.11
     freeglut-3.2.1/include
     Source/libgd/src
-    Source/glew-2.1.0/include/GL
+    Source/glew-2.2.0/include/GL
     Source/glui_v2_1_beta
     Source/lua-5.3.1/src
+    Source/glfw/include
+    include
 )
