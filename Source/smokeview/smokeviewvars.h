@@ -19,11 +19,14 @@
 #endif
 #include "smokeheaders.h"
 #include "threader.h"
+#include "gui.h"
 
 #ifdef pp_OSX
 SVEXTERN int SVDECL(monitor_screen_height, -1);
 #endif
 SVEXTERN int SVDECL(rollout_count, 0);
+
+SVEXTERN Gui smv_gui;
 
 SVEXTERN int SVDECL(glui_defined, 0);
 SVEXTERN int SVDECL(update_times,0);

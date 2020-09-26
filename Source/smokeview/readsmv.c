@@ -11474,7 +11474,7 @@ int ReadIni2(char *inifile, int localfile){
           scrWidth = glutGet(GLUT_SCREEN_WIDTH);
         }
         if(scrWidth != screenWidth){
-          SetScreenSize(&scrWidth, NULL);
+          SetWindowSize(&scrWidth, NULL);
           screenWidthINI = scrWidth;
           update_screensize = 1;
         }
@@ -11489,7 +11489,7 @@ int ReadIni2(char *inifile, int localfile){
           scrHeight = glutGet(GLUT_SCREEN_HEIGHT);
         }
         if(scrHeight != screenHeight){
-          SetScreenSize(NULL, &scrHeight);
+          SetWindowSize(NULL, &scrHeight);
           screenHeightINI = scrHeight;
           update_screensize = 1;
         }

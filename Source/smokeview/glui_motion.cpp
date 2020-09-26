@@ -289,9 +289,9 @@ extern "C" void ShrinkDialogs(void){
 
 void InsertRollout(GLUI_Rollout *rollout, GLUI *dialog){
   rolloutlistdata *thisrollout, *prev, *next;
-  
+
   NewMemory((void **)&thisrollout,sizeof(rolloutlistdata));
-  
+
   prev = &first_rollout;
   next = prev->next;
 
@@ -1910,12 +1910,12 @@ extern "C" void SceneMotionCB(int var){
       if(windowsize_pointer>=2){
         SPINNER_window_width->set_int_val(glui_screenWidth);
         SPINNER_window_height->set_int_val(glui_screenHeight);
-        SetScreenSize(&glui_screenWidth,&glui_screenHeight);
+        // SetScreenSize(&glui_screenWidth,&glui_screenHeight);
         ResizeWindow(screenWidth,screenHeight);
       }
       {
         int width_low, height_low, width_high, height_high;
- 
+
         GetRenderResolution(&width_low, &height_low, &width_high, &height_high);
         UpdateRenderRadioButtons(width_low, height_low, width_high, height_high);
       }
@@ -1924,7 +1924,7 @@ extern "C" void SceneMotionCB(int var){
       SnapScene();
       break;
     case WINDOW_RESIZE:
-      SetScreenSize(&glui_screenWidth,&glui_screenHeight);
+      // SetScreenSize(&glui_screenWidth,&glui_screenHeight);
       UpdateWindowSizeList();
       ResizeWindow(screenWidth,screenHeight);
       break;
@@ -2337,7 +2337,7 @@ void RenderCB(int var){
     case RENDER_MULTIPLIER:
       {
         int width_low, height_low, width_high, height_high;
- 
+
         GetRenderResolution(&width_low, &height_low, &width_high, &height_high);
         UpdateRenderRadioButtons(width_low, height_low, width_high, height_high);
       }
@@ -2375,7 +2375,7 @@ void RenderCB(int var){
       RenderMenu(render_size_index);
       {
         int width_low, height_low, width_high, height_high;
- 
+
         GetRenderResolution(&width_low, &height_low, &width_high, &height_high);
         UpdateRenderRadioButtons(width_low, height_low, width_high, height_high);
       }
@@ -2398,7 +2398,7 @@ void RenderCB(int var){
       }
       {
         int width_low, height_low, width_high, height_high;
- 
+
         GetRenderResolution(&width_low, &height_low, &width_high, &height_high);
         UpdateRenderRadioButtons(width_low, height_low, width_high, height_high);
       }

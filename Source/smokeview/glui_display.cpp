@@ -1215,7 +1215,7 @@ extern "C" void LabelsCB(int var){
     updatefacelists=1;
     updatehiddenfaces=1;
     UpdateHiddenFaces();
-    glutPostRedisplay();
+    // glutPostRedisplay();
     break;
 #ifdef pp_BETA
   case LABELS_drawface:

@@ -1110,7 +1110,7 @@ void ReadTerrain(char *file, int ifile, int flag, int *errorcode){
   UpdateTimes();
   PrintMemoryInfo;
   IdleCB();
-  glutPostRedisplay();
+  // glutPostRedisplay();
 }
 
 /* ------------------ UpdateTerrain ------------------------ */

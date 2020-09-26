@@ -78,10 +78,10 @@ int ProgramSetupLua(lua_State *L, int argc, char **argv_sv) {
   return 0;
 }
 
-int lua_SetupGLUT(lua_State *L) {
+int lua_SetupGlfw(lua_State *L) {
   int argc = lua_tonumber(L, -2);
   char **argv_sv = lua_topointer(L, -1);
-  SetupGlut(argc,argv_sv);
+  SetupGlfw(argc,argv_sv);
   return 0;
 }
 
@@ -113,7 +113,7 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
 
   lua_pushnumber(L, argc);
   lua_pushlightuserdata(L, argv_sv);
-  lua_SetupGLUT(L);
+  lua_SetupGlfw(L);
   START_TIMER(startup_time);
   START_TIMER(read_time_elapsed);
   // Load information about smokeview into the lua interpreter.
@@ -5860,7 +5860,7 @@ int runSSFScript() {
   } else {
     printf("script completed\n");
     lua_close(L);
-    glutIdleFunc(NULL);
+    // glutIdleFunc(NULL);
   }
   return yieldOrOkSSF;
 }
@@ -5900,7 +5900,7 @@ int runLuaScript() {
   } else {
     printf("script completed\n");
     lua_close(L);
-    glutIdleFunc(NULL);
+    // glutIdleFunc(NULL);
   }
   return yieldOrOk;
 }

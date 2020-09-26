@@ -1181,7 +1181,7 @@ void toggle_timehms() {
 void set_units(int unitclass, int unit_index) {
   unitclasses[unitclass].unit_index=unit_index;
   updatemenu=1;
-  glutPostRedisplay();
+  // glutPostRedisplay();
 }
 
 void set_units_default() {
@@ -1190,13 +1190,13 @@ void set_units_default() {
       unitclasses[i].unit_index=0;
     }
   updatemenu=1;
-  glutPostRedisplay();
+  // glutPostRedisplay();
 }
 
 void set_unitclass_default(int unitclass) {
   unitclasses[unitclass].unit_index=0;
   updatemenu=1;
-  glutPostRedisplay();
+  // glutPostRedisplay();
 }
 
 // Show/Hide Geometry
@@ -1814,7 +1814,7 @@ void unloadslice(int value){
   int errorcode,i;
 
   updatemenu=1;
-  glutPostRedisplay();
+  // glutPostRedisplay();
   if(value>=0){
     ReadSlice("",value,UNLOAD,SET_SLICECOLOR,&errorcode);
   }
@@ -4190,13 +4190,13 @@ int show_smoke3d_showall() {
   int i;
 
   updatemenu=1;
-  glutPostRedisplay();
+  // glutPostRedisplay();
   plotstate=DYNAMIC_PLOTS;
   for(i=0;i<nsmoke3dinfo;i++){
     smoke3di = smoke3dinfo + i;
     if(smoke3di->loaded==1)smoke3di->display=1;
   }
-  glutPostRedisplay();
+  // glutPostRedisplay();
   UpdateShow();
   return 0;
 }
@@ -4206,7 +4206,7 @@ int show_smoke3d_hideall() {
   int i;
 
   updatemenu=1;
-  glutPostRedisplay();
+  // glutPostRedisplay();
   for(i=0;i<nsmoke3dinfo;i++){
     smoke3di = smoke3dinfo + i;
     if(smoke3di->loaded==1)smoke3di->display=0;
@@ -4219,7 +4219,7 @@ int show_slices_showall(){
   int i;
 
   updatemenu=1;
-  glutPostRedisplay();
+  // glutPostRedisplay();
   for(i=0;i<nsliceinfo;i++){
     sliceinfo[i].display=1;
   }
@@ -4230,7 +4230,7 @@ int show_slices_showall(){
   UpdateGlui();
   UpdateSliceListIndex(slicefilenum);
   UpdateShow();
-  glutPostRedisplay();
+  // glutPostRedisplay();
   return 0;
 }
 
@@ -4238,7 +4238,7 @@ int show_slices_hideall(){
   int i;
 
   updatemenu=1;
-  glutPostRedisplay();
+  // glutPostRedisplay();
   for(i=0;i<nsliceinfo;i++){
     sliceinfo[i].display=0;
   }

@@ -192,7 +192,7 @@ GLUI_Rollout *ROLLOUT_boundary_temp_threshold;
 GLUI_Rollout *ROLLOUT_boundary_duplicates;
 GLUI_Rollout *ROLLOUT_iso_settings;
 GLUI_Rollout *ROLLOUT_iso_bounds;
-GLUI_Rollout *ROLLOUT_iso_color; 
+GLUI_Rollout *ROLLOUT_iso_color;
 GLUI_Rollout *ROLLOUT_script = NULL;
 GLUI_Rollout *ROLLOUT_config = NULL;
 GLUI_Rollout *ROLLOUT_boundary_bound = NULL;
@@ -219,7 +219,7 @@ GLUI_Rollout *ROLLOUT_isosurface = NULL;
 GLUI_Rollout *ROLLOUT_boundary_settings = NULL;
 GLUI_Rollout *ROLLOUT_particle_settings=NULL;
 
-GLUI_Panel *PANEL_iso1 = NULL; 
+GLUI_Panel *PANEL_iso1 = NULL;
 GLUI_Panel *PANEL_iso2 = NULL;
 GLUI_Panel *PANEL_geomexp = NULL;
 GLUI_Panel *PANEL_slice_smoke = NULL;
@@ -2627,7 +2627,7 @@ extern "C" void Plot3DBoundCB(int var){
   case PLOTISO:
     visiso = 1 - visiso;
     HandleIso();
-    glutPostRedisplay();
+    // glutPostRedisplay();
     break;
   case PLOTISOTYPE:
     updatemenu=1;
@@ -2635,7 +2635,7 @@ extern "C" void Plot3DBoundCB(int var){
   case UPDATEPLOT:
     UpdateRGBColors(COLORBAR_INDEX_NONE);
     updatemenu=1;
-    glutPostRedisplay();
+    // glutPostRedisplay();
     break;
   case FILETYPEINDEX:
    p3min[list_p3_index_old]=p3min_temp;
@@ -2967,7 +2967,7 @@ extern "C" void IsoBoundCB(int var){
     }
     glui_iso_valmin=iso_valmin;
     EDIT_iso_valmin->set_float_val(glui_iso_valmin);
-    glutPostRedisplay();
+    // glutPostRedisplay();
     break;
   case ISO_SETVALMAX:
     switch (setisomax){
@@ -2989,15 +2989,15 @@ extern "C" void IsoBoundCB(int var){
     }
     glui_iso_valmax = iso_valmax;
     EDIT_iso_valmax->set_float_val(glui_iso_valmax);
-    glutPostRedisplay();
+    // glutPostRedisplay();
     break;
   case ISO_VALMIN:
     iso_valmin=glui_iso_valmin;
-    glutPostRedisplay();
+    // glutPostRedisplay();
     break;
   case ISO_VALMAX:
     iso_valmax=glui_iso_valmax;
-    glutPostRedisplay();
+    // glutPostRedisplay();
     break;
   default:
     ASSERT(FFALSE);

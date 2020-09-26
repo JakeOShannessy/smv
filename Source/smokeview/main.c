@@ -6,6 +6,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include GLUT_H
+#include "gui.h"
+#include <GLFW/glfw3.h>
 
 #include "string_util.h"
 #include "smokeviewvars.h"
@@ -802,11 +804,17 @@ int main(int argc, char **argv){
   have_ffplay = HaveProg("ffplay -version >/dev/null 2>/dev/null");
 #endif
   DisplayVersionInfo("Smokeview ");
-  SetupGlut(argc,argv_sv);
+  printf("Before SetupGlfw\n");
+  SetupGlfw(argc,argv_sv);
+  printf("After SetupGlfw\n");
+  SetupGui();
+
   START_TIMER(startup_time);
   START_TIMER(read_time_elapsed);
 
+  printf("Before SetupCase\n");
   return_code= SetupCase(argc,argv_sv);
+  printf("After SetupCase\n");
   if(return_code==0&&update_bounds==1)return_code=Update_Bounds();
   if(return_code!=0)return 1;
   if(convert_ini==1){
@@ -827,6 +835,12 @@ int main(int argc, char **argv){
 #endif
   PRINTF("\nStartup time: %.1f s\n", startup_time);
 
-  glutMainLoop();
+  // GUI main loop.
+  while (!glfwWindowShouldClose(smv_gui.window))
+  {
+      // Keep running
+      printf("running loop\n");
+  }
+
   return 0;
 }

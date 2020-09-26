@@ -75,7 +75,7 @@ extern "C" void UpdateShowRotationCenter2(void){
 void ClipCB(int var){
   int i;
 
-  glutPostRedisplay();
+  // glutPostRedisplay();
   switch(var){
   case CLIP_ROTATE:
     if(clip_rotate==0){

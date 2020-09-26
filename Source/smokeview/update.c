@@ -629,7 +629,7 @@ void UpdateShow(void){
     num_colorbars++;
   }
   if(ReadPlot3dFile==1&&num_colorbars==0)num_colorbars=1;
-  
+
   // note: animated iso-contours do not need a colorbar, so we don't test for isosurface files
 
   if ((showtime == 1 || showplot3d == 1) && (visColorbarVertical == 1|| visColorbarHorizontal == 1)) {
@@ -643,10 +643,10 @@ void UpdateShow(void){
 
   if(showtime2==1)showtime=1;
   if(plotstate==DYNAMIC_PLOTS&&stept==1){
-    if(use_graphics==1)glutIdleFunc(IdleCB);
+    // if(use_graphics==1)glutIdleFunc(IdleCB);
   }
   else{
-    if(use_graphics==1)glutIdleFunc(NULL);
+    // if(use_graphics==1)glutIdleFunc(NULL);
   }
 }
 

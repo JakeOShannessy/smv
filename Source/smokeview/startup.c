@@ -5,6 +5,9 @@
 #include <math.h>
 #include "glew.h"
 #include GLUT_H
+#include "GLFW/glfw3.h"
+#include "gui.h"
+#include "ui.h"
 
 #include "smokeviewvars.h"
 #include "infoheader.h"
@@ -12,6 +15,13 @@
 #ifdef pp_LUA
 #include "lua_api.h"
 #endif
+
+void glfw_error_callback(int error, const char* description)
+{
+    fprintf(stderr, "GLFW Error: %s\n", description);
+}
+
+
 
 /* ------------------ Init ------------------------ */
 
@@ -66,6 +76,7 @@ void InitMisc(void){
 
     strcpy(name_external,"external");
     InitCamera(camera_external,name_external);
+    printf("InitMisc progress\n");
     camera_external->view_id=EXTERNAL_LIST_ID;
   }
   if(camera_ini!=NULL&&camera_ini->defined==1){
@@ -75,8 +86,13 @@ void InitMisc(void){
     camera_external->zoom=zoom;
     CopyCamera(camera_current,camera_external);
   }
+  printf("camera_current->name: %s\n",camera_current->name);
+  printf("InitMisc progress2\n");
   strcpy(camera_label,camera_current->name);
+  printf("InitMisc progress2.5\n");
+  // fflush(stdout);
   UpdateCameraLabel();
+  printf("InitMisc progress3\n");
   {
     char name_internal[32];
     strcpy(name_internal,"internal");
@@ -89,6 +105,7 @@ void InitMisc(void){
   CopyCamera(camera_save,camera_current);
   CopyCamera(camera_last,camera_current);
 
+  printf("InitMisc progress3\n");
   InitCameraList();
   AddDefaultViews();
   CopyCamera(camera_external_save,camera_external);
@@ -230,6 +247,7 @@ int SetupCase(int argc, char **argv){
   SetUnitVis();
 
   CheckMemory;
+  printf("about to read ini\n");
   ReadIni(NULL);
   ReadBoundINI();
 
@@ -243,32 +261,33 @@ int SetupCase(int argc, char **argv){
 
   if(ntourinfo==0)SetupTour();
   InitRolloutList();
-  GluiColorbarSetup(mainwindow_id);
-  GluiMotionSetup(mainwindow_id);
-  GluiBoundsSetup(mainwindow_id);
-  GluiShooterSetup(mainwindow_id);
-  GluiGeometrySetup(mainwindow_id);
-  GluiClipSetup(mainwindow_id);
-  GluiWuiSetup(mainwindow_id);
-  GluiLabelsSetup(mainwindow_id);
-  GluiDeviceSetup(mainwindow_id);
-  GluiTourSetup(mainwindow_id);
-  GluiAlertSetup(mainwindow_id);
-  GluiStereoSetup(mainwindow_id);
-  Glui3dSmokeSetup(mainwindow_id);
+  // GluiColorbarSetup(mainwindow_id);
+  // GluiMotionSetup(mainwindow_id);
+  // GluiBoundsSetup(mainwindow_id);
+  // GluiShooterSetup(mainwindow_id);
+  // GluiGeometrySetup(mainwindow_id);
+  // GluiClipSetup(mainwindow_id);
+  // GluiWuiSetup(mainwindow_id);
+  // GluiLabelsSetup(mainwindow_id);
+  // GluiDeviceSetup(mainwindow_id);
+  // GluiTourSetup(mainwindow_id);
+  // GluiAlertSetup(mainwindow_id);
+  // GluiStereoSetup(mainwindow_id);
+  // Glui3dSmokeSetup(mainwindow_id);
 
   UpdateLights(light_position0, light_position1);
 
-  glutReshapeWindow(screenWidth,screenHeight);
+  // glutReshapeWindow(screenWidth,screenHeight);
 
-  glutSetWindow(mainwindow_id);
-  glutShowWindow();
-  glutSetWindowTitle(fdsprefix);
+  // glutSetWindow(mainwindow_id);
+  // glutShowWindow();
+  // glutSetWindowTitle(fdsprefix);
+  printf("ini file read\n");
   InitMisc();
-  GluiTrainerSetup(mainwindow_id);
-  glutDetachMenu(GLUT_RIGHT_BUTTON);
+  // GluiTrainerSetup(mainwindow_id);
+  // glutDetachMenu(GLUT_RIGHT_BUTTON);
   InitMenus(LOAD);
-  glutAttachMenu(GLUT_RIGHT_BUTTON);
+  // glutAttachMenu(GLUT_RIGHT_BUTTON);
   if(trainer_mode==1){
     ShowGluiTrainer();
     ShowGluiAlert();
@@ -279,9 +298,9 @@ int SetupCase(int argc, char **argv){
   return 0;
 }
 
-/* ------------------ SetupGlut ------------------------ */
+/* ------------------ SetupGlfw ------------------------ */
 
-void SetupGlut(int argc, char **argv){
+void SetupGlfw(int argc, char **argv){
   int i;
   char *smoketempdir;
   size_t lensmoketempdir;
@@ -355,8 +374,8 @@ void SetupGlut(int argc, char **argv){
 #endif
   if(use_graphics==1){
     PRINTF("\n");
-    PRINTF("%s\n",_("initializing Glut"));
-    glutInit(&argc, argv);
+    PRINTF("%s\n",_("initializing GLFW"));
+    if (!glfwInit()) exit(-1);
     PRINTF("%s\n",_("complete"));
   }
 #ifdef pp_OSX
@@ -367,25 +386,50 @@ void SetupGlut(int argc, char **argv){
 #ifdef _DEBUG
     PRINTF("%s",_("initializing Smokeview graphics window - "));
 #endif
-    glutInitWindowSize(screenWidth, screenHeight);
+
+
 #ifdef _DEBUG
     PRINTF("%s\n",_("initialized"));
 #endif
+#ifdef _DEBUG
+    PRINTF("%s\n",_("   creating window"));
+#endif
+    // Set some version requirements before window creation.
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    // Create the window and store its id in the global gui struct.
+    smv_gui.window = glfwCreateWindow(screenWidth, screenHeight, "Smokeview", NULL, NULL);
+    if (!smv_gui.window)
+    {
+      // Failure to create window is not a recoverable error, terminate
+      // immediately.
+      glfwTerminate();
+      exit(-1);
+    }
+    printf("window created\n");
+    smv_gui.motion_cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+    printf("Settin error callback\n");
+    glfwSetErrorCallback(glfw_error_callback);
 
-    max_screenWidth = glutGet(GLUT_SCREEN_WIDTH);
-    max_screenHeight = glutGet(GLUT_SCREEN_HEIGHT);
+#ifdef _DEBUG
+    PRINTF("%s\n",_("   window created"));
+#endif
+    // Get the window size in screen coordinates.
+    glfwGetWindowSize(smv_gui.window, &max_screenWidth, &max_screenHeight);
     if(trainer_mode==1){
       int TRAINER_WIDTH;
       int scrW, scrH;
 
       TRAINER_WIDTH=300;
-      scrW = glutGet(GLUT_SCREEN_WIDTH)-TRAINER_WIDTH;
-      scrH = glutGet(GLUT_SCREEN_HEIGHT)-50;
-      SetScreenSize(&scrW,&scrH);
+      scrW = max_screenWidth-TRAINER_WIDTH;
+      scrH = max_screenHeight-50;
+      SetWindowSize(&scrW,&scrH);
       max_screenWidth = screenWidth;
       max_screenHeight = screenHeight;
     }
+    printf("Before InitOpenGL\n");
     InitOpenGL();
+    printf("After InitOpenGL\n");
   }
 
   NewMemory((void **)&rgbptr,MAXRGB*sizeof(float *));
@@ -405,6 +449,35 @@ void SetupGlut(int argc, char **argv){
   }
   rgb_plot3d_contour[nrgb-2]=&rgb_full[0][0];
   rgb_plot3d_contour[nrgb-1]=&rgb_full[255][0];
+  printf("End of SetupGlfw\n");
+}
+
+int SetupGui(Gui *smv_gui) {
+  uiInitOptions options;
+  const char *err;
+  uiTab *tab;
+
+  memset(&options, 0, sizeof (uiInitOptions));
+  err = uiInit(&options);
+  if (err != NULL) {
+    fprintf(stderr, "error initializing libui: %s", err);
+    uiFreeInitError(err);
+    return 1;
+  }
+  DialogMotionSetup(smv_gui);
+  // GluiColorbarSetup(mainwindow_id);
+  // GluiMotionSetup(mainwindow_id);
+  // GluiBoundsSetup(mainwindow_id);
+  // GluiShooterSetup(mainwindow_id);
+  // GluiGeometrySetup(mainwindow_id);
+  // GluiClipSetup(mainwindow_id);
+  // GluiWuiSetup(mainwindow_id);
+  // GluiLabelsSetup(mainwindow_id);
+  // GluiDeviceSetup(mainwindow_id);
+  // GluiTourSetup(mainwindow_id);
+  // GluiAlertSetup(mainwindow_id);
+  // GluiStereoSetup(mainwindow_id);
+  // Glui3dSmokeSetup(mainwindow_id);
 }
 
 /* ------------------ GetOpenGLVersion ------------------------ */
@@ -441,46 +514,44 @@ void InitOpenGL(void){
   int err;
 
   PRINTF("%s\n",_("initializing OpenGL"));
+  // TODO:
+//   type = GLUT_RGB|GLUT_DEPTH;
+//   if(buffertype==GLUT_DOUBLE){
+//     type |= GLUT_DOUBLE;
+//   }
+//   else{
+//     type |= GLUT_SINGLE;
+//   }
 
-  type = GLUT_RGB|GLUT_DEPTH;
-  if(buffertype==GLUT_DOUBLE){
-    type |= GLUT_DOUBLE;
-  }
-  else{
-    type |= GLUT_SINGLE;
-  }
+// //  glutInitDisplayMode(GLUT_STEREO);
+//   if(stereoactive==1){
+//     if(glutGet(GLUT_DISPLAY_MODE_POSSIBLE)==1){
+//       videoSTEREO=1;
+//       type |= GLUT_STEREO;
+//     }
+//     else{
+//       videoSTEREO=0;
+//       fprintf(stderr,"*** Error: video hardware does not support stereo\n");
+//     }
+//   }
 
-//  glutInitDisplayMode(GLUT_STEREO);
-  if(stereoactive==1){
-    if(glutGet(GLUT_DISPLAY_MODE_POSSIBLE)==1){
-      videoSTEREO=1;
-      type |= GLUT_STEREO;
-    }
-    else{
-      videoSTEREO=0;
-      fprintf(stderr,"*** Error: video hardware does not support stereo\n");
-    }
-  }
+// TODO: shouldn't be necessary with glfw
+// #ifdef _DEBUG
+//   PRINTF("%s",_("   Initializing Glut display mode - "));
+// #endif
+// #ifdef pp_OSXGLUT32
+//   type|=GLUT_3_2_CORE_PROFILE;
+// #endif
 
-#ifdef _DEBUG
-  PRINTF("%s",_("   Initializing Glut display mode - "));
-#endif
-#ifdef pp_OSXGLUT32
-  type|=GLUT_3_2_CORE_PROFILE;
-#endif
-  glutInitDisplayMode(type);
-#ifdef _DEBUG
-  PRINTF("%s\n",_("initialized"));
-#endif
+//   glutInitDisplayMode(type);
+// #ifdef _DEBUG
+//   PRINTF("%s\n",_("initialized"));
+// #endif
+
+  // Initialize OpenGL context.
+  glfwMakeContextCurrent(smv_gui.window);
 
   CheckMemory;
-#ifdef _DEBUG
-  PRINTF("%s\n",_("   creating window"));
-#endif
-  mainwindow_id = glutCreateWindow("");
-#ifdef _DEBUG
-  PRINTF("%s\n",_("   window created"));
-#endif
 
 #ifdef _DEBUG
   PRINTF("%s",_("   Initializing callbacks - "));
@@ -490,16 +561,21 @@ void InitOpenGL(void){
     glGetIntegerv(GL_VIEWPORT, m);
     printf("%i %i %i %i\n", m[0], m[1], m[2], m[3]);
   }
-  glutSpecialUpFunc(SpecialKeyboardUpCB);
-  glutKeyboardUpFunc(KeyboardUpCB);
-  glutKeyboardFunc(KeyboardCB);
-  glutMouseFunc(MouseCB);
-  glutSpecialFunc(SpecialKeyboardCB);
-  glutMotionFunc(MouseDragCB);
-  glutReshapeFunc(ReshapeCB);
-  glutDisplayFunc(DisplayCB);
-  glutVisibilityFunc(NULL);
-  glutMenuStatusFunc(MenuStatus_CB);
+  glfwSetKeyCallback(smv_gui.window, KeyboardCBGlfw);
+
+  // glutSpecialUpFunc(SpecialKeyboardUpCB);
+  // glutKeyboardUpFunc(KeyboardUpCB);
+  // glutKeyboardFunc(KeyboardCB);
+  glfwSetCursorPosCallback(smv_gui.window, MouseCB);
+  glfwSetMouseButtonCallback(smv_gui.window,MouseButtonCB);
+  // glutMouseFunc(MouseCB);
+  // glutSpecialFunc(SpecialKeyboardCB);
+  // glutMotionFunc(MouseDragCB);
+  // glutReshapeFunc(ReshapeCB);
+  // glutDisplayFunc(DisplayCB);
+  // glutVisibilityFunc(NULL);
+  // glutMenuStatusFunc(MenuStatus_CB);
+//  glfwSetWindowCloseCallback
 #ifdef _DEBUG
   PRINTF("%s\n",_("initialized"));
 #endif

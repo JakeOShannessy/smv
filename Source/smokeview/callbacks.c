@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include GLUT_H
+#include "GLFW/glfw3.h"
+#include "gui.h"
 
 #include "update.h"
 #include "smokeviewvars.h"
@@ -869,33 +871,20 @@ void UpdateMouseInfo(int flag, int xm, int ym){
 
 #define DELTA_TIME 0.25
 
-void MouseCB(int button, int state, int xm, int ym){
+void MouseButtonCB(GLFWwindow *window, int button, int action, int mods){
   float *eye_xyz;
-
-  {
-    float delta_time;
-
-    delta_time = glutGet(GLUT_ELAPSED_TIME)/1000.0 - timer_reshape;
-    if(delta_time<DELTA_TIME)return;
-  }
+  double xpos, ypos;
+  glfwGetCursorPos(window, &xpos, &ypos);
 
   if(autofreeze_volsmoke==ON&&nvolsmoke_loaded>0){
-    if(state==GLUT_DOWN)UpdateFreeze(ON);
-    if(state==GLUT_UP)UpdateFreeze(OFF);
+    if(action==GLFW_PRESS)UpdateFreeze(ON);
+    if(action==GLFW_RELEASE)UpdateFreeze(OFF);
   }
 #ifdef pp_GLUTGET
   if(state == GLUT_UP){
     alt_ctrl_key_state = KEY_NONE;
   }
 #endif
-  if(rotation_type==ROTATION_3AXIS){
-    if(state==GLUT_DOWN){
-      UpdateMouseInfo(MOUSE_DOWN,xm,ym);
-    }
-    else if(state==GLUT_UP){
-      UpdateMouseInfo(MOUSE_UP,xm,ym);
-    }
-  }
 
   if(trainer_mode==1){
     SetGLuiViewListManual();
@@ -907,9 +896,9 @@ void MouseCB(int button, int state, int xm, int ym){
   }
   glui_move_mode=-1;
   move_gslice=0;
-  glutPostRedisplay();
+  // glutPostRedisplay();
 
-  if(state==GLUT_UP){
+  if(action==GLFW_RELEASE){
     tour_drag=0;
     mouse_down=0;
     show_gslice_normal_keyboard=0;
@@ -920,7 +909,7 @@ void MouseCB(int button, int state, int xm, int ym){
     timebar_drag=0;
     colorbar_drag=0;
     colorbar_splitdrag=0;
-    GLUTSETCURSOR(GLUT_CURSOR_LEFT_ARROW);
+    glfwSetCursor(window, NULL);
     UpdateTrainerMoves();
     return;
   }
@@ -942,27 +931,27 @@ void MouseCB(int button, int state, int xm, int ym){
     }
     last_mouse_time=this_mouse_time;
   }
-  if(button==GLUT_LEFT_BUTTON||button==GLUT_MIDDLE_BUTTON||button==GLUT_RIGHT_BUTTON){
-    GLUTSETCURSOR(GLUT_CURSOR_INFO);
+  if(button==GLFW_MOUSE_BUTTON_LEFT||button==GLFW_MOUSE_BUTTON_MIDDLE||button==GLFW_MOUSE_BUTTON_RIGHT){
+    // We will be moving the view, so set the motion cursor style.
+    glfwSetCursor(window, smv_gui.motion_cursor);
 
-    /* edit blockages */
-
-    if(button==GLUT_LEFT_BUTTON){
+    if(button==GLFW_MOUSE_BUTTON_LEFT){
       if(blockageSelect == 1){
+        // Blockage selection mode.
         GetGeomDialogState();
-        if(structured_isopen == 1 && unstructured_isopen == 0)MouseEditBlockage(button, state, xm, ym);
+        if(structured_isopen == 1 && unstructured_isopen == 0)MouseEditBlockage(button, action, xpos, ypos);
       }
-      if(edittour==1&&blockageSelect==0)MouseEditTour(button,state,xm,ym);
-      if(viscolorbarpath==1)MouseEditColorbar(button, state, xm, ym);
-      if(select_avatar==1)MouseSelectAvatar(button,state,xm,ym);
-      if(select_device==1)MouseSelectDevice(button,state,xm,ym);
+      if(edittour==1&&blockageSelect==0)MouseEditTour(button,action, xpos, ypos);
+      if(viscolorbarpath==1)MouseEditColorbar(button, action, xpos, ypos);
+      if(select_avatar==1)MouseSelectAvatar(button,action, xpos, ypos);
+      if(select_device==1)MouseSelectDevice(button,action, xpos, ypos);
     }
-    glutPostRedisplay();
+    // glutPostRedisplay();
     if( showtime==1 || showplot3d==1){
-      if(ColorbarClick(xm,ym)==1)return;
+      if(ColorbarClick(xpos, ypos)==1)return;
     }
     if(visTimebar==1&&showtime==1){
-      if(TimebarClick(xm,ym)==1)return;
+      if(TimebarClick(xpos, ypos)==1)return;
     }
     CopyCamera(camera_last,camera_current);
     if(canrestorelastview==0){
@@ -970,48 +959,124 @@ void MouseCB(int button, int state, int xm, int ym){
       canrestorelastview=1;
       EnableResetSavedView();
     }
-    switch(button){
-      case GLUT_MIDDLE_BUTTON:
-        state=GLUT_ACTIVE_CTRL;
-        break;
-      case GLUT_RIGHT_BUTTON:
-        state=GLUT_ACTIVE_ALT;
-        break;
-      default:
-        state=GLUTGETMODIFIERS();
-        break;
+    // Use the button and modifier keys to determine what type of motion to
+    // employ.
+    if (action == GLFW_PRESS) {
+    if ((mods & GLFW_MOD_CONTROL) || (button = GLFW_MOUSE_BUTTON_MIDDLE)) {
+      // Using the middle mouse button is the same as CTRL+Left
+        smv_gui.cursor_motion_mode = ZoomLeftRight;
+      } else if ((mods & GLFW_MOD_ALT) || (button = GLFW_MOUSE_BUTTON_RIGHT) ) {
+        // Using the right mouse button is the same as CTRL+Alt, although this
+        // shouldn't really be possible due to the context menu.
+        smv_gui.cursor_motion_mode = Vertical;
+      } else if (mods & GLFW_MOD_SHIFT) {
+        smv_gui.cursor_motion_mode = ZoomLeftRightSpecial;
+      } else {
+        smv_gui.cursor_motion_mode = Rotate;
+      }
+      mouse_down_xy0[0]=xpos;
+      mouse_down_xy0[1]=ypos;
+    } else if (action == GLFW_RELEASE) {
+      smv_gui.cursor_motion_mode = NoMotion;
     }
-    switch(state){
-      case GLUT_ACTIVE_CTRL:
-        key_state = KEY_CTRL;
-        eye_xyz0[0]=eye_xyz[0];
-        eye_xyz0[1]=eye_xyz[1];
-        touring=0;
-        break;
-      case GLUT_ACTIVE_ALT:
-        key_state = KEY_ALT;
-        eye_xyz0[0]=eye_xyz[0];
-        eye_xyz0[2]=eye_xyz[2];
-        touring=0;
-        break;
-      case GLUT_ACTIVE_SHIFT:
-        key_state = KEY_SHIFT;
-        eye_xyz0[0] = eye_xyz[0];
-        eye_xyz0[1] = eye_xyz[1];
-        aperture_glui0 = aperture_glui;
-        touring=0;
-        break;
-      default:
-        key_state = KEY_NONE;
-        start_xyz0[0]=xm;
-        start_xyz0[1]=ym;
-        touring=0;
-        break;
-    }
-    mouse_down_xy0[0]=xm;
-    mouse_down_xy0[1]=ym;
   }
-  glutPostRedisplay();
+  // glutPostRedisplay();
+  if(blockageSelect == 1){
+    GetGeomDialogState();
+    if(structured_isopen == 1 && unstructured_isopen == 0)DisplayCB();
+  }
+}
+
+// This callback defines what happens when the cursor is moved across the
+// screen.
+void MouseCB(GLFWwindow* window, double xpos, double ypos) {
+  int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+  // state is one of:
+  //   * GLFW_PRESS
+  //   * GLFW_RELEASE
+  float *eye_xyz;
+
+  {
+    // This limits the rate at which the callback is executed.
+    float delta_time;
+
+    delta_time = glutGet(GLUT_ELAPSED_TIME)/1000.0 - timer_reshape;
+    if(delta_time<DELTA_TIME)return;
+  }
+  if(rotation_type==ROTATION_3AXIS){
+    if(state==GLFW_PRESS){
+      UpdateMouseInfo(MOUSE_DOWN,xpos,ypos);
+    }
+    else if(state==GLFW_RELEASE){
+      UpdateMouseInfo(MOUSE_UP,xpos,ypos);
+    }
+  }
+
+  if(trainer_mode==1){
+    SetGLuiViewListManual();
+  }
+  eye_xyz = camera_current->eye;
+  if(selected_view!=-999){
+    selected_view=-999;
+    updatemenu=1;
+  }
+  glui_move_mode=-1;
+  move_gslice=0;
+  // glutPostRedisplay();
+
+
+  mouse_down=1;
+
+  // check for double click for translating/rotating 3D slice plane
+
+  if(vis_gslice_data==1||show_gslice_triangles==1||show_gslice_triangulation==1){
+    START_TIMER(this_mouse_time);
+    if(this_mouse_time-last_mouse_time<0.5){
+      gslice_xyz0[0]=gslice_xyz[0];
+      gslice_xyz0[1]=gslice_xyz[1];
+      gslice_xyz0[2]=gslice_xyz[2];
+      gslice_normal_azelev0[0]=gslice_normal_azelev[0];
+      gslice_normal_azelev0[1]=gslice_normal_azelev[1];
+      move_gslice=1;
+      show_gslice_normal_keyboard=1;
+    }
+    last_mouse_time=this_mouse_time;
+  }
+  if(smv_gui.cursor_motion_mode != NoMotion) {
+
+    CopyCamera(camera_last,camera_current);
+    if(canrestorelastview==0){
+      updatemenu=1;
+      canrestorelastview=1;
+      EnableResetSavedView();
+    }
+    switch (smv_gui.cursor_motion_mode)
+    {
+    case Rotate:
+      start_xyz0[0]=xpos;
+      start_xyz0[1]=ypos;
+      touring=0;
+      break;
+    case ZoomLeftRight:
+      start_xyz0[0]=xpos;
+      start_xyz0[1]=ypos;
+      touring=0;
+      break;
+    case ZoomLeftRightSpecial:
+      // TODO: why is this special, what does the aperture line do?
+      eye_xyz0[0] = eye_xyz[0];
+      eye_xyz0[1] = eye_xyz[1];
+      aperture_glui0 = aperture_glui;
+      touring=0;
+      break;
+    case NoMotion:
+    default:
+      break;
+    }
+    mouse_down_xy0[0]=xpos;
+    mouse_down_xy0[1]=ypos;
+  }
+  // glutPostRedisplay();
   if(blockageSelect == 1){
     GetGeomDialogState();
     if(structured_isopen == 1 && unstructured_isopen == 0)DisplayCB();
@@ -1389,7 +1454,7 @@ void MouseDragCB(int xm, int ym){
   }
 #endif
 
-  glutPostRedisplay();
+  // glutPostRedisplay();
 
   if( colorbar_drag==1&&(showtime==1 || showplot3d==1)){
     ColorbarDrag(xm,ym);
@@ -1487,7 +1552,7 @@ void Keyboard(unsigned char key, int flag){
   else if(flag==FROM_SMOKEVIEW_ALT){
     keystate=GLUT_ACTIVE_ALT;
   }
-  glutPostRedisplay();
+  // glutPostRedisplay();
   key2 = (char)key;
 
   switch(key2){
@@ -1659,7 +1724,7 @@ void Keyboard(unsigned char key, int flag){
       updatehiddenfaces=1;
       UpdateHiddenFaces();
       UpdateShowHideButtons();
-      glutPostRedisplay();
+      // glutPostRedisplay();
       break;
     case 'g':
       switch(keystate){
@@ -1887,7 +1952,7 @@ void Keyboard(unsigned char key, int flag){
           visFrame = 1;
           updatefacelists = 1;
           updatemenu = 1;
-          glutPostRedisplay();
+          // glutPostRedisplay();
         }
         if(highlight_flag>2&&noutlineinfo>0)highlight_flag=0;
         if(highlight_flag>1&&noutlineinfo==0)highlight_flag=0;
@@ -2394,7 +2459,7 @@ void Keyboard(unsigned char key, int flag){
       plotiso[plotn-1] += FlowDir;
       UpdateSurface();
     }
-    glutPostRedisplay();
+    // glutPostRedisplay();
   }
   if(iplot_state!=0)UpdatePlotSlice(iplot_state);
 }
@@ -2403,9 +2468,933 @@ void Keyboard(unsigned char key, int flag){
 
 void KeyboardCB(unsigned char key, int x, int y){
   Keyboard(key,FROM_CALLBACK);
-  glutPostRedisplay();
+  // glutPostRedisplay();
   updatemenu=1;
 }
+
+void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mods, int flag)
+{
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+      glfwSetWindowShouldClose(window, GLFW_TRUE);
+  char key2;
+  int skip2;
+  meshdata *gbsave,*gbi;
+  int i;
+  int keystate=0;
+
+  if(flag==FROM_CALLBACK){
+    // keystate = (GLUT_ACTIVE_ALT|GLUT_ACTIVE_CTRL)&GLUTGETMODIFIERS();
+    if(scriptoutstream!=NULL&&key!='t'&&key!='r'&&key!='R'&&key!=' '&&key!='-'){
+      fprintf(scriptoutstream,"KEYBOARD\n");
+      if (mods & GLFW_MOD_ALT) {
+        fprintf(scriptoutstream," ALT");
+      }
+      if (mods & GLFW_MOD_CONTROL) {
+        fprintf(scriptoutstream," ALT");
+      }
+      fprintf(scriptoutstream," %c\n",key);
+    }
+  }
+  else if(flag==FROM_SCRIPT){
+    keystate=script_keystate;
+  }
+  else if(flag==FROM_SMOKEVIEW_ALT){
+    keystate=GLUT_ACTIVE_ALT;
+  }
+
+  switch(key){
+    case GLFW_KEY_A:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'A'
+        axislabels_smooth=1-axislabels_smooth;
+        UpdateAxisLabelsSmooth();
+      } else {
+        // 'a'
+        if(showtour_dialog==1&&edittour==1){
+          AddDeleteKeyframe(ADD_KEYFRAME);
+          break;
+        }
+        if(rotation_type==EYE_CENTERED){
+          HandleMoveKeys(256+key2);
+          break;
+        }
+        if((visVector==1&&ReadPlot3dFile==1)||showvslice==1||isZoneFireModel==1){
+        }
+        else{
+          break;
+        }
+        if(isZoneFireModel==1){
+          if(keystate==GLUT_ACTIVE_ALT){
+            zone_ventfactor /= 1.5;
+          }
+          else{
+            zone_ventfactor *= 1.5;
+          }
+          PRINTF("zone vent factor: %f\n",zone_ventfactor);
+        }
+        else{
+          if(keystate==GLUT_ACTIVE_ALT){
+            vecfactor/=1.5;
+          }
+          else{
+            vecfactor*=1.5;
+          }
+          PRINTF("vector length factor: %f\n",vecfactor);
+          UpdateGluiVecFactor();
+        }
+        if(visVector==1&&ReadPlot3dFile==1){
+          gbsave=current_mesh;
+          for(i=0;i<nmeshes;i++){
+            gbi = meshinfo + i;
+            if(gbi->plot3dfilenum==-1)continue;
+            UpdateCurrentMesh(gbi);
+            UpdatePlotSlice(XDIR);
+            UpdatePlotSlice(YDIR);
+            UpdatePlotSlice(ZDIR);
+          }
+          UpdateCurrentMesh(gbsave);
+        }
+      }
+      break;
+    case GLFW_KEY_B:
+      if (mods & GLFW_MOD_ALT) {
+        DialogMenu(DIALOG_BOUNDS); // clip dialog
+      } else {
+        show_boundaryfiles = 1-show_boundaryfiles;
+        if(show_boundaryfiles==1){
+          ShowBoundaryMenu(SHOWALL_BOUNDARY);
+          if(key2=='B'){
+            VentMenu(HIDE_ALL_VENTS);
+            BlockageMenu(visBLOCKHide);
+          }
+          }
+        else{
+          ShowBoundaryMenu(HIDEALL_BOUNDARY);
+          if(key2=='B'){
+            VentMenu(SHOW_ALL_VENTS);
+            BlockageMenu(visBLOCKAsInput);
+          }
+        }
+      }
+      break;
+    case GLFW_KEY_C:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'C'
+        if (mods & GLFW_MOD_ALT) {
+            DialogMenu(DIALOG_COLORBAR); // colorbar dialog
+        } else {
+            if(nrooms>0){
+              zone_highlight = 1 - zone_highlight;
+              if(zone_highlight==1){
+                PRINTF("room %i\n",zone_highlight_room+1);
+              }
+            }
+        }
+      } else {
+        // 'c'
+        if (mods & GLFW_MOD_ALT) {
+            DialogMenu(DIALOG_CLIP); // clip dialog
+        } else {
+            if(nrooms>0){
+              zone_highlight_room++;
+              if(zone_highlight_room>=nrooms)zone_highlight_room=0;
+              PRINTF("room %i\n",zone_highlight_room+1);
+            }
+            else{
+              contour_type++;
+              if(contour_type>2)contour_type=0;
+              UpdatePlot3dDisplay();
+              UpdateRGBColors(COLORBAR_INDEX_NONE);
+            }
+        }
+      }
+      break;
+    case GLFW_KEY_D:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'D'
+        if(showtour_dialog==1&&edittour==1){
+          AddDeleteKeyframe(DELETE_KEYFRAME);
+        } else {
+          if (mods & GLUT_ACTIVE_ALT) {
+            DialogMenu(DIALOG_DISPLAY); // display dialog
+          } else {
+            if(rotation_type==EYE_CENTERED){
+              HandleMoveKeys(256+key2);
+            }
+            else{
+              demo_mode++;
+              if(demo_mode>5)demo_mode=0;
+            }
+
+          }
+        }
+      } else {
+      // 'd'
+#ifdef pp_GLUTGET
+      alt_ctrl_key_state = KEY_CTRL;
+#endif
+    }
+    break;
+    case GLFW_KEY_E:
+      if (mods & GLFW_MOD_ALT) {
+        DialogMenu(DIALOG_GEOMETRY); // edit geometry
+      } else {
+        rotation_type++;
+        if(rotation_type>3)rotation_type=0;
+        RotationTypeCB(rotation_type);
+        UpdateRotationType(rotation_type);
+        HandleRotationType(ROTATION_2AXIS);
+      }
+      break;
+    case GLFW_KEY_F:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'F'
+        hide_overlaps=1-hide_overlaps;
+        updatehiddenfaces=1;
+        UpdateHiddenFaces();
+        UpdateShowHideButtons();
+        // glutPostRedisplay();
+      } else {
+#ifdef pp_GLUTGET
+        // TODO: this certainly isn't updated for GLFW
+        alt_ctrl_key_state = KEY_ALT;
+#endif
+      }
+      break;
+    case GLFW_KEY_G:
+      if (mods & GLFW_MOD_SHIFT) {
+#ifdef pp_GPU
+        // 'G'
+        if(gpuactive==1){
+          usegpu=1-usegpu;
+        }
+        else{
+          usegpu=0;
+        }
+        if(nsmoke3dinfo>0){
+          UpdateSmoke3dFlags();
+        }
+        PrintGPUCullState();
+        return;
+#endif
+      } else {
+        // 'g'
+        if (mods & GLFW_MOD_ALT) {
+          DialogMenu(DIALOG_VIEW);
+        } else {
+          if(ntotal_blockages>0||isZoneFireModel==0||(isZoneFireModel==1&&ntrnx>0)){
+            switch(visGrid){
+              case noGridnoProbe:
+                visGrid=GridnoProbe;
+                break;
+              case GridnoProbe:
+                visGrid=GridProbe;
+                break;
+              case GridProbe:
+                visGrid=noGridProbe;
+                break;
+              case noGridProbe:
+                visGrid=noGridnoProbe;
+                break;
+              default:
+                visGrid=noGridnoProbe;
+                break;
+            }
+            if(visGrid==GridProbe||visGrid==noGridProbe)visgridloc=1;
+          }
+        }
+      }
+      break;
+    case GLFW_KEY_H:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'H'
+        int nslice_loaded_local=0, nvslice_loaded_local=0;
+
+        for(i=0;i<nsliceinfo;i++){
+          slicedata *sd;
+
+          sd = sliceinfo + i;
+          if(sd->loaded==1)nslice_loaded_local++;
+        }
+        for(i=0;i<nvsliceinfo;i++){
+          vslicedata *vd;
+
+          vd = vsliceinfo + i;
+          if(vd->loaded==1)nvslice_loaded_local++;
+        }
+        stept=1;
+        if(nvslice_loaded_local>0){
+          if(showall_slices==0){
+            ShowVSliceMenu(SHOW_ALL);
+            force_redisplay=1;
+          }
+          else{
+            itime_save=itimes;
+            ShowVSliceMenu(HIDE_ALL);
+          }
+        }
+        if(nvslice_loaded_local==0&&nslice_loaded_local>0){
+          if(showall_slices==0){
+            ShowHideSliceMenu(SHOW_ALL);
+            force_redisplay=1;
+          }
+          else{
+            itime_save=itimes;
+            ShowHideSliceMenu(HIDE_ALL);
+          }
+        }
+      } else {
+        // 'h'
+        switch(keystate){
+        case GLUT_ACTIVE_ALT:
+          if(titlesafe_offset==0){
+            titlesafe_offset=titlesafe_offsetBASE;
+          }
+          else{
+            titlesafe_offset=0;
+          }
+          break;
+        case GLUT_ACTIVE_CTRL:
+        default:
+          if(histogram_show_graph == 1 || histogram_show_numbers == 1){
+            histogram_show_graph = 0;
+            histogram_show_numbers = 0;
+          }
+          else{
+            histogram_show_graph = 1;
+            histogram_show_numbers = 1;
+            visColorbarVertical = 1;
+            update_slice_hists = 1;
+          }
+          UpdateHistogramType();
+          break;
+        }
+      }
+      break;
+    case 'I':
+      show_slice_in_obst++;
+      if(show_slice_in_obst>2)show_slice_in_obst = 0;
+      UpdateShowSliceInObst();
+      updatemenu = 1;
+      break;
+    case 'i':
+      if(cache_qdata==1){
+        HandleIso();
+        return;
+      }
+      break;
+
+    case GLFW_KEY_J:
+      if(keystate==GLUT_ACTIVE_ALT){
+        sensorrelsize /= 1.5;
+      }
+      else{
+        sensorrelsize *= 1.5;
+      }
+      UpdateDeviceSize();
+      break;
+    case 'k':
+    case 'K':
+      visTimebar = 1 - visTimebar;
+      if(visTimebar==0)PRINTF("Time bar hidden\n");
+      if(visTimebar==1)PRINTF("Time bar visible\n");
+      break;
+    case 'L':
+      UnloadSliceMenu(UNLOAD_LAST);
+      break;
+#ifdef _DEBUG
+    case 'l':
+      if(nsmoke3dinfo>0){
+        smokecullflag=1-smokecullflag;
+        PRINTF("smokecullflag=%i\n",smokecullflag);
+        UpdateSmoke3dFlags();
+        return;
+      }
+      break;
+#endif
+    case GLFW_KEY_M:
+      switch(keystate){
+      case GLUT_ACTIVE_ALT:
+        DialogMenu(DIALOG_MOTION); // motion dialog
+        break;
+      case GLUT_ACTIVE_CTRL:
+      default:
+        if(nmeshes>1){
+          highlight_mesh++;
+          if(highlight_mesh>nmeshes-1)highlight_mesh=0;
+          UpdateCurrentMesh(meshinfo+highlight_mesh);
+        }
+      }
+      break;
+#ifdef _DEBUG
+    case GLFW_KEY_N:
+      if(nsmoke3dinfo>0){
+        adjustalphaflag++;
+        if(adjustalphaflag>3)adjustalphaflag=0;
+        PRINTF("adjustalphaflag=%i\n",adjustalphaflag);
+        UpdateSmoke3dFlags();
+        return;
+      }
+      break;
+#endif
+    case 'O':
+      switch(visBlocks){
+        case visBLOCKAsInput:
+        case visBLOCKAsInputOutline:
+          BlockageMenu(visBLOCKHide);
+          BlockageMenu(visBLOCKOnlyOutline);
+          break;
+        default:
+          BlockageMenu(visBLOCKHide);
+          BlockageMenu(visBLOCKAsInput);
+          break;
+      }
+      break;
+    case 'o':
+      if(keystate==GLUT_ACTIVE_ALT){
+        switch(visBlocks){
+          case visBLOCKAsInput:
+            BlockageMenu(visBLOCKHide);
+            BlockageMenu(visBLOCKAsInput);
+            BlockageMenu(visBLOCKAddOutline);
+            break;
+          case visBLOCKAsInputOutline:
+            BlockageMenu(visBLOCKHide);
+            BlockageMenu(visBLOCKNormal);
+            break;
+          case visBLOCKNormal:
+            BlockageMenu(visBLOCKHide);
+            BlockageMenu(visBLOCKOnlyOutline);
+            break;
+          case visBLOCKOutline:
+          case visBLOCKOnlyOutline:
+            BlockageMenu(visBLOCKHide);
+            break;
+          case visBLOCKHide:
+            BlockageMenu(visBLOCKHide);
+            BlockageMenu(visBLOCKAsInput);
+            break;
+          default:
+            BlockageMenu(visBLOCKHide);
+            BlockageMenu(visBLOCKAsInput);
+            break;
+        }
+      }
+      else{
+        highlight_flag++;
+        if(highlight_flag!=0&&visFrame==0){
+          visFrame = 1;
+          updatefacelists = 1;
+          updatemenu = 1;
+          // glutPostRedisplay();
+        }
+        if(highlight_flag>2&&noutlineinfo>0)highlight_flag=0;
+        if(highlight_flag>1&&noutlineinfo==0)highlight_flag=0;
+        PRINTF("outline mode=%i\n",highlight_flag);
+      }
+      break;
+    case 'p':
+      plotn += FlowDir;
+      if(plotn<1){
+        plotn=numplot3dvars;
+      }
+      if(plotn>numplot3dvars){
+        plotn=1;
+      }
+      printf("plotn: %d\n", plotn);
+      UpdateAllPlotSlices();
+      if(visiso==1&&cache_qdata==1)UpdateSurface();
+      UpdatePlot3dListIndex();
+      break;
+    case GLFW_KEY_Q:
+      blocklocation++;
+      if((ncadgeom==0&&blocklocation>BLOCKlocation_exact)||
+                       blocklocation>BLOCKlocation_cad){
+        blocklocation=BLOCKlocation_grid;
+      }
+      if(showedit_dialog==1){
+        if(blocklocation==BLOCKlocation_exact){
+          blockage_as_input=1;
+        }
+        else{
+          blockage_as_input=0;
+        }
+        ObjectCB(BLOCKAGE_AS_INPUT2);
+      }
+      break;
+    case GLFW_KEY_R:
+      {
+        int rflag=0;
+        if ((mods & GLFW_MOD_ALT) && (mods & GLFW_MOD_SHIFT)) {
+          research_mode=1-research_mode;
+          update_research_mode=1;
+          return;
+        }
+        if ((mods & GLFW_MOD_SHIFT) && !(mods & GLFW_MOD_ALT)) {
+          resolution_multiplier = glui_resolution_multiplier;
+        } else {
+          resolution_multiplier = 1;
+        }
+
+
+        if(mods & GLFW_MOD_ALT){
+          render_mode = RENDER_360;
+        } else{
+          render_mode = RENDER_NORMAL;
+        }
+        render_times = RENDER_SINGLETIME;
+
+        if ((mods & GLFW_MOD_SHIFT) || render_mode==RENDER_360) {
+          rflag=1;
+        } else if (render_size_index==2) {
+          renderW=0;
+          renderH=0;
+        }
+        if(scriptoutstream!=NULL) {
+          if(nglobal_times>0){
+            float timeval;
+
+            timeval=global_times[itimes];
+            fprintf(scriptoutstream,"SETTIMEVAL\n");
+            fprintf(scriptoutstream," %f\n",timeval);
+            if(nvolrenderinfo>0&&load_at_rendertimes==1){
+              for(i=0;i<nmeshes;i++){
+                meshdata *meshi;
+                volrenderdata *vr;
+                int j;
+                int framenum;
+                float timediffmin;
+
+                meshi = meshinfo + i;
+                vr = &meshi->volrenderinfo;
+                if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
+                if(vr->loaded==0||vr->display==0)continue;
+                timediffmin = ABS(timeval-vr->times[0]);
+                framenum=0;
+                for(j=1;j<vr->ntimes;j++){
+                  float timediff;
+
+                  timediff = ABS(vr->times[j]-timeval);
+                  if(timediff<timediffmin){
+                    timediffmin=timediff;
+                    framenum=j;
+                  }
+                }
+                fprintf(scriptoutstream,"LOADVOLSMOKEFRAME\n");
+                fprintf(scriptoutstream," %i %i\n",i,framenum);
+              }
+            }
+          }
+          else{
+            int show_plot3dkeywords=0;
+
+            for(i=0;i<nmeshes;i++){
+              meshdata *meshi;
+              plot3ddata *plot3di;
+              float *xp, *yp, *zp;
+
+              meshi = meshinfo  + i;
+              if(meshi->plot3dfilenum==-1)continue;
+
+              plot3di = plot3dinfo + meshi->plot3dfilenum;
+              if(plot3di->display==0)continue;
+              show_plot3dkeywords=1;
+              xp = meshi->xplt_orig;
+              yp = meshi->yplt_orig;
+              zp = meshi->zplt_orig;
+              fprintf(scriptoutstream,"SHOWPLOT3DDATA\n");
+              fprintf(scriptoutstream," %i %i %i %i %f\n",i+1,1, plotn,visx_all,xp[meshi->plotx]);
+              fprintf(scriptoutstream,"SHOWPLOT3DDATA\n");
+              fprintf(scriptoutstream," %i %i %i %i %f\n",i+1,2, plotn,visy_all,yp[meshi->ploty]);
+              fprintf(scriptoutstream,"SHOWPLOT3DDATA\n");
+              fprintf(scriptoutstream," %i %i %i %i %f\n",i+1,3, plotn,visz_all,zp[meshi->plotz]);
+              fprintf(scriptoutstream,"SHOWPLOT3DDATA\n");
+              fprintf(scriptoutstream," %i %i %i %i %i\n",i+1,4, plotn,visiso,plotiso[plotn-1]);
+            }
+            if(show_plot3dkeywords==1){
+              fprintf(scriptoutstream,"PLOT3DPROPS\n");
+              fprintf(scriptoutstream," %i %i 4 %i\n",plotn,visVector,contour_type);
+            }
+          }
+          if(clip_rendered_scene!=0){
+            fprintf(scriptoutstream,"RENDERCLIP\n");
+            fprintf(scriptoutstream," %i %i %i %i %i\n",
+              clip_rendered_scene,render_clip_left,render_clip_right,render_clip_bottom,render_clip_top);
+          }
+          if(vis_gslice_data==1||show_gslice_triangles==1||show_gslice_triangulation==1||show_gslice_normal){
+            fprintf(scriptoutstream,"GSLICEVIEW\n");
+            fprintf(scriptoutstream," %i %i %i %i\n",vis_gslice_data,show_gslice_triangles,show_gslice_triangulation,show_gslice_normal);
+            fprintf(scriptoutstream,"GSLICEPOS\n");
+            fprintf(scriptoutstream," %f %f %f\n",gslice_xyz[0],gslice_xyz[1],gslice_xyz[2]);
+            fprintf(scriptoutstream,"GSLICEORIEN\n");
+            fprintf(scriptoutstream," %f %f\n",gslice_normal_azelev[0],gslice_normal_azelev[1]);
+          }
+          if(rflag==0){
+            fprintf(scriptoutstream,"RENDERONCE\n");
+          }
+          else{
+            fprintf(scriptoutstream,"RENDERDOUBLEONCE\n");
+          }
+          fprintf(scriptoutstream," %s\n",script_renderfile);
+        }
+        RenderState(RENDER_ON);
+      }
+      break;
+    case 'S':
+      stereotypeOLD=stereotype;
+      stereotype++;
+      if(stereotype>5)stereotype=0;
+      if(stereotype==STEREO_TIME&&videoSTEREO!=1)stereotype=STEREO_LR;
+      UpdateGluiStereo();
+      break;
+    case 's':
+      switch(keystate){
+      case GLUT_ACTIVE_ALT:
+        DialogMenu(DIALOG_3DSMOKE); // 3d smoke dialog
+        break;
+      case GLUT_ACTIVE_CTRL:
+        SnapScene();
+        break;
+      default:
+        if(rotation_type==EYE_CENTERED){
+          HandleMoveKeys(GLUT_KEY_DOWN);
+        }
+        else{
+          vectorskip++;
+          if(vectorskip>4)vectorskip=1;
+        }
+      }
+      break;
+    case 'T':
+      usetexturebar=1-usetexturebar;
+      PRINTF("usetexturebar=%i\n",usetexturebar);
+      break;
+    case 't':
+      switch(keystate){
+      case GLUT_ACTIVE_ALT:
+        if(showtour_dialog==1){
+          DialogMenu(DIALOG_TOUR_HIDE);
+        }
+        else{
+          DialogMenu(DIALOG_TOUR_SHOW);
+        }
+        break;
+      case GLUT_ACTIVE_CTRL:
+      default:
+        stept=(stept+1)%2;
+        if(stept==1){
+          plotstate=GetPlotState(DYNAMIC_PLOTS);
+          if(plotstate==DYNAMIC_PLOTS){
+            ResetGLTime();
+          }
+          else{
+            stept=0;
+          }
+        }
+        if(stept == 1){
+          //if(render_skip!=RENDER_CURRENT_SINGLE)render_skip = 1;
+        }
+        else{
+          itime_save = -1;
+          render_skip = RENDER_CURRENT_SINGLE;
+        }
+        updatemenu = 1;
+        UpdateRenderListSkip();
+      }
+      break;
+
+    case GLFW_KEY_U:
+      if (mods & GLFW_MOD_ALT) {
+          skip_slice_in_embedded_mesh = 1 - skip_slice_in_embedded_mesh;
+      } else if (mods & GLFW_MOD_SHIFT) {
+            ReloadMenu(RELOAD_INCREMENTAL_NOW);
+      } else {
+            ReloadMenu(RELOAD_ALL_NOW);
+      }
+      break;
+    case 'V':
+      if(nvolrenderinfo>0){
+        usevolrender=1-usevolrender;
+        UpdateSmoke3dFlags();
+#ifdef pp_GPU
+        PrintGPUCullState();
+#endif
+        return;
+      }
+      break;
+    case 'v':
+      switch(keystate){
+        case GLUT_ACTIVE_ALT:
+          projection_type = 1 - projection_type;
+          SceneMotionCB(PROJECTION);
+          break;
+        default:
+          visVector=1-visVector;
+          if(vectorspresent==0)visVector=0;
+          UpdateGlui();
+          break;
+      }
+      break;
+    case 'W':
+      clip_mode++;
+      if(clip_mode>3)clip_mode=0;
+      UpdateClipAll();
+      break;
+    case 'w':
+      switch(keystate){
+        case GLUT_ACTIVE_ALT:
+          DialogMenu(DIALOG_WUI); // WUI dialog
+          break;
+        case GLUT_ACTIVE_CTRL:
+        default:
+          if(rotation_type==EYE_CENTERED){
+            HandleMoveKeys(GLUT_KEY_UP);
+          }
+          else{
+            vis_gslice_data = 1 - vis_gslice_data;
+            UpdateGsliceParms();
+          }
+          break;
+      }
+      break;
+    case GLFW_KEY_X:
+      if(keystate==GLUT_ACTIVE_ALT){
+        if(key2=='x')DialogMenu(DIALOG_HIDEALL);
+        if(key2=='X')DialogMenu(DIALOG_SHRINKALL);
+      }
+      else{
+        visx_all=1-visx_all;
+        plotstate = GetPlotState(STATIC_PLOTS);
+        updatemenu = 1;
+      }
+      break;
+    case 'y':
+    case 'Y':
+      visy_all = 1-visy_all;
+      plotstate = GetPlotState(STATIC_PLOTS);
+      updatemenu = 1;
+      break;
+    case GLFW_KEY_Z:
+      if(mods & GLFW_MOD_ALT){
+        DialogMenu(DIALOG_SMOKEZIP); // compress dialog
+      } else{
+        visz_all = 1 - visz_all;
+        plotstate = GetPlotState(STATIC_PLOTS);
+        updatemenu = 1;
+      }
+      break;
+    case '0':
+      if(plotstate==DYNAMIC_PLOTS){
+        itime_cycle = 0;
+        UpdateTimes();
+        return;
+      }
+      break;
+    case '~':
+      LevelScene(1,1,quat_general);
+      Quat2Rot(quat_general,quat_rotation);
+      break;
+    case '!':
+      SnapScene();
+      break;
+    case '@':
+      cell_center_text = 1 - cell_center_text;
+      break;
+    case ':':
+      timebar_overlap++;
+      if (timebar_overlap > 2)timebar_overlap = 0;
+      UpdateTimebarOverlap();
+      printf("overlap time/colorbar region: ");
+      switch(timebar_overlap){
+      case 0:
+        printf("always\n");
+        break;
+      case 1:
+        printf("never\n");
+        break;
+      case 2:
+        printf("only if time/colorbar hidden\n");
+        break;
+      }
+      break;
+ // toggle_colorbar   state
+ //    0              hidden
+ //    1              vertical
+ //    2->max         horizontal
+    case GLFW_KEY_COMMA:
+      if (mods & GLFW_MOD_SHIFT) {
+        // '<'
+        vectorpointsize+=2;
+        if(vectorpointsize>20.0)vectorpointsize = 1.0;
+        UpdateVectorpointsize();
+        updatemenu = 1;
+      } else {
+        // ','
+        int maxtoggle;
+
+        maxtoggle = MAX(3, 2 + CountColorbars());
+        toggle_colorbar++;
+        if(toggle_colorbar >= maxtoggle)toggle_colorbar = 0;
+        if(toggle_colorbar == 0) {
+          visColorbarVertical = 0;
+          visColorbarHorizontal = 0;
+        }
+        else if(toggle_colorbar == 1) {
+          visColorbarVertical = 1;
+          visColorbarHorizontal = 0;
+        }
+        else {
+          visColorbarVertical = 0;
+          visColorbarHorizontal = 1;
+        }
+      }
+      updatemenu = 1;
+      break;
+    case GLFW_KEY_PERIOD:
+      if (mods & GLFW_MOD_SHIFT) {
+        // '>'
+        vectorpointsize-=2;
+        if(vectorpointsize<1.0)vectorpointsize = 20.0;
+        UpdateVectorpointsize();
+        updatemenu = 1;
+      } else {
+        // '.'
+        lock_mouse_aperture = 1 - lock_mouse_aperture;
+      }
+      break;
+    case '#':
+      WriteIni(LOCAL_INI,NULL);
+      break;
+    case '$':
+      trainer_active=1-trainer_active;
+      if(trainer_active==1){
+        PRINTF("Trainer mode active\n");
+        trainer_mode=1;
+        ShowGluiTrainer();
+      }
+      if(trainer_active==0){
+        PRINTF("Trainer mode inactive\n");
+        trainer_mode=0;
+        HideGluiTrainer();
+      }
+      break;
+    case '%':
+      script_step=1-script_step;
+      break;
+    case '^':
+      script_step_now=1;
+      break;
+    case '&':
+      antialiasflag=1-antialiasflag;
+      PRINTF("antialiasflag=%i\n",antialiasflag);
+      break;
+    case '*':
+      visx_all=0;
+      visy_all=0;
+      visz_all=0;
+      vis_gslice_data=0;
+      show_gslice_triangles=0;
+      show_gslice_triangulation=0;
+      show_gslice_normal=0;
+      break;
+    case '(':
+      clip_rendered_scene=1-clip_rendered_scene;
+      break;
+    case '[':
+      edittour=1;
+      UpdateEditTour();
+      break;
+    case ']':
+      edittour=0;
+      UpdateEditTour();
+      break;
+    case GLFW_KEY_SEMICOLON:
+      ColorbarMenu(COLORBAR_FLIP);
+      break;
+  }
+
+  skip2=key2-'1'+1;
+  if(skip2>0&&skip2<10)skip_global=skip2;
+
+  /* if not a directional key then return */
+
+  if(strncmp((const char *)&key2,"-",1)!=0&&strncmp((const char *)&key2," ",1)!=0&&
+     strncmp((const char *)&key2,"+",1)!=0&&strncmp((const char *)&key2,"=",1)!=0&&
+     strncmp((const char *)&key2,"<",1)!=0&&strncmp((const char *)&key2,">",1)!=0&&
+     strncmp((const char *)&key2,",",1)!=0&&strncmp((const char *)&key2,".",1)!=0&&
+     strncmp((const char *)&key2,"_",1)!=0&&(skip2<=0||skip2>=10))return;
+
+  if(clip_mode!=CLIP_OFF&&(
+    strncmp((const char *)&key2,"<",1)==0||strncmp((const char *)&key2,",",1)==0||
+    strncmp((const char *)&key2,">",1)==0||strncmp((const char *)&key2,".",1)==0)){
+
+    if(strncmp((const char *)&key2,"<",1)==0||strncmp((const char *)&key2,",",1)==0){ClipDir=-1;}
+     else if(strncmp((const char *)&key2,">",1)==0||strncmp((const char *)&key2,".",1)==0){ClipDir=1;}
+
+    if(stepclip_xmin==1  )clip_i += skip_global*ClipDir;
+    if(stepclip_ymin==1  )clip_j += skip_global*ClipDir;
+    if(stepclip_zmin==1  )clip_k += skip_global*ClipDir;
+    if(stepclip_xmax==1  )clip_I += skip_global*ClipDir;
+    if(stepclip_ymax==1  )clip_J += skip_global*ClipDir;
+    if(stepclip_zmax==1  )clip_K += skip_global*ClipDir;
+
+    UpdateClipbounds(clipinfo.clip_xmin,&clip_i,clipinfo.clip_xmax,&clip_I,current_mesh->ibar);
+    UpdateClipbounds(clipinfo.clip_ymin,&clip_j,clipinfo.clip_ymax,&clip_J,current_mesh->jbar);
+    UpdateClipbounds(clipinfo.clip_zmin,&clip_k,clipinfo.clip_zmax,&clip_K,current_mesh->kbar);
+    return;
+  }
+
+  if(strncmp((const char *)&key2,"-",1)==0||strncmp((const char *)&key2,"_",1)==0){
+    FlowDir=-1;
+  }
+  else if(strncmp((const char *)&key2," ",1)==0||
+     strncmp((const char *)&key2,"=",1)==0||
+     strncmp((const char *)&key2,"+",1)==0
+     ){
+     FlowDir=1;
+  }
+
+  if(plotstate==DYNAMIC_PLOTS){
+    if(timebar_drag==0)itimes += skip_global*FlowDir;
+    CheckTimeBound();
+    IdleCB();
+
+    return;
+  }
+  switch(iplot_state){
+    case XDIR:
+      NextXIndex(skip_global*FlowDir,0);
+      break;
+    case 0:
+    case YDIR:
+      NextYIndex(skip_global*FlowDir,0);
+      break;
+    case ZDIR:
+      NextZIndex(skip_global*FlowDir,0);
+      break;
+    default:
+      ASSERT(FFALSE);
+      break;
+  }
+  if(ReadPlot3dFile==1){
+    plotstate = GetPlotState(STATIC_PLOTS);
+    if(visiso!=0&&current_mesh->slicedir==ISO){
+      plotiso[plotn-1] += FlowDir;
+      UpdateSurface();
+    }
+    // glutPostRedisplay();
+  }
+  if(iplot_state!=0)UpdatePlotSlice(iplot_state);
+  updatemenu=1;
+}
+
+static void KeyboardCBGlfw(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+  KeyboardGlfw(window, key, scancode, action, mods, FROM_CALLBACK);
+  updatemenu=1;
+}
+
+
 
 /* ------------------ HandleRotationType ------------------------ */
 
@@ -2497,7 +3486,7 @@ void SpecialKeyboardCB(int key, int x, int y){
 #define P3_MODE 1
   int keymode=EYE_MODE;
 
-  glutPostRedisplay();
+  // glutPostRedisplay();
 
   if(rotation_type==EYE_CENTERED){
     keymode=EYE_MODE;
@@ -2886,15 +3875,18 @@ void IdleCB(void){
   }
 }
 
-/* ------------------ SetScreenSize ------------------------ */
+/* ------------------ SetWindowSize ------------------------ */
 
-void SetScreenSize(int *width, int *height){
+void SetWindowSize(int *width, int *height){
   if(width!=NULL){
+    // Make sure the screen width is at least 1
     screenWidth=MAX(*width,1);
     screenWidth = MAX(screenWidth, 1);
+    // Make sure the screen width is even.
     if(screenWidth%2==1)screenWidth++;
   }
   if(height!=NULL){
+    // Make sure the screen height is at least 1
     screenHeight=MAX(*height,1);
   }
   {
@@ -2916,7 +3908,7 @@ void ReshapeCB(int width, int height){
   if(strcmp(camera_current->name,"external")!=0||in_external==0){
     CopyCamera(camera_save,camera_current);
   }
-  SetScreenSize(&width,&height);
+  SetWindowSize(&width,&height);
   windowresized=1;
   UpdateCameraYpos(camera_external);
   if(strcmp(camera_current->name,"external")==0&&in_external==1){
@@ -3259,7 +4251,7 @@ void DoScript(void){
         }
       }
     }
-    glutPostRedisplay();
+    // glutPostRedisplay();
   }
   else{
     first_frame_index=0;
@@ -3414,5 +4406,5 @@ void ResizeWindow(int width, int height){
     }
   }
   glutReshapeWindow(width,height);
-  glutPostRedisplay();
+  // glutPostRedisplay();
 }

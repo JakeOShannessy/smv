@@ -1955,7 +1955,7 @@ FILE_SIZE ReadPart(char *file, int ifile, int loadflag, int *errorcode){
     UpdatePart5Extremes();
     updatemenu = 1;
     IdleCB();
-    glutPostRedisplay();
+    // glutPostRedisplay();
   }
   STOP_TIMER(load_time);
   if(file_size>1000000000){

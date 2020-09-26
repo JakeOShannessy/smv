@@ -2,6 +2,8 @@
 #define SMOKEHEADERS_H_DEFINED
 
 #include <GL/gl.h>
+#include "GLFW/glfw3.h"
+#include "gui.h"
 
 #ifdef pp_LUA
 #include "gd.h"
@@ -169,7 +171,8 @@ EXTERNCPP void GluiColorbarSetup(int main_window);
 EXTERNCPP void GluiDeviceSetup(int main_window);
 EXTERNCPP void GluiGeometrySetup(int main_window);
 EXTERNCPP void GluiLabelsSetup(int main_window);
-EXTERNCPP void GluiMotionSetup(int main_window);
+// EXTERNCPP void GluiMotionSetup(int main_window);
+EXTERNCPP int DialogMotionSetup(Gui *smv_gui);
 EXTERNCPP void GluiShooterSetup(int main_window);
 EXTERNCPP void GluiStereoSetup(int main_window);
 EXTERNCPP void GluiTourSetup(int main_window);
@@ -300,14 +303,16 @@ EXTERNCPP void AngleAxis2Quat(float angle, float *axis, float *quat);
 EXTERNCPP void Quat2Rot(float quat[4],float rot[16]);
 EXTERNCPP void MultQuat(float x[4], float y[4], float z[4]);
 
-EXTERNCPP void SetScreenSize(int *width, int *height);
+EXTERNCPP void SetWindowSize(int *width, int *height);
+EXTERNCPP void KeyboardCBGlfw(GLFWwindow* window, int key, int scancode, int action, int mods);
 EXTERNCPP void KeyboardCB(unsigned char key, int x, int y);
 EXTERNCPP void KeyboardUpCB(unsigned char key, int x, int y);
 EXTERNCPP void ReshapeCB(int width, int height);
 EXTERNCPP void DisplayCB(void);
 EXTERNCPP void SpecialKeyboardCB(int key, int x, int y);
 EXTERNCPP void SpecialKeyboardUpCB(int key, int x, int y);
-EXTERNCPP void MouseCB(int button, int state, int x, int y);
+EXTERNCPP void MouseCB(GLFWwindow* window, double xpos, double ypos);
+EXTERNCPP void MouseButtonCB(GLFWwindow *window, int button, int action, int mods);
 EXTERNCPP void MouseDragCB(int xm, int ym);
 EXTERNCPP void MenuStatus_CB(int status, int x, int y);
 EXTERNCPP void IdleCB(void);
@@ -320,7 +325,6 @@ EXTERNCPP void UpdateIsoColors(void);
 EXTERNCPP void GetFaceInfo(void);
 EXTERNCPP void GetGeomInfoPtrs(int flag);
 EXTERNCPP devicedata *GetDeviceFromLabel(char *label, int index);
-EXTERNCPP void SetupGlut(int argc, char **argv);
 EXTERNCPP int GetNDevices(char *file);
 EXTERNCPP void ReadHRR(int flag, int *errorcode);
 EXTERNCPP void ReadDeviceData(char *file, int filetype, int flag);
