@@ -1,24 +1,21 @@
 cmake_minimum_required(VERSION 3.16)
 project(Smokeview LANGUAGES C CXX Fortran)
 
-if (UNIX)
-	add_definitions(-Dpp_LINUX)
-	remove_definitions(-Dpp_INTEL)
-	add_definitions(-Dpp_GCC)
-    set(CMAKE_Fortran_FLAGS "-cpp")
-endif ()
+add_definitions(-Dpp_LINUX)
+remove_definitions(-Dpp_INTEL)
+add_definitions(-Dpp_GCC)
+set(CMAKE_Fortran_FLAGS "-cpp")
 
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(GLUT REQUIRED)
+# find_package(GLEW REQUIRED)
+# find_package(FreeGLUT REQUIRED)
+# find_package(GD REQUIRED)
 include_directories( ${OPENGL_INCLUDE_DIRS}  ${GLUT_INCLUDE_DIR} )
 add_subdirectory(Source/glui_v2_1_beta)
-
-
-option(FREEGLUT_STATIC "Statically link freeglut" on)
-if (FREEGLUT_STATIC)
-    add_definitions(-DFREEGLUT_STATIC)
-endif ()
+add_subdirectory(Source/gd-2.0.15)
+add_subdirectory(Source/jpeg-9b)
+add_subdirectory(Source/png-1.6.21)
+add_subdirectory(Source/glut-3.7.6)
 
 add_executable(Smokeview Source/smokeview/main.c
     Source/smokeview/menus.c Source/smokeview/IOscript.c Source/smokeview/IOshooter.c Source/smokeview/glui_objects.cpp Source/smokeview/glui_shooter.cpp Source/smokeview/glui_wui.cpp
@@ -33,6 +30,7 @@ add_executable(Smokeview Source/smokeview/main.c
     Source/smokeview/shaders.c Source/smokeview/unit.c Source/smokeview/threader.c Source/shared/histogram.c Source/shared/translate.c Source/smokeview/update.c Source/smokeview/viewports.c
     Source/smokeview/smv_geometry.c Source/smokeview/showscene.c Source/smokeview/infoheader.c  Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
     Source/smokeview/fdsmodules.f90 Source/smokeview/gsmv.f90 Source/smokeview/getdata.f90
+    Source/glew/glew.c
 )
 
 option(LUA "Include lua scripting" off)
@@ -43,28 +41,52 @@ if (LUA)
     target_link_libraries(Smokeview liblua)
 endif ()
 
-option(MULTITHREADED "Use multithreading via pthreads" ${MULTITHREADED_DEFAULT})
+option(MULTITHREADED "Use multithreading via pthreads" on)
 if (MULTITHREADED)
-    add_definitions(-Dpp_THREAD)
+    # add_definitions(-Dpp_THREAD)
     #TODO: throw an appropriate error message if MULTITHREADED is enabled but we can't use pthreads.
 endif ()
 
 target_link_libraries(Smokeview
-    ${GLUT_LIBRARIES}
     glui_static
-    GLU
-    GLEW
-    GL
+    opengl32
+
+    winglut
+    glu32
     gd
-    pthread
+
+    jpeg
+    png
+
+    gdi32
+    winmm
+    comdlg32
+
     gfortran
-    z
+    "-Wl,-Bstatic -lquadmath"
+    "-Wl,-Bstatic -lpthread"
+    "-Wl,-Bstatic -lz"
 )
 
+add_definitions(-Dpp_LINUX)
+add_definitions(-DGLEW_STATIC)
+add_definitions(-DMINGW)
+add_definitions(-D__MINGW32__)
+add_definitions(-DWIN32)
+add_definitions(-D_WIN32)
+target_compile_options(Smokeview PRIVATE -Wno-write-strings)
+target_link_options(Smokeview PRIVATE -static-libgcc -static-libstdc++)
 target_include_directories(Smokeview PRIVATE
     ${GLEW_INCLUDE_DIRS}/GL
     Source/smokeview
     Source/shared
+    Source/glew
+    Source/jpeg-9b
+
     Source/glui_v2_1_beta
     Source/lua-5.3.1/src
+    /mingw64/include/GL/
+    Source/gd-2.0.15
+    Source/glut-3.7.6
+    Source/glui_gl
 )
