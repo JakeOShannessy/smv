@@ -4,12 +4,9 @@
 /* ------------------ GetEndian ------------------------ */
 
 int GetEndian(void){
-  short val;
-  char *cval;
-
-  val=1;
-  cval = (char *)&val+1;
-  return (int)(*cval);
+  short int word = 0x0001;
+  char *b = (char *)&word;
+  return (b[0] ? ENDIAN_LITTLE : ENDIAN_BIG);
 }
 
 /* ------------------ FloatSwitch ------------------------ */
@@ -28,7 +25,6 @@ float FloatSwitch(float val){
 
   val2ptr=(float *)buffer2;
   return *val2ptr;
-
 }
 
 /* ------------------ IntSwitch ------------------------ */
@@ -47,7 +43,6 @@ int IntSwitch(int val){
 
   val2ptr=(int *)buffer2;
   return *val2ptr;
-
 }
 
 /* ------------------ EndianSwitch ------------------------ */

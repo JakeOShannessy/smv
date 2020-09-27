@@ -17,31 +17,6 @@
 #include "lua_api.h"
 #endif
 
-#ifdef pp_OSX
-/* ------------------ GetScreenHeight ------------------------ */
-
-int GetScreenHeight(void){
-  FILE *stream;
-  char command[1000], height_file[1000], *full_height_file, buffer[255];
-  int screen_height=-1;
-
-  strcpy(command,"system_profiler SPDisplaysDataType | grep Resolution | awk '{print $4}' >& ");
-  strcpy(height_file, fdsprefix);
-  strcat(height_file, ".hgt");
-  full_height_file = GetFileName(smokeviewtempdir, height_file, NOT_FORCE_IN_DIR);
-  strcat(command,full_height_file);
-  system(command);
-  stream = fopen(full_height_file,"r");
-  if(stream!=NULL){
-    fgets(buffer, 255, stream);
-    sscanf(buffer, "%i", &screen_height);
-    fclose(stream);
-  }
-  FREEMEMORY(full_height_file);
-  return screen_height;
-}
-#endif
-
 /* ------------------ Usage ------------------------ */
 
 void Usage(char *prog,int option){
@@ -58,25 +33,17 @@ void Usage(char *prog,int option){
   UsageCommon(HELP_SUMMARY);
   if(option==HELP_ALL){
     PRINTF("\n%s\n", _("Other options:"));
-#ifdef pp_READBUFFER
-    PRINTF("%s\n", _(" -buffer        - scan .smv file using a memory buffer"));
-#endif
     PRINTF("%s\n", _(" -build         - show directives used in this build of Smokeview"));
     PRINTF("%s\n", _(" -convert_ini case1.ini case2.ini - update case1.ini to the current format"));
     PRINTF("%s\n", _("                  and save results into case2.ini"));
     PRINTF("%s\n", _(" -demo          - use demonstrator mode of Smokeview"));
     PRINTF("%s\n", _(" -fast          - assume slice files exist in order to reduce startup time"));
     PRINTF("%s\n", _(" -fed           - pre-calculate all FED slice files"));
-#ifdef pp_HTML
+    PRINTF("%s\n", _(" -geominfo      - output information about geometry triangles"));
     PRINTF("%s\n", _(" -html          - output html version of smokeview scene"));
-#endif
-#ifdef pp_LANG
+    PRINTF("%s\n", _(" -info            generate casename.slcf and casename.viewpoint files containing slice file and viewpiont info"));
     PRINTF("%s\n", _(" -lang xx       - where xx is de, es, fr, it for German, Spanish, French or Italian"));
-#endif
     PRINTF("%s\n", _(" -ng_ini        - non-graphics version of -ini."));
-#ifdef pp_READBUFFER
-    PRINTF("%s\n", _(" -no_buffer     - scan .smv file using file I/O rather from memory"));
-#endif
     PRINTF("%s\n", _(" -scriptrenderdir dir - directory containing script rendered images"));
     PRINTF("%s\n", _("                  (override directory specified by RENDERDIR script keyword)"));
     PRINTF("%s\n", _(" -setup         - only show geometry"));
@@ -86,9 +53,9 @@ void Usage(char *prog,int option){
     PRINTF("%s\n", " -luascript scriptfile - run the Lua script file scriptfile");
     PRINTF("%s\n", " -killscript    - exit smokeview (with an error code) if the script fails");
 #endif
-#ifdef pp_HTML
-    PRINTF("%s\n", _(" -runhtmlscript - run the script file casename.ssf without using graphics"));
-#endif
+    PRINTF("%s\n", _(" -htmlscript scriptfile - run the script file scriptfile without using the video card"));
+    PRINTF("%s\n", _(" -runhtmlscript - run the script file casename.ssf without using the video card"));
+    PRINTF("%s\n", _("     the -htmlscript and -runhtmlscript keywords are used to generate JSON files"));
     PRINTF("%s\n", _(" -sizes         - output files sizes then exit"));
     PRINTF("%s\n", _(" -skipframe n   - render every n frames"));
     PRINTF("%s\n", _(" -smoke3d       - only show 3d smoke"));
@@ -125,9 +92,6 @@ void Usage(char *prog,int option){
 #ifdef pp_DRAWISO
     strcat(label, ", pp_DRAWISO");
 #endif
-#ifdef pp_FILELIST
-    strcat(label, ", pp_FILELIST");
-#endif
 #ifdef pp_GCC
     strcat(label, ", pp_GCC");
 #endif
@@ -137,23 +101,11 @@ void Usage(char *prog,int option){
 #ifdef pp_GPU
     strcat(label, ", pp_GPU");
 #endif
-#ifdef pp_GPU_CULL_STATE
-    strcat(label, ", pp_GPU_CULL_STATE");
-#endif
-#ifdef pp_GPUDEPTH
-    strcat(label, ", pp_GPUDEPTH");
-#endif
 #ifdef pp_GPUTHROTTLE
     strcat(label, ", pp_GPUTHROTTLE");
 #endif
 #ifdef pp_HASH
     strcat(label, ", pp_HASH");
-#endif
-#ifdef pp_INTEL
-    strcat(label, ", pp_INTEL");
-#endif
-#ifdef pp_LANG
-    strcat(label, ", pp_LANG");
 #endif
 #ifdef pp_LINUX
     strcat(label, ", pp_LINUX");
@@ -179,14 +131,8 @@ void Usage(char *prog,int option){
 #ifdef pp_OSX
     strcat(label, ", pp_OSX");
 #endif
-#ifdef pp_OSXGLUT32
-    strcat(label, ", pp_OSXGLUT32");
-#endif
-#ifdef pp_PARTTEST
-    strcat(label, ", pp_PARTTEST");
-#endif
-#ifdef pp_READBUFFER
-    strcat(label, ", pp_READBUFFER");
+#ifdef pp_PART_TEST
+    strcat(label, ", pp_PART_TEST");
 #endif
 #ifdef pp_release
     strcat(label, ", pp_release");
@@ -197,10 +143,9 @@ void Usage(char *prog,int option){
 #ifdef pp_SETTIME
     strcat(label, ", pp_SETTIME");
 #endif
-#ifdef pp_SHOWTERRAIN
-    strcat(label, ", pp_SHOWTERRAIN");
-#endif
+#ifdef pp_SLICELOAD
     strcat(label, ", pp_SLICELOAD");
+#endif
 #ifdef pp_THREAD
     strcat(label, ", pp_THREAD");
 #endif
@@ -234,25 +179,23 @@ void ParseCommandline(int argc, char **argv){
   int smv_parse;
 
   CheckMemory;
-  partscale = a_partscale;
-  zonescale = a_zonescale;
 
   if(argc == 1){
-    exit(1);
+    SMV_EXIT(1);
   }
   if(strncmp(argv[1], "-ini", 4) == 0){
     InitCameraList();
     InitOpenGL();
     UpdateRGBColors(COLORBAR_INDEX_NONE);
     WriteIni(GLOBAL_INI, NULL);
-    exit(0);
+    SMV_EXIT(0);
   }
   if(strncmp(argv[1], "-ng_ini", 7) == 0){
     InitCameraList();
     use_graphics = 0;
     UpdateRGBColors(COLORBAR_INDEX_NONE);
     WriteIni(GLOBAL_INI, NULL);
-    exit(0);
+    SMV_EXIT(0);
   }
   strcpy(SMVFILENAME, "");
   smv_parse = 0;
@@ -262,10 +205,9 @@ void ParseCommandline(int argc, char **argv){
       if(
         strncmp(argi, "-points", 7) == 0 ||
         strncmp(argi, "-frames", 7) == 0 ||
-#ifdef pp_LANG
         strncmp(argi, "-lang", 5) == 0 ||
-#endif
         strncmp(argi, "-script", 7) == 0 ||
+        strncmp(argi, "-htmlscript", 11)==0||
 #ifdef pp_LUA
         strncmp(argi, "-luascript", 10) == 0 ||
 #endif
@@ -306,10 +248,6 @@ void ParseCommandline(int argc, char **argv){
   if(smv_ext!=NULL)*smv_ext = 0;
   FREEMEMORY(trainer_filename);
   FREEMEMORY(test_filename);
-
-#ifdef pp_OSX
-  monitor_screen_height = GetScreenHeight();
-#endif
 
   strcpy(input_filename_ext, "");
 
@@ -352,12 +290,30 @@ void ParseCommandline(int argc, char **argv){
   STRCPY(caseini_filename, fdsprefix);
   STRCAT(caseini_filename, ".ini");
 
-#ifdef pp_HTML
   FREEMEMORY(html_filename);
   NewMemory((void **)&html_filename, len_casename+strlen(".html")+1);
   STRCPY(html_filename, fdsprefix);
   STRCAT(html_filename, ".html");
-#endif
+
+  FREEMEMORY(htmlvr_filename);
+  NewMemory((void **)&htmlvr_filename, len_casename+strlen("_vr.html")+1);
+  STRCPY(htmlvr_filename, fdsprefix);
+  STRCAT(htmlvr_filename, "_vr.html");
+
+  FREEMEMORY(htmlobst_filename);
+  NewMemory((void **)&htmlobst_filename, len_casename+strlen("_obst.json")+1);
+  STRCPY(htmlobst_filename, fdsprefix);
+  STRCAT(htmlobst_filename, "_obst.json");
+
+  FREEMEMORY(htmlslicenode_filename);
+  NewMemory((void **)&htmlslicenode_filename, len_casename+strlen("_slicenode.json")+1);
+  STRCPY(htmlslicenode_filename, fdsprefix);
+  STRCAT(htmlslicenode_filename, "_slicenode.json");
+
+  FREEMEMORY(htmlslicecell_filename);
+  NewMemory((void **)&htmlslicecell_filename, len_casename+strlen("_slicecell.json")+1);
+  STRCPY(htmlslicecell_filename, fdsprefix);
+  STRCAT(htmlslicecell_filename, "_slicecell.json");
 
   FREEMEMORY(boundinfo_filename);
   NewMemory((void **)&boundinfo_filename, len_casename + strlen(".binfo") + 1);
@@ -471,14 +427,6 @@ void ParseCommandline(int argc, char **argv){
       use_graphics = 0;
       update_slice = 1;
     }
-#ifdef pp_READBUFFER
-    else if(strncmp(argv[i], "-no_buffer", 10)==0){
-      readfile_option = READFILE;
-    }
-    else if(strncmp(argv[i], "-buffer", 7)==0){
-      readfile_option = READBUFFER;
-    }
-#endif
     else if(strncmp(argv[i], "-update", 7)==0){
       if(strncmp(argv[i], "-update_slice", 13)!=0&&strncmp(argv[i], "-update_bounds", 14)!=0){
         use_graphics = 0;
@@ -492,6 +440,10 @@ void ParseCommandline(int argc, char **argv){
     else if(strncmp(argv[i], "-demo", 5) == 0){
       demo_option = 1;
     }
+    else if(strncmp(argv[i], "-info", 5)==0){
+      generate_info_from_commandline = 1;
+      use_graphics = 0;
+    }
     else if(strncmp(argv[1], "-sizes", 6)==0){
       update_filesizes = 1;
       use_graphics = 0;
@@ -501,7 +453,6 @@ void ParseCommandline(int argc, char **argv){
       stereotype = STEREO_TIME;
       PRINTF("stereo option activated\n");
     }
-#ifdef pp_LANG
     else if(strncmp(argv[i], "-lang", 5) == 0){
       ++i;
       if(i < argc){
@@ -515,7 +466,6 @@ void ParseCommandline(int argc, char **argv){
         strcpy(tr_name, lang);
       }
     }
-#endif
     else if(strncmp(argv[i], "-convert_ini", 12) == 0){
       char *local_ini_from = NULL, *local_ini_to = NULL;
 
@@ -569,11 +519,11 @@ void ParseCommandline(int argc, char **argv){
     }
     else if(strncmp(argv[i], "-h", 2) == 0&&strncmp(argv[i], "-help_all", 9)!=0&&strncmp(argv[1], "-html", 5)!=0){
       Usage(argv[0],HELP_SUMMARY);
-      exit(0);
+      SMV_EXIT(0);
     }
     else if(strncmp(argv[i], "-help_all", 9)==0){
       Usage(argv[0],HELP_ALL);
-      exit(0);
+      SMV_EXIT(0);
     }
     else if(strncmp(argv[i], "-noblank", 8) == 0){
       iblank_set_on_commandline = 1;
@@ -582,22 +532,25 @@ void ParseCommandline(int argc, char **argv){
     else if(strncmp(argv[i], "-fed", 4) == 0){
       compute_fed = 1;
     }
+    else if(strncmp(argv[i], "-geominfo", 9)==0){
+      print_geominfo = 1;
+    }
     else if(strncmp(argv[i], "-fast", 5) == 0){
       fast_startup = 1;
-      lookfor_zip = 0;
+      lookfor_compressed_slice = 0;
     }
     else if(strncmp(argv[i], "-blank", 6) == 0){
       iblank_set_on_commandline = 1;
       use_iblank = 1;
     }
     else if(strncmp(argv[i], "-gversion", 9) == 0){
-      gversion = 1;
+      vis_title_gversion = 1;
     }
     else if(
       strncmp(argv[i], "-volrender", 10) != 0 && (strncmp(argv[i], "-version", 8) == 0 || strncmp(argv[i], "-v", 2) == 0)
       ){
       DisplayVersionInfo("Smokeview ");
-      exit(0);
+      SMV_EXIT(0);
     }
     else if(
       strncmp(argv[i], "-redirect", 9) == 0
@@ -616,14 +569,12 @@ void ParseCommandline(int argc, char **argv){
 #endif
       runscript = 1;
     }
-#ifdef pp_HTML
     else if(strncmp(argv[i], "-runhtmlscript", 14)==0){
       from_commandline = 1;
       use_graphics = 0;
       iso_multithread = 0;
       runhtmlscript = 1;
     }
-#endif
 #ifdef pp_LUA
     else if(strncmp(argv[i], "-runluascript", 13) == 0){
       from_commandline = 1;
@@ -656,21 +607,28 @@ void ParseCommandline(int argc, char **argv){
       from_commandline = 1;
       ++i;
       if(i < argc){
-        sscanf(argv[i], "%i", &skipframe0);
+        sscanf(argv[i], "%i", &render_skipframe0);
       }
     }
     else if(strncmp(argv[i], "-startframe", 11) == 0){
       from_commandline = 1;
       ++i;
       if(i < argc){
-        sscanf(argv[i], "%i", &startframe0);
+        sscanf(argv[i], "%i", &render_startframe0);
       }
     }
     else if(strncmp(argv[i], "-volrender", 10) == 0){
       from_commandline = 1;
       make_volrender_script = 1;
     }
-    else if(strncmp(argv[i], "-script", 7) == 0){
+    else if(strncmp(argv[i], "-script", 7)==0||strncmp(argv[i], "-htmlscript", 11)==0){
+      int is_htmlscript;
+
+      is_htmlscript = strncmp(argv[i], "-htmlscript", 11);
+      if(is_htmlscript==0){
+        use_graphics = 0;
+        runhtmlscript = 1;
+      }
       from_commandline = 1;
       iso_multithread=0;
       ++i;
@@ -681,7 +639,9 @@ void ParseCommandline(int argc, char **argv){
         strcpy(scriptbuffer, argv[i]);
         sfd = InsertScriptFile(scriptbuffer);
         if(sfd != NULL)default_script = sfd;
-        runscript = 1;
+        if(is_htmlscript!=0){
+          runscript = 1;
+        }
       }
     }
 #ifdef pp_LUA
@@ -715,12 +675,12 @@ void ParseCommandline(int argc, char **argv){
     else if(strncmp(argv[i], "-build", 6) == 0){
       showbuild = 1;
       Usage(argv[0],HELP_ALL);
-      exit(0);
+      SMV_EXIT(0);
     }
     else{
       fprintf(stderr, "*** Error: unknown option: %s\n", argv[i]);
       Usage(argv[0],HELP_ALL);
-      exit(1);
+      SMV_EXIT(1);
     }
   }
   if(update_ssf == 1){
@@ -754,6 +714,25 @@ int main(int argc, char **argv){
   char **argv_sv;
   int return_code;
   char *progname;
+
+#ifdef pp_CRASH_TEST
+  {
+    float *x = NULL, xx, yy, zz;
+
+    zz = xx+yy;
+    printf("use undefined variable zz=%f\n", zz);
+
+    xx = 0.0;
+    zz = 1.0/xx;
+    printf("divide by zero zz=%f\n", zz);
+
+    printf("before crash\n");
+    x[0] = 1.0;
+    printf("use undefined pointer x[0]=%f\n", x[0]);
+
+    printf("after crash\n");
+  }
+#endif
 #ifdef pp_LUA
   // If we are using lua, let lua take control here.
   // Initialise the lua interpreter, it does not take control at this point
@@ -780,16 +759,18 @@ int main(int argc, char **argv){
     Usage("smokeview",HELP_SUMMARY);
     return 1;
   }
-  if(show_version==1){
-    PRINTVERSION("smokeview", argv_sv[0]);
-    return 1;
-  }
 
   prog_fullpath = progname;
 #ifdef pp_LUA
   smokeview_bindir_abs=getprogdirabs(progname,&smokeviewpath);
 #endif
   ParseCommandline(argc, argv_sv);
+
+  if(show_version==1){
+    PRINTVERSION("smokeview", argv_sv[0]);
+    return 1;
+  }
+
   if(smokeview_bindir==NULL){
     smokeview_bindir= GetProgDir(progname,&smokeviewpath);
   }
@@ -820,19 +801,15 @@ int main(int argc, char **argv){
   if(convert_ini==1){
     ReadIni(ini_from);
   }
-#ifdef pp_HTML
   if(runhtmlscript==1){
     DoScriptHtml();
   }
-#endif
 
   STOP_TIMER(startup_time);
-#ifdef pp_HTML
   if(runhtmlscript==1){
     PRINTF("\nTime: %.1f s\n", startup_time);
     return 0;
   }
-#endif
   PRINTF("\nStartup time: %.1f s\n", startup_time);
 
   // GUI main loop.
@@ -843,4 +820,10 @@ int main(int argc, char **argv){
   }
 
   return 0;
+}
+
+/* ------------------ SMV_EXIT ------------------------ */
+
+void SMV_EXIT(int code){
+  exit(code);
 }

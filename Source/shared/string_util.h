@@ -32,7 +32,8 @@ typedef struct {
 #define MATCH 1
 #define NOTMATCH 0
 
-#define LABEL_OK 0
+#define LABEL_OK  0
+#define LABEL_EOF 1
 #define LABEL_ERR 2
 
 #define DEG_SYMBOL 176
@@ -46,6 +47,10 @@ typedef struct {
 #endif
 #define HELP_SUMMARY 1
 #define HELP_ALL 2
+
+#ifdef pp_PLOT3D_STATIC
+#define MAXPLOT3DLABELSIZE 61
+#endif
 
 // vvvvvvvvvvvvvvvvvvvvvvvv headers vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
@@ -67,6 +72,9 @@ EXTERNCPP int            SetLabels(flowlabels *flowlabel, char *longlabel, char 
 EXTERNCPP int            SetLabelsIso(flowlabels *flowlabel, char *longlabel, char *shortlabel, char *unit, float *levels, int nlevels);
 EXTERNCPP int            ReadLabelsBNDS(flowlabels *flowlabel, BFILE *stream, char *bufferD, char *bufferE, char *bufferF, char *suffix_label);
 EXTERNCPP int            ReadLabels(flowlabels *flow_label, BFILE *stream, char *suffix_label);
+#ifdef pp_PLOT3D_STATIC
+EXTERNCPP int            ReadPlot3DLabels(flowlabels *flow_label, BFILE *stream, char *suffix_label, char *labels_static);
+#endif
 EXTERNCPP int            AppendLabels(flowlabels *flow_label, char *suffix_label);
 
 #ifdef pp_HASH
@@ -96,15 +104,16 @@ EXTERNCPP char          *STRSTR(char *c, const char *key);
 EXTERNCPP void           ScaleString(const char *stringfrom, char *stringto, const float *scale);
 EXTERNCPP void           ScaleFloat2String(float floatfrom, char *stringto, const float *scale);
 EXTERNCPP void           Num2String(char *string, float tval);
+EXTERNCPP void           ColorbarFloat2String(char *string, float tval, int ndecimals);
+EXTERNCPP void           ColorbarFloat2String2(char *string, float tval, int exponent_max, int ndecimals);
 EXTERNCPP char          *TrimFrontBack(char *buffer);
-EXTERNCPP int            STRNCMP(const char *s1, const char *s2, const int n);
 EXTERNCPP int            STRCMP(const char *s1, const char *s2);
 EXTERNCPP char          *GetChid(char *file, char *buffer);
 #ifdef pp_GPU
 EXTERNCPP int            LogBase2(float xx);
 #endif
 EXTERNCPP void           Array2String(float *vals, int nvals, char *string);
-EXTERNCPP float          FrExp10(float x, int *exp10);
+EXTERNCPP float          GetMantissaExponent(float x, int *exp10);
 EXTERNCPP void           GetGitInfo(char *githash, char *gitdate);
 EXTERNCPP char          *GetString(char *buffer);
 EXTERNCPP char          *Time2TimeLabel(float time, float dt, char *timelabel);

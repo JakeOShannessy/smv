@@ -605,9 +605,20 @@ void UpdateIndexColors(void){
       bc = meshi->blockageinfoptrs[j];
       if(bc->usecolorindex==1){
         colorindex=bc->colorindex;
+#ifdef pp_BLOCK_COLOR
+        if(colorindex>=0){
+          if(bc->use_block_transparency==1&&bc->transparency>=0.0){
+            bc->color = GetColorTranPtr(rgb[nrgb+colorindex],bc->transparency);
+          }
+          else{
+            bc->color = GetColorPtr(rgb[nrgb+colorindex]);
+          }
+        }
+#else
         if(colorindex>=0){
           bc->color = GetColorPtr(rgb[nrgb+colorindex]);
         }
+#endif
       }
     }
     for(j=0;j<meshi->nvents;j++){
@@ -1100,6 +1111,8 @@ void SetCVentDirs(void){
 void SetVentDirs(void){
   int ii;
 
+  n_mirrorvents = 0;
+  n_openvents = 0;
   for(ii=0;ii<nmeshes;ii++){
     meshdata *meshi;
     float *xplttemp;
@@ -1130,6 +1143,8 @@ void SetVentDirs(void){
 
       vi=meshi->ventinfo+iv;
 
+      if(vi->isMirrorvent==1)n_mirrorvents++; // count number of mirror and open vents
+      if(vi->isOpenvent==1)n_openvents++;
       dir=0;
       if(vi->imin==vi->imax)dir=XDIR;
       if(vi->jmin==vi->jmax)dir=YDIR;
@@ -1603,10 +1618,12 @@ void ReadCAD2Geom(cadgeomdata *cd){
     texti->loaded=0;
     texti->used=0;
     texti->name=0;
+    texti->is_transparent = 0;
 
     if(texti->file!=NULL){
       int texwid, texht;
       unsigned char *floortex;
+      int is_transparent;
 
       if(have_textures==0){
         PRINTF("     Loading CAD textures\n");
@@ -1615,7 +1632,8 @@ void ReadCAD2Geom(cadgeomdata *cd){
       PRINTF("       Loading texture: %s",texti->file);
       glGenTextures(1,&texti->name);
       glBindTexture(GL_TEXTURE_2D,texti->name);
-      floortex=ReadPicture(texti->file,&texwid,&texht,0);
+      floortex=ReadPicture(texti->file,&texwid,&texht,&is_transparent,0);
+      texti->is_transparent = is_transparent;
       if(floortex==NULL){
         PRINTF(" - failed\n");
         fprintf(stderr,"*** Error: Texture file %s failed to load\n",texti->file);
@@ -2173,6 +2191,12 @@ void ObstOrVent2Faces(const meshdata *meshi,blockagedata *bc,
           faceptr->invisible=bc->surf[j]->invisible;
           faceptr->transparent=bc->surf[j]->transparent;
         }
+#ifdef pp_BLOCK_COLOR
+        if(bc->use_block_transparency==1){
+          faceptr->transparent = bc->transparent;
+          faceptr->color = GetColorTranPtr(faceptr->color, bc->transparency);
+        }
+#endif
         break;
       default:
         ASSERT(FFALSE);
@@ -2457,6 +2481,9 @@ void ObstOrVent2Faces(const meshdata *meshi,blockagedata *bc,
     }
     faceptr++;
   }
+#ifdef pp_BLOCK_COLOR
+  UpdateBlockType();
+#endif
 }
 
 /* ------------------ UpdateFaces ------------------------ */
@@ -4182,7 +4209,7 @@ void DrawUserTicks(void){
   int i;
   float xyz[3],xyz2[3];
   float tick_origin[3], step[3];
-  int show_tick_x, show_tick_y, show_tick_z;
+  int show_tick_x=0, show_tick_y=0, show_tick_z=0;
   float fds_tick_length;
 
 #define MIN_DTICK 0.0
@@ -4377,8 +4404,15 @@ void DrawUserTicks(void){
         xyz2[1]=xyz[1];
         xyz2[2]=xyz[2]-TEXT_FACTOR*fds_tick_length;
       }
-      sprintf(label,"%5.1f",GetUnitVal("Distance",xyz[0]));
-      TrimZeros(label);
+      {
+        char form[20], form2[20];
+
+        strcpy(form,"%5.");
+        sprintf(form2,"%i",ntick_decimals);
+        strcat(form,form2);
+        strcat(form,"f");
+        sprintf(label,form,GetUnitVal("Distance",xyz[0], ntick_decimals));
+      }
       Output3Text(foregroundcolor,xyz2[0],xyz2[1],xyz2[2], label);
     }
   }
@@ -4471,8 +4505,15 @@ void DrawUserTicks(void){
         xyz2[1]=xyz[1];
         xyz2[2]=xyz[2]-TEXT_FACTOR*fds_tick_length;
       }
-      sprintf(label,"%5.1f",GetUnitVal("Distance",xyz[1]));
-      TrimZeros(label);
+      {
+        char form[20], form2[20];
+
+        strcpy(form,"%5.");
+        sprintf(form2,"%i",ntick_decimals);
+        strcat(form,form2);
+        strcat(form,"f");
+        sprintf(label,form,GetUnitVal("Distance",xyz[1], ntick_decimals));
+      }
       Output3Text(foregroundcolor,xyz2[0],xyz2[1],xyz2[2], label);
     }
   }
@@ -4560,9 +4601,16 @@ void DrawUserTicks(void){
         xyz2[1]=xyz[1];
       }
       xyz2[2]=xyz[2];
-      sprintf(label,"%5.1f",GetUnitVal("Distance",xyz[2]));
-      TrimZeros(label);
-      Output3Text(foregroundcolor,xyz2[0],xyz2[1],xyz2[2], label);
+      {
+        char form[20], form2[20];
+
+        strcpy(form,"%5.");
+        sprintf(form2,"%i",ntick_decimals);
+        strcat(form,form2);
+        strcat(form,"f");
+        sprintf(label,form,GetUnitVal("Distance",xyz[2], ntick_decimals));
+      }
+      Output3Text(foregroundcolor,xyz2[0],xyz2[1],xyz2[2]+step[2]/20.0, label);
     }
   }
 

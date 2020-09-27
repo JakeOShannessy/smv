@@ -6,14 +6,13 @@
 #include <math.h>
 #include <zlib.h>
 #include "svzip.h"
-#include "MALLOC.h"
+#include "MALLOCC.h"
 #include "compress.h"
 
 void mt_update_slice_hist(void);
 
 #define FORTSLICEREAD(var,size) FSEEK(SLICEFILE,4,SEEK_CUR);\
                            returncode=fread(var,4,size,SLICEFILE);\
-                           if(endianswitch==1)EndianSwitch(var,size);\
                            FSEEK(SLICEFILE,4,SEEK_CUR)
 
 /* ------------------ ConvertVolSlice ------------------------ */
@@ -27,7 +26,7 @@ int ConvertVolSlice(slicedata *slicei, int *thread_index){
   uLong framesize;
   float *sliceframe_data=NULL;
   int sizebefore, sizeafter;
-  int returncode;
+  int returncode=0;
   LINT data_loc;
   int percent_done;
   int percent_next=10;
@@ -274,7 +273,7 @@ int ConvertSlice(slicedata *slicei, int *thread_index){
   unsigned char *sliceframe_compressed_rle=NULL, *sliceframe_uncompressed_rle=NULL;
   char cval[256];
   int sizebefore, sizeafter;
-  int returncode;
+  int returncode=0;
   float minmax[2];
   float time_local;
   LINT data_loc;
@@ -766,11 +765,6 @@ void *CompressVolSlices(void *arg){
 void GetSliceBounds(void){
   int i;
 
-  int endiandata;
-
-  endiandata = GetEndian();
-  if(endianswitch==1)endiandata = 1-endiandata;
-
   PRINTF("Determining slice file bounds\n");
   for(i = 0;i<nsliceinfo;i++){
     slicedata *slicei;
@@ -856,7 +850,6 @@ void GetGlobalSliceBounds(char *label){
   if(count>0){
     for(j = 0;j<nsliceinfo;j++){
       slicedata *slicej;
-      FILE *stream;
 
       slicej = sliceinfo+j;
       if(strcmp(label, slicej->label.shortlabel)!=0)continue;

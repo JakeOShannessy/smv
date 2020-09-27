@@ -48,7 +48,7 @@ void GetIsoLevels(const char *isofile, int dataflag, float **levelsptr, float **
 
 void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nvertices, int *ntriangles,
                  float **levelsptr, int *nisolevels, int *niso_times,
-                 float *tmin_local, float *tmax_local, int endian_local){
+                 float *tmin_local, float *tmax_local){
   int len[3],labellengths=0;
   int nlevels, n;
   int nvertices_i, ntriangles_i;
@@ -139,9 +139,6 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
     *niso_times += 1;
   }
   FSEEK(*isostreamptr,beg,SEEK_SET);
-  if(dataflag==1&&axislabels_smooth==1){
-    SmoothLabel(tmin_local,tmax_local,nrgb);
-  }
 }
 
 /* ------------------ ReadIsoGeomWrapup ------------------------ */
@@ -151,6 +148,7 @@ void ReadIsoGeomWrapup(int flag){
   float wrapup_time;
 #endif
 
+  update_fileload = 1;
   update_readiso_geom_wrapup=UPDATE_ISO_OFF;
 #ifdef pp_ISOTIME
   START_TIMER(wrapup_time);
@@ -288,6 +286,7 @@ FILE_SIZE ReadIsoGeom(const char *file, int ifile, int load_flag, int *geom_fram
   surfdata *surfi;
   FILE_SIZE return_filesize=0;
 
+  update_fileload = 1;
   if(load_flag==UNLOAD){
     CancelUpdateTriangles();
   }
@@ -385,7 +384,6 @@ FILE_SIZE ReadIsoGeom(const char *file, int ifile, int load_flag, int *geom_fram
     GetIsoDataBounds(isoi, &iso_valmin, &iso_valmax);
     isoi->geom_globalmin = iso_valmin;
     isoi->geom_globalmax = iso_valmax;
-    AdjustBounds(PERCENTILE_MIN, PERCENTILE_MAX, isoi->geom_vals, isoi->geom_nvals, &iso_valmin, &iso_valmax);
     isoi->geom_percentilemin = iso_valmin;
     isoi->geom_percentilemax = iso_valmax;
     if(setisomin == GLOBAL_MIN)iso_valmin = isoi->geom_globalmin;
@@ -542,6 +540,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
 
   START_TIMER(total_time);
 
+  update_fileload = 1;
   ASSERT(ifile>=0&&ifile<nisoinfo);
   ib = isoinfo+ifile;
   if(ib->loaded==0&&flag==UNLOAD)return;
@@ -577,7 +576,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
 
   GetIsoSizes(file, ib->dataflag, &isostream, &nisopoints, &nisotriangles,
     &meshi->isolevels, &meshi->nisolevels, &meshi->niso_times,
-    &ib->tmin, &ib->tmax, endian_data);
+    &ib->tmin, &ib->tmax);
 
   if(meshi->isolevels==NULL){
     ReadIso("",ifile,UNLOAD,NULL,&error);
@@ -963,12 +962,13 @@ FILE_SIZE ReadIso(const char *file, int ifile, int flag, int *geom_frame_index, 
   isodata *isoi;
   FILE_SIZE return_filesize=0;
 
+  update_fileload = 1;
   if(ifile>=0&&ifile<nisoinfo){
 
     isoi = isoinfo+ifile;
     if(flag==LOAD)PRINTF("Loading %s(%s)", file,isoi->surface_label.shortlabel);
     if(isoi->is_fed==1){
-      ReadFed(ifile, flag, FED_ISO, errorcode);
+      ReadFed(ifile, ALL_SLICE_FRAMES, NULL,  flag, FED_ISO, errorcode);
     }
     else{
       if(isoi->geomflag==1){
@@ -1011,7 +1011,7 @@ void DrawIsoOrig(int tranflag){
     iso_specular[3] = 1.0;
     if(tranflag==DRAW_TRANSPARENT)TransparentOn();
 
-    if(usetexturebar==1&&isoi->dataflag==1){
+    if(isoi->dataflag==1){
       glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
       glEnable(GL_TEXTURE_1D);
       glBindTexture(GL_TEXTURE_1D,texture_iso_colorbar_id);
@@ -1035,7 +1035,7 @@ void DrawIsoOrig(int tranflag){
       niso_list_start=niso_opaques;
     }
     CheckMemory;
-    if(usetexturebar==1&&isoi->dataflag==1){
+    if(isoi->dataflag==1){
       for(i=0;i<niso_list_start;i++){
         isotri *tri;
         isovert *v1, *v2, *v3;
@@ -1086,7 +1086,7 @@ void DrawIsoOrig(int tranflag){
     glEnd();
 
     glPopAttrib();
-    if(usetexturebar==1&&isoi->dataflag==1)glDisable(GL_TEXTURE_1D);
+    if(isoi->dataflag==1)glDisable(GL_TEXTURE_1D);
 
 
     if(tranflag==DRAW_TRANSPARENT)TransparentOff();
@@ -1600,7 +1600,6 @@ void UpdateIsoShowLevels(void){
 
 void SetIsoLabels(float smin, float smax,
                     isodata *sd, int *errorcode){
-  char *scale;
   int isotype;
   boundsdata *sb;
 
@@ -1611,9 +1610,7 @@ void SetIsoLabels(float smin, float smax,
 
   *errorcode=0;
   PRINTF("setting up iso labels \n");
-  scale=sb->scale;
-  GetIsoLabels(smin,smax,nrgb,
-                sb->colorlabels,&scale,sb->levels256);
+  GetIsoLabels(smin,smax,nrgb,sb->colorlabels,sb->levels256);
 }
 
 /* ------------------ CompareIsoTriangles ------------------------ */

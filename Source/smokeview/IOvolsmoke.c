@@ -7,7 +7,6 @@
 #include <float.h>
 #include GLUT_H
 
-#include "smv_endian.h"
 #include "update.h"
 #include "smokeviewvars.h"
 #include "IOvolsmoke.h"
@@ -17,7 +16,6 @@
 #define TRAILER_SIZE 4
 #define FORTVOLSLICEREAD(var,size) FSEEK(SLICEFILE,HEADER_SIZE,SEEK_CUR);\
                            fread(var,4,size,SLICEFILE);\
-                           if(endianswitch==1)EndianSwitch(var,size);\
                            FSEEK(SLICEFILE,TRAILER_SIZE,SEEK_CUR)
 
 
@@ -368,7 +366,6 @@ void InitVolsmokeSuperTexture(supermeshdata *smesh){
     glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, MAXSMOKERGB, 0, GL_RGBA, GL_FLOAT, rgb_volsmokecolormap);
   }
 
-#ifndef pp_GPUDEPTH
   nx = smesh->ibar;
   ny = smesh->jbar;
   nz = smesh->kbar;
@@ -383,7 +380,6 @@ void InitVolsmokeSuperTexture(supermeshdata *smesh){
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nx, ny, nz, border_size, GL_RED, GL_FLOAT, smesh->f_iblank_cell);
   }
-#endif
   glActiveTexture(GL_TEXTURE0);
   FFLUSH();
 }
@@ -393,6 +389,8 @@ void InitVolsmokeSuperTexture(supermeshdata *smesh){
 
 int MeshConnect(meshdata *mesh_from, int val, meshdata *mesh_to){
   float *eps;
+
+  //  returns 1 if mesh_from  is 'val' of mesh_to (where val is MLEFT, MRIGHT, MFRONT, MBACK, MDOWN, MBACK )
 
   eps = mesh_from->boxeps;
   switch(val){
@@ -582,38 +580,36 @@ void InitNabors(void){
     int j;
 
     meshi = meshinfo+i;
-    for(j = i+1;j<nmeshes;j++){
+    for(j = 0;j<nmeshes;j++){
       meshdata *meshj;
+
+      if(i==j)continue;
 
       meshj = meshinfo+j;
 
       if(MeshConnect(meshi, MLEFT, meshj)==1){
         meshi->nabors[MRIGHT] = meshj;
-        meshj->nabors[MLEFT] = meshi;
         continue;
       }
       if(MeshConnect(meshi, MRIGHT, meshj)==1){
         meshi->nabors[MLEFT] = meshj;
-        meshj->nabors[MRIGHT] = meshi;
         continue;
       }
       if(MeshConnect(meshi, MFRONT, meshj)==1){
         meshi->nabors[MBACK] = meshj;
-        meshj->nabors[MFRONT] = meshi;
         continue;
       }
       if(MeshConnect(meshi, MBACK, meshj)==1){
         meshi->nabors[MFRONT] = meshj;
-        meshj->nabors[MBACK] = meshi;
         continue;
       }
       if(MeshConnect(meshi, MDOWN, meshj)==1){
         meshi->nabors[MUP] = meshj;
-        meshj->nabors[MDOWN] = meshi;
+        continue;
       }
       if(MeshConnect(meshi, MUP, meshj)==1){
         meshi->nabors[MDOWN] = meshj;
-        meshj->nabors[MUP] = meshi;
+        continue;
       }
     }
   }
@@ -791,6 +787,7 @@ void InitVolRender(void){
   int i;
 
   nvolrenderinfo=0;
+  update_fileload = 1;
   for(i=0;i<nmeshes;i++){
     meshdata *meshi;
     volrenderdata *vr;
@@ -830,20 +827,21 @@ void InitVolRender(void){
     slicei = sliceinfo + i;
     blocknumber = slicei->blocknumber;
     if(blocknumber<0||blocknumber>=nmeshes)continue;
+    shortlabel = slicei->label.shortlabel;
+    longlabel = slicei->label.longlabel;
+    if(STRCMP(shortlabel, "temp")!=0&&STRCMP(shortlabel, "rho_Soot")!=0&&STRCMP(shortlabel, "rho_C0.9H0.1")!=0&&STRCMP(shortlabel, "frac")!=0&&STRCMP(shortlabel, "X_CO2")!=0)continue;
+    if(slicei->full_mesh==NO)continue;
     if(FILE_EXISTS(slicei->reg_file)==NO)continue;
 
     meshi = meshinfo + blocknumber;
-    if(slicei->full_mesh==NO)continue;
 
     vr = &(meshi->volrenderinfo);
-    shortlabel = slicei->label.shortlabel;
-    longlabel = slicei->label.longlabel;
 
     if(STRCMP(shortlabel,"temp")==0){
       vr->fireslice=slicei;
      continue;
     }
-    if(STRCMP(shortlabel, "rho_Soot")==0||(strlen(longlabel)>=12&&strncmp(longlabel, "SOOT DENSITY",12)==0)){
+    if(STRCMP(shortlabel, "rho_Soot")==0||STRCMP(shortlabel, "rho_C0.9H0.1")==0||(strlen(longlabel)>=12&&strncmp(longlabel, "SOOT DENSITY",12)==0)){
       vr->smokeslice=slicei;
       continue;
     }
@@ -1190,7 +1188,6 @@ void IntegrateSmokeColors(float *integrated_smokecolor, float *xyzvert, float dl
     }
     tauhat *= smoke_transparency;
   }
-#define MAXABS3(x) (MAX(ABS((x)[0]),MAX(ABS((x)[1]),ABS((x)[2]))))
 
   if(alphahat>0.0){
     float maxval;
@@ -2118,13 +2115,6 @@ void DrawSmoke3DGPUVol(void){
   if(mouse_down==1&&show_volsmoke_moving==0){
     return;
   }
-#ifdef pp_GPUDEPTH
-  GetDepthTexture();
-  glUniform1i(GPUvol_depthtexture,4);
-  glUniform2f(GPUvol_screensize,(float)screenWidth,(float)screenHeight);
-  glUniform2f(GPUvol_nearfar,fnear,ffar);
-  SNIFF_ERRORS("after DrawSmoke3dGpuVol A");
-#endif
   glUniform3f(GPUvol_light_position, xyz_light_glui[0],xyz_light_glui[1],xyz_light_glui[2]);
   glUniform1i(GPUvol_light_type, light_type_glui);
   glUniform1f(GPUvol_scatter_param, scatter_param);
@@ -2334,7 +2324,6 @@ float GetVolsmokeFrameTime(volrenderdata *vr, int framenum){
   FILE *SLICEFILE;
   int framesize;
   float time_local=0.0;
-  int endianswitch=0;
   LINT skip_local;
 
   if(framenum<0||framenum>=vr->ntimes)return time_local;
@@ -2464,8 +2453,7 @@ void ReadVolsmokeFrame(volrenderdata *vr, int framenum, int *first){
   FILE *SLICEFILE;
   int framesize,framesize2;
   LINT skip_local;
-  float time_local, *smokeframe_data, *fireframe_data, *lightframe_data;
-  int endianswitch=0;
+  float time_local, *smokeframe_data=NULL, *fireframe_data=NULL, *lightframe_data=NULL;
 #ifdef pp_VOLCO2
   unsigned char *c_smokedata_compressed=NULL, *c_firedata_compressed=NULL, *c_lightdata_compressed=NULL, *c_co2data_compressed = NULL;
   unsigned char *c_firedata_compressed2=NULL, *c_lightdata_compressed2=NULL, *c_co2data_compressed2 = NULL;
@@ -2797,6 +2785,7 @@ void UnloadVolsmokeFrameAllMeshes(int framenum){
   int i;
 
   PRINTF("Unloading smoke frame: %i\n",framenum);
+  update_fileload = 1;
   for(i=0;i<nmeshes;i++){
     meshdata *meshi;
     volrenderdata *vr;
@@ -2817,6 +2806,7 @@ void UnloadVolsmokeAllFrames(volrenderdata *vr){
   int i;
 
   PRINTF("Unloading smoke %s - ",vr->rendermeshlabel);
+  update_fileload = 1;
   for(i=0;i<vr->ntimes;i++){
     FREEMEMORY(vr->firedataptrs[i]);
     FREEMEMORY(vr->smokedataptrs[i]);
@@ -2837,6 +2827,7 @@ void ReadVolsmokeAllFrames(volrenderdata *vr){
   int i;
   int first=1;
 
+  update_fileload = 1;
   nframes = vr->ntimes;
   for(i=0;i<nframes;i++){
     ReadVolsmokeFrame(vr, i, &first);
@@ -2865,6 +2856,7 @@ void ReadVolsmokeFrameAllMeshes(int framenum, supermeshdata *smesh){
   int first=1;
   int nm;
 
+  update_fileload = 1;
   if(smesh==NULL){
     nm=nmeshes;
   }
@@ -3059,7 +3051,6 @@ void InitVolsmokeTexture(meshdata *meshi){
 
 // define blockage texture
 
-#ifndef pp_GPUDEPTH
   nx = meshi->ibar;
   ny = meshi->jbar;
   nz = meshi->kbar;
@@ -3075,7 +3066,6 @@ void InitVolsmokeTexture(meshdata *meshi){
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, nx, ny, nz, border_size, GL_RED, GL_FLOAT, meshi->f_iblank_cell);
   }
-#endif
 
   glActiveTexture(GL_TEXTURE0);
   PRINTF("complete");
@@ -3114,6 +3104,7 @@ void DefineVolsmokeTextures(void){
 void ReadVolsmokeAllFramesAllMeshes(void){
   int i;
 
+  update_fileload = 1;
   compress_volsmoke=glui_compress_volsmoke;
   load_volcompressed=glui_load_volcompressed;
   for(i=0;i<nmeshes;i++){

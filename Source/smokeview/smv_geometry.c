@@ -8,6 +8,8 @@
 #include GLUT_H
 
 #include "smokeviewvars.h"
+#include "IOvolsmoke.h"
+#include "interp.h"
 
 /* ------------------ Slerp ------------------------ */
 
@@ -463,8 +465,6 @@ void UpdatePlotxyzAll(void){
   }
 }
 
-#define MESHEPS 0.001
-
 /* ------------------ GetMesh ------------------------ */
 
 meshdata *GetMesh(float *xyz, meshdata *guess){
@@ -894,8 +894,6 @@ void GetScreenMapping(float *xyz0, float *screen_perm){
     set=1;\
   }
 
-#define MAXABS3(x) (MAX(ABS((x)[0]),MAX(ABS((x)[1]),ABS((x)[2]))))
-
   glGetIntegerv(GL_VIEWPORT, viewport);
   glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
   glGetDoublev(GL_PROJECTION_MATRIX, projection);
@@ -1208,7 +1206,7 @@ int MakeIBlank(void){
     int nx, ny, nxy, ibarjbar;
     int ibar,jbar,kbar;
     float *fblank_cell=NULL;
-    char *iblank_node=NULL,*iblank_cell=NULL,*c_iblank_x=NULL,*c_iblank_y=NULL,*c_iblank_z=NULL;
+    char *iblank_node=NULL,*iblank_cell=NULL,*c_iblank_x=NULL,*c_iblank_y=NULL,*c_iblank_z=NULL,*c_iblank_node_html=NULL;
     int ii,ijksize;
     int i,j,k;
 
@@ -1220,6 +1218,7 @@ int MakeIBlank(void){
     kbar = meshi->kbar;
     ijksize=(ibar+1)*(jbar+1)*(kbar+1);
 
+    if(NewMemory((void **)&c_iblank_node_html, ijksize*sizeof(char))==0)return 1;
     if(NewMemory((void **)&iblank_node,ijksize*sizeof(char))==0)return 1;
     if(NewMemory((void **)&iblank_cell,ibar*jbar*kbar*sizeof(char))==0)return 1;
     if(NewMemory((void **)&fblank_cell,ibar*jbar*kbar*sizeof(float))==0)return 1;
@@ -1227,6 +1226,7 @@ int MakeIBlank(void){
     if(NewMemory((void **)&c_iblank_y,ijksize*sizeof(char))==0)return 1;
     if(NewMemory((void **)&c_iblank_z,ijksize*sizeof(char))==0)return 1;
 
+    meshi->c_iblank_node_html = c_iblank_node_html;
     meshi->c_iblank_node0=iblank_node;
     meshi->c_iblank_cell0=iblank_cell;
     meshi->f_iblank_cell0=fblank_cell;
@@ -1238,10 +1238,11 @@ int MakeIBlank(void){
       iblank_cell[i]=GAS;
     }
     for(i=0;i<ijksize;i++){
-      iblank_node[i]=GAS;
-      c_iblank_x[i]=GAS;
-      c_iblank_y[i]=GAS;
-      c_iblank_z[i]=GAS;
+      c_iblank_node_html[i] = GAS;
+      iblank_node[i]        = GAS;
+      c_iblank_x[i]         = GAS;
+      c_iblank_y[i]         = GAS;
+      c_iblank_z[i]         = GAS;
     }
 
     nx = ibar+1;
@@ -1260,6 +1261,21 @@ int MakeIBlank(void){
           ijk = IJKCELL(bc->ijk[IMIN], j, k);
           for(i = bc->ijk[IMIN]; i < bc->ijk[IMAX]; i++){
             iblank_cell[ijk++] = SOLID;
+          }
+        }
+      }
+    }
+    for(ii = 0; ii<meshi->nbptrs; ii++){
+      blockagedata *bc;
+
+      bc = meshi->blockageinfoptrs[ii];
+      for(k = bc->ijk[KMIN]; k<=bc->ijk[KMAX]; k++){
+        for(j = bc->ijk[JMIN]; j<=bc->ijk[JMAX]; j++){
+          int ijk;
+
+          ijk = IJK(bc->ijk[IMIN], j, k);
+          for(i = bc->ijk[IMIN]; i<=bc->ijk[IMAX]; i++){
+            c_iblank_node_html[ijk++] = SOLID;
           }
         }
       }

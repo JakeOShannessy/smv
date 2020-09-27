@@ -21,10 +21,13 @@
 
 #define SCALE2FDSL(x) ((x)*xyzmaxdiff_local)
 
-#define YES 1
-#define NO 0
+#define NO      0
+#define YES     1
 
 #define PLANEDIST(norm,xyz0,xyz) ((xyz[0]-xyz0[0])*norm[0]+(xyz[1]-xyz0[1])*norm[1]+(xyz[2]-xyz0[2])*norm[2])
+
+#define REL_VAL(val, valmin, valmax) ((float)((val)-(valmin))/(float)((valmax)-(valmin)))
+#define SHIFT_VAL(val, valmin, valmax, shift_val) ((valmin) + ((valmax)-(valmin))*pow(REL_VAL((val),(valmin),(valmax)),(shift_val)))
 
 #define NORMALIZE_X(x) (((x)-xbar0)/xyzmaxdiff)
 #define NORMALIZE_Y(y) (((y)-ybar0)/xyzmaxdiff)
@@ -226,6 +229,10 @@
 #define MAX(a,b)  ((a)>(b) ? (a) : (b))
 #endif
 
+#ifndef MAXABS3
+#define MAXABS3(x) (MAX(ABS((x)[0]),MAX(ABS((x)[1]),ABS((x)[2]))))
+#endif
+
 #ifndef MAX3
 #define MAX3(a,b,c) ((a)<(b)?(MAX(b,c)):(MAX(a,c)))
 #endif
@@ -276,7 +283,7 @@
 
 #ifndef GET_QVAL
 #define GET_QVAL(i,j,k,n) \
-  if(cache_qdata==1){\
+  if(cache_plot3d_data==1){\
     qval=qdata[IJKN(i,j,k,n)];\
   }\
   else{\

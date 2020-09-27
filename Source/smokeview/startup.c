@@ -9,7 +9,6 @@
 #include "gui.h"
 #include "ui.h"
 
-#include "smokeviewvars.h"
 #include "infoheader.h"
 #include "update.h"
 #ifdef pp_LUA
@@ -29,7 +28,7 @@ void InitMisc(void){
   int i;
 
   FREEMEMORY(plotiso);
-  NewMemory((void **)&plotiso,mxplot3dvars*sizeof(int));
+  NewMemory((void **)&plotiso, MAXPLOT3DVARS*sizeof(int));
 
   for(i=0;i<16;i++){
     if(i%5==0){
@@ -39,7 +38,7 @@ void InitMisc(void){
       modelview_identity[i]=0.0;
     }
   }
-  for(i=0;i<mxplot3dvars;i++){
+  for(i=0;i<MAXPLOT3DVARS;i++){
     plotiso[i]=nrgb/2;
   }
 
@@ -202,6 +201,16 @@ int SetupCase(int argc, char **argv){
   char *input_file;
 
   return_code=-1;
+
+  FREEMEMORY(part_globalbound_filename);
+  NewMemory((void **)&part_globalbound_filename, strlen(fdsprefix)+strlen(".prt5.gbnd")+1);
+  STRCPY(part_globalbound_filename, fdsprefix);
+  STRCAT(part_globalbound_filename, ".prt5.gbnd");
+  part_globalbound_filename = GetFileName(smokeviewtempdir, part_globalbound_filename, NOT_FORCE_IN_DIR);
+
+  // setup input files names
+
+  input_file = smv_filename;
   if(strcmp(input_filename_ext,".svd")==0||demo_option==1){
     trainer_mode=1;
     trainer_active=1;
@@ -211,18 +220,21 @@ int SetupCase(int argc, char **argv){
     else if(strcmp(input_filename_ext,".smt")==0){
       input_file=test_filename;
     }
-    else{
-      input_file=smv_filename;
-    }
-    return_code=ReadSMV(input_file,iso_filename);
-    if(return_code==0){
-      ShowGluiTrainer();
-      ShowGluiAlert();
+  }
+  {
+    bufferstreamdata *smv_streaminfo = NULL;
+
+    PRINTF(_("processing smokeview file:"));
+    PRINTF(" %s\n", input_file);
+    smv_streaminfo = GetSMVBuffer(input_file, iso_filename);
+    return_code = ReadSMV(smv_streaminfo);
+    if(smv_streaminfo!=NULL){
+      FCLOSE(smv_streaminfo);
     }
   }
-  else{
-    input_file=smv_filename;
-    return_code=ReadSMV(input_file,iso_filename);
+  if(return_code==0&&trainer_mode==1){
+    ShowGluiTrainer();
+    ShowGluiAlert();
   }
   switch(return_code){
     case 1:
@@ -255,9 +267,7 @@ int SetupCase(int argc, char **argv){
 
   if(use_graphics==0)return 0;
   glui_defined = 1;
-#ifdef pp_LANG
   InitTranslate(smokeview_bindir, tr_name);
-#endif
 
   if(ntourinfo==0)SetupTour();
   InitRolloutList();
@@ -293,12 +303,36 @@ int SetupCase(int argc, char **argv){
     ShowGluiAlert();
   }
   // initialize info header
-  initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash,
-                       chidfilebase);
+  initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash, chidfilebase, fds_title);
   return 0;
 }
 
-/* ------------------ SetupGlfw ------------------------ */
+#ifdef pp_OSX
+/* ------------------ GetScreenHeight ------------------------ */
+
+int GetScreenHeight(void){
+  FILE *stream;
+  char command[1000], height_file[1000], *full_height_file, buffer[255];
+  int screen_height=-1;
+
+  strcpy(command,"system_profiler SPDisplaysDataType | grep Resolution | awk '{print $4}' >& ");
+  strcpy(height_file, fdsprefix);
+  strcat(height_file, ".hgt");
+  full_height_file = GetFileName(smokeviewtempdir, height_file, NOT_FORCE_IN_DIR);
+  strcat(command,full_height_file);
+  system(command);
+  stream = fopen(full_height_file,"r");
+  if(stream!=NULL){
+    fgets(buffer, 255, stream);
+    sscanf(buffer, "%i", &screen_height);
+    fclose(stream);
+  }
+  FREEMEMORY(full_height_file);
+  return screen_height;
+}
+#endif
+
+/* ------------------ SetupGlut ------------------------ */
 
 void SetupGlfw(int argc, char **argv){
   int i;
@@ -318,11 +352,13 @@ void SetupGlfw(int argc, char **argv){
 
   // create full path for html template file
 
-#ifdef pp_HTML
   NewMemory((void **)&smokeview_html, (unsigned int)(strlen(smokeview_bindir)+strlen("smokeview.html")+1));
   STRCPY(smokeview_html, smokeview_bindir);
   STRCAT(smokeview_html, "smokeview.html");
-#endif
+
+  NewMemory((void **)&smokeviewvr_html, (unsigned int)(strlen(smokeview_bindir)+strlen("smokeview_vr.html")+1));
+  STRCPY(smokeviewvr_html, smokeview_bindir);
+  STRCAT(smokeviewvr_html, "smokeview_vr.html");
 
   startup_pass=2;
 
@@ -340,6 +376,20 @@ void SetupGlfw(int argc, char **argv){
       if(FileExistsOrig(smoketempdir)==NO){
         if(MKDIR(smoketempdir)!=0){
           FREEMEMORY(smoketempdir);
+        }
+      }
+
+      // only needed if -info option is used
+
+      if(generate_info_from_commandline == 1){
+        NewMemory((void **)&smokeview_cachedir, strlen(homedir)+strlen(dirseparator)+strlen(".smokeview")+1);
+        strcpy(smokeview_cachedir, homedir);
+        strcat(smokeview_cachedir, dirseparator);
+        strcat(smokeview_cachedir, ".smokeview");
+        if(FileExistsOrig(smokeview_cachedir)==NO){
+          if(MKDIR(smokeview_cachedir)!=0){
+            FREEMEMORY(smokeview_cachedir);
+          }
         }
       }
     }
@@ -365,6 +415,11 @@ void SetupGlfw(int argc, char **argv){
       PRINTF(" %s\n",smokeviewtempdir);
     }
   }
+
+#ifdef pp_OSX
+  monitor_screen_height = GetScreenHeight();
+#endif
+
 #ifdef pp_BETA
   fprintf(stderr,"%s\n","\n*** This version of Smokeview is intended for review and testing ONLY. ***");
 #endif
@@ -464,7 +519,7 @@ int SetupGui(Gui *smv_gui) {
     uiFreeInitError(err);
     return 1;
   }
-  DialogMotionSetup(smv_gui);
+  // DialogMotionSetup(smv_gui);
   // GluiColorbarSetup(mainwindow_id);
   // GluiMotionSetup(mainwindow_id);
   // GluiBoundsSetup(mainwindow_id);
@@ -1074,9 +1129,9 @@ void InitOpenGL(void){
       vslicedata *vslicei;
 
       vslicei = vsliceinfo + i;
-      if(vslicei->autoload==0&&vslicei->loaded==1)ReadVSlice(i,UNLOAD,&errorcode);
+      if(vslicei->autoload==0&&vslicei->loaded==1)ReadVSlice(i,ALL_SLICE_FRAMES, NULL, UNLOAD,&errorcode);
       if(vslicei->autoload==1){
-        ReadVSlice(i,LOAD,&errorcode);
+        ReadVSlice(i,ALL_SLICE_FRAMES, NULL, LOAD,&errorcode);
       }
     }
     // note:  only slices that are NOT a part of a vector slice will be loaded here
@@ -1100,23 +1155,22 @@ void InitOpenGL(void){
         slicei = sliceinfo + i;
         set_slicecolor = DEFER_SLICECOLOR;
         if(i == last_slice)set_slicecolor = SET_SLICECOLOR;
-        if(slicei->autoload == 0 && slicei->loaded == 1)ReadSlice(slicei->file, i, UNLOAD, set_slicecolor,&errorcode);
-        if(slicei->autoload == 1 && slicei->loaded == 0)ReadSlice(slicei->file, i, LOAD, set_slicecolor, &errorcode);
+        if(slicei->autoload == 0 && slicei->loaded == 1)ReadSlice(slicei->file, i, ALL_SLICE_FRAMES, NULL, UNLOAD, set_slicecolor,&errorcode);
+        if(slicei->autoload == 1 && slicei->loaded == 0){
+#ifdef pp_NEWBOUND_DIALOG
+          ReadSliceUseGluiBounds(slicei->file, i, ALL_SLICE_FRAMES, NULL, LOAD, set_slicecolor, &errorcode);
+#else
+                       ReadSlice(slicei->file, i, ALL_SLICE_FRAMES, NULL, LOAD, set_slicecolor, &errorcode);
+#endif
+        }
       }
-    }
-    for(i=0;i<nterraininfo;i++){
-      terraindata *terri;
-
-      terri = terraininfo + i;
-      if(terri->autoload==0&&terri->loaded==1)ReadTerrain(terri->file,i,UNLOAD,&errorcode);
-      if(terri->autoload==1&&terri->loaded==0)ReadTerrain(terri->file,i,LOAD,&errorcode);
     }
     for(i=0;i<nsmoke3dinfo;i++){
       smoke3ddata *smoke3di;
 
       smoke3di = smoke3dinfo + i;
-      if(smoke3di->autoload==0&&smoke3di->loaded==1)ReadSmoke3D(ALL_FRAMES,i,UNLOAD,&errorcode);
-      if(smoke3di->autoload==1)ReadSmoke3D(ALL_FRAMES,i,LOAD,&errorcode);
+      if(smoke3di->autoload==0&&smoke3di->loaded==1)ReadSmoke3D(ALL_SMOKE_FRAMES, i, UNLOAD, FIRST_TIME, &errorcode);
+      if(smoke3di->autoload==1)ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
     }
     for(i=0;i<npatchinfo;i++){
       patchdata *patchi;
@@ -1272,9 +1326,7 @@ void InitVars(void){
     memcpy(&LABEL_local,&LABEL_default,sizeof(labeldata));
   }
 
-#ifdef pp_LANG
   strcpy(startup_lang_code,"en");
-#endif
   mat_specular_orig[0]=0.5f;
   mat_specular_orig[1]=0.5f;
   mat_specular_orig[2]=0.2f;
@@ -1352,7 +1404,6 @@ void InitVars(void){
   direction_color[3]=1.0;
 
   direction_color_ptr=GetColorPtr(direction_color);
-  show_slice_terrain=0;
 
   shooter_uvw[0]=0.0;
   shooter_uvw[1]=0.0;
@@ -1431,8 +1482,6 @@ void InitVars(void){
   rgb_terrain[9][2]=0.5;
   rgb_terrain[9][3]=1.0;
 
-  percentile_level=0.01;
-
   strcpy(script_inifile_suffix,"");
   strcpy(script_renderdir,"");
   strcpy(script_renderfilesuffix,"");
@@ -1498,8 +1547,7 @@ void InitVars(void){
   ReadPlot3dFile=0, ReadIsoFile=0;
 
   ReadVolSlice=0;
-  Read3DSmoke3DFile=0;
-  ReadZoneFile=0, ReadPartFile=0, ReadEvacFile=0;;
+  ReadZoneFile=0;
 
   editwindow_status=-1;
   startup_pass=1;
@@ -1517,11 +1565,11 @@ void InitVars(void){
   setpartmin=PERCENTILE_MIN, setpartmax=PERCENTILE_MAX;
   setpartmin_old=setpartmin;
   setpartmax_old=setpartmax;
-  setpatchmin=GLOBAL_MIN, setpatchmax=GLOBAL_MAX;
+  glui_setpatchmin = GLOBAL_MIN;
+  glui_setpatchmax = GLOBAL_MAX;
   settargetmin=0, settargetmax=0;
   setpartchopmin=0, setpartchopmax=0;
   partchopmin=1.0,  partchopmax=0.;
-  slicechopmin=0, slicechopmax=0;
 
   temp_threshold=400.0;
   vis_onlythreshold=0, vis_threshold=0;
@@ -1548,7 +1596,6 @@ void InitVars(void){
   hrrpuv_iso_color[1]=0.5;
   hrrpuv_iso_color[2]=0.0;
   hrrpuv_iso_color[3]=1.0;
-  showterrain=0;
   showgluitrainer=0;
   colorbartype=0;
   colorbartype_ini=-1;
@@ -1601,7 +1648,7 @@ void InitVars(void){
   periodic_value=-2;
 
   slicefilenum=-1;
-  partfilenum=-1,zonefilenum=-1;
+  zonefilenum=-1;
   targfilenum=-1;
 
   setPDIM=0;
@@ -1675,7 +1722,6 @@ void InitVars(void){
   usetextures=0;
   canrestorelastview=0;
   ntargets=0;
-  endian_data=0, endian_native=0, setendian=0;
 
   mainwindow_id=0;
   rendertourcount=0;
@@ -1784,7 +1830,7 @@ void InitVars(void){
   right_green=0.0;
   right_blue=1.0;
   apertureindex=1;
-  zoomindex=2;
+  zoomindex=ZOOMINDEX_ONE;
   projection_type=PROJECTION_PERSPECTIVE;
   apertures[0]=30.;
   apertures[1]=45.;
@@ -1793,11 +1839,13 @@ void InitVars(void){
   apertures[3]=90.;
   planar_terrain_slice=0;
 
-  zooms[0]=0.25;
-  zooms[1]=0.5;
-  zooms[2]=1.0;
-  zooms[3]=2.0;
-  zooms[4]=4.0;
+  zooms[0] = 0.25;
+  zooms[1] = 0.5;
+  zooms[2] = 1.0;
+  zooms[3] = 2.0;
+  zooms[4] = 4.0;
+  zooms[5] = 10.0;
+  zooms[MAX_ZOOMS] = -1.0;
   zoom=1.0;
   aperture = Zoom2Aperture(zoom);
   aperture_glui = aperture;
@@ -1879,7 +1927,6 @@ void InitVars(void){
   nearclip=0.001,farclip=3.0;
   updateclipvals=0;
   updateUpdateFrameRateMenu=0;
-  ntextures=0;
   nskyboxinfo=0;
 
   streak_rvalue[0]=0.25;
@@ -1916,7 +1963,6 @@ void InitVars(void){
 
   smokecullflag=1;
   visMAINmenus=0;
-  smoke3d_thick=0;
 #ifdef pp_GPU
   smoke3d_rthick=1.0;
   usegpu=0;
@@ -1925,7 +1971,6 @@ void InitVars(void){
   blockage_as_input=0;
   blockage_snapped=1;
   show_cad_and_grid=0;
-  nplot3dtimelist=0;
 
   buffertype=DOUBLE_BUFFER;
   opengldefined=0;
@@ -2010,7 +2055,6 @@ void InitVars(void){
 
   demo_mode=0;
   update_demo=1;
-  mxplot3dvars=MAXPLOT3DVARS;
 
   valindex=0;
 
@@ -2136,16 +2180,23 @@ void InitVars(void){
     int iii;
 
     for(iii=0;iii<7;iii++){
-      vis_boundary_type[iii]=0;
+      vis_boundary_type[iii]=1;
     }
     vis_boundary_type[0]=1;
     for(iii=0;iii<MAXPLOT3DVARS;iii++){
-      setp3min[iii]=PERCENTILE_MIN;
-      p3min[iii]=1.0f;
-      p3chopmin[iii]=1.0f;
-      setp3max[iii]=PERCENTILE_MAX;
-      p3max[iii]=1.0f;
-      p3chopmax[iii]=0.0f;
+#ifdef pp_NEWBOUND_DIALOG
+      setp3min_all[iii] = SET_MIN;
+      setp3max_all[iii] = SET_MAX;
+      p3min_ini[iii] = 1.0;
+      p3max_ini[iii] = 0.0;
+#else
+      setp3min_all[iii] = PERCENTILE_MIN;
+      setp3max_all[iii] = PERCENTILE_MAX;
+#endif
+      p3min_all[iii]    = 1.0f;
+      p3chopmin[iii]    = 1.0f;
+      p3max_all[iii]    = 1.0f;
+      p3chopmax[iii]    = 0.0f;
     }
   }
 }

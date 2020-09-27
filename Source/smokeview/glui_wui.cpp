@@ -7,29 +7,10 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "glui_bounds.h"
+#include "glui_wui.h"
 
 GLUI_Panel *PANEL_terrain=NULL;
-
-#define TERRAIN_COLORS 35
-#define TERRAIN_VERT 34
-#define WUI_CLOSE 99
-#define SAVE_SETTINGS 98
-#define TERRAIN_TYPE 36
-#define TERRAIN_MIN 37
-#define TERRAIN_MAX 38
-#define TERRAIN_FIRE_LINE_UPDATE 39
-
-#define SETVALMIN 1
-#define SETVALMAX 2
-#define VALMIN 3
-#define VALMAX 4
-#define FILETYPEINDEX 5
-#define CHOPVALMIN 13
-#define CHOPVALMAX 14
-#define SETCHOPMINVAL 15
-#define SETCHOPMAXVAL 16
-#define CHOPUPDATE 17
-#define FILEUPDATE 6
 
 GLUI *glui_wui=NULL;
 
@@ -38,6 +19,7 @@ GLUI_Panel *PANEL_fire_line=NULL;
 GLUI_Panel *PANEL_terrain_hidden1=NULL;
 GLUI_Panel *PANEL_terrain_color=NULL;
 GLUI_Panel *PANEL_terrain_type=NULL;
+GLUI_Panel *PANEL_terrain_normal=NULL;
 
 GLUI_RadioGroup *RADIO_terrain_type=NULL;
 
@@ -75,7 +57,6 @@ extern "C" void UpdateGluiWui(void){
 /* ------------------ GluiWuiSetup ------------------------ */
 
 extern "C" void GluiWuiSetup(int main_window){
-  update_glui_wui=0;
   if(glui_wui!=NULL){
     glui_wui->close();
     glui_wui=NULL;
@@ -116,12 +97,10 @@ extern "C" void GluiWuiSetup(int main_window){
     RADIOBUTTON_wui_1c=glui_wui->add_radiobutton_to_group(RADIO_terrain_type,_("2D lines"));
     RADIOBUTTON_texture=glui_wui->add_radiobutton_to_group(RADIO_terrain_type,_("Image"));
     RADIOBUTTON_wui_1d=glui_wui->add_radiobutton_to_group(RADIO_terrain_type,_("Hidden"));
-#ifndef pp_SHOWTERRAIN
     RADIOBUTTON_wui_1b->disable();
     RADIOBUTTON_wui_1c->disable();
-#endif
 
-    if(terrain_texture==NULL||terrain_texture->loaded==0){
+    if(terrain_textures==NULL){
       RADIOBUTTON_texture->disable();
     }
 
@@ -133,11 +112,18 @@ extern "C" void GluiWuiSetup(int main_window){
     glui_wui->add_button_to_panel(PANEL_fire_line,_("Update"),TERRAIN_FIRE_LINE_UPDATE,WuiCB);
 
     SPINNER_vertical_factor=glui_wui->add_spinner_to_panel(PANEL_terrain_hidden1,"vertical exaggeration",GLUI_SPINNER_FLOAT,&vertical_factor,TERRAIN_VERT,WuiCB);
-     SPINNER_vertical_factor->set_float_limits(0.25,4.0,GLUI_LIMIT_CLAMP);
+    SPINNER_vertical_factor->set_float_limits(0.25,4.0,GLUI_LIMIT_CLAMP);
+    glui_wui->add_checkbox_to_panel(PANEL_terrain_hidden1, "show grid", &show_terrain_grid);
+    PANEL_terrain_normal=glui_wui->add_panel_to_panel(PANEL_terrain_hidden1,_("normals"));
+    glui_wui->add_checkbox_to_panel(PANEL_terrain_normal, "show", &show_terrain_normals);
+    glui_wui->add_spinner_to_panel(PANEL_terrain_normal, "length", GLUI_SPINNER_FLOAT, &terrain_normal_length);
+    glui_wui->add_spinner_to_panel(PANEL_terrain_normal, "skip", GLUI_SPINNER_INT, &terrain_normal_skip);
 
-    BUTTON_wui_1=glui_wui->add_button("Save settings",SAVE_SETTINGS,WuiCB);
+    BUTTON_wui_1=glui_wui->add_button("Save settings",SAVE_SETTINGS_WUI,WuiCB);
     BUTTON_wui_2=glui_wui->add_button("Close",WUI_CLOSE,WuiCB);
-
+#ifdef pp_CLOSEOFF
+    BUTTON_wui_2->disable();
+#endif
   }
 
   glui_wui->set_main_gfx_window( main_window );
@@ -170,15 +156,17 @@ extern "C" void WuiCB(int var){
       list_slice_index=fire_line_type;
       UpdateSliceList(list_slice_index);
 
-      SliceBoundCB(FILETYPEINDEX);
+      SliceBoundCB(FILETYPE_INDEX);
 
-      setslicemin=1;
-      setslicemax=1;
-      slicemin=20.0;
-      slicemax=fire_line_max;
-      setslicechopmin=1;
-      setslicechopmax=0;
-      slicechopmin=fire_line_min;
+#ifndef pp_NEWBOUND_DIALOG
+      glui_setslicemin = SET_MIN;
+      glui_setslicemax = SET_MAX;
+#endif
+      glui_slicemin=20.0;
+      glui_slicemax=fire_line_max;
+      glui_setslicechopmin = 1;
+      glui_setslicechopmax = 0;
+      glui_slicechopmin=fire_line_min;
 
       SliceBoundCB(SETVALMIN);
       SliceBoundCB(SETVALMAX);
@@ -190,7 +178,7 @@ extern "C" void WuiCB(int var){
       SliceBoundCB(CHOPVALMIN);
       SliceBoundCB(CHOPVALMAX);
 
-      SliceBoundCB(FILEUPDATE);
+      SliceBoundCB(FILE_UPDATE);
       SliceBoundCB(CHOPUPDATE);
       break;
     case TERRAIN_COLORS:
@@ -208,7 +196,7 @@ extern "C" void WuiCB(int var){
       }
       updatemenu=1;
       break;
-  case SAVE_SETTINGS:
+  case SAVE_SETTINGS_WUI:
     WriteIni(LOCAL_INI,NULL);
     break;
   case WUI_CLOSE:

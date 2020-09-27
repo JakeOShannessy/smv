@@ -61,7 +61,7 @@ GLUI_Button *BUTTON_clip_2=NULL;
 #define DEFAULT_VALS -2
 
 #define CLIP_CLOSE 99
-#define SAVE_SETTINGS 98
+#define SAVE_SETTINGS_CLIP 98
 #define CLIP_MESH 80
 
 /* ------------------ UpdateShowRotationCenter2 ------------------------ */
@@ -73,9 +73,7 @@ extern "C" void UpdateShowRotationCenter2(void){
 /* ------------------ ClipCB ------------------------ */
 
 void ClipCB(int var){
-  int i;
-
-  // glutPostRedisplay();
+   // glutPostRedisplay();
   switch(var){
   case CLIP_ROTATE:
     if(clip_rotate==0){
@@ -96,7 +94,7 @@ void ClipCB(int var){
       SetClipControls(clip_mesh);
     }
     break;
-  case SAVE_SETTINGS:
+  case SAVE_SETTINGS_CLIP:
     WriteIni(LOCAL_INI, NULL);
     break;
   case CLIP_CLOSE:
@@ -136,6 +134,8 @@ void ClipCB(int var){
     updatefacelists = 1;
     UpdateClipPlanes();
     if(clip_mode != CLIP_OFF){
+      int i;
+
       for(i = 0;i < 6;i++){
         ClipCB(i);
       }
@@ -279,9 +279,6 @@ void SetClipControls(int val){
 /* ------------------ GluiClipSetup ------------------------ */
 
 extern "C" void GluiClipSetup(int main_window){
-  int i;
-
-  update_glui_clip=0;
   if(glui_clip!=NULL){
     glui_clip->close();
     glui_clip=NULL;
@@ -314,6 +311,7 @@ extern "C" void GluiClipSetup(int main_window){
   RADIOBUTTON_clip_1b=glui_clip->add_radiobutton_to_group(radio_clip,_("Clip blockages and data"));
   RADIOBUTTON_clip_1c=glui_clip->add_radiobutton_to_group(radio_clip,_("Clip blockages"));
   RADIOBUTTON_clip_1c=glui_clip->add_radiobutton_to_group(radio_clip,_("Clip data"));
+  ASSERT(CLIP_MAX==3);
 
   PANEL_rotation_center = glui_clip->add_panel_to_panel(PANEL_clip,"rotation center");
   CHECKBOX_clip_rotate = glui_clip->add_checkbox_to_panel(PANEL_rotation_center,"center of clipping planes", &clip_rotate, CLIP_ROTATE, ClipCB);
@@ -342,6 +340,7 @@ extern "C" void GluiClipSetup(int main_window){
 
   {
     int nblocks = 0;
+    int i;
 
     for(i = 0;i < nmeshes;i++){
       meshdata *meshi;
@@ -375,11 +374,14 @@ extern "C" void GluiClipSetup(int main_window){
 
   glui_clip->add_column_to_panel(panel_wrapup,false);
 
-  BUTTON_clip_1=glui_clip->add_button_to_panel(panel_wrapup,_("Save settings"),SAVE_SETTINGS,ClipCB);
+  BUTTON_clip_1=glui_clip->add_button_to_panel(panel_wrapup,_("Save settings"),SAVE_SETTINGS_CLIP,ClipCB);
 
   glui_clip->add_column_to_panel(panel_wrapup,false);
 
   BUTTON_clip_2=glui_clip->add_button_to_panel(panel_wrapup,_("Close"),CLIP_CLOSE,ClipCB);
+#ifdef pp_CLOSEOFF
+  BUTTON_clip_2->disable();
+#endif
 
   if(updateclipvals==1){
     SetClipControls(INI_VALS);  // clip vals from ini file

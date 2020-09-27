@@ -1,48 +1,33 @@
 ## Building Smokeview and Utilities
 
-The directories under smv/Build contain scripts for building smokeview and utility programs such as smokediff and smokezip.  
-Most of these scripts assume you have an Intel C/C++ compiler installed.  Smokeview, smokediff and smokezip also
+The directories under smv/Build contain scripts for building smokeview and utilities such as smokediff and smokezip.  
+Most of these scripts assume you have an Intel C/C++ compiler.  Smokeview, smokediff and smokezip also
 assume you have an Intel Fortran Compiler.  Linux and OSX build directories also have scripts for building
-these applications using gnu compilers (gcc and gfortran). 
+using gcc and gfortran gnu compilers. 
 
 ### Preliminaries
 
   * Install the GIT repository for FDS and Smokeview using the [GIT getting started wiki](https://github.com/firemodels/fds/wiki/Git-Notes-Getting-Started).  
 
-The following steps assume that `~/Fire-Models` is the repository root where `~` is your home directory.
-
-  * On a Windows PC, install the [GNU make utility - http://gnuwin32.sourceforge.net/packages/make.htm](http://gnuwin32.sourceforge.net/packages/make.htm).
-
-  * The gnu make installer does not add an entry to the PATH variable.  When you run the installer, note where the installer places the make utility executable, then add this directory path to your PATH variable. 
-
-  * On a Linux or OSX system, define the shell variable, `IFORT_COMPILER`, in your startup files to point to the location of your Intel compiler distribution.  For example if using the bash shell, add the following line to your .bashrc startup file (substituting the path to your compiler for the path given below)
-{{{
-export IFORT_COMPILER=/opt/intel/composerxe
-}}}
+  * On a Windows PC, install the [GNU make utility - http://gnuwin32.sourceforge.net/packages/make.htm](http://gnuwin32.sourceforge.net/packages/make.htm).  The gnu make installer does not add an entry to the PATH variable.  When you run the installer, note where the installer places the make utility executable, then add this directory path to your PATH variable. 
 
 ### Building Libraries Needed by Smokeview
 
-  * Smokeview requires several software libraries (such as Glut, glui etc) to implement features such as dialog boxes, rendering images or interacting with the underlying OS.  To build these libraries, 
-      * cd to `smv/Build/LIBS/<platform>` 
-      * type the `make_LIBS.sh or `make_LIBS.bat command that is found there.
+  * Smokeview requires several libraries such as glut, png and glui used for implementing dialog boxes, rendering images or interacting with the OS.  To build these libraries using Intel compilers where platform is linux, osx or win:
+      * cd to `smv/Build/LIBS/intel_platform_64` 
+      * type make_LIBS.sh on a Linux or OSX system and make_LIBS.bat on a Windows system
 
 ### Building Smokeview 
 
-  * There is a sub-directory under `SMV/Build/smokeview` for each target in the Smokeview Makefile.  To build Smokeview on a Linux system, cd into the `intel_linux_64` directory and type
+  * There is a sub-directory under `smv/Build/smokeview` for each target in the Smokeview Makefile.  To build Smokeview on a Linux or OSX system, cd into the `intel_linux_64` or `intel_osx_64` directory and type
 
-   ```./make_smv.sh```
+   ```./make_smokeview.sh```
 
 On a Windows system cd into the `intel_win_64` directory and type
 
-   ```.\make_smv.bat ```
+   ```.\make_smokeview.bat ```
 
-To build Smokeview for other platforms, cd into one of the following directories and type the .bat or .sh (depending on platform) command that is found there.
+### Building Smokeview Utilities
 
-  *  intel_linux_64
-  *  intel_osx_64
-  *  intel_win_64
-
-
-
-
-
+Similarly to build a smokeview utiltity such as smokezip or smokediff using the Intel compilers cd into `smv/Build/prog/intel_platform_64` and type
+`./make_prog.sh` on a linux or osx system and `make_prog` on a windows sytem where `prog` is the name of the utility (`smokediff` or `smokezip` for example) and `platform` is `linux`, `osx` or `win` .

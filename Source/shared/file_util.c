@@ -24,8 +24,7 @@
 #else
 #include <dirent.h>
 #endif
-#include "MALLOC.h"
-#include "smv_endian.h"
+#include "MALLOCC.h"
 
 FILE *alt_stdout=NULL;
 
@@ -456,7 +455,8 @@ FILE_SIZE GetFileSizeSMV(const char *filename){
   return return_val;
 }
 
-#ifdef pp_READBUFFER
+//VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV file buffer routines VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+
 /* ------------------ FeofBuffer ------------------------ */
 
 int FeofBuffer(filedata *fileinfo){
@@ -489,7 +489,8 @@ char *FgetsBuffer(filedata *fileinfo,char *buffer,int size){
 
 void RewindFileBuffer(filedata *fileinfo){
   if(fileinfo==NULL)return;
-  fileinfo->iline=0;
+  fileinfo->iline = 0;
+  fileinfo->pos   = 0;
 }
 
 /* ------------------ FreeFileBuffer ------------------------ */
@@ -526,7 +527,6 @@ int AppendFileBuffer(filedata *file1, filedata *file2){
 
   new_filesize = file1->filesize + file2->filesize;
   if(NewMemory((void **)&new_buffer, new_filesize)==0){
-    readfile_option = READFILE;
     return -1;
   }
   new_buffer1 = new_buffer;
@@ -537,7 +537,6 @@ int AppendFileBuffer(filedata *file1, filedata *file2){
   new_nlines = file1->nlines+file2->nlines;
   if(NewMemory((void **)&new_lines, new_nlines*sizeof(char *))==0){
     FREEMEMORY(new_buffer);
-    readfile_option = READFILE;
     return  -1;
   }
 
@@ -557,24 +556,70 @@ int AppendFileBuffer(filedata *file1, filedata *file2){
   return 0;
 }
 
-  /* ------------------ File2Buffer ------------------------ */
+/* ------------------ CopySMVBuffer ------------------------ */
 
-filedata *File2Buffer(char *filename){
+bufferstreamdata *CopySMVBuffer(bufferstreamdata *stream_in){
+  bufferstreamdata *stream_out;
+  filedata *fileinfo;
+
+  if(stream_in==NULL)return NULL;
+
+  NewMemory((void **)&stream_out, sizeof(bufferstreamdata));
+  memcpy(stream_out, stream_in, sizeof(bufferstreamdata));
+
+  NewMemory((void **)&fileinfo, sizeof(filedata));
+  stream_out->fileinfo = fileinfo;
+
+  memcpy(fileinfo, stream_in->fileinfo, sizeof(filedata));
+  return stream_out;
+}
+
+/* ------------------ GetSMVBuffer ------------------------ */
+
+bufferstreamdata *GetSMVBuffer(char *file, char *file2){
+  bufferstreamdata *stream;
+
+  NewMemory((void **)&stream, sizeof(bufferstreamdata));
+
+  stream->fileinfo = fopen_buffer(file,"r");
+  if(stream->fileinfo==NULL){
+    FREEMEMORY(stream);
+  }
+  if(stream!=NULL&&stream->fileinfo!=NULL&&file2!=NULL){
+    bufferstreamdata streaminfo2, *stream2 = &streaminfo2;
+
+    stream2->fileinfo = fopen_buffer(file2,"r");
+    if(stream2->fileinfo!=NULL){
+      AppendFileBuffer(stream->fileinfo, stream2->fileinfo);
+    }
+    FreeFileBuffer(stream2->fileinfo);
+  }
+  return stream;
+}
+
+  /* ------------------ fopen_buffer ------------------------ */
+
+filedata *fopen_buffer(char *filename, char *mode){
   FILE_SIZE i,filesize;
   filedata *fileinfo;
   char *buffer, **lines;
   int nlines;
   FILE *stream;
 
+  // only support r and rb modes (ascii and binary)
+
+  if(mode==NULL)return NULL;
+  if( strcmp(mode, "r")!=0 && strcmp(mode, "rb")!=0 )return NULL;
+
   if(FILE_EXISTS(filename)==NO)return NULL;
   filesize = GetFileSizeSMV(filename);
   if(filesize==0)return NULL;
   stream = fopen(filename,"rb");
   if(stream==NULL)return NULL;
+
   NewMemory((void **)&fileinfo, sizeof(filedata));
   if(NewMemory((void **)&buffer, filesize+1)==0){
     FREEMEMORY(fileinfo);
-    readfile_option = READFILE;
     fclose(stream);
     return NULL;
   }
@@ -584,48 +629,63 @@ filedata *File2Buffer(char *filename){
   filesize++;           // add an extra character to file and set it to the end of string character
   buffer[filesize-1]=0;
 
-  fileinfo->buffer = buffer;
+  fileinfo->buffer   = buffer;
   fileinfo->filesize = filesize;
-  fileinfo->iline = 0;
+  fileinfo->lines    = NULL;
+  fileinfo->iline    = 0;
+  fileinfo->nlines   = 0;
+  fileinfo->pos      = 0;
   CheckMemory;
 
-  // count number of lines
-
-  nlines = 0;
-  for(i = 0;i<filesize;i++){
-    int ch;
-
-    ch = buffer[i];
-    if(ch=='\r'){      // end of line is \r\n or \n
-      buffer[i]=' ';   //  if a \r is found set it to a blank character
-      continue;
-    }
-    if(ch=='\n'||ch==EOF||ch==0){
-      buffer[i]=0;
-      nlines++;
-    }
+  if(strcmp(mode, "r")==0){
+    fileinfo->mode=FILE_ASCII;
   }
-  CheckMemory;
-  NewMemory((void **)&lines, (nlines+1)*sizeof(char *));
-  fileinfo->lines = lines;
-
-  nlines = 0;
-  lines[0] = buffer;
-  for(i = 0;i<filesize;i++){
-    int ch;
-
-    ch = buffer[i];
-    if(ch!=0)continue;
-    if(i+1<filesize){
-      nlines++;
-      lines[nlines] = buffer+i+1;
-    }
+  if(strcmp(mode, "rb")==0){
+    fileinfo->mode = FILE_BINARY;
   }
-  fileinfo->nlines = nlines;
+
+  if(fileinfo->mode==FILE_ASCII){
+
+    // count number of lines
+
+    nlines = 0;
+    for(i = 0; i<filesize; i++){
+      int ch;
+
+      ch = buffer[i];
+      if(ch=='\r'){      // end of line is \r\n or \n
+        buffer[i] = ' ';   //  if a \r is found set it to a blank character
+        continue;
+      }
+      if(ch=='\n'||ch==EOF||ch==0){
+        buffer[i] = 0;
+        nlines++;
+      }
+    }
+    CheckMemory;
+    NewMemory((void **)&lines, (nlines+1)*sizeof(char *));
+    fileinfo->lines = lines;
+
+    nlines = 0;
+    lines[0] = buffer;
+    for(i = 0; i<filesize; i++){
+      int ch;
+
+      ch = buffer[i];
+      if(ch!=0)continue;
+      if(i+1<filesize){
+        nlines++;
+        lines[nlines] = buffer+i+1;
+      }
+    }
+    fileinfo->nlines = nlines;
+  }
   CheckMemory;
   return fileinfo;
 }
-#endif
+
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ file buffer routines ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 
 /* ------------------ FileExistsOrig ------------------------ */
 
@@ -640,22 +700,16 @@ int FileExistsOrig(char *filename){
 
   /* ------------------ FileExists ------------------------ */
 
-#ifdef pp_FILELIST
 int FileExists(char *filename, filelistdata *filelist, int nfilelist, filelistdata *filelist2, int nfilelist2){
-#else
-int FileExists(char *filename){
-#endif
 
 // returns YES if the file filename exists, NO otherwise
 
   if(filename == NULL)return NO;
-#ifdef pp_FILELIST
   if(filelist != NULL&&nfilelist>0){
     if(FileInList(filename, filelist, nfilelist, filelist2, nfilelist2) != NULL){
       return YES;
     }
   }
-#endif
   if(ACCESS(filename,F_OK)==-1){
     return NO;
   }
@@ -695,6 +749,31 @@ int GetFileListSize(const char *path, char *filter){
   return maxfiles;
 }
 
+
+/* ------------------ fopen_indir  ------------------------ */
+
+FILE *fopen_indir(char *dir, char *file, char *mode){
+  FILE *stream;
+
+  if(file==NULL||strlen(file)==0)return NULL;
+  if(dir==NULL||strlen(dir)==0){
+    stream = fopen(file,mode);
+  }
+  else{
+    char *filebuffer;
+    int lenfile;
+
+    lenfile = strlen(dir)+1+strlen(file)+1;
+    NewMemory((void **)&filebuffer,lenfile*sizeof(char));
+    strcpy(filebuffer,dir);
+    strcat(filebuffer,dirseparator);
+    strcat(filebuffer,file);
+    stream = fopen(filebuffer,mode);
+    FREEMEMORY(filebuffer);
+  }
+  return stream;
+}
+
 /* ------------------ CompareFileList ------------------------ */
 
 int CompareFileList(const void *arg1, const void *arg2){
@@ -707,7 +786,6 @@ int CompareFileList(const void *arg1, const void *arg2){
 }
 
 /* ------------------ getfile ------------------------ */
-#ifdef pp_FILELIST
 filelistdata *FileInList(char *file, filelistdata *filelist, int nfiles, filelistdata *filelist2, int nfiles2){
   filelistdata *entry=NULL, fileitem;
 
@@ -723,7 +801,6 @@ filelistdata *FileInList(char *file, filelistdata *filelist, int nfiles, filelis
   }
   return entry;
 }
-#endif
 
 /* ------------------ MakeFileList ------------------------ */
 
@@ -985,7 +1062,7 @@ char *GetZoneFileName(char *bufptr){
   return filename;
 }
 
-/* ------------------ file_modtime ------------------------ */
+/* ------------------ FileModtime ------------------------ */
 
 time_t FileModtime(char *filename){
 

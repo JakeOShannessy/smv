@@ -33,13 +33,15 @@ GNU_COMPINFO=-Dpp_COMPVER=\"$(GNU_COMPVERSION)\"
 # Definition of the object variables
 
 obj =    main.o CNV3dsmoke.o CNVboundary.o CNVpart.o CNVplot3d.o CNVslice.o assert.o \
-         csphere.o dmalloc.o lightsmoke.o smv_endian.o histogram.o readfiles.o utilities.o \
+         csphere.o dmalloc.o lightsmoke.o histogram.o readfiles.o utilities.o \
          isobox.o file_util.o string_util.o threader.o compress.o md5.o sha1.o sha256.o \
          fdsmodules.o gsmv.o getdata.o
 objwin = $(obj:.o=.obj)
 
 # main has to be compiled without optimization (on a Windows PC) otherwise errors occcur
-main.obj: CFLAGS = -Od /nologo -D WIN32 -D pp_WIN_INTEL $(OPT)
+# don't think the following is needed anymore - keeping it around for awhile to make it easier to put
+# back in case it is needed
+#main.obj: CFLAGS = -Od /nologo -D WIN32 -D pp_WIN_INTEL $(OPT)
 
 #*** General Purpose Rules ***
 
@@ -63,8 +65,8 @@ no_target:
 # ------------- intel win 64 ----------------
 
 intel_win_64 : INC_DIR   += -I $(SOURCE_DIR)/pthreads 
-intel_win_64 : CFLAGS    = -Od /nologo -D pp_INTEL -D WIN32 -D PTW32_STATIC_LIB -D X64  $(OPT) $(GITINFO) $(INTEL_COMPINFO)
-intel_win_64 : FFLAGS    = -Od /nologo -fpp -D pp_cvf -D X64 -D pp_INTEL -D WIN32 /iface:stdref /fpscomp:general
+intel_win_64 : CFLAGS    = -Od /nologo -D WIN32 -D PTW32_STATIC_LIB -D X64  $(OPT) $(GITINFO) $(INTEL_COMPINFO)
+intel_win_64 : FFLAGS    = -Od /nologo -fpp -D pp_cvf -D X64 -D WIN32 /iface:stdref /fpscomp:general
 intel_win_64 : CC        = icl
 intel_win_64 : CPP       = icl
 intel_win_64 : FC        = ifort
@@ -144,8 +146,8 @@ gnu_osx_64_db : $(obj)
 
 LINUXFORTLIBS_64=$(IFORT_COMPILER_LIB)/libifcore.a
 
-intel_linux_64 : FFLAGS    = -O2 -m64 -fpp -D pp_INTEL -D pp_LINUX
-intel_linux_64 : CFLAGS    = -O2 -m64 ${INC_DIR} -D pp_LINUX -D pp_INTEL $(GITINFO) $(INTEL_COMPINFO)
+intel_linux_64 : FFLAGS    = -O2 -m64 -fpp -D pp_LINUX
+intel_linux_64 : CFLAGS    = -O2 -m64 ${INC_DIR} -D pp_LINUX $(GITINFO) $(INTEL_COMPINFO)
 intel_linux_64 : LFLAGS    = -lifport $(LINUXFORTLIBS_64) -L $(LIB_DIR)/intel_linux_64 -lz -lpthread -static-intel
 intel_linux_64 : CC        = icc
 intel_linux_64 : CPP       = icc
@@ -160,9 +162,9 @@ OSXFORTLIBS=$(IFORT_COMPILER_LIB)/libifcoremt.a $(IFORT_COMPILER_LIB)/libifport.
 
 # ------------- intel osx 64 ----------------
 
-intel_osx_64 : FFLAGS    = -O2 -m64 -fpp -D pp_INTEL -D pp_OSX
-intel_osx_64 : CFLAGS    = -O2 -m64 -D pp_OSX -D pp_INTEL $(GITINFO) $(INTEL_COMPINFO)
-intel_osx_64 : LFLAGS    = -m64 -static-intel -mmacosx-version-min=10.7 $(OSXFORTLIBS) -L $(LIB_DIR)/intel_osx_64 -lz -lpthread
+intel_osx_64 : FFLAGS    = -O2 -m64 -fpp -D pp_OSX  -mmacosx-version-min=10.9 -stand:f08
+intel_osx_64 : CFLAGS    = -O2 -m64 -D pp_OSX $(GITINFO) $(INTEL_COMPINFO)  -mmacosx-version-min=10.9 
+intel_osx_64 : LFLAGS    = -m64 -static-intel -mmacosx-version-min=10.9 $(OSXFORTLIBS) -L $(LIB_DIR)/intel_osx_64 -lz -lpthread
 intel_osx_64 : CC        = icc
 intel_osx_64 : CPP       = icc
 intel_osx_64 : FC        = ifort
@@ -173,9 +175,9 @@ intel_osx_64 : $(obj)
 
 # ------------- intel osx 64 db ----------------
 
-intel_osx_64_db : FFLAGS    = -O0 -m64 -static-intel -fpp -D pp_INTEL -D pp_OSX -mmacosx-version-min=10.7 -stand:f08
-intel_osx_64_db : CFLAGS    = -O0 -g -m64 -static-intel -D _DEBUG -D pp_OSX -D pp_INTEL -mmacosx-version-min=10.7 $(SMV_TESTFLAG) -Wall -Wextra -check=stack,uninit -fp-stack-check -fp-trap-all=divzero,invalid,overflow -ftrapuv -Wuninitialized -Wunused-function -Wunused-variable $(GITINFO) $(INTEL_COMPINFO)
-intel_osx_64_db : LFLAGS    = -m64 -static-intel -mmacosx-version-min=10.7 $(OSXFORTLIBS) -L $(LIB_DIR)/intel_osx_64 -lz -lpthread
+intel_osx_64_db : FFLAGS    = -O0 -m64 -static-intel -fpp -D pp_OSX -mmacosx-version-min=10.9 -stand:f08
+intel_osx_64_db : CFLAGS    = -O0 -g -m64 -static-intel -D _DEBUG -D pp_OSX -mmacosx-version-min=10.9 $(SMV_TESTFLAG) -Wall -Wextra -check=stack,uninit -fp-stack-check -fp-trap-all=divzero,invalid,overflow -ftrapuv -Wuninitialized -Wunused-function -Wunused-variable $(GITINFO) $(INTEL_COMPINFO)
+intel_osx_64_db : LFLAGS    = -m64 -static-intel -mmacosx-version-min=10.9 $(OSXFORTLIBS) -L $(LIB_DIR)/intel_osx_64 -lz -lpthread
 intel_osx_64_db : CC        = icc
 intel_osx_64_db : CPP       = icc
 intel_osx_64_db : FC        = ifort

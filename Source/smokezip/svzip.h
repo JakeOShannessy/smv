@@ -304,7 +304,6 @@ void initpdf(pdfdata *pdf);
 void makesvd(char *destdir, char *smvfile);
 void getpdf(float *vals, int nvals, pdfdata *pdf);
 void mergepdf(pdfdata *pdf1, pdfdata *pdf2, pdfdata *pdfmerge);
-void SmoothLabel(float *a, float *b, int n);
 #ifdef pp_PART
 void compress_parts(void *arg);
 void *convert_parts2iso(void *arg);
@@ -417,7 +416,7 @@ EXTERN int GLOBoverwrite_plot3d;
 #ifdef pp_PART
 EXTERN int GLOBoverwrite_part;
 #endif
-EXTERN int endianswitch,GLOBoverwrite_b,GLOBoverwrite_s;
+EXTERN int GLOBoverwrite_b,GLOBoverwrite_s;
 EXTERN int GLOBcleanfiles;
 EXTERN char *GLOBdestdir,*GLOBsourcedir;
 EXTERN char GLOBpp[2],GLOBx[2];

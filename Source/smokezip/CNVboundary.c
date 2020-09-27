@@ -6,14 +6,13 @@
 #include <math.h>
 #include <zlib.h>
 #include "svzip.h"
-#include "MALLOC.h"
+#include "MALLOCC.h"
 #include "compress.h"
 
 pdfdata pdfmerge,pdfframe;
 
 #define FORTREAD(var,size) FSEEK(BOUNDARYFILE,4,SEEK_CUR);\
                            returncode=fread(var,4,size,BOUNDARYFILE);\
-                           if(endianswitch==1)EndianSwitch(var,size);\
                            FSEEK(BOUNDARYFILE,4,SEEK_CUR)
 
 /* ------------------ clean_boundary ------------------------ */
@@ -96,7 +95,7 @@ int convert_boundary(patch *patchi, int *thread_index){
   int i1, i2, j1, j2, k1, k2;
   float *patchvals=NULL,*patchvalscopy;
   unsigned char *full_boundarybuffer=NULL,*compressed_boundarybuffer=NULL;
-  int returncode;
+  int returncode=0;
   int ncompressed_zlibSAVE;
   uLongf ncompressed_zlib;
   uLong npatchfull;
@@ -538,10 +537,6 @@ void *compress_patches(void *arg){
 
 void update_patch_hist(void){
   int i;
-  int endiandata;
-
-  endiandata=GetEndian();
-  if(endianswitch==1)endiandata=1-endiandata;
 
   for(i=0;i<npatchinfo;i++){
     patch *patchi;
@@ -630,11 +625,6 @@ void mt_update_patch_hist(void){
 
 void Get_Boundary_Bounds(void){
   int i;
-
-  int endiandata;
-
-  endiandata=GetEndian();
-  if(endianswitch==1)endiandata=1-endiandata;
 
   PRINTF("Determining boundary file bounds\n");
   for(i=0;i<npatchinfo;i++){

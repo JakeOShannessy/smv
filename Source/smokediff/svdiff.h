@@ -41,7 +41,6 @@
 
 #define SLICE_NODE_CENTER 1
 #define SLICE_CELL_CENTER 2
-#define SLICE_FIRELINE 3
 #define SLICE_TERRAIN 4
 
 //************************** data structures ****************************************
@@ -101,16 +100,14 @@ typedef struct {
   plot3d *plot3dinfo;
   boundary *boundaryinfo;
   char *dir;
-  int endian;
   int nmeshes;
   int nsliceinfo, nplot3dinfo, nboundary_files;
 } casedata;
 
 //************************** headers ****************************************
 
-int GetEndian(void);
 int mesh_Match(meshdata *mesh1, meshdata *mesh2);
-int ReadSMV(FILE *streamsmv, FILE *stream_out, casedata *smvcase);
+int ReadSMV(bufferstreamdata *streamsmv, FILE *stream_out, casedata *smvcase);
 void setup_boundary(FILE *stream_out);
 void setup_slice(FILE *stream_out);
 void SetupPlot3D(FILE *stream_out);

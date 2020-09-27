@@ -7,8 +7,7 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
-
-#ifdef pp_HTML
+#include "interp.h"
 
 /* --------------------------  webgeomdata ------------------------------------ */
 
@@ -16,14 +15,15 @@ typedef struct _webgeomdata {
   char type[32];
   unsigned char *textures;
   float *verts, *colors;
-  int *indices, *framesizes;
-  int nverts, nindices, framesize, nframes;
+  int *indices, *framesizes, *blank;
+  int nverts, nindices, ntriangles;
+  int framesize, nframes;
 } webgeomdata;
 
 /* ------------------ GetPartFileNodes ------------------------ */
 
-void GetPartVerts(int option, int option2, int *offset, 
-  float *verts, float *colors, int *nverts, 
+void GetPartVerts(int option, int option2, int *offset,
+  float *verts, float *colors, int *nverts,
   int *indices, int *nindices,
   int *frame_sizes, int *nframes){
   int i, first = 1;
@@ -48,7 +48,7 @@ void GetPartVerts(int option, int option2, int *offset,
     }
   }
   if(first==1)return;
-  if(option2==ALL_TIMES){
+  if(option2==HTML_ALL_TIMES){
     ibeg = 0;
     iend = *nframes;
   }
@@ -155,12 +155,12 @@ void GetBndfNodeVerts(int option, int option2, int *offset,
     else{
       minsteps = MIN(minsteps, patchi->ntimes);
     }
-    if(option2==CURRENT_TIME)break;
+    if(option2==HTML_CURRENT_TIME)break;
   }
   if(first==1){
     return;
   }
-  if(option2==ALL_TIMES){
+  if(option2==HTML_ALL_TIMES){
     ibeg = 0;
     iend = minsteps;
     *nframes = iend;
@@ -295,7 +295,7 @@ void GetSliceCellVerts(int option, int option2, int *offset, float *verts, unsig
     else{
       minsteps = MIN(minsteps, slicei->ntimes);
     }
-    if(option2==CURRENT_TIME)break;
+    if(option2==HTML_CURRENT_TIME)break;
   }
   if(first==1){
     *frame_size=0;
@@ -304,7 +304,7 @@ void GetSliceCellVerts(int option, int option2, int *offset, float *verts, unsig
     *ntris = 0;
     return;
   }
-  if(option2==ALL_TIMES){
+  if(option2==HTML_ALL_TIMES){
     ibeg = 0;
     iend = minsteps;
     *nframes = iend;
@@ -525,7 +525,7 @@ void GetSliceGeomVerts(int option, int option2, int *offset, float *verts, unsig
     else{
       minsteps = MIN(minsteps, slicei->ntimes);
     }
-    if(option2==CURRENT_TIME)break;
+    if(option2==HTML_CURRENT_TIME)break;
   }
   if(first==1){
     *frame_size = 0;
@@ -534,7 +534,7 @@ void GetSliceGeomVerts(int option, int option2, int *offset, float *verts, unsig
     *ntris = 0;
     return;
   }
-  if(option2==ALL_TIMES){
+  if(option2==HTML_ALL_TIMES){
     ibeg = 0;
     iend = minsteps;
     *nframes = iend;
@@ -618,7 +618,10 @@ void GetSliceGeomVerts(int option, int option2, int *offset, float *verts, unsig
 
 /* ------------------ GetSliceNodeVerts ------------------------ */
 
-void GetSliceNodeVerts(int option, int option2, int *offset, float *verts, unsigned char *textures, int *nverts, int *tris, int *ntris, int *frame_size, int *nframes){
+void GetSliceNodeVerts(int option, int option2,
+                       int *offset, float *verts, unsigned char *textures, int *nverts,
+                       int *tris, int *blank, int *ntris,
+                       int *frame_size, int *nframes){
   int islice, nv = 0, nt = 0;
   int ibeg, iend, itime, first=1, minsteps;
   slicedata *slicetime=NULL;
@@ -627,7 +630,7 @@ void GetSliceNodeVerts(int option, int option2, int *offset, float *verts, unsig
     slicedata *slicei;
 
     slicei = sliceinfo+islice;
-    if(slicei->loaded==0||slicei->display==0||slicei->slice_filetype!=SLICE_NODE_CENTER||slicei->volslice==1)continue;
+    if(slicei->loaded==0||slicei->display==0||(slicei->slice_filetype!=SLICE_NODE_CENTER&&slicei->slice_filetype!=SLICE_TERRAIN)||slicei->volslice==1)continue;
     if(slicei->idir!=XDIR&&slicei->idir!=YDIR&&slicei->idir!=ZDIR)continue;
     slicetime = slicei;
     if(first==1){
@@ -637,7 +640,7 @@ void GetSliceNodeVerts(int option, int option2, int *offset, float *verts, unsig
     else{
       minsteps = MIN(minsteps, slicei->ntimes);
     }
-    if(option2==CURRENT_TIME)break;
+    if(option2==HTML_CURRENT_TIME)break;
   }
   if(first==1){
     *frame_size=0;
@@ -646,7 +649,7 @@ void GetSliceNodeVerts(int option, int option2, int *offset, float *verts, unsig
     *ntris = 0;
     return;
   }
-  if(option2==ALL_TIMES){
+  if(option2==HTML_ALL_TIMES){
     ibeg = 0;
     iend = minsteps;
     *nframes = iend;
@@ -666,7 +669,7 @@ void GetSliceNodeVerts(int option, int option2, int *offset, float *verts, unsig
 
       slicei = sliceinfo+islice;
 
-      if(slicei->loaded==0||slicei->display==0||slicei->slice_filetype!=SLICE_NODE_CENTER||slicei->volslice==1)continue;
+      if(slicei->loaded==0||slicei->display==0||(slicei->slice_filetype!=SLICE_NODE_CENTER&&slicei->slice_filetype!=SLICE_TERRAIN)||slicei->volslice==1)continue;
       if(slicei->idir!=XDIR&&slicei->idir!=YDIR&&slicei->idir!=ZDIR)continue;
 
       iq = slicei->slicelevel+itime*slicei->nsliceijk;
@@ -697,12 +700,24 @@ void GetSliceNodeVerts(int option, int option2, int *offset, float *verts, unsig
           float  constval;
           int n, i, j, k, nj, nk;
           int ii, jj, kk;
+          char *iblank;
+          int nx, ny, nxy;
+          float agl;
 
           meshi = meshinfo+slicei->blocknumber;
-
+          nx = meshi->ibar+1;
+          ny = meshi->jbar+1;
+          nxy = nx*ny;
+          iblank = meshi->c_iblank_node_html;
           xplt = meshi->xplt;
           yplt = meshi->yplt;
-          zplt = meshi->zplt;
+          if(slicei->slice_filetype==SLICE_TERRAIN){
+            agl = SCALE2FDS(.005) + slicei->above_ground_level;
+            zplt = meshi->terrain->znode;
+          }
+          else{
+            zplt = meshi->zplt;
+          }
           plotx = slicei->is1;
           ploty = slicei->js1;
           plotz = slicei->ks1;
@@ -717,6 +732,17 @@ void GetSliceNodeVerts(int option, int option2, int *offset, float *verts, unsig
                   *verts++ = constval;
                   *verts++ = yplt[j];
                   *verts++ = zplt[k];
+
+                // define blank array
+
+                  if(iblank!=NULL&&blank!=NULL){
+                    if(iblank[IJK(plotx, j, k)] == GAS){
+                      *blank++ = 1;
+                    }
+                    else{
+                      *blank++ = 0;
+                    }
+                  }
                 }
               }
               // triangle indices
@@ -762,6 +788,17 @@ void GetSliceNodeVerts(int option, int option2, int *offset, float *verts, unsig
                   *verts++ = xplt[i];
                   *verts++ = constval;
                   *verts++ = zplt[k];
+
+                // define blank array
+
+                  if(iblank!=NULL&&blank!=NULL){
+                    if(iblank[IJK(i, ploty, k)]==GAS){
+                      *blank++ = 1;
+                    }
+                    else{
+                      *blank++ = 0;
+                    }
+                  }
                 }
               }
               // triangle indices
@@ -806,7 +843,23 @@ void GetSliceNodeVerts(int option, int option2, int *offset, float *verts, unsig
                 for(j = slicei->js1; j<=slicei->js2; j++){
                   *verts++ = xplt[i];
                   *verts++ = yplt[j];
-                  *verts++ = constval;
+                  if(slicei->slice_filetype==SLICE_TERRAIN){
+                    *verts++ = NORMALIZE_Z(zplt[i*ny+j] + agl);
+                  }
+                  else{
+                    *verts++ = constval;
+                  }
+
+                // define blank array
+
+                  if(iblank!=NULL&&blank!=NULL){
+                    if(iblank[IJK(i, j, plotz)] == GAS){
+                      *blank++ = 1;
+                    }
+                    else{
+                      *blank++ = 0;
+                    }
+                  }
                 }
               }
               // triangle indices
@@ -1225,8 +1278,8 @@ void PartNodeVerts2Geom(webgeomdata *part_node_web, int option){
     int npart_verts, npart_indices;
 
 
-    GetPartVerts(1, option, &offset, 
-      verts, colors, &npart_verts, 
+    GetPartVerts(1, option, &offset,
+      verts, colors, &npart_verts,
       indices, &npart_indices,
       framesizes, &(part_node_web->nframes));
     verts   += 3*npart_verts;
@@ -1244,7 +1297,7 @@ void PartNodeVerts2Geom(webgeomdata *part_node_web, int option){
 
 /* ------------------ SliceCellTriangles2Geom ------------------------ */
 
-void SliceCellTriangles2Geom(webgeomdata *slice_cell_web, int option){
+int SliceCellTriangles2Geom(webgeomdata *slice_cell_web, int option){
   int nverts = 0, nindices = 0, offset = 0;
   float *verts, *verts_save;
   unsigned char *textures, *textures_save;
@@ -1265,7 +1318,7 @@ void SliceCellTriangles2Geom(webgeomdata *slice_cell_web, int option){
     slice_cell_web->verts    = NULL;
     slice_cell_web->textures = NULL;
     slice_cell_web->indices  = NULL;
-    return;
+    return 0;
   }
 
   NewMemory((void **)&verts_save, nverts*sizeof(float));
@@ -1280,9 +1333,9 @@ void SliceCellTriangles2Geom(webgeomdata *slice_cell_web, int option){
   if(nsliceinfo>0){
     int nslice_verts, nslice_tris;
 
-    GetSliceCellVerts(1, option, &offset, 
-      verts, textures, &nslice_verts, 
-      indices, &nslice_tris, 
+    GetSliceCellVerts(1, option, &offset,
+      verts, textures, &nslice_verts,
+      indices, &nslice_tris,
       &(slice_cell_web->framesize), &(slice_cell_web->nframes));
     verts   += 3*nslice_verts;
     indices += 3*nslice_tris;
@@ -1293,56 +1346,67 @@ void SliceCellTriangles2Geom(webgeomdata *slice_cell_web, int option){
   slice_cell_web->verts    = verts_save;
   slice_cell_web->textures = textures_save;
   slice_cell_web->indices  = indices_save;
+  return nverts;
 }
 
 /* ------------------ SliceNodeTriangles2Geom ------------------------ */
 
-void SliceNodeTriangles2Geom(webgeomdata *slice_node_web, int option){
-  int nverts = 0, nindices = 0, offset = 0;
+int SliceNodeTriangles2Geom(webgeomdata *slice_node_web, int option){
+  int nverts = 0, nindices = 0, offset = 0, ntriangles = 0;
   float *verts, *verts_save;
   unsigned char *textures, *textures_save;
   int *indices, *indices_save;
+  int *blank, *blank_save;
 
   if(nsliceinfo>0){
     int nslice_verts, nslice_tris;
 
-    GetSliceNodeVerts(0, option, NULL, NULL, NULL, &nslice_verts, NULL, &nslice_tris, &(slice_node_web->framesize), &(slice_node_web->nframes));
+    GetSliceNodeVerts(0, option, NULL, NULL, NULL, &nslice_verts, NULL, NULL, &nslice_tris, &(slice_node_web->framesize), &(slice_node_web->nframes));
 
     nverts   += 3*nslice_verts;     // 3 coordinates per vertex
-    nindices += 3*nslice_tris;  // 3 indices per triangles
+    nindices += 3*nslice_tris;      // 3 indices per triangles
+    ntriangles = nindices/3;
   }
 
   if(nverts==0||nindices==0){
-    slice_node_web->nverts   = 0;
-    slice_node_web->nindices = 0;
-    slice_node_web->verts    = NULL;
-    slice_node_web->textures = NULL;
-    slice_node_web->indices  = NULL;
-    return;
+    slice_node_web->nverts     = 0;
+    slice_node_web->nindices   = 0;
+    slice_node_web->ntriangles = 0;
+    slice_node_web->verts      = NULL;
+    slice_node_web->textures   = NULL;
+    slice_node_web->indices    = NULL;
+    slice_node_web->blank      = NULL;
+    return 0;
   }
 
-  NewMemory((void **)&verts_save, nverts*sizeof(float));
+  NewMemory((void **)&verts_save,     nverts*sizeof(float));
   NewMemory((void **)&textures_save, (slice_node_web->framesize*slice_node_web->nframes)*sizeof(float));
-  NewMemory((void **)&indices_save, nindices*sizeof(int));
+  NewMemory((void **)&indices_save,  nindices*sizeof(int));
+  NewMemory((void **)&blank_save,    (nverts/3)*sizeof(int));
   verts = verts_save;
   textures = textures_save;
   indices = indices_save;
+  blank = blank_save;
 
   // load slice file data into data structures
 
   if(nsliceinfo>0){
     int nslice_verts, nslice_tris;
 
-    GetSliceNodeVerts(1, option, &offset, verts, textures, &nslice_verts, indices, &nslice_tris, &(slice_node_web->framesize), &(slice_node_web->nframes));
+    GetSliceNodeVerts(1, option, &offset, verts, textures, &nslice_verts, indices, blank, &nslice_tris, &(slice_node_web->framesize), &(slice_node_web->nframes));
     verts   += 3*nslice_verts;
     indices += 3*nslice_tris;
+    blank   += nslice_verts/3;
   }
 
-  slice_node_web->nverts   = nverts;
-  slice_node_web->nindices = nindices;
-  slice_node_web->verts    = verts_save;
-  slice_node_web->textures = textures_save;
-  slice_node_web->indices  = indices_save;
+  slice_node_web->nverts     = nverts;
+  slice_node_web->nindices   = nindices;
+  slice_node_web->ntriangles = ntriangles;
+  slice_node_web->verts      = verts_save;
+  slice_node_web->textures   = textures_save;
+  slice_node_web->indices    = indices_save;
+  slice_node_web->blank      = blank_save;
+  return nverts;
 }
 
 /* ------------------ SliceGeomTriangles2Geom ------------------------ */
@@ -1397,10 +1461,14 @@ void SliceGeomTriangles2Geom(webgeomdata *slice_geom_web, int option){
 
 /* ------------------ ObstLitTriangles2Geom ------------------------ */
 
-void ObstLitTriangles2Geom(float **vertsptr, float **normalsptr, float **colorsptr, int *n_verts, int **trianglesptr, int *n_triangles){
+void ObstLitTriangles2Geom(float **vertsptr, float **normalsptr, float **colorsptr,
+                           float **colors4ptr, int **trianglesptr, int *n_triangles,
+                           int *n_verts, int *n4_verts){
   int j;
-  int nverts = 0, nindices = 0, offset = 0;
-  float *verts, *verts_save, *normals, *normals_save, *colors, *colors_save;
+  int nverts = 0, n4verts = 0, nindices = 0, offset = 0;
+  float *verts, *verts_save, *normals, *normals_save;
+  float *colors, *colors_save;
+  float *colors4, *colors4_save;
   int *indices, *indices_save;
 
   // count triangle vertices and indices for blockes
@@ -1409,27 +1477,32 @@ void ObstLitTriangles2Geom(float **vertsptr, float **normalsptr, float **colorsp
     meshdata *meshi;
 
     meshi     = meshinfo+j;
-    nverts   += meshi->nbptrs*24*3;     // 24 vertices per blockages * 3 coordinates per vertex
+    nverts   += meshi->nbptrs*24*3;    // 24 vertices per blockages * 3 coordinates per vertex
+    n4verts  += meshi->nbptrs*24*4;    // 24 vertices per blockages * 4 coordinates per vertex
     nindices += meshi->nbptrs*6*2*3;   // 6 faces per blockage * 2 triangles per face * 3 indicies per triangle
   }
 
   if(nverts==0||nindices==0){
     *n_verts = 0;
+    *n4_verts = 0;
     *n_triangles  = 0;
     *vertsptr     = NULL;
     *normalsptr   = NULL;
     *colorsptr    = NULL;
+    *colors4ptr   = NULL;
     *trianglesptr = NULL;
     return;
   }
 
-  NewMemory((void **)&verts_save, nverts*sizeof(float));
+  NewMemory((void **)&verts_save,   nverts*sizeof(float));
   NewMemory((void **)&normals_save, nverts*sizeof(float));
-  NewMemory((void **)&colors_save, nverts*sizeof(float));
+  NewMemory((void **)&colors_save,  nverts*sizeof(float));
+  NewMemory((void **)&colors4_save, n4verts*sizeof(float));
   NewMemory((void **)&indices_save, nindices*sizeof(int));
-  verts = verts_save;
+  verts   = verts_save;
   normals = normals_save;
-  colors = colors_save;
+  colors  = colors_save;
+  colors4 = colors4_save;
   indices = indices_save;
 
   // load blockage info into data structures
@@ -1449,15 +1522,19 @@ void ObstLitTriangles2Geom(float **vertsptr, float **normalsptr, float **colorsp
       bc = meshi->blockageinfoptrs[i];
       GetBlockNodes(meshi, bc, xyz, norms, tris);
       for(k = 0; k<24; k++){
-        *verts++ = xyz[3*k+0];
-        *verts++ = xyz[3*k+1];
-        *verts++ = xyz[3*k+2];
+        *verts++   = xyz[3*k+0];
+        *verts++   = xyz[3*k+1];
+        *verts++   = xyz[3*k+2];
         *normals++ = norms[3*k+0];
         *normals++ = norms[3*k+1];
         *normals++ = norms[3*k+2];
-        *colors++ = bc->color[0];
-        *colors++ = bc->color[1];
-        *colors++ = bc->color[2];
+        *colors++  = bc->color[0];
+        *colors++  = bc->color[1];
+        *colors++  = bc->color[2];
+        *colors4++ = bc->color[0];
+        *colors4++ = bc->color[1];
+        *colors4++ = bc->color[2];
+        *colors4++ = 1.0;
       }
       for(k = 0; k<12; k++){
         *indices++ = offset+tris[3*k+0];
@@ -1469,10 +1546,12 @@ void ObstLitTriangles2Geom(float **vertsptr, float **normalsptr, float **colorsp
   }
 
   *n_verts = nverts;
-  *n_triangles = nindices;
-  *vertsptr = verts_save;
-  *normalsptr = normals_save;
-  *colorsptr = colors_save;
+  *n4_verts = n4verts;
+  *n_triangles  = nindices;
+  *vertsptr     = verts_save;
+  *normalsptr   = normals_save;
+  *colorsptr    = colors_save;
+  *colors4ptr   = colors4_save;
   *trianglesptr = indices_save;
 }
 
@@ -1538,7 +1617,7 @@ void GeomLitTriangles2Geom(float **vertsptr, float **normalsptr, float **colorsp
 
 /* ------------------ GetHtmlFileName ------------------------ */
 
-int GetHtmlFileName(char *htmlfile_full, int option){
+int GetHtmlFileName(char *htmlfile_full, int option, int vr_flag){
   char htmlfile_dir[1024], htmlfile_suffix[1024];
   int image_num;
 
@@ -1567,7 +1646,7 @@ int GetHtmlFileName(char *htmlfile_full, int option){
 
   // filename suffix
 
-  if(option==CURRENT_TIME){
+  if(option==HTML_CURRENT_TIME){
     if(RenderTime==0){
       image_num = seqnum;
     }
@@ -1584,7 +1663,12 @@ int GetHtmlFileName(char *htmlfile_full, int option){
 
   strcpy(htmlfile_full, html_file_base);
   strcat(htmlfile_full, htmlfile_suffix);
-  strcat(htmlfile_full, ".html");
+  if(vr_flag==VR_NO){
+    strcat(htmlfile_full, ".html");
+  }
+  else{
+    strcat(htmlfile_full, "_vr.html");
+  }
   return 0;
 }
 
@@ -1592,18 +1676,132 @@ int GetHtmlFileName(char *htmlfile_full, int option){
 #define PERCOLOR_ROW 8
 #define PERBIN_ROW 24
 
+/* --------------------------  FreeWebGeom ------------------------------------ */
+
+void FreeWebGeom(webgeomdata *wi){
+  FREEMEMORY(wi->textures);
+  FREEMEMORY(wi->verts);
+  FREEMEMORY(wi->indices);
+  FREEMEMORY(wi->blank);
+  wi->nverts     = 0;
+  wi->nindices   = 0;
+  wi->framesize  = 0;
+  wi->nframes    = 0;
+  wi->ntriangles = 0;
+}
+
 /* --------------------------  InitWebgeom ------------------------------------ */
 
-void InitWebgeom(webgeomdata *wi, char *label){
+void InitWebGeom(webgeomdata *wi, char *label){
   strcpy(wi->type, label);
   wi->textures  = NULL;
   wi->verts     = NULL;
   wi->indices   = NULL;
+  wi->blank = NULL;
   wi->nverts    = 0;
   wi->nindices  = 0;
   wi->framesize = 0;
   wi->nframes   = 0;
+  wi->ntriangles = 0;
 }
+
+/* ------------------ OutputFixedFrameData ------------------------ */
+
+void OutputFixedFrameData(char *html_file, webgeomdata *webgi ,float *colorbar){
+  int i;
+  char varlabel[100];
+  FILE *stream_out = NULL;
+
+  if(webgi->nframes<=0||webgi->nverts<=0||webgi->framesize<=0||webgi->nindices<=0)return;
+  stream_out = fopen(html_file, "w");
+  if(stream_out==NULL)return;
+
+  fprintf(stream_out, "{\n");
+  fprintf(stream_out, "  \"vertices\": [\n");
+  for(i = 0; i < webgi->nverts - 1; i++){
+    sprintf(varlabel, "%.3f", webgi->verts[i]);
+    TrimZeros(varlabel);
+    if(i%PER_ROW==0)fprintf(stream_out, "   ");
+    fprintf(stream_out, "%s,", varlabel);
+    if(i%PER_ROW==(PER_ROW-1))fprintf(stream_out, "\n");
+  }
+
+  sprintf(varlabel, "%.3f", webgi->verts[webgi->nverts-1]);
+  TrimZeros(varlabel);
+  fprintf(stream_out, "%s\n", varlabel);
+  fprintf(stream_out, "   ],\n");
+
+
+  fprintf(stream_out, "\"indices\": [\n");
+  for(i = 0; i < webgi->nindices - 1; i++){
+    if(i%PERBIN_ROW==0)fprintf(stream_out, "   ");
+    fprintf(stream_out, "%i,", webgi->indices[i]);
+    if(i%PERBIN_ROW==(PERBIN_ROW-1))fprintf(stream_out, "\n");
+  }
+  fprintf(stream_out, "%i\n", webgi->indices[webgi->nindices-1]);
+  fprintf(stream_out, "   ],\n");
+
+#define PERBIN_ROW_TEMP 33
+    fprintf(stream_out, "\"blank\": [\n");
+    if(webgi->blank!=NULL){
+      for(i = 0; i<webgi->nverts/3-1; i++){
+        if(i%PERBIN_ROW_TEMP==0)fprintf(stream_out, "   ");
+        fprintf(stream_out, "%i,", webgi->blank[i]);
+        if(i%PERBIN_ROW_TEMP==(PERBIN_ROW_TEMP-1))fprintf(stream_out, "\n");
+      }
+      fprintf(stream_out, "%i\n", webgi->blank[webgi->nverts/3-1]);
+    }
+    else{
+      for(i = 0; i<webgi->nverts/3-1; i++){
+        if(i%PERBIN_ROW_TEMP==0)fprintf(stream_out, "   ");
+        fprintf(stream_out, "1,");
+        if(i%PERBIN_ROW_TEMP==(PERBIN_ROW_TEMP-1))fprintf(stream_out, "\n");
+      }
+      fprintf(stream_out, "1\n");
+    }
+    fprintf(stream_out, "   ],\n");
+
+  if(colorbar!=NULL){
+    fprintf(stream_out, "  \"colorbar\": [\n");
+    for(i = 0; i<255; i++){
+      int ii[3];
+
+      ii[0] = CLAMP(255*colorbar[4*i+0], 0, 255);
+      ii[1] = CLAMP(255*colorbar[4*i+1], 0, 255);
+      ii[2] = CLAMP(255*colorbar[4*i+2], 0, 255);
+      if(i%PERCOLOR_ROW==0)fprintf(stream_out, "   ");
+      fprintf(stream_out, "%i,%i,%i,255,", ii[0], ii[1], ii[2]);
+      if(i%PERCOLOR_ROW==(PERCOLOR_ROW-1))fprintf(stream_out, "\n");
+    }
+    {
+      int ii[3];
+
+      i = 255;
+      ii[0] = CLAMP(255*colorbar[4*i+0], 0, 255);
+      ii[1] = CLAMP(255*colorbar[4*i+1], 0, 255);
+      ii[2] = CLAMP(255*colorbar[4*i+2], 0, 255);
+      if(i%PERCOLOR_ROW==0)fprintf(stream_out, "   ");
+      fprintf(stream_out, "%i,%i,%i,255\n", ii[0], ii[1], ii[2]);
+    }
+  fprintf(stream_out, "   ],\n");
+  }
+
+
+  fprintf(stream_out, " \"texData\": [\n");
+  for(i = 0; i<webgi->framesize*webgi->nframes-1; i++){
+    sprintf(varlabel, "%i", CLAMP((int)webgi->textures[i], 0, 255));
+    if(i%PERBIN_ROW==0)fprintf(stream_out, "   ");
+    fprintf(stream_out, "%s,", varlabel);
+    if(i%PERBIN_ROW==(PERBIN_ROW-1))fprintf(stream_out, "\n");
+  }
+  sprintf(varlabel, "%i", CLAMP((int)webgi->textures[webgi->framesize*webgi->nframes-1], 0, 255));
+  fprintf(stream_out, "%s\n", varlabel);
+  fprintf(stream_out, "   ]\n");
+
+  fprintf(stream_out, "}\n");
+  fclose(stream_out);
+}
+
 
 /* ------------------ OutputFixedFrame ------------------------ */
 
@@ -1782,15 +1980,200 @@ void OutputVariableFrame(FILE *stream_out, char *label, webgeomdata *webgi){
   fprintf(stream_out, "\n");
 }
 
+/* ------------------ SliceNode2Data ------------------------ */
+
+int SliceNode2Data(char *html_file, int option){
+  webgeomdata slice_node_web;
+  int return_val = 0;
+
+  InitWebGeom(&slice_node_web, "slice_node");
+  if(SliceNodeTriangles2Geom(&slice_node_web, option)!=0){
+    OutputFixedFrameData(html_file, &slice_node_web, rgb_slice);
+    return_val = 1;
+  }
+  FreeWebGeom(&slice_node_web);
+
+  return return_val;
+}
+
+/* ------------------ SliceCell2Data ------------------------ */
+
+int SliceCell2Data(char *html_file, int option){
+  webgeomdata slice_cell_web;
+  int return_val = 0;
+
+  InitWebGeom(&slice_cell_web, "slice_cell");
+  if(SliceCellTriangles2Geom(&slice_cell_web, option)!=0){
+    OutputFixedFrameData(html_file, &slice_cell_web, rgb_slice);
+    return_val = 1;
+  }
+  FreeWebGeom(&slice_cell_web);
+
+  return return_val;
+}
+
+/* ------------------ Obst2Data ------------------------ */
+
+int Obst2Data(char *html_file){
+  float *vertsObstLit=NULL, *normalsObstLit = NULL;
+  float *colorsObstLit = NULL, *colors4ObstLit = NULL;
+  int nvertsObstLit, nverts4ObstLit;
+  int *facesObstLit, nfacesObstLit;
+  FILE *stream_out;
+  char label[100];
+  int i;
+
+  ObstLitTriangles2Geom(&vertsObstLit, &normalsObstLit,
+                        &colorsObstLit, &colors4ObstLit, &facesObstLit,
+                        &nfacesObstLit, &nvertsObstLit, &nverts4ObstLit);
+  if(nvertsObstLit<=0||nfacesObstLit<=0){
+    FREEMEMORY(vertsObstLit);
+    FREEMEMORY(colorsObstLit);
+    FREEMEMORY(colors4ObstLit);
+    FREEMEMORY(facesObstLit);
+    return 0;
+  }
+  stream_out = fopen(html_file, "w");
+  if(stream_out==NULL)return 0;
+
+  fprintf(stream_out,"{\n");
+
+  fprintf(stream_out, "\"vertices\": [\n");
+  for(i = 0; i < nvertsObstLit - 1; i++){
+    sprintf(label, "%f", vertsObstLit[i]);
+    TrimZeros(label);
+    if(i%PER_ROW==0)fprintf(stream_out, "  ");
+    fprintf(stream_out, "%s,", label);
+    if(i%PER_ROW == (PER_ROW - 1))fprintf(stream_out, "\n");
+  }
+  sprintf(label, "%f", vertsObstLit[nvertsObstLit - 1]);
+  TrimZeros(label);
+  fprintf(stream_out, "%s\n", label);
+  fprintf(stream_out, "   ],\n");
+
+  fprintf(stream_out, "\"colors\": [\n");
+  for(i = 0; i < nverts4ObstLit - 1; i++){
+    sprintf(label, "%f", colors4ObstLit[i]);
+    TrimZeros(label);
+    if(i%PER_ROW==0)fprintf(stream_out, "  ");
+    fprintf(stream_out, "%s,", label);
+    if(i%PER_ROW == (PER_ROW - 1))fprintf(stream_out, "\n");
+  }
+  sprintf(label, "%f", colors4ObstLit[nverts4ObstLit - 1]);
+  TrimZeros(label);
+  fprintf(stream_out, "%s\n", label);
+  fprintf(stream_out, "   ],\n");
+
+  fprintf(stream_out, "\"indices\": [\n");
+  for(i = 0; i < nfacesObstLit - 1; i++){
+    if(i%PERBIN_ROW==0)fprintf(stream_out, "  ");
+    fprintf(stream_out, "%i,", facesObstLit[i]);
+    if(i%PERBIN_ROW == (PERBIN_ROW - 1))fprintf(stream_out, "\n");
+  }
+  fprintf(stream_out, "%i\n", facesObstLit[nfacesObstLit - 1]);
+  fprintf(stream_out, "   ]\n");
+
+  fprintf(stream_out, "}\n");
+
+  FREEMEMORY(vertsObstLit);
+  FREEMEMORY(colorsObstLit);
+  FREEMEMORY(colors4ObstLit);
+  FREEMEMORY(facesObstLit);
+  fclose(stream_out);
+
+  return 1;
+}
+
+/* ------------------ Smv2Geom ------------------------ */
+
+int Smv2Geom(char *html_file){
+  float *vertsGeomLit = NULL, *normalsGeomLit = NULL, *colorsGeomLit = NULL;
+  int nvertsGeomLit, *facesGeomLit, nfacesGeomLit;
+  FILE *stream_out;
+  int i;
+
+  stream_out = fopen(html_file, "w");
+  if(stream_out != NULL){
+    GeomLitTriangles2Geom(&vertsGeomLit, &normalsGeomLit, &colorsGeomLit, &nvertsGeomLit, &facesGeomLit, &nfacesGeomLit);
+
+    if(nvertsGeomLit > 0)fprintf(stream_out, "geometry: %i\n", nvertsGeomLit);
+    for(i = 0; i < nvertsGeomLit - 1; i++){
+      char label[100];
+
+      sprintf(label, "%f", vertsGeomLit[i]);
+      TrimZeros(label);
+      fprintf(stream_out, "%s,", label);
+      if(i%PER_ROW == (PER_ROW - 1))fprintf(stream_out, "\n");
+    }
+    if(nvertsGeomLit > 0){
+      char label[100];
+
+      sprintf(label, "%f", vertsGeomLit[nvertsGeomLit - 1]);
+      TrimZeros(label);
+      fprintf(stream_out, "%s\n", label);
+    }
+
+    if(nvertsGeomLit > 0)fprintf(stream_out, "normals: %i\n", nvertsGeomLit);
+    for(i = 0; i < nvertsGeomLit - 1; i++){
+      char label[100];
+
+      sprintf(label, "%f", normalsGeomLit[i]);
+      TrimZeros(label);
+      fprintf(stream_out, "%s,", label);
+      if(i%PER_ROW == (PER_ROW - 1))fprintf(stream_out, "\n");
+    }
+    if(nvertsGeomLit > 0){
+      char label[100];
+
+      sprintf(label, "%f", normalsGeomLit[nvertsGeomLit - 1]);
+      TrimZeros(label);
+      fprintf(stream_out, "%s\n", label);
+    }
+
+    if(nvertsGeomLit > 0)fprintf(stream_out, "colors: %i\n", nvertsGeomLit);
+    for(i = 0; i < nvertsGeomLit - 1; i++){
+      char label[100];
+
+      sprintf(label, "%f", colorsGeomLit[i]);
+      TrimZeros(label);
+      fprintf(stream_out, "%s,", label);
+      if(i%PER_ROW == (PER_ROW - 1))fprintf(stream_out, "\n");
+    }
+    if(nvertsGeomLit > 0){
+      char label[100];
+
+      sprintf(label, "%f", colorsGeomLit[nvertsGeomLit - 1]);
+      TrimZeros(label);
+      fprintf(stream_out, "%s\n", label);
+    }
+
+    if(nfacesGeomLit > 0)fprintf(stream_out, "indices: %i\n", nfacesGeomLit);
+    for(i = 0; i < nfacesGeomLit - 1; i++){
+      fprintf(stream_out, "%i,", facesGeomLit[i]);
+      if(i%PERBIN_ROW == (PERBIN_ROW - 1))fprintf(stream_out, "\n");
+    }
+    if(nfacesGeomLit > 0){
+      fprintf(stream_out, "%i\n", facesGeomLit[nfacesGeomLit - 1]);
+    }
+
+    FREEMEMORY(vertsGeomLit);
+    FREEMEMORY(colorsGeomLit);
+    FREEMEMORY(facesGeomLit);
+    fclose(stream_out);
+  }
+  return 1;
+}
+
 /* ------------------ Smv2Html ------------------------ */
 
-int Smv2Html(char *html_file, int option, int from_where){
-  FILE *stream_in = NULL, *stream_out;
-  float *vertsObstLit, *normalsObstLit, *colorsObstLit;
-  int nvertsObstLit, *facesObstLit, nfacesObstLit;
+int Smv2Html(char *html_file, int option, int from_where, int vr_flag){
+  FILE *stream_in = NULL, *stream_out = NULL;
+  float *vertsObstLit, *normalsObstLit, *colorsObstLit, *colors4ObstLit;
+  int nvertsObstLit, nverts4ObstLit, *facesObstLit, nfacesObstLit;
   float *vertsGeomLit, *normalsGeomLit, *colorsGeomLit;
   int nvertsGeomLit, *facesGeomLit, nfacesGeomLit;
   int have_blockages = 0, have_geometry = 0;
+  char *template_file;
 
   float *vertsLine, *colorsLine;
   int nvertsLine, *facesLine, nfacesLine;
@@ -1799,9 +2182,15 @@ int Smv2Html(char *html_file, int option, int from_where){
   int copy_html, i;
   webgeomdata slice_node_web, slice_cell_web, slice_geom_web, bndf_node_web, part_node_web;
 
-  stream_in = fopen(smokeview_html, "r");
+  if(vr_flag==VR_NO){
+    template_file = smokeview_html;
+  }
+  else{
+    template_file = smokeviewvr_html;
+  }
+  stream_in = fopen(template_file, "r");
   if(stream_in==NULL){
-    printf("***error: smokeview html template file %s failed to open\n", smokeview_html);
+    printf("***error: smokeview html template file %s failed to open\n", template_file);
     return 1;
   }
 
@@ -1811,7 +2200,7 @@ int Smv2Html(char *html_file, int option, int from_where){
   else{
     int return_val;
 
-    return_val = GetHtmlFileName(html_fullfile, option);
+    return_val = GetHtmlFileName(html_fullfile, option, vr_flag);
     if(return_val==1){
       fclose(stream_in);
       return 1;
@@ -1829,11 +2218,11 @@ int Smv2Html(char *html_file, int option, int from_where){
 
   // obtain vertices, triangles and lines
 
-  InitWebgeom(&slice_node_web, "slice_node");
-  InitWebgeom(&slice_cell_web, "slice_cell");
-  InitWebgeom(&slice_geom_web, "slice_geom");
-  InitWebgeom(&bndf_node_web,  "bndf_node");
-  InitWebgeom(&part_node_web,  "part");
+  InitWebGeom(&slice_node_web, "slice_node");
+  InitWebGeom(&slice_cell_web, "slice_cell");
+  InitWebGeom(&slice_geom_web, "slice_geom");
+  InitWebGeom(&bndf_node_web,  "bndf_node");
+  InitWebGeom(&part_node_web,  "part");
 
   SliceNodeTriangles2Geom(&slice_node_web, option);
   SliceCellTriangles2Geom(&slice_cell_web, option);
@@ -1841,7 +2230,7 @@ int Smv2Html(char *html_file, int option, int from_where){
   BndfNodeTriangles2Geom( &bndf_node_web,  option);
   PartNodeVerts2Geom(     &part_node_web,  option);
 
-  ObstLitTriangles2Geom(&vertsObstLit, &normalsObstLit, &colorsObstLit, &nvertsObstLit, &facesObstLit, &nfacesObstLit);
+  ObstLitTriangles2Geom(&vertsObstLit, &normalsObstLit, &colorsObstLit, &colors4ObstLit, &facesObstLit, &nfacesObstLit, &nvertsObstLit, &nverts4ObstLit);
   GeomLitTriangles2Geom(&vertsGeomLit, &normalsGeomLit, &colorsGeomLit, &nvertsGeomLit, &facesGeomLit, &nfacesGeomLit);
   Lines2Geom(&vertsLine, &colorsLine, &nvertsLine, &facesLine, &nfacesLine);
 
@@ -1872,8 +2261,7 @@ int Smv2Html(char *html_file, int option, int from_where){
 
       // reset buttons
       fprintf(stream_out, "<button onclick = \"Reset()\">Reset View </button>\n");
-	  fprintf(stream_out, "<button onclick = \"EnterVR()\">Enter VR </button>\n");
-	  fprintf(stream_out, "<br>\n");
+      fprintf(stream_out, "<br>\n");
 
       //show/hide scene elements
 
@@ -1905,7 +2293,7 @@ int Smv2Html(char *html_file, int option, int from_where){
       //time stepping controls
 
 // buttons need to be defined for all cases for now
-      if(option==ALL_TIMES){
+      if(option==HTML_ALL_TIMES){
         fprintf(stream_out, "<button onclick = \"SetTime(-2)\"><<</button>\n");
         fprintf(stream_out, "<button onclick = \"SetTime(-1)\"><</button>\n");
         fprintf(stream_out, "<button type = \"button\" id = \"buttonPauseResume\" onclick = \"SetTime(0)\">Pause</button>\n");
@@ -1924,7 +2312,7 @@ int Smv2Html(char *html_file, int option, int from_where){
       fprintf(stream_out, "         var xcen=%f;\n", xbar/2.0);
       fprintf(stream_out, "         var ycen=%f;\n", ybar/2.0);
       fprintf(stream_out, "         var zcen=%f;\n", zbar/2.0);
-      if(option==ALL_TIMES){
+      if(option==HTML_ALL_TIMES){
         fprintf(stream_out, "         document.getElementById(\"buttonPauseResume\").style.width = \"75px\";\n");
       }
 
@@ -2157,7 +2545,11 @@ int Smv2Html(char *html_file, int option, int from_where){
 
   fclose(stream_in);
   fclose(stream_out);
+  FreeWebGeom(&slice_node_web);
+  FreeWebGeom(&slice_cell_web);
+  FreeWebGeom(&slice_geom_web);
+  FreeWebGeom(&bndf_node_web);
+  FreeWebGeom(&part_node_web);
   printf(" - complete\n");
   return 0;
 }
-#endif

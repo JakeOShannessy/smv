@@ -5,11 +5,11 @@
 #include <string.h>
 #include <math.h>
 #include "svzip.h"
-#include "MALLOC.h"
+#include "MALLOCC.h"
 
 int ReadSMV(char *smvfile){
-
-  FILE *streamsmv;
+  FILE *stream = NULL;
+  bufferstreamdata *streamsmv;
   int ioffset;
   int unit_start=15;
   int igrid,ipdim;
@@ -25,14 +25,17 @@ int ReadSMV(char *smvfile){
 
   igrid=0;
   ipdim=0;
-  streamsmv=fopen(smvfile,"r");
-  if(streamsmv==NULL){
+  stream=fopen(smvfile,"r");
+  if(stream==NULL){
     PRINTF("The file: %s could not be opened\n",smvfile);
     return 1;
   }
+  fclose(stream);
 
-  while(!feof(streamsmv)){
-    if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+  streamsmv = GetSMVBuffer(smvfile, NULL);
+
+  while(!FEOF(streamsmv)){
+    if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
     CheckMemory;
     if(strncmp(buffer," ",1)==0)continue;
 
@@ -83,13 +86,13 @@ int ReadSMV(char *smvfile){
       int i,nclasses;
 
       npartclassinfo++;
-      fgets(buffer,BUFFERSIZE,streamsmv);
-      fgets(buffer,BUFFERSIZE,streamsmv);
-      fgets(buffer,BUFFERSIZE,streamsmv);
+      FGETS(buffer,BUFFERSIZE,streamsmv);
+      FGETS(buffer,BUFFERSIZE,streamsmv);
+      FGETS(buffer,BUFFERSIZE,streamsmv);
       sscanf(buffer,"%i",&nclasses);
       if(nclasses>0)maxpart5propinfo+=nclasses;
       for(i=0;i<nclasses;i++){
-        fgets(buffer,BUFFERSIZE,streamsmv);
+        FGETS(buffer,BUFFERSIZE,streamsmv);
       }
       continue;
     }
@@ -112,7 +115,6 @@ int ReadSMV(char *smvfile){
       Match(buffer,"SLCF") == 1||
       Match(buffer,"SLCC") == 1||
       Match(buffer, "SLCD") == 1 ||
-      Match(buffer, "SLFL") == 1 ||
       Match(buffer,"SLCT") == 1
       ){
       nsliceinfo++;
@@ -268,7 +270,7 @@ int ReadSMV(char *smvfile){
   igrid=0;
   ismoke3d=0;
   ismoke3d_seq=0;
-  rewind(streamsmv);
+  REWIND(streamsmv);
 #ifndef pp_THREAD
   if(GLOBcleanfiles==0)PRINTF("Compressing .bf, .iso, .s3d, and .sf data files referenced in %s\n\n",smvfile);
 #endif
@@ -276,10 +278,10 @@ int ReadSMV(char *smvfile){
     PRINTF("Removing compressed .bf, .iso, .s3d and .sf data files referenced in %s\n",smvfile);
     PRINTF("   (Each removal occurs only if the corresponding uncompressed file exists)\n\n");
   }
-  while(!feof(streamsmv)){
+  while(!FEOF(streamsmv)){
     patch *patchi;
 
-    if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+    if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
     CheckMemory;
     if(strncmp(buffer," ",1)==0)continue;
   /*
@@ -288,11 +290,8 @@ int ReadSMV(char *smvfile){
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
     if(Match(buffer,"ENDF") == 1){
-      FILE *endianstream;
-      int one;
-
       GLOBendf=1;
-      if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+      if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
       TrimBack(buffer);
       strcpy(GLOBendianfilebase,buffer);
       FREEMEMORY(GLOBendianfile);
@@ -308,18 +307,6 @@ int ReadSMV(char *smvfile){
         strcpy(GLOBendianfile,GLOBsourcedir);
         strcat(GLOBendianfile,buffer);
       }
-      endianstream=fopen(GLOBendianfile,"rb");
-      if(endianstream!=NULL){
-        FSEEK(endianstream,4,SEEK_CUR);
-        fread(&one,4,1,endianstream);
-        if(one==1){
-          endianswitch=0;
-        }
-        else{
-          endianswitch=1;
-        }
-        fclose(endianstream);
-      }
       continue;
     }
 
@@ -328,7 +315,7 @@ int ReadSMV(char *smvfile){
 
       meshi=meshinfo+igrid;
       igrid++;
-      fgets(buffer,BUFFERSIZE,streamsmv);
+      FGETS(buffer,BUFFERSIZE,streamsmv);
       sscanf(buffer,"%i %i %i",&meshi->ibar,&meshi->jbar,&meshi->kbar);
       continue;
     }
@@ -342,7 +329,7 @@ int ReadSMV(char *smvfile){
 
       meshi=meshinfo+ipdim;
       ipdim++;
-      fgets(buffer,BUFFERSIZE,streamsmv);
+      FGETS(buffer,BUFFERSIZE,streamsmv);
       sscanf(buffer,"%f %f %f %f %f %f",&meshi->xbar0,&meshi->xbar,&meshi->ybar0,&meshi->ybar,&meshi->zbar0,&meshi->zbar);
       continue;
     }
@@ -352,25 +339,9 @@ int ReadSMV(char *smvfile){
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
     if(Match(buffer,"SYST") == 1){
-      if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+      if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
       GLOBsyst=1;
       TrimBack(buffer);
-      if(Match(buffer,"SGI") == 1||Match(buffer,"AIX")==1){
-        if(GetEndian()==0){
-          endianswitch=1;
-        }
-        else{
-          endianswitch=0;
-        }
-      }
-      else{
-        if(GetEndian()==0){
-          endianswitch=0;
-        }
-        else{
-          endianswitch=1;
-        }
-      }
       continue;
     }
   /*
@@ -382,7 +353,7 @@ int ReadSMV(char *smvfile){
       float dummy;
 
       ioffset++;
-      fgets(buffer,255,streamsmv);
+      FGETS(buffer,255,streamsmv);
       sscanf(buffer,"%f %f %f",&dummy,&dummy,&dummy);
       continue;
     }
@@ -425,7 +396,7 @@ int ReadSMV(char *smvfile){
       }
 #endif
 
-      if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+      if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
       TrimBack(buffer);
       buffer2=TrimFront(buffer);
       filelen=strlen(buffer2);
@@ -445,7 +416,7 @@ int ReadSMV(char *smvfile){
           STRCPY(smoke3di->file,buffer2);
         }
         smoke3di->filesize=filesize;
-        if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+        if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
         buffer2 = TrimFront(buffer);
         TrimBack(buffer2);
         if(strcmp(buffer2,"HRRPUV")==0){
@@ -476,16 +447,16 @@ int ReadSMV(char *smvfile){
 
       partclassi = partclassinfo + npartclassinfo;
 
-      fgets(buffer,BUFFERSIZE,streamsmv);
+      FGETS(buffer,BUFFERSIZE,streamsmv);
       percen=strchr(buffer,'%');
       if(percen!=NULL)percen=0;
       TrimBack(buffer);
       NewMemory((void **)&partclassi->name,strlen(buffer)+1);
       strcpy(partclassi->name,buffer);
 
-      fgets(buffer,BUFFERSIZE,streamsmv);
+      FGETS(buffer,BUFFERSIZE,streamsmv);
 
-      fgets(buffer,BUFFERSIZE,streamsmv);
+      FGETS(buffer,BUFFERSIZE,streamsmv);
       sscanf(buffer,"%i",&partclassi->ntypes);
       if(partclassi->ntypes>0){
         NewMemory((void **)&partclassi->labels,partclassi->ntypes*sizeof(flowlabels));
@@ -548,7 +519,7 @@ int ReadSMV(char *smvfile){
       parti->compressed2=0;
       parti->inuse_part2iso=0;
 
-      if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+      if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
       TrimBack(buffer);
       buffer2=TrimFront(buffer);
       if(strlen(buffer2)==0)break;
@@ -572,7 +543,7 @@ int ReadSMV(char *smvfile){
       else{
         fprintf(stderr,"*** Warning: the file, %s, does not exist.\n",buffer2);
       }
-      if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+      if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
       sscanf(buffer,"%i",&parti->nclasses);
       if(parti->nclasses>0){
         NewMemory((void **)&parti->classptr,parti->nclasses*sizeof(partclassdata *));
@@ -583,7 +554,7 @@ int ReadSMV(char *smvfile){
       for(i=0;i<parti->nclasses;i++){
         int classindex;
 
-        if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+        if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
         sscanf(buffer,"%i",&classindex);
         parti->classptr[i]=partclassinfo + classindex - 1;
       }
@@ -616,7 +587,7 @@ int ReadSMV(char *smvfile){
       patchi->compressed=0;
       patchi->version=version_local;
 
-      if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+      if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
       TrimBack(buffer);
       buffer2=TrimFront(buffer);
       if(strlen(buffer2)==0)break;
@@ -634,7 +605,7 @@ int ReadSMV(char *smvfile){
         else{
           STRCPY(patchi->file,buffer2);
         }
-        if(ReadLabels(&patchi->label,streamsmv,NULL)==2){
+        if(ReadLabels(&patchi->label,streamsmv,NULL)==LABEL_ERR){
           fprintf(stderr,"*** Warning: problem reading BNDF entry\n");
           break;
         }
@@ -681,7 +652,7 @@ int ReadSMV(char *smvfile){
       }
       else{
         fprintf(stderr,"*** Warning: the file, %s, does not exist.\n",buffer);
-        if(ReadLabels(&patchi->label,streamsmv,NULL)==2)break;
+        if(ReadLabels(&patchi->label,streamsmv,NULL)==LABEL_ERR)break;
         npatchinfo--;
       }
       continue;
@@ -695,7 +666,6 @@ int ReadSMV(char *smvfile){
       Match(buffer,"SLCF") == 1||
       Match(buffer,"SLCC") == 1||
       Match(buffer, "SLCD") == 1 ||
-      Match(buffer, "SLFL") == 1 ||
       Match(buffer,"SLCT") == 1)
     {
       int version_local=0,dummy;
@@ -741,7 +711,7 @@ int ReadSMV(char *smvfile){
         slicei->histogram->buckets_polar = NULL;
       }
 
-      if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+      if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
       TrimBack(buffer);
       buffer2=TrimFront(buffer);
       if(strlen(buffer2)==0)break;
@@ -763,7 +733,7 @@ int ReadSMV(char *smvfile){
         STRCPY(slicei->boundfile,slicei->file);
         STRCAT(slicei->boundfile,".bnd");
 
-        if(ReadLabels(&slicei->label,streamsmv,NULL)==2){
+        if(ReadLabels(&slicei->label,streamsmv,NULL)==LABEL_ERR){
           fprintf(stderr,"*** Warning: problem reading SLCF entry\n");
           break;
         }
@@ -772,7 +742,7 @@ int ReadSMV(char *smvfile){
       }
       else{
         fprintf(stderr,"*** Warning: the file, %s, does not exist.\n",buffer2);
-        if(ReadLabels(&sliceinfo[islice].label,streamsmv,NULL)==2)break;
+        if(ReadLabels(&sliceinfo[islice].label,streamsmv,NULL)==LABEL_ERR)break;
         nsliceinfo--;
       }
       continue;
@@ -818,7 +788,7 @@ int ReadSMV(char *smvfile){
       plot3di->inuse=0;
       plot3di->compressed=0;
 
-      if(fgets(buffer,BUFFERSIZE,streamsmv)==NULL)break;
+      if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
       TrimBack(buffer);
       buffer2=TrimFront(buffer);
       if(strlen(buffer2)==0)break;
@@ -836,11 +806,11 @@ int ReadSMV(char *smvfile){
           STRCPY(plot3di->file,"");
         }
         STRCAT(plot3di->file,buffer2);
-        if(ReadLabels(&plot3di->labels[0],streamsmv,NULL)==2||
-           ReadLabels(&plot3di->labels[1],streamsmv,NULL)==2||
-           ReadLabels(&plot3di->labels[2],streamsmv,NULL)==2||
-           ReadLabels(&plot3di->labels[3],streamsmv,NULL)==2||
-           ReadLabels(&plot3di->labels[4],streamsmv,NULL)==2){
+        if(ReadLabels(&plot3di->labels[0],streamsmv,NULL)==LABEL_ERR||
+           ReadLabels(&plot3di->labels[1],streamsmv,NULL)==LABEL_ERR||
+           ReadLabels(&plot3di->labels[2],streamsmv,NULL)==LABEL_ERR||
+           ReadLabels(&plot3di->labels[3],streamsmv,NULL)==LABEL_ERR||
+           ReadLabels(&plot3di->labels[4],streamsmv,NULL)==LABEL_ERR){
           fprintf(stderr,"*** Warning: problem reading PL3D entry\n");
           break;
         }
@@ -849,11 +819,11 @@ int ReadSMV(char *smvfile){
       }
       else{
         fprintf(stderr,"*** Warning: the file, %s, does not exist.\n",buffer);
-        if(ReadLabels(&plot3dinfo[iplot3d].labels[0],streamsmv,NULL)==2)break;
-        if(ReadLabels(&plot3dinfo[iplot3d].labels[1],streamsmv,NULL)==2)break;
-        if(ReadLabels(&plot3dinfo[iplot3d].labels[2],streamsmv,NULL)==2)break;
-        if(ReadLabels(&plot3dinfo[iplot3d].labels[3],streamsmv,NULL)==2)break;
-        if(ReadLabels(&plot3dinfo[iplot3d].labels[4],streamsmv,NULL)==2)break;
+        if(ReadLabels(&plot3dinfo[iplot3d].labels[0],streamsmv,NULL)==LABEL_ERR)break;
+        if(ReadLabels(&plot3dinfo[iplot3d].labels[1],streamsmv,NULL)==LABEL_ERR)break;
+        if(ReadLabels(&plot3dinfo[iplot3d].labels[2],streamsmv,NULL)==LABEL_ERR)break;
+        if(ReadLabels(&plot3dinfo[iplot3d].labels[3],streamsmv,NULL)==LABEL_ERR)break;
+        if(ReadLabels(&plot3dinfo[iplot3d].labels[4],streamsmv,NULL)==LABEL_ERR)break;
         nplot3dinfo--;
       }
       continue;
@@ -1235,7 +1205,7 @@ void InitVolRender(void){
       vr->fire=slicei;
      continue;
     }
-    if(STRCMP(shortlabel,"rho_Soot")==0){
+    if(STRCMP(shortlabel,"rho_Soot")==0||STRCMP(shortlabel, "rho_C0.9H0.1")==0){
       vr->smoke=slicei;
       continue;
     }

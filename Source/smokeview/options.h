@@ -17,33 +17,39 @@
 
 //*** options: all platforms
 
-#define pp_HTML                // output html version of smokeview scene
-//#define pp_PARTDEBUG        // debug output for particles file I/O
-//#define pp_SPECULAR         // add widgets for specular lighting parameters to the lighting dialog box
-//#define pp_VENTPROFILE      // show original zonefire vent flow profile (calculated in smokeview)
-#define pp_GPUSMOKE           // code to speed up 3d smoke using the gpu
-//#define pp_SMOKEDIAG        // output smoke3d diagnostics (number of meshes, total triangles, triangles drawn)
-//#define pp_GEOMPRINT        // output geometry info
-//#define pp_MAKE_SMOKEIBLANK // generate smoke iblank arrays
-//#define pp_DPRINT           // debug print, printf line number and source file
-#define pp_CLIP               // test frustum near/far clip planes
-#define pp_DRAWISO            // turn on drawing routines
-#define pp_FILELIST           // use list of file names
-#define pp_LANG               // support other languages
-#define pp_SLICE_USE_ID       // use slcf index
-//#define pp_ISOTIME          // output iso load times
-#define pp_ISOTHREAD          // use multithreading for isosurfaces
-//#define pp_SMOKETEST        // max blending for fire, regular blending for smoke
-
-//#define pp_SPECTRAL
-
+//#define pp_SHOW_BOUND_MIRROR  // add menu for showing boundary files on mirror/open vents
+#define pp_MULTI_RES          // read in multi-resolution slice files
+//#define pp_HTML_VR           // output VR html code
+//#define pp_PART_HIST            // compute particle histograms
+//#define pp_SKIP_TERRAIN_DATA  // skip reading in terrain data if case is using immersed geometry
+//#define pp_SKIP_BOUNDARY_GEOMS // skips reading of boundary geometry files
 #define pp_GPU                // support the GPU
+#define pp_THREAD             // turn on multi-threading
+#define pp_GPUSMOKE           // code to speed up 3d smoke using the gpu
+#define pp_DRAWISO            // turn on drawing routines
+//#define pp_UPDATE_FILELOAD  // updates fileload variables when a file has been loaded or unloaded
+//#define pp_SPECULAR         // add widgets for specular lighting parameters to the lighting dialog box
+
+//#define pp_WUI_VAO            // use opengl vao objects for drawing terrain
+
+//*** debug: all platforms
+//#define pp_ISOTIME          // output iso load times
+//#define pp_PART_TEST        // for debugging, set particle values to 100*parti->seq_id + small random number
+
+//*** in development: all platforms
+#define pp_SMOKE_FAST           // load 3d smoke in parallel
+//#define pp_SMOKETEST          // max blending for fire, regular blending for smoke
+//#define pp_SPECTRAL           // use black body colors - not fully implemented
+//#define pp_SLICETHREAD        // parallel slice file loading
+//#define pp_BLOCK_COLOR        //  new algorithm for assigning obst colors
+//#define pp_NEWBOUND_DIALOG    // redo bound dialog
+//#define pp_PLOT3D_REDUCEMENUS // eliminate plot3d sub-menus
+//#define pp_PLOT3D_STATIC      // use static memory for plot3d labels
+//#define pp_LOAD_INCREMENTAL   // load data incrementally
+
 #ifdef pp_GPU
 #define pp_GPUTHROTTLE  // pp_GPU directive must also be set
 #endif
-
-//#define pp_PARTTEST   // for debugging, set particle values to 100*parti->seq_id + small random number
-#define pp_READBUFFER   // read .smv file from a memory buffer
 
 #ifdef pp_THREAD
 #define pp_THREADIBLANK // construct iblank arrays in background
@@ -68,19 +74,20 @@
 
 #ifdef pp_OSX
 #define pp_GLUTGET      // use d and f key in place of CTRL and ALT key
-// #define pp_OSXGLUT32 // used to test advanced OpenGL profile on mac
+#define pp_QUARTZ         // use Quartz
+#endif
+
+#ifdef pp_QUARTZ
+#define pp_CLOSEOFF     // turn off and disable close buttons in dialog box
 #endif
 
 //*** options: options being tested on all platforms
 
 #ifdef pp_BETA
+#define pp_DEBUG_TERRAIN       // output spreadsheet version of terrain elevation file
 //#define pp_SLICE_DEBUG         // slice debug output
 #define pp_DEBUG_SUBMENU       // debug output and testing for building menus
-//#define pp_SMOKE3D_LOADTEST  // load 3d smoke for all meshes for each time step
-//#define pp_SMOKEALPHA        // experimental smoke alpha settings
-#define pp_SHOWTERRAIN
 #define pp_TIMINGS
-//#define pp_GPUDEPTH
 //#define pp_SMOKETEST         // experimental smoke dialog box entries
 #endif
 
@@ -88,6 +95,7 @@
 
 #ifdef _DEBUG
 #define pp_RENDER360_DEBUG
+#define pp_SNIFF_ERROR
 #endif
 
 #endif

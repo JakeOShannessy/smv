@@ -63,13 +63,14 @@ extern "C" void ShowGluiAlert(void){
 /* ------------------ HideGluiAlert ------------------------ */
 
 extern "C" void HideGluiAlert(void){
+#ifndef pp_CLOSEOFF
   if(glui_alert!=NULL)glui_alert->hide();
+#endif
 }
 
 /* ------------------ GluiAlertSetup ------------------------ */
 
 extern "C" void GluiAlertSetup(int main_window){
-  update_glui_alert=0;
   if(glui_alert!=NULL){
     glui_alert->close();
     glui_alert=NULL;
@@ -229,15 +230,15 @@ void TrainerCB(int var){
   case LOAD_TEMP:
     // kind of a hack, having to put in code seg twice, but this is required to get data chopping to work
     if(slicebounds != NULL&&slicefile_labelindex != -1){
-      if(setslicechopmin == 1 || setslicechopmax == 1){
-        SetSliceBounds(slicefile_labelindex);
+      if(glui_setslicechopmin == 1 || glui_setslicechopmax == 1){
+        SliceBounds2Glui(slicefile_labelindex);
       }
     }
     TrainerViewMenu(MENU_TRAINER_temp);
     UpdateChopColors();
     if(slicebounds != NULL&&slicefile_labelindex != -1){
-      if(setslicechopmin == 1 || setslicechopmax == 1){
-        SetSliceBounds(slicefile_labelindex);
+      if(glui_setslicechopmin == 1 || glui_setslicechopmax == 1){
+        SliceBounds2Glui(slicefile_labelindex);
       }
     }
     UpdateChopColors();
@@ -247,15 +248,15 @@ void TrainerCB(int var){
   case LOAD_OXY:
     // kind of a hack, having to put in code seg twice, but this is required to get data chopping to work
     if(slicebounds != NULL&&slicefile_labelindex != -1){
-      if(setslicechopmin == 1 || setslicechopmax == 1){
-        SetSliceBounds(slicefile_labelindex);
+      if(glui_setslicechopmin == 1 || glui_setslicechopmax == 1){
+        SliceBounds2Glui(slicefile_labelindex);
       }
     }
     TrainerViewMenu(MENU_TRAINER_oxy);
     UpdateChopColors();
     if(slicebounds != NULL&&slicefile_labelindex != -1){
-      if(setslicechopmin == 1 || setslicechopmax == 1){
-        SetSliceBounds(slicefile_labelindex);
+      if(glui_setslicechopmin == 1 || glui_setslicechopmax == 1){
+        SliceBounds2Glui(slicefile_labelindex);
       }
     }
     UpdateChopColors();
@@ -315,7 +316,6 @@ void RotateCB(int var){
 
 extern "C" void GluiTrainerSetup(int main_window){
 
-  update_glui_trainer=0;
   if(glui_trainer!=NULL){
     glui_trainer->close();
     glui_trainer=NULL;

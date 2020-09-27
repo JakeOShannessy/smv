@@ -8,6 +8,7 @@
 
 #include "update.h"
 #include "smokeviewvars.h"
+#include "glui_tour.h"
 
 static int viewtype1=REL_VIEW;
 static int viewtype2=REL_VIEW;
@@ -68,45 +69,6 @@ GLUI_EditText *EDIT_label=NULL;
 GLUI_Listbox *LISTBOX_tour=NULL;
 GLUI_Listbox *LISTBOX_avatar=NULL;
 
-#define TOUR_CLOSE 99
-#define KEYFRAME_tXYZ 1
-#define KEYFRAME_INSERT 2
-#define KEYFRAME_DELETE 3
-#define KEYFRAME_PREVIOUS 4
-#define KEYFRAME_NEXT 5
-#define SAVE_SETTINGS 7
-#define SHOWTOURROUTE 8
-#define VIEWTOURFROMPATH 9
-#define VIEWTOURFROMPATH1 41
-#define VIEWTOURFROMPATH2 42
-#define SHOWTOURROUTE1 39
-#define SHOWTOURROUTE2 40
-#define TOUR_INSERT_NEW 32
-#define TOUR_INSERT_COPY 33
-#define TOUR_PREVIOUS 17
-#define TOUR_NEXT 18
-#define TOUR_DELETE 34
-#define TOUR_LABEL 19
-#define TOUR_HIDE 20
-#define KEYFRAME_viewXYZ 22
-#define VIEWSNAP 23
-#define TOUR_LIST 24
-#define TOUR_AVATAR 31
-#define VIEW1 26
-#define VIEW2 30
-#define VIEW_times 27
-#define TOUR_UPDATELABEL 28
-#define TOUR_USECURRENT 29
-#define TOUR_REVERSE 35
-#define TOUR_CIRCULAR_UPDATE 36
-#define KEYFRAME_UPDATE_ALL 38
-
-#define TOURMENU(f) callfrom_tourglui=1;TourMenu(f);callfrom_tourglui=0;
-
-#define SETTINGS_TOURS_ROLLOUT 0
-#define KEYFRAME_TOURS_ROLLOUT 1
-#define MODIFY_TOURS_ROLLOUT 2
-
 procdata toursprocinfo[3];
 int ntoursprocinfo = 0;
 
@@ -164,7 +126,6 @@ extern "C" void GluiTourSetup(int main_window){
 
   int i;
 
-  update_glui_tour=0;
   if(glui_tour!=NULL){
     glui_tour->close();
     glui_tour=NULL;
@@ -275,7 +236,7 @@ extern "C" void GluiTourSetup(int main_window){
   glui_tour->add_checkbox_to_panel(PANEL_misc, _("Anti-alias tour path line"), &tour_antialias);
 #endif
   if(navatar_types > 0){
-    glui_tour->add_checkbox_to_panel(PANEL_misc, _("Show avatar"), &show_tourlocus);
+    glui_tour->add_checkbox_to_panel(PANEL_misc, _("Show avatar"), &show_avatar);
     LISTBOX_avatar = glui_tour->add_listbox_to_panel(PANEL_misc, _("Avatar:"), &glui_avatar_index, TOUR_AVATAR, TourCB);
     for(i = 0;i < navatar_types;i++){
       LISTBOX_avatar->add_item(i, avatar_types[i]->label);
@@ -293,9 +254,14 @@ extern "C" void GluiTourSetup(int main_window){
   }
 
   PANEL_close_tour = glui_tour->add_panel("",false);
-  glui_tour->add_button_to_panel(PANEL_close_tour,_("Save settings"),SAVE_SETTINGS,TourCB);
+  glui_tour->add_button_to_panel(PANEL_close_tour,_("Save settings"),SAVE_SETTINGS_TOUR,TourCB);
   glui_tour->add_column_to_panel(PANEL_close_tour,false);
+#ifdef pp_CLOSEOFF
+  GLUI_Button *BUTTON_button2 = glui_tour->add_button_to_panel(PANEL_close_tour,"Close",TOUR_CLOSE,TourCB);
+  BUTTON_button2->disable();
+#else
   glui_tour->add_button_to_panel(PANEL_close_tour,"Close",TOUR_CLOSE,TourCB);
+#endif
 
   ROLLOUT_keyframe->close();
   ROLLOUT_settings->close();
@@ -459,7 +425,7 @@ void TourCB(int var){
   float key_time_in, key_az_path, key_view[3], key_zoom;
   float key_elev_path;
 
-  if(ntourinfo==0&&var!=TOUR_INSERT_NEW&&var!=TOUR_INSERT_COPY&&var!=TOUR_CLOSE&&var!=SAVE_SETTINGS){
+  if(ntourinfo==0&&var!=TOUR_INSERT_NEW&&var!=TOUR_INSERT_COPY&&var!=TOUR_CLOSE&&var!=SAVE_SETTINGS_TOUR){
     return;
   }
   if(selected_frame!=NULL){
@@ -533,7 +499,7 @@ void TourCB(int var){
   case TOUR_CLOSE:
     HideGluiTour();
     break;
-  case SAVE_SETTINGS:
+  case SAVE_SETTINGS_TOUR:
     WriteIni(LOCAL_INI,NULL);
     break;
   case SHOWTOURROUTE:

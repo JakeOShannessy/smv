@@ -7,7 +7,7 @@
 #include <math.h>
 #include "histogram.h"
 #include "pragmas.h"
-#include "MALLOC.h"
+#include "MALLOCC.h"
 #include "datadefs.h"
 
 /* ------------------ GetHistogramCDF ------------------------ */
@@ -20,6 +20,7 @@ float GetHistogramCDF(histogramdata *histogram, float val){
   if(histogram->val_max <= histogram->val_min)return 1.0;
 
   cutoff = (val - histogram->val_min)*(float)histogram->nbuckets / (histogram->val_max - histogram->val_min);
+  cutoff = CLAMP(cutoff, 0, histogram->nbuckets);
   for(i = 0; i < cutoff; i++){
     sum += histogram->buckets[i];
   }
@@ -182,9 +183,6 @@ void CopyVals2Histogram(float *vals, char *mask, float *weight, int nvals, histo
   float dbucket;
   int first=1;
   float nnvals=0.0;
-#ifdef pp_PARTDEBUG  
-  int have_inf = 0;
-#endif
 
 // initialize
 
@@ -205,13 +203,6 @@ void CopyVals2Histogram(float *vals, char *mask, float *weight, int nvals, histo
     else{
       nnvals++;
     }
-#ifdef pp_PARTDEBUG
-    if(isinf(vals[i])){
-      vals[i] = 0.0;
-      have_inf = 1;
-      printf("%i ", i);
-    }
-#endif
     if(first==1){
       valmin=vals[i];
       valmax=vals[i];
@@ -221,9 +212,6 @@ void CopyVals2Histogram(float *vals, char *mask, float *weight, int nvals, histo
     valmin=MIN(vals[i],valmin);
     valmax=MAX(vals[i],valmax);
   }
-#ifdef pp_PARTDEBUG
-  if(have_inf==1)printf("\n\n");
-#endif
 
 // record unmasked data in histogram
 

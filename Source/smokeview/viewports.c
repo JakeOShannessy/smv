@@ -52,9 +52,34 @@ void GetViewportInfo(void){
   int info_width;
   int dohist=0;
   int hbar_height;
+  int show_horizontal_colorbar;
+  int show_vertical_colorbar;
+
+  if(visColorbarHorizontal==1&&(showtime==1||showplot3d==1)){
+    show_horizontal_colorbar = 1;
+  }
+  else{
+    show_horizontal_colorbar = 0;
+  }
+  if(visColorbarVertical==1&&(showtime==1||showplot3d==1)){
+    show_vertical_colorbar = 1;
+  }
+  else{
+    show_vertical_colorbar = 0;
+  }
 
   info_width = GetStringWidth("y: 115, 11.5 m");
-  colorbar_label_width = GetStringWidth("*10^-02");
+  {
+    char sample_label[32];
+    int i;
+
+    strcpy(sample_label,"-.E+99");
+    for(i=0;i<MAX(5,ncolorlabel_digits);i++){
+      strcat(sample_label,"1");
+    }
+
+    colorbar_label_width = GetStringWidth(sample_label);
+  }
 
   v_space = 2;
   text_height=18;
@@ -130,7 +155,7 @@ void GetViewportInfo(void){
     if(doit==0&&visFramerate==1)doit=1;
     if(doit==0&&vis_slice_average==1&&show_slice_average&&slice_average_flag==1)doit=1;
   }
-  if(visColorbarHorizontal == 1){
+  if(show_horizontal_colorbar == 1){
     doit = 1;
   }
 #ifdef pp_memstatus
@@ -149,7 +174,7 @@ void GetViewportInfo(void){
     if(show_firecutoff==1 && current_mesh != NULL){
       if(hrrpuv_loaded == 1||temp_loaded == 1)VP_timebar.height += (text_height + v_space);
     }
-    if(visColorbarHorizontal==1){
+    if(show_horizontal_colorbar==1){
       VP_timebar.height += hbar_height;
     }
   }
@@ -169,7 +194,8 @@ void GetViewportInfo(void){
     }
   }
 
-  if(visColorbarVertical==0||num_colorbars==0||(showtime==0&&showplot3d==0))doit=0;
+  if(show_vertical_colorbar==0||num_colorbars==0)doit=0;
+  vis_colorbar = GetColorbarState();
   VP_vcolorbar.left = screenWidth-vcolorbar_delta - num_colorbars*(colorbar_label_width+2*h_space)-titlesafe_offset;
   if(dohist==1){
     VP_vcolorbar.left -= colorbar_label_width;
@@ -203,43 +229,42 @@ void GetViewportInfo(void){
   // set the correct dimensions for the view point based on the list of strings
   // we want to print and the spacing information
   // only do this if title is set
-  if(visTitle==1){
-    // add the margins
-    VP_title.height=titleinfo.top_margin+titleinfo.bottom_margin;
-    // count the lines first, then add space after
-    int nlinestotal = 0;
-    // first add the space for the hard coded lines if necessary
-    if(visTitle==1){
-      nlinestotal++;
-    }
-    if(gversion==1){
-      nlinestotal++;
-    }
-    if(gversion==1&&(strlen(titleinfo.fdsbuildline)>0)){
-      nlinestotal++;
-    }
-    if(visCHID==1){
-      nlinestotal++;
-    }
-    nlinestotal += titleinfo.nlines;
-    if(nlinestotal==0){
-      // if there is no information to be displayed, set everything to zero
-      VP_title.width = 0;
-      VP_title.height = 0;
-      VP_title.doit = 0;
-    } else{
-      // add the space for each line
-      // one fewer spacings are needed as they only go between each line
-      VP_title.height += nlinestotal*titleinfo.text_height +
-                         (nlinestotal-1)*titleinfo.line_space;
-      VP_title.doit = 1;
-      VP_title.width = screenWidth-VP_vcolorbar.width-2*titlesafe_offset;
-    }
 
-  } else{
+
+  // add the margins
+  VP_title.height=titleinfo.top_margin+titleinfo.bottom_margin;
+  // count the lines first, then add space after
+  int nlinestotal = 0;
+  // first add the space for the hard coded lines if necessary
+  if(vis_title_smv_version==1){
+    nlinestotal++;
+  }
+  if(vis_title_gversion==1){
+    nlinestotal++;
+  }
+  if(vis_title_gversion==1&&(strlen(titleinfo.fdsbuildline)>0)){
+    nlinestotal++;
+  }
+  if(vis_title_CHID==1){
+    nlinestotal++;
+  }
+  if(vis_title_fds==1){
+    nlinestotal++;
+  }
+  nlinestotal += titleinfo.nlines;
+  if(nlinestotal==0){
+    // if there is no information to be displayed, set everything to zero
     VP_title.width = 0;
     VP_title.height = 0;
     VP_title.doit = 0;
+  }
+  else{
+    // add the space for each line
+    // one fewer spacings are needed as they only go between each line
+    VP_title.height += nlinestotal*titleinfo.text_height +
+                       (nlinestotal-1)*titleinfo.line_space;
+    VP_title.doit = 1;
+    VP_title.width = screenWidth-VP_vcolorbar.width-2*titlesafe_offset;
   }
 
   VP_title.text_height = text_height;
@@ -256,7 +281,7 @@ void GetViewportInfo(void){
 
     timebar_height = MAX(VP_timebar.height, VP_info.height);
     if(timebar_overlap == TIMEBAR_OVERLAP_ALWAYS)timebar_height = 0;
-    if(timebar_overlap==TIMEBAR_OVERLAP_AUTO&&visTimebar==0&&visColorbarHorizontal==0)timebar_height = 0;
+    if(timebar_overlap==TIMEBAR_OVERLAP_AUTO&&visTimebar==0&&show_horizontal_colorbar==0)timebar_height = 0;
     VP_scene.text_height = text_height;
     VP_scene.text_width = text_width;
     VP_scene.left = titlesafe_offset;
@@ -274,14 +299,14 @@ void GetViewportInfo(void){
 
   vcolorbar_right_pos = VP_vcolorbar.right  - h_space;
   vcolorbar_left_pos  = vcolorbar_right_pos - vcolorbar_delta;
-  vcolorbar_top_pos   = VP_vcolorbar.top - 4*(v_space + VP_vcolorbar.text_height) - vcolorbar_delta;
-  vcolorbar_down_pos  = VP_vcolorbar.down + vcolorbar_delta;
+  vcolorbar_top_pos   = VP_vcolorbar.top    - 4*(v_space + VP_vcolorbar.text_height) - vcolorbar_delta;
+  vcolorbar_down_pos  = VP_vcolorbar.down   + vcolorbar_delta;
 
   // horizontal colorbar boundaries
 
-  hcolorbar_right_pos = VP_timebar.right - colorbar_label_width-hcolorbar_delta;
-  hcolorbar_left_pos  = VP_timebar.left  + colorbar_label_width;
-  hcolorbar_down_pos  = VP_timebar.top - hbar_height + (text_height + v_space);
+  hcolorbar_right_pos = VP_timebar.right   - hcolorbar_delta - colorbar_label_width;
+  hcolorbar_left_pos  = VP_timebar.left                      + colorbar_label_width;
+  hcolorbar_down_pos  = VP_timebar.top     - hbar_height     + (text_height + v_space);
   hcolorbar_top_pos   = hcolorbar_down_pos + hcolorbar_delta;
 }
 
@@ -1632,7 +1657,6 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
   eyeyINI = camera_current->eye[1];
   eyezINI = camera_current->eye[2];
 
-#ifdef pp_CLIP
   if(projection_type==PROJECTION_ORTHOGRAPHIC){
     fnear = -eyeyINI - 1.0;
     if(fnear < nearclip)fnear = nearclip;
@@ -1643,14 +1667,10 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
 
     eye = camera_current->eye;
     GetMinMaxDepth(eye, &min_depth, &max_depth);
-    fnear = MAX(min_depth-1.0, 0.001);
+    fnear = MAX(min_depth-1.0, 0.00001);
     ffar  = MAX(    max_depth+1.0, farclip);
+    ffar = max_depth+1.0;
   }
-#else
-  fnear = -eyeyINI - 1.0;
-  if(fnear < nearclip)fnear = nearclip;
-  ffar = fnear + farclip;
-#endif
 
   aperture_temp = Zoom2Aperture(zoom);
 
@@ -1871,10 +1891,6 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       ComputeAllSmokecolors();
 #endif
     }
-#ifdef pp_SMOKEDIAG
-    smoketime_merge = 0.0;
-    smoketime_draw = 0.0;
-#endif
     if(nsmoke3dinfo>0&&show3dsmoke==1){
       SortSmoke3dinfo();
 #ifdef pp_GPUSMOKE

@@ -5,13 +5,18 @@ set arg2=%2
 :: if arg3 is freeglut then freeglut not glut library will be built
 set arg3=%3
 
+:: setup compiler environment
+call ..\..\..\Utilities\Scripts\setup_intel_compilers.bat
+
+set EXIT_SCRIPT=1
+
 set WAIT=
 if "%arg1%"=="bot" (
   set WAIT=/WAIT
 )
 
 set LIBDIR=%CD%
-erase *.lib
+git clean -dxf
 
 cd ..\..\..\Source
 set SRCDIR=%CD%
@@ -19,41 +24,45 @@ set SRCDIR=%CD%
 cd ..\Build
 set BUILDDIR=%CD%
 
+:: openvr
+::cd %SRCDIR%\openvr
+::start %WAIT% makelib %OPTS% -copy libopenvr.lib %LIBDIR%\openvr.lib
+
 :: ZLIB
 cd %SRCDIR%\zlib128
-start %WAIT% makelib %OPTS% -copy libz.lib %LIBDIR%\zlib.lib
+start "building windows zlib" %WAIT% makelib %OPTS% -copy libz.lib %LIBDIR%\zlib.lib
 
 :: JPEG
 cd %SRCDIR%\jpeg-9b
-start %WAIT% makelib %OPTS% -copy libjpeg.lib  %LIBDIR%\jpeg.lib
+start "building windows jpeg" %WAIT% makelib %OPTS% -copy libjpeg.lib  %LIBDIR%\jpeg.lib
 
 :: PNG
 cd %SRCDIR%\png-1.6.21
-start %WAIT% makelib %OPTS% -copy libpng.lib %LIBDIR%\png.lib
+start "building windows png" %WAIT% makelib %OPTS% -copy libpng.lib %LIBDIR%\png.lib
 
 :: GD
 cd %SRCDIR%\gd-2.0.15
-start %WAIT% call makelib %OPTS% -copy libgd.lib %LIBDIR%\gd.lib
+start "building windows gd" %WAIT% call makelib %OPTS% -copy libgd.lib %LIBDIR%\gd.lib
 
 :: GLUT
 if x%arg3% == xfreeglut goto skip_glut
 cd %SRCDIR%\glut-3.7.6
-start %WAIT% makelib %OPTS% -copy libglutwin.lib %LIBDIR%\glut32.lib
+start "building windows glut" %WAIT% makelib %OPTS% -copy libglutwin.lib %LIBDIR%\glut32.lib
 :skip_glut
 
 :: GLUI
 cd %SRCDIR%\glui_v2_1_beta
 if x%arg3% == xfreeglut goto skip_glui1
-  start %WAIT% makelib %OPTS% -copy libglui.lib %LIBDIR%\glui.lib
+  start "building windows glui" %WAIT% makelib %OPTS% -copy libglui.lib %LIBDIR%\glui.lib
 :skip_glui1
 
 if NOT x%arg3% == xfreeglut goto skip_glui2
-  start %WAIT% makelib_freeglut %OPTS% -copy libglui.lib %LIBDIR%\glui.lib
+  start "building windows glui" %WAIT% makelib_freeglut %OPTS% -copy libglui.lib %LIBDIR%\glui.lib
 :skip_glui2
 
 :: pthreads
 cd %SRCDIR%\pthreads
-start %WAIT% makelib %OPTS% -copy libpthreads.lib %LIBDIR%\pthreads.lib
+start "building windows pthreads" %WAIT% makelib %OPTS% -copy libpthreads.lib %LIBDIR%\pthreads.lib
 
 if NOT x%arg2% == xlua goto skip_lua
 :: Lua interpreter
@@ -68,7 +77,7 @@ copy lpeg.lib %LIBDIR%\lpeg.lib
 :skip_lua
 
 :: FREEGLUT
-if NOT x%arg3% == xfreeglut goto skip_freeglut
+if NOT "x%arg3%" == "xfreeglut" goto skip_freeglut
 cd %BUILDDIR%\freeglut3.0.0\intel_win_64
 call make_freeglut %OPTS% 
 copy freeglut_staticd.lib %LIBDIR%\freeglut_staticd.lib
@@ -77,7 +86,8 @@ copy freeglut_staticd.lib %LIBDIR%\glut32.lib
 
 cd %LIBDIR%
 
-echo library builds complete
-if x%arg1% == xbot goto skip1
+if "x%arg1%" == "xbot" goto skip1
+pause
+dir *.lib
 pause
 :skip1

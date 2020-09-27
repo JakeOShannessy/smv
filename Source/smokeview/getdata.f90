@@ -10,7 +10,7 @@
 !  IF (N_FACE_D>0)  WRITE(LU_GEOM) (SURF_D(I),I=1,N_FACE_D)
 
 
-#ifdef pp_INTEL
+#ifdef __INTEL_COMPILER
 #define pp_FSEEK
 #endif
 #ifdef pp_GCC
@@ -20,7 +20,7 @@
 !  ------------------ module cio ------------------------
 
 module cio
-#ifdef pp_INTEL
+#ifdef __INTEL_COMPILER
 use ifport, only: seek_set, seek_cur
 #else
 integer, parameter :: seek_set=0, seek_cur=1
@@ -32,7 +32,7 @@ contains
 !  ------------------ ffseek ------------------------
 
 subroutine ffseek(unit,sizes,nsizes,mode,error)
-#ifdef pp_INTEL
+#ifdef __INTEL_COMPILER
 use ifport, only: fseek
 #endif
 implicit none
@@ -52,7 +52,7 @@ do i = 1, nsizes
 end do
 #endif
 
-#ifdef pp_INTEL
+#ifdef __INTEL_COMPILER
 error = fseek(unit,size,mode)
 #endif
 
@@ -543,6 +543,44 @@ endif
 return
 end subroutine openpart
 
+!  ------------------ write_bingeom------------------------
+
+subroutine write_bingeom(filename, verts, faces, surfs, n_verts, n_faces, n_surf_id, error)
+implicit none
+integer :: i
+
+character(len=*), intent(in) :: filename
+integer, intent(in) :: n_verts, n_faces, n_surf_id
+real, dimension(*), intent(in) :: verts
+integer, dimension(*), intent(in) :: faces
+integer, dimension(*), intent(in) :: surfs
+integer, intent(out) :: error
+integer, parameter :: double = selected_real_kind(12)
+
+
+integer :: n_volus
+integer, dimension(4) :: volus
+
+integer :: unitnum, integer_one=1
+
+error=0
+n_volus =0
+volus(1:4)=0
+
+open(newunit=unitnum,file=filename,form="unformatted",action="write")
+
+write(unitnum) integer_one
+write(unitnum) n_verts, n_faces, n_surf_id, n_volus
+write(unitnum) (real(verts(i),double),i=1,3*n_verts)
+write(unitnum) faces(1:3*n_faces)
+write(unitnum) surfs(1:n_surf_id)
+write(unitnum) volus(1:4*n_volus)
+
+close(unitnum)
+
+return
+end subroutine write_bingeom
+
 !  ------------------ openslice ------------------------
 
 subroutine openslice(slicefilename, unitnum, is1, is2, js1, js2, ks1, ks2, error)
@@ -668,7 +706,7 @@ if(exists)then
   return
 endif
 
-if(error.eq.0)read(boundaryunitnumber,iostat=error)patchlonglabel
+read(boundaryunitnumber,iostat=error)patchlonglabel
 if(error.eq.0)read(boundaryunitnumber,iostat=error)patchshortlabel
 if(error.eq.0)read(boundaryunitnumber,iostat=error)patchunit
 if(error.eq.0)read(boundaryunitnumber,iostat=error)npatch

@@ -15,11 +15,7 @@
 #ifdef pp_LUA
 #include "lua_api.h"
 #endif
-
-#undef pp_GPU_CULL_STATE
-#ifdef pp_GPU
-#define pp_GPU_CULL_STATE
-#endif
+#include "IOscript.h"
 
 /* ------------------ GetGridIndex ------------------------ */
 
@@ -526,6 +522,97 @@ void MouseSelectAvatar(int button, int state, int x, int y){
   }
 }
 
+/* ------------------ MouseSelectGeom ------------------------ */
+
+void MouseSelectGeom(int button, int state, int x, int y){
+  int val;
+  int mouse_x, mouse_y;
+  GLubyte r, g, b;
+
+  mouse_x = x;
+  mouse_y = screenHeight-y;
+
+  glDisable(GL_BLEND);
+  glDisable(GL_DITHER);
+  glDisable(GL_FOG);
+  DISABLE_LIGHTING;
+  glDisable(GL_TEXTURE_1D);
+  glDisable(GL_TEXTURE_2D);
+  glShadeModel(GL_FLAT);
+
+  ShowScene(SELECTOBJECT, VIEW_CENTER, 0, 0, 0, NULL);
+  glReadBuffer(GL_BACK);
+  glReadPixels(mouse_x, mouse_y, 1, 1, GL_RED,   GL_UNSIGNED_BYTE, &r);
+  glReadPixels(mouse_x, mouse_y, 1, 1, GL_GREEN, GL_UNSIGNED_BYTE, &g);
+  glReadPixels(mouse_x, mouse_y, 1, 1, GL_BLUE,  GL_UNSIGNED_BYTE, &b);
+
+  r = r>>nredshift;
+  g = g>>ngreenshift;
+  b = b>>nblueshift;
+
+  val = (r<<(nbluebits+ngreenbits))|(g<<nbluebits)|b;
+
+  if(val>0){
+    geomdata *geomi;
+    geomlistdata *geomlisti;
+
+    geomi = geominfoptrs[0];
+    geomlisti = geomi->geomlistinfo-1;
+
+    switch (select_geom){
+    case GEOM_PROP_VERTEX1:
+      selected_geom_vertex1 = val-1;
+      break;
+    case GEOM_PROP_VERTEX2:
+      selected_geom_vertex2 = val-1;
+      break;
+    case GEOM_PROP_TRIANGLE:
+    case GEOM_PROP_SURF:
+      selected_geom_triangle = val-1;
+      break;
+    }
+
+    switch(select_geom){
+    case GEOM_PROP_VERTEX1:
+    case GEOM_PROP_VERTEX2:
+    {
+      float *xyz1, *xyz2;
+
+      xyz1 = NULL;
+      if(selected_geom_vertex1>=0){
+        vertdata *verti;
+
+        verti = geomlisti->verts+selected_geom_vertex1;
+        xyz1 = verti->xyz;
+      }
+      xyz2 = NULL;
+      if(selected_geom_vertex2>=0){
+        vertdata *verti;
+
+        verti = geomlisti->verts+selected_geom_vertex2;
+        xyz2 = verti->xyz;
+      }
+      UpdateVertexInfo(xyz1, xyz2);
+    }
+      break;
+    case GEOM_PROP_TRIANGLE:
+    case GEOM_PROP_SURF:
+      if(geomlisti->ntriangles>0){
+        surfdata *tri_surf;
+        tridata *trii;
+
+        trii = geomlisti->triangles+selected_geom_triangle;
+        tri_surf = trii->geomsurf;
+        UpdateTriangleInfo(tri_surf, trii->area);
+      }
+      break;
+    }
+    glShadeModel(GL_SMOOTH);
+    glEnable(GL_BLEND);
+    ENABLE_LIGHTING;
+  }
+}
+
 /* ------------------ CheckTimeBound ------------------------ */
 
 void CheckTimeBound(void){
@@ -540,8 +627,9 @@ void CheckTimeBound(void){
     itimes=first_frame_index;
     if(render_status==RENDER_ON){
       RenderMenu(RenderCancel);
-      // following exits render command, do this a better way
-      if(current_script_command!=NULL)current_script_command->exit=1;
+      if(current_script_command!=NULL&&current_script_command->command!=SCRIPT_LOADSLICERENDER){
+        current_script_command->exit=1;
+      }
     }
     frame_index=first_frame_index;
     for(i=0;i<nsliceinfo;i++){
@@ -945,6 +1033,7 @@ void MouseButtonCB(GLFWwindow *window, int button, int action, int mods){
       if(viscolorbarpath==1)MouseEditColorbar(button, action, xpos, ypos);
       if(select_avatar==1)MouseSelectAvatar(button,action, xpos, ypos);
       if(select_device==1)MouseSelectDevice(button,action, xpos, ypos);
+      if(select_geom!=GEOM_PROP_NONE)MouseSelectGeom(button, action, xpos, ypos);
     }
     // glutPostRedisplay();
     if( showtime==1 || showplot3d==1){
@@ -1497,12 +1586,11 @@ void KeyboardUpCB(unsigned char key, int x, int y){
 #endif
 }
 
-#ifdef pp_GPU_CULL_STATE
-/* ------------------ PrintGPUCullState ------------------------ */
-
-void PrintGPUCullState(void){
-  char gpu_label[128];
 #ifdef pp_GPU
+/* ------------------ PrintGPUState ------------------------ */
+
+void PrintGPUState(void){
+  char gpu_label[128];
   if(gpuactive==1){
     if(usegpu==1){
       strcpy(gpu_label,"GPU in use.");
@@ -1515,10 +1603,39 @@ void PrintGPUCullState(void){
     strcpy(gpu_label,"GPU not available.");
   }
   PRINTF("%s ",gpu_label);
-#endif
   PRINTF("\n");
 }
 #endif
+
+/* ------------------ IsPartLoaded ------------------------ */
+
+int IsPartLoaded(void){
+  int i;
+
+  for(i = 0; i<npartinfo; i++){
+    partdata *parti;
+
+    parti = partinfo+i;
+    if(parti->loaded==0||parti->display==0)continue;
+    return 1;
+  }
+  return 0;
+}
+
+/* ------------------ IsPlot3DLoaded ------------------------ */
+
+int IsPlot3DLoaded(void){
+  int i;
+
+  for(i = 0; i<nplot3dinfo; i++){
+    plot3ddata *plot3di;
+
+    plot3di = plot3dinfo+i;
+    if(plot3di->loaded==0||plot3di->display==0)continue;
+    return 1;
+  }
+  return 0;
+}
 
 /* ------------------ Keyboard ------------------------ */
 
@@ -1531,6 +1648,9 @@ void Keyboard(unsigned char key, int flag){
 
   if(flag==FROM_CALLBACK){
     keystate = (GLUT_ACTIVE_ALT|GLUT_ACTIVE_CTRL)&GLUTGETMODIFIERS();
+#ifdef pp_OSX
+    if(keystate==0)keystate=GLUT_ACTIVE_ALT;
+#endif
     if(scriptoutstream!=NULL&&key!='t'&&key!='r'&&key!='R'&&key!=' '&&key!='-'){
       fprintf(scriptoutstream,"KEYBOARD\n");
       switch(keystate){
@@ -1602,10 +1722,6 @@ void Keyboard(unsigned char key, int flag){
         UpdateCurrentMesh(gbsave);
       }
       break;
-    case 'A':
-      axislabels_smooth=1-axislabels_smooth;
-      UpdateAxisLabelsSmooth();
-      break;
     case 'b':
     case 'B':
       switch(keystate){
@@ -1647,6 +1763,9 @@ void Keyboard(unsigned char key, int flag){
         else{
           contour_type++;
           if(contour_type>2)contour_type=0;
+          if(contour_type==LINE_CONTOURS)printf("line coloring\n");
+          if(contour_type==STEPPED_CONTOURS)printf("stepped coloring\n");
+          if(contour_type==SHADED_CONTOURS)printf("continuous coloring\n");
           UpdatePlot3dDisplay();
           UpdateRGBColors(COLORBAR_INDEX_NONE);
         }
@@ -1767,7 +1886,7 @@ void Keyboard(unsigned char key, int flag){
       if(nsmoke3dinfo>0){
         UpdateSmoke3dFlags();
       }
-      PrintGPUCullState();
+      PrintGPUState();
       return;
 #endif
     case 'h':
@@ -1836,7 +1955,7 @@ void Keyboard(unsigned char key, int flag){
       }
       break;
     case 'i':
-      if(cache_qdata==1){
+      if(cache_plot3d_data==1){
         HandleIso();
         return;
       }
@@ -1863,16 +1982,9 @@ void Keyboard(unsigned char key, int flag){
       if(visTimebar==0)PRINTF("Time bar hidden\n");
       if(visTimebar==1)PRINTF("Time bar visible\n");
       break;
-#ifdef _DEBUG
     case 'l':
-      if(nsmoke3dinfo>0){
-        smokecullflag=1-smokecullflag;
-        PRINTF("smokecullflag=%i\n",smokecullflag);
-        UpdateSmoke3dFlags();
-        return;
-      }
+      LoadUnloadMenu(RELOADALL);
       break;
-#endif
     case 'L':
       UnloadSliceMenu(UNLOAD_LAST);
       break;
@@ -1960,25 +2072,32 @@ void Keyboard(unsigned char key, int flag){
       }
       break;
     case 'p':
-      plotn += FlowDir;
-      if(plotn<1){
-        plotn=numplot3dvars;
+    case 'P':
+      if(IsPartLoaded()==1){
+        IncrementPartPropIndex();
       }
-      if(plotn>numplot3dvars){
-        plotn=1;
+      if(IsPlot3DLoaded()==1){
+        plotn += FlowDir;
+        if(plotn<1){
+          plotn = numplot3dvars;
+        }
+        if(plotn>numplot3dvars){
+          plotn = 1;
+        }
+        UpdateAllPlotSlices();
+        if(visiso==1&&cache_plot3d_data==1)UpdateSurface();
+        UpdatePlot3dListIndex();
       }
-      printf("plotn: %d\n", plotn);
-      UpdateAllPlotSlices();
-      if(visiso==1&&cache_qdata==1)UpdateSurface();
-      UpdatePlot3dListIndex();
       break;
     case 'q':
-    case 'Q':
       blocklocation++;
       if((ncadgeom==0&&blocklocation>BLOCKlocation_exact)||
                        blocklocation>BLOCKlocation_cad){
         blocklocation=BLOCKlocation_grid;
       }
+      if(blocklocation==BLOCKlocation_grid)printf("blocklocation: snapped to grid\n");
+      if(blocklocation==BLOCKlocation_exact)printf("blocklocation: as input\n");
+      if(blocklocation==BLOCKlocation_cad)printf("blocklocation: cad\n");
       if(showedit_dialog==1){
         if(blocklocation==BLOCKlocation_exact){
           blockage_as_input=1;
@@ -1989,13 +2108,32 @@ void Keyboard(unsigned char key, int flag){
         ObjectCB(BLOCKAGE_AS_INPUT2);
       }
       break;
+    case 'Q':
+      showhide_textures = 1-showhide_textures;
+      for(i = 0; i<ntextureinfo; i++){
+        texturedata *texti;
+
+        texti = textureinfo+i;
+        if(texti->loaded==0||texti->used==0)continue;
+        if(texti->display==0){ // if any textures are hidden then show them all
+          showhide_textures = 1;
+          break;
+        }
+      }
+      if(showhide_textures==1){
+        TextureShowMenu(MENU_TEXTURE_SHOWALL);
+      }
+      else{
+        TextureShowMenu(MENU_TEXTURE_HIDEALL);
+      }
+      break;
     case 'r':
     case 'R':
       {
         int rflag=0;
 
         if(keystate==GLUT_ACTIVE_ALT&&strncmp((const char *)&key2, "r", 1) == 0){
-          research_mode=1-research_mode;
+          research_mode = 1-research_mode;
           update_research_mode=1;
           return;
         }
@@ -2171,8 +2309,8 @@ void Keyboard(unsigned char key, int flag){
       }
       break;
     case 'T':
-      usetexturebar=1-usetexturebar;
-      PRINTF("usetexturebar=%i\n",usetexturebar);
+      vishmsTimelabel = 1-vishmsTimelabel;
+      SetLabelControls();
       break;
     case 'u':
     case 'U':
@@ -2208,7 +2346,7 @@ void Keyboard(unsigned char key, int flag){
         usevolrender=1-usevolrender;
         UpdateSmoke3dFlags();
 #ifdef pp_GPU
-        PrintGPUCullState();
+        PrintGPUState();
 #endif
         return;
       }
@@ -2232,7 +2370,7 @@ void Keyboard(unsigned char key, int flag){
       break;
     case 'W':
       clip_mode++;
-      if(clip_mode>3)clip_mode=0;
+      if(clip_mode>CLIP_MAX)clip_mode=0;
       UpdateClipAll();
       break;
     case 'x':
@@ -2271,9 +2409,28 @@ void Keyboard(unsigned char key, int flag){
         return;
       }
       break;
+#ifdef pp_MULTI_RES
+    case '`':
+      slice_resolution_level++;
+      if(slice_resolution_level>max_slice_resolution)slice_resolution_level = 0;
+      printf("slice resolution level: %i\n", slice_resolution_level);
+      break;
+#endif
     case '~':
       LevelScene(1,1,quat_general);
       Quat2Rot(quat_general,quat_rotation);
+      break;
+    case '=':
+      if(ngeominfo>0){
+        select_geom++;
+        if(select_geom==5)select_geom=0;
+        if(select_geom==GEOM_PROP_NONE)printf("geometry selection off\n");
+        if(select_geom==GEOM_PROP_VERTEX1)printf("select vertex 1\n");
+        if(select_geom==GEOM_PROP_VERTEX2)printf("select vertex 2\n");
+        if(select_geom==GEOM_PROP_TRIANGLE)printf("select triangle\n");
+        if(select_geom==GEOM_PROP_SURF)printf("select surf\n");
+        UpdateSelectGeom();
+      }
       break;
     case '!':
       SnapScene();
@@ -2283,6 +2440,9 @@ void Keyboard(unsigned char key, int flag){
       break;
     case '.':
       lock_mouse_aperture = 1 - lock_mouse_aperture;
+      break;
+    case '?':
+      vector_debug = 1 - vector_debug;
       break;
     case ':':
       timebar_overlap++;
@@ -2301,22 +2461,22 @@ void Keyboard(unsigned char key, int flag){
         break;
       }
       break;
- // toggle_colorbar   state
- //    0              hidden
- //    1              vertical
- //    2->max         horizontal
+ //    vis_colorbar                       state
+ //    0/COLORBAR_HIDDEN                  hidden
+ //    1/COLORBAR_SHOW_VERTICAL           vertical
+ //    2->max/COLORBAR_SHOW_HORIZONTAL    horizontal
     case ',':
       {
         int maxtoggle;
 
         maxtoggle = MAX(3, 2 + CountColorbars());
-        toggle_colorbar++;
-        if(toggle_colorbar >= maxtoggle)toggle_colorbar = 0;
-        if(toggle_colorbar == 0) {
+        vis_colorbar++;
+        if(vis_colorbar>= maxtoggle)vis_colorbar = 0;
+        if(vis_colorbar== COLORBAR_HIDDEN) {
           visColorbarVertical = 0;
           visColorbarHorizontal = 0;
         }
-        else if(toggle_colorbar == 1) {
+        else if(vis_colorbar== COLORBAR_SHOW_VERTICAL) {
           visColorbarVertical = 1;
           visColorbarHorizontal = 0;
         }
@@ -2341,6 +2501,22 @@ void Keyboard(unsigned char key, int flag){
       break;
     case '#':
       WriteIni(LOCAL_INI,NULL);
+      break;
+    case '/':
+      updatemenu=1;
+      partfast = 1 - partfast;
+      if(npartinfo>1){
+        part_multithread = partfast;
+      }
+      else{
+        part_multithread = 0;
+      }
+      if(part_multithread==1){
+        if(npartthread_ids>1)printf("parallel particle loading: on(%i threads,streaks disabled)\n",npartthread_ids);
+        if(npartthread_ids==1)printf("parallel particle loading: on(1 thread, streaks disabled)\n");
+      }
+      if(part_multithread==0)printf("parallel particle loading: off\n");
+      UpdateGluiPartFast();
       break;
     case '$':
       trainer_active=1-trainer_active;
@@ -2387,6 +2563,16 @@ void Keyboard(unsigned char key, int flag){
       break;
     case ';':
       ColorbarMenu(COLORBAR_FLIP);
+      break;
+    case '{':
+      iplot3dtimelist--;
+      if(iplot3dtimelist<0)iplot3dtimelist=nplot3dtimelist-1;
+      Plot3DListMenu(iplot3dtimelist);
+      break;
+    case '}':
+      iplot3dtimelist++;
+      if(iplot3dtimelist>=nplot3dtimelist)iplot3dtimelist=0;
+      Plot3DListMenu(iplot3dtimelist);
       break;
   }
 
@@ -2505,9 +2691,7 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
   switch(key){
     case GLFW_KEY_A:
       if (mods & GLFW_MOD_SHIFT) {
-        // 'A'
-        axislabels_smooth=1-axislabels_smooth;
-        UpdateAxisLabelsSmooth();
+        // 'A' // No longer in use
       } else {
         // 'a'
         if(showtour_dialog==1&&edittour==1){
@@ -2674,7 +2858,7 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
         if(nsmoke3dinfo>0){
           UpdateSmoke3dFlags();
         }
-        PrintGPUCullState();
+        PrintGPUState();
         return;
 #endif
       } else {
@@ -2771,19 +2955,21 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
         }
       }
       break;
-    case 'I':
-      show_slice_in_obst++;
-      if(show_slice_in_obst>2)show_slice_in_obst = 0;
-      UpdateShowSliceInObst();
-      updatemenu = 1;
-      break;
-    case 'i':
-      if(cache_qdata==1){
-        HandleIso();
-        return;
+    case GLFW_KEY_I:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'I'
+        show_slice_in_obst++;
+        if(show_slice_in_obst>2)show_slice_in_obst = 0;
+        UpdateShowSliceInObst();
+        updatemenu = 1;
+      } else {
+        // 'i'
+        if(cache_plot3d_data==1){
+          HandleIso();
+          return;
+        }
       }
       break;
-
     case GLFW_KEY_J:
       if(keystate==GLUT_ACTIVE_ALT){
         sensorrelsize /= 1.5;
@@ -2799,19 +2985,15 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
       if(visTimebar==0)PRINTF("Time bar hidden\n");
       if(visTimebar==1)PRINTF("Time bar visible\n");
       break;
-    case 'L':
-      UnloadSliceMenu(UNLOAD_LAST);
-      break;
-#ifdef _DEBUG
-    case 'l':
-      if(nsmoke3dinfo>0){
-        smokecullflag=1-smokecullflag;
-        PRINTF("smokecullflag=%i\n",smokecullflag);
-        UpdateSmoke3dFlags();
-        return;
+    case GLFW_KEY_L:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'L'
+        UnloadSliceMenu(UNLOAD_LAST);
+      } else {
+        // 'l'
+        LoadUnloadMenu(RELOADALL);
       }
       break;
-#endif
     case GLFW_KEY_M:
       switch(keystate){
       case GLUT_ACTIVE_ALT:
@@ -2893,35 +3075,64 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
         PRINTF("outline mode=%i\n",highlight_flag);
       }
       break;
-    case 'p':
-      plotn += FlowDir;
-      if(plotn<1){
-        plotn=numplot3dvars;
+    case GLFW_KEY_P:
+      if(IsPartLoaded()==1){
+        IncrementPartPropIndex();
       }
-      if(plotn>numplot3dvars){
-        plotn=1;
+      if(IsPlot3DLoaded()==1){
+        plotn += FlowDir;
+        if(plotn<1){
+          plotn = numplot3dvars;
+        }
+        if(plotn>numplot3dvars){
+          plotn = 1;
+        }
+        UpdateAllPlotSlices();
+        if(visiso==1&&cache_plot3d_data==1)UpdateSurface();
+        UpdatePlot3dListIndex();
       }
-      printf("plotn: %d\n", plotn);
-      UpdateAllPlotSlices();
-      if(visiso==1&&cache_qdata==1)UpdateSurface();
-      UpdatePlot3dListIndex();
       break;
     case GLFW_KEY_Q:
-      blocklocation++;
-      if((ncadgeom==0&&blocklocation>BLOCKlocation_exact)||
-                       blocklocation>BLOCKlocation_cad){
-        blocklocation=BLOCKlocation_grid;
-      }
-      if(showedit_dialog==1){
-        if(blocklocation==BLOCKlocation_exact){
-          blockage_as_input=1;
+      // TODO: lowercase (without shift) only
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'Q'
+        showhide_textures = 1-showhide_textures;
+        for(i = 0; i<ntextureinfo; i++){
+          texturedata *texti;
+
+          texti = textureinfo+i;
+          if(texti->loaded==0||texti->used==0)continue;
+          if(texti->display==0){ // if any textures are hidden then show them all
+            showhide_textures = 1;
+            break;
+          }
+        }
+        if(showhide_textures==1){
+          TextureShowMenu(MENU_TEXTURE_SHOWALL);
         }
         else{
-          blockage_as_input=0;
+          TextureShowMenu(MENU_TEXTURE_HIDEALL);
         }
-        ObjectCB(BLOCKAGE_AS_INPUT2);
-      }
-      break;
+      } else {
+        blocklocation++;
+        if((ncadgeom==0&&blocklocation>BLOCKlocation_exact)||
+                        blocklocation>BLOCKlocation_cad){
+          blocklocation=BLOCKlocation_grid;
+        }
+        if(blocklocation==BLOCKlocation_grid)printf("blocklocation: snapped to grid\n");
+        if(blocklocation==BLOCKlocation_exact)printf("blocklocation: as input\n");
+        if(blocklocation==BLOCKlocation_cad)printf("blocklocation: cad\n");
+        if(showedit_dialog==1){
+          if(blocklocation==BLOCKlocation_exact){
+            blockage_as_input=1;
+          }
+          else{
+            blockage_as_input=0;
+          }
+          ObjectCB(BLOCKAGE_AS_INPUT2);
+        }
+    }
+    break;
     case GLFW_KEY_R:
       {
         int rflag=0;
@@ -3065,44 +3276,46 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
         }
       }
       break;
-    case 'T':
-      usetexturebar=1-usetexturebar;
-      PRINTF("usetexturebar=%i\n",usetexturebar);
-      break;
-    case 't':
-      switch(keystate){
-      case GLUT_ACTIVE_ALT:
-        if(showtour_dialog==1){
-          DialogMenu(DIALOG_TOUR_HIDE);
-        }
-        else{
-          DialogMenu(DIALOG_TOUR_SHOW);
-        }
-        break;
-      case GLUT_ACTIVE_CTRL:
-      default:
-        stept=(stept+1)%2;
-        if(stept==1){
-          plotstate=GetPlotState(DYNAMIC_PLOTS);
-          if(plotstate==DYNAMIC_PLOTS){
-            ResetGLTime();
+    case GLFW_KEY_T:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'T'
+        vishmsTimelabel = 1-vishmsTimelabel;
+        SetLabelControls();
+      } else {
+        // 't'
+        switch(keystate){
+        case GLUT_ACTIVE_ALT:
+          if(showtour_dialog==1){
+            DialogMenu(DIALOG_TOUR_HIDE);
           }
           else{
-            stept=0;
+            DialogMenu(DIALOG_TOUR_SHOW);
           }
+          break;
+        case GLUT_ACTIVE_CTRL:
+        default:
+          stept=(stept+1)%2;
+          if(stept==1){
+            plotstate=GetPlotState(DYNAMIC_PLOTS);
+            if(plotstate==DYNAMIC_PLOTS){
+              ResetGLTime();
+            }
+            else{
+              stept=0;
+            }
+          }
+          if(stept == 1){
+            //if(render_skip!=RENDER_CURRENT_SINGLE)render_skip = 1;
+          }
+          else{
+            itime_save = -1;
+            render_skip = RENDER_CURRENT_SINGLE;
+          }
+          updatemenu = 1;
+          UpdateRenderListSkip();
         }
-        if(stept == 1){
-          //if(render_skip!=RENDER_CURRENT_SINGLE)render_skip = 1;
-        }
-        else{
-          itime_save = -1;
-          render_skip = RENDER_CURRENT_SINGLE;
-        }
-        updatemenu = 1;
-        UpdateRenderListSkip();
       }
       break;
-
     case GLFW_KEY_U:
       if (mods & GLFW_MOD_ALT) {
           skip_slice_in_embedded_mesh = 1 - skip_slice_in_embedded_mesh;
@@ -3117,7 +3330,7 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
         usevolrender=1-usevolrender;
         UpdateSmoke3dFlags();
 #ifdef pp_GPU
-        PrintGPUCullState();
+        PrintGPUState();
 #endif
         return;
       }
@@ -3137,7 +3350,7 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
       break;
     case 'W':
       clip_mode++;
-      if(clip_mode>3)clip_mode=0;
+      if(clip_mode>CLIP_MAX)clip_mode=0;
       UpdateClipAll();
       break;
     case 'w':
@@ -3190,9 +3403,28 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
         return;
       }
       break;
+#ifdef pp_MULTI_RES
+    case '`':
+      slice_resolution_level++;
+      if(slice_resolution_level>max_slice_resolution)slice_resolution_level = 0;
+      printf("slice resolution level: %i\n", slice_resolution_level);
+      break;
+#endif
     case '~':
       LevelScene(1,1,quat_general);
       Quat2Rot(quat_general,quat_rotation);
+      break;
+    case '=':
+      if(ngeominfo>0){
+        select_geom++;
+        if(select_geom==5)select_geom=0;
+        if(select_geom==GEOM_PROP_NONE)printf("geometry selection off\n");
+        if(select_geom==GEOM_PROP_VERTEX1)printf("select vertex 1\n");
+        if(select_geom==GEOM_PROP_VERTEX2)printf("select vertex 2\n");
+        if(select_geom==GEOM_PROP_TRIANGLE)printf("select triangle\n");
+        if(select_geom==GEOM_PROP_SURF)printf("select surf\n");
+        UpdateSelectGeom();
+      }
       break;
     case '!':
       SnapScene();
@@ -3200,27 +3432,13 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
     case '@':
       cell_center_text = 1 - cell_center_text;
       break;
-    case ':':
-      timebar_overlap++;
-      if (timebar_overlap > 2)timebar_overlap = 0;
-      UpdateTimebarOverlap();
-      printf("overlap time/colorbar region: ");
-      switch(timebar_overlap){
-      case 0:
-        printf("always\n");
-        break;
-      case 1:
-        printf("never\n");
-        break;
-      case 2:
-        printf("only if time/colorbar hidden\n");
-        break;
-      }
+    case '?':
+      vector_debug = 1 - vector_debug;
       break;
- // toggle_colorbar   state
- //    0              hidden
- //    1              vertical
- //    2->max         horizontal
+ //    vis_colorbar                       state
+ //    0/COLORBAR_HIDDEN                  hidden
+ //    1/COLORBAR_SHOW_VERTICAL           vertical
+ //    2->max/COLORBAR_SHOW_HORIZONTAL    horizontal
     case GLFW_KEY_COMMA:
       if (mods & GLFW_MOD_SHIFT) {
         // '<'
@@ -3233,13 +3451,13 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
         int maxtoggle;
 
         maxtoggle = MAX(3, 2 + CountColorbars());
-        toggle_colorbar++;
-        if(toggle_colorbar >= maxtoggle)toggle_colorbar = 0;
-        if(toggle_colorbar == 0) {
+        vis_colorbar++;
+        if(vis_colorbar>= maxtoggle)vis_colorbar = 0;
+        if(vis_colorbar== COLORBAR_HIDDEN) {
           visColorbarVertical = 0;
           visColorbarHorizontal = 0;
         }
-        else if(toggle_colorbar == 1) {
+        else if(vis_colorbar== COLORBAR_SHOW_VERTICAL) {
           visColorbarVertical = 1;
           visColorbarHorizontal = 0;
         }
@@ -3264,6 +3482,22 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
       break;
     case '#':
       WriteIni(LOCAL_INI,NULL);
+      break;
+    case '/':
+      updatemenu=1;
+      partfast = 1 - partfast;
+      if(npartinfo>1){
+        part_multithread = partfast;
+      }
+      else{
+        part_multithread = 0;
+      }
+      if(part_multithread==1){
+        if(npartthread_ids>1)printf("parallel particle loading: on(%i threads,streaks disabled)\n",npartthread_ids);
+        if(npartthread_ids==1)printf("parallel particle loading: on(1 thread, streaks disabled)\n");
+      }
+      if(part_multithread==0)printf("parallel particle loading: off\n");
+      UpdateGluiPartFast();
       break;
     case '$':
       trainer_active=1-trainer_active;
@@ -3309,7 +3543,37 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
       UpdateEditTour();
       break;
     case GLFW_KEY_SEMICOLON:
-      ColorbarMenu(COLORBAR_FLIP);
+      if (mods & GLFW_MOD_SHIFT) {
+        // ':'
+        timebar_overlap++;
+        if (timebar_overlap > 2)timebar_overlap = 0;
+        UpdateTimebarOverlap();
+        printf("overlap time/colorbar region: ");
+        switch(timebar_overlap){
+        case 0:
+          printf("always\n");
+          break;
+        case 1:
+          printf("never\n");
+          break;
+        case 2:
+          printf("only if time/colorbar hidden\n");
+          break;
+        }
+      } else {
+        // ';'
+        ColorbarMenu(COLORBAR_FLIP);
+      }
+      break;
+    case '{':
+      iplot3dtimelist--;
+      if(iplot3dtimelist<0)iplot3dtimelist=nplot3dtimelist-1;
+      Plot3DListMenu(iplot3dtimelist);
+      break;
+    case '}':
+      iplot3dtimelist++;
+      if(iplot3dtimelist>=nplot3dtimelist)iplot3dtimelist=0;
+      Plot3DListMenu(iplot3dtimelist);
       break;
   }
 
@@ -3385,10 +3649,9 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
     // glutPostRedisplay();
   }
   if(iplot_state!=0)UpdatePlotSlice(iplot_state);
-  updatemenu=1;
 }
 
-static void KeyboardCBGlfw(GLFWwindow* window, int key, int scancode, int action, int mods)
+void KeyboardCBGlfw(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
   KeyboardGlfw(window, key, scancode, action, mods, FROM_CALLBACK);
   updatemenu=1;
@@ -3578,7 +3841,6 @@ void HandlePLOT3DKeys(int  key){
     }
     break;
   default:
-    ASSERT(FFALSE);
     break;
   }
   if(iplot_state!=0)UpdatePlotSlice(iplot_state);
@@ -3884,10 +4146,21 @@ void SetWindowSize(int *width, int *height){
     screenWidth = MAX(screenWidth, 1);
     // Make sure the screen width is even.
     if(screenWidth%2==1)screenWidth++;
+
+#ifdef pp_OSX
+#ifndef pp_QUARTZ
+    screenWidth*=2;
+#endif
+#endif
   }
   if(height!=NULL){
     // Make sure the screen height is at least 1
     screenHeight=MAX(*height,1);
+#ifdef pp_OSX
+#ifndef pp_QUARTZ
+    screenHeight*=2;
+#endif
+#endif
   }
   {
     int width_low, height_low, width_high, height_high;
@@ -3918,11 +4191,6 @@ void ReshapeCB(int width, int height){
     CopyCamera(camera_current,camera_save);
   }
   UpdateWindowSizeList();
-#ifdef pp_GPU
-#ifdef pp_GPUDEPTH
-  CreateDepthTexture();
-#endif
-#endif
 }
 
 /* ------------------ ResetGLTime ------------------------ */
@@ -3981,9 +4249,7 @@ void ClearBuffers(int mode){
 
 /* ------------------ DoStereo ------------------------ */
 
-int DoStereo(void){
-  int return_code=0;
-
+void DoStereo(void){
   if(stereotype==STEREO_TIME&&videoSTEREO==1){  // temporal stereo (shuttered glasses)
     glDrawBuffer(GL_BACK_LEFT);
     if(stereotype_frame==LEFT_EYE||stereotype_frame==BOTH_EYES){
@@ -3996,7 +4262,6 @@ int DoStereo(void){
     }
     Render(VIEW_RIGHT);
     if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
-    return_code=1;
   }
   else if(stereotype==STEREO_LR){             // left/right stereo
     int i;
@@ -4052,7 +4317,6 @@ int DoStereo(void){
         Render(VIEW_CENTER);
       }
     }
-    return_code=2;
   }
   else if(stereotype==STEREO_RB){             // red/blue stereo
     glDrawBuffer(GL_BACK);
@@ -4076,7 +4340,6 @@ int DoStereo(void){
     }
     Render(VIEW_CENTER);
     if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
-    return_code=3;
   }
   else if(stereotype==STEREO_RC){             // red/cyan stereo
     glDrawBuffer(GL_BACK);
@@ -4100,7 +4363,6 @@ int DoStereo(void){
     }
     Render(VIEW_CENTER);
     if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
-    return_code=4;
   }
   else if(stereotype==STEREO_CUSTOM){             // custom red/blue stereo
     glDrawBuffer(GL_BACK);
@@ -4147,9 +4409,7 @@ int DoStereo(void){
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_DITHER);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    return_code=5;
   }
-  return return_code;
 }
 
 #ifdef pp_LUA
@@ -4164,7 +4424,7 @@ void DoScriptLua(void){
     fflush(stdout);
     script_return_code = runLuaScript();
     if(script_return_code != LUA_OK && script_return_code != LUA_YIELD && exit_on_script_crash){
-        exit(1);
+        SMV_EXIT(1);
     }
   }
 }
@@ -4180,7 +4440,7 @@ void DoScript(void){
       fflush(stdout);
       script_return_code = runSSFScript();
       if(script_return_code != LUA_OK && script_return_code != LUA_YIELD && exit_on_script_crash){
-          exit(1);
+          SM_EXIT(1);
       }
     }
 }
@@ -4196,7 +4456,7 @@ void DoScript(void){
 #ifndef WIN32
     if(FILE_EXISTS(stop_filename)==YES){
       fprintf(stderr,"*** Warning: stop file found.  Remove before running smokeview script\n");
-      exit(0);
+      SMV_EXIT(0);
     }
 #endif
     if(current_script_command>=scriptinfo){
@@ -4210,7 +4470,7 @@ void DoScript(void){
           current_script_command->exit = 0;
         }
       }
-      if(current_script_command->command==SCRIPT_ISORENDERALL){
+      else if(current_script_command->command==SCRIPT_ISORENDERALL){
           if(current_script_command->exit==0){
             RenderState(RENDER_ON);
           }
@@ -4220,12 +4480,23 @@ void DoScript(void){
             current_script_command->exit = 0;
           }
       }
+      else if(current_script_command->command==SCRIPT_LOADSLICERENDER){
+        if(current_script_command->exit==0){
+          RenderState(RENDER_ON);
+          ScriptLoadSliceRender(current_script_command);
+        }
+        else{
+          RenderState(RENDER_OFF);
+          current_script_command->first = 1;
+          current_script_command->exit = 0;
+        }
+      }
     }
     if(render_status==RENDER_OFF){   // don't advance command if Smokeview is executing a RENDERALL command
       current_script_command++;
       script_render_flag= RunScriptCommand(current_script_command);
       if(runscript==2&&noexit==0&&current_script_command==NULL){
-        exit(0);
+        SMV_EXIT(0);
       }
       if(current_script_command==NULL){
         GluiScriptEnable();
@@ -4241,7 +4512,7 @@ void DoScript(void){
           UnloadVolsmokeFrameAllMeshes(remove_frame);
         }
       }
-      if(current_script_command->command==SCRIPT_ISORENDERALL){
+      else if(current_script_command->command==SCRIPT_ISORENDERALL){
         int remove_frame;
 
         ScriptLoadIsoFrame2(current_script_command);
@@ -4263,7 +4534,6 @@ void DoScript(void){
 
 /* ------------------ DoScriptHtml ------------------------ */
 
-#ifdef pp_HTML
 void DoScriptHtml(void){
   int i;
 
@@ -4276,8 +4546,6 @@ void DoScriptHtml(void){
     RunScriptCommand(scripti);
   }
 }
-#endif
-
 
 /* ------------------ IdleDisplay ------------------------ */
 
@@ -4288,11 +4556,91 @@ void IdleDisplay(void){
   from_DisplayCB=0;
 }
 
+/* ------------------ DoNonStereo ------------------------ */
+
+void DoNonStereo(void){
+  if(render_status==RENDER_OFF){
+    glDrawBuffer(GL_BACK);
+    ShowScene(DRAWSCENE, VIEW_CENTER, 0, 0, 0, NULL);
+    if(update_rgb_test==1){
+      update_rgb_test = 0;
+      RGBTest();
+    }
+    if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
+  }
+  else{
+    int stop_rendering;
+
+    IdleDisplay();
+
+    stop_rendering = 1;
+    if(plotstate==DYNAMIC_PLOTS && nglobal_times>0){
+      if(itimes>=0&&itimes<nglobal_times&&
+        ((render_frame[itimes]==0&&stereotype==STEREO_NONE)||(render_frame[itimes]<2&&stereotype!=STEREO_NONE))
+        ){
+        render_frame[itimes]++;
+        stop_rendering = 0;
+      }
+    }
+    if(render_mode==RENDER_NORMAL){
+      int i, ibuffer = 0;
+      GLubyte **screenbuffers;
+
+      NewMemory((void **)&screenbuffers, resolution_multiplier*resolution_multiplier*sizeof(GLubyte *));
+
+      glDrawBuffer(GL_BACK);
+
+      for(i = 0; i<resolution_multiplier; i++){
+        int j;
+
+        for(j = 0; j<resolution_multiplier; j++){
+          ShowScene(DRAWSCENE, VIEW_CENTER, 1, j*screenWidth, i*screenHeight, NULL);
+          screenbuffers[ibuffer++] = GetScreenBuffer();
+          if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
+        }
+      }
+
+      MergeRenderScreenBuffers(resolution_multiplier, screenbuffers);
+
+      for(i = 0; i<resolution_multiplier*resolution_multiplier; i++){
+        FREEMEMORY(screenbuffers[i]);
+      }
+      FREEMEMORY(screenbuffers);
+    }
+    if(render_mode==RENDER_360){
+      int i;
+
+      glDrawBuffer(GL_BACK);
+
+      if(screeninfo==NULL||update_screeninfo==1)SetupScreeninfo();
+
+      for(i = 0; i<nscreeninfo; i++){
+        screendata *screeni;
+
+        screeni = screeninfo+i;
+        ShowScene(DRAWSCENE, VIEW_CENTER, 0, 0, 0, screeni);
+        screeni->screenbuffer = GetScreenBuffer();
+        if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
+      }
+      MergeRenderScreenBuffers360();
+
+      for(i = 0; i<nscreeninfo; i++){
+        screendata *screeni;
+
+        screeni = screeninfo+i;
+        FREEMEMORY(screeni->screenbuffer);
+      }
+    }
+    if(stop_rendering==1){
+      ASSERT(render_skip>0);
+      RenderState(RENDER_OFF);
+    }
+  }
+}
+
 /* ------------------ DisplayCB ------------------------ */
 
 void DisplayCB(void){
-  int dostereo;
-
   DoScript();
 #ifdef pp_LUA
   DoScriptLua();
@@ -4300,89 +4648,12 @@ void DisplayCB(void){
   UpdateDisplay();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   if(stereotype==STEREO_NONE){
-    dostereo=0;
+    if(use_vr==0){
+      DoNonStereo();
+    }
   }
   else{
-    dostereo=DoStereo();
-  }
-  if(dostereo==0){
-    if(render_status==RENDER_OFF){
-      glDrawBuffer(GL_BACK);
-      ShowScene(DRAWSCENE,VIEW_CENTER,0,0,0,NULL);
-      if(update_rgb_test==1){
-        update_rgb_test = 0;
-        RGBTest();
-      }
-      if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
-    }
-    else{
-      int stop_rendering;
-
-      IdleDisplay();
-
-      stop_rendering = 1;
-      if(plotstate==DYNAMIC_PLOTS && nglobal_times>0){
-        if(itimes>=0&&itimes<nglobal_times&&
-          ((render_frame[itimes] == 0&&stereotype==STEREO_NONE)||(render_frame[itimes]<2&&stereotype!=STEREO_NONE))
-          ){
-          render_frame[itimes]++;
-          stop_rendering = 0;
-        }
-      }
-      if(render_mode==RENDER_NORMAL){
-        int i,ibuffer=0;
-        GLubyte **screenbuffers;
-
-        NewMemory((void **)&screenbuffers,resolution_multiplier*resolution_multiplier*sizeof(GLubyte *));
-
-        glDrawBuffer(GL_BACK);
-
-        for(i=0;i<resolution_multiplier;i++){
-          int j;
-
-          for(j=0;j<resolution_multiplier;j++){
-            ShowScene(DRAWSCENE,VIEW_CENTER,1,j*screenWidth,i*screenHeight,NULL);
-            screenbuffers[ibuffer++]=GetScreenBuffer();
-            if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
-          }
-        }
-
-        MergeRenderScreenBuffers(resolution_multiplier,screenbuffers);
-
-        for(i=0;i<resolution_multiplier*resolution_multiplier;i++){
-          FREEMEMORY(screenbuffers[i]);
-        }
-        FREEMEMORY(screenbuffers);
-      }
-      if(render_mode == RENDER_360){
-        int i;
-
-        glDrawBuffer(GL_BACK);
-
-        if(screeninfo == NULL||update_screeninfo==1)SetupScreeninfo();
-
-        for(i = 0; i < nscreeninfo; i++){
-          screendata *screeni;
-
-          screeni = screeninfo + i;
-          ShowScene(DRAWSCENE, VIEW_CENTER, 0, 0, 0, screeni);
-          screeni->screenbuffer = GetScreenBuffer();
-          if(buffertype == DOUBLE_BUFFER)glutSwapBuffers();
-        }
-        MergeRenderScreenBuffers360();
-
-        for(i = 0; i < nscreeninfo; i++){
-          screendata *screeni;
-
-          screeni = screeninfo + i;
-          FREEMEMORY(screeni->screenbuffer);
-        }
-      }
-      if(stop_rendering==1){
-        ASSERT(render_skip>0);
-        RenderState(RENDER_OFF);
-      }
-    }
+    DoStereo();
   }
 }
 

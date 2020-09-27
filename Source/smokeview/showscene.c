@@ -214,6 +214,16 @@ void ShowScene2(int mode, int view_mode, int quad, GLint s_left, GLint s_down){
     }
   }
 
+  /* ++++++++++++++++++++++++ draw selected avatars +++++++++++++++++++++++++ */
+  if(mode==SELECTOBJECT){
+    if(select_geom!=GEOM_PROP_NONE){
+      CLIP_GEOMETRY;
+      DrawSelectGeom();
+      SNIFF_ERRORS("after DrawSelectGeom");
+      return;
+    }
+  }
+
   /* ++++++++++++++++++++++++ DrawSelectTours +++++++++++++++++++++++++ */
 
   if(mode == SELECTOBJECT){
@@ -258,8 +268,17 @@ void ShowScene2(int mode, int view_mode, int quad, GLint s_left, GLint s_down){
 
   if(ngeominfoptrs>0){
     CLIP_GEOMETRY;
+#ifndef WUI_NEW
+#ifdef pp_WUI_VAO
+    if(have_terrain_vao==0){
+      DrawGeom(DRAW_OPAQUE, GEOM_STATIC);
+      DrawGeom(DRAW_OPAQUE, GEOM_DYNAMIC);
+    }
+#else
     DrawGeom(DRAW_OPAQUE, GEOM_STATIC);
     DrawGeom(DRAW_OPAQUE, GEOM_DYNAMIC);
+#endif
+#endif
     SNIFF_ERRORS("DrawGeom");
   }
 
@@ -281,7 +300,21 @@ void ShowScene2(int mode, int view_mode, int quad, GLint s_left, GLint s_down){
 
   /* ++++++++++++++++++++++++ draw terrain +++++++++++++++++++++++++ */
 
-  if(visTerrainType != TERRAIN_HIDDEN&&nterraininfo>0){
+#ifdef pp_WUI_VAO
+  if(have_terrain_vao==1&&usegpu==1){
+    CLIP_GEOMETRY;
+    DrawTerrainGeomGPU(DRAW_OPAQUE);
+  }
+  else{
+    CLIP_GEOMETRY;
+    DrawTerrainGeom(DRAW_OPAQUE);
+  }
+#else
+  CLIP_GEOMETRY;
+  DrawTerrainGeom(DRAW_OPAQUE);
+#endif
+
+  if(visTerrainType != TERRAIN_HIDDEN&&nterraininfo>0&&ngeominfo==0){
     int i;
 
     //shaded 17 0
@@ -293,41 +326,21 @@ void ShowScene2(int mode, int view_mode, int quad, GLint s_left, GLint s_down){
     CLIP_GEOMETRY;
     for(i = 0;i<nterraininfo;i++){
       terraindata *terri;
-      int only_geom;
 
       terri = terraininfo + i;
-      if(terri->loaded == 1){
-        only_geom = 0;
-      }
-      else{
-        only_geom = 1;
-      }
       switch(visTerrainType){
       case TERRAIN_3D:
-        DrawTerrain(terri, only_geom);
+        DrawTerrainOBST(terri);
         break;
       case TERRAIN_2D_STEPPED:
-        if(cullfaces == 1)glDisable(GL_CULL_FACE);
-        glPushMatrix();
-        glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-        glTranslatef(-xbar0, -ybar0, -zbar0);
-        DrawContours(&meshinfo[i].terrain_contour);
-        glPopMatrix();
-        if(cullfaces == 1)glEnable(GL_CULL_FACE);
-        break;
       case TERRAIN_2D_LINE:
-        glPushMatrix();
-        glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-        glTranslatef(-xbar0, -ybar0, -zbar0);
-        DrawLineContours(&meshinfo[i].terrain_contour, 1.0);
-        glPopMatrix();
         break;
       case TERRAIN_3D_MAP:
-        if(terrain_texture != NULL&&terrain_texture->loaded == 1){
-          DrawTerrainTexture(terri, only_geom);
+        if(terrain_textures != NULL&&terrain_textures[iterrain_textures].loaded == 1){
+          DrawTerrainOBSTTexture(terri);
         }
         else{
-          DrawTerrain(terri, only_geom);
+          DrawTerrainOBST(terri);
         }
         break;
       default:
@@ -373,16 +386,22 @@ void ShowScene2(int mode, int view_mode, int quad, GLint s_left, GLint s_down){
 
   if(nrooms>0){
     CLIP_GEOMETRY;
-    DrawRoomGeom();
-    SNIFF_ERRORS("after DrawRoomGeom");
+    DrawZoneRoomGeom();
+    SNIFF_ERRORS("after DrawZoneRoomGeom");
 
     if(showzone == 1){
       CLIP_VALS;
-      DrawFireData();
-      SNIFF_ERRORS("after DrawRoomData");
-      if(ReadZoneFile == 1 && nzvents>0){
-        DrawVentData();
-        SNIFF_ERRORS("after DrawVentData");
+      DrawZoneFireData();
+      SNIFF_ERRORS("after DrawZoneFireData");
+      if(ReadZoneFile == 1){
+        if(nzvents>0){
+          DrawZoneVentData();
+          SNIFF_ERRORS("after DrawZoneVentData");
+        }
+        if(have_wall_data==1&&vis_wall_data==1){
+          DrawZoneWallData();
+          SNIFF_ERRORS("after DrawZoneWallData");
+        }
       }
     }
   }
@@ -402,6 +421,22 @@ void ShowScene2(int mode, int view_mode, int quad, GLint s_left, GLint s_down){
   //**********************************************************************************
   //**********************************************************************************
   //**********************************************************************************
+
+  /* ++++++++++++++++++++++++ draw terrain +++++++++++++++++++++++++ */
+
+#ifdef pp_WUI_VAO
+  if(have_terrain_vao==1&&usegpu==1){
+    CLIP_GEOMETRY;
+    DrawTerrainGeomGPU(DRAW_TRANSPARENT);
+  }
+  else{
+    CLIP_GEOMETRY;
+    DrawTerrainGeom(DRAW_TRANSPARENT);
+  }
+#else
+  CLIP_GEOMETRY;
+  DrawTerrainGeom(DRAW_TRANSPARENT);
+#endif
 
   /* ++++++++++++++++++++++++ draw triangles +++++++++++++++++++++++++ */
 
@@ -459,8 +494,8 @@ void ShowScene2(int mode, int view_mode, int quad, GLint s_left, GLint s_down){
 
   if(nrooms>0 && showzone == 1){
     CLIP_VALS;
-    DrawRoomData();
-    SNIFF_ERRORS("after DrawRoomData");
+    DrawZoneRoomData();
+    SNIFF_ERRORS("after DrawZoneRoomData");
   }
 
   /* ++++++++++++++++++++++++ draw boundary files +++++++++++++++++++++++++ */

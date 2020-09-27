@@ -203,7 +203,7 @@ temperature and flow vectors showing flow direction and magnitude.
 
 Smokeview and associated documentation for Windows, Linux and Mac
 OS X may be downloaded from the web site {\bf
-\hhref{http://fire.nist.gov/fds}}\ at no cost.
+\hhref{http://pages.nist.gov/fds}}\ at no cost.
 
 %---------------------------------------------------------------------------------
 %------------------------ About the Author ---------------------------------------
@@ -632,7 +632,7 @@ along coordinate axes.
 
 \subsection{Obtaining Smokeview}
 
-Smokeview is available at \hhref{http://fire.nist.gov/fds}.
+Smokeview is available at \hhref{http://pages.nist.gov/fds}.
 This site contains links to installation packages for
 Windows, Linux and Mac~OS~X operating systems. It also contains documentation for
 Smokeview and FDS, sample FDS calculations, software updates and
@@ -1042,34 +1042,9 @@ data that has a special property, for example a tenability temperature criteria 
 Figure \ref{figslicesplit} illustrates a scene using a colorbar with a split at 0.0~m/s. Velocities greater than 0.0~m/s are colored with shades of red.
 Velocities less than 0.0~m/s are colored with shades of blue.
 
-Fig. \ref{fignewslice}\ illustrates how interpolating color within the colorbar
-improves the visualization.
-Colors are crisper and sharper, more
-accurately representing the underlying data. This is most
-noticeable when selecting the colorbar with the mouse.
-This causes a portion of the colorbar to turn black and the
-corresponding region in the scene to also turn black.  The
-black color is accurate to the pixel so this feature may be used
-to highlight regions of interest. The improved accuracy is a
-result of the way color interpolations are performed.  Colors
-are interpolated within the colorbar using a 1D texture map.  Color interpolations with
-the former method occurred within the color cube.
-
 Note, due to the way that transparent objects are drawn (from back to front),
 3D Smoke/Fire and transparent slices may not display
 properly when shown at the same time.
-
-\begin{figure}[bph]
-\begin{center}
-\begin{tabular}{ccc}
-\includegraphics[height=3.5in]{../SMV_Verification_Guide/SCRIPT_FIGURES/plume5c_notexturebar}&
-\includegraphics[height=3.5in]{../SMV_Verification_Guide/SCRIPT_FIGURES/plume5c_texturebar}\\
-colors interpolated using a 3D color cube&colors interpolated using a 1D texture colorbar\\
-\end{tabular}
-\caption [Slice file snapshots illustrating two methods for mapping data to color.] {Slice file snapshots illustrating two methods for mapping data to color.}
-\label{fignewslice}%
-\end{center}
-\end{figure}
 
 \section{2D Shaded Contours and Vector Slices - Slice Files}
 \label{section:slices}
@@ -1706,7 +1681,8 @@ flow speed and direction.  Plumes are represented as inverted
 cones with heights calculated in Smokeview using the same
 correlation as CFAST and heat release rate data computed by CFAST.
 A Smokeview view of the one room sample case that comes with the
-CFAST installation is illustrated in Figs. \ref{figcfast}, \ref{figcfast2}\ and \ref{figcfastsmoke}.
+CFAST installation is illustrated in Figs. \ref{figcfast}, \ref{figcfast2}\,  \ref{figcfastsmoke}
+and \ref{figcfastboundary}.
 
 \begin{figure}[bph]
 \begin{center}
@@ -1760,6 +1736,25 @@ Layers are visualized realistically and vent flow
 is visualized using color.}
 \label{figcfastsmoke}%
 \end{figure}
+
+\begin{figure}[bph]
+\begin{center}
+\begin{tabular}{ccc}
+\includegraphics[width=3.00in]{SCRIPT_FIGURES/cfast_test_boundary_100}&
+\includegraphics[width=3.00in]{SCRIPT_FIGURES/cfast_test_boundary_200}\\
+100.0 s&200.0 s\\
+\includegraphics[width=3.00in]{SCRIPT_FIGURES/cfast_test_boundary_300}&
+\includegraphics[width=3.00in]{SCRIPT_FIGURES/cfast_test_boundary_400}\\
+300.0 s&400.0 s
+&\raisebox{0.0ex}[0pt]{\includegraphics[height=5.0in]{\SMVfigdir/colorbar_20_620}}\\
+\\
+\end{tabular}
+\end{center}
+\caption{CFAST test showing wall temperatures
+visualized using color.}
+\label{figcfastboundary}%
+\end{figure}
+
 %---------------------------------------------------------------------------------
 %------------------------ Controlling and Customizing Smokeview --------------------
 %---------------------------------------------------------------------------------
@@ -1780,7 +1775,9 @@ c=255 \frac{v-v_{\rm min}}{v_{\rm max}-v_{\rm min}}
 Creating and modifying colorbars are discussed in Chapter \ref{chap:colorbar}.
 User specified min/max values may be used to ensure consistent color shading when
 displaying several data files simultaneously.
-To quickly set bounds for actual data, press {\tt ALT r}\ and reload or update data files. This puts Smokeview into {\em research mode}\ which uses actual global min/max values when mapping data to color and does not smooth colorbar labels.
+To quickly set bounds for actual data, press {\tt ALT r}\ and reload or update data files.
+This puts Smokeview into {\em research mode}\ which uses actual global min/max bounds
+when mapping data to color and does not smooth colorbar labels.
 
 \begin{figure}[bph]
 \centerline{
@@ -1849,15 +1846,31 @@ the new bounds to take effect.}\ \label{figBOUNDSplot3d}
 
 The {\tt Plot3D}\ portion of the File/Bounds dialog box as illustrated in Figure \ref{figBOUNDSplot3d} has controls for specifying how Plot3D vectors and isosurfaces appear.
 
+The bounds dialog for Plot3D display allows one to select between
+three different types of contour plots:  shaded, stepped and line
+contours.
 
-The {\em Boundary File}\ portion of the File/Bounds dialog
+The {\tt Boundary File}\ portion of the File/Bounds dialog
 box has an {\em Ignition}\ checkbox which allows one to visualize
 when and where the blockage temperature exceeds its ignition
 temperature.
 
-The bounds dialog for Plot3D display allows one to select between
-three different types of contour plots:  shaded, stepped and line
-contours.
+The {\tt Particle file}\ portion of the File/bounds dialog box
+as illustrated in Figure \ref{figBOUNDSpart}\
+has controls for specifying whether particle files are loaded in parallel.
+The user may also specify the number files that are loaded simultaneously
+
+\begin{figure}[bph]
+\centerline{
+\includegraphics[width=2.583333in]{\SMVfigdir/figBOUNDSpart}
+}\ \caption[Dialog box for setting Particle file
+options.] {Dialog box for setting Particle file
+options. Select a variable and bound type. Enter a lower
+and/or upper bound if set bound type was selected. Particle files may be loaded in parallel by
+selecting the Parallel loading checkbox and setting the number of files to load in parallel.
+ }\ \label{figBOUNDSpart}
+\end{figure}
+
 
 \section{3D Smoke Options}
 \begin{figure}[bph]
@@ -3341,6 +3354,34 @@ and commands to output the scene to image files.
 
 
 
+%%\hitem{XYZVIEW}
+
+%%\hitem{SCENECLIP}
+
+%%\hitem{SETTOURKEYFRAME}
+%%\hitem{SETTOURVIEW}
+
+%%\hitem{SHOWSMOKESENSORS}
+
+%%\hitem{SMOKEFRAMES}
+
+%%\hitem{MAKEMOVIE}
+%%\hitem{MOVIETYPE}
+%%\hitem{RENDER360ALL}
+%%\hitem{RENDERHTMLALL}
+%%\hitem{RENDERHTMLDIR}
+%%\hitem{RENDERHTMLGEOM}
+%%\hitem{RENDERHTMLOBST}
+%%\hitem{RENDERHTMLONCE}
+%%\hitem{RENDERHTMLSLICE}
+%%\hitem{RENDERSIZE}
+%%\hitem{RENDERSTART}
+%%\hitem{RENDERTYPE}
+
+%%\hitem{LOADBOUNDARYM}
+%%\hitem{LOADSLICEM}
+%%\hitem{LOADVSLICEM}
+
 \subsection{Loading and Unloading  Files}
 
 \blist
@@ -3382,7 +3423,9 @@ LOADBOUNDARY
 \end{lstlisting}
 
 \hitem{LOAD3DSMOKE}
-Load a 3D smoke file.  Two types are supported {\tt soot mass fraction}\ or {\tt HRRPUV.}
+Load a 3D smoke file.  The types supported are
+SOOT DENSITY, HRRPUV,\\
+TEMPERATURE and CARBON DIOXIDE DENSITY.
 Usage:
 \begin{lstlisting}
 LOAD3DSMOKE
@@ -3577,6 +3620,39 @@ SETVIEWPOINT
 \hitem{UNLOADTOUR}Unload a tour.
 \begin{lstlisting}
 UNLOADTOUR
+\end{lstlisting}
+
+\hitem{XYZVIEW}Sets the position (x, y and z location) and view direction (azimuth and elevation angle in degrees).
+Usge:
+\begin{lstlisting}
+XYZVIEW
+ xpos ypos zpos az elev
+\end{lstlisting}
+
+\hitem{VIEWXMIN,VIEWYMIN,VIEWZMIN}The {\tt VIEWXMIN}\ script keyword sets the view so that the scene
+is viewed towards the XMIN direction.  It sets
+the scene view location to (x,ymid,zmid)
+and the scene view direction to $(-1.0,0.0,0.0)$ where
+x is chosen so that the entire scene is in view and ymid, zmid
+are the middle of the scene along y and z directions.  The {\tt VIEWYMIN}\ and {\tt VIEWZMIN}\ script
+keywords are defined similarly.  Usage:
+\begin{lstlisting}
+VIEWXMIN
+VIEWYMIN
+VIEWZMIN
+\end{lstlisting}
+
+\hitem{VIEWXMAX,VIEWYMAX,VIEWZMAX}The {\tt VIEWXMAX}\ script keyword sets the view so that the scene
+is viewed towards the XMAX direction.  It sets
+the scene view location to (x,ymid,zmid)
+and the scene view direction to $(+1.0,0.0,0.0)$ where
+x is chosen so that the entire scene is in view and ymid, zmid
+are the middle of the scene along y and z directions.  The {\tt VIEWYMAX}\ and {\tt VIEWZMAX}\ script
+keywords are defined similarly.  Usage:
+\begin{lstlisting}
+VIEWXMAX
+VIEWYMAX
+VIEWZMAX
 \end{lstlisting}
 
 \hitem{XSCENECLIP}\ Sets clipping planes along the X axis.
@@ -4700,6 +4776,8 @@ capturing.
 
 \kitem{k,K}Toggle timebar visibility.
 
+\kitem{l}Reload all currently loaded files.
+
 \kitem{L}Unload most recently loaded slice file.
 
 
@@ -4715,15 +4793,11 @@ This option may be used with the {\em m}\ key to highlight all meshes in sequenc
 
 \kitem{O}Toggle the blockage view state between 1) defined in input file and 2) outline only
 
-\kitem{p}Show the next variable in a Plot3D data set.
+\kitem{p}Cycle through particle file types.
 
-\kitem{P}The cursor keys and the page up/down keys are needed to
-both move grid and Plot3D planes around the scene and to move
-through the scene while in {\em eye centered}\ mode.  The upper
-case ``P`` key is then used to switch the way these keys are used
-between grid/Plot3D movement mode and scene movement mode.
+\kitem{P}Cycle through Plot3D file types.
 
-\kitem{q,Q}Switch between blockage views.  These views are blocks
+\kitem{q}Switch between blockage views.  These views are blocks
 that are aligned on grid lines, blocks as specified by the user
 (in the FDS input file) and blocks as generated by a CAD (computer
 aided drawing) package.
@@ -4731,6 +4805,8 @@ aided drawing) package.
 Also switch between vent views.  When a circular vent is specified,
 the {\em q}\ key will switch between how the vent is specified by the user, a circle
 and how it is represented by FDS, a series of grid cell faces.
+
+\kitem{Q}Toggle texture visibility.
 
 \kitem{r,R}Render the current scene as a JPEG or a PNG file which
 can be viewed in a web browser or inserted into a word processing
@@ -4748,8 +4824,8 @@ meshed.
 \kitem{t}Toggle the time stepping mode.  Time stepping mode allows
 one to step through the simulation one time step at a time.
 
-\kitem{T}Toggle the method for interpolating colors when drawing
-slice and boundary files.
+\kitem{T}Toggle the time time bar time label between showing time as seconds
+and time as hour, minutes and seconds.
 
 \kitem{u,U}Reload files from the keyboard.  This is useful when
 using Smokeview to display a case that is currently running in
@@ -4804,9 +4880,8 @@ as {\tt d}\ and {\tt f}\ are used for {\tt CTRL}\ and
 4) outline only and
 5) hidden
 
-\kitem{ALT r}Toggle research mode (research mode uses global min
-and max for coloring data and turns off axis label smoothing when
-displaying it.)
+\kitem{ALT r}Toggle research mode.  Research mode uses global min
+and max bounds for coloring data and turns off smoothing when displaying colorbar labels.
 
 \kitem{ALT R}Display scene in 360$^\circ$ view mode - all view directions of the scene are displayed in a $1024\times 512$ image.
 
@@ -4857,6 +4932,8 @@ draws line smoothly without {\em jaggies}.
 \kitem{*}Hide all 3D slice planes (aligned with 3 coordinate axes
 and general slice planes).
 
+\kitem{=}Toggle vertex selected in examine geometry dialog
+
 \kitem{,}Toggle display of colorbar display (show vertical, horizontal or now colorbar).
 
 \kitem{.}Toggle locking of left/right scene motion when using the SHIFT mouse to change the scene aperture.
@@ -4872,6 +4949,10 @@ and general slice planes).
 \kitem{>}Decrease vector point size
 
 \kitem{;}Flip colorbar
+
+\kitem{/}Toggle parallel loading of particle files.  The number of threads used to load
+particles files in parallel may be specified using the Settings portion of the particle bounds
+dialog box.
 
 \hitem{Left/Right Cursor}When the {\em eyeview}\ mode is {\em eye
 centered}\ then these keys rotate the scene to the left or right
@@ -5540,7 +5621,7 @@ draw blockages.  Blockages are drawn either snapped to the nearest
 grid (5), drawn at locations as specified in the FDS input file
 (6) or drawn as specified in a compatible CAD package (7)\footnote{There are various
 third party tools that have been developed to help process obstruction data for FDS. See
-the FDS/Smokeview website, \hhref{http://fire.nist.gov/fds/}, for details.}.   (default: 5)
+the FDS/Smokeview website, \hhref{http://pages.nist.gov/fds/}, for details.}.   (default: 5)
 
 \hitemNULL{BOUNDARYTWOSIDE}
 
@@ -6538,36 +6619,9 @@ This data is found within the spread sheet data now used to store zone fire mode
 \subsection{Miscellaneous Keywords}
 \blist
 
-\hitem{ALBEDO}This keyword is not implemented yet.
-It will be used to specify the smoke albedo (0.0, 1.0).
-
-\hitem{ENDIAN}The {\tt ENDIAN}\ keyword defines whether a big or
-little endian\footnote{ Big-endian and little-endian are terms
-that describe the order in which a sequence of bytes are stored in
-computer memory. Big-endian is an order in which the {\em big end}
-(most significant value in the sequence) is stored first (at the
-lowest storage address). Little-endian is an order in which the
-{\em little end}\ (least significant value in the sequence) is
-stored first. The terms big-endian and little-endian are derived
-from the Lilliputians of Gulliver's Travels, whose major political
-issue was whether soft-boiled eggs should be opened on the big end
-or the little end. }\ system is used to represent the data.  The PC
-(both Windows and LINUX) uses the little endian system for
-representing numbers while most UNIX workstations use the big
-endian system. The PC version of Smokeview uses this keyword  to
-determine whether data should be converted between these two
-systems before it is visualized. The valid {\tt ENDIAN}\ parameters
-are {\tt BIG}\ or {\tt LITTLE}.
-
 \hitem{REVISION}The {\tt REVISION}\ keyword defines the GIT revision or
-build number for the version of FDS that ran the case currently being visualized.
-The FDS build number is displayed in the Help menu along with the Smokeview build number.
-
-\hitem{SYST}The {\tt SYST}\ keyword defines which system the FDS
-case was run on. The PC version of Smokeview uses this information
-(if the {\tt ENDIAN}\ keyword is absent) to swap data bytes if the
-FDS case was run on a computer with a different {\em endian}\
-format than the PC.
+build number for the version of FDS that ran the case being visualized.
+The FDS and Smokeview revisions are displayed in the Help menu.
 
 \hitem{TITLE1/TITLE2}The {\tt TITLE1}\ and {\tt TITLE2}\ keywords
 allow one to specify extra information documenting a Smokeview

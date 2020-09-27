@@ -9,7 +9,7 @@ ifeq ($(GLUT),freeglut)
   INCS = -I ../freeglut3.0.0/include
   NOCLOSE=-D FREEGLUT_STATIC
 else
-  INCS = -I ../GLUTINC/glut
+  INCS = -I ../glui_gl
   NOCLOSE=-D pp_NOCLOSE
 endif
 
@@ -39,11 +39,11 @@ intel_linux_64: CFLAGS=-m64 $(NOCLOSE) -fpermissive
 intel_linux_64: $(GLUI_OBJS)
 	ar rcs libglui.a $(GLUI_OBJS)
 
-intel_osx_64: CFLAGS=-m64 $(NOCLOSE) -fpermissive 
+intel_osx_64: CFLAGS=-m64 -D pp_OSX -stdlib=libc++ $(NOCLOSE) -fpermissive
 intel_osx_64: $(GLUI_OBJS)
 	ar rcs libglui.a $(GLUI_OBJS)
 
-gnu_osx_64: CFLAGS=-m64 $(NOCLOSE) -fpermissive 
+gnu_osx_64: CFLAGS=-m64 -D pp_OSX $(NOCLOSE) -fpermissive 
 gnu_osx_64: $(GLUI_OBJS)
 	ar rcs libglui.a $(GLUI_OBJS)
 

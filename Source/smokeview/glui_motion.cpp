@@ -11,91 +11,8 @@
 
 #include "smokeviewvars.h"
 #include "IOvolsmoke.h"
+#include "glui_motion.h"
 
-#define TRANSLATE_XY 101
-#define ROTATE_2AXIS 102
-#define GLUI_Z         2
-#define MESH_LIST      4
-#define EYE_ROTATE     5
-#define EYE_ROTATE_90  6
-#define EYELEVEL       7
-#define FLOORLEVEL     8
-#define ROTATE_90    103
-#define RESET_VIEW   104
-
-#define LABEL_VIEW 4
-
-#define CUSTOM_ROTATION_X 9
-#define CUSTOM_ROTATION_Y 10
-#define CUSTOM_ROTATION_Z 11
-#define LIST_VIEW 5
-#define ADD_VIEW 6
-#define DELETE_VIEW 7
-#define RESTORE_VIEW 8
-#define REPLACE_VIEW 9
-#define STARTUP 10
-#define CYCLEVIEWS 11
-#define ZOOM 12
-#define APERTURE 15
-#define CURSOR 13
-#define SAVE_SETTINGS 14
-#define WINDOW_RESIZE 16
-#define WINDOWSIZE_LIST 17
-#define SNAPSCENE 21
-#define SET_VIEW_XYZ 22
-#define ZAXIS_CUSTOM 25
-#define USE_GVEC 28
-#define GSLICE_TRANSLATE 24
-#define GSLICE_NORMAL 27
-#define PLAY_MOVIE 29
-#define MOVIE_NAME 30
-#define CLOSE_MOTION 1
-#ifdef pp_RENDER360_DEBUG
-#define SHOWALL_SCREENS 31
-#define HIDEALL_SCREENS 32
-#endif
-#define WINDOW_COLORS 33
-#define COLOR_FLIP 34
-#define CLIP_SHOW_ROTATE 35
-#define ZAXIS_UP 41
-#define NEARFARCLIP 42
-#define CUSTOM_VIEW 43
-
-#define RENDER_TYPE 0
-#define RENDER_RESOLUTION 1
-#define RENDER_SKIP 2
-#define RENDER_START_HIGHRES 11
-#define RENDER_STOP 4
-#define RENDER_LABEL 5
-#define RENDER_MULTIPLIER 6
-#define MOVIE_FILETYPE 7
-#define RENDER_MODE 8
-#define RENDER_START_TOP 13
-#define RENDER_DEBUG_360 14
-
-#define SLICE_ROLLOUT           0
-#define VIEWPOINTS_ROLLOUT      1
-#define WINDOW_ROLLOUT          2
-#define SCALING_ROLLOUT         3
-#define TRANSLATEROTATE_ROLLOUT 4
-#define ROTATION_ROLLOUT        5
-#define ORIENTATION_ROLLOUT     6
-#define POSITION_VIEW_ROLLOUT   7
-
-#define MOTION_ROLLOUT 0
-#define VIEW_ROLLOUT   1
-#define RENDER_ROLLOUT 2
-#define MOVIE_ROLLOUT  3
-
-#define RENDER_FILE_ROLLOUT   0
-#define RENDER_SIZE_ROLLOUT   1
-#define RENDER_SCREEN_ROLLOUT 2
-#define RENDER_CLIP_ROLLOUT   3
-
-#define RENDER_360CB 9
-#ifdef pp_HTML
-#define RENDER_HTML 15
-#endif
 
 #ifdef pp_DEG
 unsigned char deg360[] = { '3','6','0',DEG_SYMBOL,0 };
@@ -268,6 +185,7 @@ int nmotionprocinfo = 0, nmvrprocinfo=0, nsubrenderprocinfo=0;
 /* ------------------ CloseRollouts ------------------------ */
 
 extern "C" void CloseRollouts(GLUI *dialog){
+#ifndef pp_CLOSEOFF
   rolloutlistdata *this_rollout;
 
   for(this_rollout = first_rollout.next; this_rollout->next!=NULL; this_rollout = this_rollout->next){
@@ -277,6 +195,7 @@ extern "C" void CloseRollouts(GLUI *dialog){
     dialog->hide();
     updatemenu = 1;
   }
+#endif
 }
 
 /* ------------------ ShrinkDialogs ------------------------ */
@@ -679,7 +598,7 @@ void EnableDisableViews(void){
 
 /* ------------------ ViewpointCB ------------------------ */
 
-void ViewpointCB(int var){
+extern "C" void ViewpointCB(int var){
   int ival;
   int rotation_type_save;
   cameradata *cam1, *cex, *ca;
@@ -782,6 +701,11 @@ void ViewpointCB(int var){
     EnableDisableViews();
     break;
   case RESTORE_VIEW:
+    if(use_customview==1){
+      use_customview=0;
+      if(CHECKBOX_use_customview!=NULL)CHECKBOX_use_customview->set_int_val(use_customview);
+      SceneMotionCB(CUSTOM_VIEW);
+    }
     ival = LIST_viewpoints->get_int_val();
     selected_view = ival;
     for(ca = camera_list_first.next;ca->next != NULL;ca = ca->next){
@@ -945,10 +869,12 @@ extern "C" void UpdateGluiCameraViewList(void){
 void MotionDlgCB(int var){
   switch(var){
   case CLOSE_MOTION:
+#ifndef pp_CLOSEOFF
     if(glui_motion != NULL)glui_motion->hide();
+#endif
     updatemenu = 1;
     break;
-  case SAVE_SETTINGS:
+  case SAVE_SETTINGS_MOTION:
     updatemenu = 1;
     WriteIni(LOCAL_INI, NULL);
     break;
@@ -975,7 +901,6 @@ extern "C" void GluiMotionSetup(int main_window){
 
   eye_xyz=camera_current->eye;
 
-  update_glui_motion=0;
   if(glui_motion!=NULL){
     glui_motion->close();
     glui_motion=NULL;
@@ -1096,7 +1021,8 @@ extern "C" void GluiMotionSetup(int main_window){
   PANEL_change_zaxis = glui_motion->add_panel_to_panel(ROLLOUT_orientation,_("z axis"));
 
   if(zaxis_custom==0){
-    float vv[3];
+    float vv[3], maxvv;
+
 
     if(have_gvec==1){
       vv[0] = -gvecphys[0];
@@ -1108,6 +1034,10 @@ extern "C" void GluiMotionSetup(int main_window){
       vv[1] = -gvecphys_orig[1];
       vv[2] = -gvecphys_orig[2];
     }
+    maxvv = MAXABS3(vv);
+    vv[0] /= maxvv;
+    vv[1] /= maxvv;
+    vv[2] /= maxvv;
     XYZ2AzElev(vv, zaxis_angles, zaxis_angles+1);
   }
   SPINNER_zaxis_angles[0] = glui_motion->add_spinner_to_panel(PANEL_change_zaxis, _("azimuth:"),GLUI_SPINNER_FLOAT, zaxis_angles,ZAXIS_CUSTOM, SceneMotionCB);
@@ -1290,19 +1220,12 @@ extern "C" void GluiMotionSetup(int main_window){
   glui_motion->add_radiobutton_to_group(RADIO_render_type, "png");
   glui_motion->add_radiobutton_to_group(RADIO_render_type, "jpg");
 
-#ifdef pp_HTML
   glui_motion->add_button_to_panel(PANEL_render_file, "Render to html", RENDER_HTML, RenderCB);
-#endif
 
   LIST_render_skip = glui_motion->add_listbox_to_panel(ROLLOUT_render, _("Show:"), &render_skip, RENDER_SKIP, RenderCB);
-  LIST_render_skip->add_item(RENDER_CURRENT_SINGLE, _("Current"));
-  LIST_render_skip->add_item(1, _("All frames"));
-  LIST_render_skip->add_item(2, _("Every 2nd frame"));
-  LIST_render_skip->add_item(3, _("Every 3rd frame"));
-  LIST_render_skip->add_item(4, _("Every 4th frame"));
-  LIST_render_skip->add_item(5, _("Every 5th frame"));
-  LIST_render_skip->add_item(10, _("Every 10th frame"));
-  LIST_render_skip->add_item(20, _("Every 20th frame"));
+  for(i = 0; i<NRENDER_SKIPS; i++){
+    LIST_render_skip->add_item(render_skips[i], crender_skips[i]);
+  }
   LIST_render_skip->set_int_val(render_skip);
 
   ROLLOUT_image_size = glui_motion->add_rollout_to_panel(ROLLOUT_render, "size/type", false, RENDER_SIZE_ROLLOUT, SubRenderRolloutCB);
@@ -1441,11 +1364,14 @@ extern "C" void GluiMotionSetup(int main_window){
 
   PANEL_close = glui_motion->add_panel("",GLUI_PANEL_NONE);
 
-  BUTTON_motion_1=glui_motion->add_button_to_panel(PANEL_close,_("Save settings"),SAVE_SETTINGS, MotionDlgCB);
+  BUTTON_motion_1=glui_motion->add_button_to_panel(PANEL_close,_("Save settings"),SAVE_SETTINGS_MOTION, MotionDlgCB);
 
   glui_motion->add_column_to_panel(PANEL_close,false);
 
   BUTTON_motion_2=glui_motion->add_button_to_panel(PANEL_close,_("Close"),1, MotionDlgCB);
+#ifdef pp_CLOSEOFF
+  BUTTON_motion_2->disable();
+#endif
 
   ShowHideTranslate(rotation_type);
   glui_motion->set_main_gfx_window( main_window );
@@ -1765,11 +1691,11 @@ extern "C" void SceneMotionCB(int var){
   }
   if(var == NEARFARCLIP){
     if(nearclip<0.0){
-      nearclip=0.001;
+      nearclip=0.00001;
       SPINNER_nearclip->set_float_val(nearclip);
     }
     if(farclip<0.0){
-      farclip=0.001;
+      farclip=0.00001;
       SPINNER_farclip->set_float_val(farclip);
     }
     return;
@@ -1987,13 +1913,18 @@ extern "C" void SceneMotionCB(int var){
       update_rotation_center=1;
       return;
     case ZOOM:
+      updatemenu = 1;
       zoomindex=-1;
-      for(i=0;i<5;i++){
+      for(i=0;i<MAX_ZOOMS;i++){
         if(ABS(zoom-zooms[i])<0.001){
           zoomindex=i;
           zoom=zooms[i];
           break;
         }
+      }
+      if(zoomindex==-1&&zoom>0.0){
+        zooms[MAX_ZOOMS] = zoom;
+        zoomindex = MAX_ZOOMS;
       }
       camera_current->zoom=zoom;
       aperture_glui=Zoom2Aperture(zoom);
@@ -2008,8 +1939,8 @@ extern "C" void SceneMotionCB(int var){
         if(SPINNER_aperture!=NULL)SPINNER_aperture->set_float_val(aperture_glui);
       }
       zoomindex=-1;
-      for(i=0;i<5;i++){
-        if(ABS(zoom-zooms[i])<0.001){
+      for(i=0;i<MAX_ZOOMS+1;i++){
+        if(ABS(zoom-zooms[i])<0.001&&zooms[i]>0.0){
           zoomindex=i;
           zoom=zooms[i];
           aperture_glui=Zoom2Aperture(zoom);
@@ -2066,13 +1997,15 @@ extern "C" void SceneMotionCB(int var){
       {
         float vv[3];
         float *elev, *az;
+        float maxvv;
 
         gvec_down=1;
         SceneMotionCB(ZAXIS_UP);
         gvec_down=1;
-        vv[0] = -gvecphys[0];
-        vv[1] = -gvecphys[1];
-        vv[2] = -gvecphys[2];
+        maxvv = MAXABS3(gvecphys);
+        vv[0] = -gvecphys[0]/maxvv;
+        vv[1] = -gvecphys[1]/maxvv;
+        vv[2] = -gvecphys[2]/maxvv;
         XYZ2AzElev(vv, zaxis_angles, zaxis_angles+1);
         UpdateZaxisAngles();
 
@@ -2317,11 +2250,12 @@ void RenderCB(int var){
     case RENDER_LABEL:
     case RENDER_TYPE:
       break;
-#ifdef pp_HTML
     case RENDER_HTML:
-      Smv2Html(html_filename,CURRENT_TIME, FROM_SMOKEVIEW);
-      break;
+      Smv2Html(html_filename, HTML_CURRENT_TIME, FROM_SMOKEVIEW, VR_NO);
+#ifdef pp_HTML_VR
+      Smv2Html(htmlvr_filename, HTML_CURRENT_TIME, FROM_SMOKEVIEW, VR_YES);
 #endif
+      break;
 #ifdef pp_RENDER360_DEBUG
     case RENDER_DEBUG_360:
       if(debug_360_skip_x<2){
@@ -2475,7 +2409,16 @@ void RenderCB(int var){
 /* ------------------ UpdateRenderListSkip ------------------------ */
 
 void UpdateRenderListSkip(void){
-  if(LIST_render_skip!=NULL)LIST_render_skip->set_int_val(render_skip);
+  if(LIST_render_skip!=NULL){
+    int i;
+
+    for(i = 0; i<NRENDER_SKIPS; i++){
+      if(render_skip==render_skips[i]){
+        LIST_render_skip->set_int_val(render_skip);
+        break;
+      }
+    }
+  }
 }
 
 /* ------------------ UpdateGluiRender ------------------------ */
