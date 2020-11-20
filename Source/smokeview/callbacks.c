@@ -2979,8 +2979,7 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
       }
       UpdateDeviceSize();
       break;
-    case 'k':
-    case 'K':
+    case GLFW_KEY_K:
       visTimebar = 1 - visTimebar;
       if(visTimebar==0)PRINTF("Time bar hidden\n");
       if(visTimebar==1)PRINTF("Time bar visible\n");
@@ -3019,60 +3018,63 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
       }
       break;
 #endif
-    case 'O':
-      switch(visBlocks){
-        case visBLOCKAsInput:
-        case visBLOCKAsInputOutline:
-          BlockageMenu(visBLOCKHide);
-          BlockageMenu(visBLOCKOnlyOutline);
-          break;
-        default:
-          BlockageMenu(visBLOCKHide);
-          BlockageMenu(visBLOCKAsInput);
-          break;
-      }
-      break;
-    case 'o':
-      if(keystate==GLUT_ACTIVE_ALT){
+    case GLFW_KEY_O:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'O'
         switch(visBlocks){
           case visBLOCKAsInput:
-            BlockageMenu(visBLOCKHide);
-            BlockageMenu(visBLOCKAsInput);
-            BlockageMenu(visBLOCKAddOutline);
-            break;
           case visBLOCKAsInputOutline:
             BlockageMenu(visBLOCKHide);
-            BlockageMenu(visBLOCKNormal);
-            break;
-          case visBLOCKNormal:
-            BlockageMenu(visBLOCKHide);
             BlockageMenu(visBLOCKOnlyOutline);
-            break;
-          case visBLOCKOutline:
-          case visBLOCKOnlyOutline:
-            BlockageMenu(visBLOCKHide);
-            break;
-          case visBLOCKHide:
-            BlockageMenu(visBLOCKHide);
-            BlockageMenu(visBLOCKAsInput);
             break;
           default:
             BlockageMenu(visBLOCKHide);
             BlockageMenu(visBLOCKAsInput);
             break;
         }
-      }
-      else{
-        highlight_flag++;
-        if(highlight_flag!=0&&visFrame==0){
-          visFrame = 1;
-          updatefacelists = 1;
-          updatemenu = 1;
-          // glutPostRedisplay();
+      } else {
+        // 'o'
+        if(keystate==GLUT_ACTIVE_ALT){
+          switch(visBlocks){
+            case visBLOCKAsInput:
+              BlockageMenu(visBLOCKHide);
+              BlockageMenu(visBLOCKAsInput);
+              BlockageMenu(visBLOCKAddOutline);
+              break;
+            case visBLOCKAsInputOutline:
+              BlockageMenu(visBLOCKHide);
+              BlockageMenu(visBLOCKNormal);
+              break;
+            case visBLOCKNormal:
+              BlockageMenu(visBLOCKHide);
+              BlockageMenu(visBLOCKOnlyOutline);
+              break;
+            case visBLOCKOutline:
+            case visBLOCKOnlyOutline:
+              BlockageMenu(visBLOCKHide);
+              break;
+            case visBLOCKHide:
+              BlockageMenu(visBLOCKHide);
+              BlockageMenu(visBLOCKAsInput);
+              break;
+            default:
+              BlockageMenu(visBLOCKHide);
+              BlockageMenu(visBLOCKAsInput);
+              break;
+          }
         }
-        if(highlight_flag>2&&noutlineinfo>0)highlight_flag=0;
-        if(highlight_flag>1&&noutlineinfo==0)highlight_flag=0;
-        PRINTF("outline mode=%i\n",highlight_flag);
+        else{
+          highlight_flag++;
+          if(highlight_flag!=0&&visFrame==0){
+            visFrame = 1;
+            updatefacelists = 1;
+            updatemenu = 1;
+            // glutPostRedisplay();
+          }
+          if(highlight_flag>2&&noutlineinfo>0)highlight_flag=0;
+          if(highlight_flag>1&&noutlineinfo==0)highlight_flag=0;
+          PRINTF("outline mode=%i\n",highlight_flag);
+        }
       }
       break;
     case GLFW_KEY_P:
@@ -3251,28 +3253,31 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
         RenderState(RENDER_ON);
       }
       break;
-    case 'S':
-      stereotypeOLD=stereotype;
-      stereotype++;
-      if(stereotype>5)stereotype=0;
-      if(stereotype==STEREO_TIME&&videoSTEREO!=1)stereotype=STEREO_LR;
-      UpdateGluiStereo();
-      break;
-    case 's':
-      switch(keystate){
-      case GLUT_ACTIVE_ALT:
-        DialogMenu(DIALOG_3DSMOKE); // 3d smoke dialog
-        break;
-      case GLUT_ACTIVE_CTRL:
-        SnapScene();
-        break;
-      default:
-        if(rotation_type==EYE_CENTERED){
-          HandleMoveKeys(GLUT_KEY_DOWN);
-        }
-        else{
-          vectorskip++;
-          if(vectorskip>4)vectorskip=1;
+    case GLFW_KEY_S:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'S'
+        stereotypeOLD=stereotype;
+        stereotype++;
+        if(stereotype>5)stereotype=0;
+        if(stereotype==STEREO_TIME&&videoSTEREO!=1)stereotype=STEREO_LR;
+        UpdateGluiStereo();
+      } else {
+        // 's'
+        switch(keystate){
+        case GLUT_ACTIVE_ALT:
+          DialogMenu(DIALOG_3DSMOKE); // 3d smoke dialog
+          break;
+        case GLUT_ACTIVE_CTRL:
+          SnapScene();
+          break;
+        default:
+          if(rotation_type==EYE_CENTERED){
+            HandleMoveKeys(GLUT_KEY_DOWN);
+          }
+          else{
+            vectorskip++;
+            if(vectorskip>4)vectorskip=1;
+          }
         }
       }
       break;
@@ -3325,49 +3330,54 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
             ReloadMenu(RELOAD_ALL_NOW);
       }
       break;
-    case 'V':
-      if(nvolrenderinfo>0){
-        usevolrender=1-usevolrender;
-        UpdateSmoke3dFlags();
+    case GLFW_KEY_V:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'V'
+        if(nvolrenderinfo>0){
+          usevolrender=1-usevolrender;
+          UpdateSmoke3dFlags();
 #ifdef pp_GPU
-        PrintGPUState();
+          PrintGPUState();
 #endif
-        return;
+          return;
+        }
+      } else {
+        // 'v'
+        switch(keystate){
+          case GLUT_ACTIVE_ALT:
+            projection_type = 1 - projection_type;
+            SceneMotionCB(PROJECTION);
+            break;
+          default:
+            visVector=1-visVector;
+            if(vectorspresent==0)visVector=0;
+            UpdateGlui();
+            break;
+        }
       }
-      break;
-    case 'v':
-      switch(keystate){
-        case GLUT_ACTIVE_ALT:
-          projection_type = 1 - projection_type;
-          SceneMotionCB(PROJECTION);
-          break;
-        default:
-          visVector=1-visVector;
-          if(vectorspresent==0)visVector=0;
-          UpdateGlui();
-          break;
-      }
-      break;
-    case 'W':
-      clip_mode++;
-      if(clip_mode>CLIP_MAX)clip_mode=0;
-      UpdateClipAll();
-      break;
-    case 'w':
-      switch(keystate){
-        case GLUT_ACTIVE_ALT:
-          DialogMenu(DIALOG_WUI); // WUI dialog
-          break;
-        case GLUT_ACTIVE_CTRL:
-        default:
-          if(rotation_type==EYE_CENTERED){
-            HandleMoveKeys(GLUT_KEY_UP);
-          }
-          else{
-            vis_gslice_data = 1 - vis_gslice_data;
-            UpdateGsliceParms();
-          }
-          break;
+    case GLFW_KEY_W:
+      if (mods & GLFW_MOD_SHIFT) {
+        // 'W'
+        clip_mode++;
+        if(clip_mode>CLIP_MAX)clip_mode=0;
+        UpdateClipAll();
+      } else {
+        // 'w'
+        switch(keystate){
+          case GLUT_ACTIVE_ALT:
+            DialogMenu(DIALOG_WUI); // WUI dialog
+            break;
+          case GLUT_ACTIVE_CTRL:
+          default:
+            if(rotation_type==EYE_CENTERED){
+              HandleMoveKeys(GLUT_KEY_UP);
+            }
+            else{
+              vis_gslice_data = 1 - vis_gslice_data;
+              UpdateGsliceParms();
+            }
+            break;
+        }
       }
       break;
     case GLFW_KEY_X:
@@ -3381,8 +3391,7 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
         updatemenu = 1;
       }
       break;
-    case 'y':
-    case 'Y':
+    case GLFW_KEY_Y:
       visy_all = 1-visy_all;
       plotstate = GetPlotState(STATIC_PLOTS);
       updatemenu = 1;
@@ -3396,7 +3405,7 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
         updatemenu = 1;
       }
       break;
-    case '0':
+    case GLFW_KEY_0:
       if(plotstate==DYNAMIC_PLOTS){
         itime_cycle = 0;
         UpdateTimes();
@@ -3404,17 +3413,18 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
       }
       break;
 #ifdef pp_MULTI_RES
-    case '`':
-      slice_resolution_level++;
-      if(slice_resolution_level>max_slice_resolution)slice_resolution_level = 0;
-      printf("slice resolution level: %i\n", slice_resolution_level);
+    case GLFW_KEY_GRAVE_ACCENT:
+      if (mods & GLFW_MOD_SHIFT) {
+        LevelScene(1,1,quat_general);
+        Quat2Rot(quat_general,quat_rotation);
+      } else {
+        slice_resolution_level++;
+        if(slice_resolution_level>max_slice_resolution)slice_resolution_level = 0;
+        printf("slice resolution level: %i\n", slice_resolution_level);
+      }
       break;
 #endif
-    case '~':
-      LevelScene(1,1,quat_general);
-      Quat2Rot(quat_general,quat_rotation);
-      break;
-    case '=':
+    case GLFW_KEY_EQUAL:
       if(ngeominfo>0){
         select_geom++;
         if(select_geom==5)select_geom=0;
@@ -3426,8 +3436,11 @@ void KeyboardGlfw(GLFWwindow* window, int key, int scancode, int action, int mod
         UpdateSelectGeom();
       }
       break;
-    case '!':
-      SnapScene();
+    case GLFW_KEY_1:
+      if (mods & GLFW_MOD_SHIFT) {
+        // '!'
+        SnapScene();
+      }
       break;
     case '@':
       cell_center_text = 1 - cell_center_text;

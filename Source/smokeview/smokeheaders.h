@@ -11,7 +11,7 @@
 
 EXTERNCPP void UpdateColorbarControls(void);
 EXTERNCPP void UpdateColorbarControls2(void);
-  
+
 EXTERNCPP void UpdateColorLabelDigits(void);
 
 EXTERNCPP void IncrementPartPropIndex(void);
@@ -404,7 +404,9 @@ EXTERNCPP void GetFaceInfo(void);
 EXTERNCPP void GetGeomInfoPtrs(int flag);
 EXTERNCPP devicedata *GetDeviceFromLabel(char *label, int index);
 EXTERNCPP devicedata *GetCSVDeviceFromLabel(char *label, int index);
-EXTERNCPP void SetupGlut(int argc, char **argv);
+// EXTERNCPP void SetupGlut(int argc, char **argv);
+void SetupGlfw(int argc, char **argv);
+int SetupGui(Gui *smv_gui);
 EXTERNCPP int GetNDevices(char *file);
 EXTERNCPP void ReadHRR(int flag, int *errorcode);
 EXTERNCPP void ReadDeviceData(char *file, int filetype, int flag);

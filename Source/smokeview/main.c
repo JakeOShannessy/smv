@@ -788,7 +788,9 @@ int main(int argc, char **argv){
   printf("Before SetupGlfw\n");
   SetupGlfw(argc,argv_sv);
   printf("After SetupGlfw\n");
-  SetupGui();
+  SetupGui(&smv_gui);
+  fflush(stdout);
+  exit(1);
 
   START_TIMER(startup_time);
   START_TIMER(read_time_elapsed);

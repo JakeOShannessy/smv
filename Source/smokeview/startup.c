@@ -509,13 +509,13 @@ void SetupGlfw(int argc, char **argv){
 
 int SetupGui(Gui *smv_gui) {
   uiInitOptions options;
-  const char *err;
+  // const char *err;
   uiTab *tab;
 
   memset(&options, 0, sizeof (uiInitOptions));
-  err = uiInit(&options);
+  const char *err = uiInit(&options);
   if (err != NULL) {
-    fprintf(stderr, "error initializing libui: %s", err);
+    fprintf(stderr, "%s\n", err);
     uiFreeInitError(err);
     return 1;
   }
