@@ -1,0 +1,6 @@
+option('__INTEL_COMPILER', type : 'boolean', value : false)
+option('pp_LINUX', type : 'boolean', value : true)
+option('pp_FSEEK', type : 'boolean', value : true)
+
+# option('warning_level', type : 'string', value : '3', description : 'An option')
+# option('b_pch', type : 'boolean', value : false)
