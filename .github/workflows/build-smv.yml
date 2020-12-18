@@ -1,0 +1,52 @@
+name: Smokeview
+on: push
+jobs:
+  build:
+    name: Build Smokeview
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.os }}
+        run: |
+          if [[ "$PLATFORM" == "macos-latest" ]]; then
+            brew install gcc
+            brew reinstall gcc
+            # curl -OL http://prdownloads.sourceforge.net/hpc/gfortran-8.1-bin.tar.gz -o gfortran-8.1-bin.tar.gz
+            # mkdir gfortran-8.1-bin
+            # tar -xzvf gfortran-8.1-bin.tar.gz -C gfortran-8.1-bin
+            # cp gfortran-8.1-bin/usr/local/lib/libgfortran* Build/LIBS/gnu_osx_64
+            ls /usr/local/Cellar/gcc/10.2.0/lib/gcc/10/*
+            cp /usr/local/Cellar/gcc/10.2.0/lib/gcc/10/libgfortran* Build/LIBS/gnu_osx_64
+            pushd Build/smokeview/gnu_osx_64
+            ./make_smokeview.sh
+            popd
+            cp Build/smokeview/gnu_osx_64/smokeview_osx_64 smokeview
+          fi
+          if [[ "$PLATFORM" == "ubuntu-latest" ]]; then
+            sudo apt-get install build-essential gfortran freeglut3-dev libx11-dev libxmu-dev libxi-dev
+            pushd Build/smokeview/gnu_linux_64
+            ./make_smokeview.sh
+            popd
+            cp Build/smokeview/gnu_linux_64/smokeview_linux_64 smokeview
+          fi
+          if [[ "$PLATFORM" == "windows-latest" ]]; then
+            choco install make
+            pushd Build/smokeview/mingw_win_64
+            ./make_smokeview.sh
+            popd
+            cp Build/smokeview/mingw_win_64/smokeview_mingw_64 smokeview
+          fi
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: smokeview
+          path: smokeview
