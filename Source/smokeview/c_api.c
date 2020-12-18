@@ -50,7 +50,7 @@ int set_slice_bound_min(const char *slice_type, int set, float value) {
 
 float get_slice_bound_min(const char *slice_type) {
   int i;
-  float min, max;
+  float min;
   for(i = 0; i < nslicebounds; i++) {
       if(!strcmp(slice_type, slicebounds[i].shortlabel)) {
           min=slicebounds[i].dlg_valmin;
@@ -62,7 +62,7 @@ float get_slice_bound_min(const char *slice_type) {
 
 float get_slice_bound_max(const char *slice_type) {
   int i;
-  float min, max;
+  float max;
   for(i = 0; i < nslicebounds; i++) {
       if(!strcmp(slice_type, slicebounds[i].shortlabel)) {
           // min=slicebounds[i].dlg_valmin;
@@ -347,6 +347,7 @@ int loadfile(const char *filename) {
 
   fprintf(stderr,"*** Error: file %s failed to load\n",filename);
   if(stderr2!=NULL)fprintf(stderr2, "*** Error: file %s failed to load\n", filename);
+  return 0;
 }
 
 /* ------------------ loadinifile ------------------------ */
@@ -1879,7 +1880,6 @@ void unloadslice(int value){
 void unloadall() {
   int errorcode;
   int i;
-  int ii;
 
   if(scriptoutstream!=NULL){
     fprintf(scriptoutstream,"UNLOADALL\n");
@@ -2508,6 +2508,7 @@ int set_sensornormcolor(float r, float g, float b) {
 int set_bw(int geo_setting, int data_setting) {
   setbw = geo_setting;
   setbwdata = data_setting;
+  return 0;
 } // SETBW
 
 int set_sprinkleroffcolor(float r, float g, float b) {
@@ -3272,6 +3273,7 @@ int set_trainerview(int v) {
 int set_transparent(int use_flag, float level) {
   use_transparency_data = use_flag;
   transparent_level = level;
+  return 0;
 } // TRANSPARENT
 
 int set_treeparms(int minsize, int visx, int visy, int visz) {
@@ -3693,6 +3695,7 @@ int set_deviceorientation(int a, float b) {
   orientation_scale = b;
   show_device_orientation = CLAMP(show_device_orientation, 0, 1);
   orientation_scale = CLAMP(orientation_scale, 0.1, 10.0);
+  return 0;
 } // DEVICEORIENTATION
 
 int set_gridparms(int vx, int vy, int vz, int px, int py, int pz) {
@@ -3887,7 +3890,6 @@ int set_shooter(float xyz[], float dxyz[], float uvw[],
 
 int set_showdevices(int ndevices_ini, const char **names) {
   sv_object *obj_typei;
-  char *dev_label;
   int i;
   char tempname[255]; // temporary buffer to convert from const string
 
@@ -3919,6 +3921,7 @@ int set_showdevicevals(int vshowdeviceval, int vshowvdeviceval,
   showdevice_unit = vshowdeviceunit;
   devicetypes_index = CLAMP(vdevicetypes_index, 0, ndevicetypes - 1);
   UpdateGluiDevices();
+  return 0;
 } // SHOWDEVICEVALS
 
 int set_showmissingobjects(int v) {

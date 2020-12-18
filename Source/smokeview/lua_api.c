@@ -129,6 +129,7 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
   STOP_TIMER(startup_time);
   PRINTF("\nStartup time: %.1f s\n", startup_time);
   glutMainLoop();
+  return 0;
 }
 
 /* ------------------ load_script ------------------------ */
@@ -1284,6 +1285,7 @@ int lua_makemovie(lua_State *L) {
   const char *base = lua_tostring(L, 2);
   float framerate = lua_tonumber(L, 3);
   makemovie(name, base, framerate);
+  return 0;
 }
 
 int lua_loadtour(lua_State *L) {
@@ -5040,54 +5042,55 @@ int loadSSFScript(char *filename) {
   //       strncpy(filename, script_filename, 1024);
   //   }
   printf("scriptfile: %s\n", filename);
-    // The display callback needs to be run once initially.
-    // PROBLEM: the display CB does not work without a loaded case.
-    runscript=0;
-    lua_displayCB(L);
-    runscript=1;
-    const char* err_msg;
-    lua_Debug info;
-    int level =  0;
-    char lString[1024];
-    snprintf(lString, 1024, "require(\"ssfparser\")\nrunSSF(\"%s.ssf\")", fdsprefix);
-    luaL_dostring(L, "require \"ssfparser\"");
-    int return_code = luaL_loadstring(L, lString);
-    switch (return_code) {
-      case LUA_OK:
-        printf("%s loaded ok\n", filename);
-        break;
-      case LUA_ERRSYNTAX:
-        fprintf(stderr, "Syntax error loading %s\n", filename);
-        err_msg = lua_tostring (L, -1);
-        fprintf(stderr, "error:%s\n", err_msg);
-        level = 0;
-        while (lua_getstack(L, level, &info)) {
-            lua_getinfo(L, "nSl", &info);
-            fprintf(stderr, "  [%d] %s:%d -- %s [%s]\n",
-                level, info.short_src, info.currentline,
-                (info.name ? info.name : "<unknown>"), info.what);
-            ++level;
-        }
-        break;
-      case LUA_ERRMEM:
-        break;
-      case LUA_ERRGCMM:
-        break;
-      case LUA_ERRFILE:
-        fprintf(stderr, "Could not load file %s\n", filename);
-        err_msg = lua_tostring (L, -1);
-        fprintf(stderr, "error:%s\n", err_msg);
-        level = 0;
-        while (lua_getstack(L, level, &info)) {
+  // The display callback needs to be run once initially.
+  // PROBLEM: the display CB does not work without a loaded case.
+  runscript=0;
+  lua_displayCB(L);
+  runscript=1;
+  const char* err_msg;
+  lua_Debug info;
+  int level =  0;
+  char lString[1024];
+  snprintf(lString, 1024, "require(\"ssfparser\")\nrunSSF(\"%s.ssf\")", fdsprefix);
+  luaL_dostring(L, "require \"ssfparser\"");
+  int return_code = luaL_loadstring(L, lString);
+  switch (return_code) {
+    case LUA_OK:
+      printf("%s loaded ok\n", filename);
+      break;
+    case LUA_ERRSYNTAX:
+      fprintf(stderr, "Syntax error loading %s\n", filename);
+      err_msg = lua_tostring (L, -1);
+      fprintf(stderr, "error:%s\n", err_msg);
+      level = 0;
+      while (lua_getstack(L, level, &info)) {
           lua_getinfo(L, "nSl", &info);
           fprintf(stderr, "  [%d] %s:%d -- %s [%s]\n",
               level, info.short_src, info.currentline,
               (info.name ? info.name : "<unknown>"), info.what);
           ++level;
-        }
-        break;
-    }
-    printf("after lua loadfile\n");
+      }
+      break;
+    case LUA_ERRMEM:
+      break;
+    case LUA_ERRGCMM:
+      break;
+    case LUA_ERRFILE:
+      fprintf(stderr, "Could not load file %s\n", filename);
+      err_msg = lua_tostring (L, -1);
+      fprintf(stderr, "error:%s\n", err_msg);
+      level = 0;
+      while (lua_getstack(L, level, &info)) {
+        lua_getinfo(L, "nSl", &info);
+        fprintf(stderr, "  [%d] %s:%d -- %s [%s]\n",
+            level, info.short_src, info.currentline,
+            (info.name ? info.name : "<unknown>"), info.what);
+        ++level;
+      }
+      break;
+  }
+  printf("after lua loadfile\n");
+  return 0;
 }
 
 int yieldOrOkSSF = LUA_YIELD;
