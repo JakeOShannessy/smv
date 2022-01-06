@@ -109,24 +109,24 @@ jobs:
     # - name: install fortran
     #   if: steps.cache-install.outputs.cache-hit != 'true'
     #   run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_FORTRAN_COMPONENTS
-    # - name: build smokeview
-    #   shell: bash
-    #   env:
-    #     LUA: ${{ matrix.lua }}
-    #   run: |
-    #     scripts/setup_windows_oneapi.bat ""
-    #     pushd Build/smokeview/intel_win_64
-    #     if [[ "$LUA" == true ]]; then
-    #       ./make_smokeview_lua.bat
-    #     else
-    #       make -j 4 pp_WIN_ONEAPI=1 -f ../Makefile intel_win_64
-    #     fi
-    #     popd
-    #     cp Build/smokeview/mingw_win_64/smokeview_mingw_64 smokeview
-    # - name: exclude unused files from cache
-    #   if: steps.cache-install.outputs.cache-hit != 'true'
-    #   shell: bash
-    #   run: scripts/cache_exclude_windows.sh
+    - name: build smokeview
+      shell: cmd
+      env:
+        LUA: ${{ matrix.lua }}
+      run: |
+        scripts/setup_windows_oneapi.bat ""
+        pushd Build/smokeview/intel_win_64
+        if [[ "$LUA" == true ]]; then
+          ./make_smokeview_lua.bat
+        else
+          make -j 4 pp_WIN_ONEAPI=1 -f ../Makefile intel_win_64
+        fi
+        popd
+        cp Build/smokeview/intel_win_64/smokeview_intel_64 smokeview
+    - name: exclude unused files from cache
+      if: steps.cache-install.outputs.cache-hit != 'true'
+      shell: bash
+      run: scripts/cache_exclude_windows.sh
 
     # Delete the following if you don't want to save install logs
     - name: Saving install logs
