@@ -70,6 +70,10 @@ jobs:
 
   build-windows:
     name: Build Smokeview Windows
+    strategy:
+      fail-fast: false
+      matrix:
+        lua: [true, false]
     runs-on: windows-latest
     defaults:
       run:
