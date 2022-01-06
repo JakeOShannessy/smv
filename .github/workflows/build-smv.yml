@@ -122,7 +122,7 @@ jobs:
           make -j 4 pp_WIN_ONEAPI=1 -f ../Makefile intel_win_64
         fi
         popd
-        # cp Build/smokeview/intel_win_64/smokeview_intel_64 smokeview
+        copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
     - name: exclude unused files from cache
       if: steps.cache-install.outputs.cache-hit != 'true'
       shell: bash
