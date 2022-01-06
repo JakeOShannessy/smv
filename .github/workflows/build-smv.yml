@@ -19,6 +19,40 @@ env:
   MACOS_FORTRAN_COMPONENTS: intel.oneapi.mac.ifort-compiler
 
 jobs:
+  build-macos:
+    name: Build Smokeview MacOS
+    strategy:
+      fail-fast: false
+      matrix:
+        lua: [true, false]
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.os }}
+          LUA: ${{ matrix.lua }}
+        run: |
+          brew install gcc
+          brew reinstall gcc
+          ls /usr/local/Cellar/gcc/10.2.0/lib/gcc/10/*
+          cp /usr/local/Cellar/gcc/10.2.0/lib/gcc/10/libgfortran* Build/LIBS/gnu_osx_64
+          pushd Build/smokeview/gnu_osx_64
+          if [[ "$LUA" == true ]]; then
+            ./make_smokeview_lua.sh
+          else
+            ./make_smokeview.sh
+          fi
+          popd
+          cp Build/smokeview/gnu_osx_64/smokeview_osx_64 smokeview
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: smokeview-macos-${{ matrix.lua }}
+          path: smokeview
+
   build-linux:
     name: Build Smokeview Linux
     strategy:
@@ -26,7 +60,6 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         lua: [true, false]
-        # os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -79,7 +112,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - name: CHeckout code
+      - name: Checkout code
         uses: actions/checkout@v2
       - name: cache install cpp
         id: cache-install-cpp
@@ -89,20 +122,9 @@ jobs:
           key: install-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_CPP_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
       - name: ls
         run: ls
-      # - name: install-basekit
-      #   run: scripts/install_windows_oneapi.bat $WINDOWS_BASEKIT_URL  intel.oneapi.win.mkl.devel intel.oneapi.win.tbb.devel
       - name: install cpp
         if: steps.cache-install-cpp.outputs.cache-hit != 'true'
         run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS $WINDOWS_FORTRAN_COMPONENTS
-      # - name: cache install fortran
-      #   id: cache-install-fortran
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: C:\Program Files (x86)\Intel\oneAPI\compiler
-      #     key: install-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_FORTRAN_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
-      # - name: install fortran
-      #   if: steps.cache-install.outputs.cache-hit != 'true'
-      #   run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_FORTRAN_COMPONENTS
       - name: build smokeview
         shell: cmd
         env:
@@ -121,18 +143,6 @@ jobs:
         if: steps.cache-install.outputs.cache-hit != 'true'
         shell: bash
         run: scripts\cache_exclude_windows.sh
-
-      # Delete the following if you don't want to save install logs
-      - name: Saving install logs
-        if: steps.cache-install.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
-        with:
-          name: InstallLogs_${{ github.job }}
-          path: |
-            extract.log
-            bootstrapper*
-            installer*
-          retention-days: 7
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
