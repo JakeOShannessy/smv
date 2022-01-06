@@ -47,11 +47,11 @@ jobs:
           fi
           if [[ "$PLATFORM" == "windows-latest" ]]; then
             choco install make
-            pushd Build/smokeview/mingw_win_64
+            pushd Build/smokeview/intel_win_64
             if [[ "$LUA" == true ]]; then
-              ./make_smokeview_lua.sh
+              ./make_smokeview_lua.bat
             else
-              ./make_smokeview.sh
+              ./make_smokeview.bat
             fi
             popd
             cp Build/smokeview/mingw_win_64/smokeview_mingw_64 smokeview
