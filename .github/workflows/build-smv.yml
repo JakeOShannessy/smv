@@ -96,7 +96,7 @@ jobs:
     - name: ls
       run: ls
     # - name: install-basekit
-    #   run: scripts/install_windows_oneapi.bat $WINDOWS_BASEKIT_URL $WINDOWS_DPCPP_COMPONENTS
+    #   run: scripts/install_windows_oneapi.bat $WINDOWS_BASEKIT_URL  intel.oneapi.win.mkl.devel intel.oneapi.win.tbb.devel
     - name: install cpp
       if: steps.cache-install.outputs.cache-hit != 'true'
       run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS $WINDOWS_FORTRAN_COMPONENTS
@@ -119,7 +119,7 @@ jobs:
         if [[ "$LUA" == true ]]; then
           ./make_smokeview_lua.bat
         else
-          ./make_smokeview.bat
+          make -j 4 -f ..\Makefile intel_win_64
         fi
         popd
         cp Build/smokeview/mingw_win_64/smokeview_mingw_64 smokeview
