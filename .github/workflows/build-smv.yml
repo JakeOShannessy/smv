@@ -114,7 +114,7 @@ jobs:
       env:
         LUA: ${{ matrix.lua }}
       run: |
-        scripts/setup_windows_oneapi.bat ""
+        scripts\setup_windows_oneapi.bat ""
         pushd Build/smokeview/intel_win_64
         if [[ "$LUA" == true ]]; then
           ./make_smokeview_lua.bat
@@ -122,7 +122,7 @@ jobs:
           make -j 4 pp_WIN_ONEAPI=1 -f ../Makefile intel_win_64
         fi
         popd
-        cp Build/smokeview/intel_win_64/smokeview_intel_64 smokeview
+        # cp Build/smokeview/intel_win_64/smokeview_intel_64 smokeview
     - name: exclude unused files from cache
       if: steps.cache-install.outputs.cache-hit != 'true'
       shell: bash
