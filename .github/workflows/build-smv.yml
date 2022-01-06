@@ -99,16 +99,16 @@ jobs:
     #   run: scripts/install_windows_oneapi.bat $WINDOWS_BASEKIT_URL $WINDOWS_DPCPP_COMPONENTS
     - name: install cpp
       if: steps.cache-install.outputs.cache-hit != 'true'
-      run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS
-    - name: cache install fortran
-      id: cache-install-fortran
-      uses: actions/cache@v2
-      with:
-        path: C:\Program Files (x86)\Intel\oneAPI\compiler
-        key: install-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_FORTRAN_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
-    - name: install fortran
-      if: steps.cache-install.outputs.cache-hit != 'true'
-      run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_FORTRAN_COMPONENTS
+      run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS $WINDOWS_FORTRAN_COMPONENTS
+    # - name: cache install fortran
+    #   id: cache-install-fortran
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: C:\Program Files (x86)\Intel\oneAPI\compiler
+    #     key: install-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_FORTRAN_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
+    # - name: install fortran
+    #   if: steps.cache-install.outputs.cache-hit != 'true'
+    #   run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_FORTRAN_COMPONENTS
     - name: build smokeview
       shell: bash
       env:
