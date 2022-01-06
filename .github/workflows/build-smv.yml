@@ -77,7 +77,7 @@ jobs:
   #     - name: Archive production artifacts
   #       uses: actions/upload-artifact@v2
   #       with:
-  #         name: smokeview
+  #         name: smokeview-linux-${{ matrix.lua }}
   #         path: smokeview
   build-windows:
     name: Build Smokeview Windows
@@ -95,6 +95,9 @@ jobs:
         key: install-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_CPP_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
     - name: ls
       run: ls
+    - name: install-basekit
+#      if: steps.cache-install.outputs.cache-hit != 'true'
+      run: scripts/install_windows_oneapi.bat $WINDOWS_BASEKIT_URL $WINDOWS_DPCPP_COMPONENTS
     - name: install cpp
       if: steps.cache-install.outputs.cache-hit != 'true'
       run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS
@@ -107,7 +110,19 @@ jobs:
     - name: install fortran
       if: steps.cache-install.outputs.cache-hit != 'true'
       run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_FORTRAN_COMPONENTS
-
+    - name: build smokeview
+      shell: bash
+      env:
+        LUA: ${{ matrix.lua }}
+      run: |
+        pushd Build/smokeview/intel_win_64
+        if [[ "$LUA" == true ]]; then
+          ./make_smokeview_lua.bat
+        else
+          ./make_smokeview.bat
+        fi
+        popd
+        cp Build/smokeview/mingw_win_64/smokeview_mingw_64 smokeview
     - name: exclude unused files from cache
       if: steps.cache-install.outputs.cache-hit != 'true'
       shell: bash
@@ -124,3 +139,8 @@ jobs:
           bootstrapper*
           installer*
         retention-days: 7
+    - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: smokeview-windows-${{ matrix.lua }}
+          path: smokeview
