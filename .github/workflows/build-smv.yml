@@ -114,6 +114,7 @@ jobs:
       env:
         LUA: ${{ matrix.lua }}
       run: |
+        scripts/setup_windows_oneapi.bat ""
         pushd Build/smokeview/intel_win_64
         if [[ "$LUA" == true ]]; then
           ./make_smokeview_lua.bat
