@@ -98,7 +98,7 @@ jobs:
     # - name: install-basekit
     #   run: scripts/install_windows_oneapi.bat $WINDOWS_BASEKIT_URL  intel.oneapi.win.mkl.devel intel.oneapi.win.tbb.devel
     - name: install cpp
-      if: steps.cache-install.outputs.cache-hit != 'true'
+      if: steps.cache-install-cpp.outputs.cache-hit != 'true'
       run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS $WINDOWS_FORTRAN_COMPONENTS
     # - name: cache install fortran
     #   id: cache-install-fortran
