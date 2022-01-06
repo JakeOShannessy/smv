@@ -37,8 +37,8 @@ jobs:
         run: |
           brew install gcc
           brew reinstall gcc
-          ls /usr/local/Cellar/gcc/10.2.0/lib/gcc/10/*
-          cp /usr/local/Cellar/gcc/10.2.0/lib/gcc/10/libgfortran* Build/LIBS/gnu_osx_64
+          ls /usr/local/Cellar/gcc/11.2.0/lib/gcc/11/*
+          cp /usr/local/Cellar/gcc/11.2.0/lib/gcc/11/libgfortran* Build/LIBS/gnu_osx_64
           pushd Build/smokeview/gnu_osx_64
           if [[ "$LUA" == true ]]; then
             ./make_smokeview_lua.sh
@@ -47,10 +47,13 @@ jobs:
           fi
           popd
           cp Build/smokeview/gnu_osx_64/smokeview_osx_64 smokeview
+      - name: My first step
+        if: ${{ matrix.lua == true }}
+        run: echo "exec_suffix=-lua" >> $GITHUB_ENV
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: smokeview-macos-${{ matrix.lua }}
+          name: smokeview-macos-${{ env.exec_suffix }}
           path: smokeview
 
   build-linux:
@@ -70,35 +73,22 @@ jobs:
           PLATFORM: ${{ matrix.os }}
           LUA: ${{ matrix.lua }}
         run: |
-          if [[ "$PLATFORM" == "macos-latest" ]]; then
-            brew install gcc
-            brew reinstall gcc
-            ls /usr/local/Cellar/gcc/10.2.0/lib/gcc/10/*
-            cp /usr/local/Cellar/gcc/10.2.0/lib/gcc/10/libgfortran* Build/LIBS/gnu_osx_64
-            pushd Build/smokeview/gnu_osx_64
-            if [[ "$LUA" == true ]]; then
-              ./make_smokeview_lua.sh
-            else
-              ./make_smokeview.sh
-            fi
-            popd
-            cp Build/smokeview/gnu_osx_64/smokeview_osx_64 smokeview
+          sudo apt-get install build-essential gfortran freeglut3-dev libx11-dev libxmu-dev libxi-dev
+          pushd Build/smokeview/gnu_linux_64
+          if [[ "$LUA" == true ]]; then
+            ./make_smokeview_lua.sh
+          else
+            ./make_smokeview.sh
           fi
-          if [[ "$PLATFORM" == "ubuntu-latest" ]]; then
-            sudo apt-get install build-essential gfortran freeglut3-dev libx11-dev libxmu-dev libxi-dev
-            pushd Build/smokeview/gnu_linux_64
-            if [[ "$LUA" == true ]]; then
-              ./make_smokeview_lua.sh
-            else
-              ./make_smokeview.sh
-            fi
-            popd
-            cp Build/smokeview/gnu_linux_64/smokeview_linux_64 smokeview
-          fi
+          popd
+          cp Build/smokeview/gnu_linux_64/smokeview_linux_64 smokeview
+      - name: My first step
+        if: ${{ matrix.lua == true }}
+        run: echo "exec_suffix=-lua" >> $GITHUB_ENV
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: smokeview-linux-${{ matrix.lua }}
+          name: smokeview-linux-${{ env.exec_suffix }}
           path: smokeview
 
   build-windows:
@@ -133,12 +123,15 @@ jobs:
           scripts\setup_windows_oneapi.bat ""
           pushd Build/smokeview/intel_win_64
           if [[ "$LUA" == true ]]; then
-            ./make_smokeview_lua.bat
+            make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="true" -f ../Makefile intel_win_64
           else
             make -j 4 pp_WIN_ONEAPI=1 -f ../Makefile intel_win_64
           fi
           popd
           copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
+      - name: My first step
+        if: ${{ matrix.lua == true }}
+        run: echo "exec_suffix=-lua" >> $GITHUB_ENV
       - name: exclude unused files from cache
         if: steps.cache-install.outputs.cache-hit != 'true'
         shell: bash
@@ -146,5 +139,5 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: smokeview-windows-${{ matrix.lua }}
+          name: smokeview-windows-${{ env.exec_suffix }}
           path: smokeview
