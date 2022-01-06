@@ -95,8 +95,8 @@ jobs:
         key: install-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_CPP_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
     - name: ls
       run: ls
-    - name: install-basekit
-      run: scripts/install_windows_oneapi.bat $WINDOWS_BASEKIT_URL $WINDOWS_DPCPP_COMPONENTS
+    # - name: install-basekit
+    #   run: scripts/install_windows_oneapi.bat $WINDOWS_BASEKIT_URL $WINDOWS_DPCPP_COMPONENTS
     - name: install cpp
       if: steps.cache-install.outputs.cache-hit != 'true'
       run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS
