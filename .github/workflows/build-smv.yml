@@ -40,16 +40,9 @@ jobs:
         with:
           path: /opt/intel/oneapi
           key: install2-${{ env.MACOS_HPCKIT_URL }}-${{ env.MACOS_CPP_COMPONENTS }}
-      # - name: install-cpp
-      #   if: steps.cache-install.outputs.cache-hit != 'true'
-      #   run: bash scripts/install_macos_oneapi.sh $MACOS_HPCKIT_URL $MACOS_CPP_COMPONENTS
       - name: install
         if: steps.cache-install.outputs.cache-hit != 'true'
         run: bash scripts/install_macos_oneapi.sh $MACOS_HPCKIT_URL
-      # - name: test-ifort
-      #   run: |
-      #     source /opt/intel/oneapi/setvars.sh
-      #     ifort
       - name: build smokeview
         shell: bash
         env:
@@ -73,7 +66,7 @@ jobs:
           name: smokeview-macos-${{ env.exec_suffix }}
           path: smokeview
 
-  build-linux:
+  build-linux-gnu:
     name: gnu_linux
     strategy:
       fail-fast: false
@@ -99,6 +92,53 @@ jobs:
           fi
           popd
           cp Build/smokeview/gnu_linux_64/smokeview_linux_64 smokeview
+      - name: Set exec suffix
+        if: ${{ matrix.lua }} == lua
+        run: echo "exec_suffix=-lua" >> $GITHUB_ENV
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: smokeview-linux-${{ env.exec_suffix }}
+          path: smokeview
+
+  build-linux-intel:
+    name: intel_linux
+    strategy:
+      fail-fast: false
+      matrix:
+        # lua: [lua, no-lua]
+        lua: [no-lua]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: prepare for cache restore
+        run: |
+          sudo mkdir -p /opt/intel
+          sudo chown $USER /opt/intel
+      - name: cache install
+        id: cache-install
+        uses: actions/cache@v2
+        with:
+          path: /opt/intel/oneapi
+          key: install2-${{ env.LINUX_HPCKIT_URL }}-${{ env.LINUX_CPP_COMPONENTS }}
+      - name: install
+        if: steps.cache-install.outputs.cache-hit != 'true'
+        run: bash scripts/install_LINUX_oneapi.sh $LINUX_HPCKIT_URL
+      - name: build smokeview
+        shell: bash
+        env:
+          LUA: ${{ matrix.lua }}
+        run: |
+          source /opt/intel/oneapi/setvars.sh
+          pushd Build/smokeview/intel_linux_64
+          if [[ "$LUA" == "lua" ]]; then
+            ./make_smokeview_lua.sh
+          else
+            ./make_smokeview.sh
+          fi
+          popd
+          copy Build/smokeview/intel_linux_64/smokeview_linux_64 smokeview
       - name: Set exec suffix
         if: ${{ matrix.lua }} == lua
         run: echo "exec_suffix=-lua" >> $GITHUB_ENV
