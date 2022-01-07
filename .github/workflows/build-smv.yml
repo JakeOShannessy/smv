@@ -43,9 +43,9 @@ jobs:
       # - name: install-cpp
       #   if: steps.cache-install.outputs.cache-hit != 'true'
       #   run: bash scripts/install_macos_oneapi.sh $MACOS_HPCKIT_URL $MACOS_CPP_COMPONENTS
-      - name: install-fortran
+      - name: install
         if: steps.cache-install.outputs.cache-hit != 'true'
-        run: bash scripts/install_macos_oneapi.sh $MACOS_HPCKIT_URL $MACOS_FORTRAN_COMPONENTS
+        run: bash scripts/install_macos_oneapi.sh $MACOS_HPCKIT_URL
       # - name: test-ifort
       #   run: |
       #     source /opt/intel/oneapi/setvars.sh
