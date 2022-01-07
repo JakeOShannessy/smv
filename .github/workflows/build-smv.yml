@@ -24,8 +24,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # lua: [lua, no-lua]
-        lua: [no-lua]
+        lua:
+          # - lua
+          - no-lua
     runs-on: macos-latest
     steps:
       - name: Checkout code
@@ -72,7 +73,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        lua: [lua, no-lua]
+        lua:
+          - lua
+          - no-lua
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -107,8 +110,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # lua: [lua, no-lua]
-        lua: [no-lua]
+        lua:
+          # - lua
+          - no-lua
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -155,7 +159,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        lua: [lua, no-lua]
+        lua:
+          # - lua
+          - no-lua
     runs-on: windows-latest
     defaults:
       run:
@@ -187,9 +193,9 @@ jobs:
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\smokeview\intel_win_64
           make -j 4 pp_WIN_ONEAPI=1 -f ..\Makefile intel_win_64
-          # make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING=%LUA_SCRIPTING% -f ..\Makefile intel_win_64
           popd
           copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
+      # make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING=%LUA_SCRIPTING% -f ..\Makefile intel_win_64
       - name: Set exec suffix
         if: ${{ matrix.lua }} == lua
         run: echo "exec_suffix=-lua" >> $GITHUB_ENV
