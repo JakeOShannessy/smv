@@ -124,7 +124,7 @@ jobs:
           key: install2-${{ env.LINUX_HPCKIT_URL }}-${{ env.LINUX_CPP_COMPONENTS }}
       - name: install
         if: steps.cache-install.outputs.cache-hit != 'true'
-        run: bash scripts/install_LINUX_oneapi.sh $LINUX_HPCKIT_URL
+        run: bash scripts/install_linux_oneapi.sh $LINUX_HPCKIT_URL
       - name: build smokeview
         shell: bash
         env:
@@ -179,6 +179,7 @@ jobs:
         env:
           LUA: ${{ matrix.lua }}
         run: |
+          dir "C:\Program Files (x86)\Intel\oneAPI"
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\smokeview\intel_win_64
           make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ..\Makefile intel_win_64
