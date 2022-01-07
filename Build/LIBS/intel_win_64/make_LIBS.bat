@@ -1,29 +1,29 @@
-set OPTS=i
-set arg1=%1
-set arg2=%2
-:: if arg3 is freeglut then freeglut not glut library will be built
-set arg3=%3
+@REM set OPTS=i
+@REM set arg1=%1
+@REM set arg2=%2
+@REM :: if arg3 is freeglut then freeglut not glut library will be built
+@REM set arg3=%3
 
-:: setup compiler environment
-if x%arg1% == xbot goto skip1
-call ..\..\..\Utilities\Scripts\setup_intel_compilers.bat
-:skip1
+@REM :: setup compiler environment
+@REM if x%arg1% == xbot goto skip1
+@REM call ..\..\..\Utilities\Scripts\setup_intel_compilers.bat
+@REM :skip1
 
-set EXIT_SCRIPT=1
+@REM set EXIT_SCRIPT=1
 
-set WAIT=
-if "%arg1%"=="bot" (
-  set WAIT=/WAIT
-)
+@REM set WAIT=
+@REM if "%arg1%"=="bot" (
+@REM   set WAIT=/WAIT
+@REM )
 
-set LIBDIR=%CD%
-git clean -dxf
+@REM set LIBDIR=%CD%
+@REM git clean -dxf
 
-cd ..\..\..\Source
-set SRCDIR=%CD%
+@REM cd ..\..\..\Source
+@REM set SRCDIR=%CD%
 
-cd ..\Build
-set BUILDDIR=%CD%
+@REM cd ..\Build
+@REM set BUILDDIR=%CD%
 
 :: openvr
 ::cd %SRCDIR%\openvr
