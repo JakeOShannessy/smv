@@ -192,7 +192,7 @@ jobs:
         run: |
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\smokeview\intel_win_64
-          make -j 4 pp_WIN_ONEAPI=1 -f ..\Makefile intel_win_64
+          make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="false" -f ..\Makefile intel_win_64
           popd
           copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
       # make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING=%LUA_SCRIPTING% -f ..\Makefile intel_win_64
