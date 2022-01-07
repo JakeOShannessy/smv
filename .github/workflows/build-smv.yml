@@ -40,14 +40,16 @@ jobs:
         with:
           path: /opt/intel/oneapi
           key: install2-${{ env.MACOS_HPCKIT_URL }}-${{ env.MACOS_CPP_COMPONENTS }}
-      - name: install-cpp
-        if: steps.cache-install.outputs.cache-hit != 'true'
-        run: bash scripts/install_macos_oneapi.sh $MACOS_HPCKIT_URL $MACOS_CPP_COMPONENTS
+      # - name: install-cpp
+      #   if: steps.cache-install.outputs.cache-hit != 'true'
+      #   run: bash scripts/install_macos_oneapi.sh $MACOS_HPCKIT_URL $MACOS_CPP_COMPONENTS
       - name: install-fortran
         if: steps.cache-install.outputs.cache-hit != 'true'
         run: bash scripts/install_macos_oneapi.sh $MACOS_HPCKIT_URL $MACOS_FORTRAN_COMPONENTS
-      - name: test-ifort
-        run: ifort
+      # - name: test-ifort
+      #   run: |
+      #     source /opt/intel/oneapi/setvars.sh
+      #     ifort
       - name: build smokeview
         shell: bash
         env:
@@ -137,6 +139,7 @@ jobs:
         env:
           LUA: ${{ matrix.lua }}
         run: |
+          dir "C:\Program Files (x86)\Intel\oneAPI\compiler\latest"
           "C:\Program Files (x86)\Intel\oneAPI\compiler\latest\env\vars.bat"
           pushd Build\smokeview\intel_win_64
           make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ..\Makefile intel_win_64
