@@ -103,6 +103,7 @@ jobs:
 
   build-linux-intel:
     name: intel_linux
+    if: false # ignore this job for now
     strategy:
       fail-fast: false
       matrix:
@@ -172,7 +173,6 @@ jobs:
         if: steps.cache-install-cpp.outputs.cache-hit != 'true'
         run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL
       - name: set LUA_SCRIPTING
-        if: ${{ matrix.lua }}
         shell: bash
         run: echo "LUA_SCRIPTING=false" >> $GITHUB_ENV
       - name: set LUA_SCRIPTING
@@ -184,10 +184,9 @@ jobs:
         env:
           LUA: ${{ matrix.lua }}
         run: |
-          dir "C:\Program Files (x86)\Intel\oneAPI"
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\smokeview\intel_win_64
-          make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ..\Makefile intel_win_64
+          make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING=%LUA_SCRIPTING% -f ..\Makefile intel_win_64
           popd
           copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
       - name: Set exec suffix
