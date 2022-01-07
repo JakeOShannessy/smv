@@ -165,7 +165,7 @@ jobs:
         id: cache-install-cpp
         uses: actions/cache@v2
         with:
-          path: C:\Program Files (x86)\Intel\oneAPI\compiler
+          path: C:\Program Files (x86)\Intel\oneAPI
           key: install2-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_CPP_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
       - name: install cpp
         if: steps.cache-install-cpp.outputs.cache-hit != 'true'
