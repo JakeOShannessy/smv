@@ -174,6 +174,10 @@ jobs:
       - name: set LUA_SCRIPTING
         if: ${{ matrix.lua }}
         shell: bash
+        run: echo "LUA_SCRIPTING=false" >> $GITHUB_ENV
+      - name: set LUA_SCRIPTING
+        if: ${{ matrix.lua }}
+        shell: bash
         run: echo "LUA_SCRIPTING=true" >> $GITHUB_ENV
       - name: build smokeview
         shell: cmd
