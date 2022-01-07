@@ -192,7 +192,8 @@ jobs:
         run: |
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\LIBS\intel_win_64
-          make_LIBS.bat
+          dir
+          call make_LIBS.bat
           popd
           pushd Build\smokeview\intel_win_64
           make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="false" -f ..\Makefile intel_win_64
