@@ -134,7 +134,6 @@ jobs:
         env:
           LUA: ${{ matrix.lua }}
         run: |
-          scripts\setup_windows_oneapi.bat ""
           pushd Build\smokeview\intel_win_64
           make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ..\Makefile intel_win_64
           popd
