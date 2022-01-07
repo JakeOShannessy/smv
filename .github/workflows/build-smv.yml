@@ -37,11 +37,13 @@ jobs:
         run: |
           brew install gcc
           brew reinstall gcc
-          ls /usr/local/Cellar/gcc/11.2.0_03/lib/gcc/
+          ls /usr/local/Cellar/gcc
+          ls /usr/local/Cellar/gcc/11.2.0_3
           echo "--"
-          ls /usr/local/Cellar/gcc/11.2.0_03/lib/gcc/11
-          cp /usr/local/Cellar/gcc/11.2.0_03/lib/gcc/11/libgfortran* Build/LIBS/gnu_osx_64
+          ls /usr/local/Cellar/gcc/11.2.0_3/lib/gcc/11
+          cp /usr/local/Cellar/gcc/11.2.0_3/lib/gcc/11/libgfortran* Build/LIBS/gnu_osx_64
           pushd Build/smokeview/gnu_osx_64
+          echo $LUA
           if [[ "$LUA" == "lua" ]]; then
             ./make_smokeview_lua.sh
           else
