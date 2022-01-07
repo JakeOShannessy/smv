@@ -24,33 +24,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        lua: [lua, no-lua]
+        # lua: [lua, no-lua]
+        lua: [no-lua]
     runs-on: macos-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Build
+      - name: prepare for cache restore
+        run: |
+          sudo mkdir -p /opt/intel
+          sudo chown $USER /opt/intel
+      - name: cache install
+        id: cache-install
+        uses: actions/cache@v2
+        with:
+          path: /opt/intel/oneapi
+          key: install-${{ env.MACOS_HPCKIT_URL }}-${{ env.MACOS_CPP_COMPONENTS }}
+      - name: install
+        if: steps.cache-install.outputs.cache-hit != 'true'
+        run: scripts/install_macos.sh $MACOS_HPCKIT_URL $MACOS_CPP_COMPONENTS $MACOS_FORTRAN_COMPONENTS
+      - name: build smokeview
         shell: bash
         env:
-          PLATFORM: ${{ matrix.os }}
           LUA: ${{ matrix.lua }}
         run: |
-          brew install gcc
-          brew reinstall gcc
-          ls /usr/local/Cellar/gcc
-          ls /usr/local/Cellar/gcc/11.2.0_3
-          echo "--"
-          ls /usr/local/Cellar/gcc/11.2.0_3/lib/gcc/11
-          cp /usr/local/Cellar/gcc/11.2.0_3/lib/gcc/11/libgfortran* Build/LIBS/gnu_osx_64
-          pushd Build/smokeview/gnu_osx_64
-          echo $LUA
+          source /opt/intel/oneapi/setvars.sh
+          pushd Build/smokeview/intel_osx_64
           if [[ "$LUA" == "lua" ]]; then
             ./make_smokeview_lua.sh
           else
             ./make_smokeview.sh
           fi
           popd
-          cp Build/smokeview/gnu_osx_64/smokeview_osx_64 smokeview
+          copy Build/smokeview/intel_osx_64/smokeview_osx_64 smokeview
       - name: Set exec suffix
         if: ${{ matrix.lua }} == lua
         run: echo "exec_suffix=-lua" >> $GITHUB_ENV
