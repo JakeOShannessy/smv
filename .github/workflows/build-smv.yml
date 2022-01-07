@@ -115,6 +115,10 @@ jobs:
       - name: install cpp
         if: steps.cache-install-cpp.outputs.cache-hit != 'true'
         run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS $WINDOWS_FORTRAN_COMPONENTS
+      - name: set LUA_SCRIPTING
+        if: steps.cache-install.outputs.cache-hit != 'true'
+        shell: bash
+        run: scripts/cache_exclude_windows.sh
       - name: build smokeview
         shell: cmd
         env:
@@ -122,10 +126,11 @@ jobs:
         run: |
           scripts\setup_windows_oneapi.bat ""
           pushd Build/smokeview/intel_win_64
+          if %LUA%==lua (set LUA_SCRIPTING=true) else (set LUA_SCRIPTING=false)
           if [[ "$LUA" == "lua" ]]; then
-            make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="true" -f ../Makefile intel_win_64
+            make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ../Makefile intel_win_64
           else
-            make -j 4 pp_WIN_ONEAPI=1 -f ../Makefile intel_win_64
+            make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ../Makefile intel_win_64
           fi
           popd
           copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
