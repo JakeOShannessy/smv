@@ -1,4 +1,3 @@
-@echo off
 set OPTS=i
 set arg1=%1
 set arg2=%2
@@ -81,7 +80,7 @@ copy lpeg.lib %LIBDIR%\lpeg.lib
 :: FREEGLUT
 if NOT "x%arg3%" == "xfreeglut" goto skip_freeglut
 cd %BUILDDIR%\freeglut3.0.0\intel_win_64
-call make_freeglut %OPTS% 
+call make_freeglut %OPTS%
 copy freeglut_staticd.lib %LIBDIR%\freeglut_staticd.lib
 copy freeglut_staticd.lib %LIBDIR%\glut32.lib
 :skip_freeglut
