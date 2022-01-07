@@ -126,19 +126,17 @@ jobs:
         if: steps.cache-install-cpp.outputs.cache-hit != 'true'
         run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS $WINDOWS_FORTRAN_COMPONENTS
       - name: set LUA_SCRIPTING
-        if: steps.cache-install.outputs.cache-hit != 'true'
+        if: ${{ matrix.lua }}
         shell: bash
-        run: scripts/cache_exclude_windows.sh
+        run: echo "LUA_SCRIPTING=true" >> $GITHUB_ENV
       - name: build smokeview
         shell: cmd
         env:
           LUA: ${{ matrix.lua }}
         run: |
           scripts\setup_windows_oneapi.bat ""
-          pushd Build/smokeview/intel_win_64
-          echo %LUA%
-          if %LUA%==lua (set LUA_SCRIPTING=true) else (set LUA_SCRIPTING=false)
-          make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ../Makefile intel_win_64
+          pushd Build\smokeview\intel_win_64
+          make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ..\Makefile intel_win_64
           popd
           copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
       - name: Set exec suffix
