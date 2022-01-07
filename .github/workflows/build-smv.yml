@@ -134,12 +134,9 @@ jobs:
         run: |
           scripts\setup_windows_oneapi.bat ""
           pushd Build/smokeview/intel_win_64
+          echo %LUA%
           if %LUA%==lua (set LUA_SCRIPTING=true) else (set LUA_SCRIPTING=false)
-          if [[ "$LUA" == "lua" ]]; then
-            make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ../Makefile intel_win_64
-          else
-            make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ../Makefile intel_win_64
-          fi
+          make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ../Makefile intel_win_64
           popd
           copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
       - name: Set exec suffix
