@@ -20,7 +20,7 @@ env:
 
 jobs:
   build-macos:
-    name: Build Smokeview MacOS
+    name: intel_osx_64
     strategy:
       fail-fast: false
       matrix:
@@ -74,7 +74,7 @@ jobs:
           path: smokeview
 
   build-linux:
-    name: Build Smokeview Linux
+    name: gnu_linux_64
     strategy:
       fail-fast: false
       matrix:
@@ -109,7 +109,7 @@ jobs:
           path: smokeview
 
   build-windows:
-    name: Build Smokeview Windows
+    name: intel_win_64
     strategy:
       fail-fast: false
       matrix:
@@ -126,10 +126,10 @@ jobs:
         uses: actions/cache@v2
         with:
           path: C:\Program Files (x86)\Intel\oneAPI\compiler
-          key: install-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_CPP_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
+          key: install2-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_CPP_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
       - name: install cpp
         if: steps.cache-install-cpp.outputs.cache-hit != 'true'
-        run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL $WINDOWS_CPP_COMPONENTS $WINDOWS_FORTRAN_COMPONENTS
+        run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL
       - name: set LUA_SCRIPTING
         if: ${{ matrix.lua }}
         shell: bash
@@ -139,7 +139,8 @@ jobs:
         env:
           LUA: ${{ matrix.lua }}
         run: |
-          dir "C:\Program Files (x86)\Intel\oneAPI\compiler\latest"
+          dir "C:\Program Files (x86)\Intel\oneAPI\compiler\latest\env"
+          dir "C:\Program Files (x86)\Intel\oneAPI"
           "C:\Program Files (x86)\Intel\oneAPI\compiler\latest\env\vars.bat"
           pushd Build\smokeview\intel_win_64
           make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ..\Makefile intel_win_64
