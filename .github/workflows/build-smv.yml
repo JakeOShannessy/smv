@@ -20,7 +20,7 @@ env:
 
 jobs:
   build-macos:
-    name: intel_osx_64
+    name: intel_osx
     strategy:
       fail-fast: false
       matrix:
@@ -74,7 +74,7 @@ jobs:
           path: smokeview
 
   build-linux:
-    name: gnu_linux_64
+    name: gnu_linux
     strategy:
       fail-fast: false
       matrix:
@@ -109,7 +109,7 @@ jobs:
           path: smokeview
 
   build-windows:
-    name: intel_win_64
+    name: intel_win
     strategy:
       fail-fast: false
       matrix:
@@ -139,9 +139,7 @@ jobs:
         env:
           LUA: ${{ matrix.lua }}
         run: |
-          dir "C:\Program Files (x86)\Intel\oneAPI\compiler\latest\env"
-          dir "C:\Program Files (x86)\Intel\oneAPI"
-          "C:\Program Files (x86)\Intel\oneAPI\compiler\latest\env\vars.bat"
+          "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\smokeview\intel_win_64
           make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="%LUA_SCRIPTING%" -f ..\Makefile intel_win_64
           popd
