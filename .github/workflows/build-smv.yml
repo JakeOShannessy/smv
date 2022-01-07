@@ -178,37 +178,37 @@ jobs:
       - name: install cpp
         if: steps.cache-install-cpp.outputs.cache-hit != 'true'
         run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL
-      # - name: set LUA_SCRIPTING
-      #   shell: bash
-      #   run: echo "LUA_SCRIPTING=false" >> $GITHUB_ENV
-      # - name: set LUA_SCRIPTING
-      #   if: ${{ matrix.lua }}
-      #   shell: bash
-      #   run: echo "LUA_SCRIPTING=true" >> $GITHUB_ENV
-      # - name: build smokeview
-      #   shell: cmd
-      #   env:
-      #     LUA: ${{ matrix.lua }}
-      #   run: |
-      #     call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
-      #     pushd Build\LIBS\intel_win_64
-      #     dir
-      #     call make_LIBS.bat
-      #     popd
-      #     pushd Build\smokeview\intel_win_64
-      #     make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="false" -f ..\Makefile intel_win_64
-      #     popd
-      #     copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
-      # # make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING=%LUA_SCRIPTING% -f ..\Makefile intel_win_64
-      # - name: Set exec suffix
-      #   if: ${{ matrix.lua }} == lua
-      #   run: echo "exec_suffix=-lua" >> $GITHUB_ENV
-      # - name: exclude unused files from cache
-      #   if: steps.cache-install.outputs.cache-hit != 'true'
-      #   shell: bash
-      #   run: scripts/cache_exclude_windows.sh
-      # - name: Archive production artifacts
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: smokeview-windows-${{ env.exec_suffix }}
-      #     path: smokeview
+      - name: set LUA_SCRIPTING
+        shell: bash
+        run: echo "LUA_SCRIPTING=false" >> $GITHUB_ENV
+      - name: set LUA_SCRIPTING
+        if: ${{ matrix.lua }}
+        shell: bash
+        run: echo "LUA_SCRIPTING=true" >> $GITHUB_ENV
+      - name: build smokeview
+        shell: cmd
+        env:
+          LUA: ${{ matrix.lua }}
+        run: |
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          pushd Build\LIBS\intel_win_64
+          dir
+          call make_LIBS.bat
+          popd
+          pushd Build\smokeview\intel_win_64
+          make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="false" -f ..\Makefile intel_win_64
+          popd
+          copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
+      # make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING=%LUA_SCRIPTING% -f ..\Makefile intel_win_64
+      - name: Set exec suffix
+        if: ${{ matrix.lua }} == lua
+        run: echo "exec_suffix=-lua" >> $GITHUB_ENV
+      - name: exclude unused files from cache
+        if: steps.cache-install.outputs.cache-hit != 'true'
+        shell: bash
+        run: scripts/cache_exclude_windows.sh
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: smokeview-windows-${{ env.exec_suffix }}
+          path: smokeview
