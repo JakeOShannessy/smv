@@ -35,7 +35,7 @@ SVEXTERN float obst_bounding_box[6];
 SVEXTERN float geom_bounding_box[6];
 #endif
 
-SVEXTERN int SVDECL(terrain_skip, 1);
+SVEXTERN int SVDECL(terrain_skip, 1), SVDECL(terrain_debug, 0);
 SVEXTERN int SVDECL(max_colorbar_label_width, 0);
 SVEXTERN char SVDECL(**colorbar_labels,  NULL);
 SVEXTERN float SVDECL(*colorbar_vals,    NULL);
@@ -172,7 +172,7 @@ SVEXTERN int SVDECL(terrain_nfaces, 0);
 SVEXTERN int SVDECL(terrain_show_geometry_surface, 1);
 SVEXTERN int SVDECL(terrain_show_geometry_outline, 0);
 SVEXTERN int SVDECL(terrain_show_geometry_points, 0);
-SVEXTERN int SVDECL(terrain_showonly_top, 0);
+SVEXTERN int SVDECL(terrain_showonly_top, 1);
 SVEXTERN int SVDECL(showhide_textures, 0);
 
 SVEXTERN int SVDECL(print_geominfo, 1);

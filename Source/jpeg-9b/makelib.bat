@@ -8,6 +8,6 @@ if %COMPILER% == gcc set target=libjpeg.a
 make COMPILER=%COMPILER% SIZE=%SIZE% RM=erase -f ./makefile %target%
 if %COPYLIB% == 1 copy %FROMLIB% %TOLIB%
 if "x%EXIT_SCRIPT%" == "x" goto skip1
-@REM exit
+exit
 :skip1
 endlocal
