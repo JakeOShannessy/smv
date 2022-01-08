@@ -203,10 +203,10 @@ jobs:
         run: |
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\smokeview\intel_win_64
-          call make_smokeview.bat bot
+          call make_smokeview.bat -release
           dir
           popd
-          copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
+          copy Build\smokeview\intel_win_64\smokeview_win_64.exe smokeview.exe
       - name: Set exec suffix
         if: ${{ matrix.lua }} == lua
         run: echo "exec_suffix=-lua" >> $GITHUB_ENV
@@ -218,4 +218,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: smokeview-windows-${{ env.exec_suffix }}
-          path: smokeview
+          path: smokeview.exe
