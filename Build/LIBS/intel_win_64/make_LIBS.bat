@@ -33,39 +33,39 @@ echo "Making libs"
 
 :: ZLIB
 cd %SRCDIR%\zlib128
-call "building windows zlib" %WAIT% makelib %OPTS% -copy libz.lib %LIBDIR%\zlib.lib
+call makelib %OPTS% -copy libz.lib %LIBDIR%\zlib.lib
 
 :: JPEG
 cd %SRCDIR%\jpeg-9b
-call "building windows jpeg" %WAIT% makelib %OPTS% -copy libjpeg.lib  %LIBDIR%\jpeg.lib
+call makelib %OPTS% -copy libjpeg.lib  %LIBDIR%\jpeg.lib
 
 :: PNG
 cd %SRCDIR%\png-1.6.21
-call "building windows png" %WAIT% makelib %OPTS% -copy libpng.lib %LIBDIR%\png.lib
+call makelib %OPTS% -copy libpng.lib %LIBDIR%\png.lib
 
 :: GD
 cd %SRCDIR%\gd-2.0.15
-call "building windows gd" %WAIT% call makelib %OPTS% -copy libgd.lib %LIBDIR%\gd.lib
+call makelib %OPTS% -copy libgd.lib %LIBDIR%\gd.lib
 
 :: GLUT
 if x%arg3% == xfreeglut goto skip_glut
 cd %SRCDIR%\glut-3.7.6
-call "building windows glut" %WAIT% makelib %OPTS% -copy libglutwin.lib %LIBDIR%\glut32.lib
+call makelib %OPTS% -copy libglutwin.lib %LIBDIR%\glut32.lib
 :skip_glut
 
 :: GLUI
 cd %SRCDIR%\glui_v2_1_beta
 if x%arg3% == xfreeglut goto skip_glui1
-  call "building windows glui" %WAIT% makelib %OPTS% -copy libglui.lib %LIBDIR%\glui.lib
+  call makelib %OPTS% -copy libglui.lib %LIBDIR%\glui.lib
 :skip_glui1
 
 if NOT x%arg3% == xfreeglut goto skip_glui2
-  call "building windows glui" %WAIT% makelib_freeglut %OPTS% -copy libglui.lib %LIBDIR%\glui.lib
+  call makelib_freeglut %OPTS% -copy libglui.lib %LIBDIR%\glui.lib
 :skip_glui2
 
 :: pthreads
 cd %SRCDIR%\pthreads
-call "building windows pthreads" %WAIT% makelib %OPTS% -copy libpthreads.lib %LIBDIR%\pthreads.lib
+call makelib %OPTS% -copy libpthreads.lib %LIBDIR%\pthreads.lib
 
 if NOT x%arg2% == xlua goto skip_lua
 :: Lua interpreter
