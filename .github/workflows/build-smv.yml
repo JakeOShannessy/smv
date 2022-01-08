@@ -21,7 +21,7 @@ env:
 jobs:
   build-macos:
     name: intel_osx
-    # if: "false" # ignore this job for now
+    if: "false" # ignore this job for now
     strategy:
       fail-fast: false
       matrix:
@@ -203,7 +203,7 @@ jobs:
         run: |
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\smokeview\intel_win_64
-          IF [/I] %LUA% == lua (call make_smokeview_lua.bat -release) ELSE (call make_smokeview.bat -release)
+          IF [/I] ${{ matrix.lua }} == lua (call make_smokeview_lua.bat -release) ELSE (call make_smokeview.bat -release)
           popd
           copy Build\smokeview\intel_win_64\smokeview_win_64.exe smokeview.exe
       - name: Set exec suffix
