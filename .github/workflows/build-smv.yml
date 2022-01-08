@@ -196,16 +196,17 @@ jobs:
           call make_LIBS.bat bot
           dir
           popd
-      # - name: build smokeview
-      #   shell: cmd
-      #   env:
-      #     LUA: ${{ matrix.lua }}
-      #   run: |
-      #     call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
-      #     pushd Build\smokeview\intel_win_64
-      #     call make_smokeview.bat bot
-      #     popd
-      #     copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
+      - name: build smokeview
+        shell: cmd
+        env:
+          LUA: ${{ matrix.lua }}
+        run: |
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          pushd Build\smokeview\intel_win_64
+          call make_smokeview.bat bot
+          dir
+          popd
+          copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
       - name: Set exec suffix
         if: ${{ matrix.lua }} == lua
         run: echo "exec_suffix=-lua" >> $GITHUB_ENV
