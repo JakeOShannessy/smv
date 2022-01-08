@@ -192,19 +192,19 @@ jobs:
         run: |
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\LIBS\intel_win_64
+          set EXIT_SCRIPTS
           call make_LIBS.bat
           popd
-      - name: build smokeview
-        shell: cmd
-        env:
-          LUA: ${{ matrix.lua }}
-        run: |
-          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
-          pushd Build\smokeview\intel_win_64
-          make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="false" -f ..\Makefile intel_win_64
-          popd
-          copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
-      # make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING=%LUA_SCRIPTING% -f ..\Makefile intel_win_64
+      # - name: build smokeview
+      #   shell: cmd
+      #   env:
+      #     LUA: ${{ matrix.lua }}
+      #   run: |
+      #     call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+      #     pushd Build\smokeview\intel_win_64
+      #     make -j 4 pp_WIN_ONEAPI=1 LUA_SCRIPTING="false" -f ..\Makefile intel_win_64
+      #     popd
+      #     copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
       - name: Set exec suffix
         if: ${{ matrix.lua }} == lua
         run: echo "exec_suffix=-lua" >> $GITHUB_ENV
