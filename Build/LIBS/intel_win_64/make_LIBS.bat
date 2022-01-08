@@ -37,6 +37,7 @@ cd %SRCDIR%\zlib128
 call makelib %OPTS% -copy libz.lib %LIBDIR%\zlib.lib
 
 :: JPEG
+echo %SRCDIR%\jpeg-9b
 cd %SRCDIR%\jpeg-9b
 call makelib %OPTS% -copy libjpeg.lib  %LIBDIR%\jpeg.lib
 
