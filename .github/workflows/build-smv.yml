@@ -193,6 +193,7 @@ jobs:
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\LIBS\intel_win_64
           call make_LIBS.bat bot
+          dir
           popd
       # - name: build smokeview
       #   shell: cmd
