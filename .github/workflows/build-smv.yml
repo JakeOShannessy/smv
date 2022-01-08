@@ -21,6 +21,7 @@ env:
 jobs:
   build-macos:
     name: intel_osx
+    if: "false" # ignore this job for now
     strategy:
       fail-fast: false
       matrix:
