@@ -25,6 +25,8 @@
 @REM cd ..\Build
 @REM set BUILDDIR=%CD%
 
+echo "Making libs"
+
 :: openvr
 ::cd %SRCDIR%\openvr
 ::start %WAIT% makelib %OPTS% -copy libopenvr.lib %LIBDIR%\openvr.lib
