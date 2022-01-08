@@ -169,12 +169,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: cache install cpp
-        id: cache-install-cpp
-        uses: actions/cache@v2
-        with:
-          path: C:\Program Files (x86)\Intel\oneAPI
-          key: install3-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_CPP_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
+      # - name: cache install cpp
+      #   id: cache-install-cpp
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: C:\Program Files (x86)\Intel\oneAPI
+      #     key: install3-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_CPP_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
       - name: install cpp
         # if: steps.cache-install-cpp.outputs.cache-hit != 'true'
         run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL
@@ -192,9 +192,9 @@ jobs:
         run: |
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\LIBS\intel_win_64
-          set EXIT_SCRIPTS
           call make_LIBS.bat
           popd
+      # set EXIT_SCRIPTS
       # - name: build smokeview
       #   shell: cmd
       #   env:
