@@ -21,7 +21,7 @@ env:
 jobs:
   build-macos:
     name: intel_osx
-    if: "false" # ignore this job for now
+    # if: "false" # ignore this job for now
     strategy:
       fail-fast: false
       matrix:
@@ -36,14 +36,14 @@ jobs:
         run: |
           sudo mkdir -p /opt/intel
           sudo chown $USER /opt/intel
-      - name: cache install
-        id: cache-install
-        uses: actions/cache@v2
-        with:
-          path: /opt/intel/oneapi
-          key: install2-${{ env.MACOS_HPCKIT_URL }}-${{ env.MACOS_CPP_COMPONENTS }}
+      # - name: cache install
+      #   id: cache-install
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: /opt/intel/oneapi
+      #     key: install2-${{ env.MACOS_HPCKIT_URL }}-${{ env.MACOS_CPP_COMPONENTS }}
       - name: install
-        if: steps.cache-install.outputs.cache-hit != 'true'
+        # if: steps.cache-install.outputs.cache-hit != 'true'
         run: bash scripts/install_macos_oneapi.sh $MACOS_HPCKIT_URL
       - name: build smokeview
         shell: bash
@@ -161,7 +161,7 @@ jobs:
       fail-fast: false
       matrix:
         lua:
-          - lua
+          # - lua
           - no-lua
     runs-on: windows-latest
     defaults:
