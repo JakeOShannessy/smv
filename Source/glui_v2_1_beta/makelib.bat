@@ -14,6 +14,6 @@ make GLUT="%GLUTTYPE%" COMPILER=%COMPILER% COMPILER2=%COMPILER2% -f ./makefile %
 if %COPYLIB% == 1 copy %FROMLIB% %TOLIB%
 
 if "x%EXIT_SCRIPT%" == "x" goto skip1
-exit
+@REM exit
 :skip1
 endlocal
