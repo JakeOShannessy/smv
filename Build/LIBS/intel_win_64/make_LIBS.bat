@@ -32,6 +32,7 @@ echo "Making libs"
 ::call %WAIT% makelib %OPTS% -copy libopenvr.lib %LIBDIR%\openvr.lib
 
 :: ZLIB
+echo %SRCDIR%\zlib128
 cd %SRCDIR%\zlib128
 call makelib %OPTS% -copy libz.lib %LIBDIR%\zlib.lib
 
