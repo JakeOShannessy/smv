@@ -192,9 +192,8 @@ jobs:
         run: |
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\LIBS\intel_win_64
-          call make_LIBS.bat
+          call make_LIBS.bat bot
           popd
-      # set EXIT_SCRIPTS
       # - name: build smokeview
       #   shell: cmd
       #   env:
@@ -202,7 +201,7 @@ jobs:
       #   run: |
       #     call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
       #     pushd Build\smokeview\intel_win_64
-      #     call make_smokeview.bat
+      #     call make_smokeview.bat bot
       #     popd
       #     copy Build\smokeview\intel_win_64\smokeview_win_64 smokeview
       - name: Set exec suffix
