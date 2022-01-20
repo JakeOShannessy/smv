@@ -187,6 +187,7 @@ jobs:
         shell: bash
         run: echo "LUA_SCRIPTING=true" >> $GITHUB_ENV
       - name: build libs
+        if: matrix.lua != 'lua'
         shell: cmd
         env:
           LUA: ${{ matrix.lua }}
@@ -194,6 +195,17 @@ jobs:
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           pushd Build\LIBS\intel_win_64
           call make_LIBS.bat bot
+          dir
+          popd
+      - name: build libs lua
+        if: matrix.lua == 'lua'
+        shell: cmd
+        env:
+          LUA: ${{ matrix.lua }}
+        run: |
+          call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+          pushd Build\LIBS\intel_win_64
+          call make_LIBS.bat bot lua
           dir
           popd
       - name: build smokeview lua
