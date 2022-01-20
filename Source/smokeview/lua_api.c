@@ -16,7 +16,7 @@
 #include GLUT_H
 #include "gd.h"
 
-#include <unistd.h>
+// #include <unistd.h>
 
 lua_State* L;
 int lua_displayCB(lua_State *L);

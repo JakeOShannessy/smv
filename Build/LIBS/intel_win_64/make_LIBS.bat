@@ -69,8 +69,8 @@ start "building windows pthreads" %WAIT% makelib %OPTS% -copy libpthreads.lib %L
 if NOT x%arg2% == xlua goto skip_lua
 :: Lua interpreter
 cd %SRCDIR%\lua-5.3.1
-call makelib.bat
-copy src\liblua.lib %LIBDIR%\liblua.lib
+start makelib.bat
+copy src\liblua.a %LIBDIR%\liblua.lib
 
 :: LPEG
 cd %SRCDIR%\lpeg-1.0.0
@@ -81,7 +81,7 @@ copy lpeg.lib %LIBDIR%\lpeg.lib
 :: FREEGLUT
 if NOT "x%arg3%" == "xfreeglut" goto skip_freeglut
 cd %BUILDDIR%\freeglut3.0.0\intel_win_64
-call make_freeglut %OPTS% 
+call make_freeglut %OPTS%
 copy freeglut_staticd.lib %LIBDIR%\freeglut_staticd.lib
 copy freeglut_staticd.lib %LIBDIR%\glut32.lib
 :skip_freeglut
