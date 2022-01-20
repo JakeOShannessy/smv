@@ -69,7 +69,7 @@ start "building windows pthreads" %WAIT% makelib %OPTS% -copy libpthreads.lib %L
 if NOT x%arg2% == xlua goto skip_lua
 :: Lua interpreter
 cd %SRCDIR%\lua-5.3.1
-start makelib.bat
+start "building liblua" %WAIT% makelib.bat
 copy src\liblua.a %LIBDIR%\liblua.lib
 
 :: LPEG
