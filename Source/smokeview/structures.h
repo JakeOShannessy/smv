@@ -233,7 +233,7 @@ typedef struct _luascriptfiledata {
 
 typedef struct _scriptdata {
   int command;
-  char command_label[32];
+  char command_label[32], quantity2[32];
   int ival,ival2,ival3,ival4,ival5;
   int need_graphics;
   char *cval,*cval2;
@@ -655,6 +655,9 @@ typedef struct _meshdata {
   int *cutcells, ncutcells;
   int update_smoke3dcolors;
   terraindata *terrain;
+  float *znodes_complete;
+  int nznodes;
+  struct _meshdata *floor_mesh;
   int mesh_type;
 #ifdef pp_GPU
   GLuint blockage_texture_id;

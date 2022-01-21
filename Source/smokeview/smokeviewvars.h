@@ -172,7 +172,7 @@ SVEXTERN int SVDECL(terrain_nfaces, 0);
 SVEXTERN int SVDECL(terrain_show_geometry_surface, 1);
 SVEXTERN int SVDECL(terrain_show_geometry_outline, 0);
 SVEXTERN int SVDECL(terrain_show_geometry_points, 0);
-SVEXTERN int SVDECL(terrain_showonly_top, 1);
+SVEXTERN int SVDECL(terrain_showonly_top, 1), SVDECL(terrain_update_normals, 1);;
 SVEXTERN int SVDECL(showhide_textures, 0);
 
 SVEXTERN int SVDECL(print_geominfo, 1);
@@ -204,6 +204,7 @@ SVEXTERN int SVDECL(update_colorbar_digits, 0);
 
 SVEXTERN int SVDECL(show_bndf_mesh_interface, 0);
 SVEXTERN int SVDECL(ncolorlabel_digits, 4), SVDECL(ncolorlabel_padding, 0);
+SVEXTERN int SVDECL(ntimebar_digits, 3);
 SVEXTERN int SVDECL(ngridloc_digits, 4);
 SVEXTERN int SVDECL(ntick_decimals, 1);
 SVEXTERN int SVDECL(mpi_nprocesses, -1), SVDECL(mpi_iprocess,-1);
@@ -1026,7 +1027,6 @@ SVEXTERN unsigned char SVDECL(*izonetargets, NULL);
 SVEXTERN int nzone_times;
 SVEXTERN float barright;
 SVEXTERN float SVDECL(*tspr,NULL);
-SVEXTERN float tmin_global, tmax_global;
 
 SVEXTERN int videoSTEREO;
 SVEXTERN float fzero;
@@ -1309,7 +1309,7 @@ SVEXTERN int ntrnx, ntrny, ntrnz,npdim,nmeshes,clip_mesh;
 SVEXTERN int SVDECL(nOBST,0),SVDECL(nVENT,0),SVDECL(nCVENT,0),SVDECL(ncvents,0),noffset;
 SVEXTERN int visLabels;
 SVEXTERN float framerate;
-SVEXTERN int nglobal_times, itimes, itime_save, itimeold, seqnum,RenderTime,RenderTimeOld, SVDECL(itime_cycle,0);
+SVEXTERN int seqnum,RenderTime,RenderTimeOld, SVDECL(itime_cycle,0);
 SVEXTERN int SVDECL(fed_seqnum, 0);
 SVEXTERN int nopart;
 SVEXTERN int uindex, vindex, windex;
@@ -1728,7 +1728,12 @@ SVEXTERN int SVDECL(hilight_skinny,0);
 SVEXTERN int minfill, maxfill;
 
 SVEXTERN int SVDECL(*plotiso,NULL);
-SVEXTERN float SVDECL(*global_times,NULL),cputimes[20];
+
+SVEXTERN int nglobal_times, itimes, itime_save, itimeold;
+SVEXTERN float SVDECL(*global_times,NULL), SVDECL(*times_buffer, NULL), cputimes[20];
+SVEXTERN float SVDECL(global_tbegin, 1.0), SVDECL(global_tend, 0.0);
+SVEXTERN int SVDECL(ntimes_buffer, 0);
+
 SVEXTERN int cpuframe;
 
 SVEXTERN float eye_position_fds[3],xeyedir[3], yeyedir[3], zeyedir[3];

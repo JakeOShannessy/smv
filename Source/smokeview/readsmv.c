@@ -314,6 +314,10 @@ void FreeLabels(flowlabels *flowlabel){
 void InitMesh(meshdata *meshi){
   int i;
 
+  meshi->znodes_complete = NULL;
+  meshi->nznodes = 0;
+  meshi->floor_mesh = meshi;
+  meshi->is_bottom = 0;
   meshi->is_block_terrain = NULL;
   meshi->smoke3d_soot = NULL;
   meshi->smoke3d_hrrpuv = NULL;
@@ -386,7 +390,6 @@ void InitMesh(meshdata *meshi){
 #endif
   meshi->mesh_offset_ptr = NULL;
   meshi->cullgeominfo = NULL;
-  meshi->is_bottom = 1;
   meshi->blockvis = 1;
   meshi->terrain = NULL;
   meshi->meshrgb[0] = 0.0;
@@ -694,12 +697,12 @@ void ReadSMVDynamic(char *file){
 
       do_pass2=1;
       if(setup_only==1||smoke3d_only==1)continue;
+      FGETS(buffer, 255, stream);
       for(n = 0; n<5; n++){
         if(ReadLabels(NULL, stream, NULL)==LABEL_ERR)break;
       }
       nplot3dinfo++;
       continue;
-
     }
 /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -5924,8 +5927,8 @@ int ReadSMV(bufferstreamdata *stream){
     }
     TrimBack(buffer);
     if(strncmp(buffer," ",1)==0||buffer[0]==0)continue;
-    if(Match(buffer, "PL3D")==1){
-      BREAK;
+    if(Match(buffer, "PL3D")==1){// read plot3d entries in ReadSMVDynamic routine
+      continue;
     }
 
     /*
@@ -6227,6 +6230,8 @@ int ReadSMV(bufferstreamdata *stream){
         BREAK;
       }
       sscanf(buffer,"%f %f %i",&tour_tstart,&tour_tstop,&tour_ntimes);
+      global_tbegin = tour_tstart;
+      global_tend   = tour_tstop;
       if(tour_ntimes<2)tour_ntimes=2;
       ReallocTourMemory();
       continue;
@@ -6712,7 +6717,7 @@ int ReadSMV(bufferstreamdata *stream){
       if(strncmp(buffer," ",1)==0||buffer[0]==0)continue;
     }
     if(Match(buffer, "PL3D")==1){
-      BREAK;
+      continue;
     }
 
     /*
@@ -6817,7 +6822,16 @@ int ReadSMV(bufferstreamdata *stream){
       ncsvinfo+=nfiles;
       continue;
     }
-
+  /*
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    +++++++++++++++++++++++++++++ TIMES +++++++++++++++++++++++++
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  */
+    if(Match(buffer, "TIMES")==1){
+      FGETS(buffer, 255, stream);
+      sscanf(buffer, "%f %f", &global_tbegin, &global_tend);
+      continue;
+    }
   /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++ BOXGEOM ++++++++++++++++++++++++++
@@ -8078,7 +8092,7 @@ int ReadSMV(bufferstreamdata *stream){
     TrimBack(buffer);
     if(strncmp(buffer," ",1)==0||buffer[0]==0)continue;
     if(Match(buffer, "PL3D")==1){
-      BREAK;
+      continue;
     }
     /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -8566,7 +8580,7 @@ int ReadSMV(bufferstreamdata *stream){
     }
     CheckMemory;
     if(Match(buffer, "PL3D")==1){
-      BREAK;
+      continue;
     }
     /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -9952,7 +9966,7 @@ typedef struct {
     }
     if(strncmp(buffer," ",1)==0||buffer[0]==0)continue;
     if(Match(buffer, "PL3D")==1){
-      BREAK;
+      continue;
     }
 
     /*
@@ -10284,6 +10298,8 @@ typedef struct {
   UpdateIsoTypes();
   UpdateBoundaryTypes();
 
+  InitNabors();
+
   PRINT_TIMER(timer_readsmv, "update bound info");
   UpdateTerrain(1); // xxslow
   UpdateTerrainColors();
@@ -10506,6 +10522,45 @@ int GetNewBoundIndex(int old_index){
   ASSERT(old_index>=0&&old_index<=2);
   old_index=CLAMP(old_index,0, 2);
   return bound_map[old_index];
+}
+
+/* ------------------ SetBoundBounds ------------------------ */
+
+void SetBoundBounds(int set_valmin, float valmin, int set_valmax, float valmax, char *quantity){
+  int i;
+
+  GLUI2GlobalBoundaryBounds(quantity);
+  for(i = 0; i<npatchbounds; i++){
+    boundsdata *boundi;
+
+    boundi = patchbounds+i;
+    if(strcmp(quantity, "")==0||strcmp(quantity, boundi->shortlabel)==0){
+      patchbounds[i].dlg_setvalmin = glui_setpatchmin;
+      patchbounds[i].dlg_setvalmax = glui_setpatchmax;
+      SetMinMax(BOUND_PATCH, boundi->shortlabel, set_valmin, valmin, set_valmax, valmax);
+      update_glui_bounds = 1;
+    }
+  }
+}
+
+/* ------------------ SetSliceBounds ------------------------ */
+
+void SetSliceBounds(int set_valmin, float valmin, int set_valmax, float valmax, char *buffer2){
+  int i;
+
+  for(i = 0; i<nslicebounds; i++){
+    if(strcmp(buffer2, "")==0||strcmp(slicebounds[i].shortlabel, buffer2)==0){
+      slicebounds[i].dlg_setvalmin = set_valmin;
+      slicebounds[i].dlg_setvalmax = set_valmax;
+      slicebounds[i].dlg_valmin = valmin;
+      slicebounds[i].dlg_valmax = valmax;
+      SetMinMax(BOUND_SLICE, slicebounds[i].shortlabel, set_valmin, valmin, set_valmax, valmax);
+      update_glui_bounds = 1;
+      if(strcmp(slicebounds[i].shortlabel, buffer2)==0){
+        break;
+      }
+    }
+  }
 }
 
 /* ------------------ ReadIni2 ------------------------ */
@@ -11123,30 +11178,14 @@ int ReadIni2(char *inifile, int localfile){
           update_research_mode = 1;
         }
         iplot3d--;
-        if(strcmp(buffer2, "")!=0){
-          if(iplot3d >= 0 && iplot3d<MAXPLOT3DVARS){
-            setp3min_all[iplot3d] = isetmin;
-            setp3max_all[iplot3d] = isetmax;
-            p3min_all[iplot3d]    = p3mintemp;
-            p3max_all[iplot3d]    = p3maxtemp;
-            if(plot3dinfo!=NULL){
-              SetMinMax(BOUND_PLOT3D, plot3dinfo[0].label[iplot3d].shortlabel, isetmin, p3mintemp, isetmax, p3maxtemp);
-              update_glui_bounds = 1;
-            }
-          }
-        }
-        else{
-          int ii;
-
+        if(iplot3d >= 0 && iplot3d<MAXPLOT3DVARS){
+          setp3min_all[iplot3d] = isetmin;
+          setp3max_all[iplot3d] = isetmax;
+          p3min_all[iplot3d]    = p3mintemp;
+          p3max_all[iplot3d]    = p3maxtemp;
           if(plot3dinfo!=NULL){
-            for(ii = 0; ii<plot3dinfo->nvars; ii++){
-              if(isetmin!=BOUND_SET_MIN)setp3min_all[ii] = isetmin;
-              if(isetmax!=BOUND_SET_MAX)setp3max_all[ii] = isetmax;
-              if(isetmin!=BOUND_SET_MIN||isetmax!=BOUND_SET_MAX){
-                SetMinMax(BOUND_PLOT3D, buffer2, isetmin, p3mintemp, isetmax, p3maxtemp);
-                update_glui_bounds = 1;
-              }
-            }
+            SetMinMax(BOUND_PLOT3D, plot3dinfo[0].label[iplot3d].shortlabel, isetmin, p3mintemp, isetmax, p3maxtemp);
+            update_glui_bounds = 1;
           }
         }
       }
@@ -11637,7 +11676,47 @@ int ReadIni2(char *inifile, int localfile){
                 break;
             }
           }
-          SetMinMax(BOUND_PART, short_label, ivmin, vmin, ivmax, vmax);
+#define MAX_PART_TYPES 100
+          if(strcmp(short_label, "")==0){
+            int npart_types;
+
+            npart_types = GetNValtypes(BOUND_PART);
+            if(npart_types>0){
+              int  *ivmins, *ivmaxs;
+              float *vmins, *vmaxs;
+              int ivalmins[MAX_PART_TYPES],  ivalmaxs[MAX_PART_TYPES];
+              float valmins[MAX_PART_TYPES], valmaxs[MAX_PART_TYPES];
+
+              if(npart_types>MAX_PART_TYPES){
+                NewMemory((void **)&ivmins, npart_types*sizeof(int));
+                NewMemory((void **)&vmins,  npart_types*sizeof(float));
+                NewMemory((void **)&ivmaxs, npart_types*sizeof(int));
+                NewMemory((void **)&vmaxs,  npart_types*sizeof(float));
+              }
+              else{
+                ivmins = ivalmins;
+                ivmaxs = ivalmaxs;
+                vmins = valmins;
+                vmaxs = valmaxs;
+              }
+              for(i = 0; i<npart_types; i++){
+                ivmins[i] = ivmin;
+                ivmaxs[i] = ivmax;
+                vmins[i]  = vmin;
+                vmaxs[i]  = vmax;
+              }
+              SetMinMaxAll(BOUND_PART, ivmins, vmins, ivmaxs, vmaxs, npart_types);
+              if(npart_types>MAX_PART_TYPES){
+                FREEMEMORY(ivmins);
+                FREEMEMORY(vmins);
+                FREEMEMORY(ivmaxs);
+                FREEMEMORY(vmaxs);
+              }
+            }
+          }
+          else{
+            SetMinMax(BOUND_PART, short_label, ivmin, vmin, ivmax, vmax);
+          }
           update_glui_bounds=1;
         }
       }
@@ -11669,6 +11748,7 @@ int ReadIni2(char *inifile, int localfile){
     }
     if(Match(buffer, "V2_SLICE")==1||Match(buffer, "V_SLICE")==1){
       int is_old_bound;
+      char *colon;
 
       is_old_bound=0;
       if(Match(buffer, "V_SLICE")==1){
@@ -11682,64 +11762,28 @@ int ReadIni2(char *inifile, int localfile){
       strcpy(buffer2, "");
       sscanf(buffer, "%i %f %i %f %s", &set_valmin, &valmin, &set_valmax, &valmax, buffer2);
 
-    if(is_old_bound==1){
-      set_valmin = GetNewBoundIndex(set_valmin);
-      set_valmax = GetNewBoundIndex(set_valmax);
-    }
-    if(
-    set_valmin==BOUND_SET_MIN||set_valmin==BOUND_PERCENTILE_MIN||
-    set_valmax==BOUND_SET_MAX||set_valmax==BOUND_PERCENTILE_MAX
-    ){
-      research_mode = 0;
-      update_research_mode = 1;
-    }
-      {
-        char *colon;
-
-        colon = strstr(buffer, ":");
-        level_val = NULL;
-        if(colon != NULL){
-          level_val = colon + 1;
-          TrimBack(level_val);
-          *colon = 0;
-          if(strlen(level_val)>1){
-            sscanf(level_val, "%f %f %i", &slice_line_contour_min, &slice_line_contour_max, &slice_line_contour_num);
-          }
-          {
-            level_val = NULL;
-          }
+      if(is_old_bound==1){
+        set_valmin = GetNewBoundIndex(set_valmin);
+        set_valmax = GetNewBoundIndex(set_valmax);
+      }
+      if(set_valmin==BOUND_SET_MIN||set_valmin==BOUND_PERCENTILE_MIN||set_valmax==BOUND_SET_MAX||set_valmax==BOUND_PERCENTILE_MAX){
+        research_mode = 0;
+        update_research_mode = 1;
+      }
+      colon = strstr(buffer, ":");
+      level_val = NULL;
+      if(colon != NULL){
+        level_val = colon + 1;
+        TrimBack(level_val);
+        *colon = 0;
+        if(strlen(level_val)>1){
+          sscanf(level_val, "%f %f %i", &slice_line_contour_min, &slice_line_contour_max, &slice_line_contour_num);
         }
+        level_val = NULL;
       }
       if(strcmp(buffer2, "TEMP")==0&&nzoneinfo>0)continue;
-      if(strcmp(buffer2, "") != 0){
-        TrimBack(buffer2);
-        for(i = 0; i<nslicebounds; i++){
-          if(strcmp(slicebounds[i].shortlabel, buffer2)==0){
-            slicebounds[i].dlg_setvalmin = set_valmin;
-            slicebounds[i].dlg_setvalmax = set_valmax;
-            slicebounds[i].dlg_valmin = valmin;
-            slicebounds[i].dlg_valmax = valmax;
-            SetMinMax(BOUND_SLICE, buffer2, set_valmin, valmin, set_valmax, valmax);
-            update_glui_bounds = 1;
-            if(level_val!=NULL){
-              slicebounds[i].line_contour_min = slice_line_contour_min;
-              slicebounds[i].line_contour_max = slice_line_contour_max;
-              slicebounds[i].line_contour_num = slice_line_contour_num;
-            }
-            break;
-          }
-        }
-      }
-      else{
-        for(i = 0; i<nslicebounds; i++){
-          if(set_valmin!=BOUND_SET_MIN)slicebounds[i].dlg_setvalmin = set_valmin;
-          if(set_valmax!=BOUND_SET_MAX)slicebounds[i].dlg_setvalmax = set_valmax;
-          if(set_valmin!=BOUND_SET_MIN||set_valmax!=BOUND_SET_MAX){
-            SetMinMax(BOUND_SLICE, buffer2, set_valmin, valmin, set_valmax, valmax);
-            update_glui_bounds = 1;
-          }
-        }
-      }
+      TrimBack(buffer2);
+      SetSliceBounds(set_valmin, valmin, set_valmax, valmax, buffer2);
       continue;
     }
     if(Match(buffer, "C_SLICE")==1){
@@ -11843,21 +11887,7 @@ int ReadIni2(char *inifile, int localfile){
         research_mode = 0;
         update_research_mode = 1;
       }
-      if(strcmp(buffer2, "") != 0){
-        GLUI2GlobalBoundaryBounds(buffer2);
-        SetMinMax(BOUND_PATCH, buffer2, glui_setpatchmin, glui_patchmin, glui_setpatchmax, glui_patchmax);
-        update_glui_bounds = 1;
-      }
-      else{
-        for(i = 0; i<npatchbounds; i++){
-          if(glui_setpatchmin!=BOUND_SET_MIN)patchbounds[i].dlg_setvalmin = glui_setpatchmin;
-          if(glui_setpatchmax!=BOUND_SET_MAX)patchbounds[i].dlg_setvalmax = glui_setpatchmax;
-          if(glui_setpatchmin!=BOUND_SET_MIN||glui_setpatchmax!=BOUND_SET_MAX){
-            SetMinMax(BOUND_PATCH, buffer2, glui_setpatchmin, glui_patchmin, glui_setpatchmax, glui_patchmax);
-            update_glui_bounds = 1;
-          }
-        }
-      }
+      SetBoundBounds(glui_setpatchmin, glui_patchmin, glui_setpatchmax, glui_patchmax, buffer2);
       continue;
     }
     if(Match(buffer, "C_BOUNDARY")==1){
@@ -15313,5 +15343,3 @@ void GetElevAz(float *xyznorm,float *dtheta,float *rotate_axis, float *dpsi){
     if(xyznorm2[0]<0.0)*dpsi=-(*dpsi);
   }
 }
-
-

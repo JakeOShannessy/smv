@@ -9622,11 +9622,7 @@ updatemenu=0;
       glutAddMenuEntry(sizeHIGHRES, RenderStartHIGHRES);
       {
         char rend_label[100];
-#ifdef pp_DEG
-        unsigned char deg360[] = {'3','6','0',DEG_SYMBOL,0};
-#else
         unsigned char deg360[] = {'3','6','0',0};
-#endif
 
         sprintf(rend_label,"%s - %ix%i",deg360,nwidth360, nheight360);
         glutAddMenuEntry(rend_label, RenderStart360);
@@ -10031,11 +10027,7 @@ updatemenu=0;
   glutAddMenuEntry("             r: image has the same resolution as the scene", MENU_DUMMY);
   {
     char render_label[1024];
-#ifdef pp_DEG
-    unsigned char deg360[] = {'3','6','0',DEG_SYMBOL,0};
-#else
     unsigned char deg360[] = {'3','6','0',0};
-#endif
 
     sprintf(render_label, "            R: image has %i times the resolution of of scene", MAX(2,resolution_multiplier));
     glutAddMenuEntry(render_label, MENU_DUMMY);
@@ -11353,21 +11345,6 @@ updatemenu=0;
 
         i = plot3dorderindex[ii];
         plot3di = plot3dinfo + i;
-        if(ii==nplot3dinfo-1){
-          glutAddMenuEntry("-", MENU_PLOT3D_DUMMY);
-#ifndef pp_PLOT3D_REDUCEMENUS
-          if(nmeshes>1){
-            GLUTADDSUBMENU(_("Mesh"), plot3dsinglemeshmenu);
-          }
-#endif
-          glutAddMenuEntry(_("Settings..."), MENU_PLOT3D_SETTINGS);
-          if(nplot3dloaded>1){
-            GLUTADDSUBMENU(_("Unload"),unloadplot3dmenu);
-          }
-          else{
-            glutAddMenuEntry(_("Unload"),UNLOAD_ALL);
-          }
-        }
         if(ii==0){
           int plot3d_load_state;
           char prefix[3];
@@ -11426,6 +11403,21 @@ updatemenu=0;
               glutAddMenuEntry(menulabel,i);
             }
             nloadsubplot3dmenu++;
+          }
+        }
+        if(ii==nplot3dinfo-1){
+          glutAddMenuEntry("-", MENU_PLOT3D_DUMMY);
+#ifndef pp_PLOT3D_REDUCEMENUS
+          if(nmeshes>1){
+            GLUTADDSUBMENU(_("Mesh"), plot3dsinglemeshmenu);
+          }
+#endif
+          glutAddMenuEntry(_("Settings..."), MENU_PLOT3D_SETTINGS);
+          if(nplot3dloaded>1){
+            GLUTADDSUBMENU(_("Unload"), unloadplot3dmenu);
+          }
+          else{
+            glutAddMenuEntry(_("Unload"), UNLOAD_ALL);
           }
         }
       }
