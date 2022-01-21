@@ -203,8 +203,7 @@ endif
 ifeq ($(LUA_SCRIPTING),true)
 intel_win_64 : CFLAGS    += -D pp_LUA
 intel_win_64 : SMV_LIBS_WIN += $(SMV_WIN_LIBDIR)\liblua.lib
-# intel_win_64 : SMV_LIBS_WIN += $(SMV_WIN_LIBDIR)\lpeg.lib
-# intel_win_64 : SMVLUACORE_FILES += $(SMV_WIN_LIBDIR)\lpeg.dll
+intel_win_64 : SMVLUACORE_FILES += $(SMV_WIN_LIBDIR)\lpeg.dll
 endif
 intel_win_64 : LFLAGS    = /F32768000 -D FREEGLUT_STATIC
 intel_win_64 : CC        = $(I_CC)

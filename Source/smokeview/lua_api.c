@@ -16,6 +16,10 @@
 #include GLUT_H
 #include "gd.h"
 
+#if defined(_WIN32)
+#include <direct.h>
+#endif
+
 lua_State* L;
 int lua_displayCB(lua_State *L);
 
@@ -4944,7 +4948,11 @@ int loadLuaScript(char *filename) {
   lua_displayCB(L);
   runluascript=1;
   char cwd[1000];
+#if defined(_WIN32)
+  _getcwd(cwd,1000);
+#else
   getcwd(cwd,1000);
+#endif
   printf("cwd: %s\n", cwd);
   printf("loading: %s\n", filename);
   const char *err_msg;

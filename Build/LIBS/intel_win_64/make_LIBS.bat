@@ -74,8 +74,8 @@ copy src\liblua.a %LIBDIR%\liblua.lib
 
 :: LPEG
 cd %SRCDIR%\lpeg-1.0.0
-call makelib.bat
-copy lpeg.lib %LIBDIR%\lpeg.lib
+start "building lpeg" %WAIT% makelib.bat
+copy lpeg.dll %LIBDIR%\lpeg.dll
 :skip_lua
 
 :: FREEGLUT
