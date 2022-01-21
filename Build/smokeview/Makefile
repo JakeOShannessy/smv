@@ -189,7 +189,7 @@ intel_win_64_db : CPP       = $(I_CC)
 intel_win_64_db : FC        = $(I_IFORT)
 intel_win_64_db : exe       = smokeview_win_$(SMV_TESTSTRING)64_db
 
-intel_win_64_db : $(objwin) $(if $(LUA_SCRIPTING),smvluacore)
+intel_win_64_db : $(objwin)
 	$(CPP) -o $(bin)/$(exe) $(LFLAGS) $(objwin) $(WIN32_LIBS) $(SMV_LIBS_WIN)
 
 # ------------- intel_win_64 ----------------
@@ -338,34 +338,6 @@ gnu_linux_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
 	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
 		$(SMV_LIBS_LINUX) -lgfortran $(SYSTEM_LIBS_LINUX) \
 		$(if $(LUA_SCRIPTING),$(LIB_DIR_PLAT)/liblua.a -ldl)
-
-# ------------- mingw_win_64 ----------------
-
-mingw_win_64 : LIB_DIR_PLAT = $(LIB_DIR)/mingw_win_64
-mingw_win_64 : LIBS_PLAT = $(LIB_DIR_PLAT)/libglui.a \
-	$(LIB_DIR_PLAT)/libgd.a $(LIB_DIR_PLAT)/libjpeg.a \
-	$(LIB_DIR_PLAT)/libpng.a $(LIB_DIR_PLAT)/libz.a \
-	$(LIB_DIR_PLAT)/libglutwin.a
-mingw_win_64 : INC += -I $(SOURCE_DIR)/GLINC-mingw -I $(SOURCE_DIR)/pthreads -I $(SOURCE_DIR)/GLUTINC/glut
-mingw_win_64 : FFLAGS    = -O0 -m64 -x f95-cpp-input -D pp_GCC \
-						       -ffree-form -frecord-marker=4
-mingw_win_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW -Wno-write-strings
-ifeq ($(LUA_SCRIPTING),true)
-mingw_win_64 : CFLAGS    += -D pp_LUA
-mingw_win_64 : LIBS_PLAT += $(LIB_DIR_PLAT)/lua53.dll
-mingw_win_64 : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.dll
-endif
-mingw_win_64 : LFLAGS    = -m64 -static-libgcc -static-libstdc++
-mingw_win_64 : CC        = gcc
-mingw_win_64 : CPP       = g++
-mingw_win_64 : FC        = gfortran
-mingw_win_64 : exe       = smokeview_mingw_$(SMV_TESTSTRING)64
-
-mingw_win_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
-	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
-		$(LIBS_PLAT) -lm -lopengl32 -lglu32 \
-		-Wl,-Bstatic  -lgfortran -lquadmath  \
-		-Wl,-Bdynamic -lgdi32 -lwinmm -lcomdlg32
 
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV   OSX   VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
