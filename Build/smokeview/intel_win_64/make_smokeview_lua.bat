@@ -27,6 +27,7 @@ if x%inc% == xinc goto skip_inc
 erase *.obj *.mod *.exe 2> Nul
 :skip_inc
 
+copy ..\..\..\..\Source\smvluacore\*.lua .
 make -j 4 ICON="%ICON%" GLUT="%GLUT%" SHELL="%ComSpec%" LUA_SCRIPTING="true" SMV_TESTFLAG="%SMV_TESTFLAG%" SMV_TESTSTRING="%SMV_TESTSTRING%" -f ..\Makefile intel_win_64%debug%
 if x%from% == xbot goto skip2
 pause

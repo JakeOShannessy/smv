@@ -189,7 +189,7 @@ intel_win_64_db : CPP       = $(I_CC)
 intel_win_64_db : FC        = $(I_IFORT)
 intel_win_64_db : exe       = smokeview_win_$(SMV_TESTSTRING)64_db
 
-intel_win_64_db : $(objwin)
+intel_win_64_db : $(objwin) $(if $(LUA_SCRIPTING),smvluacore)
 	$(CPP) -o $(bin)/$(exe) $(LFLAGS) $(objwin) $(WIN32_LIBS) $(SMV_LIBS_WIN)
 
 # ------------- intel_win_64 ----------------

@@ -16,8 +16,6 @@
 #include GLUT_H
 #include "gd.h"
 
-// #include <unistd.h>
-
 lua_State* L;
 int lua_displayCB(lua_State *L);
 
@@ -77,7 +75,7 @@ int ProgramSetupLua(lua_State *L, int argc, char **argv) {
   return 0;
 }
 
-  
+
 
 int lua_SetupGLUT(lua_State *L) {
   int argc = lua_tonumber(L, 1);
@@ -2236,7 +2234,7 @@ int lua_set_isocolors(lua_State *L) {
     lua_gettable(L, 6);
     get_color(L, -1, colors[i-1]);
   }
-  int return_code = set_isocolors(shininess, transparency, transparency_option, 
+  int return_code = set_isocolors(shininess, transparency, transparency_option,
                                   opacity_change, specular, n_colors, colors);
   lua_pushnumber(L,return_code);
   return 1;

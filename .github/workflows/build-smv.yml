@@ -44,7 +44,7 @@ jobs:
       #     key: install2-${{ env.MACOS_HPCKIT_URL }}-${{ env.MACOS_CPP_COMPONENTS }}
       - name: install
         # if: steps.cache-install.outputs.cache-hit != 'true'
-        run: bash scripts/install_macos_oneapi.sh $MACOS_HPCKIT_URL
+        run: bash .github/workflows/install_macos_oneapi.sh $MACOS_HPCKIT_URL
       - name: build smokeview
         shell: bash
         env:
@@ -130,7 +130,7 @@ jobs:
           key: install2-${{ env.LINUX_HPCKIT_URL }}-${{ env.LINUX_CPP_COMPONENTS }}
       - name: install
         if: steps.cache-install.outputs.cache-hit != 'true'
-        run: bash scripts/install_linux_oneapi.sh $LINUX_HPCKIT_URL
+        run: bash .github/workflows/install_linux_oneapi.sh $LINUX_HPCKIT_URL
       - name: build smokeview
         shell: bash
         env:
@@ -175,10 +175,10 @@ jobs:
       #   uses: actions/cache@v2
       #   with:
       #     path: C:\Program Files (x86)\Intel\oneAPI
-      #     key: install3-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_CPP_COMPONENTS }}-compiler-${{ hashFiles('**/scripts/cache_exclude_windows.sh') }}
+      #     key: install3-${{ env.WINDOWS_HPCKIT_URL }}-${{ env.WINDOWS_CPP_COMPONENTS }}-compiler-${{ hashFiles('**/.github/workflows/cache_exclude_windows.sh') }}
       - name: install cpp
         # if: steps.cache-install-cpp.outputs.cache-hit != 'true'
-        run: scripts/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL
+        run: .github/workflows/install_windows_oneapi.bat $WINDOWS_HPCKIT_URL
       - name: set LUA_SCRIPTING
         shell: bash
         run: echo "LUA_SCRIPTING=false" >> $GITHUB_ENV
@@ -236,7 +236,7 @@ jobs:
       # - name: exclude unused files from cache
       #   if: steps.cache-install.outputs.cache-hit != 'true'
       #   shell: bash
-      #   run: scripts/cache_exclude_windows.sh
+      #   run: .github/workflows/cache_exclude_windows.sh
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
