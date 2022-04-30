@@ -162,6 +162,11 @@ elseif(STRICT_CHECKS AND (NOT MSVC))
 endif()
 
 
+if (COVERAGE)
+    target_compile_options(wind2fds PRIVATE -coverage -O0 -fprofile-arcs -ftest-coverage)
+    target_link_options(wind2fds PRIVATE -lgcov --coverage)
+endif()
+
 include(CTest)
 enable_testing()
 add_subdirectory(Tests)

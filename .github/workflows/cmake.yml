@@ -8,6 +8,8 @@ jobs:
     # Set the name of this build, variable depending on the OS and whether it
     # includes the lua engine
     name: build ${{ matrix.os }} - lua=${{ matrix.lua }} - gcc
+    env:
+      COVERAGE: on
     strategy:
       fail-fast: false
       # The matrix sets all the different combinations of builds, e.g. platforms
@@ -53,8 +55,8 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }}
-          cmake --build ${{github.workspace}}/cbuild -j4
+          cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DCOVERAGE=${{ env.COVERAGE }}
+          cmake --build ${{github.workspace}}/cbuild -j4 -v
           cp ${{github.workspace}}/cbuild/smokeview smokeview
       # Run the CMake-based tests on MacOS
       - name: Test
@@ -68,6 +70,9 @@ jobs:
         shell: bash
         run: |
           xvfb-run ctest --test-dir cbuild -j10 --output-on-failure -V
+      - name: Codecov
+        if: runner.os == 'Linux'
+        uses: codecov/codecov-action@v3.1.0
       # Set a suffix based on whether lua is included
       - name: Set exec suffix
         if: matrix.lua == 'on'
