@@ -5,6 +5,9 @@ jobs:
   build_unix_gcc:
     # Set the name of this build, variable depending on the OS
     name: build ${{ matrix.os }} - ${{ matrix.compiler }} - ${{ matrix.build }}
+    environment: cov-env
+    env:
+      COVERAGE: on
     strategy:
       fail-fast: false
       # The matrix sets all the different combinations of builds, e.g. platforms
@@ -31,7 +34,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libglew-dev libgd-dev libjson-c-dev
+          sudo apt-get install build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libglew-dev libgd-dev libjson-c-dev lvoc
       # If we are building on macos configure the environment to use gcc-14 as
       # the compiler
       - name: set macos gcc
@@ -66,7 +69,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          cmake -B ${{github.workspace}}/cbuild -DSTRICT_CHECKS=ON -DCMAKE_BUILD_TYPE=${{ matrix.build }}
+          cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DSTRICT_CHECKS=ON -DCMAKE_BUILD_TYPE=${{ matrix.build }} -DCOVERAGE=${{ env.COVERAGE }}
           cmake --build ${{github.workspace}}/cbuild -j4 -v
           cp ${{github.workspace}}/cbuild/smokeview smokeview
       # Run the CMake-based tests on MacOS
@@ -81,6 +84,19 @@ jobs:
         shell: bash
         run: |
           xvfb-run ctest --test-dir cbuild -j10 --output-on-failure -V
+      - name: run coverage
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          ctest -T Coverage --test-dir cbuild -j10 --output-on-failure -V
+          lcov --capture --directory cbuild --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+          lcov --list coverage.info # debug info
+      - name: Codecov
+        if: runner.os == 'Linux'
+        uses: codecov/codecov-action@v3.1.0
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       # Archive the smokeview executable
       - name: Archive production artifacts
         if: matrix.build == 'Release'

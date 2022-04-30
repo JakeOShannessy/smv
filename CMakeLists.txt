@@ -148,6 +148,7 @@ if(STRICT_CHECKS AND (NOT MSVC))
 endif()
 
 
+
 if (NOT (CMAKE_BUILD_TYPE STREQUAL Release))
     include(CTest)
     enable_testing()

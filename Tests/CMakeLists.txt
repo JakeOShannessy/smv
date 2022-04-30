@@ -28,6 +28,11 @@ endif()
 add_executable(parse_simple_slice parse_simple_slice.c)
 target_link_libraries(parse_simple_slice PRIVATE smv)
 
+if (COVERAGE)
+    target_compile_options(parse_simple_slice PRIVATE -coverage -O0 -fprofile-arcs -ftest-coverage)
+    target_link_options(parse_simple_slice PRIVATE -lgcov --coverage)
+endif()
+
 # parse_simple_bndf
 add_executable(parse_simple_bndf parse_simple_bndf.c)
 target_link_libraries(parse_simple_bndf PRIVATE smv)
@@ -86,7 +91,7 @@ target_link_libraries(sort_surfs PRIVATE smv)
 
 # # test_gif
 # add_executable(test_gif test_gif.c)
-# target_link_libraries(test_gif PRIVATE libsmv)
+# target_link_libraries(test_gif PRIVATE smv)
 
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
