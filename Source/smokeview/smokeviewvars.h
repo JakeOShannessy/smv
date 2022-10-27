@@ -1337,8 +1337,8 @@ SVEXTERN float pref,pamb,tamb;
 SVEXTERN int ntc_total, nspr_total, nheat_total;
 SVEXTERN int n_devices;
 
-SVEXTERN int npartinfo, nsliceinfo, nvsliceinfo, nplot3dinfo, npatchinfo;
-SVEXTERN int SVDECL(nslicebounds, 0), SVDECL(npatchbounds,0), npatch2;
+SVEXTERN int npartinfo, nvsliceinfo, nplot3dinfo, npatchinfo;
+SVEXTERN int SVDECL(nslicebounds, 0), SVDECL(npatchbounds, 0), npatch2;
 SVEXTERN int nfedinfo;
 #ifdef pp_EVAC
 SVEXTERN int nevac;
@@ -1930,7 +1930,12 @@ SVEXTERN int npartclassinfo;
 SVEXTERN partpropdata SVDECL(*part5propinfo,NULL), SVDECL(*current_property,NULL);
 SVEXTERN int SVDECL(npart5prop,0),ipart5prop,ipart5prop_old;
 SVEXTERN int SVDECL(global_prop_index,-1);
-SVEXTERN slicedata SVDECL(*sliceinfo, NULL), SVDECL(*slicexyzinfo, NULL);
+/// @brief The length of the sliceinfo array (i.e. the number of slices
+/// referenced in the SMV file).
+SVEXTERN int nsliceinfo;
+/// @brief Information on each of the slices referenced in the SMV file.
+SVEXTERN slicedata SVDECL(*sliceinfo, NULL);
+SVEXTERN slicedata SVDECL(*slicexyzinfo, NULL);
 SVEXTERN fileboundsdata SVDECL(*sliceboundsinfo, NULL), SVDECL(*patchboundsinfo, NULL);
 SVEXTERN int SVDECL(nsliceboundsinfo, 0), SVDECL(npatchboundsinfo, 0);
 SVEXTERN feddata SVDECL(*fedinfo,NULL);
