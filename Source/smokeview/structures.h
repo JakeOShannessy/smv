@@ -538,6 +538,7 @@ typedef struct _cadquad {
 typedef struct _clipdata {
   int option;
   GLdouble clipvals[24];
+  /// @brief TODO: This seems duplicated in cameradata.
   int clip_xmin, clip_xmax;
   int clip_ymin, clip_ymax;
   int clip_zmin, clip_zmax;
@@ -1179,19 +1180,47 @@ typedef struct _mousedata {
 /* --------------------------  cameradata ------------------------------------ */
 
 typedef struct _cameradata {
-  int defined,dirty;
+  /// @brief Is this camera defined? TODO: This is written to but never read.
+  int defined;
+  int dirty;
   /// @brief Orthographic or perspective projection.
   int projection_type;
-  int rotation_type, rotation_index;
-  float eye[3], view[3], up[3], eye_save[3];
+  /// @brief How should rotation be treated? There are a number of options:
+  /// #define ROTATION_2AXIS             0
+  /// #define EYE_CENTERED               1
+  /// #define ROTATION_1AXIS             2
+  /// #define ROTATION_3AXIS             3
+  int rotation_type;
+  /// @brief UNKNOWN
+  int rotation_index;
+  /// @brief UNKNOWN
+  float eye[3];
+  /// @brief UNKNOWN
+  float view[3];
+  /// @brief UNKNOWN
+  float up[3];
+  /// @brief UNKNOWN
+  float eye_save[3];
+  /// @brief UNKNOWN
   float isometric_y;
+  /// @brief Azimuth and elevation.
   float az_elev[2];
-  float view_angle, azimuth, elevation;
+  float view_angle;
+  /// @brief Azimuth (again).
+  float azimuth;
+  /// @brief Elevation (again).
+  float elevation;
   float xcen, ycen, zcen;
   float zoom;
+  /// @brief Boolean: Is a quaterion ('quaternion') defined.
   int quat_defined;
   float quaternion[4];
 
+  /// @brief The clipping mode. One of:
+  ///     - CLIP_OFF            0
+  ///     - CLIP_BLOCKAGES_DATA 1
+  ///     - CLIP_BLOCKAGES      2
+  ///     - CLIP_DATA           3
   int clip_mode;
   int clip_xmin, clip_xmax;
   int clip_ymin, clip_ymax;
