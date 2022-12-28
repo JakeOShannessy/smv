@@ -791,12 +791,14 @@ SVEXTERN int show_slice_outlines[MAX_CELL_TYPES] = {0,0,0};
 SVEXTERN int show_slice_points[MAX_CELL_TYPES]   = {0,0,0};
 SVEXTERN int show_slice_values[MAX_CELL_TYPES]   = {0,0,0};
 SVEXTERN int show_vector_slice[MAX_CELL_TYPES]   = {1,0,1};
+SVEXTERN int slice_edgetypes[3] = {OUTLINE_HIDDEN,OUTLINE_HIDDEN,OUTLINE_HIDDEN};
 #else
 SVEXTERN int show_slice_shaded[MAX_CELL_TYPES];
 SVEXTERN int show_slice_outlines[MAX_CELL_TYPES];
 SVEXTERN int show_slice_points[MAX_CELL_TYPES];
 SVEXTERN int show_slice_values[MAX_CELL_TYPES];
 SVEXTERN int show_vector_slice[MAX_CELL_TYPES];
+SVEXTERN int slice_edgetypes[3];
 #endif
 
 SVEXTERN int SVDECL(show_boundary_shaded, 1);
@@ -819,7 +821,6 @@ SVEXTERN int SVDECL(boundary_edgetype, OUTLINE_HIDDEN);
 
 SVEXTERN int SVDECL(glui_slice_edgetype, OUTLINE_POLYGON);
 SVEXTERN int SVDECL(slice_celltype, 0);
-SVEXTERN int slice_edgetypes[3];
 
 SVEXTERN int SVDECL(show_geom_normal, 0), SVDECL(smooth_geom_normal, 1);
 
