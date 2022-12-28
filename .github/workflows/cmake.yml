@@ -246,13 +246,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: build smokeview lua
+      - name: build smokeview
         shell: cmd
         run: |
+          set PATH=%PATH%;C:\Program Files (x86)\WiX Toolset v3.11\bin
+          candle --version
           cmake --version
-          cmake -B ${{github.workspace}}\cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DGLUI=${{ matrix.glui }}
+          cmake -B ${{github.workspace}}\cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DGLUI=${{ matrix.glui }} -DLUA_BUILD_BINARY=${{ matrix.lua }}
           cmake --build ${{github.workspace}}\cbuild -j4 --config ${{env.BUILD_TYPE}}
           copy ${{github.workspace}}\cbuild\Release\smokeview.exe smokeview.exe
+      - name: build installer
+        if: ${{ matrix.lua == 'on' }}
+        shell: cmd
+        run: |
+          echo %PATH%
+          set PATH=%PATH%;C:\Program Files (x86)\WiX Toolset v3.11\bin
+          echo %PATH%
+          cmake --install ${{github.workspace}}\cbuild --config ${{env.BUILD_TYPE}} --prefix dist
+          candle "SMVLuaInstaller.wxs"
+          light "SMVLuaInstaller.wixobj"
       - name: Download test data
         working-directory: ${{github.workspace}}/Tests
         shell: pwsh
@@ -265,10 +277,16 @@ jobs:
         run: |
           ctest -j10 -C ${{env.BUILD_TYPE}} --output-on-failure
       - name: Set exec suffix
-        if: ${{ matrix.lua }}
+        if: ${{ matrix.lua == 'on' }}
         run: echo "exec_suffix=-lua" >> $GITHUB_ENV
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
           name: smokeview-windows-msvc-${{ env.exec_suffix }}
           path: smokeview.exe
+      - name: Archive installer
+        if: ${{ matrix.lua == 'on' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: smokeview-windows-msvc-${{ env.exec_suffix }}.msi
+          path: SMVLuaInstaller.msi
