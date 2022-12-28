@@ -4,6 +4,8 @@ add_test(NAME "Execute smokediff" COMMAND smokediff)
 add_test(NAME "Execute smokeview" COMMAND smokeview -v)
 add_test(NAME "Execute smokezip" COMMAND smokezip)
 
+# magick compare -metric phash colorbar_med_bad.png colorbar_med.png out.png
+
 # parse_simple_slice
 add_executable(parse_simple_slice parse_simple_slice.c
     ../Source/smokeview/getdata.c
