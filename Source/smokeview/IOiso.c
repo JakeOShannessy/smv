@@ -367,7 +367,9 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     iso_percentile_max = isoi->geom_percentilemax;
     iso_global_min = isoi->geom_globalmin;
     iso_global_max = isoi->geom_globalmax;
+#ifdef pp_GLUI
     UpdateGluiIsoBounds();
+#endif
   }
   PrintMemoryInfo;
   show_isofiles = 1;
@@ -1898,4 +1900,3 @@ void UpdateIsoColors(void){
   }
   CheckMemory;
 }
-

@@ -1213,7 +1213,9 @@ tourdata *AddTour(char *label){
   keyframe *thisframe, *addedframe;
   int itour=-1;
 
+#ifdef pp_GLUI
   DeleteTourList();
+#endif
   ntourinfo++;
   NewMemory( (void **)&tourtemp, ntourinfo*sizeof(tourdata));
   if(ntourinfo>1)memcpy(tourtemp,tourinfo,(ntourinfo-1)*sizeof(tourdata));
@@ -1311,7 +1313,9 @@ tourdata *AddTour(char *label){
   UpdateTourMenuLabels();
   CreateTourPaths();
   UpdateTimes();
+#ifdef pp_GLUI
   CreateTourList();
+#endif
   return tourinfo + ntourinfo-1;
 }
 
@@ -1321,7 +1325,9 @@ void DeleteTour(int tour_index){
   tourdata *touri,*tourtemp;
   int i;
 
+#ifdef pp_GLUI
   DeleteTourList();
+#endif
   touri = tourinfo + tour_index;
   FreeTour(touri);
   ntourinfo--;
@@ -1358,10 +1364,14 @@ void DeleteTour(int tour_index){
     selected_tour=NULL;
     selected_frame=NULL;
   }
+#ifdef pp_GLUI
   SetGluiTourKeyframe();
+#endif
   UpdateTourMenuLabels();
   UpdateTimes();
+#ifdef pp_GLUI
   CreateTourList();
+#endif
 
 }
 

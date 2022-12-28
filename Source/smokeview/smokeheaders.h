@@ -60,7 +60,9 @@ EXTERNCPP void DrawGeomBoundingBox(float *boundingbox_color);
 
 EXTERNCPP void UpdateGeomBoundingBox(void);
 
+#ifdef pp_GLUI
 EXTERNCPP void UpdateGluiCfaces(void);
+#endif
 
 EXTERNCPP void SetTimeState(void);
 
@@ -234,8 +236,10 @@ EXTERNCPP void GetAllPartBounds(void);
 EXTERNCPP void MergeAllPartBounds(void);
 EXTERNCPP void ShrinkDialogs(void);
 #ifdef CPP
+#ifdef pp_GLUI
 EXTERNCPP void InsertRollout(GLUI_Rollout *rollout, GLUI *dialog);
 EXTERNCPP void CloseRollouts(GLUI *dialog);
+#endif
 #endif
 
 EXTERNCPP int HaveFireLoaded(void);
@@ -368,7 +372,9 @@ EXTERNCPP void PSystem(char *commandline);
 EXTERNCPP char *GetMovieFilePath(char *moviefile_path);
   EXTERNCPP int GetNumActiveDevices(void);
 #ifdef CPP
+#ifdef pp_GLUI
 EXTERNCPP void ToggleRollout(procdata *procinfo, int nprocinfo, int motion_id);
+#endif
 #endif
 EXTERNCPP void EnableDisablePlayMovie(void);
 EXTERNCPP void UpdateRenderStartButton(void);
@@ -392,6 +398,7 @@ EXTERNCPP void InitVolrenderScript(char *prefix, char *tour_label, int startfram
 
 // glui headers
 
+#ifdef pp_GLUI
 EXTERNCPP void UpdateGluiZoneBounds(void);
 EXTERNCPP void Glui3dSmokeSetup(int main_window);
 EXTERNCPP void GluiBoundsSetup(int main_window);
@@ -453,7 +460,6 @@ EXTERNCPP void HideGluiTour(void);
 EXTERNCPP void ShowGluiStereo(void);
 EXTERNCPP void HideGluiStereo(void);
 
-EXTERNCPP void ToggleMetroMode(void);
 EXTERNCPP void UpdateClipPlanes(void);
 EXTERNCPP void ShowGluiBounds(int menu_id);
 EXTERNCPP void HideGluiBounds(void);
@@ -461,12 +467,14 @@ EXTERNCPP void ShowGluiGeometry(void);
 EXTERNCPP void HideGluiHVAC(void);
 EXTERNCPP void ShowGluiHVAC(void);
 EXTERNCPP void HVAC2Glui(int index);
+EXTERNCPP void UpdateHvacOffset(void);
+EXTERNCPP void HideGluiGeometry(void);
+#endif
+
+EXTERNCPP void SetDuctXYZ(hvacductdata *ducti);
 EXTERNCPP hvacductdata *GetHVACDuctID(char *duct_name);
 EXTERNCPP hvacnodedata *GetHVACNodeID(char *node_name);
-EXTERNCPP void UpdateHvacOffset(void);
-EXTERNCPP void SetDuctXYZ(hvacductdata *ducti);
-
-EXTERNCPP void HideGluiGeometry(void);
+EXTERNCPP void ToggleMetroMode(void);
 
 EXTERNCPP void UpdateAllBoundaryColors(int flag);
 EXTERNCPP void UpdateBoundaryListIndex(int patchfilenum);

@@ -75,7 +75,9 @@ void MakeMovie(void){
   strcat(frame0, "_0001");
   strcat(frame0, image_ext);
   if(runscript==0&& FILE_EXISTS(frame0)==NO){
+#ifdef pp_GLUI
     RenderCB(RENDER_START_NORMAL);
+#endif
     return;
   }
 
@@ -145,8 +147,10 @@ void MakeMovie(void){
 
 // enable movie making button
 
+#ifdef pp_GLUI
   EnableDisableMakeMovie(ON);
   EnableDisablePlayMovie();
+#endif
 
   update_makemovie = 0;
 }

@@ -133,7 +133,9 @@ void  UpdatePlot3DColors(plot3ddata *plot3di, int flag, int *errorcode){
 
   int num;
 
+#ifdef pp_GLUI
   GetMinMaxAll(BOUND_PLOT3D, setp3min_all, p3min_all, setp3max_all, p3max_all, &num);
+#endif
   *errorcode=AllocatePlot3DColorLabels(plot3di);
   if(*errorcode==1)return;
   for(nn = 0; nn < numplot3dvars; nn++){
@@ -421,14 +423,18 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   if(cache_plot3d_data==1){
     if(p->finalize==1){
       MergePlot3DHistograms();
+#ifdef pp_GLUI
       SetPercentilePlot3DBounds();
 #ifdef pp_PLOT3DVAL
       UpdateAllPlot3DColors(0);
 #else
       UpdateAllPlot3DColors(1);
 #endif
+#endif
 #define BOUND_PERCENTILE_DRAW          120
+#ifdef pp_GLUI
       Plot3DBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
+#endif
     }
   }
   else{
@@ -468,7 +474,9 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
     UpdateSurface();
   }
 
+#ifdef pp_GLUI
   UpdatePlot3dListIndex();
+#endif
   PrintMemoryInfo;
   UpdateTimes();
   UpdateUnitDefs();

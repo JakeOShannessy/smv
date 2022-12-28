@@ -1189,7 +1189,9 @@ void ReadZone(int ifile, int flag, int *errorcode){
   if(setzonemax==GLOBAL_MAX)zonemax = zoneglobalmax;
   if(setzonemin==SET_MIN)zonemin = zoneusermin;
   if(setzonemax==SET_MAX)zonemax = zoneusermax;
+#ifdef pp_GLUI
   UpdateGluiZoneBounds();
+#endif
   GetZoneColors(zonetu, ntotal_rooms, izonetu, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
   GetZoneColors(zonetl, ntotal_rooms, izonetl, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
   if(have_zonefl==1)GetZoneColors(zonefl, ntotal_rooms, izonefl, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
@@ -2454,4 +2456,3 @@ void DrawZoneFirePlume(float diameter, float height, float maxheight){
     glPopMatrix();
   }
 }
-

@@ -179,7 +179,9 @@ void SetViewPoint(int option){
   }
   if(option==RESTORE_EXTERIOR_VIEW_ZOOM)camera_current->zoom=zooms[zoomindex];
   zoom=camera_current->zoom;
+#ifdef pp_GLUI
   UpdateGluiZoom();
+#endif
 }
 
 /* ------------------ InitVolrenderScript ------------------------ */
@@ -252,4 +254,3 @@ void DisplayVersionInfo(char *progname){
     if(verbose_output==1)PRINTF("Texture directory: %s\n",texturedir);
   }
 }
-

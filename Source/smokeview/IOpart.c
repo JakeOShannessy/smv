@@ -1197,7 +1197,9 @@ void MergePartHistograms(void){
 void GeneratePartHistograms(void){
   int i;
 
+#ifdef pp_GLUI
   EnableDisablePartPercentileDraw(0);
+#endif
   for(i=0;i<npartinfo;i++){
     partdata *parti;
 
@@ -1207,7 +1209,9 @@ void GeneratePartHistograms(void){
     }
   }
   MergePartHistograms();
+#ifdef pp_GLUI
   EnableDisablePartPercentileDraw(1);
+#endif
   if(part_multithread==1)printf("particle setup complete\n");
 }
 
@@ -2064,7 +2068,9 @@ void FinalizePartLoad(partdata *parti){
   }
   GetGlobalPartBounds(ALL_FILES);
   if(cache_part_data==1){
+#ifdef pp_GLUI
     SetPercentilePartBounds();
+#endif
     for(j = 0; j<npartinfo; j++){
       partdata *partj;
 
@@ -2079,7 +2085,9 @@ void FinalizePartLoad(partdata *parti){
     }
   }
 #define BOUND_PERCENTILE_DRAW          120
+#ifdef pp_GLUI
   PartBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
+#endif
   parttype = 0;
   ParticlePropShowMenu(part5colorindex);
   plotstate = GetPlotState(DYNAMIC_PLOTS);

@@ -29,11 +29,13 @@ typedef struct _fueldata{
 
 /* --------------------------  procdata ------------------------------------ */
 #ifdef CPP
+#ifdef pp_GLUI
 typedef struct _procdata {
   GLUI_Rollout *rollout;
   GLUI *dialog;
   int rollout_id;
 } procdata;
+#endif
 #endif
 
 /* --------------------------  csvdata ------------------------------------ */
@@ -232,11 +234,13 @@ typedef struct _inifiledata {
 /* --------------------------  rolloutlistdata ------------------------------------ */
 
 #ifdef CPP
+#ifdef pp_GLUI
 typedef struct _rolloutlistdata {
   struct _rolloutlistdata *prev, *next;
   GLUI_Rollout *rollout;
   GLUI *dialog;
 } rolloutlistdata;
+#endif
 #endif
 
 /* --------------------------  scriptfiledata ------------------------------------ */

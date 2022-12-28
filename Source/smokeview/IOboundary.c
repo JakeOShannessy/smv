@@ -2489,7 +2489,9 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
   patchi->display = 1;
 
   if(patchi->finalize==1){
+#ifdef pp_GLUI
     UpdateBoundaryListIndex(patchfilenum);
+#endif
 #define BOUND_UPDATE_COLORS       110
 #ifdef pp_BOUNDVAL
 #define BOUND_DONTUPDATE_COLORS   128
@@ -2501,41 +2503,55 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
     if(update_patchfile_bounds==1){
       update_patchfile_bounds = 0;
       GetGlobalPatchBounds();
+#ifdef pp_GLUI
       SetLoadedPatchBounds(NULL, 0);
 #ifdef pp_BOUNDVAL
       PatchBoundsCPP_CB(BOUND_DONTUPDATE_COLORS);
 #else
       PatchBoundsCPP_CB(BOUND_UPDATE_COLORS);
 #endif
+#endif
     }
     else{
+#ifdef pp_GLUI
       bounds = GetBoundsData(BOUND_PATCH);
+#endif
       if(bounds->set_valmin==BOUND_PERCENTILE_MIN||bounds->set_valmax==BOUND_PERCENTILE_MAX){
         float global_min=0.0, global_max=1.0;
         histogramdata *bound_hist;
 
         bound_hist = bounds->hist;
+#ifdef pp_GLUI
         GetGlobalBoundsMinMax(BOUND_PATCH, bounds->label, &global_min, &global_max);
+#endif
         ComputeLoadedPatchHist(bounds->label, &bound_hist, &global_min, &global_max);
         if(bound_hist->defined==1){
           if(bounds->set_valmin==BOUND_PERCENTILE_MIN){
            float per_valmin;
 
             GetHistogramValProc(bound_hist, percentile_level_min, &per_valmin);
+#ifdef pp_GLUI
             SetMin(BOUND_PATCH, bounds->label, BOUND_PERCENTILE_MIN, per_valmin);
+#endif
           }
           if(bounds->set_valmax==BOUND_PERCENTILE_MAX){
             float per_valmax;
 
             GetHistogramValProc(bound_hist,percentile_level_max, &per_valmax);
+#ifdef pp_GLUI
             SetMax(BOUND_PATCH, bounds->label, BOUND_PERCENTILE_MAX, per_valmax);
+#endif
           }
         }
+#ifdef pp_GLUI
         PatchBoundsCPP_CB(BOUND_UPDATE_COLORS);
+#endif
       }
     }
 #define BOUND_PERCENTILE_DRAW          120
+#ifdef pp_GLUI
     PatchBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
+#endif
   }
 
   if(wallcenter==1){
@@ -2942,7 +2958,9 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
 
     label = patchi->label.shortlabel;
 
+#ifdef pp_GLUI
     GetMinMax(BOUND_PATCH, label, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
     GetBoundaryColors3(patchi, patchi->geom_vals, 0, patchi->geom_nvals, patchi->geom_ivals,
       &valmin, &valmax,
       nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
@@ -2997,7 +3015,9 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     slicefile_labelindex = GetSliceBoundsIndexFromLabel(patchi->label.shortlabel);
     UpdateAllSliceColors(slicefile_labelindex, errorcode);
     list_slice_index = slicefile_labelindex;
+#ifdef pp_GLUI
     SliceBounds2Glui(slicefile_labelindex);
+#endif
 
     GetSliceColors(patchi->geom_vals, patchi->geom_nvals, patchi->geom_ivals,
       glui_slicemin, glui_slicemax, nrgb_full, nrgb,
@@ -3025,12 +3045,16 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
       bound_type = BOUND_SLICE;
     }
 
+#ifdef pp_GLUI
     bounds = GetBoundsData(bound_type);
+#endif
     if(bounds->set_valmin==BOUND_PERCENTILE_MIN||bounds->set_valmax==BOUND_PERCENTILE_MAX){
       float global_min = 0.0, global_max = 1.0;
 
       if(patchi->boundary==1){
+#ifdef pp_GLUI
         GetGlobalBoundsMinMax(BOUND_PATCH, bounds->label, &global_min, &global_max);
+#endif
         ComputeLoadedPatchHist(bounds->label, &(bounds->hist), &global_min, &global_max);
       }
       else{
@@ -3041,13 +3065,17 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
           float per_valmin;
 
           GetHistogramValProc(bounds->hist, percentile_level_min, &per_valmin);
+#ifdef pp_GLUI
           SetMin(bound_type, bounds->label, BOUND_PERCENTILE_MIN, per_valmin);
+#endif
         }
         if(bounds->set_valmax==BOUND_PERCENTILE_MAX){
           float per_valmax;
 
           GetHistogramValProc(bounds->hist, percentile_level_max, &per_valmax);
+#ifdef pp_GLUI
           SetMax(bound_type, bounds->label, BOUND_PERCENTILE_MAX, per_valmax);
+#endif
         }
       }
     }
@@ -3058,14 +3086,20 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
         int set_valmin, set_valmax;
         float valmin_dlg, valmax_dlg;
 
+#ifdef pp_GLUI
         GetMinMax(BOUND_SLICE, bounds->label, &set_valmin, &valmin_dlg, &set_valmax, &valmax_dlg);
+#endif
       }
     }
     if(patchi->boundary==1){
+#ifdef pp_GLUI
       PatchBoundsCPP_CB(BOUND_UPDATE_COLORS);
+#endif
     }
     else{
+#ifdef pp_GLUI
       SliceBoundsCPP_CB(BOUND_UPDATE_COLORS);
+#endif
     }
     UpdateUnitDefs();
     UpdateTimes();

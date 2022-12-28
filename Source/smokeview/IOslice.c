@@ -1259,8 +1259,10 @@ void ReadFed(int file_index, int time_frame, float *time_value, int flag, int fi
     cb = GetColorbar(default_fed_colorbar);
     if(cb!=NULL){
       colorbartype=cb-colorbarinfo;
+#ifdef pp_GLUI
       SetColorbarListIndex(colorbartype);
       SliceBoundCB(COLORBAR_LIST2);
+#endif
       UpdateCurrentColorbar(cb);
     }
   }
@@ -2023,7 +2025,9 @@ void UpdateAllSliceLabels(int slicetype, int *errorcode){
     }
     if(*errorcode!=0)return;
   }
+#ifdef pp_GLUI
   SliceBounds2Glui(slicetype);
+#endif
 }
 
 /* ------------------ SetSliceColors ------------------------ */
@@ -2094,7 +2098,9 @@ void UpdateAllSliceColors(int slicetype, int *errorcode){
     SetSliceColors(valmin,valmax,sd,1,errorcode);
     if(*errorcode!=0)return;
   }
+#ifdef pp_GLUI
   SliceBounds2Glui(slicetype);
+#endif
 }
 
 /* ------------------ SliceCompare ------------------------ */
@@ -4661,7 +4667,9 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
         if(sd->compression_type == UNCOMPRESSED){
           UpdateSliceBounds();
           list_slice_index = slicefile_labelindex;
+#ifdef pp_GLUI
           SliceBounds2Glui(slicefile_labelindex);
+#endif
           UpdateAllSliceColors(slicefile_labelindex, errorcode);
         }
         else{
@@ -4926,8 +4934,11 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
     if(update_slicefile_bounds==1){
       update_slicefile_bounds = 0;
       GetGlobalSliceBounds();
+#ifdef pp_GLUI
       SetLoadedSliceBounds(NULL, 0);
+#endif
     }
+#ifdef pp_GLUI
     GetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin, &qmin, &set_valmax, &qmax);
     if(set_valmin==BOUND_PERCENTILE_MIN||set_valmax==BOUND_PERCENTILE_MAX){
       cpp_boundsdata *bounds;
@@ -4945,8 +4956,11 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
         }
       }
     }
+#endif
 #define BOUND_PERCENTILE_DRAW          120
+#ifdef pp_GLUI
     SliceBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
+#endif
     colorbar_slice_min = qmin;
     colorbar_slice_max = qmax;
     UpdateUnitDefs();

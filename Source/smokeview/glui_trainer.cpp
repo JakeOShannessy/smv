@@ -231,14 +231,18 @@ void TrainerCB(int var){
     // kind of a hack, having to put in code seg twice, but this is required to get data chopping to work
     if(slicebounds != NULL&&slicefile_labelindex != -1){
       if(glui_setslicechopmin == 1 || glui_setslicechopmax == 1){
+#ifdef pp_GLUI
         SliceBounds2Glui(slicefile_labelindex);
+#endif
       }
     }
     TrainerViewMenu(MENU_TRAINER_temp);
     UpdateChopColors();
     if(slicebounds != NULL&&slicefile_labelindex != -1){
       if(glui_setslicechopmin == 1 || glui_setslicechopmax == 1){
+#ifdef pp_GLUI
         SliceBounds2Glui(slicefile_labelindex);
+#endif
       }
     }
     UpdateChopColors();
@@ -249,14 +253,18 @@ void TrainerCB(int var){
     // kind of a hack, having to put in code seg twice, but this is required to get data chopping to work
     if(slicebounds != NULL&&slicefile_labelindex != -1){
       if(glui_setslicechopmin == 1 || glui_setslicechopmax == 1){
+#ifdef pp_GLUI
         SliceBounds2Glui(slicefile_labelindex);
+#endif
       }
     }
     TrainerViewMenu(MENU_TRAINER_oxy);
     UpdateChopColors();
     if(slicebounds != NULL&&slicefile_labelindex != -1){
       if(glui_setslicechopmin == 1 || glui_setslicechopmax == 1){
+#ifdef pp_GLUI
         SliceBounds2Glui(slicefile_labelindex);
+#endif
       }
     }
     UpdateChopColors();

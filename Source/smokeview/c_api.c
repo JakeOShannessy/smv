@@ -47,16 +47,40 @@ int set_slice_bound_min(const char *slice_type, int set, float value) {
       }
   }
   UpdateSliceBounds();
+#ifdef pp_GLUI
   SliceBoundCB(6); // TODO: remove constant
+#endif
   return 0;
 }
 
-int set_slice_bounds(const char *quantity, int set_valmin, float valmin, int set_valmax, float valmax) {
-  fprintf(stderr,"c_api: set_valmin: %d, set_valmax: %d, valmin: %f, valmax: %f\n",set_valmin,set_valmax,valmin,valmax);
+
+int set_slice_bounds(const char *quantity, int set_valmin, float valmin,
+                     int set_valmax, float valmax) {
+  fprintf(
+      stderr,
+      "c_api: set_valmin: %d, set_valmax: %d, valmin: %f, valmax: %f for: %s\n",
+      set_valmin, set_valmax, valmin, valmax, quantity);
   char *quantity_var;
-  if(NewMemory((void **)&quantity_var, sizeof(char)*strlen(quantity)+1) == 0)return 2;
+  // Create a dummy variable due to const issues
+  if (NewMemory((void **)&quantity_var, sizeof(char) * strlen(quantity) + 1) ==
+      0)
+    return 2;
+  strcpy(quantity_var, quantity);
+  // Set the requested bounds
   SetSliceBounds(set_valmin, valmin, set_valmax, valmax, quantity_var);
-  SliceBoundsCPP_CB(110);
+  int error = 0;
+  int slicetype = -1;
+  for (int i = 0; i < nslicebounds; i++) {
+    if (strcmp(quantity_var, "") == 0 ||
+        strcmp(slicebounds[i].shortlabel, quantity_var) == 0) {
+      slicetype = i;
+    }
+  }
+  if (slicetype == -1) {
+    SMV_EXIT(1);
+  }
+  // Update the colors given the bounds set above
+  UpdateAllSliceColors(slicetype, &error);
   FREEMEMORY(quantity_var);
   return 0;
 }
@@ -97,7 +121,9 @@ int set_slice_bound_max(const char *slice_type, int set, float value) {
       }
   }
   UpdateSliceBounds();
+#ifdef pp_GLUI
   SliceBoundCB(6); // TODO: remove constant
+#endif
   return 0;
 }
 
@@ -200,10 +226,12 @@ int loadsmv(char *input_filename, char *input_filename_ext){
       FCLOSE(smv_streaminfo);
     }
   }
+#ifdef pp_GLUI
   if(return_code==0&&trainer_mode==1){
     ShowGluiTrainer();
     ShowGluiAlert();
   }
+#endif
   switch(return_code){
     case 1:
       fprintf(stderr,"*** Error: Smokeview file, %s, not found\n",input_file);
@@ -237,6 +265,7 @@ int loadsmv(char *input_filename, char *input_filename_ext){
   InitTranslate(smokeview_bindir, tr_name);
 
   if(ntourinfo==0)SetupTour();
+#ifdef pp_GLUI
   InitRolloutList();
   GluiColorbarSetup(mainwindow_id);
   GluiMotionSetup(mainwindow_id);
@@ -250,6 +279,7 @@ int loadsmv(char *input_filename, char *input_filename_ext){
   GluiAlertSetup(mainwindow_id);
   GluiStereoSetup(mainwindow_id);
   Glui3dSmokeSetup(mainwindow_id);
+#endif
 
   UpdateLights(light_position0, light_position1);
 
@@ -259,13 +289,17 @@ int loadsmv(char *input_filename, char *input_filename_ext){
   glutShowWindow();
   glutSetWindowTitle(fdsprefix);
   InitMisc();
+#ifdef pp_GLUI
   GluiTrainerSetup(mainwindow_id);
+#endif
   glutDetachMenu(GLUT_RIGHT_BUTTON);
   InitMenus(LOAD);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
   if(trainer_mode==1){
+#ifdef pp_GLUI
     ShowGluiTrainer();
     ShowGluiAlert();
+#endif
   }
   // initialize info header
   initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash, chidfilebase, fds_title);
@@ -647,8 +681,10 @@ void settourkeyframe(float keyframe_time) {
   }
   if(minkey!=NULL){
     NewSelect(minkey);
+#ifdef pp_GLUI
     SetGluiTourKeyframe();
     UpdateTourControls();
+#endif
   }
 }
 
@@ -702,7 +738,9 @@ void settourview(int edittourArg, int mode, int show_tourlocusArg,
       viewtourfrompath=0;
       break;
   }
+#ifdef pp_GLUI
   UpdateTourState();
+#endif
 }
 
 int getframe() {
@@ -798,19 +836,25 @@ void set_colorbar(int value) {
   iso_colorbar_index=value;
   iso_colorbar = colorbarinfo + iso_colorbar_index;
   update_texturebar=1;
+#ifdef pp_GLUI
   UpdateListIsoColorobar();
+#endif
   selectedcolorbar_index2=colorbartype;
   UpdateCurrentColorbar(colorbarinfo+colorbartype);
+#ifdef pp_GLUI
   UpdateColorbarType();
   UpdateColorbarList2();
+#endif
   if(colorbartype == bw_colorbar_index){
     setbwdata = 1;
   }
   else{
     setbwdata = 0;
   }
+#ifdef pp_GLUI
   IsoBoundCB(ISO_COLORS);
   SetLabelControls();
+#endif
   if (value>-10) {
     UpdateRGBColors(COLORBAR_INDEX_NONE);
   }
@@ -951,7 +995,9 @@ void toggle_chid_visibility() {
 // axis visibility
 void set_axis_visibility(int setting) {
   visaxislabels = setting;
+#ifdef pp_GLUI
   UpdateVisAxisLabels();
+#endif
   if(visaxislabels==0)PRINTF("Axis labels hidden\n");
   if(visaxislabels==1)PRINTF("Axis labels visible\n");
 }
@@ -962,7 +1008,9 @@ int get_axis_visibility() {
 
 void toggle_axis_visibility() {
   visaxislabels = 1 - visaxislabels;
+#ifdef pp_GLUI
   UpdateVisAxisLabels();
+#endif
   if(visaxislabels==0)PRINTF("Axis labels hidden\n");
   if(visaxislabels==1)PRINTF("Axis labels visible\n");
 }
@@ -975,9 +1023,6 @@ void set_framelabel_visibility(int setting) {
   if(visFramelabel==1)visTimebar=1;
   if(visFramelabel==1){
     vis_hrr_label=0;
-    if(hrrinfo!=NULL){
-      UpdateTimes();
-    }
   }
   if(visFramelabel==0)PRINTF("Frame label hidden\n");
   if(visFramelabel==1)PRINTF("Frame label visible\n");
@@ -994,9 +1039,6 @@ void toggle_framelabel_visibility() {
   if(visFramelabel==1)visTimebar=1;
     if(visFramelabel==1){
       vis_hrr_label=0;
-      if(hrrinfo!=NULL){
-        UpdateTimes();
-      }
   }
   if(visFramelabel==0)PRINTF("Frame label hidden\n");
   if(visFramelabel==1)PRINTF("Frame label visible\n");
@@ -1198,7 +1240,9 @@ void set_all_label_visibility(int setting) {
 // time
 void set_timehms(int setting) {
   vishmsTimelabel = 1 - vishmsTimelabel;
+#ifdef pp_GLUI
   SetLabelControls();
+#endif
   if(vishmsTimelabel==0)PRINTF("Time label in h:m:s\n");
   if(vishmsTimelabel==1)PRINTF("Time label in s\n");
 }
@@ -1209,7 +1253,9 @@ int get_timehms() {
 
 void toggle_timehms() {
   vishmsTimelabel = 1 - vishmsTimelabel;
+#ifdef pp_GLUI
   SetLabelControls();
+#endif
   if(vishmsTimelabel==0)PRINTF("Time label in h:m:s\n");
   if(vishmsTimelabel==1)PRINTF("Time label in s\n");
 }
@@ -1458,12 +1504,14 @@ void load3dsmoke(const char *smoke_type){
 }
 
 void rendertype(const char *type) {
+#ifdef pp_GLUI
     if(STRCMP(type, "JPG")==0){
       UpdateRenderType(JPEG);
     }
     else{
       UpdateRenderType(PNG);
     }
+#endif
 }
 
 int get_rendertype() {
@@ -1471,6 +1519,7 @@ int get_rendertype() {
 }
 
 void set_movietype(const char *type) {
+#ifdef pp_GLUI
     if(STRCMP(type, "WMV") == 0){
       UpdateMovieType(WMV);
     }
@@ -1480,6 +1529,7 @@ void set_movietype(const char *type) {
     else{
       UpdateMovieType(AVI);
     }
+#endif
 }
 
 int get_movietype() {
@@ -1490,7 +1540,9 @@ void makemovie(const char *name, const char *base, float framerate) {
     strcpy(movie_name, name);
     strcpy(render_file_base, base);
     movie_framerate=framerate;
+#ifdef pp_GLUI
     RenderCB(MAKE_MOVIE);
+#endif
 }
 
 /* ------------------ script_loadtour ------------------------ */
@@ -1631,16 +1683,22 @@ void plot3dprops(int variable_index, int showvector, int vector_length_index,
   }
   UpdateAllPlotSlices();
   if(visiso==1)UpdateSurface();
+#ifdef pp_GLUI
   UpdatePlot3dListIndex();
+#endif
 
   vecfactor=1.0;
   if(vector_length>=0.0)vecfactor=vector_length;
+#ifdef pp_GLUI
   UpdateVectorWidgets();
+#endif
 
   PRINTF("vecfactor=%f\n",vecfactor);
 
   contour_type=CLAMP(display_type,0,2);
+#ifdef pp_GLUI
   UpdatePlot3dDisplay();
+#endif
 
   if(visVector==1&&nplot3dloaded==1){
     meshdata *gbsave,*gbi;
@@ -1739,7 +1797,9 @@ void loadplot3d(int meshnumber, float time_local){
     }
   }
   UpdateRGBColors(COLORBAR_INDEX_NONE);
+#ifdef pp_GLUI
   SetLabelControls();
+#endif
   if(count==0)fprintf(stderr,"*** Error: Plot3d file failed to load\n");
 
   //UpdateMenu();
@@ -1919,6 +1979,7 @@ void unloadslice(int value){
 
 void unloadall() {
   int errorcode;
+  int i;
 
   if(scriptoutstream!=NULL){
     fprintf(scriptoutstream,"UNLOADALL\n");
@@ -1929,7 +1990,7 @@ void unloadall() {
   if(nvolrenderinfo>0){
     LoadVolsmoke3DMenu(UNLOAD_ALL);
   }
-  for(int i = 0; i < nsliceinfo; i++){
+  for(i = 0; i < nsliceinfo; i++){
     slicedata *slicei;
 
     slicei = sliceinfo + i;
@@ -1942,22 +2003,22 @@ void unloadall() {
       }
     }
   }
-  for(int i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<nplot3dinfo; i++){
     ReadPlot3D("",i,UNLOAD,&errorcode);
   }
-  for(int i=0;i<npatchinfo;i++){
+  for(i=0;i<npatchinfo;i++){
     ReadBoundary(i,UNLOAD,&errorcode);
   }
-  for(int i=0;i<npartinfo;i++){
+  for(i=0;i<npartinfo;i++){
     ReadPart("",i,UNLOAD,&errorcode);
   }
-  for(int i=0;i<nisoinfo;i++){
+  for(i=0;i<nisoinfo;i++){
     ReadIso("",i,UNLOAD,NULL,&errorcode);
   }
-  for(int i=0;i<nzoneinfo;i++){
+  for(i=0;i<nzoneinfo;i++){
     ReadZone(i,UNLOAD,&errorcode);
   }
-  for(int i=0;i<nsmoke3dinfo;i++){
+  for(i=0;i<nsmoke3dinfo;i++){
     ReadSmoke3D(ALL_SMOKE_FRAMES, i, UNLOAD, FIRST_TIME, &errorcode);
   }
   if(nvolrenderinfo>0){
@@ -2007,8 +2068,10 @@ int get_clipping_mode() {
 void set_clipping_mode(int mode) {
     clip_mode=mode;
     updatefacelists=1;
+#ifdef pp_GLUI
     UpdateGluiClip();
     UpdateClipAll();
+#endif
 }
 
 void set_sceneclip_x(int clipMin, float min, int clipMax, float max) {
@@ -2018,24 +2081,30 @@ void set_sceneclip_x(int clipMin, float min, int clipMax, float max) {
     clipinfo.clip_xmax=clipMax;
     clipinfo.xmax = max;
     updatefacelists=1;
+#ifdef pp_GLUI
     UpdateGluiClip();
     UpdateClipAll();
+#endif
 }
 
 void set_sceneclip_x_min(int flag, float value) {
     clipinfo.clip_xmin = flag;
     clipinfo.xmin = value;
     updatefacelists = 1;
+#ifdef pp_GLUI
     UpdateGluiClip();
     UpdateClipAll();
+#endif
 }
 
 void set_sceneclip_x_max(int flag, float value) {
     clipinfo.clip_xmax = flag;
     clipinfo.xmax = value;
     updatefacelists = 1;
+#ifdef pp_GLUI
     UpdateGluiClip();
     UpdateClipAll();
+#endif
 }
 
 void set_sceneclip_y(int clipMin, float min, int clipMax, float max) {
@@ -2045,24 +2114,30 @@ void set_sceneclip_y(int clipMin, float min, int clipMax, float max) {
     clipinfo.clip_ymax=clipMax;
     clipinfo.ymax = max;
     updatefacelists=1;
+#ifdef pp_GLUI
     UpdateGluiClip();
     UpdateClipAll();
+#endif
 }
 
 void set_sceneclip_y_min(int flag, float value) {
     clipinfo.clip_ymin = flag;
     clipinfo.ymin = value;
     updatefacelists = 1;
+#ifdef pp_GLUI
     UpdateGluiClip();
     UpdateClipAll();
+#endif
 }
 
 void set_sceneclip_y_max(int flag, float value) {
     clipinfo.clip_ymax = flag;
     clipinfo.ymax = value;
     updatefacelists = 1;
+#ifdef pp_GLUI
     UpdateGluiClip();
     UpdateClipAll();
+#endif
 }
 
 void set_sceneclip_z(int clipMin, float min, int clipMax, float max) {
@@ -2072,24 +2147,30 @@ void set_sceneclip_z(int clipMin, float min, int clipMax, float max) {
     clipinfo.clip_zmax=clipMax;
     clipinfo.zmax = max;
     updatefacelists=1;
+#ifdef pp_GLUI
     UpdateGluiClip();
     UpdateClipAll();
+#endif
 }
 
 void set_sceneclip_z_min(int flag, float value) {
     clipinfo.clip_zmin = flag;
     clipinfo.zmin = value;
     updatefacelists = 1;
+#ifdef pp_GLUI
     UpdateGluiClip();
     UpdateClipAll();
+#endif
 }
 
 void set_sceneclip_z_max(int flag, float value) {
     clipinfo.clip_zmax = flag;
     clipinfo.zmax = value;
     updatefacelists = 1;
+#ifdef pp_GLUI
     UpdateGluiClip();
     UpdateClipAll();
+#endif
 }
 
 /* ------------------ setrenderdir ------------------------ */
@@ -2188,7 +2269,9 @@ void setgridparms(int x_vis, int y_vis, int z_vis,
  */
 void setcolorbarflip(int flip) {
 	colorbar_flip = flip;
+#ifdef pp_GLUI
 	UpdateColorbarFlip();
+#endif
   UpdateRGBColors(COLORBAR_INDEX_NONE);
 }
 
@@ -2203,8 +2286,10 @@ int getcolorbarflip(int flip) {
 void camera_set_rotation_type(int rotation_typev) {
   rotation_type = rotation_typev;
   camera_current->rotation_type = rotation_typev;
+#ifdef pp_GLUI
   RotationTypeCB(rotation_type);
   UpdateRotationType(rotation_type);
+#endif
   HandleRotationType(ROTATION_2AXIS);
 }
 
@@ -2485,7 +2570,9 @@ int set_isocolors(float shininess, float transparency, int transparency_option, 
     iso_color[3] = CLAMP(colors[nn][3], 0.0, 1.0);
   }
   UpdateIsoColors();
+#ifdef pp_GLUI
   UpdateIsoColorlevel();
+#endif
   return 0;
 } // ISOCOLORS
 
@@ -3938,7 +4025,9 @@ int set_showdevicevals(int vshowdeviceval, int vshowvdeviceval,
   showdevice_type = vshowdevicetype;
   showdevice_unit = vshowdeviceunit;
   devicetypes_index = CLAMP(vdevicetypes_index, 0, ndevicetypes - 1);
+#ifdef pp_GLUI
   UpdateGluiDevices();
+#endif
   return 0;
 } // SHOWDEVICEVALS
 
@@ -4107,7 +4196,9 @@ int set_pl3d_bound_min(int pl3dValueIndex, int set, float value) {
     setp3min_all[pl3dValueIndex] = set;
     p3min_all[pl3dValueIndex] = value;
     // TODO: remove this reload and hardcoded value
+#ifdef pp_GLUI
     Plot3DBoundCB(7);
+#endif
     return 0;
 }
 
@@ -4118,7 +4209,9 @@ int set_pl3d_bound_max(int pl3dValueIndex, int set, float value) {
     setp3max_all[pl3dValueIndex] = set;
     p3max_all[pl3dValueIndex] = value;
     // TODO: remove this reload and hardcoded value
+#ifdef pp_GLUI
     Plot3DBoundCB(7);
+#endif
     return 0;
 }
 

@@ -311,7 +311,9 @@ void InitCamera(cameradata *ci,char *name){
     clipinfo.xmax = cam->xmax;
     clipinfo.ymax = cam->ymax;
     clipinfo.zmax = cam->zmax;
+#ifdef pp_GLUI
     UpdateGluiClip();
+#endif
 
   }
 
@@ -322,7 +324,9 @@ void CopyCamera(cameradata *to, cameradata *from){
   memcpy(to,from,sizeof(cameradata));
   if(to==camera_current){
     zoom=camera_current->zoom;
+#ifdef pp_GLUI
     UpdateGluiZoom();
+#endif
   }
   to->dirty=1;
   if(to == camera_current && updateclipvals == 0){
@@ -349,8 +353,10 @@ void UpdateCamera(cameradata *ca){
     }
     highlight_mesh = current_mesh-meshinfo;
     HandleRotationType(EYE_CENTERED);
+#ifdef pp_GLUI
     UpdateMeshList1(ca->rotation_index);
     UpdateTrainerMoves();
+#endif
 
     ca->clip_mode=clip_mode;
     ca->clip_xmin=clipinfo.clip_xmin;
@@ -365,7 +371,9 @@ void UpdateCamera(cameradata *ca){
     ca->ymax=clipinfo.ymax;
     ca->zmax=clipinfo.zmax;
   }
+#ifdef pp_GLUI
   UpdateGluiSetViewXYZ(ca->eye);
+#endif
   ca->dirty=0;
 }
 
@@ -454,7 +462,9 @@ cameradata *InsertCamera(cameradata *cb,cameradata *source, char *name){
     cam->view_id = camera_max_id;
     camera_max_id++;
   }
+#ifdef pp_GLUI
   UpdateGluiViewpointList();
+#endif
   updatemenu=1;
   return cam;
 }

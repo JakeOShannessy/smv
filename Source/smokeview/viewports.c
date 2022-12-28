@@ -2405,7 +2405,9 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
 #ifdef pp_REFRESH
   if(refresh_glui_dialogs==1){
     refresh_glui_dialogs=0;
+#ifdef pp_GLUI
     RefreshGluiDialogs();
+#endif
   }
 #endif
 

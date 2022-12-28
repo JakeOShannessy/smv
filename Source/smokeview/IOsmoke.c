@@ -4084,13 +4084,17 @@ void SmokeWrapup(void){
   UpdateLoadedSmoke(&hrrpuv_loaded,&temp_loaded);
   UpdateSmoke3dFileParms();
   UpdateTimes();
+#ifdef pp_GLUI
   Smoke3dCB(UPDATE_SMOKEFIRE_COLORS);
+#endif
   smoke_render_option = RENDER_SLICE;
   update_fire_alpha = 1;
 #define USE_OPACITY_MULTIPLIER 94
   have_fire  = HaveFireLoaded();
   have_smoke = HaveSootLoaded();
+#ifdef pp_GLUI
   Smoke3dCB(USE_OPACITY_MULTIPLIER);
+#endif
   ForceIdle();
 }
 
@@ -4470,7 +4474,9 @@ FILE_SIZE ReadSmoke3D(int iframe_arg,int ifile_arg,int flag_arg, int first_time,
     SOOT_index = GetSmoke3DType(smoke3di->label.shortlabel);
     update_smoke_alphas = 1;
 #define SMOKE_EXTINCT 95
+#ifdef pp_GLUI
     Smoke3dCB(SMOKE_EXTINCT);
+#endif
   }
   *errorcode_arg = 0;
 #ifdef pp_SMOKE3DSTREAM

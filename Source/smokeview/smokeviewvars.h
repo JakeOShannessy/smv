@@ -4,7 +4,9 @@
 
 #include "MALLOCC.h"
 #ifdef CPP
+#ifdef pp_GLUI
 #include "glui.h"
+#endif
 #endif
 #include "datadefs.h"
 #include "translate.h"
@@ -148,6 +150,21 @@ SVEXTERN int SVDECL(show_timings, 0);
 
 SVEXTERN float SVDECL(pixel_dens, 1.0);
 
+#ifndef pp_GLUI
+#ifdef pp_OSX_HIGHRES
+SVEXTERN int SVDECL(force_scale, 0);
+#ifdef INMAIN
+#define GLUTEXTERN
+int double_scale=1;
+#else
+#define GLUTEXTERN extern
+extern int double_scale;
+#endif
+GLUTEXTERN const BitmapFontRec glutBitmapHelvetica20;
+GLUTEXTERN const BitmapFontRec glutBitmapHelvetica24;
+GLUTEXTERN const BitmapFontRec glutBitmapHelvetica36;
+#endif
+#else
 #ifdef pp_OSX_HIGHRES
 SVEXTERN int SVDECL(force_scale, 0);
 extern CCC const BitmapFontRec glutBitmapHelvetica20;
@@ -155,6 +172,7 @@ extern CCC const BitmapFontRec glutBitmapHelvetica24;
 extern CCC const BitmapFontRec glutBitmapHelvetica36;
 #ifndef _GLUI_H_
 extern int double_scale;
+#endif
 #endif
 #endif
 
@@ -843,9 +861,11 @@ SVEXTERN int SVDECL(plot2d_max_columns, 0);
 SVEXTERN int SVDECL(deviceunits_index, 0);
 SVEXTERN int SVDECL(plot2d_dialogs_defined, 0);
 SVEXTERN int SVDECL(glui_device_unit_index, -1);
+#ifdef pp_GLUI
 SVEXTERN int SVDECL(glui_device_index, 0);
 SVEXTERN int SVDECL(glui_hrr_unit_index, -1);
 SVEXTERN int SVDECL(glui_hrr_index, 1);
+#endif
 SVEXTERN plot2ddata SVDECL(*glui_plot2dinfo, NULL), SVDECL(*plot2dinfo, NULL), SVDECL(*plot2dini, NULL);
 SVEXTERN int SVDECL(nplot2dinfo, 0), SVDECL(iplot2dinfo, 0), SVDECL(nplot2dini, 0);
 SVEXTERN curvedata glui_curve, glui_curve_default;

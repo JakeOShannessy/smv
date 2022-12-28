@@ -34,7 +34,9 @@ void CompressSVZip2(void){
   char shellcommand[1024];
 
   PRINTF("Compressing...\n");
+#ifdef pp_GLUI
   CompressOnOff(OFF);
+#endif
 
   WriteIni(LOCAL_INI, NULL);
 
@@ -59,7 +61,9 @@ void CompressSVZip2(void){
   system(shellcommand);
   UpdateSmoke3dMenuLabels();
   UpdateBoundaryMenuLabels();
+#ifdef pp_GLUI
   CompressOnOff(ON);
+#endif
   updatemenu = 1;
   PRINTF("Compression completed\n");
 }

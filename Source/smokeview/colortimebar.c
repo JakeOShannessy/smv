@@ -441,7 +441,9 @@ void UpdateCurrentColorbar(colorbardata *cb){
       break;
     }
   }
+#ifdef pp_GLUI
   if(is_fed_colorbar==1&&fed_loaded==1)SliceBoundCB(FILE_UPDATE);
+#endif
 }
 
 /* ------------------ RemapColorbar ------------------------ */

@@ -41,8 +41,10 @@ void InitDefaultCameras(void){
 
   camera_external->zoom = zoom;
   CopyCamera(camera_current, camera_external);
+#ifdef pp_GLUI
   strcpy(camera_label, camera_current->name);
   UpdateCameraLabel();
+#endif
 
   CopyCamera(camera_save, camera_current);
   CopyCamera(camera_last, camera_current);
@@ -50,7 +52,9 @@ void InitDefaultCameras(void){
   InitCameraList();
   AddDefaultViewpoints();
   CopyCamera(camera_external_save, camera_external);
+#ifdef pp_GLUI
   UpdateGluiViewpointList();
+#endif
 }
 
 /* ------------------ InitMisc ------------------------ */
@@ -136,6 +140,7 @@ void InitMisc(void){
   mat_specular2[3] = 1.0;
 
   glui_curve_default.use_foreground_color = 1;
+#ifdef pp_GLUI
   glui_curve_default.color[0]           = 0;
   glui_curve_default.color[1]           = 0;
   glui_curve_default.color[2]           = 0;
@@ -151,6 +156,7 @@ void InitMisc(void){
   strcpy(glui_curve_default.scaled_unit,  "");
 
   ResetGluiView(startup_view_ini);
+#endif
   UpdateShow();
 }
 
@@ -259,10 +265,12 @@ int SetupCase(char *filename){
   // read casename.smo (only OBST lines) to define a one mesh version of OBST's
     ReadSMVOrig();
   }
+#ifdef pp_GLUI
   if(return_code==0&&trainer_mode==1){
     ShowGluiTrainer();
     ShowGluiAlert();
   }
+#endif
   switch(return_code){
     case 1:
       fprintf(stderr,"*** Error: Smokeview file, %s, not found\n",input_file);
@@ -299,7 +307,9 @@ int SetupCase(char *filename){
   PRINT_TIMER(timer_start, "UpdateRGBColors");
 
   if(use_graphics==0){
+#ifdef pp_GLUI
     SliceBoundsSetupNoGraphics();
+#endif
     return 0;
   }
   glui_defined = 1;
@@ -307,6 +317,7 @@ int SetupCase(char *filename){
 
   PRINT_TIMER(timer_start, "InitTranslate");
   if(ntourinfo==0)SetupTour();
+#ifdef pp_GLUI
   InitRolloutList();
   GluiColorbarSetup(mainwindow_id);
   GluiMotionSetup(mainwindow_id);
@@ -321,6 +332,7 @@ int SetupCase(char *filename){
   GluiAlertSetup(mainwindow_id);
   GluiStereoSetup(mainwindow_id);
   Glui3dSmokeSetup(mainwindow_id);
+#endif
   PRINT_TIMER(timer_start, "dialogs");
 
   UpdateLights(light_position0, light_position1);
@@ -331,14 +343,18 @@ int SetupCase(char *filename){
   glutShowWindow();
   glutSetWindowTitle(fdsprefix);
   InitMisc();
+#ifdef pp_GLUI
   GluiTrainerSetup(mainwindow_id);
+#endif
   glutDetachMenu(GLUT_RIGHT_BUTTON);
   InitMenus(LOAD);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
+#ifdef pp_GLUI
   if(trainer_mode==1){
     ShowGluiTrainer();
     ShowGluiAlert();
   }
+#endif
   // initialize info header
   initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash, chidfilebase, fds_title);
   PRINT_TIMER(timer_start, "glut routines");
@@ -1207,7 +1223,9 @@ void InitOpenGL(int option){
     UpdateFrameNumber(0);
     updatemenu=1;
     update_load_files=0;
+#ifdef pp_GLUI
     HideGluiAlert();
+#endif
     TrainerViewMenu(trainerview);
   }
 
@@ -2205,4 +2223,3 @@ void InitVars(void){
     }
   }
 }
-

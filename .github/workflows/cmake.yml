@@ -23,7 +23,7 @@ env:
 
 jobs:
   build_unix_gcc:
-    name: build ${{ matrix.os }} - lua=${{ matrix.lua }} - gcc
+    name: build ${{ matrix.os }} - lua=${{ matrix.lua }} - glui=${{ matrix.glui }} - gcc
     strategy:
       fail-fast: false
       matrix:
@@ -31,6 +31,9 @@ jobs:
           - ubuntu-latest
           - macos-latest
         lua:
+          - on
+          - off
+        glui:
           - on
           - off
     runs-on: ${{ matrix.os }}
@@ -55,7 +58,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }}
+          cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DGLUI=${{ matrix.glui }}
           cmake --build ${{github.workspace}}/cbuild -j4
           cp ${{github.workspace}}/cbuild/smokeview smokeview
       - name: Download test data
@@ -75,7 +78,7 @@ jobs:
           name: smokeview-${{ runner.os }}-${{ env.exec_suffix }}
           path: smokeview
   build_unix_intel:
-    name: build ${{ matrix.os }} - lua=${{ matrix.lua }} - intel
+    name: build ${{ matrix.os }} - lua=${{ matrix.lua }} - glui=${{ matrix.glui }} - intel
     strategy:
       fail-fast: false
       matrix:
@@ -83,6 +86,9 @@ jobs:
           - ubuntu-latest
           - macos-latest
         lua:
+          - on
+          - off
+        glui:
           - on
           - off
     runs-on: ${{ matrix.os }}
@@ -133,7 +139,7 @@ jobs:
         shell: bash
         run: |
           source /opt/intel/oneapi/setvars.sh
-          cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }}
+          cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DGLUI=${{ matrix.glui }}
           cmake --build ${{github.workspace}}/cbuild -j4
           cp ${{github.workspace}}/cbuild/smokeview smokeview
       - name: Download test data
@@ -154,13 +160,16 @@ jobs:
           name: smokeview-${{ runner.os }}-${{ env.exec_suffix }}
           path: smokeview
   build_windows_intel:
-    name: build ${{ matrix.os }} - lua=${{ matrix.lua }} - intel
+    name: build ${{ matrix.os }} - lua=${{ matrix.lua }} - glui=${{ matrix.glui }} - intel
     strategy:
       fail-fast: false
       matrix:
         os:
           - windows-2019
         lua:
+          - on
+          - off
+        glui:
           - on
           - off
     runs-on: ${{ matrix.os }}
@@ -193,7 +202,7 @@ jobs:
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           ninja --version
           cmake --version
-          cmake -B ${{github.workspace}}\cbuild -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }}
+          cmake -B ${{github.workspace}}\cbuild -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DGLUI=${{ matrix.glui }}
           cmake --build ${{github.workspace}}\cbuild -j4
           copy ${{github.workspace}}\cbuild\smokeview.exe smokeview.exe
       - name: Download test data
@@ -218,13 +227,16 @@ jobs:
           name: smokeview-windows${{ env.exec_suffix }}
           path: smokeview.exe
   build_windows_msvc:
-    name: build ${{ matrix.os }} - lua=${{ matrix.lua }} - msvc
+    name: build ${{ matrix.os }} - lua=${{ matrix.lua }} - glui=${{ matrix.glui }} - msvc
     strategy:
       fail-fast: false
       matrix:
         os:
           - windows-2022
         lua:
+          - on
+          - off
+        glui:
           - on
           - off
     runs-on: ${{ matrix.os }}
@@ -238,7 +250,7 @@ jobs:
         shell: cmd
         run: |
           cmake --version
-          cmake -B ${{github.workspace}}\cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }}
+          cmake -B ${{github.workspace}}\cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DGLUI=${{ matrix.glui }}
           cmake --build ${{github.workspace}}\cbuild -j4 --config ${{env.BUILD_TYPE}}
           copy ${{github.workspace}}\cbuild\Release\smokeview.exe smokeview.exe
       - name: Download test data

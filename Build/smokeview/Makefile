@@ -173,6 +173,7 @@ intel_win_64_db : DYNLIB_EXT = .dll
 intel_win_64_db : INC += $(WININC) -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview
 intel_win_64_db : FFLAGS    = /Od /iface:stdref /fpp -D WIN32 /Zi /nologo /fpscomp:general /debug:full /extend-source:132 /warn:unused /warn:nointerfaces /Qtrapuv /fp:strict /fp:except /traceback /check:all /stand:f18
 intel_win_64_db : CFLAGS    = /Od /W4 /Wno-unused-function /Wno-unused-parameter /debug:full /Zi -D pp_INTEL -D _DEBUG -D WIN32 -D _CONSOLE -D X64 -D GLEW_STATIC -D PTW32_STATIC_LIB $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO)
+intel_win_64_db : CFLAGS   += -Dpp_GLUI
 ifeq ($(GLUT),freeglut)
 intel_win_64_db : CFLAGS   += -D FREEGLUT_STATIC
 endif
@@ -196,11 +197,13 @@ intel_win_64_db : $(objwin)
 intel_win_64 : DYNLIB_EXT = .dll
 intel_win_64 : INC += $(WININC) -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview
 intel_win_64 : CFLAGS    = -O1 -D pp_INTEL -D WIN32 -D _CONSOLE -D X64 -D GLEW_STATIC -D PTW32_STATIC_LIB $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO)
+intel_win_64 : CFLAGS   += -Dpp_GLUI
 ifeq ($(GLUT),freeglut)
 intel_win_64 : CFLAGS   += -D FREEGLUT_STATIC
 endif
 ifeq ($(LUA_SCRIPTING),true)
 intel_win_64 : CFLAGS    += -D pp_LUA
+intel_win_64 : SMV_LIBS_WIN += $(SMV_WIN_LIBDIR)\liblua.lib
 intel_win_64 : SMVLUACORE_FILES += $(SMV_WIN_LIBDIR)\lpeg.dll
 intel_win_64 : SMVLUACORE_FILES += $(SMV_WIN_LIBDIR)\lua.dll
 endif
@@ -222,6 +225,7 @@ intel_win_64 : $(objwin)
 
 gnu_win_64 : INC       += -I $(SOURCE_DIR)/glui_gl -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview
 gnu_win_64 : CFLAGS    = -O0 -m64 $(D_FREEGLUT) -D GLEW_STATIC -D WIN32 -D pp_GCC -D __MINGW32__ -fno-builtin -Wno-write-strings $(GITINFO) $(GNU_COMPINFO) $(SMV_PROFILEFLAG)
+gnu_win_64 : CFLAGS   += -Dpp_GLUI
 gnu_win_64 : LFLAGS    = -m64 $(SMV_LIBS_GNU) -lm -lopengl32 -lglu32 -lgdi32 -lwinmm -lcomdlg32 -lhid -lquadmath $(SMV_PROFILEFLAG)
 gnu_win_64 : CC        = gcc
 gnu_win_64 : CPP       = g++
@@ -242,6 +246,7 @@ gnu_win_64 : $(obj)
 
 gnu_win_64_db : INC       += -I $(SOURCE_DIR)/glui_gl -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview
 gnu_win_64_db : CFLAGS    = -O0 -m64 -g -Wunused-label -Wunused-value -Wunused-variable $(D_FREEGLUT) $(SMV_PROFILEFLAG) -D GLEW_STATIC -D WIN32 -D pp_GCC -D __MINGW32__ -fno-builtin -Wno-write-strings $(GITINFO) $(GNU_COMPINFO)
+gnu_win_64_db : CFLAGS   += -Dpp_GLUI
 gnu_win_64_db : LFLAGS    = -m64 $(SMV_LIBS_GNU) -lm -lopengl32 -lglu32 -lgdi32 -lwinmm -lcomdlg32 -lhid -lquadmath $(SMV_PROFILEFLAG)
 gnu_win_64_db : CC        = gcc
 gnu_win_64_db : CPP       = g++
@@ -268,6 +273,7 @@ SYSTEM_LIBS_LINUX = -lpthread -lX11 -lXmu -lGLU -lGL -lm -lrt
 intel_linux_64 : DYNLIB_EXT = .so
 intel_linux_64 : LIB_DIR_PLAT = $(LIB_DIR)/intel_linux_64
 intel_linux_64 : CFLAGS    = -O0 -traceback -m64 -D pp_LINUX $(SMV_TESTFLAG) $(SMV_PROFILEFLAG) $(GITINFO) $(INTEL_COMPINFO)
+intel_linux_64 : CFLAGS   += -Dpp_GLUI
 intel_linux_64 : LIBLUA    =
 ifeq ($(LUA_SCRIPTING),true)
 intel_linux_64 : CFLAGS    += -D pp_LUA
@@ -287,6 +293,7 @@ intel_linux_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
 intel_linux_64_db : CFLAGS    = -O0 -g -m64 $(SMV_TESTFLAG) -D _DEBUG -D pp_LINUX $(SMV_PROFILEFLAG) \
                                 -Wall -Wextra -Wuninitialized -Wunused-function -Wunused-variable -Wno-sign-compare \
                                 -Wno-unused-parameter $(GITINFO) $(INTEL_COMPINFO)
+intel_linux_64_db : CFLAGS   += -Dpp_GLUI
 intel_linux_64_db : LFLAGS    = -m64 -static-intel $(INTEL_LIBS_LINUX) $(SMV_PROFILEFLAG)
 intel_linux_64_db : CC        = icx
 intel_linux_64_db : CPP       = icpx
@@ -299,6 +306,7 @@ intel_linux_64_db : $(obj)
 
 gnu_linux_64_db : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
 gnu_linux_64_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wunreachable-code -Wswitch-default -Wshadow -Winit-self -Wundef -Wpointer-arith -Wuninitialized -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
+gnu_linux_64_db : CFLAGS   += -Dpp_GLUI
 ifeq ($(LUA_SCRIPTING),true)
 gnu_linux_64_db : CFLAGS    += -D pp_LUA
 gnu_linux_64_db : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
@@ -318,6 +326,7 @@ gnu_linux_64_db : $(obj)
 gnu_linux_64 : DYNLIB_EXT = .so
 gnu_linux_64 : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
 gnu_linux_64 : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings           -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
+gnu_linux_64 : CFLAGS   += -Dpp_GLUI
 ifeq ($(LUA_SCRIPTING),true)
 gnu_linux_64 : CFLAGS    += -D pp_LUA
 gnu_linux_64 : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
@@ -350,6 +359,7 @@ endif
 # ------------- intel_osx_64 ----------------
 
 intel_osx_64 : CFLAGS    = -O0 -m64 -I $(SOURCE_DIR)/glui_gl -traceback -static-intel -D pp_OSX $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO) -mmacosx-version-min=10.9
+intel_osx_64 : CFLAGS   += -Dpp_GLUI
 intel_osx_64 : C_STANDARD    = -std=c99
 intel_osx_64 : LIBLUA    =
 ifeq ($(LUA_SCRIPTING),true)
@@ -377,6 +387,7 @@ intel_osx_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
 # ------------- intel_osx_64_db ----------------
 
 intel_osx_64_db : CFLAGS    = -O0 -g -m64 -I $(SOURCE_DIR)/glui_gl -traceback -static-intel -D _DEBUG -D pp_OSX $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO) -mmacosx-version-min=10.9
+intel_osx_64_db : CFLAGS   += -Dpp_GLUI
 intel_osx_64_db : C_STANDARD    = -std=c99
 intel_osx_64_db : LIBLUA    =
 ifeq ($(LUA_SCRIPTING),true)
@@ -405,6 +416,7 @@ intel_osx_64_db : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
 # ------------- gnu_osx_64_db ----------------
 
 gnu_osx_64_db : CFLAGS    = -O0 -ggdb -m64 -D _DEBUG -D pp_OSX -D pp_GCC $(SMV_TESTFLAG) -Wall -Wno-comment -Wno-deprecated-declarations $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
+gnu_osx_64_db : CFLAGS   += -Dpp_GLUI
 gnu_osx_64_db : LFLAGS    = -m64 -L$(LIB_DIR)/gnu_osx_64 $(SMV_LIBS_OSX) $(GLIBDIROPT) $(SMV_PROFILEFLAG)
 ifeq ($(GLUT),freeglut)
 gnu_osx_64_db : LFLAGS   += -L /opt/X11/lib -lX11 -lXmu -lGLU -lGL
@@ -426,6 +438,7 @@ gnu_osx_64_db : $(obj)
 # ------------- gnu_osx_64 ----------------
 
 gnu_osx_64 : CFLAGS    = -O0 -m64              -D pp_OSX -D pp_GCC $(SMV_TESTFLAG) -Wall -Wno-comment -Wno-deprecated-declarations -Wno-write-strings $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
+gnu_osx_64 : CFLAGS   += -Dpp_GLUI
 gnu_osx_64 : LFLAGS    = -m64 -L$(LIB_DIR)/gnu_osx_64 $(SMV_LIBS_OSX) $(GLIBDIROPT) $(SMV_PROFILEFLAG)
 ifeq ($(GLUT),freeglut)
 gnu_osx_64 : LFLAGS   += -L /opt/X11/lib -lX11 -lXmu -lGLU -lGL

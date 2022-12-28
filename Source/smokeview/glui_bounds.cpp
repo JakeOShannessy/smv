@@ -6245,7 +6245,9 @@ extern "C" void SliceBoundCB(int var){
     if(slice_bounds_dialog==0&&list_slice_index!=fire_line_index){
       slice_bounds_dialog=1;
     }
+#ifdef pp_GLUI
     SliceBounds2Glui(list_slice_index);
+#endif
     SPINNER_line_contour_min->set_float_val(slice_line_contour_min);
     SPINNER_line_contour_max->set_float_val(slice_line_contour_max);
     SPINNER_line_contour_num->set_int_val(slice_line_contour_num);
