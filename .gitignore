@@ -7,11 +7,14 @@
 *.o
 *.mod
 *.obj
+*.obj.tmp
 *.pdb
 *.exp
 *.lib
 *.i90
 *.dll
+*.so
+cbuild/
 
 # executables
 fds_intel_*
@@ -72,9 +75,15 @@ Manuals/*/SCRIPT_FIGURES/*/*.tex
 # Validation script generated csv files
 Validation/*/FDS_Output_Files/*.csv
 
+# Installer related files
+*.msi
+*.wixobj
+*.wixpdb
+
 # Build directory for CMake
 cbuild/
 dist/
+dist-debug/
 
 # Local config for some editors
 .vscode/
