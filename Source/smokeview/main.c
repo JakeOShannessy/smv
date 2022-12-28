@@ -95,8 +95,8 @@ void Usage(char *prog,int option){
 #ifdef pp_DRAWISO
     strcat(label, ", pp_DRAWISO");
 #endif
-#ifdef pp_GCC
-    strcat(label, ", pp_GCC");
+#ifdef __GNUC__
+    strcat(label, ", __GNUC__");
 #endif
 #ifdef pp_GPU
     strcat(label, ", pp_GPU");

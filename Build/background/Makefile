@@ -80,7 +80,7 @@ intel_linux_64 : $(obj)
 
 # ------------- gnu Linux 64 ----------------
 
-gnu_linux_64 : CFLAGS    = -O2 -m64 -Wall -D pp_GCC -D pp_LINUX $(GITINFO) $(GNU_COMPINFO)
+gnu_linux_64 : CFLAGS    = -O2 -m64 -Wall -D pp_LINUX $(GITINFO) $(GNU_COMPINFO)
 gnu_linux_64 : CC        = gcc
 gnu_linux_64 : exe       = background_linux_64
 
@@ -89,7 +89,7 @@ gnu_linux_64: $(obj)
 
 # ------------- gnu Linux 64 db ----------------
 
-gnu_linux_64_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG -D pp_LINUX -D pp_GCC $(GITINFO) $(GNU_COMPINFO)
+gnu_linux_64_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG -D pp_LINUX $(GITINFO) $(GNU_COMPINFO)
 gnu_linux_64_db : CC        = gcc
 gnu_linux_64_db : exe       = background_linux_64
 

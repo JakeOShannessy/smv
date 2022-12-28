@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include "options.h"
 #endif
-#ifdef pp_GCC
+#ifdef __GNUC__
 #include <unistd.h>
 #endif
 #if defined(pp_LINUX) || defined(pp_OSX)

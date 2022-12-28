@@ -129,7 +129,12 @@
 #define SVDECL(var,val)  var
 #endif
 
+#ifdef WIN32
+#include <windows.h>
 #define GLUT_H <GL/glut.h>
+#else
+#define GLUT_H <GL/glut.h>
+#endif
 #ifdef pp_OSX
 #undef  GLUT_H
 #define GLUT_H <GLUT/glut.h>
