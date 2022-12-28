@@ -136,6 +136,7 @@ target_link_libraries(smokeview
     jpeg_static
     zlib_static
 )
+add_compile_definitions(pp_GITHASH="6.7.21+sc.lua")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
@@ -171,7 +172,7 @@ if (LUA)
     add_subdirectory(Source/lpeg-1.0.0)
     add_subdirectory(Source/lfs/luafilesystem-1_8_0)
     # If we are including the lua interpreter, include the appropriate sources.
-    target_sources(smokeview PRIVATE Source/smokeview/lua_api.c Source/smokeview/c_api.c)
+    target_sources(smokeview PRIVATE Source/smokeview/lua_api.c Source/smokeview/c_api.c Source/smokeview/csv.c)
     target_include_directories(smokeview PRIVATE Source/lua-5.3.1/src)
     target_link_libraries(smokeview lua_shared)
 
@@ -204,7 +205,11 @@ if (LUA)
         # RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
         # PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
-
+    install(
+        TARGETS smokeview lua_shared
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
 
 endif ()
 

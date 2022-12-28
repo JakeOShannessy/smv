@@ -58,6 +58,7 @@ add_library(lua_shared SHARED ${LUA_LIB_SRCS})
 set_target_properties(lua_shared PROPERTIES OUTPUT_NAME "lua")
 if(UNIX)
 	set(LUA_DEFINITIONS)
+    target_compile_definitions(lua_shared PRIVATE "LUA_USE_LINUX")
 
     if(NOT EMSCRIPTEN)
         find_library(LIBM m)
