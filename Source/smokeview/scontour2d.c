@@ -1,7 +1,8 @@
 #include "options.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include GLUT_H
+#include <GL/gl.h>
+
 #include "contourdefs.h"
 #include "MALLOCC.h"
 

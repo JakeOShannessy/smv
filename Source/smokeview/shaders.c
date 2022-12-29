@@ -659,12 +659,12 @@ int InitShaders(void){
 
   gpuactive=0;
   usegpu=0;
-  if(opengl_version<200){
-    PRINTF("   Smokeview is running on a system using OpenGL %s\n",opengl_version_label);
-    PRINTF("   OpenGL 2.0 or later is required to use the GPU.\n");
-    PRINTF("   GPU smoke shader not supported.\n");
-    return 1;
-  }
+  // if(opengl_version<200){
+  //   PRINTF("   Smokeview is running on a system using OpenGL %s\n",opengl_version_label);
+  //   PRINTF("   OpenGL 2.0 or later is required to use the GPU.\n");
+  //   PRINTF("   GPU smoke shader not supported.\n");
+  //   return 1;
+  // }
 
   if(GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader){
     if(verbose_output==1)PRINTF("  GPU shaders\n");

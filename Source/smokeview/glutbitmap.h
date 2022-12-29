@@ -10,7 +10,8 @@
 #define GLUT_NO_LIB_PRAGMA  /* Avoid auto library linking when building
                                the GLUT library itself. */
 //#include <GL/glut.h>
-#include GLUT_H
+#include <GL/gl.h>
+
 
 typedef struct {
   const GLsizei width;

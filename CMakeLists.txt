@@ -10,25 +10,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 find_package(OpenGL REQUIRED)
 # message( "OPENGL_LIBRARIES=${OPENGL_LIBRARIES}")
 find_package(GLUT)
-# if (NOT GLUT_FOUND)
-#     #TODO need to handle debug vs release
-#     message(STATUS "Local GLUT not found, using vendored freeglut")
-#     set(GLUT_INCLUDE_DIR "Source/freeglut-3.2.1/include")
-#     set(GLUT_LIBRARIES "Source/freeglut-3.2.1/lib/freeglut_static")
-#     set(GLUT_glut_LIBRARY_DEBUG "Source/freeglut-3.2.1/lib/freeglut_staticd")
-#     set(GLUT_glut_LIBRARY_RELEASE "Source/freeglut-3.2.1/lib/freeglut_static")
-#     # message( "GLUT_LIBRARIES=${GLUT_LIBRARIES}")
-# endif ()
-# add_subdirectory(Source/freeglut-3.2.1)
 add_subdirectory(Source/gd-2.0.15)
 add_subdirectory(Source/zlib128)
 add_subdirectory(Source/jpeg-9b)
 add_subdirectory(Source/png-1.6.21)
-
-# option(FREEGLUT_STATIC "Statically link freeglut" on)
-# if (FREEGLUT_STATIC)
-#     add_definitions(-DFREEGLUT_STATIC)
-# endif ()
+add_subdirectory(Source/glfw)
 
 add_executable(smokeview
     Source/smokeview/main.c
@@ -90,6 +76,7 @@ add_executable(smokeview
     Source/smokeview/getdata.c
     Source/smokeview/color2rgb.c
     Source/smokeview/colortable.c
+    Source/smokeview/gui.c
 )
 
 option(GLUI "Use glui" on)
@@ -129,8 +116,7 @@ set(SMV_LUA_CORE
 add_definitions(-Dpp_CMAKE)
 
 target_link_libraries(smokeview
-#     ${GLUT_LIBRARIES}
-#     # ${GLUT_glut_LIBRARY_DEBUG}
+    glfw
     gd_static
     png_static
     jpeg_static
@@ -140,9 +126,6 @@ target_link_libraries(smokeview
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
     add_definitions(-Dpp_OSX)
-else()
-    target_link_libraries(smokeview glut32_static)
-    add_subdirectory(Source/glut-3.7.6)
 endif()
 
 
@@ -150,13 +133,10 @@ target_include_directories(smokeview PRIVATE
     Source/smokeview
     Source/shared
     Source/zlib128
-    # The headers below are not for use
-    # Source/smokeview/include/glut
     Source/jpeg-9b
-    # freeglut-3.2.1/include
     Source/gd-2.0.15
     Source/glew
-    Source/glui_v2_1_beta
+    Source/glfw/include
 )
 
 option(BETA "Include beta functionality" off)
@@ -204,6 +184,15 @@ if (LUA)
         # RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
         # PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
+    install(
+        TARGETS smokeview lua_shared
+        DESTINATION bin
+        # RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        # PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+    if ((NOT MACOSX) AND UNIX)
+        target_link_libraries(smokeview m)
+    endif()
 
 
 endif ()
@@ -215,9 +204,6 @@ if (WIN32)
     target_link_libraries(smokeview pthread_static)
     target_link_libraries(smokeview opengl32 glu32 gdi32 winmm comdlg32 hid)
     add_subdirectory(Source/pthreads)
-    target_include_directories(smokeview PRIVATE Source/glut_gl )
-else()
-    target_include_directories(smokeview PRIVATE Source/glui_gl )
 endif ()
 
 if ((NOT MACOSX) AND UNIX)
@@ -250,7 +236,6 @@ endif ()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(smokediff m)
 endif()
-
 
 add_executable(smokezip Source/smokezip/main.c Source/smokezip/CNV3dsmoke.c Source/smokezip/CNVboundary.c
     Source/smokezip/CNVpart.c Source/smokezip/CNVplot3d.c Source/smokezip/CNVslice.c Source/shared/assert.c

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
-#include GLUT_H
+
 
 #include "smokeviewvars.h"
 #include "compress.h"

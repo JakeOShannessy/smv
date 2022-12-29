@@ -1,13 +1,15 @@
-#include "options.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#ifdef pp_OSX
-#include <unistd.h>
-#endif
-#include "glew.h"
-#include GLUT_H
+#include <GL/glew.h>
+#include <GL/gl.h>
+
+#include "gui.h"
+
+#include "options.h"
+
+#include "GLFW/glfw3.h"
 
 #include "infoheader.h"
 #ifdef pp_LUA
@@ -337,18 +339,18 @@ int SetupCase(char *filename){
 
   UpdateLights(light_position0, light_position1);
 
-  glutReshapeWindow(screenWidth,screenHeight);
+  // glutReshapeWindow(screenWidth,screenHeight);
 
   SetMainWindow();
-  glutShowWindow();
-  glutSetWindowTitle(fdsprefix);
+  // glutShowWindow();
+  // glutSetWindowTitle(fdsprefix);
   InitMisc();
 #ifdef pp_GLUI
   GluiTrainerSetup(mainwindow_id);
 #endif
-  glutDetachMenu(GLUT_RIGHT_BUTTON);
+  // glutDetachMenu(GLUT_RIGHT_BUTTON);
   InitMenus(LOAD);
-  glutAttachMenu(GLUT_RIGHT_BUTTON);
+  // glutAttachMenu(GLUT_RIGHT_BUTTON);
 #ifdef pp_GLUI
   if(trainer_mode==1){
     ShowGluiTrainer();
@@ -472,8 +474,8 @@ void SetupGlut(int argc, char **argv){
 #endif
   if(use_graphics==1){
     PRINTF("\n");
-    if(verbose_output==1)PRINTF("%s","initializing Glut");
-    glutInit(&argc, argv);
+    if(verbose_output==1)PRINTF("%s","initializing GUI");
+    guiInit();
 #ifdef pp_OSX
     if(verbose_output==1)PRINTF("(%i/%i)", GetScreenHeight(), glutGet(GLUT_SCREEN_HEIGHT));
 #endif
@@ -488,13 +490,13 @@ void SetupGlut(int argc, char **argv){
 #ifdef _DEBUG
     if(verbose_output==1)PRINTF("%s",_("initializing Smokeview graphics window - "));
 #endif
-    glutInitWindowSize(screenWidth, screenHeight);
+    // glutInitWindowSize(screenWidth, screenHeight);
 #ifdef _DEBUG
     if(verbose_output==1)PRINTF("%s\n",_("initialized"));
 #endif
 
-    max_screenWidth = glutGet(GLUT_SCREEN_WIDTH);
-    max_screenHeight = glutGet(GLUT_SCREEN_HEIGHT);
+    // max_screenWidth = glutGet(GLUT_SCREEN_WIDTH);
+    // max_screenHeight = glutGet(GLUT_SCREEN_HEIGHT);
 #ifdef pp_OSX_HIGHRES
     if(force_scale==0){
       if(monitor_screen_height!=max_screenHeight)double_scale=1;
@@ -505,8 +507,8 @@ void SetupGlut(int argc, char **argv){
       max_screenHeight *= 2;
     }
 #endif
-    font_ptr          = GLUT_BITMAP_HELVETICA_12;
-    colorbar_font_ptr = GLUT_BITMAP_HELVETICA_10;
+    // font_ptr          = GLUT_BITMAP_HELVETICA_12;
+    // colorbar_font_ptr = GLUT_BITMAP_HELVETICA_10;
 #ifdef pp_OSX_HIGHRES
     if(double_scale==1){
       font_ptr = (void *)GLUT_BITMAP_HELVETICA_24;
@@ -592,30 +594,30 @@ void InitOpenGL(int option){
     if(verbose_output==1)PRINTF("%s\n", _("initializing OpenGL"));
   }
 
-  type = GLUT_RGB|GLUT_DEPTH;
-  if(buffertype==GLUT_DOUBLE){
-    type |= GLUT_DOUBLE;
-  }
-  else{
-    type |= GLUT_SINGLE;
-  }
+  // type = GLUT_RGB|GLUT_DEPTH;
+  // if(buffertype==GLUT_DOUBLE){
+  //   type |= GLUT_DOUBLE;
+  // }
+  // else{
+  //   type |= GLUT_SINGLE;
+  // }
 
 //  glutInitDisplayMode(GLUT_STEREO);
-  if(stereoactive==1){
-    if(glutGet(GLUT_DISPLAY_MODE_POSSIBLE)==1){
-      videoSTEREO=1;
-      type |= GLUT_STEREO;
-    }
-    else{
-      videoSTEREO=0;
-      fprintf(stderr,"*** Error: video hardware does not support stereo\n");
-    }
-  }
+  // if(stereoactive==1){
+  //   if(glutGet(GLUT_DISPLAY_MODE_POSSIBLE)==1){
+  //     videoSTEREO=1;
+  //     type |= GLUT_STEREO;
+  //   }
+  //   else{
+  //     videoSTEREO=0;
+  //     fprintf(stderr,"*** Error: video hardware does not support stereo\n");
+  //   }
+  // }
 
 #ifdef _DEBUG
   if(option==PRINT)PRINTF("%s",_("   Initializing Glut display mode - "));
 #endif
-  glutInitDisplayMode(type);
+  // glutInitDisplayMode(type);
 #ifdef _DEBUG
   if(option==PRINT)PRINTF("%s\n",_("initialized"));
 #endif
@@ -624,7 +626,7 @@ void InitOpenGL(int option){
 #ifdef _DEBUG
   if(option==PRINT)PRINTF("%s\n",_("   creating window"));
 #endif
-  mainwindow_id = glutCreateWindow("");
+  // mainwindow_id = glutCreateWindow("");
 #ifdef _DEBUG
   if(option==PRINT)PRINTF("%s\n",_("   window created"));
 #endif
@@ -632,6 +634,7 @@ void InitOpenGL(int option){
 #ifdef _DEBUG
   if(option==PRINT)PRINTF("%s",_("   Initializing callbacks - "));
 #endif
+#ifdef pp_GLUI
   glutSpecialUpFunc(SpecialKeyboardUpCB);
   glutKeyboardUpFunc(KeyboardUpCB);
   glutKeyboardFunc(KeyboardCB);
@@ -642,11 +645,13 @@ void InitOpenGL(int option){
   glutDisplayFunc(DisplayCB);
   glutVisibilityFunc(NULL);
   glutMenuStatusFunc(MenuStatusCB);
+#endif
 #ifdef _DEBUG
   if(option==PRINT)PRINTF("%s\n",_("initialized"));
 #endif
 
-  opengl_version = GetOpenGLVersion(opengl_version_label);
+  // DEPRECATED: GLFW init will fail without a satisfactory OpenGL  version
+  // opengl_version = GetOpenGLVersion(opengl_version_label);
 
   err=0;
  #ifdef pp_GPU
@@ -1725,7 +1730,7 @@ void InitVars(void){
   targfilenum=-1;
 
   setPDIM=0;
-  menustatus=GLUT_MENU_NOT_IN_USE;
+  // menustatus=GLUT_MENU_NOT_IN_USE;
 
   vertical_factor=1.0;
   terrain_rgba_zmin[0]=90;
@@ -1852,8 +1857,8 @@ void InitVars(void){
   showbuild=0;
 
   strcpy(emptylabel,"");
-  font_ptr          = GLUT_BITMAP_HELVETICA_12;
-  colorbar_font_ptr = GLUT_BITMAP_HELVETICA_10;
+  // font_ptr          = GLUT_BITMAP_HELVETICA_12;
+  // colorbar_font_ptr = GLUT_BITMAP_HELVETICA_10;
 #ifdef pp_OSX_HIGHRES
     if(double_scale==1){
       font_ptr = (void *)GLUT_BITMAP_HELVETICA_24;

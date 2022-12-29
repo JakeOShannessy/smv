@@ -7,13 +7,15 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
+#include "gui.h"
+
 #include "options.h"
 #include "smokeviewvars.h"
 #include "infoheader.h"
 #include "c_api.h"
 #include "lua_api.h"
 
-#include GLUT_H
+
 #include "gd.h"
 
 #if defined(_WIN32)
@@ -196,7 +198,7 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
   PRINTF("Startup time: %.1f s\n", startup_time);
   PRINTF("\n");
 
-  glutMainLoop();
+  guiRun();
   return 0;
 }
 
@@ -376,7 +378,7 @@ int lua_displayCB(lua_State *L) {
 */
 int lua_hidewindow(lua_State *L) {
   printf("hiding window\n");
-  glutHideWindow();
+  // glutHideWindow();
   //once we hide the window the display callback is never called
   return 0;
 }
@@ -5822,7 +5824,7 @@ int runSSFScript() {
   } else {
     printf("script completed\n");
     lua_close(L);
-    glutIdleFunc(NULL);
+    // glutIdleFunc(NULL);
   }
   return yieldOrOkSSF;
 }
@@ -5862,7 +5864,7 @@ int runLuaScript() {
   } else {
     printf("script completed\n");
     lua_close(L);
-    glutIdleFunc(NULL);
+    // glutIdleFunc(NULL);
   }
   return yieldOrOk;
 }

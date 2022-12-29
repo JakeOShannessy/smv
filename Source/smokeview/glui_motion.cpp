@@ -6,7 +6,7 @@
 #include <unistd.h>
 #endif
 #include <string.h>
-#include GLUT_H
+
 #include <math.h>
 
 #include "smokeviewvars.h"
@@ -785,7 +785,7 @@ extern "C" void SetCurrentViewPoint(char *viewpoint_label){
     if(strcmp(ca->name, viewpoint_label)==0){
       LIST_viewpoints->set_int_val(ca->view_id);
       ViewpointCB(LIST_VIEW);
-      glutPostRedisplay();
+      GLUTPOSTREDISPLAY;
       break;
     }
   }
@@ -1829,7 +1829,7 @@ extern "C" void UpdateRotationIndex(int val){
 #endif
   UpdateMeshList1(val);
 
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }
 
 /* ------------------ UpdateProjectionType ------------------------ */
@@ -2376,7 +2376,7 @@ extern "C" void SceneMotionCB(int var){
         if(LIST_viewpoints!=NULL)LIST_viewpoints->set_int_val(EXTERNAL_LIST_ID);
         ViewpointCB(LIST_VIEW);
         updatemenu = 1;
-        glutPostRedisplay();
+        GLUTPOSTREDISPLAY;
       }
       break;
     case ZAXIS_UP:

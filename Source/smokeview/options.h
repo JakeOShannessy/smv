@@ -1,6 +1,8 @@
 #ifndef OPTIONS_H_DEFINED
 #define OPTIONS_H_DEFINED
 
+#define GLUT_MENU_IN_USE 0
+
 #include "options_common.h"
 
 //*** uncomment the following two lines to force all versions to be beta

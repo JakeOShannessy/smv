@@ -5,6 +5,9 @@
 #include "gd.h"
 #endif
 
+#include <GLFW/glfw3.h>
+
+
 EXTERNCPP float GetTime(void);
 
 // gen plot routines
@@ -543,11 +546,10 @@ EXTERNCPP void MultQuat(float x[4], float y[4], float z[4]);
 EXTERNCPP void SetScreenSize(int *width, int *height);
 EXTERNCPP void KeyboardCB(unsigned char key, int x, int y);
 EXTERNCPP void KeyboardUpCB(unsigned char key, int x, int y);
-EXTERNCPP void ReshapeCB(int width, int height);
+EXTERNCPP void ReshapeCB(GLFWwindow *window, int width, int height);
 EXTERNCPP void DisplayCB(void);
-EXTERNCPP void SpecialKeyboardCB(int key, int x, int y);
+EXTERNCPP void SpecialKeyboardCB(int mods, int key, int x, int y);
 EXTERNCPP void SpecialKeyboardUpCB(int key, int x, int y);
-EXTERNCPP void MouseCB(int button, int state, int x, int y);
 EXTERNCPP void MouseDragCB(int xm, int ym);
 EXTERNCPP void MenuStatusCB(int status, int x, int y);
 EXTERNCPP void IdleCB(void);
@@ -831,8 +833,8 @@ EXTERNCPP void UpdateMeshList1(int val);
 EXTERNCPP void UpdateTranslate(void);
 EXTERNCPP void BlockageMenu(int value);
 EXTERNCPP char *STRSTR(char *c, const char *key);
-EXTERNCPP void HandlePLOT3DKeys(int  key);
-EXTERNCPP void HandleMoveKeys(int  key);
+EXTERNCPP void HandlePLOT3DKeys(int mods, int  key);
+EXTERNCPP void HandleMoveKeys(int mods, int  key);
 EXTERNCPP int GetInterval(float val, float *array, int n);
 EXTERNCPP int GetTimeInterval(float val, float *array, int n);
 

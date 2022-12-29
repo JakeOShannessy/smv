@@ -6,8 +6,8 @@
 #include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include GLUT_H
 
+#include "structures.h"
 #include "smokeviewvars.h"
 #include "compress.h"
 #include "IOscript.h"
@@ -721,14 +721,14 @@ void UpdateShow(void){
   }
 
   if(showtime2==1)showtime=1;
-  if(use_graphics==1){
-    if(plotstate==DYNAMIC_PLOTS&&stept==1){
-      glutIdleFunc(IdleCB);
-    }
-    else{
-      glutIdleFunc(NULL);
-    }
-  }
+  // if(use_graphics==1){
+  //   if(plotstate==DYNAMIC_PLOTS&&stept==1){
+  //     glutIdleFunc(IdleCB);
+  //   }
+  //   else{
+  //     glutIdleFunc(NULL);
+  //   }
+  // }
 }
 
 /* ------------------ GetItime ------------------------ */
@@ -2514,12 +2514,12 @@ void UpdateDisplay(void){
 #endif
     ResizeWindow(screenWidthINI, screenHeightINI);
   }
-  if(updatemenu == 1 && usemenu == 1 && menustatus == GLUT_MENU_NOT_IN_USE){
-    glutDetachMenu(GLUT_RIGHT_BUTTON);
-    InitMenus(LOAD);
-    glutAttachMenu(GLUT_RIGHT_BUTTON);
-    updatemenu = 0;
-  }
+  // if(updatemenu == 1 && usemenu == 1 && menustatus == GLUT_MENU_NOT_IN_USE){
+  //   glutDetachMenu(GLUT_RIGHT_BUTTON);
+  //   InitMenus(LOAD);
+  //   glutAttachMenu(GLUT_RIGHT_BUTTON);
+  //   updatemenu = 0;
+  // }
   if(update_patch_bounds!=-1||update_slice_bounds!=-1||update_part_bounds!=-1||update_plot3d_bounds!=-1){
 
     if(current_script_command==NULL||current_script_command->command!=SCRIPT_LOADSLICERENDER){
@@ -2639,11 +2639,11 @@ void PauseTime(float pause_time){
   float start_time;
 
   // pause no more than 60 s
-  start_time = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-  for(;;){
-    float delta_time;
+  // start_time = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+  // for(;;){
+  //   float delta_time;
 
-    delta_time = glutGet(GLUT_ELAPSED_TIME) / 1000.0 - start_time;
-    if(delta_time > pause_time || delta_time > 60.0)return;
-    }
-  }
+  //   delta_time = glutGet(GLUT_ELAPSED_TIME) / 1000.0 - start_time;
+  //   if(delta_time > pause_time || delta_time > 60.0)return;
+  // }
+}

@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include GLUT_H
+
 
 #include "smokeviewvars.h"
 #include "IOobjects.h"

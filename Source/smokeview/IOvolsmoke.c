@@ -5,7 +5,7 @@
 #include <string.h>
 #include <math.h>
 #include <float.h>
-#include GLUT_H
+
 
 #include "smokeviewvars.h"
 #include "IOvolsmoke.h"

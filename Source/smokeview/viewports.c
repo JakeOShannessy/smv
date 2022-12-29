@@ -5,7 +5,7 @@
 #include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include GLUT_H
+
 
 #include "smokeviewvars.h"
 #include "IOvolsmoke.h"
@@ -24,7 +24,7 @@ int GetStringWidth(char *string){
   switch(fontindex){
     case SMALL_FONT:
       for(c=string;*c!='\0';c++){
-        length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, *c);
+        // length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, *c);
       }
       length *= (288.0/235.0);
 #ifdef pp_OSX_HIGHRES
@@ -35,7 +35,7 @@ int GetStringWidth(char *string){
       break;
     case LARGE_FONT:
       for(c=string;*c!='\0';c++){
-        length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_18, *c);
+        // length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_18, *c);
       }
       length *= (416.0/423.0);
 #ifdef pp_OSX_HIGHRES
@@ -46,7 +46,7 @@ int GetStringWidth(char *string){
       break;
     case SCALED_FONT:
       for(c=string;*c!='\0';c++){
-        length += glutStrokeWidth(GLUT_STROKE_ROMAN, *c);
+        // length += glutStrokeWidth(GLUT_STROKE_ROMAN, *c);
       }
       length *= (283.0/402.0)*scale_2d_x;
       break;

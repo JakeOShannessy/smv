@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include GLUT_H
+
 #include <math.h>
 
 #include "smokeviewvars.h"
@@ -467,7 +467,7 @@ void TourCB(int var){
     CreateTourPaths();
     UpdateTimes();
     CreateTourList();
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case KEYFRAME_UPDATE_ALL:
     {

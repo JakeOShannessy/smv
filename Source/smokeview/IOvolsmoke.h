@@ -2,6 +2,8 @@
 #define IOVOLSMOKE_H_DEFINED
 #define GPU_VOLframemax 1.5
 
+#include "structures.h"
+
 EXTERNCPP void UnloadVolsmokeFrameAllMeshes(int framenum);
 EXTERNCPP void ComputeAllSmokecolors(void);
 EXTERNCPP void DrawSmoke3DGPUVol(void);

@@ -1,11 +1,13 @@
 #define INMAIN
+#include "gui.h"
 #include "options.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include GLUT_H
+
+#include <GLFW/glfw3.h>
 
 #include "string_util.h"
 #include "smokeviewvars.h"
@@ -969,7 +971,7 @@ int main(int argc, char **argv){
   }
   PRINTF("Startup time: %.1f s\n", startup_time);
 
-  glutMainLoop();
+  guiRun();
   return 0;
 }
 

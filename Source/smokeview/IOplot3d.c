@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include GLUT_H
+
 
 #include "smokeviewvars.h"
 #include "IOobjects.h"
@@ -513,7 +513,7 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
     STRCPY(p->timelabel, "");
   }
   show_plot3dfiles = 1;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }
 
 /* ------------------ DrawPlot3dTexture ------------------------ */

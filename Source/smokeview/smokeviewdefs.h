@@ -166,7 +166,8 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define NO_SMOKE -1
 #define NO_FIRE  -1
 
-#define GLUTPOSTREDISPLAY  if(use_graphics==1)glutPostRedisplay()
+#define GLUTPOSTREDISPLAY
+// #define GLUTPOSTREDISPLAY  if(use_graphics==1)glutPostRedisplay()
 #define GLUTSETCURSOR(val) if(use_graphics==1)glutSetCursor(val)
 
 #define ENABLE_LIGHTING if(use_lighting==1&&lighting_on==0){glEnable(GL_LIGHTING);lighting_on=1;}
@@ -231,16 +232,20 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define UPDATE_WINDROSE_CHECKBOX 1
 #define UPDATE_WINDROSE_SHOWHIDE 2
 
+#define START_TIMER
 #ifndef START_TIMER
 #define START_TIMER(a) a = glutGet(GLUT_ELAPSED_TIME)/1000.0
 #endif
+#define STOP_TIMER
 #ifndef STOP_TIMER
 #define STOP_TIMER(a) a = glutGet(GLUT_ELAPSED_TIME)/1000.0 - a
 #endif
 
+#define START_TICKS
 #ifndef START_TICKS
 #define START_TICKS(a) a = glutGet(GLUT_ELAPSED_TIME)
 #endif
+#define STOP_TICKS
 #ifndef STOP_TICKS
 #define STOP_TICKS(a) a = glutGet(GLUT_ELAPSED_TIME) - a
 #endif

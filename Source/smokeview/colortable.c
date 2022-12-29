@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include GLUT_H
+
 #include <math.h>
 
 #include "smokeviewvars.h"

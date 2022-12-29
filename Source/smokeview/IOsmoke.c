@@ -6,7 +6,7 @@
 #include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include GLUT_H
+
 #include <float.h>
 
 #include "smokeviewvars.h"

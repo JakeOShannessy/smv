@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include GLUT_H
+
 
 #include "compress.h"
 #include "interp.h"

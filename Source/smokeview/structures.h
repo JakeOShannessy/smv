@@ -1,9 +1,15 @@
 #ifndef FLOWFILES_H_DEFINED
 #define FLOWFILES_H_DEFINED
 
+#include <GL/gl.h>
+
 #include "stdio_m.h"
 #include "string_util.h" // necessary for flowlabels
 #include "smokestream.h"
+#include "smokeviewdefs.h"
+#include "../shared/histogram.h"
+#include "../shared/isodefs.h"
+#include "contourdefs.h"
 
 /* --------------------------  circdata ------------------------------------ */
 

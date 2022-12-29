@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <math.h>
-#include GLUT_H
+#include <GL/gl.h>
 
 #include "smokeviewvars.h"
 #include "smokeheaders.h"
@@ -283,18 +283,18 @@ int loadsmv(char *input_filename, char *input_filename_ext){
 
   UpdateLights(light_position0, light_position1);
 
-  glutReshapeWindow(screenWidth,screenHeight);
+  // glutReshapeWindow(screenWidth,screenHeight);
 
   SetMainWindow();
-  glutShowWindow();
-  glutSetWindowTitle(fdsprefix);
+  // glutShowWindow();
+  // glutSetWindowTitle(fdsprefix);
   InitMisc();
 #ifdef pp_GLUI
   GluiTrainerSetup(mainwindow_id);
 #endif
-  glutDetachMenu(GLUT_RIGHT_BUTTON);
+  // glutDetachMenu(GLUT_RIGHT_BUTTON);
   InitMenus(LOAD);
-  glutAttachMenu(GLUT_RIGHT_BUTTON);
+  // glutAttachMenu(GLUT_RIGHT_BUTTON);
   if(trainer_mode==1){
 #ifdef pp_GLUI
     ShowGluiTrainer();
@@ -1263,7 +1263,7 @@ void toggle_timehms() {
 void set_units(int unitclass, int unit_index) {
   unitclasses[unitclass].unit_index=unit_index;
   updatemenu=1;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }
 
 void set_units_default() {
@@ -1272,13 +1272,13 @@ void set_units_default() {
       unitclasses[i].unit_index=0;
     }
   updatemenu=1;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }
 
 void set_unitclass_default(int unitclass) {
   unitclasses[unitclass].unit_index=0;
   updatemenu=1;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }
 
 // Show/Hide Geometry
@@ -1443,7 +1443,7 @@ void loadvolsmokeframe(int meshnumber, int framenumber, int flag) {
   UpdateFrameNumber(0);
   UpdateTimeLabels();
   // TODO: replace with a call to render()
-  Keyboard('r', FROM_SMOKEVIEW);
+  // Keyboard('r', FROM_SMOKEVIEW);
   if(flag == 1)script_render = 1;// called when only rendering a single frame
 }
 
@@ -1774,7 +1774,7 @@ void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
   // UpdateAllPlotSlices();
   // if(visiso==1&&cache_qdata==1)UpdateSurface();
   // UpdatePlot3dListIndex();
-  // glutPostRedisplay();
+  // GLUTPOSTREDISPLAY;
 }
 
 /* ------------------ loadplot3d ------------------------ */
@@ -2228,9 +2228,10 @@ int getcolorbarindex() {
 /* ------------------ setwindowsize ------------------------ */
 void setwindowsize(int width, int height) {
   printf("Setting window size to %dx%d\n", width, height);
-  glutReshapeWindow(width,height);
+  // glutReshapeWindow(width,height);
   ResizeWindow(width, height);
-  ReshapeCB(width, height);
+  // TODO: uncomment below
+  // ReshapeCB(width, height);
 
 }
 
@@ -3511,7 +3512,7 @@ int set_zaxisangles(float a, float b, float c) {
 
 // *** 3D SMOKE INFO ***
 int set_adjustalpha(int v) {
-  adjustalphaflag = v;
+  // adjustalphaflag = v;
   return 0;
 } // ADJUSTALPHA
 
@@ -4346,13 +4347,13 @@ int show_smoke3d_showall() {
   int i;
 
   updatemenu=1;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   plotstate=DYNAMIC_PLOTS;
   for(i=0;i<nsmoke3dinfo;i++){
     smoke3di = smoke3dinfo + i;
     if(smoke3di->loaded==1)smoke3di->display=1;
   }
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   UpdateShow();
   return 0;
 }
@@ -4362,7 +4363,7 @@ int show_smoke3d_hideall() {
   int i;
 
   updatemenu=1;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   for(i=0;i<nsmoke3dinfo;i++){
     smoke3di = smoke3dinfo + i;
     if(smoke3di->loaded==1)smoke3di->display=0;
@@ -4375,7 +4376,7 @@ int show_slices_showall(){
   int i;
 
   updatemenu=1;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   for(i=0;i<nsliceinfo;i++){
     sliceinfo[i].display=1;
   }
@@ -4384,7 +4385,7 @@ int show_slices_showall(){
   plotstate=GetPlotState(DYNAMIC_PLOTS);
 
   UpdateShow();
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   return 0;
 }
 
@@ -4392,7 +4393,7 @@ int show_slices_hideall(){
   int i;
 
   updatemenu=1;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   for(i=0;i<nsliceinfo;i++){
     sliceinfo[i].display=0;
   }

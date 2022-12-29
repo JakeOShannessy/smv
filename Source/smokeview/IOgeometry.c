@@ -6,7 +6,7 @@
 
 #include "smokeviewvars.h"
 #ifdef pp_ISOTIME
-#include GLUT_H
+
 #endif
 
 void UpdateGeomTriangles(geomdata *geomi, int geom_type);

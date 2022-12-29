@@ -5,7 +5,7 @@
 #endif
 #endif
 
-#include GLUT_H
+
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -200,7 +200,7 @@ int GetFontHeight(void){
       height = 18;
       break;
     case SCALED_FONT:
-        height = glutStrokeWidth(GLUT_STROKE_ROMAN, 'A');
+        // height = glutStrokeWidth(GLUT_STROKE_ROMAN, 'A');
       break;
     default:
       ASSERT(FFALSE);
@@ -263,7 +263,7 @@ void OutputSText3(float x, float y, float z, char *string){
 
   glScalef(scale_x,scale_y,1.0);
   for(c=string; *c != '\0'; c++){
-    glutStrokeCharacter(GLUT_STROKE_ROMAN,*c);
+    // glutStrokeCharacter(GLUT_STROKE_ROMAN,*c);
   }
   glPopMatrix();
 }
@@ -279,7 +279,7 @@ void OutputSText2r(float x, float y, float z, char *string){
   if(string==NULL)return;
   total_width=0;
   for(c=string; *c != '\0'; c++){
-    total_width+=glutStrokeWidth(GLUT_STROKE_ROMAN,*c);
+    // total_width+=glutStrokeWidth(GLUT_STROKE_ROMAN,*c);
   }
   glPushMatrix();
   scale_x = port_unit_width*(scaled_font2d_height2width*(float)scaled_font2d_height/(float)104.76)/(float)port_pixel_width;
@@ -291,7 +291,7 @@ void OutputSText2r(float x, float y, float z, char *string){
   glTranslatef(x-scale_x*total_width,y,z);
   glScalef(scale_x,scale_y,1.0);
   for(c=string; *c != '\0'; c++){
-    glutStrokeCharacter(GLUT_STROKE_ROMAN,*c);
+    // glutStrokeCharacter(GLUT_STROKE_ROMAN,*c);
   }
   glPopMatrix();
 }
@@ -314,7 +314,7 @@ void OutputSText2(float x, float y, float z, char *string){
   glScalef(scale_x,scale_y,1.0);
   glTranslatef(0.0,25.0,0.0);
   for(c=string; *c != '\0'; c++){
-    glutStrokeCharacter(GLUT_STROKE_ROMAN,*c);
+    // glutStrokeCharacter(GLUT_STROKE_ROMAN,*c);
   }
   glPopMatrix();
 }
@@ -349,7 +349,7 @@ void Output3Text(float *color, float x, float y, float z, char *string){
   else{
     glRasterPos3f(x, y, z);
     for(c=string; *c!='\0'; c++){
-      glutBitmapCharacter(font_ptr,(unsigned char)*c);
+      // glutBitmapCharacter(font_ptr,(unsigned char)*c);
     }
   }
 }
@@ -473,7 +473,7 @@ void Output3TextRight(float *color, float x, float y, float z, char *string, flo
     }
     for(i = 0; i<strlen(string); i++){
       c = string + i;
-      glutBitmapCharacter(font_ptr, (unsigned char)*c);
+      // glutBitmapCharacter(font_ptr, (unsigned char)*c);
     }
   }
 }
@@ -487,7 +487,7 @@ void OutputLargeText(float x, float y, char *string){
   glColor3fv(foregroundcolor);
   glRasterPos2f(x, y);
   for(c=string; *c!='\0'; c++){
-    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18,(unsigned char)*c);
+    // glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18,(unsigned char)*c);
   }
 }
 
@@ -512,7 +512,7 @@ void OutputTextColor(float *fontcolor, float x, float y, char *string){
   }
   glRasterPos2f(x, y);
   for(c = string; *c!='\0'; c++){
-    glutBitmapCharacter(font_ptr, (unsigned char)*c);
+    // glutBitmapCharacter(font_ptr, (unsigned char)*c);
   }
 }
 
@@ -530,7 +530,7 @@ void OutputText(float x, float y, char *string){
   }
   glRasterPos2f(x, y);
   for(c=string; *c!='\0'; c++){
-    glutBitmapCharacter(font_ptr,(unsigned char)*c);
+    // glutBitmapCharacter(font_ptr,(unsigned char)*c);
   }
 }
 
@@ -549,7 +549,7 @@ void OutputBarText(float x, float y, const GLfloat *color, char *string){
   else{
     glRasterPos2f(x, y);
     for(c=string; *c!='\0'; c++){
-      glutBitmapCharacter(colorbar_font_ptr,(unsigned char)(*c));
+      // glutBitmapCharacter(colorbar_font_ptr,(unsigned char)(*c));
     }
   }
 }

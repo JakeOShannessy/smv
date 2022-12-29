@@ -4,7 +4,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <math.h>
-#include GLUT_H
+
 
 #include "smokeviewvars.h"
 #include "IOvolsmoke.h"
@@ -1420,7 +1420,7 @@ void LoadSmokeFrame(int meshnum, int framenum){
   force_redisplay = 1;
   UpdateFrameNumber(0);
   stept=1;
-  Keyboard('t', FROM_SMOKEVIEW);
+  // Keyboard('t', FROM_SMOKEVIEW);
   UpdateTimeLabels();
 #ifdef pp_GLUI
   UpdateLoadTimeVal(valtime);
@@ -1490,7 +1490,7 @@ void ScriptLoadVolSmokeFrame(scriptdata *scripti, int flag){
   index = scripti->ival;
   framenum = scripti->ival2;
   LoadSmokeFrame(index, framenum);
-  Keyboard('r', FROM_SMOKEVIEW);
+  // Keyboard('r', FROM_SMOKEVIEW);
   if(flag == 1)script_render = 1;// called when only rendering a single frame
 }
 
@@ -1569,7 +1569,7 @@ void ScriptLoadIsoFrame(scriptdata *scripti, int flag){
   force_redisplay = 1;
   UpdateFrameNumber(0);
   UpdateTimeLabels();
-  Keyboard('r', FROM_SMOKEVIEW);
+  // Keyboard('r', FROM_SMOKEVIEW);
   if(flag == 1)script_render = 1;// called when only rendering a single frame
 }
 
@@ -2209,7 +2209,7 @@ void ScriptLoadSliceRender(scriptdata *scripti){
 #endif
 
     START_TIMER(slice_load_time);
-    GLUTSETCURSOR(GLUT_CURSOR_WAIT);
+    // GLUTSETCURSOR(GLUT_CURSOR_WAIT);
 
     // load slice data
 
@@ -2258,7 +2258,7 @@ void ScriptLoadSliceRender(scriptdata *scripti){
       count++;
     }
     GLUTPOSTREDISPLAY;
-    GLUTSETCURSOR(GLUT_CURSOR_LEFT_ARROW);
+    // GLUTSETCURSOR(GLUT_CURSOR_LEFT_ARROW);
     updatemenu = 1;
     STOP_TIMER(slice_load_time);
 
@@ -3146,7 +3146,7 @@ void SetTimeVal(float timeval){
         force_redisplay=1;
         UpdateFrameNumber(0);
         UpdateTimeLabels();
-        Keyboard('t',FROM_SMOKEVIEW);
+        // Keyboard('t',FROM_SMOKEVIEW);
         break;
       }
     }
@@ -3437,9 +3437,9 @@ int RunScriptCommand(scriptdata *script_command){
 
         script_keystate=0;
         key = scripti->cval + strlen(scripti->cval) - 1;
-        if(strncmp(scripti->cval,"ALT",3)==0)script_keystate=GLUT_ACTIVE_ALT;
+        // if(strncmp(scripti->cval,"ALT",3)==0)script_keystate=GLUT_ACTIVE_ALT;
 
-        Keyboard(*key,FROM_SCRIPT);
+        // Keyboard(*key,FROM_SCRIPT);
         returnval=1;
       }
       break;
@@ -3479,7 +3479,7 @@ int RunScriptCommand(scriptdata *script_command){
       render_clip_top=scripti->ival5;
       break;
     case SCRIPT_RENDERONCE:
-      Keyboard('r',FROM_SMOKEVIEW);
+      // Keyboard('r',FROM_SMOKEVIEW);
       returnval=1;
       break;
     case SCRIPT_RENDERHTMLALL:
@@ -3507,7 +3507,7 @@ int RunScriptCommand(scriptdata *script_command){
       returnval = 1;
       break;
     case SCRIPT_RENDERDOUBLEONCE:
-      Keyboard('R',FROM_SMOKEVIEW);
+      // Keyboard('R',FROM_SMOKEVIEW);
       returnval=1;
       break;
     case SCRIPT_RENDERSTART:

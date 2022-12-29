@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include GLUT_H
+
 #include <math.h>
 
 #include "smokeviewvars.h"
@@ -352,7 +352,7 @@ extern "C" void UpdateSmoke3dFlags(void){
   CHECKBOX_smokecullflag->set_int_val(smokecullflag);
   RADIO_skipframes->set_int_val(smokeskipm1);
   Smoke3dCB(VOL_SMOKE);
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }
 
 /* ------------------ Glui3dSmokeSetup ------------------------ */
@@ -824,7 +824,7 @@ extern "C" void Smoke3dCB(int var){
       SPINNER_emission_factor->set_float_val(emission_factor);
     }
     Smoke3dCB(UPDATE_SMOKEFIRE_COLORS_COMMON);
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case USE_OPACITY_DEPTH_CHECK:
     use_opacity_ini = 0;
@@ -904,7 +904,7 @@ extern "C" void Smoke3dCB(int var){
     UpdateCO2Colormap();
     Smoke3dCB(CO2COLORMAP_TYPE);
     Smoke3dCB(UPDATE_SMOKECOLORS);
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case UPDATE_HRRPUV_CONTROLS:
     if(
@@ -939,7 +939,7 @@ extern "C" void Smoke3dCB(int var){
       meshi->update_smoke3dcolors = 1;
     }
     UpdateOpacityMap();
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case LOAD_SMOKEFRAME:
     LoadSmokeFrame(-1, smoke_framenumber);
@@ -1048,7 +1048,7 @@ extern "C" void Smoke3dCB(int var){
     temp_max = (float)(10*(int)(global_temp_max/10.0) - 10.0);
     SPINNER_temperature_cutoff->set_float_limits(temp_min,temp_max);
     UpdateSmokeColormap(smoke_render_option);
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case TEMP_MAX:
     if(global_temp_max<global_temp_min){
@@ -1176,7 +1176,7 @@ extern "C" void Smoke3dCB(int var){
     WriteIni(LOCAL_INI,NULL);
     break;
   case GLOBAL_FIRE_CUTOFF:
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     ForceIdle();
     UpdateSmokeColormap(smoke_render_option);
     break;
@@ -1223,7 +1223,7 @@ extern "C" void Smoke3dCB(int var){
     Smoke3dCB(UPDATE_SMOKEFIRE_COLORS_COMMON);
     break;
   case UPDATE_SMOKEFIRE_COLORS_COMMON:
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     force_redisplay = 1;
     UpdateRGBColors(COLORBAR_INDEX_NONE);
     UpdateSmokeColormap(smoke_render_option);
@@ -1237,7 +1237,7 @@ extern "C" void Smoke3dCB(int var){
       meshi = meshinfo + i;
       meshi->update_smoke3dcolors=1;
     }
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     force_redisplay=1;
     UpdateSmokeColormap(RENDER_SLICE);
     UpdateSmokeColormap(smoke_render_option);
@@ -1252,13 +1252,13 @@ extern "C" void Smoke3dCB(int var){
 #ifdef pp_GPU
   case SMOKE_RTHICK:
 
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     force_redisplay=1;
     IdleCB();
     break;
 #endif
   case VOL_NGRID:
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
 
   case VOL_SMOKE:

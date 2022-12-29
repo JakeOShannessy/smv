@@ -3,8 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "glew.h"
-#include GLUT_H
+#include <GL/gl.h>
+// #include <GL/glew.h>
+
 
 #include "smokeviewvars.h"
 
@@ -14,7 +15,7 @@
 
 /* ------------------ _Sniff_Errors ------------------------ */
 #ifdef pp_SNIFF_ERROR
-void _Sniff_Errors(const char *whereat, const char *file, int line){
+void _Sniff_Errors(char *whereat, char *file, int line){
   int error;
 
   while((error=glGetError())!=GL_NO_ERROR){
@@ -245,12 +246,11 @@ void DisplayVersionInfo(char *progname){
     }
 #endif
   }
-#ifdef pp_COMPRESS
   if(smokezippath!=NULL){
-    if(verbose_output==1)PRINTF("Smokezip         : %s\n",smokezippath);
+    PRINTF("Smokezip         : %s\n",smokezippath);
   }
-#endif
   if(texturedir!=NULL){
-    if(verbose_output==1)PRINTF("Texture directory: %s\n",texturedir);
+    PRINTF("Texture directory: %s\n",texturedir);
   }
 }
+

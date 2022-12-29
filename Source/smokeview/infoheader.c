@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include GLUT_H
+
 
 #include "MALLOCC.h"
 #include "infoheader.h"

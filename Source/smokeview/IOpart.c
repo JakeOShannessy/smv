@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include GLUT_H
+
 #include <math.h>
 
 #include "smokeviewvars.h"
@@ -2095,7 +2095,7 @@ void FinalizePartLoad(partdata *parti){
   UpdatePart5Extremes();
   updatemenu = 1;
   ForceIdle();
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }
 
 /* -----  ------------- ReadPart ------------------------ */
