@@ -475,7 +475,7 @@ void SetupGlut(int argc, char **argv){
   if(use_graphics==1){
     PRINTF("\n");
     if(verbose_output==1)PRINTF("%s","initializing GUI");
-    guiInit();
+    // guiInit();
 #ifdef pp_OSX
     if(verbose_output==1)PRINTF("(%i/%i)", GetScreenHeight(), glutGet(GLUT_SCREEN_HEIGHT));
 #endif

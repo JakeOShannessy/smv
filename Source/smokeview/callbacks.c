@@ -1183,20 +1183,14 @@ void MouseButtonCB(GLFWwindow *window, int button, int action, int mods) {
 // screen.
 void MouseCB(GLFWwindow *window, double xpos, double ypos) {
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+  printf("MouseCB %f %f (left: %d)\n",xpos,ypos,state);
   // state is one of:
   //   * GLFW_PRESS
   //   * GLFW_RELEASE
   float *eye_xyz;
-
-  // {
-  //   // This limits the rate at which the callback is executed.
-  //   float delta_time;
-
-  //   delta_time = glutGet(GLUT_ELAPSED_TIME)/1000.0 - timer_reshape;
-  //   if(delta_time<DELTA_TIME)return;
-  // }
   if (rotation_type == ROTATION_3AXIS) {
     if (state == GLFW_PRESS) {
+      printf("rotating %f %f\n",xpos,ypos);
       UpdateMouseInfo(MOUSE_DOWN, xpos, ypos);
     } else if (state == GLFW_RELEASE) {
       UpdateMouseInfo(MOUSE_UP, xpos, ypos);
@@ -1215,7 +1209,6 @@ void MouseCB(GLFWwindow *window, double xpos, double ypos) {
   }
   glui_move_mode = -1;
   move_gslice = 0;
-  GLUTPOSTREDISPLAY;
 
   mouse_down = 1;
 
@@ -3826,7 +3819,6 @@ void KeyboardGlfw(GLFWwindow *window, int key, int scancode, int action,
         } else {
           DialogMenu(DIALOG_TOUR_SHOW);
         }
-        // } else if (mods & GLFW_MOD_CONTROL) {
       } else {
         stept = (stept + 1) % 2;
         if (stept == 1) {
@@ -3872,8 +3864,8 @@ void KeyboardGlfw(GLFWwindow *window, int key, int scancode, int action,
       // 'v'
       if (mods & GLFW_MOD_ALT) {
         projection_type = 1 - projection_type;
-        // SceneMotionCB(PROJECTION);
-        // } else if (mods & GLFW_MOD_CONTROL) {
+        ZoomMenu(UPDATE_PROJECTION);
+        camera_current->projection_type = projection_type;
       } else {
         visVector = 1 - visVector;
         if (vectorspresent == 0) visVector = 0;
@@ -5448,5 +5440,6 @@ void ResizeWindow(int width, int height) {
 }
 
 void FrameResizeCB(GLFWwindow *window, int width, int height) {
+  // printf("resized to %d %d\n", width,height);
   glViewport(0, 0, width, height);
 }

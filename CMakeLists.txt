@@ -82,7 +82,6 @@ add_executable(smokeview
 option(GLUI "Use glui" on)
 if (GLUI)
     add_definitions(-Dpp_GLUI)
-    add_subdirectory(Source/glui_v2_1_beta)
     target_sources(smokeview PRIVATE
         Source/smokeview/glui_smoke.cpp
         Source/smokeview/glui_clip.cpp
@@ -185,7 +184,7 @@ if (LUA)
         # PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
     install(
-        TARGETS smokeview lua_shared
+        TARGETS lua_shared
         DESTINATION bin
         # RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
         # PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -196,6 +195,13 @@ if (LUA)
 
 
 endif ()
+
+install(
+    TARGETS smokeview
+    DESTINATION bin
+    # RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    # PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
 if (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_WIN32)

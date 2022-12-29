@@ -10,6 +10,7 @@
 // TODO: remove these includes
 int InitShaders(void);
 void DoNonStereo(void);
+void DoScript(void);
 
 Gui smv_gui = {0};
 
@@ -19,34 +20,22 @@ void glfw_error_callback(int error, const char *description) {
 
 int guiRun() {
   while (!glfwWindowShouldClose(smv_gui.window)) {
-    float ratio;
-    int width, height;
 
-    // mat4x4 m, p, mvp;
-
-    //     DoScript();
-    // #ifdef pp_LUA
-    //     DoScriptLua();
-    // #endif
+    DoScript();
+#ifdef pp_LUA
+    DoScriptLua();
+#endif
     UpdateDisplay();
-    // glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    // if(stereotype==STEREO_NONE){
-    //   if(use_vr==0){
-    DoNonStereo();
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    // TODO: reenable stereoscopic rendering
+    // if (stereotype == STEREO_NONE) {
+    //   if (use_vr == 0) {
+        DoNonStereo();
     //   }
-    // }
-    // else{
+    // } else {
     //   DoStereo();
     // }
 
-    // mat4x4_identity(m);
-    // mat4x4_rotate_Z(m, m, (float) glfwGetTime());
-    // mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-    // mat4x4_mul(mvp, p, m);
-
-    // glUseProgram(program);
-    // glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
-    // glDrawArrays(GL_TRIANGLES, 0, 3);
     glfwSwapBuffers(smv_gui.window);
     glfwPollEvents();
   }
@@ -67,9 +56,9 @@ int SetupWindow() {
     fprintf(stderr, "Failed initialise GLFW %i\n", code);
     exit(-1);
   }
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+  // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   int screenWidth = 800;
   int screenHeight = 500;
   // Create the window and store its id in the global gui struct.
@@ -149,7 +138,7 @@ int SetupCallbacks() {
   glfwSetKeyCallback(smv_gui.window, KeyboardCBGlfw);
   glfwSetCursorPosCallback(smv_gui.window, MouseCB);
   glfwSetMouseButtonCallback(smv_gui.window, MouseButtonCB);
-  // glfwSetWindowSizeCallback(smv_gui.window, ReshapeCB);
+  glfwSetWindowSizeCallback(smv_gui.window, ReshapeCB);
   // Frame buffer size will vary a lot particularly with high-DPI.
   glfwSetFramebufferSizeCallback(smv_gui.window, FrameResizeCB);
   // The content scale callback will trigger if the OS high-DPI handling

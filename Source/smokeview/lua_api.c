@@ -198,7 +198,9 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
   PRINTF("Startup time: %.1f s\n", startup_time);
   PRINTF("\n");
 
+  guiInit();
   guiRun();
+  guiDestroy();
   return 0;
 }
 
