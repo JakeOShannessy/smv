@@ -1707,7 +1707,7 @@ void DialogMenu(int value){
 #ifdef pp_GLUI
   RefreshGluiDialogs();
 #endif
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 #endif
 #endif
 }

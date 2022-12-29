@@ -467,7 +467,7 @@ void TourCB(int var){
     CreateTourPaths();
     UpdateTimes();
     CreateTourList();
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case KEYFRAME_UPDATE_ALL:
     {

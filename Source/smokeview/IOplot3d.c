@@ -513,7 +513,7 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
     STRCPY(p->timelabel, "");
   }
   show_plot3dfiles = 1;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }
 
 /* ------------------ DrawPlot3dTexture ------------------------ */

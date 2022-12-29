@@ -1068,7 +1068,7 @@ void MouseCB(int button, int state, int xm, int ym){
   }
   glui_move_mode=-1;
   move_gslice=0;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 
   if(state==GLUT_UP){
     tour_drag=0;
@@ -1127,7 +1127,7 @@ void MouseCB(int button, int state, int xm, int ym){
       if(select_device==1)MouseSelectDevice(xm,ym);
       if(select_geom!=GEOM_PROP_NONE)MouseSelectGeom(xm, ym);
     }
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     if( showtime==1 || showplot3d==1){
       if(ColorbarClick(xm,ym)==1)return;
     }
@@ -1183,7 +1183,7 @@ void MouseCB(int button, int state, int xm, int ym){
     mouse_down_xy0[0]=xm;
     mouse_down_xy0[1]=ym;
   }
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   if(blockageSelect == 1){
 #ifdef pp_GLUI
     GetGeomDialogState();
@@ -1560,7 +1560,7 @@ void MouseDragCB(int xm, int ym){
   }
 #endif
 
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 
   if( colorbar_drag==1&&(showtime==1 || showplot3d==1)){
     ColorbarDrag(xm,ym);
@@ -1735,7 +1735,7 @@ void Keyboard(unsigned char key, int flag){
   else if(flag==FROM_SMOKEVIEW_ALT){
     keystate=GLUT_ACTIVE_ALT;
   }
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   key2 = (char)key;
 
   switch(key2){
@@ -1979,7 +1979,7 @@ void Keyboard(unsigned char key, int flag){
 #ifdef pp_GLUI
       UpdateShowHideButtons();
 #endif
-      glutPostRedisplay();
+      GLUTPOSTREDISPLAY;
       break;
     case 'g':
       switch(keystate){
@@ -2347,7 +2347,7 @@ void Keyboard(unsigned char key, int flag){
           visFrame = 1;
           updatefacelists = 1;
           updatemenu = 1;
-          glutPostRedisplay();
+          GLUTPOSTREDISPLAY;
         }
         if(highlight_flag>2&&noutlineinfo>0)highlight_flag=0;
         if(highlight_flag>1&&noutlineinfo==0)highlight_flag=0;
@@ -3169,7 +3169,7 @@ void Keyboard(unsigned char key, int flag){
       plotiso[plotn-1] += FlowDir;
       UpdateSurface();
     }
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
   }
   if(iplot_state!=0)UpdatePlotSlice(iplot_state);
 }
@@ -3178,7 +3178,7 @@ void Keyboard(unsigned char key, int flag){
 
 void KeyboardCB(unsigned char key, int x, int y){
   Keyboard(key,FROM_CALLBACK);
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   updatemenu=1;
 }
 
@@ -3278,7 +3278,7 @@ void SpecialKeyboardCB(int key, int x, int y){
 
   special_modifier = glutGetModifiers() & GLUT_ACTIVE_SHIFT;
 
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 
   if(rotation_type==EYE_CENTERED){
     keymode=EYE_MODE;
@@ -4257,7 +4257,7 @@ void DoScript(void){
     if(current_script_command!=NULL&&current_script_command->command==SCRIPT_RENDERONCE){
       nrenderonce++;
     }
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
   }
   else{
     first_frame_index=0;
@@ -4423,5 +4423,5 @@ void ResizeWindow(int width, int height){
     }
   }
   glutReshapeWindow(width,height);
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }

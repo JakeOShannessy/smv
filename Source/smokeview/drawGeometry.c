@@ -2916,7 +2916,7 @@ void UpdateFaceLists(void){
   nface_outlines=0;
   nface_transparent=0;
   if(opengldefined==1){
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
   }
   // if we are not showing boundary files then don't try to hide blockages
   if(use_tload_begin == 1 && global_times!=NULL && global_times[itimes] < tload_begin)check_blockhide = 0;
