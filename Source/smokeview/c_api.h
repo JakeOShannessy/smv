@@ -62,6 +62,7 @@ void exit_smokeview();
 void setcolorbarflip(int flip);
 int getcolorbarflip();
 int setviewpoint(const char *viewpoint);
+int set_ortho_preset(const char *viewpoint);
 int setrenderdir(const char *dir);
 void setwindowsize(int width, int height);
 void setgridvisibility(int selection);

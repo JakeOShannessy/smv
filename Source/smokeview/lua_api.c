@@ -5948,7 +5948,7 @@ int yieldOrOkSSF = LUA_YIELD;
 int runSSFScript() {
   if (yieldOrOkSSF == LUA_YIELD) {
     printf("running ssf script\n");
-    yieldOrOkSSF = lua_resume(L, NULL, 0);
+    yieldOrOkSSF = lua_resume(L, NULL, 0,0);
     printf("resume done\n");
     if (yieldOrOkSSF == LUA_YIELD) {
       printf("  LUA_YIELD\n");
@@ -5985,7 +5985,7 @@ int yieldOrOk = LUA_YIELD;
 int runLuaScript() {
   if (yieldOrOk == LUA_YIELD) {
     printf("running lua script\n");
-    yieldOrOk = lua_resume(L, NULL, 0);
+    yieldOrOk = lua_resume(L, NULL, 0,0);
     printf("resume done\n");
     if (yieldOrOk == LUA_YIELD) {
       printf("  LUA_YIELD\n");
