@@ -115,7 +115,7 @@ add_executable(smokeview
 option(GLUI "Use glui" on)
 if (GLUI)
     add_definitions(-Dpp_GLUI)
-    # add_subdirectory(Source/glui_v2_1_beta)
+    add_subdirectory(Libs/glui_v2_1_beta)
     target_sources(smokeview PRIVATE
         Source/smokeview/glui_smoke.cpp
         Source/smokeview/glui_clip.cpp
@@ -130,7 +130,7 @@ if (GLUI)
         Source/smokeview/glui_objects.cpp
         Source/smokeview/glui_shooter.cpp
     )
-    # target_link_libraries(smokeview glui_static)
+    target_link_libraries(smokeview glui_static)
 endif()
 
 # target_include_directories(smokeview PRIVATE ${OPENGL_INCLUDE_DIRS}  )
@@ -211,7 +211,7 @@ target_include_directories(smokeview PRIVATE
     Source/shared
     Source/gd-2.0.15
     Source/glew
-    Source/glui_v2_1_beta
+    Libs/glui_v2_1_beta
 )
 
 option(BETA "Include beta functionality" off)

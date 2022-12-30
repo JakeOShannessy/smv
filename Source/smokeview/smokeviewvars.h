@@ -5,7 +5,7 @@
 #include "MALLOCC.h"
 #ifdef CPP
 #ifdef pp_GLUI
-#include <GL/glui.h>
+#include "glui.h"
 #endif
 #endif
 #include "datadefs.h"

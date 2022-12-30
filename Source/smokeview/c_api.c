@@ -2316,7 +2316,7 @@ int set_backgroundcolor(float r, float g, float b) {
   backgroundbasecolor[1] = g;
   backgroundbasecolor[2] = b;
 #ifdef pp_GLUI
-  SetColorControls(void);
+  SetColorControls();
 #endif
   GLUTPOSTREDISPLAY;
   return 0;
