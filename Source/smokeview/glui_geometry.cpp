@@ -5,6 +5,7 @@
 #include <string.h>
 #include <math.h>
 #include GLUT_H
+#include <GL/glui.h>
 
 #include "smokeviewvars.h"
 

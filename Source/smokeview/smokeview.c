@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "glew.h"
+#include <GL/glew.h>
 #include GLUT_H
 
 #include "smokeviewvars.h"

@@ -6,7 +6,7 @@
 #ifdef pp_OSX
 #include <unistd.h>
 #endif
-#include "glew.h"
+#include <GL/glew.h>
 #include GLUT_H
 
 #include "infoheader.h"

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "glew.h"
+#include <GL/glew.h>
 #include GLUT_H
 
 #include "smokeviewvars.h"

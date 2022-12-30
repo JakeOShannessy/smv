@@ -1,6 +1,6 @@
 #include "options.h"
 #ifdef pp_WUI_VAO
-#include "glew.h"
+#include <GL/glew.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>

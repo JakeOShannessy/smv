@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "glew.h"
+#include <GL/glew.h>
 
 #include "smokeviewvars.h"
 

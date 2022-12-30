@@ -11,6 +11,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 find_package(OpenGL REQUIRED)
 # message( "OPENGL_LIBRARIES=${OPENGL_LIBRARIES}")
 find_package(GLUT)
+find_package(GLEW)
 # find_package(GLUI)
 # if (NOT GLUT_FOUND)
 #     #TODO need to handle debug vs release
@@ -99,7 +100,6 @@ add_executable(smokeview
     Source/smokeview/viewports.c
     Source/smokeview/smv_geometry.c
     Source/smokeview/showscene.c
-    Source/glew/glew.c
     Source/smokeview/infoheader.c
     Source/shared/md5.c
     Source/shared/sha1.c
@@ -162,6 +162,21 @@ target_link_libraries(smokeview gd)
 # message(FATAL_ERROR "No GD: ${GD_LIBRARIES}")
 
 
+
+if (GLEW_FOUND) 
+    target_link_libraries(smokeview ${GLEW_LIBRARIES})
+    # target_include_directories(smokeview ${GLUT_INCLUDE_DIRS})
+else()
+    message(FATAL_ERROR "No GLEW lib")
+endif()
+
+if (GLUT_FOUND) 
+    target_link_libraries(smokeview ${GLUT_LIBRARIES})
+    # target_include_directories(smokeview ${GLUT_INCLUDE_DIRS})
+else()
+    message(FATAL_ERROR "No GLUT lib")
+endif()
+
 if (JPEG_FOUND) 
     target_link_libraries(smokeview ${JPEG_LIBRARIES})
 else()
@@ -185,9 +200,9 @@ add_compile_definitions(pp_GITHASH="6.7.21+sc.lua")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
     add_definitions(-Dpp_OSX)
-else()
-    target_link_libraries(smokeview glut32_static)
-    add_subdirectory(Source/glut-3.7.6)
+# else()
+#     target_link_libraries(smokeview glut32_static)
+#     add_subdirectory(Source/glut-3.7.6)
 endif()
 
 
