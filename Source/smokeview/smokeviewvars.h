@@ -1780,6 +1780,7 @@ SVEXTERN int SVDECL(nsurfids,0);
 SVEXTERN surfid SVDECL(*surfids,NULL);
 SVEXTERN int key_state;
 SVEXTERN float starteyex, starteyey;
+/// @brief UNKNOWN.
 SVEXTERN float eye_xyz0[3];
 SVEXTERN float start_xyz0[3];
 SVEXTERN int glui_move_mode;
