@@ -170,7 +170,7 @@ if (LUA)
     add_definitions(-Dpp_LUA)
     add_subdirectory(Source/lua-5.3.1)
     add_subdirectory(Source/lpeg-1.0.0)
-    add_subdirectory(Source/lfs/luafilesystem-1_8_0)
+    # add_subdirectory(Source/lfs/luafilesystem-1_8_0)
     # If we are including the lua interpreter, include the appropriate sources.
     target_sources(smokeview PRIVATE Source/smokeview/lua_api.c Source/smokeview/c_api.c Source/smokeview/csv.c)
     target_include_directories(smokeview PRIVATE Source/lua-5.3.1/src)
@@ -205,11 +205,11 @@ if (LUA)
         # RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
         # PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
-    install(
-        TARGETS lua_shared
-        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
+    # install(
+    #     TARGETS lua_shared
+    #     RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    #     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    # )
 endif ()
 
 install(
