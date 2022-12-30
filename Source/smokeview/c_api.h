@@ -40,7 +40,7 @@ void set_slice_in_obst(int setting);
 int get_slice_in_obst();
 void loadvolsmoke(int meshnumber);
 void loadvolsmokeframe(int meshnumber, int framenumber, int flag);
-void rendertype(const char *type);
+int set_rendertype(const char *type);
 int get_rendertype(void);
 void set_movietype(const char *type);
 int get_movietype(void);
@@ -584,6 +584,6 @@ typedef struct _simple_bounds {
   float min, max;
 } simple_bounds;
 
-simple_bounds get_slice_bounds(const char *slice_type);
+simple_bounds get_slice_bounds(const char *slice_type, int *error);
 
 #define PROPINDEX_STRIDE 2

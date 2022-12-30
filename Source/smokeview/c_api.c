@@ -1,4 +1,3 @@
-
 #include "options.h"
 #include <math.h>
 #include <stdio.h>
@@ -40,122 +39,109 @@ void UpdateSliceBounds(void);
 void OutputSliceData(void);
 void UnloadBoundaryMenu(int value);
 
-// TODO: update to match set_slice_bounds
+/// @brief Given a quantity type, return the appropriate index into the
+/// slicebounds array.
+/// @param slice_type A string describing the slice quantity.
+/// @return If successful, the index > 0. If not found -1.
+int get_slice_bound_index(const char *slice_type) {
+  for (int i = 0; i < nslicebounds; i++) {
+    if (strcmp(slicebounds[i].shortlabel, slice_type) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/// @brief Set the minimum bound of a given slice quantity.
+/// @param slice_type The quantity string
+/// @param set
+/// @param value
+/// @return Non-zero on error
 int set_slice_bound_min(const char *slice_type, int set, float value) {
-  int i;
-  for (i = 0; i < nslicebounds; i++) {
-    printf("setting %s min bound ", slice_type);
-    if (set) {
-      printf("ON");
-    } else {
-      printf("OFF");
-    }
-    printf(" with value of %f\n", value);
-    if (!strcmp(slice_type, slicebounds[i].shortlabel)) {
-      slicebounds[i].dlg_setvalmin = set;
-      slicebounds[i].dlg_valmin = value;
-    }
+  int slice_type_index = get_slice_bound_index(slice_type);
+  if (slice_type_index < 0) {
+    // Slice type index could not be found.
+    return 1;
   }
-  UpdateSliceBounds();
-#ifdef pp_GLUI
-  SliceBoundCB(6); // TODO: remove constant
-#endif
-  return 0;
-}
-
-int set_slice_bounds(const char *quantity, int set_valmin, float valmin,
-                     int set_valmax, float valmax) {
-  fprintf(
-      stderr,
-      "c_api: set_valmin: %d, set_valmax: %d, valmin: %f, valmax: %f for: %s\n",
-      set_valmin, set_valmax, valmin, valmax, quantity);
-  char *quantity_var;
-  // Create a dummy variable due to const issues
-  if (NewMemory((void **)&quantity_var, sizeof(char) * strlen(quantity) + 1) ==
-      0)
-    return 2;
-  strcpy(quantity_var, quantity);
-  // Set the requested bounds
-  SetSliceBounds(set_valmin, valmin, set_valmax, valmax, quantity_var);
+  slicebounds[slice_type_index].dlg_setvalmin = set;
+  slicebounds[slice_type_index].dlg_valmin = value;
   int error = 0;
-  int slicetype = -1;
-  for (int i = 0; i < nslicebounds; i++) {
-    if (strcmp(quantity_var, "") == 0 ||
-        strcmp(slicebounds[i].shortlabel, quantity_var) == 0) {
-      slicetype = i;
-    }
-  }
-  if (slicetype == -1) {
-    SMV_EXIT(1);
-  }
+  UpdateSliceBounds();
   // Update the colors given the bounds set above
-  UpdateAllSliceColors(slicetype, &error);
-  FREEMEMORY(quantity_var);
+  UpdateAllSliceColors(slice_type_index, &error);
+  return error;
+}
+
+/// @brief Set the maximum bound of a given slice quantity.
+/// @param slice_type
+/// @param set
+/// @param value
+/// @return
+int set_slice_bound_max(const char *slice_type, int set, float value) {
+  int slice_type_index = get_slice_bound_index(slice_type);
+  if (slice_type_index < 0) {
+    // Slice type index could not be found.
+    return 1;
+  }
+  slicebounds[slice_type_index].dlg_setvalmax = set;
+  slicebounds[slice_type_index].dlg_valmax = value;
+  int error = 0;
+  UpdateSliceBounds();
+  // Update the colors given the bounds set above
+  UpdateAllSliceColors(slice_type_index, &error);
+  return error;
+}
+
+/// @brief Set the bounds of a given slice quantity.
+/// @param slice_type
+/// @param set_valmin
+/// @param valmin
+/// @param set_valmax
+/// @param valmax
+/// @return Non-zero on error
+int set_slice_bounds(const char *slice_type, int set_valmin, float valmin,
+                     int set_valmax, float valmax) {
+  int slice_type_index = get_slice_bound_index(slice_type);
+  if (slice_type_index < 0) {
+    // Slice type index could not be found.
+    return 1;
+  }
+  // Set the requested bounds
+  slicebounds[slice_type_index].dlg_setvalmin = set_valmin;
+  slicebounds[slice_type_index].dlg_setvalmax = set_valmax;
+  slicebounds[slice_type_index].dlg_valmin = valmin;
+  slicebounds[slice_type_index].dlg_valmax = valmax;
+  int error = 0;
+  // Update the colors given the bounds set above
+  UpdateAllSliceColors(slice_type_index, &error);
   return 0;
 }
 
-simple_bounds get_slice_bounds(const char *slice_type) {
+/// @brief Get the slice bounds of a given slice quantity.
+/// @param slice_type
+/// @param[out] error
+/// @return A simple_bounds struct containing the min and max bounds being used.
+simple_bounds get_slice_bounds(const char *slice_type, int *error) {
   simple_bounds bounds;
-  for (int i = 0; i < nslicebounds; i++) {
-    if (!strcmp(slice_type, slicebounds[i].shortlabel)) {
-      bounds.min = slicebounds[i].dlg_valmin;
-      bounds.max = slicebounds[i].dlg_valmax;
-    }
+  int slice_type_index = get_slice_bound_index(slice_type);
+  if (slice_type_index < 0) {
+    // Slice type index could not be found.
+    *error = 1;
+    return bounds;
   }
+  bounds.min = slicebounds[slice_type_index].dlg_valmin;
+  bounds.max = slicebounds[slice_type_index].dlg_valmax;
   return bounds;
 }
 
-float get_slice_bound_min(const char *slice_type) {
-  int i;
-  float min;
-  for (i = 0; i < nslicebounds; i++) {
-    if (!strcmp(slice_type, slicebounds[i].shortlabel)) {
-      min = slicebounds[i].dlg_valmin;
-      // max=slicebounds[i].dlg_valmax;
-    }
-  }
-  return min;
-}
-
-float get_slice_bound_max(const char *slice_type) {
-  int i;
-  float max;
-  for (i = 0; i < nslicebounds; i++) {
-    if (!strcmp(slice_type, slicebounds[i].shortlabel)) {
-      // min=slicebounds[i].dlg_valmin;
-      max = slicebounds[i].dlg_valmax;
-    }
-  }
-  return max;
-}
-
-int set_slice_bound_max(const char *slice_type, int set, float value) {
-  int i;
-  for (i = 0; i < nslicebounds; i++) {
-    printf("setting %s max bound ", slice_type);
-    if (set) {
-      printf("ON");
-    } else {
-      printf("OFF");
-    }
-    printf(" with value of %f\n", value);
-    if (!strcmp(slice_type, slicebounds[i].shortlabel)) {
-      slicebounds[i].dlg_setvalmax = set;
-      slicebounds[i].dlg_valmax = value;
-    }
-  }
-  UpdateSliceBounds();
-#ifdef pp_GLUI
-  SliceBoundCB(6); // TODO: remove constant
-#endif
-  return 0;
-}
-
-/* ------------------ loadsmvall ------------------------ */
-// Loads a SMV file into smokeview. This should be completely independent from
-// the setup of smokeview, and should be able to be run multiple times (or not
-// at all). This is based on setup_case from startup.c. Currently it features
-// initialisation of some GUI elements that have yet to be factored out.
+/// @brief Loads a SMV file into smokeview.
+///
+/// This should be completely independent from the setup of smokeview, and
+/// should be able to be run multiple times (or not at all). This is based on
+/// setup_case from startup.c. Currently it features initialisation of some GUI
+/// elements that have yet to be factored out.
+/// @param[in] input_filename
+/// @return Non-zero on error
 int loadsmvall(const char *input_filename) {
   printf("about to load %s\n", input_filename);
   int return_code;
@@ -173,9 +159,13 @@ int loadsmvall(const char *input_filename) {
   return 0;
 }
 
-// This function takes a filepath to an smv file an finds the casename
-// and the extension, which are returned in the 2nd and 3rd arguments (the
-// 2nd and 3rd aguments a pre-existing strings).
+/// @brief Takes a filepath to an smv file an finds the casename and the
+/// extension, which are returned in the 2nd and 3rd arguments (the 2nd and 3rd
+/// aguments a pre-existing strings).
+/// @param smv_filepath
+/// @param fdsprefix
+/// @param input_filename_ext
+/// @return
 int parse_smv_filepath(const char *smv_filepath, char *fdsprefix,
                        char *input_filename_ext) {
   int len_casename;
@@ -211,7 +201,6 @@ int parse_smv_filepath(const char *smv_filepath, char *fdsprefix,
   return 0;
 }
 
-/* ------------------ loadsmv ------------------------ */
 int loadsmv(char *input_filename, char *input_filename_ext) {
   int return_code;
   char *input_file;
@@ -331,8 +320,6 @@ int loadsmv(char *input_filename, char *input_filename_ext) {
   return 0;
 }
 
-/* ------------------ loadfile ------------------------ */
-
 int loadfile(const char *filename) {
   int i;
   int errorcode;
@@ -423,8 +410,6 @@ int loadfile(const char *filename) {
   return 0;
 }
 
-/* ------------------ loadinifile ------------------------ */
-
 void loadinifile(const char *filepath) {
   PRINTF("loading ini file %s\n\n", filepath);
   windowresized = 0;
@@ -432,8 +417,6 @@ void loadinifile(const char *filepath) {
   strcpy(f, filepath);
   ReadIni(f);
 }
-
-/* ------------------ loadvfile ------------------------ */
 
 int loadvfile(const char *filepath) {
   int i;
@@ -458,8 +441,6 @@ int loadvfile(const char *filepath) {
   fprintf(stderr, "*** Error: Vector slice file %s was not loaded\n", filepath);
   return 1;
 }
-
-/* ------------------ loadboundaryfile ------------------------ */
 
 void loadboundaryfile(const char *filepath) {
   int i;
@@ -495,17 +476,18 @@ void loadboundaryfile(const char *filepath) {
   UpdateFrameNumber(0);
 }
 
-/* ------------------ label ------------------------ */
-
 void label(const char *label) {
   PRINTF("*******************************\n");
   PRINTF("*** %s ***\n", label);
   PRINTF("*******************************\n");
 }
 
-/*
-  Specify offset clip in pixels.
-*/
+/// @brief Specify offset clip in pixels
+/// @param flag
+/// @param left
+/// @param right
+/// @param bottom
+/// @param top
 void renderclip(int flag, int left, int right, int bottom, int top) {
   clip_rendered_scene = flag;
   render_clip_left = left;
@@ -513,8 +495,6 @@ void renderclip(int flag, int left, int right, int bottom, int top) {
   render_clip_bottom = bottom;
   render_clip_top = top;
 }
-
-/* ------------------ render ------------------------ */
 
 int render(const char *filename) {
   // runluascript=0;
@@ -614,14 +594,17 @@ char *form_filename(int view_mode, char *renderfile_name, char *renderfile_dir,
   return renderfile_name;
 }
 
-// This is function fulfills the exact same purpose as the original RenderFrame
-// function, except that it takes a second argument, basename. This could be
-// be used as a drop in replacement as long as all existing calls are modified
-// to use basename = NULL.
-/* ------------------ RenderFrameLua ------------------------ */
-// The second argument to RenderFrameLua is the name that should be given to the
-// rendered file. If basename == NULL, then a default filename is formed based
-// on the chosen frame and rendering options.
+/// @brief Render a frame to file.
+///
+/// This is function fulfills the exact same purpose as the original
+/// RenderFrame function, except that it takes a second argument, basename. This
+/// could be be used as a drop in replacement as long as all existing calls are
+/// modified to use basename = NULL.
+/// @param view_mode
+/// @param basename This is the name that should be given to the rendered file.
+/// If NULL then a default filename is formed based on the chosen frame and
+/// rendering options.
+/// @return
 int RenderFrameLua(int view_mode, const char *basename) {
   char renderfile_name[1024]; // the name the file (including extension)
   char renderfile_dir[1024];  // the directory into which the image will be
@@ -682,8 +665,6 @@ int RenderFrameLuaVar(int view_mode, gdImagePtr *RENDERimage) {
   return return_code;
 }
 
-/* ------------------ settourkeyframe ------------------------ */
-
 void settourkeyframe(float keyframe_time) {
   keyframe *keyj, *minkey = NULL;
   tourdata *touri;
@@ -715,8 +696,6 @@ void settourkeyframe(float keyframe_time) {
   }
 }
 
-/* ------------------ gsliceview ------------------------ */
-
 void gsliceview(int data, int show_triangles, int show_triangulation,
                 int show_normal) {
   vis_gslice_data = data;
@@ -726,8 +705,6 @@ void gsliceview(int data, int show_triangles, int show_triangulation,
   update_gslice = 1;
 }
 
-/* ------------------ gslicepos ------------------------ */
-
 void gslicepos(float x, float y, float z) {
   gslice_xyz[0] = x;
   gslice_xyz[1] = y;
@@ -735,15 +712,11 @@ void gslicepos(float x, float y, float z) {
   update_gslice = 1;
 }
 
-/* ------------------ gsliceorien ------------------------ */
-
 void gsliceorien(float az, float elev) {
   gslice_normal_azelev[0] = az;
   gslice_normal_azelev[1] = elev;
   update_gslice = 1;
 }
-
-/* ------------------ settourview ------------------------ */
 
 void settourview(int edittourArg, int mode, int show_tourlocusArg,
                  float tour_global_tensionArg) {
@@ -776,7 +749,6 @@ int getframe() {
 }
 
 float gettime() { return global_times[itimes]; }
-/* ------------------ settime ------------------------ */
 
 int settime(float timeval) {
   PRINTF("setting time to %f\n\n", timeval);
@@ -889,7 +861,6 @@ void set_colorbar(int value) {
   }
 }
 
-// colorbar visibility
 void set_colorbar_visibility_vertical(int setting) {
   visColorbarVertical = setting;
   if (visColorbarVertical == 0) PRINTF("Vertical Colorbar hidden\n");
@@ -954,7 +925,6 @@ int get_colorbar_visibility() { return get_colorbar_visibility_vertical(); }
 
 void toggle_colorbar_visibility() { toggle_colorbar_visibility_vertical(); }
 
-// timebar visibility
 void set_timebar_visibility(int setting) {
   visTimebar = setting;
   if (visTimebar == 0) PRINTF("Time bar hidden\n");
@@ -984,7 +954,6 @@ void toggle_title_visibility() {
   if (vis_title_fds == 1) PRINTF("Title visible\n");
 }
 
-// smv_version visibility
 void set_smv_version_visibility(int setting) {
   vis_title_smv_version = setting;
   if (vis_title_smv_version == 0) PRINTF("SMV Version hidden\n");
@@ -999,7 +968,6 @@ void toggle_smv_version_visibility() {
   if (vis_title_smv_version == 1) PRINTF("SMV Version visible\n");
 }
 
-// CHID visibility
 void set_chid_visibility(int setting) {
   vis_title_CHID = setting;
   if (vis_title_CHID == 0) PRINTF("CHID hidden\n");
@@ -1408,13 +1376,13 @@ int blockage_outline_color(int setting) {
   return 0;
 }
 
-/** Determine how the blockages should be displayed.
- * The 'setting' integer is used as following:
- * 0 - grid - Snapped to the grid as used by FDS.
- * 1 - exact - As specified.
- * 2 - cad - Using CAD geometry.
- * This is used for the BLOCKLOCATION .ini option.
- */
+/// @brief Determine how the blockages should be displayed. This is used for the
+/// BLOCKLOCATION .ini option.
+/// @param setting An integer dictating the display mode as follows:
+///   0 - grid - Snapped to the grid as used by FDS.
+///   1 - exact - As specified.
+///   2 - cad - Using CAD geometry.
+/// @return
 int blockage_locations(int setting) {
   switch (setting) {
   case 0:
@@ -1441,11 +1409,10 @@ void setframe(int framenumber) {
   UpdateTimeLabels();
 }
 
-/* ------------------ loadvolsmoke ------------------------ */
-/*
-  Load files needed to view volume rendered smoke. One may either load files for
-  all meshes or for one particular mesh. Use meshnumber = -1 for all meshes.
-*/
+/// @brief Load files needed to view volume rendered smoke. One may either load
+/// files for all meshes or for one particular mesh. Use meshnumber = -1 for all
+/// meshes.
+/// @param meshnumber
 void loadvolsmoke(int meshnumber) {
   int imesh;
 
@@ -1463,11 +1430,11 @@ void loadvolsmoke(int meshnumber) {
   }
 }
 
-/* ------------------ loadvolsmokeframe ------------------------ */
-/*
-  As with loadvolsmoke, but for a single frame indicated my framenumber. Flag is
-  set to 1 when calling from a script. Reason unkown.
-*/
+/// @brief As with loadvolsmoke, but for a single frame indicated my
+/// framenumber. Flag is set to 1 when calling from a script. Reason unkown.
+/// @param meshnumber
+/// @param framenumber
+/// @param flag
 void loadvolsmokeframe(int meshnumber, int framenumber, int flag) {
   int framenum, index;
   int first = 1;
@@ -1509,8 +1476,6 @@ void loadvolsmokeframe(int meshnumber, int framenumber, int flag) {
   Keyboard('r', FROM_SMOKEVIEW);
   if (flag == 1) script_render = 1; // called when only rendering a single frame
 }
-
-/* ------------------ load3dsmoke ------------------------ */
 
 void load3dsmoke(const char *smoke_type) {
   int i;
@@ -1568,13 +1533,18 @@ void load3dsmoke(const char *smoke_type) {
   updatemenu = 1;
 }
 
-void rendertype(const char *type) {
-#ifdef pp_GLUI
-  if (STRCMP(type, "JPG") == 0) {
-    UpdateRenderType(JPEG);
+int set_rendertype(const char *type) {
+  if (STRCMP(type, "JPG") == 0 || STRCMP(type, "JPEG") == 0) {
+    render_filetype = JPEG;
+    return 0;
+  } else if (STRCMP(type, "PNG") == 0) {
+    render_filetype = PNG;
+    return 0;
   } else {
-    UpdateRenderType(PNG);
+    return 1;
   }
+#ifdef pp_GLUI
+  UpdateRenderType(render_filetype);
 #endif
 }
 
@@ -1604,8 +1574,6 @@ void makemovie(const char *name, const char *base, float framerate) {
 #endif
 }
 
-/* ------------------ script_loadtour ------------------------ */
-
 int loadtour(const char *tourname) {
   int i;
   int count = 0;
@@ -1633,8 +1601,6 @@ int loadtour(const char *tourname) {
   updatemenu = 1;
   return errorcode;
 }
-
-/* ------------------ loadparticles ------------------------ */
 
 void loadparticles(const char *name) {
   int i;
@@ -1672,8 +1638,6 @@ void loadparticles(const char *name) {
   updatemenu = 1;
 }
 
-/* ------------------ partclasscolor ------------------------ */
-
 void partclasscolor(const char *color) {
   int i;
   int count = 0;
@@ -1692,8 +1656,6 @@ void partclasscolor(const char *color) {
     fprintf(stderr, "*** Error: particle class color: %s failed to be set\n",
             color);
 }
-
-/* ------------------ partclasstype ------------------------ */
 
 void partclasstype(const char *part_type) {
   int i;
@@ -1723,8 +1685,6 @@ void partclasstype(const char *part_type) {
             "set\n",
             part_type);
 }
-
-/* ------------------ script_plot3dprops ------------------------ */
 
 void plot3dprops(int variable_index, int showvector, int vector_length_index,
                  int display_type, float vector_length) {
@@ -1779,15 +1739,6 @@ void plot3dprops(int variable_index, int showvector, int vector_length_index,
   }
 }
 
-// TODO: this function uses 5 int script values, but the documentation only
-// lists three. Find out what is going on here.
-// /* ------------------ script_showplot3ddata ------------------------ */
-//
-// void script_showplot3ddata(int meshnumber, int plane_orientation, int
-// display,
-//                            float position) {
-/* ------------------ ScriptShowPlot3dData ------------------------ */
-
 void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
                     int showhide, float position, int isolevel) {
   meshdata *meshi;
@@ -1841,8 +1792,6 @@ void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
   // GLUTPOSTREDISPLAY;
 }
 
-/* ------------------ loadplot3d ------------------------ */
-
 void loadplot3d(int meshnumber, float time_local) {
   int i;
   int blocknum;
@@ -1869,8 +1818,6 @@ void loadplot3d(int meshnumber, float time_local) {
 
   // UpdateMenu();
 }
-
-/* ------------------ loadiso ------------------------ */
 
 void loadiso(const char *type) {
   int i;
@@ -1906,8 +1853,6 @@ void loadiso(const char *type) {
   force_redisplay = 1;
   updatemenu = 1;
 }
-
-/* ------------------ loadslice ------------------------ */
 
 void loadslice(const char *type, int axis, float distance) {
   int i;
@@ -1945,11 +1890,7 @@ void loadslice(const char *type, int axis, float distance) {
             type);
 }
 
-/* ------------------ loadsliceindex -------------------- */
-
 void loadsliceindex(int index) { LoadSlicei(SET_SLICECOLOR, index); }
-
-/* ------------------ loadvslice ------------------------ */
 
 void loadvslice(const char *type, int axis, float distance) {
   int i;
@@ -1984,8 +1925,6 @@ void loadvslice(const char *type, int axis, float distance) {
             "to load\n",
             type);
 }
-
-/* ------------------ unloadslice ------------------------ */
 
 void unloadslice(int value) {
   int errorcode, i;
@@ -2050,8 +1989,6 @@ void unloadslice(int value) {
   }
 }
 
-/* ------------------ unloadall ------------------------ */
-
 void unloadall() {
   int errorcode;
   int i;
@@ -2106,14 +2043,10 @@ void unloadall() {
 
 void unloadtour() { TourMenu(MENU_TOUR_MANUAL); }
 
-/* ------------------ exit_smokeview ------------------------ */
-
 void exit_smokeview() {
   PRINTF("exiting...\n");
   exit(EXIT_SUCCESS);
 }
-
-/* ------------------ setviewpoint ------------------------ */
 
 int setviewpoint(const char *viewpoint) {
   cameradata *ca;
@@ -2266,8 +2199,6 @@ void set_sceneclip_z_max(int flag, float value) {
 #endif
 }
 
-/* ------------------ setrenderdir ------------------------ */
-
 int setrenderdir(const char *dir) {
   // TODO: as lua gives us consts, but most smv code uses non-const, we
   // must make a non-const copy
@@ -2308,21 +2239,16 @@ int setrenderdir(const char *dir) {
   }
 }
 
-/* ------------------ setcolorbarindex ------------------------ */
 void setcolorbarindex(int chosen_index) { UpdateRGBColors(chosen_index); }
 
-/* ------------------ setcolorbarindex ------------------------ */
 int getcolorbarindex() { return global_colorbar_index; }
 
-/* ------------------ setwindowsize ------------------------ */
 void setwindowsize(int width, int height) {
   printf("Setting window size to %dx%d\n", width, height);
   glutReshapeWindow(width, height);
   ResizeWindow(width, height);
   ReshapeCB(width, height);
 }
-
-/* ------------------ setgridvisibility ------------------------ */
 
 void setgridvisibility(int selection) {
   visGrid = selection;
@@ -2333,8 +2259,6 @@ void setgridvisibility(int selection) {
   // - NOGRID_PROBE
   if (visGrid == GRID_PROBE || visGrid == NOGRID_PROBE) visgridloc = 1;
 }
-
-/* ------------------ setgridparms ------------------------ */
 
 void setgridparms(int x_vis, int y_vis, int z_vis, int x_plot, int y_plot,
                   int z_plot) {
@@ -2474,7 +2398,7 @@ int camera_set_projection_type(int pt) {
   camera_current->projection_type = pt;
   projection_type = pt;
   ZoomMenu(UPDATE_PROJECTION);
-  camera_current->projection_type=projection_type;
+  camera_current->projection_type = projection_type;
   // 1 is orthogonal
   // 0 is perspective
   return 0;

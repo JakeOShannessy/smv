@@ -1961,7 +1961,9 @@ int lua_loadvolsmokeframe(lua_State *L) {
 ///   "PNG"
 int lua_set_rendertype(lua_State *L) {
   const char *type = lua_tostring(L, 1);
-  rendertype(type);
+  if (set_rendertype(type)) {
+    return luaL_error(L, "%s is not a valid render type", type);
+  }
   return 0;
 }
 
@@ -2767,24 +2769,14 @@ int lua_set_slice_bound_min(lua_State *L) {
 
 int lua_get_slice_bounds(lua_State *L) {
   const char *slice_type = lua_tostring(L, 1);
-  simple_bounds value = get_slice_bounds(slice_type);
+  int error = 0;
+  simple_bounds value = get_slice_bounds(slice_type, &error);
+  if (error) {
+    luaL_error(L, "Could not get slice bounds for %s", slice_type);
+  }
   lua_pushnumber(L, value.min);
   lua_pushnumber(L, value.max);
   return 2;
-}
-
-int lua_get_slice_bound_min(lua_State *L) {
-  const char *slice_type = lua_tostring(L, 1);
-  float value = get_slice_bound_min(slice_type);
-  lua_pushnumber(L, value);
-  return 1;
-}
-
-int lua_get_slice_bound_max(lua_State *L) {
-  const char *slice_type = lua_tostring(L, 1);
-  float value = get_slice_bound_max(slice_type);
-  lua_pushnumber(L, value);
-  return 1;
 }
 
 int lua_set_slice_bound_max(lua_State *L) {
@@ -5189,8 +5181,7 @@ static luaL_Reg const smvlib[] = {
     {"set_slice_bounds", lua_set_slice_bounds},
     {"set_slice_bound_min", lua_set_slice_bound_min},
     {"set_slice_bound_max", lua_set_slice_bound_max},
-    {"get_slice_bound_min", lua_get_slice_bound_min},
-    {"get_slice_bound_max", lua_get_slice_bound_max},
+    {"get_slice_bounds", lua_get_slice_bounds},
     {"loadsmvall", lua_loadsmvall},
     {"hidewindow", lua_hidewindow},
     {"yieldscript", lua_yieldscript},
