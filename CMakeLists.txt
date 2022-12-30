@@ -21,9 +21,12 @@ find_package(GLUT)
 # endif ()
 # add_subdirectory(Source/freeglut-3.2.1)
 add_subdirectory(Source/gd-2.0.15)
-add_subdirectory(Source/zlib128)
-add_subdirectory(Source/jpeg-9b)
-add_subdirectory(Source/png-1.6.21)
+# add_subdirectory(Source/zlib128)
+# add_subdirectory(Source/jpeg-9b)
+find_package(JPEG)
+find_package(PNG)
+find_package(ZLIB)
+# add_subdirectory(Source/png-1.6.21)
 
 # option(FREEGLUT_STATIC "Statically link freeglut" on)
 # if (FREEGLUT_STATIC)
@@ -132,10 +135,26 @@ target_link_libraries(smokeview
 #     ${GLUT_LIBRARIES}
 #     # ${GLUT_glut_LIBRARY_DEBUG}
     gd_static
-    png_static
-    jpeg_static
-    zlib_static
 )
+
+if (JPEG_FOUND) 
+    target_link_libraries(smokeview ${JPEG_LIBRARIES})
+else()
+    message(FATAL_ERROR "No JPEG lib")
+endif()
+
+if (PNG_FOUND) 
+    target_link_libraries(smokeview ${PNG_LIBRARIES})
+else()
+    message(FATAL_ERROR "No PNG lib")
+endif()
+
+if (ZLIB_FOUND) 
+    target_link_libraries(smokeview ${ZLIB_LIBRARIES})
+else()
+    message(FATAL_ERROR "No ZLIB")
+endif()
+
 add_compile_definitions(pp_GITHASH="6.7.21+sc.lua")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -150,11 +169,6 @@ endif()
 target_include_directories(smokeview PRIVATE
     Source/smokeview
     Source/shared
-    Source/zlib128
-    # The headers below are not for use
-    # Source/smokeview/include/glut
-    Source/jpeg-9b
-    # freeglut-3.2.1/include
     Source/gd-2.0.15
     Source/glew
     Source/glui_v2_1_beta
@@ -280,7 +294,7 @@ target_include_directories(smokezip PRIVATE
 )
 
 target_link_libraries(smokezip
-    zlib_static
+    ${ZLIB_LIBRARIES}
 )
 
 if ((NOT MACOSX) AND UNIX)
