@@ -25,18 +25,18 @@ find_package(GLEW)
 # add_subdirectory(Source/freeglut-3.2.1)
 # add_subdirectory(Source/gd-2.0.15)
 
-FetchContent_Declare(
-  GD
-  GIT_REPOSITORY https://github.com/libgd/libgd.git
-  GIT_TAG        b5319a41286107b53daa0e08e402aa1819764bdc # v2.3.3
-  OVERRIDE_FIND_PACKAGE
-)
+# FetchContent_Declare(
+#   GD
+#   GIT_REPOSITORY https://github.com/libgd/libgd.git
+#   GIT_TAG        b5319a41286107b53daa0e08e402aa1819764bdc # v2.3.3
+#   OVERRIDE_FIND_PACKAGE
+# )
 # FetchContent_Declare(
 #   Catch2
 #   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
 #   GIT_TAG        de6fe184a9ac1a06895cdd1c9b437f0a0bdf14ad # v2.13.4
 # )
-FetchContent_MakeAvailable(GD)
+# FetchContent_MakeAvailable(GD)
 # find_package(GD)
 
 # add_subdirectory(Source/zlib128)
