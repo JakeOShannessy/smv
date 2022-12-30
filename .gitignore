@@ -39,6 +39,8 @@ wind2fds_*
 *.toc
 *.gz
 Manuals/*/*Guide.pdf
+latex/
+html/
 
 # FDS output files
 *.sf

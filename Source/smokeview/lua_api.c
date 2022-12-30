@@ -462,13 +462,6 @@ int lua_loadboundaryfile(lua_State *L) {
   return 0;
 }
 
-/// @brief Print a label to stdout.
-int lua_label(lua_State *L) {
-  const char *thelabel = lua_tostring(L, 1);
-  label(thelabel);
-  return 0;
-}
-
 /// @brief Load a slice file given the type of slice, the axis along which it
 /// exists and its position along this axis.
 int lua_loadslice(lua_State *L) {
@@ -5204,7 +5197,6 @@ static luaL_Reg const smvlib[] = {
     {"loadinifile", lua_loadinifile},
     {"loadvdatafile", lua_loadvdatafile},
     {"loadboundaryfile", lua_loadboundaryfile},
-    {"label", lua_label},
     {"load3dsmoke", lua_load3dsmoke},
     {"loadvolsmoke", lua_loadvolsmoke},
     {"loadvolsmokeframe", lua_loadvolsmokeframe},

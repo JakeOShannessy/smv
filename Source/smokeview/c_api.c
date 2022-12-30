@@ -73,9 +73,9 @@ int set_slice_bound_min(const char *slice_type, int set, float value) {
 }
 
 /// @brief Set the maximum bound of a given slice quantity.
-/// @param slice_type
-/// @param set
-/// @param value
+/// @param[in] slice_type
+/// @param[in] set
+/// @param[in] value
 /// @return
 int set_slice_bound_max(const char *slice_type, int set, float value) {
   int slice_type_index = get_slice_bound_index(slice_type);
@@ -93,11 +93,11 @@ int set_slice_bound_max(const char *slice_type, int set, float value) {
 }
 
 /// @brief Set the bounds of a given slice quantity.
-/// @param slice_type
-/// @param set_valmin
-/// @param valmin
-/// @param set_valmax
-/// @param valmax
+/// @param[in] slice_type
+/// @param[in] set_valmin
+/// @param[in] valmin
+/// @param[in] set_valmax
+/// @param[in] valmax
 /// @return Non-zero on error
 int set_slice_bounds(const char *slice_type, int set_valmin, float valmin,
                      int set_valmax, float valmax) {
@@ -118,7 +118,7 @@ int set_slice_bounds(const char *slice_type, int set_valmin, float valmin,
 }
 
 /// @brief Get the slice bounds of a given slice quantity.
-/// @param slice_type
+/// @param[in] slice_type
 /// @param[out] error
 /// @return A simple_bounds struct containing the min and max bounds being used.
 simple_bounds get_slice_bounds(const char *slice_type, int *error) {
@@ -134,7 +134,7 @@ simple_bounds get_slice_bounds(const char *slice_type, int *error) {
   return bounds;
 }
 
-/// @brief Loads a SMV file into smokeview.
+/// @brief Loads an SMV file into smokeview.
 ///
 /// This should be completely independent from the setup of smokeview, and
 /// should be able to be run multiple times (or not at all). This is based on
@@ -162,9 +162,9 @@ int loadsmvall(const char *input_filename) {
 /// @brief Takes a filepath to an smv file an finds the casename and the
 /// extension, which are returned in the 2nd and 3rd arguments (the 2nd and 3rd
 /// aguments a pre-existing strings).
-/// @param smv_filepath
-/// @param fdsprefix
-/// @param input_filename_ext
+/// @param[in] smv_filepath
+/// @param[out] fdsprefix
+/// @param[out] input_filename_ext
 /// @return
 int parse_smv_filepath(const char *smv_filepath, char *fdsprefix,
                        char *input_filename_ext) {
@@ -476,12 +476,6 @@ void loadboundaryfile(const char *filepath) {
   UpdateFrameNumber(0);
 }
 
-void label(const char *label) {
-  PRINTF("*******************************\n");
-  PRINTF("*** %s ***\n", label);
-  PRINTF("*******************************\n");
-}
-
 /// @brief Specify offset clip in pixels
 /// @param flag
 /// @param left
@@ -743,13 +737,22 @@ void settourview(int edittourArg, int mode, int show_tourlocusArg,
 #endif
 }
 
+/// @brief Get the current frame number.
+/// @return Time value in seconds.
 int getframe() {
   int framenumber = itimes;
   return framenumber;
 }
 
+/// @brief Get the time value of the current frame.
+/// @return
 float gettime() { return global_times[itimes]; }
 
+/// @brief Set the currrent time.
+///
+/// Switch to the frame with the closest time value to @p timeval.
+/// @param timeval Time in seconds
+/// @return Non-zero on error
 int settime(float timeval) {
   PRINTF("setting time to %f\n\n", timeval);
   if (global_times != NULL && nglobal_times > 0) {
@@ -798,10 +801,10 @@ int settime(float timeval) {
   }
 }
 
+/// @brief Show slices in blockages.
+/// @param setting Boolean
 void set_slice_in_obst(int setting) {
   show_slice_in_obst = setting;
-  if (show_slice_in_obst == 0) PRINTF("Not showing slices witin blockages.\n");
-  if (show_slice_in_obst == 1) PRINTF("Showing slices within blockages.\n");
   // UpdateSliceFilenum();
   // plotstate=GetPlotState(DYNAMIC_PLOTS);
   //
@@ -809,8 +812,13 @@ void set_slice_in_obst(int setting) {
   // UpdateShow();
 }
 
+/// @brief Check if slices are being shown in obstructions.
+/// @return
 int get_slice_in_obst() { return show_slice_in_obst; }
 
+/// @brief Set the colorbar to one named @p name
+/// @param name
+/// @return
 int set_named_colorbar(const char *name) {
   fprintf(stderr, "Setting colorbar to: %s\n", name);
   for (int i = 0; i < ncolorbars; i++) {
@@ -832,8 +840,9 @@ int set_named_colorbar(const char *name) {
 //   return 1;
 // }
 
+/// @brief Set the colorbar to the given colorbar index.
+/// @param value
 void set_colorbar(int value) {
-  fprintf(stderr, "Setting colorbar to: %d\n", value);
   colorbartype = value;
   iso_colorbar_index = value;
   iso_colorbar = colorbarinfo + iso_colorbar_index;
@@ -939,50 +948,32 @@ void toggle_timebar_visibility() {
   if (visTimebar == 1) PRINTF("Time bar visible\n");
 }
 
-// title visibility
-void set_title_visibility(int setting) {
-  vis_title_fds = setting;
-  if (vis_title_fds == 0) PRINTF("Title hidden\n");
-  if (vis_title_fds == 1) PRINTF("Title visible\n");
-}
+/// @brief Set whether the title of the simulation is visible.
+/// @param setting Boolean value.
+void set_title_visibility(int setting) { vis_title_fds = setting; }
 
+/// @brief Check whether the title of the simulation is visible.
+/// @return
 int get_title_visibility() { return vis_title_fds; }
 
-void toggle_title_visibility() {
-  vis_title_fds = 1 - vis_title_fds;
-  if (vis_title_fds == 0) PRINTF("Title hidden\n");
-  if (vis_title_fds == 1) PRINTF("Title visible\n");
-}
+void toggle_title_visibility() { vis_title_fds = 1 - vis_title_fds; }
 
 void set_smv_version_visibility(int setting) {
   vis_title_smv_version = setting;
-  if (vis_title_smv_version == 0) PRINTF("SMV Version hidden\n");
-  if (vis_title_smv_version == 1) PRINTF("SMV Version visible\n");
 }
 
 int get_smv_version_visibility() { return vis_title_smv_version; }
 
 void toggle_smv_version_visibility() {
   vis_title_smv_version = 1 - vis_title_smv_version;
-  if (vis_title_smv_version == 0) PRINTF("SMV Version hidden\n");
-  if (vis_title_smv_version == 1) PRINTF("SMV Version visible\n");
 }
 
-void set_chid_visibility(int setting) {
-  vis_title_CHID = setting;
-  if (vis_title_CHID == 0) PRINTF("CHID hidden\n");
-  if (vis_title_CHID == 1) PRINTF("CHID visible\n");
-}
+void set_chid_visibility(int setting) { vis_title_CHID = setting; }
 
 int get_chid_visibility() { return vis_title_CHID; }
 
-void toggle_chid_visibility() {
-  vis_title_CHID = 1 - vis_title_CHID;
-  if (vis_title_CHID == 0) PRINTF("CHID hidden\n");
-  if (vis_title_CHID == 1) PRINTF("CHIDe visible\n");
-}
+void toggle_chid_visibility() { vis_title_CHID = 1 - vis_title_CHID; }
 
-// blockages visibility
 void blockages_show_all() {
   if (isZoneFireModel) visFrame = 1;
   /*
@@ -1011,22 +1002,6 @@ void blockages_hide_all() {
   PRINTF("Blockages Hide All\n");
 }
 
-// surfaces visibility
-// void surfaces_show_all() {
-//     if(isZoneFireModel)visFrame=1;
-//     /*
-//     visFloor=1;
-//     visWalls=1;
-//     visCeiling=1;
-//     */
-//     show_faces_shaded=1;
-//     visVents=1;
-//     BlockageMenu(visBLOCKAsInput);
-//     PRINTF("Blockages Show All\n");
-// }
-
-// void ImmersedMenu(int value);
-// void BlockageMenu(int value);
 void surfaces_hide_all() {
   visVents = 0;
   visOpenVents = 0;
@@ -1049,8 +1024,6 @@ void set_axis_visibility(int setting) {
   visaxislabels = setting;
 #ifdef pp_GLUI
   UpdateVisAxisLabels();
-  if (visaxislabels == 0) PRINTF("Axis labels hidden\n");
-  if (visaxislabels == 1) PRINTF("Axis labels visible\n");
 #endif
 }
 
@@ -1061,8 +1034,6 @@ void toggle_axis_visibility() {
 #ifdef pp_GLUI
   UpdateVisAxisLabels();
 #endif
-  if (visaxislabels == 0) PRINTF("Axis labels hidden\n");
-  if (visaxislabels == 1) PRINTF("Axis labels visible\n");
 }
 
 // framelabel visibility
@@ -1077,8 +1048,6 @@ void set_framelabel_visibility(int setting) {
       UpdateTimes();
     }
   }
-  if (visFramelabel == 0) PRINTF("Frame label hidden\n");
-  if (visFramelabel == 1) PRINTF("Frame label visible\n");
 }
 
 int get_framelabel_visibility() { return visFramelabel; }
@@ -1094,160 +1063,83 @@ void toggle_framelabel_visibility() {
       UpdateTimes();
     }
   }
-  if (visFramelabel == 0) PRINTF("Frame label hidden\n");
-  if (visFramelabel == 1) PRINTF("Frame label visible\n");
 }
 
-// framerate visibility
-void set_framerate_visibility(int setting) {
-  visFramerate = setting;
-  if (visFramerate == 0) PRINTF("Frame rate hidden\n");
-  if (visFramerate == 1) PRINTF("Frame rate visible\n");
-}
+void set_framerate_visibility(int setting) { visFramerate = setting; }
 
 int get_framerate_visibility() { return visFramerate; }
 
-void toggle_framerate_visibility() {
-  visFramerate = 1 - visFramerate;
-  if (visFramerate == 0) PRINTF("Frame rate hidden\n");
-  if (visFramerate == 1) PRINTF("Frame rate visible\n");
-}
+void toggle_framerate_visibility() { visFramerate = 1 - visFramerate; }
 
 // grid locations visibility
-void set_gridloc_visibility(int setting) {
-  visgridloc = setting;
-  if (visgridloc == 0) PRINTF("Grid locations hidden\n");
-  if (visgridloc == 1) PRINTF("Grid locations visible\n");
-}
+void set_gridloc_visibility(int setting) { visgridloc = setting; }
 
 int get_gridloc_visibility() { return visgridloc; }
 
-void toggle_gridloc_visibility() {
-  visgridloc = 1 - visgridloc;
-  if (visgridloc == 0) PRINTF("Grid locations hidden\n");
-  if (visgridloc == 1) PRINTF("Grid locations visible\n");
-}
+void toggle_gridloc_visibility() { visgridloc = 1 - visgridloc; }
 
 // HRRPUV cutoff visibility
-void set_hrrcutoff_visibility(int setting) {
-  show_hrrcutoff_active = setting;
-  if (show_hrrcutoff_active == 0) PRINTF("HRR cutoff hidden\n");
-  if (show_hrrcutoff_active == 1) PRINTF("HRR cutoff visible\n");
-}
+void set_hrrcutoff_visibility(int setting) { show_hrrcutoff_active = setting; }
 
 int get_hrrcutoff_visibility() { return show_hrrcutoff_active; }
 
 void toggle_hrrcutoff_visibility() {
   show_hrrcutoff_active = 1 - show_hrrcutoff_active;
-  if (show_hrrcutoff_active == 0) PRINTF("HRR cutoff hidden\n");
-  if (show_hrrcutoff_active == 1) PRINTF("HRR cutoff visible\n");
 }
 
 // HRR label
-void set_hrrlabel_visibility(int setting) {
-  vis_hrr_label = setting;
-  if (show_hrrcutoff_active == 0) PRINTF("HRR label hidden\n");
-  if (show_hrrcutoff_active == 1) PRINTF("HRR label visible\n");
-}
+void set_hrrlabel_visibility(int setting) { vis_hrr_label = setting; }
 
 int get_hrrlabel_visibility() { return vis_hrr_label; }
 
-void toggle_hrrlabel_visibility() {
-  vis_hrr_label = 1 - vis_hrr_label;
-  if (show_hrrcutoff_active == 0) PRINTF("HRR label hidden\n");
-  if (show_hrrcutoff_active == 1) PRINTF("HRR label visible\n");
-}
+void toggle_hrrlabel_visibility() { vis_hrr_label = 1 - vis_hrr_label; }
 
 // memory load
 #ifdef pp_memstatus
-void set_memload_visibility(int setting) {
-  visAvailmemory = setting;
-  if (visAvailmemory == 0) PRINTF("Memory load hidden\n");
-  if (visAvailmemory == 1) PRINTF("Memory load visible\n");
-}
+void set_memload_visibility(int setting) { visAvailmemory = setting; }
 
 int get_memload_visibility() { return visAvailmemory; }
 
-void toggle_memload_visibility() {
-  visAvailmemory = 1 - visAvailmemory;
-  if (visAvailmemory == 0) PRINTF("Memory load hidden\n");
-  if (visAvailmemory == 1) PRINTF("Memory load visible\n");
-}
+void toggle_memload_visibility() { visAvailmemory = 1 - visAvailmemory; }
 #endif
 
 // mesh label
-void set_meshlabel_visibility(int setting) {
-  visMeshlabel = setting;
-  if (visMeshlabel == 0) PRINTF("Mesh label hidden\n");
-  if (visMeshlabel == 1) PRINTF("Mesh label visible\n");
-}
+void set_meshlabel_visibility(int setting) { visMeshlabel = setting; }
 
 int get_meshlabel_visibility() { return visMeshlabel; }
 
-void toggle_meshlabel_visibility() {
-  visMeshlabel = 1 - visMeshlabel;
-  if (visMeshlabel == 0) PRINTF("Mesh label hidden\n");
-  if (visMeshlabel == 1) PRINTF("Mesh label visible\n");
-}
+void toggle_meshlabel_visibility() { visMeshlabel = 1 - visMeshlabel; }
 
 // slice average
-void set_slice_average_visibility(int setting) {
-  vis_slice_average = setting;
-  if (vis_slice_average == 0) PRINTF("Slice average hidden\n");
-  if (vis_slice_average == 1) PRINTF("Slice average visible\n");
-}
+void set_slice_average_visibility(int setting) { vis_slice_average = setting; }
 
 int get_slice_average_visibility() { return vis_slice_average; }
 
 void toggle_slice_average_visibility() {
   vis_slice_average = 1 - vis_slice_average;
-  if (vis_slice_average == 0) PRINTF("Slice average hidden\n");
-  if (vis_slice_average == 1) PRINTF("Slice average visible\n");
 }
 
 // time
-void set_time_visibility(int setting) {
-  visTimelabel = setting;
-  if (visTimelabel == 0) PRINTF("Time label hidden\n");
-  if (visTimelabel == 1) PRINTF("Time label visible\n");
-}
+void set_time_visibility(int setting) { visTimelabel = setting; }
 
 int get_time_visibility() { return visTimelabel; }
 
-void toggle_time_visibility() {
-  visTimelabel = 1 - visTimelabel;
-  if (visTimelabel == 0) PRINTF("Time label hidden\n");
-  if (visTimelabel == 1) PRINTF("Time label visible\n");
-}
+void toggle_time_visibility() { visTimelabel = 1 - visTimelabel; }
 
 // user settable ticks
-void set_user_ticks_visibility(int setting) {
-  visUSERticks = setting;
-  if (visUSERticks == 0) PRINTF("User settable ticks hidden\n");
-  if (visUSERticks == 1) PRINTF("User settable ticks visible\n");
-}
+void set_user_ticks_visibility(int setting) { visUSERticks = setting; }
 
 int get_user_ticks_visibility() { return visUSERticks; }
 
-void toggle_user_ticks_visibility() {
-  visUSERticks = 1 - visUSERticks;
-  if (visUSERticks == 0) PRINTF("User settable ticks hidden\n");
-  if (visUSERticks == 1) PRINTF("User settable ticks visible\n");
-}
+void toggle_user_ticks_visibility() { visUSERticks = 1 - visUSERticks; }
 
 // version info
-void set_version_info_visibility(int setting) {
-  vis_title_gversion = setting;
-  if (vis_title_gversion == 0) PRINTF("Version info hidden\n");
-  if (vis_title_gversion == 1) PRINTF("Version info visible\n");
-}
+void set_version_info_visibility(int setting) { vis_title_gversion = setting; }
 
 int get_version_info_visibility() { return vis_title_gversion; }
 
 void toggle_version_info_visibility() {
   vis_title_gversion = 1 - vis_title_gversion;
-  if (vis_title_gversion == 0) PRINTF("Version info hidden\n");
-  if (vis_title_gversion == 1) PRINTF("Version info visible\n");
 }
 
 void set_all_label_visibility(int setting) {
@@ -1277,8 +1169,6 @@ void set_timehms(int setting) {
 #ifdef pp_GLUI
   SetLabelControls();
 #endif
-  if (vishmsTimelabel == 0) PRINTF("Time label in h:m:s\n");
-  if (vishmsTimelabel == 1) PRINTF("Time label in s\n");
 }
 
 int get_timehms() { return vishmsTimelabel; }
@@ -1288,8 +1178,6 @@ void toggle_timehms() {
 #ifdef pp_GLUI
   SetLabelControls();
 #endif
-  if (vishmsTimelabel == 0) PRINTF("Time label in h:m:s\n");
-  if (vishmsTimelabel == 1) PRINTF("Time label in s\n");
 }
 
 void set_units(int unitclass, int unit_index) {
@@ -1317,14 +1205,14 @@ void set_unitclass_default(int unitclass) {
 // Obstacles
 // View Method
 
-/** Set the method for viewing blockages.
- * The 'setting' integer is used as following:
- * 0 - Defined in input file
- * 1 - Solid
- * 2 - Outine only
- * 3 - Outline added
- * 4 - Hidden
- */
+/// @brief Set the way blockages are rendered.
+/// @param[im] setting One of the following:
+/// - 0 - Defined in input file
+/// - 1 - Solid
+/// - 2 - Outine only
+/// - 3 - Outline added
+/// - 4 - Hidden
+/// @return
 int blockage_view_method(int setting) {
   int value;
   switch (setting) {
@@ -1354,11 +1242,11 @@ int blockage_view_method(int setting) {
   return 0;
 }
 
-/** Set the color to be used when drawing blockage outlines.
- * The 'setting' integer is used as following:
- * 0 - Use blockage
- * 1 - Use foreground
- */
+/// @brief Set the color to be used when drawing blockage outlines.
+/// @param setting One of the ofollowing
+/// - 0 - Use blockage
+/// - 1 - Use foreground
+/// @return Non-zero on error
 int blockage_outline_color(int setting) {
   switch (setting) {
   case 0:
@@ -1379,9 +1267,9 @@ int blockage_outline_color(int setting) {
 /// @brief Determine how the blockages should be displayed. This is used for the
 /// BLOCKLOCATION .ini option.
 /// @param setting An integer dictating the display mode as follows:
-///   0 - grid - Snapped to the grid as used by FDS.
-///   1 - exact - As specified.
-///   2 - cad - Using CAD geometry.
+///   - 0 - grid - Snapped to the grid as used by FDS.
+///   - 1 - exact - As specified.
+///   - 2 - cad - Using CAD geometry.
 /// @return
 int blockage_locations(int setting) {
   switch (setting) {
@@ -1989,6 +1877,7 @@ void unloadslice(int value) {
   }
 }
 
+/// @brief Unload all the currently loaded data.
 void unloadall() {
   int errorcode;
   int i;
@@ -2043,6 +1932,7 @@ void unloadall() {
 
 void unloadtour() { TourMenu(MENU_TOUR_MANUAL); }
 
+/// @brief Exit smokeview.
 void exit_smokeview() {
   PRINTF("exiting...\n");
   exit(EXIT_SUCCESS);
@@ -2068,6 +1958,15 @@ int setviewpoint(const char *viewpoint) {
   return errorcode;
 }
 
+/// @brief Switch to a preset orthographic view.
+/// @param viewpoint A string describe the view. Currently one of:
+/// - "XMIN"
+/// - "XMAX"
+/// - "YMIN"
+/// - "YMAX"
+/// - "ZMIN"
+/// - "ZMAX"
+/// @return
 int set_ortho_preset(const char *viewpoint) {
   int command;
   if (STRCMP(viewpoint, "XMIN") == 0) {
@@ -2250,13 +2149,15 @@ void setwindowsize(int width, int height) {
   ReshapeCB(width, height);
 }
 
+/// @brief Set the visibility of the grid.
+/// @param selection One of:
+/// - #NOGRID_NOPROBE
+/// - #GRID_NOPROBE
+/// - #GRID_PROBE
+/// - #NOGRID_PROBE
 void setgridvisibility(int selection) {
   visGrid = selection;
   // selection may be one of:
-  // - NOGRID_NOPROBE
-  // - GRID_NOPROBE
-  // - GRID_PROBE
-  // - NOGRID_PROBE
   if (visGrid == GRID_PROBE || visGrid == NOGRID_PROBE) visgridloc = 1;
 }
 
@@ -2275,10 +2176,9 @@ void setgridparms(int x_vis, int y_vis, int z_vis, int x_plot, int y_plot,
   if (iplotz_all > nplotz_all - 1) iplotz_all = 0;
 }
 
-/** Set the direction of the colorbar.
- * Is used for the .ini option FLIP. If the values is TRUE, the colorbar
- * runs in the opposite direction to that specified.
- */
+/// @brief Set the firection of the colorbar.
+/// @param flip Boolean. If true, the colorbar runs in the opposite direction
+/// than default.
 void setcolorbarflip(int flip) {
   colorbar_flip = flip;
 #ifdef pp_GLUI
@@ -2287,9 +2187,9 @@ void setcolorbarflip(int flip) {
   UpdateRGBColors(COLORBAR_INDEX_NONE);
 }
 
-/** Get whether the direction of the colorbar is flipped.
- */
-int getcolorbarflip(int flip) { return colorbar_flip; }
+/// @brief Get whether the direction of the colorbar is flipped.
+/// @return 
+int getcolorbarflip() { return colorbar_flip; }
 
 // Camera API
 // These function live-modify the current view by modifying "camera_current".
@@ -2317,9 +2217,6 @@ void camera_set_viewdir(float xcen, float ycen, float zcen) {
   camera_current->xcen = xcen;
   camera_current->ycen = ycen;
   camera_current->zcen = zcen;
-  // camera_set_xcen(xcen);
-  // camera_set_ycen(ycen);
-  // camera_set_zcen(zcen);
 }
 
 // xcen
@@ -2418,6 +2315,10 @@ int set_backgroundcolor(float r, float g, float b) {
   backgroundbasecolor[0] = r;
   backgroundbasecolor[1] = g;
   backgroundbasecolor[2] = b;
+#ifdef pp_GLUI
+  SetColorControls(void);
+#endif
+  GLUTPOSTREDISPLAY;
   return 0;
 } // BACKGROUNDCOLOR
 
@@ -2519,6 +2420,12 @@ int set_directioncolor(float r, float g, float b) {
   return 0;
 } // DIRECTIONCOLOR
 
+
+/// @brief Set whether the foreground/background colors are flipped.
+///
+/// By default they are flipped.
+/// @param v 
+/// @return 
 int set_flip(int v) {
   background_flip = v;
   return 0;
