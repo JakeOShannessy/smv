@@ -272,6 +272,7 @@ int set_color2bar_colors(int ncolors, float colors[][3]);
 int set_diffuselight(float r, float g, float b);    // DIFFUSELIGHT
 int set_directioncolor(float r, float g, float b);  // DIRECTIONCOLOR
 int set_flip(int setting);                          // FLIP
+int get_flip();
 int set_foregroundcolor(float r, float g, float b); // FOREGROUNDCOLOR
 int set_heatoffcolor(float r, float g, float b);    // HEATOFFCOLOR
 int set_heatoncolor(float r, float g, float b);     // HEATONCOLOR
@@ -385,7 +386,6 @@ int set_showceiling(int v);                  // SHOWCEILING
 int set_showcolorbars(int v);                // SHOWCOLORBARS
 int set_showcvents(int a, int b);            // SHOWCVENTS
 int set_showdummyvents(int v);               // SHOWDUMMYVENTS
-int set_showevacslices(int a, int b, int c); // SHOWEVACSLICES
 int set_showfloor(int v);                    // SHOWFLOOR
 int set_showframe(int v);                    // SHOWFRAME
 int set_showframelabel(int v);               // SHOWFRAMELABEL

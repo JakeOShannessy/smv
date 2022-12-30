@@ -201,12 +201,28 @@ _color = {
             return smvlib.set_ambientlight(v.r, v.g, v.b)
         end
     },
-    backgroundcolor = {
-        -- get = function ()
-        --     return getcolorbarindex()
-        -- end,
+    flip = {
+        get = function()
+            return smvlib.get_flip()
+        end,
+        set = function(v)
+            return smvlib.set_flip(v)
+        end
+    },
+    background = {
+        get = function()
+            return smvlib.get_backgroundcolor()
+        end,
         set = function(v)
             smvlib.set_backgroundcolor(v.r, v.g, v.b)
+        end
+    },
+    foreground = {
+        get = function()
+            return smvlib.get_foregroundcolor()
+        end,
+        set = function(v)
+            smvlib.set_foregroundcolor(v.r, v.g, v.b)
         end
     },
     blockcolor = {

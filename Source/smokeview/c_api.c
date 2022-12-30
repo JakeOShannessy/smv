@@ -2431,6 +2431,10 @@ int set_flip(int v) {
   return 0;
 } // FLIP
 
+int get_flip() {
+  return background_flip;
+} 
+
 int set_foregroundcolor(float r, float g, float b) {
   foregroundbasecolor[0] = r;
   foregroundbasecolor[1] = g;

@@ -2789,6 +2789,25 @@ int lua_set_ambientlight(lua_State *L) {
   return 1;
 }
 
+int lua_get_backgroundcolor(lua_State *L) {
+  float r = lua_tonumber(L, 1);
+  float g = lua_tonumber(L, 2);
+  float b = lua_tonumber(L, 3);
+
+  lua_createtable(L, 0, 3);
+
+  lua_pushnumber(L, backgroundbasecolor[0]);
+  lua_setfield(L, -2, "r");
+
+  lua_pushnumber(L, backgroundbasecolor[1]);
+  lua_setfield(L, -2, "g");
+
+  lua_pushnumber(L, backgroundbasecolor[2]);
+  lua_setfield(L, -2, "b");
+
+  return 1;
+}
+
 int lua_set_backgroundcolor(lua_State *L) {
   float r = lua_tonumber(L, 1);
   float g = lua_tonumber(L, 2);
@@ -2984,9 +3003,33 @@ int lua_set_directioncolor(lua_State *L) {
 }
 
 int lua_set_flip(lua_State *L) {
-  int v = lua_tonumber(L, 1);
+  int v = lua_toboolean(L, 1);
   int return_code = set_flip(v);
   lua_pushnumber(L, return_code);
+  return 1;
+}
+
+int lua_get_flip(lua_State *L) {
+  lua_pushboolean(L, get_flip());
+  return 1;
+}
+
+int lua_get_foregroundcolor(lua_State *L) {
+  float r = lua_tonumber(L, 1);
+  float g = lua_tonumber(L, 2);
+  float b = lua_tonumber(L, 3);
+
+  lua_createtable(L, 0, 3);
+
+  lua_pushnumber(L, foregroundbasecolor[0]);
+  lua_setfield(L, -2, "r");
+
+  lua_pushnumber(L, foregroundbasecolor[1]);
+  lua_setfield(L, -2, "g");
+
+  lua_pushnumber(L, foregroundbasecolor[2]);
+  lua_setfield(L, -2, "b");
+
   return 1;
 }
 
@@ -5407,6 +5450,7 @@ static luaL_Reg const smvlib[] = {
     {"set_sceneclip_z_max", lua_set_sceneclip_z_max},
 
     {"set_ambientlight", lua_set_ambientlight},
+    {"get_backgroundcolor", lua_get_backgroundcolor},
     {"set_backgroundcolor", lua_set_backgroundcolor},
     {"set_blockcolor", lua_set_blockcolor},
     {"set_blockshininess", lua_set_blockshininess},
@@ -5414,7 +5458,9 @@ static luaL_Reg const smvlib[] = {
     {"set_boundcolor", lua_set_boundcolor},
     {"set_diffuselight", lua_set_diffuselight},
     {"set_directioncolor", lua_set_directioncolor},
+    {"get_flip", lua_get_flip},
     {"set_flip", lua_set_flip},
+    {"get_foregroundcolor", lua_get_foregroundcolor},
     {"set_foregroundcolor", lua_set_foregroundcolor},
     {"set_heatoffcolor", lua_set_heatoffcolor},
     {"set_heatoncolor", lua_set_heatoncolor},
@@ -5819,8 +5865,6 @@ int loadLuaScript(char *filename) {
     break;
   case LUA_ERRMEM:
     break;
-  case LUA_ERRGCMM:
-    break;
   case LUA_ERRFILE:
     fprintf(stderr, "Could not load file %s\n", filename);
     err_msg = lua_tostring(L, -1);
@@ -5882,8 +5926,6 @@ int loadSSFScript(char *filename) {
     break;
   case LUA_ERRMEM:
     break;
-  case LUA_ERRGCMM:
-    break;
   case LUA_ERRFILE:
     fprintf(stderr, "Could not load file %s\n", filename);
     err_msg = lua_tostring(L, -1);
@@ -5928,8 +5970,6 @@ int runSSFScript() {
       };
     } else if (yieldOrOkSSF == LUA_ERRMEM) {
       printf("  LUA_ERRMEM\n");
-    } else if (yieldOrOkSSF == LUA_ERRGCMM) {
-      printf("  LUA_ERRGCMM\n");
     } else {
       printf("  resume code: %i\n", yieldOrOkSSF);
     }
@@ -5967,8 +6007,6 @@ int runLuaScript() {
       };
     } else if (yieldOrOk == LUA_ERRMEM) {
       printf("  LUA_ERRMEM\n");
-    } else if (yieldOrOk == LUA_ERRGCMM) {
-      printf("  LUA_ERRGCMM\n");
     } else {
       printf("  resume code: %i\n", yieldOrOk);
     }
