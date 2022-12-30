@@ -8,10 +8,11 @@ Source0:        smokeview-%{version}.tar.gz
 Url:            https://smokecloud.io
 
 BuildRequires:  systemd, systemd-rpm-macros
-BuildRequires:  cmake
+BuildRequires:  cmake, gd-devel, freeglut-devel, glui-devel
 Requires:       bash
 Requires:       lua-filesystem
 Requires:       lua
+Requires:       gd, freeglut, glui
 
 %description
 A post-processor for FDS (Fire Dynamics Simulator).

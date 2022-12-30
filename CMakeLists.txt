@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 cmake_policy(SET CMP0091 NEW)
+include(FetchContent)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 project(smv LANGUAGES C CXX)
 
@@ -10,6 +11,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 find_package(OpenGL REQUIRED)
 # message( "OPENGL_LIBRARIES=${OPENGL_LIBRARIES}")
 find_package(GLUT)
+# find_package(GLUI)
 # if (NOT GLUT_FOUND)
 #     #TODO need to handle debug vs release
 #     message(STATUS "Local GLUT not found, using vendored freeglut")
@@ -20,7 +22,22 @@ find_package(GLUT)
 #     # message( "GLUT_LIBRARIES=${GLUT_LIBRARIES}")
 # endif ()
 # add_subdirectory(Source/freeglut-3.2.1)
-add_subdirectory(Source/gd-2.0.15)
+# add_subdirectory(Source/gd-2.0.15)
+
+FetchContent_Declare(
+  GD
+  GIT_REPOSITORY https://github.com/libgd/libgd.git
+  GIT_TAG        b5319a41286107b53daa0e08e402aa1819764bdc # v2.3.3
+  OVERRIDE_FIND_PACKAGE
+)
+# FetchContent_Declare(
+#   Catch2
+#   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+#   GIT_TAG        de6fe184a9ac1a06895cdd1c9b437f0a0bdf14ad # v2.13.4
+# )
+FetchContent_MakeAvailable(GD)
+# find_package(GD)
+
 # add_subdirectory(Source/zlib128)
 # add_subdirectory(Source/jpeg-9b)
 find_package(JPEG)
@@ -98,7 +115,7 @@ add_executable(smokeview
 option(GLUI "Use glui" on)
 if (GLUI)
     add_definitions(-Dpp_GLUI)
-    add_subdirectory(Source/glui_v2_1_beta)
+    # add_subdirectory(Source/glui_v2_1_beta)
     target_sources(smokeview PRIVATE
         Source/smokeview/glui_smoke.cpp
         Source/smokeview/glui_clip.cpp
@@ -113,7 +130,7 @@ if (GLUI)
         Source/smokeview/glui_objects.cpp
         Source/smokeview/glui_shooter.cpp
     )
-    target_link_libraries(smokeview glui_static)
+    # target_link_libraries(smokeview glui_static)
 endif()
 
 # target_include_directories(smokeview PRIVATE ${OPENGL_INCLUDE_DIRS}  )
@@ -131,11 +148,19 @@ set(SMV_LUA_CORE
 
 add_definitions(-Dpp_CMAKE)
 
-target_link_libraries(smokeview
-#     ${GLUT_LIBRARIES}
-#     # ${GLUT_glut_LIBRARY_DEBUG}
-    gd_static
-)
+# if (GD_FOUND)
+#     target_link_libraries(smokeview GD_LIBRARY)
+#     target_link_libraries(smokeview ${GD_LIBRARIES})
+#     target_include_directories(smokeview PRIVATE ${GD_INCLUDE_DIR})
+#     # message(FATAL_ERROR "No GD lib: ${GD::GD_LIBRARIES}")
+#     else()
+#     message(FATAL_ERROR "No GD lib")
+# endif()
+
+# target_link_libraries(smokeview GD_LIBRARY)
+target_link_libraries(smokeview gd)
+# message(FATAL_ERROR "No GD: ${GD_LIBRARIES}")
+
 
 if (JPEG_FOUND) 
     target_link_libraries(smokeview ${JPEG_LIBRARIES})
