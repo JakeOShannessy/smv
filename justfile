@@ -17,14 +17,18 @@ build:
 
 # Build the release binaries
 build-release:
-    cmake -B cbuild -DLUA=ON -DLUA_BUILD_BINARY=ON -DGLUI=off -DCMAKE_BUILD_TYPE=RelWithDebInfo
+    cmake -B cbuild -DLUA=ON -DLUA_BUILD_BINARY=ON -DGLUI=off -DCMAKE_BUILD_TYPE=Release
     cmake --build cbuild --config Release -j6 -v
     cmake --install cbuild --config Release --prefix dist
 
 # Build release and create MSI package
-package: build-release
+package-windows: build-release
     candle "SMVLuaInstaller.wxs"
     light "SMVLuaInstaller.wixobj"
+
+# Build release and create RPM package
+package-rpm:
+    ./buildrpm.sh
 
 # Clean the ./dist folder
 clean-dist:
