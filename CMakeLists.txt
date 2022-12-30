@@ -168,13 +168,14 @@ endif ()
 option(LUA "Include lua scripting" off)
 if (LUA)
     add_definitions(-Dpp_LUA)
-    add_subdirectory(Source/lua-5.3.1)
-    add_subdirectory(Source/lpeg-1.0.0)
+    # add_subdirectory(Source/lua-5.3.1)
+    # add_subdirectory(Source/lpeg-1.0.0)
+    find_package(Lua)
     # add_subdirectory(Source/lfs/luafilesystem-1_8_0)
     # If we are including the lua interpreter, include the appropriate sources.
     target_sources(smokeview PRIVATE Source/smokeview/lua_api.c Source/smokeview/c_api.c Source/smokeview/csv.c)
     target_include_directories(smokeview PRIVATE Source/lua-5.3.1/src)
-    target_link_libraries(smokeview lua_shared)
+    target_link_libraries(smokeview ${LUA_LIBRARIES})
 
     target_sources(smokeview PUBLIC
         Source/smvluacore/smv.lua Source/smvluacore/ssf.lua
