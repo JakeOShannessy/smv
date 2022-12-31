@@ -8,6 +8,12 @@ set_property(GLOBAL PROPERTY C_STANDARD 99)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(MACOSX TRUE)
+    add_definitions(-Dpp_OSX)
+endif()
+
+
 find_package(OpenGL REQUIRED)
 if (WIN32)
     find_package(FreeGLUT CONFIG REQUIRED)
@@ -149,11 +155,6 @@ else()
 endif()
 
 add_compile_definitions(pp_GITHASH="6.7.21+sc.lua")
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(MACOSX TRUE)
-    add_definitions(-Dpp_OSX)
-endif()
 
 target_include_directories(smokeview PRIVATE
     Source/smokeview
