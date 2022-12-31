@@ -42,7 +42,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Install linux deps
         if: runner.os == 'Linux'
-        run: sudo apt-get install build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev glew-dev
+        run: sudo apt-get install build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libglew-dev
       - name: set macos gcc
         if: runner.os == 'macOS'
         shell: bash
@@ -203,7 +203,7 @@ jobs:
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           ninja --version
           cmake --version
-          cmake -B ${{github.workspace}}\cbuild -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DGLUI=${{ matrix.glui }} -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%
+          cmake -B ${{github.workspace}}\cbuild -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DGLUI=${{ matrix.glui }} -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build ${{github.workspace}}\cbuild -j4
           copy ${{github.workspace}}\cbuild\smokeview.exe smokeview.exe
       - name: Download test data
@@ -253,7 +253,7 @@ jobs:
           set PATH=%PATH%;C:\Program Files (x86)\WiX Toolset v3.11\bin
           candle --version
           cmake --version
-          cmake -B ${{github.workspace}}\cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DGLUI=${{ matrix.glui }} -DLUA_BUILD_BINARY=${{ matrix.lua }} -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%
+          cmake -B ${{github.workspace}}\cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DGLUI=${{ matrix.glui }} -DLUA_BUILD_BINARY=${{ matrix.lua }} -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build ${{github.workspace}}\cbuild -j4 --config ${{env.BUILD_TYPE}}
           copy ${{github.workspace}}\cbuild\Release\smokeview.exe smokeview.exe
       - name: build installer
