@@ -126,6 +126,7 @@ jobs:
         run: |
           echo "CC=icc" >> $GITHUB_ENV
           echo "CXX=icpc" >> $GITHUB_ENV
+          brew install glew lua gd zlib
       - name: set linux intel compiler
         if: runner.os == 'Linux'
         shell: bash
