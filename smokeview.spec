@@ -22,7 +22,7 @@ A post-processor for FDS (Fire Dynamics Simulator).
 
 %global debug_package %{nil}
 %build
-%cmake -DLUA=ON -DGLUI=off
+%cmake -DLUA=ON -DGLUI=ON
 %cmake_build
 
 %install
