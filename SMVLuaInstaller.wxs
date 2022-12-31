@@ -75,7 +75,7 @@
                                 <File Id='window' Name='window.lua' Source='dist/bin/window.lua'></File>
                                 <File Id='lfs' Name='lfs.dll' Source='dist/bin/lfs.dll'></File>
                                 <File Id='lpeg' Name='lpeg.dll' Source='dist/bin/lpeg.dll'></File>
-                                <File Id='lua' Name='lua.dll' Source='dist/bin/lua.dll'></File>
+                                <!-- <File Id='lua' Name='lua.dll' Source='dist/bin/lua.dll'></File> -->
                             </Component>
                         </Directory>
                     </Directory>
