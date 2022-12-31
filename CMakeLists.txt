@@ -133,6 +133,26 @@ if (GLUI)
     target_link_libraries(smokeview glui_static)
 endif()
 
+option(IMGUI "Use imgui" off)
+if (IMGUI)
+    add_definitions(-Dpp_IMGUI)
+    # add_subdirectory(Libs/glui_v2_1_beta)
+    set(IMGUI_DIR "../imgui")
+    target_sources(smokeview PRIVATE
+        ${IMGUI_DIR}/imgui.cpp
+        ${IMGUI_DIR}/imgui_demo.cpp 
+        ${IMGUI_DIR}/imgui_draw.cpp 
+        ${IMGUI_DIR}/imgui_tables.cpp 
+        ${IMGUI_DIR}/imgui_widgets.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_glut.cpp 
+        ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp
+
+        Source/smokeview/gui/gui.cpp
+    )
+    # target_link_libraries(smokeview glui_static)
+    target_include_directories(smokeview PRIVATE Source/smokeview/gui ${IMGUI_DIR} ${IMGUI_DIR}/backends)
+endif()
+
 # target_include_directories(smokeview PRIVATE ${OPENGL_INCLUDE_DIRS}  )
 
 set(SMV_LUA_CORE

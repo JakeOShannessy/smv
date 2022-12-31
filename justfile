@@ -11,7 +11,7 @@ test:
 
 # Build the debug binaries
 build:
-    cmake -B cbuild -DLUA=ON -DGLUI=ON -DCMAKE_BUILD_TYPE=Debug
+    cmake -B cbuild -DLUA=ON -DGLUI=OFF -DIMGUI=ON -DCMAKE_BUILD_TYPE=Debug
     cmake --build cbuild --config Debug -j6 -v
     cmake --install cbuild --config Debug --prefix dist-debug
 

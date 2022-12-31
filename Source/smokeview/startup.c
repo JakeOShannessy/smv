@@ -15,6 +15,10 @@
 #endif
 #include "stdio_buffer.h"
 
+#ifdef pp_IMGUI
+#include "gui.h"
+#endif
+
 /* ------------------ InitDefaultCameras ------------------------ */
 
 void InitDefaultCameras(void){
@@ -702,6 +706,9 @@ void InitOpenGL(int option){
   if(option==PRINT){
     if(verbose_output==1)PRINTF("%s\n\n", _("complete"));
   }
+#ifdef pp_IMGUI
+  setupImgui();
+#endif
 }
 
 /* ------------------ Set3DSmokeStartup ------------------------ */

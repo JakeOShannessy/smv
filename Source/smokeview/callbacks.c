@@ -3963,7 +3963,7 @@ void DoStereo(void){
       ShowScene(DRAWSCENE,VIEW_RIGHT,0,0,0,NULL);
     }
     Render(VIEW_RIGHT);
-    if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
+    // if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
   }
   else if(stereotype==STEREO_LR){             // left/right stereo
     int i;
@@ -4003,7 +4003,7 @@ void DoStereo(void){
         screenWidth = MAX(screenWidth, 1);
       }
       if(render_mode == RENDER_360 && render_status == RENDER_ON)screeni->screenbuffer = GetScreenBuffer();
-      if(buffertype == DOUBLE_BUFFER)glutSwapBuffers();
+      // if(buffertype == DOUBLE_BUFFER)glutSwapBuffers();
     }
     if(render_status == RENDER_ON){
       if(render_mode == RENDER_360){
@@ -4041,7 +4041,7 @@ void DoStereo(void){
       glFlush();
     }
     Render(VIEW_CENTER);
-    if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
+    // if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
   }
   else if(stereotype==STEREO_RC){             // red/cyan stereo
     glDrawBuffer(GL_BACK);
@@ -4064,7 +4064,7 @@ void DoStereo(void){
       glFlush();
     }
     Render(VIEW_CENTER);
-    if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
+    // if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
   }
   else if(stereotype==STEREO_CUSTOM){             // custom red/blue stereo
     glDrawBuffer(GL_BACK);
@@ -4106,7 +4106,7 @@ void DoStereo(void){
       glFlush();
     }
     Render(VIEW_CENTER);
-    if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
+    // if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
     ENABLE_LIGHTING;
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_DITHER);
@@ -4304,7 +4304,7 @@ void DoNonStereo(void){
       update_rgb_test = 0;
       RGBTest();
     }
-    if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
+    // if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
   }
   else{
     int stop_rendering;
@@ -4334,7 +4334,7 @@ void DoNonStereo(void){
         for(j = 0; j<resolution_multiplier; j++){
           ShowScene(DRAWSCENE, VIEW_CENTER, 1, j*screenWidth, i*screenHeight, NULL);
           screenbuffers[ibuffer++] = GetScreenBuffer();
-          if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
+          // if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
         }
       }
 
@@ -4358,7 +4358,7 @@ void DoNonStereo(void){
         screeni = screeninfo+i;
         ShowScene(DRAWSCENE, VIEW_CENTER, 0, 0, 0, screeni);
         screeni->screenbuffer = GetScreenBuffer();
-        if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
+        // if(buffertype==DOUBLE_BUFFER)glutSwapBuffers();
       }
       MergeRenderScreenBuffers360();
 
@@ -4380,6 +4380,10 @@ void DoNonStereo(void){
 
 void DisplayCB(void){
   SNIFF_ERRORS("DisplayDB: start");
+#ifdef pp_IMGUI
+  imgui_display_start();
+#endif
+
   DoScript();
 #ifdef pp_LUA
   DoScriptLua();
@@ -4394,6 +4398,11 @@ void DisplayCB(void){
   else{
     DoStereo();
   }
+#ifdef pp_IMGUI
+  imgui_display_end();
+#endif
+  glutSwapBuffers();
+  glutPostRedisplay();
 }
 
 /* ------------------ SetMainWindow ------------------------ */
