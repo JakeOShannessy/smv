@@ -222,45 +222,48 @@ if (LUA)
         Source/smvluacore/camera.lua Source/smvluacore/window.lua
         DESTINATION bin
     )
-    FetchContent_Declare(
-    lfs
-    GIT_REPOSITORY https://github.com/lunarmodules/luafilesystem.git
-    GIT_TAG        7c6e1b013caec0602ca4796df3b1d7253a2dd258 # v1.8.0
-    )
-    FetchContent_GetProperties(lfs)
-        if(NOT lfs_POPULATED)
-            message("Cloning LFS")
-            FetchContent_Populate(lfs)
-    endif()
 
-    add_library(lfs_shared SHARED
-        ${lfs_SOURCE_DIR}/src/lfs.c
-    )
-    target_link_libraries(lfs_shared PRIVATE ${LUA_LIBRARIES})
-    target_include_directories(lfs_shared PRIVATE ${LUA_INCLUDE_DIR})
-    set_target_properties(lfs_shared PROPERTIES OUTPUT_NAME lfs)
-    install(TARGETS lfs_shared)
-
-
-    
-    FetchContent_Declare(
-        lfs
-        URL http://www.inf.puc-rio.br/~roberto/lpeg/lpeg-1.0.2.tar.gz
-        # GIT_TAG        7c6e1b013caec0602ca4796df3b1d7253a2dd258 # v1.8.0
+    if (WIN32)
+        FetchContent_Declare(lfs
+            GIT_REPOSITORY https://github.com/lunarmodules/luafilesystem.git
+            GIT_TAG        7c6e1b013caec0602ca4796df3b1d7253a2dd258 # v1.8.0
         )
-    FetchContent_GetProperties(lpeg)
-        if(NOT lpeg_POPULATED)
-            message("Cloning LPEG")
-            FetchContent_Populate(lpeg)
-    endif()
+        FetchContent_GetProperties(lfs)
+            if(NOT lfs_POPULATED)
+                message("Cloning LFS")
+                FetchContent_Populate(lfs)
+        endif()
 
-    add_library(lpeg_shared SHARED
-        ${lpeg_SOURCE_DIR}/src/lpeg.c
-    )
-    target_link_libraries(lpeg_shared PRIVATE ${LUA_LIBRARIES})
-    target_include_directories(lpeg_shared PRIVATE ${LUA_INCLUDE_DIR})
-    set_target_properties(lpeg_shared PROPERTIES OUTPUT_NAME lpeg)
-    install(TARGETS lpeg_shared)
+        add_library(lfs_shared SHARED
+            ${lfs_SOURCE_DIR}/src/lfs.c
+        )
+        target_link_libraries(lfs_shared PRIVATE ${LUA_LIBRARIES})
+        target_include_directories(lfs_shared PRIVATE ${LUA_INCLUDE_DIR})
+        set_target_properties(lfs_shared PROPERTIES OUTPUT_NAME lfs)
+        install(TARGETS lfs_shared)
+
+        FetchContent_Declare(lpeg
+            URL http://www.inf.puc-rio.br/~roberto/lpeg/lpeg-1.0.2.tar.gz
+            URL_HASH     MD5=d342571886f1abcb7afe6a83d024d583 # v1.0.2
+        )
+        FetchContent_GetProperties(lpeg)
+            if(NOT lpeg_POPULATED)
+                message("Cloning LPEG")
+                FetchContent_Populate(lpeg)
+        endif()
+
+        add_library(lpeg_shared SHARED
+            ${lpeg_SOURCE_DIR}/lpvm.c
+            ${lpeg_SOURCE_DIR}/lpcap.c
+            ${lpeg_SOURCE_DIR}/lptree.c
+            ${lpeg_SOURCE_DIR}/lpcode.c
+            ${lpeg_SOURCE_DIR}/lpprint.c
+        )
+        target_link_libraries(lpeg_shared PRIVATE ${LUA_LIBRARIES})
+        target_include_directories(lpeg_shared PRIVATE ${LUA_INCLUDE_DIR})
+        set_target_properties(lpeg_shared PROPERTIES OUTPUT_NAME lpeg)
+        install(TARGETS lpeg_shared)
+    endif()
 endif ()
 
 install(
