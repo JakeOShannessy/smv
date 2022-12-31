@@ -17,7 +17,7 @@ build:
 
 # Build the release binaries
 build-release:
-    cmake -B cbuild -DLUA=ON -DLUA_BUILD_BINARY=ON -DGLUI=off -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-static
+    cmake -B cbuild -DLUA=ON -DGLUI=ON -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-static
     cmake --build cbuild --config Release -v -j6
     cmake --install cbuild --config Release --prefix dist
 
