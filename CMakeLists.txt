@@ -130,11 +130,7 @@ add_definitions(-Dpp_CMAKE)
 
 target_link_libraries(smokeview PRIVATE GLEW::GLEW)
 # GLUT/FreeGLUT
-if (WIN32)
-    target_link_libraries(smokeview PRIVATE $<IF:$<TARGET_EXISTS:FreeGLUT::freeglut>,FreeGLUT::freeglut,FreeGLUT::freeglut_static>)
-else()
-    target_link_libraries(smokeview PRIVATE GLUT::GLUT)
-endif()
+target_link_libraries(smokeview PRIVATE $<IF:$<TARGET_EXISTS:FreeGLUT::freeglut>,FreeGLUT::freeglut,FreeGLUT::freeglut_static>)
 target_link_libraries(smokeview PRIVATE JPEG::JPEG)
 target_link_libraries(smokeview PRIVATE PNG::PNG)
 target_link_libraries(smokeview PRIVATE ZLIB::ZLIB)
