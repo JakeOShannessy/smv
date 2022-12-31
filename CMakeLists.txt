@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.23)
 cmake_policy(SET CMP0091 NEW)
 include(FetchContent)
+include(ExternalProject)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 project(smv LANGUAGES C CXX)
 
@@ -31,13 +32,31 @@ find_package(ZLIB REQUIRED)
 #   GIT_TAG        b5319a41286107b53daa0e08e402aa1819764bdc # v2.3.3
 #   OVERRIDE_FIND_PACKAGE
 # )
-# FetchContent_Declare(
-#   Catch2
-#   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-#   GIT_TAG        de6fe184a9ac1a06895cdd1c9b437f0a0bdf14ad # v2.13.4
+
+
+# ExternalProject_Add(lfs
+#     GIT_REPOSITORY https://github.com/lunarmodules/luafilesystem.git
+#     GIT_TAG        7c6e1b013caec0602ca4796df3b1d7253a2dd258 # v1.8.0
+#     DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}
+#     # URL http://url/library_code.tar.gz
+#     # UPDATE_COMMAND ""
+#     # SOURCE_DIR ${lfs_SOURCE_DIR}
+#     # BUILD_IN_SOURCE 1
+#     # BUILD_COMMAND "make -j8"
+#     # INSTALL_COMMAND "${make_lib_install_commands}"
+#     CONFIGURE_COMMAND ""
+#     BUILD_COMMAND ${CMAKE_EXE}
 # )
-# FetchContent_MakeAvailable(GD)
-# find_package(GD)
+
+# add_library(make_lib_libA STATIC IMPORTED GLOBAL)
+# set_property(TARGET make_lib_libA 
+#     PROPERTY IMPORTED_LOCATION 
+#     ${make_lib_SOURCE_DIR}/path/to/make_lib_libA.a
+# )
+
+# add_dependencies(myOtherLib make_lib)
+
+# find_package(lfs)
 
 add_executable(smokeview
     Source/smokeview/main.c
@@ -203,6 +222,45 @@ if (LUA)
         Source/smvluacore/camera.lua Source/smvluacore/window.lua
         DESTINATION bin
     )
+    FetchContent_Declare(
+    lfs
+    GIT_REPOSITORY https://github.com/lunarmodules/luafilesystem.git
+    GIT_TAG        7c6e1b013caec0602ca4796df3b1d7253a2dd258 # v1.8.0
+    )
+    FetchContent_GetProperties(lfs)
+        if(NOT lfs_POPULATED)
+            message("Cloning LFS")
+            FetchContent_Populate(lfs)
+    endif()
+
+    add_library(lfs_shared SHARED
+        ${lfs_SOURCE_DIR}/src/lfs.c
+    )
+    target_link_libraries(lfs_shared PRIVATE ${LUA_LIBRARIES})
+    target_include_directories(lfs_shared PRIVATE ${LUA_INCLUDE_DIR})
+    set_target_properties(lfs_shared PROPERTIES OUTPUT_NAME lfs)
+    install(TARGETS lfs_shared)
+
+
+    
+    FetchContent_Declare(
+        lfs
+        URL http://www.inf.puc-rio.br/~roberto/lpeg/lpeg-1.0.2.tar.gz
+        # GIT_TAG        7c6e1b013caec0602ca4796df3b1d7253a2dd258 # v1.8.0
+        )
+    FetchContent_GetProperties(lpeg)
+        if(NOT lpeg_POPULATED)
+            message("Cloning LPEG")
+            FetchContent_Populate(lpeg)
+    endif()
+
+    add_library(lpeg_shared SHARED
+        ${lpeg_SOURCE_DIR}/src/lpeg.c
+    )
+    target_link_libraries(lpeg_shared PRIVATE ${LUA_LIBRARIES})
+    target_include_directories(lpeg_shared PRIVATE ${LUA_INCLUDE_DIR})
+    set_target_properties(lpeg_shared PROPERTIES OUTPUT_NAME lpeg)
+    install(TARGETS lpeg_shared)
 endif ()
 
 install(
