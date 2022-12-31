@@ -1,14 +1,17 @@
 cmake_minimum_required(VERSION 3.23)
 cmake_policy(SET CMP0091 NEW)
 include(FetchContent)
-include(ExternalProject)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 project(smv LANGUAGES C CXX)
-
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+# Options which can be configured (along with their defaults)
+option(GLUI "Use glui" on)
+option(BETA "Include beta functionality" off)
+option(LUA "Include lua scripting" off)
+option(LUA_BUILD_BINARY "Build a lua intepreter" ON)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
     add_definitions(-Dpp_OSX)
@@ -25,38 +28,6 @@ find_package(GLEW REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
 find_package(ZLIB REQUIRED)
-
-# FetchContent_Declare(
-#   GD
-#   GIT_REPOSITORY https://github.com/libgd/libgd.git
-#   GIT_TAG        b5319a41286107b53daa0e08e402aa1819764bdc # v2.3.3
-#   OVERRIDE_FIND_PACKAGE
-# )
-
-
-# ExternalProject_Add(lfs
-#     GIT_REPOSITORY https://github.com/lunarmodules/luafilesystem.git
-#     GIT_TAG        7c6e1b013caec0602ca4796df3b1d7253a2dd258 # v1.8.0
-#     DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}
-#     # URL http://url/library_code.tar.gz
-#     # UPDATE_COMMAND ""
-#     # SOURCE_DIR ${lfs_SOURCE_DIR}
-#     # BUILD_IN_SOURCE 1
-#     # BUILD_COMMAND "make -j8"
-#     # INSTALL_COMMAND "${make_lib_install_commands}"
-#     CONFIGURE_COMMAND ""
-#     BUILD_COMMAND ${CMAKE_EXE}
-# )
-
-# add_library(make_lib_libA STATIC IMPORTED GLOBAL)
-# set_property(TARGET make_lib_libA 
-#     PROPERTY IMPORTED_LOCATION 
-#     ${make_lib_SOURCE_DIR}/path/to/make_lib_libA.a
-# )
-
-# add_dependencies(myOtherLib make_lib)
-
-# find_package(lfs)
 
 add_executable(smokeview
     Source/smokeview/main.c
@@ -119,7 +90,6 @@ add_executable(smokeview
     Source/smokeview/colortable.c
 )
 
-option(GLUI "Use glui" on)
 if (GLUI)
     add_definitions(-Dpp_GLUI)
     add_subdirectory(Libs/glui_v2_1_beta)
@@ -179,12 +149,10 @@ target_include_directories(smokeview PRIVATE
     Libs/glui_v2_1_beta
 )
 
-option(BETA "Include beta functionality" off)
 if (BETA)
     add_compile_definitions(pp_BETA)
 endif ()
 
-option(LUA "Include lua scripting" off)
 if (LUA)
     add_definitions(-Dpp_LUA)
     find_package(Lua)
@@ -263,6 +231,60 @@ if (LUA)
         target_include_directories(lpeg_shared PRIVATE ${LUA_INCLUDE_DIR})
         set_target_properties(lpeg_shared PROPERTIES OUTPUT_NAME lpeg)
         install(TARGETS lpeg_shared)
+
+
+        FetchContent_Declare(lua_exe
+            GIT_REPOSITORY https://github.com/lua/lua.git
+            GIT_TAG        5d708c3f9cae12820e415d4f89c9eacbe2ab964b # v5.4.4
+        )
+        FetchContent_GetProperties(lua_exe)
+            if(NOT lua_exe)
+                message("Cloning lua_exe")
+                FetchContent_Populate(lua_exe)
+        endif()
+        if(LUA_BUILD_BINARY)
+            add_executable(lua_exe
+                ${lua_exe_SOURCE_DIR}/lapi.c
+                ${lua_exe_SOURCE_DIR}/lauxlib.c
+                ${lua_exe_SOURCE_DIR}/lbaselib.c
+                ${lua_exe_SOURCE_DIR}/lcode.c
+                ${lua_exe_SOURCE_DIR}/lcorolib.c
+                ${lua_exe_SOURCE_DIR}/lctype.c
+                ${lua_exe_SOURCE_DIR}/ldblib.c
+                ${lua_exe_SOURCE_DIR}/ldebug.c
+                ${lua_exe_SOURCE_DIR}/ldo.c
+                ${lua_exe_SOURCE_DIR}/ldump.c
+                ${lua_exe_SOURCE_DIR}/lfunc.c
+                ${lua_exe_SOURCE_DIR}/lgc.c
+                ${lua_exe_SOURCE_DIR}/linit.c
+                ${lua_exe_SOURCE_DIR}/liolib.c
+                ${lua_exe_SOURCE_DIR}/llex.c
+                ${lua_exe_SOURCE_DIR}/lmathlib.c
+                ${lua_exe_SOURCE_DIR}/lmem.c
+                ${lua_exe_SOURCE_DIR}/loadlib.c
+                ${lua_exe_SOURCE_DIR}/lobject.c
+                ${lua_exe_SOURCE_DIR}/lopcodes.c
+                ${lua_exe_SOURCE_DIR}/loslib.c
+                ${lua_exe_SOURCE_DIR}/lparser.c
+                ${lua_exe_SOURCE_DIR}/lstate.c
+                ${lua_exe_SOURCE_DIR}/lstring.c
+                ${lua_exe_SOURCE_DIR}/lstrlib.c
+                ${lua_exe_SOURCE_DIR}/ltable.c
+                ${lua_exe_SOURCE_DIR}/ltablib.c
+                ${lua_exe_SOURCE_DIR}/ltm.c
+                ${lua_exe_SOURCE_DIR}/lua.c
+                ${lua_exe_SOURCE_DIR}/lundump.c
+                ${lua_exe_SOURCE_DIR}/lutf8lib.c
+                ${lua_exe_SOURCE_DIR}/lvm.c
+                ${lua_exe_SOURCE_DIR}/lzio.c
+            )
+            find_library(LIBM m)
+            target_link_libraries(lua_exe PUBLIC ${LIBM})
+            find_package(PkgConfig)
+            pkg_check_modules(Readline REQUIRED IMPORTED_TARGET readline)
+            target_link_libraries(lua_exe PRIVATE PkgConfig::Readline)
+            install(TARGETS lua_exe)
+        endif()
     endif()
 endif ()
 
