@@ -1,0 +1,15 @@
+{
+    "name":"smv",
+    "version-string":"0.1.0",
+    "dependencies":[
+        "zlib",
+        "freeglut",
+        "glew",
+        "libjpeg-turbo",
+        "libpng",
+        "pkgconf",
+        "libgd",
+        "lua",
+        "pthreads"
+    ]
+}
