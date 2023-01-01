@@ -362,9 +362,9 @@ target_include_directories(smokediff PRIVATE
     Source/shared
 )
 
-if (WIN32)
-    target_include_directories(smokediff PRIVATE Source/pthreads)
-endif ()
+if(WIN32)
+    target_link_libraries(smokezip PRIVATE PThreads4W::PThreads4W)
+endif()
 
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(smokediff m)
