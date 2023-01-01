@@ -1,55 +1,33 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.23)
 cmake_policy(SET CMP0091 NEW)
 include(FetchContent)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 project(smv LANGUAGES C CXX)
-
 set_property(GLOBAL PROPERTY C_STANDARD 99)
 
+# Options which can be configured (along with their defaults)
+option(GLUI "Use glui" on)
+option(BETA "Include beta functionality" off)
+option(LUA "Include lua scripting" off)
+option(LUA_BUILD_BINARY "Build a lua intepreter" ON)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(MACOSX TRUE)
+    add_definitions(-Dpp_OSX)
+endif()
+
 
 find_package(OpenGL REQUIRED)
-# message( "OPENGL_LIBRARIES=${OPENGL_LIBRARIES}")
-find_package(GLUT)
-find_package(GLEW)
-# find_package(GLUI)
-# if (NOT GLUT_FOUND)
-#     #TODO need to handle debug vs release
-#     message(STATUS "Local GLUT not found, using vendored freeglut")
-#     set(GLUT_INCLUDE_DIR "Source/freeglut-3.2.1/include")
-#     set(GLUT_LIBRARIES "Source/freeglut-3.2.1/lib/freeglut_static")
-#     set(GLUT_glut_LIBRARY_DEBUG "Source/freeglut-3.2.1/lib/freeglut_staticd")
-#     set(GLUT_glut_LIBRARY_RELEASE "Source/freeglut-3.2.1/lib/freeglut_static")
-#     # message( "GLUT_LIBRARIES=${GLUT_LIBRARIES}")
-# endif ()
-# add_subdirectory(Source/freeglut-3.2.1)
-# add_subdirectory(Source/gd-2.0.15)
-
-# FetchContent_Declare(
-#   GD
-#   GIT_REPOSITORY https://github.com/libgd/libgd.git
-#   GIT_TAG        b5319a41286107b53daa0e08e402aa1819764bdc # v2.3.3
-#   OVERRIDE_FIND_PACKAGE
-# )
-# FetchContent_Declare(
-#   Catch2
-#   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-#   GIT_TAG        de6fe184a9ac1a06895cdd1c9b437f0a0bdf14ad # v2.13.4
-# )
-# FetchContent_MakeAvailable(GD)
-# find_package(GD)
-
-# add_subdirectory(Source/zlib128)
-# add_subdirectory(Source/jpeg-9b)
-find_package(JPEG)
-find_package(PNG)
-find_package(ZLIB)
-# add_subdirectory(Source/png-1.6.21)
-
-# option(FREEGLUT_STATIC "Statically link freeglut" on)
-# if (FREEGLUT_STATIC)
-#     add_definitions(-DFREEGLUT_STATIC)
-# endif ()
+if (WIN32)
+    find_package(FreeGLUT CONFIG REQUIRED)
+else()
+    find_package(GLUT REQUIRED)
+endif()
+find_package(GLEW REQUIRED)
+find_package(JPEG REQUIRED)
+find_package(PNG REQUIRED)
+find_package(ZLIB REQUIRED)
 
 add_executable(smokeview
     Source/smokeview/main.c
@@ -112,7 +90,6 @@ add_executable(smokeview
     Source/smokeview/colortable.c
 )
 
-option(GLUI "Use glui" on)
 if (GLUI)
     add_definitions(-Dpp_GLUI)
     add_subdirectory(Libs/glui_v2_1_beta)
@@ -130,30 +107,33 @@ if (GLUI)
         Source/smokeview/glui_objects.cpp
         Source/smokeview/glui_shooter.cpp
     )
-    target_link_libraries(smokeview glui_static)
+    target_link_libraries(smokeview PRIVATE glui_static)
 endif()
 
 option(IMGUI "Use imgui" off)
 if (IMGUI)
+    FetchContent_Declare(imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG        a8df192df022ed6ac447e7b7ada718c4c4824b41 # v1.89.1
+    )
+    FetchContent_GetProperties(imgui)
+        if(NOT imgui_POPULATED)
+            message("Cloning imgui")
+            FetchContent_Populate(imgui)
+    endif()
     add_definitions(-Dpp_IMGUI)
-    # add_subdirectory(Libs/glui_v2_1_beta)
-    set(IMGUI_DIR "../imgui")
     target_sources(smokeview PRIVATE
-        ${IMGUI_DIR}/imgui.cpp
-        ${IMGUI_DIR}/imgui_demo.cpp 
-        ${IMGUI_DIR}/imgui_draw.cpp 
-        ${IMGUI_DIR}/imgui_tables.cpp 
-        ${IMGUI_DIR}/imgui_widgets.cpp
-        ${IMGUI_DIR}/backends/imgui_impl_glut.cpp 
-        ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp
-
+        ${imgui_SOURCE_DIR}/imgui.cpp
+        ${imgui_SOURCE_DIR}/imgui_demo.cpp 
+        ${imgui_SOURCE_DIR}/imgui_draw.cpp 
+        ${imgui_SOURCE_DIR}/imgui_tables.cpp 
+        ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_glut.cpp 
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl2.cpp
         Source/smokeview/gui/gui.cpp
     )
-    # target_link_libraries(smokeview glui_static)
-    target_include_directories(smokeview PRIVATE Source/smokeview/gui ${IMGUI_DIR} ${IMGUI_DIR}/backends)
+    target_include_directories(smokeview PRIVATE Source/smokeview/gui ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
 endif()
-
-# target_include_directories(smokeview PRIVATE ${OPENGL_INCLUDE_DIRS}  )
 
 set(SMV_LUA_CORE
     Source/smvluacore/smv.lua Source/smvluacore/ssf.lua
@@ -168,88 +148,46 @@ set(SMV_LUA_CORE
 
 add_definitions(-Dpp_CMAKE)
 
-# if (GD_FOUND)
-#     target_link_libraries(smokeview GD_LIBRARY)
-#     target_link_libraries(smokeview ${GD_LIBRARIES})
-#     target_include_directories(smokeview PRIVATE ${GD_INCLUDE_DIR})
-#     # message(FATAL_ERROR "No GD lib: ${GD::GD_LIBRARIES}")
-#     else()
-#     message(FATAL_ERROR "No GD lib")
-# endif()
-
-# target_link_libraries(smokeview GD_LIBRARY)
-target_link_libraries(smokeview gd)
-# message(FATAL_ERROR "No GD: ${GD_LIBRARIES}")
-
-
-
-if (GLEW_FOUND) 
-    target_link_libraries(smokeview ${GLEW_LIBRARIES})
-    # target_include_directories(smokeview ${GLUT_INCLUDE_DIRS})
+target_link_libraries(smokeview PRIVATE GLEW::GLEW)
+# GLUT/FreeGLUT
+if (WIN32)
+    target_link_libraries(smokeview PRIVATE $<IF:$<TARGET_EXISTS:FreeGLUT::freeglut>,FreeGLUT::freeglut,FreeGLUT::freeglut_static>)
 else()
-    message(FATAL_ERROR "No GLEW lib")
+    target_link_libraries(smokeview PRIVATE GLUT::GLUT)
 endif()
-
-if (GLUT_FOUND) 
-    target_link_libraries(smokeview ${GLUT_LIBRARIES})
-    # target_include_directories(smokeview ${GLUT_INCLUDE_DIRS})
-else()
-    message(FATAL_ERROR "No GLUT lib")
-endif()
-
-if (JPEG_FOUND) 
-    target_link_libraries(smokeview ${JPEG_LIBRARIES})
-else()
-    message(FATAL_ERROR "No JPEG lib")
-endif()
-
-if (PNG_FOUND) 
-    target_link_libraries(smokeview ${PNG_LIBRARIES})
-else()
-    message(FATAL_ERROR "No PNG lib")
-endif()
-
-if (ZLIB_FOUND) 
-    target_link_libraries(smokeview ${ZLIB_LIBRARIES})
-else()
-    message(FATAL_ERROR "No ZLIB")
+target_link_libraries(smokeview PRIVATE JPEG::JPEG)
+target_link_libraries(smokeview PRIVATE PNG::PNG)
+target_link_libraries(smokeview PRIVATE ZLIB::ZLIB)
+find_package(PkgConfig)
+pkg_check_modules(LIBGD REQUIRED IMPORTED_TARGET gdlib)
+target_link_libraries(smokeview PRIVATE PkgConfig::LIBGD)
+if (WIN32) 
+    find_package(PThreads4W REQUIRED)
+    target_link_libraries(smokeview PRIVATE PThreads4W::PThreads4W)
 endif()
 
 add_compile_definitions(pp_GITHASH="6.7.21+sc.lua")
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(MACOSX TRUE)
-    add_definitions(-Dpp_OSX)
-# else()
-#     target_link_libraries(smokeview glut32_static)
-#     add_subdirectory(Source/glut-3.7.6)
-endif()
-
-
 target_include_directories(smokeview PRIVATE
     Source/smokeview
     Source/shared
-    Source/gd-2.0.15
-    Source/glew
     Libs/glui_v2_1_beta
 )
 
-option(BETA "Include beta functionality" off)
 if (BETA)
     add_compile_definitions(pp_BETA)
 endif ()
 
-option(LUA "Include lua scripting" off)
 if (LUA)
     add_definitions(-Dpp_LUA)
-    # add_subdirectory(Source/lua-5.3.1)
-    # add_subdirectory(Source/lpeg-1.0.0)
     find_package(Lua)
-    # add_subdirectory(Source/lfs/luafilesystem-1_8_0)
-    # If we are including the lua interpreter, include the appropriate sources.
-    target_sources(smokeview PRIVATE Source/smokeview/lua_api.c Source/smokeview/c_api.c Source/smokeview/csv.c)
-    target_include_directories(smokeview PRIVATE Source/lua-5.3.1/src)
-    target_link_libraries(smokeview ${LUA_LIBRARIES})
+    target_link_libraries(smokeview PRIVATE ${LUA_LIBRARIES})
+    target_include_directories(smokeview PRIVATE ${LUA_INCLUDE_DIR})
+    target_sources(smokeview PRIVATE 
+        Source/smokeview/lua_api.c 
+        Source/smokeview/c_api.c 
+        Source/smokeview/csv.c
+    )
 
     target_sources(smokeview PUBLIC
         Source/smvluacore/smv.lua Source/smvluacore/ssf.lua
@@ -264,7 +202,6 @@ if (LUA)
         Source/smvluacore/camera.lua Source/smvluacore/window.lua
     )
     install(
-        # TARGETS smokeview
         FILES
         Source/smvluacore/smv.lua Source/smvluacore/ssf.lua
         Source/smvluacore/ssfparser.lua Source/smvluacore/ssfcommands.lua
@@ -277,14 +214,105 @@ if (LUA)
         Source/smvluacore/pl3d.lua Source/smvluacore/json.lua
         Source/smvluacore/camera.lua Source/smvluacore/window.lua
         DESTINATION bin
-        # RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        # PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
-    # install(
-    #     TARGETS lua_shared
-    #     RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    #     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    # )
+
+    if (WIN32)
+        FetchContent_Declare(lfs
+            GIT_REPOSITORY https://github.com/lunarmodules/luafilesystem.git
+            GIT_TAG        7c6e1b013caec0602ca4796df3b1d7253a2dd258 # v1.8.0
+        )
+        FetchContent_GetProperties(lfs)
+            if(NOT lfs_POPULATED)
+                message("Cloning LFS")
+                FetchContent_Populate(lfs)
+        endif()
+
+        add_library(lfs_shared SHARED
+            ${lfs_SOURCE_DIR}/src/lfs.c
+        )
+        target_link_libraries(lfs_shared PRIVATE ${LUA_LIBRARIES})
+        target_include_directories(lfs_shared PRIVATE ${LUA_INCLUDE_DIR})
+        set_target_properties(lfs_shared PROPERTIES OUTPUT_NAME lfs)
+        install(TARGETS lfs_shared)
+
+        FetchContent_Declare(lpeg
+            URL http://www.inf.puc-rio.br/~roberto/lpeg/lpeg-1.0.2.tar.gz
+            URL_HASH     MD5=d342571886f1abcb7afe6a83d024d583 # v1.0.2
+        )
+        FetchContent_GetProperties(lpeg)
+            if(NOT lpeg_POPULATED)
+                message("Cloning LPEG")
+                FetchContent_Populate(lpeg)
+        endif()
+
+        add_library(lpeg_shared SHARED
+            ${lpeg_SOURCE_DIR}/lpvm.c
+            ${lpeg_SOURCE_DIR}/lpcap.c
+            ${lpeg_SOURCE_DIR}/lptree.c
+            ${lpeg_SOURCE_DIR}/lpcode.c
+            ${lpeg_SOURCE_DIR}/lpprint.c
+        )
+        target_link_libraries(lpeg_shared PRIVATE ${LUA_LIBRARIES})
+        target_include_directories(lpeg_shared PRIVATE ${LUA_INCLUDE_DIR})
+        set_target_properties(lpeg_shared PROPERTIES OUTPUT_NAME lpeg)
+        install(TARGETS lpeg_shared)
+
+
+        FetchContent_Declare(lua_exe
+            GIT_REPOSITORY https://github.com/lua/lua.git
+            GIT_TAG        5d708c3f9cae12820e415d4f89c9eacbe2ab964b # v5.4.4
+        )
+        FetchContent_GetProperties(lua_exe)
+            if(NOT lua_exe)
+                message("Cloning lua_exe")
+                FetchContent_Populate(lua_exe)
+        endif()
+        if(LUA_BUILD_BINARY)
+            add_executable(lua_exe
+                ${lua_exe_SOURCE_DIR}/lapi.c
+                ${lua_exe_SOURCE_DIR}/lauxlib.c
+                ${lua_exe_SOURCE_DIR}/lbaselib.c
+                ${lua_exe_SOURCE_DIR}/lcode.c
+                ${lua_exe_SOURCE_DIR}/lcorolib.c
+                ${lua_exe_SOURCE_DIR}/lctype.c
+                ${lua_exe_SOURCE_DIR}/ldblib.c
+                ${lua_exe_SOURCE_DIR}/ldebug.c
+                ${lua_exe_SOURCE_DIR}/ldo.c
+                ${lua_exe_SOURCE_DIR}/ldump.c
+                ${lua_exe_SOURCE_DIR}/lfunc.c
+                ${lua_exe_SOURCE_DIR}/lgc.c
+                ${lua_exe_SOURCE_DIR}/linit.c
+                ${lua_exe_SOURCE_DIR}/liolib.c
+                ${lua_exe_SOURCE_DIR}/llex.c
+                ${lua_exe_SOURCE_DIR}/lmathlib.c
+                ${lua_exe_SOURCE_DIR}/lmem.c
+                ${lua_exe_SOURCE_DIR}/loadlib.c
+                ${lua_exe_SOURCE_DIR}/lobject.c
+                ${lua_exe_SOURCE_DIR}/lopcodes.c
+                ${lua_exe_SOURCE_DIR}/loslib.c
+                ${lua_exe_SOURCE_DIR}/lparser.c
+                ${lua_exe_SOURCE_DIR}/lstate.c
+                ${lua_exe_SOURCE_DIR}/lstring.c
+                ${lua_exe_SOURCE_DIR}/lstrlib.c
+                ${lua_exe_SOURCE_DIR}/ltable.c
+                ${lua_exe_SOURCE_DIR}/ltablib.c
+                ${lua_exe_SOURCE_DIR}/ltm.c
+                ${lua_exe_SOURCE_DIR}/lua.c
+                ${lua_exe_SOURCE_DIR}/lundump.c
+                ${lua_exe_SOURCE_DIR}/lutf8lib.c
+                ${lua_exe_SOURCE_DIR}/lvm.c
+                ${lua_exe_SOURCE_DIR}/lzio.c
+            )
+            find_library(LIBM m)
+            target_link_libraries(lua_exe PUBLIC ${LIBM})
+            if(NOT(WIN32))
+                # Build with readline when not on windows
+                pkg_check_modules(Readline REQUIRED IMPORTED_TARGET readline)
+                target_link_libraries(lua_exe PRIVATE PkgConfig::Readline)
+                install(TARGETS lua_exe)
+            endif()
+        endif()
+    endif()
 endif ()
 
 install(
@@ -294,33 +322,39 @@ install(
 )
 
 if (WIN32)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_WIN32)
-    add_compile_definitions(PTW32_BUILD PTW32_STATIC_LIB GLEW_STATIC X64 _WIN32 WIN32 _CONSOLE)
-    target_include_directories(smokeview PRIVATE Source/pthreads)
-    target_link_libraries(smokeview pthread_static)
-    target_link_libraries(smokeview opengl32 glu32 gdi32 winmm comdlg32 hid)
-    add_subdirectory(Source/pthreads)
-    target_include_directories(smokeview PRIVATE Source/glut_gl )
-else()
-    target_include_directories(smokeview PRIVATE Source/glui_gl )
+    add_compile_definitions(X64 _WIN32 WIN32 _CONSOLE BGDWIN32 NONDLL)
 endif ()
 
 if ((NOT MACOSX) AND UNIX)
     add_definitions(-Dpp_LINUX)
-    target_link_libraries(smokeview pthread X11 Xmu GLU GL m stdc++)
+    target_link_libraries(smokeview PRIVATE pthread X11 Xmu GLU GL m stdc++)
 endif()
 if (MACOSX)
     add_definitions(-Dpp_NOQUARTZ)
-    target_link_libraries(smokeview "-framework OpenGL" "-framework GLUT")
+    target_link_libraries(smokeview PRIVATE "-framework OpenGL" "-framework GLUT")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 endif ()
 
 # Other programs
-add_executable(smokediff Source/shared/assert.c Source/shared/dmalloc.c Source/shared/histogram.c
-    Source/smokediff/IOdboundary.c Source/smokediff/IOdplot.c Source/smokediff/IOdslice.c Source/smokediff/main.c
-    Source/smokediff/readsmv.c Source/shared/file_util.c Source/shared/string_util.c Source/smokediff/utilities.c
-    Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c Source/shared/stdio_buffer.c
-    Source/smokeview/gsmv.c Source/smokeview/getdata.c Source/smokeview/color2rgb.c
+add_executable(smokediff 
+    Source/shared/assert.c 
+    Source/shared/dmalloc.c 
+    Source/shared/histogram.c
+    Source/smokediff/IOdboundary.c 
+    Source/smokediff/IOdplot.c 
+    Source/smokediff/IOdslice.c 
+    Source/smokediff/main.c
+    Source/smokediff/readsmv.c 
+    Source/shared/file_util.c 
+    Source/shared/string_util.c 
+    Source/smokediff/utilities.c
+    Source/shared/md5.c 
+    Source/shared/sha1.c 
+    Source/shared/sha256.c 
+    Source/shared/stdio_buffer.c
+    Source/smokeview/gsmv.c 
+    Source/smokeview/getdata.c 
+    Source/smokeview/color2rgb.c
 )
 target_include_directories(smokediff PRIVATE
     Source/smokediff
@@ -337,13 +371,31 @@ if ((NOT MACOSX) AND UNIX)
 endif()
 
 
-add_executable(smokezip Source/smokezip/main.c Source/smokezip/CNV3dsmoke.c Source/smokezip/CNVboundary.c
-    Source/smokezip/CNVpart.c Source/smokezip/CNVplot3d.c Source/smokezip/CNVslice.c Source/shared/assert.c
-    Source/shared/csphere.c Source/shared/dmalloc.c Source/smokezip/lightsmoke.c Source/shared/histogram.c
-    Source/smokezip/readfiles.c Source/smokezip/utilities.c Source/shared/isobox.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/smokezip/threader.c Source/shared/compress.c Source/shared/md5.c
-    Source/shared/sha1.c Source/shared/sha256.c Source/shared/stdio_buffer.c
-    Source/smokeview/gsmv.c Source/smokeview/getdata.c
+add_executable(smokezip 
+    Source/smokezip/main.c 
+    Source/smokezip/CNV3dsmoke.c 
+    Source/smokezip/CNVboundary.c
+    Source/smokezip/CNVpart.c 
+    Source/smokezip/CNVplot3d.c 
+    Source/smokezip/CNVslice.c 
+    Source/shared/assert.c
+    Source/shared/csphere.c 
+    Source/shared/dmalloc.c 
+    Source/smokezip/lightsmoke.c 
+    Source/shared/histogram.c
+    Source/smokezip/readfiles.c 
+    Source/smokezip/utilities.c 
+    Source/shared/isobox.c 
+    Source/shared/file_util.c
+    Source/shared/string_util.c 
+    Source/smokezip/threader.c 
+    Source/shared/compress.c 
+    Source/shared/md5.c
+    Source/shared/sha1.c 
+    Source/shared/sha256.c 
+    Source/shared/stdio_buffer.c
+    Source/smokeview/gsmv.c 
+    Source/smokeview/getdata.c
 )
 
 target_include_directories(smokezip PRIVATE
@@ -353,22 +405,26 @@ target_include_directories(smokezip PRIVATE
     Source/zlib128
 )
 
-target_link_libraries(smokezip
-    ${ZLIB_LIBRARIES}
-)
-
-if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(smokezip pthread m)
+target_link_libraries(smokezip PRIVATE ZLIB::ZLIB)
+if(WIN32)
+    target_link_libraries(smokezip PRIVATE PThreads4W::PThreads4W)
 endif()
 
-if (WIN32)
-    target_include_directories(smokezip PRIVATE Source/pthreads)
-    target_link_libraries(smokezip pthread_static)
-endif ()
+if ((NOT MACOSX) AND UNIX)
+    target_link_libraries(smokezip PRIVATE pthread m)
+endif()
+
 
 # background
-add_executable(background Source/background/main.c Source/shared/assert.c Source/shared/dmalloc.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
+add_executable(background 
+    Source/background/main.c 
+    Source/shared/assert.c 
+    Source/shared/dmalloc.c 
+    Source/shared/file_util.c
+    Source/shared/string_util.c 
+    Source/shared/md5.c 
+    Source/shared/sha1.c 
+    Source/shared/sha256.c
     Source/shared/stdio_buffer.c
 )
 
@@ -382,8 +438,15 @@ if ((NOT MACOSX) AND UNIX)
 endif()
 
 # convert
-add_executable(convert Source/convert/main.c Source/shared/assert.c Source/shared/dmalloc.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
+add_executable(convert 
+    Source/convert/main.c 
+    Source/shared/assert.c 
+    Source/shared/dmalloc.c 
+    Source/shared/file_util.c
+    Source/shared/string_util.c 
+    Source/shared/md5.c 
+    Source/shared/sha1.c 
+    Source/shared/sha256.c
     Source/shared/stdio_buffer.c
 )
 
@@ -397,9 +460,17 @@ if ((NOT MACOSX) AND UNIX)
 endif()
 
 # env2mod
-add_executable(env2mod Source/env2mod/main.c Source/shared/assert.c Source/shared/dmalloc.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
-    Source/shared/stdio_buffer.c Source/env2mod/env2mod.c
+add_executable(env2mod 
+    Source/env2mod/main.c 
+    Source/shared/assert.c 
+    Source/shared/dmalloc.c 
+    Source/shared/file_util.c
+    Source/shared/string_util.c 
+    Source/shared/md5.c 
+    Source/shared/sha1.c 
+    Source/shared/sha256.c
+    Source/shared/stdio_buffer.c 
+    Source/env2mod/env2mod.c
 )
 
 target_include_directories(env2mod PRIVATE
@@ -412,8 +483,15 @@ if ((NOT MACOSX) AND UNIX)
 endif()
 
 # flush
-add_executable(flush Source/flush/main.c Source/shared/assert.c Source/shared/dmalloc.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
+add_executable(flush 
+    Source/flush/main.c 
+    Source/shared/assert.c 
+    Source/shared/dmalloc.c 
+    Source/shared/file_util.c
+    Source/shared/string_util.c 
+    Source/shared/md5.c 
+    Source/shared/sha1.c 
+    Source/shared/sha256.c
     Source/shared/stdio_buffer.c
 )
 
@@ -427,17 +505,28 @@ if ((NOT MACOSX) AND UNIX)
 endif()
 
 # get_time
-add_executable(get_time Source/get_time/get_time.c)
+add_executable(get_time 
+    Source/get_time/get_time.c
+)
 
 # getdate
-add_executable(getdate Source/getdate/main.c)
+add_executable(getdate 
+    Source/getdate/main.c
+)
 
 target_include_directories(getdate PRIVATE Source/getdate)
 
 
 # hashfile
-add_executable(hashfile Source/hashfile/main.c Source/shared/assert.c Source/shared/dmalloc.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
+add_executable(hashfile 
+    Source/hashfile/main.c 
+    Source/shared/assert.c 
+    Source/shared/dmalloc.c 
+    Source/shared/file_util.c
+    Source/shared/string_util.c 
+    Source/shared/md5.c 
+    Source/shared/sha1.c 
+    Source/shared/sha256.c
     Source/shared/stdio_buffer.c
 )
 
@@ -451,8 +540,15 @@ if ((NOT MACOSX) AND UNIX)
 endif()
 
 # makepo
-add_executable(makepo Source/makepo/main.c Source/shared/assert.c Source/shared/dmalloc.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
+add_executable(makepo 
+    Source/makepo/main.c 
+    Source/shared/assert.c 
+    Source/shared/dmalloc.c 
+    Source/shared/file_util.c
+    Source/shared/string_util.c 
+    Source/shared/md5.c 
+    Source/shared/sha1.c 
+    Source/shared/sha256.c
     Source/shared/stdio_buffer.c
 )
 
@@ -466,8 +562,16 @@ if ((NOT MACOSX) AND UNIX)
 endif()
 
 # mergepo
-add_executable(mergepo Source/mergepo/main.c Source/shared/assert.c Source/shared/dmalloc.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c Source/shared/translate.c
+add_executable(mergepo 
+    Source/mergepo/main.c 
+    Source/shared/assert.c 
+    Source/shared/dmalloc.c 
+    Source/shared/file_util.c
+    Source/shared/string_util.c
+    Source/shared/md5.c 
+    Source/shared/sha1.c 
+    Source/shared/sha256.c 
+    Source/shared/translate.c
     Source/shared/stdio_buffer.c
 )
 
@@ -481,21 +585,35 @@ if ((NOT MACOSX) AND UNIX)
 endif()
 
 if (WIN32)
-# set_path
-add_executable(set_path Source/set_path/main.c Source/shared/assert.c Source/shared/dmalloc.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
-    Source/shared/stdio_buffer.c
-)
+    # set_path
+    add_executable(set_path 
+        Source/set_path/main.c 
+        Source/shared/assert.c 
+        Source/shared/dmalloc.c
+        Source/shared/file_util.c
+        Source/shared/string_util.c 
+        Source/shared/md5.c 
+        Source/shared/sha1.c 
+        Source/shared/sha256.c
+        Source/shared/stdio_buffer.c
+    )
 
-target_include_directories(set_path PRIVATE
-    Source/set_path
-    Source/shared
-)
+    target_include_directories(set_path PRIVATE
+        Source/set_path
+        Source/shared
+    )
 endif ()
 
 # sh2bat
-add_executable(sh2bat Source/sh2bat/sh2bat.c Source/shared/assert.c Source/shared/dmalloc.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
+add_executable(sh2bat 
+    Source/sh2bat/sh2bat.c 
+    Source/shared/assert.c 
+    Source/shared/dmalloc.c 
+    Source/shared/file_util.c
+    Source/shared/string_util.c 
+    Source/shared/md5.c 
+    Source/shared/sha1.c 
+    Source/shared/sha256.c
     Source/shared/stdio_buffer.c
 )
 
@@ -509,8 +627,15 @@ if ((NOT MACOSX) AND UNIX)
 endif()
 
 # timep
-add_executable(timep Source/timep/main.c Source/shared/assert.c Source/shared/dmalloc.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
+add_executable(timep 
+    Source/timep/main.c 
+    Source/shared/assert.c
+    Source/shared/dmalloc.c 
+    Source/shared/file_util.c
+    Source/shared/string_util.c 
+    Source/shared/md5.c 
+    Source/shared/sha1.c 
+    Source/shared/sha256.c
     Source/shared/stdio_buffer.c
 )
 
@@ -524,8 +649,15 @@ if ((NOT MACOSX) AND UNIX)
 endif()
 
 # wind2fds
-add_executable(wind2fds Source/wind2fds/main.c Source/shared/assert.c Source/shared/dmalloc.c Source/shared/file_util.c
-    Source/shared/string_util.c Source/shared/md5.c Source/shared/sha1.c Source/shared/sha256.c
+add_executable(wind2fds 
+    Source/wind2fds/main.c 
+    Source/shared/assert.c 
+    Source/shared/dmalloc.c 
+    Source/shared/file_util.c
+    Source/shared/string_util.c 
+    Source/shared/md5.c 
+    Source/shared/sha1.c 
+    Source/shared/sha256.c
     Source/shared/stdio_buffer.c
 )
 

@@ -11,14 +11,14 @@ test:
 
 # Build the debug binaries
 build:
-    cmake -B cbuild -DLUA=ON -DGLUI=OFF -DIMGUI=ON -DCMAKE_BUILD_TYPE=Debug
+    cmake -B cbuild -DLUA=ON -DGLUI=OFF -DIMGUI=ON -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-windows-static
     cmake --build cbuild --config Debug -j6 -v
     cmake --install cbuild --config Debug --prefix dist-debug
 
 # Build the release binaries
 build-release:
-    cmake -B cbuild -DLUA=ON -DLUA_BUILD_BINARY=ON -DGLUI=off -DCMAKE_BUILD_TYPE=Release
-    cmake --build cbuild --config Release -j6 -v
+    cmake -B cbuild -DLUA=ON -DGLUI=OFF -DIMGUI=ON -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-static
+    cmake --build cbuild --config Release -v -j6
     cmake --install cbuild --config Release --prefix dist
 
 # Build release and create MSI package

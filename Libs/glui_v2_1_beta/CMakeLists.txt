@@ -5,6 +5,12 @@ set(PROJECT_VERSION 2.37)
 
 find_package(OpenGL REQUIRED)
 
+if (WIN32)
+    find_package(FreeGLUT CONFIG REQUIRED)
+else()
+    find_package(GLUT REQUIRED)
+endif()
+
 set(GLUI_SRCS
   glui_add_controls.cpp
   glui.cpp
@@ -47,3 +53,8 @@ if (WIN32)
     # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-self-assign -Wno-misleading-indentation -Wno-sometimes-uninitialized -Wno-unused-variable -Wno-writable-strings -Wno-unused-variable")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif ()
+if (WIN32)
+    target_link_libraries(glui_static PRIVATE $<IF:$<TARGET_EXISTS:FreeGLUT::freeglut>,FreeGLUT::freeglut,FreeGLUT::freeglut_static>)
+else()
+    target_link_libraries(glui_static PRIVATE GLUT::GLUT)
+endif()
