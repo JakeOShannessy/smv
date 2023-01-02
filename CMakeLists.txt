@@ -338,7 +338,7 @@ target_include_directories(smokediff PRIVATE
 )
 
 if(WIN32)
-    target_link_libraries(smokezip PRIVATE PThreads4W::PThreads4W)
+    target_link_libraries(smokediff PRIVATE PThreads4W::PThreads4W)
 endif()
 
 if ((NOT MACOSX) AND UNIX)
