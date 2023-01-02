@@ -17,8 +17,9 @@ target_include_directories(parse_simple_slice PRIVATE
     ../Tests
     ../Source/shared
 )
-if (WIN32)
-    target_include_directories(parse_simple_slice PRIVATE ../Source/pthreads)
+if (WIN32) 
+    find_package(PThreads4W REQUIRED)
+    target_link_libraries(parse_simple_slice PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_slice m)
@@ -36,7 +37,7 @@ target_include_directories(parse_simple_bndf PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(parse_simple_bndf PRIVATE ../Source/pthreads)
+    target_link_libraries(parse_simple_bndf PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_bndf m)
@@ -55,7 +56,7 @@ target_include_directories(parse_simple_part PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(parse_simple_part PRIVATE ../Source/pthreads)
+    target_link_libraries(parse_simple_part PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_part m)
@@ -74,7 +75,7 @@ target_include_directories(parse_simple_pl3d PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(parse_simple_pl3d PRIVATE ../Source/pthreads)
+    target_link_libraries(parse_simple_pl3d PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_pl3d m)
