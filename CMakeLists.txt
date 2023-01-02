@@ -296,8 +296,6 @@ if (LUA)
                 ${lua_exe_SOURCE_DIR}/lvm.c
                 ${lua_exe_SOURCE_DIR}/lzio.c
             )
-            find_library(LIBM m)
-            target_link_libraries(lua_exe PUBLIC ${LIBM})
             if(NOT(WIN32))
                 # Build with readline when not on windows
                 pkg_check_modules(Readline REQUIRED IMPORTED_TARGET readline)
