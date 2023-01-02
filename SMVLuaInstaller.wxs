@@ -48,10 +48,10 @@
                                 <File Id='SMVLuaEXE' Name='smvlua.exe' Source='dist/bin/smokeview.exe' KeyPath='yes'>
                                 </File>
                             </Component>
-                            <Component Id='LuaComponent' Guid='eea182cb-d651-4cbf-b1f7-18b5bceee877' Win64="yes">
+                            <!-- <Component Id='LuaComponent' Guid='eea182cb-d651-4cbf-b1f7-18b5bceee877' Win64="yes">
                                 <File Id='LuaEXE' Name='lua.exe' Source='dist/bin/lua.exe' KeyPath='yes'>
                                 </File>
-                            </Component>
+                            </Component> -->
                             <Component Id='CommonRender' Guid='c9eb176c-5dbb-46f4-b0bd-c81e48de8055' Win64="yes">
                                 <File Id='bounds' Name='bounds.lua' Source='dist/bin/bounds.lua' KeyPath='yes'></File>
                                 <File Id='camera' Name='camera.lua' Source='dist/bin/camera.lua'></File>
@@ -89,7 +89,7 @@
             <ComponentRef Id='SMVLuaScript' />
             <ComponentRef Id='SMVLuaComponent' />
             <ComponentRef Id='LuaScript' />
-            <ComponentRef Id='LuaComponent' />
+            <!-- <ComponentRef Id='LuaComponent' /> -->
             <ComponentRef Id='CommonRender' />
         </Feature>
     </Product>
