@@ -190,15 +190,10 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
   if (runhtmlscript == 1) {
     DoScriptHtml();
   }
-
   STOP_TIMER(startup_time);
-  PRINTF("\n");
   if (runhtmlscript == 1) {
-    PRINTF("Time: %.1f s\n", startup_time);
     return 0;
   }
-  PRINTF("Startup time: %.1f s\n", startup_time);
-  PRINTF("\n");
 
   glutMainLoop();
   return 0;
@@ -212,7 +207,6 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
 /// included to load the scripts early in the piece, before the display
 /// callback. Both runluascript and runscript are global.
 int load_script(char *filename) {
-  fprintf(stderr, "load_script: %s\n", filename);
   if (runluascript == 1 && runscript == 1) {
     fprintf(stderr, "Both a Lua script and an SSF script cannot be run "
                     "simultaneously\n");
@@ -257,7 +251,6 @@ int load_script(char *filename) {
 int lua_loadsmvall(lua_State *L) {
   // The first argument is taken from the stack as a string.
   const char *filepath = lua_tostring(L, 1);
-  printf("lua_loadsmvall filepath: %s\n", filepath);
   // The function from the C api is called using this string.
   loadsmvall(filepath);
   // 0 arguments are returned.
@@ -278,10 +271,7 @@ int lua_renderclip(lua_State *L) {
 /// @brief Render the current frame to a file.
 int lua_render(lua_State *L) {
   lua_displayCB(L);
-  printf("performing lua render\n");
-  printf("rendering to: %s\n", script_dir_path);
   const char *basename = lua_tostring(L, 1);
-  printf("basename(lua): %s\n", basename);
   int ret = render(basename);
   lua_pushnumber(L, ret);
   return 1;
@@ -367,7 +357,6 @@ int lua_displayCB(lua_State *L) {
 /// prevents the display callback being called, and therefore the script will
 /// not continue (the script is called as part of the display callback).
 int lua_hidewindow(lua_State *L) {
-  printf("hiding window\n");
   glutHideWindow();
   // once we hide the window the display callback is never called
   return 0;
@@ -377,7 +366,6 @@ int lua_hidewindow(lua_State *L) {
 /// display is updated. It is necessary to call this before producing any
 /// outputs (such as renderings).
 int lua_yieldscript(lua_State *L) {
-  printf("yielding\n");
   lua_yield(L, 0 /*zero results*/);
   return 0;
 }
@@ -385,7 +373,6 @@ int lua_yieldscript(lua_State *L) {
 /// @brief As with lua_yieldscript, but immediately resumes the script after
 /// letting the display callback run.
 int lua_tempyieldscript(lua_State *L) {
-  printf("tempyielding\n");
   runluascript = 1;
   lua_yield(L, 0 /*zero results*/);
   return 0;
@@ -403,7 +390,6 @@ int lua_getframe(lua_State *L) {
 /// @brief Shift to a specific frame number.
 int lua_setframe(lua_State *L) {
   int f = lua_tonumber(L, 1);
-  printf("lua_api: setting frame to %d\n", f);
   setframe(f);
   return 0;
 }
@@ -573,7 +559,6 @@ int lua_set_sceneclip_z_max(lua_State *L) {
 /// @param L The lua interpreter
 /// @return Number of stack items left on stack.
 int lua_get_global_times(lua_State *L) {
-  PRINTF("lua: initialising global time table\n");
   lua_createtable(L, 0, nglobal_times);
   int i;
   for (i = 0; i < nglobal_times; i++) {
@@ -648,7 +633,6 @@ int lua_getiblanknode(lua_State *L) {
 int lua_get_meshes(lua_State *L) {
   int entries = nmeshes;
   meshdata *infotable = meshinfo;
-  PRINTF("lua: initialising mesh table\n");
   lua_createtable(L, 0, entries);
   int i;
   for (i = 0; i < entries; i++) {
@@ -742,7 +726,6 @@ int lua_get_meshes(lua_State *L) {
 
     lua_settable(L, -3);
   }
-  PRINTF("lua: done initialising mesh table\n");
   // Leaves one returned value on the stack, the mesh table.
   return 1;
 }
@@ -757,7 +740,6 @@ int lua_get_ndevices(lua_State *L) {
 int lua_get_devices(lua_State *L) {
   int entries = ndeviceinfo;
   devicedata *infotable = deviceinfo;
-  PRINTF("lua: initialising device table\n");
   lua_createtable(L, 0, entries);
   int i;
   for (i = 0; i < entries; i++) {
@@ -890,7 +872,6 @@ int access_csventry_prop(lua_State *L) {
 
 int lua_csv_is_loaded(lua_State *L) {
   const char *key = lua_tostring(L, lua_upvalueindex(1));
-  PRINTF("Loading: %s\n", key);
   csvfiledata *csventry = get_csvinfo(key);
   lua_pushboolean(L, csventry->loaded);
   return 1;
@@ -1047,7 +1028,6 @@ int lua_get_plot3dentry(lua_State *L) {
 }
 
 int lua_get_plot3dinfo(lua_State *L) {
-  PRINTF("lua: initialising plot3d table\n");
   lua_createtable(L, 0, nplot3dinfo);
   int i;
   for (i = 0; i < nplot3dinfo; i++) {
@@ -1782,7 +1762,6 @@ int lua_getslicedata(lua_State *L) {
 /// @brief Build a Lua table with information on the slices of the model.
 // TODO: change this to use userdata instead
 int lua_get_sliceinfo(lua_State *L) {
-  PRINTF("lua: initialising slice table\n");
   lua_createtable(L, 0, nsliceinfo);
   int i;
   for (i = 0; i < nsliceinfo; i++) {
@@ -1902,7 +1881,6 @@ int lua_get_csventry(lua_State *L) {
 // TODO: provide more information via this interface.
 // TODO: use metatables so that the most up-to-date information is retrieved.
 int lua_get_csvinfo(lua_State *L) {
-  PRINTF("lua: initialising csv table\n");
   lua_createtable(L, 0, ncsvfileinfo);
   int i;
   for (i = 0; i < ncsvfileinfo; i++) {
@@ -2934,7 +2912,6 @@ int lua_get_colorbar_colors(lua_State *L) {
     lua_settable(L, -3);
     rgb_ini_copy_p += 3;
   }
-  PRINTF("lua: done creating colorbar table\n");
   // Leaves one returned value on the stack, the mesh table.
   return 1;
 }
@@ -2979,7 +2956,6 @@ int lua_get_color2bar_colors(lua_State *L) {
     lua_settable(L, -3);
     rgb_ini_copy_p += 3;
   }
-  PRINTF("lua: done creating color2bar table\n");
   // Leaves one returned value on the stack, the mesh table.
   return 1;
 }
@@ -5848,7 +5824,6 @@ int loadLuaScript(char *filename) {
   int return_code = luaL_loadfile(L, filename);
   switch (return_code) {
   case LUA_OK:
-    printf("%s loaded ok\n", filename);
     break;
   case LUA_ERRSYNTAX:
     fprintf(stderr, "Syntax error loading %s\n", filename);
@@ -5890,7 +5865,6 @@ int loadSSFScript(char *filename) {
   //   } else {
   //       strncpy(filename, script_filename, 1024);
   //   }
-  printf("scriptfile: %s\n", filename);
   // The display callback needs to be run once initially.
   // PROBLEM: the display CB does not work without a loaded case.
   runscript = 0;
@@ -5909,7 +5883,6 @@ int loadSSFScript(char *filename) {
   int return_code = luaL_loadstring(L, lString);
   switch (return_code) {
   case LUA_OK:
-    printf("%s loaded ok\n", filename);
     break;
   case LUA_ERRSYNTAX:
     fprintf(stderr, "Syntax error loading %s\n", filename);
@@ -5940,17 +5913,14 @@ int loadSSFScript(char *filename) {
     }
     break;
   }
-  printf("after lua loadfile\n");
   return 0;
 }
 
 int yieldOrOkSSF = LUA_YIELD;
 int runSSFScript() {
   if (yieldOrOkSSF == LUA_YIELD) {
-    printf("running ssf script\n");
     int nresults = 0;
     yieldOrOkSSF = lua_resume(L, NULL, 0, &nresults);
-    printf("resume done\n");
     if (yieldOrOkSSF == LUA_YIELD) {
       printf("  LUA_YIELD\n");
     } else if (yieldOrOkSSF == LUA_OK) {
@@ -5975,7 +5945,6 @@ int runSSFScript() {
       printf("  resume code: %i\n", yieldOrOkSSF);
     }
   } else {
-    printf("script completed\n");
     lua_close(L);
     glutIdleFunc(NULL);
   }
@@ -5985,10 +5954,8 @@ int runSSFScript() {
 int yieldOrOk = LUA_YIELD;
 int runLuaScript() {
   if (yieldOrOk == LUA_YIELD) {
-    printf("running lua script\n");
     int nresults = 0;
     yieldOrOk = lua_resume(L, NULL, 0, &nresults);
-    printf("resume done\n");
     if (yieldOrOk == LUA_YIELD) {
       printf("  LUA_YIELD\n");
     } else if (yieldOrOk == LUA_OK) {
@@ -6013,7 +5980,6 @@ int runLuaScript() {
       printf("  resume code: %i\n", yieldOrOk);
     }
   } else {
-    printf("script completed\n");
     lua_close(L);
     glutIdleFunc(NULL);
   }
