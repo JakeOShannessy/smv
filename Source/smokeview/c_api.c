@@ -34,7 +34,6 @@ void InitMisc(void);
 void UpdateMenu(void);
 void LoadVolsmoke3DMenu(int value);
 void UnLoadVolsmoke3DMenu(int value);
-void LoadSlicei(int set_slicecolor, int value);
 void UpdateSliceBounds(void);
 void OutputSliceData(void);
 void UnloadBoundaryMenu(int value);
@@ -201,8 +200,6 @@ int parse_smv_filepath(const char *smv_filepath, char *fdsprefix,
 int loadsmv(char *input_filename, char *input_filename_ext) {
   int return_code;
   char *input_file;
-
-  return_code = -1;
 
   FREEMEMORY(part_globalbound_filename);
   NewMemory((void **)&part_globalbound_filename,
@@ -1686,6 +1683,11 @@ void loadiso(const char *type) {
   updatemenu = 1;
 }
 
+FILE_SIZE loadsliceindex(size_t index, int *errorcode) {
+  return ReadSlice(sliceinfo[index].file, (int)index, ALL_FRAMES, NULL, LOAD,
+                   SET_SLICECOLOR, errorcode);
+}
+
 void loadslice(const char *type, int axis, float distance) {
   int count = 0;
   for (int i = 0; i < nmultisliceinfo; i++) {
@@ -1715,8 +1717,6 @@ void loadslice(const char *type, int axis, float distance) {
             "load\n",
             type);
 }
-
-void loadsliceindex(int index) { LoadSlicei(SET_SLICECOLOR, index); }
 
 void loadvslice(const char *type, int axis, float distance) {
   float delta_orig;

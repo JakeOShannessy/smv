@@ -460,8 +460,12 @@ int lua_loadslice(lua_State *L) {
 
 /// @brief Load a slice based on its index in sliceinfo.
 int lua_loadsliceindex(lua_State *L) {
-  int index = lua_tonumber(L, 1);
-  loadsliceindex(index);
+  size_t index = lua_tonumber(L, 1);
+  int error = 0;
+  loadsliceindex(index, &error);
+  if (error) {
+    return luaL_error(L, "Could not load slice at index %zu", index);
+  }
   return 0;
 }
 

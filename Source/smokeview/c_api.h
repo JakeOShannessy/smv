@@ -2,7 +2,6 @@
 
 void set_colorbar(int value);
 int set_named_colorbar(const char *name);
-
 int set_slice_bounds(const char *slice_type, int set_min, float value_min,
                      int set_max, float value_max);
 int set_slice_bound_min(const char *slice_type, int set, float value);
@@ -54,7 +53,7 @@ void plot3dprops(int variable_index, int showvector, int vector_length_index,
 void loadplot3d(int meshnumber, float time_local);
 void loadiso(const char *type);
 void loadslice(const char *type, int axis, float distance);
-void loadsliceindex(int index);
+FILE_SIZE loadsliceindex(size_t index, int *errorcode);
 void loadvslice(const char *type, int axis, float distance);
 void unloadall();
 void unloadtour();
