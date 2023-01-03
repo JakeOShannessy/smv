@@ -1,20 +1,36 @@
 #include "gd.h"
 
-void set_colorbar(int value);
-int set_named_colorbar(const char *name);
-int set_slice_bounds(const char *slice_type, int set_min, float value_min,
+// Verified, the declarations below are part of the verified and test API.
+#define ERROR_CODE int
+#define ERR_OK 0
+#define ERR_NOK 1
+
+typedef struct _simple_bounds {
+  float min, max;
+} simple_bounds;
+
+
+void set_colorbar(size_t value);
+ERROR_CODE set_named_colorbar(const char *name);
+ERROR_CODE get_named_colorbar(const char *name, size_t *index);
+ERROR_CODE set_slice_bounds(const char *slice_type, int set_min, float value_min,
                      int set_max, float value_max);
-int set_slice_bound_min(const char *slice_type, int set, float value);
-int set_slice_bound_max(const char *slice_type, int set, float value);
-float get_slice_bound_min(const char *slice_type);
-float get_slice_bound_max(const char *slice_type);
+ERROR_CODE set_slice_bound_min(const char *slice_type, int set, float value);
+ERROR_CODE set_slice_bound_max(const char *slice_type, int set, float value);
+ERROR_CODE get_slice_bounds(const char *slice_type, simple_bounds *bounds);
+ERROR_CODE render(const char *filename);
+int getframe();
+void setframe(int framenumber);
+float gettime();
+int settime(float timeval);
 
-void printsliceinfo();
 
+
+
+// Non-Verified, the declarations below are of variable quality.
 int loadsmvall(const char *input_filepath);
 int loadsmv(char *input_filename, char *input_filename_ext);
 void renderclip(int flag, int left, int right, int bottom, int top);
-int render(const char *filename);
 void gsliceview(int data, int show_triangles, int show_triangulation,
                 int show_normal);
 void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
@@ -24,10 +40,6 @@ void gsliceorien(float az, float elev);
 void settourkeyframe(float keyframe_time);
 void settourview(int edittourArg, int mode, int show_tourlocusArg,
                  float tour_global_tensionArg);
-int getframe();
-void setframe(int framenumber);
-float gettime();
-int settime(float timeval);
 int loadfile(const char *filename);
 void loadinifile(const char *filepath);
 int loadvfile(const char *filepath);
@@ -55,7 +67,7 @@ void loadiso(const char *type);
 void loadslice(const char *type, int axis, float distance);
 FILE_SIZE loadsliceindex(size_t index, int *errorcode);
 void loadvslice(const char *type, int axis, float distance);
-void unloadall();
+int unloadall();
 void unloadtour();
 void exit_smokeview();
 void setcolorbarflip(int flip);
@@ -269,9 +281,9 @@ int get_colorbar_textureflag();
 int set_colorbar_contourvalue(int v);
 int set_colorbar_colors(int ncolors, float colors[][3]);
 int set_color2bar_colors(int ncolors, float colors[][3]);
-int set_diffuselight(float r, float g, float b);    // DIFFUSELIGHT
-int set_directioncolor(float r, float g, float b);  // DIRECTIONCOLOR
-int set_flip(int setting);                          // FLIP
+int set_diffuselight(float r, float g, float b);   // DIFFUSELIGHT
+int set_directioncolor(float r, float g, float b); // DIRECTIONCOLOR
+int set_flip(int setting);                         // FLIP
 int get_flip();
 int set_foregroundcolor(float r, float g, float b); // FOREGROUNDCOLOR
 int set_heatoffcolor(float r, float g, float b);    // HEATOFFCOLOR
@@ -375,36 +387,36 @@ int set_p3dsurfacesmooth(int v);                        // P3DSURFACESMOOTH
 int set_sbatstart(int v);                               // SBATSTART
 int set_scaledfont(int height2d, float height2dwidth, int thickness2d,
                    int height3d, float height3dwidth,
-                   int thickness3d);         // SCALEDFONT
-int set_showalltextures(int v);              // SHOWALLTEXTURES
-int set_showaxislabels(int v);               // SHOWAXISLABELS
-int set_showblocklabel(int v);               // SHOWBLOCKLABEL
-int set_showblocks(int v);                   // SHOWBLOCKS
-int set_showcadandgrid(int v);               // SHOWCADANDGRID
-int set_showcadopaque(int v);                // SHOWCADOPAQUE
-int set_showceiling(int v);                  // SHOWCEILING
-int set_showcolorbars(int v);                // SHOWCOLORBARS
-int set_showcvents(int a, int b);            // SHOWCVENTS
-int set_showdummyvents(int v);               // SHOWDUMMYVENTS
-int set_showfloor(int v);                    // SHOWFLOOR
-int set_showframe(int v);                    // SHOWFRAME
-int set_showframelabel(int v);               // SHOWFRAMELABEL
-int set_showframerate(int v);                // SHOWFRAMERATE
-int set_showgrid(int v);                     // SHOWGRID
-int set_showgridloc(int v);                  // SHOWGRIDLOC
-int set_showhmstimelabel(int v);             // SHOWHMSTIMELABEL
-int set_showhrrcutoff(int v);                // SHOWHRRCUTOFF
-int set_showiso(int v);                      // SHOWISO
-int set_showisonormals(int v);               // SHOWISONORMALS
-int set_showlabels(int v);                   // SHOWLABELS
-int set_showmemload(int v);                  // SHOWMEMLOAD
-int set_shownormalwhensmooth(int v);         // SHOWNORMALWHENSMOOTH
-int set_showopenvents(int a, int b);         // SHOWOPENVENTS
-int set_showothervents(int v);               // SHOWOTHERVENTS
-int set_showsensors(int a, int b);           // SHOWSENSORS
-int set_showsliceinobst(int v);              // SHOWSLICEINOBST
-int set_showsmokepart(int v);                // SHOWSMOKEPART
-int set_showsprinkpart(int v);               // SHOWSPRINKPART
+                   int thickness3d); // SCALEDFONT
+int set_showalltextures(int v);      // SHOWALLTEXTURES
+int set_showaxislabels(int v);       // SHOWAXISLABELS
+int set_showblocklabel(int v);       // SHOWBLOCKLABEL
+int set_showblocks(int v);           // SHOWBLOCKS
+int set_showcadandgrid(int v);       // SHOWCADANDGRID
+int set_showcadopaque(int v);        // SHOWCADOPAQUE
+int set_showceiling(int v);          // SHOWCEILING
+int set_showcolorbars(int v);        // SHOWCOLORBARS
+int set_showcvents(int a, int b);    // SHOWCVENTS
+int set_showdummyvents(int v);       // SHOWDUMMYVENTS
+int set_showfloor(int v);            // SHOWFLOOR
+int set_showframe(int v);            // SHOWFRAME
+int set_showframelabel(int v);       // SHOWFRAMELABEL
+int set_showframerate(int v);        // SHOWFRAMERATE
+int set_showgrid(int v);             // SHOWGRID
+int set_showgridloc(int v);          // SHOWGRIDLOC
+int set_showhmstimelabel(int v);     // SHOWHMSTIMELABEL
+int set_showhrrcutoff(int v);        // SHOWHRRCUTOFF
+int set_showiso(int v);              // SHOWISO
+int set_showisonormals(int v);       // SHOWISONORMALS
+int set_showlabels(int v);           // SHOWLABELS
+int set_showmemload(int v);          // SHOWMEMLOAD
+int set_shownormalwhensmooth(int v); // SHOWNORMALWHENSMOOTH
+int set_showopenvents(int a, int b); // SHOWOPENVENTS
+int set_showothervents(int v);       // SHOWOTHERVENTS
+int set_showsensors(int a, int b);   // SHOWSENSORS
+int set_showsliceinobst(int v);      // SHOWSLICEINOBST
+int set_showsmokepart(int v);        // SHOWSMOKEPART
+int set_showsprinkpart(int v);       // SHOWSPRINKPART
 int set_showstreak(int show, int step, int showhead, int index); // SHOWSTREAK
 int set_showterrain(int v);                                      // SHOWTERRAIN
 int set_showtetras(int a, int b);                                // SHOWTETRAS
@@ -579,11 +591,5 @@ int show_smoke3d_hideall();
 int show_slices_showall();
 int show_slices_hideall();
 int RenderFrameLuaVar(int view_mode, gdImagePtr *RENDERimage);
-
-typedef struct _simple_bounds {
-  float min, max;
-} simple_bounds;
-
-simple_bounds get_slice_bounds(const char *slice_type, int *error);
 
 #define PROPINDEX_STRIDE 2

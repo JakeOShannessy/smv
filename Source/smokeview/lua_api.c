@@ -2744,13 +2744,12 @@ int lua_set_slice_bound_min(lua_State *L) {
 
 int lua_get_slice_bounds(lua_State *L) {
   const char *slice_type = lua_tostring(L, 1);
-  int error = 0;
-  simple_bounds value = get_slice_bounds(slice_type, &error);
-  if (error) {
+  simple_bounds bounds;
+  if (get_slice_bounds(slice_type, &bounds)) {
     luaL_error(L, "Could not get slice bounds for %s", slice_type);
   }
-  lua_pushnumber(L, value.min);
-  lua_pushnumber(L, value.max);
+  lua_pushnumber(L, bounds.min);
+  lua_pushnumber(L, bounds.max);
   return 2;
 }
 
