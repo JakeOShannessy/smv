@@ -121,7 +121,7 @@ int set_slice_bounds(const char *slice_type, int set_valmin, float valmin,
 /// @param[out] error
 /// @return A simple_bounds struct containing the min and max bounds being used.
 simple_bounds get_slice_bounds(const char *slice_type, int *error) {
-  simple_bounds bounds;
+  simple_bounds bounds = {0};
   int slice_type_index = get_slice_bound_index(slice_type);
   if (slice_type_index < 0) {
     // Slice type index could not be found.
