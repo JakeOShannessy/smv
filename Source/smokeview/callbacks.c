@@ -15,6 +15,10 @@
 #endif
 #include "IOscript.h"
 
+#ifdef pp_IMGUI
+#include "gui/gui.h"
+#endif
+
 int nrenderonce=0;
 
 /* ------------------ GetGridIndex ------------------------ */
@@ -1023,6 +1027,11 @@ void UpdateMouseInfo(int flag, int xm, int ym){
 
 void MouseCB(int button, int state, int xm, int ym){
   float *eye_xyz;
+#ifdef pp_IMGUI
+  if(imgui_mouse(button,state,xm,ym)) {
+    return;
+  }
+#endif
 
 #ifdef pp_OSX_HIGHRES
   if(double_scale==1){
@@ -1540,6 +1549,11 @@ int ThrottleGpu(void){
 /* ------------------ MouseDragCB ------------------------ */
 
 void MouseDragCB(int xm, int ym){
+#ifdef pp_IMGUI
+  if (imgui_motion(xm,ym)) {
+    return;
+  }
+#endif
 #ifdef pp_OSX_HIGHRES
   if(double_scale==1){
     xm *= 2;
@@ -1714,6 +1728,7 @@ void Keyboard(unsigned char key, int flag){
 #else
     keystate = (GLUT_ACTIVE_ALT|GLUT_ACTIVE_CTRL)&GLUTGETMODIFIERS();
 #endif
+  printf("keyboard: %c, %d\n",key,keystate);
     if(scriptoutstream!=NULL&&key!='t'&&key!='r'&&key!='R'&&key!=' '&&key!='-'){
       fprintf(scriptoutstream,"KEYBOARD\n");
       switch(keystate){
@@ -3176,10 +3191,15 @@ void Keyboard(unsigned char key, int flag){
 
 /* ------------------ KeyboardCB ------------------------ */
 
-void KeyboardCB(unsigned char key, int x, int y){
-  Keyboard(key,FROM_CALLBACK);
+void KeyboardCB(unsigned char key, int x, int y) {
+#ifdef pp_IMGUI
+  if (imgui_keyboard(key, x, y)) {
+    return;
+  }
+#endif
+  Keyboard(key, FROM_CALLBACK);
   GLUTPOSTREDISPLAY;
-  updatemenu=1;
+  updatemenu = 1;
 }
 
 /* ------------------ HandleRotationType ------------------------ */
@@ -3872,6 +3892,9 @@ void AdjustY(cameradata *ca){
 
 void ReshapeCB(int width, int height){
   START_TIMER(timer_reshape);
+#ifdef pp_IMGUI
+  imgui_reshape(width,height);
+#endif
   if(disable_reshape==1)return;
   updatemenu=1;
   if(strcmp(camera_current->name,"external")!=0||in_external==0){

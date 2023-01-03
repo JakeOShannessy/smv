@@ -636,6 +636,9 @@ void InitOpenGL(int option){
 #ifdef _DEBUG
   if(option==PRINT)PRINTF("%s",_("   Initializing callbacks - "));
 #endif
+#ifdef pp_IMGUI
+  setupImgui();
+#endif
   glutSpecialUpFunc(SpecialKeyboardUpCB);
   glutKeyboardUpFunc(KeyboardUpCB);
   glutKeyboardFunc(KeyboardCB);
@@ -646,6 +649,9 @@ void InitOpenGL(int option){
   glutDisplayFunc(DisplayCB);
   glutVisibilityFunc(NULL);
   glutMenuStatusFunc(MenuStatusCB);
+
+
+
 #ifdef _DEBUG
   if(option==PRINT)PRINTF("%s\n",_("initialized"));
 #endif
@@ -706,9 +712,6 @@ void InitOpenGL(int option){
   if(option==PRINT){
     if(verbose_output==1)PRINTF("%s\n\n", _("complete"));
   }
-#ifdef pp_IMGUI
-  setupImgui();
-#endif
 }
 
 /* ------------------ Set3DSmokeStartup ------------------------ */

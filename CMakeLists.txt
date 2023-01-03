@@ -11,6 +11,7 @@ option(BETA "Include beta functionality" off)
 option(LUA "Include lua scripting" off)
 option(LUA_BUILD_BINARY "Build a lua intepreter" ON)
 option(STRICT_CHECKS "Run additional strict checks" OFF)
+option(IMGUI "Use imgui" off)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -128,17 +129,17 @@ if (GLUI)
     target_link_libraries(smokeview PRIVATE glui_static)
 endif()
 
-option(IMGUI "Use imgui" off)
 if (IMGUI)
-    FetchContent_Declare(imgui
-        GIT_REPOSITORY https://github.com/ocornut/imgui.git
-        GIT_TAG        a8df192df022ed6ac447e7b7ada718c4c4824b41 # v1.89.1
-    )
-    FetchContent_GetProperties(imgui)
-        if(NOT imgui_POPULATED)
-            message("Cloning imgui")
-            FetchContent_Populate(imgui)
-    endif()
+    # FetchContent_Declare(imgui
+    #     GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    #     GIT_TAG        a8df192df022ed6ac447e7b7ada718c4c4824b41 # v1.89.1
+    # )
+    # FetchContent_GetProperties(imgui)
+    #     if(NOT imgui_POPULATED)
+    #         message("Cloning imgui")
+    #         FetchContent_Populate(imgui)
+    # endif()
+    set(imgui_SOURCE_DIR "../imgui")
     add_definitions(-Dpp_IMGUI)
     target_sources(smokeview PRIVATE
         ${imgui_SOURCE_DIR}/imgui.cpp

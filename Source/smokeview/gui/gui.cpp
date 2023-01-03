@@ -25,13 +25,19 @@
 #ifdef __APPLE__
 #include <GL/glut.h>
 #else
-    // #include <GL/freeglut.h>
-    #include <GL/glut.h>
+// #include <GL/freeglut.h>
+#include <GL/glut.h>
 #endif
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4505) // unreferenced local function has been removed
 #endif
+
+#include <stdio.h>
+extern "C" void ReshapeCB(int width, int height);
+extern "C" void MouseDragCB(int xm, int ym);
+extern "C" void MouseCB(int button, int state, int xm, int ym);
+extern "C" void KeyboardCB(unsigned char key, int x, int y);
 
 // Our state
 static bool show_demo_window = true;
@@ -91,7 +97,7 @@ void my_display_code() {
 }
 
 extern "C" void imgui_display_start() {
-    // Start the Dear ImGui frame
+  // Start the Dear ImGui frame
   ImGui_ImplOpenGL2_NewFrame();
   ImGui_ImplGLUT_NewFrame();
 
@@ -99,24 +105,26 @@ extern "C" void imgui_display_start() {
 
   // Rendering
   ImGui::Render();
+
   ImGuiIO &io = ImGui::GetIO();
-  
-  glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
+
+  // Reshape both underlying smokeview render and imgui elements
+  // ReshapeCB(io.DisplaySize.x, io.DisplaySize.y);
+  // glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 }
 
 extern "C" void imgui_display_end() {
-    ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+  ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 }
 
 // void glut_display_func() {
-  
+
 //   glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
 //   glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w,
 //                clear_color.z * clear_color.w, clear_color.w);
 //   glClear(GL_COLOR_BUFFER_BIT);
 //   // glUseProgram(0); // You may want this if using this code in an OpenGL 3+
 //   // context where shaders may be bound, but prefer using the GL3+ code.
-  
 
 //   glutSwapBuffers();
 //   glutPostRedisplay();
@@ -164,19 +172,26 @@ extern "C" int setupImgui() {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
+  io.Fonts->AddFontFromFileTTF("/usr/share/fonts/google-roboto-slab-fonts/RobotoSlab-Regular.ttf", 36.0);
+  // io.Fonts->GetTexDataAsRGBA32();
   (void)io;
+  // io.ConfigFlags |= ImGuiConfigFlags_NavNoCaptureKeyboard;
+
   // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable
-  // Keyboard Controls
+  // Keyboard Controlssd
 
   // Setup Dear ImGui style
-  ImGui::StyleColorsDark();
-  // ImGui::StyleColorsLight();
+  // ImGui::StyleColorsDark();
+  ImGui::StyleColorsLight();
+  // auto style = ImGui::GetStyle();
+  // style.ScaleAllSizes(4.0);
 
   // Setup Platform/Renderer backends
   // FIXME: Consider reworking this example to install our own GLUT funcs +
   // forward calls ImGui_ImplGLUT_XXX ones, instead of using
   // ImGui_ImplGLUT_InstallFuncs().
   ImGui_ImplGLUT_Init();
+  // With the InstallFuncs call, imgui takes control of the GLUT callbacks.
   ImGui_ImplGLUT_InstallFuncs();
   ImGui_ImplOpenGL2_Init();
 
@@ -205,10 +220,46 @@ extern "C" int setupImgui() {
   // ImFont* font =
   // io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f,
   // NULL, io.Fonts->GetGlyphRangesJapanese()); IM_ASSERT(font != NULL);
+  return 0;
 }
 
 int cleanupImgui() {
   ImGui_ImplOpenGL2_Shutdown();
   ImGui_ImplGLUT_Shutdown();
   ImGui::DestroyContext();
+  return 0;
+}
+
+extern "C" int imgui_keyboard(unsigned char key, int x, int y) {
+  ImGuiIO &io = ImGui::GetIO();
+  if (io.WantCaptureKeyboard) {
+    ImGui_ImplGLUT_KeyboardUpFunc(key, x, y);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+extern "C" void imgui_reshape(int width, int height) {
+  ImGui_ImplGLUT_ReshapeFunc(width, height);
+}
+
+extern "C" int imgui_mouse(int button, int state, int x, int y) {
+  ImGuiIO &io = ImGui::GetIO();
+  if (io.WantCaptureMouse) {
+    ImGui_ImplGLUT_MouseFunc(button, state, x, y);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+extern "C" int imgui_motion(int x, int y) {
+  ImGuiIO &io = ImGui::GetIO();
+  if (io.WantCaptureMouse) {
+    ImGui_ImplGLUT_MotionFunc(x, y);
+    return 1;
+  } else {
+    return 0;
+  }
 }
