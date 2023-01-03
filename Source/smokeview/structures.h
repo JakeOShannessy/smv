@@ -1023,11 +1023,12 @@ typedef struct _sv_object {
 
 /* --------------------------  device ------------------------------------ */
 
+#define LENDEVICEBUFFER 255
 typedef struct _device {
   int active;
   int screenijk[3], visval, target_index;
-  char deviceID[30], csvlabel[30], *labelptr;
-  char quantity[30], unit[30];
+  char deviceID[LENDEVICEBUFFER], csvlabel[LENDEVICEBUFFER], *labelptr;
+  char quantity[LENDEVICEBUFFER], unit[LENDEVICEBUFFER];
   float *times, *vals;
   float *vals_orig;
   int update_avg;
@@ -1447,10 +1448,8 @@ typedef struct _menudata {
   char label[256];
 } menudata;
 
-/**
- * @brief For a given file name, what are the maximum and minimum values found
- * in that file.
- */
+/// @brief For a given file name, what are the maximum and minimum values found
+/// in that file.
 typedef struct _fileboundsdata {
   /// @brief The name of the file.
   char file[255];
@@ -1458,14 +1457,12 @@ typedef struct _fileboundsdata {
   float valmin, valmax;
 } fileboundsdata;
 
-/**
- * @brief Holds information on a give slice.
- */
+/// @brief Holds information and the data of a given slice.
 typedef struct _slicedata {
   /// @brief Mesh type, i.e. Fire or Evac, possibly deprecated when Evac is
   /// removed.
   int mesh_type;
-  /// @brief UNKNOWN
+  /// @brief Autoloading parameters.
   int seq_id, autoload;
   /// @brief The name of the file.
   char *file;
@@ -1503,7 +1500,8 @@ typedef struct _slicedata {
   /// @brief Enum: An indicator on what type of slice, be it Geom, Cell
   /// Centred, Face Centred, or Terrain.
   int slice_filetype;
-  /// @brief UNKNOWN
+  /// @brief A pointer to the multi-slice that this slice is a part of. TODO:
+  /// Could a slice be part of more than one multislice?
   struct _multislicedata *mslice;
   /// @brief Boolean: Is this an FED slice?
   int is_fed;
@@ -1667,12 +1665,22 @@ typedef struct _slicemenudata {
 
 /* --------------------------  multislicedata ------------------------------------ */
 
+/// @brief Holds references to a collection of slices that can be loaded/display
+/// together. Could be considered a "slice group".
 typedef struct _multislicedata {
   int mesh_type;
-  int seq_id, autoload;
-  int loaded, display;
+  int seq_id;
+  int autoload;
+  /// @brief Has this multislice been loaded?
+  int loaded;
+  /// @brief Is this multislice being displayed?
+  int display;
   int ndirxyz[4];
-  int *islices, nslices;
+  /// @brief An array of the slice indices that make up this multislice. These
+  /// indices are indices into the @ref sliceinfo array.
+  int *islices;
+  /// @brief The length of the @ref islices array.
+  int nslices;
   int slice_filetype;
   char menulabel[128];
   char menulabel2[128];
@@ -1682,10 +1690,18 @@ typedef struct _multislicedata {
 
 typedef struct _multivslicedata {
   int mesh_type;
+  /// @brief Autoloading parameters.
   int seq_id, autoload;
-  int loaded,display,mvslicefile_labelindex;
+  /// @brief Has this multislice been loaded?
+  int loaded;
+  /// @brief Is this multislice being displayed?
+  int display;
+  int mvslicefile_labelindex;
+  /// @brief The length of the @ref ivslices array.
   int nvslices;
   int ndirxyz[4];
+  /// @brief An array of the slice indices that make up this multislice. These
+  /// indices are indices into the @ref sliceinfo array.
   int *ivslices;
   char menulabel[128];
   char menulabel2[128];
@@ -1734,11 +1750,9 @@ typedef struct _boundsdata {
   flowlabels *label;
 } boundsdata;
 
-/**
- * @brief Similar to \ref _slicedata but considers a vector slice. Holds
- * references to each of the \ref _slicedata objects which hold the data along
- * each of the three axes.
- */
+/// @brief Similar to \ref _slicedata but considers a vector slice. Holds
+/// references to each of the \ref _slicedata objects which hold the data along
+/// each of the three axes.
 typedef struct _vslicedata {
   int seq_id, autoload, reload;
   /// @brief Slice data which holds the x-component of this vector data.

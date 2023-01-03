@@ -34,7 +34,6 @@ void InitMisc(void);
 void UpdateMenu(void);
 void LoadVolsmoke3DMenu(int value);
 void UnLoadVolsmoke3DMenu(int value);
-void LoadSlicei(int set_slicecolor, int value);
 void UpdateSliceBounds(void);
 void OutputSliceData(void);
 void UnloadBoundaryMenu(int value);
@@ -122,7 +121,7 @@ int set_slice_bounds(const char *slice_type, int set_valmin, float valmin,
 /// @param[out] error
 /// @return A simple_bounds struct containing the min and max bounds being used.
 simple_bounds get_slice_bounds(const char *slice_type, int *error) {
-  simple_bounds bounds;
+  simple_bounds bounds = {0};
   int slice_type_index = get_slice_bound_index(slice_type);
   if (slice_type_index < 0) {
     // Slice type index could not be found.
@@ -143,13 +142,10 @@ simple_bounds get_slice_bounds(const char *slice_type, int *error) {
 /// @param[in] input_filename
 /// @return Non-zero on error
 int loadsmvall(const char *input_filename) {
-  printf("about to load %s\n", input_filename);
   int return_code;
   // fdsprefix and input_filename_ext are global and defined in smokeviewvars.h
   // TODO: move these into the model information namespace
   parse_smv_filepath(input_filename, fdsprefix, input_filename_ext);
-  printf("fdsprefix: %s\ninput_filename_ext: %s\n", fdsprefix,
-         input_filename_ext);
   return_code = loadsmv(fdsprefix, input_filename_ext);
   if (return_code == 0 && update_bounds == 1) return_code = Update_Bounds();
   if (return_code != 0) return 1;
@@ -205,8 +201,6 @@ int loadsmv(char *input_filename, char *input_filename_ext) {
   int return_code;
   char *input_file;
 
-  return_code = -1;
-
   FREEMEMORY(part_globalbound_filename);
   NewMemory((void **)&part_globalbound_filename,
             strlen(fdsprefix) + strlen(".prt5.gbnd") + 1);
@@ -229,9 +223,6 @@ int loadsmv(char *input_filename, char *input_filename_ext) {
   }
   {
     bufferstreamdata *smv_streaminfo = NULL;
-
-    PRINTF(_("processing smokeview file:"));
-    PRINTF(" %s\n", input_file);
     smv_streaminfo = GetSMVBuffer(input_file, iso_filename);
     return_code = ReadSMV(smv_streaminfo);
     if (smv_streaminfo != NULL) {
@@ -325,7 +316,6 @@ int loadfile(const char *filename) {
   int errorcode;
 
   FREEMEMORY(loaded_file);
-  PRINTF("script: loading file %s\n\n", filename);
   if (filename != NULL && strlen(filename) > 0) {
     NewMemory((void **)&loaded_file, strlen(filename) + 1);
     strcpy(loaded_file, filename);
@@ -411,7 +401,6 @@ int loadfile(const char *filename) {
 }
 
 void loadinifile(const char *filepath) {
-  PRINTF("loading ini file %s\n\n", filepath);
   windowresized = 0;
   char f[1048];
   strcpy(f, filepath);
@@ -421,7 +410,6 @@ void loadinifile(const char *filepath) {
 int loadvfile(const char *filepath) {
   int i;
   FREEMEMORY(loaded_file);
-  PRINTF("loading vector slice file %s\n\n", filepath);
   for (i = 0; i < nvsliceinfo; i++) {
     slicedata *val;
     vslicedata *vslicei;
@@ -448,8 +436,6 @@ void loadboundaryfile(const char *filepath) {
   int count = 0;
 
   FREEMEMORY(loaded_file);
-  PRINTF("loading boundary files of type: %s\n\n", filepath);
-
   for (i = 0; i < npatchinfo; i++) {
     patchdata *patchi;
 
@@ -495,7 +481,6 @@ int render(const char *filename) {
   DisplayCB();
   // runluascript=1;
   // strcpy(render_file_base,filename);
-  printf("basename(c): %s\n", filename);
   return RenderFrameLua(VIEW_CENTER, filename);
 }
 
@@ -523,8 +508,6 @@ char *form_filename(int view_mode, char *renderfile_name, char *renderfile_dir,
   // if the basename has not been specified, use a predefined method to
   // determine the filename
   if (basename == NULL) {
-    printf("basename is null\n");
-
     switch (view_mode) {
     case VIEW_LEFT:
       if (stereotype == STEREO_LR) {
@@ -545,11 +528,8 @@ char *form_filename(int view_mode, char *renderfile_name, char *renderfile_dir,
     }
 
     if (Writable(renderfile_dir) == NO) {
-      printf("Creating directory: %s\n", renderfile_dir);
-
       // TODO: ensure this can be made cross-platform
       if (strlen(renderfile_dir) > 0) {
-        printf("making dir: %s", renderfile_dir);
 #if defined(__MINGW32__)
         mkdir(renderfile_dir);
 #elif defined(WIN32)
@@ -578,10 +558,6 @@ char *form_filename(int view_mode, char *renderfile_name, char *renderfile_dir,
 
     snprintf(renderfile_name, 1024, "%s%s%s", chidfilebase, view_suffix,
              renderfile_ext);
-    printf("chidfilebase is: %s\n", chidfilebase);
-    printf("fdsprefix is: %s\n", fdsprefix);
-    printf("directory is: %s\n", renderfile_dir);
-    printf("filename is: %s\n", renderfile_name);
   } else {
     snprintf(renderfile_name, 1024, "%s%s", basename, renderfile_ext);
   }
@@ -625,8 +601,6 @@ int RenderFrameLua(int view_mode, const char *basename) {
   // construct filename for image to be rendered
   form_filename(view_mode, renderfile_name, renderfile_dir, renderfile_path,
                 woffset, hoffset, screenH, basename);
-
-  printf("renderfile_name: %s\n", renderfile_name);
   // render image
   return_code =
       SmokeviewImage2File(renderfile_dir, renderfile_name, render_filetype,
@@ -754,7 +728,6 @@ float gettime() { return global_times[itimes]; }
 /// @param timeval Time in seconds
 /// @return Non-zero on error
 int settime(float timeval) {
-  PRINTF("setting time to %f\n\n", timeval);
   if (global_times != NULL && nglobal_times > 0) {
     if (timeval < global_times[0]) timeval = global_times[0];
     if (timeval > global_times[nglobal_times - 1] - 0.0001) {
@@ -792,11 +765,8 @@ int settime(float timeval) {
     force_redisplay = 1;
     UpdateFrameNumber(0);
     UpdateTimeLabels();
-    PRINTF("script: time set to %f s (i.e. frame number: %d)\n\n",
-           global_times[itimes], itimes);
     return 0;
   } else {
-    PRINTF("no data loaded, time could not be set\n");
     return 1;
   }
 }
@@ -820,7 +790,6 @@ int get_slice_in_obst() { return show_slice_in_obst; }
 /// @param name
 /// @return
 int set_named_colorbar(const char *name) {
-  fprintf(stderr, "Setting colorbar to: %s\n", name);
   for (int i = 0; i < ncolorbars; i++) {
     if (strcmp(colorbarinfo[i].label, name) == 0) {
       set_colorbar(i);
@@ -872,8 +841,6 @@ void set_colorbar(int value) {
 
 void set_colorbar_visibility_vertical(int setting) {
   visColorbarVertical = setting;
-  if (visColorbarVertical == 0) PRINTF("Vertical Colorbar hidden\n");
-  if (visColorbarVertical == 1) PRINTF("Vertical Colorbar visible\n");
   if (visColorbarVertical == 1 && visColorbarHorizontal == 0) {
     vis_colorbar = 1;
   } else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
@@ -887,8 +854,6 @@ int get_colorbar_visibility_vertical() { return visColorbarVertical; }
 
 void toggle_colorbar_visibility_vertical() {
   visColorbarVertical = 1 - visColorbarVertical;
-  if (visColorbarVertical == 0) PRINTF("Vertical Colorbar hidden\n");
-  if (visColorbarVertical == 1) PRINTF("Vertical Colorbar visible\n");
   if (visColorbarVertical == 1 && visColorbarHorizontal == 0) {
     vis_colorbar = 1;
   } else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
@@ -900,8 +865,6 @@ void toggle_colorbar_visibility_vertical() {
 
 void set_colorbar_visibility_horizontal(int setting) {
   visColorbarHorizontal = setting;
-  if (visColorbarHorizontal == 0) PRINTF("Horizontal Colorbar hidden\n");
-  if (visColorbarHorizontal == 1) PRINTF("Horizontal Colorbar visible\n");
   if (visColorbarVertical == 1 && visColorbarHorizontal == 0) {
     vis_colorbar = 1;
   } else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
@@ -915,8 +878,6 @@ int get_colorbar_visibility_horizontal() { return visColorbarHorizontal; }
 
 void toggle_colorbar_visibility_horizontal() {
   visColorbarHorizontal = 1 - visColorbarHorizontal;
-  if (visColorbarHorizontal == 0) PRINTF("Horizontal Colorbar hidden\n");
-  if (visColorbarHorizontal == 1) PRINTF("Horizontal Colorbar visible\n");
   if (visColorbarVertical == 1 && visColorbarHorizontal == 0) {
     vis_colorbar = 1;
   } else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
@@ -934,19 +895,11 @@ int get_colorbar_visibility() { return get_colorbar_visibility_vertical(); }
 
 void toggle_colorbar_visibility() { toggle_colorbar_visibility_vertical(); }
 
-void set_timebar_visibility(int setting) {
-  visTimebar = setting;
-  if (visTimebar == 0) PRINTF("Time bar hidden\n");
-  if (visTimebar == 1) PRINTF("Time bar visible\n");
-}
+void set_timebar_visibility(int setting) { visTimebar = setting; }
 
 int get_timebar_visibility() { return visTimebar; }
 
-void toggle_timebar_visibility() {
-  visTimebar = 1 - visTimebar;
-  if (visTimebar == 0) PRINTF("Time bar hidden\n");
-  if (visTimebar == 1) PRINTF("Time bar visible\n");
-}
+void toggle_timebar_visibility() { visTimebar = 1 - visTimebar; }
 
 /// @brief Set whether the title of the simulation is visible.
 /// @param setting Boolean value.
@@ -984,7 +937,6 @@ void blockages_show_all() {
   show_faces_shaded = 1;
   visVents = 1;
   BlockageMenu(visBLOCKAsInput);
-  PRINTF("Blockages Show All\n");
 }
 
 void ImmersedMenu(int value);
@@ -999,7 +951,6 @@ void blockages_hide_all() {
   visGrid = NOGRID_NOPROBE;
   BlockageMenu(visBLOCKHide);
   ImmersedMenu(GEOMETRY_HIDEALL);
-  PRINTF("Blockages Hide All\n");
 }
 
 void surfaces_hide_all() {
@@ -1008,7 +959,6 @@ void surfaces_hide_all() {
   visDummyVents = 0;
   visOtherVents = 0;
   visCircularVents = VENT_HIDE;
-  PRINTF("Surfaces Hide All\n");
 }
 
 void devices_hide_all() {
@@ -1016,7 +966,6 @@ void devices_hide_all() {
     sv_object *objecti = object_defs[i];
     objecti->visible = 0;
   }
-  PRINTF("Devices Hide All\n");
 }
 
 // axis visibility
@@ -1372,7 +1321,6 @@ void load3dsmoke(const char *smoke_type) {
   int lastsmoke;
 
   FREEMEMORY(loaded_file);
-  // PRINTF("script: loading smoke3d files of type: %s\n\n",scripti->cval);
 
   for (i = nsmoke3dinfo - 1; i >= 0; i--) {
     smoke3ddata *smoke3di;
@@ -1466,7 +1414,6 @@ int loadtour(const char *tourname) {
   int i;
   int count = 0;
   int errorcode = 0;
-  PRINTF("loading tour %s\n\n", tourname);
 
   for (i = 0; i < ntourinfo; i++) {
     tourdata *touri;
@@ -1496,8 +1443,6 @@ void loadparticles(const char *name) {
   int count = 0;
 
   FREEMEMORY(loaded_file);
-
-  PRINTF("script: loading particles files\n\n");
 
   npartframes_max = GetMinPartFrames(PARTFILE_LOADALL);
   for (i = 0; i < npartinfo; i++) {
@@ -1604,8 +1549,6 @@ void plot3dprops(int variable_index, int showvector, int vector_length_index,
   UpdateVectorWidgets();
 #endif
 
-  PRINTF("vecfactor=%f\n", vecfactor);
-
   contour_type = CLAMP(display_type, 0, 2);
 #ifdef pp_GLUI
   UpdatePlot3dDisplay();
@@ -1641,7 +1584,6 @@ void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
   dir = CLAMP(plane_orientation, XDIR, ISO);
 
   plotn = display;
-  printf("show plotn: %d\n", plotn);
   val = position;
 
   switch (dir) {
@@ -1712,7 +1654,6 @@ void loadiso(const char *type) {
   int count = 0;
 
   FREEMEMORY(loaded_file);
-  PRINTF("loading isosurface files of type: %s\n\n", type);
 
   update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
   for (i = 0; i < nisoinfo; i++) {
@@ -1742,13 +1683,14 @@ void loadiso(const char *type) {
   updatemenu = 1;
 }
 
+FILE_SIZE loadsliceindex(size_t index, int *errorcode) {
+  return ReadSlice(sliceinfo[index].file, (int)index, ALL_FRAMES, NULL, LOAD,
+                   SET_SLICECOLOR, errorcode);
+}
+
 void loadslice(const char *type, int axis, float distance) {
-  int i;
   int count = 0;
-
-  PRINTF("loading slice files of type: %s\n\n", type);
-
-  for (i = 0; i < nmultisliceinfo; i++) {
+  for (int i = 0; i < nmultisliceinfo; i++) {
     multislicedata *mslicei;
     slicedata *slicei;
     int j;
@@ -1757,8 +1699,6 @@ void loadslice(const char *type, int axis, float distance) {
     mslicei = multisliceinfo + i;
     if (mslicei->nslices <= 0) continue;
     slicei = sliceinfo + mslicei->islices[0];
-    printf("slice name: %s, axis: %d, position: %f\n", slicei->label.longlabel,
-           slicei->idir, slicei->position_orig);
     if (MatchUpper(slicei->label.longlabel, type) == 0) continue;
     if (slicei->idir != axis) continue;
     delta_orig = slicei->position_orig - distance;
@@ -1778,16 +1718,10 @@ void loadslice(const char *type, int axis, float distance) {
             type);
 }
 
-void loadsliceindex(int index) { LoadSlicei(SET_SLICECOLOR, index); }
-
 void loadvslice(const char *type, int axis, float distance) {
-  int i;
   float delta_orig;
   int count = 0;
-
-  PRINTF("loading vector slice files of type: %s\n\n", type);
-
-  for (i = 0; i < nmultivsliceinfo; i++) {
+  for (int i = 0; i < nmultivsliceinfo; i++) {
     multivslicedata *mvslicei;
     int j;
     slicedata *slicei;
@@ -1933,16 +1867,12 @@ void unloadall() {
 void unloadtour() { TourMenu(MENU_TOUR_MANUAL); }
 
 /// @brief Exit smokeview.
-void exit_smokeview() {
-  PRINTF("exiting...\n");
-  exit(EXIT_SUCCESS);
-}
+void exit_smokeview() { exit(EXIT_SUCCESS); }
 
 int setviewpoint(const char *viewpoint) {
   cameradata *ca;
   int count = 0;
   int errorcode = 0;
-  PRINTF("setting viewpoint to %s\n\n", viewpoint);
   for (ca = camera_list_first.next; ca->next != NULL; ca = ca->next) {
     if (strcmp(viewpoint, ca->name) == 0) {
       ResetMenu(ca->view_id);
@@ -2106,8 +2036,6 @@ int setrenderdir(const char *dir) {
   strncpy(dir_path_temp, dir, l + 1);
   // TODO: should we make the directory at this point?
   if (dir != NULL && strlen(dir_path_temp) > 0) {
-    printf("making dir: %s\n", dir_path_temp);
-
 #if defined(__MINGW32__)
     fprintf(stderr, "%s\n", "making directory(mingw)\n");
     mkdir(dir_path_temp);
@@ -2127,7 +2055,6 @@ int setrenderdir(const char *dir) {
     } else {
       free(script_dir_path);
       script_dir_path = dir_path_temp;
-      PRINTF("c_api: renderdir set to: %s\n", script_dir_path);
       return 0;
     }
   } else {
@@ -2143,7 +2070,6 @@ void setcolorbarindex(int chosen_index) { UpdateRGBColors(chosen_index); }
 int getcolorbarindex() { return global_colorbar_index; }
 
 void setwindowsize(int width, int height) {
-  printf("Setting window size to %dx%d\n", width, height);
   glutReshapeWindow(width, height);
   ResizeWindow(width, height);
   ReshapeCB(width, height);
@@ -2188,7 +2114,7 @@ void setcolorbarflip(int flip) {
 }
 
 /// @brief Get whether the direction of the colorbar is flipped.
-/// @return 
+/// @return
 int getcolorbarflip() { return colorbar_flip; }
 
 // Camera API
@@ -2213,31 +2139,21 @@ void camera_set_rotation_index(int rotation_index) {
 int camera_get_rotation_index() { return camera_current->rotation_index; }
 
 void camera_set_viewdir(float xcen, float ycen, float zcen) {
-  printf("c_api: Setting viewDir to %f %f %f\n", xcen, ycen, zcen);
   camera_current->xcen = xcen;
   camera_current->ycen = ycen;
   camera_current->zcen = zcen;
 }
 
 // xcen
-void camera_set_xcen(float xcen) {
-  printf("Setting xcen to %f\n", xcen);
-  camera_current->xcen = xcen;
-}
+void camera_set_xcen(float xcen) { camera_current->xcen = xcen; }
 float camera_get_xcen() { return camera_current->xcen; }
 
 // ycen
-void camera_set_ycen(float ycen) {
-  printf("Setting ycen to %f\n", ycen);
-  camera_current->ycen = ycen;
-}
+void camera_set_ycen(float ycen) { camera_current->ycen = ycen; }
 float camera_get_ycen() { return camera_current->ycen; }
 
 // zcen
-void camera_set_zcen(float zcen) {
-  printf("Setting zcen to %f\n", zcen);
-  camera_current->zcen = zcen;
-}
+void camera_set_zcen(float zcen) { camera_current->zcen = zcen; }
 float camera_get_zcen() { return camera_current->zcen; }
 
 // eyex
@@ -2420,20 +2336,17 @@ int set_directioncolor(float r, float g, float b) {
   return 0;
 } // DIRECTIONCOLOR
 
-
 /// @brief Set whether the foreground/background colors are flipped.
 ///
 /// By default they are flipped.
-/// @param v 
-/// @return 
+/// @param v
+/// @return
 int set_flip(int v) {
   background_flip = v;
   return 0;
 } // FLIP
 
-int get_flip() {
-  return background_flip;
-} 
+int get_flip() { return background_flip; }
 
 int set_foregroundcolor(float r, float g, float b) {
   foregroundbasecolor[0] = r;
@@ -4087,13 +4000,6 @@ int set_v_plot3d(int n3d, int minFlags[], int minVals[], int maxFlags[],
 } // V_PLOT3D
 
 int set_pl3d_bound_min(int pl3dValueIndex, int set, float value) {
-  printf("setting pl3d min bound ");
-  if (set) {
-    printf("ON");
-  } else {
-    printf("OFF");
-  }
-  printf(" with value of %f\n", value);
   setp3min_all[pl3dValueIndex] = set;
   p3min_all[pl3dValueIndex] = value;
   // TODO: remove this reload and hardcoded value
@@ -4104,13 +4010,6 @@ int set_pl3d_bound_min(int pl3dValueIndex, int set, float value) {
 }
 
 int set_pl3d_bound_max(int pl3dValueIndex, int set, float value) {
-  printf("setting pl3d max bound ");
-  if (set) {
-    printf("ON");
-  } else {
-    printf("OFF");
-  }
-  printf(" with value of %f\n", value);
   setp3max_all[pl3dValueIndex] = set;
   p3max_all[pl3dValueIndex] = value;
   // TODO: remove this reload and hardcoded value
