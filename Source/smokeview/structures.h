@@ -1668,9 +1668,7 @@ typedef struct _slicemenudata {
 /// @brief Holds references to a collection of slices that can be loaded/display
 /// together. Could be considered a "slice group".
 typedef struct _multislicedata {
-#ifdef pp_EVAC
   int mesh_type;
-#endif
   int seq_id;
   int autoload;
   /// @brief Has this multislice been loaded?
@@ -1691,9 +1689,7 @@ typedef struct _multislicedata {
 /* --------------------------  multivslicedata ------------------------------------ */
 
 typedef struct _multivslicedata {
-#ifdef pp_EVAC
   int mesh_type;
-#endif
   /// @brief Autoloading parameters.
   int seq_id, autoload;
   /// @brief Has this multislice been loaded?
