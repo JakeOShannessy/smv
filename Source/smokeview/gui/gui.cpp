@@ -40,8 +40,8 @@ extern "C" void MouseCB(int button, int state, int xm, int ym);
 extern "C" void KeyboardCB(unsigned char key, int x, int y);
 
 // Our state
-static bool show_demo_window = true;
-static bool show_another_window = false;
+static bool show_demo_window = false;
+static bool show_clipping_window = false;
 static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 void my_display_code() {
@@ -55,16 +55,10 @@ void my_display_code() {
   {
     static float f = 0.0f;
     static int counter = 0;
-
-    ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and
-                                   // append into it.
-
-    ImGui::Text("This is some useful text."); // Display some text (you can use
-                                              // a format strings too)
-    ImGui::Checkbox(
-        "Demo Window",
-        &show_demo_window); // Edit bools storing our window open/close state
-    ImGui::Checkbox("Another Window", &show_another_window);
+    ImGui::Begin("Smokeview");
+    ImGui::Text("This is some useful text.");
+    ImGui::Checkbox("Demo Window", &show_demo_window);
+    ImGui::Checkbox("Clipping Window", &show_clipping_window);
 
     ImGui::SliderFloat("float", &f, 0.0f,
                        1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
@@ -82,16 +76,74 @@ void my_display_code() {
                 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::End();
   }
+  if (show_clipping_window) {
+    ImGui::Begin("Clipping", &show_clipping_window);
+    // ImGui::Text("Hello from another window!");
+    // if (ImGui::Button("Close Me")) show_clipping_window = false;
+    static int e = 0;
+    ImGui::RadioButton("Clipping disabled", &e, 0);
+    ImGui::RadioButton("Clip blockages and data", &e, 1);
+    ImGui::RadioButton("Clip blockages", &e, 2);
+    ImGui::RadioButton("Clip data", &e, 2);
 
-  // 3. Show another simple window.
-  if (show_another_window) {
-    ImGui::Begin(
-        "Another Window",
-        &show_another_window); // Pass a pointer to our bool variable (the
-                               // window will have a closing button that will
-                               // clear the bool when clicked)
-    ImGui::Text("Hello from another window!");
-    if (ImGui::Button("Close Me")) show_another_window = false;
+    static bool rotate_center_clipping_planes = false;
+    ImGui::Checkbox("center of clipping planes",
+                    &rotate_center_clipping_planes);
+    static bool show_rotation_center = false;
+    ImGui::Checkbox("Show", &show_rotation_center);
+
+    if (e == 0) ImGui::BeginDisabled();
+
+    ImGui::BeginGroup();
+    // X Min and Max
+    static bool clip_lower_x = false;
+    static float clip_lower_x_value = 0.0;
+    static bool clip_upper_x = false;
+    static float clip_upper_x_value = 0.0;
+
+    ImGui::Checkbox("##xmin_check", &clip_lower_x);
+    ImGui::SameLine();
+    ImGui::DragFloat("Xmin", &clip_lower_x_value, 0.1f);
+    // ImGui::SameLine();
+    ImGui::Checkbox("##xmax_check", &clip_upper_x);
+    ImGui::SameLine();
+    ImGui::DragFloat("Xmax", &clip_upper_x_value, 0.1f);
+
+    static bool clip_lower_y = false;
+    static float clip_lower_y_value = 0.0;
+    static bool clip_upper_y = false;
+    static float clip_upper_y_value = 0.0;
+
+    ImGui::Checkbox("##ymin_check", &clip_lower_y);
+    ImGui::SameLine();
+    ImGui::DragFloat("Ymin", &clip_lower_y_value, 0.1f);
+    // ImGui::SameLine();
+    ImGui::Checkbox("##ymax_check", &clip_upper_y);
+    ImGui::SameLine();
+    ImGui::DragFloat("Ymax", &clip_upper_y_value, 0.1f);
+
+    static bool clip_lower_z = false;
+    static float clip_lower_z_value = 0.0;
+    static bool clip_upper_z = false;
+    static float clip_upper_z_value = 0.0;
+
+    ImGui::Checkbox("##zmin_check", &clip_lower_z);
+    ImGui::SameLine();
+    ImGui::DragFloat("Zmin", &clip_lower_z_value, 0.1f);
+    // ImGui::SameLine();
+    ImGui::Checkbox("##zmax_check", &clip_upper_z);
+    ImGui::SameLine();
+    ImGui::DragFloat("Zmax", &clip_upper_z_value, 0.1f);
+    ImGui::EndGroup();
+
+    if (e == 0) ImGui::EndDisabled();
+
+    if (ImGui::TreeNode("Show/Hide Blockages")) {
+      static bool show_mesh_1 = true;
+      ImGui::Checkbox("Mesh1", &show_mesh_1);
+      ImGui::TreePop();
+    }
+
     ImGui::End();
   }
 }
@@ -172,8 +224,8 @@ extern "C" int setupImgui() {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
-  io.Fonts->AddFontFromFileTTF("/usr/share/fonts/google-roboto-slab-fonts/RobotoSlab-Regular.ttf", 36.0);
-  // io.Fonts->GetTexDataAsRGBA32();
+  // io.Fonts->AddFontFromFileTTF("/usr/share/fonts/google-roboto-slab-fonts/RobotoSlab-Regular.ttf",
+  // 36.0); io.Fonts->GetTexDataAsRGBA32();
   (void)io;
   // io.ConfigFlags |= ImGuiConfigFlags_NavNoCaptureKeyboard;
 

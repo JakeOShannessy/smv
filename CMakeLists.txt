@@ -130,16 +130,15 @@ if (GLUI)
 endif()
 
 if (IMGUI)
-    # FetchContent_Declare(imgui
-    #     GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    #     GIT_TAG        a8df192df022ed6ac447e7b7ada718c4c4824b41 # v1.89.1
-    # )
-    # FetchContent_GetProperties(imgui)
-    #     if(NOT imgui_POPULATED)
-    #         message("Cloning imgui")
-    #         FetchContent_Populate(imgui)
-    # endif()
-    set(imgui_SOURCE_DIR "../imgui")
+    FetchContent_Declare(imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG        a8df192df022ed6ac447e7b7ada718c4c4824b41 # v1.89.1
+    )
+    FetchContent_GetProperties(imgui)
+        if(NOT imgui_POPULATED)
+            message("Cloning imgui")
+            FetchContent_Populate(imgui)
+    endif()
     add_definitions(-Dpp_IMGUI)
     target_sources(smokeview PRIVATE
         ${imgui_SOURCE_DIR}/imgui.cpp
