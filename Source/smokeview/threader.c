@@ -13,7 +13,7 @@
 void InitMultiThreading(void){
 #ifdef pp_THREAD
   pthread_mutex_init(&mutexREADALLGEOM, NULL);
-#ifdef pp_SLICETHREAD
+#ifdef pp_SLICE_MULTI
   pthread_mutex_init(&mutexSLICE_LOAD, NULL);
 #endif
   pthread_mutex_init(&mutexPART_LOAD, NULL);
@@ -352,7 +352,7 @@ int ReadBuffer(char *filename, int filesize, char *buffer, int nthreads, int use
     else{
       end = start+filesizei;
     }
-    if(end>filesize)end = filesize;;
+    if(end>filesize)end = filesize;
 
     readbufferi = readbufferinfo+i;
     readbufferi->buffer = buffer;

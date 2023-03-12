@@ -179,10 +179,8 @@ void UpdateFrameNumber(int changetime){
         patchi->geom_itime = patchi->geom_timeslist[itimes];
         patchi->geom_ival_static = patchi->geom_ivals_static[patchi->geom_itime];
         patchi->geom_ival_dynamic = patchi->geom_ivals_dynamic[patchi->geom_itime];
-#ifdef pp_SLICEBOUNDVAL
         patchi->geom_val_static  = patchi->geom_vals_static[patchi->geom_itime];
         patchi->geom_val_dynamic = patchi->geom_vals_dynamic[patchi->geom_itime];
-#endif
         patchi->geom_nval_static = patchi->geom_nstatics[patchi->geom_itime];
         patchi->geom_nval_dynamic = patchi->geom_ndynamics[patchi->geom_itime];
       }
@@ -207,7 +205,7 @@ void UpdateFrameNumber(int changetime){
 #else
           if(smoke3di->ismoke3d_time != smoke3di->lastiframe){
             smoke3di->lastiframe = smoke3di->ismoke3d_time;
-            UpdateSmoke3D(smoke3di);;
+            UpdateSmoke3D(smoke3di);
           }
 #endif
         }
@@ -396,7 +394,7 @@ void UpdateShow(void){
       devicedata *devicei;
 
       devicei = deviceinfo+i;
-      if(devicei->type2==devicetypes_index&&devicei->object->visible==1){
+      if(devicei->type2==devicetypes_index&&devicei->object->visible==1&&devicei->show==1){
         showdeviceflag = 1;
         break;
       }
@@ -700,7 +698,8 @@ void UpdateShow(void){
     if(slicecolorbarflag==1||vslicecolorbarflag==1)num_colorbars++;
     if(patchflag==1&&wall_cell_color_flag==0)num_colorbars++;
     if(ReadZoneFile==1)num_colorbars++;
-    if(hvacductvar_index >= 0 || hvacnodevar_index >= 0)num_colorbars++;
+    if(hvacductvar_index >= 0)num_colorbars++;
+    if(hvacnodevar_index >= 0)num_colorbars++;
 
     if(tisoflag==1&&1==0){ // disable isosurface colorbar label for now
       showiso_colorbar = 1;
@@ -1161,8 +1160,11 @@ void UpdateTimes(void){
       MergeGlobalTimes(stimes, 2);
     }
   }
-  if(hvacductvar_index >= 0 || hvacnodevar_index >= 0){
-    MergeGlobalTimes(hvacvalsinfo->times, hvacvalsinfo->ntimes);
+  if(hvacductvar_index >= 0){
+    MergeGlobalTimes(hvacductvalsinfo->times, hvacductvalsinfo->ntimes);
+  }
+  if(hvacnodevar_index >= 0){
+    MergeGlobalTimes(hvacnodevalsinfo->times, hvacnodevalsinfo->ntimes);
   }
   if(use_tload_begin==1){
     MergeGlobalTimes(&tload_begin, 1);
@@ -1186,6 +1188,7 @@ void UpdateTimes(void){
 
       devicei = deviceinfo+i;
       if(devicei->object->visible==0||devicei->nvals==0)continue;
+      if(devicei->show == 0)continue;
       if(devicei->type2==devicetypes_index){
         MergeGlobalTimes(devicei->times, devicei->nvals);
       }
@@ -1495,7 +1498,7 @@ void UpdateTimes(void){
     devicedata *devicei;
 
     devicei = deviceinfo + i;
-    if(devicei->object->visible==0)continue;
+    if(devicei->object->visible == 0 || devicei->show == 0)continue;
     if(devicei->nstate_changes==0)continue;
     FREEMEMORY(devicei->showstatelist);
     if(nglobal_times>0){
@@ -1624,7 +1627,7 @@ int GetPlotStateSub(int choice){
           devicedata *devicei;
 
           devicei = deviceinfo+i;
-          if(devicei->object->visible==0)continue;
+          if(devicei->object->visible == 0 || devicei->show == 0)continue;
           if(devicei->type2==devicetypes_index){
             stept = 1;
             return DYNAMIC_PLOTS;
@@ -1871,7 +1874,7 @@ int HaveSootLoaded(void) {
     smoke3ddata *smoke3di;
 
     smoke3di = smoke3dinfo+i;
-    if(smoke3di->loaded==1&&smoke3di->extinct>0.0)return GetSmoke3DType(smoke3di->label.shortlabel);;
+    if(smoke3di->loaded==1&&smoke3di->extinct>0.0)return GetSmoke3DType(smoke3di->label.shortlabel);
   }
   return NO_SMOKE;
 }
@@ -1895,6 +1898,14 @@ void UpdateShowScene(void){
 #ifdef pp_GLUI
     UpdateSliceXYZ();
 #endif
+  }
+  if(update_vectorskip == 1){
+    update_vectorskip = 0;
+    UpdateVectorSkip(vectorskip);
+  }
+  if(update_plot_label == 1){
+    update_plot_label = 0;
+    UpdatePlotLabel();
   }
   if(open_movie_dialog==1){
     open_movie_dialog = 0;
@@ -2406,11 +2417,9 @@ void OutputBounds(void){
 
 void UpdateDisplay(void){
   SNIFF_ERRORS("UpdateDisplay: start");
-#ifdef pp_SORTSLICES
   if(sortslices == 1&&nsliceloaded>0){
     SortSlices();
   }
-#endif
   LOCK_IBLANK;
   if(update_adjust_y>0){
     AdjustY(camera_current);

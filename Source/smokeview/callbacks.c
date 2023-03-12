@@ -2121,9 +2121,9 @@ void Keyboard(unsigned char key, int flag){
       break;
     case 'I':
       show_slice_in_obst++;
-      if(show_slice_in_obst>2)show_slice_in_obst = 0;
+      if(show_slice_in_obst>3)show_slice_in_obst = 0;
 #ifdef pp_GLUI
-      UpdateShowSliceInObst(show_slice_in_obst);
+      SliceInObstMenu2Dialog(show_slice_in_obst);
 #endif
       updatemenu = 1;
       break;
@@ -2600,19 +2600,26 @@ void Keyboard(unsigned char key, int flag){
         }
         else{
           vectorskip++;
-          if(vectorskip>4)vectorskip=1;
+          update_vectorskip = 1;
         }
       }
       break;
     case 'S':
-      stereotypeOLD=stereotype;
-      stereotype++;
-      if(stereotype>5)stereotype=0;
-      if(stereotype==STEREO_TIME&&videoSTEREO!=1)stereotype=STEREO_LR;
+      switch(keystate){
+      case GLUT_ACTIVE_ALT:
+        stereotypeOLD=stereotype;
+        stereotype++;
+        if(stereotype>5)stereotype=0;
+        if(stereotype==STEREO_TIME&&videoSTEREO!=1)stereotype=STEREO_LR;
 #ifdef pp_GLUI
-      UpdateGluiStereo();
+        UpdateGluiStereo();
 #endif
-      break;
+        break;
+      default:
+        vectorskip--;
+        if(vectorskip<1)vectorskip=1;
+        update_vectorskip = 1;
+      }
     case 't':
       switch(keystate){
       case GLUT_ACTIVE_ALT:

@@ -596,7 +596,7 @@ void GSliceCB(int var){
     az *= DEG2RAD;
     elev *= DEG2RAD;
     gslice_norm[0] = cos(az)*cos(elev);
-    gslice_norm[1] = sin(az)*cos(elev);;
+    gslice_norm[1] = sin(az)*cos(elev);
     gslice_norm[2] = sin(elev);
     break;
   case GSLICE_TRANSLATE:
@@ -1817,17 +1817,6 @@ extern "C" void UpdateRotationIndex(int val){
   if(SPINNER_ycenCUSTOM!=NULL)SPINNER_ycenCUSTOM->set_float_val(ycenCUSTOMsmv);
   if(SPINNER_zcenCUSTOM!=NULL)SPINNER_zcenCUSTOM->set_float_val(zcenCUSTOMsmv);
 
-#ifndef pp_CLIP_FIX
-  if(*rotation_index!=ROTATE_ABOUT_USER_CENTER){
-    float *az_elev;
-
-    az_elev = camera_current->az_elev;
-    az_elev[0]                 = 0.0;
-    az_elev[1]                 = 0.0;
-    camera_current->azimuth    = 0.0;
-    camera_current->view_angle = 0.0;
-  }
-#endif
   UpdateMeshList1(val);
 
   GLUTPOSTREDISPLAY;
@@ -2634,10 +2623,7 @@ void RenderCB(int var){
     case RENDER_TYPE:
       break;
     case RENDER_HTML:
-      Smv2Html(html_filename, HTML_CURRENT_TIME, FROM_SMOKEVIEW, VR_NO);
-#ifdef pp_HTML_VR
-      Smv2Html(htmlvr_filename, HTML_CURRENT_TIME, FROM_SMOKEVIEW, VR_YES);
-#endif
+      Smv2Html(html_filename, HTML_CURRENT_TIME, FROM_SMOKEVIEW);
       break;
 #ifdef pp_RENDER360_DEBUG
     case RENDER_DEBUG_360:

@@ -144,20 +144,9 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
 /* ------------------ ReadIsoGeomWrapup ------------------------ */
 
 void ReadIsoGeomWrapup(int flag){
-#ifdef pp_ISOTIME
-  float wrapup_time;
-#endif
-
-  update_readiso_geom_wrapup=UPDATE_ISO_OFF;
-#ifdef pp_ISOTIME
-  START_TIMER(wrapup_time);
-#endif
+  update_readiso_geom_wrapup = UPDATE_ISO_OFF;
   UpdateTrianglesMT();
-  if(flag==FOREGROUND)FinishUpdateTriangles();
-#ifdef pp_ISOTIME
-  STOP_TIMER(wrapup_time);
-  printf("iso wrapup time=%f\n", wrapup_time);
-#endif
+  if(flag == FOREGROUND)FinishUpdateTriangles();
   UpdateTimes();
   GetFaceInfo();
   ForceIdle();
@@ -723,7 +712,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
           fread(&asurface->tmin,4,1,isostream);
           fread(&asurface->tmax,4,1,isostream);
           read_size+=2*(4+4+4);
-          //printf("amin=%f amax=%f imin=%f imax=%f\n",asurface->tmin,asurface->tmax,ib->tmin,ib->tmax);;
+          //printf("amin=%f amax=%f imin=%f imax=%f\n",asurface->tmin,asurface->tmax,ib->tmin,ib->tmax);
           if(NewMemoryMemID((void **)&tvertices_i,nvertices_i*sizeof(unsigned short),ib->memory_id)==0){
             break_frame=1;
             break;

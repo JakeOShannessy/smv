@@ -200,10 +200,9 @@ void DrawSelectColorbar(void){
   glEnd();
 }
 
+/* ------------------ DrawColorbarPathRGB ------------------------ */
 
-/* ------------------ DrawColorbarPath ------------------------ */
-
-void DrawColorbarPath(void){
+void DrawColorbarPathRGB(void){
   int i;
   colorbardata *cbi;
   int ncolors;
@@ -403,6 +402,85 @@ void DrawColorbarPath(void){
   }
 }
 
+/* ------------------ DrawColorbarPathHSL ------------------------ */
+
+void DrawColorbarPathHSL(void){
+  int i;
+  colorbardata *cbi;
+
+  if(show_firecolormap == 0){
+    cbi = colorbarinfo + colorbartype;
+  }
+  else{
+    cbi = colorbarinfo + fire_colorbar_index;
+  }
+  glPointSize(5.0);
+  glBegin(GL_POINTS);
+  for(i = 0;i < 255;i++){
+    float *rgbi, hsl[3], xyz[3];
+    unsigned char rgb255[3];
+
+    rgbi = cbi->colorbar + 3 * i;
+    rgb255[0] = rgbi[0] * 255.0;
+    rgb255[1] = rgbi[1] * 255.0;
+    rgb255[2] = rgbi[2] * 255.0;
+    glColor3fv(rgbi);
+    Rgb2Hsl(rgb255, hsl);
+    xyz[0] = (1.0 + cos(2.0 * 3.14159 * hsl[0] / 360.0) * hsl[1]) / 2.0;
+    xyz[1] = (1.0 + sin(2.0 * 3.14159 * hsl[0] / 360.0) * hsl[1]) / 2.0;
+    xyz[2] = hsl[2];
+    xyz[2] = TOBW(rgbi);
+    glVertex3fv(xyz);
+  }
+
+  for(i = 0;i < 360;i++){
+    float hsl[3], xyz[3];
+    unsigned char rgb255[3];
+
+    hsl[0]=(float)i;
+    hsl[1] = 0.75;
+    hsl[2] = 0.75;
+    Hsl2Rgb(hsl, rgb255);
+    glColor3ubv(rgb255);
+    xyz[0] = (1.0 + cos(2.0 * 3.14159 * hsl[0] / 360.0) * hsl[1]) / 2.0;
+    xyz[1] = (1.0 + sin(2.0 * 3.14159 * hsl[0] / 360.0) * hsl[1]) / 2.0;
+    xyz[2] = hsl[2];
+    glVertex3fv(xyz);
+  }
+
+  for(i = 0;i < 100;i++){
+    float hsl[3], xyz[3];
+    unsigned char rgb255[3];
+
+    hsl[0] = 0.0;
+    hsl[1] = (float)i/100.0;
+    hsl[2] = 0.75;
+    Hsl2Rgb(hsl, rgb255);
+    glColor3ubv(rgb255);
+    xyz[0] = (1.0 + cos(2.0 * 3.14159 * hsl[0] / 360.0) * hsl[1]) / 2.0;
+    xyz[1] = (1.0 + sin(2.0 * 3.14159 * hsl[0] / 360.0) * hsl[1]) / 2.0;
+    xyz[2] = hsl[2];
+    glVertex3fv(xyz);
+  }
+
+  for(i = 0;i < 100;i++){
+    float hsl[3], xyz[3];
+    unsigned char rgb255[3];
+
+    hsl[0] = 0.0;
+    hsl[1] = 0.75;
+    hsl[2] = (float)i/100.0;
+    Hsl2Rgb(hsl, rgb255);
+    glColor3ubv(rgb255);
+    xyz[0] = (1.0+cos(2.0 * 3.14159 * hsl[0] / 360.0) * hsl[1])/2.0;
+    xyz[1] = (1.0 + sin(2.0 * 3.14159 * hsl[0] / 360.0) * hsl[1])/2.0;
+    xyz[2] = hsl[2];
+    glVertex3fv(xyz);
+  }
+  glEnd();
+
+}
+
 /* ------------------ GetColorbar ------------------------ */
 
 colorbardata *GetColorbar(char *label){
@@ -566,6 +644,32 @@ void UpdateColorbarNodes(colorbardata *cbi){
   RemapColorbar(cbi);
 }
 
+#ifdef pp_COLORBAR_CONSTANT
+/* ------------------ UpdateColorbarConstant ------------------------ */
+
+void UpdateColorbarConstant(colorbardata *cbi, int grey_arg){
+  float total_dist = 0.0;
+  int i;
+
+  if(grey_arg < 0){
+    memcpy(cbi->rgb_node, cbi->rgb_node_orig, 3 * cbi->nnodes);
+  }
+  else{
+    for(i = 0;i < cbi->nnodes;i++){
+      unsigned char *node, *node_orig;
+      float hsl[3];
+
+      node = cbi->rgb_node + 3 * i;
+      node_orig = cbi->rgb_node_orig + 3 * i;
+      Rgb2Hsl(node_orig, hsl);
+      hsl[2] = (float)grey_arg / 255.0;
+      Hsl2Rgb(hsl, node);
+    }
+  }
+  RemapColorbar(cbi);
+}
+#endif
+
 /* ------------------ RemapColorbarType ------------------------ */
 
 void RemapColorbarType(int cb_oldtype, char *cb_newname){
@@ -644,22 +748,106 @@ void RemapColorbarType(int cb_oldtype, char *cb_newname){
   }
 }
 
+#ifdef pp_COLORBARS_CSV
+/* ------------------ InitColorbar ------------------------ */
+
+void InitColorbar(colorbardata *cbptr, char *dir, char *file, char *type){
+  FILE *stream;
+  int i,n=0;
+  char fullfile[1024];
+
+  if(file == NULL || strlen(file) == 0)return;
+  if(dir == NULL || strlen(dir) == 0)return;
+  strcpy(fullfile, dir);
+  strcat(fullfile, dirseparator);
+  strcat(fullfile, file);
+  stream = fopen(fullfile, "r");
+  if(stream == NULL)return;
+  for(;;){
+    char buffer[255];
+
+    if(fgets(buffer, 255, stream) == NULL)break;
+    n++;
+  }
+  rewind(stream);
+  int *rgbs, *rgbscopy;
+  NewMemory((void **)&rgbs, 3 * n * sizeof(int));
+  rgbscopy = rgbs;
+
+  for(i=0;i<n;i++){
+    char buffer[255];
+    char *crgb;
+
+    if(fgets(buffer, 255, stream) == NULL)break;
+    TrimBack(buffer);
+    crgb = strtok(buffer, ",");
+    sscanf(crgb, "%i", rgbscopy);
+    crgb = strtok(NULL, ",");
+    sscanf(crgb, "%i", rgbscopy+1);
+    crgb = strtok(NULL, ",");
+    sscanf(crgb, "%i", rgbscopy+2);
+    cbptr->rgb_node[3 * i + 0] = (unsigned char)CLAMP(rgbscopy[0],0,255);
+    cbptr->rgb_node[3 * i + 1] = (unsigned char)CLAMP(rgbscopy[1], 0, 255);
+    cbptr->rgb_node[3 * i + 2] = (unsigned char)CLAMP(rgbscopy[2], 0, 255);
+    cbptr->index_node[i] = i;
+    strcpy(cbptr->type, type);
+    rgbscopy += 3;
+  }
+  strcpy(cbptr->label, file);
+  cbptr->label_ptr = cbptr->label;
+  cbptr->nnodes = n;
+  cbptr->nodehilight = 0;
+  fclose(stream);
+}
+#endif
+
 /* ------------------ InitDefaultColorbars ------------------------ */
 
 void InitDefaultColorbars(int nini){
   int i;
   colorbardata *cbi;
 
-  ndefaultcolorbars=18;
+  ndefaultcolorbars = 0;
+
+#ifdef pp_COLORBARS_CSV
+  filelistdata *linear_filelist=NULL, *cyclic_filelist=NULL,*rainbow_filelist=NULL;
+  char filter_linear[256], filter_cyclic[256], filter_rainbow[256];
+  FILE *stream_colorbar=NULL;
+
+  stream_colorbar = fopen(colorbarsdir, "r");
+  if(colorbarsdir!=NULL&&stream_colorbar!=NULL){
+    fclose(stream_colorbar);
+    strcpy(filter_linear, "CET-L*.csv");
+    nlinear_filelist = GetFileListSize(colorbarsdir, filter_linear);
+    strcpy(filter_cyclic, "CET-C*.csv");
+    ncyclic_filelist = GetFileListSize(colorbarsdir, filter_cyclic);
+    strcpy(filter_rainbow, "CET-R*.csv");
+    nrainbow_filelist = GetFileListSize(colorbarsdir, filter_rainbow);
+  }
+
+  if(nlinear_filelist > 0){
+    MakeFileList(colorbarsdir, filter_linear, nlinear_filelist, NO, &linear_filelist);
+  }
+  if(ncyclic_filelist > 0){
+    MakeFileList(colorbarsdir, filter_cyclic, ncyclic_filelist, NO, &cyclic_filelist);
+  }
+  if(nrainbow_filelist > 0){
+    MakeFileList(colorbarsdir, filter_rainbow, nrainbow_filelist, NO, &rainbow_filelist);
+  }
+  ndefaultcolorbars+=nlinear_filelist+ncyclic_filelist +nrainbow_filelist;
+#endif
+
+  ndefaultcolorbars+=18;
 
   FREEMEMORY(colorbarinfo);
   ncolorbars=ndefaultcolorbars;
   NewMemory((void **)&colorbarinfo,(ncolorbars+nini)*sizeof(colorbardata));
   UpdateCurrentColorbar(colorbarinfo + colorbartype);
 
+  cbi = colorbarinfo;
+
   // rainbow colorbar
 
-  cbi=colorbarinfo;
 
   strcpy(cbi->label,"Rainbow");
   cbi->label_ptr=cbi->label;
@@ -690,34 +878,76 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[12]=255;
   cbi->rgb_node[13]=0;
   cbi->rgb_node[14]=0;
+  strcpy(cbi->type, "original");
   cbi++;
 
   // Rainbow 2 colorbar
 
   strcpy(cbi->label,"Rainbow 2");
   cbi->label_ptr=cbi->label;
-  cbi->nnodes=4;
+  cbi->nnodes=12;
   cbi->nodehilight=0;
-
-  cbi->index_node[0]=0;
-  cbi->rgb_node[0]=0;
-  cbi->rgb_node[1]=0;
-  cbi->rgb_node[2]=255;
-
-  cbi->index_node[1]=85;
-  cbi->rgb_node[3]=0;
-  cbi->rgb_node[4]=255;
-  cbi->rgb_node[5]=255;
-
-  cbi->index_node[2]=170;
-  cbi->rgb_node[6]=255;
-  cbi->rgb_node[7]=255;
-  cbi->rgb_node[8]=0;
-
-  cbi->index_node[3]=255;
-  cbi->rgb_node[9]=255;
-  cbi->rgb_node[10]=0;
-  cbi->rgb_node[11]=0;
+ 
+  cbi->index_node[0]=0;	
+  cbi->rgb_node[0]=4;	
+  cbi->rgb_node[1]=0;	
+  cbi->rgb_node[2]=108;
+  
+  cbi->index_node[1]=20;	
+  cbi->rgb_node[3]=6;	
+  cbi->rgb_node[4]=3;	
+  cbi->rgb_node[5]=167;
+  
+  cbi->index_node[2]=60;	
+  cbi->rgb_node[6]=24;	
+  cbi->rgb_node[7]=69;	
+  cbi->rgb_node[8]=240;
+  
+  cbi->index_node[3]=70;	
+  cbi->rgb_node[9]=31;	
+  cbi->rgb_node[10]=98;	
+  cbi->rgb_node[11]=214;
+  
+  cbi->index_node[4]=80;	
+  cbi->rgb_node[12]=5;	
+  cbi->rgb_node[13]=125;	
+  cbi->rgb_node[14]=170;
+  
+  cbi->index_node[5]=96;	
+  cbi->rgb_node[15]=48;	
+  cbi->rgb_node[16]=155;	
+  cbi->rgb_node[17]=80;
+  
+  cbi->index_node[6]=112;	
+  cbi->rgb_node[18]=82;	
+  cbi->rgb_node[19]=177;	
+  cbi->rgb_node[20]=8;
+  
+  cbi->index_node[7]=163;	
+  cbi->rgb_node[21]=240;	
+  cbi->rgb_node[22]=222;	
+  cbi->rgb_node[23]=3;
+  
+  cbi->index_node[8]=170;	
+  cbi->rgb_node[24]=249;	
+  cbi->rgb_node[25]=214;	
+  cbi->rgb_node[26]=7;
+  
+  cbi->index_node[9]=200;	
+  cbi->rgb_node[27]=252;	
+  cbi->rgb_node[28]=152;	
+  cbi->rgb_node[29]=22;
+  
+  cbi->index_node[10]=230;	
+  cbi->rgb_node[30]=254;	
+  cbi->rgb_node[31]=67;	
+  cbi->rgb_node[32]=13;
+  
+  cbi->index_node[11]=255;	
+  cbi->rgb_node[33]=215;	
+  cbi->rgb_node[34]=5;	
+  cbi->rgb_node[35]=13;
+  strcpy(cbi->type, "original");
   cbi++;
 
   // yellow/red
@@ -736,6 +966,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[3]=255;
   cbi->rgb_node[4]=0;
   cbi->rgb_node[5]=0;
+  strcpy(cbi->type, "original");
   cbi++;
 
   // blue/green/red
@@ -759,6 +990,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[6]=255;
   cbi->rgb_node[7]=0;
   cbi->rgb_node[8]=0;
+  strcpy(cbi->type, "original");
   cbi++;
 
   // blue/yellow/white
@@ -791,7 +1023,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[9]    = 255;
   cbi->rgb_node[10]   = 255;
   cbi->rgb_node[11]   = 255;
-
+  strcpy(cbi->type, "original");
   cbi++;
 
   // blue->red split
@@ -821,6 +1053,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[9]=255;
   cbi->rgb_node[10]=0;
   cbi->rgb_node[11]=0;
+  strcpy(cbi->type, "original");
   cbi++;
 
   // black->white
@@ -841,6 +1074,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[3] =255;
   cbi->rgb_node[4]=255;
   cbi->rgb_node[5]=255;
+  strcpy(cbi->type, "original");
   cbi++;
 
   // FED
@@ -880,6 +1114,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[15]=255;
   cbi->rgb_node[16]=155;
   cbi->rgb_node[17]=0;
+  strcpy(cbi->type, "original");
   cbi++;
 
   // fire (original)
@@ -911,6 +1146,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[9]=255;
   cbi->rgb_node[10]=128;
   cbi->rgb_node[11]=0;
+  strcpy(cbi->type, "original");
   cbi++;
 
   // fire 2
@@ -972,6 +1208,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[27]=255;
   cbi->rgb_node[28]=255;
   cbi->rgb_node[29]=238;
+  strcpy(cbi->type, "original");
   cbi++;
 
   // fire 3
@@ -979,6 +1216,7 @@ void InitDefaultColorbars(int nini){
   fire_colorbar_index = cbi - colorbarinfo;
   fire_colorbar = cbi;
   strcpy(cbi->label, "fire 3");
+  strcpy(cbi->type, "original");
   cbi->label_ptr = cbi->label;
 
   cbi->nnodes = 4;
@@ -1003,7 +1241,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[9] = 255;
   cbi->rgb_node[10] = 255;
   cbi->rgb_node[11] = 255;
-
+  strcpy(cbi->type, "original");
   cbi++;
 
   // cool
@@ -1050,6 +1288,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[18] = 255;
   cbi->rgb_node[19] = 255;
   cbi->rgb_node[20] = 255;
+  strcpy(cbi->type, "original");
   cbi++;
 
   // fire line (level set)
@@ -1090,6 +1329,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[15]=0;
   cbi->rgb_node[16]=1;
   cbi->rgb_node[17]=2;
+  strcpy(cbi->type, "original");
   cbi++;
 
 
@@ -1121,6 +1361,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[9]=253;
   cbi->rgb_node[10]=254;
   cbi->rgb_node[11]=255;
+  strcpy(cbi->type, "original");
   cbi++;
 
   // split
@@ -1140,6 +1381,7 @@ void InitDefaultColorbars(int nini){
   for(i = 0; i < 12; i++){
     cbi->rgb_node[i] = colorsplit[i];
   }
+  strcpy(cbi->type, "original");
   cbi++;
 
 
@@ -1170,7 +1412,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[9] = 255;
   cbi->rgb_node[10] = 255;
   cbi->rgb_node[11] = 255;
-
+  strcpy(cbi->type, "original");
   cbi++;
 
   // Propane
@@ -1205,7 +1447,7 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[12] = 255;
   cbi->rgb_node[13] = 255;
   cbi->rgb_node[14] = 255;
-
+  strcpy(cbi->type, "original");
   cbi++;
 
   // CO2
@@ -1231,8 +1473,23 @@ void InitDefaultColorbars(int nini){
   cbi->rgb_node[6] = 255;
   cbi->rgb_node[7] = 255;
   cbi->rgb_node[8] = 255;
-
+  strcpy(cbi->type, "original");
   cbi++;
+
+#ifdef pp_COLORBARS_CSV
+  for(i = 0;i < nlinear_filelist;i++){
+    InitColorbar(cbi, colorbarsdir, linear_filelist[i].file, "linear");
+    cbi++;
+  }
+  for(i = 0;i < ncyclic_filelist;i++){
+    InitColorbar(cbi, colorbarsdir, cyclic_filelist[i].file, "cyclic");
+    cbi++;
+  }
+  for(i = 0;i < nrainbow_filelist;i++){
+    InitColorbar(cbi, colorbarsdir, rainbow_filelist[i].file, "rainbow");
+    cbi++;
+  }
+#endif
 
   // construct colormaps from color node info
 
@@ -1241,6 +1498,7 @@ void InitDefaultColorbars(int nini){
 
     RemapColorbar(cbi);
     UpdateColorbarSplits(cbi);
+    memcpy(cbi->rgb_node_orig, cbi->rgb_node, 3 * cbi->nnodes * sizeof(unsigned char));
   }
 }
 
@@ -1460,15 +1718,18 @@ void DrawVerticalColorbarReg(void){
 #define COLORBAR_BOUNDARY 3
 #define COLORBAR_PLOT3D   4
 #define COLORBAR_ZONE     5
-#define COLORBAR_HVAC     6
+#define COLORBAR_HVACDUCT 6
+#define COLORBAR_HVACNODE 7
 
 /* ------------------ UpdateShowSliceColorbar ------------------------ */
 
-void UpdateShowColorbar(int *showcfast_arg, int *show_slice_colorbar_arg, int *show_hvac_colorbar_arg){
+void UpdateShowColorbar(int *showcfast_arg, int *show_slice_colorbar_arg, 
+  int *show_hvacduct_colorbar_arg, int *show_hvacnode_colorbar_arg){
   int showcfast_local = 0;
   int show_slice_colorbar_local = 0;
 
-  if(hvacductvar_index >= 0 || hvacnodevar_index >= 0)*show_hvac_colorbar_arg = 1;
+  if(hvacductvar_index >= 0)*show_hvacduct_colorbar_arg = 1;
+  if(hvacnodevar_index >= 0)*show_hvacnode_colorbar_arg = 1;
   if(showzone==1&&zonecolortype==ZONETEMP_COLOR)showcfast_local = 1;
   if(showslice==1||(showcfast_local==0&&showvslice==1&&vslicecolorbarflag==1))show_slice_colorbar_local = 1;
   if(show_slice_colorbar_local==1&&showcfast_local==1&&strcmp(slicebounds[slicefile_labelindex].label->shortlabel, "TEMP")==0)show_slice_colorbar_local=0;
@@ -1483,15 +1744,21 @@ int CountColorbars(void){
   int i;
   int showcfast_local = 0;
   int show_slice_colorbar_local = 0;
-  int show_hvac_colorbar_local = 0;
+  int show_hvacduct_colorbar_local = 0;
+  int show_hvacnode_colorbar_local = 0;
 
-  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local, &show_hvac_colorbar_local);
+  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local, 
+    &show_hvacduct_colorbar_local, &show_hvacnode_colorbar_local);
 
   for(i=0;i< N_COLORBARS;i++){
     hcolorbar_vis[i]=-1;
   }
-  if(show_hvac_colorbar_local == 1){
-    hcolorbar_vis[COLORBAR_HVAC] = count + 2;
+  if(show_hvacduct_colorbar_local == 1){
+    hcolorbar_vis[COLORBAR_HVACDUCT] = count + 2;
+    count++;
+  }
+  if(show_hvacnode_colorbar_local == 1){
+    hcolorbar_vis[COLORBAR_HVACNODE] = count + 2;
     count++;
   }
   if(showsmoke==1){
@@ -1527,16 +1794,18 @@ void DrawHorizontalColorbars(void){
   int doit=0;
   int showcfast_local = 0;
   int show_slice_colorbar_local = 0;
-  int show_hvac_colorbar_local = 0;
+  int show_hvacduct_colorbar_local = 0;
+  int show_hvacnode_colorbar_local = 0;
 
-  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local, &show_hvac_colorbar_local);
+  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local, 
+    & show_hvacduct_colorbar_local, &show_hvacnode_colorbar_local);
 
   CountColorbars();
 
   if(vis_colorbar==hcolorbar_vis[COLORBAR_SLICE]){
     if(show_slice_colorbar_local == 1)doit=1;
   }
-  else if(show_hvac_colorbar_local==1){
+  else if(show_hvacduct_colorbar_local==1 || show_hvacnode_colorbar_local == 1){
     doit = 1;
   }
   else if(vis_colorbar==hcolorbar_vis[COLORBAR_BOUNDARY]){
@@ -1671,16 +1940,18 @@ void DrawVerticalColorbars(void){
   int i;
   int showcfast_local = 0;
   int show_slice_colorbar_local = 0;
-  int show_hvac_colorbar_local = 0;
+  int show_hvacduct_colorbar_local = 0;
+  int show_hvacnode_colorbar_local = 0;
 
-  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local, &show_hvac_colorbar_local);
+  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local, 
+    &show_hvacduct_colorbar_local, &show_hvacnode_colorbar_local);
 
   // -------------- compute columns where left labels will occur ------------
 
   if(showiso_colorbar==1||
     (showsmoke==1&&parttype!=0)|| show_slice_colorbar_local==1||
     (showpatch==1&&wall_cell_color_flag==0)||
-    showcfast_local==1||show_hvac_colorbar_local==1||
+    showcfast_local==1||show_hvacduct_colorbar_local==1||show_hvacnode_colorbar_local == 1 ||
     showplot3d==1){
 
     SNIFF_ERRORS("before vertical colorbar");
@@ -1829,9 +2100,11 @@ void DrawHorizontalColorbarRegLabels(void){
 
   int showcfast_local = 0;
   int show_slice_colorbar_local = 0;
-  int show_hvac_colorbar_local = 0;
+  int show_hvacduct_colorbar_local = 0;
+  int show_hvacnode_colorbar_local = 0;
 
-  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local, &show_hvac_colorbar_local);
+  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local, 
+    &show_hvacduct_colorbar_local, &show_hvacnode_colorbar_local);
 
   foreground_color = &(foregroundcolor[0]);
   red_color = &(redcolor[0]);
@@ -2404,7 +2677,8 @@ void DrawHorizontalColorbarRegLabels(void){
 void DrawVerticalColorbarRegLabels(void){
   int i;
   int ileft = 0;
-  int leftzone, leftsmoke, leftslice, lefthist, leftpatch, leftiso, lefthvac;
+  int leftzone, leftsmoke, leftslice, lefthist, leftpatch, leftiso;
+  int lefthvacduct, lefthvacnode;
   int iposition;
 
   int sliceflag = 0;
@@ -2436,51 +2710,40 @@ void DrawVerticalColorbarRegLabels(void){
 
   int showcfast_local = 0;
   int show_slice_colorbar_local = 0;
-  int show_hvac_colorbar_local = 0;
+  int show_hvacduct_colorbar_local = 0;
+  int show_hvacnode_colorbar_local = 0;
   char exp_factor_label[256];
 
-  max_colorbar_label_width = 0.0;
+  max_colorbar_label_width = GetStringWidth("123456");
 
-  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local, &show_hvac_colorbar_local);
+  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local, 
+    &show_hvacduct_colorbar_local, &show_hvacnode_colorbar_local);
 
   colorbar_eps = pow(10.0, -ncolorlabel_digits);
 
   // -------------- compute columns where left labels will occur ------------
 
-  lefthvac  = 0;
-  leftsmoke = 0;
-  leftslice = 0;
-  lefthist  = 0;
-  leftpatch = 0;
-  leftiso   = 0;
-  ileft     = 0;
-  if(showiso_colorbar == 1){
-    leftiso = ileft;
-    ileft++;
-  }
-  if(showsmoke == 1){
-    if(parttype != 0){
-      leftsmoke = ileft;
-      ileft++;
-    }
-  }
+  lefthvacnode = 0;
+  lefthvacduct = 0;
+  leftsmoke    = 0;
+  leftslice    = 0;
+  lefthist     = 0;
+  leftpatch    = 0;
+  leftiso      = 0;
+  ileft        = 0;
+  if(showiso_colorbar == 1)leftiso = ileft++;
+  if(showsmoke == 1&&parttype != 0)leftsmoke = ileft++;
   if(show_slice_colorbar_local == 1){
-    leftslice = ileft;
-    ileft++;
+    leftslice = ileft++;
     if(histogram_show_numbers == 1){
-      lefthist = ileft;
-      ileft++;
+      lefthist = ileft++;
       dohist = 1;
     }
   }
-  if(showpatch == 1 && wall_cell_color_flag == 0){
-    leftpatch = ileft;
-  }
-  if(show_hvac_colorbar_local == 1){
-    lefthvac = ileft;
-    ileft++;
-  }
-  leftzone = ileft;
+  if(showpatch == 1 && wall_cell_color_flag == 0)leftpatch = ileft++;
+  if(show_hvacnode_colorbar_local == 1)lefthvacnode = ileft++;
+  if(show_hvacduct_colorbar_local == 1)lefthvacduct = ileft++;
+  leftzone = ileft++;
 
   foreground_color = &(foregroundcolor[0]);
   red_color = &(redcolor[0]);
@@ -2883,26 +3146,21 @@ void DrawVerticalColorbarRegLabels(void){
     glPopMatrix();
   }
 
-  // -------------- HVAC left labels ------------
+  // -------------- HVAC node left labels ------------
 
-  if(show_hvac_colorbar_local==1){
+  if(show_hvacnode_colorbar_local==1 && hvacnodevar_index>=0){
     hvacvaldata *hi;
     float tttval, tttmin, tttmax;
     float hvacrange;
 
-    if(hvacnodevar_index >= 0){
-      hi = hvacvalsinfo->node_vars + hvacnodevar_index;
-    }
-    if(hvacductvar_index >= 0){
-      hi = hvacvalsinfo->duct_vars + hvacductvar_index;
-    }
+    hi = hvacnodevalsinfo->node_vars + hvacnodevar_index;
     iposition = -1;
     tttmin = hi->levels256[0];
     tttmax = hi->levels256[255];
     hvacrange = tttmax - tttmin;
     glPushMatrix();
     glTranslatef(vcolorbar_left_pos - colorbar_label_width, -VP_vcolorbar.text_height / 2.0, 0.0);
-    glTranslatef(-lefthvac*(colorbar_label_width + h_space), 0.0, 0.0);
+    glTranslatef(-lefthvacnode*(colorbar_label_width + h_space), 0.0, 0.0);
     if(global_colorbar_index != -1){
       char hvaclabel[256], *hvac_colorlabel_ptr = NULL;
       float vert_position;
@@ -2919,7 +3177,7 @@ void DrawVerticalColorbarRegLabels(void){
       float val;
 
       if(iposition == i)continue;
-      val = tttmin + i * hvacrange / (nrgb - 2);;
+      val = tttmin + i * hvacrange / (nrgb - 2);
       colorbar_vals[i] = val;
       GetMantissaExponent(ABS(val), colorbar_exponents + i);
     }
@@ -2937,36 +3195,100 @@ void DrawVerticalColorbarRegLabels(void){
     glPopMatrix();
   }
 
-  // -------------- HVAC file top labels ------------
+  // -------------- HVAC duct left labels ------------
 
-  if(show_hvac_colorbar_local==1){
+  if(show_hvacduct_colorbar_local==1 && hvacductvar_index>=0){
+    hvacvaldata *hi;
+    float tttval, tttmin, tttmax;
+    float hvacrange;
+
+    hi = hvacductvalsinfo->duct_vars + hvacductvar_index;
+    iposition = -1;
+    tttmin = hi->levels256[0];
+    tttmax = hi->levels256[255];
+    hvacrange = tttmax - tttmin;
+    glPushMatrix();
+    glTranslatef(vcolorbar_left_pos - colorbar_label_width, -VP_vcolorbar.text_height / 2.0, 0.0);
+    glTranslatef(-lefthvacduct*(colorbar_label_width + h_space), 0.0, 0.0);
+    if(global_colorbar_index != -1){
+      char hvaclabel[256], *hvac_colorlabel_ptr = NULL;
+      float vert_position;
+
+      // draw hvac file value selected with mouse
+      tttval = hi->levels256[valindex];
+      Num2String(hvaclabel, tttval);
+      hvac_colorlabel_ptr = &(hvaclabel[0]);
+      vert_position = MIX2(global_colorbar_index, 255, vcolorbar_top_pos, vcolorbar_down_pos);
+      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      OutputBarText(0.0, vert_position, red_color, hvac_colorlabel_ptr);
+    }
+    for(i = 0; i < nrgb - 1; i++){
+      float val;
+
+      if(iposition == i)continue;
+      val = tttmin + i * hvacrange / (nrgb - 2);
+      colorbar_vals[i] = val;
+      GetMantissaExponent(ABS(val), colorbar_exponents + i);
+    }
+    Floats2Strings(colorbar_labels, colorbar_vals, nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+    max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
+    for(i = 0; i < nrgb - 1; i++){
+      float vert_position;
+
+      vert_position = MIX2(i, nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
+
+      if(iposition == i)continue;
+      OutputBarText(0.0, vert_position, foreground_color, colorbar_labels[i]);
+      max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(colorbar_labels[i]));
+    }
+    glPopMatrix();
+  }
+
+  // -------------- HVAC file node top labels ------------
+
+  if(show_hvacnode_colorbar_local==1 && hvacnodevar_index>=0){
     char *slabel, *unitlabel;
+    hvacvaldata *hi;
 
-    if(hvacnodevar_index >= 0){
-      hvacvaldata *hi;
-
-      hi = hvacvalsinfo->node_vars + hvacnodevar_index;
-      slabel = hi->label.shortlabel;
-      unitlabel = hi->label.unit;
-    }
-    if(hvacductvar_index >= 0){
-      hvacvaldata *hi;
-
-      hi = hvacvalsinfo->duct_vars + hvacductvar_index;
-      slabel = hi->label.shortlabel;
-      unitlabel = hi->label.unit;
-    }
+    hi = hvacnodevalsinfo->node_vars + hvacnodevar_index;
+    slabel = hi->label.shortlabel;
+    unitlabel = hi->label.unit;
 
     glPushMatrix();
     glTranslatef(
       vcolorbar_left_pos - colorbar_label_width,
       vcolorbar_top_pos + v_space + vcolorbar_delta,
       0.0);
-    glTranslatef(-lefthvac*(colorbar_label_width + h_space), 0.0, 0.0);
+    glTranslatef(-lefthvacnode*(colorbar_label_width + h_space), 0.0, 0.0);
     OutputBarText(0.0, 3 * (VP_vcolorbar.text_height + v_space), foreground_color, "HVAC");
-    OutputBarText(0.0, 2 * (VP_vcolorbar.text_height + v_space), foreground_color, slabel);
-    OutputBarText(0.0,     (VP_vcolorbar.text_height + v_space), foreground_color, unitlabel);
-    OutputBarText(0.0, 0, foreground_color, exp_factor_label);
+    OutputBarText(0.0, 2 * (VP_vcolorbar.text_height + v_space), foreground_color, "node");
+    OutputBarText(0.0, 1 * (VP_vcolorbar.text_height + v_space), foreground_color, slabel);
+    OutputBarText(0.0, 0 * (VP_vcolorbar.text_height + v_space), foreground_color, unitlabel);
+    OutputBarText(0.0,-1 * (VP_vcolorbar.text_height + v_space), foreground_color, exp_factor_label);
+    glPopMatrix();
+  }
+
+  // -------------- HVAC file duct top labels ------------
+
+  if(show_hvacduct_colorbar_local==1 && hvacductvar_index >=0){
+    char *slabel, *unitlabel;
+    hvacvaldata *hi;
+
+    hi = hvacductvalsinfo->duct_vars + hvacductvar_index;
+    slabel = hi->label.shortlabel;
+    unitlabel = hi->label.unit;
+
+    glPushMatrix();
+    glTranslatef(
+      vcolorbar_left_pos - colorbar_label_width,
+      vcolorbar_top_pos + v_space + vcolorbar_delta,
+      0.0);
+    glTranslatef(-lefthvacduct*(colorbar_label_width + h_space), 0.0, 0.0);
+    OutputBarText(0.0, 3 * (VP_vcolorbar.text_height + v_space), foreground_color, "HVAC");
+    OutputBarText(0.0, 2 * (VP_vcolorbar.text_height + v_space), foreground_color, "duct");
+    OutputBarText(0.0, 1 * (VP_vcolorbar.text_height + v_space), foreground_color, slabel);
+    OutputBarText(0.0, 0 * (VP_vcolorbar.text_height + v_space), foreground_color, unitlabel);
+    OutputBarText(0.0,-1 * (VP_vcolorbar.text_height + v_space), foreground_color, exp_factor_label);
     glPopMatrix();
   }
 
@@ -3299,21 +3621,16 @@ void DrawVerticalColorbarRegLabels(void){
 
 /* ------------------ Rgb2Hsl ------------------------ */
 
-void Rgb2Hsl(float *rgbvals, float *hslvals, int flag){
+void Rgb2Hsl(unsigned char *rgbvals255, float *hslvals){
   // https://www.niwa.nu/2013/05/math-behind-colorspace-conversions-rgb-hsl/
   float cmin, cmax, r, g, b;
   float luminance, saturation, hue;
   int maxmode;
   float cmaxmcmin;
 
-  r = rgbvals[0];
-  g = rgbvals[1];
-  b = rgbvals[2];
-  if(flag==1){
-    r /= 255.0;
-    g /= 255.0;
-    b /= 255.0;
-  }
+  r = (float)rgbvals255[0]/255.0;
+  g = (float)rgbvals255[1]/255.0;
+  b = (float)rgbvals255[2]/255.0;
 
   cmin = MIN(r, MIN(g, b));
   cmax = MAX(r, MAX(g, b));
@@ -3330,22 +3647,19 @@ void Rgb2Hsl(float *rgbvals, float *hslvals, int flag){
   }
   else{
     if(luminance>0.0&&luminance<0.5){
-      saturation = (cmax-cmin)/(2.0*luminance);
+      saturation = (cmax-cmin)/(cmax + cmin);
     }
-    else if(luminance>=0.5){
+    else{
       float denom;
 
-      denom = 2.0-2.0*luminance;
-      if(denom!=0.0){
-        saturation = (cmax-cmin)/denom;
-      }
-      else{
-        saturation = 1.0;
-        hue = 0.0;
-      }
+      denom = 2.0-cmax-cmin;
+      saturation = 1.0;
+      hue = 0.0;
+      if(denom!=0.0)saturation = (cmax-cmin)/denom;
     }
   }
 
+  hue = 0.0;
   if(cmaxmcmin>0.0&&luminance!=0.0&&luminance!=1.0){
     if(maxmode==0){
       hue = (g-b)/cmaxmcmin;
@@ -3359,9 +3673,6 @@ void Rgb2Hsl(float *rgbvals, float *hslvals, int flag){
     hue *= 60.0;
     if(hue<0.0)hue += 360.0;
   }
-  else{
-    hue = 0.0;
-  }
   hslvals[0] = hue;
   hslvals[1] = saturation;
   hslvals[2] = luminance;
@@ -3369,39 +3680,33 @@ void Rgb2Hsl(float *rgbvals, float *hslvals, int flag){
 
 /* ------------------ Hsl2Rgb ------------------------ */
 
-void Hsl2Rgb(float *hslvals, float *rgbvals, int flag){
+void Hsl2Rgb(float *hslvals, unsigned char *rgbvals255){
   // https://www.niwa.nu/2013/05/math-behind-colorspace-conversions-rgb-hsl/
 
   float hue, saturation, luminance;
   float r, g, b;
-//  float temp_1;
-//  float  temp_2;
+  float temp_1, temp_2;
   float temp_r, temp_g, temp_b;
 
   hue = ABS(hslvals[0]);
   saturation = ABS(hslvals[1]);
   luminance = ABS(hslvals[2]);
   if(saturation==0.0){
-    r = saturation;
-    g = saturation;
-    b = saturation;
-    if(flag==1){
-      r *= 255.0;
-      g *= 255.0;
-      b *= 255.0;
-    }
-    rgbvals[0] = r;
-    rgbvals[1] = b;
-    rgbvals[2] = g;
+    r = 255.0*luminance;
+    g = 255.0*luminance;
+    b = 255.0*luminance;
+    rgbvals255[0] = (unsigned char)CLAMP(r, 0.0, 255.0);
+    rgbvals255[1] = (unsigned char)CLAMP(g, 0.0, 255.0);
+    rgbvals255[2] = (unsigned char)CLAMP(b, 0.0, 255.0);
     return;
   }
   if(luminance<0.5){
-//    temp_1 = luminance*(1.0+saturation);
+    temp_1 = luminance*(1.0+saturation);
   }
   else{
-//    temp_1 = luminance+saturation-luminance*saturation;
+    temp_1 = luminance+saturation-luminance*saturation;
   }
-//  temp_2 = 2.0*luminance-temp_1;
+  temp_2 = 2.0*luminance-temp_1;
 
   hue /= 360.0;
 
@@ -3417,6 +3722,48 @@ void Hsl2Rgb(float *hslvals, float *rgbvals, int flag){
   if(temp_b<0.0)temp_b += 1.0;
   if(temp_b>1.0)temp_b -= 1.0;
 
+  float val;
+  if(temp_r < 1.0 / 6.0){
+    val = temp_2 + (temp_2 - temp_1) * 6.0 * temp_r;
+  }
+  else if(temp_r >= 1.0 / 6.0 && temp_r < 0.5){
+    val = temp_1;
+  }
+  else if(temp_r >= 0.5 && temp_r < 2.0 / 3.0){
+    val = temp_2 + (temp_2 - temp_1) * (4.0 - 6.0*temp_r);
+  }
+  else{
+    val = temp_2;
+  }
+  rgbvals255[0] = CLAMP((unsigned char)(val * 255.0), 0, 255);
+
+  if(temp_g < 1.0 / 6.0){
+    val = temp_2 + (temp_2 - temp_1) * 6.0 * temp_g;
+  }
+  else if(temp_g >= 1.0 / 6.0 && temp_g < 0.5){
+    val = temp_1;
+  }
+  else if(temp_g >= 0.5 && temp_g < 2.0 / 3.0){
+    val = temp_2 + (temp_2 - temp_1) * (4.0 - 6.0 * temp_g);
+  }
+  else{
+    val = temp_2;
+  }
+  rgbvals255[1] = CLAMP((unsigned char)(val * 255.0), 0, 255);
+
+  if(temp_b < 1.0 / 6.0){
+    val = temp_2 + (temp_2 - temp_1) * 6.0 * temp_b;
+  }
+  else if(temp_g >= 1.0 / 6.0 && temp_b < 0.5){
+    val = temp_1;
+  }
+  else if(temp_b >= 0.5 && temp_b < 2.0 / 3.0){
+    val = temp_2 + (temp_2 - temp_1) * (4.0 - 6.0 * temp_b);
+  }
+  else{
+    val = temp_2;
+  }
+  rgbvals255[2] = CLAMP((unsigned char)(val * 255.0), 0, 255);
 }
 
 

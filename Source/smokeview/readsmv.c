@@ -235,8 +235,8 @@ int ReadCSV(csvfiledata *csvfi, int flag){
 
     ci = csvfi->csvinfo + i;
     ci->nvals = nrows-2;
-    NewMemory((void **)&ci->vals,      ci->nvals*sizeof(csvdata));
-    NewMemory((void **)&ci->vals_orig, ci->nvals*sizeof(csvdata));
+    NewMemory((void **)&ci->vals,      MAX(1, ci->nvals)*sizeof(csvdata));
+    NewMemory((void **)&ci->vals_orig, MAX(1, ci->nvals)*sizeof(csvdata));
   }
   CheckMemory;
 
@@ -477,8 +477,8 @@ void ReadHRR(int flag){
     hrrdata *hi;
 
     hi = hrrinfo+i;
-    NewMemory((void **)&hi->vals, (nrows-2)*sizeof(float));
-    NewMemory((void **)&hi->vals_orig, (nrows-2)*sizeof(float));
+    NewMemory((void **)&hi->vals,      MAX(1,(nrows-2))*sizeof(float));
+    NewMemory((void **)&hi->vals_orig, MAX(1,(nrows-2))*sizeof(float));
     hi->base_col = -1;
     hi->nvals = nrows-2;
   }
@@ -525,7 +525,7 @@ void ReadHRR(int flag){
       int doit = 0;
 
       doit = 0;
-      if(strlen(fuel_name)>0&&strstr(hi->label.longlabel, fuel_name)!=NULL)doit = 1;;
+      if(strlen(fuel_name)>0&&strstr(hi->label.longlabel, fuel_name)!=NULL)doit = 1;
       if(doit==0&&strstr(hi->label.longlabel, "FUEL")!=NULL)doit = 1;
       if(doit==0)continue;
       hi2 = hrrinfo + nhrrinfo + nhrrhcinfo;
@@ -834,6 +834,15 @@ void FreeLabels(flowlabels *flowlabel){
 void InitMesh(meshdata *meshi){
   int i;
 
+  for(i = 0;i < 6;i++){
+    meshi->skip_nabors[i]=NULL;
+  }
+  meshi->imap = NULL;
+  meshi->jmap = NULL;
+  meshi->kmap = NULL;
+  meshi->n_imap = 0;
+  meshi->n_jmap = 0;
+  meshi->n_kmap = 0;
   meshi->znodes_complete = NULL;
   meshi->nznodes = 0;
   meshi->floor_mesh = meshi;
@@ -1968,6 +1977,7 @@ void InitDevice(devicedata *devicei, float *xyz, int is_beam, float *xyz1, float
   float norm;
   int i;
 
+  devicei->show        = 1;
   devicei->selected    = 0;
   devicei->nvals       = 0;
   devicei->filetype    = -1;
@@ -2876,12 +2886,89 @@ void UpdateBoundInfo(void){
       }
     }
   }
+
 #ifdef pp_GLUI
+  int nhvacboundsmax = 0;
+  if(hvacductvalsinfo != NULL)nhvacboundsmax += hvacductvalsinfo->n_duct_vars;
+  if(hvacnodevalsinfo != NULL)nhvacboundsmax += hvacnodevalsinfo->n_node_vars;
+  if(nhvacboundsmax>0){
+    FREEMEMORY(hvacductbounds);
+    NewMemory((void*)&hvacductbounds,hvacductvalsinfo->n_duct_vars*sizeof(boundsdata));
+    nhvacductbounds=0;
+
+    FREEMEMORY(hvacnodebounds);
+    NewMemory((void*)&hvacnodebounds,hvacnodevalsinfo->n_node_vars*sizeof(boundsdata));
+    nhvacnodebounds=0;
+
+    for(i=0;i<nhvacboundsmax;i++){
+      hvacvaldata *hi;
+      boundsdata *hbi;
+
+      if(i<hvacductvalsinfo->n_duct_vars){
+        hi = hvacductvalsinfo->duct_vars + i;
+        hbi = hvacductbounds + nhvacductbounds;
+      }
+      else{
+        hi = hvacnodevalsinfo->node_vars + i - hvacductvalsinfo->n_duct_vars;
+        hbi = hvacnodebounds + nhvacnodebounds;
+      }
+      hi->firstshort=1;
+      hi->valmin=1.0;
+      hi->valmax=0.0;
+      hi->setvalmin=0;
+      hi->setvalmax=0;
+
+      hbi->shortlabel       = hi->label.shortlabel;
+      hbi->dlg_setvalmin    = PERCENTILE_MIN;
+      hbi->dlg_setvalmax    = PERCENTILE_MAX;
+      hbi->dlg_valmin       = 1.0;
+      hbi->dlg_valmax       = 0.0;
+      hbi->chopmax          = 0.0;
+      hbi->chopmin          = 1.0;
+      hbi->setchopmax       = 0;
+      hbi->setchopmin       = 0;
+      hbi->line_contour_min = 0.0;
+      hbi->line_contour_max = 1.0;
+      hbi->line_contour_num = 1;
+      hbi->label            = &(hi->label);
+      int nbeg;
+      if(i<hvacductvalsinfo->n_duct_vars){
+        nbeg = 0;
+        nhvacductbounds++;
+      }
+      else{
+        nbeg = hvacductvalsinfo->n_duct_vars;
+        nhvacnodebounds++;
+      }
+      for(n=nbeg;n<i;n++){
+        hvacvaldata *hn;
+
+        if(n<hvacductvalsinfo->n_duct_vars){
+          hn = hvacductvalsinfo->duct_vars + n;
+        }
+        else{
+          hn = hvacnodevalsinfo->node_vars + n - hvacductvalsinfo->n_duct_vars;
+        }
+        if(strcmp(hi->label.shortlabel,hn->label.shortlabel)==0){
+          hi->firstshort=0;
+          if(n<hvacductvalsinfo->n_duct_vars){
+            nhvacductbounds--;
+          }
+          else{
+            nhvacnodebounds--;
+          }
+          break;
+        }
+      }
+    }
+  }
   UpdateChar();
 #endif
   GetGlobalPartBounds(ALL_FILES);
   GetGlobalSliceBounds();
   GetGlobalPatchBounds();
+  GetGlobalHVACDuctBounds(0);
+  GetGlobalHVACNodeBounds(0);
 }
 
 /*
@@ -3083,6 +3170,9 @@ void UpdateMeshBoxBounds(void){
     meshi->boxmax[0] = meshi->xplt[meshi->ibar];
     meshi->boxmax[1] = meshi->yplt[meshi->jbar];
     meshi->boxmax[2] = meshi->zplt[meshi->kbar];
+    meshi->boxeps_fds[0] = (meshi->xplt[1] - meshi->xplt[0]) / 2.0;
+    meshi->boxeps_fds[1] = (meshi->yplt[1] - meshi->yplt[0]) / 2.0;
+    meshi->boxeps_fds[2] = (meshi->zplt[1] - meshi->zplt[0]) / 2.0;
   }
 }
 
@@ -3117,7 +3207,7 @@ int CompareSmoketypes( const void *arg1, const void *arg2 ){
   smoke3dtypedata *smoketypei, *smoketypej;
   smoke3ddata *smoke3di, *smoke3dj;
   char *labeli, *labelj;
-  float exti, extj;;
+  float exti, extj;
 
   smoketypei = (smoke3dtypedata *)arg1;
   smoketypej = (smoke3dtypedata *)arg2;
@@ -3810,15 +3900,19 @@ void UpdateMeshCoords(void){
     meshi->dxyz_orig[1] = dy;
     meshi->dxyz_orig[2] = dz;
 
-    // dxy = x*y/sqrt(x*x+y*y)
-#define DIAGDIST(X,Y)  (X)*(Y)/sqrt((X)*(X)+(Y)*(Y))
-
     meshi->dxDdx  = 1.0;
     meshi->dyDdx  = dy/dx;
     meshi->dzDdx  = dz/dx;
-    meshi->dxyDdx = DIAGDIST(dx, dy)/dx;
-    meshi->dxzDdx = DIAGDIST(dx, dz)/dx;
-    meshi->dyzDdx = DIAGDIST(dy, dz)/dx;
+    meshi->dxyDdx = dy/sqrt(dx*dx+dy*dy);
+    meshi->dxzDdx = dz/sqrt(dx*dx+dz*dz);
+    meshi->dyzDdx = (dy*dz/dx)/sqrt(dy*dy+dz*dz);
+
+    meshi->smoke_dist[ALPHA_X]  = dx;
+    meshi->smoke_dist[ALPHA_Y]  = dy;
+    meshi->smoke_dist[ALPHA_Z]  = dz;
+    meshi->smoke_dist[ALPHA_XY] = dx*dy/sqrt(dx*dx + dy*dy);
+    meshi->smoke_dist[ALPHA_YZ] = dy*dz/sqrt(dy*dy + dz*dz);
+    meshi->smoke_dist[ALPHA_XZ] = dx*dz/sqrt(dx*dx + dz*dz);
   }
 }
 
@@ -5187,11 +5281,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
     else if(patchi->structured==NO){
       char geomlabel[256];
 
-#ifdef pp_MERGE_GEOMS
-      strcpy(geomlabel, "(cell centered)");
-#else
       strcpy(geomlabel, "(geometry)");
-#endif
       if(patchi->filetype_label!=NULL){
         if(strcmp(patchi->filetype_label, "EXIMBND_FACES")==0){
           strcat(geomlabel, " - EXIM faces");
@@ -5566,7 +5656,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
 
   sd = sliceinfo+nn_slice-1;
 
-#ifdef pp_SLICETHREAD
+#ifdef pp_SLICE_MULTI
   sd->loadstatus = FILE_UNLOADED;
 #endif
   sd->vals2d.vals      = NULL;
@@ -5585,6 +5675,12 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   sd->valmax_smv = 0.0;
   sd->valmin_fds = 1.0;
   sd->valmax_fds = 0.0;
+  sd->imap = NULL;
+  sd->jmap = NULL;
+  sd->kmap = NULL;
+  sd->n_imap=0;
+  sd->n_jmap=0;
+  sd->n_kmap=0;
   sd->cell_center = cellcenter;
   if(slicegeom==1&&cell_center_flag==1)sd->cell_center = 1;
  // sd->file_size = 0;
@@ -5772,14 +5868,12 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   sd->js2 = jj2;
   sd->ks1 = kk1;
   sd->ks2 = kk2;
-#ifdef pp_SORTSLICES
   sd->iis1 = ii1;
   sd->iis2 = ii2;
   sd->jjs1 = jj1;
   sd->jjs2 = jj2;
   sd->kks1 = kk1;
   sd->kks2 = kk2;
-#endif
   sd->plotx = -1;
   sd->ploty = -1;
   sd->plotz = -1;
@@ -6227,134 +6321,6 @@ void UpdateObstBoundingBox(float *XB){
     }
   }
 }
-
-#ifdef pp_CACHE_FILEBOUNDS
-/* ------------------ GetSliceInfoIndex ------------------------ */
-
-char *GetSliceInfoFileptr(char *file){
-  int i;
-
-  for(i=0;i<nsliceinfo;i++){
-    slicedata *slicei;
-
-    slicei = sliceinfo + i;
-    if(strcmp(slicei->file, file)==0)return slicei->file;
-  }
-  return NULL;
-}
-
-/* ------------------ GetPatchInfoIndex ------------------------ */
-
-char *GetPatchInfoFileptr(char *file){
-  int i;
-
-  for(i=0;i<npatchinfo;i++){
-    patchdata *patchi;
-
-    patchi = patchinfo + i;
-    if(strcmp(patchi->file, file)==0)return patchi->file;
-  }
-  return NULL;
-}
-
-/* ------------------ UpdateFileBoundList ------------------------ */
-
-void UpdateFileBoundList(void){
-  int call_again=0;
-
-  if(nsliceinfo>0){
-    int i;
-    FILE *stream;
-
-    stream = fopen(bnds_slice_filename, "r");
-    if(stream!=NULL){
-      nsliceboundfileinfo = 0;
-      for(;;){
-        char buffer[255];
-
-        if(feof(stream)!=0||fgets(buffer,255,stream)==NULL)break;
-        if(feof(stream)!=0||fgets(buffer,255,stream)==NULL)break;
-        nsliceboundfileinfo++;
-      }
-      NewMemory((void **)&sliceboundfileinfo, nsliceboundfileinfo*sizeof(boundfiledata));
-      rewind(stream);
-
-      for(i=0;i<nsliceboundfileinfo;i++){
-        sliceboundfileinfo[i].file   = NULL;
-        sliceboundfileinfo[i].valmin = 1.0;
-        sliceboundfileinfo[i].valmax = 0.0;
-      }
-      for(i=0;i<nsliceboundfileinfo;i++){
-        char buffer[255];
-        float valmin, valmax;
-
-        if(feof(stream)!=0||fgets(buffer,255,stream)==NULL)break;
-        sliceboundfileinfo[i].file=GetSliceInfoFileptr(TrimFrontBack(buffer));
-
-        if(feof(stream)!=0||fgets(buffer,255,stream)==NULL)break;
-        sscanf(buffer, "%f %f", &valmin, &valmax);
-        sliceboundfileinfo[i].valmin = valmin;
-        sliceboundfileinfo[i].valmax = valmax;
-      }
-      fclose(stream);
-    }
-    else{
-      nsliceboundfileinfo = nsliceinfo;
-      NewMemory((void **)&sliceboundfileinfo, nsliceboundfileinfo*sizeof(boundfiledata));
-      void GetGlobalSliceBounds(void);
-      GetGlobalSliceBounds();
-      call_again = 1;
-    }
-  }
-  if(npatchinfo>0){
-    int i;
-    FILE *stream;
-
-    stream = fopen(bnds_patch_filename, "r");
-    if(stream!=NULL){
-      npatchboundfileinfo = 0;
-      for(;;){
-        char buffer[255];
-
-        if(feof(stream)!=0||fgets(buffer,255,stream)==NULL)break;
-        if(feof(stream)!=0||fgets(buffer,255,stream)==NULL)break;
-        npatchboundfileinfo++;
-      }
-      NewMemory((void **)&patchboundfileinfo, npatchboundfileinfo*sizeof(boundfiledata));
-      rewind(stream);
-
-      for(i=0;i<npatchboundfileinfo;i++){
-        patchboundfileinfo[i].file   = NULL;
-        patchboundfileinfo[i].valmin = 1.0;
-        patchboundfileinfo[i].valmax = 0.0;
-      }
-      for(i=0;i<npatchboundfileinfo;i++){
-        char buffer[255];
-        float valmin, valmax;
-
-        if(feof(stream)!=0||fgets(buffer,255,stream)==NULL)break;
-        patchboundfileinfo[i].file=GetPatchInfoFileptr(TrimFrontBack(buffer));
-
-        if(feof(stream)!=0||fgets(buffer,255,stream)==NULL)break;
-        sscanf(buffer, "%f %f", &valmin, &valmax);
-        patchboundfileinfo[i].valmin = valmin;
-        patchboundfileinfo[i].valmax = valmax;
-      }
-      fclose(stream);
-    }
-    else{
-      npatchboundfileinfo = npatchinfo;
-      NewMemory((void **)&patchboundfileinfo, npatchboundfileinfo*sizeof(boundfiledata));
-      void GetGlobalPatchBounds(void);
-      GetGlobalPatchBounds();
-      call_again = 1;
-    }
-  }
-  if(call_again == 1){
-    UpdateFileBoundList();
-  }
-}
-#endif
 
 /* ------------------ ReadSMVOrig ------------------------ */
 
@@ -7687,41 +7653,50 @@ int ReadSMV(bufferstreamdata *stream){
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
     if(MatchSMV(buffer, "HVACVALS") == 1){
-      FREEMEMORY(hvacvalsinfo);
-      NewMemory(( void ** )&hvacvalsinfo, sizeof(hvacvalsdata));
-      hvacvalsinfo->times = NULL;
-      
-      if(FGETS(buffer, 255, stream) == NULL)BREAK;
-      hvacvalsinfo->file = GetCharPtr(TrimFrontBack(buffer));
-      
-      if(FGETS(buffer, 255, stream) == NULL)BREAK;
-      sscanf(buffer, "%i", &hvacvalsinfo->n_node_vars);
-      
-      NewMemory((void **)&hvacvalsinfo->node_vars, hvacvalsinfo->n_node_vars * sizeof(hvacvaldata));
-      for(i = 0;i < hvacvalsinfo->n_node_vars;i++){
-        hvacvaldata *hi;
-        flowlabels *labeli;
+      FREEMEMORY(hvacductvalsinfo);
+      NewMemory(( void ** )&hvacductvalsinfo, sizeof(hvacvalsdata));
+      hvacductvalsinfo->times = NULL;
+      hvacductvalsinfo->loaded = 0;
+      hvacductvalsinfo->node_vars = NULL;
+      hvacductvalsinfo->duct_vars = NULL;
 
-        hi = hvacvalsinfo->node_vars + i;
-        InitHvacData(hi);
-        labeli = &hi->label;
-        ReadLabels(labeli, stream, NULL);
-      }
-      
       if(FGETS(buffer, 255, stream) == NULL)BREAK;
-      sscanf(buffer, "%i", &hvacvalsinfo->n_duct_vars);
-      
-      NewMemory((void **)&hvacvalsinfo->duct_vars, hvacvalsinfo->n_duct_vars * sizeof(hvacvaldata));
-      for(i = 0;i < hvacvalsinfo->n_duct_vars;i++){
-        hvacvaldata *hi;
-        flowlabels *labeli;
+      hvacductvalsinfo->file = GetCharPtr(TrimFrontBack(buffer));
 
-        hi = hvacvalsinfo->duct_vars + i;
-        InitHvacData(hi);
-        labeli = &hi->label;
-        ReadLabels(labeli, stream, NULL);
+      if(FGETS(buffer, 255, stream) == NULL)BREAK;
+      sscanf(buffer, "%i", &hvacductvalsinfo->n_node_vars);
+
+      if(hvacductvalsinfo->n_node_vars>0){
+        NewMemory((void **)&hvacductvalsinfo->node_vars, hvacductvalsinfo->n_node_vars * sizeof(hvacvaldata));
+        for(i = 0;i < hvacductvalsinfo->n_node_vars;i++){
+          hvacvaldata *hi;
+          flowlabels *labeli;
+
+          hi = hvacductvalsinfo->node_vars + i;
+          InitHvacData(hi);
+          labeli = &hi->label;
+          ReadLabels(labeli, stream, NULL);
+        }
       }
 
+      if(FGETS(buffer, 255, stream) == NULL)BREAK;
+      sscanf(buffer, "%i", &hvacductvalsinfo->n_duct_vars);
+
+      if(hvacductvalsinfo->n_duct_vars>0){
+        NewMemory((void **)&hvacductvalsinfo->duct_vars, hvacductvalsinfo->n_duct_vars * sizeof(hvacvaldata));
+        for(i = 0;i < hvacductvalsinfo->n_duct_vars;i++){
+          hvacvaldata *hi;
+          flowlabels *labeli;
+
+          hi = hvacductvalsinfo->duct_vars + i;
+          InitHvacData(hi);
+          labeli = &hi->label;
+          ReadLabels(labeli, stream, NULL);
+        }
+      }
+      FREEMEMORY(hvacnodevalsinfo);
+      NewMemory(( void ** )&hvacnodevalsinfo, sizeof(hvacvalsdata));
+      memcpy(hvacnodevalsinfo, hvacductvalsinfo, sizeof(hvacvalsdata));
     }
     /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -7783,7 +7758,7 @@ int ReadSMV(bufferstreamdata *stream){
           strcpy(nodei->c_filter, "FI");
           nhvacfilters++;
         }
-        
+
       }
   // DUCTS
   // n_ducts
@@ -7838,7 +7813,16 @@ int ReadSMV(bufferstreamdata *stream){
         ducti->nact_times   = 0;
         ducti->metro_path   = DUCT_XYZ;
         ducti->connect_id   = -1;
-        ducti->waypoints    = NULL;
+        ducti->xyz_reg      = NULL;
+        ducti->cell_met     = NULL;
+        ducti->cell_reg     = NULL;
+        ducti->nxyz_met     = 0;
+        ducti->nxyz_reg     = 0;
+        ducti->xyz_met_cell = NULL;
+        ducti->xyz_reg_cell = NULL;
+        ducti->nxyz_met_cell = 0;
+        ducti->nxyz_reg_cell = 0;
+
         if(connect_id != NULL)sscanf(connect_id, "%i", &ducti->connect_id);
 
         if(FGETS(buffer, 255, stream) == NULL)BREAK;
@@ -7860,32 +7844,31 @@ int ReadSMV(bufferstreamdata *stream){
 
         if(FGETS(buffer, 255, stream) == NULL)BREAK;
         if(FGETS(buffer, 255, stream) == NULL)BREAK;
-        sscanf(buffer, "%i", &ducti->n_waypoints);
+        int n_waypoints;
+        sscanf(buffer, "%i", &n_waypoints);
 
-        if(ducti->n_waypoints > 0){
-          float *waypoints;
+        float *waypoints;
 
-          NewMemory(( void ** )&waypoints, 3*(ducti->n_waypoints+2) * sizeof(float));
-          ducti->waypoints0 = waypoints;
-          ducti->waypoints = waypoints+3;
+        NewMemory(( void ** )&waypoints, 3*(n_waypoints+2) * sizeof(float));
+        ducti->xyz_reg   = waypoints;
+        ducti->nxyz_reg  = n_waypoints + 2;
 
-          hvacnodedata *node_from, *node_to;
-          float *xyz0, *xyz1;
+        hvacnodedata *node_from, *node_to;
+        float *xyz0, *xyz1;
 
-          node_from = hvacnodeinfo + ducti->node_id_from;
-          node_to = hvacnodeinfo + ducti->node_id_to;
-          xyz0 = node_from->xyz;
-          xyz1 = node_to->xyz;
-          memcpy(ducti->waypoints0,                            xyz0, 3*sizeof(float));
-          memcpy(ducti->waypoints0 + 3*(ducti->n_waypoints+1), xyz1, 3*sizeof(float));
+        node_from = hvacnodeinfo + ducti->node_id_from;
+        node_to = hvacnodeinfo + ducti->node_id_to;
+        xyz0 = node_from->xyz;
+        xyz1 = node_to->xyz;
 
-          //store node xyz position at the first and last waypoint
+        memcpy(ducti->xyz_reg,                            xyz0, 3*sizeof(float));  // first point
+        memcpy(ducti->xyz_reg + 3*(n_waypoints+1), xyz1, 3*sizeof(float));  // last point
+
+        waypoints += 3;
+        for(j = 0; j < n_waypoints; j++){ // points between first and last point
+          if(FGETS(buffer, 255, stream) == NULL)BREAK;
+          sscanf(buffer, "%f %f %f", waypoints, waypoints + 1, waypoints + 2);
           waypoints += 3;
-          for(j = 0; j < ducti->n_waypoints; j++){
-            if(FGETS(buffer, 255, stream) == NULL)BREAK;
-            sscanf(buffer, "%f %f %f", waypoints, waypoints + 1, waypoints + 2);
-            waypoints += 3;
-          }
         }
       }
       char **hvac_network_labels = NULL;
@@ -8934,6 +8917,7 @@ int ReadSMV(bufferstreamdata *stream){
       float *xp, *yp, *zp;
       float *xp2, *yp2, *zp2;
       float *xplt_cen, *yplt_cen,*zplt_cen;
+      int *imap, *jmap, *kmap;
 
 //      int lenbuffer;
 
@@ -8995,6 +8979,11 @@ int ReadSMV(bufferstreamdata *stream){
          NewMemory((void **)&yp2,sizeof(float)*(jbartemp+1))==0||
          NewMemory((void **)&zp2,sizeof(float)*(kbartemp+1))==0
          )return 2;
+      if(
+        NewMemory(( void ** )&imap, sizeof(int) * (ibartemp + 1)) == 0 ||
+        NewMemory(( void ** )&jmap, sizeof(int) * (jbartemp + 1)) == 0 ||
+        NewMemory(( void ** )&kmap, sizeof(int) * (kbartemp + 1)) == 0
+        )return 2;
       if(meshinfo!=NULL){
         meshi->mesh_type=mesh_type;
         meshi->xplt=xp;
@@ -9012,6 +9001,12 @@ int ReadSMV(bufferstreamdata *stream){
         meshi->plotx=ibartemp/2;
         meshi->ploty=jbartemp/2;
         meshi->plotz=kbartemp/2;
+        meshi->imap = imap;
+        meshi->n_imap = 0;
+        meshi->jmap = jmap;
+        meshi->n_jmap = 0;
+        meshi->kmap = kmap;
+        meshi->n_kmap = 0;
       }
       continue;
     }
@@ -9211,7 +9206,7 @@ int ReadSMV(bufferstreamdata *stream){
 
   if(ndeviceinfo>0){
     if(NewMemory((void **)&deviceinfo,ndeviceinfo*sizeof(devicedata))==0)return 2;
-    devicecopy=deviceinfo;;
+    devicecopy=deviceinfo;
   }
   ndeviceinfo=0;
   REWIND(stream);
@@ -10280,7 +10275,7 @@ typedef struct {
           *id_labelptr2 = 0;
         }
         bc->id_label = GetCharPtr(id_labelptr);
-    
+
         TrimBack(buffer);
         for(i=0;i<6;i++){
           s_num[i]=-1;
@@ -11477,9 +11472,6 @@ typedef struct {
 
   glui_rotation_index = ROTATE_ABOUT_FDS_CENTER;
 
-#ifdef pp_CACHE_FILEBOUNDS
-  UpdateFileBoundList();
-#endif
   PRINT_TIMER(timer_readsmv, "UpdateFileBoundList");
   UpdateBoundInfo();
 
@@ -11552,17 +11544,11 @@ typedef struct {
   GetBoxGeomCorners();
   PRINT_TIMER(timer_readsmv, "update trianglesfaces");
 
-#ifdef pp_WUI_VAO
-  have_terrain_vao = 0;
-#endif
   if(ngeominfo>0&&auto_terrain==1){
     int sizeof_vertices, sizeof_indices;
 
     PRINT_TIMER(timer_readsmv, "null");
     GenerateTerrainGeom(&terrain_vertices, &sizeof_vertices, &terrain_indices, &sizeof_indices, &terrain_nindices);
-#ifdef pp_WUI_VAO
-    have_terrain_vao = InitTerrainVAO(sizeof_vertices, sizeof_indices);
-#endif
     PRINT_TIMER(timer_readsmv, "GenerateTerrainGeom");
   }
 
@@ -11729,6 +11715,42 @@ int GetNewBoundIndex(int old_index){
   ASSERT(old_index>=0&&old_index<=2);
   old_index=CLAMP(old_index,0, 2);
   return bound_map[old_index];
+}
+
+/* ------------------ SetHVACDuctBounds ------------------------ */
+
+void SetHVACDuctBounds(int set_valmin, float valmin, int set_valmax, float valmax, char *quantity){
+  int i;
+
+  for(i = 0; i < nhvacductbounds; i++){
+    boundsdata *boundi;
+
+    boundi = hvacductbounds + i;
+    if(strcmp(quantity, "") == 0 || strcmp(quantity, boundi->shortlabel) == 0){
+      hvacductbounds[i].dlg_setvalmin = glui_setpatchmin;
+      hvacductbounds[i].dlg_setvalmax = glui_setpatchmax;
+      SetMinMax(BOUND_HVACDUCT, boundi->shortlabel, set_valmin, valmin, set_valmax, valmax);
+      update_glui_bounds = 1;
+    }
+  }
+}
+
+/* ------------------ SetHVACNodeBounds ------------------------ */
+
+void SetHVACNodeBounds(int set_valmin, float valmin, int set_valmax, float valmax, char *quantity){
+  int i;
+
+  for(i = 0; i < nhvacnodebounds; i++){
+    boundsdata *boundi;
+
+    boundi = hvacnodebounds + i;
+    if(strcmp(quantity, "") == 0 || strcmp(quantity, boundi->shortlabel) == 0){
+      hvacnodebounds[i].dlg_setvalmin = glui_setpatchmin;
+      hvacnodebounds[i].dlg_setvalmax = glui_setpatchmax;
+      SetMinMax(BOUND_HVACNODE, boundi->shortlabel, set_valmin, valmin, set_valmax, valmax);
+      update_glui_bounds = 1;
+    }
+  }
 }
 
 /* ------------------ SetBoundBounds ------------------------ */
@@ -11898,13 +11920,13 @@ int ReadIni2(char *inifile, int localfile){
     }
     if(MatchINI(buffer, "HVACVIEW") == 1&&hvacinfo!=NULL&&nhvacinfo > 0){
       int nh, dummy;
+      float rdummy;
 
       fgets(buffer, 255, stream);
-      sscanf(buffer, " %i %i %i %i %f", 
-        &nh, &hvac_metro_view, &dummy, &hvac_offset_nodes, &hvac_offset_inc);
+      sscanf(buffer, " %i %i %i %i %f %i",
+        &nh, &hvac_metro_view, &dummy, &dummy, &rdummy, &hvac_cell_view);
       ONEORZERO(hvac_metro_view);
-      ONEORZERO(hvac_offset_nodes);
-      hvac_offset_inc = MAX(0.0, hvac_offset_inc);
+      ONEORZERO(hvac_cell_view);
 
       nh = MIN(nhvacinfo, nh);
       for(i = 0; i < nh; i++){
@@ -12151,6 +12173,9 @@ int ReadIni2(char *inifile, int localfile){
           curve->curve_factor              = factor;
           curve->apply_curve_factor        = apply_factor;
           curve->vals                      = NULL;
+#ifdef pp_PLOT2DMAX
+          curve->vals2                     = NULL;
+#endif
           curve->use_foreground_color      = use_foreground_color;
           if(strcmp(curve->c_type, "devc")==0){
             curve->quantity = csvfileinfo[file_index].csvinfo[col_index].label.longlabel;
@@ -12397,7 +12422,7 @@ int ReadIni2(char *inifile, int localfile){
       float dummy;
 
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %f %f %i %i", &idummy, &vf, &dummy, &vec_uniform_length, &vec_uniform_spacing);
+      sscanf(buffer, "%i %f %f %i %i %i", &idummy, &vf, &dummy, &vec_uniform_length, &vec_uniform_spacing, &color_vector_black);
       vecfactor = vf;
       continue;
     }
@@ -13277,6 +13302,40 @@ int ReadIni2(char *inifile, int localfile){
       update_chop_colors = 1;
       continue;
     }
+    if(MatchINI(buffer, "V2_HVACDUCT") == 1){
+      int sethvacductmin, sethvacductmax;
+      float hvacductmin, hvacductmax;
+
+      fgets(buffer, 255, stream);
+      TrimBack(buffer);
+      strcpy(buffer2, "");
+      sscanf(buffer, "%i %f %i %f %s", &sethvacductmin, &hvacductmin, &sethvacductmax, &hvacductmax, buffer2);
+      if(sethvacductmin != BOUND_SET_MIN)sethvacductmin = BOUND_LOADED_MIN;
+      if(sethvacductmax != BOUND_SET_MAX)sethvacductmax = BOUND_LOADED_MAX;
+      if(sethvacductmin == BOUND_SET_MIN || sethvacductmax == BOUND_SET_MAX){
+        research_mode = 0;
+        update_research_mode = 1;
+      }
+      SetHVACDuctBounds(sethvacductmin, hvacductmin, sethvacductmax, hvacductmax, buffer2);
+      continue;
+    }
+    if(MatchINI(buffer, "V2_HVACNODE") == 1){
+      int sethvacnodemin, sethvacnodemax;
+      float hvacnodemin, hvacnodemax;
+
+      fgets(buffer, 255, stream);
+      TrimBack(buffer);
+      strcpy(buffer2, "");
+      sscanf(buffer, "%i %f %i %f %s", &sethvacnodemin, &hvacnodemin, &sethvacnodemax, &hvacnodemax, buffer2);
+      if(sethvacnodemin != BOUND_SET_MIN)sethvacnodemin = BOUND_LOADED_MIN;
+      if(sethvacnodemax != BOUND_SET_MAX)sethvacnodemax = BOUND_LOADED_MAX;
+      if(sethvacnodemin == BOUND_SET_MIN || sethvacnodemax == BOUND_SET_MAX){
+        research_mode = 0;
+        update_research_mode = 1;
+      }
+      SetHVACNodeBounds(sethvacnodemin, hvacnodemin, sethvacnodemax, hvacnodemax, buffer2);
+      continue;
+    }
     if(MatchINI(buffer, "V_ZONE") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i %f %i %f", &setzonemin, &zoneusermin, &setzonemax, &zoneusermax);
@@ -13734,6 +13793,7 @@ int ReadIni2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i ", &vectorskip);
       if(vectorskip<1)vectorskip = 1;
+      update_vectorskip = 1;
       continue;
     }
     if(MatchINI(buffer, "SPRINKLERABSSIZE") == 1){
@@ -13773,14 +13833,12 @@ int ReadIni2(char *inifile, int localfile){
       sscanf(buffer, "%i %f", &use_transparency_data, &transparent_level);
       continue;
     }
-#ifdef pp_SORTSLICES
     if(MatchINI(buffer, "SORTSLICES") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &sortslices);
       ONEORZERO(sortslices);
       continue;
     }
-#endif
     if(MatchINI(buffer, "VENTCOLOR") == 1){
       float ventcolor_temp[4];
 
@@ -14558,7 +14616,7 @@ int ReadIni2(char *inifile, int localfile){
         sscanf(buffer, "%i %i", &use_opacity_depth_ini, &use_opacity_multiplier_ini);
         use_opacity_ini = 1;
         continue;
-        }
+      }
       if(MatchINI(buffer, "SMOKEPROP")==1){
         if(fgets(buffer, 255, stream)==NULL)break;
         sscanf(buffer, "%f", &glui_smoke3d_extinct);
@@ -15936,6 +15994,30 @@ void WriteIniLocal(FILE *fileout){
     }
     }
   }
+  if(nhvacductbounds > 0){
+    for(i = 0; i < nhvacductbounds; i++){
+      fprintf(fileout, "V2_HVACDUCT\n");
+      int set_valmin = 0, set_valmax = 0;
+      float valmin = 1.0, valmax = 0.0;
+      char *label;
+
+      label = hvacductbounds[i].label->shortlabel;
+      GetMinMax(BOUND_HVACDUCT, label, &set_valmin, &valmin, &set_valmax, &valmax);
+      fprintf(fileout, " %i %f %i %f %s\n", set_valmin, valmin, set_valmax, valmax, label);
+    }
+  }
+  if(nhvacnodebounds > 0){
+    for(i = 0; i < nhvacnodebounds; i++){
+      fprintf(fileout, "V2_HVACNODE\n");
+      int set_valmin = 0, set_valmax = 0;
+      float valmin = 1.0, valmax = 0.0;
+      char *label;
+
+      label = hvacnodebounds[i].label->shortlabel;
+      GetMinMax(BOUND_HVACNODE, label, &set_valmin, &valmin, &set_valmax, &valmax);
+      fprintf(fileout, " %i %f %i %f %s\n", set_valmin, valmin, set_valmax, valmax, label);
+    }
+  }
   if(nslicebounds > 0){
     for(i = 0; i < nslicebounds; i++){
       fprintf(fileout, "V2_SLICE\n");
@@ -16201,10 +16283,8 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i\n", antialiasflag);
   fprintf(fileout, "SPHERESEGS\n");
   fprintf(fileout, " %i\n", device_sphere_segments);
-#ifdef pp_SORTSLICES
   fprintf(fileout, "SORTSLICES\n");
   fprintf(fileout, " %i\n", sortslices);
-#endif
   fprintf(fileout, "SPRINKLERABSSIZE\n");
   fprintf(fileout, " %f\n", sprinklerabssize);
   fprintf(fileout, "STREAKLINEWIDTH\n");
@@ -16216,7 +16296,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "VECCONTOURS\n");
   fprintf(fileout, " %i %i\n", show_node_slices_and_vectors,show_cell_slices_and_vectors);
   fprintf(fileout, "VECLENGTH\n");
-  fprintf(fileout, " %i %f %f %i %i\n", 4, vecfactor, 1.0, vec_uniform_length, vec_uniform_spacing);
+  fprintf(fileout, " %i %f %f %i %i %i\n", 4, vecfactor, 1.0, vec_uniform_length, vec_uniform_spacing, color_vector_black);
   fprintf(fileout, "VECTORLINEWIDTH\n");
   fprintf(fileout, " %f %f\n", vectorlinewidth, slice_line_contour_width);
   fprintf(fileout, "VECTORPOINTSIZE\n");
@@ -16329,7 +16409,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i %i %i %f %f %i\n",show_boundary_shaded, show_boundary_outline, show_boundary_points, geomboundary_linewidth, geomboundary_pointsize, boundary_edgetype);
   if(nhvacinfo > 0){
     fprintf(fileout, "HVACVIEW\n");
-    fprintf(fileout, " %i %i %i %i %f\n", nhvacinfo, hvac_metro_view, 1, hvac_offset_nodes, hvac_offset_inc);
+    fprintf(fileout, " %i %i %i %i %f %i\n", nhvacinfo, hvac_metro_view, 1, 0, 0.0, hvac_cell_view);
     for(i = 0; i < nhvacinfo; i++){
       hvacdata *hvaci;
       int *dc, *nc;

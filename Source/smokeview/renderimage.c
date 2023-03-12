@@ -254,7 +254,8 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
     if(
       ( command == SCRIPT_RENDERONCE   || command == SCRIPT_RENDERALL         ||
         command == SCRIPT_RENDER360ALL || command == SCRIPT_VOLSMOKERENDERALL ||
-        command == SCRIPT_ISORENDERALL || command == SCRIPT_LOADSLICERENDER
+        command == SCRIPT_ISORENDERALL || command == SCRIPT_LOADSLICERENDER   ||
+        command == SCRIPT_RENDERDOUBLEONCE
         ) &&
       current_script_command->cval2 != NULL
       ){
@@ -1111,7 +1112,7 @@ void SetSmokeSensor(gdImagePtr RENDERimage, int width, int height){
 
       devicei = deviceinfo + idev;
 
-      if(devicei->object->visible == 0)continue;
+      if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(strcmp(devicei->object->label, "smokesensor") != 0)continue;
       idev_row = devicei->screenijk[0];
       idev_col = devicei->screenijk[1];
@@ -1284,7 +1285,7 @@ int SVimage2var(int rendertype,
 
       devicei = deviceinfo + idev;
 
-      if(devicei->object->visible==0)continue;
+      if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(strcmp(devicei->object->label,"smokesensor")!=0)continue;
       idev_row = devicei->screenijk[0];
       idev_col = devicei->screenijk[1];

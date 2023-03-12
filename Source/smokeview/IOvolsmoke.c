@@ -623,6 +623,37 @@ void InitNabors(void){
       }
     }
   }
+  for(i = 0;i < nmeshes;i++){
+    meshdata *meshi;
+    float xyzmid[3], xyz[3];
+
+    meshi = meshinfo + i;
+    memcpy(xyzmid, meshi->boxmiddle, 3*sizeof(float)); 
+
+    memcpy(xyz, xyzmid, 3 * sizeof(float));
+    xyz[0] = meshi->boxmin[0]- meshi->boxeps_fds[0];
+    meshi->skip_nabors[MLEFT] = GetMesh(xyz, NULL);
+
+    memcpy(xyz, xyzmid, 3 * sizeof(float));
+    xyz[0] = meshi->boxmax[0] + meshi->boxeps_fds[0];
+    meshi->skip_nabors[MRIGHT] = GetMesh(xyz, NULL);
+
+    memcpy(xyz, xyzmid, 3 * sizeof(float));
+    xyz[1] = meshi->boxmin[1] - meshi->boxeps_fds[1];
+    meshi->skip_nabors[MFRONT] = GetMesh(xyz, NULL);
+
+    memcpy(xyz, xyzmid, 3 * sizeof(float));
+    xyz[1] = meshi->boxmax[0] + meshi->boxeps_fds[1];
+    meshi->skip_nabors[MBACK] = GetMesh(xyz, NULL);
+
+    memcpy(xyz, xyzmid, 3 * sizeof(float));
+    xyz[2] = meshi->boxmin[2] - meshi->boxeps_fds[2];
+    meshi->skip_nabors[MDOWN] = GetMesh(xyz, NULL);
+
+    memcpy(xyz, xyzmid, 3 * sizeof(float));
+    xyz[2] = meshi->boxmax[2] + meshi->boxeps_fds[2];
+    meshi->skip_nabors[MUP] = GetMesh(xyz, NULL);
+  }
 }
 
 /* ------------------ InitSuperMesh ------------------------ */
@@ -2185,7 +2216,7 @@ void DrawSmoke3DGPUVol(void){
     yy2 = meshi->y1;
     z1 = meshi->z0;
     z2 = meshi->z1;
-    dcell = meshi->dcell;;
+    dcell = meshi->dcell;
     inside = meshi->inside;
     newmesh=0;
     if(combine_meshes==1){

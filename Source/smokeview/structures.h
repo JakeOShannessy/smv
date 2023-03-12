@@ -210,15 +210,6 @@ typedef struct _boundata {
   int defined;
 } bounddata;
 
-/* --------------------------  boundfiledata ------------------------------------ */
-
-#ifdef pp_CACHE_FILEBOUNDS
-typedef struct _boundfiledata {
-  char *file;
-  float valmin, valmax;
-} boundfiledata;
-#endif
-
 /* --------------------------  propdata ------------------------------------ */
 #define PROPVARMAX 100
 typedef struct _propdata {
@@ -323,7 +314,9 @@ typedef struct _treedata {
 
 typedef struct _colorbardata {
   char label[1024], *label_ptr ;        // menu label
+  char type[256];
   int nnodes,nodehilight,nsplits;
+  unsigned char rgb_node_orig[3 * 1024];
   unsigned char rgb_node[3*1024];
   unsigned char alpha[1024];
   unsigned char index_node[1024];  // colorbar index
@@ -457,9 +450,6 @@ typedef struct _facedata {
   int patchpresent;
   struct _culldata *cullport;
   int **showtimelist_handle;
-#ifdef pp_THINFACE
-  int thinface;
-#endif
   int show_bothsides, is_interior;
   struct _blockagedata *bc;
   surfdata *surfinfo;
@@ -774,6 +764,7 @@ typedef struct _meshdata {
   int is_extface[6];
   int inside;
   float boxmin[3], boxmiddle[3], boxmax[3], dbox[3], boxeps[3], dcell, dcell3[3], verts[24], eyedist;
+  float boxeps_fds[3];
   float slice_min[3], slice_max[3];
   float boxmin_scaled[3], boxmiddle_scaled[3], boxmax_scaled[3];
   float xyz_bar0[3], xyz_bar[3];
@@ -787,6 +778,8 @@ typedef struct _meshdata {
   int plotx, ploty, plotz;
   int slicedir;
   int plotn;
+  int *imap, *jmap, *kmap;
+  int n_imap, n_jmap, n_kmap;
 
   char *c_iblank_node0;
   char *c_iblank_cell0;
@@ -848,12 +841,14 @@ typedef struct _meshdata {
   int iso_itime;
   int smokedir,smokedir_old;
   float dxDdx, dyDdx, dzDdx, dxyDdx, dxzDdx, dyzDdx, dxyz_orig[3];
+  float smoke_dist[6];
   float norm[3];
   float dplane_min[4], dplane_max[4];
 
   int *boundarytype;
   int *patchdir,*patch_surfindex;
   int *pi1, *pi2, *pj1, *pj2, *pk1, *pk2;
+  struct _meshdata *skip_nabors[6];
   int *blockonpatch;
   struct _meshdata **meshonpatch;
   struct _meshdata *nabors[6];
@@ -905,10 +900,8 @@ typedef struct _meshdata {
   struct _culldata *cullgeominfo;
 
   volrenderdata volrenderinfo;
-#ifdef pp_SORTSLICES
   int  nslicex,  nslicey,  nslicez;
   struct _slicedata **slicex, **slicey, **slicez;
-#endif
 
   meshplanedata gsliceinfo;
   meshplanedata *smokeplaneinfo;
@@ -1026,6 +1019,7 @@ typedef struct _sv_object {
 #define LENDEVICEBUFFER 255
 typedef struct _device {
   int active;
+  int show;
   int screenijk[3], visval, target_index;
   char deviceID[LENDEVICEBUFFER], csvlabel[LENDEVICEBUFFER], *labelptr;
   char quantity[LENDEVICEBUFFER], unit[LENDEVICEBUFFER];
@@ -1091,6 +1085,9 @@ typedef struct _curvedata{
   float curve_factor;
   float vmin, vmax;
   float *vals;
+#ifdef pp_PLOT2DMAX
+  float *vals2;
+#endif
   int update_avg;
   float linewidth;
 } curvedata;
@@ -1393,17 +1390,20 @@ typedef struct _hvacnodedata {
 
 typedef struct _hvacductdata {
   char *duct_name, *network_name, c_component[4];
-  int duct_id, component, nduct_cells, n_waypoints;
+  int duct_id, component, nduct_cells;
   int node_id_from, node_id_to, use_duct, connect_id;
   hvacconnectdata *connect;
   int nact_times, *act_states, metro_path;
   float *act_times;
   float xyz_symbol[3], xyz_symbol_metro[3];
   float xyz_label[3],  xyz_label_metro[3];
-  float xyz_metro[6];
   float normal[3], normal_metro[3];
   hvacnodedata* node_from, * node_to;
-  float *waypoints0, *waypoints;
+  float xyz_met[12], *xyz_reg;
+  int   nxyz_met, nxyz_reg;
+  float *xyz_met_cell, *xyz_reg_cell;
+  int   nxyz_met_cell, nxyz_reg_cell;
+  int    *cell_met,    *cell_reg;
 } hvacductdata;
 
 /* --------------------------  hvacdata ------------------------------------ */
@@ -1421,8 +1421,9 @@ typedef struct _hvacdata {
 
 typedef struct _hvacvaldata{
   float *vals, valmin, valmax;
-  unsigned char *ivals;
+  int setvalmin, setvalmax;
   int vis, nvals;
+  int firstshort;
   char  colorlabels[12][11];
   float colorvalues[12];
   float levels256[256];
@@ -1433,6 +1434,7 @@ typedef struct _hvacvaldata{
 
 typedef struct _hvacvalsdata {
   char *file;
+  int loaded;
   int n_node_vars, n_duct_vars, ntimes;
   float *times;
   hvacvaldata *node_vars, *duct_vars;
@@ -1592,9 +1594,9 @@ typedef struct _slicedata {
   int volslice;
   /// @brief UNKNOWN
   int is1, is2, js1, js2, ks1, ks2;
-#ifdef pp_SORTSLICES
   int iis1, iis2, jjs1, jjs2, kks1, kks2;
-#endif
+  int *imap, *jmap, *kmap;
+  int n_imap, n_jmap, n_kmap;
   int plotx, ploty, plotz;
   int ijk_min[3], ijk_max[3];
   /// @brief UNKNOWN
@@ -1651,7 +1653,7 @@ typedef struct _slicedata {
   int *geom_offsets;
   /// @brief UNKNOWN
   devicedata vals2d;
-#ifdef pp_SLICETHREAD
+#ifdef pp_SLICE_MULTI
   /// @brief UNKNOWN
   int loadstatus;
 #endif
@@ -1707,7 +1709,6 @@ typedef struct _multivslicedata {
   char menulabel2[128];
 } multivslicedata;
 
-#ifdef pp_SORTSLICES
 /* --------------------------  splitslicedata ------------------------------------ */
 
 typedef struct _splitslicedata {
@@ -1717,7 +1718,6 @@ typedef struct _splitslicedata {
   int is1, is2, js1, js2, ks1, ks2;
   int plotx, ploty, plotz;
 } splitslicedata;
-#endif
 
 /* --------------------------  cpp_boundsdata ------------------------------------ */
 

@@ -326,6 +326,13 @@ int GetScriptKeywordIndex(char *keyword){
   if(MatchSSF(keyword,"SETBOUNDBOUNDS")==MATCH)return SCRIPT_SETBOUNDBOUNDS;
   if(MatchSSF(keyword,"SETTOURVIEW") == MATCH)return SCRIPT_SETTOURVIEW;
   if(MatchSSF(keyword,"SETVIEWPOINT") == MATCH)return SCRIPT_SETVIEWPOINT;             // documented
+  if(MatchSSF(keyword,"SHOWHVACDUCTVAL") == MATCH)return SCRIPT_SHOWHVACDUCTVAL;
+  if(MatchSSF(keyword,"SHOWHVACNODEVAL") == MATCH)return SCRIPT_SHOWHVACNODEVAL;
+  if(MatchSSF(keyword,"HIDEHVACVALS") == MATCH)return SCRIPT_HIDEHVACVALS;
+  if(MatchSSF(keyword, "SHOWALLDEVS") == MATCH)return SCRIPT_SHOWALLDEVS;              // documented
+  if(MatchSSF(keyword, "HIDEALLDEVS") == MATCH)return SCRIPT_HIDEALLDEVS;              // documented
+  if(MatchSSF(keyword, "SHOWDEV") == MATCH)return SCRIPT_SHOWDEV;                      // documented
+  if(MatchSSF(keyword, "HIDEDEV") == MATCH)return SCRIPT_HIDEDEV;                      // documented
   if(MatchSSF(keyword,"SHOWPLOT3DDATA") == MATCH)return SCRIPT_SHOWPLOT3DDATA;         // documented
   if(MatchSSF(keyword,"SHOWSMOKESENSORS")==MATCH)return SCRIPT_SHOWSMOKESENSORS;
   if(MatchSSF(keyword,"UNLOADALL") == MATCH)return SCRIPT_UNLOADALL;                   // documented
@@ -604,6 +611,36 @@ NewMemory((void **)&scriptinfo, nscriptinfo*sizeof(scriptdata));
 
 // SHOWSMOKESENSORS
       case SCRIPT_SHOWSMOKESENSORS:
+        break;
+
+// SHOWHVACDUCTVAL
+      case SCRIPT_SHOWHVACDUCTVAL:
+        SETcval;
+        break;
+
+// SHOWHVACNODEVAL
+      case SCRIPT_SHOWHVACNODEVAL:
+        SETcval;
+        break;
+
+// SHOWALLDEVS
+      case SCRIPT_SHOWALLDEVS:
+        break;
+
+// HIDEALLDEVS
+      case SCRIPT_HIDEALLDEVS:
+        break;
+        
+// SHOWDEV
+// dev_id
+      case SCRIPT_SHOWDEV:
+        SETcval;
+        break;
+
+// HIDEDEV
+//  dev_id
+      case SCRIPT_HIDEDEV:
+        SETcval;
         break;
 
 // RENDERSIZE
@@ -1275,13 +1312,10 @@ void ScriptRenderHtml(scriptdata *scripti, int option){
 
   GetWebFileName(web_filename, scripti);
   strcat(web_filename,".html");
-  Smv2Html(web_filename, option, FROM_SCRIPT, VR_NO);
+  Smv2Html(web_filename, option, FROM_SCRIPT);
 
   GetWebFileName(webvr_filename, scripti);
   strcat(webvr_filename,"_vr.html");
-#ifdef pp_HTML_VR
-  Smv2Html(webvr_filename, option, FROM_SCRIPT, VR_YES);
-#endif
 }
 
 /* ------------------ ScriptRenderStart ------------------------ */
@@ -2554,6 +2588,40 @@ void ScriptPlot3dProps(scriptdata *scripti){
   }
 }
 
+/* ------------------ ScriptShowHVACDuctVAL ------------------------ */
+
+void ScriptShowHVACDuctVal(scriptdata *scripti){
+  int ductvalindex;
+
+  ductvalindex = GetHVACDuctValIndex(scripti->cval);
+  if(ductvalindex>=0){
+    HVACDuctValueMenu(ductvalindex);
+  }
+  else{
+    printf("***warning: %s not a known hvac duct quantity\n", scripti->cval);
+  }
+}
+
+/* ------------------ ScriptShowHVACNodeVAL ------------------------ */
+
+void ScriptShowHVACNodeVal(scriptdata *scripti){
+  int nodevalindex;
+
+  nodevalindex = GetHVACNodeValIndex(scripti->cval);
+  if(nodevalindex>=0){
+    HVACNodeValueMenu(nodevalindex);
+  }
+  else{
+    printf("***warning: %s not a known hvac node quantity\n", scripti->cval);
+  }
+}
+
+/* ------------------ ScriptHideHVACVals ------------------------ */
+
+void ScriptHideHVACVals(void){
+  HVACMenu(MENU_HVAC_HIDE_ALL_VALUES);
+}
+
 /* ------------------ ScriptShowSmokeSensors ------------------------ */
 
 void ScriptShowSmokeSensors(void){
@@ -3549,8 +3617,38 @@ int RunScriptCommand(scriptdata *script_command){
     case SCRIPT_PARTCLASSCOLOR:
       ScriptPartClassColor(scripti);
       break;
+    case SCRIPT_SHOWHVACDUCTVAL:
+      ScriptShowHVACDuctVal(scripti);
+      break;
+    case SCRIPT_SHOWHVACNODEVAL:
+      ScriptShowHVACNodeVal(scripti);
+      break;
+    case SCRIPT_HIDEHVACVALS:
+      ScriptHideHVACVals();
+      break;
     case SCRIPT_SHOWSMOKESENSORS:
       ScriptShowSmokeSensors();
+      break;
+    case SCRIPT_SHOWALLDEVS:
+      ShowDevicesMenu(MENU_DEVICES_SHOWALL);
+      break;
+    case SCRIPT_HIDEALLDEVS:
+      ShowDevicesMenu(MENU_DEVICES_HIDEALL);
+      break;
+    case SCRIPT_SHOWDEV:
+    case SCRIPT_HIDEDEV:
+      {
+        int dev_index;
+
+        dev_index = GetDeviceIndexFromLabel(scripti->cval);
+        if(dev_index<0){
+          printf("***error: device %s does not exist\n", scripti->cval);
+          break;
+        }
+        dev_index += ndeviceinfo;                                       // show device
+        if(scripti->command==SCRIPT_HIDEDEV)dev_index += ndeviceinfo;  // hide device
+        ShowDevicesMenu(dev_index);
+      }
       break;
     case SCRIPT_SHOWPLOT3DDATA:
       ScriptShowPlot3dData(scripti);

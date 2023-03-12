@@ -26,6 +26,7 @@ GLUI_Panel *PANEL_cb5a=NULL;
 GLUI_Panel *PANEL_cb5b=NULL;
 GLUI_Panel *PANEL_cb6=NULL;
 GLUI_Panel *PANEL_cb10=NULL;
+GLUI_Panel *PANEL_cb11r=NULL;
 
 GLUI_Listbox *LISTBOX_colorbar=NULL;
 
@@ -39,7 +40,11 @@ GLUI_Spinner *SPINNER_valmin=NULL;
 GLUI_Spinner *SPINNER_valmax=NULL;
 GLUI_Spinner *SPINNER_val=NULL;
 GLUI_Spinner *SPINNER_colorindex=NULL;
+#ifdef pp_COLORBAR_CONSTANT
+GLUI_Spinner *SPINNER_colorbar_brightness=NULL;
+#endif
 
+GLUI_Button *BUTTON_node_next=NULL,*BUTTON_node_prev=NULL;
 GLUI_Button *BUTTON_next=NULL,*BUTTON_prev=NULL;
 GLUI_Button *BUTTON_new=NULL;
 GLUI_Button *BUTTON_delete=NULL;
@@ -50,8 +55,13 @@ GLUI_Button *BUTTON_update=NULL;
 GLUI_Button *BUTTON_colorbar_save=NULL;
 GLUI_Button *BUTTON_colorbar_close=NULL;
 GLUI_Button *BUTTON_autonodes = NULL;
+#ifdef pp_COLORBAR_CONSTANT
+GLUI_Button *BUTTON_constant_brightness = NULL;
+GLUI_Button *BUTTON_reset_colorbar = NULL;
+#endif
 
 GLUI_Checkbox *CHECKBOX_hidesv=NULL;
+GLUI_Checkbox *CHECKBOX_colorbar_hsl= NULL;
 
 GLUI_EditText *EDITTEXT_colorbar_label=NULL;
 
@@ -59,20 +69,26 @@ GLUI_StaticText *STATICTEXT_left=NULL, *STATICTEXT_right=NULL;
 
 int cb_usecolorbar_extreme;
 
-#define COLORBAR_LIST 0
-#define COLORBAR_CLOSE 1
-#define COLORBAR_NEXT 3
-#define COLORBAR_PREV 4
-#define COLORBAR_NEW 5
-#define COLORBAR_ADDPOINT 7
-#define COLORBAR_DELETEPOINT 8
-#define COLORBAR_SAVE 9
-#define COLORBAR_LABEL 10
-#define COLORBAR_UPDATE 11
-#define COLORBAR_COLORINDEX 12
-#define COLORBAR_DELETE 14
-#define COLORBAR_EXTREME 16
-#define COLORBAR_UNIFORM 17
+#define COLORBAR_LIST                 0
+#define COLORBAR_CLOSE                1
+#define COLORBAR_NODE_NEXT                 3
+#define COLORBAR_NODE_PREV                 4
+#define COLORBAR_NEW                  5
+#define COLORBAR_ADDPOINT             7
+#define COLORBAR_DELETEPOINT          8
+#define COLORBAR_SAVE                 9
+#define COLORBAR_LABEL               10
+#define COLORBAR_UPDATE              11
+#define COLORBAR_COLORINDEX          12
+#define COLORBAR_DELETE              14
+#define COLORBAR_EXTREME             16
+#define COLORBAR_UNIFORM             17
+#ifdef pp_COLORBAR_CONSTANT
+#define COLORBAR_CONSTANT_BRIGHTNESS 19
+#define COLORBAR_CONSTANT_RESET      20
+#endif
+#define COLORBAR_PREV                21
+#define COLORBAR_NEXT                22
 
 /* ------------------ UpdateColorbarList ------------------------ */
 
@@ -142,6 +158,18 @@ extern "C" void ColorbarCB(int var){
   int i;
 
   switch(var){
+#ifdef pp_COLORBAR_CONSTANT
+  case COLORBAR_CONSTANT_BRIGHTNESS:
+    cbi = colorbarinfo + colorbartype;
+    void UpdateColorbarConstant(colorbardata *cbi, int grey);
+    UpdateColorbarConstant(cbi, colorbar_brightness);
+    break;
+  case COLORBAR_CONSTANT_RESET:
+    cbi = colorbarinfo + colorbartype;
+    void UpdateColorbarConstant(colorbardata *cbi, int grey);
+    UpdateColorbarConstant(cbi, -1);
+    break;
+#endif
   case COLORBAR_UNIFORM:
     if(colorbartype >= ndefaultcolorbars&&colorbartype < ncolorbars){
       cbi = colorbarinfo + colorbartype;
@@ -198,6 +226,12 @@ extern "C" void ColorbarCB(int var){
       rgb2_local[0] = rgb1[0];
       rgb2_local[1] = rgb1[1];
       rgb2_local[2] = rgb1[2];
+
+      rgb2_local = cbi->rgb_node_orig + 3 * i;
+      rgb1 = rgb2_local - 3;
+      rgb2_local[0] = rgb1[0];
+      rgb2_local[1] = rgb1[1];
+      rgb2_local[2] = rgb1[2];
       cbi->index_node[i] = cbi->index_node[i - 1];
     }
     {
@@ -205,6 +239,13 @@ extern "C" void ColorbarCB(int var){
       unsigned char *inew, *ibef, *iaft;
 
       rnew = cbi->rgb_node + 3 * colorbarpoint;
+      rbef = rnew - 3;
+      raft = rnew + 3;
+      rnew[0] = (int)(((float)rbef[0] + (float)raft[0]) / 2.0);
+      rnew[1] = (int)(((float)rbef[1] + (float)raft[1]) / 2.0);
+      rnew[2] = (int)(((float)rbef[2] + (float)raft[2]) / 2.0);
+
+      rnew = cbi->rgb_node_orig + 3 * colorbarpoint;
       rbef = rnew - 3;
       raft = rnew + 3;
       rnew[0] = (int)(((float)rbef[0] + (float)raft[0]) / 2.0);
@@ -275,17 +316,26 @@ extern "C" void ColorbarCB(int var){
   case COLORBAR_CLOSE:
     HideGluiColorbar();
     break;
-  case COLORBAR_NEXT:
   case COLORBAR_PREV:
+  case COLORBAR_NEXT:
+    if(var==COLORBAR_PREV)colorbartype--;
+    if(var==COLORBAR_NEXT)colorbartype++;
+    if(colorbartype<0)colorbartype=ncolorbars-1;
+    if(colorbartype>ncolorbars-1)colorbartype=0;
+    LISTBOX_colorbar->set_int_val(colorbartype);
+    ColorbarCB(COLORBAR_LIST);
+    break;
+  case COLORBAR_NODE_NEXT:
+  case COLORBAR_NODE_PREV:
   case COLORBAR_SET:
     if(colorbartype < 0 || colorbartype >= ncolorbars)return;
     show_colorbar_hint = 0;
     cbi = colorbarinfo + colorbartype;
-    if(var == COLORBAR_NEXT){
+    if(var == COLORBAR_NODE_NEXT){
       colorbarpoint++;
       if(colorbarpoint > cbi->nnodes - 1)colorbarpoint = 0;
     }
-    else if(var == COLORBAR_PREV){
+    else if(var == COLORBAR_NODE_PREV){
       colorbarpoint--;
       if(colorbarpoint < 0)colorbarpoint = cbi->nnodes - 1;
     }
@@ -364,7 +414,9 @@ extern "C" void GluiColorbarSetup(int main_window){
   glui_colorbar->add_column_to_panel(PANEL_cb2R2,false);
   colorbar_hidescene=1;
   CHECKBOX_hidesv = glui_colorbar->add_checkbox_to_panel(PANEL_cb2R2,_("Hide scene"),&colorbar_hidescene);
-
+#ifdef pp_COLORBAR_HSL
+  CHECKBOX_colorbar_hsl = glui_colorbar->add_checkbox_to_panel(PANEL_cb2R2, _("HSL"), &colorbar_hsl);
+#endif
   PANEL_cb1 = glui_colorbar->add_panel(_("Colorbar"));
   if(ncolorbars>0){
     selectedcolorbar_index=-1;
@@ -377,20 +429,29 @@ extern "C" void GluiColorbarSetup(int main_window){
     }
     LISTBOX_colorbar->set_int_val(colorbartype);
   }
-  EDITTEXT_colorbar_label=glui_colorbar->add_edittext_to_panel(PANEL_cb1,_("Label"),GLUI_EDITTEXT_TEXT,colorbar_label,COLORBAR_LABEL,ColorbarCB);
+  EDITTEXT_colorbar_label  = glui_colorbar->add_edittext_to_panel(PANEL_cb1,_("Label"),GLUI_EDITTEXT_TEXT,colorbar_label,COLORBAR_LABEL,ColorbarCB);
   BUTTON_update=glui_colorbar->add_button_to_panel(PANEL_cb1,_("Update label"),COLORBAR_UPDATE,ColorbarCB);
   BUTTON_autonodes=glui_colorbar->add_button_to_panel(PANEL_cb1,_("Distribute nodes uniformly"),COLORBAR_UNIFORM,ColorbarCB);
-
+#ifdef pp_COLORBAR_CONSTANT
+  BUTTON_constant_brightness = glui_colorbar->add_button_to_panel(PANEL_cb1, _("Constant brightness"), COLORBAR_CONSTANT_BRIGHTNESS, ColorbarCB);
+  BUTTON_reset_colorbar      = glui_colorbar->add_button_to_panel(PANEL_cb1, _("Reset colorbar"),      COLORBAR_CONSTANT_RESET,      ColorbarCB);
+  SPINNER_colorbar_brightness=  glui_colorbar->add_spinner_to_panel(PANEL_cb1,_("brightness"),  GLUI_SPINNER_INT,&colorbar_brightness,  COLORBAR_CONSTANT_BRIGHTNESS,ColorbarCB);
+  SPINNER_colorbar_brightness->set_int_limits(0,255);
+#endif
+  PANEL_cb11r     = glui_colorbar->add_panel_to_panel(PANEL_cb1,"",GLUI_PANEL_NONE);
+  BUTTON_prev     = glui_colorbar->add_button_to_panel(PANEL_cb11r, _("Previous"), COLORBAR_PREV, ColorbarCB);
+  glui_colorbar->add_column_to_panel(PANEL_cb11r,false);
+  BUTTON_next     = glui_colorbar->add_button_to_panel(PANEL_cb11r, _("Next"),     COLORBAR_NEXT, ColorbarCB);
   PANEL_point = glui_colorbar->add_panel(_("Node"));
 
   PANEL_cb5 = glui_colorbar->add_panel_to_panel(PANEL_point,"",GLUI_PANEL_NONE);
 
-  BUTTON_prev=glui_colorbar->add_button_to_panel(PANEL_cb5,_("Previous"),COLORBAR_PREV,ColorbarCB);
+  BUTTON_node_prev=glui_colorbar->add_button_to_panel(PANEL_cb5,_("Previous"),COLORBAR_NODE_PREV,ColorbarCB);
   BUTTON_deletepoint=glui_colorbar->add_button_to_panel(PANEL_cb5,_("Delete"),COLORBAR_DELETEPOINT,ColorbarCB);
 
   glui_colorbar->add_column_to_panel(PANEL_cb5,false);
 
-  BUTTON_next=glui_colorbar->add_button_to_panel(PANEL_cb5,_("Next"),COLORBAR_NEXT,ColorbarCB);
+  BUTTON_node_next=glui_colorbar->add_button_to_panel(PANEL_cb5,_("Next"),COLORBAR_NODE_NEXT,ColorbarCB);
   BUTTON_addpoint=glui_colorbar->add_button_to_panel(PANEL_cb5,_("Insert"),COLORBAR_ADDPOINT,ColorbarCB);
 
   PANEL_cb4 = glui_colorbar->add_panel_to_panel(PANEL_point,"",GLUI_PANEL_NONE);
@@ -431,8 +492,8 @@ extern "C" void ColorbarGlobal2Local(void){
 
   SPINNER_colorindex->set_int_val(cbi->index_node[colorbarpoint]);
 
-  BUTTON_next->enable();
-  BUTTON_prev->enable();
+  BUTTON_node_next->enable();
+  BUTTON_node_prev->enable();
 
   strcpy(colorbar_label,cbi->label);
   EDITTEXT_colorbar_label->set_text(colorbar_label);

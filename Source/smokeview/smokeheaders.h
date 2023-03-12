@@ -9,6 +9,7 @@ EXTERNCPP float GetTime(void);
 
 // gen plot routines
 
+EXTERNCPP void UpdatePlotLabel(void);
 EXTERNCPP char *GetPlotUnit2(plot2ddata *plot2di, curvedata *curve);
 EXTERNCPP char *GetPlotShortLabel2(plot2ddata *plot2di, curvedata *curv);
 EXTERNCPP void GetPlot2DBounds(plot2ddata*plot2di, float *valmin, float *valmax);
@@ -32,12 +33,17 @@ EXTERNCPP void TimeAveragePlot2DData(float *times, float *vals, float *vals_avg,
 
 EXTERNCPP void SplitCB(int var);
 
+EXTERNCPP void HVACDuctBoundsCPP_CB(int var);
+EXTERNCPP void HVACNodeBoundsCPP_CB(int var);
 EXTERNCPP void SetHVACInfo(void);
 EXTERNCPP void DrawHVACS(void);
 EXTERNCPP hvacnodedata *GetHVACNode(hvacdata *hvaci, int node_id);
 EXTERNCPP void InitHvacData(hvacvaldata *hi);
 EXTERNCPP void ReadHVACData(int flag);
 EXTERNCPP int IsHVACVisible(void);
+EXTERNCPP void UpdateHVACDuctColorLabels(int index);
+EXTERNCPP void UpdateHVACNodeColorLabels(int index);
+EXTERNCPP void UpdateAllHVACColorLabels(void);
 
 #ifdef pp_REFRESH
 EXTERNCPP void PeriodicRefresh(int var);
@@ -93,7 +99,8 @@ EXTERNCPP void InitStartupDirs(void);
 
 EXTERNCPP int GetFontHeight(void);
 
-EXTERNCPP void UpdateShowColorbar(int *showcfast_arg, int *show_slice_colorbar_arg, int *show_hvac_colorbar_arg);
+EXTERNCPP void UpdateShowColorbar(int *showcfast_arg, int *show_slice_colorbar_arg,
+  int *show_hvacduct_colorbar_arg, int *show_hvacnode_colorbar_arg);
 
 EXTERNCPP void UpdateSliceSkip(void);
 
@@ -141,10 +148,6 @@ EXTERNCPP void OutputMinMax(char *meshlabel, char *label, char *unit, float valm
 EXTERNCPP void ScriptLoadSliceRender(scriptdata*scripti);
 EXTERNCPP int GetNSliceFrames(char *file, float *stime_min, float *stime_max);
 EXTERNCPP void GenerateSliceMenu(int from_commandline);
-#ifdef pp_WUI_VAO
-int InitTerrainVAO(int sizeof_vertices, int sizeof_indices);
-void DrawTerrainGeomGPU(void);
-#endif
 void DrawTerrainGeom(int option);
 void GenerateTerrainGeom(float **vertices_arg, int *sizeof_vertices_arg, unsigned int **indices_arg, int *sizeof_indices_arg, int *nindices_arg);
 
@@ -164,6 +167,10 @@ EXTERNCPP void GetGlobalPatchBounds(void);
 EXTERNCPP void GetLoadedPlot3dBounds(int *compute_loaded, float *loaded_min, float *loaded_max);
 EXTERNCPP void GetGlobalPlot3DBounds(void);
 EXTERNCPP void GetGlobalSliceBounds(void);
+EXTERNCPP void GetGlobalHVACDuctBounds(int flag);
+EXTERNCPP void GetGlobalHVACNodeBounds(int flag);
+EXTERNCPP void UpdateHVACDuctType(void);
+EXTERNCPP void UpdateHVACNodeType(void);
 EXTERNCPP void UpdateGlobalFEDSliceBounds(void);
 
 EXTERNCPP void Slice2Device(void);
@@ -172,6 +179,7 @@ EXTERNCPP void PauseTime(float pause_time);
 
 EXTERNCPP  void UpdateSliceXYZ(void);
 EXTERNCPP int InMesh(float *xyz);
+EXTERNCPP void UpdateVectorSkip(int skip);
 EXTERNCPP char *GetHomeDir(void);
 EXTERNCPP void SetPercentileDrawOff(void);
 EXTERNCPP void ClosePartFiles(void);
@@ -263,7 +271,7 @@ EXTERNCPP int GetTourFrame(tourdata *touri, int itime);
 EXTERNCPP int MeshConnect(meshdata *mesh_from, int val, meshdata *mesh_to);
 EXTERNCPP int IsBottomMesh(meshdata *mesh_from);
 EXTERNCPP void InitNabors(void);
-EXTERNCPP int Smv2Html(char *html_out, int option, int from_where, int vr_flag);
+EXTERNCPP int Smv2Html(char *html_out, int option, int from_where);
 EXTERNCPP int Smv2Geom(char *html_file);
 EXTERNCPP int Obst2Data(char *html_file);
 EXTERNCPP int SliceNode2Data(char *html_file, int option);
@@ -334,6 +342,11 @@ EXTERNCPP void UpdateVSliceDups(void);
 EXTERNCPP void UnloadVSliceMenu(int value);
 EXTERNCPP void UpdateSliceDups(void);
 EXTERNCPP void UpdateSmokeAlphas(void);
+EXTERNCPP void InitAlphas(unsigned char *alphanew,
+                          float base_extinct, float new_extinct,
+                          float base_dx, float new_dx);
+EXTERNCPP void ShowDevicesMenu(int value);
+EXTERNCPP int GetDeviceIndexFromLabel(char *label);
 EXTERNCPP void UpdateBoundarySliceDups(void);
 EXTERNCPP void IsoBoundCB(int var);
 EXTERNCPP void UpdateScriptStep(void);
@@ -351,7 +364,8 @@ EXTERNCPP void Enable360Zoom(void);
 #ifdef pp_RENDER360_DEBUG
 EXTERNCPP void DrawScreenInfo(void);
 #endif
-EXTERNCPP void UpdateShowSliceInObst(int var);
+EXTERNCPP void SliceInObstMenu2Dialog(int var);
+EXTERNCPP void SliceInObstDialog2Menu(void);
 EXTERNCPP void GetGeomZBounds(float *zmin, float *zmax);
 EXTERNCPP void MakeIBlankAll(void);
 EXTERNCPP void UpdateSliceDupDialog(void);
@@ -460,6 +474,10 @@ EXTERNCPP void HideGluiTour(void);
 EXTERNCPP void ShowGluiStereo(void);
 EXTERNCPP void HideGluiStereo(void);
 
+EXTERNCPP void HVACMenu(int value);
+EXTERNCPP int GetHVACDuctValIndex(char *shortlabel);
+EXTERNCPP int GetHVACNodeValIndex(char *shortlabel);
+EXTERNCPP void ToggleMetroMode(void);
 EXTERNCPP void UpdateClipPlanes(void);
 EXTERNCPP void ShowGluiBounds(int menu_id);
 EXTERNCPP void HideGluiBounds(void);
@@ -474,7 +492,13 @@ EXTERNCPP void HideGluiGeometry(void);
 EXTERNCPP void SetDuctXYZ(hvacductdata *ducti);
 EXTERNCPP hvacductdata *GetHVACDuctID(char *duct_name);
 EXTERNCPP hvacnodedata *GetHVACNodeID(char *node_name);
-EXTERNCPP void ToggleMetroMode(void);
+EXTERNCPP void GetCellXYZs(float *xyz, int nxyz, int ncells, float **xyz_cellptr, int *nxyz_cell, int **cell_indptr);
+EXTERNCPP void UpdateHVACViews(void);
+EXTERNCPP void HVACDuctValueMenu(int value);
+EXTERNCPP void HVACNodeValueMenu(int value);
+EXTERNCPP void UpdateHVACVarLists(void);
+
+EXTERNCPP void HideGluiGeometry(void);
 
 EXTERNCPP void UpdateAllBoundaryColors(int flag);
 EXTERNCPP void UpdateBoundaryListIndex(int patchfilenum);
@@ -673,7 +697,8 @@ EXTERNCPP void AddColorbar(int icolorbar);
 EXTERNCPP void ReloadMenu(int value);
 EXTERNCPP void ColorbarMenu(int val);
 EXTERNCPP void InitDefaultColorbars(int nini);
-EXTERNCPP void DrawColorbarPath(void);
+EXTERNCPP void DrawColorbarPathRGB(void);
+EXTERNCPP void DrawColorbarPathHSL(void);
 EXTERNCPP void UpdateColorbarSplits(colorbardata *cbi);
 EXTERNCPP void UpdateColorbarNodes(colorbardata *cbi);
 EXTERNCPP void RemapColorbar(colorbardata *cbi);
@@ -798,12 +823,10 @@ EXTERNCPP void DrawBoundaryFrame(int flag);
 EXTERNCPP void SceneMotionCB(int var);
 EXTERNCPP void DrawVolSliceLines(const slicedata *sd);
 EXTERNCPP void DrawVolSliceVerts(const slicedata *sd);
-#ifdef pp_SORTSLICES
 EXTERNCPP void SortSlices(void);
 EXTERNCPP void DrawSortSlices(void);
 EXTERNCPP void DrawSortSlicesDebug(void);
 EXTERNCPP void UpdateSortSlices(void);
-#endif
 
 EXTERNCPP void DrawSmoke3DVol(void);
 EXTERNCPP void GetDrawingParms(int *drawing_transparent, int *drawing_blockage_transparent, int *drawing_vent_transparent);
@@ -869,6 +892,12 @@ EXTERNCPP void UpdateVsliceMenuLabels(void);
 EXTERNCPP void UpdatePlot3dMenuLabels(void);
 EXTERNCPP void HandleRotationType(int flag);
 
+EXTERNCPP void Rgb2Hsl(unsigned char *rgbvals, float *hslvals);
+EXTERNCPP void Hsl2Rgb(float *hslvals, unsigned char *rgbvals);
+
+#ifdef pp_COLORBARS_CSV
+EXTERNCPP void InitColorbarsDir(void);
+#endif
 EXTERNCPP void InitTextureDir(void);
 EXTERNCPP void GetRGB(unsigned int val, unsigned char *rr, unsigned char *gg, unsigned char *bb);
 EXTERNCPP unsigned char *ReadPicture(char *filename, int *width, int *height, int *is_transparent, int printflag);
@@ -1110,10 +1139,8 @@ EXTERNCPP void GetPlot3DColors(int iplot, float *ttmin, float *ttmax,
 EXTERNCPP void GetColorbarLabels(float tmin, float tmax, int nlevel,
               char labels[12][11],float *tlevels256);
 EXTERNCPP void UpdatePart5Extremes(void);
-#ifdef pp_SLICEVAL
 EXTERNCPP void SetSliceColors(float smin, float smax, slicedata *sd, int flag, int *errorcode);
 EXTERNCPP void UpdateSliceBounds2(void);
-#endif
 EXTERNCPP void UpdateSliceColors(int last_slice);
 EXTERNCPP void GetSliceColors(const float *t, int nt, unsigned char *it,
               float tmin, float tmax,

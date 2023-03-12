@@ -14,16 +14,6 @@
 #include "compress.h"
 #include "getdata.h"
 
-#ifdef pp_SMOKEBUFFER
-typedef bufferstreamdata MFILE;
-#define SKIP_SMOKE             fseek_buffer(SMOKE3DFILE->fileinfo, fortran_skip, SEEK_CUR)
-#define FOPEN_SMOKE(file,mode,nthreads,use_threads) FOPEN_RB(file,nthreads,use_threads)
-#define FREAD_SMOKE(a,b,c,d)    fread_buffer(a,b,c,d->fileinfo)
-#define FREADPTR_SMOKE(a,b,c,d) freadptr_buffer(a,b,c,d->fileinfo)
-#define FEOF_SMOKE(a)           feof_buffer(a->fileinfo)
-#define FSEEK_SMOKE(a,b,c)      fseek_buffer(a->fileinfo,b,c)
-#define FCLOSE_SMOKE(a)         fclose_buffer(a->fileinfo)
-#else
 typedef FILE MFILE;
 #define MFILE                   FILE
 #define SKIP_SMOKE              FSEEK( SMOKE3DFILE, fortran_skip, SEEK_CUR)
@@ -33,7 +23,6 @@ typedef FILE MFILE;
 #define FEOF_SMOKE(a)           feof(a)
 #define FSEEK_SMOKE(a,b,c)      fseek(a,b,c)
 #define FCLOSE_SMOKE(a)         fclose(a)
-#endif
 
 #define SKIP FSEEK( SMOKE3DFILE, fortran_skip, SEEK_CUR)
 
@@ -116,33 +105,9 @@ void UpdateOpacityMap(void){
   }
 }
 
-/* ------------------ AdjustAlpha ------------------------ */
-
-unsigned char AdjustAlpha(unsigned char alpha, float factor){
-  double val, rr;
-  float falpha;
-  float term1, term2, term3, term4;
-
-  rr = factor;
-  falpha = alpha/255.0;
-
-  //val = 1.0 - pow(1.0-falpha,rr);
-  term1 = falpha*rr;
-  term2 = falpha*(rr-1.0)/2.0;
-  term3 = falpha*(rr-2.0)/3.0;
-  term4 = falpha*(rr-3.0)/4.0;
-  val = term1*(1.0-term2*(1.0-term3*(1.0-term4)));
-
-  val = 255*val+0.5;
-  if(val>255)val = 255;
-  alpha = val;
-  return alpha;
-}
-
-//              alphaf_out[n]=AdjustAlpha(ALPHAIN, eye_position_fds, xp, ASPECTRATIO, NORM, NORMTYPE);
-
 // -------------------------- ADJUSTALPHA ----------------------------------
 
+// alpha correction done in alpha_map (different map for each direction, x, y, z, xy, xz, yz)
 #define ADJUSTALPHA(ALPHAIN) \
             alphaf_out[n]=0;\
             if(ALPHAIN==0)continue;\
@@ -150,6 +115,7 @@ unsigned char AdjustAlpha(unsigned char alpha, float factor){
             alphaf_out[n] = alpha_map[ALPHAIN]
 
 // -------------------------- DRAWVERTEX ----------------------------------
+
 #define DRAWVERTEX(XX,YY,ZZ)        \
   value[0]=alphaf_ptr[n11]; \
   value[1]=alphaf_ptr[n12]; \
@@ -959,7 +925,7 @@ void DrawSmoke3DGPU(smoke3ddata *smoke3di){
 
           n = iterm+jterm+kterm;
           n11 = n;            //n
-          n12 = n11+1;;       //n+1
+          n12 = n11+1;        //n+1
           n22 = n12+nxy;      //n+1+nxy
           n21 = n22-1;        //n+nxy
 
@@ -1061,7 +1027,7 @@ void DrawSmoke3DGPU(smoke3ddata *smoke3di){
 
           n = iterm+jterm+kterm;
           n11 = n;
-          n12 = n11+1;;
+          n12 = n11+1;
           n22 = n12+nx;
           n21 = n22-1;
 
@@ -1833,12 +1799,15 @@ void InitAlphas(unsigned char *alphanew,
     base_extinct = 1.0;
     new_extinct = 1.0;
   }
-  for(i = 0; i<254; i++){
+  alphanew[0] = 0;
+  for(i = 1; i<254; i++){
     float val;
+    int ival;
 
-    val = -log(1.0-(i)/254.0)/(base_extinct*base_dx);
-    val = 254.0*(1.0-exp(-val*new_extinct*new_dx));
-    alphanew[i] = CLAMP((unsigned char)val, 0, 254);
+    val = -log(1.0-(float)i/254.0)/(base_extinct*base_dx);
+    val = 254.0*(1.0-exp(-val*new_extinct*new_dx))+0.5;
+    ival = CLAMP(val, 0, 254);
+    alphanew[i] = (unsigned char)ival;
   }
 }
 
@@ -2578,10 +2547,10 @@ void DrawSmoke3D(smoke3ddata *smoke3di){
           n22 = n12+nxy;
           n21 = n11+nxy;
 
-          //        n11 = (j-js1)*nx   + (i-is1)   + (k-ks1)*nx*ny;
-          //        n12 = (j-1-js1)*nx + (i+1-is1) + (k-ks1)*nx*ny;
+          //        n11 = (j  -js1)*nx + (i  -is1) + (k  -ks1)*nx*ny;
+          //        n12 = (j-1-js1)*nx + (i+1-is1) + (k  -ks1)*nx*ny;
           //        n22 = (j-1-js1)*nx + (i+1-is1) + (k+1-ks1)*nx*ny;
-          //        n21 = (j-js1)*nx   + (i-is1)   + (k+1-ks1)*nx*ny;
+          //        n21 = (j  -js1)*nx + (i  -is1) + (k+1-ks1)*nx*ny;
 
           if(nterraininfo>0&&ABS(vertical_factor-1.0)>0.01){
             int m11, m12, m22, m21;
@@ -2763,10 +2732,10 @@ void DrawSmoke3D(smoke3ddata *smoke3di){
           n22 = n12+nxy;
           n21 = n11+nxy;
 
-          //    n11 = (j-js1)*nx + (i-is1) + (k-ks1)*nx*ny;
-          //    n12 = (j+1-js1)*nx + (i+1-is1) + (k-ks1)*nx*ny;
+          //    n11 = (j  -js1)*nx + (i  -is1) + (k  -ks1)*nx*ny;
+          //    n12 = (j+1-js1)*nx + (i+1-is1) + (k  -ks1)*nx*ny;
           //    n22 = (j+1-js1)*nx + (i+1-is1) + (k+1-ks1)*nx*ny;
-          //    n21 = (j-js1)*nx + (i-is1) + (k+1-ks1)*nx*ny;
+          //    n21 = (j  -js1)*nx + (i  -is1) + (k+1-ks1)*nx*ny;
 
           if(nterraininfo>0&&ABS(vertical_factor-1.0)>0.01){
             int m11, m12, m22, m21;
@@ -2944,10 +2913,10 @@ void DrawSmoke3D(smoke3ddata *smoke3di){
           n22 = n12+1;
           n21 = n22-nx+nxy;
 
-          //        n11 = (i-is1)   + (j-js1)*nx   + (k-ks1)*nx*ny;
-          //        n12 = (i-is1)   + (j+1-js1)*nx + (k-1-ks1)*nx*ny;
+          //        n11 = (i  -is1) + (j  -js1)*nx + (k  -ks1)*nx*ny;
+          //        n12 = (i  -is1) + (j+1-js1)*nx + (k-1-ks1)*nx*ny;
           //        n22 = (i+1-is1) + (j+1-js1)*nx + (k-1-ks1)*nx*ny;
-          //        n21 = (i+1-is1) + (j-js1)*nx   + (k-ks1)*nx*ny;
+          //        n21 = (i+1-is1) + (j  -js1)*nx + (k  -ks1)*nx*ny;
 
           if(nterraininfo>0&&ABS(vertical_factor-1.0)>0.01){
             int m11, m12, m22, m21;
@@ -3123,16 +3092,15 @@ void DrawSmoke3D(smoke3ddata *smoke3di){
           ynode[2] = y3;
           ynode[3] = yy1;
 
-
           n11 = jterm+iterm+kterm;
           n12 = n11+nxy+nx;
           n22 = n12+1;
           n21 = n22-nx-nxy;
 
-          //    n11 = (i-is1)   + (j-js1)*nx    + (k-ks1)*nx*ny;
-          //    n12 = (i-is1)   + (j+1-js1)*nx  + (k+1-ks1)*nx*ny;
+          //    n11 = (i  -is1) + (j  -js1)*nx  + (k  -ks1)*nx*ny;
+          //    n12 = (i  -is1) + (j+1-js1)*nx  + (k+1-ks1)*nx*ny;
           //    n22 = (i+1-is1) + (j+1-js1)*nx  + (k+1-ks1)*nx*ny;
-          //    n21 = (i+1-is1) + (j-js1)*nx    + (k-ks1)*nx*ny;
+          //    n21 = (i+1-is1) + (j  -js1)*nx  + (k  -ks1)*nx*ny;
 
           if(nterraininfo>0&&ABS(vertical_factor-1.0)>0.01){
             int m11, m12, m22, m21;
@@ -3151,7 +3119,6 @@ void DrawSmoke3D(smoke3ddata *smoke3di){
     }
     glEnd();
     break;
-
 
     // +++++++++++++++++++++++++++++++++++ DIR 8 +++++++++++++++++++++++++++++++++++++++
 
@@ -3176,7 +3143,6 @@ void DrawSmoke3D(smoke3ddata *smoke3di){
         kend = 0;
         iend = ipk-kend;
       }
-
 
       if(smokecullflag==1){
         x11[0] = xplt[is1+ibeg];
@@ -3311,10 +3277,10 @@ void DrawSmoke3D(smoke3ddata *smoke3di){
           n22 = n12+nx;
           n21 = n22-1+nxy;
 
-          //        n11 = (i-is1)   + (j-js1)*nx   + (k-ks1)*nx*ny;
-          //        n12 = (i+1-is1) + (j-js1)*nx   + (k-1-ks1)*nx*ny;
+          //        n11 = (i  -is1) + (j  -js1)*nx + (k  -ks1)*nx*ny;
+          //        n12 = (i+1-is1) + (j  -js1)*nx + (k-1-ks1)*nx*ny;
           //        n22 = (i+1-is1) + (j+1-js1)*nx + (k-1-ks1)*nx*ny;
-          //        n21 = (i-is1)   + (j+1-js1)*nx + (k-ks1)*nx*ny;
+          //        n21 = (i  -is1) + (j+1-js1)*nx + (k  -ks1)*nx*ny;
 
           if(nterraininfo>0&&ABS(vertical_factor-1.0)>0.01){
             int m11, m12, m22, m21;
@@ -3496,10 +3462,10 @@ void DrawSmoke3D(smoke3ddata *smoke3di){
           n22 = n12+nx;
           n21 = n22-1-nxy;
 
-          //    n11 = (i-is1)   + (j-js1)*nx   + (k-ks1)*nx*ny;
-          //    n12 = (i+1-is1) + (j-js1)*nx   + (k+1-ks1)*nx*ny;
+          //    n11 = (i  -is1) + (j  -js1)*nx + (k  -ks1)*nx*ny;
+          //    n12 = (i+1-is1) + (j  -js1)*nx + (k+1-ks1)*nx*ny;
           //    n22 = (i+1-is1) + (j+1-js1)*nx + (k+1-ks1)*nx*ny;
-          //    n21 = (i-is1)   + (j+1-js1)*nx + (k-ks1)*nx*ny;
+          //    n21 = (i  -is1) + (j+1-js1)*nx + (k  -ks1)*nx*ny;
 
           if(nterraininfo>0&&ABS(vertical_factor-1.0)>0.01){
             int m11, m12, m22, m21;

@@ -425,11 +425,9 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
       MergePlot3DHistograms();
 #ifdef pp_GLUI
       SetPercentilePlot3DBounds();
-#ifdef pp_PLOT3DVAL
       UpdateAllPlot3DColors(0);
 #else
       UpdateAllPlot3DColors(1);
-#endif
 #endif
 #define BOUND_PERCENTILE_DRAW          120
 #ifdef pp_GLUI
@@ -438,11 +436,7 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
     }
   }
   else{
-#ifdef pp_PLOT3DVAL
     UpdatePlot3DColors(p, 0, errorcode);
-#else
-    UpdatePlot3DColors(p, 1, errorcode);
-#endif
   }
 
   if(meshi->plotx==-1)meshi->plotx=ibar/2;
@@ -521,21 +515,12 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
 void DrawPlot3dTexture(meshdata *meshi){
   int i,j,k;
   int colorindex;
-#ifndef pp_PLOT3DVAL
-  float *color1t;
-  float *color2t;
-#endif
   float dx, dy, dz;
   int plotx, ploty, plotz;
   int visx, visy, visz;
   float *xplt, *yplt, *zplt;
   int ibar, jbar, kbar;
   isosurface *currentsurfptr,*currentsurf2ptr;
-#ifndef pp_PLOT3DVAL
-  unsigned char *yzcolorbase, *xzcolorbase, *xycolorbase;
-  contour *plot3dcontour1ptr, *plot3dcontour2ptr, *plot3dcontour3ptr;
-  float *yzcolortbase, *xzcolortbase, *xycolortbase;
-#endif
 
   float *dx_xy, *dy_xy, *dz_xy;
   float *dx_xz, *dy_xz, *dz_xz;
@@ -546,26 +531,20 @@ void DrawPlot3dTexture(meshdata *meshi){
   int nx, ny, nz,nxy;
   char *c_iblank_x, *c_iblank_y, *c_iblank_z, *iblank;
   float *vector_color;
-#ifdef pp_PLOT3DVAL
   float *qdata;
   int nxyz;
   int num;
-#endif
 
   plotx = meshi->iplotx_all[iplotx_all];
   ploty = meshi->iploty_all[iploty_all];
   plotz = meshi->iplotz_all[iplotz_all];
-#ifdef pp_PLOT3DVAL
   qdata = meshi->qdata;
-#endif
 
-#ifdef pp_PLOT3DVAL
   GetMinMaxAll(BOUND_PLOT3D, setp3min_all, p3min_all, setp3max_all, p3max_all, &num);
   float ttmin, ttmax;
 
   ttmin = p3min_all[plotn-1];
   ttmax = p3max_all[plotn-1];
-#endif
 
   visx = visx_all;
   visy = visy_all;
@@ -586,23 +565,10 @@ void DrawPlot3dTexture(meshdata *meshi){
   ny = jbar+1;
   nz = kbar+1;
   nxy = nx*ny;
-#ifdef pp_PLOT3DVAL
   nxyz = nx*ny*nz;
-#endif
 
   currentsurfptr=&meshi->currentsurf;
   currentsurf2ptr=&meshi->currentsurf2;
-#ifndef pp_PLOT3DVAL
-  plot3dcontour1ptr=&meshi->plot3dcontour1;
-  plot3dcontour2ptr=&meshi->plot3dcontour2;
-  plot3dcontour3ptr=&meshi->plot3dcontour3;
-  yzcolorbase = meshi->yzcolorbase;
-  xzcolorbase = meshi->xzcolorbase;
-  xycolorbase = meshi->xycolorbase;
-  yzcolortbase=meshi->yzcolortbase;
-  xzcolortbase=meshi->xzcolortbase;
-  xycolortbase=meshi->xycolortbase;
-#endif
   dx_xy=meshi->dx_xy;
   dx_xz=meshi->dx_xz;
   dx_yz=meshi->dx_yz;
@@ -629,11 +595,7 @@ void DrawPlot3dTexture(meshdata *meshi){
   if(use_transparency_data==1){
     TransparentOn();
   }
-#ifdef pp_PLOT3DVAL
   if(visVector==0){
-#else
-  if(visVector==0&&contour_type!=STEPPED_CONTOURS){
-#endif
     glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
     glEnable(GL_TEXTURE_1D);
     glBindTexture(GL_TEXTURE_1D,texture_plot3d_colorbar_id);
@@ -642,15 +604,7 @@ void DrawPlot3dTexture(meshdata *meshi){
   /* +++++++++++++++++++++++++++   draw yz contours +++++++++++++++++++++++++++++++++++++ */
 
   if(plotx>=0&&visx!=0){
-#ifndef pp_PLOT3DVAL
-    if(visVector==0&&contour_type==STEPPED_CONTOURS){
-      DrawContours(plot3dcontour1ptr);
-    }
-#endif
     if(visVector==0
-#ifndef pp_PLOT3DVAL
-       &&contour_type!=STEPPED_CONTOURS
-#endif
        ){
       if(plotx<0){
         plotx=ibar;
@@ -662,13 +616,8 @@ void DrawPlot3dTexture(meshdata *meshi){
       }
       glBegin(GL_TRIANGLES);
       for(j=0; j<jbar; j++){
-#ifndef pp_PLOT3DVAL
-        color1t=yzcolortbase + j*nz;
-        color2t=color1t+nz;
-#endif
         for(k=0; k<kbar; k++){
           if(c_iblank_x==NULL||c_iblank_x[IJKNODE(plotx,j,k)]==GASGAS){
-#ifdef pp_PLOT3DVAL
             float val[4];
 
             val[0] = GET_QDATA(plotx, j,   k,   plotn-1);
@@ -697,26 +646,6 @@ void DrawPlot3dTexture(meshdata *meshi){
               glTexCoord1f(val[3]); glVertex3f(xplt[plotx],yplt[j+1],zplt[k+1]);
               glTexCoord1f(val[1]); glVertex3f(xplt[plotx],yplt[j],zplt[k+1]);
             }
-#else
-            if(ABS(color1t[k]-color2t[k+1])<ABS(color1t[k+1]-color2t[k])){
-              glTexCoord1f(color1t[k]);  glVertex3f(xplt[plotx],yplt[j],zplt[k]);
-              glTexCoord1f(color2t[k]);  glVertex3f(xplt[plotx],yplt[j+1],zplt[k]);
-              glTexCoord1f(color2t[k+1]);glVertex3f(xplt[plotx],yplt[j+1],zplt[k+1]);
-
-              glTexCoord1f(color1t[k]);  glVertex3f(xplt[plotx],yplt[j],zplt[k]);
-              glTexCoord1f(color2t[k+1]);glVertex3f(xplt[plotx],yplt[j+1],zplt[k+1]);
-              glTexCoord1f(color1t[k+1]);glVertex3f(xplt[plotx],yplt[j],zplt[k+1]);
-            }
-            else{
-              glTexCoord1f(color1t[k]);  glVertex3f(xplt[plotx],yplt[j],zplt[k]);
-              glTexCoord1f(color2t[k]);  glVertex3f(xplt[plotx],yplt[j+1],zplt[k]);
-              glTexCoord1f(color1t[k+1]);glVertex3f(xplt[plotx],yplt[j],zplt[k+1]);
-
-              glTexCoord1f(color2t[k]);  glVertex3f(xplt[plotx],yplt[j+1],zplt[k]);
-              glTexCoord1f(color2t[k+1]);glVertex3f(xplt[plotx],yplt[j+1],zplt[k+1]);
-              glTexCoord1f(color1t[k+1]);glVertex3f(xplt[plotx],yplt[j],zplt[k+1]);
-            }
-#endif
           }
         }
       }
@@ -725,11 +654,6 @@ void DrawPlot3dTexture(meshdata *meshi){
     /* draw yz vectors */
 
     if(visVector==1){
-#ifndef pp_PLOT3DVAL
-      unsigned char *yzcolor;
-
-      yzcolor=yzcolorbase;
-#endif
       dx_yzcopy=dx_yz; dy_yzcopy=dy_yz; dz_yzcopy=dz_yz;
       AntiAliasLine(ON);
       glLineWidth(vectorlinewidth);
@@ -738,18 +662,11 @@ void DrawPlot3dTexture(meshdata *meshi){
         dx_yzcopy = dx_yz+j*(kbar+1);
         dy_yzcopy = dy_yz+j*(kbar+1);
         dz_yzcopy = dz_yz+j*(kbar+1);
-#ifndef pp_PLOT3DVAL
-        yzcolor = yzcolorbase + j*(kbar+1);
-#endif
         for(k=0; k<=kbar; k+=vectorskip){
-#ifdef pp_PLOT3DVAL
           float val;
 
           val = GET_QDATA(plotx, j,   k,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
-#else
-          colorindex=*yzcolor;
-#endif
           vector_color = rgb_plot3d + 4*colorindex;
           if((iblank==NULL||iblank[IJKNODE(plotx,j,k)]==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
@@ -762,9 +679,6 @@ void DrawPlot3dTexture(meshdata *meshi){
           dx_yzcopy+=vectorskip;
           dy_yzcopy+=vectorskip;
           dz_yzcopy+=vectorskip;
-#ifndef pp_PLOT3DVAL
-          yzcolor+=vectorskip;
-#endif
         }
       }
       glEnd();
@@ -772,9 +686,6 @@ void DrawPlot3dTexture(meshdata *meshi){
 
       /* draw points for yz vectors */
 
-#ifndef pp_PLOT3DVAL
-      yzcolor=yzcolorbase;
-#endif
       dx_yzcopy=dx_yz;
       dy_yzcopy=dy_yz;
       dz_yzcopy=dz_yz;
@@ -784,18 +695,11 @@ void DrawPlot3dTexture(meshdata *meshi){
         dx_yzcopy = dx_yz+j*(kbar+1);
         dy_yzcopy = dy_yz+j*(kbar+1);
         dz_yzcopy = dz_yz+j*(kbar+1);
-#ifndef pp_PLOT3DVAL
-        yzcolor = yzcolorbase + j*(kbar+1);
-#endif
         for(k=0; k<=kbar; k+=vectorskip){
-#ifdef pp_PLOT3DVAL
           float val;
 
           val = GET_QDATA(plotx, j,   k,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
-#else
-          colorindex=*yzcolor;
-#endif
           vector_color = rgb_plot3d + 4*colorindex;
           if((iblank==NULL||iblank[IJKNODE(plotx,j,k)]==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
@@ -808,9 +712,6 @@ void DrawPlot3dTexture(meshdata *meshi){
           dx_yzcopy+=vectorskip;
           dy_yzcopy+=vectorskip;
           dz_yzcopy+=vectorskip;
-#ifndef pp_PLOT3DVAL
-          yzcolor+=vectorskip;
-#endif
         }
       }
       glEnd();
@@ -820,24 +721,11 @@ void DrawPlot3dTexture(meshdata *meshi){
   /* +++++++++++++++++++++++++++++++++  draw xz contours  ++++++++++++++++++++++++++++++++++++++++ */
 
   if(ploty>=0&&visy!=0){
-#ifndef pp_PLOT3DVAL
-    if(visVector==0&&contour_type==STEPPED_CONTOURS){
-      DrawContours(plot3dcontour2ptr);
-    }
-#endif
     if(visVector==0
-#ifndef pp_PLOT3DVAL
-       &&contour_type!=STEPPED_CONTOURS
-#endif
        ){
       glBegin(GL_TRIANGLES);
       for(i=0; i<ibar; i++){
-#ifndef pp_PLOT3DVAL
-        color1t=xzcolortbase + i*nz;
-        color2t=color1t+nz;
-#endif
         for(k=0; k<kbar; k++){
-#ifdef pp_PLOT3DVAL
           float val[4];
 
           val[0] = GET_QDATA(i,   ploty, k,   plotn-1);
@@ -867,27 +755,6 @@ void DrawPlot3dTexture(meshdata *meshi){
               glTexCoord1f(val[3]); glVertex3f(xplt[i+1], yplt[ploty], zplt[k+1]);
               glTexCoord1f(val[1]); glVertex3f(xplt[i],   yplt[ploty], zplt[k+1]);
             }
-#else
-          if(c_iblank_y==NULL||c_iblank_y[IJKNODE(i,ploty,k)]==GASGAS){
-            if(ABS(color1t[k]-color2t[k+1])<ABS(color1t[k+1]-color2t[k])){
-              glTexCoord1f(color1t[k]);  glVertex3f(xplt[i],yplt[ploty],zplt[k]);
-              glTexCoord1f(color2t[k]);  glVertex3f(xplt[i+1],yplt[ploty],zplt[k]);
-              glTexCoord1f(color2t[k+1]);glVertex3f(xplt[i+1],yplt[ploty],zplt[k+1]);
-
-              glTexCoord1f(color1t[k]);  glVertex3f(xplt[i],yplt[ploty],zplt[k]);
-              glTexCoord1f(color2t[k+1]);glVertex3f(xplt[i+1],yplt[ploty],zplt[k+1]);
-              glTexCoord1f(color1t[k+1]);glVertex3f(xplt[i],yplt[ploty],zplt[k+1]);
-            }
-            else{
-              glTexCoord1f(color1t[k]);  glVertex3f(xplt[i],yplt[ploty],zplt[k]);
-              glTexCoord1f(color2t[k]);  glVertex3f(xplt[i+1],yplt[ploty],zplt[k]);
-              glTexCoord1f(color1t[k+1]);glVertex3f(xplt[i],yplt[ploty],zplt[k+1]);
-
-              glTexCoord1f(color2t[k]);  glVertex3f(xplt[i+1],yplt[ploty],zplt[k]);
-              glTexCoord1f(color2t[k+1]);glVertex3f(xplt[i+1],yplt[ploty],zplt[k+1]);
-              glTexCoord1f(color1t[k+1]);glVertex3f(xplt[i],yplt[ploty],zplt[k+1]);
-            }
-#endif
           }
         }
       }
@@ -897,13 +764,7 @@ void DrawPlot3dTexture(meshdata *meshi){
     /* draw xz vectors */
 
     if(visVector==1){
-#ifndef pp_PLOT3DVAL
-      unsigned char*xzcolor;
-#endif
 
-#ifndef pp_PLOT3DVAL
-      xzcolor=xzcolorbase;
-#endif
       AntiAliasLine(ON);
       glLineWidth(vectorlinewidth);
       glBegin(GL_LINES);
@@ -911,18 +772,11 @@ void DrawPlot3dTexture(meshdata *meshi){
         dx_xzcopy=dx_xz+i*(kbar+1);
         dy_xzcopy=dy_xz+i*(kbar+1);
         dz_xzcopy=dz_xz+i*(kbar+1);
-#ifndef pp_PLOT3DVAL
-        xzcolor = xzcolorbase + i*(kbar+1);
-#endif
         for(k=0; k<=kbar; k+=vectorskip){
-#ifdef pp_PLOT3DVAL
           float val;
 
           val = GET_QDATA(i, ploty,   k,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
-#else
-          colorindex=*xzcolor;
-#endif
           vector_color = rgb_plot3d + 4*colorindex;
           if((iblank==NULL||iblank[IJKNODE(i,ploty,k)]==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
@@ -935,9 +789,6 @@ void DrawPlot3dTexture(meshdata *meshi){
           dx_xzcopy+=vectorskip;
           dy_xzcopy+=vectorskip;
           dz_xzcopy+=vectorskip;
-#ifndef pp_PLOT3DVAL
-          xzcolor+=vectorskip;
-#endif
         }
       }
       glEnd();
@@ -945,27 +796,17 @@ void DrawPlot3dTexture(meshdata *meshi){
 
       /* draw points for xz vectors */
 
-#ifndef pp_PLOT3DVAL
-      xzcolor=xzcolorbase;
-#endif
       glPointSize(vectorpointsize);
       glBegin(GL_POINTS);
       for(i=0; i<=ibar; i+=vectorskip){
         dx_xzcopy=dx_xz+i*(kbar+1);
         dy_xzcopy=dy_xz+i*(kbar+1);
         dz_xzcopy=dz_xz+i*(kbar+1);
-#ifndef pp_PLOT3DVAL
-        xzcolor = xzcolorbase + i*(kbar+1);
-#endif
         for(k=0; k<=kbar; k+=vectorskip){
-#ifdef pp_PLOT3DVAL
           float val;
 
           val = GET_QDATA(i, ploty,   k,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
-#else
-          colorindex=*xzcolor;
-#endif
           vector_color = rgb_plot3d + 4*colorindex;
           if((iblank==NULL||iblank[IJKNODE(i,ploty,k)]==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
@@ -977,9 +818,6 @@ void DrawPlot3dTexture(meshdata *meshi){
           dx_xzcopy+=vectorskip;
           dy_xzcopy+=vectorskip;
           dz_xzcopy+=vectorskip;
-#ifndef pp_PLOT3DVAL
-          xzcolor+=vectorskip;
-#endif
         }
       }
       glEnd();
@@ -989,15 +827,7 @@ void DrawPlot3dTexture(meshdata *meshi){
   /* ++++++++++++++++++++++++++++ draw xy contours ++++++++++++++++++++++++++++++++ */
 
   if(plotz>=0&&visz!=0){
-#ifndef pp_PLOT3DVAL
-    if(visVector==0&&contour_type==STEPPED_CONTOURS){
-      DrawContours(plot3dcontour3ptr);
-    }
-#endif
     if(visVector==0
-#ifndef pp_PLOT3DVAL
-       &&contour_type!=STEPPED_CONTOURS
-#endif
        ){
       if(plotz<0){
         plotz=kbar;
@@ -1009,12 +839,7 @@ void DrawPlot3dTexture(meshdata *meshi){
       }
       glBegin(GL_TRIANGLES);
       for(i=0; i<ibar; i++){
-#ifndef pp_PLOT3DVAL
-        color1t=xycolortbase + i*ny;
-        color2t=color1t+ny;
-#endif
         for(j=0; j<jbar; j++){
-#ifdef pp_PLOT3DVAL
           float val[4];
 
           val[0] = GET_QDATA(i,   j,   plotz, plotn-1);
@@ -1045,28 +870,6 @@ void DrawPlot3dTexture(meshdata *meshi){
                glTexCoord1f(val[1]); glVertex3f(xplt[i],   yplt[j+1], zplt[plotz]);
             }
           }
-#else
-          if(c_iblank_z==NULL||c_iblank_z[IJKNODE(i,j,plotz)]==GASGAS){
-            if(ABS(color1t[j]-color2t[j+1])<ABS(color1t[j+1]-color2t[j])){
-              glTexCoord1f(  color1t[j]);glVertex3f(  xplt[i],  yplt[j],zplt[plotz]);
-              glTexCoord1f(  color2t[j]);glVertex3f(xplt[i+1],  yplt[j],zplt[plotz]);
-              glTexCoord1f(color2t[j+1]);glVertex3f(xplt[i+1],yplt[j+1],zplt[plotz]);
-
-              glTexCoord1f(  color1t[j]);glVertex3f(  xplt[i],  yplt[j],zplt[plotz]);
-              glTexCoord1f(color2t[j+1]);glVertex3f(xplt[i+1],yplt[j+1],zplt[plotz]);
-              glTexCoord1f(color1t[j+1]);glVertex3f(  xplt[i],yplt[j+1],zplt[plotz]);
-            }
-            else{
-              glTexCoord1f(  color1t[j]);glVertex3f(  xplt[i],  yplt[j],zplt[plotz]);
-              glTexCoord1f(  color2t[j]);glVertex3f(xplt[i+1],  yplt[j],zplt[plotz]);
-              glTexCoord1f(color1t[j+1]);glVertex3f(  xplt[i],yplt[j+1],zplt[plotz]);
-
-              glTexCoord1f(  color2t[j]);glVertex3f(xplt[i+1],  yplt[j],zplt[plotz]);
-              glTexCoord1f(color2t[j+1]);glVertex3f(xplt[i+1],yplt[j+1],zplt[plotz]);
-              glTexCoord1f(color1t[j+1]);glVertex3f(  xplt[i],yplt[j+1],zplt[plotz]);
-            }
-          }
-#endif
         }
       }
       glEnd();
@@ -1075,13 +878,7 @@ void DrawPlot3dTexture(meshdata *meshi){
     /* draw xy vectors */
 
     if(visVector==1){
-#ifndef pp_PLOT3DVAL
-      unsigned char *xycolor;
-#endif
 
-#ifndef pp_PLOT3DVAL
-      xycolor=xycolorbase;
-#endif
       AntiAliasLine(ON);
       glLineWidth(vectorlinewidth);
       glBegin(GL_LINES);
@@ -1089,18 +886,11 @@ void DrawPlot3dTexture(meshdata *meshi){
         dx_xycopy=dx_xy+i*(jbar+1);
         dy_xycopy=dy_xy+i*(jbar+1);
         dz_xycopy=dz_xy+i*(jbar+1);
-#ifndef pp_PLOT3DVAL
-        xycolor = xycolorbase + i*(jbar+1);
-#endif
         for(j=0; j<=jbar; j+=vectorskip){
-#ifdef pp_PLOT3DVAL
           float val;
 
           val = GET_QDATA(i, j, plotz,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
-#else
-          colorindex=*xycolor;
-#endif
           vector_color = rgb_plot3d + 4*colorindex;
           if((iblank==NULL||iblank[IJKNODE(i,j,plotz)]==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
@@ -1113,9 +903,6 @@ void DrawPlot3dTexture(meshdata *meshi){
           dx_xycopy+=vectorskip;
           dy_xycopy+=vectorskip;
           dz_xycopy+=vectorskip;
-#ifndef pp_PLOT3DVAL
-          xycolor+=vectorskip;
-#endif
         }
       }
       glEnd();
@@ -1123,27 +910,17 @@ void DrawPlot3dTexture(meshdata *meshi){
 
       /* draw points for xy vectors */
 
-#ifndef pp_PLOT3DVAL
-      xycolor=xycolorbase;
-#endif
       glPointSize(vectorpointsize);
       glBegin(GL_POINTS);
       for(i=0; i<=ibar; i+=vectorskip){
         dx_xycopy=dx_xy+i*(jbar+1);
         dy_xycopy=dy_xy+i*(jbar+1);
         dz_xycopy=dz_xy+i*(jbar+1);
-#ifndef pp_PLOT3DVAL
-        xycolor = xycolorbase + i*(jbar+1);
-#endif
         for(j=0; j<=jbar; j+=vectorskip){
-#ifdef pp_PLOT3DVAL
           float val;
 
           val = GET_QDATA(i, j, plotz,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
-#else
-          colorindex=*xycolor;
-#endif
           vector_color = rgb_plot3d + 4*colorindex;
           if((iblank==NULL||iblank[IJKNODE(i,j,plotz)]==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
@@ -1156,18 +933,12 @@ void DrawPlot3dTexture(meshdata *meshi){
           dx_xycopy+=vectorskip;
           dy_xycopy+=vectorskip;
           dz_xycopy+=vectorskip;
-#ifndef pp_PLOT3DVAL
-          xycolor+=vectorskip;
-#endif
         }
       }
       glEnd();
     }
   }
   if(visVector==0
-#ifndef pp_PLOT3DVAL
-     &&contour_type!=STEPPED_CONTOURS
-#endif
      ){
     glDisable(GL_TEXTURE_1D);
   }

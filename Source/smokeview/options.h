@@ -3,50 +3,31 @@
 
 #include "options_common.h"
 
-//*** uncomment the following two lines to force all versions to be beta
-//#undef pp_BETA
-//#define pp_BETA
-
 //*** define smokeview title
 
 #ifdef pp_BETA
   #define PROGVERSION "Test"
+  #define pp_DEBUG_SUBMENU       // debug output and testing for building menus
 #else
   #define PROGVERSION ""
 #endif
 
-#ifdef pp_LINUX
-#define pp_OSXLINUX
-#endif
-#ifdef pp_OSX
-#define pp_OSXLINUX
-#endif
+//#define pp_COLORBAR_DEBUG     // output colorbar debug info
+#define pp_COLORBARS_CSV      // add csv colorbars//
+//#define pp_COLORBAR_CONSTANT  // make colorbar brightness constant in colorbar dialog box
+//define pp_COLORBAR_HSL        // add option to display color bar in terms of HSL (hue, saturation, lightness)
 
-//*** options: all platforms
+// add option to plot 2d max vals
+//#define pp_PLOT2DMAX
 
-//#define pp_THINFACE         // don't draw sides of thin faces
-
-#define pp_SORTSLICES        // split slices to improve transparent drawing
-// use floating point to color data
-
-//#define pp_PARTVAL          // speed up part file color updating
-//#define pp_SLICEVAL         // speed up slice file color updating
-//#define pp_BOUNDVAL         // speed up boundary file color updating
-//#define pp_PLOT3DVAL        // speed up plot3d file color updating
+//*** parallel file loading
+#define pp_SLICE_MULTI        // load slice files in parallel
+#define pp_PART_MULTI         // load particle files in parallel
 
 // streaming directives
 
 //#define pp_SMOKE3DSTREAM      // stream smoke3d data
 //#define pp_PARTSTREAM         // stream particle data
-
-#ifdef pp_SLICEVAL
-#define pp_SLICEBOUNDVAL
-#endif
-
-#ifdef pp_BOUNDVAL
-#undef pp_SLICEBOUNDVAL
-#define pp_SLICEBOUNDVAL
-#endif
 
 // turn on pp_STREAM if streaming is on for any file type
 
@@ -58,34 +39,12 @@
 #define pp_STREAM
 #endif
 
-#define pp_CLIP_FIX          // fixes to clipping
-#define pp_PART_MULTI        // load particles in parallel
-//#define pp_CACHE_FILEBOUNDS   // cache slice and boundary file bounds
 #define pp_THREADBUFFER
-//#define pp_SMOKEBUFFER       // read 3d smoke files using memory buffer i/o routines
-//#define pp_GEOM_DEBUG        // debug out in geometry routines
-//#define pp_CRASH_TEST         // test detection of division by zero or use of undefined pointer
-//#define pp_SHOW_BOUND_MIRROR  // add menu for showing boundary files on mirror/open vents
-//#define pp_HTML_VR           // output VR html code
-//#define pp_SKIP_BOUNDARY_GEOMS // skips reading of boundary geometry files
+//#define pp_CRASH_TEST       // test detection of division by zero or use of undefined pointer
 #define pp_GPU                // support the GPU
 #define pp_THREAD             // turn on multi-threading
 #define pp_DRAWISO            // turn on drawing routines
 //#define pp_LOAD_NEWDATA     // add button for loading new data
-//#define pp_TERRAIN_UPDATE     // add button to update terrain normals
-
-//#define pp_WUI_VAO            // use opengl vao objects for drawing terrain
-
-//*** debug: all platforms
-//#define pp_ISOTIME          // output iso load times
-//#define pp_PART_TEST        // for debugging, set particle values to 100*parti->seq_id + small random number
-
-//*** in development: all platforms
-#define pp_SLICETHREAD        // parallel slice file loading
-//#define pp_SHOW_CACHE         // show file cache checkbox
-//#define pp_PLOT3D_REDUCEMENUS // eliminate plot3d sub-menus
-//#define pp_RESEARCH_DEBUG     // output whether data is reloaded or colors re-mapped when toggling to/from research mode
-//#define pp_MERGE_GEOMS          // merge geometry and structure boundary file menu items
 
 #ifdef pp_GPU
 #define pp_GPUTHROTTLE  // pp_GPU directive must also be set
@@ -106,7 +65,7 @@
 //*** options: Linux
 
 #ifdef pp_LINUX
-#define pp_REFRESH      // refresh glui dialogs when they change size
+#define pp_REFRESH          // refresh glui dialogs when they change size
 #define pp_DIALOG_SHORTCUTS // dialog shortcuts
 #endif
 
@@ -132,19 +91,10 @@
 #endif
 #endif
 
-//*** options: options being tested on all platforms
-
-#ifdef pp_BETA
-#define pp_DEBUG_SUBMENU       // debug output and testing for building menus
-#endif
-
 //*** options: for debugging
 
 #ifdef _DEBUG
 #define pp_MOVIE_BATCH_DEBUG // allow movei batch dialogs to be defined for testing
-#ifndef pp_RESEARCH_DEBUG
-#define pp_RESEARCH_DEBUG
-#endif
 #define pp_SNIFF_ERROR
 #endif
 #define pp_RENDER360_DEBUG

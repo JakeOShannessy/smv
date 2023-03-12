@@ -28,6 +28,9 @@
 #define GENPLOT_RESET_BOUNDS        114
 #define GENPLOT_PLOT_DIST           115
 #define GENPLOT_UPDATE              116
+#ifdef pp_PLOT2DMAX
+#define GENPLOT_MAX_VALS            117
+#endif
 
 #define GENPLOT_CSV_FILETYPE        121
 #define GENPLOT_CURVE_UNIT          122
@@ -373,7 +376,14 @@ void RemoveCurve(plot2ddata *plot2di, int index){
     LIST_plotcurves->set_int_val(-1);
   }
   curve = plot2di->curve+index;
-  FREEMEMORY(curve->vals);
+  if(index >= 0){
+#ifdef pp_PLOT2DMAX
+    FREEMEMORY(curve->vals);
+    FREEMEMORY(curve->vals2);
+#else
+    FREEMEMORY(curve->vals);
+#endif
+  }
 //    (0,...,i-1,i+1,...,n-1)
   if(plot2di->ncurves>index+1){
     memmove(curve, curve+1, (plot2di->ncurves-index-1)*sizeof(curvedata));
@@ -439,6 +449,9 @@ void AddCSVCurve(plot2ddata *plot2di, int index, int option){
       curve->curve_factor       = glui_curve_default.curve_factor;
       curve->apply_curve_factor = glui_curve_default.apply_curve_factor;
       curve->vals               = glui_curve_default.vals;
+#ifdef pp_PLOT2DMAX
+      curve->vals2               = glui_curve_default.vals2;
+#endif
       curve->update_avg         = glui_curve_default.update_avg;
 
       shortlabel = GetPlotShortLabel2(plot2di, curve);
@@ -961,14 +974,14 @@ void UpdatePlotDevList(void){
     devicedata *devi;
 
     devi = deviceinfo + i;
-    devi->inlist = 0;;
+    devi->inlist = 0;
   }
   LIST_plot_add_dev->delete_item(-1);
   for(i = 0; i<ndeviceinfo; i++){
     devicedata *devi;
 
     devi = deviceinfo+i;
-    devi->inlist = 1 - InDevList(devi, i);;
+    devi->inlist = 1 - InDevList(devi, i);
     LIST_plot_add_dev->delete_item(i);
   }
   LIST_plot_add_dev->add_item(-1, "");
@@ -1349,6 +1362,11 @@ void GenPlotCB(int var){
       break;
     case GENPLOT_UPDATE:
       break;
+#ifdef pp_PLOT2DMAX
+    case GENPLOT_MAX_VALS:
+      update_max_avg_vals = 1;
+      break;
+#endif
     default:
       ASSERT(FFALSE);
       break;
@@ -1660,7 +1678,7 @@ extern "C" void GluiPlot2DSetup(int main_window){
         devicedata *devi;
 
         devi = deviceinfo+i;
-        devi->inlist = 0;;
+        devi->inlist = 0;
       }
       for(i = 0; i<ndeviceinfo; i++){
         devicedata *devi;
@@ -1733,7 +1751,9 @@ extern "C" void GluiPlot2DSetup(int main_window){
     SPINNER_size_factor = glui_plot2d->add_spinner_to_panel(PANEL_plotother, _("plot size(relative)"), GLUI_SPINNER_FLOAT, &plot2d_size_factor,   GENPLOT_PLOT_SIZE, GenPlotCB);
     glui_plot2d->add_spinner_to_panel(PANEL_plotother, _("vertical font spacing"), GLUI_SPINNER_FLOAT, &plot2d_font_spacing,                 GENPLOT_UPDATE,    GenPlotCB);
     SPINNER_plot2d_time_average = glui_plot2d->add_spinner_to_panel(PANEL_plotother, _("smoothing interval (s)"), GLUI_SPINNER_FLOAT, &plot2d_time_average, DEVICE_TIMEAVERAGE, DeviceCB);
-
+#ifdef pp_PLOT2DMAX
+    glui_plot2d->add_checkbox_to_panel(PANEL_plotother, "max vals", &show_max_avg_vals, GENPLOT_MAX_VALS, GenPlotCB);
+#endif
     if(nplot2dinfo==0){
       if(PANEL_add_curve!=NULL)PANEL_add_curve->disable();
       if(PANEL_plot_position!=NULL)PANEL_plot_position->disable();

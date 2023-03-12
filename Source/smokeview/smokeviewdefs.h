@@ -10,8 +10,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MENU_HVAC_LOAD     0
 #define MENU_HVAC_UNLOAD   1
 
-#define HVAC_LOAD      1
-#define HVAC_UNLOAD   -1
+#define BOUND_UPDATE_COLORS            110 
 
 #define HVAC_FILTER_NO  0
 #define HVAC_FILTER_YES 1
@@ -98,10 +97,12 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define BOUND_GLOBAL_MIN     2
 #define BOUND_PERCENTILE_MIN 3
 
-#define BOUND_PART   0
-#define BOUND_SLICE  1
-#define BOUND_PLOT3D 2
-#define BOUND_PATCH  3
+#define BOUND_PART     0
+#define BOUND_SLICE    1
+#define BOUND_PLOT3D   2
+#define BOUND_PATCH    3
+#define BOUND_HVACDUCT 4
+#define BOUND_HVACNODE 5
 
 #define MINMAX_ALL    0
 #define MINMAX_LOADED 1
@@ -208,6 +209,12 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define DLG_PART     3
 #define DLG_PLOT3D   4
 #define DLG_ISO      5
+#define DLG_HVACDUCT 6
+#define DLG_HVACNODE 7
+
+#define COLORBAR_LIST2 112
+#define COLORBAR_LIST2_PREV 128
+#define COLORBAR_LIST2_NEXT 129
 
 #define ZONEVENT_CIRCLE 1
 #define ZONEVENT_SQUARE 2
@@ -222,9 +229,10 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define ROTATE_ABOUT_FDS_CENTER      -3
 #define ROTATE_ABOUT_WORLD_CENTER    -4
 
-#define ONLY_IN_GAS   0
-#define GAS_AND_SOLID 1
-#define ONLY_IN_SOLID 2
+#define ONLY_IN_GAS           0
+#define GAS_AND_SOLID         1
+#define ONLY_IN_SOLID         2
+#define NEITHER_GAS_NOR_SOLID 3
 
 #define UPDATE_WINDROSE_DEVICE   0
 #define UPDATE_WINDROSE_CHECKBOX 1
@@ -547,6 +555,8 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MENU_MOTION_Z_VECTOR       6
 #define MENU_MOTION_SHOW_VECTORS   7
 
+#define MENU_HVAC_HIDE_ALL_VALUES -15
+
 #define FIRSTCALL     1
 #define NOT_FIRSTCALL 0
 
@@ -755,6 +765,9 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define SCRIPT_CONTINUE         -7
 #define SCRIPT_CANCEL           -8
 #define MENU_SCRIPT_SETTINGS    -9
+
+#define MENU_DEVICES_SHOWALL -1
+#define MENU_DEVICES_HIDEALL -2
 
 #define DRAWSCENE    1
 #define SELECTOBJECT 2

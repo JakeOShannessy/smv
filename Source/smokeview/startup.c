@@ -151,6 +151,9 @@ void InitMisc(void){
   glui_curve_default.apply_curve_factor = 0;
   glui_curve_default.update_avg         = 0;
   glui_curve_default.vals               = NULL;
+#ifdef pp_PLOT2DMAX
+  glui_curve_default.vals2              = NULL;
+#endif
   memcpy(&glui_curve, &glui_curve_default, sizeof(curvedata));
   strcpy(glui_curve_default.scaled_label, "");
   strcpy(glui_curve_default.scaled_unit,  "");
@@ -1229,7 +1232,22 @@ void InitOpenGL(int option){
     TrainerViewMenu(trainerview);
   }
 
-/* ------------------ InitTextureDir ------------------------ */
+#ifdef pp_COLORBARS_CSV
+  /* ------------------ InitColorbarsDir ------------------------ */
+
+  void InitColorbarsDir(void){
+    if(colorbarsdir != NULL)return;
+    if(smokeview_bindir != NULL){
+      size_t colorbars_len;
+
+      colorbars_len = strlen(smokeview_bindir) + strlen("colorbars");
+      NewMemory((void **)&colorbarsdir, colorbars_len + 2);
+      strcpy(colorbarsdir, smokeview_bindir);
+      strcat(colorbarsdir, "colorbars");
+    }
+  }
+#endif
+  /* ------------------ InitTextureDir ------------------------ */
 
 void InitTextureDir(void){
   char *texture_buffer;
@@ -1297,7 +1315,7 @@ void InitVars(void){
       if(queue==NULL||nmovie_queues>=MAX_QUEUS)break;
       movie_queues[nmovie_queues++]=TrimFrontBack(queue);
     }
-    ResizeMemory((void **)&movie_queues, nmovie_queues*sizeof(char *));;
+    ResizeMemory((void **)&movie_queues, nmovie_queues*sizeof(char *));
     have_slurm = 1;
   }
 
@@ -1849,7 +1867,6 @@ void InitVars(void){
   loadfiles_at_startup=0;
 
   nmenus=0;
-  showbuild=0;
 
   strcpy(emptylabel,"");
   font_ptr          = GLUT_BITMAP_HELVETICA_12;

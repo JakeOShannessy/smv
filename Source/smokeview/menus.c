@@ -69,10 +69,8 @@ float     part_load_time;
 #define MENU_KEEP_COARSE -4
 
 #define MENU_SLICECOLORDEFER -5
-#ifdef pp_SORTSLICES
 #define MENU_SPLITSLICES       -10
 #define MENU_SPLITSLICES_DEBUG -11
-#endif
 
 #define MENU_SLICE_FILE_SIZES -9
 
@@ -294,7 +292,6 @@ float     part_load_time;
 #define MENU_HVAC_SHOWALL_NETWORKS        -2
 #define MENU_HVAC_HIDEALL_NETWORKS        -3
 #define MENU_HVAC_METRO_VIEW              -4
-#define MENU_HVAC_OFFSET_NODES            -14
 #define MENU_HVAC_DIALOG_HVAC             -5
 #define MENU_HVAC_SHOW_COMPONENT_TEXT     -6
 #define MENU_HVAC_SHOW_COMPONENT_SYMBOLS  -7
@@ -304,7 +301,9 @@ float     part_load_time;
 #define MENU_HVAC_SHOW_FILTER_HIDE       -11
 #define MENU_HVAC_SHOW_DUCT_IDS          -12
 #define MENU_HVAC_SHOW_NODE_IDS          -13
-#define MENU_HVAC_HIDE_ALL_VALUES        -15
+// defined in smokeviewdefs.h (so it can also be used in IOscript.c )
+//#define MENU_HVAC_HIDE_ALL_VALUES        -15
+#define MENU_HVAC_CELL_VIEW              -16
 
 #ifdef WIN32
 
@@ -546,17 +545,17 @@ void ShowMultiSliceMenu(int value){
     return;
   case MENU_SHOWSLICE_IN_GAS:
 #ifdef pp_GLUI
-    UpdateShowSliceInObst(ONLY_IN_GAS);
+    SliceInObstMenu2Dialog(ONLY_IN_GAS);
 #endif
     break;
   case MENU_SHOWSLICE_IN_GASANDSOLID:
 #ifdef pp_GLUI
-    UpdateShowSliceInObst(GAS_AND_SOLID);
+    SliceInObstMenu2Dialog(GAS_AND_SOLID);
 #endif
     break;
   case MENU_SHOWSLICE_IN_SOLID:
 #ifdef pp_GLUI
-    UpdateShowSliceInObst(ONLY_IN_SOLID);
+    SliceInObstMenu2Dialog(ONLY_IN_SOLID);
 #endif
     break;
   case -12:
@@ -1112,6 +1111,19 @@ void ColorbarMenu(int value){
   if(value>-10){
     UpdateRGBColors(COLORBAR_INDEX_NONE);
   }
+#ifdef pp_COLORBAR_DEBUG
+  int i;
+  colorbardata *cbi;
+  cbi = colorbarinfo + colorbartype;
+  for(i = 0;i < cbi->nnodes;i++){
+    float hsl[3],factor;
+    Rgb2Hsl(cbi->rgb_node+3*i, hsl);
+    factor = 255.0;
+    if(hsl[2] != 0.0)factor = TOBW(cbi->rgb_node + 3 * i) / hsl[2];
+    factor /= 255.0;
+    printf("%i: h:%f s:%f l:%f g:%f f:%f\n", i, hsl[0], hsl[1], hsl[2], TOBW(cbi->rgb_node+3*i),factor);
+  }
+#endif
 }
 
 /* ------------------ Smoke3DShowMenu ------------------------ */
@@ -1324,19 +1336,19 @@ void ShowVSliceMenu(int value){
   }
   if(value==MENU_SHOWSLICE_IN_GAS){
 #ifdef pp_GLUI
-    UpdateShowSliceInObst(ONLY_IN_GAS);
+    SliceInObstMenu2Dialog(ONLY_IN_GAS);
 #endif
     return;
   }
   else if(value==MENU_SHOWSLICE_IN_GASANDSOLID){
 #ifdef pp_GLUI
-    UpdateShowSliceInObst(GAS_AND_SOLID);
+    SliceInObstMenu2Dialog(GAS_AND_SOLID);
 #endif
     return;
   }
   else if(value==MENU_SHOWSLICE_IN_SOLID){
 #ifdef pp_GLUI
-    UpdateShowSliceInObst(ONLY_IN_SOLID);
+    SliceInObstMenu2Dialog(ONLY_IN_SOLID);
 #endif
     return;
   }
@@ -1426,17 +1438,17 @@ void ShowHideSliceMenu(int value){
       break;
     case MENU_SHOWSLICE_IN_GAS:
 #ifdef pp_GLUI
-      UpdateShowSliceInObst(ONLY_IN_GAS);
+      SliceInObstMenu2Dialog(ONLY_IN_GAS);
 #endif
       break;
     case MENU_SHOWSLICE_IN_GASANDSOLID:
 #ifdef pp_GLUI
-      UpdateShowSliceInObst(GAS_AND_SOLID);
+      SliceInObstMenu2Dialog(GAS_AND_SOLID);
 #endif
       break;
     case MENU_SHOWSLICE_IN_SOLID:
 #ifdef pp_GLUI
-      UpdateShowSliceInObst(ONLY_IN_SOLID);
+      SliceInObstMenu2Dialog(ONLY_IN_SOLID);
 #endif
       break;
     case MENU_SHOWSLICE_OFFSET:
@@ -2190,16 +2202,10 @@ void RenderMenu(int value){
     }
     break;
   case RenderHTML:
-    Smv2Html(html_filename,   HTML_CURRENT_TIME, FROM_SMOKEVIEW, VR_NO);
-#ifdef pp_HTML_VR
-    Smv2Html(htmlvr_filename, HTML_CURRENT_TIME, FROM_SMOKEVIEW, VR_YES);
-#endif
+    Smv2Html(html_filename,   HTML_CURRENT_TIME, FROM_SMOKEVIEW);
     break;
   case RenderHTMLALL:
-    Smv2Html(html_filename,   HTML_ALL_TIMES, FROM_SMOKEVIEW, VR_NO);
-#ifdef pp_HTML_VR
-    Smv2Html(htmlvr_filename, HTML_ALL_TIMES, FROM_SMOKEVIEW, VR_YES);
-#endif
+    Smv2Html(html_filename,   HTML_ALL_TIMES, FROM_SMOKEVIEW);
     break;
   case RenderCancel:
     RenderState(RENDER_OFF);
@@ -2583,6 +2589,7 @@ void VectorSkipMenu(int value){
   vectorskip=value;
   visVector=1;
   updatemenu=1;
+  update_vectorskip = 1;
   GLUTPOSTREDISPLAY;
 }
 
@@ -3374,6 +3381,8 @@ void ReloadAllSliceFiles(void){
   slicefile_labelindex = slicefile_labelindex_save;
 }
 
+void LoadHVACMenu(int value);
+
 /* ------------------ LoadUnloadMenu ------------------------ */
 
 void LoadUnloadMenu(int value){
@@ -3454,6 +3463,10 @@ void LoadUnloadMenu(int value){
       ReadHRR(LOAD);
     }
 
+    //*** reload hvac file
+      if(hvacductvalsinfo!=NULL&&hvacductvalsinfo->loaded==1){
+        LoadHVACMenu(MENU_HVAC_LOAD);
+      }
 
     //*** reload vector slice and slice files
 
@@ -5028,17 +5041,17 @@ void LoadSliceMenu(int value){
         break;
       case MENU_SHOWSLICE_IN_GAS:
 #ifdef pp_GLUI
-        UpdateShowSliceInObst(ONLY_IN_GAS);
+        SliceInObstMenu2Dialog(ONLY_IN_GAS);
 #endif
         break;
       case  MENU_SHOWSLICE_IN_GASANDSOLID:
 #ifdef pp_GLUI
-        UpdateShowSliceInObst(GAS_AND_SOLID);
+        SliceInObstMenu2Dialog(GAS_AND_SOLID);
 #endif
         break;
       case MENU_SHOWSLICE_IN_SOLID:
 #ifdef pp_GLUI
-        UpdateShowSliceInObst(ONLY_IN_SOLID);
+        SliceInObstMenu2Dialog(ONLY_IN_SOLID);
 #endif
         break;
       case MENU_SLICE_SETTINGS:
@@ -5306,7 +5319,7 @@ void LoadMultiSliceMenu(int value){
     script_multislice=0;
   }
   else if(value<=-1000){
-    int submenutype, last_slice, dir, errorcode;
+    int submenutype, dir, errorcode;
     char *submenulabel;
     slicedata *slicei;
     float load_time, load_size = 0.0;
@@ -5318,22 +5331,8 @@ void LoadMultiSliceMenu(int value){
     submenutype=msubslice_menuindex[submenutype];
     slicei = sliceinfo + submenutype;
     submenulabel = slicei->label.longlabel;
-    last_slice = nsliceinfo - 1;
-    for(i = nsliceinfo-1; i>=0; i--){
-      char *longlabel;
-
-      slicei = sliceinfo + i;
-      if(slicei->skipdup == 1)continue;
-      longlabel = slicei->label.longlabel;
-      if(strcmp(longlabel, submenulabel) != 0)continue;
-      if(dir != 0 && dir != slicei->idir)continue;
-      if(dir !=0 && slicei->volslice == 1)continue;
-      last_slice = i;
-      break;
-    }
     START_TIMER(load_time);
     for(i = 0; i<nsliceinfo; i++){
-      int set_slicecolor;
       char *longlabel;
 
       slicei = sliceinfo + i;
@@ -5342,13 +5341,11 @@ void LoadMultiSliceMenu(int value){
       if(strcmp(longlabel,submenulabel)!=0)continue;
       if(dir!=0&&dir!=slicei->idir)continue;
       if(dir!=0&&slicei->volslice==1)continue;
-      set_slicecolor = DEFER_SLICECOLOR;
-      if(i == last_slice)set_slicecolor = SET_SLICECOLOR;
       if(slicei->slice_filetype == SLICE_GEOM){
-        load_size+=ReadGeomData(slicei->patchgeom, slicei, LOAD, ALL_FRAMES, NULL, &errorcode);
+        load_size += ReadGeomData(slicei->patchgeom, slicei, LOAD, ALL_FRAMES, NULL, &errorcode);
       }
       else{
-        load_size+=             ReadSlice(slicei->file,i, ALL_FRAMES, NULL, LOAD,set_slicecolor,&errorcode);
+        load_size += ReadSlice(slicei->file,i, ALL_FRAMES, NULL, LOAD,SET_SLICECOLOR,&errorcode);
       }
       file_count++;
     }
@@ -5395,7 +5392,6 @@ void LoadMultiSliceMenu(int value){
 #endif
       }
       break;
-#ifdef pp_SORTSLICES
       case MENU_SPLITSLICES:
         sortslices = 1 - sortslices;
         updatemenu = 1;
@@ -5413,7 +5409,6 @@ void LoadMultiSliceMenu(int value){
         updatemenu = 1;
         GLUTPOSTREDISPLAY;
         break;
-#endif
       case MENU_SLICECOLORDEFER:
         use_set_slicecolor = 1 - use_set_slicecolor;
         updatemenu = 1;
@@ -5475,7 +5470,7 @@ void Plot3DListMenu(int value){
 
     plot3di = plot3dinfo+list[i];
     plot3di->finalize = 1;
-    break;;
+    break;
   }
   for(i=0;i<nlist;i++){
     int errorcode;
@@ -5761,11 +5756,7 @@ void LoadBoundaryMenu(int value){
         patchdata *patchi;
 
         patchi = patchinfo+i;
-#ifdef pp_MERGE_GEOMS
-        if(strcmp(patchi->label.longlabel, patchj->label.longlabel)==0){
-#else
         if(strcmp(patchi->label.longlabel, patchj->label.longlabel)==0&&patchi->patch_filetype==patchj->patch_filetype){
-#endif
           LOCK_COMPRESS;
           patchi->finalize = 1;
           UNLOCK_COMPRESS;
@@ -5776,11 +5767,7 @@ void LoadBoundaryMenu(int value){
         patchdata *patchi;
 
         patchi = patchinfo + i;
-#ifdef pp_MERGE_GEOMS
-        if(strcmp(patchi->label.longlabel,patchj->label.longlabel)==0){
-#else
         if(strcmp(patchi->label.longlabel,patchj->label.longlabel)==0&&patchi->patch_filetype==patchj->patch_filetype){
-#endif
           LOCK_COMPRESS;
           if(patchi->structured == YES){
             PRINTF("Loading %s(%s)", patchi->file, patchi->label.shortlabel);
@@ -6518,6 +6505,46 @@ void DeviceTypeMenu(int val){
 #endif
 }
 
+/* ------------------ ShowDevicesMenu ------------------------ */
+
+void ShowDevicesMenu(int value){
+  if(value==MENU_DUMMY||ndeviceinfo<=0)return;
+  updatemenu = 1;
+  GLUTPOSTREDISPLAY;
+  if(value==MENU_DEVICES_SHOWALL||value==MENU_DEVICES_HIDEALL){
+    int i;
+
+    for(i=0; i<ndeviceinfo; i++){
+      devicedata *devicei;
+
+      devicei = deviceinfo + i;
+      if(value==MENU_DEVICES_SHOWALL){
+        devicei->show = 1;
+      }
+      else{
+        devicei->show = 0;
+      }
+    }
+    return;
+  }
+  {
+    int ival, itype;
+    devicedata *devicei;
+
+    if(value >= 3 * ndeviceinfo)return;
+    ival = value % ndeviceinfo;
+    itype = value / ndeviceinfo;
+
+    devicei = deviceinfo + ival;
+    //             0 <= value <   ndeviceinfo : toggle
+    //   ndeviceinfo <= value < 2*ndeviceinfo : show
+    // 2*ndeviceinfo <= value < 3*ndeviceinfo : hide
+    if(itype == 0)devicei->show = 1 - devicei->show;
+    if(itype == 1)devicei->show = 1;
+    if(itype == 2)devicei->show = 0;
+  }
+}
+
 /* ------------------ ShowObjectsMenu ------------------------ */
 
 void ShowObjectsMenu(int value){
@@ -6863,7 +6890,7 @@ void HVACConnectMenu(int var){
     GLUTPOSTREDISPLAY;
     return;
   }
-  hvac_show_networks    = 0;  
+  hvac_show_networks    = 0;
   hvac_show_connections = 1;
   if(var >= 0){
     hvacconnectinfo[var].display = 1 - hvacconnectinfo[var].display;
@@ -6895,7 +6922,7 @@ void HVACNetworkMenu(int value){
     GLUTPOSTREDISPLAY;
     return;
   }
-  hvac_show_networks    = 1;  
+  hvac_show_networks    = 1;
   hvac_show_connections = 0;
   if(value>=0&&value<nhvacinfo){
     hvacdata *hvaci;
@@ -6930,33 +6957,27 @@ void HVACNetworkMenu(int value){
   GLUTPOSTREDISPLAY;
 }
 
-/* ------------------ SetHVACNodeIndex ------------------------ */
+/* ------------------ SetHVACNodeValIndex ------------------------ */
 
-void SetHVACNodeIndex(int value){
-  int i, return_val, hival=-1;
+void SetHVACNodeValIndex(int value){
+  int i, return_val;
 
   return_val = -1;
-  for(i = 0;i < hvacvalsinfo->n_node_vars;i++){
+  if(hvacnodevalsinfo == NULL){
+    hvacnodevar_index = return_val;
+    return;
+  }
+  for(i = 0;i < hvacnodevalsinfo->n_node_vars;i++){
     hvacvaldata *hi;
 
-    hi = hvacvalsinfo->node_vars + i;
+    hi = hvacnodevalsinfo->node_vars + i;
     if(value == i){
       hi->vis = 1 - hi->vis;
-      hival = hi->vis;
       if(hi->vis == 1)return_val = i;
     }
     else{
       hi->vis = 0;
     }
-  }
-  if(hival==1){
-    for(i = 0;i < hvacvalsinfo->n_duct_vars;i++){
-      hvacvaldata *hi;
-
-      hi = hvacvalsinfo->duct_vars + i;
-      hi->vis = 0;
-    }
-    hvacductvar_index = -1;
   }
   hvacnodevar_index = return_val;
 }
@@ -6966,16 +6987,12 @@ void SetHVACNodeIndex(int value){
 void SetHVACDuct(void){
   int i;
 
-  for(i = 0;i < hvacvalsinfo->n_duct_vars;i++){
+  hvacductvalsinfo->duct_vars[0].vis = 1;
+  for(i = 1;i < hvacductvalsinfo->n_duct_vars;i++){
     hvacvaldata *hi;
 
-    hi = hvacvalsinfo->duct_vars + i;
-    if(i==0){
-      hi->vis = 1;
-    }
-    else{
-      hi->vis = 0;
-    }
+    hi = hvacductvalsinfo->duct_vars + i;
+     hi->vis = 0;
   }
   hvacductvar_index = 0;
   if(IsHVACVisible()==0){
@@ -6988,33 +7005,27 @@ void SetHVACDuct(void){
   }
 }
 
-/* ------------------ SetHVACDuctIndex ------------------------ */
+/* ------------------ SetHVACDuctValIndex ------------------------ */
 
-void SetHVACDuctIndex(int value){
-  int i, return_val, hival=-1;
+void SetHVACDuctValIndex(int value){
+  int i, return_val;
 
   return_val = -1;
-  for(i = 0;i < hvacvalsinfo->n_duct_vars;i++){
+  if(hvacductvalsinfo == NULL){
+    hvacductvar_index = return_val;
+    return;
+  }
+  for(i = 0;i < hvacductvalsinfo->n_duct_vars;i++){
     hvacvaldata *hi;
 
-    hi = hvacvalsinfo->duct_vars + i;
+    hi = hvacductvalsinfo->duct_vars + i;
     if(value == i){
       hi->vis = 1 - hi->vis;
-      hival = hi->vis;
       if(hi->vis == 1)return_val = i;
     }
     else{
       hi->vis = 0;
     }
-  }
-  if(hival==1){
-    for(i = 0;i < hvacvalsinfo->n_node_vars;i++){
-      hvacvaldata *hi;
-
-      hi = hvacvalsinfo->node_vars + i;
-      hi->vis = 0;
-    }
-    hvacnodevar_index = -1;
   }
   hvacductvar_index = return_val;
 }
@@ -7024,10 +7035,10 @@ void SetHVACDuctIndex(int value){
 void HVACNodeValueMenu(int value){
   int i;
 
-  if(hvacvalsinfo->times==NULL){
-    ReadHVACData(HVAC_LOAD);
+  if(hvacductvalsinfo->times==NULL){
+    ReadHVACData(LOAD);
   }
-  SetHVACNodeIndex(value);
+  SetHVACNodeValIndex(value);
   plotstate = GetPlotState(DYNAMIC_PLOTS);
   UpdateTimes();
   if(hvacductvar_index >= 0 || hvacnodevar_index >= 0){
@@ -7040,19 +7051,22 @@ void HVACNodeValueMenu(int value){
       }
     }
   }
+  SetValTypeIndex(BOUND_HVACNODE, value);
   updatemenu = 1;
+  UpdateHVACVarLists();
+  HVACNodeBoundsCPP_CB(BOUND_UPDATE_COLORS);
   GLUTPOSTREDISPLAY;
 }
-  
+
 /* ------------------ HVACDuctValueMenu ------------------------ */
 
 void HVACDuctValueMenu(int value){
   int i;
 
-  if(hvacvalsinfo->times==NULL){
-    ReadHVACData(HVAC_LOAD);
+  if(hvacductvalsinfo->times==NULL){
+    ReadHVACData(LOAD);
   }
-  SetHVACDuctIndex(value);
+  SetHVACDuctValIndex(value);
   plotstate = GetPlotState(DYNAMIC_PLOTS);
   UpdateTimes();
   if(hvacductvar_index >= 0 || hvacnodevar_index >= 0){
@@ -7066,6 +7080,9 @@ void HVACDuctValueMenu(int value){
     }
   }
   updatemenu = 1;
+  UpdateHVACVarLists();
+  SetValTypeIndex(BOUND_HVACDUCT, value);
+  HVACDuctBoundsCPP_CB(BOUND_UPDATE_COLORS);//
   GLUTPOSTREDISPLAY;
 }
 
@@ -7074,16 +7091,17 @@ void HVACDuctValueMenu(int value){
 void LoadHVACMenu(int value){
   switch(value){
     case MENU_HVAC_LOAD:
-      ReadHVACData(HVAC_LOAD);
+      ReadHVACData(LOAD);
       SetHVACDuct();
       plotstate = GetPlotState(DYNAMIC_PLOTS);
       UpdateTimes();
-      GLUTPOSTREDISPLAY;      
+      HVACDuctBoundsCPP_CB(BOUND_UPDATE_COLORS);//
+      GLUTPOSTREDISPLAY;
       break;
     case MENU_HVAC_UNLOAD:
-      SetHVACNodeIndex(-1);
-      SetHVACDuctIndex(-1);
-      ReadHVACData(HVAC_UNLOAD);
+      SetHVACNodeValIndex(-1);
+      SetHVACDuctValIndex(-1);
+      ReadHVACData(UNLOAD);
       plotstate = GetPlotState(DYNAMIC_PLOTS);
       UpdateTimes();
       GLUTPOSTREDISPLAY;
@@ -7101,8 +7119,8 @@ void HVACMenu(int value){
 
   if(value==MENU_HVAC_SHOW_NODE_IGNORE)return;
   if(value==MENU_HVAC_HIDE_ALL_VALUES){
-    SetHVACNodeIndex(-1);
-    SetHVACDuctIndex(-1);
+    SetHVACNodeValIndex(-1);
+    SetHVACDuctValIndex(-1);
     plotstate = GetPlotState(DYNAMIC_PLOTS);
     UpdateTimes();
     updatemenu = 1;
@@ -7117,31 +7135,33 @@ void HVACMenu(int value){
       glui_hvac->show_node_labels = 1 - glui_hvac->show_node_labels;
       break;
     case MENU_HVAC_SHOW_COMPONENT_TEXT:
-      glui_hvac->show_component = 0;     
+      glui_hvac->show_component = 0;
       break;
     case MENU_HVAC_SHOW_COMPONENT_SYMBOLS:
-      glui_hvac->show_component = 1;     
+      glui_hvac->show_component = 1;
       break;
     case MENU_HVAC_SHOW_COMPONENT_HIDE:
-      glui_hvac->show_component = 2;     
+      glui_hvac->show_component = 2;
       break;
     case MENU_HVAC_SHOW_FILTER_TEXT:
-      glui_hvac->show_filters = 0;     
+      glui_hvac->show_filters = 0;
       break;
     case MENU_HVAC_SHOW_FILTER_SYMBOLS:
-      glui_hvac->show_filters = 1;     
+      glui_hvac->show_filters = 1;
       break;
     case MENU_HVAC_SHOW_FILTER_HIDE:
-      glui_hvac->show_filters = 2;     
+      glui_hvac->show_filters = 2;
       break;
     case MENU_HVAC_METRO_VIEW:
       hvac_metro_view = 1 - hvac_metro_view;
-      break;
-    case MENU_HVAC_OFFSET_NODES:
-      hvac_offset_nodes = 1 - hvac_offset_nodes;
-      SetHVACInfo();
 #ifdef pp_GLUI
-      UpdateHvacOffset();        
+      UpdateHVACViews();
+#endif
+      break;
+    case MENU_HVAC_CELL_VIEW:
+      hvac_cell_view = 1 - hvac_cell_view;
+#ifdef pp_GLUI
+      UpdateHVACViews();
 #endif
       break;
     case MENU_HVAC_DIALOG_HVAC:
@@ -7516,6 +7536,11 @@ void InitShowSliceMenu(int *showhideslicemenuptr, int patchgeom_slice_showhide){
           glutAddMenuEntry(_("  *solid"), MENU_SHOWSLICE_IN_SOLID);
           glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
         }
+        if(show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
+          glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
+          glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
+          glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
+        }
       }
       if(nsliceloaded>0){
         if(offset_slice==1)glutAddMenuEntry(_("*Offset slice"), MENU_SHOWSLICE_OFFSET);
@@ -7624,6 +7649,11 @@ void InitShowMultiSliceMenu(int *showmultislicemenuptr, int showhideslicemenu, i
         glutAddMenuEntry(_("    gas"), MENU_SHOWSLICE_IN_GAS);
         glutAddMenuEntry(_("    *solid"), MENU_SHOWSLICE_IN_SOLID);
         glutAddMenuEntry(_("    gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
+      }
+      if(show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
+        glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
+        glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
+        glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
       }
     }
     if(nsliceloaded>0){
@@ -7846,7 +7876,7 @@ void InitLoadSliceMenu(int *loadslicemenuptr, int unloadslicemenu, int *loadsubs
     sd = sliceinfo + sliceorderindex[i];
     if(i>0)sdim1 = sliceinfo + sliceorderindex[i-1];
     if(i==0||strcmp(sd->label.longlabel,sdim1->label.longlabel)!=0){
-      char mlabel[1024],mlabel2[1024];;
+      char mlabel[1024],mlabel2[1024];
 
       STRCPY(mlabel,sd->label.longlabel);
       if((i==0&&sd->mesh_type>0)||(i>0&&sd->mesh_type!=sdim1->mesh_type)){
@@ -8082,7 +8112,6 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
 
   if(nmultisliceinfo>0)glutAddMenuEntry("-", MENU_DUMMY);
   GLUTADDSUBMENU(_("Skip"), sliceskipmenu);
-#ifdef pp_SORTSLICES
   if(sortslices == 1){
     glutAddMenuEntry(_("*Sort slices(back to front)"), MENU_SPLITSLICES);
   }
@@ -8096,7 +8125,6 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
   else{
     glutAddMenuEntry(_("Sort slices(debug)"), MENU_SPLITSLICES_DEBUG);
   }
-#endif
 #endif
   if(use_set_slicecolor == 1){
     glutAddMenuEntry(_("*Defer slice coloring"), MENU_SLICECOLORDEFER);
@@ -8533,6 +8561,119 @@ void InitPatchSubMenus(int **loadsubpatchmenu_sptr, int **nsubpatchmenus_sptr){
 
 /* ------------------ InitMenus ------------------------ */
 
+void MakeColorbarMenu(int *menuptr,
+#ifdef pp_COLORBARS_CSV
+                      int *submenu1ptr, int *submenu2ptr, int *submenu3ptr,
+#endif
+                      void (*CBMenu)(int)){
+  int i;
+  int menu = 0;
+#ifdef pp_COLORBARS_CSV
+  int submenu1=0, submenu2=0, submenu3=0;
+#endif
+
+#ifdef pp_COLORBARS_CSV
+  if(nlinear_filelist > 0){
+    CREATEMENU(submenu1, CBMenu);
+    colorbardata *cbi;
+    char ccolorbarmenu[256];
+
+    for(i = 0; i < ncolorbars; i++){
+      cbi = colorbarinfo + i;
+
+      if(strcmp(cbi->type, "linear") != 0)continue;
+      strcpy(ccolorbarmenu, "  ");
+      if(colorbartype == i){
+        strcat(ccolorbarmenu, "*");
+        strcat(ccolorbarmenu, cbi->label);
+      }
+      else{
+        strcat(ccolorbarmenu, cbi->label);
+      }
+      glutAddMenuEntry(ccolorbarmenu, i);
+    }
+  }
+  if(ncyclic_filelist > 0){
+    CREATEMENU(submenu2, CBMenu);
+    colorbardata *cbi;
+    char ccolorbarmenu[256];
+
+    for(i = 0; i < ncolorbars; i++){
+      cbi = colorbarinfo + i;
+
+      if(strcmp(cbi->type, "cyclic") != 0)continue;
+      strcpy(ccolorbarmenu, "  ");
+      if(colorbartype == i){
+        strcat(ccolorbarmenu, "*");
+        strcat(ccolorbarmenu, cbi->label);
+      }
+      else{
+        strcat(ccolorbarmenu, cbi->label);
+      }
+      glutAddMenuEntry(ccolorbarmenu, i);
+    }
+  }
+  if(nrainbow_filelist > 0){
+    CREATEMENU(submenu3, CBMenu);
+    colorbardata *cbi;
+    char ccolorbarmenu[256];
+
+    for(i = 0; i < ncolorbars; i++){
+      cbi = colorbarinfo + i;
+
+      if(strcmp(cbi->type, "rainbow") != 0)continue;
+      strcpy(ccolorbarmenu, "  ");
+      if(colorbartype == i){
+        strcat(ccolorbarmenu, "*");
+        strcat(ccolorbarmenu, cbi->label);
+      }
+      else{
+        strcat(ccolorbarmenu, cbi->label);
+      }
+      glutAddMenuEntry(ccolorbarmenu, i);
+    }
+  }
+#endif
+
+  CREATEMENU(menu, CBMenu);
+  {
+    colorbardata *cbi;
+    char ccolorbarmenu[256];
+
+    for(i = 0; i < ncolorbars; i++){
+      cbi = colorbarinfo + i;
+
+      if(strcmp(cbi->type, "original") != 0)continue;
+      strcpy(ccolorbarmenu, "  ");
+      if(colorbartype == i){
+        strcat(ccolorbarmenu, "*");
+        strcat(ccolorbarmenu, cbi->label);
+      }
+      else{
+        strcat(ccolorbarmenu, cbi->label);
+      }
+      glutAddMenuEntry(ccolorbarmenu, i);
+    }
+  }
+#ifdef pp_COLORBARS_CSV
+  if(nlinear_filelist > 0){
+    GLUTADDSUBMENU(_("linear"), submenu1);
+  }
+  if(ncyclic_filelist > 0){
+    GLUTADDSUBMENU(_("cyclic"), submenu2);
+  }
+  if(nrainbow_filelist > 0){
+    GLUTADDSUBMENU(_("rainbow"), submenu3);
+  }
+  *submenu1ptr = submenu1;
+  *submenu2ptr = submenu2;
+  *submenu3ptr = submenu3;
+#endif
+  *menuptr     = menu;
+}
+
+/* ------------------ InitMenus ------------------------ */
+
 void InitMenus(int unload){
   int i;
   int nmultisliceloaded;
@@ -8543,6 +8684,10 @@ void InitMenus(int unload){
 static int filesdialogmenu = 0, viewdialogmenu = 0, datadialogmenu = 0, windowdialogmenu=0;
 static int labelmenu=0, titlemenu=0, colorbarmenu=0, colorbarsmenu=0, colorbarshademenu, smokecolorbarmenu=0, showhidemenu=0,colorbardigitmenu=0;
 static int optionmenu=0, rotatetypemenu=0;
+#ifdef pp_COLORBARS_CSV
+static int colorbars_submenu1=0, colorbars_submenu2 = 0, colorbars_submenu3 = 0;
+static int smokecolorbars_submenu1=0, smokecolorbars_submenu2 = 0, smokecolorbars_submenu3 = 0;
+#endif
 static int resetmenu=0, defaultviewmenu=0, frameratemenu=0, rendermenu=0, smokeviewinimenu=0, inisubmenu=0, resolutionmultipliermenu=0;
 static int terrain_geom_showmenu = 0;
 static int render_resolutionmenu=0, render_filetypemenu=0, render_filesuffixmenu=0, render_skipmenu=0;
@@ -8591,7 +8736,7 @@ static int *particlepropshowsubmenu=NULL;
 static int particlestreakshowmenu=0;
 static int tourmenu=0,tourcopymenu=0;
 static int trainerviewmenu=0,mainmenu=0,zoneshowmenu=0,particleshowmenu=0;
-static int showobjectsmenu=0,showobjectsplotmenu=0,devicetypemenu=0,spheresegmentmenu=0,propmenu=0;
+static int showobjectsmenu=0,showdevicesmenu=0,showobjectsplotmenu=0,devicetypemenu=0,spheresegmentmenu=0,propmenu=0;
 static int unloadplot3dmenu=0, unloadpatchmenu=0, unloadisomenu=0;
 static int showmultislicemenu=0;
 static int textureshowmenu=0;
@@ -9613,6 +9758,33 @@ updatemenu=0;
     glutAddMenuEntry(_("Settings..."), MENU_DEVICE_SETTINGS);
   }
   if(nobject_defs>0){
+    if(ndeviceinfo > 0){
+      int showall=1, hideall=1;
+
+      CREATEMENU(showdevicesmenu, ShowDevicesMenu);
+      for(i = 0; i < ndeviceinfo; i++){
+        devicedata *devicei;
+        char devicelabel[256];
+
+        devicei = deviceinfo + i;
+        strcpy(devicelabel, "");
+        if(devicei->show==1){
+          strcat(devicelabel,"*");
+          hideall=0;
+        }
+        else{
+          showall=0;
+        }
+        strcat(devicelabel, devicei->deviceID);
+        glutAddMenuEntry(devicelabel, i);
+      }
+      glutAddMenuEntry("-",MENU_DUMMY);
+      if(showall==1)glutAddMenuEntry("*Show all", MENU_DEVICES_SHOWALL);
+      if(showall==0)glutAddMenuEntry("Show all", MENU_DEVICES_SHOWALL);
+      if(hideall==1)glutAddMenuEntry("*Hide all", MENU_DEVICES_HIDEALL);
+      if(hideall==0)glutAddMenuEntry("Hide all", MENU_DEVICES_HIDEALL);
+    }
+
     CREATEMENU(showobjectsmenu,ShowObjectsMenu);
     for(i=0;i<nobject_defs;i++){
       sv_object *obj_typei;
@@ -9665,6 +9837,9 @@ updatemenu=0;
       }
     }
     glutAddMenuEntry("-",MENU_DUMMY);
+    if(ndeviceinfo > 0){
+      GLUTADDSUBMENU(_("Show/Hide devices"), showdevicesmenu);
+    }
     GLUTADDSUBMENU(_("Segments"),spheresegmentmenu);
     if(nobject_defs>0&&ndeviceinfo>0){
       glutAddMenuEntry("-",MENU_DUMMY);
@@ -9683,7 +9858,7 @@ updatemenu=0;
     if(nhvacconnectinfo > 0){
       int show_all_connections=1;
       int hide_all_connections=1;
-      
+
       CREATEMENU(connectivitymenu, HVACConnectMenu);
       if(hvac_show_connections==1){
         glutAddMenuEntry("*connection view", MENU_HVAC_CONNECTION_VIEW);
@@ -9800,13 +9975,17 @@ updatemenu=0;
         glutAddMenuEntry("hide all", MENU_HVAC_HIDEALL_NETWORKS);
       }
     }
-    if(hvacvalsinfo != NULL){
+    int doit_ducts=0, doit_nodes=0;
+
+    if(hvacductvalsinfo != NULL&&hvacductvalsinfo->n_duct_vars>0)doit_ducts = 1;
+    if(hvacnodevalsinfo != NULL&&hvacnodevalsinfo->n_node_vars>0)doit_nodes = 1;
+    if(doit_nodes==1){
       CREATEMENU(hvacnodevaluemenu, HVACNodeValueMenu);
-      for(i = 0;i < hvacvalsinfo->n_node_vars;i++){
+      for(i = 0;i < hvacnodevalsinfo->n_node_vars;i++){
         char label[255], *labeli;
         hvacvaldata *hi;
 
-        hi = hvacvalsinfo->node_vars + i;
+        hi = hvacnodevalsinfo->node_vars + i;
 
         labeli = hi->label.longlabel;
         strcpy(label, "");
@@ -9814,13 +9993,14 @@ updatemenu=0;
         strcat(label, labeli);
         glutAddMenuEntry(label, i);
       }
-
+    }
+    if(doit_ducts==1){
       CREATEMENU(hvacductvaluemenu, HVACDuctValueMenu);
-      for(i = 0;i < hvacvalsinfo->n_duct_vars;i++){
+      for(i = 0;i < hvacductvalsinfo->n_duct_vars;i++){
         char label[255], *labeli;
         hvacvaldata *hi;
 
-        hi = hvacvalsinfo->duct_vars + i;
+        hi = hvacductvalsinfo->duct_vars + i;
 
         labeli = hi->label.longlabel;
         strcpy(label, "");
@@ -9828,17 +10008,17 @@ updatemenu=0;
         strcat(label, labeli);
         glutAddMenuEntry(label, i);
       }
-
+    }
+    if(doit_ducts==1|| doit_nodes ==1){
       CREATEMENU(hvacvaluemenu, HVACMenu);
-      GLUTADDSUBMENU(_("Node"), hvacnodevaluemenu);
-      GLUTADDSUBMENU(_("Duct"), hvacductvaluemenu);
+
+      if(doit_ducts==1)GLUTADDSUBMENU(_("Duct"), hvacductvaluemenu);
+      if(doit_nodes==1)GLUTADDSUBMENU(_("Node"), hvacnodevaluemenu);
       glutAddMenuEntry("Hide all", MENU_HVAC_HIDE_ALL_VALUES);
     }
 
     CREATEMENU(hvacmenu, HVACMenu);
-    if(hvacvalsinfo != NULL){
-      GLUTADDSUBMENU(_("Values"), hvacvaluemenu);
-    }
+    if(doit_ducts==1||doit_nodes==1)GLUTADDSUBMENU(_("Values"), hvacvaluemenu);
     GLUTADDSUBMENU(_("Networks"), hvacnetworkmenu);
     if(nhvacconnectinfo > 0){
       GLUTADDSUBMENU(_("Connections"), connectivitymenu);
@@ -9870,11 +10050,11 @@ updatemenu=0;
     else{
       glutAddMenuEntry("metro view", MENU_HVAC_METRO_VIEW);
     }
-    if(hvac_offset_nodes == 1){
-      glutAddMenuEntry("*offset nodes", MENU_HVAC_OFFSET_NODES);
+    if(hvac_cell_view == 1){
+      glutAddMenuEntry("*cell view", MENU_HVAC_CELL_VIEW);
     }
     else{
-      glutAddMenuEntry("offset nodes", MENU_HVAC_OFFSET_NODES);
+      glutAddMenuEntry("cell view", MENU_HVAC_CELL_VIEW);
     }
     glutAddMenuEntry(_("Settings..."), MENU_HVAC_DIALOG_HVAC);
   }
@@ -10524,24 +10704,12 @@ updatemenu=0;
 /* -------------------------------- colorbarmenu -------------------------- */
 
   if(nsmoke3dloaded>0||nvolrenderinfo>0){
-    colorbardata *cbi;
-    char ccolorbarmenu[256];
+    MakeColorbarMenu(&smokecolorbarmenu,
+#ifdef pp_COLORBARS_CSV
+                     &smokecolorbars_submenu1, &smokecolorbars_submenu2, &smokecolorbars_submenu3,
+#endif
+                     SmokeColorbarMenu);
 
-    CREATEMENU(smokecolorbarmenu,SmokeColorbarMenu);
-
-    for(i=0;i<ncolorbars;i++){
-      cbi = colorbarinfo + i;
-
-      strcpy(ccolorbarmenu,"  ");
-      if(fire_colorbar_index==i){
-        strcat(ccolorbarmenu,"*");
-        strcat(ccolorbarmenu,cbi->label);
-      }
-      else{
-        strcat(ccolorbarmenu,cbi->label);
-      }
-      glutAddMenuEntry(ccolorbarmenu,i);
-    }
   }
 
 
@@ -10743,26 +10911,11 @@ updatemenu=0;
   else{
     glutAddMenuEntry(_("  Auto flip"), COLORBAR_AUTOFLIP);
   }
-
-  CREATEMENU(colorbarsmenu,ColorbarMenu);
-  {
-    colorbardata *cbi;
-    char ccolorbarmenu[256];
-
-    for(i=0;i<ncolorbars;i++){
-      cbi = colorbarinfo + i;
-
-      strcpy(ccolorbarmenu,"  ");
-      if(colorbartype==i){
-        strcat(ccolorbarmenu,"*");
-        strcat(ccolorbarmenu,cbi->label);
-      }
-      else{
-        strcat(ccolorbarmenu,cbi->label);
-      }
-      glutAddMenuEntry(ccolorbarmenu,i);
-    }
-  }
+  MakeColorbarMenu(&colorbarsmenu,
+#ifdef pp_COLORBARS_CSV
+                   &colorbars_submenu1, &colorbars_submenu2, &colorbars_submenu3,
+#endif
+                   ColorbarMenu);
 
 /* -------------------------------- colorbarmenu -------------------------- */
 
@@ -10843,6 +10996,11 @@ updatemenu=0;
       glutAddMenuEntry(_("    gas"), MENU_SHOWSLICE_IN_GAS);
       glutAddMenuEntry(_("    *solid"), MENU_SHOWSLICE_IN_SOLID);
       glutAddMenuEntry(_("    gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
+    }
+    if(show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
+      glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
+      glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
+      glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
     }
     if(show_node_slices_and_vectors == 1)glutAddMenuEntry(_("*Show node centered slices and vectors"), MENU_SHOWSLICE_NODESLICEANDVECTORS);
     if(show_node_slices_and_vectors == 0)glutAddMenuEntry(_("Show node centered slices and vectors"), MENU_SHOWSLICE_NODESLICEANDVECTORS);
@@ -11898,13 +12056,13 @@ updatemenu=0;
 
   /* --------------------------------hvac menu -------------------------- */
 
-  if(nhvacinfo > 0){
+  if(nhvacinfo > 0 && hvacductvalsinfo!=NULL){
     char menulabel[1024];
 
     CREATEMENU(loadhvacmenu, LoadHVACMenu);
     strcpy(menulabel, "");
-    if(hvacvalsinfo->times!=NULL)strcat(menulabel, "*");
-    strcat(menulabel, hvacvalsinfo->file);
+    if(hvacductvalsinfo->times!=NULL)strcat(menulabel, "*");
+    strcat(menulabel, hvacductvalsinfo->file);
     glutAddMenuEntry(menulabel, MENU_HVAC_LOAD);
     glutAddMenuEntry("Unload",  MENU_HVAC_UNLOAD);
   }
@@ -11982,7 +12140,7 @@ updatemenu=0;
 
   //*** setup vector slice menus
 
-    InitUnloadVSLiceMenu(&unloadvslicemenu);;
+    InitUnloadVSLiceMenu(&unloadvslicemenu);
     InitVSliceSubMenu(&loadsubvslicemenu);
     InitVSliceLoadMenu(&vsliceloadmenu, loadsubvslicemenu, unloadvslicemenu);
     if(nslicedups > 0){
@@ -12209,7 +12367,6 @@ updatemenu=0;
       int ii;
 
       CREATEMENU(unloadplot3dmenu,UnloadPlot3dMenu);
-#ifndef pp_PLOT3D_REDUCEMENUS
       for(ii=0;ii<nplot3dinfo;ii++){
         i=plot3dorderindex[ii];
         plot3di = plot3dinfo + i;
@@ -12224,10 +12381,8 @@ updatemenu=0;
         STRCPY(menulabel,plot3dinfo[i].menulabel);
         glutAddMenuEntry(menulabel,i);
       }
-#endif
       glutAddMenuEntry(_("Unload all"),UNLOAD_ALL);
 
-#ifndef pp_PLOT3D_REDUCEMENUS
       nloadsubplot3dmenu=1;
       for(ii=1;ii<nplot3dinfo;ii++){
         int im1;
@@ -12273,10 +12428,7 @@ updatemenu=0;
         strcat(menulabel,plot3di->menulabel);
         glutAddMenuEntry(menulabel,i);
       }
-#endif
-
       nloadsubplot3dmenu=0;
-#ifndef pp_PLOT3D_REDUCEMENUS
       CREATEMENU(plot3dsinglemeshmenu,LoadPlot3dMenu);
       for(ii=0;ii<nplot3dinfo;ii++){
         int im1;
@@ -12311,8 +12463,6 @@ updatemenu=0;
           }
         }
       }
-#endif
-
       nloadsubplot3dmenu=0;
       CREATEMENU(loadplot3dmenu,LoadPlot3dMenu);
       for(ii=0;ii<nplot3dinfo;ii++){
@@ -12382,11 +12532,9 @@ updatemenu=0;
         }
         if(ii==nplot3dinfo-1){
           glutAddMenuEntry("-", MENU_PLOT3D_DUMMY);
-#ifndef pp_PLOT3D_REDUCEMENUS
           if(nmeshes>1){
             GLUTADDSUBMENU(_("Mesh"), plot3dsinglemeshmenu);
           }
-#endif
           glutAddMenuEntry(_("Settings..."), MENU_PLOT3D_SETTINGS);
           if(nplot3dloaded>1){
             GLUTADDSUBMENU(_("Unload"), unloadplot3dmenu);
@@ -12476,11 +12624,6 @@ updatemenu=0;
 //*** these same lines also appear below
       glutAddMenuEntry("-",MENU_DUMMY3);
 
-#ifdef pp_SHOW_BOUND_MIRROR
-      if(nmeshes>1||n_mirrorvents>0||n_openvents>0){
-        GLUTADDSUBMENU(_("Include"),includepatchmenu);
-      }
-#endif
       glutAddMenuEntry(_("Update bounds"),MENU_UPDATEBOUNDS);
       if(nboundaryslicedups>0){
         GLUTADDSUBMENU(_("Duplicate boundary slices"),duplicateboundaryslicemenu);
@@ -12631,11 +12774,6 @@ updatemenu=0;
       }
 //*** these same lines also appear above (except for nmeshes>1 line)
       glutAddMenuEntry("-",MENU_DUMMY3);
-#ifdef pp_SHOW_BOUND_MIRROR
-      if(nmeshes>1||n_mirrorvents>0||n_openvents>0){
-        GLUTADDSUBMENU(_("Include"),includepatchmenu);
-      }
-#endif
 
       glutAddMenuEntry(_("Update bounds"),MENU_UPDATEBOUNDS);
       if(nboundaryslicedups>0){
@@ -13157,7 +13295,7 @@ updatemenu=0;
       if(glui_active==1){
         glutAddMenuEntry("-",MENU_DUMMY);
       }
-      if(nhvacinfo > 0){
+      if(nhvacinfo > 0 && hvacductvalsinfo!=NULL){
         GLUTADDSUBMENU("HVAC", loadhvacmenu);
       }
       GLUTADDSUBMENU(_("Configuration files"),smokeviewinimenu);

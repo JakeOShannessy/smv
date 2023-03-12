@@ -42,7 +42,9 @@ jobs:
         uses: actions/checkout@v2
       - name: Install linux deps
         if: runner.os == 'Linux'
-        run: sudo apt-get install build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libglew-dev libgd-dev liblua5.4-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libglew-dev libgd-dev liblua5.4-dev
       - name: set macos gcc
         if: runner.os == 'macOS'
         shell: bash
@@ -136,7 +138,9 @@ jobs:
       - name: Build
         shell: bash
         if: runner.os == 'Linux'
-        run:  sudo apt-get install build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libgl1-mesa-dev libglew-dev libgd-dev liblua5.4-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libgl1-mesa-dev libglew-dev libgd-dev liblua5.4-dev
       - name: Build
         shell: bash
         run: |

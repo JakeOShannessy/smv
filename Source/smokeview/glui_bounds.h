@@ -68,6 +68,9 @@
 #define SET_FDS_TIMES            220
 #define SLICE_PLOT               221
 #define SLICE_SIZE               222
+#define SLICE_PLOT_CSV           224
+#define SLICE_PLOT_LABEL         225
+#define SLICE_PLOT_FILENAME      226
 
 #define ISO_TRANSPARENT_CONSTANT 0
 #define ISO_TRANSPARENT_VARYING  1
@@ -100,7 +103,6 @@
 #define LOAD_FILES 92
 #define COLORBAR_EXTREME2 109
 #define TRANSPARENTLEVEL 110
-#define COLORBAR_LIST2 112
 #define RESEARCH_MODE 114
 #define COLORBAND 115
 #define SLICE_IN_GAS 116
@@ -108,13 +110,12 @@
 #define COLORLABEL_DIGITS 123
 #define SLICE_SKIP 124
 #define FORCE_EXPONENTIAL 125
-#ifdef pp_SORTSLICES
 #define SORTSLICES       126
 #define SORTSLICES_DEBUG 127
-#endif
 
-#define UPDATE_VECTOR 101
+#define UPDATE_VECTOR          101
 #define UPDATE_VECTOR_FROM_SMV 102
+#define VEC_UNIFORM_SPACING    103
 
 #define TRUNCATE_BOUNDS 1
 #define DONT_TRUNCATE_BOUNDS 0

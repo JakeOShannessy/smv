@@ -371,7 +371,7 @@ void DrawDevicesVal(void){
   for(i=0;i<ndeviceinfo;i++){
     devicei = deviceinfo + i;
 
-    if(devicei->object->visible==0)continue;
+    if(devicei->object->visible==0||devicei->show == 0)continue;
     xyz = devicei->xyz;
     xyznorm = devicei->xyznorm;
     if(active_smokesensors==1&&show_smokesensors!=SMOKESENSORS_HIDDEN&&STRCMP(devicei->object->label,"smokesensor")==0){
@@ -807,7 +807,7 @@ void DrawTargetNorm(void){
 
       devicei = deviceinfo + i;
 
-      if(devicei->object->visible==0)continue;
+      if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(STRCMP(devicei->object->label,"sensor")==0&&visSensor==0)continue;
       if(isZoneFireModel==1&&STRCMP(devicei->object->label,"target")==0&&visSensor==0)continue;
       xyz = devicei->xyz;
@@ -3309,7 +3309,7 @@ void DrawDevices(int mode){
         float *xyz1, *xyz2, dxyz[3];
 
         devicei = deviceinfo+i;
-        if(devicei->object->visible==0)continue;
+        if(devicei->object->visible == 0 || devicei->show == 0)continue;
         xyz1 = devicei->xyz1;
         xyz2 = devicei->xyz2;
         dxyz[0] = xyz2[0]-xyz1[0];
@@ -3327,7 +3327,7 @@ void DrawDevices(int mode){
       devicedata *devicei;
 
       devicei = deviceinfo + i;
-      if(devicei->object->visible == 0)continue;
+      if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(devicei->in_zone_csv == 1)continue;
       if(devicei->plane_surface != NULL){
         int j;
@@ -3706,6 +3706,7 @@ void DrawDevices(int mode){
 
     if(devicei->object->visible == 0 || (devicei->prop != NULL&&devicei->prop->smv_object->visible == 0))continue;
     if(devicei->plane_surface != NULL)continue;
+    if(devicei->show == 0)continue;
     if(isZoneFireModel == 1 && STRCMP(devicei->object->label, "target") == 0 && visSensor == 0)continue;
     if(devicei->in_zone_csv == 1&&strcmp(devicei->deviceID,"TARGET")!=0)continue;
     if(isZoneFireModel == 1 && STRCMP(devicei->deviceID, "TIME") == 0)continue;
@@ -5664,6 +5665,20 @@ devicedata *GetCSVDeviceFromLabel(char *label, int index){
     }
   }
   return NULL;
+}
+
+/* ----------------------- GetDeviceIndexFromLabel ----------------------------- */
+
+int GetDeviceIndexFromLabel(char *label){
+  int i;
+
+  for(i = 0;i < ndeviceinfo;i++){
+    devicedata *devicei;
+
+    devicei = deviceinfo + i;
+    if(STRCMP(devicei->deviceID, label) == 0)return i;
+  }
+  return -1;
 }
 
 /* ----------------------- GetDeviceFromLabel ----------------------------- */
