@@ -2598,20 +2598,19 @@ void VectorSkipMenu(int value){
 void TextureShowMenu(int value){
   texturedata *texti;
   int i;
-  int texturedisplay=0;
   int texture_flag=0;
+  int loadall_textures;
 
   updatefacelists=1;
   if(value>=0){
     texti = textureinfo + value;
     texti->display = 1-texti->display;
-    if(texti->display==1)texturedisplay=1;
     for(i=0;i<ntextureinfo;i++){
       texti = textureinfo + i;
       if(texti->loaded==0||texti->used==0)continue;
       if(texti->display==0){
-        showall_textures=0;
-        texture_flag=1;
+        showall_textures = 0;
+        texture_flag =     1;
         break;
       }
     }
@@ -2619,12 +2618,23 @@ void TextureShowMenu(int value){
   }
   else{
     switch(value){
+    case MENU_TEXTURE_SHOWALL2:
+      // load all textures if none are loaded
+      loadall_textures = 1;
+      for(i = 0; i < ntextureinfo; i++){
+        texti = textureinfo + i;
+        if(texti->loaded == 1 && texti->used == 1&&texti->display==1){
+          loadall_textures = 0;
+          break;
+        }
+      }
+      // if loadall_textures==1 then fall through and run MENU_TEXTURE_SHOWALL block
+      if(loadall_textures == 0)break;
     case MENU_TEXTURE_SHOWALL:
       for(i=0;i<ntextureinfo;i++){
         texti = textureinfo + i;
         if(texti->loaded==0||texti->used==0)continue;
         texti->display=1;
-        texturedisplay=1;
       }
       showall_textures=1;
       break;
@@ -2642,32 +2652,36 @@ void TextureShowMenu(int value){
     }
   }
   visGeomTextures=0;
-  if(texturedisplay==1){
-    for(i=0;i<ngeominfo;i++){
-      geomdata *geomi;
-      surfdata *surf;
-      texturedata *textii=NULL;
+  for(i=0;i<ngeominfo;i++){
+    geomdata *geomi;
+    surfdata *surf;
+    texturedata *textii=NULL;
 
-      geomi = geominfo + i;
-      surf = geomi->surfgeom;
-      if(terrain_textures!=NULL){
-        textii = terrain_textures+iterrain_textures;
-      }
-      else{
-        if(surf!=NULL)textii = surf->textureinfo;
-      }
-      if(textii!=NULL&&textii->display==1){
-        visGeomTextures=1;
+    geomi = geominfo + i;
+    surf = geomi->surfgeom;
+    if(terrain_textures!=NULL){
+      textii = terrain_textures+iterrain_textures;
+    }
+    else{
+      if(surf!=NULL)textii = surf->textureinfo;
+    }
+    if(textii!=NULL&&textii->display==1){
+      visGeomTextures = 1;
+      break;
+    }
+  }
+
+  for(i=0;i<ntextureinfo;i++){
+    texti = textureinfo + i;
+    if(texti->loaded==1&&texti->used==1&&texti->display==1){
+      if(value!=visBLOCKOutline&&value!=visBLOCKSolidOutline&&value!=visBLOCKHide){
+        BlockageMenu(visBLOCKAsInput);
         break;
       }
-    }
-    if(value!=visBLOCKOutline&&value!=visBLOCKSolidOutline&&value!=visBLOCKHide){
-      BlockageMenu(visBLOCKAsInput);
     }
   }
   updatemenu=1;
   GLUTPOSTREDISPLAY;
-
 }
 
 /* ------------------ Plot3DShowMenu ------------------------ */
@@ -2976,6 +2990,7 @@ void ScriptMenu(int value){
   char newscriptfilename[1024];
 
   if(value==MENU_DUMMY)return;
+  JOIN_CSVFILES;
   updatemenu=1;
   GLUTPOSTREDISPLAY;
   switch(value){
@@ -3343,6 +3358,7 @@ void ReloadAllSliceFiles(void){
   float load_size = 0.0, load_time;
   slicedata **reload_slicelist;
 
+  if(nsliceinfo == 0)return;
   NewMemory((void **)&reload_slicelist, nsliceinfo*sizeof(slicedata *));
   slicefile_labelindex_save = slicefile_labelindex;
   START_TIMER(load_time);
@@ -3388,7 +3404,6 @@ void LoadHVACMenu(int value);
 void LoadUnloadMenu(int value){
   int errorcode;
   int i;
-  int ii;
   int file_count = 0;
   float load_size = 0.0, load_time;
 
@@ -3453,11 +3468,6 @@ void LoadUnloadMenu(int value){
     GLUTPOSTREDISPLAY;
   }
   if(value==RELOADALL||value==RELOAD_INCREMENTAL_ALL){
-    int load_mode;
-
-    if(value==RELOADALL)load_mode = LOAD;
-    if(value==RELOAD_INCREMENTAL_ALL)load_mode = RELOAD;
-
     LOCK_COMPRESS
     if(hrr_csv_filename!=NULL){
       ReadHRR(LOAD);
@@ -3504,20 +3514,28 @@ void LoadUnloadMenu(int value){
 
     //*** reload boundary files
 
-    for(ii=0;ii<npatch_loaded;ii++){
+    for(i = 0;i < npatchinfo;i++){
       patchdata *patchi;
 
-      i = patch_loaded_list[ii];
-      patchi = patchinfo+i;
-      PRINTF("Loading %s(%s)", patchi->file, patchi->label.shortlabel);
-      ReadBoundary(i, load_mode,&errorcode);
+      patchi = patchinfo + i;
+      patchi->loaded2 = patchi->loaded;
+      ASSERT(patchi->loaded==0||patchi->loaded==1);
+    }
+    for(i = 0;i < npatchinfo;i++){
+      patchdata *patchi;
+
+      patchi = patchinfo + i;
+      if(patchi->loaded2 == 1){
+        PRINTF("Loading %s(%s)", patchi->file, patchi->label.shortlabel);
+        ReadBoundary(i, LOAD,&errorcode);
+      }
     }
 
     //*** reload 3d smoke files
 
     for(i=0;i<nsmoke3dinfo;i++){
       if(smoke3dinfo[i].loaded==1||smoke3dinfo[i].request_load==1){
-        ReadSmoke3D(ALL_SMOKE_FRAMES, i, load_mode, FIRST_TIME, &errorcode);
+        ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
       }
     }
 
@@ -5678,20 +5696,55 @@ void LoadIsoMenu(int value){
 
 /* ------------------ LoadBoundaryMenu ------------------------ */
 
+int InPatchList(patchdata *patchj, patchdata *patchi){
+#ifdef pp_BNDF
+  char labelj[1000], labeli[1000];
+  char *endj, *endi;
+
+  strcpy(labelj, patchj->label.longlabel);
+  endj = strchr(labelj, '(');
+  if(endj!=NULL)*endj=0;
+  strcpy(labeli, patchi->label.longlabel);
+  endi = strchr(labeli, '(');
+  if(endi!=NULL)*endi=0;
+  if(strcmp(labelj,labeli)!=0)return 0;
+
+  if(patchj->patch_filetype!=PATCH_GEOMETRY_BOUNDARY){
+    if(strcmp(patchj->label.longlabel, patchi->label.longlabel)!=0)return 0;
+  }
+  if(patchj->patch_filetype==PATCH_STRUCTURED_NODE_CENTER){
+    if(patchi->patch_filetype==PATCH_STRUCTURED_NODE_CENTER)return 1;
+    return 0;
+  }
+  if(patchj->patch_filetype==PATCH_GEOMETRY_BOUNDARY){
+    if(patchi->patch_filetype==PATCH_STRUCTURED_CELL_CENTER)return 1;
+    if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY)return 1;
+    return 0;
+  }
+  if(patchj->patch_filetype!=patchi->patch_filetype)return 0;
+#else
+  if(strcmp(patchj->label.longlabel, patchi->label.longlabel)!=0)return 0;
+  if(patchj->patch_filetype!=patchi->patch_filetype)return 0;
+#endif
+  return 1;
+}
+
+/* ------------------ LoadBoundaryMenu ------------------------ */
+
 void LoadBoundaryMenu(int value){
   int errorcode;
-  int i,ii;
+  int i;
   int boundarytypenew;
 
   GLUTSETCURSOR(GLUT_CURSOR_WAIT);
   if(value>=0){
     boundarytypenew=GetBoundaryType(patchinfo+value);
     if(boundarytypenew!=-1){
-      for(ii=0;ii<npatch_loaded;ii++){
+      for(i=0;i<npatchinfo;i++){
         patchdata *patchi;
 
-        i = patch_loaded_list[ii];
         patchi = patchinfo + i;
+        if(patchi->loaded == 0)continue;
         if(patchi->shortlabel_index !=boundarytypenew)ReadBoundary(i,UNLOAD,&errorcode);
       }
     }
@@ -5744,7 +5797,7 @@ void LoadBoundaryMenu(int value){
         patchdata *patchi;
 
         patchi = patchinfo+i;
-        if(strcmp(patchi->label.longlabel, patchj->label.longlabel)==0&&patchi->patch_filetype==patchj->patch_filetype){
+        if(InPatchList(patchj, patchi)==1){
           list[nlist++]=i;
         }
       }
@@ -5756,7 +5809,7 @@ void LoadBoundaryMenu(int value){
         patchdata *patchi;
 
         patchi = patchinfo+i;
-        if(strcmp(patchi->label.longlabel, patchj->label.longlabel)==0&&patchi->patch_filetype==patchj->patch_filetype){
+        if(InPatchList(patchj, patchi)==1){
           LOCK_COMPRESS;
           patchi->finalize = 1;
           UNLOCK_COMPRESS;
@@ -5767,7 +5820,7 @@ void LoadBoundaryMenu(int value){
         patchdata *patchi;
 
         patchi = patchinfo + i;
-        if(strcmp(patchi->label.longlabel,patchj->label.longlabel)==0&&patchi->patch_filetype==patchj->patch_filetype){
+        if(InPatchList(patchj, patchi)==1){
           LOCK_COMPRESS;
           if(patchi->structured == YES){
             PRINTF("Loading %s(%s)", patchi->file, patchi->label.shortlabel);
@@ -5867,17 +5920,16 @@ void ShowBoundaryMenu(int value){
   updatefacelists=1;
   GLUTPOSTREDISPLAY;
   if(value>=1000){
-    int ii;
     patchdata *patchj;
+    int i;
 
     patchj = patchinfo + value-1000;
     patchj->display = 1 - patchj->display;
-    for(ii=0;ii<npatch_loaded;ii++){
+    for(i=0;i<npatchinfo;i++){
       patchdata *patchi;
-      int i;
 
-      i = patch_loaded_list[ii];
       patchi = patchinfo + i;
+      if(patchi->loaded == 0)continue;
       if(strcmp(patchi->label.longlabel,patchj->label.longlabel)==0)patchi->display=patchj->display;
     }
     UpdateBoundaryType();
@@ -5889,7 +5941,7 @@ void ShowBoundaryMenu(int value){
 #endif
   }
   if(value==GLUI_SHOWALL_BOUNDARY||value==GLUI_HIDEALL_BOUNDARY){
-    int ii;
+    int i;
 
     if(value == GLUI_SHOWALL_BOUNDARY){
       show_boundaryfiles = 1;
@@ -5897,18 +5949,17 @@ void ShowBoundaryMenu(int value){
     if(value == GLUI_HIDEALL_BOUNDARY){
       show_boundaryfiles = 0;
     }
-    for(ii=0;ii<npatch_loaded;ii++){
+    for(i=0;i<npatchinfo;i++){
       patchdata *patchi;
-      int i;
 
-      i = patch_loaded_list[ii];
       patchi = patchinfo + i;
+      if(patchi->loaded == 0)continue;
       if(patchi->structured == YES)patchi->display=show_boundaryfiles;
     }
   }
   if(value<0){
     if(value==ShowEXTERIORwallmenu||value==HideEXTERIORwallmenu){
-      int i,ii,val;
+      int i,val;
 
       if(value==ShowEXTERIORwallmenu){
         val = 1;
@@ -5916,13 +5967,14 @@ void ShowBoundaryMenu(int value){
       else{
         val = 0;
       }
-      for(ii = 0;ii < npatch_loaded;ii++){
+      for(i = 0;i < npatchinfo;i++){
         int n;
 
         patchdata *patchi;
         meshdata *meshi;
 
-        patchi = patchinfo + patch_loaded_list[ii];
+        patchi = patchinfo + i;
+        if(patchi->loaded == 0)continue;
         meshi = meshinfo + patchi->blocknumber;
         for(n = 0;n < meshi->npatches;n++){
           if(meshi->boundarytype[n] != INTERIORwall){
@@ -5935,17 +5987,19 @@ void ShowBoundaryMenu(int value){
       }
     }
     else if(value==INTERIORwallmenu){
-      int ii,val;
+      int val;
+      int i;
 
       allinterior = 1 - allinterior;
       val = allinterior;
       vis_boundary_type[INTERIORwall]=val;
-      for(ii = 0;ii < npatch_loaded;ii++){
+      for(i = 0;i < npatchinfo;i++){
         patchdata *patchi;
         meshdata *meshi;
         int n;
 
-        patchi = patchinfo + patch_loaded_list[ii];
+        patchi = patchinfo + i;
+        if(patchi->loaded == 0)continue;
         meshi = meshinfo + patchi->blocknumber;
         for(n = 0;n < meshi->npatches;n++){
           if(meshi->boundarytype[n] == INTERIORwall){
@@ -5955,15 +6009,16 @@ void ShowBoundaryMenu(int value){
       }
     }
     if(value==INI_EXTERIORwallmenu){
-      int ii;
+      int i;
 
-      for(ii = 0;ii < npatch_loaded;ii++){
+      for(i = 0;i < npatchinfo;i++){
         int n;
 
         patchdata *patchi;
         meshdata *meshi;
 
-        patchi = patchinfo + patch_loaded_list[ii];
+        patchi = patchinfo + i;
+        if(patchi->loaded == 0)continue;
         meshi = meshinfo + patchi->blocknumber;
         for(n = 0;n < meshi->npatches;n++){
           if(meshi->boundarytype[n] != INTERIORwall){
@@ -5973,15 +6028,16 @@ void ShowBoundaryMenu(int value){
       }
     }
     else if(value != DUMMYwallmenu){
-      int ii;
+      int i;
 
       value = -(value + 2); /* map xxxwallmenu to xxxwall */
-      for(ii = 0;ii < npatch_loaded;ii++){
+      for(i = 0;i < npatchinfo;i++){
         patchdata *patchi;
         meshdata *meshi;
         int n;
 
-        patchi = patchinfo + patch_loaded_list[ii];
+        patchi = patchinfo + i;
+        if(patchi->loaded == 0)continue;
         meshi = meshinfo + patchi->blocknumber;
         for(n = 0;n < meshi->npatches;n++){
           if(meshi->boundarytype[n] == value){
@@ -6362,7 +6418,18 @@ void BlockageMenu(int value){
    case BLOCKlocation_grid:
    case BLOCKlocation_exact:
    case BLOCKlocation_cad:
-     blocklocation=value;
+     if(ncadgeom == 0){
+       if(value == BLOCKlocation_grid){
+         blocklocation_menu = BLOCKlocation_exact;
+       }
+       else{
+         blocklocation_menu = BLOCKlocation_grid;
+       }
+     }
+     else{
+       blocklocation_menu = value;
+     }
+     Keyboard('q', FROM_SMOKEVIEW);
      break;
    case BLOCKtexture_cad:
      visCadTextures=1-visCadTextures;
@@ -7274,6 +7341,16 @@ void GeometryMenu(int value){
   updatefacelists=1;
   updatemenu=1;
   GLUTPOSTREDISPLAY;
+}
+
+/* ------------------ GeometryMainMenu ------------------------ */
+
+void GeometryMainMenu(int value){
+  if(value==BLOCKlocation_grid||value==BLOCKlocation_exact||value==BLOCKlocation_cad){
+    BlockageMenu(value);
+    return;
+  }
+  GeometryMenu(value);
 }
 
 /* ------------------ GetNumActiveDevices ------------------------ */
@@ -9244,57 +9321,6 @@ updatemenu=0;
       }
     }
   }
-  glutAddMenuEntry("-",MENU_DUMMY);
-  glutAddMenuEntry(_("Locations:"),MENU_DUMMY);
-  if(blocklocation==BLOCKlocation_grid){
-    glutAddMenuEntry(_("   *Actual"),BLOCKlocation_grid);
-  }
-  else{
-    glutAddMenuEntry(_("   Actual"),BLOCKlocation_grid);
-  }
-  if(blocklocation==BLOCKlocation_exact){
-    glutAddMenuEntry(_("   *Requested"),BLOCKlocation_exact);
-  }
-  else{
-    glutAddMenuEntry(_("   Requested"),BLOCKlocation_exact);
-  }
-  if(ncadgeom>0){
-    if(blocklocation==BLOCKlocation_cad){
-      glutAddMenuEntry(_("   *Cad"),BLOCKlocation_cad);
-    }
-    else{
-      glutAddMenuEntry(_("   Cad"),BLOCKlocation_cad);
-    }
-    {
-      cadgeomdata *cd;
-      cadlookdata *cdi;
-      int showtexturemenu;
-
-      showtexturemenu=0;
-      for(i=0;i<ncadgeom;i++){
-        int j;
-
-        cd = cadgeominfo + i;
-        for(j=0;j<cd->ncadlookinfo;j++){
-          cdi = cd->cadlookinfo+j;
-          if(cdi->textureinfo.loaded==1){
-            showtexturemenu=1;
-            break;
-          }
-        }
-        if(showtexturemenu==1)break;
-      }
-      if(showtexturemenu==1){
-        if(visCadTextures==1){
-          glutAddMenuEntry(_(" *Show CAD textures"),BLOCKtexture_cad);
-        }
-        else{
-          glutAddMenuEntry(_(" Show CAD textures"),BLOCKtexture_cad);
-        }
-      }
-    }
-  }
-
 
 /* --------------------------------level menu -------------------------- */
 
@@ -10061,7 +10087,7 @@ updatemenu=0;
 
   /* --------------------------------geometry menu -------------------------- */
 
-  CREATEMENU(geometrymenu,GeometryMenu);
+  CREATEMENU(geometrymenu,GeometryMainMenu);
   if(ntotal_blockages>0)GLUTADDSUBMENU(_("Obstacles"),blockagemenu);
   if(ngeominfo>0){
     GLUTADDSUBMENU(_("Immersed"), immersedmenu);
@@ -10091,6 +10117,59 @@ updatemenu=0;
   else{
     visFrame=0;
   }
+  if(ncadgeom == 0){
+    if(blocklocation == BLOCKlocation_grid){
+      glutAddMenuEntry("Locations(*actual,requested)",   BLOCKlocation_grid);
+    }
+    if(blocklocation == BLOCKlocation_exact){
+      glutAddMenuEntry("Locations(actual,*requested)", BLOCKlocation_exact);
+    }
+  }
+  else{
+    if(blocklocation == BLOCKlocation_grid){
+      glutAddMenuEntry("Locations:*actual",   BLOCKlocation_grid);
+      glutAddMenuEntry("Locations:requested", BLOCKlocation_exact);
+      glutAddMenuEntry("Locations:cad",       BLOCKlocation_cad);
+    }
+    if(blocklocation == BLOCKlocation_exact){
+      glutAddMenuEntry("Locations:actual",     BLOCKlocation_grid);
+      glutAddMenuEntry("Locations:*requested", BLOCKlocation_exact);
+      glutAddMenuEntry("Locations:cad",        BLOCKlocation_cad);
+    }
+    if(blocklocation == BLOCKlocation_cad){
+      glutAddMenuEntry("Locations:actual", BLOCKlocation_grid);
+      glutAddMenuEntry("Locations:requested", BLOCKlocation_exact);
+      glutAddMenuEntry("Locations:*cad", BLOCKlocation_cad);
+    }
+    {
+      cadgeomdata *cd;
+      cadlookdata *cdi;
+      int showtexturemenu;
+
+      showtexturemenu = 0;
+      for(i = 0; i < ncadgeom; i++){
+        int j;
+
+        cd = cadgeominfo + i;
+        for(j = 0; j < cd->ncadlookinfo; j++){
+          cdi = cd->cadlookinfo + j;
+          if(cdi->textureinfo.loaded == 1){
+            showtexturemenu = 1;
+            break;
+          }
+        }
+        if(showtexturemenu == 1)break;
+      }
+      if(showtexturemenu == 1){
+        if(visCadTextures == 1){
+          glutAddMenuEntry(_(" *Show CAD textures"), BLOCKtexture_cad);
+        }
+        else{
+          glutAddMenuEntry(_(" Show CAD textures"), BLOCKtexture_cad);
+        }
+      }
+    }
+  }  
   glutAddMenuEntry(_("Show all"), GEOM_ShowAll);
   glutAddMenuEntry(_("Hide all"), GEOM_HideAll);
 
@@ -11911,6 +11990,7 @@ updatemenu=0;
     glutAddMenuEntry(_("  t: set/unset single time step mode"), MENU_DUMMY);
     glutAddMenuEntry(_("  0: reset animation to the initial time"), MENU_DUMMY);
     glutAddMenuEntry(_("  p,P: increment particle variable displayed"), MENU_DUMMY);
+    glutAddMenuEntry(_("  [,]: decreease/increase particle size"), MENU_DUMMY);
     glutAddMenuEntry(_("  T: time display between 'Time s' and 'h:m:s'"), MENU_DUMMY);
     if(cellcenter_slice_active==1){
       glutAddMenuEntry(_("     (also, toggles cell center display on/off)"), MENU_DUMMY);
@@ -12613,6 +12693,9 @@ updatemenu=0;
           }
         }
 
+#ifdef pp_BNDF
+        if(patchi->have_geom==1)continue;
+#endif
         if(patchi->filetype_label==NULL||strcmp(patchi->filetype_label,"INCLUDE_GEOM")!=0){
           STRCPY(menulabel, "");
           if(patchi->loaded==1)STRCAT(menulabel,"*");
@@ -12761,6 +12844,9 @@ updatemenu=0;
               char menulabel[1024];
               int patch_load_state;
 
+#ifdef pp_BNDF
+              if(patchi->have_geom==1)continue;
+#endif
               PatchLoadState(patchi, &patch_load_state);
               strcpy(menulabel, "");
               if(patch_load_state==1)strcat(menulabel, "#");

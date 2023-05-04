@@ -25,6 +25,9 @@
 #include "glutbitmap.h"
 #endif
 
+SVEXTERN int SVDECL(update_plot2dini, 0);
+SVEXTERN int SVDECL(update_device_timeaverage, 0);
+
 #ifdef pp_PLOT2DMAX
 SVEXTERN int SVDECL(show_max_avg_vals, 0);
 SVEXTERN int SVDECL(update_max_avg_vals, 0);
@@ -350,6 +353,11 @@ SVEXTERN int SVDECL(part_multithread, 1);
 #else
 SVEXTERN int SVDECL(part_multithread, 0);
 #endif
+#ifdef pp_CSV_MULTI
+SVEXTERN int SVDECL(csv_multithread,1);
+SVEXTERN int SVDECL(ncsv_threads, 1);
+#endif
+SVEXTERN float SVDECL(csv_timer, 0.0);
 #ifdef pp_SLICE_MULTI
 SVEXTERN int SVDECL(slice_multithread, 0);
 #endif
@@ -538,6 +546,7 @@ SVEXTERN int SVDECL(histograms_defined,0), SVDECL(update_slice_hists, 0), SVDECL
 SVEXTERN histogramdata SVDECL(*hists256_slice, NULL), SVDECL(*hists12_slice, NULL);
 SVEXTERN histogramdata SVDECL(*full_part_histogram, NULL);
 SVEXTERN histogramdata SVDECL(*full_plot3D_histograms, NULL);
+SVEXTERN int SVDECL(update_loadall_textures, 1);
 
 SVEXTERN int SVDECL(color_vector_black, 0);
 SVEXTERN float SVDECL(geom_transparency, 0.5);
@@ -849,8 +858,11 @@ SVEXTERN int SVDECL(trainer_temp_n,0),SVDECL(trainer_oxy_n,0);
 SVEXTERN char SVDECL(*tr_name,NULL);
 SVEXTERN int SVDECL(showdevice_val, 0), SVDECL(showvdevice_val, 0);
 SVEXTERN int SVDECL(show_plot2d_xlabels, 1), SVDECL(show_plot2d_ylabels, 1), SVDECL(show_plot2d_title, 1);
+SVEXTERN int SVDECL(average_plot2d_slice_region, 0), SVDECL(show_plot2d_slice_position, 1);;
 SVEXTERN int SVDECL(colordevice_val, 0), SVDECL(showdevice_id, 0);
 SVEXTERN int SVDECL(select_device, 0);
+SVEXTERN char plot2d_xaxis_label[301];
+SVEXTERN float SVDECL(plot2d_xaxis_position, 0.0);
 SVEXTERN int SVDECL(showdevice_type,1), SVDECL(showdevice_unit,1);
 SVEXTERN float SVDECL(device_valmin,0.0), SVDECL(device_valmax,1.0);
 SVEXTERN devicedata SVDECL(**devicetypes,NULL);
@@ -860,14 +872,20 @@ SVEXTERN int SVDECL(ndevicetypes,0);
 SVEXTERN int SVDECL(idevice_add, 0);
 SVEXTERN float plot2d_xyzstart[3], plot2d_xyzend[3];
 SVEXTERN int SVDECL(plot2d_show_plot_title,   1);
-SVEXTERN int SVDECL(plot2d_show_yaxis_labels, 1);
-SVEXTERN int SVDECL(plot2d_show_xaxis_labels, 1);
+SVEXTERN int SVDECL(plot2d_show_yaxis_bounds, 1);
+SVEXTERN int SVDECL(plot2d_show_yaxis_units,  1);
+SVEXTERN int SVDECL(plot2d_show_xaxis_labels, 0);
+SVEXTERN int SVDECL(plot2d_show_xaxis_bounds, 1);
 SVEXTERN int SVDECL(plot2d_show_curve_labels, 1);
 SVEXTERN int SVDECL(plot2d_show_curve_values, 0);
+SVEXTERN int SVDECL(plot2d_show_plots,        1);
 
 SVEXTERN int SVDECL(glui_remove_selected_curve, 0);
 SVEXTERN int SVDECL(glui_csv_file_index, 0);
 SVEXTERN int SVDECL(icsv_cols, 0), SVDECL(icsv_units, 0);
+#ifdef pp_CFAST_CSV
+SVEXTERN int SVDECL(icsv_compartments, -1);
+#endif
 SVEXTERN int SVDECL(plot2d_max_columns, 0);
 SVEXTERN int SVDECL(deviceunits_index, 0);
 SVEXTERN int SVDECL(plot2d_dialogs_defined, 0);
@@ -1446,6 +1464,7 @@ SVEXTERN int SVDECL(outline_color_flag,0);
 SVEXTERN int SVDECL(solid_state,-1),SVDECL(outline_state,-1);
 SVEXTERN int visTransparentBlockage;
 SVEXTERN int SVDECL(blocklocation,BLOCKlocation_grid);
+SVEXTERN int SVDECL(blocklocation_menu, BLOCKlocation_grid);
 SVEXTERN int ncadgeom;
 SVEXTERN int visFloor, visFrame;
 SVEXTERN int visNormalEditColors;
@@ -1509,9 +1528,13 @@ SVEXTERN int SVDECL(use_geom_factors, 1), SVDECL(have_geom_factors, 0);
 SVEXTERN int SVDECL(transparent_state,ALL_SOLID);
 
 SVEXTERN float SVDECL(tload_begin, 0.0), SVDECL(tload_end, 0.0);
+SVEXTERN int SVDECL(use_tload_begin, 0), SVDECL(use_tload_end, 0);
+SVEXTERN float SVDECL(tload_begin2, 0.0), SVDECL(tload_end2, 0.0);
+SVEXTERN int SVDECL(use_tload_begin2, 0), SVDECL(use_tload_end2, 0);
+SVEXTERN int SVDECL(use_tload_skip, 0);
+
 SVEXTERN int SVDECL(tload_zipskip, 0), SVDECL(tload_zipstep, 1);
 SVEXTERN int SVDECL(tload_skip, 0), SVDECL(tload_step, 1);
-SVEXTERN int SVDECL(use_tload_begin, 0), SVDECL(use_tload_end, 0), SVDECL(use_tload_skip, 0);
 
 SVEXTERN float frameinterval;
 
@@ -1542,6 +1565,7 @@ SVEXTERN float gslice_normal_xyz[3];
 SVEXTERN float gslice_normal_azelev[3];
 #endif
 SVEXTERN float SVDECL(glui_tour_time, 0.0);
+SVEXTERN float SVDECL(glui_tour_pause_time, 0.0);
 
 SVEXTERN float gslice_xyz0[3],gslice_normal_azelev0[2];
 SVEXTERN int SVDECL(vis_gslice_data,0),SVDECL(SHOW_gslice_data,0),SVDECL(SHOW_gslice_data_old,0),SVDECL(show_gslice_triangles,0);
@@ -1703,8 +1727,8 @@ SVEXTERN int   reset_frame;
 SVEXTERN float reset_time,start_frametime,stop_frametime;
 SVEXTERN float SVDECL(max_velocity,0.0);
 SVEXTERN int niso_compressed;
-SVEXTERN int nslice_loaded, ngeomslice_loaded, npatch_loaded, nvolsmoke_loaded;
-SVEXTERN int SVDECL(*slice_loaded_list,NULL), SVDECL(*slice_sorted_loaded_list,NULL),SVDECL(*patch_loaded_list,NULL);
+SVEXTERN int nslice_loaded, ngeomslice_loaded, nvolsmoke_loaded;
+SVEXTERN int SVDECL(*slice_loaded_list,NULL), SVDECL(*slice_sorted_loaded_list,NULL);
 SVEXTERN char SVDECL(*fdsprefix,NULL), SVDECL(*fdsprefix2,NULL);
 SVEXTERN char SVDECL(*endian_filename,NULL);
 SVEXTERN char SVDECL(*target_filename,NULL);
@@ -1746,9 +1770,9 @@ SVEXTERN int SVDECL(runluascript,0);
 SVEXTERN int SVDECL(exit_on_script_crash,0);
 #endif
 #ifdef INMAIN
-SVEXTERN float slice_xyz[3]={0.0,0.0,0.0};
+SVEXTERN float slice_xyz[3]={0.0,0.0,0.0}, slice_dxyz[3] = {0.0, 0.0, 0.0};
 #else
-SVEXTERN float slice_xyz[3];
+SVEXTERN float slice_xyz[3], slice_dxyz[3];
 #endif
 SVEXTERN int   SVDECL(update_slice2device, 0);
 SVEXTERN int SVDECL(script_multislice,0), SVDECL(script_multivslice,0), SVDECL(script_iso,0);

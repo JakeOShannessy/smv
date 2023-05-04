@@ -801,7 +801,9 @@ void DrawGeom(int flag, int timestate){
         int j;
 
         trianglei = tris[i];
+#ifndef pp_TERRAIN_CFACES
         if(use_cfaces==1&&trianglei->geomtype==GEOM_GEOM)continue;
+#endif
         if(trianglei->geomtype!=GEOM_ISO){
           if(trianglei->outside_domain==0&&showgeom_inside_domain==0)continue;
           if(trianglei->outside_domain==1&&showgeom_outside_domain==0)continue;
@@ -3709,7 +3711,7 @@ void DrawGeomData(int flag, slicedata *sd, patchdata *patchi, int geom_type){
   float ttmin, ttmax;
 
   label = patchi->label.shortlabel;
-  GetMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
+  GetOnlyMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
 #define GEOMBOUNDCOLOR(val) CLAMP((int)(255.0*(val-ttmin)/(ttmax-ttmin)),0,255)
 #define GEOMBOUNDTEXTURE(val) CLAMP(((val-ttmin)/(ttmax-ttmin)),0.0,1.0)
 
@@ -4307,6 +4309,7 @@ void DrawCGeom(int flag, geomdata *cgeom){
   int i;
   geomdata *geomi;
 
+  if(visGeomTextures == 1)return;
   if(show_geom_boundingbox==SHOW_BOUNDING_BOX_ALWAYS||geom_bounding_box_mousedown==1){
     if(flag==DRAW_OPAQUE&&have_geom_triangles==1){
       DrawGeomBoundingBox(NULL);
@@ -4716,9 +4719,9 @@ void ShowHideSortGeometry(int sort_geom, float *mm){
             xyz1 = tri->verts[0]->xyz;
             xyz2 = tri->verts[1]->xyz;
             xyz3 = tri->verts[2]->xyz;
-            xyz[0] = NORMALIZE_X((xyz1[0] + xyz2[0] + xyz3[0]) / 3.0);
-            xyz[1] = NORMALIZE_Y((xyz1[1] + xyz2[1] + xyz3[1]) / 3.0);
-            xyz[2] = NORMALIZE_Z((xyz1[2] + xyz2[2] + xyz3[2]) / 3.0);
+            xyz[0] = FDS2SMV_X((xyz1[0] + xyz2[0] + xyz3[0]) / 3.0);
+            xyz[1] = FDS2SMV_Y((xyz1[1] + xyz2[1] + xyz3[1]) / 3.0);
+            xyz[2] = FDS2SMV_Z((xyz1[2] + xyz2[2] + xyz3[2]) / 3.0);
 
             xyzeye[0] = mm[0] * xyz[0] + mm[4] * xyz[1] + mm[8] * xyz[2] + mm[12];
             xyzeye[1] = mm[1] * xyz[0] + mm[5] * xyz[1] + mm[9] * xyz[2] + mm[13];

@@ -290,6 +290,7 @@ int GetScriptKeywordIndex(char *keyword){
   if(MatchSSF(keyword,"LOADVFILE") == MATCH)return SCRIPT_LOADVFILE;                   // documented
   if(MatchSSF(keyword,"LOADVSLICE") == MATCH)return SCRIPT_LOADVSLICE;                 // documented
   if(MatchSSF(keyword,"LOADVSLICEM") == MATCH)return SCRIPT_LOADVSLICEM;
+  if(MatchSSF(keyword,"UNLOADPLOT2D") == MATCH)return SCRIPT_UNLOADPLOT2D;
   if(MatchSSF(keyword,"MAKEMOVIE") == MATCH)return SCRIPT_MAKEMOVIE;
   if(MatchSSF(keyword,"MOVIETYPE")==MATCH)return SCRIPT_MOVIETYPE;
   if(MatchSSF(keyword,"PARTCLASSCOLOR") == MATCH)return SCRIPT_PARTCLASSCOLOR;         // documented
@@ -963,6 +964,11 @@ NewMemory((void **)&scriptinfo, nscriptinfo*sizeof(scriptdata));
         sscanf(buffer, "%f %f %f %f %f", &scripti->fval, &scripti->fval2, &scripti->fval3, &scripti->fval4, &scripti->fval5);
         if(ABS(scripti->fval5-90)<0.1)scripti->fval5=89.9;
         if(ABS(scripti->fval5+90)<0.1)scripti->fval5=-89.9;
+        break;
+
+// UNLOADPLOT2D
+//  (not parameters)
+      case SCRIPT_UNLOADPLOT2D:
         break;
 
 // SHOWPLOT3DDATA
@@ -1944,6 +1950,19 @@ void ScriptLoadVSLCF(scriptdata *scripti){
   if(count == 0){
     fprintf(stderr, "*** Error: Vector slice files of type %s failed to load\n", scripti->cval);
     if(stderr2!=NULL)fprintf(stderr2, "*** Error: Vector slice files of type %s failed to load\n", scripti->cval);
+  }
+}
+
+/* ------------------ ScriptUnLoadPlot2D ------------------------ */
+
+void ScriptUnLoadPlot2D(scriptdata *scripti){
+  int i;
+
+  for(i=0;i<nplot2dinfo;i++){
+    plot2ddata *plot2di;
+
+    plot2di = plot2dinfo + i;
+    plot2di->show = 0;
   }
 }
 
@@ -3228,7 +3247,7 @@ void ScriptRGBtest(scriptdata *scripti){
   rgb_test_xyz[0] = scripti->fval;
   rgb_test_xyz[1] = scripti->fval2;
   rgb_test_xyz[2] = scripti->fval3;
-  NORMALIZE_XYZ(rgb_test_xyz, rgb_test_xyz);
+  FDS2SMV_XYZ(rgb_test_xyz, rgb_test_xyz);
   rgb_test_rgb[0] = scripti->ival;
   rgb_test_rgb[1] = scripti->ival2;
   rgb_test_rgb[2] = scripti->ival3;
@@ -3707,6 +3726,9 @@ int RunScriptCommand(scriptdata *script_command){
       break;
     case SCRIPT_LOADSLCF:
       ScriptLoadSLCF(scripti);
+      break;
+    case SCRIPT_UNLOADPLOT2D:
+      ScriptUnLoadPlot2D(scripti);
       break;
     case SCRIPT_LOADSLICE:
       ScriptLoadSlice(scripti);

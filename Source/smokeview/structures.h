@@ -71,6 +71,8 @@ typedef struct _csvdata {
 /**
  * @brief Data from a CSV file.
  */
+#define CSV_FDS_FORMAT   0
+#define CSV_CFAST_FORMAT 1
 typedef struct _csvfiledata {
   /// @brief The filename of the CSV file
   char *file;
@@ -78,8 +80,10 @@ typedef struct _csvfiledata {
   csvdata *csvinfo;
   /// @brief The time vector of the CSV file.
   csvdata *time;
+  int defined, glui_defined;
   /// @brief The length of the array 'csvinfo'.
   int ncsvinfo;
+  int format;
   int loaded, display;
   /// @brief The type of the CSV file (e.g., 'devc,'hrr','ctr;)
   char c_type[32];
@@ -949,6 +953,7 @@ typedef struct _culldata {
 typedef struct _keyframe {
   int selected, npoints;
   float time;
+  float pause_time, cum_pause_time;
   float view_smv[3], view2_smv[3];
   float xyz_fds[3], xyz_smv[3];
   float arc_dist, line_dist, xyz_diff[3], view_diff[3];
@@ -964,8 +969,7 @@ typedef struct _tourdata {
   keyframe first_frame,last_frame, **keyframe_list;
   int glui_avatar_index, display2;
   float *path_times,*keyframe_times;
-  float xyz_smv[3], view_smv[3], *path_xyzs, *path_views;
-  struct _keyframe **path_keyframes;
+  float xyz_smv[3], view_smv[3];
   float global_dist;
   int *timeslist;
   int ntimes, nkeyframes;
@@ -1413,7 +1417,7 @@ typedef struct _hvacdata {
   int display;
   int show_node_labels, show_duct_labels;
   int show_filters, show_component;
-  float node_size, component_size, duct_width, filter_size;
+  float cell_node_size, node_size, component_size, duct_width, filter_size;
   int duct_color[3], node_color[3];
 } hvacdata;
 
@@ -1864,6 +1868,9 @@ typedef struct _patchdata {
   char *filetype_label;
   geomdata *geominfo;
   int *geom_offsets;
+#ifdef pp_BNDF
+  int have_geom;
+#endif
   //int *patchsize;
   int skip,dir;
   float xyz_min[3], xyz_max[3];
@@ -1886,7 +1893,7 @@ typedef struct _patchdata {
   int setchopmin, setchopmax;
   float chopmin, chopmax;
   float diff_valmin, diff_valmax;
-  int blocknumber,loaded,display;
+  int blocknumber,loaded,loaded2,display;
   float *geom_times, *geom_vals;
   int *geom_timeslist,geom_itime;
   unsigned char *geom_ivals, **geom_ivals_static, **geom_ivals_dynamic;

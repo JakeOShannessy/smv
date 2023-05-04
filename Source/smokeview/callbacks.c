@@ -26,13 +26,13 @@ int GetGridIndex(float val, int dir, float *plotxyz, int nplotxyz){
 
   switch(dir){
     case XDIR:
-      val=NORMALIZE_X(val);
+      val=FDS2SMV_X(val);
       break;
     case YDIR:
-      val=NORMALIZE_Y(val);
+      val=FDS2SMV_Y(val);
       break;
     case ZDIR:
-      val=NORMALIZE_Z(val);
+      val=FDS2SMV_Z(val);
       break;
     default:
       ASSERT(FFALSE);
@@ -1386,8 +1386,7 @@ void MoveGenSlice(int xm, int ym){
 
         yy = ym-mouse_down_xy0[1];
         yy = yy/(float)screenHeight;
-
-        gslice_xyz[2] = gslice_xyz0[2] - DENORMALIZE_Z(4*(xyzbox-NORMALIZE_Z(gslice_xyz0[2]))*yy);
+        gslice_xyz[2] = gslice_xyz0[2] - SMV2FDS_Z(4*(xyzbox-FDS2SMV_Z(gslice_xyz0[2]))*yy);
 #ifdef pp_GLUI
         UpdateGsliceParms();
 #endif
@@ -2402,12 +2401,22 @@ void Keyboard(unsigned char key, int flag){
       update_chop_colors = 1;
       break;
     case 'q':
+      if(flag==FROM_SMOKEVIEW){
+        blocklocation=blocklocation_menu;
+      }
+      else{
+        blocklocation++;
+      }
+      if((ncadgeom==0&&blocklocation>BLOCKlocation_exact)||blocklocation>BLOCKlocation_cad){
+        blocklocation=BLOCKlocation_grid;
+      }
       if(ncgeominfo>0){
-        use_cfaces = 1-use_cfaces;
-        if(use_cfaces==1){
+        if(blocklocation==BLOCKlocation_grid){
+          use_cfaces = 1;
           printf("cfaces: ");
         }
         else{
+          use_cfaces = 0;
           printf("geometry: ");
         }
         if(show_faces_shaded==1) printf("shaded triangles ");
@@ -2417,11 +2426,6 @@ void Keyboard(unsigned char key, int flag){
 #ifdef pp_GLUI
         UpdateGluiCfaces();
 #endif
-      }
-      blocklocation++;
-      if((ncadgeom==0&&blocklocation>BLOCKlocation_exact)||
-                       blocklocation>BLOCKlocation_cad){
-        blocklocation=BLOCKlocation_grid;
       }
       if(blocklocation==BLOCKlocation_grid)printf("blocklocation: snapped to grid\n");
       if(blocklocation==BLOCKlocation_exact)printf("blocklocation: as input\n");
@@ -3070,16 +3074,12 @@ void Keyboard(unsigned char key, int flag){
       clip_rendered_scene=1-clip_rendered_scene;
       break;
     case '[':
-      edittour=1;
-#ifdef pp_GLUI
-      UpdateEditTour();
-#endif
-      break;
     case ']':
-      edittour=0;
-#ifdef pp_GLUI
-      UpdateEditTour();
-#endif
+      if(key2=='[')partpointsize--;
+      if(key2==']')partpointsize++;
+      partpointsize = CLAMP(partpointsize, PART_MIN_SIZE, PART_MAX_SIZE);
+      printf("particle size: %f\n", partpointsize);
+      UpdatePartPointSize();
       break;
     case ';':
       ColorbarMenu(COLORBAR_FLIP);
@@ -4145,6 +4145,9 @@ void DoScript(void){
   int script_return_code;
 
   if(runscript == 1){
+  // csv files are read in the background.  the following line ensures that they will all be read in
+  // before the script begins. gpf
+      JOIN_CSV_FILES;
       runscript = 0;
       PRINTF("running ssf script instruction\n");
       fflush(stdout);
@@ -4157,6 +4160,9 @@ void DoScript(void){
 #else
 void DoScript(void){
   SNIFF_ERRORS("DoScript: start");
+  if(runscript == 1){
+    JOIN_CSVFILES;
+  }
   if(runscript==1&&default_script!=NULL){
     ScriptMenu(default_script->id);
     runscript=2;

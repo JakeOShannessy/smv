@@ -87,6 +87,7 @@ cbuild/
 dist/
 dist-debug/
 rpmbuild/
+vcpkg_installed
 
 # Local config for some editors
 .vscode/

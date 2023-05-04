@@ -43,6 +43,7 @@ GLUI_Checkbox *CHECKBOX_showintermediate = NULL;
 GLUI_Checkbox *CHECKBOX_tourhide=NULL;
 
 GLUI_Spinner *SPINNER_tour_time = NULL;
+GLUI_Spinner *SPINNER_tour_pause_time = NULL;
 GLUI_Spinner *SPINNER_x = NULL;
 GLUI_Spinner *SPINNER_y = NULL;
 GLUI_Spinner *SPINNER_z = NULL;
@@ -227,6 +228,7 @@ extern "C" void GluiTourSetup(int main_window){
   PANEL_tourposition = glui_tour->add_panel_to_panel(PANEL_node, _("Node"));
 
   SPINNER_tour_time = glui_tour->add_spinner_to_panel(PANEL_tourposition, "t:", GLUI_SPINNER_FLOAT, &glui_tour_time, KEYFRAME_tXYZ, TourCB);
+  SPINNER_tour_pause_time = glui_tour->add_spinner_to_panel(PANEL_tourposition, "pause:", GLUI_SPINNER_FLOAT, &glui_tour_pause_time, KEYFRAME_tXYZ, TourCB);
   SPINNER_x=glui_tour->add_spinner_to_panel(PANEL_tourposition,"x:",GLUI_SPINNER_FLOAT,glui_tour_xyz,  KEYFRAME_tXYZ,TourCB);
   SPINNER_y=glui_tour->add_spinner_to_panel(PANEL_tourposition,"y:",GLUI_SPINNER_FLOAT,glui_tour_xyz+1,KEYFRAME_tXYZ,TourCB);
   SPINNER_z=glui_tour->add_spinner_to_panel(PANEL_tourposition,"z:",GLUI_SPINNER_FLOAT,glui_tour_xyz+2,KEYFRAME_tXYZ,TourCB);
@@ -338,6 +340,8 @@ extern "C" float TrimVal(float val){
 extern "C" void UpdateGluiKeyframe(void){
   glui_tour_time = selected_frame->time;
   SPINNER_tour_time->set_float_val(glui_tour_time);
+  glui_tour_pause_time = selected_frame->pause_time;
+  SPINNER_tour_pause_time->set_float_val(glui_tour_pause_time);
   SPINNER_x->set_float_val(glui_tour_xyz[0]);
   SPINNER_y->set_float_val(glui_tour_xyz[1]);
   SPINNER_z->set_float_val(glui_tour_xyz[2]);
@@ -363,12 +367,13 @@ extern "C" void SetGluiTourKeyframe(void){
   xyz_view = selected_frame->view_smv;
 
   glui_tour_time    = selected_frame->time;
-  glui_tour_xyz[0]  = TrimVal(DENORMALIZE_X(eye[0]));
-  glui_tour_xyz[1]  = TrimVal(DENORMALIZE_Y(eye[1]));
-  glui_tour_xyz[2]  = TrimVal(DENORMALIZE_Z(eye[2]));
-  glui_tour_view[0] = TrimVal(DENORMALIZE_X(xyz_view[0]));
-  glui_tour_view[1] = TrimVal(DENORMALIZE_Y(xyz_view[1]));
-  glui_tour_view[2] = TrimVal(DENORMALIZE_Z(xyz_view[2]));
+  glui_tour_pause_time = selected_frame->pause_time;
+  glui_tour_xyz[0]  = TrimVal(SMV2FDS_X(eye[0]));
+  glui_tour_xyz[1]  = TrimVal(SMV2FDS_Y(eye[1]));
+  glui_tour_xyz[2]  = TrimVal(SMV2FDS_Z(eye[2]));
+  glui_tour_view[0] = TrimVal(SMV2FDS_X(xyz_view[0]));
+  glui_tour_view[1] = TrimVal(SMV2FDS_Y(xyz_view[1]));
+  glui_tour_view[2] = TrimVal(SMV2FDS_Z(xyz_view[2]));
   if(SPINNER_tour_time==NULL)return;
 
   {
@@ -380,6 +385,7 @@ extern "C" void SetGluiTourKeyframe(void){
     SPINNER_tour_time->set_float_val(glui_tour_time);
   }
 
+  SPINNER_tour_pause_time->set_float_val(glui_tour_pause_time);
   SPINNER_tour_time->set_float_val(glui_tour_time);
   SPINNER_x->set_float_val(glui_tour_xyz[0]);
   SPINNER_y->set_float_val(glui_tour_xyz[1]);
@@ -582,7 +588,7 @@ void TourCB(int var){
       if(selected_tour-tourinfo==0)dirtycircletour=1;
       selected_tour->startup=0;
       xyz_view = selected_frame->view_smv;
-      NORMALIZE_XYZ(xyz_view,glui_tour_view);
+      FDS2SMV_XYZ(xyz_view,glui_tour_view);
 
       if(update_tour_path==1)CreateTourPaths();
       selected_frame->selected=1;
@@ -596,11 +602,12 @@ void TourCB(int var){
       eye = selected_frame->xyz_smv;
       xyz_view = selected_frame->view_smv;
 
-      NORMALIZE_XYZ(eye,glui_tour_xyz);
+      FDS2SMV_XYZ(eye,glui_tour_xyz);
       memcpy(selected_frame->xyz_fds,           glui_tour_xyz, 3*sizeof(float));
       memcpy(selected_frame->xyz_smv, eye,      3*sizeof(float));
+      selected_frame->pause_time = glui_tour_pause_time;
 
-      NORMALIZE_XYZ(xyz_view,glui_tour_view);
+      FDS2SMV_XYZ(xyz_view,glui_tour_view);
       if(update_tour_path==1)CreateTourPaths();
       selected_frame->selected=1;
       TourCB(KEYFRAME_viewXYZ);
@@ -649,26 +656,29 @@ void TourCB(int var){
       nextkey=thiskey->next;
       if(nextkey==&thistour->last_frame){
         lastkey=thiskey->prev;
-        key_xyz[0] = DENORMALIZE_X(2*thiskey->xyz_smv[0]-lastkey->xyz_smv[0]);
-        key_xyz[1] = DENORMALIZE_Y(2*thiskey->xyz_smv[1]-lastkey->xyz_smv[1]);
-        key_xyz[2] = DENORMALIZE_Z(2*thiskey->xyz_smv[2]-lastkey->xyz_smv[2]);
+        key_xyz[0] = SMV2FDS_X(2*thiskey->xyz_smv[0]-lastkey->xyz_smv[0]);
+        key_xyz[1] = SMV2FDS_Y(2*thiskey->xyz_smv[1]-lastkey->xyz_smv[1]);
+        key_xyz[2] = SMV2FDS_Z(2*thiskey->xyz_smv[2]-lastkey->xyz_smv[2]);
         key_time_in = thiskey->time;
-        thiskey->time=(thiskey->time+lastkey->time)/2.0;
-        key_view[0] = DENORMALIZE_X(2*thiskey->view_smv[0]-lastkey->view_smv[0]);
-        key_view[1] = DENORMALIZE_Y(2*thiskey->view_smv[1]-lastkey->view_smv[1]);
-        key_view[2] = DENORMALIZE_Z(2*thiskey->view_smv[2]-lastkey->view_smv[2]);
+        thiskey->time=(thiskey->time+thiskey->pause_time+lastkey->time)/2.0;
+        key_view[0] = SMV2FDS_X(2*thiskey->view_smv[0]-lastkey->view_smv[0]);
+        key_view[1] = SMV2FDS_Y(2*thiskey->view_smv[1]-lastkey->view_smv[1]);
+        key_view[2] = SMV2FDS_Z(2*thiskey->view_smv[2]-lastkey->view_smv[2]);
       }
       else{
         float t_avg;
 
         t_avg = (thiskey->time+nextkey->time)/2.0;
-        GetTourXYZ(t_avg,  thiskey, key_xyz);
-        DENORMALIZE_XYZ(key_xyz, key_xyz);
+        GetKeyXYZ(t_avg,  thiskey, key_xyz);
+        SMV2FDS_XYZ(key_xyz, key_xyz);
         key_time_in = (thiskey->time+nextkey->time)/2.0;
-        GetTourView(t_avg, thiskey, key_view);
-        DENORMALIZE_XYZ(key_view, key_view);
+        GetKeyView(t_avg, thiskey, key_view);
+        SMV2FDS_XYZ(key_view, key_view);
       }
-      newframe=AddFrame(selected_frame, key_time_in, key_xyz, key_view);
+      newframe = AddFrame(selected_frame, key_time_in, 0.0, key_xyz, key_view);
+#ifdef pp_TOUR      
+      UpdateKeyframeDups(thistour);
+#endif
       CreateTourPaths();
       NewSelect(newframe);
       SetGluiTourKeyframe();
@@ -680,6 +690,9 @@ void TourCB(int var){
       selected_frame=DeleteFrame(selected_frame);
       if(selected_frame!=NULL){
         selected_frame->selected=1;
+#ifdef pp_TOUR      
+        UpdateKeyframeDups(thistour);
+#endif
         CreateTourPaths();
       }
       else{
@@ -759,6 +772,9 @@ void TourCB(int var){
   case TOUR_REVERSE:
     if(selectedtour_index>=0&&selectedtour_index<ntourinfo){
       ReverseTour(tourinfo[selectedtour_index].label);
+#ifdef pp_TOUR
+      UpdateKeyframeDups(tourinfo + selectedtour_index);
+#endif
     }
     break;
   case TOUR_INSERT_NEW:

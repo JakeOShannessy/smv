@@ -5,10 +5,16 @@
 #include "gd.h"
 #endif
 
+EXTERNCPP void UpdatePartPointSize(void);
 EXTERNCPP float GetTime(void);
+EXTERNCPP void StartTimer(float *timerptr);
+EXTERNCPP void UpdatePlot2DTbounds(void);
+EXTERNCPP void UpdateBoundTbounds(void);
 
 // gen plot routines
 
+EXTERNCPP int HavePlot2D(float **times, int *ntimes);
+EXTERNCPP void UpdatePlot2DINI(void);
 EXTERNCPP void UpdatePlotLabel(void);
 EXTERNCPP char *GetPlotUnit2(plot2ddata *plot2di, curvedata *curve);
 EXTERNCPP char *GetPlotShortLabel2(plot2ddata *plot2di, curvedata *curv);
@@ -23,7 +29,6 @@ EXTERNCPP void DrawGenPlots(void);
 EXTERNCPP int HaveGenDev(void);
 EXTERNCPP int HaveGenHrr(void);
 EXTERNCPP void ShowPlot2D(void);
-EXTERNCPP void ReadAllCSV(int flag);
 EXTERNCPP char *GetPlotShortLabel(plot2ddata *plot2di, int curv_index);
 EXTERNCPP csvdata *GetCsvData(int file_index, int col_index, csvfiledata **csvf_ptr);
 EXTERNCPP csvdata *GetCsvCurve(int i, csvfiledata **csvf_ptr);
@@ -250,6 +255,14 @@ EXTERNCPP void CloseRollouts(GLUI *dialog);
 #endif
 #endif
 
+EXTERNCPP void ReadAllCSVFilesMT(void);
+EXTERNCPP void ReadAllCSVFiles(void);
+EXTERNCPP void UpdateCSVFileTypes(void);
+#ifdef pp_CSV_MULTI
+EXTERNCPP void FinishAllCSVFiles(void);
+EXTERNCPP void LockCSV(void);
+EXTERNCPP void UnLockCSV(void);
+#endif
 EXTERNCPP int HaveFireLoaded(void);
 EXTERNCPP int HaveSootLoaded(void);
 EXTERNCPP void Smoke3dCB(int var);
@@ -265,8 +278,13 @@ EXTERNCPP void UpdateGluiPartFast(void);
 EXTERNCPP void InitRolloutList(void);
 EXTERNCPP void UpdateCO2ColorbarList(int value);
 EXTERNCPP void UpdateFireColorbarList(void);
-EXTERNCPP void GetTourXYZ(float t, keyframe *this_key, float *xyz);
-EXTERNCPP void GetTourView(float t, keyframe *this_key, float *view);
+EXTERNCPP void GetKeyXYZ(float t, keyframe *this_key, float *xyz);
+EXTERNCPP void GetTourXYZ(float t, tourdata *this_tour, float *xyz);
+EXTERNCPP void GetKeyView(float t, keyframe *this_key, float *view);
+EXTERNCPP void GetTourView(float t, tourdata *this_tour, float *view);
+#ifdef pp_TOUR
+EXTERNCPP void UpdateKeyframeDups(tourdata *touri);
+#endif
 EXTERNCPP int GetTourFrame(tourdata *touri, int itime);
 EXTERNCPP int MeshConnect(meshdata *mesh_from, int val, meshdata *mesh_to);
 EXTERNCPP int IsBottomMesh(meshdata *mesh_from);
@@ -933,7 +951,7 @@ EXTERNCPP void InitCircularTour(tourdata *touri, int nkeyframes, int option);
 EXTERNCPP void DeleteTourFrames(tourdata *thistour);
 EXTERNCPP keyframe *DeleteFrame(keyframe *step);
 EXTERNCPP void ReallocTourMemory(void);
-EXTERNCPP keyframe *AddFrame(keyframe *framei, float time, float *xyz,float view[3]);
+EXTERNCPP keyframe *AddFrame(keyframe *framei, float time, float pause_time, float *xyz, float view[3]);
 
 EXTERNCPP void GetBlockVals(float *xmin, float *xmax,
                    float *ymin, float *ymax,

@@ -317,8 +317,8 @@ int SetupCase(char *filename){
   }
   glui_defined = 1;
   InitTranslate(smokeview_bindir, tr_name);
-
   PRINT_TIMER(timer_start, "InitTranslate");
+
   if(ntourinfo==0)SetupTour();
 #ifdef pp_GLUI
   InitRolloutList();
@@ -336,7 +336,7 @@ int SetupCase(char *filename){
   GluiStereoSetup(mainwindow_id);
   Glui3dSmokeSetup(mainwindow_id);
 #endif
-  PRINT_TIMER(timer_start, "dialogs");
+  PRINT_TIMER(timer_start, "all dialogs");
 
   UpdateLights(light_position0, light_position1);
 

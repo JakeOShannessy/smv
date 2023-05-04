@@ -17,12 +17,20 @@
 //#define pp_COLORBAR_CONSTANT  // make colorbar brightness constant in colorbar dialog box
 //define pp_COLORBAR_HSL        // add option to display color bar in terms of HSL (hue, saturation, lightness)
 
-// add option to plot 2d max vals
-//#define pp_PLOT2DMAX
+//#define pp_PLOT2DMAX // add option to plot 2d max vals
+#define pp_CFAST_CSV // look for cfast spreadsheet files
 
 //*** parallel file loading
 #define pp_SLICE_MULTI        // load slice files in parallel
 #define pp_PART_MULTI         // load particle files in parallel
+#define pp_CSV_MULTI          // read in csv files in parallel
+
+//#define pp_TOUR               // handle duplicate keyframes
+//#define pp_BNDF               // merge geometry and structured boundary files in load menus
+
+#define pp_TERRAIN_CFACES       // draw terrain over cfaces and regular geometry
+
+//#define pp_DPRINT             // turn on debug print (file, line number)
 
 // streaming directives
 

@@ -292,8 +292,8 @@ void DrawColorbarPathRGB(void){
     }
     glEnd();
 
-    xdenorm = DENORMALIZE_X(1.55);
-    ydenorm = DENORMALIZE_Y(0.0);
+    xdenorm = SMV2FDS_X(1.55);
+    ydenorm = SMV2FDS_Y(0.0);
     if(fontindex==SCALED_FONT)ScaleFont3D();
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
@@ -303,7 +303,7 @@ void DrawColorbarPathRGB(void){
       float dzpoint;
 
       dzpoint = (float)cbi->index_node[i]/255.0;
-      zdenorm = DENORMALIZE_Z(dzpoint);
+      zdenorm = SMV2FDS_Z(dzpoint);
       sprintf(cbuff,"%i",(int)cbi->index_node[i]);
       Output3Text(foregroundcolor, xdenorm,ydenorm,zdenorm, cbuff);
     }
@@ -812,11 +812,8 @@ void InitDefaultColorbars(int nini){
 #ifdef pp_COLORBARS_CSV
   filelistdata *linear_filelist=NULL, *cyclic_filelist=NULL,*rainbow_filelist=NULL;
   char filter_linear[256], filter_cyclic[256], filter_rainbow[256];
-  FILE *stream_colorbar=NULL;
 
-  stream_colorbar = fopen(colorbarsdir, "r");
-  if(colorbarsdir!=NULL&&stream_colorbar!=NULL){
-    fclose(stream_colorbar);
+  if(colorbarsdir!=NULL){
     strcpy(filter_linear, "CET-L*.csv");
     nlinear_filelist = GetFileListSize(colorbarsdir, filter_linear);
     strcpy(filter_cyclic, "CET-C*.csv");

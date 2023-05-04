@@ -504,11 +504,11 @@ void UpdateShow(void){
         }
       }
     }
-    for(ii=0;ii<npatch_loaded;ii++){
+    for(i=0;i<npatchinfo;i++){
       patchdata *patchi;
 
-      i = patch_loaded_list[ii];
       patchi=patchinfo+i;
+      if(patchi->loaded == 0)continue;
       if(patchi->boundary == 0 && patchi->display == 1 && patchi->shortlabel_index == slicefile_labelindex){
         sliceflag = 1;
         slicecolorbarflag = 1;
@@ -573,8 +573,6 @@ void UpdateShow(void){
 
   patchflag=0;
   if(visTimeBoundary==1){
-    int ii;
-
     for (i = 0; i < ngeominfo; i++) {
       geomdata *geomi;
 
@@ -582,11 +580,11 @@ void UpdateShow(void){
       geomi->patchactive = 0;
     }
     wall_cell_color_flag=0;
-    for(ii=0;ii<npatch_loaded;ii++){
+    for(i=0;i<npatchinfo;i++){
       patchdata *patchi;
 
-      i = patch_loaded_list[ii];
       patchi=patchinfo+i;
+      if(patchi->loaded == 0)continue;
       if(patchi->boundary == 1 && patchi->display == 1 && patchi->shortlabel_index == iboundarytype){
         if (strcmp(patchi->label.shortlabel, "wc") == 0)wall_cell_color_flag = 1;
         patchflag = 1;
@@ -616,7 +614,7 @@ void UpdateShow(void){
   ReadPartFile = partflag;
 
   plot2dflag = 0;
-  if(GenDevShow() == 1 || GenHrrShow() == 1)plot2dflag = 1;
+  if(GenDevShow() == 1 || GenHrrShow() == 1 || HavePlot2D(NULL,NULL)==1)plot2dflag = 1;
 
   shooter_flag=0;
   if(visShooter!=0&&shooter_active==1){
@@ -1044,6 +1042,45 @@ float GetTime(void){
 
   /* ------------------ MergeGlobalTimes ------------------------ */
 
+void MergeGlobalTimes(float *t, int n);
+
+void TruncateGlobalTimes(void){
+  int i, ibeg, iend;
+  
+  if(use_tload_begin == 0 && use_tload_end == 0)return;
+  if(nglobal_times==0 || global_times==NULL)return;
+  ibeg = 0;
+  iend = nglobal_times - 1;
+  if(use_tload_begin==1){
+    for(i=0;i<nglobal_times;i++){
+      if(tload_begin<global_times[i]){
+        ibeg = i;
+        break;
+      }
+    }
+  }
+  if(use_tload_end==1){
+    for(i=nglobal_times-1;i>=0;i--){
+      if(global_times[i]<tload_end){
+        iend = i;
+        break;
+      }
+    }
+  }
+  for(i=ibeg;i<=iend;i++){
+    global_times[i-ibeg] = global_times[i];
+  }
+  nglobal_times = iend + 1 - ibeg;
+  if(use_tload_begin==1){
+    MergeGlobalTimes(&tload_begin, 1);
+  }
+  if(use_tload_end==1){
+    MergeGlobalTimes(&tload_end, 1);
+  }
+}
+
+  /* ------------------ MergeGlobalTimes ------------------------ */
+
 void MergeGlobalTimes(float *time_in, int ntimes_in){
   int left, right, nbuffer, i;
   float dt_eps;
@@ -1176,6 +1213,14 @@ void UpdateTimes(void){
   if(vis_hrr_plot==1&&hrrptr!=NULL){
     MergeGlobalTimes(timeptr->vals, timeptr->nvals);
   }
+  {
+    float *times = NULL;
+    int ntimes = 0;
+    
+    if(HavePlot2D(&times, &ntimes)==1){
+      MergeGlobalTimes(times, ntimes);
+    }
+  }
   if(GenDevShow()==1){
     MergeGlobalTimes(deviceinfo->times, deviceinfo->nvals);
   }
@@ -1298,6 +1343,10 @@ void UpdateTimes(void){
     if(touri->display==0)continue;
     MergeGlobalTimes(touri->path_times, touri->ntimes);
   }
+
+  TruncateGlobalTimes();
+
+  //--------------------------------------------------------------
 
   CheckMemory;
 
@@ -1618,7 +1667,7 @@ int GetPlotStateSub(int choice){
         stept = 1;
         return DYNAMIC_PLOTS;
       }
-      if(GenDevShow() == 1 || GenHrrShow() == 1){
+      if(GenDevShow() == 1 || GenHrrShow() == 1 || HavePlot2D(NULL,NULL)==1){
         stept = 1;
         return DYNAMIC_PLOTS;
       }
@@ -1650,10 +1699,11 @@ int GetPlotStateSub(int choice){
         if(vslicei->display==0||vslicei->vslicefile_labelindex!=slicefile_labelindex)continue;
         return DYNAMIC_PLOTS;
       }
-      for(i=0;i<npatch_loaded;i++){
+      for(i=0;i<npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo + patch_loaded_list[i];
+        patchi = patchinfo + i;
+        if(patchi->loaded == 0)continue;
         if (patchi->display == 1) {
           if(patchi->boundary == 1 && patchi->shortlabel_index == iboundarytype)return DYNAMIC_PLOTS;
           if(patchi->boundary == 0 && patchi->shortlabel_index == slicefile_labelindex)return DYNAMIC_PLOTS;
@@ -1884,6 +1934,18 @@ int HaveSootLoaded(void) {
 void UpdateShowScene(void){
   have_fire  = HaveFireLoaded();
   have_smoke = HaveSootLoaded();
+  if(update_loadall_textures == 1){
+    update_loadall_textures = 0;
+    TextureShowMenu(MENU_TEXTURE_SHOWALL2);
+  }
+  if(update_plot2dini == 1){
+    update_plot2dini = 0;
+    UpdatePlot2DINI();
+  }
+  if(update_device_timeaverage == 1){
+    update_device_timeaverage = 0;
+    DeviceCB(DEVICE_TIMEAVERAGE);
+  }
   if(update_smoke_alphas==1){
     update_smoke_alphas = 0;
     UpdateSmokeAlphas();

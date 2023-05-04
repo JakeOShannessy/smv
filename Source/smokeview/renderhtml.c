@@ -598,15 +598,15 @@ void GetSliceGeomVerts(int option, int option2, int *offset, float *verts, unsig
             v1 = trii->verts[0];
             v2 = trii->verts[1];
             v3 = trii->verts[2];
-            *verts++ = NORMALIZE_X(v1->xyz[0]);
-            *verts++ = NORMALIZE_Y(v1->xyz[1]);
-            *verts++ = NORMALIZE_Z(v1->xyz[2]);
-            *verts++ = NORMALIZE_X(v2->xyz[0]);
-            *verts++ = NORMALIZE_Y(v2->xyz[1]);
-            *verts++ = NORMALIZE_Z(v2->xyz[2]);
-            *verts++ = NORMALIZE_X(v3->xyz[0]);
-            *verts++ = NORMALIZE_Y(v3->xyz[1]);
-            *verts++ = NORMALIZE_Z(v3->xyz[2]);
+            *verts++ = FDS2SMV_X(v1->xyz[0]);
+            *verts++ = FDS2SMV_Y(v1->xyz[1]);
+            *verts++ = FDS2SMV_Z(v1->xyz[2]);
+            *verts++ = FDS2SMV_X(v2->xyz[0]);
+            *verts++ = FDS2SMV_Y(v2->xyz[1]);
+            *verts++ = FDS2SMV_Z(v2->xyz[2]);
+            *verts++ = FDS2SMV_X(v3->xyz[0]);
+            *verts++ = FDS2SMV_Y(v3->xyz[1]);
+            *verts++ = FDS2SMV_Z(v3->xyz[2]);
           }
           *offset += 3*geomlisti->ntriangles;
         }
@@ -853,7 +853,7 @@ void GetSliceNodeVerts(int option, int option2,
                   *verts++ = xplt[i];
                   *verts++ = yplt[j];
                   if(slicei->slice_filetype==SLICE_TERRAIN){
-                    *verts++ = NORMALIZE_Z(zplt[i*ny+j] + agl);
+                    *verts++ = FDS2SMV_Z(zplt[i*ny+j] + agl);
                   }
                   else{
                     *verts++ = constval;
@@ -953,7 +953,7 @@ void GetGeometryNodes(int option, int *offset, float *verts, float *norms, float
         }
         xyz_in = geomlisti->verts[j].xyz;
         norm_in = geomlisti->verts[j].vert_norm;
-        NORMALIZE_XYZ(xyz_out, xyz_in);
+        FDS2SMV_XYZ(xyz_out, xyz_in);
         *verts++ = xyz_out[0];
         *verts++ = xyz_out[1];
         *verts++ = xyz_out[2];

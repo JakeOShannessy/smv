@@ -245,6 +245,14 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define STOP_TIMER(a) a = glutGet(GLUT_ELAPSED_TIME)/1000.0 - a
 #endif
 
+#ifndef INIT_PRINT_TIMER
+#define INIT_PRINT_TIMER(timer)   float timer;START_TIMER(timer)
+#endif
+#ifndef PRINT_TIMER
+#define PRINT_TIMER(timer, label) PrintTime(__FILE__, __LINE__, &timer, label)
+#endif
+
+
 #ifndef START_TICKS
 #define START_TICKS(a) a = glutGet(GLUT_ELAPSED_TIME)
 #endif
@@ -523,10 +531,20 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define TEPS 0.00
 
+#define CSV_UNDEFINED 0
+#define CSV_DEFINED   1
+#define CSV_DEFINING  2
+
 #define PART_POINTS     1
 #define PART_SPHERES    2
 #define PART_LINES      3
 #define PART_SMV_DEVICE 4
+
+#define PART_MIN_SIZE    1.0
+#define PART_MAX_SIZE  100.0
+
+#define PART_MIN_WIDTH   1.0
+#define PART_MAX_WIDTH 100.0
 
 #define DOUBLE_BUFFER 2
 #define SINGLE_BUFFER 1
@@ -1055,8 +1073,9 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MENU_TOUR_CLEARALL     -13
 #define MENU_TOUR_SETTINGS     -14
 
-#define MENU_TEXTURE_SHOWALL -1
-#define MENU_TEXTURE_HIDEALL -2
+#define MENU_TEXTURE_SHOWALL  -1
+#define MENU_TEXTURE_HIDEALL  -2
+#define MENU_TEXTURE_SHOWALL2 -3
 
 #define MENU_SHOWHIDE_FLIP 15
 
