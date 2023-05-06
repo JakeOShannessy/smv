@@ -2996,6 +2996,13 @@ void Keyboard(unsigned char key, int flag){
       updatemenu = 1;
       break;
     case '<':
+      if(keystate == GLUT_ACTIVE_ALT){
+        colorbartype--;
+        if(colorbartype < 0)colorbartype=ncolorbars-1;
+        ColorbarMenu(colorbartype);
+        updatemenu = 1;
+        break;
+      }
       vectorpointsize+=2;
       if(vectorpointsize>20.0)vectorpointsize = 1.0;
 #ifdef pp_GLUI
@@ -3004,6 +3011,13 @@ void Keyboard(unsigned char key, int flag){
       updatemenu = 1;
       break;
     case '>':
+      if(keystate == GLUT_ACTIVE_ALT){
+        colorbartype++;
+        if(colorbartype >= ncolorbars)colorbartype = 0;
+        ColorbarMenu(colorbartype);
+        updatemenu = 1;
+        break;
+      }
       vectorpointsize-=2;
       if(vectorpointsize<1.0)vectorpointsize = 20.0;
 #ifdef pp_GLUI
@@ -3058,8 +3072,16 @@ void Keyboard(unsigned char key, int flag){
       script_step_now=1;
       break;
     case '&':
-      ToggleMetroMode();
-      PRINTF("HVAC metro view mode=%i\n",hvac_metro_view);
+      if(keystate==GLUT_ACTIVE_ALT){
+        if(nhvacinfo > 0){
+          ToggleMetroMode();
+          PRINTF("HVAC metro view mode=%i\n", hvac_metro_view);
+        }
+      }
+      else{
+        antialiasflag = 1 - antialiasflag;
+        PRINTF("antialiasflag=%i\n", antialiasflag);
+      }
       break;
     case '*':
       visx_all=0;
