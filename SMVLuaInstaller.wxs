@@ -1,4 +1,4 @@
-﻿<?define ProductVersion = "1.2.29"?>
+﻿<?define ProductVersion = "1.2.30"?>
 <?define ProductUpgradeCode = "1940d8a1-c842-442f-bf5d-00a570219bdb"?>
 
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
