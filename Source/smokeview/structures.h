@@ -41,26 +41,38 @@ typedef struct _procdata {
 } procdata;
 #endif
 
-/* --------------------------  csvdata ------------------------------------ */
-typedef struct _csvdata{
+/// @brief A single vector of data from a CSV file.
+typedef struct _csvdata {
+  /// @brief The names of the quantity being measured, and its units. UNKNOWN:
+  /// \ref flowlabels has a shortname and a longname, but vectors from CSV files
+  /// only have a single name. How is this resolved?
   flowlabels label;
   float val, *vals, *vals_orig;
+  /// @brief The maximum and minimum values of the vector.
   float valmin, valmax;
+  /// @brief The length of the arrays 'vals' and 'vals_org'.
   int nvals;
-  int dimensionless, skip;
+  /// @brief Boolean: Is this vector dimensionless?
+  int dimensionless;
+  int skip;
 } csvdata;
 
-/* --------------------------  _csvfiledata ------------------------------------ */
-
-#define CSV_FDS_FORMAT   0
+/// @brief Data from a CSV file.
+#define CSV_FDS_FORMAT 0
 #define CSV_CFAST_FORMAT 1
 typedef struct _csvfiledata {
+  /// @brief The filename of the CSV file
   char *file;
-  csvdata *csvinfo, *time;
+  /// @brief The other vectors in the CSV file.
+  csvdata *csvinfo;
+  /// @brief The time vector of the CSV file.
+  csvdata *time;
   int defined, glui_defined;
+  /// @brief The length of the array 'csvinfo'.
   int ncsvinfo;
   int format;
   int loaded, display;
+  /// @brief The type of the CSV file (e.g., 'devc,'hrr','ctr;)
   char c_type[32];
 } csvfiledata;
 
@@ -508,6 +520,7 @@ typedef struct _cadquad {
 typedef struct _clipdata {
   int option;
   GLdouble clipvals[24];
+  /// @brief TODO: This seems duplicated in cameradata.
   int clip_xmin, clip_xmax;
   int clip_ymin, clip_ymax;
   int clip_zmin, clip_zmax;
@@ -684,7 +697,14 @@ typedef struct _meshplanedata {
 /* --------------------------  mesh ------------------------------------ */
 
 typedef struct _meshdata {
-  int ibar, jbar, kbar;
+  /// @brief Number of cells in the x-direction.
+  int ibar;
+  /// @brief Number of cells in the y-direction.
+  int jbar;
+  /// @brief Number of cells in the z-direction.
+  int kbar;
+  /// @brief A measure of cell size defined as sqrt(dx*dx+dy*dy+dz*dz), i.e.,
+  /// the diagonal of a cell. TODO: Could be a function.
   float cellsize;
   int ncvents,nvents,ndummyvents;
   int nbptrs;
@@ -717,10 +737,12 @@ typedef struct _meshdata {
   float *xplt_orig, *yplt_orig, *zplt_orig;
   float x0, x1, y0, y1, z0, z1;
   int drawsides[7];
-  int extsides[7];   // 1 if on exterior side of a supermesh, 0 otherwise
-  int is_extface[6]; //  MESH_EXT if face i is completely adjacent to exterior,
-                     //  MESH_INT if face i is completely adjacent to another mesh,
-                     // MESH_BOTH if face i is neither
+  /// @brief 1 if on exterior side of a supermesh, 0 otherwise
+  int extsides[7];
+  /// @brief MESH_EXT if face i is completely adjacent to exterior,
+  /// MESH_INT if face i is completely adjacent to another mesh,
+  /// MESH_BOTH if face i is neither
+  int is_extface[6];
   int inside;
   float boxmin[3], boxmiddle[3], boxmax[3], dbox[3], boxeps[3], dcell, dcell3[3], verts[24], eyedist;
   float boxeps_fds[3];
@@ -1018,6 +1040,8 @@ typedef struct _hrrdata {
   int inlist1;
   int nvals;
   int base_col;
+  /// @brief The names of the quantity being measured, and its units. UNKNOWN:
+  /// How does this vary?
   flowlabels label;
 } hrrdata;
 
@@ -1128,18 +1152,47 @@ typedef struct _mousedata {
 /* --------------------------  cameradata ------------------------------------ */
 
 typedef struct _cameradata {
-  int defined,dirty;
+  /// @brief Is this camera defined? TODO: This is written to but never read.
+  int defined;
+  int dirty;
+  /// @brief Orthographic or perspective projection.
   int projection_type;
-  int rotation_type, rotation_index;
-  float eye[3], view[3], up[3], eye_save[3];
+  /// @brief How should rotation be treated? There are a number of options:
+  /// #define ROTATION_2AXIS             0
+  /// #define EYE_CENTERED               1
+  /// #define ROTATION_1AXIS             2
+  /// #define ROTATION_3AXIS             3
+  int rotation_type;
+  /// @brief UNKNOWN
+  int rotation_index;
+  /// @brief UNKNOWN
+  float eye[3];
+  /// @brief UNKNOWN
+  float view[3];
+  /// @brief UNKNOWN
+  float up[3];
+  /// @brief UNKNOWN
+  float eye_save[3];
+  /// @brief UNKNOWN
   float isometric_y;
+  /// @brief Azimuth and elevation.
   float az_elev[2];
-  float view_angle, azimuth, elevation;
+  float view_angle;
+  /// @brief Azimuth (again).
+  float azimuth;
+  /// @brief Elevation (again).
+  float elevation;
   float xcen, ycen, zcen;
   float zoom;
+  /// @brief Boolean: Is a quaterion ('quaternion') defined.
   int quat_defined;
   float quaternion[4];
 
+  /// @brief The clipping mode. One of:
+  ///     - CLIP_OFF            0
+  ///     - CLIP_BLOCKAGES_DATA 1
+  ///     - CLIP_BLOCKAGES      2
+  ///     - CLIP_DATA           3
   int clip_mode;
   int clip_xmin, clip_xmax;
   int clip_ymin, clip_ymax;
@@ -1149,7 +1202,9 @@ typedef struct _cameradata {
   float zmin, zmax;
 
   int view_id;
-  struct _cameradata *next,*prev;
+  /// @brief References to other cameras as part of the linked list.
+  struct _cameradata *next, *prev;
+  /// @brief The name of the camera.
   char name[301];
 } cameradata;
 
@@ -1225,6 +1280,7 @@ typedef struct _partdata {
   int have_bound_file;
   int seq_id, autoload, loaded, skipload, request_load, display, reload, finalize;
   int loadstatus, boundstatus;
+  /// @brief Enum: The type of compression used in the file.
   int compression_type;
   int blocknumber;
   int *timeslist, ntimes, itime;
@@ -1242,8 +1298,11 @@ typedef struct _partdata {
   histogramdata **histograms;
   int bounds_set;
   float *global_min, *global_max;
-  float *valmin_fds, *valmax_fds;   // read in from .bnd files
-  float *valmin_smv, *valmax_smv;   // computed by smokeview
+  /// @brief The minimum and maximum values as read from
+  /// .bnd files, calculated by FDS.
+  float *valmin_fds, *valmax_fds;
+  /// @brief The minimum and maximum values as computed by smokeview.
+  float *valmin_smv, *valmax_smv;
   int nfilebounds;
   unsigned char *vis_part;
   int *tags;
@@ -1360,97 +1419,208 @@ typedef struct _menudata {
   char label[256];
 } menudata;
 
-/* --------------------------  filebounddata ------------------------------------ */
-
+/// @brief For a given file name, what are the maximum and minimum values found
+/// in that file.
 typedef struct _fileboundsdata {
+  /// @brief The name of the file.
   char file[255];
+  /// @brief The maximum and minimum values in the file.
   float valmin, valmax;
 } fileboundsdata;
 
-/* --------------------------  slicedata ------------------------------------ */
-
+/// @brief Holds information and the data of a given slice.
 typedef struct _slicedata {
+  /// @brief Autoloading parameters.
   int seq_id, autoload;
-  char *file, *size_file, *bound_file;
+  /// @brief The name of the file.
+  char *file;
+  /// @brief Filename of the file containing size information on this slice.
+  /// Generally the name of the slice file itself with ".sz" appended.
+  char *size_file;
+  /// @brief Filename of the file containing bounds information on this slice.
+  /// Generally the name of the slice file itself with ".bnd" appended.
+  char *bound_file;
+  /// @brief Boolean: Does this slice have an accompanying bounds file (as named
+  /// in 'bound_file')?
   int have_bound_file;
+  /// @brief  UNKNOWN
   char *comp_file, *reg_file, *vol_file;
+  /// @brief UNKNOWN
   char *geom_file;
+  /// @brief The number of frames the slice file contains. Sourced from the
+  /// header of the slice file itself.
   int nframes;
+  /// @brief UNKNOWN
   int finalize;
+  /// @brief The SLCF index as recorded in the SMV file. These may not
+  /// be numbered from zero.
   int slcf_index;
+  /// @brief The name of the slice, as per the ID parameter in the
+  /// input file. If there is no ID parameter, this field is
+  /// NULL.
   char *slicelabel;
+  /// @brief Enum: The type of compression used in the file.
   int compression_type;
+  /// @brief UNKNOWN
   int colorbar_autoflip;
+  /// @brief UNKNOWN
   int ncompressed;
+  /// @brief Enum: An indicator on what type of slice, be it Geom, Cell
+  /// Centred, Face Centred, or Terrain.
   int slice_filetype;
+  /// @brief A pointer to the multi-slice that this slice is a part of. TODO:
+  /// Could a slice be part of more than one multislice?
   struct _multislicedata *mslice;
+  /// @brief Boolean: Is this an FED slice?
   int is_fed;
+  /// @brief UNKNOWN
   feddata *fedptr;
+  /// @brief Boolean: Indicates if this should be shown in the menus.
   int menu_show;
+  /// @brief UNKNOWN
   float *constant_color;
+  /// @brief UNKNOWN
   float qval256[256];
+  /// @brief UNKNOWN
   int loaded, loading, display;
+  /// @brief UNKNOWN
   int loaded_save, display_save;
+  /// @brief UNKNOWN
   float position_orig;
+  /// @brief The mesh in which this slice sits.
   int blocknumber;
+  /// @brief UNKNOWN
   int cell_center_edge;
+  /// @brief UNKNOWN
   int firstshort_slice;
+  /// @brief UNKNOWN
   int vec_comp;
+  /// @brief UNKNOWN
   int skipdup;
+  /// @brief UNKNOWN
   int setvalmin, setvalmax;
+  /// @brief UNKNOWN
   float valmin, valmax;
+  /// @brief UNKNOWN
   float globalmin, globalmax;
+  /// @brief UNKNOWN
   float valmin_data, valmax_data;
-  float valmin_fds, valmax_fds;   // read in from .bnd files
-  float valmin_smv, valmax_smv;   // computed by smokeview
-  float diff_valmin,  diff_valmax;
+  /// @brief The minimum and maximum values as read from
+  /// .bnd files, calculated by FDS.
+  float valmin_fds, valmax_fds;
+  /// @brief The minimum and maximum values as computed by smokeview.
+  float valmin_smv, valmax_smv;
+  /// @brief UNKNOWN
+  float diff_valmin, diff_valmax;
+  /// @brief The names of the quantity being measured, and its units.
   flowlabels label;
-  float *qslicedata, *qsliceframe, *times, *qslice;
+  /// @brief The slice data itself. This is an array of frames. Each frames has
+  /// 'nsliceijk' values in it. UNKNOWN: Is it guaranteed that there are
+  /// 'nframes' frames in this array?
+  float *qslicedata;
+  /// @brief UNKNOWN
+  float *qsliceframe, *qslice;
+  /// @brief The length of the array 'times'. UNKNOWN: How does ntimes relate to
+  /// nframes? In most cases they should be the same. It's not clear if there
+  /// are cases where they aren't.
+  int ntimes;
+  /// @brief The simulation time values (in seconds) for each frame.
+  float *times;
+  /// @brief UNKNOWN
   unsigned char *qslicedata_compressed;
+  /// @brief UNKNOWN
   unsigned char *slicecomplevel;
+  /// @brief UNKNOWN
   unsigned char full_mesh;
+  /// @brief UNKNOWN
   contour *line_contours;
+  /// @brief UNKNOWN
   int nline_contours;
+  /// @brief UNKNOWN
   compdata *compindex;
+  /// @brief UNKNOWN
   unsigned char *slicelevel;
+  /// @brief A string used to describe this slice in menus,
+  /// usually in the format "[AXIS]=[OFFSET]".
   char menulabel[128];
+  /// @brief A string used to describe this slice in menus,
+  /// usually in the format "[QUANTITY], [AXIS]=[OFFSET]".
   char menulabel2[128];
+  /// @brief UNKNOWN
   float *rgb_slice_ptr[256];
-  int ntimes,ntimes_old,itime;
+  /// @brief UNKNOWN
+  int ntimes_old, itime;
+  /// @brief UNKNOWN
   unsigned char *iqsliceframe;
+  /// @brief UNKNOWN
   float above_ground_level;
+  /// @brief UNKNOWN
   int have_agl_data;
+  /// @brief Boolean: Is this a 3d slice (i.e., does it have volume)?
   int volslice;
+  /// @brief UNKNOWN
   int is1, is2, js1, js2, ks1, ks2;
   int iis1, iis2, jjs1, jjs2, kks1, kks2;
   int *imap, *jmap, *kmap;
   int n_imap, n_jmap, n_kmap;
   int plotx, ploty, plotz;
   int ijk_min[3], ijk_max[3];
-  float xmin,xmax,ymin,ymax,zmin,zmax;
+  /// @brief UNKNOWN
+  float xmin, xmax, ymin, ymax, zmin, zmax;
+  /// @brief UNKNOWN
   float xyz_min[3], xyz_max[3];
-  int nsliceijk;
+  /// @brief UNKNOWN
   int *timeslist;
+  /// @brief A string describing the location of the slice. E.g., an
+  /// axis and an offset or a 3D slice.
   char cdir[256];
+  /// @brief The exis along which this slice lies.
   int idir;
+  /// @brief The offset from zero along the axis dictacted by \ref
+  /// _slicedata.idir
   float sliceoffset;
-  int nslicei, nslicej, nslicek;
+  /// @brief The number of 'points' in x-dimnension of the slice the slice.
+  int nslicei;
+  /// @brief The number of 'points' in y-dimnension of the slice the slice.
+  int nslicej;
+  /// @brief The number of 'points' in z-dimnension of the slice the slice.
+  int nslicek;
+  /// @brief The number of 'points' in the slice. Equivalent to
+  /// nslicei*nslicej*nslicek.
+  int nsliceijk;
+  /// @brief UNKNOWN
   int nslicex, nslicey;
+  /// @brief UNKNOWN
   int ndirxyz[4];
+  /// @brief UNKNOWN
   int nslicetotal;
+  /// @brief UNKNOWN
   int slicefile_labelindex;
+  /// @brief UNKNOWN
   int vloaded, uvw;
+  /// @brief UNKNOWN
   int cell_center;
+  /// @brief UNKNOWN
   float delta_orig, dplane_min, dplane_max;
+  /// @brief UNKNOWN
   int extreme_min, extreme_max;
+  /// @brief UNKNOWN
   histogramdata *histograms;
+  /// @brief UNKNOWN
   histogramdata *histogram;
+  /// @brief The number of histograms. Must always equal the length of
+  /// the array pointed to by \ref _slicedata.histograms
   int nhistograms;
+  /// @brief UNKNOWN
   struct _patchdata *patchgeom;
+  /// @brief The file size (in bytes) of the file which holds this slice.
   FILE_SIZE file_size;
+  /// @brief UNKNOWN
   int *geom_offsets;
+  /// @brief UNKNOWN
   devicedata vals2d;
 #ifdef pp_SLICE_MULTI
+  /// @brief UNKNOWN
   int loadstatus;
 #endif
 } slicedata;
@@ -1463,11 +1633,21 @@ typedef struct _slicemenudata {
 
 /* --------------------------  multislicedata ------------------------------------ */
 
+/// @brief Holds references to a collection of slices that can be loaded/display
+/// together. Could be considered a "slice group".
 typedef struct _multislicedata {
-  int seq_id, autoload;
-  int loaded, display;
+  int seq_id;
+  int autoload;
+  /// @brief Has this multislice been loaded?
+  int loaded;
+  /// @brief Is this multislice being displayed?
+  int display;
   int ndirxyz[4];
-  int *islices, nslices;
+  /// @brief An array of the slice indices that make up this multislice. These
+  /// indices are indices into the @ref sliceinfo array.
+  int *islices;
+  /// @brief The length of the @ref islices array.
+  int nslices;
   int slice_filetype;
   char menulabel[128];
   char menulabel2[128];
@@ -1476,10 +1656,18 @@ typedef struct _multislicedata {
 /* --------------------------  multivslicedata ------------------------------------ */
 
 typedef struct _multivslicedata {
+  /// @brief Autoloading parameters.
   int seq_id, autoload;
-  int loaded,display,mvslicefile_labelindex;
+  /// @brief Has this multislice been loaded?
+  int loaded;
+  /// @brief Is this multislice being displayed?
+  int display;
+  int mvslicefile_labelindex;
+  /// @brief The length of the @ref ivslices array.
   int nvslices;
   int ndirxyz[4];
+  /// @brief An array of the slice indices that make up this multislice. These
+  /// indices are indices into the @ref sliceinfo array.
   int *ivslices;
   char menulabel[128];
   char menulabel2[128];
@@ -1525,11 +1713,18 @@ typedef struct _boundsdata {
   flowlabels *label;
 } boundsdata;
 
-/* --------------------------  vslicedata ------------------------------------ */
-
+/// @brief Similar to \ref _slicedata but considers a vector slice. Holds
+/// references to each of the \ref _slicedata objects which hold the data along
+/// each of the three axes.
 typedef struct _vslicedata {
   int seq_id, autoload, reload;
-  slicedata *u,*v,*w,*val;
+  /// @brief Slice data which holds the x-component of this vector data.
+  slicedata *u;
+  /// @brief Slice data which holds the y-component of this vector data.
+  slicedata *v;
+  /// @brief Slice data which holds the z-component of this vector data.
+  slicedata *w;
+  slicedata *val;
   int volslice;
   int iu, iv, iw, ival;
   int skip;
@@ -1574,7 +1769,9 @@ typedef struct _smoke3ddata {
   int blocknumber;
   int type;
   int is1, is2, js1, js2, ks1, ks2;
+  /// @brief Enum: The type of compression used in the file.
   int compression_type;
+  /// @brief The names of the quantity being measured, and its units.
   flowlabels label;
   char menulabel[128];
   float *times;
@@ -1643,10 +1840,14 @@ typedef struct _patchdata {
   int boundary;
   int inuse,inuse_getbounds;
   int firstshort;
+  /// @brief Enum: The type of compression used in the file.
   int compression_type;
   int setvalmin, setvalmax;
-  float valmin_fds, valmax_fds;   // read in from .bnd files
-  float valmin_smv, valmax_smv;   // computed by smokeview
+  /// @brief The minimum and maximum values as read from
+  /// .bnd files, calculated by FDS.
+  float valmin_fds, valmax_fds;
+  /// @brief The minimum and maximum values as computed by smokeview.
+  float valmin_smv, valmax_smv;
   float valmin, valmax;
   int setchopmin, setchopmax;
   float chopmin, chopmax;
@@ -1662,6 +1863,7 @@ typedef struct _patchdata {
   int *geom_nstatics, *geom_ndynamics;
   int geom_vert2tri;
   int geom_nvals, ngeom_times;
+  /// @brief The names of the quantity being measured, and its units.
   flowlabels label;
   char menulabel[128], menulabel_base[128], menulabel_suffix[128], gslicedir[50];
   int ijk[6];
@@ -1681,16 +1883,22 @@ typedef struct _plot3ddata {
   char *file,*reg_file,*comp_file;
   char *bound_file;
   int have_bound_file;
+  /// @brief Enum: The type of compression used in the file.
   int compression_type;
   int finalize;
   int memory_id;
+  /// @brief The simulation time of this Plot3d snaphot.
   float time;
   int u, v, w, nvars;
   float diff_valmin[MAXPLOT3DVARS], diff_valmax[MAXPLOT3DVARS];
   int extreme_min[MAXPLOT3DVARS], extreme_max[MAXPLOT3DVARS];
-  int blocknumber,loaded,display;
-  float valmin_fds[MAXPLOT3DVARS], valmax_fds[MAXPLOT3DVARS];   // read in from .bnd files
-  float valmin_smv[MAXPLOT3DVARS], valmax_smv[MAXPLOT3DVARS];   // computed by smokeview
+  int blocknumber, loaded, display;
+  /// @brief The minimum and maximum values as read from
+  /// .bnd files, calculated by FDS.
+  float valmin_fds[MAXPLOT3DVARS], valmax_fds[MAXPLOT3DVARS];
+  /// @brief The minimum and maximum values as computed by smokeview.
+  float valmin_smv[MAXPLOT3DVARS], valmax_smv[MAXPLOT3DVARS];
+  /// @brief The names of the quantity being measured, and its units.
   flowlabels label[MAXPLOT3DVARS];
   char menulabel[256], longlabel[256], timelabel[256];
   histogramdata *histograms[MAXPLOT3DVARS];
@@ -1747,22 +1955,37 @@ typedef struct _firedata {
   int valid,roomnumber;
 } firedata;
 
-/* --------------------------  f_unit ------------------------------------ */
-
+/// @brief Describes a set of units for a given quantity (e.g., m/s for speed).
 typedef struct {
-  char unit[10];   /* m/s, mph etc - appears in the colorbar */
-  float scale[2];  /* newval=scale[0]*oldval+scale[1] */
+  /// @brief The units as written, e.g., m/s, mph etc - appears in the colorbar.
+  char unit[10];
+  /// @brief Scaling parameters to conver the base unit to this unit.
+  /// newval=scale[0]*oldval+scale[1]. Note that each quantity (aka: unitclass)
+  /// has "base" units that are outputted by the simulation software.
+  float scale[2];
+  /// @brief UNKNOWN
   char rel_val[20];
+  /// @brief UNKNOWN
   int rel_defined;
 } f_unit;
 
-/* --------------------------  f_units ------------------------------------ */
-
+/// @brief Describes a quantity (aka: unitclass) such as speed, temperature.
 typedef struct _f_units {
-  int nunits;
-  int unit_index,submenuid,visible;
-  char unitclass[30]; /* ie: velocity, temperature */
+  /// @brief UNKNOWN
+  int unit_index;
+  /// @brief UNKNOWN
+  int submenuid;
+  /// @brief UNKNOWN
+  int visible;
+  /// @brief Describes the name of a unitclass/quantity. E.g., velocity,
+  /// temperature.
+  char unitclass[30];
+  /// @brief UNKNOWN
   int diff_index;
+  /// @brief The length of the array 'units'.
+  int nunits;
+  /// @brief The various sets of units that could be used to describe this
+  /// quantity.
   f_unit *units;
 } f_units;
 
