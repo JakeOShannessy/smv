@@ -25,6 +25,7 @@ include(GNUInstallDirs)
 # Pass a flag to to the source code. There's no great need for this but allows
 # us to have conditional code based on the build method.
 add_definitions(-Dpp_CMAKE)
+add_compile_definitions(pp_GITHASH="6.7.21+sc.lua")
 
 # Options which can be configured (along with their defaults)
 option(BETA "Include beta functionality" OFF)

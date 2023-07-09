@@ -244,6 +244,7 @@ jobs:
         run: |
           echo "CC=icc" >> $GITHUB_ENV
           echo "CXX=icpc" >> $GITHUB_ENV
+          brew install glew lua gd zlib
       - name: set linux intel compiler
         if: runner.os == 'Linux'
         shell: bash
@@ -320,7 +321,7 @@ jobs:
           call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
           ninja --version
           cmake --version
-          cmake -B ${{github.workspace}}\cbuild -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }}
+          cmake -B ${{github.workspace}}\cbuild -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA=${{ matrix.lua }} -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%/scripts/buildsystems/vcpkg.cmake -DLUA_BUILD_BINARY=ON
           cmake --build ${{github.workspace}}\cbuild -j4
           copy ${{github.workspace}}\cbuild\smokeview.exe smokeview.exe
       - name: Download test data
@@ -364,10 +365,22 @@ jobs:
       - name: build smokeview
         shell: cmd
         run: |
+          set PATH=%PATH%;C:\Program Files (x86)\WiX Toolset v3.11\bin
+          candle --version
           cmake --version
           cmake -B ${{github.workspace}}\cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DLUA_UTIL_LIBS=ON -DLUA=${{ matrix.lua }} -DLUA_BUILD_BINARY=${{ matrix.lua }} -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%/scripts/buildsystems/vcpkg.cmake -DLUA_BUILD_BINARY=ON
           cmake --build ${{github.workspace}}\cbuild -j4 --config ${{env.BUILD_TYPE}}
           copy ${{github.workspace}}\cbuild\Release\smokeview.exe smokeview.exe
+      - name: build installer
+        if: ${{ matrix.lua == 'on' }}
+        shell: cmd
+        run: |
+          echo %PATH%
+          set PATH=%PATH%;C:\Program Files (x86)\WiX Toolset v3.11\bin
+          echo %PATH%
+          cmake --install ${{github.workspace}}\cbuild --config ${{env.BUILD_TYPE}} --prefix dist
+          candle "SMVLuaInstaller.wxs"
+          light "SMVLuaInstaller.wixobj"
       - name: Download test data
         working-directory: ${{github.workspace}}/Tests
         shell: pwsh
@@ -380,10 +393,16 @@ jobs:
         run: |
           ctest -j10 -C ${{env.BUILD_TYPE}} --output-on-failure
       - name: Set exec suffix
-        if: ${{ matrix.lua }}
+        if: ${{ matrix.lua == 'on' }}
         run: echo "exec_suffix=-lua" >> $GITHUB_ENV
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
           name: smokeview-windows-msvc-${{ env.exec_suffix }}
           path: smokeview.exe
+      - name: Archive installer
+        if: ${{ matrix.lua == 'on' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: smokeview-windows-msvc-${{ env.exec_suffix }}.msi
+          path: SMVLuaInstaller.msi
