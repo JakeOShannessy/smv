@@ -1,24 +1,15 @@
-#include "options.h"
-// TODO: sort out imports
 #include "getdata.h"
 #include "dmalloc.h"
 #include <stdint.h>
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
-  initMALLOC();
   if (argc < 3) return 2;
   int error = 0;
   char *filename = argv[1];
   size_t n_expected_frames = atol(argv[2]);
   int boundary_version = 1;
-  int *i1 = NULL;
-  int *i2 = NULL;
-  int *j1 = NULL;
-  int *j2 = NULL;
-  int *k1 = NULL;
-  int *k2 = NULL;
-  int *patchdir = NULL;
+
   FILE *file;
   int npatches = 0;
   int headersize = 0;
@@ -26,13 +17,13 @@ int main(int argc, char **argv) {
   int framesize = 0;
   getpatchsizes1(&file, filename, &npatches, &headersize, &error);
 
-  NewMemory((void **)&i1, npatches * sizeof(*i1));
-  NewMemory((void **)&i2, npatches * sizeof(*i2));
-  NewMemory((void **)&j1, npatches * sizeof(*j1));
-  NewMemory((void **)&j2, npatches * sizeof(*j2));
-  NewMemory((void **)&k1, npatches * sizeof(*k1));
-  NewMemory((void **)&k2, npatches * sizeof(*k2));
-  NewMemory((void **)&patchdir, npatches * sizeof(*k2));
+  int *i1 = malloc(npatches * sizeof(int));
+  int *i2 = malloc(npatches * sizeof(int));
+  int *j1 = malloc(npatches * sizeof(int));
+  int *j2 = malloc(npatches * sizeof(int));
+  int *k1 = malloc(npatches * sizeof(int));
+  int *k2 = malloc(npatches * sizeof(int));
+  int *patchdir = malloc(npatches * sizeof(int));
 
   getpatchsizes2(file, boundary_version, npatches, &npatchsize, i1, i2, j1, j2,
                  k1, k2, patchdir, &headersize, &framesize);
@@ -43,7 +34,6 @@ int main(int argc, char **argv) {
   if (error) return error;
   float patchtime = 0.0;
   int file_size = 0;
-  float *patchdata;
   int npatchdata = 0;
   int nsize = 0;
   for (int i = 0; i < npatches; i++) {
@@ -53,29 +43,30 @@ int main(int argc, char **argv) {
     nsize += size;
   }
 
-  // TODO: we need information about the patches first, including
-  //  1. Number of patches.
-  //  2. IJK values.
-  NewMemory((void **)&patchdata, nsize * sizeof(float));
+  int n_parse_frames = 0;
+  if (nsize > 0) {
+    // TODO: we need information about the patches first, including
+    //  1. Number of patches.
+    //  2. IJK values.
+    float *patchdata = malloc(nsize * sizeof(float));
 
-  NewMemory((void **)&patchdir, npatches * sizeof(int));
-
-  int i = 0;
-  while (1) {
-    getpatchdata(file, npatches, i1, i2, j1, j2, k1, k2, &patchtime, patchdata,
-                 &npatchdata, &file_size, &error);
-    if (error) break;
-    i++;
+    while (1) {
+      getpatchdata(file, npatches, i1, i2, j1, j2, k1, k2, &patchtime,
+                   patchdata, &npatchdata, &file_size, &error);
+      if (error) break;
+      n_parse_frames++;
+    }
+    free(patchdata);
   }
 
-  FREEMEMORY(patchdata);
-  FREEMEMORY(i1);
-  FREEMEMORY(i2);
-  FREEMEMORY(j1);
-  FREEMEMORY(j2);
-  FREEMEMORY(k1);
-  FREEMEMORY(k2);
-  if (i != n_expected_frames) {
+  free(i1);
+  free(i2);
+  free(j1);
+  free(j2);
+  free(k1);
+  free(k2);
+  if (n_parse_frames != n_expected_frames) {
+    fprintf(stderr, "incorrect number of frames");
     return 1;
   }
   closefortranfile(file);

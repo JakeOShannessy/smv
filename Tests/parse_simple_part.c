@@ -1,12 +1,9 @@
-#include "options.h"
-// TODO: sort out imports
 #include "getdata.h"
 #include "dmalloc.h"
 #include <stdint.h>
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
-  initMALLOC();
   if (argc < 3) return 2;
   int error = 0;
   char *filename = argv[1];
@@ -16,19 +13,15 @@ int main(int argc, char **argv) {
   int size = 0;
   int fdsversion = 0;
   int nclasses = 0;
-  int *nquantities;
-  int *npoints;
   getpartheader1(file, &nclasses, &fdsversion, &size);
 
-  NewMemory((void **)&nquantities, nclasses * sizeof(int));
-  NewMemory((void **)&npoints, nclasses * sizeof(int));
+  int *nquantities = malloc(nclasses * sizeof(int));
+  int *npoints = malloc(nclasses * sizeof(int));
 
   const size_t BUFFER_SIZE = 1000000;
 
-  float *pdata;
-  int *tagdata;
-  NewMemory((void **)&pdata, BUFFER_SIZE * sizeof(float));
-  NewMemory((void **)&tagdata, BUFFER_SIZE * sizeof(int));
+  float *pdata = malloc(BUFFER_SIZE * sizeof(float));
+  int *tagdata = malloc(BUFFER_SIZE * sizeof(int));
 
   getpartheader2(file, nclasses, nquantities, &size);
   int i = 0;
@@ -42,10 +35,10 @@ int main(int argc, char **argv) {
 
   closefortranfile(file);
 
-  FREEMEMORY(nquantities);
-  FREEMEMORY(npoints);
-  FREEMEMORY(pdata);
-  FREEMEMORY(tagdata);
+  free(nquantities);
+  free(npoints);
+  free(pdata);
+  free(tagdata);
   if (i != n_expected_frames) {
     return 1;
   }

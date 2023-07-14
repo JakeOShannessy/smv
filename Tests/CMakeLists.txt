@@ -1,5 +1,22 @@
 
 include(CTest)
+
+# Download test data
+set(TEST_REV "662ec45da984a21be14e7c754a1a87bd3c91e689")
+file(DOWNLOAD
+    "https://github.com/firemodels/fig/archive/${TEST_REV}.zip"
+    "${CMAKE_BINARY_DIR}/test-files.zip"
+    STATUS test_download_status)
+list(GET test_download_status 0 test_download_status_code)
+if (test_download_status_code)
+    message(FATAL_ERROR "Could not download test data from the fig repo ${test_download_status_code}")
+endif()
+# Extract test data into the build directory
+file(ARCHIVE_EXTRACT
+    INPUT "${CMAKE_BINARY_DIR}/test-files.zip"
+    DESTINATION "${CMAKE_BINARY_DIR}/test-data"
+    VERBOSE)
+
 add_test(NAME "Execute smokediff" COMMAND smokediff)
 add_test(NAME "Execute smokeview" COMMAND smokeview -v)
 add_test(NAME "Execute smokezip" COMMAND smokezip)
@@ -18,6 +35,19 @@ set(FIG_DIR ${test_data_SOURCE_DIR})
 # parse_simple_slice
 add_executable(parse_simple_slice parse_simple_slice.c)
 target_link_libraries(parse_simple_slice PRIVATE libsmv)
+
+# parse_simple_slice_new
+add_executable(parse_simple_slice_new parse_simple_slice_new.c)
+target_link_libraries(parse_simple_slice_new PRIVATE smv)
+
+# parse_size_file
+add_executable(parse_size_file parse_size_file.c)
+target_link_libraries(parse_size_file PRIVATE smv)
+
+# create_binary_size_file
+add_executable(create_binary_size_file create_binary_size_file.c)
+target_link_libraries(create_binary_size_file PRIVATE smv)
+
 
 # parse_simple_bndf
 add_executable(parse_simple_bndf parse_simple_bndf.c)
@@ -67,7 +97,6 @@ target_link_libraries(test_root_dir PRIVATE libsmv)
 add_executable(sort_surfs sort_surfs.c)
 target_link_libraries(sort_surfs PRIVATE libsmv)
 
-
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
 add_test(NAME "Simple Slice - Complete"
@@ -76,6 +105,29 @@ add_test(NAME "Simple Slice - Complete"
 # half (to simulate a partially written slice file)
 add_test(NAME "Simple Slice - Last Frame Half Truncated"
     COMMAND parse_simple_slice ${FIG_DIR}/smv/Tests/truncated_slice.sf 2)
+
+
+# Arguments to this tests are <slice path> <number of frames in slice>
+# Simple slice is a finished slice file with 3 frames
+add_test(NAME "Simple Slice (New) - Complete"
+    COMMAND parse_simple_slice_new ${CMAKE_BINARY_DIR}/test-data/fig-${TEST_REV}/smv/Tests/simple_slice.sf 3)
+# Arguments to this tests are <slice path> <number of frames in slice>
+# Simple slice is a finished slice file with 3 frames
+add_test(NAME "Simple Slice (New) - Last Frame Half Truncated"
+    COMMAND parse_simple_slice_new ${CMAKE_BINARY_DIR}/test-data/fig-${TEST_REV}/smv/Tests/truncated_slice.sf 2)
+
+# add_test(NAME "Simple Size File (New) - Complete"
+#     COMMAND parse_size_file ${CMAKE_BINARY_DIR}/test-data/fig-${TEST_REV}/smv/Tests/zlib_slice.sf.sz 11)
+
+add_test(NAME "Create Binary Size File - Complete"
+    COMMAND create_binary_size_file
+        ${CMAKE_BINARY_DIR}/test-data/fig-${TEST_REV}/smv/Tests/zlib_slice.sf.sz
+        ${CMAKE_BINARY_DIR}/test-data/fig-${TEST_REV}/smv/Tests/zlib_slice.sf.szb)
+
+    # Arguments to this tests are <slice path> <number of frames in slice>
+# Simple slice is a finished slice file with 3 frames
+add_test(NAME "Simple Slice (New) - Compressed ZLIB Complete"
+    COMMAND parse_simple_slice_new ${CMAKE_BINARY_DIR}/test-data/fig-${TEST_REV}/smv/Tests/zlib_slice.sf.svz 29 "zlib")
 
 # Arguments to this tests are <bndf path> <number of frames in bndf>
 # Simple slice is a finished slice file with 2 frames, why 2 frames for boundary

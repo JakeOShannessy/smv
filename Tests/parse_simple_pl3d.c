@@ -1,5 +1,3 @@
-#include "options.h"
-// TODO: sort out imports
 #include "getdata.h"
 #include "dmalloc.h"
 #include <stdint.h>
@@ -16,7 +14,6 @@ int get_pl3d_spec(const char *filename, int npts[3]) {
 }
 
 int main(int argc, char **argv) {
-  initMALLOC();
   if (argc < 2) return 2;
   int error = 0;
   char *filename = argv[1];
