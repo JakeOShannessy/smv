@@ -351,6 +351,90 @@ gnu_linux_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
 		$(SMV_LIBS_LINUX) $(SYSTEM_LIBS_LINUX) \
 		$(if $(LUA_SCRIPTING),$(LIB_DIR_PLAT)/liblua.a -ldl)
 
+gnu_linux_64_check : CFLAGS    = -O0 -m64 $(VKLFLAG) -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings           -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
+gnu_linux_64_check : C_STANDARD    = -std=gnu99
+ifeq ($(LUA_SCRIPTING),true)
+gnu_linux_64_check : CFLAGS    += -D pp_LUA
+endif
+
+srcs = ../../../Source/shared/assert.c \
+  ../../../Source/smokeview/callbacks.c \
+  ../../../Source/smokeview/camera.c \
+  ../../../Source/shared/color2rgb.c \
+  ../../../Source/smokeview/colortimebar.c \
+  ../../../Source/shared/compress.c \
+  ../../../Source/shared/csphere.c \
+  ../../../Source/shared/dmalloc.c \
+  ../../../Source/smokeview/drawGeometry.c \
+  ../../../Source/shared/file_util.c\
+  ../../../Source/shared/getdata.c \
+  ../../../Source/smokeview/getdatabounds.c \
+  ../../../Source/smokeview/getdatacolors.c \
+  ../../../Source/glew/glew.c \
+  ../../../Source/smokeview/glui_bounds.cpp \
+  ../../../Source/smokeview/glui_clip.cpp \
+  ../../../Source/smokeview/glui_colorbar.cpp\
+  ../../../Source/smokeview/glui_display.cpp \
+  ../../../Source/smokeview/glui_geometry.cpp\
+  ../../../Source/smokeview/glui_motion.cpp \
+  ../../../Source/smokeview/glui_objects.cpp \
+  ../../../Source/smokeview/glui_shooter.cpp \
+  ../../../Source/smokeview/glui_smoke.cpp \
+  ../../../Source/smokeview/glui_stereo.cpp \
+  ../../../Source/smokeview/glui_tour.cpp \
+  ../../../Source/smokeview/glui_trainer.cpp \
+  ../../../Source/shared/histogram.c \
+  ../../../Source/smokeview/infoheader.c \
+  ../../../Source/smokeview/IOboundary.c \
+  ../../../Source/smokeview/IOgeometry.c \
+  ../../../Source/smokeview/IOhvac.c \
+  ../../../Source/smokeview/IOiso.c\
+  ../../../Source/smokeview/IOobjects.c\
+  ../../../Source/smokeview/IOpart.c\
+  ../../../Source/smokeview/IOplot2d.c \
+  ../../../Source/smokeview/IOplot3d.c \
+  ../../../Source/smokeview/IOscript.c\
+  ../../../Source/smokeview/IOshooter.c\
+  ../../../Source/smokeview/IOslice.c \
+  ../../../Source/smokeview/IOsmoke.c \
+  ../../../Source/smokeview/IOtour.c \
+  ../../../Source/smokeview/IOvolsmoke.c \
+  ../../../Source/smokeview/IOwui.c \
+  ../../../Source/smokeview/IOzone.c \
+  ../../../Source/shared/isobox.c \
+  ../../../Source/smokeview/main.c \
+  ../../../Source/shared/md5.c \
+  ../../../Source/smokeview/menus.c \
+  ../../../Source/smokeview/output.c \
+  ../../../Source/smokeview/readsmv.c \
+  ../../../Source/smokeview/renderhtml.c \
+  ../../../Source/smokeview/renderimage.c \
+  ../../../Source/smokeview/scontour2d.c\
+  ../../../Source/shared/sha1.c \
+  ../../../Source/shared/sha256.c\
+  ../../../Source/smokeview/shaders.c \
+  ../../../Source/smokeview/showscene.c \
+  ../../../Source/smokeview/skybox.c \
+  ../../../Source/shared/smokestream.c\
+  ../../../Source/smokeview/smokeview.c \
+  ../../../Source/smokeview/smv_geometry.c \
+  ../../../Source/smokeview/startup.c \
+  ../../../Source/shared/stdio_buffer.c \
+  ../../../Source/shared/stdio_m.c \
+  ../../../Source/shared/string_util.c \
+  ../../../Source/smokeview/threader.c \
+  ../../../Source/shared/translate.c\
+  ../../../Source/smokeview/unit.c \
+  ../../../Source/smokeview/update.c \
+  ../../../Source/smokeview/viewports.c\
+  ../../../Source/smokeview/colortable.c \
+  ../../../Source/smokeview/command_args.c
+gnu_linux_64_check : $(srcs)
+	clang-tidy $(srcs) --  $(CFLAGS) $(INC)
+
+gnu_linux_64_format : $(srcs)
+	clang-format -i $(srcs)
+
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV   OSX   VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
