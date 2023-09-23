@@ -313,6 +313,8 @@ if (LUA)
     target_sources(smokeview PRIVATE
         Source/smokeview/lua_api.c
         Source/smokeview/c_api.c
+        # For the Savitzky-Golay filter
+        Source/smokeview/sgfilter.c
     )
 
     target_sources(smokeview PUBLIC

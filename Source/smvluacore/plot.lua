@@ -267,6 +267,13 @@ function plot.plotHRRDV(plotDir, hrrDV, name, config)
             print(i, v.name)
         end
     end
+    -- Attempt to get a version with the Savitzky-Golay filter
+    local success,filtered_y = pcall(smvlib.savgol(hrrDV.x.values, hrrDV.y.values))
+    if success then
+        local filteredVec = smv.deepCopy(hrrDV)
+        filteredVec.y.values = filtered_y
+        filteredVec.name = "Time-Averaged"
+    end
     return plot.DV(plotDir, vecs, name, config)
 end
 
