@@ -5029,6 +5029,7 @@ void AddCPath(lua_State *L) {
   strcat(new_path, bin_path);
   lua_pushstring(L, new_path);
   lua_setfield(L, -3, "cpath");
+  fprintf(stderr,"%s\n",new_path);
   lua_pop(L, 1); // pop the now redundant "path" variable from the stack
   lua_pop(L, 1); // pop the now redundant "package" variable from the stack
   free(new_path);

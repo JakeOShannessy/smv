@@ -65,37 +65,36 @@
                             </Component>
                             <Component Id='CommonRender' Guid='c9eb176c-5dbb-46f4-b0bd-c81e48de8055'
                                 Win64="yes">
-                                <File Id='bounds' Name='bounds.lua' Source='dist/share/smokeview/bounds.lua'
+                                <File Id='bounds' Name='bounds.lua' Source='dist/share/smokeview/scripts/bounds.lua'
                                     KeyPath='yes'></File>
-                                <File Id='camera' Name='camera.lua' Source='dist/share/smokeview/camera.lua'></File>
+                                <File Id='camera' Name='camera.lua' Source='dist/share/smokeview/scripts/camera.lua'></File>
                                 <File Id='clipping' Name='clipping.lua'
-                                    Source='dist/share/smokeview/clipping.lua'></File>
+                                    Source='dist/share/smokeview/scripts/clipping.lua'></File>
                                 <File Id='constants' Name='constants.lua'
-                                    Source='dist/share/smokeview/constants.lua'></File>
+                                    Source='dist/share/smokeview/scripts/constants.lua'></File>
                                 <File Id='gnuplotlua' Name='gnuplot.lua'
-                                    Source='dist/share/smokeview/gnuplot.lua'></File>
+                                    Source='dist/share/smokeview/scripts/gnuplot.lua'></File>
                                 <File Id='inioptions' Name='inioptions.lua'
-                                    Source='dist/share/smokeview/inioptions.lua'></File>
+                                    Source='dist/share/smokeview/scripts/inioptions.lua'></File>
                                 <File Id='iniparser' Name='iniparser.lua'
-                                    Source='dist/share/smokeview/iniparser.lua'></File>
-                                <File Id='json' Name='json.lua' Source='dist/share/smokeview/json.lua'></File>
-                                <File Id='load' Name='load.lua' Source='dist/share/smokeview/load.lua'></File>
-                                <File Id='pl3d' Name='pl3d.lua' Source='dist/share/smokeview/pl3d.lua'></File>
-                                <File Id='plot' Name='plot.lua' Source='dist/share/smokeview/plot.lua'></File>
-                                <File Id='render' Name='render.lua' Source='dist/share/smokeview/render.lua'></File>
-                                <File Id='smv' Name='smv.lua' Source='dist/share/smokeview/smv.lua'></File>
-                                <File Id='ssf' Name='ssf.lua' Source='dist/share/smokeview/ssf.lua'></File>
+                                    Source='dist/share/smokeview/scripts/iniparser.lua'></File>
+                                <File Id='json' Name='json.lua' Source='dist/share/smokeview/scripts/json.lua'></File>
+                                <File Id='load' Name='load.lua' Source='dist/share/smokeview/scripts/load.lua'></File>
+                                <File Id='pl3d' Name='pl3d.lua' Source='dist/share/smokeview/scripts/pl3d.lua'></File>
+                                <File Id='plot' Name='plot.lua' Source='dist/share/smokeview/scripts/plot.lua'></File>
+                                <File Id='render' Name='render.lua' Source='dist/share/smokeview/scripts/render.lua'></File>
+                                <File Id='smv' Name='smv.lua' Source='dist/share/smokeview/scripts/smv.lua'></File>
+                                <File Id='ssf' Name='ssf.lua' Source='dist/share/smokeview/scripts/ssf.lua'></File>
                                 <File Id='ssfcommands' Name='ssfcommands.lua'
-                                    Source='dist/share/smokeview/ssfcommands.lua'></File>
+                                    Source='dist/share/smokeview/scripts/ssfcommands.lua'></File>
                                 <File Id='ssfparser' Name='ssfparser.lua'
-                                    Source='dist/share/smokeview/ssfparser.lua'></File>
-                                <File Id='tour' Name='tour.lua' Source='dist/share/smokeview/tour.lua'></File>
-                                <File Id='unload' Name='unload.lua' Source='dist/share/smokeview/unload.lua'></File>
-                                <File Id='view' Name='view.lua' Source='dist/share/smokeview/view.lua'></File>
-                                <File Id='window' Name='window.lua' Source='dist/share/smokeview/window.lua'></File>
+                                    Source='dist/share/smokeview/scripts/ssfparser.lua'></File>
+                                <File Id='tour' Name='tour.lua' Source='dist/share/smokeview/scripts/tour.lua'></File>
+                                <File Id='unload' Name='unload.lua' Source='dist/share/smokeview/scripts/unload.lua'></File>
+                                <File Id='view' Name='view.lua' Source='dist/share/smokeview/scripts/view.lua'></File>
                                 <File Id='lfs' Name='lfs.dll' Source='dist/bin/lfs.dll'></File>
                                 <File Id='lpeg' Name='lpeg.dll' Source='dist/bin/lpeg.dll'></File>
-                                <!-- <File Id='lua' Name='lua.dll' Source='dist/bin/lua.dll'></File> -->
+                                <File Id='lua' Name='lua.dll' Source='dist/bin/lua.dll'></File>
                             </Component>
                         </Directory>
                     </Directory>
