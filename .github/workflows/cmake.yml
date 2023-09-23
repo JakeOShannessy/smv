@@ -42,7 +42,7 @@ jobs:
     steps:
       # Check out the smv repo
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       # If we are currently building on Linux (ubuntu) install all the native
       # pre-requisites
       - name: Install linux deps
@@ -105,7 +105,7 @@ jobs:
           - off
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install linux deps
         run: |
           yum -y install epel-release
@@ -151,7 +151,7 @@ jobs:
           - off
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install linux deps
         run: |
           yum -y install epel-release
@@ -213,7 +213,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: prepare for cache restore
         run: |
           sudo mkdir -p /opt/intel
@@ -297,7 +297,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: cache install
         id: cache-install
         uses: actions/cache@v2
@@ -361,7 +361,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: build smokeview
         shell: cmd
         run: |
