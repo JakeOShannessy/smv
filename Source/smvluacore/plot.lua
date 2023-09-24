@@ -3,6 +3,7 @@ local plot = {}
 
 local gp = require('gnuplot')
 local lfs = require('lfs')
+local smv = require('smv')
 
 function plot.createDV(cols, colXIndex, colYIndex, name)
     return { x = cols[colXIndex], y = cols[colYIndex], name = name }
