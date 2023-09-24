@@ -1,7 +1,39 @@
 --- @module 'view'
-local view = { colorbar = {}, font = {}, blockages = {}, color = {}, titlebox = {}, surfaces = {}, devices = {},
-    outline = {} }
+local view = {
+    colorbar = {},
+    font = {},
+    blockages = {},
+    color = {},
+    titlebox = {},
+    surfaces = {},
+    devices = {},
+    outline = {}
+}
 view.camera = require("camera")
+
+-- local camera_mt = {
+--     -- get method
+--     -- __index = function(t, quantity_name)
+--     --     local vals = camera.slices.get(quantity_name)
+--     --     local vt = {}
+--     --     setmetatable(vt, {
+--     --         __newindex = function(t, k, v)
+--     --             vals[k] = v
+--     --             return camera.slices.set(quantity_name, vals)
+--     --         end,
+--     --         __index = function(t, k)
+--     --             return vals[k]
+--     --         end
+--     --     })
+--     --     return vt
+--     -- end,
+--     -- set method
+--     __newindex = function(t, k, v)
+--         return camera.slices.set(k, v)
+--     end
+-- }
+-- setmetatable(camera, camera_mt)
+
 local _view = {
     -- colorbar = {
     --     get = function()
@@ -96,7 +128,7 @@ local _view = {
         end
     },
     window = {
-        size = function(width, height)
+        set_size = function(self, width, height)
             smvlib.setwindowsize(width, height)
         end
     },
@@ -422,7 +454,7 @@ local _blockages = {
             end
         end
     },
-    hide_all = function()
+    hide_all = function(self)
         return smvlib.blockages_hide_all()
     end
     -- get = function()
@@ -450,7 +482,7 @@ local blockages_mt = {
 setmetatable(view.blockages, blockages_mt)
 
 local _surfaces = {
-    hide_all = function()
+    hide_all = function(self)
         return smvlib.surfaces_hide_all()
     end
     -- get = function()
@@ -477,7 +509,7 @@ local surfaces_mt = {
 setmetatable(view.surfaces, surfaces_mt)
 
 local _devices = {
-    hide_all = function()
+    hide_all = function(self)
         return smvlib.devices_hide_all()
     end
     -- get = function()

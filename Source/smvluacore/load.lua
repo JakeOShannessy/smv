@@ -63,7 +63,13 @@ local function findCellDimension(mesh, axis, distance)
     return nil
 end
 
-function load.slice_std(case, slice_type, axis, distance)
+function load.slice_std(case_r, slice_type, axis, distance)
+    local case
+    if case_r.case then
+        case = case_r.case
+    else
+        case = case_r
+    end
     -- Validate inputs.
     assert(type(slice_type) == "string", "slice_type must be a string")
     assert(type(axis) == "number", "axis must be a number")

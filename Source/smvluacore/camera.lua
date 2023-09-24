@@ -117,26 +117,32 @@ end
 function camera.set_az(az)
     return smvlib.camera_set_az(az)
 end
+
 function camera.set_elev(az)
     return smvlib.camera_set_elev(az)
 end
+
 function camera.zoom_to_fit()
     return smvlib.camera_zoom_to_fit()
 end
-function camera.from_z_max()
+
+function camera.from_z_max(self)
     -- TODO: Determine best rotation.
     camera.set_orthographic()
     camera.set_elev(90)
     camera.set_az(90)
     camera.zoom_to_fit()
 end
+
 function camera.from_y_min()
     camera.set("YMIN")
 end
+
 function camera.set_ortho_preset(camera)
     smvlib.set_ortho_preset(camera)
 end
-    function camera.set(camera)
+
+function camera.set(camera)
     if camera == nil then
         error("camera.set: camera does not exist")
     end
@@ -158,7 +164,6 @@ end
     smvlib.camera_set_viewdir(camera.viewDir.x, camera.viewDir.y, camera.viewDir.z)
     -- TODO: the below is nonsensical, but it helps
     smvlib.settime(smvlib.gettime())
-
 end
 
 return camera
