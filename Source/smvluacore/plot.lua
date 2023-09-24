@@ -268,12 +268,10 @@ function plot.plotHRRDV(plotDir, hrrDV, name, config)
             print(i, v.name)
         end
     end
-    -- Attempt to get a version with the Savitzky-Golay filter
-    local success, filtered_y = pcall(smvlib.savgol, hrrDV.x.values, hrrDV.y.values)
-    if success then
+    do
         local filteredVec = smv.deepCopy(hrrDV)
-        filteredVec.y.values = filtered_y
-        filteredVec.name = "Time-Averaged"
+        plot.wma(filteredVec, 20)
+        filteredVec.name = "Time-Averaged (WMA)"
         vecs[#vecs + 1] = filteredVec
     end
     return plot.DV(plotDir, vecs, name, config)
@@ -313,6 +311,46 @@ function plot.avgVec(dv, window)
             n = n + 1
         end
         dv.y.values[i] = val / n
+    end
+    return dv
+end
+
+-- Weighted moving average
+function plot.wma(dv, window)
+    if #dv.y.values <= 1 then
+        -- The weighted average of an empty vector or a vector that has a
+        -- single element is just the same vector
+        error("cannot average empty vector")
+    end
+    for i, v in ipairs(dv.y.values) do
+        local val = 0
+        local n = 0
+        -- The total sum
+        local sum = 0;
+        -- First the actual value is fully weighted
+        sum = sum + v * window
+        local totalWeight = window
+        for j = 1, window do
+            local weight = window - j
+            local valueBehind = dv.y.values[i - j]
+            if valueBehind == nil then
+                -- If the window covers an area "before" before the start of the
+                -- vector, just use the first value. We know this exists as th
+                -- vector is not empty.
+                valueBehind = dv.y.values[1]
+            end
+            local valueAhead = dv.y.values[i + j]
+            if valueAhead == nil then
+                -- If the window covers an area "after" before the end of the
+                -- vector, just use the last value. We know this exists as th
+                -- vector is not empty.
+                valueAhead = dv.y.values[#dv.y.values]
+            end
+            sum = sum + valueBehind * weight
+            sum = sum + valueAhead * weight
+            totalWeight = totalWeight + weight * 2
+        end
+        dv.y.values[i] = sum / totalWeight
     end
     return dv
 end
