@@ -4946,14 +4946,15 @@ int lua_savgol(lua_State *L) {
   }
   luaL_checktype(L, 1, LUA_TTABLE);
   luaL_checktype(L, 2, LUA_TTABLE);
-  double *x_input = (double *)malloc(sizeof(double) * (n_points + 1));
-  double *y_input = (double *)malloc(sizeof(double) * (n_points + 1));
-  double *y_output = (double *)malloc(sizeof(double) * (n_points + 1));
+  double *x_input = malloc((size_t)(sizeof(double) * (n_points + 1)));
+  double *y_input = malloc((size_t)(sizeof(double) * (n_points + 1)));
+  double *y_output = malloc((size_t)(sizeof(double) * (n_points + 1)));
   for (int i = 1; i <= n_points; i++) {
     lua_geti(L, 1, i);
-    double xval = lua_tonumber(L, -1);
     lua_geti(L, 2, i);
+    double xval = lua_tonumber(L, -2);
     double yval = lua_tonumber(L, -1);
+    lua_pop(L, 2);
     x_input[i] = xval;
     y_input[i] = yval;
     y_output[i] = 0.0;
@@ -4961,9 +4962,9 @@ int lua_savgol(lua_State *L) {
   int result =
       savgol_filter(x_input, y_input, y_output, n_points, nl, nr, ld, m);
   if (result != 0) {
-    return luaL_error(L, "savgol: vectors must be the same length");
+    return luaL_error(L, "savgol: filter failed");
   }
-  lua_createtable(L, 10, 0);
+  lua_createtable(L, n_points, 0);
   for (int i = 1; i <= n_points; i++) {
     lua_pushnumber(L, i);
     lua_pushnumber(L, y_output[i]);

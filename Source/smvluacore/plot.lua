@@ -1,6 +1,7 @@
 --- @module 'plot'
 local plot = {}
 
+local smv = require('smv')
 local gp = require('gnuplot')
 local lfs = require('lfs')
 
@@ -268,11 +269,12 @@ function plot.plotHRRDV(plotDir, hrrDV, name, config)
         end
     end
     -- Attempt to get a version with the Savitzky-Golay filter
-    local success,filtered_y = pcall(smvlib.savgol(hrrDV.x.values, hrrDV.y.values))
+    local success, filtered_y = pcall(smvlib.savgol, hrrDV.x.values, hrrDV.y.values)
     if success then
         local filteredVec = smv.deepCopy(hrrDV)
         filteredVec.y.values = filtered_y
         filteredVec.name = "Time-Averaged"
+        vecs[#vecs + 1] = filteredVec
     end
     return plot.DV(plotDir, vecs, name, config)
 end
