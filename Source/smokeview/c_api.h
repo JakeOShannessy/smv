@@ -1,4 +1,5 @@
 #include "options_common.h"
+
 #include "gd.h"
 
 // Verified, the declarations below are part of the verified and test API.
@@ -16,7 +17,7 @@ ERROR_CODE get_named_colorbar(const char *name, size_t *index);
 ERROR_CODE set_slice_bounds(const char *slice_type, int set_min,
                             float value_min, int set_max, float value_max);
 ERROR_CODE set_slice_bound_min(const char *slice_type, int set, float value);
-ERROR_CODE set_slice_bound_max(const char *slice_type, int set, float value);
+ERROR_CODE SetSliceBoundMax(const char *slice_type, int set, float value);
 ERROR_CODE get_slice_bounds(const char *slice_type, simple_bounds *bounds);
 ERROR_CODE render(const char *filename);
 int getframe();

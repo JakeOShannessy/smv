@@ -46,7 +46,7 @@ void UnloadBoundaryMenu(int value);
 /// slicebounds array.
 /// @param slice_type A string describing the slice quantity.
 /// @return If successful, the index > 0. If not found -1.
-int get_slice_bound_index(const char *slice_type) {
+int GetSliceBoundIndex(const char *slice_type) {
   for (int i = 0; i < nslicebounds; i++) {
     if (strcmp(slicebounds[i].shortlabel, slice_type) == 0) {
       return i;
@@ -61,7 +61,7 @@ int get_slice_bound_index(const char *slice_type) {
 /// @param value
 /// @return Non-zero on error
 int set_slice_bound_min(const char *slice_type, int set, float value) {
-  int slice_type_index = get_slice_bound_index(slice_type);
+  int slice_type_index = GetSliceBoundIndex(slice_type);
   if (slice_type_index < 0) {
     // Slice type index could not be found.
     return 1;
@@ -80,8 +80,8 @@ int set_slice_bound_min(const char *slice_type, int set, float value) {
 /// @param[in] set
 /// @param[in] value
 /// @return
-int set_slice_bound_max(const char *slice_type, int set, float value) {
-  int slice_type_index = get_slice_bound_index(slice_type);
+int SetSliceBoundMax(const char *slice_type, int set, float value) {
+  int slice_type_index = GetSliceBoundIndex(slice_type);
   if (slice_type_index < 0) {
     // Slice type index could not be found.
     return 1;
@@ -104,7 +104,7 @@ int set_slice_bound_max(const char *slice_type, int set, float value) {
 /// @return Non-zero on error
 int set_slice_bounds(const char *slice_type, int set_valmin, float valmin,
                      int set_valmax, float valmax) {
-  int slice_type_index = get_slice_bound_index(slice_type);
+  int slice_type_index = GetSliceBoundIndex(slice_type);
   if (slice_type_index < 0) {
     // Slice type index could not be found.
     return 1;
@@ -115,7 +115,8 @@ int set_slice_bounds(const char *slice_type, int set_valmin, float valmin,
   slicebounds[slice_type_index].dlg_valmin = valmin;
   slicebounds[slice_type_index].dlg_valmax = valmax;
   int error = 0;
-  SetMinMax(BOUND_SLICE, slicebounds[slice_type_index].shortlabel, set_valmin, valmin, set_valmax, valmax);
+  SetMinMax(BOUND_SLICE, slicebounds[slice_type_index].shortlabel, set_valmin,
+            valmin, set_valmax, valmax);
   // Update the colors given the bounds set above
   UpdateAllSliceColors(slice_type_index, &error);
   return 0;
@@ -127,7 +128,7 @@ int set_slice_bounds(const char *slice_type, int set_valmin, float valmin,
 /// used.
 /// @return Non-zero on error
 ERROR_CODE get_slice_bounds(const char *slice_type, simple_bounds *bounds) {
-  int slice_type_index = get_slice_bound_index(slice_type);
+  int slice_type_index = GetSliceBoundIndex(slice_type);
   if (slice_type_index < 0) {
     // Slice type index could not be found.
     return ERR_NOK;
@@ -221,7 +222,8 @@ int loadsmv(char *input_filename, char *input_filename_ext) {
     trainer_active = 1;
     if (strcmp(input_filename_ext, ".svd") == 0) {
       input_file = trainer_filename;
-    } else if (strcmp(input_filename_ext, ".smt") == 0) {
+    }
+    else if (strcmp(input_filename_ext, ".smt") == 0) {
       input_file = test_filename;
     }
   }
@@ -327,7 +329,8 @@ int loadfile(const char *filename) {
       if (i < nsliceinfo - nfedinfo) {
         ReadSlice(sd->file, i, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR,
                   &errorcode);
-      } else {
+      }
+      else {
         ReadFed(i, ALL_FRAMES, NULL, LOAD, FED_SLICE, &errorcode);
       }
       return errorcode;
@@ -561,7 +564,8 @@ char *form_filename(int view_mode, char *renderfile_name, char *renderfile_dir,
 
     snprintf(renderfile_name, 1024, "%s%s%s", chidfilebase, view_suffix,
              renderfile_ext);
-  } else {
+  }
+  else {
     snprintf(renderfile_name, 1024, "%s%s", basename, renderfile_ext);
   }
   return renderfile_name;
@@ -584,12 +588,13 @@ int RenderFrameLua(int view_mode, const char *basename) {
                               // rendered
   char renderfile_path[2048]; // the full path of the rendered image
   int woffset = 0, hoffset = 0;
-  int screenH;
+  int screen_h;
   int return_code;
 
   if (script_dir_path != NULL) {
     strcpy(renderfile_dir, script_dir_path);
-  } else {
+  }
+  else {
     strcpy(renderfile_dir, ".");
   }
 
@@ -598,16 +603,16 @@ int RenderFrameLua(int view_mode, const char *basename) {
   SetThreadExecutionState(ES_DISPLAY_REQUIRED);
 #endif
 
-  screenH = screenHeight;
+  screen_h = screenHeight;
   // we should not be rendering under these conditions
   if (view_mode == VIEW_LEFT && stereotype == STEREO_RB) return 0;
   // construct filename for image to be rendered
   form_filename(view_mode, renderfile_name, renderfile_dir, renderfile_path,
-                woffset, hoffset, screenH, basename);
+                woffset, hoffset, screen_h, basename);
   // render image
   return_code =
       SmokeviewImage2File(renderfile_dir, renderfile_name, render_filetype,
-                          woffset, screenWidth, hoffset, screenH);
+                          woffset, screenWidth, hoffset, screen_h);
   if (RenderTime == 1 && output_slicedata == 1) {
     OutputSliceData();
   }
@@ -616,7 +621,7 @@ int RenderFrameLua(int view_mode, const char *basename) {
 
 int RenderFrameLuaVar(int view_mode, gdImagePtr *RENDERimage) {
   int woffset = 0, hoffset = 0;
-  int screenH;
+  int screen_h;
   int return_code;
 
 #ifdef WIN32
@@ -624,12 +629,12 @@ int RenderFrameLuaVar(int view_mode, gdImagePtr *RENDERimage) {
   SetThreadExecutionState(ES_DISPLAY_REQUIRED);
 #endif
 
-  screenH = screenHeight;
+  screen_h = screenHeight;
   // we should not be rendering under these conditions
   if (view_mode == VIEW_LEFT && stereotype == STEREO_RB) return 0;
   // render image
   return_code = SVimage2var(render_filetype, woffset, screenWidth, hoffset,
-                            screenH, RENDERimage);
+                            screen_h, RENDERimage);
   if (RenderTime == 1 && output_slicedata == 1) {
     OutputSliceData();
   }
@@ -765,7 +770,8 @@ int settime(float timeval) {
     UpdateFrameNumber(0);
     UpdateTimeLabels();
     return 0;
-  } else {
+  }
+  else {
     return 1;
   }
 }
@@ -819,7 +825,8 @@ void set_colorbar(size_t value) {
   UpdateColorbarType();
   if (colorbartype == bw_colorbar_index && bw_colorbar_index >= 0) {
     setbwdata = 1;
-  } else {
+  }
+  else {
     setbwdata = 0;
   }
   IsoBoundCB(ISO_COLORS);
@@ -833,9 +840,11 @@ void set_colorbar_visibility_vertical(int setting) {
   visColorbarVertical = setting;
   if (visColorbarVertical == 1 && visColorbarHorizontal == 0) {
     vis_colorbar = 1;
-  } else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
+  }
+  else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
     vis_colorbar = 2;
-  } else {
+  }
+  else {
     vis_colorbar = 0;
   }
 }
@@ -846,9 +855,11 @@ void toggle_colorbar_visibility_vertical() {
   visColorbarVertical = 1 - visColorbarVertical;
   if (visColorbarVertical == 1 && visColorbarHorizontal == 0) {
     vis_colorbar = 1;
-  } else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
+  }
+  else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
     vis_colorbar = 2;
-  } else {
+  }
+  else {
     vis_colorbar = 0;
   }
 }
@@ -857,9 +868,11 @@ void set_colorbar_visibility_horizontal(int setting) {
   visColorbarHorizontal = setting;
   if (visColorbarVertical == 1 && visColorbarHorizontal == 0) {
     vis_colorbar = 1;
-  } else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
+  }
+  else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
     vis_colorbar = 2;
-  } else {
+  }
+  else {
     vis_colorbar = 0;
   }
 }
@@ -870,9 +883,11 @@ void toggle_colorbar_visibility_horizontal() {
   visColorbarHorizontal = 1 - visColorbarHorizontal;
   if (visColorbarVertical == 1 && visColorbarHorizontal == 0) {
     vis_colorbar = 1;
-  } else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
+  }
+  else if (visColorbarVertical == 0 && visColorbarHorizontal == 1) {
     vis_colorbar = 2;
-  } else {
+  }
+  else {
     vis_colorbar = 0;
   }
 }
@@ -917,7 +932,7 @@ int get_chid_visibility() { return vis_title_CHID; }
 
 void toggle_chid_visibility() { vis_title_CHID = 1 - vis_title_CHID; }
 
-void blockages_show_all() {
+void BlockagesShowAll() {
   if (isZoneFireModel) visFrame = 1;
   /*
   visFloor=1;
@@ -1235,7 +1250,8 @@ void loadvolsmoke(int meshnumber) {
   if (imesh == -1) {
     read_vol_mesh = VOL_READALL;
     ReadVolsmokeAllFramesAllMeshes2(NULL);
-  } else if (imesh >= 0 && imesh < nmeshes) {
+  }
+  else if (imesh >= 0 && imesh < nmeshes) {
     meshdata *meshi;
     volrenderdata *vr;
 
@@ -1350,10 +1366,12 @@ int set_rendertype(const char *type) {
   if (STRCMP(type, "JPG") == 0 || STRCMP(type, "JPEG") == 0) {
     render_filetype = JPEG;
     return 0;
-  } else if (STRCMP(type, "PNG") == 0) {
+  }
+  else if (STRCMP(type, "PNG") == 0) {
     render_filetype = PNG;
     return 0;
-  } else {
+  }
+  else {
     return 1;
   }
   UpdateRenderType(render_filetype);
@@ -1367,7 +1385,8 @@ void set_movietype(const char *type) {
   }
   if (STRCMP(type, "MP4") == 0) {
     UpdateMovieType(MP4);
-  } else {
+  }
+  else {
     UpdateMovieType(AVI);
   }
 }
@@ -1702,7 +1721,7 @@ void loadvslice(const char *type, int axis, float distance) {
             type);
 }
 
-void unloadslice(int value) {
+void Unloadslice(int value) {
   int errorcode;
 
   updatemenu = 1;
@@ -1713,25 +1732,28 @@ void unloadslice(int value) {
     slicei = sliceinfo + value;
 
     if (slicei->slice_filetype == SLICE_GEOM) {
-      ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL,
-                   0, &errorcode);
-    } else {
+      ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
+                   &errorcode);
+    }
+    else {
       ReadSlice("", value, ALL_FRAMES, NULL, UNLOAD, SET_SLICECOLOR,
                 &errorcode);
     }
   }
   if (value <= -3) {
     UnloadBoundaryMenu(-3 - value);
-  } else {
+  }
+  else {
     if (value == UNLOAD_ALL) {
       for (size_t i = 0; i < nsliceinfo; i++) {
         slicedata *slicei;
 
         slicei = sliceinfo + i;
         if (slicei->slice_filetype == SLICE_GEOM) {
-          ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL,
-                       0, &errorcode);
-        } else {
+          ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
+                       &errorcode);
+        }
+        else {
           ReadSlice("", i, ALL_FRAMES, NULL, UNLOAD, DEFER_SLICECOLOR,
                     &errorcode);
         }
@@ -1745,7 +1767,8 @@ void unloadslice(int value) {
           UnloadBoundaryMenu(i);
         }
       }
-    } else if (value == UNLOAD_LAST) {
+    }
+    else if (value == UNLOAD_LAST) {
       int unload_index;
 
       unload_index = LastSliceLoadstack();
@@ -1754,9 +1777,10 @@ void unloadslice(int value) {
 
         slicei = sliceinfo + unload_index;
         if (slicei->slice_filetype == SLICE_GEOM) {
-          ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL,
-                       0, &errorcode);
-        } else {
+          ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
+                       &errorcode);
+        }
+        else {
           ReadSlice("", unload_index, ALL_FRAMES, NULL, UNLOAD, SET_SLICECOLOR,
                     &errorcode);
         }
@@ -1784,9 +1808,10 @@ int unloadall() {
     slicei = sliceinfo + i;
     if (slicei->loaded == 1) {
       if (slicei->slice_filetype == SLICE_GEOM) {
-        ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL,
-                     0, &errorcode);
-      } else {
+        ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
+                     &errorcode);
+      }
+      else {
         ReadSlice(slicei->file, i, ALL_FRAMES, NULL, UNLOAD, DEFER_SLICECOLOR,
                   &errorcode);
       }
@@ -1855,17 +1880,23 @@ int set_ortho_preset(const char *viewpoint) {
   int command;
   if (STRCMP(viewpoint, "XMIN") == 0) {
     command = SCRIPT_VIEWXMIN;
-  } else if (STRCMP(viewpoint, "XMAX") == 0) {
+  }
+  else if (STRCMP(viewpoint, "XMAX") == 0) {
     command = SCRIPT_VIEWXMAX;
-  } else if (STRCMP(viewpoint, "YMIN") == 0) {
+  }
+  else if (STRCMP(viewpoint, "YMIN") == 0) {
     command = SCRIPT_VIEWYMIN;
-  } else if (STRCMP(viewpoint, "YMAX") == 0) {
+  }
+  else if (STRCMP(viewpoint, "YMAX") == 0) {
     command = SCRIPT_VIEWYMAX;
-  } else if (STRCMP(viewpoint, "ZMIN") == 0) {
+  }
+  else if (STRCMP(viewpoint, "ZMIN") == 0) {
     command = SCRIPT_VIEWZMIN;
-  } else if (STRCMP(viewpoint, "ZMAX") == 0) {
+  }
+  else if (STRCMP(viewpoint, "ZMAX") == 0) {
     command = SCRIPT_VIEWZMAX;
-  } else {
+  }
+  else {
     return 1;
   }
   ScriptViewXYZMINMAXOrtho(command);
@@ -1986,12 +2017,14 @@ int setrenderdir(const char *dir) {
               "directory: %s\n",
               dir_path_temp);
       return 1;
-    } else {
+    }
+    else {
       free(script_dir_path);
       script_dir_path = dir_path_temp;
       return 0;
     }
-  } else {
+  }
+  else {
     // TODO: why would we ever want to set the render directory to NULL
     script_dir_path = NULL;
     FREEMEMORY(dir_path_temp);
@@ -2557,7 +2590,8 @@ int set_fedcolorbar(const char *name) {
   if (strlen(name) > 0) {
     strcpy(default_fed_colorbar, name);
     return 0;
-  } else {
+  }
+  else {
     return 1;
   }
 } // FEDCOLORBAR
@@ -2775,9 +2809,7 @@ int set_scaledfont(int height2d, float height2dwidth, int thickness2d,
   return 0;
 } // SCALEDFONT
 
-int get_scaledfont_height2d() {
-  return scaled_font2d_height;
-}
+int get_scaledfont_height2d() { return scaled_font2d_height; }
 
 int set_scaledfont_height2d(int height2d) {
   scaled_font2d_height = height2d;
@@ -3190,7 +3222,7 @@ int set_renderfiletype(int render, int movie) {
   return 0;
 } // RENDERFILETYPE
 
-int set_skybox() {
+int SetSkybox() {
   // skyboxdata *skyi;
 
   // free_skybox();
@@ -3319,12 +3351,14 @@ int set_showextremedata(int show_extremedata, int below, int above) {
     if (below != 0) below = 1;
     if (above == -1) above = 0;
     if (above != 0) above = 1;
-  } else {
+  }
+  else {
     if (show_extremedata != 1) show_extremedata = 0;
     if (show_extremedata == 1) {
       below = 1;
       above = 1;
-    } else {
+    }
+    else {
       below = 0;
       above = 0;
     }
@@ -3346,7 +3380,8 @@ int set_smokecull(int v) {
   if (gpuactive == 1) {
     cullsmoke = v;
     if (cullsmoke != 0) cullsmoke = 1;
-  } else {
+  }
+  else {
     cullsmoke = 0;
   }
 #else
@@ -3395,7 +3430,8 @@ int set_showhazardcolors(int v) {
 int set_showhzone(int v) {
   if (v) {
     visZonePlane = ZONE_ZPLANE;
-  } else {
+  }
+  else {
     visZonePlane = ZONE_HIDDEN;
   }
   return 0;
@@ -3409,7 +3445,8 @@ int set_showszone(int v) {
 int set_showvzone(int v) {
   if (v) {
     visZonePlane = ZONE_YPLANE;
-  } else {
+  }
+  else {
     visZonePlane = ZONE_HIDDEN;
   }
   return 0;
@@ -3824,7 +3861,8 @@ int set_c_slice(int minFlag, float minValue, int maxFlag, float maxValue,
       break;
     }
     // if there is no label apply values to all slice types
-  } else {
+  }
+  else {
     for (size_t i = 0; i < nslicebounds; i++) {
       slicebounds[i].setchopmin = minFlag;
       slicebounds[i].setchopmax = maxFlag;
@@ -4015,7 +4053,8 @@ int set_v_slice(int minFlag, float minValue, int maxFlag, float maxValue,
       break;
     }
     // if there is no label apply values to all slice types
-  } else {
+  }
+  else {
     for (size_t i = 0; i < nslicebounds; i++) {
       slicebounds[i].dlg_setvalmin = minFlag;
       slicebounds[i].dlg_setvalmax = maxFlag;
