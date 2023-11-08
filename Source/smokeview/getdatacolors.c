@@ -1,5 +1,6 @@
 #include "options.h"
 #include "glew.h"
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -293,7 +294,7 @@ void UpdateAllBoundaryColors(int flag){
       case PATCH_GEOMETRY_SLICE:
         break;
       default:
-        ASSERT(FFALSE);
+        assert(FFALSE);
         break;
     }
   }
@@ -341,7 +342,7 @@ void UpdateAllBoundaryColors(int flag){
 #endif
             break;
           default:
-            ASSERT(FFALSE);
+            assert(FFALSE);
             break;
         }
       }
@@ -997,7 +998,7 @@ void InitCadColors(void){
     }
     break;
     default:
-      ASSERT(FFALSE);
+      assert(FFALSE);
       break;
   }
 }
@@ -1126,7 +1127,7 @@ void UpdateCO2Colormap(void){
       }
       break;
     default:
-      ASSERT(FFALSE);
+      assert(FFALSE);
       break;
   }
 }
@@ -1242,7 +1243,7 @@ void UpdateSmokeColormap(int option){
       }
       break;
     default:
-      ASSERT(FFALSE);
+      assert(FFALSE);
       break;
   }
   UpdateTexturebar();
@@ -1913,7 +1914,7 @@ void ConvertColor(int flag){
     }
     break;
    default:
-     ASSERT(FFALSE);
+     assert(FFALSE);
      break;
   }
 }
