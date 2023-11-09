@@ -62,4 +62,45 @@ void plot3dout(const char *outfile, int nx, int ny, int nz, float *qout,
                int *error3);
 // Translate character string of a color name to RGB value
 void color2rgb(int rgb[3], const char *color);
+
+/// @brief A summary of the information contained in a size file.
+typedef struct SizeFileInfo {
+  // int compression_type;
+  /// @brief
+  int framestep;
+  /// @brief Does this struct represent the entire size file? False if this is a
+  /// subset.
+  int complete_file;
+  /// @brief The first time value.
+  float t_min;
+  /// @brief The last time value.
+  float t_max;
+  /// @brief Number of value along the x-axis
+  int nx;
+  /// @brief Number of value along the y-axis
+  int ny;
+  /// @brief Number of value along the z-axis
+  int nz;
+  /// @brief The number of frames of this subset
+  int nsteps;
+  /// @brief The size (in bytes) of all the compressed data. This is of the
+  /// frame data itself.
+  int ntotal;
+  /// @brief The minimum value found in the data file described by this size
+  /// file.
+  float valmin;
+  /// @brief The maximum value found in the data file described by this size
+  /// file.
+  float valmax;
+} SizeFileInfo;
+
+int ParseSizeFileInfo(FILE *stream, int compression_type, int framestep,
+                  int set_tmin, int set_tmax, float tmin_local,
+                  float tmax_local, SizeFileInfo *sz_info);
+
+#define COMPRESSED_UNKNOWN -1
+#define UNCOMPRESSED 2
+#define COMPRESSED_RLE 0  // 3d smoke file format assumes rle parameter is 0
+#define COMPRESSED_ZLIB 1 // 3d smoke file format assumes zlib parameter is 1
+
 #endif

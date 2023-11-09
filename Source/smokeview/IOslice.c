@@ -681,9 +681,14 @@ void OutSlicefile(slicedata *sd){
 // time, compressed frame size                        for each frame
 // compressed buffer
 
-/* ------------------ MakeSliceSizefile ------------------------ */
-
-int MakeSliceSizefile(char *file, char *sizefile, int compression_type){
+/// @brief Given a slice file (by path) determine the size of each frame and
+/// create an "index" that can be used to decompress frames using random access.
+/// @param[in] file Path to the slice file
+/// @param[in] sizefile Path to which the size data is written to
+/// @param compression_type The type of compression
+/// @return 0 on failure or if the compression type is UNCOMPRESSED, number of
+/// frames on success
+int MakeSliceSizefile(const char *file, const char *sizefile, int compression_type){
   FILE *stream, *sizestream;
   int count;
 
@@ -714,7 +719,10 @@ int MakeSliceSizefile(char *file, char *sizefile, int compression_type){
     FSKIP;fread(minmax, 4, 2, stream);FSKIP;
     FSKIP;fread(ijkbar, 4, 6, stream);FSKIP;
 
+    // Write the slixe bounds to the first line of the size file.
     fprintf(sizestream, "%i %i %i %i %i %i\n", ijkbar[0], ijkbar[1], ijkbar[2], ijkbar[3], ijkbar[4], ijkbar[5]);
+    // Write the min and max value of the slice file to the second line of the
+    // size file.
     fprintf(sizestream, "%f %f\n", minmax[0], minmax[1]);
     count = 2;
 
@@ -746,92 +754,104 @@ int MakeSliceSizefile(char *file, char *sizefile, int compression_type){
   fclose(stream);
   fclose(sizestream);
   return count;
-
 }
 
-/* ------------------ GetSliceHeader0 ------------------------ */
-
-int GetSliceHeader0(char *comp_file, char *size_file, int compression_type, int *i1, int *i2, int *jj1, int *j2, int *k1, int *k2, int *slice3d){
+/// @brief Read the size file of slice file, creating the size file if doesn't
+/// exist. Output the slice dimensions as found in the size file. TODO: why
+/// bother, why not just take the size information from the slice file. This is
+/// currently only called in GetSliceParams.
+/// @param[in] comp_file Path to the slice file
+/// @param[in] size_file Path to the size file
+/// @param[in] compression_type The compression type of the slice file
+/// @param[out] i1 Slice imin
+/// @param[out] i2 Slice imax
+/// @param[out] jj1 Slice jmin
+/// @param[out] j2 Slice jmax
+/// @param[out] k1 Slice kmin
+/// @param[out] k2 Slice kmax
+/// @param[out] slice3d Is the slice 3d?
+/// @return 0 on failure, 1 on success
+int GetSliceHeader0(const char *comp_file, const char *size_file,
+                    int compression_type, int *i1, int *i2, int *jj1, int *j2,
+                    int *k1, int *k2, int *slice3d) {
   FILE *stream;
   char buffer[255];
 
   stream = FOPEN(size_file, "r");
-  if(stream == NULL){
-    if(MakeSliceSizefile(comp_file, size_file, compression_type) == 0)return 0;
+  if (stream == NULL) {
+    // If the size file could not be opened, create one, then open it for
+    // reading.
+    if (MakeSliceSizefile(comp_file, size_file, compression_type) == 0)
+      return 0;
     stream = FOPEN(size_file, "r");
-    if(stream == NULL)return 0;
+    // If we still don't have a size file, return 0 to indicate error.
+    if (stream == NULL) return 0;
   }
 
-  if(fgets(buffer, 255, stream) == NULL){
-    fclose(stream);
-    return 0;
-  }
-  sscanf(buffer, "%i %i %i %i %i %i", i1, i2, jj1, j2, k1, k2);
-  if(*i1 == *i2 || *jj1 == *j2 || *k1 == *k2){
+  SizeFileInfo sz_info = {0};
+  int result =
+      ParseSizeFileInfo(stream, compression_type, -1, 0, 0, 0, 0, &sz_info);
+  fclose(stream);
+  if (sz_info.nx == 1 || sz_info.ny == 1 || sz_info.nz == 1) {
     *slice3d = 0;
   }
-  else{
+  else {
     *slice3d = 1;
   }
-  fclose(stream);
   return 1;
 }
 
-/* ------------------ GetSliceHeader ------------------------ */
+/// @brief Read the size file of a slice file, creating the size file if it doesn't exist.
+/// @param[in] comp_file
+/// @param[in] size_file
+/// @param[in] compression_type
+/// @param[in] framestep
+/// @param[in] set_tmin
+/// @param[in] set_tmax
+/// @param[in] tmin_local
+/// @param[in] tmax_local
+/// @param[out] nx
+/// @param[out] ny
+/// @param[out] nz
+/// @param[out] nsteps
+/// @param[out] ntotal
+/// @param[out] valmin
+/// @param[out] valmax
+/// @return On sucess, the number of lines in the file, 0 on failure
+int GetSliceHeader(const char *comp_file, const char *size_file,
+                   int compression_type, int framestep, int set_tmin,
+                   int set_tmax, float tmin_local, float tmax_local, int *nx,
+                   int *ny, int *nz, int *nsteps, int *ntotal, float *valmin,
+                   float *valmax) {
 
-int GetSliceHeader(char *comp_file, char *size_file, int compression_type,
-  int framestep, int set_tmin, int set_tmax, float tmin_local, float tmax_local,
-  int *nx, int *ny, int *nz, int *nsteps, int *ntotal, float *valmin, float *valmax){
-  FILE *stream;
-  int i1, i2, jj1, j2, k1, k2;
-  float time_local;
-  int ncompressed;
-  int count;
-  char buffer[256];
-  int ncompressed_rle, ncompressed_zlib;
-
-  stream = FOPEN(size_file, "r");
-  if(stream == NULL){
-    if(MakeSliceSizefile(comp_file, size_file, compression_type) == 0)return 0;
+  FILE *stream = FOPEN(size_file, "r");
+  if (stream == NULL) {
+    // If the size file could not be opened, create one, then open it for
+    // reading.
+    if (MakeSliceSizefile(comp_file, size_file, compression_type) == 0)
+      return 0;
     stream = fopen(size_file, "r");
-    if(stream == NULL)return 0;
+    // If we still don't have a size file, return 0 to indicate error.
+    if (stream == NULL) return 0;
   }
 
-  if(fgets(buffer, 255, stream) == NULL){
-    fclose(stream);
-    return 0;
-  }
-  sscanf(buffer, "%i %i %i %i %i %i", &i1, &i2, &jj1, &j2, &k1, &k2);
-  *nx = i2 + 1 - i1;
-  *ny = j2 + 1 - jj1;
-  *nz = k2 + 1 - k1;
-  if(fgets(buffer, 255, stream) == NULL){
-    fclose(stream);
-    return 0;
-  }
-  sscanf(buffer, "%f %f", valmin, valmax);
-
-  count = 0;
-  *nsteps = 0;
-  *ntotal = 0;
-  while(!feof(stream)){
-
-    if(fgets(buffer, 255, stream) == NULL)break;
-    sscanf(buffer, "%f %i %i", &time_local, &ncompressed_zlib, &ncompressed_rle);
-    if(compression_type == COMPRESSED_ZLIB){
-      ncompressed = ncompressed_zlib;
-    }
-    else{
-      ncompressed = ncompressed_rle;
-    }
-    if(count++%framestep != 0)continue;
-    if(set_tmin == 1 && time_local < tmin_local)continue;
-    if(set_tmax == 1 && time_local > tmax_local)continue;
-    (*nsteps)++;
-    *ntotal += ncompressed;
-  }
+  SizeFileInfo sz_info = {0};
+  int result = ParseSizeFileInfo(stream, compression_type, framestep, set_tmin,
+                             set_tmax, tmin_local, tmax_local, &sz_info);
+  *nx = sz_info.nx;
+  *ny = sz_info.ny;
+  *nz = sz_info.nz;
+  *nsteps = sz_info.nsteps;
+  *ntotal = sz_info.ntotal;
+  *valmin = sz_info.valmax;
+  *valmax = sz_info.valmax;
   fclose(stream);
-  return 2 + *nsteps;
+  if (result != 0) {
+    return 0;
+  }
+  else {
+    return 2 + sz_info.nsteps;
+  }
 }
 
 /* ------------------ CReadSlice_frame ------------------------ */

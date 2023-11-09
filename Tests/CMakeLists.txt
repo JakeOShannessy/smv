@@ -21,6 +21,23 @@ if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_slice m)
 endif()
 
+# parse_simple_slice_sz
+add_executable(parse_simple_slice_sz parse_simple_slice_sz.c
+    ../Source/shared/getdata.c
+    ../Source/shared/dmalloc.c
+)
+
+target_include_directories(parse_simple_slice_sz PRIVATE
+    ../Tests
+    ../Source/shared
+)
+if (WIN32)
+    target_include_directories(parse_simple_slice PRIVATE ../Source/pthreads)
+endif()
+if ((NOT MACOSX) AND UNIX)
+    target_link_libraries(parse_simple_slice m)
+endif()
+
 # parse_simple_bndf
 add_executable(parse_simple_bndf parse_simple_bndf.c
     ../Source/shared/getdata.c
@@ -84,6 +101,9 @@ add_test(NAME "Simple Slice - Complete"
 # half (to simulate a partially written slice file)
 add_test(NAME "Simple Slice - Last Frame Half Truncated"
     COMMAND parse_simple_slice ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/truncated_slice.sf 2)
+
+add_test(NAME "Simple Slice Size File - Complete"
+    COMMAND parse_simple_slice_sz ${CMAKE_SOURCE_DIR}/Tests/comp_size_file_1.sz)
 
 # Arguments to this tests are <bndf path> <number of frames in bndf>
 # Simple slice is a finished slice file with 2 frames, why 2 frames for boundary

@@ -334,6 +334,75 @@ void GetSliceParms(const char *slicefilename, int *ip1, int *ip2, int *jp1,
   return;
 }
 
+/// @brief Parse a slice file, returning key metadata about it. Note, this does
+/// not return the size file data itself.
+/// @param stream The file handle to the start of the file to be parsed
+/// @param compression_type The compression type used
+/// @param framestep The number of frames to skip. If set to -1, parse no frames
+/// at all.
+/// @param set_tmin
+/// @param set_tmax
+/// @param tmin_local
+/// @param tmax_local
+/// @param sz_info
+/// @return zero on sucess, non-zero on failure
+int ParseSizeFileInfo(FILE *stream, int compression_type, int framestep,
+                      int set_tmin, int set_tmax, float tmin_local,
+                      float tmax_local, SizeFileInfo *sz_info) {
+  float time_local;
+  int ncompressed;
+  char buffer[256];
+  int ncompressed_rle, ncompressed_zlib;
+
+  // If we still don't have a size file, return 0 to indicate error.
+  if (stream == NULL) return 1;
+  if (fgets(buffer, 255, stream) == NULL) {
+    return 1;
+  }
+  {
+    // Read slice bounds from the first line of the size file.
+    int i1, i2, jj1, j2, k1, k2;
+    sscanf(buffer, "%i %i %i %i %i %i", &i1, &i2, &jj1, &j2, &k1, &k2);
+    sz_info->nx = i2 + 1 - i1;
+    sz_info->ny = j2 + 1 - jj1;
+    sz_info->nz = k2 + 1 - k1;
+  }
+  if (fgets(buffer, 255, stream) == NULL) {
+    return 1;
+  }
+  // Read the min and max values from the second line of the size file.
+  sscanf(buffer, "%f %f", &sz_info->valmin, &sz_info->valmax);
+
+  int count = 0;
+  sz_info->nsteps = 0;
+  sz_info->ntotal = 0;
+  // Iterate through each line of the size file. If framestep is -1, skip this
+  // entirely
+  if (framestep == -1) {
+    return 0;
+  }
+  while (!feof(stream)) {
+    if (fgets(buffer, 255, stream) == NULL) break;
+    // For each line of the slice file (which corresponds to a frame in a slice
+    // file) read the time and two numbers.
+    sscanf(buffer, "%f %i %i", &time_local, &ncompressed_zlib,
+           &ncompressed_rle);
+    if (compression_type == COMPRESSED_ZLIB) {
+      ncompressed = ncompressed_zlib;
+    }
+    else {
+      ncompressed = ncompressed_rle;
+    }
+    if (count++ % framestep != 0) continue;
+    if (set_tmin == 1 && time_local < tmin_local) continue;
+    if (set_tmax == 1 && time_local > tmax_local) continue;
+    (sz_info->nsteps)++;
+    (sz_info->ntotal) += ncompressed;
+  }
+  // TODO: set sz_info->complete status
+  return 0;
+}
+
 // !  ------------------ openpart ------------------------
 
 FILE *openpart(const char *partfilename, int *error) {
