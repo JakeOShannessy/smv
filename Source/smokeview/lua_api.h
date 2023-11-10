@@ -1,6 +1,7 @@
 #include "lua.h"
 
 int LuaRender(lua_State *L);
+lua_State *L;
 lua_State *InitLua();
 int RunLuaBranch(lua_State *L, int argc, char **argv);
 
@@ -8,13 +9,13 @@ int LuaInitsmvproginfo(lua_State *L);
 int LuaInitsmvdata(lua_State *L);
 void AddLuaPaths(lua_State *L);
 
-int LoadScript(const char *filename);
-int LoadLuaScript(const char *filename);
-int RunLuaScript();
-int LoadSsfScript(const char *filename);
-int RunSsfScript();
+int LoadScript(lua_State *L, const char *filename);
+int LoadLuaScript(lua_State *L, const char *filename);
+int RunLuaScript(lua_State *L);
+int LoadSsfScript(lua_State *L, const char *filename);
+int RunSsfScript(lua_State *L);
 
-int RunScriptString(const char *string);
+int RunScriptString(lua_State *L, const char *string);
 int LuaGetSliceinfo(lua_State *L);
 int LuaGetCsvinfo(lua_State *L);
 int LuaInitsmvdata(lua_State *L);

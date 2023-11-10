@@ -206,7 +206,7 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
 /// callback (DisplayCB, in callbacks.c). These two loading routines are
 /// included to load the scripts early in the piece, before the display
 /// callback. Both runluascript and runscript are global.
-int LoadScript(const char *filename) {
+int LoadScript(lua_State *L, const char *filename) {
   if (runluascript == 1 && runscript == 1) {
     fprintf(stderr, "Both a Lua script and an SSF script cannot be run "
                     "simultaneously\n");
@@ -214,7 +214,7 @@ int LoadScript(const char *filename) {
   }
   if (runluascript == 1) {
     // Load the Lua script in order for it to be run later.
-    if (LoadLuaScript(filename) != LUA_OK) {
+    if (LoadLuaScript(L, filename) != LUA_OK) {
       fprintf(stderr, "There was an error loading the script, and so it "
                       "will not run.\n");
       if (exit_on_script_crash) {
@@ -5590,7 +5590,8 @@ int SmvlibIndex(lua_State *L) {
 }
 
 lua_State *InitLua() {
-  L = luaL_newstate();
+  // NOLINTNEXTLINE
+  lua_State *L = luaL_newstate();
 
   luaL_openlibs(L);
 
@@ -5619,9 +5620,11 @@ lua_State *InitLua() {
   return L;
 }
 
-int RunScriptString(const char *string) { return luaL_dostring(L, string); }
+int RunScriptString(lua_State *L, const char *string) {
+  return luaL_dostring(L, string);
+}
 
-int LoadLuaScript(const char *filename) {
+int LoadLuaScript(lua_State *L, const char *filename) {
   // The display callback needs to be run once initially.
   // PROBLEM: the display CB does not work without a loaded case.
   runluascript = 0;
@@ -5672,7 +5675,7 @@ int LoadLuaScript(const char *filename) {
   return return_code;
 }
 
-int LoadSsfScript(const char *filename) {
+int LoadSsfScript(lua_State *L, const char *filename) {
   // char filename[1024];
   //   if (strlen(script_filename) == 0) {
   //       strncpy(filename, fdsprefix, 1020);
@@ -5732,7 +5735,7 @@ int LoadSsfScript(const char *filename) {
 }
 
 int yield_or_ok_ssf = LUA_YIELD;
-int RunSsfScript() {
+int RunSsfScript(lua_State *L) {
   if (yield_or_ok_ssf == LUA_YIELD) {
     int nresults = 0;
 #if LUA_VERSION_NUM < 502
@@ -5778,7 +5781,7 @@ int RunSsfScript() {
 }
 
 int yield_or_ok = LUA_YIELD;
-int RunLuaScript() {
+int RunLuaScript(lua_State *L) {
   if (yield_or_ok == LUA_YIELD) {
     int nresults = 0;
 #if LUA_VERSION_NUM < 502

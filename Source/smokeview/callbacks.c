@@ -3895,14 +3895,14 @@ void DoStereo(void){
 
 #ifdef pp_LUA
 /* ------------------ DoScriptLua ------------------------ */
-void DoScriptLua(void){
+void DoScriptLua(lua_State *L){
   int script_return_code;
   if(runluascript == 1){
-    if(strlen(luascript_filename)>0) LoadScript(luascript_filename);
+    if(strlen(luascript_filename)>0) LoadScript(L, luascript_filename);
     runluascript = 0;
     PRINTF("running lua script section\n");
     fflush(stdout);
-    script_return_code = RunLuaScript();
+    script_return_code = RunLuaScript(L);
     if(script_return_code != LUA_OK && script_return_code != LUA_YIELD && exit_on_script_crash){
         SMV_EXIT(1);
     }
@@ -4160,7 +4160,7 @@ void DisplayCB(void){
   SNIFF_ERRORS("DisplayDB: start");
   DoScript();
 #ifdef pp_LUA
-  DoScriptLua();
+  DoScriptLua(L);
 #endif
   UpdateDisplay();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
