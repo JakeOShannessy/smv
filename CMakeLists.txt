@@ -206,6 +206,9 @@ target_sources(smokeview PRIVATE
     Source/smokeview/glui_shooter.cpp
 )
 
+target_compile_options(smokeview PRIVATE -fsanitize=address  -fno-omit-frame-pointer)
+target_link_options(smokeview PRIVATE -fsanitize=address)
+
 # These include directories are an existing workaround that would be good to
 # remove.Because of this custom code and the potential conflict with native libs
 # this needs to be early in the include order.
