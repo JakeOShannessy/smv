@@ -39,6 +39,18 @@ int memusage(void){
 }
 #endif
 
+mallocflag simple_malloc(void **ppv, size_t size) {
+  *ppv = malloc(size);
+  if (*ppv == NULL) return 0;
+  return 1;
+}
+
+mallocflag simple_realloc(void **ppv, size_t size) {
+  *ppv = malloc(size);
+  if (*ppv == NULL) return 0;
+  return 1;
+}
+
 /* ------------------ _memorystatus ------------------------ */
 
 #ifdef pp_memstatus
@@ -207,9 +219,10 @@ void FreeAllMemory(int memory_id){
 /* ------------------ FreeMemory ------------------------ */
 
 void FreeMemory(void *pv){
-  LOCK_MEM;
-  FreeMemoryNOTHREAD(pv);
-  UNLOCK_MEM;
+  // LOCK_MEM;
+  // FreeMemoryNOTHREAD(pv);
+  // UNLOCK_MEM;
+  free(pv);
 }
 
 /* ------------------ FreeMemoryNOTHREAD ------------------------ */
