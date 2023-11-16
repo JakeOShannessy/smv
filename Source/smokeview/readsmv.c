@@ -2410,7 +2410,7 @@ int GetInpf(bufferstreamdata *stream_in){
       if(NewMemory((void **)&fds_filein,(unsigned int)(len+1))==0)return 2;
       STRCPY(fds_filein,bufferptr);
       if(FILE_EXISTS_CASEDIR(fds_filein)==NO){
-        FreeMemory(fds_filein);
+        FREEMEMORY(fds_filein);
       }
 
       if(chidfilebase==NULL){
@@ -6745,7 +6745,6 @@ int ReadSMV_Init(){
   }
   npartclassinfo=0;
 
-  FreeAllObjects();
   if(ndeviceinfo>0){
     for(i=0;i<ndeviceinfo;i++){
     }
@@ -6754,7 +6753,7 @@ int ReadSMV_Init(){
   }
 
   // read in device (.svo) definitions
-
+  FreeAllObjects();
   InitObjectDefs();
 
   if(noutlineinfo>0){

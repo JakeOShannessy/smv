@@ -796,6 +796,9 @@ target_include_directories(parse_smv_benchmark PRIVATE
     Source/glui_gl
 )
 
+target_compile_options(parse_smv_benchmark PRIVATE -fsanitize=address  -fno-omit-frame-pointer)
+target_link_options(parse_smv_benchmark PRIVATE -fsanitize=address)
+# target_compile_options(parse_smv_benchmark PRIVATE -fsanitize=memory)
 
 # These include directories are an existing workaround that would be good to
 # remove.Because of this custom code and the potential conflict with native libs
