@@ -7,10 +7,16 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define SNIFF_ERRORS(f)
 #endif
 
+#define SLICE_LOAD_SPECIFIED    0
+#define SLICE_LOADALL_XorYorZ   1
+#define SLICE_LOADALL_XandYandZ 2
+
+#define BOUND_UPDATE_COLORS       110
+#define BOUND_DONTUPDATE_COLORS   128
+#define BOUND_COMPUTE_PERCENTILES 116
+
 #define MENU_HVAC_LOAD     0
 #define MENU_HVAC_UNLOAD   1
-
-#define BOUND_UPDATE_COLORS            110 
 
 #define HVAC_FILTER_NO  0
 #define HVAC_FILTER_YES 1
@@ -247,15 +253,15 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define UPDATE_WINDROSE_SHOWHIDE 2
 
 #ifndef START_TIMER
-#define START_TIMER(a) a = glutGet(GLUT_ELAPSED_TIME)/1000.0
+#define START_TIMER(a) a = (float)clock()/(float)CLOCKS_PER_SEC
 #endif
 
 #ifndef STOP_TIMER
-#define STOP_TIMER(a) a = glutGet(GLUT_ELAPSED_TIME)/1000.0 - a
+#define STOP_TIMER(a) a = (float)clock()/(float)CLOCKS_PER_SEC - a
 #endif
 
 #ifndef CUM_TIMER
-#define CUM_TIMER(a,b) b += (glutGet(GLUT_ELAPSED_TIME)/1000.0 - a)
+#define CUM_TIMER(a,b) b += ((float)clock()/(float)CLOCKS_PER_SEC - a)
 #endif
 
 #ifndef INIT_PRINT_TIMER
@@ -555,9 +561,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define PROJECTION 24
 
-#define PARTICLES 0
-#define HUMANS    1
-
 #define GLOBAL_INI 0
 #define STDOUT_INI 1
 #define LOCAL_INI  2
@@ -782,6 +785,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define COMPUTE_SMV_BOUNDS    10
 #define SHOW_BOUND_DIFFS      11
 #define CACHE_FILE_DATA       12
+#define LOAD_WHEN_LOADED      13
 
 #define SCRIPT_START_RECORDING2 -6
 #define SCRIPT_START_RECORDING  -2
@@ -964,7 +968,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define BOUNDS_ONLY 5
 
 #define FIRST_TIME  1
-#define LATER_TIMES 0
+#define LATER_TIME  0
 
 #define MAKE_SIZEFILE 0
 #define GET_DATA      1

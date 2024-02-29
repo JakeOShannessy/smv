@@ -37,8 +37,33 @@ int LuaDisplayCb(lua_State *L);
 #endif
 
 char *ParseCommandline(int argc, char **argv);
-void Usage(char *prog, int option);
-int CheckSMVFile(char *file, char *subdir);
+
+int CheckSMVFileLua(char *file, char *subdir) {
+  char casedir[256], *casedirptr, casename[256];
+  FILE *stream;
+
+  if (file == NULL) return 1;
+
+  strcpy(casename, file);
+  if (subdir == NULL) {
+    casedirptr = casedir;
+    strcpy(casedir, casename);
+  }
+  else {
+    casedirptr = subdir;
+  }
+  stream = fopen(casename, "r");
+  if (stream == NULL) {
+    stream = fopen_indir(casedirptr, casename, "r");
+    if (stream == NULL) {
+      printf("***error: unable to open %s\n", casename);
+      return 0;
+    }
+    CHDIR(casedirptr);
+  }
+  fclose(stream);
+  return 1;
+}
 
 int ProgramSetupLua(lua_State *L, int argc, char **argv) {
   char *progname;
@@ -48,19 +73,6 @@ int ProgramSetupLua(lua_State *L, int argc, char **argv) {
   printf("smv_filename: %s\n", smv_filename);
 
   progname = argv[0];
-
-  if (show_help == 1) {
-    Usage("smokeview", HELP_SUMMARY);
-    fflush(stderr);
-    fflush(stdout);
-    SMV_EXIT(0);
-  }
-  if (show_help == 2) {
-    Usage("smokeview", HELP_ALL);
-    fflush(stderr);
-    fflush(stdout);
-    SMV_EXIT(0);
-  }
   prog_fullpath = progname;
 #ifdef pp_LUA
   smokeview_bindir_abs = getprogdirabs(progname, &smokeviewpath);
@@ -72,7 +84,7 @@ int ProgramSetupLua(lua_State *L, int argc, char **argv) {
     DisplayVersionInfo("Smokeview ");
     SMV_EXIT(0);
   }
-  if (CheckSMVFile(smv_filename, smokeview_casedir) == 0) {
+  if (CheckSMVFileLua(smv_filename, smokeview_casedir) == 0) {
     SMV_EXIT(1);
   }
   InitTextureDir();
@@ -124,6 +136,7 @@ int LuaSetupGlut(lua_State *L) {
   // Here we must copy the arguments received from the Lua interperter to
   // allow them to be non-const (i.e. let the C code modify them).
   char **argv_sv_non_const = CopyArgv(argc, argv_sv);
+  InitStartupDirs();
   SetupGlut(argc, argv_sv_non_const);
   FreeArgv(argc, argv_sv_non_const);
   return 0;
@@ -175,12 +188,13 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
   // interpreter to call this.
   LuaSetupCase(L);
   return_code = lua_tonumber(L, -1);
-
+#ifdef pp_HIST
   if (return_code == 0 && update_bounds == 1) {
     INIT_PRINT_TIMER(timer_update_bounds);
     return_code = Update_Bounds();
     PRINT_TIMER(timer_update_bounds, "Update_Bounds");
   }
+#endif
   if (return_code != 0) return 1;
   if (convert_ini == 1) {
     INIT_PRINT_TIMER(timer_read_ini);
@@ -986,8 +1000,8 @@ int LuaGetPlot3dentry(lua_State *L) {
   lua_pushnumber(L, plot3dinfo[index].w);
   lua_setfield(L, -2, "w");
 
-  lua_pushnumber(L, plot3dinfo[index].nvars);
-  lua_setfield(L, -2, "nvars");
+  lua_pushnumber(L, plot3dinfo[index].nplot3dvars);
+  lua_setfield(L, -2, "nplot3dvars");
 
   lua_pushnumber(L, plot3dinfo[index].blocknumber);
   lua_setfield(L, -2, "blocknumber");
@@ -4872,6 +4886,7 @@ int LuaSetCacheQdata(lua_State *L) {
   return 1;
 } // CACHE_QDATA
 
+#ifdef pp_HIST
 int LuaSetPercentilelevel(lua_State *L) {
   float p_level_min = lua_tonumber(L, 1);
   float p_level_max = lua_tonumber(L, 2);
@@ -4879,6 +4894,7 @@ int LuaSetPercentilelevel(lua_State *L) {
   lua_pushnumber(L, return_code);
   return 1;
 } // PERCENTILELEVEL
+#endif
 
 int LuaSetTimeoffset(lua_State *L) {
   int v = lua_tonumber(L, 1);
@@ -5521,7 +5537,9 @@ static luaL_Reg const SMVLIB[] = {
     {"set_c_slice", LuaSetCSlice},
     {"set_cache_boundarydata", LuaSetCacheBoundarydata},
     {"set_cache_qdata", LuaSetCacheQdata},
+#ifdef pp_HIST
     {"set_percentilelevel", LuaSetPercentilelevel},
+#endif
     {"set_timeoffset", LuaSetTimeoffset},
     {"set_tload", LuaSetTload},
     {"set_v_slice", LuaSetVSlice},

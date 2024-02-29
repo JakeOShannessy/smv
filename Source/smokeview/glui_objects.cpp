@@ -14,6 +14,7 @@
 
 #define GENPLOT_ADD_PLOT            101
 #define GENPLOT_REM_PLOT            102
+#define GENPLOT_REM_ALL_PLOTS       136
 #define GENPLOT_SHOW_PLOT           103
 #define GENPLOT_SELECT_PLOT         104
 #define GENPLOT_ADD_DEV_PLOTS       105
@@ -89,6 +90,7 @@ GLUI_EditText *EDIT_xaxis_label  = NULL;
 GLUI_Button *BUTTON_plot_position = NULL;
 GLUI_Button *BUTTON_add_plot = NULL;
 GLUI_Button *BUTTON_rem_plot = NULL;
+GLUI_Button *BUTTON_rem_all_plots = NULL;
 GLUI_Button *BUTTON_open_down=NULL ;
 GLUI_Button *BUTTON_device_2=NULL;
 GLUI_Button *BUTTON_plot2d_2=NULL;
@@ -239,9 +241,9 @@ int ndeviceprocinfo = 0;
 procdata plot2dprocinfo[3];
 int nplot2dprocinfo = 0;
 
-/* ------------------ UpdatePlot2DSize ------------------------ */
+/* ------------------ GLUIUpdatePlot2DSize ------------------------ */
 
-extern "C" void UpdatePlot2DSize(void){
+extern "C" void GLUIUpdatePlot2DSize(void){
   if(SPINNER_size_factor!=NULL)SPINNER_size_factor->set_float_val(plot2d_size_factor);
   if(SPINNER_plot2d_time_average!=NULL)SPINNER_plot2d_time_average->set_float_val(plot2d_time_average);
 }
@@ -249,31 +251,31 @@ extern "C" void UpdatePlot2DSize(void){
 /* ------------------ Device_Rollout_CB ------------------------ */
 
 void Device_Rollout_CB(int var){
-  ToggleRollout(deviceprocinfo, ndeviceprocinfo, var);
+  GLUIToggleRollout(deviceprocinfo, ndeviceprocinfo, var);
 }
 
 /* ------------------ Plot2D_Rollout_CB ------------------------ */
 
 void Plot2D_Rollout_CB(int var){
-  ToggleRollout(plot2dprocinfo, nplot2dprocinfo, var);
+  GLUIToggleRollout(plot2dprocinfo, nplot2dprocinfo, var);
 }
 
-/* ------------------ UpdateDeviceTypes ------------------------ */
+/* ------------------ GLUIUpdateDeviceTypes ------------------------ */
 
-extern "C" void UpdateDeviceTypes(int val){
+ extern "C" void GLUIUpdateDeviceTypes(int val){
   devicetypes_index = val;
   updatemenu = 1;
 }
 
-/* ------------------ UpdateDeviceShow ------------------------ */
+/* ------------------ GLUIUpdateDeviceShow ------------------------ */
 
-extern "C" void UpdateDeviceShow(void){
+extern "C" void GLUIUpdateDeviceShow(void){
   if(CHECKBOX_showdevice_val!=NULL)CHECKBOX_showdevice_val->set_int_val(showdevice_val);
 }
 
-/* ------------------ UpdateWindRoseDevices ------------------------ */
+/* ------------------ GLUIUpdateWindRoseDevices ------------------------ */
 
-extern "C" void UpdateWindRoseDevices(int option){
+extern "C" void GLUIUpdateWindRoseDevices(int option){
   int i,icheckboxes;
 
   icheckboxes = 0;
@@ -316,26 +318,26 @@ extern "C" void UpdateWindRoseDevices(int option){
   update_windrose_showhide = 0;
   if(option == UPDATE_WINDROSE_SHOWHIDE&&windrosez_showhide == NULL){
     NewMemory((void **)&windrosez_showhide, nwindrosez_showhide * sizeof(int));
-    if(windrosez_showhide!=NULL)UpdateWindRoseDevices(UPDATE_WINDROSE_SHOWHIDE);
+    if(windrosez_showhide!=NULL)GLUIUpdateWindRoseDevices(UPDATE_WINDROSE_SHOWHIDE);
   }
 }
 
-/* ------------------ UpdateShowbeamAsLine ------------------------ */
+/* ------------------ GLUIUpdateShowbeamAsLine ------------------------ */
 
-extern "C" void UpdateShowbeamAsLine(void){
+extern "C" void GLUIUpdateShowbeamAsLine(void){
   if(CHECKBOX_showbeam_as_line!=NULL)CHECKBOX_showbeam_as_line->set_int_val(showbeam_as_line);
 }
 
-/* ------------------ UpdateDeviceSize ------------------------ */
+/* ------------------ GLUIUpdateDeviceSize ------------------------ */
 
-extern "C" void UpdateDeviceSize(void){
+extern "C" void GLUIUpdateDeviceSize(void){
   if(sensorrelsize<sensorrelsizeMIN)sensorrelsize = sensorrelsizeMIN;
   if(SPINNER_sensorrelsize!=NULL)SPINNER_sensorrelsize->set_float_val(sensorrelsize);
 }
 
-/* ------------------ UpdateDeviceOrientation ------------------------ */
+/* ------------------ GLUIUpdateDeviceOrientation ------------------------ */
 
-extern "C" void UpdateDeviceOrientation(void){
+extern "C" void GLUIUpdateDeviceOrientation(void){
   if(CHECKBOX_device_orientation!=NULL)CHECKBOX_device_orientation->set_int_val(show_device_orientation);
 }
 
@@ -394,6 +396,7 @@ void RemoveCurve(plot2ddata *plot2di, int index){
   if(index < 0){
     plot2di->ncurves = 0;
     LIST_plotcurves->set_int_val(-1);
+    return;
   }
   curve = plot2di->curve+index;
   if(index >= 0){
@@ -438,6 +441,7 @@ void AddCSVCurve(plot2ddata *plot2di, int index, int option){
   char *c_type;
 
   csvi = GetCsvCurve(index, &csvfi);
+  if(csvfi == NULL)return;
   c_type = csvfi->c_type;
 
   have_plot = 0;
@@ -467,17 +471,17 @@ void AddCSVCurve(plot2ddata *plot2di, int index, int option){
       curve->update_avg         = glui_curve_default.update_avg;
 
       shortlabel = GetPlotShortLabel2(plot2di, curve);
-      strcpy(curve->scaled_label, shortlabel);
+      if(shortlabel!=curve->scaled_label)strcpy(curve->scaled_label, shortlabel);
 
       unit = GetPlotUnit2(plot2di, curve);
-      strcpy(curve->scaled_unit,  unit);
+      if(unit!=curve->scaled_unit)strcpy(curve->scaled_unit,  unit);
     }
     else{
       csvfi  = csvfileinfo+curve->csv_file_index;
       c_type = curve->c_type;
       csvi   = csvfi->csvinfo+curve->csv_col_index;
     }
-    strcpy(curve->c_type, c_type);
+    if(c_type!=curve->c_type)strcpy(curve->c_type, c_type);
     if(strcmp(c_type, "devc")==0){
       curve->quantity = deviceinfo[curve->csv_col_index-1].quantity;
     }
@@ -573,7 +577,7 @@ void GetPlotLabel(char *label, int size){
 
 /* ------------------ AddPlot ------------------------ */
 
-extern "C" void AddPlot(void){
+void AddPlot(void){
   char label[32];
 
   nplot2dinfo++;
@@ -690,19 +694,28 @@ void EnableDisablePlot2D(void){
   }
 }
 
-/* ------------------ UpdateDeviceAdd ------------------------ */
+/* ------------------ GLUIUpdateDeviceAdd ------------------------ */
 
-extern "C" void UpdateDeviceAdd(void){
+extern "C" void GLUIUpdateDeviceAdd(void){
   if(LIST_plot_add_dev!=NULL){
     LIST_plot_add_dev->set_int_val(idevice_add);
   }
 }
 
-/* ------------------ ShowPlot2D ------------------------ */
+/* ------------------ GLUIShowPlot2D ------------------------ */
 
-extern "C" void ShowPlot2D(void){
+extern "C" void GLUIShowPlot2D(void){
   if(glui_plot2d != NULL){
     glui_plot2d->show();
+    EnableDisablePlot2D();
+  }
+}
+
+/* ------------------ GLUIHidePlot2D ------------------------ */
+
+extern "C" void GLUIHidePlot2D(void){
+  if(glui_plot2d != NULL){
+    glui_plot2d->hide();
     EnableDisablePlot2D();
   }
 }
@@ -735,22 +748,21 @@ void FilterList(void){
   int unit_id;
   int compartment_id;
 
-  LOCK_CSV_LOAD_CPP;
   for(i=0; i<plot2d_max_columns; i++){
     LIST_csvID->delete_item(i);
   }
-  UNLOCK_CSV_LOAD_CPP;
   {
     csvfiledata *csvfi;
 
     GetCsvCurve(0, &csvfi);
+    if(csvfi == NULL)return;
     unit_id = LIST_curve_unit->get_int_val();
     strcpy(unit_label, "all");
     if(unit_id >= 0){
       csvdata *csvunit;
 
       csvunit = GetCsvCurve(unit_id, NULL);
-      if(csvunit->dimensionless == 0){
+      if(csvunit!=NULL&&csvunit->dimensionless == 0){
         strcpy(unit_label, csvunit->label.unit);
       }
       else{
@@ -765,7 +777,7 @@ void FilterList(void){
       int doit;
 
       csvi = GetCsvCurve(i, NULL);
-      if(csvi->skip != 0)continue;
+      if(csvi==NULL||csvi->skip != 0)continue;
       doit = 0;
       if(strcmp(unit_label, "all") == 0)doit = 1;
       if(doit==0&&csvi->dimensionless == 1 && strcmp(unit_label, "dimensionless")==0)doit = 1;
@@ -842,17 +854,16 @@ void UpdateCsvList(void){
   char label2[256];
   csvfiledata *csvfi;
 
-  LOCK_CSV_LOAD_CPP;
   for(i=0; i<plot2d_max_columns; i++){
     LIST_csvID->delete_item(i);
   }
-  UNLOCK_CSV_LOAD_CPP;
   GetCsvCurve(0, &csvfi);
+  if(csvfi == NULL)return;
   for(i = 0; i < csvfi->ncsvinfo; i++){
     csvdata *csvi;
 
     csvi = GetCsvCurve(i, NULL);
-    if(csvi->skip==1)continue;
+    if(csvi==NULL||csvi->skip==1)continue;
     LIST_csvID->add_item(i, csvi->label.shortlabel);
   }
   strcpy(label, "add");
@@ -870,21 +881,21 @@ void UpdateCsvList(void){
   strcat(label2, " curve:");
   LIST_csvID->set_name(label2);
 
-  LOCK_CSV_LOAD_CPP;
   for(i=0; i<plot2d_max_columns; i++){
     LIST_curve_unit->delete_item(i);
   }
-  UNLOCK_CSV_LOAD_CPP;
   for(i = 0; i < csvfi->ncsvinfo; i++){
     csvdata *csvi;
     int dup_unit, j;
 
     csvi = GetCsvCurve(i, NULL);
+    if(csvi == NULL)continue;
     dup_unit = 0;
     for(j=0; j<i; j++){
       csvdata *csvj;
 
       csvj = GetCsvCurve(j, NULL);
+      if(csvj == NULL)continue;
       if(csvi->dimensionless==0){
         if(strcmp(csvi->label.unit, csvj->label.unit) == 0){
           dup_unit = 1;
@@ -1076,11 +1087,11 @@ void GenPlotCB(int var){
       }
       break;
     case GENPLOT_PLOT_TMINMAX:
-      UpdateBoundTbounds();
+      GLUIUpdateBoundTbounds();
       break;
     case GENPLOT_PLOT_MINMAX:
       Glui2Plot2D(iplot2dinfo);
-      DeviceCB(DEVICE_TIMEAVERAGE);
+      GLUIDeviceCB(DEVICE_TIMEAVERAGE);
       break;
     case GENPLOT_ADD_CURVE:
       curve_id = LIST_csvID->get_int_val();
@@ -1089,7 +1100,7 @@ void GenPlotCB(int var){
       EnableDisablePlot2D();
       GenPlotCB(GENPLOT_RESET_BOUNDS);
       SetPlot2DBoundLabels(plot2dinfo + iplot2dinfo);
-      DeviceCB(DEVICE_TIMEAVERAGE);
+      GLUIDeviceCB(DEVICE_TIMEAVERAGE);
       plotstate = GetPlotState(DYNAMIC_PLOTS);
       update_times = 1;
       break;
@@ -1171,7 +1182,7 @@ void GenPlotCB(int var){
       curve = glui_plot2dinfo->curve+index;
       memcpy(curve, &glui_curve, sizeof(curvedata));
       Glui2Plot2D(iplot2dinfo);
-      DeviceCB(DEVICE_TIMEAVERAGE);
+      GLUIDeviceCB(DEVICE_TIMEAVERAGE);
 #define COLOR_EPS 5
       glui_curve.use_foreground_color = 0;
       if(
@@ -1193,7 +1204,7 @@ void GenPlotCB(int var){
     case GENPLOT_PLOT_SIZE:
       if(plot2d_size_factor<0.0){
         plot2d_size_factor = 0.0;
-        UpdatePlot2DSize();
+        GLUIUpdatePlot2DSize();
       }
       break;
     case GENPLOT_PLOT_LABEL:
@@ -1204,7 +1215,7 @@ void GenPlotCB(int var){
         LIST_plots->set_int_val(-1);
         LIST_plots->set_int_val(iplot2dinfo_save);
       }
-      DeviceCB(DEVICE_TIMEAVERAGE);
+      GLUIDeviceCB(DEVICE_TIMEAVERAGE);
       SetPlot2DShowLabel();
       break;
     case GENPLOT_SET_PLOTPOS:
@@ -1267,8 +1278,7 @@ void GenPlotCB(int var){
         strcat(label, plot2di->plot_label);
         strcat(label, ")");
         ROLLOUT_curve_properties->set_name(label);
-        csvfiledata *csvfi;
-        GetCsvCurve(0, &csvfi);
+        GetCsvCurve(0, NULL);
         strcpy(label, "add");
         if(plot2dinfo != NULL){
           strcat(label, " curves to ");
@@ -1376,6 +1386,17 @@ void GenPlotCB(int var){
       GenPlotCB(GENPLOT_SELECT_PLOT);
       SetPlot2DBoundLabels(plot2dinfo+iplot2dinfo);
       LIST_csvID->set_int_val(-1);
+      if(nplot2dinfo == 1){
+        glui_csv_file_index = 0;
+        LIST_csvfile->set_int_val(0);
+        GenPlotCB(GENPLOT_CSV_FILETYPE);
+      }
+      break;
+    case GENPLOT_REM_ALL_PLOTS:
+      while(nplot2dinfo != 0){
+        iplot2dinfo = 0;
+        GenPlotCB(GENPLOT_REM_PLOT);
+      }
       break;
     case GENPLOT_REM_PLOT:
       RemovePlot(iplot2dinfo);
@@ -1387,7 +1408,7 @@ void GenPlotCB(int var){
         strcat(label, plot2dinfo[iplot2dinfo].plot_label);
         SetPlot2DBoundLabels(plot2dinfo+iplot2dinfo);
       }
-      else{
+      else if(plot2dinfo!=NULL){
         strcpy(label, "Remove plot");
         SetPlot2DBoundLabels(plot2dinfo+iplot2dinfo);
       }
@@ -1422,7 +1443,7 @@ void GenPlotCB(int var){
         curve->csv_col_index = curv_index;
       }
       Glui2Plot2D(iplot2dinfo);
-      DeviceCB(DEVICE_TIMEAVERAGE);
+      GLUIDeviceCB(DEVICE_TIMEAVERAGE);
       SetPlot2DBoundLabels(plot2dinfo+iplot2dinfo);
       break;
     case GENPLOT_SAVE:
@@ -1440,9 +1461,9 @@ void GenPlotCB(int var){
   ForceIdle();
 }
 
-/* ------------------ DeviceCB ------------------------ */
+/* ------------------ GLUIDeviceCB ------------------------ */
 
-extern "C" void DeviceCB(int var){
+extern "C" void GLUIDeviceCB(int var){
   int i;
 
   updatemenu = 1;
@@ -1478,7 +1499,7 @@ extern "C" void DeviceCB(int var){
       windrose_merge_type=WINDROSE_SLIDING;
       RADIO_windrose_merge_type->set_int_val(windrose_merge_type);
     }
-    DeviceCB(DEVICE_WINDROSE_SETPOS);
+    GLUIDeviceCB(DEVICE_WINDROSE_SETPOS);
     return;
   }
   if(var == DEVICE_WINDROSE_DTMINMAX){
@@ -1490,11 +1511,11 @@ extern "C" void DeviceCB(int var){
       windrose_merge_type=WINDROSE_SLIDING;
       RADIO_windrose_merge_type->set_int_val(windrose_merge_type);
     }
-    DeviceCB(DEVICE_WINDROSE_SETPOS);
+    GLUIDeviceCB(DEVICE_WINDROSE_SETPOS);
     return;
   }
   if(var == DEVICE_WINDROSE_DXYZ){
-    DeviceCB(DEVICE_WINDROSE_SETPOS);
+    GLUIDeviceCB(DEVICE_WINDROSE_SETPOS);
     return;
   }
   if(var == DEVICE_WINDROSE_SHOW_FIRST){
@@ -1531,7 +1552,7 @@ extern "C" void DeviceCB(int var){
         vd->display = 1;
       }
     }
-    UpdateWindRoseDevices(UPDATE_WINDROSE_CHECKBOX);
+    GLUIUpdateWindRoseDevices(UPDATE_WINDROSE_CHECKBOX);
     return;
   }
   if(var>=DEVICE_WINDROSE_SHOWHIDEALL+nzwindtreeinfo&&var<DEVICE_WINDROSE_SHOWHIDEALL+2*nzwindtreeinfo){
@@ -1552,7 +1573,7 @@ extern "C" void DeviceCB(int var){
         vd->display = 0;
       }
     }
-    UpdateWindRoseDevices(UPDATE_WINDROSE_CHECKBOX);
+    GLUIUpdateWindRoseDevices(UPDATE_WINDROSE_CHECKBOX);
     return;
   }
   switch(var){
@@ -1590,7 +1611,7 @@ extern "C" void DeviceCB(int var){
       }
     }
     update_avg = 1;
-    UpdatePlot2DSize2();
+    GLUIUpdatePlot2DSize2();
     break;
   case DEVICE_devicetypes:
     for(i = 0;i < ndevicetypes;i++){
@@ -1638,7 +1659,7 @@ extern "C" void DeviceCB(int var){
     else{
       vis_device_plot = 0;
     }
-    DeviceCB(DEVICE_SHOWDEVICEPLOT);
+    GLUIDeviceCB(DEVICE_SHOWDEVICEPLOT);
     plotstate=GetPlotState(DYNAMIC_PLOTS);
     updatemenu=1;
     break;
@@ -1654,20 +1675,20 @@ extern "C" void DeviceCB(int var){
     WriteIni(LOCAL_INI, NULL);
     break;
   case DEVICE_close:
-    HideGluiDevice();
+    GLUIHideDevice();
     break;
   default:
     assert(FFALSE);
   }
 }
 
-/* ------------------ UpdateGluiDevices ------------------------ */
+/* ------------------ GLUIUpdateDevices ------------------------ */
 
-extern "C" void UpdateGluiDevices(void){
-  DeviceCB(DEVICE_SHOWDEVICEPLOT);
-  DeviceCB(DEVICE_SHOWDEVICEVALS);
-  DeviceCB(DEVICE_COLORDEVICEVALS);
-  DeviceCB(DEVICE_devicetypes);
+extern "C" void GLUIUpdateDevices(void){
+  GLUIDeviceCB(DEVICE_SHOWDEVICEPLOT);
+  GLUIDeviceCB(DEVICE_SHOWDEVICEVALS);
+  GLUIDeviceCB(DEVICE_COLORDEVICEVALS);
+  GLUIDeviceCB(DEVICE_devicetypes);
 }
 
 /* ------------------ GetDeviceTminTmax ------------------------ */
@@ -1712,9 +1733,9 @@ int HaveExt(void){
   return 0;
 }
 
-/* ------------------ UpdatePlot2DINI ------------------------ */
+/* ------------------ GLUIUpdatePlot2DINI ------------------------ */
 
-extern "C" void UpdatePlot2DINI(void){
+extern "C" void GLUIUpdatePlot2DINI(void){
   if(nplot2dini > 0){
     int i;
 
@@ -1749,9 +1770,9 @@ void UpdateCSVFileTypes(void){
   }
 }
 
-/* ------------------ UpdatePlot2DTbounds ------------------------ */
+/* ------------------ GLUIUpdatePlot2DTbounds ------------------------ */
 
-extern "C" void UpdatePlot2DTbounds(void){
+extern "C" void GLUIUpdatePlot2DTbounds(void){
   use_tload_end2 = use_tload_end;
   use_tload_begin2 = use_tload_begin;
   tload_end2 = tload_end;
@@ -1762,9 +1783,9 @@ extern "C" void UpdatePlot2DTbounds(void){
   if(SPINNER_genplot_valmin[2]!=NULL)SPINNER_genplot_valmin[2]->set_float_val(tload_begin2);
 }
 
-/* ------------------ GluiPlot2DSetup ------------------------ */
+/* ------------------ GLUIPlot2DSetup ------------------------ */
 
-extern "C" void GluiPlot2DSetup(int main_window){
+extern "C" void GLUIPlot2DSetup(int main_window){
   if(glui_plot2d!=NULL){
     glui_plot2d->close();
     glui_plot2d = NULL;
@@ -1784,6 +1805,7 @@ extern "C" void GluiPlot2DSetup(int main_window){
     BUTTON_add_plot = glui_plot2d->add_button_to_panel(PANEL_plots, _("New plot"), GENPLOT_ADD_PLOT, GenPlotCB);
 
     BUTTON_rem_plot = glui_plot2d->add_button_to_panel(PANEL_plots, _("Remove"), GENPLOT_REM_PLOT, GenPlotCB);
+    BUTTON_rem_all_plots = glui_plot2d->add_button_to_panel(PANEL_plots, _("Remove all"), GENPLOT_REM_ALL_PLOTS, GenPlotCB);
     LIST_plots = glui_plot2d->add_listbox_to_panel(PANEL_plots, "select:", &iplot2dinfo, GENPLOT_SELECT_PLOT, GenPlotCB);
     LIST_plots->add_item(-1, "");
     CHECKBOX_show_genplot  = glui_plot2d->add_checkbox_to_panel(PANEL_plots, "show", &(glui_plot2dinfo->show), GENPLOT_SHOW_PLOT, GenPlotCB);
@@ -1867,7 +1889,7 @@ extern "C" void GluiPlot2DSetup(int main_window){
     glui_plot2d->add_spinner_to_panel(PANEL_plotother, _("frame line width"), GLUI_SPINNER_FLOAT, &plot2d_frame_width,                       GENPLOT_UPDATE,    GenPlotCB);
     SPINNER_size_factor = glui_plot2d->add_spinner_to_panel(PANEL_plotother, _("plot size(relative)"), GLUI_SPINNER_FLOAT, &plot2d_size_factor,   GENPLOT_PLOT_SIZE, GenPlotCB);
     glui_plot2d->add_spinner_to_panel(PANEL_plotother, _("vertical font spacing"), GLUI_SPINNER_FLOAT, &plot2d_font_spacing,                 GENPLOT_UPDATE,    GenPlotCB);
-    SPINNER_plot2d_time_average = glui_plot2d->add_spinner_to_panel(PANEL_plotother, _("smoothing interval (s)"), GLUI_SPINNER_FLOAT, &plot2d_time_average, DEVICE_TIMEAVERAGE, DeviceCB);
+    SPINNER_plot2d_time_average = glui_plot2d->add_spinner_to_panel(PANEL_plotother, _("smoothing interval (s)"), GLUI_SPINNER_FLOAT, &plot2d_time_average, DEVICE_TIMEAVERAGE, GLUIDeviceCB);
 
     PANEL_plotproperties2 = glui_plot2d->add_panel_to_panel(ROLLOUT_plotproperties, "", GLUI_PANEL_NONE);
 
@@ -1974,7 +1996,7 @@ extern "C" void GluiPlot2DSetup(int main_window){
 
     if(update_plot2dini == 1){
       update_plot2dini = 0;
-      UpdatePlot2DINI();
+      GLUIUpdatePlot2DINI();
     }
     GenPlotCB(GENPLOT_SHOW_PLOT);
     plot2d_dialogs_defined = 1;
@@ -1993,9 +2015,9 @@ extern "C" void GluiPlot2DSetup(int main_window){
   }
 }
 
-/* ------------------ GluiDeviceSetup ------------------------ */
+/* ------------------ GLUIDeviceSetup ------------------------ */
 
-extern "C" void GluiDeviceSetup(int main_window){
+extern "C" void GLUIDeviceSetup(int main_window){
 
   if(glui_device!=NULL){
     glui_device->close();
@@ -2013,14 +2035,14 @@ extern "C" void GluiDeviceSetup(int main_window){
     INSERT_ROLLOUT(ROLLOUT_smvobjects, glui_device);
     ADDPROCINFO(deviceprocinfo, ndeviceprocinfo, ROLLOUT_smvobjects, OBJECTS_ROLLOUT, glui_device);
 
-    SPINNER_sensorrelsize = glui_device->add_spinner_to_panel(ROLLOUT_smvobjects, _("Scale"), GLUI_SPINNER_FLOAT, &sensorrelsize, DEVICE_sensorsize, DeviceCB);
+    SPINNER_sensorrelsize = glui_device->add_spinner_to_panel(ROLLOUT_smvobjects, _("Scale"), GLUI_SPINNER_FLOAT, &sensorrelsize, DEVICE_sensorsize, GLUIDeviceCB);
     CHECKBOX_device_3 = glui_device->add_checkbox_to_panel(ROLLOUT_smvobjects, _("Outline"), &object_outlines);
-    CHECKBOX_device_orientation = glui_device->add_checkbox_to_panel(ROLLOUT_smvobjects, _("Orientation"), &show_device_orientation, DEVICE_show_orientation, DeviceCB);
+    CHECKBOX_device_orientation = glui_device->add_checkbox_to_panel(ROLLOUT_smvobjects, _("Orientation"), &show_device_orientation, DEVICE_show_orientation, GLUIDeviceCB);
     SPINNER_orientation_scale = glui_device->add_spinner_to_panel(ROLLOUT_smvobjects, _("Orientation scale"), GLUI_SPINNER_FLOAT, &orientation_scale);
     SPINNER_orientation_scale->set_float_limits(0.1, 10.0);
     if(have_beam){
       PANEL_beam = glui_device->add_panel_to_panel(ROLLOUT_smvobjects, "Beam sensor", true);
-      CHECKBOX_showbeam_as_line = glui_device->add_checkbox_to_panel(PANEL_beam, _("Show beam as line"), &showbeam_as_line, DEVICE_SHOWBEAM, DeviceCB);
+      CHECKBOX_showbeam_as_line = glui_device->add_checkbox_to_panel(PANEL_beam, _("Show beam as line"), &showbeam_as_line, DEVICE_SHOWBEAM, GLUIDeviceCB);
       SPINNER_beam_line_width = glui_device->add_spinner_to_panel(PANEL_beam, _("line width"), GLUI_SPINNER_FLOAT, &beam_line_width);
       SPINNER_beam_line_width->set_float_limits(1.0, 20.0);
       CHECKBOX_use_beamcolor = glui_device->add_checkbox_to_panel(PANEL_beam, _("Use color"), &use_beamcolor);
@@ -2069,41 +2091,41 @@ extern "C" void GluiDeviceSetup(int main_window){
       ADDPROCINFO(deviceprocinfo, ndeviceprocinfo, ROLLOUT_windrose, WINDROSE_ROLLOUT, glui_device);
 
 
-      glui_device->add_checkbox_to_panel(ROLLOUT_windrose, _("show"), &viswindrose, DEVICE_WINDROSE_UPDATE, DeviceCB);
+      glui_device->add_checkbox_to_panel(ROLLOUT_windrose, _("show"), &viswindrose, DEVICE_WINDROSE_UPDATE, GLUIDeviceCB);
 
-      SPINNER_nr_windrose = glui_device->add_spinner_to_panel(ROLLOUT_windrose, _("radii"), GLUI_SPINNER_INT, &nr_windrose, DEVICE_NBUCKETS, DeviceCB);
+      SPINNER_nr_windrose = glui_device->add_spinner_to_panel(ROLLOUT_windrose, _("radii"), GLUI_SPINNER_INT, &nr_windrose, DEVICE_NBUCKETS, GLUIDeviceCB);
       SPINNER_nr_windrose->set_int_limits(3, 72, GLUI_LIMIT_CLAMP);
-      SPINNER_ntheta_windrose = glui_device->add_spinner_to_panel(ROLLOUT_windrose, _("angles"), GLUI_SPINNER_INT, &ntheta_windrose, DEVICE_NBUCKETS, DeviceCB);
+      SPINNER_ntheta_windrose = glui_device->add_spinner_to_panel(ROLLOUT_windrose, _("angles"), GLUI_SPINNER_INT, &ntheta_windrose, DEVICE_NBUCKETS, GLUIDeviceCB);
       SPINNER_ntheta_windrose->set_int_limits(3, 72, GLUI_LIMIT_CLAMP);
-      SPINNER_radius_windrose = glui_device->add_spinner_to_panel(ROLLOUT_windrose, _("radius"), GLUI_SPINNER_FLOAT, &radius_windrose, DEVICE_RADIUS, DeviceCB);
+      SPINNER_radius_windrose = glui_device->add_spinner_to_panel(ROLLOUT_windrose, _("radius"), GLUI_SPINNER_FLOAT, &radius_windrose, DEVICE_RADIUS, GLUIDeviceCB);
       RADIO_windstate_windrose = glui_device->add_radiogroup_to_panel(ROLLOUT_windrose, &windstate_windrose);
       glui_device->add_radiobutton_to_group(RADIO_windstate_windrose, "heading");
       glui_device->add_radiobutton_to_group(RADIO_windstate_windrose, "direction");
 
       ROLLOUT_show_windrose2 = glui_device->add_rollout_to_panel(ROLLOUT_windrose, "merge data", false);
       PANEL_windrose_mergexyz = glui_device->add_panel_to_panel(ROLLOUT_show_windrose2, "space", true);
-      SPINNER_windrose_merge_dxyzt[0] = glui_device->add_spinner_to_panel(PANEL_windrose_mergexyz, "dx", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt, DEVICE_WINDROSE_DXYZ, DeviceCB);
-      SPINNER_windrose_merge_dxyzt[1] = glui_device->add_spinner_to_panel(PANEL_windrose_mergexyz, "dy", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt+1, DEVICE_WINDROSE_DXYZ, DeviceCB);
-      SPINNER_windrose_merge_dxyzt[2] = glui_device->add_spinner_to_panel(PANEL_windrose_mergexyz, "dz", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt+2, DEVICE_WINDROSE_DXYZ, DeviceCB);
+      SPINNER_windrose_merge_dxyzt[0] = glui_device->add_spinner_to_panel(PANEL_windrose_mergexyz, "dx", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt, DEVICE_WINDROSE_DXYZ, GLUIDeviceCB);
+      SPINNER_windrose_merge_dxyzt[1] = glui_device->add_spinner_to_panel(PANEL_windrose_mergexyz, "dy", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt+1, DEVICE_WINDROSE_DXYZ, GLUIDeviceCB);
+      SPINNER_windrose_merge_dxyzt[2] = glui_device->add_spinner_to_panel(PANEL_windrose_mergexyz, "dz", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt+2, DEVICE_WINDROSE_DXYZ, GLUIDeviceCB);
 
       PANEL_windrose_merget = glui_device->add_panel_to_panel(ROLLOUT_show_windrose2, "time", true);
-      SPINNER_windrose_merge_dxyzt[3] = glui_device->add_spinner_to_panel(PANEL_windrose_merget, "dt", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt+3, DEVICE_WINDROSE_DT, DeviceCB);
-      SPINNER_windrose_merge_dxyzt[4] = glui_device->add_spinner_to_panel(PANEL_windrose_merget, "tmin", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt+4, DEVICE_WINDROSE_DTMINMAX, DeviceCB);
-      SPINNER_windrose_merge_dxyzt[5] = glui_device->add_spinner_to_panel(PANEL_windrose_merget, "tmax", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt+5, DEVICE_WINDROSE_DTMINMAX, DeviceCB);
+      SPINNER_windrose_merge_dxyzt[3] = glui_device->add_spinner_to_panel(PANEL_windrose_merget, "dt", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt+3, DEVICE_WINDROSE_DT, GLUIDeviceCB);
+      SPINNER_windrose_merge_dxyzt[4] = glui_device->add_spinner_to_panel(PANEL_windrose_merget, "tmin", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt+4, DEVICE_WINDROSE_DTMINMAX, GLUIDeviceCB);
+      SPINNER_windrose_merge_dxyzt[5] = glui_device->add_spinner_to_panel(PANEL_windrose_merget, "tmax", GLUI_SPINNER_FLOAT, windrose_merge_dxyzt+5, DEVICE_WINDROSE_DTMINMAX, GLUIDeviceCB);
 
       PANEL_windrose_merge = glui_device->add_panel_to_panel(PANEL_windrose_merget, "type", true);
 
-      RADIO_windrose_merge_type = glui_device->add_radiogroup_to_panel(PANEL_windrose_merge, &windrose_merge_type, DEVICE_WINDROSE_DT, DeviceCB);
+      RADIO_windrose_merge_type = glui_device->add_radiogroup_to_panel(PANEL_windrose_merge, &windrose_merge_type, DEVICE_WINDROSE_DT, GLUIDeviceCB);
       glui_device->add_radiobutton_to_group(RADIO_windrose_merge_type, _("point"));
       glui_device->add_radiobutton_to_group(RADIO_windrose_merge_type, _("stepped"));
       glui_device->add_radiobutton_to_group(RADIO_windrose_merge_type, _("sliding"));
 
-      RADIO_windrose_ttype = glui_device->add_radiogroup_to_panel(PANEL_windrose_merget, &windrose_ttype, DEVICE_WINDROSE_SETPOS, DeviceCB);
+      RADIO_windrose_ttype = glui_device->add_radiogroup_to_panel(PANEL_windrose_merget, &windrose_ttype, DEVICE_WINDROSE_SETPOS, GLUIDeviceCB);
       glui_device->add_radiobutton_to_group(RADIO_windrose_ttype, _("use dt"));
       glui_device->add_radiobutton_to_group(RADIO_windrose_ttype, _("use tmin/tmax"));
       glui_device->add_radiobutton_to_group(RADIO_windrose_ttype, _("neither"));
 
-      BUTTON_update_windrose = glui_device->add_button_to_panel(ROLLOUT_show_windrose2, _("Update"), DEVICE_WINDROSE_UPDATE, DeviceCB);
+      BUTTON_update_windrose = glui_device->add_button_to_panel(ROLLOUT_show_windrose2, _("Update"), DEVICE_WINDROSE_UPDATE, GLUIDeviceCB);
 
       if(windrose_xy_active==1||windrose_xz_active==1||windrose_yz_active==1){
         PANEL_orientation = glui_device->add_panel_to_panel(ROLLOUT_windrose, "orientation", true);
@@ -2118,8 +2140,8 @@ extern "C" void GluiDeviceSetup(int main_window){
         ROLLOUT_showhide_windrose = glui_device->add_rollout_to_panel(ROLLOUT_windrose, "trees", false);
         INSERT_ROLLOUT(ROLLOUT_showhide_windrose, glui_device);
 
-        SPINNER_windrose_first = glui_device->add_spinner_to_panel(ROLLOUT_showhide_windrose, _("first"), GLUI_SPINNER_INT, &windrose_first, DEVICE_WINDROSE_SHOW_FIRST, DeviceCB);
-        SPINNER_windrose_next = glui_device->add_spinner_to_panel(ROLLOUT_showhide_windrose, _("skip"), GLUI_SPINNER_INT, &windrose_next, DEVICE_WINDROSE_SHOW_NEXT, DeviceCB);
+        SPINNER_windrose_first = glui_device->add_spinner_to_panel(ROLLOUT_showhide_windrose, _("first"), GLUI_SPINNER_INT, &windrose_first, DEVICE_WINDROSE_SHOW_FIRST, GLUIDeviceCB);
+        SPINNER_windrose_next = glui_device->add_spinner_to_panel(ROLLOUT_showhide_windrose, _("skip"), GLUI_SPINNER_INT, &windrose_next, DEVICE_WINDROSE_SHOW_NEXT, GLUIDeviceCB);
 
         NewMemory((void **)&ROLLOUT_showz_windrose, nzwindtreeinfo*sizeof(GLUI_Rollout *));
 
@@ -2144,7 +2166,7 @@ extern "C" void GluiDeviceSetup(int main_window){
         for(i = 0; i<nwindrosez_checkboxes; i++){
           CHECKBOX_showz_windrose[i] = NULL;
         }
-        UpdateWindRoseDevices(UPDATE_WINDROSE_DEVICE);
+        GLUIUpdateWindRoseDevices(UPDATE_WINDROSE_DEVICE);
 
         icheckboxes = 0;
         for(i = 0; i<nzwindtreeinfo; i++){
@@ -2166,8 +2188,8 @@ extern "C" void GluiDeviceSetup(int main_window){
           snprintf(roselabel, sizeof(roselabel), "x=%s, y=%s", xlabel, ylabel);
           ROLLOUT_showz_windrose[i] = glui_device->add_rollout_to_panel(ROLLOUT_showhide_windrose, roselabel, false);
           INSERT_ROLLOUT(ROLLOUT_showz_windrose[i], glui_device);
-          glui_device->add_button_to_panel(ROLLOUT_showz_windrose[i], _("Show all"), DEVICE_WINDROSE_SHOWHIDEALL+i, DeviceCB);
-          glui_device->add_button_to_panel(ROLLOUT_showz_windrose[i], _("Hide all"), DEVICE_WINDROSE_SHOWHIDEALL+nzwindtreeinfo+i, DeviceCB);
+          glui_device->add_button_to_panel(ROLLOUT_showz_windrose[i], _("Show all"), DEVICE_WINDROSE_SHOWHIDEALL+i, GLUIDeviceCB);
+          glui_device->add_button_to_panel(ROLLOUT_showz_windrose[i], _("Hide all"), DEVICE_WINDROSE_SHOWHIDEALL+nzwindtreeinfo+i, GLUIDeviceCB);
 
           for(j = treei->first; j<=treei->last; j++){
             vdevicesortdata *vdevsorti;
@@ -2205,17 +2227,17 @@ extern "C" void GluiDeviceSetup(int main_window){
       SPINNER_scale_max_windrose = glui_device->add_spinner_to_panel(ROLLOUT_scale_windrose, _("max"), GLUI_SPINNER_INT, &scale_max_windrose);
       SPINNER_scale_max_windrose->set_int_limits(0, 100);
 
-      UpdateGluiDevices();
+      GLUIUpdateDevices();
     }
   }
 
   if(ndevicetypes>0){
     ROLLOUT_values = glui_device->add_rollout_to_panel(PANEL_objects, "devc values", false);
-    CHECKBOX_showdevice_val = glui_device->add_checkbox_to_panel(ROLLOUT_values, _("Values"), &showdevice_val, DEVICE_SHOWDEVICEVALS, DeviceCB);
-    CHECKBOX_device_1 = glui_device->add_checkbox_to_panel(ROLLOUT_values, _("Id"), &showdevice_id, DEVICE_SHOWDEVICEVALS, DeviceCB);
-    CHECKBOX_device_5 = glui_device->add_checkbox_to_panel(ROLLOUT_values, _("Type"), &showdevice_type, DEVICE_SHOWDEVICEVALS, DeviceCB);
-    CHECKBOX_device_6 = glui_device->add_checkbox_to_panel(ROLLOUT_values, _("Unit"), &showdevice_unit, DEVICE_SHOWDEVICEVALS, DeviceCB);
-    CHECKBOX_device_4 = glui_device->add_checkbox_to_panel(ROLLOUT_values, _("Color"), &colordevice_val, DEVICE_COLORDEVICEVALS, DeviceCB);
+    CHECKBOX_showdevice_val = glui_device->add_checkbox_to_panel(ROLLOUT_values, _("Values"), &showdevice_val, DEVICE_SHOWDEVICEVALS, GLUIDeviceCB);
+    CHECKBOX_device_1 = glui_device->add_checkbox_to_panel(ROLLOUT_values, _("Id"), &showdevice_id, DEVICE_SHOWDEVICEVALS, GLUIDeviceCB);
+    CHECKBOX_device_5 = glui_device->add_checkbox_to_panel(ROLLOUT_values, _("Type"), &showdevice_type, DEVICE_SHOWDEVICEVALS, GLUIDeviceCB);
+    CHECKBOX_device_6 = glui_device->add_checkbox_to_panel(ROLLOUT_values, _("Unit"), &showdevice_unit, DEVICE_SHOWDEVICEVALS, GLUIDeviceCB);
+    CHECKBOX_device_4 = glui_device->add_checkbox_to_panel(ROLLOUT_values, _("Color"), &colordevice_val, DEVICE_COLORDEVICEVALS, GLUIDeviceCB);
     glui_device->add_spinner_to_panel(ROLLOUT_values, "min", GLUI_SPINNER_FLOAT, &device_valmin);
     glui_device->add_spinner_to_panel(ROLLOUT_values, "max", GLUI_SPINNER_FLOAT, &device_valmax);
   }
@@ -2223,10 +2245,10 @@ extern "C" void GluiDeviceSetup(int main_window){
   PANEL_label3 = glui_device->add_panel("",false);
   glui_device->add_column_to_panel(PANEL_label3,false);
 
-  glui_device->add_button_to_panel(PANEL_label3,_("Save settings"),DEVICE_SAVE_SETTINGS_OBJECTS,DeviceCB);
+  glui_device->add_button_to_panel(PANEL_label3,_("Save settings"),DEVICE_SAVE_SETTINGS_OBJECTS,GLUIDeviceCB);
   glui_device->add_column_to_panel(PANEL_label3,false);
 
-  BUTTON_device_2=glui_device->add_button_to_panel(PANEL_label3,_("Close"),DEVICE_close,DeviceCB);
+  BUTTON_device_2=glui_device->add_button_to_panel(PANEL_label3,_("Close"),DEVICE_close,GLUIDeviceCB);
 #ifdef pp_CLOSEOFF
   BUTTON_device_2->disable();
 #endif
@@ -2234,15 +2256,15 @@ extern "C" void GluiDeviceSetup(int main_window){
   glui_device->set_main_gfx_window( main_window );
 }
 
-/* ------------------ HideGluiDevice ------------------------ */
+/* ------------------ GLUIHideDevice ------------------------ */
 
-extern "C" void HideGluiDevice(void){
-  CloseRollouts(glui_device);
+extern "C" void GLUIHideDevice(void){
+  GLUICloseRollouts(glui_device);
 }
 
-/* ------------------ ShowGluiPlotDevice ------------------------ */
+/* ------------------ GLUIShowPlotDevice ------------------------ */
 
-extern "C" void ShowGluiPlotDevice(void){
+extern "C" void GLUIShowPlotDevice(void){
   if(glui_device!=NULL){
     glui_device->show();
     if(ROLLOUT_device2Dplots!=NULL)ROLLOUT_device2Dplots->open();
@@ -2250,9 +2272,9 @@ extern "C" void ShowGluiPlotDevice(void){
 
 }
 
-/* ------------------ ShowGluiDevice ------------------------ */
+/* ------------------ GLUIShowDevice ------------------------ */
 
-extern "C" void ShowGluiDevice(void){
+extern "C" void GLUIShowDevice(void){
   if(glui_device!=NULL&&ROLLOUT_smvobjects!=NULL){
     glui_device->show();
     ROLLOUT_smvobjects->open();

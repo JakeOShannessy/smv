@@ -16,6 +16,18 @@
 #define K2C(T) ((T)-273.15)
 #define C2K(T) ((T)+273.15)
 
+#define USEMESH_DRAW -1
+#define IF_NOT_USEMESH_RETURN0(loaded,blocknum)\
+  if(loaded==1)return 0;\
+  if((blocknum)>=0 && meshinfo[(blocknum)].use == 0){\
+    return 0;\
+   }
+#define IF_NOT_USEMESH_CONTINUE(loaded,blocknum)\
+  if(loaded==1)continue;\
+  if((blocknum)>=0 && meshinfo[(blocknum)].use == 0){\
+    continue;\
+   }
+
 #define SCALE2FDS(x) ((x)*xyzmaxdiff)
 #define SCALE2SMV(x) ((x)/xyzmaxdiff)
 
@@ -36,6 +48,9 @@
 #define SMV2FDS_X(x) (xbar0+(x)*xyzmaxdiff)
 #define SMV2FDS_Y(y) (ybar0+(y)*xyzmaxdiff)
 #define SMV2FDS_Z(z) (zbar0+(z)*xyzmaxdiff)
+
+#define DONOT_SET_MINMAX_FLAG 0
+#define SET_MINMAX_FLAG       1
 
 #define VERT_AVG2(v1,v2,vavg) \
   vavg[0]=(v1[0]+v2[0])/2.0;\

@@ -139,65 +139,13 @@ void WriteBoundIni(void){
         return;
       }
     }
-#ifdef pp_HIST
-    fprintf(stream, "B_BOUNDARY\n");
-    fprintf(stream, " %f %f %f %f %i %s\n", boundi->global_min, boundi->percentile_min, boundi->percentile_max, boundi->global_max, patchi->patch_filetype, patchi->label.shortlabel);
-#else
     float dummy = 0.0;
     fprintf(stream, "B_BOUNDARY\n");
     fprintf(stream, " %f %f %f %f %i %s\n", boundi->global_min, dummy, dummy, boundi->global_max, patchi->patch_filetype, patchi->label.shortlabel);
-#endif
   }
   if(stream != NULL)fclose(stream);
   FREEMEMORY(fullfilename);
 }
-
-/* ------------------ UpdateBoundaryBounds ------------------------ */
-#ifdef pp_HIST
-void UpdateBoundaryBounds(patchdata *patchi){
-  histogramdata full_histogram;
-  bounddata *boundi;
-  int j;
-
-  boundi = &patchi->bounds;
-  if(boundi->defined==1)return;
-  InitHistogram(&full_histogram,NHIST_BUCKETS, NULL, NULL);
-
-  for(j=0;j<npatchinfo;j++){
-    patchdata *patchj;
-
-    patchj=patchinfo+j;
-    if(patchj->loaded == 0)continue;
-    if(patchi->boundary != patchj->boundary)continue;
-    if(patchi->patch_filetype == PATCH_GEOMETRY_SLICE || patchj->patch_filetype == PATCH_GEOMETRY_SLICE)continue;
-    if(patchj->shortlabel_index != patchi->shortlabel_index)continue; // dont consider file type for now (node/cell centered, structdured/unstructured etc)
-    MergeHistogram(&full_histogram,patchj->histogram,MERGE_BOUNDS);
-  }
-
-  boundi->global_min = GetHistogramVal(&full_histogram, 0.0);
-  boundi->global_max = GetHistogramVal(&full_histogram, 1.0);
-
-  boundi->percentile_min = GetHistogramVal(&full_histogram, percentile_level_min);
-  boundi->percentile_max = GetHistogramVal(&full_histogram, percentile_level_max);
-  boundi->defined=1;
-
-  for(j=0;j<npatchinfo;j++){
-    bounddata *boundj;
-    patchdata *patchj;
-
-    patchj=patchinfo+j;
-    if (patchi == patchj)continue;
-    if(patchi->boundary != patchj->boundary)continue;
-    if(patchi->patch_filetype == PATCH_GEOMETRY_SLICE || patchj->patch_filetype == PATCH_GEOMETRY_SLICE)continue;
-    if(patchj->shortlabel_index != patchi->shortlabel_index)continue;
-
-    boundj = &patchj->bounds;
-    memcpy(boundj,boundi,sizeof(bounddata));
-  }
-  WriteBoundIni();
-  FreeHistogram(&full_histogram);
-}
-#endif
 
 /* ------------------ GetBoundaryColors3 ------------------------ */
 
@@ -216,7 +164,7 @@ void GetBoundaryColors3(patchdata *patchi, float *t, int start, int nt, unsigned
   char *label;
 
   label = patchi->label.shortlabel;
-  GetMinMax(BOUND_PATCH, label, &set_valmin, ttmin, &set_valmax, ttmax);
+  GLUIGetMinMax(BOUND_PATCH, label, &set_valmin, ttmin, &set_valmax, ttmax);
   new_tmin = *ttmin;
   new_tmax = *ttmax;
 
@@ -310,12 +258,10 @@ void UpdateAllBoundaryColors(int flag){
         char *label;
 
         label = patchi->label.shortlabel;
-        GetMinMax(BOUND_PATCH, label, &set_valmin, &valmin, &set_valmax, &valmax);
+        GLUIGetMinMax(BOUND_PATCH, label, &set_valmin, &valmin, &set_valmax, &valmax);
         switch(patchi->patch_filetype){
           case PATCH_STRUCTURED_NODE_CENTER:
           case PATCH_STRUCTURED_CELL_CENTER:
-#ifdef pp_HIST
-#ifndef pp_PATCH_HIST
             if(patchi->blocknumber>=0){
               meshdata *meshi;
               int npatchvals;
@@ -327,19 +273,13 @@ void UpdateAllBoundaryColors(int flag){
                                  nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
                                  &patchi->extreme_min, &patchi->extreme_max, flag);
             }
-#endif
-#endif
             break;
           case PATCH_GEOMETRY_BOUNDARY:
           case PATCH_GEOMETRY_SLICE:
-#ifdef pp_HIST
-#ifndef pp_PATCH_HIST
             GetBoundaryColors3(patchi, patchi->geom_vals, 0, patchi->geom_nvals, patchi->geom_ivals,
                                &valmin, &valmax,
                                nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
                                &patchi->extreme_min, &patchi->extreme_max, flag);
-#endif
-#endif
             break;
           default:
             assert(FFALSE);
@@ -411,12 +351,12 @@ void GetPartColors(partdata *parti, int nlevel, int flag){
   int *part_set_valmin, *part_set_valmax;
   float *part_valmin, *part_valmax;
 
-  num = GetNValtypes(BOUND_PART);
+  num = GLUIGetNValtypes(BOUND_PART);
   NewMemory((void **)&part_set_valmin, num*sizeof(int));
   NewMemory((void **)&part_valmin,     num*sizeof(float));
   NewMemory((void **)&part_set_valmax, num*sizeof(int));
   NewMemory((void **)&part_valmax,     num*sizeof(float));
-  GetMinMaxAll(BOUND_PART, part_set_valmin, part_valmin, part_set_valmax, part_valmax, &num2);
+  GLUIGetMinMaxAll(BOUND_PART, part_set_valmin, part_valmin, part_set_valmax, part_valmax, &num2);
 
   int start=0;
   if(flag==0)start = parti->ntimes+1;// skip particle conversion if flag is 0
@@ -857,13 +797,11 @@ void UpdateSliceBounds2(void){
     i = slice_loaded_list[ii];
     sd = sliceinfo+i;
     if(sd->display==0)continue;
-    GetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin, &qmin, &set_valmax, &qmax);
-    sd->valmin      = qmin;
-    sd->valmax      = qmax;
-    sd->globalmin   = qmin;
-    sd->globalmax   = qmax;
-    sd->valmin_data = qmin;
-    sd->valmax_data = qmax;
+    GLUIGetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin, &qmin, &set_valmax, &qmax);
+    sd->valmin_slice      = qmin;
+    sd->valmax_slice      = qmax;
+    sd->globalmin_slice   = qmin;
+    sd->globalmax_slice   = qmax;
     SetSliceColors(qmin, qmax, sd, 0, &error);
   }
   for(ii = 0; ii<nvsliceinfo; ii++){
@@ -875,13 +813,11 @@ void UpdateSliceBounds2(void){
     vd = vsliceinfo+ii;
     if(vd->loaded==0||vd->display==0||vd->ival==-1)continue;
     sd = sliceinfo+vd->ival;
-    GetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin, &qmin, &set_valmax, &qmax);
-    sd->valmin = qmin;
-    sd->valmax = qmax;
-    sd->globalmin = qmin;
-    sd->globalmax = qmax;
-    sd->valmin_data = qmin;
-    sd->valmax_data = qmax;
+    GLUIGetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin, &qmin, &set_valmax, &qmax);
+    sd->valmin_slice    = qmin;
+    sd->valmax_slice    = qmax;
+    sd->globalmin_slice = qmin;
+    sd->globalmax_slice = qmax;
     SetSliceColors(qmin, qmax, sd, 0, &error);
   }
 }
@@ -1067,7 +1003,7 @@ void InitRGB(void){
 
   if(setbw==0){
     ConvertColor(TO_COLOR);
-    if(nrgb_ini !=0){
+    if(nrgb_ini > 0){
       nrgb = nrgb_ini;
       for(n=0;n<nrgb_ini;n++){
         rgb[n][0] = rgb_ini[n*3];
@@ -1500,7 +1436,7 @@ void UpdateChopColors(void){
   cpp_boundsdata *bounds;
 
   SNIFF_ERRORS("UpdateChopColors: start");
-  bounds                = GetBoundsData(BOUND_PATCH);
+  bounds                = GLUIGetBoundsData(BOUND_PATCH);
   if(bounds!=NULL){
     setpatchchopmin_local = bounds->set_chopmin;
     setpatchchopmax_local = bounds->set_chopmax;
@@ -1508,7 +1444,7 @@ void UpdateChopColors(void){
     patchchopmax_local = bounds->chopmax;
   }
 
-  bounds                     = GetBoundsData(BOUND_SLICE);
+  bounds                     = GLUIGetBoundsData(BOUND_SLICE);
   if(bounds!=NULL){
     glui_setslicechopmin_local = bounds->set_chopmin;
     glui_setslicechopmax_local = bounds->set_chopmax;
@@ -1516,7 +1452,7 @@ void UpdateChopColors(void){
     glui_slicechopmax_local = bounds->chopmax;
   }
 
-  bounds               = GetBoundsData(BOUND_PART);
+  bounds               = GLUIGetBoundsData(BOUND_PART);
   if(bounds!=NULL){
     setpartchopmin_local = bounds->set_chopmin;
     setpartchopmax_local = bounds->set_chopmax;
@@ -1526,7 +1462,7 @@ void UpdateChopColors(void){
     glui_partmax_local = bounds->valmax[bounds->set_valmax];
   }
 
-  bounds                  = GetBoundsData(BOUND_PLOT3D);
+  bounds                  = GLUIGetBoundsData(BOUND_PLOT3D);
   if(bounds!=NULL){
     setp3chopmin_temp_local = bounds->set_chopmin;
     setp3chopmax_temp_local = bounds->set_chopmax;

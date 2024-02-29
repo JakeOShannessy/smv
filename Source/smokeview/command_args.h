@@ -62,6 +62,10 @@ typedef struct CommandlineArgs {
   bool outline;
   /// @brief open the movie generating dialog box
   bool make_movie;
+  /// @brief specify maximum memory used
+  bool max_mem;
+  bool csv;
+  float max_mem_GB;
   /// @brief output information about geometry triangles
   bool geominfo;
   /// @brief assume slice files exist in order to reduce startup time
@@ -72,6 +76,7 @@ typedef struct CommandlineArgs {
   bool redirect;
   /// @brief Run the default SSF script, i.e. CHID.ssf
   bool runscript;
+  bool checkscript;
   bool runhtmlscript;
   /// @brief Run the SSF script at this path
   char *script;
@@ -125,8 +130,9 @@ enum CommandLineError {
   CLE_MULTIPLE_INPUTS,
   CLE_OK,
   CLE_ARGUMENT_EXPECTED,
+  CLE_UNKNOWN_ARGUMENT
 };
-const char *CLE_Message(enum CommandLineError cle);
-CommandlineArgs ParseCommandlineNew(int argc, char **argv,
+const char *CLE_Message(enum CommandLineError cle, char *message);
+CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
                                     enum CommandLineError *error);
 #endif

@@ -1389,149 +1389,6 @@ int GetPatchNTimes(char *file){
   return count;
 }
 
-#ifdef pp_HIST
-#ifdef pp_PATCH_HIST
-/* ------------------ UpdateBoundaryHist ------------------------ */
-float UpdateBoundaryHist(patchdata *patchi){
-  float hist_time = 0.0;
-
-  if(patchi->loaded == 0)return 0.0;
-  START_TIMER(hist_time);
-  ResetHistogram(patchi->histogram, NULL, NULL);
-  if(patchi->structured == YES){
-    int npatchvals;
-    meshdata *meshi;
-
-    meshi = meshinfo + patchi->blocknumber;
-    npatchvals = meshi->npatch_times*meshi->npatchsize;
-    UpdateHistogram(meshi->patchval, NULL, npatchvals, patchi->histogram);
-  }
-  else{
-    UpdateHistogram(patchi->geom_vals, NULL, patchi->geom_nvals, patchi->histogram);
-  }
-  STOP_TIMER(hist_time);
-  return hist_time;
-}
-#else
-/* ------------------ UpdateBoundaryHist ------------------------ */
-
-float UpdateBoundaryHist(patchdata *patchj){
-  int i;
-  int hist_updated = 0;
-  float hist_time = 0.0;
-
-  START_TIMER(hist_time);
-  for (i = 0; i < npatchinfo; i++){
-    int npatches, error;
-    patchdata *patchi;
-    FILE *unit1 = NULL;
-    int error1;
-    int *pi1, *pi2, *pj1, *pj2, *pk1, *pk2, *patchdir, *patchsize;
-    float patchtime1, *patchframe;
-    int patchframesize;
-    int j;
-    time_t modtime;
-
-    patchi = patchinfo + i;
-    if(patchi->shortlabel_index != patchj->shortlabel_index) continue;
-    if(patchi->patch_filetype != patchj->patch_filetype) continue;
-    if(patchi->structured != patchj->structured) continue;
-
-    modtime = FileModtime(patchi->file);
-    if(modtime > patchi->modtime){
-      patchi->modtime             = modtime;
-      patchi->inuse_getbounds     = 0;
-      patchi->histogram->complete = 0;
-      patchi->bounds.defined      = 0;
-    }
-    if(histogram_nframes == patchi->histogram_nframes){
-      if(patchi->inuse_getbounds == 1 || patchi->histogram->complete == 1 || patchi->bounds.defined == 1){
-        continue;
-      }
-    }
-    patchi->histogram_nframes = histogram_nframes;
-
-    patchi->inuse_getbounds = 1;
-
-    if(patchi->ntimes <= 0){
-      patchi->ntimes = GetPatchNTimes(patchi->bound_file);
-      patchi->ntimes_old = patchi->ntimes;
-    }
-
-    if(patchj->structured == YES){
-      getboundaryheader1(patchi->file, &unit1, &npatches, &error);
-      if(npatches == 0){
-        closefortranfile(unit1);
-        continue;
-      }
-
-      NewMemory((void **)&pi1, npatches * sizeof(int));
-      NewMemory((void **)&pi2, npatches * sizeof(int));
-      NewMemory((void **)&pj1, npatches * sizeof(int));
-      NewMemory((void **)&pj2, npatches * sizeof(int));
-      NewMemory((void **)&pk1, npatches * sizeof(int));
-      NewMemory((void **)&pk2, npatches * sizeof(int));
-      NewMemory((void **)&patchdir, npatches * sizeof(int));
-      NewMemory((void **)&patchsize, npatches * sizeof(int));
-
-      getboundaryheader2(unit1, patchi->version, npatches, pi1, pi2, pj1, pj2,
-                         pk1, pk2, patchdir);
-
-      patchframesize = 0;
-      for (j = 0; j < npatches; j++){
-        int npatchsize;
-
-        npatchsize = (pi2[j] + 1 - pi1[j]);
-        npatchsize *= (pj2[j] + 1 - pj1[j]);
-        npatchsize *= (pk2[j] + 1 - pk1[j]);
-        patchframesize += npatchsize;
-      }
-      NewMemory((void **)&patchframe, patchframesize * sizeof(float));
-      ResetHistogram(patchi->histogram, NULL, NULL);
-      error1 = 0;
-      int skip, ii, total_frame_size;
-
-      skip = MAX(patchi->ntimes / histogram_nframes, 1);
-      total_frame_size =
-          4 + 4 + 4 + patchframesize * sizeof(float) + npatches * 2 * 4;
-      for (ii = 0; ii < patchi->ntimes; ii += skip){
-        int ndummy, filesize;
-
-        getpatchdata(unit1, npatches, pi1, pi2, pj1, pj2, pk1, pk2, &patchtime1,
-                     patchframe, &ndummy, &filesize, &error1);
-        if(error1 != 0) break;
-        UpdateHistogram(patchframe, NULL, patchframesize, patchi->histogram);
-        if(skip > 1) FSEEK(unit1, (skip - 1) * total_frame_size, SEEK_CUR);
-      }
-      if(patchi->ntimes > 0) hist_updated = 1;
-      closefortranfile(unit1);
-      FREEMEMORY(patchframe);
-      FREEMEMORY(pi1);
-      FREEMEMORY(pi2);
-      FREEMEMORY(pj1);
-      FREEMEMORY(pj2);
-      FREEMEMORY(pk1);
-      FREEMEMORY(pk2);
-      FREEMEMORY(patchdir);
-      FREEMEMORY(patchsize);
-      patchi->histogram->complete = 1;
-    }
-    else{
-      int error_code;
-
-      ReadGeomData(patchi, NULL, UPDATE_HIST, ALL_FRAMES, NULL, 0, &error_code);
-      ReadGeomData(patchi, NULL, UNLOAD,      ALL_FRAMES, NULL, 0, &error_code);
-    }
-  }
-  if(hist_updated == 1){
-    STOP_TIMER(hist_time);
-  } else {
-    hist_time = 0.0;
-  }
-  return hist_time;
-}
-#endif
-#endif
 /* ------------------ ReadBoundaryBndf ------------------------ */
 
 FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
@@ -1557,11 +1414,6 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
   int npatchvals;
   char patchcsvfile[1024];
   int framestart;
-#ifdef pp_HIST
-#ifndef pp_PATCH_HIST
-  float hist_update_time;
-#endif
-#endif
 
   int nn;
   int filenum;
@@ -1644,13 +1496,11 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
     FREEMEMORY(meshi->patchval);
     FREEMEMORY(meshi->thresholdtime);
     FREEMEMORY(meshi->patch_times);
+    FREEMEMORY(meshi->patch_times_map);
     FREEMEMORY(meshi->patchblank);
   }
 
   if(flag==UNLOAD){
-#ifdef pp_HIST
-    update_draw_hist = 1;
-#endif
     UpdateBoundaryType();
     UpdateUnitDefs();
     UpdateTimes();
@@ -1779,13 +1629,6 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
     meshi->npatchsize=nnsize;
     loadpatchbysteps=COMPRESSED_ALLFRAMES;
   }
-#ifdef pp_HIST
-#ifdef pp_PATCH_HIST
-  update_boundary_hist = 1;
-#else
-  hist_update_time = UpdateBoundaryHist(patchi);
-#endif
-#endif
 
   if(meshi->npatchsize>0){
     if(
@@ -1897,7 +1740,6 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
     default:
       assert(FFALSE);
     }
-
 
     meshi->boundarytype[n]=INTERIORwall;
     is_extface = meshi->is_extface;
@@ -2286,6 +2128,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
   }
 
   NewResizeMemory(meshi->patch_times,sizeof(float)*maxtimes_boundary);
+  NewResizeMemory(meshi->patch_times_map, maxtimes_boundary);
   NewResizeMemory(meshi->zipoffset,  sizeof(unsigned int)*maxtimes_boundary);
   NewResizeMemory(meshi->zipsize,    sizeof(unsigned int)*maxtimes_boundary);
   if(meshi->patch_times==NULL){
@@ -2480,14 +2323,36 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
 
     patchstart = patchi->ntimes_old*meshi->npatchsize;
 
+#ifdef pp_BOUNDS
+    if(meshi->boundary_mask == NULL&&patchi->patch_filetype==PATCH_STRUCTURED_CELL_CENTER){
+      MakeBoundaryMask(patchi);
+    }
+    patchmin_global = 10000000000000.0;
+    patchmax_global = -patchmin_global;
+    if(meshi->boundary_mask != NULL && patchi->patch_filetype == PATCH_STRUCTURED_CELL_CENTER){
+      for(i = 0; i<npatchvals; i++){
+        if(meshi->boundary_mask[i % meshi->npatchsize] == 1){
+          patchmin_global = MIN(patchmin_global, meshi->patchval[i]);
+          patchmax_global = MAX(patchmax_global, meshi->patchval[i]);
+        }
+      }
+    }
+    else{
+      for(i = 0; i<npatchvals; i++){
+        patchmin_global = MIN(patchmin_global, meshi->patchval[i]);
+        patchmax_global = MAX(patchmax_global, meshi->patchval[i]);
+      }
+    }
+#else
     patchmin_global = 10000000000000.0;
     patchmax_global = -patchmin_global;
     for(i = 0; i<npatchvals; i++){
       patchmin_global = MIN(patchmin_global, meshi->patchval[i]);
       patchmax_global = MAX(patchmax_global, meshi->patchval[i]);
     }
-    patchi->valmin_smv = patchmin_global;
-    patchi->valmax_smv = patchmax_global;
+#endif
+    patchi->valmin_patch = patchmin_global;
+    patchi->valmax_patch = patchmax_global;
     if(patchi->have_bound_file==NO){
       if(WriteFileBounds(patchi->bound_file, patchmin_global, patchmax_global)==1){
         patchi->have_bound_file = YES;
@@ -2517,58 +2382,52 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
 
   patchi->loaded = 1;
   patchi->display = 1;
+  patchi->hist_update = 1;
 
+#ifdef pp_RECOMPUTE_DEBUG
+  int recompute = 0;
+#endif
   if(patchi->finalize==1){
-    UpdateBoundaryListIndex(patchfilenum);
-#define BOUND_UPDATE_COLORS       110
-#define BOUND_DONTUPDATE_COLORS   128
-#define BOUND_COMPUTE_PERCENTILES 116
+    GLUIUpdateBoundaryListIndex(patchfilenum);
     cpp_boundsdata *bounds;
 
     if(runscript == 0){
-      JOIN_PATCHBOUNDS;
+      THREADcontrol(patchbound_threads, THREAD_JOIN);
     }
-    if(force_bound_update==1||patch_bounds_defined==0){
-      GetGlobalPatchBounds(1);
+#ifdef pp_BOUNDS
+    int set_valmin_save, set_valmax_save;
+    float qmin_save, qmax_save;
+    GLUIGetMinMax(BOUND_PATCH, patchi->label.shortlabel, &set_valmin_save, &qmin_save, &set_valmax_save, &qmax_save);
+#endif
+    if(force_bound_update==1||patch_bounds_defined==0 || IsFDSRunning(&last_size_for_boundary) == 1){
+      GetGlobalPatchBounds(1,DONOT_SET_MINMAX_FLAG);
       SetLoadedPatchBounds(NULL, 0);
-      PatchBoundsCPP_CB(BOUND_DONTUPDATE_COLORS);
+      GLUIPatchBoundsCPP_CB(BOUND_DONTUPDATE_COLORS);
+#ifdef pp_RECOMPUTE_DEBUG
+      recompute = 1;
+#endif
     }
     else{
-      bounds = GetBoundsData(BOUND_PATCH);
+      bounds = GLUIGetBoundsData(BOUND_PATCH);
       if(bounds->set_valmin==BOUND_PERCENTILE_MIN||bounds->set_valmax==BOUND_PERCENTILE_MAX){
         float global_min=0.0, global_max=1.0;
-#ifdef pp_HIST
-        histogramdata *bound_hist;
-#endif
-
-#ifdef pp_HIST
-        bound_hist = bounds->hist;
-#endif
-        GetGlobalBoundsMinMax(BOUND_PATCH, bounds->label, &global_min, &global_max);
-#ifdef pp_HIST
-#ifdef pp_BOUND_HIST_ON
-        ComputeLoadedPatchHist(bounds->label, &bound_hist, &global_min, &global_max);
-#endif
-        if(bound_hist!=NULL&&bound_hist->defined==1){
-          if(bounds->set_valmin==BOUND_PERCENTILE_MIN){
-           float per_valmin;
-
-            GetHistogramValProc(bound_hist, percentile_level_min, &per_valmin);
-            SetMin(BOUND_PATCH, bounds->label, BOUND_PERCENTILE_MIN, per_valmin);
-          }
-          if(bounds->set_valmax==BOUND_PERCENTILE_MAX){
-            float per_valmax;
-
-            GetHistogramValProc(bound_hist,percentile_level_max, &per_valmax);
-            SetMax(BOUND_PATCH, bounds->label, BOUND_PERCENTILE_MAX, per_valmax);
-          }
-        }
-#endif
-        PatchBoundsCPP_CB(BOUND_UPDATE_COLORS);
+        GLUIGetGlobalBoundsMinMax(BOUND_PATCH, bounds->label, &global_min, &global_max);
+        GLUIPatchBoundsCPP_CB(BOUND_UPDATE_COLORS);
       }
     }
+#ifdef pp_BOUNDS
+    if(set_valmin_save == 0){
+      SetPatchMin(set_valmin_save, qmin_save, patchi->label.shortlabel);
+    }
+    if(set_valmax_save == 0){
+      SetPatchMax(set_valmax_save, qmax_save, patchi->label.shortlabel);
+    }
+    if(set_valmin_save == 0 || set_valmax_save == 0){
+      UpdateAllBoundaryColors(0);
+    }
+#endif
 #define BOUND_PERCENTILE_DRAW          120
-    PatchBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
+    GLUIPatchBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
   }
 
   if(wallcenter==1){
@@ -2593,6 +2452,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
     meshi->vis_boundaries[n] = vis_boundary_type[meshi->boundarytype[n]];
   }
   plotstate=GetPlotState(DYNAMIC_PLOTS);
+  patchi->have_restart = MakeTimesMap(meshi->patch_times, meshi->patch_times_map, meshi->npatch_times);
   UpdateTimes();
   UpdateUnitDefs();
   UpdateChopColors();
@@ -2610,14 +2470,10 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int flag, int *errorcode){
  else{
    PRINTF(" - %.0f kB in %.1f s\n", (float)return_filesize / 1000., total_time);
   }
+#ifdef pp_RECOMPUTE_DEBUG
+  if(recompute == 1)printf("***recomputing bounds\n");
+#endif
 
-#ifdef pp_HIST
-#ifndef pp_PATCH_HIST
-  if(show_timings==1&&hist_update_time>0.0){
-    PRINTF(" data distribution update time: %.1f s\n", hist_update_time);
-  }
-#endif
-#endif
   update_patch_bounds = ifile;
 
   GLUTPOSTREDISPLAY;
@@ -2653,26 +2509,12 @@ FILE_SIZE ReadBoundary(int ifile, int load_flag, int *errorcode){
   SetTimeState();
   patchi = patchinfo + ifile;
   if(patchi->structured == NO){
-#ifdef pp_HIST
-    if(load_flag == LOAD){
-#ifdef pp_PATCH_HIST
-      update_boundary_hist = 1;
-#else
-      UpdateBoundaryHist(patchi);
-#endif
-    }
-#endif
     return_filesize=ReadGeomData(patchi,NULL, load_flag,ALL_FRAMES, NULL, 1, errorcode);
   }
   else{
     assert(ifile>=0&&ifile<npatchinfo);
     return_filesize=ReadBoundaryBndf(ifile,load_flag,errorcode);
   }
-#ifdef pp_HIST
-  if(load_flag==UNLOAD){
-    update_draw_hist = 1;
-  }
-#endif
   return return_filesize;
 }
 
@@ -2686,8 +2528,8 @@ void GLUI2GlobalBoundaryBounds(const char *key){
 
     patchi = patchinfo + i;
     if(strcmp(key,"")==0||strcmp(patchi->label.shortlabel,key)==0){
-      patchi->valmin = glui_patchmin;
-      patchi->valmax = glui_patchmax;
+      patchi->valmin_glui = glui_patchmin;
+      patchi->valmax_glui = glui_patchmax;
 
       patchi->chopmin=patchchopmin;
       patchi->chopmax=patchchopmax;
@@ -2707,8 +2549,8 @@ void Global2GLUIBoundaryBounds(const char *key){
 
     patchi = patchinfo + i;
     if(strcmp(patchi->label.shortlabel,key)==0){
-      glui_patchmin = patchi->valmin;
-      glui_patchmax = patchi->valmax;
+      glui_patchmin = patchi->valmin_glui;
+      glui_patchmax = patchi->valmax_glui;
 
       patchchopmin=patchi->chopmin;
       patchchopmax=patchi->chopmax;
@@ -2788,7 +2630,7 @@ void DrawBoundaryTexture(const meshdata *meshi){
   float ttmin, ttmax;
 
   label = patchi->label.shortlabel;
-  GetOnlyMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
+  GLUIGetOnlyMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
 
   if(patch_times[0]>global_times[itimes]||patchi->display==0)return;
   if(cullfaces==1)glDisable(GL_CULL_FACE);
@@ -2821,7 +2663,7 @@ void DrawBoundaryTexture(const meshdata *meshi){
       xyzpatchcopy = xyzpatch + 3*blockstart[n];
       patchblankcopy = patchblank + blockstart[n];
       patchvals = patchval_iframe + blockstart[n];
-      cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
+      if(patchi->compression_type == COMPRESSED_ZLIB)cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
 
       for(irow=0;irow<nrow-1;irow++){
         int *patchblank1, *patchblank2;
@@ -2913,7 +2755,7 @@ void DrawBoundaryTexture(const meshdata *meshi){
       xyzpatchcopy = xyzpatch + 3*blockstart[n];
       patchblankcopy = patchblank + blockstart[n];
       patchvals  = patchval_iframe+blockstart[n];
-      cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
+      if(patchi->compression_type == COMPRESSED_ZLIB)cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
       if(hidepatchsurface==0){
         glPushMatrix();
         switch(meshi->patchdir[n]){
@@ -3021,7 +2863,7 @@ void DrawBoundaryTexture(const meshdata *meshi){
       xyzpatchcopy = xyzpatch + 3*blockstart[n];
       patchblankcopy = patchblank + blockstart[n];
       patchvals  = patchval_iframe+blockstart[n];
-      cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
+      if(patchi->compression_type == COMPRESSED_ZLIB)cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
       if(hidepatchsurface==0){
         glPushMatrix();
         switch(meshi->patchdir[n]){
@@ -3163,7 +3005,7 @@ void DrawBoundaryTextureThreshold(const meshdata *meshi){
   float ttmin, ttmax;
 
   label = patchi->label.shortlabel;
-  GetMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
+  GLUIGetMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
 
   if(cullfaces==1)glDisable(GL_CULL_FACE);
 
@@ -3192,7 +3034,7 @@ void DrawBoundaryTextureThreshold(const meshdata *meshi){
       xyzpatchcopy = xyzpatch + 3*blockstart[n];
       patchblankcopy = patchblank + blockstart[n];
       patchvals = patchval_iframe + blockstart[n];
-      cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
+      if(patchi->compression_type == COMPRESSED_ZLIB)cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
       for(irow=0;irow<nrow-1;irow++){
         int *patchblank1, *patchblank2;
         float *xyzp1, *xyzp2;
@@ -3278,7 +3120,7 @@ void DrawBoundaryTextureThreshold(const meshdata *meshi){
       xyzpatchcopy = xyzpatch + 3*blockstart[n];
       patchblankcopy = patchblank + blockstart[n];
       patchvals  = patchval_iframe + blockstart[n];
-      cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
+      if(patchi->compression_type == COMPRESSED_ZLIB)cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
       for(irow=0;irow<nrow-1;irow++){
         int *patchblank1, *patchblank2;
         float *xyzp1, *xyzp2;
@@ -3361,7 +3203,7 @@ void DrawBoundaryTextureThreshold(const meshdata *meshi){
       xyzpatchcopy = xyzpatch + 3*blockstart[n];
       patchblankcopy = patchblank + blockstart[n];
       patchvals  = patchval_iframe + blockstart[n];
-      cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
+      if(patchi->compression_type == COMPRESSED_ZLIB)cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
       for(irow=0;irow<nrow-1;irow++){
         int *patchblank1, *patchblank2;
         float *xyzp1, *xyzp2;
@@ -3637,6 +3479,33 @@ void DrawBoundaryThresholdCellcenter(const meshdata *meshi){
   glEnd();
 }
 
+#ifdef pp_BOUNDS
+/* ------------------ MakeBoundaryMask ------------------------ */
+
+void MakeBoundaryMask(patchdata *patchi){
+  meshdata *meshi;
+  int n;
+
+  if(patchi->blocknumber < 0)return;
+  meshi = meshinfo + patchi->blocknumber;
+  if(meshi->boundary_mask != NULL|| meshi->npatchsize <= 0)return;
+  NewMemory((void **)&meshi->boundary_mask, meshi->npatchsize);
+  memset(meshi->boundary_mask, 0, meshi->npatchsize);
+  for(n = 0;n < meshi->npatches; n++){
+    int irow, ncol;
+
+    ncol = meshi->boundary_col[n];
+    for(irow = 1; irow < meshi->boundary_row[n]; irow++){
+      int icol;
+
+      for(icol = 1;icol < meshi->boundary_col[n];icol++){
+        meshi->boundary_mask[meshi->blockstart[n]+IJKBF(irow, icol)] = 1;
+      }
+    }
+  }
+}
+#endif
+
 /* ------------------ DrawBoundaryCellCenter ------------------------ */
 
 void DrawBoundaryCellCenter(const meshdata *meshi){
@@ -3685,7 +3554,7 @@ void DrawBoundaryCellCenter(const meshdata *meshi){
   patchi = patchinfo+meshi->patchfilenum;
 
   label = patchi->label.shortlabel;
-  GetOnlyMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
+  GLUIGetOnlyMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
   if(ttmin>=ttmax){
     ttmin = 0.0;
     ttmax = 1.0;
@@ -3730,7 +3599,7 @@ void DrawBoundaryCellCenter(const meshdata *meshi){
       nrow = boundary_row[n];
       ncol = boundary_col[n];
       patchvals  = patchval_iframe+blockstart[n];
-      cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
+      if(patchi->compression_type == COMPRESSED_ZLIB)cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
       for(irow = 0;irow<nrow-1;irow++){
         int *patchblank1, *patchblank2;
         float *xyzp1, *xyzp2;
@@ -3811,7 +3680,7 @@ void DrawBoundaryCellCenter(const meshdata *meshi){
       nrow = boundary_row[n];
       ncol = boundary_col[n];
       patchvals = patchval_iframe+blockstart[n];
-      cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
+      if(patchi->compression_type == COMPRESSED_ZLIB)cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
       if(hidepatchsurface==0){
         glPushMatrix();
         switch(meshi->patchdir[n]){
@@ -3910,7 +3779,7 @@ void DrawBoundaryCellCenter(const meshdata *meshi){
       nrow = boundary_row[n];
       ncol = boundary_col[n];
       patchvals  = patchval_iframe+blockstart[n];
-      cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
+      if(patchi->compression_type == COMPRESSED_ZLIB)cpatchvals = meshi->cpatchval_iframe_zlib + blockstart[n];
       if(hidepatchsurface==0){
         glPushMatrix();
         switch(meshi->patchdir[n]){
@@ -4000,6 +3869,7 @@ void DrawBoundaryFrame(int flag){
     patchdata *patchi;
 
     patchi = patchinfo + i;
+    IF_NOT_USEMESH_CONTINUE(USEMESH_DRAW,patchi->blocknumber);
     if(patchi->structured == NO && patchi->loaded == 1 && patchi->display == 1){
       if(flag == DRAW_OPAQUE){
         if(patchi->patch_filetype == PATCH_GEOMETRY_BOUNDARY){
@@ -4018,6 +3888,7 @@ void DrawBoundaryFrame(int flag){
   if(flag == DRAW_TRANSPARENT)return;
   for(i=0;i<nmeshes;i++){
     meshi=meshinfo+i;
+    if(meshi->use == 0)continue;
     if(meshi->npatches>0){
       int filenum;
 
@@ -4385,30 +4256,3 @@ void UpdateHideBoundarySurface(void){
   }
   if(hidepatchsurface_old!=hidepatchsurface)updatefacelists=1;
 }
-
-
-/* ------------------ UpdateAllBoundaryBoundsST ------------------------ */
-#ifdef pp_HIST
-void UpdateAllBoundaryBoundsST(void){
-  int i;
-  int total=0;
-
-  LOCK_COMPRESS;
-  for(i=0;i<npatchinfo;i++){
-    patchdata *patchi;
-
-    patchi = patchinfo + i;
-#ifdef pp_BOUND_HIST_ON
-    total+= UpdateBoundaryHist(patchi);
-#endif
-    UpdateBoundaryBounds(patchi);
-  }
-  if(total==0){
-    PRINTF("Boundary file bounds already computed.\n");
-  }
-  else{
-    PRINTF("Bounds for %i boundary files computed\n",total);
-  }
-  UNLOCK_COMPRESS;
-}
-#endif

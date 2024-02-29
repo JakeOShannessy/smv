@@ -1,7 +1,5 @@
 .SUFFIXES: .c .cpp .o .obj
 
-#COMPILER=icx
-#COMPILER2=icx
 COMPILER=icx
 COMPILER2=icx
 CC=${COMPILER}
@@ -20,9 +18,9 @@ endif
 .c.o:
 	$(CC)  $(CFLAGS) $(FILTERC) -c $<
 .cpp.obj:
-	$(CPP) $(CFLAGS) $(INCS) $(FILTERC) -c $<
+	$(CPP) $(CPP_STANDARD) $(CFLAGS) $(INCS) $(FILTERC) -c $<
 .cpp.o:
-	$(CPP) $(CFLAGS) $(FILTERC) -c $<
+	$(CPP) $(CPP_STANDARD) $(CFLAGS) $(FILTERC) -c $<
 
 
 GLUI_OBJS = glui_add_controls.o glui.o glui_bitmap_img_data.o glui_bitmaps.o \
@@ -38,7 +36,8 @@ default: CFLAGS=-m64 $(INCS) $(PLATFORM) $(NOCLOSE) $(CFLAGOPT)
 default: $(GLUI_OBJS)
 	ar rcs libglui.a $(GLUI_OBJS)
 
-intel_linux_64: CFLAGS=-m64 $(NOCLOSE) -fpermissive 
+intel_linux_64: CPP_STANDARD = -std=c++11 -stdlib=libc++
+intel_linux_64: CFLAGS=-m64 $(INCS) $(PLATFORM) $(NOCLOSE) $(CFLAGOPT) -fpermissive 
 intel_linux_64: $(GLUI_OBJS)
 	ar rcs libglui.a $(GLUI_OBJS)
 

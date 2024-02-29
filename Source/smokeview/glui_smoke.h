@@ -38,7 +38,6 @@
 #define VOL_SMOKE 13
 #define VOL_NGRID 18
 #define SMOKE_OPTIONS 19
-#define LOAD_COMPRESSED_DATA 20
 #define TEMP_MIN 21
 #define TEMP_CUTOFF 22
 #define TEMP_MAX 23
@@ -80,10 +79,9 @@
 #define CUTOFF_RESET 96
 #define EXTINCTION_RESET_FDS 97
 #define EXTINCTION_RESET_SMV 98
-#ifdef pp_BLACKBODY
 #define BLACKBODY_TEMPS      101
-#endif
 #define VOLTEST_DEPTH 102
 #define VOLTEST_UPDATE 103
+#define FORCE_ALPHA_OPAQUE 104
 #endif
 

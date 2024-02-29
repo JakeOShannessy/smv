@@ -11,6 +11,7 @@
         "pkgconf",
         "libgd",
         "lua",
-        "pthreads"
+        "pthreads",
+        "json-c"
     ]
 }

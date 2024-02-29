@@ -15,18 +15,46 @@
 
 /* ------------------ PlayMovie ------------------------ */
 
-void PlayMovie(void){
+void *PlayMovie(void *arg){
   char command_line[1024], moviefile_path[1024];
 
-  if(play_movie_now==0)return;
   if(FILE_EXISTS(GetMovieFilePath(moviefile_path)) == YES){
     strcpy(command_line, "ffplay ");
-    strcat(command_line,moviefile_path);
-    PSystem(command_line);
+    strcat(command_line, moviefile_path);
+#ifdef WIN32
+    strcat(command_line, " 2>Nul ");
+#else
+    strcat(command_line, " 2>/dev/null ");
+#endif
+    play_movie_now = 0;
+    update_playmovie = 1;
+    system(command_line);
+    play_movie_now = 1;
+    update_playmovie = 1;
+    GLUTPOSTREDISPLAY;
   }
-  else{
-    PRINTF("*** Error: the movie file, %s, does not exist\n", moviefile_path);
-  }
+  THREAD_EXIT(playmovie_threads);
+}
+
+/* ------------------ SetupFF ------------------------ */
+
+void *SetupFF(void *arg){
+  int have_ffmpeg_local, have_ffplay_local;
+
+#ifdef WIN32
+  have_ffmpeg_local = HaveProg("ffmpeg -version> Nul 2>Nul");
+  have_ffplay_local = HaveProg("ffplay -version> Nul 2>Nul");
+#else
+  have_ffmpeg_local = HaveProg("ffmpeg -version >/dev/null 2>/dev/null");
+  have_ffplay_local = HaveProg("ffplay -version >/dev/null 2>/dev/null");
+#endif
+
+  THREADcontrol(ffmpeg_threads, THREAD_LOCK);;
+  update_ff = 1;
+  have_ffmpeg = have_ffmpeg_local;
+  have_ffplay = have_ffplay_local;
+  THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
+  THREAD_EXIT(ffmpeg_threads);
 }
 
 /* ------------------ GetMovieFilePath ------------------------ */
@@ -54,7 +82,6 @@ char *GetMovieFilePath(char *moviefile_path){
 
 void MakeMovie(void){
   char command_line[1024];
-  char frame0[1024];
   char moviefile_path[1024],overwrite_flag[10],image_ext[10], movie_frames[1024];
   int make_movie_now=1;
 
@@ -68,16 +95,6 @@ void MakeMovie(void){
   }
   else{
     strcpy(image_ext, ".png");
-  }
-
-// if the first frame doesn't exist then generate images
-
-  strcpy(frame0, render_file_base);
-  strcat(frame0, "_0001");
-  strcat(frame0, image_ext);
-  if(runscript==0&& FILE_EXISTS(frame0)==NO){
-    RenderCB(RENDER_START_NORMAL);
-    return;
   }
 
 // construct full pathname of movie
@@ -251,7 +268,7 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
     if(
       ( command == SCRIPT_RENDERONCE   || command == SCRIPT_RENDERALL         ||
         command == SCRIPT_RENDER360ALL || command == SCRIPT_VOLSMOKERENDERALL ||
-        command == SCRIPT_ISORENDERALL || command == SCRIPT_LOADSLICERENDER   ||
+        command == SCRIPT_ISORENDERALL || command == SCRIPT_LOADSLICERENDER   || command == SCRIPT_LOADSMOKERENDER ||
         command == SCRIPT_RENDERDOUBLEONCE
         ) &&
       current_script_command->cval2 != NULL
@@ -296,7 +313,7 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
     (current_script_command->command == SCRIPT_RENDERALL ||
       current_script_command->command == SCRIPT_RENDER360ALL ||
       current_script_command->command == SCRIPT_VOLSMOKERENDERALL ||
-      current_script_command->command == SCRIPT_LOADSLICERENDER ||
+      current_script_command->command == SCRIPT_LOADSLICERENDER || current_script_command->command == SCRIPT_LOADSMOKERENDER ||
       current_script_command->command == SCRIPT_ISORENDERALL
       ))){
     int image_num;
@@ -307,9 +324,14 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
       image_num = seqnum;
     }
     else{
-      image_num = itimes;
+      if(render_skip > 1){
+        image_num = itimes / render_skip;
+      }
+      else{
+        image_num = itimes;
+      }
     }
-    if(current_script_command!=NULL&&current_script_command->command==SCRIPT_LOADSLICERENDER){
+    if(current_script_command!=NULL && IS_LOADRENDER){
       int time_current = current_script_command->ival4;
       image_num = time_current;
     }
@@ -318,7 +340,7 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
       int code;
       int do_time=0;
 
-      if(current_script_command!=NULL&&current_script_command->command==SCRIPT_LOADSLICERENDER)do_time = 1;
+      if(current_script_command!=NULL && IS_LOADRENDER)do_time = 1;
       if(RenderTime!=0)do_time=1;
 
       if(do_time == 1){
@@ -643,7 +665,7 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
     OutputSliceData();
   }
   PRINTF(" Completed\n");
-  if(current_script_command!=NULL&&current_script_command->command==SCRIPT_LOADSLICERENDER){
+  if(current_script_command!=NULL && IS_LOADRENDER){
     char timer_render_label[20];
 
     STOP_TIMER(timer_render);

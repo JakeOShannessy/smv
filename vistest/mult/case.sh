@@ -1,0 +1,25 @@
+#!/bin/bash
+N=$1
+CHID=test${N}x${N}
+
+cat << EOF > ${CHID}.fds
+&HEAD CHID='$CHID',TITLE='test' /
+
+&MESH IJK=2,2,2, XB=0,1,0,1,0,1, MULT_ID='mesh' /1
+&MULT ID='mesh', DX=1, DY=1, DZ=1, I_UPPER=$N, J_UPPER=$N, K_UPPER=1 /
+
+&MISC FREEZE_VELOCITY=T/
+
+&TIME T_END=1. /  Total simulation time
+
+&RADI RADIATION=.FALSE. /
+&VENT MB='XMIN',SURF_ID='OPEN'/
+&VENT MB='XMAX',SURF_ID='OPEN'/
+&VENT MB='YMIN',SURF_ID='OPEN'/
+&VENT MB='YMAX',SURF_ID='OPEN'/
+&VENT MB='ZMAX',SURF_ID='OPEN'/
+
+&SLCF PBZ=0.5,QUANTITY='TEMPERATURE',VECTOR=.TRUE. /
+
+&TAIL /
+EOF

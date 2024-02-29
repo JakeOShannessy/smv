@@ -29,6 +29,7 @@
 #define SCRIPT_RENDERSIZE        120
 #define SCRIPT_MOVIETYPE         121
 #define SCRIPT_ISORENDERALL      122
+#define SCRIPT_GPUOFF            127
 
 #define SCRIPT_LOADFILE          201
 #define SCRIPT_LOADVFILE         202
@@ -52,7 +53,7 @@
 #define SCRIPT_LOADBOUNDARYM     220
 #define SCRIPT_LOADSLICEM        221
 #define SCRIPT_LOADVSLICEM       222
-#define SCRIPT_SHOWSMOKESENSORS  223
+#define SCRIPT_OUTPUTSMOKESENSORS  223
 #define SCRIPT_RGBTEST           225
 #define SCRIPT_XYZVIEW           226
 #define SCRIPT_VIEWXMIN          227
@@ -76,6 +77,7 @@
 #define SCRIPT_SETCBAR           245
 #define SCRIPT_SETCBARLAB        246
 #define SCRIPT_SETCBARRGB        247
+#define SCRIPT_LOADSMOKERENDER   248
 
 #define SCRIPT_SETTIMEVAL        301
 #define SCRIPT_SETVIEWPOINT      302
@@ -103,6 +105,12 @@
 #define SCRIPT_ISO_FILE            4
 
 #define SCRIPT_UNKNOWN            -1
+#define SCRIPT_OK               -997
+#define SCRIPT_ERR              -998
+#define SCRIPT_EOF              -999
+
+#define NOT_LOADRENDER (current_script_command->command!=SCRIPT_LOADSLICERENDER && current_script_command->command != SCRIPT_LOADSMOKERENDER)
+#define IS_LOADRENDER  (current_script_command->command==SCRIPT_LOADSLICERENDER || current_script_command->command == SCRIPT_LOADSMOKERENDER)
 
 #endif
 

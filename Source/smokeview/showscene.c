@@ -84,7 +84,7 @@ void ShowScene2(int mode){
 
     /* ++++++++++++++++++++++++ draw particles +++++++++++++++++++++++++ */
 
-    if(showsmoke == 1){
+    if(showsmoke == 1 && geom_bounding_box_mousedown==0){
       CLIP_VALS;
       DrawPartFrame();
     }
@@ -166,6 +166,44 @@ void ShowScene2(int mode){
 
     if(geom_bounding_box_mousedown==1){
       DrawObstBoundingBox();
+    }
+
+    if(show_intersected_meshes == 1){
+      int i;
+      float box_black[4] = {0.0, 0.0, 0.0, 1.0};
+
+      for(i = 0;i < nmeshes;i++){
+        meshdata *meshi;
+        float *xyz_min, *xyz_max;
+
+        meshi = meshinfo + i;
+        xyz_min = meshi->boxmin_scaled;
+        xyz_max = meshi->boxmax_scaled;
+        if(meshi->use == 1){
+          if(show_mesh_labels == 1){
+            char label[32];
+            float pos[3];
+
+            pos[0] = xyz_min[0] + (xyz_max[0] - xyz_min[0]) / 40.0;
+            pos[1] = xyz_min[1] + (xyz_max[1] - xyz_min[1]) / 40.0;
+            pos[2] = xyz_min[2];
+
+            sprintf(label, "%i", i + 1);
+            Output3Text(foregroundcolor, pos[0], pos[1], pos[2], label);
+          }
+          DrawBoxMinMax(xyz_min, xyz_max, box_black);
+        }
+      }
+    }
+
+    if(show_intersection_box==1){
+      float box_red[4] = {1.0, 0.0, 0.0, 1.0};
+
+      glPushMatrix();
+      glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
+      glTranslatef(-xbar0, -ybar0, -zbar0);
+      DrawBox(meshclip, box_red);
+      glPopMatrix();
     }
 
     if(show_rotation_center == 1){
@@ -556,7 +594,6 @@ void ShowScene2(int mode){
 void ShowScene(int mode, int view_mode, int quad, GLint s_left, GLint s_down, screendata *screen){
   CheckMemory;
 
-  LOCK_IBLANK
   show_mode = mode;
 
   UNCLIP;
@@ -607,12 +644,6 @@ void ShowScene(int mode, int view_mode, int quad, GLint s_left, GLint s_down, sc
       ViewportTitle(quad, s_left, s_down);
       SNIFF_ERRORS("after ViewportTitle");
     }
-#ifdef pp_HIST
-    if(histogram_draw!=NULL){
-      ViewportHistogram(quad, s_left, s_down);
-      SNIFF_ERRORS("after ViewportHistogram");
-    }
-#endif
 
     ViewportScene(quad, view_mode, s_left, s_down, screen);
     if(update_reshape>0){
@@ -643,5 +674,4 @@ void ShowScene(int mode, int view_mode, int quad, GLint s_left, GLint s_down, sc
 //  Render(view_mode);
 
   SNIFF_ERRORS("end of ShowScene");
-  UNLOCK_IBLANK
 }

@@ -29,8 +29,6 @@ GLUI_Panel *PANEL_clipy=NULL, *PANEL_clipY=NULL;
 GLUI_Panel *PANEL_clipz=NULL, *PANEL_clipZ=NULL;
 GLUI_Panel *PANEL_rotation_center = NULL;
 
-GLUI_Rollout *PANEL_blockageview = NULL;
-
 GLUI_RadioButton *RADIOBUTTON_clip_1a=NULL;
 GLUI_RadioButton *RADIOBUTTON_clip_1b=NULL;
 GLUI_RadioButton *RADIOBUTTON_clip_1c=NULL;
@@ -63,9 +61,9 @@ GLUI_Button *BUTTON_clip_2=NULL;
 #define SAVE_SETTINGS_CLIP 98
 #define CLIP_MESH 80
 
-/* ------------------ UpdateShowRotationCenter2 ------------------------ */
+/* ------------------ GLUIUpdateShowRotationCenter2 ------------------------ */
 
-extern "C" void UpdateShowRotationCenter2(void){
+extern "C" void GLUIUpdateShowRotationCenter2(void){
   if(CHECKBOX_clip_show_rotation_center2!=NULL)CHECKBOX_clip_show_rotation_center2->set_int_val(show_rotation_center);
 }
 
@@ -83,7 +81,7 @@ void ClipCB(int var){
     }
     break;
   case CLIP_SHOW_ROTATE2:
-    UpdateShowRotationCenter();
+    GLUIUpdateShowRotationCenter();
     break;
   case CLIP_MESH:
     if(clip_mesh == 0){
@@ -97,7 +95,7 @@ void ClipCB(int var){
     WriteIni(LOCAL_INI, NULL);
     break;
   case CLIP_CLOSE:
-    HideGluiClip();
+    GLUIHideClip();
     break;
   case CLIP_xlower:
     if(clipinfo.clip_xmin == 0)SPINNER_clip_xmin->disable();
@@ -212,7 +210,7 @@ void ClipCB(int var){
     assert(FFALSE);
     break;
   }
-  if(glui_rotation_index==ROTATE_ABOUT_CLIPPING_CENTER)UpdateRotationIndex(ROTATE_ABOUT_CLIPPING_CENTER);
+  if(glui_rotation_index==ROTATE_ABOUT_CLIPPING_CENTER)GLUIUpdateRotationIndex(ROTATE_ABOUT_CLIPPING_CENTER);
 }
 
 /* ------------------ SetClipControls ------------------------ */
@@ -262,9 +260,9 @@ void SetClipControls(int val){
   SPINNER_clip_zmax->set_float_val(clipinfo.zmax);
 }
 
-/* ------------------ GluiClipSetup ------------------------ */
+/* ------------------ GLUIClipSetup ------------------------ */
 
-extern "C" void GluiClipSetup(int main_window){
+extern "C" void GLUIClipSetup(int main_window){
   if(glui_clip!=NULL){
     glui_clip->close();
     glui_clip=NULL;
@@ -296,10 +294,7 @@ extern "C" void GluiClipSetup(int main_window){
   RADIOBUTTON_clip_1c=glui_clip->add_radiobutton_to_group(radio_clip,_("Clip data"));
   assert(CLIP_MAX==3);
 
-  PANEL_rotation_center = glui_clip->add_panel_to_panel(PANEL_clip,"rotation center");
-  CHECKBOX_clip_rotate = glui_clip->add_checkbox_to_panel(PANEL_rotation_center,"center of clipping planes", &clip_rotate, CLIP_ROTATE, ClipCB);
-  CHECKBOX_clip_show_rotation_center2 = glui_clip->add_checkbox_to_panel(PANEL_rotation_center, "Show", &show_rotation_center, CLIP_SHOW_ROTATE2, ClipCB);
-  glui_clip->add_column_to_panel(PANEL_clip,false);
+  glui_clip->add_column_to_panel(PANEL_clip, false);
 
   PANEL_clip_upper = glui_clip->add_panel_to_panel(PANEL_clip,_("Clip upper"));
 
@@ -318,37 +313,9 @@ extern "C" void GluiClipSetup(int main_window){
   glui_clip->add_column_to_panel(PANEL_clipZ,false);
   CHECKBOX_clip_zmax=glui_clip->add_checkbox_to_panel(PANEL_clipZ,"",&clipinfo.clip_zmax,CLIP_zupper,ClipCB);
 
-  {
-    int nblocks = 0;
-    int i;
-
-    for(i = 0;i < nmeshes;i++){
-      meshdata *meshi;
-
-      meshi = meshinfo + i;
-      if(meshi->nbptrs > 0)nblocks++;
-    }
-    if(nblocks > 0){
-      int ncolumns,ib=0;
-
-#define MAXCLIPROWS 40
-
-      PANEL_blockageview = glui_clip->add_rollout_to_panel(PANEL_clip, "Hide blockages", false);
-      INSERT_ROLLOUT(PANEL_blockageview, glui_clip);
-      ncolumns = nblocks / MAXCLIPROWS + 1;
-
-      for(i = 0;i < nmeshes;i++){
-        meshdata *meshi;
-
-        meshi = meshinfo + i;
-        if(meshi->nbptrs > 0){
-          glui_clip->add_checkbox_to_panel(PANEL_blockageview, meshi->label, &meshi->blockvis);
-          ib++;
-          if(ib % (nblocks / ncolumns) == 0)glui_clip->add_column_to_panel(PANEL_blockageview);
-        }
-      }
-    }
-  }
+  PANEL_rotation_center = glui_clip->add_panel_to_panel(PANEL_clip, "rotation center");
+  CHECKBOX_clip_rotate = glui_clip->add_checkbox_to_panel(PANEL_rotation_center, "center of clipping planes", &clip_rotate, CLIP_ROTATE, ClipCB);
+  CHECKBOX_clip_show_rotation_center2 = glui_clip->add_checkbox_to_panel(PANEL_rotation_center, "Show", &show_rotation_center, CLIP_SHOW_ROTATE2, ClipCB);
 
   panel_wrapup = glui_clip->add_panel_to_panel(PANEL_clip,"",GLUI_PANEL_NONE);
 
@@ -378,21 +345,21 @@ extern "C" void GluiClipSetup(int main_window){
   glui_clip->set_main_gfx_window( main_window );
 }
 
-/* ------------------ HideGluiClip ------------------------ */
+/* ------------------ GLUIHideClip ------------------------ */
 
-extern "C" void HideGluiClip(void){
-  CloseRollouts(glui_clip);
+extern "C" void GLUIHideClip(void){
+  GLUICloseRollouts(glui_clip);
 }
 
-/* ------------------ ShowGluiClip ------------------------ */
+/* ------------------ GLUIShowClip ------------------------ */
 
-extern "C" void ShowGluiClip(void){
+extern "C" void GLUIShowClip(void){
   if(glui_clip!=NULL)glui_clip->show();
 }
 
-/* ------------------ UpdateGluiClip ------------------------ */
+/* ------------------ GLUIUpdateClip ------------------------ */
 
-extern "C" void UpdateGluiClip(void){
+extern "C" void GLUIUpdateClip(void){
   if(CHECKBOX_clip_xmin!=NULL&&CHECKBOX_clip_ymin!=NULL&&CHECKBOX_clip_zmin!=NULL&&
      CHECKBOX_clip_xmax!=NULL&&CHECKBOX_clip_ymax!=NULL&&CHECKBOX_clip_zmax!=NULL){
 
@@ -419,9 +386,9 @@ extern "C" void UpdateGluiClip(void){
   }
 }
 
-/* ------------------ UpdateClipAll ------------------------ */
+/* ------------------ GLUIUpdateClipAll ------------------------ */
 
-extern "C" void UpdateClipAll(void){
+extern "C" void GLUIUpdateClipAll(void){
   ClipCB(CLIP_all);
   radio_clip->set_int_val(clip_mode);
 }

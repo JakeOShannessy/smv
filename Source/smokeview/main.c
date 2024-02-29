@@ -79,10 +79,12 @@ void Usage(char *prog,int option){
 #endif
     PRINTF("%s\n", _(" -big           - hide scene and data when moving scene or selecting menus"));
     PRINTF("%s\n", _(" -casedir dir   - specify location of case (if different than current directory)"));
+    PRINTF("%s\n", _(" -checkscript file.ssf  - check the script file file.ssf for errors"));
     PRINTF("%s\n", _(" -convert_ini case1.ini case2.ini - update case1.ini to the current format"));
     PRINTF("%s\n", _("                  and save the results into case2.ini"));
     PRINTF("%s\n", _(" -demo          - use demonstrator mode of Smokeview"));
-    PRINTF("%s\n", _(" -fast          - assume slice files exist in order to reduce startup time"));
+    PRINTF("%s\n", _(" -fast          - assume slice files exist in order to reduce startup time,"));
+    PRINTF("%s\n", _("                  don't compute blanking arrays"));
     PRINTF("%s\n", _(" -full          - full startup - check if files exist"));
     PRINTF("%s\n", _(" -fed           - pre-calculate all FED slice files"));
     PRINTF("%s\n", _(" -geominfo      - output information about geometry triangles"));
@@ -90,6 +92,7 @@ void Usage(char *prog,int option){
     PRINTF("%s\n", _(" -lang xx       - where xx is de, es, fr, it for German, Spanish, French or Italian"));
     PRINTF("%s\n", _(" -large         - take some shortcuts when reading in large geometry cases"));
     PRINTF("%s\n", _(" -make_movie    - open the movie generating dialog box"));
+    PRINTF("%s\n", _(" -max_mem mem   - specify maximum memory used in GB"));
     PRINTF("%s\n", _(" -outline       - show geometry bound boxes instead of geometry"));
     PRINTF("%s\n", _(" -ng_ini        - non-graphics version of -ini."));
     PRINTF("%s\n", _(" -scriptrenderdir dir - directory containing script rendered images"));
@@ -122,10 +125,11 @@ char *ProcessCommandLine(CommandlineArgs *args);
 char *ParseCommandline(int argc, char **argv) {
   enum CommandLineError error;
   char *return_val;
+  char message[256];
 
-  CommandlineArgs args = ParseCommandlineNew(argc, argv, &error);
+  CommandlineArgs args = ParseCommandlineNew(argc, argv, message, &error);
   if (error != CLE_OK) {
-    const char *msg = CLE_Message(error);
+    const char *msg = CLE_Message(error, message);
     if (msg != NULL) {
       fprintf(stderr, "%s\n", msg);
     }
@@ -156,7 +160,34 @@ char *ProcessCommandLine(CommandlineArgs *args) {
   char *filename_local = NULL;
 
   CheckMemory;
+  if(args->checkscript){
+    int error_code;
 
+    int CheckScript(char *file);
+    error_code = CheckScript(args->script);
+    switch(error_code){
+    case 0:
+      fprintf(stderr, "***no errors detected in %s\n", args->script);
+      break;
+    case 1:
+      fprintf(stderr, "***error: unable to open script file %s\n", args->script);
+      break;
+    case 2:
+      fprintf(stderr, "***errors detected in script file %s\n", args->script);
+      break;
+    default:
+      assert(FFALSE);
+      break;
+    }
+    void SMV_EXIT(int error);
+    SMV_EXIT(0);
+  }
+  if (args->csv) {
+    update_csv_load = 1;
+  }
+  if(args->max_mem){
+    max_mem_GB = args->max_mem_GB;
+  }
   if (args->ini) {
     InitCameraList();
     InitOpenGL(NO_PRINT);
@@ -276,6 +307,11 @@ char *ProcessCommandLine(CommandlineArgs *args) {
   NewMemory((void **)&expcsv_filename, len_casename + strlen("_exp.csv") + 1);
   STRCPY(expcsv_filename, fdsprefix);
   STRCAT(expcsv_filename, "_exp.csv");
+
+  FREEMEMORY(stepcsv_filename);
+  NewMemory(( void ** )&stepcsv_filename, len_casename + strlen("_steps.csv") + 1);
+  STRCPY(stepcsv_filename, fdsprefix);
+  STRCAT(stepcsv_filename, "_steps.csv");
 
   FREEMEMORY(dEcsv_filename);
   NewMemory(( void ** )&dEcsv_filename, len_casename + strlen("_dE.csv") + 1);
@@ -565,7 +601,7 @@ char *ProcessCommandLine(CommandlineArgs *args) {
     }
     if(args->runscript){
       from_commandline = 1;
-      iso_multithread=0;
+      use_iso_threads=0;
 #ifdef pp_LUA
       strcpy(script_filename, "");
 #endif
@@ -574,13 +610,13 @@ char *ProcessCommandLine(CommandlineArgs *args) {
     if(args->runhtmlscript){
       from_commandline = 1;
       use_graphics = 0;
-      iso_multithread = 0;
+      use_iso_threads = 0;
       runhtmlscript = 1;
     }
 #ifdef pp_LUA
     if(args->runluascript){
       from_commandline = 1;
-      iso_multithread=0;
+      use_iso_threads=0;
       strcpy(luascript_filename, "");
       strncpy(luascript_filename, fdsprefix, MAX_LUASCRIPT_FILENAME_BUFFER-5);
       strcat(luascript_filename, ".lua");
@@ -617,7 +653,7 @@ char *ProcessCommandLine(CommandlineArgs *args) {
         runhtmlscript = 1;
       }
       from_commandline = 1;
-      iso_multithread=0;
+      use_iso_threads=0;
         char scriptbuffer[MAX_SCRIPT_FILENAME_BUFFER];
         scriptfiledata *sfd;
         if (args->script != NULL) {
@@ -642,7 +678,7 @@ char *ProcessCommandLine(CommandlineArgs *args) {
 #ifdef pp_LUA
     if(args->luascript != NULL){
       from_commandline = 1;
-      iso_multithread=0;
+      use_iso_threads=0;
       if (strlen(args->luascript) > MAX_LUASCRIPT_FILENAME_BUFFER-1) {
         fprintf(stderr, "*** Error: luascript filename exceeds maximum length of %d\n", MAX_SMV_FILENAME_BUFFER-1);
         SMV_EXIT(1);
@@ -665,7 +701,7 @@ char *ProcessCommandLine(CommandlineArgs *args) {
       strcpy(smokeview_casedir, args->casedir);
     }
     if(args->threads_defined){
-        nreadallgeomthread_ids = CLAMP(args->threads, 1, 16);
+        n_readallgeom_threads = CLAMP(args->threads, 1, 16);
     }
   if(update_ssf == 1){
     int len_prefix = 0;
@@ -729,9 +765,8 @@ int main(int argc, char **argv){
   char *progname;
 
   START_TIMER(timer_startup);
-// #define pp_CRASH_TEST
-#ifdef pp_CRASH_TEST
-
+  // uncomment following block of code to test crash detection
+/*
   float *x = NULL, xx, yy, zz;
 
   printf("before using undefined variable\n");
@@ -746,7 +781,7 @@ int main(int argc, char **argv){
   printf("before accessing null variable\n");
   x[0] = 1.0;
   printf("after accessing null variable: %f\n", x[0]);
-#endif
+*/
 #ifdef pp_LUA
   // If we are using lua, let lua take control here.
   // Initialise the lua interpreter, it does not take control at this point
@@ -838,28 +873,18 @@ int main(int argc, char **argv){
   if(CheckSMVFile(smv_filename, smokeview_casedir)==0){
     SMV_EXIT(1);
   }
-#ifdef pp_BLACKBODY
   MakeFireColors(fire_temp_min, fire_temp_max, nfire_colors);
-#endif
 
   InitTextureDir();
   InitColorbarsDir();
   InitScriptErrorFiles();
   smokezippath= GetSmokeZipPath(smokeview_bindir);
   DisplayVersionInfo("Smokeview ");
+  InitStartupDirs();
   SetupGlut(argc,argv);
   START_TIMER(startup_time);
 
   return_code= SetupCase(smv_filename);
-#ifdef pp_HIST
-#ifndef pp_PATCH_HIST
-  if(return_code==0&&update_bounds==1){
-    INIT_PRINT_TIMER(timer_update_bounds);
-    return_code=Update_Bounds();
-    PRINT_TIMER(timer_update_bounds, "Update_Bounds");
-  }
-#endif
-#endif
   if(return_code!=0)return 1;
   if(convert_ini==1){
     INIT_PRINT_TIMER(timer_read_ini);
@@ -880,19 +905,4 @@ int main(int argc, char **argv){
 
   glutMainLoop();
   return 0;
-}
-
-/* ------------------ SMV_EXIT ------------------------ */
-
-void SMV_EXIT(int code){
-  exit(code);
-}
-
-/* ------------------ StartTimer ------------------------ */
-
-void StartTimer(float *timerptr){
-  float timer;
-
-  START_TIMER(timer);
-  *timerptr = timer;
 }

@@ -67,8 +67,6 @@
       value = *vv;\
     }
 
-#ifdef pp_BLACKBODY
-
 // https://www.fourmilab.ch/documents/specrend/specrend.c
 
 /* A colour system is defined by the CIE x and y coordinates of
@@ -598,7 +596,6 @@ void Temperature2Emission(float temperature, float *emission){
   emission[1] = (1.0-factor)*rgb_bef[1] + factor*rgb_aft[1];
   emission[2] = (1.0-factor)*rgb_bef[2] + factor*rgb_aft[2];
 }
-#endif
 
 /* ----------------------- GetFireEmission ----------------------------- */
 
@@ -618,9 +615,9 @@ void GetFireEmission(float *smoke_tran, float *fire_emission, float dlength, flo
   int slicetype;
   float soot_density, temperature;
 
-  smokedata_local = meshi->volrenderinfo.smokedataptr;
-  firedata_local  = meshi->volrenderinfo.firedataptr;
-  slicetype = meshi->volrenderinfo.smokeslice->slice_filetype;
+  smokedata_local = meshi->volrenderinfo->smokedataptr;
+  firedata_local  = meshi->volrenderinfo->firedataptr;
+  slicetype = meshi->volrenderinfo->smokeslice->slice_filetype;
 
   if(slicetype==SLICE_NODE_CENTER){
     // check this
@@ -686,11 +683,11 @@ void GetFireEmission(float *smoke_tran, float *fire_emission, float dlength, flo
           int ii;
 
           ijk_index = IJKNODE(i, j, k);
-          for(ii = 0;ii < meshi->volrenderinfo.ntimes;ii++){
+          for(ii = 0;ii < meshi->volrenderinfo->ntimes;ii++){
             float *smokevals, *firevals;
 
-            smokevals = meshi->volrenderinfo.smokedataptrs[ii];
-            firevals = meshi->volrenderinfo.firedataptrs[ii];
+            smokevals = meshi->volrenderinfo->smokedataptrs[ii];
+            firevals = meshi->volrenderinfo->firedataptrs[ii];
 
             if(smokevals!=NULL)smokevals[ijk_index] = smoke_val;
             if(firevals!=NULL)firevals[ijk_index] = fire_val;
@@ -806,7 +803,7 @@ void InitVolRenderSurface(int flag){
     volrenderdata *vr;
 
     meshi = meshinfo + i;
-    vr = &(meshi->volrenderinfo);
+    vr = meshi->volrenderinfo;
     if(flag==FIRSTCALL){
       vr->smokecolor_yz0=NULL;
       vr->smokecolor_yz1=NULL;
@@ -1172,27 +1169,27 @@ void InitNabors(void){
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
     xyz[0] = meshi->boxmin[0]- meshi->boxeps_fds[0];
-    meshi->skip_nabors[MLEFT] = GetMesh(xyz, NULL);
+    meshi->skip_nabors[MLEFT] = GetMesh(xyz);
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
     xyz[0] = meshi->boxmax[0] + meshi->boxeps_fds[0];
-    meshi->skip_nabors[MRIGHT] = GetMesh(xyz, NULL);
+    meshi->skip_nabors[MRIGHT] = GetMesh(xyz);
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
     xyz[1] = meshi->boxmin[1] - meshi->boxeps_fds[1];
-    meshi->skip_nabors[MFRONT] = GetMesh(xyz, NULL);
+    meshi->skip_nabors[MFRONT] = GetMesh(xyz);
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
     xyz[1] = meshi->boxmax[0] + meshi->boxeps_fds[1];
-    meshi->skip_nabors[MBACK] = GetMesh(xyz, NULL);
+    meshi->skip_nabors[MBACK] = GetMesh(xyz);
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
     xyz[2] = meshi->boxmin[2] - meshi->boxeps_fds[2];
-    meshi->skip_nabors[MDOWN] = GetMesh(xyz, NULL);
+    meshi->skip_nabors[MDOWN] = GetMesh(xyz);
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
     xyz[2] = meshi->boxmax[2] + meshi->boxeps_fds[2];
-    meshi->skip_nabors[MUP] = GetMesh(xyz, NULL);
+    meshi->skip_nabors[MUP] = GetMesh(xyz);
   }
 }
 
@@ -1371,7 +1368,7 @@ void InitVolRender(void){
     volrenderdata *vr;
 
     meshi = meshinfo + i;
-    vr = &(meshi->volrenderinfo);
+    vr = meshi->volrenderinfo;
     vr->rendermeshlabel=meshi->label;
 
     vr->fireslice=NULL;
@@ -1405,7 +1402,7 @@ void InitVolRender(void){
 
     meshi = meshinfo + blocknumber;
 
-    vr = &(meshi->volrenderinfo);
+    vr = meshi->volrenderinfo;
 
     if(STRCMP(shortlabel,"temp")==0){
       vr->fireslice=slicei;
@@ -1421,7 +1418,7 @@ void InitVolRender(void){
     volrenderdata *vr;
 
     meshi = meshinfo + i;
-    vr = &(meshi->volrenderinfo);
+    vr = meshi->volrenderinfo;
     vr->ntimes=0;
 
     vr->firedata_full=NULL;
@@ -1470,7 +1467,6 @@ void InitVolRender(void){
   if(nvolrenderinfo>0){
     InitSuperMesh();
   }
-
 }
 
 /* ------------------ GetMeshInSmesh ------------------------ */
@@ -1735,7 +1731,7 @@ void ComputeAllSmokecolors(void){
     float *smokecolor;
 
     meshi = meshinfo + ii;
-    vr = &(meshi->volrenderinfo);
+    vr = meshi->volrenderinfo;
     if(vr->loaded==0||vr->display==0)continue;
 
     x = meshi->xvolplt;
@@ -2124,7 +2120,7 @@ void DrawSmoke3DVol(void){
     ibar = meshi->ivolbar;
     jbar = meshi->jvolbar;
     kbar = meshi->kvolbar;
-    vr = &(meshi->volrenderinfo);
+    vr = meshi->volrenderinfo;
 
     if(iwall==0||meshi->drawsides[iwall+3]==0)continue;
     if(vr->firedataptr==NULL&&vr->smokedataptr==NULL)continue;
@@ -2340,7 +2336,7 @@ void UpdateVolsmokeSupertexture(supermeshdata *smesh){
     float *smokedataptr;
 
     meshi = smesh->meshes[i];
-    smokedataptr = meshi->volrenderinfo.smokedataptr;
+    smokedataptr = meshi->volrenderinfo->smokedataptr;
 
     s_offset = meshi->s_offset;
 
@@ -2362,7 +2358,7 @@ void UpdateVolsmokeSupertexture(supermeshdata *smesh){
     float *firedataptr;
 
     meshi = smesh->meshes[i];
-    firedataptr = meshi->volrenderinfo.firedataptr;
+    firedataptr = meshi->volrenderinfo->firedataptr;
     if(firedataptr==NULL)continue;
 
     s_offset = meshi->s_offset;
@@ -2413,7 +2409,7 @@ void UpdateVolsmokeTexture(meshdata *meshi){
   volrenderdata *vr;
   float *smokedata_local, *firedata_local;
 
-  vr = &meshi->volrenderinfo;
+  vr = meshi->volrenderinfo;
   smokedata_local = vr->smokedataptr;
   firedata_local  = vr->firedataptr;
 
@@ -2496,7 +2492,7 @@ void DrawSmoke3DGPUVol(void){
     if(meshvisptr[meshi-meshinfo]==0)continue;
     if(iwall==0||meshi->drawsides[iwall+3]==0)continue;
 
-    vr = &meshi->volrenderinfo;
+    vr = meshi->volrenderinfo;
     if(vr->firedataptr==NULL&&vr->smokedataptr==NULL)continue;
 
     // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
@@ -2959,7 +2955,7 @@ void UnloadVolsmokeFrameAllMeshes(int framenum){
     volrenderdata *vr;
 
     meshi = meshinfo + i;
-    vr = &meshi->volrenderinfo;
+    vr = meshi->volrenderinfo;
     if(vr->smokeslice==NULL||vr->fireslice==NULL||vr->loaded==0)continue;
     FREEMEMORY(vr->firedataptrs[framenum]);
     FREEMEMORY(vr->smokedataptrs[framenum]);
@@ -3036,7 +3032,7 @@ void ReadVolsmokeFrameAllMeshes(int framenum, supermeshdata *smesh){
     else{
       meshi = smesh->meshes[i];
     }
-    vr = &meshi->volrenderinfo;
+    vr = meshi->volrenderinfo;
     if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
     if(read_vol_mesh==i||read_vol_mesh==VOL_READALL){
       ReadVolsmokeFrame(vr,framenum,&first);
@@ -3052,7 +3048,7 @@ void ReadVolsmokeFrameAllMeshes(int framenum, supermeshdata *smesh){
     else{
       meshi = smesh->meshes[i];
     }
-    vr = &meshi->volrenderinfo;
+    vr = meshi->volrenderinfo;
     if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
     if(read_vol_mesh!=i&&read_vol_mesh!=VOL_READALL)continue;
     if(framenum==0){
@@ -3081,7 +3077,7 @@ void *ReadVolsmokeAllFramesAllMeshes2(void *arg){
     volrenderdata *vr;
 
     meshi = meshinfo + i;
-    vr = &meshi->volrenderinfo;
+    vr = meshi->volrenderinfo;
     if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
     if(read_vol_mesh!=VOL_READALL&&read_vol_mesh!=i)continue;
     if(vr->ntimes>0){
@@ -3254,7 +3250,7 @@ void ReadVolsmokeAllFramesAllMeshes(void){
     volrenderdata *vr;
 
     meshi = meshinfo + i;
-    vr = &meshi->volrenderinfo;
+    vr = meshi->volrenderinfo;
     if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
     if(read_vol_mesh!=VOL_READALL&&read_vol_mesh!=i)continue;
     GetVolsmokeAllTimes(vr);
@@ -3274,16 +3270,11 @@ void ReadVolsmokeAllFramesAllMeshes(void){
   plotstate=GetPlotState(DYNAMIC_PLOTS);
   stept=1;
   UpdateTimes();
-#ifdef pp_THREAD
-  if(use_multi_threading==1){
-    MtReadVolsmokeAllFramesAllMeshes2();
+
+  if(volsmokeload_threads == NULL){
+    volsmokeload_threads = THREADinit(&n_volsmokeload_threads, &use_volsmokeload_threads, ReadVolsmokeAllFramesAllMeshes2);
   }
-  else{
-    ReadVolsmokeAllFramesAllMeshes2(NULL);
-  }
-#else
-  ReadVolsmokeAllFramesAllMeshes2(NULL);
-#endif
+  THREADrun(volsmokeload_threads, NULL);
 }
 
 /* ------------------ UnloadVolsmokeTextures ------------------------ */

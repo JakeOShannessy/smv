@@ -180,7 +180,7 @@ void SetViewPoint(int option){
   }
   if(option==RESTORE_EXTERIOR_VIEW_ZOOM)camera_current->zoom=zooms[zoomindex];
   zoom=camera_current->zoom;
-  UpdateGluiZoom();
+  GLUIUpdateZoom();
 }
 
 /* ------------------ InitVolrenderScript ------------------------ */
@@ -235,4 +235,38 @@ void DisplayVersionInfo(char *progname){
   if(smokeview_bindir != NULL){
     PRINTF("Bin directory    : %s\n", smokeview_bindir);
   }
+}
+
+/* ------------------ IsFDSRunning ------------------------ */
+
+int IsFDSRunning(FILE_SIZE *last_size){
+  FILE_SIZE file_size;
+
+  file_size = GetFileSizeSMV(stepcsv_filename);
+  if(file_size != *last_size){
+    *last_size = file_size;
+    return 1;
+  }
+  return 0;
+}
+
+/* ------------------ SMV_EXIT ------------------------ */
+
+void SMV_EXIT(int code){
+#ifdef _DEBUG_VS
+  char buffer[255];
+
+  printf("smokeview exiting\n");
+  fgets(buffer, 255, stdin);
+#endif
+  exit(code);
+}
+
+/* ------------------ StartTimer ------------------------ */
+
+void StartTimer(float *timerptr){
+  float timer;
+
+  START_TIMER(timer);
+  *timerptr = timer;
 }

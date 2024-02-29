@@ -13,6 +13,52 @@
 #define BUILD_GEOM_OFFSETS 0
 #define GET_GEOM_OFFSETS  -1
 
+/* ------------------ ClassifyAllGeom ------------------------ */
+
+void *ClassifyAllGeom(void *arg){
+  int i;
+
+  for(i = 0; i < ngeominfo; i++){
+    geomdata *geomi;
+
+    geomi = geominfo + i;
+    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    if(geomi->read_status != 0){
+      THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+      continue;
+    }
+    geomi->read_status = 1;
+    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+
+    if(geomi->geomtype != GEOM_ISO){
+      ClassifyGeom(geomi, NULL);
+    }
+    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    geomi->read_status = 2;
+    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+  }
+  for(i = 0; i < ncgeominfo; i++){
+    geomdata *geomi;
+
+    geomi = cgeominfo + i;
+    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    if(geomi->read_status != 0){
+      THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+      continue;
+    }
+    geomi->read_status = 1;
+    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+
+    if(geomi->geomtype != GEOM_ISO){
+      ClassifyGeom(geomi, NULL);
+    }
+    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    geomi->read_status = 2;
+    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+  }
+  THREAD_EXIT(readallgeom_threads);
+}
+
 // !  ------------------ Distance3 ------------------------
 
 float Distance3(float v1[3], float v2[3]){
@@ -868,6 +914,20 @@ void DrawBox(float *bb, float *box_color){
   glEnd();
 }
 
+/* ------------------ DrawBox ------------------------ */
+
+void DrawBoxMinMax(float *bbmin, float *bbmax, float *box_color){
+  float bb[6];
+
+  bb[0] = bbmin[0];
+  bb[2] = bbmin[1];
+  bb[4] = bbmin[2];
+  bb[1] = bbmax[0];
+  bb[3] = bbmax[1];
+  bb[5] = bbmax[2];
+  DrawBox(bb, box_color);
+}
+
 /* ------------------ DrawObstBoundingBox ------------------------ */
 
 void DrawObstBoundingBox(void){
@@ -1267,14 +1327,10 @@ void DrawGeom(int flag, int timestate){
     glDisable(GL_COLOR_MATERIAL);
     DISABLE_LIGHTING;
     glPopMatrix();
-#ifdef _FORCE_TRANSPARENCY
-    TransparentOff();
-#else
     if(flag==DRAW_TRANSPARENT){
       if(use_transparency_data==1)TransparentOff();
       return;
     }
-#endif
     if(cullfaces==1)glEnable(GL_CULL_FACE);
   }
 
@@ -2769,9 +2825,6 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     if(patchi->boundary==1)UpdateBoundaryType();
     UpdateUnitDefs();
     UpdateTimes();
-#ifdef pp_HIST
-    update_draw_hist = 1;
-#endif
     PrintMemoryInfo;
     return 0;
   }
@@ -2844,28 +2897,19 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
       NewMemory((void **)&patchi->geom_ivals, nvals * sizeof(char));
     }
   }
-#ifdef pp_HIST
-  if(load_flag == UPDATE_HIST){
-    GetGeomData(patchi->file, ntimes_local, nvals, patchi->geom_times,
-      patchi->geom_nstatics, patchi->geom_ndynamics, patchi->geom_vals, time_frame, time_value, geom_offsets, &error);
-    ResetHistogram(patchi->histogram, NULL, NULL);
-    UpdateHistogram(patchi->geom_vals, NULL, nvals, patchi->histogram);
-    patchi->histogram->complete=  1;
-    return 0;
-  }
-  else{
-#endif
-    int filesize;
+  int filesize;
 
-    if(current_script_command==NULL||current_script_command->command!=SCRIPT_LOADSLICERENDER){
-      PRINTF("Loading %s(%s)", patchi->file, patchi->label.shortlabel);
-    }
-    filesize=GetGeomData(patchi->file, ntimes_local, nvals, patchi->geom_times,
-      patchi->geom_nstatics, patchi->geom_ndynamics, patchi->geom_vals, time_frame, time_value, geom_offsets, &error);
-    return_filesize += filesize;
-#ifdef pp_HIST
+  if(current_script_command==NULL||NOT_LOADRENDER){
+    PRINTF("Loading %s(%s)", patchi->file, patchi->label.shortlabel);
   }
-#endif
+  filesize=GetGeomData(patchi->file, ntimes_local, nvals, patchi->geom_times,
+    patchi->geom_nstatics, patchi->geom_ndynamics, patchi->geom_vals, time_frame, time_value, geom_offsets, &error);
+  return_filesize += filesize;
+  if(error == 1){
+    patchi->loaded = 0;
+    patchi->display = 0;
+    return return_filesize;
+  }
 
   patchi->ngeom_times = ntimes_local;
   patchi->geom_nvals = nvals;
@@ -2912,7 +2956,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
 
     label = patchi->label.shortlabel;
 
-    GetMinMax(BOUND_PATCH, label, &set_valmin, &valmin, &set_valmax, &valmax);
+    GLUIGetMinMax(BOUND_PATCH, label, &set_valmin, &valmin, &set_valmax, &valmax);
     int convert = 0;
     if(patchi->patch_filetype != PATCH_GEOMETRY_BOUNDARY && patchi->patch_filetype != PATCH_GEOMETRY_SLICE)convert = 0;
     GetBoundaryColors3(patchi, patchi->geom_vals, 0, patchi->geom_nvals, patchi->geom_ivals,
@@ -2940,10 +2984,10 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
 
     UpdateLoadedLists();
     GetSliceDataBounds(slicei, &qmin, &qmax);
-    slicei->globalmin = qmin;
-    slicei->globalmax = qmax;
-    slicei->valmin_smv = qmin;
-    slicei->valmax_smv = qmax;
+    slicei->globalmin_slice = qmin;
+    slicei->globalmax_slice = qmax;
+    slicei->valmin_slice    = qmin;
+    slicei->valmax_slice    = qmax;
     if(slice_average_flag==1){
       int data_per_timestep, nvals2, ntimes;
       float *vals, *times;
@@ -2958,10 +3002,10 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
         show_slice_average = 0;
       }
     }
-    slicei->valmin = qmin;
-    slicei->valmax = qmax;
-    slicei->valmin_data = qmin;
-    slicei->valmax_data = qmax;
+    slicei->valmin_slice    = qmin;
+    slicei->valmax_slice    = qmax;
+    slicei->globalmin_slice = qmin;
+    slicei->globalmax_slice = qmax;
     for (i = 0; i < 256; i++){
       slicei->qval256[i] = (qmin*(255 - i) + qmax*i) / 255;
     }
@@ -2983,7 +3027,10 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
   else{
     slicefile_labelindex = GetSliceBoundsIndexFromLabel(patchi->label.shortlabel);
   }
-  if((slicei==NULL&&patchi->finalize==1)||(slicei!=NULL&&slicei->finalize==1)){
+#ifdef pp_RECOMPUTE_DEBUG
+  int recompute = 0;
+#endif
+  if(current_script_command!=NULL||(slicei==NULL&&patchi->finalize==1)||(slicei!=NULL&&slicei->finalize==1)){
     plotstate = GetPlotState(DYNAMIC_PLOTS);
     if(patchi->boundary==1)UpdateBoundaryType();
     cpp_boundsdata *bounds;
@@ -2996,35 +3043,29 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
       bound_type = BOUND_SLICE;
     }
 
-    bounds = GetBoundsData(bound_type);
-#ifdef pp_HIST
-    if(bounds->set_valmin==BOUND_PERCENTILE_MIN||bounds->set_valmax==BOUND_PERCENTILE_MAX){
-      float global_min = 0.0, global_max = 1.0;
-
-      if(patchi->boundary==1){
-        GetGlobalBoundsMinMax(BOUND_PATCH, bounds->label, &global_min, &global_max);
-        ComputeLoadedPatchHist(bounds->label, &(bounds->hist), &global_min, &global_max);
-      }
-      else{
-        ComputeLoadedSliceHist(bounds->label);
-        MergeLoadedSliceHist(bounds->label, &(bounds->hist));
-      }
-      if(bounds->hist->defined==1){
-        if(bounds->set_valmin==BOUND_PERCENTILE_MIN){
-          float per_valmin;
-
-          GetHistogramValProc(bounds->hist, percentile_level_min, &per_valmin);
-          SetMin(bound_type, bounds->label, BOUND_PERCENTILE_MIN, per_valmin);
-        }
-        if(bounds->set_valmax==BOUND_PERCENTILE_MAX){
-          float per_valmax;
-
-          GetHistogramValProc(bounds->hist, percentile_level_max, &per_valmax);
-          SetMax(bound_type, bounds->label, BOUND_PERCENTILE_MAX, per_valmax);
-        }
+    bounds = GLUIGetBoundsData(bound_type);
+    INIT_PRINT_TIMER(geom_bounds_timer);
+    int bound_update = 0;
+    if(force_bound_update == 1 || current_script_command != NULL)bound_update = 1;
+    if(patchi->boundary == 1){
+      if(bound_update==1||patch_bounds_defined==0 || IsFDSRunning(&last_size_for_boundary) == 1){
+        GetGlobalPatchBounds(1,DONOT_SET_MINMAX_FLAG);
+        SetLoadedPatchBounds(NULL, 0);
+        GLUIPatchBoundsCPP_CB(BOUND_DONTUPDATE_COLORS);
+#ifdef pp_RECOMPUTE_DEBUG
+        recompute = 1;
+#endif
       }
     }
+    else{
+      if(bound_update==1||slice_bounds_defined==0||IsFDSRunning(&last_size_for_slice)==1){
+        GetGlobalSliceBounds(1, DONOT_SET_MINMAX_FLAG);
+        SetLoadedSliceBounds(NULL, 0);
+#ifdef pp_RECOMPUTE_DEBUG
+        recompute = 1;
 #endif
+      }
+    }
     if(bounds->set_valmin==BOUND_SET_MIN||bounds->set_valmax==BOUND_SET_MAX){
       if(patchi->boundary==1){
       }
@@ -3032,15 +3073,21 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
         int set_valmin, set_valmax;
         float valmin_dlg, valmax_dlg;
 
-        GetMinMax(BOUND_SLICE, bounds->label, &set_valmin, &valmin_dlg, &set_valmax, &valmax_dlg);
+        GLUIGetMinMax(BOUND_SLICE, bounds->label, &set_valmin, &valmin_dlg, &set_valmax, &valmax_dlg);
       }
     }
-    if(patchi->boundary==1){
-      PatchBoundsCPP_CB(BOUND_UPDATE_COLORS);
-    }
-    else{
-      SliceBoundsCPP_CB(BOUND_UPDATE_COLORS);
-    }
+    PRINT_TIMER(geom_bounds_timer, "update boundary bounds");
+
+    INIT_PRINT_TIMER(geom_color_timer);
+//*** don't think the following is needed
+//    if(patchi->boundary==1){
+//      GLUIPatchBoundsCPP_CB(BOUND_UPDATE_COLORS);
+//    }
+//    else{
+//      GLUIHVACSliceBoundsCPP_CB(BOUND_UPDATE_COLORS);
+//    }
+    PRINT_TIMER(geom_color_timer, "update boundary colors");
+
     UpdateUnitDefs();
     UpdateTimes();
     force_redisplay = 1;
@@ -3050,10 +3097,13 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
   force_redisplay = 1;
   updatemenu = 1;
   STOP_TIMER(total_time);
-  if(current_script_command==NULL||current_script_command->command!=SCRIPT_LOADSLICERENDER){
+  if(current_script_command==NULL||NOT_LOADRENDER){
     PRINTF(" - %.1f MB/%.1f s\n", (float)return_filesize/1000000., total_time);
   }
   PrintMemoryInfo;
+#ifdef pp_RECOMPUTE_DEBUG
+  if(recompute == 1)printf("***recomputing bounds\n");
+#endif
   return return_filesize;
 }
 
@@ -3214,44 +3264,45 @@ void UpdateGeomTriangles(geomdata *geomi, int geom_type){
 
 /* ------------------ ReadAllGeom ------------------------ */
 
-void ReadAllGeom(void){
+void *ReadAllGeom(void *arg){
   int i;
 
   for(i=0;i<ngeominfo;i++){
     geomdata *geomi;
 
     geomi = geominfo + i;
-    LOCK_READALLGEOM;
+    THREADcontrol(readallgeom_threads, THREAD_LOCK);
     if(geomi->read_status!=0){
-      UNLOCK_READALLGEOM;
+      THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
       continue;
     }
     geomi->read_status = 1;
-    UNLOCK_READALLGEOM;
+    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
 
     ReadGeom(geomi, LOAD, GEOM_GEOM, NULL);
-    LOCK_READALLGEOM;
+    THREADcontrol(readallgeom_threads, THREAD_LOCK);
     geomi->read_status = 2;
-    UNLOCK_READALLGEOM;
+    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
   }
   for(i = 0; i<ncgeominfo; i++){
     geomdata *geomi;
 
     geomi = cgeominfo+i;
-    LOCK_READALLGEOM;
+    THREADcontrol(readallgeom_threads, THREAD_LOCK);
     if(geomi->read_status!=0){
-      UNLOCK_READALLGEOM;
+      THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
       continue;
     }
     geomi->read_status = 1;
-    UNLOCK_READALLGEOM;
+    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
 
     ReadGeom(geomi, LOAD, GEOM_CGEOM, NULL);
     UpdateGeomTriangles(geomi, GEOM_STATIC);
-    LOCK_READALLGEOM;
+    THREADcontrol(readallgeom_threads, THREAD_LOCK);
     geomi->read_status = 2;
-    UNLOCK_READALLGEOM;
+    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
   }
+  THREAD_EXIT(readallgeom_threads);
 }
 
 /* ------------------ UpdateAllGeomTriangles ------------------------ */
@@ -3945,8 +3996,8 @@ int CompareEdges(const void *arg1, const void *arg2){
   edgedata *edge1, *edge2;
   int *v1, *v2;
 
-  edge1 = (edgedata *)arg1;
-  edge2 = (edgedata *)arg2;
+  edge1 = *(edgedata **)arg1;
+  edge2 = *(edgedata **)arg2;
   v1 = edge1->vert_index;
   v2 = edge2->vert_index;
 
@@ -4042,6 +4093,14 @@ edgedata *GetEdge(edgedata *edges, int nedges, int iv1, int iv2){
     }
   }
   return NULL;
+}
+
+/* ------------------ CancelUpdateTriangles ------------------------ */
+
+void CancelUpdateTriangles(void){
+  cancel_update_triangles = 1;
+  THREADcontrol(triangles_threads, THREAD_JOIN);
+  cancel_update_triangles = 0;
 }
 
 /* ------------------ ClassifyGeom ------------------------ */
@@ -4145,9 +4204,8 @@ void ClassifyGeom(geomdata *geomi,int *geom_frame_index){
       edges2[nedges].vert_index[1] = edgelist_ptr[nedges]->vert_index[1];
       nedges++;
       for(ii = 1; ii < nedgelist_index; ii++){
-        if(CompareEdges(edgelist_ptr[ii - 1], edgelist_ptr[ii])==0)continue;
-        edges2[nedges].vert_index[0] = edgelist_ptr[ii]->vert_index[0];
-        edges2[nedges].vert_index[1] = edgelist_ptr[ii]->vert_index[1];
+        if(CompareEdges(edgelist_ptr+ii - 1, edgelist_ptr+ii)==0)continue;
+        memcpy(edges2[nedges].vert_index, edgelist_ptr[ii]->vert_index, 2*sizeof(int));
         nedges++;
       }
       if(nedges>0)ResizeMemory((void **)&edges2, nedges * sizeof(edgedata));
@@ -4207,51 +4265,6 @@ void ClassifyGeom(geomdata *geomi,int *geom_frame_index){
       }
       FREEMEMORY(vertlist_ptr);
     }
-  }
-}
-
-/* ------------------ ClassifyAllGeom ------------------------ */
-
-void ClassifyAllGeom(void){
-  int i;
-
-  for(i = 0; i<ngeominfo; i++){
-    geomdata *geomi;
-
-    geomi = geominfo+i;
-    LOCK_READALLGEOM;
-    if(geomi->read_status!=0){
-      UNLOCK_READALLGEOM;
-      continue;
-    }
-    geomi->read_status = 1;
-    UNLOCK_READALLGEOM;
-
-    if(geomi->geomtype!=GEOM_ISO){
-      ClassifyGeom(geomi, NULL);
-    }
-    LOCK_READALLGEOM;
-    geomi->read_status = 2;
-    UNLOCK_READALLGEOM;
-  }
-  for(i = 0; i<ncgeominfo; i++){
-    geomdata *geomi;
-
-    geomi = cgeominfo+i;
-    LOCK_READALLGEOM;
-    if(geomi->read_status!=0){
-      UNLOCK_READALLGEOM;
-      continue;
-    }
-    geomi->read_status = 1;
-    UNLOCK_READALLGEOM;
-
-    if(geomi->geomtype!=GEOM_ISO){
-      ClassifyGeom(geomi, NULL);
-    }
-    LOCK_READALLGEOM;
-    geomi->read_status = 2;
-    UNLOCK_READALLGEOM;
   }
 }
 
@@ -4559,13 +4572,13 @@ void DrawGeomData(int flag, slicedata *sd, patchdata *patchi, int geom_type){
   float ttmin, ttmax;
 
   label = patchi->label.shortlabel;
-  GetOnlyMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
+  GLUIGetOnlyMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
 
   float rvals[3];
   float valmin, valmax;
   if(sd!=NULL){
-    valmin = sd->valmin;
-    valmax = sd->valmax;
+    valmin = sd->valmin_slice;
+    valmax = sd->valmax_slice;
     if(valmin>=valmax){
       valmin = 0.0;
       valmax = 1.0;
@@ -4654,7 +4667,7 @@ void DrawGeomData(int flag, slicedata *sd, patchdata *patchi, int geom_type){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-xbar0, -ybar0, -zbar0+boundaryoffset);
       if(auto_terrain==1)glTranslatef(0.0, 0.0, slice_dz);
       glBegin(GL_TRIANGLES);
       if((patchi->patch_filetype!=PATCH_GEOMETRY_BOUNDARY&&smooth_iso_normal == 0)
@@ -5654,7 +5667,8 @@ void ShowHideSortGeometry(int sort_geom, float *mm){
 
 /* ------------------ InitGeom ------------------------ */
 
-void InitGeom(geomdata *geomi,int geomtype, int fdsblock, int have_cface_normals_arg){
+void InitGeom(geomdata *geomi,int geomtype, int fdsblock, int have_cface_normals_arg, int block_number){
+  geomi->block_number = block_number;
   geomi->file=NULL;
   geomi->topo_file = NULL;
   geomi->cache_defined = 0;

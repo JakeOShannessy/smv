@@ -178,11 +178,17 @@ void GetCellXYZs(float *xyz, int nxyz, int ncells, float **xyz_cellptr, int *nxy
   for(i = 0;i < nmerge;i++){
     GetHVACPathXYZ(fractions_both[i], xyz, nxyz, xyz_cell + 3*i);
   }
+  assert(ncells >= 1);
   for(i = 0;i < nmerge-1;i++){
-    float frac_avg;
+    if(ncells > 1){
+      float frac_avg;
 
-    frac_avg = (fractions_both[i] + fractions_both[i + 1]) / 2.0;
-    cell_ind[i] = CLAMP((int)(frac_avg*(float)ncells), 0, ncells - 1);
+      frac_avg = (fractions_both[i] + fractions_both[i + 1]) / 2.0;
+      cell_ind[i] = CLAMP((int)(frac_avg * (float)ncells), 0, ncells - 1);
+    }
+    else{
+      cell_ind[i] = 0;
+    }
   }
   FREEMEMORY(fractions);
   FREEMEMORY(fractions_cell);
@@ -227,7 +233,7 @@ void UpdateHVACDuctColorLabels(int index){
   float valmin, valmax;
 
   hi = hvacductvalsinfo->duct_vars + index;
-  GetMinMax(BOUND_HVACDUCT, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
+  GLUIGetMinMax(BOUND_HVACDUCT, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
   GetColorbarLabels(valmin, valmax, nrgb, hi->colorlabels, hi->levels256);
 }
 
@@ -239,7 +245,7 @@ void UpdateHVACNodeColorLabels(int index){
   float valmin, valmax;
 
   hi = hvacnodevalsinfo->node_vars + index;
-  GetMinMax(BOUND_HVACNODE, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
+  GLUIGetMinMax(BOUND_HVACNODE, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
   GetColorbarLabels(valmin, valmax, nrgb, hi->colorlabels, hi->levels256);
 }
 
@@ -254,7 +260,7 @@ void UpdateAllHVACColorLabels(void){
     float valmin, valmax;
 
     hi = hvacductvalsinfo->duct_vars + i;
-    GetMinMax(BOUND_HVACDUCT, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
+    GLUIGetMinMax(BOUND_HVACDUCT, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
     GetColorbarLabels(hi->valmin, hi->valmax, nrgb, hi->colorlabels, hi->levels256);
   }
   for(i = 0; i < hvacnodevalsinfo->n_node_vars; i++){
@@ -263,7 +269,7 @@ void UpdateAllHVACColorLabels(void){
     float valmin, valmax;
 
     hi = hvacnodevalsinfo->node_vars + i;
-    GetMinMax(BOUND_HVACNODE, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
+    GLUIGetMinMax(BOUND_HVACNODE, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
     GetColorbarLabels(valmin, valmax, nrgb, hi->colorlabels, hi->levels256);
   }
 }
@@ -454,8 +460,8 @@ void ReadHVACData(int flag){
     UpdateAllHVACColorLabels();
     GetGlobalHVACNodeBounds(1);
     GetGlobalHVACDuctBounds(1);
-    UpdateHVACDuctType();
-    SetValTypeIndex(BOUND_HVACDUCT, 0);
+    GLUIUpdateHVACDuctType();
+    GLUISetValTypeIndex(BOUND_HVACDUCT, 0);
 
     STOP_TIMER(total_time);
     PRINTF("Loading %s", hvacductvalsinfo->file);
@@ -1049,7 +1055,7 @@ void DrawHVAC(hvacdata *hvaci){
   hvacvaldata *ductvar;
   if(global_times != NULL && hvacductvar_index>=0){
     ductvar = hvacductvalsinfo->duct_vars + hvacductvar_index;
-    GetOnlyMinMax(BOUND_HVACDUCT, ductvar->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
+    GLUIGetOnlyMinMax(BOUND_HVACDUCT, ductvar->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
   }
 
   glLineWidth(hvaci->duct_width);

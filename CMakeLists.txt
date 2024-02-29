@@ -172,7 +172,7 @@ add_executable(smokeview
     Source/smokeview/startup.c
     Source/smokeview/shaders.c
     Source/smokeview/unit.c
-    Source/smokeview/threader.c
+    Source/shared/threader.c
     Source/shared/histogram.c
     Source/shared/translate.c
     Source/smokeview/update.c
@@ -292,7 +292,7 @@ if (SMOKEVIEW_OBJECT_DEFS_PATH)
 endif()
 
 if (LUA)
-    add_definitions(-Dpp_LUA)
+    target_compile_definitions(smokeview PRIVATE pp_LUA)
     find_package(Lua)
     if (LUA_FOUND)
         target_link_libraries(smokeview PRIVATE ${LUA_LIBRARIES})
@@ -699,7 +699,10 @@ endif()
 include(CTest)
 enable_testing()
 add_subdirectory(Tests)
-add_subdirectory(Verification/Visualization)
+option(VERIFICATION_TESTS "Run larger verification tests" OFF)
+if (VERIFICATION_TESTS)
+    add_subdirectory(Verification/Visualization)
+endif()
 
 # Retrieve configuration and data files from the bot repo
 file(DOWNLOAD "https://raw.githubusercontent.com/firemodels/bot/a0a9d710f7a55b4e04c9ac4e32a04e2efe197c47/Bundlebot/smv/for_bundle/objects.svo" "${CMAKE_BINARY_DIR}/objects.svo" STATUS object_svo_status)
@@ -713,3 +716,5 @@ list(GET smokeview_ini_status 0 smokeview_ini_status_code)
 if (smokeview_ini_status_code)
     message(FATAL_ERROR "Could not download smokeview.ini ${smokeview_ini_status_code}")
 endif()
+
+add_subdirectory(Source/smvq)

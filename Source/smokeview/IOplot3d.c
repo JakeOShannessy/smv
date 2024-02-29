@@ -14,11 +14,10 @@
 
 /* ------------------ GetPlot3DHists ------------------------ */
 
-#ifdef pp_HIST
 void GetPlot3DHists(plot3ddata *p){
   int i;
 
-  for(i = 0; i<p->nvars; i++){
+  for(i = 0; i<p->nplot3dvars; i++){
     histogramdata *histi;
     float *vals;
     int nvals;
@@ -32,7 +31,9 @@ void GetPlot3DHists(plot3ddata *p){
     plot3d_mesh = meshinfo+p->blocknumber;
     nvals = (plot3d_mesh->ibar+1)*(plot3d_mesh->jbar+1)*(plot3d_mesh->kbar+1);
     vals = plot3d_mesh->qdata+i*nvals;
-    CopyVals2Histogram(vals, NULL, NULL, nvals, histi);
+    int use_bounds = 0;
+    float valmin_dummy = 0.0, valmax_dummy = 1.0;
+    CopyVals2Histogram(vals, NULL, NULL, nvals, histi, use_bounds, valmin_dummy, valmax_dummy);
   }
 }
 
@@ -59,13 +60,11 @@ void MergePlot3DHistograms(void){
 
     plot3di = plot3dinfo+i;
     if(plot3di->loaded==0)continue;
-    for(k = 0; k<plot3di->nvars; k++){
+    for(k = 0; k<plot3di->nplot3dvars; k++){
       MergeHistogram(full_plot3D_histograms+k, plot3di->histograms[k], MERGE_BOUNDS);
     }
   }
 }
-#endif
-
 
 /* ------------------ Plot3dCompare  ------------------------ */
 
@@ -136,7 +135,7 @@ void  UpdatePlot3DColors(plot3ddata *plot3di, int flag, int *errorcode){
 
   int num;
 
-  GetMinMaxAll(BOUND_PLOT3D, setp3min_all, p3min_all, setp3max_all, p3max_all, &num);
+  GLUIGetMinMaxAll(BOUND_PLOT3D, setp3min_all, p3min_all, setp3max_all, p3max_all, &num);
   *errorcode=AllocatePlot3DColorLabels(plot3di);
   if(*errorcode==1)return;
   for(nn = 0; nn < numplot3dvars; nn++){
@@ -170,7 +169,7 @@ int GetPlot3DBounds(plot3ddata *plot3di){
   ntotal = (meshi->ibar+1)*(meshi->jbar+1)*(meshi->kbar+1);
   iblank = meshi->c_iblank_node;
 
-  for(i = 0; i<plot3di->nvars; i++){
+  for(i = 0; i<plot3di->nplot3dvars; i++){
     int n;
 
     valmin = 1000000000.;
@@ -186,11 +185,38 @@ int GetPlot3DBounds(plot3ddata *plot3di){
         valmax = MAX(val, valmax);
       }
     }
-    plot3di->valmin_smv[i] = valmin;
-    plot3di->valmax_smv[i] = valmax;
+    plot3di->valmin_plot3d[i] = valmin;
+    plot3di->valmax_plot3d[i] = valmax;
   }
   return 1;
 }
+
+/* ------------------ ComputeLoadedPlot3DBounds  ------------------------ */
+
+void ComputeLoadedPlot3DBounds(float *valmin_loaded, float *valmax_loaded){
+  int i, first;
+
+  for(first = 1, i = 0; i < nplot3dinfo; i++){
+    plot3ddata *plot3di;
+
+    plot3di = plot3dinfo + i;
+    if(plot3di->loaded == 0)continue;
+    if(first == 1){
+      first = 0;
+      memcpy(valmin_loaded, plot3di->valmin_plot3d, plot3di->nplot3dvars * sizeof(float));
+      memcpy(valmax_loaded, plot3di->valmax_plot3d, plot3di->nplot3dvars * sizeof(float));
+    }
+    else{
+      int j;
+
+      for(j = 0; j < plot3di->nplot3dvars; j++){
+        valmin_loaded[j] = MIN(valmin_loaded[j], plot3di->valmin_plot3d[j]);
+        valmax_loaded[j] = MAX(valmax_loaded[j], plot3di->valmax_plot3d[j]);
+      }
+    }
+  }
+}
+
 
 /* ------------------ UpdatePlot3DFileLoad  ------------------------ */
 
@@ -244,9 +270,6 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   }
   if(flag==UNLOAD){
     meshi->plot3dfilenum=-1;
-#ifdef pp_HIST
-    update_draw_hist = 1;
-#endif
   }
   else{
     pn = meshi->plot3dfilenum;
@@ -257,14 +280,14 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
     meshi->plot3dfilenum=ifile;
   }
 
-  FreeSurface(&meshi->currentsurf);
-  FreeSurface(&meshi->currentsurf2);
-  FreeContour(&meshi->plot3dcontour1);
-  FreeContour(&meshi->plot3dcontour2);
-  FreeContour(&meshi->plot3dcontour3);
-  InitContour(&meshi->plot3dcontour1,rgb_plot3d_contour,nrgb);
-  InitContour(&meshi->plot3dcontour2,rgb_plot3d_contour,nrgb);
-  InitContour(&meshi->plot3dcontour3,rgb_plot3d_contour,nrgb);
+  FreeSurface(meshi->currentsurf);
+  FreeSurface(meshi->currentsurf2);
+  FreeContour(meshi->plot3dcontour1);
+  FreeContour(meshi->plot3dcontour2);
+  FreeContour(meshi->plot3dcontour3);
+  InitContour(meshi->plot3dcontour1,rgb_plot3d_contour,nrgb);
+  InitContour(meshi->plot3dcontour2,rgb_plot3d_contour,nrgb);
+  InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,nrgb);
 
 
   for(i=0;i<nmeshes;i++){
@@ -301,7 +324,7 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   uindex = plot3dinfo[ifile].u;
   vindex = plot3dinfo[ifile].v;
   windex = plot3dinfo[ifile].w;
-  if(uindex!=-1||vindex!=-1||windex!=-1)numplot3dvars=plot3dinfo[ifile].nvars;
+  if(uindex!=-1||vindex!=-1||windex!=-1)numplot3dvars=plot3dinfo[ifile].nplot3dvars;
 
   if(NewMemoryMemID((void **)&meshi->qdata,numplot3dvars*ntotal*sizeof(float), p->memory_id)==0){
     *errorcode=1;
@@ -335,7 +358,29 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   file_size= GetFileSizeSMV(file);
   PRINTF("Loading plot3d data: %s",file);
   START_TIMER(read_time);
-  getplot3dq(file,nx,ny,nz,meshi->qdata,&error,isotest);
+  float qmin[6], qmax[6], *qminptr=NULL, *qmaxptr=NULL;
+
+  if(p->have_bound_file==0){
+    qminptr = qmin;
+    qmaxptr = qmax;
+  }
+  getplot3dq(file, nx, ny, nz, meshi->qdata, qminptr, qmaxptr, &error, isotest);
+#ifdef pp_BOUNDS
+  update_plot3d_bnd = 1;
+#else
+  if(p->have_bound_file == 0){
+    FILE *bound_stream;
+
+    bound_stream = fopen(p->bound_file, "w");
+    if(bound_stream != NULL){
+      for(i = 0;i < 6;i++){
+        fprintf(bound_stream, " %f %f\n", qmin[i], qmax[i]);
+      }
+      update_plot3d_bnd = 1;
+      fclose(bound_stream);
+    }
+  }
+#endif
   if(NewMemoryMemID((void **)&meshi->iqdata,numplot3dvars*ntotal*sizeof(unsigned char), p->memory_id)==0){
     *errorcode=1;
     ReadPlot3D("",ifile,UNLOAD,&error);
@@ -344,6 +389,7 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   STOP_TIMER(read_time);
   p->loaded=1;
   p->display=1;
+  p->hist_update = 1;
   if(nplot3dloaded==0)UpdatePlot3DFileLoad();
   speedmax = -1.;
   meshi->udata=NULL;
@@ -351,7 +397,7 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   meshi->wdata=NULL;
   if(uindex!=-1||vindex!=-1||windex!=-1){
     vectorspresent=1;
-    p->nvars= MAXPLOT3DVARS;
+    p->nplot3dvars= MAXPLOT3DVARS;
     if(uindex!=-1)udata = meshi->qdata + ntotal*uindex;
     if(vindex!=-1)vdata = meshi->qdata + ntotal*vindex;
     if(windex!=-1)wdata = meshi->qdata + ntotal*windex;
@@ -413,21 +459,24 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
       if(setp3max_all[nn]!=SET_MAX&&setp3max_all[nn]!=CHOP_MAX)setp3max_all[nn]=SET_MAX;
     }
   }
-#ifdef pp_HIST
-  GetPlot3DHists(p);
-#endif
   AllocatePlot3DColorLabels(p);
   if(cache_plot3d_data==1){
     if(p->finalize==1){
-#ifdef pp_HIST
-      MergePlot3DHistograms();
-      SetPercentilePlot3DBounds();
+      if(update_plot3d_bnd==1){
+        update_plot3d_bnd = 0;
+#ifdef pp_BOUNDS
+        float valmin_loaded[6], valmax_loaded[6];
+
+        void BoundsUpdate(int file_type);
+        BoundsUpdate(BOUND_PLOT3D);
+        ComputeLoadedPlot3DBounds(valmin_loaded, valmax_loaded);
+        GLUISetLoadedMinMaxAll(BOUND_PLOT3D, valmin_loaded, valmax_loaded, plot3dinfo->nplot3dvars);
+#else
+        GetGlobalPlot3DBounds();
+        SetLoadedPlot3DBounds();
 #endif
+      }
       UpdateAllPlot3DColors(0);
-#ifdef pp_HIST
-#define BOUND_PERCENTILE_DRAW          120
-      Plot3DBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
-#endif
     }
   }
   else{
@@ -463,7 +512,7 @@ void ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
     UpdateSurface();
   }
 
-  UpdatePlot3dListIndex();
+  GLUIUpdatePlot3dListIndex();
   PrintMemoryInfo;
   UpdateTimes();
   UpdateUnitDefs();
@@ -533,7 +582,7 @@ void DrawPlot3dTexture(meshdata *meshi){
   plotz = meshi->iplotz_all[iplotz_all];
   qdata = meshi->qdata;
 
-  GetMinMaxAll(BOUND_PLOT3D, setp3min_all, p3min_all, setp3max_all, p3max_all, &num);
+  GLUIGetMinMaxAll(BOUND_PLOT3D, setp3min_all, p3min_all, setp3max_all, p3max_all, &num);
   float ttmin, ttmax;
 
   ttmin = p3min_all[plotn-1];
@@ -560,8 +609,8 @@ void DrawPlot3dTexture(meshdata *meshi){
   nxy = nx*ny;
   nxyz = nx*ny*nz;
 
-  currentsurfptr=&meshi->currentsurf;
-  currentsurf2ptr=&meshi->currentsurf2;
+  currentsurfptr=meshi->currentsurf;
+  currentsurf2ptr=meshi->currentsurf2;
   dx_xy=meshi->dx_xy;
   dx_xz=meshi->dx_xz;
   dx_yz=meshi->dx_yz;
@@ -951,6 +1000,7 @@ void DrawPlot3dFrame(void){
     meshdata *meshi;
 
     meshi=meshinfo+i;
+    if(meshi->use == 0)continue;
     if(meshi->plot3dfilenum==-1)continue;
     if(plot3dinfo[meshi->plot3dfilenum].display==0)continue;
     DrawPlot3dTexture(meshi);
@@ -986,8 +1036,8 @@ void UpdateSurface(void){
     zplt=meshi->zplt;
     iblank_cell=meshi->c_iblank_cell;
 
-    currentsurfptr = &meshi->currentsurf;
-    currentsurf2ptr = &meshi->currentsurf2;
+    currentsurfptr = meshi->currentsurf;
+    currentsurf2ptr = meshi->currentsurf2;
     qdata=meshi->qdata;
     if(plotiso[plotn-1]<0){
       plotiso[plotn-1]=nrgb-3;
@@ -1234,9 +1284,9 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
   dz_xz = meshi->dz_xz;
   dz_yz = meshi->dz_yz;
 
-  plot3dcontour1ptr = &meshi->plot3dcontour1;
-  plot3dcontour2ptr = &meshi->plot3dcontour2;
-  plot3dcontour3ptr = &meshi->plot3dcontour3;
+  plot3dcontour1ptr = meshi->plot3dcontour1;
+  plot3dcontour2ptr = meshi->plot3dcontour2;
+  plot3dcontour3ptr = meshi->plot3dcontour3;
   nx = ibar + 1;
   ny = jbar + 1;
   nz = kbar + 1;

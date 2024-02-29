@@ -142,12 +142,23 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
   FSEEK(*isostreamptr,beg,SEEK_SET);
 }
 
+/* ------------------ UpdateTrianglesAll ------------------------ */
+
+void *UpdateTrianglesAll(void *arg){
+  UpdateTriangles(GEOM_DYNAMIC, GEOM_UPDATE_ALL);
+  THREAD_EXIT(triangles_threads);
+}
+
 /* ------------------ ReadIsoGeomWrapup ------------------------ */
 
 void ReadIsoGeomWrapup(int flag){
   update_readiso_geom_wrapup = UPDATE_ISO_OFF;
-  UpdateTrianglesMT();
-  if(flag == FOREGROUND)FinishUpdateTriangles();
+
+  if(triangles_threads == NULL){
+    triangles_threads = THREADinit(&n_triangles_threads, &use_triangles_threads, UpdateTrianglesAll);
+  }
+  THREADrun(triangles_threads, NULL);
+  if(flag == FOREGROUND)THREADcontrol(triangles_threads, THREAD_JOIN);
   UpdateTimes();
   GetFaceInfo();
   ForceIdle();
@@ -321,9 +332,8 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
   surfdata *surfi;
   FILE_SIZE return_filesize=0;
 
-  if(load_flag==LOAD&&setup_isosurfaces == 0){
-    SetupAllIsosurfaces();
-    setup_isosurfaces = 1;
+  if(load_flag==LOAD){
+    THREADcontrol(isosurface_threads, THREAD_JOIN);
   }
   if(load_flag==UNLOAD){
     CancelUpdateTriangles();
@@ -387,10 +397,16 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     *errorcode=1;
     return 0;
   }
+  if(NewMemoryMemID((void **)&meshi->iso_times_map, meshi->niso_times, isoi->memory_id) == 0){
+    ReadIso("", ifile, UNLOAD, geom_frame_index, &error);
+    *errorcode = 1;
+    return 0;
+  }
   for(i=0;i<geomi->ntimes;i++){
     meshi->iso_times[i]=geomi->times[i];
+    meshi->iso_times_map[i] = 1;
   }
-
+  isoi->have_restart = MakeTimesMap(meshi->iso_times, meshi->iso_times_map, geomi->ntimes);
   meshi->nisolevels=geomi->nfloat_vals;
   if(
     NewMemoryMemID((void **)&meshi->showlevels, sizeof(int)*meshi->nisolevels, isoi->memory_id) == 0 ||
@@ -418,19 +434,13 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
 
   if(isoi->dataflag==1){
     GetIsoDataBounds(isoi, &iso_valmin, &iso_valmax);
-    isoi->geom_globalmin = iso_valmin;
-    isoi->geom_globalmax = iso_valmax;
-    if(setisomin == GLOBAL_MIN)iso_valmin = isoi->geom_globalmin;
-    if(setisomax == GLOBAL_MAX)iso_valmax = isoi->geom_globalmax;
-#ifdef pp_HIST
-    isoi->geom_percentilemin = iso_valmin;
-    isoi->geom_percentilemax = iso_valmax;
-    iso_percentile_min = isoi->geom_percentilemin;
-    iso_percentile_max = isoi->geom_percentilemax;
-#endif
-    iso_global_min = isoi->geom_globalmin;
-    iso_global_max = isoi->geom_globalmax;
-    UpdateGluiIsoBounds();
+    isoi->globalmin_iso = iso_valmin;
+    isoi->globalmax_iso = iso_valmax;
+    if(setisomin == GLOBAL_MIN)iso_valmin = isoi->globalmin_iso;
+    if(setisomax == GLOBAL_MAX)iso_valmax = isoi->globalmax_iso;
+    iso_global_min = isoi->globalmin_iso;
+    iso_global_max = isoi->globalmax_iso;
+    GLUIUpdateIsoBounds();
   }
   PrintMemoryInfo;
   show_isofiles = 1;
@@ -453,7 +463,7 @@ int GetIsoTType(const isodata *isoi){
     isoi2 = isoinfo + j;
 
     if(isoi2->dataflag == 0)continue;
-    if(isoi2->firstshort == 0)continue;
+    if(isoi2->firstshort_iso == 0)continue;
     if(strcmp(isoi->color_label.longlabel, isoi2->color_label.longlabel) == 0)return jj;
     jj++;
   }
@@ -577,9 +587,8 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
   isodata *ib;
 
   START_TIMER(total_time);
-  if(flag==LOAD&&setup_isosurfaces == 0){
-    SetupAllIsosurfaces();
-    setup_isosurfaces = 1;
+  if(flag==LOAD){
+    THREADcontrol(isosurface_threads, THREAD_JOIN);
   }
   assert(ifile>=0&&ifile<nisoinfo);
   ib = isoinfo+ifile;

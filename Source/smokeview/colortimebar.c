@@ -16,7 +16,7 @@ void UpdateTimeLabels(void){
 
   time0 = timeoffset;
   if(global_times!=NULL)time0 = timeoffset+global_times[itimes];
-  if(current_script_command!=NULL&&current_script_command->command==SCRIPT_LOADSLICERENDER){
+  if(current_script_command!=NULL&&IS_LOADRENDER){
     time0 = current_script_command->fval4;
   }
 
@@ -42,7 +42,7 @@ void UpdateTimeLabels(void){
     float dt;
     char timeval[30], *timevalptr;
 
-    if(current_script_command!=NULL&&current_script_command->command==SCRIPT_LOADSLICERENDER){
+    if(current_script_command!=NULL&&IS_LOADRENDER){
       dt = current_script_command->fval5;
     }
     else{
@@ -63,7 +63,7 @@ void UpdateTimeLabels(void){
   {
     int itime_val;
 
-    if(current_script_command!=NULL&&current_script_command->command==SCRIPT_LOADSLICERENDER){
+    if(current_script_command!=NULL&&IS_LOADRENDER){
       itime_val = script_itime;
     }
     else{
@@ -117,7 +117,7 @@ void DrawTimebar(float xleft, float xright, float ybot, float ytop){
   glEnd();
 
   xxright = xright;
-  if(current_script_command!=NULL&&current_script_command->command==SCRIPT_LOADSLICERENDER){
+  if(current_script_command!=NULL&&IS_LOADRENDER){
     float factor, time_min, time_max, time_now;
 
     time_min = current_script_command->fval2;
@@ -608,7 +608,7 @@ void UpdateCurrentColorbar(colorbardata *cb){
       break;
     }
   }
-  if(is_fed_colorbar==1&&fed_loaded==1)SliceBoundCB(FILE_UPDATE);
+  if(is_fed_colorbar==1&&fed_loaded==1)GLUISliceBoundCB(FILE_UPDATE);
 }
 
 /* ------------------ AdjustColorBar ------------------------ */
@@ -637,11 +637,13 @@ void AdjustColorBar(colorbardata *cbi){
   total_dist = cbi->node_dist[cbi->nnodes - 1];
   nnodes = cbi->node_index[cbi->nnodes - 1];
 
-  for(i = 1;i < cbi->nnodes - 1;i++){
-    int inode;
+  if(total_dist > 0.0){
+    for(i = 1;i < cbi->nnodes - 1;i++){
+      int inode;
 
-    inode = nnodes * (cbi->node_dist[i] / total_dist);
-    cbi->node_index[i] = inode;
+      inode = nnodes * (cbi->node_dist[i] / total_dist);
+      cbi->node_index[i] = inode;
+    }
   }
   cbi->adjusted = 1;
   update_colorbar_dialog = 1;
@@ -1248,15 +1250,15 @@ void SortColorBars(void){
 
 void UpdateColorbarDialogs(void){
   SortColorBars();
-  UpdateColorbarListEdit(1, CB_DELETE);
-  UpdateColorbarListBound(1);
-  UpdateColorbarListEdit(2, CB_DELETE);
-  UpdateColorbarListEdit(3, CB_DELETE);
-  UpdateColorbarListBound(2);
-  UpdateColorbarListBound(3);
-  UpdateColorbarBound();
-  UpdateColorbarEdit();
-  ColorbarCB(COLORBAR_LIST);
+  GLUIUpdateColorbarListEdit(1, CB_DELETE);
+  GLUIUpdateColorbarListBound(1);
+  GLUIUpdateColorbarListEdit(2, CB_DELETE);
+  GLUIUpdateColorbarListEdit(3, CB_DELETE);
+  GLUIUpdateColorbarListBound(2);
+  GLUIUpdateColorbarListBound(3);
+  GLUIUpdateColorbarBound();
+  GLUIUpdateColorbarEdit();
+  GLUIColorbarCB(COLORBAR_LIST);
 }
 
 /* ------------------ AddColorbar ------------------------ */
@@ -1293,8 +1295,8 @@ int AddColorbar(int icolorbar){
   if(cbnew != NULL){
     colorbartype = cbnew - colorbarinfo;
   }
-  SetColorbarListEdit(colorbartype);
-  SetColorbarListBound(colorbartype);
+  GLUISetColorbarListEdit(colorbartype);
+  GLUISetColorbarListBound(colorbartype);
   return colorbartype;
 }
 
@@ -1378,7 +1380,7 @@ void InitDefaultColorbars(int nini){
 
   // original rainbow colorbar
 
-  strcpy(cbi->menu_label,"Rainbow_orig");
+  strcpy(cbi->menu_label, "Rainbow_orig");
   cbi->nnodes=5;
   cbi->nodehilight=0;
 
@@ -1526,25 +1528,21 @@ void InitDefaultColorbars(int nini){
   cbi->nodehilight = 0;
 
   cbi->node_index[0]  =   0;
-
   cbi->node_rgb[0]    =   0;
   cbi->node_rgb[1]    = 151;
   cbi->node_rgb[2]    = 255;
 
   cbi->node_index[1]  = 113;
-
   cbi->node_rgb[3]    = 255;
   cbi->node_rgb[4]    =   0;
   cbi->node_rgb[5]    =   0;
 
   cbi->node_index[2]  = 212;
-
   cbi->node_rgb[6]    = 255;
   cbi->node_rgb[7]    = 255;
   cbi->node_rgb[8]    =   0;
 
   cbi->node_index[3]  = 255;
-
   cbi->node_rgb[9]    = 255;
   cbi->node_rgb[10]   = 255;
   cbi->node_rgb[11]   = 255;
@@ -1954,14 +1952,6 @@ void InitDefaultColorbars(int nini){
   cbi->node_rgb[10] = 248;
   cbi->node_rgb[11] = 70;
 
-  cbi->node_rgb[7] = 180;
-  cbi->node_rgb[8] = 0;
-
-  cbi->node_index[3] = 190;
-  cbi->node_rgb[9] = 252;
-  cbi->node_rgb[10] = 248;
-  cbi->node_rgb[11] = 70;
-
   cbi->node_index[4] = 255;
   cbi->node_rgb[12] = 255;
   cbi->node_rgb[13] = 255;
@@ -2026,7 +2016,12 @@ void InitDefaultColorbars(int nini){
   for(i=0;i<ndefaultcolorbars;i++){
     cbi = colorbarinfo + i;
 
-    cbi->interp = INTERP_LAB;
+    if(cbi->can_adjust==1){
+      cbi->interp = INTERP_LAB;
+    }
+    else{
+      cbi->interp = INTERP_RGB;
+    }
     RemapColorbar(cbi);
     memcpy(cbi->node_rgb_orig, cbi->node_rgb, 3 * cbi->nnodes * sizeof(unsigned char));
   }
@@ -2041,138 +2036,6 @@ void InitDefaultColorbars(int nini){
   }
   memcpy(colorbarcopyinfo, colorbarinfo, ncolorbars * sizeof(colorbardata));
 }
-
-/* ------------------ DrawColorbarHist ------------------------ */
-#ifdef pp_HIST
-void DrawColorbarHist(void){
-  int ibucket;
-  int cbt, cbb, cbdiff;
-
-  cbdiff = vcolorbar_top_pos - vcolorbar_down_pos;
-  cbt =  vcolorbar_top_pos + cbdiff / (float)(histogram_nbuckets - 2);
-  cbb = vcolorbar_down_pos - cbdiff / (float)(histogram_nbuckets - 2);
-
-  if(histogram_show_graph == 1){
-    if(histogram_show_outline == 1){
-      glBegin(GL_LINES);
-    }
-    else{
-      glBegin(GL_TRIANGLES);
-    }
-    for(ibucket = 0; ibucket < histogram_nbuckets; ibucket++){
-      float *rgb_cb, *rgb_cb2;
-      float yy, yy2;
-      int cbl, cbr;
-      int icolor, icolor2;
-      float dcolor, val;
-      histogramdata *histi;
-
-      icolor = ibucket*(float)(nrgb_full - 1) / (float)histogram_nbuckets;
-      rgb_cb = rgb_full[icolor];
-
-      icolor2 = (ibucket + 1)*(float)(nrgb_full - 1) / (float)histogram_nbuckets;
-      rgb_cb2 = rgb_full[icolor2];
-
-      if(histogram_static == 0){
-        histi = hists256_slice + CLAMP(slice_time + 1, 1, nhists256_slice);
-      }
-      else{
-        histi = hists256_slice;
-      }
-
-      dcolor = 3.0*(vcolorbar_right_pos - vcolorbar_left_pos)/(histogram_width_factor/100.0);
-      if(histi->bucket_maxval!=0.0){
-        val = (float)histi->buckets[ibucket] / (float)histi->ntotal;
-        cbl = vcolorbar_right_pos - dcolor*val / histi->bucket_maxval;
-      }
-      else{
-        cbl = vcolorbar_right_pos;
-      }
-
-      cbr = vcolorbar_right_pos;
-
-      yy = MIX2(icolor, 255, cbt, cbb);
-      yy2 = MIX2(icolor2, 255, cbt, cbb);
-
-      //   (cbl,yy)-------(cbr,yy)
-      //      |         /    |
-      //      |     /        |
-      //      |  /           |
-      //   (cbl,yy2)------(cbr,yy2)
-
-      if(histogram_show_outline == 1){
-        glColor4fv(rgb_cb);
-        glVertex2f(cbl, yy);
-        glVertex2f(cbr, yy);
-
-        glVertex2f(cbr, yy);
-        glColor4fv(rgb_cb2);
-        glVertex2f(cbr, yy2);
-
-        glVertex2f(cbr, yy2);
-        glVertex2f(cbl, yy2);
-
-        glVertex2f(cbl, yy2);
-        glColor4fv(rgb_cb);
-        glVertex2f(cbl, yy);
-      }
-      else{
-        glColor4fv(rgb_cb);
-        glVertex2f(cbl, yy);
-        glVertex2f(cbr, yy);
-        glColor4fv(rgb_cb2);
-        glVertex2f(cbl, yy2);
-
-        glVertex2f(cbr, yy2);
-        glVertex2f(cbl, yy2);
-        glColor4fv(rgb_cb);
-        glVertex2f(cbr, yy);
-      }
-    }
-    glEnd();
-  }
-}
-
-/* ------------------ DrawColorbarHistLabels ------------------------ */
-
-void DrawColorbarHistLabels(int lefthist){
-  if(histogram_show_numbers == 1 && (showslice == 1 || (showvslice == 1 && vslicecolorbarflag == 1))){
-    char *percen = "%";
-    int i;
-
-    glPushMatrix();
-    glTranslatef(vcolorbar_left_pos - colorbar_label_width, -VP_vcolorbar.text_height / 2.0, 0.0);
-    glTranslatef(-lefthist*(colorbar_label_width + h_space), 0.0, 0.0);
-    glTranslatef(colorbar_label_width / 2.0, 0.0, 0.0);
-
-    for(i = 0; i < nrgb; i++){
-      float vert_position;
-      char string[100], *stringptr;
-      GLfloat *foreground_color;
-      histogramdata *histi;
-      float val;
-
-      foreground_color = &(foregroundcolor[0]);
-
-      if(histogram_static == 0){
-        histi = hists12_slice + CLAMP(slice_time + 1, 1, nhists256_slice);
-      }
-      else{
-        histi = hists12_slice;
-      }
-
-      val = 100.0*(float)histi->buckets[i] / (float)histi->ntotal;
-
-      sprintf(string, "%i%s", (int)(val + 0.5), percen);
-
-      stringptr = string;
-      vert_position = MIX2(MAX(i - 0.5, -0.15), nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
-      OutputBarText(0.0, vert_position, foreground_color, stringptr);
-    }
-    glPopMatrix();
-  }
-}
-#endif
 
 /* ------------------ DrawHorizontalColorbarReg ------------------------ */
 
@@ -2428,13 +2291,7 @@ void DrawHorizontalColorbars(void){
 
     // -------------- draw all other colorbars ------------
 
-#ifdef pp_HIST
-    if(hists12_slice == NULL || histogram_show_graph == 0){
-      DrawHorizontalColorbarReg();
-    }
-#else
     DrawHorizontalColorbarReg();
-#endif
   }
   if(show_extreme_mindata == 1 || show_extreme_maxdata == 1){
     float barmid;
@@ -2556,16 +2413,7 @@ void DrawVerticalColorbars(void){
     else{
 
       // -------------- draw all other colorbars ------------
-#ifdef pp_HIST
-      if(hists12_slice == NULL || histogram_show_graph == 0){
-        DrawVerticalColorbarReg();
-      }
-      if(histogram_show_graph == 1 || histogram_show_numbers == 1){
-        if(hists12_slice != NULL)DrawColorbarHist();
-      }
-#else
       DrawVerticalColorbarReg();
-#endif
     }
     if(show_extreme_mindata==1||show_extreme_maxdata==1){
       float barmid;
@@ -3211,11 +3059,7 @@ void DrawHorizontalColorbarRegLabels(void){
 void DrawVerticalColorbarRegLabels(void){
   int i;
   int ileft = 0;
-#ifdef pp_HIST
-  int leftzone, leftsmoke, leftslice, lefthist, leftpatch, leftiso;
-#else
   int leftzone, leftsmoke, leftslice, leftpatch, leftiso;
-#endif
   int lefthvacduct, lefthvacnode;
   int iposition;
 
@@ -3265,9 +3109,6 @@ void DrawVerticalColorbarRegLabels(void){
   lefthvacduct = 0;
   leftsmoke    = 0;
   leftslice    = 0;
-#ifdef pp_HIST
-  lefthist     = 0;
-#endif
   leftpatch    = 0;
   leftiso      = 0;
   ileft        = 0;
@@ -3275,12 +3116,6 @@ void DrawVerticalColorbarRegLabels(void){
   if(showsmoke == 1&&parttype != 0)leftsmoke = ileft++;
   if(show_slice_colorbar_local == 1){
     leftslice = ileft++;
-#ifdef pp_HIST
-    if(histogram_show_numbers == 1){
-      lefthist = ileft++;
-      dohist = 1;
-    }
-#endif
   }
   if(showpatch == 1 && wall_cell_color_flag == 0)leftpatch = ileft++;
   if(show_hvacnode_colorbar_local == 1)lefthvacnode = ileft++;
@@ -3311,51 +3146,6 @@ void DrawVerticalColorbarRegLabels(void){
           }
         }
       }
-    }
-
-    // -------------- draw plot3d colorbars ------------
-
-    if(showplot3d == 1 && contour_type == STEPPED_CONTOURS){
-    }
-    else{
-
-      // -------------- draw all other colorbars ------------
-
-#ifdef pp_HIST
-      if(show_fed_area == 1 && fed_slice == 1 && fed_areas != NULL){
-        char area_label[256];
-        char percen[] = "%";
-        float yy;
-        int *fed_areasi;
-
-        fed_areasi = fed_areas + 4 * CLAMP(slice_time + 1, 1, nhists256_slice);
-
-        glPushMatrix();
-        glTranslatef(
-          vcolorbar_left_pos,
-          0.0,
-          0.0);
-        sprintf(area_label, "%i%s", fed_areasi[0], percen);
-        yy = MIX2(0.15, 3.0, vcolorbar_top_pos, vcolorbar_down_pos) - VP_vcolorbar.text_height / 2;
-        OutputBarText(0.0, yy, foreground_color, area_label);
-
-        sprintf(area_label, "%i%s", fed_areasi[1], percen);
-        yy = MIX2(0.65, 3.0, vcolorbar_top_pos, vcolorbar_down_pos) - VP_vcolorbar.text_height / 2;
-        OutputBarText(0.0, yy, foreground_color, area_label);
-
-        sprintf(area_label, "%i%s", fed_areasi[2], percen);
-        yy = MIX2(2.0, 3.0, vcolorbar_top_pos, vcolorbar_down_pos) - VP_vcolorbar.text_height / 2;
-        OutputBarText(0.0, yy, foreground_color, area_label);
-
-        sprintf(area_label, "%i%s", fed_areasi[3], percen);
-        yy = MIX2(3.0, 3.0, vcolorbar_top_pos, vcolorbar_down_pos) - VP_vcolorbar.text_height / 2;
-        OutputBarText(0.0, yy + 10, foreground_color, area_label);
-        glPopMatrix();
-      }
-      if(histogram_show_graph == 1 || histogram_show_numbers == 1){
-        if(hists12_slice != NULL)DrawColorbarHistLabels(lefthist);
-      }
-#endif
     }
   }
 
@@ -4108,7 +3898,7 @@ void DrawVerticalColorbarRegLabels(void){
       for(i = 0; i < nrgb - 2; i++){
         float val;
 
-        val = tttmin + (i - 1)*plot3drange / (nrgb - 2);
+        val = tttmin + (float)(i +0.5)*plot3drange / (nrgb - 2);
         colorbar_vals[i] = val;
       }
       Floats2Strings(colorbar_labels, colorbar_vals, nrgb-2, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
