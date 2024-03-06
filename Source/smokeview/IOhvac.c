@@ -345,62 +345,6 @@ void DrawHVACFilter(hvacductdata *ducti, float *xyz, float size){
   glPopMatrix();
 }
 
-/* ------------------ GetHVACDuctID ------------------------ */
-
-hvacductdata *GetHVACDuctID(char *duct_name){
-  int i;
-
-  for(i = 0;i < hvaccoll.nhvacductinfo;i++){
-    hvacductdata *ducti;
-
-    ducti = hvaccoll.hvacductinfo + i;
-    if(strcmp(ducti->duct_name, duct_name) == 0)return ducti;
-  }
-  return NULL;
-}
-
-/* ------------------ GetHVACDuctValIndex ------------------------ */
-
-int GetHVACDuctValIndex(char *shortlabel){
-  int i;
-
-  for(i = 0;i < hvaccoll.hvacductvalsinfo->n_duct_vars;i++){
-    hvacvaldata *hi;
-
-    hi = hvaccoll.hvacductvalsinfo->duct_vars + i;
-    if(strcmp(hi->label.shortlabel, shortlabel) == 0)return i;
-  }
-  return -1;
-}
-
-/* ------------------ GetHVACNodeValIndex ------------------------ */
-
-int GetHVACNodeValIndex(char *shortlabel){
-  int i;
-
-  for(i = 0;i < hvaccoll.hvacnodevalsinfo->n_node_vars;i++){
-    hvacvaldata *hi;
-
-    hi = hvaccoll.hvacnodevalsinfo->node_vars + i;
-    if(strcmp(hi->label.shortlabel, shortlabel) == 0)return i;
-  }
-  return -1;
-}
-
-/* ------------------ GetHVACNodeID ------------------------ */
-
-hvacnodedata *GetHVACNodeID(char *node_name){
-  int i;
-
-  for(i = 0;i < hvaccoll.nhvacnodeinfo;i++){
-    hvacnodedata *nodei;
-
-    nodei = hvaccoll.hvacnodeinfo + i;
-    if(strcmp(nodei->duct_name, node_name) == 0)return nodei;
-  }
-  return NULL;
-}
-
 /* ------------------ DrawHVAC ------------------------ */
 
 void DrawHVAC(hvacdata *hvaci){

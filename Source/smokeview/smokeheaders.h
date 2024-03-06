@@ -606,12 +606,8 @@ EXTERNCPP void InitVolrenderScript(char *prefix, char *tour_label, int startfram
 EXTERNCPP void UpdateGluiBoundaryUnits(void);
 EXTERNCPP void UpdateGluiSliceUnits(void);
 EXTERNCPP void HVACMenu(int value);
-EXTERNCPP int GetHVACDuctValIndex(char *shortlabel);
-EXTERNCPP int GetHVACNodeValIndex(char *shortlabel);
 EXTERNCPP void ToggleMetroMode(void);
 EXTERNCPP void UpdateClipPlanes(void);
-EXTERNCPP hvacductdata *GetHVACDuctID(char *duct_name);
-EXTERNCPP hvacnodedata *GetHVACNodeID(char *node_name);
 EXTERNCPP void HVACDuctValueMenu(int value);
 EXTERNCPP void HVACNodeValueMenu(int value);
 

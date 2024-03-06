@@ -1439,7 +1439,7 @@ void ReadSMVDynamic(char *file){
       ductname = strchr(buffer, ' ');
       if(ductname == NULL)continue;
       ductname = TrimFrontBack(ductname + 1);
-      ducti = GetHVACDuctID(ductname);
+      ducti = GetHVACDuctID(&hvaccoll, ductname);
       if(ducti == NULL)continue;
 
       act_times  = ducti->act_times;
