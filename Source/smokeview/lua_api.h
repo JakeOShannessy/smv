@@ -1,7 +1,9 @@
+#ifndef LUA_H_DEFINED
+#define LUA_H_DEFINED
 #include "lua.h"
 
 int LuaRender(lua_State *L);
-lua_State *L;
+extern lua_State *L;
 lua_State *InitLua();
 int RunLuaBranch(lua_State *L, int argc, char **argv);
 
@@ -38,4 +40,5 @@ LUALIB_API void(luaL_setfuncs)(lua_State *L, const luaL_Reg *l, int nup);
 #endif
 #if LUA_VERSION_NUM < 504
 #define LUA_OK 0
+#endif
 #endif
