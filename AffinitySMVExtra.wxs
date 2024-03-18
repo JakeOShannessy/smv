@@ -44,9 +44,15 @@
                                 <File Id='affinity' Name='affinity.lua'
                                     Source='affinity.lua'
                                     KeyPath='yes'></File>
-                                <!-- <File Id='camera' Name='camera.lua'
-                                    Source='dist/share/smokeview/scripts/camera.lua'></File> -->
                             </Component>
+                            <Directory Id='CBDIR' Name='colorbars'>
+                                <Component Id='Colorbars'
+                                    Guid='2c80829c-c939-405b-9e1f-a49332c6654d'
+                                    Win64="yes">
+                                    <File Id='AFAC' Name='AFAC.csv'
+                                        Source='AFAC.csv' KeyPath='yes'></File>
+                                </Component>
+                            </Directory>
                         </Directory>
                     </Directory>
                 </Directory>
@@ -57,6 +63,7 @@
         </InstallExecuteSequence>
         <Feature Id='SMVLuaFeature' Level='1'>
             <ComponentRef Id='CommonRender' />
+            <ComponentRef Id='Colorbars' />
         </Feature>
     </Product>
 </Wix>

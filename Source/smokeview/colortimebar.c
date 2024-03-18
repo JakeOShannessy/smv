@@ -1328,7 +1328,7 @@ void InitDefaultColorbars(int nini){
 
   ndefaultcolorbars+=nlinear_filelist + ncircular_filelist + nrainbow_filelist + ndivergent_filelist + nuser_filelist;
 
-  ndefaultcolorbars+=19;
+  ndefaultcolorbars+=20;
 
   FREEMEMORY(colorbarinfo);
   ncolorbars=ndefaultcolorbars;
@@ -1578,6 +1578,58 @@ void InitDefaultColorbars(int nini){
   cbi->can_adjust = 0;
   strcpy(cbi->colorbar_type, "divergent");
   cbi++;
+
+
+  // AFAC split
+
+  strcpy(cbi->menu_label,"AFAC split");
+  cbi->nnodes=8;
+  cbi->nodehilight=0;
+
+  cbi->node_index[0]=0;
+  cbi->node_rgb[0]=0;
+  cbi->node_rgb[1]=178;
+  cbi->node_rgb[2]=90;
+
+  cbi->node_index[1]=80;
+  cbi->node_rgb[3]=0;
+  cbi->node_rgb[4]=178;
+  cbi->node_rgb[5]=90;
+
+  cbi->node_index[2]=81;
+  cbi->node_rgb[6]=255;
+  cbi->node_rgb[7]=243;
+  cbi->node_rgb[8]=0;
+
+  cbi->node_index[3]=100;
+  cbi->node_rgb[9]= 255;
+  cbi->node_rgb[10]=243;
+  cbi->node_rgb[11]=0;
+
+  cbi->node_index[4]=101;
+  cbi->node_rgb[12]=250;
+  cbi->node_rgb[13]=150;
+  cbi->node_rgb[14]=38;
+
+  cbi->node_index[5]=140;
+  cbi->node_rgb[15]=250;
+  cbi->node_rgb[16]=150;
+  cbi->node_rgb[17]=38;
+
+  cbi->node_index[6]=141;
+  cbi->node_rgb[18]=209;
+  cbi->node_rgb[19]=34;
+  cbi->node_rgb[20]=41;
+
+  cbi->node_index[7]=255;
+  cbi->node_rgb[21]=209;
+  cbi->node_rgb[22]=34;
+  cbi->node_rgb[23]=41;
+
+  cbi->can_adjust = 0;
+  strcpy(cbi->colorbar_type, "divergent");
+  cbi++;
+
 
   // black->white
 

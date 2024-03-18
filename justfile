@@ -22,9 +22,13 @@ build-release:
     cmake --install cbuild --config Release --prefix dist
 
 # Build release and create MSI package
-package-windows: build-release
+package-windows: build-release package-affinity-windows
     candle "SMVLuaInstaller.wxs"
     light "SMVLuaInstaller.wixobj"
+
+package-affinity-windows:
+    candle "AffinitySMVExtra.wxs"
+    light "AffinitySMVExtra.wixobj"
 
 # Build release and create RPM package
 package-rpm:
