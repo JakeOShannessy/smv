@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "glui_bounds.h"
 #include "getdata.h"
 
 /* ------------------ GetIsoLevels ------------------------ */
@@ -202,6 +203,7 @@ void UnloadIso(meshdata *meshi){
   ib = isoinfo + meshi->isofilenum;
   FreeAllMemory(ib->memory_id);
   meshi->iso_times = NULL;
+  meshi->iso_times_map = NULL;
 
   UnloadIsoTrans();
 
@@ -246,11 +248,17 @@ void GetIsoDataBounds(isodata *isod, float *pmin, float *pmax){
 
   pdata = isod->geom_vals;
   ndata = isod->geom_nvals;
-  *pmin = pdata[0];
-  *pmax = pdata[0];
-  for(i = 1; i<ndata; i++) {
-    *pmin = MIN(*pmin, pdata[i]);
-    *pmax = MAX(*pmax, pdata[i]);
+  if(ndata > 0 && pdata != NULL){
+    *pmin = pdata[0];
+    *pmax = pdata[0];
+    for(i = 1; i < ndata; i++) {
+      *pmin = MIN(*pmin, pdata[i]);
+      *pmax = MAX(*pmax, pdata[i]);
+    }
+  }
+  else{
+    *pmin = 0.0;
+    *pmax = 1.0;
   }
 }
 
@@ -321,135 +329,6 @@ void OutputAllIsoBounds(void){
   }
 }
 
-/* ------------------ ReadIsoGeom ------------------------ */
-
-FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *errorcode){
-  isodata *isoi;
-  geomdata *geomi;
-  int ilevel,error;
-  meshdata *meshi;
-  int i;
-  surfdata *surfi;
-  FILE_SIZE return_filesize=0;
-
-  if(load_flag==LOAD){
-    THREADcontrol(isosurface_threads, THREAD_JOIN);
-  }
-  if(load_flag==UNLOAD){
-    CancelUpdateTriangles();
-  }
-  isoi = isoinfo + ifile;
-  meshi = meshinfo + isoi->blocknumber;
-  geomi = isoi->geominfo;
-  UnloadIso(meshi);
-  FreeAllMemory(isoi->memory_id);
-  meshi->showlevels = NULL;
-  meshi->isolevels = NULL;
-
-  return_filesize=ReadGeom(geomi,load_flag,GEOM_ISO,geom_frame_index);
-
-  if(load_flag==UNLOAD){
-    FREEMEMORY(isoi->geom_vals);
-    meshi->isofilenum = -1;
-    return 0;
-  }
-
-  if(isoi->dataflag==1){
-    int filesize;
-    int ntimes_local;
-    float *valptr;
-
-    ntimes_local = GetGeomDataSize(isoi->tfile, &isoi->geom_nvals, ALL_FRAMES, NULL, NULL, NULL, NULL, NULL, &error);
-    if(isoi->geom_nvals>0&&ntimes_local>0){
-      NewMemoryMemID((void **)&isoi->geom_nstatics,  ntimes_local*sizeof(int),       isoi->memory_id);
-      NewMemoryMemID((void **)&isoi->geom_ndynamics, ntimes_local*sizeof(int),       isoi->memory_id);
-      NewMemoryMemID((void **)&isoi->geom_times,     ntimes_local*sizeof(float),     isoi->memory_id);
-      NewMemoryMemID((void **)&isoi->geom_vals,      isoi->geom_nvals*sizeof(float), isoi->memory_id);
-    }
-
-    filesize = GetGeomData(isoi->tfile, ntimes_local, isoi->geom_nvals, isoi->geom_times,
-                           isoi->geom_nstatics, isoi->geom_ndynamics, isoi->geom_vals,
-                           ALL_FRAMES, NULL, NULL, &error);
-    return_filesize += filesize;
-    FREEMEMORY(isoi->geom_nstatics);
-    FREEMEMORY(isoi->geom_times);
-    valptr = isoi->geom_vals;
-    for(i = 0; i<ntimes_local; i++){
-      geomlistdata *geomlisti;
-
-      geomlisti = geomi->geomlistinfo+i;
-      geomlisti->vertvals = valptr;
-      valptr += isoi->geom_ndynamics[i];
-    }
-    FREEMEMORY(isoi->geom_ndynamics);
-  }
-
-  surfi = surfinfo + nsurfinfo+1;
-  UpdateIsoColors();
-  if(strcmp(isoi->surface_label.shortlabel,"hrrpuv")==0){
-    surfi->color=GetColorPtr(hrrpuv_iso_color);
-  }
-
-  meshi->isofilenum=ifile;
-  meshi->niso_times=geomi->ntimes;
-  if(NewMemoryMemID((void **)&meshi->iso_times, sizeof(float)*meshi->niso_times, isoi->memory_id) == 0){
-    ReadIso("",ifile,UNLOAD,geom_frame_index,&error);
-    *errorcode=1;
-    return 0;
-  }
-  if(NewMemoryMemID((void **)&meshi->iso_times_map, meshi->niso_times, isoi->memory_id) == 0){
-    ReadIso("", ifile, UNLOAD, geom_frame_index, &error);
-    *errorcode = 1;
-    return 0;
-  }
-  for(i=0;i<geomi->ntimes;i++){
-    meshi->iso_times[i]=geomi->times[i];
-    meshi->iso_times_map[i] = 1;
-  }
-  isoi->have_restart = MakeTimesMap(meshi->iso_times, meshi->iso_times_map, geomi->ntimes);
-  meshi->nisolevels=geomi->nfloat_vals;
-  if(
-    NewMemoryMemID((void **)&meshi->showlevels, sizeof(int)*meshi->nisolevels, isoi->memory_id) == 0 ||
-    NewMemoryMemID((void **)&meshi->isolevels, sizeof(int)*meshi->nisolevels, isoi->memory_id) == 0
-    ){
-    *errorcode=1;
-    ReadIso("",ifile,UNLOAD,geom_frame_index,&error);
-    return 0;
-  }
-  for(ilevel=0;ilevel<meshi->nisolevels;ilevel++){
-    meshi->showlevels[ilevel]=1;
-    meshi->isolevels[ilevel]=geomi->float_vals[ilevel];
-  }
-  isoi->loaded=1;
-  isoi->display=1;
-  loaded_isomesh= GetLoadedIsoMesh();
-  UpdateIsoShowLevels();
-  ReadIsoFile=1;
-  plotstate=GetPlotState(DYNAMIC_PLOTS);
-  updatemenu=1;
-  iisotype=GetIsoType(isoi);
-
-  if(update_readiso_geom_wrapup==UPDATE_ISO_OFF)update_readiso_geom_wrapup=UPDATE_ISO_ONE_NOW;
-  if(update_readiso_geom_wrapup==UPDATE_ISO_START_ALL)update_readiso_geom_wrapup=UPDATE_ISO_ALL_NOW;
-
-  if(isoi->dataflag==1){
-    GetIsoDataBounds(isoi, &iso_valmin, &iso_valmax);
-    isoi->globalmin_iso = iso_valmin;
-    isoi->globalmax_iso = iso_valmax;
-    if(setisomin == GLOBAL_MIN)iso_valmin = isoi->globalmin_iso;
-    if(setisomax == GLOBAL_MAX)iso_valmax = isoi->globalmax_iso;
-    iso_global_min = isoi->globalmin_iso;
-    iso_global_max = isoi->globalmax_iso;
-    GLUIUpdateIsoBounds();
-  }
-  PrintMemoryInfo;
-  show_isofiles = 1;
-
-  GLUTPOSTREDISPLAY;
-  CheckMemory;
-  return return_filesize;
-}
-
 /* ------------------ GetIsoTType ------------------------ */
 
 int GetIsoTType(const isodata *isoi){
@@ -484,8 +363,7 @@ void SyncIsoBounds(){
     isodata *isoi;
 
     isoi = isoinfo + i;
-    if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
-    if(iisottype != GetIsoTType(isoi))continue;
+    if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
     ncount++;
   }
   if(ncount <= 1)return;
@@ -496,8 +374,7 @@ void SyncIsoBounds(){
     isodata *isoi;
 
     isoi = isoinfo + i;
-    if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
-    if(iisottype != GetIsoTType(isoi))continue;
+    if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
     if(firsttime == 1){
       firsttime = 0;
       tmin_local = isoi->tmin;
@@ -515,8 +392,7 @@ void SyncIsoBounds(){
     isodata *isoi;
 
     isoi = isoinfo + i;
-    if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
-    if(iisottype != GetIsoTType(isoi))continue;
+    if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
     isoi->tmin = tmin_local;
     isoi->tmax = tmax_local;
   }
@@ -560,6 +436,163 @@ void SyncIsoBounds(){
       }
     }
   }
+}
+
+/* ------------------ ReadIsoGeom ------------------------ */
+
+FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *errorcode){
+  isodata *isoi;
+  geomdata *geomi;
+  int ilevel,error;
+  meshdata *meshi;
+  int i;
+  surfdata *surfi;
+  FILE_SIZE return_filesize=0;
+
+  if(load_flag==LOAD){
+    THREADcontrol(isosurface_threads, THREAD_JOIN);
+  }
+  if(load_flag==UNLOAD){
+    CancelUpdateTriangles();
+  }
+  isoi = isoinfo + ifile;
+  meshi = meshinfo + isoi->blocknumber;
+  geomi = isoi->geominfo;
+  UnloadIso(meshi);
+  FreeAllMemory(isoi->memory_id);
+  meshi->showlevels = NULL;
+  meshi->isolevels = NULL;
+
+  return_filesize=ReadGeom(geomi,load_flag,GEOM_ISO,geom_frame_index);
+
+  if(load_flag==UNLOAD){
+    meshi->isofilenum = -1;
+    return 0;
+  }
+
+  if(isoi->dataflag==1){
+    int filesize;
+    int ntimes_local;
+    float *valptr;
+
+    ntimes_local = GetGeomDataSize(isoi->tfile, &isoi->geom_nvals, ALL_FRAMES, NULL, NULL, NULL, NULL, NULL, &error);
+    if(isoi->geom_nvals>0&&ntimes_local>0){
+      NewMemoryMemID((void **)&isoi->geom_nstatics,  ntimes_local*sizeof(int),       isoi->memory_id);
+      NewMemoryMemID((void **)&isoi->geom_ndynamics, ntimes_local*sizeof(int),       isoi->memory_id);
+      NewMemoryMemID((void **)&isoi->geom_times,     ntimes_local*sizeof(float),     isoi->memory_id);
+      NewMemoryMemID((void **)&isoi->geom_times_map, ntimes_local*sizeof(unsigned char), isoi->memory_id);
+      NewMemoryMemID((void **)&isoi->geom_vals,      isoi->geom_nvals*sizeof(float), isoi->memory_id);
+    }
+
+    filesize = GetGeomData(isoi->tfile, ntimes_local, isoi->geom_nvals, isoi->geom_times,
+                           isoi->geom_nstatics, isoi->geom_ndynamics, isoi->geom_vals,
+                           ALL_FRAMES, NULL, NULL, &error);
+    return_filesize += filesize;
+    FREEMEMORY(isoi->geom_nstatics);
+    FREEMEMORY(isoi->geom_times);
+    FREEMEMORY(isoi->geom_times_map);
+    valptr = isoi->geom_vals;
+    for(i = 0; i<ntimes_local; i++){
+      geomlistdata *geomlisti;
+
+      geomlisti = geomi->geomlistinfo+i;
+      geomlisti->vertvals = valptr;
+      valptr += isoi->geom_ndynamics[i];
+    }
+    FREEMEMORY(isoi->geom_ndynamics);
+  }
+
+  surfi = surfinfo + nsurfinfo+1;
+  UpdateIsoColors();
+  if(strcmp(isoi->surface_label.shortlabel,"hrrpuv")==0){
+    surfi->color=GetColorPtr(hrrpuv_iso_color);
+  }
+
+  meshi->isofilenum=ifile;
+  meshi->niso_times=geomi->ntimes;
+  if(NewMemoryMemID((void **)&meshi->iso_times, sizeof(float)*meshi->niso_times, isoi->memory_id) == 0){
+    ReadIso("",ifile,UNLOAD,geom_frame_index,&error);
+    *errorcode=1;
+    return 0;
+  }
+  if(NewMemoryMemID((void **)&meshi->iso_times_map, meshi->niso_times, isoi->memory_id) == 0){
+    ReadIso("", ifile, UNLOAD, geom_frame_index, &error);
+    *errorcode = 1;
+    return 0;
+  }
+  for(i=0;i<geomi->ntimes;i++){
+    meshi->iso_times[i]=geomi->times[i];
+    meshi->iso_times_map[i] = 1;
+  }
+  MakeTimesMap(meshi->iso_times, meshi->iso_times_map, geomi->ntimes);
+  meshi->nisolevels=geomi->nfloat_vals;
+  if(
+    NewMemoryMemID((void **)&meshi->showlevels, sizeof(int)*meshi->nisolevels, isoi->memory_id) == 0 ||
+    NewMemoryMemID((void **)&meshi->isolevels, sizeof(int)*meshi->nisolevels, isoi->memory_id) == 0
+    ){
+    *errorcode=1;
+    ReadIso("",ifile,UNLOAD,geom_frame_index,&error);
+    return 0;
+  }
+  for(ilevel=0;ilevel<meshi->nisolevels;ilevel++){
+    meshi->showlevels[ilevel]=1;
+    meshi->isolevels[ilevel]=geomi->float_vals[ilevel];
+  }
+  isoi->loaded=1;
+  isoi->display=1;
+  loaded_isomesh= GetLoadedIsoMesh();
+  UpdateIsoShowLevels();
+  ReadIsoFile=1;
+  plotstate=GetPlotState(DYNAMIC_PLOTS);
+  updatemenu=1;
+  iisotype=GetIsoType(isoi);
+
+  if(update_readiso_geom_wrapup==UPDATE_ISO_OFF)update_readiso_geom_wrapup=UPDATE_ISO_ONE_NOW;
+  if(update_readiso_geom_wrapup==UPDATE_ISO_START_ALL)update_readiso_geom_wrapup=UPDATE_ISO_ALL_NOW;
+
+  if(isoi->dataflag==1){
+    GetIsoDataBounds(isoi, &iso_valmin, &iso_valmax);
+    isoi->globalmin_iso = iso_valmin;
+    isoi->globalmax_iso = iso_valmax;
+    if(isoi->finalize == 1){
+      iso_global_min = 1.0;
+      iso_global_max = 0.0;
+      for(i = 0;i < nisoinfo;i++){
+        isodata *isoj;
+
+        isoj = isoinfo + i;
+        if(isoj->loaded == 0)continue;
+        if(iso_global_min > iso_valmax){
+          iso_global_min = isoj->globalmin_iso;
+          iso_global_max = isoj->globalmax_iso;
+        }
+        else{
+          iso_global_min = MIN(iso_global_min, isoj->globalmin_iso);
+          iso_global_max = MAX(iso_global_max, isoj->globalmax_iso);
+        }
+      }
+      for(i = 0;i < nisoinfo;i++){
+        isodata *isoj;
+
+        isoj = isoinfo + i;
+        if(isoj->loaded == 0)continue;
+        isoj->globalmin_iso = iso_global_min;
+        isoj->globalmax_iso = iso_global_max;
+      }
+      iisottype = GetIsoTType(isoi);
+   //   SyncIsoBounds();
+      SetIsoLabels(isoi->tmin, isoi->tmax, isoi, errorcode);
+      GLUIUpdateIsoBounds();
+      GLUIIsoBoundCB(ISO_VALMIN);
+      GLUIIsoBoundCB(ISO_VALMAX);
+    }
+  }
+  PrintMemoryInfo;
+  show_isofiles = 1;
+
+  GLUTPOSTREDISPLAY;
+  CheckMemory;
+  return return_filesize;
 }
 
 /* ------------------ ReadIsoOrig ------------------------ */
@@ -971,8 +1004,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
     UnloadIso(meshi);
     ReadIso("",ifile,UNLOAD,NULL,&error);
     return;
-    }
-
+  }
 
   ib->loaded=1;
   ib->display=1;
@@ -986,7 +1018,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
   CheckMemory;
   if(ib->dataflag==1){
     iisottype = GetIsoTType(ib);
-    SyncIsoBounds();
+   // SyncIsoBounds();
     SetIsoLabels(ib->tmin, ib->tmax, ib, errorcode);
     CheckMemory;
   }
@@ -1645,7 +1677,6 @@ void SetIsoLabels(float smin, float smax,
   isotype= GetIsoTType(sd);
   sb = isobounds + isotype;
   sb->label=&(sd->color_label);
-
 
   *errorcode=0;
   PRINTF("setting up iso labels \n");

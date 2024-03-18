@@ -65,7 +65,7 @@ EXTERNCPP void GLUIUpdatePartFast(void);
 EXTERNCPP void GLUIUpdateColorbarControls2(void);
 EXTERNCPP void GLUISetColorbarDigits(void);
 EXTERNCPP void GLUIIncrementPartPropIndex(void);
-EXTERNCPP void GLUIUpdateIsoBounds(void);
+EXTERNCPP void GLUIUpdateIsoBounds();
 EXTERNCPP void GLUIUpdateListIsoColorobar(void);
 EXTERNCPP void GLUIUpdateUseLighting(void);
 EXTERNCPP void GLUIImmersedBoundCB(int var);
@@ -336,6 +336,10 @@ EXTERNCPP int IsColorbarSplit(colorbardata *cbi);
 EXTERNCPP void UpdateHVACNodeColorLabels(int index);
 EXTERNCPP void UpdateAllHVACColorLabels(void);
 
+#ifdef pp_SLICE_MENU_DEBUG
+EXTERNCPP void PrintSliceInfo(void);
+#endif
+
 #ifdef pp_REFRESH
 EXTERNCPP void PeriodicRefresh(int var);
 #endif
@@ -445,6 +449,8 @@ EXTERNCPP void GetLoadedPlot3dBounds(int *compute_loaded, float *loaded_min, flo
 EXTERNCPP void GetGlobalPlot3DBounds(void);
 EXTERNCPP void GetGlobalSliceBounds(int flag, int set_flag);
 EXTERNCPP int IsFDSRunning(FILE_SIZE *last_size);
+EXTERNCPP int BuildGbndFile(int file_type);
+
 EXTERNCPP void GetGlobalSliceBoundsReduced(void);
 EXTERNCPP void GetGlobalHVACDuctBounds(int flag);
 EXTERNCPP void GetGlobalHVACNodeBounds(int flag);
@@ -1203,7 +1209,7 @@ EXTERNCPP void GetSliceColors(const float *t, int nt, unsigned char *it,
               char colorlabels[12][11],float colorvalues[12], float *tlevels2,
               int *extreme_min, int *extreme_max, int flag
               );
-EXTERNCPP int MakeTimesMap(float *times, unsigned char *times_map, int n);
+EXTERNCPP void MakeTimesMap(float *times, unsigned char *times_map, int n);
 EXTERNCPP meshdata *GetLoadedIsoMesh(void);
 EXTERNCPP void SetIsoLabels(float smin, float smax,
                     isodata *sd, int *errorcode);

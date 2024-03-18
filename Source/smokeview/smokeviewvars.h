@@ -22,6 +22,8 @@
 #include "glutbitmap.h"
 #endif
 
+#include GLUT_H
+
 //*** threader variables
 
 //***isosurface
@@ -411,6 +413,7 @@ SVEXTERN float SVDECL(iso_global_min,0.0), SVDECL(iso_global_max,1.0);
 SVEXTERN int SVDECL(iso_colorbar_index, 0);
 SVEXTERN colorbardata SVDECL(*iso_colorbar, NULL);
 SVEXTERN int SVDECL(show_iso_color, 1);
+SVEXTERN int SVDECL(update_iso_ini, 0);
 
 SVEXTERN int SVDECL(script_defer_loading, 0);
 
@@ -759,11 +762,7 @@ SVEXTERN int SVDECL(tour_drag,0);
 SVEXTERN int SVDECL(update_gslice,0);
 SVEXTERN int SVDECL(wall_cell_color_flag,0);
 SVEXTERN circdata cvent_circ, object_circ, windrose_circ;
-#ifdef pp_BETA
-SVEXTERN int SVDECL(show_all_units,1);
-#else
 SVEXTERN int SVDECL(show_all_units,0);
-#endif
 SVEXTERN int SVDECL(circle_outline,0);
 SVEXTERN unsigned char SVDECL(*patchmin_unit,NULL),SVDECL(*patchmax_unit,NULL);
 SVEXTERN unsigned char SVDECL(*glui_slicemin_unit,NULL),SVDECL(*glui_slicemax_unit,NULL);
@@ -969,6 +968,7 @@ SVEXTERN int npropinfo;
 SVEXTERN propdata SVDECL(*propinfo,NULL);
 SVEXTERN float SVDECL(right_green,0.0), SVDECL(right_blue,1.0);
 
+SVEXTERN int SVDECL(saved_colorbar, -1);
 SVEXTERN int SVDECL(levelset_colorbar,-1), SVDECL(wallthickness_colorbar,-1);
 SVEXTERN colorbardata SVDECL(*fire_colorbar,NULL);
 SVEXTERN float SVDECL(glui_time,0.0);
@@ -1243,7 +1243,9 @@ SVEXTERN float rgb_part[4*MAXRGB];
 SVEXTERN float rgb_trans[4*MAXRGB];
 SVEXTERN float rgb_cad[MAXRGB][4];
 
-SVEXTERN float SVDECL(iso_transparency,30.5/255.0), SVDECL(*iso_colors,NULL), SVDECL(*iso_colorsbw,NULL);
+//keep comment until changes are merged
+//SVEXTERN float SVDECL(iso_transparency,30.5/255.0), SVDECL(*iso_colors,NULL), SVDECL(*iso_colorsbw,NULL);
+SVEXTERN float SVDECL(iso_transparency, 0.1196078), SVDECL(*iso_colors,NULL), SVDECL(*iso_colorsbw,NULL);
 SVEXTERN int glui_iso_colors[4], SVDECL(glui_iso_level,1), glui_iso_transparency;
 
 SVEXTERN float SVDECL(*rgb_ini,NULL);
@@ -1350,8 +1352,15 @@ SVEXTERN int SVDECL(nrooms,0),SVDECL(nzoneinfo,0), SVDECL(nfires,0);
 SVEXTERN float SVDECL(scene_aspect_ratio,1.0);
 
 SVEXTERN int SVDECL(fix_window_aspect, 0);
-SVEXTERN float SVDECL(window_aspect,640.0/480.0);
+//keep comment until changes are merged
+//SVEXTERN float SVDECL(window_aspect,640.0/480.0);
+SVEXTERN float SVDECL(window_aspect,1.333333);
 SVEXTERN int SVDECL(screenWidth,640), SVDECL(screenHeight,480);
+SVEXTERN int SVDECL(screenX0, 0), SVDECL(screenY0, 0);
+SVEXTERN int SVDECL(dialogX0, 0), SVDECL(dialogY0, 0);
+SVEXTERN int SVDECL(have_dialogX0, 0), SVDECL(have_dialogY0, 0);
+SVEXTERN int SVDECL(use_commandline_origin, 0);
+SVEXTERN char SVDECL(*smv_screenini, NULL);
 SVEXTERN int screenWidth_save, screenHeight_save;
 SVEXTERN int SVDECL(screenWidthINI,640), SVDECL(screenHeightINI,480);
 SVEXTERN int SVDECL(glui_screenWidth,640), SVDECL(glui_screenHeight,480);
@@ -1406,7 +1415,7 @@ SVEXTERN int SVDECL(rotation_type,ROTATION_2AXIS),SVDECL(eyeview_level,1);
 SVEXTERN int SVDECL(rotation_type_old,ROTATION_2AXIS),SVDECL(eyeview_SAVE,0),SVDECL(eyeview_last,0);
 SVEXTERN int SVDECL(frameratevalue,1000);
 SVEXTERN int SVDECL(setpartmin,PERCENTILE_MIN),   SVDECL(setpartmax,PERCENTILE_MAX);
-SVEXTERN int SVDECL(setisomin, PERCENTILE_MIN),   SVDECL(setisomax, PERCENTILE_MAX);
+SVEXTERN int SVDECL(setisomin, GLOBAL_MIN),   SVDECL(setisomax, GLOBAL_MAX);
 SVEXTERN int SVDECL(glui_setslicemin,GLOBAL_MIN), SVDECL(glui_setslicemax,GLOBAL_MAX);
 
 SVEXTERN float slice_line_contour_min;
@@ -1466,7 +1475,9 @@ SVEXTERN float shooter_uvw[3];
 #endif
 SVEXTERN float shooter_velx, shooter_vely, shooter_velz, shooter_time, shooter_time_max;
 SVEXTERN int SVDECL(shooter_cont_update,0),SVDECL(shooter_firstframe,0);
-SVEXTERN float SVDECL(shooter_u0,2.0), SVDECL(shooter_z0,1.0), SVDECL(shooter_p,1.0/7.0), SVDECL(shooter_v_inf,1.0);
+//keep comment until changes are merged
+//SVEXTERN float SVDECL(shooter_u0,2.0), SVDECL(shooter_z0,1.0), SVDECL(shooter_p,1.0/7.0), SVDECL(shooter_v_inf,1.0);
+SVEXTERN float SVDECL(shooter_u0,2.0), SVDECL(shooter_z0,1.0), SVDECL(shooter_p, 0.1428571), SVDECL(shooter_v_inf,1.0);
 SVEXTERN float shooter_velmag, shooter_veldir, shooter_duration, SVDECL(shooter_history,10.0);
 SVEXTERN int SVDECL(shooter_active,0);
 SVEXTERN int shooter_fps,shooter_vel_type, shooter_nparts, SVDECL(visShooter,0), showshooter, nshooter_frames, max_shooter_points;
@@ -1499,6 +1510,9 @@ SVEXTERN int SVDECL(sliceload_boundtype, 0);
 SVEXTERN int SVDECL(sliceload_filetype, 0);
 SVEXTERN int SVDECL(sliceload_dir,0);
 SVEXTERN int SVDECL(sliceload_isvector, 0);
+#ifdef pp_SLICE_MENU_DEBUG
+SVEXTERN int SVDECL(update_printsliceinfo, 1);
+#endif
 
 SVEXTERN int SVDECL(nsliceinfo,0),           SVDECL(nvsliceinfo,0);
 SVEXTERN int SVDECL(nmultisliceinfo,0),      SVDECL(nmultivsliceinfo,0);

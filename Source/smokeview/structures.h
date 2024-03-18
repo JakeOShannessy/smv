@@ -620,6 +620,7 @@ typedef struct _isodata {
   short *normaltable;
   int memory_id;
   int fds_skip;
+  int finalize;
   float fds_delta;
   int nnormaltable;
   char *file,*tfile;
@@ -639,7 +640,7 @@ typedef struct _isodata {
   int *geom_nstatics, *geom_ndynamics;
   float *geom_times, *geom_vals;
   unsigned char *times_map;
-  int have_restart;
+  unsigned char *geom_times_map;
   float globalmin_iso, globalmax_iso;
   int geom_nvals;
 } isodata;
@@ -710,6 +711,7 @@ typedef struct _meshdata {
   float mesh_offset[3], *mesh_offset_ptr;
   int blockvis;
   float *xplt, *yplt, *zplt;
+  double *xpltd, *ypltd, *zpltd;
   int ivolbar, jvolbar, kvolbar;
   float *xvolplt, *yvolplt, *zvolplt;
   float *xplt_cen, *yplt_cen, *zplt_cen;
@@ -1251,7 +1253,6 @@ typedef struct _partdata {
 
   float zoffset, *times;
   unsigned char *times_map;
-  int have_restart;
   FILE_SIZE reg_file_size, file_size;
   LINT *filepos;
 
@@ -1423,7 +1424,6 @@ typedef struct _slicedata {
   flowlabels label;
   float *qslicedata, *qsliceframe, *times, *qslice;
   unsigned char *times_map;
-  int have_restart;
   unsigned char *qslicedata_compressed;
   unsigned char *slicecomplevel;
   unsigned char full_mesh;
@@ -1526,10 +1526,17 @@ typedef struct _cpp_boundsdata {
 typedef struct _boundsdata {
   char *shortlabel;
   int dlg_setvalmin, dlg_setvalmax;
+
+  int ini_defined;
+  int ini_setvalmin, ini_setvalmax;
+  float ini_valmin, ini_valmax;
+  float edit_valmin, edit_valmax;
+  int edit_valmin_defined, edit_valmax_defined;
+
   int setchopmin, setchopmax;
   float chopmin, chopmax;
   float dlg_valmin, dlg_valmax;
-  float data_valmin,data_valmax;
+  float data_valmin, data_valmax;
   float dlg_global_valmin, dlg_global_valmax;
   float line_contour_min;
   float line_contour_max;
@@ -1610,7 +1617,6 @@ typedef struct _smoke3ddata {
   char menulabel[128];
   float *times;
   unsigned char *times_map;
-  int have_restart;
   int *use_smokeframe;
   int *smokeframe_loaded;
   float extinct, valmin, valmax;
@@ -1688,7 +1694,6 @@ typedef struct _patchdata {
   float *geom_times, *geom_vals;
   int *geom_timeslist,geom_itime;
   unsigned char *geom_times_map;
-  int have_restart;
   unsigned char *geom_ivals;
   int *geom_ivals_static_offset, *geom_ivals_dynamic_offset;
   int *geom_vals_static_offset,  *geom_vals_dynamic_offset;

@@ -144,6 +144,7 @@ GLUI_Rollout *ROLLOUT_light2 = NULL;
 
 GLUI_Panel *PANEL_boundingbox = NULL;
 GLUI_Panel *PANEL_titles=NULL;
+GLUI_Panel *PANEL_screen = NULL;
 GLUI_Panel *PANEL_light=NULL;
 GLUI_Panel *PANEL_position0=NULL;
 GLUI_Panel *PANEL_position1 = NULL;
@@ -242,7 +243,6 @@ GLUI_Button *BUTTON_label_4=NULL;
 #define LABELS_REFRESH_RATE   37
 #endif
 #define LABELS_BOUNDING_BOX   38
-
 
 #define LABELS_HMS 18
 #define SAVE_SETTINGS_DISPLAY 99
@@ -672,7 +672,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
     glui_labels->close();
     glui_labels=NULL;
   }
-  glui_labels = GLUI_Master.create_glui("Display",0,0,0);
+  glui_labels = GLUI_Master.create_glui("Display",0,dialogX0,dialogY0);
   glui_labels->hide();
 
   // -------------- General Settings -------------------

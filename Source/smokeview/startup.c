@@ -425,6 +425,10 @@ void InitStartupDirs(void){
     MKDIR(smokeview_scratchdir);
   }
 
+  NewMemory((void **)&smv_screenini, strlen(smokeview_scratchdir) + strlen("smv_screen.ini") + 1);
+  strcpy(smv_screenini, smokeview_scratchdir);
+  strcat(smv_screenini, "smv_screen.ini");
+
   NewMemory((void **)&colorbars_user_dir, strlen(homedir) + strlen(dirseparator) + strlen(".smokeview") + strlen(dirseparator) + strlen("colorbars") + 1);
   strcpy(colorbars_user_dir, homedir);
   strcat(colorbars_user_dir, dirseparator);
@@ -494,6 +498,9 @@ void SetupGlut(int argc, char **argv){
     if(verbose_output==1)PRINTF("%s",_("initializing Smokeview graphics window - "));
 #endif
     glutInitWindowSize(screenWidth, screenHeight);
+    if(have_dialogX0 == 0)dialogX0 = screenX0;
+    if(have_dialogY0 == 0)dialogY0 = screenY0;
+    glutInitWindowPosition(screenX0, screenY0);
 #ifdef _DEBUG
     if(verbose_output==1)PRINTF("%s\n",_("initialized"));
 #endif
