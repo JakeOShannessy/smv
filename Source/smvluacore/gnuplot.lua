@@ -57,6 +57,8 @@ end
 local quoted = {
     xlabel      = true,
     ylabel      = true,
+    x2label      = true,
+    y2label      = true,
     zlabel      = true,
     xformat     = true,
     yformat     = true,
@@ -176,6 +178,7 @@ function gnuplot.codegen(g, cmd, path)
         table.insert(opts, d.ptype     and 'pt ' .. d.ptype        )
         table.insert(opts, d.psize     and 'ps ' .. d.psize        )
         table.insert(opts, d.pinterval and 'pi ' .. d.pinterval    )
+        table.insert(opts, d.axis      and 'axis ' .. d.axis    )
         table.insert(opts, 't "' .. (d.title or '') .. '"'         )
 
         add(plot_cmd, table.concat(opts, ' '))

@@ -121,6 +121,10 @@ local function recursive_mkdir(path)
     end
 end
 
+local unitMap = {
+}
+unitMap["m3/s"] = "m³/s"
+
 function plot.MultiDV(dir, dvs, title, opts)
     recursive_mkdir(dir)
     local g = gp {
@@ -128,7 +132,6 @@ function plot.MultiDV(dir, dvs, title, opts)
         width  = 1600,
         height = 1000,
         xlabel = dvs[1].x.name .. " (" .. dvs[1].x.units .. ")",
-        ylabel = dvs[1].y.name .. " (" .. dvs[1].y.units .. ")",
         key    = "top left",
         title  = title:gsub("_", "\\\\_"),
         -- consts = {
@@ -149,20 +152,55 @@ function plot.MultiDV(dir, dvs, title, opts)
     if (not opts) or (not opts.fsize) then
         g.fsize = 12
     end
+    local units = {}
+    local unitsOrder = {}
     for i, dv in ipairs(dvs) do
-        local arr = { -- plot from an 'array-like' thing in memory. Could be a
-            -- numlua matrix, for example.
-            {
-                dv.x.values, -- x
-                dv.y.values  -- y
-            },
+        if not units[dv.y.units] then
+            units[dv.y.units] = {}
+            unitsOrder[#unitsOrder + 1] = dv.y.units
+        end
+        units[dv.y.units][#units[dv.y.units] + 1] = dv
+    end
+    if #units > 1 then
+        error("cannot plot more than 2 different y-units at once")
+    end
 
-            title = dv.y.name, -- optional
-            using = { 1, 2 }   -- optional
-        }
-        if dv.name then arr.title = dv.name else arr.title = dv.y.name end
-        if (dv.with) then arr.with = dv.with else arr.with = 'linespoints' end
-        g.data[i] = gp.array(arr)
+    local i = 1
+    for unitsN, unitsName in ipairs(unitsOrder) do
+        local unitsVecs = units[unitsName]
+        for _, dv in ipairs(unitsVecs) do
+            local arr = { -- plot from an 'array-like' thing in memory. Could be a
+                -- numlua matrix, for example.
+                {
+                    dv.x.values, -- x
+                    dv.y.values  -- y
+                },
+
+                title = dv.y.name, -- optional
+                using = { 1, 2 }   -- optional
+            }
+            if dv.name then arr.title = dv.name else arr.title = dv.y.name end
+            if (dv.with) then arr.with = dv.with else arr.with = 'linespoints' end
+            g.data[i] = gp.array(arr)
+            i = i + 1
+            if unitsN == 1 then
+                local un = unitMap[unitsName]
+                if not un then
+                    un = dv.y.units
+                end
+                g.ylabel = dv.y.name .. " (" .. un .. ")"
+                g.ytics = "nomirror"
+                arr.axis = "x1y1"
+            elseif unitsN == 2 then
+                local un = unitMap[unitsName]
+                if not un then
+                    un = dv.y.units
+                end
+                g.y2label = dv.y.name .. " (" .. un .. ")"
+                g.y2tics = "nomirror"
+                arr.axis = "x1y2"
+            end
+        end
     end
     g:plot(dir .. "/" .. title .. '.png')
 end
@@ -188,7 +226,6 @@ local ultrafastColour = '#BF00BF'
 local function createStdHRRCurves(dv, offset)
     if not offset then offset = 0 end
     local maxHRR = 0
-    print(dv)
     for i, v in ipairs(dv.y.values) do
         if v > maxHRR then maxHRR = v end
     end
@@ -251,21 +288,15 @@ function plot.plotHRRDV(plotDir, hrrDV, name, config)
         offset = 0
     end
     if hrrDV.x and hrrDV.y then
-        print(hrrDV.name)
         local slowDV, mediumDV, fastDV, ultrafastDV = createStdHRRCurves(hrrDV, offset)
         vecs = { hrrDV, slowDV, mediumDV, fastDV, ultrafastDV }
     else
         -- TODO: find the best set of x points from each HRR DV, instead of using
         -- hrrDV[1]
-        print(hrrDV[1].name)
         local slowDV, mediumDV, fastDV, ultrafastDV = createStdHRRCurves(hrrDV[1], offset)
         vecs = hrrDV
         for i, v in ipairs({ slowDV, mediumDV, fastDV, ultrafastDV }) do
-            print(i, v.name)
             vecs[#vecs + 1] = v
-        end
-        for i, v in ipairs(vecs) do
-            print(i, v.name)
         end
     end
     do
