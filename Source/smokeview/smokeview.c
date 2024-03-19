@@ -253,6 +253,7 @@ int IsFDSRunning(FILE_SIZE *last_size){
 /* ------------------ BuildGbndFile ------------------------ */
 
 int BuildGbndFile(int file_type){
+#ifdef pp_BOUNDS
   switch (file_type){
     case BOUND_SLICE:
       if(FileExistsOrig(slice_gbnd_filename)==0)return 1;
@@ -270,6 +271,7 @@ int BuildGbndFile(int file_type){
       assert(FFALSE);
       break;
   }
+#endif
   return 0;
 }
 
