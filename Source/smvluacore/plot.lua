@@ -194,7 +194,8 @@ function plot.MultiDV(dir, dvs, title, opts)
         width  = 1600,
         height = 1000,
         xlabel = dvs[1].x.name .. " (" .. dvs[1].x.units .. ")",
-        key    = "top left",
+        key    = "outside bottom center box opaque font ',10' horizontal spacing 1.5",
+        bmargin = 6.5,
         title  = title:gsub("_", "\\\\_"),
         -- consts = {
         --     gamma = 2.5
