@@ -383,7 +383,7 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
         filteredVec.name = "Time-Averaged (WMA)"
         vecs[#vecs + 1] = filteredVec
     end
-    if plotConfig.bounds then
+    if plotConfig and plotConfig.bounds then
         local configObject = type(plotConfig.bounds) == "object"
         local alpha
         if configObject and plotConfig.bounds.alpha then
