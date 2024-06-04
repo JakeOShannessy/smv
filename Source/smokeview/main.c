@@ -86,7 +86,6 @@ void Usage(char *prog,int option){
     PRINTF("%s\n", _(" -fast          - assume slice files exist in order to reduce startup time,"));
     PRINTF("%s\n", _("                  don't compute blanking arrays"));
     PRINTF("%s\n", _(" -full          - full startup - check if files exist"));
-    PRINTF("%s\n", _(" -fed           - pre-calculate all FED slice files"));
     PRINTF("%s\n", _(" -geominfo      - output information about geometry triangles"));
     PRINTF("%s\n", _(" -info            generate casename.slcf and casename.viewpoint files containing slice file and viewpiont info"));
     PRINTF("%s\n", _(" -lang xx       - where xx is de, es, fr, it for German, Spanish, French or Italian"));
@@ -111,7 +110,8 @@ void Usage(char *prog,int option){
     PRINTF("%s\n", _(" -smoke3d       - only show 3D smoke"));
     PRINTF("%s\n", _(" -startframe n  - start rendering at frame n"));
     PRINTF("%s\n", _(" -stereo        - activate stereo mode"));
-    PRINTF("%s\n", _(" -timings       - show startup timings"));
+    PRINTF("%s\n", _(" -timings       - show timings"));
+    PRINTF("%s\n", _(" -trirates      - show triangle display rates"));
     PRINTF("%s\n", _(" -update_slice  - calculate slice file parameters"));
     PRINTF("%s\n", _(" -update        - equivalent to -update_bounds and -update_slice"));
     PRINTF("%s\n", _(" -update_ini case.ini - update case.ini to the current format"));
@@ -119,10 +119,6 @@ void Usage(char *prog,int option){
     PRINTF("%s\n", _(" -y0 val - vertical screen coordinate in pixels where smokeview window is place at startup"));
     PRINTF("%s\n", _(" -X0 val - horizontal screen coordinate in pixels where dialog windows are placed when opened"));
     PRINTF("%s\n", _(" -Y0 val - vertical screen coordinate in pixels where dialog windows are placed when opened"));
-    PRINTF("%s\n", _(" -screenX0 val - same as -x0 val"));
-    PRINTF("%s\n", _(" -screenY0 val - same as -y0 val"));
-    PRINTF("%s\n", _(" -dialogX0 val - same as -X0 val"));
-    PRINTF("%s\n", _(" -dialogY0 val - same as -Y0 val"));
     PRINTF("%s\n", _(" -volrender     - generate images of volume rendered smoke and fire"));
     UsageCommon(HELP_ALL);
   }
@@ -270,6 +266,23 @@ char *ProcessCommandLine(CommandlineArgs *args) {
       NewMemory((void **)&filename_local, (unsigned int)filelength);
       OpenSMVFile(filename_local, filelength, &openfile);
       if(openfile == 1 && ResizeMemory((void **)&filename_local, strlen(filename_local) + 1) != 0){
+        char *dirlast = NULL, *caselast = NULL;
+
+        FREEMEMORY(smokeview_casedir);
+        FREEMEMORY(fdsprefix);
+        NewMemory((void **)&smokeview_casedir, strlen(filename_local) + 1);
+        NewMemory((void **)&fdsprefix, strlen(filename_local) + 1);
+        strcpy(smokeview_casedir, filename_local);
+        dirlast = strrchr(smokeview_casedir, '\\');
+        if(dirlast != NULL){
+          strcpy(filename_local, dirlast + 1);
+          strcpy(fdsprefix, filename_local);
+          caselast = strrchr(fdsprefix, '.');
+          if(caselast != NULL)caselast[0] = 0;
+          dirlast[1] = 0;
+          len_casename = strlen(filename_local);
+        }
+        CHDIR(smokeview_casedir);
       }
       else{
         FREEMEMORY(filename_local);
@@ -326,6 +339,11 @@ char *ProcessCommandLine(CommandlineArgs *args) {
   NewMemory((void **)&caseini_filename, len_casename + strlen(".ini") + 1);
   STRCPY(caseini_filename, fdsprefix);
   STRCAT(caseini_filename, ".ini");
+
+  FREEMEMORY(fedsmv_filename);
+  NewMemory((void **)&fedsmv_filename, len_casename + strlen(".fedsmv") + 1);
+  STRCPY(fedsmv_filename, fdsprefix);
+  STRCAT(fedsmv_filename, ".fedsmv");
 
   FREEMEMORY(expcsv_filename);
   NewMemory((void **)&expcsv_filename, len_casename + strlen("_exp.csv") + 1);
@@ -414,11 +432,6 @@ char *ProcessCommandLine(CommandlineArgs *args) {
 #else
     STRCAT(ffmpeg_command_filename,".sh");
 #endif
-  }
-  if(fed_filename == NULL){
-    STRCPY(fed_filename_base, fdsprefix);
-    STRCAT(fed_filename_base, ".fed_smv");
-    fed_filename = GetFileName(smokeview_scratchdir, fed_filename_base, NOT_FORCE_IN_DIR);
   }
   if(stop_filename == NULL){
     NewMemory((void **)&stop_filename, (unsigned int)(len_casename + strlen(".stop") + 1));
@@ -527,6 +540,9 @@ char *ProcessCommandLine(CommandlineArgs *args) {
     if(args->timings){
       show_timings = 1;
     }
+    if(args->trirates){
+      show_trirates = 1;
+    }
     if(args->lang != NULL){
         FREEMEMORY(tr_name);
         NewMemory((void **)&tr_name, strlen(args->lang)+1);
@@ -586,8 +602,8 @@ char *ProcessCommandLine(CommandlineArgs *args) {
       iblank_set_on_commandline = 1;
       use_iblank = 0;
     }
-    if(args->fed){
-      compute_fed = 1;
+    if(args->nobounds){
+      no_bounds = 1;
     }
     if(args->verbose){
       verbose_output = 1;

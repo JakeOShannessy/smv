@@ -1511,7 +1511,7 @@ int LuaGetPartNpoints(lua_State *L) {
   // Create a table with an entry for each time
   for (index = 0; index < parti->ntimes; index++) {
     part5data *part5 = parti->data5 + index * parti->nclasses;
-    // sum += part5->npoints;
+    // sum += part5->npoints_file;
 
     // use a 1-indexed array to match lua
     lua_pushnumber(L, index + 1);
@@ -1539,11 +1539,11 @@ int LuaGetPartNpoints(lua_State *L) {
   // Create a table with an entry for each time
   for (index = 0; index < parti->ntimes; index++) {
     part5data *part5 = parti->data5 + index * parti->nclasses;
-    // sum += part5->npoints;
+    // sum += part5->npoints_file;
 
     // use a 1-indexed array to match lua
     lua_pushnumber(L, index + 1);
-    lua_pushnumber(L, part5->npoints);
+    lua_pushnumber(L, part5->npoints_file);
     lua_settable(L, -3);
   }
   lua_settable(L, -3);
@@ -3384,6 +3384,7 @@ int LuaSetBoundzipstep(lua_State *L) {
   return 1;
 }
 
+#ifdef pp_FED
 int LuaSetFed(lua_State *L) {
   int v = lua_tonumber(L, 1);
   int return_code = SetFed(v);
@@ -3397,7 +3398,7 @@ int LuaSetFedcolorbar(lua_State *L) {
   lua_pushnumber(L, return_code);
   return 1;
 }
-
+#endif
 int LuaSetIsozipstep(lua_State *L) {
   int v = lua_tonumber(L, 1);
   int return_code = SetIsozipstep(v);
@@ -3412,12 +3413,14 @@ int LuaSetNopart(lua_State *L) {
   return 1;
 }
 
+#ifdef pp_FED
 int LuaSetShowfedarea(lua_State *L) {
   int v = lua_tonumber(L, 1);
   int return_code = SetShowfedarea(v);
   lua_pushnumber(L, return_code);
   return 1;
 }
+#endif
 
 int LuaSetSliceaverage(lua_State *L) {
   int flag = lua_tonumber(L, 1);
@@ -5352,11 +5355,15 @@ static luaL_Reg const SMVLIB[] = {
     {"set_windowheight", LuaSetWindowheight},
 
     {"set_boundzipstep", LuaSetBoundzipstep},
+#ifdef pp_FED
     {"set_fed", LuaSetFed},
     {"set_fedcolorbar", LuaSetFedcolorbar},
+#endif
     {"set_isozipstep", LuaSetIsozipstep},
     {"set_nopart", LuaSetNopart},
+#ifdef pp_FED
     {"set_showfedarea", LuaSetShowfedarea},
+#endif
     {"set_sliceaverage", LuaSetSliceaverage},
     {"set_slicedataout", LuaSetSlicedataout},
     {"set_slicezipstep", LuaSetSlicezipstep},

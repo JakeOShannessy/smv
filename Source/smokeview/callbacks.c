@@ -312,6 +312,40 @@ void MouseEditTour(int x, int y){
   ENABLE_LIGHTING;
 }
 
+/* ------------------ MouseSelectPart ------------------------ */
+
+void MouseSelectPart(int x, int y){
+  int val, val1;
+  int mouse_x, mouse_y;
+  GLubyte r, g, b;
+
+  mouse_x = x; mouse_y = screenHeight - y;
+  glDisable(GL_BLEND);
+  glDisable(GL_DITHER);
+  glDisable(GL_FOG);
+  DISABLE_LIGHTING;
+  glDisable(GL_TEXTURE_1D);
+  glDisable(GL_TEXTURE_2D);
+  glShadeModel(GL_FLAT);
+
+  ShowScene(SELECTOBJECT, VIEW_CENTER, 0, 0, 0, NULL);
+  glReadBuffer(GL_BACK);
+  glReadPixels(mouse_x, mouse_y, 1, 1, GL_RED, GL_UNSIGNED_BYTE, &r);
+  glReadPixels(mouse_x, mouse_y, 1, 1, GL_GREEN, GL_UNSIGNED_BYTE, &g);
+  glReadPixels(mouse_x, mouse_y, 1, 1, GL_BLUE, GL_UNSIGNED_BYTE, &b);
+
+  r = r >> nredshift;
+  g = g >> ngreenshift;
+  b = b >> nblueshift;
+
+  val1 = (r << (nbluebits + ngreenbits)) | (g << nbluebits) | b;
+  val = val1;
+  if(val>0)selected_part_index = val;
+  glShadeModel(GL_SMOOTH);
+  glEnable(GL_BLEND);
+  ENABLE_LIGHTING;
+}
+
 /* ------------------ MouseEditBlockage ------------------------ */
 
 void MouseEditBlockage(int x, int y){
@@ -950,13 +984,6 @@ void MouseCB(int button, int state, int xm, int ym){
   }
 #endif
 
-  {
-    float delta_time;
-
-    delta_time = glutGet(GLUT_ELAPSED_TIME)/1000.0 - timer_reshape;
-    if(delta_time<DELTA_TIME)return;
-  }
-
   if(autofreeze_volsmoke==ON&&nvolsmoke_loaded>0){
     if(state==GLUT_DOWN)GLUIUpdateFreeze(ON);
     if(state==GLUT_UP)GLUIUpdateFreeze(OFF);
@@ -1023,8 +1050,6 @@ void MouseCB(int button, int state, int xm, int ym){
   if(button==GLUT_LEFT_BUTTON||button==GLUT_MIDDLE_BUTTON||button==GLUT_RIGHT_BUTTON){
     GLUTSETCURSOR(GLUT_CURSOR_INFO);
 
-    /* edit blockages */
-
     if(button==GLUT_LEFT_BUTTON){
       if(blockageSelect == 1){
         GLUIGetGeomDialogState();
@@ -1034,6 +1059,7 @@ void MouseCB(int button, int state, int xm, int ym){
       if(select_avatar==1)MouseSelectAvatar(xm,ym);
       if(select_device==1)MouseSelectDevice(xm,ym);
       if(select_geom!=GEOM_PROP_NONE)MouseSelectGeom(xm, ym);
+      if(select_part == 1 && npartloaded>0)MouseSelectPart(xm, ym);
     }
     glutPostRedisplay();
     if( showtime==1 || showplot3d==1){
@@ -1418,12 +1444,6 @@ void MouseDragCB(int xm, int ym){
     ym *= 2;
   }
 #endif
-  {
-    float delta_time;
-
-    delta_time = glutGet(GLUT_ELAPSED_TIME)/1000.0 - timer_reshape;
-    if(delta_time<DELTA_TIME)return;
-  }
 
   in_external=0;
 #ifdef pp_GPUTHROTTLE
@@ -2032,12 +2052,6 @@ void Keyboard(unsigned char key, int flag){
         if(visTimebar==1)PRINTF("Time bar visible\n");
       }
       break;
-    case 'l':
-      LoadUnloadMenu(RELOADALL);
-      break;
-    case 'L':
-      UnloadSliceMenu(UNLOAD_LAST);
-      break;
     case 'm':
       switch(keystate){
       case GLUT_ACTIVE_ALT:
@@ -2191,8 +2205,16 @@ void Keyboard(unsigned char key, int flag){
         PRINTF("outline mode=%i\n",highlight_flag);
       }
       break;
-    case 'p':
     case 'P':
+      glutAttachMenu(GLUT_RIGHT_BUTTON);
+      attachmenu_status = 1;
+      attachmenu_print = 1 - attachmenu_print;
+      if(attachmenu_print == 1){
+        if(attachmenu_status == 1)printf("menus attached(%i)\n",attachmenu_counter++);
+        if(attachmenu_status == 0)printf("menus detached(%i)\n",attachmenu_counter++);
+      }
+      break;
+    case 'p':
       {
         int is_part_loaded, is_plot3d_loaded;
 
@@ -2746,52 +2768,6 @@ void Keyboard(unsigned char key, int flag){
     case '?':
       vector_debug = 1 - vector_debug;
       break;
-    case ':':
-      timebar_overlap++;
-      if (timebar_overlap > 2)timebar_overlap = 0;
-      GLUIUpdateTimebarOverlap();
-      printf("overlap time/colorbar region: ");
-      switch(timebar_overlap){
-      case 0:
-        printf("always\n");
-        break;
-      case 1:
-        printf("never\n");
-        break;
-      case 2:
-        printf("only if time/colorbar hidden\n");
-        break;
-      default:
-        assert(FFALSE);
-        break;
-      }
-      break;
- //    vis_colorbar                       state
- //    0/COLORBAR_HIDDEN                  hidden
- //    1/COLORBAR_SHOW_VERTICAL           vertical
- //    2->max/COLORBAR_SHOW_HORIZONTAL    horizontal
-    case ',':
-      {
-        int maxtoggle;
-
-        maxtoggle = MAX(3, 2 + CountColorbars());
-        vis_colorbar++;
-        if(vis_colorbar>= maxtoggle)vis_colorbar = 0;
-        if(vis_colorbar== COLORBAR_HIDDEN) {
-          visColorbarVertical = 0;
-          visColorbarHorizontal = 0;
-        }
-        else if(vis_colorbar== COLORBAR_SHOW_VERTICAL) {
-          visColorbarVertical = 1;
-          visColorbarHorizontal = 0;
-        }
-        else {
-          visColorbarVertical = 0;
-          visColorbarHorizontal = 1;
-        }
-      }
-      updatemenu = 1;
-      break;
     case '<':
       if(keystate == GLUT_ACTIVE_ALT){
         colorbartype--;
@@ -2852,14 +2828,15 @@ void Keyboard(unsigned char key, int flag){
           trainer_mode = 0;
           GLUIHideTrainer();
         }
-        break;
       }
-      force_alpha_opaque = 1 - force_alpha_opaque;
-      if(force_alpha_opaque == 1)printf("force smoke/fire opaqueness: yes\n");
-      if(force_alpha_opaque == 0)printf("force smoke/fire opaqueness: no\n");
-      update_smoke_alphas = 1;
-      GLUIForceAlphaOpaque();
-      GLUTPOSTREDISPLAY;
+      else{
+        force_alpha_opaque = 1 - force_alpha_opaque;
+        if(force_alpha_opaque == 1)printf("force smoke/fire opaqueness: yes\n");
+        if(force_alpha_opaque == 0)printf("force smoke/fire opaqueness: no\n");
+        update_smoke_alphas = 1;
+        GLUIForceAlphaOpaque();
+        GLUTPOSTREDISPLAY;
+      }
       break;
     case '%':
       script_step=1-script_step;
@@ -3554,7 +3531,12 @@ void UpdateFrame(float thisinterval, int *changetime, int *redisplay){
           itimes = first_frame_index;
         }
         else{
-          itimes += render_skip*FlowDir;
+          if(render_skip==RENDER_CURRENT_SINGLE){
+            itimes += FlowDir;
+          }
+          else{
+            itimes += render_skip*FlowDir;
+          }
         }
       }
       if(script_render_flag == 1&&IS_LOADRENDER)itimes = script_itime;
@@ -3649,7 +3631,6 @@ void SetScreenSize(int *width, int *height){
 /* ------------------ ReshapeCB ------------------------ */
 
 void ReshapeCB(int width, int height){
-  START_TIMER(timer_reshape);
   if(disable_reshape==1)return;
   updatemenu=1;
   if(update_reshape==0){
@@ -3663,7 +3644,7 @@ void ReshapeCB(int width, int height){
   else{
     SetScreenSize(&width,&height);
   }
-
+  GLUIGetPixelsPerTriangle();
   windowresized=1;
   CopyCamera(camera_current,camera_save);
   windowsize_pointer_old = -1;
@@ -4099,14 +4080,7 @@ void DoNonStereo(void){
     IdleDisplay();
 
     stop_rendering = 1;
-    if(plotstate==DYNAMIC_PLOTS && nglobal_times>0){
-      if(itimes>=0&&itimes<nglobal_times&&
-        ((render_frame[itimes]==0&&stereotype==STEREO_NONE)||(render_frame[itimes]<2&&stereotype!=STEREO_NONE))
-        ){
-        render_frame[itimes]++;
-        stop_rendering = 0;
-      }
-    }
+    if(plotstate==DYNAMIC_PLOTS && nglobal_times>0&&itimes>=0&&itimes<nglobal_times)stop_rendering = 0;
     if(render_mode==RENDER_NORMAL){
       int i, ibuffer = 0;
       GLubyte **screenbuffers;
@@ -4156,7 +4130,7 @@ void DoNonStereo(void){
         FREEMEMORY(screeni->screenbuffer);
       }
     }
-    if(stop_rendering==1){
+    if(stop_rendering==1||stept==0){
       assert(render_skip>0);
       RenderState(RENDER_OFF);
     }

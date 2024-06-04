@@ -166,23 +166,30 @@ void UpdateFrameNumber(int changetime){
         patchi->geom_nval_dynamic = patchi->geom_ndynamics[patchi->geom_itime];
       }
     }
-    if(show3dsmoke==1){
-      if(nsmoke3dinfo > 0){
-        for(i = 0;i < nsmoke3dinfo;i++){
-          smoke3ddata *smoke3di;
+    if(show3dsmoke==1 && nsmoke3dinfo > 0){
+      INIT_PRINT_TIMER(merge_smoke_time);
+#ifdef pp_SMOKEDRAW_SPEEDUP
+      THREADcontrol(mergesmoke_threads, THREAD_LOCK);
+      THREADruni(mergesmoke_threads, merge_args);
+      THREADcontrol(mergesmoke_threads, THREAD_JOIN);
+      THREADcontrol(mergesmoke_threads, THREAD_UNLOCK);
+#else
+      for(i = 0;i < nsmoke3dinfo;i++){
+        smoke3ddata *smoke3di;
 
-          smoke3di = smoke3dinfo + i;
-          if(smoke3di->loaded == 0 || smoke3di->display == 0)continue;
-          smoke3di->ismoke3d_time = smoke3di->timeslist[itimes];
-          if(IsSmokeComponentPresent(smoke3di) == 0)continue;
-          if(smoke3di->ismoke3d_time != smoke3di->lastiframe){
-            smoke3di->lastiframe = smoke3di->ismoke3d_time;
-            UpdateSmoke3D(smoke3di);
-          }
+        smoke3di = smoke3dinfo + i;
+        if(smoke3di->loaded == 0 || smoke3di->display == 0)continue;
+        smoke3di->ismoke3d_time = smoke3di->timeslist[itimes];
+        if(IsSmokeComponentPresent(smoke3di) == 0)continue;
+        if(smoke3di->ismoke3d_time != smoke3di->lastiframe){
+          smoke3di->lastiframe = smoke3di->ismoke3d_time;
+          UpdateSmoke3D(smoke3di);
         }
-        MergeSmoke3D(NULL);
-        PrintMemoryInfo;
       }
+      MergeSmoke3D(NULL);
+#endif
+      PrintMemoryInfo;
+      PRINT_TIMER(merge_smoke_time, "UpdateSmoke3D + MergeSmoke3D");
     }
     if(showpatch==1){
       for(i=0;i<npatchinfo;i++){
@@ -628,6 +635,7 @@ void UpdateShow(void){
   }
   if(showsmoke==1||showpatch==1||showslice==1||showvslice==1||showzone==1||showiso==1)RenderTime=1;
   if(showtours==1||show3dsmoke==1||touring==1||showvolrender==1)RenderTime=1;
+  if(showhvacflag == 1)RenderTime = 1;
   if(showshooter==1)RenderTime=1;
   if(plotstate==STATIC_PLOTS&&nplot3dloaded>0&&plotn>0&&plotn<=numplot3dvars)showplot3d=1;
   if(showplot3d==1){
@@ -717,27 +725,13 @@ int GetItime(int n, int *timeslist, unsigned char *times_map, float *times, int 
 /* ------------------ GetDataTimeFrame ------------------------ */
 
 int GetDataTimeFrame(float time, unsigned char *times_map, float *times, int ntimes){
-  int i, mini;
-  float tmin = -1.0;
+  int i;
 
-  mini = 0;
-  for(i = 0; i < ntimes; i++){
-    float tdiff;
-
+  for(i = 0; i < ntimes-1; i++){
     if(times_map!=NULL&&times_map[i] == 0)continue;
-    tdiff = ABS(time - times[i]);
-    if(tmin < 0.0){
-      tmin = tdiff;
-      mini = i;
-    }
-    else{
-      if(tdiff < tmin){
-        tmin = tdiff;
-        mini = i;
-      }
-    }
+    if(times[i]<=time&&time<times[i+1])return i;
   }
-  return mini;
+  return ntimes-1;
 }
 
 /* ------------------ SynchTimes ------------------------ */
@@ -1288,13 +1282,6 @@ void UpdateTimes(void){
       MergeGlobalTimes(ptime, 1);
     }
   }
-  for(i=0;i<npartinfo;i++){
-    partdata *parti;
-
-    parti = partinfo + i;
-    if(parti->loaded==0)continue;
-    MergeGlobalTimes(parti->times, parti->ntimes);
-  }
   for(i=0;i<nsliceinfo;i++){
     slicedata *sd;
 
@@ -1362,6 +1349,13 @@ void UpdateTimes(void){
       }
     }
   }
+  for(i = 0; i < npartinfo; i++){
+    partdata *parti;
+
+    parti = partinfo + i;
+    if(parti->loaded == 0)continue;
+    MergeGlobalTimes(parti->times, parti->ntimes);
+  }
 
   for(i=0;i<ntourinfo;i++){
     tourdata *touri;
@@ -1378,9 +1372,6 @@ void UpdateTimes(void){
   CheckMemory;
 
   // allocate memory for individual timelist arrays
-
-  FREEMEMORY(render_frame);
-  if(nglobal_times>0)NewMemory((void **)&render_frame,nglobal_times*sizeof(int));
 
   for(i=0;i<ngeominfoptrs;i++){
     geomdata *geomi;
@@ -1479,27 +1470,11 @@ void UpdateTimes(void){
   if(nglobal_times>0)NewMemory((void **)&targtimeslist,  nglobal_times*sizeof(int));
   CheckMemory;
 
-  // reset render_frame array
-
   if(current_script_command!=NULL&&
     (current_script_command->command==SCRIPT_VOLSMOKERENDERALL||current_script_command->command==SCRIPT_ISORENDERALL)
     ){
     if(current_script_command->first==1){
-      int n;
-
-      for(n=0;n<nglobal_times;n++){
-        render_frame[n]=0;
-      }
       current_script_command->first=0;
-    }
-  }
-  else{
-    int n;
-
-    if(render_frame!=NULL){
-      for(n = 0; n<nglobal_times; n++){
-        render_frame[n] = 0;
-      }
     }
   }
 
@@ -1973,6 +1948,16 @@ void UpdateShowScene(void){
   have_fire  = HaveFireLoaded();
   have_smoke = HaveSootLoaded();
 
+#ifdef pp_SMOKE_SPEEDUP  
+  if(update_smoke3dmenulabels == 1){
+    update_smoke3dmenulabels = 0;
+    UpdateSmoke3dMenuLabels();
+  }
+  if(update_merge_smoke == 1){
+    update_merge_smoke = 0;
+    GLUISmoke3dCB(MERGE_SMOKE);
+  }
+#endif
   if(glui_meshclip_defined==1&&update_meshclip == 1){
     update_meshclip = 0;
     GLUIUpdateMeshBounds();
@@ -2095,7 +2080,6 @@ void UpdateShowScene(void){
   }
   UpdateRenderStartButton();
   if(update_makemovie == 1||output_ffmpeg_command==1)MakeMovie();
-  if(compute_fed == 1)DefineAllFEDs();
   if(restart_time == 1){
     restart_time = 0;
     ResetItimes0();
@@ -2511,12 +2495,6 @@ void EnableDisablePlayMovie(void){
 void UpdateDisplay(void){
   SNIFF_ERRORS("UpdateDisplay: start");
 
-#ifdef pp_SLICE_MENU_DEBUG
-  if(update_printsliceinfo == 1){
-    PrintSliceInfo();
-    update_printsliceinfo = 0;
-  }
-#endif
   if(sortslices == 1&&nsliceloaded>0){
     SortSlices();
   }
@@ -2672,11 +2650,20 @@ void UpdateDisplay(void){
   }
   if(updatemenu == 1 && usemenu == 1 && menustatus == GLUT_MENU_NOT_IN_USE){
     glutDetachMenu(GLUT_RIGHT_BUTTON);
+    attachmenu_status = 0;
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
     InitMenus();
     THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
+    attachmenu_status = 1;
     updatemenu = 0;
+#ifdef _DEBUG
+    printf("nmenus=%i\n", nmenus);
+#endif
+  }
+  if(attachmenu_print == 1){
+    if(attachmenu_status == 1)printf("menus attached(%i)\n",attachmenu_counter++);
+    if(attachmenu_status == 0)printf("menus detached(%i)\n",attachmenu_counter++);
   }
   if(update_patch_bounds!=-1||update_slice_bounds!=-1||update_part_bounds!=-1||update_plot3d_bounds!=-1){
 

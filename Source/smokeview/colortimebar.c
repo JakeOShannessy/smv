@@ -585,30 +585,9 @@ colorbardata *GetColorbar(char *menu_label){
 }
 
 /* ------------------ UpdateCurrentColorbar ------------------------ */
-#define FILE_UPDATE 6
+
 void UpdateCurrentColorbar(colorbardata *cb){
-  int jj=0,fed_loaded=0;
-
   current_colorbar = cb;
-  if(current_colorbar != NULL&&strcmp(current_colorbar->menu_label, "FED") == 0){
-    is_fed_colorbar = 1;
-  }
-  else{
-    is_fed_colorbar = 0;
-  }
-  for(jj=0;jj<nslice_loaded;jj++){
-    slicedata *slicej;
-    int j;
-
-    j = slice_loaded_list[jj];
-    slicej = sliceinfo + j;
-    if(slicej->display==0)continue;
-    if(slicej->is_fed==1){
-      fed_loaded=1;
-      break;
-    }
-  }
-  if(is_fed_colorbar==1&&fed_loaded==1)GLUISliceBoundCB(FILE_UPDATE);
 }
 
 /* ------------------ AdjustColorBar ------------------------ */
@@ -2527,8 +2506,6 @@ void DrawHorizontalColorbarRegLabels(void){
   int type_label_left, type_label_down;
   int axis_label_left, axis_label_down;
 
-  int fed_slice = 0;
-
   GLfloat *foreground_color, *red_color;
 
   int showcfast_local = 0;
@@ -2546,28 +2523,6 @@ void DrawHorizontalColorbarRegLabels(void){
   type_label_down = 1.5*VP_vcolorbar.text_height;
   axis_label_left = -colorbar_label_width/4;
   axis_label_down = hcolorbar_down_pos-(VP_vcolorbar.text_height + v_space);
-
-  if(showiso_colorbar==1||
-    (showsmoke == 1 && parttype != 0) || show_slice_colorbar_local == 1 ||
-    (showpatch == 1 && wall_cell_color_flag == 0) ||
-    showcfast_local==1 || showplot3d == 1){
-
-    SNIFF_ERRORS("before colorbar");
-    CheckMemory;
-    if(show_slice_colorbar_local==1){
-      boundsdata *sb;
-
-      sb = slicebounds + slicefile_labelindex;
-
-      if(strcmp(sb->label->shortlabel, "FED") ==  0&& current_colorbar != NULL){
-        strcpy(default_fed_colorbar, current_colorbar->menu_label);
-        if(strcmp(current_colorbar->menu_label, "FED") == 0){
-          fed_slice = 1;
-          if(strcmp(sb->colorlabels[1], "0.00") != 0 || strcmp(sb->colorlabels[nrgb - 1], "3.00") != 0)fed_slice = 0;
-        }
-      }
-    }
-  }
 
   // -------------- particle file top labels ------------
 
@@ -2884,24 +2839,7 @@ void DrawHorizontalColorbarRegLabels(void){
       iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
       OutputBarText(horiz_position, 0.0, red_color, slicecolorlabel_ptr);
     }
-    if(fed_slice == 1){
-      for(i = 0; i < nrgb - 1; i++){
-        float horiz_position;
-
-        horiz_position = MIX2(0.0, 3.0, hcolorbar_right_pos, hcolorbar_left_pos);
-        OutputBarText(horiz_position, 0.0, foreground_color, "0.00");
-
-        horiz_position = MIX2(0.3, 3.0, hcolorbar_right_pos, hcolorbar_left_pos);
-        OutputBarText(horiz_position, 0.0, foreground_color, "0.30");
-
-        horiz_position = MIX2(1.0, 3.0, hcolorbar_right_pos, hcolorbar_left_pos);
-        OutputBarText(horiz_position, 0.0, foreground_color, "1.00");
-
-        horiz_position = MIX2(3.0, 3.0, hcolorbar_right_pos, hcolorbar_left_pos);
-        OutputBarText(horiz_position, 0.0, foreground_color, "3.00");
-      }
-    }
-    else{
+    {
       for(i = 0; i < nrgb - 1; i++){
         float horiz_position;
         char slicecolorlabel[256];
@@ -3137,7 +3075,6 @@ void DrawVerticalColorbarRegLabels(void){
   float *partfactor = NULL;
   int dohist = 0;
 
-  int fed_slice = 0;
   float colorbar_max, colorbar_eps;
 
   GLfloat *foreground_color, *red_color;
@@ -3176,30 +3113,6 @@ void DrawVerticalColorbarRegLabels(void){
 
   foreground_color = &(foregroundcolor[0]);
   red_color = &(redcolor[0]);
-  if(showiso_colorbar == 1 ||
-    (showsmoke == 1 && parttype != 0) || show_slice_colorbar_local == 1 ||
-    (showpatch == 1 && wall_cell_color_flag == 0) ||
-    showcfast_local==1 ||
-    showplot3d == 1){
-
-    SNIFF_ERRORS("before colorbar");
-    CheckMemory;
-    if(show_slice_colorbar_local==1){
-      boundsdata *sb;
-
-      sb = slicebounds + slicefile_labelindex;
-
-      if(strcmp(sb->label->shortlabel, "FED") == 0){
-        if(current_colorbar != NULL){
-          strcpy(default_fed_colorbar, current_colorbar->menu_label);
-          if(strcmp(current_colorbar->menu_label, "FED") == 0){
-            fed_slice = 1;
-            if(strcmp(sb->colorlabels[1], "0.00") != 0 || strcmp(sb->colorlabels[nrgb - 1], "3.00") != 0)fed_slice = 0;
-          }
-        }
-      }
-    }
-  }
 
   // -------------- isosurface left labels ------------
 
@@ -3430,24 +3343,7 @@ void DrawVerticalColorbarRegLabels(void){
       iposition = MIX2(shifted_colorbar_index, 255, nrgb - 1, 0);
       OutputBarText(0.0, vert_position, red_color, slicecolorlabel_ptr);
     }
-    if(fed_slice == 1){
-      for(i = 0; i < nrgb - 1; i++){
-        float vert_position;
-
-        vert_position = MIX2(0.0, 3.0, vcolorbar_top_pos, vcolorbar_down_pos);
-        OutputBarText(0.0, vert_position, foreground_color, "0.00");
-
-        vert_position = MIX2(0.3, 3.0, vcolorbar_top_pos, vcolorbar_down_pos);
-        OutputBarText(0.0, vert_position, foreground_color, "0.30");
-
-        vert_position = MIX2(1.0, 3.0, vcolorbar_top_pos, vcolorbar_down_pos);
-        OutputBarText(0.0, vert_position, foreground_color, "1.00");
-
-        vert_position = MIX2(3.0, 3.0, vcolorbar_top_pos, vcolorbar_down_pos);
-        OutputBarText(0.0, vert_position, foreground_color, "3.00");
-      }
-    }
-    else{
+    {
       float valmin, valmax;
 
 

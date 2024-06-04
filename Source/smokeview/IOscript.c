@@ -261,6 +261,7 @@ void InitKeywords(void){
   NewMemory((void **)&keywordinfo, 1000*sizeof(keyworddata));
   nkeywordinfo++;
 
+  InitKeyword("dummy", -999, 0);         // dummy entry used to report errors
 // 3d smoke
   InitKeyword("LOAD3DSMOKE",         SCRIPT_LOAD3DSMOKE, 1);         // documented
   InitKeyword("LOADVOLSMOKE",        SCRIPT_LOADVOLSMOKE, 1);        // documented
@@ -290,6 +291,8 @@ void InitKeywords(void){
   InitKeyword("LOADVSLICE",          SCRIPT_LOADVSLICE, 2);          // documented
   InitKeyword("LOADVSLICEM",         SCRIPT_LOADVSLICEM, 3);         // documented
   InitKeyword("SETSLICEBOUNDS",      SCRIPT_SETSLICEBOUNDS, 1);      // documented
+  InitKeyword("SETSLICEAVERAGE",     SCRIPT_SETSLICEAVERAGE, 2);     // documented
+  InitKeyword("OUTPUTSLICEDATA",     SCRIPT_OUTPUTSLICEDATA, 1);     // documented
 
 // particle files
   InitKeyword("LOADPARTICLES",       SCRIPT_LOADPARTICLES, 0);       // documented
@@ -499,7 +502,7 @@ int CheckScript(char *file){
 /* ------------------ GetScriptKeyword ------------------------ */
 
 keyworddata *GetScriptKeyword(FILE *stream){
-  char *keyword, keyword_buffer[1024];
+  char *keyword=NULL, keyword_buffer[1024];
 
   for(;;){
     char *comment;
@@ -908,8 +911,8 @@ int CompileScript(char *scriptfile){
 #endif
           scripti->cval= GetCharPointer(param_buffer);
         }
-        }
         break;
+      }
 
 // SCENECLIP
 //  clip mode (int)
@@ -1443,7 +1446,21 @@ int CompileScript(char *scriptfile){
         sscanf(param_buffer," %i %f %i %f, %s",&scripti->ival,&scripti->fval, &scripti->ival2,&scripti->fval2, scripti->quantity2);
         break;
 
-// SETTOURVIEW
+// SETSLICEAVERAGE
+//  slice_average_flag (int) slice_average_interval (float)
+      case SCRIPT_SETSLICEAVERAGE:
+        SETbuffer;
+        sscanf(param_buffer, " %i %f", &scripti->ival, &scripti->fval);
+        break;
+        
+// OUTPUTSLICEDATA
+//  output_slicedata (int)
+      case SCRIPT_OUTPUTSLICEDATA:
+        SETbuffer;
+        sscanf(param_buffer, " %i", &scripti->ival);
+        break;
+
+        // SETTOURVIEW
 //   viewtype  showpath showtour_locus
       case SCRIPT_SETTOURVIEW:
         SETbuffer;
@@ -3156,6 +3173,11 @@ void ScriptLoadIniFile(scriptdata *scripti){
   PRINTF("script: loading ini file %s\n\n",scripti->cval);
   windowresized=0;
   ReadIni(scripti->cval);
+  UpdateDisplay();               // update all variables that need changing
+//  if(update_chop_colors == 1){ // only update variables for chopping data
+//    update_chop_colors = 0;
+//    UpdateChopColors();
+//  }
 }
 
 /* ------------------ ScriptLoadFile ------------------------ */
@@ -3171,12 +3193,7 @@ void ScriptLoadFile(scriptdata *scripti){
     sd = sliceinfo + i;
     if(strcmp(sd->file,scripti->cval)==0){
       sd->finalize = 1;
-      if(i<nsliceinfo-nfedinfo){
-        ReadSlice(sd->file,i, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR,&errorcode);
-      }
-      else{
-        ReadFed(i, ALL_FRAMES, NULL, LOAD,FED_SLICE,&errorcode);
-      }
+      ReadSlice(sd->file, i, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR, &errorcode);
       return;
     }
   }
@@ -3430,6 +3447,19 @@ void ScriptSetSliceBounds(scriptdata *scripti){
   valmax = scripti->fval2;
   quantity = scripti->quantity2;
   SetSliceBounds(set_valmin, valmin, set_valmax, valmax, quantity);
+}
+
+/* ------------------ ScriptSetSliceAverage ------------------------ */
+
+void ScriptSetSliceAverage(scriptdata *scripti){
+  slice_average_flag     = scripti->ival;
+  slice_average_interval = scripti->fval;
+}
+
+/* ------------------ ScriptOutputSlicedata ------------------------ */
+
+void ScriptOutputSliceData(scriptdata *scripti){
+  output_slicedata     = scripti->ival;
 }
 
 /* ------------------ ScriptSetBoundBounds ------------------------ */
@@ -4146,6 +4176,12 @@ int RunScriptCommand(scriptdata *script_command){
       break;
     case SCRIPT_SETSLICEBOUNDS:
       ScriptSetSliceBounds(scripti);
+      break;
+    case SCRIPT_SETSLICEAVERAGE:
+      ScriptSetSliceAverage(scripti);
+      break;
+    case SCRIPT_OUTPUTSLICEDATA:
+      ScriptOutputSliceData(scripti);
       break;
     case SCRIPT_SETBOUNDBOUNDS:
       ScriptSetBoundBounds(scripti);

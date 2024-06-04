@@ -1,5 +1,4 @@
 #!/bin/bash
-
 $QFDS -d Visualization plume5c.fds
 $QFDS -p 2 -d Visualization thouse5.fds
 $QFDS -d Visualization cell_test.fds
@@ -10,7 +9,6 @@ $QFDS -d Visualization smokex080.fds
 $QFDS -d Visualization smokex160.fds
 $QFDS -d Visualization colorbar.fds
 $QFDS -d Visualization smoke_test2.fds
-$QFDS -d Visualization fed_test.fds
 $QFDS -d Visualization part_color.fds
 $QFDS -d Visualization slicemask.fds
 $QFDS -d Visualization smoke_sensor.fds

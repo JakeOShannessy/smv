@@ -2,7 +2,7 @@
 
 set curdir=%CD%
 set size=_64
-set svn_drive=c:
+set git_drive=c:
 set DEBUG=
 set TEST=
 set SCRIPT_DIR=%CD%
@@ -27,36 +27,39 @@ cd %CD%\..
 set BASEDIR=%CD%
 
 cd %BASEDIR%\..\..
-set SVNROOT=%CD%
+set GITROOT=%CD%
 
 if %useinstalled% == 1 (
   set BACKGROUND="background"
   set SMOKEDIFF=smokediff
+  set FDS2FED=fds2fed
   set SMOKEZIP=smokezip
   set SMOKEVIEW=smokeview
   set WIND2FDS=wind2fds
 ) else (
-  set BACKGROUND=%SVNROOT%\smv\Build\background\intel_win%size%\background.exe
-  set SMOKEDIFF=%SVNROOT%\smv\Build\smokediff\intel_win%size%\smokediff_win%size%.exe
-  set SMOKEVIEW=%SVNROOT%\smv\Build\smokeview\intel_win%size%\smokeview_win%TEST%%size%%DEBUG%.exe -bindir %SVNROOT%\smv\for_bundle
-  set  SMOKEZIP=%SVNROOT%\smv\Build\smokezip\intel_win%size%\smokezip_win%size%.exe
-  set  WIND2FDS=%SVNROOT%\smv\Build\wind2fds\intel_win%size%\wind2fds_win%size%.exe
+  set BACKGROUND=%GITROOT%\smv\Build\background\intel_win%size%\background.exe
+  set SMOKEDIFF=%GITROOT%\smv\Build\smokediff\intel_win%size%\smokediff_win%size%.exe
+  set FDS2FED=%GITROOT%\smv\Build\fds2fed\intel_win%size%\fds2fed_win%size%.exe
+  set SMOKEVIEW=%GITROOT%\smv\Build\smokeview\intel_win%size%\smokeview_win%TEST%%size%%DEBUG%.exe -bindir %GITROOT%\smv\for_bundle
+  set  SMOKEZIP=%GITROOT%\smv\Build\smokezip\intel_win%size%\smokezip_win%size%.exe
+  set  WIND2FDS=%GITROOT%\smv\Build\wind2fds\intel_win%size%\wind2fds_win%size%.exe
 )
 
 call :is_file_installed %SMOKEVIEW%|| exit /b 1
 call :is_file_installed %SMOKEDIFF%|| exit /b 1
+call :is_file_installed %FDS2FED%|| exit /b 1
 call :is_file_installed %SMOKEZIP%|| exit /b 1
 call :is_file_installed %BACKGROUND%|| exit /b 1
 
-set vis="%SVNROOT%\smv\Verification\Visualization"
-set wui="%SVNROOT%\smv\Verification\Wui"
-set smvug="%SVNROOT%\smv\Manuals\SMV_User_Guide"
-set smvvg="%SVNROOT%\smv\Manuals\SMV_Verification_Guide"
-set summary="%SVNROOT%\smv\Manuals\SMV_Summary"
+set vis="%GITROOT%\smv\Verification\Visualization"
+set wui="%GITROOT%\smv\Verification\Wui"
+set smvug="%GITROOT%\smv\Manuals\SMV_User_Guide"
+set smvvg="%GITROOT%\smv\Manuals\SMV_Verification_Guide"
+set summary="%GITROOT%\smv\Manuals\SMV_Summary"
 
 set QFDS=call "%SCRIPT_DIR%\runsmv.bat"
 set RUNCFAST=call "%SCRIPT_DIR%\runsmv.bat"
-set SH2BAT=%SVNROOT%\smv\Build\sh2bat\intel_win_64\sh2bat
+set SH2BAT=%GITROOT%\smv\Build\sh2bat\intel_win_64\sh2bat
 
 :: erase summary images
 
@@ -96,7 +99,7 @@ echo Creating Smokeview User guide info files
 %SMOKEZIP%   -v > smokezip.version
 %SMOKEDIFF%  -v > smokediff.version
 %BACKGROUND% -v > background.version
-%WIND2FDS% -v > wind2fds.version
+%WIND2FDS%   -v > wind2fds.version
 
 :: --------------  verification guide ----------------
 
@@ -114,6 +117,15 @@ if %runsmvcases% == 1 (
   echo creating case list from SMV_Cases.sh
   %SH2BAT% SMV_Cases.sh SMV_Pictures_Cases.bat
   %SH2BAT% SMV_DIFF_Cases.sh SMV_DIFF_Pictures_Cases.bat
+
+:: precompute FED slices
+  cd %GITROOT%\smv\Verification\Visualization
+  %FDS2FED% plume5c
+  %FDS2FED% plume5cdelta
+  %FDS2FED% thouse5
+  %FDS2FED% thouse5delta
+  %FDS2FED% fed_test
+
 )
 if %runwuicases% == 1 (
   echo creating case list from WUI_Cases.sh
@@ -124,7 +136,7 @@ echo.
 echo converting plume5c particles to an isosurface
 
 if %runsmvcases% == 1 (
-  cd %SVNROOT%\smv\Verification\Visualization
+  cd %GITROOT%\smv\Verification\Visualization
   %SMOKEZIP% -f -part2iso plumeiso
 
   echo.
@@ -139,7 +151,7 @@ if %runsmvcases% == 1 (
   echo.
   echo converting tree_one particles to an isosurface
 
-  cd %SVNROOT%\smv\Verification\Wui
+  cd %GITROOT%\smv\Verification\Wui
   %SMOKEZIP% -f -part2iso pine_tree
 )
 

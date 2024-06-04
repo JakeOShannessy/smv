@@ -3,40 +3,22 @@
 
 #include "options_common.h"
 
-#ifdef pp_BETA
-#define pp_DEBUG_SUBMENU       // debug output and testing for building menus
-#endif
-
-//#define pp_LUA                 // turn on LUA option
-
-#define pp_GBND             // use .gbnd files
-
-//#define pp_SLICE_MENU       // make slice menu formation consistent (sort step, build step)
-//#define pp_SLICE_MENU_DEBUG // output slice menu infoo to casename_sliceinfo.csv
-
-//*** parallel file loading
-#define pp_SLICE_MULTI    // load slice files in parallel
-
-//#define pp_CSV_MENU       // add menu for loading CSV files
-
-//#define pp_SMOKE16      // load 16 bit smoke files
-//#define pp_GAMMA        // show gamma correction checkbox
-// #define pp_BLACKBODY_OUT       // output generated blackbody color data 
-// #define pp_BLACKBODY_SYSTEM    
-//#define pp_DECIMATE     // decimate terrain geometry
-// #define pp_BOUNDS         // compute bounds from data (for now just slice bounds)
-
-#define pp_FAST           // set fast startup by default
-
-//#define pp_DPRINT       // turn on debug print (file, line number)
-
-//#define pp_LOAD_INC     // add menu item for loading new data
-
-#define pp_GPU                // support the GPU
-#define pp_THREAD             // turn on multi-threading
-
+//#define pp_PARTBOUND_MULTI // compute particle bounds in the background
+//#define pp_LUA            // turn on LUA option
+#define pp_SLICE_MULTI      // load slice files in parallel
+//#define pp_SMOKE_MULTI      // load 3d smoke in parallel
+//#define pp_SMOKE16        // load 16 bit smoke files
+//#define pp_GAMMA          // show gamma correction checkbox
+// #define pp_BLACKBODY_OUT // output generated blackbody color data 
+#define pp_FAST             // set fast startup by default
+//#define pp_LOAD_INC       // add menu item for loading new data
+#define pp_PART_SPEEDUP     // improve efficiency of loading particles
+#define pp_SMOKE_SPEEDUP    // improve efficiency of loading 3d smoke
+#define pp_SMOKEDRAW_SPEEDUP    // improve efficiency of drawing 3d smoke
+#define pp_GPU              // support the GPU
+#define pp_THREAD           // turn on multi-threading
 #ifdef pp_GPU
-#define pp_GPUTHROTTLE  // pp_GPU directive must also be set
+#define pp_GPUTHROTTLE      // pp_GPU directive must also be set
 #endif
 
 //*** options: windows
@@ -82,6 +64,7 @@
 //*** options: for debugging
 
 #ifdef _DEBUG
+#define pp_DEBUG_SUBMENU     // debug output and testing for building menus
 #define pp_RECOMPUTE_DEBUG   // output debug message if bounds are recomputed
 #define pp_BOUND_DEBUG       // output debug message in some bound routines
 #define pp_MOVIE_BATCH_DEBUG // allow movei batch dialogs to be defined for testing

@@ -233,7 +233,9 @@ int Loadsmv(char *input_filename, char *input_filename_ext) {
   }
   {
     bufferstreamdata *smv_streaminfo = NULL;
-    smv_streaminfo = GetSMVBuffer(input_file, iso_filename);
+    smv_streaminfo = GetSMVBuffer(input_file);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, iso_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, fedsmv_filename);
     return_code = ReadSMV(smv_streaminfo);
     if (smv_streaminfo != NULL) {
       FCLOSE(smv_streaminfo);
@@ -325,13 +327,8 @@ int Loadfile(const char *filename) {
 
     sd = sliceinfo + i;
     if (strcmp(sd->file, filename) == 0) {
-      if (i < nsliceinfo - nfedinfo) {
-        ReadSlice(sd->file, i, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR,
-                  &errorcode);
-      }
-      else {
-        ReadFed(i, ALL_FRAMES, NULL, LOAD, FED_SLICE, &errorcode);
-      }
+      ReadSlice(sd->file, i, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR,
+        &errorcode);
       return errorcode;
     }
   }
@@ -1727,24 +1724,6 @@ void Unloadslice(int value) {
         }
       }
     }
-    else if (value == UNLOAD_LAST) {
-      int unload_index;
-
-      unload_index = LastSliceLoadstack();
-      if (unload_index >= 0 && unload_index < nsliceinfo) {
-        slicedata *slicei;
-
-        slicei = sliceinfo + unload_index;
-        if (slicei->slice_filetype == SLICE_GEOM) {
-          ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
-                       &errorcode);
-        }
-        else {
-          ReadSlice("", unload_index, ALL_FRAMES, NULL, UNLOAD, SET_SLICECOLOR,
-                    &errorcode);
-        }
-      }
-    }
   }
 }
 
@@ -2540,20 +2519,6 @@ int SetBoundzipstep(int v) {
   return 0;
 } // BOUNDZIPSTEP
 
-int SetFed(int v) {
-  regenerate_fed = v;
-  return 0;
-} // FED
-
-int SetFedcolorbar(const char *name) {
-  if (strlen(name) > 0) {
-    strcpy(default_fed_colorbar, name);
-    return 0;
-  }
-  else {
-    return 1;
-  }
-} // FEDCOLORBAR
 
 int SetIsozipstep(int v) {
   tload_zipstep = v;
@@ -2569,11 +2534,6 @@ int SetNopart(int v) {
 //   partpointstep = v;
 //   return 0;
 // } // PARTPOINTSTEP
-
-int SetShowfedarea(int v) {
-  show_fed_area = v;
-  return 0;
-} // SHOWFEDAREA
 
 int SetSliceaverage(int flag, float interval, int vis) {
   slice_average_flag = flag;

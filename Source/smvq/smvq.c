@@ -124,12 +124,14 @@ int SetGlobalFilenames(const char *fdsprefix) {
     STRCAT(ffmpeg_command_filename, ".sh");
 #endif
   }
+#ifdef pp_FED
   if (fed_filename == NULL) {
     STRCPY(fed_filename_base, fdsprefix);
     STRCAT(fed_filename_base, ".fed_smv");
     fed_filename =
         GetFileName(smokeview_scratchdir, fed_filename_base, NOT_FORCE_IN_DIR);
   }
+#endif
   if (stop_filename == NULL) {
     NewMemory((void **)&stop_filename,
               (unsigned int)(len_casename + strlen(".stop") + 1));
@@ -195,7 +197,7 @@ int RunBenchmark(char *input_file) {
   INIT_PRINT_TIMER(parse_time);
   fprintf(stderr, "reading:\t%s\n", input_file);
   {
-    bufferstreamdata *smv_streaminfo = GetSMVBuffer(NULL, input_file);
+    bufferstreamdata *smv_streaminfo = GetSMVBuffer(input_file);
     if (smv_streaminfo == NULL) {
       fprintf(stderr, "could not open %s\n", input_file);
       return 1;

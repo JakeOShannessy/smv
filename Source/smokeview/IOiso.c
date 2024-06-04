@@ -708,7 +708,6 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
     fclose(isostream);
     return;
   }
-
   if(strcmp(ib->surface_label.shortlabel,"FED")==0){
     float fed_blue[]={0.0,0.0,1.0,1.0};
     float fed_yellow[]={1.0,1.0,0.0,1.0};
@@ -718,7 +717,6 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
     fed_colors[1]=GetColorPtr(fed_yellow);
     fed_colors[2]=GetColorPtr(fed_red);
   }
-
   asurface=meshi->animatedsurfaces;
   break_frame=0;
   iitime=0;
@@ -1045,10 +1043,6 @@ FILE_SIZE ReadIso(const char *file, int ifile, int flag, int *geom_frame_index, 
 
     isoi = isoinfo+ifile;
     if(flag==LOAD)PRINTF("Loading %s(%s)", file,isoi->surface_label.shortlabel);
-    if(isoi->is_fed==1){
-      ReadFed(ifile, ALL_FRAMES, NULL,  flag, FED_ISO, errorcode);
-    }
-    else{
       if(isoi->geomflag==1){
         return_filesize=ReadIsoGeom(ifile,flag,geom_frame_index,errorcode);
       }
@@ -1056,7 +1050,6 @@ FILE_SIZE ReadIso(const char *file, int ifile, int flag, int *geom_frame_index, 
         ReadIsoOrig(file,ifile,flag,errorcode);
       }
     }
-  }
   return return_filesize;
 }
 
