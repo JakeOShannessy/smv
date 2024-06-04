@@ -66,7 +66,6 @@ function plot.copyDV(dv)
     return deepCopy(dv)
 end
 
-
 function plot.createDV(cols, colXIndex, colYIndex, name)
     return { x = cols[colXIndex], y = cols[colYIndex], name = name }
 end
@@ -191,17 +190,17 @@ function plot.MultiDV(dir, dvs, title, opts)
     recursive_mkdir(dir)
     local g = gp {
         -- All optional, with sane defaults.
-        width  = 1600,
-        height = 1000,
-        xlabel = dvs[1].x.name .. " (" .. dvs[1].x.units .. ")",
-        key    = "outside bottom center box opaque font ',10' horizontal spacing 1.5",
+        width   = 1600,
+        height  = 1000,
+        xlabel  = dvs[1].x.name .. " (" .. dvs[1].x.units .. ")",
+        key     = "outside bottom center box opaque font ',10' horizontal spacing 1.5",
         bmargin = 6.5,
-        title  = title:gsub("_", "\\\\_"),
+        title   = title:gsub("_", "\\\\_"),
         -- consts = {
         --     gamma = 2.5
         -- },
 
-        data   = {}
+        data    = {}
 
     }
     if opts then
@@ -342,24 +341,40 @@ local function createStdHRRCurves(dv, offset)
     return slowDV, mediumDV, fastDV, ultrafastDV
 end
 
-function plot.plotHRRDV(plotDir, hrrDV, name, config)
+local function cappedCurve(alpha, capTime, t)
+    local tR
+    if t >= capTime then
+        tR = capTime
+    else
+        tR = t
+    end
+    return alpha * tR ^ 2;
+end
+
+function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
     local vecs
     local offset
-    if config and config.offset then
-        offset = config.offset
+    if gnuPlotConfig and gnuPlotConfig.offset then
+        offset = gnuPlotConfig.offset
     else
         offset = 0
     end
     if hrrDV.x and hrrDV.y then
+        print(hrrDV.name)
         local slowDV, mediumDV, fastDV, ultrafastDV = createStdHRRCurves(hrrDV, offset)
         vecs = { hrrDV, slowDV, mediumDV, fastDV, ultrafastDV }
     else
         -- TODO: find the best set of x points from each HRR DV, instead of using
         -- hrrDV[1]
+        print(hrrDV[1].name)
         local slowDV, mediumDV, fastDV, ultrafastDV = createStdHRRCurves(hrrDV[1], offset)
         vecs = hrrDV
         for i, v in ipairs({ slowDV, mediumDV, fastDV, ultrafastDV }) do
+            print(i, v.name)
             vecs[#vecs + 1] = v
+        end
+        for i, v in ipairs(vecs) do
+            print(i, v.name)
         end
     end
     do
@@ -368,7 +383,44 @@ function plot.plotHRRDV(plotDir, hrrDV, name, config)
         filteredVec.name = "Time-Averaged (WMA)"
         vecs[#vecs + 1] = filteredVec
     end
-    return plot.DV(plotDir, vecs, name, config)
+    if plotConfig.bounds then
+        local configObject = type(plotConfig.bounds) == "object"
+        local alpha
+        if configObject and plotConfig.bounds.alpha then
+            alpha = plotConfig.bounds.alpha
+        else
+            alpha = mediumAlpha
+        end
+        local capTime
+        if configObject and plotConfig.bounds.capTime then
+            capTime = plotConfig.bounds.capTime
+        else
+            capTime = 300
+        end
+        local bound
+        if configObject and plotConfig.bounds.bound then
+            bound = plotConfig.bounds.bound
+        else
+            bound = 0.1
+        end
+        do
+            local tenPercLower = smv.deepCopy(hrrDV)
+            for i, x in ipairs(tenPercLower.x.values) do
+                tenPercLower.y.values[i] = cappedCurve(alpha, capTime, x) * (1 + bound)
+            end
+            tenPercLower.name = "Lower Bound"
+            vecs[#vecs + 1] = tenPercLower
+        end
+        do
+            local tenPercLower = smv.deepCopy(hrrDV)
+            for i, x in ipairs(tenPercLower.x.values) do
+                tenPercLower.y.values[i] = cappedCurve(alpha, capTime, x) * (1 - bound)
+            end
+            tenPercLower.name = "Upper Bound"
+            vecs[#vecs + 1] = tenPercLower
+        end
+    end
+    return plot.DV(plotDir, vecs, name, gnuPlotConfig)
 end
 
 function plot.printVec(vec)
