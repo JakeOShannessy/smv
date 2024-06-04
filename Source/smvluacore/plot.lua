@@ -151,13 +151,13 @@ local function createDVNamed(cols, colXName, colYName, name)
     return { x = xVector, y = yVector, name = name }
 end
 
-function plot.DV(dir, dvs, title, opts)
+function plot.DV(dir, dvs, title, opts, extras)
     if type(dvs) ~= "table" then
         error("dvs must be a table")
     elseif dvs.x and dvs.y then
-        plot.MultiDV(dir, { dvs }, title, opts)
+        plot.MultiDV(dir, { dvs }, title, opts, extras)
     else
-        plot.MultiDV(dir, dvs, title, opts)
+        plot.MultiDV(dir, dvs, title, opts, extras)
     end
 end
 
@@ -186,7 +186,7 @@ local unitMap = {
 }
 unitMap["m3/s"] = "m³/s"
 
-function plot.MultiDV(dir, dvs, title, opts)
+function plot.MultiDV(dir, dvs, title, opts, extras)
     recursive_mkdir(dir)
     local g = gp {
         -- All optional, with sane defaults.
@@ -227,7 +227,32 @@ function plot.MultiDV(dir, dvs, title, opts)
         error("cannot plot more than 2 different y-units at once")
     end
 
-    local i = 1
+    if extras.lowerBound and extras.upperBound then
+        do
+            local arr = { -- plot from an 'array-like' thing in memory. Could be a
+                -- numlua matrix, for example.
+                {
+                    extras.lowerBound.x.values, -- x
+                    extras.lowerBound.y.values, -- y
+                    extras.upperBound.y.values  -- y
+                },
+
+                title = extras.lowerBound.y.name, -- optional
+                using = { 1, 2, 3 }               -- optional
+            }
+            -- if extras.lowerBound.name then arr.title = extras.lowerBound.name else arr.title = extras.lowerBound.y.name end
+            arr.title = "Target Bounds"
+            if (extras.lowerBound.with) then
+                arr.with = extras.lowerBound.with
+            else
+                arr.with =
+                'filledcurves fs transparent pattern 6 border lw 2'
+            end
+            -- arr.with
+            g.data[#g.data + 1] = gp.array(arr)
+        end
+    end
+
     for unitsN, unitsName in ipairs(unitsOrder) do
         local unitsVecs = units[unitsName]
         for _, dv in ipairs(unitsVecs) do
@@ -243,8 +268,7 @@ function plot.MultiDV(dir, dvs, title, opts)
             }
             if dv.name then arr.title = dv.name else arr.title = dv.y.name end
             if (dv.with) then arr.with = dv.with else arr.with = 'linespoints' end
-            g.data[i] = gp.array(arr)
-            i = i + 1
+            g.data[#g.data + 1] = gp.array(arr)
             if unitsN == 1 then
                 local un = unitMap[unitsName]
                 if not un then
@@ -383,6 +407,7 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
         filteredVec.name = "Time-Averaged (WMA)"
         vecs[#vecs + 1] = filteredVec
     end
+    local extras = {}
     if plotConfig and plotConfig.bounds then
         local configObject = type(plotConfig.bounds) == "object"
         local alpha
@@ -404,23 +429,23 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
             bound = 0.1
         end
         do
-            local tenPercLower = smv.deepCopy(hrrDV)
-            for i, x in ipairs(tenPercLower.x.values) do
-                tenPercLower.y.values[i] = cappedCurve(alpha, capTime, x) * (1 + bound)
+            local lowerBound = smv.deepCopy(hrrDV)
+            for i, x in ipairs(lowerBound.x.values) do
+                lowerBound.y.values[i] = cappedCurve(alpha, capTime, x) * (1 + bound)
             end
-            tenPercLower.name = "Lower Bound"
-            vecs[#vecs + 1] = tenPercLower
+            lowerBound.name = "Lower Bound"
+            extras.lowerBound = lowerBound
         end
         do
-            local tenPercLower = smv.deepCopy(hrrDV)
-            for i, x in ipairs(tenPercLower.x.values) do
-                tenPercLower.y.values[i] = cappedCurve(alpha, capTime, x) * (1 - bound)
+            local upperBound = smv.deepCopy(hrrDV)
+            for i, x in ipairs(upperBound.x.values) do
+                upperBound.y.values[i] = cappedCurve(alpha, capTime, x) * (1 - bound)
             end
-            tenPercLower.name = "Upper Bound"
-            vecs[#vecs + 1] = tenPercLower
+            upperBound.name = "Upper Bound"
+            extras.upperBound = upperBound
         end
     end
-    return plot.DV(plotDir, vecs, name, gnuPlotConfig)
+    return plot.DV(plotDir, vecs, name, gnuPlotConfig, extras)
 end
 
 function plot.printVec(vec)
