@@ -329,6 +329,13 @@ local mediumAlpha = 1000 / 300 ^ 2;
 local fastAlpha = 1000 / 150 ^ 2;
 local ultrafastAlpha = 1000 / 75 ^ 2;
 
+local growthRates = {
+    slow = slowAlpha,
+    medium = mediumAlpha,
+    fast = fastAlpha,
+    ultrafast = ultrafastAlpha,
+}
+
 local slowColour = '#008000'
 local mediumColour = '#FF0000'
 local fastColour = '#00BFBF'
@@ -434,10 +441,14 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
     end
     local extras = {}
     if plotConfig and plotConfig.bounds then
-        local configObject = type(plotConfig.bounds) == "object"
+        local configObject = type(plotConfig.bounds) == "table"
         local alpha
         if configObject and plotConfig.bounds.alpha then
-            alpha = plotConfig.bounds.alpha
+            if type(plotConfig.bounds.growthRate) == "string" then
+                alpha = growthRates[plotConfig.bounds.growthRate]
+            else
+                alpha = plotConfig.bounds.growthRate
+            end
         else
             alpha = mediumAlpha
         end
