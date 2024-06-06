@@ -60,7 +60,7 @@ csrc = callbacks.c camera.c color2rgb.c colortimebar.c compress.c csphere.c dmal
       drawGeometry.c file_util.c getdata.c getdatabounds.c getdatacolors.c glew.c  \
       histogram.c infoheader.c \
       IOboundary.c IOgeometry.c IOhvac.c IOiso.c IOobjects.c IOpart.c IOplot2d.c IOplot3d.c \
-      IOscript.c IOshooter.c IOslice.c IOsmoke.c IOtour.c IOvolsmoke.c IOwui.c IOzone.c isobox.c \
+      IOscript.c IOshooter.c IOslice.c IOsmoke.c IOtour.c IOvolsmoke.c IOwui.c IOzone.c IOframe.o isobox.c \
       main.c md5.c menus.c output.c readsmv.c renderhtml.c renderimage.c scontour2d.c sha1.c \
       sha256.c shaders.c showscene.c skybox.c smokestream.c smokeview.c smv_geometry.c startup.c \
       stdio_buffer.c stdio_m.c string_util.c threader.c translate.c unit.c update.c viewports.c colortable.c command_args.c
@@ -324,7 +324,7 @@ intel_linux_64_db : $(obj)
 # ------------- gnu_linux_64_db ----------------
 
 gnu_linux_64_db : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
-gnu_linux_64_db : CFLAGS    = -O0  -m64 -ggdb -Wall -Wunreachable-code -Wswitch-default -Wshadow -Winit-self -Wundef -Wpointer-arith -Wuninitialized -Wno-undef -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
+gnu_linux_64_db : CFLAGS    = -O0  -m64 -ggdb -Wall -Wunreachable-code -Wswitch-default -Wshadow -Winit-self -Wundef -Wpointer-arith -Wuninitialized -Wno-address -Wno-format-overflow -Wno-format-truncation -Wno-undef -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
 gnu_linux_64_db : C_STANDARD    = -std=gnu99
 gnu_linux_64_db : INC += -I $(SOURCE_DIR)/freeglut3.0.0/include
 ifeq ($(LUA_SCRIPTING),true)

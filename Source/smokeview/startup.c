@@ -247,7 +247,9 @@ int SetupCase(char *filename){
     if(FileExistsOrig(smvzip_filename) == 1){
       lookfor_compressed_files = 1;
     }
-    smv_streaminfo = GetSMVBuffer(iso_filename, input_file);
+    smv_streaminfo = GetSMVBuffer(input_file);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, iso_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, fedsmv_filename);
 
     return_code = ReadSMV(smv_streaminfo);
     if(smv_streaminfo!=NULL){
@@ -331,10 +333,12 @@ int SetupCase(char *filename){
   InitMisc();
   GLUITrainerSetup(mainwindow_id);
   glutDetachMenu(GLUT_RIGHT_BUTTON);
+  attachmenu_status = 0;
   THREADcontrol(checkfiles_threads, THREAD_LOCK);
   InitMenus();
   THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
+  attachmenu_status = 1;
   if(trainer_mode==1){
     GLUIShowTrainer();
     GLUIShowAlert();
@@ -932,6 +936,7 @@ void InitOpenGL(int option){
       multislicedata *mslicei;
 
       mslicei = multisliceinfo + i;
+      mslicei->loadable = 1;
 
       if(mslicei->loaded==1)nstartup++;
    }
@@ -942,6 +947,7 @@ void InitOpenGL(int option){
         multislicedata *mslicei;
 
         mslicei = multisliceinfo + i;
+        mslicei->loadable = 1;
         if(mslicei->loaded==1)fprintf(fileout," %i\n",i);
      }
    }
@@ -1407,8 +1413,6 @@ void InitVars(void){
   strcpy((char *)degC,"C");
   strcpy((char *)degF,"F");
 
-  strcpy(default_fed_colorbar,"FED");
-
   label_first_ptr = &label_first;
   label_last_ptr = &label_last;
 
@@ -1569,7 +1573,6 @@ void InitVars(void){
   setpartmin_old=setpartmin;
   setpartmax_old=setpartmax;
   UpdateCurrentColorbar(colorbarinfo);
-  colorbartype_save=colorbartype;
   visBlocks=visBLOCKAsInput;
   blocklocation=BLOCKlocation_grid;
   render_window_size=RenderWindow;

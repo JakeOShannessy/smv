@@ -17,8 +17,6 @@ typedef struct _sliceparmdata {
   int nvsliceinfo;
   int nmultisliceinfo;
   int nmultivsliceinfo;
-  int nfedinfo;
-  int nfediso;
 } sliceparmdata;
 
 /* --------------------------  circdata ------------------------------------ */
@@ -108,9 +106,6 @@ typedef struct _tridata {
   int vert_index[3], exterior, geomtype, insolid, outside_domain;
   vertdata *verts[3];
   edgedata *edges[3];
-#ifdef pp_DECIMATE
-  int ival;
-#endif
 } tridata;
 
 /* --------------------------  geomlistdata ------------------------------------ */
@@ -133,7 +128,7 @@ typedef struct _geomobjdata {
   char *texture_name;
   float texture_width, texture_height, texture_center[3];
   int texture_mapping;
-  int use_geom_color;
+  int use_geom_color, ntriangles;
 } geomobjdata;
 
 /* --------------------------  geomdata ------------------------------------ */
@@ -157,6 +152,8 @@ typedef struct _geomdata {
   struct _surfdata *surfgeom;
   geomlistdata *geomlistinfo,*geomlistinfo_0, *currentframe;
   geomobjdata *geomobjinfo;
+  int *geomobj_offsets;
+  int ngeomobj_offsets;
 } geomdata;
 
 
@@ -602,15 +599,6 @@ typedef struct _tickdata {
   float width, rgb[3];
 } tickdata;
 
-/* --------------------------  feddata ------------------------------------ */
-
-typedef struct _feddata {
-  struct _slicedata *co,*co2,*o2,*fed_slice;
-  struct _isodata *fed_iso;
-  int co_index, co2_index, o2_index, fed_index;
-  int loaded,display;
-} feddata;
-
 /* --------------------------  isodata ------------------------------------ */
 
 typedef struct _isodata {
@@ -625,8 +613,6 @@ typedef struct _isodata {
   int nnormaltable;
   char *file,*tfile;
   int dataflag,geomflag,get_isolevels;
-  int is_fed;
-  feddata *fedptr;
   int type;
   int firstshort_iso;
   flowlabels surface_label, color_label;
@@ -742,9 +728,7 @@ typedef struct _meshdata {
   int *imap, *jmap, *kmap;
   int n_imap, n_jmap, n_kmap;
 
-#ifdef pp_BOUNDS
   unsigned char *boundary_mask;
-#endif
   char *c_iblank_node0,      *c_iblank_cell0,      *c_iblank_x0,      *c_iblank_y0,      *c_iblank_z0;
   char *c_iblank_node0_temp, *c_iblank_cell0_temp, *c_iblank_x0_temp, *c_iblank_y0_temp, *c_iblank_z0_temp;
   char *c_iblank_node_html;
@@ -859,12 +843,6 @@ typedef struct _meshdata {
 
   int ncullgeominfo,nxyzgeomcull[3],nxyzskipgeomcull[3];
   struct _culldata *cullgeominfo;
-#ifdef pp_DECIMATE
-  struct _vertdata *dec_verts;
-  struct _tridata *dec_triangles;
-  int ndec_triangles, ndec_verts, decimated;
-#endif
-
 
   struct _volrenderdata *volrenderinfo;
   int  nslicex,  nslicey,  nslicez;
@@ -1225,7 +1203,7 @@ typedef struct _partpropdata {
 typedef struct _part5data {
   partclassdata *partclassbase;
   float time;
-  int npoints,n_rtypes, n_itypes;
+  int npoints_file,npoints_loaded,n_rtypes, n_itypes;
   short *sx, *sy, *sz;
   float *dsx, *dsy, *dsz;
   float *avatar_angle, *avatar_width, *avatar_depth, *avatar_height;
@@ -1249,7 +1227,7 @@ typedef struct _partdata {
   int blocknumber;
   int *timeslist, ntimes, itime;
   FILE_SIZE bound_file_size;
-  int npoints;
+  int npoints_file, npoints_loaded;
 
   float zoffset, *times;
   unsigned char *times_map;
@@ -1374,8 +1352,8 @@ typedef struct _menudata {
   int status;
 #ifdef pp_DEBUG_SUBMENU
   int *menuvar_ptr;
-#endif
   char label[256];
+#endif
 } menudata;
 
 /* --------------------------  filebounddata ------------------------------------ */
@@ -1397,16 +1375,12 @@ typedef struct _slicedata {
   int finalize;
   int slcf_index;
   char *slicelabel;
-#ifdef pp_BOUNDS
   unsigned char *slice_mask;
-#endif
   int compression_type;
   int colorbar_autoflip;
   int ncompressed;
   int slice_filetype;
   struct _multislicedata *mslice;
-  int is_fed;
-  feddata *fedptr;
   int menu_show;
   float *constant_color;
   float qval256[256];
@@ -1479,11 +1453,19 @@ typedef struct _slicemenudata {
   slicedata *sliceinfo;
 } slicemenudata;
 
+/* --------------------------  _subslicemenudata ------------------------------------ */
+
+typedef struct _subslicemenudata {
+  char *menulabel, *shortlabel;
+  int slicetype;
+  int havex, havey, havez, havexyz;
+} subslicemenudata;
+
 /* --------------------------  multislicedata ------------------------------------ */
 
 typedef struct _multislicedata {
   int seq_id, autoload;
-  int loaded, display;
+  int loaded, display, loadable;
   int *islices, nslices;
   int slice_filetype;
   char menulabel[128];
@@ -1494,7 +1476,7 @@ typedef struct _multislicedata {
 
 typedef struct _multivslicedata {
   int seq_id, autoload;
-  int loaded,display,mvslicefile_labelindex;
+  int loaded,display,mvslicefile_labelindex,loadable;
   int nvslices;
   int *ivslices;
   char menulabel[128];
@@ -1515,7 +1497,7 @@ typedef struct _splitslicedata {
 
 typedef struct _cpp_boundsdata {
   char label[32], unit[32];
-  int set_valmin, set_valmax, set_chopmin, set_chopmax;
+  int set_valmin, set_valmax, set_chopmin, set_chopmax, chop_hide;
   float valmin[4], valmax[4], chopmin, chopmax;
   float glui_valmin, glui_valmax;
   int set_valtype, cache;
@@ -1548,7 +1530,6 @@ typedef struct _boundsdata {
   flowlabels *label;
 } boundsdata;
 
-#ifdef pp_BOUNDS
 /* --------------------------  globalboundsdata ------------------------------------ */
 
 typedef struct _globalboundsdata {
@@ -1558,7 +1539,6 @@ typedef struct _globalboundsdata {
   float valmins_save[MAXPLOT3DVARS], valmaxs_save[MAXPLOT3DVARS];
   float valmins[MAXPLOT3DVARS],      valmaxs[MAXPLOT3DVARS];
 } globalboundsdata;
-#endif
 
 /* --------------------------  vslicedata ------------------------------------ */
 
@@ -1653,7 +1633,7 @@ typedef struct _smoke3ddata {
 
   /* --------------------------  smoke3dtypedata ------------------------------------ */
 
-typedef struct smoke3dtypedata {
+typedef struct _smoke3dtypedata {
   char *shortlabel, *longlabel;
   int type;  // color based or opacity based
   int menu_id;
@@ -1787,7 +1767,7 @@ typedef struct _firedata {
 
 /* --------------------------  f_unit ------------------------------------ */
 
-typedef struct {
+typedef struct _f_unit {
   char unit[10];   /* m/s, mph etc - appears in the colorbar */
   float scale[2];  /* newval=scale[0]*oldval+scale[1] */
   char rel_val[20];

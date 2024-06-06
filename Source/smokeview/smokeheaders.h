@@ -14,12 +14,27 @@ EXTERNCPP void *MtLoadAllPartFiles(void *arg);
 EXTERNCPP void *GetGlobalPatchBoundsFull(void *arg);
 EXTERNCPP void *PlayMovie(void *arg);
 EXTERNCPP void *ReadAllGeom(void *arg);
+EXTERNCPP void *GetGlobalPartBoundsReduced(void *arg);
 EXTERNCPP void *GetGlobalSliceBoundsFull(void *arg);
 EXTERNCPP void *UpdateTrianglesAll(void *arg);
 EXTERNCPP void *ReadVolsmokeAllFramesAllMeshes2(void *arg);
 EXTERNCPP void *SetupAllIsosurfaces(void *arg);
+#ifdef pp_SMOKEDRAW_SPEEDUP
+EXTERNCPP void *MtMergeSmoke3D(void *arg);
+EXTERNCPP void UpdateGluiMergeSmoke(void);
+#endif
+
 
 //*** glui_bounds.cpp headers
+EXTERNCPP int  GLUIGetChopHide(char *label);
+EXTERNCPP void GLUISetChopHide(char *label, int val);
+
+EXTERNCPP int  GLUIGetChopMin(int type, char *label, int *set_valmin, float *valmin);
+EXTERNCPP int  GLUIGetChopMax(int type, char *label, int *set_valmax, float *valmax);
+EXTERNCPP int  GLUISetChopMin(int type, char *label, int set_chopmin, float chopmin);
+EXTERNCPP int  GLUISetChopMax(int type, char *label, int set_chopmax, float chopmax);
+
+EXTERNCPP void GLUIUpdateLoadAllSlices(void);
 EXTERNCPP void GLUIUpdateMeshBounds(void);
 EXTERNCPP void DrawBoxMinMax(float *bbmin, float *bbmax, float *box_color);
 EXTERNCPP void DrawBox(float *bb, float *box_color);
@@ -52,12 +67,10 @@ EXTERNCPP void GLUISetMin(int type, char *label, int set_valmin, float valmin);
 EXTERNCPP void GLUISetMax(int type, char *label, int set_valmax, float valmax);
 EXTERNCPP void GLUISetMinMax(int type, char *label, int set_valmin, float valmin, int set_valmax, float valmax);
 EXTERNCPP void GLUISetMinMaxAll(int type, int *set_valmin, float *valmin, int *set_valmax, float *valmax, int nall);
-#ifdef pp_BOUNDS
 EXTERNCPP void GLUISetGlobalMinMaxAll(int type, float *valmin, float *valmax, int nall);
 EXTERNCPP void GLUISetLoadedMinMaxAll(int type, float *valmin, float *valmax, int nall);
 EXTERNCPP void GLUIGetGlobalMinMaxAll(int type, float *valmin, float *valmax, int nall);
 EXTERNCPP void GLUIGetLoadedMinMaxAll(int type, float *valmin, float *valmax, int nall);
-#endif
 EXTERNCPP void GLUIUpdateBounds(void);
 EXTERNCPP void GLUIPlot3DBoundsCPP_CB(int var);
 EXTERNCPP void GLUISetColorbarDigitsCPP(int ndigits);
@@ -249,6 +262,7 @@ SVEXTERN void GLUIUpdatePlot2DSize(void);
 EXTERNCPP void GLUIUpdateDeviceAdd(void);
 
 //*** glui_smoke.cpp headers
+EXTERNCPP void GLUIGetPixelsPerTriangle(void);
 EXTERNCPP void GLUIForceAlphaOpaque(void);
 EXTERNCPP void GLUI3dSmokeSetup(int main_window);
 EXTERNCPP void GLUISmoke3dCB(int var);
@@ -335,10 +349,6 @@ EXTERNCPP int IsColorbarSplit(colorbardata *cbi);
 
 EXTERNCPP void UpdateHVACNodeColorLabels(int index);
 EXTERNCPP void UpdateAllHVACColorLabels(void);
-
-#ifdef pp_SLICE_MENU_DEBUG
-EXTERNCPP void PrintSliceInfo(void);
-#endif
 
 #ifdef pp_REFRESH
 EXTERNCPP void PeriodicRefresh(int var);
@@ -430,15 +440,12 @@ EXTERNCPP int GetNSliceFrames(char *file, float *stime_min, float *stime_max);
 EXTERNCPP void GenerateSliceMenu(int from_commandline);
 void DrawTerrainGeom(int option);
 void GenerateTerrainGeom(float **vertices_arg, unsigned int **indices_arg, int *nindices_arg);
-#ifdef pp_DECIMATE
-EXTERNCPP void DecimateAllTerrains(void);
-#endif
 
 EXTERNCPP int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option_arg);
 EXTERNCPP void SetMainWindow(void);
 EXTERNCPP void GetSliceFileHeader(char *file, int *ip1, int *ip2, int *jp1, int *jp2, int *kp1, int *kp2, int *error);
 EXTERNCPP int TimeAverageData(float *data_out, float *data_in, int ndata, int data_per_timestep, float *times_local, int ntimes_local, float average_time);
-bufferstreamdata *GetSMVBuffer(char *file, char *file2);
+bufferstreamdata *GetSMVBuffer(char *file);
 EXTERNCPP void UpdateBlockType(void);
 boundsdata *GetSliceBoundsInfo(char *shortlabel);
 boundsdata *GetPatchBoundsInfo(char *shortlabel);
@@ -454,7 +461,6 @@ EXTERNCPP int BuildGbndFile(int file_type);
 EXTERNCPP void GetGlobalSliceBoundsReduced(void);
 EXTERNCPP void GetGlobalHVACDuctBounds(int flag);
 EXTERNCPP void GetGlobalHVACNodeBounds(int flag);
-EXTERNCPP void UpdateGlobalFEDSliceBounds(void);
 
 EXTERNCPP void Slice2Device(void);
 EXTERNCPP void PauseTime(float pause_time);
@@ -619,7 +625,6 @@ EXTERNCPP void GetSliceParams2(void);
 
 EXTERNCPP void DrawWindRosesDevices(void);
 EXTERNCPP void DeviceData2WindRose(int nr, int ntheta);
-EXTERNCPP void DefineAllFEDs(void);
 EXTERNCPP void AddDeleteKeyframe(int flag);
 EXTERNCPP void Slerp(float *p0, float *p1, float t, float *pout);
 EXTERNCPP void VentMenu(int value);
@@ -698,8 +703,6 @@ EXTERNCPP void SortIsoTriangles(float *mm);
 EXTERNCPP void UpdateIsoTriangles(int flag);
 EXTERNCPP void UpdateSliceMenuShow(sliceparmdata *sp);
 EXTERNCPP void UpdateHideBoundarySurface(void);
-EXTERNCPP int  LastSliceLoadstack(void);
-EXTERNCPP int  LastVSliceLoadstack(void);
 EXTERNCPP void UpdateDefer(void);
 EXTERNCPP void SetTimeVal(float timeval);
 EXTERNCPP void GetIndepVarIndices(sv_object *smv_object,char **var_indep_strings, int nvars_indep,int *index);
@@ -721,7 +724,6 @@ EXTERNCPP char *GetScriptFileName(int id);
 EXTERNCPP inifiledata *InsertIniFile(char *file);
 EXTERNCPP void Keyboard(unsigned char key, int flag);
 EXTERNCPP void GetNewScriptFileName(char *newscriptfilename);
-EXTERNCPP void OutputFedCSV(void);
 EXTERNCPP void ParticlePropShowMenu(int value);
 EXTERNCPP int  GetGridIndex(float x, int dir, float *plotxyz, int nplotxyz);
 EXTERNCPP void UpdateSliceContours(int slice_type_index, float line_min, float line_max, int nline_values);
@@ -893,7 +895,7 @@ EXTERNCPP int  RectangleInFrustum( float *x11, float *x12, float *x22, float *x2
 EXTERNCPP int UpdateSmoke3D(smoke3ddata *smoke3di);
 EXTERNCPP void DrawSmokeFrame(void);
 EXTERNCPP void DrawVolSmokeFrame(void);
-EXTERNCPP void DrawPartFrame(void);
+EXTERNCPP void DrawPartFrame(int mode);
 EXTERNCPP void DrawPlot3dFrame(void);
 EXTERNCPP void DrawVSliceFrame(void);
 EXTERNCPP void DrawSliceFrame(void);
@@ -1003,7 +1005,6 @@ EXTERNCPP void TransparentOn(void);
 EXTERNCPP void GetObstLabels(const char *filein);
 EXTERNCPP void UpdateUseTextures(void);
 EXTERNCPP void AntiAliasLine(int flag);
-EXTERNCPP void AntiAliasSurface(int flag);
 EXTERNCPP void SliceBounds2Glui(int slicefile_labelindex);
 EXTERNCPP void GLUI2GlobalBoundaryBounds(const char *key);
 EXTERNCPP void Global2GLUIBoundaryBounds(const char *key);
@@ -1132,7 +1133,6 @@ EXTERNCPP void FreeSmoke3D(smoke3ddata *smoke3di);
 EXTERNCPP void GetSmoke3DTimeSteps(int fortran_skip, char *smokefile, int version, int *ntimes_found, int *ntimes_full);
 EXTERNCPP void ReadSmoke3DAllMeshes(int iframe, int smoketype, int *errorcode);
 EXTERNCPP FILE_SIZE ReadSmoke3D(int iframe, int ifile, int flag, int first_time, float *time_value, int *errorcode);
-EXTERNCPP void ReadFed(int ifile, int time_frame, float *time_value, int flag, int file_type, int *errorcode);
 EXTERNCPP FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_value, int flag, int set_slicecolor, int *errorcode);
 EXTERNCPP FILE_SIZE ReadIso(const char *file, int ifile, int flag, int *geom_frame_index, int *errorcode);
 
@@ -1159,13 +1159,11 @@ EXTERNCPP float GetStringLength(char *string);
 EXTERNCPP void UpdateGslicePlanes(void);
 
 EXTERNCPP void UpdateAllGeomTriangles(void);
-#ifdef pp_BOUNDS
 EXTERNCPP void MakeBoundaryMask(patchdata *patchi);
 EXTERNCPP void SetPatchMin(int set_valmin, float valmin, char *buffer2);
 EXTERNCPP void SetPatchMax(int set_valmax, float valmax, char *buffer2);
 EXTERNCPP void SetSliceMin(int set_valmin, float valmin, char *buffer2);
 EXTERNCPP void SetSliceMax(int set_valmax, float valmax, char *buffer2);
-#endif
 EXTERNCPP void SetSliceBounds(int set_valmin, float valmin, int set_valmax, float valmax, char *buffer2);
 EXTERNCPP void SetBoundBounds(int set_valmin, float valmin, int set_valmax, float valmax, char *buffer2);
 

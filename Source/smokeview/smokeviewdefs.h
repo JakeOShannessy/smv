@@ -518,9 +518,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define STEPS_PER_DEG 10.0
 
-#define FED_SLICE 0
-#define FED_ISO   1
-
+#define SLICE_UNKNOWN     -1
 #define SLICE_NODE_CENTER 1
 #define SLICE_CELL_CENTER 2
 #define SLICE_TERRAIN     4
@@ -1077,8 +1075,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define DIALOG_HVAC      47
 #define DIALOG_TERRAIN   48
 #define DIALOG_COLORING  49
-
-#define UNLOAD_LAST -2
 
 #define UPDATE_PROJECTION -2
 

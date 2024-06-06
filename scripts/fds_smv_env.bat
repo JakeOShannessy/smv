@@ -1,50 +1,31 @@
 @echo off
 
-:: ---- FDS and smokeview version ----
-
-set fds_version=FDS6.7.9
-set fds_tag=FDS6.7.9
-set fds_versionbase=6.7.9
-
-set smv_version=SMV6.7.21
-set smv_tag=SMV6.7.21
-set smv_versionbase=6.7.21
-
-set fds_edition=FDS6
-set fds_debug=0
-
-set fds_tag_name=release
-set smv_tag_name=release
-
-:: ---- FDS and smokeview revision ----
+:: ---- smokeview revision ----
 
 set smv_revision=unknown
 set fds_revision=unknown
 if exist %userprofile%\.bundle\smv_revision.txt (
   set /p smv_revision=<%userprofile%\.bundle\smv_revision.txt
 )
-if exist %userprofile%\.bundle\fds_revision.txt (
-  set /p fds_revision=<%userprofile%\.bundle\fds_revision.txt
-)
 
 :: ---- log entry date ----
 
-set smvlogdate="21-Nov-2023"
+set smvlogdate="28-May-2024"
 
 :: ---- repo locations ----
 
 ::*** PC
-if "x%svn_root%" NEQ "x" goto skipsvn
-set svn_root=%userprofile%\FireModels_fork
-:skipsvn
+if "x%git_root%" NEQ "x" goto skipgit
+set git_root=%userprofile%\FireModels_fork
+:skipgit
 
-set fdswikirepo=%svn_root%\wikis
-set svn_drive=c:
+set fdswikirepo=%git_root%\wikis
+set git_drive=c:
 
 ::*** Linux/OSX
 set userhome=/home/gforney
 set bot_home=/home4/gforney
-set linux_svn_root=FireModels_fork
+set linux_git_root=FireModels_fork
 set compiler_dir=fire-notes/INSTALL/LINUX/INTEL_19u1
 set misc_dir=fire-notes/INSTALL/LIBS/LINUX/LIB64
 

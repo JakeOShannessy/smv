@@ -1,5 +1,13 @@
 \documentclass[11pt,twoside]{book}
 
+\newcommand{\feda}{\input smv_vg_fed1.tex}
+\newcommand{\fedb}{\section{fed\_test}\fdsinput{fed_test.fds}}
+\newcommand{\fedc}{\section{fed\_test}\fdsinput{fed_test.ssf}}
+%\newcommand{\feda}{}
+%\newcommand{\fedb}{}
+%\newcommand{\fedc}{}
+
+
 \UseRawInputEncoding
 
 %% include commands for bios, titles etc used in multiple documents
@@ -626,6 +634,9 @@ all of the data in the slice.  The second column discards or chops data below
 \SI{140}{\degreeCelsius}. Note that the color near the chopped boundary should
 match the color in the color bar near \SI{140}{\degreeCelsius}.
 
+Figure \ref{figsliceaveragetest} presents images verifying slice averaging.  The left column shows regular slices.  The right column
+shows slices averaged over a 5~s time interval.
+
 Figure \ref{figslicesort} presents images verifying that two slices
 illustrated in Figure \ref{figslicexy}\
 are displayed without visual artifacts when drawn sorted from back to front.
@@ -639,19 +650,10 @@ Fig. \ref{figcellbslicetest} tests the transfer of data from FDS to Smokeview.
 Figure \ref{figslicenodemasktest} and \ref{figslicecellmasktest} presents images verifying that node and cell centered slices
 are masked properly when drawn through or near blockages. Images are drawn at \SI{10}{s}.
 
-Figure \ref{figvslicetest} present images verifying the display of vector slices.
-Again, vector slice file images are drawn at \SI{0}{s}, \SI{10}{s} and \SI{30}{s}.
-The first column draws all vectors while the second column discards or chops vectors
-below \SI{140}{\degreeCelsius}.
-
-Figure \ref{figfedslicetest} presents slice file images verifying the computation
-of fractional effective dose (FED).  FED is a measure of human incapacitation or
-hazard due to combustion gases\cite{SFPE:Purser}. Images are drawn at \SI{30}{s},
-\SI{60}{s} and \SI{120}{s} and \SI{240}{s}. The FED is computed using three data slices with concentration of $1000~\mathrm{ppm}$ for $\mathrm{CO}$ and volume fractions of 0.02 and 0.07 for $\mathrm{CO_2}$ and $\mathrm{O_2}$ respectively. These values result in FED values of 1.5 at \SI{30}{s}, 3.0 at \SI{60}{s}, 6.0 at \SI{120}{s} and 12.0 at \SI{240}{s}.
+Figure \ref{figslice3D} presents images of shaded 3D slices oriented in XY, XY and YZ planes.
+Images are drawn at \SI{0}{s}, \SI{10}{s} and \SI{30}{s}.
 
 Figure \ref{figgslicetest} presents images of 3D slices oriented in two different
-ways. Images are drawn at \SI{0}{s}, \SI{10}{s} and \SI{30}{s}.
-Figure \ref{figvgslicetest} presents images of 3D vector slices oriented in two different
 ways. Images are drawn at \SI{0}{s}, \SI{10}{s} and \SI{30}{s}.
 
 Figure \ref{figdiffslicetest} presents images from data differenced by Smokediff.
@@ -685,16 +687,28 @@ files. Difference contours from these slice files are displayed at \SI{0}{s},
 \label{fignodeslicetest}%
 \end{figure}
 
+
 \begin{figure}[bph]
 \begin{center}
-\begin{tabular}{cccp{1.0in}}
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/testsort_x0p4}&
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/testsort_y1p2}\\
- $x=0.4$&$y=1.2$\\
+\begin{tabular}{rccp{1.0in}}
+1.0~s&
+ \includegraphics[height=2.5in]{SCRIPT_FIGURES/plume_orig_slice_01}&
+ \includegraphics[height=2.5in]{SCRIPT_FIGURES/plume_average_slice_01}\\
+
+2.0~s&
+ \includegraphics[height=2.5in]{SCRIPT_FIGURES/plume_orig_slice_02}&
+ \includegraphics[height=2.5in]{SCRIPT_FIGURES/plume_average_slice_02}\\
+
+ 5.0~s&
+\includegraphics[height=2.5in]{SCRIPT_FIGURES/plume_orig_slice_05}&
+ \includegraphics[height=2.5in]{SCRIPT_FIGURES/plume_average_slice_05}\\
+
+& regular slice&averaged slice\\
+&&&\raisebox{0.5in}[0pt]{\includegraphics[height=7.5in]{\SMVfigdir/colorbar_20_620}}\\
  \end{tabular}
 \end{center}
- \caption[Two vertical slices drawn at $x=0.4$ and $y=1.2$.]{Two vertical slices drawn at $x=0.4$ and $y=1.2$.}
-\label{figslicexy}%
+ \caption[A test showing regular and averaged slice file data]{A test showing regular slice file images and slice file images averaged over a 5~s time interval.}
+\label{figsliceaveragetest}%
 \end{figure}
 
 \begin{figure}[bph]
@@ -709,6 +723,18 @@ files. Difference contours from these slice files are displayed at \SI{0}{s},
  from back to front.]{A test showing two vertical slices drawn without visual artifacts when drawn sorted
  from back to front and drawn with visual artifacts (a portion of the slice in back appears in front) when drawn unsorted.}
 \label{figslicesort}%
+\end{figure}
+
+\begin{figure}[bph]
+\begin{center}
+\begin{tabular}{cccp{1.0in}}
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/testsort_x0p4}&
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/testsort_y1p2}\\
+ $x=0.4$&$y=1.2$\\
+ \end{tabular}
+\end{center}
+ \caption[Two vertical slices drawn at $x=0.4$ and $y=1.2$.]{Two vertical slices drawn at $x=0.4$ and $y=1.2$.}
+\label{figslicexy}%
 \end{figure}
 
 \begin{figure}[bph]
@@ -793,42 +819,15 @@ above on boundary&above
 
 \begin{figure}[bph]
 \begin{center}
-\begin{tabular}{ccl}
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslice_00}&
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslicechop_00}\\
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslice_10}&
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslicechop_10}\\
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslice_30}&
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslicechop_30}\\
- &data chopped below \SI{140}{\degreeCelsius}\\
- &&\raisebox{0.5in}[0pt]{\includegraphics[height=7.5in]{\SMVfigdir/colorbar_20_620}}\\
-
- \end{tabular}
-\end{center}
- \caption[A test showing vector slice file data] {A test showing vector slice file data
- at \SI{1}{s}, \SI{10}{s} and \SI{30}{s}. A portion of the interior gas temperature
- is initialized to \SI{600}{\degreeCelsius}.  The vectors in this region should be
- red for the $t=\SI{0}{s}$ images. For the chopped contours, the color near the chop
- boundary should match the color near \SI{140}{\degreeCelsius} in the colorbar.}
-\label{figvslicetest}%
-\end{figure}
-
-\begin{figure}[bph]
-\begin{center}
 \begin{tabular}{ccp{1.0in}}
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/fed_test_030}&
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/fed_test_060}\\
-SI{30}{s}, FED=0.29&\SI{60}{s}, FED=0.59\\
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/fed_test_120}&
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/fed_test_360}\\
-\SI{120}{s}, FED=1.2&3\SI{60}{s}, FED=3.5\\
-&&\raisebox{0.25in}[0pt]{\includegraphics[height=5.5in]{\SMVfigdir/colorbar_fed}}
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/mplume5c8_slice_00}\\
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/mplume5c8_slice_10}\\
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/mplume5c8_slice_30}\\
+&&\raisebox{0.5in}[0pt]{\includegraphics[height=7.5in]{\SMVfigdir/colorbar_20_620}}\\
  \end{tabular}
 \end{center}
- \caption[A test showing cell centered FED slice file data]{A test showing cell
- centered FED slice file data.  These contours were generated using $\mathrm{CO}$,
- $\mathrm{CO_2}$ and $\mathrm{O_2}$ data slices. }
-\label{figfedslicetest}%
+ \caption[A shaded 3D slice files]{A shaded 3D slice files at \SI{0}{s}, \SI{10}{s} and \SI{30}{s}.}
+\label{figslice3D}%
 \end{figure}
 
 \begin{figure}[bph]
@@ -854,6 +853,109 @@ SI{30}{s}, FED=0.29&\SI{60}{s}, FED=0.59\\
 \label{figgslicetest}%
 \end{figure}
 
+\begin{figure}[bph]
+\begin{center}
+\begin{tabular}{cp{1.0in}}
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_diff_slice_00}\\
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_diff_slice_10}\\
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_diff_slice_30}\\
+&\raisebox{0.5in}[0pt]{\includegraphics[height=7.5in]{\SMVfigdir/colorbar_tempdiff}}\\
+ \end{tabular}
+\end{center}
+ \caption[A test showing slice contours generated by differencing two cases with
+ Smokediff]{A test showing slice contours generated by differencing
+ two cases with Smokediff  at \SI{0}{s}, \SI{10}{s} and \SI{30}{s}.}
+\label{figdiffslicetest}%
+\end{figure}
+
+%%-----------------------------------------------------------------------
+%*** fed section
+\feda
+
+\clearpage
+
+\section{Vector Slices}
+Figure \ref{figvslicetest} present images verifying the display of vector slices.
+Vector slice file images are drawn at \SI{0}{s}, \SI{10}{s} and \SI{30}{s}.
+The first column draws all vectors while the second column discards or chops vectors
+below \SI{140}{\degreeCelsius}.
+
+Figures \ref{figvsliceuniformx} and \ref{figvsliceuniformz} present images verifying the display of vector slices using the uniform display option.
+The test cases consist of three meshes with different resolutions.  With the uniform option selected, vector
+skipping is set in each mesh so that vectors are spaced uniformly.
+
+Figure \ref{figvslice3D} presents images of 3D vector slices oriented in XY, XY and YZ planes.
+Images are drawn at \SI{0}{s}, \SI{10}{s} and \SI{30}{s}.
+
+Figure \ref{figvgslicetest} presents images of 3D vector slices oriented in two different
+ways. Images are drawn at \SI{0}{s}, \SI{10}{s} and \SI{30}{s}.
+
+
+
+\begin{figure}[bph]
+\begin{center}
+\begin{tabular}{ccl}
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslice_00}&
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslicechop_00}\\
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslice_10}&
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslicechop_10}\\
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslice_30}&
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_vslicechop_30}\\
+ &data chopped below \SI{140}{\degreeCelsius}\\
+ &&\raisebox{0.5in}[0pt]{\includegraphics[height=7.5in]{\SMVfigdir/colorbar_20_620}}\\
+
+ \end{tabular}
+\end{center}
+ \caption[A test showing vector slice file data] {A test showing vector slice file data
+ at \SI{1}{s}, \SI{10}{s} and \SI{30}{s}. A portion of the interior gas temperature
+ is initialized to \SI{600}{\degreeCelsius}.  The vectors in this region should be
+ red for the $t=\SI{0}{s}$ images. For the chopped contours, the color near the chop
+ boundary should match the color near \SI{140}{\degreeCelsius} in the colorbar.}
+\label{figvslicetest}%
+\end{figure}
+
+\begin{figure}[bph]
+\begin{center}
+\begin{tabular}{c}
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/vectorskipx_grid}\\
+ grid\\
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/vectorskipx}\\
+ original spacing\\
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/vectorskipx_uniform}\\
+ uniform spacing
+ \end{tabular}
+\end{center}
+ \caption[A test showing uniform vector slices where grids are non-uniform in the X direction.]
+{A test showing uniform vector slices where grids are non-uniform in the X direction.}
+\label{figvsliceuniformx}%
+\end{figure}
+
+\begin{figure}[bph]
+\begin{center}
+\begin{tabular}{ccc}
+ \includegraphics[height=6.0in]{SCRIPT_FIGURES/vectorskipz_grid}&
+ \includegraphics[height=6.0in]{SCRIPT_FIGURES/vectorskipz}&
+ \includegraphics[height=6.0in]{SCRIPT_FIGURES/vectorskipz_uniform}\\
+ grid&original spacing&uniform spacing\\
+ \end{tabular}
+\end{center}
+ \caption[A test showing uniform vector slices where grids are non-uniform in the Z direction.]
+{A test showing uniform vector slices where grids are non-uniform in the Z direction.}
+\label{figvsliceuniformz}%
+\end{figure}
+
+\begin{figure}[bph]
+\begin{center}
+\begin{tabular}{ccp{1.0in}}
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/mplume5c8_vslice_00}\\
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/mplume5c8_vslice_10}\\
+ \includegraphics[height=\figheightE]{SCRIPT_FIGURES/mplume5c8_vslice_30}\\
+&&\raisebox{0.5in}[0pt]{\includegraphics[height=7.5in]{\SMVfigdir/colorbar_20_620}}\\
+ \end{tabular}
+\end{center}
+ \caption[A test showing 3D vector slice data]{A test showing 3D vector slice data at \SI{0}{s}, \SI{10}{s} and \SI{30}{s}.}
+\label{figvslice3D}%
+\end{figure}
 
 \begin{figure}[bph]
 \begin{center}
@@ -877,22 +979,6 @@ SI{30}{s}, FED=0.29&\SI{60}{s}, FED=0.59\\
  shown at three time steps. }
 \label{figvgslicetest}%
 \end{figure}
-
-\begin{figure}[bph]
-\begin{center}
-\begin{tabular}{cp{1.0in}}
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_diff_slice_00}\\
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_diff_slice_10}\\
- \includegraphics[height=\figheightE]{SCRIPT_FIGURES/plume5c_diff_slice_30}\\
-&\raisebox{0.5in}[0pt]{\includegraphics[height=7.5in]{\SMVfigdir/colorbar_tempdiff}}\\
- \end{tabular}
-\end{center}
- \caption[A test showing slice contours generated by differencing two cases with
- Smokediff]{A test showing slice contours generated by differencing
- two cases with Smokediff  at \SI{0}{s}, \SI{10}{s} and \SI{30}{s}.}
-\label{figdiffslicetest}%
-\end{figure}
-
 
 \clearpage
 
@@ -1029,9 +1115,6 @@ The cases are the same otherwise.  Similarly, Figure \ref{figRESTARTgeom} shows
 an immersed geometry case run with and without a restart file. The `with restart` images
 in both figures
 should be the same as the `without restart` images.
-
-
-
 
 \begin{figure}[bph]
 \begin{center}
@@ -1380,6 +1463,21 @@ by running the Smokeview script, {\tt plume5c.ssf}\ (see Appendix \ref{SSFplume5
 
 \clearpage
 
+\section{Geometry}
+Figure \ref{figgeomtest} shows four geometry objects colored using a color specified on a SURF line or a color specified on a GEOM line. The object color should match the color given on the label below it.
+
+\begin{figure}[bph]
+\begin{center}
+\begin{tabular}{c}
+ \includegraphics[height=\figheightD]{SCRIPT_FIGURES/color_geom}
+\end{tabular}
+\end{center}
+ \caption{A test verifying objects are colored correctly when colors are specified on either a SURF or a GEOM line.}
+\label{figgeomtest}%
+\end{figure}
+
+\clearpage
+
 \section{Devices}
 
 The case illustrated in Fig. \ref{figsprinkmany} tests how well Smokeview can
@@ -1621,8 +1719,7 @@ glasses are required to see the 3D stereo effect. }
 \label{FDScolorconv}
 \fdsinput{colorconv.fds}
 
-\section{fed\_test}
-\fdsinput{fed_test.fds}
+\fedb
 
 \section{plume5c}
 \label{FDSplume5c}
@@ -1667,8 +1764,7 @@ glasses are required to see the 3D stereo effect. }
 \label{SSFcolorconv}
 \fdsinput{colorconv.ssf}
 
-\section{fed\_test}
-\fdsinput{fed_test.ssf}
+\fedc
 
 \section{plume5c}
 \label{SSFplume5c}
