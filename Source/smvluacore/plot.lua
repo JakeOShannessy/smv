@@ -193,7 +193,7 @@ function plot.MultiDV(dir, dvs, title, opts, extras)
         width   = 1600,
         height  = 1000,
         xlabel  = dvs[1].x.name .. " (" .. dvs[1].x.units .. ")",
-        key     = "outside bottom center box opaque font ',10' horizontal spacing 1.5",
+        key     = "outside bottom center box opaque font ',10' horizontal spacing 1.1",
         bmargin = 6.5,
         title   = title:gsub("_", "\\\\_"),
         -- consts = {
@@ -247,6 +247,31 @@ function plot.MultiDV(dir, dvs, title, opts, extras)
             else
                 arr.with =
                 'filledcurves fs transparent pattern 6 border lw 2'
+            end
+            -- arr.with
+            g.data[#g.data + 1] = gp.array(arr)
+        end
+    end
+    if extras and extras.door then
+        do
+            local arr = { -- plot from an 'array-like' thing in memory. Could be a
+                -- numlua matrix, for example.
+                {
+                    { extras.door.open, extras.door.close }, -- x
+                    -- TODO: find a better way to do this than this approx. value
+                    { 1600,             1600 },              -- x
+                },
+
+                title = extras.lowerBound.y.name, -- optional
+                using = { 1, 2 }                  -- optional
+            }
+            -- if extras.lowerBound.name then arr.title = extras.lowerBound.name else arr.title = extras.lowerBound.y.name end
+            arr.title = "Door Open"
+            if (extras.door.with) then
+                arr.with = extras.door.with
+            else
+                arr.with =
+                'filledcurves x1 fs transparent pattern 7 border lw 2'
             end
             -- arr.with
             g.data[#g.data + 1] = gp.array(arr)
@@ -444,6 +469,9 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
             upperBound.name = "Upper Bound"
             extras.upperBound = upperBound
         end
+    end
+    if plotConfig and plotConfig.door then
+        extras.door = plotConfig.door
     end
     return plot.DV(plotDir, vecs, name, gnuPlotConfig, extras)
 end
