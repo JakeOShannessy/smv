@@ -251,7 +251,7 @@ int RunBenchmark(char *input_file) {
                            json_object_new_double(mesh->x1));
     json_object_object_add(mesh_dimensions, "y_min",
                            json_object_new_double(mesh->y0));
-    json_object_object_add(mesh_dimensions, "y_ax",
+    json_object_object_add(mesh_dimensions, "y_max",
                            json_object_new_double(mesh->y1));
     json_object_object_add(mesh_dimensions, "z_min",
                            json_object_new_double(mesh->z0));
