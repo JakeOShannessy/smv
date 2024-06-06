@@ -227,7 +227,7 @@ function plot.MultiDV(dir, dvs, title, opts, extras)
         error("cannot plot more than 2 different y-units at once")
     end
 
-    if extras.lowerBound and extras.upperBound then
+    if extras and extras.lowerBound and extras.upperBound then
         do
             local arr = { -- plot from an 'array-like' thing in memory. Could be a
                 -- numlua matrix, for example.
