@@ -138,6 +138,22 @@ function camera.from_y_min()
     camera.set("YMIN")
 end
 
+function camera.from_y_max()
+    camera.set("YMAX")
+end
+
+function camera.from_x_min()
+    camera.set("XMIN")
+end
+
+function camera.from_x_max()
+    camera.set("XMAX")
+end
+
+function camera.from_z_min()
+    camera.set("ZMIN")
+end
+
 function camera.set_ortho_preset(camera)
     smvlib.set_ortho_preset(camera)
 end
