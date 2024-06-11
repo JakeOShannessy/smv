@@ -398,6 +398,10 @@ local function FlowGroupFlowPrefix(flowGroup)
             showName = vol.id .. " " .. soot.id
         end
         return showName
+    elseif vol then
+        return vol.id
+    elseif soot then
+        return soot.id
     end
 end
 
@@ -408,6 +412,11 @@ local function FlowGroupBestName(flowGroup)
         return deviceId
     elseif prefix and prefix:len() > 0 then
         return prefix
+    else
+        for k, v in pairs(flowGroup) do
+            print(k, v)
+        end
+        error("no flow devices for: ", deviceId)
     end
 end
 
