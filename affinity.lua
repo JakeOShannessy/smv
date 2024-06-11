@@ -678,34 +678,36 @@ function affinity.keyRenders(smv, case, geom, timeline)
     smv.render("Vis - 2 m AFFL (End)", smv.view.time)
     smv.unload.all()
 
-    local threshold = 30
-    smv.view.colorbar.flip = true
-    smv.load.slice_std(case, "SOOT VISIBILITY", geom.stair.axis, geom.stair.offset)
-    smv.bounds.slices.set("VIS_C", { min = 0, max = threshold * 2 })
-    if geom.stair.axis == 1 then
-        smv.camera.from_x_min()
-    elseif geom.stair.axis == 2 then
-        smv.camera.from_y_min()
-    end
-    smv.clipping.mode = 2
-    smv.clipping.y.min = geom.stair.offset
-    smv.camera.set_orthographic()
-    if timeline then
-        if timeline.aptDoor.close then
-            smv.view.time = timeline.aptDoor.close
-            smv.render("Vis - Stair View - %.0fs (Flat Door Close)", smv.view.time)
-            smv.view.time = timeline.stairDoor.close
-            smv.render("Vis - Stair View - %.0fs (Stair Door Close)", smv.view.time)
-            smv.bounds.slices.set("VIS_C", { min = 0, max = 20 })
-            smv.view.time = timeline.corridorClearance
-            smv.render("Vis - Stair View - %.0fs (Corridor Clearance)", smv.view.time)
-            smv.bounds.slices.set("VIS_C", { min = 0, max = threshold * 2 })
+    if geom.stair then
+        local threshold = 30
+        smv.view.colorbar.flip = true
+        smv.load.slice_std(case, "SOOT VISIBILITY", geom.stair.axis, geom.stair.offset)
+        smv.bounds.slices.set("VIS_C", { min = 0, max = threshold * 2 })
+        if geom.stair.axis == 1 then
+            smv.camera.from_x_min()
+        elseif geom.stair.axis == 2 then
+            smv.camera.from_y_min()
         end
+        smv.clipping.mode = 2
+        smv.clipping.y.min = geom.stair.offset
+        smv.camera.set_orthographic()
+        if timeline then
+            if timeline.aptDoor.close then
+                smv.view.time = timeline.aptDoor.close
+                smv.render("Vis - Stair View - %.0fs (Flat Door Close)", smv.view.time)
+                smv.view.time = timeline.stairDoor.close
+                smv.render("Vis - Stair View - %.0fs (Stair Door Close)", smv.view.time)
+                smv.bounds.slices.set("VIS_C", { min = 0, max = 20 })
+                smv.view.time = timeline.corridorClearance
+                smv.render("Vis - Stair View - %.0fs (Corridor Clearance)", smv.view.time)
+                smv.bounds.slices.set("VIS_C", { min = 0, max = threshold * 2 })
+            end
+        end
+        smv.view.set_time_end()
+        smv.render("Vis - Stair View (end)", smv.view.time)
+        smv.clipping.y.min = nil
+        smv.unload.all()
     end
-    smv.view.set_time_end()
-    smv.render("Vis - Stair View (end)", smv.view.time)
-    smv.clipping.y.min = nil
-    smv.unload.all()
 
 
     -- Speed
@@ -793,7 +795,7 @@ function affinity.keyRenders(smv, case, geom, timeline)
     smv.unload.all()
 end
 
-function affinity.autoPlotHRR(case, pOpts,opts)
+function affinity.autoPlotHRR(case, pOpts, opts)
     local hrrDV = case.csvs['hrr'].vectors['HRR']
     plot.plotHRRDV(pOpts.plotDir, hrrDV, string.format("HRR %s", case.chid),
         {},
