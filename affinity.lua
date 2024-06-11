@@ -793,4 +793,11 @@ function affinity.keyRenders(smv, case, geom, timeline)
     smv.unload.all()
 end
 
+function affinity.autoPlotHRR(case, pOpts,opts)
+    local hrrDV = case.csvs['hrr'].vectors['HRR']
+    plot.plotHRRDV(pOpts.plotDir, hrrDV, string.format("HRR %s", case.chid),
+        {},
+        opts)
+end
+
 return affinity
