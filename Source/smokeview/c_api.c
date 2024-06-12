@@ -117,10 +117,9 @@ int CApiSetSliceBounds(const char *slice_type, int set_valmin, float valmin,
   slicebounds[slice_type_index].dlg_valmin = valmin;
   slicebounds[slice_type_index].dlg_valmax = valmax;
   int error = 0;
-  GLUISetMinMax(BOUND_SLICE, slicebounds[slice_type_index].shortlabel, set_valmin,
-            valmin, set_valmax, valmax);
-  // Update the colors given the bounds set above
-  UpdateAllSliceColors(slice_type_index, &error);
+  GLUISetMinMax(BOUND_SLICE, slicebounds[slice_type_index].shortlabel,
+                set_valmin, valmin, set_valmax, valmax);
+  UpdateSliceBounds2();
   return 0;
 }
 
@@ -328,7 +327,7 @@ int Loadfile(const char *filename) {
     sd = sliceinfo + i;
     if (strcmp(sd->file, filename) == 0) {
       ReadSlice(sd->file, i, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR,
-        &errorcode);
+                &errorcode);
       return errorcode;
     }
   }
@@ -2518,7 +2517,6 @@ int SetBoundzipstep(int v) {
   tload_zipstep = v;
   return 0;
 } // BOUNDZIPSTEP
-
 
 int SetIsozipstep(int v) {
   tload_zipstep = v;
