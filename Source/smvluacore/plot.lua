@@ -246,7 +246,7 @@ function plot.MultiDV(dir, dvs, title, opts, extras)
                 arr.with = extras.lowerBound.with
             else
                 arr.with =
-                'filledcurves fs transparent pattern 6 border lw 2'
+                'filledcurves fs transparent pattern 6 border lw 2 fc rgb "skyblue"'
             end
             -- arr.with
             g.data[#g.data + 1] = gp.array(arr)
@@ -271,7 +271,7 @@ function plot.MultiDV(dir, dvs, title, opts, extras)
                 arr.with = extras.door.with
             else
                 arr.with =
-                'filledcurves x1 fs transparent pattern 7 border lw 2'
+                'filledcurves x1 fs transparent pattern 7 border lw 2 fc rgb "blue"'
             end
             -- arr.with
             g.data[#g.data + 1] = gp.array(arr)
@@ -293,6 +293,11 @@ function plot.MultiDV(dir, dvs, title, opts, extras)
             }
             if dv.name then arr.title = dv.name else arr.title = dv.y.name end
             if (dv.with) then arr.with = dv.with else arr.with = 'linespoints' end
+            if (dv.opts) then
+                for _, opt in ipairs(dv.opts) do
+                    arr.with = arr.with .. " " .. opt
+                end
+            end
             g.data[#g.data + 1] = gp.array(arr)
             if unitsN == 1 then
                 local un = unitMap[unitsName]
@@ -417,13 +422,15 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
     end
     if hrrDV.x and hrrDV.y then
         print(hrrDV.name)
+        hrrDV.opts = { "lt 1" }
         local slowDV, mediumDV, fastDV, ultrafastDV = createStdHRRCurves(hrrDV, offset)
-        vecs = { hrrDV, slowDV, mediumDV, fastDV, ultrafastDV }
+        vecs = { slowDV, mediumDV, fastDV, ultrafastDV, hrrDV, }
     else
         -- TODO: find the best set of x points from each HRR DV, instead of using
         -- hrrDV[1]
         print(hrrDV[1].name)
         local slowDV, mediumDV, fastDV, ultrafastDV = createStdHRRCurves(hrrDV[1], offset)
+        hrrDV.opts = { "lt 1" }
         vecs = hrrDV
         for i, v in ipairs({ slowDV, mediumDV, fastDV, ultrafastDV }) do
             print(i, v.name)
@@ -437,9 +444,13 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
         local filteredVec = smv.deepCopy(hrrDV)
         plot.wma(filteredVec, 20)
         filteredVec.name = "Time-Averaged (WMA)"
+        filteredVec.opts = { "lt 2" }
         vecs[#vecs + 1] = filteredVec
     end
     local extras = {}
+    for k, v in pairs(plotConfig) do
+        print(k, v)
+    end
     if plotConfig and plotConfig.bounds then
         local configObject = type(plotConfig.bounds) == "table"
         local alpha
