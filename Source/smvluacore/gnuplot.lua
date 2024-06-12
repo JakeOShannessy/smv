@@ -37,9 +37,9 @@ local function remove_temp_files()
     end
 end
 
-local function write_temp_file(content)
+local function write_temp_file(content, suffix)
     -- local name = os.tmpname()
-    local name = tostring(math.floor(math.random()*100000))
+    local name = tostring(math.floor(math.random() * 100000)) .. suffix
     local file = io.open(name, 'w')
     file:write(content)
     file:close()
@@ -57,8 +57,8 @@ end
 local quoted = {
     xlabel      = true,
     ylabel      = true,
-    x2label      = true,
-    y2label      = true,
+    x2label     = true,
+    y2label     = true,
     zlabel      = true,
     xformat     = true,
     yformat     = true,
@@ -69,12 +69,12 @@ local quoted = {
 }
 
 local special = {
-    xformat     = 'set format x "%s"',
-    yformat     = 'set format y "%s"',
-    width       = false,
-    height      = false,
-    fname       = false,
-    fsize       = false,
+    xformat = 'set format x "%s"',
+    yformat = 'set format y "%s"',
+    width   = false,
+    height  = false,
+    fname   = false,
+    fsize   = false,
 }
 
 -- outputs that should be persistent
@@ -95,7 +95,7 @@ gnuplot.terminal = {
 local options = {
     -- header
     function(g, code)
-        local tm   = gnuplot.terminal[g._type]
+        local tm = gnuplot.terminal[g._type]
         if (not tm) then
             print("tm:", tm)
             -- error("nil tm")
@@ -110,7 +110,7 @@ local options = {
     -- configs
     function(g, code)
         for k, v in pairs(g) do
-            if k:sub(1,1) ~= '_' then
+            if k:sub(1, 1) ~= '_' then
                 -- string. ex.: set logscale x or set xlabel "X label"
                 if type(v) == 'string' or type(v) == 'number' then
                     if special[k] ~= nil then
@@ -124,7 +124,7 @@ local options = {
                     else
                         add(code, 'set %s %s', k, v)
                     end
-                -- boolean. ex.: set grid
+                    -- boolean. ex.: set grid
                 elseif type(v) == 'boolean' then
                     add(code, '%s %s', v and 'set' or 'unset', k)
                 end
@@ -153,8 +153,8 @@ local options = {
 
 -- returns a string with the gnuplot script
 function gnuplot.codegen(g, cmd, path)
-    g._type  = g.type or path:match("%.([^%.]+)$")
-    g.type   = nil
+    g._type = g.type or path:match("%.([^%.]+)$")
+    g.type  = nil
     if not persist[g._type] then g.output = path end
 
     local code = {}
@@ -162,24 +162,30 @@ function gnuplot.codegen(g, cmd, path)
         f(g, code)
     end
 
+    if ColorCommands then
+        for _, colorCommand in ipairs(ColorCommands) do
+            code[#code + 1] = colorCommand
+        end
+    end
+
     local plot_cmd = {}
 
     for i = 1, #g.data do
         local d    = g.data[i]
         local u    = d.using and 'u ' .. table.concat(d.using, ':') or ''
-        local name = d.file  and string.format('"%s"', d[1]) or d[1]
+        local name = d.file and string.format('"%s"', d[1]) or d[1]
 
-        local opts = {name, u}
-        table.insert(opts, d.with      and 'w  ' .. d.with         )
-        table.insert(opts, d.width     and 'lw ' .. d.width        )
-        table.insert(opts, d.style     and 'ls ' .. d.style        )
-        table.insert(opts, d.type      and 'lt ' .. d.type         )
-        table.insert(opts, d.color     and 'lc ' .. d.color        )
-        table.insert(opts, d.ptype     and 'pt ' .. d.ptype        )
-        table.insert(opts, d.psize     and 'ps ' .. d.psize        )
-        table.insert(opts, d.pinterval and 'pi ' .. d.pinterval    )
-        table.insert(opts, d.axis      and 'axis ' .. d.axis    )
-        table.insert(opts, 't "' .. (d.title or '') .. '"'         )
+        local opts = { name, u }
+        table.insert(opts, d.with and 'w  ' .. d.with)
+        table.insert(opts, d.width and 'lw ' .. d.width)
+        table.insert(opts, d.style and 'ls ' .. d.style)
+        table.insert(opts, d.type and 'lt ' .. d.type)
+        table.insert(opts, d.color and 'lc ' .. d.color)
+        table.insert(opts, d.ptype and 'pt ' .. d.ptype)
+        table.insert(opts, d.psize and 'ps ' .. d.psize)
+        table.insert(opts, d.pinterval and 'pi ' .. d.pinterval)
+        table.insert(opts, d.axis and 'axis ' .. d.axis)
+        table.insert(opts, 't "' .. (d.title or '') .. '"')
 
         add(plot_cmd, table.concat(opts, ' '))
         g.__gpcache = nil
@@ -193,7 +199,7 @@ end
 
 osname = ""
 
-if package.config:sub(1,1) == "\\" then
+if package.config:sub(1, 1) == "\\" then
     osname = "windows"
 else
     osname = "not windows"
@@ -201,7 +207,7 @@ end
 
 function gnuplot.do_plot(g, cmd, path)
     local code = gnuplot.codegen(g, cmd, path)
-    local name = write_temp_file( code )
+    local name = write_temp_file(code, ".gnuplot")
     local opt = ""
     if persist[g._type] then opt = '--persist' end
     -- A hack to use 'start' on windows to get around path issues.
@@ -209,7 +215,7 @@ function gnuplot.do_plot(g, cmd, path)
     local success
     local result
     local err_code
-    success, result, err_code = os.execute( command )
+    success, result, err_code = os.execute(command)
     if not success then error(string.format("plot failed with %d", err_code)) end
     return g
 end
@@ -252,7 +258,7 @@ plot_mt = {
 }
 
 setmetatable(gnuplot, plot_mt)
-setmetatable(plot_mt, {__gc = remove_temp_files }) -- ugly
+setmetatable(plot_mt, { __gc = remove_temp_files }) -- ugly
 
 -- ** Data to plot **
 
@@ -282,14 +288,14 @@ function gnuplot.array(arg)
 
             table.insert(array, table.concat(aux, ' '))
 
-             -- insert a blank line, for contour plots
+            -- insert a blank line, for contour plots
             if arg.blank and line % arg.blank == 0 then
                 table.insert(array, '')
             end
         end
 
-        local lines  = table.concat(array, '\n')
-        data.__gpcache = write_temp_file(lines)
+        local lines    = table.concat(array, '\n')
+        data.__gpcache = write_temp_file(lines, ".dat")
     end
 
     arg[1] = data.__gpcache
@@ -303,7 +309,7 @@ function gnuplot.custom(arg)
 
     if not data.__gpcache then
         local lines = data:serialize()
-        data.__gpcache = write_temp_file(lines)
+        data.__gpcache = write_temp_file(lines, ".dat")
     end
 
     arg[1] = data.__gpcache
@@ -314,11 +320,11 @@ end
 function gnuplot.func(arg)
     local array = { {}, {} }
     local func  = arg[1]
-    local range = arg.range or {-5, 5, 0.1}
+    local range = arg.range or { -5, 5, 0.1 }
 
     for x = range[1], range[2], range[3] do
-        table.insert(array[1], x       )
-        table.insert(array[2], func(x) )
+        table.insert(array[1], x)
+        table.insert(array[2], func(x))
     end
 
     arg[1] = array
