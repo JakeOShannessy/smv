@@ -465,20 +465,38 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
             bound = 0.1
         end
         do
-            local lowerBound = smv.deepCopy(hrrDV)
-            for i, x in ipairs(lowerBound.x.values) do
-                lowerBound.y.values[i] = cappedCurve(alpha, capTime, x) * (1 + bound)
+            if configObject and plotConfig.bounds.fixed then
+                local lowerBound = smv.deepCopy(hrrDV)
+                for i, x in ipairs(lowerBound.x.values) do
+                    lowerBound.y.values[i] = plotConfig.bounds.fixed * (1 + bound)
+                end
+                lowerBound.name = "Lower Bound"
+                extras.lowerBound = lowerBound
+            else
+                local lowerBound = smv.deepCopy(hrrDV)
+                for i, x in ipairs(lowerBound.x.values) do
+                    lowerBound.y.values[i] = cappedCurve(alpha, capTime, x) * (1 + bound)
+                end
+                lowerBound.name = "Lower Bound"
+                extras.lowerBound = lowerBound
             end
-            lowerBound.name = "Lower Bound"
-            extras.lowerBound = lowerBound
         end
         do
-            local upperBound = smv.deepCopy(hrrDV)
-            for i, x in ipairs(upperBound.x.values) do
-                upperBound.y.values[i] = cappedCurve(alpha, capTime, x) * (1 - bound)
+            if configObject and plotConfig.bounds.fixed then
+                local upperBound = smv.deepCopy(hrrDV)
+                for i, x in ipairs(upperBound.x.values) do
+                    upperBound.y.values[i] = plotConfig.bounds.fixed * (1 - bound)
+                end
+                upperBound.name = "Upper Bound"
+                extras.upperBound = upperBound
+            else
+                local upperBound = smv.deepCopy(hrrDV)
+                for i, x in ipairs(upperBound.x.values) do
+                    upperBound.y.values[i] = cappedCurve(alpha, capTime, x) * (1 - bound)
+                end
+                upperBound.name = "Upper Bound"
+                extras.upperBound = upperBound
             end
-            upperBound.name = "Upper Bound"
-            extras.upperBound = upperBound
         end
     end
     if plotConfig and plotConfig.door then
