@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<?define ProductVersion = "1.8.0"?>
+<?define ProductVersion = "1.11.0"?>
 <?define ProductUpgradeCode = "3692e538-093e-452d-9957-c83561235f72"?>
 
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
@@ -34,6 +34,9 @@
             NEWERVERSIONDETECTED</Condition>
         <Property Id="ALLUSERS" Secure="yes" Value="2" />
         <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1" />
+
+        <!-- TODO: install a environment variable key for aff-calcs -->
+        <!-- <Environment Id="PATH" Name="PATH" Value="[INSTALLDIR]" Permanent="yes" Part="last" Action="set" System="no" /> -->
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id='ProgramFiles64Folder' Name='PFiles'>
                 <Directory Id='Fireng' Name='Fireng'>
