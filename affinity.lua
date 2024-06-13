@@ -659,11 +659,21 @@ function affinity.autoSootRegions(case, info, pOpts)
     end
 end
 
+local function loadSliceStdMany(smv, case, sliceType, axis, vals)
+    if type(vals) == "table" then
+        for _, p in ipairs(vals) do
+            smv.load.slice_std(case, sliceType, axis, p)
+        end
+    else
+        smv.load.slice_std(case, sliceType, axis, vals)
+    end
+end
+
 function affinity.keyRenders(smv, case, geom, timeline)
     -- Visibility
     local threshold = 30
     smv.view.colorbar.flip = true
-    smv.load.slice_std(case, "SOOT VISIBILITY", 3, geom.occHeight)
+    loadSliceStdMany(smv, case, "SOOT VISIBILITY", 3, geom.occHeight)
     smv.bounds.slices.set("VIS_C", { min = 0, max = threshold * 2 })
     smv.camera.from_z_max()
     smv.clipping.mode = 2
@@ -671,12 +681,16 @@ function affinity.keyRenders(smv, case, geom, timeline)
     -- TODO: how do we get the time of extract activation.
     -- TODO: find and render the worst value for soot in stair
     if timeline then
-        if timeline.aptDoor.close then
+        if timeline.aptDoor then
             smv.view.time = timeline.aptDoor.close
             print(smv.view.time)
             smv.render("Vis - 2 m AFFL - %.0fs (Flat Door Close)", smv.view.time)
+        end
+        if timeline.stairDoor then
             smv.view.time = timeline.stairDoor.close
             smv.render("Vis - 2 m AFFL - %.0fs (Stair Door Close)", smv.view.time)
+        end
+        if timeline.corridorClearance then
             smv.bounds.slices.set("VIS_C", { min = 0, max = 20 })
             smv.view.time = timeline.corridorClearance
             smv.render("Vis - 2 m AFFL - %.0fs (Corridor Clearance)", smv.view.time)
@@ -690,7 +704,7 @@ function affinity.keyRenders(smv, case, geom, timeline)
     if geom.stair then
         local threshold = 30
         smv.view.colorbar.flip = true
-        smv.load.slice_std(case, "SOOT VISIBILITY", geom.stair.axis, geom.stair.offset)
+        loadSliceStdMany(smv, case, "SOOT VISIBILITY", geom.stair.axis, geom.stair.offset)
         smv.bounds.slices.set("VIS_C", { min = 0, max = threshold * 2 })
         if geom.stair.axis == 1 then
             smv.camera.from_x_min()
@@ -701,12 +715,16 @@ function affinity.keyRenders(smv, case, geom, timeline)
         smv.clipping.y.min = geom.stair.offset
         smv.camera.set_orthographic()
         if timeline then
-            if timeline.aptDoor.close then
-                smv.view.time = timeline.aptDoor.close
+            if timeline.aptDoor then
+                smv.view.time = timeline.aptDoor
                 smv.render("Vis - Stair View - %.0fs (Flat Door Close)", smv.view.time)
+            end
+            if timeline.stairDoor then
                 smv.view.time = timeline.stairDoor.close
                 smv.render("Vis - Stair View - %.0fs (Stair Door Close)", smv.view.time)
                 smv.bounds.slices.set("VIS_C", { min = 0, max = 20 })
+            end
+            if timeline.corridorClearance then
                 smv.view.time = timeline.corridorClearance
                 smv.render("Vis - Stair View - %.0fs (Corridor Clearance)", smv.view.time)
                 smv.bounds.slices.set("VIS_C", { min = 0, max = threshold * 2 })
@@ -721,17 +739,21 @@ function affinity.keyRenders(smv, case, geom, timeline)
 
     -- Speed
     smv.view.colorbar.flip = false
-    smv.load.slice_std(case, "VELOCITY", 3, geom.occHeight)
+    loadSliceStdMany(smv, case, "VELOCITY", 3, geom.occHeight)
     smv.bounds.slices.set("vel", { min = 0, max = 10 })
     smv.camera.from_z_max()
     smv.clipping.mode = 2
     smv.clipping.z.max = geom.occHeight
     if timeline then
-        if timeline.aptDoor.close then
+        if timeline.aptDoor then
             smv.view.time = timeline.aptDoor.close
             smv.render("Air Speed - 2 m AFFL - %.0fs (Flat Door Close)", smv.view.time)
+        end
+        if timeline.stairDoor then
             smv.view.time = timeline.stairDoor.close
             smv.render("Air Speed - 2 m AFFL - %.0fs (Stair Door Close)", smv.view.time)
+        end
+        if timeline.corridorClearance then
             smv.view.time = timeline.corridorClearance
             smv.render("Air Speed - 2 m AFFL - %.0fs (Corridor Clearance)", smv.view.time)
         end
@@ -744,15 +766,17 @@ function affinity.keyRenders(smv, case, geom, timeline)
     smv.view.colorbar.preset = "AFAC split"
     smv.view.colorbar.flip = false
     smv.bounds.slices.set("temp", { min = 20, max = 275 })
-    smv.load.slice_std(case, "TEMPERATURE", 3, geom.ffHeight)
+    loadSliceStdMany(smv, case, "TEMPERATURE", 3, geom.ffHeight)
     smv.bounds.slices.set("temp", { min = 20, max = 275 })
     smv.camera.from_z_max()
     smv.clipping.mode = 2
     smv.clipping.z.max = geom.occHeight
     if timeline then
-        if timeline.aptDoor.close then
+        if timeline.aptDoor then
             smv.view.time = timeline.aptDoor.close
             smv.render("Temp AFAC - 1.5 m AFFL - %.0fs (Flat Door Close)", smv.view.time)
+        end
+        if timeline.corridorClearance then
             smv.view.time = timeline.corridorClearance
             smv.render("Temp AFAC - 1.5 m AFFL - %.0fs (Corridor Clearance Time)", smv.view.time)
         end
@@ -764,15 +788,17 @@ function affinity.keyRenders(smv, case, geom, timeline)
     affinity.setHouseStyle(smv)
 
     smv.view.colorbar.flip = false
-    smv.load.slice_std(case, "TEMPERATURE", 3, geom.ffHeight)
+    loadSliceStdMany(smv, case, "TEMPERATURE", 3, geom.ffHeight)
     smv.bounds.slices.set("temp", { min = 20, max = 300 })
     smv.camera.from_z_max()
     smv.clipping.mode = 2
     smv.clipping.z.max = geom.occHeight
     if timeline then
-        if timeline.aptDoor.close then
+        if timeline.aptDoor then
             smv.view.time = timeline.aptDoor.close
             smv.render("Temp 160 - 1.5 m AFFL - %.0fs (Flat Door Close)", smv.view.time)
+        end
+        if timeline.corridorClearance then
             smv.view.time = timeline.corridorClearance
             smv.render("Temp 160 - 1.5 m AFFL - %.0fs (Corridor Clearance Time)", smv.view.time)
         end
@@ -782,17 +808,19 @@ function affinity.keyRenders(smv, case, geom, timeline)
     smv.unload.all()
 
     -- Pressure
-    smv.load.slice_std(case, "PRESSURE", 3, geom.occHeight)
+    loadSliceStdMany(smv, case, "TEMPERATURE", 3, geom.occHeight)
     smv.bounds.slices.set("pres", { min = -130, max = 10 })
     smv.camera.from_z_max()
     smv.clipping.mode = 2
     smv.clipping.z.max = geom.occHeight
     smvlib.setcolorbarflip(true)
     if timeline then
-        if timeline.aptDoor.close then
+        if timeline.aptDoor then
             smv.view.time = timeline.aptDoor.close
             smv.view.colorbar.flip = true
             smv.render("Pres - 2 m AFFL - %.0fs (apt door re-close)", smv.view.time)
+        end
+        if timeline.corridorClearance then
             smv.view.time = timeline.corridorClearance
             smv.view.colorbar.flip = true
             smv.render("Pres - 2 m AFFL - %.0fs (apt door re-close + 120)", smv.view.time)
