@@ -1,13 +1,13 @@
 #define INMAIN
 #include "options.h"
 #include <ctype.h>
+#include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <getopt.h>
 
 #include "MALLOCC.h"
 #include "smokeviewvars.h"
@@ -258,6 +258,52 @@ int RunBenchmark(char *input_file) {
     json_object_object_add(mesh_dimensions, "z_max",
                            json_object_new_double(mesh->z1));
     json_object_object_add(mesh_obj, "dimensions", mesh_dimensions);
+
+    struct json_object *vents = json_object_new_array();
+    for (int i = 0; i < mesh->nvents; i++) {
+      ventdata *vent = &mesh->ventinfo[i];
+      struct json_object *vent_obj = json_object_new_object();
+      json_object_object_add(vent_obj, "index", json_object_new_int(i + 1));
+      // json_object_object_add(vent_obj, "filename",
+      //                        json_object_new_string(csv_file->file));
+      // json_object_object_add(vent_obj, "type",
+      //                        json_object_new_string(csv_file->c_type));
+      json_object_object_add(
+          vent_obj, "surface_id",
+          json_object_new_string(vent->surf[0]->surfacelabel));
+      struct json_object *dimensions = json_object_new_object();
+      json_object_object_add(dimensions, "x_min",
+                             json_object_new_double(vent->xmin));
+      json_object_object_add(dimensions, "x_max",
+                             json_object_new_double(vent->xmax));
+      json_object_object_add(dimensions, "y_min",
+                             json_object_new_double(vent->ymin));
+      json_object_object_add(dimensions, "y_max",
+                             json_object_new_double(vent->ymax));
+      json_object_object_add(dimensions, "z_min",
+                             json_object_new_double(vent->zmin));
+      json_object_object_add(dimensions, "z_max",
+                             json_object_new_double(vent->zmax));
+      json_object_object_add(vent_obj, "dimensions", dimensions);
+
+      struct json_object *coordinates = json_object_new_object();
+      json_object_object_add(coordinates, "i_min",
+                             json_object_new_int(vent->imin));
+      json_object_object_add(coordinates, "i_max",
+                             json_object_new_int(vent->imax));
+      json_object_object_add(coordinates, "j_min",
+                             json_object_new_int(vent->jmin));
+      json_object_object_add(coordinates, "j_max",
+                             json_object_new_int(vent->jmax));
+      json_object_object_add(coordinates, "k_min",
+                             json_object_new_int(vent->kmin));
+      json_object_object_add(coordinates, "k_max",
+                             json_object_new_int(vent->kmax));
+      json_object_object_add(vent_obj, "coordinates", coordinates);
+      json_object_array_add(vents, vent_obj);
+    }
+    json_object_object_add(mesh_obj, "vents", vents);
+
     json_object_array_add(mesh_array, mesh_obj);
   }
   json_object_object_add(jobj, "meshes", mesh_array);
