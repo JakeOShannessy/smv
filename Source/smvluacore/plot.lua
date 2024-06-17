@@ -199,10 +199,18 @@ function plot.MultiDV(dir, dvs, title, opts, extras)
         -- consts = {
         --     gamma = 2.5
         -- },
-
+        arrow   = {},
+        label   = {},
         data    = {}
 
     }
+    local maxTargetHrr
+    if extras and extras.maxTargetHrr then
+        maxTargetHrr = extras.maxTargetHrr
+        if not g.yrange then g.yrange = "[0:".. maxTargetHrr * 1.3 .. "]" end
+    else
+        maxTargetHrr = 1000
+    end
     if opts then
         for k, v in pairs(opts) do
             g[k] = v
@@ -257,9 +265,9 @@ function plot.MultiDV(dir, dvs, title, opts, extras)
             local arr = { -- plot from an 'array-like' thing in memory. Could be a
                 -- numlua matrix, for example.
                 {
-                    { extras.door.open, extras.door.close }, -- x
+                    { extras.door.open,   extras.door.close },  -- x
                     -- TODO: find a better way to do this than this approx. value
-                    { 1600,             1600 },              -- x
+                    { maxTargetHrr * 1.3, maxTargetHrr * 1.3 }, -- x
                 },
 
                 title = extras.lowerBound.y.name, -- optional
@@ -275,6 +283,22 @@ function plot.MultiDV(dir, dvs, title, opts, extras)
             end
             -- arr.with
             g.data[#g.data + 1] = gp.array(arr)
+        end
+    end
+
+    if extras and extras.sprinklerTime then
+        do
+            g.arrow[#g.arrow + 1] = "from " ..
+                extras.sprinklerTime ..
+                ", graph 0 to " .. extras.sprinklerTime .. ", graph 1 nohead lc rgb 'dark-green' lw 2"
+            g.label[#g.label + 1] = "'SPK' at " .. extras.sprinklerTime * 0.9 .. "," .. maxTargetHrr * 1.1 .. " right"
+        end
+    end
+    if extras and extras.detectorTime then
+        do
+            g.arrow[#g.arrow + 1] = "from " ..
+                extras.detectorTime .. ", graph 0 to " .. extras.detectorTime .. ", graph 1 nohead lc rgb 'red' lw 2"
+            g.label[#g.label + 1] = "'SD' at " .. extras.detectorTime * 0.95 .. "," .. maxTargetHrr * 1.1 .. " right"
         end
     end
 
@@ -373,24 +397,25 @@ local function createStdHRRCurves(dv, offset)
         x = { name = "Time", units = "s", values = {} },
         y = { name = "Ultrafast HRR", units = "kW", values = {} }
     }
+    local bound = 1.5
     for i, v in ipairs(dv.x.values) do
         local slowVal = stdGrowthRate(slowAlpha, v - offset)
         local mediumVal = stdGrowthRate(mediumAlpha, v - offset)
         local fastVal = stdGrowthRate(fastAlpha, v - offset)
         local ultrafastVal = stdGrowthRate(ultrafastAlpha, v - offset)
-        if slowVal < (1.1 * maxHRR) then
+        if slowVal < (bound * maxHRR) then
             slowDV.x.values[i] = v
             slowDV.y.values[i] = slowVal
         end
-        if mediumVal < (1.1 * maxHRR) then
+        if mediumVal < (bound * maxHRR) then
             mediumDV.x.values[i] = v
             mediumDV.y.values[i] = mediumVal
         end
-        if fastVal < (1.1 * maxHRR) then
+        if fastVal < (bound * maxHRR) then
             fastDV.x.values[i] = v
             fastDV.y.values[i] = fastVal
         end
-        if ultrafastVal < (1.1 * maxHRR) then
+        if ultrafastVal < (bound * maxHRR) then
             ultrafastDV.x.values[i] = v
             ultrafastDV.y.values[i] = ultrafastVal
         end
@@ -420,15 +445,23 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
     else
         offset = 0
     end
+    local maxHRR = 0
+
     if hrrDV.x and hrrDV.y then
         print(hrrDV.name)
         hrrDV.opts = { "lt 1" }
         local slowDV, mediumDV, fastDV, ultrafastDV = createStdHRRCurves(hrrDV, offset)
         vecs = { slowDV, mediumDV, fastDV, ultrafastDV, hrrDV, }
+        for _, v in ipairs(hrrDV.y.values) do
+            if v > maxHRR then maxHRR = v end
+        end
     else
         -- TODO: find the best set of x points from each HRR DV, instead of using
         -- hrrDV[1]
         print(hrrDV[1].name)
+        for _, v in ipairs(hrrDV[1].y.values) do
+            if v > maxHRR then maxHRR = v end
+        end
         local slowDV, mediumDV, fastDV, ultrafastDV = createStdHRRCurves(hrrDV[1], offset)
         hrrDV.opts = { "lt 1" }
         vecs = hrrDV
@@ -440,6 +473,9 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
             print(i, v.name)
         end
     end
+    if maxHRR == 0 then maxHRR = 1 end
+    local extras = {}
+    extras.maxTargetHrr = maxHRR
     do
         local filteredVec = smv.deepCopy(hrrDV)
         plot.wma(filteredVec, 20)
@@ -447,7 +483,6 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
         filteredVec.opts = { "lt 2" }
         vecs[#vecs + 1] = filteredVec
     end
-    local extras = {}
     for k, v in pairs(plotConfig) do
         print(k, v)
     end
@@ -512,6 +547,12 @@ function plot.plotHRRDV(plotDir, hrrDV, name, gnuPlotConfig, plotConfig)
     end
     if plotConfig and plotConfig.door then
         extras.door = plotConfig.door
+    end
+    if plotConfig and plotConfig.sprinklerTime then
+        extras.sprinklerTime = plotConfig.sprinklerTime
+    end
+    if plotConfig and plotConfig.detectorTime then
+        extras.detectorTime = plotConfig.detectorTime
     end
     return plot.DV(plotDir, vecs, name, gnuPlotConfig, extras)
 end

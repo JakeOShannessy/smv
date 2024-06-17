@@ -127,6 +127,10 @@ local options = {
                     -- boolean. ex.: set grid
                 elseif type(v) == 'boolean' then
                     add(code, '%s %s', v and 'set' or 'unset', k)
+                elseif type(v) == 'table' and k ~= "data" then
+                    for _,v in ipairs(v) do
+                        add(code, 'set %s %s', k, v)
+                    end
                 end
             end
         end
