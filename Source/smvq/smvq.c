@@ -222,6 +222,8 @@ int RunBenchmark(char *input_file) {
   struct json_object *jobj = json_object_new_object();
   json_object_object_add(jobj, "version", json_object_new_int(1));
   json_object_object_add(jobj, "chid", json_object_new_string(chidfilebase));
+  json_object_object_add(jobj, "input_file", json_object_new_string(fds_filein));
+
   if (fds_title != NULL) {
     json_object_object_add(jobj, "title", json_object_new_string(fds_title));
   }

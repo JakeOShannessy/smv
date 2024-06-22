@@ -977,7 +977,7 @@ void BoundsUpdateSetup(int file_type){
 
       if(fgets(buffer, 255, stream) == NULL)break;
       if(file_type==BOUND_PLOT3D){
-        sscanf(buffer, "%s %f %f %f %f %f %f %f %f %f %f %f %f ", file, 
+        sscanf(buffer, "%s %f %f %f %f %f %f %f %f %f %f %f %f ", file,
           valmins + 0, valmaxs + 0,
           valmins + 1, valmaxs + 1,
           valmins + 2, valmaxs + 2,
@@ -1204,7 +1204,7 @@ void BoundsUpdateDoit(int file_type){
               val = meshi->qdata[IJKN(ii,jj,kk,nn)];
               valmins[nn] = MIN(val, valmins[nn]);
               valmaxs[nn] = MAX(val, valmaxs[nn]);
-              
+
             }
           }
         }
@@ -1354,7 +1354,7 @@ void BoundsUpdate(int file_type){
     strcat(label2, "SLICE");
     strcat(label3, "SLICE");
 #ifdef pp_BOUND_DEBUG
-    printf("BoundsUpdate(SLICE)\n");
+    fprintf(stderr,"BoundsUpdate(SLICE)\n");
 #endif
   }
   else if(file_type==BOUND_PATCH){
