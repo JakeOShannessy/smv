@@ -7294,7 +7294,7 @@ int ReadSMV_Init() {
   }
   nisoinfo=0;
 
-  FreeCADInfo();
+  FreeCADInfo(cadgeominfo,ncadgeom);
 
   updateindexcolors=0;
   ntrnx=0;
@@ -7330,7 +7330,7 @@ int ReadSMV_Init() {
   FREEMEMORY(surfinfo);
   FREEMEMORY(terrain_textures);
 
-  if(cadgeominfo!=NULL)FreeCADInfo();
+  if(cadgeominfo!=NULL)FreeCADInfo(cadgeominfo,ncadgeom);
 
   STOP_TIMER(pass0_time );
   PRINT_TIMER(timer_readsmv, "readsmv setup");
@@ -8119,7 +8119,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
   FREEMEMORY(surfinfo);
   if(NewMemory((void **)&surfinfo,(nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
 
-  if(cadgeominfo!=NULL)FreeCADInfo();
+  if(cadgeominfo!=NULL)FreeCADInfo(cadgeominfo,ncadgeom);
   if(ncadgeom>0){
     if(NewMemory((void **)&cadgeominfo,ncadgeom*sizeof(cadgeomdata))==0)return 2;
   }
@@ -9288,7 +9288,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       if(FILE_EXISTS_CASEDIR(bufferptr)==YES){
         if(NewMemory((void **)&cadgeominfo[ncadgeom].file,(unsigned int)(len+1))==0)return 2;
         STRCPY(cadgeominfo[ncadgeom].file,bufferptr);
-        ReadCADGeom(cadgeominfo+ncadgeom);
+        ReadCADGeom(cadgeominfo+ncadgeom,block_shininess);
         ncadgeom++;
       }
       else{
