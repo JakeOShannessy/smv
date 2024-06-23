@@ -18,6 +18,7 @@
 #include "glui_motion.h"
 #include "readimage.h"
 #include "readgeom.h"
+#include "readslice.h"
 #include "readobject.h"
 #include "readcad.h"
 
