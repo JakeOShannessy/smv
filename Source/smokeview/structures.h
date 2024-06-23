@@ -13,6 +13,7 @@
 #include "IOframe.h"
 #endif
 
+#include "readcad.h"
 #include "readgeom.h"
 #include "readobject.h"
 
@@ -259,7 +260,6 @@ typedef struct _labeldata {
   int useforegroundcolor,show_always;
 } labeldata;
 
-
 /* --------------------------  terraindata ------------------------------------ */
 
 typedef struct _terraindata {
@@ -389,6 +389,18 @@ typedef struct _blockagedata {
   float texture_origin[3];
 } blockagedata;
 
+/* --------------------------  clipdata ------------------------------------ */
+
+typedef struct _clipdata {
+  int option;
+  GLdouble clipvals[24];
+  int clip_xmin, clip_xmax;
+  int clip_ymin, clip_ymax;
+  int clip_zmin, clip_zmax;
+  float xmin, xmax;
+  float ymin, ymax;
+  float zmin, zmax;
+} clipdata;
 /* --------------------------  cadlookdata ------------------------------------ */
 
 typedef struct _cadlookdata {
@@ -411,18 +423,6 @@ typedef struct _cadquad {
   cadlookdata *cadlookq;
 } cadquad;
 
-
-/* --------------------------  cadgeomdata ------------------------------------ */
-
-typedef struct _cadgeomdata{
-  char *file;
-  int *order;
-  int version;
-  int ncadlookinfo;
-  cadlookdata *cadlookinfo;
-  int nquads;
-  cadquad *quad;
-} cadgeomdata;
 
 /* --------------------------  cventdata ------------------------------------ */
 
