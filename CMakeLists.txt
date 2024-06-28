@@ -191,6 +191,7 @@ add_executable(smokeview
     Source/shared/readgeom.c
     Source/smokeview/colortable.c
     Source/smokeview/command_args.c
+    Source/smokeview/jsonrpc.c
 )
 
 # GLUI sources are separate here. In some branches GLUI is conditional.
