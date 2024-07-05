@@ -210,6 +210,35 @@ target_sources(smokeview PRIVATE
     Source/smokeview/glui_shooter.cpp
 )
 
+
+find_package(json-c CONFIG)
+if (NOT json-c_FOUND)
+    if (PKG_CONFIG_FOUND)
+        pkg_check_modules(json-c json-c)
+    endif()
+    if (NOT json-c_FOUND)
+        FetchContent_Declare(
+            json-c-git
+            EXCLUDE_FROM_ALL
+            SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/json-c/json-c
+            GIT_REPOSITORY https://github.com/json-c/json-c.git
+            GIT_TAG        33337523f5cff82e659ecbe94b2fac19c7761a42
+            FIND_PACKAGE_ARGS CONFIG NAMES json-c
+        )
+        FetchContent_MakeAvailable(json-c-git)
+        target_link_libraries(smvq PRIVATE json-c-static)
+        target_include_directories(smvq PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/json-c)
+    else()
+        message("${json-c_INCLUDE_DIRS}")
+        target_link_libraries(smvq  PRIVATE ${json-c_LIBRARIES})
+        target_include_directories(smvq  PRIVATE ${json-c_INCLUDE_DIRS})
+        target_compile_options(smvq PUBLIC ${json-c_CFLAGS_OTHER})
+    endif()
+else()
+    target_link_libraries(smokeview PRIVATE json-c::json-c)
+endif()
+
+
 # These include directories are an existing workaround that would be good to
 # remove.Because of this custom code and the potential conflict with native libs
 # this needs to be early in the include order.

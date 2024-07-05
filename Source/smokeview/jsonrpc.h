@@ -1,15 +1,25 @@
-/*
- * jsonrpc-c.h
- *
- *  Created on: Oct 11, 2012
- *      Author: hmng
- */
+#ifndef JSONRPC_H_DEFINED
+#define JSONRPC_H_DEFINED
 
-#ifndef JSONRPCC_H_
-#define JSONRPCC_H_
+#include <arpa/inet.h>
+#include <errno.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
+#include <unistd.h>
 
-#include "cJSON.h"
-#include <ev.h>
+#include "jsonrpc.h"
+
+#include <json-c/json_object.h>
+#include <json-c/json_tokener.h>
+#include <json-c/json_util.h>
+
+#define SOCK_PATH "echo_socket"
 
 /*
  *
@@ -37,8 +47,8 @@ typedef struct {
   char *error_message;
 } jrpc_context;
 
-typedef cJSON *(*jrpc_function)(jrpc_context *context, cJSON *params,
-                                cJSON *id);
+typedef json_object *(*jrpc_function)(jrpc_context *context,
+                                      json_object *params, json_object *id);
 
 struct jrpc_procedure {
   char *name;
@@ -47,38 +57,58 @@ struct jrpc_procedure {
 };
 
 struct jrpc_server {
-  int port_number;
-  struct ev_loop *loop;
-  ev_io listen_watcher;
+  struct sockaddr_un socket;
+  struct sockaddr_un remote;
+  int fd;
   int procedure_count;
   struct jrpc_procedure *procedures;
   int debug_level;
 };
 
 struct jrpc_connection {
-  struct ev_io io;
   int fd;
-  int pos;
   unsigned int buffer_size;
   char *buffer;
   int debug_level;
 };
 
-int jrpc_server_init(struct jrpc_server *server, int port_number);
-
-int jrpc_server_init_with_ev_loop(struct jrpc_server *server, int port_number,
-                                  struct ev_loop *loop);
-
-void jrpc_server_run(struct jrpc_server *server);
-
-int jrpc_server_stop(struct jrpc_server *server);
-
-void jrpc_server_destroy(struct jrpc_server *server);
+static void jrpc_procedure_destroy(struct jrpc_procedure *procedure);
 
 int jrpc_register_procedure(struct jrpc_server *server,
                             jrpc_function function_pointer, char *name,
                             void *data);
 
-int jrpc_deregister_procedure(struct jrpc_server *server, char *name);
+void jrpc_server_destroy(struct jrpc_server *server);
 
+int jrpc_deregister_procedure(struct jrpc_server *server, char *name);
+static void *get_in_addr(struct sockaddr *sa);
+
+static int send_response(struct jrpc_connection *conn, const char *response);
+
+static int send_error(struct jrpc_connection *conn, int code, char *message,
+                      json_object *id);
+
+static int send_result(struct jrpc_connection *conn, json_object *result,
+                       json_object *id);
+
+static int invoke_procedure(struct jrpc_server *server,
+                            struct jrpc_connection *conn, const char *name,
+                            json_object *params, json_object *id);
+
+static int eval_request(struct jrpc_server *server,
+                        struct jrpc_connection *conn, json_object *jobj);
+
+struct jrpc_server jrpc_server_create();
+
+int jrpc_server_listen(struct jrpc_server *server);
+
+int process_connection(struct jrpc_server *server,
+                       struct jrpc_connection *conn);
+
+struct jrpc_connection connection_create(size_t n);
+void connection_destroy(struct jrpc_connection *conn);
+
+json_object *subtract(jrpc_context *context, json_object *params,
+                      json_object *id);
+char *strdup(const char *s);
 #endif
