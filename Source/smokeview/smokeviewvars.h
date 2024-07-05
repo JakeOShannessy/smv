@@ -23,6 +23,7 @@
 #endif
 
 #include GLUT_H
+#include <json-c/json_object.h>
 
 //*** threader variables
 

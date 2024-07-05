@@ -1,4 +1,65 @@
+#include "options.h"
+
+#include "smokeviewvars.h"
+
 #include "jsonrpc.h"
+#include <pthread.h>
+
+pthread_mutex_t rpc_mutex = PTHREAD_MUTEX_INITIALIZER;
+size_t rpc_capacity = 0;
+size_t rpc_len = 0;
+json_object **rpc_buffer = NULL;
+struct jrpc_server *server = NULL;
+struct jrpc_connection *conn = NULL;
+
+void push_rpc(json_object *jobj) {
+  pthread_mutex_lock(&rpc_mutex);
+  if (rpc_buffer == NULL) {
+    rpc_capacity = 2;
+    rpc_buffer = (json_object **)malloc(rpc_capacity * sizeof(&rpc_buffer));
+  }
+  else if (rpc_len + 1 < rpc_capacity) {
+    rpc_capacity *= 2;
+    rpc_buffer =
+        (json_object **)realloc(rpc_buffer, rpc_capacity * sizeof(&rpc_buffer));
+  }
+  rpc_buffer[rpc_len] = jobj;
+  rpc_len++;
+  fprintf(stderr, "rpc_len(socket_thread): %zu\n", rpc_len);
+  pthread_mutex_unlock(&rpc_mutex);
+}
+
+void process_rpc() {
+  pthread_mutex_lock(&rpc_mutex);
+  // Do RPC actions
+  fprintf(stderr, "rpc_len: %zu\n", rpc_len);
+  // eval_request(server, conn, jobj);
+  pthread_mutex_unlock(&rpc_mutex);
+}
+
+void *kickoff_socket() {
+  *server = jrpc_server_create();
+  jrpc_server_listen(server);
+  jrpc_register_procedure(server, &subtract, "subtract", NULL);
+  *conn = connection_create(100);
+  int n = 0;
+  for (;;) {
+    fprintf(stderr, "Waiting for a connection...\n");
+    socklen_t slen = sizeof(server->remote);
+    if ((conn->fd = accept(server->fd, (struct sockaddr *)&server->remote,
+                           &slen)) == -1) {
+      perror("accept");
+      exit(1);
+    }
+    fprintf(stderr, "Connected.\n");
+    process_connection(server, conn);
+    fprintf(stderr, "Connection processed. %d\n", n);
+    n++;
+    if (n > 5) break;
+  }
+  connection_destroy(conn);
+  return NULL;
+}
 
 char *strdup(const char *s) {
   size_t slen = strlen(s);
@@ -274,8 +335,9 @@ int process_connection(struct jrpc_server *server,
       extra_chars = &conn->buffer[json_tokener_get_parse_end(tok)];
     }
     if (jobj == NULL) break;
-    // Success, use jobj here.
-    eval_request(server, conn, jobj);
+    // Success, add jobj to the buffer
+    // eval_request(server, conn, jobj);
+    push_rpc(jobj);
     const char *sq =
         json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
 

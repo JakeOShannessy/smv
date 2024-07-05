@@ -15,6 +15,7 @@
 #include "lua_api.h"
 #endif
 #include "IOscript.h"
+#include "jsonrpc.h"
 
 int nrenderonce=0;
 
@@ -3567,7 +3568,8 @@ void IdleCB(void){
   int changetime=0;
   float thisinterval;
   int redisplay=0;
-  fprintf(stderr,"idleCB\n");
+  fprintf(stderr, "idleCB\n");
+  process_rpc();
 
   if(render_status == RENDER_ON && from_DisplayCB==0)return;
   CheckMemory;

@@ -111,4 +111,7 @@ void connection_destroy(struct jrpc_connection *conn);
 json_object *subtract(jrpc_context *context, json_object *params,
                       json_object *id);
 char *strdup(const char *s);
+void push_rpc(json_object* jobj);
+void process_rpc();
+void *kickoff_socket();
 #endif

@@ -21,6 +21,7 @@
 #endif
 
 #include <assert.h>
+#include "jsonrpc.h"
 
 /* ------------------ IsInstallBinDir ------------------------ */
 

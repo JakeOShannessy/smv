@@ -35,6 +35,7 @@ int LuaDisplayCb(lua_State *L);
 #else
 #include <unistd.h>
 #endif
+#include "jsonrpc.h"
 
 char *ParseCommandline(int argc, char **argv);
 
@@ -207,6 +208,11 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
   STOP_TIMER(startup_time);
   if (runhtmlscript == 1) {
     return 0;
+  }
+  {
+    pthread_t socket_thread;
+    pthread_create(&socket_thread,NULL,kickoff_socket,NULL);
+    // pthread_join(socket_thread,NULL);
   }
 
   glutMainLoop();

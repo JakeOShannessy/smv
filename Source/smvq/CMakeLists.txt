@@ -61,6 +61,7 @@ add_executable(smvq smvq.c
     ../shared/readgeom.c
     ../smokeview/colortable.c
     ../smokeview/command_args.c
+    ../smokeview/jsonrpc.c
 
     ../smokeview/glui_smoke.cpp
     ../smokeview/glui_clip.cpp
