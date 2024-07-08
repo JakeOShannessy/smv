@@ -134,23 +134,6 @@ json_object *jsonrpc_Settime(jrpc_context *context, json_object *params,
   return NULL;
 }
 
-// /// @brief Load an FDS data file directly (i.e. as a filepath).
-// json_object *jsonrpc_Loaddatafile(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   const char *filename = lua_tostring(L, 1);
-//   int return_value = Loadfile(filename);
-//   lua_pushnumber(L, return_value);
-//   return 1;
-// }
-
-// /// @brief Load a Smokeview config (.ini) file.
-// json_object *jsonrpc_Loadinifile(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   const char *filename = lua_tostring(L, 1);
-//   Loadinifile(filename);
-//   return 0;
-// }
-
 // /// @brief Load an FDS vector data file directly (i.e. as a filepath). This
 // /// function handles the loading of any additional data files necessary to
 // /// display vectors.
@@ -169,29 +152,6 @@ json_object *jsonrpc_Settime(jrpc_context *context, json_object *params,
 // *params, json_object *id) {
 //   const char *filename = lua_tostring(L, 1);
 //   Loadboundaryfile(filename);
-//   return 0;
-// }
-
-// /// @brief Load a slice file given the type of slice, the axis along which it
-// /// exists and its position along this axis.
-// json_object *jsonrpc_Loadslice(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   const char *type = lua_tostring(L, 1);
-//   int axis = lua_tonumber(L, 2);
-//   float distance = lua_tonumber(L, 3);
-//   Loadslice(type, axis, distance);
-//   return 0;
-// }
-
-// /// @brief Load a slice based on its index in sliceinfo.
-// json_object *jsonrpc_Loadsliceindex(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   size_t index = lua_tonumber(L, 1);
-//   int error = 0;
-//   Loadsliceindex(index, &error);
-//   if (error) {
-//     return luaL_error(L, "Could not load slice at index %zu", index);
-//   }
 //   return 0;
 // }
 
@@ -230,6 +190,7 @@ json_object *jsonrpc_GetClipping(jrpc_context *context, json_object *params,
                            json_object_new_double(clipinfo.zmax));
   }
   json_object_object_add(result_root, "z", z_object);
+  return result_root;
 }
 
 /// @brief Set the clipping mode, which determines which parts of the model are
@@ -868,24 +829,93 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
 //   lua_pushnumber(L, global_times[index]);
 //   return 1;
 // }
+json_object *json_GetSmoke3ds() {
+  struct json_object *smoke3ds = json_object_new_array();
+  for (int i = 0; i < nsmoke3dinfo; i++) {
+    smoke3ddata *val = &smoke3dinfo[i];
+    struct json_object *slice_obj = json_object_new_object();
+    json_object_object_add(slice_obj, "index", json_object_new_int(i + 1));
+    json_object_object_add(slice_obj, "mesh",
+                           json_object_new_int(val->blocknumber));
+    if (val->label.longlabel != NULL) {
+      json_object_object_add(slice_obj, "longlabel",
+                             json_object_new_string(val->label.longlabel));
+    }
+    if (val->label.shortlabel) {
+      json_object_object_add(slice_obj, "shortlabel",
+                             json_object_new_string(val->label.shortlabel));
+    }
+    json_object_object_add(slice_obj, "type", json_object_new_int(val->type));
+    // if (val->label.unit) {
+    //   json_object_object_add(slice_obj, "unit",
+    //                          json_object_new_string(val->smoke_type));
+    // }
+    // struct json_object *coordinates = json_object_new_object();
+    // json_object_object_add(coordinates, "i_min",
+    //                        json_object_new_int(smoke3ddata->ijk_min[0]));
+    // json_object_object_add(coordinates, "i_max",
+    //                        json_object_new_int(smoke3ddata->ijk_max[0]));
+    // json_object_object_add(coordinates, "j_min",
+    //                        json_object_new_int(smoke3ddata->ijk_min[1]));
+    // json_object_object_add(coordinates, "j_max",
+    //                        json_object_new_int(smoke3ddata->ijk_max[1]));
+    // json_object_object_add(coordinates, "k_min",
+    //                        json_object_new_int(smoke3ddata->ijk_min[2]));
+    // json_object_object_add(coordinates, "k_max",
+    //                        json_object_new_int(smoke3ddata->ijk_max[2]));
+    // json_object_object_add(slice_obj, "coordinates", coordinates);
+    json_object_array_add(smoke3ds, slice_obj);
+  }
+  return smoke3ds;
+}
 
-// json_object *jsonrpc_GetSlice(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   // This should push a lightuserdata onto the stack which is a pointer to
-//   the
-//   // slicedata. This takes the index of the slice (in the sliceinfo array) as
-//   an
-//   // argument.
-//   // Get the index of the slice as an argument to the lua function.
-//   int slice_index = lua_tonumber(L, 1);
-//   // Get the pointer to the slicedata struct.
-//   slicedata *slice = &sliceinfo[slice_index];
-//   // Push the pointer onto the lua stack as lightuserdata.
-//   lua_pushlightuserdata(L, slice);
-//   // lua_newuserdata places the data on the stack, so return a single stack
-//   // item.
-//   return 1;
-// }
+json_object *json_GetSlices() {
+  struct json_object *slices = json_object_new_array();
+  for (int i = 0; i < nsliceinfo; i++) {
+    slicedata *slice = &sliceinfo[i];
+    struct json_object *slice_obj = json_object_new_object();
+    json_object_object_add(slice_obj, "index", json_object_new_int(i + 1));
+    json_object_object_add(slice_obj, "mesh",
+                           json_object_new_int(slice->blocknumber));
+    if (slice->label.longlabel != NULL) {
+      json_object_object_add(slice_obj, "longlabel",
+                             json_object_new_string(slice->label.longlabel));
+    }
+    if (slice->label.shortlabel) {
+      json_object_object_add(slice_obj, "shortlabel",
+                             json_object_new_string(slice->label.shortlabel));
+    }
+    if (slice->slicelabel) {
+      json_object_object_add(slice_obj, "id",
+                             json_object_new_string(slice->slicelabel));
+    }
+    if (slice->label.unit) {
+      json_object_object_add(slice_obj, "unit",
+                             json_object_new_string(slice->label.unit));
+    }
+    struct json_object *coordinates = json_object_new_object();
+    json_object_object_add(coordinates, "i_min",
+                           json_object_new_int(slice->ijk_min[0]));
+    json_object_object_add(coordinates, "i_max",
+                           json_object_new_int(slice->ijk_max[0]));
+    json_object_object_add(coordinates, "j_min",
+                           json_object_new_int(slice->ijk_min[1]));
+    json_object_object_add(coordinates, "j_max",
+                           json_object_new_int(slice->ijk_max[1]));
+    json_object_object_add(coordinates, "k_min",
+                           json_object_new_int(slice->ijk_min[2]));
+    json_object_object_add(coordinates, "k_max",
+                           json_object_new_int(slice->ijk_max[2]));
+    json_object_object_add(slice_obj, "coordinates", coordinates);
+    json_object_array_add(slices, slice_obj);
+  }
+  return slices;
+}
+
+json_object *jsonrpc_GetSlices(jrpc_context *context, json_object *params,
+                               json_object *id) {
+  return json_GetSlices();
+}
 
 // /// @brief This takes a lightuserdata pointer as an argument, and returns the
 // /// slice label as a string.
@@ -1091,29 +1121,45 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
 //   return 0;
 // }
 
-// json_object *jsonrpc_Load3dsmoke(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   const char *smoke_type = lua_tostring(L, 1);
-//   Load3dsmoke(smoke_type);
-//   return 0;
-// }
+/// @brief Load a slice based on its index in sliceinfo.
+json_object *jsonrpc_LoadSliceIndices(jrpc_context *context,
+                                      json_object *params, json_object *id) {
+  int errorcode = 0;
+  size_t n_files = json_object_array_length(params);
+  for (size_t n = 0; n < n_files; n++) {
+    int i = json_object_get_int(json_object_array_get_idx(params, n));
+    Loadsliceindex(i, &errorcode);
+    if (errorcode) {
+      context->error_code = 115;
+      context->error_message = strdup("could not load slice");
+      return NULL;
+    }
+  }
+  return NULL;
+}
 
-// json_object *jsonrpc_Loadvolsmoke(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   int meshnumber = lua_tonumber(L, 1);
-//   Loadvolsmoke(meshnumber);
-//   return 0;
-// }
-
-// json_object *jsonrpc_Loadvolsmokeframe(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   int meshnumber = lua_tonumber(L, 1);
-//   int framenumber = lua_tonumber(L, 1);
-//   Loadvolsmokeframe(meshnumber, framenumber, 1);
-//   // returnval = 1; // TODO: determine if this is the correct behaviour.
-//   // this is what is done in the SSF code.
-//   return 0;
-// }
+json_object *jsonrpc_Load3dSmokeIndices(jrpc_context *context,
+                                        json_object *params, json_object *id) {
+  int errorcode = 0;
+  size_t n_files = json_object_array_length(params);
+  for (size_t n = 0; n < n_files; n++) {
+    int i = json_object_get_int(json_object_array_get_idx(params, n));
+    fprintf(stderr, "loading smoke3d index %d\n", i);
+    smoke3ddata *smoke3di;
+    smoke3di = smoke3dinfo + i;
+    smoke3di->finalize = 0;
+    if (n == (n_files - 1)) smoke3di->finalize = 1;
+    ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
+    if (errorcode) {
+      context->error_code = 117;
+      context->error_message = strdup("failed to load smoke3d");
+    }
+  }
+  force_redisplay = 1;
+  updatemenu = 1;
+  GLUTPOSTREDISPLAY;
+  return NULL;
+}
 
 /// @brief Set the format of images which will be exported. The value should be
 /// a string. The acceptable values are:
@@ -1182,52 +1228,10 @@ json_object *jsonrpc_GetMovietype(jrpc_context *context, json_object *params,
 //   return 0;
 // }
 
-// json_object *jsonrpc_Loadtour(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   const char *name = lua_tostring(L, 1);
-//   int error_code = Loadtour(name);
-//   lua_pushnumber(L, error_code);
-//   return 1;
-// }
-
 // json_object *jsonrpc_Loadparticles(jrpc_context *context, json_object
 // *params, json_object *id) {
 //   const char *name = lua_tostring(L, 1);
 //   Loadparticles(name);
-//   return 0;
-// }
-
-// json_object *jsonrpc_Partclasscolor(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   const char *color = lua_tostring(L, 1);
-//   Partclasscolor(color);
-//   return 0;
-// }
-
-// json_object *jsonrpc_Partclasstype(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   const char *type = lua_tostring(L, 1);
-//   Partclasstype(type);
-//   return 0;
-// }
-
-// json_object *jsonrpc_Plot3dprops(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   int variable_index = lua_tonumber(L, 1);
-//   int showvector = lua_toboolean(L, 2);
-//   int vector_length_index = lua_tonumber(L, 3);
-//   int display_type = lua_tonumber(L, 4);
-//   float vector_length = lua_tonumber(L, 5);
-//   Plot3dprops(variable_index, showvector, vector_length_index, display_type,
-//               vector_length);
-//   return 0;
-// }
-
-// json_object *jsonrpc_Loadplot3d(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   int meshnumber = lua_tonumber(L, 1);
-//   float time_local = lua_tonumber(L, 2);
-//   Loadplot3d(meshnumber, time_local);
 //   return 0;
 // }
 
@@ -1241,7 +1245,10 @@ json_object *jsonrpc_Setrenderdir(jrpc_context *context, json_object *params,
                                   json_object *id) {
   const char *dir =
       json_object_get_string(json_object_array_get_idx(params, 0));
-  int return_code = Setrenderdir(dir);
+  if (Setrenderdir(dir)) {
+    context->error_code = 112;
+    context->error_message = strdup("set render dir failure");
+  }
   return NULL;
 }
 
@@ -1250,27 +1257,33 @@ json_object *jsonrpc_Getrenderdir(jrpc_context *context, json_object *params,
   return json_object_new_string(script_dir_path);
 }
 
-// json_object *jsonrpc_SetOrthoPreset(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   const char *viewpoint = lua_tostring(L, 1);
-//   int errorcode = SetOrthoPreset(viewpoint);
-//   lua_pushnumber(L, errorcode);
-//   return 1;
-// }
+json_object *jsonrpc_SetOrthoPreset(jrpc_context *context, json_object *params,
+                                    json_object *id) {
 
-// json_object *jsonrpc_Setviewpoint(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   const char *viewpoint = lua_tostring(L, 1);
-//   int errorcode = Setviewpoint(viewpoint);
-//   lua_pushnumber(L, errorcode);
-//   return 1;
-// }
+  const char *viewpoint =
+      json_object_get_string(json_object_array_get_idx(params, 0));
+  if (SetOrthoPreset(viewpoint)) {
+    context->error_code = 119;
+    context->error_message = strdup("SetOrthoPreset failure");
+  }
+  return NULL;
+}
 
-// json_object *jsonrpc_Getviewpoint(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   lua_pushstring(L, camera_current->name);
-//   return 1;
-// }
+json_object *jsonrpc_Setviewpoint(jrpc_context *context, json_object *params,
+                                  json_object *id) {
+  const char *viewpoint =
+      json_object_get_string(json_object_array_get_idx(params, 0));
+  if (Setviewpoint(viewpoint)) {
+    context->error_code = 113;
+    context->error_message = strdup("set viewpoint failure");
+  }
+  return NULL;
+}
+
+json_object *jsonrpc_Getviewpoint(jrpc_context *context, json_object *params,
+                                  json_object *id) {
+  return json_object_new_string(camera_current->name);
+}
 
 json_object *jsonrpc_ExitSmokeview(jrpc_context *context, json_object *params,
                                    json_object *id) {
@@ -1363,12 +1376,6 @@ json_object *jsonrpc_Getcolorbarflip(jrpc_context *context, json_object *params,
 //   return 1;
 // }
 
-// json_object *jsonrpc_ToggleColorbarVisibility(jrpc_context *context,
-// json_object *params,  json_object *id) {
-//   ToggleColorbarVisibility();
-//   return 0;
-// }
-
 // json_object *jsonrpc_SetColorbarVisibilityHorizontal(jrpc_context *context,
 // json_object *jsonrpc_params,  json_object *id) {
 //   int setting = lua_toboolean(L, 1);
@@ -1381,12 +1388,6 @@ json_object *jsonrpc_Getcolorbarflip(jrpc_context *context, json_object *params,
 //   int setting = GetColorbarVisibilityHorizontal();
 //   lua_pushboolean(L, setting);
 //   return 1;
-// }
-
-// json_object *jsonrpc_ToggleColorbarVisibilityHorizontal(jrpc_context
-// *context, json_object *jsonrpc_params,  json_object *id) {
-//   ToggleColorbarVisibilityHorizontal();
-//   return 0;
 // }
 
 // json_object *jsonrpc_SetColorbarVisibilityVertical(jrpc_context *context,
@@ -1403,12 +1404,6 @@ json_object *jsonrpc_Getcolorbarflip(jrpc_context *context, json_object *params,
 //   return 1;
 // }
 
-// json_object *jsonrpc_ToggleColorbarVisibilityVertical(jrpc_context *context,
-// json_object *jsonrpc_params,  json_object *id) {
-//   ToggleColorbarVisibilityVertical();
-//   return 0;
-// }
-
 // json_object *jsonrpc_SetTimebarVisibility(jrpc_context *context, json_object
 // *params, json_object *id) {
 //   int setting = lua_toboolean(L, 1);
@@ -1421,12 +1416,6 @@ json_object *jsonrpc_Getcolorbarflip(jrpc_context *context, json_object *params,
 //   int setting = GetTimebarVisibility();
 //   lua_pushboolean(L, setting);
 //   return 1;
-// }
-
-// json_object *jsonrpc_ToggleTimebarVisibility(jrpc_context *context,
-// json_object *params,  json_object *id) {
-//   ToggleTimebarVisibility();
-//   return 0;
 // }
 
 // // title
@@ -1444,12 +1433,6 @@ json_object *jsonrpc_Getcolorbarflip(jrpc_context *context, json_object *params,
 //   return 1;
 // }
 
-// json_object *jsonrpc_ToggleTitleVisibility(jrpc_context *context, json_object
-// *params,  json_object *id) {
-//   ToggleTitleVisibility();
-//   return 0;
-// }
-
 // // smv_version
 // json_object *jsonrpc_SetSmvVersionVisibility(jrpc_context *context,
 // json_object *params,  json_object *id) {
@@ -1464,8 +1447,6 @@ json_object *jsonrpc_Getcolorbarflip(jrpc_context *context, json_object *params,
 //   lua_pushboolean(L, setting);
 //   return 1;
 // }
-
-// chid
 
 // #define JsonRpcBoolSetting(name,func)
 
@@ -1593,12 +1574,6 @@ json_object *jsonrpc_GetChidVisibility(jrpc_context *context,
 //   int setting = GetTimeVisibility();
 //   lua_pushboolean(L, setting);
 //   return 1;
-// }
-
-// json_object *jsonrpc_ToggleTimeVisibility(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   ToggleTimeVisibility();
-//   return 0;
 // }
 
 // // version info
@@ -1990,6 +1965,13 @@ int register_procedures(struct jrpc_server *server) {
                           NULL);
   jrpc_register_procedure(server, &jsonrpc_SetWindowSize, "set_window_size",
                           NULL);
+  jrpc_register_procedure(server, &jsonrpc_LoadSliceIndices,
+                          "load_slice_indices", NULL);
+  jrpc_register_procedure(server, &jsonrpc_GetSlices, "get_slices", NULL);
+  jrpc_register_procedure(server, &json_GetSmoke3ds, "get_smoke3ds", NULL);
+  jrpc_register_procedure(server, &jsonrpc_Load3dSmokeIndices,
+                          "load_smoke3d_indices", NULL);
+  jrpc_register_procedure(server, &jsonrpc_SetOrthoPreset, "set_ortho_preset", NULL);
 
   return 0;
 }

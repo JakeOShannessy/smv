@@ -89,6 +89,13 @@ class JsonRpcClient {
             console.error(r);
         }
     }
+    async notify(method: string, params?: any) {
+        await client.send({
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": params,
+        });
+    }
 }
 export interface JsonRpcResponse {
     jsonrpc: "2.0";
@@ -104,19 +111,34 @@ const client = new JsonRpcClient();
 // const r = await client.call("subtract", [42, 23]);
 // console.log("r:", await client.call("subtract", [42, 23]));
 console.log("r:", await client.call("subtract", [47, 1]));
-console.log("r:", await client.call("set_frame", [500]));
 console.log(
     "r:",
     await client.call("set_clipping", { mode: 2, x: { max: 2 } }),
 );
 await client.call("set_chid_visibility", [true]);
-await client.call("set_window_size", { width: 1600, height: 1000 });
+await client.call("set_window_size", { width: 800, height: 500 });
+console.log(await client.call("get_slices"));
+const smoke3ds = await client.call("get_smoke3ds");
+const smokeIndices = smoke3ds.filter((
+    c: { longlabel: string; index: number },
+) => c.longlabel === "SOOT DENSITY");
+console.log(smoke3ds);
+console.log(
+    "smokeIndex:",
+    smokeIndices.map((c: { longlabel: string; index: number }) => c.index - 1),
+);
+await client.call(
+    "load_smoke3d_indices",
+    smokeIndices.map((c: { longlabel: string; index: number }) => c.index - 1),
+);
+console.log("r:", await client.call("set_frame", [500]));
+
 console.log(
     "r:",
     await client.call("render", {}),
 );
 console.log("r:", await client.call("unload_all"));
 // TODO: exit should be a notification
-console.log("r:", await client.call("exit"));
+console.log("r:", await client.notify("exit"));
 
 conn.close();
