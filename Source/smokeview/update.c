@@ -693,10 +693,10 @@ void UpdateShow(void){
   if(showtime2==1)showtime=1;
   if(use_graphics==1){
     if(plotstate==DYNAMIC_PLOTS&&stept==1){
-      glutIdleFunc(IdleCB);
+      // glutIdleFunc(IdleCB);
     }
     else{
-      glutIdleFunc(NULL);
+      // glutIdleFunc(NULL);
     }
   }
 }
@@ -1948,7 +1948,7 @@ void UpdateShowScene(void){
   have_fire  = HaveFireLoaded();
   have_smoke = HaveSootLoaded();
 
-#ifdef pp_SMOKE_SPEEDUP  
+#ifdef pp_SMOKE_SPEEDUP
   if(update_smoke3dmenulabels == 1){
     update_smoke3dmenulabels = 0;
     UpdateSmoke3dMenuLabels();

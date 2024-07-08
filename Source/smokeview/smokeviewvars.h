@@ -25,6 +25,8 @@
 #include GLUT_H
 #include <json-c/json_object.h>
 
+#include "jsonrpc.h"
+
 //*** threader variables
 
 //***mergesmoke
@@ -2281,6 +2283,8 @@ SVEXTERN float SVDECL(transparency_geom,0.2);
 SVEXTERN int SVDECL(use_transparency_geom,0);
 SVEXTERN facedata SVDECL(**face_transparent,NULL);
 SVEXTERN int SVDECL(hidepatchsurface,0);
+
+SVEXTERN struct jrpc_server SVDECL(server, {0});
 
 #ifdef INMAIN
 SVEXTERN float meshclip[6] = {0.0, 1.0, 0.0, 1.0, 0.0, 1.0};

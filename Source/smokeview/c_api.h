@@ -1,3 +1,5 @@
+#ifndef C_API_H_DEFINED
+#define C_API_H_DEFINED
 #include "options_common.h"
 
 #include "gd.h"
@@ -595,3 +597,4 @@ int ShowSlicesHideall();
 int RenderFrameLuaVar(int view_mode, gdImagePtr *RENDERimage);
 
 #define PROPINDEX_STRIDE 2
+#endif

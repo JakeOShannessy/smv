@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "jsonrpc.h"
 
@@ -20,6 +21,17 @@
 #include <json-c/json_util.h>
 
 #define SOCK_PATH "echo_socket"
+
+typedef struct circular_buffer
+{
+  void *buffer;     // data buffer
+  void *buffer_end; // end of data buffer
+  size_t capacity;  // maximum number of items in the buffer
+  size_t count;     // number of items in the buffer
+  size_t sz;        // size of each item in the buffer
+  void *head;       // pointer to head
+  void *tail;       // pointer to tail
+} circular_buffer;
 
 /*
  *
@@ -41,7 +53,8 @@
 #define JRPC_INVALID_PARAMS -32603
 #define JRPC_INTERNAL_ERROR -32693
 
-typedef struct {
+typedef struct
+{
   void *data;
   int error_code;
   char *error_message;
@@ -50,22 +63,30 @@ typedef struct {
 typedef json_object *(*jrpc_function)(jrpc_context *context,
                                       json_object *params, json_object *id);
 
-struct jrpc_procedure {
+struct jrpc_procedure
+{
   char *name;
   jrpc_function function;
   void *data;
 };
 
-struct jrpc_server {
+struct jrpc_server
+{
   struct sockaddr_un socket;
   struct sockaddr_un remote;
   int fd;
   int procedure_count;
   struct jrpc_procedure *procedures;
   int debug_level;
+  circular_buffer rpc_buffer;
+  // Currently we only serve one connection at a time. For this use case there
+  // isn't much use in expanding it.
+  struct jrpc_connection *conn;
+  pthread_mutex_t rpc_mutex;
 };
 
-struct jrpc_connection {
+struct jrpc_connection
+{
   int fd;
   unsigned int buffer_size;
   char *buffer;
@@ -108,10 +129,10 @@ int process_connection(struct jrpc_server *server,
 struct jrpc_connection connection_create(size_t n);
 void connection_destroy(struct jrpc_connection *conn);
 
-json_object *subtract(jrpc_context *context, json_object *params,
-                      json_object *id);
+json_object *move_x(jrpc_context *context, json_object *params,
+                    json_object *id);
 char *strdup(const char *s);
-void push_rpc(json_object* jobj);
-void process_rpc();
-void *kickoff_socket();
+void push_rpc(struct jrpc_server *server, json_object *jobj);
+int process_rpcs(struct jrpc_server *server);
+void *kickoff_socket(void *server_in);
 #endif

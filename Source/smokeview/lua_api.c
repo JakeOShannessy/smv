@@ -26,6 +26,8 @@
 #include <direct.h>
 #endif
 
+#include "jsonrpc_api.h"
+
 // NOLINTNEXTLINE
 lua_State *L;
 int LuaDisplayCb(lua_State *L);
@@ -158,6 +160,16 @@ int LuaSetupCase(lua_State *L) {
   return 1;
 }
 
+json_object *subtract(jrpc_context *context, json_object *params,
+                      json_object *id)
+{
+    int a = json_object_get_int(json_object_array_get_idx(params, 0));
+    int b = json_object_get_int(json_object_array_get_idx(params, 1));
+    json_object *result_root = json_object_new_int(a - b);
+    return result_root;
+}
+
+
 int RunLuaBranch(lua_State *L, int argc, char **argv) {
   int return_code;
   SetStdOut(stdout);
@@ -209,13 +221,18 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
   if (runhtmlscript == 1) {
     return 0;
   }
-  {
-    pthread_t socket_thread;
-    pthread_create(&socket_thread,NULL,kickoff_socket,NULL);
-    // pthread_join(socket_thread,NULL);
-  }
+
+  pthread_t socket_thread;
+  server = jrpc_server_create();
+  jrpc_register_procedure(&server, &subtract, "subtract", NULL);
+  register_procedures(&server);
+
+  pthread_create(&socket_thread, NULL, kickoff_socket, &server);
 
   glutMainLoop();
+
+  pthread_join(socket_thread,NULL);
+
   return 0;
 }
 
@@ -5806,7 +5823,7 @@ int RunSsfScript(lua_State *L) {
   }
   else {
     lua_close(L);
-    glutIdleFunc(NULL);
+    // glutIdleFunc(NULL);
   }
   return yield_or_ok_ssf;
 }
@@ -5852,7 +5869,7 @@ int RunLuaScript(lua_State *L) {
   }
   else {
     lua_close(L);
-    glutIdleFunc(NULL);
+    // glutIdleFunc(NULL);
   }
   GLUTPOSTREDISPLAY;
   return yield_or_ok;

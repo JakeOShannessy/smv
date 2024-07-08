@@ -2,7 +2,7 @@ import { SplitJsonObjectsStream } from "./rstream.ts";
 
 const conn = await Deno.connect({
     transport: "unix",
-    path: "echo_socket",
+    path: "/home/jake/couch/echo_socket",
 });
 
 class JsonRpcClient {
@@ -73,7 +73,7 @@ class JsonRpcClient {
     async recv(): Promise<object | undefined> {
         return (await this.reader.read()).value;
     }
-    async call(method: string, params: any) {
+    async call(method: string, params?: any) {
         await client.send({
             "jsonrpc": "2.0",
             "method": method,
@@ -102,7 +102,21 @@ function isJsonRpcResponse(o: any): o is JsonRpcResponse {
 
 const client = new JsonRpcClient();
 // const r = await client.call("subtract", [42, 23]);
-console.log("r:", await client.call("subtract", [42, 23]));
+// console.log("r:", await client.call("subtract", [42, 23]));
 console.log("r:", await client.call("subtract", [47, 1]));
+console.log("r:", await client.call("set_frame", [500]));
+console.log(
+    "r:",
+    await client.call("set_clipping", { mode: 2, x: { max: 2 } }),
+);
+await client.call("set_chid_visibility", [true]);
+await client.call("set_window_size", { width: 1600, height: 1000 });
+console.log(
+    "r:",
+    await client.call("render", {}),
+);
+console.log("r:", await client.call("unload_all"));
+// TODO: exit should be a notification
+console.log("r:", await client.call("exit"));
 
 conn.close();

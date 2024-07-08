@@ -3568,8 +3568,8 @@ void IdleCB(void){
   int changetime=0;
   float thisinterval;
   int redisplay=0;
-  fprintf(stderr, "idleCB\n");
-  process_rpc();
+  // fprintf(stderr, "idleCB\n");
+  process_rpcs(&server);
 
   if(render_status == RENDER_ON && from_DisplayCB==0)return;
   CheckMemory;
