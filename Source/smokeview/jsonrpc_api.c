@@ -1,4 +1,6 @@
 
+#include "jsonrpc.h"
+
 #include <float.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -17,7 +19,6 @@
 
 #include "c_api.h"
 
-#include "jsonrpc.h"
 
 #include GLUT_H
 #include "gd.h"
@@ -610,7 +611,7 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
 //   return 1;
 // }
 
-json_object *json_GetSmoke3ds() {
+json_object *json_GetSmoke3ds(void) {
   struct json_object *smoke3ds = json_object_new_array();
   for (int i = 0; i < nsmoke3dinfo; i++) {
     smoke3ddata *val = &smoke3dinfo[i];
@@ -632,7 +633,7 @@ json_object *json_GetSmoke3ds() {
   return smoke3ds;
 }
 
-json_object *json_GetSlices() {
+json_object *json_GetSlices(void) {
   struct json_object *slices = json_object_new_array();
   for (int i = 0; i < nsliceinfo; i++) {
     slicedata *slice = &sliceinfo[i];

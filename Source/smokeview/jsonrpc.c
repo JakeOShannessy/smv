@@ -3,6 +3,27 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+/* Note: For POSIX, typedef SOCKET as an int. */
+
+int sockClose(int sock) {
+
+  int status = 0;
+
+#ifdef _WIN32
+  status = shutdown(sock, SD_BOTH);
+  if (status == 0) {
+    status = closesocket(sock);
+  }
+#else
+  status = shutdown(sock, SHUT_RDWR);
+  if (status == 0) {
+    status = close(sock);
+  }
+#endif
+
+  return status;
+}
+
 void cb_init(circular_buffer *cb, size_t capacity, size_t sz) {
   cb->buffer = malloc(capacity * sz);
   if (cb->buffer == NULL) {
@@ -90,7 +111,7 @@ void *kickoff_socket(void *server_in) {
   int n = 0;
   for (;;) {
     fprintf(stderr, "Waiting for a connection...\n");
-    socklen_t slen = sizeof(server->remote);
+    int slen = sizeof(server->remote);
     if ((server->conn->fd = accept(
              server->fd, (struct sockaddr *)&server->remote, &slen)) == -1) {
       perror("accept");
@@ -104,7 +125,7 @@ void *kickoff_socket(void *server_in) {
   connection_destroy(server->conn);
   return NULL;
 }
-
+#ifndef _WIN32
 char *strdup(const char *s) {
   size_t slen = strlen(s);
   char *result = malloc(slen + 1);
@@ -114,6 +135,7 @@ char *strdup(const char *s) {
   memcpy(result, s, slen + 1);
   return result;
 }
+#endif
 
 static void jrpc_procedure_destroy(struct jrpc_procedure *procedure) {
   if (procedure->name) {
@@ -150,6 +172,11 @@ void jrpc_server_destroy(struct jrpc_server *server) {
     jrpc_procedure_destroy(&(server->procedures[i]));
   }
   free(server->procedures);
+  // Analogous to `unlink`
+  // DeleteFileA(SERVER_SOCKET);
+#ifdef _WIN32
+  WSACleanup();
+#endif
 }
 
 int jrpc_deregister_procedure(struct jrpc_server *server, char *name) {
@@ -189,19 +216,11 @@ int jrpc_deregister_procedure(struct jrpc_server *server, char *name) {
   return 0;
 }
 
-// get sockaddr, IPv4 or IPv6:
-static void *get_in_addr(struct sockaddr *sa) {
-  if (sa->sa_family == AF_INET) {
-    return &(((struct sockaddr_in *)sa)->sin_addr);
-  }
-  return &(((struct sockaddr_in6 *)sa)->sin6_addr);
-}
-
 static int send_response(struct jrpc_connection *conn, const char *response) {
   if (conn->debug_level > 1) fprintf(stderr, "JSON Response:\n%s\n", response);
   // (send(conn->fd, sq, strlen(sq), 0) < 0)
-  send(conn->fd, response, strlen(response), MSG_NOSIGNAL);
-  send(conn->fd, "\n", 1, MSG_NOSIGNAL);
+  send(conn->fd, response, strlen(response), 0);
+  send(conn->fd, "\n", 1, 0);
   return 0;
 }
 
@@ -317,12 +336,21 @@ struct jrpc_server jrpc_server_create() {
   server.conn = NULL;
   pthread_mutex_t rpc_mutex = PTHREAD_MUTEX_INITIALIZER;
   server.rpc_mutex = rpc_mutex;
+  int rc = WSAStartup(MAKEWORD(2, 2), &server.wsa_data);
+  if (rc != 0) {
+    printf("WSAStartup() error: %d\n", rc);
+    exit(1);
+  }
   return server;
 }
 
 int jrpc_server_listen(struct jrpc_server *server) {
   if ((server->fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+#ifdef _WIN32
+    fprintf(stderr, "Could not create socket : %d\n", WSAGetLastError());
+#else
     perror("socket");
+#endif
     exit(1);
   }
 
@@ -330,12 +358,20 @@ int jrpc_server_listen(struct jrpc_server *server) {
   unlink(server->socket.sun_path);
   int len = strlen(server->socket.sun_path) + sizeof(server->socket.sun_family);
   if (bind(server->fd, (struct sockaddr *)&server->socket, len) == -1) {
+#ifdef _WIN32
+    fprintf(stderr, "Could not bind socket : %d\n", WSAGetLastError());
+#else
     perror("bind");
+#endif
     exit(1);
   }
 
   if (listen(server->fd, 5) == -1) {
+#ifdef _WIN32
+    fprintf(stderr, "Could not listen socket : %d\n", WSAGetLastError());
+#else
     perror("listen");
+#endif
     exit(1);
   }
   return 0;
@@ -397,7 +433,7 @@ int process_connection(struct jrpc_server *server,
   } while (!done);
   fprintf(stderr, "Connection done.\n");
 
-  close(conn->fd);
+  sockClose(conn->fd);
   return 0;
 }
 

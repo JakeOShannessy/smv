@@ -1,4 +1,6 @@
 #define INMAIN
+#include "jsonrpc.h"
+
 #include "options.h"
 #include <stdio.h>
 #include <string.h>
@@ -21,7 +23,6 @@
 #endif
 
 #include <assert.h>
-#include "jsonrpc.h"
 
 /* ------------------ IsInstallBinDir ------------------------ */
 

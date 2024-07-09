@@ -1,20 +1,26 @@
 #ifndef JSONRPC_H_DEFINED
 #define JSONRPC_H_DEFINED
 
+#ifdef _WIN32
+#include <stdio.h>
+#include <winsock2.h>
+#include <windows.h>
+#include <afunix.h>
+#else
 #include <arpa/inet.h>
-#include <errno.h>
-#include <netdb.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <netdb.h>
+#endif
+
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/un.h>
-#include <unistd.h>
 #include <pthread.h>
-
-#include "jsonrpc.h"
 
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>
@@ -72,6 +78,9 @@ struct jrpc_procedure
 
 struct jrpc_server
 {
+#ifdef _WIN32
+  WSADATA wsa_data;
+#endif
   struct sockaddr_un socket;
   struct sockaddr_un remote;
   int fd;
@@ -131,7 +140,9 @@ void connection_destroy(struct jrpc_connection *conn);
 
 json_object *move_x(jrpc_context *context, json_object *params,
                     json_object *id);
+#ifndef _WIN32
 char *strdup(const char *s);
+#endif
 void push_rpc(struct jrpc_server *server, json_object *jobj);
 int process_rpcs(struct jrpc_server *server);
 void *kickoff_socket(void *server_in);

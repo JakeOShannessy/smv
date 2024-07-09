@@ -1,3 +1,5 @@
+#include "jsonrpc.h"
+
 #include "options.h"
 #include <assert.h>
 #include <stdio.h>
@@ -3356,7 +3358,7 @@ void UnloadSmoke3D(smoke3ddata *smoke3di){
 void UnloadAllSmoke3D(int type){
   int i;
 
-#ifdef pp_SMOKE_SPEEDUP  
+#ifdef pp_SMOKE_SPEEDUP
   update_merge_smoke = 1;
 #endif
   if(nsmoke3dinfo > 0){
@@ -3436,7 +3438,7 @@ void LoadUnloadMenu(int value){
       showdevice_val = 0;
       GLUIUpdateDeviceShow();
     }
-    LoadPlot2DMenu(MENU_PLOT2D_UNLOAD);    
+    LoadPlot2DMenu(MENU_PLOT2D_UNLOAD);
     updatemenu=1;
     GLUTPOSTREDISPLAY;
     break;
@@ -4047,7 +4049,7 @@ void SetupPart(int value){
       load_only_when_unloaded == 0 &&
       parti->loaded == 1){
       int errorcode;
-      
+
       ReadPart("", i, UNLOAD, &errorcode);
     }
     if(parti->loaded==1)continue;
@@ -5885,7 +5887,7 @@ void LoadBoundaryMenu(int value){
 
         patchi = patchinfo+i;
         patchi->finalize = 0;
-        if(patchi->loaded == 1 
+        if(patchi->loaded == 1
           && load_only_when_unloaded == 0
           ){
           ReadBoundary(i, UNLOAD, &errorcode);
@@ -7272,7 +7274,7 @@ void ToggleMetroMode(void){
 
   /* ------------------ GeometryMenu ------------------------ */
 
-  
+
 void GeometryMenu(int value){
 
   switch(value){
@@ -8108,7 +8110,7 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
 
   InitSubSliceMenuInfo();
   if(nsubslicemenuinfo>0){
-  
+
 //*** load all x slices
 
     CREATEMENU(loadsubslicexmenu,   LoadAllSlices);
@@ -8119,7 +8121,7 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
       si = subslicemenuinfo + i;
       if(si->havex==1)glutAddMenuEntry(si->menulabel,4*i);
     }
-  
+
 //*** load all y slices
 
     CREATEMENU(loadsubsliceymenu,   LoadAllSlices);
@@ -8130,7 +8132,7 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
       si = subslicemenuinfo + i;
       if(si->havey == 1)glutAddMenuEntry(si->menulabel, 4*i+1);
     }
-  
+
 //*** load all z slices
 
     CREATEMENU(loadsubslicezmenu,   LoadAllSlices);
@@ -8141,7 +8143,7 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
       si = subslicemenuinfo + i;
       if(si->havez == 1)glutAddMenuEntry(si->menulabel, 4*i+2);
     }
-  
+
 //*** load all x,y,z slices
 
     CREATEMENU(loadsubslicexyzmenu, LoadAllSlices);
@@ -8399,7 +8401,7 @@ void InitMultiVectorLoadMenu(int *loadmultivslicemenuptr, int *loadsubmvslicemen
   int loadsubvectorslicexmenu, loadsubvectorsliceymenu, loadsubvectorslicezmenu, loadsubvectorslicexyzmenu;
 
   InitSubVectorSliceMenuInfo();
-  
+
 //*** load all x vector slices
 
   CREATEMENU(loadsubvectorslicexmenu,   LoadAllVectorSlices);
@@ -8410,7 +8412,7 @@ void InitMultiVectorLoadMenu(int *loadmultivslicemenuptr, int *loadsubmvslicemen
     si = subvectorslicemenuinfo + i;
     if(si->havex==1)glutAddMenuEntry(si->menulabel,4*i);
   }
-  
+
 //*** load all y vector slices
 
   CREATEMENU(loadsubvectorsliceymenu,   LoadAllVectorSlices);
@@ -8421,7 +8423,7 @@ void InitMultiVectorLoadMenu(int *loadmultivslicemenuptr, int *loadsubmvslicemen
     si = subvectorslicemenuinfo + i;
     if(si->havey==1)glutAddMenuEntry(si->menulabel,4*i+1);
   }
-  
+
 //*** load all z vector slices
 
   CREATEMENU(loadsubvectorslicezmenu,   LoadAllVectorSlices);
@@ -8432,7 +8434,7 @@ void InitMultiVectorLoadMenu(int *loadmultivslicemenuptr, int *loadsubmvslicemen
     si = subvectorslicemenuinfo + i;
     if(si->havez==1)glutAddMenuEntry(si->menulabel,4*i+2);
   }
-  
+
 //*** load all x,y,z vector slices
 
   CREATEMENU(loadsubvectorslicexyzmenu,   LoadAllVectorSlices);

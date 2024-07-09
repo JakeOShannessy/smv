@@ -85,6 +85,10 @@ target_include_directories(smvq PRIVATE
     ../glui_gl
 )
 
+if(WIN32)
+  target_link_libraries(smvq PRIVATE wsock32 ws2_32)
+endif()
+
 find_package(json-c CONFIG)
 if (NOT json-c_FOUND)
     if (PKG_CONFIG_FOUND)
@@ -125,13 +129,9 @@ endif ()
 # potential conflict with native libs this needs to be early in the include order.
 target_link_libraries(smvq PRIVATE glui_static)
 target_include_directories(smvq PRIVATE ../glui_v2_1_beta)
+add_compile_definitions(HAVE_STRUCT_TIMESPEC)
 if(WIN32)
-    if (PThreads4W_FOUND)
-        target_link_libraries(smvq PRIVATE PThreads4W::PThreads4W)
-    else()
-        target_include_directories(smvq PRIVATE ../pthreads)
-        target_link_libraries(smvq PRIVATE pthread_static)
-    endif()
+    target_link_libraries(smvq PRIVATE PThreads4W::PThreads4W)
 endif()
 # Selecting which GLUT version to use is the most platform-dependent part of the
 # build.

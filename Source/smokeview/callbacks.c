@@ -1,3 +1,5 @@
+#include "jsonrpc.h"
+
 #include "options.h"
 #include <assert.h>
 #include <stdio.h>
@@ -15,7 +17,6 @@
 #include "lua_api.h"
 #endif
 #include "IOscript.h"
-#include "jsonrpc.h"
 
 int nrenderonce=0;
 

@@ -1,5 +1,7 @@
 #ifndef SMOKEVIEWVARS_H_DEFINED
 #define SMOKEVIEWVARS_H_DEFINED
+#include "jsonrpc.h"
+
 #include <time.h>
 #include "MALLOCC.h"
 #ifdef CPP
@@ -25,7 +27,6 @@
 #include GLUT_H
 #include <json-c/json_object.h>
 
-#include "jsonrpc.h"
 
 //*** threader variables
 

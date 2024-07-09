@@ -1,4 +1,6 @@
 #ifdef pp_LUA
+#include "jsonrpc.h"
+#include "jsonrpc_api.h"
 
 #include <float.h>
 #include <stdbool.h>
@@ -26,7 +28,6 @@
 #include <direct.h>
 #endif
 
-#include "jsonrpc_api.h"
 
 // NOLINTNEXTLINE
 lua_State *L;
@@ -37,7 +38,6 @@ int LuaDisplayCb(lua_State *L);
 #else
 #include <unistd.h>
 #endif
-#include "jsonrpc.h"
 
 char *ParseCommandline(int argc, char **argv);
 
