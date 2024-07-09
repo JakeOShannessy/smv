@@ -107,7 +107,34 @@ function isJsonRpcResponse(o: any): o is JsonRpcResponse {
     return o["jsonrpc"] === "2.0" && "id" in o && "result" in o;
 }
 
+async function setAffinityStyle() {
+    // -- Set the color bar to a blue/red split.
+    await client.call("set_colorbar", ["blue->red split"]);
+    // -- Set the window size to 800×500
+    await client.call("set_window_size", { width: 800, height: 500 });
+    // -- Don't show the title of the model
+    await client.call("set_title_visibility", [false]);
+    // -- Don't show the version of smokeview being used.
+    await client.call("set_smv_version_visibility", [false]);
+    // -- Show the CHID of the model
+    await client.call("set_chid_visibility", [true]);
+    // -- Don't show blockages.
+    await client.call("blockages_hide_all");
+    // -- Don't show any surfaces
+    await client.call("surfaces_hide_all");
+    // -- Hide domain outlines
+    await client.call("outlines_hide_all");
+    // -- Don't show any devices
+    await client.call("devices_hide_all");
+    // -- Use a large font
+    await client.call("set_font_size", ["large"]);
+
+    await client.call("set_render_dir", ["renders"]);
+    await client.call("set_render_type", ["rendePNGrs"]);
+}
+
 const client = new JsonRpcClient();
+await setAffinityStyle();
 await client.call("set_clipping", { mode: 2, x: { max: 2 } });
 await client.call("set_chid_visibility", [true]);
 await client.call("set_window_size", { width: 800, height: 500 });
@@ -148,11 +175,20 @@ await client.call(
 );
 await client.call("set_ortho_preset", ["XMAX"]);
 await client.call("set_clipping", { mode: 2, x: { max: 2.45 } });
-await client.call("set_frame", [250]);
+await client.call("set_time", [255]);
 await client.call("set_projection_type", [1]);
 await client.call("render", { basename: "temperature" });
-await client.call("unload_all");
-await client.notify("exit");
+await client.call("set_colorbar", ["blue->red split"]);
+await client.call("set_font_size", ["large"]);
+await client.call("set_slice_bounds", {
+    type: "temp",
+    set_min: true,
+    value_min: 20,
+    set_max: true,
+    value_max: 160,
+});
+// await client.call("unload_all");
+// await client.notify("exit");
 conn.close();
 
 function findCellDimension(

@@ -92,7 +92,7 @@ json_object *jsonrpc_Render(jrpc_context *context, json_object *params,
 // }
 
 /// @brief Return the current frame number which Smokeivew has loaded.
-json_object *jsonrpc_Getframe(jrpc_context *context, json_object *params,
+json_object *jsonrpc_GetFrame(jrpc_context *context, json_object *params,
                               json_object *id) {
   int framenumber = Getframe();
   json_object *result_root = json_object_new_int(framenumber);
@@ -100,7 +100,7 @@ json_object *jsonrpc_Getframe(jrpc_context *context, json_object *params,
 }
 
 /// @brief Shift to a specific frame number.
-json_object *jsonrpc_Setframe(jrpc_context *context, json_object *params,
+json_object *jsonrpc_SetFrame(jrpc_context *context, json_object *params,
                               json_object *id) {
   int f = json_object_get_int(json_object_array_get_idx(params, 0));
   fprintf(stderr, "setting frame to %d\n", f);
@@ -109,7 +109,7 @@ json_object *jsonrpc_Setframe(jrpc_context *context, json_object *params,
 }
 
 /// @brief Get the time value of the currently loaded frame.
-json_object *jsonrpc_Gettime(jrpc_context *context, json_object *params,
+json_object *jsonrpc_GetTime(jrpc_context *context, json_object *params,
                              json_object *id) {
   if (global_times != NULL && nglobal_times > 0) {
     float time = Gettime();
@@ -122,7 +122,7 @@ json_object *jsonrpc_Gettime(jrpc_context *context, json_object *params,
 }
 
 /// @brief Shift to the closest frame to given a time value.
-json_object *jsonrpc_Settime(jrpc_context *context, json_object *params,
+json_object *jsonrpc_SetTime(jrpc_context *context, json_object *params,
                              json_object *id) {
   DisplayCB();
   float t = json_object_get_double(json_object_array_get_idx(params, 0));
@@ -329,66 +329,8 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
   return 0;
 }
 
-// /// @brief Return a table (an array) of the times available in Smokeview.
-// They
-// /// key of the table is an int representing the frame number, and the value
-// of
-// /// the table is a float representing the time.
-// /// @param L The lua interpreter
-// /// @return Number of stack items left on stack.
-// json_object *jsonrpc_GetGlobalTimes(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   lua_createtable(L, 0, nglobal_times);
-//   int i;
-//   for (i = 0; i < nglobal_times; i++) {
-//     lua_pushnumber(L, i);
-//     lua_pushnumber(L, global_times[i]);
-//     lua_settable(L, -3);
-//   }
-//   return 1;
-// }
-
-// /// @brief Given a frame number return the time.
-// /// @param L The lua interpreter
-// /// @return Number of stack items left on stack.
-// json_object *jsonrpc_GetGlobalTime(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   int frame_number = lua_tonumber(L, 1);
-//   if (frame_number >= 0 && frame_number < nglobal_times) {
-//     lua_pushnumber(L, global_times[frame_number]);
-//   }
-//   else {
-//     lua_pushnil(L);
-//   }
-//   return 1;
-// }
-
-// /// @brief Get the number of (global) frames available to smokeview.
-// /// @param L
-// /// @return
-// json_object *jsonrpc_GetNglobalTimes(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   lua_pushnumber(L, nglobal_times);
-//   return 1;
-// }
-
-// /// @brief Get the number of meshes in the loaded model.
-// json_object *jsonrpc_GetNmeshes(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   lua_pushnumber(L, nmeshes);
-//   return 1;
-// }
-
-// /// @brief Get the number of particle files in the loaded model.
-// json_object *jsonrpc_GetNpartinfo(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   lua_pushnumber(L, npartinfo);
-//   return 1;
-// }
-
 /// @brief Build a Lua table with information on the meshes of the model. The
 /// key of the table is the mesh number.
-// TODO: provide more information via this interface.
 json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
                                json_object *id) {
   struct json_object *mesh_array = json_object_new_array();
@@ -668,171 +610,6 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
 //   return 1;
 // }
 
-// int AccessPl3dentryProp(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   // Take the index from the table.
-//   lua_pushstring(L, "index");
-//   lua_gettable(L, 1);
-//   int index = lua_tonumber(L, -1);
-//   const char *field = lua_tostring(L, 2);
-//   if (strcmp(field, "loaded") == 0) {
-//     lua_pushboolean(L, plot3dinfo[index].loaded);
-//     return 1;
-//   }
-//   else {
-//     return 0;
-//   }
-// }
-
-// json_object *jsonrpc_SetPl3dBoundMin(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   int pl3d_value_index = lua_tonumber(L, 1);
-//   int set = lua_toboolean(L, 2);
-//   float value = lua_tonumber(L, 3);
-//   SetPl3dBoundMin(pl3d_value_index, set, value);
-//   return 0;
-// }
-
-// json_object *jsonrpc_SetPl3dBoundMax(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   int pl3d_value_index = lua_tonumber(L, 1);
-//   int set = lua_toboolean(L, 2);
-//   float value = lua_tonumber(L, 3);
-//   SetPl3dBoundMax(pl3d_value_index, set, value);
-//   return 0;
-// }
-
-// /// @brief Get the number of PL3D files available to the model.
-// json_object *jsonrpc_GetNplot3dinfo(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   lua_pushnumber(L, nplot3dinfo);
-//   return 1;
-// }
-
-// json_object *jsonrpc_GetPlot3dentry(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   int lua_index = lua_tonumber(L, -1);
-//   int index = lua_index - 1;
-//   int i;
-
-//   // csvdata *csventry = get_csvinfo(key);
-//   // fprintf(stderr, "csventry->file: %s\n", csventry->file);
-//   lua_createtable(L, 0, 4);
-
-//   lua_pushnumber(L, index);
-//   lua_setfield(L, -2, "index");
-
-//   lua_pushstring(L, plot3dinfo[index].file);
-//   lua_setfield(L, -2, "file");
-
-//   lua_pushstring(L, plot3dinfo[index].reg_file);
-//   lua_setfield(L, -2, "reg_file");
-
-//   lua_pushstring(L, plot3dinfo[index].longlabel);
-//   lua_setfield(L, -2, "longlabel");
-
-//   lua_pushnumber(L, plot3dinfo[index].time);
-//   lua_setfield(L, -2, "time");
-
-//   lua_pushnumber(L, plot3dinfo[index].u);
-//   lua_setfield(L, -2, "u");
-//   lua_pushnumber(L, plot3dinfo[index].v);
-//   lua_setfield(L, -2, "v");
-//   lua_pushnumber(L, plot3dinfo[index].w);
-//   lua_setfield(L, -2, "w");
-
-//   lua_pushnumber(L, plot3dinfo[index].nplot3dvars);
-//   lua_setfield(L, -2, "nplot3dvars");
-
-//   lua_pushnumber(L, plot3dinfo[index].blocknumber);
-//   lua_setfield(L, -2, "blocknumber");
-
-//   lua_pushnumber(L, plot3dinfo[index].display);
-//   lua_setfield(L, -2, "display");
-
-//   lua_createtable(L, 0, 6);
-//   for (i = 0; i < 6; ++i) {
-//     lua_pushnumber(L, i + 1);
-
-//     lua_createtable(L, 0, 3);
-//     lua_pushstring(L, plot3dinfo[index].label[i].longlabel);
-//     lua_setfield(L, -2, "longlabel");
-//     lua_pushstring(L, plot3dinfo[index].label[i].shortlabel);
-//     lua_setfield(L, -2, "shortlabel");
-//     lua_pushstring(L, plot3dinfo[index].label[i].unit);
-//     lua_setfield(L, -2, "unit");
-
-//     lua_settable(L, -3);
-//   }
-//   lua_setfield(L, -2, "label");
-
-//   // Create a metatable.
-//   // TODO: this metatable might be more easily implemented directly in Lua
-//   // so that we don't need to reimplement table access.
-//   lua_createtable(L, 0, 1);
-//   lua_pushcfunction(L, &AccessPl3dentryProp);
-//   lua_setfield(L, -2, "__index");
-//   // then set the metatable
-//   lua_setmetatable(L, -2);
-
-//   return 1;
-// }
-
-// json_object *jsonrpc_GetPlot3dinfo(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   lua_createtable(L, 0, nplot3dinfo);
-//   int i;
-//   for (i = 0; i < nplot3dinfo; i++) {
-//     lua_pushnumber(L, i + 1);
-//     LuaGetPlot3dentry(L);
-
-//     lua_settable(L, -3);
-//   }
-//   return 1;
-// }
-
-// json_object *jsonrpc_GetQdataSum(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   int meshnumber = lua_tonumber(L, 1);
-//   int vari, i, j, k;
-//   meshdata mesh = meshinfo[meshnumber];
-//   int ntotal = (mesh.ibar + 1) * (mesh.jbar + 1) * (mesh.kbar + 1);
-//   int vars = 5;
-//   float totals[5];
-//   totals[0] = 0.0;
-//   totals[1] = 0.0;
-//   totals[2] = 0.0;
-//   totals[3] = 0.0;
-//   totals[4] = 0.0;
-//   for (vari = 0; vari < 5; ++vari) {
-//     int offset = vari * ntotal;
-//     for (k = 0; k <= mesh.kbar; ++k) {
-//       for (j = 0; j <= mesh.jbar; ++j) {
-//         for (i = 0; i <= mesh.ibar; ++i) {
-//           int n = offset + k * (mesh.jbar + 1) * (mesh.ibar + 1) +
-//                   j * (mesh.ibar + 1) + i;
-//           totals[vari] += mesh.qdata[n];
-//         }
-//       }
-//     }
-//   }
-//   for (vari = 0; vari < vars; ++vari) {
-//     lua_pushnumber(L, totals[vari]);
-//   }
-//   lua_pushnumber(L, ntotal);
-//   return vars + 1;
-// }
-
-// json_object *jsonrpc_GetGlobalTimeN(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   // argument 1 is the table, argument 2 is the index
-//   int index = lua_tonumber(L, 2);
-//   if (index < 0 || index >= nglobal_times) {
-//     return luaL_error(L, "%d is not a valid global time index\n", index);
-//   }
-//   lua_pushnumber(L, global_times[index]);
-//   return 1;
-// }
 json_object *json_GetSmoke3ds() {
   struct json_object *smoke3ds = json_object_new_array();
   for (int i = 0; i < nsmoke3dinfo; i++) {
@@ -850,24 +627,6 @@ json_object *json_GetSmoke3ds() {
                              json_object_new_string(val->label.shortlabel));
     }
     json_object_object_add(slice_obj, "type", json_object_new_int(val->type));
-    // if (val->label.unit) {
-    //   json_object_object_add(slice_obj, "unit",
-    //                          json_object_new_string(val->smoke_type));
-    // }
-    // struct json_object *coordinates = json_object_new_object();
-    // json_object_object_add(coordinates, "i_min",
-    //                        json_object_new_int(smoke3ddata->ijk_min[0]));
-    // json_object_object_add(coordinates, "i_max",
-    //                        json_object_new_int(smoke3ddata->ijk_max[0]));
-    // json_object_object_add(coordinates, "j_min",
-    //                        json_object_new_int(smoke3ddata->ijk_min[1]));
-    // json_object_object_add(coordinates, "j_max",
-    //                        json_object_new_int(smoke3ddata->ijk_max[1]));
-    // json_object_object_add(coordinates, "k_min",
-    //                        json_object_new_int(smoke3ddata->ijk_min[2]));
-    // json_object_object_add(coordinates, "k_max",
-    //                        json_object_new_int(smoke3ddata->ijk_max[2]));
-    // json_object_object_add(slice_obj, "coordinates", coordinates);
     json_object_array_add(smoke3ds, slice_obj);
   }
   return smoke3ds;
@@ -915,21 +674,6 @@ json_object *json_GetSlices() {
                            json_object_new_int(slice->ijk_max[2]));
     json_object_object_add(slice_obj, "coordinates", coordinates);
 
-    //  struct json_object *dimensions = json_object_new_object();
-    // json_object_object_add(dimensions, "x_min",
-    //                        json_object_new_double(slice->xyz_min[0]));
-    // json_object_object_add(dimensions, "x_max",
-    //                        json_object_new_double(slice->xyz_max[0]));
-    // json_object_object_add(dimensions, "y_min",
-    //                        json_object_new_double(slice->xyz_min[1]));
-    // json_object_object_add(dimensions, "y_max",
-    //                        json_object_new_double(slice->xyz_max[1]));
-    // json_object_object_add(dimensions, "z_min",
-    //                        json_object_new_double(slice->xyz_min[2]));
-    // json_object_object_add(dimensions, "z_max",
-    //                        json_object_new_double(slice->xyz_max[2]));
-    // json_object_object_add(slice_obj, "dimensions", dimensions);
-
     json_object_array_add(slices, slice_obj);
   }
   return slices;
@@ -939,148 +683,6 @@ json_object *jsonrpc_GetSlices(jrpc_context *context, json_object *params,
                                json_object *id) {
   return json_GetSlices();
 }
-
-// /// @brief This takes a lightuserdata pointer as an argument, and returns the
-// /// slice label as a string.
-// json_object *jsonrpc_SliceGetLabel(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   // get the lightuserdata from the stack, which is a pointer to the
-//   'slicedata' slicedata *slice = (slicedata *)lua_touserdata(L, 1);
-//   // Push the string onto the stack
-//   lua_pushstring(L, slice->slicelabel);
-//   return 1;
-// }
-
-// /// @brief This takes a lightuserdata pointer as an argument, and returns the
-// /// slice filename as a string.
-// json_object *jsonrpc_SliceGetFilename(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   // Get the lightuserdata from the stack, which is a pointer to the
-//   // 'slicedata'.
-//   slicedata *slice = (slicedata *)lua_touserdata(L, 1);
-//   // Push the string onto the stack
-//   lua_pushstring(L, slice->file);
-//   return 1;
-// }
-
-// json_object *jsonrpc_SliceGetData(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   // get the lightuserdata from the stack, which is a pointer to the
-//   'slicedata' slicedata *slice = (slicedata *)lua_touserdata(L, 1);
-//   // Push a lightuserdata (a pointer) onto the lua stack that points to the
-//   // qslicedata.
-//   lua_pushlightuserdata(L, slice->qslicedata);
-//   return 1;
-// }
-
-// json_object *jsonrpc_SliceGetTimes(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   int i;
-//   // get the lightuserdata from the stack, which is a pointer to the
-//   'slicedata' slicedata *slice = (slicedata *)lua_touserdata(L, 1);
-//   // Push a lightuserdata (a pointer) onto the lua stack that points to the
-//   // qslicedata.
-//   lua_createtable(L, slice->ntimes, 0);
-//   for (i = 0; i < slice->ntimes; i++) {
-//     lua_pushnumber(L, i + 1);
-//     lua_pushnumber(L, slice->times[i]);
-//     lua_settable(L, -3);
-//   }
-//   return 1;
-// }
-
-// json_object *jsonrpc_GetPart(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   // This should push a lightuserdata onto the stack which is a pointer to
-//   the
-//   // partdata. This takes the index of the part (in the partinfo array) as an
-//   // argument.
-//   // Get the index of the slice as an argument to the lua function.
-//   int part_index = lua_tonumber(L, 1);
-//   // Get the pointer to the slicedata struct.
-//   partdata *part = &partinfo[part_index];
-//   // Push the pointer onto the lua stack as lightuserdata.
-//   lua_pushlightuserdata(L, part);
-//   // lua_newuserdata places the data on the stack, so return a single stack
-//   // item.
-//   return 1;
-// }
-
-// // pass in the part data
-// json_object *jsonrpc_GetPartNpoints(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   int index;
-//   partdata *parti = (partdata *)lua_touserdata(L, 1);
-//   if (!parti->loaded) {
-//     return luaL_error(L, "particle file %s not loaded", parti->file);
-//   }
-
-//   // Create a table with an entry for x, y and name
-//   lua_createtable(L, 3, 0);
-
-//   lua_pushstring(L, "name");
-//   lua_pushstring(L, "(unknown)");
-//   lua_settable(L, -3);
-
-//   // x entries
-//   lua_pushstring(L, "x");
-//   lua_createtable(L, 3, 0);
-
-//   lua_pushstring(L, "units");
-//   lua_pushstring(L, "s");
-//   lua_settable(L, -3);
-
-//   lua_pushstring(L, "name");
-//   lua_pushstring(L, "Time");
-//   lua_settable(L, -3);
-
-//   lua_pushstring(L, "values");
-//   lua_createtable(L, parti->ntimes, 0);
-
-//   // Create a table with an entry for each time
-//   for (index = 0; index < parti->ntimes; index++) {
-//     part5data *part5 = parti->data5 + index * parti->nclasses;
-//     // sum += part5->npoints_file;
-
-//     // use a 1-indexed array to match lua
-//     lua_pushnumber(L, index + 1);
-//     lua_pushnumber(L, part5->time);
-//     lua_settable(L, -3);
-//   }
-//   lua_settable(L, -3);
-//   lua_settable(L, -3);
-
-//   // y entries
-//   lua_pushstring(L, "y");
-//   lua_createtable(L, 3, 0);
-
-//   lua_pushstring(L, "units");
-//   lua_pushstring(L, "#");
-//   lua_settable(L, -3);
-
-//   lua_pushstring(L, "name");
-//   lua_pushstring(L, "# Particles");
-//   lua_settable(L, -3);
-
-//   lua_pushstring(L, "values");
-//   lua_createtable(L, parti->ntimes, 0);
-
-//   // Create a table with an entry for each time
-//   for (index = 0; index < parti->ntimes; index++) {
-//     part5data *part5 = parti->data5 + index * parti->nclasses;
-//     // sum += part5->npoints_file;
-
-//     // use a 1-indexed array to match lua
-//     lua_pushnumber(L, index + 1);
-//     lua_pushnumber(L, part5->npoints_file);
-//     lua_settable(L, -3);
-//   }
-//   lua_settable(L, -3);
-//   lua_settable(L, -3);
-
-//   // Return a table of values.
-//   return 1;
-// }
 
 // json_object *jsonrpc_GetCsventry(jrpc_context *context, json_object *params,
 // json_object *id) {
@@ -1364,24 +966,17 @@ json_object *jsonrpc_Getcolorbarflip(jrpc_context *context, json_object *params,
 //   return 0;
 // }
 
-// json_object *jsonrpc_SetNamedColorbar(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   const char *name = lua_tostring(L, 1);
-//   int err = SetNamedColorbar(name);
-//   if (err == 1) {
-//     luaL_error(L, "%s is not a valid colorbar name", name);
-//   }
-//   return 0;
-// }
-
-// // int lua_get_named_colorbar(jrpc_context *context, json_object *params,
-// json_object *id) {
-// //   int err = GetNamedColorbar();
-// //   if (err == 1) {
-// //     luaL_error(L, "%s is not a valid colorbar name", name);
-// //   }
-// //   return 0;
-// // }
+json_object *jsonrpc_SetNamedColorbar(jrpc_context *context,
+                                      json_object *params, json_object *id) {
+  const char *name =
+      json_object_get_string(json_object_array_get_idx(params, 0));
+  int err = SetNamedColorbar(name);
+  if (err == 1) {
+    context->error_code = 125;
+    context->error_message = strdup("not a valid colorbar name");
+  }
+  return 0;
+}
 
 // //////////////////////
 
@@ -1441,35 +1036,46 @@ json_object *jsonrpc_Getcolorbarflip(jrpc_context *context, json_object *params,
 //   return 1;
 // }
 
-// // title
-// json_object *jsonrpc_SetTitleVisibility(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   int setting = lua_toboolean(L, 1);
-//   SetTitleVisibility(setting);
-//   return 0;
-// }
+// title
+json_object *jsonrpc_SetTitleVisibility(jrpc_context *context,
+                                        json_object *params, json_object *id) {
+  json_bool v = json_object_get_boolean(json_object_array_get_idx(params, 0));
+  SetTitleVisibility(v ? 1 : 0);
+  return NULL;
+}
 
-// json_object *jsonrpc_GetTitleVisibility(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   int setting = GetTitleVisibility();
-//   lua_pushboolean(L, setting);
-//   return 1;
-// }
+json_object *jsonrpc_GetTitleVisibility(jrpc_context *context,
+                                        json_object *params, json_object *id) {
+  int v = GetTitleVisibility();
+  if (v) {
+    return json_object_new_boolean(1);
+  }
+  else {
+    return json_object_new_boolean(0);
+  }
+  return NULL;
+}
 
-// // smv_version
-// json_object *jsonrpc_SetSmvVersionVisibility(jrpc_context *context,
-// json_object *params,  json_object *id) {
-//   int setting = lua_toboolean(L, 1);
-//   SetSmvVersionVisibility(setting);
-//   return 0;
-// }
+// smv_version
+json_object *jsonrpc_SetSmvVersionVisibility(jrpc_context *context,
+                                             json_object *params,
+                                             json_object *id) {
+  json_bool v = json_object_get_boolean(json_object_array_get_idx(params, 0));
+  SetSmvVersionVisibility(v ? 1 : 0);
+  return NULL;
+}
 
-// json_object *jsonrpc_GetSmvVersionVisibility(jrpc_context *context,
-// json_object *params,  json_object *id) {
-//   int setting = GetSmvVersionVisibility();
-//   lua_pushboolean(L, setting);
-//   return 1;
-// }
+json_object *jsonrpc_GetSmvVersionVisibility(jrpc_context *context,
+                                             json_object *params,
+                                             json_object *id) {
+  int v = GetSmvVersionVisibility();
+  if (v) {
+    return json_object_new_boolean(1);
+  }
+  else {
+    return json_object_new_boolean(0);
+  }
+}
 
 // #define JsonRpcBoolSetting(name,func)
 
@@ -1840,6 +1446,8 @@ json_object *jsonrpc_SetSliceBounds(jrpc_context *context, json_object *params,
   int set_max = json_object_get_int(json_object_object_get(params, "set_max"));
   float value_max =
       json_object_get_double(json_object_object_get(params, "value_max"));
+  fprintf(stderr, "setting slice_bounds: %s %d, %g, %d, %g\n", slice_type,
+          set_min, value_min, set_max, value_max);
   CApiSetSliceBounds(slice_type, set_min, value_min, set_max, value_max);
   return NULL;
 }
@@ -1868,20 +1476,6 @@ json_object *jsonrpc_SetSliceBounds(jrpc_context *context, json_object *params,
 //   return 1;
 // }
 
-// json_object *jsonrpc_SetScaledfont(jrpc_context *context, json_object
-// *params, json_object *id) {
-//   int height2d = lua_tonumber(L, 1);
-//   int height2dwidth = lua_tonumber(L, 2);
-//   int thickness2d = lua_tonumber(L, 3);
-//   int height3d = lua_tonumber(L, 3);
-//   int height3dwidth = lua_tonumber(L, 5);
-//   int thickness3d = lua_tonumber(L, 6);
-//   int return_code = SetScaledfont(height2d, height2dwidth, thickness2d,
-//                                   height3d, height3dwidth, thickness3d);
-//   lua_pushnumber(L, return_code);
-//   return 1;
-// }
-
 // json_object *jsonrpc_GetFontsize(jrpc_context *context, json_object *params,
 // json_object *id) {
 //   switch (fontindex) {
@@ -1903,16 +1497,56 @@ json_object *jsonrpc_SetSliceBounds(jrpc_context *context, json_object *params,
 //   }
 // }
 
-// json_object *jsonrpc_SetScaledfontHeight2d(jrpc_context *context, json_object
-// *params,  json_object *id) {
+// json_object *jsonrpc_SetScaledfont(jrpc_context *context, json_object
+// *params,
+//                                    json_object *id) {
 //   int height2d = lua_tonumber(L, 1);
-//   int return_code = SetScaledfontHeight2d(height2d);
+//   int height2dwidth = lua_tonumber(L, 2);
+//   int thickness2d = lua_tonumber(L, 3);
+//   int height3d = lua_tonumber(L, 3);
+//   int height3dwidth = lua_tonumber(L, 5);
+//   int thickness3d = lua_tonumber(L, 6);
+//   int return_code = SetScaledfont(height2d, height2dwidth, thickness2d,
+//                                   height3d, height3dwidth, thickness3d);
 //   lua_pushnumber(L, return_code);
 //   return 1;
 // }
 
-// json_object *jsonrpc_SetShowhmstimelabel(jrpc_context *context, json_object
-// *params, json_object *id) {
+json_object *jsonrpc_SetFontSize(jrpc_context *context, json_object *params,
+                                 json_object *id) {
+  json_object *arg0 = json_object_array_get_idx(params, 0);
+  if (json_object_is_type(arg0, json_type_string)) {
+    const char *size_name =
+        json_object_get_string(json_object_array_get_idx(params, 0));
+    if (strcmp(size_name, "small") == 0) {
+      SetFontsize(0);
+    }
+    else if (strcmp(size_name, "large") == 0) {
+      SetFontsize(1);
+    }
+    else {
+      context->error_code = 134;
+      context->error_message = strdup("invalid font size");
+    }
+  }
+  else if (json_object_is_type(arg0, json_type_int)) {
+    int height2d = json_object_get_int(arg0);
+    if (SetScaledfontHeight2d(height2d)) {
+      context->error_code = 133;
+      context->error_message = strdup("could not set font size");
+    }
+  }
+  return NULL;
+}
+
+// if v
+//   == "small" then return smvlib.set_fontsize(0) elseif v ==
+//       "large" then return smvlib.set_fontsize(1) elseif type(v) ==
+//       "number" then smvlib.set_scaledfont_height2d(v) return smvlib
+//           .set_fontsize(2) else error("invalid font size") end
+
+// json_object *jsonrpc_SetShowhmstimelabel(jrpc_context *context,
+// json_object *params, json_object *id) {
 //   int v = lua_tonumber(L, 1);
 //   int return_code = SetShowhmstimelabel(v);
 //   lua_pushnumber(L, return_code);
@@ -1937,36 +1571,36 @@ json_object *jsonrpc_SetSliceBounds(jrpc_context *context, json_object *params,
 // }
 // #endif
 
-// json_object *jsonrpc_ShowSmoke3dShowall(jrpc_context *context, json_object
-// *params, json_object *id) {
+// json_object *jsonrpc_ShowSmoke3dShowall(jrpc_context *context,
+// json_object *params, json_object *id) {
 //   int return_code = ShowSmoke3dShowall();
 //   lua_pushnumber(L, return_code);
 //   return 1;
 // }
 
-// json_object *jsonrpc_ShowSmoke3dHideall(jrpc_context *context, json_object
-// *params, json_object *id) {
+// json_object *jsonrpc_ShowSmoke3dHideall(jrpc_context *context,
+// json_object *params, json_object *id) {
 //   int return_code = ShowSmoke3dHideall();
 //   lua_pushnumber(L, return_code);
 //   return 1;
 // }
 
-// json_object *jsonrpc_ShowSlicesShowall(jrpc_context *context, json_object
-// *params, json_object *id) {
+// json_object *jsonrpc_ShowSlicesShowall(jrpc_context *context,
+// json_object *params, json_object *id) {
 //   int return_code = ShowSlicesShowall();
 //   lua_pushnumber(L, return_code);
 //   return 1;
 // }
 
-// json_object *jsonrpc_ShowSlicesHideall(jrpc_context *context, json_object
-// *params, json_object *id) {
+// json_object *jsonrpc_ShowSlicesHideall(jrpc_context *context,
+// json_object *params, json_object *id) {
 //   int return_code = ShowSlicesHideall();
 //   lua_pushnumber(L, return_code);
 //   return 1;
 // }
 
-// json_object *jsonrpc_AddTitleLine(jrpc_context *context, json_object *params,
-// json_object *id) {
+// json_object *jsonrpc_AddTitleLine(jrpc_context *context, json_object
+// *params, json_object *id) {
 //   const char *string = lua_tostring(L, 1);
 //   int return_code = addTitleLine(&titleinfo, string);
 //   lua_pushnumber(L, return_code);
@@ -1980,8 +1614,33 @@ json_object *jsonrpc_SetSliceBounds(jrpc_context *context, json_object *params,
 //   return 1;
 // }
 
+json_object *jsonrpc_BlockagesHideAll(jrpc_context *context,
+                                      json_object *params, json_object *id) {
+  BlockagesHideAll();
+  return NULL;
+}
+
+json_object *jsonrpc_SurfacesHideAll(jrpc_context *context, json_object *params,
+                                     json_object *id) {
+  SurfacesHideAll();
+  return NULL;
+}
+
+json_object *jsonrpc_OutlinesHide(jrpc_context *context, json_object *params,
+                                  json_object *id) {
+  OutlinesHide();
+  return NULL;
+}
+
+json_object *jsonrpc_DevicesHideAll(jrpc_context *context, json_object *params,
+                                    json_object *id) {
+  DevicesHideAll();
+  return NULL;
+}
+
 int register_procedures(struct jrpc_server *server) {
-  jrpc_register_procedure(server, &jsonrpc_Setframe, "set_frame", NULL);
+  jrpc_register_procedure(server, &jsonrpc_SetFrame, "set_frame", NULL);
+  jrpc_register_procedure(server, &jsonrpc_SetTime, "set_time", NULL);
   jrpc_register_procedure(server, &jsonrpc_SetClipping, "set_clipping", NULL);
   jrpc_register_procedure(server, &jsonrpc_Render, "render", NULL);
   jrpc_register_procedure(server, &jsonrpc_Unloadall, "unload_all", NULL);
@@ -2003,6 +1662,30 @@ int register_procedures(struct jrpc_server *server) {
   jrpc_register_procedure(server, &jsonrpc_GetMeshes, "get_meshes", NULL);
   jrpc_register_procedure(server, &jsonrpc_CameraSetProjectionType,
                           "set_projection_type", NULL);
+  jrpc_register_procedure(server, &jsonrpc_SetNamedColorbar, "set_colorbar",
+                          NULL);
+  jrpc_register_procedure(server, &jsonrpc_SetRendertype, "set_render_type",
+                          NULL);
+  jrpc_register_procedure(server, &jsonrpc_Setrenderdir, "set_render_dir",
+                          NULL);
+  jrpc_register_procedure(server, &jsonrpc_SetFontSize, "set_font_size", NULL);
+  jrpc_register_procedure(server, &jsonrpc_SetTitleVisibility,
+                          "set_title_visibility", NULL);
+  jrpc_register_procedure(server, &jsonrpc_GetTitleVisibility,
+                          "get_title_visibility", NULL);
+  jrpc_register_procedure(server, &jsonrpc_SetSmvVersionVisibility,
+                          "set_smv_version_visibility", NULL);
+  jrpc_register_procedure(server, &jsonrpc_GetSmvVersionVisibility,
+                          "get_smv_version_visibility", NULL);
+
+  jrpc_register_procedure(server, &jsonrpc_BlockagesHideAll,
+                          "blockages_hide_all", NULL);
+  jrpc_register_procedure(server, &jsonrpc_SurfacesHideAll, "surfaces_hide_all",
+                          NULL);
+  jrpc_register_procedure(server, &jsonrpc_OutlinesHide, "outlines_hide_all",
+                          NULL);
+  jrpc_register_procedure(server, &jsonrpc_DevicesHideAll, "devices_hide_all",
+                          NULL);
 
   return 0;
 }
