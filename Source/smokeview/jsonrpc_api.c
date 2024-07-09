@@ -386,109 +386,113 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
 //   return 1;
 // }
 
-// /// @brief Build a Lua table with information on the meshes of the model. The
-// /// key of the table is the mesh number.
-// // TODO: provide more information via this interface.
-// json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
-// json_object *id) {
-//   int entries = nmeshes;
-//   meshdata *infotable = meshinfo;
-//   lua_createtable(L, 0, entries);
-//   int i;
-//   for (i = 0; i < entries; i++) {
-//     lua_pushnumber(L, i);
-//     lua_createtable(L, 0, 5);
+/// @brief Build a Lua table with information on the meshes of the model. The
+/// key of the table is the mesh number.
+// TODO: provide more information via this interface.
+json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
+                               json_object *id) {
+  struct json_object *mesh_array = json_object_new_array();
+  for (int i = 0; i < nmeshes; i++) {
+    meshdata *mesh = &meshinfo[i];
+    struct json_object *mesh_obj = json_object_new_object();
+    json_object_object_add(mesh_obj, "index", json_object_new_int(i + 1));
+    if (mesh->label != NULL) {
+      json_object_object_add(mesh_obj, "id",
+                             json_object_new_string(mesh->label));
+    }
+    struct json_object *mesh_coordinates = json_object_new_object();
+    json_object_object_add(mesh_coordinates, "i",
+                           json_object_new_int(mesh->ibar));
+    json_object_object_add(mesh_coordinates, "j",
+                           json_object_new_int(mesh->jbar));
+    json_object_object_add(mesh_coordinates, "k",
+                           json_object_new_int(mesh->kbar));
+    json_object_object_add(mesh_obj, "coordinates", mesh_coordinates);
+    struct json_object *mesh_dimensions = json_object_new_object();
+    json_object_object_add(mesh_dimensions, "x_min",
+                           json_object_new_double(mesh->x0));
+    json_object_object_add(mesh_dimensions, "x_max",
+                           json_object_new_double(mesh->x1));
+    json_object_object_add(mesh_dimensions, "y_min",
+                           json_object_new_double(mesh->y0));
+    json_object_object_add(mesh_dimensions, "y_max",
+                           json_object_new_double(mesh->y1));
+    json_object_object_add(mesh_dimensions, "z_min",
+                           json_object_new_double(mesh->z0));
+    json_object_object_add(mesh_dimensions, "z_max",
+                           json_object_new_double(mesh->z1));
+    json_object_object_add(mesh_obj, "dimensions", mesh_dimensions);
 
-//     lua_pushnumber(L, infotable[i].ibar);
-//     lua_setfield(L, -2, "ibar");
+    struct json_object *vents = json_object_new_array();
+    for (int i = 0; i < mesh->nvents; i++) {
+      ventdata *vent = &mesh->ventinfo[i];
+      struct json_object *vent_obj = json_object_new_object();
+      json_object_object_add(vent_obj, "index", json_object_new_int(i + 1));
+      // json_object_object_add(vent_obj, "filename",
+      //                        json_object_new_string(csv_file->file));
+      // json_object_object_add(vent_obj, "type",
+      //                        json_object_new_string(csv_file->c_type));
+      json_object_object_add(
+          vent_obj, "surface_id",
+          json_object_new_string(vent->surf[0]->surfacelabel));
+      struct json_object *dimensions = json_object_new_object();
+      json_object_object_add(dimensions, "x_min",
+                             json_object_new_double(vent->xmin));
+      json_object_object_add(dimensions, "x_max",
+                             json_object_new_double(vent->xmax));
+      json_object_object_add(dimensions, "y_min",
+                             json_object_new_double(vent->ymin));
+      json_object_object_add(dimensions, "y_max",
+                             json_object_new_double(vent->ymax));
+      json_object_object_add(dimensions, "z_min",
+                             json_object_new_double(vent->zmin));
+      json_object_object_add(dimensions, "z_max",
+                             json_object_new_double(vent->zmax));
+      json_object_object_add(vent_obj, "dimensions", dimensions);
 
-//     lua_pushnumber(L, infotable[i].jbar);
-//     lua_setfield(L, -2, "jbar");
+      struct json_object *coordinates = json_object_new_object();
+      json_object_object_add(coordinates, "i_min",
+                             json_object_new_int(vent->imin));
+      json_object_object_add(coordinates, "i_max",
+                             json_object_new_int(vent->imax));
+      json_object_object_add(coordinates, "j_min",
+                             json_object_new_int(vent->jmin));
+      json_object_object_add(coordinates, "j_max",
+                             json_object_new_int(vent->jmax));
+      json_object_object_add(coordinates, "k_min",
+                             json_object_new_int(vent->kmin));
+      json_object_object_add(coordinates, "k_max",
+                             json_object_new_int(vent->kmax));
+      json_object_object_add(vent_obj, "coordinates", coordinates);
+      json_object_array_add(vents, vent_obj);
+    }
+    json_object_object_add(mesh_obj, "vents", vents);
 
-//     lua_pushnumber(L, infotable[i].kbar);
-//     lua_setfield(L, -2, "kbar");
+    struct json_object *xplt_orig = json_object_new_array();
+    for (size_t j = 0; j < mesh->ibar; j++) {
+      json_object_array_add(xplt_orig,
+                            json_object_new_double(mesh->xplt_orig[j]));
+    }
+    json_object_object_add(mesh_obj, "xplt_orig", xplt_orig);
 
-//     lua_pushstring(L, infotable[i].label);
-//     lua_setfield(L, -2, "label");
+    struct json_object *yplt_orig = json_object_new_array();
+    for (size_t j = 0; j < mesh->ibar; j++) {
+      json_object_array_add(yplt_orig,
+                            json_object_new_double(mesh->yplt_orig[j]));
+    }
+    json_object_object_add(mesh_obj, "yplt_orig", yplt_orig);
 
-//     lua_pushnumber(L, infotable[i].kbar);
-//     lua_setfield(L, -2, "cellsize");
+    struct json_object *zplt_orig = json_object_new_array();
+    for (size_t j = 0; j < mesh->jbar; j++) {
+      json_object_array_add(zplt_orig,
+                            json_object_new_double(mesh->zplt_orig[j]));
+    }
+    json_object_object_add(mesh_obj, "zplt_orig", zplt_orig);
 
-//     lua_pushnumber(L, xbar0);
-//     lua_setfield(L, -2, "xbar0");
-
-//     lua_pushnumber(L, ybar0);
-//     lua_setfield(L, -2, "ybar0");
-
-//     lua_pushnumber(L, zbar0);
-//     lua_setfield(L, -2, "zbar0");
-
-//     lua_pushnumber(L, xyzmaxdiff);
-//     lua_setfield(L, -2, "xyzmaxdiff");
-
-//     lua_pushnumber(L, i);
-//     lua_pushcclosure(L, LuaGetiblankcell, 1);
-//     lua_setfield(L, -2, "iblank_cell");
-
-//     lua_pushnumber(L, i);
-//     lua_pushcclosure(L, LuaGetiblanknode, 1);
-//     lua_setfield(L, -2, "iblank_node");
-
-//     // loop for less than ibar
-//     int j;
-//     lua_createtable(L, 0, infotable[i].ibar);
-//     for (j = 0; j < infotable[i].ibar; j++) {
-//       lua_pushnumber(L, j);
-//       lua_pushnumber(L, infotable[i].xplt[j]);
-//       lua_settable(L, -3);
-//     }
-//     lua_setfield(L, -2, "xplt");
-
-//     lua_createtable(L, 0, infotable[i].jbar);
-//     for (j = 0; j < infotable[i].jbar; j++) {
-//       lua_pushnumber(L, j);
-//       lua_pushnumber(L, infotable[i].yplt[j]);
-//       lua_settable(L, -3);
-//     }
-//     lua_setfield(L, -2, "yplt");
-
-//     lua_createtable(L, 0, infotable[i].kbar);
-//     for (j = 0; j < infotable[i].kbar; j++) {
-//       lua_pushnumber(L, j);
-//       lua_pushnumber(L, infotable[i].zplt[j]);
-//       lua_settable(L, -3);
-//     }
-//     lua_setfield(L, -2, "zplt");
-
-//     lua_createtable(L, 0, infotable[i].ibar);
-//     for (j = 0; j < infotable[i].ibar; j++) {
-//       lua_pushnumber(L, j);
-//       lua_pushnumber(L, infotable[i].xplt_orig[j]);
-//       lua_settable(L, -3);
-//     }
-//     lua_setfield(L, -2, "xplt_orig");
-
-//     lua_createtable(L, 0, infotable[i].jbar);
-//     for (j = 0; j < infotable[i].jbar; j++) {
-//       lua_pushnumber(L, j);
-//       lua_pushnumber(L, infotable[i].yplt_orig[j]);
-//       lua_settable(L, -3);
-//     }
-//     lua_setfield(L, -2, "yplt_orig");
-
-//     lua_createtable(L, 0, infotable[i].kbar);
-//     for (j = 0; j < infotable[i].kbar; j++) {
-//       lua_pushnumber(L, j);
-//       lua_pushnumber(L, infotable[i].zplt_orig[j]);
-//       lua_settable(L, -3);
-//     }
-//     lua_setfield(L, -2, "zplt_orig");
-
-//     lua_settable(L, -3);
-//   }
-//   // Leaves one returned value on the stack, the mesh table.
-//   return 1;
-// }
+    json_object_array_add(mesh_array, mesh_obj);
+  }
+  return mesh_array;
+}
 
 // /// @brief Get the number of meshes in the loaded model.
 // json_object *jsonrpc_GetNdevices(jrpc_context *context, json_object *params,
@@ -889,6 +893,9 @@ json_object *json_GetSlices() {
       json_object_object_add(slice_obj, "id",
                              json_object_new_string(slice->slicelabel));
     }
+    json_object_object_add(slice_obj, "idir", json_object_new_int(slice->idir));
+    json_object_object_add(slice_obj, "position_orig",
+                           json_object_new_double(slice->position_orig));
     if (slice->label.unit) {
       json_object_object_add(slice_obj, "unit",
                              json_object_new_string(slice->label.unit));
@@ -907,6 +914,22 @@ json_object *json_GetSlices() {
     json_object_object_add(coordinates, "k_max",
                            json_object_new_int(slice->ijk_max[2]));
     json_object_object_add(slice_obj, "coordinates", coordinates);
+
+    //  struct json_object *dimensions = json_object_new_object();
+    // json_object_object_add(dimensions, "x_min",
+    //                        json_object_new_double(slice->xyz_min[0]));
+    // json_object_object_add(dimensions, "x_max",
+    //                        json_object_new_double(slice->xyz_max[0]));
+    // json_object_object_add(dimensions, "y_min",
+    //                        json_object_new_double(slice->xyz_min[1]));
+    // json_object_object_add(dimensions, "y_max",
+    //                        json_object_new_double(slice->xyz_max[1]));
+    // json_object_object_add(dimensions, "z_min",
+    //                        json_object_new_double(slice->xyz_min[2]));
+    // json_object_object_add(dimensions, "z_max",
+    //                        json_object_new_double(slice->xyz_max[2]));
+    // json_object_object_add(slice_obj, "dimensions", dimensions);
+
     json_object_array_add(slices, slice_obj);
   }
   return slices;
@@ -1709,13 +1732,17 @@ json_object *jsonrpc_GetChidVisibility(jrpc_context *context,
 //   lua_pushnumber(L, projection_type);
 //   return 1;
 // }
-// json_object *jsonrpc_CameraSetProjectionType(jrpc_context *context,
-// json_object *params,  json_object *id) {
-//   float projection_type = lua_tonumber(L, 1);
-//   int return_value = CameraSetProjectionType(projection_type);
-//   lua_pushnumber(L, return_value);
-//   return 1;
-// }
+json_object *jsonrpc_CameraSetProjectionType(jrpc_context *context,
+                                             json_object *params,
+                                             json_object *id) {
+  int projection_type =
+      json_object_get_int(json_object_array_get_idx(params, 0));
+  if (CameraSetProjectionType(projection_type)) {
+    context->error_code = 121;
+    context->error_message = strdup("set proejction type failure");
+  }
+  return NULL;
+}
 
 // json_object *jsonrpc_CameraGetRotationType(jrpc_context *context, json_object
 // *params,  json_object *id) {
@@ -1971,7 +1998,11 @@ int register_procedures(struct jrpc_server *server) {
   jrpc_register_procedure(server, &json_GetSmoke3ds, "get_smoke3ds", NULL);
   jrpc_register_procedure(server, &jsonrpc_Load3dSmokeIndices,
                           "load_smoke3d_indices", NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetOrthoPreset, "set_ortho_preset", NULL);
+  jrpc_register_procedure(server, &jsonrpc_SetOrthoPreset, "set_ortho_preset",
+                          NULL);
+  jrpc_register_procedure(server, &jsonrpc_GetMeshes, "get_meshes", NULL);
+  jrpc_register_procedure(server, &jsonrpc_CameraSetProjectionType,
+                          "set_projection_type", NULL);
 
   return 0;
 }
