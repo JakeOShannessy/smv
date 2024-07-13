@@ -61,7 +61,6 @@ add_executable(smvq smvq.c
     ../shared/readgeom.c
     ../smokeview/colortable.c
     ../smokeview/command_args.c
-    ../smokeview/jsonrpc.c
 
     ../smokeview/glui_smoke.cpp
     ../smokeview/glui_clip.cpp
@@ -190,5 +189,7 @@ if (LINUX)
     add_definitions(-Dpp_LINUX)
     target_link_libraries(smvq PRIVATE pthread X11 Xmu GLU GL m stdc++)
 endif()
-
+# if (LUA)
+# endif()
+target_link_libraries(smvq PRIVATE jsonrpc)
 install(TARGETS smvq)

@@ -56,7 +56,7 @@ endif()
 # Set flags for Windows
 if (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_WIN32)
-    add_compile_definitions(PTW32_BUILD PTW32_STATIC_LIB GLEW_STATIC X64 _WIN32 WIN32 _CONSOLE)
+    add_compile_definitions(PTW32_BUILD PTW32_STATIC_LIB   X64 _WIN32 WIN32 _CONSOLE)
 endif()
 # Set flags for Linux
 if (LINUX)
@@ -92,7 +92,7 @@ if (NOT GLUT_FOUND)
     add_subdirectory(Source/glut-3.7.6)
 endif()
 find_package(OpenGL REQUIRED)
-find_package(GLEW)
+find_package(GLEW REQUIRED)
 # If GLEW is not found natively we compile it into smokeview directly later in
 # this file rather than adding a subdirectory
 find_package(JPEG)
@@ -188,7 +188,6 @@ add_executable(smokeview
     Source/shared/readgeom.c
     Source/smokeview/colortable.c
     Source/smokeview/command_args.c
-    Source/smokeview/jsonrpc.c
     Source/smokeview/jsonrpc_api.c
 )
 
@@ -234,6 +233,8 @@ if (NOT json-c_FOUND)
     endif()
 else()
     target_link_libraries(smokeview PRIVATE json-c::json-c)
+    # install(FILES json-c::json-c)
+    # install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
 endif()
 
 
@@ -280,21 +281,28 @@ else()
 endif()
 if (JPEG_FOUND)
     target_link_libraries(smokeview PRIVATE JPEG::JPEG)
+    # install(TARGET JPEG::JPEG)
 else()
     target_link_libraries(smokeview PRIVATE jpeg_static)
+    install(TARGET jpeg_static)
 endif()
 if (PNG_FOUND)
     target_link_libraries(smokeview PRIVATE PNG::PNG)
+    # install(IMPORTED_RUNTIME_ARTIFACTS PNG::PNG)
 else()
     target_link_libraries(smokeview PRIVATE png_static)
+    install(TARGET png_static)
 endif()
 if (ZLIB_FOUND)
     target_link_libraries(smokeview PRIVATE ZLIB::ZLIB)
+    # install(IMPORTED_RUNTIME_ARTIFACTS ZLIB::ZLIB)
 else()
     target_link_libraries(smokeview PRIVATE zlib_static)
+    install(TARGET zlib_static)
 endif()
 if (LIBGD_FOUND)
     target_link_libraries(smokeview PRIVATE PkgConfig::LIBGD)
+    install(TARGET jpeg_static)
 else()
     target_link_libraries(smokeview PRIVATE gd_static)
 endif()
@@ -319,6 +327,8 @@ if (SMOKEVIEW_OBJECT_DEFS_PATH)
     target_compile_definitions(smokeview PRIVATE SMOKEVIEW_OBJECT_DEFS_PATH="${SMOKEVIEW_OBJECT_DEFS_PATH}")
 endif()
 
+add_subdirectory(Source/jsonrpc)
+target_link_libraries(smokeview PRIVATE jsonrpc)
 if (LUA)
     target_compile_definitions(smokeview PRIVATE pp_LUA)
     find_package(Lua)
@@ -386,7 +396,7 @@ if (LINUX)
     target_link_libraries(smokeview PRIVATE pthread X11 Xmu GLU GL m stdc++)
 endif()
 
-install(TARGETS smokeview)
+install(TARGETS smokeview jsonrpc)
 
 # Other programs
 # smokediff

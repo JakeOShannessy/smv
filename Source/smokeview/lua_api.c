@@ -231,7 +231,10 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
 
   glutMainLoop();
 
+  jrpc_server_destroy(&server);
+
   pthread_join(socket_thread,NULL);
+
 
   return 0;
 }

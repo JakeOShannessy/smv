@@ -1,4 +1,4 @@
-#include "jsonrpc.h"
+#include "jsonrpc_internal.h"
 #include <json-c/json_object.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -10,12 +10,18 @@ int sockClose(int sock) {
   int status = 0;
 
 #ifdef _WIN32
-  status = shutdown(sock, SD_BOTH);
+  fprintf(stderr, "sock: %d\n", sock);
+  status = shutdown(sock, SD_SEND);
+  fprintf(stderr, "shutdown: %d\n", status);
   if (status == 0) {
     status = closesocket(sock);
+    fprintf(stderr, "closesocket: %d\n", status);
+  }
+  else {
+    sock_error("shutdown");
   }
 #else
-  status = shutdown(sock, SHUT_RDWR);
+  status = shutdown(sock, SHUT_WR);
   if (status == 0) {
     status = close(sock);
   }
@@ -103,26 +109,19 @@ int process_rpcs(struct jrpc_server *server) {
   return completed_requests;
 }
 
-void *kickoff_socket(void *server_in) {
+DLLEXPORT void *kickoff_socket(void *server_in) {
   struct jrpc_server *server = server_in;
   jrpc_server_listen(server);
-  server->conn = malloc(sizeof(struct jrpc_connection));
-  *server->conn = connection_create(100);
-  int n = 0;
   for (;;) {
     fprintf(stderr, "Waiting for a connection...\n");
-    int slen = sizeof(server->remote);
-    if ((server->conn->fd = accept(
-             server->fd, (struct sockaddr *)&server->remote, &slen)) == -1) {
-      perror("accept");
-      exit(1);
-    }
+    struct jrpc_connection conn = jrpc_server_connect(server);
+    server->conn = &conn;
     fprintf(stderr, "Connected.\n");
-    process_connection(server, server->conn);
-    fprintf(stderr, "Connection processed. %d\n", n);
-    n++;
+    process_connection(server, &conn);
+    fprintf(stderr, "Connection processed.");
+    server->conn = NULL;
+    connection_destroy(&conn);
   }
-  connection_destroy(server->conn);
   return NULL;
 }
 #ifndef _WIN32
@@ -148,9 +147,9 @@ static void jrpc_procedure_destroy(struct jrpc_procedure *procedure) {
   }
 }
 
-int jrpc_register_procedure(struct jrpc_server *server,
-                            jrpc_function function_pointer, char *name,
-                            void *data) {
+DLLEXPORT int jrpc_register_procedure(struct jrpc_server *server,
+                                      jrpc_function function_pointer,
+                                      char *name, void *data) {
   int i = server->procedure_count++;
   if (!server->procedures)
     server->procedures = malloc(sizeof(struct jrpc_procedure));
@@ -167,7 +166,7 @@ int jrpc_register_procedure(struct jrpc_server *server,
   return 0;
 }
 
-void jrpc_server_destroy(struct jrpc_server *server) {
+DLLEXPORT void jrpc_server_destroy(struct jrpc_server *server) {
   for (int i = 0; i < server->procedure_count; i++) {
     jrpc_procedure_destroy(&(server->procedures[i]));
   }
@@ -179,7 +178,25 @@ void jrpc_server_destroy(struct jrpc_server *server) {
 #endif
 }
 
-int jrpc_deregister_procedure(struct jrpc_server *server, char *name) {
+DLLEXPORT void jrpc_client_destroy(struct jrpc_client *client) {
+  // Analogous to `unlink`
+  // DeleteFileA(SERVER_SOCKET);
+#ifdef _WIN32
+  WSACleanup();
+#endif
+}
+
+DLLEXPORT void jrpc_client_destroy_ptr(struct jrpc_client *client) {
+  // Analogous to `unlink`
+  // DeleteFileA(SERVER_SOCKET);
+  free(client);
+#ifdef _WIN32
+  WSACleanup();
+#endif
+}
+
+DLLEXPORT int jrpc_deregister_procedure(struct jrpc_server *server,
+                                        char *name) {
   /* Search the procedure to deregister */
   int i;
   int found = 0;
@@ -218,7 +235,6 @@ int jrpc_deregister_procedure(struct jrpc_server *server, char *name) {
 
 static int send_response(struct jrpc_connection *conn, const char *response) {
   if (conn->debug_level > 1) fprintf(stderr, "JSON Response:\n%s\n", response);
-  // (send(conn->fd, sq, strlen(sq), 0) < 0)
   send(conn->fd, response, strlen(response), 0);
   send(conn->fd, "\n", 1, 0);
   return 0;
@@ -238,11 +254,10 @@ static int send_error(struct jrpc_connection *conn, int code, char *message,
       json_object_to_json_string_ext(result_root, JSON_C_TO_STRING_PRETTY);
   return_value = send_response(conn, str_result);
   json_object_put(result_root);
-  free(message);
   return return_value;
 }
 
-// TODO: if id is not defined, do not provide respons
+// TODO: if id is not defined, do not provide resposne
 static int send_result(struct jrpc_connection *conn, json_object *result,
                        json_object *id) {
   int return_value = 0;
@@ -277,13 +292,16 @@ static int invoke_procedure(struct jrpc_server *server,
     }
   }
   if (!procedure_found)
-    return send_error(conn, JRPC_METHOD_NOT_FOUND, strdup("Method not found."),
-                      id);
+    return send_error(conn, JRPC_METHOD_NOT_FOUND, "Method not found.", id);
   else {
-    if (ctx.error_code)
-      return send_error(conn, ctx.error_code, ctx.error_message, id);
-    else
+    if (ctx.error_code) {
+      int status = send_error(conn, ctx.error_code, ctx.error_message, id);
+      free(ctx.error_message);
+      return status;
+    }
+    else {
       return send_result(conn, returned, id);
+    }
   }
 }
 
@@ -346,11 +364,7 @@ struct jrpc_server jrpc_server_create() {
 
 int jrpc_server_listen(struct jrpc_server *server) {
   if ((server->fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-#ifdef _WIN32
-    fprintf(stderr, "Could not create socket : %d\n", WSAGetLastError());
-#else
-    perror("socket");
-#endif
+    sock_error("socket");
     exit(1);
   }
 
@@ -358,82 +372,155 @@ int jrpc_server_listen(struct jrpc_server *server) {
   unlink(server->socket.sun_path);
   int len = strlen(server->socket.sun_path) + sizeof(server->socket.sun_family);
   if (bind(server->fd, (struct sockaddr *)&server->socket, len) == -1) {
-#ifdef _WIN32
-    fprintf(stderr, "Could not bind socket : %d\n", WSAGetLastError());
-#else
-    perror("bind");
-#endif
+    sock_error("bind");
     exit(1);
   }
 
   if (listen(server->fd, 5) == -1) {
-#ifdef _WIN32
-    fprintf(stderr, "Could not listen socket : %d\n", WSAGetLastError());
-#else
-    perror("listen");
-#endif
+    sock_error("listen");
     exit(1);
   }
   return 0;
 }
 
-int process_connection(struct jrpc_server *server,
-                       struct jrpc_connection *conn) {
+struct jrpc_connection jrpc_server_connect(struct jrpc_server *server) {
+  struct jrpc_connection conn = connection_create(100);
+  // TODO: consider handling multiple remotes
+  int slen = sizeof(server->remote);
+  if ((conn.fd = accept(server->fd, (struct sockaddr *)&server->remote,
+                        &slen)) == -1) {
+    sock_error("accept");
+    exit(1);
+  }
+  return conn;
+}
+
+DLLEXPORT struct jrpc_client jrpc_client_create() {
+  struct jrpc_client client = {0};
+  client.socket.sun_family = AF_UNIX;
+
+  client.debug_level = 1;
+  fprintf(stderr, "struct created\n");
+#ifdef _WIN32
+  WSADATA wsa_data = {0};
+  fprintf(stderr, "pre WSAStartup\n");
+  int rc = WSAStartup(MAKEWORD(2, 2), &client.wsa_data);
+  fprintf(stderr, "post WSAStartup\n");
+  if (rc != 0) {
+    printf("WSAStartup() error: %d\n", rc);
+    exit(1);
+  }
+#endif
+  fprintf(stderr, "returning client\n");
+  return client;
+}
+
+DLLEXPORT struct jrpc_client *jrpc_client_create_ptr() {
+  struct jrpc_client *client = malloc(sizeof(struct jrpc_client));
+
+  *client = jrpc_client_create();
+  return client;
+}
+
+DLLEXPORT void print_something() { fprintf(stderr, "something\n"); }
+
+DLLEXPORT struct jrpc_connection
+jrpc_client_connect(struct jrpc_client *client) {
+  struct jrpc_connection conn = connection_create(100);
+  connection_connect(client, &conn);
+  fprintf(stderr, "fsock: %d\n", conn.fd);
+  return conn;
+}
+
+DLLEXPORT struct jrpc_connection *
+jrpc_client_connect_ptr(struct jrpc_client *client) {
+  struct jrpc_connection *conn = malloc(sizeof(struct jrpc_connection));
+  *conn = jrpc_client_connect(client);
+  return conn;
+}
+
+DLLEXPORT char *pop_or_block_s(struct jrpc_connection *conn) {
+  json_object *jobj = pop_or_block(conn);
+  const char *sq =
+      json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
+  char *r = strdup(sq);
+  json_object_put(jobj);
+  return r;
+}
+
+/**
+ * @brief Parse a JSON object from the front of a stream or block until a full
+ * object is sent.
+ *
+ * @param server
+ * @param conn
+ * @return json_object* returns NULL if connection is closed.
+ */
+DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
 
   int done = 0;
-  char *extra_chars = NULL;
   json_tokener *tok = json_tokener_new();
   // This is the loop that handles JSON objects. It goes once around for each
   // object passed on the socket.
+  json_object *jobj = NULL;
+  int stringlen = 0;
+  // TODO: we give this an initial value so that we return an error if the
+  // connection sends nothing.
+  enum json_tokener_error jerr;
+  // This is the loop for reading from the socket. It goes around until an
+  // object is parsed.
   do {
-    json_object *jobj = NULL;
-    int stringlen = 0;
-    // TODO: we give this an initial value so that we return an error if the
-    // connection sends nothing.
-    enum json_tokener_error jerr = json_tokener_error_parse_unexpected;
-    // This is the loop for reading from the socket. It goes around until an
-    // object is parsed.
-    do {
-      if (extra_chars) {
-        fprintf(stderr, "Parsing Extra Chars: >%s<\n", extra_chars);
-        jobj = json_tokener_parse_ex(tok, extra_chars, strlen(extra_chars));
-        extra_chars = NULL;
-      }
-      else {
-        memset(conn->buffer, 0, conn->buffer_size * sizeof(char));
-        int n = recv(conn->fd, conn->buffer, sizeof(conn->buffer), 0);
-        if (n <= 0) {
-          if (n < 0) perror("recv");
-          fprintf(stderr, "Connection Closed %d\n", n);
-          done = 1;
-        }
-        stringlen = strlen(conn->buffer);
-        if (stringlen == 0) break;
-        jobj = json_tokener_parse_ex(tok, conn->buffer, stringlen);
-      }
-    } while ((jerr = json_tokener_get_error(tok)) == json_tokener_continue &&
-             done == 0);
-    if (jerr != json_tokener_success) {
-      fprintf(stderr, "Error: %s\n", json_tokener_error_desc(jerr));
-      // Handle errors, as appropriate for your application.
+    if (conn->extra_chars) {
+      fprintf(stderr, "Parsing Extra Chars: >%s<\n", conn->extra_chars);
+      jobj = json_tokener_parse_ex(tok, conn->extra_chars,
+                                   strlen(conn->extra_chars));
+      conn->extra_chars = NULL;
     }
-    if (json_tokener_get_parse_end(tok) < stringlen) {
-      // Handle extra characters after parsed object as desired.
-      // e.g. issue an error, parse another object from that point, etc...
-      extra_chars = &conn->buffer[json_tokener_get_parse_end(tok)];
+    else {
+      memset(conn->buffer, 0, conn->buffer_size * sizeof(char));
+      int n = recv(conn->fd, conn->buffer, sizeof(conn->buffer), 0);
+      if (n <= 0) {
+        if (n < 0) sock_error("recv");
+        // TODO: what if we use extra_chars then receive nothing?
+        fprintf(stderr, "Connection Closed %d\n", n);
+        conn->extra_chars = NULL;
+        return NULL;
+      }
+      stringlen = strlen(conn->buffer);
+      jobj = json_tokener_parse_ex(tok, conn->buffer, stringlen);
     }
+  } while ((jerr = json_tokener_get_error(tok)) == json_tokener_continue &&
+           done == 0);
+  if (jerr != json_tokener_success) {
+    fprintf(stderr, "Error: %s\n", json_tokener_error_desc(jerr));
+    // Handle errors, as appropriate for your application.
+  }
+  if (json_tokener_get_parse_end(tok) < stringlen) {
+    // Handle extra characters after parsed object as desired.
+    // e.g. issue an error, parse another object from that point, etc...
+    conn->extra_chars = &conn->buffer[json_tokener_get_parse_end(tok)];
+  }
+  return jobj;
+}
+
+int process_connection(struct jrpc_server *server,
+                       struct jrpc_connection *conn) {
+  int done = 0;
+  // This is the loop that handles JSON objects. It goes once around for each
+  // object passed on the socket.
+  for (;;) {
+    fprintf(stderr, "pop_or_block\n");
+    json_object *jobj = pop_or_block(conn);
     if (jobj == NULL) break;
     // Success, add jobj to the buffer
-    // eval_request(server, conn, jobj);
     push_rpc(server, jobj);
     const char *sq =
         json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
 
     fprintf(stderr, "%s\n", sq);
-  } while (!done);
+  }
   fprintf(stderr, "Connection done.\n");
 
-  sockClose(conn->fd);
   return 0;
 }
 
@@ -445,4 +532,90 @@ struct jrpc_connection connection_create(size_t n) {
   return conn;
 }
 
-void connection_destroy(struct jrpc_connection *conn) { free(conn->buffer); }
+void connection_connect(struct jrpc_client *client,
+                        struct jrpc_connection *conn) {
+  if ((conn->fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+    sock_error("socket");
+    exit(1);
+  }
+
+  strcpy(client->socket.sun_path, SOCK_PATH);
+  int len = strlen(client->socket.sun_path) + sizeof(client->socket.sun_family);
+  if (connect(conn->fd, (struct sockaddr *)&client->socket, len) == -1) {
+    sock_error("connect");
+    exit(1);
+  }
+}
+
+DLLEXPORT void connection_destroy(struct jrpc_connection *conn) {
+  fprintf(stderr, "destroying connection\n");
+  sockClose(conn->fd);
+  free(conn->buffer);
+}
+void connection_clear(struct jrpc_connection *conn) {
+  memset(conn->buffer, 0, conn->buffer_size * sizeof(char));
+}
+
+void sock_error(const char *error_category) {
+#ifdef _WIN32
+  wchar_t *s = NULL;
+  FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                     FORMAT_MESSAGE_IGNORE_INSERTS,
+                 NULL, WSAGetLastError(),
+                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&s, 0,
+                 NULL);
+  fprintf(stderr, "%s: [%d]: %S\n", error_category, WSAGetLastError(), s);
+#else
+  perror(category);
+#endif
+}
+
+json_object *request_create(int id, const char *method, json_object *params) {
+  json_object *request_object = json_object_new_object();
+
+  json_object_object_add(request_object, "jsonrpc",
+                         json_object_new_string("2.0"));
+  json_object_object_add(request_object, "id", json_object_new_int(id));
+  json_object_object_add(request_object, "method",
+                         json_object_new_string(method));
+  json_object_object_add(request_object, "params", params);
+  return request_object;
+}
+
+void send_request(struct jrpc_connection *conn, json_object *request_object) {
+  const char *str =
+      json_object_to_json_string_ext(request_object, JSON_C_TO_STRING_PRETTY);
+  fprintf(stderr, "sending %s\n", str);
+  int r = send(conn->fd, str, strlen(str) + 1, 0);
+  fprintf(stderr, "send result =  %d\n", r);
+  if (r == -1) {
+    sock_error("send");
+    exit(1);
+  }
+}
+
+void parse_response(struct jrpc_connection *conn, json_object *request_object) {
+  const char *str =
+      json_object_to_json_string_ext(request_object, JSON_C_TO_STRING_PRETTY);
+  if (send(conn->fd, str, strlen(str) + 1, 0) == -1) {
+    sock_error("send");
+    exit(1);
+  }
+}
+DLLEXPORT void jrpc_send_request(struct jrpc_connection *conn,
+                                 const char *method, json_object *params) {
+  fprintf(stderr, "sending %s\n", method);
+  json_object *request_object = request_create(conn->next_id, method, params);
+  conn->next_id++;
+  send_request(conn, request_object);
+  fprintf(stderr, "sent\n");
+  json_object_put(request_object);
+}
+
+DLLEXPORT void jrpc_send_request_s(struct jrpc_connection *conn,
+                                   const char *method, const char *params_s) {
+  fprintf(stderr, "sending %s\n", method);
+  json_tokener *tok = json_tokener_new();
+  json_object *params = json_tokener_parse_ex(tok, params_s, strlen(params_s));
+  jrpc_send_request(conn, method, params);
+}

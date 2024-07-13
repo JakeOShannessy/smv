@@ -19,7 +19,6 @@
 
 #include "c_api.h"
 
-
 #include GLUT_H
 #include "gd.h"
 
@@ -125,12 +124,17 @@ json_object *jsonrpc_GetTime(jrpc_context *context, json_object *params,
 /// @brief Shift to the closest frame to given a time value.
 json_object *jsonrpc_SetTime(jrpc_context *context, json_object *params,
                              json_object *id) {
+  if (!json_object_is_type(params, json_type_array)) {
+    context->error_code = JRPC_INVALID_PARAMS;
+    context->error_message = strdup("expected an array");
+    return NULL;
+  }
   DisplayCB();
   float t = json_object_get_double(json_object_array_get_idx(params, 0));
   int return_code = Settime(t);
   if (return_code) {
     context->error_code = 112;
-    context->error_message = strdup("render failure");
+    context->error_message = strdup("set_time failure");
   }
   return NULL;
 }
@@ -419,14 +423,14 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
     json_object_object_add(mesh_obj, "xplt_orig", xplt_orig);
 
     struct json_object *yplt_orig = json_object_new_array();
-    for (size_t j = 0; j < mesh->ibar; j++) {
+    for (size_t j = 0; j < mesh->jbar; j++) {
       json_object_array_add(yplt_orig,
                             json_object_new_double(mesh->yplt_orig[j]));
     }
     json_object_object_add(mesh_obj, "yplt_orig", yplt_orig);
 
     struct json_object *zplt_orig = json_object_new_array();
-    for (size_t j = 0; j < mesh->jbar; j++) {
+    for (size_t j = 0; j < mesh->kbar; j++) {
       json_object_array_add(zplt_orig,
                             json_object_new_double(mesh->zplt_orig[j]));
     }
@@ -611,7 +615,8 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
 //   return 1;
 // }
 
-json_object *json_GetSmoke3ds(void) {
+json_object *json_GetSmoke3ds(jrpc_context *context, json_object *params,
+                              json_object *id) {
   struct json_object *smoke3ds = json_object_new_array();
   for (int i = 0; i < nsmoke3dinfo; i++) {
     smoke3ddata *val = &smoke3dinfo[i];
@@ -1342,6 +1347,11 @@ json_object *jsonrpc_GetChidVisibility(jrpc_context *context,
 json_object *jsonrpc_CameraSetProjectionType(jrpc_context *context,
                                              json_object *params,
                                              json_object *id) {
+  if (!json_object_is_type(params, json_type_array)) {
+    context->error_code = JRPC_INVALID_PARAMS;
+    context->error_message = strdup("expected an array");
+    return NULL;
+  }
   int projection_type =
       json_object_get_int(json_object_array_get_idx(params, 0));
   if (CameraSetProjectionType(projection_type)) {

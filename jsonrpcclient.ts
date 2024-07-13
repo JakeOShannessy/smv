@@ -1,111 +1,14 @@
-import { SplitJsonObjectsStream } from "./rstream.ts";
+import { JsonRpcClientUnix } from "./jsonrpcunix.ts";
+import { JsonRpcClientWin } from "./jsonrpcwin.ts";
 
-const conn = await Deno.connect({
-    transport: "unix",
-    path: "/home/jake/couch/echo_socket",
-});
+export type JsonRpcClient = JsonRpcClientUnix | JsonRpcClientWin;
 
-class JsonRpcClient {
-    private writeStream = new TextEncoderStream();
-    private writer;
-    private responseStream: ReadableStream<object>;
-    private textStream: ReadableStream<string>;
-    private objectStream: ReadableStream<object>;
-    private reader: ReadableStreamDefaultReader<object>;
-    private n = 0;
-    constructor() {
-        /*await*/ this.writeStream.readable.pipeTo(conn.writable);
-        this.writer = this.writeStream.writable.getWriter();
-        this.textStream = conn.readable.pipeThrough(
-            new TextDecoderStream(),
-        );
-        this.objectStream = this.textStream.pipeThrough(
-            new SplitJsonObjectsStream(),
-        );
-        this.reader = this.objectStream.getReader();
-        this.responseStream = new ReadableStream({
-            start(controller) {
-                /* … */
-            },
-
-            async pull(controller) {
-                // let response = "";
-                // const objectStrings = [];
-                // let singleObj = "";
-                // const textStream = conn.readable.pipeThrough(
-                //     new TextDecoderStream(),
-                // );
-                // const reader = textStream.getReader();
-                // // while (true) {
-                // const { value, done } = await reader.read();
-                // if (value) {
-                //     // const s = decoder.decode(value);
-                //     console.log("s:", value);
-                //     for (const c of value) {
-                //         singleObj += c;
-                //         if (c == "}") {
-                //             objectStrings.push(singleObj);
-                //             singleObj = "";
-                //             // break;
-                //         }
-                //         // console.log(c);
-                //     }
-                //     console.log(objectStrings);
-                //     response += value;
-                // }
-                // //     if (done) {
-                // //         break;
-                // //     }
-                // // }
-                // // console.log(response);
-                // const t: object[] = objectStrings.map((s) => JSON.parse(s));
-            },
-
-            cancel(reason) {
-                /* … */
-            },
-        });
-    }
-    async send(obj: object) {
-        await this.writer.write(JSON.stringify(obj));
-    }
-    // TODO: create a stream of JSON objects
-    async recv(): Promise<object | undefined> {
-        return (await this.reader.read()).value;
-    }
-    async call(method: string, params?: any) {
-        await client.send({
-            "jsonrpc": "2.0",
-            "method": method,
-            "params": params,
-            "id": this.n,
-        });
-        this.n++;
-        // TODO: make sure ids correspond
-        const r = (await this.reader.read()).value;
-        if (isJsonRpcResponse(r)) {
-            return r.result;
-        } else {
-            console.error(r);
-        }
-    }
-    async notify(method: string, params?: any) {
-        await client.send({
-            "jsonrpc": "2.0",
-            "method": method,
-            "params": params,
-        });
-    }
-}
-export interface JsonRpcResponse {
-    jsonrpc: "2.0";
-    id: any;
-    result?: any;
-    error?: any;
-}
-function isJsonRpcResponse(o: any): o is JsonRpcResponse {
-    return o["jsonrpc"] === "2.0" && "id" in o && "result" in o;
-}
+const client = new JsonRpcClientWin();
+// const r = await client.call("subtract", [42, 23]);
+// console.log("r:", await client.call("subtract", [42, 23]));
+// console.log("r:", await client.call("subtract", [47, 1]));
+// console.log("r:", await client.call("move_x", [0.5]));
+// console.log("r:", await client.call("rotate", [0.5]));
 
 async function setAffinityStyle() {
     // -- Set the color bar to a blue/red split.
@@ -133,7 +36,6 @@ async function setAffinityStyle() {
     await client.call("set_render_type", ["rendePNGrs"]);
 }
 
-const client = new JsonRpcClient();
 await setAffinityStyle();
 await client.call("set_clipping", { mode: 2, x: { max: 2 } });
 await client.call("set_chid_visibility", [true]);
@@ -152,7 +54,7 @@ await client.call("unload_all");
 const slices = await client.call("get_slices");
 const meshes = await client.call("get_meshes");
 
-const distance = 2.45;
+const distance = -10.4;
 const sliceIndices = slices.filter((
     c: {
         shortlabel: string;
@@ -187,9 +89,10 @@ await client.call("set_slice_bounds", {
     set_max: true,
     value_max: 160,
 });
-// await client.call("unload_all");
-// await client.notify("exit");
-conn.close();
+function sleep(seconds: number) {
+    return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+}
+client.close();
 
 function findCellDimension(
     mesh: {
