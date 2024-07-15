@@ -74,7 +74,7 @@ export class JsonRpcClientUnix {
     async recv(): Promise<object | undefined> {
         return (await this.reader.read()).value;
     }
-    async call(method: string, params: any) {
+    async call(method: string, params?: any) {
         await this.send({
             "jsonrpc": "2.0",
             "method": method,
@@ -89,5 +89,15 @@ export class JsonRpcClientUnix {
         } else {
             console.error(r);
         }
+    }
+    async notify(method: string, params?: any) {
+        await this.send({
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": params,
+        });
+    }
+    close() {
+
     }
 }

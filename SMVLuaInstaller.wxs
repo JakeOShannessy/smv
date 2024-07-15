@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<?define ProductVersion = "1.14.1"?>
+<?define ProductVersion = "1.14.4"?>
 <?define ProductUpgradeCode = "1940d8a1-c842-442f-bf5d-00a570219bdb"?>
 
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
@@ -50,6 +50,8 @@
                             Win64="yes">
                             <File Id='LuaScriptCMD' Name='lua.cmd' Source='lua.cmd' KeyPath='yes'>
                             </File>
+                            <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File>
+                            <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File>
                         </Component>
                         <Component Id='SMVQComponent'
                             Guid='c84dc251-0843-4520-95da-1aa889ebd874' Win64="yes">
@@ -63,6 +65,11 @@
                                 <File Id='SMVLuaEXE' Name='smvlua.exe'
                                     Source='dist/bin/smokeview.exe' KeyPath='yes'>
                                 </File>
+                                <File Name='jsonrpc.dll' Source='dist/bin/jsonrpc.dll'> </File>
+                                <File Name='glew32.dll' Source='dist/bin/glew32.dll'> </File>
+                                <File Name='zlib1.dll' Source='dist/bin/zlib1.dll'> </File>
+                                <File Name='jpeg62.dll' Source='dist/bin/jpeg62.dll'> </File>
+                                <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'> </File>
                             </Component>
                             <Component Id='LuaComponent'
                                 Guid='eea182cb-d651-4cbf-b1f7-18b5bceee877' Win64="yes">

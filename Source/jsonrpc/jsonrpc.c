@@ -3,7 +3,90 @@
 #include <pthread.h>
 #include <stdbool.h>
 
-/* Note: For POSIX, typedef SOCKET as an int. */
+#ifdef _WIN32
+//
+//  This application opens a file specified by the user and uses
+//  a temporary file to convert the file to upper case letters.
+//  Note that the given source file is assumed to be an ASCII text file
+//  and the new file created is overwritten each time the application is
+//  run.
+//
+
+#include <stdio.h>
+#include <tchar.h>
+#include <windows.h>
+
+#define BUFSIZE 1024
+
+void PrintError(LPCTSTR errDesc);
+
+TCHAR *create_temp_path() {
+  HANDLE hFile = INVALID_HANDLE_VALUE;
+  HANDLE hTempFile = INVALID_HANDLE_VALUE;
+
+  BOOL fSuccess = FALSE;
+  UINT uRetVal = 0;
+
+  DWORD dwBytesRead = 0;
+  DWORD dwBytesWritten = 0;
+
+  TCHAR *szTempFileName = malloc(MAX_PATH * sizeof(TCHAR));
+  TCHAR lpTempPathBuffer[MAX_PATH];
+  char chBuffer[BUFSIZE];
+
+  LPCTSTR errMsg;
+
+  //  Gets the temp path env string (no guarantee it's a valid path).
+  DWORD dwRetVal = 0;
+  dwRetVal = GetTempPath(MAX_PATH,          // length of the buffer
+                         lpTempPathBuffer); // buffer for path
+  if (dwRetVal > MAX_PATH || (dwRetVal == 0)) {
+    PrintError(TEXT("GetTempPath failed"));
+    if (!CloseHandle(hFile)) {
+      PrintError(TEXT("CloseHandle(hFile) failed"));
+      return NULL;
+    }
+    return NULL;
+  }
+
+  //  Generates a temporary file name.
+  uRetVal = GetTempFileName(lpTempPathBuffer,   // directory for tmp files
+                            TEXT("smv_socket"), // temp file name prefix
+                            0,                  // create unique name
+                            szTempFileName);    // buffer for name
+  if (uRetVal == 0) {
+    PrintError(TEXT("GetTempFileName failed"));
+    if (!CloseHandle(hFile)) {
+      PrintError(TEXT("CloseHandle(hFile) failed"));
+      return NULL;
+    }
+    return NULL;
+  }
+  return szTempFileName;
+}
+
+//  ErrorMessage support function.
+//  Retrieves the system error message for the GetLastError() code.
+//  Note: caller must use LocalFree() on the returned LPCTSTR buffer.
+LPCTSTR ErrorMessage(DWORD error) {
+  LPVOID lpMsgBuf;
+
+  FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                    FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPTSTR)&lpMsgBuf, 0, NULL);
+
+  return ((LPCTSTR)lpMsgBuf);
+}
+
+//  PrintError support function.
+//  Simple wrapper function for error output.
+void PrintError(LPCTSTR errDesc) {
+  LPCTSTR errMsg = ErrorMessage(GetLastError());
+  _tprintf(TEXT("\n** ERROR ** %s: %s\n"), errDesc, errMsg);
+  LocalFree((LPVOID)errMsg);
+}
+#endif
 
 int sockClose(int sock) {
 
@@ -109,17 +192,25 @@ int process_rpcs(struct jrpc_server *server) {
   return completed_requests;
 }
 
-DLLEXPORT void *kickoff_socket(void *server_in) {
-  struct jrpc_server *server = server_in;
-  jrpc_server_listen(server);
+DLLEXPORT void *kickoff_socket(void *kickoff_info) {
+  struct kickoff_info *koi = kickoff_info;
+  struct jrpc_server *s_server = koi->server;
+  char *sock_path;
+  if (koi->sock_path) {
+    sock_path = koi->sock_path;
+  }
+  else {
+    sock_path = create_temp_path();
+  }
+  jrpc_server_listen(s_server, sock_path);
   for (;;) {
     fprintf(stderr, "Waiting for a connection...\n");
-    struct jrpc_connection conn = jrpc_server_connect(server);
-    server->conn = &conn;
+    struct jrpc_connection conn = jrpc_server_connect(s_server);
+    s_server->conn = &conn;
     fprintf(stderr, "Connected.\n");
-    process_connection(server, &conn);
+    process_connection(s_server, &conn);
     fprintf(stderr, "Connection processed.");
-    server->conn = NULL;
+    s_server->conn = NULL;
     connection_destroy(&conn);
   }
   return NULL;
@@ -362,13 +453,13 @@ struct jrpc_server jrpc_server_create() {
   return server;
 }
 
-int jrpc_server_listen(struct jrpc_server *server) {
+int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
   if ((server->fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
     sock_error("socket");
     exit(1);
   }
-
-  strcpy(server->socket.sun_path, SOCK_PATH);
+  fprintf(stdout, "sock_path: %s\n", sock_path);
+  strcpy(server->socket.sun_path, sock_path);
   unlink(server->socket.sun_path);
   int len = strlen(server->socket.sun_path) + sizeof(server->socket.sun_family);
   if (bind(server->fd, (struct sockaddr *)&server->socket, len) == -1) {
@@ -424,18 +515,19 @@ DLLEXPORT struct jrpc_client *jrpc_client_create_ptr() {
 
 DLLEXPORT void print_something() { fprintf(stderr, "something\n"); }
 
-DLLEXPORT struct jrpc_connection
-jrpc_client_connect(struct jrpc_client *client) {
+DLLEXPORT struct jrpc_connection jrpc_client_connect(struct jrpc_client *client,
+                                                     const char *sock_path) {
   struct jrpc_connection conn = connection_create(100);
-  connection_connect(client, &conn);
+  connection_connect(client, &conn, sock_path);
   fprintf(stderr, "fsock: %d\n", conn.fd);
   return conn;
 }
 
 DLLEXPORT struct jrpc_connection *
-jrpc_client_connect_ptr(struct jrpc_client *client) {
+jrpc_client_connect_ptr(struct jrpc_client *client, const char *sock_path) {
+  fprintf(stderr, "connect sock path: %s\n", sock_path);
   struct jrpc_connection *conn = malloc(sizeof(struct jrpc_connection));
-  *conn = jrpc_client_connect(client);
+  *conn = jrpc_client_connect(client, sock_path);
   return conn;
 }
 
@@ -533,13 +625,13 @@ struct jrpc_connection connection_create(size_t n) {
 }
 
 void connection_connect(struct jrpc_client *client,
-                        struct jrpc_connection *conn) {
+                        struct jrpc_connection *conn, const char *sock_path) {
   if ((conn->fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
     sock_error("socket");
     exit(1);
   }
 
-  strcpy(client->socket.sun_path, SOCK_PATH);
+  strcpy(client->socket.sun_path, sock_path);
   int len = strlen(client->socket.sun_path) + sizeof(client->socket.sun_family);
   if (connect(conn->fd, (struct sockaddr *)&client->socket, len) == -1) {
     sock_error("connect");

@@ -2,31 +2,31 @@
 #define JSONRPC_H_DEFINED
 
 #ifdef _WIN32
+// clang-format off
 #include <stdio.h>
 #include <winsock2.h>
 #include <windows.h>
 #include <afunix.h>
+// clang-format on
 #else
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <netdb.h>
 #endif
 
 #include <errno.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <pthread.h>
 
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>
 #include <json-c/json_util.h>
-
-#define SOCK_PATH "echo_socket"
 
 #define DLLEXPORT __declspec(dllexport)
 
@@ -52,8 +52,7 @@
 #define JRPC_INVALID_PARAMS -32603
 #define JRPC_INTERNAL_ERROR -32693
 
-struct jrpc_connection
-{
+struct jrpc_connection {
   int fd;
   unsigned int buffer_size;
   char *buffer;
@@ -73,8 +72,7 @@ char *strdup(const char *s);
 
 // SERVER SIDE
 
-typedef struct
-{
+typedef struct {
   void *data;
   int error_code;
   char *error_message;
@@ -83,14 +81,12 @@ typedef struct
 typedef json_object *(*jrpc_function)(jrpc_context *context,
                                       json_object *params, json_object *id);
 
-struct jrpc_procedure
-{
+struct jrpc_procedure {
   char *name;
   jrpc_function function;
   void *data;
 };
-typedef struct circular_buffer
-{
+typedef struct circular_buffer {
   void *buffer;     // data buffer
   void *buffer_end; // end of data buffer
   size_t capacity;  // maximum number of items in the buffer
@@ -99,8 +95,7 @@ typedef struct circular_buffer
   void *head;       // pointer to head
   void *tail;       // pointer to tail
 } circular_buffer;
-struct jrpc_server
-{
+struct jrpc_server {
 #ifdef _WIN32
   WSADATA wsa_data;
 #endif
@@ -116,11 +111,16 @@ struct jrpc_server
   struct jrpc_connection *conn;
   pthread_mutex_t rpc_mutex;
 };
+struct kickoff_info {
+  struct jrpc_server *server;
+  char *sock_path;
+};
 DLLEXPORT struct jrpc_server jrpc_server_create();
-DLLEXPORT struct jrpc_connection jrpc_server_connect(struct jrpc_server *server);
+DLLEXPORT struct jrpc_connection
+jrpc_server_connect(struct jrpc_server *server);
 DLLEXPORT int jrpc_register_procedure(struct jrpc_server *server,
-                            jrpc_function function_pointer, char *name,
-                            void *data);
+                                      jrpc_function function_pointer,
+                                      char *name, void *data);
 
 DLLEXPORT void jrpc_server_destroy(struct jrpc_server *server);
 DLLEXPORT int jrpc_deregister_procedure(struct jrpc_server *server, char *name);
@@ -128,8 +128,7 @@ DLLEXPORT void *kickoff_socket(void *server_in);
 DLLEXPORT int process_rpcs(struct jrpc_server *server);
 
 // CLIENT SIDE
-struct jrpc_client
-{
+struct jrpc_client {
 #ifdef _WIN32
   WSADATA wsa_data;
 #endif
@@ -140,9 +139,12 @@ struct jrpc_client
 DLLEXPORT void print_something();
 DLLEXPORT struct jrpc_client *jrpc_client_create_ptr();
 DLLEXPORT struct jrpc_client jrpc_client_create();
-DLLEXPORT struct jrpc_connection jrpc_client_connect(struct jrpc_client *client);
-DLLEXPORT void jrpc_send_request(struct jrpc_connection *conn, const char *method, json_object *params);
-DLLEXPORT void jrpc_send_request_s(struct jrpc_connection *conn, const char *method, const char *params_s);
+DLLEXPORT struct jrpc_connection jrpc_client_connect(struct jrpc_client *client,
+                                                     const char *sock_path);
+DLLEXPORT void jrpc_send_request(struct jrpc_connection *conn,
+                                 const char *method, json_object *params);
+DLLEXPORT void jrpc_send_request_s(struct jrpc_connection *conn,
+                                   const char *method, const char *params_s);
 DLLEXPORT void jrpc_client_destroy(struct jrpc_client *client);
 DLLEXPORT void jrpc_client_destroy_ptr(struct jrpc_client *client);
 #endif

@@ -28,7 +28,6 @@
 #include <direct.h>
 #endif
 
-
 // NOLINTNEXTLINE
 lua_State *L;
 int LuaDisplayCb(lua_State *L);
@@ -161,14 +160,12 @@ int LuaSetupCase(lua_State *L) {
 }
 
 json_object *subtract(jrpc_context *context, json_object *params,
-                      json_object *id)
-{
-    int a = json_object_get_int(json_object_array_get_idx(params, 0));
-    int b = json_object_get_int(json_object_array_get_idx(params, 1));
-    json_object *result_root = json_object_new_int(a - b);
-    return result_root;
+                      json_object *id) {
+  int a = json_object_get_int(json_object_array_get_idx(params, 0));
+  int b = json_object_get_int(json_object_array_get_idx(params, 1));
+  json_object *result_root = json_object_new_int(a - b);
+  return result_root;
 }
-
 
 int RunLuaBranch(lua_State *L, int argc, char **argv) {
   int return_code;
@@ -226,15 +223,17 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
   server = jrpc_server_create();
   jrpc_register_procedure(&server, &subtract, "subtract", NULL);
   register_procedures(&server);
+  struct kickoff_info koi = {0};
+  koi.server = &server;
+  koi.sock_path = socket_path;
 
-  pthread_create(&socket_thread, NULL, kickoff_socket, &server);
+  pthread_create(&socket_thread, NULL, kickoff_socket, &koi);
 
   glutMainLoop();
 
   jrpc_server_destroy(&server);
 
-  pthread_join(socket_thread,NULL);
-
+  pthread_join(socket_thread, NULL);
 
   return 0;
 }

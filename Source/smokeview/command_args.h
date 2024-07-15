@@ -92,6 +92,8 @@ typedef struct CommandlineArgs {
   bool killscript;
   /// @brief Run a custom lua script at this path.
   char *luascript;
+  /// @brief Create a socket for IPC.
+  char *socket;
 #endif
   /// @brief set directory containing script rendered images (override directory
   /// specified by RENDERDIR script keyword)

@@ -256,6 +256,7 @@ target_link_libraries(smokeview PRIVATE glui_static)
 target_include_directories(smokeview PRIVATE Source/glui_v2_1_beta)
 if(WIN32)
     target_link_libraries(smokeview PRIVATE PThreads4W::PThreads4W)
+    install(IMPORTED_RUNTIME_ARTIFACTS PThreads4W::PThreads4W)
 endif()
 # Selecting which GLUT version to use is the most platform-dependent part of the
 # build.
@@ -281,14 +282,38 @@ else()
 endif()
 if (JPEG_FOUND)
     target_link_libraries(smokeview PRIVATE JPEG::JPEG)
-    # install(TARGET JPEG::JPEG)
+    # install(IMPORTED_RUNTIME_ARTIFACTS PThreads4W::PThreads4W)
+    # install(IMPORTED_RUNTIME_ARTIFACTS JPEG::JPEG)
+    # message(FATAL_ERROR "${JPEG_LIBRARY}")
+#     install(
+#         FILES $<TARGET_FILE:JPEG::JPEG>
+#         DESTINATION ${CMAKE_INSTALL_BINDIR}
+#     )
+#     install(
+#     TARGETS smokeview
+#     RUNTIME_DEPENDENCIES
+#     PRE_EXCLUDE_REGEXES .
+#         "ext-ms-.*"
+#         "api-ms-.*"
+#         "AzureAttestManager.dll"
+#         "AzureAttestNormal.dll"
+#         "HvsiFileTrust.dll"
+#         "PdmUtilities.dll"
+#         "wpaxholder.dll"
+# )
 else()
     target_link_libraries(smokeview PRIVATE jpeg_static)
     install(TARGET jpeg_static)
 endif()
 if (PNG_FOUND)
     target_link_libraries(smokeview PRIVATE PNG::PNG)
+    # set(T get_target_property(TARGET_TYPE PNG::PNG TYPE))
     # install(IMPORTED_RUNTIME_ARTIFACTS PNG::PNG)
+    # install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libpng16d.dll" bin)
+    # install(
+    #     FILES $<TARGET_RUNTIME_DLLS:PNG::PNG>
+    #     DESTINATION ${CMAKE_INSTALL_BINDIR}
+    # )
 else()
     target_link_libraries(smokeview PRIVATE png_static)
     install(TARGET png_static)

@@ -2271,6 +2271,7 @@ SVEXTERN int SVDECL(*isosubmenus,NULL), nisosubmenus;
 SVEXTERN int SVDECL(*loadpatchsubmenus,NULL), nloadpatchsubmenus;
 SVEXTERN int nboundarytypes;
 SVEXTERN char SVDECL(**patchlabellist,NULL);
+SVEXTERN char SVDECL(*socket_path,NULL);
 SVEXTERN int SVDECL(*patchlabellist_index,NULL);
 SVEXTERN int SVDECL(*isoindex,NULL);
 

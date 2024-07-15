@@ -2,33 +2,33 @@
 #define JSONRPC_INTERNAL_H_DEFINED
 
 #ifdef _WIN32
+// clang-format off
 #include <stdio.h>
 #include <winsock2.h>
 #include <windows.h>
 #include <afunix.h>
+// clang-format on
 #else
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <netdb.h>
 #endif
 
 #include <errno.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <pthread.h>
 
 #include "jsonrpc.h"
 
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>
 #include <json-c/json_util.h>
-
-#define SOCK_PATH "echo_socket"
 
 #define DLLEXPORT __declspec(dllexport)
 
@@ -59,7 +59,7 @@ static int eval_request(struct jrpc_server *server,
 struct jrpc_server jrpc_server_create();
 struct jrpc_client jrpc_client_create();
 
-int jrpc_server_listen(struct jrpc_server *server);
+int jrpc_server_listen(struct jrpc_server *server, const char *sock_path);
 
 int process_connection(struct jrpc_server *server,
                        struct jrpc_connection *conn);
@@ -79,5 +79,6 @@ void sock_error(const char *error_category);
 json_object *request_create(int id, const char *method, json_object *params);
 void send_request(struct jrpc_connection *conn, json_object *request_object);
 void parse_response(struct jrpc_connection *conn, json_object *request_object);
-void connection_connect(struct jrpc_client *client, struct jrpc_connection *conn);
+void connection_connect(struct jrpc_client *client,
+                        struct jrpc_connection *conn, const char *sock_path);
 #endif

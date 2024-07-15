@@ -188,6 +188,9 @@ char *ProcessCommandLine(CommandlineArgs *args) {
     void SMV_EXIT(int error);
     SMV_EXIT(0);
   }
+  if(args->socket){
+    socket_path = args->socket;
+  }
   if(args->have_x0){
     use_commandline_origin = 1;
     screenX0 = args->x0;

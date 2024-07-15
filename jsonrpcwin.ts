@@ -17,7 +17,8 @@ switch (Deno.build.os) {
         break;
 }
 
-const libName = `./jsonrpc.${libSuffix}`;
+const libName = `./bin/jsonrpc.${libSuffix}`;
+// const libName = `C:/Users/josha/AppData/Local/Programs/Fireng/Smokeview Lua/bin/jsonrpc.${libSuffix}`;
 console.log(libName);
 // Open library and define exported symbols
 
@@ -40,7 +41,7 @@ export class JsonRpcClientWin {
             "jrpc_client_create_ptr": { parameters: [], result: "pointer" },
             "pop_or_block_s": { parameters: ["pointer"], result: "buffer" },
             "jrpc_client_connect_ptr": {
-                parameters: ["pointer"],
+                parameters: ["pointer", "buffer"],
                 result: "pointer",
             },
             "jrpc_client_destroy_ptr": {
@@ -55,11 +56,15 @@ export class JsonRpcClientWin {
     );
     private client: Deno.PointerValue<unknown>;
     private conn: Deno.PointerValue<unknown>;
-    constructor() {
+    constructor(public socketPath: string) {
         this.client = this.dylib.symbols
             .jrpc_client_create_ptr();
-        // this.client =
-        this.conn = this.dylib.symbols.jrpc_client_connect_ptr(this.client);
+        console.log(this.client);
+        this.conn = this.dylib.symbols.jrpc_client_connect_ptr(
+            this.client,
+            new TextEncoder().encode(`${this.socketPath}\0`),
+        );
+        console.log(this.conn);
 
         // /*await*/ this.writeStream.readable.pipeTo(conn.writable);
         // this.writer = this.writeStream.writable.getWriter();
