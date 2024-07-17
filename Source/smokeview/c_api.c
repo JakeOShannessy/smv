@@ -927,10 +927,10 @@ void BlockageMenu(int value);
 void BlockagesHideAll() { BlockageMenu(visBLOCKHide); }
 // TODO: clarify behaviour under isZoneFireModel
 void OutlinesHide() {
-  if (isZoneFireModel == 0) visFrame = 1 - visFrame;
+  if (isZoneFireModel == 0) visFrame = 0;
 }
 void OutlinesShow() {
-  if (isZoneFireModel == 0) visFrame = 1 - visFrame;
+  if (isZoneFireModel == 0) visFrame = 1;
 }
 
 void SurfacesHideAll() {
@@ -1815,6 +1815,7 @@ int Setviewpoint(const char *viewpoint) {
 /// @return
 int SetOrthoPreset(const char *viewpoint) {
   int command;
+  fprintf(stderr, "setting ortho %s\n", viewpoint);
   if (STRCMP(viewpoint, "XMIN") == 0) {
     command = SCRIPT_VIEWXMIN;
   }

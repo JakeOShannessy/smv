@@ -382,8 +382,11 @@ static int invoke_procedure(struct jrpc_server *server,
       break;
     }
   }
-  if (!procedure_found)
-    return send_error(conn, JRPC_METHOD_NOT_FOUND, "Method not found.", id);
+  if (!procedure_found) {
+    char msg[1000];
+    snprintf(msg, 1000, "Method not found (%s).", name);
+    return send_error(conn, JRPC_METHOD_NOT_FOUND, msg, id);
+  }
   else {
     if (ctx.error_code) {
       int status = send_error(conn, ctx.error_code, ctx.error_message, id);
@@ -620,7 +623,7 @@ struct jrpc_connection connection_create(size_t n) {
   struct jrpc_connection conn = {0};
   conn.buffer = malloc(n * sizeof(char));
   conn.buffer_size = n;
-  conn.debug_level = 2;
+  conn.debug_level = 0;
   return conn;
 }
 
@@ -694,20 +697,22 @@ void parse_response(struct jrpc_connection *conn, json_object *request_object) {
     exit(1);
   }
 }
-DLLEXPORT void jrpc_send_request(struct jrpc_connection *conn,
-                                 const char *method, json_object *params) {
+DLLEXPORT int jrpc_send_request(struct jrpc_connection *conn,
+                                const char *method, json_object *params) {
   fprintf(stderr, "sending %s\n", method);
-  json_object *request_object = request_create(conn->next_id, method, params);
+  int request_id = conn->next_id;
   conn->next_id++;
+  json_object *request_object = request_create(request_id, method, params);
   send_request(conn, request_object);
   fprintf(stderr, "sent\n");
   json_object_put(request_object);
+  return request_id;
 }
 
-DLLEXPORT void jrpc_send_request_s(struct jrpc_connection *conn,
-                                   const char *method, const char *params_s) {
+DLLEXPORT int jrpc_send_request_s(struct jrpc_connection *conn,
+                                  const char *method, const char *params_s) {
   fprintf(stderr, "sending %s\n", method);
   json_tokener *tok = json_tokener_new();
   json_object *params = json_tokener_parse_ex(tok, params_s, strlen(params_s));
-  jrpc_send_request(conn, method, params);
+  return jrpc_send_request(conn, method, params);
 }

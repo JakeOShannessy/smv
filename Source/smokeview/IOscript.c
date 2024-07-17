@@ -3745,6 +3745,7 @@ void ScriptViewXYZMINMAXOrtho(int command){
   GLUISceneMotionCB(ZAXIS_CUSTOM);
 }
 
+
 /* ------------------ ScriptViewXYZMINMAXPersp ------------------------ */
 void ResetDefaultMenu(int var);
 void ScriptViewXYZMINMAXPersp(int command){

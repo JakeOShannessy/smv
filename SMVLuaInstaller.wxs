@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<?define ProductVersion = "1.14.4"?>
+<?define ProductVersion = "1.14.17"?>
 <?define ProductUpgradeCode = "1940d8a1-c842-442f-bf5d-00a570219bdb"?>
 
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
@@ -45,6 +45,8 @@
                             <File Id='SMVLuaScriptCMD' Name='smvlua.cmd' Source='smvlua.cmd'
                                 KeyPath='yes'>
                             </File>
+                            <File Id='SMVQScriptCMD' Name='smvq.cmd' Source='smvq.cmd'>
+                            </File>
                         </Component>
                         <Component Id='LuaScript' Guid='babec8ea-faad-42d5-9276-19594a1328ee'
                             Win64="yes">
@@ -53,13 +55,13 @@
                             <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File>
                             <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File>
                         </Component>
-                        <Component Id='SMVQComponent'
-                            Guid='c84dc251-0843-4520-95da-1aa889ebd874' Win64="yes">
-                            <File Id='SMVQEXE' Name='smvq.exe'
-                                Source='dist/bin/smvq.exe' KeyPath='yes'>
-                            </File>
-                        </Component>
                         <Directory Id='BINDIR' Name='bin'>
+                            <Component Id='SMVQComponent'
+                                Guid='c84dc251-0843-4520-95da-1aa889ebd874' Win64="yes">
+                                <File Id='SMVQEXE' Name='smvq.exe'
+                                    Source='dist/bin/smvq.exe' KeyPath='yes'>
+                                </File>
+                            </Component>
                             <Component Id='SMVLuaComponent'
                                 Guid='767754dc-8fe5-4cbf-920e-6051e321312f' Win64="yes">
                                 <File Id='SMVLuaEXE' Name='smvlua.exe'

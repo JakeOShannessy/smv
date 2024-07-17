@@ -141,9 +141,9 @@ DLLEXPORT struct jrpc_client *jrpc_client_create_ptr();
 DLLEXPORT struct jrpc_client jrpc_client_create();
 DLLEXPORT struct jrpc_connection jrpc_client_connect(struct jrpc_client *client,
                                                      const char *sock_path);
-DLLEXPORT void jrpc_send_request(struct jrpc_connection *conn,
+DLLEXPORT int jrpc_send_request(struct jrpc_connection *conn,
                                  const char *method, json_object *params);
-DLLEXPORT void jrpc_send_request_s(struct jrpc_connection *conn,
+DLLEXPORT int jrpc_send_request_s(struct jrpc_connection *conn,
                                    const char *method, const char *params_s);
 DLLEXPORT void jrpc_client_destroy(struct jrpc_client *client);
 DLLEXPORT void jrpc_client_destroy_ptr(struct jrpc_client *client);

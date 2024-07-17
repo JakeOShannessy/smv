@@ -121,6 +121,18 @@ json_object *jsonrpc_GetTime(jrpc_context *context, json_object *params,
   }
 }
 
+/// @brief Get the time value of the currently loaded frame.
+json_object *jsonrpc_GetNGlobalTimes(jrpc_context *context, json_object *params,
+                                     json_object *id) {
+  if (global_times != NULL && nglobal_times > 0) {
+    json_object *result_root = json_object_new_int(nglobal_times);
+    return result_root;
+  }
+  else {
+    return NULL;
+  }
+}
+
 /// @brief Shift to the closest frame to given a time value.
 json_object *jsonrpc_SetTime(jrpc_context *context, json_object *params,
                              json_object *id) {
@@ -136,6 +148,18 @@ json_object *jsonrpc_SetTime(jrpc_context *context, json_object *params,
     context->error_code = 112;
     context->error_message = strdup("set_time failure");
   }
+  return NULL;
+}
+
+json_object *jsonrpc_SetCameraAz(jrpc_context *context, json_object *params,
+                                 json_object *id) {
+  if (!json_object_is_type(params, json_type_array)) {
+    context->error_code = JRPC_INVALID_PARAMS;
+    context->error_message = strdup("expected an array");
+    return NULL;
+  }
+  float az = json_object_get_double(json_object_array_get_idx(params, 0));
+  CameraSetAz(az);
   return NULL;
 }
 
@@ -690,6 +714,72 @@ json_object *jsonrpc_GetSlices(jrpc_context *context, json_object *params,
   return json_GetSlices();
 }
 
+json_object *jsonrpc_GetCsvs(jrpc_context *context, json_object *params,
+                             json_object *id) {
+  struct json_object *csv_files = json_object_new_array();
+  for (int i = 0; i < ncsvfileinfo; i++) {
+    csvfiledata *csv_file = &csvfileinfo[i];
+    struct json_object *csv_obj = json_object_new_object();
+    json_object_object_add(csv_obj, "index", json_object_new_int(i + 1));
+    json_object_object_add(csv_obj, "filename",
+                           json_object_new_string(csv_file->file));
+    json_object_object_add(csv_obj, "type",
+                           json_object_new_string(csv_file->c_type));
+    json_object_array_add(csv_files, csv_obj);
+  }
+  return csv_files;
+}
+
+json_object *CreateVectorJson(csvdata *csv_x, csvdata *csv_y) {
+  struct json_object *csv_obj = json_object_new_object();
+  json_object_object_add(csv_obj, "name",
+                         json_object_new_string(csv_y->label.longlabel));
+  struct json_object *x_obj = json_object_new_object();
+  json_object_object_add(x_obj, "name",
+                         json_object_new_string(csv_x->label.longlabel));
+  json_object_object_add(x_obj, "units",
+                         json_object_new_string(csv_x->label.unit));
+  json_object_object_add(csv_obj, "x", x_obj);
+  struct json_object *y_obj = json_object_new_object();
+  json_object_object_add(y_obj, "name",
+                         json_object_new_string(csv_y->label.longlabel));
+  json_object_object_add(y_obj, "units",
+                         json_object_new_string(csv_y->label.unit));
+  json_object_object_add(csv_obj, "y", y_obj);
+  struct json_object *values = json_object_new_array();
+  for (int i = 0; i < csv_x->nvals; ++i) {
+    struct json_object *p_obj = json_object_new_object();
+    json_object_object_add(p_obj, "x", json_object_new_double(csv_x->vals[i]));
+    json_object_object_add(p_obj, "y", json_object_new_double(csv_y->vals[i]));
+    json_object_array_add(values, p_obj);
+  }
+  json_object_object_add(csv_obj, "values", values);
+  return csv_obj;
+}
+
+void LoadCsv(csvfiledata *csventry);
+
+json_object *jsonrpc_GetCsvVectors(jrpc_context *context, json_object *params,
+                                   json_object *id) {
+  struct json_object *csv_files = json_object_new_object();
+
+  for (int i = 0; i < ncsvfileinfo; ++i) {
+    struct json_object *csvs_obj = json_object_new_object();
+    json_object_object_add(csv_files, csvfileinfo[i].c_type, csvs_obj);
+    csvfiledata *csventry = &csvfileinfo[i];
+    if (!csventry->loaded) {
+      LoadCsv(csventry);
+    }
+    for (size_t j = 0; j < csventry->ncsvinfo; j++) {
+      json_object *vector =
+          CreateVectorJson(csventry->time, &(csventry->csvinfo[j]));
+      json_object_object_add(csvs_obj, csventry->csvinfo[j].label.longlabel,
+                             vector);
+    }
+  }
+  return csv_files;
+}
+
 // json_object *jsonrpc_GetCsventry(jrpc_context *context, json_object *params,
 // json_object *id) {
 //   const char *key = lua_tostring(L, -1);
@@ -890,13 +980,15 @@ json_object *jsonrpc_Getrenderdir(jrpc_context *context, json_object *params,
 
 json_object *jsonrpc_SetOrthoPreset(jrpc_context *context, json_object *params,
                                     json_object *id) {
-
+  GLUIUpdateTranslate();
+  DisplayCB();
   const char *viewpoint =
       json_object_get_string(json_object_array_get_idx(params, 0));
   if (SetOrthoPreset(viewpoint)) {
     context->error_code = 119;
     context->error_message = strdup("SetOrthoPreset failure");
   }
+  DisplayCB();
   return NULL;
 }
 
@@ -932,7 +1024,7 @@ json_object *jsonrpc_SetWindowSize(jrpc_context *context, json_object *params,
   return NULL;
 }
 
-json_object *jsonrpc_Setcolorbarflip(jrpc_context *context, json_object *params,
+json_object *jsonrpc_SetColorbarFlip(jrpc_context *context, json_object *params,
                                      json_object *id) {
   json_bool flip =
       json_object_get_boolean(json_object_array_get_idx(params, 0));
@@ -1652,6 +1744,11 @@ json_object *jsonrpc_DevicesHideAll(jrpc_context *context, json_object *params,
 int register_procedures(struct jrpc_server *server) {
   jrpc_register_procedure(server, &jsonrpc_SetFrame, "set_frame", NULL);
   jrpc_register_procedure(server, &jsonrpc_SetTime, "set_time", NULL);
+  jrpc_register_procedure(server, &jsonrpc_SetCameraAz, "set_camera_az", NULL);
+
+  jrpc_register_procedure(server, &jsonrpc_GetNGlobalTimes,
+                          "get_n_global_times", NULL);
+  jrpc_register_procedure(server, &jsonrpc_GetTime, "get_time", NULL);
   jrpc_register_procedure(server, &jsonrpc_SetClipping, "set_clipping", NULL);
   jrpc_register_procedure(server, &jsonrpc_Render, "render", NULL);
   jrpc_register_procedure(server, &jsonrpc_Unloadall, "unload_all", NULL);
@@ -1696,6 +1793,10 @@ int register_procedures(struct jrpc_server *server) {
   jrpc_register_procedure(server, &jsonrpc_OutlinesHide, "outlines_hide_all",
                           NULL);
   jrpc_register_procedure(server, &jsonrpc_DevicesHideAll, "devices_hide_all",
+                          NULL);
+  jrpc_register_procedure(server, &jsonrpc_GetCsvVectors, "get_csv_vectors",
+                          NULL);
+  jrpc_register_procedure(server, &jsonrpc_SetColorbarFlip, "set_colorbar_flip",
                           NULL);
 
   return 0;
