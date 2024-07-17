@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<?define ProductVersion = "1.15.0"?>
+<?define ProductVersion = "1.15.1"?>
 <?define ProductUpgradeCode = "1940d8a1-c842-442f-bf5d-00a570219bdb"?>
 
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
@@ -72,6 +72,7 @@
                                 <File Name='zlib1.dll' Source='dist/bin/zlib1.dll'> </File>
                                 <File Name='jpeg62.dll' Source='dist/bin/jpeg62.dll'> </File>
                                 <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'> </File>
+                                <File Name='getopt.dll' Source='dist/bin/getopt.dll'> </File>
                             </Component>
                             <Component Id='LuaComponent'
                                 Guid='eea182cb-d651-4cbf-b1f7-18b5bceee877' Win64="yes">
