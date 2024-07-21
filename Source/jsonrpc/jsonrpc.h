@@ -57,6 +57,7 @@ struct jrpc_connection {
   unsigned int buffer_size;
   char *buffer;
   int debug_level;
+  unsigned int extra_chars_n;
   char *extra_chars;
   // Only used when acting as a client.
   int next_id;
@@ -142,9 +143,9 @@ DLLEXPORT struct jrpc_client jrpc_client_create();
 DLLEXPORT struct jrpc_connection jrpc_client_connect(struct jrpc_client *client,
                                                      const char *sock_path);
 DLLEXPORT int jrpc_send_request(struct jrpc_connection *conn,
-                                 const char *method, json_object *params);
+                                const char *method, json_object *params);
 DLLEXPORT int jrpc_send_request_s(struct jrpc_connection *conn,
-                                   const char *method, const char *params_s);
+                                  const char *method, const char *params_s);
 DLLEXPORT void jrpc_client_destroy(struct jrpc_client *client);
 DLLEXPORT void jrpc_client_destroy_ptr(struct jrpc_client *client);
 #endif

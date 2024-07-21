@@ -390,7 +390,9 @@ static int invoke_procedure(struct jrpc_server *server,
   else {
     if (ctx.error_code) {
       int status = send_error(conn, ctx.error_code, ctx.error_message, id);
-      free(ctx.error_message);
+      if (ctx.error_message) {
+        // free(ctx.error_message);
+      }
       return status;
     }
     else {
@@ -566,10 +568,11 @@ DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
   // object is parsed.
   do {
     if (conn->extra_chars) {
-      fprintf(stderr, "Parsing Extra Chars: >%s<\n", conn->extra_chars);
-      jobj = json_tokener_parse_ex(tok, conn->extra_chars,
-                                   strlen(conn->extra_chars));
+      fprintf(stderr, "Parsing Extra Chars[%d]: >%s<\n", conn->extra_chars_n,
+              conn->extra_chars);
+      jobj = json_tokener_parse_ex(tok, conn->extra_chars, conn->extra_chars_n);
       conn->extra_chars = NULL;
+      conn->extra_chars_n = 0;
     }
     else {
       memset(conn->buffer, 0, conn->buffer_size * sizeof(char));
@@ -579,21 +582,47 @@ DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
         // TODO: what if we use extra_chars then receive nothing?
         fprintf(stderr, "Connection Closed %d\n", n);
         conn->extra_chars = NULL;
+        conn->extra_chars_n = 0;
         return NULL;
       }
       stringlen = strlen(conn->buffer);
-      jobj = json_tokener_parse_ex(tok, conn->buffer, stringlen);
+      char g[100];
+      strncpy(g, conn->buffer, stringlen);
+      g[stringlen] = '\0';
+      fprintf(stderr, ">>[%03d/%03d]: %s\n", stringlen, n, conn->buffer);
+      // if stringlen is less than n, it's because there was a '\0' in the
+      // string indicating we should start again.
+      if (stringlen < n) {
+        // parse the end into the existing object
+        jobj = json_tokener_parse_ex(tok, conn->buffer, stringlen);
+        // TODO: if we're in a failure state we should restart
+        jerr = json_tokener_get_error(tok);
+        if (jerr != json_tokener_success && stringlen > 0) {
+          json_tokener_reset(tok);
+        }
+        if (n != 1) {
+          conn->extra_chars = &conn->buffer[stringlen + 1];
+          conn->extra_chars_n = n - stringlen - 1;
+        }
+      }
+      else {
+        jobj = json_tokener_parse_ex(tok, conn->buffer, n);
+      }
     }
   } while ((jerr = json_tokener_get_error(tok)) == json_tokener_continue &&
            done == 0);
   if (jerr != json_tokener_success) {
     fprintf(stderr, "Error: %s\n", json_tokener_error_desc(jerr));
+    fprintf(stderr, "Buffer: %s\n", conn->buffer);
     // Handle errors, as appropriate for your application.
   }
   if (json_tokener_get_parse_end(tok) < stringlen) {
-    // Handle extra characters after parsed object as desired.
-    // e.g. issue an error, parse another object from that point, etc...
-    conn->extra_chars = &conn->buffer[json_tokener_get_parse_end(tok)];
+    if (conn->extra_chars != NULL) {
+      // Handle extra characters after parsed object as desired.
+      // e.g. issue an error, parse another object from that point, etc...
+      conn->extra_chars = &conn->buffer[json_tokener_get_parse_end(tok)];
+      conn->extra_chars_n = strlen(conn->extra_chars);
+    }
   }
   return jobj;
 }
@@ -612,9 +641,9 @@ int process_connection(struct jrpc_server *server,
     const char *sq =
         json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
 
-    fprintf(stderr, "%s\n", sq);
+    fprintf(stderr, "received: %s\n", sq);
   }
-  fprintf(stderr, "Connection done.\n");
+  fprintf(stderr, "Connection done (server).\n");
 
   return 0;
 }

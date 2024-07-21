@@ -1,185 +1,97 @@
---- @module 'camera'
-local camera = {}
-function camera.get()
-    local camera = {
-        rotationType = smvlib.camera_get_rotation_type(),
-        rotationIndex = smvlib.camera_get_rotation_index(),
-        eyePos = {
-            x = smvlib.camera_get_eyex(),
-            y = smvlib.camera_get_eyey(),
-            z = smvlib.camera_get_eyez()
-        },
-        zoom = smvlib.camera_get_zoom(),
-        viewDir = smvlib.camera_get_viewdir(),
-        zAngle = {
-            az = smvlib.camera_get_az(),
-            elev = smvlib.camera_get_elev()
-        }
-    }
-    return camera
+-- @module 'iniparser'
+local iniparser = {}
+
+local inioptions = require "inioptions"
+local lpeg = require "lpeg"
+lpeg.locale(lpeg)
+
+if smokeviewEmbedded then execute = true else execute = false end
+
+local function buildOpt(opt)
+    local option = {name = opt[1], argLines = opt[2]}
+    -- printOption(option)
+    -- local execute = false
+    option = inioptions.validate(option, execute)
+    return option
 end
 
-function camera.print(camera)
-    io.write(string.format("rotationType: %d\n", camera.rotationType))
-    -- io.write(string.format("rotationIndex: %d\n", camera.rotationIndex))
-    io.write(string.format("viewId: %s\n", camera.viewId))
-    io.write(string.format("eyePos: (%f,%f,%f)\n",
-        camera.eyePos.x, camera.eyePos.y, camera.eyePos.x))
-    io.write(string.format("zoom: %f\n", camera.zoom))
-    io.write(string.format("viewAngle: %f\n", camera.viewAngle))
-    io.write(string.format("directionAngle: %f\n", camera.directionAngle))
-    io.write(string.format("elevationAngle: %f\n", camera.elevationAngle))
-    io.write(string.format("projectionType: %d\n", camera.projectionType))
-    io.write(string.format("viewDir: (%f,%f,%f)\n",
-        camera.viewDir.x, camera.viewDir.y, camera.viewDir.z))
-    io.write(string.format("zAngle: (%f,%f)\n",
-        camera.zAngle.az, camera.zAngle.elev))
-    -- io.write(string.format("transformMatrix: %d\n", camera.transformMatrix))
-    local clipping = camera.clipping
-    io.write(string.format("clipping: "))
-    if clipping == nil or clipping.mode == nil then
-        io.write(string.format("mode: 0\n"))
-    else
-        io.write(string.format("mode: %d\n", clipping.mode))
+local function printOption(opt)
+    print("Option")
+    io.write("  Name:\t" .. opt.name .. "\n")
+    io.write("  Arguments:\n")
+    for ki,vi in pairs(opt.argLines) do
+        print("    line: " .. ki)
+        for k,v in pairs(vi) do
+            print("      " .. k .. ": " .. v)
+        end
     end
-    io.write(string.format("  x: ", camera.clipping))
-    if clipping == nil or clipping.x == nil or clipping.x.min == nil then
-        io.write(string.format("-inf", camera.clipping))
-    else
-        io.write(string.format("%f", clipping.x.min))
+    -- for key,val in pairs(inst.args) do
+    --     io.write(val .. ", ")
+    -- end
+    -- io.write("]\n")
+end
+
+local whitespace = lpeg.space^0
+local integer = lpeg.S("-+")^-1 * lpeg.R("09")^1 / tonumber
+local float = lpeg.S("-+")^-1 * lpeg.R("09")^1 * lpeg.P(".")^0 * lpeg.R("09")^0
+            / tonumber
+local stringChar = lpeg.alnum + lpeg.punct -- the chars that are valid in a string
+local string = lpeg.C(stringChar^1)
+local filepath = string
+local eol = lpeg.P("\n") + lpeg.P("\r\n")
+local optionNameChar = lpeg.alnum + lpeg.S("_")
+local optionName = lpeg.C(optionNameChar^1) * eol
+-- rgb = lpeg.R(float) * lpeg.space^1 * lpeg.R(float) * lpeg.space^1 * lpeg.R(float)
+-- command = lpeg.C(lpeg.alnum^1)
+local comment = lpeg.space^0 * lpeg.P(":")
+    * lpeg.P(lpeg.alnum + lpeg.punct + lpeg.S(" \t"))^0
+    * #eol
+local rootComment = lpeg.space^0 * lpeg.S("#-*(")
+    * lpeg.P(lpeg.alnum + lpeg.punct + lpeg.S(" \t"))^0
+    * eol
+local argument = float + integer + string + lpeg.S(" \t")^1 -- + comment +
+    -- lpeg.P(eol * (#(lpeg.space) + eol * #comment))
+local argumentLine = lpeg.S(" \t")^1 * lpeg.Ct(argument^0) * comment^0 * eol^-1
+local emptyLine = lpeg.S(" \t")^0 * eol
+local junkLine = emptyLine + rootComment
+local option = junkLine^0 * lpeg.Ct(optionName * lpeg.Ct(argumentLine^0)) / buildOpt
+local iniFile = lpeg.Ct(option^0) * junkLine^0 * -lpeg.P(1)
+-- arguments = lpeg.Ct(argument^0) * eol^-1
+-- instruction = lpeg.Ct(command * arguments) / buildInst
+-- script = lpeg.Ct(instruction^0)
+
+-- print("OPTION NAME")
+-- exampleOptionName = "AMBIENTLIGHT\n 0.600000 0.600000 0.600000\n 0.800000 0.700000 0.900000\n"
+-- testOption = option:match(exampleOption)
+-- printOption(testOption)
+-- print("OPTION")
+-- exampleOption = "AMBIENTLIGHT\n 0.600000 0.600000 0.600000\n 0.800000 0.700000 0.900000\n"
+-- testOption = option:match(exampleOption)
+-- printOption(testOption)
+
+-- print("ARGUMENT LINE")
+-- exampleArgumentLine = " 0.600000 0.600000 0.600000 : grey\n"
+-- testArgumentLine = argumentLine:match(exampleArgumentLine)
+-- for k,v in pairs(testArgumentLine) do
+--     print(testArgumentLine[k])
+-- end
+
+local function parseINI(filepath)
+    print("parsing:", filepath)
+    local f,err = io.open(filepath, "r")
+    if f == nil then
+        error(err,1)
     end
-    io.write(" to ")
-    if clipping == nil or clipping.x == nil or clipping.x.max == nil then
-        io.write(string.format("+inf", camera.clipping))
-    else
-        io.write(string.format("%f", clipping.x.max))
-    end
-    io.write("\n")
-    io.write(string.format("  y: ", camera.clipping))
-    if clipping == nil or clipping.y == nil or clipping.y.min == nil then
-        io.write(string.format("-inf", camera.clipping))
-    else
-        io.write(string.format("%f", clipping.y.min))
-    end
-    io.write(" to ")
-    if clipping == nil or clipping.y == nil or clipping.y.max == nil then
-        io.write(string.format("+inf", camera.clipping))
-    else
-        io.write(string.format("%f", clipping.y.max))
-    end
-    io.write("\n")
-    io.write(string.format("  z: ", camera.clipping))
-    if clipping == nil or clipping.z == nil or clipping.z.min == nil then
-        io.write(string.format("-inf", camera.clipping))
-    else
-        io.write(string.format("%f", clipping.z.min))
-    end
-    io.write(" to ")
-    if clipping == nil or clipping.z == nil or clipping.z.max == nil then
-        io.write(string.format("+inf", camera.clipping))
-    else
-        io.write(string.format("%f", clipping.z.max))
-    end
-    io.write("\n")
-    -- transformMatrix = {
-    --      1.000000 0.000000 0.000000 0.000000
-    --      0.000000 1.000000 0.000000 0.000000
-    --      0.000000 0.000000 1.000000 0.000000
-    --      0.000000 0.000000 0.000000 1.000000
-    -- },
+    local input = f:read("*all")
+    local parsedIniFile = iniFile:match(input)
+    io.close()
+    print(parsedIniFile)
 end
 
-function camera.set_projection(v)
-    if not (type(v) == "number" and (v == 0 or v == 1)) then
-        error("projection type: " .. v .. " invalid")
-    end
-    local errorcode = smvlib.camera_set_projection_type(v)
-    assert(errorcode == 0, string.format("set_projection_type errorcode: %d\n", errorcode))
-    return errorcode
+local function test()
+    parseINI("test.ini")
 end
 
-function camera.set_orthographic()
-    return camera.set_projection(1)
-end
-
---     get = function()
---         return smvlib.camera_get_projection_type()
---     end,
---     set = function(v)
---         if not (type(v) == "number" and (v == 0 or v == 1)) then
---             error("projection type: " .. v .. " invalid")
---         end
---         local errorcode = smvlib.camera_set_projection_type(v)
---         assert(errorcode == 0, string.format("set_projection_type errorcode: %d\n", errorcode))
---         return errorcode
---     end
--- }
-function camera.set_az(az)
-    return smvlib.camera_set_az(az)
-end
-
-function camera.set_elev(az)
-    return smvlib.camera_set_elev(az)
-end
-
-function camera.zoom_to_fit()
-    return smvlib.camera_zoom_to_fit()
-end
-
-function camera.from_z_max(self)
-    -- TODO: Determine best rotation.
-    camera.set_orthographic()
-    camera.set_elev(90)
-    camera.set_az(90)
-    camera.zoom_to_fit()
-end
-
-function camera.from_y_min()
-    camera.set("YMIN")
-end
-
-function camera.from_y_max()
-    camera.set("YMAX")
-end
-
-function camera.from_x_min()
-    camera.set("XMIN")
-end
-
-function camera.from_x_max()
-    camera.set("XMAX")
-end
-
-function camera.from_z_min()
-    camera.set("ZMIN")
-end
-
-function camera.set_ortho_preset(camera)
-    smvlib.set_ortho_preset(camera)
-end
-
-function camera.set(camera)
-    if camera == nil then
-        error("camera.set: camera does not exist")
-    end
-    if type(camera) == "string" then
-        smvlib.setviewpoint(camera)
-        return
-    end
-    smvlib.camera_set_rotation_type(camera.rotationType)
-    smvlib.camera_set_projection_type(camera.projectionType)
-    smvlib.camera_set_az(camera.zAngle.az)
-    smvlib.camera_set_elev(camera.zAngle.elev)
-    smvlib.camera_set_zoom(camera.zoom)
-    smvlib.camera_set_eyex(camera.eyePos.x)
-    smvlib.camera_set_eyey(camera.eyePos.y)
-    smvlib.camera_set_eyez(camera.eyePos.z)
-    -- TODO: viewAngle
-    -- TODO: directionAngle
-    -- TODO: elevationAngle
-    smvlib.camera_set_viewdir(camera.viewDir.x, camera.viewDir.y, camera.viewDir.z)
-    -- TODO: the below is nonsensical, but it helps
-    smvlib.settime(smvlib.gettime())
-end
-
-return camera
+return iniparser
+-- print(emptyLine:match(" \n    \n\n    \r\n"))
+-- test()
