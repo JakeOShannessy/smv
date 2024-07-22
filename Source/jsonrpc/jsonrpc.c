@@ -710,7 +710,7 @@ json_object *request_create(int id, const char *method, json_object *params) {
 void send_request(struct jrpc_connection *conn, json_object *request_object) {
   const char *str =
       json_object_to_json_string_ext(request_object, JSON_C_TO_STRING_PRETTY);
-  fprintf(stderr, "sending %s\n", str);
+  // fprintf(stderr, "sending %s\n", str);
   int r = send(conn->fd, str, strlen(str) + 1, 0);
   fprintf(stderr, "send result =  %d\n", r);
   if (r == -1) {
