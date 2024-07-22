@@ -540,6 +540,7 @@ DLLEXPORT char *pop_or_block_s(struct jrpc_connection *conn) {
   json_object *jobj = pop_or_block(conn);
   const char *sq =
       json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
+  fprintf(stderr, "pop_or_block_s: %s\n", sq);
   char *r = strdup(sq);
   json_object_put(jobj);
   return r;
