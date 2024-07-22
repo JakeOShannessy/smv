@@ -590,7 +590,7 @@ DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
       char g[100];
       strncpy(g, conn->buffer, stringlen);
       g[stringlen] = '\0';
-      fprintf(stderr, ">>[%03d/%03d]: %s\n", stringlen, n, conn->buffer);
+      // fprintf(stderr, ">>[%03d/%03d]: %s\n", stringlen, n, conn->buffer);
       // if stringlen is less than n, it's because there was a '\0' in the
       // string indicating we should start again.
       if (stringlen < n) {
