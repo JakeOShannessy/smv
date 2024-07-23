@@ -788,7 +788,7 @@ PROP
     NewMemory((void **)&smokeview_id,lenbuf+1);
     strcpy(smokeview_id,buffer);
     propi->smokeview_ids[i]=smokeview_id;
-    propi->smv_objects[i]=GetSmvObjectType(&objectscoll, propi->smokeview_ids[i],objectscoll->std_object_defs.missing_device);
+    propi->smv_objects[i]=GetSmvObjectType(objectscoll, propi->smokeview_ids[i],objectscoll->std_object_defs.missing_device);
   }
   propi->smv_object=propi->smv_objects[0];
   propi->smokeview_id=propi->smokeview_ids[0];
@@ -2171,9 +2171,9 @@ void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
   else{
     strcpy(devicei->deviceID, tok1);
   }
-  devicei->object = GetSmvObjectType(&objectscoll,  tok1,objectscoll->std_object_defs.missing_device);
+  devicei->object = GetSmvObjectType(objectscoll,  tok1,objectscoll->std_object_defs.missing_device);
   if(devicei->object==objectscoll->std_object_defs.missing_device&&tok3!=NULL){
-    devicei->object = GetSmvObjectType(&objectscoll,  tok3,objectscoll->std_object_defs.missing_device);
+    devicei->object = GetSmvObjectType(objectscoll,  tok3,objectscoll->std_object_defs.missing_device);
   }
   if(devicei->object == objectscoll->std_object_defs.missing_device)have_missing_objects = 1;
   devicei->params=NULL;
@@ -2302,9 +2302,9 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
   else{
     strcpy(devicei->deviceID, tok1);
   }
-  devicei->object = GetSmvObjectType(&objectscoll,  tok1, objectscoll->std_object_defs.missing_device);
+  devicei->object = GetSmvObjectType(objectscoll,  tok1, objectscoll->std_object_defs.missing_device);
   if(devicei->object==objectscoll->std_object_defs.missing_device&&tok3!=NULL){
-    devicei->object = GetSmvObjectType(&objectscoll,  tok3, objectscoll->std_object_defs.missing_device);
+    devicei->object = GetSmvObjectType(objectscoll,  tok3, objectscoll->std_object_defs.missing_device);
   }
   if(devicei->object==objectscoll->std_object_defs.missing_device)have_missing_objects = 1;
   devicei->params = NULL;
@@ -2779,7 +2779,7 @@ void InitTextures0(void){
 
 void InitTextures(int use_graphics_arg){
   INIT_PRINT_TIMER(total_texture_time);
-  UpdateDeviceTextures(&objectscoll, ndeviceinfo, deviceinfo,
+  UpdateDeviceTextures(objectscoll, ndeviceinfo, deviceinfo,
                        npropinfo, propinfo, ndevice_texture_list,
                        device_texture_list_index, device_texture_list);
   if(nsurfinfo>0||ndevice_texture_list>0){
@@ -6977,7 +6977,7 @@ int ReadSMV_Init() {
   }
   npartclassinfo=0;
 
-  FreeObjectCollection(&objectscoll);
+  FreeObjectCollection(objectscoll);
   if(ndeviceinfo>0){
     for(i=0;i<ndeviceinfo;i++){
     }
@@ -6988,7 +6988,7 @@ int ReadSMV_Init() {
   // read in device (.svo) definitions
 
   START_TIMER(timer_setup);
-  ReadObjectCollection(&objectscoll, smokeview_bindir, fdsprefix, setbw,
+  ReadObjectCollection(objectscoll, smokeview_bindir, fdsprefix, setbw,
                        isZoneFireModel);
   PRINT_TIMER(timer_setup, "InitSurface");
 
@@ -8577,7 +8577,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
         NewMemory((void **)&smokeview_id,lenbuf+1);
         strcpy(smokeview_id, file_buffer);
         propi->smokeview_ids[i]=smokeview_id;
-        propi->smv_objects[i]=GetSmvObjectType(&objectscoll,propi->smokeview_ids[i],objectscoll->std_object_defs.missing_device);
+        propi->smv_objects[i]=GetSmvObjectType(objectscoll,propi->smokeview_ids[i],objectscoll->std_object_defs.missing_device);
       }
       propi->smv_object=propi->smv_objects[0];
       propi->smokeview_id=propi->smokeview_ids[0];
@@ -8735,9 +8735,9 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       partclassi->smv_device=NULL;
       partclassi->device_name=NULL;
       if(device_ptr!=NULL){
-        partclassi->sphere=GetSmvObjectType(&objectscoll,"SPHERE",objectscoll->std_object_defs.missing_device);
+        partclassi->sphere=GetSmvObjectType(objectscoll,"SPHERE",objectscoll->std_object_defs.missing_device);
 
-        partclassi->smv_device=GetSmvObjectType(&objectscoll,device_ptr,objectscoll->std_object_defs.missing_device);
+        partclassi->smv_device=GetSmvObjectType(objectscoll,device_ptr,objectscoll->std_object_defs.missing_device);
         if(partclassi->smv_device!=NULL){
           len = strlen(device_ptr);
           NewMemory((void **)&partclassi->device_name,len+1);
@@ -8750,7 +8750,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
           len = strlen(tube);
           NewMemory((void **)&partclassi->device_name,len+1);
           STRCPY(partclassi->device_name,tube);
-          partclassi->smv_device=GetSmvObjectType(&objectscoll,tube,objectscoll->std_object_defs.missing_device);
+          partclassi->smv_device=GetSmvObjectType(objectscoll,tube,objectscoll->std_object_defs.missing_device);
         }
       }
 
@@ -9676,14 +9676,14 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
           }
           if(device_label==NULL){
             if(isZoneFireModel==1){
-              devicecopy->object = GetSmvObjectType(&objectscoll,  "target",objectscoll->std_object_defs.thcp_object_backup);
+              devicecopy->object = GetSmvObjectType(objectscoll,  "target",objectscoll->std_object_defs.thcp_object_backup);
             }
             else{
-              devicecopy->object = GetSmvObjectType(&objectscoll,  "thermoc4",objectscoll->std_object_defs.thcp_object_backup);
+              devicecopy->object = GetSmvObjectType(objectscoll,  "thermoc4",objectscoll->std_object_defs.thcp_object_backup);
             }
           }
           else{
-            devicecopy->object = GetSmvObjectType(&objectscoll,  device_label,objectscoll->std_object_defs.thcp_object_backup);
+            devicecopy->object = GetSmvObjectType(objectscoll,  device_label,objectscoll->std_object_defs.thcp_object_backup);
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
@@ -9757,10 +9757,10 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
             xyznorm[2]/=normdenom;
           }
           if(device_label==NULL){
-            devicecopy->object = GetSmvObjectType(&objectscoll,  "sprinkler_upright",objectscoll->std_object_defs.sprinkler_upright_object_backup);
+            devicecopy->object = GetSmvObjectType(objectscoll,  "sprinkler_upright",objectscoll->std_object_defs.sprinkler_upright_object_backup);
           }
           else{
-            devicecopy->object = GetSmvObjectType(&objectscoll,  device_label,objectscoll->std_object_defs.sprinkler_upright_object_backup);
+            devicecopy->object = GetSmvObjectType(objectscoll,  device_label,objectscoll->std_object_defs.sprinkler_upright_object_backup);
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
@@ -9835,10 +9835,10 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
             xyznorm[2]/=normdenom;
           }
           if(device_label==NULL){
-            devicecopy->object = GetSmvObjectType(&objectscoll,  "heat_detector",objectscoll->std_object_defs.heat_detector_object_backup);
+            devicecopy->object = GetSmvObjectType(objectscoll,  "heat_detector",objectscoll->std_object_defs.heat_detector_object_backup);
           }
           else{
-            devicecopy->object = GetSmvObjectType(&objectscoll,  device_label,objectscoll->std_object_defs.heat_detector_object_backup);
+            devicecopy->object = GetSmvObjectType(objectscoll,  device_label,objectscoll->std_object_defs.heat_detector_object_backup);
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
@@ -9894,10 +9894,10 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
           xyznorm[2]/=normdenom;
         }
         if(device_label==NULL){
-          devicecopy->object = GetSmvObjectType(&objectscoll,  "smoke_detector",objectscoll->std_object_defs.smoke_detector_object_backup);
+          devicecopy->object = GetSmvObjectType(objectscoll,  "smoke_detector",objectscoll->std_object_defs.smoke_detector_object_backup);
         }
         else{
-          devicecopy->object = GetSmvObjectType(&objectscoll,  device_label,objectscoll->std_object_defs.smoke_detector_object_backup);
+          devicecopy->object = GetSmvObjectType(objectscoll,  device_label,objectscoll->std_object_defs.smoke_detector_object_backup);
         }
         GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
@@ -15536,7 +15536,7 @@ int ReadIni2(char *inifile, int localfile){
           fgets(buffer, 255, stream);
           TrimBack(buffer);
           dev_label = TrimFront(buffer);
-          obj_typei = GetSmvObject(&objectscoll, dev_label);
+          obj_typei = GetSmvObject(objectscoll, dev_label);
           if(obj_typei != NULL){
             obj_typei->visible = 1;
           }

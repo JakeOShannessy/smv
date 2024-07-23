@@ -3670,7 +3670,7 @@ int SetShowdevices(int ndevices_ini, const char *const *names) {
   }
   for (size_t i = 0; i < ndevices_ini; i++) {
     strncpy(tempname, names[i], 255 - 1); // use temp buffer
-    obj_typei = GetSmvObject(&objectscoll, tempname);
+    obj_typei = GetSmvObject(objectscoll, tempname);
     // obj_typei = GetSmvObject(names[i]);
     if (obj_typei != NULL) {
       obj_typei->visible = 1;
