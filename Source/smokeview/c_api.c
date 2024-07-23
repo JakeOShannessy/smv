@@ -943,8 +943,8 @@ void SurfacesHideAll() {
 }
 
 void DevicesHideAll() {
-  for (size_t i = 0; i < objectscoll.nobject_defs; i++) {
-    sv_object *objecti = objectscoll.object_defs[i];
+  for (size_t i = 0; i < objectscoll->nobject_defs; i++) {
+    sv_object *objecti = objectscoll->object_defs[i];
     objecti->visible = 0;
   }
 }
@@ -3664,8 +3664,8 @@ int SetShowdevices(int ndevices_ini, const char *const *names) {
 
   char tempname[255]; // temporary buffer to convert from const string
 
-  for (size_t i = 0; i < objectscoll.nobject_defs; i++) {
-    obj_typei = objectscoll.object_defs[i];
+  for (size_t i = 0; i < objectscoll->nobject_defs; i++) {
+    obj_typei = objectscoll->object_defs[i];
     obj_typei->visible = 0;
   }
   for (size_t i = 0; i < ndevices_ini; i++) {

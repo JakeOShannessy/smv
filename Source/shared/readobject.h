@@ -371,13 +371,26 @@ typedef struct {
   sv_object object_def_last;
   /** @brief A number of standard objects to be used. */
   std_objects std_object_defs;
+  int iavatar_types;
+  int navatar_types;
+  sv_object **avatar_types;
+  sv_object *avatar_defs_backup[2];
 } object_collection;
 
 /**
- * @brief Initialise an @ref object_collection and avatar types.
+ * @brief Initialise an @ref object_collection.
+ *
+ * @returns A @ref object_collection which has been properly initialized.
+ */
+object_collection *CreateObjectCollection(void);
+
+/**
+ * @brief Read objects from the appropriate files, using fallback objects if
+ * object definitions are not found.
  *
  * @param[inout] objectscoll Pointer to the location of the @ref
- * object_collection to initialize.
+ * object_collection to read object definitions into. This @ref
+ * object_collection
  * @param[in] setbw Set the colors to black and white.
  * @param[inout] avatar_types Linked-list of avatar types. TODO: include in
  * object_collection.
@@ -390,14 +403,12 @@ typedef struct {
  * files (e.g., "${fdsprefix}.svo").
  * @param[in] isZoneFireModel Is this model a zone fire model.
  */
-void InitObjectCollection(object_collection *objectscoll, int navatar_types,
-                          sv_object **avatar_types,
-                          sv_object *avatar_defs_backup[2],
+void ReadObjectCollection(object_collection *objectscoll,
                           const char *smokeview_bindir, const char *fdsprefix,
                           int setbw, int isZoneFireModel);
 /**
- * @brief Free an @ref object_collection previously initialized by @ref
- * InitObjectCollection.
+ * @brief Free an @ref object_collection previously created by @ref
+ * CreateObjectCollection.
  *
  * @param[inout] objectscoll The @ref object_collection to free.
  */

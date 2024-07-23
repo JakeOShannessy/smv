@@ -1,4 +1,5 @@
 #include "options.h"
+
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -1164,6 +1165,7 @@ void FreeObjectCollection(object_collection *objectscoll) {
     if (object->prev == NULL) break;
     FreeObject(object);
   }
+  FreeMemory(objectscoll);
 }
 
 /* ----------------------- GetSmvObject ----------------------------- */
@@ -1373,9 +1375,7 @@ int ReadObjectDefs(object_collection *objectscoll, char *file, int setbw) {
 
 /* ----------------------- InitAvatar ----------------------------- */
 
-void InitAvatar(object_collection *objectscoll, int navatar_types,
-                sv_object **avatar_types, sv_object *avatar_defs_backup[2],
-                int setbw) {
+void InitAvatar(object_collection *objectscoll, int setbw) {
   int iavatar_types_local;
   sv_object *objecti, *object_start;
   char com_buffer[1024];
@@ -1385,41 +1385,53 @@ void InitAvatar(object_collection *objectscoll, int navatar_types,
          ":DUM1 :DUM2 :DUM3 :W :D :H1 :SX :SY :SZ :R :G :B :HX :HY :HZ ");
 
   object_start = objectscoll->object_def_first.next;
-  navatar_types = 2;
+  objectscoll->navatar_types = 2;
   for (objecti = object_start; objecti->next != NULL; objecti = objecti->next) {
-    if (objecti->type == IS_AVATAR) navatar_types++;
+    if (objecti->type == IS_AVATAR) objectscoll->navatar_types++;
   }
-  NewMemory((void **)&avatar_types, navatar_types * sizeof(sv_object *));
+  NewMemory((void **)&objectscoll->avatar_types,
+            objectscoll->navatar_types * sizeof(sv_object *));
 
   strcpy(com_buffer, labels);
   strcat(com_buffer, "0.0 0.0 1.0 translate 255 0 0 setrgb 0.03 0.1 drawdisk 0 "
                      "0 255 setrgb 90.0 rotatey 0.03 0.2 drawdisk");
-  avatar_defs_backup[0] =
+  objectscoll->avatar_defs_backup[0] =
       InitSmvObject1(objectscoll, "Avatar_1", com_buffer, 1, setbw);
-  avatar_defs_backup[0]->type = IS_AVATAR;
+  objectscoll->avatar_defs_backup[0]->type = IS_AVATAR;
 
   strcpy(com_buffer, labels);
   strcat(com_buffer, "255 255 0 setrgb 0.02 0.05 drawdisk");
-  avatar_defs_backup[1] =
+  objectscoll->avatar_defs_backup[1] =
       InitSmvObject1(objectscoll, "Avatar_2", com_buffer, 1, setbw);
-  avatar_defs_backup[1]->type = IS_AVATAR;
+  objectscoll->avatar_defs_backup[1]->type = IS_AVATAR;
 
-  avatar_types[0] = avatar_defs_backup[0];
-  avatar_types[1] = avatar_defs_backup[1];
+  objectscoll->avatar_types[0] = objectscoll->avatar_defs_backup[0];
+  objectscoll->avatar_types[1] = objectscoll->avatar_defs_backup[1];
 
   iavatar_types_local = 2;
   for (objecti = object_start; objecti->next != NULL; objecti = objecti->next) {
     if (objecti->type == IS_NOT_AVATAR) continue;
-    avatar_types[iavatar_types_local++] = objecti;
+    objectscoll->avatar_types[iavatar_types_local++] = objecti;
   }
-  iavatar_types_local = 0;
+}
+
+object_collection *CreateObjectCollection(void) {
+  object_collection *objectscoll;
+  NewMemory((void **)&objectscoll, sizeof(object_collection));
+  strcpy(objectscoll->object_def_first.label, "first");
+  objectscoll->object_def_first.next = &objectscoll->object_def_last;
+  objectscoll->object_def_first.prev = NULL;
+
+  strcpy(objectscoll->object_def_last.label, "last");
+  objectscoll->object_def_last.next = NULL;
+  objectscoll->object_def_last.prev = &objectscoll->object_def_first;
+  objectscoll->object_defs = NULL;
+  return objectscoll;
 }
 
 /* ----------------------- InitObjectDefs ----------------------------- */
 
-void InitObjectCollection(object_collection *objectscoll, int navatar_types,
-                          sv_object **avatar_types,
-                          sv_object *avatar_defs_backup[2],
+void ReadObjectCollection(object_collection *objectscoll,
                           const char *smokeview_bindir, const char *fdsprefix,
                           int setbw, int isZoneFireModel) {
   char com_buffer[1024];
@@ -1454,9 +1466,10 @@ void InitObjectCollection(object_collection *objectscoll, int navatar_types,
   ReadObjectDefs(objectscoll, objectfile, setbw);
 
 #ifdef SMOKEVIEW_OBJECT_DEFS_PATH
-  // Read objects file pointed to be macro SMOKEVIEW_OBJECT_DEFS_PATH. Useful
-  // when install paths differ per platform.
-  ReadObjectDefs(SMOKEVIEW_OBJECT_DEFS_PATH);
+  // Read objects file pointed to be macro SMOKEVIEW_OBJECT_DEFS_PATH.
+  Useful
+      // when install paths differ per platform.
+      ReadObjectDefs(SMOKEVIEW_OBJECT_DEFS_PATH);
 #endif
 
   // Read objects file from the envar SMOKEVIEW_OBJECT_DEFS
@@ -1465,8 +1478,7 @@ void InitObjectCollection(object_collection *objectscoll, int navatar_types,
     ReadObjectDefs(objectscoll, envar_object_path, setbw);
   }
 
-  InitAvatar(objectscoll, navatar_types, avatar_types, avatar_defs_backup,
-             setbw);
+  InitAvatar(objectscoll, setbw);
 
   if (isZoneFireModel == 1) {
     strcpy(com_buffer, "255 255 0 setrgb 0.02 0.05 drawdisk");
@@ -1490,8 +1502,9 @@ void InitObjectCollection(object_collection *objectscoll, int navatar_types,
 
   strcpy(com_buffer, "0 255 0 setrgb 0.038 drawcube");
   strcpy(com_buffer2, "255 0 0 setrgb 0.038 drawcube");
-  objectscoll->std_object_defs.sprinkler_upright_object_backup = InitSmvObject2(
-      objectscoll, "sprinkler_upright", com_buffer, com_buffer2, 1, setbw);
+  objectscoll->std_object_defs.sprinkler_upright_object_backup =
+      InitSmvObject2(objectscoll, "sprinkler_upright", com_buffer, com_buffer2,
+                     1, setbw);
 
   strcpy(com_buffer, "127 127 127 setrgb 0.2 0.05 drawdisk");
   strcpy(com_buffer2, "255 0 0 setrgb 0.2 0.05 drawdisk");
