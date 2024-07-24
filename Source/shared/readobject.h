@@ -391,16 +391,12 @@ object_collection *CreateObjectCollection(void);
  * @param[inout] objectscoll Pointer to the location of the @ref
  * object_collection to read object definitions into. This @ref
  * object_collection
- * @param[in] setbw Set the colors to black and white.
- * @param[inout] avatar_types Linked-list of avatar types. TODO: include in
- * object_collection.
- * @param[in] avatar_defs_backup Backup avatar types. TODO: include in
- * object_collection.
  * @param[in] smokeview_bindir The path which contains the smokeview binary.
- * Object definition files from this directory are read.
+ * Object definition files from this directory are read. If NULL, this step is
+ * skipped.
  * @param[in] setbw Set the colors to black and white.
  * @param[in] fdsprefix The fdsprefix. This is used to find case-specific object
- * files (e.g., "${fdsprefix}.svo").
+ * files (e.g., "${fdsprefix}.svo"). If NULL, such files are never read.
  * @param[in] isZoneFireModel Is this model a zone fire model.
  */
 void ReadObjectCollection(object_collection *objectscoll,

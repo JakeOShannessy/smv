@@ -101,7 +101,6 @@ sv_object *GetSmvObjectType(object_collection *objectscoll, char *olabel,
 
   if (olabel == NULL) return default_object;
   strcpy(label, olabel);
-  labelptr = label;
   TrimBack(label);
   labelptr = TrimFront(label);
   if (strlen(labelptr) == 0) return default_object;
@@ -124,7 +123,6 @@ sv_object *GetSmvObjectType2(object_collection *objectscoll, char *olabel,
 
   if (olabel == NULL) return default_object;
   strcpy(label, olabel);
-  labelptr = label;
   TrimBack(label);
   labelptr = TrimFront(label);
   if (strlen(labelptr) == 0) return default_object;
@@ -1199,8 +1197,6 @@ int ReadObjectDefs(object_collection *objectscoll, char *file, int setbw) {
   int ndevices = 0;
   int eof = 0;
 
-  // FreeObjectCollection();
-
   stream = fopen(file, "r");
   if (stream == NULL) return 0;
   // if(verbose_output==1)PRINTF("reading %s ", file);
@@ -1463,15 +1459,16 @@ void ReadObjectCollection(object_collection *objectscoll,
   ReadObjectDefs(objectscoll, objectfile, setbw);
 
   // Read "${fdsprefix}.svo" from the current directory
-  strcpy(objectfile, fdsprefix);
-  strcat(objectfile, ".svo");
-  ReadObjectDefs(objectscoll, objectfile, setbw);
+  if (fdsprefix != NULL) {
+    strcpy(objectfile, fdsprefix);
+    strcat(objectfile, ".svo");
+    ReadObjectDefs(objectscoll, objectfile, setbw);
+  }
 
 #ifdef SMOKEVIEW_OBJECT_DEFS_PATH
   // Read objects file pointed to be macro SMOKEVIEW_OBJECT_DEFS_PATH.
-  Useful
-      // when install paths differ per platform.
-      ReadObjectDefs(SMOKEVIEW_OBJECT_DEFS_PATH);
+  // Useful when install paths differ per platform.
+  ReadObjectDefs(objectscoll, SMOKEVIEW_OBJECT_DEFS_PATH, set_bw);
 #endif
 
   // Read objects file from the envar SMOKEVIEW_OBJECT_DEFS
