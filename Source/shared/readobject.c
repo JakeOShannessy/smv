@@ -1418,6 +1418,8 @@ void InitAvatar(object_collection *objectscoll, int setbw) {
 object_collection *CreateObjectCollection(void) {
   object_collection *objectscoll;
   NewMemory((void **)&objectscoll, sizeof(object_collection));
+  // Set all of the std objects to NULL
+  memset(&objectscoll->std_object_defs, 0, sizeof(std_objects));
   strcpy(objectscoll->object_def_first.label, "first");
   objectscoll->object_def_first.next = &objectscoll->object_def_last;
   objectscoll->object_def_first.prev = NULL;
@@ -1502,9 +1504,8 @@ void ReadObjectCollection(object_collection *objectscoll,
 
   strcpy(com_buffer, "0 255 0 setrgb 0.038 drawcube");
   strcpy(com_buffer2, "255 0 0 setrgb 0.038 drawcube");
-  objectscoll->std_object_defs.sprinkler_upright_object_backup =
-      InitSmvObject2(objectscoll, "sprinkler_upright", com_buffer, com_buffer2,
-                     1, setbw);
+  objectscoll->std_object_defs.sprinkler_upright_object_backup = InitSmvObject2(
+      objectscoll, "sprinkler_upright", com_buffer, com_buffer2, 1, setbw);
 
   strcpy(com_buffer, "127 127 127 setrgb 0.2 0.05 drawdisk");
   strcpy(com_buffer2, "255 0 0 setrgb 0.2 0.05 drawdisk");

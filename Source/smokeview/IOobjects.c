@@ -4059,7 +4059,7 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
           iframe_local2 = 0;
         }
         object_name = (toki - 1)->string;
-        included_object = GetSmvObjectType(&objectscoll, object_name, objectscoll->std_object_defs.missing_device);
+        included_object = GetSmvObjectType(objectscoll, object_name, objectscoll->std_object_defs.missing_device);
         toki->included_frame = iframe_local2;
         toki->included_object = included_object;
       }
