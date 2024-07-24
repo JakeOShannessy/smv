@@ -1742,3 +1742,7 @@ void InitVars(void){
     }
   }
 }
+
+void FreeVars(void) {
+  FreeObjectCollection(objectscoll);
+}
