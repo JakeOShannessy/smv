@@ -29,16 +29,16 @@ int GetTokenId(char *token, int *opptr, int *num_opptr, int *num_outopptr,
                int *use_displaylist);
 void ParseSmvObjectString(object_collection *objectscoll, char *string,
                           char **tokens, int *ntokens, int setbw);
-sv_object *InitSmvObject1(object_collection *objectscoll, char *label,
-                          char *commands, int visible, int setbw);
-sv_object *InitSmvObject2(object_collection *objectscoll, char *label,
-                          char *commandsoff, char *commandson, int visible,
-                          int setbw);
+sv_object *InitSmvObject1(object_collection *objectscoll, const char *label,
+                          const char *commands, int visible, int setbw);
+sv_object *InitSmvObject2(object_collection *objectscoll, const char *label,
+                          const char *commandsoff, const char *commandson,
+                          int visible, int setbw);
 sv_object *GetSmvObjectType2(object_collection *objectscoll, char *olabel,
                              sv_object *default_object);
 void FreeObject(sv_object *object);
 
-char *ParseObjectFrame(object_collection *objectscoll, char *buffer,
+char *ParseObjectFrame(object_collection *objectscoll, const char *buffer,
                        FILE *stream, int *eof, sv_object_frame *frame,
                        int setbw);
 
@@ -284,9 +284,11 @@ void GetIndepVarIndices(sv_object *smv_object, char **var_indep_strings,
 
 /* ----------------------- ParseObjectFrame ----------------------------- */
 // Previously ParseDeviceFrame
-char *ParseObjectFrame(object_collection *objectscoll, char *buffer,
+char *ParseObjectFrame(object_collection *objectscoll, const char *buffer_in,
                        FILE *stream, int *eof, sv_object_frame *frame,
                        int setbw) {
+  char buffer[1024];
+  strcpy(buffer, buffer_in);
 
   char object_buffer[10 * BUFFER_SIZE];
   int ntokens;
@@ -1078,9 +1080,9 @@ int GetObjectFrameTokenLoc(char *var, sv_object_frame *frame) {
 
 /* ----------------------- init_SMVOBJECT2 ----------------------------- */
 
-sv_object *InitSmvObject2(object_collection *objectscoll, char *label,
-                          char *commandsoff, char *commandson, int visible,
-                          int setbw) {
+sv_object *InitSmvObject2(object_collection *objectscoll, const char *label,
+                          const char *commandsoff, const char *commandson,
+                          int visible, int setbw) {
   sv_object *object;
   int i;
 
@@ -1125,8 +1127,8 @@ sv_object *InitSmvObject2(object_collection *objectscoll, char *label,
 
 /* ----------------------- InitSmvObject1 ----------------------------- */
 
-sv_object *InitSmvObject1(object_collection *objectscoll, char *label,
-                          char *commands, int visible, int setbw) {
+sv_object *InitSmvObject1(object_collection *objectscoll, const char *label,
+                          const char *commands, int visible, int setbw) {
   sv_object *object;
   sv_object_frame *framei;
   int eof;

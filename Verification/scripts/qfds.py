@@ -18,8 +18,12 @@ def run_fds(directory, filename, processes=None):
 def run_smv_script(directory, filename, smv_path="smokeview"):
     print("running", filename)
     args = [smv_path, "-runscript", filename]
-    subprocess.run(args, shell=False,
-                   capture_output=False, text=True, cwd=directory)
+    result = subprocess.run(args, shell=False,
+                            capture_output=True, text=True, cwd=directory)
+    if result.returncode != 0:
+        print(result.stdout)
+        print(result.stderr)
+        raise Exception(f'smokeview failed: case: {filename}')
     print("completed", filename)
 
 
