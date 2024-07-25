@@ -96,33 +96,34 @@ class Comparison:
         ini_root = os.path.join(p, "Visualization")
         ini_files = glob.glob('./**/*.ini', recursive=True,
                               root_dir=ini_root)
+        jpeg_files = glob.glob('./**/*.jpg', recursive=True,
+                               root_dir=ini_root)
+        png_files = glob.glob('./**/*.png', recursive=True,
+                              root_dir=ini_root)
         for case in self.cases:
             if case.program == 'fds':
                 case_rundir = os.path.join(
                     dir, create_case_dir_name(case.path))
                 input_path = os.path.join(p, case.path)
                 source_script_path = os.path.join(p, case.script_path())
-                print("script for", input_path)
-                print("  source_script_path", source_script_path)
+                # print("script for", input_path)
+                # print("  source_script_path", source_script_path)
                 (fds_prefix, _) = os.path.splitext(
                     os.path.basename(case.path))
                 # Copy script file to that dir
-                print("  scriptpath:", os.path.join(
-                    case_rundir, case.script_name()))
+                # print("  scriptpath:", os.path.join(
+                #     case_rundir, case.script_name()))
                 if os.path.isfile(source_script_path):
                     dest_script_path = os.path.join(
                         case_rundir, case.script_name())
-                    print("  copy", source_script_path, 'to', dest_script_path)
+                    # print("  copy", source_script_path, 'to', dest_script_path)
                     shutil.copyfile(source_script_path, dest_script_path)
-                    # print("  ", caserundir, fds_prefix + ".smv")
-                    for ini_file in ini_files:
-                        src_path = os.path.join(ini_root, ini_file)
+                    for file in (ini_files+jpeg_files+png_files):
+                        src_path = os.path.join(ini_root, file)
                         dest_path = os.path.join(
-                            case_rundir, os.path.basename(ini_file))
+                            case_rundir, os.path.basename(file))
+                        print("  copy", src_path, 'to', dest_path)
                         shutil.copyfile(src_path, dest_path)
-                    # if os.path.isfile(os.path.join(p, case.ini_path())):
-                    #     shutil.copyfile(os.path.join(p, case.ini_path()), os.path.join(
-                    #         caserundir, fds_prefix + ".ini"))
                     if os.path.isfile(stop_path(dest_script_path)):
                         os.remove(stop_path(dest_script_path))
                     qfds.run_smv_script(
