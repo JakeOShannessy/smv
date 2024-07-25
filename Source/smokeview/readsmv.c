@@ -6987,7 +6987,7 @@ int ReadSMV_Init() {
   // read in device (.svo) definitions
 
   START_TIMER(timer_setup);
-  ReadObjectCollection(objectscoll, smokeview_bindir, fdsprefix, setbw,
+  ReadDefaultObjectCollection(objectscoll, smokeview_bindir, fdsprefix, setbw,
                        isZoneFireModel);
   PRINT_TIMER(timer_setup, "InitSurface");
 

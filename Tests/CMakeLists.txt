@@ -125,4 +125,4 @@ add_test(NAME "Simple PL3d - Complete"
 COMMAND parse_simple_pl3d ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_pl3d.q)
 
 add_test(NAME "Test Object API"
-COMMAND test_objects)
+COMMAND test_objects ${CMAKE_SOURCE_DIR}/Tests/bad_objects.svo)

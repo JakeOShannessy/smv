@@ -385,8 +385,8 @@ typedef struct {
 object_collection *CreateObjectCollection(void);
 
 /**
- * @brief Read objects from the appropriate files, using fallback objects if
- * object definitions are not found.
+ * @brief Read objects from the standard file locations, using fallback objects
+ * if object definitions are not found.
  *
  * @param[inout] objectscoll Pointer to the location of the @ref
  * object_collection to read object definitions into. This @ref
@@ -399,9 +399,10 @@ object_collection *CreateObjectCollection(void);
  * files (e.g., "${fdsprefix}.svo"). If NULL, such files are never read.
  * @param[in] isZoneFireModel Is this model a zone fire model.
  */
-void ReadObjectCollection(object_collection *objectscoll,
-                          const char *smokeview_bindir, const char *fdsprefix,
-                          int setbw, int isZoneFireModel);
+void ReadDefaultObjectCollection(object_collection *objectscoll,
+                                 const char *smokeview_bindir,
+                                 const char *fdsprefix, int setbw,
+                                 int isZoneFireModel);
 /**
  * @brief Free an @ref object_collection previously created by @ref
  * CreateObjectCollection.
@@ -431,7 +432,7 @@ sv_object *GetSmvObject(object_collection *objectscoll, char *label);
  */
 sv_object *GetSmvObjectType(object_collection *objectscoll, char *olabel,
                             sv_object *default_object);
-
+int ReadObjectDefs(object_collection *objectscoll, const char *file, int setbw);
 // END MAIN API
 
 // These still need to be documented.

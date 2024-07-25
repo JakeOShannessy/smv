@@ -396,7 +396,6 @@ char *ParseObjectFrame(object_collection *objectscoll, const char *buffer_in,
         nargs_actual = i - last_command_index - 1;
       }
       else {
-        nargs_actual = toki - first_token;
         nargs_actual = toki->nvars;
       }
       if (nargs_actual != toki->nvars) {
@@ -1186,13 +1185,16 @@ sv_object *GetSmvObject(object_collection *objectscoll, char *label) {
  * @param[inout] nobject_defs The number of object definitions in object_defs
  * @param[out] object_defs
  * @param[in] file The file path to read from
+ *
+ * @returns The number of objects read
  */
-int ReadObjectDefs(object_collection *objectscoll, char *file, int setbw) {
+int ReadObjectDefs(object_collection *objectscoll, const char *file,
+                   int setbw) {
   FILE *stream;
   char buffer[256], *trim_buffer;
   char *buffer_ptr;
   sv_object *temp_object, *prev_object, *next_object, *current_object;
-  sv_object_frame *current_frame;
+  sv_object_frame *current_frame = NULL;
   int firstdef;
   sv_object *object_start, *objecti;
   size_t lenbuffer;
@@ -1292,8 +1294,11 @@ int ReadObjectDefs(object_collection *objectscoll, char *file, int setbw) {
         continue;
       }
     }
-    buffer_ptr = ParseObjectFrame(objectscoll, buffer, stream, &eof,
-                                  current_frame, setbw);
+    // If a frame has not been started, don't try and parse it.
+    if (current_frame != NULL) {
+      buffer_ptr = ParseObjectFrame(objectscoll, buffer, stream, &eof,
+                                    current_frame, setbw);
+    }
   }
   fclose(stream);
 
@@ -1413,11 +1418,52 @@ void InitAvatar(object_collection *objectscoll, int setbw) {
   }
 }
 
+void InitStdObjectDefs(object_collection *objectscoll, int setbw,
+                       int isZoneFireModel) {
+  if (isZoneFireModel == 1) {
+    objectscoll->std_object_defs.target_object_backup = InitSmvObject1(
+        objectscoll, "target", "255 255 0 setrgb 0.02 0.05 drawdisk", 1, setbw);
+  }
+  else {
+    objectscoll->std_object_defs.target_object_backup = InitSmvObject1(
+        objectscoll, "sensor", "255 255 0 setrgb 0.038 drawcube", 1, setbw);
+  }
+
+  objectscoll->std_object_defs.thcp_object_backup = InitSmvObject1(
+      objectscoll, "thcp", "255 255 0 setrgb 0.038 drawcube", 1, setbw);
+
+  objectscoll->std_object_defs.heat_detector_object_backup = InitSmvObject2(
+      objectscoll, "heat_detector", "0 255 0 setrgb 0.038 drawcube",
+      "255 0 0 setrgb 0.038 drawcube", 1, setbw);
+
+  objectscoll->std_object_defs.sprinkler_upright_object_backup = InitSmvObject2(
+      objectscoll, "sprinkler_upright", "0 255 0 setrgb 0.038 drawcube",
+      "255 0 0 setrgb 0.038 drawcube", 1, setbw);
+
+  objectscoll->std_object_defs.smoke_detector_object_backup = InitSmvObject2(
+      objectscoll, "smoke_detector", "127 127 127 setrgb 0.2 0.05 drawdisk",
+      "255 0 0 setrgb 0.2 0.05 drawdisk", 1, setbw);
+
+  objectscoll->std_object_defs.error_device = InitSmvObject1(
+      objectscoll, "error_device",
+      "255 0 0 setrgb push 45.0 rotatey -0.1 offsetz 0.05 0.2 drawdisk pop "
+      "push -45.0 rotatey -0.1 offsetz 0.05 0.2 drawdisk pop",
+      1, setbw);
+
+  if (objectscoll->std_object_defs.missing_device == NULL) {
+    objectscoll->std_object_defs.missing_device = InitSmvObject1(
+        objectscoll, "missing_device",
+        "0 0 255 setrgb push 45.0 rotatey -0.1 offsetz 0.05 0.2 drawdisk "
+        "pop push -45.0 rotatey -0.1 offsetz 0.05 0.2 drawdisk pop",
+        1, setbw);
+  }
+}
+
 object_collection *CreateObjectCollection(void) {
   object_collection *objectscoll;
   NewMemory((void **)&objectscoll, sizeof(object_collection));
-  // Set all of the std objects to NULL
-  memset(&objectscoll->std_object_defs, 0, sizeof(std_objects));
+  // Set everything to NULL
+  memset(objectscoll, 0, sizeof(object_collection));
   strcpy(objectscoll->object_def_first.label, "first");
   objectscoll->object_def_first.next = &objectscoll->object_def_last;
   objectscoll->object_def_first.prev = NULL;
@@ -1429,13 +1475,26 @@ object_collection *CreateObjectCollection(void) {
   return objectscoll;
 }
 
+void LoadDefaultObjectDefs(object_collection *objectscoll) {
+  objectscoll->nobject_defs = 4;
+  FREEMEMORY(objectscoll->object_defs);
+  NewMemory((void **)&objectscoll->object_defs, 4 * sizeof(sv_object *));
+  objectscoll->object_defs[0] =
+      objectscoll->std_object_defs.target_object_backup;
+  objectscoll->object_defs[1] =
+      objectscoll->std_object_defs.heat_detector_object_backup;
+  objectscoll->object_defs[2] =
+      objectscoll->std_object_defs.sprinkler_upright_object_backup;
+  objectscoll->object_defs[3] =
+      objectscoll->std_object_defs.smoke_detector_object_backup;
+}
+
 /* ----------------------- InitObjectDefs ----------------------------- */
 
-void ReadObjectCollection(object_collection *objectscoll,
-                          const char *smokeview_bindir, const char *fdsprefix,
-                          int setbw, int isZoneFireModel) {
-  char com_buffer[1024];
-  char com_buffer2[1024];
+void ReadDefaultObjectCollection(object_collection *objectscoll,
+                                 const char *smokeview_bindir,
+                                 const char *fdsprefix, int setbw,
+                                 int isZoneFireModel) {
   char objectfile[1024];
 
   // There are 5 places to retrieve object definitions from:
@@ -1481,62 +1540,11 @@ void ReadObjectCollection(object_collection *objectscoll,
 
   InitAvatar(objectscoll, setbw);
 
-  if (isZoneFireModel == 1) {
-    strcpy(com_buffer, "255 255 0 setrgb 0.02 0.05 drawdisk");
-    objectscoll->std_object_defs.target_object_backup =
-        InitSmvObject1(objectscoll, "target", com_buffer, 1, setbw);
-  }
-  else {
-    strcpy(com_buffer, "255 255 0 setrgb 0.038 drawcube");
-    objectscoll->std_object_defs.target_object_backup =
-        InitSmvObject1(objectscoll, "sensor", com_buffer, 1, setbw);
-  }
+  InitStdObjectDefs(objectscoll, setbw, isZoneFireModel);
 
-  strcpy(com_buffer, "255 255 0 setrgb 0.038 drawcube");
-  objectscoll->std_object_defs.thcp_object_backup =
-      InitSmvObject1(objectscoll, "thcp", com_buffer, 1, setbw);
-
-  strcpy(com_buffer, "0 255 0 setrgb 0.038 drawcube");
-  strcpy(com_buffer2, "255 0 0 setrgb 0.038 drawcube");
-  objectscoll->std_object_defs.heat_detector_object_backup = InitSmvObject2(
-      objectscoll, "heat_detector", com_buffer, com_buffer2, 1, setbw);
-
-  strcpy(com_buffer, "0 255 0 setrgb 0.038 drawcube");
-  strcpy(com_buffer2, "255 0 0 setrgb 0.038 drawcube");
-  objectscoll->std_object_defs.sprinkler_upright_object_backup = InitSmvObject2(
-      objectscoll, "sprinkler_upright", com_buffer, com_buffer2, 1, setbw);
-
-  strcpy(com_buffer, "127 127 127 setrgb 0.2 0.05 drawdisk");
-  strcpy(com_buffer2, "255 0 0 setrgb 0.2 0.05 drawdisk");
-  objectscoll->std_object_defs.smoke_detector_object_backup = InitSmvObject2(
-      objectscoll, "smoke_detector", com_buffer, com_buffer2, 1, setbw);
-
-  strcpy(com_buffer,
-         "255 0 0 setrgb push 45.0 rotatey -0.1 offsetz 0.05 0.2 drawdisk pop "
-         "push -45.0 rotatey -0.1 offsetz 0.05 0.2 drawdisk pop");
-  objectscoll->std_object_defs.error_device =
-      InitSmvObject1(objectscoll, "error_device", com_buffer, 1, setbw);
-
-  if (objectscoll->std_object_defs.missing_device == NULL) {
-    strcpy(com_buffer,
-           "0 0 255 setrgb push 45.0 rotatey -0.1 offsetz 0.05 0.2 drawdisk "
-           "pop push -45.0 rotatey -0.1 offsetz 0.05 0.2 drawdisk pop");
-    objectscoll->std_object_defs.missing_device =
-        InitSmvObject1(objectscoll, "missing_device", com_buffer, 1, setbw);
-  }
-
+  // If no objects were read, insert the 4 standard objects
   if (objectscoll->nobject_defs == 0) {
-    objectscoll->nobject_defs = 4;
-    FREEMEMORY(objectscoll->object_defs);
-    NewMemory((void **)&objectscoll->object_defs, 4 * sizeof(sv_object *));
-    objectscoll->object_defs[0] =
-        objectscoll->std_object_defs.target_object_backup;
-    objectscoll->object_defs[1] =
-        objectscoll->std_object_defs.heat_detector_object_backup;
-    objectscoll->object_defs[2] =
-        objectscoll->std_object_defs.sprinkler_upright_object_backup;
-    objectscoll->object_defs[3] =
-        objectscoll->std_object_defs.smoke_detector_object_backup;
+    LoadDefaultObjectDefs(objectscoll);
   }
 }
 
