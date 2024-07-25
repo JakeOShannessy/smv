@@ -1181,13 +1181,7 @@ sv_object *GetSmvObject(object_collection *objectscoll, char *label) {
 }
 
 /* ----------------------- ReadObjectDefs ----------------------------- */
-/** @brief Read in object definitions from an object file.
- * @param[inout] nobject_defs The number of object definitions in object_defs
- * @param[out] object_defs
- * @param[in] file The file path to read from
- *
- * @returns The number of objects read
- */
+
 int ReadObjectDefs(object_collection *objectscoll, const char *file,
                    int setbw) {
   FILE *stream;

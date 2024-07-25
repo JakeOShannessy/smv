@@ -432,6 +432,17 @@ sv_object *GetSmvObject(object_collection *objectscoll, char *label);
  */
 sv_object *GetSmvObjectType(object_collection *objectscoll, char *olabel,
                             sv_object *default_object);
+/**
+ * @brief Read in object definitions from an object file and add them to an
+ * object collection.
+ *
+ * @param[inout] nobject_defs The number of object definitions in object_defs
+ * @param[in] file The file path to read from
+ * @param[out] setbw A boolean value to set wether these objects should be set
+ * to black and white
+ *
+ * @returns The number of objects read
+ */
 int ReadObjectDefs(object_collection *objectscoll, const char *file, int setbw);
 // END MAIN API
 
