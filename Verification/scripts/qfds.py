@@ -37,7 +37,7 @@ def compare_images(image1, image2, out_path) -> float:
     intermediate_path = "inter1.png"
     blur_image(image1, blur1)
     blur_image(image2, blur2)
-    args = ["compare", "-metric", "rmse", blur1, blur2, intermediate_path]
+    args = ["magick","compare", "-metric", "rmse", blur1, blur2, intermediate_path]
     # args = ["/home/jake/smv/.vscode/build/smokeview","-runscript", filename]
     # if processes:
     #     args.append("-p")
@@ -88,7 +88,7 @@ def blur_image(input, output):
 def composite_image(input1, input2, output, diff):
     print("composing", input1, input2)
     inter2 = "inter2.png"
-    args = ["composite", input1, input2, "-compose", "difference", inter2]
+    args = ["magick", "composite", input1, input2, "-compose", "difference", inter2]
     if os.path.dirname(output):
         os.makedirs(os.path.dirname(output), exist_ok=True)
     subprocess.run(args, shell=False,
