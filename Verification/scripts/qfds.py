@@ -50,7 +50,7 @@ class ImageComparer():
         print("comparing", self.image1, self.image2)
         blur1 = os.path.join(self.dir.name, "blur1.png")
         blur2 = os.path.join(self.dir.name, "blur2.png")
-        intermediate_path = "inter1.png"
+        intermediate_path = os.path.join(self.dir.name, "inter1.png")
         self.blur_image(self.image1, blur1)
         self.blur_image(self.image2, blur2)
         args = ["magick", "compare", "-metric",
