@@ -435,6 +435,7 @@ int RunBenchmark(char *input_file) {
       json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
   printf("%s\n", json_output);
   json_object_put(jobj);
+  FreeVars();
   return 0;
 }
 

@@ -15,6 +15,7 @@
 #include "contourdefs.h"
 #include "histogram.h"
 #include "structures.h"
+#include "readobject.h"
 #ifndef CPP
 #include <zlib.h>
 #endif
@@ -200,6 +201,8 @@ SVEXTERN int SOOT_index, HRRPUV_index, TEMP_index, CO2_index;
 
 SVEXTERN int SVDECL(agl_offset_actual, 1);
 
+SVEXTERN int SVDECL(texture_showall, 0);
+SVEXTERN int SVDECL(texture_hideall, 0);
 SVEXTERN int SVDECL(have_compressed_files, 0);
 SVEXTERN int SVDECL(force_gray_smoke, 1);
 SVEXTERN int SVDECL(verbose_output, 0);
@@ -1827,14 +1830,10 @@ SVEXTERN treedevicedata SVDECL(**zwindtreeinfo, NULL);
 
 SVEXTERN int SVDECL(show_smokesensors,SMOKESENSORS_0255),SVDECL(active_smokesensors,0),SVDECL(test_smokesensors,0);
 SVEXTERN float SVDECL(smoke3d_cvis,1.0);
-SVEXTERN sv_object SVDECL(**object_defs,NULL), SVDECL(*heat_detector_object_backup,NULL), SVDECL(*target_object_backup,NULL);
-SVEXTERN sv_object SVDECL(*sprinkler_upright_object_backup,NULL), SVDECL(*smoke_detector_object_backup,NULL);
-SVEXTERN sv_object SVDECL(*thcp_object_backup,NULL), SVDECL(*missing_device,NULL), SVDECL(*error_device,NULL);
-SVEXTERN sv_object object_def_first, object_def_last;
+SVEXTERN std_objects SVDECL(std_object_defs,{0});
+SVEXTERN object_collection SVDECL(*objectscoll,NULL);
 SVEXTERN char SVDECL(**device_texture_list,NULL);
 SVEXTERN int ndevice_texture_list, SVDECL(*device_texture_list_index,NULL);
-SVEXTERN int SVDECL(nobject_defs,0);
-SVEXTERN int SVDECL(svofile_exists,0);
 SVEXTERN treedata SVDECL(*treeinfo,NULL);
 SVEXTERN terraindata SVDECL(*terraininfo,NULL);
 SVEXTERN int SVDECL(ntreeinfo,0), SVDECL(nterraininfo,0), SVDECL(visTerrainType,0);
@@ -2079,10 +2078,7 @@ SVEXTERN int SVDECL(updateindexcolors,0);
 SVEXTERN int SVDECL(show_path_knots,0);
 SVEXTERN int SVDECL(show_avatar,1);
 SVEXTERN int SVDECL(tourlocus_type,0);
-SVEXTERN int iavatar_types, SVDECL(navatar_types,0);
-SVEXTERN sv_object SVDECL(**avatar_types,NULL);
 SVEXTERN int SVDECL(glui_avatar_index,0);
-SVEXTERN sv_object *avatar_defs_backup[2];
 SVEXTERN int SVDECL(device_sphere_segments,6);
 SVEXTERN int ntexturestack;
 

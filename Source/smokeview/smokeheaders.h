@@ -36,6 +36,7 @@ EXTERNCPP int  GLUIGetChopMax(int type, char *label, int *set_valmax, float *val
 EXTERNCPP int  GLUISetChopMin(int type, char *label, int set_chopmin, float chopmin);
 EXTERNCPP int  GLUISetChopMax(int type, char *label, int set_chopmax, float chopmax);
 
+EXTERNCPP void GLUIUpdateTextureDisplay(void);
 EXTERNCPP void GLUIUpdateLoadAllSlices(void);
 EXTERNCPP void GLUIUpdateMeshBounds(void);
 EXTERNCPP void DrawBoxMinMax(float *bbmin, float *bbmax, float *box_color);
@@ -566,6 +567,8 @@ EXTERNCPP void UnloadVSliceMenu(int value);
 EXTERNCPP void UpdateSliceDups(sliceparmdata *sp);
 EXTERNCPP void GetSliceParmInfo(sliceparmdata *sp);
 EXTERNCPP void SetSliceParmInfo(sliceparmdata *sp);
+EXTERNCPP int HandleColorbarIndex(int colorbar_index);
+EXTERNCPP void UpdateColorbarSelectionIndex(int val);
 
 EXTERNCPP void UpdateSmokeAlphas(void);
 EXTERNCPP void InitAlphas(unsigned char *alphanew,
@@ -632,7 +635,6 @@ EXTERNCPP void VentMenu(int value);
 EXTERNCPP void UpdateAllSliceLabels(int slicetype, int *errorcode);
 
 EXTERNCPP void MergeClipPlanes(clipdata *ci, clipdata *cj);
-EXTERNCPP void InitBoxClipInfo(clipdata *ci,float xmin, float xmax, float ymin, float ymax, float zmin, float zmax);
 EXTERNCPP void InitTetraClipInfo(clipdata *ci,float *v1, float *v2, float *v3, float *v4);
 EXTERNCPP void InitClip(void);
 EXTERNCPP void SetClipPlanes(clipdata *ci, int option);
@@ -649,7 +651,6 @@ EXTERNCPP void DrawCircVents(int option);
 EXTERNCPP void UpdateSmokeColormap(int option);
 EXTERNCPP void UpdateCO2Colormap(void);
 EXTERNCPP void DefineVolsmokeTextures(void);
-EXTERNCPP int  GetColorbarIndex(int flag, int x, int y);
 EXTERNCPP void GetViewportInfo(void);
 
 EXTERNCPP void ScaleFont2D(void);
@@ -700,7 +701,6 @@ EXTERNCPP void UpdateSliceMenuShow(sliceparmdata *sp);
 EXTERNCPP void UpdateHideBoundarySurface(void);
 EXTERNCPP void UpdateDefer(void);
 EXTERNCPP void SetTimeVal(float timeval);
-EXTERNCPP void GetIndepVarIndices(sv_object *smv_object,char **var_indep_strings, int nvars_indep,int *index);
 
 EXTERNCPP void LoadSmokeFrame(int meshnum, int framenum);
 EXTERNCPP void LoadTimeFrame(int meshnum, float timeval);
@@ -743,7 +743,6 @@ EXTERNCPP void NextXIndex(int inc,int flag);
 EXTERNCPP void NextYIndex(int inc,int flag);
 EXTERNCPP void NextZIndex(int inc,int flag);
 EXTERNCPP void InitSphere(int nlat, int nlong);
-EXTERNCPP void InitCircle(unsigned int npoints, circdata *circinfo);
 EXTERNCPP int  HaveTerrainSlice(void);
 EXTERNCPP int HaveSmokeSensor(void);
 EXTERNCPP int GetSmoke3DType(char *label);
@@ -755,16 +754,9 @@ EXTERNCPP void SortCamerasID(void);
 EXTERNCPP char *GetCameraLabel(int index);
 EXTERNCPP void Clip2Cam(cameradata *cam);
 EXTERNCPP void Cam2Clip(cameradata *cam);
-EXTERNCPP void InitObjectDefs(void);
-EXTERNCPP void UpdateDeviceTextures(void);
-EXTERNCPP char *GetDeviceLabel(char *buffer);
 EXTERNCPP void GetElevAz(float *xyznorm,float *dtheta, float *rotate_axis, float *dpsi);
+EXTERNCPP char *GetDeviceLabel(char *buffer);
 EXTERNCPP void DrawDevices(int mode);
-EXTERNCPP sv_object *InitSmvObject1(char *label, char *commands,int visible);
-EXTERNCPP sv_object *InitSmvObject2(char *label, char *commandson, char *commandsoff,int visible);
-EXTERNCPP sv_object *GetSmvObjectType(char *label, sv_object *default_object);
-EXTERNCPP sv_object *GetSmvObjectType2(char *label, sv_object *default_object);
-EXTERNCPP void FreeAllObjects(void);
 EXTERNCPP void UpdatePartClassDepend(partclassdata *partclassi);
 
 EXTERNCPP void CheckLab(void);
@@ -833,6 +825,10 @@ EXTERNCPP void LoadSliceMenu(int value);
 EXTERNCPP void LoadVSliceMenu(int value);
 
 EXTERNCPP void InitVars(void);
+/**
+ * @brief Free the global variables initialized by @ref InitVars.
+ */
+EXTERNCPP void FreeVars(void);
 EXTERNCPP void RenderState(int onoff);
 EXTERNCPP void ResizeWindow(int width, int height);
 EXTERNCPP meshdata *GetMesh(float *xyz);
@@ -843,7 +839,6 @@ EXTERNCPP int InExterior(float *xyz);
 EXTERNCPP int  OnMeshBoundary(float *xyz);
 
 EXTERNCPP void RenderCB(int var);
-EXTERNCPP sv_object *GetSmvObject(char *label);
 EXTERNCPP void SnapScene(void);
 EXTERNCPP void LevelScene(int level_x, int level_y, float *quat);
 EXTERNCPP void GetPlot3dUVW(float xyz[3], float uvw[3]);
@@ -943,7 +938,6 @@ EXTERNCPP void DrawStaticIso(const isosurface *asurface,int surfacetype,
                              int smoothnorms, int trans_flag, int data_type,
                              float line_width);
 EXTERNCPP int  GetPlot3dTime(float *time);
-EXTERNCPP void Normalize(float *xyz, int n);
 EXTERNCPP void Array2String(float *array, int narray, char *string);
 EXTERNCPP void GetIsoLevels(const char *isofile, int dataflag, float **levelsptr, float ***colorlevelsptr, int *nisolevels);
 

@@ -708,9 +708,8 @@ void CheckTimeBound(void){
 #define CB_SELECT_STOP -1
 /* ------------------ GetColorbarIndex ------------------------ */
 
-int GetColorbarIndex(int flag, int x, int y){
-
-  if(flag==0||(vcolorbar_left_pos<=x&&x<=vcolorbar_right_pos)){
+int GetColorbarIndex(int x, int y){
+  if(vcolorbar_left_pos<=x&&x<=vcolorbar_right_pos){
       y = screenHeight - y;
       if(vcolorbar_down_pos<=y&&y<=vcolorbar_top_pos){
         int index;
@@ -747,12 +746,9 @@ int GlutGetModifiersNew(void){
   return modifier;
 }
 
-/* ------------------ ColorbarClick ------------------------ */
+/* ------------------ HandleColorbarIndex ------------------------ */
 
-int ColorbarClick(int x, int y){
-  int colorbar_index;
-
-  colorbar_index = GetColorbarIndex(1,x,y);
+int HandleColorbarIndex(int colorbar_index){
   if(colorbar_index>=0){
     colorbar_select_index=colorbar_index;
     colorbar_drag=1;
@@ -772,7 +768,19 @@ int ColorbarClick(int x, int y){
   return 0;
 }
 
-/* ------------------ GetTimeBarFrame ------------------------ */
+/* ------------------ ColorbarClick ------------------------ */
+
+int ColorbarClick(int x, int y){
+  int colorbar_index;
+  int return_val;
+
+  colorbar_index = GetColorbarIndex(x, y);
+  UpdateColorbarSelectionIndex(colorbar_index);
+  return_val = HandleColorbarIndex(colorbar_index);
+  return return_val;
+}
+
+  /* ------------------ GetTimeBarFrame ------------------------ */
 
 int GetTimeBarFrame(int xm){
   int timebar_right_pos, timebar_left_pos, iframe;
@@ -986,6 +994,9 @@ void MouseCB(int button, int state, int xm, int ym){
   }
 #endif
 
+  colorbar_drag = 0;
+  timebar_drag  = 0;
+
   if(autofreeze_volsmoke==ON&&nvolsmoke_loaded>0){
     if(state==GLUT_DOWN)GLUIUpdateFreeze(ON);
     if(state==GLUT_UP)GLUIUpdateFreeze(OFF);
@@ -1129,7 +1140,7 @@ void MouseCB(int button, int state, int xm, int ym){
 void ColorbarDrag(int xm, int ym){
   int colorbar_index;
 
-  colorbar_index = GetColorbarIndex(0,xm,ym);
+  colorbar_index = GetColorbarIndex(xm,ym);
   if(colorbar_index>=0){
     colorbar_select_index=colorbar_index;
     UpdateRGBColors(colorbar_index);
@@ -1779,7 +1790,7 @@ void Keyboard(unsigned char key, int flag){
           if(contour_type==STEPPED_CONTOURS)printf("stepped coloring\n");
           if(contour_type==SHADED_CONTOURS)printf("continuous coloring\n");
           GLUIUpdatePlot3dDisplay();
-          UpdateRGBColors(COLORBAR_INDEX_NONE);
+          UpdateRGBColors(colorbar_select_index);
         }
       }
       break;
@@ -1960,14 +1971,14 @@ void Keyboard(unsigned char key, int flag){
       break;
     case 'i':
       if(keystate==GLUT_ACTIVE_ALT){ // toggle device visibility
-        if(nobject_defs>0){
+        if(objectscoll->nobject_defs>0){
           int vis;
 
-          vis = 1-object_defs[0]->visible;
-          for(i = 0; i<nobject_defs; i++){
+          vis = 1-objectscoll->object_defs[0]->visible;
+          for(i = 0; i<objectscoll->nobject_defs; i++){
             sv_object *objecti;
 
-            objecti = object_defs[i];
+            objecti = objectscoll->object_defs[i];
             objecti->visible = vis;
           }
           updatemenu = 1;
@@ -2007,23 +2018,23 @@ void Keyboard(unsigned char key, int flag){
           devicei->selected = selected;
         }
       }
-      if(nobject_defs>0){
+      if(objectscoll->nobject_defs>0){
         int makevis=1;
 
-        for(i = 0; i<nobject_defs; i++){
+        for(i = 0; i<objectscoll->nobject_defs; i++){
           sv_object *objecti;
 
-          objecti = object_defs[i];
+          objecti = objectscoll->object_defs[i];
           if(objecti->visible==1){
             makevis = 0;
             break;
           }
         }
         if(makevis==1){
-          for(i = 0; i<nobject_defs; i++){
+          for(i = 0; i<objectscoll->nobject_defs; i++){
             sv_object *objecti;
 
-            objecti = object_defs[i];
+            objecti = objectscoll->object_defs[i];
             objecti->visible = 1;
           }
         }
@@ -3701,10 +3712,10 @@ void UpdateCurrentMesh(meshdata *meshi){
 
 void ClearBuffers(int mode){
   if(mode==DRAWSCENE){
-    glClearColor(backgroundcolor[0],backgroundcolor[1],backgroundcolor[2], 0.0f);
+    glClearColor(backgroundcolor[0],backgroundcolor[1],backgroundcolor[2], 1.0f);
   }
   else{
-    glClearColor((float)0.0,(float)0.0,(float)0.0, (float)0.0);
+    glClearColor((float)0.0,(float)0.0,(float)0.0, (float)1.0);
   }
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -3814,7 +3825,7 @@ void DoStereo(void){
     if(stereotype_frame==RIGHT_EYE||stereotype_frame==BOTH_EYES){
       glDrawBuffer(GL_BACK);
       glColorMask(GL_FALSE,GL_TRUE,GL_TRUE,GL_TRUE);
-      glClearColor(0.0, 1.0, 1.0, 0.0);
+      glClearColor(0.0, 1.0, 1.0, 1.0);
       glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
       ShowScene(DRAWSCENE,VIEW_RIGHT,0,0,0,NULL);

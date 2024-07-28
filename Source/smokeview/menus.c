@@ -16,6 +16,7 @@
 #include "string_util.h"
 #include "smokeviewvars.h"
 #include "IOvolsmoke.h"
+#include "readobject.h"
 
 void LoadHVACMenu(int value);
 void LoadPlot2DMenu(int value);
@@ -947,7 +948,7 @@ void SmokeColorbarMenu(int value){
   value = CLAMP(value, 0, ncolorbars - 1);
   fire_colorbar_index=value;
   fire_colorbar = colorbarinfo + value;
-  UpdateRGBColors(COLORBAR_INDEX_NONE);
+  UpdateRGBColors(colorbar_select_index);
   if(FlowDir>0){
     Keyboard('-',FROM_SMOKEVIEW);
     Keyboard(' ',FROM_SMOKEVIEW);
@@ -992,17 +993,17 @@ void ColorbarMenu(int value){
       contour_type=SHADED_CONTOURS;
       setbw=0;
       GLUIUpdateExtreme();
-      UpdateRGBColors(COLORBAR_INDEX_NONE);
+      UpdateRGBColors(colorbar_select_index);
       break;
     case COLORBAR_HIGHLIGHT_BELOW:
       show_extreme_mindata=1-show_extreme_mindata;
       GLUIUpdateExtreme();
-      UpdateRGBColors(COLORBAR_INDEX_NONE);
+      UpdateRGBColors(colorbar_select_index);
       break;
     case COLORBAR_HIGHLIGHT_ABOVE:
       show_extreme_maxdata=1-show_extreme_maxdata;
       GLUIUpdateExtreme();
-      UpdateRGBColors(COLORBAR_INDEX_NONE);
+      UpdateRGBColors(colorbar_select_index);
       break;
     case COLORBAR_TOGGLE_BW_DATA:
       setbwdata = 1 - setbwdata;
@@ -1029,21 +1030,21 @@ void ColorbarMenu(int value){
       break;
    case COLORBAR_TRANSPARENT:
      use_transparency_data=1-use_transparency_data;
-     UpdateRGBColors(COLORBAR_INDEX_NONE);
+     UpdateRGBColors(colorbar_select_index);
      GLUISetLabelControls();
      GLUIUpdateTransparency();
      break;
    case COLORBAR_CONTINUOUS:
      contour_type=SHADED_CONTOURS;
-     UpdateRGBColors(COLORBAR_INDEX_NONE);
+     UpdateRGBColors(colorbar_select_index);
      break;
    case COLORBAR_STEPPED:
      contour_type=STEPPED_CONTOURS;
-     UpdateRGBColors(COLORBAR_INDEX_NONE);
+     UpdateRGBColors(colorbar_select_index);
      break;
    case COLORBAR_LINES:
      contour_type=LINE_CONTOURS;
-     UpdateRGBColors(COLORBAR_INDEX_NONE);
+     UpdateRGBColors(colorbar_select_index);
      break;
    case COLORBAR_HORIZONTAL:
      LabelMenu(MENU_LABEL_colorbar_horizontal);
@@ -1082,7 +1083,7 @@ void ColorbarMenu(int value){
     if(ext!=NULL)*ext=0;
   }
   if(value>-10){
-    UpdateRGBColors(COLORBAR_INDEX_NONE);
+    UpdateRGBColors(colorbar_select_index);
   }
 }
 
@@ -1487,7 +1488,7 @@ void ShowHideMenu(int value){
 #endif
   case MENU_SHOWHIDE_FLIP:
    background_flip = 1-background_flip;
-   UpdateRGBColors(COLORBAR_INDEX_NONE);
+   UpdateRGBColors(colorbar_select_index);
    GLUISetLabelControls();
    GLUISetColorControls();
    GLUIUpdateBackgroundFlip(background_flip);
@@ -2556,6 +2557,7 @@ void TextureShowMenu(int value){
       }
     }
   }
+  GLUIUpdateTextureDisplay();
   updatemenu=1;
   GLUTPOSTREDISPLAY;
 }
@@ -2790,7 +2792,7 @@ void SmokeviewIniMenu(int value){
   switch(value){
   case MENU_READINI:
     ReadIni(NULL);
-    UpdateRGBColors(COLORBAR_INDEX_NONE);
+    UpdateRGBColors(colorbar_select_index);
     break;
   case MENU_REVERT_WRITEINI:
     ReadBinIni();
@@ -2803,7 +2805,8 @@ void SmokeviewIniMenu(int value){
     WriteIni(LOCAL_INI,NULL);
     break;
   case MENU_READSVO:
-    InitObjectDefs();
+    ReadDefaultObjectCollection(objectscoll, smokeview_bindir, fdsprefix, setbw,
+                         isZoneFireModel);
     break;
   case MENU_DUMMY:
     break;
@@ -3703,9 +3706,9 @@ void TourMenu(int value){
   default:
     if(value<-22){
       tourlocus_type=2;
-      iavatar_types=(-value-23);
+      objectscoll->iavatar_types=(-value-23);
       if(selectedtour_index>=0&&selectedtour_index<ntourinfo){
-        tourinfo[selectedtour_index].glui_avatar_index=iavatar_types;
+        tourinfo[selectedtour_index].glui_avatar_index=objectscoll->iavatar_types;
       }
     }
 
@@ -6585,16 +6588,16 @@ void TitleMenu(int value){
 void ShowADeviceType(void){
   int i;
 
-  for(i=0;i<nobject_defs;i++){
+  for(i=0;i<objectscoll->nobject_defs;i++){
     sv_object *obj_typei;
 
-    obj_typei = object_defs[i];
+    obj_typei = objectscoll->object_defs[i];
     if(obj_typei->used_by_device==1&&obj_typei->visible==1)return;
   }
-  for(i=0;i<nobject_defs;i++){
+  for(i=0;i<objectscoll->nobject_defs;i++){
     sv_object *obj_typei;
 
-    obj_typei = object_defs[i];
+    obj_typei = objectscoll->object_defs[i];
     if(obj_typei->used_by_device==1){
       obj_typei->visible=1;
       return;
@@ -6655,8 +6658,8 @@ void ShowObjectsMenu(int value){
   sv_object *objecti;
   int i;
 
-  if(value>=0&&value<nobject_defs){
-    objecti = object_defs[value];
+  if(value>=0&&value<objectscoll->nobject_defs){
+    objecti = objectscoll->object_defs[value];
     objecti->visible = 1 - objecti->visible;
     if(showdevice_val==1||vis_device_plot!=DEVICE_PLOT_HIDDEN){
       update_times = 1;
@@ -6669,14 +6672,14 @@ void ShowObjectsMenu(int value){
     show_missing_objects = 1 - show_missing_objects;
   }
   else if(value==OBJECT_SHOWALL){
-    for(i=0;i<nobject_defs;i++){
-      objecti = object_defs[i];
+    for(i=0;i<objectscoll->nobject_defs;i++){
+      objecti = objectscoll->object_defs[i];
       objecti->visible=1;
     }
   }
   else if(value==OBJECT_HIDEALL){
-    for(i=0;i<nobject_defs;i++){
-      objecti = object_defs[i];
+    for(i=0;i<objectscoll->nobject_defs;i++){
+      objecti = objectscoll->object_defs[i];
       objecti->visible=0;
     }
   }
@@ -7385,13 +7388,13 @@ void GeometryMainMenu(int value){
 int GetNumActiveDevices(void){
   int num_activedevices = 0;
 
-  if(nobject_defs > 0){
+  if(objectscoll->nobject_defs > 0){
     int i;
 
-    for(i = 0; i < nobject_defs; i++){
+    for(i = 0; i < objectscoll->nobject_defs; i++){
       sv_object *obj_typei;
 
-      obj_typei = object_defs[i];
+      obj_typei = objectscoll->object_defs[i];
       if(obj_typei->used_by_device == 1)num_activedevices++;
     }
   }
@@ -9257,8 +9260,10 @@ static int menu_count=0;
       char menulabel[1024];
 
       texti = textureinfo + i;
-      if(texti->loaded==0||texti->used==0||terrain_textures==NULL)continue;
-      if(texti>=terrain_textures&&texti<terrain_textures+nterrain_textures)continue;
+      if(texti->loaded == 0 || texti->used == 0)continue;
+      if(terrain_textures != NULL){
+        if(texti >= terrain_textures && texti < terrain_textures + nterrain_textures)continue;
+      }
       ntextures_used++;
       if(texti->display==1){
         STRCPY(menulabel,"*");
@@ -9461,7 +9466,7 @@ static int menu_count=0;
   if(visTerrainType==TERRAIN_HIDDEN)glutAddMenuEntry(_("*Hidden"),17+TERRAIN_HIDDEN);
   if(visTerrainType!=TERRAIN_HIDDEN)glutAddMenuEntry(_("Hidden"),17+TERRAIN_HIDDEN);
 
-  if(nobject_defs>0){
+  if(objectscoll->nobject_defs>0){
     int multiprop;
 
     multiprop=0;
@@ -9540,12 +9545,12 @@ static int menu_count=0;
       glutAddMenuEntry(qlabel, i);
     }
   }
-  if(nobject_defs>0||hrrptr!=NULL){
+  if(objectscoll->nobject_defs>0||hrrptr!=NULL){
     CREATEMENU(showobjectsplotmenu,ShowObjectsMenu);
     if(ndevicetypes>0){
       GLUTADDSUBMENU(_("quantity"),devicetypemenu);
     }
-    if(nobject_defs>0){
+    if(objectscoll->nobject_defs>0){
       if(vis_device_plot==DEVICE_PLOT_SHOW_ALL)glutAddMenuEntry(      "*All devices",           OBJECT_PLOT_SHOW_ALL);
       if(vis_device_plot!=DEVICE_PLOT_SHOW_ALL)glutAddMenuEntry(      "All devices",            OBJECT_PLOT_SHOW_ALL);
       if(vis_device_plot==DEVICE_PLOT_SHOW_SELECTED)glutAddMenuEntry( "*Selected devices",      OBJECT_PLOT_SHOW_SELECTED);
@@ -9560,7 +9565,7 @@ static int menu_count=0;
     if(showdevice_val==0)glutAddMenuEntry(_("Show values"),  OBJECT_VALUES);
     glutAddMenuEntry(_("Settings..."), MENU_DEVICE_SETTINGS);
   }
-  if(nobject_defs>0){
+  if(objectscoll->nobject_defs>0){
     if(ndeviceinfo > 0){
       int showall=1, hideall=1;
 
@@ -9589,10 +9594,10 @@ static int menu_count=0;
     }
 
     CREATEMENU(showobjectsmenu,ShowObjectsMenu);
-    for(i=0;i<nobject_defs;i++){
+    for(i=0;i<objectscoll->nobject_defs;i++){
       sv_object *obj_typei;
 
-      obj_typei = object_defs[i];
+      obj_typei = objectscoll->object_defs[i];
       if(obj_typei->used_by_device==1){
         char obj_menu[256];
 
@@ -9644,7 +9649,7 @@ static int menu_count=0;
       GLUTADDSUBMENU(_("Show/Hide devices"), showdevicesmenu);
     }
     GLUTADDSUBMENU(_("Segments"),spheresegmentmenu);
-    if(nobject_defs>0&&ndeviceinfo>0){
+    if(objectscoll->nobject_defs>0&&ndeviceinfo>0){
       glutAddMenuEntry("-",MENU_DUMMY);
       GLUTADDSUBMENU(_("Plot data"),showobjectsplotmenu);
     }
@@ -10796,10 +10801,10 @@ static int menu_count=0;
         STRCPY(menulabel,touri->menulabel);
       }
       glui_avatar_index_local = touri->glui_avatar_index;
-      if(glui_avatar_index_local>=0&&glui_avatar_index_local<navatar_types){
+      if(glui_avatar_index_local>=0&&glui_avatar_index_local<objectscoll->navatar_types){
         sv_object *avatari;
 
-        avatari=avatar_types[glui_avatar_index_local];
+        avatari=objectscoll->avatar_types[glui_avatar_index_local];
         strcat(menulabel,"(");
         strcat(menulabel,avatari->label);
         strcat(menulabel,")");
@@ -11047,13 +11052,13 @@ static int menu_count=0;
     showhide_data = 1;
     GLUTADDSUBMENU(_("Zone"), zoneshowmenu);
   }
-  if(nobject_defs>0){
+  if(objectscoll->nobject_defs>0){
     int num_activedevices=0;
 
-    for(i = 0; i<nobject_defs; i++){
+    for(i = 0; i<objectscoll->nobject_defs; i++){
       sv_object *obj_typei;
 
-      obj_typei = object_defs[i];
+      obj_typei = objectscoll->object_defs[i];
       if(obj_typei->used==1)num_activedevices++;
     }
 
@@ -11065,10 +11070,10 @@ static int menu_count=0;
       */
     }
     else{
-      for(i=0;i<nobject_defs;i++){
+      for(i=0;i<objectscoll->nobject_defs;i++){
         sv_object *obj_typei;
 
-        obj_typei = object_defs[i];
+        obj_typei = objectscoll->object_defs[i];
         if(obj_typei->used==1){
           char obj_menu[256];
 
