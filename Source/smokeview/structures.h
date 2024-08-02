@@ -389,41 +389,6 @@ typedef struct _blockagedata {
   float texture_origin[3];
 } blockagedata;
 
-/* --------------------------  clipdata ------------------------------------ */
-
-typedef struct _clipdata {
-  int option;
-  GLdouble clipvals[24];
-  int clip_xmin, clip_xmax;
-  int clip_ymin, clip_ymax;
-  int clip_zmin, clip_zmax;
-  float xmin, xmax;
-  float ymin, ymax;
-  float zmin, zmax;
-} clipdata;
-/* --------------------------  cadlookdata ------------------------------------ */
-
-typedef struct _cadlookdata {
-  int index;
-  float texture_width, texture_height, texture_origin[3];
-  float rgb[4], shininess;
-  texturedata textureinfo;
-  int onesided;
-} cadlookdata;
-
-/* --------------------------  cadquad ------------------------------------ */
-
-typedef struct _cadquad {
-  float xyzpoints[12];
-  float txypoints[8];
-  float normals[3];
-  int colorindex;
-  float colors[4];
-  float time_show;
-  cadlookdata *cadlookq;
-} cadquad;
-
-
 /* --------------------------  cventdata ------------------------------------ */
 
 typedef struct _cventdata {
