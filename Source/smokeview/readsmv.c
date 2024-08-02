@@ -19,6 +19,7 @@
 #include "readimage.h"
 #include "readgeom.h"
 #include "readobject.h"
+#include "readcad.h"
 
 #define BREAK break
 #define BREAK2 \
@@ -3911,11 +3912,11 @@ void UpdateMeshCoords(void){
       vi->zmax = FDS2SMV_Z(vi->zmax);
     }
   }
-  for(i=0;i<ncadgeom;i++){
+  for(i=0;i<NCADGeom(cadgeomcoll);i++){
     cadgeomdata *cd;
     int j;
 
-    cd=cadgeominfo+i;
+    cd=cadgeomcoll->cadgeominfo+i;
     for(j=0;j<cd->nquads;j++){
       int k;
       cadquad *quadi;
@@ -7294,7 +7295,7 @@ int ReadSMV_Init() {
   }
   nisoinfo=0;
 
-  FreeCADInfo(cadgeominfo,ncadgeom);
+  FreeCADGeomCollection(cadgeomcoll);
 
   updateindexcolors=0;
   ntrnx=0;
@@ -7330,8 +7331,6 @@ int ReadSMV_Init() {
   FREEMEMORY(surfinfo);
   FREEMEMORY(terrain_textures);
 
-  if(cadgeominfo!=NULL)FreeCADInfo(cadgeominfo,ncadgeom);
-
   STOP_TIMER(pass0_time );
   PRINT_TIMER(timer_readsmv, "readsmv setup");
   return 0;
@@ -7362,6 +7361,8 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
 
   int setGRID=0;
   int have_auto_terrain_image=0;
+
+  int n_cadgeom_keywords = 0;
 
   char buffer[256], buffers[6][256];
   patchdata *patchgeom;
@@ -7769,7 +7770,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       continue;
     }
     if(MatchSMV(buffer,"CADGEOM") == 1){
-      ncadgeom++;
+      n_cadgeom_keywords++;
       continue;
     }
     if(MatchSMV(buffer,"CVENT") == 1){
@@ -8119,9 +8120,12 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
   FREEMEMORY(surfinfo);
   if(NewMemory((void **)&surfinfo,(nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
 
-  if(cadgeominfo!=NULL)FreeCADInfo(cadgeominfo,ncadgeom);
-  if(ncadgeom>0){
-    if(NewMemory((void **)&cadgeominfo,ncadgeom*sizeof(cadgeomdata))==0)return 2;
+  if (cadgeomcoll != NULL) FreeCADGeomCollection(cadgeomcoll);
+  if (n_cadgeom_keywords > 0) {
+    // Allocate a fixed-size collection large enough to hold each of the CADGEOM
+    // definitions.
+    cadgeomcoll = CreateCADGeomCollection(n_cadgeom_keywords);
+    if (cadgeomcoll == NULL) return 2;
   }
 
   if(noutlineinfo>0){
@@ -8171,7 +8175,6 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
   startpass=1;
   ioffset=0;
   iobst=0;
-  ncadgeom=0;
   nsurfinfo=0;
   noutlineinfo=0;
   if(noffset==0)ioffset=1;
@@ -9281,18 +9284,12 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
         BREAK;
       }
       bufferptr=TrimFrontBack(buffer);
-      len=strlen(bufferptr);
-      cadgeominfo[ncadgeom].order=NULL;
-      cadgeominfo[ncadgeom].quad=NULL;
-      cadgeominfo[ncadgeom].file=NULL;
-      if(FILE_EXISTS_CASEDIR(bufferptr)==YES){
-        if(NewMemory((void **)&cadgeominfo[ncadgeom].file,(unsigned int)(len+1))==0)return 2;
-        STRCPY(cadgeominfo[ncadgeom].file,bufferptr);
-        ReadCADGeom(cadgeominfo+ncadgeom,block_shininess);
-        ncadgeom++;
+      if (FILE_EXISTS_CASEDIR(bufferptr) == YES) {
+        ReadCADGeomToCollection(cadgeomcoll, bufferptr, block_shininess);
       }
-      else{
-        PRINTF(_("***Error: CAD geometry file: %s could not be opened"),bufferptr);
+      else {
+        PRINTF(_("***Error: CAD geometry file: %s could not be opened"),
+               bufferptr);
         PRINTF("\n");
       }
       continue;
