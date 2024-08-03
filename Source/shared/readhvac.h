@@ -20,6 +20,10 @@ typedef struct {
   hvacdata *hvacinfo;
   int nhvacinfo;
 
+  int nhvacfilters;
+
+  int nhvaccomponents;
+
   hvacvalsdata *hvacductvalsinfo;
   int hvacductvar_index;
   hvacvalsdata *hvacnodevalsinfo;
@@ -30,25 +34,32 @@ typedef struct {
 
 } hvacdatacollection;
 
-
-inline int hvacval(hvacdatacollection *hvaccoll, int itime, int iduct, int icell) {
-  return (itime)*hvaccoll->hvac_maxcells*hvaccoll->hvac_n_ducts + (iduct)*hvaccoll->hvac_maxcells + (icell);
-}
-
-
 hvacductdata *GetHVACDuctID(hvacdatacollection *hvaccoll, char *duct_name);
 int GetHVACDuctValIndex(hvacdatacollection *hvaccoll, char *shortlabel);
-int GetHVACNodeValIndex(hvacdatacollection *hvaccoll, char *shortlabel);
+
 hvacnodedata *GetHVACNodeID(hvacdatacollection *hvaccoll, char *node_name);
+int GetHVACNodeValIndex(hvacdatacollection *hvaccoll, char *shortlabel);
 
 void InitHvacData(hvacvaldata *hi);
-int CompareHvacConnect(const void *arg1, const void *arg2);
+/**
+ * @brief Are any of the hvac items visible (i.e., have display set to true)?
+ *
+ * @param hvaccoll The HVAC collection.
+ * @return 1 if ANY HVAC item is visible. 0 if NO HVAC item is visible.
+ */
 int IsHVACVisible(hvacdatacollection *hvaccoll);
-int HaveHVACConnect(int val, hvacconnectdata *vals, int nvals);
-void GetHVACPathXYZ(float fraction, float *xyzs, int n, float *xyz);
-void GetCellXYZs(float *xyz, int nxyz, int ncells, float **xyz_cellptr,
-                 int *nxyz_cell, int **cell_indptr);
-void SetDuctLabelSymbolXYZ(hvacductdata *ducti);
-void SetHVACInfo(hvacdatacollection *hvaccoll);
-void ReadHVACData0(hvacdatacollection *hvaccoll, int flag, FILE_SIZE *file_size);
+
+/**
+ * @brief Parse the definition of HVAC nodes etc. from an *.smv file.
+ *
+ * @param hvaccoll The HVAC collection.
+ * @param stream The stream that is currently being parsed. The position of this
+ * stream should be just after the "HVAC" keyword.
+ * @param hvac_node_color Default HVAC node color
+ * @param hvac_duct_color Default HVAC duct color
+ * @return 0 on success, 1 to break parsing loop, 2 to continue to continue
+ * parsing loop.
+ */
+int ParseHVACEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream,
+                   int hvac_node_color[3], int hvac_duct_color[3]);
 #endif

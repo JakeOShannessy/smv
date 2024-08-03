@@ -9966,7 +9966,7 @@ static int menu_count=0;
       }
     }
 
-    if(nhvaccomponents > 0){
+    if(hvaccoll.nhvaccomponents > 0){
       CREATEMENU(showcomponentmenu, HVACMenu);
       if(glui_hvac->show_component == 0){
         glutAddMenuEntry("*text",   MENU_HVAC_SHOW_COMPONENT_TEXT);
@@ -9985,7 +9985,7 @@ static int menu_count=0;
       }
     }
 
-    if(nhvacfilters > 0){
+    if(hvaccoll.nhvacfilters > 0){
       CREATEMENU(showfiltermenu, HVACMenu);
       if(glui_hvac->show_filters == 0){
         glutAddMenuEntry("*text", MENU_HVAC_SHOW_FILTER_TEXT);
@@ -10099,7 +10099,7 @@ static int menu_count=0;
     else{
       glutAddMenuEntry("   IDs", MENU_HVAC_SHOW_DUCT_IDS);
     }
-    if(nhvaccomponents > 0){
+    if(hvaccoll.nhvaccomponents > 0){
       GLUTADDSUBMENU(_(  "   Components"), showcomponentmenu);
     }
     glutAddMenuEntry("Nodes", MENU_HVAC_SHOW_NODE_IGNORE);
@@ -10109,7 +10109,7 @@ static int menu_count=0;
     else{
       glutAddMenuEntry("   IDs", MENU_HVAC_SHOW_NODE_IDS);
     }
-    if(nhvacfilters > 0){
+    if(hvaccoll.nhvacfilters > 0){
       GLUTADDSUBMENU(_("   Filters"), showfiltermenu);
     }
     glutAddMenuEntry("-", MENU_HVAC_SHOW_NODE_IGNORE);
