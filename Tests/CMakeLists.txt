@@ -99,6 +99,27 @@ if ((NOT MACOSX) AND UNIX)
     target_link_libraries(test_objects m)
 endif()
 
+# parse_hvac_vals
+add_executable(parse_hvac_vals parse_hvac_vals.c
+    ../Source/shared/readhvac.c
+    ../Source/shared/file_util.c
+    ../Source/shared/string_util.c
+    ../Source/shared/stdio_buffer.c
+    ../Source/shared/getdata.c
+    ../Source/shared/dmalloc.c
+)
+
+target_include_directories(parse_hvac_vals PRIVATE
+    ../Tests
+    ../Source/shared
+)
+if (WIN32)
+    target_include_directories(parse_hvac_vals PRIVATE ../Source/pthreads)
+endif()
+if ((NOT MACOSX) AND UNIX)
+    target_link_libraries(parse_hvac_vals m)
+endif()
+
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
 add_test(NAME "Simple Slice - Complete"
@@ -126,3 +147,6 @@ COMMAND parse_simple_pl3d ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_pl3d.q)
 
 add_test(NAME "Test Object API"
 COMMAND test_objects ${CMAKE_SOURCE_DIR}/Tests/bad_objects.svo)
+
+add_test(NAME "Simple HVAC Vals - Complete"
+COMMAND parse_hvac_vals ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/hvac_vals.hvac)

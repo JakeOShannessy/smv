@@ -1,4 +1,5 @@
-#include "options.h"
+#include "options_common.h"
+
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -8,17 +9,10 @@
 #include <sys/types.h>
 
 #include "MALLOCC.h"
-#include "contourdefs.h"
 #include "datadefs.h"
 #include "histogram.h"
 #include "isodefs.h"
-#include "smokeviewdefs.h"
 #include "string_util.h"
-#include "structures.h"
-
-#include GLUT_H
-#include "IOscript.h"
-#include "gd.h"
 
 #include "file_util.h"
 #include "stdio_buffer.h"
@@ -544,7 +538,7 @@ void SetHVACInfo(hvacdatacollection *hvaccoll) {
       }
       break;
     default:
-      assert(FFALSE);
+      assert(0);
       break;
     }
     GetCellXYZs(ducti->xyz_reg, ducti->nxyz_reg, ducti->nduct_cells,
@@ -587,7 +581,7 @@ void ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
   }
   hvaccoll->hvacductvalsinfo->loaded = 0;
   hvaccoll->hvacnodevalsinfo->loaded = 0;
-  if (flag == UNLOAD) return;
+  if (flag == 1 /*TODO: should be 'UNLOAD'*/) return;
 
   stream = fopen(hvaccoll->hvacductvalsinfo->file, "rb");
   if (stream == NULL) return;
@@ -759,7 +753,6 @@ int CompareLabel(const void *arg1, const void *arg2) {
   return strcmp(x, y);
 }
 
-// Return 0 to do nothing, 1 to break, 2 to continue.
 int ParseHVACEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream,
                    int hvac_node_color[3], int hvac_duct_color[3]) {
   char buffer[256];
@@ -977,5 +970,57 @@ int ParseHVACEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream,
   }
   FREEMEMORY(hvac_network_labels);
   SetHVACInfo(hvaccoll);
+  return 0;
+}
+
+int ParseHVACValsEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream) {
+  char buffer[256];
+  FREEMEMORY(hvaccoll->hvacductvalsinfo);
+  NewMemory((void **)&(hvaccoll->hvacductvalsinfo), sizeof(hvacvalsdata));
+  hvaccoll->hvacductvalsinfo->times = NULL;
+  hvaccoll->hvacductvalsinfo->loaded = 0;
+  hvaccoll->hvacductvalsinfo->node_vars = NULL;
+  hvaccoll->hvacductvalsinfo->duct_vars = NULL;
+
+  if (FGETS(buffer, 255, stream) == NULL) return 1;
+  hvaccoll->hvacductvalsinfo->file = GetCharPtr(TrimFrontBack(buffer));
+
+  if (FGETS(buffer, 255, stream) == NULL) return 1;
+  sscanf(buffer, "%i", &(hvaccoll->hvacductvalsinfo)->n_node_vars);
+
+  if (hvaccoll->hvacductvalsinfo->n_node_vars > 0) {
+    NewMemory((void **)&(hvaccoll->hvacductvalsinfo)->node_vars,
+              hvaccoll->hvacductvalsinfo->n_node_vars * sizeof(hvacvaldata));
+    for (int i = 0; i < hvaccoll->hvacductvalsinfo->n_node_vars; i++) {
+      hvacvaldata *hi;
+      flowlabels *labeli;
+
+      hi = hvaccoll->hvacductvalsinfo->node_vars + i;
+      InitHvacData(hi);
+      labeli = &hi->label;
+      ReadLabels(labeli, stream, NULL);
+    }
+  }
+
+  if (FGETS(buffer, 255, stream) == NULL) return 1;
+  sscanf(buffer, "%i", &hvaccoll->hvacductvalsinfo->n_duct_vars);
+
+  if (hvaccoll->hvacductvalsinfo->n_duct_vars > 0) {
+    NewMemory((void **)&hvaccoll->hvacductvalsinfo->duct_vars,
+              hvaccoll->hvacductvalsinfo->n_duct_vars * sizeof(hvacvaldata));
+    for (int i = 0; i < hvaccoll->hvacductvalsinfo->n_duct_vars; i++) {
+      hvacvaldata *hi;
+      flowlabels *labeli;
+
+      hi = hvaccoll->hvacductvalsinfo->duct_vars + i;
+      InitHvacData(hi);
+      labeli = &hi->label;
+      ReadLabels(labeli, stream, NULL);
+    }
+  }
+  FREEMEMORY(hvaccoll->hvacnodevalsinfo);
+  NewMemory((void **)&hvaccoll->hvacnodevalsinfo, sizeof(hvacvalsdata));
+  memcpy(hvaccoll->hvacnodevalsinfo, hvaccoll->hvacductvalsinfo,
+         sizeof(hvacvalsdata));
   return 0;
 }

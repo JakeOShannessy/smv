@@ -8177,50 +8177,14 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
     if(MatchSMV(buffer, "HVACVALS") == 1){
-      FREEMEMORY(hvaccoll.hvacductvalsinfo);
-      NewMemory(( void ** )&(hvaccoll.hvacductvalsinfo), sizeof(hvacvalsdata));
-      hvaccoll.hvacductvalsinfo->times = NULL;
-      hvaccoll.hvacductvalsinfo->loaded = 0;
-      hvaccoll.hvacductvalsinfo->node_vars = NULL;
-      hvaccoll.hvacductvalsinfo->duct_vars = NULL;
-
-      if(FGETS(buffer, 255, stream) == NULL)BREAK;
-      hvaccoll.hvacductvalsinfo->file = GetCharPtr(TrimFrontBack(buffer));
-
-      if(FGETS(buffer, 255, stream) == NULL)BREAK;
-      sscanf(buffer, "%i", &(hvaccoll.hvacductvalsinfo)->n_node_vars);
-
-      if(hvaccoll.hvacductvalsinfo->n_node_vars>0){
-        NewMemory((void **)&(hvaccoll.hvacductvalsinfo)->node_vars, hvaccoll.hvacductvalsinfo->n_node_vars * sizeof(hvacvaldata));
-        for(i = 0;i < hvaccoll.hvacductvalsinfo->n_node_vars;i++){
-          hvacvaldata *hi;
-          flowlabels *labeli;
-
-          hi = hvaccoll.hvacductvalsinfo->node_vars + i;
-          InitHvacData(hi);
-          labeli = &hi->label;
-          ReadLabels(labeli, stream, NULL);
-        }
+      int r =
+          ParseHVACValsEntry(&hvaccoll, stream );
+      if (r == 1) {
+        BREAK;
       }
-
-      if(FGETS(buffer, 255, stream) == NULL)BREAK;
-      sscanf(buffer, "%i", &hvaccoll.hvacductvalsinfo->n_duct_vars);
-
-      if(hvaccoll.hvacductvalsinfo->n_duct_vars>0){
-        NewMemory((void **)&hvaccoll.hvacductvalsinfo->duct_vars, hvaccoll.hvacductvalsinfo->n_duct_vars * sizeof(hvacvaldata));
-        for(i = 0;i < hvaccoll.hvacductvalsinfo->n_duct_vars;i++){
-          hvacvaldata *hi;
-          flowlabels *labeli;
-
-          hi = hvaccoll.hvacductvalsinfo->duct_vars + i;
-          InitHvacData(hi);
-          labeli = &hi->label;
-          ReadLabels(labeli, stream, NULL);
-        }
+      else if (r == 2) {
+        continue;
       }
-      FREEMEMORY(hvaccoll.hvacnodevalsinfo);
-      NewMemory(( void ** )&hvaccoll.hvacnodevalsinfo, sizeof(hvacvalsdata));
-      memcpy(hvaccoll.hvacnodevalsinfo, hvaccoll.hvacductvalsinfo, sizeof(hvacvalsdata));
     }
     /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
