@@ -29,15 +29,15 @@
 #define DUCT_YZX 4
 #define DUCT_ZYX 5
 
-#define HVAC_FILTER_NO  0
+#define HVAC_FILTER_NO 0
 #define HVAC_FILTER_YES 1
-#define HVAC_NONE    0
-#define HVAC_FAN     1
+#define HVAC_NONE 0
+#define HVAC_FAN 1
 #define HVAC_AIRCOIL 2
-#define HVAC_DAMPER  3
+#define HVAC_DAMPER 3
 
 #define HVAC_STATE_INACTIVE 0
-#define HVAC_STATE_ACTIVE   1
+#define HVAC_STATE_ACTIVE 1
 
 /* --------------------------  hvacconnectdata
  * ------------------------------------ */
@@ -168,8 +168,24 @@ int IsHVACVisible(hvacdatacollection *hvaccoll);
 int ParseHVACEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream,
                    int hvac_node_color[3], int hvac_duct_color[3]);
 
+/**
+ * @brief Parse the definition of HVAC values from an *.smv file.
+ *
+ * @param hvaccoll The HVAC collection.
+ * @param stream The stream that is currently being parsed. The position of this
+ * stream should be just after the "HVACVALS" keyword.
+ * @return 0 on success, 1 to break parsing loop, 2 to continue to continue
+ * parsing loop.
+ */
 int ParseHVACValsEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream);
 
+/**
+ * @brief Parse HVAC value data from a *.hvac file.
+ *
+ * @param[inout] hvaccoll The HVAC collection.
+ * @param[in] flag The flag to control whether we load or unload.
+ * @param[out] file_size A location to output the size of the file.
+ */
 void ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
                    FILE_SIZE *file_size);
 #endif
