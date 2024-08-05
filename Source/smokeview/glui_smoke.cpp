@@ -209,7 +209,7 @@ extern "C" void GLUIUpdateFireAlpha(void){
 /* ------------------ GLUIUpdateCO2ColorbarList ------------------------ */
 
 extern "C" void GLUIUpdateCO2ColorbarList(int value){
-  co2_colorbar_index = CLAMP(value, 0, ncolorbars-1);
+  co2_colorbar_index = CLAMP(value, 0, colorbars.ncolorbars-1);
   if(LISTBOX_co2_colorbar!=NULL)LISTBOX_co2_colorbar->set_int_val(co2_colorbar_index);
   GLUISmoke3dCB(CO2_COLORBAR_LIST);
 }
@@ -390,7 +390,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   ROLLOUT_smoke_settings = glui_3dsmoke->add_rollout_to_panel(ROLLOUT_smoke3d, "Settings", true, SMOKE_SETTINGS, SmokeRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_smoke_settings, glui_3dsmoke);
   ADDPROCINFO(smokeprocinfo, nsmokeprocinfo, ROLLOUT_smoke_settings, SMOKE_SETTINGS, glui_3dsmoke);
-  
+
   PANEL_settings1 = glui_3dsmoke->add_panel_to_panel(ROLLOUT_smoke_settings, "");
 #ifdef pp_GPU
   CHECKBOX_smokeGPU=glui_3dsmoke->add_checkbox_to_panel(PANEL_settings1,_("Use GPU"),&usegpu,VOL_SMOKE,GLUISmoke3dCB);
@@ -487,14 +487,14 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   SPINNER_smoke3d_fire_green->set_int_limits(0,255);
   SPINNER_smoke3d_fire_blue->set_int_limits(0,255);
 
-  if(ncolorbars > 0){
+  if(colorbars.ncolorbars > 0){
     CHECKBOX_use_fire_colormap = glui_3dsmoke->add_checkbox_to_panel(ROLLOUT_firecolor, "set smoke/fire color using colormap", &use_fire_colormap, USE_FIRE_COLORMAP, GLUISmoke3dCB);
     PANEL_colormap3 = glui_3dsmoke->add_panel_to_panel(ROLLOUT_firecolor, "colormap");
     LISTBOX_smoke_colorbar = glui_3dsmoke->add_listbox_to_panel(PANEL_colormap3, "Select:", &fire_colorbar_index, SMOKE_COLORBAR_LIST, GLUISmoke3dCB);
-    for(i = 0;i < ncolorbars;i++){
+    for(i = 0;i < colorbars.ncolorbars;i++){
       colorbardata *cbi;
 
-      cbi = colorbarinfo + i;
+      cbi = colorbars.colorbarinfo + i;
       LISTBOX_smoke_colorbar->add_item(i, cbi->menu_label);
     }
     LISTBOX_smoke_colorbar->set_int_val(fire_colorbar_index);
@@ -588,13 +588,13 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
     SPINNER_co2color[0]->set_int_limits(0, 255);
     SPINNER_co2color[1]->set_int_limits(0, 255);
     SPINNER_co2color[2]->set_int_limits(0, 255);
-    if(ncolorbars > 0){
+    if(colorbars.ncolorbars > 0){
       CHECKBOX_use_co2_colormap = glui_3dsmoke->add_checkbox_to_panel(ROLLOUT_co2color, "set colormap", &use_co2_colormap, USE_CO2_COLORMAP, GLUISmoke3dCB);
       LISTBOX_co2_colorbar = glui_3dsmoke->add_listbox_to_panel(ROLLOUT_co2color, "colormap:", &co2_colorbar_index, CO2_COLORBAR_LIST, GLUISmoke3dCB);
-      for(i = 0; i < ncolorbars; i++){
+      for(i = 0; i < colorbars.ncolorbars; i++){
         colorbardata *cbi;
 
-        cbi = colorbarinfo+i;
+        cbi = colorbars.colorbarinfo+i;
         LISTBOX_co2_colorbar->add_item(i, cbi->menu_label);
       }
       LISTBOX_co2_colorbar->set_int_val(co2_colorbar_index);
@@ -638,7 +638,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   SPINNER_smoke3d_kmax = glui_3dsmoke->add_spinner_to_panel(PANEL_skip_planes, "max k", GLUI_SPINNER_INT, &smoke3d_kmax);
   CHECKBOX_smokecullflag = glui_3dsmoke->add_checkbox_to_panel(PANEL_skip_planes, "Cull hidden planes", &smokecullflag);
   GLUISmoke3dCB(SMOKE_SKIP_X);
-  
+
 
 
   //---------------------------------------------Volume render settings--------------------------------------------------------------
@@ -804,8 +804,8 @@ void SetRGBColorMapVars(int use_rgb){
 void GLUIGetPixelsPerTriangle(void){
   float x_pixels_per_triangle=1000000.0, y_pixels_per_triangle=1000000.0, pixels_per_triangle;
   char label[500];
- 
-  if(STATIC_pixels_per_triangle == NULL)return; 
+
+  if(STATIC_pixels_per_triangle == NULL)return;
   if(nplotx_all>0)x_pixels_per_triangle = smoke3d_skipx*(float)glui_screenWidth/(float)nplotx_all;
   if(nploty_all>0)y_pixels_per_triangle = smoke3d_skipy*(float)glui_screenHeight/(float)nploty_all;
   pixels_per_triangle = MIN(x_pixels_per_triangle, y_pixels_per_triangle);
@@ -1091,12 +1091,12 @@ extern "C" void GLUISmoke3dCB(int var){
     }
     if(fire_temp_min<20.0){
       fire_temp_min = 20.0;
-      SPINNER_fire_temp_min->set_float_val(fire_temp_min);     
+      SPINNER_fire_temp_min->set_float_val(fire_temp_min);
     }
     if(fire_temp_min>fire_temp_max){
       fire_temp_max = fire_temp_min + 1500.0;
-      SPINNER_fire_temp_min->set_float_val(fire_temp_min);     
-      SPINNER_fire_temp_max->set_float_val(fire_temp_max);     
+      SPINNER_fire_temp_min->set_float_val(fire_temp_min);
+      SPINNER_fire_temp_max->set_float_val(fire_temp_max);
     }
     MakeFireColors(fire_temp_min, fire_temp_max, nfire_colors);
     break;

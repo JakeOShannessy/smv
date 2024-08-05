@@ -383,79 +383,52 @@ int GetScreenHeight(void){
 }
 #endif
 
-/* ------------------ GetHomeDir ------------------------ */
+char *GetSmokeviewIni() {
+  char *smv_bindir = GetSmvRootDir();
+  char *path;
+  NEWMEMORY(path, (unsigned int)(strlen(smv_bindir) + 14));
+  STRCPY(path, smv_bindir);
+  STRCAT(path, "smokeview.ini");
+  FREEMEMORY(smv_bindir);
+  return path;
+}
 
-char *GetHomeDir(){
-  char *homedir;
+char *GetSmokeviewHtml() {
+  char *smv_bindir = GetSmvRootDir();
+  char *path;
+  NEWMEMORY(path, (unsigned int)(strlen(smv_bindir) + 14));
+  STRCPY(path, smv_bindir);
+  STRCAT(path, "smokeview.html");
+  FREEMEMORY(smv_bindir);
+  return path;
+}
 
-#ifdef WIN32
-  homedir = getenv("userprofile");
-#else
-  homedir = getenv("HOME");
-#endif
-
-  if(homedir==NULL){
-    NewMemory((void **)&homedir, 2);
-    strcpy(homedir, ".");
-  }
-  return homedir;
+char *GetSmokeviewHtmlVr() {
+  char *smv_bindir = GetSmvRootDir();
+  char *path;
+  NEWMEMORY(path, (unsigned int)(strlen(smv_bindir) + 14));
+  STRCPY(path, smv_bindir);
+  STRCAT(path, "smokeview_vr.html");
+  FREEMEMORY(smv_bindir);
+  return path;
 }
 
 /* ------------------ InitStartupDirs ------------------------ */
 
 void InitStartupDirs(void){
-  char *homedir = NULL;
-  char *smv_bindir = GetSmvRootDir();
-// get smokeview bin directory from argv[0] which contains the full path of the smokeview binary
-
-  // create full path for smokeview.ini file
-
-  NewMemory((void **)&smokeviewini, (unsigned int)(strlen(smv_bindir)+14));
-  STRCPY(smokeviewini, smv_bindir);
-  STRCAT(smokeviewini, "smokeview.ini");
-
-  // create full path for html template file
-
-  NewMemory((void **)&smokeview_html, (unsigned int)(strlen(smv_bindir)+strlen("smokeview.html")+1));
-  STRCPY(smokeview_html, smv_bindir);
-  STRCAT(smokeview_html, "smokeview.html");
-
-  NewMemory((void **)&smokeviewvr_html, (unsigned int)(strlen(smv_bindir)+strlen("smokeview_vr.html")+1));
-  STRCPY(smokeviewvr_html, smv_bindir);
-  STRCAT(smokeviewvr_html, "smokeview_vr.html");
-  FREEMEMORY(smv_bindir);
-
   startup_pass = 2;
 
-  homedir = GetHomeDir();
-
-  NewMemory((void **)&smokeview_scratchdir, strlen(homedir)+strlen(dirseparator)+strlen(".smokeview")+strlen(dirseparator)+1);
-  strcpy(smokeview_scratchdir, homedir);
-  strcat(smokeview_scratchdir, dirseparator);
-  strcat(smokeview_scratchdir, ".smokeview");
-  strcat(smokeview_scratchdir, dirseparator);
-  if(FileExistsOrig(smokeview_scratchdir)==NO){
-    MKDIR(smokeview_scratchdir);
+  char *config_dir = GetConfigDir();
+  if(FileExistsOrig(config_dir)==NO){
+    MKDIR(config_dir);
   }
+  FREEMEMORY(config_dir);
 
-  NewMemory((void **)&smv_screenini, strlen(smokeview_scratchdir) + strlen("smv_screen.ini") + 1);
-  strcpy(smv_screenini, smokeview_scratchdir);
-  strcat(smv_screenini, "smv_screen.ini");
-
-  NewMemory((void **)&colorbars_user_dir, strlen(homedir) + strlen(dirseparator) + strlen(".smokeview") + strlen(dirseparator) + strlen("colorbars") + 1);
-  strcpy(colorbars_user_dir, homedir);
-  strcat(colorbars_user_dir, dirseparator);
-  strcat(colorbars_user_dir, ".smokeview");
-  strcat(colorbars_user_dir, dirseparator);
-  strcat(colorbars_user_dir, "colorbars");
-  if(FileExistsOrig(colorbars_user_dir) == NO){
-    FREEMEMORY(colorbars_user_dir);
+  char *colorbars_user_dir = GetConfigSubDir("colorbars");
+  if(FileExistsOrig(colorbars_user_dir)==NO){
+    MKDIR(colorbars_user_dir);
   }
-
-  NewMemory((void **)&smokeviewini_filename, strlen(smokeview_scratchdir)+strlen(dirseparator)+strlen("smokeview.ini")+2);
-  strcpy(smokeviewini_filename, smokeview_scratchdir);
-  strcat(smokeviewini_filename, dirseparator);
-  strcat(smokeviewini_filename, "smokeview.ini");
+  FREEMEMORY(colorbars_user_dir);
 
   if(verbose_output==1)PRINTF("Scratch directory: %s\n", smokeview_scratchdir);
   if(verbose_output==1)PRINTF("    smokeview.ini: %s\n", smokeviewini_filename);
@@ -1254,32 +1227,6 @@ void InitOpenGL(int option){
     TrainerViewMenu(trainerview);
   }
 
-  /* ------------------ InitColorbarsSubDir ------------------------ */
-
-  char *InitColorbarsSubDir(char *subdir){
-    char *return_path = NULL;
-    char *smv_bindir = GetSmvRootDir();
-    if(subdir==NULL)return return_path;
-
-    NewMemory((void **)&return_path,
-              strlen(smv_bindir) + strlen("colorbars") + strlen(dirseparator) + strlen(subdir) + 2);
-    strcpy(return_path, smv_bindir);
-    strcat(return_path, "colorbars");
-    strcat(return_path, dirseparator);
-    if(strlen(subdir)>0)strcat(return_path, subdir);
-    FREEMEMORY(smv_bindir);
-    return return_path;
-  }
-
-  /* ------------------ InitColorbarsDir ------------------------ */
-
-  void InitColorbarsDir(void){
-    colorbars_dir           = InitColorbarsSubDir("");
-    colorbars_linear_dir    = InitColorbarsSubDir("linear");
-    colorbars_divergent_dir = InitColorbarsSubDir("divergent");
-    colorbars_rainbow_dir   = InitColorbarsSubDir("rainbow");
-    colorbars_circular_dir  = InitColorbarsSubDir("circular");
-  }
   /* ------------------ InitTextureDir ------------------------ */
 
 void InitTextureDir(void){
@@ -1584,7 +1531,7 @@ void InitVars(void){
   strcpy(script_renderfile,"");
   setpartmin_old=setpartmin;
   setpartmax_old=setpartmax;
-  UpdateCurrentColorbar(colorbarinfo);
+  UpdateCurrentColorbar(colorbars.colorbarinfo);
   visBlocks=visBLOCKAsInput;
   blocklocation=BLOCKlocation_grid;
   render_window_size=RenderWindow;

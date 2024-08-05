@@ -14,6 +14,8 @@
 #include "glui_bounds.h"
 #include "histogram.h"
 
+#include "colorbars.h"
+
 void SetResearchMode(int flag);
 int GetCacheFlag(int type);
 int GetValType(int type);
@@ -443,7 +445,7 @@ void bounds_dialog::setup(const char *file_type, GLUI_Rollout * ROLLOUT_dialog, 
     if(strcmp(file_type, "slice")==0){
       CHECKBOX_chop_hide = glui_bounds->add_checkbox_to_panel(ROLLOUT_truncate, "hide triangles with truncated values", &(bounds.chop_hide), BOUND_CHOP_HIDE, Callback);
     }
-    
+
     Callback(BOUND_VAL_TYPE);
     Callback(BOUND_SETCHOPMIN);
     Callback(BOUND_SETCHOPMAX);
@@ -1987,7 +1989,7 @@ extern "C" void GLUIHVACSliceBoundsCPP_CB(int var){
       }
       if(hist_update == 1||bounds->hist==NULL){
         float global_min, global_max;
-        
+
         GLUIGetGlobalBoundsMinMax(BOUND_SLICE, bounds->label, &global_min, &global_max);
         ComputeLoadedSliceHist(bounds->label, global_min, global_max);
         MergeLoadedSliceHist(bounds->label, &(bounds->hist));
@@ -2379,7 +2381,7 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
       }
       if(hist_update == 1||bounds->hist==NULL){
         float global_min, global_max;
-        
+
         GLUIGetGlobalBoundsMinMax(BOUND_PATCH, bounds->label, &global_min, &global_max);
         ComputeLoadedPatchHist(bounds->label, &(bounds->hist), &global_min, &global_max);
       }
@@ -3232,7 +3234,8 @@ extern "C" void GLUISplitCB(int var){
     for(i = 0; i < 12; i++){
       split_colorbar->node_rgb[i] = colorsplit[i] & 0xFF;
     }
-    RemapColorbar(split_colorbar);
+    RemapColorbar(split_colorbar, show_extreme_mindata, rgb_below_min,
+                  show_extreme_maxdata, rgb_above_max);
     UpdateRGBColors(colorbar_select_index);
     break;
   default:
@@ -3270,15 +3273,16 @@ extern "C" void GLUIExtremeCB(int var){
       if(SPINNER_up_green!=NULL)SPINNER_up_green->disable();
       if(SPINNER_up_blue!=NULL)SPINNER_up_blue->disable();
     }
-    if(colorbartype<0||colorbartype>=ncolorbars)return;
-    cbi = colorbarinfo+colorbartype;
-    RemapColorbar(cbi);
+    if(colorbartype<0||colorbartype>=colorbars.ncolorbars)return;
+    cbi = colorbars.colorbarinfo+colorbartype;
+    RemapColorbar(cbi, show_extreme_mindata, rgb_below_min,
+                  show_extreme_maxdata, rgb_above_max);
     UpdateRGBColors(colorbar_select_index);
     updatemenu = 1;
     break;
   case COLORBAR_EXTREME_RGB:
-    if(colorbartype<0||colorbartype>=ncolorbars)return;
-    cbi = colorbarinfo+colorbartype;
+    if(colorbartype<0||colorbartype>=colorbars.ncolorbars)return;
+    cbi = colorbars.colorbarinfo+colorbartype;
 
     rgb_nodes = rgb_above_max;
     for(i = 0; i<3; i++){
@@ -3288,7 +3292,8 @@ extern "C" void GLUIExtremeCB(int var){
     for(i = 0; i<3; i++){
       rgb_nodes[i] = cb_down_rgb[i];
     }
-    RemapColorbar(cbi);
+    RemapColorbar(cbi, show_extreme_mindata, rgb_below_min,
+                  show_extreme_maxdata, rgb_above_max);
     UpdateRGBColors(colorbar_select_index);
     break;
   default:
@@ -4654,10 +4659,10 @@ void AddColorbarListBound(GLUI_Listbox *LIST_cbar, int index, char *label_arg, i
   int i, nitems = 0;
 
 
-  for(i = 0; i < ncolorbars; i++){
+  for(i = 0; i < colorbars.ncolorbars; i++){
     colorbardata *cbi;
 
-    cbi = colorbarinfo + i;
+    cbi = colorbars.colorbarinfo + i;
     if(strcmp(cbi->colorbar_type, label_arg) != 0)continue;
     nitems++;
   }
@@ -4666,10 +4671,10 @@ void AddColorbarListBound(GLUI_Listbox *LIST_cbar, int index, char *label_arg, i
   strcat(cbar_type, label_arg);
   strcat(cbar_type, "----------");
   LIST_cbar->add_item(index, cbar_type);
-  for(i = 0; i < ncolorbars; i++){
+  for(i = 0; i < colorbars.ncolorbars; i++){
     colorbardata *cbi;
 
-    cbi = colorbarinfo + colorbar_list_sorted[i];
+    cbi = colorbars.colorbarinfo + colorbar_list_sorted[i];
     if(strcmp(cbi->colorbar_type, label_arg) != 0)continue;
     LIST_cbar->add_item(colorbar_list_sorted[i], cbi->menu_label);
     *max_index = MAX(colorbar_list_sorted[i], *max_index);
@@ -4727,7 +4732,7 @@ extern "C" void GLUIUpdateColorbarListBound(int flag){
   }
 
   if(LIST_cb == NULL)return;
-  for(i=-7;i<ncolorbars;i++){
+  for(i=-7;i<colorbars.ncolorbars;i++){
    LIST_cb->delete_item(i);
   }
   strcpy(label, "rainbow");      AddColorbarListBound(LIST_cb, -1, label, &max_LISTBOX_cb_bound);
@@ -5080,12 +5085,12 @@ extern "C" void GLUIBoundsSetup(int main_window){
     GLUIIsoBoundCB(ISO_LEVEL);
     GLUIIsoBoundCB(ISO_COLORS);
 
-    if(ncolorbars>0){
+    if(colorbars.ncolorbars>0){
       LIST_iso_colorbar = glui_bounds->add_listbox_to_panel(ROLLOUT_iso_color, "colormap:", &iso_colorbar_index, ISO_COLORBAR_LIST, GLUIIsoBoundCB);
-      for(i = 0; i<ncolorbars; i++){
+      for(i = 0; i<colorbars.ncolorbars; i++){
         colorbardata *cbi;
 
-        cbi = colorbarinfo+i;
+        cbi = colorbars.colorbarinfo+i;
         LIST_iso_colorbar->add_item(i, cbi->menu_label);
       }
       LIST_iso_colorbar->set_int_val(iso_colorbar_index);
@@ -5514,7 +5519,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
   ROLLOUT_autoload = glui_bounds->add_rollout_to_panel(PANEL_loadbounds,_("Auto load"), false, LOAD_AUTO_ROLLOUT, LoadRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_autoload, glui_bounds);
   ADDPROCINFO(loadprocinfo, nloadprocinfo, ROLLOUT_autoload, LOAD_AUTO_ROLLOUT, glui_bounds);
-  
+
   glui_bounds->add_checkbox_to_panel(ROLLOUT_autoload, _("Auto load at startup"), &loadfiles_at_startup, STARTUP, BoundBoundCB);
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, _("Save auto load file list"), SAVE_FILE_LIST, BoundBoundCB);
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, _("Auto load now"), LOAD_FILES, BoundBoundCB);
@@ -5625,7 +5630,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
 
   PANEL_colorbar_properties = glui_bounds->add_panel_to_panel(PANEL_cb11, _("Colorbar"));
 
-  if(ncolorbars>0){
+  if(colorbars.ncolorbars>0){
     colorbartype = -1;
     LISTBOX_cb_bound = glui_bounds->add_listbox_to_panel(PANEL_colorbar_properties, "", &colorbartype, COLORBAR_LIST2, GLUISliceBoundCB);
     GLUIUpdateColorbarListBound(1);
@@ -6034,7 +6039,7 @@ extern "C" void GLUIIsoBoundCB(int var){
     iso_outline_offset = (float)iso_outline_ioffset/1000.0;
   break;
   case ISO_COLORBAR_LIST:
-    iso_colorbar = colorbarinfo + iso_colorbar_index;
+    iso_colorbar = colorbars.colorbarinfo + iso_colorbar_index;
     ColorbarMenu(iso_colorbar_index);
     updatemenu = 1;
     update_texturebar = 1;
@@ -6154,7 +6159,7 @@ extern "C" void GLUIIsoBoundCB(int var){
     EDIT_iso_valmin->set_float_val(glui_iso_valmin);
     glutPostRedisplay();
     break;
-    
+
   case ISO_SETVALMAX:
     switch(setisomax){
       case SET_MAX:

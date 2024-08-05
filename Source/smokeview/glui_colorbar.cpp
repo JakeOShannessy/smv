@@ -10,6 +10,8 @@
 #include "smokeviewvars.h"
 #include "glui_bounds.h"
 
+#include "colorbars.h"
+
 GLUI *glui_colorbar=NULL;
 
 GLUI_Rollout *ROLLOUT_cb_simple  = NULL;
@@ -375,10 +377,10 @@ void GetNewColorbarName(char *base, char *label){
     }
 
     int dup = 0;
-    for(j = 0;j < ncolorbars;j++){
+    for(j = 0;j < colorbars.ncolorbars;j++){
       colorbardata *cbj;
 
-      cbj = colorbarinfo + j;
+      cbj = colorbars.colorbarinfo + j;
       if(strcmp(label, cbj->menu_label) == 0){
         dup = 1;
         break;
@@ -391,13 +393,13 @@ void GetNewColorbarName(char *base, char *label){
 /* ------------------ ColorbarSimple ------------------------ */
 
 void ColorbarSimple(int node){
-  ColorbarSimple2General(colorbarinfo + colorbartype);
+  ColorbarSimple2General(colorbars.colorbarinfo + colorbartype);
   colorbarpoint = node;
   memcpy(cb_rgb, cb_simple_rgb + 3*colorbarpoint, 3*sizeof(int));
   SPINNER_cb_rgb[0]->set_int_val(cb_rgb[0]);
   SPINNER_cb_rgb[1]->set_int_val(cb_rgb[1]);
   SPINNER_cb_rgb[2]->set_int_val(cb_rgb[2]);
-  cb_colorindex = colorbarinfo[colorbartype].node_index[colorbarpoint];
+  cb_colorindex = colorbars.colorbarinfo[colorbartype].node_index[colorbarpoint];
   SPINNER_cb_colorindex->set_int_val(cb_colorindex);
   GLUIColorbarCB(COLORBAR_RGB);
 }
@@ -449,25 +451,26 @@ extern "C" void GLUIColorbarCB(int var){
   update_colorbar_dialog = 1;
   switch(var){
   case COLORBAR_COLORINDEX:
-    if(colorbartype < ncolorbars){
-      cbi = colorbarinfo + colorbartype;
+    if(colorbartype < colorbars.ncolorbars){
+      cbi = colorbars.colorbarinfo + colorbartype;
       UpdateCurrentColorbar(cbi);
 
       cbi->node_index[colorbarpoint] = cb_colorindex;
       cbi->can_adjust = 0;
 
       GLUIColorbarGlobal2Local();
-      RemapColorbar(cbi);
+      RemapColorbar(cbi, show_extreme_mindata, rgb_below_min,
+                  show_extreme_maxdata, rgb_above_max);
       UpdateRGBColors(colorbar_select_index);
       ColorbarGeneral2Simple(cbi);
       cbi->adjusted = 0;
     }
     break;
   case COLORBAR_LABEL:
-    if(colorbartype < ncolorbars){
+    if(colorbartype < colorbars.ncolorbars){
       char *clabel;
 
-      cbi = colorbarinfo + colorbartype;
+      cbi = colorbars.colorbarinfo + colorbartype;
       clabel = EDITTEXT_cb_label->get_text();
       strcpy(cbi->menu_label, clabel);
       LISTBOX_cb_edit->delete_item(colorbartype);
@@ -485,8 +488,8 @@ extern "C" void GLUIColorbarCB(int var){
     WriteIni(LOCAL_INI, NULL);
     break;
   case COLORBAR_ADDPOINT:
-    if(colorbartype >= ncolorbars)return;
-    cbi = colorbarinfo + colorbartype;
+    if(colorbartype >= colorbars.ncolorbars)return;
+    cbi = colorbars.colorbarinfo + colorbartype;
     if(colorbarpoint <= 0 || colorbarpoint > cbi->nnodes - 1)return;
 
     cbi->nnodes++;
@@ -518,16 +521,17 @@ extern "C" void GLUIColorbarCB(int var){
     }
 
     GLUIColorbarGlobal2Local();
-    RemapColorbar(cbi);
+    RemapColorbar(cbi, show_extreme_mindata, rgb_below_min,
+                  show_extreme_maxdata, rgb_above_max);
     UpdateRGBColors(colorbar_select_index);
 
     if(colorbarpoint == cbi->nnodes)colorbarpoint = cbi->nnodes - 1;
-    ColorbarGeneral2Simple(colorbarinfo + colorbartype);
+    ColorbarGeneral2Simple(colorbars.colorbarinfo + colorbartype);
     GLUIColorbarCB(COLORBAR_SIMPLE_ABLE);
     break;
   case COLORBAR_DELETEPOINT:
-    if(colorbartype >= ncolorbars)return;
-    cbi = colorbarinfo + colorbartype;
+    if(colorbartype >= colorbars.ncolorbars)return;
+    cbi = colorbars.colorbarinfo + colorbartype;
     if(colorbarpoint<0 || colorbarpoint>cbi->nnodes - 1)return;
     if(cbi->nnodes <= 2)return;
 
@@ -548,7 +552,8 @@ extern "C" void GLUIColorbarCB(int var){
       cbi->node_index[colorbarpoint] = 255;
     }
     if(colorbarpoint == 0)cbi->node_index[colorbarpoint] = 0;
-    RemapColorbar(cbi);
+    RemapColorbar(cbi, show_extreme_mindata, rgb_below_min,
+                  show_extreme_maxdata, rgb_above_max);
     UpdateRGBColors(colorbar_select_index);
     nodes_rgb = cbi->node_rgb + 3 * colorbarpoint;
     for(i = 0;i < 3;i++){
@@ -557,7 +562,7 @@ extern "C" void GLUIColorbarCB(int var){
     }
     SPINNER_cb_colorindex->set_int_val(cbi->node_index[colorbarpoint]);
     cb_colorindex = cbi->node_index[colorbarpoint];
-    ColorbarGeneral2Simple(colorbarinfo + colorbartype);
+    ColorbarGeneral2Simple(colorbars.colorbarinfo + colorbartype);
     GLUIColorbarCB(COLORBAR_SIMPLE_ABLE);
     break;
   case COLORBAR_RGB2:
@@ -587,7 +592,7 @@ extern "C" void GLUIColorbarCB(int var){
     toggle_on = 0;
     break;
   case COLORBAR_SIMPLE_ABLE:
-    if(colorbarinfo[colorbartype].nnodes > 5)break;
+    if(colorbars.colorbarinfo[colorbartype].nnodes > 5)break;
     switch(colorbar_simple_type){
       default:
       assert(FFALSE);
@@ -686,14 +691,14 @@ extern "C" void GLUIColorbarCB(int var){
     break;
   case COLORBAR_SIMPLE_TYPE:
     GLUIColorbarCB(COLORBAR_SIMPLE_ABLE);
-    ColorbarSimple2General(colorbarinfo + colorbartype);
+    ColorbarSimple2General(colorbars.colorbarinfo + colorbartype);
     GLUIColorbarCB(COLORBAR_LIST);
     ColorbarSimple(0);
     GLUTPOSTREDISPLAY;
     break;
   case COLORBAR_RGB:
-    if(colorbartype < 0 || colorbartype >= ncolorbars)return;
-    cbi = colorbarinfo + colorbartype;
+    if(colorbartype < 0 || colorbartype >= colorbars.ncolorbars)return;
+    cbi = colorbars.colorbarinfo + colorbartype;
     if(colorbarpoint<0 || colorbarpoint>cbi->nnodes - 1)return;
     if(colorbarpoint<=4){
       int index;
@@ -713,7 +718,8 @@ extern "C" void GLUIColorbarCB(int var){
     for(i = 0;i < 3;i++){
       nodes_rgb[i] = cb_rgb[i];
     }
-    RemapColorbar(cbi);
+    RemapColorbar(cbi, show_extreme_mindata, rgb_below_min,
+                  show_extreme_maxdata, rgb_above_max);
     UpdateRGBColors(colorbar_select_index);
     break;
   case COLORBAR_S0_RGB:
@@ -751,7 +757,7 @@ extern "C" void GLUIColorbarCB(int var){
     list_index = LISTBOX_cb_edit->get_int_val();
     if(list_index<0)break;
     colorbartype = list_index;
-    cbi = colorbarinfo + colorbartype;
+    cbi = colorbars.colorbarinfo + colorbartype;
     if(show_firecolormap!=0)fire_colorbar_index= colorbartype;
     GLUISetColorbarListBound(colorbartype);
     ColorbarMenu(colorbartype);
@@ -761,7 +767,7 @@ extern "C" void GLUIColorbarCB(int var){
 
     char button_label[sizeof(GLUI_String)];
     strcpy(button_label, "Copy to ");
-    strcat(button_label, colorbarinfo[colorbartype].menu_label);
+    strcat(button_label, colorbars.colorbarinfo[colorbartype].menu_label);
     strcat(button_label, "_copy");
     BUTTON_cb_save_as->set_name(button_label);
     if(colorbartype < ndefaultcolorbars){
@@ -801,8 +807,8 @@ extern "C" void GLUIColorbarCB(int var){
   case COLORBAR_NODE_NEXT:
   case COLORBAR_NODE_PREV:
   case COLORBAR_SET:
-    if(colorbartype < 0 || colorbartype >= ncolorbars)return;
-    cbi = colorbarinfo + colorbartype;
+    if(colorbartype < 0 || colorbartype >= colorbars.ncolorbars)return;
+    cbi = colorbars.colorbarinfo + colorbartype;
     if(var == COLORBAR_NODE_NEXT){
       colorbarpoint++;
       if(colorbarpoint > cbi->nnodes - 1)colorbarpoint = 0;
@@ -815,9 +821,9 @@ extern "C" void GLUIColorbarCB(int var){
     GLUIColorbarGlobal2Local();
     break;
   case COLORBAR_COPY:
-    if(colorbartype < 0 || colorbartype >= ncolorbars)return;
+    if(colorbartype < 0 || colorbartype >= colorbars.ncolorbars)return;
     colorbartype = AddColorbar(colorbartype);
-    UpdateCurrentColorbar(colorbarinfo + colorbartype);
+    UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
     GLUIColorbarCB(COLORBAR_LIST);
     break;
   case COLORBAR_NEW:
@@ -836,39 +842,42 @@ extern "C" void GLUIColorbarCB(int var){
 
       cb_save = colorbartype;
       GLUIColorbarCB(COLORBAR_COPY);
-      memcpy(colorbarinfo + cb_save, colorbarcopyinfo + cb_save, sizeof(colorbardata));
+      memcpy(colorbars.colorbarinfo + cb_save, colorbarcopyinfo + cb_save, sizeof(colorbardata));
     }
     break;
   case COLORBAR_ADJUST_LAB:
-    AdjustColorBar(colorbarinfo + colorbartype);
+    AdjustColorBar(colorbars.colorbarinfo + colorbartype);
+    // As we have used AdjustColorBar we should set the flat to update the
+    // colorbar dialog.
+    update_colorbar_dialog = 1;
     GLUIColorbarCB(COLORBAR_RGB);
     break;
   case COLORBAR_REVERT:
-    RevertColorBar(colorbarinfo + colorbartype);
+    RevertColorBar(colorbars.colorbarinfo + colorbartype);
     GLUIColorbarCB(COLORBAR_LIST);
     break;
   case COLORBAR_SAVE_CSV:
-    cbi = colorbarinfo + colorbartype;
+    cbi = colorbars.colorbarinfo + colorbartype;
     Colorbar2File(cbi, colorbar_filename, colorbar_label);
     break;
   case COLORBAR_DELETE:
-    if(colorbartype >= ndefaultcolorbars&&colorbartype < ncolorbars){
+    if(colorbartype >= ndefaultcolorbars&&colorbartype < colorbars.ncolorbars){
       colorbardata *cb_from, *cb_to;
 
-      for(i = colorbartype;i < ncolorbars - 1;i++){
-        cb_to = colorbarinfo + i;
+      for(i = colorbartype;i < colorbars.ncolorbars - 1;i++){
+        cb_to = colorbars.colorbarinfo + i;
         cb_from = cb_to + 1;
         memcpy(cb_to, cb_from, sizeof(colorbardata));
       }
-      for(i = colorbartype;i < ncolorbars;i++){
+      for(i = colorbartype;i < colorbars.ncolorbars;i++){
         LISTBOX_cb_edit->delete_item(i);
       }
-      ncolorbars--;
-      for(i = colorbartype;i < ncolorbars;i++){
-        cbi = colorbarinfo + i;
+      colorbars.ncolorbars--;
+      for(i = colorbartype;i < colorbars.ncolorbars;i++){
+        cbi = colorbars.colorbarinfo + i;
         LISTBOX_cb_edit->add_item(i, cbi->menu_label);
       }
-      if(colorbartype == ncolorbars)colorbartype--;
+      if(colorbartype == colorbars.ncolorbars)colorbartype--;
       LISTBOX_cb_edit->set_int_val(0);
       GLUIColorbarCB(COLORBAR_LIST);
       UpdateColorbarDialogs();
@@ -887,10 +896,10 @@ void AddColorbarListEdit(GLUI_Listbox *LIST_cbar, int index, char *label_arg, in
   int i, nitems=0;
 
 
-  for(i = 0; i < ncolorbars; i++){
+  for(i = 0; i < colorbars.ncolorbars; i++){
     colorbardata *cbi;
 
-    cbi = colorbarinfo + i;
+    cbi = colorbars.colorbarinfo + i;
     if(strcmp(cbi->colorbar_type, label_arg) != 0)continue;
     nitems++;
     break;
@@ -900,10 +909,10 @@ void AddColorbarListEdit(GLUI_Listbox *LIST_cbar, int index, char *label_arg, in
   strcat(cbar_type, label_arg);
   strcat(cbar_type, "----------");
   LIST_cbar->add_item(index, cbar_type);
-  for(i = 0; i < ncolorbars; i++){
+  for(i = 0; i < colorbars.ncolorbars; i++){
     colorbardata *cbi;
 
-    cbi = colorbarinfo + colorbar_list_sorted[i];
+    cbi = colorbars.colorbarinfo + colorbar_list_sorted[i];
     if(strcmp(cbi->colorbar_type, label_arg) != 0)continue;
     LIST_cbar->add_item(colorbar_list_sorted[i], cbi->menu_label);
     *max_index = MAX(colorbar_list_sorted[i], *max_index);
@@ -934,7 +943,7 @@ extern "C" void GLUIUpdateColorbarListEdit(int flag, int del){
   }
   if(LISTBOX_cb == NULL)return;
   if(del == CB_DELETE){
-    for(i = -7; i < ncolorbars; i++){
+    for(i = -7; i < colorbars.ncolorbars; i++){
       LISTBOX_cb->delete_item(i);
     }
   }
@@ -990,7 +999,7 @@ extern "C" void GLUIColorbarSetup(int main_window){
   BUTTON_cb_save_as = glui_colorbar->add_button_to_panel(PANEL_cb_select1, _("Save"),      COLORBAR_SAVE_AS, GLUIColorbarCB);
   glui_colorbar->add_column_to_panel(PANEL_cb_select1, false);
   glui_colorbar->add_button_to_panel(PANEL_cb_select1,"New",COLORBAR_NEW,GLUIColorbarCB);
-  if(ncolorbars>0){
+  if(colorbars.ncolorbars>0){
     colorbartype=0;
 
     LISTBOX_cb_edit=glui_colorbar->add_listbox_to_panel(PANEL_cb_select,"",&colorbartype,COLORBAR_LIST,GLUIColorbarCB);
@@ -1153,7 +1162,7 @@ extern "C" void GLUIColorbarSetup(int main_window){
 #ifdef pp_CLOSEOFF
   BUTTON_colorbar_close->disable();
 #endif
-  if(ncolorbars > 0){
+  if(colorbars.ncolorbars > 0){
     GLUIColorbarCB(COLORBAR_LIST);
   }
 
@@ -1166,9 +1175,9 @@ extern "C" void GLUIColorbarGlobal2Local(void){
   colorbardata *cbi;
   unsigned char *rgb_local;
 
-  if(colorbartype<0||colorbartype>=ncolorbars)return;
+  if(colorbartype<0||colorbartype>=colorbars.ncolorbars)return;
 
-  cbi = colorbarinfo + colorbartype;
+  cbi = colorbars.colorbarinfo + colorbartype;
   colorbarpoint=cbi->nodehilight;
 
   if(SPINNER_cb_colorindex == NULL)return;
