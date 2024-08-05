@@ -2188,12 +2188,13 @@ int Smv2Html(char *html_file, int option, int from_where){
   int copy_html, i;
   webgeomdata slice_node_web, slice_cell_web, slice_geom_web, bndf_node_web, part_node_web;
 
-  template_file = smokeview_html;
+  template_file = GetSmokeviewHtml();
   stream_in = fopen(template_file, "r");
   if(stream_in==NULL){
     printf("***error: smokeview html template file %s failed to open\n", template_file);
     return 1;
   }
+  FREEMEMORY(template_file);
 
   if(from_where==FROM_SCRIPT){
     strcpy(html_fullfile, html_file);

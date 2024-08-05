@@ -6,6 +6,7 @@
 #endif
 
 #include "readgeom.h"
+#include "colorbars.h"
 
 //*** threader headers
 EXTERNCPP void *CheckFiles(void *arg);
@@ -348,7 +349,6 @@ EXTERNCPP void ReadHVACData(int flag);
 EXTERNCPP int IsHVACVisible(void);
 EXTERNCPP void UpdateHVACDuctColorLabels(int index);
 EXTERNCPP void UpdateNodeLabel(colorbardata *cbi);
-EXTERNCPP int IsColorbarSplit(colorbardata *cbi);
 
 EXTERNCPP void UpdateHVACNodeColorLabels(int index);
 EXTERNCPP void UpdateAllHVACColorLabels(void);
@@ -756,26 +756,17 @@ EXTERNCPP char *GetDeviceLabel(char *buffer);
 EXTERNCPP void DrawDevices(int mode);
 EXTERNCPP void UpdatePartClassDepend(partclassdata *partclassi);
 
-EXTERNCPP void CheckLab(void);
-
-EXTERNCPP void AdjustColorBar(colorbardata *cbi);
-EXTERNCPP void AdjustColorBarLab(colorbardata *cbi);
 EXTERNCPP void RevertColorBar(colorbardata *cbi);
 EXTERNCPP void Rgb2Lab(unsigned char *rgb, float *lab);
 EXTERNCPP void Rgb2Labs(unsigned char *rgbs255, float *labs);
 EXTERNCPP void UpdateColorbarOrig(void);
 EXTERNCPP void Lab2Rgb(unsigned char *rgb255, float *frgb, float *lab);
-EXTERNCPP void FRgb2Lab(float *rgb_arg, float *lab);
 
 EXTERNCPP char *GetChid(char *file, char *buffer);
 EXTERNCPP int AddColorbar(int icolorbar);
 EXTERNCPP void ReloadMenu(int value);
 EXTERNCPP void ColorbarMenu(int val);
-EXTERNCPP void InitDefaultColorbars(int nini);
 EXTERNCPP void DrawColorbarPathRGB(void);
-EXTERNCPP void RemapColorbar(colorbardata *cbi);
-EXTERNCPP void SortColorBars(void);
-EXTERNCPP colorbardata *GetColorbar(char *label);
 EXTERNCPP void InitOpenGL(int option);
 EXTERNCPP void TextureShowMenu(int value);
 
@@ -1029,7 +1020,6 @@ EXTERNCPP void ApertureMenu(int value);
 EXTERNCPP void ZoomMenu(int value);
 EXTERNCPP int  NewMultiSlice(slicedata *sdold,slicedata *sd);
 EXTERNCPP void DrawTimebar(float xleft, float xright, float ybot, float ytop);
-EXTERNCPP int CountColorbars(void);
 EXTERNCPP void DrawHorizontalColorbars(void);
 EXTERNCPP void DrawVerticalColorbars(void);
 EXTERNCPP void DrawHorizontalColorbarRegLabels(void);

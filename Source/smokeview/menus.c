@@ -943,9 +943,9 @@ void SmokeColorbarMenu(int value){
   if(value==MENU_DUMMY)return;
   updatemenu=1;
 
-  value = CLAMP(value, 0, ncolorbars - 1);
+  value = CLAMP(value, 0, colorbars.ncolorbars - 1);
   fire_colorbar_index=value;
-  fire_colorbar = colorbarinfo + value;
+  fire_colorbar = colorbars.colorbarinfo + value;
   UpdateRGBColors(colorbar_select_index);
   if(FlowDir>0){
     Keyboard('-',FROM_SMOKEVIEW);
@@ -1061,10 +1061,10 @@ void ColorbarMenu(int value){
   if(value>=0){
     colorbartype=value;
     iso_colorbar_index=value;
-    iso_colorbar = colorbarinfo + iso_colorbar_index;
+    iso_colorbar = colorbars.colorbarinfo + iso_colorbar_index;
     update_texturebar=1;
     GLUIUpdateListIsoColorobar();
-    UpdateCurrentColorbar(colorbarinfo+colorbartype);
+    UpdateCurrentColorbar(colorbars.colorbarinfo+colorbartype);
     GLUIUpdateColorbarType();
     GLUISetColorbarListBound(colorbartype);
     if(colorbartype == bw_colorbar_index&&bw_colorbar_index>=0){
@@ -1076,7 +1076,7 @@ void ColorbarMenu(int value){
     GLUIIsoBoundCB(ISO_COLORS);
     GLUISetLabelControls();
     char *ext, cblabel[1024];
-    strcpy(cblabel,colorbarinfo[colorbartype].menu_label);
+    strcpy(cblabel,colorbars.colorbarinfo[colorbartype].menu_label);
     ext = strrchr(cblabel,'.');
     if(ext!=NULL)*ext=0;
   }
@@ -3417,7 +3417,7 @@ char *FileSize2Label(char *label, FILE_SIZE bytes){
 
 void Plot3DSummary(char *label, int count, FILE_SIZE file_size, float timer){
   char size_label[256], time_label[256], time_label2[256];
-  
+
   sprintf(label, "PLOT3D: loaded %i files, %s", count, FileSize2Label(size_label, file_size));
   Float2String(time_label2, timer, ncolorlabel_digits, force_fixedpoint);
   sprintf(time_label, " in %ss", time_label2);
@@ -3551,7 +3551,7 @@ void LoadUnloadMenu(int value){
     STOP_TIMER(plot3d_timer);
     if(file_count>0){
       char label[256];
-      
+
       Plot3DSummary(label, file_count, total_plot3d_filesize, plot3d_timer);
       printf("%s\n",label);
     }
@@ -5713,7 +5713,7 @@ void Plot3DListMenu(int value){
   STOP_TIMER(plot3d_timer);
   if(file_count>0){
     char label[256];
-      
+
     Plot3DSummary(label, file_count, total_plot3d_filesize, plot3d_timer);
     printf("%s\n",label);
   }
@@ -5771,7 +5771,7 @@ int LoadAllPlot3D(float time){
   STOP_TIMER(plot3d_timer);
   if(file_count>0){
     char label[256];
-      
+
     Plot3DSummary(label, file_count, total_plot3d_filesize, plot3d_timer);
     printf("%s\n",label);
   }
@@ -5829,7 +5829,7 @@ void LoadPlot3dMenu(int value){
       STOP_TIMER(plot3d_timer);
       if(file_count>0){
         char label[256];
-      
+
         Plot3DSummary(label, file_count, total_plot3d_filesize, plot3d_timer);
         printf("%s\n",label);
       }
@@ -5880,7 +5880,7 @@ void LoadPlot3dMenu(int value){
     STOP_TIMER(plot3d_timer);
     if(file_count>0){
       char label[256];
-      
+
       Plot3DSummary(label, file_count, total_plot3d_filesize, plot3d_timer);
       printf("%s\n",label);
     }
@@ -8817,10 +8817,10 @@ void InitPatchSubMenus(int **loadsubpatchmenu_sptr, int **nsubpatchmenus_sptr){
 int MakeSubColorbarMenu(int *submenuptr, int *nmenusptr, char *ctype, void (*CBMenu)(int)){
   int i, nitems=0, submenu;
 
-  for(i = 0; i < ncolorbars; i++){
+  for(i = 0; i < colorbars.ncolorbars; i++){
     colorbardata *cbi;
 
-    cbi = colorbarinfo + i;
+    cbi = colorbars.colorbarinfo + i;
     if(strcmp(cbi->colorbar_type, ctype) != 0)continue;
     nitems++;
     break;
@@ -8831,10 +8831,10 @@ int MakeSubColorbarMenu(int *submenuptr, int *nmenusptr, char *ctype, void (*CBM
   *submenuptr = submenu;
   char ccolorbarmenu[256];
 
-  for(i = 0; i < ncolorbars; i++){
+  for(i = 0; i < colorbars.ncolorbars; i++){
     colorbardata *cbi;
 
-    cbi = colorbarinfo + colorbar_list_sorted[i];
+    cbi = colorbars.colorbarinfo + colorbar_list_sorted[i];
     if(strcmp(cbi->colorbar_type, ctype) != 0)continue;
     strcpy(ccolorbarmenu, "");
     if(colorbartype == colorbar_list_sorted[i]){
@@ -12815,6 +12815,7 @@ static int menu_count=0;
         n_inifiles++;
       }
     }
+    char *smokeviewini = GetSmokeviewIni();
     if( n_inifiles>0||FILE_EXISTS(smokeviewini_filename)==YES||FILE_EXISTS(caseini_filename)==YES||FILE_EXISTS(smokeviewini)==YES){
       if(n_inifiles==0){
         glutAddMenuEntry(_("Read ini files"),MENU_READINI);
@@ -12823,6 +12824,7 @@ static int menu_count=0;
         GLUTADDSUBMENU(_("Read ini files"),inisubmenu);
       }
     }
+    FREEMEMORY(smokeviewini);
    }
 
 

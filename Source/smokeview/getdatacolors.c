@@ -1042,7 +1042,7 @@ void UpdateCO2Colormap(void){
 
   if(use_transparency_data==1)transparent_level_local=transparent_level;
 
-  co2_cb = colorbarinfo[co2_colorbar_index].colorbar_rgb;
+  co2_cb = colorbars.colorbarinfo[co2_colorbar_index].colorbar_rgb;
   rgb_colormap = rgb_sliceco2colormap_01;
 
   switch(co2_colormap_type){
@@ -1097,8 +1097,8 @@ void UpdateSmokeColormap(int option){
 
   if(use_transparency_data==1)transparent_level_local=transparent_level;
 
-  alpha_rgb = colorbarinfo[colorbartype].colorbar_alpha;
-  fire_cb = colorbarinfo[fire_colorbar_index].colorbar_rgb;
+  alpha_rgb = colorbars.colorbarinfo[colorbartype].colorbar_alpha;
+  fire_cb = colorbars.colorbarinfo[fire_colorbar_index].colorbar_rgb;
 
   switch(fire_colormap_type){
     case FIRECOLORMAP_DIRECT:
@@ -1209,13 +1209,13 @@ void UpdateRGBColors(int colorbar_index){
     rgb_trans[4*n+2]=0.0;
     rgb_trans[4*n+3]=(float)n/(float)(nrgb_full-1);
   }
-  if(colorbarinfo!=NULL){
+  if(colorbars.colorbarinfo!=NULL){
     unsigned char *alpha_rgb;
     colorbardata *cbi;
 
-    cbi = colorbarinfo + colorbartype;
+    cbi = colorbars.colorbarinfo + colorbartype;
 
-    alpha_rgb = colorbarinfo[colorbartype].colorbar_alpha;
+    alpha_rgb = colorbars.colorbarinfo[colorbartype].colorbar_alpha;
     for(n=0;n<nrgb_full;n++){
       rgb_full[n][0]=cbi->colorbar_rgb[3*n];
       rgb_full[n][1]=cbi->colorbar_rgb[3*n+1];

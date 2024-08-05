@@ -2301,7 +2301,7 @@ void UpdateShowScene(void){
     END_SHOW_UPDATE(update_frame);
   }
 #endif
-#ifdef pp_SMOKE_SPEEDUP  
+#ifdef pp_SMOKE_SPEEDUP
   if(update_smoke3dmenulabels == 1){
     SHOW_UPDATE(update_smoke3dmenulabels);
     update_smoke3dmenulabels = 0;
@@ -3063,15 +3063,15 @@ void UpdateDisplay(void){
     SmokeColorbarMenu(fire_colorbar_index);
   }
   if(update_colorbar_dialog == 1){
-    UpdateNodeLabel(colorbarinfo + colorbartype);
+    UpdateNodeLabel(colorbars.colorbarinfo + colorbartype);
     update_colorbar_dialog = 0;
   }
   if(update_colorbartype == 1){
     colorbardata *cb;
 
-    cb = GetColorbar(colorbarname);
+    cb = GetColorbar(&colorbars, colorbarname);
     if(cb != NULL){
-      colorbartype = cb - colorbarinfo;
+      colorbartype = cb - colorbars.colorbarinfo;
       colorbartype_default = colorbartype;
       if(cb->can_adjust == 1){
         cb->interp = INTERP_LAB;
@@ -3079,13 +3079,14 @@ void UpdateDisplay(void){
       else{
         cb->interp = INTERP_RGB;
       }
-      RemapColorbar(cb);
+      RemapColorbar(cb, show_extreme_mindata, rgb_below_min,
+                    show_extreme_maxdata, rgb_above_max);
       memcpy(cb->node_rgb_orig, cb->node_rgb, 3*cb->nnodes*sizeof(unsigned char));
       UpdateCurrentColorbar(cb);
       if(colorbartype != colorbartype_default){
         colorbartype_ini = colorbartype;
       }
-      if(colorbarinfo != NULL){
+      if(colorbars.colorbarinfo != NULL){
         colorbartype = colorbartype_default;
         UpdateColorbarDialogs();
       }

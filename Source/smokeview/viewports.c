@@ -11,6 +11,7 @@
 #include "smokeviewvars.h"
 #include "IOvolsmoke.h"
 #include "infoheader.h"
+#include "colorbars.h"
 
 #define CONV(p,pl,pr,pxl,pxr) ( (pxl) + ((pxr)-(pxl))*((p)-(pl))/((pr)-(pl)) )
 #define TIMEBAR_HEIGHT 20
@@ -1155,7 +1156,7 @@ void ViewportSlicePlot(int quad, GLint screen_left, GLint screen_down){
 
     position = 0;
 
-    cbi = colorbarinfo + colorbartype;
+    cbi = colorbars.colorbarinfo + colorbartype;
     strcpy(label, cbi->menu_label);
     strcat(label, "/CIELab delta");
 
@@ -1163,8 +1164,7 @@ void ViewportSlicePlot(int quad, GLint screen_left, GLint screen_down){
       xvals[i] = (float)i;
     }
 
-    void GetColorDist(colorbardata *cbi, int option, float *min, float *max);
-    GetColorDist(colorbarinfo + colorbartype, 1, &valmin, &valmax);
+    GetColorDist(colorbars.colorbarinfo + colorbartype, 1, &valmin, &valmax);
     DrawPlot2D(PLOT_ALL, xvals, cbi->colorbar_dist_delta, NULL, 254,
       0.0, cbi->colorbar_dist_delta[0], 0.0, 1, position, valmin, valmax,
       label, NULL, "",

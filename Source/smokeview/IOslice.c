@@ -2224,7 +2224,7 @@ void UpdateSliceinfoPtrs(sliceparmdata *sp){
   for(i=0; i<sp->nsliceinfo; i++){
     slicedata *slicei;
     meshdata *meshi;
-    
+
     slicei                             = sliceinfo + i;
     meshi                              = meshinfo + slicei->blocknumber;
     sliceinfoptrs[meshi->isliceinfo++] = slicei;
@@ -2372,7 +2372,7 @@ void GetSliceParams(sliceparmdata *sp){
           direction = 3;
         }
       }
-      
+
       if(direction==1){
         sd->idir=1;
         position = meshi->xplt_orig[is1];
@@ -3540,21 +3540,21 @@ FILE_SIZE GetSliceData(slicedata *sd, const char *slicefilename, int time_frame,
   }
 
  // 1D not X dir
- 
+
   if(ijk[0] == ijk[1] && sd->idir != 1){
     ijk[0]--;
     ijk[1]--;
   }
 
  // 1D not Y dir
- 
+
   if(ijk[2] == ijk[3] && sd->idir != 2){
     ijk[2]--;
     ijk[3]--;
   }
 
  // 1D not Z dir
- 
+
   if(ijk[4] == ijk[5] && sd->idir != 3){
     ijk[4]--;
     ijk[5]--;
@@ -4414,10 +4414,10 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
     if(strcmp(sd->label.shortlabel,"FED")==0){
       colorbardata *cb;
 
-      cb = GetColorbar("FED");
+      cb = GetColorbar(&colorbars, "FED");
       if(cb != NULL){
-        if(cb - colorbarinfo != colorbartype_save)colorbartype_save = colorbartype;
-        colorbartype = cb - colorbarinfo;
+        if(cb - colorbars.colorbarinfo != colorbartype_save)colorbartype_save = colorbartype;
+        colorbartype = cb - colorbars.colorbarinfo;
         ColorbarMenu(colorbartype);
       }
     }
@@ -4487,7 +4487,7 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
         saved_colorbar = colorbartype;
       }
       ColorbarMenu(wallthickness_colorbar);
-    } 
+    }
     else if(strcmp(sd->label.shortlabel, "phi") == 0){
       if(colorbartype != levelset_colorbar && colorbartype != -1){
         saved_colorbar = colorbartype;
@@ -5474,12 +5474,12 @@ void DrawVolSliceTerrain(const slicedata *sd){
         r33 = SLICETEXTURE(v33);
 
         if(set_chopmax==1){
-           if(v11>chopmax || v31>chopmax || v33 > chopmax)draw123=0;          
-           if(v11>chopmax || v13>chopmax || v33 > chopmax)draw134=0;          
+           if(v11>chopmax || v31>chopmax || v33 > chopmax)draw123=0;
+           if(v11>chopmax || v13>chopmax || v33 > chopmax)draw134=0;
         }
         if(set_chopmin==1){
-           if(v11<chopmin || v31<chopmin || v33<chopmin)draw123=0;          
-           if(v11<chopmin || v13<chopmin || v33<chopmin)draw134=0;          
+           if(v11<chopmin || v31<chopmin || v33<chopmin)draw123=0;
+           if(v11<chopmin || v13<chopmin || v33<chopmin)draw134=0;
         }
         if(draw123==1){
           glTexCoord1f(r11);  glVertex3f(x1, yy1, z11);
@@ -6082,19 +6082,19 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
           glTexCoord1f(r31);  glVertex3f(x3, yy1, constval);
           glTexCoord1f(rmid); glVertex3f(xmid, ymid, constval);
         }
-        
+
         if(draw2==1){
           glTexCoord1f(r31);  glVertex3f(x3, yy1, constval);
           glTexCoord1f(r33);  glVertex3f(x3, y3, constval);
           glTexCoord1f(rmid); glVertex3f(xmid, ymid, constval);
         }
-        
+
         if(draw3==1){
           glTexCoord1f(r33);  glVertex3f(x3, y3, constval);
           glTexCoord1f(r13);  glVertex3f(x1, y3, constval);
           glTexCoord1f(rmid); glVertex3f(xmid, ymid, constval);
         }
-        
+
         if(draw4==1){
           glTexCoord1f(r13);  glVertex3f(x1, y3, constval);
           glTexCoord1f(r11);  glVertex3f(x1, yy1, constval);
