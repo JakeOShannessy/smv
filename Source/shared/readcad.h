@@ -1,20 +1,8 @@
 #ifndef READCAD_H_DEFINED
 #define READCAD_H_DEFINED
 
-#define BUFFER_LEN 255
-
-#include "options.h"
-#if defined(WIN32)
-#include <windows.h>
-#endif
-#include GLU_H
 #include GL_H
-
-typedef struct _texturedata {
-  char *file;
-  int loaded, display, used, is_transparent;
-  GLuint name;
-} texturedata;
+#include "shared_structures.h"
 
 typedef struct _cadlookdata {
   int index;
@@ -44,9 +32,56 @@ typedef struct _cadgeomdata {
   cadquad *quad;
 } cadgeomdata;
 
-void CalcQuadNormal(float *xyz, float *out);
-int CompareQuad(const void *arg1, const void *arg2);
-void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess);
-void ReadCADGeom(cadgeomdata *cd, GLfloat block_shininess);
-void FreeCADInfo(cadgeomdata *cadgeominfo, int ncadgeom);
+/**
+ * @brief A collection of CAD geometry definitions. This is allocated with a
+ * fixed capacity.
+ *
+ */
+typedef struct {
+  /** @brief The capacity of the array. This cannot be changed after creation.
+   */
+  int capacity;
+  /** @brief The number of CAD geometry objects currently defined. */
+  int ncadgeom;
+  /** @brief The array of object definitions. The length of this array is @ref
+   * capacity but only the first @ref ncadgeom entries contain valid
+   * information. */
+  cadgeomdata *cadgeominfo;
+} cadgeom_collection;
+
+/**
+ * @brief Initialise an @ref cadgeom_collection.
+ *
+ * @param capacity The maximum capacity of this collection.
+ *
+ * @returns A @ref cadgeom_collection which has been properly initialized.
+ */
+cadgeom_collection *CreateCADGeomCollection(int capacity);
+
+/**
+ * @brief Free an @ref cadgeom_collection previously created by @ref
+ * CreateCADGeomCollection.
+ *
+ * @param[inout] coll The @ref cadgeom_collection to free.
+ */
+void FreeCADGeomCollection(cadgeom_collection *coll);
+
+/**
+ * @brief Read CAD geometry data into 'cd'.
+ *
+ * @param cd A pointer to the cadgeomdata, this must already be allocated.
+ * @param file A path to the file to read.
+ * @param block_shininess The block shininess to apply.
+ */
+int ReadCADGeomToCollection(cadgeom_collection *coll, const char *file,
+                            GLfloat block_shininess);
+
+/**
+ * @brief Return the number of CAD object definitions.
+ *
+ * @param coll The collection.
+ * @return  Number of defined objects. If @ref coll is NULL, return 0.
+ */
+int NCADGeom(cadgeom_collection *coll);
+
 #endif
