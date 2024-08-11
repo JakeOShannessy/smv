@@ -188,6 +188,7 @@ add_executable(smokeview
     Source/shared/color2rgb.c
     Source/shared/readimage.c
     Source/shared/readcad.c
+    Source/shared/readhvac.c
     Source/shared/readgeom.c
     Source/shared/colorbars.c
     Source/shared/colorbar_defs.c

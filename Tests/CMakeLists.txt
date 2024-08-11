@@ -122,6 +122,26 @@ if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_objects m)
 endif()
 
+# parse_hvac_vals
+add_executable(parse_hvac_vals parse_hvac_vals.c
+    ../Source/shared/readhvac.c
+    ../Source/shared/file_util.c
+    ../Source/shared/string_util.c
+    ../Source/shared/stdio_buffer.c
+    ../Source/shared/getdata.c
+    ../Source/shared/dmalloc.c
+)
+
+target_include_directories(parse_hvac_vals PRIVATE
+    ../Tests
+    ../Source/shared
+)
+if (WIN32)
+    target_include_directories(parse_hvac_vals PRIVATE ../Source/pthreads)
+endif()
+if ((NOT MACOSX) AND UNIX)
+    target_link_libraries(parse_hvac_vals m)
+endif()
 
 # parse_colorbar
 add_executable(parse_colorbar parse_colorbar.c
@@ -142,11 +162,13 @@ target_include_directories(parse_colorbar PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(parse_colorbar PRIVATE ../Source/pthreads)
+target_include_directories(parse_colorbar PRIVATE ../Source/pthreads)
 endif()
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(parse_colorbar m)
+target_link_libraries(parse_colorbar m)
 endif()
+
+
 
 # mem_test
 add_executable(mem_test mem_test.c
@@ -203,3 +225,6 @@ add_test(NAME "Parse Colorbar"
 
 add_test(NAME "Mem Test"
     COMMAND mem_test)
+
+add_test(NAME "Simple HVAC Vals - Complete"
+    COMMAND parse_hvac_vals ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/hvac_vals.hvac)
