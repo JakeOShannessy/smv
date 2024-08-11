@@ -19,7 +19,7 @@
 
 #include "readhvac.h"
 
-inline int hvacval(hvacdatacollection *hvaccoll, int itime, int iduct,
+static inline int hvacval(hvacdatacollection *hvaccoll, int itime, int iduct,
                    int icell) {
   return (itime)*hvaccoll->hvac_maxcells * hvaccoll->hvac_n_ducts +
          (iduct)*hvaccoll->hvac_maxcells + (icell);

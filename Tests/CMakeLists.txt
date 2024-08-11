@@ -107,6 +107,9 @@ add_executable(parse_hvac_vals parse_hvac_vals.c
     ../Source/shared/stdio_buffer.c
     ../Source/shared/getdata.c
     ../Source/shared/dmalloc.c
+    ../Source/shared/sha256.c
+    ../Source/shared/sha1.c
+    ../Source/shared/md5.c
 )
 
 target_include_directories(parse_hvac_vals PRIVATE
