@@ -644,6 +644,10 @@ void DrawOrigObstOutlines(void){
   int i;
   float *color, *oldcolor=NULL;
 
+
+#ifdef pp_FDS
+  THREADcontrol(readsmvorig_threads, THREAD_JOIN);
+#endif
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
   glTranslatef(-xbar0,-ybar0,-zbar0);
@@ -3898,13 +3902,22 @@ void UpdateHiddenFaces(){
       facej->hidden=0;
 
     }
+  }
+  if(have_removable_obsts == 1){ 
+    if(hide_overlaps!=0)PRINTF(" complete\n");
+    return;
+  }
+  for(i=0;i<nmeshes;i++){
+    int j;
+    meshdata *meshi;
+
+    meshi=meshinfo + i;
     if(hide_overlaps==0)continue;
     for(j=0;j<6*meshi->nbptrs;j++){
       int k;
       facedata *facej;
 
       facej = meshi->faceinfo+j;
-
       for(k=0;k<6*meshi->nbptrs;k++){
         facedata *facek;
 
@@ -4019,35 +4032,29 @@ void AllocateFaces(){
     ntotal = 6*meshi->nbptrs + meshi->nvents+12;
     ntotal2 += ntotal;
 
-    FREEMEMORY(meshi->faceinfo);
-    FREEMEMORY(meshi->face_normals_single);
-    FREEMEMORY(meshi->face_normals_double);
-    FREEMEMORY(meshi->face_transparent_double);
-    FREEMEMORY(meshi->face_textures);
-    FREEMEMORY(meshi->face_outlines);
     if(ntotal>0){
-      if(abortflag==0&&NewMemory((void **)&meshi->faceinfo,sizeof(facedata)*ntotal)==0){
+      if(abortflag==0 && NEWMEM(meshi->faceinfo,sizeof(facedata)*ntotal)==0){
         abortflag=1;
       }
-      if(abortflag==0&&NewMemory((void **)&meshi->face_normals_single,sizeof(facedata *)*ntotal)==0){
+      if(abortflag==0 && NEWMEM(meshi->face_normals_single,sizeof(facedata *)*ntotal)==0){
+        abortflag = 1;
+      }
+      if(abortflag==0 && NEWMEM(meshi->face_normals_double,sizeof(facedata *)*ntotal)==0){
         abortflag=1;
       }
-      if(abortflag==0&&NewMemory((void **)&meshi->face_normals_double,sizeof(facedata *)*ntotal)==0){
+      if(abortflag==0 && NEWMEM(meshi->face_transparent_double,sizeof(facedata *)*ntotal)==0){
         abortflag=1;
       }
-      if(abortflag==0&&NewMemory((void **)&meshi->face_transparent_double,sizeof(facedata *)*ntotal)==0){
+      if(abortflag==0 && NEWMEM(meshi->face_textures,sizeof(facedata *)*ntotal)==0){
         abortflag=1;
       }
-      if(abortflag==0&&NewMemory((void **)&meshi->face_textures,sizeof(facedata *)*ntotal)==0){
-        abortflag=1;
-      }
-      if(abortflag==0&&NewMemory((void **)&meshi->face_outlines,sizeof(facedata *)*ntotal)==0){
+      if(abortflag==0 && NEWMEM(meshi->face_outlines,sizeof(facedata *)*ntotal)==0){
         abortflag=1;
       }
     }
   }
   if(ntotal2>0){
-    if(abortflag==0&&NewMemory((void **)&face_transparent,sizeof(facedata *)*ntotal2)==0){
+    if(abortflag==0&&NEWMEM(face_transparent,sizeof(facedata *)*ntotal2)==0){
       abortflag=1;
     }
   }
@@ -4206,17 +4213,6 @@ void UpdateSelectFaces(void){
       }
     }
   }
-}
-
-/* ------------------ IsBlockageVisible ------------------------ */
-
-int IsBlockageVisible(blockagedata *bc, float local_time){
-  int listindex,val;
-
-  if(bc->showhide==NULL||local_time<0.0)return 1;
-  listindex=GetIndex(local_time,bc->showtime,bc->nshowtime);
-  val = bc->showhide[listindex];
-  return val;
 }
 
 /* ------------------ InitDemo ------------------------ */

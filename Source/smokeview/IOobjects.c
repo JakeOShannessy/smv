@@ -1698,6 +1698,17 @@ void DrawCircle(float diameter,unsigned char *rgbcolor, circdata *circinfo){
 
 /* ----------------------- DrawCuboid ----------------------------- */
 
+//     7--------6
+//    /|       /
+//   / |      / |
+//  4--------5  |
+//  |  |     |  |
+//  |  |     |  |
+//  |  3--------2
+//  | /      | /
+//  |/       |/
+//  0--------1
+
 void DrawCuboid(float *origin, float verts[8][3], unsigned char *rgbcolor, int draw_outline){
   if(origin!=NULL){
     glPushMatrix();
@@ -1858,7 +1869,7 @@ void DrawCubeC(float size, unsigned char *rgbcolor){
   float s1=size/2.0;
   float verts[8][3]={
     {-s1,-s1,-s1},{s1,-s1,-s1},{s1,s1,-s1},{-s1,s1,-s1},
-    {-s1,-s1,-s1},{s1,-s1,-s1},{s1,s1,-s1},{-s1,s1,-s1}
+    {-s1,-s1, s1},{s1,-s1, s1},{s1,s1, s1},{-s1,s1, s1}
   };
 
   DrawCuboid(NULL,verts,rgbcolor,object_outlines);
@@ -5910,6 +5921,23 @@ void UpdateObjectUsed(void){
   }
 }
 
+/* ----------------------- Dist2Plane ------------------------ */
+
+float Dist2Plane(float x, float y, float z, float xyzp[3], float xyzpn[3]){
+  float return_val;
+  float xyz[3];
+  int i;
+
+  xyz[0]=x;
+  xyz[1]=y;
+  xyz[2]=z;
+  return_val=0.0;
+  for(i=0;i<3;i++){
+    return_val+=(xyz[i]-xyzp[i])*xyzpn[i];
+  }
+  return return_val;
+}
+
 /* ----------------------- InitDevicePlane ------------------------ */
 
 void InitDevicePlane(devicedata *devicei){
@@ -6020,3 +6048,29 @@ void UpdatePartClassDepend(partclassdata *partclassi){
     partclassi->vars_dep_index[nvar-1]= GetObjectFrameTokenLoc("B",obj_frame);
   }
 }
+
+/* ------------------ Normalize ------------------------ */
+
+void Normalize(float *xyz, int n){
+  float norm,norm2;
+  int i;
+
+  norm2 = 0.0;
+
+  for(i=0;i<n;i++){
+    norm2 += xyz[i]*xyz[i];
+  }
+  norm = sqrt(norm2);
+  if(norm<0.00001){
+    for(i=0;i<n-1;i++){
+      xyz[i]=0.0;
+    }
+    xyz[n-1]=1.0;
+  }
+  else{
+    for(i=0;i<n;i++){
+      xyz[i]/=norm;
+    }
+  }
+}
+

@@ -66,6 +66,23 @@ typedef struct {
 #define HELP_SUMMARY 1
 #define HELP_ALL 2
 
+#ifndef pp_COMPVER
+#if defined(__VERSION__) && defined(__GNUC__) && !defined(__clang__)
+#define pp_COMPVER "GCC " __VERSION__
+#elif defined(__VERSION__)
+#define pp_COMPVER __VERSION__
+#elif defined(__VERSION)
+#define pp_COMPVER __VERSION
+#elif defined(_MSC_VER)
+// These macros are to convert the MSVC version number to a string
+#define xstr(s) str(s)
+#define str(s) #s
+#define pp_COMPVER "MSVC " xstr(_MSC_VER)
+#else
+#define pp_COMPVER "unknown"
+#endif
+#endif
+
 // vvvvvvvvvvvvvvvvvvvvvvvv headers vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 EXTERNCPP char          *GetStringPtr(char *buffer);
@@ -116,6 +133,7 @@ EXTERNCPP const char    *TrimFrontConst(const char *line);
 EXTERNCPP void           TrimZeros(char *line);
 EXTERNCPP char          *TrimFrontZeros(char *line);
 
+EXTERNCPP char           *Val2String(float val, char *string);
 EXTERNCPP void           TrimMZeros(char *line);
 EXTERNCPP char          *Strstr(char *c, char *key);
 EXTERNCPP char          *STRSTR(char *c, const char *key);
