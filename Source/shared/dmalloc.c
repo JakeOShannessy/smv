@@ -16,10 +16,6 @@ static int checkmemoryflag=1;
 static blockinfo *GetBlockInfo(bbyte *pb);
 #endif
 
-#ifdef pp_OSX
-#include <stddef.h>
-#endif
-
 #ifdef WIN32
 
 /* ------------------ memusage ------------------------ */

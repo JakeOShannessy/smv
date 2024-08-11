@@ -148,6 +148,18 @@ if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_colorbar m)
 endif()
 
+# mem_test
+add_executable(mem_test mem_test.c
+    ../Source/shared/dmalloc.c
+)
+
+target_include_directories(mem_test PRIVATE
+    ../Tests
+    ../Source/shared
+)
+if (WIN32)
+    target_include_directories(mem_test PRIVATE ../Source/pthreads)
+endif()
 
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames

@@ -11,6 +11,7 @@
 
 #ifndef pp_OSX
 #include <malloc.h>
+#include <stddef.h>
 #endif
 #define memGarbage 0xA3
 
