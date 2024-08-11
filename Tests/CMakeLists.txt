@@ -123,6 +123,16 @@ if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_hvac_vals m)
 endif()
 
+# mem_test
+add_executable(mem_test mem_test.c
+    ../Source/shared/dmalloc.c
+)
+
+target_include_directories(mem_test PRIVATE
+    ../Tests
+    ../Source/shared
+)
+
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
 add_test(NAME "Simple Slice - Complete"
@@ -153,3 +163,6 @@ add_test(NAME "Test Object API"
 
 add_test(NAME "Simple HVAC Vals - Complete"
     COMMAND parse_hvac_vals ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_hvac.hvac)
+
+add_test(NAME "Mem Test"
+    COMMAND mem_test)
