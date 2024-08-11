@@ -200,3 +200,6 @@ add_test(NAME "Test Object API (for bundle)"
 
 add_test(NAME "Parse Colorbar"
     COMMAND parse_colorbar ${CMAKE_SOURCE_DIR}/Build/for_bundle/colorbars/divergent/CET-D01.csv)
+
+add_test(NAME "Mem Test"
+    COMMAND mem_test)
