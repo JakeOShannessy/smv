@@ -11,8 +11,8 @@
 
 #ifndef pp_OSX
 #include <malloc.h>
-#include <stddef.h>
 #endif
+#include <stddef.h>
 #define memGarbage 0xA3
 
 typedef int mallocflag;
