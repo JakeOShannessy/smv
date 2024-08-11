@@ -132,6 +132,9 @@ add_executable(parse_colorbar parse_colorbar.c
     ../Source/shared/file_util.c
     ../Source/shared/string_util.c
     ../Source/shared/stdio_buffer.c
+    ../Source/shared/sha256.c
+    ../Source/shared/sha1.c
+    ../Source/shared/md5.c
 )
 
 target_include_directories(parse_colorbar PRIVATE
