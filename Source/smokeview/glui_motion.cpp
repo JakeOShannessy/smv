@@ -1761,10 +1761,10 @@ extern "C" void GLUIUpdateRotationIndex(int val){
 
   *rotation_index=val;
   camera_current->rotation_index=val;
-  if(*rotation_index>=0&&*rotation_index<nmeshes){
+  if(*rotation_index>=0&&*rotation_index<meshescoll.nmeshes){
     meshdata *meshi;
 
-    meshi = meshinfo + *rotation_index;
+    meshi = meshescoll.meshinfo + *rotation_index;
     camera_current->xcen=meshi->xcen;
     camera_current->ycen=meshi->ycen;
     camera_current->zcen=meshi->zcen;
@@ -2252,8 +2252,8 @@ extern "C" void GLUISceneMotionCB(int var){
         SPINNER_ycenCUSTOM->disable();
         SPINNER_zcenCUSTOM->disable();
       }
-      if(*rotation_index>=0&&*rotation_index<nmeshes){
-        UpdateCurrentMesh(meshinfo + (*rotation_index));
+      if(*rotation_index>=0&&*rotation_index<meshescoll.nmeshes){
+        UpdateCurrentMesh(meshescoll.meshinfo + (*rotation_index));
         GLUIUpdateRotationIndex(*rotation_index);
       }
       else if(*rotation_index==ROTATE_ABOUT_USER_CENTER){
@@ -2266,11 +2266,11 @@ extern "C" void GLUISceneMotionCB(int var){
         GLUIUpdateRotationIndex(ROTATE_ABOUT_CLIPPING_CENTER);
       }
       else if(*rotation_index==ROTATE_ABOUT_WORLD_CENTER){
-        UpdateCurrentMesh(meshinfo);
+        UpdateCurrentMesh(meshescoll.meshinfo);
         GLUIUpdateRotationIndex(ROTATE_ABOUT_WORLD_CENTER);
       }
       else{
-        UpdateCurrentMesh(meshinfo);
+        UpdateCurrentMesh(meshescoll.meshinfo);
         GLUIUpdateRotationIndex(ROTATE_ABOUT_WORLD_CENTER);
       }
       update_rotation_center=1;
@@ -2460,7 +2460,7 @@ extern "C" void GLUISceneMotionCB(int var){
 extern "C" void GLUIUpdateMeshList1(int val){
   if(LIST_rotate_about==NULL)return;
   LIST_rotate_about->set_int_val(val);
-  if(val>=0&&val<nmeshes){
+  if(val>=0&&val<meshescoll.nmeshes){
     RADIO_rotation_type->set_int_val(ROTATION_2AXIS);
     HandleRotationType(ROTATION_2AXIS);
   }

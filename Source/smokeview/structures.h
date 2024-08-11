@@ -1419,4 +1419,9 @@ typedef struct _skyboxdata {
   texturedata face[6];
 } skyboxdata;
 
+typedef struct {
+  meshdata *meshinfo;
+  int nmeshes;
+} meshescollection;
+
 #endif

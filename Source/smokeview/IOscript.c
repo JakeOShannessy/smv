@@ -1668,12 +1668,12 @@ int GetVolFrameMax(int meshnum){
   int i, volframemax=-1;
 
   volframemax = -1;
-  for(i = 0; i<nmeshes; i++){
+  for(i = 0; i<meshescoll.nmeshes; i++){
     meshdata *meshi;
     volrenderdata *vr;
 
     if(meshnum!=i && meshnum>=0)continue;
-    meshi = meshinfo+i;
+    meshi = meshescoll.meshinfo+i;
     vr = meshi->volrenderinfo;
     volframemax = MAX(volframemax,vr->ntimes);
   }
@@ -1688,7 +1688,7 @@ void LoadSmokeFrame(int meshnum, int framenum){
   int max_frames = -1, frame_old;
   float valtime;
 
-  if(meshnum > nmeshes - 1||meshnum<-1)meshnum = -1;
+  if(meshnum > meshescoll.nmeshes - 1||meshnum<-1)meshnum = -1;
 
   max_frames = GetVolFrameMax(meshnum);
   if(max_frames > 0)GLUIUpdateLoadFrameMax(max_frames);
@@ -1696,12 +1696,12 @@ void LoadSmokeFrame(int meshnum, int framenum){
   framenum = CLAMP(framenum, 0, max_frames-1);
   if(framenum!=frame_old)GLUIUpdateLoadFrameVal(framenum);
 
-  for(i = 0; i<nmeshes; i++){
+  for(i = 0; i<meshescoll.nmeshes; i++){
     meshdata *meshi;
     volrenderdata *vr;
 
     if(meshnum != i && meshnum >= 0)continue;
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     vr = meshi->volrenderinfo;
     FreeVolsmokeFrame(vr, framenum);
     ReadVolsmokeFrame(vr, framenum, &first);
@@ -1741,9 +1741,9 @@ void LoadTimeFrame(int meshnum, float timeval){
   int update_timebounds = 0;
 
   meshnum_orig = meshnum;
-  if(meshnum<0||meshnum>nmeshes-1)meshnum = 0;
+  if(meshnum<0||meshnum>meshescoll.nmeshes-1)meshnum = 0;
 
-  meshi = meshinfo+meshnum;
+  meshi = meshescoll.meshinfo+meshnum;
   vr = meshi->volrenderinfo;
 
   if(vr->times_defined==0)LoadSmokeFrame(meshnum_orig, 0);
@@ -1841,7 +1841,7 @@ void ScriptLoadIsoFrame(scriptdata *scripti, int flag){
   index = scripti->ival;
   framenum = scripti->ival2;
   fileindex = scripti->ival4;
-  if(index > nmeshes - 1)index = -1;
+  if(index > meshescoll.nmeshes - 1)index = -1;
 
   update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
   CancelUpdateTriangles();
@@ -2001,11 +2001,11 @@ void ScriptLoadVolSmoke(scriptdata *scripti){
     read_vol_mesh=VOL_READALL;
     ReadVolsmokeAllFramesAllMeshes2(NULL);
   }
-  else if(imesh>=0&&imesh<nmeshes){
+  else if(imesh>=0&&imesh<meshescoll.nmeshes){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo + imesh;
+    meshi = meshescoll.meshinfo + imesh;
     vr = meshi->volrenderinfo;
     ReadVolsmokeAllFrames(vr);
   }
@@ -2097,7 +2097,7 @@ int SliceMatch(scriptdata *scripti, slicedata *slicei){
     else{
       if(min[0]!=0||min[1]!=0||min[2]!=0)return 0;
     }
-    meshi = meshinfo+slicei->blocknumber;
+    meshi = meshescoll.meshinfo+slicei->blocknumber;
     if(max[0]!=meshi->ibar||max[1]!=meshi->jbar||max[2]!=meshi->kbar)return 0;
   }
   else{
@@ -2686,7 +2686,7 @@ void ScriptLoadSliceM(scriptdata *scripti, int meshnum){
       min = slicei->ijk_min;
       max = slicei->ijk_max;
       if(min[0] != 0 || min[1] != 0 || min[2] != 0)continue;
-      meshi = meshinfo + slicei->blocknumber;
+      meshi = meshescoll.meshinfo + slicei->blocknumber;
       if(max[0] != meshi->ibar || max[1] != meshi->jbar || max[2] != meshi->kbar)continue;
     }
     else{
@@ -2903,8 +2903,8 @@ void ScriptPlot3dProps(scriptdata *scripti){
     meshdata *gbsave,*gbi;
 
     gbsave=current_mesh;
-    for(i=0;i<nmeshes;i++){
-      gbi = meshinfo + i;
+    for(i=0;i<meshescoll.nmeshes;i++){
+      gbi = meshescoll.meshinfo + i;
       if(gbi->plot3dfilenum==-1)continue;
       UpdateCurrentMesh(gbi);
       UpdatePlotSlice(XDIR);
@@ -3092,9 +3092,9 @@ void ScriptShowPlot3dData(scriptdata *scripti){
   int isolevel;
 
   imesh = scripti->ival-1;
-  if(imesh<0||imesh>nmeshes-1)return;
+  if(imesh<0||imesh>meshescoll.nmeshes-1)return;
 
-  meshi = meshinfo + imesh;
+  meshi = meshescoll.meshinfo + imesh;
   UpdateCurrentMesh(meshi);
 
   dir = CLAMP(scripti->ival2,XDIR,ISO);

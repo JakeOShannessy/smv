@@ -252,7 +252,7 @@ int GetCellindex(float *xyz, meshdata **mesh_tryptr){
   meshdata *mesh_try=NULL;
 
   if(mesh_tryptr != NULL)mesh_try = *mesh_tryptr;
-  for(i = -1; i < nmeshes; i++){
+  for(i = -1; i < meshescoll.nmeshes; i++){
     meshdata *meshi;
     float *boxmin, *boxmax, *dbox;
 
@@ -261,7 +261,7 @@ int GetCellindex(float *xyz, meshdata **mesh_tryptr){
       meshi = mesh_try;
     }
     else{
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       if(meshi == mesh_try)continue;
     }
     boxmin = meshi->boxmin;
@@ -372,8 +372,8 @@ void DrawSmoke3DGPU(smoke3ddata *smoke3di){
 
   meshdata *meshi;
 
-  meshi = meshinfo+smoke3di->blocknumber;
-  if(meshvisptr[meshi-meshinfo]==0)return;
+  meshi = meshescoll.meshinfo+smoke3di->blocknumber;
+  if(meshvisptr[meshi-meshescoll.meshinfo]==0)return;
 
   if(HRRPUV_index>=0){
     firecolor = smoke3di->smokestate[HRRPUV_index].color;
@@ -403,8 +403,8 @@ void DrawSmoke3DGPU(smoke3ddata *smoke3di){
   // meshi->hrrpuv_cutoff
   // hrrpuv_max_smv;
 
-  meshi = meshinfo+smoke3di->blocknumber;
-  if(meshvisptr[meshi-meshinfo]==0)return;
+  meshi = meshescoll.meshinfo+smoke3di->blocknumber;
+  if(meshvisptr[meshi-meshescoll.meshinfo]==0)return;
   value[0] = 255;
   value[1] = 255;
   value[2] = 255;
@@ -1548,7 +1548,7 @@ void UpdateSmokeAlphas(void){
 
     smoke3di = smoke3dinfo+i;
     if(smoke3di->extinct<0.0)continue;
-    smoke_mesh = meshinfo+smoke3di->blocknumber;
+    smoke_mesh = meshescoll.meshinfo+smoke3di->blocknumber;
     dx = smoke_mesh->dxyz_orig[0];
     dists[ALPHA_X]  = dx;
     dists[ALPHA_Y]  = smoke_mesh->dxyz_orig[1];
@@ -1597,8 +1597,8 @@ int DrawSmoke3D(smoke3ddata *smoke3di){
 
   meshdata *meshi;
 
-  meshi = meshinfo+smoke3di->blocknumber;
-  if(meshvisptr[meshi-meshinfo]==0)return 0;
+  meshi = meshescoll.meshinfo+smoke3di->blocknumber;
+  if(meshvisptr[meshi-meshescoll.meshinfo]==0)return 0;
 
   if(meshi->smokealpha_ptr==NULL||meshi->merge_alpha==NULL||meshi->update_smoke3dcolors==1){
     meshi->update_smoke3dcolors = 0;
@@ -4043,7 +4043,7 @@ int SetupSmoke3D(smoke3ddata *smoke3di, int load_flag, int iframe_arg, int *erro
   int fortran_skip = 0;
   int error_local;
 
-  mesh_smoke3d = meshinfo+smoke3di->blocknumber;
+  mesh_smoke3d = meshescoll.meshinfo+smoke3di->blocknumber;
   if(smoke3di->extinct>0.0){
     mesh_smoke3d->smoke3d_soot = smoke3di;
   }
@@ -4095,7 +4095,7 @@ int SetupSmoke3D(smoke3ddata *smoke3di, int load_flag, int iframe_arg, int *erro
         meshdata *meshj;
 
         smoke3dj = smoke3dinfo+j;
-        meshj = meshinfo+smoke3dj->blocknumber;
+        meshj = meshescoll.meshinfo+smoke3dj->blocknumber;
         if(smoke3dj!=smoke3di && smoke3dj->loaded==1&&meshj==mesh_smoke3d){
           free_iblank_smoke3d_local = 0;
           break;
@@ -4263,7 +4263,7 @@ FILE_SIZE ReadSmoke3D(int time_frame,int ifile_arg,int load_flag, int first_time
   int fortran_skip=0;
 #endif
 
-#ifdef pp_SMOKE_SPEEDUP  
+#ifdef pp_SMOKE_SPEEDUP
   update_glui_merge_smoke = 1;
   GLUTPOSTREDISPLAY;
 #endif
@@ -4589,7 +4589,7 @@ void MergeSmoke3DColors(smoke3ddata *smoke3dset){
     if(smoke3di->loaded==0||smoke3di->display==0)continue;
     if(smoke3di->is_fire == 1  && smoke3di->skip_fire == 1)continue;
     if(smoke3di->is_smoke == 1 && smoke3di->skip_smoke == 1)continue;
-    mesh_smoke3d = meshinfo+smoke3di->blocknumber;
+    mesh_smoke3d = meshescoll.meshinfo+smoke3di->blocknumber;
     smoke3d_soot = mesh_smoke3d->smoke3d_soot;
     if(smoke3di->type==SOOT_index){
       smoke3di->primary_file = 1;
@@ -4641,7 +4641,7 @@ void MergeSmoke3DColors(smoke3ddata *smoke3dset){
     if(smoke3di->loaded==0||smoke3di->primary_file==0)continue;
     if(smoke3di->is_fire == 1  && smoke3di->skip_fire == 1)continue;
     if(smoke3di->is_smoke == 1 && smoke3di->skip_smoke == 1)continue;
-    mesh_smoke3d = meshinfo+smoke3di->blocknumber;
+    mesh_smoke3d = meshescoll.meshinfo+smoke3di->blocknumber;
     if(IsSmokeComponentPresent(smoke3di)==0)continue;
 
     if(fire_halfdepth<=0.0){
@@ -4838,7 +4838,7 @@ void MergeSmoke3DBlack(smoke3ddata *smoke3dset){
     if(smoke3dset!=NULL&&smoke3dset!=smoke3di)continue;
     smoke3di->primary_file = 0;
     if(smoke3di->loaded==0||smoke3di->display==0)continue;
-    mesh_smoke3d = meshinfo+smoke3di->blocknumber;
+    mesh_smoke3d = meshescoll.meshinfo+smoke3di->blocknumber;
     smoke3d_soot = mesh_smoke3d->smoke3d_soot;
     if(smoke3di->type==SOOT_index){
       smoke3di->primary_file = 1;
@@ -4878,7 +4878,7 @@ void MergeSmoke3DBlack(smoke3ddata *smoke3dset){
     if(smoke3dset!=NULL&&smoke3dset!=smoke3di)continue;
     if(smoke3di->loaded==0||smoke3di->primary_file==0)continue;
     if(IsSmokeComponentPresent(smoke3di)==0)continue;
-    meshi = meshinfo+smoke3di->blocknumber;
+    meshi = meshescoll.meshinfo+smoke3di->blocknumber;
 
     if(fire_halfdepth<=0.0){
       smoke3di->fire_alpha = 255;
@@ -4987,10 +4987,10 @@ void UpdateSmoke3dMenuLabels(void){
   for(i=0;i<nsmoke3dinfo;i++){
     smoke3di = smoke3dinfo + i;
     STRCPY(smoke3di->menulabel, "");
-    if(nmeshes > 1){
+    if(meshescoll.nmeshes > 1){
       meshdata *mesh_smoke3d;
 
-      mesh_smoke3d = meshinfo + smoke3di->blocknumber;
+      mesh_smoke3d = meshescoll.meshinfo + smoke3di->blocknumber;
       sprintf(meshlabel, "%s", mesh_smoke3d->label);
       STRCAT(smoke3di->menulabel, meshlabel);
     }
@@ -5030,12 +5030,12 @@ int InMeshSmoke(float x, float y, float z, int nm, int flag){
     n = nm;
   }
   else{
-    n = nmeshes;
+    n = meshescoll.nmeshes;
   }
   for(i = 0;i<n;i++){
     meshdata *meshi;
 
-    meshi = meshinfo+i;
+    meshi = meshescoll.meshinfo+i;
     if(flag==ALLMESHES&&i==nm)continue;
     if(meshi->iblank_smoke3d==NULL)continue;
 
@@ -5060,7 +5060,7 @@ void MakeIBlankSmoke3D(void){
     int ijksize;
 
     smoke3di = smoke3dinfo + i;
-    mesh_smoke3d = meshinfo + smoke3di->blocknumber;
+    mesh_smoke3d = meshescoll.meshinfo + smoke3di->blocknumber;
 
     ibar = mesh_smoke3d->ibar;
     jbar = mesh_smoke3d->jbar;
@@ -5075,7 +5075,7 @@ void MakeIBlankSmoke3D(void){
     }
   }
 
-  for(ic=nmeshes-1;ic>=0;ic--){
+  for(ic=meshescoll.nmeshes-1;ic>=0;ic--){
     meshdata *mesh_smoke3d;
     unsigned char *iblank_smoke3d;
     float *xplt, *yplt, *zplt;
@@ -5085,7 +5085,7 @@ void MakeIBlankSmoke3D(void){
     int ijksize;
     int j, k;
 
-    mesh_smoke3d = meshinfo + ic;
+    mesh_smoke3d = meshescoll.meshinfo + ic;
     iblank_smoke3d = mesh_smoke3d->iblank_smoke3d;
    // if(iblank_smoke3d==NULL||mesh_smoke3d->iblank_smoke3d_defined==1)continue;
     if(iblank_smoke3d==NULL)continue;

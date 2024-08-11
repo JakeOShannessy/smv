@@ -613,7 +613,7 @@ int LuaGetNglobalTimes(lua_State *L) {
 
 /// @brief Get the number of meshes in the loaded model.
 int LuaGetNmeshes(lua_State *L) {
-  lua_pushnumber(L, nmeshes);
+  lua_pushnumber(L, meshescoll.nmeshes);
   return 1;
 }
 
@@ -631,7 +631,7 @@ int LuaGetiblankcell(lua_State *L) {
   int j = lua_tonumber(L, 2);
   int k = lua_tonumber(L, 3);
 
-  meshdata *mesh = &meshinfo[mesh_index];
+  meshdata *mesh = &meshescoll.meshinfo[mesh_index];
   char iblank =
       mesh->c_iblank_cell[(i) + (j)*mesh->ibar + (k)*mesh->ibar * mesh->jbar];
   if (iblank == GAS) {
@@ -651,7 +651,7 @@ int LuaGetiblanknode(lua_State *L) {
   int j = lua_tonumber(L, 2);
   int k = lua_tonumber(L, 3);
 
-  meshdata *mesh = &meshinfo[mesh_index];
+  meshdata *mesh = &meshescoll.meshinfo[mesh_index];
   char iblank = mesh->c_iblank_node[(i) + (j) * (mesh->ibar + 1) +
                                     (k) * (mesh->ibar + 1) * (mesh->jbar + 1)];
   if (iblank == GAS) {
@@ -667,8 +667,8 @@ int LuaGetiblanknode(lua_State *L) {
 /// key of the table is the mesh number.
 // TODO: provide more information via this interface.
 int LuaGetMeshes(lua_State *L) {
-  int entries = nmeshes;
-  meshdata *infotable = meshinfo;
+  int entries = meshescoll.nmeshes;
+  meshdata *infotable = meshescoll.meshinfo;
   lua_createtable(L, 0, entries);
   int i;
   for (i = 0; i < entries; i++) {
@@ -1052,7 +1052,7 @@ int LuaGetPlot3dinfo(lua_State *L) {
 int LuaGetQdataSum(lua_State *L) {
   int meshnumber = lua_tonumber(L, 1);
   int vari, i, j, k;
-  meshdata mesh = meshinfo[meshnumber];
+  meshdata mesh = meshescoll.meshinfo[meshnumber];
   int ntotal = (mesh.ibar + 1) * (mesh.jbar + 1) * (mesh.kbar + 1);
   int vars = 5;
   float totals[5];
@@ -1091,7 +1091,7 @@ int LuaGetQdataSumBounded(lua_State *L) {
   j2 = lua_tonumber(L, 5);
   k1 = lua_tonumber(L, 6);
   k2 = lua_tonumber(L, 7);
-  meshdata mesh = meshinfo[meshnumber];
+  meshdata mesh = meshescoll.meshinfo[meshnumber];
   int ntotal = (mesh.ibar + 1) * (mesh.jbar + 1) * (mesh.kbar + 1);
   int bounded_total = (i2 - i1 + 1) * (j2 - j1 + 1) * (k2 - k1 + 1);
   int vars = 5;
@@ -1132,7 +1132,7 @@ int LuaGetQdataMaxBounded(lua_State *L) {
   j2 = lua_tonumber(L, 5);
   k1 = lua_tonumber(L, 6);
   k2 = lua_tonumber(L, 7);
-  meshdata mesh = meshinfo[meshnumber];
+  meshdata mesh = meshescoll.meshinfo[meshnumber];
   int ntotal = (mesh.ibar + 1) * (mesh.jbar + 1) * (mesh.kbar + 1);
   int bounded_total = (i2 - i1 + 1) * (j2 - j1 + 1) * (k2 - k1 + 1);
   int vars = 5;
@@ -1167,7 +1167,7 @@ int LuaGetQdataMaxBounded(lua_State *L) {
 int LuaGetQdataMean(lua_State *L) {
   int meshnumber = lua_tonumber(L, 1);
   int vari, i, j, k;
-  meshdata mesh = meshinfo[meshnumber];
+  meshdata mesh = meshescoll.meshinfo[meshnumber];
   int ntotal = (mesh.ibar + 1) * (mesh.jbar + 1) * (mesh.kbar + 1);
   int vars = 5;
   float totals[5];

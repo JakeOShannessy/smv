@@ -2253,7 +2253,7 @@ void DrawZoneFireData(void){
           // radius/plumeheight = .268 = atan(15 degrees)
           firei = fireinfo + i;
           roomi = roominfo + firei->roomnumber-1;
-          meshi = meshinfo + firei->roomnumber-1;
+          meshi = meshescoll.meshinfo + firei->roomnumber-1;
           diameter = SCALE2SMV(zonefdiambase[i]);
           deltaz = SCALE2SMV(zonefbasebase[i]);
           maxheight=roomi->z1-roomi->z0-deltaz;
@@ -2275,7 +2275,7 @@ void DrawZoneFireData(void){
           // radius/plumeheight = .268 = atan(15 degrees)
           firei = fireinfo + i;
           roomi = roominfo + firei->roomnumber-1;
-          meshi = meshinfo + firei->roomnumber-1;
+          meshi = meshescoll.meshinfo + firei->roomnumber-1;
           maxheight=roomi->z1-firei->absz;
           flameheight = SCALE2SMV((0.23f*pow((double)qdot,(double)0.4)/(1.0f+2.0f*0.268f)));
           diameter = 2.0*flameheight*0.268f;

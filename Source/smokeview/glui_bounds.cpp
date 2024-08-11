@@ -443,7 +443,7 @@ void bounds_dialog::setup(const char *file_type, GLUI_Rollout * ROLLOUT_dialog, 
     if(strcmp(file_type, "slice")==0){
       CHECKBOX_chop_hide = glui_bounds->add_checkbox_to_panel(ROLLOUT_truncate, "hide triangles with truncated values", &(bounds.chop_hide), BOUND_CHOP_HIDE, Callback);
     }
-    
+
     Callback(BOUND_VAL_TYPE);
     Callback(BOUND_SETCHOPMIN);
     Callback(BOUND_SETCHOPMAX);
@@ -1987,7 +1987,7 @@ extern "C" void GLUIHVACSliceBoundsCPP_CB(int var){
       }
       if(hist_update == 1||bounds->hist==NULL){
         float global_min, global_max;
-        
+
         GLUIGetGlobalBoundsMinMax(BOUND_SLICE, bounds->label, &global_min, &global_max);
         ComputeLoadedSliceHist(bounds->label, global_min, global_max);
         MergeLoadedSliceHist(bounds->label, &(bounds->hist));
@@ -2023,7 +2023,7 @@ int HavePlot3DData(void){
     plot3di = plot3dinfo+i;
     if(plot3di->loaded==0)continue;
     if(plot3di->blocknumber<0)return 0;
-    meshi = meshinfo+plot3di->blocknumber;
+    meshi = meshescoll.meshinfo+plot3di->blocknumber;
     if(meshi->qdata==NULL)return 0;
   }
   return 1;
@@ -2257,7 +2257,7 @@ int HavePatchData(void){
     switch(patchi->patch_filetype){
       case PATCH_STRUCTURED_NODE_CENTER:
       case PATCH_STRUCTURED_CELL_CENTER:
-        meshi = meshinfo+patchi->blocknumber;
+        meshi = meshescoll.meshinfo+patchi->blocknumber;
         if(meshi->patchval==NULL||meshi->cpatchval==NULL)return 0;
         break;
       case PATCH_GEOMETRY_BOUNDARY:
@@ -2379,7 +2379,7 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
       }
       if(hist_update == 1||bounds->hist==NULL){
         float global_min, global_max;
-        
+
         GLUIGetGlobalBoundsMinMax(BOUND_PATCH, bounds->label, &global_min, &global_max);
         ComputeLoadedPatchHist(bounds->label, &(bounds->hist), &global_min, &global_max);
       }
@@ -4178,7 +4178,7 @@ void UpdateBoundaryFiles(void){
 
     patchi = patchinfo + i;
     if(patchi->loaded == 0 || patchi->blocknumber < 0)continue;
-    meshi = meshinfo + patchi->blocknumber;
+    meshi = meshescoll.meshinfo + patchi->blocknumber;
     if(meshi->use == 1 && patchi->display == 0){
       patchi->display = 1;
       updatefacelists = 1;
@@ -4216,7 +4216,7 @@ void MeshBoundCB(int var){
     for(i = 0; i < nmeshes; i++){
       meshdata *meshi;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       meshi->use = 0;
     }
     break;
@@ -4224,7 +4224,7 @@ void MeshBoundCB(int var){
     {
       meshdata *meshi;
 
-      meshi = meshinfo + set_mesh - 1;
+      meshi = meshescoll.meshinfo + set_mesh - 1;
       meshclip[0] = meshi->boxmin[0];
       meshclip[2] = meshi->boxmin[1];
       meshclip[4] = meshi->boxmin[2];
@@ -4244,7 +4244,7 @@ void MeshBoundCB(int var){
   {
     meshdata *meshi;
 
-    meshi = meshinfo + set_mesh - 1;
+    meshi = meshescoll.meshinfo + set_mesh - 1;
     meshi->use = 0;
   }
   break;
@@ -4257,10 +4257,10 @@ void MeshBoundCB(int var){
     break;
   case USEMESH_XYZ:
     updatemenu = 1;
-    for(i = 0;i < nmeshes;i++){
+    for(i = 0;i < meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       meshi->use = 1;
     }
     if(use_meshclip[0] == 0 && use_meshclip[1] == 0 && use_meshclip[2] == 0 &&
@@ -4268,7 +4268,7 @@ void MeshBoundCB(int var){
     for(i=0;i<nmeshes;i++){
       meshdata *meshi;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       float meshclip_min[3],  meshclip_max[3];
       int use_meshclip_min[3], use_meshclip_max[3];
       meshclip_min[0] = meshclip[0];
@@ -5453,10 +5453,10 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
     glui_bounds->add_spinner_to_panel(PANEL_slice_misc, "slice offset", GLUI_SPINNER_FLOAT, &slice_dz);
     CHECKBOX_sortslices = glui_bounds->add_checkbox_to_panel(PANEL_slice_misc, "sort slices(back to front)", &sortslices, SORTSLICES, GLUISliceBoundCB);
     CHECKBOX_sortslices_debug = glui_bounds->add_checkbox_to_panel(PANEL_slice_misc, "sort slices(debug)", &sortslices_debug, SORTSLICES_DEBUG, GLUISliceBoundCB);
-    for(i = 0; i<nmeshes; i++){
+    for(i = 0; i<meshescoll.nmeshes; i++){
       meshdata *meshi;
 
-      meshi = meshinfo+i;
+      meshi = meshescoll.meshinfo+i;
       max_slice_skip = MAX(max_slice_skip, meshi->ibar/2);
       max_slice_skip = MAX(max_slice_skip, meshi->jbar/2);
       max_slice_skip = MAX(max_slice_skip, meshi->kbar/2);
@@ -5514,7 +5514,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
   ROLLOUT_autoload = glui_bounds->add_rollout_to_panel(PANEL_loadbounds,_("Auto load"), false, LOAD_AUTO_ROLLOUT, LoadRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_autoload, glui_bounds);
   ADDPROCINFO(loadprocinfo, nloadprocinfo, ROLLOUT_autoload, LOAD_AUTO_ROLLOUT, glui_bounds);
-  
+
   glui_bounds->add_checkbox_to_panel(ROLLOUT_autoload, _("Auto load at startup"), &loadfiles_at_startup, STARTUP, BoundBoundCB);
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, _("Save auto load file list"), SAVE_FILE_LIST, BoundBoundCB);
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, _("Auto load now"), LOAD_FILES, BoundBoundCB);
@@ -6154,7 +6154,7 @@ extern "C" void GLUIIsoBoundCB(int var){
     EDIT_iso_valmin->set_float_val(glui_iso_valmin);
     glutPostRedisplay();
     break;
-    
+
   case ISO_SETVALMAX:
     switch (setisomax){
       case SET_MAX:

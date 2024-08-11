@@ -2153,8 +2153,8 @@ void RenderMenu(int value){
         sd=sliceinfo+i;
         sd->itime=0;
       }
-      for(i=0;i<nmeshes;i++){
-        meshi=meshinfo+i;
+      for(i=0;i<meshescoll.nmeshes;i++){
+        meshi=meshescoll.meshinfo+i;
         meshi->patch_itime=0;
       }
     }
@@ -3104,7 +3104,7 @@ void LoadVolsmoke3DMenu(int value){
     volrenderdata *vr;
 
     update_smokecolorbar = 1;
-    meshi = meshinfo + value;
+    meshi = meshescoll.meshinfo + value;
     vr = meshi->volrenderinfo;
     if(vr->smokeslice != NULL&&vr->fireslice != NULL){
       if(scriptoutstream != NULL){
@@ -3418,7 +3418,7 @@ char *FileSize2Label(char *label, FILE_SIZE bytes){
 
 void Plot3DSummary(char *label, int count, FILE_SIZE file_size, float timer){
   char size_label[256], time_label[256], time_label2[256];
-  
+
   sprintf(label, "PLOT3D: loaded %i files, %s", count, FileSize2Label(size_label, file_size));
   Float2String(time_label2, timer, ncolorlabel_digits, force_fixedpoint);
   sprintf(time_label, " in %ss", time_label2);
@@ -3552,7 +3552,7 @@ void LoadUnloadMenu(int value){
     STOP_TIMER(plot3d_timer);
     if(file_count>0){
       char label[256];
-      
+
       Plot3DSummary(label, file_count, total_plot3d_filesize, plot3d_timer);
       printf("%s\n",label);
     }
@@ -4730,7 +4730,7 @@ void ShowVolsmoke3DMenu(int value){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo + value;
+    meshi = meshescoll.meshinfo + value;
     vr = meshi->volrenderinfo;
     if(vr->fireslice!=NULL||vr->smokeslice!=NULL){
       if(vr->loaded==1){
@@ -4749,11 +4749,11 @@ void ShowVolsmoke3DMenu(int value){
     else if(value==TOGGLE_VOLSMOKE){  // show all
       show_volsmokefiles=1-show_volsmokefiles;
     }
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
       volrenderdata *vr;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       vr = meshi->volrenderinfo;
       if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
       if(vr->loaded==1){
@@ -4776,11 +4776,11 @@ void UnLoadVolsmoke3DMenu(int value){
   updatemenu=1;
   if(value<0){
     if(value==UNLOAD_ALL){
-      for(i=0;i<nmeshes;i++){
+      for(i=0;i<meshescoll.nmeshes;i++){
         meshdata *meshi;
         volrenderdata *vr;
 
-        meshi = meshinfo + i;
+        meshi = meshescoll.meshinfo + i;
         vr = meshi->volrenderinfo;
         if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
         if(vr->loaded==1){
@@ -4793,7 +4793,7 @@ void UnLoadVolsmoke3DMenu(int value){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo + value;
+    meshi = meshescoll.meshinfo + value;
     vr = meshi->volrenderinfo;
     if(vr->fireslice!=NULL||vr->smokeslice!=NULL){
       UnloadVolsmokeAllFrames(vr);
@@ -5714,7 +5714,7 @@ void Plot3DListMenu(int value){
   STOP_TIMER(plot3d_timer);
   if(file_count>0){
     char label[256];
-      
+
     Plot3DSummary(label, file_count, total_plot3d_filesize, plot3d_timer);
     printf("%s\n",label);
   }
@@ -5772,7 +5772,7 @@ int LoadAllPlot3D(float time){
   STOP_TIMER(plot3d_timer);
   if(file_count>0){
     char label[256];
-      
+
     Plot3DSummary(label, file_count, total_plot3d_filesize, plot3d_timer);
     printf("%s\n",label);
   }
@@ -5830,7 +5830,7 @@ void LoadPlot3dMenu(int value){
       STOP_TIMER(plot3d_timer);
       if(file_count>0){
         char label[256];
-      
+
         Plot3DSummary(label, file_count, total_plot3d_filesize, plot3d_timer);
         printf("%s\n",label);
       }
@@ -5881,7 +5881,7 @@ void LoadPlot3dMenu(int value){
     STOP_TIMER(plot3d_timer);
     if(file_count>0){
       char label[256];
-      
+
       Plot3DSummary(label, file_count, total_plot3d_filesize, plot3d_timer);
       printf("%s\n",label);
     }
@@ -5954,7 +5954,7 @@ void LoadAllIsos(int iso_type){
       if(iso_type == isoi->type&&isoi->blocknumber >= 0){
         meshdata *meshi;
 
-        meshi = meshinfo + isoi->blocknumber;
+        meshi = meshescoll.meshinfo + isoi->blocknumber;
         UnloadIso(meshi);
       }
     }
@@ -6325,7 +6325,7 @@ void ShowBoundaryMenu(int value){
 
         patchi = patchinfo + i;
         if(patchi->loaded == 0)continue;
-        meshi = meshinfo + patchi->blocknumber;
+        meshi = meshescoll.meshinfo + patchi->blocknumber;
         for(n = 0;n < meshi->npatches;n++){
           if(meshi->boundarytype[n] != INTERIORwall){
             meshi->vis_boundaries[n] = val;
@@ -6350,7 +6350,7 @@ void ShowBoundaryMenu(int value){
 
         patchi = patchinfo + i;
         if(patchi->loaded == 0)continue;
-        meshi = meshinfo + patchi->blocknumber;
+        meshi = meshescoll.meshinfo + patchi->blocknumber;
         for(n = 0;n < meshi->npatches;n++){
           if(meshi->boundarytype[n] == INTERIORwall){
             meshi->vis_boundaries[n] = val;
@@ -6369,7 +6369,7 @@ void ShowBoundaryMenu(int value){
 
         patchi = patchinfo + i;
         if(patchi->loaded == 0)continue;
-        meshi = meshinfo + patchi->blocknumber;
+        meshi = meshescoll.meshinfo + patchi->blocknumber;
         for(n = 0;n < meshi->npatches;n++){
           if(meshi->boundarytype[n] != INTERIORwall){
             meshi->vis_boundaries[n] = vis_boundary_type[meshi->boundarytype[n]];
@@ -6388,7 +6388,7 @@ void ShowBoundaryMenu(int value){
 
         patchi = patchinfo + i;
         if(patchi->loaded == 0)continue;
-        meshi = meshinfo + patchi->blocknumber;
+        meshi = meshescoll.meshinfo + patchi->blocknumber;
         for(n = 0;n < meshi->npatches;n++){
           if(meshi->boundarytype[n] == value){
             meshi->vis_boundaries[n] = 1 - meshi->vis_boundaries[n];
@@ -7665,7 +7665,7 @@ int GetNTotalVents(void){
   for(i = 0; i < nmeshes; i++){
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     ntotal_vents += meshi->nvents;
   }
   return ntotal_vents;
@@ -7680,7 +7680,7 @@ int IsBoundaryType(int type){
     meshdata *meshi;
     int n;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     for(n = 0; n < meshi->npatches; n++){
       if(meshi->boundarytype[n] == type)return 1;
     }
@@ -8992,7 +8992,7 @@ static int menu_count=0;
       meshdata *meshi;
 
       sd = sliceinfo + mslicei->islices[j];
-      meshi = meshinfo + sd->blocknumber;
+      meshi = meshescoll.meshinfo + sd->blocknumber;
       if(meshi->use == 1)mslicei->loadable = 1;
       if(sd->loaded==1)mslicei->loaded++;
       if(sd->display==1)mslicei->display++;
@@ -9025,7 +9025,7 @@ static int menu_count=0;
 
       vd = vsliceinfo + mvslicei->ivslices[j];
       valslice = sliceinfo + vd->ival;
-      meshi = meshinfo + valslice->blocknumber;
+      meshi = meshescoll.meshinfo + valslice->blocknumber;
       if(meshi->use==1)mvslicei->loadable = 1;
       if(vd->loaded==1)mvslicei->loaded++;
       if(vd->display==1)mvslicei->display++;
@@ -10863,7 +10863,7 @@ static int menu_count=0;
       if((visAIso & 2) != 2)glutAddMenuEntry(_("Outline"), MENU_ISOSHOW_OUTLINE);
       if((visAIso & 4) == 4)glutAddMenuEntry(_("*Points"), MENU_ISOSHOW_POINTS);
       if((visAIso & 4) != 4)glutAddMenuEntry(_("Points"), MENU_ISOSHOW_POINTS);
-      hmesh=meshinfo+highlight_mesh;
+      hmesh=meshescoll.meshinfo+highlight_mesh;
       if(hmesh->isofilenum!=-1){
         char levellabel[1024];
 
@@ -12041,7 +12041,7 @@ static int menu_count=0;
     int ii;
     int doit = 0;
 
-    if(nmeshes==1){
+    if(meshescoll.nmeshes==1){
       CREATEMENU(particlemenu,LoadParticleMenu);
       doit = 1;
     }
@@ -12060,7 +12060,7 @@ static int menu_count=0;
         glutAddMenuEntry(menulabel, i);
       }
     }
-    if(nmeshes>1){
+    if(meshescoll.nmeshes>1){
       char menulabel[1024];
 
       CREATEMENU(particlemenu,LoadParticleMenu);
@@ -12077,7 +12077,7 @@ static int menu_count=0;
       glutAddMenuEntry("-",MENU_DUMMY);
       if(partfast==1)glutAddMenuEntry(_("*Fast loading"), MENU_PART_PARTFAST);
       if(partfast==0)glutAddMenuEntry(_("Fast loading"), MENU_PART_PARTFAST);
-      if(nmeshes>1){
+      if(meshescoll.nmeshes>1){
       }
     }
     glutAddMenuEntry("-",MENU_DUMMY);
@@ -12146,11 +12146,11 @@ static int menu_count=0;
         strcpy(vlabel,_("3D smoke (Volume rendered)"));
         glutAddMenuEntry(vlabel,UNLOAD_ALL);
       }
-      for(i=0;i<nmeshes;i++){
+      for(i=0;i<meshescoll.nmeshes;i++){
         meshdata *meshi;
         volrenderdata *vr;
 
-        meshi = meshinfo + i;
+        meshi = meshescoll.meshinfo + i;
         vr = meshi->volrenderinfo;
         if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
         if(vr->loaded==0)continue;
@@ -12200,13 +12200,13 @@ static int menu_count=0;
       }
     {
       if(nsmoke3dinfo>0){
-        if(nmeshes==1){
+        if(meshescoll.nmeshes==1){
           CREATEMENU(loadsmoke3dmenu,LoadSmoke3DMenu);
         }
 
         int ii;
         for(ii = 0; ii<nsmoke3dtypes; ii++){
-          if(nmeshes>1){
+          if(meshescoll.nmeshes>1){
             CREATEMENU(smoke3dtypes[ii].menu_id, LoadSmoke3DMenu);
           }
           for(i = 0; i<nsmoke3dinfo; i++){
@@ -12223,7 +12223,7 @@ static int menu_count=0;
             glutAddMenuEntry(menulabel, i);
           }
         }
-        if(nmeshes>1){
+        if(meshescoll.nmeshes>1){
           CREATEMENU(loadsmoke3dmenu,LoadSmoke3DMenu);
           // multi mesh smoke menus items
           for(ii = 0; ii<nsmoke3dtypes; ii++){
@@ -12368,7 +12368,7 @@ static int menu_count=0;
           sprintf(menulabel,"  %s%f", prefix, plot3di->time);
           TrimZeros(menulabel);
           strcat(menulabel," s");
-          if(nmeshes>1){
+          if(meshescoll.nmeshes>1){
             glutAddMenuEntry(menulabel,-100000+nloadsubplot3dmenu);
           }
           else{
@@ -12401,7 +12401,7 @@ static int menu_count=0;
             sprintf(menulabel,"  %s%f",prefix, plot3di->time);
             TrimZeros(menulabel);
             strcat(menulabel," s");
-            if(nmeshes>1){
+            if(meshescoll.nmeshes>1){
               glutAddMenuEntry(menulabel,-100000+nloadsubplot3dmenu);
             }
             else{
@@ -12434,9 +12434,9 @@ static int menu_count=0;
       int ii;
       int npatchloaded2=0;
 
-      if(nmeshes>1||n_mirrorvents>0||n_openvents>0){
+      if(meshescoll.nmeshes>1||n_mirrorvents>0||n_openvents>0){
         CREATEMENU(includepatchmenu, LoadBoundaryMenu);
-        if(nmeshes>1){
+        if(meshescoll.nmeshes>1){
           if(show_bndf_mesh_interface==1)glutAddMenuEntry("*Mesh interface", MENU_BNDF_SHOW_MESH_INTERFACE);
           if(show_bndf_mesh_interface==0)glutAddMenuEntry("Mesh interface", MENU_BNDF_SHOW_MESH_INTERFACE);
         }
@@ -12469,11 +12469,11 @@ static int menu_count=0;
       }
       glutAddMenuEntry(_("Unload all"),UNLOAD_ALL);
 
-      if(nmeshes>1&&loadpatchsubmenus==NULL){
+      if(meshescoll.nmeshes>1&&loadpatchsubmenus==NULL){
         NewMemory((void **)&loadpatchsubmenus,npatchinfo*sizeof(int));
       }
 
-      if(nmeshes>1){
+      if(meshescoll.nmeshes>1){
         CREATEMENU(loadpatchsubmenus[nloadpatchsubmenus],LoadBoundaryMenu);
         nloadpatchsubmenus++;
       }
@@ -12489,7 +12489,7 @@ static int menu_count=0;
         patchi = patchinfo + i;
         if(ii>0){
           patchim1 = patchinfo + patchorderindex[ii-1];
-          if(nmeshes>1&&strcmp(patchim1->label.longlabel,patchi->label.longlabel)!=0){
+          if(meshescoll.nmeshes>1&&strcmp(patchim1->label.longlabel,patchi->label.longlabel)!=0){
             CREATEMENU(loadpatchsubmenus[nloadpatchsubmenus],LoadBoundaryMenu);
             nloadpatchsubmenus++;
           }
@@ -12537,7 +12537,7 @@ static int menu_count=0;
           glutAddMenuEntry(_("  keep coarse"), MENU_KEEP_COARSE);
         }
       }
-      if(nmeshes>1){
+      if(meshescoll.nmeshes>1){
 
 // count patch submenus
 
@@ -12666,7 +12666,7 @@ static int menu_count=0;
         nisosubmenus++;
       }
 
-      if(nmeshes==1){
+      if(meshescoll.nmeshes==1){
         CREATEMENU(loadisomenu,LoadIsoMenu);
       }
       for(ii=0;ii<nisoinfo;ii++){
@@ -12677,7 +12677,7 @@ static int menu_count=0;
         if(ii>0){
           iso1 = isoinfo + isoorderindex[ii-1];
           iso2 = isoinfo + isoorderindex[ii];
-          if(nmeshes>1&&strcmp(iso1->surface_label.longlabel,iso2->surface_label.longlabel)!=0){
+          if(meshescoll.nmeshes>1&&strcmp(iso1->surface_label.longlabel,iso2->surface_label.longlabel)!=0){
             CREATEMENU(isosubmenus[nisosubmenus],LoadIsoMenu);
             nisosubmenus++;
           }
@@ -12696,7 +12696,7 @@ static int menu_count=0;
         int useitem;
         isodata *isoi, *isoj;
 
-        if(nmeshes>1){
+        if(meshescoll.nmeshes>1){
           CREATEMENU(loadisomenu,LoadIsoMenu);
           for(i=0;i<nisoinfo;i++){
             int j;
