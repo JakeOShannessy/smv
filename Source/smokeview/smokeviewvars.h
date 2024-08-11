@@ -15,6 +15,7 @@
 #include "structures.h"
 #include "readhvac.h"
 #include "readobject.h"
+#include "readlabel.h"
 #include "colorbars.h"
 #ifndef CPP
 #include <zlib.h>
@@ -2241,7 +2242,7 @@ SVEXTERN int SVDECL(visMAINmenus,0);
 SVEXTERN int SVDECL(ijkbarmax,5);
 SVEXTERN int SVDECL(blockage_as_input,0), SVDECL(blockage_snapped,1);
 SVEXTERN int SVDECL(show_cad_and_grid,0);
-SVEXTERN labeldata label_first, label_last, *label_first_ptr, *label_last_ptr;
+SVEXTERN labels_collection SVDECL(labelscoll, {0});
 SVEXTERN int SVDECL(*isotypes,NULL), SVDECL(*boundarytypes,NULL);
 SVEXTERN plot3ddata SVDECL(*plot3dinfo,NULL);
 SVEXTERN int SVDECL(iplot3dtimelist, -1), SVDECL(nplot3dtimelist, 0);
