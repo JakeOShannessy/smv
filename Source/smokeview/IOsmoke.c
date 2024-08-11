@@ -14,6 +14,7 @@
 #include "IOvolsmoke.h"
 #include "compress.h"
 #include "getdata.h"
+#include "readsmoke.h"
 
 typedef FILE MFILE;
 #define MFILE                   FILE
@@ -3762,34 +3763,6 @@ int GetSmoke3DSizes(smoke3ddata *smoke3di, int fortran_skip, char *smokefile, in
   return 0;
 }
 
-/* ------------------ FreeSmoke3d ------------------------ */
-
-void FreeSmoke3D(smoke3ddata *smoke3di){
-
-  smoke3di->lastiframe = -999;
-#ifdef pp_SMOKEFRAME
-  FRAMEFree(smoke3di->frameinfo);
-  smoke3di->frameinfo = NULL;
-#endif
-  FREEMEMORY(smoke3di->smokeframe_in);
-  FREEMEMORY(smoke3di->smokeframe_out);
-  FREEMEMORY(smoke3di->timeslist);
-  FREEMEMORY(smoke3di->times);
-  FREEMEMORY(smoke3di->times_map);
-  FREEMEMORY(smoke3di->use_smokeframe);
-  FREEMEMORY(smoke3di->nchars_compressed_smoke_full);
-  FREEMEMORY(smoke3di->nchars_compressed_smoke);
-  FREEMEMORY(smoke3di->frame_all_zeros);
-  FREEMEMORY(smoke3di->smoke_boxmin);
-  FREEMEMORY(smoke3di->smoke_boxmax);
-#ifndef pp_SMOKEFRAME
-  FREEMEMORY(smoke3di->smoke_comp_all);
-#endif
-  FREEMEMORY(smoke3di->smokeframe_comp_list);
-  FREEMEMORY(smoke3di->smokeview_tmp);
-  FREEMEMORY(smoke3di->smokeframe_loaded);
-}
-
 /* ------------------ GetSmoke3DVersion ------------------------ */
 
 #ifdef pp_SMOKE_SPEEDUP
@@ -4263,8 +4236,7 @@ FILE_SIZE ReadSmoke3D(int time_frame,int ifile_arg,int load_flag, int first_time
   int fortran_skip=0;
 #endif
 
-#ifdef pp_SMOKE_SPEEDUP  
-  update_glui_merge_smoke = 1;
+#ifdef pp_SMOKE_SPEEDUP
   GLUTPOSTREDISPLAY;
 #endif
   SetTimeState();

@@ -13,7 +13,9 @@
 #include "contourdefs.h"
 #include "histogram.h"
 #include "structures.h"
+#include "readhvac.h"
 #include "readobject.h"
+#include "colorbars.h"
 #ifndef CPP
 #include <zlib.h>
 #endif
@@ -119,16 +121,8 @@ SVEXTERN int SVDECL(update_frame, 0);
 #endif
 
 // hvac data
-SVEXTERN int SVDECL(hvacductvar_index, -1), SVDECL(hvacnodevar_index, -1);
-SVEXTERN int SVDECL(nhvacnodeinfo, 0), SVDECL(nhvacductinfo, 0), SVDECL(nhvacinfo, 0);
+SVEXTERN hvacdatacollection SVDECL(hvaccoll, {0});
 SVEXTERN int SVDECL(hvac_show_connections, 0), SVDECL(hvac_show_networks, 1);
-SVEXTERN int SVDECL(nhvacconnectinfo, 0);
-SVEXTERN hvacconnectdata SVDECL(*hvacconnectinfo, NULL);
-SVEXTERN hvacvalsdata SVDECL(*hvacductvalsinfo, NULL);
-SVEXTERN hvacvalsdata SVDECL(*hvacnodevalsinfo, NULL);
-SVEXTERN hvacdata SVDECL(*hvacinfo, NULL);
-SVEXTERN hvacnodedata SVDECL(*hvacnodeinfo, NULL);
-SVEXTERN hvacductdata SVDECL(*hvacductinfo, NULL);
 SVEXTERN int SVDECL(hvac_metro_view, 0), SVDECL(hvac_cell_view, 0);
 
 SVEXTERN hvacdata SVDECL(*glui_hvac, NULL);
@@ -2129,7 +2123,7 @@ SVEXTERN int SVDECL(wall_case,0);
 SVEXTERN surfdata SVDECL(*surfacedefault,NULL), SVDECL(*vent_surfacedefault,NULL), SVDECL(*exterior_surfacedefault,NULL);
 SVEXTERN char surfacedefaultlabel[256];
 SVEXTERN int ntotalfaces;
-SVEXTERN colordata SVDECL(*firstcolor,NULL);
+SVEXTERN color_collection SVDECL(colorcoll,{0});
 SVEXTERN texturedata SVDECL(*textureinfo,NULL), SVDECL(*terrain_textures,NULL);
 SVEXTERN GLuint texture_colorbar_id, texture_slice_colorbar_id, texture_patch_colorbar_id, texture_plot3d_colorbar_id, texture_iso_colorbar_id, terrain_colorbar_id;
 SVEXTERN GLuint volsmoke_colormap_id,slice3d_colormap_id,slicesmoke_colormap_id;

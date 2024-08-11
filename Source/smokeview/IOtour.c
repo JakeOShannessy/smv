@@ -8,6 +8,7 @@
 
 #include "smokeviewvars.h"
 #include "IOobjects.h"
+#include "readtour.h"
 
 /* ------------------ FreeTours ------------------------ */
 
@@ -1343,39 +1344,13 @@ void DeleteTour(int tour_index){
 
 }
 
-/* ------------------ ReallocTourMemory  ------------------------ */
-
-
-void ReallocTourMemory(void){
-  int i;
-  tourdata *touri;
-
-  if(tour_ntimes>0){
-    for(i=0;i<ntourinfo;i++){
-      touri = tourinfo + i;
-      FREEMEMORY(touri->path_times);
-      NewMemory((void **)&touri->path_times,tour_ntimes*sizeof(float));
-      touri->ntimes=tour_ntimes;
-    }
-    FREEMEMORY(tour_t);
-    FREEMEMORY(tour_t2);
-    FREEMEMORY(tour_dist);
-    FREEMEMORY(tour_dist2);
-    FREEMEMORY(tour_dist3);
-    NewMemory((void **)&tour_t,tour_ntimes*sizeof(float));
-    NewMemory((void **)&tour_t2,tour_ntimes*sizeof(float));
-    NewMemory((void **)&tour_dist,tour_ntimes*sizeof(float));
-    NewMemory((void **)&tour_dist2,tour_ntimes*sizeof(float));
-    NewMemory((void **)&tour_dist3,(tour_ntimes+10)*sizeof(float));
-  }
-}
-
 /* ------------------ SetupTour  ------------------------ */
 
 void SetupTour(void){
 
   if(ntourinfo==0){
-    ReallocTourMemory();
+    ReallocTourMemory(ntourinfo, tourinfo, tour_ntimes, tour_t, tour_t2,
+                      tour_dist, tour_dist2, tour_dist3);
     ntourinfo=1;
     NewMemory( (void **)&tourinfo, ntourinfo*sizeof(tourdata));
     InitCircularTour(tourinfo,ncircletournodes,INIT);

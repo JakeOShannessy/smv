@@ -3,6 +3,7 @@
 #include "options.h"
 #include <stdio.h>
 #include "isodefs.h"
+#include "readcad.h"
 
 #if defined(WIN32)
 #include <windows.h>
@@ -27,14 +28,6 @@ typedef struct _propdata {
   float *fvals, fvars_dep[PROPVARMAX];
   int tag_number;
 } propdata;
-
-/* --------------------------  texturedata ---------------------------------- */
-
-typedef struct _texturedata {
-  char *file;
-  int loaded, display, used, is_transparent;
-  GLuint name;
-} texturedata;
 
 /* --------------------------  mesh ----------------------------------------- */
 

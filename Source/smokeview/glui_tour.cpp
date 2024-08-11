@@ -9,6 +9,7 @@
 
 #include "smokeviewvars.h"
 #include "glui_tour.h"
+#include "readtour.h"
 
 static int tour_hide=0;
 static char tour_label[sizeof(GLUI_String)];
@@ -563,7 +564,8 @@ void TourCB(int var){
     CreateTourPaths();
     break;
   case VIEW_times:
-    ReallocTourMemory();
+    ReallocTourMemory(ntourinfo, tourinfo, tour_ntimes, tour_t, tour_t2,
+                      tour_dist, tour_dist2, tour_dist3);
     CreateTourPaths();
     UpdateTimes();
     break;

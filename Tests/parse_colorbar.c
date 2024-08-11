@@ -1,6 +1,5 @@
-#include "options.h"
-
 #include "MALLOCC.h"
+#include "options.h"
 
 #include <assert.h>
 #include <stdint.h>

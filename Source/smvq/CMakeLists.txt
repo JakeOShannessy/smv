@@ -1,55 +1,15 @@
 
 # smvq
 add_executable(smvq smvq.c
-    ../shared/getdata.c
     ../shared/dmalloc.c
-    ../smokeview/menus.c
-    ../smokeview/IOscript.c
-    ../smokeview/IOshooter.c
     ../shared/csphere.c
-    ../smokeview/colortimebar.c
-    ../smokeview/camera.c
-    ../smokeview/IOgeometry.c
-    ../smokeview/IOwui.c
-    ../smokeview/IOobjects.c
-    ../smokeview/IOtour.c
-    ../smokeview/getdatacolors.c
-    ../smokeview/smokeview.c
-    ../smokeview/output.c
-    ../smokeview/renderimage.c
-    ../smokeview/renderhtml.c
     ../shared/isobox.c
-    ../smokeview/getdatabounds.c
-    ../smokeview/readsmv.c
-    ../smokeview/scontour2d.c
-    ../shared/dmalloc.c
     ../shared/compress.c
-    ../smokeview/IOvolsmoke.c
-    ../smokeview/IOsmoke.c
-    ../smokeview/IOplot3d.c
-    ../smokeview/IOplot2d.c
-    ../smokeview/IOslice.c
-    ../smokeview/IOhvac.c
-    ../smokeview/IOboundary.c
-    ../smokeview/IOpart.c
-    ../smokeview/IOzone.c
-    ../smokeview/IOiso.c
-    ../smokeview/callbacks.c
-    ../smokeview/drawGeometry.c
-    ../smokeview/skybox.c
     ../shared/file_util.c
     ../shared/string_util.c
-    ../smokeview/startup.c
-    ../smokeview/shaders.c
-    ../smokeview/unit.c
     ../shared/threader.c
     ../shared/histogram.c
     ../shared/translate.c
-    ../smokeview/update.c
-    ../smokeview/viewports.c
-    ../smokeview/smv_geometry.c
-    ../smokeview/showscene.c
-    ../smokeview/infoheader.c
     ../shared/md5.c
     ../shared/sha1.c
     ../shared/sha256.c
@@ -61,22 +21,17 @@ add_executable(smvq smvq.c
     ../shared/readgeom.c
     ../shared/colorbars.c
     ../shared/colorbar_defs.c
+    ../shared/readhvac.c
+    ../shared/readslice.c
     ../shared/readobject.c
-    ../smokeview/colortable.c
-    ../smokeview/command_args.c
-
-    ../smokeview/glui_smoke.cpp
-    ../smokeview/glui_clip.cpp
-    ../smokeview/glui_stereo.cpp
-    ../smokeview/glui_geometry.cpp
-    ../smokeview/glui_motion.cpp
-    ../smokeview/glui_bounds.cpp
-    ../smokeview/glui_colorbar.cpp
-    ../smokeview/glui_display.cpp
-    ../smokeview/glui_tour.cpp
-    ../smokeview/glui_trainer.cpp
-    ../smokeview/glui_objects.cpp
-    ../smokeview/glui_shooter.cpp
+    ../shared/readsmvfile.c
+    ../shared/readobject.c
+    ../shared/colorbars.c
+    ../shared/readcad.c
+    ../shared/readpart.c
+    ../shared/readlabel.c
+    ../shared/readtour.c
+    ../shared/readsmoke.c
 )
 
 target_include_directories(smvq PRIVATE

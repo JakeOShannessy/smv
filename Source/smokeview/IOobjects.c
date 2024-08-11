@@ -5019,61 +5019,6 @@ void SetupZoneDevs(void){
   }
 }
 
-/* ----------------------- GetDeviceLabel ----------------------------- */
-
-char *GetDeviceLabel(char *buffer) {
-  char *label_present;
-
-  label_present = strstr(buffer, "#");
-  if (label_present == NULL) return NULL;
-  if (strlen(label_present) <= 1) {
-    label_present[0] = 0;
-    return NULL;
-  }
-  label_present[0] = 0;
-  label_present++;
-  label_present = TrimFront(label_present);
-  TrimBack(label_present);
-  if (strlen(label_present) == 0) return NULL;
-  return label_present;
-}
-
-
-/* ----------------------- GetNDevices ----------------------------- */
-#define BUFFER_LEN 255
-int GetNDevices(char *file) {
-  FILE *stream;
-  char buffer[BUFFER_LEN], *comma;
-  int buffer_len = BUFFER_LEN, nd = 0;
-
-  if (file == NULL) return 0;
-  stream = fopen(file, "r");
-  if (stream == NULL) return 0;
-  fgets(buffer, buffer_len, stream);
-  comma = strchr(buffer, ',');
-  if (comma != NULL) *comma = 0;
-  TrimBack(buffer);
-  if (strcmp(buffer, "//HEADER") != 0) {
-    fclose(stream);
-    return 0;
-  }
-
-  while (!feof(stream)) {
-    fgets(buffer, buffer_len, stream);
-    comma = strchr(buffer, ',');
-    if (comma != NULL) *comma = 0;
-    TrimBack(buffer);
-    if (strcmp(buffer, "//DATA") == 0) {
-      break;
-    }
-    if (strcmp(buffer, "DEVICE") == 0) {
-      nd++;
-    }
-  }
-  fclose(stream);
-  return nd;
-}
-
 void RewindDeviceFile(FILE *stream) {
 #define BUFFER_LEN 255
   char buffer[BUFFER_LEN], *comma;
@@ -5966,7 +5911,7 @@ void InitDevicePlane(devicedata *devicei){
     rgbcolor[1]=0.0;
     rgbcolor[2]=0.0;
     rgbcolor[3]=1.0;
-    devicei->color=GetColorPtr(rgbcolor);
+    devicei->color=GetColorPtr(colorcoll, rgbcolor);
   }
   colorindex=0;
   for(i=0;i<nmeshes;i++){
@@ -6023,52 +5968,3 @@ void InitDevicePlane(devicedata *devicei){
   }
 
 }
-
-/* ----------------------- UpdatePartClassDepend ----------------------------- */
-
-void UpdatePartClassDepend(partclassdata *partclassi){
-  int i;
-
-  if(partclassi->prop!=NULL){
-    sv_object_frame *obj_frame;
-    int nvar;
-
-    obj_frame=partclassi->prop->smv_object->obj_frames[0];
-    for(i=0;i<partclassi->nvars_dep-3;i++){
-      char *var;
-
-      var=partclassi->vars_dep[i];
-      partclassi->vars_dep_index[i]= GetObjectFrameTokenLoc(var,obj_frame);
-    }
-    nvar = partclassi->nvars_dep;
-    partclassi->vars_dep_index[nvar-3]= GetObjectFrameTokenLoc("R",obj_frame);
-    partclassi->vars_dep_index[nvar-2]= GetObjectFrameTokenLoc("G",obj_frame);
-    partclassi->vars_dep_index[nvar-1]= GetObjectFrameTokenLoc("B",obj_frame);
-  }
-}
-
-/* ------------------ Normalize ------------------------ */
-
-void Normalize(float *xyz, int n){
-  float norm,norm2;
-  int i;
-
-  norm2 = 0.0;
-
-  for(i=0;i<n;i++){
-    norm2 += xyz[i]*xyz[i];
-  }
-  norm = sqrt(norm2);
-  if(norm<0.00001){
-    for(i=0;i<n-1;i++){
-      xyz[i]=0.0;
-    }
-    xyz[n-1]=1.0;
-  }
-  else{
-    for(i=0;i<n;i++){
-      xyz[i]/=norm;
-    }
-  }
-}
-

@@ -13,6 +13,7 @@
 
 #include "smokeviewvars.h"
 #include "glutbitmap.h"
+#include "readlabel.h"
 
 
 #define DENORMAL(x,i, n, min,max) ((min) + (i)*((max)-(min))/(n))
@@ -525,31 +526,6 @@ int LabelGetNUserLabels(void){
   return count;
 }
 
-/* ------------------ LabelGet ------------------------ */
-
-labeldata *LabelGet(char *name){
-  labeldata *thislabel;
-
-  if(name==NULL)return NULL;
-  for(thislabel=label_first_ptr->next;thislabel->next!=NULL;thislabel=thislabel->next){
-    if(strcmp(thislabel->name,name)==0)return thislabel;
-  }
-  return NULL;
-}
-
-/* ------------------ LabelInsertBefore ------------------------ */
-
-void LabelInsertBefore(labeldata *listlabel, labeldata *label){
-  labeldata *prev, *next;
-
-  prev        = listlabel->prev;
-  next        = listlabel;
-  prev->next  = label;
-  next->prev  = label;
-  label->prev = prev;
-  label->next = next;
-}
-
 /* ------------------ LabelDelete ------------------------ */
 
 void LabelDelete(labeldata *label){
@@ -585,20 +561,8 @@ void LabelResort(labeldata *label){
   memcpy(&labelcopy,label,sizeof(labeldata));
   CheckMemory;
   LabelDelete(label);
-  LabelInsert(&labelcopy);
-}
-
-/* ------------------ LabelInsertAfter ------------------------ */
-
-void LabelInsertAfter(labeldata *listlabel, labeldata *label){
-  labeldata *prev, *next;
-
-  prev        = listlabel;
-  next        = listlabel->next;
-  prev->next  = label;
-  next->prev  = label;
-  label->prev = prev;
-  label->next = next;
+  LabelInsert(label_first, label_last, label_first_ptr, label_last_ptr,
+              &labelcopy);
 }
 
 /* ------------------ LabelPrint ------------------------ */
@@ -611,51 +575,6 @@ void LabelPrint(void){
     xyz = thislabel->xyz;
     PRINTF("label: %s position: %f %f %f\n",thislabel->name,xyz[0],xyz[1],xyz[2]);
   }
-}
-
-/* ------------------ LabelInsert ------------------------ */
-
-labeldata *LabelInsert(labeldata *labeltemp){
-  labeldata *newlabel, *thislabel;
-  labeldata *firstuserptr, *lastuserptr;
-
-  NewMemory((void **)&newlabel,sizeof(labeldata));
-  memcpy(newlabel,labeltemp,sizeof(labeldata));
-
-  thislabel = LabelGet(newlabel->name);
-  if(thislabel!=NULL){
-    LabelInsertAfter(thislabel->prev,newlabel);
-    return newlabel;
-  }
-
-  firstuserptr=label_first_ptr->next;
-  if(firstuserptr==label_last_ptr)firstuserptr=NULL;
-
-  lastuserptr=label_last_ptr->prev;
-  if(lastuserptr==label_first_ptr)lastuserptr=NULL;
-
-  if(firstuserptr!=NULL&&strcmp(newlabel->name,firstuserptr->name)<0){
-    LabelInsertBefore(firstuserptr,newlabel);
-    return newlabel;
-  }
-  if(lastuserptr!=NULL&&strcmp(newlabel->name,lastuserptr->name)>0){
-    LabelInsertAfter(lastuserptr,newlabel);
-    return newlabel;
-  }
-  if(firstuserptr==NULL&&lastuserptr==NULL){
-    LabelInsertAfter(label_first_ptr,newlabel);
-    return newlabel;
-  }
-  for(thislabel=label_first_ptr->next;thislabel->next!=NULL;thislabel=thislabel->next){
-    labeldata *nextlabel;
-
-    nextlabel=thislabel->next;
-    if(strcmp(thislabel->name,newlabel->name)<0&&strcmp(newlabel->name,nextlabel->name)<0){
-      LabelInsertAfter(thislabel,newlabel);
-      return newlabel;
-    }
-  }
-  return NULL;
 }
 
 /* ----------------------- ScaleFont2D ----------------------------- */

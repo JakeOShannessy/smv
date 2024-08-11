@@ -189,6 +189,457 @@ int SetGlobalFilenames(const char *fdsprefix) {
   return 0;
 }
 
+// TODO: remove this definition of Zoom2Aperture
+float Zoom2Aperture(float zoom0){
+  float ap;
+  // note tan(46*PI/360)~(W/2)/D  where W=17==monitor width
+  //                                D=20==distance from eye to monitor
+  // (rounded off to 45 degrees)
+
+  ap = 2.0*RAD2DEG*atan(tan(45.0*DEG2RAD/2.0)/zoom0);
+  return ap;
+}
+
+// TODO: remove this definition of InitVars
+void InitVars(void){
+  int i;
+  char *queue_list = NULL, *queue=NULL, *htmldir=NULL, *email=NULL;
+
+#ifdef pp_OSX_HIGHRES
+  double_scale = 1;
+#endif
+  curdir_writable = Writable(".");
+  windrose_circ.ncirc=0;
+  InitCircle(180, &windrose_circ);
+
+  object_circ.ncirc=0;
+  cvent_circ.ncirc=0;
+
+//*** define slurm queues
+
+  queue_list = getenv("SMV_QUEUES");
+#ifdef pp_MOVIE_BATCH_DEBUG
+  if(queue_list==NULL)queue_list = "batch"; // placeholder for debugging slurm queues on the PC
+#endif
+
+#define MAX_QUEUS 100
+  if(queue_list!=NULL){
+    strcpy(movie_queue_list, queue_list);
+    queue = strtok(movie_queue_list, ":");
+  }
+  if(queue!=NULL){
+    NewMemory((void **)&movie_queues, MAX_QUEUS*sizeof(char *));
+    movie_queues[nmovie_queues++]=TrimFrontBack(queue);
+    for(;;){
+      queue = strtok(NULL, ":");
+      if(queue==NULL||nmovie_queues>=MAX_QUEUS)break;
+      movie_queues[nmovie_queues++]=TrimFrontBack(queue);
+    }
+    ResizeMemory((void **)&movie_queues, nmovie_queues*sizeof(char *));
+    have_slurm = 1;
+  }
+
+//*** define weburl
+  {
+    char *hostname = NULL, *username = NULL;
+
+    hostname = getenv("HOSTNAME");
+    username = getenv("USER");
+
+    if(hostname!=NULL&&username!=NULL){
+      strcpy(movie_url, "http://");
+      strcat(movie_url, hostname);
+      strcat(movie_url, "/");
+      strcat(movie_url, username);
+    }
+    else{
+      strcpy(movie_url, "");
+    }
+  }
+
+//*** define html directory
+
+  htmldir = getenv("SMV_HTMLDIR");
+  if(htmldir!=NULL&&strlen(htmldir)>0){
+    strcpy(movie_htmldir, htmldir);
+  }
+  else{
+    strcpy(movie_htmldir, "");
+  }
+
+//*** define email address
+
+  email = getenv("SMV_EMAIL");
+  if(email!=NULL&&strlen(email)>0){
+    strcpy(movie_email, email);
+  }
+  else{
+    strcpy(movie_email, "");
+  }
+
+#ifdef pp_RENDER360_DEBUG
+  NewMemory((void **)&screenvis, nscreeninfo * sizeof(int));
+  for(i = 0; i < nscreeninfo; i++){
+    screenvis[i] = 1;
+  }
+#endif
+
+  beam_color[0] = 255 * foregroundcolor[0];
+  beam_color[1] = 255 * foregroundcolor[1];
+  beam_color[2] = 255 * foregroundcolor[2];
+
+  if(movie_filetype==WMV){
+    strcpy(movie_ext, ".wmv");
+  }
+  else if(movie_filetype==MP4){
+    strcpy(movie_ext, ".mp4");
+  }
+  else{
+    strcpy(movie_ext, ".avi");
+  }
+  for(i=0;i<200;i++){
+    face_id[i]=1;
+  }
+  for(i=0;i<10;i++){
+    face_vis[i]=1;
+    face_vis_old[i]=1;
+  }
+  for(i=0;i<7;i++){
+    b_state[i]=-1;
+  }
+  strcpy((char *)degC,"C");
+  strcpy((char *)degF,"F");
+
+  label_first_ptr = &label_first;
+  label_last_ptr = &label_last;
+
+  label_first_ptr->prev = NULL;
+  label_first_ptr->next = label_last_ptr;
+  strcpy(label_first_ptr->name,"first");
+
+  label_last_ptr->prev = label_first_ptr;
+  label_last_ptr->next = NULL;
+  strcpy(label_last_ptr->name,"last");
+
+  {
+    labeldata *gl;
+
+    gl=&LABEL_default;
+    gl->rgb[0]=0;
+    gl->rgb[1]=0;
+    gl->rgb[2]=0;
+    gl->rgb[3]=255;
+    gl->frgb[0]=0.0;
+    gl->frgb[1]=0.0;
+    gl->frgb[2]=0.0;
+    gl->frgb[3]=1.0;
+    gl->tstart_stop[0]=0.0;
+    gl->tstart_stop[1]=1.0;
+    gl->useforegroundcolor=1;
+    gl->show_always=1;
+    strcpy(gl->name,"new");
+    gl->xyz[0]=0.0;
+    gl->xyz[1]=0.0;
+    gl->xyz[2]=0.0;
+    gl->tick_begin[0] = 0.0;
+    gl->tick_begin[1] = 0.0;
+    gl->tick_begin[2] = 0.0;
+    gl->tick_direction[0] = 1.0;
+    gl->tick_direction[1] = 0.0;
+    gl->tick_direction[2] = 0.0;
+    gl->show_tick = 0;
+    gl->labeltype = TYPE_INI;
+    memcpy(&LABEL_local,&LABEL_default,sizeof(labeldata));
+  }
+
+  strcpy(startup_lang_code,"en");
+  mat_specular_orig[0]=0.5f;
+  mat_specular_orig[1]=0.5f;
+  mat_specular_orig[2]=0.2f;
+  mat_specular_orig[3]=1.0f;
+  mat_specular2=GetColorPtr(colorcoll, mat_specular_orig);
+
+  mat_ambient_orig[0] = 0.5f;
+  mat_ambient_orig[1] = 0.5f;
+  mat_ambient_orig[2] = 0.2f;
+  mat_ambient_orig[3] = 1.0f;
+  mat_ambient2=GetColorPtr(colorcoll, mat_ambient_orig);
+
+  ventcolor_orig[0]=1.0;
+  ventcolor_orig[1]=0.0;
+  ventcolor_orig[2]=1.0;
+  ventcolor_orig[3]=1.0;
+  ventcolor=GetColorPtr(colorcoll, ventcolor_orig);
+
+  block_ambient_orig[0] = 1.0;
+  block_ambient_orig[1] = 0.8;
+  block_ambient_orig[2] = 0.4;
+  block_ambient_orig[3] = 1.0;
+  block_ambient2=GetColorPtr(colorcoll, block_ambient_orig);
+
+  block_specular_orig[0] = 0.0;
+  block_specular_orig[1] = 0.0;
+  block_specular_orig[2] = 0.0;
+  block_specular_orig[3] = 1.0;
+  block_specular2=GetColorPtr(colorcoll, block_specular_orig);
+
+  for(i=0;i<256;i++){
+    boundarylevels256[i]=(float)i/255.0;
+  }
+
+  first_scriptfile.id=-1;
+  first_scriptfile.prev=NULL;
+  first_scriptfile.next=&last_scriptfile;
+
+  last_scriptfile.id=-1;
+  last_scriptfile.prev=&first_scriptfile;
+  last_scriptfile.next=NULL;
+
+  first_inifile.id=-1;
+  first_inifile.prev=NULL;
+  first_inifile.next=&last_inifile;
+
+  last_inifile.id=-1;
+  last_inifile.prev=&first_inifile;
+  last_inifile.next=NULL;
+  // TODO: why is thei GLUI init here?
+  // FontMenu(fontindex);
+
+  direction_color[0]=39.0/255.0;
+  direction_color[1]=64.0/255.0;
+  direction_color[2]=139.0/255.0;
+  direction_color[3]=1.0;
+  direction_color_ptr=GetColorPtr(colorcoll, direction_color);
+
+  GetGitInfo(smv_githash,smv_gitdate);
+
+  rgb_terrain[0][0]=1.0;
+  rgb_terrain[0][1]=0.0;
+  rgb_terrain[0][2]=0.0;
+  rgb_terrain[0][3]=1.0;
+
+  rgb_terrain[1][0]=0.5;
+  rgb_terrain[1][1]=0.5;
+  rgb_terrain[1][2]=0.0;
+  rgb_terrain[1][3]=1.0;
+
+  rgb_terrain[2][0]=0.0;
+  rgb_terrain[2][1]=1.0;
+  rgb_terrain[2][2]=0.0;
+  rgb_terrain[2][3]=1.0;
+
+  rgb_terrain[3][0]=0.0;
+  rgb_terrain[3][1]=0.5;
+  rgb_terrain[3][2]=0.0;
+  rgb_terrain[3][3]=1.0;
+
+  rgb_terrain[4][0]=0.0;
+  rgb_terrain[4][1]=0.5;
+  rgb_terrain[4][2]=0.5;
+  rgb_terrain[4][3]=1.0;
+
+  rgb_terrain[5][0]=0.0;
+  rgb_terrain[5][1]=0.0;
+  rgb_terrain[5][2]=1.0;
+  rgb_terrain[5][3]=1.0;
+
+  rgb_terrain[6][0]=0.5;
+  rgb_terrain[6][1]=0.0;
+  rgb_terrain[6][2]=0.5;
+  rgb_terrain[6][3]=1.0;
+
+  rgb_terrain[7][0]=1.0;
+  rgb_terrain[7][1]=0.5;
+  rgb_terrain[7][2]=0.0;
+  rgb_terrain[7][3]=1.0;
+
+  rgb_terrain[8][0]=1.0;
+  rgb_terrain[8][1]=0.5;
+  rgb_terrain[8][2]=0.5;
+  rgb_terrain[8][3]=1.0;
+
+  rgb_terrain[9][0]=1.0;
+  rgb_terrain[9][1]=0.25;
+  rgb_terrain[9][2]=0.5;
+  rgb_terrain[9][3]=1.0;
+
+  strcpy(script_inifile_suffix,"");
+  strcpy(script_renderdir,"");
+  strcpy(script_renderfilesuffix,"");
+  strcpy(script_renderfile,"");
+  setpartmin_old=setpartmin;
+  setpartmax_old=setpartmax;
+  // UpdateCurrentColorbar(colorbarinfo);
+  visBlocks=visBLOCKAsInput;
+  blocklocation=BLOCKlocation_grid;
+  render_window_size=RenderWindow;
+  // RenderMenu(render_window_size);
+  solidlinewidth=linewidth;
+  setbwSAVE=setbw;
+
+  glui_backgroundbasecolor[0] = 255 * backgroundbasecolor[0];
+  glui_backgroundbasecolor[1] = 255 * backgroundbasecolor[1];
+  glui_backgroundbasecolor[2] = 255 * backgroundbasecolor[2];
+  glui_backgroundbasecolor[3] = 255 * backgroundbasecolor[3];
+
+  glui_foregroundbasecolor[0] = 255 * foregroundbasecolor[0];
+  glui_foregroundbasecolor[1] = 255 * foregroundbasecolor[1];
+  glui_foregroundbasecolor[2] = 255 * foregroundbasecolor[2];
+  glui_foregroundbasecolor[3] = 255 * foregroundbasecolor[3];
+
+  strcpy(emptylabel,"");
+  font_ptr          = GLUT_BITMAP_HELVETICA_12;
+  colorbar_font_ptr = GLUT_BITMAP_HELVETICA_10;
+#ifdef pp_OSX_HIGHRES
+    if(double_scale==1){
+      font_ptr = (void *)GLUT_BITMAP_HELVETICA_24;
+      colorbar_font_ptr = (void *)GLUT_BITMAP_HELVETICA_20;
+    }
+#endif
+
+  aperture = Zoom2Aperture(zoom);
+  aperture_glui = aperture;
+  aperture_default = aperture;
+
+  {
+    int ii;
+    rgbmask[0]=1;
+    for(ii=1;ii<16;ii++){
+      rgbmask[ii]=2*rgbmask[ii-1]+1;
+    }
+  }
+
+  strcpy(ext_png,".png");
+  strcpy(ext_jpg,".jpg");
+  render_filetype=PNG;
+
+  strcpy(surfacedefaultlabel,"");
+  if(streak_index>=0)float_streak5value=streak_rvalue[streak_index];
+
+  objectscoll = CreateObjectCollection();
+
+  GetTitle("Smokeview ", release_title);
+  GetTitle("Smokeview ", plot3d_title);
+
+  strcpy(blank_global,"");
+
+  NewMemory((void **)&iso_colors, 4 * MAX_ISO_COLORS*sizeof(float));
+  NewMemory((void **)&iso_colorsbw, 4 * MAX_ISO_COLORS*sizeof(float));
+
+#define N_ISO_COLORS 10
+  iso_colors[0] = 0.96;
+  iso_colors[1] = 0.00;
+  iso_colors[2] = 0.96;
+
+  iso_colors[4] = 0.75;
+  iso_colors[5] = 0.80;
+  iso_colors[6] = 0.80;
+
+  iso_colors[8] = 0.00;
+  iso_colors[9] = 0.96;
+  iso_colors[10] = 0.28;
+
+  iso_colors[12] = 0.00;
+  iso_colors[13] = 0.00;
+  iso_colors[14] = 1.00;
+
+  iso_colors[16] = 0.00;
+  iso_colors[17] = 0.718750;
+  iso_colors[18] = 1.00;
+
+  iso_colors[20] = 0.00;
+  iso_colors[21] = 1.0;
+  iso_colors[22] = 0.5625;
+
+  iso_colors[24] = 0.17185;
+  iso_colors[25] = 1.0;
+  iso_colors[26] = 0.0;
+
+  iso_colors[28] = 0.890625;
+  iso_colors[29] = 1.0;
+  iso_colors[30] = 0.0;
+
+  iso_colors[32] = 1.0;
+  iso_colors[33] = 0.380952;
+  iso_colors[34] = 0.0;
+
+  iso_colors[36] = 1.0;
+  iso_colors[37] = 0.0;
+  iso_colors[38] = 0.0;
+
+  glui_iso_transparency = CLAMP(255 * iso_transparency+0.1, 1, 255);
+  for(i = 0; i < N_ISO_COLORS; i++){
+    iso_colors[4 * i + 3] = iso_transparency;
+  }
+
+  for(i = N_ISO_COLORS; i<MAX_ISO_COLORS; i++){
+    int grey;
+
+    grey=1.0-(float)(i-N_ISO_COLORS)/(float)(MAX_ISO_COLORS+1-N_ISO_COLORS);
+    iso_colors[4*i+0]=grey;
+    iso_colors[4*i+1]=grey;
+    iso_colors[4*i+2]=grey;
+    iso_colors[4 * i + 3] = iso_transparency;
+  }
+
+  for(i = 0; i < MAX_ISO_COLORS; i++){
+    float graylevel;
+
+    graylevel = TOBW(iso_colors+4*i);
+    iso_colorsbw[4*i+0] = graylevel;
+    iso_colorsbw[4*i+1] = graylevel;
+    iso_colorsbw[4*i+2] = graylevel;
+    iso_colorsbw[4*i+3] = 1.0;
+  }
+  CheckMemory;
+
+  ncolortableinfo = 2;
+  if(ncolortableinfo>0){
+    colortabledata *cti;
+
+    NewMemory((void **)&colortableinfo, ncolortableinfo*sizeof(colortabledata));
+
+    cti = colortableinfo+0;
+    cti->color[0] = 210;
+    cti->color[1] = 180;
+    cti->color[2] = 140;
+    cti->color[3] = 255;
+    strcpy(cti->label, "tan");
+
+    cti = colortableinfo+1;
+    cti->color[0] = 178;
+    cti->color[1] = 34;
+    cti->color[2] = 34;
+    cti->color[3] = 255;
+    strcpy(cti->label, "firebrick");
+  }
+
+  memcpy(rgb_base,rgb_baseBASE,MAXRGB*4*sizeof(float));
+  memcpy(bw_base,bw_baseBASE,MAXRGB*4*sizeof(float));
+  memcpy(rgb2,rgb2BASE,MAXRGB*3*sizeof(float));
+  memcpy(bw_base,bw_baseBASE,MAXRGB*4*sizeof(float));
+
+  strcpy(viewpoint_label_startup,"external");
+  {
+    int iii;
+
+    for(iii=0;iii<7;iii++){
+      vis_boundary_type[iii]=1;
+    }
+    vis_boundary_type[0]=1;
+    for(iii=0;iii<MAXPLOT3DVARS;iii++){
+      p3min_all[iii]    = 1.0f;
+      p3chopmin[iii]    = 1.0f;
+      p3max_all[iii]    = 1.0f;
+      p3chopmax[iii]    = 0.0f;
+    }
+  }
+}
+
+void FreeVars(void) {
+  FreeObjectCollection(objectscoll);
+}
+
 int RunBenchmark(char *input_file) {
   initMALLOC();
   InitVars();
@@ -214,7 +665,7 @@ int RunBenchmark(char *input_file) {
   show_timings = 1;
   ReadSMVOrig();
   INIT_PRINT_TIMER(ReadSMVDynamic_time);
-  ReadSMVDynamic(input_file);
+  // ReadSMVDynamic(input_file);
   STOP_TIMER(ReadSMVDynamic_time);
   fprintf(stderr, "ReadSMVDynamic:\t%8.3f ms\n", ReadSMVDynamic_time * 1000);
   STOP_TIMER(parse_time);

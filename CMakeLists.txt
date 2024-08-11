@@ -190,7 +190,14 @@ add_executable(smokeview
     Source/shared/readgeom.c
     Source/shared/colorbars.c
     Source/shared/colorbar_defs.c
+    Source/shared/readhvac.c
+    Source/shared/readslice.c
     Source/shared/readobject.c
+    Source/shared/readcad.c
+    Source/shared/readsmoke.c
+    Source/shared/readpart.c
+    Source/shared/readlabel.c
+    Source/shared/readtour.c
     Source/smokeview/colortable.c
     Source/smokeview/command_args.c
 )

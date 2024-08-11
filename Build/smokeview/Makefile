@@ -46,8 +46,8 @@ bin = .
 
 # Definition of the object variables
 
-csrc = callbacks.c camera.c color2rgb.c readimage.c readgeom.c readobject.c colorbars.c colorbar_defs.c colortimebar.c compress.c csphere.c dmalloc.c \
-      drawGeometry.c file_util.c getdata.c getdatabounds.c getdatacolors.c glew.c  \
+csrc = callbacks.c camera.c color2rgb.c readimage.c readtour.c readlabel.c readslice.c readpart.c readgeom.c readcad.c readobject.c readhvac.c colorbars.c colorbar_defs.c colortimebar.c compress.c csphere.c dmalloc.c \
+      drawGeometry.c file_util.c getdata.c getdatabounds.c getdatacolors.c readsmoke.c glew.c  \
       histogram.c infoheader.c \
       IOboundary.c IOgeometry.c IOhvac.c IOiso.c IOobjects.c IOpart.c IOplot2d.c IOplot3d.c \
       IOscript.c IOshooter.c IOslice.c IOsmoke.c IOtour.c IOvolsmoke.c IOwui.c IOzone.c IOframe.o isobox.c \

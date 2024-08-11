@@ -1002,7 +1002,7 @@ void InitRGB(void){
   if(use_transparency_data==1)transparent_level_local=transparent_level;
 
   if(setbw==0){
-    ConvertColor(TO_COLOR);
+    ConvertColor(colorcoll, TO_COLOR);
     if(nrgb_ini > 0){
       nrgb = nrgb_ini;
       for(n=0;n<nrgb_ini;n++){
@@ -1022,7 +1022,7 @@ void InitRGB(void){
     }
   }
   else{
-    ConvertColor(TO_BW);
+    ConvertColor(colorcoll, TO_BW);
     for(n=0;n<nrgb;n++){
       rgb[n][0] = bw_base[n][0];
       rgb[n][1] = bw_base[n][1];
@@ -1773,50 +1773,6 @@ void GetRGB(unsigned int val, unsigned char *rr, unsigned char *gg, unsigned cha
   *rr=r; *gg=g; *bb=b;
 }
 
-/* ------------------ GetColorPtr ------------------------ */
-
-float *GetColorPtr(float *color){
-  colordata *colorptr,*oldlastcolor,*lastcolor;
-
-  int i;
-
-  if(firstcolor==NULL){
-    NewMemory((void *)&firstcolor,sizeof(colordata));
-    for(i=0;i<4;i++){
-      firstcolor->color[i]=color[i];
-      firstcolor->full_color[i]=color[i];
-    }
-    firstcolor->bw_color[0] = TOBW(color);
-    firstcolor->bw_color[1] = firstcolor->bw_color[0];
-    firstcolor->bw_color[2] = firstcolor->bw_color[0];
-    firstcolor->bw_color[3] = color[3];
-    firstcolor->nextcolor=NULL;
-    return firstcolor->color;
-  }
-  oldlastcolor = firstcolor;
-  for(colorptr = firstcolor; colorptr!=NULL; colorptr = colorptr->nextcolor){
-    oldlastcolor=colorptr;
-    if(ABS(colorptr->color[0]-color[0])>0.0001)continue;
-    if(ABS(colorptr->color[1]-color[1])>0.0001)continue;
-    if(ABS(colorptr->color[2]-color[2])>0.0001)continue;
-    if(ABS(colorptr->color[3]-color[3])>0.0001)continue;
-    return colorptr->color;
-  }
-  lastcolor=NULL;
-  NewMemory((void *)&lastcolor,sizeof(colordata));
-  oldlastcolor->nextcolor=lastcolor;
-  for(i=0;i<4;i++){
-    lastcolor->color[i]=color[i];
-    lastcolor->full_color[i]=color[i];
-  }
-  lastcolor->bw_color[0] = TOBW(color);
-  lastcolor->bw_color[1] = lastcolor->bw_color[0];
-  lastcolor->bw_color[2] = lastcolor->bw_color[0];
-  lastcolor->bw_color[3] = color[3];
-  lastcolor->nextcolor=NULL;
-  return lastcolor->color;
-}
-
 /* ------------------ GetColorTranPtr ------------------------ */
 
 float *GetColorTranPtr(float *color, float transparency){
@@ -1826,25 +1782,24 @@ float *GetColorTranPtr(float *color, float transparency){
   col[1] = color[1];
   col[2] = color[2];
   col[3] = transparency;
-  return GetColorPtr(col);
+  return GetColorPtr(colorcoll, col);
 }
 
   /* ------------------ ConvertColor ------------------------ */
 
-void ConvertColor(int flag){
+void ConvertColor(color_collection colorcoll, int flag){
   colordata *colorptr;
-  extern colordata *firstcolor;
 
   switch(flag){
    case TO_BW:
-    for(colorptr=firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
+    for(colorptr=colorcoll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
       colorptr->color[0]=colorptr->bw_color[0];
       colorptr->color[1]=colorptr->bw_color[1];
       colorptr->color[2]=colorptr->bw_color[2];
     }
     break;
    case TO_COLOR:
-    for(colorptr=firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
+    for(colorptr=colorcoll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
       colorptr->color[0]=colorptr->full_color[0];
       colorptr->color[1]=colorptr->full_color[1];
       colorptr->color[2]=colorptr->full_color[2];

@@ -7,6 +7,8 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "colorbars.h"
+#include "readlabel.h"
 
 GLUI *glui_labels=NULL;
 
@@ -418,7 +420,7 @@ void TextLabelsCB(int var){
     memcpy(&LABEL_global_ptr->useforegroundcolor, &gl->useforegroundcolor, sizeof(int));
     break;
   case LB_PREVIOUS:
-    new_label = LabelGet(LIST_LB_labels->curr_text);
+    new_label = LabelGet(label_first_ptr,LIST_LB_labels->curr_text);
     new_label = LabelPrevious(new_label);
     if(new_label == NULL)break;
     LABEL_global_ptr = new_label;
@@ -428,7 +430,7 @@ void TextLabelsCB(int var){
     }
     break;
   case LB_NEXT:
-    new_label = LabelGet(LIST_LB_labels->curr_text);
+    new_label = LabelGet(label_first_ptr,LIST_LB_labels->curr_text);
     new_label = LabelNext(new_label);
     if(new_label == NULL)break;
     LABEL_global_ptr = new_label;
@@ -438,7 +440,7 @@ void TextLabelsCB(int var){
     }
     break;
   case LB_LIST:
-    new_label = LabelGet(LIST_LB_labels->curr_text);
+    new_label = LabelGet(label_first_ptr,LIST_LB_labels->curr_text);
     LABEL_global_ptr = new_label;
     if(new_label != NULL){
       LabelCopy(gl, new_label);
@@ -460,7 +462,7 @@ void TextLabelsCB(int var){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);
     }
-    LabelInsert(gl);
+    LabelInsert(label_first, label_last, label_first_ptr, label_last_ptr, gl);
     count = 0;
     for(thislabel = label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
       if(thislabel->labeltype == TYPE_SMV)continue;
@@ -475,7 +477,7 @@ void TextLabelsCB(int var){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);
     }
-    thislabel = LabelGet(name);
+    thislabel = LabelGet(label_first_ptr,name);
     if(thislabel != NULL){
       LabelDelete(thislabel);
     }
@@ -638,7 +640,7 @@ void SurfaceCB(int var){
         surfi->transparent_level = 1.0;
       }
       s_color[3] = surfi->transparent_level;
-      surfi->color = GetColorPtr(s_color);
+      surfi->color = GetColorPtr(colorcoll, s_color);
       updatefacelists = 1;
       updatefaces = 1;
       updatehiddenfaces = 1;

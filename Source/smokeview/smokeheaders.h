@@ -341,12 +341,9 @@ EXTERNCPP void SetupPlot2DUnitData(void);
 
 EXTERNCPP void TimeAveragePlot2DData(float *times, float *vals, float *vals_avg, int nvals, float time_interval);
 
-EXTERNCPP void SetHVACInfo(void);
 EXTERNCPP void DrawHVACS(void);
 EXTERNCPP hvacnodedata *GetHVACNode(hvacdata *hvaci, int node_id);
-EXTERNCPP void InitHvacData(hvacvaldata *hi);
 EXTERNCPP void ReadHVACData(int flag);
-EXTERNCPP int IsHVACVisible(void);
 EXTERNCPP void UpdateHVACDuctColorLabels(int index);
 EXTERNCPP void UpdateNodeLabel(colorbardata *cbi);
 
@@ -609,13 +606,8 @@ EXTERNCPP void InitVolrenderScript(char *prefix, char *tour_label, int startfram
 EXTERNCPP void UpdateGluiBoundaryUnits(void);
 EXTERNCPP void UpdateGluiSliceUnits(void);
 EXTERNCPP void HVACMenu(int value);
-EXTERNCPP int GetHVACDuctValIndex(char *shortlabel);
-EXTERNCPP int GetHVACNodeValIndex(char *shortlabel);
 EXTERNCPP void ToggleMetroMode(void);
 EXTERNCPP void UpdateClipPlanes(void);
-EXTERNCPP hvacductdata *GetHVACDuctID(char *duct_name);
-EXTERNCPP hvacnodedata *GetHVACNodeID(char *node_name);
-EXTERNCPP void GetCellXYZs(float *xyz, int nxyz, int ncells, float **xyz_cellptr, int *nxyz_cell, int **cell_indptr);
 EXTERNCPP void HVACDuctValueMenu(int value);
 EXTERNCPP void HVACNodeValueMenu(int value);
 
@@ -658,10 +650,8 @@ EXTERNCPP labeldata *LabelPrevious(labeldata *gl);
 EXTERNCPP int  LabelInit(labeldata *gl);
 EXTERNCPP void LabelResort(labeldata *label);
 EXTERNCPP void LabelCopy(labeldata *label_to, labeldata *label_from);
-EXTERNCPP labeldata *LabelGet(char *name);
 EXTERNCPP void LabelDelete(labeldata *label);
 EXTERNCPP void LabelPrint(void);
-EXTERNCPP labeldata *LabelInsert(labeldata *labeltemp);
 
 EXTERNCPP void SetScreenSize(int *width, int *height);
 EXTERNCPP void KeyboardCB(unsigned char key, int x, int y);
@@ -684,7 +674,6 @@ EXTERNCPP void GetGeomInfoPtrs(int flag);
 EXTERNCPP devicedata *GetDeviceFromLabel(char *label, int index);
 EXTERNCPP devicedata *GetCSVDeviceFromLabel(char *label, int index);
 EXTERNCPP void SetupGlut(int argc, char **argv);
-EXTERNCPP int GetNDevices(char *file);
 EXTERNCPP void ReadHRR(int flag);
 EXTERNCPP FILE_SIZE ReadDeviceData(char *file, int filetype, int flag);
 EXTERNCPP void SetupZoneDevs(void);
@@ -754,7 +743,6 @@ EXTERNCPP void Cam2Clip(cameradata *cam);
 EXTERNCPP void GetElevAz(float *xyznorm,float *dtheta, float *rotate_axis, float *dpsi);
 EXTERNCPP char *GetDeviceLabel(char *buffer);
 EXTERNCPP void DrawDevices(int mode);
-EXTERNCPP void UpdatePartClassDepend(partclassdata *partclassi);
 
 EXTERNCPP void RevertColorBar(colorbardata *cbi);
 EXTERNCPP void Rgb2Lab(unsigned char *rgb, float *lab);
@@ -966,7 +954,6 @@ EXTERNCPP void SetupCircularTourNodes(void);
 EXTERNCPP void InitCircularTour(tourdata *touri, int nkeyframes, int option);
 EXTERNCPP void DeleteTourFrames(tourdata *thistour);
 EXTERNCPP keyframe *DeleteFrame(keyframe *step);
-EXTERNCPP void ReallocTourMemory(void);
 EXTERNCPP keyframe *AddFrame(keyframe *framei, float time, float pause_time, float *xyz, float view[3]);
 
 EXTERNCPP void GetBlockVals(float *xmin, float *xmax,
@@ -1061,9 +1048,8 @@ EXTERNCPP void AllocateFaces(void);
 EXTERNCPP void UpdateFaceLists(void);
 EXTERNCPP void UpdateFaces(void);
 EXTERNCPP void DrawTicks(void);
-EXTERNCPP float *GetColorPtr(float *color);
 EXTERNCPP float *GetColorTranPtr(float *color, float transparency);
-EXTERNCPP void ConvertColor(int flag);
+EXTERNCPP void ConvertColor(color_collection colorcoll, int flag);
 EXTERNCPP void InitCadColors(void);
 EXTERNCPP void UpdateRGBColors(int colorindex);
 EXTERNCPP void InitRGB(void);
@@ -1079,14 +1065,11 @@ EXTERNCPP void Num2String(char *string, float tval);
 EXTERNCPP int  SetupCase(char *file);
 EXTERNCPP int  GetMinPartFrames(int flag);
 
-EXTERNCPP void FreeCADInfo(void);
 
 EXTERNCPP void InitUnitDefs(void);
 EXTERNCPP void InitUnits(void);
 EXTERNCPP f_units *GetUnitClass(char *unit);
 
-EXTERNCPP void ReadCAD2Geom(cadgeomdata *cd);
-EXTERNCPP void ReadCADGeom(cadgeomdata *cd);
 EXTERNCPP void DrawCADGeom(const cadgeomdata *cd);
 
 EXTERNCPP FILE_SIZE ReadPlot3D(char *file, int ifile, int flag,int *errorcode);
@@ -1098,7 +1081,6 @@ EXTERNCPP FILE_SIZE ReadPart(char *file, int ifile, int loadflag, int *errorcode
 EXTERNCPP void ReadZone(int ifile, int flag, int *errorcode);
 EXTERNCPP FILE_SIZE ReadVSlice(int ivslice, int time_frame, float *time_value, int flag, int set_slice_color, int *errorcode);
 
-EXTERNCPP void FreeSmoke3D(smoke3ddata *smoke3di);
 EXTERNCPP void GetSmoke3DTimeSteps(int fortran_skip, char *smokefile, int version, int *ntimes_found, int *ntimes_full);
 EXTERNCPP void ReadSmoke3DAllMeshes(int iframe, int smoketype, int *errorcode);
 EXTERNCPP FILE_SIZE ReadSmoke3D(int iframe, int ifile, int flag, int first_time, int *errorcode);

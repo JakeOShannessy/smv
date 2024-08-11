@@ -16,9 +16,16 @@
 #include "IOvolsmoke.h"
 #include "stdio_buffer.h"
 #include "glui_motion.h"
-#include "readimage.h"
 #include "readgeom.h"
+#include "readimage.h"
+#include "readhvac.h"
+#include "readslice.h"
 #include "readobject.h"
+#include "readsmoke.h"
+#include "readlabel.h"
+#include "readtour.h"
+#include "readgeom.h"
+#include "readslice.h"
 #include "colorbars.h"
 
 #define BREAK break
@@ -42,6 +49,8 @@
 #define PARTBUFFER(len)    part_buffer;    part_buffer    += (len)
 #define SMOKE3DBUFFER(len) smoke3d_buffer; smoke3d_buffer += (len)
 #define SLICEBUFFER(len)   slice_buffer;   slice_buffer   += (len)
+
+int GetNDevices(char *file);
 
 /* ------------------ GetHrrCsvCol ------------------------ */
 
@@ -1439,7 +1448,7 @@ void ReadSMVDynamic(char *file){
       ductname = strchr(buffer, ' ');
       if(ductname == NULL)continue;
       ductname = TrimFrontBack(ductname + 1);
-      ducti = GetHVACDuctID(ductname);
+      ducti = GetHVACDuctID(&hvaccoll, ductname);
       if(ducti == NULL)continue;
 
       act_times  = ducti->act_times;
@@ -2084,7 +2093,7 @@ void InitDevice(devicedata *devicei, float *xyz, int is_beam, float *xyz1, float
       color[1] = params[1];
       color[2] = params[2];
       color[3] = 1.0;
-      devicei->color = GetColorPtr(color);
+      devicei->color = GetColorPtr(colorcoll, color);
     }
     if(nparams >= 4){
       devicei->line_width = params[3];
@@ -2972,27 +2981,27 @@ void UpdateBoundInfo(void){
   PRINT_TIMER(bound_timer, "boundary file bounds");
 
   int nhvacboundsmax = 0;
-  if(hvacductvalsinfo != NULL)nhvacboundsmax += hvacductvalsinfo->n_duct_vars;
-  if(hvacnodevalsinfo != NULL)nhvacboundsmax += hvacnodevalsinfo->n_node_vars;
+  if(hvaccoll.hvacductvalsinfo != NULL)nhvacboundsmax += hvaccoll.hvacductvalsinfo->n_duct_vars;
+  if(hvaccoll.hvacnodevalsinfo != NULL)nhvacboundsmax += hvaccoll.hvacnodevalsinfo->n_node_vars;
   if(nhvacboundsmax>0){
     FREEMEMORY(hvacductbounds);
-    NewMemory((void*)&hvacductbounds,hvacductvalsinfo->n_duct_vars*sizeof(boundsdata));
+    NewMemory((void*)&hvacductbounds,hvaccoll.hvacductvalsinfo->n_duct_vars*sizeof(boundsdata));
     nhvacductbounds=0;
 
     FREEMEMORY(hvacnodebounds);
-    NewMemory((void*)&hvacnodebounds,hvacnodevalsinfo->n_node_vars*sizeof(boundsdata));
+    NewMemory((void*)&hvacnodebounds,hvaccoll.hvacnodevalsinfo->n_node_vars*sizeof(boundsdata));
     nhvacnodebounds=0;
 
     for(i=0;i<nhvacboundsmax;i++){
       hvacvaldata *hi;
       boundsdata *hbi;
 
-      if(i<hvacductvalsinfo->n_duct_vars){
-        hi = hvacductvalsinfo->duct_vars + i;
+      if(i<hvaccoll.hvacductvalsinfo->n_duct_vars){
+        hi = hvaccoll.hvacductvalsinfo->duct_vars + i;
         hbi = hvacductbounds + nhvacductbounds;
       }
       else{
-        hi = hvacnodevalsinfo->node_vars + i - hvacductvalsinfo->n_duct_vars;
+        hi = hvaccoll.hvacnodevalsinfo->node_vars + i - hvaccoll.hvacductvalsinfo->n_duct_vars;
         hbi = hvacnodebounds + nhvacnodebounds;
       }
       hi->valmin=1.0;
@@ -3014,25 +3023,25 @@ void UpdateBoundInfo(void){
       hbi->line_contour_num = 1;
       hbi->label            = &(hi->label);
       int nbeg;
-      if(i<hvacductvalsinfo->n_duct_vars){
+      if(i<hvaccoll.hvacductvalsinfo->n_duct_vars){
         nbeg = 0;
         nhvacductbounds++;
       }
       else{
-        nbeg = hvacductvalsinfo->n_duct_vars;
+        nbeg = hvaccoll.hvacductvalsinfo->n_duct_vars;
         nhvacnodebounds++;
       }
       for(n=nbeg;n<i;n++){
         hvacvaldata *hn;
 
-        if(n<hvacductvalsinfo->n_duct_vars){
-          hn = hvacductvalsinfo->duct_vars + n;
+        if(n<hvaccoll.hvacductvalsinfo->n_duct_vars){
+          hn = hvaccoll.hvacductvalsinfo->duct_vars + n;
         }
         else{
-          hn = hvacnodevalsinfo->node_vars + n - hvacductvalsinfo->n_duct_vars;
+          hn = hvaccoll.hvacnodevalsinfo->node_vars + n - hvaccoll.hvacductvalsinfo->n_duct_vars;
         }
         if(strcmp(hi->label.shortlabel,hn->label.shortlabel)==0){
-          if(n<hvacductvalsinfo->n_duct_vars){
+          if(n<hvaccoll.hvacductvalsinfo->n_duct_vars){
             nhvacductbounds--;
           }
           else{
@@ -4619,7 +4628,7 @@ void ReadZVentData(zventdata *zvi, char *buffer, int flag){
       zvi->wall = TOP_WALL;
     }
   }
-  zvi->color = GetColorPtr(color);
+  zvi->color = GetColorPtr(colorcoll, color);
   zvi->area_fraction = area_fraction;
 }
 
@@ -6461,7 +6470,7 @@ void UpdateEvents(void){
 
       label.useforegroundcolor = 0;
       label.show_always = 0;
-      LabelInsert(&label);
+      LabelInsert(label_first, label_last, label_first_ptr, label_last_ptr,&label);
       event_file_exists = 1;
     }
   }
@@ -6806,13 +6815,13 @@ void ReadSMVOrig(void){
           obi->invisible=1;
         }
         if(colorindex>=0){
-          obi->color = GetColorPtr(rgb[nrgb+colorindex]);
+          obi->color = GetColorPtr(colorcoll, rgb[nrgb+colorindex]);
           obi->usecolorindex=1;
           obi->colorindex=colorindex;
           updateindexcolors=1;
         }
         if(colorindex==-3){
-          obi->color = GetColorPtr(s_color);
+          obi->color = GetColorPtr(colorcoll, s_color);
           updateindexcolors=1;
         }
         obi->colorindex = colorindex;
@@ -7295,7 +7304,7 @@ int ReadSMV_Init() {
   }
   nisoinfo=0;
 
-  FreeCADInfo();
+  FreeCADInfo(cadgeominfo,ncadgeom);
 
   updateindexcolors=0;
   ntrnx=0;
@@ -7331,7 +7340,7 @@ int ReadSMV_Init() {
   FREEMEMORY(surfinfo);
   FREEMEMORY(terrain_textures);
 
-  if(cadgeominfo!=NULL)FreeCADInfo();
+  if(cadgeominfo!=NULL)FreeCADInfo(cadgeominfo,ncadgeom);
 
   STOP_TIMER(pass0_time );
   PRINT_TIMER(timer_readsmv, "readsmv setup");
@@ -7721,7 +7730,8 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       global_tend   = tour_tstop;
       tload_end     = tour_tstop;
       if(tour_ntimes<2)tour_ntimes=2;
-      ReallocTourMemory();
+      ReallocTourMemory(ntourinfo, tourinfo, tour_ntimes, tour_t, tour_t2,
+                        tour_dist, tour_dist2, tour_dist3);
       continue;
     }
     if(MatchSMV(buffer,"OUTLINE") == 1){
@@ -7948,7 +7958,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
    rgb_class[1]=0.0;
    rgb_class[2]=0.0;
    rgb_class[3]=1.0;
-   partclassi->rgb=GetColorPtr(rgb_class);
+   partclassi->rgb=GetColorPtr(colorcoll, rgb_class);
 
    partclassi->ntypes=0;
    partclassi->xyz=NULL;
@@ -8120,7 +8130,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
   FREEMEMORY(surfinfo);
   if(NewMemory((void **)&surfinfo,(nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
 
-  if(cadgeominfo!=NULL)FreeCADInfo();
+  if(cadgeominfo!=NULL)FreeCADInfo(cadgeominfo,ncadgeom);
   if(ncadgeom>0){
     if(NewMemory((void **)&cadgeominfo,ncadgeom*sizeof(cadgeomdata))==0)return 2;
   }
@@ -8203,26 +8213,26 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
     if(MatchSMV(buffer, "HVACVALS") == 1){
-      FREEMEMORY(hvacductvalsinfo);
-      NewMemory(( void ** )&hvacductvalsinfo, sizeof(hvacvalsdata));
-      hvacductvalsinfo->times = NULL;
-      hvacductvalsinfo->loaded = 0;
-      hvacductvalsinfo->node_vars = NULL;
-      hvacductvalsinfo->duct_vars = NULL;
+      FREEMEMORY(hvaccoll.hvacductvalsinfo);
+      NewMemory(( void ** )&(hvaccoll.hvacductvalsinfo), sizeof(hvacvalsdata));
+      hvaccoll.hvacductvalsinfo->times = NULL;
+      hvaccoll.hvacductvalsinfo->loaded = 0;
+      hvaccoll.hvacductvalsinfo->node_vars = NULL;
+      hvaccoll.hvacductvalsinfo->duct_vars = NULL;
 
       if(FGETS(buffer, 255, stream) == NULL)BREAK;
-      hvacductvalsinfo->file = GetCharPtr(TrimFrontBack(buffer));
+      hvaccoll.hvacductvalsinfo->file = GetCharPtr(TrimFrontBack(buffer));
 
       if(FGETS(buffer, 255, stream) == NULL)BREAK;
-      sscanf(buffer, "%i", &hvacductvalsinfo->n_node_vars);
+      sscanf(buffer, "%i", &(hvaccoll.hvacductvalsinfo)->n_node_vars);
 
-      if(hvacductvalsinfo->n_node_vars>0){
-        NewMemory((void **)&hvacductvalsinfo->node_vars, hvacductvalsinfo->n_node_vars * sizeof(hvacvaldata));
-        for(i = 0;i < hvacductvalsinfo->n_node_vars;i++){
+      if(hvaccoll.hvacductvalsinfo->n_node_vars>0){
+        NewMemory((void **)&(hvaccoll.hvacductvalsinfo)->node_vars, hvaccoll.hvacductvalsinfo->n_node_vars * sizeof(hvacvaldata));
+        for(i = 0;i < hvaccoll.hvacductvalsinfo->n_node_vars;i++){
           hvacvaldata *hi;
           flowlabels *labeli;
 
-          hi = hvacductvalsinfo->node_vars + i;
+          hi = hvaccoll.hvacductvalsinfo->node_vars + i;
           InitHvacData(hi);
           labeli = &hi->label;
           ReadLabels(labeli, stream, NULL);
@@ -8230,23 +8240,23 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       }
 
       if(FGETS(buffer, 255, stream) == NULL)BREAK;
-      sscanf(buffer, "%i", &hvacductvalsinfo->n_duct_vars);
+      sscanf(buffer, "%i", &hvaccoll.hvacductvalsinfo->n_duct_vars);
 
-      if(hvacductvalsinfo->n_duct_vars>0){
-        NewMemory((void **)&hvacductvalsinfo->duct_vars, hvacductvalsinfo->n_duct_vars * sizeof(hvacvaldata));
-        for(i = 0;i < hvacductvalsinfo->n_duct_vars;i++){
+      if(hvaccoll.hvacductvalsinfo->n_duct_vars>0){
+        NewMemory((void **)&hvaccoll.hvacductvalsinfo->duct_vars, hvaccoll.hvacductvalsinfo->n_duct_vars * sizeof(hvacvaldata));
+        for(i = 0;i < hvaccoll.hvacductvalsinfo->n_duct_vars;i++){
           hvacvaldata *hi;
           flowlabels *labeli;
 
-          hi = hvacductvalsinfo->duct_vars + i;
+          hi = hvaccoll.hvacductvalsinfo->duct_vars + i;
           InitHvacData(hi);
           labeli = &hi->label;
           ReadLabels(labeli, stream, NULL);
         }
       }
-      FREEMEMORY(hvacnodevalsinfo);
-      NewMemory(( void ** )&hvacnodevalsinfo, sizeof(hvacvalsdata));
-      memcpy(hvacnodevalsinfo, hvacductvalsinfo, sizeof(hvacvalsdata));
+      FREEMEMORY(hvaccoll.hvacnodevalsinfo);
+      NewMemory(( void ** )&hvaccoll.hvacnodevalsinfo, sizeof(hvacvalsdata));
+      memcpy(hvaccoll.hvacnodevalsinfo, hvaccoll.hvacductvalsinfo, sizeof(hvacvalsdata));
     }
     /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -8259,22 +8269,22 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       //  n_nodes
       if(FGETS(buffer, 255, stream) == NULL)BREAK;
       if(FGETS(buffer, 255, stream) == NULL)BREAK;
-      sscanf(buffer, "%i", &nhvacnodeinfo);
-      nhvacnodeinfo = MAX(nhvacnodeinfo, 0);
-      if(nhvacnodeinfo == 0)continue;
+      sscanf(buffer, "%i", &hvaccoll.nhvacnodeinfo);
+      hvaccoll.nhvacnodeinfo = MAX(hvaccoll.nhvacnodeinfo, 0);
+      if(hvaccoll.nhvacnodeinfo == 0)continue;
 
-      FREEMEMORY(hvacnodeinfo);
-      NewMemory(( void ** )&hvacnodeinfo, nhvacnodeinfo * sizeof(hvacnodedata));
+      FREEMEMORY(hvaccoll.hvacnodeinfo);
+      NewMemory(( void ** )&hvaccoll.hvacnodeinfo, hvaccoll.nhvacnodeinfo * sizeof(hvacnodedata));
 
   // node_id duct_label network_label
   // x y z filter_flag vent_label
 
-      for(i=0;i<nhvacnodeinfo;i++){
+      for(i=0;i<hvaccoll.nhvacnodeinfo;i++){
         hvacnodedata *nodei;
         char *filter, *node_label, *network_label, *connect_id;
 
 
-        nodei=hvacnodeinfo + i;
+        nodei=hvaccoll.hvacnodeinfo + i;
 
         if(FGETS(buffer, 255, stream) == NULL)BREAK;
         sscanf(buffer, "%i", &nodei->node_id);
@@ -8319,29 +8329,29 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
   // waypoint xyz
       if(FGETS(buffer, 255, stream) == NULL)BREAK;
       if(FGETS(buffer, 255, stream) == NULL)BREAK;
-      sscanf(buffer, "%i", &nhvacductinfo);
-      nhvacductinfo = MAX(nhvacductinfo, 0);
-      if(nhvacductinfo == 0){
-        FREEMEMORY(hvacnodeinfo);
-        nhvacnodeinfo = 0;
+      sscanf(buffer, "%i", &hvaccoll.nhvacductinfo);
+      hvaccoll.nhvacductinfo = MAX(hvaccoll.nhvacductinfo, 0);
+      if(hvaccoll.nhvacductinfo == 0){
+        FREEMEMORY(hvaccoll.hvacnodeinfo);
+        hvaccoll.nhvacnodeinfo = 0;
         break;
       }
 
-      FREEMEMORY(hvacductinfo);
-      NewMemory((void **)&hvacductinfo, nhvacductinfo*sizeof(hvacductdata));
-      for(i=0;i<nhvacductinfo;i++){
+      FREEMEMORY(hvaccoll.hvacductinfo);
+      NewMemory((void **)&(hvaccoll.hvacductinfo), hvaccoll.nhvacductinfo*sizeof(hvacductdata));
+      for(i=0;i<hvaccoll.nhvacductinfo;i++){
         hvacductdata *ducti;
         char *duct_label, *network_label, *hvac_label, *connect_id;
         int j;
 
-        ducti = hvacductinfo + i;
+        ducti = hvaccoll.hvacductinfo + i;
         if(FGETS(buffer, 255, stream) == NULL)BREAK;
         sscanf(buffer, "%i %i %i", &ducti->duct_id, &ducti->node_id_from, &ducti->node_id_to);
         ducti->node_id_from--;
         ducti->node_id_to--;
 
-        ducti->node_from = hvacnodeinfo + ducti->node_id_from;
-        ducti->node_to   = hvacnodeinfo + ducti->node_id_to;
+        ducti->node_from = hvaccoll.hvacnodeinfo + ducti->node_id_from;
+        ducti->node_to   = hvaccoll.hvacnodeinfo + ducti->node_id_to;
 
         if(ducti->node_from->duct == NULL)ducti->node_from->duct = ducti;
         if(ducti->node_to->duct == NULL)ducti->node_to->duct = ducti;
@@ -8406,8 +8416,8 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
         hvacnodedata *node_from, *node_to;
         float *xyz0, *xyz1;
 
-        node_from = hvacnodeinfo + ducti->node_id_from;
-        node_to = hvacnodeinfo + ducti->node_id_to;
+        node_from = hvaccoll.hvacnodeinfo + ducti->node_id_from;
+        node_to = hvaccoll.hvacnodeinfo + ducti->node_id_to;
         xyz0 = node_from->xyz;
         xyz1 = node_to->xyz;
 
@@ -8423,25 +8433,25 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       }
       char **hvac_network_labels = NULL;
 
-      NewMemory(( void ** )&hvac_network_labels, (nhvacnodeinfo + nhvacductinfo) * sizeof(char *));
-      for(i = 0; i < nhvacnodeinfo; i++){
-        hvac_network_labels[i] = hvacnodeinfo[i].network_name;
+      NewMemory(( void ** )&hvac_network_labels, (hvaccoll.nhvacnodeinfo + hvaccoll.nhvacductinfo) * sizeof(char *));
+      for(i = 0; i < hvaccoll.nhvacnodeinfo; i++){
+        hvac_network_labels[i] = hvaccoll.hvacnodeinfo[i].network_name;
       }
-      for(i = 0; i < nhvacductinfo; i++){
-        hvac_network_labels[i+nhvacnodeinfo] = hvacductinfo[i].network_name;
+      for(i = 0; i < hvaccoll.nhvacductinfo; i++){
+        hvac_network_labels[i+hvaccoll.nhvacnodeinfo] = hvaccoll.hvacductinfo[i].network_name;
       }
-      qsort(( char * )hvac_network_labels, ( size_t )(nhvacnodeinfo + nhvacductinfo), sizeof(char *), CompareLabel);
-      nhvacinfo = 1;
-      for(i = 1; i < nhvacnodeinfo + nhvacductinfo; i++){
-        if(strcmp(hvac_network_labels[nhvacinfo-1], hvac_network_labels[i]) == 0)continue;
-        hvac_network_labels[nhvacinfo] = hvac_network_labels[i];
-        nhvacinfo++;
+      qsort(( char * )hvac_network_labels, ( size_t )(hvaccoll.nhvacnodeinfo + hvaccoll.nhvacductinfo), sizeof(char *), CompareLabel);
+      hvaccoll.nhvacinfo = 1;
+      for(i = 1; i < hvaccoll.nhvacnodeinfo + hvaccoll.nhvacductinfo; i++){
+        if(strcmp(hvac_network_labels[hvaccoll.nhvacinfo-1], hvac_network_labels[i]) == 0)continue;
+        hvac_network_labels[hvaccoll.nhvacinfo] = hvac_network_labels[i];
+        hvaccoll.nhvacinfo++;
       }
-      NewMemory(( void ** )&hvacinfo, nhvacinfo * sizeof(hvacdata));
-      for(i = 0; i < nhvacinfo; i++){
+      NewMemory(( void ** )&hvaccoll.hvacinfo, hvaccoll.nhvacinfo * sizeof(hvacdata));
+      for(i = 0; i < hvaccoll.nhvacinfo; i++){
         hvacdata *hvaci;
 
-        hvaci = hvacinfo + i;
+        hvaci = hvaccoll.hvacinfo + i;
         hvaci->network_name = hvac_network_labels[i];
         hvaci->display           = 0;
         hvaci->show_node_labels  = 0;
@@ -8457,7 +8467,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
         memcpy(hvaci->duct_color, hvac_duct_color, 3*sizeof(int));
       }
       FREEMEMORY(hvac_network_labels);
-      SetHVACInfo();
+      SetHVACInfo(&hvaccoll);
     }
       /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -8610,7 +8620,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
           if(FILE_EXISTS_CASEDIR(buff2)==YES){
             NewMemory((void **)&geomi->file2,strlen(buff2)+1);
             strcpy(geomi->file2,buff2);
-            ReadGeomFile2(geomi);
+            // ReadGeomFile2(geomi);
           }
         }
       }
@@ -8657,7 +8667,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
               fcolors[2] = colors[2]/255.0;
               if(transparency<0.0)transparency = 1.0;
               fcolors[3] = transparency;
-              geomobji->color = GetColorPtr(fcolors);
+              geomobji->color = GetColorPtr(colorcoll, fcolors);
               geomobji->use_geom_color = 1;
             }
             geomobji->ntriangles = ntriangles;
@@ -8985,7 +8995,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f",rgb_class,rgb_class+1,rgb_class+2);
       rgb_class[3]=1.0;
-      partclassi->rgb=GetColorPtr(rgb_class);
+      partclassi->rgb=GetColorPtr(colorcoll, rgb_class);
 
       partclassi->ntypes=0;
       partclassi->xyz=NULL;
@@ -9133,7 +9143,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
         rgbtemp[0]=frgbtemp[0]*255;
         rgbtemp[1]=frgbtemp[1]*255;
         rgbtemp[2]=frgbtemp[2]*255;
-        LabelInsert(labeli);
+        LabelInsert(label_first, label_last, label_first_ptr, label_last_ptr,labeli);
       }
       continue;
     }
@@ -9289,7 +9299,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       if(FILE_EXISTS_CASEDIR(bufferptr)==YES){
         if(NewMemory((void **)&cadgeominfo[ncadgeom].file,(unsigned int)(len+1))==0)return 2;
         STRCPY(cadgeominfo[ncadgeom].file,bufferptr);
-        ReadCADGeom(cadgeominfo+ncadgeom);
+        ReadCADGeom(cadgeominfo+ncadgeom,block_shininess);
         ncadgeom++;
       }
       else{
@@ -9379,7 +9389,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
         surfi->invisible = 1;
         surfi->type = BLOCK_hidden;
       }
-      surfi->color = GetColorPtr(s_color);
+      surfi->color = GetColorPtr(colorcoll, s_color);
       if(s_color[3]<0.99){
         surfi->transparent=1;
         surfi->transparent_level = s_color[3];
@@ -10419,7 +10429,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
         default:
           assert(FFALSE);
         }
-        zvi->color = GetColorPtr(color);
+        zvi->color = GetColorPtr(colorcoll, color);
         zvi->area_fraction = area_fraction;
       }
       else if(vent_type==VFLOW_VENT){
@@ -10474,7 +10484,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
         zvi->vertical_vent_type = vertical_vent_type;
         zvi->area = vent_area;
         zvi->area_fraction = area_fraction;
-        zvi->color = GetColorPtr(color);
+        zvi->color = GetColorPtr(colorcoll, color);
       }
       else if(vent_type==MFLOW_VENT){
         nzmvents++;
@@ -11001,14 +11011,14 @@ typedef struct {
             colorindex=-3;
           }
           if(s_color[0]>=0.0&&s_color[1]>=0.0&&s_color[2]>=0.0){
-            bc->color=GetColorPtr(s_color);
+            bc->color=GetColorPtr(colorcoll, s_color);
           }
           bc->nnodes=(ijk[1]+1-ijk[0])*(ijk[3]+1-ijk[2])*(ijk[5]+1-ijk[4]);
           bc->useblockcolor = 1;
         }
         else{
           if(colorindex>=0){
-            bc->color = GetColorPtr(rgb[nrgb+colorindex]);
+            bc->color = GetColorPtr(colorcoll, rgb[nrgb+colorindex]);
             bc->usecolorindex=1;
             bc->colorindex=colorindex;
             updateindexcolors=1;
@@ -11195,7 +11205,7 @@ typedef struct {
           cvi->useventcolor=1;
         }
         s_color[3]=1.0; // set color to opaque until CVENT transparency is implemented
-        cvi->color = GetColorPtr(s_color);
+        cvi->color = GetColorPtr(colorcoll, s_color);
       }
       continue;
     }
@@ -11436,7 +11446,7 @@ typedef struct {
             vi->useventcolor=1;
             updateindexcolors=1;
           }
-          vi->color = GetColorPtr(s_color);
+          vi->color = GetColorPtr(colorcoll, s_color);
         }
         else{
           iv1=0;
@@ -12705,7 +12715,7 @@ int ReadIni2(char *inifile, int localfile){
       ONEORZERO(boundary_edgetype);
       continue;
     }
-    if(MatchINI(buffer, "HVACVIEW") == 1&&hvacinfo!=NULL&&nhvacinfo > 0){
+    if(MatchINI(buffer, "HVACVIEW") == 1&&hvaccoll.hvacinfo!=NULL&&hvaccoll.nhvacinfo > 0){
       int nh, dummy;
       float rdummy;
 
@@ -12715,13 +12725,13 @@ int ReadIni2(char *inifile, int localfile){
       ONEORZERO(hvac_metro_view);
       ONEORZERO(hvac_cell_view);
 
-      nh = MIN(nhvacinfo, nh);
+      nh = MIN(hvaccoll.nhvacinfo, nh);
       for(i = 0; i < nh; i++){
         hvacdata *hvaci;
         int dc[3], nc[3];
         int j;
 
-        hvaci = hvacinfo + i;
+        hvaci = hvaccoll.hvacinfo + i;
         fgets(buffer, 255, stream);
         sscanf(buffer, " %i %i %i %i %i %f %f %f %f %f",
           &hvaci->display,  &hvaci->show_node_labels, &hvaci->show_duct_labels,
@@ -13176,7 +13186,7 @@ int ReadIni2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", dc, dc + 1, dc + 2);
       dc[3] = 1.0;
-      direction_color_ptr = GetColorPtr(direction_color);
+      direction_color_ptr = GetColorPtr(colorcoll, direction_color);
       GetSliceParmInfo(&sliceparminfo);
       UpdateSliceMenuShow(&sliceparminfo);
       continue;
@@ -14638,7 +14648,7 @@ int ReadIni2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", ventcolor_temp, ventcolor_temp + 1, ventcolor_temp + 2);
       ventcolor_temp[3] = 1.0;
-      ventcolor = GetColorPtr(ventcolor_temp);
+      ventcolor = GetColorPtr(colorcoll, ventcolor_temp);
       updatefaces = 1;
       updateindexcolors = 1;
       continue;
@@ -14734,7 +14744,7 @@ int ReadIni2(char *inifile, int localfile){
         s_color[0] = CLAMP(s_color[0], 0.0, 1.0);
         s_color[1] = CLAMP(s_color[1], 0.0, 1.0);
         s_color[2] = CLAMP(s_color[2], 0.0, 1.0);
-        surfi->color = GetColorPtr(s_color);
+        surfi->color = GetColorPtr(colorcoll, s_color);
         surfi->transparent_level=s_color[3];
       }
       continue;
@@ -14770,7 +14780,7 @@ int ReadIni2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", blockcolor_temp, blockcolor_temp + 1, blockcolor_temp + 2);
       blockcolor_temp[3] = 1.0;
-      block_ambient2 = GetColorPtr(blockcolor_temp);
+      block_ambient2 = GetColorPtr(colorcoll, blockcolor_temp);
       updatefaces = 1;
       updateindexcolors = 1;
       continue;
@@ -14805,7 +14815,7 @@ int ReadIni2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", blockspec_temp, blockspec_temp + 1, blockspec_temp + 2);
       blockspec_temp[3] = 1.0;
-      block_specular2 = GetColorPtr(blockspec_temp);
+      block_specular2 = GetColorPtr(colorcoll, blockspec_temp);
       updatefaces = 1;
       updateindexcolors = 1;
       continue;
@@ -15742,14 +15752,15 @@ int ReadIni2(char *inifile, int localfile){
         TrimBack(buffer);
         bufferptr = TrimFront(buffer);
         strcpy(labeli->name, bufferptr);
-        LabelInsert(labeli);
+        LabelInsert(label_first, label_last, label_first_ptr, label_last_ptr,labeli);
         continue;
       }
       if(MatchINI(buffer, "VIEWTIMES") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
         sscanf(buffer, "%f %f %i", &tour_tstart, &tour_tstop, &tour_ntimes);
         if(tour_ntimes<2)tour_ntimes = 2;
-        ReallocTourMemory();
+        ReallocTourMemory(ntourinfo, tourinfo, tour_ntimes, tour_t, tour_t2,
+                      tour_dist, tour_dist2, tour_dist3);
         continue;
       }
       if(MatchINI(buffer, "SHOOTER") == 1){
@@ -16026,7 +16037,8 @@ int ReadIni2(char *inifile, int localfile){
               touri->display = 0;
             }
           }
-          ReallocTourMemory();
+          ReallocTourMemory(ntourinfo, tourinfo, tour_ntimes, tour_t, tour_t2,
+                      tour_dist, tour_dist2, tour_dist3);
           InitCircularTour(tourinfo,ncircletournodes,INIT);
           {
             keyframe *thisframe, *addedframe;
@@ -16137,7 +16149,8 @@ int ReadIni2(char *inifile, int localfile){
               touri->display = 0;
             }
           }
-          ReallocTourMemory();
+          ReallocTourMemory(ntourinfo, tourinfo, tour_ntimes, tour_t, tour_t2,
+                      tour_dist, tour_dist2, tour_dist3);
           InitCircularTour(tourinfo,ncircletournodes,INIT);
           {
             keyframe *thisframe, *addedframe;
@@ -17274,14 +17287,14 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i %i\n", freeze_volsmoke, autofreeze_volsmoke);
   fprintf(fileout, "GEOMBOUNDARYPROPS\n");
   fprintf(fileout, " %i %i %i %f %f %i\n",show_boundary_shaded, show_boundary_outline, show_boundary_points, geomboundary_linewidth, geomboundary_pointsize, boundary_edgetype);
-  if(nhvacinfo > 0){
+  if(hvaccoll.nhvacinfo > 0){
     fprintf(fileout, "HVACVIEW\n");
-    fprintf(fileout, " %i %i %i %i %f %i\n", nhvacinfo, hvac_metro_view, 1, 0, 0.0, hvac_cell_view);
-    for(i = 0; i < nhvacinfo; i++){
+    fprintf(fileout, " %i %i %i %i %f %i\n", hvaccoll.nhvacinfo, hvac_metro_view, 1, 0, 0.0, hvac_cell_view);
+    for(i = 0; i < hvaccoll.nhvacinfo; i++){
       hvacdata *hvaci;
       int *dc, *nc;
 
-      hvaci = hvacinfo + i;
+      hvaci = hvaccoll.hvacinfo + i;
       dc = hvaci->duct_color;
       nc = hvaci->node_color;
       fprintf(fileout, " %i %i %i %i %i %f %f %f %f %f\n",

@@ -138,6 +138,24 @@ sv_object *GetSmvObjectType2(object_collection *objectscoll, char *olabel,
   return default_object;
 }
 
+/* ----------------------- GetTokenLoc ----------------------------- */
+
+int GetTokenLoc(char *var, sv_object_frame *frame) {
+  int i;
+
+  for (i = 0; i < frame->nsymbols; i++) {
+    int ii;
+    tokendata *toki;
+    char *token_var;
+
+    ii = frame->symbols[i];
+    toki = frame->tokens + ii;
+    token_var = toki->tokenlabel + 1;
+    if (STRCMP(var, token_var) == 0) return ii;
+  }
+  return -1;
+}
+
 /* ------------------ ParseSmvObjectString ------------------------ */
 
 void ParseSmvObjectString(object_collection *objectscoll, char *string,
@@ -1659,4 +1677,58 @@ void UpdateDeviceTextures(object_collection *objectscoll, int ndeviceinfo,
   *ndevice_texture_listptr      = ndevice_texture_list;
   *device_texture_listptr       = device_texture_list;
   *device_texture_list_indexptr = device_texture_list_index;
+}
+
+/* ----------------------- GetNDevices ----------------------------- */
+#define BUFFER_LEN 255
+int GetNDevices(char *file) {
+  FILE *stream;
+  char buffer[BUFFER_LEN], *comma;
+  int buffer_len = BUFFER_LEN, nd = 0;
+
+  if (file == NULL) return 0;
+  stream = fopen(file, "r");
+  if (stream == NULL) return 0;
+  fgets(buffer, buffer_len, stream);
+  comma = strchr(buffer, ',');
+  if (comma != NULL) *comma = 0;
+  TrimBack(buffer);
+  if (strcmp(buffer, "//HEADER") != 0) {
+    fclose(stream);
+    return 0;
+  }
+
+  while (!feof(stream)) {
+    fgets(buffer, buffer_len, stream);
+    comma = strchr(buffer, ',');
+    if (comma != NULL) *comma = 0;
+    TrimBack(buffer);
+    if (strcmp(buffer, "//DATA") == 0) {
+      break;
+    }
+    if (strcmp(buffer, "DEVICE") == 0) {
+      nd++;
+    }
+  }
+  fclose(stream);
+  return nd;
+}
+
+/* ----------------------- GetDeviceLabel ----------------------------- */
+
+char *GetDeviceLabel(char *buffer) {
+  char *label_present;
+
+  label_present = strstr(buffer, "#");
+  if (label_present == NULL) return NULL;
+  if (strlen(label_present) <= 1) {
+    label_present[0] = 0;
+    return NULL;
+  }
+  label_present[0] = 0;
+  label_present++;
+  label_present = TrimFront(label_present);
+  TrimBack(label_present);
+  if (strlen(label_present) == 0) return NULL;
+  return label_present;
 }

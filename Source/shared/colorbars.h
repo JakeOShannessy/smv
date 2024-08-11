@@ -17,6 +17,17 @@
 #define INTERP_RGB 0
 #define INTERP_LAB 1
 
+#define TOBW(col) (0.299 * (col)[0] + 0.587 * (col)[1] + 0.114 * (col)[2])
+
+typedef struct _colordata {
+  float color[4], full_color[4], bw_color[4];
+  struct _colordata *nextcolor;
+} colordata;
+
+typedef struct {
+  colordata *firstcolor;
+} color_collection;
+
 typedef struct _colorbardata {
   /// @brief The label used in GUI menus
   char menu_label[1024];
@@ -85,7 +96,7 @@ EXTERNCPP colorbardata *NewColorbar(colorbar_collection *colorbars);
  * @return 0 on success, non-zero on failure.
  */
 EXTERNCPP int ReadCSVColorbar(colorbardata *colorbar, const char *filepath,
-                     const char *colorbar_type, int type);
+                              const char *colorbar_type, int type);
 /**
  * @brief Initialize the default colorbars. This includes:
  *    - Initializing the colorbars which are hardcoded.
@@ -111,8 +122,6 @@ EXTERNCPP void InitDefaultColorbars(colorbar_collection *colorbars, int nini,
                                     unsigned char rgb_above_max[3],
                                     colorbardata *colorbarcopyinfo);
 
-
-
 EXTERNCPP void AdjustColorBar(colorbardata *cbi);
 EXTERNCPP void RemapColorbar(colorbardata *cbi, int show_extreme_mindata,
                              unsigned char rgb_below_min[3],
@@ -121,6 +130,8 @@ EXTERNCPP void RemapColorbar(colorbardata *cbi, int show_extreme_mindata,
 EXTERNCPP void Lab2XYZ(float *xyz, float *lab);
 EXTERNCPP void CheckLab(void);
 EXTERNCPP void FRgb2Lab(float *rgb_arg, float *lab);
-EXTERNCPP void GetColorDist(colorbardata *cbi, int option, float *min, float *max);
+EXTERNCPP void GetColorDist(colorbardata *cbi, int option, float *min,
+                            float *max);
 
+EXTERNCPP float *GetColorPtr(color_collection colorcoll, float *color);
 #endif
