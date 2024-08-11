@@ -106,14 +106,15 @@ int main(int argc, char **argv) {
   init_vals(&hvaccoll, argv[1]);
 
   FILE_SIZE file_size;
-  ReadHVACData0(&hvaccoll, 0, &file_size);
+  int ret = ReadHVACData0(&hvaccoll, 0, &file_size);
+  if (ret) return ret;
   for (int i = 0; i < hvaccoll.hvacductvalsinfo->n_duct_vars; i++) {
     hvacvaldata *hi = hvaccoll.hvacductvalsinfo->duct_vars + i;
     fprintf(stderr, "%s\n", hi->label.longlabel);
     fprintf(stderr, "  shortlabel: %s\n", hi->label.shortlabel);
     fprintf(stderr, "  units: %s\n", hi->label.unit);
     fprintf(stderr, "  nvals: %d\n", hi->nvals);
-    for (int j = 0; j < hi->nvals+100; j++) {
+    for (int j = 0; j < hi->nvals + 100; j++) {
       fprintf(stderr, "    %d: %g\n", j, hi->vals[j]);
     }
   }

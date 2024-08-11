@@ -186,6 +186,6 @@ int ParseHVACValsEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream);
  * @param[in] flag The flag to control whether we load or unload.
  * @param[out] file_size A location to output the size of the file.
  */
-void ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
+int ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
                    FILE_SIZE *file_size);
 #endif
