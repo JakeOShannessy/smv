@@ -130,6 +130,9 @@ add_executable(parse_hvac_vals parse_hvac_vals.c
     ../Source/shared/stdio_buffer.c
     ../Source/shared/getdata.c
     ../Source/shared/dmalloc.c
+    ../Source/shared/sha256.c
+    ../Source/shared/sha1.c
+    ../Source/shared/md5.c
 )
 
 target_include_directories(parse_hvac_vals PRIVATE
@@ -201,7 +204,7 @@ add_test(NAME "Simple BNDF - Complete"
 # Arguments to this tests are <bndf path> <number of frames in bndf>
 # Simple slice is a finished slice file with 3 frames
 add_test(NAME "Simple PRT5 - Complete"
-COMMAND parse_simple_part ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_part.prt5 3)
+    COMMAND parse_simple_part ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_part.prt5 3)
 
 # Arguments to this tests are <bndf path> <number of frames in bndf>
 # Simple slice is a finished slice file with 3 frames

@@ -16,6 +16,7 @@
 #include "readcad.h"
 #include "readgeom.h"
 #include "readobject.h"
+#include "shared_structures.h"
 
 /* --------------------------  circdata ------------------------------------ */
 

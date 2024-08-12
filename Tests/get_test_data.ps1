@@ -1,4 +1,4 @@
-$commit_fig = "bf2446b600b4062196923a74cd2cf67c3b7be76d"
+$commit_fig = "83e6a770f511e315af21be5868d758b99f0a83ad"
 
 $zip_path = "$env:temp\test-data.zip"
 $unzip_path = "$env:temp\test-data-out"

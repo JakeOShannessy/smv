@@ -19,8 +19,8 @@
 
 #include "readhvac.h"
 
-inline int hvacval(hvacdatacollection *hvaccoll, int itime, int iduct,
-                   int icell) {
+static inline int hvacval(hvacdatacollection *hvaccoll, int itime, int iduct,
+                          int icell) {
   return (itime)*hvaccoll->hvac_maxcells * hvaccoll->hvac_n_ducts +
          (iduct)*hvaccoll->hvac_maxcells + (icell);
 }
@@ -551,8 +551,8 @@ void SetHVACInfo(hvacdatacollection *hvaccoll) {
   }
 }
 
-void ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
-                   FILE_SIZE *file_size) {
+int ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
+                  FILE_SIZE *file_size) {
   FILE *stream = NULL;
   float *node_buffer = NULL, *duct_buffer = NULL, *ducttimes, *nodetimes;
   int max_node_buffer = 0, max_duct_buffer = 0;
@@ -561,8 +561,8 @@ void ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
   int i, iframe;
   int *duct_ncells;
 
-  if (hvaccoll->hvacductvalsinfo == NULL) return;
-  if (hvaccoll->hvacnodevalsinfo == NULL) return;
+  if (hvaccoll->hvacductvalsinfo == NULL) return 1;
+  if (hvaccoll->hvacnodevalsinfo == NULL) return 1;
   FREEMEMORY(hvaccoll->hvacductvalsinfo->times);
   FREEMEMORY(hvaccoll->hvacnodevalsinfo->times);
 
@@ -581,10 +581,10 @@ void ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
   }
   hvaccoll->hvacductvalsinfo->loaded = 0;
   hvaccoll->hvacnodevalsinfo->loaded = 0;
-  if (flag == 1 /*TODO: should be 'UNLOAD'*/) return;
+  if (flag == 1 /*TODO: should be 'UNLOAD'*/) return 2;
 
   stream = fopen(hvaccoll->hvacductvalsinfo->file, "rb");
-  if (stream == NULL) return;
+  if (stream == NULL) return 3;
 
   FSEEK(stream, 4, SEEK_CUR);
   fread(parms, 4, 4, stream);
@@ -740,6 +740,7 @@ void ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
     }
   }
   FREEMEMORY(duct_ncells);
+  return 0;
 }
 
 /* ------------------ CompareLabel ------------------------ */
