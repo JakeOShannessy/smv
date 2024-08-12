@@ -7314,8 +7314,6 @@ int ReadSMV_Init() {
   FREEMEMORY(surfinfo);
   FREEMEMORY(terrain_textures);
 
-  if(cadgeomcoll->cadgeominfo!=NULL)FreeCADGeomCollection(cadgeomcoll);
-
   STOP_TIMER(pass0_time );
   PRINT_TIMER(timer_readsmv, "readsmv setup");
   return 0;
