@@ -16,7 +16,6 @@
 #include "IOvolsmoke.h"
 #include "stdio_buffer.h"
 #include "glui_motion.h"
-#include "readgeom.h"
 #include "readimage.h"
 #include "readhvac.h"
 #include "readslice.h"
@@ -25,6 +24,7 @@
 #include "readlabel.h"
 #include "readtour.h"
 #include "readgeom.h"
+#include "readpart.h"
 #include "readslice.h"
 #include "colorbars.h"
 #include "readcad.h"
@@ -7278,7 +7278,6 @@ int ReadSMV_Init() {
   }
   nisoinfo=0;
 
-  FreeCADInfo(cadgeominfo,ncadgeom);
   FreeCADGeomCollection(cadgeomcoll);
 
   updateindexcolors=0;
@@ -7315,7 +7314,7 @@ int ReadSMV_Init() {
   FREEMEMORY(surfinfo);
   FREEMEMORY(terrain_textures);
 
-  if(cadgeominfo!=NULL)FreeCADInfo(cadgeominfo,ncadgeom);
+  if(cadgeomcoll->cadgeominfo!=NULL)FreeCADGeomCollection(cadgeomcoll);
 
   STOP_TIMER(pass0_time );
   PRINT_TIMER(timer_readsmv, "readsmv setup");
@@ -8107,9 +8106,6 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
   FREEMEMORY(surfinfo);
   if(NewMemory((void **)&surfinfo,(nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
 
-  if(cadgeominfo!=NULL)FreeCADInfo(cadgeominfo,ncadgeom);
-  if(ncadgeom>0){
-    if(NewMemory((void **)&cadgeominfo,ncadgeom*sizeof(cadgeomdata))==0)return 2;
   if (cadgeomcoll != NULL) FreeCADGeomCollection(cadgeomcoll);
   if (n_cadgeom_keywords > 0) {
     // Allocate a fixed-size collection large enough to hold each of the CADGEOM
@@ -9042,15 +9038,6 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
         BREAK;
       }
       bufferptr=TrimFrontBack(buffer);
-      len=strlen(bufferptr);
-      cadgeominfo[ncadgeom].order=NULL;
-      cadgeominfo[ncadgeom].quad=NULL;
-      cadgeominfo[ncadgeom].file=NULL;
-      if(FILE_EXISTS_CASEDIR(bufferptr)==YES){
-        if(NewMemory((void **)&cadgeominfo[ncadgeom].file,(unsigned int)(len+1))==0)return 2;
-        STRCPY(cadgeominfo[ncadgeom].file,bufferptr);
-        ReadCADGeom(cadgeominfo+ncadgeom,block_shininess);
-        ncadgeom++;
       if (FILE_EXISTS_CASEDIR(bufferptr) == YES) {
         ReadCADGeomToCollection(cadgeomcoll, bufferptr, block_shininess);
       }
