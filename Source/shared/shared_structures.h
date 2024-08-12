@@ -3,7 +3,6 @@
 #include "options.h"
 #include <stdio.h>
 #include "isodefs.h"
-#include "readcad.h"
 
 #if defined(_WIN32)
 #include <windows.h>

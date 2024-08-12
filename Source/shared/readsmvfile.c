@@ -1878,17 +1878,6 @@ int GetSmoke3DType(char *label){
   return -1;
 }
 
-/* ------------------ CompareLabel ------------------------ */
-
-int CompareLabel(const void *arg1, const void *arg2){
-  char *x, *y;
-
-  x = *( char ** )arg1;
-  y = *( char ** )arg2;
-
-  return strcmp(x, y);
-}
-
 /* ------------------ CompareSmoketypes ------------------------ */
 
 int CompareSmoketypes( const void *arg1, const void *arg2 ){
@@ -4049,22 +4038,6 @@ char *GetViewPointPtr(char **viewpoint_list, int nviewpoint_list, char *viewpoin
     if(strcmp(viewpoint_list[i], viewpoint)==0)return viewpoint_list[i];
   }
   return NULL;
-}
-
-/* ------------------ GetCharPtr ------------------------ */
-
-char *GetCharPtr(char *label){
-  char *labelptr, labelcopy[256], *labelcopyptr;
-  int lenlabel;
-
-  if(label==NULL||strlen(label)==0)return NULL;
-  strcpy(labelcopy,label);
-  labelcopyptr = TrimFrontBack(labelcopy);
-  lenlabel = strlen(labelcopyptr);
-  if(lenlabel==0)return NULL;
-  NewMemory((void **)&labelptr, lenlabel+1);
-  strcpy(labelptr, labelcopyptr);
-  return labelptr;
 }
 
 /* ------------------ GetViewPoints ------------------------ */

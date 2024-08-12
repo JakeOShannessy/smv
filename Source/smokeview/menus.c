@@ -17,6 +17,7 @@
 #include "readhvac.h"
 #include "readobject.h"
 #include "readsmoke.h"
+#include "readpart.h"
 
 void LoadHVACMenu(int value);
 void LoadPlot2DMenu(int value);
