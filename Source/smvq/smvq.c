@@ -679,8 +679,8 @@ int RunBenchmark(char *input_file) {
   json_object_object_add(jobj, "fds_version",
                          json_object_new_string(fds_version));
   struct json_object *mesh_array = json_object_new_array();
-  for (int i = 0; i < nmeshes; i++) {
-    meshdata *mesh = &meshinfo[i];
+  for (int i = 0; i < meshescoll.nmeshes; i++) {
+    meshdata *mesh = &meshescoll.meshinfo[i];
     struct json_object *mesh_obj = json_object_new_object();
     json_object_object_add(mesh_obj, "index", json_object_new_int(i + 1));
     if (mesh->label != NULL) {

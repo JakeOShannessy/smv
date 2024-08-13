@@ -3268,7 +3268,7 @@ void DrawDevices(int mode){
       if(devicei->plane_surface != NULL){
         int j;
 
-        for(j = 0;j < nmeshes;j++){
+        for(j = 0;j < meshescoll.nmeshes;j++){
           DrawStaticIso(devicei->plane_surface[j], -1, 0, 2, 0, devicei->line_width);
           DrawStaticIso(devicei->plane_surface[j], 2, 0, 2, 0, devicei->line_width);
         }
@@ -5914,7 +5914,7 @@ void InitDevicePlane(devicedata *devicei){
     devicei->color=GetColorPtr(colorcoll, rgbcolor);
   }
   colorindex=0;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
     float xvert[12], yvert[12], zvert[12];
@@ -5926,7 +5926,7 @@ void InitDevicePlane(devicedata *devicei){
     InitIsoSurface(devicei->plane_surface[i],level,devicei->color,colorindex);
     devicei->plane_surface[i]->cullfaces=1;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
 
     xx[0]=meshi->xyz_bar0[XXX];
     xx[1]=SMV2FDS_X(meshi->xyz_bar[XXX]);

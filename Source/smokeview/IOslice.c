@@ -170,7 +170,7 @@ float Get3DSliceVal(slicedata *sd, float *xyz){
 
   meshdata *valmesh;
 
-  valmesh = meshinfo + sd->blocknumber;
+  valmesh = meshescoll.meshinfo + sd->blocknumber;
 
   xplt = valmesh->xplt_orig;
   yplt = valmesh->yplt_orig;
@@ -1163,7 +1163,7 @@ void GetSliceHists(slicedata *sd, int use_bounds, float valmin, float valmax){
   float *xplt, *yplt, *zplt;
 
   if(sd->histograms != NULL)return;
-  meshi = meshinfo + sd->blocknumber;
+  meshi = meshescoll.meshinfo + sd->blocknumber;
   iblank_node = meshi->c_iblank_node;
   iblank_cell = meshi->c_iblank_cell;
   xplt = meshi->xplt_orig;
@@ -1573,7 +1573,7 @@ char *GetMSliceDir(multislicedata *mslicei){
     float delta;
 
     slicei = sliceinfo+mslicei->islices[i];
-    meshi = meshinfo+slicei->blocknumber;
+    meshi = meshescoll.meshinfo+slicei->blocknumber;
     if(slicei->idir==0){
       return slicei->cdir;
     }
@@ -1614,10 +1614,10 @@ void UpdateSliceMenuLabels(sliceparmdata *sp){
     STRCAT(mslicei->menulabel2,", ");
     STRCAT(mslicei->menulabel2,sd->menulabel);
 
-    if(nmeshes>1){
+    if(meshescoll.nmeshes>1){
       meshdata *slicemesh;
 
-      slicemesh = meshinfo + sd->blocknumber;
+      slicemesh = meshescoll.meshinfo + sd->blocknumber;
       sprintf(label,", %s",slicemesh->label);
       STRCAT(sd->menulabel,label);
     }
@@ -1644,10 +1644,10 @@ void UpdateSliceMenuLabels(sliceparmdata *sp){
         STRCAT(mslicei->menulabel2,", ");
         STRCAT(mslicei->menulabel2, cdir);
       }
-      if(nmeshes>1){
+      if(meshescoll.nmeshes>1){
         meshdata *slicemesh;
 
-        slicemesh = meshinfo + sd->blocknumber;
+        slicemesh = meshescoll.meshinfo + sd->blocknumber;
         sprintf(label,", %s",slicemesh->label);
         STRCAT(sd->menulabel,label);
       }
@@ -1738,18 +1738,18 @@ void UpdateMeshSkip(meshdata *meshi, int skip, int dir){
 void UpdateAllMeshSkips(int skip){
   int i;
 
-  for(i = 0; i < nmeshes; i++){
+  for(i = 0; i < meshescoll.nmeshes; i++){
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     meshi->n_imap = 0;
     meshi->n_jmap = 0;
     meshi->n_kmap = 0;
   }
-  for(i = 0; i < nmeshes; i++){
+  for(i = 0; i < meshescoll.nmeshes; i++){
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     UpdateMeshSkip(meshi, skip, 0);
     UpdateMeshSkip(meshi, skip, 1);
     UpdateMeshSkip(meshi, skip, 2);
@@ -1791,7 +1791,7 @@ void UpdateVectorSkipNonUniform(slicedata *slicei, int factor_x, int factor_y, i
   int ii, jj, kk;
 
   if(slicei->loaded == 0)return;
-  slicemesh = meshinfo + slicei->blocknumber;
+  slicemesh = meshescoll.meshinfo + slicei->blocknumber;
 
   int n = 0;
   for(ii = 0; ii < slicemesh->n_imap; ii+=factor_x){
@@ -1834,7 +1834,7 @@ void UpdateVectorSkipUniform(int skip){
 
     slicei = sliceinfo + i;
     if(slicei->loaded == 0)continue;
-    slicemesh = meshinfo + slicei->blocknumber;
+    slicemesh = meshescoll.meshinfo + slicei->blocknumber;
 
     mesh_dx = slicemesh->xplt_orig[1] - slicemesh->xplt_orig[0];
     mesh_dy = slicemesh->yplt_orig[1] - slicemesh->yplt_orig[0];
@@ -1862,7 +1862,7 @@ void UpdateVectorSkip(int skip){
 
     slicei = sliceinfo + i;
     if(slicei->loaded == 0)continue;
-    slicemesh = meshinfo + slicei->blocknumber;
+    slicemesh = meshescoll.meshinfo + slicei->blocknumber;
     if(slicei->imap == NULL){
       int *imap;
 
@@ -1922,10 +1922,10 @@ void UpdateVsliceMenuLabels(sliceparmdata *sp){
 
     STRCPY(vsd->menulabel,mvslicei->menulabel);
     STRCPY(vsd->menulabel2,mvslicei->menulabel2);
-    if(nmeshes>1){
+    if(meshescoll.nmeshes>1){
       meshdata *slicemesh;
 
-      slicemesh = meshinfo + sd->blocknumber;
+      slicemesh = meshescoll.meshinfo + sd->blocknumber;
       sprintf(label,", %s",slicemesh->label);
       STRCAT(vsd->menulabel,label);
     }
@@ -1946,10 +1946,10 @@ void UpdateVsliceMenuLabels(sliceparmdata *sp){
         STRCAT(mvslicei->menulabel2,", ");
         STRCAT(mvslicei->menulabel2,mvslicei->menulabel);
       }
-      if(nmeshes>1){
+      if(meshescoll.nmeshes>1){
         meshdata *slicemesh;
 
-        slicemesh = meshinfo + sd->blocknumber;
+        slicemesh = meshescoll.meshinfo + sd->blocknumber;
         sprintf(label,", %s",slicemesh->label);
         STRCAT(vsd->menulabel,label);
       }
@@ -1990,7 +1990,7 @@ void GetGSliceParams(void){
     meshdata *meshi;
 
     patchi = patchinfo + i;
-    meshi = meshinfo + patchi->blocknumber;
+    meshi = meshescoll.meshinfo + patchi->blocknumber;
     strcpy(patchi->gslicedir, "");
     if(patchi->structured == YES)continue;
     ii1 = patchi->ijk[0];
@@ -2057,7 +2057,7 @@ int IsSliceDuplicate(multislicedata *mslicei, int ii, int flag){
 
   if(flag==FIND_DUPLICATES&&slicedup_option==SLICEDUP_KEEPALL)return 0;
   slicei = sliceinfo+mslicei->islices[ii];
-  meshi = meshinfo+slicei->blocknumber;
+  meshi = meshescoll.meshinfo+slicei->blocknumber;
   xyzmini = slicei->xyz_min;
   xyzmaxi = slicei->xyz_max;
   for(jj=0;jj<mslicei->nslices;jj++){ // identify duplicate slices
@@ -2066,7 +2066,7 @@ int IsSliceDuplicate(multislicedata *mslicei, int ii, int flag){
     meshdata *meshj;
 
     slicej = sliceinfo + mslicei->islices[jj];
-    meshj = meshinfo+slicej->blocknumber;
+    meshj = meshescoll.meshinfo+slicej->blocknumber;
     if(slicej==slicei||slicej->skipdup==1)continue;
     if(slicei->above_ground_level>0.0&&slicej->above_ground_level>0.0){
       if(slicei->ks1==0&&slicej->ks2==meshj->kbar)return 0;
@@ -2105,7 +2105,7 @@ int IsVectorSliceDuplicate(multivslicedata *mvslicei, int i){
   if(vectorslicedup_option==SLICEDUP_KEEPALL)return 0;
   vslicei = vsliceinfo + mvslicei->ivslices[i];
   slicei = sliceinfo + vslicei->ival;
-  meshi = meshinfo+slicei->blocknumber;
+  meshi = meshescoll.meshinfo+slicei->blocknumber;
   xyzmini = slicei->xyz_min;
   xyzmaxi = slicei->xyz_max;
   for(jj=0;jj<mvslicei->nvslices;jj++){ // identify duplicate slices
@@ -2116,7 +2116,7 @@ int IsVectorSliceDuplicate(multivslicedata *mvslicei, int i){
 
     vslicej = vsliceinfo + mvslicei->ivslices[jj];
     slicej = sliceinfo + vslicej->ival;
-    meshj = meshinfo+slicej->blocknumber;
+    meshj = meshescoll.meshinfo+slicej->blocknumber;
     if(slicej==slicei||slicej->skipdup==1)continue;
     if(slicei->above_ground_level>0.0&&slicej->above_ground_level>0.0){
       if(slicei->ks1==0&&slicej->ks2==meshj->kbar)return 0;
@@ -2212,12 +2212,12 @@ void UpdateVSliceDups(void){
 void UpdateSliceinfoPtrs(sliceparmdata *sp){
   int i;
 
-  meshinfo->isliceinfo    = 0;
-  for(i=1; i<nmeshes; i++){
+  meshescoll.meshinfo->isliceinfo    = 0;
+  for(i=1; i<meshescoll.nmeshes; i++){
     meshdata *meshim1, *meshi;
 
-    meshim1               = meshinfo + i - 1;
-    meshi                 = meshinfo + i;
+    meshim1               = meshescoll.meshinfo + i - 1;
+    meshi                 = meshescoll.meshinfo + i;
     meshi->isliceinfo     = meshim1->isliceinfo + meshim1->nsliceinfo;
   }
   for(i=0; i<sp->nsliceinfo; i++){
@@ -2228,15 +2228,15 @@ void UpdateSliceinfoPtrs(sliceparmdata *sp){
     meshdata *meshi;
 
     slicei                             = sliceinfo + i;
-    meshi                              = meshinfo + slicei->blocknumber;
+    meshi                              = meshescoll.meshinfo + slicei->blocknumber;
     sliceinfoptrs[meshi->isliceinfo++] = slicei;
   }
-  meshinfo->isliceinfo    = 0;
-  for(i=1; i<nmeshes; i++){
+  meshescoll.meshinfo->isliceinfo    = 0;
+  for(i=1; i<meshescoll.nmeshes; i++){
     meshdata *meshim1, *meshi;
 
-    meshim1               = meshinfo + i - 1;
-    meshi                 = meshinfo + i;
+    meshim1               = meshescoll.meshinfo + i - 1;
+    meshi                 = meshescoll.meshinfo + i;
     meshi->isliceinfo     = meshim1->isliceinfo + meshim1->nsliceinfo;
   }
   CheckMemory;
@@ -2345,7 +2345,7 @@ void GetSliceParams(sliceparmdata *sp){
     meshdata *meshi;
 
     sd = sliceinfo + i;
-    meshi = meshinfo + sd->blocknumber;
+    meshi = meshescoll.meshinfo + sd->blocknumber;
 
     is1 = sd->is1;
     is2=sd->is2;
@@ -2628,14 +2628,14 @@ void *UpdateVSlices(void *arg){
   sliceparmdata *sp;
 
   sp = (sliceparmdata *)arg;
-  max_dx = meshinfo->xplt_orig[1] - meshinfo->xplt_orig[0];
-  max_dy = meshinfo->yplt_orig[1] - meshinfo->yplt_orig[0];
-  max_dz = meshinfo->zplt_orig[1] - meshinfo->zplt_orig[0];
-  for(i = 1; i<nmeshes; i++){
+  max_dx = meshescoll.meshinfo->xplt_orig[1] - meshescoll.meshinfo->xplt_orig[0];
+  max_dy = meshescoll.meshinfo->yplt_orig[1] - meshescoll.meshinfo->yplt_orig[0];
+  max_dz = meshescoll.meshinfo->zplt_orig[1] - meshescoll.meshinfo->zplt_orig[0];
+  for(i = 1; i<meshescoll.nmeshes; i++){
     meshdata *meshi;
     float *xplt, *yplt, *zplt;
 
-    meshi = meshinfo+i;
+    meshi = meshescoll.meshinfo+i;
     xplt = meshi->xplt_orig;
     yplt = meshi->yplt_orig;
     zplt = meshi->zplt_orig;
@@ -2688,7 +2688,7 @@ void *UpdateVSlices(void *arg){
 #endif
     vd = vsliceinfo + sp->nvsliceinfo;
     sdi = sliceinfo+i;
-    meshi = meshinfo + sdi->blocknumber;
+    meshi = meshescoll.meshinfo + sdi->blocknumber;
     vd->iu=-1;
     vd->iv=-1;
     vd->iw=-1;
@@ -2905,7 +2905,7 @@ void UpdateSliceContours(int slice_type_index, float line_min, float line_max, i
       if(val_index>255)val_index=255;
       sd->rgb_slice_ptr[i]=&rgb_full[val_index][0];
     }
-    meshi = meshinfo + sd->blocknumber;
+    meshi = meshescoll.meshinfo + sd->blocknumber;
 
     xplt=meshi->xplt;
     yplt=meshi->yplt;
@@ -3078,7 +3078,7 @@ void GetSliceDataBounds(slicedata *sd, float *pmin, float *pmax){
     }
     return;
   }
-  meshi = meshinfo + sd->blocknumber;
+  meshi = meshescoll.meshinfo + sd->blocknumber;
   iblank_node = meshi->c_iblank_node;
   iblank_cell = meshi->c_iblank_cell;
 
@@ -3875,7 +3875,7 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
   sd = sliceinfo+slicefilenumber;
 
   blocknumber = sd->blocknumber;
-  meshi = meshinfo + blocknumber;
+  meshi = meshescoll.meshinfo + blocknumber;
 
   if(load_flag != RESETBOUNDS){
     if(sd->loaded == 0 && load_flag == UNLOAD)return 0;
@@ -4185,9 +4185,9 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
     that it does not "interfere" with an adjacent block */
 
     blocknumber = sliceinfo[ifile].blocknumber;
-    xplt_local = meshinfo[blocknumber].xplt;
-    yplt_local = meshinfo[blocknumber].yplt;
-    zplt_local = meshinfo[blocknumber].zplt;
+    xplt_local = meshescoll.meshinfo[blocknumber].xplt;
+    yplt_local = meshescoll.meshinfo[blocknumber].yplt;
+    zplt_local = meshescoll.meshinfo[blocknumber].zplt;
 
     xslicemid = (xplt_local[sd->is1] + xplt_local[sd->is2]) / 2.0;
     yslicemid = (yplt_local[sd->js1] + yplt_local[sd->js2]) / 2.0;
@@ -4478,7 +4478,7 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
   if(sd->volslice == 1){
     meshdata *meshj;
 
-    meshj = meshinfo + sd->blocknumber;
+    meshj = meshescoll.meshinfo + sd->blocknumber;
 
     meshj->slice_min[0] = SMV2FDS_X(sd->xyz_min[0]);
     meshj->slice_min[1] = SMV2FDS_Y(sd->xyz_min[1]);
@@ -4497,7 +4497,7 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
   else{
     meshdata *meshj;
 
-    meshj = meshinfo + sd->blocknumber;
+    meshj = meshescoll.meshinfo + sd->blocknumber;
     meshj->slice_min[0] = 1.0;
     meshj->slice_min[1] = 0.0;
     meshj->slice_min[2] = 1.0;
@@ -4609,7 +4609,7 @@ void DrawGSliceDataGpu(slicedata *slicei){
 
   if(slicei->loaded == 0 || slicei->display == 0 || slicei->volslice == 0)return;
 
-  meshi = meshinfo + slicei->blocknumber;
+  meshi = meshescoll.meshinfo + slicei->blocknumber;
   verts = meshi->gsliceinfo->verts;
   triangles = meshi->gsliceinfo->triangles;
 
@@ -4671,7 +4671,7 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int is1, int is2, int js1, 
 
   rgb_ptr = rgb_slice;
 
-  meshi = meshinfo + sd->blocknumber;
+  meshi = meshescoll.meshinfo + sd->blocknumber;
 
   float valmin, valmax;
 
@@ -4933,7 +4933,7 @@ void DrawVolSliceValues(slicedata *sd){
   int nx, ny, nxy;
   float *rgb_ptr;
 
-  meshi = meshinfo + sd->blocknumber;
+  meshi = meshescoll.meshinfo + sd->blocknumber;
   xplttemp = meshi->xplt;
   yplttemp = meshi->yplt;
   zplttemp = meshi->zplt;
@@ -5105,7 +5105,7 @@ void DrawVolSliceCellFaceCenterValues(const slicedata *sd){
 
   meshdata *meshi;
 
-  meshi = meshinfo + sd->blocknumber;
+  meshi = meshescoll.meshinfo + sd->blocknumber;
 
   xplt = meshi->xplt;
   yplt = meshi->yplt;
@@ -5329,7 +5329,7 @@ void DrawVolSliceTerrain(const slicedata *sd){
   meshdata *meshi;
 
   if(sd->have_agl_data==0)return;
-  meshi = meshinfo + sd->blocknumber;
+  meshi = meshescoll.meshinfo + sd->blocknumber;
   if(meshi->in_frustum == 0)return;
   nycell = meshi->jbar;
 
@@ -5496,7 +5496,7 @@ void DrawVolAllSlicesTextureDiag(const slicedata *sd, int direction){
   meshdata *meshi;
 
   if(sd->volslice == 1 && visx_all == 0 && visy_all == 0 && visz_all == 0)return;
-  meshi = meshinfo+sd->blocknumber;
+  meshi = meshescoll.meshinfo+sd->blocknumber;
 
   xplt = meshi->xplt;
   yplt = meshi->yplt;
@@ -5693,7 +5693,6 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
     valmax = 1.0;
   }
   if(sd->volslice == 1 && visx_all == 0 && visy_all == 0 && visz_all == 0)return;
-  meshi = meshinfo + sd->blocknumber;
 
   int slice_interp;
   int set_chopmin=0, set_chopmax=0;
@@ -5704,6 +5703,7 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
     GLUIGetChopMin(BOUND_SLICE, sd->label.shortlabel, &set_chopmin, &chopmin);
     GLUIGetChopMax(BOUND_SLICE, sd->label.shortlabel, &set_chopmax, &chopmax);
   }
+  meshi = meshescoll.meshinfo + sd->blocknumber;
 
   xplt = meshi->xplt;
   yplt = meshi->yplt;
@@ -6102,7 +6102,7 @@ void DrawVolSliceLines(const slicedata *sd){
   meshdata *meshi;
 
   if(sd->volslice==1&&visx_all==0&&visy_all==0&&visz_all==0)return;
-  meshi = meshinfo+sd->blocknumber;
+  meshi = meshescoll.meshinfo+sd->blocknumber;
 
   float valmin, valmax;
 
@@ -6439,7 +6439,7 @@ void DrawVolSliceVerts(const slicedata *sd){
   meshdata *meshi;
 
   if(sd->volslice==1&&visx_all==0&&visy_all==0&&visz_all==0)return;
-  meshi = meshinfo+sd->blocknumber;
+  meshi = meshescoll.meshinfo+sd->blocknumber;
 
   float valmin, valmax;
 
@@ -6883,7 +6883,7 @@ int GetSliceOffsetReg(slicedata *sd, float *xyz, float *device_xyz){
   int offset=0;
 
   memcpy(device_xyz, xyz, 3*sizeof(float));
-  slicemesh = meshinfo+sd->blocknumber;
+  slicemesh = meshescoll.meshinfo+sd->blocknumber;
   xplt = slicemesh->xplt_orig;
   yplt = slicemesh->yplt_orig;
   zplt = slicemesh->zplt_orig;
@@ -7003,7 +7003,7 @@ int InSliceMesh(slicedata *slicei, float *xyz){
   meshdata *meshi;
   int plotx, ploty, plotz;
 
-  meshi = meshinfo + slicei->blocknumber;
+  meshi = meshescoll.meshinfo + slicei->blocknumber;
   dir = slicei->idir;
   boxmin = meshi->boxmin;
   boxmax = meshi->boxmax;
@@ -7382,7 +7382,7 @@ void DrawSliceFrame(){
       slice_normal[0] = 0.0;
       slice_normal[1] = 0.0;
       slice_normal[2] = 0.0;
-      slicemesh = meshinfo+sd->blocknumber;
+      slicemesh = meshescoll.meshinfo+sd->blocknumber;
       if(slicemesh->smokedir<0)direction = -1;
       switch(ABS(slicemesh->smokedir)){
       case 4:  // -45 slope slices
@@ -7599,7 +7599,7 @@ void DrawVVolSliceCellCenter(const vslicedata *vd){
   int ibar, jbar;
 
   sd = sliceinfo + vd->ival;
-  meshi = meshinfo + sd->blocknumber;
+  meshi = meshescoll.meshinfo + sd->blocknumber;
   xplttemp = meshi->xplt;
   yplttemp = meshi->yplt;
   zplttemp = meshi->zplt;
@@ -8024,7 +8024,7 @@ void DrawVVolSliceTerrain(const vslicedata *vd){
   int plotz;
 
   sd = sliceinfo + vd->ival;
-  meshi = meshinfo + sd->blocknumber;
+  meshi = meshescoll.meshinfo + sd->blocknumber;
   xplttemp = meshi->xplt;
   yplttemp = meshi->yplt;
   if(vd->volslice == 1){
@@ -8257,7 +8257,7 @@ void DrawVVolSlice(const vslicedata *vd){
   float *rgb_ptr;
 
   sd = sliceinfo + vd->ival;
-  meshi = meshinfo + sd->blocknumber;
+  meshi = meshescoll.meshinfo + sd->blocknumber;
   xplttemp = meshi->xplt;
   yplttemp = meshi->yplt;
   zplttemp = meshi->zplt;
@@ -8705,14 +8705,14 @@ void UpdateGslicePlanes(void){
   xyz0 = gslice_xyz;
 
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
     float vals[8],xx[2],yy[2],zz[2];
     float *xyzmin, *xyzmax;
     float level;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
 
     xyzmin = meshi->slice_min;
     xyzmax = meshi->slice_max;
@@ -8751,13 +8751,13 @@ void DrawGSliceOutline(void){
 
   if(show_gslice_triangles==1){
     glBegin(GL_LINES);
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
       int j;
       int *triangles;
       float *verts;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       verts = meshi->gsliceinfo->verts;
       triangles = meshi->gsliceinfo->triangles;
 
@@ -8781,14 +8781,14 @@ void DrawGSliceOutline(void){
   }
 
   if(show_gslice_triangulation==1){
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
       int j;
       float del;
       int *triangles;
       float *verts;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       verts = meshi->gsliceinfo->verts;
       triangles = meshi->gsliceinfo->triangles;
 
@@ -8840,7 +8840,7 @@ void DrawGSliceData(slicedata *slicei){
 
   if(slicei->loaded==0||slicei->display==0||slicei->volslice==0)return;
 
-  meshi = meshinfo + slicei->blocknumber;
+  meshi = meshescoll.meshinfo + slicei->blocknumber;
   verts = meshi->gsliceinfo->verts;
   triangles = meshi->gsliceinfo->triangles;
 
@@ -8900,7 +8900,7 @@ void DrawVGSliceData(vslicedata *vslicei){
 
   if(slicei->loaded==0/*||slicei->display==0*/||slicei->volslice==0)return;
 
-  meshi = meshinfo + slicei->blocknumber;
+  meshi = meshescoll.meshinfo + slicei->blocknumber;
   verts = meshi->gsliceinfo->verts;
   triangles = meshi->gsliceinfo->triangles;
 
@@ -8976,7 +8976,7 @@ void InitSliceData(void){
     if(fileout == NULL)continue;
     fprintf(fileout, "%s\n", sd->label.longlabel);
     fprintf(fileout, "%s\n", sd->label.unit);
-    meshi = meshinfo + sd->blocknumber;
+    meshi = meshescoll.meshinfo + sd->blocknumber;
 
     xplt = meshi->xplt_orig;
     yplt = meshi->yplt_orig;
@@ -9052,7 +9052,7 @@ void SliceData2Hist(slicedata *sd, float *xyz, float *dxyz, float time, float dt
   int nvals,ival;
   float *vals;
 
-  meshi = meshinfo+sd->blocknumber;
+  meshi = meshescoll.meshinfo+sd->blocknumber;
   xplt = meshi->xplt;
   yplt = meshi->yplt;
   zplt = meshi->zplt;
@@ -9355,11 +9355,11 @@ void SortSlices(void){
   slicex0 = slicex;
   slicey0 = slicey;
   slicez0 = slicez;
-  for(i = 0;i < nmeshes;i++){
+  for(i = 0;i < meshescoll.nmeshes;i++){
     int j, nx, ny, nz;
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     meshi->slicex = slicex0;
     meshi->slicey = slicey0;
     meshi->slicez = slicez0;
@@ -9418,13 +9418,13 @@ void SortSlices(void){
     nsplitsliceinfoMAX = nsplitsliceinfo;
   }
   nsplitsliceinfo = 0;
-  for(i = 0;i < nmeshes;i++){
+  for(i = 0;i < meshescoll.nmeshes;i++){
     meshdata *meshi;
     int ii, jj, kk;
     int is1, is2, js1, js2, ks1, ks2;
     slicedata **slicexx, **sliceyy, **slicezz;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
 
     slicexx = meshi->slicex;
     sliceyy = meshi->slicey;

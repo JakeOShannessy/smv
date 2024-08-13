@@ -28,7 +28,7 @@ void GetPlot3DHists(plot3ddata *p){
     p->histograms[i] = histi;
     InitHistogramMemID(histi, NHIST_BUCKETS, NULL, NULL, p->memory_id);
 
-    plot3d_mesh = meshinfo+p->blocknumber;
+    plot3d_mesh = meshescoll.meshinfo+p->blocknumber;
     nvals = (plot3d_mesh->ibar+1)*(plot3d_mesh->jbar+1)*(plot3d_mesh->kbar+1);
     vals = plot3d_mesh->qdata+i*nvals;
     int use_bounds = 0;
@@ -164,7 +164,7 @@ int GetPlot3DBounds(plot3ddata *plot3di){
   meshdata *meshi;
   int i, ntotal;
 
-  meshi = meshinfo+plot3di->blocknumber;
+  meshi = meshescoll.meshinfo+plot3di->blocknumber;
   if(meshi->qdata==NULL)return 0;
   ntotal = (meshi->ibar+1)*(meshi->jbar+1)*(meshi->kbar+1);
   iblank = meshi->c_iblank_node;
@@ -257,7 +257,7 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   if(flag==UNLOAD&&p->loaded==0)return 0;
 
   highlight_mesh=p->blocknumber;
-  meshi=meshinfo+highlight_mesh;
+  meshi=meshescoll.meshinfo+highlight_mesh;
   UpdateCurrentMesh(meshi);
 
   if(meshi->plot3dfilenum!=-1){
@@ -290,8 +290,8 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,nrgb);
 
 
-  for(i=0;i<nmeshes;i++){
-    gbb=meshinfo+i;
+  for(i=0;i<meshescoll.nmeshes;i++){
+    gbb=meshescoll.meshinfo+i;
     if(gbb->plot3dfilenum!=-1)nloaded++;
   }
 
@@ -300,7 +300,7 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
     p->display=0;
     UpdatePlot3DFileLoad();
     plotstate = GetPlotState(STATIC_PLOTS);
-    meshi=meshinfo+p->blocknumber;
+    meshi=meshescoll.meshinfo+p->blocknumber;
     meshi->plot3dfilenum=-1;
     if(nloaded==0){
       numplot3dvars=0;
@@ -469,8 +469,8 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   meshi->plot3d_speedmax=0.0f;
   if(uindex!=-1||vindex!=-1||windex!=-1||numplot3dvars>5)meshi->plot3d_speedmax=p3max_all[5];
   speedmax=-1000000.;
-  for(i=0;i<nmeshes;i++){
-    gbi=meshinfo+i;
+  for(i=0;i<meshescoll.nmeshes;i++){
+    gbi=meshescoll.meshinfo+i;
     if(gbi->plot3dfilenum==-1)continue;
     if(speedmax<gbi->plot3d_speedmax)speedmax=gbi->plot3d_speedmax;
   }
@@ -962,10 +962,10 @@ void DrawPlot3dTexture(meshdata *meshi){
 void DrawPlot3dFrame(void){
   int i;
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=meshinfo+i;
+    meshi=meshescoll.meshinfo+i;
     if(meshi->use == 0)continue;
     if(meshi->plot3dfilenum==-1)continue;
     if(plot3dinfo[meshi->plot3dfilenum].display==0)continue;
@@ -987,10 +987,10 @@ void UpdateSurface(void){
   int i;
 
   if(nplot3dloaded==0)return;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshinfo+i;
+    meshi = meshescoll.meshinfo+i;
     if(meshi->plot3dfilenum==-1)continue;
 
     ibar=meshi->ibar;
@@ -1103,13 +1103,13 @@ void UpdatePlotXYZ(meshdata *current_mesh_local){
   yval = current_mesh_local->yplt[current_mesh_local->ploty];
   zval = current_mesh_local->zplt[current_mesh_local->plotz];
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     float xmin, xmax;
     float ymin, ymax;
     float zmin, zmax;
 
-    meshi=meshinfo+i;
+    meshi=meshescoll.meshinfo+i;
     if(meshi==current_mesh_local)continue;
 
     xmin = meshi->xplt[0];
@@ -1424,10 +1424,10 @@ void UpdatePlotSlice(int slicedir){
   int i;
 
   UpdatePlotXYZ(current_mesh);
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshjj;
 
-    meshjj = meshinfo + i;
+    meshjj = meshescoll.meshinfo + i;
     if(meshjj->plot3dfilenum==-1)continue;
     UpdatePlotSliceMesh(meshjj,slicedir);
   }
@@ -1474,13 +1474,13 @@ void UpdateShowStep(int val, int slicedir){
     ymax = current_mesh->yplt[current_mesh->jbar];
     zmin = current_mesh->zplt[0];
     zmax = current_mesh->zplt[current_mesh->kbar];
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
       float xmin2, xmax2;
       float ymin2, ymax2;
       float zmin2, zmax2;
 
-      meshi = meshinfo+i;
+      meshi = meshescoll.meshinfo+i;
       if(meshi==current_mesh)continue;
 
       xmin2 = meshi->xplt[0];
@@ -1642,17 +1642,17 @@ void UpdatePlot3dMenuLabels(void){
         STRCAT(label," s");
         STRCAT(plot3di->menulabel,label);
       }
-      if(nmeshes>1){
+      if(meshescoll.nmeshes>1){
         meshdata *plot3dmesh;
 
-        plot3dmesh = meshinfo + plot3di->blocknumber;
+        plot3dmesh = meshescoll.meshinfo + plot3di->blocknumber;
         sprintf(label,"%s",plot3dmesh->label);
         if(plot3di->time>=0.0)STRCAT(plot3di->menulabel,", ");
         sprintf(label,"%s",plot3dmesh->label);
         STRCAT(plot3di->menulabel,label);
       }
       if(showfiles==1||plot3di->time<0.0){
-        if(plot3di->time>=0.0||nmeshes>1)STRCAT(plot3di->menulabel,", ");
+        if(plot3di->time>=0.0||meshescoll.nmeshes>1)STRCAT(plot3di->menulabel,", ");
         STRCAT(plot3di->menulabel,plot3di->file);
       }
     }
@@ -1711,7 +1711,7 @@ void GetPlot3dUVW(float xyz[3], float uvw[3]){
   uvw[0]=0.0;
   uvw[1]=0.0;
   uvw[2]=0.0;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int ibar, jbar, kbar;
     float *udata,  *vdata, *wdata, *qdata;
@@ -1719,7 +1719,7 @@ void GetPlot3dUVW(float xyz[3], float uvw[3]){
     int ix, iy, iz;
     int ijk;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
 
     xplt = meshi->xplt_orig;
     yplt = meshi->yplt_orig;
