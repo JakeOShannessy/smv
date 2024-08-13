@@ -2118,7 +2118,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     ntimes_local = GetGeomDataSize(patchi->file, &nvals, time_frame, cvals_offsets, cvals_sizes, geom_offsets, &geom_offset_flag, &max_buffer_size, &error);
   }
   if(max_buffer_size > 0){
-    NewMemory(( void ** )&cbuffer, max_buffer_size);
+    NewMemory((void **)&cbuffer, max_buffer_size);
     patchi->cbuffer = cbuffer;
   }
   else{
@@ -2201,7 +2201,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
 
   if(slicei == NULL){
     if(colorlabelpatch != NULL){
-      for (n = 0; n < MAXRGB; n++){
+      for(n = 0; n < MAXRGB; n++){
         FREEMEMORY(colorlabelpatch[n]);
       }
       FREEMEMORY(colorlabelpatch);
@@ -2210,10 +2210,10 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
       ReadGeomData(patchi, NULL, UNLOAD, time_frame, time_value,  0, &error);
       return 0;
     }
-    for (n = 0; n < MAXRGB; n++){
+    for(n = 0; n < MAXRGB; n++){
       colorlabelpatch[n] = NULL;
     }
-    for (n = 0; n < nrgb; n++){
+    for(n = 0; n < nrgb; n++){
       if(NewMemory((void **)&colorlabelpatch[n], 11) == 0){
         ReadGeomData(patchi, NULL, UNLOAD, time_frame, time_value, 0, &error);
         return 0;
@@ -2267,9 +2267,9 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
       ntimes = patchi->ngeom_times;
       data_per_timestep = nvals2/ntimes;
 #ifdef pp_SLICEFRAME
-      qvalptrs = ( float ** )slicei->frameinfo->frameptrs;
+      qvalptrs = (float **)slicei->frameinfo->frameptrs;
 #else
-      NewMemory(( void ** )&qvalptrs, ntimes*sizeof(float *));
+      NewMemory((void **)&qvalptrs, ntimes*sizeof(float *));
       for(i = 0; i < ntimes; i++){
         qvalptrs[i] = slicei->patchgeom->geom_vals + i*data_per_timestep;
       }
@@ -2282,7 +2282,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     slicei->valmax_slice    = qmax;
     slicei->globalmin_slice = qmin;
     slicei->globalmax_slice = qmax;
-    for (i = 0; i < 256; i++){
+    for(i = 0; i < 256; i++){
       slicei->qval256[i] = (qmin*(255 - i) + qmax*i) / 255;
     }
     UpdateSliceBounds();

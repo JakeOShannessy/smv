@@ -661,7 +661,7 @@ int ParseSLCFTokens(char *buffer, char **keywords, int *type, int nkeywords, int
     }
     if(val==NULL)return i;
     val = TrimFrontBack(val);
-    switch (type[keyword_index]){
+    switch(type[keyword_index]){
       case TOKEN_INT:
         sscanf(val, "%i", itokens+i);
         break;
@@ -1308,7 +1308,7 @@ int CompileScript(char *scriptfile){
           }
 
           for(i=0;i<ntokens;i++){
-            switch (tokens[i]){
+            switch(tokens[i]){
               char label[100];
 
               case KW_QUANTITY:
@@ -1939,25 +1939,25 @@ void ScriptLoadIso(scriptdata *scripti, int meshnum){
 
   update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
   CancelUpdateTriangles();
-  for (i = nisoinfo - 1; i >= 0; i--) {
+  for(i = nisoinfo - 1; i >= 0; i--){
     isodata* isoi;
 
     isoi = isoinfo + i;
     isoi->finalize = 0;
   }
-  for (i = nisoinfo-1; i >=0; i--) {
+  for(i = nisoinfo-1; i >=0; i--){
     isodata* isoi;
     char label2[100];
     int lencval, lenlabel;
 
     isoi = isoinfo + i;
-    if (meshnum != -1 && isoi->blocknumber + 1 != meshnum)continue;
+    if(meshnum != -1 && isoi->blocknumber + 1 != meshnum)continue;
     lencval = strlen(scripti->cval);
     lenlabel = strlen(isoi->surface_label.longlabel);
-    if (lencval <= lenlabel) {
+    if(lencval <= lenlabel){
       strncpy(label2, isoi->surface_label.longlabel, lencval);
       label2[lencval] = 0;
-      if (STRCMP(label2, scripti->cval) == 0) {
+      if(STRCMP(label2, scripti->cval) == 0){
         isoi->finalize = 1;
       }
     }
@@ -3749,7 +3749,7 @@ void ScriptViewXYZMINMAXOrtho(int command){
 /* ------------------ ScriptViewXYZMINMAXPersp ------------------------ */
 void ResetDefaultMenu(int var);
 void ScriptViewXYZMINMAXPersp(int command){
-  switch (command){
+  switch(command){
   case SCRIPT_VIEWXMIN:
     ResetDefaultMenu(VIEW_XMIN);
     break;

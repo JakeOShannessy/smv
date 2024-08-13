@@ -17,7 +17,7 @@
 
 /* ------------------ CompareFloat ------------------------ */
 
-int CompareFloat( const void *arg1, const void *arg2 ){
+int CompareFloat(const void *arg1, const void *arg2){
   float x, y;
 
   x=*(float *)arg1;
@@ -152,7 +152,7 @@ void UpdateFrameNumber(int changetime){
           slice_time = sd->itime;
         }
       }
-      for (i = 0; i < npatchinfo; i++) {
+      for(i = 0; i < npatchinfo; i++){
         patchdata *patchi;
 
         patchi = patchinfo + i;
@@ -548,7 +548,7 @@ void UpdateShow(void){
 
   patchflag=0;
   if(visTimeBoundary==1){
-    for (i = 0; i < ngeominfo; i++) {
+    for(i = 0; i < ngeominfo; i++){
       geomdata *geomi;
 
       geomi = geominfo + i;
@@ -561,7 +561,7 @@ void UpdateShow(void){
       patchi=patchinfo+i;
       if(patchi->loaded == 0)continue;
       if(patchi->boundary == 1 && patchi->display == 1 && patchi->shortlabel_index == iboundarytype){
-        if (strcmp(patchi->label.shortlabel, "wc") == 0)wall_cell_color_flag = 1;
+        if(strcmp(patchi->label.shortlabel, "wc") == 0)wall_cell_color_flag = 1;
         patchflag = 1;
         if(patchi->extreme_max == 1)have_extreme_maxdata = 1;
         if(patchi->extreme_min == 1)have_extreme_mindata = 1;
@@ -684,11 +684,11 @@ void UpdateShow(void){
 
   // note: animated iso-contours do not need a colorbar, so we don't test for isosurface files
 
-  if ((showtime == 1 || showplot3d == 1) && (visColorbarVertical == 1|| visColorbarHorizontal == 1)) {
+  if((showtime == 1 || showplot3d == 1) && (visColorbarVertical == 1|| visColorbarHorizontal == 1)){
     if(old_draw_colorlabel == 0)updatemenu = 1;
     old_draw_colorlabel = 1;
   }
-  else {
+  else{
     if(old_draw_colorlabel == 1)updatemenu = 1;
     old_draw_colorlabel = 0;
   }
@@ -1466,7 +1466,7 @@ void UpdateTimes(void){
       FREEMEMORY(sd->patchgeom->geom_timeslist);
       if(nglobal_times > 0)NewMemory((void **)&(sd->patchgeom->geom_timeslist), nglobal_times * sizeof(int));
     }
-    else {
+    else{
       FREEMEMORY(sd->timeslist);
       if(nglobal_times > 0)NewMemory((void **)&sd->timeslist, nglobal_times * sizeof(int));
     }
@@ -1537,6 +1537,7 @@ void UpdateTimes(void){
 
   // initialize individual time pointers
 
+  INIT_PRINT_TIMER(timer_setpointers);
   izone=0;
   ResetItimes0();
   for(i=0;i<ngeominfoptrs;i++){
@@ -1571,9 +1572,11 @@ void UpdateTimes(void){
     parti = partinfo + i;
     parti->itime=0;
   }
+  PRINT_TIMER(timer_setpointers, "UpdateTimes: set pointer");
 
   /* determine visibility of each blockage at each time step */
 
+  INIT_PRINT_TIMER(timer_visblocks);
   for(i=0;i<nmeshes;i++){
     int j;
     meshdata *meshi;
@@ -1599,9 +1602,11 @@ void UpdateTimes(void){
       }
     }
   }
+  PRINT_TIMER(timer_visblocks, "UpdateTimes: block vis");
 
   /* determine state of each device at each time step */
 
+  INIT_PRINT_TIMER(timer_device);
   for(i=0;i<ndeviceinfo;i++){
     devicedata *devicei;
 
@@ -1621,8 +1626,11 @@ void UpdateTimes(void){
       }
     }
   }
+  PRINT_TIMER(timer_device, "UpdateTimes: device state");
 
   /* determine visibility of each vent at each time step */
+  
+  INIT_PRINT_TIMER(timer_vent);
 
   for(i=0;i<nmeshes;i++){
     int j;
@@ -1679,18 +1687,23 @@ void UpdateTimes(void){
       }
     }
   }
+  PRINT_TIMER(timer_vent, "UpdateTimes: vent state");
 
   if(nglobal_times>0){
     INIT_PRINT_TIMER(timer_synch_times);
     SynchTimes();
-    PRINT_TIMER(timer_synch_times, "timer: SyncTimes");
+    PRINT_TIMER(timer_synch_times, "timer: SynchTimes");
   }
 #ifdef pp_UPDATE_FACES
   updatefaces=1;
 #endif
   if(nglobal_times>0){
+    INIT_PRINT_TIMER(timer_labels);
     UpdateTimeLabels();
+    PRINT_TIMER(timer_labels, "UpdateTimes: time labels");
+    INIT_PRINT_TIMER(timer_bounds);
     GLUIUpdateTimeBounds(global_times[0],global_times[nglobal_times-1]);
+    PRINT_TIMER(timer_bounds, "UpdateTimes: time bound");
   }
   CheckMemory;
 }
@@ -1767,7 +1780,7 @@ int GetPlotStateSub(int choice){
 
         patchi = patchinfo + i;
         if(patchi->loaded == 0)continue;
-        if (patchi->display == 1) {
+        if(patchi->display == 1){
           if(patchi->boundary == 1 && patchi->shortlabel_index == iboundarytype)return DYNAMIC_PLOTS;
           if(patchi->boundary == 0 && patchi->shortlabel_index == slicefile_labelindex)return DYNAMIC_PLOTS;
         }
@@ -1961,14 +1974,14 @@ void UpdateColorTable(colortabledata *ctableinfo, int nctableinfo){
 
 /* ------------------ HaveFire ------------------------ */
 
-int HaveFireLoaded(void) {
+int HaveFireLoaded(void){
   int i;
 
-  for(i = 0; i<nsmoke3dinfo; i++) {
+  for(i = 0; i<nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
 
     smoke3di = smoke3dinfo+i;
-    if(smoke3di->loaded==1) {
+    if(smoke3di->loaded==1){
       if(smoke3di->type==HRRPUV_index)return HRRPUV_index;
       if(smoke3di->type==TEMP_index)return TEMP_index;
     }
@@ -1978,10 +1991,10 @@ int HaveFireLoaded(void) {
 
 /* ------------------ HaveSoot ------------------------ */
 
-int HaveSootLoaded(void) {
+int HaveSootLoaded(void){
   int i;
 
-  for(i = 0; i<nsmoke3dinfo; i++) {
+  for(i = 0; i<nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
 
     smoke3di = smoke3dinfo+i;
@@ -2275,7 +2288,7 @@ void OutputFrameSteps(void){
 }
 #endif
 #ifdef pp_SHOW_UPDATE
-#define SHOW_UPDATE(var) printf("updating: %s\n", #var);INIT_PRINT_TIMER(update_timer);
+#define SHOW_UPDATE(var) printf("updating: %s\n", #var);INIT_PRINT_TIMER(update_timer);updating=1
 #define END_SHOW_UPDATE(var) PRINT_TIMER(update_timer,#var)
 #else
 #define SHOW_UPDATE(var)
@@ -2603,6 +2616,7 @@ void UpdateShowScene(void){
     END_SHOW_UPDATE(updateUpdateFrameRateMenu);
   }
   if(updatefaces == 1){
+    updatefaces = 0;
     SHOW_UPDATE(updatefaces);
     INIT_PRINT_TIMER(timer_update_faces);
     UpdateFaces();

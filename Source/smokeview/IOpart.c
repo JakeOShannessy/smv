@@ -218,10 +218,13 @@ void DrawPart(const partdata *parti, int mode){
   nclasses = parti->nclasses;
   datacopy = parti->data5 + nclasses*ipframe;
   CheckMemory;
+  glPushMatrix();
+  glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
+  glTranslatef(-xbar0, -ybar0, -zbar0);
   if(part5show == 1){
     if(streak5show == 0 || (streak5show == 1 && showstreakhead == 1)){
       for(i = 0;i < parti->nclasses;i++){
-        short *sx, *sy, *sz;
+        float *xpos, *ypos, *zpos;
         unsigned char *vis, *color;
         partclassdata *partclassi;
         int partclass_index, itype, vistype, class_vis;
@@ -246,9 +249,9 @@ void DrawPart(const partdata *parti, int mode){
           show_default = 1;
         }
 
-        sx = datacopy->sx;
-        sy = datacopy->sy;
-        sz = datacopy->sz;
+        xpos = datacopy->xpos;
+        ypos = datacopy->ypos;
+        zpos = datacopy->zpos;
         vis = datacopy->vis_part;
         {
           glPointSize(partpointsize);
@@ -263,7 +266,7 @@ void DrawPart(const partdata *parti, int mode){
                     char taglabel[32];
 
                     sprintf(taglabel, "%i", selected_part_index);
-                    Output3Text(foregroundcolor, xplts[sx[j]], yplts[sy[j]], zplts[sz[j]], taglabel);
+                    Output3Text(foregroundcolor, xpos[j], ypos[j], zpos[j], taglabel);
                   }
                 }
               }
@@ -273,7 +276,7 @@ void DrawPart(const partdata *parti, int mode){
                   glColor4fv(datacopy->partclassbase->rgb);
                   for(j = 0; j < datacopy->npoints_file; j += partdrawskip){
                     if(vis[j] == 1){
-                      glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                      glVertex3f(xpos[j], ypos[j], zpos[j]);
                     }
                   }
                 }
@@ -284,7 +287,7 @@ void DrawPart(const partdata *parti, int mode){
 
                       GetRGB((unsigned int)datacopy->tags[j], &r, &g, &b);
                       glColor3ub(r, g, b);
-                      glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                      glVertex3f(xpos[j], ypos[j], zpos[j]);
                     }
                   }
                 }
@@ -303,7 +306,7 @@ void DrawPart(const partdata *parti, int mode){
                       if(current_property != NULL && (colorj > current_property->imax || colorj < current_property->imin))continue;
                       if(rgb_part[4 * colorj + 3] == 0.0)continue;
                       glColor4fv(rgb_part + 4 * colorj);
-                      glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                      glVertex3f(xpos[j], ypos[j], zpos[j]);
                     }
                   }
                 }
@@ -320,7 +323,7 @@ void DrawPart(const partdata *parti, int mode){
 
                       GetRGB((unsigned int)datacopy->tags[j], &r, &g, &b);
                       glColor3ub(r, g, b);
-                      glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                      glVertex3f(xpos[j], ypos[j], zpos[j]);
                     }
                   }
                 }
@@ -341,7 +344,7 @@ void DrawPart(const partdata *parti, int mode){
                 if(vis[j] != 1)continue;
 
                 glPushMatrix();
-                glTranslatef(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                glTranslatef(xpos[j], ypos[j], zpos[j]);
 
                 glRotatef(-datacopy->partclassbase->elevation, 0.0, 1.0, 0.0);
                 glRotatef(datacopy->partclassbase->azimuth, 0.0, 0.0, 1.0);
@@ -364,9 +367,9 @@ void DrawPart(const partdata *parti, int mode){
                 CopyDepVals(partclassi, datacopy, colorptr, prop, j);
                 glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
 
-                partfacedir[0] = xbar0 + SCALE2SMV(fds_eyepos[0]) - xplts[sx[j]];
-                partfacedir[1] = ybar0 + SCALE2SMV(fds_eyepos[1]) - yplts[sy[j]];
-                partfacedir[2] = zbar0 + SCALE2SMV(fds_eyepos[2]) - zplts[sz[j]];
+                partfacedir[0] = xbar0 + SCALE2SMV(fds_eyepos[0]) - xpos[j];
+                partfacedir[1] = ybar0 + SCALE2SMV(fds_eyepos[1]) - ypos[j];
+                partfacedir[2] = zbar0 + SCALE2SMV(fds_eyepos[2]) - zpos[j];
 
                 DrawSmvObject(prop->smv_object, 0, prop, 0, NULL, 0);
                 glPopMatrix();
@@ -403,8 +406,8 @@ void DrawPart(const partdata *parti, int mode){
                       dy = dyv[j];
                       dz = dzv[j];
                     }
-                    glVertex3f(xplts[sx[j]] - dx, yplts[sy[j]] - dy, zplts[sz[j]] - dz);
-                    glVertex3f(xplts[sx[j]] + dx, yplts[sy[j]] + dy, zplts[sz[j]] + dz);
+                    glVertex3f(xpos[j] - dx, ypos[j] - dy, zpos[j] - dz);
+                    glVertex3f(xpos[j] + dx, ypos[j] + dy, zpos[j] + dz);
                   }
                 }
               }
@@ -418,8 +421,8 @@ void DrawPart(const partdata *parti, int mode){
                       dy = dyv[j];
                       dz = dzv[j];
                     }
-                    glVertex3f(xplts[sx[j]] - dx, yplts[sy[j]] - dy, zplts[sz[j]] - dz);
-                    glVertex3f(xplts[sx[j]] + dx, yplts[sy[j]] + dy, zplts[sz[j]] + dz);
+                    glVertex3f(xpos[j] - dx, ypos[j] - dy, zpos[j] - dz);
+                    glVertex3f(xpos[j] + dx, ypos[j] + dy, zpos[j] + dz);
                   }
                 }
               }
@@ -432,15 +435,10 @@ void DrawPart(const partdata *parti, int mode){
               glColor4fv(datacopy->partclassbase->rgb);
               for(j = 0;j < datacopy->npoints_file;j+=partdrawskip){
                 float zoffset;
-                float xx, yy, zz;
                 int loc;
 
-                xx = xplts[sx[j]];
-                yy = yplts[sy[j]];
-                zz = zplts[sz[j]];
-
-                zoffset = GetZCellValOffset(meshinfo, xx, yy, &loc);
-                if(vis[j] == 1)glVertex3f(xx, yy, zz + zoffset);
+                zoffset = GetZCellValOffset(meshinfo, xpos[j], ypos[j], &loc);
+                if(vis[j] == 1)glVertex3f(xpos[j], ypos[j], zpos[j] + zoffset);
               }
             }
             else{
@@ -448,7 +446,7 @@ void DrawPart(const partdata *parti, int mode){
               for(j = 0;j < datacopy->npoints_file;j+=partdrawskip){
                 if(vis[j] == 1){
                   glColor4fv(rgb_full[color[j]]);
-                  glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                  glVertex3f(xpos[j], ypos[j], zpos[j]);
                 }
               }
             }
@@ -466,8 +464,7 @@ void DrawPart(const partdata *parti, int mode){
 
   if(streak5show == 1){
     for(i = 0;i < parti->nclasses;i++){
-      short *sx, *sy, *sz;
-      short *sxx, *syy, *szz;
+      float *xpos, *ypos, *zpos;
       unsigned char *vis;
       int k;
       int show_default;
@@ -495,9 +492,9 @@ void DrawPart(const partdata *parti, int mode){
         show_default = 1;
       }
 
-      sx = datacopy->sx;
-      sy = datacopy->sy;
-      sz = datacopy->sz;
+      xpos = datacopy->xpos;
+      ypos = datacopy->ypos;
+      zpos = datacopy->zpos;
       vis = datacopy->vis_part;
 
       if(show_default == 1){
@@ -514,18 +511,19 @@ void DrawPart(const partdata *parti, int mode){
           tagval = datacopy->tags[j];
           if(vis[j] == 0)continue;
           glBegin(GL_LINE_STRIP);
-          glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+          glVertex3f(xpos[j], ypos[j], zpos[j]);
           for(k = 1;k < streak5step;k++){
             int jj;
+            float *xxpos, *yypos, *zzpos;
 
             if(ipframe - k < 0)break;
             datapast = parti->data5 + nclasses*(ipframe - k) + i;
             jj = GetTagIndex(parti, &datapast, tagval, DRAWING);
             if(jj < 0)break;
-            sxx = datapast->sx;
-            syy = datapast->sy;
-            szz = datapast->sz;
-            glVertex3f(xplts[sxx[jj]], yplts[syy[jj]], zplts[szz[jj]]);
+            xxpos = datapast->xpos;
+            yypos = datapast->ypos;
+            zzpos = datapast->zpos;
+            glVertex3f(xxpos[jj], yypos[jj], zzpos[jj]);
           }
           glEnd();
         }
@@ -546,21 +544,22 @@ void DrawPart(const partdata *parti, int mode){
 
           glBegin(GL_LINE_STRIP);
           glColor4fv(colorptr);
-          glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+          glVertex3f(xpos[j], ypos[j], zpos[j]);
           for(k = 1;k < streak5step;k++){
             int jj;
+            float *xxpos, *yypos, *zzpos;
 
             if(ipframe - k < 0)break;
             datapast = parti->data5 + nclasses*(ipframe - k) + i;
             jj = GetTagIndex(parti, &datapast, tagval, DRAWING);
             if(jj < 0 || datapast->irvals == NULL)break;
-            sxx = datapast->sx;
-            syy = datapast->sy;
-            szz = datapast->sz;
+            xxpos = datapast->xpos;
+            yypos = datapast->ypos;
+            zzpos = datapast->zpos;
 
             GetPartColor(&colorptr, datacopy, show_default, jj, itype, valmin, valmax);
             glColor4fv(colorptr);
-            glVertex3f(xplts[sxx[jj]], yplts[syy[jj]], zplts[szz[jj]]);
+            glVertex3f(xxpos[jj], yypos[jj], zzpos[jj]);
           }
           glEnd();
         }
@@ -569,7 +568,7 @@ void DrawPart(const partdata *parti, int mode){
       datacopy++;
     }
   }
-
+  glPopMatrix();
 }
 
 /* ------------------ DrawPartFrame ------------------------ */
@@ -620,11 +619,7 @@ void FreeAllPart5Data(partdata * parti){
   }
   FREEMEMORY(parti->data5);
   FREEMEMORY(parti->vis_part);
-  FREEMEMORY(parti->tags);
   FREEMEMORY(parti->sort_tags);
-  FREEMEMORY(parti->sx);
-  FREEMEMORY(parti->sy);
-  FREEMEMORY(parti->sz);
   FREEMEMORY(parti->irvals);
 #ifdef pp_PARTFRAME
   if(load_flag != RELOAD){
@@ -640,9 +635,9 @@ void FreeAllPart5Data(partdata * parti){
 void InitPart5Data(part5data *datacopy, partclassdata *partclassi){
   datacopy->cvals=NULL;
   datacopy->partclassbase=partclassi;
-  datacopy->sx=NULL;
-  datacopy->sy=NULL;
-  datacopy->sz=NULL;
+  datacopy->xpos=NULL;
+  datacopy->ypos=NULL;
+  datacopy->zpos=NULL;
   datacopy->dsx=NULL;
   datacopy->dsy=NULL;
   datacopy->dsz=NULL;
@@ -824,7 +819,7 @@ void CreatePartSizeFileFromBound(char *part5boundfile_arg, char *part5sizefile_a
 }
 
 /* ------------------ CreatePartSizeFileFromPart ------------------------ */
-
+#ifndef pp_PARTFRAME
 void CreatePartSizeFileFromPart(char *part5file_arg, char *part5sizefile_arg, LINT file_offset_arg){
   FILE *streamout_local;
   FILE_m *stream;
@@ -842,13 +837,13 @@ void CreatePartSizeFileFromPart(char *part5file_arg, char *part5sizefile_arg, LI
   FORTREAD_m(&nclasses_local, 4, 1, stream);
   NewMemory((void **)&numtypes_local, 2*nclasses_local* sizeof(int));
   NewMemory((void **)&numpoints_local, nclasses_local* sizeof(int));
-  for (i = 0; i < nclasses_local; i++){
+  for(i = 0; i < nclasses_local; i++){
     FORTREAD_m(numtypes_local+2*i, 4, 2, stream);
     numvals_local = numtypes_local[2 * i] + numtypes_local[2 * i + 1];
     skip_local = 2*numvals_local*(4 + 30 + 4);
     fseek_m(stream, skip_local, SEEK_CUR);
   }
-  while (!feof_m(stream)){
+  while(!feof_m(stream)){
     float time_local;
     LINT frame_size_local;
     char format[128];
@@ -858,7 +853,7 @@ void CreatePartSizeFileFromPart(char *part5file_arg, char *part5sizefile_arg, LI
     FORTREAD_m(&time_local, 4, 1, stream);
     frame_size_local += 12;
     if(count_read != 1)break;
-    for (i = 0; i < nclasses_local; i++){
+    for(i = 0; i < nclasses_local; i++){
       FORTREAD_m(numpoints_local+ i, 4, 1, stream);
       frame_size_local += 12;
       skip_local = 4+4*NXYZ_COMP_PART*numpoints_local[i]+4;
@@ -876,7 +871,7 @@ void CreatePartSizeFileFromPart(char *part5file_arg, char *part5sizefile_arg, LI
     fprintf(streamout_local, format, time_local, file_offset_arg);
     fprintf(streamout_local, "\n");
     file_offset_arg += frame_size_local;
-    for (i = 0; i < nclasses_local; i++){
+    for(i = 0; i < nclasses_local; i++){
       fprintf(streamout_local, " %i\n", numpoints_local[i]);
     }
   }
@@ -885,6 +880,7 @@ void CreatePartSizeFileFromPart(char *part5file_arg, char *part5sizefile_arg, LI
   FREEMEMORY(numtypes_local);
   FREEMEMORY(numpoints_local);
 }
+#endif
 
 /* ------------------ GetPartHeaderOffset ------------------------ */
 
@@ -1285,35 +1281,13 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
       CheckMemory;
       if(doit_local==1){
         float *xyz;
-        int j;
 
         FORTREAD_mv((void **)&xyz, 4, NXYZ_COMP_PART*nparts_local, stream);
+        datacopy_local->xpos = xyz;
+        datacopy_local->ypos = xyz +   nparts_local;
+        datacopy_local->zpos = xyz + 2*nparts_local;
         if(count_read!=NXYZ_COMP_PART*nparts_local)goto wrapup;
         CheckMemory;
-        if(nparts_local>0){
-          float *x_local, *y_local, *z_local;
-          short *sx_local, *sy_local, *sz_local;
-
-          x_local = xyz;
-          y_local = xyz+nparts_local;
-          z_local = xyz+2*nparts_local;
-          sx_local = datacopy_local->sx;
-          sy_local = datacopy_local->sy;
-          sz_local = datacopy_local->sz;
-          for(j=0;j<nparts_local;j++){
-            float xx_local, yy_local, zz_local;
-            int factor_local=256*128-1;
-
-            xx_local = FDS2SMV_X(x_local[j])/xbar;
-            yy_local = FDS2SMV_Y(y_local[j])/ybar;
-            zz_local = FDS2SMV_Z(z_local[j])/zbar;
-
-            sx_local[j] = factor_local*xx_local;
-            sy_local[j] = factor_local*yy_local;
-            sz_local[j] = factor_local*zz_local;
-          }
-          CheckMemory;
-        }
       }
       else{
         skip_local += 4+NXYZ_COMP_PART*nparts_local*sizeof(float)+4;
@@ -1324,7 +1298,7 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
         int j;
 
         sort_tags_local = datacopy_local->sort_tags;
-        FORTREAD_m(datacopy_local->tags,4, nparts_local, stream);
+        FORTREAD_mv((void **)&(datacopy_local->tags),4, nparts_local, stream);
         if(count_read!=nparts_local)goto wrapup;
         CheckMemory;
         if(nparts_local>0){
@@ -1710,7 +1684,7 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
 
   fseek_m(stream, 2 * (4 + 4 + 4), SEEK_SET);
   fseek_m(stream, 4, SEEK_CUR); fread_m(&n_part, sizeof(int), 1, stream); fseek_m(stream, 4, SEEK_CUR);
-  NewMemory(( void ** )&n_quants, n_part*sizeof(int));
+  NewMemory((void **)&n_quants, n_part*sizeof(int));
   for(i = 0; i < n_part; i++){
     int vals[2];
 
@@ -1757,9 +1731,9 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
   // allocate memory for number of time steps * number of classes
 
   CheckMemory;
-  NewMemory(( void ** )&parti->data5, parti->nclasses * parti->ntimes * sizeof(part5data));
-  NewMemory(( void ** )&parti->times, parti->ntimes * sizeof(float));
-  NewMemory(( void ** )&parti->times_map, parti->ntimes);
+  NewMemory((void **)&parti->data5, parti->nclasses * parti->ntimes * sizeof(part5data));
+  NewMemory((void **)&parti->times, parti->ntimes * sizeof(float));
+  NewMemory((void **)&parti->times_map, parti->ntimes);
 
   // free memory for x, y, z frame data
 
@@ -1810,9 +1784,9 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
       if(npoints_local > partclassj->maxpoints)partclassj->maxpoints = npoints_local;
       if(npoints_local > 0){
         if(partfast == NO){
-          NewMemory(( void ** )&datacopy_local->dsx, npoints_local * sizeof(float));
-          NewMemory(( void ** )&datacopy_local->dsy, npoints_local * sizeof(float));
-          NewMemory(( void ** )&datacopy_local->dsz, npoints_local * sizeof(float));
+          NewMemory((void **)&datacopy_local->dsx, npoints_local * sizeof(float));
+          NewMemory((void **)&datacopy_local->dsy, npoints_local * sizeof(float));
+          NewMemory((void **)&datacopy_local->dsz, npoints_local * sizeof(float));
         }
       }
       datacopy_local++;
@@ -1839,21 +1813,13 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
     }
   }
   FREEMEMORY(parti->vis_part);
-  FREEMEMORY(parti->tags);
   FREEMEMORY(parti->sort_tags);
-  FREEMEMORY(parti->sx);
-  FREEMEMORY(parti->sy);
-  FREEMEMORY(parti->sz);
   FREEMEMORY(parti->irvals);
   FREEMEMORY(n_quants);
 
-  NewMemory(( void ** )&parti->vis_part,    MAX(nall_points_local, 1));
-  NewMemory(( void ** )&parti->tags,        MAX(nall_points_local, 1)*sizeof(int));
-  NewMemory(( void ** )&parti->sort_tags, 2*MAX(nall_points_local, 1)*sizeof(int));
-  NewMemory(( void ** )&parti->sx,          MAX(nall_points_local, 1)*sizeof(short));
-  NewMemory(( void ** )&parti->sy,          MAX(nall_points_local, 1)*sizeof(short));
-  NewMemory(( void ** )&parti->sz,          MAX(nall_points_local, 1)*sizeof(short));
-  NewMemory(( void ** )&parti->irvals,      MAX(nall_points_types_local, 1));
+  NewMemory((void **)&parti->vis_part,    MAX(nall_points_local, 1));
+  NewMemory((void **)&parti->sort_tags, 2*MAX(nall_points_local, 1)*sizeof(int));
+  NewMemory((void **)&parti->irvals,      MAX(nall_points_types_local, 1));
 
   datacopy_local = parti->data5;
   nall_points_types_local = 0;
@@ -1864,18 +1830,14 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
     for(j = 0; j < parti->nclasses; j++){
       int npoints_local, ntypes_local;
 
-      datacopy_local->irvals = parti->irvals + nall_points_types_local;
-      datacopy_local->vis_part = parti->vis_part + nall_points_local;
-      datacopy_local->tags = parti->tags + nall_points_local;
-      datacopy_local->sort_tags = parti->sort_tags + 2 * nall_points_local;
-      datacopy_local->sx = parti->sx + nall_points_local;
-      datacopy_local->sy = parti->sy + nall_points_local;
-      datacopy_local->sz = parti->sz + nall_points_local;
+      datacopy_local->irvals    = parti->irvals    +   nall_points_types_local;
+      datacopy_local->vis_part  = parti->vis_part  +   nall_points_local;
+      datacopy_local->sort_tags = parti->sort_tags + 2*nall_points_local;
 
-      npoints_local = datacopy_local->npoints_file;
-      ntypes_local = datacopy_local->partclassbase->ntypes;
-      nall_points_types_local += npoints_local * ntypes_local;
-      nall_points_local += npoints_local;
+      npoints_local             = datacopy_local->npoints_file;
+      ntypes_local              = datacopy_local->partclassbase->ntypes;
+      nall_points_types_local  += npoints_local*ntypes_local;
+      nall_points_local        += npoints_local;
       datacopy_local++;
     }
   }
@@ -2043,18 +2005,10 @@ int GetPartHeader(partdata * parti, int *nf_all, int option_arg, int print_optio
       }
     }
     FREEMEMORY(parti->vis_part);
-    FREEMEMORY(parti->tags);
     FREEMEMORY(parti->sort_tags);
-    FREEMEMORY(parti->sx);
-    FREEMEMORY(parti->sy);
-    FREEMEMORY(parti->sz);
 
     NewMemory((void **)&parti->vis_part,    MAX(nall_points_local, 1)*sizeof(unsigned char));
-    NewMemory((void **)&parti->tags,        MAX(nall_points_local, 1)*sizeof(int));
     NewMemory((void **)&parti->sort_tags, 2*MAX(nall_points_local, 1)*sizeof(int));
-    NewMemory((void **)&parti->sx,          MAX(nall_points_local, 1)*sizeof(short));
-    NewMemory((void **)&parti->sy,          MAX(nall_points_local, 1)*sizeof(short));
-    NewMemory((void **)&parti->sz,          MAX(nall_points_local, 1)*sizeof(short));
 
     FREEMEMORY(parti->irvals);
     NewMemory((void **)&parti->irvals, MAX(nall_points_types_local,1)*sizeof(unsigned char));
@@ -2070,11 +2024,7 @@ int GetPartHeader(partdata * parti, int *nf_all, int option_arg, int print_optio
 
         datacopy_local->irvals    = parti->irvals    +     nall_points_types_local;
         datacopy_local->vis_part  = parti->vis_part  +     nall_points_local;
-        datacopy_local->tags      = parti->tags      +     nall_points_local;
         datacopy_local->sort_tags = parti->sort_tags +   2*nall_points_local;
-        datacopy_local->sx        = parti->sx        +     nall_points_local;
-        datacopy_local->sy        = parti->sy        +     nall_points_local;
-        datacopy_local->sz        = parti->sz        +     nall_points_local;
 
         npoints_local            = datacopy_local->npoints_file;
         ntypes_local             = datacopy_local->partclassbase->ntypes;

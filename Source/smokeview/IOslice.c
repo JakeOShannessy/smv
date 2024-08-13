@@ -1510,7 +1510,7 @@ void UpdateAllSliceColors(int slicetype, int *errorcode){
 
 /* ------------------ SliceCompare ------------------------ */
 
-int SliceCompare( const void *arg1, const void *arg2 ){
+int SliceCompare(const void *arg1, const void *arg2){
   slicedata *slicei, *slicej;
 
   slicei = sliceinfo + *(int *)arg1;
@@ -1864,21 +1864,21 @@ void UpdateVectorSkip(int skip){
     if(slicei->imap == NULL){
       int *imap;
 
-      NewMemory(( void ** )&imap, (slicemesh->ibar + 1) * sizeof(int));
+      NewMemory((void **)&imap, (slicemesh->ibar + 1) * sizeof(int));
       slicei->imap = imap;
       slicei->n_imap = 0;
     }
     if(slicei->jmap == NULL){
       int *jmap;
 
-      NewMemory(( void ** )&jmap, (slicemesh->jbar + 1) * sizeof(int));
+      NewMemory((void **)&jmap, (slicemesh->jbar + 1) * sizeof(int));
       slicei->jmap = jmap;
       slicei->n_jmap = 0;
     }
     if(slicei->kmap == NULL){
       int *kmap;
 
-      NewMemory(( void ** )&kmap, (slicemesh->kbar + 1) * sizeof(int));
+      NewMemory((void **)&kmap, (slicemesh->kbar + 1) * sizeof(int));
       slicei->kmap = kmap;
       slicei->n_kmap = 0;
     }
@@ -2726,13 +2726,13 @@ void *UpdateVSlices(void *arg){
         slicedata *sdj;
 
         sdj = sliceinfoptrs[meshi->isliceinfo + j];
-        if (sdj->slice_filetype == SLICE_CELL_CENTER|| sdj->slice_filetype == SLICE_GEOM)continue;
-        if (sdi->blocknumber != sdj->blocknumber)continue;
-        if (sdi->is1 != sdj->is1 || sdi->is2 != sdj->is2 || sdi->js1 != sdj->js1)continue;
-        if (sdi->js2 != sdj->js2 || sdi->ks1 != sdj->ks1 || sdi->ks2 != sdj->ks2)continue;
-        if (sdj->vec_comp == 1)vd->iu = sdj-sliceinfo;
-        if (sdj->vec_comp == 2)vd->iv = sdj-sliceinfo;
-        if (sdj->vec_comp == 3)vd->iw = sdj-sliceinfo;
+        if(sdj->slice_filetype == SLICE_CELL_CENTER|| sdj->slice_filetype == SLICE_GEOM)continue;
+        if(sdi->blocknumber != sdj->blocknumber)continue;
+        if(sdi->is1 != sdj->is1 || sdi->is2 != sdj->is2 || sdi->js1 != sdj->js1)continue;
+        if(sdi->js2 != sdj->js2 || sdi->ks1 != sdj->ks1 || sdi->ks2 != sdj->ks2)continue;
+        if(sdj->vec_comp == 1)vd->iu = sdj-sliceinfo;
+        if(sdj->vec_comp == 2)vd->iv = sdj-sliceinfo;
+        if(sdj->vec_comp == 3)vd->iw = sdj-sliceinfo;
       }
     }
     if(vd->iu!=-1||vd->iv!=-1||vd->iw!=-1){
@@ -3070,7 +3070,7 @@ void GetSliceDataBounds(slicedata *sd, float *pmin, float *pmax){
     }
     *pmin = pdata[0];
     *pmax = pdata[0];
-    for (i = 0; i < ndata; i++) {
+    for(i = 0; i < ndata; i++){
       *pmin = MIN(*pmin, pdata[i]);
       *pmax = MAX(*pmax, pdata[i]);
     }
@@ -4181,11 +4181,11 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
       show_slice_average = 1;
 
 #ifdef pp_SLICEFRAME
-      qvalptrs = ( float **)sd->frameinfo->frameptrs;
+      qvalptrs = (float **)sd->frameinfo->frameptrs;
 #else
       int i;
-      NewMemory(( void ** )&qvalptrs, sd->ntimes*sizeof(float *));
-      for(i=0; i< sd->ntimes ; i++){
+      NewMemory((void **)&qvalptrs, sd->ntimes*sizeof(float *));
+      for(i=0; i< sd->ntimes; i++){
         qvalptrs[i] = sd->qslicedata + i*data_per_timestep;
       }
 #endif
@@ -4220,7 +4220,7 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
 
     sd->sliceoffset = 0.0;
 
-    switch (sd->idir){
+    switch(sd->idir){
     case XDIR:
       offset = sliceoffset_factor*(xplt_local[1] - xplt_local[0]);
       if(InBlockage(meshi, xslicemid - offset, yslicemid, zslicemid) == 1){
@@ -6801,7 +6801,7 @@ void ComputeOpacityCorrections(meshdata *meshi, float *xyz0, float *normal){
 
 /* ------------------ CompareLoadedSliceList ------------------------ */
 
-int CompareLoadedSliceList( const void *arg1, const void *arg2 ){
+int CompareLoadedSliceList(const void *arg1, const void *arg2){
   slicedata *slicei, *slicej;
   float position_i, position_j;
   int dir;
@@ -7409,7 +7409,7 @@ void DrawSliceFrame(){
       slice_normal[2] = 0.0;
       slicemesh = meshinfo+sd->blocknumber;
       if(slicemesh->smokedir<0)direction = -1;
-      switch (ABS(slicemesh->smokedir)){
+      switch(ABS(slicemesh->smokedir)){
       case 4:  // -45 slope slices
         visy_all = 1;
         nslicemax = nploty_list;
@@ -7598,7 +7598,7 @@ void DrawSliceFrame(){
       glBlendEquation(GL_FUNC_ADD);
     }
   }
-  for (ii = 0; ii < npatchinfo; ii++) {
+  for(ii = 0; ii < npatchinfo; ii++){
     patchdata *patchi;
 
     patchi = patchinfo + ii;
@@ -9012,7 +9012,7 @@ void InitSliceData(void){
       zplt[sd->ks1], zplt[sd->ks2]);
 
 
-    switch (sd->idir){
+    switch(sd->idir){
     case XDIR:
       fprintf(fileout, "%i\n", sd->ks2 + 1 - sd->ks1);
       for(k = sd->ks1; k <= sd->ks2; k++){
@@ -9556,7 +9556,7 @@ void SortSlices(void){
     splitsliceinfoptr[i] = splitsliceinfo + i;
   }
   if(nsplitsliceinfo > 1){
-    qsort(( splitslicedata ** )splitsliceinfoptr, ( size_t )nsplitsliceinfo, sizeof(splitslicedata *), CompareSortSlices);
+    qsort((splitslicedata **)splitsliceinfoptr, ( size_t )nsplitsliceinfo, sizeof(splitslicedata *), CompareSortSlices);
   }
 }
 

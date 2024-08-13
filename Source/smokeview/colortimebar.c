@@ -656,22 +656,22 @@ void FRgb2Lab(float *rgb_arg, float *lab){
   float var_G = rgb_arg[1] / 255.0f;
   float var_B = rgb_arg[2] / 255.0f;
 
-  if(var_R > 0.04045f) {
+  if(var_R > 0.04045f){
     var_R = pow((var_R + 0.055f) / 1.055f, 2.4f);
   }
-  else {
+  else{
     var_R /= 12.92f;
   }
-  if(var_G > 0.04045f) {
+  if(var_G > 0.04045f){
     var_G = pow((var_G + 0.055f) / 1.055f, 2.4f);
   }
-  else {
+  else{
     var_G /= 12.92f;
   }
-  if(var_B > 0.04045f) {
+  if(var_B > 0.04045f){
     var_B = pow((var_B + 0.055f) / 1.055f, 2.4f);
   }
-  else {
+  else{
     var_B /= 12.92f;
   }
 
@@ -688,22 +688,22 @@ void FRgb2Lab(float *rgb_arg, float *lab){
   float var_Y = Y / 100.0f;
   float var_Z = Z / 108.883f;
 
-  if(var_X > 0.008856f) {
+  if(var_X > 0.008856f){
     var_X = pow(var_X, 1.0f / 3.0f);
   }
-  else {
+  else{
     var_X = (7.787f * var_X) + (16.0f / 116.0f);
   }
-  if(var_Y > 0.008856f) {
+  if(var_Y > 0.008856f){
     var_Y = pow(var_Y, 1.0f / 3.0f);
   }
-  else {
+  else{
     var_Y = (7.787f * var_Y) + (16.0f / 116.0f);
   }
-  if(var_Z > 0.008856f) {
+  if(var_Z > 0.008856f){
     var_Z = pow(var_Z, 1.0f / 3.0f);
   }
-  else {
+  else{
     var_Z = (7.787f * var_Z) + (16.0f / 116.0f);
   }
 
@@ -772,22 +772,22 @@ void Lab2Rgb(unsigned char *rgb_arg, float *frgb_arg, float *lab){
   float var_X = a / 500.0f + var_Y;
   float var_Z = var_Y - b / 200.0f;
 
-  if(pow(var_Y, 3.0f) > 0.008856f) {
+  if(pow(var_Y, 3.0f) > 0.008856f){
     var_Y = pow(var_Y, 3.0f);
   }
-  else {
+  else{
     var_Y = (var_Y - 16.0f / 116.0f) / 7.787f;
   }
-  if(pow(var_X, 3.0f) > 0.008856f) {
+  if(pow(var_X, 3.0f) > 0.008856f){
     var_X = pow(var_X, 3.0f);
   }
-  else {
+  else{
     var_X = (var_X - 16.0f / 116.0f) / 7.787f;
   }
-  if(pow(var_Z, 3.0f) > 0.008856f) {
+  if(pow(var_Z, 3.0f) > 0.008856f){
     var_Z = pow(var_Z, 3.0f);
   }
-  else {
+  else{
     var_Z = (var_Z - 16.0f / 116.0f) / 7.787f;
   }
 
@@ -800,22 +800,22 @@ void Lab2Rgb(unsigned char *rgb_arg, float *frgb_arg, float *lab){
   float var_G = -X * 0.9689f + Y * 1.8758f + Z * 0.0415f;
   float var_B =  X * 0.0557f - Y * 0.2040f + Z * 1.0570f;
 
-  if(var_R > 0.0031308f) {
+  if(var_R > 0.0031308f){
     var_R = 1.055f * pow(var_R, 1.0f / 2.4f) - 0.055f;
   }
-  else {
+  else{
     var_R *= 12.92f;
   }
-  if(var_G > 0.0031308f) {
+  if(var_G > 0.0031308f){
     var_G = 1.055f * pow(var_G, 1.0f / 2.4f) - 0.055f;
   }
-  else {
+  else{
     var_G *= 12.92f;
   }
-  if(var_B > 0.0031308f) {
+  if(var_B > 0.0031308f){
     var_B = 1.055f * pow(var_B, 1.0f / 2.4f) - 0.055f;
   }
-  else {
+  else{
     var_B *= 12.92f;
   }
 
@@ -884,9 +884,9 @@ void CheckLab(void){
         unsigned char rgbval[3];
         float lab[3];
 
-        rgbval[0] = MIN(( unsigned char )k,255);
-        rgbval[1] = MIN(( unsigned char )j,255);
-        rgbval[2] = MIN(( unsigned char )i,255);
+        rgbval[0] = MIN((unsigned char)k,255);
+        rgbval[1] = MIN((unsigned char)j,255);
+        rgbval[2] = MIN((unsigned char)i,255);
         Rgb2Lab(rgbval, lab);
         memcpy(labxyz, lab, 3 * sizeof(float));
         memcpy(labrgb, rgbval, 3);
@@ -1312,7 +1312,7 @@ void InitDefaultColorbars(int nini){
   FREEMEMORY(colorbarinfo);
   ncolorbars=ndefaultcolorbars;
   NewMemory((void **)&colorbarinfo,(ncolorbars+nini)*sizeof(colorbardata));
-  NewMemory(( void ** )&colorbarcopyinfo, (ncolorbars + nini) * sizeof(colorbardata));
+  NewMemory((void **)&colorbarcopyinfo, (ncolorbars + nini) * sizeof(colorbardata));
   UpdateCurrentColorbar(colorbarinfo + colorbartype);
 
   for(i=0;i<ncolorbars;i++){

@@ -841,15 +841,15 @@ void GetBlockVals(  float *xmin, float *xmax,
 
 /* ------------------ HaveCircularVents ------------------------ */
 
-int HaveCircularVents(void) {
+int HaveCircularVents(void){
   int i;
 
-  for (i = 0; i < nmeshes; i++) {
+  for(i = 0; i < nmeshes; i++){
     meshdata* meshi;
 
     meshi = meshinfo + i;
 
-    if (meshi->ncvents > 0)return 1;
+    if(meshi->ncvents > 0)return 1;
   }
   return 0;
 }
@@ -1196,7 +1196,7 @@ int CheckVentDup(ventdata* vi, meshdata* meshi){
   int nreal_vents;
 
   nreal_vents = meshi->nvents - meshi->ndummyvents;
-  if (nreal_vents == 0)return 0;
+  if(nreal_vents == 0)return 0;
 
   for(i = 0; i < nreal_vents; i++){
     ventdata *vi2;
@@ -1698,7 +1698,7 @@ void ReadCADGeom(cadgeomdata *cd){
 
 /* ------------------ CompareQuad ------------------------ */
 
-int CompareQuad( const void *arg1, const void *arg2 ){
+int CompareQuad(const void *arg1, const void *arg2){
   int i1, i2;
   cadgeomdata *cd;
   cadquad *quadi, *quadj;
@@ -2772,7 +2772,7 @@ void SetCullVis(void){
 
 /* ------------------ CompareSingleFaces0 ------------------------ */
 
-int CompareSingleFaces0( const void *arg1, const void *arg2 ){
+int CompareSingleFaces0(const void *arg1, const void *arg2){
   facedata *facei, *facej;
   int dirs[6];
 
@@ -2844,7 +2844,7 @@ int CompareSingleFaces0( const void *arg1, const void *arg2 ){
 
 /* ------------------ CompareSingleFaces ------------------------ */
 
-int CompareSingleFaces( const void *arg1, const void *arg2 ){
+int CompareSingleFaces(const void *arg1, const void *arg2){
   facedata *facei, *facej;
 
   facei = *(facedata **)arg1;
@@ -2888,7 +2888,7 @@ int CompareSingleFaces( const void *arg1, const void *arg2 ){
 
 /* ------------------ CompareColorFaces ------------------------ */
 
-int CompareColorFaces( const void *arg1, const void *arg2 ){
+int CompareColorFaces(const void *arg1, const void *arg2){
   facedata *facei, *facej;
 
   facei = *(facedata **)arg1;
@@ -3177,7 +3177,7 @@ void UpdateFaceLists(void){
       if(nhidden>0){
         n_normals_single=0;
         for(iface=0;iface<meshi->nface_normals_single;iface++){
-          facedata *facei  ;
+          facedata *facei;
 
           facei=meshi->face_normals_single[iface];
           if(facei->dup==0)meshi->face_normals_single[n_normals_single++]=facei;
@@ -3610,7 +3610,7 @@ void DrawFaces(){
 
 /* ------------------ CompareTransparentFaces ------------------------ */
 
-int CompareTransparentFaces( const void *arg1, const void *arg2 ){
+int CompareTransparentFaces(const void *arg1, const void *arg2){
   facedata *facei, *facej;
 
   facei = *(facedata **)arg1;
@@ -4099,7 +4099,7 @@ void AllocateFaces(){
 
 /* ------------------ CompareBlock ------------------------ */
 
-int CompareBlock( const void *arg1, const void *arg2 ){
+int CompareBlock(const void *arg1, const void *arg2){
   blockagedata *bc1,*bc2;
   int i1, i2;
 
@@ -5679,7 +5679,7 @@ culldata *GetFacePort(meshdata *meshi, facedata *facei){
 
 /* ------------------ CompareBlockage ------------------------ */
 
-int CompareBlockage( const void *arg1, const void *arg2 ){
+int CompareBlockage(const void *arg1, const void *arg2){
   blockagedata *bc1, *bc2;
   int *ijk1, *ijk2;
 

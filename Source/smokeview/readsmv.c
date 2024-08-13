@@ -442,7 +442,7 @@ FILE_SIZE ReadCSVFile(csvfiledata *csvfi, int flag){
 
 /* ------------------ CompareCSV ------------------------ */
 
-int CompareCSV( const void *arg1, const void *arg2 ){
+int CompareCSV(const void *arg1, const void *arg2){
   csvfiledata *csvi, *csvj;
 
   csvi = (csvfiledata *)arg1;
@@ -917,6 +917,10 @@ void FreeLabels(flowlabels *flowlabel){
 void InitMesh(meshdata *meshi){
   int i;
 
+#ifdef pp_BOUNDMEM
+  meshi->buffer1 = NULL;
+  meshi->buffer2 = NULL;
+#endif
   meshi->use = 1;
   meshi->isliceinfo    = 0;
   meshi->nsliceinfo    = 0;
@@ -3301,15 +3305,15 @@ int GetSmoke3DType(char *label){
 int CompareLabel(const void *arg1, const void *arg2){
   char *x, *y;
 
-  x = *( char ** )arg1;
-  y = *( char ** )arg2;
+  x = *(char **)arg1;
+  y = *(char **)arg2;
 
   return strcmp(x, y);
 }
 
 /* ------------------ CompareSmoketypes ------------------------ */
 
-int CompareSmoketypes( const void *arg1, const void *arg2 ){
+int CompareSmoketypes(const void *arg1, const void *arg2){
   smoke3dtypedata *smoketypei, *smoketypej;
   smoke3ddata *smoke3di, *smoke3dj;
   char *labeli, *labelj;
@@ -4646,7 +4650,7 @@ void InitCellMeshInfo(void){
     return;
   }
 
-  NewMemory(( void ** )&cellmeshinfo, sizeof(cellmeshdata));
+  NewMemory((void **)&cellmeshinfo, sizeof(cellmeshdata));
   xyzminmax = cellmeshinfo->xyzminmax;
   dxyz      = cellmeshinfo->dxyz;
   nxyz      = cellmeshinfo->nxyz;
@@ -4691,7 +4695,7 @@ void InitCellMeshInfo(void){
   nxyz[2] = MAX((int)( (xyzminmax[5] - xyzminmax[4])/dxyz[2] + 0.5), 1);
 
   ntotal = nxyz[0]*nxyz[1]*nxyz[2];
-  NewMemory(( void ** )&cellmeshinfo->cellmeshes, ntotal*sizeof(meshdata *));
+  NewMemory((void **)&cellmeshinfo->cellmeshes, ntotal*sizeof(meshdata *));
   cellmeshes = cellmeshinfo->cellmeshes;
   for(i=0;i<ntotal;i++){
     cellmeshinfo->cellmeshes[i] = NULL;
@@ -4834,8 +4838,8 @@ void SetupIsosurface(isodata *isoi){
     if(isoi->nlevels > 0){
       int i;
 
-      NewMemory(( void ** )&levels, isoi->nlevels * sizeof(float));
-      NewMemory(( void ** )&colorlevels, isoi->nlevels * sizeof(float *));
+      NewMemory((void **)&levels, isoi->nlevels * sizeof(float));
+      NewMemory((void **)&colorlevels, isoi->nlevels * sizeof(float *));
       for(i = 0; i < isoi->nlevels; i++){
         colorlevels[i] = NULL;
         levels[i] = geomi->float_vals[i];
@@ -5206,12 +5210,8 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
 #ifndef pp_PARTFRAME
   parti->filepos = NULL;
 #endif
-  parti->tags = NULL;
   parti->sort_tags = NULL;
   parti->vis_part = NULL;
-  parti->sx = NULL;
-  parti->sy = NULL;
-  parti->sz = NULL;
   parti->irvals = NULL;
 
   parti->data5 = NULL;
@@ -5608,7 +5608,7 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
     smoke3di->reg_file = SMOKE3DBUFFER(len + 1);
     STRCPY(smoke3di->reg_file, bufferptr);
     for(i=0; i<6; i++){
-      smoke3di->alphas_dir[i] = ( unsigned char * )smoke3d_buffer;
+      smoke3di->alphas_dir[i] = (unsigned char *)smoke3d_buffer;
       smoke3d_buffer += 256;
     }
     smoke3di->ntimes = 0;
@@ -5649,8 +5649,8 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
     smoke3di->smoke_boxmax = NULL;
     smoke3di->display = 0;
     smoke3di->loaded = 0;
-    smoke3di->finalize = 0;
     smoke3di->request_load = 0;
+    smoke3di->finalize = 0;
     smoke3di->primary_file = 0;
     smoke3di->is_smoke = 0;
     smoke3di->is_fire = 0;
@@ -6612,7 +6612,7 @@ char *ConvertFDSInputFile(char *filein, int *ijk_arg, float *xb_arg){
   fclose(streamout);
 
   char *outfile;
-  NewMemory(( void ** )&outfile, strlen(fileout)+1);
+  NewMemory((void **)&outfile, strlen(fileout)+1);
   strcpy(outfile, fileout);
   return outfile;
 }
@@ -6702,7 +6702,7 @@ int GenerateSmvOrigFile(void){
 
 void *GenerateSmvOrigFileWrapper(void *arg){
   if(GenerateSmvOrigFile()==1){
-    printf("%s generated\n", smv_orig_filename);  
+    printf("%s generated\n", smv_orig_filename);
   }
   ReadSMVOrig();
   THREAD_EXIT(readsmvorig_threads);
@@ -6848,7 +6848,7 @@ void InitCSV(csvfiledata *csvi, char *file, char *type, int format){
   csvi->format       = format;
 
   if(file != NULL){
-    NewMemory(( void ** )&csvi->file, strlen(file) + 1);
+    NewMemory((void **)&csvi->file, strlen(file) + 1);
     strcpy(csvi->file, file);
   }
   else{
@@ -7024,7 +7024,7 @@ static float pass5_time;
 /// @brief Initialise any global variables necessary to being parsing an SMV
 /// file. This should be called before @ref ReadSMV_Parse.
 /// @return zero on success, nonzero on failure.
-int ReadSMV_Init() {
+int ReadSMV_Init(){
   float timer_readsmv;
   float timer_setup;
 
@@ -7208,8 +7208,7 @@ int ReadSMV_Init() {
   // read in device (.svo) definitions
 
   START_TIMER(timer_setup);
-  ReadDefaultObjectCollection(objectscoll, smokeview_bindir, fdsprefix, setbw,
-                       isZoneFireModel);
+  ReadDefaultObjectCollection(objectscoll, fdsprefix, setbw, isZoneFireModel);
   PRINT_TIMER(timer_setup, "InitSurface");
 
   if(noutlineinfo>0){
@@ -7343,7 +7342,7 @@ int ReadSMV_Init() {
 /// after ReadSMV_Init to ensure that the appropriate variables are set.
 /// @param stream the smv file stream
 /// @return zero on success, non-zero on failure
-int ReadSMV_Parse(bufferstreamdata *stream) {
+int ReadSMV_Parse(bufferstreamdata *stream){
   int i;
   int have_zonevents,nzventsnew=0;
   devicedata *devicecopy;
@@ -8152,13 +8151,13 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
   }
 
   if(npartinfo>0){
-    if(NewMemory(( void ** )&part_buffer, 4*npartinfo*MAXFILELEN) == 0)return 2;
+    if(NewMemory((void **)&part_buffer, 4*npartinfo*MAXFILELEN) == 0)return 2;
   }
   if(nsliceinfo>0){
-    if(NewMemory(( void ** )&slice_buffer, 7*nsliceinfo*MAXFILELEN) == 0)return 2;
+    if(NewMemory((void **)&slice_buffer, 7*nsliceinfo*MAXFILELEN) == 0)return 2;
   }
   if(nsmoke3dinfo>0){
-    if(NewMemory(( void ** )&smoke3d_buffer, 9*nsmoke3dinfo*MAXFILELEN) == 0)return 2;
+    if(NewMemory((void **)&smoke3d_buffer, 9*nsmoke3dinfo*MAXFILELEN) == 0)return 2;
   }
 
   PRINT_TIMER(timer_readsmv, "pass 1");
@@ -8204,7 +8203,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
   */
     if(MatchSMV(buffer, "HVACVALS") == 1){
       FREEMEMORY(hvacductvalsinfo);
-      NewMemory(( void ** )&hvacductvalsinfo, sizeof(hvacvalsdata));
+      NewMemory((void **)&hvacductvalsinfo, sizeof(hvacvalsdata));
       hvacductvalsinfo->times = NULL;
       hvacductvalsinfo->loaded = 0;
       hvacductvalsinfo->node_vars = NULL;
@@ -8245,7 +8244,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
         }
       }
       FREEMEMORY(hvacnodevalsinfo);
-      NewMemory(( void ** )&hvacnodevalsinfo, sizeof(hvacvalsdata));
+      NewMemory((void **)&hvacnodevalsinfo, sizeof(hvacvalsdata));
       memcpy(hvacnodevalsinfo, hvacductvalsinfo, sizeof(hvacvalsdata));
     }
     /*
@@ -8264,7 +8263,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       if(nhvacnodeinfo == 0)continue;
 
       FREEMEMORY(hvacnodeinfo);
-      NewMemory(( void ** )&hvacnodeinfo, nhvacnodeinfo * sizeof(hvacnodedata));
+      NewMemory((void **)&hvacnodeinfo, nhvacnodeinfo * sizeof(hvacnodedata));
 
   // node_id duct_label network_label
   // x y z filter_flag vent_label
@@ -8399,7 +8398,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
 
         float *waypoints;
 
-        NewMemory(( void ** )&waypoints, 3*(n_waypoints+2) * sizeof(float));
+        NewMemory((void **)&waypoints, 3*(n_waypoints+2) * sizeof(float));
         ducti->xyz_reg   = waypoints;
         ducti->nxyz_reg  = n_waypoints + 2;
 
@@ -8423,21 +8422,21 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       }
       char **hvac_network_labels = NULL;
 
-      NewMemory(( void ** )&hvac_network_labels, (nhvacnodeinfo + nhvacductinfo) * sizeof(char *));
+      NewMemory((void **)&hvac_network_labels, (nhvacnodeinfo + nhvacductinfo) * sizeof(char *));
       for(i = 0; i < nhvacnodeinfo; i++){
         hvac_network_labels[i] = hvacnodeinfo[i].network_name;
       }
       for(i = 0; i < nhvacductinfo; i++){
         hvac_network_labels[i+nhvacnodeinfo] = hvacductinfo[i].network_name;
       }
-      qsort(( char * )hvac_network_labels, ( size_t )(nhvacnodeinfo + nhvacductinfo), sizeof(char *), CompareLabel);
+      qsort((char *)hvac_network_labels, ( size_t )(nhvacnodeinfo + nhvacductinfo), sizeof(char *), CompareLabel);
       nhvacinfo = 1;
       for(i = 1; i < nhvacnodeinfo + nhvacductinfo; i++){
         if(strcmp(hvac_network_labels[nhvacinfo-1], hvac_network_labels[i]) == 0)continue;
         hvac_network_labels[nhvacinfo] = hvac_network_labels[i];
         nhvacinfo++;
       }
-      NewMemory(( void ** )&hvacinfo, nhvacinfo * sizeof(hvacdata));
+      NewMemory((void **)&hvacinfo, nhvacinfo * sizeof(hvacdata));
       for(i = 0; i < nhvacinfo; i++){
         hvacdata *hvaci;
 
@@ -9505,9 +9504,9 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
          NewMemory((void **)&zp2,sizeof(float)*(kbartemp+1))==0
          )return 2;
       if(
-        NewMemory(( void ** )&imap, sizeof(int) * (ibartemp + 1)) == 0 ||
-        NewMemory(( void ** )&jmap, sizeof(int) * (jbartemp + 1)) == 0 ||
-        NewMemory(( void ** )&kmap, sizeof(int) * (kbartemp + 1)) == 0
+        NewMemory((void **)&imap, sizeof(int) * (ibartemp + 1)) == 0 ||
+        NewMemory((void **)&jmap, sizeof(int) * (jbartemp + 1)) == 0 ||
+        NewMemory((void **)&kmap, sizeof(int) * (kbartemp + 1)) == 0
         )return 2;
       if(meshinfo!=NULL){
         meshi->xplt=xp;
@@ -11591,8 +11590,7 @@ typedef struct {
     ++++++++++++++++++++++ PART ++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
-    if(MatchSMV(buffer,"PRT5")==1||MatchSMV(buffer,"EVA5")==1
-      ){
+    if(MatchSMV(buffer,"PRT5")==1||MatchSMV(buffer,"EVA5")==1){
       int return_val;
 
       START_TIMER(PRT5_timer);
@@ -16248,7 +16246,9 @@ int ReadBinIni(void){
   char *smvprogini_ptr = NULL;
 
   strcpy(smvprogini, "");
-  if(smokeview_bindir!=NULL)strcat(smvprogini, smokeview_bindir);
+  char *smv_bindir = GetSmvRootDir();
+  strcat(smvprogini, smv_bindir);
+  FREEMEMORY(smv_bindir);
   strcat(smvprogini, "smokeview.ini");
   smvprogini_ptr = smokeviewini;
   if(smokeviewini!=NULL){
@@ -16293,7 +16293,9 @@ int ReadIni(char *inifile){
 
   ntickinfo=ntickinfo_smv;
   strcpy(smvprogini,"");
-  if(smokeview_bindir!=NULL)strcat(smvprogini,smokeview_bindir);
+  char *smv_bindir = GetSmvRootDir();
+  strcat(smvprogini,smv_bindir);
+  FREEMEMORY(smv_bindir);
   strcat(smvprogini,"smokeview.ini");
   smvprogini_ptr=smokeviewini;
   if(smokeviewini!=NULL){
@@ -17021,7 +17023,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i\n", background_flip);
   fprintf(fileout, "FOREGROUNDCOLOR\n");
   fprintf(fileout, " %f %f %f\n", foregroundbasecolor[0], foregroundbasecolor[1], foregroundbasecolor[2]);
-  fprintf(fileout, "GEOMSELECTCOLOR\n") ;
+  fprintf(fileout, "GEOMSELECTCOLOR\n");
   fprintf(fileout, " %u %u %u\n",  geom_vertex1_rgb[0],  geom_vertex1_rgb[1],  geom_vertex1_rgb[2]);
   fprintf(fileout, " %u %u %u\n",  geom_vertex2_rgb[0],  geom_vertex2_rgb[1],  geom_vertex2_rgb[2]);
   fprintf(fileout, " %u %u %u\n", geom_triangle_rgb[0], geom_triangle_rgb[1], geom_triangle_rgb[2]);
@@ -17137,7 +17139,7 @@ void WriteIni(int flag,char *filename){
 
   fprintf(fileout, "\n   *** SIZES/OFFSETS ***\n\n");
 
-  fprintf(fileout, "GEOMSAXIS\n") ;
+  fprintf(fileout, "GEOMSAXIS\n");
   fprintf(fileout, " %f %f\n",  glui_surf_axis_length, glui_surf_axis_width);
   fprintf(fileout, "GRIDLINEWIDTH\n");
   fprintf(fileout, " %f\n", gridlinewidth);

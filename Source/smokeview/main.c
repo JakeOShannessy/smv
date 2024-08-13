@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include GLUT_H
 
+#include "file_util.h"
 #include "string_util.h"
 #include "smokeviewvars.h"
 #include "command_args.h"
@@ -24,43 +25,6 @@
 #endif
 
 #include <assert.h>
-
-/* ------------------ IsInstallBinDir ------------------------ */
-
-int IsInstallBinDir(char *bindir){
-  char smvfile[1024];
-
-  if(bindir == NULL)return 0;
-  strcpy(smvfile, bindir);
-  strcat(smvfile, dirseparator);
-  strcat(smvfile, ".smokeview_bin");
-  return FileExistsOrig(smvfile);
-}
-
-/* ------------------ SetBinDirAlways ------------------------ */
-
-void SetBinDirAlways(char *new_bindir){
-  char savedir[1024], new_bindir_local[1024];
-
-  GETCWD(savedir, 1024);
-  CHDIR(new_bindir);
-  GETCWD(new_bindir_local, 1024);
-  CHDIR(savedir);
-  FREEMEMORY(smokeview_bindir);
-  NewMemory((void **)&smokeview_bindir, strlen(new_bindir_local) + 2);
-  strcpy(smokeview_bindir, new_bindir_local);
-  if(smokeview_bindir[strlen(smokeview_bindir) - 1] != dirseparator[0])strcat(smokeview_bindir, dirseparator);
-}
-
-/* ------------------ SetBinDir ------------------------ */
-
-int SetBinDir(char *new_bindir){
-  if(IsInstallBinDir(new_bindir) == 1){
-    SetBinDirAlways(new_bindir);
-    return 1;
-  }
-  return 0;
-}
 
 /* ------------------ Usage ------------------------ */
 
@@ -129,29 +93,19 @@ void Usage(char *prog,int option){
 
 char *ProcessCommandLine(CommandlineArgs *args);
 
-char *ParseCommandline(int argc, char **argv) {
+char *ParseCommandline(int argc, char **argv){
   enum CommandLineError error;
-  char *return_val;
   char message[256];
 
   CommandlineArgs args = ParseCommandlineNew(argc, argv, message, &error);
-  if (error != CLE_OK) {
+  if(error != CLE_OK){
     const char *msg = CLE_Message(error, message);
-    if (msg != NULL) {
+    if(msg != NULL){
       fprintf(stderr, "%s\n", msg);
     }
     SMV_EXIT(0);
   }
-  return_val = ProcessCommandLine(&args);
-  if(args.bindir == NULL){
-    have_bindir_arg = 0;
-  }
-  else{
-    have_bindir_arg = 1;
-    SetBinDirAlways(args.bindir);
-    if(smokeview_bindir[strlen(smokeview_bindir) - 1] != dirseparator[0])strcat(smokeview_bindir, dirseparator);
-  }
-  return return_val;
+  return ProcessCommandLine(&args);
 }
 
 /// @brief Once the commandline arguments ahve been parsed, they can be passed
@@ -159,7 +113,7 @@ char *ParseCommandline(int argc, char **argv) {
 /// @param args The args which were previously parsed. All commandline arguments
 /// are parsed into @ref CommandlineArgs.
 /// @return The iput file name (the SMV file).
-char *ProcessCommandLine(CommandlineArgs *args) {
+char *ProcessCommandLine(CommandlineArgs *args){
   int len_casename;
   size_t len_memory;
   char *argi, *smv_ext;
@@ -208,13 +162,13 @@ char *ProcessCommandLine(CommandlineArgs *args) {
     dialogY0 = args->Y0;
     have_dialogY0 = 1;
   }
-  if (args->csv) {
+  if(args->csv){
     update_csv_load = 1;
   }
   if(args->max_mem){
     max_mem_GB = args->max_mem_GB;
   }
-  if (args->ini) {
+  if(args->ini){
     InitCameraList();
     InitOpenGL(NO_PRINT);
     UpdateRGBColors(colorbar_select_index);
@@ -222,7 +176,7 @@ char *ProcessCommandLine(CommandlineArgs *args) {
     WriteIni(GLOBAL_INI, NULL);
     SMV_EXIT(0);
   }
-  if (args->ng_ini) {
+  if(args->ng_ini){
     InitCameraList();
     use_graphics = 0;
     UpdateRGBColors(colorbar_select_index);
@@ -230,12 +184,12 @@ char *ProcessCommandLine(CommandlineArgs *args) {
     WriteIni(GLOBAL_INI, NULL);
     SMV_EXIT(0);
   }
-  if (args->print_version) {
+  if(args->print_version){
     show_version = 1;
   }
   strcpy(SMVFILENAME, "");
-  if (args->input_file != NULL) {
-    if (strlen(args->input_file) > MAX_SMV_FILENAME_BUFFER-1) {
+  if(args->input_file != NULL){
+    if(strlen(args->input_file) > MAX_SMV_FILENAME_BUFFER-1){
       fprintf(stderr, "*** Error: input filename exceeds maximum length of %d\n", MAX_SMV_FILENAME_BUFFER-1);
       SMV_EXIT(1);
     }
@@ -364,12 +318,12 @@ char *ProcessCommandLine(CommandlineArgs *args) {
   STRCAT(expcsv_filename, "_exp.csv");
 
   FREEMEMORY(stepcsv_filename);
-  NewMemory(( void ** )&stepcsv_filename, len_casename + strlen("_steps.csv") + 1);
+  NewMemory((void **)&stepcsv_filename, len_casename + strlen("_steps.csv") + 1);
   STRCPY(stepcsv_filename, fdsprefix);
   STRCAT(stepcsv_filename, "_steps.csv");
 
   FREEMEMORY(dEcsv_filename);
-  NewMemory(( void ** )&dEcsv_filename, len_casename + strlen("_dE.csv") + 1);
+  NewMemory((void **)&dEcsv_filename, len_casename + strlen("_dE.csv") + 1);
   STRCPY(dEcsv_filename, fdsprefix);
   STRCAT(dEcsv_filename, "_dE.csv");
 
@@ -709,14 +663,14 @@ char *ProcessCommandLine(CommandlineArgs *args) {
       use_iso_threads=0;
         char scriptbuffer[MAX_SCRIPT_FILENAME_BUFFER];
         scriptfiledata *sfd;
-        if (args->script != NULL) {
-          if (strlen(args->script) > MAX_SCRIPT_FILENAME_BUFFER-1) {
+        if(args->script != NULL){
+          if(strlen(args->script) > MAX_SCRIPT_FILENAME_BUFFER-1){
             fprintf(stderr, "*** Error: script filename exceeds maximum length of %d\n", MAX_SCRIPT_FILENAME_BUFFER-1);
             SMV_EXIT(1);
           }
           strcpy(scriptbuffer, args->script);
-        } else {
-          if (strlen(args->htmlscript) > MAX_SCRIPT_FILENAME_BUFFER-1) {
+        } else{
+          if(strlen(args->htmlscript) > MAX_SCRIPT_FILENAME_BUFFER-1){
             fprintf(stderr, "*** Error: luascript filename exceeds maximum length of %d\n", MAX_SCRIPT_FILENAME_BUFFER-1);
             SMV_EXIT(1);
           }
@@ -732,7 +686,7 @@ char *ProcessCommandLine(CommandlineArgs *args) {
     if(args->luascript != NULL){
       from_commandline = 1;
       use_iso_threads=0;
-      if (strlen(args->luascript) > MAX_LUASCRIPT_FILENAME_BUFFER-1) {
+      if(strlen(args->luascript) > MAX_LUASCRIPT_FILENAME_BUFFER-1){
         fprintf(stderr, "*** Error: luascript filename exceeds maximum length of %d\n", MAX_SMV_FILENAME_BUFFER-1);
         SMV_EXIT(1);
       }
@@ -747,7 +701,7 @@ char *ProcessCommandLine(CommandlineArgs *args) {
       setup_only = 1;
     }
     if(args->bindir != NULL){
-      SetBinDirAlways(args->bindir);
+      SetSmvRootOverride(args->bindir);
     }
     if(args->casedir){
       NewMemory((void **)&smokeview_casedir, strlen(args->casedir) +2);
@@ -815,7 +769,6 @@ int CheckSMVFile(char *file, char *subdir){
 
 int main(int argc, char **argv){
   int return_code;
-  char *progname;
 
   START_TIMER(timer_startup);
   // uncomment following block of code to test crash detection
@@ -864,9 +817,6 @@ int main(int argc, char **argv){
     return 1;
   }
 
-  progname=argv[0];
-  strcpy(smokeview_progname, progname);
-  GetProgFullPath(smokeview_progname, 1024);
   smv_filename = ParseCommandline(argc, argv);
 
 #ifdef WIN32
@@ -875,61 +825,12 @@ int main(int argc, char **argv){
   Which("fds", &fdsprog);
 #endif
 
-  prog_fullpath = progname;
-  if(smokeview_bindir==NULL){
-    smokeview_bindir = GetProgDir(progname, &smokeviewpath);
-  }
-  int valid_bindir;
-
-  valid_bindir = have_bindir_arg;
-  if(valid_bindir == 0&&smokeview_bindir!=NULL&&IsInstallBinDir(smokeview_bindir)==0){
-    char new_bindir[1024];
-    char *bins[] = {"bot","Bundlebot","smv","for_bundle"};
-    int i;
-
-    strcpy(new_bindir, smokeview_bindir);
-    for(i = 0; i < 4; i++){
-      strcat(new_bindir, dirseparator);
-      strcat(new_bindir, "..");
-    }
-    for(i = 0; i < 4; i++){
-      strcat(new_bindir, dirseparator);
-      strcat(new_bindir, bins[i]);
-    }
-    strcat(new_bindir, dirseparator);
-    if(IsInstallBinDir(new_bindir) == 1){
-      char savedir[1024];
-
-      FreeMemory(smokeview_bindir);
-      GETCWD(savedir, 1024);
-      CHDIR(new_bindir);
-      GETCWD(new_bindir, 1024);
-      CHDIR(savedir);
-      NewMemory((void **)&smokeview_bindir, strlen(new_bindir)+2);
-      strcpy(smokeview_bindir, new_bindir);
-      valid_bindir = 1;
-    }
-  }
-#ifdef WIN32
-  if(valid_bindir == 0){
-    char new_bindir[1024];
-
-    strcpy(new_bindir, "C:\\Program Files\\firemodels\\SMV6\\");
-    valid_bindir = SetBinDir(new_bindir);
-  }
-  if(valid_bindir == 0){
-    char new_bindir[1024];
-
-    strcpy(new_bindir, "C:\\Program Files\\firemodels\\SMV7");
-    valid_bindir = SetBinDir(new_bindir);
-  }
-#endif
   if(smv_filename == NULL){
     DisplayVersionInfo("Smokeview ");
     SMV_EXIT(0);
   }
   if(show_version==1 || smv_filename==NULL){
-    PRINTVERSION("smokeview", argv[0]);
+    PRINTVERSION("smokeview");
     return 1;
   }
   if(CheckSMVFile(smv_filename, smokeview_casedir)==0){
@@ -938,9 +839,10 @@ int main(int argc, char **argv){
   MakeFireColors(fire_temp_min, fire_temp_max, nfire_colors);
 
   InitTextureDir();
-  InitColorbarsDir();
   InitScriptErrorFiles();
-  smokezippath= GetSmokeZipPath(smokeview_bindir);
+  char *smv_bindir = GetSmvRootDir();
+  smokezippath= GetSmokeZipPath(smv_bindir);
+  FREEMEMORY(smv_bindir);
   DisplayVersionInfo("Smokeview ");
   InitStartupDirs();
   SetupGlut(argc,argv);

@@ -286,19 +286,19 @@ extern "C" void GLUIUpdateVisAxisLabels(void){
 
 /* ------------------ GLUIUpdateFrameTimelabel ------------------------ */
 
-extern "C" void GLUIUpdateFrameTimelabel(void) {
+extern "C" void GLUIUpdateFrameTimelabel(void){
   CHECKBOX_labels_frametimelabel->set_int_val(visFrameTimelabel);
 }
 
 /* ------------------ GLUIUpdateBackgroundFlip ------------------------ */
 
-extern "C" void GLUIUpdateBackgroundFlip(int flip) {
+extern "C" void GLUIUpdateBackgroundFlip(int flip){
   CHECKBOX_labels_flip->set_int_val(flip);
 }
 
 /* ------------------ GLUIUpdateTimebarOverlap ------------------------ */
 
-extern "C" void GLUIUpdateTimebarOverlap(void) {
+extern "C" void GLUIUpdateTimebarOverlap(void){
   RADIO_timebar_overlap->set_int_val(timebar_overlap);
 }
 
@@ -515,7 +515,7 @@ void TextLabelsCB(int var){
 void ColorCB(int var){
   int i;
 
-  switch (var){
+  switch(var){
   case LIGHT_POSITION:
     light_position0[0] = (xyzmaxdiff/2.0)*cos(DEG2RAD*glui_light_az0)*cos(DEG2RAD*glui_light_elev0);
     light_position0[1] = (xyzmaxdiff/2.0)*sin(DEG2RAD*glui_light_az0)*cos(DEG2RAD*glui_light_elev0);
@@ -1225,10 +1225,10 @@ extern "C" void GLUILabelsCB(int var){
   case LABELS_vcolorbar:
   case LABELS_hcolorbar:
     if(var==LABELS_vcolorbar){
-      if (visColorbarVertical == 1)visColorbarHorizontal = 0;
+      if(visColorbarVertical == 1)visColorbarHorizontal = 0;
     }
     else{
-      if (visColorbarHorizontal == 1)visColorbarVertical = 0;
+      if(visColorbarHorizontal == 1)visColorbarVertical = 0;
     }
     GLUIUpdateColorbarControls();
     GLUIUpdateColorbarControls2();
