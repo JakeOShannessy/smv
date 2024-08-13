@@ -172,11 +172,11 @@ void ShowScene2(int mode){
       int i;
       float box_black[4] = {0.0, 0.0, 0.0, 1.0};
 
-      for(i = 0;i < nmeshes;i++){
+      for(i = 0;i < meshescoll.nmeshes;i++){
         meshdata *meshi;
         float *xyz_min, *xyz_max;
 
-        meshi = meshinfo + i;
+        meshi = meshescoll.meshinfo + i;
         xyz_min = meshi->boxmin_scaled;
         xyz_max = meshi->boxmax_scaled;
         if(meshi->use == 1){
@@ -228,8 +228,8 @@ void ShowScene2(int mode){
         meshdata *meshi;
 
         UNCLIP;
-        for(igrid = 0;igrid<nmeshes;igrid++){
-          meshi = meshinfo + igrid;
+        for(igrid = 0;igrid<meshescoll.nmeshes;igrid++){
+          meshi = meshescoll.meshinfo + igrid;
           DrawGrid(meshi);
           SNIFF_ERRORS("DrawGrid");
         }
@@ -384,10 +384,10 @@ void ShowScene2(int mode){
     }
     if(visTerrainType==TERRAIN_IMAGE||visTerrainType==TERRAIN_SURFACE){
       if(terrain_showonly_top==0){
-        for(i = 0; i<nmeshes; i++){
+        for(i = 0; i<meshescoll.nmeshes; i++){
           meshdata *meshi;
 
-          meshi = meshinfo+i;
+          meshi = meshescoll.meshinfo+i;
           DrawTerrainOBSTSides(meshi);
         }
       }

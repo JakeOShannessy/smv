@@ -317,4 +317,9 @@ typedef struct _circdata {
   float *xcirc, *ycirc;
   int ncirc;
 } circdata;
+
+typedef struct {
+  meshdata *meshinfo;
+  int nmeshes;
+} meshescollection;
 #endif
