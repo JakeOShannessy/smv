@@ -14,8 +14,6 @@
 
 #include "datadefs.h"
 #include "shared_structures.h"
-// #include "smokeviewvars.h"
-// #include "IOvolsmoke.h"
 #include "stdio_buffer.h"
 #include "glui_motion.h"
 #include "readgeom.h"
@@ -28,6 +26,7 @@
 #include "readtour.h"
 #include "readpart.h"
 #include "readcad.h"
+#include "colorbars.h"
 
 #define BREAK break
 #define BREAK2 \
@@ -920,7 +919,7 @@ propdata *GetPropID(prop_collection *propcoll, char *prop_id){
 
 /* ----------------------- InitDevice ----------------------------- */
 
-void InitDevice(devicedata *devicei, float *xyz, int is_beam, float *xyz1, float *xyz2, float *xyzn, int state0, int nparams, float *params, char *labelptr){
+void InitDevice(meshescollection *meshescoll, color_collection *colorcoll, devicedata *devicei, float *xyz, int is_beam, float *xyz1, float *xyz2, float *xyzn, int state0, int nparams, float *params, char *labelptr){
   float norm;
   int i;
 
@@ -942,8 +941,8 @@ void InitDevice(devicedata *devicei, float *xyz, int is_beam, float *xyz1, float
   if(STRCMP(devicei->object->label, "plane") == 0){
     float color[4];
 
-    NewMemory((void **)&devicei->plane_surface, nmeshes * sizeof(isosurface *));
-    for(i = 0; i < nmeshes; i++){
+    NewMemory((void **)&devicei->plane_surface, meshescoll->nmeshes * sizeof(isosurface *));
+    for(i = 0; i < meshescoll->nmeshes; i++){
       NewMemory((void **)&devicei->plane_surface[i], sizeof(isosurface));
     }
     if(nparams >= 3){
@@ -1016,7 +1015,7 @@ void InitDevice(devicedata *devicei, float *xyz, int is_beam, float *xyz1, float
 
 /* ------------------ ParseDevicekeyword ------------------------ */
 
-void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
+void ParseDevicekeyword(object_collection *objectscoll, BFILE *stream, devicedata *devicei){
   float xyz[3]={0.0,0.0,0.0}, xyzn[3]={0.0,0.0,0.0};
   float xyz1[3] = { 0.0,0.0,0.0 }, xyz2[3] = { 0.0,0.0,0.0 };
   int state0=0;
@@ -1125,7 +1124,7 @@ void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
   }
 
   if(nparams<=0){
-    InitDevice(devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,0,NULL,labelptr);
+    InitDevice(meshescoll,colorcoll,devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,0,NULL,labelptr);
   }
   else{
     float *params,*pc;
@@ -1141,7 +1140,7 @@ void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
       sscanf(buffer,"%f %f %f %f %f %f",pc,pc+1,pc+2,pc+3,pc+4,pc+5);
       pc+=6;
     }
-    InitDevice(devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,nparams,params,labelptr);
+    InitDevice(meshescoll,colorcoll,devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,nparams,params,labelptr);
   }
   GetElevAz(devicei->xyznorm,&devicei->dtheta,devicei->rotate_axis,NULL);
   if(nparams_textures>0){
@@ -1253,7 +1252,7 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
   }
 
   if(nparams<=0){
-    InitDevice(devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, 0, NULL, labelptr);
+    InitDevice(meshescoll,colorcoll,devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, 0, NULL, labelptr);
   }
   else{
     float *params, *pc;
@@ -1269,7 +1268,7 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
       sscanf(buffer, "%f %f %f %f %f %f", pc, pc+1, pc+2, pc+3, pc+4, pc+5);
       pc += 6;
     }
-    InitDevice(devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, nparams, params, labelptr);
+    InitDevice(meshescoll,colorcoll,devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, nparams, params, labelptr);
   }
   GetElevAz(devicei->xyznorm, &devicei->dtheta, devicei->rotate_axis, NULL);
   if(nparams_textures>0){
@@ -1356,16 +1355,16 @@ int GetInpf(bufferstreamdata *stream_in){
 
 /* ------------------ IsDupTexture ------------------------ */
 
-int IsDupTexture(texturedata *texti){
+int IsDupTexture(texture_collection *texture_coll, texturedata *texti){
   int dup_texture;
   int i, j;
 
-  i = texti - textureinfo;
+  i = texti - texture_coll->textureinfo;
   dup_texture=0;
   for(j=0;j<i;j++){
     texturedata *textj;
 
-    textj = textureinfo + j;
+    textj = texture_coll->textureinfo + j;
     if(textj->loaded==0)continue;
     if(strcmp(texti->file,textj->file)==0){
       texti->name=textj->name;
@@ -1400,7 +1399,7 @@ void InitTextures0(void){
   int i;
 
   INIT_PRINT_TIMER(texture_timer);
-  ntextureinfo = 0;
+  texture_coll->ntextureinfo = 0;
   for(i=0;i<nsurfinfo;i++){
     surfdata *surfi;
     texturedata *texti;
@@ -1408,15 +1407,15 @@ void InitTextures0(void){
 
     surfi = surfinfo + i;
     if(surfi->texturefile==NULL)continue;
-    texti = textureinfo + ntextureinfo;
+    texti = texture_coll->textureinfo + texture_coll->ntextureinfo;
     len = strlen(surfi->texturefile);
     NewMemory((void **)&texti->file,(len+1)*sizeof(char));
     strcpy(texti->file,surfi->texturefile);
     texti->loaded=0;
     texti->used=0;
     texti->display=0;
-    ntextureinfo++;
-    surfi->textureinfo=textureinfo+ntextureinfo-1;
+    texture_coll->ntextureinfo++;
+    surfi->textureinfo=texture_coll->textureinfo+texture_coll->ntextureinfo-1;
   }
   PRINT_TIMER(texture_timer, "SURF textures");
 
@@ -1426,36 +1425,36 @@ void InitTextures0(void){
     int len;
 
     texturefile = device_texture_list[i];
-    texti = textureinfo + ntextureinfo;
+    texti = texture_coll->textureinfo + texture_coll->ntextureinfo;
     len = strlen(texturefile);
     NewMemory((void **)&texti->file,(len+1)*sizeof(char));
-    device_texture_list_index[i]=ntextureinfo;
+    device_texture_list_index[i]=texture_coll->ntextureinfo;
     strcpy(texti->file,texturefile);
     texti->loaded=0;
     texti->used=0;
     texti->display=0;
-    ntextureinfo++;
+    texture_coll->ntextureinfo++;
   }
   PRINT_TIMER(texture_timer, "device textures");
 
   if(nterrain_textures>0){
     texturedata *texture_base;
 
-    texture_base = textureinfo + ntextureinfo;
+    texture_base = texture_coll->textureinfo + texture_coll->ntextureinfo;
     for(i=0;i<nterrain_textures;i++){
       char *texturefile;
       texturedata *texti;
       int len;
 
       texturefile = terrain_textures[i].file;
-      texti = textureinfo + ntextureinfo;
+      texti = texture_coll->textureinfo + texture_coll->ntextureinfo;
       len = strlen(texturefile);
       NewMemory((void **)&texti->file,(len+1)*sizeof(char));
       strcpy(texti->file,texturefile);
       texti->loaded=0;
       texti->used=0;
       texti->display=0;
-      ntextureinfo++;
+      texture_coll->ntextureinfo++;
     }
     FREEMEMORY(terrain_textures);
     terrain_textures = texture_base;
@@ -1465,7 +1464,7 @@ void InitTextures0(void){
   // check to see if texture files exist .
   // If so, then convert to OpenGL format
 
-  for(i=0;i<ntextureinfo;i++){
+  for(i=0;i<texture_coll->ntextureinfo;i++){
     unsigned char *floortex;
     int texwid, texht;
     texturedata *texti;
@@ -1473,7 +1472,7 @@ void InitTextures0(void){
     int max_texture_size;
     int is_transparent;
 
-    texti = textureinfo + i;
+    texti = texture_coll->textureinfo + i;
     texti->loaded=0;
     if(texti->file==NULL||IsDupTexture(texti)==1||IsTerrainTexture(texti)==1)continue;
 
@@ -1515,8 +1514,8 @@ void InitTextures0(void){
   }
 
   CheckMemory;
-  if(ntextureinfo==0){
-    FREEMEMORY(textureinfo);
+  if(texture_coll->ntextureinfo==0){
+    FREEMEMORY(texture_coll->textureinfo);
   }
 
   // define colorbar textures
@@ -1672,7 +1671,7 @@ void InitTextures(int use_graphics_arg){
                        npropinfo, propinfo, &ndevice_texture_list,
                        &device_texture_list_index, &device_texture_list);
   if(nsurfinfo>0||ndevice_texture_list>0){
-    if(NewMemory((void **)&textureinfo, (nsurfinfo+ndevice_texture_list+nterrain_textures)*sizeof(texturedata))==0)return;
+    if(NewMemory((void **)&texture_coll->textureinfo, (nsurfinfo+ndevice_texture_list+nterrain_textures)*sizeof(texturedata))==0)return;
   }
   if(use_graphics_arg==1){
     InitTextures0();
@@ -1685,10 +1684,10 @@ void InitTextures(int use_graphics_arg){
 void UpdateVentOffset(void){
   int i;
 
-  for(i = 0;i < nmeshes;i++){
+  for(i = 0;i < meshescoll->nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll->meshinfo + i;
     meshi->vent_offset[XXX] = ventoffset_factor*(meshi->xplt[1] - meshi->xplt[0]);
     meshi->vent_offset[YYY] = ventoffset_factor*(meshi->yplt[1] - meshi->yplt[0]);
     meshi->vent_offset[ZZZ] = ventoffset_factor*(meshi->zplt[1] - meshi->zplt[0]);
@@ -1705,10 +1704,10 @@ void UpdateBlockType(void){
   nopenvents = 0;
   nopenvents_nonoutline = 0;
   ndummyvents = 0;
-  for(igrid = 0; igrid<nmeshes; igrid++){
+  for(igrid = 0; igrid<meshescoll->nmeshes; igrid++){
     meshdata *meshi;
 
-    meshi = meshinfo+igrid;
+    meshi = meshescoll->meshinfo+igrid;
     for(i = 0; i<meshi->nbptrs; i++){
       blockagedata *bc;
 
@@ -1851,11 +1850,11 @@ void GetBoxCorners(float xbar_local, float ybar_local, float zbar_local){
 void UpdateMeshBoxBounds(void){
   int i;
 
-  for(i = 0; i<nmeshes;  i++){
+  for(i = 0; i<meshescoll->nmeshes;  i++){
     meshdata *meshi;
 
     // xplt, yplt, zplt has original cooredinates because this routine is calld before UpdateMeshCoords
-    meshi = meshinfo+i;
+    meshi = meshescoll->meshinfo+i;
     meshi->boxmin[0] = meshi->xplt[0];
     meshi->boxmin[1] = meshi->yplt[0];
     meshi->boxmin[2] = meshi->zplt[0];
@@ -2624,7 +2623,7 @@ void InitCellMeshInfo(void){
   dxyz[1] = y[meshinfo->jbar] - y[0];
   dxyz[2] = z[meshinfo->kbar] - z[0];
 
-  for(i = 1; i<nmeshes;i++){
+  for(i = 1; i<meshescoll->nmeshes;i++){
     meshdata *meshi;
 
     meshi = meshinfo + i;
@@ -2655,7 +2654,7 @@ void InitCellMeshInfo(void){
   for(i=0;i<ntotal;i++){
     cellmeshinfo->cellmeshes[i] = NULL;
   }
-  for(i = 0;i < nmeshes;i++){
+  for(i = 0;i < meshescoll->nmeshes;i++){
     meshdata *meshi;
     int i1, i2, j1, j2, k1, k2;
     float xmin, xmax, ymin, ymax, zmin, zmax;
@@ -2960,7 +2959,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
   parti = partinfo+ipart;
   lenkey = 4;
   len = strlen(buffer);
-  if(nmeshes>1){
+  if(meshescoll->nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -3128,7 +3127,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   TrimBack(buffer);
   len = strlen(buffer);
 
-  if(nmeshes>1){
+  if(meshescoll->nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -3314,7 +3313,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   patchi->chopmin = 1.0;
   patchi->setchopmax = 0;
   patchi->chopmax = 0.0;
-  meshinfo[blocknumber].patchfilenum = -1;
+  meshescoll->meshinfo[blocknumber].patchfilenum = -1;
   {
     char geomlabel2[256], *geomptr = NULL;
 
@@ -3395,7 +3394,7 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
 
   TrimBack(buffer);
   len = strlen(buffer);
-  if(nmeshes>1){
+  if(meshescoll->nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -3565,7 +3564,7 @@ int ParseSLCFCount(int option, bufferstreamdata *stream, char *buffer, int *nsli
       return RETURN_BREAK;
     }
   }
-  nsliceinfo++;
+  slicescoll->nsliceinfo++;
   *nslicefiles_in = nsliceinfo;
   if(Match(buffer, "BNDS")==1){
     if(FGETS(buffer, 255, stream)==NULL){
@@ -3674,7 +3673,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   }
   TrimBack(buffer);
   len = strlen(buffer);
-  if(nmeshes>1){
+  if(meshescoll->nmeshes>1){
     blocknumber = ioffset_in-1;
   }
   else{
@@ -3683,7 +3682,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   if(len>5){
     char *buffer3;
 
-    buffer3 = buffer+4;
+    buffer3 = buffer+4;`
     sscanf(buffer3, "%i %f", &blocknumber, &above_ground_level);
     blocknumber--;
   }
@@ -3691,7 +3690,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   // read in slice file name
 
   if(FGETS(buffer, 255, stream)==NULL){
-    nsliceinfo--;
+    slicescoll->nsliceinfo--;
     return RETURN_BREAK;
   }
   if(slicegeom==1){
@@ -3701,7 +3700,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   bufferptr = TrimFrontBack(buffer);
   len = strlen(bufferptr);
 
-  sd = sliceinfo+nn_slice-1;
+  sd = slicescoll->sliceinfo+nn_slice-1;
 
 #ifdef pp_SLICE_MULTI
   sd->loadstatus = FILE_UNLOADED;
@@ -7129,7 +7128,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
       devicedata *devicei;
 
       devicei = deviceinfo + ndeviceinfo;
-      ParseDevicekeyword(stream,devicei);
+      ParseDevicekeyword(objectscoll, stream,devicei);
       CheckMemory;
       update_device = 1;
       ndeviceinfo++;
@@ -7196,7 +7195,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-          InitDevice(devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,"target");
+          InitDevice(meshescoll,colorcoll,devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,"target");
           devicecopy->prop=NULL;
 
           devicecopy++;
@@ -7273,7 +7272,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-          InitDevice(devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
+          InitDevice(meshescoll,colorcoll,devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
 
           devicecopy++;
           ndeviceinfo++;
@@ -7351,7 +7350,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-          InitDevice(devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
+          InitDevice(meshescoll,colorcoll,devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
           devicecopy->prop=NULL;
 
           devicecopy++;
@@ -7410,7 +7409,7 @@ int ReadSMV_Parse(bufferstreamdata *stream) {
         }
         GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-        InitDevice(devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
+        InitDevice(meshescoll,colorcoll,devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
 
         devicecopy++;
         ndeviceinfo++;

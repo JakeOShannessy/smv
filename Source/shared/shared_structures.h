@@ -355,4 +355,14 @@ typedef struct {
   propdata *propinfo;
 } prop_collection;
 
+typedef struct {
+  int ntextureinfo;
+  texturedata *textureinfo;
+} texture_collection;
+
+typedef struct {
+  int nslice;
+  slicedata *sliceinfo;
+} slice_collection;
+
 #endif
