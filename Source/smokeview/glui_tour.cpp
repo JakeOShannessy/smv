@@ -193,17 +193,17 @@ extern "C" void GLUITourSetup(int main_window){
   glui_tour->add_button_to_panel(PANEL_tour1, _("New"), TOUR_INSERT_NEW, TourCB);
   glui_tour->add_button_to_panel(PANEL_tour1, _("Reverse"), TOUR_REVERSE, TourCB);
 
-  if(ntourinfo > 0){
+  if(tourcoll.ntourinfo > 0){
     selectedtour_index = TOURINDEX_MANUAL;
     selectedtour_index_old = TOURINDEX_MANUAL;
     LISTBOX_tour = glui_tour->add_listbox_to_panel(PANEL_tour, "Select: ", &selectedtour_index, TOUR_LIST, TourCB);
 
     LISTBOX_tour->add_item(TOURINDEX_MANUAL, "Manual");
     LISTBOX_tour->add_item(-999, "-");
-    for(i = 0;i < ntourinfo;i++){
+    for(i = 0;i < tourcoll.ntourinfo;i++){
       tourdata *touri;
 
-      touri = tourinfo + i;
+      touri = tourcoll.tourinfo + i;
       LISTBOX_tour->add_item(i, touri->label);
     }
     LISTBOX_tour->set_int_val(selectedtour_index);
@@ -250,9 +250,9 @@ extern "C" void GLUITourSetup(int main_window){
 
   PANEL_path = glui_tour->add_panel_to_panel(ROLLOUT_settings, _("Duration"), true);
 
-  glui_tour->add_spinner_to_panel(PANEL_path, _("start time"), GLUI_SPINNER_FLOAT, &tour_tstart, VIEW_times, TourCB);
-  glui_tour->add_spinner_to_panel(PANEL_path, _("stop time:"), GLUI_SPINNER_FLOAT, &tour_tstop, VIEW_times, TourCB);
-  glui_tour->add_spinner_to_panel(PANEL_path, _("points"),     GLUI_SPINNER_INT,   &tour_ntimes, VIEW_times, TourCB);
+  glui_tour->add_spinner_to_panel(PANEL_path, _("start time"), GLUI_SPINNER_FLOAT, &tourcoll.tour_tstart, VIEW_times, TourCB);
+  glui_tour->add_spinner_to_panel(PANEL_path, _("stop time:"), GLUI_SPINNER_FLOAT, &tourcoll.tour_tstop, VIEW_times, TourCB);
+  glui_tour->add_spinner_to_panel(PANEL_path, _("points"),     GLUI_SPINNER_INT,   &tourcoll.tour_ntimes, VIEW_times, TourCB);
   PANEL_misc = glui_tour->add_panel_to_panel(ROLLOUT_settings, "Misc", true);
   CHECKBOX_showintermediate = glui_tour->add_checkbox_to_panel(PANEL_misc, _("Show intermediate path nodes"), &show_path_knots);
   if(objectscoll->navatar_types > 0){
@@ -404,10 +404,10 @@ int NextTour(void){
   int i;
 
   i = selectedtour_index + 1;
-  if(i > ntourinfo - 1)i = 0;
-  if(i >= 0 && i < ntourinfo){
+  if(i > tourcoll.ntourinfo - 1)i = 0;
+  if(i >= 0 && i < tourcoll.ntourinfo){
     selectedtour_index = i;
-    selected_tour = tourinfo + i;
+    selected_tour = tourcoll.tourinfo + i;
     selected_frame = selected_tour->first_frame.next;
     return 1;
   }
@@ -420,10 +420,10 @@ int PrevTour(void){
   int i;
 
   i = selectedtour_index - 1;
-  if(i < 0)i = ntourinfo - 1;
-  if(i >= 0 && i < ntourinfo){
+  if(i < 0)i = tourcoll.ntourinfo - 1;
+  if(i >= 0 && i < tourcoll.ntourinfo){
     selectedtour_index = i;
-    selected_tour = tourinfo + i;
+    selected_tour = tourcoll.tourinfo + i;
     selected_frame = selected_tour->first_frame.next;
     return 1;
   }
@@ -442,7 +442,7 @@ void TourCB(int var){
   float key_xyz[3];
   float key_time_in, key_view[3];
 
-  if(ntourinfo==0&&var!=TOUR_INSERT_NEW&&var!=TOUR_INSERT_COPY&&var!=TOUR_CLOSE&&var!=SAVE_SETTINGS_TOUR){
+  if(tourcoll.ntourinfo==0&&var!=TOUR_INSERT_NEW&&var!=TOUR_INSERT_COPY&&var!=TOUR_CLOSE&&var!=SAVE_SETTINGS_TOUR){
     return;
   }
   if(selected_frame!=NULL){
@@ -460,8 +460,8 @@ void TourCB(int var){
         TourCB(TOUR_LIST);
       }
     }
-    DeleteTourFrames(tourinfo);
-    InitCircularTour(tourinfo,ncircletournodes,UPDATE);
+    DeleteTourFrames(tourcoll.tourinfo);
+    InitCircularTour(tourcoll.tourinfo,ncircletournodes,UPDATE);
     TourCB(KEYFRAME_UPDATE_ALL);
     UpdateTourMenuLabels();
     CreateTourPaths();
@@ -520,7 +520,7 @@ void TourCB(int var){
     WriteIni(LOCAL_INI,NULL);
     break;
   case SHOWTOURROUTE:
-    if(edittour==1&&selectedtour_index<0&&ntourinfo>0){
+    if(edittour==1&&selectedtour_index<0&&tourcoll.ntourinfo>0){
       selectedtour_index=0;
       TourCB(TOUR_LIST);
     }
@@ -564,8 +564,7 @@ void TourCB(int var){
     CreateTourPaths();
     break;
   case VIEW_times:
-    ReallocTourMemory(ntourinfo, tourinfo, tour_ntimes, tour_t, tour_t2,
-                      tour_dist, tour_dist2, tour_dist3);
+    ReallocTourMemory(&tourcoll);
     CreateTourPaths();
     UpdateTimes();
     break;
@@ -579,7 +578,7 @@ void TourCB(int var){
     break;
   case KEYFRAME_viewXYZ:
     if(selected_frame!=NULL){
-      if(selected_tour-tourinfo==0)dirtycircletour=1;
+      if(selected_tour-tourcoll.tourinfo==0)dirtycircletour=1;
       selected_tour->startup=0;
       xyz_view = selected_frame->view_smv;
       FDS2SMV_XYZ(xyz_view,glui_tour_view);
@@ -591,7 +590,7 @@ void TourCB(int var){
   case KEYFRAME_tXYZ:
     if(selected_frame!=NULL){
       show_tour_hint = 0;
-      if(selected_tour-tourinfo==0)dirtycircletour=1;
+      if(selected_tour-tourcoll.tourinfo==0)dirtycircletour=1;
       selected_tour->startup=0;
       eye = selected_frame->xyz_smv;
       xyz_view = selected_frame->view_smv;
@@ -609,9 +608,9 @@ void TourCB(int var){
     break;
   case KEYFRAME_NEXT:
     show_tour_hint = 0;
-    if(selected_frame==NULL&&tourinfo!=NULL){
-      selected_frame=&(tourinfo[0].first_frame);
-      selected_tour=tourinfo;
+    if(selected_frame==NULL&&tourcoll.tourinfo!=NULL){
+      selected_frame=&(tourcoll.tourinfo[0].first_frame);
+      selected_tour=tourcoll.tourinfo;
     }
     if(selected_frame!=NULL){
       thistour=selected_tour;
@@ -626,9 +625,9 @@ void TourCB(int var){
     break;
   case KEYFRAME_PREVIOUS:
     show_tour_hint = 0;
-    if(selected_frame==NULL&&tourinfo!=NULL){
-      selected_frame=&(tourinfo[0].last_frame);
-      selected_tour=tourinfo;
+    if(selected_frame==NULL&&tourcoll.tourinfo!=NULL){
+      selected_frame=&(tourcoll.tourinfo[0].last_frame);
+      selected_tour=tourcoll.tourinfo;
     }
     if(selected_frame!=NULL){
       thistour=selected_tour;
@@ -684,7 +683,7 @@ void TourCB(int var){
         CreateTourPaths();
       }
       else{
-        if(thistour!=NULL)DeleteTour(thistour-tourinfo);
+        if(thistour!=NULL)DeleteTour(thistour-tourcoll.tourinfo);
       }
     }
     break;
@@ -707,7 +706,7 @@ void TourCB(int var){
     }
     break;
   case TOUR_UPDATELABEL:
-    if(selectedtour_index>=0&&selectedtour_index<ntourinfo){
+    if(selectedtour_index>=0&&selectedtour_index<tourcoll.ntourinfo){
       selectedtour_index_save = selectedtour_index;
       selectedtour_index = -1;
       TourCB(TOUR_LIST);
@@ -738,7 +737,7 @@ void TourCB(int var){
       TOURMENU(MENU_TOUR_DEFAULT);  // default tour
       break;
     default:
-      selected_tour=tourinfo + selectedtour_index;
+      selected_tour=tourcoll.tourinfo + selectedtour_index;
       selected_frame=selected_tour->first_frame.next;
       selected_tour->display=0;
       TOURMENU(selectedtour_index);
@@ -758,8 +757,8 @@ void TourCB(int var){
     DeleteTour(selectedtour_index);
     break;
   case TOUR_REVERSE:
-    if(selectedtour_index>=0&&selectedtour_index<ntourinfo){
-      ReverseTour(tourinfo[selectedtour_index].label);
+    if(selectedtour_index>=0&&selectedtour_index<tourcoll.ntourinfo){
+      ReverseTour(tourcoll.tourinfo[selectedtour_index].label);
     }
     break;
   case TOUR_INSERT_NEW:
@@ -768,10 +767,10 @@ void TourCB(int var){
       thistour=AddTour(NULL);
     }
     else{
-      if(selectedtour_index>=0&&selectedtour_index<ntourinfo){
+      if(selectedtour_index>=0&&selectedtour_index<tourcoll.ntourinfo){
         char label[300];
 
-        strcpy(label, tourinfo[selectedtour_index].label);
+        strcpy(label, tourcoll.tourinfo[selectedtour_index].label);
         thistour = AddTour(label);
       }
       else{
@@ -782,7 +781,7 @@ void TourCB(int var){
     if(CHECKBOX_showtourroute2 != NULL&&edittour == 0)CHECKBOX_showtourroute2->set_int_val(1);
     selected_frame=thistour->first_frame.next;
     selected_tour=thistour;
-    selectedtour_index = thistour - tourinfo;
+    selectedtour_index = thistour - tourcoll.tourinfo;
     selectedtour_index_old=selectedtour_index;
     GLUISetTourKeyframe();
     CreateTourPaths();
@@ -799,8 +798,8 @@ void TourCB(int var){
       strcpy(thistour->label,tour_label);
       GLUISetTourKeyframe();
       if(LISTBOX_tour!=NULL){
-        LISTBOX_tour->delete_item(thistour-tourinfo);
-        LISTBOX_tour->add_item(thistour-tourinfo,thistour->label);
+        LISTBOX_tour->delete_item(thistour-tourcoll.tourinfo);
+        LISTBOX_tour->add_item(thistour-tourcoll.tourinfo,thistour->label);
       }
       UpdateTourMenuLabels();
       updatemenu=1;
@@ -810,7 +809,7 @@ void TourCB(int var){
     if(thistour!=NULL){
       if(tour_hide==1){
         thistour->display=1;
-        TOURMENU(thistour-tourinfo);
+        TOURMENU(thistour-tourcoll.tourinfo);
         NextTour();
         GLUISetTourKeyframe();
         thistour->display=0;
@@ -836,7 +835,7 @@ extern "C" void GLUIDeleteTourList(void){
   int i;
 
   if(LISTBOX_tour==NULL)return;
-  for(i=0;i<ntourinfo;i++){
+  for(i=0;i<tourcoll.ntourinfo;i++){
     LISTBOX_tour->delete_item(i);
   }
   GLUIDeleteVolTourList(); //xx comment this line if smokebot fails with seg fault
@@ -848,11 +847,11 @@ extern "C" void GLUICreateTourList(void){
   int i;
 
   if(LISTBOX_tour==NULL)return;
-  for(i=0;i<ntourinfo;i++){
+  for(i=0;i<tourcoll.ntourinfo;i++){
     tourdata *touri;
     char label[1000];
 
-    touri = tourinfo + i;
+    touri = tourcoll.tourinfo + i;
     strcpy(label,"");
     if(i==selectedtour_index)strcat(label,"*");
     if(strlen(touri->label)>0)strcat(label,touri->label);
@@ -863,7 +862,7 @@ extern "C" void GLUICreateTourList(void){
       LISTBOX_tour->add_item(i,"error");
     }
   }
-  if(selectedtour_index>=-1&&selectedtour_index<ntourinfo)LISTBOX_tour->set_int_val(selectedtour_index);
+  if(selectedtour_index>=-1&&selectedtour_index<tourcoll.ntourinfo)LISTBOX_tour->set_int_val(selectedtour_index);
 
   GLUICreateVolTourList(); //xx comment this line if smokebot fails with seg fault
 }
@@ -879,7 +878,7 @@ extern "C" void GLUIUpdateTourControls(void){
   if(CHECKBOX_showtourroute2 != NULL)CHECKBOX_showtourroute2->set_int_val(edittour);
   if(CHECKBOX_view1!=NULL)CHECKBOX_view1->set_int_val(viewtourfrompath);
   if(CHECKBOX_view2!=NULL)CHECKBOX_view2->set_int_val(viewtourfrompath);
-  if(ntourinfo>1){
+  if(tourcoll.ntourinfo>1){
     BUTTON_next_tour->enable();
     BUTTON_prev_tour->enable();
   }
@@ -897,7 +896,7 @@ extern "C" void GLUIUpdateTourControls(void){
     }
   }
   if(selected_tour!=NULL){
-    selectedtour_index = selected_tour-tourinfo;
+    selectedtour_index = selected_tour-tourcoll.tourinfo;
     LISTBOX_tour->set_int_val(selectedtour_index);
   }
   else{
