@@ -12,8 +12,10 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
-#include "smokeviewvars.h"
-#include "IOvolsmoke.h"
+#include "datadefs.h"
+#include "shared_structures.h"
+// #include "smokeviewvars.h"
+// #include "IOvolsmoke.h"
 #include "stdio_buffer.h"
 #include "glui_motion.h"
 #include "readgeom.h"
@@ -55,14 +57,14 @@ int GetNDevices(char *file);
 
 /* ------------------ GetHrrCsvCol ------------------------ */
 
-int GetHrrCsvCol(char *label){
+int GetHrrCsvCol(hrr_collection *hrr_coll, char *label){
   int i;
 
-  if(label==NULL||strlen(label)==0||nhrrinfo==0)return -1;
-  for(i = 0; i<nhrrinfo; i++){
+  if(label==NULL||strlen(label)==0||hrr_coll->nhrrinfo==0)return -1;
+  for(i = 0; i<hrr_coll->nhrrinfo; i++){
     hrrdata *hi;
 
-    hi = hrrinfo+i;
+    hi = hrr_coll->hrrinfo+i;
     if(hi->label.shortlabel==NULL)continue;
     if(strcmp(hi->label.shortlabel, label)==0)return i;
   }
@@ -87,13 +89,13 @@ int GetTokensBlank(char *buffer, char **tokens){
 
 /* ------------------ GetHoc ------------------------ */
 
-void GetHoc(float *hoc, char *name){
+void GetHoc(fuel_collection *fuel_coll, float *hoc, char *name){
   char outfile[256], buffer[255];
   FILE *stream;
 
-  if(nfuelinfo > 0){
-    *hoc = fuelinfo->hoc;
-    strcpy(name, fuelinfo->fuel);
+  if(fuel_coll->nfuelinfo > 0){
+    *hoc = fuel_coll->fuelinfo->hoc;
+    strcpy(name, fuel_coll->fuelinfo->fuel);
     return;
   }
   strcpy(outfile, fdsprefix);
@@ -129,19 +131,19 @@ void GetHoc(float *hoc, char *name){
 
 /* ------------------ UpdateHoc ------------------------ */
 
-void UpdateHoc(void){
+void UpdateHoc(hrr_collection *hrr_coll){
   int i;
 
 // construct column for each MLR column by heat of combustion except for air and products
-  for(i = nhrrinfo-nhrrhcinfo; i<nhrrinfo; i++){
+  for(i = hrr_coll->nhrrinfo-hrr_coll->nhrrhcinfo; i<hrr_coll->nhrrinfo; i++){
     hrrdata *hi;
 
-    hi = hrrinfo+i;
+    hi = hrr_coll->hrrinfo+i;
     if(hi->base_col>=0){
       hrrdata *hi_from;
       int j;
 
-      hi_from = hrrinfo+hi->base_col;
+      hi_from = hrr_coll->hrrinfo+hi->base_col;
       memcpy(hi->vals, hi_from->vals, hi_from->nvals*sizeof(float));
       hi->nvals = hi_from->nvals;
       for(j = 0; j<hi->nvals; j++){
@@ -478,7 +480,7 @@ void InitProp(propdata *propi, int nsmokeview_ids, char *label){
 
 /* ------------------ InitDefaultProp ------------------------ */
 
-void InitDefaultProp(void){
+void InitDefaultProp(prop_collection *propcoll, object_collection *objectscoll){
 /*
 PROP
  Human_props
@@ -499,7 +501,7 @@ PROP
   char buffer[255];
   int i;
 
-  propi = propinfo + npropinfo;
+  propi = propcoll->propinfo + propcoll->npropinfo;
 
   strcpy(proplabel,"Human_props(default)");           // from input
 
@@ -902,14 +904,14 @@ void GetLabels(char *buffer, char **label1, char **label2){
 
 /* ------------------ GetPropID ------------------------ */
 
-propdata *GetPropID(char *prop_id){
+propdata *GetPropID(prop_collection *propcoll, char *prop_id){
   int i;
 
-  if(propinfo == NULL || prop_id == NULL || strlen(prop_id) == 0)return NULL;
-  for(i = 0; i < npropinfo; i++){
+  if(propcoll->propinfo == NULL || prop_id == NULL || strlen(prop_id) == 0)return NULL;
+  for(i = 0; i < propcoll->npropinfo; i++){
     propdata *propi;
 
-    propi = propinfo + i;
+    propi = propcoll->propinfo + i;
 
     if(strcmp(propi->label, prop_id) == 0)return propi;
   }

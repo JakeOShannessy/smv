@@ -43,13 +43,6 @@ typedef struct _lanlistdata {
   char lang_name[32];
 } langlistdata;
 
-/* --------------------------  fueldata ------------------------------------ */
-
-typedef struct _fueldata{
-  char *fuel;
-  float hoc;
-} fueldata;
-
 /* --------------------------  procdata ------------------------------------ */
 #ifdef CPP
 typedef struct _procdata {
@@ -559,17 +552,6 @@ typedef struct _tourdata {
   int startup;
   int isDefault;
 } tourdata;
-
-
-/* --------------------------  hrrdata ------------------------------------ */
-
-typedef struct _hrrdata {
-  float *vals, *vals_orig, valmin, valmax;
-  int inlist1;
-  int nvals;
-  int base_col;
-  flowlabels label;
-} hrrdata;
 
 /* --------------------------  curvedata ------------------------------------ */
 

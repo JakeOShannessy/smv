@@ -10,6 +10,8 @@
 #include GLU_H
 #include GL_H
 
+#include "string_util.h"
+
 /* --------------------------  propdata ------------------------------------- */
 #define PROPVARMAX 100
 typedef struct _propdata {
@@ -317,4 +319,40 @@ typedef struct _circdata {
   float *xcirc, *ycirc;
   int ncirc;
 } circdata;
+
+/* --------------------------  hrrdata ------------------------------------ */
+
+typedef struct _hrrdata {
+  float *vals, *vals_orig, valmin, valmax;
+  int inlist1;
+  int nvals;
+  int base_col;
+  flowlabels label;
+} hrrdata;
+
+
+/* --------------------------  fueldata ------------------------------------ */
+
+typedef struct _fueldata{
+  char *fuel;
+  float hoc;
+} fueldata;
+
+
+typedef struct {
+  int nhrrinfo;
+  int nhrrhcinfo;
+  hrrdata *hrrinfo;
+} hrr_collection;
+
+typedef struct {
+  int nfuelinfo;
+  fueldata *fuelinfo;
+} fuel_collection;
+
+typedef struct {
+  int npropinfo;
+  propdata *propinfo;
+} prop_collection;
+
 #endif
