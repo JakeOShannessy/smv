@@ -368,7 +368,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
 
   if(nsmoke3dinfo<=0&&nvolrenderinfo<=0)return;
   if(CHECKBOX_meshvisptr!=NULL)FREEMEMORY(CHECKBOX_meshvisptr);
-  NewMemory((void **)&CHECKBOX_meshvisptr,nmeshes*sizeof(GLUI_Checkbox *));
+  NewMemory((void **)&CHECKBOX_meshvisptr,meshescoll.nmeshes*sizeof(GLUI_Checkbox *));
 
   glui_3dsmoke=glui_bounds;
 
@@ -1072,10 +1072,10 @@ extern "C" void GLUISmoke3dCB(int var){
     voltest_soot2 = log(2.0)/(mass_extinct*voltest_depth2);
     break;
   case VOLTEST_UPDATE:
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       if(meshi->volrenderinfo->loaded == 0)continue;
       meshi->voltest_update = 1;
     }
@@ -1282,10 +1282,10 @@ extern "C" void GLUISmoke3dCB(int var){
     IdleCB();
     break;
   case UPDATE_SMOKECOLORS:
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       meshi->update_smoke3dcolors=1;
     }
     glutPostRedisplay();
@@ -1316,7 +1316,7 @@ extern "C" void GLUISmoke3dCB(int var){
     {
       volrenderdata *vr;
 
-      vr = meshinfo->volrenderinfo;
+      vr = meshescoll.meshinfo->volrenderinfo;
       if(vr!=NULL&&vr->smokeslice!=NULL&&vr->smokeslice->slice_filetype==SLICE_CELL_CENTER){
         if(usegpu==1&&combine_meshes==1){
           combine_meshes=0;

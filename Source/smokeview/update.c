@@ -47,13 +47,13 @@ void UpdateFrameNumber(int changetime){
     if(showvolrender==1){
       int imesh;
 
-      for(imesh=0;imesh<nmeshes;imesh++){
+      for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
         meshdata *meshi;
         volrenderdata *vr;
         slicedata *fireslice, *smokeslice;
         int j;
 
-        meshi = meshinfo + imesh;
+        meshi = meshescoll.meshinfo + imesh;
         vr = meshi->volrenderinfo;
         fireslice=vr->fireslice;
         smokeslice=vr->smokeslice;
@@ -206,11 +206,11 @@ void UpdateFrameNumber(int changetime){
         patchi->geom_nval_dynamic = patchi->geom_ndynamics[patchi->geom_itime];
         if(patchi->is_compressed==1)UncompressBoundaryDataGEOM(patchi, patchi->geom_itime);
       }
-      for(i=0;i<nmeshes;i++){
+      for(i=0;i<meshescoll.nmeshes;i++){
         patchdata *patchi;
         meshdata *meshi;
 
-        meshi = meshinfo+i;
+        meshi = meshescoll.meshinfo+i;
         if(meshi->patchfilenum < 0||meshi->patchfilenum>npatchinfo-1)continue;
         patchi=patchinfo + meshi->patchfilenum;
         if(patchi->structured == NO||meshi->patch_times==NULL||meshi->patch_timeslist==NULL)continue;
@@ -234,7 +234,7 @@ void UpdateFrameNumber(int changetime){
       CheckMemory;
       for(i=0;i<nisoinfo;i++){
         isoi = isoinfo + i;
-        meshi = meshinfo + isoi->blocknumber;
+        meshi = meshescoll.meshinfo + isoi->blocknumber;
         if(isoi->loaded==0||meshi->iso_times==NULL||meshi->iso_timeslist==NULL)continue;
         meshi->iso_itime=meshi->iso_timeslist[itimes];
       }
@@ -307,11 +307,11 @@ void UpdateFileLoad(void){
   }
 
   nvolsmoke3dloaded = 0;
-  for(i = 0; i<nmeshes; i++){
+  for(i = 0; i<meshescoll.nmeshes; i++){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo+i;
+    meshi = meshescoll.meshinfo+i;
     vr = meshi->volrenderinfo;
     if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
     if(vr->loaded==1)nvolsmoke3dloaded++;
@@ -409,11 +409,11 @@ void UpdateShow(void){
     }
   }
   if(nvolrenderinfo>0&&usevolrender==1){
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
       volrenderdata *vr;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       vr = meshi->volrenderinfo;
       if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
       if(vr->loaded==0||vr->display==0)continue;
@@ -609,18 +609,18 @@ void UpdateShow(void){
     if(patchflag==1)showpatch=1;
     drawing_boundary_files = showpatch;
 
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi=meshinfo+i;
+      meshi=meshescoll.meshinfo+i;
       meshi->visInteriorBoundaries=0;
     }
     if(showpatch==1&&vis_boundary_type[0]==1){
-      for(i=0;i<nmeshes;i++){
+      for(i=0;i<meshescoll.nmeshes;i++){
         patchdata *patchi;
         meshdata *meshi;
 
-        meshi=meshinfo+i;
+        meshi=meshescoll.meshinfo+i;
         if(meshi->patch_times==NULL)continue;
         patchi = patchinfo+meshi->patchfilenum;
         if(patchi->loaded==1&&patchi->display==1&&patchi->shortlabel_index ==iboundarytype){
@@ -642,22 +642,22 @@ void UpdateShow(void){
   if(showshooter==1)RenderTime=1;
   if(plotstate==STATIC_PLOTS&&nplot3dloaded>0&&plotn>0&&plotn<=numplot3dvars)showplot3d=1;
   if(showplot3d==1){
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
       int ii;
 
-      meshi=meshinfo+i;
+      meshi=meshescoll.meshinfo+i;
       ii=meshi->plot3dfilenum;
       if(ii==-1)continue;
       if(plot3dinfo[ii].loaded==0)continue;
       if(plot3dinfo[ii].display==0)continue;
       if(plot3dinfo[ii].extreme_min[plotn-1]==1)have_extreme_mindata=1;
     }
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
       int ii;
 
-      meshi=meshinfo+i;
+      meshi=meshescoll.meshinfo+i;
       ii=meshi->plot3dfilenum;
       if(ii==-1)continue;
       if(plot3dinfo[ii].loaded==0)continue;
@@ -782,7 +782,7 @@ void SynchTimes(void){
       geomi = geominfoptrs[j];
       if(geomi->loaded==0||geomi->display==0)continue;
       if(geomi->geomtype == GEOM_ISO&& geomi->block_number >= 0){
-        times_map = meshinfo[geomi->block_number].iso_times_map;
+        times_map = meshescoll.meshinfo[geomi->block_number].iso_times_map;
       }
       geomi->timeslist[n] = GetDataTimeFrame(global_times[n], times_map, geomi->times, geomi->ntimes);
     }
@@ -851,11 +851,11 @@ void SynchTimes(void){
       if(patchi->structured == YES)continue;
       patchi->geom_timeslist[n] = GetDataTimeFrame(global_times[n], patchi->geom_times_map, patchi->geom_times,patchi->ngeom_times);
     }
-    for(j=0;j<nmeshes;j++){
+    for(j=0;j<meshescoll.nmeshes;j++){
       patchdata *patchi;
       meshdata *meshi;
 
-      meshi=meshinfo+j;
+      meshi=meshescoll.meshinfo+j;
       if(meshi->patchfilenum<0||meshi->patch_times==NULL)continue;
       patchi=patchinfo+meshi->patchfilenum;
       if(patchi->structured == NO||patchi->loaded==0)continue;
@@ -864,10 +864,10 @@ void SynchTimes(void){
 
   /* synchronize isosurface times */
 
-    for(igrid=0;igrid<nmeshes;igrid++){
+    for(igrid=0;igrid<meshescoll.nmeshes;igrid++){
       meshdata *meshi;
 
-      meshi=meshinfo+igrid;
+      meshi=meshescoll.meshinfo+igrid;
       if(meshi->iso_times==NULL)continue;
       meshi->iso_timeslist[n] = GetDataTimeFrame(global_times[n], meshi->iso_times_map, meshi->iso_times,meshi->niso_times);
     }
@@ -875,11 +875,11 @@ void SynchTimes(void){
   /* synchronize volume render times */
 
     if(nvolrenderinfo>0){
-      for(igrid=0;igrid<nmeshes;igrid++){
+      for(igrid=0;igrid<meshescoll.nmeshes;igrid++){
         volrenderdata *vr;
         meshdata *meshi;
 
-        meshi=meshinfo+igrid;
+        meshi=meshescoll.meshinfo+igrid;
         vr = meshi->volrenderinfo;
         if(vr->smokeslice==NULL)continue;
         if(vr->loaded==0||vr->display==0)continue;
@@ -1348,12 +1348,12 @@ void UpdateTimes(void){
     }
   }
   INIT_PRINT_TIMER(boundary_timer);
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     patchdata *patchi;
     meshdata *meshi;
     int filenum;
 
-    meshi=meshinfo+i;
+    meshi=meshescoll.meshinfo+i;
     filenum =meshi->patchfilenum;
     if(filenum!=-1){
       patchi=patchinfo+filenum;
@@ -1374,17 +1374,17 @@ void UpdateTimes(void){
 
       ib = isoinfo+i;
       if(ib->geomflag==1||ib->loaded==0)continue;
-      meshi=meshinfo + ib->blocknumber;
+      meshi=meshescoll.meshinfo + ib->blocknumber;
       MergeGlobalTimes(meshi->iso_times, meshi->niso_times);
     }
     PRINT_TIMER(iso_timer, "UpdateTimes: iso");
   }
   if(nvolrenderinfo>0){
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       volrenderdata *vr;
       meshdata *meshi;
 
-      meshi=meshinfo+i;
+      meshi=meshescoll.meshinfo+i;
       vr = meshi->volrenderinfo;
       if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
       if(vr->loaded==0||vr->display==0)continue;
@@ -1472,11 +1472,11 @@ void UpdateTimes(void){
     }
   }
   if(nvolrenderinfo>0){
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
       volrenderdata *vr;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       vr = meshi->volrenderinfo;
       if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
       if(vr->loaded==0||vr->display==0)continue;
@@ -1493,10 +1493,10 @@ void UpdateTimes(void){
       if(nglobal_times>0)NewMemory((void **)&smoke3di->timeslist,nglobal_times*sizeof(int));
     }
   }
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=meshinfo+i;
+    meshi=meshescoll.meshinfo+i;
     if(meshi->iso_times==NULL)continue;
     FREEMEMORY(meshi->iso_timeslist);
     if(nglobal_times>0)NewMemory((void **)&meshi->iso_timeslist,  nglobal_times*sizeof(int));
@@ -1511,12 +1511,12 @@ void UpdateTimes(void){
     if(patchi->geom_times==NULL)continue;
     if(nglobal_times>0)NewMemory((void **)&patchi->geom_timeslist,nglobal_times*sizeof(int));
   }
-  for(i=0;i<nmeshes;i++){
-    FREEMEMORY(meshinfo[i].patch_timeslist);
+  for(i=0;i<meshescoll.nmeshes;i++){
+    FREEMEMORY(meshescoll.meshinfo[i].patch_timeslist);
   }
-  for(i=0;i<nmeshes;i++){
-    if(meshinfo[i].patch_times==NULL)continue;
-    if(nglobal_times>0)NewMemory((void **)&meshinfo[i].patch_timeslist,nglobal_times*sizeof(int));
+  for(i=0;i<meshescoll.nmeshes;i++){
+    if(meshescoll.meshinfo[i].patch_times==NULL)continue;
+    if(nglobal_times>0)NewMemory((void **)&meshescoll.meshinfo[i].patch_timeslist,nglobal_times*sizeof(int));
   }
 
   FREEMEMORY(zone_timeslist);
@@ -1547,10 +1547,10 @@ void UpdateTimes(void){
     if(geomi->loaded==0||geomi->display==0)continue;
     geomi->itime=0;
   }
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=meshinfo+i;
+    meshi=meshescoll.meshinfo+i;
     meshi->patch_itime=0;
   }
   for(i=0;i<nsliceinfo;i++){
@@ -1559,10 +1559,10 @@ void UpdateTimes(void){
     sd = sliceinfo + i;
     sd->itime=0;
   }
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=meshinfo+i;
+    meshi=meshescoll.meshinfo+i;
     if(meshi->iso_times==NULL)continue;
     meshi->iso_itime=0;
   }
@@ -1577,11 +1577,11 @@ void UpdateTimes(void){
   /* determine visibility of each blockage at each time step */
 
   INIT_PRINT_TIMER(timer_visblocks);
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
 
-    meshi=meshinfo+i;
+    meshi=meshescoll.meshinfo+i;
     for(j=0;j<meshi->nbptrs;j++){
       blockagedata *bc;
 
@@ -1632,11 +1632,11 @@ void UpdateTimes(void){
   
   INIT_PRINT_TIMER(timer_vent);
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
 
-    meshi=meshinfo+i;
+    meshi=meshescoll.meshinfo+i;
     if(meshi->ventinfo==NULL)continue;
     for(j=0;j<meshi->nvents;j++){
       ventdata *vi;
@@ -1661,11 +1661,11 @@ void UpdateTimes(void){
 
   /* determine visibility of each circular vent at each time step */
 
-  for(i = 0; i<nmeshes; i++){
+  for(i = 0; i<meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     if(meshi->cventinfo == NULL)continue;
     for(j = 0; j<meshi->ncvents; j++){
       cventdata *cvi;
@@ -1718,11 +1718,11 @@ int GetPlotStateSub(int choice){
     case STATIC_PLOTS:
     case STATIC_PLOTS_NORECURSE:
       stept = 0;
-      for(i=0;i<nmeshes;i++){
+      for(i=0;i<meshescoll.nmeshes;i++){
         plot3ddata *ploti;
         meshdata *meshi;
 
-        meshi=meshinfo + i;
+        meshi=meshescoll.meshinfo + i;
         if(meshi->plot3dfilenum==-1)continue;
         ploti = plot3dinfo + meshi->plot3dfilenum;
         if(ploti->loaded==0||ploti->display==0)continue;
@@ -1822,11 +1822,11 @@ int GetPlotStateSub(int choice){
         return DYNAMIC_PLOTS;
       }
       if(nvolrenderinfo>0){
-        for(i=0;i<nmeshes;i++){
+        for(i=0;i<meshescoll.nmeshes;i++){
           meshdata *meshi;
           volrenderdata *vr;
 
-          meshi = meshinfo + i;
+          meshi = meshescoll.meshinfo + i;
           vr = meshi->volrenderinfo;
           if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
           if(vr->loaded==0||vr->display==0)continue;
@@ -2757,10 +2757,10 @@ void OutputBounds(void){
 
       slicei = sliceinfo + i;
       if(slicei->loaded==0)continue;
-      meshi = meshinfo+slicei->blocknumber;
+      meshi = meshescoll.meshinfo+slicei->blocknumber;
       labeli = slicei->label.longlabel;
       if(strcmp(label,labeli)!=0)continue;
-      if(nmeshes>1&&bounds_each_mesh==1){
+      if(meshescoll.nmeshes>1&&bounds_each_mesh==1){
         OutputMinMax(meshi->label, label, unit, slicei->valmin_slice, slicei->valmax_slice, slicei->valmin_slice, slicei->valmax_slice);
       }
       if(valmin_fds>valmax_fds){
@@ -2798,10 +2798,10 @@ void OutputBounds(void){
 
       patchi = patchinfo + i;
       if(patchi->loaded==0)continue;
-      meshi = meshinfo+patchi->blocknumber;
+      meshi = meshescoll.meshinfo+patchi->blocknumber;
       labeli = patchi->label.longlabel;
       if(strcmp(label,labeli)!=0)continue;
-      if(nmeshes>1&&bounds_each_mesh==1){
+      if(meshescoll.nmeshes>1&&bounds_each_mesh==1){
         OutputMinMax(meshi->label, label, unit, patchi->valmin_patch, patchi->valmax_patch, patchi->valmin_patch, patchi->valmax_patch);
       }
       if(valmin_patch>valmax_patch){
@@ -2822,14 +2822,14 @@ void OutputBounds(void){
     char *label, *unit;
     int i, j;
 
-    if(nmeshes>1&&nmeshes>1&&bounds_each_mesh==1){
+    if(meshescoll.nmeshes>1&&meshescoll.nmeshes>1&&bounds_each_mesh==1){
       for(i = 0; i<npartinfo; i++){
         partdata *parti;
         meshdata *meshi;
 
         parti = partinfo+i;
         if(parti->loaded==0)continue;
-        meshi = meshinfo + parti->blocknumber;
+        meshi = meshescoll.meshinfo + parti->blocknumber;
         for(j = 0; j<npart5prop; j++){
           partpropdata *propj;
 
@@ -2881,7 +2881,7 @@ void OutputBounds(void){
 
     p = plot3dinfo+update_plot3d_bounds;
 
-    if(nmeshes>1&&bounds_each_mesh==1){
+    if(meshescoll.nmeshes>1&&bounds_each_mesh==1){
       printf("\n");
       for(i = 0; i<nplot3dinfo; i++){
         plot3ddata *plot3di;
@@ -2889,7 +2889,7 @@ void OutputBounds(void){
 
         plot3di = plot3dinfo+i;
         if(plot3di->loaded==0)continue;
-        meshi = meshinfo+plot3di->blocknumber;
+        meshi = meshescoll.meshinfo+plot3di->blocknumber;
         for(j = 0; j<MAXPLOT3DVARS; j++){
 
           label = p->label[j].longlabel;
@@ -2996,10 +2996,10 @@ void UpdateDisplay(void){
   if(update_make_iblank == 1){
     int ig;
 
-    for(ig = 0; ig < nmeshes; ig++){
+    for(ig = 0; ig < meshescoll.nmeshes; ig++){
       meshdata *meshi;
 
-      meshi = meshinfo + ig;
+      meshi = meshescoll.meshinfo + ig;
       meshi->c_iblank_node = meshi->c_iblank_node_temp;
       meshi->c_iblank_cell = meshi->c_iblank_cell_temp;
       meshi->f_iblank_cell = meshi->f_iblank_cell_temp;
