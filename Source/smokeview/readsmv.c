@@ -7986,6 +7986,14 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   }
   FREEMEMORY(meshescoll.meshinfo);
   if(NewMemory((void **)&meshescoll.meshinfo,meshescoll.nmeshes*sizeof(meshdata))==0)return 2;
+  for(i = 0; i < meshescoll.nmeshes; i++){
+    meshdata *meshi;
+
+    meshi = meshescoll.meshinfo + i;
+    InitMesh(meshi); // initialize mesh here so order of order GRID/TERRAIN keywords won't cause a problem
+  }
+  FREEMEMORY(meshescoll.meshinfo);
+  if(NewMemory((void **)&meshescoll.meshinfo,meshescoll.nmeshes*sizeof(meshdata))==0)return 2;
   FREEMEMORY(supermeshinfo);
   if(NewMemory((void **)&supermeshinfo,meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
   meshescoll.meshinfo->plot3dfilenum=-1;
@@ -9442,7 +9450,6 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       zp[nn]=zbar0+(float)nn*(zbar-zbar0)/(float)kbartemp;
     }
     meshi=meshescoll.meshinfo;
-    InitMesh(meshi);
     meshi->xplt=xp;
     meshi->yplt=yp;
     meshi->zplt=zp;
@@ -10363,6 +10370,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
       itrnx++;
       xpltcopy=meshescoll.meshinfo[itrnx-1].xplt;
+      xpltdcopy=meshescoll.meshinfo[itrnx - 1].xpltd;
       ibartemp=meshescoll.meshinfo[itrnx-1].ibar;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i ",&idummy);
@@ -10416,6 +10424,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
       itrnz++;
       zpltcopy=meshescoll.meshinfo[itrnz-1].zplt;
+      zpltdcopy=meshescoll.meshinfo[itrnz - 1].zpltd;
       kbartemp=meshescoll.meshinfo[itrnz-1].kbar;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i ",&idummy);

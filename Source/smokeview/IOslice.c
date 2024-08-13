@@ -5693,6 +5693,7 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
     valmax = 1.0;
   }
   if(sd->volslice == 1 && visx_all == 0 && visy_all == 0 && visz_all == 0)return;
+  meshi = meshescoll.meshinfo + sd->blocknumber;
 
   int slice_interp;
   int set_chopmin=0, set_chopmax=0;
@@ -5703,7 +5704,6 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
     GLUIGetChopMin(BOUND_SLICE, sd->label.shortlabel, &set_chopmin, &chopmin);
     GLUIGetChopMax(BOUND_SLICE, sd->label.shortlabel, &set_chopmax, &chopmax);
   }
-  meshi = meshescoll.meshinfo + sd->blocknumber;
 
   xplt = meshi->xplt;
   yplt = meshi->yplt;

@@ -320,6 +320,10 @@ typedef struct _circdata {
   int ncirc;
 } circdata;
 
+typedef struct {
+  meshdata *meshinfo;
+  int nmeshes;
+} meshescollection;
 /* --------------------------  hrrdata ------------------------------------ */
 
 typedef struct _hrrdata {
