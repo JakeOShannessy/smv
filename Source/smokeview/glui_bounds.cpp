@@ -3928,7 +3928,7 @@ extern "C" void GLUIImmersedBoundCB(int var){
     SliceInObstDialog2Menu();
     break;
   case IMMERSED_SWITCH_EDGETYPE:
-    switch (glui_slice_edgetype){
+    switch(glui_slice_edgetype){
     case SHOW_POLYGON_EDGES:
     case SHOW_TRIANGLE_EDGES:
       glui_show_slice_outlines=1;
@@ -4017,7 +4017,7 @@ void BoundBoundCB(int var){
     break;
   case SETCHOPMINVAL:
     UpdateChopColors();
-    if (patchlabellist != NULL)GLUI2GlobalBoundaryBounds(patchlabellist[list_patch_index]);
+    if(patchlabellist != NULL)GLUI2GlobalBoundaryBounds(patchlabellist[list_patch_index]);
     switch(setpatchchopmin){
     case DISABLE:
       break;
@@ -4715,7 +4715,7 @@ extern "C" void GLUIUpdateColorbarListBound(int flag){
   char label[64];
   GLUI_Listbox *LIST_cb;
 
-  switch (flag){
+  switch(flag){
     case 1:
      LIST_cb = LISTBOX_cb_bound;
      break;
@@ -6137,7 +6137,7 @@ extern "C" void GLUIIsoBoundCB(int var){
     break;
 
   case ISO_SETVALMIN:
-    switch (setisomin){
+    switch(setisomin){
       case SET_MIN:
         if(sb->edit_valmin_defined==1)glui_iso_valmin = sb->edit_valmin;
         iso_valmin=glui_iso_valmin;
@@ -6161,7 +6161,7 @@ extern "C" void GLUIIsoBoundCB(int var){
     break;
 
   case ISO_SETVALMAX:
-    switch (setisomax){
+    switch(setisomax){
       case SET_MAX:
         if(sb->edit_valmax_defined==1)glui_iso_valmax = sb->edit_valmax;
         iso_valmax=glui_iso_valmax;
@@ -6861,7 +6861,7 @@ extern "C" void GLUISliceBoundCB(int var){
 /* ------------------ GLUIShowBounds ------------------------ */
 
 extern "C" void GLUIShowBounds(int menu_id){
-  switch (menu_id){
+  switch(menu_id){
   case DIALOG_BOUNDS:
     GLUIUpdateChar();
     FileRolloutCB(FILEBOUNDS_ROLLOUT);
@@ -6907,7 +6907,7 @@ extern "C" void GLUIShowBoundsDialog(int type){
   else{
     GLUIShowBounds(DIALOG_BOUNDS);
   }
-  switch (type){
+  switch(type){
     case DLG_3DSMOKE:
       if(ROLLOUT_smoke3d!=NULL)ROLLOUT_smoke3d->open();
       break;

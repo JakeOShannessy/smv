@@ -90,13 +90,13 @@ void ReadHVACData(int flag){
     STOP_TIMER(total_time);
     PRINTF("Loading %s", hvaccoll.hvacductvalsinfo->file);
     if(file_size > 1000000000){
-      PRINTF(" - %.1f GB/%.1f s\n", ( float )file_size / 1000000000., total_time);
+      PRINTF(" - %.1f GB/%.1f s\n", (float)file_size / 1000000000., total_time);
     }
     else if(file_size > 1000000){
-      PRINTF(" - %.1f MB/%.1f s\n", ( float )file_size / 1000000., total_time);
+      PRINTF(" - %.1f MB/%.1f s\n", (float)file_size / 1000000., total_time);
     }
     else{
-      PRINTF(" - %.0f KB/%.1f s\n", ( float )file_size / 1000., total_time);
+      PRINTF(" - %.0f KB/%.1f s\n", (float)file_size / 1000., total_time);
     }
     hvaccoll.hvacductvalsinfo->loaded = 1;
   }

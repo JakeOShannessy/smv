@@ -53,7 +53,7 @@ char *GetCharPtr(char *label) {
 
 /* ----------------------- AppendString ----------------------------- */
 
-char *AppendString(char *S1, char *S2) {
+char *AppendString(char *S1, char *S2){
   strcpy(append_string, S1);
   strcat(append_string, S2);
   return append_string;
@@ -421,7 +421,7 @@ int STRCMP(const char *s1, const char *s2){
 
 //  same as the standard function, strcmp, but ignores case
 
-  while (toupper(*s1) == toupper(*s2++)){
+  while(toupper(*s1) == toupper(*s2++)){
     if(*s1++ == 0)return (0);
   }
   return (toupper(*(const unsigned char *)s1) - toupper(*(const unsigned char *)(s2 - 1)));
@@ -973,7 +973,7 @@ int LogBase2(float xx){
   unsigned int x;
 
   x=xx;
-  while( (x >> r) != 0){
+  while((x >> r) != 0){
     r++;
   }
   return r-1; // returns -1 for x==0, floor(log2(x)) otherwise

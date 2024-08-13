@@ -313,13 +313,13 @@ void PrintFileLoadTimes(int file_count, FILE_SIZE load_size, float load_time){
       }
     }
     if(load_size > 1000000000){
-      PRINTF("Loaded %.2f GB in %.2f s (%s)\n", ( float )load_size / 1000000000., load_time, crate);
+      PRINTF("Loaded %.2f GB in %.2f s (%s)\n", (float)load_size / 1000000000., load_time, crate);
     }
     else if(load_size > 1000000){
-      PRINTF("Loaded %.2f MB in %.2f s (%s)\n", ( float )load_size / 1000000., load_time, crate);
+      PRINTF("Loaded %.2f MB in %.2f s (%s)\n", (float)load_size / 1000000., load_time, crate);
     }
     else{
-      PRINTF("Loaded %.2f kB in %.2f s (%s)\n", ( float )load_size / 1000., load_time, crate);
+      PRINTF("Loaded %.2f kB in %.2f s (%s)\n", (float)load_size / 1000., load_time, crate);
     }
     printf("\n");
   }
@@ -356,7 +356,7 @@ void OpenSMVFile(char *filebuffer,int filebufferlength,int *openfile){
   if(GetOpenFileName(&openfinfo)){
     STRCPY(smv_directory,"");
     strncat(smv_directory,filebuffer,openfinfo.nFileOffset);
-    if( _chdir( smv_directory )   ){
+    if( _chdir( smv_directory )  ){
       PRINTF( "Unable to locate the directory: %s\n", smv_directory );
     }
     else{
@@ -638,7 +638,7 @@ void ShowAllSlices(char *type1, char *type2){
       if(
         (type1 != NULL&&STRCMP(slicei->label.longlabel, type1) == 0) ||
         (type2 != NULL&&STRCMP(slicei->label.longlabel, type2) == 0)
-        ){
+       ){
         sliceinfo[i].display = 1;
         slicefile_labelindex = slicei->slicefile_labelindex;
       }
@@ -3364,11 +3364,11 @@ void LoadPlot2DMenu(int value){
 /* ------------------ UnloadSmoke3D ------------------------ */
 
 void UnloadSmoke3D(smoke3ddata *smoke3di){
+  smoke3di->request_load = 0;
   if(smoke3di->loaded == 0)return;
   FreeSmoke3D(smoke3di);
   smoke3di->loaded  = 0;
   smoke3di->display = 0;
-  smoke3di->request_load = 0;
 }
 
 /* ------------------ UnloadAllSmoke3D ------------------------ */
@@ -3384,6 +3384,7 @@ void UnloadAllSmoke3D(int type){
       smoke3ddata *smoke3di;
 
       smoke3di = smoke3dinfo + i;
+      if(type == -1 || smoke3di->type == type)smoke3di->request_load = 0;
       if(smoke3di->loaded == 0)continue;
       if(type == -1 || smoke3di->type == type){
         UnloadSmoke3D(smoke3di);
@@ -3581,7 +3582,10 @@ void LoadUnloadMenu(int value){
     //*** reload 3d smoke files
 
     for(i=0;i<nsmoke3dinfo;i++){
-      if(smoke3dinfo[i].loaded==1||smoke3dinfo[i].request_load==1){
+      smoke3ddata *smoke3di;
+
+      smoke3di = smoke3dinfo + i;
+      if(smoke3di->request_load==1){
 #ifdef pp_SMOKEFRAME
         ReadSmoke3D(ALL_SMOKE_FRAMES, i, load_flag, FIRST_TIME, &errorcode);
 #else
@@ -4122,7 +4126,7 @@ void LoadAllPartFiles(int partnum){
 #ifdef pp_PARTFRAME
       || partnum==RELOAD_LOADED_PART_FILES || partnum == LOAD_ALL_PART_FILES
 #endif
-      ){
+     ){
       if(partnum==LOAD_ALL_PART_FILES||(partnum==RELOAD_LOADED_PART_FILES&&parti->loaded==1)||partnum==i){
         parti->loadstatus = FILE_LOADING;
         THREADcontrol(partload_threads, THREAD_UNLOCK);
@@ -4214,7 +4218,7 @@ void SetupPart(int value){
 void *MtLoadAllPartFiles(void *arg){
   int *valptr;
 
-  valptr = ( int * )(arg);
+  valptr = (int *)(arg);
   LoadAllPartFiles(*valptr);
 #ifdef pp_PARTFRAME
   return NULL;
@@ -4345,13 +4349,17 @@ void LoadParticleMenu(int value){
       if(scriptoutstream!=NULL){
         fprintf(scriptoutstream,"LOADPARTICLES\n");
       }
-      if(value==PARTFILE_LOADALL){
+      if(value == PARTFILE_LOADALL){
         SetupPart(value);
+      }
+#ifdef pp_PART_COUNT
+      if(value==PARTFILE_LOADALL){
         npartframes_max=GetMinPartFrames(PARTFILE_LOADALL);
       }
       else{
         npartframes_max=GetMinPartFrames(PARTFILE_RELOADALL);
       }
+#endif
 
       if(scriptoutstream==NULL||script_defer_loading==0){
 
@@ -5130,7 +5138,7 @@ void LoadSliceMenu(int value){
     LoadSlicei(SET_SLICECOLOR,value, ALL_FRAMES, NULL);
   }
   else{
-    switch (value){
+    switch(value){
       int submenutype;
       slicedata *slicei;
 #ifndef pp_SLICEFRAME
@@ -6141,7 +6149,7 @@ void LoadBoundaryMenu(int value){
         patchi->finalize = 0;
         if(patchi->loaded == 1
           && load_only_when_unloaded == 0
-          ){
+         ){
           ReadBoundary(i, UNLOAD, &errorcode);
         }
       }
@@ -8363,7 +8371,7 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
                             int *nsubpatchmenus_s, int sliceskipmenu, int sliceloadoptionmenu, int duplicateslicemenu,
                             int loadslicemenu, int nmultisliceloaded, int unloadmultislicemenu
                             , int *loadsubslicexmenuptr, int *loadsubsliceymenuptr, int *loadsubslicezmenuptr, int *loadsubslicexyzmenuptr
-                            ){
+                           ){
   int i, loadmultislicemenu;
   int nloadsubmslicemenu;
   int iloadsubpatchmenu_s;
@@ -8656,7 +8664,7 @@ void InitMultiVectorSubMenu(int **loadsubmvslicemenuptr){
 void InitMultiVectorLoadMenu(int *loadmultivslicemenuptr, int *loadsubmvslicemenu, int duplicatevectorslicemenu,
                              int vsliceloadmenu, int sliceloadoptionmenu, int unloadmultivslicemenu
                              , int *loadsubvectorslicexmenuptr, int *loadsubvectorsliceymenuptr, int *loadsubvectorslicezmenuptr, int *loadsubvectorslicexyzmenuptr
-                             ){
+                            ){
   int loadmultivslicemenu;
   int nloadsubmvslicemenu;
   int i;
@@ -9178,7 +9186,7 @@ static int menu_count=0;
           if(
             strncmp(patchi->label.shortlabel,"TEMP",4) == 0||
             strncmp(patchi->label.shortlabel,"temp",4) == 0
-            ){
+           ){
             local_do_threshold=1;
           }
         }
@@ -10562,7 +10570,7 @@ static int menu_count=0;
           if(partclassj->col_diameter>=0||partclassj->col_length>=0||partclassj->device_name!=NULL||
              (partclassj->prop!=NULL&&partclassj->prop->smokeview_id!=NULL)||
              (partclassj->col_u_vel>=0&&partclassj->col_v_vel>=0&&partclassj->col_w_vel>=0)
-            ){
+           ){
             if(propi->class_vis[j]==1){
               strcpy(menulabel,_("using:"));
             }
@@ -10596,7 +10604,7 @@ static int menu_count=0;
             if(
               (partclassj->smv_device!=NULL&&partclassj->device_name!=NULL)||
               (partclassj->prop!=NULL&&partclassj->prop->smokeview_id!=NULL)
-              ){
+             ){
               if(partclassj->device_name!=NULL){
                 strcpy(menulabel,"    ");
                 if(partclassj->vis_type==PART_SMV_DEVICE){
