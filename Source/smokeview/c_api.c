@@ -788,8 +788,8 @@ ERROR_CODE SetNamedColorbar(const char *name) {
 }
 
 ERROR_CODE GetNamedColorbar(const char *name, size_t *index) {
-  for(size_t i = 0; i < ncolorbars; i++) {
-    if(strcmp(colorbarinfo[i].menu_label, name) == 0) {
+  for(size_t i = 0; i < colorbars.ncolorbars; i++) {
+    if(strcmp(colorbars.colorbarinfo[i].menu_label, name) == 0) {
       *index = i;
       return 0;
     }
