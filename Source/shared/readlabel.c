@@ -22,10 +22,10 @@
 labeldata *LabelGet(labels_collection *labelscoll, char *name) {
   labeldata *thislabel;
 
-  if (name == NULL) return NULL;
-  for (thislabel = labelscoll->label_first_ptr->next; thislabel->next != NULL;
-       thislabel = thislabel->next) {
-    if (strcmp(thislabel->name, name) == 0) return thislabel;
+  if(name == NULL) return NULL;
+  for(thislabel = labelscoll->label_first_ptr->next; thislabel->next != NULL;
+      thislabel = thislabel->next) {
+    if(strcmp(thislabel->name, name) == 0) return thislabel;
   }
   return NULL;
 }
@@ -60,36 +60,36 @@ labeldata *LabelInsert(labels_collection *labelscoll, labeldata *labeltemp) {
   memcpy(newlabel, labeltemp, sizeof(labeldata));
 
   thislabel = LabelGet(labelscoll, newlabel->name);
-  if (thislabel != NULL) {
+  if(thislabel != NULL) {
     LabelInsertAfter(thislabel->prev, newlabel);
     return newlabel;
   }
 
   firstuserptr = labelscoll->label_first_ptr->next;
-  if (firstuserptr == labelscoll->label_last_ptr) firstuserptr = NULL;
+  if(firstuserptr == labelscoll->label_last_ptr) firstuserptr = NULL;
 
   lastuserptr = labelscoll->label_last_ptr->prev;
-  if (lastuserptr == labelscoll->label_first_ptr) lastuserptr = NULL;
+  if(lastuserptr == labelscoll->label_first_ptr) lastuserptr = NULL;
 
-  if (firstuserptr != NULL && strcmp(newlabel->name, firstuserptr->name) < 0) {
+  if(firstuserptr != NULL && strcmp(newlabel->name, firstuserptr->name) < 0) {
     LabelInsertBefore(firstuserptr, newlabel);
     return newlabel;
   }
-  if (lastuserptr != NULL && strcmp(newlabel->name, lastuserptr->name) > 0) {
+  if(lastuserptr != NULL && strcmp(newlabel->name, lastuserptr->name) > 0) {
     LabelInsertAfter(lastuserptr, newlabel);
     return newlabel;
   }
-  if (firstuserptr == NULL && lastuserptr == NULL) {
+  if(firstuserptr == NULL && lastuserptr == NULL) {
     LabelInsertAfter(labelscoll->label_first_ptr, newlabel);
     return newlabel;
   }
-  for (thislabel = labelscoll->label_first_ptr->next; thislabel->next != NULL;
-       thislabel = thislabel->next) {
+  for(thislabel = labelscoll->label_first_ptr->next; thislabel->next != NULL;
+      thislabel = thislabel->next) {
     labeldata *nextlabel;
 
     nextlabel = thislabel->next;
-    if (strcmp(thislabel->name, newlabel->name) < 0 &&
-        strcmp(newlabel->name, nextlabel->name) < 0) {
+    if(strcmp(thislabel->name, newlabel->name) < 0 &&
+       strcmp(newlabel->name, nextlabel->name) < 0) {
       LabelInsertAfter(thislabel, newlabel);
       return newlabel;
     }
@@ -140,8 +140,8 @@ void LabelPrint(labeldata *label_first_ptr) {
   labeldata *thislabel;
   float *xyz;
 
-  for (thislabel = label_first_ptr->next; thislabel->next != NULL;
-       thislabel = thislabel->next) {
+  for(thislabel = label_first_ptr->next; thislabel->next != NULL;
+      thislabel = thislabel->next) {
     xyz = thislabel->xyz;
     PRINTF("label: %s position: %f %f %f\n", thislabel->name, xyz[0], xyz[1],
            xyz[2]);
@@ -153,12 +153,12 @@ void LabelPrint(labeldata *label_first_ptr) {
 labeldata *LabelNext(labels_collection *labelscoll, labeldata *label) {
   labeldata *thislabel;
 
-  if (label == NULL) return NULL;
-  if (labelscoll->label_first_ptr->next->next == NULL) return NULL;
-  for (thislabel = label->next; thislabel != label;
-       thislabel = thislabel->next) {
-    if (thislabel->next == NULL) thislabel = labelscoll->label_first_ptr->next;
-    if (thislabel->labeltype == TYPE_SMV) continue;
+  if(label == NULL) return NULL;
+  if(labelscoll->label_first_ptr->next->next == NULL) return NULL;
+  for(thislabel = label->next; thislabel != label;
+      thislabel = thislabel->next) {
+    if(thislabel->next == NULL) thislabel = labelscoll->label_first_ptr->next;
+    if(thislabel->labeltype == TYPE_SMV) continue;
     return thislabel;
   }
   return NULL;
@@ -169,12 +169,12 @@ labeldata *LabelNext(labels_collection *labelscoll, labeldata *label) {
 labeldata *LabelPrevious(labels_collection *labelscoll, labeldata *label) {
   labeldata *thislabel;
 
-  if (label == NULL) return NULL;
-  if (labelscoll->label_last_ptr->prev->prev == NULL) return NULL;
-  for (thislabel = label->prev; thislabel != label;
-       thislabel = thislabel->prev) {
-    if (thislabel->prev == NULL) thislabel = labelscoll->label_last_ptr->prev;
-    if (thislabel->labeltype == TYPE_SMV) continue;
+  if(label == NULL) return NULL;
+  if(labelscoll->label_last_ptr->prev->prev == NULL) return NULL;
+  for(thislabel = label->prev; thislabel != label;
+      thislabel = thislabel->prev) {
+    if(thislabel->prev == NULL) thislabel = labelscoll->label_last_ptr->prev;
+    if(thislabel->labeltype == TYPE_SMV) continue;
     return thislabel;
   }
   return NULL;
@@ -185,9 +185,9 @@ labeldata *LabelPrevious(labels_collection *labelscoll, labeldata *label) {
 int LabelInit(labels_collection *labelscoll, labeldata *gl) {
   labeldata *thislabel;
 
-  for (thislabel = labelscoll->label_first_ptr->next; thislabel->next != NULL;
-       thislabel = thislabel->next) {
-    if (thislabel->labeltype == TYPE_SMV) continue;
+  for(thislabel = labelscoll->label_first_ptr->next; thislabel->next != NULL;
+      thislabel = thislabel->next) {
+    if(thislabel->labeltype == TYPE_SMV) continue;
     LabelCopy(gl, thislabel);
     return 1;
   }
@@ -200,9 +200,9 @@ int LabelGetNUserLabels(labels_collection *labelscoll) {
   int count = 0;
   labeldata *thislabel;
 
-  for (thislabel = labelscoll->label_first_ptr->next; thislabel->next != NULL;
-       thislabel = thislabel->next) {
-    if (thislabel->labeltype == TYPE_INI) count++;
+  for(thislabel = labelscoll->label_first_ptr->next; thislabel->next != NULL;
+      thislabel = thislabel->next) {
+    if(thislabel->labeltype == TYPE_INI) count++;
   }
   return count;
 }
