@@ -1,7 +1,6 @@
 #ifndef READCAD_H_DEFINED
 #define READCAD_H_DEFINED
 
-#include GL_H
 #include "shared_structures.h"
 
 typedef struct _cadlookdata {
@@ -67,9 +66,10 @@ cadgeom_collection *CreateCADGeomCollection(int capacity);
 void FreeCADGeomCollection(cadgeom_collection *coll);
 
 /**
- * @brief Read CAD geometry data into 'cd'.
+ * @brief Read CAD geometry data and add it to a collection.
  *
- * @param cd A pointer to the cadgeomdata, this must already be allocated.
+ * @param coll A pointer to the cadgeom_collection, this must have been created
+ * with CreateCADGeomCollection.
  * @param file A path to the file to read.
  * @param block_shininess The block shininess to apply.
  */
@@ -80,7 +80,7 @@ int ReadCADGeomToCollection(cadgeom_collection *coll, const char *file,
  * @brief Return the number of CAD object definitions.
  *
  * @param coll The collection.
- * @return  Number of defined objects. If @ref coll is NULL, return 0.
+ * @return  Number of defined objects. If coll is NULL, return 0.
  */
 int NCADGeom(cadgeom_collection *coll);
 

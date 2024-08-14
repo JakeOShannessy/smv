@@ -7279,8 +7279,6 @@ int ReadSMV_Init(){
   }
   nisoinfo=0;
 
-  FreeCADGeomCollection(cadgeomcoll);
-
   updateindexcolors=0;
   ntrnx=0;
   ntrny=0;
@@ -9031,7 +9029,6 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
     if(MatchSMV(buffer,"CADGEOM") == 1){
-      size_t len;
       char *bufferptr;
 
       if(FGETS(buffer,255,stream)==NULL){

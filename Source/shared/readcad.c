@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(WIN32)
+#ifdef _WIN32
 #include <windows.h>
 #endif
 #include GLU_H
@@ -38,12 +38,12 @@ void CalcQuadNormal(float *xyz, float *out) {
   p2 = pp2;
   p3 = pp3;
 
-  if (pp1[0] == pp2[0] && pp1[1] == pp2[1] && pp1[2] == pp2[2]) {
+  if(pp1[0] == pp2[0] && pp1[1] == pp2[1] && pp1[2] == pp2[2]) {
     p1 = pp2;
     p2 = pp3;
     p3 = pp4;
   }
-  if (pp2[0] == pp3[0] && pp2[1] == pp3[1] && pp2[2] == pp3[2]) {
+  if(pp2[0] == pp3[0] && pp2[1] == pp3[1] && pp2[2] == pp3[2]) {
     p1 = pp1;
     p2 = pp3;
     p3 = pp4;
@@ -83,8 +83,8 @@ int CompareQuad(const void *arg1, const void *arg2) {
   quadj = cd->quad + i2;
   clj = quadj->cadlookq;
 
-  if (cli < clj) return 1;
-  if (cli > clj) return -1;
+  if(cli < clj) return 1;
+  if(cli > clj) return -1;
   return 0;
 }
 static char *texturedir = NULL;
@@ -105,22 +105,22 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
   int iquad;
   int have_textures = 0;
 
-  if ((stream = fopen(cd->file, "r")) == NULL) {
+  if((stream = fopen(cd->file, "r")) == NULL) {
     return;
   }
 
   /* read in [APPEARANCE] info */
 
-  if (fgets(buffer, 255, stream) == NULL) {
+  if(fgets(buffer, 255, stream) == NULL) {
     fclose(stream);
     return;
   }
-  if (fgets(buffer, 255, stream) == NULL) {
+  if(fgets(buffer, 255, stream) == NULL) {
     fclose(stream);
     return;
   }
   sscanf(buffer, "%i", &cd->ncadlookinfo);
-  if (cd->ncadlookinfo <= 0) {
+  if(cd->ncadlookinfo <= 0) {
     cd->ncadlookinfo = 0;
     fclose(stream);
     return;
@@ -129,7 +129,7 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
   cd->cadlookinfo = NULL;
   NewMemory((void **)&cd->cadlookinfo, cd->ncadlookinfo * sizeof(cadlookdata));
 
-  for (i = 0; i < cd->ncadlookinfo; i++) {
+  for(i = 0; i < cd->ncadlookinfo; i++) {
     cadlookdata *cdi;
     texturedata *texti;
     int errorcode;
@@ -142,10 +142,10 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
 
     cdi = cd->cadlookinfo + i;
 
-    if (fgets(buffer, 255, stream) == NULL)
+    if(fgets(buffer, 255, stream) == NULL)
       return; // material description (not used)
 
-    if (fgets(buffer, 255, stream) == NULL) return;
+    if(fgets(buffer, 255, stream) == NULL) return;
     rrgb = cdi->rgb;
     shininess = &cdi->shininess;
     onesided = &cdi->onesided;
@@ -162,8 +162,8 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
     *shininess = block_shininess;
     *onesided = 0;
     lenbuffer = strlen(buffer);
-    for (ii = 0; ii < (int)lenbuffer; ii++) {
-      if (buffer[ii] == ',') buffer[ii] = ' ';
+    for(ii = 0; ii < (int)lenbuffer; ii++) {
+      if(buffer[ii] == ',') buffer[ii] = ' ';
     }
 
     sscanf(buffer, "%i %f %f %f %f %f %f %f %f %f %f %i", &cdi->index, rrgb,
@@ -173,15 +173,15 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
     rrgb[0] /= 255.0;
     rrgb[1] /= 255.0;
     rrgb[2] /= 255.0;
-    if (rrgb[0] < 0.0 || rrgb[1] < 0.0 || rrgb[2] < 0.0) rrgb[3] = 1.0;
+    if(rrgb[0] < 0.0 || rrgb[1] < 0.0 || rrgb[2] < 0.0) rrgb[3] = 1.0;
 
-    if (fgets(buffer, 255, stream) == NULL) return;
+    if(fgets(buffer, 255, stream) == NULL) return;
     TrimBack(buffer);
     len = strlen(buffer);
 
     texti = &cdi->textureinfo;
     texti->file = NULL;
-    if (len > 0) {
+    if(len > 0) {
       NewMemory((void **)&texti->file, len + 1);
       strcpy(texti->file, buffer);
     }
@@ -191,12 +191,12 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
     texti->name = 0;
     texti->is_transparent = 0;
 
-    if (texti->file != NULL) {
+    if(texti->file != NULL) {
       int texwid, texht;
       unsigned char *floortex;
       int is_transparent;
 
-      if (have_textures == 0) {
+      if(have_textures == 0) {
         PRINTF("     Loading CAD textures\n");
         have_textures = 1;
       }
@@ -206,7 +206,7 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
       floortex = ReadPicture(texturedir, texti->file, &texwid, &texht,
                              &is_transparent, 0);
       texti->is_transparent = is_transparent;
-      if (floortex == NULL) {
+      if(floortex == NULL) {
         PRINTF(" - failed\n");
         fprintf(stderr, "*** Error: Texture file %s failed to load\n",
                 texti->file);
@@ -214,7 +214,7 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
       }
       errorcode = gluBuild2DMipmaps(GL_TEXTURE_2D, 4, texwid, texht, GL_RGBA,
                                     GL_UNSIGNED_BYTE, floortex);
-      if (errorcode != 0) {
+      if(errorcode != 0) {
         FREEMEMORY(floortex);
         PRINTF(" - failed\n");
         continue;
@@ -232,10 +232,10 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
 
   /* read in [FACES] info */
 
-  if (fgets(buffer, 255, stream) == NULL) return;
-  if (fgets(buffer, 255, stream) == NULL) return;
+  if(fgets(buffer, 255, stream) == NULL) return;
+  if(fgets(buffer, 255, stream) == NULL) return;
   sscanf(buffer, "%i", &nquads);
-  if (nquads <= 0) {
+  if(nquads <= 0) {
     cd->nquads = 0;
     return;
   }
@@ -244,15 +244,15 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
 
   // TODO: what does this do. Seems like if there is nothing read, delete all of
   // the cad info
-  if (NewMemory((void **)&cd->quad, nquads * sizeof(cadquad)) == 0 ||
-      NewMemory((void **)&cd->order, nquads * sizeof(int)) == 0) {
+  if(NewMemory((void **)&cd->quad, nquads * sizeof(cadquad)) == 0 ||
+     NewMemory((void **)&cd->order, nquads * sizeof(int)) == 0) {
     // If memory allocation fails, set quad data to NULL and return.
     cd->quad = NULL;
     return;
   }
 
   iquad = 0;
-  for (i = 0; i < nquads; i++) {
+  for(i = 0; i < nquads; i++) {
     float *normal;
     int look_index;
     cadquad *quadi;
@@ -260,7 +260,7 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
     float *xyzpoints;
     float time_show;
 
-    if (fgets(buffer, 255, stream) == NULL) break;
+    if(fgets(buffer, 255, stream) == NULL) break;
     iquad++;
     quadi = cd->quad + i;
     xyzpoints = quadi->xyzpoints;
@@ -271,7 +271,7 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
            xyzpoints + 5, xyzpoints + 6, xyzpoints + 7, xyzpoints + 8,
            xyzpoints + 9, xyzpoints + 10, xyzpoints + 11, &look_index,
            &time_show);
-    if (look_index < 0 || look_index > cd->ncadlookinfo - 1) look_index = 0;
+    if(look_index < 0 || look_index > cd->ncadlookinfo - 1) look_index = 0;
     quadi->cadlookq = cd->cadlookinfo + look_index;
     cl = quadi->cadlookq;
     quadi->colors[0] = cl->rgb[0];
@@ -281,20 +281,20 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
     quadi->time_show = time_show;
     CalcQuadNormal(xyzpoints, normal);
   }
-  if (iquad < nquads) {
+  if(iquad < nquads) {
     fprintf(
         stderr,
         "*** Warning: number of faces expected=%i number of faces found=%i\n",
         cd->nquads, iquad);
     cd->nquads = iquad;
   }
-  for (i = 0; i < cd->nquads; i++) {
+  for(i = 0; i < cd->nquads; i++) {
     cd->order[i] = i;
   }
   current_cadgeom = cd;
   qsort(cd->order, (size_t)cd->nquads, sizeof(int), CompareQuad);
   fclose(stream);
-  if (have_textures == 1) {
+  if(have_textures == 1) {
     PRINTF("     CAD textures loading completed\n");
   }
 }
@@ -314,18 +314,18 @@ int ReadCADGeom(cadgeomdata *cd, const char *file, GLfloat block_shininess) {
   int nquads = 0;
   int colorindex;
 
-  if (NewMemory((void **)&cd->file, (unsigned int)(strlen(file) + 1)) == 0)
+  if(NewMemory((void **)&cd->file, (unsigned int)(strlen(file) + 1)) == 0)
     return 2;
   STRCPY(cd->file, file);
   stream = fopen(cd->file, "r");
-  if (stream == NULL) return 1;
+  if(stream == NULL) return 1;
 
-  if (fgets(buffer, 255, stream) == NULL) {
+  if(fgets(buffer, 255, stream) == NULL) {
     fclose(stream);
     return 1;
   }
   TrimBack(buffer);
-  if (strncmp(buffer, "[APPEARANCE]", 12) == 0) {
+  if(strncmp(buffer, "[APPEARANCE]", 12) == 0) {
     cd->version = 2;
     fclose(stream);
     ReadCAD2Geom(cd, block_shininess);
@@ -333,14 +333,14 @@ int ReadCADGeom(cadgeomdata *cd, const char *file, GLfloat block_shininess) {
   }
   cd->version = 1;
   rewind(stream);
-  while (!feof(stream)) {
-    if (fgets(buffer, 255, stream) == NULL) break;
-    if (fgets(buffer, 255, stream) == NULL) break;
+  while(!feof(stream)) {
+    if(fgets(buffer, 255, stream) == NULL) break;
+    if(fgets(buffer, 255, stream) == NULL) break;
     nquads++;
   }
   cd->nquads = nquads;
   rewind(stream);
-  if (NewMemory((void **)&cd->quad, nquads * sizeof(cadquad)) == 0) {
+  if(NewMemory((void **)&cd->quad, nquads * sizeof(cadquad)) == 0) {
     // If memory allocation fails, set quad data to NULL and return.
     cd->quad = NULL;
     fclose(stream);
@@ -351,7 +351,7 @@ int ReadCADGeom(cadgeomdata *cd, const char *file, GLfloat block_shininess) {
   lastcolor[0] = -1.0;
   lastcolor[1] = -1.0;
   lastcolor[2] = -1.0;
-  while (!feof(stream)) {
+  while(!feof(stream)) {
     char obstlabel[255];
     float *xyzpoints;
     float *normal;
@@ -359,7 +359,7 @@ int ReadCADGeom(cadgeomdata *cd, const char *file, GLfloat block_shininess) {
     float rgbtemp[4] = {(float)-1., (float)-1., (float)-1., (float)1.};
     cadquad *quadi;
 
-    if (fgets(buffer, 255, stream) == NULL) break;
+    if(fgets(buffer, 255, stream) == NULL) break;
     quadi = cd->quad + nquads;
     xyzpoints = quadi->xyzpoints;
     normal = quadi->normals;
@@ -369,19 +369,19 @@ int ReadCADGeom(cadgeomdata *cd, const char *file, GLfloat block_shininess) {
            xyzpoints + 9, xyzpoints + 10, xyzpoints + 11);
     CalcQuadNormal(xyzpoints, normal);
 
-    if (fgets(buffer, 255, stream) == NULL) break;
+    if(fgets(buffer, 255, stream) == NULL) break;
     colors = strstr(buffer, " ");
     strcpy(obstlabel, buffer);
     rgbtemp[0] = (float)-1.0;
     rgbtemp[1] = (float)-1.0;
     rgbtemp[2] = (float)-1.0;
     rgbtemp[3] = (float)1.0;
-    if (colors != NULL) {
+    if(colors != NULL) {
       colors[0] = '\0';
       sscanf(colors + 1, "%f %f %f", rgbtemp, rgbtemp + 1, rgbtemp + 2);
     }
-    if (lastcolor[0] != rgbtemp[0] || lastcolor[1] != rgbtemp[1] ||
-        lastcolor[2] != rgbtemp[2]) {
+    if(lastcolor[0] != rgbtemp[0] || lastcolor[1] != rgbtemp[1] ||
+       lastcolor[2] != rgbtemp[2]) {
       quadi->colorindex = colorindex;
       colorindex++;
       lastcolor[0] = rgbtemp[0];
@@ -391,7 +391,7 @@ int ReadCADGeom(cadgeomdata *cd, const char *file, GLfloat block_shininess) {
     else {
       quadi->colorindex = colorindex;
     }
-    if (colors != NULL && rgbtemp[0] >= 0.0) {
+    if(colors != NULL && rgbtemp[0] >= 0.0) {
       quadi->colorindex = -1;
     }
     quadi->colors[0] = rgbtemp[0];
@@ -406,7 +406,7 @@ int ReadCADGeom(cadgeomdata *cd, const char *file, GLfloat block_shininess) {
 
 int ReadCADGeomToCollection(cadgeom_collection *coll, const char *file,
                             GLfloat block_shininess) {
-  if (coll->capacity >= (coll->ncadgeom + 1)) {
+  if(coll->capacity >= (coll->ncadgeom + 1)) {
     fprintf(stderr, "CADGeomCollection has exceeded capacity");
     return -1;
   }
@@ -417,7 +417,7 @@ int ReadCADGeomToCollection(cadgeom_collection *coll, const char *file,
 
 cadgeom_collection *CreateCADGeomCollection(int capacity) {
   cadgeom_collection *coll;
-  if (NewMemory((void **)&coll, capacity * sizeof(cadgeom_collection)) == 0)
+  if(NewMemory((void **)&coll, capacity * sizeof(cadgeom_collection)) == 0)
     return NULL;
   // Set everything to NULL
   memset(coll, 0, capacity * sizeof(cadgeom_collection));
@@ -431,14 +431,14 @@ void FreeCADGeom(cadgeomdata *cd) {
 }
 
 void FreeCADGeomCollection(cadgeom_collection *coll) {
-  for (int i = 0; i < coll->ncadgeom; i++) {
+  for(int i = 0; i < coll->ncadgeom; i++) {
     FreeCADGeom(&(coll->cadgeominfo[i]));
   }
   FreeMemory(coll);
 }
 
 int NCADGeom(cadgeom_collection *coll) {
-  if (coll == NULL) {
+  if(coll == NULL) {
     return 0;
   }
   else {
