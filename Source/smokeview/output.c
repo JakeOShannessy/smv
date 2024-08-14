@@ -388,7 +388,7 @@ void OutputBarText(float x, float y, const GLfloat *color, char *string){
 
 /* ------------------ WriteLabels ------------------------ */
 
-void WriteLabels(labels_collection *labelscoll){
+void WriteLabels(labels_collection *labelscoll_arg){
   labeldata *first_label, *thislabel;
   FILE *stream = NULL;
   char quote[2];
@@ -397,7 +397,7 @@ void WriteLabels(labels_collection *labelscoll){
   stream = fopen(event_filename, "w");
   if(stream==NULL)return;
 
-  first_label = labelscoll->label_first_ptr;
+  first_label = labelscoll_arg->label_first_ptr;
   strcpy(quote,"\"");
 
   for(thislabel = first_label->next; thislabel->next!=NULL; thislabel = thislabel->next){
@@ -419,10 +419,10 @@ void WriteLabels(labels_collection *labelscoll){
 
 /* ------------------ DrawLabels ------------------------ */
 
-void DrawLabels(labels_collection *labelscoll){
+void DrawLabels(labels_collection *labelscoll_arg){
   labeldata *first_label, *thislabel;
 
-  first_label = labelscoll->label_first_ptr;
+  first_label = labelscoll_arg->label_first_ptr;
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
