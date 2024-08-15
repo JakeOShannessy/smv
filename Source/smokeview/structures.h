@@ -1100,6 +1100,14 @@ typedef struct _smoke3dtypedata {
   float extinction, valmin, valmax;
 } smoke3dtypedata;
 
+/* --------------------------  patchfacedata ------------------------------------ */
+
+typedef struct _patchfacedata{
+  int ib[6], dir, vis, nrow, ncol, start, type, internal;
+  struct _meshdata *meshinfo;
+  struct _blockagedata *obst;
+} patchfacedata;
+
 /* --------------------------  patchdata ------------------------------------ */
 
 typedef struct _patchdata {
@@ -1113,7 +1121,6 @@ typedef struct _patchdata {
   int skip,dir;
   float xyz_min[3], xyz_max[3];
   int ntimes, ntimes_old;
-  int version;
   int patch_filetype, structured;
   int shortlabel_index;
   int *cvals_offsets, *cvals_sizes;
@@ -1151,6 +1158,8 @@ typedef struct _patchdata {
   int hist_update;
   bounddata bounds;
   boundsdata *bounds2;
+  int npatches;
+  patchfacedata *patchfaceinfo;
 #ifdef pp_BOUNDFRAME
   framedata *frameinfo;
 #endif
