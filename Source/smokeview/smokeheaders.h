@@ -6,6 +6,7 @@
 #endif
 
 #include "readgeom.h"
+#include "readsmoke.h"
 
 //*** threader headers
 EXTERNCPP void *CheckFiles(void *arg);

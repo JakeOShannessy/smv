@@ -21,6 +21,7 @@
 #include "string_util.h"
 #include "isodefs.h"
 #include "structures.h"
+#include "readsmoke.h"
 
 /* ------------------ FreeSmoke3d ------------------------ */
 
