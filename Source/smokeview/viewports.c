@@ -1068,11 +1068,11 @@ void OutputSlicePlot(char *file){
     return;
   }
 
-  for(i = 0; i < nsliceinfo; i++){
+  for(i = 0; i < slicecoll.nsliceinfo; i++){
     slicedata *slicei;
     devicedata *devicei;
 
-    slicei = sliceinfo + i;
+    slicei = slicecoll.sliceinfo + i;
     devicei = &(slicei->vals2d);
     if(slicei->loaded == 0 || devicei->valid == 0)continue;
     if(first == 1){
@@ -1087,11 +1087,11 @@ void OutputSlicePlot(char *file){
 
   for(j = -3;j < ntimes;j++){
     first = 1;
-    for(i = 0; i < nsliceinfo; i++){
+    for(i = 0; i < slicecoll.nsliceinfo; i++){
       slicedata *slicei;
       devicedata *devicei;
 
-      slicei = sliceinfo + i;
+      slicei = slicecoll.sliceinfo + i;
       devicei = &(slicei->vals2d);
       if(slicei->loaded == 0 || devicei->valid == 0)continue;
       if(j == -3){
@@ -1175,13 +1175,13 @@ void ViewportSlicePlot(int quad, GLint screen_left, GLint screen_down){
     int i, position;
 
     position = 0;
-    for(i = 0; i<nsliceinfo; i++){
+    for(i = 0; i<slicecoll.nsliceinfo; i++){
       slicedata *slicei;
       devicedata *devicei;
       float valmin, valmax;
       float highlight_val;
 
-      slicei = sliceinfo+i;
+      slicei = slicecoll.sliceinfo+i;
       devicei = &(slicei->vals2d);
       if(slicei->loaded==0||devicei->valid==0)continue;
 
