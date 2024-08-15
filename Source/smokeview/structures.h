@@ -785,27 +785,6 @@ typedef struct _subslicemenudata {
   int havex, havey, havez, havexyz;
 } subslicemenudata;
 
-/* --------------------------  multislicedata ------------------------------------ */
-
-typedef struct _multislicedata {
-  int seq_id, autoload;
-  int loaded, display, loadable;
-  int *islices, nslices;
-  int slice_filetype;
-  char menulabel[128];
-  char menulabel2[128];
-} multislicedata;
-
-/* --------------------------  multivslicedata ------------------------------------ */
-
-typedef struct _multivslicedata {
-  int seq_id, autoload;
-  int loaded,display,mvslicefile_labelindex,loadable;
-  int nvslices;
-  int *ivslices;
-  char menulabel[128];
-  char menulabel2[128];
-} multivslicedata;
 
 /* --------------------------  splitslicedata ------------------------------------ */
 
@@ -864,22 +843,6 @@ typedef struct _globalboundsdata {
   float valmins[MAXPLOT3DVARS],      valmaxs[MAXPLOT3DVARS];
 } globalboundsdata;
 
-/* --------------------------  vslicedata ------------------------------------ */
-
-typedef struct _vslicedata {
-  int seq_id, autoload, reload;
-  slicedata *u,*v,*w,*val;
-  int volslice;
-  int iu, iv, iw, ival;
-  int skip;
-  int finalize;
-  int loaded,display;
-  float valmin, valmax;
-  int vslice_filetype;
-  int vslicefile_labelindex;
-  char menulabel[128];
-  char menulabel2[128];
-} vslicedata;
 
 /* --------------------------  smokedata ------------------------------------ */
 

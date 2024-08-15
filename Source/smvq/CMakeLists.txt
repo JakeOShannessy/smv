@@ -27,7 +27,6 @@ add_executable(smvq smvq.c
     ../shared/readobject.c
     ../shared/readsmvfile.c
     ../shared/readobject.c
-    ../shared/colorbars.c
     ../shared/readcad.c
     ../shared/readpart.c
     ../shared/readlabel.c

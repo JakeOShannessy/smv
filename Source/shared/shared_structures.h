@@ -43,6 +43,11 @@ typedef struct _tourdata {
   int startup;
   int isDefault;
 } tourdata;
+#include "string_util.h"
+#include "isodefs.h"
+#include "contourdefs.h"
+#include "histogram.h"
+
 
 /* --------------------------  propdata ------------------------------------- */
 #define PROPVARMAX 100
@@ -359,7 +364,6 @@ typedef struct _hrrdata {
   flowlabels label;
 } hrrdata;
 
-
 /* --------------------------  compdata ------------------------------------ */
 
 typedef struct _compdata {
@@ -397,7 +401,7 @@ typedef struct _slicedata {
   int setvalmin, setvalmax;
   float globalmin_slice, globalmax_slice;
   float valmin_slice, valmax_slice;
-  float diff_valmin, diff_valmax;
+  float diff_valmin,  diff_valmax;
   flowlabels label;
   float *qslicedata, *qsliceframe, *times, *qslice;
   unsigned char *times_map;
@@ -411,7 +415,7 @@ typedef struct _slicedata {
   char menulabel[128];
   char menulabel2[128];
   float *rgb_slice_ptr[256];
-  int ntimes, ntimes_old, itime;
+  int ntimes,ntimes_old,itime;
   unsigned char *iqsliceframe;
   float above_ground_level;
   int have_agl_data;
@@ -422,7 +426,7 @@ typedef struct _slicedata {
   int n_imap, n_jmap, n_kmap;
   int plotx, ploty, plotz;
   int ijk_min[3], ijk_max[3];
-  float xmin, xmax, ymin, ymax, zmin, zmax;
+  float xmin,xmax,ymin,ymax,zmin,zmax;
   float xyz_min[3], xyz_max[3];
   int nsliceijk;
   int *timeslist;
@@ -483,10 +487,61 @@ typedef struct {
   texturedata *terrain_textures;
 } terrain_texture_collection;
 
+
+/* --------------------------  multislicedata ------------------------------------ */
+
+typedef struct _multislicedata {
+  int seq_id, autoload;
+  int loaded, display, loadable;
+  int *islices, nslices;
+  int slice_filetype;
+  char menulabel[128];
+  char menulabel2[128];
+} multislicedata;
+
+/* --------------------------  multivslicedata ------------------------------------ */
+
+typedef struct _multivslicedata {
+  int seq_id, autoload;
+  int loaded,display,mvslicefile_labelindex,loadable;
+  int nvslices;
+  int *ivslices;
+  char menulabel[128];
+  char menulabel2[128];
+} multivslicedata;
+
+/* --------------------------  vslicedata ------------------------------------ */
+
+typedef struct _vslicedata {
+  int seq_id, autoload, reload;
+  slicedata *u,*v,*w,*val;
+  int volslice;
+  int iu, iv, iw, ival;
+  int skip;
+  int finalize;
+  int loaded,display;
+  float valmin, valmax;
+  int vslice_filetype;
+  int vslicefile_labelindex;
+  char menulabel[128];
+  char menulabel2[128];
+} vslicedata;
+
+
 typedef struct {
-  int nslice;
+  int nsliceinfo;
   slicedata *sliceinfo;
+
+  int nmultisliceinfo;
+  multislicedata *multisliceinfo;
+
+  int nvsliceinfo;
+  vslicedata *vsliceinfo;
+
+  int nmultivsliceinfo;
+  multivslicedata *multivsliceinfo;
 } slice_collection;
+
 
 typedef struct {
   int nsurfinfo;
