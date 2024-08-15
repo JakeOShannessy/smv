@@ -6,6 +6,7 @@
 #endif
 
 #include "readgeom.h"
+#include "readsmoke.h"
 #include "colorbars.h"
 
 //*** threader headers

@@ -28,6 +28,7 @@
 #include "readslice.h"
 #include "colorbars.h"
 #include "readcad.h"
+#include "readsmoke.h"
 #include "shared_structures.h"
 
 #define BREAK break
@@ -3331,22 +3332,22 @@ int CompareSmoketypes(const void *arg1, const void *arg2){
 void UpdateSmoke3DTypes(void){
   int i;
 
-  if(nsmoke3dinfo==0)return;
-  NewMemory((void **)&smoke3dtypes, nsmoke3dinfo*sizeof(smoke3dtypedata));
-  for(i = 0; i<nsmoke3dinfo; i++){
+  if(smoke3dcoll.nsmoke3dinfo==0)return;
+  NewMemory((void **)&smoke3dtypes, smoke3dcoll.nsmoke3dinfo*sizeof(smoke3dtypedata));
+  for(i = 0; i<smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
     int j, doit;
     char *labeli;
     smoke3dtypedata *typen;
 
-    smoke3di = smoke3dinfo+i;
+    smoke3di = smoke3dcoll.smoke3dinfo+i;
     labeli = smoke3di->label.shortlabel;
     doit = 1;
     for(j = 0; j<i; j++){
       smoke3ddata *smoke3dj;
       char *labelj;
 
-      smoke3dj = smoke3dinfo+j;
+      smoke3dj = smoke3dcoll.smoke3dinfo+j;
       labelj = smoke3dj->label.shortlabel;
       if(strcmp(labeli, labelj)==0){
         doit = 0;
@@ -3369,12 +3370,12 @@ void UpdateSmoke3DTypes(void){
   else{
     FREEMEMORY(smoke3dtypes);
   }
-  for(i = 0; i<nsmoke3dinfo; i++){
+  for(i = 0; i<smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
     int j;
     smokestatedata *smokestate;
 
-    smoke3di = smoke3dinfo+i;
+    smoke3di = smoke3dcoll.smoke3dinfo+i;
     smoke3di->type = GetSmoke3DType(smoke3di->label.shortlabel);
 
     NewMemory((void **)&smokestate, nsmoke3dtypes*sizeof(smokestatedata));
@@ -3996,13 +3997,13 @@ void UpdateMeshCoords(void){
     }
   }
   UpdateVentOffset();
-  if(nsmoke3dinfo>0)NewMemory((void **)&smoke3dinfo_sorted,nsmoke3dinfo*sizeof(smoke3ddata *));
+  if(smoke3dcoll.nsmoke3dinfo>0)NewMemory((void **)&smoke3dcoll.smoke3dinfo_sorted,smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata *));
   NewMemory((void **)&meshvisptr,meshescoll.nmeshes*sizeof(int));
   for(i=0;i<meshescoll.nmeshes;i++){
     meshvisptr[i]=1;
   }
-  for(i=0;i<nsmoke3dinfo;i++){
-    smoke3dinfo_sorted[i]=smoke3dinfo+i;
+  for(i=0;i<smoke3dcoll.nsmoke3dinfo;i++){
+    smoke3dcoll.smoke3dinfo_sorted[i]=smoke3dcoll.smoke3dinfo+i;
   }
   for(i = 0; i<meshescoll.nmeshes; i++){
     meshdata *meshi;
@@ -5521,7 +5522,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
 
 void ParseSMOKE3DCount(void){
   if(setup_only==1)return;
-  nsmoke3dinfo++;
+  smoke3dcoll.nsmoke3dinfo++;
 }
 
 /* ------------------ ParseSMOKE3DProcess ------------------------ */
@@ -5567,7 +5568,7 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
     blocknumber--;
   }
   if(FGETS(buffer, 255, stream)==NULL){
-    nsmoke3dinfo--;
+    smoke3dcoll.nsmoke3dinfo--;
     return RETURN_BREAK;
   }
   bufferptr = TrimFrontBack(buffer);
@@ -5577,10 +5578,10 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
     smoke3ddata *smoke3di;
     int i;
 
-    smoke3di = smoke3dinfo+ismoke3d;
+    smoke3di = smoke3dcoll.smoke3dinfo+ismoke3d;
 
 #ifdef _DEBUG
-    if(nsmoke3dinfo>500&&(ismoke3d%100==0||ismoke3d==nsmoke3dinfo-1)){
+    if(smoke3dcoll.nsmoke3dinfo>500&&(ismoke3d%100==0||ismoke3d==smoke3dcoll.nsmoke3dinfo-1)){
       PRINTF("     examining %i'st 3D smoke file\n", ismoke3dcount);
     }
 #endif
@@ -6917,11 +6918,11 @@ void *CheckFiles(void *arg){
     }
     THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   }
-  for(i = 0;i < nsmoke3dinfo;i++){
+  for(i = 0;i < smoke3dcoll.nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
     int have_file;
 
-    smoke3di = smoke3dinfo + i;
+    smoke3di = smoke3dcoll.smoke3dinfo + i;
     have_file = FILE_EXISTS_CASEDIR(smoke3di->comp_file);
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
     if(have_file == YES){
@@ -6943,10 +6944,10 @@ void *CheckFiles(void *arg){
       patchi->file = patchi->comp_file;
     }
   }
-  for(i = 0; i < nsmoke3dinfo; i++){
+  for(i = 0; i < smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dinfo + i;
+    smoke3di = smoke3dcoll.smoke3dinfo + i;
     if(smoke3di->compression_type_temp == COMPRESSED_ZLIB){
       smoke3di->file = smoke3di->comp_file;
       smoke3di->is_zlib = 1;
@@ -7208,18 +7209,18 @@ int ReadSMV_Init(){
   }
   nzoneinfo=0;
 
-  if(nsmoke3dinfo>0){
+  if(smoke3dcoll.nsmoke3dinfo>0){
     {
       smoke3ddata *smoke3di;
 
-      for(i=0;i<nsmoke3dinfo;i++){
-        smoke3di = smoke3dinfo + i;
+      for(i=0;i<smoke3dcoll.nsmoke3dinfo;i++){
+        smoke3di = smoke3dcoll.smoke3dinfo + i;
         FreeSmoke3D(smoke3di);
         FREEMEMORY(smoke3di->comp_file);
         FREEMEMORY(smoke3di->reg_file);
       }
-      FREEMEMORY(smoke3dinfo);
-      nsmoke3dinfo=0;
+      FREEMEMORY(smoke3dcoll.smoke3dinfo);
+      smoke3dcoll.nsmoke3dinfo=0;
     }
   }
 
@@ -8034,8 +8035,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     }
     sliceinfo_copy=slicecoll.sliceinfo;
   }
-  if(nsmoke3dinfo>0){
-    if(NewMemory( (void **)&smoke3dinfo, nsmoke3dinfo*sizeof(smoke3ddata))==0)return 2;
+  if(smoke3dcoll.nsmoke3dinfo>0){
+    if(NewMemory( (void **)&smoke3dcoll.smoke3dinfo, smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata))==0)return 2;
   }
 
   FREEMEMORY(patchinfo);
@@ -8125,8 +8126,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   if(slicecoll.nsliceinfo>0){
     if(NewMemory((void **)&slice_buffer, 7*slicecoll.nsliceinfo*MAXFILELEN) == 0)return 2;
   }
-  if(nsmoke3dinfo>0){
-    if(NewMemory((void **)&smoke3d_buffer, 9*nsmoke3dinfo*MAXFILELEN) == 0)return 2;
+  if(smoke3dcoll.nsmoke3dinfo>0){
+    if(NewMemory((void **)&smoke3d_buffer, 9*smoke3dcoll.nsmoke3dinfo*MAXFILELEN) == 0)return 2;
   }
 
   PRINT_TIMER(timer_readsmv, "pass 1");
