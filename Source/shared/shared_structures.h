@@ -479,8 +479,18 @@ typedef struct {
 } texture_collection;
 
 typedef struct {
+  int nterrain_textures;
+  texturedata *terrain_textures;
+} terrain_texture_collection;
+
+typedef struct {
   int nslice;
   slicedata *sliceinfo;
 } slice_collection;
+
+typedef struct {
+  int nsurfinfo;
+  slicedata *surfinfo;
+} surf_collection;
 
 #endif

@@ -1368,15 +1368,15 @@ int IsDupTexture(texture_collection *texture_coll, texturedata *texti){
 
 /* ------------------ IsTerrainTexture ------------------------ */
 
-int IsTerrainTexture(texturedata *texti){
+int IsTerrainTexture(terrain_texture_collection *terrain_texture_coll, texturedata *texti){
   int is_terrain_texture;
   int i;
 
   is_terrain_texture=0;
-  for(i=0;i<nterrain_textures;i++){
+  for(i=0;i<terrain_texture_coll->nterrain_textures;i++){
     texturedata *tt;
 
-    tt = terrain_textures + i;
+    tt = terrain_texture_coll->terrain_textures + i;
     if(tt->file==NULL||strcmp(tt->file, texti->file)!=0)continue;
     return 1;
   }
@@ -1385,18 +1385,18 @@ int IsTerrainTexture(texturedata *texti){
 
 /* ------------------ InitTextures0 ------------------------ */
 
-void InitTextures0(void){
+void InitTextures0(surf_collection *surfcoll,texture_collection *texture_coll,terrain_texture_collection *terrain_texture_coll){
   // get texture filename from SURF and device info
   int i;
 
   INIT_PRINT_TIMER(texture_timer);
   texture_coll->ntextureinfo = 0;
-  for(i=0;i<nsurfinfo;i++){
+  for(i=0;i<surfcoll->nsurfinfo;i++){
     surfdata *surfi;
     texturedata *texti;
     int len;
 
-    surfi = surfinfo + i;
+    surfi = surfcoll->surfinfo + i;
     if(surfi->texturefile==NULL)continue;
     texti = texture_coll->textureinfo + texture_coll->ntextureinfo;
     len = strlen(surfi->texturefile);
@@ -1428,16 +1428,16 @@ void InitTextures0(void){
   }
   PRINT_TIMER(texture_timer, "device textures");
 
-  if(nterrain_textures>0){
+  if(terrain_texture_coll->nterrain_textures>0){
     texturedata *texture_base;
 
     texture_base = texture_coll->textureinfo + texture_coll->ntextureinfo;
-    for(i=0;i<nterrain_textures;i++){
+    for(i=0;i<terrain_texture_coll->nterrain_textures;i++){
       char *texturefile;
       texturedata *texti;
       int len;
 
-      texturefile = terrain_textures[i].file;
+      texturefile = terrain_texture_coll->terrain_textures[i].file;
       texti = texture_coll->textureinfo + texture_coll->ntextureinfo;
       len = strlen(texturefile);
       NewMemory((void **)&texti->file,(len+1)*sizeof(char));
@@ -1447,8 +1447,8 @@ void InitTextures0(void){
       texti->display=0;
       texture_coll->ntextureinfo++;
     }
-    FREEMEMORY(terrain_textures);
-    terrain_textures = texture_base;
+    FREEMEMORY(terrain_texture_coll->terrain_textures);
+    terrain_texture_coll->terrain_textures = texture_base;
   }
   PRINT_TIMER(texture_timer, "terrain textures");
 
@@ -1610,15 +1610,15 @@ void InitTextures0(void){
 
   // define terrain texture
 
-  if(nterrain_textures>0){
+  if(terrain_texture_coll->nterrain_textures>0){
     texturedata *tt;
     unsigned char *floortex;
     int texwid, texht, nloaded=0;
 
-    for(i=0;i<nterrain_textures;i++){
+    for(i=0;i<terrain_texture_coll->nterrain_textures;i++){
       int is_transparent;
 
-      tt = terrain_textures + i;
+      tt = terrain_texture_coll->terrain_textures + i;
       tt->loaded=0;
       tt->used=0;
       tt->display=0;
@@ -1656,16 +1656,16 @@ void InitTextures0(void){
 
   /* ------------------ InitTextures ------------------------ */
 
-void InitTextures(int use_graphics_arg){
+void InitTextures(surf_collection *surfcoll, texture_collection *texture_coll, terrain_texture_collection *terrain_texture_col, int use_graphics_arg){
   INIT_PRINT_TIMER(total_texture_time);
   UpdateDeviceTextures(objectscoll, ndeviceinfo, deviceinfo,
                        npropinfo, propinfo, &ndevice_texture_list,
                        &device_texture_list_index, &device_texture_list);
-  if(nsurfinfo>0||ndevice_texture_list>0){
-    if(NewMemory((void **)&texture_coll->textureinfo, (nsurfinfo+ndevice_texture_list+nterrain_textures)*sizeof(texturedata))==0)return;
+  if(surfcoll->nsurfinfo>0||ndevice_texture_list>0){
+    if(NewMemory((void **)&texture_coll->textureinfo, (surfcoll->nsurfinfo+ndevice_texture_list+terrain_texture_col->nterrain_textures)*sizeof(texturedata))==0)return;
   }
-  if(use_graphics_arg==1){
-    InitTextures0();
+  if(use_graphics_arg == 1) {
+    InitTextures0(surfcoll, texture_coll, terrain_texture_col);
   }
   PRINT_TIMER(total_texture_time, "total texure time");
 }
@@ -1999,13 +1999,13 @@ void UpdateSmoke3DTypes(void){
 
 /* ------------------ IsSliceDup ------------------------ */
 
-int IsSliceDup(slicedata *sd, int nslice){
+int IsSliceDup(slice_collection *slicecoll, slicedata *sd, int nslice){
   int i;
 
   for(i=0;i<nslice-1;i++){
     slicedata *slicei;
 
-    slicei = sliceinfo + i;
+    slicei = slicecoll->sliceinfo + i;
     if(slicei->ijk_min[0]!=sd->ijk_min[0]||slicei->ijk_max[0]!=sd->ijk_max[0])continue;
     if(slicei->ijk_min[1]!=sd->ijk_min[1]||slicei->ijk_max[1]!=sd->ijk_max[1])continue;
     if(slicei->ijk_min[2]!=sd->ijk_min[2]||slicei->ijk_max[2]!=sd->ijk_max[2])continue;
@@ -2052,13 +2052,13 @@ int CreateNullLabel(flowlabels *flowlabel){
 
 /* ------------------ GetSurface ------------------------ */
 
-surfdata *GetSurface(char *label){
+surfdata *GetSurface(surf_collection *surfcoll, char *label){
   int i;
 
-  for(i = 0; i < nsurfinfo; i++){
+  for(i = 0; i < surfcoll->nsurfinfo; i++){
     surfdata *surfi;
 
-    surfi = surfinfo + i;
+    surfi = surfcoll->surfinfo + i;
     if(strcmp(surfi->surfacelabel, label) == 0)return surfi;
   }
   return surfacedefault;
@@ -2213,7 +2213,7 @@ void ReadDeviceHeader(char *file, devicedata *devices, int ndevices){
 
 /* ------------------ SetSurfaceIndex ------------------------ */
 
-void SetSurfaceIndex(blockagedata *bc){
+void SetSurfaceIndex(surf_collection *surfcoll, blockagedata *bc){
   int i, j, jj;
   surfdata *surfj;
   char *surflabel, *bclabel;
@@ -2224,10 +2224,10 @@ void SetSurfaceIndex(blockagedata *bc){
     bc->surf_index[i] = -1;
     bclabel = bc->surf[i]->surfacelabel;
     if(bc->surf[i] == NULL)continue;
-    for(jj = 1; jj < nsurfinfo + 1; jj++){
+    for(jj = 1; jj < surfcoll->nsurfinfo + 1; jj++){
       j = jj;
-      if(jj == nsurfinfo)j = 0;
-      surfj = surfinfo + j;
+      if(jj == surfcoll->nsurfinfo)j = 0;
+      surfj = surfcoll->surfinfo + j;
       surflabel = surfj->surfacelabel;
       if(strcmp(bclabel, surflabel) != 0)continue;
       bc->surf_index[i] = j;
@@ -2429,8 +2429,8 @@ void ParseDatabase(char *file){
   for(i = 0; i<nsurfids; i++){
     labeli = surfids[i].label;
     nexti = 0;
-    for(j = 0; j<nsurfinfo; j++){
-      surfj = surfinfo+j;
+    for(j = 0; j<surfcoll->nsurfinfo; j++){
+      surfj = surfcoll->surfinfo+j;
       labelj = surfj->surfacelabel;
       if(strcmp(labeli, labelj)==0){
         nexti = 1;
@@ -2459,14 +2459,14 @@ void ParseDatabase(char *file){
   /* add surfaces found in database to those surfaces defined in previous SURF lines */
 
   if(nsurfids_shown>0){
-    if(nsurfinfo==0){
+    if(surfcoll->nsurfinfo==0){
       FREEMEMORY(surfinfo);
       FREEMEMORY(textureinfo);
       NewMemory((void **)&surfinfo, (nsurfids_shown+MAX_ISO_COLORS+1)*sizeof(surfdata));
       NewMemory((void **)&textureinfo, nsurfids_shown*sizeof(texturedata));
     }
-    if(nsurfinfo>0){
-      if(surfinfo==NULL){
+    if(surfcoll->nsurfinfo>0){
+      if(surfcoll->surfinfo==NULL){
         NewMemory((void **)&surfinfo, (nsurfids_shown+nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
       }
       else{
@@ -2479,14 +2479,14 @@ void ParseDatabase(char *file){
         ResizeMemory((void **)&textureinfo, (nsurfids_shown+nsurfinfo)*sizeof(texturedata));
       }
     }
-    surfj = surfinfo+nsurfinfo-1;
+    surfj = surfcoll->surfinfo+surfcoll->nsurfinfo-1;
     for(j = 0; j<nsurfids; j++){
       if(surfids[j].show==0)continue;
       surfj++;
       InitSurface(surfj);
       surfj->surfacelabel = surfids[j].label;
     }
-    nsurfinfo += nsurfids_shown;
+    nsurfcoll->surfinfo += nsurfids_shown;
   }
   UpdateSortedSurfIdList();
 }
@@ -3977,15 +3977,15 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
 
 /* ------------------ FreeSliceData ------------------------ */
 
-void FreeSliceData(void){
+void FreeSliceData(slice_collection *slicecoll){
   int i;
 
-  FREEMEMORY(surfinfo);
-  if(nsliceinfo>0){
+  FREEMEMORY(surfcoll->surfinfo);
+  if(slicecoll->nsliceinfo>0){
     for(i = 0; i<nsliceinfo; i++){
       slicedata *sd;
-      sd = sliceinfo+i;
-      FreeLabels(&sliceinfo[i].label);
+      sd = slicecoll->sliceinfo+i;
+      FreeLabels(&slicecoll->sliceinfo[i].label);
       FREEMEMORY(sd->reg_file);
       FREEMEMORY(sd->comp_file);
       FREEMEMORY(sd->size_file);
@@ -4000,9 +4000,9 @@ void FreeSliceData(void){
     }
     FREEMEMORY(multisliceinfo);
     nmultisliceinfo = 0;
-    FREEMEMORY(sliceinfo);
+    FREEMEMORY(slicecoll->sliceinfo);
   }
-  nsliceinfo = 0;
+  slicecoll->nsliceinfo = 0;
 
   //*** free multi-vector slice data
 
