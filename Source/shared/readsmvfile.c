@@ -52,6 +52,12 @@
 
 #define SNIFF_ERRORS(f)
 
+typedef struct {
+  meshescollection *meshescoll;
+  color_collection *colorcoll;
+  prop_collection *propcoll;
+} smv_case;
+
 int GetNDevices(char *file);
 
 /* ------------------ GetHrrCsvCol ------------------------ */
@@ -733,26 +739,11 @@ void InitMesh(meshdata *meshi){
   meshi->nvents = 0;
   meshi->ndummyvents = 0;
   meshi->ncvents = 0;
-  meshi->npatches = 0;
-  meshi->boundarytype = NULL;
   meshi->offset[XXX] = 0.0;
   meshi->offset[YYY] = 0.0;
   meshi->offset[ZZZ] = 0.0;
-  meshi->boundarytype = NULL;
-  meshi->patchdir = NULL;
-  meshi->patch_surfindex = NULL;
-  meshi->pi1 = NULL;
-  meshi->pi2 = NULL;
-  meshi->pj1 = NULL;
-  meshi->pj2 = NULL;
-  meshi->pk1 = NULL;
-  meshi->pk2 = NULL;
-  meshi->meshonpatch = NULL;
-  meshi->blockonpatch = NULL;
   meshi->ptype = NULL;
-  meshi->boundary_row = NULL, meshi->boundary_col = NULL, meshi->blockstart = NULL;
   meshi->zipoffset = NULL, meshi->zipsize = NULL;
-  meshi->vis_boundaries = NULL;
   meshi->xyzpatch = NULL;
   meshi->xyzpatch_threshold = NULL;
   meshi->patchventcolors = NULL;
@@ -919,7 +910,7 @@ propdata *GetPropID(prop_collection *propcoll, char *prop_id){
 
 /* ----------------------- InitDevice ----------------------------- */
 
-void InitDevice(meshescollection *meshescoll, color_collection *colorcoll, devicedata *devicei, float *xyz, int is_beam, float *xyz1, float *xyz2, float *xyzn, int state0, int nparams, float *params, char *labelptr){
+void InitDevice(smv_case *scase, devicedata *devicei, float *xyz, int is_beam, float *xyz1, float *xyz2, float *xyzn, int state0, int nparams, float *params, char *labelptr){
   float norm;
   int i;
 
@@ -941,8 +932,8 @@ void InitDevice(meshescollection *meshescoll, color_collection *colorcoll, devic
   if(STRCMP(devicei->object->label, "plane") == 0){
     float color[4];
 
-    NewMemory((void **)&devicei->plane_surface, meshescoll->nmeshes * sizeof(isosurface *));
-    for(i = 0; i < meshescoll->nmeshes; i++){
+    NewMemory((void **)&devicei->plane_surface, scase->meshescoll->nmeshes * sizeof(isosurface *));
+    for(i = 0; i < scase->meshescoll->nmeshes; i++){
       NewMemory((void **)&devicei->plane_surface[i], sizeof(isosurface));
     }
     if(nparams >= 3){
@@ -950,7 +941,7 @@ void InitDevice(meshescollection *meshescoll, color_collection *colorcoll, devic
       color[1] = params[1];
       color[2] = params[2];
       color[3] = 1.0;
-      devicei->color = GetColorPtr(colorcoll, color);
+      devicei->color = GetColorPtr(scase->colorcoll, color);
     }
     if(nparams >= 4){
       devicei->line_width = params[3];
@@ -1015,7 +1006,7 @@ void InitDevice(meshescollection *meshescoll, color_collection *colorcoll, devic
 
 /* ------------------ ParseDevicekeyword ------------------------ */
 
-void ParseDevicekeyword(object_collection *objectscoll, BFILE *stream, devicedata *devicei){
+void ParseDevicekeyword(smv_case *scase, BFILE *stream, devicedata *devicei){
   float xyz[3]={0.0,0.0,0.0}, xyzn[3]={0.0,0.0,0.0};
   float xyz1[3] = { 0.0,0.0,0.0 }, xyz2[3] = { 0.0,0.0,0.0 };
   int state0=0;
@@ -1059,11 +1050,11 @@ void ParseDevicekeyword(object_collection *objectscoll, BFILE *stream, devicedat
   else{
     strcpy(devicei->deviceID, tok1);
   }
-  devicei->object = GetSmvObjectType(objectscoll,tok1,objectscoll->std_object_defs.missing_device);
-  if(devicei->object==objectscoll->std_object_defs.missing_device&&tok3!=NULL){
-    devicei->object = GetSmvObjectType(objectscoll,tok3,objectscoll->std_object_defs.missing_device);
+  devicei->object = GetSmvObjectType(scase->objectscoll,tok1,scase->objectscoll->std_object_defs.missing_device);
+  if(devicei->object==scase->objectscoll->std_object_defs.missing_device&&tok3!=NULL){
+    devicei->object = GetSmvObjectType(scase->objectscoll,tok3,scase->objectscoll->std_object_defs.missing_device);
   }
-  if(devicei->object == objectscoll->std_object_defs.missing_device)have_missing_objects = 1;
+  if(devicei->object == scase->objectscoll->std_object_defs.missing_device)have_missing_objects = 1;
   devicei->params=NULL;
   devicei->times=NULL;
   devicei->vals=NULL;
@@ -1124,7 +1115,7 @@ void ParseDevicekeyword(object_collection *objectscoll, BFILE *stream, devicedat
   }
 
   if(nparams<=0){
-    InitDevice(meshescoll,colorcoll,devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,0,NULL,labelptr);
+    InitDevice(scase,devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,0,NULL,labelptr);
   }
   else{
     float *params,*pc;
@@ -1140,7 +1131,7 @@ void ParseDevicekeyword(object_collection *objectscoll, BFILE *stream, devicedat
       sscanf(buffer,"%f %f %f %f %f %f",pc,pc+1,pc+2,pc+3,pc+4,pc+5);
       pc+=6;
     }
-    InitDevice(meshescoll,colorcoll,devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,nparams,params,labelptr);
+    InitDevice(scase,devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,nparams,params,labelptr);
   }
   GetElevAz(devicei->xyznorm,&devicei->dtheta,devicei->rotate_axis,NULL);
   if(nparams_textures>0){
@@ -1155,7 +1146,7 @@ void ParseDevicekeyword(object_collection *objectscoll, BFILE *stream, devicedat
 
 /* ------------------ ParseDevicekeyword2 ------------------------ */
 
-void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
+void ParseDevicekeyword2(smv_case *scase, FILE *stream, devicedata *devicei){
   float xyz[3] = {0.0,0.0,0.0}, xyzn[3] = {0.0,0.0,0.0};
   float xyz1[3] = {0.0,0.0,0.0}, xyz2[3] = {0.0,0.0,0.0};
   int state0 = 0;
@@ -1190,11 +1181,11 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
   else{
     strcpy(devicei->deviceID, tok1);
   }
-  devicei->object = GetSmvObjectType(objectscoll,tok1, objectscoll->std_object_defs.missing_device);
-  if(devicei->object==objectscoll->std_object_defs.missing_device&&tok3!=NULL){
-    devicei->object = GetSmvObjectType(objectscoll,tok3, objectscoll->std_object_defs.missing_device);
+  devicei->object = GetSmvObjectType(scase->objectscoll,tok1, scase->objectscoll->std_object_defs.missing_device);
+  if(devicei->object==scase->objectscoll->std_object_defs.missing_device&&tok3!=NULL){
+    devicei->object = GetSmvObjectType(scase->objectscoll,tok3, scase->objectscoll->std_object_defs.missing_device);
   }
-  if(devicei->object==objectscoll->std_object_defs.missing_device)have_missing_objects = 1;
+  if(devicei->object==scase->objectscoll->std_object_defs.missing_device)have_missing_objects = 1;
   devicei->params = NULL;
   devicei->times = NULL;
   devicei->vals = NULL;
@@ -1217,7 +1208,7 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
   devicei->is_beam = is_beam;
 
   GetLabels(buffer, &prop_id, NULL);
-  devicei->prop = GetPropID(prop_id);
+  devicei->prop = GetPropID(scase->propcoll, prop_id);
   if(prop_id!=NULL&&devicei->prop!=NULL&&devicei->prop->smv_object!=NULL){
     devicei->object = devicei->prop->smv_object;
   }
@@ -1252,7 +1243,7 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
   }
 
   if(nparams<=0){
-    InitDevice(meshescoll,colorcoll,devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, 0, NULL, labelptr);
+    InitDevice(scase,devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, 0, NULL, labelptr);
   }
   else{
     float *params, *pc;
@@ -1268,7 +1259,7 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
       sscanf(buffer, "%f %f %f %f %f %f", pc, pc+1, pc+2, pc+3, pc+4, pc+5);
       pc += 6;
     }
-    InitDevice(meshescoll,colorcoll,devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, nparams, params, labelptr);
+    InitDevice(scase,devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, nparams, params, labelptr);
   }
   GetElevAz(devicei->xyznorm, &devicei->dtheta, devicei->rotate_axis, NULL);
   if(nparams_textures>0){
@@ -3313,7 +3304,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   patchi->chopmin = 1.0;
   patchi->setchopmax = 0;
   patchi->chopmax = 0.0;
-  meshescoll->meshinfo[blocknumber].patchfilenum = -1;
+  scase->meshescoll->meshinfo[blocknumber].patchfilenum = -1;
   {
     char geomlabel2[256], *geomptr = NULL;
 
@@ -4863,7 +4854,7 @@ int ReadSMV_Init() {
 /// after ReadSMV_Init to ensure that the appropriate variables are set.
 /// @param stream the smv file stream
 /// @return zero on success, non-zero on failure
-int ReadSMV_Parse(bufferstreamdata *stream) {
+int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   int i;
   int have_zonevents,nzventsnew=0;
   devicedata *devicecopy;

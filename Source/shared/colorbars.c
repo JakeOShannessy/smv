@@ -20,26 +20,26 @@ void Rgbf2Lab(float *rgbf_arg, float *lab);
 
 /* ------------------ GetColorPtr ------------------------ */
 
-float *GetColorPtr(color_collection colorcoll, float *color) {
+float *GetColorPtr(color_collection *colorcoll, float *color) {
   colordata *colorptr, *oldlastcolor, *lastcolor;
 
   int i;
 
-  if (colorcoll.firstcolor == NULL) {
-    NewMemory((void *)&colorcoll.firstcolor, sizeof(colordata));
+  if (colorcoll->firstcolor == NULL) {
+    NewMemory((void *)&colorcoll->firstcolor, sizeof(colordata));
     for (i = 0; i < 4; i++) {
-      colorcoll.firstcolor->color[i] = color[i];
-      colorcoll.firstcolor->full_color[i] = color[i];
+      colorcoll->firstcolor->color[i] = color[i];
+      colorcoll->firstcolor->full_color[i] = color[i];
     }
-    colorcoll.firstcolor->bw_color[0] = TOBW(color);
-    colorcoll.firstcolor->bw_color[1] = colorcoll.firstcolor->bw_color[0];
-    colorcoll.firstcolor->bw_color[2] = colorcoll.firstcolor->bw_color[0];
-    colorcoll.firstcolor->bw_color[3] = color[3];
-    colorcoll.firstcolor->nextcolor = NULL;
-    return colorcoll.firstcolor->color;
+    colorcoll->firstcolor->bw_color[0] = TOBW(color);
+    colorcoll->firstcolor->bw_color[1] = colorcoll->firstcolor->bw_color[0];
+    colorcoll->firstcolor->bw_color[2] = colorcoll->firstcolor->bw_color[0];
+    colorcoll->firstcolor->bw_color[3] = color[3];
+    colorcoll->firstcolor->nextcolor = NULL;
+    return colorcoll->firstcolor->color;
   }
-  oldlastcolor = colorcoll.firstcolor;
-  for (colorptr = colorcoll.firstcolor; colorptr != NULL;
+  oldlastcolor = colorcoll->firstcolor;
+  for (colorptr = colorcoll->firstcolor; colorptr != NULL;
        colorptr = colorptr->nextcolor) {
     oldlastcolor = colorptr;
     if (ABS(colorptr->color[0] - color[0]) > 0.0001) continue;

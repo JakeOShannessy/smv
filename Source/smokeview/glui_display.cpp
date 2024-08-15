@@ -640,7 +640,7 @@ void SurfaceCB(int var){
         surfi->transparent_level = 1.0;
       }
       s_color[3] = surfi->transparent_level;
-      surfi->color = GetColorPtr(colorcoll, s_color);
+      surfi->color = GetColorPtr(&colorcoll, s_color);
       updatefacelists = 1;
       updatefaces = 1;
       updatehiddenfaces = 1;

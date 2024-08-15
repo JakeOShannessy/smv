@@ -1,6 +1,5 @@
 #ifndef SHARED_STRUCTURES_H_DEFINED
 #define SHARED_STRUCTURES_H_DEFINED
-#include "isodefs.h"
 #include "options.h"
 #include <stdio.h>
 
@@ -9,6 +8,11 @@
 #endif
 #include GLU_H
 #include GL_H
+
+#include "isodefs.h"
+#include "contourdefs.h"
+#include "histogram.h"
+#include "string_util.h"
 
 /* --------------------------  keyframe ------------------------------------ */
 
@@ -356,13 +360,102 @@ typedef struct _hrrdata {
 } hrrdata;
 
 
+/* --------------------------  compdata ------------------------------------ */
+
+typedef struct _compdata {
+  int offset, size;
+} compdata;
+
+/* --------------------------  slicedata ------------------------------------ */
+
+typedef struct _slicedata {
+  int seq_id, autoload;
+  char *file, *size_file, *bound_file;
+  int have_bound_file;
+  char *comp_file, *reg_file, *vol_file;
+  char *geom_file;
+  int nframes;
+  int finalize;
+  int slcf_index;
+  char *slicelabel;
+  unsigned char *slice_mask;
+  int compression_type;
+  int colorbar_autoflip;
+  int ncompressed;
+  int slice_filetype;
+  struct _multislicedata *mslice;
+  int menu_show;
+  float *constant_color;
+  float qval256[256];
+  int loaded, loading, display;
+  int loaded_save, display_save;
+  float position_orig;
+  int blocknumber;
+  int cell_center_edge;
+  int vec_comp;
+  int skipdup;
+  int setvalmin, setvalmax;
+  float globalmin_slice, globalmax_slice;
+  float valmin_slice, valmax_slice;
+  float diff_valmin, diff_valmax;
+  flowlabels label;
+  float *qslicedata, *qsliceframe, *times, *qslice;
+  unsigned char *times_map;
+  unsigned char *qslicedata_compressed;
+  unsigned char *slicecomplevel;
+  unsigned char full_mesh;
+  contour *line_contours;
+  int nline_contours;
+  compdata *compindex;
+  unsigned char *slicelevel;
+  char menulabel[128];
+  char menulabel2[128];
+  float *rgb_slice_ptr[256];
+  int ntimes, ntimes_old, itime;
+  unsigned char *iqsliceframe;
+  float above_ground_level;
+  int have_agl_data;
+  int volslice;
+  int is1, is2, js1, js2, ks1, ks2;
+  int iis1, iis2, jjs1, jjs2, kks1, kks2;
+  int *imap, *jmap, *kmap;
+  int n_imap, n_jmap, n_kmap;
+  int plotx, ploty, plotz;
+  int ijk_min[3], ijk_max[3];
+  float xmin, xmax, ymin, ymax, zmin, zmax;
+  float xyz_min[3], xyz_max[3];
+  int nsliceijk;
+  int *timeslist;
+  char cdir[256];
+  int idir, fds_dir;
+  float sliceoffset;
+  int nslicei, nslicej, nslicek;
+  int nslicex, nslicey;
+  int nslicetotal;
+  int slicefile_labelindex;
+  int vloaded, uvw;
+  int cell_center;
+  float delta_orig, dplane_min, dplane_max;
+  int extreme_min, extreme_max;
+  int hist_update;
+  int nhistograms;
+  histogramdata *histograms;
+  histogramdata *histogram;
+  struct _patchdata *patchgeom;
+  FILE_SIZE file_size;
+  int *geom_offsets;
+  devicedata vals2d;
+#ifdef pp_SLICEFRAME
+  framedata *frameinfo;
+#endif
+} slicedata;
+
 /* --------------------------  fueldata ------------------------------------ */
 
-typedef struct _fueldata{
+typedef struct _fueldata {
   char *fuel;
   float hoc;
 } fueldata;
-
 
 typedef struct {
   int nhrrinfo;

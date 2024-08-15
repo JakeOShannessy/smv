@@ -618,7 +618,7 @@ void UpdateIndexColors(void){
       if(bc->usecolorindex==1){
         colorindex=bc->colorindex;
         if(colorindex>=0){
-          bc->color = GetColorPtr(colorcoll, rgb[nrgb+colorindex]);
+          bc->color = GetColorPtr(&colorcoll, rgb[nrgb+colorindex]);
         }
       }
     }
@@ -633,7 +633,7 @@ void UpdateIndexColors(void){
         s_color[1]=rgb[nrgb+colorindex][1];
         s_color[2]=rgb[nrgb+colorindex][2];
         s_color[3]=1.0;
-        vi->color = GetColorPtr(colorcoll, s_color);
+        vi->color = GetColorPtr(&colorcoll, s_color);
       }
     }
   }

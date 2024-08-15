@@ -133,5 +133,5 @@ EXTERNCPP void FRgb2Lab(float *rgb_arg, float *lab);
 EXTERNCPP void GetColorDist(colorbardata *cbi, int option, float *min,
                             float *max);
 
-EXTERNCPP float *GetColorPtr(color_collection colorcoll, float *color);
+EXTERNCPP float *GetColorPtr(color_collection *colorcoll, float *color);
 #endif
