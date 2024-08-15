@@ -56,6 +56,8 @@ typedef struct {
   meshescollection *meshescoll;
   color_collection *colorcoll;
   prop_collection *propcoll;
+  object_collection *objectscoll;
+  hrr_collection *hrr_coll;
 } smv_case;
 
 int GetNDevices(char *file);
@@ -1672,10 +1674,10 @@ void InitTextures(surf_collection *surfcoll, texture_collection *texture_coll, t
 
 /* ------------------ UpdateVentOffset ------------------------ */
 
-void UpdateVentOffset(void){
+void UpdateVentOffset(smv_case *scase){
   int i;
 
-  for(i = 0;i < meshescoll->nmeshes;i++){
+  for(i = 0;i < scase->meshescoll->nmeshes;i++){
     meshdata *meshi;
 
     meshi = meshescoll->meshinfo + i;
@@ -1838,10 +1840,10 @@ void GetBoxCorners(float xbar_local, float ybar_local, float zbar_local){
 
 /* ------------------ UpdateMeshBoxBounds ------------------------ */
 
-void UpdateMeshBoxBounds(void){
+void UpdateMeshBoxBounds(smv_case *scase){
   int i;
 
-  for(i = 0; i<meshescoll->nmeshes;  i++){
+  for(i = 0; i<scase->meshescoll->nmeshes;  i++){
     meshdata *meshi;
 
     // xplt, yplt, zplt has original cooredinates because this routine is calld before UpdateMeshCoords
@@ -2300,7 +2302,7 @@ void UpdateSortedSurfIdList(void){
 
 /* ------------------ ParseDatabase ------------------------ */
 
-void ParseDatabase(char *file){
+void ParseDatabase(smv_case *scase, char *file){
   FILE *stream;
   char buffer[1000], *buffer2 = NULL, *buffer3, *slashptr;
   size_t lenbuffer, lenbuffer2;
@@ -2429,7 +2431,7 @@ void ParseDatabase(char *file){
   for(i = 0; i<nsurfids; i++){
     labeli = surfids[i].label;
     nexti = 0;
-    for(j = 0; j<surfcoll->nsurfinfo; j++){
+    for(j = 0; j<scase->surfcoll->nsurfinfo; j++){
       surfj = surfcoll->surfinfo+j;
       labelj = surfj->surfacelabel;
       if(strcmp(labeli, labelj)==0){
@@ -2567,7 +2569,7 @@ void ReadZVentData(zventdata *zvi, char *buffer, int flag){
       zvi->wall = TOP_WALL;
     }
   }
-  zvi->color = GetColorPtr(colorcoll, color);
+  zvi->color = GetColorPtr(scase->colorcoll, color);
   zvi->area_fraction = area_fraction;
 }
 
@@ -2576,7 +2578,7 @@ void ReadZVentData(zventdata *zvi, char *buffer, int flag){
 
 /* ------------------ InitCellMeshInfo ------------------------ */
 
-void InitCellMeshInfo(void){
+void InitCellMeshInfo(smv_case *scase){
   int i, *nxyz, ntotal;
   float *xyzminmax, *dxyz;
   float *x, *y, *z;
@@ -2600,9 +2602,9 @@ void InitCellMeshInfo(void){
   dxyz      = cellmeshinfo->dxyz;
   nxyz      = cellmeshinfo->nxyz;
 
-  x = meshinfo->xplt_orig;
-  y = meshinfo->yplt_orig;
-  z = meshinfo->zplt_orig;
+  x = scase->meshescoll->meshinfo->xplt_orig;
+  y = scase->meshescoll->meshinfo->yplt_orig;
+  z = scase->meshescoll->meshinfo->zplt_orig;
 
   xyzminmax[0] = x[0];
   xyzminmax[1] = x[meshinfo->ibar];
@@ -2645,7 +2647,7 @@ void InitCellMeshInfo(void){
   for(i=0;i<ntotal;i++){
     cellmeshinfo->cellmeshes[i] = NULL;
   }
-  for(i = 0;i < meshescoll->nmeshes;i++){
+  for(i = 0;i < scase->meshescoll->nmeshes;i++){
     meshdata *meshi;
     int i1, i2, j1, j2, k1, k2;
     float xmin, xmax, ymin, ymax, zmin, zmax;
@@ -2754,7 +2756,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
   TrimBack(buffer);
   len = strlen(buffer);
 
-  if(nmeshes>1){
+  if(scase->meshescoll->nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -3664,7 +3666,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   }
   TrimBack(buffer);
   len = strlen(buffer);
-  if(meshescoll->nmeshes>1){
+  if(scase->meshescoll->nmeshes>1){
     blocknumber = ioffset_in-1;
   }
   else{
@@ -3681,7 +3683,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   // read in slice file name
 
   if(FGETS(buffer, 255, stream)==NULL){
-    slicescoll->nsliceinfo--;
+    scase->slicescoll->nsliceinfo--;
     return RETURN_BREAK;
   }
   if(slicegeom==1){
@@ -3691,7 +3693,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   bufferptr = TrimFrontBack(buffer);
   len = strlen(bufferptr);
 
-  sd = slicescoll->sliceinfo+nn_slice-1;
+  sd = scase->slicescoll->sliceinfo+nn_slice-1;
 
 #ifdef pp_SLICE_MULTI
   sd->loadstatus = FILE_UNLOADED;
@@ -3760,7 +3762,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   }
   if(compression_type==UNCOMPRESSED&&(fast_startup==1||FILE_EXISTS_CASEDIR(bufferptr)==YES))has_reg = YES;
   if(has_reg==NO&&compression_type==UNCOMPRESSED){
-    nsliceinfo--;
+    scase->nsliceinfo--;
 
     nslicefiles--;
     *nslicefiles_in = nslicefiles;
@@ -3814,7 +3816,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
     char buffer2[256];
 
     if(FGETS(buffer2, 255, stream)==NULL){
-      nsliceinfo--;
+      scase->nsliceinfo--;
       return RETURN_BREAK;
     }
     strcpy(buffers[2], buffer2);
@@ -3940,7 +3942,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   {
     meshdata *meshi;
 
-    meshi = meshinfo+blocknumber;
+    meshi = scase->meshescoll->meshinfo+blocknumber;
     sd->full_mesh = NO;
     if(sd->is2-sd->is1==meshi->ibar &&
       sd->js2-sd->js1==meshi->jbar &&
@@ -3982,7 +3984,7 @@ void FreeSliceData(slice_collection *slicecoll){
 
   FREEMEMORY(surfcoll->surfinfo);
   if(slicecoll->nsliceinfo>0){
-    for(i = 0; i<nsliceinfo; i++){
+    for(i = 0; i<scase->slicecoll->nsliceinfo; i++){
       slicedata *sd;
       sd = slicecoll->sliceinfo+i;
       FreeLabels(&slicecoll->sliceinfo[i].label);
@@ -3991,31 +3993,31 @@ void FreeSliceData(slice_collection *slicecoll){
       FREEMEMORY(sd->size_file);
     }
     FREEMEMORY(sliceorderindex);
-    for(i = 0; i<nmultisliceinfo; i++){
+    for(i = 0; i<scase->slicecoll->nmultisliceinfo; i++){
       multislicedata *mslicei;
 
-      mslicei = multisliceinfo+i;
+      mslicei = scase->slicecoll->multisliceinfo+i;
       mslicei->loadable = 1;
       FREEMEMORY(mslicei->islices);
     }
-    FREEMEMORY(multisliceinfo);
-    nmultisliceinfo = 0;
+    FREEMEMORY(scase->slicecoll->multisliceinfo);
+    scase->slicecoll->nmultisliceinfo = 0;
     FREEMEMORY(slicecoll->sliceinfo);
   }
   slicecoll->nsliceinfo = 0;
 
   //*** free multi-vector slice data
 
-  if(nvsliceinfo>0){
+  if(scase->slicecoll->nvsliceinfo>0){
     FREEMEMORY(vsliceorderindex);
-    for(i = 0; i<nmultivsliceinfo; i++){
+    for(i = 0; i<scase->slicecoll->nmultivsliceinfo; i++){
       multivslicedata *mvslicei;
 
-      mvslicei = multivsliceinfo+i;
+      mvslicei = scase->slicecoll->multivsliceinfo+i;
       FREEMEMORY(mvslicei->ivslices);
     }
-    FREEMEMORY(multivsliceinfo);
-    nmultivsliceinfo = 0;
+    FREEMEMORY(scase->slicecoll->multivsliceinfo);
+    scase->slicecoll->nmultivsliceinfo = 0;
   }
 }
 
@@ -4205,11 +4207,11 @@ blockagedata *GetBlockagePtr(float *xyz){
   xyzcenter[0] = (xyz[0]+xyz[1])/2.0;
   xyzcenter[1] = (xyz[2]+xyz[3])/2.0;
   xyzcenter[2] = (xyz[4]+xyz[5])/2.0;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<scase->meshescoll->nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi = meshinfo + i;
+    meshi = scase->meshescoll->meshinfo + i;
     if(xyzcenter[0]<meshi->boxmin[0]||xyzcenter[0]>meshi->boxmax[0])continue;
     if(xyzcenter[1]<meshi->boxmin[1]||xyzcenter[1]>meshi->boxmax[1])continue;
     if(xyzcenter[2]<meshi->boxmin[2]||xyzcenter[2]>meshi->boxmax[2])continue;
@@ -4324,7 +4326,7 @@ void ReadSMVOrig(void){
           obi->invisible=1;
         }
         if(colorindex>=0){
-          obi->color = GetColorPtr(colorcoll, rgb[nrgb+colorindex]);
+          obi->color = GetColorPtr(scase->colorcoll, rgb[nrgb+colorindex]);
           obi->usecolorindex=1;
           obi->colorindex=colorindex;
           updateindexcolors=1;
