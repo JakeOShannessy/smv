@@ -1697,7 +1697,7 @@ void UpdateBlockType(void){
   nopenvents = 0;
   nopenvents_nonoutline = 0;
   ndummyvents = 0;
-  for(igrid = 0; igrid<meshescoll->nmeshes; igrid++){
+  for(igrid = 0; igrid<scase->meshescoll->nmeshes; igrid++){
     meshdata *meshi;
 
     meshi = meshescoll->meshinfo+igrid;
