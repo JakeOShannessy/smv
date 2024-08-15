@@ -33,7 +33,7 @@ void OutputBoundaryData(char *csvfile, patchdata *patchi, int first_time, float 
   meshdata *meshi;
 
   patchfile = patchi->file;
-  meshi = meshinfo + patchi->blocknumber;
+  meshi = meshescoll.meshinfo + patchi->blocknumber;
 
   if(patchout_tmin > patchout_tmax)return;
   if(first_time== FIRST_TIME){
@@ -1009,7 +1009,7 @@ void GetBoundaryHeader2(char *file, patchfacedata *patchfaceinfo, int nmeshes_ar
     obst_index = buffer[7] - 1;
     mesh_index = buffer[8] - 1;
     if(obst_index>=0 && obst_index<nobsts_arg && mesh_index>=0 && mesh_index<nmeshes_arg){
-      patchfaceinfo->meshinfo = meshinfo + mesh_index;
+      patchfaceinfo->meshinfo = meshescoll.meshinfo + mesh_index;
       patchfaceinfo->obst     = patchfaceinfo->meshinfo->blockageinfoptrs[obst_index];
     }
     else{
@@ -1269,7 +1269,7 @@ void GetPatchSizes2(FILE_m *stream, int npatch, int nmeshes_arg, int nobsts_arg,
     obst_index = ijkp[7] - 1;
     mesh_index = ijkp[8] - 1;
     if(obst_index >= 0 && obst_index < nobsts_arg && mesh_index>=0 && mesh_index < nmeshes_arg){
-      pfi->meshinfo = meshinfo + ijkp[8] - 1;
+      pfi->meshinfo = meshescoll.meshinfo + ijkp[8] - 1;
       pfi->obst     = pfi->meshinfo->blockageinfoptrs[obst_index];
     }
     else{
@@ -1633,7 +1633,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
     k1 = pfi->ib[4];
     k2 = pfi->ib[5];
 
-    // determine if a patch is on an external wall 
+    // determine if a patch is on an external wall
     pfi->internal = 0;
     if(i1 == i2){
       float val;
