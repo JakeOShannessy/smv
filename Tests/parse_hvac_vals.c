@@ -107,6 +107,7 @@ int main(int argc, char **argv) {
 
   FILE_SIZE file_size;
   int ret = ReadHVACData0(&hvaccoll, 0, &file_size);
+  fprintf(stderr, "parse result: %d\n", ret);
   if (ret) return ret;
   for (int i = 0; i < hvaccoll.hvacductvalsinfo->n_duct_vars; i++) {
     hvacvaldata *hi = hvaccoll.hvacductvalsinfo->duct_vars + i;

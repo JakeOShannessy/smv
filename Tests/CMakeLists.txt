@@ -263,4 +263,4 @@ add_test(NAME "Mem Test"
     COMMAND mem_test)
 
 add_test(NAME "Simple HVAC Vals - Complete"
-    COMMAND parse_hvac_vals ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/hvac_vals.hvac)
+    COMMAND parse_hvac_vals ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_hvac.hvac)
