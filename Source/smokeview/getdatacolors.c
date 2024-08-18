@@ -1787,19 +1787,19 @@ float *GetColorTranPtr(float *color, float transparency){
 
   /* ------------------ ConvertColor ------------------------ */
 
-void ConvertColor(color_collection colorcoll, int flag){
+void ConvertColor(color_collection coll, int flag){
   colordata *colorptr;
 
   switch(flag){
    case TO_BW:
-    for(colorptr=colorcoll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
+    for(colorptr=coll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
       colorptr->color[0]=colorptr->bw_color[0];
       colorptr->color[1]=colorptr->bw_color[1];
       colorptr->color[2]=colorptr->bw_color[2];
     }
     break;
    case TO_COLOR:
-    for(colorptr=colorcoll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
+    for(colorptr=coll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
       colorptr->color[0]=colorptr->full_color[0];
       colorptr->color[1]=colorptr->full_color[1];
       colorptr->color[2]=colorptr->full_color[2];

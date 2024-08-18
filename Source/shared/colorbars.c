@@ -717,7 +717,6 @@ void ReadColorbarDir(colorbar_collection *colorbars, const char *dir_path,
 
 void ReadColorbarSubDir(colorbar_collection *colorbars, const char *subdir,
                         int type) {
-  filelistdata *filelist = NULL;
   char *dir_path = GetColorbarsSubDir(subdir);
   ReadColorbarDir(colorbars, dir_path, subdir, type);
   FREEMEMORY(dir_path);

@@ -424,11 +424,11 @@ void InitStartupDirs(void){
   }
   FREEMEMORY(config_dir);
 
-  char *colorbars_user_dir = GetConfigSubDir("colorbars");
-  if(FileExistsOrig(colorbars_user_dir)==NO){
-    MKDIR(colorbars_user_dir);
+  char *colorbars_user_dir_local = GetConfigSubDir("colorbars");
+  if(FileExistsOrig(colorbars_user_dir_local)==NO){
+    MKDIR(colorbars_user_dir_local);
   }
-  FREEMEMORY(colorbars_user_dir);
+  FREEMEMORY(colorbars_user_dir_local);
 
   if(verbose_output==1)PRINTF("Scratch directory: %s\n", smokeview_scratchdir);
   if(verbose_output==1)PRINTF("    smokeview.ini: %s\n", smokeviewini_filename);

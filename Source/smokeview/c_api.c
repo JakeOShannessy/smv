@@ -1253,7 +1253,6 @@ void Loadvolsmoke(int meshnumber) {
 void Loadvolsmokeframe(int meshnumber, int framenumber, int flag) {
   int framenum, index;
   int first = 1;
-  int i;
 
   index = meshnumber;
   framenum = framenumber;
@@ -1280,7 +1279,7 @@ void Loadvolsmokeframe(int meshnumber, int framenumber, int flag) {
   UpdateTimes();
   force_redisplay = 1;
   UpdateFrameNumber(framenum);
-  i = framenum;
+  int i = framenum;
   itimes = i;
   script_itime = i;
   stept = 1;

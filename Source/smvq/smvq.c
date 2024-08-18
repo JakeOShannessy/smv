@@ -16,9 +16,10 @@
 #include "smokeviewdefs.h"
 #include "shared_structures.h"
 #include "readlabel.h"
+#include "readobject.h"
 #include <math.h>
 
-#include "structures.h"
+// #include "structures.h"
 
 #include <json-c/json_object.h>
 

@@ -58,7 +58,7 @@
 
 // TODO: remove these globals, they are just used for development
 filelist_collection filelist_coll = {0};
-char *fdsprefix;
+SVEXTERN char *fdsprefix;
 int verbose_output = 0;
 float box_corners[8][3];
 float box_geom_corners[8][3];
@@ -2521,7 +2521,7 @@ void SetSurfaceIndex(surf_collection *surfcoll, blockagedata *bc){
 #ifdef _WIN32
 int SurfIdCompare(void *surfinfo, const void *arg1, const void *arg2) {
 #else
-int SurfIdCompare(const void *arg1, const void *arg2, const void *surfinfo) {
+int SurfIdCompare(const void *arg1, const void *arg2, void *surfinfo) {
 #endif
   int i = *(int *)arg1;
   int j = *(int *)arg2;
@@ -2547,7 +2547,11 @@ void UpdateSortedSurfIdList(smv_case *scase){
   for(i = 0; i<scase->surfcoll.nsorted_surfidlist; i++){
     scase->surfcoll.sorted_surfidlist[i] = i;
   }
+#ifdef _WIN32
   qsort_s(scase->surfcoll.sorted_surfidlist, (size_t)scase->surfcoll.nsurfinfo, sizeof(int), SurfIdCompare,(void *)scase->surfcoll.surfinfo);
+#else
+  qsort_r(scase->surfcoll.sorted_surfidlist, (size_t)scase->surfcoll.nsurfinfo, sizeof(int), SurfIdCompare,(void *)scase->surfcoll.surfinfo);
+#endif
   for(i = 0; i<scase->surfcoll.nsorted_surfidlist; i++){
     scase->surfcoll.inv_sorted_surfidlist[scase->surfcoll.sorted_surfidlist[i]] = i;
   }

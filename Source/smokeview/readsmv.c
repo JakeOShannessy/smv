@@ -16018,7 +16018,6 @@ int ReadBinIni(void) {
 
 int ReadIni(char *inifile){
   char smvprogini[1024];
-  char *smvprogini_ptr=NULL;
 
   // There are 7 places to retrieve configuration file from:
   //

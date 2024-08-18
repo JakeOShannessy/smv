@@ -3823,31 +3823,31 @@ int GetSmoke3DVersion(smoke3ddata *smoke3di){
 #endif
 /* ------------------ SetSmokeColorFlags ------------------------ */
 
-void SetSmokeColorFlags(smoke3d_collection *smoke3dcoll){
+void SetSmokeColorFlags(smoke3d_collection *smoke3dcoll_arg){
   int i;
 
-  for(i = 0;i<smoke3dcoll->nsmoke3dinfo;i++){
+  for(i = 0;i<smoke3dcoll_arg->nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
     int j;
 
-    smoke3di = smoke3dcoll->smoke3dinfo + i;
-    for(j = 0;j < smoke3dcoll->nsmoke3dtypes;j++){
+    smoke3di = smoke3dcoll_arg->smoke3dinfo + i;
+    for(j = 0;j < smoke3dcoll_arg->nsmoke3dtypes;j++){
       smoke3di->smokestate[j].loaded = 0;
     }
   }
 
-  for(i = 0;i<smoke3dcoll->nsmoke3dinfo;i++){
+  for(i = 0;i<smoke3dcoll_arg->nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
     int j;
 
-    smoke3di = smoke3dcoll->smoke3dinfo+i;
-    for(j = 0;j < smoke3dcoll->nsmoke3dtypes;j++){
+    smoke3di = smoke3dcoll_arg->smoke3dinfo+i;
+    for(j = 0;j < smoke3dcoll_arg->nsmoke3dtypes;j++){
       smoke3di->smokestate[j].color = NULL;
       smoke3di->smokestate[j].index = -1;
     }
     if(smoke3di->loaded==0)continue;
 
-    if(smoke3di->type >= 0 && smoke3di->type < smoke3dcoll->nsmoke3dtypes){
+    if(smoke3di->type >= 0 && smoke3di->type < smoke3dcoll_arg->nsmoke3dtypes){
       smoke3di->smokestate[smoke3di->type].color = smoke3di->smokeframe_in;
       smoke3di->smokestate[smoke3di->type].index = i;
     }
@@ -3855,12 +3855,12 @@ void SetSmokeColorFlags(smoke3d_collection *smoke3dcoll){
       assert(FFALSE);
     }
 
-    for(j = 0;j<smoke3dcoll->nsmoke3dinfo;j++){
+    for(j = 0;j<smoke3dcoll_arg->nsmoke3dinfo;j++){
       smoke3ddata *smoke3dj;
       int k;
 
       if(i==j)continue;
-      smoke3dj = smoke3dcoll->smoke3dinfo+j;
+      smoke3dj = smoke3dcoll_arg->smoke3dinfo+j;
       if(smoke3dj->loaded==0)continue;
       if(smoke3di->blocknumber!=smoke3dj->blocknumber)continue;
       if(smoke3di->is1!=smoke3dj->is1)continue;
@@ -3870,14 +3870,14 @@ void SetSmokeColorFlags(smoke3d_collection *smoke3dcoll){
       if(smoke3di->ks1!=smoke3dj->ks1)continue;
       if(smoke3di->ks2!=smoke3dj->ks2)continue;
 
-      if(smoke3dj->type >= 0 && smoke3dj->type < smoke3dcoll->nsmoke3dtypes){
+      if(smoke3dj->type >= 0 && smoke3dj->type < smoke3dcoll_arg->nsmoke3dtypes){
         smoke3di->smokestate[smoke3dj->type].color = smoke3dj->smokeframe_in;
         smoke3di->smokestate[smoke3dj->type].index = j;
       }
       else{
         assert(FFALSE);
       }
-      for(k = 0;k < smoke3dcoll->nsmoke3dtypes;k++){
+      for(k = 0;k < smoke3dcoll_arg->nsmoke3dtypes;k++){
         if(smoke3di->smokestate[k].color != NULL)smoke3dj->smokestate[k].loaded = 1;
       }
     }
