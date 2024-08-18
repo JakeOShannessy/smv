@@ -29,7 +29,6 @@
 #include "readcad.h"
 #include "colorbars.h"
 #include "csphere.h"
-// #include "infoheader.h"
 #include "translate.h"
 
 #define BREAK break
@@ -60,9 +59,6 @@
 filelist_collection filelist_coll = {0};
 SVEXTERN char *fdsprefix;
 int verbose_output = 0;
-float box_corners[8][3];
-float box_geom_corners[8][3];
-int have_box_geom_corners = 0;
 float fuel_hoc = -1.0;
 int have_object_box = 0;
 int have_beam = 0;
@@ -94,17 +90,11 @@ float rgb_part[4*MAXRGB];
 float rgb_trans[4*MAXRGB];
 float rgb_cad[MAXRGB][4];
 
-float xyzmaxdiff;
 float SVDECL(xbar,1.0);float SVDECL(ybar,1.0);float  SVDECL(zbar,1.0);
 float xbar0 = 0.0;float  ybar0 = 0.0;float  zbar0 = 0.0;
-geomdata  *geominfo =NULL;
-int  ngeominfo=0;
-geomdata  *cgeominfo= NULL;
-int ncgeominfo= 0;
-float SVDECL(sliceoffset_factor,0.1), SVDECL(ventoffset_factor,0.2), boundaryoffset = 0.0;
+float   SVDECL(ventoffset_factor,0.2);
 int nopenvents,nopenvents_nonoutline,ndummyvents,ntransparentblocks,ntransparentvents;
 char *texturedir = NULL;
-int niso_bounds = 0;
 
 #define MAXFILELEN 360
 char *part_buffer = NULL;
@@ -125,11 +115,10 @@ int handle_slice_files= 1;
 int have_compressed_files = 0;
 int update_smoke_alphas = 0;
 int *sliceorderindex = NULL,*vsliceorderindex = NULL,*partorderindex = NULL;
-float obst_bounding_box[6] = {1.0,0.0,1.0,0.0,1.0,0.0};
-float geom_bounding_box[6] = {1000000000.0, -1000000000.0,
-                                       1000000000.0, -1000000000.0,
-                                       1000000000.0, -1000000000.0
-                                      };
+// float geom_bounding_box[6] = {1000000000.0, -1000000000.0,
+//                                        1000000000.0, -1000000000.0,
+//                                        1000000000.0, -1000000000.0
+//                                       };
 int glui_surface_color[4] = {255, 255, 255, 255};
 int show_firecutoff = 0, show_hrrcutoff_active = 0,hrrpuv_loaded = 0;
 int ngeom_data = 0;
@@ -137,40 +126,31 @@ int SOOT_index, HRRPUV_index, TEMP_index, CO2_index;
 float glui_smoke3d_extinct;
 float texture_origin[3]={0.0,0.0,0.0};
 //***isosurface
-int SVDECL(n_isosurface_threads, 1), SVDECL(use_isosurface_threads, 1);
+int SVDECL(use_isosurface_threads, 1);
 threaderdata *isosurface_threads = NULL;
 
-//***sliceparms
-int SVDECL(n_sliceparms_threads, 1), SVDECL(use_sliceparms_threads, 1);
-threaderdata *sliceparms_threads = NULL;
-
 //***checkfiles
-int SVDECL(n_checkfiles_threads, 1), SVDECL(use_checkfiles_threads, 1);
+int  SVDECL(use_checkfiles_threads, 1);
 threaderdata SVDECL(*checkfiles_threads,       NULL);
 
 //*** compress
-int SVDECL(n_compress_threads, 1), SVDECL(use_compress_threads, 1);
 threaderdata SVDECL(*compress_threads,        NULL);
 
 //*** ffmpeg
-int SVDECL(n_ffmpeg_threads, 1), SVDECL(use_ffmpeg_threads, 1);
+int SVDECL(use_ffmpeg_threads, 1);
 threaderdata SVDECL(*ffmpeg_threads,         NULL);
 
-int updatemenu = 0, SVDECL(first_display,2);
-int runscript = 0, noexit = 0;
+int updatemenu = 0 ;
+int runscript = 0;
 
 //*** readallgeom
-int SVDECL(n_readallgeom_threads, 4), SVDECL(use_readallgeom_threads, 1);
+int SVDECL(use_readallgeom_threads, 1);
 threaderdata SVDECL(*readallgeom_threads,     NULL);
-threaderdata *classifyallgeom_threads = NULL;
 
 //***mergesmoke
 #ifdef pp_SMOKEDRAW_SPEEDUP
-int SVDECL(n_mergesmoke_threads, 4), SVDECL(use_mergesmoke_threads, 1);
+int SVDECL(use_mergesmoke_threads, 1);
 threaderdata *mergesmoke_threads = NULL;
-smokethreaddata smokethreadinfo[MAX_THREADS];
-int SVDECL(n_mergesmoke_glui_threads, 4), SVDECL(use_mergesmoke_glui_threads, 1);
-int SVDECL(update_glui_merge_smoke, 1);
 #endif
 int updateindexcolors = 0;
 int cellcenter_slice_active = 0;
@@ -178,29 +158,27 @@ treedata *treeinfo = NULL;
 terraindata *terraininfo = NULL;
 int ntreeinfo = 0, nterraininfo = 0, visTerrainType = 0;
 int ntickinfo = 0,ntickinfo_smv = 0;
-float ventcolor_orig[4];
 float *ventcolor = NULL;
 int ntotal_blockages;
 int niso_compressed;
 spherepoints *sphereinfo = NULL, *wui_sphereinfo = NULL;
-int updatefaces = 0,updatefacelists = 0;
+int updatefaces = 0;
 int nrooms = 0,nzoneinfo = 0, nfires = 0;
 int is_terrain_case = 0;
 outlinedata *outlineinfo = NULL;
 int noutlineinfo = 0;
 int solid_ht3d = 0;
-int SVDECL(show_slice_in_obst,ONLY_IN_GAS), offset_slice = 0;
+int SVDECL(show_slice_in_obst,ONLY_IN_GAS);
 int SVDECL(use_iblank,1),iblank_set_on_commandline = 0;
 float gvecphys[3]={0.0,0.0,-9.8};
 float gvecunit[3]={0.0,0.0,-1.0};
-float gvecphys_orig[3] = {0.0,0.0,-9.8};
-int SVDECL(gvec_down,1),have_gvec = 0,zaxis_custom = 0,showgravity_vector = 0;
+int SVDECL(gvec_down,1),have_gvec = 0;
 int smokediff = 0;
-float SVDECL(fire_halfdepth,0.3), SVDECL(fire_halfdepth2, 0.3), SVDECL(smoke_albedo, 0.3), SVDECL(smoke_albedo_base, 0.3);
+float SVDECL(fire_halfdepth,0.3), SVDECL(smoke_albedo, 0.3), SVDECL(smoke_albedo_base, 0.3);
 float northangle = 0.0;
-int vis_northangle = 0, have_northangle = 0;
+int have_northangle = 0;
 int auto_terrain = 0,manual_terrain = 0;
-int SVDECL(visOpenVents,1),SVDECL(visDummyVents,1),SVDECL(visOtherVents,1),SVDECL(visOtherVentsSAVE,1),SVDECL(visCircularVents,VENT_CIRCLE);
+int SVDECL(visOtherVents,1),SVDECL(visOtherVentsSAVE,1),SVDECL(visCircularVents,VENT_CIRCLE);
 int update_terrain_type = 0;
 int usetextures = 0;
 float SVDECL(global_tbegin, 1.0), global_tend = 0.0;
@@ -256,37 +234,45 @@ float foregroundbasecolor[4];
 float foregroundcolor[4];
 int   glui_outlinecolor[4];
 #endif
-int visWalls = 0, visGrid = 0, visCeiling = 0;
-int nface_normals_single, nface_normals_double, nface_transparent_double, nvent_transparent;
-float SVDECL(linewidth, 2.0), SVDECL(ventlinewidth, 2.0), SVDECL(highlight_linewidth, 4.0);
-int clip_i,clip_j,clip_k;
+int visWalls = 0, visCeiling = 0;
+int nvent_transparent;
+float SVDECL(linewidth, 2.0), SVDECL(ventlinewidth, 2.0);
 int clip_I,clip_J,clip_K;
-int ntextures_loaded_used =0, iterrain_textures = 0;
+int ntextures_loaded_used =0;
 int nhvacductbounds = 0, nhvacnodebounds = 0;
 boundsdata *hvacductbounds = NULL, *hvacnodebounds = NULL;
-int update_glui_bounds = 0, update_ini = 0, update_chop_colors = 0;
-int SVDECL(glui_setpatchmin,GLOBAL_MIN), SVDECL(glui_setpatchmax,GLOBAL_MAX), SVDECL(setzonemin,GLOBAL_MIN), SVDECL(setzonemax,GLOBAL_MAX);
+int update_glui_bounds = 0;
+int SVDECL(glui_setpatchmin,GLOBAL_MIN), SVDECL(glui_setpatchmax,GLOBAL_MAX);
 int ntc_total = 0.0, nspr_total = 0.0, nheat_total = 0.0;
-supermeshdata *supermeshinfo = NULL;
-int nsupermeshinfo = 0;
+
 float rgb[MAXRGB][4];
 int nslice_loaded = 0, ngeomslice_loaded = 0, nvolsmoke_loaded = 0;
-float *block_ambient2 = NULL;
 cellmeshdata *cellmeshinfo = NULL;
 int is_convex = 0;
 EXTERNCPP char *GetDeviceLabel(char *buffer);
 EXTERNCPP void GetElevAz(float *xyznorm,float *dtheta, float *rotate_axis, float *dpsi);
-int show_tempcutoff_active = 0,temp_loaded = 0;
-int setbw = 0,setbwdata = 0;
+int show_tempcutoff_active = 0;
+int setbw = 0;
 float tload_begin = 0.0, tload_end = 0.0;
 slicedata  **sliceinfoptrs = NULL;
 int *subslice_menuindex = NULL,*subvslice_menuindex = NULL;
 int *msubslice_menuindex = NULL, *msubvslice_menuindex = NULL;
-int *slice_loaded_list = NULL, *slice_sorted_loaded_list = NULL;
+int *slice_loaded_list = NULL;
 
 // END TODO
 
 int GetNDevices(char *file);
+
+int InitSmvCase(smv_case *scase) {
+  memset(scase, 0, sizeof(smv_case));
+  scase->obst_bounding_box[0] = 1.0;
+  scase->obst_bounding_box[1] = 0.0;
+  scase->obst_bounding_box[2] = 1.0;
+  scase->obst_bounding_box[3] = 0.0;
+  scase->obst_bounding_box[4] = 1.0;
+  scase->obst_bounding_box[5] = 0.0;
+  return 0;
+}
 
 /* ------------------ GetHrrCsvCol ------------------------ */
 
@@ -1957,123 +1943,6 @@ void UpdateBlockType(smv_case *scase){
   }
 }
 
-/* ------------------ GetBoxGeomCorners ------------------------ */
-
-void GetBoxGeomCorners(void){
-  float xmin, xmax, ymin, ymax, zmin, zmax;
-  int i;
-  float *xyz;
-  geomdata *geomi;
-  vertdata *verti;
-  geomlistdata *geomlisti;
-
-  have_box_geom_corners = 0;
-  if(geominfo==NULL||geominfo->geomlistinfo==NULL||geominfo==0)return;
-
-  geomi = geominfo;
-  geomlisti = geomi->geomlistinfo-1;
-  if(geomlisti->nverts<=0)return;
-
-  have_box_geom_corners = 1;
-
-  verti = geomlisti->verts;
-  xyz = verti->xyz;
-
-  xmin = xyz[0];
-  xmax = xmin;
-  ymin = xyz[1];
-  ymax = ymin;
-  zmin = xyz[2];
-  zmax = zmin;
-
-  for(i = 1; i<geomlisti->nverts; i++){
-    verti = geomlisti->verts+i;
-    xyz = verti->xyz;
-    xmin = MIN(xyz[0], xmin);
-    xmax = MAX(xyz[0], xmax);
-    ymin = MIN(xyz[1], ymin);
-    ymax = MAX(xyz[1], ymax);
-    zmin = MIN(xyz[2], zmin);
-    zmax = MAX(xyz[2], zmax);
-  }
-
-  xmin = FDS2SMV_X(xmin);
-  xmax = FDS2SMV_X(xmax);
-  ymin = FDS2SMV_Y(ymin);
-  ymax = FDS2SMV_Y(ymax);
-  zmin = FDS2SMV_Z(zmin);
-  zmax = FDS2SMV_Z(zmax);
-
-  box_geom_corners[0][0] = xmin;
-  box_geom_corners[0][1] = ymin;
-  box_geom_corners[0][2] = zmin;
-
-  box_geom_corners[1][0] = xmax;
-  box_geom_corners[1][1] = ymin;
-  box_geom_corners[1][2] = zmin;
-
-  box_geom_corners[2][0] = xmin;
-  box_geom_corners[2][1] = ymax;
-  box_geom_corners[2][2] = zmin;
-
-  box_geom_corners[3][0] = xmax;
-  box_geom_corners[3][1] = ymax;
-  box_geom_corners[3][2] = zmin;
-
-  box_geom_corners[4][0] = xmin;
-  box_geom_corners[4][1] = ymin;
-  box_geom_corners[4][2] = zmax;
-
-  box_geom_corners[5][0] = xmax;
-  box_geom_corners[5][1] = ymin;
-  box_geom_corners[5][2] = zmax;
-
-  box_geom_corners[6][0] = xmin;
-  box_geom_corners[6][1] = ymax;
-  box_geom_corners[6][2] = zmax;
-
-  box_geom_corners[7][0] = xmax;
-  box_geom_corners[7][1] = ymax;
-  box_geom_corners[7][2] = zmax;
-
-}
-
-  /* ------------------ GetBoxCorners ------------------------ */
-
-void GetBoxCorners(float xbar_local, float ybar_local, float zbar_local){
-  box_corners[0][0] = 0.0;
-  box_corners[0][1] = 0.0;
-  box_corners[0][2] = 0.0;
-
-  box_corners[1][0] = xbar_local;
-  box_corners[1][1] = 0.0;
-  box_corners[1][2] = 0.0;
-
-  box_corners[2][0] = 0.0;
-  box_corners[2][1] = ybar_local;
-  box_corners[2][2] = 0.0;
-
-  box_corners[3][0] = xbar_local;
-  box_corners[3][1] = ybar_local;
-  box_corners[3][2] = 0.0;
-
-  box_corners[4][0] = 0.0;
-  box_corners[4][1] = 0.0;
-  box_corners[4][2] = zbar_local;
-
-  box_corners[5][0] = xbar_local;
-  box_corners[5][1] = 0.0;
-  box_corners[5][2] = zbar_local;
-
-  box_corners[6][0] = 0.0;
-  box_corners[6][1] = ybar_local;
-  box_corners[6][2] = zbar_local;
-
-  box_corners[7][0] = xbar_local;
-  box_corners[7][1] = ybar_local;
-  box_corners[7][2] = zbar_local;
-}
-
 /* ------------------ UpdateMeshBoxBounds ------------------------ */
 
 void UpdateMeshBoxBounds(smv_case *scase){
@@ -3509,15 +3378,15 @@ int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
       }
     }
 
-    if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY&&ncgeominfo>0){
-      patchi->geominfo = cgeominfo+blocknumber;
+    if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY&&scase->ncgeominfo>0){
+      patchi->geominfo = scase->cgeominfo+blocknumber;
     }
     else{
       geomfile = TrimFrontBack(buffer);
-      for(igeom = 0; igeom<ngeominfo; igeom++){
+      for(igeom = 0; igeom<scase->ngeominfo; igeom++){
         geomdata *geomi;
 
-        geomi = geominfo+igeom;
+        geomi = scase->geominfo+igeom;
         if(strcmp(geomi->file, geomfile)==0){
           patchi->geominfo = geomi;
           if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY){
@@ -4429,7 +4298,7 @@ void GenerateViewpointMenu(void){
 
 /* ------------------ UpdateObstBoundingBox ------------------------ */
 
-void UpdateObstBoundingBox(float *XB){
+void UpdateObstBoundingBox(smv_case *scase, float *XB){
   float XB0[6];
   int i;
 
@@ -4444,13 +4313,13 @@ void UpdateObstBoundingBox(float *XB){
 
     imin = 2*i;
     imax = 2*i+1;
-    if(obst_bounding_box[imin]>obst_bounding_box[imax]){
-      obst_bounding_box[imin] = XB0[imin];
-      obst_bounding_box[imax] = XB0[imax];
+    if(scase->obst_bounding_box[imin]>scase->obst_bounding_box[imax]){
+      scase->obst_bounding_box[imin] = XB0[imin];
+      scase->obst_bounding_box[imax] = XB0[imax];
     }
     else{
-      obst_bounding_box[imin] = MIN(obst_bounding_box[imin], XB0[imin]);
-      obst_bounding_box[imax] = MAX(obst_bounding_box[imax], XB0[imax]);
+      scase->obst_bounding_box[imin] = MIN(scase->obst_bounding_box[imin], XB0[imin]);
+      scase->obst_bounding_box[imax] = MAX(scase->obst_bounding_box[imax], XB0[imax]);
     }
   }
 }
@@ -4870,30 +4739,30 @@ int ReadSMV_Init(smv_case *scase) {
   }
   scase->csvcoll.ncsvfileinfo=0;
 
-  if(ngeominfo>0){
-    for(i=0;i<ngeominfo;i++){
+  if(scase->ngeominfo>0){
+    for(i=0;i<scase->ngeominfo;i++){
       geomdata *geomi;
 
-      geomi = geominfo + i;
+      geomi = scase->geominfo + i;
       if(geomi->ngeomobjinfo>0){
         FREEMEMORY(geomi->geomobjinfo);
         geomi->ngeomobjinfo=0;
       }
       FREEMEMORY(geomi->file);
     }
-    FREEMEMORY(geominfo);
-    ngeominfo=0;
+    FREEMEMORY(scase->geominfo);
+    scase->ngeominfo=0;
   }
 
-  if(ncgeominfo>0){
-    for(i = 0; i<ncgeominfo; i++){
+  if(scase->ncgeominfo>0){
+    for(i = 0; i<scase->ncgeominfo; i++){
       geomdata *geomi;
 
-      geomi = cgeominfo+i;
+      geomi = scase->cgeominfo+i;
       FREEMEMORY(geomi->file);
     }
-    FREEMEMORY(cgeominfo);
-    ncgeominfo = 0;
+    FREEMEMORY(scase->cgeominfo);
+    scase->ncgeominfo = 0;
   }
 
   FREEMEMORY(tickinfo);
@@ -5299,12 +5168,12 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       continue;
     }
     if(MatchSMV(buffer, "CGEOM")==1){
-      ncgeominfo++;
+      scase->ncgeominfo++;
       continue;
     }
     if(MatchSMV(buffer, "GEOM") == 1 ||
        MatchSMV(buffer, "SGEOM") == 1){
-      ngeominfo++;
+      scase->ngeominfo++;
       continue;
     }
     if(MatchSMV(buffer,"PROP") == 1){
@@ -5686,13 +5555,13 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
  if(scase->nisoinfo>0&&scase->meshescoll.nmeshes>0)nisos_per_mesh = MAX(scase->nisoinfo / scase->meshescoll.nmeshes,1);
  NewMemory((void **)&scase->csvcoll.csvfileinfo,(scase->csvcoll.ncsvfileinfo+CFAST_CSV_MAX+2)*sizeof(csvfiledata));
  scase->csvcoll.ncsvfileinfo=0;
- if(ngeominfo>0){
-   NewMemory((void **)&geominfo,ngeominfo*sizeof(geomdata));
-   ngeominfo=0;
+ if(scase->ngeominfo>0){
+   NewMemory((void **)&scase->geominfo,scase->ngeominfo*sizeof(geomdata));
+   scase->ngeominfo=0;
  }
- if(ncgeominfo>0){
-   NewMemory((void **)&cgeominfo, ncgeominfo*sizeof(geomdata));
-   ncgeominfo = 0;
+ if(scase->ncgeominfo>0){
+   NewMemory((void **)&scase->cgeominfo, scase->ncgeominfo*sizeof(geomdata));
+   scase->ncgeominfo = 0;
  }
  if(scase->propcoll.npropinfo>0){
    NewMemory((void **)&scase->propcoll.propinfo,scase->propcoll.npropinfo*sizeof(propdata));
@@ -5784,15 +5653,15 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     meshi = scase->meshescoll.meshinfo + i;
     InitMesh(meshi); // initialize mesh here so order of order GRID/TERRAIN keywords won't cause a problem
   }
-  FREEMEMORY(supermeshinfo);
-  if(NewMemory((void **)&supermeshinfo,scase->meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
+  FREEMEMORY(scase->supermeshinfo);
+  if(NewMemory((void **)&scase->supermeshinfo,scase->meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
   scase->meshescoll.meshinfo->plot3dfilenum=-1;
   // UpdateCurrentMesh(meshinfo);
   for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
     supermeshdata *smeshi;
 
-    smeshi = supermeshinfo + i;
+    smeshi = scase->supermeshinfo + i;
     smeshi->nmeshes=0;
 
     meshi=scase->meshescoll.meshinfo+i;
@@ -6069,10 +5938,10 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
           FGETS(buffer, 255, stream);
           sscanf(buffer, "%f %f %f %f %f %f", xyz, xyz+1, xyz+2, xyz+3, xyz+4, xyz+5);
         }
-        if(ngeominfo>0){
+        if(scase->ngeominfo>0){
           geomdata *geomi;
 
-          geomi = geominfo+ngeominfo-1;
+          geomi = scase->geominfo+scase->ngeominfo-1;
           for(i = 0; i<MIN(nbounds, geomi->ngeomobjinfo); i++){
             geomobjdata *geomobji;
 
@@ -6094,7 +5963,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       char *buff2;
       int have_vectors = CFACE_NORMALS_NO;
 
-      geomi = cgeominfo+ncgeominfo;
+      geomi = scase->cgeominfo+scase->ncgeominfo;
       buff2 = buffer+6;
       sscanf(buff2, "%i", &have_vectors);
       if(have_vectors!=CFACE_NORMALS_YES)have_vectors=CFACE_NORMALS_NO;
@@ -6107,7 +5976,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       buff2 = TrimFront(buffer);
       NewMemory((void **)&geomi->file,strlen(buff2)+1);
       strcpy(geomi->file,buff2);
-      ncgeominfo++;
+      scase->ncgeominfo++;
     }
 
     /*
@@ -6122,7 +5991,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       int ngeomobjinfo=0;
       int is_geom=0;
 
-      geomi = geominfo + ngeominfo;
+      geomi = scase->geominfo + scase->ngeominfo;
       geomi->ngeomobjinfo=0;
       geomi->geomobjinfo=NULL;
       geomi->memory_id = ++nmemory_ids;
@@ -6261,7 +6130,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         }
       }
 
-      ngeominfo++;
+      scase->ngeominfo++;
       continue;
     }
 
@@ -8397,7 +8266,7 @@ typedef struct {
             &(bc->blockage_id),s_num+DOWN_X,s_num+UP_X,s_num+DOWN_Y,s_num+UP_Y,s_num+DOWN_Z,s_num+UP_Z,
             t_origin,t_origin+1,t_origin+2);
 
-          UpdateObstBoundingBox(xyzEXACT);
+          UpdateObstBoundingBox(scase, xyzEXACT);
           bc->xmin=xyzEXACT[0];
           bc->xmax=xyzEXACT[1];
           bc->ymin=xyzEXACT[2];
@@ -9397,435 +9266,6 @@ typedef struct {
   return 0;
 }
 
-/* ------------------ ReadSMV_Configure ------------------------ */
-
-// /// @brief Finish setting global variables after an SMV file has been parsed.
-// /// This should be called after @ref ReadSMV_Parse.
-// /// @return zero on success, nonzero on failure.
-// int ReadSMV_Configure(){
-//   int i;
-//   float wrapup_time;
-//   float timer_readsmv;
-
-// /*
-//    ************************************************************************
-//    ************************ wrap up ***************************************
-//    ************************************************************************
-//  */
-
-//   INIT_PRINT_TIMER(total_wrapup_time);
-//   update_colorbar_orig = 1;
-//   if(update_filesizes==1){
-//     GetFileSizes();
-//     SMV_EXIT(0);
-//   }
-
-//   START_TIMER(wrapup_time);
-//   STOP_TIMER(processing_time);
-//   START_TIMER(timer_readsmv);
-
-//   PRINTF("  wrapping up\n");
-
-//   INIT_PRINT_TIMER(fdsrunning_timer);
-//   last_size_for_slice = GetFileSizeSMV(stepcsv_filename); // used by IsFDSRunning
-//   last_size_for_boundary = last_size_for_slice;
-//   PRINT_TIMER(fdsrunning_timer, "filesize_timer");   // if file size changes then assume fds is running
-
-//   have_obsts = 0;
-//   for(i=0;i<nmeshes;i++){
-//     meshdata *meshi;
-
-//     meshi = meshinfo + i;
-//     if(meshi->nbptrs>0){
-//       have_obsts = 1;
-//       break;
-//     }
-//   }
-//   if(ntotal_blockages > 250000)show_geom_boundingbox = SHOW_BOUNDING_BOX_MOUSE_DOWN;
-
-//   if(checkfiles_threads != NULL){
-//     checkfiles_threads = THREADinit(&n_checkfiles_threads, &use_checkfiles_threads, CheckFiles);
-//   }
-//   THREADrun(checkfiles_threads, NULL);
-//   PRINT_TIMER(timer_readsmv, "CheckFiles");
-//   CheckMemory;
-//   UpdateIsoColors();
-//   PRINT_TIMER(timer_readsmv, "UpdateIsoColors");
-//   CheckMemory;
-
-//   UpdateSmoke3dFileParms();
-//   PRINT_TIMER(timer_readsmv, "UpdateSmoke3dFileParms");
-
-//   AddCfastCsvf();
-//   PRINT_TIMER(timer_readsmv, "AddCfastCsvf");
-
-//   //RemoveDupBlockages();
-//   InitCullGeom(cullgeom);
-//   PRINT_TIMER(timer_readsmv, "InitCullGeom");
-//   UpdateINIList();
-//   PRINT_TIMER(timer_readsmv, "UpdateINIList");
-
-//   if(meshinfo!=NULL&&meshinfo->jbar==1)force_isometric=1;
-
-//   if(hrr_csv_filename != NULL)ReadHRR(LOAD);
-//   PRINT_TIMER(timer_readsmv, "ReadHRR");
-
-//   if(runscript == 1){
-//     InitializeDeviceCsvData(LOAD);
-//   }
-//   PRINT_TIMER(timer_readsmv, "InitializeDeviceCsvData");
-
-//   SetupPlot2DUnitData();
-//   PRINT_TIMER(timer_readsmv, "SetupPlot2DUnitData");
-
-//   if(nzoneinfo>0)SetupZoneDevs();
-//   PRINT_TIMER(timer_readsmv, "SetupPlot2DUnitData");
-
-//   InitPartProp();
-//   PRINT_TIMER(timer_readsmv, "InitPartProp");
-
-//   InitClip();
-//   PRINT_TIMER(timer_readsmv, "InitClip");
-
-//   if(noutlineinfo>0){
-//     highlight_flag=2;
-//   }
-//   else{
-//     highlight_flag=1;
-//   }
-//   InitCadColors();
-//   PRINT_TIMER(timer_readsmv, "InitCadColors");
-
-//   // update loaded lists
-
-//   FREEMEMORY(slice_loaded_list);
-//   if(nsliceinfo>0){
-//     NewMemory((void **)&slice_loaded_list,nsliceinfo*sizeof(int));
-//   }
-//   FREEMEMORY(slice_sorted_loaded_list);
-//   if(nsliceinfo>0){
-//     NewMemory((void **)&slice_sorted_loaded_list, nsliceinfo*sizeof(int));
-//   }
-
-//   UpdateLoadedLists();
-//   PRINT_TIMER(timer_readsmv, "UpdateLoadedLists");
-//   CheckMemory;
-
-//   UpdateMeshBoxBounds();
-//   PRINT_TIMER(timer_readsmv, "UpdateMeshBoxBounds");
-
-//   SetupReadAllGeom();
-//   if(readallgeom_threads == NULL){
-//     readallgeom_threads = THREADinit(&n_readallgeom_threads, &use_readallgeom_threads, ReadAllGeom);
-//   }
-//   THREADrun(readallgeom_threads, NULL);
-//   THREADcontrol(readallgeom_threads, THREAD_JOIN);
-//   PRINT_TIMER(timer_readsmv, "ReadAllGeomMT");
-
-//   UpdateMeshCoords();
-//   PRINT_TIMER(timer_readsmv, "UpdateMeshCoords");
-
-//   UpdateSmoke3DTypes();
-//   PRINT_TIMER(timer_readsmv, "UpdateSmoke3DTypes");
-//   CheckMemory;
-
-//   // allocate memory for geometry pointers (only once)
-
-//   GetGeomInfoPtrs(1);
-//   PRINT_TIMER(timer_readsmv, "GetGeomInfoPtrs");
-//   /*
-//     Associate a surface with each block.
-//   */
-//   UpdateUseTextures();
-//   PRINT_TIMER(timer_readsmv, "UpdateUseTextures");
-//   CheckMemory;
-
-//   /* compute global bar's and box's */
-
-
-//   for(i=0;i<npartclassinfo;i++){
-//     partclassdata *partclassi;
-
-//     partclassi = partclassinfo + i;
-
-//     if(partclassi->device_name!=NULL){
-//         float length, azimuth, elevation;
-
-//         partclassi->diameter=SCALE2SMV(partclassi->diameter);
-//         partclassi->length=SCALE2SMV(partclassi->length);
-//         length=partclassi->length;
-//         azimuth = partclassi->azimuth*DEG2RAD;
-//         elevation = partclassi->elevation*DEG2RAD;
-//         partclassi->dx = cos(azimuth)*cos(elevation)*length/2.0;
-//         partclassi->dy = sin(azimuth)*cos(elevation)*length/2.0;
-//         partclassi->dz =              sin(elevation)*length/2.0;
-//     }
-//   }
-//   if(npartinfo>=64){
-//     use_partload_threads = 1;
-//     partfast = 1;
-//   }
-
-//   shooter_xyz[0]=xbar/2.0;
-//   shooter_xyz[1] = 0.0;
-//   shooter_xyz[2] = zbar/2.0;
-//   shooter_dxyz[0]=xbar/4.0;
-//   shooter_dxyz[1]=0.0;
-//   shooter_dxyz[2]=0.0;
-//   shooter_nparts=100;
-//   shooter_velmag=1.0;
-//   shooter_veldir=0.0;
-//   shooter_fps=10;
-//   shooter_vel_type=1;
-
-//   UpdatePlotxyzAll();
-//   CheckMemory;
-
-//   START_TIMER(timer_readsmv);
-//   SetSliceParmInfo(&sliceparminfo);
-//   PRINT_TIMER(timer_readsmv, "SetSliceParmInfo");
-//   nsliceinfo            = 0;
-//   nmultisliceinfo       = 0;
-//   nmultivsliceinfo      = 0;
-//   nvsliceinfo           = 0;
-//   if(sliceparms_threads == NULL){
-//     sliceparms_threads = THREADinit(&n_sliceparms_threads, &use_sliceparms_threads, UpdateVSlices);
-//   }
-//   THREADrun(sliceparms_threads, &sliceparminfo);
-//   THREADcontrol(sliceparms_threads, THREAD_JOIN);
-//   PRINT_TIMER(timer_readsmv, "UpdateVSlices");
-
-//   GetSliceParmInfo(&sliceparminfo);
-//   PRINT_TIMER(timer_readsmv, "GetSliceParmInfo");
-//   if(update_slice==1)return 3;
-
-//   GenerateSliceMenu(generate_info_from_commandline);
-//   PRINT_TIMER(timer_readsmv, "GenerateSliceMenu");
-
-//   if(generate_info_from_commandline==1){
-//     GenerateViewpointMenu();
-//     SMV_EXIT(0);
-//   }
-
-//   GetBoundaryParams();
-//   PRINT_TIMER(timer_readsmv, "GetBoundaryParams");
-
-//   GetGSliceParams();
-//   PRINT_TIMER(timer_readsmv, "GetGSliceParams");
-
-//   active_smokesensors=0;
-//   for(i=0;i<ndeviceinfo;i++){
-//     devicedata *devicei;
-//     char *label;
-
-//     devicei = deviceinfo + i;
-//     devicei->device_mesh= GetMeshNoFail(devicei->xyz);
-//     label = devicei->object->label;
-//     if(strcmp(label,"smokesensor")==0){
-//       active_smokesensors=1;
-//     }
-//     if(devicei->plane_surface!=NULL){
-//       InitDevicePlane(devicei);
-//     }
-//   }
-
-//   START_TIMER(timer_readsmv);
-
-//   MakeIBlankCarve();
-//   PRINT_TIMER(timer_readsmv, "MakeIBlankCarve");
-
-// #ifdef pp_SMOKEDRAW_SPEEDUP
-//   if(mergesmoke_threads == NULL){
-//     mergesmoke_threads = THREADinit(&n_mergesmoke_threads, &use_mergesmoke_threads, MtMergeSmoke3D);
-//   }
-// #endif
-
-//   if(ffmpeg_threads == NULL){
-//     ffmpeg_threads = THREADinit(&n_ffmpeg_threads, &use_ffmpeg_threads, SetupFF);
-//   }
-//   THREADrun(ffmpeg_threads, NULL);
-//   PRINT_TIMER(timer_readsmv, "SetupFFMT");
-
-//   if(isosurface_threads == NULL){
-//     isosurface_threads = THREADinit(&n_isosurface_threads, &use_isosurface_threads, SetupAllIsosurfaces);
-//   }
-//   THREADrun(isosurface_threads, NULL);
-//   THREADcontrol(isosurface_threads, THREAD_JOIN);
-//   PRINT_TIMER(timer_readsmv, "SetupAllIsosurfaces");
-
-//   MakeIBlankSmoke3D();
-//   PRINT_TIMER(timer_readsmv, "MakeIBlankSmoke3D");
-
-//   if(HaveCircularVents()==1|| nmeshes < 100 || fast_startup == 0){
-//     MakeIBlank();
-//     PRINT_TIMER(timer_readsmv, "MakeIBlank");
-//   }
-
-//   SetCVentDirs();
-//   PRINT_TIMER(timer_readsmv, "SetCVentDirs");
-
-//   SetVentDirs();
-//   update_setvents = 1;
-//   PRINT_TIMER(timer_readsmv, "SetVentDirs");
-
-//   UpdateFaces();
-//   PRINT_TIMER(timer_readsmv, "UpdateFaces");
-
-//   xcenGLOBAL=xbar/2.0;  ycenGLOBAL=ybar/2.0; zcenGLOBAL=zbar/2.0;
-//   xcenCUSTOM=xbar/2.0;  ycenCUSTOM=ybar/2.0; zcenCUSTOM=zbar/2.0;
-
-//   glui_rotation_index = ROTATE_ABOUT_FDS_CENTER;
-
-//   UpdateBoundInfo();
-//   PRINT_TIMER(timer_readsmv, "UpdateBoundInfo");
-
-//   UpdateObjectUsed();
-//   PRINT_TIMER(timer_readsmv, "UpdateObjectUsed");
-
-//   // close .smv file
-
-//   UpdateSelectFaces();
-//   PRINT_TIMER(timer_readsmv, "UpdateSelectFaces");
-
-//   UpdateSliceBoundIndexes();
-//   PRINT_TIMER(timer_readsmv, "UpdateSliceBoundIndexes");
-
-//   UpdateSliceBoundLabels();
-//   PRINT_TIMER(timer_readsmv, "UpdateSliceBoundLabels");
-
-//   UpdateIsoTypes();
-//   PRINT_TIMER(timer_readsmv, "UpdateIsoTypes");
-
-//   UpdateBoundaryTypes();
-//   PRINT_TIMER(timer_readsmv, "UpdateBoundaryTypes");
-
-//   if(nmeshes < 100 || fast_startup == 0){
-//     InitNabors();
-//     PRINT_TIMER(timer_readsmv, "update nabors");
-//   }
-
-//   UpdateTerrain(1); // xxslow
-//   UpdateTerrainColors();
-//   PRINT_TIMER(timer_readsmv, "UpdateTerrain");
-
-//   UpdateSmoke3dMenuLabels();
-//   PRINT_TIMER(timer_readsmv, "UpdateSmoke3dMenuLabels");
-
-//   UpdateVSliceBoundIndexes();
-//   PRINT_TIMER(timer_readsmv, "UpdateVSliceBoundIndexes");
-
-//   UpdateBoundaryMenuLabels();
-//   PRINT_TIMER(timer_readsmv, "UpdateBoundaryMenuLabels");
-
-//   UpdateIsoMenuLabels();
-//   PRINT_TIMER(timer_readsmv, "UpdateIsoMenuLabels");
-
-//   UpdatePartMenuLabels();
-//   PRINT_TIMER(timer_readsmv, "UpdatePartMenuLabels");
-
-//   UpdateTourMenuLabels();
-//   PRINT_TIMER(timer_readsmv, "UpdateTourMenuLabels");
-
-//   SetupCircularTourNodes();
-//   PRINT_TIMER(timer_readsmv, "SetupCircularTourNodes");
-
-//   InitUserTicks();
-//   PRINT_TIMER(timer_readsmv, "InitUserTicks");
-
-
-//   // define changed_idlist used for blockage editing
-
-//   {
-//     int ntotal=0;
-
-//     for(i=0;i<nmeshes;i++){
-//       meshdata *meshi;
-
-//       meshi = meshinfo + i;
-//       ntotal += meshi->nbptrs;
-//     }
-//     FREEMEMORY(changed_idlist);
-
-//     NewMemory((void **)&changed_idlist,sizeof(int)*(ntotal+1));
-
-//     for(i=0;i<ntotal;i++){
-//       changed_idlist[i]=0;
-//     }
-//     nchanged_idlist=ntotal;
-//   }
-
-//   START_TIMER(timer_readsmv);
-//   InitVolRender();
-//   InitVolRenderSurface(FIRSTCALL);
-//   radius_windrose = 0.2*xyzmaxdiff;
-//   PRINT_TIMER(timer_readsmv, "InitVolRender");
-
-//   if(large_case==0){
-//     SetupReadAllGeom();
-
-//     if(classifyallgeom_threads == NULL){
-//       classifyallgeom_threads = THREADinit(&n_readallgeom_threads, &use_readallgeom_threads, ClassifyAllGeom);
-//     }
-//     THREADrun(classifyallgeom_threads, NULL);
-//   }
-//   PRINT_TIMER(timer_readsmv, "ClassifyGeom");
-
-//   UpdateTriangles(GEOM_STATIC,GEOM_UPDATE_ALL);
-//   GetFaceInfo();
-//   GetBoxGeomCorners();
-//   PRINT_TIMER(timer_readsmv, "update trianglesfaces");
-
-//   if(ngeominfo>0&&auto_terrain==1){
-//     START_TIMER(timer_readsmv);
-//     GenerateTerrainGeom(&terrain_vertices, &terrain_indices, &terrain_nindices);
-//     PRINT_TIMER(timer_readsmv, "GenerateTerrainGeom");
-//   }
-
-//   // update event labels
-//   UpdateEvents();
-//   PRINT_TIMER(timer_readsmv, "UpdateEvents");
-
-//   InitCellMeshInfo();
-//   PRINT_TIMER(timer_readsmv, "InitCellMeshInfo");
-
-//   SetupMeshWalls();
-//   PRINT_TIMER(timer_readsmv, "SetupMeshWalls");
-
-//   if(viswindrose==1)update_windrose = 1;
-
-// // initialize 2d plot data structures
-//   NewMemory((void **)&glui_plot2dinfo, sizeof(plot2ddata));
-//   InitPlot2D(glui_plot2dinfo, 0);
-//   PRINT_TIMER(timer_readsmv, "InitPlot2D");
-
-//   SetInteriorBlockages(1);
-//   PRINT_TIMER(timer_readsmv, "SetInteriorBlockages");
-
-//   PRINTF("%s", _("complete"));
-//   PRINTF("\n\n");
-//   PrintMemoryInfo;
-
-//   STOP_TIMER(wrapup_time);
-//   if(show_timings==1){
-//     PRINTF(".smv Processing Times\n");
-//     PRINTF("---------------------\n");
-//     PRINTF("      filelist: %.1f s\n", getfilelist_time);
-//     PRINTF("         setup: %.1f s\n", pass0_time);
-//     PRINTF("        pass 1: %.1f s\n", pass1_time);
-//     PRINTF("        pass 2: %.1f s\n", pass2_time);
-//     PRINTF("        pass 3: %.1f s\n", pass3_time);
-//     PRINTF("        pass 4: %.1f s\n", pass4_time);
-//     PRINTF("        pass 5: %.1f s\n", pass5_time);
-//     PRINTF("all passes: %.1f s\n", processing_time);
-//     PRINTF("   wrap up: %.1f s\n", wrapup_time);
-//     PRINTF("\n");
-//   }
-//   STOP_TIMER(timer_startup);
-//   START_TIMER(timer_render);
-//   PRINT_TIMER(total_wrapup_time, "total wrapup time");
-//   return 0;
-// }
-
 /* ------------------ ReadSMV_Init ------------------------ */
 /// @brief Parse an SMV file.
 /// @param stream the file stream to parse.
@@ -9906,10 +9346,10 @@ void UpdateUseTextures(smv_case *scase){
       texti->used=1;
     }
   }
-  for(i=0;i<ngeominfo;i++){
+  for(i=0;i<scase->ngeominfo;i++){
     geomdata *geomi;
 
-    geomi = geominfo + i;
+    geomi = scase->geominfo + i;
     if(scase->texture_coll.textureinfo!=NULL&&geomi->surfgeom!=NULL){
         texturedata *texti;
 

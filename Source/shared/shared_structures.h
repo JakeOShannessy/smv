@@ -1797,6 +1797,16 @@ typedef struct {
   int npartinfo;
   partdata *partinfo;
 
+  geomdata *geominfo;
+  int ngeominfo;
+  geomdata *cgeominfo;
+  int ncgeominfo;
+
+  float obst_bounding_box[6];
+
+  supermeshdata *supermeshinfo;
+  int nsupermeshinfo;
+
 } smv_case;
 
 #endif

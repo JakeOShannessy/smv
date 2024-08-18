@@ -8168,6 +8168,12 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   ioffset=0;
   iobst=0;
   noutlineinfo=0;
+  // TODO: we need to reset all the counts here
+  surf_coll.nsurfinfo = 0;
+  if(noffset==0)ioffset=1;
+
+  REWIND(stream);
+  PRINTF("%s","  pass 2\n");
   for(;;){
     if(FEOF(stream)!=0){
       BREAK;
