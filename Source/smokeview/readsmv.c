@@ -7355,6 +7355,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   int have_auto_terrain_image=0;
 
   int n_cadgeom_keywords = 0;
+  int n_surf_keywords = 0;
 
   char buffer[256], buffers[6][256];
   patchdata *patchgeom;
@@ -7738,7 +7739,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"SURFACE") ==1){
-      surf_coll.nsurfinfo++;
+      n_surf_keywords++;
       continue;
     }
     if(MatchSMV(buffer,"GRID") == 1){
@@ -8110,7 +8111,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
   FREEMEMORY(texture_coll.textureinfo);
   FREEMEMORY(surf_coll.surfinfo);
-  if(NewMemory((void **)&surf_coll.surfinfo,(surf_coll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
+  if(NewMemory((void **)&surf_coll.surfinfo,(n_surf_keywords+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
 
   if (cadgeomcoll != NULL) FreeCADGeomCollection(cadgeomcoll);
   if (n_cadgeom_keywords > 0) {
@@ -8168,8 +8169,6 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   ioffset=0;
   iobst=0;
   noutlineinfo=0;
-  // TODO: we need to reset all the counts here
-  surf_coll.nsurfinfo = 0;
   if(noffset==0)ioffset=1;
 
   REWIND(stream);
