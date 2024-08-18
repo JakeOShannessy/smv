@@ -10,7 +10,6 @@
 #include <sys/types.h>
 
 #include "MALLOCC.h"
-// #include "smokeviewvars.h"
 #include "string_util.h"
 #include "datadefs.h"
 #include "smokeviewdefs.h"
@@ -18,8 +17,6 @@
 #include "readlabel.h"
 #include "readobject.h"
 #include <math.h>
-
-// #include "structures.h"
 
 #include <json-c/json_object.h>
 
