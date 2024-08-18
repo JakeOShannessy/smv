@@ -760,14 +760,14 @@ int LuaGetMeshes(lua_State *L) {
 
 /// @brief Get the number of meshes in the loaded model.
 int LuaGetNdevices(lua_State *L) {
-  lua_pushnumber(L, ndeviceinfo);
+  lua_pushnumber(L, devicecoll.ndeviceinfo);
   return 1;
 }
 
 /// @brief Build a Lua table with information on the devices of the model.
 int LuaGetDevices(lua_State *L) {
-  int entries = ndeviceinfo;
-  devicedata *infotable = deviceinfo;
+  int entries = devicecoll.ndeviceinfo;
+  devicedata *infotable = devicecoll.deviceinfo;
   lua_createtable(L, 0, entries);
   int i;
   for(i = 0; i < entries; i++) {
@@ -822,16 +822,16 @@ int LuaCreateVector(lua_State *L, csvdata *csv_x, csvdata *csv_y) {
 
 /// @brief Get the number of CSV files available to the model.
 int LuaGetNcsvinfo(lua_State *L) {
-  lua_pushnumber(L, ncsvfileinfo);
+  lua_pushnumber(L, csvcoll.ncsvfileinfo);
   return 1;
 }
 
 csvfiledata *GetCsvinfo(const char *key) {
   // Loop through csvinfo until we find the right entry
   size_t i;
-  for(i = 0; i < ncsvfileinfo; ++i) {
-    if(strcmp(csvfileinfo[i].c_type, key) == 0) {
-      return &csvfileinfo[i];
+  for(i = 0; i < csvcoll.ncsvfileinfo; ++i) {
+    if(strcmp(csvcoll.csvfileinfo[i].c_type, key) == 0) {
+      return &csvcoll.csvfileinfo[i];
     }
   }
   return NULL;
@@ -840,8 +840,8 @@ csvfiledata *GetCsvinfo(const char *key) {
 int GetCsvindex(const char *key) {
   // Loop through csvinfo until we find the right entry
   size_t i;
-  for(i = 0; i < ncsvfileinfo; ++i) {
-    if(strcmp(csvfileinfo[i].c_type, key) == 0) {
+  for(i = 0; i < csvcoll.ncsvfileinfo; ++i) {
+    if(strcmp(csvcoll.csvfileinfo[i].c_type, key) == 0) {
       return i;
     }
   }
@@ -870,15 +870,15 @@ int AccessCsventryProp(lua_State *L) {
   int index = lua_tonumber(L, -1);
   const char *field = lua_tostring(L, 2);
   if(strcmp(field, "loaded") == 0) {
-    lua_pushboolean(L, csvfileinfo[index].loaded);
+    lua_pushboolean(L, csvcoll.csvfileinfo[index].loaded);
     return 1;
   }
   else if(strcmp(field, "display") == 0) {
-    lua_pushboolean(L, csvfileinfo[index].display);
+    lua_pushboolean(L, csvcoll.csvfileinfo[index].display);
     return 1;
   }
   else if(strcmp(field, "vectors") == 0) {
-    csvfiledata *csventry = &csvfileinfo[index];
+    csvfiledata *csventry = &csvcoll.csvfileinfo[index];
     if(!csventry->loaded) {
       LoadCsv(csventry);
     }
@@ -1879,10 +1879,10 @@ int LuaGetCsventry(lua_State *L) {
 // TODO: provide more information via this interface.
 // TODO: use metatables so that the most up-to-date information is retrieved.
 int LuaGetCsvinfo(lua_State *L) {
-  lua_createtable(L, 0, ncsvfileinfo);
+  lua_createtable(L, 0, csvcoll.ncsvfileinfo);
   int i;
-  for(i = 0; i < ncsvfileinfo; i++) {
-    lua_pushstring(L, csvfileinfo[i].c_type);
+  for(i = 0; i < csvcoll.ncsvfileinfo; i++) {
+    lua_pushstring(L, csvcoll.csvfileinfo[i].c_type);
     LuaGetCsventry(L);
     lua_settable(L, -3);
   }

@@ -392,8 +392,8 @@ void MouseEditBlockage(int x, int y){
     bchighlight_old=bchighlight;
     bchighlight = meshi->blockageinfoptrs[highlight_block];
     for(i=0;i<6;i++){
-      surface_indices[i]=inv_sorted_surfidlist[bchighlight->surf_index[i]];
-      surface_indices_bak[i]=inv_sorted_surfidlist[bchighlight->surf_index[i]];
+      surface_indices[i]=surf_coll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
+      surface_indices_bak[i]=surf_coll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
     }
 
     glShadeModel(GL_SMOOTH);
@@ -464,11 +464,11 @@ void MouseSelectDevice(int x, int y){
 
   val = (r << (nbluebits+ngreenbits)) | (g << nbluebits) | b;
 
-  if(val>0&&val<ndeviceinfo){
+  if(val>0&&val<devicecoll.ndeviceinfo){
     devicedata *devicei;
     float *xyz;
 
-    devicei = deviceinfo+val-1;
+    devicei = devicecoll.deviceinfo+val-1;
     devicei->selected = 1-devicei->selected;
     xyz = devicei->xyz;
 
@@ -1642,16 +1642,16 @@ void Keyboard(unsigned char key, int flag){
 #define DEVYES_HRRNO  2
 #define DEVNO_HRRYES  3
     case 'A':
-      if(hrrptr==NULL&&ndeviceinfo==0)break;
-      if(hrrptr!=NULL&&ndeviceinfo>0){
+      if(hrrptr==NULL&&devicecoll.ndeviceinfo==0)break;
+      if(hrrptr!=NULL&&devicecoll.ndeviceinfo>0){
         plot_option++;
         if(plot_option>3)plot_option = 0;
       }
       else{
         int plot_option_temp = DEVNO_HRRNO;
 
-        if(ndeviceinfo==0&&hrrptr!=NULL&&plot_option==DEVNO_HRRNO)plot_option_temp = DEVNO_HRRYES;
-        if(ndeviceinfo>0&&hrrptr==NULL&&plot_option==DEVNO_HRRNO)plot_option_temp = DEVYES_HRRNO;
+        if(devicecoll.ndeviceinfo==0&&hrrptr!=NULL&&plot_option==DEVNO_HRRNO)plot_option_temp = DEVNO_HRRYES;
+        if(devicecoll.ndeviceinfo>0&&hrrptr==NULL&&plot_option==DEVNO_HRRNO)plot_option_temp = DEVYES_HRRNO;
         plot_option = plot_option_temp;
       }
       // 0 - device no, hrr no
@@ -2005,15 +2005,15 @@ void Keyboard(unsigned char key, int flag){
       GLUIUpdateDeviceSize();
       break;
     case '`':
-      if(ndeviceinfo>0){
+      if(devicecoll.ndeviceinfo>0){
         int selected;
 
-        selected = 1-deviceinfo[0].selected;
+        selected = 1-devicecoll.deviceinfo[0].selected;
         if(selected==1&&select_device==0)select_device = 1;
-        for(i = 0; i<ndeviceinfo; i++){
+        for(i = 0; i<devicecoll.ndeviceinfo; i++){
           devicedata *devicei;
 
-          devicei = deviceinfo+i;
+          devicei = devicecoll.deviceinfo+i;
           devicei->selected = selected;
         }
       }
@@ -2334,10 +2334,10 @@ void Keyboard(unsigned char key, int flag){
       break;
     case 'Q':
       showhide_textures = 1-showhide_textures;
-      for(i = 0; i<ntextureinfo; i++){
+      for(i = 0; i<texture_coll.ntextureinfo; i++){
         texturedata *texti;
 
-        texti = textureinfo+i;
+        texti = texture_coll.textureinfo+i;
         if(texti->loaded==0||texti->used==0)continue;
         if(texti->display==0){ // if any textures are hidden then show them all
           showhide_textures = 1;

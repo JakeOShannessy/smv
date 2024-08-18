@@ -145,7 +145,7 @@ void ShowScene2(int mode){
 
     /* ++++++++++++++++++++++++ draw fds specified blockage outlines +++++++++++++++++++++++++ */
 
-    if(nobstinfo>0&&blocklocation!=BLOCKlocation_grid){
+    if(obstcoll.nobstinfo>0&&blocklocation!=BLOCKlocation_grid){
       if(visBlocks==visBLOCKOutline||visBlocks==visBLOCKAsInputOutline||
          visBlocks==visBLOCKSolidOutline||visBlocks==visBLOCKAddOutline){
         DrawOrigObstOutlines();
@@ -370,7 +370,7 @@ void ShowScene2(int mode){
         DrawTerrainOBST(terri, flag);
         break;
       case TERRAIN_IMAGE:
-        if(terrain_textures != NULL&&terrain_textures[iterrain_textures].loaded == 1){
+        if(terrain_texture_coll.terrain_textures != NULL&&terrain_texture_coll.terrain_textures[iterrain_textures].loaded == 1){
           DrawTerrainOBSTTexture(terri);
         }
         else{

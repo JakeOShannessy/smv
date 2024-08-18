@@ -595,10 +595,10 @@ void UpdateIndexColors(void){
   if(strcmp(surfacedefault->surfacelabel,"INERT")==0){
     surfacedefault->color=block_ambient2;
   }
-  for(i=0;i<nsurfinfo;i++){
+  for(i=0;i<surf_coll.nsurfinfo;i++){
     surfdata *surfi;
 
-    surfi = surfinfo + i;
+    surfi = surf_coll.surfinfo + i;
     if(strcmp(surfi->surfacelabel,"INERT")==0){
       surfi->color=block_ambient2;
     }
@@ -656,12 +656,12 @@ void DrawOrigObstOutlines(void){
   AntiAliasLine(ON);
   glLineWidth(linewidth);
   glBegin(GL_LINES);
-  for(i=0; i<nobstinfo; i++){
+  for(i=0; i<obstcoll.nobstinfo; i++){
     xbdata *obi;
     float *xyz;
     float xmin, xmax, ymin, ymax, zmin, zmax;
 
-    obi = obstinfo + i;
+    obi = obstcoll.obstinfo + i;
     color = foregroundcolor;
     if(obi->bc!=NULL&&obi->bc->showtimelist!=NULL&&obi->bc->showtimelist[itimes]==0)continue;
     if(obi->color!=NULL)color = obi->color;
@@ -2681,7 +2681,7 @@ void UpdateFaceLists(void){
          (facej->type==BLOCK_outline&&visBlocks==visBLOCKAsInput)||
          ((j>=vent_offset&&j<vent_offset+meshi->nvents)&&vi->isOpenvent==1&&visOpenVentsAsOutline==1)
         ){
-        if(nobstinfo==0||(nobstinfo>0&&blocklocation==BLOCKlocation_grid))meshi->face_outlines[n_outlines++]=facej;
+        if(obstcoll.nobstinfo==0||(obstcoll.nobstinfo>0&&blocklocation==BLOCKlocation_grid))meshi->face_outlines[n_outlines++]=facej;
         if(visBlocks!=visBLOCKSolidOutline&&visBlocks!=visBLOCKAsInputOutline)continue;
       }
       if(j<vent_offset){

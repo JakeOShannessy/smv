@@ -7,6 +7,7 @@
 #include GLUT_H
 #include <math.h>
 
+#include "smokeviewdefs.h"
 #include "smokeviewvars.h"
 #include "IOscript.h"
 #include "MALLOCC.h"
@@ -4762,7 +4763,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
   // -------------- Show/Hide Loaded files -------------------
 
-  if(npartinfo > 0 || slicecoll.nsliceinfo > 0 || nvsliceinfo > 0 || nisoinfo > 0 || npatchinfo || smoke3dcoll.nsmoke3dinfo > 0 || nplot3dinfo > 0){
+  if(npartinfo > 0 || slicecoll.nsliceinfo > 0 || slicecoll.nvsliceinfo > 0 || nisoinfo > 0 || npatchinfo || smoke3dcoll.nsmoke3dinfo > 0 || nplot3dinfo > 0){
     ROLLOUT_showhide = glui_bounds->add_rollout_to_panel(ROLLOUT_files,_("Show/Hide"), false, SHOWHIDE_ROLLOUT, FileRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_showhide, glui_bounds);
     ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_showhide, SHOWHIDE_ROLLOUT, glui_bounds);
@@ -6645,10 +6646,10 @@ extern "C" void GLUISliceBoundCB(int var){
       break;
     case SORT_SURFACES:
       sort_geometry=sort_iso_triangles;
-      for(i=nsurfinfo;i<nsurfinfo+MAX_ISO_COLORS+1;i++){
+      for(i=surf_coll.nsurfinfo;i<surf_coll.nsurfinfo+MAX_ISO_COLORS+1;i++){
         surfdata *surfi;
 
-        surfi = surfinfo + i;
+        surfi = surf_coll.surfinfo + i;
         surfi->transparent_level=transparent_level;
       }
       CHECKBOX_sort2->set_int_val(sort_iso_triangles);
@@ -6701,10 +6702,10 @@ extern "C" void GLUISliceBoundCB(int var){
       updatemenu = 1;
       break;
     case TRANSPARENTLEVEL:
-      for(i=nsurfinfo;i<nsurfinfo+MAX_ISO_COLORS+1;i++){
+      for(i=surf_coll.nsurfinfo;i<surf_coll.nsurfinfo+MAX_ISO_COLORS+1;i++){
         surfdata *surfi;
 
-        surfi = surfinfo + i;
+        surfi = surf_coll.surfinfo + i;
         surfi->transparent_level=transparent_level;
       }
       UpdateRGBColors(colorbar_select_index);

@@ -470,20 +470,20 @@ FILE_SIZE ReadAllCSVFiles(int flag){
   int i;
   FILE_SIZE file_size=0;
 
-  if(ncsvfileinfo == 0)return 0;
+  if(csvcoll.ncsvfileinfo == 0)return 0;
 #define GENPLOT_REM_ALL_PLOTS       136
   GenPlotCB(GENPLOT_REM_ALL_PLOTS);
-  for(i = 0; i < ncsvfileinfo; i++){
+  for(i = 0; i < csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
-    csvfi = csvfileinfo + i;
+    csvfi = csvcoll.csvfileinfo + i;
     ReadCSVFile(csvfi, UNLOAD);
   }
   if(flag == UNLOAD)return 0;
-  for(i = 0; i < ncsvfileinfo; i++){
+  for(i = 0; i < csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
-    csvfi = csvfileinfo + i;
+    csvfi = csvcoll.csvfileinfo + i;
     if(csvfi->defined == CSV_DEFINING|| csvfi->defined == CSV_DEFINED){
       continue;
     }
@@ -493,10 +493,10 @@ FILE_SIZE ReadAllCSVFiles(int flag){
     csvfi->defined = CSV_DEFINED;
     UpdateCSVFileTypes();
   }
-  for(i = 0; i < ncsvfileinfo; i++){
+  for(i = 0; i < csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
-    csvfi = csvfileinfo + i;
+    csvfi = csvcoll.csvfileinfo + i;
     if(csvfi->defined != CSV_DEFINED){
       break;
     }
@@ -538,7 +538,7 @@ void ReadHRR(int flag){
   qradi_col = -1;
   if(flag==UNLOAD)return;
 
-  stream = fopen(hrr_csv_filename, "r");
+  stream = fopen(paths.hrr_csv_filename, "r");
   if(stream==NULL)return;
 
   len_buffer = GetRowCols(stream, &nrows, &ncols);
@@ -902,15 +902,15 @@ void UpdateINIList(void){
 
   strcpy(filter,fdsprefix);
   strcat(filter,"*.ini");
-  FreeFileList(ini_filelist,&nini_filelist);
-  nini_filelist=GetFileListSize(".",filter, FILE_MODE);
-  if(nini_filelist>0){
-    MakeFileList(".",filter,nini_filelist,NO,&ini_filelist, FILE_MODE);
+  FreeFileList(filelist_coll.ini_filelist,&filelist_coll.nini_filelist);
+  filelist_coll.nini_filelist=GetFileListSize(".",filter, FILE_MODE);
+  if(filelist_coll.nini_filelist>0){
+    MakeFileList(".",filter,filelist_coll.nini_filelist,NO,&filelist_coll.ini_filelist, FILE_MODE);
 
-    for(i=0;i<nini_filelist;i++){
+    for(i=0;i<filelist_coll.nini_filelist;i++){
       filelistdata *filei;
 
-      filei = ini_filelist + i;
+      filei = filelist_coll.ini_filelist + i;
       if(filei->type!=0)continue;
       InsertIniFile(filei->file);
     }
@@ -1270,10 +1270,10 @@ void ReadSMVDynamic(char *file){
       FREEMEMORY(cvi->showtime);
     }
   }
-  for(i=ndeviceinfo_exp;i<ndeviceinfo;i++){
+  for(i=devicecoll.ndeviceinfo_exp;i<devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = deviceinfo + i;
+    devicei =devicecoll.deviceinfo + i;
     devicei->nstate_changes=0;
     FREEMEMORY(devicei->act_times);
     FREEMEMORY(devicei->state_values);
@@ -1476,8 +1476,8 @@ void ReadSMVDynamic(char *file){
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f %i",&idevice,&act_time,&act_state);
       idevice--;
-      if(idevice>=0&&idevice<ndeviceinfo){
-        devicei = deviceinfo + idevice;
+      if(idevice>=0&&idevice<devicecoll.ndeviceinfo){
+        devicei = devicecoll.deviceinfo + idevice;
         devicei->act_time=act_time;
         devicei->nstate_changes++;
       }
@@ -1512,10 +1512,10 @@ void ReadSMVDynamic(char *file){
         int count=0;
 
         meshi->theat[nn-1]=time_local;
-        for(idev=0;idev<ndeviceinfo;idev++){
+        for(idev=0;idev<devicecoll.ndeviceinfo;idev++){
           devicedata *devicei;
 
-          devicei = deviceinfo + idev;
+          devicei = devicecoll.deviceinfo + idev;
           if(devicei->type==DEVICE_HEAT){
             count++;
             if(nn==count){
@@ -1556,10 +1556,10 @@ void ReadSMVDynamic(char *file){
 
         meshi->tspr[nn-1]=time_local;
 
-        for(idev=0;idev<ndeviceinfo;idev++){
+        for(idev=0;idev<devicecoll.ndeviceinfo;idev++){
           devicedata *devicei;
 
-          devicei = deviceinfo + idev;
+          devicei = devicecoll.deviceinfo + idev;
           if(devicei->type==DEVICE_SPRK){
             count++;
             if(nn==count){
@@ -1583,10 +1583,10 @@ void ReadSMVDynamic(char *file){
 
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&nn,&time_local);
-      for(idev=0;idev<ndeviceinfo;idev++){
+      for(idev=0;idev<devicecoll.ndeviceinfo;idev++){
         devicedata *devicei;
 
-        devicei = deviceinfo + idev;
+        devicei = devicecoll.deviceinfo + idev;
         if(devicei->type==DEVICE_SMOKE){
           count++;
           if(nn==count){
@@ -1619,10 +1619,10 @@ void ReadSMVDynamic(char *file){
       ResizeMemory((void **)&plot3dinfo,nplot3dinfo*sizeof(plot3ddata));
     }
   }
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     devicei->istate_changes=0;
   }
 
@@ -1930,10 +1930,10 @@ void ReadSMVDynamic(char *file){
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f %i",&idevice,&act_time,&act_state);
       idevice--;
-      if(idevice>=0&&idevice<ndeviceinfo){
+      if(idevice>=0&&idevice<devicecoll.ndeviceinfo){
         int istate;
 
-        devicei = deviceinfo + idevice;
+        devicei = devicecoll.deviceinfo + idevice;
         devicei->act_time=act_time;
         if(devicei->act_times==NULL){
           devicei->nstate_changes++;
@@ -2439,43 +2439,43 @@ int GetInpf(bufferstreamdata *stream_in){
       bufferptr=TrimFrontBack(buffer);
 
       len=strlen(bufferptr);
-      FREEMEMORY(fds_filein);
-      if(NewMemory((void **)&fds_filein,(unsigned int)(len+1))==0)return 2;
-      STRCPY(fds_filein,bufferptr);
-      if(FILE_EXISTS_CASEDIR(fds_filein)==NO){
-        FreeMemory(fds_filein);
+      FREEMEMORY(paths.fds_filein);
+      if(NewMemory((void **)&paths.fds_filein,(unsigned int)(len+1))==0)return 2;
+      STRCPY(paths.fds_filein,bufferptr);
+      if(FILE_EXISTS_CASEDIR(paths.fds_filein)==NO){
+        FreeMemory(paths.fds_filein);
       }
 
       if(chidfilebase==NULL){
         char *chidptr=NULL;
         char buffer_chid[1024];
 
-        if(fds_filein!=NULL)chidptr=GetChid(fds_filein,buffer_chid);
+        if(paths.fds_filein!=NULL)chidptr=GetChid(paths.fds_filein,buffer_chid);
         if(chidptr!=NULL){
           NewMemory((void **)&chidfilebase,(unsigned int)(strlen(chidptr)+1));
           STRCPY(chidfilebase,chidptr);
         }
       }
       if(chidfilebase!=NULL){
-        NewMemory((void **)&hrr_csv_filename,(unsigned int)(strlen(chidfilebase)+8+1));
-        STRCPY(hrr_csv_filename,chidfilebase);
-        STRCAT(hrr_csv_filename,"_hrr.csv");
-        if(FILE_EXISTS_CASEDIR(hrr_csv_filename)==NO){
-          FREEMEMORY(hrr_csv_filename);
+        NewMemory((void **)&paths.hrr_csv_filename,(unsigned int)(strlen(chidfilebase)+8+1));
+        STRCPY(paths.hrr_csv_filename,chidfilebase);
+        STRCAT(paths.hrr_csv_filename,"_hrr.csv");
+        if(FILE_EXISTS_CASEDIR(paths.hrr_csv_filename)==NO){
+          FREEMEMORY(paths.hrr_csv_filename);
         }
 
-        NewMemory((void **)&devc_csv_filename,(unsigned int)(strlen(chidfilebase)+9+1));
-        STRCPY(devc_csv_filename,chidfilebase);
-        STRCAT(devc_csv_filename,"_devc.csv");
-        if(FILE_EXISTS_CASEDIR(devc_csv_filename)==NO){
-          FREEMEMORY(devc_csv_filename);
+        NewMemory((void **)&paths.devc_csv_filename,(unsigned int)(strlen(chidfilebase)+9+1));
+        STRCPY(paths.devc_csv_filename,chidfilebase);
+        STRCAT(paths.devc_csv_filename,"_devc.csv");
+        if(FILE_EXISTS_CASEDIR(paths.devc_csv_filename)==NO){
+          FREEMEMORY(paths.devc_csv_filename);
         }
 
-        NewMemory((void **)&exp_csv_filename,(unsigned int)(strlen(chidfilebase)+8+1));
-        STRCPY(exp_csv_filename,chidfilebase);
-        STRCAT(exp_csv_filename,"_exp.csv");
-        if(FILE_EXISTS_CASEDIR(exp_csv_filename)==NO){
-          FREEMEMORY(exp_csv_filename);
+        NewMemory((void **)&paths.exp_csv_filename,(unsigned int)(strlen(chidfilebase)+8+1));
+        STRCPY(paths.exp_csv_filename,chidfilebase);
+        STRCAT(paths.exp_csv_filename,"_exp.csv");
+        if(FILE_EXISTS_CASEDIR(paths.exp_csv_filename)==NO){
+          FREEMEMORY(paths.exp_csv_filename);
         }
       }
       break;
@@ -2490,12 +2490,12 @@ int IsDupTexture(texturedata *texti){
   int dup_texture;
   int i, j;
 
-  i = texti - textureinfo;
+  i = texti - texture_coll.textureinfo;
   dup_texture=0;
   for(j=0;j<i;j++){
     texturedata *textj;
 
-    textj = textureinfo + j;
+    textj = texture_coll.textureinfo + j;
     if(textj->loaded==0)continue;
     if(strcmp(texti->file,textj->file)==0){
       texti->name=textj->name;
@@ -2513,10 +2513,10 @@ int IsTerrainTexture(texturedata *texti){
   int i;
 
   is_terrain_texture=0;
-  for(i=0;i<nterrain_textures;i++){
+  for(i=0;i<terrain_texture_coll.nterrain_textures;i++){
     texturedata *tt;
 
-    tt = terrain_textures + i;
+    tt = terrain_texture_coll.terrain_textures + i;
     if(tt->file==NULL||strcmp(tt->file, texti->file)!=0)continue;
     return 1;
   }
@@ -2530,72 +2530,72 @@ void InitTextures0(void){
   int i;
 
   INIT_PRINT_TIMER(texture_timer);
-  ntextureinfo = 0;
-  for(i=0;i<nsurfinfo;i++){
+  texture_coll.ntextureinfo = 0;
+  for(i=0;i<surf_coll.nsurfinfo;i++){
     surfdata *surfi;
     texturedata *texti;
     int len;
 
-    surfi = surfinfo + i;
+    surfi = surf_coll.surfinfo + i;
     if(surfi->texturefile==NULL)continue;
-    texti = textureinfo + ntextureinfo;
+    texti = texture_coll.textureinfo + texture_coll.ntextureinfo;
     len = strlen(surfi->texturefile);
     NewMemory((void **)&texti->file,(len+1)*sizeof(char));
     strcpy(texti->file,surfi->texturefile);
     texti->loaded=0;
     texti->used=0;
     texti->display=0;
-    ntextureinfo++;
-    surfi->textureinfo=textureinfo+ntextureinfo-1;
+    texture_coll.ntextureinfo++;
+    surfi->textureinfo=texture_coll.textureinfo+texture_coll.ntextureinfo-1;
   }
   PRINT_TIMER(texture_timer, "SURF textures");
 
-  for(i=0;i<ndevice_texture_list;i++){
+  for(i=0;i<device_texture_list_coll.ndevice_texture_list;i++){
     char *texturefile;
     texturedata *texti;
     int len;
 
-    texturefile = device_texture_list[i];
-    texti = textureinfo + ntextureinfo;
+    texturefile = device_texture_list_coll.device_texture_list[i];
+    texti = texture_coll.textureinfo + texture_coll.ntextureinfo;
     len = strlen(texturefile);
     NewMemory((void **)&texti->file,(len+1)*sizeof(char));
-    device_texture_list_index[i]=ntextureinfo;
+    device_texture_list_coll.device_texture_list_index[i]=texture_coll.ntextureinfo;
     strcpy(texti->file,texturefile);
     texti->loaded=0;
     texti->used=0;
     texti->display=0;
-    ntextureinfo++;
+    texture_coll.ntextureinfo++;
   }
   PRINT_TIMER(texture_timer, "device textures");
 
-  if(nterrain_textures>0){
+  if(terrain_texture_coll.nterrain_textures>0){
     texturedata *texture_base;
 
-    texture_base = textureinfo + ntextureinfo;
-    for(i=0;i<nterrain_textures;i++){
+    texture_base = texture_coll.textureinfo + texture_coll.ntextureinfo;
+    for(i=0;i<terrain_texture_coll.nterrain_textures;i++){
       char *texturefile;
       texturedata *texti;
       int len;
 
-      texturefile = terrain_textures[i].file;
-      texti = textureinfo + ntextureinfo;
+      texturefile = terrain_texture_coll.terrain_textures[i].file;
+      texti = texture_coll.textureinfo + texture_coll.ntextureinfo;
       len = strlen(texturefile);
       NewMemory((void **)&texti->file,(len+1)*sizeof(char));
       strcpy(texti->file,texturefile);
       texti->loaded=0;
       texti->used=0;
       texti->display=0;
-      ntextureinfo++;
+      texture_coll.ntextureinfo++;
     }
-    FREEMEMORY(terrain_textures);
-    terrain_textures = texture_base;
+    FREEMEMORY(terrain_texture_coll.terrain_textures);
+    terrain_texture_coll.terrain_textures = texture_base;
   }
   PRINT_TIMER(texture_timer, "terrain textures");
 
   // check to see if texture files exist .
   // If so, then convert to OpenGL format
 
-  for(i=0;i<ntextureinfo;i++){
+  for(i=0;i<texture_coll.ntextureinfo;i++){
     unsigned char *floortex;
     int texwid, texht;
     texturedata *texti;
@@ -2603,7 +2603,7 @@ void InitTextures0(void){
     int max_texture_size;
     int is_transparent;
 
-    texti = textureinfo + i;
+    texti = texture_coll.textureinfo + i;
     texti->loaded=0;
     if(texti->file==NULL||IsDupTexture(texti)==1||IsTerrainTexture(texti)==1)continue;
 
@@ -2645,8 +2645,8 @@ void InitTextures0(void){
   }
 
   CheckMemory;
-  if(ntextureinfo==0){
-    FREEMEMORY(textureinfo);
+  if(texture_coll.ntextureinfo==0){
+    FREEMEMORY(texture_coll.textureinfo);
   }
 
   // define colorbar textures
@@ -2750,15 +2750,15 @@ void InitTextures0(void){
 
   // define terrain texture
 
-  if(nterrain_textures>0){
+  if(terrain_texture_coll.nterrain_textures>0){
     texturedata *tt;
     unsigned char *floortex;
     int texwid, texht, nloaded=0;
 
-    for(i=0;i<nterrain_textures;i++){
+    for(i=0;i<terrain_texture_coll.nterrain_textures;i++){
       int is_transparent;
 
-      tt = terrain_textures + i;
+      tt = terrain_texture_coll.terrain_textures + i;
       tt->loaded=0;
       tt->used=0;
       tt->display=0;
@@ -2798,11 +2798,11 @@ void InitTextures0(void){
 
 void InitTextures(int use_graphics_arg){
   INIT_PRINT_TIMER(total_texture_time);
-  UpdateDeviceTextures(objectscoll, ndeviceinfo, deviceinfo,
-                       npropinfo, propinfo, &ndevice_texture_list,
-                       &device_texture_list_index, &device_texture_list);
-  if(nsurfinfo>0||ndevice_texture_list>0){
-    if(NewMemory((void **)&textureinfo, (nsurfinfo+ndevice_texture_list+nterrain_textures)*sizeof(texturedata))==0)return;
+  UpdateDeviceTextures(objectscoll, devicecoll.ndeviceinfo, devicecoll.deviceinfo,
+                       npropinfo, propinfo, &device_texture_list_coll.ndevice_texture_list,
+                       &device_texture_list_coll.device_texture_list_index, &device_texture_list_coll.device_texture_list);
+  if(surf_coll.nsurfinfo>0||device_texture_list_coll.ndevice_texture_list>0){
+    if(NewMemory((void **)&texture_coll.textureinfo, (surf_coll.nsurfinfo+device_texture_list_coll.ndevice_texture_list+terrain_texture_coll.nterrain_textures)*sizeof(texturedata))==0)return;
   }
   if(use_graphics_arg==1){
     InitTextures0();
@@ -3285,10 +3285,10 @@ void UpdateMeshBoxBounds(void){
 int GetSmoke3DType(char *label){
   int i;
 
-  for(i=0; i<nsmoke3dtypes; i++){
+  for(i=0; i<smoke3dcoll.nsmoke3dtypes; i++){
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dtypes[i].smoke3d;
+    smoke3di = smoke3dcoll.smoke3dtypes[i].smoke3d;
     if(Match(smoke3di->label.shortlabel, label)==1)return i;
   }
   return -1;
@@ -3333,7 +3333,7 @@ void UpdateSmoke3DTypes(void){
   int i;
 
   if(smoke3dcoll.nsmoke3dinfo==0)return;
-  NewMemory((void **)&smoke3dtypes, smoke3dcoll.nsmoke3dinfo*sizeof(smoke3dtypedata));
+  NewMemory((void **)&smoke3dcoll.smoke3dtypes, smoke3dcoll.nsmoke3dinfo*sizeof(smoke3dtypedata));
   for(i = 0; i<smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
     int j, doit;
@@ -3355,20 +3355,20 @@ void UpdateSmoke3DTypes(void){
       }
     }
     if(doit==1){
-      typen = smoke3dtypes+nsmoke3dtypes;
+      typen = smoke3dcoll.smoke3dtypes+smoke3dcoll.nsmoke3dtypes;
       typen->smoke3d = smoke3di;
       typen->shortlabel = smoke3di->label.shortlabel;
       typen->longlabel = smoke3di->label.longlabel;
       typen->extinction = smoke3di->extinct;
-      nsmoke3dtypes++;
+      smoke3dcoll.nsmoke3dtypes++;
     }
   }
-  if(nsmoke3dtypes>0){
-    qsort((smoke3ddata **)smoke3dtypes, nsmoke3dtypes, sizeof(smoke3dtypedata), CompareSmoketypes);
-    ResizeMemory((void **)&smoke3dtypes, nsmoke3dtypes*sizeof(smoke3dtypedata));
+  if(smoke3dcoll.nsmoke3dtypes>0){
+    qsort((smoke3ddata **)smoke3dcoll.smoke3dtypes, smoke3dcoll.nsmoke3dtypes, sizeof(smoke3dtypedata), CompareSmoketypes);
+    ResizeMemory((void **)&smoke3dcoll.smoke3dtypes, smoke3dcoll.nsmoke3dtypes*sizeof(smoke3dtypedata));
   }
   else{
-    FREEMEMORY(smoke3dtypes);
+    FREEMEMORY(smoke3dcoll.smoke3dtypes);
   }
   for(i = 0; i<smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
@@ -3378,30 +3378,30 @@ void UpdateSmoke3DTypes(void){
     smoke3di = smoke3dcoll.smoke3dinfo+i;
     smoke3di->type = GetSmoke3DType(smoke3di->label.shortlabel);
 
-    NewMemory((void **)&smokestate, nsmoke3dtypes*sizeof(smokestatedata));
+    NewMemory((void **)&smokestate, smoke3dcoll.nsmoke3dtypes*sizeof(smokestatedata));
     smoke3di->smokestate = smokestate;
-    for(j = 0; j<nsmoke3dtypes; j++){
+    for(j = 0; j<smoke3dcoll.nsmoke3dtypes; j++){
       smoke3di->smokestate[j].color = NULL;
       smoke3di->smokestate[j].index = -1;
     }
   }
-  smoke3d_other     = nsmoke3dtypes;
+  smoke3dcoll.smoke3d_other     = smoke3dcoll.nsmoke3dtypes;
   SOOT_index   = -1;
   HRRPUV_index = -1;
   TEMP_index   = -1;
   CO2_index    = -1;
 
-  for(i = 0; i<nsmoke3dtypes; i++){
+  for(i = 0; i<smoke3dcoll.nsmoke3dtypes; i++){
     smoke3ddata *smoke3di;
     char *label;
     float ext;
 
-    smoke3di = smoke3dtypes[i].smoke3d;
+    smoke3di = smoke3dcoll.smoke3dtypes[i].smoke3d;
     label = smoke3di->label.shortlabel;
     ext = smoke3di->extinct;
     if(ext>0.0){
       SOOT_index = i;
-      glui_smoke3d_extinct = smoke3dtypes[i].extinction;
+      glui_smoke3d_extinct = smoke3dcoll.smoke3dtypes[i].extinction;
       continue;
     }
     if(Match(label, "hrrpuv")==1){
@@ -4093,10 +4093,10 @@ int CreateNullLabel(flowlabels *flowlabel){
 surfdata *GetSurface(char *label){
   int i;
 
-  for(i = 0; i < nsurfinfo; i++){
+  for(i = 0; i < surf_coll.nsurfinfo; i++){
     surfdata *surfi;
 
-    surfi = surfinfo + i;
+    surfi = surf_coll.surfinfo + i;
     if(strcmp(surfi->surfacelabel, label) == 0)return surfi;
   }
   return surfacedefault;
@@ -4262,10 +4262,10 @@ void SetSurfaceIndex(blockagedata *bc){
     bc->surf_index[i] = -1;
     bclabel = bc->surf[i]->surfacelabel;
     if(bc->surf[i] == NULL)continue;
-    for(jj = 1; jj < nsurfinfo + 1; jj++){
+    for(jj = 1; jj < surf_coll.nsurfinfo + 1; jj++){
       j = jj;
-      if(jj == nsurfinfo)j = 0;
-      surfj = surfinfo + j;
+      if(jj == surf_coll.nsurfinfo)j = 0;
+      surfj = surf_coll.surfinfo + j;
       surflabel = surfj->surfacelabel;
       if(strcmp(bclabel, surflabel) != 0)continue;
       bc->surf_index[i] = j;
@@ -4308,8 +4308,8 @@ int SurfIdCompare(const void *arg1, const void *arg2){
   i = *(int *)arg1;
   j = *(int *)arg2;
 
-  surfi = surfinfo+i;
-  surfj = surfinfo+j;
+  surfi = surf_coll.surfinfo+i;
+  surfj = surf_coll.surfinfo+j;
 
   return(strcmp(surfi->surfacelabel, surfj->surfacelabel));
 }
@@ -4319,20 +4319,20 @@ int SurfIdCompare(const void *arg1, const void *arg2){
 void UpdateSortedSurfIdList(void){
   int i;
 
-  FREEMEMORY(sorted_surfidlist);
-  FREEMEMORY(inv_sorted_surfidlist);
-  NewMemory((void **)&sorted_surfidlist, nsurfinfo*sizeof(int));
-  NewMemory((void **)&inv_sorted_surfidlist, nsurfinfo*sizeof(int));
+  FREEMEMORY(surf_coll.sorted_surfidlist);
+  FREEMEMORY(surf_coll.inv_sorted_surfidlist);
+  NewMemory((void **)&surf_coll.sorted_surfidlist, surf_coll.nsurfinfo*sizeof(int));
+  NewMemory((void **)&surf_coll.inv_sorted_surfidlist, surf_coll.nsurfinfo*sizeof(int));
 
 
-  nsorted_surfidlist = nsurfinfo;
-  for(i = 0; i<nsorted_surfidlist; i++){
-    sorted_surfidlist[i] = i;
+  surf_coll.nsorted_surfidlist = surf_coll.nsurfinfo;
+  for(i = 0; i<surf_coll.nsorted_surfidlist; i++){
+    surf_coll.sorted_surfidlist[i] = i;
   }
 
-  qsort((int *)sorted_surfidlist, (size_t)nsurfinfo, sizeof(int), SurfIdCompare);
-  for(i = 0; i<nsorted_surfidlist; i++){
-    inv_sorted_surfidlist[sorted_surfidlist[i]] = i;
+  qsort((int *)surf_coll.sorted_surfidlist, (size_t)surf_coll.nsurfinfo, sizeof(int), SurfIdCompare);
+  for(i = 0; i<surf_coll.nsorted_surfidlist; i++){
+    surf_coll.inv_sorted_surfidlist[surf_coll.sorted_surfidlist[i]] = i;
   }
 }
 
@@ -4353,23 +4353,23 @@ void ParseDatabase(char *file){
 
   /* free memory called before */
 
-  for(i = 0; i<nsurfids; i++){
-    surf_id = surfids[i].label;
+  for(i = 0; i<surf_coll.nsurfids; i++){
+    surf_id = surf_coll.surfids[i].label;
     FREEMEMORY(surf_id);
   }
-  FREEMEMORY(surfids);
-  nsurfids = 0;
+  FREEMEMORY(surf_coll.surfids);
+  surf_coll.nsurfids = 0;
 
 
   if(file==NULL||strlen(file)==0||(stream = fopen(file, "r"))==NULL){
-    NewMemory((void **)&surfids, (nsurfids+1)*sizeof(surfid));
+    NewMemory((void **)&surf_coll.surfids, (surf_coll.nsurfids+1)*sizeof(surfid));
     surf_id = NULL;
     NewMemory((void **)&surf_id, 6);
     strcpy(surf_id, "INERT");
-    surfids[0].label = surf_id;
-    surfids[0].location = 0;
-    surfids[0].show = 1;
-    nsurfids = 1;
+    surf_coll.surfids[0].label = surf_id;
+    surf_coll.surfids[0].location = 0;
+    surf_coll.surfids[0].show = 1;
+    surf_coll.nsurfids = 1;
   }
 
   else{
@@ -4399,24 +4399,24 @@ void ParseDatabase(char *file){
         buffer3 = buffer2;
       }
       start = STRSTR(buffer3, "ID");
-      if(start!=NULL)nsurfids++;
+      if(start!=NULL)surf_coll.nsurfids++;
     }
 
     /* allocate memory */
 
-    NewMemory((void **)&surfids, (nsurfids+1)*sizeof(surfid));
+    NewMemory((void **)&surf_coll.surfids, (surf_coll.nsurfids+1)*sizeof(surfid));
     surf_id = NULL;
     NewMemory((void **)&surf_id, 6);
     strcpy(surf_id, "INERT");
-    surfids[0].label = surf_id;
-    surfids[0].location = 0;
-    surfids[0].show = 1;
+    surf_coll.surfids[0].label = surf_id;
+    surf_coll.surfids[0].location = 0;
+    surf_coll.surfids[0].show = 1;
 
 
     /* now look for IDs and copy them into an array */
 
     rewind(stream);
-    nsurfids = 1;
+    surf_coll.nsurfids = 1;
     while(!feof(stream)){
       if(fgets(buffer, 1000, stream)==NULL)break;
       if(STRSTR(buffer, "&SURF")==NULL)continue;
@@ -4438,7 +4438,7 @@ void ParseDatabase(char *file){
         buffer3 = buffer2;
       }
       start = STRSTR(buffer3+3, "ID");
-      if(start!=NULL)nsurfids++;
+      if(start!=NULL)surf_coll.nsurfids++;
       surf_id = NULL;
       surf_id2 = NULL;
       for(c = start; c!=NULL&&*c!='\0'; c++){
@@ -4450,9 +4450,9 @@ void ParseDatabase(char *file){
           *c = '\0';
           NewMemory((void **)&surf_id2, strlen(surf_id)+1);
           strcpy(surf_id2, surf_id);
-          surfids[nsurfids-1].label = surf_id2;
-          surfids[nsurfids-1].location = 1;
-          surfids[nsurfids-1].show = 1;
+          surf_coll.surfids[surf_coll.nsurfids-1].label = surf_id2;
+          surf_coll.surfids[surf_coll.nsurfids-1].location = 1;
+          surf_coll.surfids[surf_coll.nsurfids-1].show = 1;
           break;
         }
       }
@@ -4464,11 +4464,11 @@ void ParseDatabase(char *file){
   /*** debug: make sure ->show is defined for all cases ***/
 
   nsurfids_shown = 0;
-  for(i = 0; i<nsurfids; i++){
-    labeli = surfids[i].label;
+  for(i = 0; i<surf_coll.nsurfids; i++){
+    labeli = surf_coll.surfids[i].label;
     nexti = 0;
-    for(j = 0; j<nsurfinfo; j++){
-      surfj = surfinfo+j;
+    for(j = 0; j<surf_coll.nsurfinfo; j++){
+      surfj = surf_coll.surfinfo+j;
       labelj = surfj->surfacelabel;
       if(strcmp(labeli, labelj)==0){
         nexti = 1;
@@ -4476,18 +4476,18 @@ void ParseDatabase(char *file){
       }
     }
     if(nexti==1){
-      surfids[i].show = 0;
+      surf_coll.surfids[i].show = 0;
       continue;
     }
     for(j = 0; j<i; j++){
-      labelj = surfids[j].label;
+      labelj = surf_coll.surfids[j].label;
       if(strcmp(labeli, labelj)==0){
         nexti = 1;
         break;
       }
     }
     if(nexti==1){
-      surfids[i].show = 0;
+      surf_coll.surfids[i].show = 0;
       continue;
     }
     nsurfids_shown++;
@@ -4497,34 +4497,34 @@ void ParseDatabase(char *file){
   /* add surfaces found in database to those surfaces defined in previous SURF lines */
 
   if(nsurfids_shown>0){
-    if(nsurfinfo==0){
-      FREEMEMORY(surfinfo);
-      FREEMEMORY(textureinfo);
-      NewMemory((void **)&surfinfo, (nsurfids_shown+MAX_ISO_COLORS+1)*sizeof(surfdata));
-      NewMemory((void **)&textureinfo, nsurfids_shown*sizeof(texturedata));
+    if(surf_coll.nsurfinfo==0){
+      FREEMEMORY(surf_coll.surfinfo);
+      FREEMEMORY(texture_coll.textureinfo);
+      NewMemory((void **)&surf_coll.surfinfo, (nsurfids_shown+MAX_ISO_COLORS+1)*sizeof(surfdata));
+      NewMemory((void **)&texture_coll.textureinfo, nsurfids_shown*sizeof(texturedata));
     }
-    if(nsurfinfo>0){
-      if(surfinfo==NULL){
-        NewMemory((void **)&surfinfo, (nsurfids_shown+nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
+    if(surf_coll.nsurfinfo>0){
+      if(surf_coll.surfinfo==NULL){
+        NewMemory((void **)&surf_coll.surfinfo, (nsurfids_shown+surf_coll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
       }
       else{
-        ResizeMemory((void **)&surfinfo, (nsurfids_shown+nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
+        ResizeMemory((void **)&surf_coll.surfinfo, (nsurfids_shown+surf_coll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
       }
-      if(textureinfo==NULL){
-        NewMemory((void **)&textureinfo, (nsurfids_shown+nsurfinfo)*sizeof(texturedata));
+      if(texture_coll.textureinfo==NULL){
+        NewMemory((void **)&texture_coll.textureinfo, (nsurfids_shown+surf_coll.nsurfinfo)*sizeof(texturedata));
       }
       else{
-        ResizeMemory((void **)&textureinfo, (nsurfids_shown+nsurfinfo)*sizeof(texturedata));
+        ResizeMemory((void **)&texture_coll.textureinfo, (nsurfids_shown+surf_coll.nsurfinfo)*sizeof(texturedata));
       }
     }
-    surfj = surfinfo+nsurfinfo-1;
-    for(j = 0; j<nsurfids; j++){
-      if(surfids[j].show==0)continue;
+    surfj = surf_coll.surfinfo+surf_coll.nsurfinfo-1;
+    for(j = 0; j<surf_coll.nsurfids; j++){
+      if(surf_coll.surfids[j].show==0)continue;
       surfj++;
       InitSurface(surfj);
-      surfj->surfacelabel = surfids[j].label;
+      surfj->surfacelabel = surf_coll.surfids[j].label;
     }
-    nsurfinfo += nsurfids_shown;
+    surf_coll.nsurfinfo += nsurfids_shown;
   }
   UpdateSortedSurfIdList();
 }
@@ -4792,12 +4792,12 @@ void MakeFileLists(void){
 
   // create a list of all files in the current directory
 
-  nfilelist_casename = GetFileListSize(".", filter_casename, FILE_MODE);
-  MakeFileList(".", filter_casename, nfilelist_casename, YES, &filelist_casename, FILE_MODE);
+  filelist_coll.nfilelist_casename = GetFileListSize(".", filter_casename, FILE_MODE);
+  MakeFileList(".", filter_casename, filelist_coll.nfilelist_casename, YES, &filelist_coll.filelist_casename, FILE_MODE);
 
   strcpy(filter_casedir, "");
-  nfilelist_casedir = GetFileListSize(".", filter_casedir, FILE_MODE);
-  MakeFileList(".", filter_casedir, nfilelist_casedir, YES, &filelist_casedir, FILE_MODE);
+  filelist_coll.nfilelist_casedir = GetFileListSize(".", filter_casedir, FILE_MODE);
+  MakeFileList(".", filter_casedir, filelist_coll.nfilelist_casedir, YES, &filelist_coll.filelist_casedir, FILE_MODE);
 }
 
 #define RETURN_TWO        2
@@ -5061,16 +5061,16 @@ int ParseCHIDProcess(bufferstreamdata *stream, int option){
   }
   bufferptr = TrimFrontBack(buffer);
   len = strlen(bufferptr);
-  FREEMEMORY(chidfilebase);
-  NewMemory((void **)&chidfilebase, (unsigned int)(len+1));
-  STRCPY(chidfilebase, bufferptr);
+  FREEMEMORY(paths.chidfilebase);
+  NewMemory((void **)&paths.chidfilebase, (unsigned int)(len+1));
+  STRCPY(paths.chidfilebase, bufferptr);
 
-  if(chidfilebase!=NULL){
-    NewMemory((void **)&hrr_csv_filename, (unsigned int)(strlen(chidfilebase)+8+1));
-    STRCPY(hrr_csv_filename, chidfilebase);
-    STRCAT(hrr_csv_filename, "_hrr.csv");
-    if(FILE_EXISTS_CASEDIR(hrr_csv_filename)==NO){
-      FREEMEMORY(hrr_csv_filename);
+  if(paths.chidfilebase!=NULL){
+    NewMemory((void **)&paths.hrr_csv_filename, (unsigned int)(strlen(paths.chidfilebase)+8+1));
+    STRCPY(paths.hrr_csv_filename, chidfilebase);
+    STRCAT(paths.hrr_csv_filename, "_hrr.csv");
+    if(FILE_EXISTS_CASEDIR(paths.hrr_csv_filename)==NO){
+      FREEMEMORY(paths.hrr_csv_filename);
     }
   }
   return RETURN_CONTINUE;
@@ -6155,7 +6155,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
 void FreeSliceData(void){
   int i;
 
-  FREEMEMORY(surfinfo);
+  FREEMEMORY(surf_coll.surfinfo);
   if(slicecoll.nsliceinfo>0){
     for(i = 0; i<slicecoll.nsliceinfo; i++){
       slicedata *sd;
@@ -6721,15 +6721,15 @@ void ReadSMVOrig(void){
       float *xyz;
       int i;
 
-      FREEMEMORY(obstinfo);
+      FREEMEMORY(obstcoll.obstinfo);
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &nobstinfo);
-      NewMemory((void **)&obstinfo, nobstinfo*sizeof(xbdata));
-      for(i = 0; i<nobstinfo; i++){
+      sscanf(buffer, "%i", &obstcoll.nobstinfo);
+      NewMemory((void **)&obstcoll.obstinfo, obstcoll.nobstinfo*sizeof(xbdata));
+      for(i = 0; i<obstcoll.nobstinfo; i++){
         xbdata *obi;
         int blockid, *surf_index;
 
-        obi = obstinfo+i;
+        obi = obstcoll.obstinfo+i;
         xyz = obi->xyz;
         surf_index = obi->surf_index;
         fgets(buffer, 255, stream);
@@ -6738,13 +6738,13 @@ void ReadSMVOrig(void){
              &blockid,
              surf_index, surf_index+1, surf_index+2, surf_index+3, surf_index+4, surf_index+5);
       }
-      for(i = 0; i<nobstinfo; i++){
+      for(i = 0; i<obstcoll.nobstinfo; i++){
         xbdata *obi;
         int dummy[6];
         float s_color[4];
         int colorindex, blocktype;
 
-        obi = obstinfo+i;
+        obi = obstcoll.obstinfo+i;
         obi->transparent   = 0;
         obi->invisible     = 0;
         obi->usecolorindex = 0;
@@ -6789,9 +6789,9 @@ void ReadSMVOrig(void){
         for(j=0;j<6;j++){
           obi->surfs[0] = NULL;
         }
-        if(surfinfo!=NULL){
+        if(surf_coll.surfinfo!=NULL){
           for(j=0;j<6;j++){
-            if(obi->surf_index[j]>=0)obi->surfs[j] = surfinfo + obi->surf_index[j];
+            if(obi->surf_index[j]>=0)obi->surfs[j] = surf_coll.surfinfo + obi->surf_index[j];
           }
         }
         obi->bc = GetBlockagePtr(obi->xyz);
@@ -6833,15 +6833,15 @@ void AddCfastCsvfi(char *suffix, char *type, int format){
   strcpy(filename, fdsprefix);
   strcat(filename, suffix);
   strcat(filename, ".csv");
-  for(i=0;i<ncsvfileinfo;i++){
+  for(i=0;i<csvcoll.ncsvfileinfo;i++){
     csvfiledata *csvfi;
 
-    csvfi = csvfileinfo + i;
+    csvfi = csvcoll.csvfileinfo + i;
     if(strcmp(csvfi->c_type,type)==0)return;
   }
   if(FILE_EXISTS_CASEDIR(filename) == NO)return;
-  InitCSV(csvfileinfo + ncsvfileinfo, filename, type, format);
-  ncsvfileinfo++;
+  InitCSV(csvcoll.csvfileinfo + csvcoll.ncsvfileinfo, filename, type, format);
+  csvcoll.ncsvfileinfo++;
 }
 
   /* ------------------ AddCfastCsvf ------------------------ */
@@ -7054,16 +7054,16 @@ int ReadSMV_Init(){
   PRINT_TIMER(timer_setup, "InitSpherePoints");
   ntotal_blockages=0;
 
-  if(ncsvfileinfo>0){
+  if(csvcoll.ncsvfileinfo>0){
     csvfiledata *csvi;
 
-    for(i=0;i<ncsvfileinfo;i++){
-      csvi = csvfileinfo + i;
+    for(i=0;i<csvcoll.ncsvfileinfo;i++){
+      csvi = csvcoll.csvfileinfo + i;
       FREEMEMORY(csvi->file);
     }
-    FREEMEMORY(csvfileinfo);
+    FREEMEMORY(csvcoll.csvfileinfo);
   }
-  ncsvfileinfo=0;
+  csvcoll.ncsvfileinfo=0;
 
   if(ngeominfo>0){
     for(i=0;i<ngeominfo;i++){
@@ -7165,11 +7165,11 @@ int ReadSMV_Init(){
   }
   npartclassinfo=0;
 
-  if(ndeviceinfo>0){
-    for(i=0;i<ndeviceinfo;i++){
+  if(devicecoll.ndeviceinfo>0){
+    for(i=0;i<devicecoll.ndeviceinfo;i++){
     }
-    FREEMEMORY(deviceinfo);
-    ndeviceinfo=0;
+    FREEMEMORY(devicecoll.deviceinfo);
+    devicecoll.ndeviceinfo=0;
   }
 
   // read in device (.svo) definitions
@@ -7272,7 +7272,7 @@ int ReadSMV_Init(){
   ncvents=0;
   nOBST=0;
   noffset=0;
-  nsurfinfo=0;
+  surf_coll.nsurfinfo=0;
   nvent_transparent=0;
 
   setPDIM=0;
@@ -7291,9 +7291,9 @@ int ReadSMV_Init(){
   FREEMEMORY(fireinfo);
   FREEMEMORY(zoneinfo);
   FREEMEMORY(zventinfo);
-  FREEMEMORY(textureinfo);
-  FREEMEMORY(surfinfo);
-  FREEMEMORY(terrain_textures);
+  FREEMEMORY(texture_coll.textureinfo);
+  FREEMEMORY(surf_coll.surfinfo);
+  FREEMEMORY(terrain_texture_coll.terrain_textures);
 
   STOP_TIMER(pass0_time );
   PRINT_TIMER(timer_readsmv, "readsmv setup");
@@ -7482,7 +7482,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       FGETS(buffer2,255,stream);
       TrimBack(buffer2);
       file_ptr=TrimFront(buffer2);
-      if(FILE_EXISTS_CASEDIR(file_ptr)==YES)ncsvfileinfo++;
+      if(FILE_EXISTS_CASEDIR(file_ptr)==YES)csvcoll.ncsvfileinfo++;
       continue;
     }
     if(MatchSMV(buffer, "CGEOM")==1){
@@ -7550,10 +7550,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       TrimBack(buff2);
       len_buffer = strlen(buff2);
       if(len_buffer>0&&strcmp(buff2, "null")!=0){
-        nterrain_textures = 1;
-        NewMemory((void **)&terrain_textures, sizeof(texturedata));
-        NewMemory((void **)&(terrain_textures->file), (len_buffer+1)*sizeof(char));
-        strcpy(terrain_textures->file, buff2);
+        terrain_texture_coll.nterrain_textures = 1;
+        NewMemory((void **)&terrain_texture_coll.terrain_textures, sizeof(texturedata));
+        NewMemory((void **)&(terrain_texture_coll.terrain_textures->file), (len_buffer+1)*sizeof(char));
+        strcpy(terrain_texture_coll.terrain_textures->file, buff2);
       }
       have_auto_terrain_image=1;
       continue;
@@ -7564,29 +7564,29 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
       is_terrain_case = 1;
       if(have_auto_terrain_image == 1){
-        FREEMEMORY(terrain_textures->file);
-        FREEMEMORY(terrain_textures);
+        FREEMEMORY(terrain_texture_coll.terrain_textures->file);
+        FREEMEMORY(terrain_texture_coll.terrain_textures);
       }
-      nterrain_textures = 1;
+      terrain_texture_coll.nterrain_textures = 1;
       blank = strchr(buffer,' ');
       if(blank!=NULL){
         int nvals=0;
 
         sscanf(blank+1,"%i",&nvals);
-        if(nvals!=0)nterrain_textures = MAX(nvals,0);
+        if(nvals!=0)terrain_texture_coll.nterrain_textures = MAX(nvals,0);
       }
 
 
-      if(nterrain_textures>0){
-        NewMemory((void **)&terrain_textures, nterrain_textures*sizeof(texturedata));
+      if(terrain_texture_coll.nterrain_textures>0){
+        NewMemory((void **)&terrain_texture_coll.terrain_textures, terrain_texture_coll.nterrain_textures*sizeof(texturedata));
 
-        for(i=0;i<nterrain_textures;i++){
+        for(i=0;i<terrain_texture_coll.nterrain_textures;i++){
           FGETS(buffer, 255, stream);
           buff2 = TrimFrontBack(buffer);
           len_buffer = strlen(buff2);
           if(len_buffer>0&&strcmp(buff2, "null")!=0){
-            NewMemory((void **)&terrain_textures[i].file, (len_buffer+1)*sizeof(char));
-            strcpy(terrain_textures[i].file, buff2);
+            NewMemory((void **)&terrain_texture_coll.terrain_textures[i].file, (len_buffer+1)*sizeof(char));
+            strcpy(terrain_texture_coll.terrain_textures[i].file, buff2);
           }
         }
       }
@@ -7598,7 +7598,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       ){
       FGETS(buffer,255,stream);
       FGETS(buffer,255,stream);
-      ndeviceinfo++;
+      devicecoll.ndeviceinfo++;
       continue;
     }
     if(
@@ -7612,7 +7612,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&local_ntc);
       if(local_ntc<0)local_ntc=0;
-      ndeviceinfo+=local_ntc;
+      devicecoll.ndeviceinfo+=local_ntc;
       for(i=0;i<local_ntc;i++){
         FGETS(buffer,255,stream);
       }
@@ -7710,7 +7710,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"SURFACE") ==1){
-      nsurfinfo++;
+      surf_coll.nsurfinfo++;
       continue;
     }
     if(MatchSMV(buffer,"GRID") == 1){
@@ -7871,8 +7871,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
    strcpy(fds_githash,"unknown");
  }
  if(nisoinfo>0&&meshescoll.nmeshes>0)nisos_per_mesh = MAX(nisoinfo / meshescoll.nmeshes,1);
- NewMemory((void **)&csvfileinfo,(ncsvfileinfo+CFAST_CSV_MAX+2)*sizeof(csvfiledata));
- ncsvfileinfo=0;
+ NewMemory((void **)&csvcoll.csvfileinfo,(csvcoll.ncsvfileinfo+CFAST_CSV_MAX+2)*sizeof(csvfiledata));
+ csvcoll.ncsvfileinfo=0;
  if(ngeominfo>0){
    NewMemory((void **)&geominfo,ngeominfo*sizeof(geomdata));
    ngeominfo=0;
@@ -8082,9 +8082,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   nzvvents=0;
   nzmvents = 0;
 
-  FREEMEMORY(textureinfo);
-  FREEMEMORY(surfinfo);
-  if(NewMemory((void **)&surfinfo,(nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
+  FREEMEMORY(texture_coll.textureinfo);
+  FREEMEMORY(surf_coll.surfinfo);
+  if(NewMemory((void **)&surf_coll.surfinfo,(surf_coll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
 
   if (cadgeomcoll != NULL) FreeCADGeomCollection(cadgeomcoll);
   if (n_cadgeom_keywords > 0) {
@@ -8141,7 +8141,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   startpass=1;
   ioffset=0;
   iobst=0;
-  nsurfinfo=0;
+  surf_coll.nsurfinfo=0;
   noutlineinfo=0;
   if(noffset==0)ioffset=1;
 
@@ -8218,10 +8218,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       file_ptr=TrimFront(buffer2);
       if(FILE_EXISTS_CASEDIR(file_ptr) == NO)continue;
 
-      csvi = csvfileinfo + ncsvfileinfo;
+      csvi = csvcoll.csvfileinfo + csvcoll.ncsvfileinfo;
       InitCSV(csvi, file_ptr, type_ptr, CSV_FDS_FORMAT);
 
-      ncsvfileinfo++;
+      csvcoll.ncsvfileinfo++;
       continue;
     }
   /*
@@ -9062,7 +9062,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       size_t len;
       char *buffer3;
 
-      surfi = surfinfo + nsurfinfo;
+      surfi = surf_coll.surfinfo + surf_coll.nsurfinfo;
       InitSurface(surfi);
       FGETS(buffer,255,stream);
       TrimBack(buffer);
@@ -9075,7 +9075,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         surfi->obst_surface=0;
       }
       if(strstr(surfi->surfacelabel,"INERT")!=NULL){
-        surfinfo[0].obst_surface=1;
+        surf_coll.surfinfo[0].obst_surface=1;
       }
 
       temp_ignition=TEMP_IGNITION_MAX;
@@ -9156,7 +9156,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           fprintf(stderr,"*** Error: The texture file %s was not found\n",buffer3);
         }
       }
-      nsurfinfo++;
+      surf_coll.nsurfinfo++;
       continue;
     }
 
@@ -9459,21 +9459,21 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     meshi->zcen=(zbar+zbar0)/2.0;
   }
 
-  if(ndeviceinfo>0){
-    if(NewMemory((void **)&deviceinfo,ndeviceinfo*sizeof(devicedata))==0)return 2;
-    devicecopy=deviceinfo;
+  if(devicecoll.ndeviceinfo>0){
+    if(NewMemory((void **)&devicecoll.deviceinfo,devicecoll.ndeviceinfo*sizeof(devicedata))==0)return 2;
+    devicecopy=devicecoll.deviceinfo;
   }
-  ndeviceinfo=0;
+  devicecoll.ndeviceinfo=0;
   REWIND(stream);
 
   if(FILE_EXISTS_CASEDIR(expcsv_filename)==YES){
     csvfiledata *csvi;
     char csv_type[256];
 
-    csvi = csvfileinfo + ncsvfileinfo;
+    csvi = csvcoll.csvfileinfo + csvcoll.ncsvfileinfo;
     strcpy(csv_type, "ext");
     InitCSV(csvi, expcsv_filename, csv_type, CSV_FDS_FORMAT);
-    ncsvfileinfo++;
+    csvcoll.ncsvfileinfo++;
   }
 
   PRINTF("%s","  pass 3\n");
@@ -9567,11 +9567,11 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       ){
       devicedata *devicei;
 
-      devicei = deviceinfo + ndeviceinfo;
+      devicei = devicecoll.deviceinfo + devicecoll.ndeviceinfo;
       ParseDevicekeyword(stream,devicei);
       CheckMemory;
       update_device = 1;
-      ndeviceinfo++;
+      devicecoll.ndeviceinfo++;
       continue;
     }
   /*
@@ -9639,7 +9639,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           devicecopy->prop=NULL;
 
           devicecopy++;
-          ndeviceinfo++;
+          devicecoll.ndeviceinfo++;
         }
       }
       continue;
@@ -9715,7 +9715,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           InitDevice(devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
 
           devicecopy++;
-          ndeviceinfo++;
+          devicecoll.ndeviceinfo++;
 
           xsprcopy++; ysprcopy++; zsprcopy++;
         }
@@ -9794,7 +9794,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           devicecopy->prop=NULL;
 
           devicecopy++;
-          ndeviceinfo++;
+          devicecoll.ndeviceinfo++;
           xheatcopy++; yheatcopy++; zheatcopy++;
 
         }
@@ -9852,7 +9852,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         InitDevice(devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
 
         devicecopy++;
-        ndeviceinfo++;
+        devicecoll.ndeviceinfo++;
 
       }
       continue;
@@ -9871,48 +9871,48 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
   // look for DEVICE entries in "experimental" spread sheet files
 
-  if(ncsvfileinfo>0){
+  if(csvcoll.ncsvfileinfo>0){
     int *nexp_devices=NULL;
 
-    NewMemory((void **)&nexp_devices,(ncsvfileinfo+1)*sizeof(int));
-    for(i=0;i<ncsvfileinfo;i++){
+    NewMemory((void **)&nexp_devices,(csvcoll.ncsvfileinfo+1)*sizeof(int));
+    for(i=0;i<csvcoll.ncsvfileinfo;i++){
       csvfiledata *csvi;
 
-      csvi = csvfileinfo + i;
+      csvi = csvcoll.csvfileinfo + i;
       if(strcmp(csvi->c_type, "ext") == 0){
         nexp_devices[i] = GetNDevices(csvi->file);
-        ndeviceinfo_exp += nexp_devices[i];
+        devicecoll.ndeviceinfo_exp += nexp_devices[i];
       }
     }
-    if(ndeviceinfo>0){
-      if(ndeviceinfo_exp>0){
-        ResizeMemory((void **)&deviceinfo,(ndeviceinfo_exp+ndeviceinfo)*sizeof(devicedata));
+    if(devicecoll.ndeviceinfo>0){
+      if(devicecoll.ndeviceinfo_exp>0){
+        ResizeMemory((void **)&devicecoll.deviceinfo,(devicecoll.ndeviceinfo_exp+devicecoll.ndeviceinfo)*sizeof(devicedata));
       }
     }
     else{
-      if(ndeviceinfo_exp>0)NewMemory((void **)&deviceinfo,ndeviceinfo_exp*sizeof(devicedata));
+      if(devicecoll.ndeviceinfo_exp>0)NewMemory((void **)&devicecoll.deviceinfo,devicecoll.ndeviceinfo_exp*sizeof(devicedata));
     }
-    if(ndeviceinfo_exp >0){
+    if(devicecoll.ndeviceinfo_exp >0){
       devicedata *devicecopy2;
 
-      devicecopy2 = deviceinfo+ndeviceinfo;
-      for(i=0;i<ncsvfileinfo;i++){
+      devicecopy2 = devicecoll.deviceinfo+devicecoll.ndeviceinfo;
+      for(i=0;i<csvcoll.ncsvfileinfo;i++){
         csvfiledata *csvi;
 
-        csvi = csvfileinfo + i;
+        csvi = csvcoll.csvfileinfo + i;
         if(strcmp(csvi->c_type, "ext") == 0){
           ReadDeviceHeader(csvi->file,devicecopy2,nexp_devices[i]);
           devicecopy2 += nexp_devices[i];
         }
       }
     }
-    ndeviceinfo += ndeviceinfo_exp;
+    devicecoll.ndeviceinfo += devicecoll.ndeviceinfo_exp;
     FREEMEMORY(nexp_devices);
   }
-  for(i = 0; i < ndeviceinfo; i++){
+  for(i = 0; i < devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     if(strcmp(devicei->deviceID, "null") == 0){
       sprintf(devicei->deviceID, "DEV%03i", i + 1);
     }
@@ -9931,24 +9931,24 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   */
 
   surfacedefault=&sdefault;
-  for(i=0;i<nsurfinfo;i++){
-    if(strcmp(surfacedefaultlabel,surfinfo[i].surfacelabel)==0){
-      surfacedefault=surfinfo+i;
+  for(i=0;i<surf_coll.nsurfinfo;i++){
+    if(strcmp(surfacedefaultlabel,surf_coll.surfinfo[i].surfacelabel)==0){
+      surfacedefault=surf_coll.surfinfo+i;
       break;
     }
   }
   vent_surfacedefault=&v_surfacedefault;
-  for(i=0;i<nsurfinfo;i++){
-    if(strcmp(vent_surfacedefault->surfacelabel,surfinfo[i].surfacelabel)==0){
-      vent_surfacedefault=surfinfo+i;
+  for(i=0;i<surf_coll.nsurfinfo;i++){
+    if(strcmp(vent_surfacedefault->surfacelabel,surf_coll.surfinfo[i].surfacelabel)==0){
+      vent_surfacedefault=surf_coll.surfinfo+i;
       break;
     }
   }
 
   exterior_surfacedefault=&e_surfacedefault;
-  for(i=0;i<nsurfinfo;i++){
-    if(strcmp(exterior_surfacedefault->surfacelabel,surfinfo[i].surfacelabel)==0){
-      exterior_surfacedefault=surfinfo+i;
+  for(i=0;i<surf_coll.nsurfinfo;i++){
+    if(strcmp(exterior_surfacedefault->surfacelabel,surf_coll.surfinfo[i].surfacelabel)==0){
+      exterior_surfacedefault=surf_coll.surfinfo+i;
       break;
     }
   }
@@ -10610,8 +10610,8 @@ typedef struct {
         for(i=0;i<6;i++){
           surfdata *surfi;
 
-          if(surfinfo==NULL||s_num[i]<0||s_num[i]>=nsurfinfo)continue;
-          surfi=surfinfo+s_num[i];
+          if(surf_coll.surfinfo==NULL||s_num[i]<0||s_num[i]>=surf_coll.nsurfinfo)continue;
+          surfi=surf_coll.surfinfo+s_num[i];
           bc->surf[i]=surfi;
         }
         for(i=0;i<6;i++){
@@ -10841,8 +10841,8 @@ typedef struct {
           &cvi->xmin,&cvi->xmax,&cvi->ymin,&cvi->ymax,&cvi->zmin,&cvi->zmax,
           &cvi->cvent_id,s_num,t_origin,t_origin+1,t_origin+2);
 
-        if(surfinfo!=NULL&&s_num[0]>=0&&s_num[0]<nsurfinfo){
-          cvi->surf[0]=surfinfo+s_num[0];
+        if(surf_coll.surfinfo!=NULL&&s_num[0]>=0&&s_num[0]<surf_coll.nsurfinfo){
+          cvi->surf[0]=surf_coll.surfinfo+s_num[0];
           if(cvi->surf[0]!=NULL&&strncmp(cvi->surf[0]->surfacelabel,"OPEN",4)==0){
             cvi->isOpenvent=1;
           }
@@ -11077,13 +11077,13 @@ typedef struct {
             vi->surf[0]=exterior_surfacedefault;
           }
         }
-        if(surfinfo!=NULL&&s_num[0]>=0&&s_num[0]<nsurfinfo){
-          vi->surf[0]=surfinfo+s_num[0];
+        if(surf_coll.surfinfo!=NULL&&s_num[0]>=0&&s_num[0]<surf_coll.nsurfinfo){
+          vi->surf[0]=surf_coll.surfinfo+s_num[0];
           if(strncmp(vi->surf[0]->surfacelabel,"OPEN",4)==0)vi->isOpenvent=1;
           if(strncmp(vi->surf[0]->surfacelabel, "MIRROR", 6)==0)vi->isMirrorvent = 1;
           vi->surf[0]->used_by_vent=1;
         }
-        vi->color_bak=surfinfo[0].color;
+        vi->color_bak=surf_coll.surfinfo[0].color;
       }
       for(nn=0;nn<nvents+12;nn++){
         ventdata *vi;
@@ -11663,7 +11663,7 @@ int ReadSMV_Configure(){
 
   if(meshescoll.meshinfo!=NULL&&meshescoll.meshinfo->jbar==1)force_isometric=1;
 
-  if(hrr_csv_filename != NULL)ReadHRR(LOAD);
+  if(paths.hrr_csv_filename != NULL)ReadHRR(LOAD);
   PRINT_TIMER(timer_readsmv, "ReadHRR");
 
   if(runscript == 1){
@@ -11819,11 +11819,11 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "GetGSliceParams");
 
   active_smokesensors=0;
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
     char *label;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     devicei->device_mesh= GetMeshNoFail(devicei->xyz);
     label = devicei->object->label;
     if(strcmp(label,"smokesensor")==0){
@@ -12049,10 +12049,10 @@ int ReadSMV(bufferstreamdata *stream){
 void UpdateUseTextures(void){
   int i;
 
-  for(i=0;i<ntextureinfo;i++){
+  for(i=0;i<texture_coll.ntextureinfo;i++){
     texturedata *texti;
 
-    texti=textureinfo + i;
+    texti=texture_coll.textureinfo + i;
     texti->used=0;
   }
   for(i=0;i<meshescoll.nmeshes;i++){
@@ -12060,7 +12060,7 @@ void UpdateUseTextures(void){
     int j;
 
     meshi=meshescoll.meshinfo + i;
-    if(textureinfo!=NULL){
+    if(texture_coll.textureinfo!=NULL){
       for(j=0;j<meshi->nbptrs;j++){
         int k;
         blockagedata *bc;
@@ -12091,7 +12091,7 @@ void UpdateUseTextures(void){
           }
         }
       }
-      if(textureinfo!=NULL){
+      if(texture_coll.textureinfo!=NULL){
         if(vi->surf[0]!=NULL){
           texturedata *texti;
 
@@ -12104,12 +12104,12 @@ void UpdateUseTextures(void){
       }
     }
   }
-  for(i=0;i<ndevice_texture_list;i++){
+  for(i=0;i<device_texture_list_coll.ndevice_texture_list;i++){
     int texture_index;
     texturedata *texti;
 
-    texture_index  = device_texture_list_index[i];
-    texti=textureinfo + texture_index;
+    texture_index  = device_texture_list_coll.device_texture_list_index[i];
+    texti=texture_coll.textureinfo + texture_index;
     if(texti!=NULL&&texti->loaded==1){
       if(usetextures==1)texti->display=1;
       texti->used=1;
@@ -12119,7 +12119,7 @@ void UpdateUseTextures(void){
     geomdata *geomi;
 
     geomi = geominfo + i;
-    if(textureinfo!=NULL&&geomi->surfgeom!=NULL){
+    if(texture_coll.textureinfo!=NULL&&geomi->surfgeom!=NULL){
         texturedata *texti;
 
       texti = geomi->surfgeom->textureinfo;
@@ -12129,21 +12129,21 @@ void UpdateUseTextures(void){
       }
     }
   }
-  if(nterrain_textures>0){
-    for(i=0;i<nterrain_textures;i++){
+  if(terrain_texture_coll.nterrain_textures>0){
+    for(i=0;i<terrain_texture_coll.nterrain_textures;i++){
       texturedata *texti;
 
-      texti = textureinfo + ntextureinfo - nterrain_textures + i;
-      if(texti == terrain_textures + i){
+      texti =texture_coll.textureinfo + texture_coll.ntextureinfo - terrain_texture_coll.nterrain_textures + i;
+      if(texti == terrain_texture_coll.terrain_textures + i){
         texti->used = 1;
       }
     }
   }
   ntextures_loaded_used=0;
-  for(i=0;i<ntextureinfo;i++){
+  for(i=0;i<texture_coll.ntextureinfo;i++){
     texturedata *texti;
 
-    texti = textureinfo + i;
+    texti = texture_coll.textureinfo + i;
     if(texti->loaded==0)continue;
     if(texti->used==0)continue;
     ntextures_loaded_used++;
@@ -12686,7 +12686,7 @@ int ReadIni2(char *inifile, int localfile){
           plot2di->curve[j].csv_file_index = file_index;
           plot2di->curve[j].csv_col_index  = col_index;
           curve                            = plot2di->curve+j;
-          strcpy(curve->c_type, csvfileinfo[file_index].c_type);
+          strcpy(curve->c_type, csvcoll.csvfileinfo[file_index].c_type);
           curve->color[0]                  = color[0];
           curve->color[1]                  = color[1];
           curve->color[2]                  = color[2];
@@ -12696,7 +12696,7 @@ int ReadIni2(char *inifile, int localfile){
           curve->vals                      = NULL;
           curve->use_foreground_color      = use_foreground_color;
           if(strcmp(curve->c_type, "devc")==0){
-            curve->quantity = csvfileinfo[file_index].csvinfo[col_index].label.longlabel;
+            curve->quantity = csvcoll.csvfileinfo[file_index].csvinfo[col_index].label.longlabel;
           }
           else{
             curve->quantity = NULL;
@@ -15200,11 +15200,11 @@ int ReadIni2(char *inifile, int localfile){
         if(fgets(buffer, 255, stream)==NULL)break;
         sscanf(buffer, "%i %i %i %i %i",
           &nt, &terrain_show_geometry_surface, &terrain_show_geometry_outline, &terrain_show_geometry_points, &terrain_showonly_top);
-        if(terrain_textures!=NULL){
-          for(i = 0; i<MIN(nt, nterrain_textures); i++){
+        if(terrain_texture_coll.terrain_textures!=NULL){
+          for(i = 0; i<MIN(nt, terrain_texture_coll.nterrain_textures); i++){
             texturedata *texti;
 
-            texti = terrain_textures+i;
+            texti = terrain_texture_coll.terrain_textures+i;
             if(fgets(buffer, 255, stream)==NULL)break;
             sscanf(buffer, "%i ", &(texti->display));
           }
@@ -16388,11 +16388,11 @@ void WriteIniLocal(FILE *fileout){
   }
   fprintf(fileout, "SHOWGEOMTERRAIN\n");
   fprintf(fileout, "%i %i %i %i %i\n",
-    nterrain_textures, terrain_show_geometry_surface, terrain_show_geometry_outline, terrain_show_geometry_points, terrain_showonly_top);
-  for(i = 0; i<nterrain_textures; i++){
+    terrain_texture_coll.nterrain_textures, terrain_show_geometry_surface, terrain_show_geometry_outline, terrain_show_geometry_points, terrain_showonly_top);
+  for(i = 0; i<terrain_texture_coll.nterrain_textures; i++){
     texturedata *texti;
 
-    texti = terrain_textures+i;
+    texti = terrain_texture_coll.terrain_textures+i;
     fprintf(fileout, "%i\n", texti->display);
   }
 
@@ -16800,19 +16800,19 @@ void WriteIni(int flag,char *filename){
     int scount;
 
     scount = 0;
-    for(i = 0; i<nsurfinfo; i++){
+    for(i = 0; i<surf_coll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surfinfo+sorted_surfidlist[i];
+      surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
       if(surfi->used_by_geom==1)scount++;
     }
     if(scount>0){
       fprintf(fileout, "SURFCOLORS\n");
       fprintf(fileout, " %i %i\n", scount, use_surf_color);
-      for(i = 0; i<nsurfinfo; i++){
+      for(i = 0; i<surf_coll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surfinfo+sorted_surfidlist[i];
+        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
         if(surfi->used_by_geom==1){
           int *ini_surf_color;
 
@@ -16826,19 +16826,19 @@ void WriteIni(int flag,char *filename){
     int scount;
 
     scount = 0;
-    for(i = 0; i<nsurfinfo; i++){
+    for(i = 0; i<surf_coll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surfinfo+sorted_surfidlist[i];
+      surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
       if(surfi->in_color_dialog==1&&surfi->color!=surfi->color_orig)scount++;
     }
     if(scount>0){
       fprintf(fileout, "OBSTSURFCOLORS\n");
       fprintf(fileout, " %i %i\n", scount, use_surf_color);
-      for(i = 0; i<nsurfinfo; i++){
+      for(i = 0; i<surf_coll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surfinfo+sorted_surfidlist[i];
+        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
         if(surfi->in_color_dialog==1&&surfi->color!=surfi->color_orig){
           float *color;
 
@@ -17254,9 +17254,9 @@ void WriteIni(int flag,char *filename){
 
   fprintf(fileout, "SHOWSLICEVALS\n");
   fprintf(fileout, " %i\n", show_slice_values_all_regions);
-  if(fds_filein != NULL&&strlen(fds_filein) > 0){
+  if(paths.fds_filein != NULL&&strlen(paths.fds_filein) > 0){
     fprintf(fileout, "INPUT_FILE\n");
-    fprintf(fileout, " %s\n", fds_filein);
+    fprintf(fileout, " %s\n", paths.fds_filein);
   }
   fprintf(fileout, "LABELSTARTUPVIEW\n");
   fprintf(fileout, " %s\n", viewpoint_label_startup);
@@ -17450,7 +17450,7 @@ void WriteIni(int flag,char *filename){
 
   if(flag == LOCAL_INI)WriteIniLocal(fileout);
   if(
-    ((INI_fds_filein != NULL&&fds_filein != NULL&&strcmp(INI_fds_filein, fds_filein) == 0) ||
+    ((INI_fds_filein != NULL&&paths.fds_filein != NULL&&strcmp(INI_fds_filein, paths.fds_filein) == 0) ||
     flag == LOCAL_INI))OutputViewpoints(fileout);
 
   {

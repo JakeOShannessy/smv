@@ -31,7 +31,7 @@ void GetZoneSizeCSV(int *nzone_times_local, int *nroom, int *nfires_local, int *
    *ntargets_arg = nt;
 
    nr=0;
-   for(i=0;i<ndeviceinfo;i++){
+   for(i=0;i<devicecoll.ndeviceinfo;i++){
      char label[100];
 
      sprintf(label,"ULT_%i",i+1);
@@ -43,7 +43,7 @@ void GetZoneSizeCSV(int *nzone_times_local, int *nroom, int *nfires_local, int *
    *nroom=nr;
 
    nv=0;
-   for(i=0;i<ndeviceinfo;i++){
+   for(i=0;i<devicecoll.ndeviceinfo;i++){
      char label[100];
 
      sprintf(label,"HVENT_%i",i+1);
@@ -54,7 +54,7 @@ void GetZoneSizeCSV(int *nzone_times_local, int *nroom, int *nfires_local, int *
    *nhvents=nv;
 
    nv=0;
-   for(i=0;i<ndeviceinfo;i++){
+   for(i=0;i<devicecoll.ndeviceinfo;i++){
      char label[100];
 
      sprintf(label,"VVENT_%i",i+1);
@@ -65,7 +65,7 @@ void GetZoneSizeCSV(int *nzone_times_local, int *nroom, int *nfires_local, int *
    *nvvents=nv;
 
    nv=0;
-   for(i=0;i<ndeviceinfo;i++){
+   for(i=0;i<devicecoll.ndeviceinfo;i++){
      char label[100];
 
      sprintf(label,"MVENT_%i",i+1);
@@ -76,7 +76,7 @@ void GetZoneSizeCSV(int *nzone_times_local, int *nroom, int *nfires_local, int *
    *nmvents=nv;
 
    nf=0;
-   for(i=0;i<ndeviceinfo;i++){
+   for(i=0;i<devicecoll.ndeviceinfo;i++){
      char label[100];
 
      sprintf(label,"HRR_%i",i+1);

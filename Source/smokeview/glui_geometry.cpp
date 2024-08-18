@@ -223,10 +223,10 @@ extern "C" void GLUIUpdateHVACViews(void){
   /* ------------------ GLUIUpdateTerrainTexture ------------------------ */
 
 extern "C" void GLUIUpdateTerrainTexture(int val){
-  if(CHECKBOX_terrain_texture_show!=NULL&&val>=0&&val<nterrain_textures){
+  if(CHECKBOX_terrain_texture_show!=NULL&&val>=0&&val<terrain_texture_coll.nterrain_textures){
     texturedata *texti;
 
-    texti = terrain_textures+val;
+    texti = terrain_texture_coll.terrain_textures+val;
     if(texti->loaded==1&&CHECKBOX_terrain_texture_show[val]!=NULL){
       CHECKBOX_terrain_texture_show[val]->set_int_val(texti->display);
     }
@@ -310,10 +310,10 @@ extern "C" void GLUIGetGeomDialogState(void){
 int HaveTexture(void){
   int i;
 
-  for(i = 0; i < ntextureinfo; i++){
+  for(i = 0; i < texture_coll.ntextureinfo; i++){
     texturedata *texti;
 
-    texti = textureinfo + i;
+    texti = texture_coll.textureinfo + i;
     if(texti->loaded == 1 && texti->used == 1)return 1;
   }
   return 0;
@@ -746,15 +746,15 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
     glui_geometry->add_column_to_panel(PANEL_faces, false);
 
-    if(nsurfinfo>0){
+    if(surf_coll.nsurfinfo>0){
       glui_geometry->add_statictext_to_panel(PANEL_faces, "");
 
       LIST_obst_surface[DOWN_X] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Left"), surface_indices+DOWN_X, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[DOWN_X]->set_w(260);
-      for(i = 0; i<nsurfinfo; i++){
+      for(i = 0; i<surf_coll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surfinfo+sorted_surfidlist[i];
+        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -763,10 +763,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
       LIST_obst_surface[UP_X] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Right"), surface_indices+UP_X, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[UP_X]->set_w(260);
-      for(i = 0; i<nsurfinfo; i++){
+      for(i = 0; i<surf_coll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surfinfo+sorted_surfidlist[i];
+        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -775,10 +775,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
       LIST_obst_surface[DOWN_Y] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Front"), surface_indices+DOWN_Y, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[DOWN_Y]->set_w(260);
-      for(i = 0; i<nsurfinfo; i++){
+      for(i = 0; i<surf_coll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surfinfo+sorted_surfidlist[i];
+        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -787,10 +787,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
       LIST_obst_surface[UP_Y] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Back"), surface_indices+UP_Y, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[UP_Y]->set_w(260);
-      for(i = 0; i<nsurfinfo; i++){
+      for(i = 0; i<surf_coll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surfinfo+sorted_surfidlist[i];
+        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -799,10 +799,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
       LIST_obst_surface[DOWN_Z] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Down"), surface_indices+DOWN_Z, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[DOWN_Z]->set_w(260);
-      for(i = 0; i<nsurfinfo; i++){
+      for(i = 0; i<surf_coll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surfinfo+sorted_surfidlist[i];
+        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -811,10 +811,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
       LIST_obst_surface[UP_Z] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Up"), surface_indices+UP_Z, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[UP_Z]->set_w(260);
-      for(i = 0; i<nsurfinfo; i++){
+      for(i = 0; i<surf_coll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surfinfo+sorted_surfidlist[i];
+        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -989,10 +989,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
       int ii;
 
       ii = 0;
-      for(i = 0; i<nsurfinfo; i++){
+      for(i = 0; i<surf_coll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surfinfo+sorted_surfidlist[i];
+        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
         if(surfi->used_by_geom==1){
           char label[100];
 
@@ -1068,13 +1068,13 @@ extern "C" void GLUIGeometrySetup(int main_window){
     SPINNER_geom_vert_exag = glui_geometry->add_spinner_to_panel(PANEL_geomtest2, "vertical exaggeration", GLUI_SPINNER_FLOAT, &geom_vert_exag, GEOM_VERT_EXAG, VolumeCB);
     SPINNER_geom_vert_exag->set_float_limits(0.1, 10.0);
 
-    if(nterrain_textures>0){
-      NewMemory((void **)&CHECKBOX_terrain_texture_show, sizeof(GLUI_Checkbox *)*nterrain_textures);
+    if(terrain_texture_coll.nterrain_textures>0){
+      NewMemory((void **)&CHECKBOX_terrain_texture_show, sizeof(GLUI_Checkbox *)*terrain_texture_coll.nterrain_textures);
       PANEL_terrain_images = glui_geometry->add_panel_to_panel(PANEL_group1, "terrain images");
-      for(i = 0; i<nterrain_textures; i++){
+      for(i = 0; i<terrain_texture_coll.nterrain_textures; i++){
         texturedata *texti;
 
-        texti = terrain_textures+i;
+        texti = terrain_texture_coll.terrain_textures+i;
         if(texti->loaded==1){
           CHECKBOX_terrain_texture_show[i] = glui_geometry->add_checkbox_to_panel(PANEL_terrain_images, texti->file, &(texti->display), i, TerrainTextureCB);
         }
@@ -1190,10 +1190,10 @@ void VolumeCB(int var){
   int i;
   switch(var){
   case SURF_GET:
-    for(i = 0; i<nsurfinfo; i++){
+    for(i = 0; i<surf_coll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surfinfo+sorted_surfidlist[i];
+      surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
       if(surfi->in_geom_list==geom_surf_index){
         int *rgb_local;
         float *axis;
@@ -1218,10 +1218,10 @@ void VolumeCB(int var){
     }
     break;
   case SURF_SET:
-    for(i = 0; i<nsurfinfo; i++){
+    for(i = 0; i<surf_coll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surfinfo+sorted_surfidlist[i];
+      surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
       if(surfi->in_geom_list==geom_surf_index){
         int *rgb_local;
         float *axis;
@@ -1295,11 +1295,11 @@ void VolumeCB(int var){
     SPINNER_geom_zlevel->set_float_limits(terrain_zmin, terrain_zmax);
     UpdateChopColors();
   case SHOW_TEXTURE_1D_IMAGE:
-    if(show_texture_1dimage == 1&&nterrain_textures>0){
-      for(i=0; i<nterrain_textures; i++){
+    if(show_texture_1dimage == 1&&terrain_texture_coll.nterrain_textures>0){
+      for(i=0; i<terrain_texture_coll.nterrain_textures; i++){
         texturedata *texti;
 
-        texti = terrain_textures+i;
+        texti = terrain_texture_coll.terrain_textures+i;
         if(texti->loaded==1){
           texti->display = 0;
           GLUIUpdateTerrainTexture(i);
@@ -1428,7 +1428,7 @@ extern "C" void GLUIUpdateBlockVals(int flag){
   EDIT_ymax->set_float_val(ymax);
   EDIT_zmin->set_float_val(zmin);
   EDIT_zmax->set_float_val(zmax);
-  if(bchighlight!=NULL&&nsurfinfo>0){
+  if(bchighlight!=NULL&&surf_coll.nsurfinfo>0){
     wall_case=bchighlight->walltype;
     GLUIObjectCB(RADIO_WALL);
   }
@@ -1475,19 +1475,19 @@ extern "C" void GLUIUpdateBlockVals(int flag){
         break;
       }
 
-      if(nsurfinfo>0){
+      if(surf_coll.nsurfinfo>0){
         for(i=0;i<6;i++){
-          surface_indices[i] = inv_sorted_surfidlist[bchighlight->surf_index[i]];
-          surface_indices_bak[i] = inv_sorted_surfidlist[bchighlight->surf_index[i]];
+          surface_indices[i] = surf_coll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
+          surface_indices_bak[i] = surf_coll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
           LIST_obst_surface[i]->set_int_val(surface_indices[i]);
         }
       }
     }
     else{
-      if(nsurfinfo>0){
+      if(surf_coll.nsurfinfo>0){
         for(i=0;i<6;i++){
-          surface_indices[i]=inv_sorted_surfidlist[0];
-          surface_indices_bak[i]=inv_sorted_surfidlist[0];
+          surface_indices[i]=surf_coll.inv_sorted_surfidlist[0];
+          surface_indices_bak[i]=surf_coll.inv_sorted_surfidlist[0];
           LIST_obst_surface[i]->set_int_val(surface_indices[i]);
         }
       }
@@ -1507,7 +1507,7 @@ extern "C" void GLUIObjectCB(int var){
       switch(wall_case){
       case WALL_1:
         temp=surface_indices_bak[UP_Z];
-        if(nsurfinfo>0){
+        if(surf_coll.nsurfinfo>0){
           for(i=0;i<6;i++){
             surface_indices[i]=temp;
             LIST_obst_surface[i]->set_int_val(temp);
@@ -1515,7 +1515,7 @@ extern "C" void GLUIObjectCB(int var){
         }
         break;
       case WALL_3:
-        if(nsurfinfo>0){
+        if(surf_coll.nsurfinfo>0){
           for(i=0;i<6;i++){
             temp=surface_indices_bak[i];
             surface_indices[i]=temp;
@@ -1524,7 +1524,7 @@ extern "C" void GLUIObjectCB(int var){
         }
         break;
       case WALL_6:
-        if(nsurfinfo>0){
+        if(surf_coll.nsurfinfo>0){
           for(i=0;i<6;i++){
             temp=surface_indices_bak[i];
             surface_indices[i]=temp;
@@ -1539,8 +1539,8 @@ extern "C" void GLUIObjectCB(int var){
 
       if(bchighlight!=NULL){
         for(i=0;i<6;i++){
-          bchighlight->surf[i]=surfinfo+sorted_surfidlist[surface_indices_bak[i]];
-          bchighlight->surf_index[i]=sorted_surfidlist[surface_indices_bak[i]];
+          bchighlight->surf[i]=surf_coll.surfinfo+surf_coll.sorted_surfidlist[surface_indices_bak[i]];
+          bchighlight->surf_index[i]=surf_coll.sorted_surfidlist[surface_indices_bak[i]];
         }
         bchighlight->changed_surface=1;
         if(bchighlight->blockage_id>0&&bchighlight->blockage_id<=nchanged_idlist){
@@ -1552,7 +1552,7 @@ extern "C" void GLUIObjectCB(int var){
       }
       break;
     case RADIO_WALL:
-      if(nsurfinfo==0)break;
+      if(surf_coll.nsurfinfo==0)break;
       if(bchighlight!=NULL){
         bchighlight->walltype=wall_case;
       }

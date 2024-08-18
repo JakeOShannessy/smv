@@ -1201,7 +1201,7 @@ void IsoShowMenu(int value){
     for(i=0;i<loaded_isomesh->nisolevels;i++){
       surfdata *surfi;
 
-      surfi = surfinfo + nsurfinfo + 1 + i;
+      surfi = surf_coll.surfinfo + surf_coll.nsurfinfo + 1 + i;
       surfi->transparent_level=1.0;
     }
     use_transparency_data=0;
@@ -1212,7 +1212,7 @@ void IsoShowMenu(int value){
     for(i=0;i<loaded_isomesh->nisolevels;i++){
       surfdata *surfi;
 
-      surfi = surfinfo + nsurfinfo + 1 + i;
+      surfi = surf_coll.surfinfo + surf_coll.nsurfinfo + 1 + i;
       surfi->transparent_level=transparent_level;
     }
     use_transparency_data=1;
@@ -1223,10 +1223,10 @@ void IsoShowMenu(int value){
     for(i=0;i<loaded_isomesh->nisolevels;i++){
       surfdata *surfi;
 
-      surfi = surfinfo + nsurfinfo + 1 + i;
+      surfi = surf_coll.surfinfo + surf_coll.nsurfinfo + 1 + i;
       surfi->transparent_level=transparent_level;
     }
-    surfinfo[nsurfinfo+1].transparent_level=1.0;
+    surf_coll.surfinfo[surf_coll.nsurfinfo+1].transparent_level=1.0;
     use_transparency_data=1;
     break;
    case MENU_ISOSHOW_MAXSOLID:
@@ -1235,11 +1235,11 @@ void IsoShowMenu(int value){
     for(i=0;i<loaded_isomesh->nisolevels;i++){
       surfdata *surfi;
 
-      surfi = surfinfo + nsurfinfo + 1 + i;
+      surfi = surf_coll.surfinfo + surf_coll.nsurfinfo + 1 + i;
       surfi->transparent_level=transparent_level;
     }
     use_transparency_data=1;
-    surfinfo[nsurfinfo+1+loaded_isomesh->nisolevels-1].transparent_level=1.0;
+    surf_coll.surfinfo[surf_coll.nsurfinfo+1+loaded_isomesh->nisolevels-1].transparent_level=1.0;
     break;
    case MENU_ISOSHOW_HIDEALL:
     show_iso_shaded=0;
@@ -1622,9 +1622,9 @@ void DialogMenu(int value){
   case DIALOG_GEOMETRY:
     showedit_dialog=1-showedit_dialog;
     if(showedit_dialog==1){
-      if(fds_filein!=NULL&&updategetobstlabels==1){
+      if(paths.fds_filein!=NULL&&updategetobstlabels==1){
         CheckMemoryOff;
-        GetObstLabels(fds_filein);
+        GetObstLabels(paths.fds_filein);
         CheckMemoryOn;
         updategetobstlabels=0;
       }
@@ -2481,10 +2481,10 @@ void TextureShowMenu(int value){
 
   updatefacelists=1;
   if(value>=0){
-    texti = textureinfo + value;
+    texti = texture_coll.textureinfo + value;
     texti->display = 1-texti->display;
-    for(i=0;i<ntextureinfo;i++){
-      texti = textureinfo + i;
+    for(i=0;i<texture_coll.ntextureinfo;i++){
+      texti = texture_coll.textureinfo + i;
       if(texti->loaded==0||texti->used==0)continue;
       if(texti->display==0){
         showall_textures = 0;
@@ -2499,8 +2499,8 @@ void TextureShowMenu(int value){
     case MENU_TEXTURE_SHOWALL2:
       // load all textures if none are loaded
       loadall_textures = 1;
-      for(i = 0; i < ntextureinfo; i++){
-        texti = textureinfo + i;
+      for(i = 0; i < texture_coll.ntextureinfo; i++){
+        texti = texture_coll.textureinfo + i;
         if(texti->loaded == 1 && texti->used == 1&&texti->display==1){
           loadall_textures = 0;
           break;
@@ -2509,16 +2509,16 @@ void TextureShowMenu(int value){
       // if loadall_textures==1 then fall through and run MENU_TEXTURE_SHOWALL block
       if(loadall_textures == 0)break;
     case MENU_TEXTURE_SHOWALL:
-      for(i=0;i<ntextureinfo;i++){
-        texti = textureinfo + i;
+      for(i=0;i<texture_coll.ntextureinfo;i++){
+        texti = texture_coll.textureinfo + i;
         if(texti->loaded==0||texti->used==0)continue;
         texti->display=1;
       }
       showall_textures=1;
       break;
     case MENU_TEXTURE_HIDEALL:
-      for(i=0;i<ntextureinfo;i++){
-        texti = textureinfo + i;
+      for(i=0;i<texture_coll.ntextureinfo;i++){
+        texti = texture_coll.textureinfo + i;
         if(texti->loaded==0||texti->used==0)continue;
         texti->display=0;
       }
@@ -2537,8 +2537,8 @@ void TextureShowMenu(int value){
 
     geomi = geominfo + i;
     surf = geomi->surfgeom;
-    if(terrain_textures!=NULL){
-      textii = terrain_textures+iterrain_textures;
+    if(terrain_texture_coll.terrain_textures!=NULL){
+      textii = terrain_texture_coll.terrain_textures+iterrain_textures;
     }
     else{
       if(surf!=NULL)textii = surf->textureinfo;
@@ -2549,8 +2549,8 @@ void TextureShowMenu(int value){
     }
   }
 
-  for(i=0;i<ntextureinfo;i++){
-    texti = textureinfo + i;
+  for(i=0;i<texture_coll.ntextureinfo;i++){
+    texti = texture_coll.textureinfo + i;
     if(texti->loaded==1&&texti->used==1&&texti->display==1){
       if(value!=visBLOCKOutline&&value!=visBLOCKSolidOutline&&value!=visBLOCKHide){
         BlockageMenu(visBLOCKAsInput);
@@ -3509,7 +3509,7 @@ void LoadUnloadMenu(int value){
     load_flag = LOAD;
 #endif
     THREADcontrol(compress_threads, THREAD_LOCK);
-    if(hrr_csv_filename!=NULL){
+    if(paths.hrr_csv_filename!=NULL){
       ReadHRR(LOAD);
     }
 
@@ -4955,11 +4955,11 @@ void LoadSmoke3DMenu(int value){
     GLUIShowBoundsDialog(DLG_3DSMOKE);
   }
   else if(value ==MENU_SMOKE_FILE_SIZES){
-    if(nsmoke3dtypes>0){
+    if(smoke3dcoll.nsmoke3dtypes>0){
       int ii;
 
       PRINTF("3D smoke file sizes:\n");
-      for(ii = 0; ii<nsmoke3dtypes; ii++){
+      for(ii = 0; ii<smoke3dcoll.nsmoke3dtypes; ii++){
         FILE_SIZE total_size;
         char *smoke_type;
 
@@ -5000,7 +5000,7 @@ void LoadSmoke3DMenu(int value){
     smoke3ddata *smoke3di;
 
     value = -(value + 100);
-    smoke3di = smoke3dtypes[value].smoke3d;
+    smoke3di = smoke3dcoll.smoke3dtypes[value].smoke3d;
     if(scriptoutstream!=NULL){
       fprintf(scriptoutstream,"LOAD3DSMOKE\n");
       fprintf(scriptoutstream," %s\n",smoke3di->label.longlabel);
@@ -6884,16 +6884,16 @@ void DeviceTypeMenu(int val){
 /* ------------------ ShowDevicesMenu ------------------------ */
 
 void ShowDevicesMenu(int value){
-  if(value==MENU_DUMMY||ndeviceinfo<=0)return;
+  if(value==MENU_DUMMY||devicecoll.ndeviceinfo<=0)return;
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
   if(value==MENU_DEVICES_SHOWALL||value==MENU_DEVICES_HIDEALL){
     int i;
 
-    for(i=0; i<ndeviceinfo; i++){
+    for(i=0; i<devicecoll.ndeviceinfo; i++){
       devicedata *devicei;
 
-      devicei = deviceinfo + i;
+      devicei = devicecoll.deviceinfo + i;
       if(value==MENU_DEVICES_SHOWALL){
         devicei->show = 1;
       }
@@ -6907,11 +6907,11 @@ void ShowDevicesMenu(int value){
     int ival, itype;
     devicedata *devicei;
 
-    if(value >= 3 * ndeviceinfo)return;
-    ival = value % ndeviceinfo;
-    itype = value / ndeviceinfo;
+    if(value >= 3 * devicecoll.ndeviceinfo)return;
+    ival = value % devicecoll.ndeviceinfo;
+    itype = value / devicecoll.ndeviceinfo;
 
-    devicei = deviceinfo + ival;
+    devicei = devicecoll.deviceinfo + ival;
     //             0 <= value <   ndeviceinfo : toggle
     //   ndeviceinfo <= value < 2*ndeviceinfo : show
     // 2*ndeviceinfo <= value < 3*ndeviceinfo : hide
@@ -7042,8 +7042,8 @@ void TerrainGeomShowMenu(int value){
   if(value>=0){
     texturedata *texti;
 
-    if(value>=0&&value<nterrain_textures){
-      texti = terrain_textures+value;
+    if(value>=0&&value<terrain_texture_coll.nterrain_textures){
+      texti = terrain_texture_coll.terrain_textures+value;
       texti->display = 1-texti->display;
       GLUIUpdateTerrainTexture(value);
     }
@@ -9212,12 +9212,12 @@ static int menu_count=0;
   /* --------------------------------terrain menu -------------------------- */
 
 
-  if(nterrain_textures>0){
+  if(terrain_texture_coll.nterrain_textures>0){
     CREATEMENU(terrain_geom_showmenu, TerrainGeomShowMenu);
-    for(i = 0; i<nterrain_textures; i++){
+    for(i = 0; i<terrain_texture_coll.nterrain_textures; i++){
       texturedata *texti;
 
-      texti = terrain_textures+i;
+      texti = terrain_texture_coll.terrain_textures+i;
       if(texti->loaded==1){
         char tlabel[256];
 
@@ -9272,7 +9272,7 @@ static int menu_count=0;
     glutAddMenuEntry(_("   Outside FDS domain"), GEOMETRY_OUTSIDE_DOMAIN);
   }
   glutAddMenuEntry("-", GEOMETRY_DUMMY);
-  if(nterrain_textures>0){
+  if(terrain_texture_coll.nterrain_textures>0){
     GLUTADDSUBMENU(_("Terrain images"), terrain_geom_showmenu);
   }
   if(terrain_nindices>0){
@@ -9532,14 +9532,14 @@ static int menu_count=0;
 
     CREATEMENU(textureshowmenu,TextureShowMenu);
     ntextures_used=0;
-    for(i=0;i<ntextureinfo;i++){
+    for(i=0;i<texture_coll.ntextureinfo;i++){
       texturedata *texti;
       char menulabel[1024];
 
-      texti = textureinfo + i;
+      texti = texture_coll.textureinfo + i;
       if(texti->loaded == 0 || texti->used == 0)continue;
-      if(terrain_textures != NULL){
-        if(texti >= terrain_textures && texti < terrain_textures + nterrain_textures)continue;
+      if(terrain_texture_coll.terrain_textures != NULL){
+        if(texti >= terrain_texture_coll.terrain_textures && texti < terrain_texture_coll.terrain_textures + terrain_texture_coll.nterrain_textures)continue;
       }
       ntextures_used++;
       if(texti->display==1){
@@ -9736,7 +9736,7 @@ static int menu_count=0;
   if(terrain_showonly_top==0)glutAddMenuEntry(_("Show only top surface"),  17 + TERRAIN_TOP);
   if(visTerrainType==TERRAIN_SURFACE)glutAddMenuEntry(_("*3D surface"),17+TERRAIN_SURFACE);
   if(visTerrainType!=TERRAIN_SURFACE)glutAddMenuEntry(_("3D surface"),17+TERRAIN_SURFACE);
-  if(terrain_textures!=NULL){ // &&terrain_texture->loaded==1
+  if(terrain_texture_coll.terrain_textures!=NULL){ // &&terrain_texture->loaded==1
     if(visTerrainType==TERRAIN_IMAGE)glutAddMenuEntry(_("*Image"),17+TERRAIN_IMAGE);
     if(visTerrainType!=TERRAIN_IMAGE)glutAddMenuEntry(_("Image"),17+TERRAIN_IMAGE);
   }
@@ -9843,15 +9843,15 @@ static int menu_count=0;
     glutAddMenuEntry(_("Settings..."), MENU_DEVICE_SETTINGS);
   }
   if(objectscoll->nobject_defs>0){
-    if(ndeviceinfo > 0){
+    if(devicecoll.ndeviceinfo > 0){
       int showall=1, hideall=1;
 
       CREATEMENU(showdevicesmenu, ShowDevicesMenu);
-      for(i = 0; i < ndeviceinfo; i++){
+      for(i = 0; i < devicecoll.ndeviceinfo; i++){
         devicedata *devicei;
         char devicelabel[256];
 
-        devicei = deviceinfo + i;
+        devicei = devicecoll.deviceinfo + i;
         strcpy(devicelabel, "");
         if(devicei->show==1){
           strcat(devicelabel,"*");
@@ -9890,7 +9890,7 @@ static int menu_count=0;
       if(show_missing_objects==1)glutAddMenuEntry(_("*undefined"),OBJECT_MISSING);
       if(show_missing_objects == 0)glutAddMenuEntry(_("undefined"),OBJECT_MISSING);
     }
-    if(ndeviceinfo>0){
+    if(devicecoll.ndeviceinfo>0){
       glutAddMenuEntry("-",MENU_DUMMY);
       if(select_device==1){
         glutAddMenuEntry(_("*Select"),OBJECT_SELECT);
@@ -9922,11 +9922,11 @@ static int menu_count=0;
       }
     }
     glutAddMenuEntry("-",MENU_DUMMY);
-    if(ndeviceinfo > 0){
+    if(devicecoll.ndeviceinfo > 0){
       GLUTADDSUBMENU(_("Show/Hide devices"), showdevicesmenu);
     }
     GLUTADDSUBMENU(_("Segments"),spheresegmentmenu);
-    if(objectscoll->nobject_defs>0&&ndeviceinfo>0){
+    if(objectscoll->nobject_defs>0&&devicecoll.ndeviceinfo>0){
       glutAddMenuEntry("-",MENU_DUMMY);
       GLUTADDSUBMENU(_("Plot data"),showobjectsplotmenu);
     }
@@ -11393,7 +11393,7 @@ static int menu_count=0;
   }
   if(titlesafe_offset==0)glutAddMenuEntry(_("Offset window"), MENU_SHOWHIDE_OFFSET);
   if(titlesafe_offset!=0)glutAddMenuEntry(_("*Offset window"),MENU_SHOWHIDE_OFFSET);
-  if(ntextures_loaded_used>nterrain_textures){
+  if(ntextures_loaded_used>terrain_texture_coll.nterrain_textures){
     GLUTADDSUBMENU(_("Textures"),textureshowmenu);
   }
 #ifdef pp_MEMPRINT
@@ -11643,10 +11643,10 @@ static int menu_count=0;
   /* --------------------------------data dialog menu -------------------------- */
 
   CREATEMENU(datadialogmenu, DialogMenu);
-  if(ndeviceinfo>0&&GetNumActiveDevices()>0){
+  if(devicecoll.ndeviceinfo>0&&GetNumActiveDevices()>0){
     glutAddMenuEntry(_("Devices/Objects"), DIALOG_DEVICE);
   }
-  if((ncsvfileinfo>0&&have_ext==0)||(ncsvfileinfo>1&&have_ext==1)){
+  if((csvcoll.ncsvfileinfo>0&&have_ext==0)||(csvcoll.ncsvfileinfo>1&&have_ext==1)){
     glutAddMenuEntry(_("2D plots"), DIALOG_2DPLOTS);
   }
   glutAddMenuEntry(_("Show/Hide..."), DIALOG_SHOWFILES);
@@ -11940,7 +11940,7 @@ static int menu_count=0;
   if(ntotal_blockages>0||isZoneFireModel==1){
     glutAddMenuEntry(_("  g: toggle grid visibility modes"), MENU_DUMMY);
   }
-  if(ndeviceinfo > 0 && GetNumActiveDevices() > 0){
+  if(devicecoll.ndeviceinfo > 0 && GetNumActiveDevices() > 0){
     glutAddMenuEntry("  j/ALT j: increase/decrease object size", MENU_DUMMY);
   }
   if(have_cface_normals == CFACE_NORMALS_YES){
@@ -12190,7 +12190,7 @@ static int menu_count=0;
 
       if(nsmoke3dloaded>0){
         CREATEMENU(unloadsmoke3dmenu,UnLoadSmoke3DMenu);
-        for(i = 0; i<nsmoke3dtypes; i++){
+        for(i = 0; i<smoke3dcoll.nsmoke3dtypes; i++){
           int j, doit, is_zlib;
 
           doit = 0;
@@ -12207,7 +12207,7 @@ static int menu_count=0;
           if(doit == 1){
             char smvmenulabel[256];
 
-            strcpy(smvmenulabel, smoke3dtypes[i].longlabel);
+            strcpy(smvmenulabel, smoke3dcoll.smoke3dtypes[i].longlabel);
             if(is_zlib == 1){
               strcat(smvmenulabel, "(ZLIB)");
             }
@@ -12222,9 +12222,9 @@ static int menu_count=0;
         }
 
         int ii;
-        for(ii = 0; ii<nsmoke3dtypes; ii++){
+        for(ii = 0; ii<smoke3dcoll.nsmoke3dtypes; ii++){
           if(meshescoll.nmeshes>1){
-            CREATEMENU(smoke3dtypes[ii].menu_id, LoadSmoke3DMenu);
+            CREATEMENU(smoke3dcoll.smoke3dtypes[ii].menu_id, LoadSmoke3DMenu);
           }
           for(i = 0; i<smoke3dcoll.nsmoke3dinfo; i++){
             char menulabel[256];
@@ -12243,7 +12243,7 @@ static int menu_count=0;
         if(meshescoll.nmeshes>1){
           CREATEMENU(loadsmoke3dmenu,LoadSmoke3DMenu);
           // multi mesh smoke menus items
-          for(ii = 0; ii<nsmoke3dtypes; ii++){
+          for(ii = 0; ii<smoke3dcoll.nsmoke3dtypes; ii++){
             int jj;
             int ntotal, nloaded;
             char menulabel[256];
@@ -12268,8 +12268,8 @@ static int menu_count=0;
             else if(nloaded>0&&nloaded<ntotal){
               strcat(menulabel, "#");
             }
-            strcat(menulabel, smoke3dtypes[ii].longlabel);
-            strcat(menulabel, smoke3dtypes[ii].smoke3d->cextinct);
+            strcat(menulabel, smoke3dcoll.smoke3dtypes[ii].longlabel);
+            strcat(menulabel, smoke3dcoll.smoke3dtypes[ii].smoke3d->cextinct);
             if(is_zlib == 1){
               strcat(menulabel, "(ZLIB)");
             }
@@ -12857,7 +12857,7 @@ static int menu_count=0;
     }
 
     glutAddMenuEntry("-", MENU_DUMMY);
-    if(ndeviceinfo>0){
+    if(devicecoll.ndeviceinfo>0){
       glutAddMenuEntry(_("Read .svo files"),MENU_READSVO);
     }
     glutAddMenuEntry("Save settings (all cases - smokeview.ini)", MENU_WRITEINI);

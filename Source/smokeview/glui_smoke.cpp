@@ -1049,7 +1049,7 @@ extern "C" void GLUISmoke3dCB(int var){
     break;
   case EXTINCTION_RESET_FDS:
     if(SOOT_index>=0){
-      glui_smoke3d_extinct = smoke3dtypes[SOOT_index].extinction;
+      glui_smoke3d_extinct = smoke3dcoll.smoke3dtypes[SOOT_index].extinction;
       if(SPINNER_smoke3d_extinct2!=NULL)SPINNER_smoke3d_extinct2->set_float_val(glui_smoke3d_extinct);
       if(SPINNER_smoke3d_extinct!=NULL)SPINNER_smoke3d_extinct->set_float_val(glui_smoke3d_extinct);
       GLUISmoke3dCB(SMOKE_EXTINCT);

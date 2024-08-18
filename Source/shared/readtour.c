@@ -12,12 +12,14 @@
 #include "isodefs.h"
 #include "smokeviewdefs.h"
 #include "string_util.h"
-#include "structures.h"
+#include "shared_structures.h"
+
 
 #include "readobject.h"
 #include "readtour.h"
+#include "readgeom.h"
 
-void ReallocTourMemory(tour_collection *tourcoll) {
+EXTERNCPP void ReallocTourMemory(tour_collection *tourcoll) {
   tourdata *touri;
 
   if(tourcoll->tour_ntimes > 0) {
@@ -185,29 +187,6 @@ void GetTourXYZView(float time, float *times, float *vals, int n, float *val3) {
   val3[0] = (1.0 - factor) * v1[0] + factor * v2[0];
   val3[1] = (1.0 - factor) * v1[1] + factor * v2[1];
   val3[2] = (1.0 - factor) * v1[2] + factor * v2[2];
-}
-
-
-/* ------------------ SetTourXYZView ------------------------ */
-
-void SetTourXYZView(float t, tourdata *touri) {
-  keyframe *this_key, *first_key, *last_key;
-
-  first_key = touri->first_frame.next;
-  last_key = touri->last_frame.prev;
-  if(t < first_key->time) {
-    memcpy(touri->xyz_smv, first_key->xyz_smv, 3 * sizeof(float));
-    memcpy(touri->view_smv, first_key->view_smv, 3 * sizeof(float));
-    return;
-  }
-  if(t >= last_key->time) {
-    memcpy(touri->xyz_smv, last_key->xyz_smv, 3 * sizeof(float));
-    memcpy(touri->view_smv, last_key->view_smv, 3 * sizeof(float));
-    return;
-  }
-  this_key = GetKeyFrame(touri, t);
-  GetKeyXYZ(t, this_key, touri->xyz_smv);
-  GetKeyView(t, this_key, touri->view_smv);
 }
 
 /* ------------------ CopyFrame ------------------------ */

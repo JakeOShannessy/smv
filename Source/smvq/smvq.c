@@ -10,14 +10,86 @@
 #include <sys/types.h>
 
 #include "MALLOCC.h"
-#include "smokeviewvars.h"
+// #include "smokeviewvars.h"
 #include "string_util.h"
+#include "datadefs.h"
+#include "smokeviewdefs.h"
+#include "shared_structures.h"
+#include "readlabel.h"
+#include <math.h>
+
+#include "structures.h"
 
 #include <json-c/json_object.h>
 
 #ifndef _WIN32
 #include <libgen.h>
 #endif
+
+int ReadSMV(smv_case *scase, bufferstreamdata *stream);
+void ReadSMVOrig(smv_case *scase);
+// TODO:
+char *movie_name = NULL;
+char *render_file_base = NULL;
+char *html_file_base = NULL;
+char *log_filename = NULL;
+char *caseini_filename = NULL;
+char *expcsv_filename;
+char *dEcsv_filename = NULL;
+char *html_filename = NULL;
+char *smv_orig_filename;
+char *hrr_filename = NULL;
+char *htmlvr_filename = NULL;
+char *htmlobst_filename = NULL;
+char *htmlslicenode_filename = NULL;
+char *htmlslicecell_filename = NULL;
+char *event_filename = NULL;
+char *ffmpeg_command_filename = NULL;
+#ifdef pp_FED
+char *fed_filename = NULL;
+#endif
+char *stop_filename;
+char *smvzip_filename = NULL;
+char *sliceinfo_filename = NULL;
+char *deviceinfo_filename = NULL;
+char *iso_filename;
+char *trainer_filename = NULL;
+char *test_filename = NULL;
+SVEXTERN int curdir_writable;
+SVEXTERN circdata cvent_circ, object_circ, windrose_circ;
+SVEXTERN char SVDECL(**movie_queues, NULL), movie_htmldir[256], movie_email[256], movie_queue_list[256], movie_url[256];
+SVEXTERN int SVDECL(have_slurm, 0);
+SVEXTERN unsigned char degC[3], degF[3];
+SVEXTERN scriptfiledata first_scriptfile, last_scriptfile, SVDECL(*default_script,NULL);
+SVEXTERN float mat_ambient_orig[4];
+SVEXTERN float mat_specular_orig[4];
+SVEXTERN float SVDECL(*mat_ambient2,NULL), SVDECL(*mat_specular2,NULL);
+SVEXTERN float direction_color[4], SVDECL(*direction_color_ptr,NULL);
+SVEXTERN int SVDECL(movie_slice_index, 0), SVDECL(movie_queue_index, 0), SVDECL(movie_nprocs, 10), SVDECL(nmovie_queues, 0);
+#ifdef INMAIN
+SVEXTERN float backgroundbasecolor[4]  = {0.0, 0.0, 0.0, 1.0};
+SVEXTERN float backgroundcolor[4]      = {0.0, 0.0, 0.0, 1.0};
+SVEXTERN float foregroundbasecolor[4]  = {1.0, 1.0, 1.0, 1.0};
+SVEXTERN float foregroundcolor[4]      = {1.0, 1.0, 1.0, 1.0};
+SVEXTERN int   glui_outlinecolor[4]    = {0, 255, 255, 255};
+#else
+SVEXTERN float backgroundbasecolor[4];
+SVEXTERN float backgroundcolor[4];
+SVEXTERN float foregroundbasecolor[4];
+SVEXTERN float foregroundcolor[4];
+SVEXTERN int   glui_outlinecolor[4];
+#endif
+SVEXTERN float rgb_terrain2[4 * MAXRGB];
+SVEXTERN char smv_githash[256], smv_gitdate[256];
+SVEXTERN float rgb_terrain[10][4];
+SVEXTERN int glui_foregroundbasecolor[4];
+SVEXTERN int glui_backgroundbasecolor[4];
+SVEXTERN float SVDECL(zoom_min, 0.1), SVDECL(zoom_max, 10.0);
+SVEXTERN float aperture_min, aperture_max;
+SVEXTERN float aperture,aperture_glui,aperture_default,aperture_glui0;
+SVEXTERN char SVDECL(*fdsprefix,NULL), SVDECL(*fdsprefix2,NULL);
+SVEXTERN char  *fds_title;
+// END TODO
 
 /// @brief Given a file path, get the filename excluding the final extension.
 /// This allocates a new copy which can be deallocated with free().
@@ -201,448 +273,450 @@ float Zoom2Aperture(float zoom0){
 }
 
 // TODO: remove this definition of InitVars
-void InitVars(void){
-  int i;
-  char *queue_list = NULL, *queue=NULL, *htmldir=NULL, *email=NULL;
-
-#ifdef pp_OSX_HIGHRES
-  double_scale = 1;
-#endif
-  curdir_writable = Writable(".");
-  windrose_circ.ncirc=0;
-  InitCircle(180, &windrose_circ);
-
-  object_circ.ncirc=0;
-  cvent_circ.ncirc=0;
-
-//*** define slurm queues
-
-  queue_list = getenv("SMV_QUEUES");
-#ifdef pp_MOVIE_BATCH_DEBUG
-  if(queue_list==NULL)queue_list = "batch"; // placeholder for debugging slurm queues on the PC
-#endif
-
-#define MAX_QUEUS 100
-  if(queue_list!=NULL){
-    strcpy(movie_queue_list, queue_list);
-    queue = strtok(movie_queue_list, ":");
-  }
-  if(queue!=NULL){
-    NewMemory((void **)&movie_queues, MAX_QUEUS*sizeof(char *));
-    movie_queues[nmovie_queues++]=TrimFrontBack(queue);
-    for(;;){
-      queue = strtok(NULL, ":");
-      if(queue==NULL||nmovie_queues>=MAX_QUEUS)break;
-      movie_queues[nmovie_queues++]=TrimFrontBack(queue);
-    }
-    ResizeMemory((void **)&movie_queues, nmovie_queues*sizeof(char *));
-    have_slurm = 1;
-  }
-
-//*** define weburl
-  {
-    char *hostname = NULL, *username = NULL;
-
-    hostname = getenv("HOSTNAME");
-    username = getenv("USER");
-
-    if(hostname!=NULL&&username!=NULL){
-      strcpy(movie_url, "http://");
-      strcat(movie_url, hostname);
-      strcat(movie_url, "/");
-      strcat(movie_url, username);
-    }
-    else{
-      strcpy(movie_url, "");
-    }
-  }
-
-//*** define html directory
-
-  htmldir = getenv("SMV_HTMLDIR");
-  if(htmldir!=NULL&&strlen(htmldir)>0){
-    strcpy(movie_htmldir, htmldir);
-  }
-  else{
-    strcpy(movie_htmldir, "");
-  }
-
-//*** define email address
-
-  email = getenv("SMV_EMAIL");
-  if(email!=NULL&&strlen(email)>0){
-    strcpy(movie_email, email);
-  }
-  else{
-    strcpy(movie_email, "");
-  }
-
-#ifdef pp_RENDER360_DEBUG
-  NewMemory((void **)&screenvis, nscreeninfo * sizeof(int));
-  for(i = 0; i < nscreeninfo; i++){
-    screenvis[i] = 1;
-  }
-#endif
-
-  beam_color[0] = 255 * foregroundcolor[0];
-  beam_color[1] = 255 * foregroundcolor[1];
-  beam_color[2] = 255 * foregroundcolor[2];
-
-  if(movie_filetype==WMV){
-    strcpy(movie_ext, ".wmv");
-  }
-  else if(movie_filetype==MP4){
-    strcpy(movie_ext, ".mp4");
-  }
-  else{
-    strcpy(movie_ext, ".avi");
-  }
-  for(i=0;i<200;i++){
-    face_id[i]=1;
-  }
-  for(i=0;i<10;i++){
-    face_vis[i]=1;
-    face_vis_old[i]=1;
-  }
-  for(i=0;i<7;i++){
-    b_state[i]=-1;
-  }
-  strcpy((char *)degC,"C");
-  strcpy((char *)degF,"F");
-
-  labelscoll.label_first_ptr = &labelscoll.label_first;
-  labelscoll.label_last_ptr = &labelscoll.label_last;
-
-  labelscoll.label_first_ptr->prev = NULL;
-  labelscoll.label_first_ptr->next = labelscoll.label_last_ptr;
-  strcpy(labelscoll.label_first_ptr->name,"first");
-
-  labelscoll.label_last_ptr->prev = labelscoll.label_first_ptr;
-  labelscoll.label_last_ptr->next = NULL;
-  strcpy(labelscoll.label_last_ptr->name,"last");
-
-  {
-    labeldata *gl;
-
-    gl=&LABEL_default;
-    gl->rgb[0]=0;
-    gl->rgb[1]=0;
-    gl->rgb[2]=0;
-    gl->rgb[3]=255;
-    gl->frgb[0]=0.0;
-    gl->frgb[1]=0.0;
-    gl->frgb[2]=0.0;
-    gl->frgb[3]=1.0;
-    gl->tstart_stop[0]=0.0;
-    gl->tstart_stop[1]=1.0;
-    gl->useforegroundcolor=1;
-    gl->show_always=1;
-    strcpy(gl->name,"new");
-    gl->xyz[0]=0.0;
-    gl->xyz[1]=0.0;
-    gl->xyz[2]=0.0;
-    gl->tick_begin[0] = 0.0;
-    gl->tick_begin[1] = 0.0;
-    gl->tick_begin[2] = 0.0;
-    gl->tick_direction[0] = 1.0;
-    gl->tick_direction[1] = 0.0;
-    gl->tick_direction[2] = 0.0;
-    gl->show_tick = 0;
-    gl->labeltype = TYPE_INI;
-    memcpy(&LABEL_local,&LABEL_default,sizeof(labeldata));
-  }
-
-  strcpy(startup_lang_code,"en");
-  mat_specular_orig[0]=0.5f;
-  mat_specular_orig[1]=0.5f;
-  mat_specular_orig[2]=0.2f;
-  mat_specular_orig[3]=1.0f;
-  mat_specular2=GetColorPtr(&colorcoll, mat_specular_orig);
-
-  mat_ambient_orig[0] = 0.5f;
-  mat_ambient_orig[1] = 0.5f;
-  mat_ambient_orig[2] = 0.2f;
-  mat_ambient_orig[3] = 1.0f;
-  mat_ambient2=GetColorPtr(&colorcoll, mat_ambient_orig);
-
-  ventcolor_orig[0]=1.0;
-  ventcolor_orig[1]=0.0;
-  ventcolor_orig[2]=1.0;
-  ventcolor_orig[3]=1.0;
-  ventcolor=GetColorPtr(&colorcoll, ventcolor_orig);
-
-  block_ambient_orig[0] = 1.0;
-  block_ambient_orig[1] = 0.8;
-  block_ambient_orig[2] = 0.4;
-  block_ambient_orig[3] = 1.0;
-  block_ambient2=GetColorPtr(&colorcoll, block_ambient_orig);
-
-  block_specular_orig[0] = 0.0;
-  block_specular_orig[1] = 0.0;
-  block_specular_orig[2] = 0.0;
-  block_specular_orig[3] = 1.0;
-  block_specular2=GetColorPtr(&colorcoll, block_specular_orig);
-
-  for(i=0;i<256;i++){
-    boundarylevels256[i]=(float)i/255.0;
-  }
-
-  first_scriptfile.id=-1;
-  first_scriptfile.prev=NULL;
-  first_scriptfile.next=&last_scriptfile;
-
-  last_scriptfile.id=-1;
-  last_scriptfile.prev=&first_scriptfile;
-  last_scriptfile.next=NULL;
-
-  first_inifile.id=-1;
-  first_inifile.prev=NULL;
-  first_inifile.next=&last_inifile;
-
-  last_inifile.id=-1;
-  last_inifile.prev=&first_inifile;
-  last_inifile.next=NULL;
-  // TODO: why is thei GLUI init here?
-  // FontMenu(fontindex);
-
-  direction_color[0]=39.0/255.0;
-  direction_color[1]=64.0/255.0;
-  direction_color[2]=139.0/255.0;
-  direction_color[3]=1.0;
-  direction_color_ptr=GetColorPtr(&colorcoll, direction_color);
-
-  GetGitInfo(smv_githash,smv_gitdate);
-
-  rgb_terrain[0][0]=1.0;
-  rgb_terrain[0][1]=0.0;
-  rgb_terrain[0][2]=0.0;
-  rgb_terrain[0][3]=1.0;
-
-  rgb_terrain[1][0]=0.5;
-  rgb_terrain[1][1]=0.5;
-  rgb_terrain[1][2]=0.0;
-  rgb_terrain[1][3]=1.0;
-
-  rgb_terrain[2][0]=0.0;
-  rgb_terrain[2][1]=1.0;
-  rgb_terrain[2][2]=0.0;
-  rgb_terrain[2][3]=1.0;
-
-  rgb_terrain[3][0]=0.0;
-  rgb_terrain[3][1]=0.5;
-  rgb_terrain[3][2]=0.0;
-  rgb_terrain[3][3]=1.0;
-
-  rgb_terrain[4][0]=0.0;
-  rgb_terrain[4][1]=0.5;
-  rgb_terrain[4][2]=0.5;
-  rgb_terrain[4][3]=1.0;
-
-  rgb_terrain[5][0]=0.0;
-  rgb_terrain[5][1]=0.0;
-  rgb_terrain[5][2]=1.0;
-  rgb_terrain[5][3]=1.0;
-
-  rgb_terrain[6][0]=0.5;
-  rgb_terrain[6][1]=0.0;
-  rgb_terrain[6][2]=0.5;
-  rgb_terrain[6][3]=1.0;
-
-  rgb_terrain[7][0]=1.0;
-  rgb_terrain[7][1]=0.5;
-  rgb_terrain[7][2]=0.0;
-  rgb_terrain[7][3]=1.0;
-
-  rgb_terrain[8][0]=1.0;
-  rgb_terrain[8][1]=0.5;
-  rgb_terrain[8][2]=0.5;
-  rgb_terrain[8][3]=1.0;
-
-  rgb_terrain[9][0]=1.0;
-  rgb_terrain[9][1]=0.25;
-  rgb_terrain[9][2]=0.5;
-  rgb_terrain[9][3]=1.0;
-
-  strcpy(script_inifile_suffix,"");
-  strcpy(script_renderdir,"");
-  strcpy(script_renderfilesuffix,"");
-  strcpy(script_renderfile,"");
-  setpartmin_old=setpartmin;
-  setpartmax_old=setpartmax;
-  // UpdateCurrentColorbar(colorbarinfo);
-  visBlocks=visBLOCKAsInput;
-  blocklocation=BLOCKlocation_grid;
-  render_window_size=RenderWindow;
-  // RenderMenu(render_window_size);
-  solidlinewidth=linewidth;
-  setbwSAVE=setbw;
-
-  glui_backgroundbasecolor[0] = 255 * backgroundbasecolor[0];
-  glui_backgroundbasecolor[1] = 255 * backgroundbasecolor[1];
-  glui_backgroundbasecolor[2] = 255 * backgroundbasecolor[2];
-  glui_backgroundbasecolor[3] = 255 * backgroundbasecolor[3];
-
-  glui_foregroundbasecolor[0] = 255 * foregroundbasecolor[0];
-  glui_foregroundbasecolor[1] = 255 * foregroundbasecolor[1];
-  glui_foregroundbasecolor[2] = 255 * foregroundbasecolor[2];
-  glui_foregroundbasecolor[3] = 255 * foregroundbasecolor[3];
-
-  strcpy(emptylabel,"");
-  font_ptr          = GLUT_BITMAP_HELVETICA_12;
-  colorbar_font_ptr = GLUT_BITMAP_HELVETICA_10;
-#ifdef pp_OSX_HIGHRES
-    if(double_scale==1){
-      font_ptr = (void *)GLUT_BITMAP_HELVETICA_24;
-      colorbar_font_ptr = (void *)GLUT_BITMAP_HELVETICA_20;
-    }
-#endif
-
-  aperture = Zoom2Aperture(zoom);
-  aperture_glui = aperture;
-  aperture_default = aperture;
-
-  {
-    int ii;
-    rgbmask[0]=1;
-    for(ii=1;ii<16;ii++){
-      rgbmask[ii]=2*rgbmask[ii-1]+1;
-    }
-  }
-
-  strcpy(ext_png,".png");
-  strcpy(ext_jpg,".jpg");
-  render_filetype=PNG;
-
-  strcpy(surfacedefaultlabel,"");
-  if(streak_index>=0)float_streak5value=streak_rvalue[streak_index];
-
-  objectscoll = CreateObjectCollection();
-
-  GetTitle("Smokeview ", release_title);
-  GetTitle("Smokeview ", plot3d_title);
-
-  strcpy(blank_global,"");
-
-  NewMemory((void **)&iso_colors, 4 * MAX_ISO_COLORS*sizeof(float));
-  NewMemory((void **)&iso_colorsbw, 4 * MAX_ISO_COLORS*sizeof(float));
-
-#define N_ISO_COLORS 10
-  iso_colors[0] = 0.96;
-  iso_colors[1] = 0.00;
-  iso_colors[2] = 0.96;
-
-  iso_colors[4] = 0.75;
-  iso_colors[5] = 0.80;
-  iso_colors[6] = 0.80;
-
-  iso_colors[8] = 0.00;
-  iso_colors[9] = 0.96;
-  iso_colors[10] = 0.28;
-
-  iso_colors[12] = 0.00;
-  iso_colors[13] = 0.00;
-  iso_colors[14] = 1.00;
-
-  iso_colors[16] = 0.00;
-  iso_colors[17] = 0.718750;
-  iso_colors[18] = 1.00;
-
-  iso_colors[20] = 0.00;
-  iso_colors[21] = 1.0;
-  iso_colors[22] = 0.5625;
-
-  iso_colors[24] = 0.17185;
-  iso_colors[25] = 1.0;
-  iso_colors[26] = 0.0;
-
-  iso_colors[28] = 0.890625;
-  iso_colors[29] = 1.0;
-  iso_colors[30] = 0.0;
-
-  iso_colors[32] = 1.0;
-  iso_colors[33] = 0.380952;
-  iso_colors[34] = 0.0;
-
-  iso_colors[36] = 1.0;
-  iso_colors[37] = 0.0;
-  iso_colors[38] = 0.0;
-
-  glui_iso_transparency = CLAMP(255 * iso_transparency+0.1, 1, 255);
-  for(i = 0; i < N_ISO_COLORS; i++){
-    iso_colors[4 * i + 3] = iso_transparency;
-  }
-
-  for(i = N_ISO_COLORS; i<MAX_ISO_COLORS; i++){
-    int grey;
-
-    grey=1.0-(float)(i-N_ISO_COLORS)/(float)(MAX_ISO_COLORS+1-N_ISO_COLORS);
-    iso_colors[4*i+0]=grey;
-    iso_colors[4*i+1]=grey;
-    iso_colors[4*i+2]=grey;
-    iso_colors[4 * i + 3] = iso_transparency;
-  }
-
-  for(i = 0; i < MAX_ISO_COLORS; i++){
-    float graylevel;
-
-    graylevel = TOBW(iso_colors+4*i);
-    iso_colorsbw[4*i+0] = graylevel;
-    iso_colorsbw[4*i+1] = graylevel;
-    iso_colorsbw[4*i+2] = graylevel;
-    iso_colorsbw[4*i+3] = 1.0;
-  }
-  CheckMemory;
-
-  ncolortableinfo = 2;
-  if(ncolortableinfo>0){
-    colortabledata *cti;
-
-    NewMemory((void **)&colortableinfo, ncolortableinfo*sizeof(colortabledata));
-
-    cti = colortableinfo+0;
-    cti->color[0] = 210;
-    cti->color[1] = 180;
-    cti->color[2] = 140;
-    cti->color[3] = 255;
-    strcpy(cti->label, "tan");
-
-    cti = colortableinfo+1;
-    cti->color[0] = 178;
-    cti->color[1] = 34;
-    cti->color[2] = 34;
-    cti->color[3] = 255;
-    strcpy(cti->label, "firebrick");
-  }
-
-  memcpy(rgb_base,rgb_baseBASE,MAXRGB*4*sizeof(float));
-  memcpy(bw_base,bw_baseBASE,MAXRGB*4*sizeof(float));
-  memcpy(rgb2,rgb2BASE,MAXRGB*3*sizeof(float));
-  memcpy(bw_base,bw_baseBASE,MAXRGB*4*sizeof(float));
-
-  strcpy(viewpoint_label_startup,"external");
-  {
-    int iii;
-
-    for(iii=0;iii<7;iii++){
-      vis_boundary_type[iii]=1;
-    }
-    vis_boundary_type[0]=1;
-    for(iii=0;iii<MAXPLOT3DVARS;iii++){
-      p3min_all[iii]    = 1.0f;
-      p3chopmin[iii]    = 1.0f;
-      p3max_all[iii]    = 1.0f;
-      p3chopmax[iii]    = 0.0f;
-    }
-  }
-}
-
-void FreeVars(void) {
-  FreeObjectCollection(objectscoll);
+// void InitVars(void){
+//   int i;
+//   char *queue_list = NULL, *queue=NULL, *htmldir=NULL, *email=NULL;
+
+// #ifdef pp_OSX_HIGHRES
+//   double_scale = 1;
+// #endif
+//   curdir_writable = Writable(".");
+//   windrose_circ.ncirc=0;
+//   InitCircle(180, &windrose_circ);
+
+//   object_circ.ncirc=0;
+//   cvent_circ.ncirc=0;
+
+// //*** define slurm queues
+
+//   queue_list = getenv("SMV_QUEUES");
+// #ifdef pp_MOVIE_BATCH_DEBUG
+//   if(queue_list==NULL)queue_list = "batch"; // placeholder for debugging slurm queues on the PC
+// #endif
+
+// #define MAX_QUEUS 100
+//   if(queue_list!=NULL){
+//     strcpy(movie_queue_list, queue_list);
+//     queue = strtok(movie_queue_list, ":");
+//   }
+//   if(queue!=NULL){
+//     NewMemory((void **)&movie_queues, MAX_QUEUS*sizeof(char *));
+//     movie_queues[nmovie_queues++]=TrimFrontBack(queue);
+//     for(;;){
+//       queue = strtok(NULL, ":");
+//       if(queue==NULL||nmovie_queues>=MAX_QUEUS)break;
+//       movie_queues[nmovie_queues++]=TrimFrontBack(queue);
+//     }
+//     ResizeMemory((void **)&movie_queues, nmovie_queues*sizeof(char *));
+//     have_slurm = 1;
+//   }
+
+// //*** define weburl
+//   {
+//     char *hostname = NULL, *username = NULL;
+
+//     hostname = getenv("HOSTNAME");
+//     username = getenv("USER");
+
+//     if(hostname!=NULL&&username!=NULL){
+//       strcpy(movie_url, "http://");
+//       strcat(movie_url, hostname);
+//       strcat(movie_url, "/");
+//       strcat(movie_url, username);
+//     }
+//     else{
+//       strcpy(movie_url, "");
+//     }
+//   }
+
+// //*** define html directory
+
+//   htmldir = getenv("SMV_HTMLDIR");
+//   if(htmldir!=NULL&&strlen(htmldir)>0){
+//     strcpy(movie_htmldir, htmldir);
+//   }
+//   else{
+//     strcpy(movie_htmldir, "");
+//   }
+
+// //*** define email address
+
+//   email = getenv("SMV_EMAIL");
+//   if(email!=NULL&&strlen(email)>0){
+//     strcpy(movie_email, email);
+//   }
+//   else{
+//     strcpy(movie_email, "");
+//   }
+
+// #ifdef pp_RENDER360_DEBUG
+//   NewMemory((void **)&screenvis, nscreeninfo * sizeof(int));
+//   for(i = 0; i < nscreeninfo; i++){
+//     screenvis[i] = 1;
+//   }
+// #endif
+
+//   beam_color[0] = 255 * foregroundcolor[0];
+//   beam_color[1] = 255 * foregroundcolor[1];
+//   beam_color[2] = 255 * foregroundcolor[2];
+
+//   if(movie_filetype==WMV){
+//     strcpy(movie_ext, ".wmv");
+//   }
+//   else if(movie_filetype==MP4){
+//     strcpy(movie_ext, ".mp4");
+//   }
+//   else{
+//     strcpy(movie_ext, ".avi");
+//   }
+//   for(i=0;i<200;i++){
+//     face_id[i]=1;
+//   }
+//   for(i=0;i<10;i++){
+//     face_vis[i]=1;
+//     face_vis_old[i]=1;
+//   }
+//   for(i=0;i<7;i++){
+//     b_state[i]=-1;
+//   }
+//   strcpy((char *)degC,"C");
+//   strcpy((char *)degF,"F");
+
+//   labelscoll.label_first_ptr = &labelscoll.label_first;
+//   labelscoll.label_last_ptr = &labelscoll.label_last;
+
+//   labelscoll.label_first_ptr->prev = NULL;
+//   labelscoll.label_first_ptr->next = labelscoll.label_last_ptr;
+//   strcpy(labelscoll.label_first_ptr->name,"first");
+
+//   labelscoll.label_last_ptr->prev = labelscoll.label_first_ptr;
+//   labelscoll.label_last_ptr->next = NULL;
+//   strcpy(labelscoll.label_last_ptr->name,"last");
+
+//   {
+//     labeldata *gl;
+
+//     gl=&LABEL_default;
+//     gl->rgb[0]=0;
+//     gl->rgb[1]=0;
+//     gl->rgb[2]=0;
+//     gl->rgb[3]=255;
+//     gl->frgb[0]=0.0;
+//     gl->frgb[1]=0.0;
+//     gl->frgb[2]=0.0;
+//     gl->frgb[3]=1.0;
+//     gl->tstart_stop[0]=0.0;
+//     gl->tstart_stop[1]=1.0;
+//     gl->useforegroundcolor=1;
+//     gl->show_always=1;
+//     strcpy(gl->name,"new");
+//     gl->xyz[0]=0.0;
+//     gl->xyz[1]=0.0;
+//     gl->xyz[2]=0.0;
+//     gl->tick_begin[0] = 0.0;
+//     gl->tick_begin[1] = 0.0;
+//     gl->tick_begin[2] = 0.0;
+//     gl->tick_direction[0] = 1.0;
+//     gl->tick_direction[1] = 0.0;
+//     gl->tick_direction[2] = 0.0;
+//     gl->show_tick = 0;
+//     gl->labeltype = TYPE_INI;
+//     memcpy(&LABEL_local,&LABEL_default,sizeof(labeldata));
+//   }
+
+//   strcpy(startup_lang_code,"en");
+//   mat_specular_orig[0]=0.5f;
+//   mat_specular_orig[1]=0.5f;
+//   mat_specular_orig[2]=0.2f;
+//   mat_specular_orig[3]=1.0f;
+//   mat_specular2=GetColorPtr(&colorcoll, mat_specular_orig);
+
+//   mat_ambient_orig[0] = 0.5f;
+//   mat_ambient_orig[1] = 0.5f;
+//   mat_ambient_orig[2] = 0.2f;
+//   mat_ambient_orig[3] = 1.0f;
+//   mat_ambient2=GetColorPtr(&colorcoll, mat_ambient_orig);
+
+//   ventcolor_orig[0]=1.0;
+//   ventcolor_orig[1]=0.0;
+//   ventcolor_orig[2]=1.0;
+//   ventcolor_orig[3]=1.0;
+//   ventcolor=GetColorPtr(&colorcoll, ventcolor_orig);
+
+//   block_ambient_orig[0] = 1.0;
+//   block_ambient_orig[1] = 0.8;
+//   block_ambient_orig[2] = 0.4;
+//   block_ambient_orig[3] = 1.0;
+//   block_ambient2=GetColorPtr(&colorcoll, block_ambient_orig);
+
+//   block_specular_orig[0] = 0.0;
+//   block_specular_orig[1] = 0.0;
+//   block_specular_orig[2] = 0.0;
+//   block_specular_orig[3] = 1.0;
+//   block_specular2=GetColorPtr(&colorcoll, block_specular_orig);
+
+//   for(i=0;i<256;i++){
+//     boundarylevels256[i]=(float)i/255.0;
+//   }
+
+//   first_scriptfile.id=-1;
+//   first_scriptfile.prev=NULL;
+//   first_scriptfile.next=&last_scriptfile;
+
+//   last_scriptfile.id=-1;
+//   last_scriptfile.prev=&first_scriptfile;
+//   last_scriptfile.next=NULL;
+
+//   first_inifile.id=-1;
+//   first_inifile.prev=NULL;
+//   first_inifile.next=&last_inifile;
+
+//   last_inifile.id=-1;
+//   last_inifile.prev=&first_inifile;
+//   last_inifile.next=NULL;
+//   // TODO: why is thei GLUI init here?
+//   // FontMenu(fontindex);
+
+//   direction_color[0]=39.0/255.0;
+//   direction_color[1]=64.0/255.0;
+//   direction_color[2]=139.0/255.0;
+//   direction_color[3]=1.0;
+//   direction_color_ptr=GetColorPtr(&colorcoll, direction_color);
+
+//   GetGitInfo(smv_githash,smv_gitdate);
+
+//   rgb_terrain[0][0]=1.0;
+//   rgb_terrain[0][1]=0.0;
+//   rgb_terrain[0][2]=0.0;
+//   rgb_terrain[0][3]=1.0;
+
+//   rgb_terrain[1][0]=0.5;
+//   rgb_terrain[1][1]=0.5;
+//   rgb_terrain[1][2]=0.0;
+//   rgb_terrain[1][3]=1.0;
+
+//   rgb_terrain[2][0]=0.0;
+//   rgb_terrain[2][1]=1.0;
+//   rgb_terrain[2][2]=0.0;
+//   rgb_terrain[2][3]=1.0;
+
+//   rgb_terrain[3][0]=0.0;
+//   rgb_terrain[3][1]=0.5;
+//   rgb_terrain[3][2]=0.0;
+//   rgb_terrain[3][3]=1.0;
+
+//   rgb_terrain[4][0]=0.0;
+//   rgb_terrain[4][1]=0.5;
+//   rgb_terrain[4][2]=0.5;
+//   rgb_terrain[4][3]=1.0;
+
+//   rgb_terrain[5][0]=0.0;
+//   rgb_terrain[5][1]=0.0;
+//   rgb_terrain[5][2]=1.0;
+//   rgb_terrain[5][3]=1.0;
+
+//   rgb_terrain[6][0]=0.5;
+//   rgb_terrain[6][1]=0.0;
+//   rgb_terrain[6][2]=0.5;
+//   rgb_terrain[6][3]=1.0;
+
+//   rgb_terrain[7][0]=1.0;
+//   rgb_terrain[7][1]=0.5;
+//   rgb_terrain[7][2]=0.0;
+//   rgb_terrain[7][3]=1.0;
+
+//   rgb_terrain[8][0]=1.0;
+//   rgb_terrain[8][1]=0.5;
+//   rgb_terrain[8][2]=0.5;
+//   rgb_terrain[8][3]=1.0;
+
+//   rgb_terrain[9][0]=1.0;
+//   rgb_terrain[9][1]=0.25;
+//   rgb_terrain[9][2]=0.5;
+//   rgb_terrain[9][3]=1.0;
+
+//   strcpy(script_inifile_suffix,"");
+//   strcpy(script_renderdir,"");
+//   strcpy(script_renderfilesuffix,"");
+//   strcpy(script_renderfile,"");
+//   setpartmin_old=setpartmin;
+//   setpartmax_old=setpartmax;
+//   // UpdateCurrentColorbar(colorbarinfo);
+//   visBlocks=visBLOCKAsInput;
+//   blocklocation=BLOCKlocation_grid;
+//   render_window_size=RenderWindow;
+//   // RenderMenu(render_window_size);
+//   solidlinewidth=linewidth;
+//   setbwSAVE=setbw;
+
+//   glui_backgroundbasecolor[0] = 255 * backgroundbasecolor[0];
+//   glui_backgroundbasecolor[1] = 255 * backgroundbasecolor[1];
+//   glui_backgroundbasecolor[2] = 255 * backgroundbasecolor[2];
+//   glui_backgroundbasecolor[3] = 255 * backgroundbasecolor[3];
+
+//   glui_foregroundbasecolor[0] = 255 * foregroundbasecolor[0];
+//   glui_foregroundbasecolor[1] = 255 * foregroundbasecolor[1];
+//   glui_foregroundbasecolor[2] = 255 * foregroundbasecolor[2];
+//   glui_foregroundbasecolor[3] = 255 * foregroundbasecolor[3];
+
+//   strcpy(emptylabel,"");
+//   font_ptr          = GLUT_BITMAP_HELVETICA_12;
+//   colorbar_font_ptr = GLUT_BITMAP_HELVETICA_10;
+// #ifdef pp_OSX_HIGHRES
+//     if(double_scale==1){
+//       font_ptr = (void *)GLUT_BITMAP_HELVETICA_24;
+//       colorbar_font_ptr = (void *)GLUT_BITMAP_HELVETICA_20;
+//     }
+// #endif
+
+//   aperture = Zoom2Aperture(zoom);
+//   aperture_glui = aperture;
+//   aperture_default = aperture;
+
+//   {
+//     int ii;
+//     rgbmask[0]=1;
+//     for(ii=1;ii<16;ii++){
+//       rgbmask[ii]=2*rgbmask[ii-1]+1;
+//     }
+//   }
+
+//   strcpy(ext_png,".png");
+//   strcpy(ext_jpg,".jpg");
+//   render_filetype=PNG;
+
+//   strcpy(surfacedefaultlabel,"");
+//   if(streak_index>=0)float_streak5value=streak_rvalue[streak_index];
+
+//   objectscoll = CreateObjectCollection();
+
+//   GetTitle("Smokeview ", release_title);
+//   GetTitle("Smokeview ", plot3d_title);
+
+//   strcpy(blank_global,"");
+
+//   NewMemory((void **)&iso_colors, 4 * MAX_ISO_COLORS*sizeof(float));
+//   NewMemory((void **)&iso_colorsbw, 4 * MAX_ISO_COLORS*sizeof(float));
+
+// #define N_ISO_COLORS 10
+//   iso_colors[0] = 0.96;
+//   iso_colors[1] = 0.00;
+//   iso_colors[2] = 0.96;
+
+//   iso_colors[4] = 0.75;
+//   iso_colors[5] = 0.80;
+//   iso_colors[6] = 0.80;
+
+//   iso_colors[8] = 0.00;
+//   iso_colors[9] = 0.96;
+//   iso_colors[10] = 0.28;
+
+//   iso_colors[12] = 0.00;
+//   iso_colors[13] = 0.00;
+//   iso_colors[14] = 1.00;
+
+//   iso_colors[16] = 0.00;
+//   iso_colors[17] = 0.718750;
+//   iso_colors[18] = 1.00;
+
+//   iso_colors[20] = 0.00;
+//   iso_colors[21] = 1.0;
+//   iso_colors[22] = 0.5625;
+
+//   iso_colors[24] = 0.17185;
+//   iso_colors[25] = 1.0;
+//   iso_colors[26] = 0.0;
+
+//   iso_colors[28] = 0.890625;
+//   iso_colors[29] = 1.0;
+//   iso_colors[30] = 0.0;
+
+//   iso_colors[32] = 1.0;
+//   iso_colors[33] = 0.380952;
+//   iso_colors[34] = 0.0;
+
+//   iso_colors[36] = 1.0;
+//   iso_colors[37] = 0.0;
+//   iso_colors[38] = 0.0;
+
+//   glui_iso_transparency = CLAMP(255 * iso_transparency+0.1, 1, 255);
+//   for(i = 0; i < N_ISO_COLORS; i++){
+//     iso_colors[4 * i + 3] = iso_transparency;
+//   }
+
+//   for(i = N_ISO_COLORS; i<MAX_ISO_COLORS; i++){
+//     int grey;
+
+//     grey=1.0-(float)(i-N_ISO_COLORS)/(float)(MAX_ISO_COLORS+1-N_ISO_COLORS);
+//     iso_colors[4*i+0]=grey;
+//     iso_colors[4*i+1]=grey;
+//     iso_colors[4*i+2]=grey;
+//     iso_colors[4 * i + 3] = iso_transparency;
+//   }
+
+//   for(i = 0; i < MAX_ISO_COLORS; i++){
+//     float graylevel;
+
+//     graylevel = TOBW(iso_colors+4*i);
+//     iso_colorsbw[4*i+0] = graylevel;
+//     iso_colorsbw[4*i+1] = graylevel;
+//     iso_colorsbw[4*i+2] = graylevel;
+//     iso_colorsbw[4*i+3] = 1.0;
+//   }
+//   CheckMemory;
+
+//   ncolortableinfo = 2;
+//   if(ncolortableinfo>0){
+//     colortabledata *cti;
+
+//     NewMemory((void **)&colortableinfo, ncolortableinfo*sizeof(colortabledata));
+
+//     cti = colortableinfo+0;
+//     cti->color[0] = 210;
+//     cti->color[1] = 180;
+//     cti->color[2] = 140;
+//     cti->color[3] = 255;
+//     strcpy(cti->label, "tan");
+
+//     cti = colortableinfo+1;
+//     cti->color[0] = 178;
+//     cti->color[1] = 34;
+//     cti->color[2] = 34;
+//     cti->color[3] = 255;
+//     strcpy(cti->label, "firebrick");
+//   }
+
+//   memcpy(rgb_base,rgb_baseBASE,MAXRGB*4*sizeof(float));
+//   memcpy(bw_base,bw_baseBASE,MAXRGB*4*sizeof(float));
+//   memcpy(rgb2,rgb2BASE,MAXRGB*3*sizeof(float));
+//   memcpy(bw_base,bw_baseBASE,MAXRGB*4*sizeof(float));
+
+//   strcpy(viewpoint_label_startup,"external");
+//   {
+//     int iii;
+
+//     for(iii=0;iii<7;iii++){
+//       vis_boundary_type[iii]=1;
+//     }
+//     vis_boundary_type[0]=1;
+//     for(iii=0;iii<MAXPLOT3DVARS;iii++){
+//       p3min_all[iii]    = 1.0f;
+//       p3chopmin[iii]    = 1.0f;
+//       p3max_all[iii]    = 1.0f;
+//       p3chopmax[iii]    = 0.0f;
+//     }
+//   }
+// }
+
+void FreeVars(smv_case *scase) {
+  FreeObjectCollection(scase->objectscoll);
 }
 
 int RunBenchmark(char *input_file) {
   initMALLOC();
-  InitVars();
+  smv_case *scase;
+  NEWMEMORY(scase, sizeof(smv_case));
+  // InitVars();
   SetGlobalFilenames(fdsprefix);
 
   INIT_PRINT_TIMER(parse_time);
@@ -654,7 +728,7 @@ int RunBenchmark(char *input_file) {
       return 1;
     }
     INIT_PRINT_TIMER(ReadSMV_time);
-    int return_code = ReadSMV(smv_streaminfo);
+    int return_code = ReadSMV(scase, smv_streaminfo);
     STOP_TIMER(ReadSMV_time);
     fprintf(stderr, "ReadSMV:\t%8.3f ms\n", ReadSMV_time * 1000);
     if (smv_streaminfo != NULL) {
@@ -663,7 +737,7 @@ int RunBenchmark(char *input_file) {
     if (return_code) return return_code;
   }
   show_timings = 1;
-  ReadSMVOrig();
+  ReadSMVOrig(scase);
   INIT_PRINT_TIMER(ReadSMVDynamic_time);
   // ReadSMVDynamic(input_file);
   STOP_TIMER(ReadSMVDynamic_time);
@@ -672,15 +746,15 @@ int RunBenchmark(char *input_file) {
   fprintf(stderr, "Total Time:\t%8.3f ms\n", parse_time * 1000);
   struct json_object *jobj = json_object_new_object();
   json_object_object_add(jobj, "version", json_object_new_int(1));
-  json_object_object_add(jobj, "chid", json_object_new_string(chidfilebase));
+  json_object_object_add(jobj, "chid", json_object_new_string(scase->paths->chidfilebase));
   if (fds_title != NULL) {
     json_object_object_add(jobj, "title", json_object_new_string(fds_title));
   }
   json_object_object_add(jobj, "fds_version",
-                         json_object_new_string(fds_version));
+                         json_object_new_string(scase->fds_version));
   struct json_object *mesh_array = json_object_new_array();
-  for (int i = 0; i < meshescoll.nmeshes; i++) {
-    meshdata *mesh = &meshescoll.meshinfo[i];
+  for (int i = 0; i < scase->meshescoll->nmeshes; i++) {
+    meshdata *mesh = &scase->meshescoll->meshinfo[i];
     struct json_object *mesh_obj = json_object_new_object();
     json_object_object_add(mesh_obj, "index", json_object_new_int(i + 1));
     if (mesh->label != NULL) {
@@ -716,8 +790,8 @@ int RunBenchmark(char *input_file) {
   // TODO: the parse rejects CSV files that it doesn't find in it's own working
   // directory.
   struct json_object *csv_files = json_object_new_array();
-  for (int i = 0; i < ncsvfileinfo; i++) {
-    csvfiledata *csv_file = &csvfileinfo[i];
+  for (int i = 0; i <scase->csvcoll->ncsvfileinfo; i++) {
+    csvfiledata *csv_file = &scase->csvcoll->csvfileinfo[i];
     struct json_object *csv_obj = json_object_new_object();
     json_object_object_add(csv_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(csv_obj, "filename",
@@ -730,8 +804,8 @@ int RunBenchmark(char *input_file) {
 
   // Add devices to JSON
   struct json_object *devices = json_object_new_array();
-  for (int i = 0; i < ndeviceinfo; i++) {
-    devicedata *device = &deviceinfo[i];
+  for (int i = 0; i < scase->devicecoll->ndeviceinfo; i++) {
+    devicedata *device = &scase->devicecoll->deviceinfo[i];
     struct json_object *device_obj = json_object_new_object();
     json_object_object_add(device_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(device_obj, "id",
@@ -770,8 +844,8 @@ int RunBenchmark(char *input_file) {
 
   // Add slices to JSON
   struct json_object *slices = json_object_new_array();
-  for (int i = 0; i < slicecoll.nsliceinfo; i++) {
-    slicedata *slice = &slicecoll.sliceinfo[i];
+  for (int i = 0; i < scase->slicecoll->nsliceinfo; i++) {
+    slicedata *slice = &scase->slicecoll->sliceinfo[i];
     struct json_object *slice_obj = json_object_new_object();
     json_object_object_add(slice_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(slice_obj, "mesh",
@@ -812,8 +886,8 @@ int RunBenchmark(char *input_file) {
 
   // Add surfaces to JSON
   struct json_object *surfaces = json_object_new_array();
-  for (int i = 0; i < nsurfinfo; i++) {
-    surfdata *surf = &surfinfo[i];
+  for (int i = 0; i < scase->surfcoll->nsurfinfo; i++) {
+    surfdata *surf = &scase->surfcoll->surfinfo[i];
     struct json_object *surf_obj = json_object_new_object();
     json_object_object_add(surf_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(surf_obj, "id",
@@ -824,8 +898,8 @@ int RunBenchmark(char *input_file) {
 
   // Add materials to JSON
   struct json_object *materials = json_object_new_array();
-  for (int i = 0; i < nsurfinfo; i++) {
-    surfdata *surf = &surfinfo[i];
+  for (int i = 0; i <scase->surfcoll->nsurfinfo; i++) {
+    surfdata *surf = &scase->surfcoll->surfinfo[i];
     struct json_object *surf_obj = json_object_new_object();
     json_object_object_add(surf_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(surf_obj, "id",
@@ -838,7 +912,7 @@ int RunBenchmark(char *input_file) {
       json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
   printf("%s\n", json_output);
   json_object_put(jobj);
-  FreeVars();
+  FreeVars(scase);
   return 0;
 }
 

@@ -613,7 +613,7 @@ void SurfaceCB(int var){
     {
       surfdata *surfi;
 
-      surfi = surfinfo + glui_surf_index;
+      surfi = surf_coll.surfinfo + glui_surf_index;
       surfi->color = surfi->color_orig;
       surfi->transparent_level = surfi->transparent_level_orig;
       SurfaceCB(SURFACE_SELECT);
@@ -625,7 +625,7 @@ void SurfaceCB(int var){
       surfdata *surfi;
       float s_color[4];
 
-      surfi = surfinfo + glui_surf_index;
+      surfi = surf_coll.surfinfo + glui_surf_index;
       s_color[0] = (float)glui_surface_color[0]/255.0;
       s_color[1] = (float)glui_surface_color[1]/255.0;
       s_color[2] = (float)glui_surface_color[2]/255.0;
@@ -652,7 +652,7 @@ void SurfaceCB(int var){
       float s_color[4];
       int i;
 
-      surfi = surfinfo + glui_surf_index;
+      surfi = surf_coll.surfinfo + glui_surf_index;
       memcpy(s_color, surfi->color, 3*sizeof(float));
       s_color[3] = surfi->transparent_level;
 
@@ -674,8 +674,8 @@ extern "C" void GLUIUpdateTextureDisplay(void){
   int i;
   int showall = 1, hideall = 1, update=0;
 
-  for(i = 0;i < ntextureinfo;i++){
-    texti = textureinfo + i;
+  for(i = 0;i < texture_coll.ntextureinfo;i++){
+    texti = texture_coll.textureinfo + i;
     if(texti->loaded == 0 || texti->used == 0)continue;
     if(texti->display == 0)showall=0;
     if(texti->display == 1)hideall = 0;
@@ -813,10 +813,10 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   int i, surfcount = 0, first_surf=-1;
 
-  for(i = 0; i<nsurfinfo; i++){
+  for(i = 0; i<surf_coll.nsurfinfo; i++){
     surfdata *surfi;
 
-    surfi = surfinfo+i;
+    surfi = surf_coll.surfinfo+i;
     if(surfi->used_by_geom==0&&surfi->used_by_obst==0)continue;
     if(strcmp(surfi->surfacelabel, "INERT")==0)continue;
     if(first_surf<0)first_surf = i;
@@ -827,10 +827,10 @@ extern "C" void GLUIDisplaySetup(int main_window){
     glui_surf_index = first_surf;
     PANEL_surfs = glui_labels->add_panel_to_panel(PANEL_gen3, "Surface color");
     LIST_surfs = glui_labels->add_listbox_to_panel(PANEL_surfs, _("Select"), &glui_surf_index, SURFACE_SELECT, SurfaceCB);
-    for(i = 0; i<nsurfinfo; i++){
+    for(i = 0; i<surf_coll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surfinfo+i;
+      surfi = surf_coll.surfinfo+i;
       if(surfi->used_by_geom==0&&surfi->used_by_obst==0)continue;
       if(strcmp(surfi->surfacelabel, "INERT")==0)continue;
       LIST_surfs->add_item(i, surfi->surfacelabel);

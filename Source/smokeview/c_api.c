@@ -1738,7 +1738,7 @@ int Unloadall() {
   if(scriptoutstream != NULL) {
     fprintf(scriptoutstream, "UNLOADALL\n");
   }
-  if(hrr_csv_filename != NULL) {
+  if(paths.hrr_csv_filename != NULL) {
     ReadHRR(UNLOAD);
   }
   if(nvolrenderinfo > 0) {

@@ -325,7 +325,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define UPDATE_SMOKEFIRE_COLORS 54
 #endif
 
-#define NELEV_ZONE 100
 
 #define UPDATE_ISO_OFF        0
 #define UPDATE_ISO_ONE_NOW    1
@@ -338,9 +337,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define ZONEHAZARD_COLOR 1
 #define ZONESMOKE_COLOR  2
 
-#define MAX_HSLABS 10
-#define MAX_VSLABS  2
-#define MAX_MSLABS  2
 
 #define MAKE_MOVIE        28
 #define MAKE_MOVIE_BATCH 130
@@ -923,7 +919,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MAKE_SIZEFILE 0
 #define GET_DATA      1
 
-#define MAXPLOT3DVARS 6
 #define NRGB         12
 
 #define SMALL_FONT         0

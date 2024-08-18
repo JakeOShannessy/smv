@@ -400,8 +400,6 @@ EXTERNCPP void DrawPlot2D(int option, float *x, float *z, float *z2, int n,
 EXTERNCPP void MergePlot3DHistograms(void);
 EXTERNCPP void GetPlot3DHists(plot3ddata *p);
 
-EXTERNCPP void UpdateHoc(void);
-
 EXTERNCPP int GetStringWidth(char *string);
 EXTERNCPP void DrawDevicePlots(void);
 EXTERNCPP void DrawTreeDevicePlots(void);

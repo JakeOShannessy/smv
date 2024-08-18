@@ -10,6 +10,7 @@
 #include "readgeom.h"
 #include "smokeviewdefs.h"
 #include "stdio_m.h"
+#include "shared_structures.h"
 #include <assert.h>
 
 /* ------------------ GetInterval ------------------------ */

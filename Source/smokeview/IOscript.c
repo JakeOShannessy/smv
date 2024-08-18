@@ -3001,10 +3001,10 @@ void ScriptOutputSmokeSensors(void){
   // count smokesensors
 
   nsmokesensors=0;
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     if(STRCMP(devicei->object->label,"smokesensor")==0)nsmokesensors++;
   }
   if(nsmokesensors == 0)return;
@@ -3025,10 +3025,10 @@ void ScriptOutputSmokeSensors(void){
 
     j = 0;
     fprintf(stream_smokesensors, "Time,");
-    for(i = 0;i < ndeviceinfo;i++){
+    for(i = 0;i < devicecoll.ndeviceinfo;i++){
       devicedata *devicei;
 
-      devicei = deviceinfo + i;
+      devicei = devicecoll.deviceinfo + i;
       if(STRCMP(devicei->object->label, "smokesensor") == 0){
         j++;
         if(j == nsmokesensors){
@@ -3049,10 +3049,10 @@ void ScriptOutputSmokeSensors(void){
   }
   fprintf(stream_smokesensors,"%f,",sensor_time);
   j = 0;
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     if(STRCMP(devicei->object->label,"smokesensor")==0){
       j++;
       if(j==nsmokesensors){
@@ -4081,8 +4081,8 @@ int RunScriptCommand(scriptdata *script_command){
           printf("***error: device %s does not exist\n", scripti->cval);
           break;
         }
-        dev_index += ndeviceinfo;                                       // show device
-        if(scripti->command==SCRIPT_HIDEDEV)dev_index += ndeviceinfo;  // hide device
+        dev_index += devicecoll.ndeviceinfo;                                       // show device
+        if(scripti->command==SCRIPT_HIDEDEV)dev_index += devicecoll.ndeviceinfo;  // hide device
         ShowDevicesMenu(dev_index);
       }
       break;
