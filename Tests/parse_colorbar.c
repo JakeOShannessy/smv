@@ -16,7 +16,6 @@ char append_string[1024];
 int main(int argc, char **argv) {
   initMALLOC();
   if (argc < 2) return 2;
-  int error = 0;
   const char *filename = argv[1];
   colorbardata *cb;
   NEWMEMORY(cb, sizeof(colorbardata));
