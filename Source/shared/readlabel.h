@@ -1,6 +1,8 @@
 #ifndef READLABEL_H_DEFINED
 #define READLABEL_H_DEFINED
 
+#include "shared_structures.h"
+
 EXTERNCPP labeldata *LabelGet(labels_collection *labelscoll, char *name);
 EXTERNCPP labeldata *LabelInsert(labels_collection *labelscoll,
                                  labeldata *labeltemp);

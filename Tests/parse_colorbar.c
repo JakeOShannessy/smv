@@ -25,5 +25,5 @@ int main(int argc, char **argv) {
   assert(strcmp(cb->colorbar_type, "divergent") == 0);
   assert(strcmp(cb->menu_label, "light blue->white->light red") == 0);
   assert(cb->nnodes == 256);
-  return 0;
+  return result;
 }

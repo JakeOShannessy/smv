@@ -42,6 +42,8 @@ target_include_directories(smvq PRIVATE
     ../glui_gl
 )
 
+target_compile_options(smvq PRIVATE -fno-omit-frame-pointer)
+
 find_package(json-c CONFIG)
 if (NOT json-c_FOUND)
     if (PKG_CONFIG_FOUND)
