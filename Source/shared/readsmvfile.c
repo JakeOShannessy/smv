@@ -3401,6 +3401,7 @@ int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
   patchi->valmin_patch        = 1.0;
   patchi->valmax_patch        = 0.0;
   patchi->skip              = 0;
+  patchi->version           = version;
   patchi->ntimes            = 0;
   patchi->ntimes_old        = 0;
   patchi->hist_update = 0;

@@ -81,7 +81,6 @@ void InitVals(hvacdatacollection *hvaccoll, const char *file) {
 
 int main(int argc, char **argv) {
   initMALLOC();
-  FILE *file;
   int error = 0;
 
   char *val_spec = "HVACVALS\
