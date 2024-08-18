@@ -3,7 +3,6 @@
 
 #include "shared_structures.h"
 
-
 /**
  * @brief Initialise an @ref cadgeom_collection.
  *
@@ -12,6 +11,8 @@
  * @returns A @ref cadgeom_collection which has been properly initialized.
  */
 cadgeom_collection *CreateCADGeomCollection(int capacity);
+
+int InitCADGeomCollection(cadgeom_collection *coll, int capacity);
 
 /**
  * @brief Free an @ref cadgeom_collection previously created by @ref

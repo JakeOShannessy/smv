@@ -1068,6 +1068,31 @@ typedef struct {
   char *hrr_csv_filename;
   char *devc_csv_filename;
   char *exp_csv_filename;
+
+  char *movie_name;
+  char *render_file_base;
+  char *html_file_base;
+  char *log_filename;
+  char *caseini_filename;
+  char *expcsv_filename;
+  char *dEcsv_filename;
+  char *html_filename;
+  char *smv_orig_filename;
+  char *hrr_filename;
+  char *htmlvr_filename;
+  char *htmlobst_filename;
+  char *htmlslicenode_filename;
+  char *htmlslicecell_filename;
+  char *event_filename;
+  char *ffmpeg_command_filename;
+  char *fed_filename;
+  char *stop_filename;
+  char *smvzip_filename;
+  char *sliceinfo_filename;
+  char *deviceinfo_filename;
+  char *iso_filename;
+  char *trainer_filename;
+  char *test_filename;
 } casepaths;
 
 /* --------------------------  csvdata ------------------------------------ */
@@ -1714,28 +1739,29 @@ typedef struct {
 
 typedef struct {
   char *fds_version;
+  char *fds_githash;
 
-  meshescollection *meshescoll;
-  color_collection *colorcoll;
-  prop_collection *propcoll;
-  object_collection *objectscoll;
-  hrr_collection *hrr_coll;
-  smoke3d_collection *smoke3dcoll;
-  surf_collection *surfcoll;
-  slice_collection *slicecoll;
-  texture_collection *texture_coll;
-  terrain_texture_collection *terrain_texture_coll;
-  device_texture_list_collection *device_texture_list_coll;
-  device_collection *devicecoll;
-  obst_collection *obstcoll;
-  csv_collection *csvcoll;
-  tour_collection *tourcoll;
-  fuel_collection *fuelcoll;
-  cadgeom_collection *cadgeomcoll;
-  hvacdatacollection *hvaccoll;
-  labels_collection *labelscoll;
+  meshescollection meshescoll;
+  color_collection colorcoll;
+  prop_collection propcoll;
+  object_collection objectscoll;
+  hrr_collection hrr_coll;
+  smoke3d_collection smoke3dcoll;
+  surf_collection surfcoll;
+  slice_collection slicecoll;
+  texture_collection texture_coll;
+  terrain_texture_collection terrain_texture_coll;
+  device_texture_list_collection device_texture_list_coll;
+  device_collection devicecoll;
+  obst_collection obstcoll;
+  csv_collection csvcoll;
+  tour_collection tourcoll;
+  fuel_collection fuelcoll;
+  cadgeom_collection cadgeomcoll;
+  hvacdatacollection hvaccoll;
+  labels_collection labelscoll;
 
-  casepaths *paths;
+  casepaths paths;
 
   int nplot3d;
   plot3ddata *plot3dinfo;
@@ -1752,6 +1778,8 @@ typedef struct {
   int nzoneinfo;
   zonedata *zoneinfo;
   zventdata *zventinfo;
+  int npartinfo;
+  partdata *partinfo;
 
 } smv_case;
 

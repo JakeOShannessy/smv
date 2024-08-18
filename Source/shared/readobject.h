@@ -304,7 +304,7 @@
  * @returns A @ref object_collection which has been properly initialized.
  */
 object_collection *CreateObjectCollection(void);
-
+int InitObjectCollection(object_collection *coll);
 /**
  * @brief Read objects from the standard file locations, using fallback objects
  * if object definitions are not found.
