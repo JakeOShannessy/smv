@@ -177,7 +177,6 @@ int cellcenter_slice_active = 0;
 treedata *treeinfo = NULL;
 terraindata *terraininfo = NULL;
 int ntreeinfo = 0, nterraininfo = 0, visTerrainType = 0;
-char *fds_title = NULL;
 int ntickinfo = 0,ntickinfo_smv = 0;
 float ventcolor_orig[4];
 float *ventcolor = NULL;
@@ -4826,7 +4825,7 @@ int ReadSMV_Init(smv_case *scase) {
 
   scase->propcoll.npropinfo=1; // the 0'th prop is the default human property
 
-  FREEMEMORY(fds_title);
+  FREEMEMORY(scase->fds_title);
 
   FREEMEMORY(treeinfo);
   ntreeinfo=0;
@@ -5250,8 +5249,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       if(fds_title_local==NULL)continue;
       len_title = strlen(fds_title_local);
       if(len_title==0)continue;
-      NewMemory((void **)&fds_title, len_title+1);
-      strcpy(fds_title, fds_title_local);
+      NewMemory((void **)&scase->fds_title, len_title+1);
+      strcpy(scase->fds_title, fds_title_local);
       continue;
     }
     if(MatchSMV(buffer, "SOLID_HT3D")==1){

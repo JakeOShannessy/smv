@@ -1738,6 +1738,7 @@ typedef struct {
 } labels_collection;
 
 typedef struct {
+  char *fds_title;
   char *fds_version;
   char *fds_githash;
 
