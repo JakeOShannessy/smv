@@ -32,7 +32,6 @@ add_executable(smvq smvq.c
     ../shared/readpart.c
     ../shared/readlabel.c
     ../shared/readtour.c
-    ../shared/readsmoke.c
 )
 
 target_include_directories(smvq PRIVATE
