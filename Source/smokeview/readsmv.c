@@ -8090,7 +8090,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   if (n_cadgeom_keywords > 0) {
     // Allocate a fixed-size collection large enough to hold each of the CADGEOM
     // definitions.
-    CreateCADGeomCollection(cadgeomcoll, n_cadgeom_keywords);
+    cadgeomcoll = CreateCADGeomCollection(n_cadgeom_keywords);
     if (cadgeomcoll == NULL) return 2;
   }
 
