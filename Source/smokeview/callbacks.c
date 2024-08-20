@@ -84,22 +84,22 @@ void NextXIndex(int inc,int flag){
     if(iplotx_all>nplotx_all-1)iplotx_all=0;
     if(visGrid!=NOGRID_NOPROBE)return;
     if(plotstate==DYNAMIC_PLOTS){
-      for(i=0;i<nsliceinfo;i++){
+      for(i=0;i<slicecoll.nsliceinfo;i++){
         slicedata *slicei;
         meshdata *meshi;
 
-        slicei = sliceinfo + i;
+        slicei = slicecoll.sliceinfo + i;
         if(slicei->loaded==0||slicei->display==0)continue;
-        meshi = meshinfo + slicei->blocknumber;
+        meshi = meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iplotx_all[iplotx_all]!=-1)return;
       }
-      for(i=0;i<nvsliceinfo;i++){
+      for(i=0;i<slicecoll.nvsliceinfo;i++){
         vslicedata *vslicei;
         meshdata *meshi;
 
-        vslicei = vsliceinfo + i;
+        vslicei = slicecoll.vsliceinfo + i;
         if(vslicei->loaded==0||vslicei->display==0)continue;
-        meshi = meshinfo + vslicei->val->blocknumber;
+        meshi = meshescoll.meshinfo + vslicei->val->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
     }
@@ -110,7 +110,7 @@ void NextXIndex(int inc,int flag){
 
         plot3di = plot3dinfo + i;
         if(plot3di->loaded==0||plot3di->display==0)continue;
-        meshi = meshinfo + plot3di->blocknumber;
+        meshi = meshescoll.meshinfo + plot3di->blocknumber;
         if(meshi->iplotx_all[iplotx_all]!=-1)return;
       }
     }
@@ -146,22 +146,22 @@ void NextYIndex(int inc,int flag){
     if(iploty_all>nploty_all-1)iploty_all=0;
     if(visGrid!=NOGRID_NOPROBE)return;
     if(plotstate==DYNAMIC_PLOTS){
-      for(i=0;i<nsliceinfo;i++){
+      for(i=0;i<slicecoll.nsliceinfo;i++){
         slicedata *slicei;
         meshdata *meshi;
 
-        slicei = sliceinfo + i;
+        slicei = slicecoll.sliceinfo + i;
         if(slicei->loaded==0||slicei->display==0)continue;
-        meshi = meshinfo + slicei->blocknumber;
+        meshi = meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
-      for(i=0;i<nvsliceinfo;i++){
+      for(i=0;i<slicecoll.nvsliceinfo;i++){
         vslicedata *vslicei;
         meshdata *meshi;
 
-        vslicei = vsliceinfo + i;
+        vslicei = slicecoll.vsliceinfo + i;
         if(vslicei->loaded==0||vslicei->display==0)continue;
-        meshi = meshinfo + vslicei->val->blocknumber;
+        meshi = meshescoll.meshinfo + vslicei->val->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
     }
@@ -172,7 +172,7 @@ void NextYIndex(int inc,int flag){
 
         plot3di = plot3dinfo + i;
         if(plot3di->loaded==0||plot3di->display==0)continue;
-        meshi = meshinfo + plot3di->blocknumber;
+        meshi = meshescoll.meshinfo + plot3di->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
     }
@@ -208,22 +208,22 @@ void NextZIndex(int inc,int flag){
     if(iplotz_all>nplotz_all-1)iplotz_all=0;
     if(visGrid!=NOGRID_NOPROBE)return;
     if(plotstate==DYNAMIC_PLOTS){
-      for(i=0;i<nsliceinfo;i++){
+      for(i=0;i<slicecoll.nsliceinfo;i++){
         slicedata *slicei;
         meshdata *meshi;
 
-        slicei = sliceinfo + i;
+        slicei = slicecoll.sliceinfo + i;
         if(slicei->loaded==0||slicei->display==0)continue;
-        meshi = meshinfo + slicei->blocknumber;
+        meshi = meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iplotz_all[iplotz_all]!=-1)return;
       }
-      for(i=0;i<nvsliceinfo;i++){
+      for(i=0;i<slicecoll.nvsliceinfo;i++){
         vslicedata *vslicei;
         meshdata *meshi;
 
-        vslicei = vsliceinfo + i;
+        vslicei = slicecoll.vsliceinfo + i;
         if(vslicei->loaded==0||vslicei->display==0)continue;
-        meshi = meshinfo + vslicei->val->blocknumber;
+        meshi = meshescoll.meshinfo + vslicei->val->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
     }
@@ -234,7 +234,7 @@ void NextZIndex(int inc,int flag){
 
         plot3di = plot3dinfo + i;
         if(plot3di->loaded==0||plot3di->display==0)continue;
-        meshi = meshinfo + plot3di->blocknumber;
+        meshi = meshescoll.meshinfo + plot3di->blocknumber;
         if(meshi->iplotz_all[iplotz_all]!=-1)return;
       }
     }
@@ -387,13 +387,13 @@ void MouseEditBlockage(int x, int y){
     sd = selectfaceinfo + val;
     highlight_block=sd->blockage;
     highlight_mesh=sd->mesh;
-    meshi = meshinfo + highlight_mesh;
+    meshi = meshescoll.meshinfo + highlight_mesh;
     UpdateCurrentMesh(meshi);
     bchighlight_old=bchighlight;
     bchighlight = meshi->blockageinfoptrs[highlight_block];
     for(i=0;i<6;i++){
-      surface_indices[i]=inv_sorted_surfidlist[bchighlight->surf_index[i]];
-      surface_indices_bak[i]=inv_sorted_surfidlist[bchighlight->surf_index[i]];
+      surface_indices[i]=surf_coll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
+      surface_indices_bak[i]=surf_coll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
     }
 
     glShadeModel(GL_SMOOTH);
@@ -464,11 +464,11 @@ void MouseSelectDevice(int x, int y){
 
   val = (r << (nbluebits+ngreenbits)) | (g << nbluebits) | b;
 
-  if(val>0&&val<ndeviceinfo){
+  if(val>0&&val<devicecoll.ndeviceinfo){
     devicedata *devicei;
     float *xyz;
 
-    devicei = deviceinfo+val-1;
+    devicei = devicecoll.deviceinfo+val-1;
     devicei->selected = 1-devicei->selected;
     xyz = devicei->xyz;
 
@@ -635,23 +635,23 @@ void CheckTimeBound(void){
         current_script_command->exit=1;
       }
     }
-    for(i=0;i<nsliceinfo;i++){
+    for(i=0;i<slicecoll.nsliceinfo;i++){
       slicedata *sd;
 
-      sd=sliceinfo+i;
+      sd=slicecoll.sliceinfo+i;
       sd->itime=0;
     }
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi=meshinfo+i;
+      meshi=meshescoll.meshinfo+i;
 
       meshi->patch_itime=0;
     }
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi=meshinfo+i;
+      meshi=meshescoll.meshinfo+i;
       if(meshi->iso_times==NULL)continue;
       meshi->iso_itime=0;
     }
@@ -665,34 +665,34 @@ void CheckTimeBound(void){
       parti=partinfo+i;
       parti->itime=parti->ntimes-1;
     }
-    for(i=0;i<nsliceinfo;i++){
+    for(i=0;i<slicecoll.nsliceinfo;i++){
       slicedata *sd;
 
-      sd=sliceinfo+i;
+      sd=slicecoll.sliceinfo+i;
       sd->itime=sd->ntimes-1;
       if(sd->volslice==1)sd->itime--;
     }
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi=meshinfo+i;
+      meshi=meshescoll.meshinfo+i;
       meshi->patch_itime=meshi->npatch_times-1;
     }
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi=meshinfo+i;
+      meshi=meshescoll.meshinfo+i;
       if(meshi->iso_times==NULL)continue;
       meshi->iso_itime=meshi->niso_times-1;
     }
   }
   /* set blockage visibility */
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi=meshinfo+i;
+    meshi=meshescoll.meshinfo+i;
     for(j=0;j<meshi->nbptrs;j++){
       blockagedata *bc;
 
@@ -1642,16 +1642,16 @@ void Keyboard(unsigned char key, int flag){
 #define DEVYES_HRRNO  2
 #define DEVNO_HRRYES  3
     case 'A':
-      if(hrrptr==NULL&&ndeviceinfo==0)break;
-      if(hrrptr!=NULL&&ndeviceinfo>0){
+      if(hrrptr==NULL&&devicecoll.ndeviceinfo==0)break;
+      if(hrrptr!=NULL&&devicecoll.ndeviceinfo>0){
         plot_option++;
         if(plot_option>3)plot_option = 0;
       }
       else{
         int plot_option_temp = DEVNO_HRRNO;
 
-        if(ndeviceinfo==0&&hrrptr!=NULL&&plot_option==DEVNO_HRRNO)plot_option_temp = DEVNO_HRRYES;
-        if(ndeviceinfo>0&&hrrptr==NULL&&plot_option==DEVNO_HRRNO)plot_option_temp = DEVYES_HRRNO;
+        if(devicecoll.ndeviceinfo==0&&hrrptr!=NULL&&plot_option==DEVNO_HRRNO)plot_option_temp = DEVNO_HRRYES;
+        if(devicecoll.ndeviceinfo>0&&hrrptr==NULL&&plot_option==DEVNO_HRRNO)plot_option_temp = DEVYES_HRRNO;
         plot_option = plot_option_temp;
       }
       // 0 - device no, hrr no
@@ -1726,8 +1726,8 @@ void Keyboard(unsigned char key, int flag){
       }
       if(visVector==1&&nplot3dloaded>0){
         gbsave=current_mesh;
-        for(i=0;i<nmeshes;i++){
-          gbi = meshinfo + i;
+        for(i=0;i<meshescoll.nmeshes;i++){
+          gbi = meshescoll.meshinfo + i;
           if(gbi->plot3dfilenum==-1)continue;
           UpdateCurrentMesh(gbi);
           UpdatePlotSlice(XDIR);
@@ -1908,7 +1908,7 @@ void Keyboard(unsigned char key, int flag){
       else{
         usegpu=0;
       }
-      if(nsmoke3dinfo>0){
+      if(smoke3dcoll.nsmoke3dinfo>0){
         GLUIUpdateSmoke3dFlags();
       }
       PrintGPUState();
@@ -1933,16 +1933,16 @@ void Keyboard(unsigned char key, int flag){
       {
         int nslice_loaded_local=0, nvslice_loaded_local=0;
 
-        for(i=0;i<nsliceinfo;i++){
+        for(i=0;i<slicecoll.nsliceinfo;i++){
           slicedata *sd;
 
-          sd = sliceinfo + i;
+          sd = slicecoll.sliceinfo + i;
           if(sd->loaded==1)nslice_loaded_local++;
         }
-        for(i=0;i<nvsliceinfo;i++){
+        for(i=0;i<slicecoll.nvsliceinfo;i++){
           vslicedata *vd;
 
-          vd = vsliceinfo + i;
+          vd = slicecoll.vsliceinfo + i;
           if(vd->loaded==1)nvslice_loaded_local++;
         }
         stept=1;
@@ -2005,15 +2005,15 @@ void Keyboard(unsigned char key, int flag){
       GLUIUpdateDeviceSize();
       break;
     case '`':
-      if(ndeviceinfo>0){
+      if(devicecoll.ndeviceinfo>0){
         int selected;
 
-        selected = 1-deviceinfo[0].selected;
+        selected = 1-devicecoll.deviceinfo[0].selected;
         if(selected==1&&select_device==0)select_device = 1;
-        for(i = 0; i<ndeviceinfo; i++){
+        for(i = 0; i<devicecoll.ndeviceinfo; i++){
           devicedata *devicei;
 
-          devicei = deviceinfo+i;
+          devicei = devicecoll.deviceinfo+i;
           devicei->selected = selected;
         }
       }
@@ -2073,10 +2073,10 @@ void Keyboard(unsigned char key, int flag){
 #endif
       case GLUT_ACTIVE_CTRL:
       default:
-        if(nmeshes>1){
+        if(meshescoll.nmeshes>1){
           highlight_mesh++;
-          if(highlight_mesh>nmeshes-1)highlight_mesh=0;
-          UpdateCurrentMesh(meshinfo+highlight_mesh);
+          if(highlight_mesh>meshescoll.nmeshes-1)highlight_mesh=0;
+          UpdateCurrentMesh(meshescoll.meshinfo+highlight_mesh);
         }
       }
       break;
@@ -2299,7 +2299,7 @@ void Keyboard(unsigned char key, int flag){
       else{
         blocklocation++;
       }
-      if((ncadgeom==0&&blocklocation>BLOCKlocation_exact)||blocklocation>BLOCKlocation_cad){
+      if((NCADGeom(cadgeomcoll)==0&&blocklocation>BLOCKlocation_exact)||blocklocation>BLOCKlocation_cad){
         blocklocation=BLOCKlocation_grid;
       }
       if(ncgeominfo>0){
@@ -2334,10 +2334,10 @@ void Keyboard(unsigned char key, int flag){
       break;
     case 'Q':
       showhide_textures = 1-showhide_textures;
-      for(i = 0; i<ntextureinfo; i++){
+      for(i = 0; i<texture_coll.ntextureinfo; i++){
         texturedata *texti;
 
-        texti = textureinfo+i;
+        texti = texture_coll.textureinfo+i;
         if(texti->loaded==0||texti->used==0)continue;
         if(texti->display==0){ // if any textures are hidden then show them all
           showhide_textures = 1;
@@ -2393,14 +2393,14 @@ void Keyboard(unsigned char key, int flag){
             fprintf(scriptoutstream,"SETTIMEVAL\n");
             fprintf(scriptoutstream," %f\n",timeval);
             if(nvolrenderinfo>0&&load_at_rendertimes==1){
-              for(i=0;i<nmeshes;i++){
+              for(i=0;i<meshescoll.nmeshes;i++){
                 meshdata *meshi;
                 volrenderdata *vr;
                 int j;
                 int framenum;
                 float timediffmin;
 
-                meshi = meshinfo + i;
+                meshi = meshescoll.meshinfo + i;
                 vr = meshi->volrenderinfo;
                 if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
                 if(vr->loaded==0||vr->display==0)continue;
@@ -2423,12 +2423,12 @@ void Keyboard(unsigned char key, int flag){
           else{
             int show_plot3dkeywords=0;
 
-            for(i=0;i<nmeshes;i++){
+            for(i=0;i<meshescoll.nmeshes;i++){
               meshdata *meshi;
               plot3ddata *plot3di;
               float *xp, *yp, *zp;
 
-              meshi = meshinfo  + i;
+              meshi = meshescoll.meshinfo  + i;
               if(meshi->plot3dfilenum==-1)continue;
 
               plot3di = plot3dinfo + meshi->plot3dfilenum;
@@ -2803,7 +2803,7 @@ void Keyboard(unsigned char key, int flag){
     case '<':
       if(keystate == GLUT_ACTIVE_ALT){
         colorbartype--;
-        if(colorbartype < 0)colorbartype=ncolorbars-1;
+        if(colorbartype < 0)colorbartype=colorbars.ncolorbars-1;
         ColorbarMenu(colorbartype);
         updatemenu = 1;
         break;
@@ -2816,7 +2816,7 @@ void Keyboard(unsigned char key, int flag){
     case '>':
       if(keystate == GLUT_ACTIVE_ALT){
         colorbartype++;
-        if(colorbartype >= ncolorbars)colorbartype = 0;
+        if(colorbartype >= colorbars.ncolorbars)colorbartype = 0;
         ColorbarMenu(colorbartype);
         updatemenu = 1;
         break;
@@ -2880,7 +2880,7 @@ void Keyboard(unsigned char key, int flag){
       break;
     case '&':
       if(keystate==GLUT_ACTIVE_ALT){
-        if(nhvacinfo > 0){
+        if(hvaccoll.nhvacinfo > 0){
           ToggleMetroMode();
           PRINTF("HVAC metro view mode=%i\n", hvac_metro_view);
         }
@@ -3139,12 +3139,12 @@ void SpecialKeyboardCB(int key, int x, int y){
 float SetClipVal(int flag){
   int i;
 
-  for(i = 0; i<nmeshes; i++){
+  for(i = 0; i<meshescoll.nmeshes; i++){
     meshdata *meshi;
     float *xplt, *yplt, *zplt;
     int plotx, ploty, plotz;
 
-    meshi = meshinfo+i;
+    meshi = meshescoll.meshinfo+i;
 
     switch(flag){
       case 0:
@@ -3358,7 +3358,7 @@ void HandleMoveKeys(int  key){
 
   glui_move_mode=-1;
 
-  INC_XY=SCALE2SMV(meshinfo->cellsize);
+  INC_XY=SCALE2SMV(meshescoll.meshinfo->cellsize);
   INC_Z=INC_XY;
   INC_ANGLE = 5*INC_ANGLE0;
 
@@ -3709,7 +3709,7 @@ void UpdatePlot3dTitle(void){
   GetBaseTitle("Smokeview ", title_base);
   STRCPY(plot3d_title, title_base);
   meshi = current_mesh;
-  if(meshi == NULL)meshi = meshinfo;
+  if(meshi == NULL)meshi = meshescoll.meshinfo;
   filenum = meshi->plot3dfilenum;
   if(filenum != -1){
     plot3di = plot3dinfo + meshi->plot3dfilenum;

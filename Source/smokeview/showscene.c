@@ -145,7 +145,7 @@ void ShowScene2(int mode){
 
     /* ++++++++++++++++++++++++ draw fds specified blockage outlines +++++++++++++++++++++++++ */
 
-    if(nobstinfo>0&&blocklocation!=BLOCKlocation_grid){
+    if(obstcoll.nobstinfo>0&&blocklocation!=BLOCKlocation_grid){
       if(visBlocks==visBLOCKOutline||visBlocks==visBLOCKAsInputOutline||
          visBlocks==visBLOCKSolidOutline||visBlocks==visBLOCKAddOutline){
         DrawOrigObstOutlines();
@@ -172,11 +172,11 @@ void ShowScene2(int mode){
       int i;
       float box_black[4] = {0.0, 0.0, 0.0, 1.0};
 
-      for(i = 0;i < nmeshes;i++){
+      for(i = 0;i < meshescoll.nmeshes;i++){
         meshdata *meshi;
         float *xyz_min, *xyz_max;
 
-        meshi = meshinfo + i;
+        meshi = meshescoll.meshinfo + i;
         xyz_min = meshi->boxmin_scaled;
         xyz_max = meshi->boxmax_scaled;
         if(meshi->use == 1){
@@ -228,8 +228,8 @@ void ShowScene2(int mode){
         meshdata *meshi;
 
         UNCLIP;
-        for(igrid = 0;igrid<nmeshes;igrid++){
-          meshi = meshinfo + igrid;
+        for(igrid = 0;igrid<meshescoll.nmeshes;igrid++){
+          meshi = meshescoll.meshinfo + igrid;
           DrawGrid(meshi);
           SNIFF_ERRORS("DrawGrid");
         }
@@ -273,7 +273,7 @@ void ShowScene2(int mode){
   /* ++++++++++++++++++++++++ DrawSelectTours +++++++++++++++++++++++++ */
 
   if(mode == SELECTOBJECT){
-    if(edittour == 1 && ntourinfo>0){
+    if(edittour == 1 && tourcoll.ntourinfo>0){
       CLIP_GEOMETRY;
       DrawSelectTours();
       SNIFF_ERRORS("after DrawSelectTours");
@@ -370,7 +370,7 @@ void ShowScene2(int mode){
         DrawTerrainOBST(terri, flag);
         break;
       case TERRAIN_IMAGE:
-        if(terrain_textures != NULL&&terrain_textures[iterrain_textures].loaded == 1){
+        if(terrain_texture_coll.terrain_textures != NULL&&terrain_texture_coll.terrain_textures[iterrain_textures].loaded == 1){
           DrawTerrainOBSTTexture(terri);
         }
         else{
@@ -384,10 +384,10 @@ void ShowScene2(int mode){
     }
     if(visTerrainType==TERRAIN_IMAGE||visTerrainType==TERRAIN_SURFACE){
       if(terrain_showonly_top==0){
-        for(i = 0; i<nmeshes; i++){
+        for(i = 0; i<meshescoll.nmeshes; i++){
           meshdata *meshi;
 
-          meshi = meshinfo+i;
+          meshi = meshescoll.meshinfo+i;
           DrawTerrainOBSTSides(meshi);
         }
       }
@@ -396,7 +396,7 @@ void ShowScene2(int mode){
 
   /* ++++++++++++++++++++++++ draw HVAC networks +++++++++++++++++++++++++ */
 
-  if(nhvacinfo > 0){
+  if (hvaccoll.nhvacinfo > 0) {
     DrawHVACS();
   }
 
@@ -424,7 +424,7 @@ void ShowScene2(int mode){
 
   if(visLabels == 1){
     CLIP_GEOMETRY;
-    DrawLabels();
+    DrawLabels(&labelscoll);
   }
 
   /* ++++++++++++++++++++++++ draw animated isosurfaces +++++++++++++++++++++++++ */

@@ -1,55 +1,15 @@
 
 # smvq
 add_executable(smvq smvq.c
-    ../shared/getdata.c
     ../shared/dmalloc.c
-    ../smokeview/menus.c
-    ../smokeview/IOscript.c
-    ../smokeview/IOshooter.c
     ../shared/csphere.c
-    ../smokeview/colortimebar.c
-    ../smokeview/camera.c
-    ../smokeview/IOgeometry.c
-    ../smokeview/IOwui.c
-    ../smokeview/IOobjects.c
-    ../smokeview/IOtour.c
-    ../smokeview/getdatacolors.c
-    ../smokeview/smokeview.c
-    ../smokeview/output.c
-    ../smokeview/renderimage.c
-    ../smokeview/renderhtml.c
     ../shared/isobox.c
-    ../smokeview/getdatabounds.c
-    ../smokeview/readsmv.c
-    ../smokeview/scontour2d.c
-    ../shared/dmalloc.c
     ../shared/compress.c
-    ../smokeview/IOvolsmoke.c
-    ../smokeview/IOsmoke.c
-    ../smokeview/IOplot3d.c
-    ../smokeview/IOplot2d.c
-    ../smokeview/IOslice.c
-    ../smokeview/IOhvac.c
-    ../smokeview/IOboundary.c
-    ../smokeview/IOpart.c
-    ../smokeview/IOzone.c
-    ../smokeview/IOiso.c
-    ../smokeview/callbacks.c
-    ../smokeview/drawGeometry.c
-    ../smokeview/skybox.c
     ../shared/file_util.c
     ../shared/string_util.c
-    ../smokeview/startup.c
-    ../smokeview/shaders.c
-    ../smokeview/unit.c
     ../shared/threader.c
     ../shared/histogram.c
     ../shared/translate.c
-    ../smokeview/update.c
-    ../smokeview/viewports.c
-    ../smokeview/smv_geometry.c
-    ../smokeview/showscene.c
-    ../smokeview/infoheader.c
     ../shared/md5.c
     ../shared/sha1.c
     ../shared/sha256.c
@@ -58,32 +18,29 @@ add_executable(smvq smvq.c
     ../shared/getdata.c
     ../shared/color2rgb.c
     ../shared/readimage.c
+    ../shared/readcad.c
     ../shared/readgeom.c
+    ../shared/colorbars.c
+    ../shared/colorbar_defs.c
+    ../shared/readhvac.c
+    ../shared/readslice.c
+    ../shared/readsmoke.c
     ../shared/readobject.c
-    ../smokeview/colortable.c
-    ../smokeview/command_args.c
-
-    ../smokeview/glui_smoke.cpp
-    ../smokeview/glui_clip.cpp
-    ../smokeview/glui_stereo.cpp
-    ../smokeview/glui_geometry.cpp
-    ../smokeview/glui_motion.cpp
-    ../smokeview/glui_bounds.cpp
-    ../smokeview/glui_colorbar.cpp
-    ../smokeview/glui_display.cpp
-    ../smokeview/glui_tour.cpp
-    ../smokeview/glui_trainer.cpp
-    ../smokeview/glui_objects.cpp
-    ../smokeview/glui_shooter.cpp
+    ../shared/readsmvfile.c
+    ../shared/readobject.c
+    ../shared/readcad.c
+    ../shared/readpart.c
+    ../shared/readlabel.c
+    ../shared/readtour.c
 )
 
 target_include_directories(smvq PRIVATE
     ../shared
     ../glew
     ../smokeview
-    ../glui_v2_1_beta
-    ../glui_gl
 )
+
+# target_compile_options(smvq PRIVATE -fno-omit-frame-pointer)
 
 find_package(json-c CONFIG)
 if (NOT json-c_FOUND)
@@ -112,19 +69,6 @@ else()
     target_link_libraries(smvq PRIVATE json-c::json-c)
 endif()
 
-# These include directories are an existing workaround that would be good to
-# remove.Because of this custom code and the potential conflict with native libs
-# this needs to be early in the include order.
-if (WIN32)
-    target_include_directories(smvq PRIVATE ../glut_gl)
-else()
-    target_include_directories(smvq PRIVATE ../glui_gl)
-endif ()
-# GLUI can be provided natively, but there are modifications in the code
-# vendored with Smokeview that we rely on. Because of this custom code and the
-# potential conflict with native libs this needs to be early in the include order.
-target_link_libraries(smvq PRIVATE glui_static)
-target_include_directories(smvq PRIVATE ../glui_v2_1_beta)
 if(WIN32)
     if (PThreads4W_FOUND)
         target_link_libraries(smvq PRIVATE PThreads4W::PThreads4W)
@@ -137,12 +81,8 @@ endif()
 # build.
 if (MACOSX)
     add_definitions(-Dpp_NOQUARTZ)
-    target_link_libraries(smvq PRIVATE "-framework OpenGL" "-framework GLUT")
+    target_link_libraries(smvq PRIVATE "-framework OpenGL")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
-elseif (GLUT_FOUND)
-    target_link_libraries(smvq PRIVATE GLUT::GLUT)
-else()
-    target_link_libraries(smvq PRIVATE glut32_static)
 endif ()
 if (GLEW_FOUND)
     target_link_libraries(smvq PRIVATE GLEW::GLEW)

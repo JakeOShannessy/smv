@@ -18,16 +18,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MENU_HVAC_LOAD     0
 #define MENU_HVAC_UNLOAD   1
 
-#define HVAC_FILTER_NO  0
-#define HVAC_FILTER_YES 1
-#define HVAC_NONE    0
-#define HVAC_FAN     1
-#define HVAC_AIRCOIL 2
-#define HVAC_DAMPER  3
-
-#define HVAC_STATE_INACTIVE 0
-#define HVAC_STATE_ACTIVE   1
-
 #define SPLIT_COLORBAR         1
 
 #define LABELS_vcolorbar 34
@@ -259,8 +249,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define STOP_TICKS(a) a = glutGet(GLUT_ELAPSED_TIME) - a
 #endif
 
-#define TOBW(col) ( 0.299*(col)[0] + 0.587*(col)[1] + 0.114*(col)[2])
-
 #define TMAX 1000000000.0
 
 #define PARTFILE_LOADALL   -11
@@ -337,7 +325,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define UPDATE_SMOKEFIRE_COLORS 54
 #endif
 
-#define NELEV_ZONE 100
 
 #define UPDATE_ISO_OFF        0
 #define UPDATE_ISO_ONE_NOW    1
@@ -350,9 +337,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define ZONEHAZARD_COLOR 1
 #define ZONESMOKE_COLOR  2
 
-#define MAX_HSLABS 10
-#define MAX_VSLABS  2
-#define MAX_MSLABS  2
 
 #define MAKE_MOVIE        28
 #define MAKE_MOVIE_BATCH 130
@@ -935,7 +919,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MAKE_SIZEFILE 0
 #define GET_DATA      1
 
-#define MAXPLOT3DVARS 6
 #define NRGB         12
 
 #define SMALL_FONT         0

@@ -104,8 +104,9 @@ typedef struct {
 
 #define FILE_EXISTS(a) FileExists(a, NULL, 0, NULL, 0)
 #define FILE_EXISTS_CASEDIR(a)                                                 \
-  FileExists(a, filelist_casename, nfilelist_casename, filelist_casedir,       \
-             nfilelist_casedir)
+  FileExists(a, filelist_coll.filelist_casename, filelist_coll.nfilelist_casename, \
+             filelist_coll.filelist_casedir,       \
+             filelist_coll.nfilelist_casedir)
 int FileExistsOrig(char *filename);
 
 #ifdef WIN32
@@ -172,7 +173,7 @@ EXTERNCPP void MakeOutFile(char *outfile, char *destdir, char *file1,
                            char *ext);
 EXTERNCPP void FullFile(char *fileout, char *dir, char *file);
 EXTERNCPP char *GetFileName(char *temp_dir, char *file, int force_in_temp_dir);
-EXTERNCPP char *GetBaseFileName(char *buffer, char *file);
+EXTERNCPP char *GetBaseFileName(char *buffer, const char *file);
 
 EXTERNCPP char *SetDir(char *argdir);
 EXTERNCPP int GetFileInfo(char *filename, char *sourcedir, FILE_SIZE *filesize);
@@ -224,12 +225,34 @@ EXTERNCPP char *GetSmvRootDir();
  * @param path The path to set. If NULL, the value is unset.
  */
 EXTERNCPP void SetSmvRootOverride(const char *path);
+/**
+ * @brief Get the path of the smokeview config directory. This is generally in a
+ * directory called ".smokeview" within the users home directory. E.g.,
+ * $HOME/.smokeview.
+ *
+ * @return A buffer allocated by NEWMEMORY or NULL if an error occurred
+ * (including hitting the maximum buffer size).
+ */
+EXTERNCPP char *GetConfigDir();
+/**
+ * @brief Get the path of a subdirectory of the smokeview config directory. This
+ * is generally in the form $HOME/.smokeview/${subdir}.
+ *
+ * @return A buffer allocated by NEWMEMORY or NULL if an error occurred
+ * (including hitting the maximum buffer size).
+ */
+EXTERNCPP char *GetConfigSubDir(const char *subdir);
+EXTERNCPP char *GetSmokeviewIni();
+EXTERNCPP char *GetSmokeviewHtml();
+EXTERNCPP char *GetSmokeviewHtmlVr();
 EXTERNCPP void PrintTime(const char *tag, int line, float *timer,
                          const char *label, int stop_flag);
 
 EXTERNCPP int IsSootFile(char *shortlabel, char *longlabel);
 
 EXTERNCPP char *LastName(char *argi);
+
+EXTERNCPP char *JoinPath(const char *path, const char *segment);
 
 // vvvvvvvvvvvvvvvvvvvvvvvv variables vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 

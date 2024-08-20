@@ -31,7 +31,7 @@ void GetZoneSizeCSV(int *nzone_times_local, int *nroom, int *nfires_local, int *
    *ntargets_arg = nt;
 
    nr=0;
-   for(i=0;i<ndeviceinfo;i++){
+   for(i=0;i<devicecoll.ndeviceinfo;i++){
      char label[100];
 
      sprintf(label,"ULT_%i",i+1);
@@ -43,7 +43,7 @@ void GetZoneSizeCSV(int *nzone_times_local, int *nroom, int *nfires_local, int *
    *nroom=nr;
 
    nv=0;
-   for(i=0;i<ndeviceinfo;i++){
+   for(i=0;i<devicecoll.ndeviceinfo;i++){
      char label[100];
 
      sprintf(label,"HVENT_%i",i+1);
@@ -54,7 +54,7 @@ void GetZoneSizeCSV(int *nzone_times_local, int *nroom, int *nfires_local, int *
    *nhvents=nv;
 
    nv=0;
-   for(i=0;i<ndeviceinfo;i++){
+   for(i=0;i<devicecoll.ndeviceinfo;i++){
      char label[100];
 
      sprintf(label,"VVENT_%i",i+1);
@@ -65,7 +65,7 @@ void GetZoneSizeCSV(int *nzone_times_local, int *nroom, int *nfires_local, int *
    *nvvents=nv;
 
    nv=0;
-   for(i=0;i<ndeviceinfo;i++){
+   for(i=0;i<devicecoll.ndeviceinfo;i++){
      char label[100];
 
      sprintf(label,"MVENT_%i",i+1);
@@ -76,7 +76,7 @@ void GetZoneSizeCSV(int *nzone_times_local, int *nroom, int *nfires_local, int *
    *nmvents=nv;
 
    nf=0;
-   for(i=0;i<ndeviceinfo;i++){
+   for(i=0;i<devicecoll.ndeviceinfo;i++){
      char label[100];
 
      sprintf(label,"HRR_%i",i+1);
@@ -835,13 +835,13 @@ void GetZoneGlobalBounds(const float *pdata, int ndata, float *pglobalmin, float
 void GetSliceTempBounds(void){
   int i;
 
-  for(i=0; i<nsliceinfo; i++){
+  for(i=0; i<slicecoll.nsliceinfo; i++){
     slicedata *slicei;
     int framesize, headersize, return_val, error;
     int ntimes_slice_old=0;
     float qmin, qmax;
 
-    slicei = sliceinfo + i;
+    slicei = slicecoll.sliceinfo + i;
     if(strcmp(slicei->label.shortlabel, "TEMP")!=0)continue;
     GetSliceSizes(slicei->file, ALL_FRAMES, &slicei->nslicei, &slicei->nslicej, &slicei->nslicek, &slicei->ntimes, tload_step, &error,
                   use_tload_begin, use_tload_end, tload_begin, tload_end, &headersize, &framesize);
@@ -1174,10 +1174,10 @@ void ReadZone(int ifile, int flag, int *errorcode){
     GetSliceTempBounds();
   }
   if(flag==BOUNDS_ONLY)return;
-  for(i = 0; i<nsliceinfo; i++){
+  for(i = 0; i<slicecoll.nsliceinfo; i++){
     slicedata *slicei;
 
-    slicei = sliceinfo+i;
+    slicei = slicecoll.sliceinfo+i;
     if(strcmp(slicei->label.shortlabel, "TEMP")==0){
       zoneglobalmin = MIN(slicei->valmin_slice, zoneglobalmin);
       zoneglobalmax = MAX(slicei->valmax_slice, zoneglobalmax);
@@ -2253,7 +2253,7 @@ void DrawZoneFireData(void){
           // radius/plumeheight = .268 = atan(15 degrees)
           firei = fireinfo + i;
           roomi = roominfo + firei->roomnumber-1;
-          meshi = meshinfo + firei->roomnumber-1;
+          meshi = meshescoll.meshinfo + firei->roomnumber-1;
           diameter = SCALE2SMV(zonefdiambase[i]);
           deltaz = SCALE2SMV(zonefbasebase[i]);
           maxheight=roomi->z1-roomi->z0-deltaz;
@@ -2275,7 +2275,7 @@ void DrawZoneFireData(void){
           // radius/plumeheight = .268 = atan(15 degrees)
           firei = fireinfo + i;
           roomi = roominfo + firei->roomnumber-1;
-          meshi = meshinfo + firei->roomnumber-1;
+          meshi = meshescoll.meshinfo + firei->roomnumber-1;
           maxheight=roomi->z1-firei->absz;
           flameheight = SCALE2SMV((0.23f*pow((double)qdot,(double)0.4)/(1.0f+2.0f*0.268f)));
           diameter = 2.0*flameheight*0.268f;

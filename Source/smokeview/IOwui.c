@@ -134,10 +134,10 @@ int HaveTerrainTexture(int *draw_surfaceptr){
   int draw_texture = 0, draw_surface = 1;
   int i;
 
-  for(i = 0; i < nterrain_textures; i++){
+  for(i = 0; i < terrain_texture_coll.nterrain_textures; i++){
     texturedata *texti;
 
-    texti = terrain_textures + i;
+    texti = terrain_texture_coll.terrain_textures + i;
     if(texti->loaded == 1 && texti->display == 1){
       draw_texture = 1;
       if(texti->is_transparent == 0)draw_surface = 0; // don't draw a surface if we are drawing a texture
@@ -152,10 +152,10 @@ int HaveTerrainTexture(int *draw_surfaceptr){
 int GetNTerrainTexturesLoaded(void){
   int count, i, opaque_texture_index = -1;
 
-  for(i = 0; i < nterrain_textures; i++){
+  for(i = 0; i < terrain_texture_coll.nterrain_textures; i++){
     texturedata *texti;
 
-    texti = terrain_textures + i;
+    texti = terrain_texture_coll.terrain_textures + i;
     if(texti->loaded == 1 && texti->display == 1 && texti->is_transparent == 0){
       opaque_texture_index = i;
       break;
@@ -163,16 +163,16 @@ int GetNTerrainTexturesLoaded(void){
   }
 
   count = 0;
-  for(i = -1; i<nterrain_textures; i++){
+  for(i = -1; i<terrain_texture_coll.nterrain_textures; i++){
     texturedata *texti;
 
     if(i==-1){
       if(opaque_texture_index==-1)continue;
-      texti = terrain_textures+opaque_texture_index;
+      texti = terrain_texture_coll.terrain_textures+opaque_texture_index;
     }
     else{
       if(i==opaque_texture_index)continue;
-      texti = terrain_textures+i;
+      texti = terrain_texture_coll.terrain_textures+i;
     }
     if(texti->loaded==0||texti->display==0)continue;
     count++;
@@ -559,10 +559,10 @@ void DrawTerrainGeom(int option){
     int ii;
     int opaque_texture_index = -1;
 
-    for(i = 0; i<nterrain_textures; i++){
+    for(i = 0; i<terrain_texture_coll.nterrain_textures; i++){
       texturedata *texti;
 
-      texti = terrain_textures+i;
+      texti = terrain_texture_coll.terrain_textures+i;
       if(texti->loaded==1&&texti->display==1&&texti->is_transparent==0){
         opaque_texture_index = i;
         break;
@@ -575,18 +575,18 @@ void DrawTerrainGeom(int option){
     int count = 0;
     int is_transparent=0;
     TransparentOff();
-    for(ii = -1; ii<nterrain_textures; ii++){
+    for(ii = -1; ii<terrain_texture_coll.nterrain_textures; ii++){
       float dz;
       texturedata *texti;
 
       // draw opaque texture first
       if(ii==-1){
         if(opaque_texture_index==-1)continue;
-        texti = terrain_textures+opaque_texture_index;
+        texti = terrain_texture_coll.terrain_textures+opaque_texture_index;
       }
       else{
         if(ii==opaque_texture_index)continue;
-        texti = terrain_textures+ii;
+        texti = terrain_texture_coll.terrain_textures+ii;
       }
       if(texti->loaded==0||texti->display==0)continue;
       dz = SCALE2FDS((float)(count)*FDS_OFFSET);
@@ -772,7 +772,7 @@ float GetZCellVal(meshdata *meshi,float xval, float yval, float *zval_offset, in
 
   if(meshi==NULL)meshstart=0;
   if(zval_offset!=NULL)*zval_offset=0.0;
-  for(imesh=meshstart;imesh<nmeshes;imesh++){
+  for(imesh=meshstart;imesh<meshescoll.nmeshes;imesh++){
     meshdata *meshj;
     float *xplt, *yplt;
     int ibar, jbar;
@@ -781,7 +781,7 @@ float GetZCellVal(meshdata *meshi,float xval, float yval, float *zval_offset, in
       meshj=meshi;
     }
     else{
-      meshj=meshinfo+imesh;
+      meshj=meshescoll.meshinfo+imesh;
       if(meshi==meshj)continue;
     }
     xplt = meshj->xplt_orig;
@@ -827,7 +827,7 @@ float GetZCellValOffset(meshdata *meshi,float xval, float yval, int *loc){
 
   if(meshi==NULL)meshstart=0;
 
-  for(imesh=meshstart;imesh<nmeshes;imesh++){
+  for(imesh=meshstart;imesh<meshescoll.nmeshes;imesh++){
     meshdata *meshj;
     float *xplt, *yplt;
     int ibar, jbar;
@@ -836,7 +836,7 @@ float GetZCellValOffset(meshdata *meshi,float xval, float yval, int *loc){
       meshj=meshi;
     }
     else{
-      meshj=meshinfo+imesh;
+      meshj=meshescoll.meshinfo+imesh;
       if(meshi==meshj)continue;
     }
 
@@ -910,14 +910,14 @@ float GetZTerrain(float x, float y){
 void ComputeTerrainNormalsManual(void){
   int imesh;
 
-  for(imesh=0;imesh<nmeshes;imesh++){
+  for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
     meshdata *meshi;
     terraindata *terri;
     float *znode;
     int j;
     int nycell;
 
-    meshi = meshinfo + imesh;
+    meshi = meshescoll.meshinfo + imesh;
     terri = meshi->terrain;
     if(terri==NULL)continue;
     znode = terri->znode;
@@ -998,7 +998,7 @@ void ComputeTerrainNormalsAuto(void){
   int imesh;
   float zmin, zmax;
 
-  for(imesh=0;imesh<nmeshes;imesh++){
+  for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
     meshdata *meshi;
     terraindata *terri;
     int j;
@@ -1007,7 +1007,7 @@ void ComputeTerrainNormalsAuto(void){
     int nycell;
     unsigned char *uc_znormal;
 
-    meshi = meshinfo + imesh;
+    meshi = meshescoll.meshinfo + imesh;
 
     terri = meshi->terrain;
 
@@ -1158,14 +1158,14 @@ void ComputeTerrainNormalsAuto(void){
     }
   }
 
-  zmin = meshinfo->terrain->znode[0];
+  zmin = meshescoll.meshinfo->terrain->znode[0];
   zmax = zmin;
-  for(imesh=0;imesh<nmeshes;imesh++){
+  for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
     meshdata *meshi;
     terraindata *terri;
     int i;
 
-    meshi = meshinfo + imesh;
+    meshi = meshescoll.meshinfo + imesh;
     terri = meshi->terrain;
 
     for(i=0;i<(terri->ibar+1)*(terri->jbar+1);i++){
@@ -1664,7 +1664,7 @@ void DrawTerrainOBSTTexture(terraindata *terri){
   glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
   glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
   glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D,terrain_textures[iterrain_textures].name);
+  glBindTexture(GL_TEXTURE_2D,terrain_texture_coll.terrain_textures[iterrain_textures].name);
 
   glEnable(GL_COLOR_MATERIAL);
   glColor4fv(terrain_color);
@@ -1864,7 +1864,7 @@ void UpdateTerrain(int allocate_memory){
     int i;
 
     if(manual_terrain==0){
-      nterraininfo = nmeshes;
+      nterraininfo = meshescoll.nmeshes;
       if(allocate_memory==1&&manual_terrain==0){
         NewMemory((void **)&terraininfo, nterraininfo*sizeof(terraindata));
         for(i = 0; i<nterraininfo; i++){
@@ -1876,13 +1876,13 @@ void UpdateTerrain(int allocate_memory){
       }
     }
 
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
       terraindata *terri;
       float xmin, xmax, ymin, ymax;
       int nx, ny;
 
-      meshi=meshinfo + i;
+      meshi=meshescoll.meshinfo + i;
       if(manual_terrain==1){
         terri = meshi->terrain;
       }
@@ -1910,11 +1910,11 @@ void UpdateTerrain(int allocate_memory){
   if(allocate_memory==1){
     int i;
 
-    for(i = 0; i<nmeshes; i++){
+    for(i = 0; i<meshescoll.nmeshes; i++){
       meshdata *meshi;
       int ii;
 
-      meshi = meshinfo+i;
+      meshi = meshescoll.meshinfo+i;
       // compute elevations for terrain in each mesh
       // really only need to do this for one mesh in a column but computation isquick and doesn't take a lot of space
       // so doing it for all meshes keeps code simpler
@@ -1922,16 +1922,16 @@ void UpdateTerrain(int allocate_memory){
         meshi->znodes_complete[ii] = GetTerrainElev(meshi, ii);
       }
     }
-    for(i=0; i<nsliceinfo; i++){
+    for(i=0; i<slicecoll.nsliceinfo; i++){
       slicedata *slicei;
       meshdata *meshi;
       float zmin, zmax;
       float agl;
       int ii;
 
-      slicei = sliceinfo + i;
+      slicei = slicecoll.sliceinfo + i;
       if(slicei->slice_filetype!=SLICE_TERRAIN)continue;
-      meshi = meshinfo + slicei->blocknumber;
+      meshi = meshescoll.meshinfo + slicei->blocknumber;
       zmin = meshi->zplt_orig[0];
       zmax = meshi->zplt_orig[meshi->kbar];
       agl = slicei->above_ground_level;
@@ -1951,7 +1951,7 @@ void UpdateTerrain(int allocate_memory){
   if(nterraininfo>0){
     int imesh;
 
-    for(imesh=0;imesh<nmeshes;imesh++){
+    for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
       meshdata *meshi;
       terraindata *terri;
       float *znode, *znode_scaled;
@@ -1959,7 +1959,7 @@ void UpdateTerrain(int allocate_memory){
       float mesh_zmin, mesh_zmax;
       float t_zmin, t_zmax;
 
-      meshi=meshinfo + imesh;
+      meshi=meshescoll.meshinfo + imesh;
       terri = meshi->terrain;
       if(terri==NULL)continue;
       terri->terrain_mesh = meshi;
@@ -2002,10 +2002,10 @@ void UpdateTerrain(int allocate_memory){
 int HaveTerrainSlice(void){
   int i;
 
-  for(i=0;i<nsliceinfo;i++){
+  for(i=0;i<slicecoll.nsliceinfo;i++){
     slicedata *slicei;
 
-    slicei = sliceinfo + i;
+    slicei = slicecoll.sliceinfo + i;
 
     if(slicei->loaded==1&&slicei->slice_filetype==SLICE_TERRAIN)return 1;
 

@@ -7,6 +7,8 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "colorbars.h"
+#include "readlabel.h"
 
 GLUI *glui_labels=NULL;
 
@@ -311,7 +313,7 @@ void DisplayRolloutCB(int var){
 /* ------------------ UpdateGluiLabelText ------------------------ */
 
 void UpdateGluiLabelText(void){
-  if(LabelGetNUserLabels()>0){
+  if(LabelGetNUserLabels(&labelscoll)>0){
     labeldata *gl;
 
     gl=&LABEL_local;
@@ -394,7 +396,7 @@ void TextLabelsCB(int var){
     updatemenu = 1;
     break;
   case LB_UPDATE:
-    for(thislabel = label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);
     }
@@ -402,7 +404,7 @@ void TextLabelsCB(int var){
     //LabelResort(LABEL_global_ptr);
 
     count = 0;
-    for(thislabel = label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
       if(thislabel->labeltype == TYPE_SMV)continue;
       thislabel->glui_id = count;
       LIST_LB_labels->add_item(count++, thislabel->name);
@@ -418,8 +420,8 @@ void TextLabelsCB(int var){
     memcpy(&LABEL_global_ptr->useforegroundcolor, &gl->useforegroundcolor, sizeof(int));
     break;
   case LB_PREVIOUS:
-    new_label = LabelGet(LIST_LB_labels->curr_text);
-    new_label = LabelPrevious(new_label);
+    new_label = LabelGet(&labelscoll,LIST_LB_labels->curr_text);
+    new_label = LabelPrevious(&labelscoll,new_label);
     if(new_label == NULL)break;
     LABEL_global_ptr = new_label;
     if(new_label != NULL){
@@ -428,8 +430,8 @@ void TextLabelsCB(int var){
     }
     break;
   case LB_NEXT:
-    new_label = LabelGet(LIST_LB_labels->curr_text);
-    new_label = LabelNext(new_label);
+    new_label = LabelGet(&labelscoll,LIST_LB_labels->curr_text);
+    new_label = LabelNext(&labelscoll,new_label);
     if(new_label == NULL)break;
     LABEL_global_ptr = new_label;
     if(new_label != NULL){
@@ -438,7 +440,7 @@ void TextLabelsCB(int var){
     }
     break;
   case LB_LIST:
-    new_label = LabelGet(LIST_LB_labels->curr_text);
+    new_label = LabelGet(&labelscoll,LIST_LB_labels->curr_text);
     LABEL_global_ptr = new_label;
     if(new_label != NULL){
       LabelCopy(gl, new_label);
@@ -447,7 +449,7 @@ void TextLabelsCB(int var){
     break;
   case LB_ADD:
     updatemenu = 1;
-    if(LabelGetNUserLabels() > 0){
+    if(LabelGetNUserLabels(&labelscoll) > 0){
       strcpy(name, "copy of ");
       strcat(name, gl->name);
       strcpy(gl->name, name);
@@ -456,13 +458,13 @@ void TextLabelsCB(int var){
       gl = &LABEL_default;
     }
     gl->labeltype = TYPE_INI;
-    for(thislabel = label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);
     }
-    LabelInsert(gl);
+    LabelInsert(&labelscoll, gl);
     count = 0;
-    for(thislabel = label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
       if(thislabel->labeltype == TYPE_SMV)continue;
       thislabel->glui_id = count;
       LIST_LB_labels->add_item(count++, thislabel->name);
@@ -471,16 +473,16 @@ void TextLabelsCB(int var){
     break;
   case LB_DELETE:
     strcpy(name, LIST_LB_labels->curr_text);
-    for(thislabel = label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);
     }
-    thislabel = LabelGet(name);
+    thislabel = LabelGet(&labelscoll,name);
     if(thislabel != NULL){
       LabelDelete(thislabel);
     }
     count = 0;
-    for(thislabel = label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
       if(thislabel->labeltype == TYPE_SMV)continue;
       thislabel->glui_id = count;
       LIST_LB_labels->add_item(count++, thislabel->name);
@@ -611,7 +613,7 @@ void SurfaceCB(int var){
     {
       surfdata *surfi;
 
-      surfi = surfinfo + glui_surf_index;
+      surfi = surf_coll.surfinfo + glui_surf_index;
       surfi->color = surfi->color_orig;
       surfi->transparent_level = surfi->transparent_level_orig;
       SurfaceCB(SURFACE_SELECT);
@@ -623,7 +625,7 @@ void SurfaceCB(int var){
       surfdata *surfi;
       float s_color[4];
 
-      surfi = surfinfo + glui_surf_index;
+      surfi = surf_coll.surfinfo + glui_surf_index;
       s_color[0] = (float)glui_surface_color[0]/255.0;
       s_color[1] = (float)glui_surface_color[1]/255.0;
       s_color[2] = (float)glui_surface_color[2]/255.0;
@@ -638,7 +640,7 @@ void SurfaceCB(int var){
         surfi->transparent_level = 1.0;
       }
       s_color[3] = surfi->transparent_level;
-      surfi->color = GetColorPtr(s_color);
+      surfi->color = GetColorPtr(&colorcoll, s_color);
       updatefacelists = 1;
       updatefaces = 1;
       updatehiddenfaces = 1;
@@ -650,7 +652,7 @@ void SurfaceCB(int var){
       float s_color[4];
       int i;
 
-      surfi = surfinfo + glui_surf_index;
+      surfi = surf_coll.surfinfo + glui_surf_index;
       memcpy(s_color, surfi->color, 3*sizeof(float));
       s_color[3] = surfi->transparent_level;
 
@@ -672,8 +674,8 @@ extern "C" void GLUIUpdateTextureDisplay(void){
   int i;
   int showall = 1, hideall = 1, update=0;
 
-  for(i = 0;i < ntextureinfo;i++){
-    texti = textureinfo + i;
+  for(i = 0;i < texture_coll.ntextureinfo;i++){
+    texti = texture_coll.textureinfo + i;
     if(texti->loaded == 0 || texti->used == 0)continue;
     if(texti->display == 0)showall=0;
     if(texti->display == 1)hideall = 0;
@@ -734,7 +736,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   PANEL_gen1=glui_labels->add_panel_to_panel(ROLLOUT_general,"",GLUI_PANEL_NONE);
 
-  if(nsliceinfo>0)CHECKBOX_labels_average = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Average"), &vis_slice_average, LABELS_label, GLUILabelsCB);
+  if(slicecoll.nsliceinfo>0)CHECKBOX_labels_average = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Average"), &vis_slice_average, LABELS_label, GLUILabelsCB);
   CHECKBOX_labels_axis = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Axis"), &visaxislabels, LABELS_label, GLUILabelsCB);
   CHECKBOX_visColorbarVertical   = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Colorbar(vertical)"),   &visColorbarVertical,   LABELS_vcolorbar, GLUILabelsCB);
   CHECKBOX_visColorbarHorizontal = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Colorbar(horizontal)"), &visColorbarHorizontal, LABELS_hcolorbar, GLUILabelsCB);
@@ -811,10 +813,10 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   int i, surfcount = 0, first_surf=-1;
 
-  for(i = 0; i<nsurfinfo; i++){
+  for(i = 0; i<surf_coll.nsurfinfo; i++){
     surfdata *surfi;
 
-    surfi = surfinfo+i;
+    surfi = surf_coll.surfinfo+i;
     if(surfi->used_by_geom==0&&surfi->used_by_obst==0)continue;
     if(strcmp(surfi->surfacelabel, "INERT")==0)continue;
     if(first_surf<0)first_surf = i;
@@ -825,10 +827,10 @@ extern "C" void GLUIDisplaySetup(int main_window){
     glui_surf_index = first_surf;
     PANEL_surfs = glui_labels->add_panel_to_panel(PANEL_gen3, "Surface color");
     LIST_surfs = glui_labels->add_listbox_to_panel(PANEL_surfs, _("Select"), &glui_surf_index, SURFACE_SELECT, SurfaceCB);
-    for(i = 0; i<nsurfinfo; i++){
+    for(i = 0; i<surf_coll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surfinfo+i;
+      surfi = surf_coll.surfinfo+i;
       if(surfi->used_by_geom==0&&surfi->used_by_obst==0)continue;
       if(strcmp(surfi->surfacelabel, "INERT")==0)continue;
       LIST_surfs->add_item(i, surfi->surfacelabel);
@@ -1069,7 +1071,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
     labeldata *thislabel;
     int count=0;
 
-    for(thislabel=label_first_ptr->next;thislabel->next!=NULL;thislabel=thislabel->next){
+    for(thislabel=labelscoll.label_first_ptr->next;thislabel->next!=NULL;thislabel=thislabel->next){
       if(thislabel->labeltype==TYPE_SMV){
         thislabel->glui_id=-1;
         continue;
