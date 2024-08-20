@@ -145,7 +145,7 @@ keyframe *GetKeyFrame(const tourdata *touri, float time) {
 }
 /* ------------------ GetKeyView ------------------------ */
 
-void GetKeyView(float t, keyframe *this_key, float *view) {
+EXTERNCPP void GetKeyView(float t, keyframe *this_key, float *view) {
   keyframe *next_key;
   float dt, t_scaled;
 

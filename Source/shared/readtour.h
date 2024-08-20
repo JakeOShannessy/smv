@@ -26,7 +26,6 @@ EXTERNCPP void FreeTour(tourdata *touri);
 EXTERNCPP void ReallocTourMemory(tour_collection *tourcoll);
 EXTERNCPP void FreeTours(tour_collection *tourcoll);
 
-
 EXTERNCPP keyframe *CopyFrame(const keyframe *framei);
 
 /**
@@ -38,7 +37,9 @@ EXTERNCPP keyframe *CopyFrame(const keyframe *framei);
  * @return The found keyframe
  */
 EXTERNCPP keyframe *GetKeyFrame(const tourdata *touri, float time);
+EXTERNCPP void GetKeyView(float t, keyframe *this_key, float *view);
 EXTERNCPP void GetKeyXYZ(float t, keyframe *this_key, float *xyz);
+EXTERNCPP void GetTourView(float t, tourdata *this_tour, float *view);
 /**
  * @brief Free all of the frames in a tour.
  *

@@ -1,5 +1,6 @@
 #ifndef SHARED_STRUCTURES_H_DEFINED
 #define SHARED_STRUCTURES_H_DEFINED
+#include "isodefs.h"
 #include "options.h"
 #include <stdio.h>
 

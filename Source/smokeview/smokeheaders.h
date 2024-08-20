@@ -512,8 +512,6 @@ EXTERNCPP void LoadAllPartFiles(int partnum);
 EXTERNCPP void CreatePartBoundFile(partdata *parti);
 EXTERNCPP void InitRolloutList(void);
 EXTERNCPP void GetTourXYZ(float t, tourdata *this_tour, float *xyz);
-EXTERNCPP void GetKeyView(float t, keyframe *this_key, float *view);
-EXTERNCPP void GetTourView(float t, tourdata *this_tour, float *view);
 EXTERNCPP int GetTourFrame(tourdata *touri, int itime);
 EXTERNCPP int MeshConnect(meshdata *mesh_from, int val, meshdata *mesh_to);
 EXTERNCPP int IsBottomMesh(meshdata *mesh_from);
