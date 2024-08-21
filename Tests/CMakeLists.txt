@@ -263,9 +263,6 @@ add_test(NAME "Parse Colorbar"
 add_test(NAME "Test Labels API"
     COMMAND test_labels)
 
-add_test(NAME "Test Labels API"
-    COMMAND test_labels)
-
 add_test(NAME "Mem Test"
     COMMAND mem_test)
 
