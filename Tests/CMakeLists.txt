@@ -202,6 +202,29 @@ if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_colorbar m)
 endif()
 
+# test_labels
+add_executable(test_labels test_labels.c
+    ../Source/shared/dmalloc.c
+    ../Source/shared/readlabel.c
+    ../Source/shared/string_util.c
+    ../Source/shared/file_util.c
+    ../Source/shared/stdio_buffer.c
+    ../Source/shared/sha256.c
+    ../Source/shared/sha1.c
+    ../Source/shared/md5.c
+)
+
+target_include_directories(test_labels PRIVATE
+    ../Tests
+    ../Source/shared
+    ../Source/glew
+)
+if (WIN32)
+    target_include_directories(test_labels PRIVATE ../Source/pthreads)
+endif()
+if ((NOT MACOSX) AND UNIX)
+    target_link_libraries(test_labels m)
+endif()
 
 
 # mem_test
