@@ -1784,6 +1784,9 @@ typedef struct {
   int nplot3d;
   plot3ddata *plot3dinfo;
 
+  int npartclassinfo;
+  partclassdata *partclassinfo;
+
   int npatchinfo;
   patchdata *patchinfo;
 

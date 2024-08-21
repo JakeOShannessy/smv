@@ -96,8 +96,6 @@ char *smoke3d_buffer = NULL;
 char *slice_buffer = NULL;
 int curdir_writable;
 char *smokeview_scratchdir = NULL;
-int npartclassinfo = 0;
-partclassdata *partclassinfo = NULL;
 int smoke3d_only = 0;
 int setup_only = 0;
 #ifdef pp_FAST
@@ -2375,12 +2373,12 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
       if(parti->file==NULL)continue;
       sscanf(buffer, "%i", &iclass);
       if(iclass<1)iclass = 1;
-      if(iclass>npartclassinfo)iclass = npartclassinfo;
+      if(iclass>scase->npartclassinfo)iclass = scase->npartclassinfo;
       ic = 0;
-      for(iii = 0; iii<npartclassinfo; iii++){
+      for(iii = 0; iii<scase->npartclassinfo; iii++){
         partclassdata *pci;
 
-        pci = partclassinfo+iii;
+        pci = scase->partclassinfo+iii;
         if(iclass-1==ic){
           parti->partclassptr[i] = pci;
           break;
@@ -2394,7 +2392,7 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
 
   if(parti->file!=NULL&&parti->nclasses==0){
     NewMemory((void **)&parti->partclassptr, sizeof(partclassdata *));
-    parti->partclassptr[i] = partclassinfo+parti->nclasses;
+    parti->partclassptr[i] = scase->partclassinfo+parti->nclasses;
   }
   if(fast_startup==1||(parti->file!=NULL&&FILE_EXISTS_CASEDIR(parti->file)==YES)){
     ipart++;
@@ -3796,13 +3794,13 @@ int ReadSMV_Init(smv_case *scase) {
 
   // free memory for particle class
 
-  if(partclassinfo!=NULL){
+  if(scase->partclassinfo!=NULL){
     int j;
 
-    for(i=0;i<npartclassinfo+1;i++){
+    for(i=0;i<scase->npartclassinfo+1;i++){
       partclassdata *partclassi;
 
-      partclassi = partclassinfo + i;
+      partclassi = scase->partclassinfo + i;
       FREEMEMORY(partclassi->name);
       if(partclassi->ntypes>0){
         for(j=0;j<partclassi->ntypes;j++){
@@ -3815,9 +3813,9 @@ int ReadSMV_Init(smv_case *scase) {
         partclassi->ntypes=0;
       }
     }
-    FREEMEMORY(partclassinfo);
+    FREEMEMORY(scase->partclassinfo);
   }
-  npartclassinfo=0;
+  scase->npartclassinfo=0;
 
   InitObjectCollection(&scase->objectscoll);
   if(scase->devicecoll.ndeviceinfo>0){
@@ -4180,7 +4178,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       continue;
     }
     if(MatchSMV(buffer,"CLASS_OF_PARTICLES") == 1){
-      npartclassinfo++;
+      scase->npartclassinfo++;
       continue;
     }
     if(MatchSMV(buffer,"AUTOTERRAIN") == 1){
@@ -4546,16 +4544,16 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
    NewMemory((void **)&terraininfo,nterraininfo*sizeof(terraindata));
    nterraininfo=0;
  }
- if(npartclassinfo>=0){
+ if(scase->npartclassinfo>=0){
    float rgb_class[4];
    partclassdata *partclassi;
    size_t len;
 
-   NewMemory((void **)&partclassinfo,(npartclassinfo+1)*sizeof(partclassdata));
+   NewMemory((void **)&scase->partclassinfo,(scase->npartclassinfo+1)*sizeof(partclassdata));
 
    // define a dummy class
 
-   partclassi = partclassinfo + npartclassinfo;
+   partclassi = scase->partclassinfo + scase->npartclassinfo;
    strcpy(buffer,"Default");
    TrimBack(buffer);
    len=strlen(buffer);
@@ -4579,7 +4577,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
    NewMemory((void **)&partclassi->labels,sizeof(flowlabels));
    CreateNullLabel(partclassi->labels);
 
-   npartclassinfo=0;
+   scase->npartclassinfo=0;
 
 
  }
@@ -5334,7 +5332,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       char *prop_id;
       size_t len;
 
-      partclassi = partclassinfo + npartclassinfo;
+      partclassi = scase->partclassinfo + scase->npartclassinfo;
       FGETS(buffer,255,stream);
 
       GetLabels(buffer,&device_ptr,&prop_id);
@@ -5467,7 +5465,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         partclassi->azimuth=azimuth;
         partclassi->elevation=elevation;
       }
-      npartclassinfo++;
+      scase->npartclassinfo++;
       continue;
     }
 
@@ -6613,7 +6611,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   nvents=0;
   itrnx=0, itrny=0, itrnz=0, igrid=0, ipdim=0, iobst=0, ivent=0, icvent=0;
   ioffset=0;
-  npartclassinfo=0;
+  scase->npartclassinfo=0;
   if(noffset==0)ioffset=1;
   PRINT_TIMER(timer_readsmv, "pass 3");
 
@@ -6666,14 +6664,14 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       char *device_ptr;
       char *prop_id;
 
-      partclassi = partclassinfo + npartclassinfo;
+      partclassi = scase->partclassinfo + scase->npartclassinfo;
       FGETS(buffer,255,stream);
 
       GetLabels(buffer,&device_ptr,&prop_id);
       partclassi->prop=GetPropID(&scase->propcoll, prop_id);
       UpdatePartClassDepend(partclassi);
 
-      npartclassinfo++;
+      scase->npartclassinfo++;
       continue;
     }
 
