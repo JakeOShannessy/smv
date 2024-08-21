@@ -53,8 +53,6 @@
 #define SMOKE3DBUFFER(len) smoke3d_buffer; smoke3d_buffer += (len)
 #define SLICEBUFFER(len)   slice_buffer;   slice_buffer   += (len)
 
-#define SNIFF_ERRORS(f)
-
 // TODO: Things that can be moved to after parse are marked with the label
 // POSTPARSE: <explanation>
 
