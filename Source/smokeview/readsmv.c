@@ -7119,8 +7119,8 @@ int ReadSMV_Init(){
   }
 
   FREEMEMORY(tickinfo);
-  ntickinfo=0;
-  ntickinfo_smv=0;
+  sextras.ntickinfo=0;
+  sextras.ntickinfo_smv=0;
 
   FREEMEMORY(camera_external);
   NewMemory((void **)&camera_external,sizeof(cameradata));
@@ -7721,8 +7721,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"TICKS") == 1){
-      ntickinfo++;
-      ntickinfo_smv++;
+      sextras.ntickinfo++;
+      sextras.ntickinfo_smv++;
       continue;
     }
     if(MatchSMV(buffer,"TRNX") == 1){
@@ -8134,10 +8134,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       outlinei->z2=NULL;
     }
   }
-  if(ntickinfo>0){
-    if(NewMemory((void **)&tickinfo,ntickinfo*sizeof(tickdata))==0)return 2;
-    ntickinfo=0;
-    ntickinfo_smv=0;
+  if(sextras.ntickinfo>0){
+    if(NewMemory((void **)&tickinfo,sextras.ntickinfo*sizeof(tickdata))==0)return 2;
+    sextras.ntickinfo=0;
+    sextras.ntickinfo_smv=0;
   }
 
   if(npropinfo>0){
@@ -8906,8 +8906,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   */
 
     if(MatchSMV(buffer,"TICKS") == 1){
-      ntickinfo++;
-      ntickinfo_smv++;
+      sextras.ntickinfo++;
+      sextras.ntickinfo_smv++;
       {
         tickdata *ticki;
         float *begt, *endt;
@@ -8917,7 +8917,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         float *dxyz;
         float sum;
 
-        ticki = tickinfo + ntickinfo - 1;
+        ticki = tickinfo + sextras.ntickinfo - 1;
         begt = ticki->begin;
         endt = ticki->end;
         nbarst=&ticki->nbars;
@@ -15575,12 +15575,12 @@ int ReadIni2(char *inifile, int localfile){
       */
 
       if(MatchINI(buffer, "TICKS") == 1){
-        ntickinfo++;
+        sextras.ntickinfo++;
         if(tickinfo==NULL){
-          NewMemory((void **)&tickinfo, (ntickinfo)*sizeof(tickdata));
+          NewMemory((void **)&tickinfo, (sextras.ntickinfo)*sizeof(tickdata));
         }
         else{
-          ResizeMemory((void **)&tickinfo, (ntickinfo)*sizeof(tickdata));
+          ResizeMemory((void **)&tickinfo, (sextras.ntickinfo)*sizeof(tickdata));
         }
 
         {
@@ -15592,7 +15592,7 @@ int ReadIni2(char *inifile, int localfile){
           float *dxyz;
           float sum;
 
-          ticki = tickinfo + ntickinfo - 1;
+          ticki = tickinfo + sextras.ntickinfo - 1;
           begt = ticki->begin;
           endt = ticki->end;
           nbarst = &ticki->nbars;
@@ -16036,7 +16036,7 @@ int ReadIni(char *inifile){
   //
   // Last definition wins.
 
-  ntickinfo=ntickinfo_smv;
+  sextras.ntickinfo=sextras.ntickinfo_smv;
   strcpy(smvprogini,"");
 
   char *smvini_path = GetSmokeviewIni();
@@ -16395,7 +16395,7 @@ void WriteIniLocal(FILE *fileout){
                     );
   fprintf(fileout, "SMOKE3DCUTOFFS\n");
   fprintf(fileout, " %f %f\n", load_3dsmoke_cutoff, load_hrrpuv_cutoff);
-  for(i = ntickinfo_smv; i < ntickinfo; i++){
+  for(i = sextras.ntickinfo_smv; i < sextras.ntickinfo; i++){
     float *begt;
     float *endt;
     float *rgbtemp;

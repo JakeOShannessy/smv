@@ -1865,6 +1865,8 @@ typedef struct {
   char surfacedefaultlabel[256];
   int nterraininfo;
   int noutlineinfo;
+  int ntickinfo;
+  int ntickinfo_smv;
 } smv_extras;
 
 // TODO: remove each of these struct fields as global variables

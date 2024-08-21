@@ -840,7 +840,7 @@ void LabelMenu(int value){
     visLabels=1;
     visMeshlabel=1;
     vis_slice_average=1;
-    if(ntickinfo>0)visFDSticks=1;
+    if(sextras.ntickinfo>0)visFDSticks=1;
     visgridloc=1;
     vis_hrr_label=1;
     show_firecutoff=1;
@@ -863,7 +863,7 @@ void LabelMenu(int value){
     visMeshlabel=0;
     vis_hrr_label=0;
     show_firecutoff=0;
-    if(ntickinfo>0)visFDSticks=0;
+    if(sextras.ntickinfo>0)visFDSticks=0;
     visgridloc=0;
     vis_slice_average=0;
 #ifdef pp_memstatus
@@ -10269,7 +10269,7 @@ static int menu_count=0;
     if(vis_northangle==1)glutAddMenuEntry(_("*North"), MENU_LABEL_northangle);
     if(vis_northangle==0)glutAddMenuEntry(_("North"), MENU_LABEL_northangle);
   }
-  if(ntickinfo>0){
+  if(sextras.ntickinfo>0){
     if(visFDSticks == 0)glutAddMenuEntry(_("FDS generated ticks"), MENU_LABEL_fdsticks);
     if(visFDSticks == 1)glutAddMenuEntry(_("*FDS generated ticks"), MENU_LABEL_fdsticks);
   }

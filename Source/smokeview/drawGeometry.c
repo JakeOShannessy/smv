@@ -4635,7 +4635,7 @@ void DrawTicks(void){
   tickdata *ticki;
   float *dxyz,xyz[3],xyz2[3],*begt,*endt,dbar[3];
 
-  for(i=0;i<ntickinfo;i++){
+  for(i=0;i<sextras.ntickinfo;i++){
     ticki = tickinfo + i;
     begt = ticki->begin;
     endt = ticki->end;

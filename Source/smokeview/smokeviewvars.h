@@ -2115,7 +2115,6 @@ SVEXTERN obst_collection SVDECL(obstcoll, {0});
 SVEXTERN selectdata SVDECL(*selectfaceinfo,NULL);
 SVEXTERN blockagedata SVDECL(**selectblockinfo,NULL);
 SVEXTERN tickdata SVDECL(*tickinfo,NULL);
-SVEXTERN int SVDECL(ntickinfo,0),SVDECL(ntickinfo_smv,0);
 SVEXTERN int SVDECL(visFDSticks,0);
 SVEXTERN float user_tick_origin[3], user_tick_max[3], user_tick_min[3], user_tick_step[3], user_tick_length, user_tick_width;
 SVEXTERN float user_tick_direction;

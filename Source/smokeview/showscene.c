@@ -129,7 +129,7 @@ void ShowScene2(int mode){
 
     /* ++++++++++++++++++++++++ draw ticks +++++++++++++++++++++++++ */
 
-    if(visFDSticks == 1 && ntickinfo>0){
+    if(visFDSticks == 1 && sextras.ntickinfo>0){
       UNCLIP;
       DrawTicks();
       SNIFF_ERRORS("after DrawTicks");

@@ -127,7 +127,6 @@ int cellcenter_slice_active = 0;
 treedata *treeinfo = NULL;
 terraindata *terraininfo = NULL;
 int visTerrainType = 0;
-int ntickinfo = 0,ntickinfo_smv = 0;
 float *ventcolor = NULL;
 int niso_compressed;
 spherepoints *sphereinfo = NULL, *wui_sphereinfo = NULL;
@@ -3433,8 +3432,8 @@ int ReadSMV_Init(smv_case *scase) {
   }
 
   FREEMEMORY(tickinfo);
-  ntickinfo=0;
-  ntickinfo_smv=0;
+  sextras.ntickinfo=0;
+  sextras.ntickinfo_smv=0;
 
   updatefaces=1;
   scase->nfires=0;
@@ -4018,8 +4017,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       continue;
     }
     if(MatchSMV(buffer,"TICKS") == 1){
-      ntickinfo++;
-      ntickinfo_smv++;
+      sextras.ntickinfo++;
+      sextras.ntickinfo_smv++;
       continue;
     }
     if(MatchSMV(buffer,"TRNX") == 1){
@@ -4431,10 +4430,10 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       outlinei->z2=NULL;
     }
   }
-  if(ntickinfo>0){
-    if(NewMemory((void **)&tickinfo,ntickinfo*sizeof(tickdata))==0)return 2;
-    ntickinfo=0;
-    ntickinfo_smv=0;
+  if(sextras.ntickinfo>0){
+    if(NewMemory((void **)&tickinfo,sextras.ntickinfo*sizeof(tickdata))==0)return 2;
+    sextras.ntickinfo=0;
+    sextras.ntickinfo_smv=0;
   }
 
   if(scase->propcoll.npropinfo>0){
@@ -5205,8 +5204,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   */
 
     if(MatchSMV(buffer,"TICKS") == 1){
-      ntickinfo++;
-      ntickinfo_smv++;
+      sextras.ntickinfo++;
+      sextras.ntickinfo_smv++;
       {
         tickdata *ticki;
         float *begt, *endt;
@@ -5216,7 +5215,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         float *dxyz;
         float sum;
 
-        ticki = tickinfo + ntickinfo - 1;
+        ticki = tickinfo + sextras.ntickinfo - 1;
         begt = ticki->begin;
         endt = ticki->end;
         nbarst=&ticki->nbars;

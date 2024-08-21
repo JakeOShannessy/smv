@@ -777,7 +777,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
   glui_labels->add_radiobutton_to_group(RADIO_show_geom_boundingbox, "when mouse is pressed");
   glui_labels->add_radiobutton_to_group(RADIO_show_geom_boundingbox, "never");
 
-  if(ntickinfo > 0){
+  if(sextras.ntickinfo > 0){
     CHECKBOX_labels_ticks->enable();
   }
   else{
