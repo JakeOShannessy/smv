@@ -195,10 +195,10 @@ target_include_directories(parse_colorbar PRIVATE
     ../Source/shared
 )
 if (WIN32)
-target_include_directories(parse_colorbar PRIVATE ../Source/pthreads)
+    target_include_directories(parse_colorbar PRIVATE ../Source/pthreads)
 endif()
 if ((NOT MACOSX) AND UNIX)
-target_link_libraries(parse_colorbar m)
+    target_link_libraries(parse_colorbar m)
 endif()
 
 

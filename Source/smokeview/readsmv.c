@@ -15284,8 +15284,8 @@ int ReadIni2(char *inifile, int localfile){
         UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
         update_colorbar_dialog = 0;
 
-        colorbars.ncolorbars = ndefaultcolorbars + ncolorbarini;
-        for(n = ndefaultcolorbars; n<colorbars.ncolorbars; n++){
+        colorbars.ncolorbars = colorbars.ndefaultcolorbars + ncolorbarini;
+        for(n = colorbars.ndefaultcolorbars; n<colorbars.ncolorbars; n++){
           char *cb_buffptr;
 
           cbi = colorbars.colorbarinfo + n;
@@ -16104,7 +16104,7 @@ int ReadIni(char *inifile){
   if(use_graphics==1){
     if(showall_textures==1)TextureShowMenu(MENU_TEXTURE_SHOWALL);
   }
-  if(colorbars.ncolorbars<=ndefaultcolorbars){
+  if(colorbars.ncolorbars<=colorbars.ndefaultcolorbars){
     InitDefaultColorbars(&colorbars, 0, show_extreme_mindata, rgb_below_min,
                          show_extreme_maxdata, rgb_above_max, colorbarcopyinfo);
     UpdateColorbarDialogs();
@@ -17346,9 +17346,9 @@ void WriteIni(int flag,char *filename){
     fprintf(fileout, "COLORBARTYPE\n");
     fprintf(fileout, " %i %s %s \n", colorbartype, percen, cb->menu_label);
   }
-  if(co2_colorbar_index >= 0 && co2_colorbar_index < colorbars.ncolorbars){
+  if(colorbars.co2_colorbar_index >= 0 && colorbars.co2_colorbar_index < colorbars.ncolorbars){
     fprintf(fileout, "COLORMAP\n");
-    fprintf(fileout, " CO2 %i %s\n", co2_colormap_type, colorbars.colorbarinfo[co2_colorbar_index].menu_label);
+    fprintf(fileout, " CO2 %i %s\n", co2_colormap_type, colorbars.colorbarinfo[colorbars.co2_colorbar_index].menu_label);
   }
   {
     int mmin[3], mmax[3];
@@ -17363,20 +17363,20 @@ void WriteIni(int flag,char *filename){
   }
   fprintf(fileout, "FIRECOLOR\n");
   fprintf(fileout, " %i %i %i\n", fire_color_int255[0], fire_color_int255[1], fire_color_int255[2]);
-  if(fire_colorbar_index >= 0 && fire_colorbar_index < colorbars.ncolorbars){
+  if(colorbars.fire_colorbar_index >= 0 && colorbars.fire_colorbar_index < colorbars.ncolorbars){
     fprintf(fileout, "FIRECOLORMAP\n");
-    fprintf(fileout, " FIRE %i %s\n", fire_colormap_type, colorbars.colorbarinfo[fire_colorbar_index].menu_label);
+    fprintf(fileout, " FIRE %i %s\n", fire_colormap_type, colorbars.colorbarinfo[colorbars.fire_colorbar_index].menu_label);
   }
   fprintf(fileout, "FIREDEPTH\n");
   fprintf(fileout, " %f %f %f %i %i\n", fire_halfdepth, co2_halfdepth, emission_factor, use_fire_alpha, force_alpha_opaque);
-  if(colorbars.ncolorbars > ndefaultcolorbars){
+  if(colorbars.ncolorbars > colorbars.ndefaultcolorbars){
     colorbardata *cbi;
     unsigned char *rrgb;
     int n;
 
     fprintf(fileout, "GCOLORBAR\n");
-    fprintf(fileout, " %i\n", colorbars.ncolorbars - ndefaultcolorbars);
-    for(n = ndefaultcolorbars; n < colorbars.ncolorbars; n++){
+    fprintf(fileout, " %i\n", colorbars.ncolorbars - colorbars.ndefaultcolorbars);
+    for(n = colorbars.ndefaultcolorbars; n < colorbars.ncolorbars; n++){
       cbi = colorbars.colorbarinfo + n;
       fprintf(fileout, " %s\n", cbi->menu_label);
       fprintf(fileout, " %i %i\n", cbi->nnodes, cbi->nodehilight);

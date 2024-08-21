@@ -3074,7 +3074,7 @@ void UpdateDisplay(void){
   }
   if(update_smokecolorbar == 1){
     update_smokecolorbar = 0;
-    SmokeColorbarMenu(fire_colorbar_index);
+    SmokeColorbarMenu(colorbars.fire_colorbar_index);
   }
   if(update_colorbar_dialog == 1){
     UpdateNodeLabel(colorbars.colorbarinfo + colorbartype);

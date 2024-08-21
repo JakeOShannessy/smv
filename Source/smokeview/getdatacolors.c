@@ -1042,7 +1042,7 @@ void UpdateCO2Colormap(void){
 
   if(use_transparency_data==1)transparent_level_local=transparent_level;
 
-  co2_cb = colorbars.colorbarinfo[co2_colorbar_index].colorbar_rgb;
+  co2_cb = colorbars.colorbarinfo[colorbars.co2_colorbar_index].colorbar_rgb;
   rgb_colormap = rgb_sliceco2colormap_01;
 
   switch(co2_colormap_type){
@@ -1098,7 +1098,7 @@ void UpdateSmokeColormap(int option){
   if(use_transparency_data==1)transparent_level_local=transparent_level;
 
   alpha_rgb = colorbars.colorbarinfo[colorbartype].colorbar_alpha;
-  fire_cb = colorbars.colorbarinfo[fire_colorbar_index].colorbar_rgb;
+  fire_cb = colorbars.colorbarinfo[colorbars.fire_colorbar_index].colorbar_rgb;
 
   switch(fire_colormap_type){
     case FIRECOLORMAP_DIRECT:

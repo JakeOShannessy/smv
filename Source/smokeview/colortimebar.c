@@ -161,7 +161,7 @@ void DrawSelectColorbar(void){
     cbi = colorbars.colorbarinfo + colorbartype;
   }
   else{
-    cbi = colorbars.colorbarinfo+fire_colorbar_index;
+    cbi = colorbars.colorbarinfo+colorbars.fire_colorbar_index;
   }
 
   glPointSize(20.0f);
@@ -189,7 +189,7 @@ void DrawColorbarPathRGB(void){
     cbi = colorbars.colorbarinfo + colorbartype;
   }
   else{
-    cbi = colorbars.colorbarinfo+fire_colorbar_index;
+    cbi = colorbars.colorbarinfo+colorbars.fire_colorbar_index;
   }
   glPointSize(5.0);
   glBegin(GL_POINTS);
@@ -391,7 +391,7 @@ void DrawColorbarPathCIELab(void){
     cbi = colorbars.colorbarinfo + colorbartype;
   }
   else{
-    cbi = colorbars.colorbarinfo + fire_colorbar_index;
+    cbi = colorbars.colorbarinfo + colorbars.fire_colorbar_index;
   }
   glPointSize(5.0);
   glBegin(GL_POINTS);
@@ -643,27 +643,27 @@ void SortColorBars(void){
 
   colorbardata *cb;
 
-  bw_colorbar_index = -1;
+  colorbars.bw_colorbar_index = -1;
   cb = GetColorbar(&colorbars, "black->white");
-  if(cb != NULL)bw_colorbar_index = cb - colorbars.colorbarinfo;
+  if(cb != NULL)colorbars.bw_colorbar_index = cb - colorbars.colorbarinfo;
 
   cb = GetColorbar(&colorbars, "fire");
-  fire_colorbar_index=cb-colorbars.colorbarinfo;
+  colorbars.fire_colorbar_index=cb-colorbars.colorbarinfo;
   fire_colorbar=cb;
 
   cb = GetColorbar(&colorbars, "fire line (level set)");
   levelset_colorbar=cb-colorbars.colorbarinfo;
 
-  split_colorbar_index = -1;
+  colorbars.split_colorbar_index = -1;
   cb = GetColorbar(&colorbars, "split");
   split_colorbar=cb;
-  if(cb != NULL)split_colorbar_index = cb - colorbars.colorbarinfo;
+  if(cb != NULL)colorbars.split_colorbar_index = cb - colorbars.colorbarinfo;
 
   cb = GetColorbar(&colorbars, "CO2");
-  co2_colorbar_index = cb - colorbars.colorbarinfo;
+  colorbars.co2_colorbar_index = cb - colorbars.colorbarinfo;
 
   colorbartype       = colorbartype_default;
-  iso_colorbar_index = colorbartype_default;
+  colorbars.iso_colorbar_index = colorbartype_default;
   cb = NULL;
   if(strlen(toggle_label1)>0)cb = GetColorbar(&colorbars, toggle_label1);
   if(cb!=NULL)index_colorbar1 = cb - colorbars.colorbarinfo;

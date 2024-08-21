@@ -3219,7 +3219,7 @@ extern "C" void GLUISplitCB(int var){
 
   switch(var){
   case COLORBAR_SHOWSPLIT:
-    LISTBOX_cb_bound->set_int_val(split_colorbar_index);
+    LISTBOX_cb_bound->set_int_val(colorbars.split_colorbar_index);
     GLUISliceBoundCB(COLORBAR_LIST2);
     visColorbarVertical = 1;
     updatemenu = 1;
@@ -3379,7 +3379,7 @@ extern "C" void GLUIUpdatePartFast(void){
 /* ------------------ GLUIUpdateListIsoColorobar ------------------------ */
 
 extern "C" void GLUIUpdateListIsoColorobar(void){
-  if(LIST_iso_colorbar!=NULL)LIST_iso_colorbar->set_int_val(iso_colorbar_index);
+  if(LIST_iso_colorbar!=NULL)LIST_iso_colorbar->set_int_val(colorbars.iso_colorbar_index);
 }
 
 
@@ -5087,14 +5087,14 @@ extern "C" void GLUIBoundsSetup(int main_window){
     GLUIIsoBoundCB(ISO_COLORS);
 
     if(colorbars.ncolorbars>0){
-      LIST_iso_colorbar = glui_bounds->add_listbox_to_panel(ROLLOUT_iso_color, "colormap:", &iso_colorbar_index, ISO_COLORBAR_LIST, GLUIIsoBoundCB);
+      LIST_iso_colorbar = glui_bounds->add_listbox_to_panel(ROLLOUT_iso_color, "colormap:", &colorbars.iso_colorbar_index, ISO_COLORBAR_LIST, GLUIIsoBoundCB);
       for(i = 0; i<colorbars.ncolorbars; i++){
         colorbardata *cbi;
 
         cbi = colorbars.colorbarinfo+i;
         LIST_iso_colorbar->add_item(i, cbi->menu_label);
       }
-      LIST_iso_colorbar->set_int_val(iso_colorbar_index);
+      LIST_iso_colorbar->set_int_val(colorbars.iso_colorbar_index);
       GLUIIsoBoundCB(ISO_COLORBAR_LIST);
     }
     glui_bounds->add_spinner_to_panel(ROLLOUT_iso_color, "min:", GLUI_SPINNER_FLOAT, &iso_valmin);
@@ -6040,8 +6040,8 @@ extern "C" void GLUIIsoBoundCB(int var){
     iso_outline_offset = (float)iso_outline_ioffset/1000.0;
   break;
   case ISO_COLORBAR_LIST:
-    iso_colorbar = colorbars.colorbarinfo + iso_colorbar_index;
-    ColorbarMenu(iso_colorbar_index);
+    iso_colorbar = colorbars.colorbarinfo + colorbars.iso_colorbar_index;
+    ColorbarMenu(colorbars.iso_colorbar_index);
     updatemenu = 1;
     update_texturebar = 1;
     break;
@@ -6616,9 +6616,9 @@ extern "C" void GLUISliceBoundCB(int var){
       GLUISetColorbarListEdit(colorbartype);
       ColorbarMenu(colorbartype);
       GLUIColorbarGlobal2Local();
-      if(colorbartype == bw_colorbar_index&&bw_colorbar_index>=0){
+      if(colorbartype == colorbars.bw_colorbar_index&&colorbars.bw_colorbar_index>=0){
         setbwdata = 1;
-        ColorbarMenu(bw_colorbar_index);
+        ColorbarMenu(colorbars.bw_colorbar_index);
       }
       else{
         setbwdata = 0;

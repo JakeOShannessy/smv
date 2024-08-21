@@ -758,7 +758,7 @@ extern "C" void GLUIColorbarCB(int var){
     if(list_index<0)break;
     colorbartype = list_index;
     cbi = colorbars.colorbarinfo + colorbartype;
-    if(show_firecolormap!=0)fire_colorbar_index= colorbartype;
+    if(show_firecolormap!=0)colorbars.fire_colorbar_index= colorbartype;
     GLUISetColorbarListBound(colorbartype);
     ColorbarMenu(colorbartype);
     GLUIColorbarGlobal2Local();
@@ -770,7 +770,7 @@ extern "C" void GLUIColorbarCB(int var){
     strcat(button_label, colorbars.colorbarinfo[colorbartype].menu_label);
     strcat(button_label, "_copy");
     BUTTON_cb_save_as->set_name(button_label);
-    if(colorbartype < ndefaultcolorbars){
+    if(colorbartype < colorbars.ndefaultcolorbars){
       BUTTON_cb_delete ->disable();
     }
     else{
@@ -827,7 +827,7 @@ extern "C" void GLUIColorbarCB(int var){
     GLUIColorbarCB(COLORBAR_LIST);
     break;
   case COLORBAR_NEW:
-    colorbartype = bw_colorbar_index;
+    colorbartype = colorbars.bw_colorbar_index;
     GLUIColorbarCB(COLORBAR_COPY);
     char newlabel[sizeof(GLUI_String)], temp_label[sizeof(GLUI_String)];
     strcpy(temp_label, "new");
@@ -837,7 +837,7 @@ extern "C" void GLUIColorbarCB(int var){
     GLUIUpdateColorbarType();
     break;
   case COLORBAR_SAVE_AS:
-    if(colorbartype < ndefaultcolorbars){
+    if(colorbartype < colorbars.ndefaultcolorbars){
       int cb_save;
 
       cb_save = colorbartype;
@@ -861,7 +861,7 @@ extern "C" void GLUIColorbarCB(int var){
     Colorbar2File(cbi, colorbar_filename, colorbar_label);
     break;
   case COLORBAR_DELETE:
-    if(colorbartype >= ndefaultcolorbars&&colorbartype < colorbars.ncolorbars){
+    if(colorbartype >= colorbars.ndefaultcolorbars&&colorbartype < colorbars.ncolorbars){
       colorbardata *cb_from, *cb_to;
 
       for(i = colorbartype;i < colorbars.ncolorbars - 1;i++){
