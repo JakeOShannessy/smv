@@ -35,7 +35,7 @@ void InitDefaultCameras(void){
   }
 
   strcpy(name_external, "external");
-  if(is_terrain_case==1){
+  if(sextras.is_terrain_case==1){
     CopyCamera(camera_external, camera_defaults[5]);
     strcpy(camera_external->name, name_external);
   }
@@ -249,7 +249,7 @@ int SetupCase(char *filename){
 
     PRINTF("reading  %s\n", input_file);
     if(FileExistsOrig(smvzip_filename) == 1){
-      lookfor_compressed_files = 1;
+      parse_opts.lookfor_compressed_files = 1;
     }
     smv_streaminfo = GetSMVBuffer(input_file);
     smv_streaminfo = AppendFileBuffer(smv_streaminfo, iso_filename);

@@ -1700,12 +1700,12 @@ void Keyboard(unsigned char key, int flag){
         HandleMoveKeys(256+key2);
         break;
       }
-      if((visVector==1&&nplot3dloaded>0)||showvslice==1||isZoneFireModel==1){
+      if((visVector==1&&nplot3dloaded>0)||showvslice==1||sextras.isZoneFireModel==1){
       }
       else{
         break;
       }
-      if(isZoneFireModel==1){
+      if(sextras.isZoneFireModel==1){
         if(keystate==GLUT_ACTIVE_ALT){
           zone_ventfactor /= 1.5;
         }
@@ -1874,7 +1874,7 @@ void Keyboard(unsigned char key, int flag){
 #endif
       case GLUT_ACTIVE_CTRL:
       default:
-        if(ntotal_blockages>0||isZoneFireModel==0||(isZoneFireModel==1&&ntrnx>0)){
+        if(ntotal_blockages>0||sextras.isZoneFireModel==0||(sextras.isZoneFireModel==1&&ntrnx>0)){
           switch(visGrid){
             case NOGRID_NOPROBE:
               visGrid=GRID_NOPROBE;

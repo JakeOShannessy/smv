@@ -769,7 +769,7 @@ void FilterList(void){
         strcpy(unit_label, "dimensionless");
       }
     }
-    if(isZoneFireModel==1){
+    if(sextras.isZoneFireModel==1){
       compartment_id = LIST_curve_compartments->get_int_val();
     }
     for(i = 0; i < csvfi->ncsvinfo; i++){
@@ -783,7 +783,7 @@ void FilterList(void){
       if(doit==0&&csvi->dimensionless == 1 && strcmp(unit_label, "dimensionless")==0)doit = 1;
       if(doit==0&&csvi->dimensionless == 0 && strcmp(unit_label, csvi->label.unit) == 0)doit = 1;
       if(doit==0)continue;
-      if(isZoneFireModel==1&&compartment_id>=0){
+      if(sextras.isZoneFireModel==1&&compartment_id>=0){
         if(
           strcmp(csvfi->c_type, "compartments") == 0 ||
           strcmp(csvfi->c_type, "masses") == 0       ||
@@ -1845,7 +1845,7 @@ extern "C" void GLUIPlot2DSetup(int main_window){
     LIST_curve_unit = glui_plot2d->add_listbox_to_panel(PANEL_add_curve1, "unit:",    &icsv_units, GENPLOT_CURVE_UNIT, GenPlotCB);
     LIST_curve_unit->add_item(-1, "any");
 
-    if(isZoneFireModel==1){
+    if(sextras.isZoneFireModel==1){
       LIST_curve_compartments = glui_plot2d->add_listbox_to_panel(PANEL_add_curve1, "compartment:", &icsv_compartments, GENPLOT_CURVE_UNIT, GenPlotCB);
       for(i = 0;i < nrooms;i++){
         char label[100];
@@ -2040,7 +2040,7 @@ extern "C" void GLUIDeviceSetup(int main_window){
     CHECKBOX_device_orientation = glui_device->add_checkbox_to_panel(ROLLOUT_smvobjects, _("Orientation"), &show_device_orientation, DEVICE_show_orientation, GLUIDeviceCB);
     SPINNER_orientation_scale = glui_device->add_spinner_to_panel(ROLLOUT_smvobjects, _("Orientation scale"), GLUI_SPINNER_FLOAT, &orientation_scale);
     SPINNER_orientation_scale->set_float_limits(0.1, 10.0);
-    if(have_beam){
+    if(sextras.have_beam){
       PANEL_beam = glui_device->add_panel_to_panel(ROLLOUT_smvobjects, "Beam sensor", true);
       CHECKBOX_showbeam_as_line = glui_device->add_checkbox_to_panel(PANEL_beam, _("Show beam as line"), &showbeam_as_line, DEVICE_SHOWBEAM, GLUIDeviceCB);
       SPINNER_beam_line_width = glui_device->add_spinner_to_panel(PANEL_beam, _("line width"), GLUI_SPINNER_FLOAT, &beam_line_width);
@@ -2054,7 +2054,7 @@ extern "C" void GLUIDeviceSetup(int main_window){
       SPINNER_beam_color[2]->set_int_limits(0, 255);
     }
 
-    if(GetNumActiveDevices()>0||isZoneFireModel==1){
+    if(GetNumActiveDevices()>0||sextras.isZoneFireModel==1){
       ROLLOUT_velocityvectors = glui_device->add_rollout_to_panel(PANEL_objects, "Flow vectors", false, FLOWVECTORS_ROLLOUT, Device_Rollout_CB);
       INSERT_ROLLOUT(ROLLOUT_velocityvectors, glui_device);
       ADDPROCINFO(deviceprocinfo, ndeviceprocinfo, ROLLOUT_velocityvectors, FLOWVECTORS_ROLLOUT, glui_device);

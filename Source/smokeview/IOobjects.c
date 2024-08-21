@@ -803,7 +803,7 @@ void DrawTargetNorm(void){
   devicedata *devicei;
   float *xyz, *xyznorm;
 
-  if(isZoneFireModel==1&&hasSensorNorm==1&&visSensor==1&&visSensorNorm==1){
+  if(sextras.isZoneFireModel==1&&hasSensorNorm==1&&visSensor==1&&visSensorNorm==1){
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
     glBegin(GL_LINES);
@@ -816,7 +816,7 @@ void DrawTargetNorm(void){
 
       if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(STRCMP(devicei->object->label,"sensor")==0&&visSensor==0)continue;
-      if(isZoneFireModel==1&&STRCMP(devicei->object->label,"target")==0&&visSensor==0)continue;
+      if(sextras.isZoneFireModel==1&&STRCMP(devicei->object->label,"target")==0&&visSensor==0)continue;
       xyz = devicei->xyz;
       xyznorm = devicei->xyznorm;
       glVertex3fv(xyz);
@@ -3643,9 +3643,9 @@ void DrawDevices(int mode){
     if(devicei->object->visible == 0 || (devicei->prop != NULL&&devicei->prop->smv_object->visible == 0))continue;
     if(devicei->plane_surface != NULL)continue;
     if(devicei->show == 0)continue;
-    if(isZoneFireModel == 1 && STRCMP(devicei->object->label, "target") == 0 && visSensor == 0)continue;
+    if(sextras.isZoneFireModel == 1 && STRCMP(devicei->object->label, "target") == 0 && visSensor == 0)continue;
     if(devicei->in_zone_csv == 1&&strcmp(devicei->deviceID,"TARGET")!=0)continue;
-    if(isZoneFireModel == 1 && STRCMP(devicei->deviceID, "TIME") == 0)continue;
+    if(sextras.isZoneFireModel == 1 && STRCMP(devicei->deviceID, "TIME") == 0)continue;
     save_use_displaylist = devicei->object->use_displaylist;
     tagval = ii + 1;
     if(select_device == 1 && show_mode == SELECTOBJECT){

@@ -917,7 +917,7 @@ int GetChidVisibility() { return vis_title_CHID; }
 void ToggleChidVisibility() { vis_title_CHID = 1 - vis_title_CHID; }
 
 void BlockagesShowAll() {
-  if(isZoneFireModel) visFrame = 1;
+  if(sextras.isZoneFireModel) visFrame = 1;
   /*
   visFloor=1;
   visWalls=1;
@@ -933,10 +933,10 @@ void BlockageMenu(int value);
 void BlockagesHideAll() { BlockageMenu(visBLOCKHide); }
 // TODO: clarify behaviour under isZoneFireModel
 void OutlinesHide() {
-  if(isZoneFireModel == 0) visFrame = 1 - visFrame;
+  if(sextras.isZoneFireModel == 0) visFrame = 1 - visFrame;
 }
 void OutlinesShow() {
-  if(isZoneFireModel == 0) visFrame = 1 - visFrame;
+  if(sextras.isZoneFireModel == 0) visFrame = 1 - visFrame;
 }
 
 void SurfacesHideAll() {

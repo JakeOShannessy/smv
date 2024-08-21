@@ -158,7 +158,7 @@ void ShowScene2(int mode){
     /* ++++++++++++++++++++++++ draw simulation frame (corners at (0,0,0) and (xbar,ybar,zbar) +++++++++++++++++++++++++ */
 
 
-    if(geom_bounding_box_mousedown==1||(isZoneFireModel == 0 && visFrame == 1 && highlight_flag == 2)){
+    if(geom_bounding_box_mousedown==1||(sextras.isZoneFireModel == 0 && visFrame == 1 && highlight_flag == 2)){
       CLIP_GEOMETRY;
       DrawOutlines();
       SNIFF_ERRORS("after DrawOutlines");

@@ -283,7 +283,7 @@ typedef struct _meshdata {
 #endif
   struct _meshdata **meshonpatch;
   int *blockonpatch;
-  int *patchdir,*patch_surfindex;
+  int *patchdir, *patch_surfindex;
   int *pi1, *pi2, *pj1, *pj2, *pk1, *pk2;
   int *boundarytype;
   int *vis_boundaries;
@@ -309,7 +309,7 @@ typedef struct _meshdata {
 #endif
   unsigned char *patch_times_map;
   float **patchventcolors;
-  int npatch_times,npatches;
+  int npatch_times, npatches;
   int patch_itime;
   int *patch_timeslist;
   int npatchsize;
@@ -1821,5 +1821,26 @@ typedef struct {
   supermeshdata *supermeshinfo;
 
 } smv_case;
+
+typedef struct {
+  /// @brief The HoC of the fuel if present. -1.0 otherwise.
+  float fuel_hoc;
+  /// @brief Is this case a terrain case?
+  int is_terrain_case;
+  /// @brief Is this case a zone model?
+  int isZoneFireModel;
+  int have_object_box;
+  int have_beam;
+  int have_missing_objects;
+} smv_extras;
+
+// TODO: remove each of these struct fields as global variables
+typedef struct {
+  int smoke3d_only;
+  int setup_only;
+  int fast_startup;
+  int lookfor_compressed_files;
+  int handle_slice_files;
+} parse_options;
 
 #endif

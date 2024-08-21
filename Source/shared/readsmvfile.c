@@ -55,13 +55,34 @@
 
 #define SNIFF_ERRORS(f)
 
+// TODO: Things that can be moved to after parse are marked with the label
+// POSTPARSE: <explanation>
+
 // TODO: remove these globals, they are just used for development
+smv_extras sextras = {
+  .fuel_hoc = -1.0,
+  0
+};
+#ifdef pp_FAST
+parse_options parse_opts = {
+  .smoke3d_only = 0,
+  .setup_only = 0,
+  .fast_startup = 1,
+  .lookfor_compressed_files = 0,
+  .handle_slice_files= 1,
+};
+#else
+parse_options parse_opts = {
+  .smoke3d_only = 0,
+  .setup_only = 0,
+  .fast_startup = 0,
+  .lookfor_compressed_files = 1,
+  .handle_slice_files= 1,
+};
+#endif
+
 filelist_collection filelist_coll = {0};
 int verbose_output = 0;
-float fuel_hoc = -1.0;
-int have_object_box = 0;
-int have_beam = 0;
-int have_missing_objects = 0;
 #ifdef pp_GPU
 int gpuactive;
 #endif
@@ -96,14 +117,6 @@ char *smoke3d_buffer = NULL;
 char *slice_buffer = NULL;
 int curdir_writable;
 char *smokeview_scratchdir = NULL;
-int smoke3d_only = 0;
-int setup_only = 0;
-#ifdef pp_FAST
-int  fast_startup = 1, lookfor_compressed_files = 0;
-#else
-int fast_startup = 0,  lookfor_compressed_files=1;
-#endif
-int handle_slice_files= 1;
 int have_compressed_files = 0;
 int update_smoke_alphas = 0;
 int *sliceorderindex = NULL, *vsliceorderindex = NULL;
@@ -144,7 +157,6 @@ int ntotal_blockages;
 int niso_compressed;
 spherepoints *sphereinfo = NULL, *wui_sphereinfo = NULL;
 int updatefaces = 0;
-int is_terrain_case = 0;
 outlinedata *outlineinfo = NULL;
 int noutlineinfo = 0;
 int solid_ht3d = 0;
@@ -165,7 +177,6 @@ float SVDECL(global_tbegin, 1.0), global_tend = 0.0;
 int ntrnx = 0, ntrny = 0, ntrnz = 0,npdim = 0,clip_mesh = 0;
 int nOBST = 0,nVENT = 0,nCVENT = 0,ncvents = 0,noffset = 0;
 int setPDIM = 0;
-int isZoneFireModel = 0;
 int zonecsv = 0, nzvents = 0, nzhvents = 0, nzvvents = 0, nzmvents = 0;
 #ifdef INMAIN
 int hvac_duct_color[3] = { 63,0,15};
@@ -729,8 +740,8 @@ void InitDevice(smv_case *scase, devicedata *devicei, float *xyz, int is_beam, f
     devicei->xyz2[2]   = xyz2[2];
     devicei->have_xyz2 = 1;
   }
-  if(xyz1!=NULL&&xyz2!=NULL)have_object_box = 1;
-  if(is_beam == 1)have_beam = 1;
+  if(xyz1!=NULL&&xyz2!=NULL)sextras.have_object_box = 1;
+  if(is_beam == 1)sextras.have_beam = 1;
   devicei->is_beam = is_beam;
   norm = sqrt(xyzn[0] * xyzn[0] + xyzn[1] * xyzn[1] + xyzn[2] * xyzn[2]);
   if(norm != 0.0){
@@ -815,7 +826,7 @@ void ParseDevicekeyword(smv_case *scase, BFILE *stream, devicedata *devicei){
   if(devicei->object==scase->objectscoll.std_object_defs.missing_device&&tok3!=NULL){
     devicei->object = GetSmvObjectType(&scase->objectscoll,tok3,scase->objectscoll.std_object_defs.missing_device);
   }
-  if(devicei->object == scase->objectscoll.std_object_defs.missing_device)have_missing_objects = 1;
+  if(devicei->object == scase->objectscoll.std_object_defs.missing_device)sextras.have_missing_objects = 1;
   devicei->params=NULL;
   devicei->times=NULL;
   devicei->vals=NULL;
@@ -946,7 +957,7 @@ void ParseDevicekeyword2(smv_case *scase, FILE *stream, devicedata *devicei){
   if(devicei->object==scase->objectscoll.std_object_defs.missing_device&&tok3!=NULL){
     devicei->object = GetSmvObjectType(&scase->objectscoll,tok3, scase->objectscoll.std_object_defs.missing_device);
   }
-  if(devicei->object==scase->objectscoll.std_object_defs.missing_device)have_missing_objects = 1;
+  if(devicei->object==scase->objectscoll.std_object_defs.missing_device)sextras.have_missing_objects = 1;
   devicei->params = NULL;
   devicei->times = NULL;
   devicei->vals = NULL;
@@ -2049,7 +2060,7 @@ void MakeFileLists(smv_case *scase){
 /* ------------------ ParseISOFCount ------------------------ */
 
 void ParseISOFCount(smv_case *scase){
-  if(setup_only == 1 || smoke3d_only == 1)return;
+  if(parse_opts.setup_only == 1 ||parse_opts.smoke3d_only == 1)return;
   scase->nisoinfo++;
 }
 
@@ -2068,7 +2079,7 @@ int ParseISOFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
 
   int ioffset, iiso, nn_iso, nisos_per_mesh;
 
-  if(setup_only==1||smoke3d_only==1)return RETURN_CONTINUE;
+  if(parse_opts.setup_only==1||parse_opts.smoke3d_only==1)return RETURN_CONTINUE;
 
   iiso = *iiso_in;
   ioffset = *ioffset_in;
@@ -2168,7 +2179,7 @@ int ParseISOFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
     strcpy(isoi->tfile, tbufferptr);
   }
 
-  if(fast_startup==1||FILE_EXISTS_CASEDIR(isoi->reg_file)==YES){
+  if(parse_opts.fast_startup==1||FILE_EXISTS_CASEDIR(isoi->reg_file)==YES){
     isoi->get_isolevels = 1;
     isoi->file = isoi->reg_file;
     if(ReadLabels(&isoi->surface_label, stream, NULL)==LABEL_ERR)return 2;
@@ -2247,7 +2258,7 @@ int ParseCHIDProcess(casepaths *paths, bufferstreamdata *stream, int option){
 /* ------------------ ParsePRTCount ------------------------ */
 
 void ParsePRT5Count(smv_case *scase){
-  if(setup_only==1||smoke3d_only==1)return;
+  if(parse_opts.setup_only==1||parse_opts.smoke3d_only==1)return;
   scase->npartinfo++;
 }
 
@@ -2263,7 +2274,7 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
   int nn_part, ipart, ioffset;
   int i;
 
-  if(setup_only==1||smoke3d_only==1)return RETURN_CONTINUE;
+  if(parse_opts.setup_only==1||parse_opts.smoke3d_only==1)return RETURN_CONTINUE;
 
   nn_part = *nn_part_in;
   ioffset = *ioffset_in;
@@ -2321,6 +2332,8 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
 
   // parti->size_file can't be written to, then put it in a world writable temp directory
 
+  // POSTPARSE: If the current directory isn't writable, set the size file path
+  // for each file to the scratch directory (if it exists).
   if(FILE_EXISTS_CASEDIR(parti->size_file)==NO&&curdir_writable==NO&&smokeview_scratchdir!=NULL){
     len = strlen(smokeview_scratchdir)+strlen(bufferptr)+1+3+1;
     parti->size_file = NULL;
@@ -2393,7 +2406,7 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
     NewMemory((void **)&parti->partclassptr, sizeof(partclassdata *));
     parti->partclassptr[i] = scase->partclassinfo+parti->nclasses;
   }
-  if(fast_startup==1||(parti->file!=NULL&&FILE_EXISTS_CASEDIR(parti->file)==YES)){
+  if(parse_opts.fast_startup==1||(parti->file!=NULL&&FILE_EXISTS_CASEDIR(parti->file)==YES)){
     ipart++;
     *ipart_in = ipart;
   }
@@ -2406,7 +2419,7 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
 /* ------------------ ParseBNDFCount ------------------------ */
 
 int ParseBNDFCount(smv_case *scase){
-  if(setup_only==1||smoke3d_only==1)return RETURN_CONTINUE;
+  if(parse_opts.setup_only==1||parse_opts.smoke3d_only==1)return RETURN_CONTINUE;
   scase->npatchinfo++;
   return RETURN_CONTINUE;
 }
@@ -2426,7 +2439,7 @@ int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
   patchdata *patchgeom;
   char *bufferptr;
 
-  if(setup_only==1||smoke3d_only==1)return RETURN_CONTINUE;
+  if(parse_opts.setup_only==1||parse_opts.smoke3d_only==1)return RETURN_CONTINUE;
 
   nn_patch = *nn_patch_in;
   ioffset = *ioffset_in;
@@ -2551,7 +2564,7 @@ int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
   STRCPY(patchi->size_file, bufferptr);
   //      STRCAT(patchi->size_file,".szz"); when we actully use file check both .sz and .szz extensions
 
-  if(lookfor_compressed_files==1&&FILE_EXISTS_CASEDIR(patchi->comp_file) == YES){
+  if(parse_opts.lookfor_compressed_files==1&&FILE_EXISTS_CASEDIR(patchi->comp_file) == YES){
     patchi->compression_type = COMPRESSED_ZLIB;
     patchi->file             = patchi->comp_file;
   }
@@ -2676,7 +2689,7 @@ int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
 /* ------------------ ParseSMOKE3DCount ------------------------ */
 
 void ParseSMOKE3DCount(smv_case *scase){
-  if(setup_only==1)return;
+  if(parse_opts.setup_only==1)return;
   scase->smoke3dcoll.nsmoke3dinfo++;
 }
 
@@ -2693,7 +2706,7 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
 
   int nn_smoke3d, ioffset, ismoke3dcount, ismoke3d;
 
-  if(setup_only==1)return RETURN_CONTINUE;
+  if(parse_opts.setup_only==1)return RETURN_CONTINUE;
 
   nn_smoke3d    = *nn_smoke3d_in;
   ioffset       = *ioffset_in;
@@ -2863,7 +2876,7 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
 /* ------------------ ParseSLCFCount ------------------------ */
 
 int ParseSLCFCount(smv_case *scase, int option, bufferstreamdata *stream, char *buffer, int *nslicefiles_in){
-  if(setup_only==1||smoke3d_only==1||handle_slice_files==0)return RETURN_CONTINUE;
+  if(parse_opts.setup_only==1||parse_opts.smoke3d_only==1||parse_opts.handle_slice_files==0)return RETURN_CONTINUE;
   if(option==SCAN){
     for(;;){
       if(FGETS(buffer, 255, stream)==NULL){
@@ -2925,7 +2938,7 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
   int nslicefiles, nn_slice;
   slicedata *sliceinfo_copy;
 
-  if(setup_only==1||smoke3d_only==1||handle_slice_files==0)return RETURN_CONTINUE;
+  if(parse_opts.setup_only==1||parse_opts.smoke3d_only==1||parse_opts.handle_slice_files==0)return RETURN_CONTINUE;
   if(option==SCAN){
     for(;;){
       if(FGETS(buffer, 255, stream)==NULL){
@@ -3078,11 +3091,11 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
 
   has_reg = NO;
   compression_type = UNCOMPRESSED;
-  if(lookfor_compressed_files==1){
+  if(parse_opts.lookfor_compressed_files==1){
     if(FILE_EXISTS_CASEDIR(rle_file)==YES)compression_type  = COMPRESSED_RLE;
     if(FILE_EXISTS_CASEDIR(zlib_file)==YES)compression_type = COMPRESSED_ZLIB;
   }
-  if(compression_type==UNCOMPRESSED&&(fast_startup==1||FILE_EXISTS_CASEDIR(bufferptr)==YES))has_reg = YES;
+  if(compression_type==UNCOMPRESSED&&(parse_opts.fast_startup==1||FILE_EXISTS_CASEDIR(bufferptr)==YES))has_reg = YES;
   if(has_reg==NO&&compression_type==UNCOMPRESSED){
     scase->slicecoll.nsliceinfo--;
 
@@ -3827,7 +3840,7 @@ int ReadSMV_Init(smv_case *scase) {
   // read in device (.svo) definitions
 
   START_TIMER(timer_setup);
-  ReadDefaultObjectCollection(&scase->objectscoll, scase->fdsprefix, setbw, isZoneFireModel);
+  ReadDefaultObjectCollection(&scase->objectscoll, scase->fdsprefix, setbw, sextras.isZoneFireModel);
   PRINT_TIMER(timer_setup, "InitSurface");
 
   if(noutlineinfo>0){
@@ -4184,7 +4197,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       int len_buffer;
       char *buff2;
 
-      is_terrain_case = 1;
+      sextras.is_terrain_case = 1;
       auto_terrain=1;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&visTerrainType);
@@ -4216,7 +4229,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       int len_buffer;
       char *buff2, *blank;
 
-      is_terrain_case = 1;
+      sextras.is_terrain_case = 1;
       if(have_auto_terrain_image == 1){
         FREEMEMORY(scase->terrain_texture_coll.terrain_textures->file);
         FREEMEMORY(scase->terrain_texture_coll.terrain_textures);
@@ -4473,7 +4486,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     }
 
     if(MatchSMV(buffer,"ROOM") == 1){
-      isZoneFireModel=1;
+      sextras.isZoneFireModel=1;
       scase->nrooms++;
       continue;
     }
@@ -4989,7 +5002,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       strcpy(geomi->file,buff2);
 
       geomi->file2 = NULL;
-      if(fast_startup==0&&is_geom==1){
+      if(parse_opts.fast_startup==0&&is_geom==1){
         char *ext;
 
         ext = strrchr(buff2,'.');
@@ -5076,7 +5089,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
             geomi->is_terrain = is_terrain;
           }
           if(geomi->is_terrain==1){
-            is_terrain_case = 1;
+            sextras.is_terrain_case = 1;
             auto_terrain = 1;
           }
           if(texture_mapping!=NULL&&strcmp(texture_mapping,"SPHERICAL")==0){
@@ -6002,7 +6015,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     if(MatchSMV(buffer,"ROOM") == 1){
       roomdata *roomi;
 
-      isZoneFireModel=1;
+      sextras.isZoneFireModel=1;
       visFrame=0;
       roomdefined=1;
       iroom++;
@@ -6277,7 +6290,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
             xyznorm[2]/=normdenom;
           }
           if(device_label==NULL){
-            if(isZoneFireModel==1){
+            if(sextras.isZoneFireModel==1){
               devicecopy->object = GetSmvObjectType(&scase->objectscoll,"target",scase->objectscoll.std_object_defs.thcp_object_backup);
             }
             else{

@@ -263,10 +263,16 @@ SVEXTERN int SVDECL(nsubslicemenuinfo, 0), SVDECL(nsubvectorslicemenuinfo, 0);
 SVEXTERN int SVDECL(nsubslicex, 0), SVDECL(nsubslicey, 0), SVDECL(nsubslicez, 0), SVDECL(nsubslicexyz, 0);
 SVEXTERN int SVDECL(nsubvectorslicex, 0), SVDECL(nsubvectorslicey, 0), SVDECL(nsubvectorslicez, 0), SVDECL(nsubvectorslicexyz, 0);
 SVEXTERN slicemenudata SVDECL(**slicemenu_sorted, NULL);
-SVEXTERN int SVDECL(handle_slice_files, 1);
 SVEXTERN int SVDECL(plot_option, 0);
 SVEXTERN float hrr_valmin, hrr_valmax;
-SVEXTERN int SVDECL(is_terrain_case, 0);
+#ifdef INMAIN
+SVEXTERN smv_extras sextras = {
+  .fuel_hoc = -1.0,
+  0
+};
+#else
+SVEXTERN smv_extras sextras;
+#endif
 SVEXTERN int SVDECL(visFrameTimelabel, 1);
 SVEXTERN int SVDECL(rotation_axis, 1);
 SVEXTERN ztreedevicedata SVDECL(*ztreedeviceinfo, NULL);
@@ -490,8 +496,27 @@ SVEXTERN int SVDECL(research_mode_override, -1);
 
 SVEXTERN float SVDECL(geomboundary_pointsize, 5.0);
 SVEXTERN float SVDECL(geomboundary_linewidth, 5.0);
-
-SVEXTERN int SVDECL(smoke3d_only, 0);
+#ifdef INMAIN
+#ifdef pp_FAST
+SVEXTERN parse_options parse_opts = {
+  .smoke3d_only = 0,
+  .setup_only = 0,
+  .fast_startup = 1,
+  .lookfor_compressed_files = 0,
+  .handle_slice_files= 1,
+};
+#else
+SVEXTERN parse_options parse_opts = {
+  .smoke3d_only = 0,
+  .setup_only = 0,
+  .fast_startup = 0,
+  .lookfor_compressed_files = 1,
+  .handle_slice_files= 1,
+};
+#endif
+#else
+SVEXTERN parse_options parse_opts;
+#endif
 SVEXTERN int SVDECL(update_tour_path,1);
 SVEXTERN int SVDECL(tour_circular_index, -1);
 SVEXTERN float tour_circular_center[3], tour_circular_radius, tour_circular_view[3], SVDECL(tour_circular_angle0,0.0);
@@ -590,11 +615,6 @@ SVEXTERN float startup_time;
 #ifdef pp_FRAME
 SVEXTERN int SVDECL(nframe_threads, 4), SVDECL(read_buffer_size, 10);
 #endif
-#ifdef pp_FAST
-SVEXTERN int SVDECL(fast_startup, 1), SVDECL(lookfor_compressed_files,0);
-#else
-SVEXTERN int SVDECL(fast_startup, 0), SVDECL(lookfor_compressed_files,1);
-#endif
 SVEXTERN int SVDECL(alt_ctrl_key_state, KEY_NONE);
 SVEXTERN devicedata SVDECL(**vel_devices, NULL);
 SVEXTERN int SVDECL(nvel_devices, 0);
@@ -616,11 +636,10 @@ SVEXTERN float box_corners[8][3], box_geom_corners[8][3];
 SVEXTERN int SVDECL(have_box_geom_corners, 0);
 SVEXTERN float boxmin_global[3], boxmax_global[3], max_cell_length;
 SVEXTERN int SVDECL(update_boxbounds, 1);
-SVEXTERN int SVDECL(have_beam, 0), SVDECL(showbeam_as_line, 1), SVDECL(use_beamcolor,0), beam_color[3];
+SVEXTERN int SVDECL(showbeam_as_line, 1), SVDECL(use_beamcolor,0), beam_color[3];
 SVEXTERN float SVDECL(beam_line_width, 4.0);
 
 SVEXTERN float SVDECL(zone_hvac_diam, 0.05);
-SVEXTERN int SVDECL(setup_only, 0);
 SVEXTERN int SVDECL(timearray_test, 0);
 SVEXTERN char SVDECL(*updatetimes_debug, NULL);
 SVEXTERN int SVDECL(slice_time, 0);
@@ -742,7 +761,7 @@ SVEXTERN int SVDECL(update_makemovie, 0),SVDECL(movie_filetype,AVI);
 SVEXTERN char movie_name[1024], movie_ext[10];
 SVEXTERN int SVDECL(movie_framerate, 10), SVDECL(have_ffmpeg, 0), SVDECL(have_ffplay, 0), SVDECL(overwrite_movie, 1);
 
-SVEXTERN int SVDECL(show_missing_objects, 1),SVDECL(have_missing_objects,0);
+SVEXTERN int SVDECL(show_missing_objects, 1);
 SVEXTERN int SVDECL(toggle_dialogs, 1);
 SVEXTERN int SVDECL(use_data_extremes, 1);
 SVEXTERN int SVDECL(extreme_data_offset, 1), SVDECL(colorbar_offset, 0);
@@ -983,7 +1002,7 @@ SVEXTERN int SVDECL(niso_timesteps,0);
 SVEXTERN isotri SVDECL(**iso_trans,NULL),SVDECL(**iso_opaques,NULL);
 SVEXTERN int SVDECL(niso_trans,0),SVDECL(niso_opaques,0);
 SVEXTERN int SVDECL(sort_iso_triangles,1);
-SVEXTERN int SVDECL(object_outlines,0), SVDECL(object_box, 0), SVDECL(have_object_box, 0);
+SVEXTERN int SVDECL(object_outlines,0), SVDECL(object_box, 0);
 SVEXTERN int SVDECL(usemenu,1);
 SVEXTERN float direction_color[4], SVDECL(*direction_color_ptr,NULL);
 #ifdef INMAIN
@@ -1797,7 +1816,6 @@ SVEXTERN int SVDECL(use_new_drawface,0);
 SVEXTERN int SVDECL(colorbar_select_index,-1),SVDECL(update_colorbar_select_index,0);
 SVEXTERN float fds_eyepos[3],smv_eyepos[3],fds_viewdir[3],smv_viewpos[3];
 SVEXTERN int SVDECL(tour_usecurrent,0);
-SVEXTERN int SVDECL(isZoneFireModel,0);
 SVEXTERN int SVDECL(output_slicedata,0),SVDECL(output_patchdata,0);
 SVEXTERN f_units SVDECL(*unitclasses,NULL),SVDECL(*unitclasses_default,NULL),SVDECL(*unitclasses_ini,NULL);
 SVEXTERN int SVDECL(nunitclasses,0),SVDECL(nunitclasses_default,0),SVDECL(nunitclasses_ini,0);

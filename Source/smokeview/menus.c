@@ -2806,7 +2806,7 @@ void SmokeviewIniMenu(int value){
     WriteIni(LOCAL_INI,NULL);
     break;
   case MENU_READSVO:
-    ReadDefaultObjectCollection(objectscoll, fdsprefix, setbw, isZoneFireModel);
+    ReadDefaultObjectCollection(objectscoll, fdsprefix, setbw, sextras.isZoneFireModel);
     break;
   case MENU_DUMMY:
     break;
@@ -7547,7 +7547,7 @@ void GeometryMenu(int value){
 
   switch(value){
   case GEOM_Outline:
-    if(isZoneFireModel==0)visFrame=1-visFrame;
+    if(sextras.isZoneFireModel==0)visFrame=1-visFrame;
     break;
   case 5:
     visFloor=1-visFloor;
@@ -7587,7 +7587,7 @@ void GeometryMenu(int value){
     }
     break;
   case GEOM_ShowAll:
-    if(isZoneFireModel)visFrame=1;
+    if(sextras.isZoneFireModel)visFrame=1;
     show_faces_shaded=1;
     visFloor = 1;
     visFrame = 1;
@@ -9879,7 +9879,7 @@ static int menu_count=0;
         glutAddMenuEntry(obj_menu,i);
       }
     }
-    if(have_missing_objects == 1&&isZoneFireModel==0){
+    if(sextras.have_missing_objects == 1&&sextras.isZoneFireModel==0){
       if(show_missing_objects==1)glutAddMenuEntry(_("*undefined"),OBJECT_MISSING);
       if(show_missing_objects == 0)glutAddMenuEntry(_("undefined"),OBJECT_MISSING);
     }
@@ -9894,7 +9894,7 @@ static int menu_count=0;
     }
     if(object_outlines==0)glutAddMenuEntry(_("Outline"),OBJECT_OUTLINE);
     if(object_outlines==1)glutAddMenuEntry(_("*Outline"),OBJECT_OUTLINE);
-    if(have_object_box==1){
+    if(sextras.have_object_box==1){
       if(object_box==0)glutAddMenuEntry(_("Show XB"), OBJECT_BOX);
       if(object_box==1)glutAddMenuEntry(_("*Show XB"), OBJECT_BOX);
     }
@@ -9906,7 +9906,7 @@ static int menu_count=0;
     else{
       glutAddMenuEntry(_("Show orientation"),OBJECT_ORIENTATION);
     }
-    if(have_beam == 1){
+    if(sextras.have_beam == 1){
       if(showbeam_as_line == 1){
         glutAddMenuEntry(_("*Show beam as line"), OBJECT_SHOWBEAM);
       }
@@ -10162,7 +10162,7 @@ static int menu_count=0;
     }
   }
   GLUTADDSUBMENU(_("Grid"),gridslicemenu);
-  if(isZoneFireModel==0){
+  if(sextras.isZoneFireModel==0){
     if(visFrame==1)glutAddMenuEntry(_("*Outline"), GEOM_Outline);
     if(visFrame==0)glutAddMenuEntry(_("Outline"), GEOM_Outline);
   }
@@ -11360,7 +11360,7 @@ static int menu_count=0;
   }
   if(ntc_total>0){
     showhide_data = 1;
-    if(isZoneFireModel==1){
+    if(sextras.isZoneFireModel==1){
       if(visSensor==1)glutAddMenuEntry(_("*Targets"), MENU_SHOWHIDE_SENSOR);
       if(visSensor==0)glutAddMenuEntry(_("Targets"), MENU_SHOWHIDE_SENSOR);
       if(hasSensorNorm==1){
@@ -11605,7 +11605,7 @@ static int menu_count=0;
   if(showtour_dialog==1)glutAddMenuEntry(_("*Create/modify tours...  ALT t"), DIALOG_TOUR_HIDE);
   if(showtour_dialog==0)glutAddMenuEntry(_("Create/modify tours...  ALT t"), DIALOG_TOUR_SHOW);
   glutAddMenuEntry(_("Edit colorbar...  ALT C"), DIALOG_COLORBAR);
-  if(isZoneFireModel==0){
+  if(sextras.isZoneFireModel==0){
     glutAddMenuEntry(_("Examine geometry...  ALT e"), DIALOG_GEOMETRY);
   }
 #else
@@ -11613,7 +11613,7 @@ static int menu_count=0;
   if(showtour_dialog==1)glutAddMenuEntry(_("*Create/edit tours..."), DIALOG_TOUR_HIDE);
   if(showtour_dialog==0)glutAddMenuEntry(_("Create/edit tours..."), DIALOG_TOUR_SHOW);
   glutAddMenuEntry(_("Edit colorbar...  "), DIALOG_COLORBAR);
-  if(isZoneFireModel==0){
+  if(sextras.isZoneFireModel==0){
     glutAddMenuEntry(_("Examine geometry...  "), DIALOG_GEOMETRY);
   }
 #endif
@@ -11930,7 +11930,7 @@ static int menu_count=0;
   glutAddMenuEntry(_("Misc"), MENU_DUMMY);
   glutAddMenuEntry(_("  A: toggle between plot types (device and HRRPUV)"), MENU_DUMMY);
   glutAddMenuEntry(_("  e: toggle between view rotation types: scene centered 2 axis, 1 axis, 3 axis and eye centered"), MENU_DUMMY);
-  if(ntotal_blockages>0||isZoneFireModel==1){
+  if(ntotal_blockages>0||sextras.isZoneFireModel==1){
     glutAddMenuEntry(_("  g: toggle grid visibility modes"), MENU_DUMMY);
   }
   if(devicecoll.ndeviceinfo > 0 && GetNumActiveDevices() > 0){

@@ -2442,7 +2442,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
     float min_depth, max_depth;
 
     GetMinMaxDepth(&min_depth, &max_depth);
-    if(is_terrain_case==1){
+    if(sextras.is_terrain_case==1){
       fnear = MAX(min_depth  -0.1,     0.00001);
       ffar  = MAX(max_depth + 0.1, fnear+2.0);
     }
