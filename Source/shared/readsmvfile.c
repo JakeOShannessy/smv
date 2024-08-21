@@ -144,7 +144,6 @@ int ntotal_blockages;
 int niso_compressed;
 spherepoints *sphereinfo = NULL, *wui_sphereinfo = NULL;
 int updatefaces = 0;
-int nrooms = 0,nzoneinfo = 0, nfires = 0;
 int is_terrain_case = 0;
 outlinedata *outlineinfo = NULL;
 int noutlineinfo = 0;
@@ -1962,10 +1961,10 @@ void ReadZVentData(smv_case *scase, zventdata *zvi, char *buffer, int flag){
     roomto = roomfrom;
   }
 
-  if(roomfrom<1 || roomfrom>nrooms)roomfrom = nrooms + 1;
+  if(roomfrom<1 || roomfrom>scase->nrooms)roomfrom = scase->nrooms + 1;
   roomi = scase->roominfo + roomfrom - 1;
   zvi->room1 = roomi;
-  if(roomto<1 || roomto>nrooms)roomto = nrooms + 1;
+  if(roomto<1 || roomto>scase->nrooms)roomto = scase->nrooms + 1;
   zvi->room2 = scase->roominfo + roomto - 1;
   zvi->x0 = roomi->x0 + xyz[0];
   zvi->x1 = roomi->x0 + xyz[1];
@@ -3767,8 +3766,8 @@ int ReadSMV_Init(smv_case *scase) {
   ntickinfo_smv=0;
 
   updatefaces=1;
-  nfires=0;
-  nrooms=0;
+  scase->nfires=0;
+  scase->nrooms=0;
 
   START_TIMER(timer_setup);
   InitSurface(&sdefault);
@@ -4475,15 +4474,15 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
 
     if(MatchSMV(buffer,"ROOM") == 1){
       isZoneFireModel=1;
-      nrooms++;
+      scase->nrooms++;
       continue;
     }
     if(MatchSMV(buffer,"FIRE") == 1){
-      nfires++;
+      scase->nfires++;
       continue;
     }
     if(MatchSMV(buffer,"ZONE") == 1){
-      nzoneinfo++;
+      scase->nzoneinfo++;
       continue;
     }
     if(MatchSMV(buffer, "VENTGEOM")==1||
@@ -5936,7 +5935,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
 
       zonei = scase->zoneinfo + izone_local;
       if(FGETS(buffer,255,stream)==NULL){
-        nzoneinfo--;
+        scase->nzoneinfo--;
         BREAK;
       }
       bufferptr=TrimFrontBack(buffer);
@@ -5966,7 +5965,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
             return 2;
           }
         }
-        nzoneinfo--;
+        scase->nzoneinfo--;
       }
       else{
         len=strlen(filename);
@@ -6764,11 +6763,11 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
 
         zvi->area=vent_width*(top-bottom);
 
-        if(roomfrom<1||roomfrom>nrooms)roomfrom=nrooms+1;
+        if(roomfrom<1||roomfrom>scase->nrooms)roomfrom=scase->nrooms+1;
         roomi = scase->roominfo + roomfrom-1;
         zvi->room1 = roomi;
 
-        if(roomto<1||roomto>nrooms)roomto=nrooms+1;
+        if(roomto<1||roomto>scase->nrooms)roomto=scase->nrooms+1;
         zvi->room2=scase->roominfo+roomto-1;
 
         zvi->wall=wall;
@@ -6819,10 +6818,10 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         zvi->wall=wall;
         roomfrom=r_from;
         roomto=r_to;
-        if(roomfrom<1||roomfrom>nrooms){
+        if(roomfrom<1||roomfrom>scase->nrooms){
           roomfrom=r_to;
           roomto=r_from;
-          if(roomfrom<1||roomfrom>nrooms){
+          if(roomfrom<1||roomfrom>scase->nrooms){
             roomfrom=1;
           }
         }
@@ -6919,7 +6918,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       }
       firei = scase->fireinfo + ifire - 1;
       sscanf(buffer,"%i %f %f %f",&roomnumber,&firei->x,&firei->y,&firei->z);
-      if(roomnumber>=1&&roomnumber<=nrooms){
+      if(roomnumber>=1&&roomnumber<=scase->nrooms){
         roomdata *roomi;
 
         roomi = scase->roominfo + roomnumber - 1;
