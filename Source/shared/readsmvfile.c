@@ -82,33 +82,12 @@ parse_options parse_opts = {
 #endif
 
 filelist_collection filelist_coll = {0};
-int verbose_output = 0;
-#ifdef pp_GPU
-int gpuactive;
-#endif
-GLuint texture_colorbar_id;
-GLuint terrain_colorbar_id;
-GLuint texture_slice_colorbar_id;
-GLuint texture_patch_colorbar_id;
-GLuint rgb_slicetexture_patch_colorbar_id;
-GLuint texture_plot3d_colorbar_id;
-GLuint texture_iso_colorbar_id;
-GLuint volsmoke_colormap_id;
-GLuint slicesmoke_colormap_id;
 
-float rgb_full[MAXRGB][4];
-float rgb_full2[MAXRGB][4];
-float rgb_terrain2[4 * MAXRGB];
-float rgb_slice[4 * MAXRGB];
-float rgb_volsmokecolormap[4*MAXSMOKERGB];
-float rgb_slicesmokecolormap_01[4*MAXSMOKERGB];
-float rgb_iso[4*MAXRGB];
-float rgb_patch[4*MAXRGB];
-float rgb_plot3d[4*MAXRGB];
+GLuint texture_patch_colorbar_id;
 
 float SVDECL(xbar,1.0);float SVDECL(ybar,1.0);float  SVDECL(zbar,1.0);
 float xbar0 = 0.0;float  ybar0 = 0.0;float  zbar0 = 0.0;
-int nopenvents,ndummyvents;
+int ndummyvents;
 char *texturedir = NULL;
 
 #define MAXFILELEN 360
@@ -170,7 +149,7 @@ float SVDECL(smoke_albedo, 0.3), SVDECL(smoke_albedo_base, 0.3);
 float northangle = 0.0;
 int have_northangle = 0;
 int auto_terrain = 0,manual_terrain = 0;
-int SVDECL(visOtherVents,1),SVDECL(visOtherVentsSAVE,1),SVDECL(visCircularVents,VENT_CIRCLE);
+int SVDECL(visOtherVents,1),SVDECL(visOtherVentsSAVE,1);
 int update_terrain_type = 0;
 int usetextures = 0;
 float SVDECL(global_tbegin, 1.0), global_tend = 0.0;
@@ -197,17 +176,11 @@ char *database_filename = NULL;
 char *expcsv_filename = NULL;
 float SVDECL(pref,101325.0),pamb = 0.0,SVDECL(tamb,293.15);
 int update_device = 0;
-int SVDECL(visSensor,1), hasSensorNorm = 0;
-int SVDECL(use_graphics,1);
+int hasSensorNorm = 0;
 surfdata sdefault,v_surfacedefault,e_surfacedefault;
 char surfacedefaultlabel[256];
-float SVDECL(global_temp_cutoff, 600.0);
-float global_hrrpuv_min = 0.0,SVDECL(global_hrrpuv_max,1200.0);
 float SVDECL(global_hrrpuv_cutoff, 200.0), SVDECL(global_hrrpuv_cutoff_default, 200.0);
-int volbw = 0;
-float SVDECL(tourrad_avatar,0.1);
-int dirtycircletour = 0;
-float load_3dsmoke_cutoff= 1.0, load_hrrpuv_cutoff=200.0;
+float load_hrrpuv_cutoff=200.0;
 int  nrgb= NRGB;
 #ifdef INMAIN
 float foregroundcolor[4]      = {1.0, 1.0, 1.0, 1.0};
@@ -1155,301 +1128,6 @@ int IsTerrainTexture(terrain_texture_collection *terrain_texture_coll, textureda
     return 1;
   }
   return is_terrain_texture;
-}
-
-/* ------------------ InitTextures0 ------------------------ */
-
-void InitTextures0(smv_case *scase){
-  // get texture filename from SURF and device info
-  int i;
-
-  INIT_PRINT_TIMER(texture_timer);
-  scase->texture_coll.ntextureinfo = 0;
-  for(i=0;i<scase->surfcoll.nsurfinfo;i++){
-    surfdata *surfi;
-    texturedata *texti;
-    int len;
-
-    surfi = scase->surfcoll.surfinfo + i;
-    if(surfi->texturefile==NULL)continue;
-    texti = scase->texture_coll.textureinfo + scase->texture_coll.ntextureinfo;
-    len = strlen(surfi->texturefile);
-    NewMemory((void **)&texti->file,(len+1)*sizeof(char));
-    strcpy(texti->file,surfi->texturefile);
-    texti->loaded=0;
-    texti->used=0;
-    texti->display=0;
-    scase->texture_coll.ntextureinfo++;
-    surfi->textureinfo=scase->texture_coll.textureinfo+scase->texture_coll.ntextureinfo-1;
-  }
-  PRINT_TIMER(texture_timer, "SURF textures");
-
-  for(i=0;i<scase->device_texture_list_coll.ndevice_texture_list;i++){
-    char *texturefile;
-    texturedata *texti;
-    int len;
-
-    texturefile = scase->device_texture_list_coll.device_texture_list[i];
-    texti = scase->texture_coll.textureinfo + scase->texture_coll.ntextureinfo;
-    len = strlen(texturefile);
-    NewMemory((void **)&texti->file,(len+1)*sizeof(char));
-    scase->device_texture_list_coll.device_texture_list_index[i]=scase->texture_coll.ntextureinfo;
-    strcpy(texti->file,texturefile);
-    texti->loaded=0;
-    texti->used=0;
-    texti->display=0;
-    scase->texture_coll.ntextureinfo++;
-  }
-  PRINT_TIMER(texture_timer, "device textures");
-
-  if(scase->terrain_texture_coll.nterrain_textures>0){
-    texturedata *texture_base;
-
-    texture_base = scase->texture_coll.textureinfo + scase->texture_coll.ntextureinfo;
-    for(i=0;i<scase->terrain_texture_coll.nterrain_textures;i++){
-      char *texturefile;
-      texturedata *texti;
-      int len;
-
-      texturefile = scase->terrain_texture_coll.terrain_textures[i].file;
-      texti = scase->texture_coll.textureinfo + scase->texture_coll.ntextureinfo;
-      len = strlen(texturefile);
-      NewMemory((void **)&texti->file,(len+1)*sizeof(char));
-      strcpy(texti->file,texturefile);
-      texti->loaded=0;
-      texti->used=0;
-      texti->display=0;
-      scase->texture_coll.ntextureinfo++;
-    }
-    FREEMEMORY(scase->terrain_texture_coll.terrain_textures);
-    scase->terrain_texture_coll.terrain_textures = texture_base;
-  }
-  PRINT_TIMER(texture_timer, "terrain textures");
-
-  // check to see if texture files exist .
-  // If so, then convert to OpenGL format
-
-  for(i=0;i<scase->texture_coll.ntextureinfo;i++){
-    unsigned char *floortex;
-    int texwid, texht;
-    texturedata *texti;
-    char *filename;
-    int max_texture_size;
-    int is_transparent;
-
-    texti = scase->texture_coll.textureinfo + i;
-    texti->loaded=0;
-    if(texti->file==NULL||IsDupTexture(&scase->texture_coll, texti)==1||IsTerrainTexture(&scase->terrain_texture_coll, texti)==1)continue;
-
-    CheckMemory;
-    filename=strrchr(texti->file,*dirseparator);
-    if(filename!=NULL){
-      filename++;
-    }
-    else{
-      filename=texti->file;
-    }
-    glGenTextures(1,&texti->name);
-    glBindTexture(GL_TEXTURE_2D,texti->name);
-    if(verbose_output==1)printf("  reading in texture image: %s",texti->file);
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
-
-    floortex=ReadPicture(texturedir, texti->file,&texwid,&texht,&is_transparent,0);
-    texti->is_transparent = is_transparent;
-    if(floortex==NULL){
-      PRINTF("\n***Error: Texture %s failed to load\n", filename);
-      continue;
-    }
-    if(verbose_output==1)printf(" - complete\n");
-    if(texwid>max_texture_size||texht>max_texture_size){
-      printf("***error: image size: %i x %i, is larger than the maximum allowed texture size %i x %i\n", texwid, texht, max_texture_size, max_texture_size);
-    }
-    if(verbose_output==1)printf("  installing texture: %s",texti->file);
-    glTexImage2D(GL_TEXTURE_2D, 0, 4, texwid, texht, 0, GL_RGBA, GL_UNSIGNED_BYTE, floortex);
-    SNIFF_ERRORS("after glTexImage2D");
-    if(verbose_output==1)printf(" - complete\n");
-    glGenerateMipmap(GL_TEXTURE_2D);
-    SNIFF_ERRORS("after glGenerateMipmap");
-    FREEMEMORY(floortex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    texti->loaded=1;
-  }
-
-  CheckMemory;
-  if(scase->texture_coll.ntextureinfo==0){
-    FREEMEMORY(scase->texture_coll.textureinfo);
-  }
-
-  // define colorbar textures
-
- // glActiveTexture(GL_TEXTURE0);
-  glGenTextures(1,&texture_colorbar_id);
-  glBindTexture(GL_TEXTURE_1D,texture_colorbar_id);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#ifdef pp_GPU
-  if(gpuactive==1){
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  }
-  else{
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  }
-#else
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-#endif
-  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,256,0,GL_RGBA,GL_FLOAT,rgb_full);
-
-  glGenTextures(1, &terrain_colorbar_id);
-  glBindTexture(GL_TEXTURE_1D, terrain_colorbar_id);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#ifdef pp_GPU
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-#else
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-#endif
-  glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 256, 0, GL_RGBA, GL_FLOAT, rgb_terrain2);
-
-  glGenTextures(1,&texture_slice_colorbar_id);
-  glBindTexture(GL_TEXTURE_1D,texture_slice_colorbar_id);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#ifdef pp_GPU
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-#else
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-#endif
-  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,256,0,GL_RGBA,GL_FLOAT,rgb_slice);
-
-  glGenTextures(1,&texture_patch_colorbar_id);
-  glBindTexture(GL_TEXTURE_1D,texture_patch_colorbar_id);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#ifdef pp_GPU
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-#else
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-#endif
-  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,256,0,GL_RGBA,GL_FLOAT,rgb_patch);
-
-  glGenTextures(1,&texture_plot3d_colorbar_id);
-  glBindTexture(GL_TEXTURE_1D,texture_plot3d_colorbar_id);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#ifdef pp_GPU
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-#else
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-#endif
-  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,256,0,GL_RGBA,GL_FLOAT,rgb_plot3d);
-
-  glGenTextures(1,&texture_iso_colorbar_id);
-  glBindTexture(GL_TEXTURE_1D,texture_iso_colorbar_id);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#ifdef pp_GPU
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-#else
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-#endif
-  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,256,0,GL_RGBA,GL_FLOAT,rgb_iso);
-
-  glGenTextures(1,&volsmoke_colormap_id);
-  glBindTexture(GL_TEXTURE_1D,volsmoke_colormap_id);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#ifdef pp_GPU
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-#else
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-#endif
-  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_volsmokecolormap);
-
-  glGenTextures(1,&slicesmoke_colormap_id);
-  glBindTexture(GL_TEXTURE_1D,slicesmoke_colormap_id);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#ifdef pp_GPU
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-#else
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-#endif
-  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_slicesmokecolormap_01);
-
-  PRINT_TIMER(texture_timer, "texture setup");
-  CheckMemory;
-
-  // define terrain texture
-
-  if(scase->terrain_texture_coll.nterrain_textures>0){
-    texturedata *tt;
-    unsigned char *floortex;
-    int texwid, texht, nloaded=0;
-
-    for(i=0;i<scase->terrain_texture_coll.nterrain_textures;i++){
-      int is_transparent;
-
-      tt = scase->terrain_texture_coll.terrain_textures + i;
-      tt->loaded=0;
-      tt->used=0;
-      tt->display=0;
-      tt->is_transparent = 0;
-
-      glGenTextures(1,&tt->name);
-      glBindTexture(GL_TEXTURE_2D,tt->name);
-      floortex=NULL;
-      if(tt->file!=NULL){
-#ifdef _DEBUG
-        PRINTF("terrain texture file: %s\n",tt->file);
-#endif
-        floortex=ReadPicture(texturedir, tt->file,&texwid,&texht,&is_transparent,0);
-        tt->is_transparent = is_transparent;
-        if(floortex==NULL)PRINTF("***Error: Texture file %s failed to load\n",tt->file);
-      }
-      if(floortex!=NULL){
-        glTexImage2D(GL_TEXTURE_2D, 0, 4, texwid, texht, 0, GL_RGBA, GL_UNSIGNED_BYTE, floortex);
-        glGenerateMipmap(GL_TEXTURE_2D);
-        SNIFF_ERRORS("after glTexImage2D for terrain texture");
-
-        FREEMEMORY(floortex);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        nloaded++;
-        tt->loaded=1;
-        if(nloaded==1)tt->display = 1; // display first texture by default
-      }
-    }
-  }
-  PRINT_TIMER(texture_timer, "terrain texture setup");
-}
-
-/* ------------------ InitTextures ------------------------ */
-
-void InitTextures(smv_case *scase, int use_graphics_arg) {
-  INIT_PRINT_TIMER(total_texture_time);
-  UpdateDeviceTextures(
-      &scase->objectscoll, scase->devicecoll.ndeviceinfo,
-      scase->devicecoll.deviceinfo, scase->propcoll.npropinfo, scase->propcoll.propinfo,
-      &scase->device_texture_list_coll.ndevice_texture_list,
-      &scase->device_texture_list_coll.device_texture_list_index,
-      &scase->device_texture_list_coll.device_texture_list);
-  if(scase->surfcoll.nsurfinfo > 0 ||
-     scase->device_texture_list_coll.ndevice_texture_list > 0) {
-    if(NewMemory((void **)&scase->texture_coll.textureinfo,
-                 (scase->surfcoll.nsurfinfo + scase->device_texture_list_coll.ndevice_texture_list +
-                  scase->terrain_texture_coll.nterrain_textures) *
-                     sizeof(texturedata)) == 0)
-      return;
-  }
-  if(use_graphics_arg == 1) {
-    InitTextures0(scase);
-  }
-  PRINT_TIMER(total_texture_time, "total texure time");
 }
 
 /* ------------------ CreateNullLabel ------------------------ */
@@ -6585,10 +6263,6 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     }
   }
 
-  // define texture data structures by constructing a list of unique file names from surfinfo and devices
-
- InitTextures(scase, use_graphics);
-
 /*
     Initialize blockage labels and blockage surface labels
 
@@ -8258,7 +7932,6 @@ typedef struct {
 int ReadSMV(smv_case *scase, bufferstreamdata *stream){
   ReadSMV_Init(scase);
   ReadSMV_Parse(scase,stream);
-  // ReadSMV_Configure();
   return 0;
 }
 

@@ -3,6 +3,7 @@ include(CTest)
 add_test(NAME "Execute smokediff" COMMAND smokediff)
 add_test(NAME "Execute smokeview" COMMAND smokeview -v)
 add_test(NAME "Execute smokezip" COMMAND smokezip)
+add_test(NAME "Execute smvq" COMMAND smvq -V)
 
 # parse_simple_slice
 add_executable(parse_simple_slice parse_simple_slice.c
@@ -264,3 +265,6 @@ add_test(NAME "Mem Test"
 
 add_test(NAME "Simple HVAC Vals - Complete"
     COMMAND parse_hvac_vals ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_hvac.hvac)
+
+# add_test(NAME "smvq - parse smv file"
+#     COMMAND smvq ${CMAKE_SOURCE_DIR}/Tests/test_model_small/test_model_small.smv)
