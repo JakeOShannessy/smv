@@ -4219,7 +4219,7 @@ void MeshBoundCB(int var){
     MeshBoundCB(USEMESH_XYZ);
     break;
   case USEMESH_REMOVE_ALL:
-    for(i = 0; i < nmeshes; i++){
+    for(i = 0; i < meshescoll.nmeshes; i++){
       meshdata *meshi;
 
       meshi = meshescoll.meshinfo + i;
@@ -4271,7 +4271,7 @@ void MeshBoundCB(int var){
     }
     if(use_meshclip[0] == 0 && use_meshclip[1] == 0 && use_meshclip[2] == 0 &&
        use_meshclip[3] == 0 && use_meshclip[4] == 0 && use_meshclip[5] == 0)break;
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
 
       meshi = meshescoll.meshinfo + i;
@@ -5608,7 +5608,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
 
   PANEL_addmesh = glui_bounds->add_panel_to_panel(PANEL_setmesh, "", false);
   SPINNER_set_mesh = glui_bounds->add_spinner_to_panel(PANEL_addmesh, "mesh:", GLUI_SPINNER_INT, &set_mesh);
-  SPINNER_set_mesh->set_int_limits(1, nmeshes);
+  SPINNER_set_mesh->set_int_limits(1, meshescoll.nmeshes);
   glui_bounds->add_column_to_panel(PANEL_addmesh, false);
   glui_bounds->add_button_to_panel(PANEL_addmesh, "Add", USEMESH_SET_ONE, MeshBoundCB);
   glui_bounds->add_column_to_panel(PANEL_addmesh, false);

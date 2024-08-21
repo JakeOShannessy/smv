@@ -7672,7 +7672,7 @@ int GetNTotalVents(void){
   int ntotal_vents = 0;
   int i;
 
-  for(i = 0; i < nmeshes; i++){
+  for(i = 0; i < meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi = meshescoll.meshinfo + i;
@@ -7686,7 +7686,7 @@ int GetNTotalVents(void){
 int IsBoundaryType(int type){
   int i;
 
-  for(i = 0; i < nmeshes; i++){
+  for(i = 0; i < meshescoll.nmeshes; i++){
     meshdata *meshi;
     int n;
 
@@ -8441,7 +8441,7 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
       nloadsubmslicemenu++;
     }
   }
-  if(nmeshes>0){
+  if(meshescoll.nmeshes>0){
     int ii;
 
     iloadsubpatchmenu_s = 0;
