@@ -3885,7 +3885,7 @@ void UpdateMeshCoords(void){
     face_centers[14]=meshi->boxmin_scaled[2];
     face_centers[17]=meshi->boxmax_scaled[2];
   }
-  if(nterraininfo>0){
+  if(sextras.nterraininfo>0){
     boundaryoffset = (meshescoll.meshinfo->zplt_orig[1] - meshescoll.meshinfo->zplt_orig[0]) / 10.0;
   }
 
@@ -7055,10 +7055,10 @@ int ReadSMV_Init(){
   FREEMEMORY(fds_title);
 
   FREEMEMORY(treeinfo);
-  ntreeinfo=0;
+  sextras.ntreeinfo=0;
 
   int i;
-  for(i=0;i<nterraininfo;i++){
+  for(i=0;i<sextras.nterraininfo;i++){
     terraindata *terri;
 
     terri = terraininfo + i;
@@ -7068,7 +7068,7 @@ int ReadSMV_Init(){
     FREEMEMORY(terri->znode);
   }
   FREEMEMORY(terraininfo);
-  nterraininfo=0;
+  sextras.nterraininfo=0;
   niso_compressed=0;
   if(sphereinfo==NULL){
     NewMemory((void **)&sphereinfo,sizeof(spherepoints));
@@ -7547,7 +7547,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     if(MatchSMV(buffer,"TERRAIN") == 1){
       manual_terrain = 1;
       FGETS(buffer, 255, stream);
-      nterraininfo++;
+      sextras.nterraininfo++;
       continue;
     }
     if(MatchSMV(buffer,"CLASS_OF_PARTICLES") == 1){
@@ -7913,9 +7913,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
    NewMemory((void **)&propinfo,npropinfo*sizeof(propdata));
    npropinfo=1; // the 0'th prop is the default human property
  }
- if(nterraininfo>0){
-   NewMemory((void **)&terraininfo,nterraininfo*sizeof(terraindata));
-   nterraininfo=0;
+ if(sextras.nterraininfo>0){
+   NewMemory((void **)&terraininfo,sextras.nterraininfo*sizeof(terraindata));
+   sextras.nterraininfo=0;
  }
  if(npartclassinfo>=0){
    float rgb_class[4];
@@ -8658,10 +8658,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       NewMemory((void **)&file, len_buffer+1);
       strcpy(file, buffer_ptr);
 
-      terraini = terraininfo + nterraininfo;
+      terraini = terraininfo + sextras.nterraininfo;
       terraini->file = file;
       if(mesh_terrain==-1){
-        mesh_terrain = nterraininfo;    // no mesh_terrain on TERRAIN line so assume that number of TERRAIN and MESH lines are the same
+        mesh_terrain = sextras.nterraininfo;    // no mesh_terrain on TERRAIN line so assume that number of TERRAIN and MESH lines are the same
       }
       else{
         mesh_terrain--;                 // mesh_terrain on TERRAIN line goes from 1 to number of meshes so subtract 1
@@ -8669,7 +8669,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       meshescoll.meshinfo[mesh_terrain].terrain = terraini;
       terraini->terrain_mesh = meshescoll.meshinfo+mesh_terrain;
       terraini->defined = 0;
-      nterraininfo++;
+      sextras.nterraininfo++;
       continue;
     }
   /*
@@ -9071,7 +9071,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
       FGETS(buffer,255,stream);
       bufferptr=TrimFrontBack(buffer);
-      strcpy(surfacedefaultlabel,TrimFront(bufferptr));
+      strcpy(sextras.surfacedefaultlabel,TrimFront(bufferptr));
       continue;
     }
   /*
@@ -9957,7 +9957,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
   surfacedefault=&sdefault;
   for(i=0;i<surf_coll.nsurfinfo;i++){
-    if(strcmp(surfacedefaultlabel,surf_coll.surfinfo[i].surfacelabel)==0){
+    if(strcmp(sextras.surfacedefaultlabel,surf_coll.surfinfo[i].surfacelabel)==0){
       surfacedefault=surf_coll.surfinfo+i;
       break;
     }
@@ -10456,11 +10456,11 @@ typedef struct {
 */
     if(MatchSMV(buffer,"TREE") == 1){
       FGETS(buffer,255,stream);
-      if(ntreeinfo!=0)continue;
-      sscanf(buffer,"%i",&ntreeinfo);
-      if(ntreeinfo>0){
-        NewMemory((void **)&treeinfo,sizeof(treedata)*ntreeinfo);
-        for(i=0;i<ntreeinfo;i++){
+      if(sextras.ntreeinfo!=0)continue;
+      sscanf(buffer,"%i",&sextras.ntreeinfo);
+      if(sextras.ntreeinfo>0){
+        NewMemory((void **)&treeinfo,sizeof(treedata)*sextras.ntreeinfo);
+        for(i=0;i<sextras.ntreeinfo;i++){
           treedata *treei;
           float *xyz;
 
@@ -10487,10 +10487,10 @@ typedef struct {
       float tree_time;
       treedata *treei;
 
-      if(ntreeinfo==0)continue;
+      if(sextras.ntreeinfo==0)continue;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %i %f",&tree_index,&tree_state,&tree_time);
-      if(tree_index>=1&&tree_index<=ntreeinfo){
+      if(tree_index>=1&&tree_index<=sextras.ntreeinfo){
         treei = treeinfo + tree_index - 1;
         if(tree_state==1){
           treei->time_char = tree_time;

@@ -1861,6 +1861,9 @@ typedef struct {
   int nzhvents;
   int nzvvents;
   int nzmvents;
+  int ntreeinfo;
+  char surfacedefaultlabel[256];
+  int nterraininfo;
 } smv_extras;
 
 // TODO: remove each of these struct fields as global variables

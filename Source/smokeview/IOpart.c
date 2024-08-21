@@ -197,7 +197,7 @@ void DrawPart(const partdata *parti, int mode){
   float valmin, valmax;
 
   if(nglobal_times<1||parti->times[0] > global_times[itimes])return;
-  if(nterraininfo > 0 && ABS(vertical_factor - 1.0) > 0.01){
+  if(sextras.nterraininfo > 0 && ABS(vertical_factor - 1.0) > 0.01){
     offset_terrain = 1;
   }
   else{
@@ -950,7 +950,7 @@ void CreatePartBoundFile(partdata *parti){
   int nparts_local, *numtypes_local = NULL, numtypes_temp_local[2];
   FILE *stream_out_local=NULL;
 
-  
+
   if(parti->reg_file == NULL)return;
   stream = fopen_b(parti->reg_file, NULL, 0, "rb");
   if(stream==NULL)return;

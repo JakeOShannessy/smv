@@ -126,7 +126,7 @@ int updateindexcolors = 0;
 int cellcenter_slice_active = 0;
 treedata *treeinfo = NULL;
 terraindata *terraininfo = NULL;
-int ntreeinfo = 0, nterraininfo = 0, visTerrainType = 0;
+int visTerrainType = 0;
 int ntickinfo = 0,ntickinfo_smv = 0;
 float *ventcolor = NULL;
 int niso_compressed;
@@ -160,12 +160,9 @@ int SVDECL(have_cface_normals, CFACE_NORMALS_NO);
 GLfloat SVDECL(block_shininess,100.0);
 char SVDECL(**colorlabelzone,NULL);
 int SVDECL(nrgb2,8);
-int visFloor = 0, SVDECL(visFrame,1);
 char *database_filename = NULL;
-char *expcsv_filename = NULL;
 float SVDECL(pref,101325.0),pamb = 0.0,SVDECL(tamb,293.15);
 surfdata sdefault,v_surfacedefault,e_surfacedefault;
-char surfacedefaultlabel[256];
 float SVDECL(global_hrrpuv_cutoff, 200.0), SVDECL(global_hrrpuv_cutoff_default, 200.0);
 float load_hrrpuv_cutoff=200.0;
 int  nrgb= NRGB;
@@ -174,7 +171,6 @@ float foregroundcolor[4]      = {1.0, 1.0, 1.0, 1.0};
 #else
 float foregroundcolor[4];
 #endif
-int visWalls = 0, visCeiling = 0;
 float SVDECL(linewidth, 2.0), SVDECL(ventlinewidth, 2.0);
 int clip_I,clip_J,clip_K;
 int ntc_total = 0.0, nspr_total = 0.0, nheat_total = 0.0;
@@ -3374,10 +3370,10 @@ int ReadSMV_Init(smv_case *scase) {
   FREEMEMORY(scase->fds_title);
 
   FREEMEMORY(treeinfo);
-  ntreeinfo=0;
+  sextras.ntreeinfo=0;
 
   int i;
-  for(i=0;i<nterraininfo;i++){
+  for(i=0;i<sextras.nterraininfo;i++){
     terraindata *terri;
 
     terri = terraininfo + i;
@@ -3387,7 +3383,7 @@ int ReadSMV_Init(smv_case *scase) {
     FREEMEMORY(terri->znode);
   }
   FREEMEMORY(terraininfo);
-  nterraininfo=0;
+  sextras.nterraininfo=0;
   niso_compressed=0;
   if(sphereinfo==NULL){
     NewMemory((void **)&sphereinfo,sizeof(spherepoints));
@@ -3849,7 +3845,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     if(MatchSMV(buffer,"TERRAIN") == 1){
       manual_terrain = 1;
       FGETS(buffer, 255, stream);
-      nterraininfo++;
+      sextras.nterraininfo++;
       continue;
     }
     if(MatchSMV(buffer,"CLASS_OF_PARTICLES") == 1){
@@ -4215,9 +4211,9 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
    NewMemory((void **)&scase->propcoll.propinfo,scase->propcoll.npropinfo*sizeof(propdata));
    scase->propcoll.npropinfo=1; // the 0'th prop is the default human property
  }
- if(nterraininfo>0){
-   NewMemory((void **)&terraininfo,nterraininfo*sizeof(terraindata));
-   nterraininfo=0;
+ if(sextras.nterraininfo>0){
+   NewMemory((void **)&terraininfo,sextras.nterraininfo*sizeof(terraindata));
+   sextras.nterraininfo=0;
  }
  if(scase->npartclassinfo>=0){
    float rgb_class[4];
@@ -4962,10 +4958,10 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       NewMemory((void **)&file, len_buffer+1);
       strcpy(file, buffer_ptr);
 
-      terraini = terraininfo + nterraininfo;
+      terraini = terraininfo + sextras.nterraininfo;
       terraini->file = file;
       if(mesh_terrain==-1){
-        mesh_terrain = nterraininfo;    // no mesh_terrain on TERRAIN line so assume that number of TERRAIN and MESH lines are the same
+        mesh_terrain = sextras.nterraininfo;    // no mesh_terrain on TERRAIN line so assume that number of TERRAIN and MESH lines are the same
       }
       else{
         mesh_terrain--;                 // mesh_terrain on TERRAIN line goes from 1 to number of meshes so subtract 1
@@ -4973,7 +4969,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       scase->meshescoll.meshinfo[mesh_terrain].terrain = terraini;
       terraini->terrain_mesh = scase->meshescoll.meshinfo+mesh_terrain;
       terraini->defined = 0;
-      nterraininfo++;
+      sextras.nterraininfo++;
       continue;
     }
   /*
@@ -5375,7 +5371,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
 
       FGETS(buffer,255,stream);
       bufferptr=TrimFrontBack(buffer);
-      strcpy(surfacedefaultlabel,TrimFront(bufferptr));
+      strcpy(sextras.surfacedefaultlabel,TrimFront(bufferptr));
       continue;
     }
   /*
@@ -5679,7 +5675,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       roomdata *roomi;
 
       sextras.isZoneFireModel=1;
-      visFrame=0;
+      // TODO: POSTPARSE: display configuration
+      // visFrame=0;
       roomdefined=1;
       iroom++;
       roomi = scase->roominfo + iroom - 1;
@@ -5796,13 +5793,13 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   scase->devicecoll.ndeviceinfo=0;
   REWIND(stream);
 
-  if(FILE_EXISTS_CASEDIR(expcsv_filename)==YES){
+  if(FILE_EXISTS_CASEDIR(scase->paths.expcsv_filename)==YES){
     csvfiledata *csvi;
     char csv_type[256];
 
     csvi = scase->csvcoll.csvfileinfo + scase->csvcoll.ncsvfileinfo;
     strcpy(csv_type, "ext");
-    InitCSV(csvi, expcsv_filename, csv_type, CSV_FDS_FORMAT);
+    InitCSV(csvi, scase->paths.expcsv_filename, csv_type, CSV_FDS_FORMAT);
     scase->csvcoll.ncsvfileinfo++;
   }
 
@@ -6258,7 +6255,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
 
   surfacedefault=&sdefault;
   for(i=0;i<scase->surfcoll.nsurfinfo;i++){
-    if(strcmp(surfacedefaultlabel,scase->surfcoll.surfinfo[i].surfacelabel)==0){
+    if(strcmp(sextras.surfacedefaultlabel,scase->surfcoll.surfinfo[i].surfacelabel)==0){
       surfacedefault=scase->surfcoll.surfinfo+i;
       break;
     }
@@ -6757,11 +6754,11 @@ typedef struct {
 */
     if(MatchSMV(buffer,"TREE") == 1){
       FGETS(buffer,255,stream);
-      if(ntreeinfo!=0)continue;
-      sscanf(buffer,"%i",&ntreeinfo);
-      if(ntreeinfo>0){
-        NewMemory((void **)&treeinfo,sizeof(treedata)*ntreeinfo);
-        for(i=0;i<ntreeinfo;i++){
+      if(sextras.ntreeinfo!=0)continue;
+      sscanf(buffer,"%i",&sextras.ntreeinfo);
+      if(sextras.ntreeinfo>0){
+        NewMemory((void **)&treeinfo,sizeof(treedata)*sextras.ntreeinfo);
+        for(i=0;i<sextras.ntreeinfo;i++){
           treedata *treei;
           float *xyz;
 
@@ -6788,10 +6785,10 @@ typedef struct {
       float tree_time;
       treedata *treei;
 
-      if(ntreeinfo==0)continue;
+      if(sextras.ntreeinfo==0)continue;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %i %f",&tree_index,&tree_state,&tree_time);
-      if(tree_index>=1&&tree_index<=ntreeinfo){
+      if(tree_index>=1&&tree_index<=sextras.ntreeinfo){
         treei = treeinfo + tree_index - 1;
         if(tree_state==1){
           treei->time_char = tree_time;
@@ -7294,11 +7291,12 @@ typedef struct {
       }
       ndummyvents=0;
       sscanf(buffer,"%i %i",&nvents,&ndummyvents);
-      if(ndummyvents!=0){
-        visFloor=0;
-        visCeiling=0;
-        visWalls=0;
-      }
+      // TODO: POSTPARSE: display configuration
+      // if(ndummyvents!=0){
+      //   visFloor=0;
+      //   visCeiling=0;
+      //   visWalls=0;
+      // }
       meshi->nvents=nvents;
       meshi->ndummyvents=ndummyvents;
       vinfo=NULL;

@@ -11254,7 +11254,7 @@ static int menu_count=0;
   GLUTADDSUBMENU(_("Color"), colorbarmenu);
   GLUTADDSUBMENU(_("Geometry"),geometrymenu);
   if(hvaccoll.nhvacinfo>0)GLUTADDSUBMENU(_("HVAC"), hvacmenu);
-  if(nterraininfo>0&&ngeominfo==0){
+  if(sextras.nterraininfo>0&&ngeominfo==0){
     GLUTADDSUBMENU(_("Terrain"), terrain_obst_showmenu);
   }
   if(GetNumActiveDevices()>0||sextras.ncvents>0){
@@ -11617,7 +11617,7 @@ static int menu_count=0;
     glutAddMenuEntry(_("Examine geometry...  "), DIALOG_GEOMETRY);
   }
 #endif
-  if(nterraininfo>0&&ngeominfo==0){
+  if(sextras.nterraininfo>0&&ngeominfo==0){
     glutAddMenuEntry(_("Terrain..."), DIALOG_TERRAIN);
   }
   if(hvaccoll.nhvacinfo > 0){
@@ -12986,7 +12986,7 @@ static int menu_count=0;
 
       // terrain
 
-      if(manual_terrain==1&&nterraininfo>0){
+      if(manual_terrain==1&&sextras.nterraininfo>0){
  //       GLUTADDSUBMENU(_("Terrain"),loadterrainmenu);
       }
 

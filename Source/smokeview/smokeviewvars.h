@@ -1840,7 +1840,7 @@ SVEXTERN object_collection SVDECL(*objectscoll,NULL);
 SVEXTERN device_texture_list_collection SVDECL(device_texture_list_coll,{0});
 SVEXTERN treedata SVDECL(*treeinfo,NULL);
 SVEXTERN terraindata SVDECL(*terraininfo,NULL);
-SVEXTERN int SVDECL(ntreeinfo,0), SVDECL(nterraininfo,0), SVDECL(visTerrainType,0);
+SVEXTERN int SVDECL(visTerrainType,0);
 SVEXTERN float treecolor[4];
 #ifdef INMAIN
 SVEXTERN float treecharcolor[4]={0.3,0.3,0.3,1.0};
@@ -2136,7 +2136,6 @@ SVEXTERN int surface_indices[7];
 SVEXTERN int surface_indices_bak[7];
 SVEXTERN int SVDECL(wall_case,0);
 SVEXTERN surfdata SVDECL(*surfacedefault,NULL), SVDECL(*vent_surfacedefault,NULL), SVDECL(*exterior_surfacedefault,NULL);
-SVEXTERN char surfacedefaultlabel[256];
 SVEXTERN int ntotalfaces;
 SVEXTERN color_collection SVDECL(colorcoll,{0});
 SVEXTERN terrain_texture_collection SVDECL(terrain_texture_coll,{0});

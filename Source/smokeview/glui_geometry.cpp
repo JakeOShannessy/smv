@@ -1104,7 +1104,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
     BUTTON_reset_zbounds = glui_geometry->add_button_to_panel(PANEL_elevation_color, _("Reset"), RESET_ZBOUNDS, VolumeCB);
   }
 
-  if(nterraininfo>0&&ngeominfo==0){
+  if(sextras.nterraininfo>0&&ngeominfo==0){
     ROLLOUT_terrain = glui_geometry->add_rollout("Terrain", false, TERRAIN_ROLLOUT, GeomRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_terrain, glui_geometry);
     ADDPROCINFO(geomprocinfo, ngeomprocinfo, ROLLOUT_terrain, TERRAIN_ROLLOUT, glui_geometry);

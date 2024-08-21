@@ -1575,7 +1575,7 @@ void InitVars(void){
   strcpy(ext_jpg,".jpg");
   render_filetype=PNG;
 
-  strcpy(surfacedefaultlabel,"");
+  strcpy(sextras.surfacedefaultlabel,"");
   if(streak_index>=0)float_streak5value=streak_rvalue[streak_index];
 
   objectscoll = CreateObjectCollection();

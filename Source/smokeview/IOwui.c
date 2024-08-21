@@ -707,7 +707,7 @@ void DrawTrees(void){
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
   glTranslatef(-xbar0,-ybar0,-zbar0);
-  for(i=0;i<ntreeinfo;i++){
+  for(i=0;i<sextras.ntreeinfo;i++){
     treedata *treei;
     float crown_height;
     int state;
@@ -1864,10 +1864,10 @@ void UpdateTerrain(int allocate_memory){
     int i;
 
     if(manual_terrain==0){
-      nterraininfo = meshescoll.nmeshes;
+      sextras.nterraininfo = meshescoll.nmeshes;
       if(allocate_memory==1&&manual_terrain==0){
-        NewMemory((void **)&terraininfo, nterraininfo*sizeof(terraindata));
-        for(i = 0; i<nterraininfo; i++){
+        NewMemory((void **)&terraininfo, sextras.nterraininfo*sizeof(terraindata));
+        for(i = 0; i<sextras.nterraininfo; i++){
           terraindata *terri;
 
           terri = terraininfo+i;
@@ -1948,7 +1948,7 @@ void UpdateTerrain(int allocate_memory){
     }
     CheckMemory;
   }
-  if(nterraininfo>0){
+  if(sextras.nterraininfo>0){
     int imesh;
 
     for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
@@ -2016,7 +2016,7 @@ int HaveTerrainSlice(void){
 /* ------------------ UpdateTerrainOptions ------------------------ */
 
 void UpdateTerrainOptions(void){
-  if(nterraininfo>0||auto_terrain==1){
+  if(sextras.nterraininfo>0||auto_terrain==1){
     visOpenVents=0;
     visDummyVents=0;
     updatemenu=1;

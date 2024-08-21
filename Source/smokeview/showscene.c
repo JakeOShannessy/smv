@@ -76,7 +76,7 @@ void ShowScene2(int mode){
 
     /* ++++++++++++++++++++++++ DrawTrees +++++++++++++++++++++++++ */
 
-    if(ntreeinfo>0){
+    if(sextras.ntreeinfo>0){
       CLIP_GEOMETRY;
       DrawTrees();
       SNIFF_ERRORS("after DrawTrees");
@@ -344,7 +344,7 @@ void ShowScene2(int mode){
   CLIP_GEOMETRY;
   DrawTerrainGeom(DRAW_OPAQUE);
 
-  if(visTerrainType != TERRAIN_HIDDEN&&nterraininfo>0&&ngeominfo==0 && geom_bounding_box_mousedown==0){
+  if(visTerrainType != TERRAIN_HIDDEN&&sextras.nterraininfo>0&&ngeominfo==0 && geom_bounding_box_mousedown==0){
     int i;
 
     //shaded  17 0
@@ -361,7 +361,7 @@ void ShowScene2(int mode){
       flag = TERRAIN_TOP_SIDE;
     }
     CLIP_GEOMETRY;
-    for(i = 0;i<nterraininfo;i++){
+    for(i = 0;i<sextras.nterraininfo;i++){
       terraindata *terri;
 
       terri = terraininfo + i;
