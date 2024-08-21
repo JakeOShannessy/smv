@@ -714,12 +714,12 @@ void DrawOrigObstOutlines(void){
 void DrawOutlines(void){
   int i;
 
-  if(noutlineinfo<=0)return;
+  if(sextras.noutlineinfo<=0)return;
   AntiAliasLine(ON);
   glLineWidth(linewidth);
   glBegin(GL_LINES);
   glColor3fv(foregroundcolor);
-  for(i=0;i<noutlineinfo;i++){
+  for(i=0;i<sextras.noutlineinfo;i++){
     outlinedata *outlinei;
     float *xx1, *yy1, *zz1;
     float *xx2, *yy2, *zz2;

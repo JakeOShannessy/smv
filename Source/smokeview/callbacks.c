@@ -2232,8 +2232,8 @@ void Keyboard(unsigned char key, int flag){
           updatemenu = 1;
           glutPostRedisplay();
         }
-        if(highlight_flag>2&&noutlineinfo>0)highlight_flag=0;
-        if(highlight_flag>1&&noutlineinfo==0)highlight_flag=0;
+        if(highlight_flag>2&&sextras.noutlineinfo>0)highlight_flag=0;
+        if(highlight_flag>1&&sextras.noutlineinfo==0)highlight_flag=0;
         PRINTF("outline mode=%i\n",highlight_flag);
       }
       break;

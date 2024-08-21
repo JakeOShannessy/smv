@@ -3732,7 +3732,7 @@ void UpdateMeshCoords(void){
     meshi->zcen = FDS2SMV_Z(meshi->zcen);
   }
 
-  for(i=0;i<noutlineinfo;i++){
+  for(i=0;i<sextras.noutlineinfo;i++){
     outlinedata *outlinei;
     float *x1, *x2, *yy1, *yy2, *z1, *z2;
     int j;
@@ -7205,8 +7205,8 @@ int ReadSMV_Init(){
   ReadDefaultObjectCollection(objectscoll, fdsprefix, setbw, sextras.isZoneFireModel);
   PRINT_TIMER(timer_setup, "InitSurface");
 
-  if(noutlineinfo>0){
-    for(i=0;i<noutlineinfo;i++){
+  if(sextras.noutlineinfo>0){
+    for(i=0;i<sextras.noutlineinfo;i++){
       outlinedata *outlinei;
 
       outlinei = outlineinfo + i;
@@ -7218,7 +7218,7 @@ int ReadSMV_Init(){
       FREEMEMORY(outlinei->z2);
     }
     FREEMEMORY(outlineinfo);
-    noutlineinfo=0;
+    sextras.noutlineinfo=0;
   }
 
   if(nzoneinfo>0){
@@ -7717,7 +7717,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"OUTLINE") == 1){
-      noutlineinfo++;
+      sextras.noutlineinfo++;
       continue;
     }
     if(MatchSMV(buffer,"TICKS") == 1){
@@ -8120,9 +8120,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     if (cadgeomcoll == NULL) return 2;
   }
 
-  if(noutlineinfo>0){
-    if(NewMemory((void **)&outlineinfo,noutlineinfo*sizeof(outlinedata))==0)return 2;
-    for(i=0;i<noutlineinfo;i++){
+  if(sextras.noutlineinfo>0){
+    if(NewMemory((void **)&outlineinfo,sextras.noutlineinfo*sizeof(outlinedata))==0)return 2;
+    for(i=0;i<sextras.noutlineinfo;i++){
       outlinedata *outlinei;
 
       outlinei = outlineinfo + i;
@@ -8167,7 +8167,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   startpass=1;
   ioffset=0;
   iobst=0;
-  noutlineinfo=0;
+  sextras.noutlineinfo=0;
   if(sextras.noffset==0)ioffset=1;
 
   REWIND(stream);
@@ -9007,8 +9007,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     if(MatchSMV(buffer,"OUTLINE") == 1){
       outlinedata *outlinei;
 
-      noutlineinfo++;
-      outlinei = outlineinfo + noutlineinfo - 1;
+      sextras.noutlineinfo++;
+      outlinei = outlineinfo + sextras.noutlineinfo - 1;
       if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
@@ -11708,7 +11708,7 @@ int ReadSMV_Configure(){
   InitClip();
   PRINT_TIMER(timer_readsmv, "InitClip");
 
-  if(noutlineinfo>0){
+  if(sextras.noutlineinfo>0){
     highlight_flag=2;
   }
   else{

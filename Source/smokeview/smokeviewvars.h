@@ -2191,7 +2191,6 @@ SVEXTERN fileboundsdata SVDECL(*sliceboundsinfo, NULL), SVDECL(*patchboundsinfo,
 SVEXTERN int SVDECL(nsliceboundsinfo, 0), SVDECL(npatchboundsinfo, 0);
 SVEXTERN camdata SVDECL(*caminfo,NULL);
 SVEXTERN outlinedata SVDECL(*outlineinfo,NULL);
-SVEXTERN int SVDECL(noutlineinfo,0);
 SVEXTERN int SVDECL(*sliceorderindex,NULL),SVDECL(*vsliceorderindex,NULL),SVDECL(*partorderindex,NULL);
 SVEXTERN int SVDECL(*patchorderindex,NULL),SVDECL(*isoorderindex,NULL),SVDECL(*plot3dorderindex,NULL);
 SVEXTERN int SVDECL(showfiles,0);
