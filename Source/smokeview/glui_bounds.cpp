@@ -446,7 +446,7 @@ void bounds_dialog::setup(const char *file_type, GLUI_Rollout * ROLLOUT_dialog, 
     if(strcmp(file_type, "slice")==0){
       CHECKBOX_chop_hide = glui_bounds->add_checkbox_to_panel(ROLLOUT_truncate, "hide triangles with truncated values", &(bounds.chop_hide), BOUND_CHOP_HIDE, Callback);
     }
-
+    
     Callback(BOUND_VAL_TYPE);
     Callback(BOUND_SETCHOPMIN);
     Callback(BOUND_SETCHOPMAX);
@@ -1990,7 +1990,7 @@ extern "C" void GLUIHVACSliceBoundsCPP_CB(int var){
       }
       if(hist_update == 1||bounds->hist==NULL){
         float global_min, global_max;
-
+        
         GLUIGetGlobalBoundsMinMax(BOUND_SLICE, bounds->label, &global_min, &global_max);
         ComputeLoadedSliceHist(bounds->label, global_min, global_max);
         MergeLoadedSliceHist(bounds->label, &(bounds->hist));
@@ -2382,7 +2382,7 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
       }
       if(hist_update == 1||bounds->hist==NULL){
         float global_min, global_max;
-
+        
         GLUIGetGlobalBoundsMinMax(BOUND_PATCH, bounds->label, &global_min, &global_max);
         ComputeLoadedPatchHist(bounds->label, &(bounds->hist), &global_min, &global_max);
       }
@@ -5520,7 +5520,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
   ROLLOUT_autoload = glui_bounds->add_rollout_to_panel(PANEL_loadbounds,_("Auto load"), false, LOAD_AUTO_ROLLOUT, LoadRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_autoload, glui_bounds);
   ADDPROCINFO(loadprocinfo, nloadprocinfo, ROLLOUT_autoload, LOAD_AUTO_ROLLOUT, glui_bounds);
-
+  
   glui_bounds->add_checkbox_to_panel(ROLLOUT_autoload, _("Auto load at startup"), &loadfiles_at_startup, STARTUP, BoundBoundCB);
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, _("Save auto load file list"), SAVE_FILE_LIST, BoundBoundCB);
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, _("Auto load now"), LOAD_FILES, BoundBoundCB);
@@ -6160,7 +6160,7 @@ extern "C" void GLUIIsoBoundCB(int var){
     EDIT_iso_valmin->set_float_val(glui_iso_valmin);
     glutPostRedisplay();
     break;
-
+    
   case ISO_SETVALMAX:
     switch(setisomax){
       case SET_MAX:

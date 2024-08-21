@@ -130,3 +130,8 @@ SV_EXTERN void CalcNormal2f(const float *v1,
                            float *out, float *area);
 SV_EXTERN int GetNormalSurface(isosurface *surfacedata);
 #endif
+
+
+
+
+
