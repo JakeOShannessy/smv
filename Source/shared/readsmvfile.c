@@ -98,7 +98,6 @@ char *smokeview_scratchdir = NULL;
 int have_compressed_files = 0;
 int update_smoke_alphas = 0;
 int *sliceorderindex = NULL, *vsliceorderindex = NULL;
-int ngeom_data = 0;
 float texture_origin[3]={0.0,0.0,0.0};
 //***isosurface
 int SVDECL(use_isosurface_threads, 1);
@@ -147,9 +146,6 @@ int auto_terrain = 0,manual_terrain = 0;
 int SVDECL(visOtherVents,1),SVDECL(visOtherVentsSAVE,1);
 int update_terrain_type = 0;
 float SVDECL(global_tbegin, 1.0), global_tend = 0.0;
-int clip_mesh = 0;
-int setPDIM = 0;
-int zonecsv = 0, nzvents = 0, nzhvents = 0, nzvvents = 0, nzmvents = 0;
 #ifdef INMAIN
 int hvac_duct_color[3] = { 63,0,15};
 int hvac_node_color[3] = { 63,0,15};
@@ -2162,7 +2158,7 @@ int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
     patchi->patch_filetype = PATCH_STRUCTURED_CELL_CENTER;
   }
   if(Match(buffer, "BNDE")==1){
-    ngeom_data++;
+    sextras.ngeom_data++;
     patchi->patch_filetype = PATCH_GEOMETRY_BOUNDARY;
     patchi->structured = NO;
   }
@@ -2171,7 +2167,7 @@ int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
     char *sliceparms;
 
     CheckMemory;
-    ngeom_data++;
+    sextras.ngeom_data++;
     patchi->patch_filetype = PATCH_GEOMETRY_SLICE;
     patchi->structured = NO;
     patchi->boundary = 0;
@@ -3609,7 +3605,7 @@ int ReadSMV_Init(smv_case *scase) {
   scase->surfcoll.nsurfinfo=0;
   sextras.nvent_transparent=0;
 
-  setPDIM=0;
+  sextras.setPDIM=0;
 
   FREEMEMORY(database_filename);
 
@@ -4058,7 +4054,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     }
     if(MatchSMV(buffer,"PDIM") == 1){
       sextras.npdim++;
-      setPDIM=1;
+      sextras.setPDIM=1;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f %f %f %f",&xbar0,&xbar,&ybar0,&ybar,&zbar0,&zbar);
       continue;
@@ -4169,7 +4165,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
        MatchSMV(buffer, "HFLOWGEOM")==1||
        MatchSMV(buffer, "VFLOWGEOM")==1||
        MatchSMV(buffer, "MFLOWGEOM")==1){
-      nzvents++;
+      sextras.nzvents++;
       continue;
     }
     if(MatchSMV(buffer, "HVENTGEOM")==1||
@@ -4326,7 +4322,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     meshi->plotn=1;
     meshi->itextureoffset=0;
   }
-  if(setPDIM==0){
+  if(sextras.setPDIM==0){
     meshdata *meshi;
 
     if(roomdefined==0){
@@ -4405,14 +4401,14 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     if(NewMemory((void **)&scase->zoneinfo,scase->nzoneinfo*sizeof(zonedata))==0)return 2;
   }
   FREEMEMORY(scase->zventinfo);
-  if(nzventsnew>0)nzvents=nzventsnew;
-  if(nzvents>0){
-    if(NewMemory((void **)&scase->zventinfo,nzvents*sizeof(zventdata))==0)return 2;
+  if(nzventsnew>0)sextras.nzvents=nzventsnew;
+  if(sextras.nzvents>0){
+    if(NewMemory((void **)&scase->zventinfo,sextras.nzvents*sizeof(zventdata))==0)return 2;
   }
-  nzvents=0;
-  nzhvents=0;
-  nzvvents=0;
-  nzmvents = 0;
+  sextras.nzvents=0;
+  sextras.nzhvents=0;
+  sextras.nzvvents=0;
+  sextras.nzmvents = 0;
 
   FREEMEMORY(scase->texture_coll.textureinfo);
   FREEMEMORY(scase->surfcoll.surfinfo);
@@ -5629,11 +5625,11 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       if(filename!=NULL)period=strrchr(filename,'.');
       if(filename!=NULL&&period!=NULL&&strcmp(period,".csv")==0){
         zonei->csv=1;
-        zonecsv=1;
+        sextras.zonecsv=1;
       }
       else{
         zonei->csv=0;
-        zonecsv=0;
+        sextras.zonecsv=0;
         filename= GetZoneFileName(bufferptr);
       }
 
@@ -5705,7 +5701,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       roomi->y1=roomi->y0+roomi->dy;
       roomi->z1=roomi->z0+roomi->dz;
 
-      if(setPDIM==0){
+      if(sextras.setPDIM==0){
         if(roomi->x0<xbar0)xbar0=roomi->x0;
         if(roomi->y0<ybar0)ybar0=roomi->y0;
         if(roomi->z0<zbar0)zbar0=roomi->z0;
@@ -5778,7 +5774,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     meshi->ploty=jbartemp/2;
     meshi->plotz=kbartemp/2;
   }
-  if(setPDIM==0&&roomdefined==1){
+  if(sextras.setPDIM==0&&roomdefined==1){
     meshdata *meshi;
 
     meshi=scase->meshescoll.meshinfo;
@@ -6414,8 +6410,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       float color[4];
       float vent_width,ventoffset,bottom,top;
 
-      nzvents++;
-      zvi = scase->zventinfo + nzvents - 1;
+      sextras.nzvents++;
+      zvi = scase->zventinfo + sextras.nzvents - 1;
       if(MatchSMV(buffer,"VFLOWGEOM")==1||
          MatchSMV(buffer,"VVENTGEOM")==1)vent_type=VFLOW_VENT;
       if(MatchSMV(buffer, "MFLOWGEOM") == 1 ||
@@ -6431,7 +6427,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       if(vent_type==HFLOW_VENT){
         float area_fraction=1.0;
 
-        nzhvents++;
+        sextras.nzhvents++;
         sscanf(buffer,"%i %i %i %f %f %f %f %f %f %f %f",
           &roomfrom,&roomto, &wall,&vent_width,&ventoffset,&bottom,&top,
           color,color+1,color+2,&area_fraction
@@ -6486,7 +6482,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         int r_from, r_to;
         float area_fraction=1.0;
 
-        nzvvents++;
+        sextras.nzvvents++;
         sscanf(buffer,"%i %i %i %f %i %f %f %f %f",
           &r_from,&r_to,&wall,&vent_area,&vertical_vent_type,
           color,color+1,color+2, &area_fraction
@@ -6535,7 +6531,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         zvi->color = GetColorPtr(&scase->colorcoll, color);
       }
       else if(vent_type==MFLOW_VENT){
-        nzmvents++;
+        sextras.nzmvents++;
         ReadZVentData(scase, zvi, buffer, ZVENT_1ROOM);
       }
       CheckMemory;
@@ -6550,8 +6546,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       if(MatchSMV(buffer, "MFLOWPOS") == 1 ||
          MatchSMV(buffer, "MVENTPOS") == 1)vent_type = MFLOW_VENT;
 
-      nzvents++;
-      zvi = scase->zventinfo + nzvents - 1;
+      sextras.nzvents++;
+      zvi = scase->zventinfo + sextras.nzvents - 1;
 
       zvi->vent_type = vent_type;
       if(FGETS(buffer, 255, stream) == NULL){
@@ -6561,15 +6557,15 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       CheckMemory;
       switch(vent_type){
       case HFLOW_VENT:
-        nzhvents++;
+        sextras.nzhvents++;
         ReadZVentData(scase, zvi, buffer,ZVENT_2ROOM);
         break;
       case VFLOW_VENT:
-        nzvvents++;
+        sextras.nzvvents++;
         ReadZVentData(scase, zvi, buffer, ZVENT_2ROOM);
         break;
       case MFLOW_VENT:
-        nzmvents++;
+        sextras.nzmvents++;
         ReadZVentData(scase, zvi, buffer, ZVENT_1ROOM);
         break;
       default:

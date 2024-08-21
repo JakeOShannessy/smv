@@ -3978,7 +3978,7 @@ void BoundBoundCB(int var){
     break;
 #endif
   case SHOW_BOUNDARY_OUTLINE:
-    if(ngeom_data==0)break;
+    if(sextras.ngeom_data==0)break;
     if(show_boundary_outline==1&&boundary_edgetype==OUTLINE_HIDDEN)boundary_edgetype = OUTLINE_POLYGON;
     if(show_boundary_outline==0&&boundary_edgetype!=OUTLINE_HIDDEN)boundary_edgetype = OUTLINE_HIDDEN;
     if(boundary_edgetype!=RADIO_boundary_edgetype->get_int_val())RADIO_boundary_edgetype->set_int_val(boundary_edgetype);
@@ -4970,7 +4970,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
     INSERT_ROLLOUT(ROLLOUT_boundary_settings, glui_bounds);
     ADDPROCINFO(subboundprocinfo, nsubboundprocinfo, ROLLOUT_boundary_settings, BOUNDARY_SETTINGS_ROLLOUT, glui_bounds);
 
-    if(ngeom_data > 0){
+    if(sextras.ngeom_data > 0){
       glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_settings, _("shaded"), &show_boundary_shaded);
       CHECKBOX_show_boundary_outline=glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_settings, _("outline"), &show_boundary_outline, SHOW_BOUNDARY_OUTLINE, BoundBoundCB);
       glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_settings, _("points"), &show_boundary_points);
@@ -5381,7 +5381,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
 
 
     RADIO_button_cutcell = glui_bounds->add_radiobutton_to_group(RADIO_slice_celltype, "cut cell");
-    if(ngeom_data==0)RADIO_button_cutcell->disable();
+    if(sextras.ngeom_data==0)RADIO_button_cutcell->disable();
 
     PANEL_immersed_outlinetype = glui_bounds->add_panel_to_panel(PANEL_immersed, "outline type", true);
     RADIO_slice_edgetype = glui_bounds->add_radiogroup_to_panel(PANEL_immersed_outlinetype, &glui_slice_edgetype, IMMERSED_SWITCH_EDGETYPE, GLUIImmersedBoundCB);
@@ -5428,7 +5428,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
     CHECKBOX_show_node_slices_and_vectors = glui_bounds->add_checkbox_to_panel(PANEL_showslice, _("node centered slices"), &show_node_slices_and_vectors);
     CHECKBOX_show_node_slices_and_vectors = glui_bounds->add_checkbox_to_panel(PANEL_showslice, _("cell centered slices"), &show_cell_slices_and_vectors);
 
-    if(ngeom_data > 0)glui_bounds->add_column_to_panel(ROLLOUT_slice_settings, false);
+    if(sextras.ngeom_data > 0)glui_bounds->add_column_to_panel(ROLLOUT_slice_settings, false);
 
     if(show_slice_in_obst==ONLY_IN_GAS){
       show_slice_in_gas   = 1;
@@ -5447,7 +5447,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
       show_slice_in_solid = 0;
     }
 
-    if(ngeom_data == 0)glui_bounds->add_column_to_panel(ROLLOUT_slice_settings, false);
+    if(sextras.ngeom_data == 0)glui_bounds->add_column_to_panel(ROLLOUT_slice_settings, false);
 
     PANEL_slice_smoke = glui_bounds->add_panel_to_panel(ROLLOUT_slice_settings, "slice(fire)", true);
     glui_bounds->add_checkbox_to_panel(PANEL_slice_smoke, _("max blending"), &slices3d_max_blending);

@@ -165,10 +165,10 @@ void GetZoneDataCSV(int nzone_times_local, int nrooms_local, int nfires_local, i
     NewMemory((void **)&zoneodu_devs,  nrooms_local*sizeof(devicedata *));
   }
 
-  if(nzhvents+nzvvents+nzmvents>0){
+  if(sextras.nzhvents+sextras.nzvvents+sextras.nzmvents>0){
     int ntotalvents;
 
-    ntotalvents = nzhvents+nzvvents+nzmvents;
+    ntotalvents = sextras.nzhvents+sextras.nzvvents+sextras.nzmvents;
     NewMemory((void **)&zonevents_devs,   ntotalvents*sizeof(devicedata *));
     NewMemory((void **)&zoneslab_n_devs,  ntotalvents*sizeof(devicedata *));
     NewMemory((void **)&zoneslab_T_devs,  MAX_HSLABS*ntotalvents*sizeof(devicedata *));
@@ -373,21 +373,21 @@ void GetZoneDataCSV(int nzone_times_local, int nrooms_local, int nfires_local, i
     zonefarea_devs[i]->in_zone_csv=1;
   }
 
-  for(i = 0; i < nzhvents+nzvvents+nzmvents; i++){
+  for(i = 0; i < sextras.nzhvents+sextras.nzvvents+sextras.nzmvents; i++){
     char label[100],vent_type[10];
     int vent_index;
 
-    if(i<nzhvents){
+    if(i<sextras.nzhvents){
       strcpy(vent_type,"HVENT");
       vent_index=i+1;
     }
-    else if(i>=nzhvents&&i<nzhvents+nzvvents){
+    else if(i>=sextras.nzhvents&&i<sextras.nzhvents+sextras.nzvvents){
       strcpy(vent_type,"VVENT");
-      vent_index=i+1-nzhvents;
+      vent_index=i+1-sextras.nzhvents;
     }
     else{
       strcpy(vent_type,"MVENT");
-      vent_index=i+1-nzhvents-nzvvents;
+      vent_index=i+1-sextras.nzhvents-sextras.nzvvents;
     }
     sprintf(label, "%s_%i", vent_type,vent_index);
     zonevents_devs[i] = GetDeviceFromLabel(label, -1);
@@ -401,22 +401,22 @@ void GetZoneDataCSV(int nzone_times_local, int nrooms_local, int nfires_local, i
 
 //  setup devices that describe VENTS
   have_ventslab_flow = 0;
-  for(i = 0; i < nzhvents+nzvvents+nzmvents; i++){
+  for(i = 0; i < sextras.nzhvents+sextras.nzvvents+sextras.nzmvents; i++){
     char label[100], vent_type[10];
     int islab, vent_index, max_slabs;
 
-    if(i<nzhvents){
+    if(i<sextras.nzhvents){
       vent_index = 1+i;
       strcpy(vent_type, "HSLAB");
       max_slabs = MAX_HSLABS;
     }
-    else if(i>=nzhvents&&i<nzhvents+nzvvents){
-      vent_index = 1+i-nzhvents;
+    else if(i>=sextras.nzhvents&&i<sextras.nzhvents+sextras.nzvvents){
+      vent_index = 1+i-sextras.nzhvents;
       strcpy(vent_type, "VSLAB");
       max_slabs = MAX_VSLABS;
     }
     else{
-      vent_index = 1+i-nzhvents-nzvvents;
+      vent_index = 1+i-sextras.nzhvents-sextras.nzvvents;
       strcpy(vent_type, "MSLAB");
       max_slabs = MAX_MSLABS;
     }
@@ -449,22 +449,22 @@ void GetZoneDataCSV(int nzone_times_local, int nrooms_local, int nfires_local, i
     if(have_ventslab_flow == 1)break;
   }
   if(have_ventslab_flow == 1){
-    for(i = 0; i < nzhvents+nzvvents+nzmvents; i++){
+    for(i = 0; i < sextras.nzhvents+sextras.nzvvents+sextras.nzmvents; i++){
       char label[100], vent_type[10];
       int islab, vent_index, max_slabs;
 
-      if(i<nzhvents){
+      if(i<sextras.nzhvents){
         vent_index = 1+i;
         strcpy(vent_type, "HSLAB");
         max_slabs = MAX_HSLABS;
       }
-      else if(i>=nzhvents&&i<nzhvents+nzvvents){
-        vent_index = 1+i-nzhvents;
+      else if(i>=sextras.nzhvents&&i<sextras.nzhvents+sextras.nzvvents){
+        vent_index = 1+i-sextras.nzhvents;
         strcpy(vent_type, "VSLAB");
         max_slabs = MAX_VSLABS;
       }
       else{
-        vent_index = 1+i-nzhvents-nzvvents;
+        vent_index = 1+i-sextras.nzhvents-sextras.nzvvents;
         strcpy(vent_type, "MSLAB");
         max_slabs = MAX_MSLABS;
       }
@@ -568,14 +568,14 @@ void GetZoneDataCSV(int nzone_times_local, int nrooms_local, int nfires_local, i
       zonefbase_local[iif]=zonefbase_devs[j]->vals[i];
       iif++;
     }
-    for(ivent=0;ivent<nzhvents+nzvvents+nzmvents;ivent++){
+    for(ivent=0;ivent<sextras.nzhvents+sextras.nzvvents+sextras.nzmvents;ivent++){
       int islab, max_slabs;
 
       zonevents_local[iihv] = zonevents_devs[ivent]->vals[i];
-      if(ivent<nzhvents){
+      if(ivent<sextras.nzhvents){
         max_slabs = MAX_HSLABS;
       }
-      else if(ivent>=nzhvents&&i<nzhvents+nzvvents){
+      else if(ivent>=sextras.nzhvents&&i<sextras.nzhvents+sextras.nzvvents){
         max_slabs = MAX_VSLABS;
       }
       else{
@@ -633,7 +633,7 @@ void FillZoneData(int izone_index){
     rhol0 = zonerhol + izone_index*nrooms;
     rhou0 = zonerhou + izone_index*nrooms;
   }
-  ntotal_vents = nzhvents + nzvvents + nzmvents;
+  ntotal_vents = sextras.nzhvents + sextras.nzvvents + sextras.nzmvents;
   hvent0 = zonevents + izone_index*ntotal_vents;
   zoneslab_n0 = zoneslab_n + izone_index*ntotal_vents;
   zoneslab_T0 = zoneslab_T + izone_index*MAX_HSLABS*ntotal_vents;
@@ -642,7 +642,7 @@ void FillZoneData(int izone_index){
   zoneslab_YT0 = zoneslab_YT + izone_index*MAX_HSLABS*ntotal_vents;
   if(zoneodl != NULL)odl0 = zoneodl + izone_index*nrooms;
   if(zoneodu != NULL)odu0 = zoneodu + izone_index*nrooms;
-  for(ivent = 0;ivent < nzhvents + nzvvents + nzmvents;ivent++){
+  for(ivent = 0;ivent < sextras.nzhvents + sextras.nzvvents + sextras.nzmvents;ivent++){
     zventdata *zventi;
     int islab;
 
@@ -769,7 +769,7 @@ void GetZoneVentBounds(void){
   int i;
 #define VEL_MAX  100000000.0
 #define VEL_MIN -100000000.0
-  for(i = 0;i < nzvents;i++){
+  for(i = 0;i < sextras.nzvents;i++){
     zventdata *zvi;
 
     zvi = zventinfo + i;
@@ -778,7 +778,7 @@ void GetZoneVentBounds(void){
   }
   for(izone = 0;izone < nzone_times;izone++){
     FillZoneData(izone);
-    for(i = 0;i < nzvents;i++){
+    for(i = 0;i < sextras.nzvents;i++){
       int j;
       zventdata *zvi;
       float zelev[NELEV_ZONE];
@@ -795,7 +795,7 @@ void GetZoneVentBounds(void){
     }
   }
   zone_maxventflow = 0.0;
-  for(i = 0;i < nzvents;i++){
+  for(i = 0;i < sextras.nzvents;i++){
     zventdata *zvi;
 
     zvi = zventinfo + i;
@@ -944,11 +944,11 @@ void ReadZone(int ifile, int flag, int *errorcode){
   }
   else{
     getzonesize(file,&nzone_times,&nrooms2,&nfires2,&error);
-    nzhvents2=nzhvents;
-    nzvvents2=nzvvents;
+    nzhvents2=sextras.nzhvents;
+    nzvvents2=sextras.nzvvents;
   }
   CheckMemory;
-  if(error!=0||nrooms!=nrooms2||nzone_times==0||nzhvents!=nzhvents2||nzvvents!=nzvvents2||nzmvents!=nzmvents2){
+  if(error!=0||nrooms!=nrooms2||nzone_times==0||sextras.nzhvents!=nzhvents2||sextras.nzvvents!=nzvvents2||sextras.nzmvents!=nzmvents2){
     showzone=0;
     UpdateTimes();
     ReadZoneFile=0;
@@ -956,16 +956,16 @@ void ReadZone(int ifile, int flag, int *errorcode){
       fprintf(stderr,"*** Error: number of rooms specified in the smv file (%i)\n",nrooms);
       fprintf(stderr,"    not consistent with the number specified in the zone file (%i)\n",nrooms2);
     }
-    if(nzhvents!=nzhvents2){
-      fprintf(stderr,"*** Error: number of horizontal flow vents specified in the smv file (%i)\n",nzhvents);
+    if(sextras.nzhvents!=nzhvents2){
+      fprintf(stderr,"*** Error: number of horizontal flow vents specified in the smv file (%i)\n",sextras.nzhvents);
       fprintf(stderr,"    not consistent with the number specified in the data file (%i)\n",nzhvents2);
     }
-    if(nzvvents!=nzvvents2){
-      fprintf(stderr,"*** Error: number of vertical flow vents specified in the smv file (%i)\n",nzvvents);
+    if(sextras.nzvvents!=nzvvents2){
+      fprintf(stderr,"*** Error: number of vertical flow vents specified in the smv file (%i)\n",sextras.nzvvents);
       fprintf(stderr,"    not consistent with the number specified in the data file (%i)\n",nzvvents2);
     }
-    if(nzmvents != nzmvents2){
-      fprintf(stderr, "*** Error: number of mechanical vents specified in the smv file (%i)\n", nzmvents);
+    if(sextras.nzmvents != nzmvents2){
+      fprintf(stderr, "*** Error: number of mechanical vents specified in the smv file (%i)\n", sextras.nzmvents);
       fprintf(stderr, "    not consistent with the number specified in the data file (%i)\n", nzmvents2);
     }
     if(nzone_times <= 0)fprintf(stderr, "*** Error: The file, %s, contains no data\n", file);
@@ -1027,10 +1027,10 @@ void ReadZone(int ifile, int flag, int *errorcode){
     FREEMEMORY(zoneslab_F);
     FREEMEMORY(zoneslab_YB);
     FREEMEMORY(zoneslab_YT);
-    if(nzhvents+nzvvents+nzmvents>0){
+    if(sextras.nzhvents+sextras.nzvvents+sextras.nzmvents>0){
       int ntotalvents;
 
-      ntotalvents = nzhvents+nzvvents+nzmvents;
+      ntotalvents = sextras.nzhvents+sextras.nzvvents+sextras.nzmvents;
       NewMemory((void **)&zonevents,   nzone_times*ntotalvents*sizeof(float));
       NewMemory((void **)&zoneslab_n,  nzone_times*ntotalvents*sizeof(int));
       NewMemory((void **)&zoneslab_T,  nzone_times*ntotalvents*MAX_HSLABS*sizeof(float));
@@ -1206,7 +1206,7 @@ void ReadZone(int ifile, int flag, int *errorcode){
   UpdateTimes();
   updatemenu=1;
   activezone = zoneinfo + ifile;
-  if(nzhvents>0||nzvvents>0||nzmvents>0){
+  if(sextras.nzhvents>0||sextras.nzvvents>0||sextras.nzmvents>0){
     PRINTF("computing vent bounds\n");
     GetZoneVentBounds();
   }
@@ -1365,7 +1365,7 @@ void DrawZoneRoomGeom(void){
   }
 
   if(visVents==1){
-    for(i=0;i<nzvents;i++){
+    for(i=0;i<sextras.nzvents;i++){
       zventdata *zvi;
       float x1, x2, y1, y2, z1, z2;
 
@@ -1488,7 +1488,7 @@ void DrawZoneVentDataProfile(void){
 
   if(cullfaces==1)glDisable(GL_CULL_FACE);
 
-  for(i=0;i<nzvents;i++){
+  for(i=0;i<sextras.nzvents;i++){
     int j;
     zventdata *zvi;
     float zelev[NELEV_ZONE];
@@ -1502,7 +1502,7 @@ void DrawZoneVentDataProfile(void){
     GetZoneVentVel(zelev, NELEV_ZONE, zvi->room1, zvi->room2, zvi->vdata, &zvi->vmin, &zvi->vmax, zvi->itempdata);
   }
   factor = 0.1*zone_ventfactor/zone_maxventflow;
-  for(i=0;i<nzvents;i++){
+  for(i=0;i<sextras.nzvents;i++){
     zventdata *zvi;
     int j;
     float zelev[NELEV_ZONE];
@@ -1625,7 +1625,7 @@ void DrawZoneVentDataSlab(void){
 
   if(cullfaces==1)glDisable(GL_CULL_FACE);
 
-  for(i = 0; i<nzvents; i++){
+  for(i = 0; i<sextras.nzvents; i++){
     zventdata *zvi;
     int islab;
     float xmid, ymid;
@@ -2243,7 +2243,7 @@ void DrawZoneFireData(void){
       float diameter, flameheight, maxheight;
 
       qdot = zoneqfirebase[i]/1000.0f;
-      if(zonecsv==1){
+      if(sextras.zonecsv==1){
         if(qdot>0.0f){
           firedata *firei;
           roomdata *roomi;

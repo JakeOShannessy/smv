@@ -222,7 +222,7 @@ void ShowScene2(int mode){
 
     /* ++++++++++++++++++++++++ draw mesh +++++++++++++++++++++++++ */
 
-    if(setPDIM == 1){
+    if(sextras.setPDIM == 1){
       if(visGrid != NOGRID_NOPROBE){
         int igrid;
         meshdata *meshi;
@@ -446,7 +446,7 @@ void ShowScene2(int mode){
       DrawZoneFireData();
       SNIFF_ERRORS("after DrawZoneFireData");
       if(ReadZoneFile == 1){
-        if(nzvents>0){
+        if(sextras.nzvents>0){
           DrawZoneVentData();
           SNIFF_ERRORS("after DrawZoneVentData");
         }

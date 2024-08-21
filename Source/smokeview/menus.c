@@ -7164,7 +7164,7 @@ void ZoneShowMenu(int value){
       visVentMFlow=0;
     }
     break;
-#define VISVENTFLOW     if((nzhvents>0&&visVentHFlow==1)||(nzvvents>0&&visVentVFlow==1)||(nzmvents>0&&visVentMFlow==1)){\
+#define VISVENTFLOW     if((sextras.nzhvents>0&&visVentHFlow==1)||(sextras.nzvvents>0&&visVentVFlow==1)||(sextras.nzmvents>0&&visVentMFlow==1)){\
       visVentFlow = 1;\
     }\
     else{\
@@ -10153,7 +10153,7 @@ static int menu_count=0;
       glutAddMenuEntry(_("Compartments"), GEOM_Compartments);
     }
   }
-  if(nzvents > 0){
+  if(sextras.nzvents > 0){
     if(visVents == 1){
       glutAddMenuEntry(_("*Vents"), GEOM_Vents);
     }
@@ -10363,7 +10363,7 @@ static int menu_count=0;
 
 /* --------------------------------zone show menu -------------------------- */
 
-  if(nzoneinfo>0&&(ReadZoneFile==1||nzvents>0)){
+  if(nzoneinfo>0&&(ReadZoneFile==1||sextras.nzvents>0)){
     CREATEMENU(zoneshowmenu,ZoneShowMenu);
     glutAddMenuEntry(_("Layers"),MENU_DUMMY);
     glutAddMenuEntry(_("   Representation:"),MENU_DUMMY);
@@ -10443,14 +10443,14 @@ static int menu_count=0;
         glutAddMenuEntry(_("Targets"), MENU_ZONE_TARGETS);
       }
     }
-    if(nzvents>0){
+    if(sextras.nzvents>0){
       if(visVentFlow==1){
         glutAddMenuEntry(_("*Vent flow"), MENU_ZONE_VENTS);
       }
       else{
         glutAddMenuEntry(_("Vent flow"), MENU_ZONE_VENTS);
       }
-      if(nzhvents>0){
+      if(sextras.nzhvents>0){
         if(visVentHFlow == 1){
           glutAddMenuEntry(_("   *Horizontal"), MENU_ZONE_HVENTS);
         }
@@ -10480,7 +10480,7 @@ static int menu_count=0;
           }
         }
       }
-      if(nzvvents>0){
+      if(sextras.nzvvents>0){
         if(visVentVFlow==1){
           glutAddMenuEntry(_("   *Vertical"), MENU_ZONE_VVENTS);
         }
@@ -10488,7 +10488,7 @@ static int menu_count=0;
           glutAddMenuEntry(_("   Vertical"), MENU_ZONE_VVENTS);
         }
       }
-      if(nzmvents>0){
+      if(sextras.nzmvents>0){
         if(visVentMFlow==1){
           glutAddMenuEntry(_("   *Mechanical"), MENU_ZONE_MVENTS);
         }
@@ -11318,7 +11318,7 @@ static int menu_count=0;
     }
   }
 
-  if(nzoneinfo>0&&(ReadZoneFile==1||nzvents>0)){
+  if(nzoneinfo>0&&(ReadZoneFile==1||sextras.nzvents>0)){
     showhide_data = 1;
     GLUTADDSUBMENU(_("Zone"), zoneshowmenu);
   }

@@ -1853,6 +1853,14 @@ typedef struct {
   int ncvents;
   int nOBST;
   int noffset;
+  int ngeom_data;
+  int clip_mesh;
+  int setPDIM;
+  int zonecsv;
+  int nzvents;
+  int nzhvents;
+  int nzvvents;
+  int nzmvents;
 } smv_extras;
 
 // TODO: remove each of these struct fields as global variables

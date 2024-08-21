@@ -84,11 +84,11 @@ void ClipCB(int var){
     GLUIUpdateShowRotationCenter();
     break;
   case CLIP_MESH:
-    if(clip_mesh == 0){
+    if(sextras.clip_mesh == 0){
       SetClipControls(DEFAULT_VALS);
     }
     else{
-      SetClipControls(clip_mesh);
+      SetClipControls(sextras.clip_mesh);
     }
     break;
   case SAVE_SETTINGS_CLIP:
@@ -334,11 +334,11 @@ extern "C" void GLUIClipSetup(int main_window){
     SetClipControls(INI_VALS);  // clip vals from ini file
   }
   else{
-    if(clip_mesh==0){
+    if(sextras.clip_mesh==0){
       SetClipControls(DEFAULT_VALS);  // clip vals from global scene
     }
     else{
-      SetClipControls(clip_mesh);  // clip vals from mesh clip_mesh
+      SetClipControls(sextras.clip_mesh);  // clip vals from mesh clip_mesh
     }
   }
 
