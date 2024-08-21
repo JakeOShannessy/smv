@@ -704,7 +704,7 @@ void NodeInExternalVent(int ipatch, int *patchblank, const meshdata *meshi,
         if(patchblank[iii] == GAS)continue;
         patchblank[iii] = NodeInBlockage(meshi, i, j1, k, &imesh, &iblockage);
         if(imesh != -1){
-          meshblock = meshinfo + imesh;
+          meshblock = meshescoll.meshinfo + imesh;
           assert(iblockage >= 0 && iblockage < meshblock->nbptrs);
           meshi->blockonpatch[ipatch] = iblockage;
           meshi->meshonpatch[ipatch] = meshblock;
