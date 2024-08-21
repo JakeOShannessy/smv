@@ -7,6 +7,7 @@
 #include "string_util.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "readlabel.h"
 

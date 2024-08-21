@@ -16,11 +16,6 @@
 #include "isodefs.h"
 #include "stdio_m.h"
 #include "string_util.h"
-// #include "readtour.h"
-// #include "readhvac.h"
-// // #include "readsmoke.h"
-// #include "readcad.h"
-// #include "readlabel.h"
 
 #define MAXPLOT3DVARS 6
 
