@@ -88,7 +88,6 @@ GLuint texture_patch_colorbar_id;
 float SVDECL(xbar,1.0);float SVDECL(ybar,1.0);float  SVDECL(zbar,1.0);
 float xbar0 = 0.0;float  ybar0 = 0.0;float  zbar0 = 0.0;
 int ndummyvents;
-char *texturedir = NULL;
 
 #define MAXFILELEN 360
 char *part_buffer = NULL;
@@ -99,7 +98,6 @@ char *smokeview_scratchdir = NULL;
 int have_compressed_files = 0;
 int update_smoke_alphas = 0;
 int *sliceorderindex = NULL, *vsliceorderindex = NULL;
-int show_hrrcutoff_active = 0;
 int ngeom_data = 0;
 float texture_origin[3]={0.0,0.0,0.0};
 //***isosurface
@@ -132,7 +130,6 @@ terraindata *terraininfo = NULL;
 int ntreeinfo = 0, nterraininfo = 0, visTerrainType = 0;
 int ntickinfo = 0,ntickinfo_smv = 0;
 float *ventcolor = NULL;
-int ntotal_blockages;
 int niso_compressed;
 spherepoints *sphereinfo = NULL, *wui_sphereinfo = NULL;
 int updatefaces = 0;
@@ -144,17 +141,13 @@ int SVDECL(use_iblank,1),iblank_set_on_commandline = 0;
 float gvecphys[3]={0.0,0.0,-9.8};
 float gvecunit[3]={0.0,0.0,-1.0};
 int have_gvec = 0;
-int smokediff = 0;
 float SVDECL(smoke_albedo, 0.3), SVDECL(smoke_albedo_base, 0.3);
 float northangle = 0.0;
-int have_northangle = 0;
 int auto_terrain = 0,manual_terrain = 0;
 int SVDECL(visOtherVents,1),SVDECL(visOtherVentsSAVE,1);
 int update_terrain_type = 0;
-int usetextures = 0;
 float SVDECL(global_tbegin, 1.0), global_tend = 0.0;
-int ntrnx = 0, ntrny = 0, ntrnz = 0,npdim = 0,clip_mesh = 0;
-int nOBST = 0,nVENT = 0,nCVENT = 0,ncvents = 0,noffset = 0;
+int clip_mesh = 0;
 int setPDIM = 0;
 int zonecsv = 0, nzvents = 0, nzhvents = 0, nzvvents = 0, nzmvents = 0;
 #ifdef INMAIN
@@ -175,8 +168,6 @@ int visFloor = 0, SVDECL(visFrame,1);
 char *database_filename = NULL;
 char *expcsv_filename = NULL;
 float SVDECL(pref,101325.0),pamb = 0.0,SVDECL(tamb,293.15);
-int update_device = 0;
-int hasSensorNorm = 0;
 surfdata sdefault,v_surfacedefault,e_surfacedefault;
 char surfacedefaultlabel[256];
 float SVDECL(global_hrrpuv_cutoff, 200.0), SVDECL(global_hrrpuv_cutoff_default, 200.0);
@@ -188,7 +179,6 @@ float foregroundcolor[4]      = {1.0, 1.0, 1.0, 1.0};
 float foregroundcolor[4];
 #endif
 int visWalls = 0, visCeiling = 0;
-int nvent_transparent;
 float SVDECL(linewidth, 2.0), SVDECL(ventlinewidth, 2.0);
 int clip_I,clip_J,clip_K;
 int ntc_total = 0.0, nspr_total = 0.0, nheat_total = 0.0;
@@ -196,7 +186,6 @@ int ntc_total = 0.0, nspr_total = 0.0, nheat_total = 0.0;
 float rgb[MAXRGB][4];
 EXTERNCPP char *GetDeviceLabel(char *buffer);
 EXTERNCPP void GetElevAz(float *xyznorm,float *dtheta, float *rotate_axis, float *dpsi);
-int show_tempcutoff_active = 0;
 int setbw = 0;
 float tload_begin = 0.0, tload_end = 0.0;
 slicedata  **sliceinfoptrs = NULL;
@@ -2520,10 +2509,10 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
     {
       if(ReadLabels(&smoke3di->label, stream, NULL)==LABEL_ERR)return RETURN_TWO;
       if(strcmp(smoke3di->label.longlabel, "HRRPUV")==0){
-        show_hrrcutoff_active = 1;
+        sextras.show_hrrcutoff_active = 1;
       }
       if(strstr(smoke3di->label.longlabel, "TEMPERATURE") !=NULL){
-        show_tempcutoff_active = 1;
+        sextras.show_tempcutoff_active = 1;
       }
       ismoke3d++;
       *ismoke3d_in = ismoke3d;
@@ -3413,7 +3402,7 @@ int ReadSMV_Init(smv_case *scase) {
     InitSpherePoints(wui_sphereinfo,14);
   }
   PRINT_TIMER(timer_setup, "InitSpherePoints");
-  ntotal_blockages=0;
+  sextras.ntotal_blockages=0;
 
   if(scase->csvcoll.ncsvfileinfo>0){
     csvfiledata *csvi;
@@ -3607,18 +3596,18 @@ int ReadSMV_Init(smv_case *scase) {
   InitCADGeomCollection(&scase->cadgeomcoll, 20);
 
   updateindexcolors=0;
-  ntrnx=0;
-  ntrny=0;
-  ntrnz=0;
+  sextras.ntrnx=0;
+  sextras.ntrny=0;
+  sextras.ntrnz=0;
   scase->meshescoll.nmeshes=0;
-  npdim=0;
-  nVENT=0;
-  nCVENT=0;
-  ncvents=0;
-  nOBST=0;
-  noffset=0;
+  sextras.npdim=0;
+  sextras.nVENT=0;
+  sextras.nCVENT=0;
+  sextras.ncvents=0;
+  sextras.nOBST=0;
+  sextras.noffset=0;
   scase->surfcoll.nsurfinfo=0;
-  nvent_transparent=0;
+  sextras.nvent_transparent=0;
 
   setPDIM=0;
 
@@ -3844,7 +3833,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       continue;
     }
     if(MatchSMV(buffer,"SMOKEDIFF") == 1){
-      smokediff=1;
+      sextras.smokediff=1;
       continue;
     }
     if(MatchSMV(buffer,"ALBEDO") == 1){
@@ -3858,7 +3847,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       FGETS(buffer, 255, stream);
       sscanf(buffer, "%f", &northangle);
       northangle = CLAMP(northangle, -180.0, 180.0);
-      have_northangle = 1;
+      sextras.have_northangle = 1;
       continue;
     }
     if(MatchSMV(buffer,"TERRAIN") == 1){
@@ -3996,7 +3985,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     }
 
     if(MatchSMV(buffer,"USETEXTURES") == 1){
-      usetextures=1;
+      sextras.usetextures=1;
       continue;
     }
 
@@ -4011,9 +4000,9 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
 
         texturedirlen=strlen(TrimFront(buffer));
         if(texturedirlen>0){
-          FREEMEMORY(texturedir);
-          NewMemory( (void **)&texturedir,texturedirlen+1);
-          strcpy(texturedir,TrimFront(buffer));
+          FREEMEMORY(sextras.texturedir);
+          NewMemory( (void **)&sextras.texturedir,texturedirlen+1);
+          strcpy(sextras.texturedir,TrimFront(buffer));
         }
       }
       continue;
@@ -4043,15 +4032,15 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       continue;
     }
     if(MatchSMV(buffer,"TRNX") == 1){
-      ntrnx++;
+      sextras.ntrnx++;
       continue;
     }
     if(MatchSMV(buffer,"TRNY") == 1){
-      ntrny++;
+      sextras.ntrny++;
       continue;
     }
     if(MatchSMV(buffer,"TRNZ") == 1){
-      ntrnz++;
+      sextras.ntrnz++;
       continue;
     }
     if(MatchSMV(buffer,"SURFACE") ==1){
@@ -4064,18 +4053,18 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       continue;
     }
     if(MatchSMV(buffer,"OFFSET") == 1){
-      noffset++;
+      sextras.noffset++;
       continue;
     }
     if(MatchSMV(buffer,"PDIM") == 1){
-      npdim++;
+      sextras.npdim++;
       setPDIM=1;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f %f %f %f",&xbar0,&xbar,&ybar0,&ybar,&zbar0,&zbar);
       continue;
     }
     if(MatchSMV(buffer,"OBST") == 1){
-      nOBST++;
+      sextras.nOBST++;
       continue;
     }
     if(MatchSMV(buffer,"CADGEOM") == 1){
@@ -4083,11 +4072,11 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       continue;
     }
     if(MatchSMV(buffer,"CVENT") == 1){
-      nCVENT++;
+      sextras.nCVENT++;
       continue;
     }
     if(MatchSMV(buffer,"VENT") == 1){
-      nVENT++;
+      sextras.nVENT++;
       continue;
     }
     if(
@@ -4283,27 +4272,27 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
      BUT if any one is present then the number of each must be equal
   */
 
-  if(scase->meshescoll.nmeshes==0&&ntrnx==0&&ntrny==0&&ntrnz==0&&npdim==0&&nOBST==0&&nVENT==0&&noffset==0){
+  if(scase->meshescoll.nmeshes==0&&sextras.ntrnx==0&&sextras.ntrny==0&&sextras.ntrnz==0&&sextras.npdim==0&&sextras.nOBST==0&&sextras.nVENT==0&&sextras.noffset==0){
     scase->meshescoll.nmeshes=1;
-    ntrnx=1;
-    ntrny=1;
-    ntrnz=1;
-    npdim=1;
-    nOBST=1;
-    noffset=1;
+    sextras.ntrnx=1;
+    sextras.ntrny=1;
+    sextras.ntrnz=1;
+    sextras.npdim=1;
+    sextras.nOBST=1;
+    sextras.noffset=1;
   }
   else{
     if(scase->meshescoll.nmeshes>1){
-      if((scase->meshescoll.nmeshes!=ntrnx||scase->meshescoll.nmeshes!=ntrny||scase->meshescoll.nmeshes!=ntrnz||scase->meshescoll.nmeshes!=npdim||scase->meshescoll.nmeshes!=nOBST||scase->meshescoll.nmeshes!=nVENT||scase->meshescoll.nmeshes!=noffset)&&
-         (nCVENT!=0&&nCVENT!=scase->meshescoll.nmeshes)){
+      if((scase->meshescoll.nmeshes!=sextras.ntrnx||scase->meshescoll.nmeshes!=sextras.ntrny||scase->meshescoll.nmeshes!=sextras.ntrnz||scase->meshescoll.nmeshes!=sextras.npdim||scase->meshescoll.nmeshes!=sextras.nOBST||scase->meshescoll.nmeshes!=sextras.nVENT||scase->meshescoll.nmeshes!=sextras.noffset)&&
+         (sextras.nCVENT!=0&&sextras.nCVENT!=scase->meshescoll.nmeshes)){
         fprintf(stderr,"*** Error:\n");
-        if(scase->meshescoll.nmeshes!=ntrnx)fprintf(stderr,"*** Error:  found %i TRNX keywords, was expecting %i\n",ntrnx,scase->meshescoll.nmeshes);
-        if(scase->meshescoll.nmeshes!=ntrny)fprintf(stderr,"*** Error:  found %i TRNY keywords, was expecting %i\n",ntrny,scase->meshescoll.nmeshes);
-        if(scase->meshescoll.nmeshes!=ntrnz)fprintf(stderr,"*** Error:  found %i TRNZ keywords, was expecting %i\n",ntrnz,scase->meshescoll.nmeshes);
-        if(scase->meshescoll.nmeshes!=npdim)fprintf(stderr,"*** Error:  found %i PDIM keywords, was expecting %i\n",npdim,scase->meshescoll.nmeshes);
-        if(scase->meshescoll.nmeshes!=nOBST)fprintf(stderr,"*** Error:  found %i OBST keywords, was expecting %i\n",nOBST,scase->meshescoll.nmeshes);
-        if(scase->meshescoll.nmeshes!=nVENT)fprintf(stderr,"*** Error:  found %i VENT keywords, was expecting %i\n",nVENT,scase->meshescoll.nmeshes);
-        if(nCVENT!=0&&scase->meshescoll.nmeshes!=nCVENT)fprintf(stderr,"*** Error:  found %i CVENT keywords, was expecting %i\n",noffset,scase->meshescoll.nmeshes);
+        if(scase->meshescoll.nmeshes!=sextras.ntrnx)fprintf(stderr,"*** Error:  found %i TRNX keywords, was expecting %i\n",sextras.ntrnx,scase->meshescoll.nmeshes);
+        if(scase->meshescoll.nmeshes!=sextras.ntrny)fprintf(stderr,"*** Error:  found %i TRNY keywords, was expecting %i\n",sextras.ntrny,scase->meshescoll.nmeshes);
+        if(scase->meshescoll.nmeshes!=sextras.ntrnz)fprintf(stderr,"*** Error:  found %i TRNZ keywords, was expecting %i\n",sextras.ntrnz,scase->meshescoll.nmeshes);
+        if(scase->meshescoll.nmeshes!=sextras.npdim)fprintf(stderr,"*** Error:  found %i PDIM keywords, was expecting %i\n",sextras.npdim,scase->meshescoll.nmeshes);
+        if(scase->meshescoll.nmeshes!=sextras.nOBST)fprintf(stderr,"*** Error:  found %i OBST keywords, was expecting %i\n",sextras.nOBST,scase->meshescoll.nmeshes);
+        if(scase->meshescoll.nmeshes!=sextras.nVENT)fprintf(stderr,"*** Error:  found %i VENT keywords, was expecting %i\n",sextras.nVENT,scase->meshescoll.nmeshes);
+        if(sextras.nCVENT!=0&&scase->meshescoll.nmeshes!=sextras.nCVENT)fprintf(stderr,"*** Error:  found %i CVENT keywords, was expecting %i\n",sextras.noffset,scase->meshescoll.nmeshes);
         return 2;
       }
     }
@@ -4487,7 +4476,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   scase->cadgeomcoll.ncadgeom=0;
   scase->surfcoll.nsurfinfo=0;
   noutlineinfo=0;
-  if(noffset==0)ioffset=1;
+  if(sextras.noffset==0)ioffset=1;
 
   REWIND(stream);
   PRINTF("%s","  pass 2\n");
@@ -5480,8 +5469,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         char texturebuffer[1024];
 
         found_texture=0;
-        if(texturedir!=NULL&&FILE_EXISTS_CASEDIR(buffer3)==NO){
-          STRCPY(texturebuffer,texturedir);
+        if(sextras.texturedir!=NULL&&FILE_EXISTS_CASEDIR(buffer3)==NO){
+          STRCPY(texturebuffer,sextras.texturedir);
           STRCAT(texturebuffer,dirseparator);
           STRCAT(texturebuffer,buffer3);
           if(FILE_EXISTS_CASEDIR(texturebuffer)==YES){
@@ -5915,7 +5904,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       devicei = scase->devicecoll.deviceinfo + scase->devicecoll.ndeviceinfo;
       ParseDevicekeyword(scase, stream,devicei);
       CheckMemory;
-      update_device = 1;
+      sextras.update_device = 1;
       scase->devicecoll.ndeviceinfo++;
       continue;
     }
@@ -5937,7 +5926,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       if(tempval<0)tempval=0;
       meshi->ntc=tempval;
       ntc_total += meshi->ntc;
-      hasSensorNorm=0;
+      sextras.hasSensorNorm=0;
       if(meshi->ntc>0){
         int nn;
 
@@ -5961,7 +5950,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
           normdenom+=xyznorm[1]*xyznorm[1];
           normdenom+=xyznorm[2]*xyznorm[2];
           if(normdenom>0.1){
-            hasSensorNorm=1;
+            sextras.hasSensorNorm=1;
             normdenom=sqrt(normdenom);
             xyznorm[0]/=normdenom;
             xyznorm[1]/=normdenom;
@@ -6298,7 +6287,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   itrnx=0, itrny=0, itrnz=0, igrid=0, ipdim=0, iobst=0, ivent=0, icvent=0;
   ioffset=0;
   scase->npartclassinfo=0;
-  if(noffset==0)ioffset=1;
+  if(sextras.noffset==0)ioffset=1;
   PRINT_TIMER(timer_readsmv, "pass 3");
 
 /*
@@ -6320,8 +6309,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       BREAK;
     }
 
-    if(nVENT==0){
-      nVENT=0;
+    if(sextras.nVENT==0){
+      sextras.nVENT=0;
       strcpy(buffer,"VENT");
     }
     else{
@@ -6653,21 +6642,21 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       meshi->xyz_bar[ZZZ] =zbar;
       meshi->zcen =(zbar+zbar0)/2.0;
       InitBoxClipInfo(meshi->box_clipinfo,xbar0,xbar,ybar0,ybar,zbar0,zbar);
-      if(ntrnx==0){
+      if(sextras.ntrnx==0){
         int nn;
 
         for(nn = 0; nn<=meshi->ibar; nn++){
           meshi->xplt[nn] = xbar0+(float)nn*(xbar-xbar0)/(float)meshi->ibar;
         }
       }
-      if(ntrny==0){
+      if(sextras.ntrny==0){
         int nn;
 
         for(nn = 0; nn<=meshi->jbar; nn++){
           meshi->yplt[nn] = ybar0+(float)nn*(ybar-ybar0)/(float)meshi->jbar;
         }
       }
-      if(ntrnz==0){
+      if(sextras.ntrnz==0){
         int nn;
 
         for(nn = 0; nn<=meshi->kbar; nn++){
@@ -6857,7 +6846,7 @@ typedef struct {
         NewMemory((void **)&meshi->blockageinfoptrs,sizeof(blockagedata *)*n_blocks_normal);
       }
 
-      ntotal_blockages+=n_blocks_normal;
+      sextras.ntotal_blockages+=n_blocks_normal;
       nn=-1;
       for(iblock=0;iblock<n_blocks;iblock++){
         int s_num[6];
@@ -7135,7 +7124,7 @@ typedef struct {
       meshi->cventinfo=NULL;
       meshi->ncvents=ncv;
       if(ncv==0)continue;
-      ncvents+=ncv;
+      sextras.ncvents+=ncv;
 
       NewMemory((void **)&cvinfo,ncv*sizeof(cventdata));
       meshi->cventinfo=cvinfo;
@@ -7300,9 +7289,9 @@ typedef struct {
       xplttemp=meshi->xplt;
       yplttemp=meshi->yplt;
       zplttemp=meshi->zplt;
-      if(nVENT==0){
+      if(sextras.nVENT==0){
         strcpy(buffer,"0 0");
-        nVENT=1;
+        sextras.nVENT=1;
       }
       else{
         FGETS(buffer,255,stream);
@@ -7550,7 +7539,7 @@ typedef struct {
             break;
           }
         }
-        if(vi->transparent==1)nvent_transparent++;
+        if(vi->transparent==1)sextras.nvent_transparent++;
         vi->linewidth=&ventlinewidth;
         vi->showhide=NULL;
         vi->showtime=NULL;
@@ -7772,7 +7761,7 @@ typedef struct {
   START_TIMER(pass5_time);
 
   if(auto_terrain==1&&manual_terrain==0){
-    nOBST=0;
+    sextras.nOBST=0;
     iobst=0;
   }
 
@@ -7882,7 +7871,7 @@ typedef struct {
       int iblock;
       int nn;
 
-      nOBST++;
+      sextras.nOBST++;
       iobst++;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&n_blocks);

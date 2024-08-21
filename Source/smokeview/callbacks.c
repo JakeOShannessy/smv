@@ -1874,7 +1874,7 @@ void Keyboard(unsigned char key, int flag){
 #endif
       case GLUT_ACTIVE_CTRL:
       default:
-        if(ntotal_blockages>0||sextras.isZoneFireModel==0||(sextras.isZoneFireModel==1&&ntrnx>0)){
+        if(ntotal_blockages>0||sextras.isZoneFireModel==0||(sextras.isZoneFireModel==1&&sextras.ntrnx>0)){
           switch(visGrid){
             case NOGRID_NOPROBE:
               visGrid=GRID_NOPROBE;

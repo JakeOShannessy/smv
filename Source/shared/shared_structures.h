@@ -1832,6 +1832,27 @@ typedef struct {
   int have_object_box;
   int have_beam;
   int have_missing_objects;
+  int show_hrrcutoff_active;
+  int show_tempcutoff_active;
+  int ntotal_blockages;
+  int hasSensorNorm;
+  char *texturedir;
+  int smokediff;
+  int have_northangle;
+  int usetextures;
+  /// @brief SMV file contains DEVICE_ACT entries
+  int update_device;
+  /// @brief Number of transparent vents
+  int nvent_transparent;
+  int ntrnx;
+  int ntrny;
+  int ntrnz;
+  int npdim;
+  int nVENT;
+  int nCVENT;
+  int ncvents;
+  int nOBST;
+  int noffset;
 } smv_extras;
 
 // TODO: remove each of these struct fields as global variables

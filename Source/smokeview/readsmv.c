@@ -7289,16 +7289,16 @@ int ReadSMV_Init(){
   nisoinfo=0;
 
   updateindexcolors=0;
-  ntrnx=0;
-  ntrny=0;
-  ntrnz=0;
+  sextras.ntrnx=0;
+  sextras.ntrny=0;
+  sextras.ntrnz=0;
   meshescoll.nmeshes=0;
-  npdim=0;
-  nVENT=0;
-  nCVENT=0;
-  ncvents=0;
-  nOBST=0;
-  noffset=0;
+  sextras.npdim=0;
+  sextras.nVENT=0;
+  sextras.nCVENT=0;
+  sextras.ncvents=0;
+  sextras.nOBST=0;
+  sextras.noffset=0;
   surf_coll.nsurfinfo=0;
   nvent_transparent=0;
 
@@ -7726,15 +7726,15 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"TRNX") == 1){
-      ntrnx++;
+      sextras.ntrnx++;
       continue;
     }
     if(MatchSMV(buffer,"TRNY") == 1){
-      ntrny++;
+      sextras.ntrny++;
       continue;
     }
     if(MatchSMV(buffer,"TRNZ") == 1){
-      ntrnz++;
+      sextras.ntrnz++;
       continue;
     }
     if(MatchSMV(buffer,"SURFACE") ==1){
@@ -7747,18 +7747,18 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"OFFSET") == 1){
-      noffset++;
+      sextras.noffset++;
       continue;
     }
     if(MatchSMV(buffer,"PDIM") == 1){
-      npdim++;
+      sextras.npdim++;
       setPDIM=1;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f %f %f %f",&xbar0,&xbar,&ybar0,&ybar,&zbar0,&zbar);
       continue;
     }
     if(MatchSMV(buffer,"OBST") == 1){
-      nOBST++;
+      sextras.nOBST++;
       continue;
     }
     if(MatchSMV(buffer,"CADGEOM") == 1){
@@ -7766,11 +7766,11 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"CVENT") == 1){
-      nCVENT++;
+      sextras.nCVENT++;
       continue;
     }
     if(MatchSMV(buffer,"VENT") == 1){
-      nVENT++;
+      sextras.nVENT++;
       continue;
     }
     if(
@@ -7966,27 +7966,27 @@ int ReadSMV_Parse(bufferstreamdata *stream){
      BUT if any one is present then the number of each must be equal
   */
 
-  if(meshescoll.nmeshes==0&&ntrnx==0&&ntrny==0&&ntrnz==0&&npdim==0&&nOBST==0&&nVENT==0&&noffset==0){
+  if(meshescoll.nmeshes==0&&sextras.ntrnx==0&&sextras.ntrny==0&&sextras.ntrnz==0&&sextras.npdim==0&&sextras.nOBST==0&&sextras.nVENT==0&&sextras.noffset==0){
     meshescoll.nmeshes=1;
-    ntrnx=1;
-    ntrny=1;
-    ntrnz=1;
-    npdim=1;
-    nOBST=1;
-    noffset=1;
+    sextras.ntrnx=1;
+    sextras.ntrny=1;
+    sextras.ntrnz=1;
+    sextras.npdim=1;
+    sextras.nOBST=1;
+    sextras.noffset=1;
   }
   else{
     if(meshescoll.nmeshes>1){
-      if((meshescoll.nmeshes!=ntrnx||meshescoll.nmeshes!=ntrny||meshescoll.nmeshes!=ntrnz||meshescoll.nmeshes!=npdim||meshescoll.nmeshes!=nOBST||meshescoll.nmeshes!=nVENT||meshescoll.nmeshes!=noffset)&&
-         (nCVENT!=0&&nCVENT!=meshescoll.nmeshes)){
+      if((meshescoll.nmeshes!=sextras.ntrnx||meshescoll.nmeshes!=sextras.ntrny||meshescoll.nmeshes!=sextras.ntrnz||meshescoll.nmeshes!=sextras.npdim||meshescoll.nmeshes!=sextras.nOBST||meshescoll.nmeshes!=sextras.nVENT||meshescoll.nmeshes!=sextras.noffset)&&
+         (sextras.nCVENT!=0&&sextras.nCVENT!=meshescoll.nmeshes)){
         fprintf(stderr,"*** Error:\n");
-        if(meshescoll.nmeshes!=ntrnx)fprintf(stderr,"*** Error:  found %i TRNX keywords, was expecting %i\n",ntrnx,meshescoll.nmeshes);
-        if(meshescoll.nmeshes!=ntrny)fprintf(stderr,"*** Error:  found %i TRNY keywords, was expecting %i\n",ntrny,meshescoll.nmeshes);
-        if(meshescoll.nmeshes!=ntrnz)fprintf(stderr,"*** Error:  found %i TRNZ keywords, was expecting %i\n",ntrnz,meshescoll.nmeshes);
-        if(meshescoll.nmeshes!=npdim)fprintf(stderr,"*** Error:  found %i PDIM keywords, was expecting %i\n",npdim,meshescoll.nmeshes);
-        if(meshescoll.nmeshes!=nOBST)fprintf(stderr,"*** Error:  found %i OBST keywords, was expecting %i\n",nOBST,meshescoll.nmeshes);
-        if(meshescoll.nmeshes!=nVENT)fprintf(stderr,"*** Error:  found %i VENT keywords, was expecting %i\n",nVENT,meshescoll.nmeshes);
-        if(nCVENT!=0&&meshescoll.nmeshes!=nCVENT)fprintf(stderr,"*** Error:  found %i CVENT keywords, was expecting %i\n",noffset,meshescoll.nmeshes);
+        if(meshescoll.nmeshes!=sextras.ntrnx)fprintf(stderr,"*** Error:  found %i TRNX keywords, was expecting %i\n",sextras.ntrnx,meshescoll.nmeshes);
+        if(meshescoll.nmeshes!=sextras.ntrny)fprintf(stderr,"*** Error:  found %i TRNY keywords, was expecting %i\n",sextras.ntrny,meshescoll.nmeshes);
+        if(meshescoll.nmeshes!=sextras.ntrnz)fprintf(stderr,"*** Error:  found %i TRNZ keywords, was expecting %i\n",sextras.ntrnz,meshescoll.nmeshes);
+        if(meshescoll.nmeshes!=sextras.npdim)fprintf(stderr,"*** Error:  found %i PDIM keywords, was expecting %i\n",sextras.npdim,meshescoll.nmeshes);
+        if(meshescoll.nmeshes!=sextras.nOBST)fprintf(stderr,"*** Error:  found %i OBST keywords, was expecting %i\n",sextras.nOBST,meshescoll.nmeshes);
+        if(meshescoll.nmeshes!=sextras.nVENT)fprintf(stderr,"*** Error:  found %i VENT keywords, was expecting %i\n",sextras.nVENT,meshescoll.nmeshes);
+        if(sextras.nCVENT!=0&&meshescoll.nmeshes!=sextras.nCVENT)fprintf(stderr,"*** Error:  found %i CVENT keywords, was expecting %i\n",sextras.noffset,meshescoll.nmeshes);
         return 2;
       }
     }
@@ -8168,7 +8168,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   ioffset=0;
   iobst=0;
   noutlineinfo=0;
-  if(noffset==0)ioffset=1;
+  if(sextras.noffset==0)ioffset=1;
 
   REWIND(stream);
   PRINTF("%s","  pass 2\n");
@@ -9982,7 +9982,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   itrnx=0, itrny=0, itrnz=0, igrid=0, ipdim=0, iobst=0, ivent=0, icvent=0;
   ioffset=0;
   npartclassinfo=0;
-  if(noffset==0)ioffset=1;
+  if(sextras.noffset==0)ioffset=1;
   PRINT_TIMER(timer_readsmv, "pass 3");
 
 /*
@@ -10004,8 +10004,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       BREAK;
     }
 
-    if(nVENT==0){
-      nVENT=0;
+    if(sextras.nVENT==0){
+      sextras.nVENT=0;
       strcpy(buffer,"VENT");
     }
     else{
@@ -10337,21 +10337,21 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       meshi->xyz_bar[ZZZ] =zbar;
       meshi->zcen =(zbar+zbar0)/2.0;
       InitBoxClipInfo(meshi->box_clipinfo,xbar0,xbar,ybar0,ybar,zbar0,zbar);
-      if(ntrnx==0){
+      if(sextras.ntrnx==0){
         int nn;
 
         for(nn = 0; nn<=meshi->ibar; nn++){
           meshi->xplt[nn] = xbar0+(float)nn*(xbar-xbar0)/(float)meshi->ibar;
         }
       }
-      if(ntrny==0){
+      if(sextras.ntrny==0){
         int nn;
 
         for(nn = 0; nn<=meshi->jbar; nn++){
           meshi->yplt[nn] = ybar0+(float)nn*(ybar-ybar0)/(float)meshi->jbar;
         }
       }
-      if(ntrnz==0){
+      if(sextras.ntrnz==0){
         int nn;
 
         for(nn = 0; nn<=meshi->kbar; nn++){
@@ -10829,7 +10829,7 @@ typedef struct {
       meshi->cventinfo=NULL;
       meshi->ncvents=ncv;
       if(ncv==0)continue;
-      ncvents+=ncv;
+      sextras.ncvents+=ncv;
 
       NewMemory((void **)&cvinfo,ncv*sizeof(cventdata));
       meshi->cventinfo=cvinfo;
@@ -10994,9 +10994,9 @@ typedef struct {
       xplttemp=meshi->xplt;
       yplttemp=meshi->yplt;
       zplttemp=meshi->zplt;
-      if(nVENT==0){
+      if(sextras.nVENT==0){
         strcpy(buffer,"0 0");
-        nVENT=1;
+        sextras.nVENT=1;
       }
       else{
         FGETS(buffer,255,stream);
@@ -11465,7 +11465,7 @@ typedef struct {
   START_TIMER(pass5_time);
 
   if(auto_terrain==1&&manual_terrain==0){
-    nOBST=0;
+    sextras.nOBST=0;
     iobst=0;
   }
 
@@ -11575,7 +11575,7 @@ typedef struct {
       int iblock;
       int nn;
 
-      nOBST++;
+      sextras.nOBST++;
       iobst++;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&n_blocks);
