@@ -3903,11 +3903,11 @@ void UpdateHiddenFaces(){
 
     }
   }
-  if(have_removable_obsts == 1){ 
+  if(have_removable_obsts == 1){
     if(hide_overlaps!=0)PRINTF(" complete\n");
     return;
   }
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
 

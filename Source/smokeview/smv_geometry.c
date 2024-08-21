@@ -488,7 +488,7 @@ int InExterior(float *xyz){
 meshdata *GetMesh(float *xyz){
   int i;
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int ibar, jbar, kbar;
     float *xplt, *yplt, *zplt;

@@ -1553,7 +1553,7 @@ SVEXTERN sliceparmdata sliceparminfo;
 SVEXTERN int SVDECL(nslicebounds, 0), SVDECL(npatchbounds,0), SVDECL(npatch2,0);
 SVEXTERN int SVDECL(nsmoke3dinfo,0);
 SVEXTERN int SVDECL(nisoinfo,0), SVDECL(niso_bounds,0);
-SVEXTERN int SVDECL(ntrnx,0), SVDECL(ntrny,0), SVDECL(ntrnz,0),SVDECL(npdim,0),SVDECL(nmeshes,0),SVDECL(clip_mesh,0);
+SVEXTERN int SVDECL(ntrnx,0), SVDECL(ntrny,0), SVDECL(ntrnz,0),SVDECL(npdim,0),SVDECL(clip_mesh,0);
 SVEXTERN int SVDECL(nOBST,0),SVDECL(nVENT,0),SVDECL(nCVENT,0),SVDECL(ncvents,0),SVDECL(noffset,0);
 SVEXTERN int SVDECL(visLabels,0);
 SVEXTERN float SVDECL(framerate,-1.0);

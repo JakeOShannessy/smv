@@ -4943,7 +4943,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
   TrimBack(buffer);
   len = strlen(buffer);
 
-  if(nmeshes>1){
+  if(meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5139,7 +5139,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
   parti = partinfo+ipart;
   lenkey = 4;
   len = strlen(buffer);
-  if(nmeshes>1){
+  if(meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5310,7 +5310,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   TrimBack(buffer);
   len = strlen(buffer);
 
-  if(nmeshes>1){
+  if(meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5580,7 +5580,7 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
 
   TrimBack(buffer);
   len = strlen(buffer);
-  if(nmeshes>1){
+  if(meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5867,7 +5867,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   }
   TrimBack(buffer);
   len = strlen(buffer);
-  if(nmeshes>1){
+  if(meshescoll.nmeshes>1){
     blocknumber = ioffset_in-1;
   }
   else{
@@ -6513,7 +6513,7 @@ blockagedata *GetBlockagePtr(float *xyz){
   xyzcenter[0] = (xyz[0]+xyz[1])/2.0;
   xyzcenter[1] = (xyz[2]+xyz[3])/2.0;
   xyzcenter[2] = (xyz[4]+xyz[5])/2.0;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
