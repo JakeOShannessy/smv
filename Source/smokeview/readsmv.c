@@ -929,13 +929,21 @@ void InitMesh(meshdata *meshi){
     meshi->nabors[i]      = NULL;
   }
   NewMemory((void **)&meshi->plot3dcontour1, sizeof(contour));
+  memset(meshi->plot3dcontour1, 0, sizeof(contour));
   NewMemory((void **)&meshi->plot3dcontour2, sizeof(contour));
+  memset(meshi->plot3dcontour2, 0, sizeof(contour));
   NewMemory((void **)&meshi->plot3dcontour3, sizeof(contour));
-  NewMemory((void **)&meshi->currentsurf,    sizeof(isosurface));
-  NewMemory((void **)&meshi->currentsurf2,   sizeof(isosurface));
-  NewMemory((void **)&meshi->box_clipinfo,   sizeof(clipdata));
-  NewMemory((void **)&meshi->gsliceinfo,     sizeof(meshplanedata));
-  NewMemory((void **)&meshi->volrenderinfo,  sizeof(volrenderdata));
+  memset(meshi->plot3dcontour3, 0, sizeof(contour));
+  NewMemory((void **)&meshi->currentsurf, sizeof(isosurface));
+  memset(meshi->currentsurf, 0, sizeof(isosurface));
+  NewMemory((void **)&meshi->currentsurf2, sizeof(isosurface));
+  memset(meshi->currentsurf2, 0, sizeof(isosurface));
+  NewMemory((void **)&meshi->box_clipinfo, sizeof(clipdata));
+  memset(meshi->box_clipinfo, 0, sizeof(clipdata));
+  NewMemory((void **)&meshi->gsliceinfo, sizeof(meshplanedata));
+  memset(meshi->gsliceinfo, 0, sizeof(meshplanedata));
+  NewMemory((void **)&meshi->volrenderinfo, sizeof(volrenderdata));
+  memset(meshi->volrenderinfo, 0, sizeof(volrenderdata));
 
   meshi->terrain = NULL;
   meshi->boundary_mask = NULL;
@@ -8006,8 +8014,6 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     meshi = meshescoll.meshinfo + i;
     InitMesh(meshi); // initialize mesh here so order of order GRID/TERRAIN keywords won't cause a problem
   }
-  FREEMEMORY(meshescoll.meshinfo);
-  if(NewMemory((void **)&meshescoll.meshinfo,meshescoll.nmeshes*sizeof(meshdata))==0)return 2;
   FREEMEMORY(supermeshinfo);
   if(NewMemory((void **)&supermeshinfo,meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
   meshescoll.meshinfo->plot3dfilenum=-1;
