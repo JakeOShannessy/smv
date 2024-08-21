@@ -19,6 +19,7 @@
 #include "readimage.h"
 #include "readgeom.h"
 #include "readobject.h"
+#include "readlabel.h"
 
 #define BREAK break
 #define BREAK2 \
@@ -3695,8 +3696,8 @@ void UpdateMeshCoords(void){
   patchout_zmin = zbar0ORIG;
   patchout_zmax = zbarORIG;
   patchout_tmin = 0.0;
-  if(tour_tstop>0.0){
-    patchout_tmax = tour_tstop;
+  if(tourcoll.tour_tstop>0.0){
+    patchout_tmax = tourcoll.tour_tstop;
   }
   else{
     patchout_tmax = 1.0;
@@ -6468,7 +6469,7 @@ void UpdateEvents(void){
 
       label.useforegroundcolor = 0;
       label.show_always = 0;
-      LabelInsert(&label);
+      LabelInsert(&labelscoll, &label);
       event_file_exists = 1;
     }
   }
@@ -7721,14 +7722,14 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
-      sscanf(buffer,"%f %f %i",&tour_tstart,&tour_tstop,&tour_ntimes);
-      global_tbegin = tour_tstart;
-      tload_begin   = tour_tstart;
+      sscanf(buffer,"%f %f %i",&tourcoll.tour_tstart,&tourcoll.tour_tstop,&tourcoll.tour_ntimes);
+      global_tbegin = tourcoll.tour_tstart;
+      tload_begin   = tourcoll.tour_tstart;
 
-      global_tend   = tour_tstop;
-      tload_end     = tour_tstop;
-      if(tour_ntimes<2)tour_ntimes=2;
-      ReallocTourMemory();
+      global_tend   = tourcoll.tour_tstop;
+      tload_end     = tourcoll.tour_tstop;
+      if(tourcoll.tour_ntimes<2)tourcoll.tour_ntimes=2;
+      ReallocTourMemory(&tourcoll);
       continue;
     }
     if(MatchSMV(buffer,"OUTLINE") == 1){
@@ -9140,7 +9141,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         rgbtemp[0]=frgbtemp[0]*255;
         rgbtemp[1]=frgbtemp[1]*255;
         rgbtemp[2]=frgbtemp[2]*255;
-        LabelInsert(labeli);
+        LabelInsert(&labelscoll, labeli);
       }
       continue;
     }
@@ -15741,14 +15742,14 @@ int ReadIni2(char *inifile, int localfile){
         TrimBack(buffer);
         bufferptr = TrimFront(buffer);
         strcpy(labeli->name, bufferptr);
-        LabelInsert(labeli);
+        LabelInsert(&labelscoll, labeli);
         continue;
       }
       if(MatchINI(buffer, "VIEWTIMES") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
-        sscanf(buffer, "%f %f %i", &tour_tstart, &tour_tstop, &tour_ntimes);
-        if(tour_ntimes<2)tour_ntimes = 2;
-        ReallocTourMemory();
+        sscanf(buffer, "%f %f %i", &tourcoll.tour_tstart, &tourcoll.tour_tstop, &tourcoll.tour_ntimes);
+        if(tourcoll.tour_ntimes<2)tourcoll.tour_ntimes = 2;
+        ReallocTourMemory(&tourcoll);
         continue;
       }
       if(MatchINI(buffer, "SHOOTER") == 1){
@@ -16001,42 +16002,42 @@ int ReadIni2(char *inifile, int localfile){
         if(have_tours==0&&MatchINI(buffer, "TOUR7") == 1)tours_flag = 1;
         if(tours_flag == 1){
           have_tour7 = 1;
-          if(ntourinfo > 0){
-            for(i = 0; i < ntourinfo; i++){
+          if(tourcoll.ntourinfo > 0){
+            for(i = 0; i < tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = tourinfo + i;
+              touri = tourcoll.tourinfo + i;
               FreeTour(touri);
             }
-            FREEMEMORY(tourinfo);
+            FREEMEMORY(tourcoll.tourinfo);
           }
-          ntourinfo = 0;
+          tourcoll.ntourinfo = 0;
 
           fgets(buffer, 255, stream);
-          sscanf(buffer, "%i", &ntourinfo);
-          ntourinfo++;
-          if(ntourinfo > 0){
-            if(NewMemory((void **)&tourinfo, ntourinfo*sizeof(tourdata)) == 0)return 2;
-            for(i = 0; i < ntourinfo; i++){
+          sscanf(buffer, "%i", &tourcoll.ntourinfo);
+          tourcoll.ntourinfo++;
+          if(tourcoll.ntourinfo > 0){
+            if(NewMemory((void **)&tourcoll.tourinfo, tourcoll.ntourinfo*sizeof(tourdata)) == 0)return 2;
+            for(i = 0; i < tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = tourinfo + i;
+              touri = tourcoll.tourinfo + i;
               touri->path_times = NULL;
               touri->display = 0;
             }
           }
-          ReallocTourMemory();
-          InitCircularTour(tourinfo,ncircletournodes,INIT);
+          ReallocTourMemory(&tourcoll);
+          InitCircularTour(tourcoll.tourinfo,ncircletournodes,INIT);
           {
             keyframe *thisframe, *addedframe;
             tourdata *touri;
             int glui_avatar_index_local;
 
-            for(i = 1; i < ntourinfo; i++){
+            for(i = 1; i < tourcoll.ntourinfo; i++){
               int j;
 
-              touri = tourinfo + i;
-              InitTour(touri);
+              touri = tourcoll.tourinfo + i;
+              InitTour(&tourcoll, touri);
               fgets(buffer, 255, stream);
               TrimBack(buffer);
               strcpy(touri->label, TrimFront(buffer));
@@ -16050,7 +16051,7 @@ int ReadIni2(char *inifile, int localfile){
               touri->nkeyframes = nkeyframes;
 
               if(NewMemory((void **)&touri->keyframe_times, nkeyframes*sizeof(float)) == 0)return 2;
-              if(NewMemory((void **)&touri->path_times, tour_ntimes*sizeof(float)) == 0)return 2;
+              if(NewMemory((void **)&touri->path_times, tourcoll.tour_ntimes*sizeof(float)) == 0)return 2;
               thisframe = &touri->first_frame;
               for(j = 0; j < nkeyframes; j++){
                 key_pause_time = 0.0;
@@ -16070,10 +16071,10 @@ int ReadIni2(char *inifile, int localfile){
             }
           }
           if(tours_flag == 1){
-            for(i = 0; i < ntourinfo; i++){
+            for(i = 0; i < tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = tourinfo + i;
+              touri = tourcoll.tourinfo + i;
               touri->first_frame.next->prev = &touri->first_frame;
               touri->last_frame.prev->next = &touri->last_frame;
             }
@@ -16087,7 +16088,7 @@ int ReadIni2(char *inifile, int localfile){
             if(viewalltours == 1)TourMenu(MENU_TOUR_SHOWALL);
           }
           else{
-            ntourinfo = 0;
+            tourcoll.ntourinfo = 0;
           }
           strcpy(buffer, "1.00000 1.00000 2.0000 0");
           TrimMZeros(buffer);
@@ -16112,44 +16113,44 @@ int ReadIni2(char *inifile, int localfile){
         if(have_tour7==0&&MatchINI(buffer, "TOURS") == 1)tours_flag = 1;
         if(tours_flag == 1){
           have_tours = 1;
-          if(ntourinfo > 0){
-            for(i = 0; i < ntourinfo; i++){
+          if(tourcoll.ntourinfo > 0){
+            for(i = 0; i < tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = tourinfo + i;
+              touri = tourcoll.tourinfo + i;
               FreeTour(touri);
             }
-            FREEMEMORY(tourinfo);
+            FREEMEMORY(tourcoll.tourinfo);
           }
-          ntourinfo = 0;
+          tourcoll.ntourinfo = 0;
 
           fgets(buffer, 255, stream);
-          sscanf(buffer, "%i", &ntourinfo);
-          ntourinfo++;
-          if(ntourinfo > 0){
-            if(NewMemory((void **)&tourinfo, ntourinfo*sizeof(tourdata)) == 0)return 2;
-            for(i = 0; i < ntourinfo; i++){
+          sscanf(buffer, "%i", &tourcoll.ntourinfo);
+          tourcoll.ntourinfo++;
+          if(tourcoll.ntourinfo > 0){
+            if(NewMemory((void **)&tourcoll.tourinfo, tourcoll.ntourinfo*sizeof(tourdata)) == 0)return 2;
+            for(i = 0; i < tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = tourinfo + i;
+              touri = tourcoll.tourinfo + i;
               touri->path_times = NULL;
               touri->display = 0;
             }
           }
-          ReallocTourMemory();
-          InitCircularTour(tourinfo,ncircletournodes,INIT);
+          ReallocTourMemory(&tourcoll);
+          InitCircularTour(tourcoll.tourinfo,ncircletournodes,INIT);
           {
             keyframe *thisframe, *addedframe;
             tourdata *touri;
             int glui_avatar_index_local;
 
-            for(i = 1; i < ntourinfo; i++){
+            for(i = 1; i < tourcoll.ntourinfo; i++){
               int j;
               float dummy;
               int idummy;
 
-              touri = tourinfo + i;
-              InitTour(touri);
+              touri = tourcoll.tourinfo + i;
+              InitTour(&tourcoll, touri);
               fgets(buffer, 255, stream);
               TrimBack(buffer);
               strcpy(touri->label, TrimFront(buffer));
@@ -16164,7 +16165,7 @@ int ReadIni2(char *inifile, int localfile){
               touri->nkeyframes = nkeyframes;
 
               if(NewMemory((void **)&touri->keyframe_times, nkeyframes*sizeof(float)) == 0)return 2;
-              if(NewMemory((void **)&touri->path_times, tour_ntimes*sizeof(float)) == 0)return 2;
+              if(NewMemory((void **)&touri->path_times, tourcoll.tour_ntimes*sizeof(float)) == 0)return 2;
               thisframe = &touri->first_frame;
               for(j = 0; j < nkeyframes; j++){
                 key_view[0] = 0.0;
@@ -16211,10 +16212,10 @@ int ReadIni2(char *inifile, int localfile){
             }
           }
           if(tours_flag == 1){
-            for(i = 0; i < ntourinfo; i++){
+            for(i = 0; i < tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = tourinfo + i;
+              touri = tourcoll.tourinfo + i;
               touri->first_frame.next->prev = &touri->first_frame;
               touri->last_frame.prev->next = &touri->last_frame;
             }
@@ -16228,7 +16229,7 @@ int ReadIni2(char *inifile, int localfile){
             if(viewalltours == 1)TourMenu(MENU_TOUR_SHOWALL);
           }
           else{
-            ntourinfo = 0;
+            tourcoll.ntourinfo = 0;
           }
           strcpy(buffer, "1.00000 1.00000 2.0000 0");
           TrimMZeros(buffer);
@@ -16457,7 +16458,7 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, " %i %i %i %i\n", vis_gslice_data, show_gslice_triangles, show_gslice_triangulation, show_gslice_normal);
   fprintf(fileout, " %f %f %f\n", gslice_xyz[0], gslice_xyz[1], gslice_xyz[2]);
   fprintf(fileout, " %f %f\n", gslice_normal_azelev[0], gslice_normal_azelev[1]);
-  for(thislabel = label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
+  for(thislabel = labelscoll.label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
     labeldata *labeli;
     float *xyz, *rgbtemp, *tstart_stop;
     int *useforegroundcolor, *show_always;
@@ -16696,13 +16697,13 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, "TOURINDEX\n");
   fprintf(fileout, " %i\n", selectedtour_index);
   startup_count = 0;
-  for(i = 0; i < ntourinfo; i++){
+  for(i = 0; i < tourcoll.ntourinfo; i++){
     tourdata *touri;
 
-    touri = tourinfo + i;
+    touri = tourcoll.tourinfo + i;
     if(touri->startup == 1)startup_count++;
   }
-  if(startup_count < ntourinfo){
+  if(startup_count < tourcoll.ntourinfo){
     //TOUR7
     // index
     //   tourlabel
@@ -16710,13 +16711,13 @@ void WriteIniLocal(FILE *fileout){
     //      time pause_time x y z
     //      vx vy vz
     fprintf(fileout, "TOUR7\n");
-    fprintf(fileout, " %i\n", ntourinfo - startup_count);
-    for(i = 0; i < ntourinfo; i++){
+    fprintf(fileout, " %i\n", tourcoll.ntourinfo - startup_count);
+    for(i = 0; i < tourcoll.ntourinfo; i++){
       tourdata *touri;
       keyframe *framei;
       int j;
 
-      touri = tourinfo + i;
+      touri =tourcoll.tourinfo + i;
       if(touri->startup == 1)continue;
 
       TrimBack(touri->label);
@@ -17734,7 +17735,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "VIEWALLTOURS\n");
   fprintf(fileout, " %i\n", viewalltours);
   fprintf(fileout, "VIEWTIMES\n");
-  fprintf(fileout, " %f %f %i\n", tour_tstart, tour_tstop, tour_ntimes);
+  fprintf(fileout, " %f %f %i\n", tourcoll.tour_tstart, tourcoll.tour_tstop, tourcoll.tour_ntimes);
   fprintf(fileout, "VIEWTOURFROMPATH\n");
   fprintf(fileout, " %i %i %f\n", viewtourfrompath, tour_snap, tour_snap_time);
 
