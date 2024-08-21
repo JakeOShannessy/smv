@@ -452,7 +452,6 @@ SVEXTERN int SVDECL(update_texturebar, 0);
 SVEXTERN float SVDECL(iso_valmin, 20.0), SVDECL(iso_valmax, 1020.0);
 SVEXTERN float SVDECL(glui_iso_valmin, 20.0), SVDECL(glui_iso_valmax, 1020.0);
 SVEXTERN float SVDECL(iso_global_min,0.0), SVDECL(iso_global_max,1.0);
-SVEXTERN int SVDECL(iso_colorbar_index, 0);
 SVEXTERN colorbardata SVDECL(*iso_colorbar, NULL);
 SVEXTERN int SVDECL(show_iso_color, 1);
 SVEXTERN int SVDECL(update_iso_ini, 0);
@@ -681,7 +680,6 @@ SVEXTERN unsigned int SVDECL(*screenmap360, NULL);
 SVEXTERN float SVDECL(*screenmap360IX, NULL), SVDECL(*screenmap360IY, NULL);
 
 SVEXTERN colorbardata SVDECL(*split_colorbar, NULL);
-SVEXTERN int SVDECL(split_colorbar_index, -1);
 #ifdef INMAIN
 SVEXTERN float splitvals[3]={-1.0,0.0,1.0};
 #else
@@ -1253,11 +1251,11 @@ SVEXTERN int showiso_colorbar;
 SVEXTERN int SVDECL(visgridloc,0);
 SVEXTERN int SVDECL(valindex,0);
 
-SVEXTERN int co2_colorbar_index, SVDECL(co2_colorbar_index_save, -1);
+SVEXTERN int SVDECL(co2_colorbar_index_save, -1);
 SVEXTERN int SVDECL(update_co2_colorbar_index, 0);
 SVEXTERN int SVDECL(co2_colorbar_index_ini, 0);
 
-SVEXTERN int fire_colorbar_index,SVDECL(fire_colorbar_index_save,-1);
+SVEXTERN int SVDECL(fire_colorbar_index_save,-1);
 SVEXTERN int SVDECL(update_fire_colorbar_index,0);
 SVEXTERN int SVDECL(fire_colorbar_index_ini,0);
 SVEXTERN float SVDECL(*rgb2_ini,NULL);
@@ -2063,7 +2061,11 @@ SVEXTERN int SVDECL(showall_textures,0);
 SVEXTERN int SVDECL(enable_texture_lighting,0);
 
 SVEXTERN int ndefaultcolorbars;
-SVEXTERN colorbar_collection SVDECL(colorbars,{0});
+#ifdef INMAIN
+SVEXTERN colorbar_collection colorbars = {.split_colorbar_index = -1, 0};
+#else
+SVEXTERN colorbar_collection colorbars;
+#endif
 SVEXTERN colorbardata SVDECL(*current_colorbar,NULL);
 SVEXTERN colorbardata SVDECL(*colorbarcopyinfo, NULL);
 
@@ -2113,7 +2115,6 @@ SVEXTERN int glui_tick_inside, glui_tick_outside;
 SVEXTERN int user_tick_nxyz[3], user_tick_sub, user_tick_option, SVDECL(visUSERticks,0), SVDECL(auto_user_tick_placement,1);
 SVEXTERN int SVDECL(user_tick_show_x,1), SVDECL(user_tick_show_y,1), SVDECL(user_tick_show_z,1);
 SVEXTERN int SVDECL(visCadTextures,1), SVDECL(visTerrainTexture,1);
-SVEXTERN int bw_colorbar_index;
 SVEXTERN int SVDECL(viscolorbarpath,0);
 SVEXTERN int SVDECL(*sortedblocklist,NULL),SVDECL(*changed_idlist,NULL),SVDECL(nchanged_idlist,0);
 SVEXTERN int SVDECL(nselectblocks,0);

@@ -758,7 +758,7 @@ extern "C" void GLUIColorbarCB(int var){
     if(list_index<0)break;
     colorbartype = list_index;
     cbi = colorbars.colorbarinfo + colorbartype;
-    if(show_firecolormap!=0)fire_colorbar_index= colorbartype;
+    if(show_firecolormap!=0)colorbars.fire_colorbar_index= colorbartype;
     GLUISetColorbarListBound(colorbartype);
     ColorbarMenu(colorbartype);
     GLUIColorbarGlobal2Local();
@@ -827,7 +827,7 @@ extern "C" void GLUIColorbarCB(int var){
     GLUIColorbarCB(COLORBAR_LIST);
     break;
   case COLORBAR_NEW:
-    colorbartype = bw_colorbar_index;
+    colorbartype = colorbars.bw_colorbar_index;
     GLUIColorbarCB(COLORBAR_COPY);
     char newlabel[sizeof(GLUI_String)], temp_label[sizeof(GLUI_String)];
     strcpy(temp_label, "new");

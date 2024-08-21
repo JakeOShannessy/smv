@@ -1629,7 +1629,7 @@ void UpdateTimes(void){
   PRINT_TIMER(timer_device, "UpdateTimes: device state");
 
   /* determine visibility of each vent at each time step */
-  
+
   INIT_PRINT_TIMER(timer_vent);
 
   for(i=0;i<nmeshes;i++){
@@ -2314,7 +2314,7 @@ void UpdateShowScene(void){
     END_SHOW_UPDATE(update_frame);
   }
 #endif
-#ifdef pp_SMOKE_SPEEDUP  
+#ifdef pp_SMOKE_SPEEDUP
   if(update_smoke3dmenulabels == 1){
     SHOW_UPDATE(update_smoke3dmenulabels);
     update_smoke3dmenulabels = 0;
@@ -3074,7 +3074,7 @@ void UpdateDisplay(void){
   }
   if(update_smokecolorbar == 1){
     update_smokecolorbar = 0;
-    SmokeColorbarMenu(fire_colorbar_index);
+    SmokeColorbarMenu(colorbars.fire_colorbar_index);
   }
   if(update_colorbar_dialog == 1){
     UpdateNodeLabel(colorbars.colorbarinfo + colorbartype);

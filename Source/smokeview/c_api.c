@@ -799,13 +799,13 @@ ERROR_CODE GetNamedColorbar(const char *name, size_t *index) {
 /// @param value
 void SetColorbar(size_t value) {
   colorbartype = value;
-  iso_colorbar_index = value;
-  iso_colorbar = colorbars.colorbarinfo + iso_colorbar_index;
+  colorbars.iso_colorbar_index = value;
+  iso_colorbar = colorbars.colorbarinfo + colorbars.iso_colorbar_index;
   update_texturebar = 1;
   GLUIUpdateListIsoColorobar();
   UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
   GLUIUpdateColorbarType();
-  if(colorbartype == bw_colorbar_index && bw_colorbar_index >= 0) {
+  if(colorbartype == colorbars.bw_colorbar_index && colorbars.bw_colorbar_index >= 0) {
     setbwdata = 1;
   }
   else {
@@ -3207,7 +3207,7 @@ int SetFirecolor(int r, int g, int b) {
 
 int SetFirecolormap(int type, int index) {
   fire_colormap_type = type;
-  fire_colorbar_index = index;
+  colorbars.fire_colorbar_index = index;
   return 0;
 } // FIRECOLORMAP
 
