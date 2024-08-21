@@ -477,7 +477,7 @@ void TextLabelsCB(int var){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);
     }
-    thislabel = LabelGet(&labelscoll,name);
+    thislabel = LabelGet(&labelscoll, name);
     if(thislabel != NULL){
       LabelDelete(thislabel);
     }

@@ -25,7 +25,6 @@
 #include "readtour.h"
 #include "readgeom.h"
 #include "readpart.h"
-#include "readslice.h"
 #include "colorbars.h"
 #include "readcad.h"
 #include "readsmoke.h"

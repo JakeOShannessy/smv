@@ -921,7 +921,6 @@ EXTERNCPP void InitTextureDir(void);
 EXTERNCPP void GetRGB(unsigned int val, unsigned char *rr, unsigned char *gg, unsigned char *bb);
 EXTERNCPP void UpdateColorbarDialogs(void);
 
-EXTERNCPP void SetTourXYZView(float t, tourdata *touri);
 EXTERNCPP void UpdateViewTour(void);
 EXTERNCPP void SetupTour(void);
 EXTERNCPP void CreateTourPaths(void);
