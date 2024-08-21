@@ -15531,8 +15531,8 @@ int ReadIni2(char *inifile, int localfile){
         UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
         update_colorbar_dialog = 0;
 
-        colorbars.ncolorbars = ndefaultcolorbars + ncolorbarini;
-        for(n = ndefaultcolorbars; n<colorbars.ncolorbars; n++){
+        colorbars.ncolorbars = colorbars.ndefaultcolorbars + ncolorbarini;
+        for(n = colorbars.ndefaultcolorbars; n<colorbars.ncolorbars; n++){
           char *cb_buffptr;
 
           cbi = colorbars.colorbarinfo + n;
@@ -16352,7 +16352,7 @@ int ReadIni(char *inifile){
   if(use_graphics==1){
     if(showall_textures==1)TextureShowMenu(MENU_TEXTURE_SHOWALL);
   }
-  if(colorbars.ncolorbars<=ndefaultcolorbars){
+  if(colorbars.ncolorbars<=colorbars.ndefaultcolorbars){
     InitDefaultColorbars(&colorbars, 0, show_extreme_mindata, rgb_below_min,
                          show_extreme_maxdata, rgb_above_max, colorbarcopyinfo);
     UpdateColorbarDialogs();
@@ -17617,14 +17617,14 @@ void WriteIni(int flag,char *filename){
   }
   fprintf(fileout, "FIREDEPTH\n");
   fprintf(fileout, " %f %f %f %i %i\n", fire_halfdepth, co2_halfdepth, emission_factor, use_fire_alpha, force_alpha_opaque);
-  if(colorbars.ncolorbars > ndefaultcolorbars){
+  if(colorbars.ncolorbars > colorbars.ndefaultcolorbars){
     colorbardata *cbi;
     unsigned char *rrgb;
     int n;
 
     fprintf(fileout, "GCOLORBAR\n");
-    fprintf(fileout, " %i\n", colorbars.ncolorbars - ndefaultcolorbars);
-    for(n = ndefaultcolorbars; n < colorbars.ncolorbars; n++){
+    fprintf(fileout, " %i\n", colorbars.ncolorbars - colorbars.ndefaultcolorbars);
+    for(n = colorbars.ndefaultcolorbars; n < colorbars.ncolorbars; n++){
       cbi = colorbars.colorbarinfo + n;
       fprintf(fileout, " %s\n", cbi->menu_label);
       fprintf(fileout, " %i %i\n", cbi->nnodes, cbi->nodehilight);

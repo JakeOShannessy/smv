@@ -2060,7 +2060,6 @@ SVEXTERN int smoke_alpha;
 SVEXTERN int SVDECL(showall_textures,0);
 SVEXTERN int SVDECL(enable_texture_lighting,0);
 
-SVEXTERN int ndefaultcolorbars;
 #ifdef INMAIN
 SVEXTERN colorbar_collection colorbars = {.split_colorbar_index = -1, 0};
 #else
