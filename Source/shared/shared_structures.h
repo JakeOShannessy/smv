@@ -1875,6 +1875,7 @@ typedef struct {
   outlinedata *outlineinfo;
   treedata *treeinfo;
   terraindata *terraininfo;
+  int solid_ht3d;
   int have_cface_normals;
   float gvecphys[3];
   float gvecunit[3];

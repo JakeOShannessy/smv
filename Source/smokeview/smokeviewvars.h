@@ -567,7 +567,6 @@ SVEXTERN int SVDECL(have_geom_slice_menus, 0), SVDECL(geom_slice_loaded,0);
 SVEXTERN FILE SVDECL(*stderr2,NULL);
 SVEXTERN char SVDECL(*script_error1_filename,NULL);
 SVEXTERN int SVDECL(render_firsttime, NO);
-SVEXTERN int SVDECL(solid_ht3d, 0);
 SVEXTERN int SVDECL(load_incremental, 0);
 SVEXTERN int SVDECL(show_tour_hint, 1);
 SVEXTERN int cb_rgb[3];

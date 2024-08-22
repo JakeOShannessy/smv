@@ -100,7 +100,6 @@ int cellcenter_slice_active = 0;
 int niso_compressed;
 spherepoints *sphereinfo = NULL, *wui_sphereinfo = NULL;
 int updatefaces = 0;
-int solid_ht3d = 0;
 int SVDECL(show_slice_in_obst,ONLY_IN_GAS);
 int SVDECL(use_iblank,1),iblank_set_on_commandline = 0;
 float SVDECL(smoke_albedo, 0.3), SVDECL(smoke_albedo_base, 0.3);
@@ -3713,9 +3712,9 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     }
     if(MatchSMV(buffer, "SOLID_HT3D")==1){
       FGETS(buffer, 255, stream);
-      sscanf(buffer, "%i", &solid_ht3d);
-      ONEORZERO(solid_ht3d);
-      if(solid_ht3d==1)show_slice_in_obst=GAS_AND_SOLID;
+      sscanf(buffer, "%i", &sextras.solid_ht3d);
+      ONEORZERO(sextras.solid_ht3d);
+      if(sextras.solid_ht3d==1)show_slice_in_obst=GAS_AND_SOLID;
       continue;
     }
     if(MatchSMV(buffer, "IBLANK")==1){
