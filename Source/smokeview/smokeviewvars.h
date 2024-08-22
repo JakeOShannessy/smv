@@ -1543,7 +1543,6 @@ SVEXTERN int SVDECL(surfincrement,0),SVDECL(visiso,0);
 SVEXTERN int SVDECL(isotest,0);
 SVEXTERN int SVDECL(isolevelindex,0), SVDECL(isolevelindex2,0);
 SVEXTERN float SVDECL(pref,101325.0),SVDECL(pamb,0.0),SVDECL(tamb,293.15);
-SVEXTERN int SVDECL(ntc_total,0.0), SVDECL(nspr_total,0.0), SVDECL(nheat_total,0.0);
 SVEXTERN int SVDECL(n_devices,0);
 
 SVEXTERN int SVDECL(npartinfo,0), SVDECL(nplot3dinfo,0), SVDECL(npatchinfo,0);
@@ -1630,7 +1629,6 @@ SVEXTERN int SVDECL(visVents, 1), SVDECL(visVentFlow, 1),SVDECL(visVentHFlow, 1)
 SVEXTERN int SVDECL(viewoption,0);
 SVEXTERN int SVDECL(clip_mode,CLIP_OFF),clip_mode_last;
 SVEXTERN int clip_i,clip_j,clip_k;
-SVEXTERN int clip_I,clip_J,clip_K;
 SVEXTERN clipdata clipinfo,colorbar_clipinfo;
 SVEXTERN int stepclip_xmin,stepclip_ymin,stepclip_zmin;
 SVEXTERN int stepclip_xmax,stepclip_ymax,stepclip_zmax;
@@ -1792,7 +1790,7 @@ SVEXTERN char plot3d_title[1024];
 SVEXTERN char SVDECL(*partshortlabel,NULL),SVDECL(*partunitlabel,NULL);
 SVEXTERN char emptylabel[2];
 
-SVEXTERN int nopenvents,nopenvents_nonoutline,ndummyvents,ntransparentblocks,ntransparentvents;
+SVEXTERN int nopenvents,nopenvents_nonoutline,ntransparentblocks,ntransparentvents;
 SVEXTERN int nventcolors;
 SVEXTERN float SVDECL(**ventcolors,NULL);
 #ifdef INMAIN

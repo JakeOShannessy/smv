@@ -3142,7 +3142,7 @@ void UpdateBlockType(void){
   ntransparentvents = 0;
   nopenvents = 0;
   nopenvents_nonoutline = 0;
-  ndummyvents = 0;
+  sextras.ndummyvents = 0;
   for(igrid = 0; igrid<meshescoll.nmeshes; igrid++){
     meshdata *meshi;
 
@@ -3161,7 +3161,7 @@ void UpdateBlockType(void){
         nopenvents++;
         if(vi->type!=BLOCK_OUTLINE)nopenvents_nonoutline++;
       }
-      if(vi->dummy==1)ndummyvents++;
+      if(vi->dummy==1)sextras.ndummyvents++;
       if(vi->color[3]<0.99)ntransparentvents++;
     }
   }
@@ -7380,9 +7380,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   nvents=0;
   igrid=0;
   ioffset=0;
-  ntc_total=0;
-  nspr_total=0;
-  nheat_total=0;
+  sextras.ntc_total=0;
+  sextras.nspr_total=0;
+  sextras.nheat_total=0;
   PRINTF("%s","  pass 1\n");
   for(;;){
     if(FEOF(stream)!=0){
@@ -9616,7 +9616,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->ntc=tempval;
-      ntc_total += meshi->ntc;
+      sextras.ntc_total += meshi->ntc;
       hasSensorNorm=0;
       if(meshi->ntc>0){
         int nn;
@@ -9684,7 +9684,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->nspr=tempval;
-      nspr_total += meshi->nspr;
+      sextras.nspr_total += meshi->nspr;
       if(meshi->nspr>0){
         float *xsprcopy, *ysprcopy, *zsprcopy;
         int nn;
@@ -9763,7 +9763,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->nheat=tempval;
-      nheat_total += meshi->nheat;
+      sextras.nheat_total += meshi->nheat;
       if(meshi->nheat>0){
         float *xheatcopy, *yheatcopy, *zheatcopy;
 
@@ -11001,15 +11001,15 @@ typedef struct {
       else{
         FGETS(buffer,255,stream);
       }
-      ndummyvents=0;
-      sscanf(buffer,"%i %i",&nvents,&ndummyvents);
-      if(ndummyvents!=0){
+      sextras.ndummyvents=0;
+      sscanf(buffer,"%i %i",&nvents,&sextras.ndummyvents);
+      if(sextras.ndummyvents!=0){
         visFloor=0;
         visCeiling=0;
         visWalls=0;
       }
       meshi->nvents=nvents;
-      meshi->ndummyvents=ndummyvents;
+      meshi->ndummyvents=sextras.ndummyvents;
       vinfo=NULL;
       meshi->ventinfo=vinfo;
       if(NewMemory((void **)&vinfo,(nvents+12)*sizeof(ventdata))==0)return 2;
@@ -11035,7 +11035,7 @@ typedef struct {
         vi->texture_origin[1]=texture_origin[1];
         vi->texture_origin[2]=texture_origin[2];
         vi->colorindex=-1;
-        if(nn>nvents-ndummyvents-1&&nn<nvents){
+        if(nn>nvents-sextras.ndummyvents-1&&nn<nvents){
           vi->dummy=1;
         }
         else{
@@ -11272,12 +11272,12 @@ typedef struct {
         }
         assert(vi->color!=NULL);
       }
-      for(nn=0;nn<nvents-ndummyvents;nn++){
+      for(nn=0;nn<nvents-sextras.ndummyvents;nn++){
         int j;
         ventdata *vi;
 
         vi = meshi->ventinfo + nn;
-        for(j=nvents-ndummyvents;j<nvents;j++){ // look for dummy vent that matches real vent
+        for(j=nvents-sextras.ndummyvents;j<nvents;j++){ // look for dummy vent that matches real vent
           ventdata *vj;
 
           vj = meshi->ventinfo + j;
@@ -11614,7 +11614,7 @@ typedef struct {
   else{
     pass5_time = 0.0;
   }
-  clip_I=ibartemp; clip_J=jbartemp; clip_K=kbartemp;
+  sextras.clip_I=ibartemp; sextras.clip_J=jbartemp; sextras.clip_K=kbartemp;
   return 0;
 }
 

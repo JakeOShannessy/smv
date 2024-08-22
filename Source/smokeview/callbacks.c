@@ -2957,13 +2957,13 @@ void Keyboard(unsigned char key, int flag){
     if(stepclip_xmin==1  )clip_i += skip_global*ClipDir;
     if(stepclip_ymin==1  )clip_j += skip_global*ClipDir;
     if(stepclip_zmin==1  )clip_k += skip_global*ClipDir;
-    if(stepclip_xmax==1  )clip_I += skip_global*ClipDir;
-    if(stepclip_ymax==1  )clip_J += skip_global*ClipDir;
-    if(stepclip_zmax==1  )clip_K += skip_global*ClipDir;
+    if(stepclip_xmax==1  )sextras.clip_I += skip_global*ClipDir;
+    if(stepclip_ymax==1  )sextras.clip_J += skip_global*ClipDir;
+    if(stepclip_zmax==1  )sextras.clip_K += skip_global*ClipDir;
 
-    UpdateClipbounds(clipinfo.clip_xmin,&clip_i,clipinfo.clip_xmax,&clip_I,current_mesh->ibar);
-    UpdateClipbounds(clipinfo.clip_ymin,&clip_j,clipinfo.clip_ymax,&clip_J,current_mesh->jbar);
-    UpdateClipbounds(clipinfo.clip_zmin,&clip_k,clipinfo.clip_zmax,&clip_K,current_mesh->kbar);
+    UpdateClipbounds(clipinfo.clip_xmin,&clip_i,clipinfo.clip_xmax,&sextras.clip_I,current_mesh->ibar);
+    UpdateClipbounds(clipinfo.clip_ymin,&clip_j,clipinfo.clip_ymax,&sextras.clip_J,current_mesh->jbar);
+    UpdateClipbounds(clipinfo.clip_zmin,&clip_k,clipinfo.clip_zmax,&sextras.clip_K,current_mesh->kbar);
     return;
   }
 

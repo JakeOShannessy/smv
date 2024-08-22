@@ -59,33 +59,28 @@
 // TODO: remove these globals, they are just used for development
 smv_extras sextras = {
   .fuel_hoc = -1.0,
-  0
+  0,
+  .have_cface_normals = CFACE_NORMALS_NO
 };
+parse_options parse_opts = {
+    .smoke3d_only = 0,
+    .setup_only = 0,
 #ifdef pp_FAST
-parse_options parse_opts = {
-  .smoke3d_only = 0,
-  .setup_only = 0,
-  .fast_startup = 1,
-  .lookfor_compressed_files = 0,
-  .handle_slice_files= 1,
-};
+    .fast_startup = 1,
+    .lookfor_compressed_files = 0,
 #else
-parse_options parse_opts = {
-  .smoke3d_only = 0,
-  .setup_only = 0,
-  .fast_startup = 0,
-  .lookfor_compressed_files = 1,
-  .handle_slice_files= 1,
-};
+    .fast_startup = 0,
+    .lookfor_compressed_files = 1,
 #endif
+    .handle_slice_files = 1,
+    .setbw = 0,
+    .foregroundcolor = {1.0, 1.0, 1.0, 1.0},
+};
 
 filelist_collection filelist_coll = {0};
 
-GLuint texture_patch_colorbar_id;
-
 float SVDECL(xbar,1.0);float SVDECL(ybar,1.0);float  SVDECL(zbar,1.0);
 float xbar0 = 0.0;float  ybar0 = 0.0;float  zbar0 = 0.0;
-int ndummyvents;
 
 #define MAXFILELEN 360
 char *part_buffer = NULL;
@@ -152,7 +147,6 @@ int hvac_node_color[3];
 surfdata *surfacedefault = NULL, *vent_surfacedefault = NULL, *exterior_surfacedefault = NULL;
 tickdata *tickinfo = NULL;
 int nmemory_ids = 0;
-int SVDECL(have_cface_normals, CFACE_NORMALS_NO);
 GLfloat SVDECL(block_shininess,100.0);
 char SVDECL(**colorlabelzone,NULL);
 int SVDECL(nrgb2,8);
@@ -162,23 +156,12 @@ surfdata sdefault,v_surfacedefault,e_surfacedefault;
 float SVDECL(global_hrrpuv_cutoff, 200.0), SVDECL(global_hrrpuv_cutoff_default, 200.0);
 float load_hrrpuv_cutoff=200.0;
 int  nrgb= NRGB;
-#ifdef INMAIN
-float foregroundcolor[4]      = {1.0, 1.0, 1.0, 1.0};
-#else
-float foregroundcolor[4];
-#endif
 float SVDECL(linewidth, 2.0), SVDECL(ventlinewidth, 2.0);
-int clip_I,clip_J,clip_K;
-int ntc_total = 0.0, nspr_total = 0.0, nheat_total = 0.0;
 
 float rgb[MAXRGB][4];
 EXTERNCPP char *GetDeviceLabel(char *buffer);
 EXTERNCPP void GetElevAz(float *xyznorm,float *dtheta, float *rotate_axis, float *dpsi);
-int setbw = 0;
 float tload_begin = 0.0, tload_end = 0.0;
-slicedata  **sliceinfoptrs = NULL;
-int *subslice_menuindex = NULL,*subvslice_menuindex = NULL;
-int *msubslice_menuindex = NULL, *msubvslice_menuindex = NULL;
 
 // END TODO
 
@@ -3495,7 +3478,7 @@ int ReadSMV_Init(smv_case *scase) {
   // read in device (.svo) definitions
 
   START_TIMER(timer_setup);
-  ReadDefaultObjectCollection(&scase->objectscoll, scase->fdsprefix, setbw, sextras.isZoneFireModel);
+  ReadDefaultObjectCollection(&scase->objectscoll, scase->fdsprefix, parse_opts.setbw, sextras.isZoneFireModel);
   PRINT_TIMER(timer_setup, "InitSurface");
 
   if(sextras.noutlineinfo>0){
@@ -3674,9 +3657,9 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   nvents=0;
   igrid=0;
   ioffset=0;
-  ntc_total=0;
-  nspr_total=0;
-  nheat_total=0;
+  sextras.ntc_total=0;
+  sextras.nspr_total=0;
+  sextras.nheat_total=0;
   PRINTF("%s","  pass 1\n");
   for(;;){
     if(FEOF(stream)!=0){
@@ -4296,7 +4279,6 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   FREEMEMORY(scase->supermeshinfo);
   if(NewMemory((void **)&scase->supermeshinfo,scase->meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
   scase->meshescoll.meshinfo->plot3dfilenum=-1;
-  // UpdateCurrentMesh(meshinfo);
   for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
     supermeshdata *smeshi;
@@ -4345,12 +4327,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   FREEMEMORY(scase->slicecoll.sliceinfo);
   if(scase->slicecoll.nsliceinfo>0){
     if(NewMemory((void **)&scase->slicecoll.vsliceinfo,         3*scase->slicecoll.nsliceinfo*sizeof(vslicedata))==0    ||
-       NewMemory((void **)&scase->slicecoll.sliceinfo,            scase->slicecoll.nsliceinfo*sizeof(slicedata))==0     ||
-       NewMemory((void **)&sliceinfoptrs,        scase->slicecoll.nsliceinfo*sizeof(slicedata *)) == 0 ||
-       NewMemory((void **)&subslice_menuindex,   scase->slicecoll.nsliceinfo*sizeof(int))==0           ||
-       NewMemory((void **)&msubslice_menuindex,  scase->slicecoll.nsliceinfo*sizeof(int))==0           ||
-       NewMemory((void **)&subvslice_menuindex,  scase->slicecoll.nsliceinfo*sizeof(int))==0           ||
-       NewMemory((void **)&msubvslice_menuindex, scase->slicecoll.nsliceinfo*sizeof(int))==0){
+       NewMemory((void **)&scase->slicecoll.sliceinfo,            scase->slicecoll.nsliceinfo*sizeof(slicedata))==0 ){
        return 2;
     }
     sliceinfo_copy=scase->slicecoll.sliceinfo;
@@ -4607,7 +4584,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       buff2 = buffer+6;
       sscanf(buff2, "%i", &have_vectors);
       if(have_vectors!=CFACE_NORMALS_YES)have_vectors=CFACE_NORMALS_NO;
-      if(have_vectors == CFACE_NORMALS_YES)have_cface_normals = CFACE_NORMALS_YES;
+      if(have_vectors == CFACE_NORMALS_YES)sextras.have_cface_normals = CFACE_NORMALS_YES;
       InitGeom(geomi, GEOM_CGEOM, FDSBLOCK, have_vectors,-1);
       geomi->memory_id = ++nmemory_ids;
 
@@ -5914,7 +5891,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->ntc=tempval;
-      ntc_total += meshi->ntc;
+      sextras.ntc_total += meshi->ntc;
       sextras.hasSensorNorm=0;
       if(meshi->ntc>0){
         int nn;
@@ -5982,7 +5959,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->nspr=tempval;
-      nspr_total += meshi->nspr;
+      sextras.nspr_total += meshi->nspr;
       if(meshi->nspr>0){
         float *xsprcopy, *ysprcopy, *zsprcopy;
         int nn;
@@ -6061,7 +6038,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->nheat=tempval;
-      nheat_total += meshi->nheat;
+      sextras.nheat_total += meshi->nheat;
       if(meshi->nheat>0){
         float *xheatcopy, *yheatcopy, *zheatcopy;
 
@@ -7285,8 +7262,8 @@ typedef struct {
       else{
         FGETS(buffer,255,stream);
       }
-      ndummyvents=0;
-      sscanf(buffer,"%i %i",&nvents,&ndummyvents);
+      sextras.ndummyvents=0;
+      sscanf(buffer,"%i %i",&nvents,&sextras.ndummyvents);
       // TODO: POSTPARSE: display configuration
       // if(ndummyvents!=0){
       //   visFloor=0;
@@ -7294,7 +7271,7 @@ typedef struct {
       //   visWalls=0;
       // }
       meshi->nvents=nvents;
-      meshi->ndummyvents=ndummyvents;
+      meshi->ndummyvents=sextras.ndummyvents;
       vinfo=NULL;
       meshi->ventinfo=vinfo;
       if(NewMemory((void **)&vinfo,(nvents+12)*sizeof(ventdata))==0)return 2;
@@ -7320,7 +7297,7 @@ typedef struct {
         vi->texture_origin[1]=texture_origin[1];
         vi->texture_origin[2]=texture_origin[2];
         vi->colorindex=-1;
-        if(nn>nvents-ndummyvents-1&&nn<nvents){
+        if(nn>nvents-sextras.ndummyvents-1&&nn<nvents){
           vi->dummy=1;
         }
         else{
@@ -7553,16 +7530,16 @@ typedef struct {
         vi->kmin = kv1;
         vi->kmax = kv2;
         if(nn>=nvents&&nn<nvents+6){
-          vi->color=foregroundcolor;
+          vi->color=parse_opts.foregroundcolor;
         }
         assert(vi->color!=NULL);
       }
-      for(nn=0;nn<nvents-ndummyvents;nn++){
+      for(nn=0;nn<nvents-sextras.ndummyvents;nn++){
         int j;
         ventdata *vi;
 
         vi = meshi->ventinfo + nn;
-        for(j=nvents-ndummyvents;j<nvents;j++){ // look for dummy vent that matches real vent
+        for(j=nvents-sextras.ndummyvents;j<nvents;j++){ // look for dummy vent that matches real vent
           ventdata *vj;
 
           vj = meshi->ventinfo + j;
@@ -7900,7 +7877,7 @@ typedef struct {
   else{
     pass5_time = 0.0;
   }
-  clip_I=ibartemp; clip_J=jbartemp; clip_K=kbartemp;
+  sextras.clip_I=ibartemp; sextras.clip_J=jbartemp; sextras.clip_K=kbartemp;
   return 0;
 }
 

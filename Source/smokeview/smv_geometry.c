@@ -1461,9 +1461,9 @@ void InitClip(void){
   clip_i=0;
   clip_j=0;
   clip_k=0;
-  clip_I=0;
-  clip_J=0;
-  clip_K=0;
+  sextras.clip_I=0;
+  sextras.clip_J=0;
+  sextras.clip_K=0;
 
   stepclip_xmin=0,stepclip_ymin=0,stepclip_zmin=0;
   stepclip_xmax=0,stepclip_ymax=0,stepclip_zmax=0;

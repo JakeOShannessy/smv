@@ -1,8 +1,8 @@
 #ifndef SHARED_STRUCTURES_H_DEFINED
 #define SHARED_STRUCTURES_H_DEFINED
+#include "isodefs.h"
 #include "options.h"
 #include <stdio.h>
-#include "isodefs.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -157,7 +157,8 @@ typedef struct _meshdata {
   struct _meshdata *floor_mesh;
 #ifdef pp_GPU
   GLuint blockage_texture_id;
-  struct _smoke3ddata *smoke3d_soot, *smoke3d_hrrpuv, *smoke3d_temp, *smoke3d_co2;
+  struct _smoke3ddata *smoke3d_soot, *smoke3d_hrrpuv, *smoke3d_temp,
+      *smoke3d_co2;
   GLuint volsmoke_texture_id, volfire_texture_id;
   float *volsmoke_texture_buffer, *volfire_texture_buffer;
   int voltest_update;
@@ -180,11 +181,13 @@ typedef struct _meshdata {
   int drawsides[7];
   int extsides[7];   // 1 if on exterior side of a supermesh, 0 otherwise
   int is_extface[6]; //  MESH_EXT if face i is completely adjacent to exterior,
-                     //  MESH_INT if face i is completely adjacent to another mesh,
+                     //  MESH_INT if face i is completely adjacent to another
+                     //  mesh,
                      // MESH_BOTH if face i is neither
   int inside;
-  int in_frustum;    // 1 if part or all of mesh is in the view frustum
-  float boxmin[3], boxmiddle[3], boxmax[3], dbox[3], boxeps[3], dcell, dcell3[3], verts[24], eyedist;
+  int in_frustum; // 1 if part or all of mesh is in the view frustum
+  float boxmin[3], boxmiddle[3], boxmax[3], dbox[3], boxeps[3], dcell,
+      dcell3[3], verts[24], eyedist;
   float boxeps_fds[3];
   float slice_min[3], slice_max[3];
   float boxmin_scaled[3], boxmiddle_scaled[3], boxmax_scaled[3];
@@ -203,8 +206,10 @@ typedef struct _meshdata {
   int n_imap, n_jmap, n_kmap;
 
   unsigned char *boundary_mask;
-  char *c_iblank_node0,      *c_iblank_cell0,      *c_iblank_x0,      *c_iblank_y0,      *c_iblank_z0;
-  char *c_iblank_node0_temp, *c_iblank_cell0_temp, *c_iblank_x0_temp, *c_iblank_y0_temp, *c_iblank_z0_temp;
+  char *c_iblank_node0, *c_iblank_cell0, *c_iblank_x0, *c_iblank_y0,
+      *c_iblank_z0;
+  char *c_iblank_node0_temp, *c_iblank_cell0_temp, *c_iblank_x0_temp,
+      *c_iblank_y0_temp, *c_iblank_z0_temp;
   char *c_iblank_node_html;
   char *c_iblank_node_html_temp;
   float *f_iblank_cell0;
@@ -213,8 +218,9 @@ typedef struct _meshdata {
   float *block_zdist0;
   float *opacity_adjustments;
 
-  char *c_iblank_node,      *c_iblank_cell,      *c_iblank_x,      *c_iblank_y,      *c_iblank_z;
-  char *c_iblank_node_temp, *c_iblank_cell_temp, *c_iblank_x_temp, *c_iblank_y_temp, *c_iblank_z_temp;
+  char *c_iblank_node, *c_iblank_cell, *c_iblank_x, *c_iblank_y, *c_iblank_z;
+  char *c_iblank_node_temp, *c_iblank_cell_temp, *c_iblank_x_temp,
+      *c_iblank_y_temp, *c_iblank_z_temp;
   float *f_iblank_cell;
   float *f_iblank_cell_temp;
   char *c_iblank_embed;
@@ -259,7 +265,7 @@ typedef struct _meshdata {
   unsigned char *iso_times_map;
   int *iso_timeslist;
   int iso_itime;
-  int smokedir,smokedir_old;
+  int smokedir, smokedir_old;
   float dxDdx, dyDdx, dzDdx, dxyDdx, dxzDdx, dyzDdx, dxyz_orig[3];
   float smoke_dist[6];
   float norm[3];
@@ -306,13 +312,14 @@ typedef struct _meshdata {
 
   int nface_textures, nface_outlines, nfaces;
   int nface_normals_single, nface_normals_double, nface_transparent_double;
-  struct _facedata *faceinfo, **face_normals_single, **face_normals_double, **face_transparent_double, **face_textures, **face_outlines;
-  struct _facedata **face_normals_single_DOWN_X,**face_normals_single_UP_X;
-  struct _facedata **face_normals_single_DOWN_Y,**face_normals_single_UP_Y;
-  struct _facedata **face_normals_single_DOWN_Z,**face_normals_single_UP_Z;
-  int nface_normals_single_DOWN_X,nface_normals_single_UP_X;
-  int nface_normals_single_DOWN_Y,nface_normals_single_UP_Y;
-  int nface_normals_single_DOWN_Z,nface_normals_single_UP_Z;
+  struct _facedata *faceinfo, **face_normals_single, **face_normals_double,
+      **face_transparent_double, **face_textures, **face_outlines;
+  struct _facedata **face_normals_single_DOWN_X, **face_normals_single_UP_X;
+  struct _facedata **face_normals_single_DOWN_Y, **face_normals_single_UP_Y;
+  struct _facedata **face_normals_single_DOWN_Z, **face_normals_single_UP_Z;
+  int nface_normals_single_DOWN_X, nface_normals_single_UP_X;
+  int nface_normals_single_DOWN_Y, nface_normals_single_UP_Y;
+  int nface_normals_single_DOWN_Z, nface_normals_single_UP_Z;
 
   int itextureoffset;
 
@@ -322,16 +329,16 @@ typedef struct _meshdata {
 
   struct _clipdata *box_clipinfo;
 
-  unsigned char *merge_color,*merge_alpha;
+  unsigned char *merge_color, *merge_alpha;
   unsigned char *smokecolor_ptr, *smokealpha_ptr;
 
   char *label;
 
-  int ncullgeominfo,nxyzgeomcull[3],nxyzskipgeomcull[3];
+  int ncullgeominfo, nxyzgeomcull[3], nxyzskipgeomcull[3];
   struct _culldata *cullgeominfo;
 
   struct _volrenderdata *volrenderinfo;
-  int  nslicex,  nslicey,  nslicez;
+  int nslicex, nslicey, nslicez;
   struct _slicedata **slicex, **slicey, **slicez;
 
   struct _meshplanedata *gsliceinfo;
@@ -1722,11 +1729,11 @@ typedef struct {
 typedef struct _labeldata {
   struct _labeldata *prev, *next;
   char name[300];
-  float xyz[3],frgb[4],tstart_stop[2];
+  float xyz[3], frgb[4], tstart_stop[2];
   float tick_begin[3], tick_direction[3];
   int show_tick;
   int rgb[4], glui_id, labeltype; // smv or ini
-  int useforegroundcolor,show_always;
+  int useforegroundcolor, show_always;
 } labeldata;
 
 /**
@@ -1855,6 +1862,15 @@ typedef struct {
   int noutlineinfo;
   int ntickinfo;
   int ntickinfo_smv;
+  int ntc_total;
+  int nspr_total;
+  int nheat_total;
+  int ndummyvents;
+  int clip_I;
+  int clip_J;
+  int clip_K;
+  GLfloat block_shininess;
+  int have_cface_normals;
 } smv_extras;
 
 // TODO: remove each of these struct fields as global variables
@@ -1864,6 +1880,8 @@ typedef struct {
   int fast_startup;
   int lookfor_compressed_files;
   int handle_slice_files;
+  int setbw;
+  float foregroundcolor[4];
 } parse_options;
 
 #endif
