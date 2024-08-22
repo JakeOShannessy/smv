@@ -103,7 +103,6 @@ int updatefaces = 0;
 int SVDECL(show_slice_in_obst,ONLY_IN_GAS);
 int SVDECL(use_iblank,1),iblank_set_on_commandline = 0;
 float SVDECL(smoke_albedo, 0.3), SVDECL(smoke_albedo_base, 0.3);
-float northangle = 0.0;
 int auto_terrain = 0,manual_terrain = 0;
 int SVDECL(visOtherVents,1),SVDECL(visOtherVentsSAVE,1);
 int update_terrain_type = 0;
@@ -3776,8 +3775,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     }
     if(MatchSMV(buffer, "NORTHANGLE")==1){
       FGETS(buffer, 255, stream);
-      sscanf(buffer, "%f", &northangle);
-      northangle = CLAMP(northangle, -180.0, 180.0);
+      sscanf(buffer, "%f", &sextras.northangle);
+      sextras.northangle = CLAMP(sextras.northangle, -180.0, 180.0);
       sextras.have_northangle = 1;
       continue;
     }

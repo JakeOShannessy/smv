@@ -677,7 +677,7 @@ void DrawTerrainGeom(int option){
 void DrawNorth(void){
   glPushMatrix();
   glTranslatef(northangle_position[0], northangle_position[1], northangle_position[2]);
-  glRotatef(-northangle, 0.0, 0.0, 1.0);
+  glRotatef(-sextras.northangle, 0.0, 0.0, 1.0);
   glBegin(GL_LINES);
   glColor3fv(foregroundcolor);
   glVertex3f(0.0, 0.0, 0.0);

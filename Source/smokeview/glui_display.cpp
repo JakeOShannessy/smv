@@ -858,7 +858,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
     SPINNER_zone_hvac_diam->set_float_limits(0.0, 1.0, GLUI_LIMIT_CLAMP);
   }
 
-  if(have_northangle==1){
+  if(sextras.have_northangle==1){
     ROLLOUT_north = glui_labels->add_rollout_to_panel(PANEL_gen3,_("North direction"),false);
     INSERT_ROLLOUT(ROLLOUT_north, glui_labels);
     CHECKBOX_shownorth=glui_labels->add_checkbox_to_panel(ROLLOUT_north,_("show"),&vis_northangle,LABELS_shownorth,GLUILabelsCB);

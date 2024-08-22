@@ -7539,9 +7539,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     }
     if(MatchSMV(buffer, "NORTHANGLE")==1){
       FGETS(buffer, 255, stream);
-      sscanf(buffer, "%f", &northangle);
-      northangle = CLAMP(northangle, -180.0, 180.0);
-      have_northangle = 1;
+      sscanf(buffer, "%f", &sextras.northangle);
+      sextras.northangle = CLAMP(sextras.northangle, -180.0, 180.0);
+      sextras.have_northangle = 1;
       continue;
     }
     if(MatchSMV(buffer,"TERRAIN") == 1){

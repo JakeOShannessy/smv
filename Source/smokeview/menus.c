@@ -10246,7 +10246,7 @@ static int menu_count=0;
 
   if(visaxislabels == 1)glutAddMenuEntry(_("*Axis"), MENU_LABEL_axis);
   if(visaxislabels == 0)glutAddMenuEntry(_("Axis"), MENU_LABEL_axis);
-  if(have_northangle==1){
+  if(sextras.have_northangle==1){
     if(vis_northangle==1)glutAddMenuEntry(_("*North"), MENU_LABEL_northangle);
     if(vis_northangle==0)glutAddMenuEntry(_("North"), MENU_LABEL_northangle);
   }
