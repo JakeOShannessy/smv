@@ -92,29 +92,7 @@ int have_compressed_files = 0;
 int update_smoke_alphas = 0;
 int *sliceorderindex = NULL, *vsliceorderindex = NULL;
 float texture_origin[3]={0.0,0.0,0.0};
-//***isosurface
-int SVDECL(use_isosurface_threads, 1);
-threaderdata *isosurface_threads = NULL;
 
-//***checkfiles
-int  SVDECL(use_checkfiles_threads, 1);
-threaderdata SVDECL(*checkfiles_threads,       NULL);
-
-//*** ffmpeg
-int SVDECL(use_ffmpeg_threads, 1);
-threaderdata SVDECL(*ffmpeg_threads,         NULL);
-
-int runscript = 0;
-
-//*** readallgeom
-int SVDECL(use_readallgeom_threads, 1);
-threaderdata SVDECL(*readallgeom_threads,     NULL);
-
-//***mergesmoke
-#ifdef pp_SMOKEDRAW_SPEEDUP
-int SVDECL(use_mergesmoke_threads, 1);
-threaderdata *mergesmoke_threads = NULL;
-#endif
 int updateindexcolors = 0;
 int cellcenter_slice_active = 0;
 treedata *treeinfo = NULL;
@@ -3326,17 +3304,6 @@ int ReadSMV_Init(smv_case *scase) {
   START_TIMER(timer_readsmv);
   START_TIMER(processing_time);
 
-//** initialize multi-threading
-  if(runscript == 1){
-    use_checkfiles_threads  = 0;
-    use_ffmpeg_threads      = 0;
-    use_readallgeom_threads = 0;
-    use_isosurface_threads  = 0;
-#ifdef pp_SMOKEDRAW_SPEEDUP
-    use_mergesmoke_threads  = 0;
-#endif
-  }
-
   START_TIMER(getfilelist_time);
   MakeFileLists(scase);
   PRINT_TIMER(timer_setup, "MakeFileLists");
@@ -5694,6 +5661,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   START_TIMER(pass3_time);
 
   CheckMemory;
+  // TODO: it seems that this is never used
   ParseDatabase(scase, database_filename);
 
 
