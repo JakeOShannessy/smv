@@ -1318,7 +1318,7 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
     float f_red, f_green, f_blue;
 
     if(hrrpuv_loaded == 1 && show_firecutoff == 1){
-      i_cutoff = (int)(global_hrrpuv_cutoff + 0.5);
+      i_cutoff = (int)(sextras.global_hrrpuv_cutoff + 0.5);
       sprintf(cutoff_label, ">%i kW/m3", i_cutoff);
     }
     else{
@@ -1341,11 +1341,11 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
         icolor = 192;
       }
       else if(strcmp(fire_colorbar->menu_label, "fire 2") == 0){
-        icolor = 128 + 127*(global_hrrpuv_cutoff - global_hrrpuv_min) / (global_hrrpuv_max - global_hrrpuv_min);
+        icolor = 128 + 127*(sextras.global_hrrpuv_cutoff - global_hrrpuv_min) / (global_hrrpuv_max - global_hrrpuv_min);
         icolor = CLAMP((icolor + 1), 0, 255);
       }
       else{
-        icolor = 255*(global_hrrpuv_cutoff-global_hrrpuv_min)/(global_hrrpuv_max-global_hrrpuv_min);
+        icolor = 255*(sextras.global_hrrpuv_cutoff-global_hrrpuv_min)/(global_hrrpuv_max-global_hrrpuv_min);
         icolor = CLAMP((icolor + 1), 0, 255);
       }
       colors = fire_colorbar->colorbar_rgb;

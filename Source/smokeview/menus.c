@@ -11879,7 +11879,7 @@ static int menu_count=0;
     glutAddMenuEntry(_("  s,S: increase/decrease interval between adjacent vectors"), MENU_DUMMY);
     glutAddMenuEntry(_("  t: set/unset single time step mode"), MENU_DUMMY);
     glutAddMenuEntry(_("  T: time display between 'Time s' and 'h:m:s'"), MENU_DUMMY);
-    if(cellcenter_slice_active==1){
+    if(sextras.cellcenter_slice_active==1){
       glutAddMenuEntry(_("     (also, toggles cell center display on/off)"), MENU_DUMMY);
       glutAddMenuEntry(_("  @: display FDS values in cell centered slices"), MENU_DUMMY);
     }
@@ -12967,7 +12967,7 @@ static int menu_count=0;
 
       // terrain
 
-      if(manual_terrain==1&&sextras.nterraininfo>0){
+      if(sextras.manual_terrain==1&&sextras.nterraininfo>0){
  //       GLUTADDSUBMENU(_("Terrain"),loadterrainmenu);
       }
 

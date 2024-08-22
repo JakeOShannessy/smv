@@ -1881,13 +1881,22 @@ typedef struct {
   int solid_ht3d;
   float northangle;
   int niso_compressed;
+  int have_compressed_files;
   int have_cface_normals;
+  int cellcenter_slice_active;
+  int auto_terrain;
+  int manual_terrain;
   float gvecphys[3];
   float gvecunit[3];
   float global_tbegin;
   float global_tend;
   float tload_begin;
   float tload_end;
+  float load_hrrpuv_cutoff;
+  float global_hrrpuv_cutoff;
+  float global_hrrpuv_cutoff_default;
+  float smoke_albedo;
+  float smoke_albedo_base;
 } smv_extras;
 
 // TODO: remove each of these struct fields as global variables

@@ -56,17 +56,20 @@
 // TODO: Things that can be moved to after parse are marked with the label
 // POSTPARSE: <explanation>
 
-smv_extras sextras = {
-    .fuel_hoc = -1.0,
-    0,
-    .have_cface_normals = CFACE_NORMALS_NO,
-    .gvecphys = {0.0, 0.0, -9.8},
-    .gvecunit = {0.0, 0.0, -1.0},
-    .global_tbegin = 1.0,
-    .global_tend = 0.0,
-    .tload_begin = 0.0,
-    .tload_end = 0.0,
-};
+smv_extras sextras = {.fuel_hoc = -1.0,
+                      0,
+                      .have_cface_normals = CFACE_NORMALS_NO,
+                      .gvecphys = {0.0, 0.0, -9.8},
+                      .gvecunit = {0.0, 0.0, -1.0},
+                      .global_tbegin = 1.0,
+                      .global_tend = 0.0,
+                      .tload_begin = 0.0,
+                      .tload_end = 0.0,
+                      .load_hrrpuv_cutoff = 200.0,
+                      .global_hrrpuv_cutoff = 200.0,
+                      .global_hrrpuv_cutoff_default = 200.0,
+                      .smoke_albedo = 0.3,
+                      .smoke_albedo_base = 0.3};
 parse_options parse_opts = {
     .smoke3d_only = 0,
     .setup_only = 0,
@@ -94,18 +97,14 @@ char *smoke3d_buffer = NULL;
 char *slice_buffer = NULL;
 int curdir_writable;
 char *smokeview_scratchdir = NULL;
-int have_compressed_files = 0;
 int update_smoke_alphas = 0;
 int *sliceorderindex = NULL, *vsliceorderindex = NULL;
 float texture_origin[3]={0.0,0.0,0.0};
 
 int updateindexcolors = 0;
-int cellcenter_slice_active = 0;
 int updatefaces = 0;
 int SVDECL(show_slice_in_obst,ONLY_IN_GAS);
 int SVDECL(use_iblank,1),iblank_set_on_commandline = 0;
-float SVDECL(smoke_albedo, 0.3), SVDECL(smoke_albedo_base, 0.3);
-int auto_terrain = 0,manual_terrain = 0;
 int SVDECL(visOtherVents,1),SVDECL(visOtherVentsSAVE,1);
 int update_terrain_type = 0;
 #ifdef INMAIN
@@ -123,8 +122,6 @@ char SVDECL(**colorlabelzone,NULL);
 int SVDECL(nrgb2,8);
 float SVDECL(pref,101325.0),pamb = 0.0,SVDECL(tamb,293.15);
 surfdata sdefault,v_surfacedefault,e_surfacedefault;
-float SVDECL(global_hrrpuv_cutoff, 200.0), SVDECL(global_hrrpuv_cutoff_default, 200.0);
-float load_hrrpuv_cutoff=200.0;
 int  nrgb= NRGB;
 float SVDECL(linewidth, 2.0), SVDECL(ventlinewidth, 2.0);
 
@@ -2228,7 +2225,7 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
     smoke3di->comp_file = SMOKE3DBUFFER(len + 1);
     STRCPY(smoke3di->comp_file, buffer2);
 
-    if(have_compressed_files==1&&FILE_EXISTS_CASEDIR(smoke3di->comp_file) == YES){
+    if(sextras.have_compressed_files==1&&FILE_EXISTS_CASEDIR(smoke3di->comp_file) == YES){
       smoke3di->file = smoke3di->comp_file;
       smoke3di->is_zlib = 1;
       smoke3di->compression_type = COMPRESSED_ZLIB;
@@ -2410,7 +2407,7 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
     terrain = 1;
   }
   if(Match(buffer, "SLCC")==1){
-    cellcenter_slice_active = 1;
+    sextras.cellcenter_slice_active = 1;
     cellcenter = 1;
   }
   TrimBack(buffer);
@@ -3572,9 +3569,9 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     }
     if(MatchSMV(buffer,"ALBEDO") == 1){
       FGETS(buffer,255,stream);
-      sscanf(buffer,"%f",&smoke_albedo);
-      smoke_albedo = CLAMP(smoke_albedo, 0.0, 1.0);
-      smoke_albedo_base = smoke_albedo;
+      sscanf(buffer,"%f",&sextras.smoke_albedo);
+      sextras.smoke_albedo = CLAMP(sextras.smoke_albedo, 0.0, 1.0);
+      sextras.smoke_albedo_base = sextras.smoke_albedo;
       continue;
     }
     if(MatchSMV(buffer, "NORTHANGLE")==1){
@@ -3585,7 +3582,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       continue;
     }
     if(MatchSMV(buffer,"TERRAIN") == 1){
-      manual_terrain = 1;
+      sextras.manual_terrain = 1;
       FGETS(buffer, 255, stream);
       sextras.nterraininfo++;
       continue;
@@ -3599,7 +3596,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       char *buff2;
 
       sextras.is_terrain_case = 1;
-      auto_terrain=1;
+      sextras.auto_terrain=1;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&sextras.visTerrainType);
       sextras.visTerrainType=CLAMP(sextras.visTerrainType,0,4);
@@ -4485,7 +4482,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
           }
           if(geomi->is_terrain==1){
             sextras.is_terrain_case = 1;
-            auto_terrain = 1;
+            sextras.auto_terrain = 1;
           }
           if(texture_mapping!=NULL&&strcmp(texture_mapping,"SPHERICAL")==0){
             geomobji->texture_mapping=TEXTURE_SPHERICAL;
@@ -4519,7 +4516,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     +++++++++++++++++++++++++++++ OBST ++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
-    if(MatchSMV(buffer,"OBST") == 1&&auto_terrain==1){
+    if(MatchSMV(buffer,"OBST") == 1&&sextras.auto_terrain==1){
       int nobsts=0;
       meshdata *meshi;
       unsigned char *is_block_terrain;
@@ -6089,9 +6086,9 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       sscanf(buffer,"%i",&nhrrpuvcut);
       if(nhrrpuvcut>=1){
         FGETS(buffer,255,stream);
-        sscanf(buffer,"%f",&global_hrrpuv_cutoff_default);
-        global_hrrpuv_cutoff = global_hrrpuv_cutoff_default;
-        load_hrrpuv_cutoff = global_hrrpuv_cutoff;
+        sscanf(buffer,"%f",&sextras.global_hrrpuv_cutoff_default);
+        sextras.global_hrrpuv_cutoff = sextras.global_hrrpuv_cutoff_default;
+        sextras.load_hrrpuv_cutoff = sextras.global_hrrpuv_cutoff;
         for(i=1;i<nhrrpuvcut;i++){
           FGETS(buffer,255,stream);
         }
@@ -6560,7 +6557,7 @@ typedef struct {
       n_blocks_normal=n_blocks;
       if(n_blocks==0)continue;
 
-      if(auto_terrain==1||manual_terrain==1){
+      if(sextras.auto_terrain==1||sextras.manual_terrain==1){
         is_block_terrain=meshi->is_block_terrain;
         n_blocks_normal=0;
         for(iblock=0;iblock<n_blocks;iblock++){
@@ -6579,7 +6576,7 @@ typedef struct {
         int s_num[6];
         blockagedata *bc;
 
-        if((auto_terrain==1||manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
+        if((sextras.auto_terrain==1||sextras.manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
           FGETS(buffer,255,stream);
           continue;
         }
@@ -6683,7 +6680,7 @@ typedef struct {
         int *ijk;
         int colorindex, blocktype;
 
-        if((auto_terrain==1||manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
+        if((sextras.auto_terrain==1||sextras.manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
           FGETS(buffer,255,stream);
           continue;
         }
@@ -7488,7 +7485,7 @@ typedef struct {
 
   START_TIMER(pass5_time);
 
-  if(auto_terrain==1&&manual_terrain==0){
+  if(sextras.auto_terrain==1&&sextras.manual_terrain==0){
     sextras.nOBST=0;
     iobst=0;
   }
@@ -7507,12 +7504,12 @@ typedef struct {
  */
 
   REWIND(stream);
-  if(do_pass4==1||(auto_terrain==1&&manual_terrain==0)){
+  if(do_pass4==1||(sextras.auto_terrain==1&&sextras.manual_terrain==0)){
     do_pass5 = 1;
     PRINTF("%s","  pass 5\n");
   }
 
-  while(((auto_terrain==1&&manual_terrain==0)||do_pass4==1)){
+  while(((sextras.auto_terrain==1&&sextras.manual_terrain==0)||do_pass4==1)){
     if(FEOF(stream)!=0){
       BREAK;
     }
@@ -7593,7 +7590,7 @@ typedef struct {
     ++++++++++++++++++++++ OBST +++++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     */
-    if(MatchSMV(buffer, "OBST")==1&&auto_terrain==1&&manual_terrain==0){
+    if(MatchSMV(buffer, "OBST")==1&&sextras.auto_terrain==1&&sextras.manual_terrain==0){
       meshdata *meshi;
       int n_blocks;
       int iblock;

@@ -3319,7 +3319,7 @@ int SetSmokeskip(int v) {
 } // SMOKESKIP
 
 int SetSmokealbedo(float v) {
-  smoke_albedo = v;
+  sextras.smoke_albedo = v;
   return 0;
 } // SMOKEALBEDO
 

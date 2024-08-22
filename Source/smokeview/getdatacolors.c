@@ -1081,7 +1081,7 @@ void UpdateSmokeColormap(int option){
 
   if(have_fire==HRRPUV_index&&option==RENDER_SLICE){
     valmin=global_hrrpuv_min;
-    valcut=global_hrrpuv_cutoff;
+    valcut=sextras.global_hrrpuv_cutoff;
     valmax=global_hrrpuv_max;
     rgb_colormap = rgb_slicesmokecolormap_01;
   }

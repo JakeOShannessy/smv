@@ -302,7 +302,7 @@ void DrawColorbarPathRGB(void){
 
       if(have_fire==HRRPUV_index&&smoke_render_option==RENDER_SLICE){
         vval_min=global_hrrpuv_min;
-        vval_cutoff=global_hrrpuv_cutoff;
+        vval_cutoff=sextras.global_hrrpuv_cutoff;
         vval_max=global_hrrpuv_max;
       }
       else{

@@ -1860,12 +1860,12 @@ float GetTerrainElev(meshdata *meshi, int index){
 /* ------------------ UpdateTerrain ------------------------ */
 
 void UpdateTerrain(int allocate_memory){
-  if(auto_terrain==1||manual_terrain==1){
+  if(sextras.auto_terrain==1||sextras.manual_terrain==1){
     int i;
 
-    if(manual_terrain==0){
+    if(sextras.manual_terrain==0){
       sextras.nterraininfo = meshescoll.nmeshes;
-      if(allocate_memory==1&&manual_terrain==0){
+      if(allocate_memory==1&&sextras.manual_terrain==0){
         NewMemory((void **)&sextras.terraininfo, sextras.nterraininfo*sizeof(terraindata));
         for(i = 0; i<sextras.nterraininfo; i++){
           terraindata *terri;
@@ -1883,7 +1883,7 @@ void UpdateTerrain(int allocate_memory){
       int nx, ny;
 
       meshi=meshescoll.meshinfo + i;
-      if(manual_terrain==1){
+      if(sextras.manual_terrain==1){
         terri = meshi->terrain;
       }
       else{
@@ -1900,10 +1900,10 @@ void UpdateTerrain(int allocate_memory){
 
       InitTerrainZNode(meshi, terri, xmin, xmax, nx, ymin, ymax, ny, allocate_memory);
     }
-    if(manual_terrain==0){ // slow
+    if(sextras.manual_terrain==0){ // slow
       ComputeTerrainNormalsAuto();
     }
-    if(manual_terrain==1){
+    if(sextras.manual_terrain==1){
       ComputeTerrainNormalsManual();
     }
   }
@@ -2016,7 +2016,7 @@ int HaveTerrainSlice(void){
 /* ------------------ UpdateTerrainOptions ------------------------ */
 
 void UpdateTerrainOptions(void){
-  if(sextras.nterraininfo>0||auto_terrain==1){
+  if(sextras.nterraininfo>0||sextras.auto_terrain==1){
     visOpenVents=0;
     visDummyVents=0;
     updatemenu=1;

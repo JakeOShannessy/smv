@@ -454,7 +454,7 @@ void DrawGeom(int flag, int timestate){
   tridata **tris;
   int texture_state = OFF, texture_first=1;
 
-  if(auto_terrain==1)return;
+  if(sextras.auto_terrain==1)return;
   if(show_geom_boundingbox==SHOW_BOUNDING_BOX_ALWAYS||geom_bounding_box_mousedown==1){
     if(flag==DRAW_OPAQUE&&timestate==GEOM_STATIC&&have_geom_triangles==1){
       DrawGeomBoundingBox(NULL);
@@ -3669,7 +3669,7 @@ void DrawGeomVData(vslicedata *vd){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
       glTranslatef(-xbar0, -ybar0, -zbar0);
-      if(auto_terrain==1)glTranslatef(0.0, 0.0, SCALE2FDS(0.01));
+      if(sextras.auto_terrain==1)glTranslatef(0.0, 0.0, SCALE2FDS(0.01));
 
       glLineWidth(vectorlinewidth);
       glBegin(GL_LINES);
@@ -3916,7 +3916,7 @@ void DrawGeomData(int flag, slicedata *sd, patchdata *patchi, int geom_type){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
       glTranslatef(-xbar0, -ybar0, -zbar0+boundaryoffset);
-      if(auto_terrain==1)glTranslatef(0.0, 0.0, slice_dz);
+      if(sextras.auto_terrain==1)glTranslatef(0.0, 0.0, slice_dz);
       glBegin(GL_TRIANGLES);
       if((patchi->patch_filetype!=PATCH_GEOMETRY_BOUNDARY&&smooth_iso_normal == 0)
        ||(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY&&geomdata_smoothnormals==0)
@@ -4783,7 +4783,7 @@ void ShowHideSortGeometry(int sort_geom, float *mm){
 
       // reject unwanted geometry
 
-      if(auto_terrain==1&&i==0)continue;
+      if(sextras.auto_terrain==1&&i==0)continue;
       if(geomi->is_terrain==1)continue;
       have_geom_triangles = 1;
       if( (geomi->fdsblock == NOT_FDSBLOCK && geomi->geomtype!=GEOM_ISO)|| geomi->patchactive == 1)continue;

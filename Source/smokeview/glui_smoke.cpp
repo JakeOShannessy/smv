@@ -390,7 +390,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   ROLLOUT_smoke_settings = glui_3dsmoke->add_rollout_to_panel(ROLLOUT_smoke3d, "Settings", true, SMOKE_SETTINGS, SmokeRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_smoke_settings, glui_3dsmoke);
   ADDPROCINFO(smokeprocinfo, nsmokeprocinfo, ROLLOUT_smoke_settings, SMOKE_SETTINGS, glui_3dsmoke);
-  
+
   PANEL_settings1 = glui_3dsmoke->add_panel_to_panel(ROLLOUT_smoke_settings, "");
 #ifdef pp_GPU
   CHECKBOX_smokeGPU=glui_3dsmoke->add_checkbox_to_panel(PANEL_settings1,_("Use GPU"),&usegpu,VOL_SMOKE,GLUISmoke3dCB);
@@ -438,7 +438,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
     SPINNER_load_3dsmoke->set_float_limits(0.0, 255.0);
 
 #define HRRPUV_CUTOFF_MAX (hrrpuv_max_smv-0.01)
-    SPINNER_load_hrrpuv = glui_3dsmoke->add_spinner_to_panel(PANEL_load_options, _("HRRPUV >"), GLUI_SPINNER_FLOAT, &load_hrrpuv_cutoff);
+    SPINNER_load_hrrpuv = glui_3dsmoke->add_spinner_to_panel(PANEL_load_options, _("HRRPUV >"), GLUI_SPINNER_FLOAT, &sextras.load_hrrpuv_cutoff);
     SPINNER_load_hrrpuv->set_float_limits(0.0, HRRPUV_CUTOFF_MAX);
 
     glui_3dsmoke->add_checkbox_to_panel(PANEL_load_options,"override cutoffs", &override_3dsmoke_cutoff);
@@ -503,7 +503,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   }
 
   PANEL_fire_cutoff = glui_3dsmoke->add_panel_to_panel(ROLLOUT_firecolor, "Color as fire when:");
-  SPINNER_hrrpuv_cutoff = glui_3dsmoke->add_spinner_to_panel(PANEL_fire_cutoff, "HRRPUV (kW/m3) > ", GLUI_SPINNER_FLOAT, &global_hrrpuv_cutoff, GLOBAL_FIRE_CUTOFF, GLUISmoke3dCB);
+  SPINNER_hrrpuv_cutoff = glui_3dsmoke->add_spinner_to_panel(PANEL_fire_cutoff, "HRRPUV (kW/m3) > ", GLUI_SPINNER_FLOAT, &sextras.global_hrrpuv_cutoff, GLOBAL_FIRE_CUTOFF, GLUISmoke3dCB);
   SPINNER_hrrpuv_cutoff->set_float_limits(0.0, HRRPUV_CUTOFF_MAX);
   {
     char temp_cutoff_label[300];
@@ -638,7 +638,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   SPINNER_smoke3d_kmax = glui_3dsmoke->add_spinner_to_panel(PANEL_skip_planes, "max k", GLUI_SPINNER_INT, &smoke3d_kmax);
   CHECKBOX_smokecullflag = glui_3dsmoke->add_checkbox_to_panel(PANEL_skip_planes, "Cull hidden planes", &smokecullflag);
   GLUISmoke3dCB(SMOKE_SKIP_X);
-  
+
 
 
   //---------------------------------------------Volume render settings--------------------------------------------------------------
@@ -804,8 +804,8 @@ void SetRGBColorMapVars(int use_rgb){
 void GLUIGetPixelsPerTriangle(void){
   float x_pixels_per_triangle=1000000.0, y_pixels_per_triangle=1000000.0, pixels_per_triangle;
   char label[500];
- 
-  if(STATIC_pixels_per_triangle == NULL)return; 
+
+  if(STATIC_pixels_per_triangle == NULL)return;
   if(nplotx_all>0)x_pixels_per_triangle = smoke3d_skipx*(float)glui_screenWidth/(float)nplotx_all;
   if(nploty_all>0)y_pixels_per_triangle = smoke3d_skipy*(float)glui_screenHeight/(float)nploty_all;
   pixels_per_triangle = MIN(x_pixels_per_triangle, y_pixels_per_triangle);
@@ -1062,10 +1062,10 @@ extern "C" void GLUISmoke3dCB(int var){
     GLUISmoke3dCB(SMOKE_EXTINCT);
     break;
   case CUTOFF_RESET:
-    global_hrrpuv_cutoff = global_hrrpuv_cutoff_default;
+    sextras.global_hrrpuv_cutoff = sextras.global_hrrpuv_cutoff_default;
     global_temp_cutoff = global_temp_cutoff_default;
     SPINNER_temperature_cutoff->set_float_val(global_temp_cutoff);
-    SPINNER_hrrpuv_cutoff->set_float_val(global_hrrpuv_cutoff);
+    SPINNER_hrrpuv_cutoff->set_float_val(sextras.global_hrrpuv_cutoff);
     break;
   case VOLTEST_DEPTH:
     voltest_soot1 = log(2.0)/(mass_extinct*voltest_depth1);
@@ -1091,12 +1091,12 @@ extern "C" void GLUISmoke3dCB(int var){
     }
     if(fire_temp_min<20.0){
       fire_temp_min = 20.0;
-      SPINNER_fire_temp_min->set_float_val(fire_temp_min);     
+      SPINNER_fire_temp_min->set_float_val(fire_temp_min);
     }
     if(fire_temp_min>fire_temp_max){
       fire_temp_max = fire_temp_min + 1500.0;
-      SPINNER_fire_temp_min->set_float_val(fire_temp_min);     
-      SPINNER_fire_temp_max->set_float_val(fire_temp_max);     
+      SPINNER_fire_temp_min->set_float_val(fire_temp_min);
+      SPINNER_fire_temp_max->set_float_val(fire_temp_max);
     }
     MakeFireColors(fire_temp_min, fire_temp_max, nfire_colors);
     break;

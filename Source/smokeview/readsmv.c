@@ -5670,7 +5670,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
     terrain = 1;
   }
   if(Match(buffer, "SLCC")==1){
-    cellcenter_slice_active = 1;
+    sextras.cellcenter_slice_active = 1;
     cellcenter = 1;
   }
   TrimBack(buffer);
@@ -6737,7 +6737,7 @@ void *CheckFiles(void *arg){
   int i;
 
   THREADcontrol(checkfiles_threads, THREAD_LOCK);
-  have_compressed_files = 0;
+  sextras.have_compressed_files = 0;
   THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   for(i = 0;i < npatchinfo;i++){
     patchdata *patchi;
@@ -6748,7 +6748,7 @@ void *CheckFiles(void *arg){
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
     if(have_file == YES){
       patchi->compression_type_temp = COMPRESSED_ZLIB;
-      have_compressed_files = 1;
+      sextras.have_compressed_files = 1;
     }
     THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   }
@@ -6761,11 +6761,11 @@ void *CheckFiles(void *arg){
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
     if(have_file == YES){
       smoke3di->compression_type_temp = COMPRESSED_ZLIB;
-      have_compressed_files = 1;
+      sextras.have_compressed_files = 1;
     }
     THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   }
-  if(have_compressed_files == 0){
+  if(sextras.have_compressed_files == 0){
     THREAD_EXIT(checkfiles_threads);
   }
   THREADcontrol(checkfiles_threads, THREAD_LOCK);
@@ -7337,9 +7337,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     }
     if(MatchSMV(buffer,"ALBEDO") == 1){
       FGETS(buffer,255,stream);
-      sscanf(buffer,"%f",&smoke_albedo);
-      smoke_albedo = CLAMP(smoke_albedo, 0.0, 1.0);
-      smoke_albedo_base = smoke_albedo;
+      sscanf(buffer,"%f",&sextras.smoke_albedo);
+      sextras.smoke_albedo = CLAMP(sextras.smoke_albedo, 0.0, 1.0);
+      sextras.smoke_albedo_base = sextras.smoke_albedo;
       continue;
     }
     if(MatchSMV(buffer, "NORTHANGLE")==1){
@@ -7350,7 +7350,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"TERRAIN") == 1){
-      manual_terrain = 1;
+      sextras.manual_terrain = 1;
       FGETS(buffer, 255, stream);
       sextras.nterraininfo++;
       continue;
@@ -7364,7 +7364,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       char *buff2;
 
       sextras.is_terrain_case = 1;
-      auto_terrain=1;
+      sextras.auto_terrain=1;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&sextras.visTerrainType);
       sextras.visTerrainType=CLAMP(sextras.visTerrainType,0,4);
@@ -8254,7 +8254,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           }
           if(geomi->is_terrain==1){
             sextras.is_terrain_case = 1;
-            auto_terrain = 1;
+            sextras.auto_terrain = 1;
           }
           if(texture_mapping!=NULL&&strcmp(texture_mapping,"SPHERICAL")==0){
             geomobji->texture_mapping=TEXTURE_SPHERICAL;
@@ -8288,7 +8288,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     +++++++++++++++++++++++++++++ OBST ++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
-    if(MatchSMV(buffer,"OBST") == 1&&auto_terrain==1){
+    if(MatchSMV(buffer,"OBST") == 1&&sextras.auto_terrain==1){
       int nobsts=0;
       meshdata *meshi;
       unsigned char *is_block_terrain;
@@ -9860,9 +9860,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       sscanf(buffer,"%i",&nhrrpuvcut);
       if(nhrrpuvcut>=1){
         FGETS(buffer,255,stream);
-        sscanf(buffer,"%f",&global_hrrpuv_cutoff_default);
-        global_hrrpuv_cutoff = global_hrrpuv_cutoff_default;
-        load_hrrpuv_cutoff = global_hrrpuv_cutoff;
+        sscanf(buffer,"%f",&sextras.global_hrrpuv_cutoff_default);
+        sextras.global_hrrpuv_cutoff = sextras.global_hrrpuv_cutoff_default;
+        sextras.load_hrrpuv_cutoff = sextras.global_hrrpuv_cutoff;
         for(i=1;i<nhrrpuvcut;i++){
           FGETS(buffer,255,stream);
         }
@@ -10331,7 +10331,7 @@ typedef struct {
       n_blocks_normal=n_blocks;
       if(n_blocks==0)continue;
 
-      if(auto_terrain==1||manual_terrain==1){
+      if(sextras.auto_terrain==1||sextras.manual_terrain==1){
         is_block_terrain=meshi->is_block_terrain;
         n_blocks_normal=0;
         for(iblock=0;iblock<n_blocks;iblock++){
@@ -10350,7 +10350,7 @@ typedef struct {
         int s_num[6];
         blockagedata *bc;
 
-        if((auto_terrain==1||manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
+        if((sextras.auto_terrain==1||sextras.manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
           FGETS(buffer,255,stream);
           continue;
         }
@@ -10454,7 +10454,7 @@ typedef struct {
         int *ijk;
         int colorindex, blocktype;
 
-        if((auto_terrain==1||manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
+        if((sextras.auto_terrain==1||sextras.manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
           FGETS(buffer,255,stream);
           continue;
         }
@@ -11267,7 +11267,7 @@ typedef struct {
 
   START_TIMER(pass5_time);
 
-  if(auto_terrain==1&&manual_terrain==0){
+  if(sextras.auto_terrain==1&&sextras.manual_terrain==0){
     sextras.nOBST=0;
     iobst=0;
   }
@@ -11286,12 +11286,12 @@ typedef struct {
  */
 
   REWIND(stream);
-  if(do_pass4==1||(auto_terrain==1&&manual_terrain==0)){
+  if(do_pass4==1||(sextras.auto_terrain==1&&sextras.manual_terrain==0)){
     do_pass5 = 1;
     PRINTF("%s","  pass 5\n");
   }
 
-  while(((auto_terrain==1&&manual_terrain==0)||do_pass4==1)){
+  while(((sextras.auto_terrain==1&&sextras.manual_terrain==0)||do_pass4==1)){
     if(FEOF(stream)!=0){
       BREAK;
     }
@@ -11372,7 +11372,7 @@ typedef struct {
     ++++++++++++++++++++++ OBST +++++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     */
-    if(MatchSMV(buffer, "OBST")==1&&auto_terrain==1&&manual_terrain==0){
+    if(MatchSMV(buffer, "OBST")==1&&sextras.auto_terrain==1&&sextras.manual_terrain==0){
       meshdata *meshi;
       int n_blocks;
       int iblock;
@@ -11812,7 +11812,7 @@ int ReadSMV_Configure(){
   GetBoxGeomCorners();
   PRINT_TIMER(timer_readsmv, "update trianglesfaces");
 
-  if(ngeominfo>0&&auto_terrain==1){
+  if(ngeominfo>0&&sextras.auto_terrain==1){
     START_TIMER(timer_readsmv);
     GenerateTerrainGeom(&terrain_vertices, &terrain_indices, &terrain_nindices);
     PRINT_TIMER(timer_readsmv, "GenerateTerrainGeom");
@@ -14940,8 +14940,8 @@ int ReadIni2(char *inifile, int localfile){
       }
       if(MatchINI(buffer, "SMOKEALBEDO") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
-        sscanf(buffer, "%f", &smoke_albedo);
-        smoke_albedo = CLAMP(smoke_albedo, 0.0, 1.0);
+        sscanf(buffer, "%f", &sextras.smoke_albedo);
+        sextras.smoke_albedo = CLAMP(sextras.smoke_albedo, 0.0, 1.0);
         continue;
       }
       if(MatchINI(buffer, "SMOKEFIREPROP") == 1){
@@ -14988,8 +14988,8 @@ int ReadIni2(char *inifile, int localfile){
        }
       if(MatchINI(buffer, "HRRPUVCUTOFF")==1){
         if(fgets(buffer, 255, stream)==NULL)break;
-        sscanf(buffer, "%f", &global_hrrpuv_cutoff_default);
-        global_hrrpuv_cutoff = global_hrrpuv_cutoff_default;
+        sscanf(buffer, "%f", &sextras.global_hrrpuv_cutoff_default);
+        sextras.global_hrrpuv_cutoff = sextras.global_hrrpuv_cutoff_default;
         continue;
       }
       if(MatchINI(buffer, "FIREDEPTH") == 1){
@@ -15208,7 +15208,7 @@ int ReadIni2(char *inifile, int localfile){
       }
       if(MatchINI(buffer, "SMOKE3DCUTOFFS") == 1){
         fgets(buffer, 255, stream);
-        sscanf(buffer, "%f %f", &load_3dsmoke_cutoff, &load_hrrpuv_cutoff);
+        sscanf(buffer, "%f %f", &load_3dsmoke_cutoff, &sextras.load_hrrpuv_cutoff);
         continue;
       }
 
@@ -16197,7 +16197,7 @@ void WriteIniLocal(FILE *fileout){
                     slice_dxyz[0], slice_dxyz[1], slice_dxyz[2], average_plot2d_slice_region, show_plot2d_slice_position
                     );
   fprintf(fileout, "SMOKE3DCUTOFFS\n");
-  fprintf(fileout, " %f %f\n", load_3dsmoke_cutoff, load_hrrpuv_cutoff);
+  fprintf(fileout, " %f %f\n", load_3dsmoke_cutoff, sextras.load_hrrpuv_cutoff);
   for(i = sextras.ntickinfo_smv; i < sextras.ntickinfo; i++){
     float *begt;
     float *endt;
@@ -17190,7 +17190,7 @@ void WriteIni(int flag,char *filename){
     }
   }
   fprintf(fileout, "HRRPUVCUTOFF\n");
-  fprintf(fileout, " %f\n", global_hrrpuv_cutoff);
+  fprintf(fileout, " %f\n", sextras.global_hrrpuv_cutoff);
   fprintf(fileout, "SHOWEXTREMEDATA\n");
   {
     int show_extremedata = 0;
@@ -17204,9 +17204,9 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i %i %i %i\n", smoke_color_int255[0], smoke_color_int255[1], smoke_color_int255[2], force_gray_smoke);
   fprintf(fileout, "SMOKECULL\n");
   fprintf(fileout," %i\n",smokecullflag);
-  if(ABS(smoke_albedo - smoke_albedo_base) > 0.001){
+  if(ABS(sextras.smoke_albedo - sextras.smoke_albedo_base) > 0.001){
     fprintf(fileout, "SMOKEALBEDO\n");
-    fprintf(fileout, " %f\n", smoke_albedo);
+    fprintf(fileout, " %f\n", sextras.smoke_albedo);
   }
   if((have_fire == NO_FIRE && have_smoke == NO_SMOKE)||(have_fire != NO_FIRE && have_smoke != NO_SMOKE)){
     fprintf(fileout, "SMOKEFIREPROP\n");

@@ -2428,7 +2428,7 @@ void UpdateShowScene(void){
     SHOW_UPDATE(terrain_update_normals);
     terrain_update_normals = 0;
     UpdateAllGeomTriangles();
-    if(auto_terrain==1){
+    if(sextras.auto_terrain==1){
       GenerateTerrainGeom(&terrain_vertices, &terrain_indices, &terrain_nindices);
     }
     END_SHOW_UPDATE(terrain_update_normals);
