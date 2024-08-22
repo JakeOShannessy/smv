@@ -97,7 +97,6 @@ float texture_origin[3]={0.0,0.0,0.0};
 
 int updateindexcolors = 0;
 int cellcenter_slice_active = 0;
-spherepoints *sphereinfo = NULL, *wui_sphereinfo = NULL;
 int updatefaces = 0;
 int SVDECL(show_slice_in_obst,ONLY_IN_GAS);
 int SVDECL(use_iblank,1),iblank_set_on_commandline = 0;
@@ -3128,13 +3127,13 @@ int ReadSMV_Init(smv_case *scase) {
   FREEMEMORY(sextras.terraininfo);
   sextras.nterraininfo=0;
   sextras.niso_compressed=0;
-  if(sphereinfo==NULL){
-    NewMemory((void **)&sphereinfo,sizeof(spherepoints));
-    InitSpherePoints(sphereinfo,14);
+  if(sextras.sphereinfo==NULL){
+    NewMemory((void **)&sextras.sphereinfo,sizeof(spherepoints));
+    InitSpherePoints(sextras.sphereinfo,14);
   }
-  if(wui_sphereinfo==NULL){
-    NewMemory((void **)&wui_sphereinfo,sizeof(spherepoints));
-    InitSpherePoints(wui_sphereinfo,14);
+  if(sextras.wui_sphereinfo==NULL){
+    NewMemory((void **)&sextras.wui_sphereinfo,sizeof(spherepoints));
+    InitSpherePoints(sextras.wui_sphereinfo,14);
   }
   PRINT_TIMER(timer_setup, "InitSpherePoints");
   sextras.ntotal_blockages=0;

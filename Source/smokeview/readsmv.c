@@ -6877,13 +6877,13 @@ int ReadSMV_Init(){
   FREEMEMORY(sextras.terraininfo);
   sextras.nterraininfo=0;
   sextras.niso_compressed=0;
-  if(sphereinfo==NULL){
-    NewMemory((void **)&sphereinfo,sizeof(spherepoints));
-    InitSpherePoints(sphereinfo,14);
+  if(sextras.sphereinfo==NULL){
+    NewMemory((void **)&sextras.sphereinfo,sizeof(spherepoints));
+    InitSpherePoints(sextras.sphereinfo,14);
   }
-  if(wui_sphereinfo==NULL){
-    NewMemory((void **)&wui_sphereinfo,sizeof(spherepoints));
-    InitSpherePoints(wui_sphereinfo,14);
+  if(sextras.wui_sphereinfo==NULL){
+    NewMemory((void **)&sextras.wui_sphereinfo,sizeof(spherepoints));
+    InitSpherePoints(sextras.wui_sphereinfo,14);
   }
   PRINT_TIMER(timer_setup, "InitSpherePoints");
   ntotal_blockages=0;

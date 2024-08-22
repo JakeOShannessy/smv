@@ -16,6 +16,7 @@
 #include "isodefs.h"
 #include "stdio_m.h"
 #include "string_util.h"
+#include "csphere.h"
 
 #define MAXPLOT3DVARS 6
 
@@ -1875,6 +1876,8 @@ typedef struct {
   outlinedata *outlineinfo;
   treedata *treeinfo;
   terraindata *terraininfo;
+  spherepoints *sphereinfo;
+  spherepoints *wui_sphereinfo;
   int solid_ht3d;
   float northangle;
   int niso_compressed;

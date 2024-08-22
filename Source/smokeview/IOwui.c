@@ -986,7 +986,7 @@ void ComputeTerrainNormalsManual(void){
         znormal3[0]/=sum;
         znormal3[1]/=sum;
         znormal3[2]/=sum;
-        *uc_znormal = GetNormalIndex(wui_sphereinfo, znormal3);
+        *uc_znormal = GetNormalIndex(sextras.wui_sphereinfo, znormal3);
       }
     }
   }
@@ -1153,7 +1153,7 @@ void ComputeTerrainNormalsAuto(void){
         znormal3[0]/=sum;
         znormal3[1]/=sum;
         znormal3[2]/=sum;
-        *uc_znormal = GetNormalIndex(wui_sphereinfo, znormal3);
+        *uc_znormal = GetNormalIndex(sextras.wui_sphereinfo, znormal3);
       }
     }
   }
@@ -1369,16 +1369,16 @@ void DrawTerrainOBST(terraindata *terri, int flag){
       zval4 += ZOFFSET;
 
       uc_zn1 = uc_znormal+IJ2(i,j);
-      zn1 = GetNormalVectorPtr(wui_sphereinfo, (unsigned int)(*uc_zn1));
+      zn1 = GetNormalVectorPtr(sextras.wui_sphereinfo, (unsigned int)(*uc_zn1));
 
       uc_zn2 = uc_znormal+IJ2(ip1, j);
-      zn2 = GetNormalVectorPtr(wui_sphereinfo, (unsigned int)(*uc_zn2));
+      zn2 = GetNormalVectorPtr(sextras.wui_sphereinfo, (unsigned int)(*uc_zn2));
 
       uc_zn3 = uc_znormal+IJ2(ip1, jp1);
-      zn3 = GetNormalVectorPtr(wui_sphereinfo, (unsigned int)(*uc_zn3));
+      zn3 = GetNormalVectorPtr(sextras.wui_sphereinfo, (unsigned int)(*uc_zn3));
 
       uc_zn4 = uc_znormal+IJ2(i, jp1);
-      zn4 = GetNormalVectorPtr(wui_sphereinfo, (unsigned int)(*uc_zn4));
+      zn4 = GetNormalVectorPtr(sextras.wui_sphereinfo, (unsigned int)(*uc_zn4));
 
       if(flag==TERRAIN_TOP_SIDE||flag==TERRAIN_BOTH_SIDES){
         if(skip123==0){
@@ -1475,7 +1475,7 @@ void DrawTerrainOBST(terraindata *terri, int flag){
           zval11 = znode[IJ2(i,     j)]+ZOFFSET;
 
           uc_zn = uc_znormal+IJ2(i, j);
-          zn = GetNormalVectorPtr(wui_sphereinfo, (unsigned int)(*uc_zn));
+          zn = GetNormalVectorPtr(sextras.wui_sphereinfo, (unsigned int)(*uc_zn));
 
           glVertex3f(x[i], y[j], zval11);
           glVertex3f(x[i]  +terrain_normal_length*zn[0],
@@ -1699,19 +1699,19 @@ void DrawTerrainOBSTTexture(terraindata *terri){
       txp1 = (x[ip1]-xbar0ORIG)/(xbarORIG-xbar0ORIG);
 
       uc_zn1 = uc_znormal+ijnode2(i,j);
-      zn1 = GetNormalVectorPtr(wui_sphereinfo, (unsigned int)(*uc_zn1));
+      zn1 = GetNormalVectorPtr(sextras.wui_sphereinfo, (unsigned int)(*uc_zn1));
       zval1 = znode[IJ2(i, j)];
 
       uc_zn2 = uc_znormal+ijnode2(ip1, j);
-      zn2 = GetNormalVectorPtr(wui_sphereinfo, (unsigned int)(*uc_zn2));
+      zn2 = GetNormalVectorPtr(sextras.wui_sphereinfo, (unsigned int)(*uc_zn2));
       zval2 = znode[IJ2(ip1, j)];
 
       uc_zn3 = uc_znormal+ijnode2(ip1, jp1);
-      zn3 = GetNormalVectorPtr(wui_sphereinfo, (unsigned int)(*uc_zn3));
+      zn3 = GetNormalVectorPtr(sextras.wui_sphereinfo, (unsigned int)(*uc_zn3));
       zval3 = znode[IJ2(ip1, jp1)];
 
       uc_zn4 = uc_znormal+ijnode2(i, jp1);
-      zn4 = GetNormalVectorPtr(wui_sphereinfo, (unsigned int)(*uc_zn4));
+      zn4 = GetNormalVectorPtr(sextras.wui_sphereinfo, (unsigned int)(*uc_zn4));
       zval4 = znode[IJ2(i, jp1)];
 
       if(zval1<zcut&&zval2<zcut&&zval3<zcut&&zval4<zcut)continue;

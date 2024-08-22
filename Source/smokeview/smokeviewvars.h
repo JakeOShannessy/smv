@@ -1130,8 +1130,6 @@ SVEXTERN float set_view_xyz[3],user_zaxis[3];
 
 SVEXTERN char SVDECL(*smokeviewini_filename, NULL);
 
-SVEXTERN spherepoints SVDECL(*sphereinfo,NULL), SVDECL(*wui_sphereinfo,NULL);
-
 #ifdef INMAIN
 SVEXTERN float tourcol_selectedpathline[3]={1.0,0.0,0.0};
 SVEXTERN float tourcol_selectedpathlineknots[3]={1.0,0.0,0.0};
