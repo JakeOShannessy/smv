@@ -138,9 +138,15 @@ SVEXTERN int SVDECL(hvac_network_ductnode_index, -1);
 #define HVAC_NCIRC 72
 SVEXTERN float SVDECL(*hvac_circ_x, NULL), SVDECL(*hvac_circ_y, NULL);
 #ifdef INMAIN
+SVEXTERN hvacdatacollection hvaccoll = {
+  .hvacductvar_index= -1,
+  .hvacnodevar_index= -1,
+  0
+};
 SVEXTERN int hvac_duct_color[3] = { 63,0,15};
 SVEXTERN int hvac_node_color[3] = { 63,0,15};
 #else
+SVEXTERN hvacdatacollection hvaccoll;
 SVEXTERN int hvac_duct_color[3];
 SVEXTERN int hvac_node_color[3];
 #endif
