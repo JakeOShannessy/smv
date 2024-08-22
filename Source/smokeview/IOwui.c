@@ -712,7 +712,7 @@ void DrawTrees(void){
     float crown_height;
     int state;
 
-    treei = treeinfo + i;
+    treei = sextras.treeinfo + i;
 
     state=0;
     if(showtime==1&&global_times!=NULL){
@@ -1190,7 +1190,7 @@ int GetTerrainData(char *file, terraindata *terri){
   int nvalues, i;
 
 #ifdef _DEBUG
-  printf("reading terrain data mesh: %i\n", (int)(terri-terraininfo));
+  printf("reading terrain data mesh: %i\n", (int)(terri-sextras.terraininfo));
 #endif
   WUIFILE = fopen(file, "rb");
   if(WUIFILE==NULL)return 1;
@@ -1866,11 +1866,11 @@ void UpdateTerrain(int allocate_memory){
     if(manual_terrain==0){
       sextras.nterraininfo = meshescoll.nmeshes;
       if(allocate_memory==1&&manual_terrain==0){
-        NewMemory((void **)&terraininfo, sextras.nterraininfo*sizeof(terraindata));
+        NewMemory((void **)&sextras.terraininfo, sextras.nterraininfo*sizeof(terraindata));
         for(i = 0; i<sextras.nterraininfo; i++){
           terraindata *terri;
 
-          terri = terraininfo+i;
+          terri = sextras.terraininfo+i;
           terri->defined = 0;
         }
       }
@@ -1887,7 +1887,7 @@ void UpdateTerrain(int allocate_memory){
         terri = meshi->terrain;
       }
       else{
-        terri = terraininfo + i;
+        terri = sextras.terraininfo + i;
         terri->file = NULL;
       }
 

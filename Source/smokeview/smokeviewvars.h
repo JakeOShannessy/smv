@@ -1836,8 +1836,6 @@ SVEXTERN float SVDECL(smoke3d_cvis,1.0);
 SVEXTERN std_objects SVDECL(std_object_defs,{0});
 SVEXTERN object_collection SVDECL(*objectscoll,NULL);
 SVEXTERN device_texture_list_collection SVDECL(device_texture_list_coll,{0});
-SVEXTERN treedata SVDECL(*treeinfo,NULL);
-SVEXTERN terraindata SVDECL(*terraininfo,NULL);
 SVEXTERN float treecolor[4];
 #ifdef INMAIN
 SVEXTERN float treecharcolor[4]={0.3,0.3,0.3,1.0};

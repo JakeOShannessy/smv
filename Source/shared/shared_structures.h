@@ -1873,6 +1873,8 @@ typedef struct {
   int visTerrainType;
   int have_gvec;
   outlinedata *outlineinfo;
+  treedata *treeinfo;
+  terraindata *terraininfo;
   int have_cface_normals;
 } smv_extras;
 

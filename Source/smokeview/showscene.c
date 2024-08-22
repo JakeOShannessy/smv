@@ -364,7 +364,7 @@ void ShowScene2(int mode){
     for(i = 0;i<sextras.nterraininfo;i++){
       terraindata *terri;
 
-      terri = terraininfo + i;
+      terri = sextras.terraininfo + i;
       switch(sextras.visTerrainType){
       case TERRAIN_SURFACE:
         DrawTerrainOBST(terri, flag);

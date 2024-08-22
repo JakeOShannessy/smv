@@ -95,8 +95,6 @@ float texture_origin[3]={0.0,0.0,0.0};
 
 int updateindexcolors = 0;
 int cellcenter_slice_active = 0;
-treedata *treeinfo = NULL;
-terraindata *terraininfo = NULL;
 int niso_compressed;
 spherepoints *sphereinfo = NULL, *wui_sphereinfo = NULL;
 int updatefaces = 0;
@@ -3311,20 +3309,20 @@ int ReadSMV_Init(smv_case *scase) {
 
   FREEMEMORY(scase->fds_title);
 
-  FREEMEMORY(treeinfo);
+  FREEMEMORY(sextras.treeinfo);
   sextras.ntreeinfo=0;
 
   int i;
   for(i=0;i<sextras.nterraininfo;i++){
     terraindata *terri;
 
-    terri = terraininfo + i;
+    terri = sextras.terraininfo + i;
     FREEMEMORY(terri->xplt);
     FREEMEMORY(terri->yplt);
     FREEMEMORY(terri->zcell);
     FREEMEMORY(terri->znode);
   }
-  FREEMEMORY(terraininfo);
+  FREEMEMORY(sextras.terraininfo);
   sextras.nterraininfo=0;
   niso_compressed=0;
   if(sphereinfo==NULL){
@@ -4154,7 +4152,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
    scase->propcoll.npropinfo=1; // the 0'th prop is the default human property
  }
  if(sextras.nterraininfo>0){
-   NewMemory((void **)&terraininfo,sextras.nterraininfo*sizeof(terraindata));
+   NewMemory((void **)&sextras.terraininfo,sextras.nterraininfo*sizeof(terraindata));
    sextras.nterraininfo=0;
  }
  if(scase->npartclassinfo>=0){
@@ -4894,7 +4892,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       NewMemory((void **)&file, len_buffer+1);
       strcpy(file, buffer_ptr);
 
-      terraini = terraininfo + sextras.nterraininfo;
+      terraini = sextras.terraininfo + sextras.nterraininfo;
       terraini->file = file;
       if(mesh_terrain==-1){
         mesh_terrain = sextras.nterraininfo;    // no mesh_terrain on TERRAIN line so assume that number of TERRAIN and MESH lines are the same
@@ -6694,12 +6692,12 @@ typedef struct {
       if(sextras.ntreeinfo!=0)continue;
       sscanf(buffer,"%i",&sextras.ntreeinfo);
       if(sextras.ntreeinfo>0){
-        NewMemory((void **)&treeinfo,sizeof(treedata)*sextras.ntreeinfo);
+        NewMemory((void **)&sextras.treeinfo,sizeof(treedata)*sextras.ntreeinfo);
         for(i=0;i<sextras.ntreeinfo;i++){
           treedata *treei;
           float *xyz;
 
-          treei = treeinfo + i;
+          treei = sextras.treeinfo + i;
           treei->time_char=-1.0;
           treei->time_complete=-1.0;
           xyz = treei->xyz;
@@ -6726,7 +6724,7 @@ typedef struct {
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %i %f",&tree_index,&tree_state,&tree_time);
       if(tree_index>=1&&tree_index<=sextras.ntreeinfo){
-        treei = treeinfo + tree_index - 1;
+        treei = sextras.treeinfo + tree_index - 1;
         if(tree_state==1){
           treei->time_char = tree_time;
         }
