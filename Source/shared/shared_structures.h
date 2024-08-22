@@ -1877,6 +1877,7 @@ typedef struct {
   terraindata *terraininfo;
   int solid_ht3d;
   float northangle;
+  int niso_compressed;
   int have_cface_normals;
   float gvecphys[3];
   float gvecunit[3];

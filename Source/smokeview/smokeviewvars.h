@@ -1894,7 +1894,6 @@ SVEXTERN int SVDECL(titlesafe_offsetBASE,45);
 SVEXTERN int   SVDECL(reset_frame,0);
 SVEXTERN float SVDECL(reset_time,0.0),SVDECL(start_frametime,0.0),SVDECL(stop_frametime,0.0);
 SVEXTERN float SVDECL(max_velocity,0.0);
-SVEXTERN int niso_compressed;
 SVEXTERN int nslice_loaded, ngeomslice_loaded, nvolsmoke_loaded;
 SVEXTERN int SVDECL(*slice_loaded_list,NULL), SVDECL(*slice_sorted_loaded_list,NULL);
 SVEXTERN char SVDECL(*fdsprefix,NULL), SVDECL(*fdsprefix2,NULL);

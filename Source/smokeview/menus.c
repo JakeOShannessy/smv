@@ -10863,7 +10863,7 @@ static int menu_count=0;
         STRCAT(levellabel,_("Levels"));
         GLUTADDSUBMENU(levellabel,isolevelmenu);
       }
-      if(niso_compressed==0){
+      if(sextras.niso_compressed==0){
         if(smooth_iso_normal == 1)glutAddMenuEntry(_("*Smooth"), MENU_ISOSHOW_SMOOTH);
         if(smooth_iso_normal == 0)glutAddMenuEntry(_("Smooth"), MENU_ISOSHOW_SMOOTH);
       }

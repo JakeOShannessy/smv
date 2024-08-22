@@ -7069,7 +7069,7 @@ int ReadSMV_Init(){
   }
   FREEMEMORY(sextras.terraininfo);
   sextras.nterraininfo=0;
-  niso_compressed=0;
+  sextras.niso_compressed=0;
   if(sphereinfo==NULL){
     NewMemory((void **)&sphereinfo,sizeof(spherepoints));
     InitSpherePoints(sphereinfo,14);
