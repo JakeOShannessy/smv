@@ -124,12 +124,6 @@ SVEXTERN int SVDECL(update_frame, 0);
 #endif
 
 // hvac data
-#ifdef INMAIN
-SVEXTERN hvacdatacollection hvaccoll = {
-    .hvacductvar_index = -1, .hvacnodevar_index = -1, 0};
-#else
-SVEXTERN hvacdatacollection hvaccoll;
-#endif
 SVEXTERN int SVDECL(hvac_show_connections, 0), SVDECL(hvac_show_networks, 1);
 SVEXTERN int SVDECL(hvac_metro_view, 0), SVDECL(hvac_cell_view, 0);
 
