@@ -3737,7 +3737,7 @@ void UpdateMeshCoords(void){
     float *x1, *x2, *yy1, *yy2, *z1, *z2;
     int j;
 
-    outlinei = outlineinfo + i;
+    outlinei = sextras.outlineinfo + i;
     x1 = outlinei->x1;
     x2 = outlinei->x2;
     yy1 = outlinei->y1;
@@ -7209,7 +7209,7 @@ int ReadSMV_Init(){
     for(i=0;i<sextras.noutlineinfo;i++){
       outlinedata *outlinei;
 
-      outlinei = outlineinfo + i;
+      outlinei = sextras.outlineinfo + i;
       FREEMEMORY(outlinei->x1);
       FREEMEMORY(outlinei->y1);
       FREEMEMORY(outlinei->z1);
@@ -7217,7 +7217,7 @@ int ReadSMV_Init(){
       FREEMEMORY(outlinei->y2);
       FREEMEMORY(outlinei->z2);
     }
-    FREEMEMORY(outlineinfo);
+    FREEMEMORY(sextras.outlineinfo);
     sextras.noutlineinfo=0;
   }
 
@@ -8121,11 +8121,11 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   }
 
   if(sextras.noutlineinfo>0){
-    if(NewMemory((void **)&outlineinfo,sextras.noutlineinfo*sizeof(outlinedata))==0)return 2;
+    if(NewMemory((void **)&sextras.outlineinfo,sextras.noutlineinfo*sizeof(outlinedata))==0)return 2;
     for(i=0;i<sextras.noutlineinfo;i++){
       outlinedata *outlinei;
 
-      outlinei = outlineinfo + i;
+      outlinei = sextras.outlineinfo + i;
       outlinei->x1=NULL;
       outlinei->x2=NULL;
       outlinei->y1=NULL;
@@ -9008,7 +9008,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       outlinedata *outlinei;
 
       sextras.noutlineinfo++;
-      outlinei = outlineinfo + sextras.noutlineinfo - 1;
+      outlinei = sextras.outlineinfo + sextras.noutlineinfo - 1;
       if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }

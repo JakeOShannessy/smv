@@ -725,7 +725,7 @@ void DrawOutlines(void){
     float *xx2, *yy2, *zz2;
     int j;
 
-    outlinei = outlineinfo + i;
+    outlinei = sextras.outlineinfo + i;
     xx1 = outlinei->x1;
     xx2 = outlinei->x2;
     yy1 = outlinei->y1;

@@ -100,7 +100,6 @@ terraindata *terraininfo = NULL;
 int niso_compressed;
 spherepoints *sphereinfo = NULL, *wui_sphereinfo = NULL;
 int updatefaces = 0;
-outlinedata *outlineinfo = NULL;
 int solid_ht3d = 0;
 int SVDECL(show_slice_in_obst,ONLY_IN_GAS);
 int SVDECL(use_iblank,1),iblank_set_on_commandline = 0;
@@ -3449,7 +3448,7 @@ int ReadSMV_Init(smv_case *scase) {
     for(i=0;i<sextras.noutlineinfo;i++){
       outlinedata *outlinei;
 
-      outlinei = outlineinfo + i;
+      outlinei = sextras.outlineinfo + i;
       FREEMEMORY(outlinei->x1);
       FREEMEMORY(outlinei->y1);
       FREEMEMORY(outlinei->z1);
@@ -3457,7 +3456,7 @@ int ReadSMV_Init(smv_case *scase) {
       FREEMEMORY(outlinei->y2);
       FREEMEMORY(outlinei->z2);
     }
-    FREEMEMORY(outlineinfo);
+    FREEMEMORY(sextras.outlineinfo);
     sextras.noutlineinfo=0;
   }
 
@@ -4356,11 +4355,11 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   }
 
   if(sextras.noutlineinfo>0){
-    if(NewMemory((void **)&outlineinfo,sextras.noutlineinfo*sizeof(outlinedata))==0)return 2;
+    if(NewMemory((void **)&sextras.outlineinfo,sextras.noutlineinfo*sizeof(outlinedata))==0)return 2;
     for(i=0;i<sextras.noutlineinfo;i++){
       outlinedata *outlinei;
 
-      outlinei = outlineinfo + i;
+      outlinei = sextras.outlineinfo + i;
       outlinei->x1=NULL;
       outlinei->x2=NULL;
       outlinei->y1=NULL;
@@ -5245,7 +5244,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       outlinedata *outlinei;
 
       sextras.noutlineinfo++;
-      outlinei = outlineinfo + sextras.noutlineinfo - 1;
+      outlinei = sextras.outlineinfo + sextras.noutlineinfo - 1;
       if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
