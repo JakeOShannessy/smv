@@ -119,7 +119,6 @@ int nmemory_ids = 0;
 GLfloat SVDECL(block_shininess,100.0);
 char SVDECL(**colorlabelzone,NULL);
 int SVDECL(nrgb2,8);
-char *database_filename = NULL;
 float SVDECL(pref,101325.0),pamb = 0.0,SVDECL(tamb,293.15);
 surfdata sdefault,v_surfacedefault,e_surfacedefault;
 float SVDECL(global_hrrpuv_cutoff, 200.0), SVDECL(global_hrrpuv_cutoff_default, 200.0);
@@ -1357,199 +1356,6 @@ void UpdateSortedSurfIdList(smv_case *scase){
   for(i = 0; i<scase->surfcoll.nsorted_surfidlist; i++){
     scase->surfcoll.inv_sorted_surfidlist[scase->surfcoll.sorted_surfidlist[i]] = i;
   }
-}
-
-/* ------------------ ParseDatabase ------------------------ */
-
-void ParseDatabase(smv_case *scase, char *file){
-  FILE *stream;
-  char buffer[1000], *buffer2 = NULL, *buffer3, *slashptr;
-  size_t lenbuffer, lenbuffer2;
-  size_t sizebuffer2;
-  char *surf_id = NULL, *start, *surf_id2;
-  char *c;
-  int i, j;
-  surfdata *surfj;
-  char *labeli, *labelj;
-  int nexti;
-  int nsurfids_shown;
-
-  /* free memory called before */
-
-  for(i = 0; i<scase->surfcoll.nsurfids; i++){
-    surf_id = scase->surfcoll.surfids[i].label;
-    FREEMEMORY(surf_id);
-  }
-  FREEMEMORY(scase->surfcoll.surfids);
-  scase->surfcoll.nsurfids = 0;
-
-
-  if(file==NULL||strlen(file)==0||(stream = fopen(file, "r"))==NULL){
-    NewMemory((void **)&scase->surfcoll.surfids, (scase->surfcoll.nsurfids+1)*sizeof(surfid));
-    surf_id = NULL;
-    NewMemory((void **)&surf_id, 6);
-    strcpy(surf_id, "INERT");
-    scase->surfcoll.surfids[0].label = surf_id;
-    scase->surfcoll.surfids[0].location = 0;
-    scase->surfcoll.surfids[0].show = 1;
-    scase->surfcoll.nsurfids = 1;
-  }
-
-  else{
-    sizebuffer2 = 1001;
-    NewMemory((void **)&buffer2, sizebuffer2);
-
-    /* find out how many surfs are in database file so memory can be allocated */
-
-    while(!feof(stream)){
-      if(fgets(buffer, 1000, stream)==NULL)break;
-      if(STRSTR(buffer, "&SURF")==NULL)continue;
-
-
-      slashptr = strstr(buffer, "/");
-      if(slashptr!=NULL)strcpy(buffer2, buffer);
-      buffer3 = buffer;
-      while(slashptr!=NULL){
-        fgets(buffer, 1000, stream);
-        lenbuffer = strlen(buffer);
-        lenbuffer2 = strlen(buffer2);
-        if(lenbuffer2+lenbuffer+2>sizebuffer2){
-          sizebuffer2 = lenbuffer2+lenbuffer+2+1000;
-          ResizeMemory((void **)&buffer2, (unsigned int)sizebuffer2);
-        }
-        strcat(buffer2, buffer);
-        slashptr = strstr(buffer, "/");
-        buffer3 = buffer2;
-      }
-      start = STRSTR(buffer3, "ID");
-      if(start!=NULL)scase->surfcoll.nsurfids++;
-    }
-
-    /* allocate memory */
-
-    NewMemory((void **)&scase->surfcoll.surfids, (scase->surfcoll.nsurfids+1)*sizeof(surfid));
-    surf_id = NULL;
-    NewMemory((void **)&surf_id, 6);
-    strcpy(surf_id, "INERT");
-    scase->surfcoll.surfids[0].label = surf_id;
-    scase->surfcoll.surfids[0].location = 0;
-    scase->surfcoll.surfids[0].show = 1;
-
-
-    /* now look for IDs and copy them into an array */
-
-    rewind(stream);
-    scase->surfcoll.nsurfids = 1;
-    while(!feof(stream)){
-      if(fgets(buffer, 1000, stream)==NULL)break;
-      if(STRSTR(buffer, "&SURF")==NULL)continue;
-
-
-      slashptr = strstr(buffer, "/");
-      if(slashptr!=NULL)strcpy(buffer2, buffer);
-      buffer3 = buffer2;
-      while(slashptr!=NULL){
-        fgets(buffer, 1000, stream);
-        lenbuffer = strlen(buffer);
-        lenbuffer2 = strlen(buffer2);
-        if(lenbuffer2+lenbuffer+2>sizebuffer2){
-          sizebuffer2 = lenbuffer2+lenbuffer+2+1000;
-          ResizeMemory((void **)&buffer2, (unsigned int)sizebuffer2);
-        }
-        strcat(buffer2, buffer);
-        slashptr = strstr(buffer, "/");
-        buffer3 = buffer2;
-      }
-      start = STRSTR(buffer3+3, "ID");
-      if(start!=NULL)scase->surfcoll.nsurfids++;
-      surf_id = NULL;
-      surf_id2 = NULL;
-      for(c = start; c!=NULL&&*c!='\0'; c++){
-        if(surf_id==NULL&&*c=='\''){
-          surf_id = c+1;
-          continue;
-        }
-        if(surf_id!=NULL&&*c=='\''){
-          *c = '\0';
-          NewMemory((void **)&surf_id2, strlen(surf_id)+1);
-          strcpy(surf_id2, surf_id);
-          scase->surfcoll.surfids[ scase->surfcoll.nsurfids-1].label = surf_id2;
-          scase->surfcoll.surfids[ scase->surfcoll.nsurfids-1].location = 1;
-          scase->surfcoll.surfids[ scase->surfcoll.nsurfids-1].show = 1;
-          break;
-        }
-      }
-
-    }
-  }
-
-  /* identify duplicate surfaces */
-  /*** debug: make sure ->show is defined for all cases ***/
-
-  nsurfids_shown = 0;
-  for(i = 0; i<scase->surfcoll.nsurfids; i++){
-    labeli = scase->surfcoll.surfids[i].label;
-    nexti = 0;
-    for(j = 0; j<scase->surfcoll.nsurfinfo; j++){
-      surfj = scase->surfcoll.surfinfo+j;
-      labelj = surfj->surfacelabel;
-      if(strcmp(labeli, labelj)==0){
-        nexti = 1;
-        break;
-      }
-    }
-    if(nexti==1){
-      scase->surfcoll.surfids[i].show = 0;
-      continue;
-    }
-    for(j = 0; j<i; j++){
-      labelj = scase->surfcoll.surfids[j].label;
-      if(strcmp(labeli, labelj)==0){
-        nexti = 1;
-        break;
-      }
-    }
-    if(nexti==1){
-      scase->surfcoll.surfids[i].show = 0;
-      continue;
-    }
-    nsurfids_shown++;
-
-  }
-
-  /* add surfaces found in database to those surfaces defined in previous SURF lines */
-
-  if(nsurfids_shown>0){
-    if(scase->surfcoll.nsurfinfo==0){
-      FREEMEMORY(scase->surfcoll.surfinfo);
-      FREEMEMORY(scase->texture_coll.textureinfo);
-      NewMemory((void **)&scase->surfcoll.surfinfo, (nsurfids_shown+MAX_ISO_COLORS+1)*sizeof(surfdata));
-      NewMemory((void **)&scase->texture_coll.textureinfo, nsurfids_shown*sizeof(texturedata));
-    }
-    if(scase->surfcoll.nsurfinfo>0){
-      if(scase->surfcoll.surfinfo==NULL){
-        NewMemory((void **)&scase->surfcoll.surfinfo, (nsurfids_shown+scase->surfcoll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
-      }
-      else{
-        ResizeMemory((void **)&scase->surfcoll.surfinfo, (nsurfids_shown+scase->surfcoll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
-      }
-      if(scase->texture_coll.textureinfo==NULL){
-        NewMemory((void **)&scase->texture_coll.textureinfo, (nsurfids_shown+scase->surfcoll.nsurfinfo)*sizeof(texturedata));
-      }
-      else{
-        ResizeMemory((void **)&scase->texture_coll.textureinfo, (nsurfids_shown+scase->surfcoll.nsurfinfo)*sizeof(texturedata));
-      }
-    }
-    surfj = scase->surfcoll.surfinfo+scase->surfcoll.nsurfinfo-1;
-    for(j = 0; j<scase->surfcoll.nsurfids; j++){
-      if(scase->surfcoll.surfids[j].show==0)continue;
-      surfj++;
-      InitSurface(surfj);
-      surfj->surfacelabel = scase->surfcoll.surfids[j].label;
-    }
-    scase->surfcoll.nsurfinfo += nsurfids_shown;
-  }
-  UpdateSortedSurfIdList(scase);
 }
 
 /* ------------------ ReadZVentData ------------------------ */
@@ -3539,8 +3345,6 @@ int ReadSMV_Init(smv_case *scase) {
   sextras.nvent_transparent=0;
 
   sextras.setPDIM=0;
-
-  FREEMEMORY(database_filename);
 
   FREEMEMORY(scase->slicecoll.vsliceinfo);
   FREEMEMORY(scase->slicecoll.sliceinfo);
@@ -5652,9 +5456,6 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   START_TIMER(pass3_time);
 
   CheckMemory;
-  // TODO: it seems that this is never used
-  ParseDatabase(scase, database_filename);
-
 
   if(setGRID==0){
     meshdata *meshi;

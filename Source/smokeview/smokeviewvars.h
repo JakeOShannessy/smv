@@ -1911,7 +1911,7 @@ SVEXTERN char SVDECL(*hrr_filename, NULL);
 SVEXTERN char SVDECL(*part_globalbound_filename, NULL);
 SVEXTERN char SVDECL(*sliceinfo_filename,NULL);
 SVEXTERN char SVDECL(*deviceinfo_filename, NULL);
-SVEXTERN char SVDECL(*database_filename,NULL),SVDECL(*iso_filename,NULL);
+SVEXTERN char SVDECL(*iso_filename,NULL);
 SVEXTERN char SVDECL(*smokeview_casedir, NULL);
 SVEXTERN int SVDECL(update_vectorskip, 0);
 SVEXTERN int SVDECL(smoke_offaxis, 0), SVDECL(smoke_adjust, 1);
