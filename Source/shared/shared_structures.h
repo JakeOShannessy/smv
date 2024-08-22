@@ -1876,6 +1876,8 @@ typedef struct {
   treedata *treeinfo;
   terraindata *terraininfo;
   int have_cface_normals;
+  float gvecphys[3];
+  float gvecunit[3];
 } smv_extras;
 
 // TODO: remove each of these struct fields as global variables

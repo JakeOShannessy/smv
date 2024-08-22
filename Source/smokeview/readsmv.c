@@ -7490,12 +7490,12 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     }
     if(MatchSMV(buffer,"GVEC") == 1){
       FGETS(buffer,255,stream);
-      sscanf(buffer,"%f %f %f",gvecphys,gvecphys+1,gvecphys+2);
-      gvecunit[0]=gvecphys[0];
-      gvecunit[1]=gvecphys[1];
-      gvecunit[2]=gvecphys[2];
-      NORMALIZE3(gvecunit);
-      if(NORM3(gvecphys)>0.0){
+      sscanf(buffer,"%f %f %f",sextras.gvecphys,sextras.gvecphys+1,sextras.gvecphys+2);
+      sextras.gvecunit[0]=sextras.gvecphys[0];
+      sextras.gvecunit[1]=sextras.gvecphys[1];
+      sextras.gvecunit[2]=sextras.gvecphys[2];
+      NORMALIZE3(sextras.gvecunit);
+      if(NORM3(sextras.gvecphys)>0.0){
         sextras.have_gvec=1;
       }
       continue;

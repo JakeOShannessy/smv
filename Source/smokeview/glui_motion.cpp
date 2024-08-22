@@ -1264,9 +1264,9 @@ extern "C" void GLUIMotionSetup(int main_window){
 
 
     if(sextras.have_gvec==1){
-      vv[0] = -gvecphys[0];
-      vv[1] = -gvecphys[1];
-      vv[2] = -gvecphys[2];
+      vv[0] = -sextras.gvecphys[0];
+      vv[1] = -sextras.gvecphys[1];
+      vv[2] = -sextras.gvecphys[2];
     }
     else{
       vv[0] = -gvecphys_orig[0];
@@ -2365,10 +2365,10 @@ extern "C" void GLUISceneMotionCB(int var){
         gvec_down=1;
         GLUISceneMotionCB(ZAXIS_UP);
         gvec_down=1;
-        maxvv = MAXABS3(gvecphys);
-        vv[0] = -gvecphys[0]/maxvv;
-        vv[1] = -gvecphys[1]/maxvv;
-        vv[2] = -gvecphys[2]/maxvv;
+        maxvv = MAXABS3(sextras.gvecphys);
+        vv[0] = -sextras.gvecphys[0]/maxvv;
+        vv[1] = -sextras.gvecphys[1]/maxvv;
+        vv[2] = -sextras.gvecphys[2]/maxvv;
         XYZ2AzElev(vv, zaxis_angles, zaxis_angles+1);
         UpdateZaxisAngles();
 

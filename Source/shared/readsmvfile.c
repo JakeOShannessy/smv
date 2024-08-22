@@ -58,9 +58,11 @@
 
 // TODO: remove these globals, they are just used for development
 smv_extras sextras = {
-  .fuel_hoc = -1.0,
-  0,
-  .have_cface_normals = CFACE_NORMALS_NO
+    .fuel_hoc = -1.0,
+    0,
+    .have_cface_normals = CFACE_NORMALS_NO,
+    .gvecphys = {0.0, 0.0, -9.8},
+    .gvecunit = {0.0, 0.0, -1.0},
 };
 parse_options parse_opts = {
     .smoke3d_only = 0,
@@ -101,8 +103,6 @@ int updatefaces = 0;
 int solid_ht3d = 0;
 int SVDECL(show_slice_in_obst,ONLY_IN_GAS);
 int SVDECL(use_iblank,1),iblank_set_on_commandline = 0;
-float gvecphys[3]={0.0,0.0,-9.8};
-float gvecunit[3]={0.0,0.0,-1.0};
 float SVDECL(smoke_albedo, 0.3), SVDECL(smoke_albedo_base, 0.3);
 float northangle = 0.0;
 int auto_terrain = 0,manual_terrain = 0;
@@ -3728,12 +3728,12 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     }
     if(MatchSMV(buffer,"GVEC") == 1){
       FGETS(buffer,255,stream);
-      sscanf(buffer,"%f %f %f",gvecphys,gvecphys+1,gvecphys+2);
-      gvecunit[0]=gvecphys[0];
-      gvecunit[1]=gvecphys[1];
-      gvecunit[2]=gvecphys[2];
-      NORMALIZE3(gvecunit);
-      if(NORM3(gvecphys)>0.0){
+      sscanf(buffer,"%f %f %f",sextras.gvecphys,sextras.gvecphys+1,sextras.gvecphys+2);
+      sextras.gvecunit[0]=sextras.gvecphys[0];
+      sextras.gvecunit[1]=sextras.gvecphys[1];
+      sextras.gvecunit[2]=sextras.gvecphys[2];
+      NORMALIZE3(sextras.gvecunit);
+      if(NORM3(sextras.gvecphys)>0.0){
         sextras.have_gvec=1;
       }
       continue;

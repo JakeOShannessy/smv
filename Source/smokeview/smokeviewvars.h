@@ -769,12 +769,8 @@ SVEXTERN int SVDECL(colorbar_autoflip,1);
 SVEXTERN int SVDECL(update_flipped_colorbar,0);
 
 #ifdef INMAIN
-SVEXTERN float gvecphys[3]={0.0,0.0,-9.8};
-SVEXTERN float gvecunit[3]={0.0,0.0,-1.0};
 SVEXTERN float gvecphys_orig[3] = {0.0,0.0,-9.8};
 #else
-SVEXTERN float gvecphys[3];
-SVEXTERN float gvecunit[3];
 SVEXTERN float gvecphys_orig[3];
 #endif
 SVEXTERN int SVDECL(gvec_down,1),SVDECL(zaxis_custom,0),SVDECL(showgravity_vector,0);
