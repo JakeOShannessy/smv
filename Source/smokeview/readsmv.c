@@ -7512,11 +7512,11 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         BREAK;
       }
       sscanf(buffer,"%f %f %i",&tourcoll.tour_tstart,&tourcoll.tour_tstop,&tourcoll.tour_ntimes);
-      global_tbegin = tourcoll.tour_tstart;
-      tload_begin   = tourcoll.tour_tstart;
+      sextras.global_tbegin = tourcoll.tour_tstart;
+      sextras.tload_begin   = tourcoll.tour_tstart;
 
-      global_tend   = tourcoll.tour_tstop;
-      tload_end     = tourcoll.tour_tstop;
+      sextras.global_tend   = tourcoll.tour_tstop;
+      sextras.tload_end     = tourcoll.tour_tstop;
       if(tourcoll.tour_ntimes<2)tourcoll.tour_ntimes=2;
       ReallocTourMemory(&tourcoll);
       continue;
@@ -8061,7 +8061,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   */
     if(MatchSMV(buffer, "TIMES")==1){
       FGETS(buffer, 255, stream);
-      sscanf(buffer, "%f %f", &global_tbegin, &global_tend);
+      sscanf(buffer, "%f %f", &sextras.global_tbegin, &sextras.global_tend);
       continue;
     }
   /*
@@ -12603,7 +12603,7 @@ int ReadIni2(char *inifile, int localfile){
     }
     if(MatchINI(buffer, "TLOAD") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %f %i %f %i %i", &use_tload_begin, &tload_begin, &use_tload_end, &tload_end, &use_tload_skip, &tload_skip);
+      sscanf(buffer, "%i %f %i %f %i %i", &use_tload_begin, &sextras.tload_begin, &use_tload_end, &sextras.tload_end, &use_tload_skip, &tload_skip);
       continue;
     }
     if(MatchINI(buffer, "VOLSMOKE") == 1){
@@ -16354,7 +16354,7 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, "TIMEOFFSET\n");
   fprintf(fileout, " %f\n", timeoffset);
   fprintf(fileout, "TLOAD\n");
-  fprintf(fileout, " %i %f %i %f %i %i\n", use_tload_begin, tload_begin, use_tload_end, tload_end, use_tload_skip, tload_skip);
+  fprintf(fileout, " %i %f %i %f %i %i\n", use_tload_begin, sextras.tload_begin, use_tload_end, sextras.tload_end, use_tload_skip, tload_skip);
   for(i = 0; i < npatchinfo; i++){
     patchdata *patchi;
 

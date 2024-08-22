@@ -577,8 +577,8 @@ void DrawPartFrame(int mode){
   partdata *parti;
   int i;
 
-  if(use_tload_begin==1&&global_times[itimes]<tload_begin)return;
-  if(use_tload_end==1&&global_times[itimes]>tload_end)return;
+  if(use_tload_begin==1&&global_times[itimes]<sextras.tload_begin)return;
+  if(use_tload_end==1&&global_times[itimes]>sextras.tload_end)return;
   for(i=0;i<npartinfo;i++){
     parti = partinfo + i;
     if(parti->loaded==0||parti->display==0)continue;
@@ -1259,8 +1259,8 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
     if(count_read!=1)goto wrapup;
 
     if((tload_step>1       && count_local%tload_step!=0)||
-       (use_tload_begin==1 && time_local<tload_begin-TEPS)||
-       (use_tload_end==1   && time_local>tload_end+TEPS)){
+       (use_tload_begin==1 && time_local<sextras.tload_begin-TEPS)||
+       (use_tload_end==1   && time_local>sextras.tload_end+TEPS)){
       doit_local=0;
     }
     else{
@@ -1888,8 +1888,8 @@ int GetPartHeader(partdata * parti, int *nf_all, int option_arg, int print_optio
     if(exitloop_local == 1)break;
     nframes_all_local++;
     if(tload_step>1       && (nframes_all_local-1)%tload_step!=0)continue;
-    if(use_tload_begin==1 && time_local<tload_begin-TEPS)continue;
-    if(use_tload_end==1   && time_local>tload_end+TEPS)break;
+    if(use_tload_begin==1 && time_local<sextras.tload_begin-TEPS)continue;
+    if(use_tload_end==1   && time_local>sextras.tload_end+TEPS)break;
     (parti->ntimes)++;
   }
   rewind(stream);
@@ -1949,8 +1949,8 @@ int GetPartHeader(partdata * parti, int *nf_all, int option_arg, int print_optio
       parti->filepos[count_local] = filepos_local;               // record file position for every frame
       skipit = 0;
       if(tload_step>1       && count_local%tload_step!=0)skipit = 1;
-      if(use_tload_begin==1 && time_local<tload_begin-TEPS)skipit = 1;
-      if(use_tload_end==1   && time_local>tload_end+TEPS)break;
+      if(use_tload_begin==1 && time_local<sextras.tload_begin-TEPS)skipit = 1;
+      if(use_tload_end==1   && time_local>sextras.tload_end+TEPS)break;
       if(skipit == 1){
         for(j=0;j<parti->nclasses;j++){
           if(fgets(buffer_local,255,stream)==NULL){

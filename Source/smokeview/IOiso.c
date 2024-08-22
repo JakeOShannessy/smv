@@ -133,8 +133,8 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
     if(skip_frame==1)continue;
     i++;
     if(i%tload_step!=0)continue;
-    if((use_tload_begin==1&&time_local<tload_begin))continue;
-    if((use_tload_end==1&&time_local>tload_end))continue;
+    if((use_tload_begin==1&&time_local<sextras.tload_begin))continue;
+    if((use_tload_end==1&&time_local>sextras.tload_end))continue;
 
     *nvertices += nvertices_i;
     *ntriangles += ntriangles_i;
@@ -793,7 +793,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       time_max=time_local;
     }
     meshi->iso_times[itime]=time_local;
-    if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<tload_begin)||(use_tload_end==1&&time_local>tload_end)||skip_frame==1){
+    if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<sextras.tload_begin)||(use_tload_end==1&&time_local>sextras.tload_end)||skip_frame==1){
     }
     for(ilevel=0;ilevel<meshi->nisolevels;ilevel++){
       int nvertices_i, ntriangles_i;
@@ -815,7 +815,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       asurface->niso_triangles=ntriangles_i/3;
       asurface->niso_vertices=nvertices_i;
 
-      if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<tload_begin)||(use_tload_end==1&&time_local>tload_end)||skip_frame==1){
+      if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<sextras.tload_begin)||(use_tload_end==1&&time_local>sextras.tload_end)||skip_frame==1){
         skip_local=0;
         if(nvertices_i<=0||ntriangles_i<=0)continue;
         skip_local += (6*nvertices_i);
@@ -1036,7 +1036,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       meshi->niso_times=itime;
       break;
     }
-    if(skip_frame==1||iitime%tload_step!=0||(use_tload_begin==1&&time_local<tload_begin)||(use_tload_end==1&&time_local>tload_end)){
+    if(skip_frame==1||iitime%tload_step!=0||(use_tload_begin==1&&time_local<sextras.tload_begin)||(use_tload_end==1&&time_local>sextras.tload_end)){
     }
     else{
       itime++;
@@ -1340,8 +1340,8 @@ void DrawIsoOrig(int tranflag){
 
 void DrawIso(int tranflag){
   if(niso_opaques>0||niso_trans>0){
-    if(use_tload_begin==1&&global_times[itimes]<tload_begin)return;
-    if(use_tload_end==1&&global_times[itimes]>tload_end)return;
+    if(use_tload_begin==1&&global_times[itimes]<sextras.tload_begin)return;
+    if(use_tload_end==1&&global_times[itimes]>sextras.tload_end)return;
     DrawIsoOrig(tranflag);
   }
 }

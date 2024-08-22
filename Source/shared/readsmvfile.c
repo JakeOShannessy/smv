@@ -56,13 +56,16 @@
 // TODO: Things that can be moved to after parse are marked with the label
 // POSTPARSE: <explanation>
 
-// TODO: remove these globals, they are just used for development
 smv_extras sextras = {
     .fuel_hoc = -1.0,
     0,
     .have_cface_normals = CFACE_NORMALS_NO,
     .gvecphys = {0.0, 0.0, -9.8},
     .gvecunit = {0.0, 0.0, -1.0},
+    .global_tbegin = 1.0,
+    .global_tend = 0.0,
+    .tload_begin = 0.0,
+    .tload_end = 0.0,
 };
 parse_options parse_opts = {
     .smoke3d_only = 0,
@@ -79,6 +82,7 @@ parse_options parse_opts = {
     .foregroundcolor = {1.0, 1.0, 1.0, 1.0},
 };
 
+// TODO: remove these globals, they are just used for development
 filelist_collection filelist_coll = {0};
 
 float SVDECL(xbar,1.0);float SVDECL(ybar,1.0);float  SVDECL(zbar,1.0);
@@ -104,7 +108,6 @@ float SVDECL(smoke_albedo, 0.3), SVDECL(smoke_albedo_base, 0.3);
 int auto_terrain = 0,manual_terrain = 0;
 int SVDECL(visOtherVents,1),SVDECL(visOtherVentsSAVE,1);
 int update_terrain_type = 0;
-float SVDECL(global_tbegin, 1.0), global_tend = 0.0;
 #ifdef INMAIN
 int hvac_duct_color[3] = { 63,0,15};
 int hvac_node_color[3] = { 63,0,15};
@@ -128,7 +131,6 @@ float SVDECL(linewidth, 2.0), SVDECL(ventlinewidth, 2.0);
 float rgb[MAXRGB][4];
 EXTERNCPP char *GetDeviceLabel(char *buffer);
 EXTERNCPP void GetElevAz(float *xyznorm,float *dtheta, float *rotate_axis, float *dpsi);
-float tload_begin = 0.0, tload_end = 0.0;
 
 // END TODO
 
@@ -3745,11 +3747,11 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         BREAK;
       }
       sscanf(buffer,"%f %f %i",&scase->tourcoll.tour_tstart,&scase->tourcoll.tour_tstop,&scase->tourcoll.tour_ntimes);
-      global_tbegin = scase->tourcoll.tour_tstart;
-      tload_begin   = scase->tourcoll.tour_tstart;
+      sextras.global_tbegin = scase->tourcoll.tour_tstart;
+      sextras.tload_begin   = scase->tourcoll.tour_tstart;
 
-      global_tend   = scase->tourcoll.tour_tstop;
-      tload_end     = scase->tourcoll.tour_tstop;
+      sextras.global_tend   = scase->tourcoll.tour_tstop;
+      sextras.tload_end     = scase->tourcoll.tour_tstop;
       if(scase->tourcoll.tour_ntimes<2)scase->tourcoll.tour_ntimes=2;
       ReallocTourMemory(&scase->tourcoll);
       continue;
@@ -4290,7 +4292,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   */
     if(MatchSMV(buffer, "TIMES")==1){
       FGETS(buffer, 255, stream);
-      sscanf(buffer, "%f %f", &global_tbegin, &global_tend);
+      sscanf(buffer, "%f %f", &sextras.global_tbegin, &sextras.global_tend);
       continue;
     }
   /*

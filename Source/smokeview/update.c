@@ -1070,7 +1070,7 @@ void TruncateGlobalTimes(void){
   iend = nglobal_times - 1;
   if(use_tload_begin==1){
     for(i=0;i<nglobal_times;i++){
-      if(tload_begin<global_times[i]){
+      if(sextras.tload_begin<global_times[i]){
         ibeg = i;
         break;
       }
@@ -1078,7 +1078,7 @@ void TruncateGlobalTimes(void){
   }
   if(use_tload_end==1){
     for(i=nglobal_times-1;i>=0;i--){
-      if(global_times[i]<tload_end){
+      if(global_times[i]<sextras.tload_end){
         iend = i;
         break;
       }
@@ -1089,10 +1089,10 @@ void TruncateGlobalTimes(void){
   }
   nglobal_times = iend + 1 - ibeg;
   if(use_tload_begin==1){
-    MergeGlobalTimes(&tload_begin, 1);
+    MergeGlobalTimes(&sextras.tload_begin, 1);
   }
   if(use_tload_end==1){
-    MergeGlobalTimes(&tload_end, 1);
+    MergeGlobalTimes(&sextras.tload_end, 1);
   }
 }
 
@@ -1278,10 +1278,10 @@ void UpdateTimes(void){
     MergeGlobalTimes(hvaccoll.hvacnodevalsinfo->times, hvaccoll.hvacnodevalsinfo->ntimes);
   }
   if(use_tload_begin==1){
-    MergeGlobalTimes(&tload_begin, 1);
+    MergeGlobalTimes(&sextras.tload_begin, 1);
   }
   if(use_tload_end==1){
-    MergeGlobalTimes(&tload_end, 1);
+    MergeGlobalTimes(&sextras.tload_end, 1);
   }
 
   if(vis_hrr_plot==1&&hrrptr!=NULL){

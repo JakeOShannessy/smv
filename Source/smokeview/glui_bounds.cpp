@@ -446,7 +446,7 @@ void bounds_dialog::setup(const char *file_type, GLUI_Rollout * ROLLOUT_dialog, 
     if(strcmp(file_type, "slice")==0){
       CHECKBOX_chop_hide = glui_bounds->add_checkbox_to_panel(ROLLOUT_truncate, "hide triangles with truncated values", &(bounds.chop_hide), BOUND_CHOP_HIDE, Callback);
     }
-    
+
     Callback(BOUND_VAL_TYPE);
     Callback(BOUND_SETCHOPMIN);
     Callback(BOUND_SETCHOPMAX);
@@ -1990,7 +1990,7 @@ extern "C" void GLUIHVACSliceBoundsCPP_CB(int var){
       }
       if(hist_update == 1||bounds->hist==NULL){
         float global_min, global_max;
-        
+
         GLUIGetGlobalBoundsMinMax(BOUND_SLICE, bounds->label, &global_min, &global_max);
         ComputeLoadedSliceHist(bounds->label, global_min, global_max);
         MergeLoadedSliceHist(bounds->label, &(bounds->hist));
@@ -2382,7 +2382,7 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
       }
       if(hist_update == 1||bounds->hist==NULL){
         float global_min, global_max;
-        
+
         GLUIGetGlobalBoundsMinMax(BOUND_PATCH, bounds->label, &global_min, &global_max);
         ComputeLoadedPatchHist(bounds->label, &(bounds->hist), &global_min, &global_max);
       }
@@ -4443,10 +4443,10 @@ void TimeBoundCB(int var){
   case SET_FDS_TIMES:
     use_tload_begin = 1;
     use_tload_end   = 1;
-    tload_begin     = global_tbegin;
-    tload_end       = global_tend;
-    SPINNER_tload_begin->set_float_val(tload_begin);
-    SPINNER_tload_end->set_float_val(tload_end);
+    sextras.tload_begin     = sextras.global_tbegin;
+    sextras.tload_end       = sextras.global_tend;
+    SPINNER_tload_begin->set_float_val(sextras.tload_begin);
+    SPINNER_tload_end->set_float_val(sextras.tload_end);
     CHECKBOX_use_tload_begin->set_int_val(use_tload_begin);
     CHECKBOX_use_tload_end->set_int_val(use_tload_end);
     TimeBoundCB(TBOUNDS);
@@ -4637,12 +4637,12 @@ void ScriptCB(int var){
 extern "C" void GLUIUpdateBoundTbounds(void){
   use_tload_end   = use_tload_end2;
   use_tload_begin = use_tload_begin2;
-  tload_end       = tload_end2;
-  tload_begin     = tload_begin2;
+  sextras.tload_end       = tload_end2;
+  sextras.tload_begin     = tload_begin2;
   if(CHECKBOX_use_tload_begin!=NULL)CHECKBOX_use_tload_begin->set_int_val(use_tload_begin);
   if(CHECKBOX_use_tload_end!=NULL)CHECKBOX_use_tload_end->set_int_val(use_tload_end);
-  if(SPINNER_tload_end!=NULL)SPINNER_tload_end->set_float_val(tload_end);
-  if(SPINNER_tload_begin!=NULL)SPINNER_tload_begin->set_float_val(tload_begin);
+  if(SPINNER_tload_end!=NULL)SPINNER_tload_end->set_float_val(sextras.tload_end);
+  if(SPINNER_tload_begin!=NULL)SPINNER_tload_begin->set_float_val(sextras.tload_begin);
 }
 
 /* ------------------ GLUIUpdateSliceXYZ ------------------------ */
@@ -5520,7 +5520,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
   ROLLOUT_autoload = glui_bounds->add_rollout_to_panel(PANEL_loadbounds,_("Auto load"), false, LOAD_AUTO_ROLLOUT, LoadRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_autoload, glui_bounds);
   ADDPROCINFO(loadprocinfo, nloadprocinfo, ROLLOUT_autoload, LOAD_AUTO_ROLLOUT, glui_bounds);
-  
+
   glui_bounds->add_checkbox_to_panel(ROLLOUT_autoload, _("Auto load at startup"), &loadfiles_at_startup, STARTUP, BoundBoundCB);
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, _("Save auto load file list"), SAVE_FILE_LIST, BoundBoundCB);
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, _("Auto load now"), LOAD_FILES, BoundBoundCB);
@@ -5540,12 +5540,12 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
   glui_bounds->add_button_to_panel(ROLLOUT_time2, _("Use FDS start/end times"), SET_FDS_TIMES, TimeBoundCB);
 
   PANEL_time2a = glui_bounds->add_panel_to_panel(ROLLOUT_time2, "", false);
-  SPINNER_tload_begin = glui_bounds->add_spinner_to_panel(PANEL_time2a, _("min time"), GLUI_SPINNER_FLOAT, &tload_begin, TBOUNDS, TimeBoundCB);
+  SPINNER_tload_begin = glui_bounds->add_spinner_to_panel(PANEL_time2a, _("min time"), GLUI_SPINNER_FLOAT, &sextras.tload_begin, TBOUNDS, TimeBoundCB);
   glui_bounds->add_column_to_panel(PANEL_time2a, false);
   CHECKBOX_use_tload_begin = glui_bounds->add_checkbox_to_panel(PANEL_time2a, "", &use_tload_begin, TBOUNDS_USE, TimeBoundCB);
 
   PANEL_time2b = glui_bounds->add_panel_to_panel(ROLLOUT_time2, "", false);
-  SPINNER_tload_end = glui_bounds->add_spinner_to_panel(PANEL_time2b, _("max time"), GLUI_SPINNER_FLOAT, &tload_end, TBOUNDS, TimeBoundCB);
+  SPINNER_tload_end = glui_bounds->add_spinner_to_panel(PANEL_time2b, _("max time"), GLUI_SPINNER_FLOAT, &sextras.tload_end, TBOUNDS, TimeBoundCB);
   glui_bounds->add_column_to_panel(PANEL_time2b, false);
   CHECKBOX_use_tload_end = glui_bounds->add_checkbox_to_panel(PANEL_time2b, "", &use_tload_end, TBOUNDS_USE, TimeBoundCB);
 
@@ -6160,7 +6160,7 @@ extern "C" void GLUIIsoBoundCB(int var){
     EDIT_iso_valmin->set_float_val(glui_iso_valmin);
     glutPostRedisplay();
     break;
-    
+
   case ISO_SETVALMAX:
     switch(setisomax){
       case SET_MAX:

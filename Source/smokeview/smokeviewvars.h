@@ -1672,7 +1672,6 @@ SVEXTERN float SVDECL(geom_zmin, 0.0), SVDECL(geom_zmax, 1.0);
 SVEXTERN int SVDECL(use_geom_factors, 1), SVDECL(have_geom_factors, 0);
 SVEXTERN int SVDECL(transparent_state,ALL_SOLID);
 
-SVEXTERN float SVDECL(tload_begin, 0.0), SVDECL(tload_end, 0.0);
 SVEXTERN int SVDECL(use_tload_begin, 0), SVDECL(use_tload_end, 0);
 SVEXTERN float SVDECL(tload_begin2, 0.0), SVDECL(tload_end2, 0.0);
 SVEXTERN int SVDECL(use_tload_begin2, 0), SVDECL(use_tload_end2, 0);
@@ -2009,7 +2008,6 @@ SVEXTERN int SVDECL(*plotiso,NULL);
 
 SVEXTERN int nglobal_times, SVDECL(itimes,0), SVDECL(itime_save,-1), SVDECL(itimeold,-999);
 SVEXTERN float SVDECL(*global_times,NULL), SVDECL(*times_buffer, NULL), cputimes[20];
-SVEXTERN float SVDECL(global_tbegin, 1.0), SVDECL(global_tend, 0.0);
 SVEXTERN int SVDECL(ntimes_buffer, 0);
 
 SVEXTERN int SVDECL(cpuframe,0);

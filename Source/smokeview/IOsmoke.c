@@ -3239,8 +3239,8 @@ void DrawSmokeFrame(void){
   int blend_mode;
   int nsmoke_triangles=0;
 
-  if(use_tload_begin==1 && global_times[itimes]<tload_begin)return;
-  if(use_tload_end==1   && global_times[itimes]>tload_end)return;
+  if(use_tload_begin==1 && global_times[itimes]<sextras.tload_begin)return;
+  if(use_tload_end==1   && global_times[itimes]>sextras.tload_end)return;
   triangle_count = 0;
 #ifdef pp_GPU
   if(usegpu==1){
@@ -3335,8 +3335,8 @@ void DrawSmokeFrame(void){
 void DrawVolSmokeFrame(void){
   int load_shaders = 0;
 
-  if(use_tload_begin==1&&global_times[itimes]<tload_begin)return;
-  if(use_tload_end==1&&global_times[itimes]>tload_end)return;
+  if(use_tload_begin==1&&global_times[itimes]<sextras.tload_begin)return;
+  if(use_tload_end==1&&global_times[itimes]>sextras.tload_end)return;
   triangle_count = 0;
   CheckMemory;
   if(smoke3dVoldebug==1){
@@ -3504,8 +3504,8 @@ void GetSmoke3DTimeSteps(int fortran_skip, char *smokefile, int version, int *nt
     sscanf(buffer, "%f", &time_local);
     iframe_local++;
     if(time_local <= time_max)continue;
-    if(use_tload_end == 1 && time_local > tload_end)break;
-    if(iii%tload_step == 0 && (use_tload_begin == 0 || time_local >= tload_begin)){
+    if(use_tload_end == 1 && time_local > sextras.tload_end)break;
+    if(iii%tload_step == 0 && (use_tload_begin == 0 || time_local >= sextras.tload_begin)){
       nframes_found++;
       time_max = time_local;
     }
@@ -3682,8 +3682,8 @@ int GetSmoke3DSizes(smoke3ddata *smoke3di, int fortran_skip, char *smokefile, in
     }
     time_last = time_local;
     iframe_local++;
-    if(use_tload_end == 1 && time_local > tload_end)break;
-    if(iii%tload_step == 0 && (use_tload_begin == 0 || time_local >= tload_begin)){
+    if(use_tload_end == 1 && time_local > sextras.tload_end)break;
+    if(iii%tload_step == 0 && (use_tload_begin == 0 || time_local >= sextras.tload_begin)){
       nframes_found++;
       time_max = time_local;
     }
@@ -3744,9 +3744,9 @@ int GetSmoke3DSizes(smoke3ddata *smoke3di, int fortran_skip, char *smokefile, in
     *maxval = MAX(maxvali, *maxval);
     *nch_smoke_compressed_full++ = nch_smoke_compressed;
     *use_smokeframe_full = 0;
-    if(use_tload_end == 1 && time_local > tload_end)break;
+    if(use_tload_end == 1 && time_local > sextras.tload_end)break;
 
-    if(iii%tload_step == 0 && (use_tload_begin == 0 || time_local >= tload_begin)){
+    if(iii%tload_step == 0 && (use_tload_begin == 0 || time_local >= sextras.tload_begin)){
       *use_smokeframe_full = 1;
       *times++ = time_local;
       time_max = time_local;
@@ -4343,12 +4343,12 @@ FILE_SIZE ReadSmoke3D(int time_frame,int ifile_arg,int load_flag, int first_time
   for(i=frame_start_local;i<frame_end_local;i++){
     SKIP_SMOKE;FREAD_SMOKE(&time_local,4,1,SMOKE3DFILE);SKIP_SMOKE;
     file_size_local +=4+4+4;
-    if(FEOF_SMOKE(SMOKE3DFILE)!=0||(use_tload_end==1&&time_local>tload_end)){
+    if(FEOF_SMOKE(SMOKE3DFILE)!=0||(use_tload_end==1&&time_local>sextras.tload_end)){
       smoke3di->ntimes_full=i;
       smoke3di->ntimes=nframes_found_local;
       break;
     }
-    if(use_tload_begin==1&&time_local<tload_begin)smoke3di->use_smokeframe[i]=0;
+    if(use_tload_begin==1&&time_local<sextras.tload_begin)smoke3di->use_smokeframe[i]=0;
     SKIP_SMOKE;FREAD_SMOKE(nchars_local,4,2,SMOKE3DFILE); SKIP_SMOKE;
     file_size_local += 4+2*4+4;
     if(FEOF_SMOKE(SMOKE3DFILE)!=0){

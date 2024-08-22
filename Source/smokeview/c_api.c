@@ -3880,9 +3880,9 @@ int SetPl3dBoundMax(int pl3dValueIndex, int set, float value) {
 int SetTload(int beginFlag, float beginVal, int endFlag, int endVal,
              int skipFlag, int skipVal) {
   use_tload_begin = beginFlag;
-  tload_begin = beginVal;
+  sextras.tload_begin = beginVal;
   use_tload_end = endFlag;
-  tload_end = endVal;
+  sextras.tload_end = endVal;
   use_tload_skip = skipFlag;
   tload_skip = skipVal;
   return 0;

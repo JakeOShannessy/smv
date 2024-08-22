@@ -12,11 +12,11 @@
 
 #include "colorbars.h"
 #include "contourdefs.h"
+#include "csphere.h"
 #include "histogram.h"
 #include "isodefs.h"
 #include "stdio_m.h"
 #include "string_util.h"
-#include "csphere.h"
 
 #define MAXPLOT3DVARS 6
 
@@ -1884,6 +1884,10 @@ typedef struct {
   int have_cface_normals;
   float gvecphys[3];
   float gvecunit[3];
+  float global_tbegin;
+  float global_tend;
+  float tload_begin;
+  float tload_end;
 } smv_extras;
 
 // TODO: remove each of these struct fields as global variables

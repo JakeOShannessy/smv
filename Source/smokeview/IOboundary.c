@@ -2486,14 +2486,14 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
     }
     CheckMemory;
     if(error!=0)break;
-    if(use_tload_end!=0&&*meshi->patch_timesi>tload_end)break;
+    if(use_tload_end!=0&&*meshi->patch_timesi>sextras.tload_end)break;
 
     switch(loadpatchbysteps){
       case UNCOMPRESSED_ALLFRAMES:
 #ifdef pp_BOUNDFRAME
         ii++;
 #else
-        if(!(use_tload_begin!=0&&*meshi->patch_timesi<tload_begin)){
+        if(!(use_tload_begin!=0&&*meshi->patch_timesi<sextras.tload_begin)){
            meshi->npatch_times++;
           patchi->ntimes=meshi->npatch_times;
           if(meshi->npatch_times + 1 > maxtimes_boundary){
@@ -4140,8 +4140,8 @@ void DrawBoundaryFrame(int flag){
   meshdata *meshi;
   int i;
 
-  if(use_tload_begin==1 && global_times[itimes]<tload_begin)return;
-  if(use_tload_end==1   && global_times[itimes]>tload_end)return;
+  if(use_tload_begin==1 && global_times[itimes]<sextras.tload_begin)return;
+  if(use_tload_end==1   && global_times[itimes]>sextras.tload_end)return;
 
   for(i=0;i<npatchinfo;i++){
     patchdata *patchi;

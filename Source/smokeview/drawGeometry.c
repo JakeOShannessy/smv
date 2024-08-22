@@ -2541,8 +2541,8 @@ void UpdateFaceLists(void){
   }
   // if we are not showing boundary files then don't try to hide blockages
   if(showplot3d == 0){
-    if(use_tload_begin == 1 && global_times != NULL && global_times[itimes] < tload_begin)check_blockhide = 0;
-    if(use_tload_end == 1 && global_times != NULL && global_times[itimes] > tload_end)check_blockhide = 0;
+    if(use_tload_begin == 1 && global_times != NULL && global_times[itimes] < sextras.tload_begin)check_blockhide = 0;
+    if(use_tload_end == 1 && global_times != NULL && global_times[itimes] > sextras.tload_end)check_blockhide = 0;
   }
   for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;

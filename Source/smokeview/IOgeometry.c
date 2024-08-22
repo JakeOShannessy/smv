@@ -2665,8 +2665,8 @@ FILE_SIZE ReadGeom0(geomdata *geomi, int load_flag, int type, int *geom_frame_in
 
       icount++;
       if(geom_frame_index == NULL){
-        if(use_tload_begin == 1 && times_local[0]     < tload_begin)skipframe = 1;
-        if(use_tload_end   == 1 && times_local[0]     > tload_end)skipframe = 1;
+        if(use_tload_begin == 1 && times_local[0]     < sextras.tload_begin)skipframe = 1;
+        if(use_tload_end   == 1 && times_local[0]     > sextras.tload_end)skipframe = 1;
         if(tload_step      >  1 && icount%tload_step != 0)skipframe = 1;
         if(skipframe == 0)geomi->times[iframe] = times_local[0];
       }
@@ -2777,7 +2777,7 @@ FILE_SIZE ReadGeom0(geomdata *geomi, int load_flag, int type, int *geom_frame_in
       // add decimation code here
       iframe++;
     }
-    if(geom_frame_index==NULL&&use_tload_end == 1 && times_local[0] > tload_end)break;
+    if(geom_frame_index==NULL&&use_tload_end == 1 && times_local[0] > sextras.tload_end)break;
   }
   geomi->loaded = 1;
   geomi->display=1;
@@ -4800,8 +4800,8 @@ void ShowHideSortGeometry(int sort_geom, float *mm){
           if(geomi->currentframe != NULL)geomlisti = geomi->currentframe;
         }
         if(itime==1&&geomi->geomtype==GEOM_ISO){
-          if(use_tload_begin==1&&global_times[itimes]<tload_begin)continue;
-          if(use_tload_end==1&&global_times[itimes]>tload_end)continue;
+          if(use_tload_begin==1&&global_times[itimes]<sextras.tload_begin)continue;
+          if(use_tload_end==1&&global_times[itimes]>sextras.tload_end)continue;
         }
 
         for(j = 0; j < geomlisti->ntriangles; j++){

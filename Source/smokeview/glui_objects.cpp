@@ -1775,8 +1775,8 @@ void UpdateCSVFileTypes(void){
 extern "C" void GLUIUpdatePlot2DTbounds(void){
   use_tload_end2 = use_tload_end;
   use_tload_begin2 = use_tload_begin;
-  tload_end2 = tload_end;
-  tload_begin2 = tload_begin;
+  tload_end2 = sextras.tload_end;
+  tload_begin2 = sextras.tload_begin;
   if(CHECKBOX_genplot_use_valmax[2]!=NULL)CHECKBOX_genplot_use_valmax[2]->set_int_val(use_tload_end2);
   if(CHECKBOX_genplot_use_valmin[2]!=NULL)CHECKBOX_genplot_use_valmin[2]->set_int_val(use_tload_begin2);
   if(SPINNER_genplot_valmax[2]!=NULL)SPINNER_genplot_valmax[2]->set_float_val(tload_end2);
