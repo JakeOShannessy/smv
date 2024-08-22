@@ -241,7 +241,7 @@ void DrawSelectGeom(void){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       glPointSize(20);
       color_index = 1;
       glBegin(GL_POINTS);
@@ -268,7 +268,7 @@ void DrawSelectGeom(void){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       color_index = 0;
       glBegin(GL_TRIANGLES);
       for(i = 0; i<geomlisti->ntriangles; i++){
@@ -399,7 +399,7 @@ void DrawObstBoundingBox(void){
   if(obst_bounding_box[4]>obst_bounding_box[5])return;
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
+  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
   DrawBox(obst_bounding_box, foregroundcolor);
   glPopMatrix();
 }
@@ -411,7 +411,7 @@ void DrawGeomBoundingBox(float *boundingbox_color){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),vertical_factor*SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
   for(i = 0; i<ngeominfo; i++){
     geomdata *geomi;
     int j, have_box;
@@ -506,7 +506,7 @@ void DrawGeom(int flag, int timestate){
 
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),vertical_factor*SCALE2SMV(1.0));
-    glTranslatef(-xbar0,-ybar0,-zbar0);
+    glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
     glBegin(GL_TRIANGLES);
     if(have_non_textures==1){
       for(i = 0; i<ntris; i++){
@@ -817,7 +817,7 @@ void DrawGeom(int flag, int timestate){
     if(show_surf_axis==1){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       glLineWidth(glui_surf_axis_width);
       glBegin(GL_LINES);
       for(i = 0; i<surf_coll.nsurfinfo;  i++){
@@ -885,7 +885,7 @@ void DrawGeom(int flag, int timestate){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-      glTranslatef(-xbar0,-ybar0,-zbar0);
+      glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
       glTranslatef(0.0, 0.0, geom_dz_offset);
       if(geomi->geomtype==GEOM_ISO){
         glLineWidth(isolinewidth);
@@ -987,7 +987,7 @@ void DrawGeom(int flag, int timestate){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-      glTranslatef(-xbar0,-ybar0,-zbar0);
+      glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
       glTranslatef(0.0, 0.0, geom_dz_offset);
       glPointSize(geom_pointsize);
       glBegin(GL_POINTS);
@@ -1063,7 +1063,7 @@ void DrawGeom(int flag, int timestate){
     if(doit==1){  // draw faceted normals
       glPushMatrix();
       glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-      glTranslatef(-xbar0,-ybar0,-zbar0);
+      glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
       glLineWidth(geom_linewidth);
       glBegin(GL_LINES);
       glColor3fv(blue);
@@ -1141,7 +1141,7 @@ void DrawGeom(int flag, int timestate){
     if(doit==1){  // draw smooth normals
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       glLineWidth(geom_linewidth);
       glBegin(GL_LINES);
       glColor3fv(blue);
@@ -2213,7 +2213,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     for(n = 0; n < MAXRGB; n++){
       colorlabelpatch[n] = NULL;
     }
-    for(n = 0; n < nrgb; n++){
+    for(n = 0; n < sextras.nrgb; n++){
       if(NewMemory((void **)&colorlabelpatch[n], 11) == 0){
         ReadGeomData(patchi, NULL, UNLOAD, time_frame, time_value, 0, &error);
         return 0;
@@ -2230,7 +2230,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     if(patchi->patch_filetype != PATCH_GEOMETRY_BOUNDARY && patchi->patch_filetype != PATCH_GEOMETRY_SLICE)convert = 0;
     GetBoundaryColors3(patchi, patchi->geom_vals, 0, patchi->geom_nvals, patchi->geom_ivals,
       &valmin, &valmax,
-      nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
+      sextras.nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
       &patchi->extreme_min, &patchi->extreme_max, convert);
     if(cache_boundary_data==0){
       FREEMEMORY(patchi->geom_vals);
@@ -2292,7 +2292,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     SliceBounds2Glui(slicefile_labelindex);
 
     GetSliceColors(patchi->geom_vals, patchi->geom_nvals, patchi->geom_ivals,
-      glui_slicemin, glui_slicemax, nrgb_full, nrgb,
+      glui_slicemin, glui_slicemax, nrgb_full, sextras.nrgb,
       sb->colorlabels, sb->colorvalues, sb->levels256,
       &slicei->extreme_min, &slicei->extreme_max, 1
     );
@@ -3668,7 +3668,7 @@ void DrawGeomVData(vslicedata *vd){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       if(sextras.auto_terrain==1)glTranslatef(0.0, 0.0, SCALE2FDS(0.01));
 
       glLineWidth(vectorlinewidth);
@@ -3915,7 +3915,7 @@ void DrawGeomData(int flag, slicedata *sd, patchdata *patchi, int geom_type){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0+boundaryoffset);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0+boundaryoffset);
       if(sextras.auto_terrain==1)glTranslatef(0.0, 0.0, slice_dz);
       glBegin(GL_TRIANGLES);
       if((patchi->patch_filetype!=PATCH_GEOMETRY_BOUNDARY&&smooth_iso_normal == 0)
@@ -4085,7 +4085,7 @@ void DrawGeomData(int flag, slicedata *sd, patchdata *patchi, int geom_type){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       if(patchi->patch_filetype == PATCH_GEOMETRY_BOUNDARY){
         glLineWidth(geomboundary_linewidth);
       }
@@ -4233,7 +4233,7 @@ void DrawGeomData(int flag, slicedata *sd, patchdata *patchi, int geom_type){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       if(patchi->patch_filetype == PATCH_GEOMETRY_BOUNDARY){
         glPointSize(geomboundary_pointsize);
       }
@@ -4358,7 +4358,7 @@ void DrawGeomValues(slicedata *sd, patchdata *patchi, int geom_type){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       for(j = 0; j<nvals; j++){
         tridata *trianglei;
         vertdata *verti;
@@ -4475,7 +4475,7 @@ void DrawCGeom(int flag, geomdata *cgeom){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       glBegin(GL_TRIANGLES);
       for(j = 0; j<ntris; j++){
         float *color, *xyzptr[3];
@@ -4548,7 +4548,7 @@ void DrawCGeom(int flag, geomdata *cgeom){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       glTranslatef(0.0, 0.0, geom_dz_offset);
       glLineWidth(geom_linewidth);
       glBegin(GL_LINES);
@@ -4626,7 +4626,7 @@ void DrawCGeom(int flag, geomdata *cgeom){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       glLineWidth(geom_linewidth);
       glBegin(GL_LINES);
       for(j = 0; j<geomi->ncface_normals; j++){
@@ -4658,7 +4658,7 @@ void DrawCGeom(int flag, geomdata *cgeom){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       glTranslatef(0.0, 0.0, geom_dz_offset);
       glPointSize(geom_pointsize);
       glBegin(GL_POINTS);

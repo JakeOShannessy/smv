@@ -1602,7 +1602,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
 
   nbb = meshi->nbptrs;
   if(nbb==0)nbb=1;
-  updatefaces=1;
+  sextras.updatefaces=1;
   *errorcode=0;
   if(load_flag != RELOAD){
 #ifdef pp_BOUNDMEM
@@ -2549,7 +2549,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
   for(n=0;n<MAXRGB;n++){
     colorlabelpatch[n]=NULL;
   }
-  for(n=0;n<nrgb;n++){
+  for(n=0;n<sextras.nrgb;n++){
     if(NewResizeMemory(colorlabelpatch[n],11)==0){
       *errorcode=1;
       if(loadpatchbysteps!=COMPRESSED_ALLFRAMES){
@@ -2585,13 +2585,13 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
     }
     GetBoundaryColors3(patchi, meshi->patchval, patchstart, npatchvals, meshi->cpatchval,
                        &glui_patchmin, &glui_patchmax,
-                       nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
+                       sextras.nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
                        &patchi->extreme_min, &patchi->extreme_max, 0);
     break;
   case COMPRESSED_ALLFRAMES:
     GetBoundaryLabels(
       glui_patchmin, glui_patchmax,
-      colorlabelpatch,colorvaluespatch,boundarylevels256,nrgb);
+      colorlabelpatch,colorvaluespatch,boundarylevels256,sextras.nrgb);
     break;
   default:
     assert(FFALSE);

@@ -68,14 +68,14 @@ void InitMisc(void){
   NewMemory((void **)&plotiso, MAXPLOT3DVARS*sizeof(int));
 
   if(colorbar_vals==NULL){
-    NewMemory((void **)&colorbar_vals, nrgb*sizeof(float));
+    NewMemory((void **)&colorbar_vals, sextras.nrgb*sizeof(float));
   }
   if(colorbar_exponents==NULL){
-    NewMemory((void **)&colorbar_exponents, nrgb*sizeof(int));
+    NewMemory((void **)&colorbar_exponents, sextras.nrgb*sizeof(int));
   }
   if(colorbar_labels==NULL){
-    NewMemory((void **)&colorbar_labels, nrgb*sizeof(char *));
-    for(i = 0; i<nrgb; i++){
+    NewMemory((void **)&colorbar_labels, sextras.nrgb*sizeof(char *));
+    for(i = 0; i<sextras.nrgb; i++){
       NewMemory((void **)&colorbar_labels[i], 256);
     }
   }
@@ -89,7 +89,7 @@ void InitMisc(void){
     }
   }
   for(i=0;i<MAXPLOT3DVARS;i++){
-    plotiso[i]=nrgb/2;
+    plotiso[i]=sextras.nrgb/2;
   }
 
   for(i=0;i<16;i++){
@@ -103,9 +103,9 @@ void InitMisc(void){
     meshdata *meshi;
 
     meshi=meshescoll.meshinfo+i;
-    InitContour(meshi->plot3dcontour1,rgb_plot3d_contour,nrgb);
-    InitContour(meshi->plot3dcontour2,rgb_plot3d_contour,nrgb);
-    InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,nrgb);
+    InitContour(meshi->plot3dcontour1,rgb_plot3d_contour,sextras.nrgb);
+    InitContour(meshi->plot3dcontour2,rgb_plot3d_contour,sextras.nrgb);
+    InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,sextras.nrgb);
   }
 
   for(i=0;i<meshescoll.nmeshes;i++){
@@ -118,7 +118,7 @@ void InitMisc(void){
 
   /* initialize box sizes, lighting parameters */
 
-  xyzbox = MAX(MAX(xbar,ybar),zbar);
+  xyzbox = MAX(MAX(sextras.xbar,sextras.ybar),sextras.zbar);
 
   InitDefaultCameras();
 
@@ -537,21 +537,21 @@ void SetupGlut(int argc, char **argv){
 
   NewMemory((void **)&rgbptr,MAXRGB*sizeof(float *));
   for(i=0;i<MAXRGB;i++){
-    rgbptr[i]=&rgb[i][0];
+    rgbptr[i]=&sextras.rgb[i][0];
   }
   NewMemory((void **)&rgb_plot3d_contour,MAXRGB*sizeof(float *));
-  for(i=0;i<nrgb-2;i++){
+  for(i=0;i<sextras.nrgb-2;i++){
     int ii;
     float factor;
 
-    factor=256.0/(float)(nrgb-2);
+    factor=256.0/(float)(sextras.nrgb-2);
 
     ii = factor*((float)i+0.5);
     if(ii>255)ii=255;
     rgb_plot3d_contour[i]=&rgb_full[ii][0];
   }
-  rgb_plot3d_contour[nrgb-2]=&rgb_full[0][0];
-  rgb_plot3d_contour[nrgb-1]=&rgb_full[255][0];
+  rgb_plot3d_contour[sextras.nrgb-2]=&rgb_full[0][0];
+  rgb_plot3d_contour[sextras.nrgb-1]=&rgb_full[255][0];
 }
 
 /* ------------------ GetOpenGLVersion ------------------------ */
@@ -1528,7 +1528,7 @@ void InitVars(void){
   blocklocation=BLOCKlocation_grid;
   render_window_size=RenderWindow;
   RenderMenu(render_window_size);
-  solidlinewidth=linewidth;
+  solidlinewidth=sextras.linewidth;
   setbwSAVE=setbw;
 
   glui_backgroundbasecolor[0] = 255 * backgroundbasecolor[0];

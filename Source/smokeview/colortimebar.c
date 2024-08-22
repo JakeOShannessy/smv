@@ -109,7 +109,7 @@ void DrawTimebar(float xleft, float xright, float ybot, float ytop){
   if(xright<=xleft)return;
   DISABLE_LIGHTING;
 
-  glLineWidth(linewidth);
+  glLineWidth(sextras.linewidth);
   glBegin(GL_LINE_LOOP);
   glColor4fv(timebarcolor);
   glVertex2f(xleft,ybot);
@@ -270,7 +270,7 @@ void DrawColorbarPathRGB(void){
     if(fontindex==SCALED_FONT)ScaleFont3D();
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-    glTranslatef(-xbar0,-ybar0,-zbar0);
+    glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
     int skip = 1;
     if(cbi->nnodes > 16)skip = cbi->nnodes / 16;
     for(i=0;i<cbi->nnodes;i+=skip){
@@ -467,7 +467,7 @@ void DrawColorbarPathCIELab(void){
   if(fontindex == SCALED_FONT)ScaleFont3D();
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
+  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
   int skip = 1;
   if(cbi->nnodes > 16)skip = cbi->nnodes / 16;
   for(i = 0;i < cbi->nnodes;i+=skip){
@@ -925,17 +925,17 @@ void DrawHorizontalColorbars(void){
     int i;
     float right_hat;
 
-    right_hat = hcolorbar_right_pos*(float)(nrgb - 3) / (float)(nrgb - 2)+hcolorbar_left_pos/(float)(nrgb-2);
+    right_hat = hcolorbar_right_pos*(float)(sextras.nrgb - 3) / (float)(sextras.nrgb - 2)+hcolorbar_left_pos/(float)(sextras.nrgb-2);
 
     glBegin(GL_QUADS);
-    for(i = 0; i < nrgb - 2; i++){
+    for(i = 0; i < sextras.nrgb - 2; i++){
       float *rgb_plot3d_local;
       float xleft, xright;
 
       rgb_plot3d_local = rgb_plot3d_contour[i];
 
-      xleft = MIX2(i, nrgb - 3, right_hat, hcolorbar_left_pos);
-      xright = MIX2(i + 1, nrgb - 3, right_hat, hcolorbar_left_pos);
+      xleft = MIX2(i, sextras.nrgb - 3, right_hat, hcolorbar_left_pos);
+      xright = MIX2(i + 1, sextras.nrgb - 3, right_hat, hcolorbar_left_pos);
 
       if(rgb_plot3d_local[3] != 0.0){
         glColor4fv(rgb_plot3d_local);
@@ -951,11 +951,11 @@ void DrawHorizontalColorbars(void){
       float *rgb_plot3d_local;
       float xleft, xright;
 
-      rgb_plot3d_local = rgb_plot3d_contour[nrgb - 2];
+      rgb_plot3d_local = rgb_plot3d_contour[sextras.nrgb - 2];
       barmid = (hcolorbar_down_pos + hcolorbar_top_pos) / 2.0;
       i = -1;
-      xright = MIX2(i + 0.5, nrgb - 3, hcolorbar_right_pos, hcolorbar_left_pos);
-      xleft  = MIX2(i + 1, nrgb - 3, hcolorbar_right_pos, hcolorbar_left_pos);
+      xright = MIX2(i + 0.5, sextras.nrgb - 3, hcolorbar_right_pos, hcolorbar_left_pos);
+      xleft  = MIX2(i + 1, sextras.nrgb - 3, hcolorbar_right_pos, hcolorbar_left_pos);
 
       if(have_extreme_mindata == 1 || have_extreme_maxdata == 1)glEnable(GL_POLYGON_SMOOTH);
 
@@ -969,11 +969,11 @@ void DrawHorizontalColorbars(void){
         glEnd();
       }
 
-      i = nrgb - 2;
-      xleft = MIX2(i, nrgb - 3, hcolorbar_right_pos, hcolorbar_left_pos);
-      xright = MIX2(i + 0.5, nrgb - 3, hcolorbar_right_pos, hcolorbar_left_pos);
+      i = sextras.nrgb - 2;
+      xleft = MIX2(i, sextras.nrgb - 3, hcolorbar_right_pos, hcolorbar_left_pos);
+      xright = MIX2(i + 0.5, sextras.nrgb - 3, hcolorbar_right_pos, hcolorbar_left_pos);
 
-      rgb_plot3d_local = rgb_plot3d_contour[nrgb - 1];
+      rgb_plot3d_local = rgb_plot3d_contour[sextras.nrgb - 1];
       if(show_extreme_maxdata == 1 && have_extreme_maxdata == 1 && rgb_plot3d_local[3] != 0.0){
         glBegin(GL_TRIANGLES);
         glColor4fv(rgb_plot3d_local);
@@ -1048,16 +1048,16 @@ void DrawVerticalColorbars(void){
     if(showplot3d==1&&contour_type==STEPPED_CONTOURS){
       float top_hat;
 
-      top_hat = vcolorbar_top_pos*(float)(nrgb - 3) / (float)(nrgb - 2)+vcolorbar_down_pos/(float)(nrgb-2);
+      top_hat = vcolorbar_top_pos*(float)(sextras.nrgb - 3) / (float)(sextras.nrgb - 2)+vcolorbar_down_pos/(float)(sextras.nrgb-2);
 
       glBegin(GL_QUADS);
-      for(i = 0; i < nrgb-2; i++){
+      for(i = 0; i < sextras.nrgb-2; i++){
         float *rgb_plot3d_local;
         float ybot, ytop;
 
         rgb_plot3d_local = rgb_plot3d_contour[i];
-        ybot = MIX2(  i,nrgb-3,top_hat,vcolorbar_down_pos);
-        ytop = MIX2(i+1,nrgb-3,top_hat,vcolorbar_down_pos);
+        ybot = MIX2(  i,sextras.nrgb-3,top_hat,vcolorbar_down_pos);
+        ytop = MIX2(i+1,sextras.nrgb-3,top_hat,vcolorbar_down_pos);
 
         if(rgb_plot3d_local[3]!=0.0){
           glColor4fv(rgb_plot3d_local);
@@ -1074,11 +1074,11 @@ void DrawVerticalColorbars(void){
         float *rgb_plot3d_local;
         float ybot, ytop;
 
-        rgb_plot3d_local = rgb_plot3d_contour[nrgb-2];
+        rgb_plot3d_local = rgb_plot3d_contour[sextras.nrgb-2];
         barmid = (vcolorbar_left_pos+vcolorbar_right_pos)/2.0;
         i=-1;
-        ytop = MIX2(i+0.5,nrgb-3,vcolorbar_top_pos,vcolorbar_down_pos);
-        ybot = MIX2(i+1,nrgb-3,vcolorbar_top_pos,vcolorbar_down_pos);
+        ytop = MIX2(i+0.5,sextras.nrgb-3,vcolorbar_top_pos,vcolorbar_down_pos);
+        ybot = MIX2(i+1,sextras.nrgb-3,vcolorbar_top_pos,vcolorbar_down_pos);
 
         if(have_extreme_mindata==1||have_extreme_maxdata==1)glEnable(GL_POLYGON_SMOOTH);
 
@@ -1092,11 +1092,11 @@ void DrawVerticalColorbars(void){
           glEnd();
         }
 
-        i=nrgb-2;
-        ybot = MIX2(i,nrgb-3,vcolorbar_top_pos,vcolorbar_down_pos);
-        ytop = MIX2(i+0.5,nrgb-3,vcolorbar_top_pos,vcolorbar_down_pos);
+        i=sextras.nrgb-2;
+        ybot = MIX2(i,sextras.nrgb-3,vcolorbar_top_pos,vcolorbar_down_pos);
+        ytop = MIX2(i+0.5,sextras.nrgb-3,vcolorbar_top_pos,vcolorbar_down_pos);
 
-        rgb_plot3d_local = rgb_plot3d_contour[nrgb-1];
+        rgb_plot3d_local = rgb_plot3d_contour[sextras.nrgb-1];
         if(show_extreme_maxdata==1&&have_extreme_maxdata==1&&rgb_plot3d_local[3]!=0.0){
           glBegin(GL_TRIANGLES);
           glColor4fv(rgb_plot3d_local);
@@ -1388,20 +1388,20 @@ void DrawHorizontalColorbarRegLabels(void){
       ScaleFloat2String(tttval, isocolorlabel, isofactor);
       isocolorlabel_ptr = isocolorlabel;
       horiz_position = MIX2(global_colorbar_index, 255, hcolorbar_right_pos, hcolorbar_left_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(horiz_position, 0.0, red_color, isocolorlabel_ptr);
     }
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float horiz_position;
       char isocolorlabel[256];
       char *isocolorlabel_ptr = NULL;
       float val;
 
-      horiz_position = MIX2(i, nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
+      horiz_position = MIX2(i, sextras.nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
       if(iposition == i)continue;
       isocolorlabel_ptr = &(sb->colorlabels[i + 1][0]);
 
-      val = tttmin + i*isorange / (nrgb - 2);
+      val = tttmin + i*isorange / (sextras.nrgb - 2);
       ScaleFloat2String(val, isocolorlabel, isofactor);
       isocolorlabel_ptr = isocolorlabel;
       OutputBarText(horiz_position, 0.0, foreground_color, isocolorlabel_ptr);
@@ -1438,15 +1438,15 @@ void DrawHorizontalColorbarRegLabels(void){
         partcolorlabel_ptr = partcolorlabel;
       }
       horiz_position = MIX2(global_colorbar_index, 255, hcolorbar_right_pos, hcolorbar_left_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(horiz_position, 0.0, red_color, partcolorlabel_ptr);
     }
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float horiz_position;
       char partcolorlabel[256];
       char *partcolorlabel_ptr = NULL;
 
-      horiz_position = MIX2(i, nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
+      horiz_position = MIX2(i, sextras.nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
       if(iposition == i)continue;
       if(global_prop_index>= 0 &&global_prop_index < npart5prop){
         float val;
@@ -1467,7 +1467,7 @@ void DrawHorizontalColorbarRegLabels(void){
         float val;
 
         partcolorlabel_ptr = partcolorlabel;
-        val = tttmin + i*partrange / (nrgb - 2);
+        val = tttmin + i*partrange / (sextras.nrgb - 2);
         val = ScaleFloat2Float(val, partfactor);
         Float2String(partcolorlabel_ptr, val, ncolorlabel_digits, force_fixedpoint);
       }
@@ -1503,22 +1503,22 @@ void DrawHorizontalColorbarRegLabels(void){
         slicecolorlabel_ptr = slicecolorlabel;
       }
       horiz_position = MIX2(global_colorbar_index, 255, hcolorbar_right_pos, hcolorbar_left_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(horiz_position, 0.0, red_color, slicecolorlabel_ptr);
     }
     {
-      for(i = 0; i < nrgb - 1; i++){
+      for(i = 0; i < sextras.nrgb - 1; i++){
         float horiz_position;
         char slicecolorlabel[256];
         char *slicecolorlabel_ptr = NULL;
 
-        horiz_position = MIX2(i, nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
+        horiz_position = MIX2(i, sextras.nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
         if(iposition == i)continue;
         slicecolorlabel_ptr = &(sb->colorlabels[i + 1][0]);
         if(sliceflag == 1){
           float val;
 
-          val = tttmin + i*slicerange / (nrgb - 2);
+          val = tttmin + i*slicerange / (sextras.nrgb - 2);
           ScaleFloat2String(val, slicecolorlabel, slicefactor);
           slicecolorlabel_ptr = slicecolorlabel;
           Float2String(slicecolorlabel_ptr, val, ncolorlabel_digits, force_fixedpoint);
@@ -1557,20 +1557,20 @@ void DrawHorizontalColorbarRegLabels(void){
         boundary_colorlabel_ptr = boundary_colorlabel;
       }
       horiz_position = MIX2(global_colorbar_index, 255, hcolorbar_right_pos, hcolorbar_left_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(0.0,horiz_position, red_color, boundary_colorlabel_ptr);
     }
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       char boundary_colorlabel[256];
       char *boundary_colorlabel_ptr = NULL;
       float horiz_position;
       float val;
 
-      horiz_position = MIX2(i, nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
+      horiz_position = MIX2(i, sextras.nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
 
       if(iposition == i)continue;
       if(patchflag == 1){
-        val = tttmin + i*patchrange / (nrgb - 2);
+        val = tttmin + i*patchrange / (sextras.nrgb - 2);
       }
       else{
         val = colorvaluespatch[i+1];
@@ -1606,21 +1606,21 @@ void DrawHorizontalColorbarRegLabels(void){
         zonecolorlabel_ptr = zonecolorlabel;
       }
       horiz_position = MIX2(global_colorbar_index, 255, hcolorbar_right_pos, hcolorbar_left_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(horiz_position, 0.0, red_color, zonecolorlabel_ptr);
     }
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float horiz_position;
       char zonecolorlabel[256];
       char *zonecolorlabel_ptr = NULL;
 
-      horiz_position = MIX2(i, nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
+      horiz_position = MIX2(i, sextras.nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
       if(iposition == i)continue;
-      zonecolorlabel_ptr = &colorlabelzone[i + 1][0];
+      zonecolorlabel_ptr = &sextras.colorlabelzone[i + 1][0];
       if(zoneflag == 1){
         float val;
 
-        val = tttmin + (i - 1)*zonerange / (nrgb - 2);
+        val = tttmin + (i - 1)*zonerange / (sextras.nrgb - 2);
         ScaleFloat2String(val, zonecolorlabel, zonefactor);
         zonecolorlabel_ptr = zonecolorlabel;
       }
@@ -1655,21 +1655,21 @@ void DrawHorizontalColorbarRegLabels(void){
         plot3dcolorlabel_ptr = plot3dcolorlabel;
       }
       horiz_position = MIX2(global_colorbar_index, 255, hcolorbar_right_pos, hcolorbar_left_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(horiz_position, 0.0, red_color, plot3dcolorlabel_ptr);
     }
     if(visiso == 0){
       float horiz_position;
 
-      for(i = 0; i < nrgb - 1; i++){
+      for(i = 0; i < sextras.nrgb - 1; i++){
         char plot3dcolorlabel[256];
         char *plot3dcolorlabel_ptr = NULL;
         float val;
 
-        horiz_position = MIX2(i, nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
+        horiz_position = MIX2(i, sextras.nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
         if(iposition == i)continue;
         if(plot3dflag == 1){
-          val = tttmin + i*plot3drange / (nrgb - 2);
+          val = tttmin + i*plot3drange / (sextras.nrgb - 2);
         }
         else{
           val = colorvaluesp3[plotn - 1][i];
@@ -1684,19 +1684,19 @@ void DrawHorizontalColorbarRegLabels(void){
       float horiz_position;
       float right_hat;
 
-      right_hat = hcolorbar_right_pos*(float)(nrgb - 3) / (float)(nrgb - 2)+hcolorbar_left_pos/(float)(nrgb-2);
-      for(i = 0; i < nrgb - 2; i++){
+      right_hat = hcolorbar_right_pos*(float)(sextras.nrgb - 3) / (float)(sextras.nrgb - 2)+hcolorbar_left_pos/(float)(sextras.nrgb-2);
+      for(i = 0; i < sextras.nrgb - 2; i++){
         char plot3dcolorlabel[256];
         char *plot3dcolorlabel_ptr = NULL;
 
-        horiz_position = MIX2(i, nrgb - 2, right_hat, hcolorbar_left_pos);
+        horiz_position = MIX2(i, sextras.nrgb - 2, right_hat, hcolorbar_left_pos);
 
         if(iposition == i)continue;
         plot3dcolorlabel_ptr = &colorlabeliso[plotn - 1][i][0];
         if(plot3dflag == 1){
           float val;
 
-          val = tttmin + (i - 1)*plot3drange / (nrgb - 2);
+          val = tttmin + (i - 1)*plot3drange / (sextras.nrgb - 2);
           ScaleFloat2String(val, plot3dcolorlabel, plot3dfactor);
           plot3dcolorlabel_ptr = plot3dcolorlabel;
         }
@@ -1813,20 +1813,20 @@ void DrawVerticalColorbarRegLabels(void){
       ScaleFloat2String(tttval, isocolorlabel, isofactor);
       isocolorlabel_ptr = isocolorlabel;
       vert_position = MIX2(global_colorbar_index, 255, vcolorbar_top_pos, vcolorbar_down_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(0.0, vert_position, red_color, isocolorlabel_ptr);
     }
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float vert_position;
       char isocolorlabel[256];
       char *isocolorlabel_ptr = NULL;
       float val;
 
-      vert_position = MIX2(i, nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
+      vert_position = MIX2(i, sextras.nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
       if(iposition == i)continue;
       isocolorlabel_ptr = &(sb->colorlabels[i + 1][0]);
 
-      val = tttmin + i*isorange / (nrgb - 2);
+      val = tttmin + i*isorange / (sextras.nrgb - 2);
       ScaleFloat2String(val, isocolorlabel, isofactor);
       isocolorlabel_ptr = isocolorlabel;
       OutputBarText(0.0, vert_position, foreground_color, isocolorlabel_ptr);
@@ -1889,10 +1889,10 @@ void DrawVerticalColorbarRegLabels(void){
         partcolorlabel_ptr = partcolorlabel;
       }
       vert_position = MIX2(global_colorbar_index, 255, vcolorbar_top_pos, vcolorbar_down_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(0.0, vert_position, red_color, partcolorlabel_ptr);
     }
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float val;
 
       if(iposition == i)continue;
@@ -1900,12 +1900,12 @@ void DrawVerticalColorbarRegLabels(void){
       val = ScaleFloat2Float(val, partfactor);
       colorbar_vals[i] = val;
     }
-    Floats2Strings(colorbar_labels, colorbar_vals, nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
     max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float vert_position;
 
-      vert_position = MIX2(i, nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
+      vert_position = MIX2(i, sextras.nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
       if(iposition == i)continue;
       OutputBarText(0.0, vert_position, foreground_color, colorbar_labels[i]);
       max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(colorbar_labels[i]));
@@ -2007,7 +2007,7 @@ void DrawVerticalColorbarRegLabels(void){
         slicecolorlabel_ptr = slicecolorlabel;
       }
       vert_position = MIX2(shifted_colorbar_index, 255, vcolorbar_top_pos, vcolorbar_down_pos);
-      iposition = MIX2(shifted_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(shifted_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(0.0, vert_position, red_color, slicecolorlabel_ptr);
     }
     {
@@ -2026,18 +2026,18 @@ void DrawVerticalColorbarRegLabels(void){
         valmax = tttmax;
       }
       else{
-        valmax = sb->colorvalues[nrgb-1];
+        valmax = sb->colorvalues[sextras.nrgb-1];
       }
       valmax = ScaleFloat2Float(valmax, slicefactor);
       colorbar_max = MAX(ABS(valmax), ABS(valmin));
       colorbar_max = MAX(colorbar_max, colorbar_eps);
 
-      for(i = 0; i<nrgb-1; i++){
+      for(i = 0; i<sextras.nrgb-1; i++){
         float val;
 
         if(iposition==i)continue;
         if(sliceflag==1){
-          val = tttmin+i*slicerange/(nrgb-2);
+          val = tttmin+i*slicerange/(sextras.nrgb-2);
         }
         else{
           val = sb->colorvalues[i+1];
@@ -2048,12 +2048,12 @@ void DrawVerticalColorbarRegLabels(void){
         }
         colorbar_vals[i] = val;
       }
-      Floats2Strings(colorbar_labels, colorbar_vals, nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+      Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
       max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
-      for(i = 0; i < nrgb - 1; i++){
+      for(i = 0; i < sextras.nrgb - 1; i++){
         float vert_position;
 
-        vert_position = MIX2(i, nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
+        vert_position = MIX2(i, sextras.nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
         if(iposition == i)continue;
         OutputBarText(0.0, vert_position, foreground_color, colorbar_labels[i]);
         max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(colorbar_labels[i]));
@@ -2121,23 +2121,23 @@ void DrawVerticalColorbarRegLabels(void){
       Num2String(hvaclabel, tttval);
       hvac_colorlabel_ptr = &(hvaclabel[0]);
       vert_position = MIX2(global_colorbar_index, 255, vcolorbar_top_pos, vcolorbar_down_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(0.0, vert_position, red_color, hvac_colorlabel_ptr);
     }
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float val;
 
       if(iposition == i)continue;
-      val = tttmin + i * hvacrange / (nrgb - 2);
+      val = tttmin + i * hvacrange / (sextras.nrgb - 2);
       colorbar_vals[i] = val;
       GetMantissaExponent(ABS(val), colorbar_exponents + i);
     }
-    Floats2Strings(colorbar_labels, colorbar_vals, nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
     max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float vert_position;
 
-      vert_position = MIX2(i, nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
+      vert_position = MIX2(i, sextras.nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
 
       if(iposition == i)continue;
       OutputBarText(0.0, vert_position, foreground_color, colorbar_labels[i]);
@@ -2170,23 +2170,23 @@ void DrawVerticalColorbarRegLabels(void){
       Num2String(hvaclabel, tttval);
       hvac_colorlabel_ptr = &(hvaclabel[0]);
       vert_position = MIX2(global_colorbar_index, 255, vcolorbar_top_pos, vcolorbar_down_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(0.0, vert_position, red_color, hvac_colorlabel_ptr);
     }
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float val;
 
       if(iposition == i)continue;
-      val = tttmin + i * hvacrange / (nrgb - 2);
+      val = tttmin + i * hvacrange / (sextras.nrgb - 2);
       colorbar_vals[i] = val;
       GetMantissaExponent(ABS(val), colorbar_exponents + i);
     }
-    Floats2Strings(colorbar_labels, colorbar_vals, nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
     max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float vert_position;
 
-      vert_position = MIX2(i, nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
+      vert_position = MIX2(i, sextras.nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
 
       if(iposition == i)continue;
       OutputBarText(0.0, vert_position, foreground_color, colorbar_labels[i]);
@@ -2284,15 +2284,15 @@ void DrawVerticalColorbarRegLabels(void){
         boundary_colorlabel_ptr = boundary_colorlabel;
       }
       vert_position = MIX2(global_colorbar_index, 255, vcolorbar_top_pos, vcolorbar_down_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(0.0, vert_position, red_color, boundary_colorlabel_ptr);
     }
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float val;
 
       if(iposition == i)continue;
       if(patchflag==1){
-        val = tttmin+i*patchrange/(nrgb-2);
+        val = tttmin+i*patchrange/(sextras.nrgb-2);
       }
       else{
         val = colorvaluespatch[i+1];
@@ -2301,12 +2301,12 @@ void DrawVerticalColorbarRegLabels(void){
       colorbar_vals[i] = val;
       GetMantissaExponent(ABS(val), colorbar_exponents + i);
     }
-    Floats2Strings(colorbar_labels, colorbar_vals, nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
     max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float vert_position;
 
-      vert_position = MIX2(i, nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
+      vert_position = MIX2(i, sextras.nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
 
       if(iposition == i)continue;
       OutputBarText(0.0, vert_position, foreground_color, colorbar_labels[i]);
@@ -2384,20 +2384,20 @@ void DrawVerticalColorbarRegLabels(void){
         zonecolorlabel_ptr = zonecolorlabel;
       }
       vert_position = MIX2(global_colorbar_index, 255, vcolorbar_top_pos, vcolorbar_down_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(0.0, vert_position, red_color, zonecolorlabel_ptr);
       max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(zonecolorlabel_ptr));
     }
-    for(i = 0; i < nrgb - 1; i++){
+    for(i = 0; i < sextras.nrgb - 1; i++){
       float vert_position;
       char zonecolorlabel[256];
       char *zonecolorlabel_ptr = NULL;
       float val;
 
-      vert_position = MIX2(i, nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
+      vert_position = MIX2(i, sextras.nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
       if(iposition == i)continue;
       if(zoneflag == 1){
-        val = tttmin + i*zonerange / (nrgb - 2);
+        val = tttmin + i*zonerange / (sextras.nrgb - 2);
       }
       else{
         val = colorvalueszone[i+1];
@@ -2479,16 +2479,16 @@ void DrawVerticalColorbarRegLabels(void){
         plot3dcolorlabel_ptr = plot3dcolorlabel;
       }
       vert_position = MIX2(global_colorbar_index, 255, vcolorbar_top_pos, vcolorbar_down_pos);
-      iposition = MIX2(global_colorbar_index, 255, nrgb - 1, 0);
+      iposition = MIX2(global_colorbar_index, 255, sextras.nrgb - 1, 0);
       OutputBarText(0.0, vert_position, red_color, plot3dcolorlabel_ptr);
     }
     if(visiso == 0){
-      for(i = 0; i < nrgb - 1; i++){
+      for(i = 0; i < sextras.nrgb - 1; i++){
         float val;
 
         if(iposition == i)continue;
         if(plot3dflag == 1){
-          val = tttmin + i*plot3drange / (nrgb - 2);
+          val = tttmin + i*plot3drange / (sextras.nrgb - 2);
         }
         else{
           val = colorvaluesp3[plotn - 1][i];
@@ -2497,12 +2497,12 @@ void DrawVerticalColorbarRegLabels(void){
         colorbar_vals[i] = val;
         GetMantissaExponent(ABS(val), colorbar_exponents + i);
       }
-      Floats2Strings(colorbar_labels, colorbar_vals, nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+      Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
       max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
-      for(i = 0; i < nrgb - 1; i++){
+      for(i = 0; i < sextras.nrgb - 1; i++){
         float vert_position;
 
-        vert_position = MIX2(i, nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
+        vert_position = MIX2(i, sextras.nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
 
         if(iposition == i)continue;
         OutputBarText(0.0, vert_position, foreground_color, colorbar_labels[i]);
@@ -2512,16 +2512,16 @@ void DrawVerticalColorbarRegLabels(void){
     else{
       float vert_position;
 
-      for(i = 0; i < nrgb - 2; i++){
+      for(i = 0; i < sextras.nrgb - 2; i++){
         float val;
 
-        val = tttmin + (float)(i +0.5)*plot3drange / (nrgb - 2);
+        val = tttmin + (float)(i +0.5)*plot3drange / (sextras.nrgb - 2);
         colorbar_vals[i] = val;
       }
-      Floats2Strings(colorbar_labels, colorbar_vals, nrgb-2, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+      Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-2, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
       max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
-      for(i = 0; i < nrgb - 2; i++){
-        vert_position = MIX2(i+0.5, nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
+      for(i = 0; i < sextras.nrgb - 2; i++){
+        vert_position = MIX2(i+0.5, sextras.nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);
         if(iposition == i)continue;
         if(isolevelindex == i || isolevelindex2 == i){
           OutputBarText(0.0, vert_position, red_color, colorbar_labels[i]);

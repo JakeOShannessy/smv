@@ -3457,16 +3457,16 @@ void UpdateIsoControls(void){
 /* ------------------ GLUISliceInObstMenu2Dialog ------------------------ */
 
 extern "C" void GLUISliceInObstMenu2Dialog(int var){
-  show_slice_in_obst = var;
-  if(show_slice_in_obst==GAS_AND_SOLID){
+  sextras.show_slice_in_obst = var;
+  if(sextras.show_slice_in_obst==GAS_AND_SOLID){
     show_slice_in_gas   = 1;
     show_slice_in_solid = 1;
   }
-  else if(show_slice_in_obst==ONLY_IN_GAS){
+  else if(sextras.show_slice_in_obst==ONLY_IN_GAS){
     show_slice_in_gas   = 1;
     show_slice_in_solid = 0;
   }
-  else if(show_slice_in_obst==ONLY_IN_SOLID){
+  else if(sextras.show_slice_in_obst==ONLY_IN_SOLID){
     show_slice_in_gas   = 0;
     show_slice_in_solid = 1;
   }
@@ -3483,16 +3483,16 @@ extern "C" void GLUISliceInObstMenu2Dialog(int var){
 
 void SliceInObstDialog2Menu(void){
   if(show_slice_shaded[IN_GAS_GLUI] == 1 && show_slice_shaded[IN_SOLID_GLUI] == 1){
-    show_slice_in_obst = GAS_AND_SOLID;
+    sextras.show_slice_in_obst = GAS_AND_SOLID;
   }
   else if(show_slice_shaded[IN_GAS_GLUI] == 1 && show_slice_shaded[IN_SOLID_GLUI] == 0){
-    show_slice_in_obst = ONLY_IN_GAS;
+    sextras.show_slice_in_obst = ONLY_IN_GAS;
   }
   else if(show_slice_shaded[IN_GAS_GLUI] == 0 && show_slice_shaded[IN_SOLID_GLUI] == 1){
-    show_slice_in_obst = ONLY_IN_SOLID;
+    sextras.show_slice_in_obst = ONLY_IN_SOLID;
   }
   else{
-    show_slice_in_obst = NEITHER_GAS_NOR_SOLID;
+    sextras.show_slice_in_obst = NEITHER_GAS_NOR_SOLID;
   }
   updatemenu = 1;
 }
@@ -5430,15 +5430,15 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
 
     if(sextras.ngeom_data > 0)glui_bounds->add_column_to_panel(ROLLOUT_slice_settings, false);
 
-    if(show_slice_in_obst==ONLY_IN_GAS){
+    if(sextras.show_slice_in_obst==ONLY_IN_GAS){
       show_slice_in_gas   = 1;
       show_slice_in_solid = 0;
     }
-    else if(show_slice_in_obst==GAS_AND_SOLID){
+    else if(sextras.show_slice_in_obst==GAS_AND_SOLID){
       show_slice_in_gas   = 1;
       show_slice_in_solid = 1;
     }
-    else if(show_slice_in_obst==ONLY_IN_SOLID){
+    else if(sextras.show_slice_in_obst==ONLY_IN_SOLID){
       show_slice_in_gas   = 0;
       show_slice_in_solid = 1;
     }
@@ -6579,13 +6579,13 @@ extern "C" void GLUISliceBoundCB(int var){
       update_vectorskip = 1;
       break;
     case ZONEVALMINMAX:
-      GetZoneColors(zonetu, nzonetotal, izonetu, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-      if(have_zonefl==1)GetZoneColors(zonefl, nzonetotal, izonefl, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-      if(have_zonelw==1)GetZoneColors(zonelw, nzonetotal, izonelw, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-      if(have_zoneuw==1)GetZoneColors(zoneuw, nzonetotal, izoneuw, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-      if(have_zonecl==1)GetZoneColors(zonecl, nzonetotal, izonecl, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-      if(have_target_data==1)GetZoneColors(zonetargets, nzonetotal_targets, izonetargets, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
+      GetZoneColors(zonetu, nzonetotal, izonetu, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+      if(have_zonefl==1)GetZoneColors(zonefl, nzonetotal, izonefl, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+      if(have_zonelw==1)GetZoneColors(zonelw, nzonetotal, izonelw, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+      if(have_zoneuw==1)GetZoneColors(zoneuw, nzonetotal, izoneuw, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+      if(have_zonecl==1)GetZoneColors(zonecl, nzonetotal, izonecl, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+      if(have_target_data==1)GetZoneColors(zonetargets, nzonetotal_targets, izonetargets, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
       zoneusermin=zonemin;
       zoneusermax=zonemax;
       break;
@@ -6604,8 +6604,8 @@ extern "C" void GLUISliceBoundCB(int var){
       else{
         EDIT_zone_max->set_float_val(zoneglobalmax);
       }
-      GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
+      GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
       break;
     case COLORBAR_LIST2:
       int list_index;

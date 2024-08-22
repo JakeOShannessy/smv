@@ -424,7 +424,7 @@ void UpdatePlotxyzAll(void){
     int ival;
 
     meshi = meshescoll.meshinfo+i;
-    ival = ClosestNodeIndex(xbar/2.0, meshi->xplt, meshi->ibar+1);
+    ival = ClosestNodeIndex(sextras.xbar/2.0, meshi->xplt, meshi->ibar+1);
     if(ival<0)continue;
     iplotx_all = ival;
   }
@@ -433,7 +433,7 @@ void UpdatePlotxyzAll(void){
     int ival;
 
     meshi = meshescoll.meshinfo+i;
-    ival = ClosestNodeIndex(ybar/2.0, meshi->yplt, meshi->jbar+1);
+    ival = ClosestNodeIndex(sextras.ybar/2.0, meshi->yplt, meshi->jbar+1);
     if(ival<0)continue;
     iploty_all = ival;
   }
@@ -442,7 +442,7 @@ void UpdatePlotxyzAll(void){
     int ival;
 
     meshi = meshescoll.meshinfo+i;
-    ival = ClosestNodeIndex(zbar/2.0, meshi->zplt, meshi->kbar+1);
+    ival = ClosestNodeIndex(sextras.zbar/2.0, meshi->zplt, meshi->kbar+1);
     if(ival<0)continue;
     iplotz_all = ival;
   }
@@ -1131,7 +1131,7 @@ int MakeIBlankCarve(void){
     if(n_embedded==0)continue;
 
     ib_embed=NULL;
-    if(use_iblank==1){
+    if(sextras.use_iblank==1){
       if(NewMemory((void **)&ib_embed,ijksize*sizeof(char))==0)return 1;
     }
     meshi->c_iblank_embed=ib_embed;
@@ -1213,7 +1213,7 @@ int MakeIBlankCarve(void){
 int MakeIBlank(void){
   int ig;
 
-  if(use_iblank==0)return 0;
+  if(sextras.use_iblank==0)return 0;
   for(ig=0;ig<meshescoll.nmeshes;ig++){
     meshdata *meshi;
     int nx, ny, nxy, ibarjbar;

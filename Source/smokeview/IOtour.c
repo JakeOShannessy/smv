@@ -870,16 +870,16 @@ void SetupCircularTourNodes(void){
   float dx, dy, dz, max_xyz;
   int i;
 
-  tour_circular_view[0]=(xbar0+xbarORIG)/2.0;
-  tour_circular_view[1]=(ybar0+ybarORIG)/2.0;
-  tour_circular_view[2]=(zbar0+zbarORIG)/2.0;
+  tour_circular_view[0]=(sextras.xbar0+xbarORIG)/2.0;
+  tour_circular_view[1]=(sextras.ybar0+ybarORIG)/2.0;
+  tour_circular_view[2]=(sextras.zbar0+zbarORIG)/2.0;
   tour_circular_center[0]=tour_circular_view[0];
   tour_circular_center[1]=tour_circular_view[1];
   tour_circular_center[2]=tour_circular_view[2];
 
-  dx = ABS(xbarORIG - xbar0)/2.0;
-  dy = ABS(ybarORIG - ybar0)/2.0;
-  dz = ABS(zbarORIG-zbar0)/2.0;
+  dx = ABS(xbarORIG - sextras.xbar0)/2.0;
+  dy = ABS(ybarORIG - sextras.ybar0)/2.0;
+  dz = ABS(zbarORIG-sextras.zbar0)/2.0;
   max_xyz=MAX(dx,dy);
   max_xyz=MAX(max_xyz,dz);
   tour_circular_radius = max_xyz+max_xyz/tan(20.0*DEG2RAD);
@@ -1053,9 +1053,9 @@ tourdata *AddTour(char *label){
   if(itour==-1){
     VEC3EQCONS(key_view,0.0);
 
-    key_xyz[0] = xbar0 - 1.0;
-    key_xyz[1] = ybar0 - 1.0;
-    key_xyz[2] = (zbar0 + zbarORIG)/2.0;
+    key_xyz[0] = sextras.xbar0 - 1.0;
+    key_xyz[1] = sextras.ybar0 - 1.0;
+    key_xyz[2] = (sextras.zbar0 + zbarORIG)/2.0;
     key_time = tourcoll.tour_tstart;
     thisframe=&touri->first_frame;
     addedframe = AddFrame(thisframe, key_time, 0.0, key_xyz, key_view);
@@ -1063,7 +1063,7 @@ tourdata *AddTour(char *label){
 
     key_xyz[0] = xbarORIG + 1.0;
     key_xyz[1] = ybarORIG + 1.0;
-    key_xyz[2] = (zbar0 + zbarORIG)/2.0;
+    key_xyz[2] = (sextras.zbar0 + zbarORIG)/2.0;
     key_time = tourcoll.tour_tstop;
     thisframe=addedframe;
     addedframe = AddFrame(thisframe, key_time, 0.0, key_xyz, key_view);

@@ -23,7 +23,7 @@ void DrawLights(float *position0, float *position1){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
+  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
   glLineWidth(10.0);
   glBegin(GL_LINES);
   glColor3f(0.0, 0.0, 0.0);
@@ -201,7 +201,7 @@ void ShowScene2(int mode){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       DrawBox(meshclip, box_red);
       glPopMatrix();
     }
@@ -295,7 +295,7 @@ void ShowScene2(int mode){
   if(show_parallax == 1){
     UNCLIP;
     AntiAliasLine(ON);
-    glLineWidth(linewidth);
+    glLineWidth(sextras.linewidth);
     glBegin(GL_LINES);
     glColor3fv(foregroundcolor);
     glVertex3f(0.75, 0.0, 0.25);

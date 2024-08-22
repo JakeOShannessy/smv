@@ -765,7 +765,7 @@ int Settime(float timeval) {
 /// @brief Show slices in blockages.
 /// @param setting Boolean
 void SetSliceInObst(int setting) {
-  show_slice_in_obst = setting;
+  sextras.show_slice_in_obst = setting;
   // UpdateSliceFilenum();
   // plotstate=GetPlotState(DYNAMIC_PLOTS);
   //
@@ -775,7 +775,7 @@ void SetSliceInObst(int setting) {
 
 /// @brief Check if slices are being shown in obstructions.
 /// @return
-int GetSliceInObst() { return show_slice_in_obst; }
+int GetSliceInObst() { return sextras.show_slice_in_obst; }
 
 /// @brief Set the colorbar to one named @p name
 /// @param name
@@ -943,7 +943,7 @@ void SurfacesHideAll() {
   visVents = 0;
   visOpenVents = 0;
   visDummyVents = 0;
-  visOtherVents = 0;
+  sextras.visOtherVents = 0;
   visCircularVents = VENT_HIDE;
 }
 
@@ -1177,11 +1177,11 @@ int BlockageOutlineColor(int setting) {
   switch(setting) {
   case 0:
     outline_color_flag = 0;
-    updatefaces = 1;
+    sextras.updatefaces = 1;
     break;
   case 1:
     outline_color_flag = 1;
-    updatefaces = 1;
+    sextras.updatefaces = 1;
     break;
   default:
     return 1;
@@ -2098,7 +2098,7 @@ float CameraGetElev() { return camera_current->az_elev[1]; }
 
 void MoveScene(int xm, int ym);
 int CameraZoomToFit() {
-  float offset = (zbar - ybar) / 2.0;
+  float offset = (sextras.zbar - sextras.ybar) / 2.0;
   camera_current->eye[1] += offset * 2;
   eye_xyz0[1] = camera_current->eye[1];
   in_external = 0;
@@ -2408,7 +2408,7 @@ int SetIsopointsize(float v) {
 } // ISOPOINTSIZE
 
 int SetLinewidth(float v) {
-  linewidth = v;
+  sextras.linewidth = v;
   return 0;
 } // LINEWIDTH
 
@@ -2492,7 +2492,7 @@ int SetVectorpointsize(float v) {
 } // VECTORPOINTSIZE
 
 int SetVentlinewidth(float v) {
-  ventlinewidth = v;
+  sextras.ventlinewidth = v;
   return 0;
 } // VENTLINEWIDTH
 
@@ -2860,7 +2860,7 @@ int SetShowopenvents(int a, int b) {
 } // SHOWOPENVENTS
 
 int SetShowothervents(int v) {
-  visOtherVents = v;
+  sextras.visOtherVents = v;
   return 0;
 } // SHOWOTHERVENTS
 
@@ -2871,7 +2871,7 @@ int SetShowsensors(int a, int b) {
 } // SHOWSENSORS
 
 int SetShowsliceinobst(int v) {
-  show_slice_in_obst = v;
+  sextras.show_slice_in_obst = v;
   return 0;
 } // SHOWSLICEINOBST
 

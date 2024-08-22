@@ -833,7 +833,7 @@ extern "C" void GLUISmoke3dCB(int var){
   float temp_min, temp_max;
 
   case FORCE_ALPHA_OPAQUE:
-    update_smoke_alphas = 1;
+    sextras.update_smoke_alphas = 1;
     updatemenu = 1;
     break;
   case USE_FIRE_ALPHA:
@@ -1295,7 +1295,7 @@ extern "C" void GLUISmoke3dCB(int var){
     IdleCB();
      break;
    case SMOKE_EXTINCT:
-     update_smoke_alphas = 1;
+     sextras.update_smoke_alphas = 1;
      glui_smoke3d_extinct = MAX(glui_smoke3d_extinct, 0.0);
      SPINNER_smoke3d_extinct->set_float_val(glui_smoke3d_extinct);
      SPINNER_smoke3d_extinct2->set_float_val(glui_smoke3d_extinct);

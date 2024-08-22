@@ -1216,7 +1216,7 @@ void GetSliceHists(slicedata *sd, int use_bounds, float valmin, float valmax){
         slice_weight0[n] = dx * dy * dz;
         if(sd->slice_filetype == SLICE_CELL_CENTER &&
           ((k == 0 && sd->nslicek != 1) || (j == 0 && sd->nslicej != 1) || (i == 0 && sd->nslicei != 1)))continue;
-        if(show_slice_in_obst == ONLY_IN_GAS){
+        if(sextras.show_slice_in_obst == ONLY_IN_GAS){
           if(sd->slice_filetype != SLICE_CELL_CENTER && iblank_node != NULL && iblank_node[IJKNODE(sd->is1 + i, sd->js1 + j, sd->ks1 + k)] == SOLID)continue;
           if(sd->slice_filetype == SLICE_CELL_CENTER && iblank_cell != NULL && iblank_cell[IJKCELL(sd->is1 + i - 1, sd->js1 + j - 1, sd->ks1 + k - 1)] == EMBED_YES)continue;
         }
@@ -1397,7 +1397,7 @@ void SetSliceLabels(float smin, float smax,
     if(pd!=NULL)sb->label = &(pd->label);
 
     *errorcode = 0;
-    GetColorbarLabels(smin, smax, nrgb, sb->colorlabels, sb->levels256);
+    GetColorbarLabels(smin, smax, sextras.nrgb, sb->colorlabels, sb->levels256);
   }
 }
 
@@ -1457,7 +1457,7 @@ void SetSliceColors(float smin, float smax, slicedata *sd, int flag, int *errorc
     patchgeom = sd->patchgeom;
     GetSliceColors(patchgeom->geom_vals, patchgeom->geom_nvals, patchgeom->geom_ivals,
       smin, smax,
-      nrgb_full, nrgb,
+      nrgb_full, sextras.nrgb,
       sb->colorlabels, sb->colorvalues, sb->levels256,
       &sd->extreme_min, &sd->extreme_max, flag
     );
@@ -1466,7 +1466,7 @@ void SetSliceColors(float smin, float smax, slicedata *sd, int flag, int *errorc
     if(sd->qslicedata == NULL)return;
     GetSliceColors(sd->qslicedata, sd->nslicetotal, sd->slicelevel,
       smin, smax,
-      nrgb_full, nrgb,
+      nrgb_full, sextras.nrgb,
       sb->colorlabels, sb->colorvalues, sb->levels256,
       &sd->extreme_min, &sd->extreme_max, flag
     );
@@ -1605,7 +1605,7 @@ void UpdateSliceMenuLabels(sliceparmdata *sp){
     char *cdir;
 
     mslicei = slicecoll.multisliceinfo;
-    sd = slicecoll.sliceinfo + sliceorderindex[0];
+    sd = slicecoll.sliceinfo + sextras.sliceorderindex[0];
     cdir = GetMSliceDir(mslicei);
     STRCPY(mslicei->menulabel, cdir);
     STRCPY(sd->menulabel,mslicei->menulabel);
@@ -1632,8 +1632,8 @@ void UpdateSliceMenuLabels(sliceparmdata *sp){
       STRCAT(sd->menulabel," (RLE)");
     }
     for(i=1;i<sp->nsliceinfo;i++){
-      sdold = slicecoll.sliceinfo + sliceorderindex[i - 1];
-      sd = slicecoll.sliceinfo + sliceorderindex[i];
+      sdold = slicecoll.sliceinfo + sextras.sliceorderindex[i - 1];
+      sd = slicecoll.sliceinfo + sextras.sliceorderindex[i];
       cdir = GetMSliceDir(mslicei);
       STRCPY(sd->menulabel, cdir);
       if(NewMultiSlice(sdold,sd)==1){
@@ -1912,7 +1912,7 @@ void UpdateVsliceMenuLabels(sliceparmdata *sp){
 
   if(sp->nvsliceinfo>0){
     mvslicei = slicecoll.multivsliceinfo;
-    vsd = slicecoll.vsliceinfo + vsliceorderindex[0];
+    vsd = slicecoll.vsliceinfo + sextras.vsliceorderindex[0];
     sd = slicecoll.sliceinfo + vsd->ival;
 
     STRCPY(mvslicei->menulabel,  sd->cdir);
@@ -1934,9 +1934,9 @@ void UpdateVsliceMenuLabels(sliceparmdata *sp){
       STRCAT(vsd->menulabel,sd->file);
     }
     for(i=1;i<sp->nvsliceinfo;i++){
-      vsdold = slicecoll.vsliceinfo + vsliceorderindex[i - 1];
+      vsdold = slicecoll.vsliceinfo + sextras.vsliceorderindex[i - 1];
       sdold = slicecoll.sliceinfo + vsdold->ival;
-      vsd = slicecoll.vsliceinfo + vsliceorderindex[i];
+      vsd = slicecoll.vsliceinfo + sextras.vsliceorderindex[i];
       sd = slicecoll.sliceinfo + vsd->ival;
       STRCPY(vsd->menulabel,sd->cdir);
       if(NewMultiSlice(sdold,sd)==1){
@@ -1959,7 +1959,7 @@ void UpdateVsliceMenuLabels(sliceparmdata *sp){
       }
     }
     for(i=0;i<sp->nvsliceinfo;i++){
-      vsd = slicecoll.vsliceinfo + vsliceorderindex[i];
+      vsd = slicecoll.vsliceinfo + sextras.vsliceorderindex[i];
       sd = slicecoll.sliceinfo + vsd->ival;
       STRCPY(vsd->menulabel2,sd->label.longlabel);
       STRCAT(vsd->menulabel2,", ");
@@ -2495,12 +2495,12 @@ void GetSliceParams(sliceparmdata *sp){
   INIT_PRINT_TIMER(timer_getsliceparams5);
   if(stream!=NULL)fclose(stream);
   if(sp->nsliceinfo>0){
-    FREEMEMORY(sliceorderindex);
-    NewMemory((void **)&sliceorderindex,sizeof(int)*sp->nsliceinfo);
+    FREEMEMORY(sextras.sliceorderindex);
+    NewMemory((void **)&sextras.sliceorderindex,sizeof(int)*sp->nsliceinfo);
     for(i=0;i<sp->nsliceinfo;i++){
-      sliceorderindex[i]=i;
+      sextras.sliceorderindex[i]=i;
     }
-    qsort( (int *)sliceorderindex, (size_t)sp->nsliceinfo, sizeof(int), SliceCompare );
+    qsort( (int *)sextras.sliceorderindex, (size_t)sp->nsliceinfo, sizeof(int), SliceCompare );
 
     for(i=0;i<sp->nmultisliceinfo;i++){
       multislicedata *mslicei;
@@ -2522,13 +2522,13 @@ void GetSliceParams(sliceparmdata *sp){
       mslicei->islices=NULL;
       NewMemory((void **)&mslicei->islices,sizeof(int)*sp->nsliceinfo);
       mslicei->nslices=1;
-      sd = slicecoll.sliceinfo + sliceorderindex[0];
-      mslicei->islices[0] = sliceorderindex[0];
+      sd = slicecoll.sliceinfo + sextras.sliceorderindex[0];
+      mslicei->islices[0] = sextras.sliceorderindex[0];
       for(i=1;i<sp->nsliceinfo;i++){
         slicedata *sdold;
 
-        sdold = slicecoll.sliceinfo + sliceorderindex[i - 1];
-        sd = slicecoll.sliceinfo + sliceorderindex[i];
+        sdold = slicecoll.sliceinfo + sextras.sliceorderindex[i - 1];
+        sd = slicecoll.sliceinfo + sextras.sliceorderindex[i];
         mslicei->autoload=0;
         if(NewMultiSlice(sdold,sd)==1){
           sp->nmultisliceinfo++;
@@ -2538,7 +2538,7 @@ void GetSliceParams(sliceparmdata *sp){
           NewMemory((void **)&mslicei->islices,sizeof(int)*sp->nsliceinfo);
         }
         mslicei->nslices++;
-        mslicei->islices[mslicei->nslices-1]=sliceorderindex[i];
+        mslicei->islices[mslicei->nslices-1]=sextras.sliceorderindex[i];
       }
     }
     have_multislice = 0;
@@ -2754,12 +2754,12 @@ void *UpdateVSlices(void *arg){
     vslicedata *vsd;
     multivslicedata *mvslicei;
 
-    FREEMEMORY(vsliceorderindex);
-    NewMemory((void **)&vsliceorderindex,sizeof(int)*sp->nvsliceinfo);
+    FREEMEMORY(sextras.vsliceorderindex);
+    NewMemory((void **)&sextras.vsliceorderindex,sizeof(int)*sp->nvsliceinfo);
     for(i=0;i<sp->nvsliceinfo;i++){
-      vsliceorderindex[i]=i;
+      sextras.vsliceorderindex[i]=i;
     }
-    qsort( (int *)vsliceorderindex, (size_t)sp->nvsliceinfo, sizeof(int), VSliceCompare );
+    qsort( (int *)sextras.vsliceorderindex, (size_t)sp->nvsliceinfo, sizeof(int), VSliceCompare );
 
     for(i=0;i<sp->nmultivsliceinfo;i++){
       mvslicei = slicecoll.multivsliceinfo + i;
@@ -2775,16 +2775,16 @@ void *UpdateVSlices(void *arg){
     mvslicei->ivslices=NULL;
     NewMemory((void **)&mvslicei->ivslices,sizeof(int)*sp->nvsliceinfo);
     mvslicei->nvslices=1;
-    vsd = slicecoll.vsliceinfo + vsliceorderindex[0];
-    mvslicei->ivslices[0] = vsliceorderindex[0];
+    vsd = slicecoll.vsliceinfo + sextras.vsliceorderindex[0];
+    mvslicei->ivslices[0] = sextras.vsliceorderindex[0];
     mvslicei->mvslicefile_labelindex=slicecoll.sliceinfo[vsd->ival].slicefile_labelindex;
     for(i=1;i<sp->nvsliceinfo;i++){
       slicedata *sd, *sdold;
       vslicedata *vsdold;
 
-      vsdold = slicecoll.vsliceinfo + vsliceorderindex[i - 1];
+      vsdold = slicecoll.vsliceinfo + sextras.vsliceorderindex[i - 1];
       sdold = slicecoll.sliceinfo + vsdold->ival;
-      vsd = slicecoll.vsliceinfo + vsliceorderindex[i];
+      vsd = slicecoll.vsliceinfo + sextras.vsliceorderindex[i];
       sd = slicecoll.sliceinfo + vsd->ival;
       if(NewMultiSlice(sdold,sd)==1){
         sp->nmultivsliceinfo++;
@@ -2795,7 +2795,7 @@ void *UpdateVSlices(void *arg){
         NewMemory((void **)&mvslicei->ivslices,sizeof(int)*sp->nvsliceinfo);
       }
       mvslicei->nvslices++;
-      mvslicei->ivslices[mvslicei->nvslices-1]=vsliceorderindex[i];
+      mvslicei->ivslices[mvslicei->nvslices-1]=sextras.vsliceorderindex[i];
     }
 
     // define sequence id's for auto file loading
@@ -3101,7 +3101,7 @@ void GetSliceDataBounds(slicedata *sd, float *pmin, float *pmax){
       for(k=0;k<sd->nslicek;k++){
         n++;
         if(sd->slice_filetype==SLICE_CELL_CENTER&&((k==0&&sd->nslicek!=1)||(j==0&&sd->nslicej!=1)||(i==0&&sd->nslicei!=1)))continue;
-        if(show_slice_in_obst == ONLY_IN_GAS){
+        if(sextras.show_slice_in_obst == ONLY_IN_GAS){
           if(sd->slice_filetype!=SLICE_CELL_CENTER&& iblank_node!=NULL){
             if(iblank_node[IJKNODE(sd->is1+i, sd->js1+j, sd->ks1+k)]==SOLID)continue;
           }
@@ -4376,7 +4376,7 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
         sb->data_valmax = qmax;
 
         UpdateAllSliceLabels(slicefile_labelindex, errorcode);
-        MakeColorLabels(sb->colorlabels, sb->colorvalues, qmin, qmax, nrgb);
+        MakeColorLabels(sb->colorlabels, sb->colorvalues, qmin, qmax, sextras.nrgb);
       }
     }
     if(sd->compression_type == COMPRESSED_ZLIB){
@@ -4618,7 +4618,7 @@ void DrawGSliceDataGpu(slicedata *slicei){
   UpdateSlice3DTexture(meshi, slicei, slicei->qsliceframe);
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
+  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
 
   if(cullfaces == 1)glDisable(GL_CULL_FACE);
   if(use_transparency_data == 1)TransparentOn();
@@ -5390,7 +5390,7 @@ void DrawVolSliceTerrain(const slicedata *sd){
 
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),vertical_factor*SCALE2SMV(1.0));
-    glTranslatef(-xbar0,-ybar0,-zbar0 + voffset);
+    glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0 + voffset);
 
     glBegin(GL_TRIANGLES);
     maxi = sd->is2;
@@ -5423,8 +5423,8 @@ void DrawVolSliceTerrain(const slicedata *sd){
         }
         if(draw123==0&&z31>=zmin&&z31<=zmax)draw123=1;
         if(draw134==0&&z13>=zmin&&z13<=zmax)draw134=1;
-        if(z11<zbar0||z31<zbar0||z33<zbar0)draw123=0;
-        if(z11<zbar0||z33<zbar0||z13<zbar0)draw134=0;
+        if(z11<sextras.zbar0||z31<sextras.zbar0||z33<sextras.zbar0)draw123=0;
+        if(z11<sextras.zbar0||z33<sextras.zbar0||z13<sextras.zbar0)draw134=0;
 
         if(draw123==0&&draw134==0)continue;
 
@@ -5554,8 +5554,8 @@ void DrawVolAllSlicesTextureDiag(const slicedata *sd, int direction){
           float rmid, zmid;
 
           n++; n2++;ijk+=nxy;
-          if(show_slice_in_obst==ONLY_IN_SOLID && c_iblank_x != NULL&&c_iblank_x[ijk]==GASGAS)continue;
-          if(show_slice_in_obst==ONLY_IN_GAS   && c_iblank_x != NULL&&c_iblank_x[ijk]!=GASGAS)continue;
+          if(sextras.show_slice_in_obst==ONLY_IN_SOLID && c_iblank_x != NULL&&c_iblank_x[ijk]==GASGAS)continue;
+          if(sextras.show_slice_in_obst==ONLY_IN_GAS   && c_iblank_x != NULL&&c_iblank_x[ijk]!=GASGAS)continue;
           if(skip_slice_in_embedded_mesh==1&&iblank_embed!=NULL&&iblank_embed[ijk]==EMBED_YES)continue;
           r11 = (float)sd->iqsliceframe[n] / 255.0;
           r31 = (float)sd->iqsliceframe[n2] / 255.0;
@@ -5624,8 +5624,8 @@ void DrawVolAllSlicesTextureDiag(const slicedata *sd, int direction){
 
         for(k = sd->ks1; k<sd->ks2; k++){
           n++; n2++; ijk+=nxy;
-          if(show_slice_in_obst==ONLY_IN_SOLID && c_iblank_y!=NULL&&c_iblank_y[ijk]==GASGAS)continue;
-          if(show_slice_in_obst==ONLY_IN_GAS   && c_iblank_y!=NULL&&c_iblank_y[ijk]!=GASGAS)continue;
+          if(sextras.show_slice_in_obst==ONLY_IN_SOLID && c_iblank_y!=NULL&&c_iblank_y[ijk]==GASGAS)continue;
+          if(sextras.show_slice_in_obst==ONLY_IN_GAS   && c_iblank_y!=NULL&&c_iblank_y[ijk]!=GASGAS)continue;
           if(skip_slice_in_embedded_mesh==1&&iblank_embed!=NULL&&iblank_embed[ijk]==EMBED_YES)continue;
           r11 = (float)sd->iqsliceframe[n] / 255.0;
           r31 = (float)sd->iqsliceframe[n2] / 255.0;
@@ -7239,7 +7239,7 @@ void DrawSlicePlots(void){
 
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),vertical_factor*SCALE2SMV(1.0));
-    glTranslatef(-xbar0,-ybar0,-zbar0);
+    glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
     if(average_plot2d_slice_region==0||(slice_dxyz[0]<0.001&&slice_dxyz[1]<0.001&&slice_dxyz[2]<0.001)){
       glPointSize(10.0);
       glBegin(GL_POINTS);
@@ -8074,7 +8074,7 @@ void DrawVVolSliceTerrain(const vslicedata *vd){
 
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),vertical_factor*SCALE2SMV(1.0));
-    glTranslatef(-xbar0,-ybar0,-zbar0 + voffset);
+    glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0 + voffset);
 
     glLineWidth(vectorlinewidth);
 
@@ -8745,7 +8745,7 @@ void DrawGSliceOutline(void){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
 
   glColor3fv(foregroundcolor);
 
@@ -8851,7 +8851,7 @@ void DrawGSliceData(slicedata *slicei){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
 
   if(cullfaces==1)glDisable(GL_CULL_FACE);
   if(use_transparency_data==1)TransparentOn();
@@ -8911,7 +8911,7 @@ void DrawVGSliceData(vslicedata *vslicei){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
 
   if(cullfaces==1)glDisable(GL_CULL_FACE);
   if(use_transparency_data==1)TransparentOn();
@@ -9571,7 +9571,7 @@ void DrawSortSlicesDebug(void){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
 
   glLineWidth(4.0);
   glColor3f(0.0, 0.0, 0.0);

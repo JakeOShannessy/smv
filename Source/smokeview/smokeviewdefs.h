@@ -812,7 +812,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MAXPOINTS          50000000
 #define INCFRAMES                20
 #define MAXFRAMES              5001
-#define MAXRGB                  256
 #define MAXSMOKERGB             256
 #define StepOn                10000
 #define RenderCancel            999

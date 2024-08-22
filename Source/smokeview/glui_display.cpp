@@ -642,7 +642,7 @@ void SurfaceCB(int var){
       s_color[3] = surfi->transparent_level;
       surfi->color = GetColorPtr(&colorcoll, s_color);
       updatefacelists = 1;
-      updatefaces = 1;
+      sextras.updatefaces = 1;
       updatehiddenfaces = 1;
     }
     break;
@@ -797,7 +797,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
   PANEL_gen3=glui_labels->add_panel_to_panel(ROLLOUT_general,"",GLUI_PANEL_NONE);
 
   PANEL_linewidth=glui_labels->add_panel_to_panel(PANEL_gen3,"line width");
-  SPINNER_linewidth=glui_labels->add_spinner_to_panel(PANEL_linewidth,_("blockage"),GLUI_SPINNER_FLOAT,&linewidth);
+  SPINNER_linewidth=glui_labels->add_spinner_to_panel(PANEL_linewidth,_("blockage"),GLUI_SPINNER_FLOAT,&sextras.linewidth);
   SPINNER_linewidth->set_float_limits(1.0,10.0,GLUI_LIMIT_CLAMP);
   SPINNER_gridlinewidth=glui_labels->add_spinner_to_panel(PANEL_linewidth,_("grid"),GLUI_SPINNER_FLOAT,&gridlinewidth);
   SPINNER_gridlinewidth->set_float_limits(1.0,10.0,GLUI_LIMIT_CLAMP);
@@ -1251,7 +1251,7 @@ extern "C" void GLUILabelsCB(int var){
     break;
   case APPLY_VENTOFFSET:
     UpdateVentOffset();
-    updatefaces=1;
+    sextras.updatefaces=1;
     break;
   case FLIP:
       colorbar_flip = 1 - colorbar_flip;

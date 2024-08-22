@@ -673,8 +673,8 @@ void FillZoneData(int izone_index){
       roomi->rho_U = rhou0[iroom];
     }
     else{
-      roomi->rho_L = (pref + pr0[iroom]) / R / roomi->tl;
-      roomi->rho_U = (pref + pr0[iroom]) / R / roomi->tu;
+      roomi->rho_L = (sextras.pref + pr0[iroom]) / R / roomi->tl;
+      roomi->rho_U = (sextras.pref + pr0[iroom]) / R / roomi->tu;
     }
     if(zoneodl != NULL)roomi->od_L = 1.0 / MAX(odl0[iroom], 0.0001);
     if(zoneodu != NULL)roomi->od_U = 1.0 / MAX(odu0[iroom], 0.0001);
@@ -682,12 +682,12 @@ void FillZoneData(int izone_index){
   roomi = roominfo + nrooms;
   roomi->pfloor = 0.0;
   roomi->ylay = 99999.0;
-  roomi->tl = tamb;
-  roomi->tu = tamb;
-  roomi->itl = GetZoneColor(K2C(tamb), zonemin, zonemax, nrgb_full);
-  roomi->itu = GetZoneColor(K2C(tamb), zonemin, zonemax, nrgb_full);
-  roomi->rho_L = (pref + pamb) / R / roomi->tl;
-  roomi->rho_U = (pref + pamb) / R / roomi->tu;
+  roomi->tl = sextras.tamb;
+  roomi->tu = sextras.tamb;
+  roomi->itl = GetZoneColor(K2C(sextras.tamb), zonemin, zonemax, nrgb_full);
+  roomi->itu = GetZoneColor(K2C(sextras.tamb), zonemin, zonemax, nrgb_full);
+  roomi->rho_L = (sextras.pref + sextras.pamb) / R / roomi->tl;
+  roomi->rho_U = (sextras.pref + sextras.pamb) / R / roomi->tu;
   roomi->z0 = 0.0;
   roomi->z1 = 100000.0;
 }
@@ -978,7 +978,7 @@ void ReadZone(int ifile, int flag, int *errorcode){
   if(NewMemory((void **)&zonelonglabels  ,LABELLEN)==0||
      NewMemory((void **)&zoneshortlabels ,LABELLEN)==0||
      NewMemory((void **)&zoneunits       ,LABELLEN)==0||
-     NewMemory((void **)&zonelevels      ,nrgb*sizeof(float))==0){
+     NewMemory((void **)&zonelevels      ,sextras.nrgb*sizeof(float))==0){
     *errorcode=1;
     return;
   }
@@ -1189,13 +1189,13 @@ void ReadZone(int ifile, int flag, int *errorcode){
   if(setzonemin==SET_MIN)zonemin = zoneusermin;
   if(setzonemax==SET_MAX)zonemax = zoneusermax;
   GLUIUpdateZoneBounds();
-  GetZoneColors(zonetu, ntotal_rooms, izonetu, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-  GetZoneColors(zonetl, ntotal_rooms, izonetl, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-  if(have_zonefl==1)GetZoneColors(zonefl, ntotal_rooms, izonefl, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-  if(have_zonelw==1)GetZoneColors(zonelw, ntotal_rooms, izonelw, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-  if(have_zoneuw==1)GetZoneColors(zoneuw, ntotal_rooms, izoneuw, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-  if(have_zonecl==1)GetZoneColors(zonecl, ntotal_rooms, izonecl, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
-  if(have_target_data==1)GetZoneColors(zonetargets, ntotal_targets, izonetargets, zonemin, zonemax, nrgb, nrgb_full, colorlabelzone, colorvalueszone, zonelevels256);
+  GetZoneColors(zonetu, ntotal_rooms, izonetu, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+  GetZoneColors(zonetl, ntotal_rooms, izonetl, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+  if(have_zonefl==1)GetZoneColors(zonefl, ntotal_rooms, izonefl, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+  if(have_zonelw==1)GetZoneColors(zonelw, ntotal_rooms, izonelw, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+  if(have_zoneuw==1)GetZoneColors(zoneuw, ntotal_rooms, izoneuw, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+  if(have_zonecl==1)GetZoneColors(zonecl, ntotal_rooms, izonecl, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+  if(have_target_data==1)GetZoneColors(zonetargets, ntotal_targets, izonetargets, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
 
   ReadZoneFile=1;
   visZone=1;
@@ -1304,13 +1304,13 @@ void DrawZoneRoomGeom(void){
 
       if(zone_highlight == 1 && zone_highlight_room == i){
         glEnd();
-        glLineWidth(5.0*linewidth);
+        glLineWidth(5.0*sextras.linewidth);
         glBegin(GL_LINES);
         glColor3f(1.0, 0.0, 0.0);
       }
       else{
         glEnd();
-        glLineWidth(linewidth);
+        glLineWidth(sextras.linewidth);
         glBegin(GL_LINES);
         glColor4fv(foregroundcolor);
       }
@@ -1388,10 +1388,10 @@ void DrawZoneRoomGeom(void){
           DrawSphere(SCALE2SMV(zone_hvac_diam), hvac_sphere_color);
         }
         glPopMatrix();
-        glLineWidth(2.0*ventlinewidth);
+        glLineWidth(2.0*sextras.ventlinewidth);
       }
       else{
-        glLineWidth(ventlinewidth);
+        glLineWidth(sextras.ventlinewidth);
       }
       glColor4fv(zvi->color);
       if(zvi->vent_type==VFLOW_VENT&&zvi->vertical_vent_type==ZONEVENT_CIRCLE){
@@ -1413,7 +1413,7 @@ void DrawZoneRoomGeom(void){
           float x45;
 
           x45 = sqrt(2.0)/2.0;
-          glLineWidth(ventlinewidth);
+          glLineWidth(sextras.ventlinewidth);
           glBegin(GL_LINES);
           glColor3ubv(uc_color);
           glVertex3f(-x45*SCALE2SMV(zvi->radius), -x45*SCALE2SMV(zvi->radius), 0.0);

@@ -1991,9 +1991,9 @@ void Keyboard(unsigned char key, int flag){
       }
       break;
     case 'I':
-      show_slice_in_obst++;
-      if(show_slice_in_obst>3)show_slice_in_obst = 0;
-      GLUISliceInObstMenu2Dialog(show_slice_in_obst);
+      sextras.show_slice_in_obst++;
+      if(sextras.show_slice_in_obst>3)sextras.show_slice_in_obst = 0;
+      GLUISliceInObstMenu2Dialog(sextras.show_slice_in_obst);
       updatemenu = 1;
       break;
     case 'j':
@@ -2869,7 +2869,7 @@ void Keyboard(unsigned char key, int flag){
         force_alpha_opaque = 1 - force_alpha_opaque;
         if(force_alpha_opaque == 1)printf("force smoke/fire opaqueness: yes\n");
         if(force_alpha_opaque == 0)printf("force smoke/fire opaqueness: no\n");
-        update_smoke_alphas = 1;
+        sextras.update_smoke_alphas = 1;
         GLUIForceAlphaOpaque();
         GLUTPOSTREDISPLAY;
       }

@@ -682,13 +682,13 @@ int LuaGetMeshes(lua_State *L) {
     lua_pushnumber(L, infotable[i].kbar);
     lua_setfield(L, -2, "cellsize");
 
-    lua_pushnumber(L, xbar0);
+    lua_pushnumber(L, sextras.xbar0);
     lua_setfield(L, -2, "xbar0");
 
-    lua_pushnumber(L, ybar0);
+    lua_pushnumber(L, sextras.ybar0);
     lua_setfield(L, -2, "ybar0");
 
-    lua_pushnumber(L, zbar0);
+    lua_pushnumber(L, sextras.zbar0);
     lua_setfield(L, -2, "zbar0");
 
     lua_pushnumber(L, xyzmaxdiff);

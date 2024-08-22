@@ -4430,7 +4430,7 @@ FILE_SIZE ReadSmoke3D(int time_frame,int ifile_arg,int load_flag, int first_time
 #endif
   if(smoke3di->extinct>0.0){
     SOOT_index = GetSmoke3DType(smoke3di->label.shortlabel);
-    update_smoke_alphas = 1;
+    sextras.update_smoke_alphas = 1;
 #define SMOKE_EXTINCT 95
     GLUISmoke3dCB(SMOKE_EXTINCT);
   }
@@ -5034,7 +5034,7 @@ void MakeIBlankSmoke3D(void){
     kbar = mesh_smoke3d->kbar;
     ijksize=(ibar+1)*(jbar+1)*(kbar+1);
 
-    if(use_iblank==1&&smoke3di->loaded==1&&mesh_smoke3d->iblank_smoke3d==NULL){
+    if(sextras.use_iblank==1&&smoke3di->loaded==1&&mesh_smoke3d->iblank_smoke3d==NULL){
       unsigned char *iblank_smoke3d;
 
       NewMemory((void **)&iblank_smoke3d, ijksize*sizeof(unsigned char));

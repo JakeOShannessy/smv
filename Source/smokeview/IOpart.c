@@ -220,7 +220,7 @@ void DrawPart(const partdata *parti, int mode){
   CheckMemory;
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
+  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
   if(part5show == 1){
     if(streak5show == 0 || (streak5show == 1 && showstreakhead == 1)){
       for(i = 0;i < parti->nclasses;i++){
@@ -367,9 +367,9 @@ void DrawPart(const partdata *parti, int mode){
                 CopyDepVals(partclassi, datacopy, colorptr, prop, j);
                 glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
 
-                partfacedir[0] = xbar0 + SCALE2SMV(fds_eyepos[0]) - xpos[j];
-                partfacedir[1] = ybar0 + SCALE2SMV(fds_eyepos[1]) - ypos[j];
-                partfacedir[2] = zbar0 + SCALE2SMV(fds_eyepos[2]) - zpos[j];
+                partfacedir[0] = sextras.xbar0 + SCALE2SMV(fds_eyepos[0]) - xpos[j];
+                partfacedir[1] = sextras.ybar0 + SCALE2SMV(fds_eyepos[1]) - ypos[j];
+                partfacedir[2] = sextras.zbar0 + SCALE2SMV(fds_eyepos[2]) - zpos[j];
 
                 DrawSmvObject(prop->smv_object, 0, prop, 0, NULL, 0);
                 glPopMatrix();
@@ -2053,7 +2053,7 @@ void UpdatePartColors(partdata *parti, int flag){
       for(n = 0; n<MAXRGB; n++){
         colorlabelpart[n] = NULL;
       }
-      for(n = 0; n<nrgb; n++){
+      for(n = 0; n<sextras.nrgb; n++){
         NewMemory((void **)&colorlabelpart[n], 11);
       }
     }
@@ -2061,7 +2061,7 @@ void UpdatePartColors(partdata *parti, int flag){
   if(parti!=NULL){
     if(parti->loaded==1&&parti->display==1){
       if(parti->stream!=NULL){
-        GetPartColors(parti, nrgb, flag);
+        GetPartColors(parti, sextras.nrgb, flag);
       }
       else{
         printf("***warning: particle data in %s was unloaded, colors not updated\n",parti->file);
@@ -2085,7 +2085,7 @@ void UpdatePartColors(partdata *parti, int flag){
 
       partj = partinfo+j;
       if(partj->loaded==1&&partj->display==1){
-        GetPartColors(partj, nrgb, flag);
+        GetPartColors(partj, sextras.nrgb, flag);
       }
     }
   }

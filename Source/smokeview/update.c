@@ -2340,9 +2340,9 @@ void UpdateShowScene(void){
     update_csv_load = 0;
     END_SHOW_UPDATE(update_csv_load);
   }
-  if(update_terrain_type == 1){
+  if(sextras.update_terrain_type == 1){
     SHOW_UPDATE(update_terrain_type);
-    update_terrain_type = 0;
+    sextras.update_terrain_type = 0;
     GLUIUpdateTerrain();
     END_SHOW_UPDATE(update_terrain_type);
   }
@@ -2382,9 +2382,9 @@ void UpdateShowScene(void){
     GLUIDeviceCB(DEVICE_TIMEAVERAGE);
     END_SHOW_UPDATE(update_device_timeaverage);
   }
-  if(update_smoke_alphas==1){
+  if(sextras.update_smoke_alphas==1){
     SHOW_UPDATE(update_smoke_alphas);
-    update_smoke_alphas = 0;
+    sextras.update_smoke_alphas = 0;
     UpdateSmokeAlphas();
     END_SHOW_UPDATE(update_smoke_alphas);
   }
@@ -2584,7 +2584,7 @@ void UpdateShowScene(void){
     FontMenu(LARGE_FONT);
     END_SHOW_UPDATE(trainer_mode);
   }
-  if(updateindexcolors == 1){
+  if(sextras.updateindexcolors == 1){
     SHOW_UPDATE(updateindexcolors);
     UpdateIndexColors();
     END_SHOW_UPDATE(updateindexcolors);
@@ -2615,8 +2615,8 @@ void UpdateShowScene(void){
     FrameRateMenu(frameratevalue);
     END_SHOW_UPDATE(updateUpdateFrameRateMenu);
   }
-  if(updatefaces == 1){
-    updatefaces = 0;
+  if(sextras.updatefaces == 1){
+    sextras.updatefaces = 0;
     SHOW_UPDATE(updatefaces);
     INIT_PRINT_TIMER(timer_update_faces);
     UpdateFaces();

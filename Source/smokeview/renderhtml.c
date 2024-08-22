@@ -1127,33 +1127,33 @@ void Lines2Geom(float **vertsptr, float **colorsptr, int *n_verts, int **linespt
   *verts++ = 0.0;
   *verts++ = 0.0;
 
-  *verts++ = xbar;
+  *verts++ = sextras.xbar;
   *verts++ = 0.0;
   *verts++ = 0.0;
 
-  *verts++ = xbar;
-  *verts++ = ybar;
+  *verts++ = sextras.xbar;
+  *verts++ = sextras.ybar;
   *verts++ = 0.0;
 
   *verts++ = 0.0;
-  *verts++ = ybar;
+  *verts++ = sextras.ybar;
   *verts++ = 0.0;
 
   *verts++ = 0.0;
   *verts++ = 0.0;
-  *verts++ = zbar;
+  *verts++ = sextras.zbar;
 
-  *verts++ = xbar;
+  *verts++ = sextras.xbar;
   *verts++ = 0.0;
-  *verts++ = zbar;
+  *verts++ = sextras.zbar;
 
-  *verts++ = xbar;
-  *verts++ = ybar;
-  *verts++ = zbar;
+  *verts++ = sextras.xbar;
+  *verts++ = sextras.ybar;
+  *verts++ = sextras.zbar;
 
   *verts++ = 0.0;
-  *verts++ = ybar;
-  *verts++ = zbar;
+  *verts++ = sextras.ybar;
+  *verts++ = sextras.zbar;
 
   for(i = 0; i<24; i++){
     *colors++ = 0.0;
@@ -2309,9 +2309,9 @@ int Smv2Html(char *html_file, int option, int from_where){
     }
     else if(Match(buffer, "//***VERTS")==1){
       // center of scene
-      fprintf(stream_out, "         var xcen=%f;\n", xbar/2.0);
-      fprintf(stream_out, "         var ycen=%f;\n", ybar/2.0);
-      fprintf(stream_out, "         var zcen=%f;\n", zbar/2.0);
+      fprintf(stream_out, "         var xcen=%f;\n", sextras.xbar/2.0);
+      fprintf(stream_out, "         var ycen=%f;\n", sextras.ybar/2.0);
+      fprintf(stream_out, "         var zcen=%f;\n", sextras.zbar/2.0);
       if(option==HTML_ALL_TIMES){
         fprintf(stream_out, "         document.getElementById(\"buttonPauseResume\").style.width = \"75px\";\n");
       }

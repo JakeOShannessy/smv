@@ -371,7 +371,7 @@ void DrawDevicesVal(void){
   if(fontindex==SCALED_FONT)ScaleFont3D();
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
   if(active_smokesensors==1&&show_smokesensors!=SMOKESENSORS_HIDDEN){
     GetDeviceScreenCoords();
   }
@@ -3239,7 +3239,7 @@ void DrawDevices(int mode){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       for(i = 0; i<devicecoll.ndeviceinfo; i++){
         devicedata *devicei;
         float *xyz1, *xyz2, dxyz[3];
@@ -3290,7 +3290,7 @@ void DrawDevices(int mode){
 
     glPushMatrix();
     glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-    glTranslatef(-xbar0, -ybar0, -zbar0);
+    glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
     glPointSize(vectorpointsize);
     arrow_color[0] = 255 * foregroundcolor[0];
     arrow_color[1] = 255 * foregroundcolor[1];
@@ -3627,7 +3627,7 @@ void DrawDevices(int mode){
   glPushMatrix();
   glPushAttrib(GL_POINT_BIT | GL_LINE_BIT);
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
+  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
   for(ii = 0;ii < devicecoll.ndeviceinfo;ii++){
     devicedata *devicei;
     int tagval;
@@ -5963,7 +5963,7 @@ void InitDevicePlane(devicedata *devicei){
                      closestnodes, nvert, triangles, ntriangles);
     GetNormalSurface(devicei->plane_surface[i]);
     CompressIsoSurface(devicei->plane_surface[i],1,
-          xbar0,2*xbar,ybar0,2*ybar,zbar0,zbar);
+          sextras.xbar0,2*sextras.xbar,sextras.ybar0,2*sextras.ybar,sextras.zbar0,sextras.zbar);
     SmoothIsoSurface(devicei->plane_surface[i]);
   }
 

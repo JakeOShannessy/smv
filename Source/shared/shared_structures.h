@@ -19,6 +19,8 @@
 #include "string_util.h"
 
 #define MAXPLOT3DVARS 6
+#define MAXRGB                  256
+#define MAXFILELEN 360
 
 /* --------------------------  outlinedata ------------------------------------
  */
@@ -1897,6 +1899,46 @@ typedef struct {
   float global_hrrpuv_cutoff_default;
   float smoke_albedo;
   float smoke_albedo_base;
+
+  // TODO: the below probably don't really belong heer
+  filelist_collection filelist_coll;
+  float xbar;
+  float ybar;
+  float zbar;
+  float xbar0;
+  float ybar0;
+  float zbar0;
+  char *part_buffer;
+  char *smoke3d_buffer;
+  char *slice_buffer;
+  // TODO: this definitely doesn't belong here
+  int curdir_writable;
+  char *smokeview_scratchdir;
+  int update_smoke_alphas;
+  int *sliceorderindex;
+  int *vsliceorderindex;
+  float texture_origin[3];
+
+  int updateindexcolors;
+  int updatefaces;
+  int show_slice_in_obst;
+  int use_iblank;
+  int iblank_set_on_commandline;
+  int visOtherVents;
+  int visOtherVentsSAVE;
+  int update_terrain_type;
+  int hvac_duct_color[3];
+  int hvac_node_color[3];
+  surfdata *surfacedefault, *vent_surfacedefault, *exterior_surfacedefault;
+  tickdata *tickinfo;
+  int nmemory_ids;
+  char **colorlabelzone;
+  int nrgb2;
+  float pref, pamb, tamb;
+  surfdata sdefault, v_surfacedefault, e_surfacedefault;
+  int nrgb;
+  float linewidth, ventlinewidth;
+  float rgb[MAXRGB][4];
 } smv_extras;
 
 // TODO: remove each of these struct fields as global variables

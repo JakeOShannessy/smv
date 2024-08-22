@@ -212,7 +212,7 @@ void DrawTerrainGeom(int option){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
+  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
 
   if(option==DRAW_OPAQUE){
 
@@ -706,7 +706,7 @@ void DrawTrees(void){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
   for(i=0;i<sextras.ntreeinfo;i++){
     treedata *treei;
     float crown_height;
@@ -1202,7 +1202,7 @@ int GetTerrainData(char *file, terraindata *terri){
 //    WRITE(LU_TERRAIN(NM)) Z_TERRAIN
 
   FORTWUIREAD(&zmin_cutoff, 1);
-  zmin_cutoff = zbar0;
+  zmin_cutoff = sextras.zbar0;
   zmin_cutoff -= 0.1;
   terri->zmin_cutoff = zmin_cutoff;
   FORTWUIREAD(ijbar, 2);
@@ -1322,7 +1322,7 @@ void DrawTerrainOBST(terraindata *terri, int flag){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
 
   ENABLE_LIGHTING;
   glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&terrain_shininess);
@@ -1517,7 +1517,7 @@ void DrawTerrainOBSTSides(meshdata *meshi){
 
   glPushMatrix();
   glScalef(SCALE2SMV(mscale[0]), SCALE2SMV(mscale[1]), vertical_factor*SCALE2SMV(mscale[2]));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
+  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
 
   ENABLE_LIGHTING;
   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
@@ -1541,15 +1541,15 @@ void DrawTerrainOBSTSides(meshdata *meshi){
       zij   = znode[IJ2(i, j)];
       zijp1 = znode[IJ2(i, j+1)];
       if(zij>zcutoff){
-        glVertex3f(x[i], y[j],   zbar0);
+        glVertex3f(x[i], y[j],   sextras.zbar0);
         glVertex3f(x[i], y[j],   zij);
-        glVertex3f(x[i], y[j+1], zbar0);
+        glVertex3f(x[i], y[j+1], sextras.zbar0);
       }
 
       if(zij<zcutoff&&zijp1<zcutoff)continue;
       if(zij<zcutoff)zij = zijp1;
       if(zijp1<zcutoff)zijp1 = zij;
-      glVertex3f(x[i], y[j+1], zbar0);
+      glVertex3f(x[i], y[j+1], sextras.zbar0);
       glVertex3f(x[i], y[j],   zij);
       glVertex3f(x[i], y[j+1], zijp1);
     }
@@ -1563,15 +1563,15 @@ void DrawTerrainOBSTSides(meshdata *meshi){
       zijp1 = znode[IJ2(i, j+1)];
 
       if(zijp1>zcutoff){
-        glVertex3f(x[i], y[j],   zbar0);
-        glVertex3f(x[i], y[j+1], zbar0);
+        glVertex3f(x[i], y[j],   sextras.zbar0);
+        glVertex3f(x[i], y[j+1], sextras.zbar0);
         glVertex3f(x[i], y[j+1], zijp1);
       }
 
       if(zij<zcutoff&&zijp1<zcutoff)continue;
       if(zij<zcutoff)zij = zijp1;
       if(zijp1<zcutoff)zijp1 = zij;
-      glVertex3f(x[i], y[j],   zbar0);
+      glVertex3f(x[i], y[j],   sextras.zbar0);
       glVertex3f(x[i], y[j+1], zijp1);
       glVertex3f(x[i], y[j],   zij);
     }
@@ -1584,15 +1584,15 @@ void DrawTerrainOBSTSides(meshdata *meshi){
       zij   = znode[IJ2(i, j)];
       zip1j = znode[IJ2(i+1, j)];
       if(zip1j>zcutoff){
-        glVertex3f(x[i],   y[j], zbar0);
-        glVertex3f(x[i+1], y[j], zbar0);
+        glVertex3f(x[i],   y[j], sextras.zbar0);
+        glVertex3f(x[i+1], y[j], sextras.zbar0);
         glVertex3f(x[i+1], y[j], zip1j);
       }
 
       if(zij<zcutoff&&zip1j<zcutoff)continue;
       if(zij<zcutoff)zij = zip1j;
       if(zip1j<zcutoff)zip1j = zij;
-      glVertex3f(x[i],   y[j], zbar0);
+      glVertex3f(x[i],   y[j], sextras.zbar0);
       glVertex3f(x[i+1], y[j], zip1j);
       glVertex3f(x[i],   y[j], zij);
     }
@@ -1605,15 +1605,15 @@ void DrawTerrainOBSTSides(meshdata *meshi){
       zij   = znode[IJ2(i, j)];
       zip1j = znode[IJ2(i+1, j)];
       if(zip1j>zcutoff){
-        glVertex3f(x[i],   y[j], zbar0);
+        glVertex3f(x[i],   y[j], sextras.zbar0);
         glVertex3f(x[i+1], y[j], zip1j);
-        glVertex3f(x[i+1], y[j], zbar0);
+        glVertex3f(x[i+1], y[j], sextras.zbar0);
       }
 
       if(zij<zcutoff&&zip1j<zcutoff)continue;
       if(zij<zcutoff)zij = zip1j;
       if(zip1j<zcutoff)zip1j = zij;
-      glVertex3f(x[i],   y[j], zbar0);
+      glVertex3f(x[i],   y[j], sextras.zbar0);
       glVertex3f(x[i],   y[j], zij);
       glVertex3f(x[i+1], y[j], zip1j);
     }
@@ -1658,7 +1658,7 @@ void DrawTerrainOBSTTexture(terraindata *terri){
 
   glPushMatrix();
   glScalef(SCALE2SMV(mscale[0]),SCALE2SMV(mscale[1]),vertical_factor*SCALE2SMV(mscale[2]));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
 
   ENABLE_LIGHTING;
   glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
@@ -1847,8 +1847,8 @@ int GetTerrainSize(char *file, float *xmin, float *xmax, int *nx, float *ymin, f
 
 float GetTerrainElev(meshdata *meshi, int index){
   for(;;){
-    if(meshi==NULL)return zbar0-2.0;
-    if(meshi->terrain==NULL||meshi->terrain->znode[index]<zbar0){
+    if(meshi==NULL)return sextras.zbar0-2.0;
+    if(meshi->terrain==NULL||meshi->terrain->znode[index]<sextras.zbar0){
       meshi = meshi->nabors[MDOWN];
     }
     else{
@@ -1940,7 +1940,7 @@ void UpdateTerrain(int allocate_memory){
 
         zterrain = meshi->znodes_complete[ii];
         zslice   = zterrain+agl;
-        if(zterrain>=zbar0&&zslice>=zmin&&zslice<=zmax){
+        if(zterrain>=sextras.zbar0&&zslice>=zmin&&zslice<=zmax){
           slicei->have_agl_data = 1;
           break;
         }

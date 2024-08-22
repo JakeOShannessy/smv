@@ -96,12 +96,12 @@ void UpdateCameraYpos(cameradata *ci, int option){
     ci->zcen = FDS2SMV_Z((geom_zmin+geom_zmax)/2.0);
   }
   else{
-    dx = xbar;
-    dy = ybar;
-    dz = zbar;
-    ci->xcen = xbar/2.0;
-    ci->ycen = ybar/2.0;
-    ci->zcen = zbar/2.0;
+    dx = sextras.xbar;
+    dy = sextras.ybar;
+    dz = sextras.zbar;
+    ci->xcen = sextras.xbar/2.0;
+    ci->ycen = sextras.ybar/2.0;
+    ci->zcen = sextras.zbar/2.0;
   }
   switch(option){
     case 1:
@@ -232,9 +232,9 @@ void InitCamera(cameradata *ci,char *name){
   ci->defined=1;
   ci->azimuth=0.0;
   ci->view_angle=0.0;
-  ci->eye[0]=eyexfactor*xbar;
+  ci->eye[0]=eyexfactor*sextras.xbar;
   UpdateCameraYpos(ci, 2);
-  ci->eye[2]=eyezfactor*zbar;
+  ci->eye[2]=eyezfactor*sextras.zbar;
   ci->eye_save[0]=ci->eye[0];
   ci->eye_save[1]=ci->eye[1];
   ci->eye_save[2]=ci->eye[2];
@@ -252,9 +252,9 @@ void InitCamera(cameradata *ci,char *name){
   ci->view[0]=0.0;
   ci->view[1]=0.0;
   ci->view[2]=0.0;
-  ci->xcen=xbar/2.0;
-  ci->ycen=ybar/2.0;
-  ci->zcen=zbar/2.0;
+  ci->xcen=sextras.xbar/2.0;
+  ci->ycen=sextras.ybar/2.0;
+  ci->zcen=sextras.zbar/2.0;
   ci->rotation_type=rotation_type;
 
   ci->azimuth=0.0;

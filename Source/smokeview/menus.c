@@ -6420,7 +6420,7 @@ void VentMenu(int value){
     visVents=1;
     visOpenVents=1;
     visDummyVents=1;
-    visOtherVents=1;
+    sextras.visOtherVents=1;
     visCircularVents=VENT_CIRCLE;
     break;
   case MENU_VENT_OPEN:
@@ -6434,24 +6434,24 @@ void VentMenu(int value){
     break;
   case MENU_VENT_TWOINTERIOR:
      show_bothsides_int=1-show_bothsides_int;
-     updatefaces=1;
+     sextras.updatefaces=1;
      break;
   case MENU_VENT_TWOEXTERIOR:
      show_bothsides_ext = 1 - show_bothsides_ext;
-     updatefaces=1;
+     sextras.updatefaces=1;
      break;
   case MENU_VENT_TRANSPARENT:
      show_transparent_vents=1-show_transparent_vents;
-     updatefaces=1;
+     sextras.updatefaces=1;
      break;
   case MENU_VENT_OTHER:
-     visOtherVents=1-visOtherVents;
+     sextras.visOtherVents=1-sextras.visOtherVents;
      break;
    case HIDE_ALL_VENTS: // Hide all vents
      visVents=0;
      visOpenVents=0;
      visDummyVents=0;
-     visOtherVents=0;
+     sextras.visOtherVents=0;
      visCircularVents=VENT_HIDE;
      break;
    case MENU_VENT_CIRCLE:
@@ -6637,7 +6637,7 @@ void BlockageMenu(int value){
       break;
     case visBLOCKOutlineColor:
       outline_color_flag = 1 - outline_color_flag;
-      updatefaces=1;
+      sextras.updatefaces=1;
       break;
     case visBLOCKOnlyOutline:
       if(outline_state!=OUTLINE_ONLY){
@@ -6732,7 +6732,7 @@ void BlockageMenu(int value){
    case visBLOCKHide:
    case visBLOCKSolidOutline:
      visBlocks=value;
-     if(value==visBLOCKSolidOutline||visBLOCKold==visBLOCKSolidOutline)updatefaces=1;
+     if(value==visBLOCKSolidOutline||visBLOCKold==visBLOCKSolidOutline)sextras.updatefaces=1;
      GLUIUpdateTrainerOutline();
      break;
    case BLOCKlocation_grid:
@@ -7568,14 +7568,14 @@ void GeometryMenu(int value){
     sextras.visTerrainType = value-17;
     GLUIUpdateTerrain();
     if(sextras.visTerrainType == TERRAIN_HIDDEN){
-      if(visOtherVents!=visOtherVentsSAVE){
-        visOtherVents=visOtherVentsSAVE;
+      if(sextras.visOtherVents!=sextras.visOtherVentsSAVE){
+        sextras.visOtherVents=sextras.visOtherVentsSAVE;
       }
     }
     else{
-      if(visOtherVents!=0){
-        visOtherVentsSAVE=visOtherVents;
-        visOtherVents=0;
+      if(sextras.visOtherVents!=0){
+        sextras.visOtherVentsSAVE=sextras.visOtherVents;
+        sextras.visOtherVents=0;
       }
       BlockageMenu(visBLOCKHide);
     }
@@ -7828,22 +7828,22 @@ void InitShowSliceMenu(int *showhideslicemenuptr, int patchgeom_slice_showhide){
 
       if(nsliceloaded>0){
         glutAddMenuEntry(_("Show in:"), MENU_DUMMY);
-        if(show_slice_in_obst==ONLY_IN_GAS){
+        if(sextras.show_slice_in_obst==ONLY_IN_GAS){
           glutAddMenuEntry(_("  *gas"), MENU_SHOWSLICE_IN_GAS);
           glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
           glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
         }
-        if(show_slice_in_obst==GAS_AND_SOLID){
+        if(sextras.show_slice_in_obst==GAS_AND_SOLID){
           glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
           glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
           glutAddMenuEntry(_("  *gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
         }
-        if(show_slice_in_obst==ONLY_IN_SOLID){
+        if(sextras.show_slice_in_obst==ONLY_IN_SOLID){
           glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
           glutAddMenuEntry(_("  *solid"), MENU_SHOWSLICE_IN_SOLID);
           glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
         }
-        if(show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
+        if(sextras.show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
           glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
           glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
           glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
@@ -7925,22 +7925,22 @@ void InitShowMultiSliceMenu(int *showmultislicemenuptr, int showhideslicemenu, i
     }
     if(nsliceloaded>0){
       glutAddMenuEntry(_("  Show in:"), MENU_DUMMY);
-      if(show_slice_in_obst==ONLY_IN_GAS){
+      if(sextras.show_slice_in_obst==ONLY_IN_GAS){
         glutAddMenuEntry(_("    *gas"), MENU_SHOWSLICE_IN_GAS);
         glutAddMenuEntry(_("    solid"), MENU_SHOWSLICE_IN_SOLID);
         glutAddMenuEntry(_("    gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
       }
-      if(show_slice_in_obst==GAS_AND_SOLID){
+      if(sextras.show_slice_in_obst==GAS_AND_SOLID){
         glutAddMenuEntry(_("    gas"), MENU_SHOWSLICE_IN_GAS);
         glutAddMenuEntry(_("    solid"), MENU_SHOWSLICE_IN_SOLID);
         glutAddMenuEntry(_("    *gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
       }
-      if(show_slice_in_obst==ONLY_IN_SOLID){
+      if(sextras.show_slice_in_obst==ONLY_IN_SOLID){
         glutAddMenuEntry(_("    gas"), MENU_SHOWSLICE_IN_GAS);
         glutAddMenuEntry(_("    *solid"), MENU_SHOWSLICE_IN_SOLID);
         glutAddMenuEntry(_("    gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
       }
-      if(show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
+      if(sextras.show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
         glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
         glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
         glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
@@ -7965,10 +7965,10 @@ void InitUnloadSliceMenu(int *unloadslicemenuptr){
     slicedata *sd;
     char menulabel[1024];
 
-    sd = slicecoll.sliceinfo + sliceorderindex[i];
+    sd = slicecoll.sliceinfo + sextras.sliceorderindex[i];
     if(sd->loaded==1){
       STRCPY(menulabel,sd->menulabel2);
-      glutAddMenuEntry(menulabel,sliceorderindex[i]);
+      glutAddMenuEntry(menulabel,sextras.sliceorderindex[i]);
     }
   }
   for(i = 0;i<npatchinfo;i++){
@@ -8506,7 +8506,7 @@ void InitUnloadVSLiceMenu(int *unloadvslicemenuptr){
     vslicedata *vd;
     int i;
 
-    i = vsliceorderindex[ii];
+    i = sextras.vsliceorderindex[ii];
     vd = slicecoll.vsliceinfo + i;
     if(vd->loaded==0)continue;
     glutAddMenuEntry(vd->menulabel2,i);
@@ -9384,18 +9384,18 @@ static int menu_count=0;
 
   if(nplot3dinfo>0){
     CREATEMENU(levelmenu,LevelMenu);
-    for(i=1;i<nrgb-1;i++){
+    for(i=1;i<sextras.nrgb-1;i++){
       if(colorlabeliso!=NULL){
         char *colorlabel;
         char levellabel2[256];
 
-        colorlabel=&colorlabeliso[plotn-1][nrgb-2-i][0];
+        colorlabel=&colorlabeliso[plotn-1][sextras.nrgb-2-i][0];
         strcpy(levellabel2,"");
-        if(plotiso[plotn-1]==nrgb-2-i&&visiso==1){
+        if(plotiso[plotn-1]==sextras.nrgb-2-i&&visiso==1){
           strcat(levellabel2,"*");
         }
         strcat(levellabel2,colorlabel);
-        glutAddMenuEntry(levellabel2,nrgb-2-i);
+        glutAddMenuEntry(levellabel2,sextras.nrgb-2-i);
       }
       else{
         char chari[4];
@@ -9671,16 +9671,16 @@ static int menu_count=0;
       if(visCircularVents==VENT_HIDE)GLUTADDSUBMENU(_("Circular"),circularventmenu);
     }
     if(GetNTotalVents()>nopenvents+sextras.ndummyvents){
-      if(visOtherVents == 1)glutAddMenuEntry(_("*Other"), MENU_VENT_OTHER);
-      if(visOtherVents == 0)glutAddMenuEntry(_("Other"), MENU_VENT_OTHER);
+      if(sextras.visOtherVents == 1)glutAddMenuEntry(_("*Other"), MENU_VENT_OTHER);
+      if(sextras.visOtherVents == 0)glutAddMenuEntry(_("Other"), MENU_VENT_OTHER);
     }
-    if(visOpenVents==1&&visDummyVents==1&&visOtherVents==1){
+    if(visOpenVents==1&&visDummyVents==1&&sextras.visOtherVents==1){
       glutAddMenuEntry(_("*Show all"),SHOW_ALL_VENTS);
     }
     else{
       glutAddMenuEntry(_("Show all"),SHOW_ALL_VENTS);
     }
-    if(visOpenVents==0&&visDummyVents==0&&visOtherVents==0){
+    if(visOpenVents==0&&visDummyVents==0&&sextras.visOtherVents==0){
       glutAddMenuEntry(_("*Hide all"),HIDE_ALL_VENTS);
     }
     else{
@@ -10985,22 +10985,22 @@ static int menu_count=0;
       glutAddMenuEntry(menulabel,SHOW_ALL);
     }
     glutAddMenuEntry(_("  Show in:"), MENU_DUMMY);
-    if(show_slice_in_obst==ONLY_IN_GAS){
+    if(sextras.show_slice_in_obst==ONLY_IN_GAS){
       glutAddMenuEntry(_("    *gas"),  MENU_SHOWSLICE_IN_GAS);
       glutAddMenuEntry(_("    solid"), MENU_SHOWSLICE_IN_SOLID);
       glutAddMenuEntry(_("    gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
     }
-    if(show_slice_in_obst==GAS_AND_SOLID){
+    if(sextras.show_slice_in_obst==GAS_AND_SOLID){
       glutAddMenuEntry(_("    gas"), MENU_SHOWSLICE_IN_GAS);
       glutAddMenuEntry(_("    solid"), MENU_SHOWSLICE_IN_SOLID);
       glutAddMenuEntry(_("    *gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
     }
-    if(show_slice_in_obst==ONLY_IN_SOLID){
+    if(sextras.show_slice_in_obst==ONLY_IN_SOLID){
       glutAddMenuEntry(_("    gas"), MENU_SHOWSLICE_IN_GAS);
       glutAddMenuEntry(_("    *solid"), MENU_SHOWSLICE_IN_SOLID);
       glutAddMenuEntry(_("    gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
     }
-    if(show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
+    if(sextras.show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
       glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
       glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
       glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
