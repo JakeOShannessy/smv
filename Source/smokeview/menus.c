@@ -7565,9 +7565,9 @@ void GeometryMenu(int value){
   case 17+TERRAIN_SURFACE:
   case 17+TERRAIN_IMAGE:
   case 17+TERRAIN_HIDDEN:
-    visTerrainType = value-17;
+    sextras.visTerrainType = value-17;
     GLUIUpdateTerrain();
-    if(visTerrainType == TERRAIN_HIDDEN){
+    if(sextras.visTerrainType == TERRAIN_HIDDEN){
       if(visOtherVents!=visOtherVentsSAVE){
         visOtherVents=visOtherVentsSAVE;
       }
@@ -7579,7 +7579,7 @@ void GeometryMenu(int value){
       }
       BlockageMenu(visBLOCKHide);
     }
-    if(visTerrainType==TERRAIN_SURFACE){
+    if(sextras.visTerrainType==TERRAIN_SURFACE){
       planar_terrain_slice=0;
     }
     else{
@@ -9708,14 +9708,14 @@ static int menu_count=0;
   CREATEMENU(terrain_obst_showmenu, GeometryMenu);
   if(terrain_showonly_top==1)glutAddMenuEntry(_("*Show only top surface"), 17 + TERRAIN_TOP);
   if(terrain_showonly_top==0)glutAddMenuEntry(_("Show only top surface"),  17 + TERRAIN_TOP);
-  if(visTerrainType==TERRAIN_SURFACE)glutAddMenuEntry(_("*3D surface"),17+TERRAIN_SURFACE);
-  if(visTerrainType!=TERRAIN_SURFACE)glutAddMenuEntry(_("3D surface"),17+TERRAIN_SURFACE);
+  if(sextras.visTerrainType==TERRAIN_SURFACE)glutAddMenuEntry(_("*3D surface"),17+TERRAIN_SURFACE);
+  if(sextras.visTerrainType!=TERRAIN_SURFACE)glutAddMenuEntry(_("3D surface"),17+TERRAIN_SURFACE);
   if(terrain_texture_coll.terrain_textures!=NULL){ // &&terrain_texture->loaded==1
-    if(visTerrainType==TERRAIN_IMAGE)glutAddMenuEntry(_("*Image"),17+TERRAIN_IMAGE);
-    if(visTerrainType!=TERRAIN_IMAGE)glutAddMenuEntry(_("Image"),17+TERRAIN_IMAGE);
+    if(sextras.visTerrainType==TERRAIN_IMAGE)glutAddMenuEntry(_("*Image"),17+TERRAIN_IMAGE);
+    if(sextras.visTerrainType!=TERRAIN_IMAGE)glutAddMenuEntry(_("Image"),17+TERRAIN_IMAGE);
   }
-  if(visTerrainType==TERRAIN_HIDDEN)glutAddMenuEntry(_("*Hidden"),17+TERRAIN_HIDDEN);
-  if(visTerrainType!=TERRAIN_HIDDEN)glutAddMenuEntry(_("Hidden"),17+TERRAIN_HIDDEN);
+  if(sextras.visTerrainType==TERRAIN_HIDDEN)glutAddMenuEntry(_("*Hidden"),17+TERRAIN_HIDDEN);
+  if(sextras.visTerrainType!=TERRAIN_HIDDEN)glutAddMenuEntry(_("Hidden"),17+TERRAIN_HIDDEN);
 
   if(objectscoll->nobject_defs>0){
     int multiprop;

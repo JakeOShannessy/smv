@@ -1838,7 +1838,6 @@ SVEXTERN object_collection SVDECL(*objectscoll,NULL);
 SVEXTERN device_texture_list_collection SVDECL(device_texture_list_coll,{0});
 SVEXTERN treedata SVDECL(*treeinfo,NULL);
 SVEXTERN terraindata SVDECL(*terraininfo,NULL);
-SVEXTERN int SVDECL(visTerrainType,0);
 SVEXTERN float treecolor[4];
 #ifdef INMAIN
 SVEXTERN float treecharcolor[4]={0.3,0.3,0.3,1.0};

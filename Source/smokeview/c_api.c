@@ -2894,7 +2894,7 @@ int SetShowstreak(int show, int step, int showhead, int index) {
 } // SHOWSTREAK
 
 int SetShowterrain(int v) {
-  visTerrainType = v;
+  sextras.visTerrainType = v;
   return 0;
 } // SHOWTERRAIN
 

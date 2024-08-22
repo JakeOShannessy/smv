@@ -97,8 +97,6 @@ int updateindexcolors = 0;
 int cellcenter_slice_active = 0;
 treedata *treeinfo = NULL;
 terraindata *terraininfo = NULL;
-int visTerrainType = 0;
-float *ventcolor = NULL;
 int niso_compressed;
 spherepoints *sphereinfo = NULL, *wui_sphereinfo = NULL;
 int updatefaces = 0;
@@ -3805,9 +3803,9 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       sextras.is_terrain_case = 1;
       auto_terrain=1;
       FGETS(buffer,255,stream);
-      sscanf(buffer,"%i",&visTerrainType);
-      visTerrainType=CLAMP(visTerrainType,0,4);
-      if(visTerrainType==TERRAIN_HIDDEN){
+      sscanf(buffer,"%i",&sextras.visTerrainType);
+      sextras.visTerrainType=CLAMP(sextras.visTerrainType,0,4);
+      if(sextras.visTerrainType==TERRAIN_HIDDEN){
         if(visOtherVents!=visOtherVentsSAVE)visOtherVents=visOtherVentsSAVE;
       }
       else{

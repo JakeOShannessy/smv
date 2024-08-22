@@ -7561,9 +7561,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       sextras.is_terrain_case = 1;
       auto_terrain=1;
       FGETS(buffer,255,stream);
-      sscanf(buffer,"%i",&visTerrainType);
-      visTerrainType=CLAMP(visTerrainType,0,4);
-      if(visTerrainType==TERRAIN_HIDDEN){
+      sscanf(buffer,"%i",&sextras.visTerrainType);
+      sextras.visTerrainType=CLAMP(sextras.visTerrainType,0,4);
+      if(sextras.visTerrainType==TERRAIN_HIDDEN){
         if(visOtherVents!=visOtherVentsSAVE)visOtherVents=visOtherVentsSAVE;
       }
       else{
@@ -12990,7 +12990,7 @@ int ReadIni2(char *inifile, int localfile){
 
     if(MatchINI(buffer, "SHOWTERRAIN") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %i", &visTerrainType, &terrain_slice_overlap);
+      sscanf(buffer, "%i %i", &sextras.visTerrainType, &terrain_slice_overlap);
       continue;
     }
     if(MatchINI(buffer, "STEREO") == 1){
@@ -17179,7 +17179,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "SHOWSTREAK\n");
   fprintf(fileout, " %i %i %i %i\n", streak5show, streak5step, showstreakhead, streak_index);
   fprintf(fileout, "SHOWTERRAIN\n");
-  fprintf(fileout, " %i %i\n", visTerrainType, terrain_slice_overlap);
+  fprintf(fileout, " %i %i\n", sextras.visTerrainType, terrain_slice_overlap);
   fprintf(fileout, "SHOWTHRESHOLD\n");
   fprintf(fileout, " %i %i %f\n", vis_threshold, vis_onlythreshold, temp_threshold);
   fprintf(fileout, "SHOWTICKS\n");

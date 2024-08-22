@@ -2309,7 +2309,7 @@ void UpdateFaces(void){
       blockagedata *bc;
 
       bc = meshi->blockageinfoptrs[j];
-      if(visTerrainType!=TERRAIN_HIDDEN&&bc->is_wuiblock==1)continue;
+      if(sextras.visTerrainType!=TERRAIN_HIDDEN&&bc->is_wuiblock==1)continue;
       ObstOrVent2Faces(meshi,bc,NULL,faceptr,BLOCK_face);
       faceptr += 6;
     }
