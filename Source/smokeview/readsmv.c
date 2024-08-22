@@ -4362,6 +4362,200 @@ void UpdateSortedSurfIdList(void){
   }
 }
 
+
+/* ------------------ ParseDatabase ------------------------ */
+// TODO: this needs to be renamed as it never actually parses a database
+void ParseDatabase(char *file){
+  FILE *stream;
+  char buffer[1000], *buffer2 = NULL, *buffer3, *slashptr;
+  size_t lenbuffer, lenbuffer2;
+  size_t sizebuffer2;
+  char *surf_id = NULL, *start, *surf_id2;
+  char *c;
+  int i, j;
+  surfdata *surfj;
+  char *labeli, *labelj;
+  int nexti;
+  int nsurfids_shown;
+
+  /* free memory called before */
+
+  for(i = 0; i<surf_coll.nsurfids; i++){
+    surf_id = surf_coll.surfids[i].label;
+    FREEMEMORY(surf_id);
+  }
+  FREEMEMORY(surf_coll.surfids);
+  surf_coll.nsurfids = 0;
+
+
+  if(file==NULL||strlen(file)==0||(stream = fopen(file, "r"))==NULL){
+    NewMemory((void **)&surf_coll.surfids, (surf_coll.nsurfids+1)*sizeof(surfid));
+    surf_id = NULL;
+    NewMemory((void **)&surf_id, 6);
+    strcpy(surf_id, "INERT");
+    surf_coll.surfids[0].label = surf_id;
+    surf_coll.surfids[0].location = 0;
+    surf_coll.surfids[0].show = 1;
+    surf_coll.nsurfids = 1;
+  }
+
+  else{
+    sizebuffer2 = 1001;
+    NewMemory((void **)&buffer2, sizebuffer2);
+
+    /* find out how many surfs are in database file so memory can be allocated */
+
+    while(!feof(stream)){
+      if(fgets(buffer, 1000, stream)==NULL)break;
+      if(STRSTR(buffer, "&SURF")==NULL)continue;
+
+
+      slashptr = strstr(buffer, "/");
+      if(slashptr!=NULL)strcpy(buffer2, buffer);
+      buffer3 = buffer;
+      while(slashptr!=NULL){
+        fgets(buffer, 1000, stream);
+        lenbuffer = strlen(buffer);
+        lenbuffer2 = strlen(buffer2);
+        if(lenbuffer2+lenbuffer+2>sizebuffer2){
+          sizebuffer2 = lenbuffer2+lenbuffer+2+1000;
+          ResizeMemory((void **)&buffer2, (unsigned int)sizebuffer2);
+        }
+        strcat(buffer2, buffer);
+        slashptr = strstr(buffer, "/");
+        buffer3 = buffer2;
+      }
+      start = STRSTR(buffer3, "ID");
+      if(start!=NULL)surf_coll.nsurfids++;
+    }
+
+    /* allocate memory */
+
+    NewMemory((void **)&surf_coll.surfids, (surf_coll.nsurfids+1)*sizeof(surfid));
+    surf_id = NULL;
+    NewMemory((void **)&surf_id, 6);
+    strcpy(surf_id, "INERT");
+    surf_coll.surfids[0].label = surf_id;
+    surf_coll.surfids[0].location = 0;
+    surf_coll.surfids[0].show = 1;
+
+
+    /* now look for IDs and copy them into an array */
+
+    rewind(stream);
+    surf_coll.nsurfids = 1;
+    while(!feof(stream)){
+      if(fgets(buffer, 1000, stream)==NULL)break;
+      if(STRSTR(buffer, "&SURF")==NULL)continue;
+
+
+      slashptr = strstr(buffer, "/");
+      if(slashptr!=NULL)strcpy(buffer2, buffer);
+      buffer3 = buffer2;
+      while(slashptr!=NULL){
+        fgets(buffer, 1000, stream);
+        lenbuffer = strlen(buffer);
+        lenbuffer2 = strlen(buffer2);
+        if(lenbuffer2+lenbuffer+2>sizebuffer2){
+          sizebuffer2 = lenbuffer2+lenbuffer+2+1000;
+          ResizeMemory((void **)&buffer2, (unsigned int)sizebuffer2);
+        }
+        strcat(buffer2, buffer);
+        slashptr = strstr(buffer, "/");
+        buffer3 = buffer2;
+      }
+      start = STRSTR(buffer3+3, "ID");
+      if(start!=NULL)surf_coll.nsurfids++;
+      surf_id = NULL;
+      surf_id2 = NULL;
+      for(c = start; c!=NULL&&*c!='\0'; c++){
+        if(surf_id==NULL&&*c=='\''){
+          surf_id = c+1;
+          continue;
+        }
+        if(surf_id!=NULL&&*c=='\''){
+          *c = '\0';
+          NewMemory((void **)&surf_id2, strlen(surf_id)+1);
+          strcpy(surf_id2, surf_id);
+          surf_coll.surfids[ surf_coll.nsurfids-1].label = surf_id2;
+          surf_coll.surfids[ surf_coll.nsurfids-1].location = 1;
+          surf_coll.surfids[ surf_coll.nsurfids-1].show = 1;
+          break;
+        }
+      }
+
+    }
+  }
+
+  /* identify duplicate surfaces */
+  /*** debug: make sure ->show is defined for all cases ***/
+
+  nsurfids_shown = 0;
+  for(i = 0; i<surf_coll.nsurfids; i++){
+    labeli = surf_coll.surfids[i].label;
+    nexti = 0;
+    for(j = 0; j<surf_coll.nsurfinfo; j++){
+      surfj = surf_coll.surfinfo+j;
+      labelj = surfj->surfacelabel;
+      if(strcmp(labeli, labelj)==0){
+        nexti = 1;
+        break;
+      }
+    }
+    if(nexti==1){
+      surf_coll.surfids[i].show = 0;
+      continue;
+    }
+    for(j = 0; j<i; j++){
+      labelj = surf_coll.surfids[j].label;
+      if(strcmp(labeli, labelj)==0){
+        nexti = 1;
+        break;
+      }
+    }
+    if(nexti==1){
+      surf_coll.surfids[i].show = 0;
+      continue;
+    }
+    nsurfids_shown++;
+
+  }
+
+  /* add surfaces found in database to those surfaces defined in previous SURF lines */
+
+  if(nsurfids_shown>0){
+    if(surf_coll.nsurfinfo==0){
+      FREEMEMORY(surf_coll.surfinfo);
+      FREEMEMORY(texture_coll.textureinfo);
+      NewMemory((void **)&surf_coll.surfinfo, (nsurfids_shown+MAX_ISO_COLORS+1)*sizeof(surfdata));
+      NewMemory((void **)&texture_coll.textureinfo, nsurfids_shown*sizeof(texturedata));
+    }
+    if(surf_coll.nsurfinfo>0){
+      if(surf_coll.surfinfo==NULL){
+        NewMemory((void **)&surf_coll.surfinfo, (nsurfids_shown+surf_coll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
+      }
+      else{
+        ResizeMemory((void **)&surf_coll.surfinfo, (nsurfids_shown+surf_coll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
+      }
+      if(texture_coll.textureinfo==NULL){
+        NewMemory((void **)&texture_coll.textureinfo, (nsurfids_shown+surf_coll.nsurfinfo)*sizeof(texturedata));
+      }
+      else{
+        ResizeMemory((void **)&texture_coll.textureinfo, (nsurfids_shown+surf_coll.nsurfinfo)*sizeof(texturedata));
+      }
+    }
+    surfj = surf_coll.surfinfo+surf_coll.nsurfinfo-1;
+    for(j = 0; j<surf_coll.nsurfids; j++){
+      if(surf_coll.surfids[j].show==0)continue;
+      surfj++;
+      InitSurface(surfj);
+      surfj->surfacelabel = surf_coll.surfids[j].label;
+    }
+    surf_coll.nsurfinfo += nsurfids_shown;
+  }
+  UpdateSortedSurfIdList();
+}
+
 /* ------------------ ReadZVentData ------------------------ */
 
 void ReadZVentData(zventdata *zvi, char *buffer, int flag){
@@ -9225,6 +9419,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   START_TIMER(pass3_time);
 
   CheckMemory;
+  ParseDatabase(NULL);
 
   if(setGRID==0){
     meshdata *meshi;

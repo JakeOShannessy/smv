@@ -88,7 +88,6 @@ smv_extras sextras = {
     .nrgb = NRGB,
     .linewidth = 2.0,
     .ventlinewidth = 2.0,
-
 };
 parse_options parse_opts = {
     .smoke3d_only = 0,
