@@ -1871,6 +1871,7 @@ typedef struct {
   int clip_K;
   GLfloat block_shininess;
   int visTerrainType;
+  int have_gvec;
   int have_cface_normals;
 } smv_extras;
 

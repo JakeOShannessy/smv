@@ -106,7 +106,6 @@ int SVDECL(show_slice_in_obst,ONLY_IN_GAS);
 int SVDECL(use_iblank,1),iblank_set_on_commandline = 0;
 float gvecphys[3]={0.0,0.0,-9.8};
 float gvecunit[3]={0.0,0.0,-1.0};
-int have_gvec = 0;
 float SVDECL(smoke_albedo, 0.3), SVDECL(smoke_albedo_base, 0.3);
 float northangle = 0.0;
 int auto_terrain = 0,manual_terrain = 0;
@@ -3738,7 +3737,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       gvecunit[2]=gvecphys[2];
       NORMALIZE3(gvecunit);
       if(NORM3(gvecphys)>0.0){
-        have_gvec=1;
+        sextras.have_gvec=1;
       }
       continue;
     }

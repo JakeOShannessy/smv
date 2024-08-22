@@ -7496,7 +7496,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       gvecunit[2]=gvecphys[2];
       NORMALIZE3(gvecunit);
       if(NORM3(gvecphys)>0.0){
-        have_gvec=1;
+        sextras.have_gvec=1;
       }
       continue;
     }

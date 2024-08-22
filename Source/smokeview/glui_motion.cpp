@@ -1263,7 +1263,7 @@ extern "C" void GLUIMotionSetup(int main_window){
     float vv[3], maxvv;
 
 
-    if(have_gvec==1){
+    if(sextras.have_gvec==1){
       vv[0] = -gvecphys[0];
       vv[1] = -gvecphys[1];
       vv[2] = -gvecphys[2];
@@ -1287,7 +1287,7 @@ extern "C" void GLUIMotionSetup(int main_window){
   SPINNER_zaxis_angles[2]->set_float_limits(-180.0,180.0);
 
   glui_motion->add_button_to_panel(PANEL_change_zaxis, "z vector up", ZAXIS_UP, GLUISceneMotionCB);
-  if(have_gvec==1){
+  if(sextras.have_gvec==1){
     glui_motion->add_button_to_panel(PANEL_change_zaxis, "Gravity vector down", USE_GVEC, GLUISceneMotionCB);
     CHECKBOX_showgravity_vector = glui_motion->add_checkbox_to_panel(PANEL_change_zaxis, "Show gravity, axis vectors", &showgravity_vector);
   }

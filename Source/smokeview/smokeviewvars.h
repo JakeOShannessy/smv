@@ -777,7 +777,7 @@ SVEXTERN float gvecphys[3];
 SVEXTERN float gvecunit[3];
 SVEXTERN float gvecphys_orig[3];
 #endif
-SVEXTERN int SVDECL(gvec_down,1),SVDECL(have_gvec,0),SVDECL(zaxis_custom,0),SVDECL(showgravity_vector,0);
+SVEXTERN int SVDECL(gvec_down,1),SVDECL(zaxis_custom,0),SVDECL(showgravity_vector,0);
 SVEXTERN float SVDECL(slice_line_contour_width,1.0);
 SVEXTERN int SVDECL(slice_contour_type,0);
 SVEXTERN int SVDECL(viscadopaque,0);
