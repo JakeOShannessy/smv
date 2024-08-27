@@ -162,6 +162,16 @@ if ((NOT MACOSX) AND UNIX)
     target_link_libraries(test_root_dir m)
 endif()
 
+# create_hdf5
+add_executable(create_hdf5 create_hdf5.c
+    # ../Source/shared/dmalloc.c
+)
+
+# target_include_directories(create_hdf5 PRIVATE
+#     ../Tests
+#     ../Source/shared
+# )
+
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
 add_test(NAME "Simple Slice - Complete"

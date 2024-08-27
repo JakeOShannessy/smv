@@ -13,6 +13,7 @@
     { "name": "libgd", "default-features": false },
     "lua",
     "pthreads",
+    "hdf5",
     "json-c"
   ]
 }
