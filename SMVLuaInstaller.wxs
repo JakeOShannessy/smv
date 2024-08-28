@@ -81,7 +81,6 @@
             <ComponentRef Id='SMVLuaScript' />
             <ComponentRef Id='SMVLuaComponent' />
             <ComponentRef Id='SMVQComponent' />
-            <ComponentRef Id='CommonRender' />
         </Feature>
     </Product>
 </Wix>
