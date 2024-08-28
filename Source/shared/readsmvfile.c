@@ -927,12 +927,10 @@ bufferstreamdata *CopySMVBuffer(bufferstreamdata *stream_in);
 
 /* ------------------ GetInpf ------------------------ */
 
-int GetInpf(bufferstreamdata *stream_in){
+int GetInpf(smv_case *scase, bufferstreamdata *stream_in){
   char buffer[255], *bufferptr;
   bufferstreamdata *stream;
   int len;
-
-  casepaths paths = {0};
 
   if(stream_in==NULL)return 1;
   stream = CopySMVBuffer(stream_in);
@@ -952,43 +950,40 @@ int GetInpf(bufferstreamdata *stream_in){
       bufferptr=TrimFrontBack(buffer);
 
       len=strlen(bufferptr);
-      FREEMEMORY(paths.fds_filein);
-      if(NewMemory((void **)&paths.fds_filein,(unsigned int)(len+1))==0)return 2;
-      STRCPY(paths.fds_filein,bufferptr);
-      if(FILE_EXISTS_CASEDIR(paths.fds_filein)==NO){
-        FreeMemory(paths.fds_filein);
-      }
+      FREEMEMORY(scase->paths.fds_filein);
+      if(NewMemory((void **)&scase->paths.fds_filein,(unsigned int)(len+1))==0)return 2;
+      STRCPY(scase->paths.fds_filein,bufferptr);
 
-      if(paths.chidfilebase==NULL){
+      if(scase->paths.chidfilebase==NULL){
         char *chidptr=NULL;
         char buffer_chid[1024];
 
-        if(paths.fds_filein!=NULL)chidptr=GetChid(paths.fds_filein,buffer_chid);
+        if(scase->paths.fds_filein!=NULL)chidptr=GetChid(scase->paths.fds_filein,buffer_chid);
         if(chidptr!=NULL){
-          NewMemory((void **)&paths.chidfilebase,(unsigned int)(strlen(chidptr)+1));
-          STRCPY(paths.chidfilebase,chidptr);
+          NewMemory((void **)&scase->paths.chidfilebase,(unsigned int)(strlen(chidptr)+1));
+          STRCPY(scase->paths.chidfilebase,chidptr);
         }
       }
-      if(paths.chidfilebase!=NULL){
-        NewMemory((void **)&paths.hrr_csv_filename,(unsigned int)(strlen(paths.chidfilebase)+8+1));
-        STRCPY(paths.hrr_csv_filename,paths.chidfilebase);
-        STRCAT(paths.hrr_csv_filename,"_hrr.csv");
-        if(FILE_EXISTS_CASEDIR(paths.hrr_csv_filename)==NO){
-          FREEMEMORY(paths.hrr_csv_filename);
+      if(scase->paths.chidfilebase!=NULL){
+        NewMemory((void **)&scase->paths.hrr_csv_filename,(unsigned int)(strlen(scase->paths.chidfilebase)+8+1));
+        STRCPY(scase->paths.hrr_csv_filename,scase->paths.chidfilebase);
+        STRCAT(scase->paths.hrr_csv_filename,"_hrr.csv");
+        if(FILE_EXISTS_CASEDIR(scase->paths.hrr_csv_filename)==NO){
+          FREEMEMORY(scase->paths.hrr_csv_filename);
         }
 
-        NewMemory((void **)&paths.devc_csv_filename,(unsigned int)(strlen(paths.chidfilebase)+9+1));
-        STRCPY(paths.devc_csv_filename,paths.chidfilebase);
-        STRCAT(paths.devc_csv_filename,"_devc.csv");
-        if(FILE_EXISTS_CASEDIR(paths.devc_csv_filename)==NO){
-          FREEMEMORY(paths.devc_csv_filename);
+        NewMemory((void **)&scase->paths.devc_csv_filename,(unsigned int)(strlen(scase->paths.chidfilebase)+9+1));
+        STRCPY(scase->paths.devc_csv_filename,scase->paths.chidfilebase);
+        STRCAT(scase->paths.devc_csv_filename,"_devc.csv");
+        if(FILE_EXISTS_CASEDIR(scase->paths.devc_csv_filename)==NO){
+          FREEMEMORY(scase->paths.devc_csv_filename);
         }
 
-        NewMemory((void **)&paths.exp_csv_filename,(unsigned int)(strlen(paths.chidfilebase)+8+1));
-        STRCPY(paths.exp_csv_filename,paths.chidfilebase);
-        STRCAT(paths.exp_csv_filename,"_exp.csv");
-        if(FILE_EXISTS_CASEDIR(paths.exp_csv_filename)==NO){
-          FREEMEMORY(paths.exp_csv_filename);
+        NewMemory((void **)&scase->paths.exp_csv_filename,(unsigned int)(strlen(scase->paths.chidfilebase)+8+1));
+        STRCPY(scase->paths.exp_csv_filename,scase->paths.chidfilebase);
+        STRCAT(scase->paths.exp_csv_filename,"_exp.csv");
+        if(FILE_EXISTS_CASEDIR(scase->paths.exp_csv_filename)==NO){
+          FREEMEMORY(scase->paths.exp_csv_filename);
         }
       }
       break;
@@ -3381,7 +3376,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
 
   // get input file name
 
-    return_code=GetInpf(stream);
+    return_code=GetInpf(scase,stream);
     if(return_code!=0)return return_code;
   }
 
