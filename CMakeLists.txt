@@ -9,8 +9,7 @@ endif()
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.19")
     cmake_policy(SET CMP0110 NEW)
 endif()
-# Use FetchContent, this is used mostly to pull in Lua via git
-include(FetchContent)
+
 # Selected the multithreaded runtime when using MSVC
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 project(smv LANGUAGES C CXX)
@@ -29,18 +28,7 @@ add_compile_definitions(pp_GITHASH="6.8.0+sc2.lua")
 
 # Options which can be configured (along with their defaults)
 option(BETA "Include beta functionality" OFF)
-option(LUA "Include lua scripting" OFF)
-option(LUA_BUILD_BINARY "Build a lua intepreter" OFF)
-option(LUA_UTIL_LIBS "Build LPEG and LFS, useful native libs for lua" OFF)
 option(STRICT_CHECKS "Run additional strict checks" OFF)
-
-# There are some C-based lua libraries that are generally distributed separately
-# (e.g. via a linux distribution or luarocks). Sometimes (particularly on
-# Windows) it makes sense to compile them here.
-if (LUA_UTIL_LIBS)
-    set(VENDOR_LFS TRUE)
-    set(VENDOR_LPEG TRUE)
-endif()
 
 # Ensure all files are in the right place to run the tests
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
@@ -78,18 +66,9 @@ find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 # If GLEW is not found natively we compile it into smokeview directly later in
 # this file rather than adding a subdirectory
-find_package(JPEG)
-if (NOT JPEG_FOUND)
-    add_subdirectory(Source/jpeg-9b)
-endif()
-find_package(PNG)
-if (NOT PNG_FOUND)
-    add_subdirectory(Source/png-1.6.21)
-endif()
-find_package(ZLIB)
-if (NOT ZLIB_FOUND)
-    add_subdirectory(Source/zlib128)
-endif()
+find_package(JPEG REQUIRED)
+find_package(PNG REQUIRED)
+find_package(ZLIB REQUIRED)
 
 # This fails on Windows so we disable it for now
 if (NOT(WIN32))
@@ -106,16 +85,6 @@ endif()
 if (WIN32)
     find_package(PThreads4W REQUIRED)
 endif()
-
-if (LUA)
-    if (VENDOR_LFS)
-        add_subdirectory(Source/lfs)
-    endif()
-    if (VENDOR_LPEG)
-        add_subdirectory(Source/lpeg)
-    endif()
-endif()
-
 
 if (NOT MSVC)
     add_compile_options(-Wunused)
@@ -238,6 +207,7 @@ add_executable(smokeview
     Source/smokeview/colortable.c
     Source/smokeview/command_args.c
     Source/smokeview/jsonrpc_api.c
+    Source/smokeview/c_api.c
 )
 
 # GLUI sources are separate here. In some branches GLUI is conditional.
@@ -421,56 +391,6 @@ endif()
 
 add_subdirectory(Source/jsonrpc)
 target_link_libraries(smokeview PRIVATE jsonrpc)
-if (LUA)
-    target_compile_definitions(smokeview PRIVATE pp_LUA)
-    find_package(Lua)
-    if (LUA_FOUND)
-        target_link_libraries(smokeview PRIVATE ${LUA_LIBRARIES})
-        target_include_directories(smokeview PRIVATE ${LUA_INCLUDE_DIR})
-        if (LUA_BUILD_BINARY)
-            # If we want to build the lua binary, we can't just rely on the
-            # native shared library so we have to pull in and compile lua this
-            # way as well.
-            add_subdirectory(Source/lua)
-        endif()
-    else()
-        add_subdirectory(Source/lua)
-        target_link_libraries(smokeview PRIVATE lua_shared)
-    endif()
-
-    # If we are including the lua interpreter, include the appropriate sources.
-    target_sources(smokeview PRIVATE
-        Source/smokeview/lua_api.c
-        Source/smokeview/c_api.c
-    )
-
-    target_sources(smokeview PUBLIC
-        Source/smvluacore/smv.lua Source/smvluacore/ssf.lua
-        Source/smvluacore/ssfparser.lua Source/smvluacore/ssfcommands.lua
-        Source/smvluacore/clipping.lua Source/smvluacore/bounds.lua
-        Source/smvluacore/render.lua Source/smvluacore/load.lua
-        Source/smvluacore/view.lua Source/smvluacore/tour.lua
-        Source/smvluacore/iniparser.lua Source/smvluacore/inioptions.lua
-        Source/smvluacore/unload.lua Source/smvluacore/constants.lua
-        Source/smvluacore/gnuplot.lua Source/smvluacore/plot.lua
-        Source/smvluacore/pl3d.lua Source/smvluacore/json.lua
-        Source/smvluacore/camera.lua
-    )
-    install(
-        FILES
-        Source/smvluacore/smv.lua Source/smvluacore/ssf.lua
-        Source/smvluacore/ssfparser.lua Source/smvluacore/ssfcommands.lua
-        Source/smvluacore/clipping.lua Source/smvluacore/bounds.lua
-        Source/smvluacore/render.lua Source/smvluacore/load.lua
-        Source/smvluacore/view.lua Source/smvluacore/tour.lua
-        Source/smvluacore/iniparser.lua Source/smvluacore/inioptions.lua
-        Source/smvluacore/unload.lua Source/smvluacore/constants.lua
-        Source/smvluacore/gnuplot.lua Source/smvluacore/plot.lua
-        Source/smvluacore/pl3d.lua Source/smvluacore/json.lua
-        Source/smvluacore/camera.lua
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/smokeview/scripts
-    )
-endif()
 
 if (MSVC)
     # The headers in Source/glut_gl redefine some macros. Ideally those headers

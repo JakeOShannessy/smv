@@ -1019,14 +1019,10 @@ extern "C" void GLUIViewpointCB(int var){
 
 extern "C" void GLUIResetView(int ival){
   assert(ival>=-5);
-#ifdef pp_LUA
-  LIST_viewpoints->set_int_val(ival);
-#else
   if(ival!=old_listview){
     old_listview = ival;
     LIST_viewpoints->set_int_val(ival);
   }
-#endif
   selected_view=ival;
   BUTTON_replace_view->enable();
   GLUIViewpointCB(RESTORE_VIEW);

@@ -95,16 +95,6 @@ typedef struct _scriptfiledata {
   char *file;
 } scriptfiledata;
 
-/* --------------------------  luascriptfiledata ------------------------------------ */
-
-#ifdef pp_LUA
-typedef struct _luascriptfiledata {
-  struct _luascriptfiledata *prev, *next;
-  int id;
-  char *file;
-} luascriptfiledata;
-#endif
-
 /* --------------------------  scriptdata ------------------------------------ */
 
 typedef struct _scriptdata {

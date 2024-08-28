@@ -1,10 +1,6 @@
 #ifndef SMOKEHEADERS_H_DEFINED
 #define SMOKEHEADERS_H_DEFINED
 
-#ifdef pp_LUA
-#include "gd.h"
-#endif
-
 #include "readgeom.h"
 #include "readsmoke.h"
 #include "colorbars.h"
@@ -1145,9 +1141,6 @@ EXTERNCPP meshdata *GetLoadedIsoMesh(void);
 EXTERNCPP void SetIsoLabels(float smin, float smax,
                     isodata *sd, int *errorcode);
 EXTERNCPP int  SmokeviewImage2File(char *directory, char *GIFfilename, int rendertype, int woffset, int width, int hoffset, int height);
-#ifdef pp_LUA
-EXTERNCPP int SVimage2var(int rendertype, int woffset, int width, int hoffset, int height, gdImagePtr *RENDERimage);
-#endif
 
 EXTERNCPP void MakeFireColors(float temp_min, float temp_max, int nfire_colors_arg);
 

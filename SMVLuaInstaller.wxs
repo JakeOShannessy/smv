@@ -48,13 +48,6 @@
                             <File Id='SMVQScriptCMD' Name='smvq.cmd' Source='smvq.cmd'>
                             </File>
                         </Component>
-                        <Component Id='LuaScript' Guid='babec8ea-faad-42d5-9276-19594a1328ee'
-                            Win64="yes">
-                            <File Id='LuaScriptCMD' Name='lua.cmd' Source='lua.cmd' KeyPath='yes'>
-                            </File>
-                            <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File>
-                            <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File>
-                        </Component>
                         <Directory Id='BINDIR' Name='bin'>
                             <Component Id='SMVQComponent'
                                 Guid='c84dc251-0843-4520-95da-1aa889ebd874' Win64="yes">
@@ -67,63 +60,14 @@
                                 <File Id='SMVLuaEXE' Name='smvlua.exe'
                                     Source='dist/bin/smokeview.exe' KeyPath='yes'>
                                 </File>
+                                <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File>
+                                <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File>
                                 <File Name='jsonrpc.dll' Source='dist/bin/jsonrpc.dll'> </File>
                                 <File Name='glew32.dll' Source='dist/bin/glew32.dll'> </File>
                                 <File Name='zlib1.dll' Source='dist/bin/zlib1.dll'> </File>
                                 <File Name='jpeg62.dll' Source='dist/bin/jpeg62.dll'> </File>
                                 <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'> </File>
                                 <File Name='getopt.dll' Source='dist/bin/getopt.dll'> </File>
-                            </Component>
-                            <Component Id='LuaComponent'
-                                Guid='eea182cb-d651-4cbf-b1f7-18b5bceee877' Win64="yes">
-                                <File Id='LuaEXE' Name='lua.exe' Source='dist/bin/lua.exe'
-                                    KeyPath='yes'>
-                                </File>
-                            </Component>
-                            <Component Id='CommonRender' Guid='c9eb176c-5dbb-46f4-b0bd-c81e48de8055'
-                                Win64="yes">
-                                <File Id='bounds' Name='bounds.lua'
-                                    Source='dist/share/smokeview/scripts/bounds.lua'
-                                    KeyPath='yes'></File>
-                                <File Id='camera' Name='camera.lua'
-                                    Source='dist/share/smokeview/scripts/camera.lua'></File>
-                                <File Id='clipping' Name='clipping.lua'
-                                    Source='dist/share/smokeview/scripts/clipping.lua'></File>
-                                <File Id='constants' Name='constants.lua'
-                                    Source='dist/share/smokeview/scripts/constants.lua'></File>
-                                <File Id='gnuplotlua' Name='gnuplot.lua'
-                                    Source='dist/share/smokeview/scripts/gnuplot.lua'></File>
-                                <File Id='inioptions' Name='inioptions.lua'
-                                    Source='dist/share/smokeview/scripts/inioptions.lua'></File>
-                                <File Id='iniparser' Name='iniparser.lua'
-                                    Source='dist/share/smokeview/scripts/iniparser.lua'></File>
-                                <File Id='json' Name='json.lua'
-                                    Source='dist/share/smokeview/scripts/json.lua'></File>
-                                <File Id='load' Name='load.lua'
-                                    Source='dist/share/smokeview/scripts/load.lua'></File>
-                                <File Id='pl3d' Name='pl3d.lua'
-                                    Source='dist/share/smokeview/scripts/pl3d.lua'></File>
-                                <File Id='plot' Name='plot.lua'
-                                    Source='dist/share/smokeview/scripts/plot.lua'></File>
-                                <File Id='render' Name='render.lua'
-                                    Source='dist/share/smokeview/scripts/render.lua'></File>
-                                <File Id='smv' Name='smv.lua'
-                                    Source='dist/share/smokeview/scripts/smv.lua'></File>
-                                <File Id='ssf' Name='ssf.lua'
-                                    Source='dist/share/smokeview/scripts/ssf.lua'></File>
-                                <File Id='ssfcommands' Name='ssfcommands.lua'
-                                    Source='dist/share/smokeview/scripts/ssfcommands.lua'></File>
-                                <File Id='ssfparser' Name='ssfparser.lua'
-                                    Source='dist/share/smokeview/scripts/ssfparser.lua'></File>
-                                <File Id='tour' Name='tour.lua'
-                                    Source='dist/share/smokeview/scripts/tour.lua'></File>
-                                <File Id='unload' Name='unload.lua'
-                                    Source='dist/share/smokeview/scripts/unload.lua'></File>
-                                <File Id='view' Name='view.lua'
-                                    Source='dist/share/smokeview/scripts/view.lua'></File>
-                                <File Id='lfs' Name='lfs.dll' Source='dist/bin/lfs.dll'></File>
-                                <File Id='lpeg' Name='lpeg.dll' Source='dist/bin/lpeg.dll'></File>
-                                <File Id='lua' Name='lua.dll' Source='dist/bin/lua.dll'></File>
                             </Component>
                         </Directory>
                     </Directory>
@@ -137,8 +81,6 @@
             <ComponentRef Id='SMVLuaScript' />
             <ComponentRef Id='SMVLuaComponent' />
             <ComponentRef Id='SMVQComponent' />
-            <ComponentRef Id='LuaScript' />
-            <ComponentRef Id='LuaComponent' />
             <ComponentRef Id='CommonRender' />
         </Feature>
     </Product>

@@ -1926,10 +1926,6 @@ SVEXTERN int SVDECL(nscriptinfo,0);
 SVEXTERN scriptfiledata SVDECL(*script_recording,NULL);
 SVEXTERN int SVDECL(runscript,0), SVDECL(noexit,0);
 SVEXTERN int SVDECL(runhtmlscript, 0);
-#ifdef pp_LUA
-SVEXTERN int SVDECL(runluascript,0);
-SVEXTERN int SVDECL(exit_on_script_crash,0);
-#endif
 #ifdef INMAIN
 SVEXTERN float slice_xyz[3]={0.0,0.0,0.0}, slice_dxyz[3] = {0.0, 0.0, 0.0};
 #else
@@ -2038,9 +2034,6 @@ SVEXTERN char script_renderdir[1024], script_renderfilesuffix[1024], script_rend
 SVEXTERN char SVDECL(*script_renderdir_cmd, NULL);
 SVEXTERN inifiledata first_inifile, last_inifile;
 SVEXTERN char script_filename[1024];
-#ifdef pp_LUA
-SVEXTERN char luascript_filename[MAX_LUASCRIPT_FILENAME_BUFFER];
-#endif
 SVEXTERN int SVDECL(highlight_block,-1), SVDECL(highlight_mesh,0), SVDECL(highlight_flag,2);
 SVEXTERN int SVDECL(updategetobstlabels,1);
 
