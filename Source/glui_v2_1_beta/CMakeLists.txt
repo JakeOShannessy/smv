@@ -35,11 +35,12 @@ set(GLUI_SRCS
   glut_hel36.c
 )
 add_library(glui_static STATIC ${GLUI_SRCS})
+find_package(GLUT REQUIRED)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(MACOSX TRUE)
   add_definitions(-Dpp_OSX -Dpp_NOQUARTZ)
 else ()
-  target_include_directories(glui_static PRIVATE ../glui_gl)
+  target_link_libraries(glui_static PRIVATE GLUT::GLUT)
 endif()
 
 if (WIN32)

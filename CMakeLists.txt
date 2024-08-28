@@ -56,12 +56,7 @@ endif()
 add_subdirectory(Source/glui_v2_1_beta)
 
 find_package(OpenGL REQUIRED)
-if (NOT(WIN32))
-    find_package(GLUT)
-endif()
-if (NOT GLUT_FOUND)
-    add_subdirectory(Source/glut-3.7.6)
-endif()
+find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 # If GLEW is not found natively we compile it into smokeview directly later in
@@ -70,16 +65,9 @@ find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
 find_package(ZLIB REQUIRED)
 
-# This fails on Windows so we disable it for now
-if (NOT(WIN32))
-    find_package(PkgConfig)
-    if (PKG_CONFIG_FOUND)
-        pkg_check_modules(LIBGD IMPORTED_TARGET gdlib)
-    endif()
-endif()
-
-if (NOT LIBGD_FOUND)
-    add_subdirectory(Source/gd-2.0.15)
+find_package(PkgConfig REQUIRED)
+if (PKG_CONFIG_FOUND)
+    pkg_check_modules(LIBGD REQUIRED IMPORTED_TARGET gdlib)
 endif()
 
 if (WIN32)
@@ -227,43 +215,22 @@ target_sources(smokeview PRIVATE
 )
 
 
-find_package(json-c CONFIG)
+find_package(json-c CONFIG REQUIRED)
 if (NOT json-c_FOUND)
     if (PKG_CONFIG_FOUND)
-        pkg_check_modules(json-c json-c)
+        pkg_check_modules(json-c json-c REQUIRED)
     endif()
-    if (NOT json-c_FOUND)
-        FetchContent_Declare(
-            json-c-git
-            EXCLUDE_FROM_ALL
-            SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/json-c/json-c
-            GIT_REPOSITORY https://github.com/json-c/json-c.git
-            GIT_TAG        33337523f5cff82e659ecbe94b2fac19c7761a42
-            FIND_PACKAGE_ARGS CONFIG NAMES json-c
-        )
-        FetchContent_MakeAvailable(json-c-git)
-        target_link_libraries(smvq PRIVATE json-c-static)
-        target_include_directories(smvq PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/json-c)
-    else()
-        message("${json-c_INCLUDE_DIRS}")
-        target_link_libraries(smvq  PRIVATE ${json-c_LIBRARIES})
-        target_include_directories(smvq  PRIVATE ${json-c_INCLUDE_DIRS})
-        target_compile_options(smvq PUBLIC ${json-c_CFLAGS_OTHER})
-    endif()
+    message("${json-c_INCLUDE_DIRS}")
+    target_link_libraries(smvq  PRIVATE ${json-c_LIBRARIES})
+    target_include_directories(smvq  PRIVATE ${json-c_INCLUDE_DIRS})
+    target_compile_options(smvq PUBLIC ${json-c_CFLAGS_OTHER})
 else()
     target_link_libraries(smokeview PRIVATE json-c::json-c)
-    install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
+    if (BUILD_SHARED_LIBS)
+        install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
+    endif()
 endif()
 
-
-# These include directories are an existing workaround that would be good to
-# remove.Because of this custom code and the potential conflict with native libs
-# this needs to be early in the include order.
-if (WIN32)
-    target_include_directories(smokeview PRIVATE Source/glut_gl)
-else()
-    target_include_directories(smokeview PRIVATE Source/glui_gl)
-endif ()
 if(WIN32)
   target_link_libraries(smokeview PRIVATE wsock32 ws2_32)
 endif()
@@ -290,10 +257,8 @@ if (MACOSX)
     add_definitions(-Dpp_NOQUARTZ)
     target_link_libraries(smokeview PRIVATE "-framework OpenGL" "-framework GLUT")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
-elseif (GLUT_FOUND)
-    target_link_libraries(smokeview PRIVATE GLUT::GLUT)
 else()
-    target_link_libraries(smokeview PRIVATE glut32_static)
+    target_link_libraries(smokeview PRIVATE GLUT::GLUT)
 endif ()
 if (GLEW_FOUND)
     target_link_libraries(smokeview PRIVATE GLEW::GLEW)
@@ -306,67 +271,15 @@ else()
     )
     target_include_directories(smokeview PRIVATE Source/glew)
 endif()
-if (JPEG_FOUND)
-    target_link_libraries(smokeview PRIVATE JPEG::JPEG)
-    # install(IMPORTED_RUNTIME_ARTIFACTS PThreads4W::PThreads4W)
-#     get_filename_component(jpeg_dir ${JPEG_LIBRARY_RELEASE} DIRECTORY)
-#     message(FATAL_ERROR "${jpeg_dir}")
-#     install(CODE [[
-#   file(GET_RUNTIME_DEPENDENCIES
-#   DIRECTORIES   ${jpeg_dir}
-#     )
-#   ]])
-    # install(IMPORTED_RUNTIME_ARTIFACTS JPEG::JPEG)
-    # file(GET_RUNTIME_DEPENDENCIES JPEG::JPEG)
-    # message(FATAL_ERROR "${JPEG_LIBRARY_RELEASE}")
-    # install(FILES ${JPEG_LIBRARY_RELEASE} bin)
-#     install(
-#         FILES $<TARGET_FILE:JPEG::JPEG>
-#         DESTINATION ${CMAKE_INSTALL_BINDIR}
-#     )
-#     install(
-#     TARGETS smokeview
-#     RUNTIME_DEPENDENCIES
-#     PRE_EXCLUDE_REGEXES .
-#         "ext-ms-.*"
-#         "api-ms-.*"
-#         "AzureAttestManager.dll"
-#         "AzureAttestNormal.dll"
-#         "HvsiFileTrust.dll"
-#         "PdmUtilities.dll"
-#         "wpaxholder.dll"
-# )
-else()
-    target_link_libraries(smokeview PRIVATE jpeg_static)
-    install(TARGET jpeg_static)
-endif()
-if (PNG_FOUND)
-    target_link_libraries(smokeview PRIVATE PNG::PNG)
-    # set(T get_target_property(TARGET_TYPE PNG::PNG TYPE))
-    # install(IMPORTED_RUNTIME_ARTIFACTS PNG::PNG)
-    # install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libpng16d.dll" bin)
-    # install(
-    #     FILES $<TARGET_RUNTIME_DLLS:PNG::PNG>
-    #     DESTINATION ${CMAKE_INSTALL_BINDIR}
-    # )
-else()
-    target_link_libraries(smokeview PRIVATE png_static)
-    install(TARGET png_static)
-endif()
-if (ZLIB_FOUND)
-    target_link_libraries(smokeview PRIVATE ZLIB::ZLIB)
-    # install(IMPORTED_RUNTIME_ARTIFACTS ZLIB::ZLIB)
-else()
-    target_link_libraries(smokeview PRIVATE zlib_static)
-    install(TARGET zlib_static)
-endif()
+target_link_libraries(smokeview PRIVATE JPEG::JPEG)
+target_link_libraries(smokeview PRIVATE PNG::PNG)
+target_link_libraries(smokeview PRIVATE ZLIB::ZLIB)
+target_link_libraries(smokeview PRIVATE OpenGL::GL OpenGL::GLU)
 if (LIBGD_FOUND)
     target_link_libraries(smokeview PRIVATE PkgConfig::LIBGD)
-    install(TARGET jpeg_static)
 else()
     target_link_libraries(smokeview PRIVATE gd_static)
 endif()
-target_link_libraries(smokeview PRIVATE OpenGL::GL OpenGL::GLU)
 
 target_include_directories(smokeview PRIVATE
     Source/smokeview
