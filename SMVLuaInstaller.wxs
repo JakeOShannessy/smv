@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<?define ProductVersion = "1.16.3"?>
+<?define ProductVersion = "1.16.4"?>
 <?define ProductUpgradeCode = "1940d8a1-c842-442f-bf5d-00a570219bdb"?>
 
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
@@ -47,6 +47,8 @@
                             </File>
                             <File Id='SMVQScriptCMD' Name='smvq.cmd' Source='smvq.cmd'>
                             </File>
+                            <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File>
+                            <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File>
                         </Component>
                         <Directory Id='BINDIR' Name='bin'>
                             <Component Id='SMVQComponent'
@@ -68,7 +70,8 @@
                                 <File Name='libgd.dll' Source='dist/bin/libgd.dll'> </File>
                                 <File Name='freeglut.dll' Source='dist/bin/freeglut.dll'> </File>
                                 <!-- <File Name='jpeg62.dll' Source='dist/bin/jpeg62.dll'> </File> -->
-                                <!-- <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'> </File> -->
+                                <!-- <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'>
+                                </File> -->
                                 <!-- <File Name='getopt.dll' Source='dist/bin/getopt.dll'> </File> -->
                             </Component>
                         </Directory>
