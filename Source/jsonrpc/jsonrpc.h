@@ -28,7 +28,11 @@
 #include <json-c/json_tokener.h>
 #include <json-c/json_util.h>
 
+#ifdef _WIN32
 #define DLLEXPORT __declspec(dllexport)
+#else
+#define DLLEXPORT
+#endif
 
 // SHARED
 
