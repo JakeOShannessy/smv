@@ -601,9 +601,9 @@ void GSliceCB(int var){
     gslice_norm[2] = sin(elev);
     break;
   case GSLICE_TRANSLATE:
-    gslice_xyz[0] = CLAMP(gslice_xyz[0], xbar0, SMV2FDS_X(xbar));
-    gslice_xyz[1] = CLAMP(gslice_xyz[1], ybar0, SMV2FDS_Y(ybar));
-    gslice_xyz[2] = CLAMP(gslice_xyz[2], zbar0, SMV2FDS_Z(zbar));
+    gslice_xyz[0] = CLAMP(gslice_xyz[0], sextras.xbar0, SMV2FDS_X(sextras.xbar));
+    gslice_xyz[1] = CLAMP(gslice_xyz[1], sextras.ybar0, SMV2FDS_Y(sextras.ybar));
+    gslice_xyz[2] = CLAMP(gslice_xyz[2], sextras.zbar0, SMV2FDS_Z(sextras.zbar));
     break;
   default:
     assert(FFALSE);
@@ -1263,10 +1263,10 @@ extern "C" void GLUIMotionSetup(int main_window){
     float vv[3], maxvv;
 
 
-    if(have_gvec==1){
-      vv[0] = -gvecphys[0];
-      vv[1] = -gvecphys[1];
-      vv[2] = -gvecphys[2];
+    if(sextras.have_gvec==1){
+      vv[0] = -sextras.gvecphys[0];
+      vv[1] = -sextras.gvecphys[1];
+      vv[2] = -sextras.gvecphys[2];
     }
     else{
       vv[0] = -gvecphys_orig[0];
@@ -1287,7 +1287,7 @@ extern "C" void GLUIMotionSetup(int main_window){
   SPINNER_zaxis_angles[2]->set_float_limits(-180.0,180.0);
 
   glui_motion->add_button_to_panel(PANEL_change_zaxis, "z vector up", ZAXIS_UP, GLUISceneMotionCB);
-  if(have_gvec==1){
+  if(sextras.have_gvec==1){
     glui_motion->add_button_to_panel(PANEL_change_zaxis, "Gravity vector down", USE_GVEC, GLUISceneMotionCB);
     CHECKBOX_showgravity_vector = glui_motion->add_checkbox_to_panel(PANEL_change_zaxis, "Show gravity, axis vectors", &showgravity_vector);
   }
@@ -1303,18 +1303,18 @@ extern "C" void GLUIMotionSetup(int main_window){
   ADDPROCINFO(motionprocinfo,nmotionprocinfo,ROLLOUT_gslice,SLICE_ROLLOUT, glui_motion);
 
   if(gslice_xyz[0]<-1000000.0&&gslice_xyz[1]<-1000000.0&&gslice_xyz[2]<-1000000.0){
-    gslice_xyz[0]=(xbar0+SMV2FDS_X(xbar))/2.0;
-    gslice_xyz[1]=(ybar0+SMV2FDS_Y(ybar))/2.0;
-    gslice_xyz[2]=(zbar0+SMV2FDS_Z(zbar))/2.0;
+    gslice_xyz[0]=(sextras.xbar0+SMV2FDS_X(sextras.xbar))/2.0;
+    gslice_xyz[1]=(sextras.ybar0+SMV2FDS_Y(sextras.ybar))/2.0;
+    gslice_xyz[2]=(sextras.zbar0+SMV2FDS_Z(sextras.zbar))/2.0;
   }
 
   PANEL_gslice_center = glui_motion->add_panel_to_panel(ROLLOUT_gslice,_("rotation center"),true);
   SPINNER_gslice_center_x=glui_motion->add_spinner_to_panel(PANEL_gslice_center,"x:",GLUI_SPINNER_FLOAT,gslice_xyz,  GSLICE_TRANSLATE, GSliceCB);
   SPINNER_gslice_center_y=glui_motion->add_spinner_to_panel(PANEL_gslice_center,"y:",GLUI_SPINNER_FLOAT,gslice_xyz+1,GSLICE_TRANSLATE, GSliceCB);
   SPINNER_gslice_center_z=glui_motion->add_spinner_to_panel(PANEL_gslice_center,"z:",GLUI_SPINNER_FLOAT,gslice_xyz+2,GSLICE_TRANSLATE, GSliceCB);
-  SPINNER_gslice_center_x->set_float_limits(xbar0,SMV2FDS_X(xbar),GLUI_LIMIT_CLAMP);
-  SPINNER_gslice_center_y->set_float_limits(ybar0,SMV2FDS_Y(ybar),GLUI_LIMIT_CLAMP);
-  SPINNER_gslice_center_z->set_float_limits(zbar0,SMV2FDS_Z(zbar),GLUI_LIMIT_CLAMP);
+  SPINNER_gslice_center_x->set_float_limits(sextras.xbar0,SMV2FDS_X(sextras.xbar),GLUI_LIMIT_CLAMP);
+  SPINNER_gslice_center_y->set_float_limits(sextras.ybar0,SMV2FDS_Y(sextras.ybar),GLUI_LIMIT_CLAMP);
+  SPINNER_gslice_center_z->set_float_limits(sextras.zbar0,SMV2FDS_Z(sextras.zbar),GLUI_LIMIT_CLAMP);
   GSliceCB(GSLICE_TRANSLATE);
 
   PANEL_gslice_normal = glui_motion->add_panel_to_panel(ROLLOUT_gslice,_("normal"),true);
@@ -1761,10 +1761,10 @@ extern "C" void GLUIUpdateRotationIndex(int val){
 
   *rotation_index=val;
   camera_current->rotation_index=val;
-  if(*rotation_index>=0&&*rotation_index<nmeshes){
+  if(*rotation_index>=0&&*rotation_index<meshescoll.nmeshes){
     meshdata *meshi;
 
-    meshi = meshinfo + *rotation_index;
+    meshi = meshescoll.meshinfo + *rotation_index;
     camera_current->xcen=meshi->xcen;
     camera_current->ycen=meshi->ycen;
     camera_current->zcen=meshi->zcen;
@@ -2252,8 +2252,8 @@ extern "C" void GLUISceneMotionCB(int var){
         SPINNER_ycenCUSTOM->disable();
         SPINNER_zcenCUSTOM->disable();
       }
-      if(*rotation_index>=0&&*rotation_index<nmeshes){
-        UpdateCurrentMesh(meshinfo + (*rotation_index));
+      if(*rotation_index>=0&&*rotation_index<meshescoll.nmeshes){
+        UpdateCurrentMesh(meshescoll.meshinfo + (*rotation_index));
         GLUIUpdateRotationIndex(*rotation_index);
       }
       else if(*rotation_index==ROTATE_ABOUT_USER_CENTER){
@@ -2266,11 +2266,11 @@ extern "C" void GLUISceneMotionCB(int var){
         GLUIUpdateRotationIndex(ROTATE_ABOUT_CLIPPING_CENTER);
       }
       else if(*rotation_index==ROTATE_ABOUT_WORLD_CENTER){
-        UpdateCurrentMesh(meshinfo);
+        UpdateCurrentMesh(meshescoll.meshinfo);
         GLUIUpdateRotationIndex(ROTATE_ABOUT_WORLD_CENTER);
       }
       else{
-        UpdateCurrentMesh(meshinfo);
+        UpdateCurrentMesh(meshescoll.meshinfo);
         GLUIUpdateRotationIndex(ROTATE_ABOUT_WORLD_CENTER);
       }
       update_rotation_center=1;
@@ -2365,10 +2365,10 @@ extern "C" void GLUISceneMotionCB(int var){
         gvec_down=1;
         GLUISceneMotionCB(ZAXIS_UP);
         gvec_down=1;
-        maxvv = MAXABS3(gvecphys);
-        vv[0] = -gvecphys[0]/maxvv;
-        vv[1] = -gvecphys[1]/maxvv;
-        vv[2] = -gvecphys[2]/maxvv;
+        maxvv = MAXABS3(sextras.gvecphys);
+        vv[0] = -sextras.gvecphys[0]/maxvv;
+        vv[1] = -sextras.gvecphys[1]/maxvv;
+        vv[2] = -sextras.gvecphys[2]/maxvv;
         XYZ2AzElev(vv, zaxis_angles, zaxis_angles+1);
         UpdateZaxisAngles();
 
@@ -2460,7 +2460,7 @@ extern "C" void GLUISceneMotionCB(int var){
 extern "C" void GLUIUpdateMeshList1(int val){
   if(LIST_rotate_about==NULL)return;
   LIST_rotate_about->set_int_val(val);
-  if(val>=0&&val<nmeshes){
+  if(val>=0&&val<meshescoll.nmeshes){
     RADIO_rotation_type->set_int_val(ROTATION_2AXIS);
     HandleRotationType(ROTATION_2AXIS);
   }

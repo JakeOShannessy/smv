@@ -3,7 +3,7 @@
 #include "lua.h"
 
 int LuaRender(lua_State *L);
-extern lua_State *L;
+extern lua_State *lua_instance;
 lua_State *InitLua();
 int RunLuaBranch(lua_State *L, int argc, char **argv);
 

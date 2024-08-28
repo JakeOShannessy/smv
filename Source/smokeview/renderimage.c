@@ -414,7 +414,7 @@ void OutputSliceData(void){
 
   for(ii = 0; ii < nslice_loaded; ii++){
     i = slice_loaded_list[ii];
-    sd = sliceinfo + i;
+    sd = slicecoll.sliceinfo + i;
     if(sd->display == 0 || sd->slicefile_labelindex != slicefile_labelindex)continue;
     if(sd->times[0] > global_times[itimes])continue;
 
@@ -1107,13 +1107,13 @@ void SetSmokeSensor(gdImagePtr RENDERimage, int width, int height){
   if(test_smokesensors == 1 && active_smokesensors == 1 && show_smokesensors != SMOKESENSORS_HIDDEN){
     int idev;
 
-    for(idev = 0; idev < ndeviceinfo; idev++){
+    for(idev = 0; idev < devicecoll.ndeviceinfo; idev++){
       devicedata *devicei;
       int idev_col, idev_row;
       int col_offset, row_offset;
       unsigned int red = 255 << 16;
 
-      devicei = deviceinfo + idev;
+      devicei = devicecoll.deviceinfo + idev;
 
       if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(strcmp(devicei->object->label, "smokesensor") != 0)continue;
@@ -1280,13 +1280,13 @@ int SVimage2var(int rendertype,
   if(test_smokesensors==1&&active_smokesensors==1&&show_smokesensors!=SMOKESENSORS_HIDDEN){
     int idev;
 
-    for(idev=0;idev<ndeviceinfo;idev++){
+    for(idev=0;idev<devicecoll.ndeviceinfo;idev++){
       devicedata *devicei;
       int idev_col, idev_row;
       int col_offset, row_offset;
       unsigned int red=255<<16;
 
-      devicei = deviceinfo + idev;
+      devicei = devicecoll.deviceinfo + idev;
 
       if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(strcmp(devicei->object->label,"smokesensor")!=0)continue;

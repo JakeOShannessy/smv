@@ -133,8 +133,8 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
     if(skip_frame==1)continue;
     i++;
     if(i%tload_step!=0)continue;
-    if((use_tload_begin==1&&time_local<tload_begin))continue;
-    if((use_tload_end==1&&time_local>tload_end))continue;
+    if((use_tload_begin==1&&time_local<sextras.tload_begin))continue;
+    if((use_tload_end==1&&time_local>sextras.tload_end))continue;
 
     *nvertices += nvertices_i;
     *ntriangles += ntriangles_i;
@@ -217,8 +217,8 @@ void UnloadIso(meshdata *meshi){
   ib->display = 0;
   plotstate = GetPlotState(DYNAMIC_PLOTS);
   meshi->isofilenum = -1;
-  for(i = 0;i < nmeshes;i++){
-    meshi2 = meshinfo + i;
+  for(i = 0;i < meshescoll.nmeshes;i++){
+    meshi2 = meshescoll.meshinfo + i;
     if(meshi2->isofilenum != -1)nloaded++;
   }
   if(nloaded == 0){
@@ -415,7 +415,7 @@ void SyncIsoBounds(){
     if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
     if(iisottype != GetIsoTType(isoi))continue;
 
-    meshi = meshinfo + isoi->blocknumber;
+    meshi = meshescoll.meshinfo + isoi->blocknumber;
     asurface = meshi->animatedsurfaces;
 
     for(ii = 0;ii < meshi->niso_times;ii++){
@@ -475,7 +475,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     }
 #endif
   }
-  meshi = meshinfo + isoi->blocknumber;
+  meshi = meshescoll.meshinfo + isoi->blocknumber;
   geomi = isoi->geominfo;
 #ifdef pp_ISOFRAME
   if(load_flag != RELOAD){
@@ -549,10 +549,10 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     FREEMEMORY(isoi->geom_ndynamics);
   }
 
-  surfi = surfinfo + nsurfinfo+1;
+  surfi = surf_coll.surfinfo + surf_coll.nsurfinfo+1;
   UpdateIsoColors();
   if(strcmp(isoi->surface_label.shortlabel,"hrrpuv")==0){
-    surfi->color=GetColorPtr(hrrpuv_iso_color);
+    surfi->color=GetColorPtr(&colorcoll, hrrpuv_iso_color);
   }
 
   meshi->isofilenum=ifile;
@@ -681,7 +681,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
   if(ib->loaded==0&&flag==UNLOAD)return;
   blocknumber=ib->blocknumber;
   ib->isoupdate_timestep=-1;
-  meshi = meshinfo+blocknumber;
+  meshi = meshescoll.meshinfo+blocknumber;
   UnloadIso(meshi);
   UnloadIsoTrans();
   ib->loaded=0;
@@ -766,9 +766,9 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
     float fed_yellow[]={1.0,1.0,0.0,1.0};
     float fed_red[]={1.0,0.0,0.0,1.0};
 
-    fed_colors[0]=GetColorPtr(fed_blue);
-    fed_colors[1]=GetColorPtr(fed_yellow);
-    fed_colors[2]=GetColorPtr(fed_red);
+    fed_colors[0]=GetColorPtr(&colorcoll, fed_blue);
+    fed_colors[1]=GetColorPtr(&colorcoll, fed_yellow);
+    fed_colors[2]=GetColorPtr(&colorcoll, fed_red);
   }
   asurface=meshi->animatedsurfaces;
   break_frame=0;
@@ -793,7 +793,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       time_max=time_local;
     }
     meshi->iso_times[itime]=time_local;
-    if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<tload_begin)||(use_tload_end==1&&time_local>tload_end)||skip_frame==1){
+    if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<sextras.tload_begin)||(use_tload_end==1&&time_local>sextras.tload_end)||skip_frame==1){
     }
     for(ilevel=0;ilevel<meshi->nisolevels;ilevel++){
       int nvertices_i, ntriangles_i;
@@ -815,7 +815,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       asurface->niso_triangles=ntriangles_i/3;
       asurface->niso_vertices=nvertices_i;
 
-      if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<tload_begin)||(use_tload_end==1&&time_local>tload_end)||skip_frame==1){
+      if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<sextras.tload_begin)||(use_tload_end==1&&time_local>sextras.tload_end)||skip_frame==1){
         skip_local=0;
         if(nvertices_i<=0||ntriangles_i<=0)continue;
         skip_local += (6*nvertices_i);
@@ -1024,7 +1024,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
 
           v1 = asurface->iso_vertices + ivert;
           ReduceToUnit(vertnorms+3*ivert);
-          v1->cnorm=(unsigned char)GetNormalIndex(sphereinfo,vertnorms+3*ivert);
+          v1->cnorm=(unsigned char)GetNormalIndex(sextras.sphereinfo,vertnorms+3*ivert);
         }
         FREEMEMORY(vertnorms);
       }
@@ -1036,7 +1036,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       meshi->niso_times=itime;
       break;
     }
-    if(skip_frame==1||iitime%tload_step!=0||(use_tload_begin==1&&time_local<tload_begin)||(use_tload_end==1&&time_local>tload_end)){
+    if(skip_frame==1||iitime%tload_step!=0||(use_tload_begin==1&&time_local<sextras.tload_begin)||(use_tload_end==1&&time_local>sextras.tload_end)){
     }
     else{
       itime++;
@@ -1174,15 +1174,15 @@ void DrawIsoOrig(int tranflag){
         v3 = tri->v3;
 
         glTexCoord1f(v1->ctexturecolor/255.0);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v1->cnorm));
+        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v1->cnorm));
         glVertex3fv(v1->xyz);
 
         glTexCoord1f(v2->ctexturecolor/255.0);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v2->cnorm));
+        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v2->cnorm));
         glVertex3fv(v2->xyz);
 
         glTexCoord1f(v3->ctexturecolor/255.0);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v3->cnorm));
+        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v3->cnorm));
         glVertex3fv(v3->xyz);
       }
     }
@@ -1198,15 +1198,15 @@ void DrawIsoOrig(int tranflag){
         v3 = tri->v3;
 
         glColor4fv(v1->color);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v1->cnorm));
+        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v1->cnorm));
         glVertex3fv(v1->xyz);
 
         glColor4fv(v2->color);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v2->cnorm));
+        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v2->cnorm));
         glVertex3fv(v2->xyz);
 
         glColor4fv(v3->color);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v3->cnorm));
+        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v3->cnorm));
         glVertex3fv(v3->xyz);
       }
     }
@@ -1340,8 +1340,8 @@ void DrawIsoOrig(int tranflag){
 
 void DrawIso(int tranflag){
   if(niso_opaques>0||niso_trans>0){
-    if(use_tload_begin==1&&global_times[itimes]<tload_begin)return;
-    if(use_tload_end==1&&global_times[itimes]>tload_end)return;
+    if(use_tload_begin==1&&global_times[itimes]<sextras.tload_begin)return;
+    if(use_tload_end==1&&global_times[itimes]>sextras.tload_end)return;
     DrawIsoOrig(tranflag);
   }
 }
@@ -1678,10 +1678,10 @@ void UpdateIsoMenuLabels(void){
     for(i=0;i<nisoinfo;i++){
       isoi = isoinfo + i;
 
-      if(nmeshes>1){
+      if(meshescoll.nmeshes>1){
         meshdata *isomesh;
 
-        isomesh = meshinfo + isoi->blocknumber;
+        isomesh = meshescoll.meshinfo + isoi->blocknumber;
         sprintf(label,"%s",isomesh->label);
         STRCPY(isoi->menulabel,label);
       }
@@ -1709,8 +1709,8 @@ void UpdateIsoShowLevels(void){
   nisolevels=loaded_isomesh->nisolevels;
   showlevels=loaded_isomesh->showlevels;
 
-  for(j=0;j<nmeshes;j++){
-    meshi = meshinfo+j;
+  for(j=0;j<meshescoll.nmeshes;j++){
+    meshi = meshescoll.meshinfo+j;
     if(meshi->isofilenum==-1)continue;
     for(i=0;i<nisolevels;i++){
       if(i<meshi->nisolevels)meshi->showlevels[i]=showlevels[i];
@@ -1731,7 +1731,7 @@ void SetIsoLabels(float smin, float smax,
 
   *errorcode=0;
   PRINTF("setting up iso labels \n");
-  GetColorbarLabels(smin,smax,nrgb,sb->colorlabels,sb->levels256);
+  GetColorbarLabels(smin,smax,sextras.nrgb,sb->colorlabels,sb->levels256);
 }
 
 /* ------------------ CompareIsoTriangles ------------------------ */
@@ -1862,7 +1862,7 @@ void UpdateIsoTriangles(int flag){
         isoi = isoinfo+i;
         if(isoi->geomflag==1||isoi->loaded==0||isoi->display==0)continue;
 
-        meshi = meshinfo + isoi->blocknumber;
+        meshi = meshescoll.meshinfo + isoi->blocknumber;
         asurface = meshi->animatedsurfaces + iitime*meshi->nisolevels;
         for(ilev=0;ilev<meshi->nisolevels;ilev++){
           asurfi = asurface + ilev;
@@ -1907,7 +1907,7 @@ void UpdateIsoTriangles(int flag){
       if(isoi->geomflag==1||isoi->loaded==0||isoi->display==0)continue;
 
       CheckMemory;
-      meshi = meshinfo + isoi->blocknumber;
+      meshi = meshescoll.meshinfo + isoi->blocknumber;
       asurface = meshi->animatedsurfaces + meshi->iso_itime*meshi->nisolevels;
       showlevels=meshi->showlevels;
 
@@ -2026,7 +2026,7 @@ meshdata *GetLoadedIsoMesh(void){
 
     isoi = isoinfo + i;
     if(isoi->loaded==0)continue;
-    mesh2 = meshinfo + isoi->blocknumber;
+    mesh2 = meshescoll.meshinfo + isoi->blocknumber;
     if(nsteps==-1||mesh2->niso_times<nsteps){
       return_mesh = mesh2;
       nsteps=mesh2->niso_times;
@@ -2043,7 +2043,7 @@ void UpdateIsoColors(void){
   for(i = 0; i < MAX_ISO_COLORS; i++){
     surfdata *surfi;
 
-    surfi = surfinfo + i + nsurfinfo + 1;
+    surfi = surf_coll.surfinfo + i + surf_coll.nsurfinfo + 1;
     surfi->transparent_level = iso_colors[4*i+3];
     if(setbwdata == 1){
       surfi->color = iso_colorsbw + 4*i;

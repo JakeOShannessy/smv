@@ -49,11 +49,11 @@ void GetSmokeSensors(void){
   height = screenHeight;
 
   doit=0;
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
     char *label;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     label = devicei->object->label;
     if(STRCMP(label,"smokesensor")!=0)continue;
     doit=1;
@@ -71,13 +71,13 @@ void GetSmokeSensors(void){
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glReadPixels(0,0,width,height, GL_RGB, GL_UNSIGNED_BYTE, rgbimage);
 
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
     char *label;
     int row, col;
     int index,val;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     label = devicei->object->label;
 
 
@@ -168,10 +168,10 @@ void RGBTest(void){
 int HaveSmokeSensor(void){
   int i;
 
-  for(i = 0; i<ndeviceinfo; i++){
+  for(i = 0; i<devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
 
-    devicei = deviceinfo+i;
+    devicei = devicecoll.deviceinfo+i;
     if(STRCMP(devicei->object->label, "smokesensor")==0)return 1;
   }
   return 0;
@@ -321,11 +321,11 @@ void GetDeviceScreenCoords(void){
   int doit;
 
   doit=0;
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
     char *label;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     label = devicei->object->label;
     if(STRCMP(label,"smokesensor")==0){
       doit=1;
@@ -337,7 +337,7 @@ void GetDeviceScreenCoords(void){
   glGetDoublev(GL_MODELVIEW_MATRIX,mv_setup);
   glGetDoublev(GL_PROJECTION_MATRIX,projection_setup);
   glGetIntegerv(GL_VIEWPORT, viewport_setup);
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     float *xyz;
     double d_ijk[3];
     devicedata *devicei;
@@ -345,7 +345,7 @@ void GetDeviceScreenCoords(void){
     char *label;
     meshdata *device_mesh;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     label = devicei->object->label;
 
     if(STRCMP(label,"smokesensor")!=0)continue;
@@ -373,12 +373,12 @@ void DrawDevicesVal(void){
   if(fontindex==SCALED_FONT)ScaleFont3D();
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
   if(active_smokesensors==1&&show_smokesensors!=SMOKESENSORS_HIDDEN){
     GetDeviceScreenCoords();
   }
-  for(i=0;i<ndeviceinfo;i++){
-    devicei = deviceinfo + i;
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
+    devicei = devicecoll.deviceinfo + i;
 
     if(devicei->object->visible==0||devicei->show == 0)continue;
     xyz = devicei->xyz;
@@ -771,13 +771,13 @@ void DrawWindRosesDevices(void){
   int i;
 
   if(windrose_xy_vis==0&&windrose_xz_vis==0&&windrose_yz_vis==0)return;
-  for(i = 0;i<nvdeviceinfo;i++){
+  for(i = 0;i<devicecoll.nvdeviceinfo;i++){
     vdevicedata *vdevi;
     windrosedata *wr;
     int itime;
 
 
-    vdevi = vdeviceinfo + i;
+    vdevi = devicecoll.vdeviceinfo + i;
     if(vdevi->display==0||vdevi->unique==0)continue;
     itime = 0;
     if(global_times!=NULL)itime = CLAMP(itimes, 0, vdevi->nwindroseinfo-1);
@@ -805,20 +805,20 @@ void DrawTargetNorm(void){
   devicedata *devicei;
   float *xyz, *xyznorm;
 
-  if(isZoneFireModel==1&&hasSensorNorm==1&&visSensor==1&&visSensorNorm==1){
+  if(sextras.isZoneFireModel==1&&hasSensorNorm==1&&visSensor==1&&visSensorNorm==1){
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
     glBegin(GL_LINES);
     glColor4fv(sensornormcolor);
 
-    for(i=0;i<ndeviceinfo;i++){
+    for(i=0;i<devicecoll.ndeviceinfo;i++){
       float xyz2[3];
 
-      devicei = deviceinfo + i;
+      devicei = devicecoll.deviceinfo + i;
 
       if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(STRCMP(devicei->object->label,"sensor")==0&&visSensor==0)continue;
-      if(isZoneFireModel==1&&STRCMP(devicei->object->label,"target")==0&&visSensor==0)continue;
+      if(sextras.isZoneFireModel==1&&STRCMP(devicei->object->label,"target")==0&&visSensor==0)continue;
       xyz = devicei->xyz;
       xyznorm = devicei->xyznorm;
       glVertex3fv(xyz);
@@ -1085,11 +1085,11 @@ void DrawCDisk(float diameter, float height, unsigned char *rgbcolor){
 void DrawTSphere(int texture_index,float diameter, unsigned char *rgbcolor){
   texturedata *texti;
 
-  if(texture_index<0||texture_index>ntextureinfo-1){
+  if(texture_index<0||texture_index>texture_coll.ntextureinfo-1){
     texti=NULL;
   }
   else{
-    texti = textureinfo + texture_index;
+    texti = texture_coll.textureinfo + texture_index;
     if(texti->loaded==0||texti->display==0)texti=NULL;
   }
   if(texti!=NULL&&object_outlines==0){
@@ -3191,9 +3191,9 @@ void GetGlobalDeviceBounds(int type){
 
   valmin = 1.0;
   valmax = 0.0;
-  for(i = 0; i<ndeviceinfo; i++){
+  for(i = 0; i<devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
-    devicei = deviceinfo+i;
+    devicei = devicecoll.deviceinfo+i;
     if(devicei->type2==type){
       int j;
       float *vals;
@@ -3211,9 +3211,9 @@ void GetGlobalDeviceBounds(int type){
       }
     }
   }
-  for(i = 0; i<ndeviceinfo; i++){
+  for(i = 0; i<devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
-    devicei = deviceinfo+i;
+    devicei = devicecoll.deviceinfo+i;
     if(devicei->type2==type){
       devicei->global_valmin = valmin;
       devicei->global_valmax = valmax;
@@ -3241,12 +3241,12 @@ void DrawDevices(int mode){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
-      for(i = 0; i<ndeviceinfo; i++){
+      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
+      for(i = 0; i<devicecoll.ndeviceinfo; i++){
         devicedata *devicei;
         float *xyz1, *xyz2, dxyz[3];
 
-        devicei = deviceinfo+i;
+        devicei = devicecoll.deviceinfo+i;
         if(devicei->object->visible == 0 || devicei->show == 0)continue;
         xyz1 = devicei->xyz1;
         xyz2 = devicei->xyz2;
@@ -3261,16 +3261,16 @@ void DrawDevices(int mode){
       }
     }
 
-    for(i = 0;i < ndeviceinfo;i++){
+    for(i = 0;i < devicecoll.ndeviceinfo;i++){
       devicedata *devicei;
 
-      devicei = deviceinfo + i;
+      devicei = devicecoll.deviceinfo + i;
       if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(devicei->in_zone_csv == 1)continue;
       if(devicei->plane_surface != NULL){
         int j;
 
-        for(j = 0;j < nmeshes;j++){
+        for(j = 0;j < meshescoll.nmeshes;j++){
           DrawStaticIso(devicei->plane_surface[j], -1, 0, 2, 0, devicei->line_width);
           DrawStaticIso(devicei->plane_surface[j], 2, 0, 2, 0, devicei->line_width);
         }
@@ -3279,7 +3279,7 @@ void DrawDevices(int mode){
     }
   }
   drawobjects_as_vectors = 0;
-  if(showtime == 1 && itimes >= 0 && itimes < nglobal_times&&showvdevice_val == 1 && nvdeviceinfo>0){
+  if(showtime == 1 && itimes >= 0 && itimes < nglobal_times&&showvdevice_val == 1 && devicecoll.nvdeviceinfo>0){
     unsigned char arrow_color[4];
     float arrow_color_float[4];
     int j;
@@ -3292,7 +3292,7 @@ void DrawDevices(int mode){
 
     glPushMatrix();
     glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-    glTranslatef(-xbar0, -ybar0, -zbar0);
+    glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
     glPointSize(vectorpointsize);
     arrow_color[0] = 255 * foregroundcolor[0];
     arrow_color[1] = 255 * foregroundcolor[1];
@@ -3314,7 +3314,7 @@ void DrawDevices(int mode){
         int velocity_type;
         vdevicesortdata *vdevsorti;
 
-        vdevsorti = vdevices_sorted + i;
+        vdevsorti = devicecoll.vdevices_sorted + i;
         if(vectortype == VECTOR_PROFILE){
           if(vdevsorti->dir == XDIR && vis_xtree == 0)continue;
           if(vdevsorti->dir == YDIR && vis_ytree == 0)continue;
@@ -3629,8 +3629,8 @@ void DrawDevices(int mode){
   glPushMatrix();
   glPushAttrib(GL_POINT_BIT | GL_LINE_BIT);
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
-  for(ii = 0;ii < ndeviceinfo;ii++){
+  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
+  for(ii = 0;ii < devicecoll.ndeviceinfo;ii++){
     devicedata *devicei;
     int tagval;
     int save_use_displaylist;
@@ -3639,15 +3639,15 @@ void DrawDevices(int mode){
     float dpsi;
     float *xyz;
 
-    devicei = deviceinfo + ii;
+    devicei = devicecoll.deviceinfo + ii;
     prop = devicei->prop;
 
     if(devicei->object->visible == 0 || (devicei->prop != NULL&&devicei->prop->smv_object->visible == 0))continue;
     if(devicei->plane_surface != NULL)continue;
     if(devicei->show == 0)continue;
-    if(isZoneFireModel == 1 && STRCMP(devicei->object->label, "target") == 0 && visSensor == 0)continue;
+    if(sextras.isZoneFireModel == 1 && STRCMP(devicei->object->label, "target") == 0 && visSensor == 0)continue;
     if(devicei->in_zone_csv == 1&&strcmp(devicei->deviceID,"TARGET")!=0)continue;
-    if(isZoneFireModel == 1 && STRCMP(devicei->deviceID, "TIME") == 0)continue;
+    if(sextras.isZoneFireModel == 1 && STRCMP(devicei->deviceID, "TIME") == 0)continue;
     save_use_displaylist = devicei->object->use_displaylist;
     tagval = ii + 1;
     if(select_device == 1 && show_mode == SELECTOBJECT){
@@ -4497,8 +4497,8 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
 
       texturefile = (toki - 2)->stringptr;
 
-      for(i = 0;i < ndevice_texture_list;i++){
-        if(strcmp(device_texture_list[i], texturefile) == 0){
+      for(i = 0;i < device_texture_list_coll.ndevice_texture_list;i++){
+        if(strcmp(device_texture_list_coll.device_texture_list[i], texturefile) == 0){
           textureindex = i;
           break;
         }
@@ -4626,13 +4626,13 @@ tokendata *GetTokenPtr(char *var,sv_object_frame *frame){
 devicedata *GetCSVDeviceFromLabel(char *label, int index){
   int i;
 
-  if(strlen(label)>=4&&strncmp(label, "null", 4)==0&&index>=0&&index<ndeviceinfo){
-    return deviceinfo+index;
+  if(strlen(label)>=4&&strncmp(label, "null", 4)==0&&index>=0&&index<devicecoll.ndeviceinfo){
+    return devicecoll.deviceinfo+index;
   }
-  for(i = 0; i<ndeviceinfo; i++){
+  for(i = 0; i<devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
 
-    devicei = deviceinfo+i;
+    devicei = devicecoll.deviceinfo+i;
     if(nzoneinfo==0){
       if(STRCMP(devicei->labelptr, label)==0)return devicei;
     }
@@ -4648,10 +4648,10 @@ devicedata *GetCSVDeviceFromLabel(char *label, int index){
 int GetDeviceIndexFromLabel(char *label){
   int i;
 
-  for(i = 0;i < ndeviceinfo;i++){
+  for(i = 0;i < devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     if(STRCMP(devicei->deviceID, label) == 0)return i;
   }
   return -1;
@@ -4662,13 +4662,13 @@ int GetDeviceIndexFromLabel(char *label){
 devicedata *GetDeviceFromLabel(char *label,int index){
   int i;
 
-  if(strlen(label)>=4&&strncmp(label,"null",4)==0&&index>=0&&index<ndeviceinfo){
-    return deviceinfo + index;
+  if(strlen(label)>=4&&strncmp(label,"null",4)==0&&index>=0&&index<devicecoll.ndeviceinfo){
+    return devicecoll.deviceinfo + index;
   }
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     if(STRCMP(devicei->deviceID,label)==0)return devicei;
   }
   return NULL;
@@ -4826,16 +4826,16 @@ void SetupZTreeDevices(void){
     FREEMEMORY(deviceinfo_sortedz);
     nztreedeviceinfo=0;
   }
-  NewMemory((void **)&ztreedeviceinfo, ndeviceinfo*sizeof(ztreedevicedata));
-  NewMemory((void **)&deviceinfo_sortedz, ndeviceinfo*sizeof(devicedata *));
-  for(i = 0; i<ndeviceinfo; i++){
-    deviceinfo_sortedz[i] = deviceinfo+i;
+  NewMemory((void **)&ztreedeviceinfo, devicecoll.ndeviceinfo*sizeof(ztreedevicedata));
+  NewMemory((void **)&deviceinfo_sortedz, devicecoll.ndeviceinfo*sizeof(devicedata *));
+  for(i = 0; i<devicecoll.ndeviceinfo; i++){
+    deviceinfo_sortedz[i] = devicecoll.deviceinfo+i;
   }
-  qsort((devicedata **)deviceinfo_sortedz, (size_t)ndeviceinfo, sizeof(devicedata *), CompareZ3Devices);
+  qsort((devicedata **)deviceinfo_sortedz, (size_t)devicecoll.ndeviceinfo, sizeof(devicedata *), CompareZ3Devices);
 
   nztreedeviceinfo = 1;
   ztreedeviceinfo->first = 0;
-  for(i = 1; i<ndeviceinfo; i++){
+  for(i = 1; i<devicecoll.ndeviceinfo; i++){
     if(CompareZ2Devices(deviceinfo_sortedz+i, deviceinfo_sortedz+i-1)!=0){
       ztreedevicedata *ztreei;
 
@@ -4853,9 +4853,9 @@ void SetupZTreeDevices(void){
     ztreedevicedata *ztreei;
 
     ztreei           = ztreedeviceinfo+nztreedeviceinfo-1;
-    ztreei->quantity = deviceinfo_sortedz[ndeviceinfo-1]->quantity;
-    ztreei->unit     = deviceinfo_sortedz[ndeviceinfo-1]->unit;
-    ztreei->n        = ndeviceinfo-ztreei->first;
+    ztreei->quantity = deviceinfo_sortedz[devicecoll.ndeviceinfo-1]->quantity;
+    ztreei->unit     = deviceinfo_sortedz[devicecoll.ndeviceinfo-1]->unit;
+    ztreei->n        = devicecoll.ndeviceinfo-ztreei->first;
   }
   ResizeMemory((void **)&ztreedeviceinfo, nztreedeviceinfo*sizeof(ztreedevicedata));
 }
@@ -4866,7 +4866,7 @@ void SetupWindTreeDevices(void){
   int i;
   treedevicedata *treei;
 
-  if(nvdeviceinfo==0)return;
+  if(devicecoll.nvdeviceinfo==0)return;
   if(ntreedeviceinfo>0){
     FREEMEMORY(treedeviceinfo);
     ntreedeviceinfo=0;
@@ -4877,11 +4877,11 @@ void SetupWindTreeDevices(void){
     nzwindtreeinfo = 0;
   }
 
-  qsort((vdevicedata **)vdevices_sorted,3*(size_t)nvdeviceinfo,sizeof(vdevicesortdata), CompareV3Devices);
+  qsort((vdevicedata **)devicecoll.vdevices_sorted,3*(size_t)devicecoll.nvdeviceinfo,sizeof(vdevicesortdata), CompareV3Devices);
 
   ntreedeviceinfo = 1;
-  for(i = 1; i < 3*nvdeviceinfo; i++){
-    if(CompareV2Devices(vdevices_sorted+i, vdevices_sorted+i-1) != 0)ntreedeviceinfo++;
+  for(i = 1; i < 3*devicecoll.nvdeviceinfo; i++){
+    if(CompareV2Devices(devicecoll.vdevices_sorted+i, devicecoll.vdevices_sorted+i-1) != 0)ntreedeviceinfo++;
   }
 
   NewMemory((void **)&treedeviceinfo,ntreedeviceinfo*sizeof(treedevicedata));
@@ -4889,15 +4889,15 @@ void SetupWindTreeDevices(void){
   ntreedeviceinfo = 1;
   treei = treedeviceinfo;
   treei->first = 0;
-  for(i = 1; i < 3*nvdeviceinfo; i++){
-    if(CompareV2Devices(vdevices_sorted + i, vdevices_sorted + i - 1) != 0){
+  for(i = 1; i < 3*devicecoll.nvdeviceinfo; i++){
+    if(CompareV2Devices(devicecoll.vdevices_sorted + i, devicecoll.vdevices_sorted + i - 1) != 0){
       treei->last = i-1;
       treei = treedeviceinfo + ntreedeviceinfo;
       treei->first = i;
       ntreedeviceinfo++;
     }
   }
-  treei->last = 3*nvdeviceinfo - 1;
+  treei->last = 3*devicecoll.nvdeviceinfo - 1;
 
   max_device_tree=0;
   for(i = 0; i < ntreedeviceinfo; i++){
@@ -4909,7 +4909,7 @@ void SetupWindTreeDevices(void){
       vdevicedata *vdevi;
       vdevicesortdata *vdevsorti;
 
-      vdevsorti = vdevices_sorted + j;
+      vdevsorti = devicecoll.vdevices_sorted + j;
       vdevi = vdevsorti->vdeviceinfo;
       if(vdevi->unique != 0)n++;
     }
@@ -4927,7 +4927,7 @@ void SetupWindTreeDevices(void){
     for(j = treei->first; j<=treei->last; j++){
       vdevicesortdata *vdevsorti;
 
-      vdevsorti = vdevices_sorted + j;
+      vdevsorti = devicecoll.vdevices_sorted + j;
       if(vdevsorti->dir==ZDIR){
         vd = vdevsorti->vdeviceinfo;
         if(vd->unique==0)continue;
@@ -4959,7 +4959,7 @@ void SetupWindTreeDevices(void){
     for(j = treei->first; j<=treei->last; j++){
       vdevicesortdata *vdevsorti;
 
-      vdevsorti = vdevices_sorted + j;
+      vdevsorti = devicecoll.vdevices_sorted + j;
       if(vdevsorti->dir==ZDIR){
         vd = vdevsorti->vdeviceinfo;
         if(vd->unique==0)continue;
@@ -5021,62 +5021,7 @@ void SetupZoneDevs(void){
   }
 }
 
-/* ----------------------- GetDeviceLabel ----------------------------- */
-
-char *GetDeviceLabel(char *buffer){
-  char *label_present;
-
-  label_present = strstr(buffer, "#");
-  if(label_present == NULL) return NULL;
-  if(strlen(label_present) <= 1){
-    label_present[0] = 0;
-    return NULL;
-  }
-  label_present[0] = 0;
-  label_present++;
-  label_present = TrimFront(label_present);
-  TrimBack(label_present);
-  if(strlen(label_present) == 0) return NULL;
-  return label_present;
-}
-
-
-/* ----------------------- GetNDevices ----------------------------- */
-#define BUFFER_LEN 255
-int GetNDevices(char *file){
-  FILE *stream;
-  char buffer[BUFFER_LEN], *comma;
-  int buffer_len = BUFFER_LEN, nd = 0;
-
-  if(file == NULL) return 0;
-  stream = fopen(file, "r");
-  if(stream == NULL) return 0;
-  fgets(buffer, buffer_len, stream);
-  comma = strchr(buffer, ',');
-  if(comma != NULL) *comma = 0;
-  TrimBack(buffer);
-  if(strcmp(buffer, "//HEADER") != 0){
-    fclose(stream);
-    return 0;
-  }
-
-  while(!feof(stream)){
-    fgets(buffer, buffer_len, stream);
-    comma = strchr(buffer, ',');
-    if(comma != NULL) *comma = 0;
-    TrimBack(buffer);
-    if(strcmp(buffer, "//DATA") == 0){
-      break;
-    }
-    if(strcmp(buffer, "DEVICE") == 0){
-      nd++;
-    }
-  }
-  fclose(stream);
-  return nd;
-}
-
-void RewindDeviceFile(FILE *stream){
+void RewindDeviceFile(FILE *stream) {
 #define BUFFER_LEN 255
   char buffer[BUFFER_LEN], *comma;
   int found_data = 0, buffer_len = BUFFER_LEN;
@@ -5125,27 +5070,27 @@ FILE_SIZE ReadDeviceData(char *file, int filetype, int loadstatus){
 // unload data
 
   if(loadstatus==UNLOAD){
-    for(i=0;i<ndeviceinfo;i++){
+    for(i=0;i<devicecoll.ndeviceinfo;i++){
       devicedata *devicei;
 
-      devicei = deviceinfo + i;
+      devicei = devicecoll.deviceinfo + i;
       if(devicei->filetype!=filetype)continue;
       FREEMEMORY(devicei->vals);
       FREEMEMORY(devicei->vals_orig);
       FREEMEMORY(devicei->valids);
     }
-    for(i=0;i<ndeviceinfo;i++){
+    for(i=0;i<devicecoll.ndeviceinfo;i++){
       devicedata *devicei;
       int j;
 
-      devicei = deviceinfo + i;
+      devicei = devicecoll.deviceinfo + i;
       if(devicei->filetype!=filetype||devicei->times==NULL)continue;
       times_local = devicei->times;
       FREEMEMORY(devicei->times);
-      for(j=i+1;j<ndeviceinfo;j++){
+      for(j=i+1;j<devicecoll.ndeviceinfo;j++){
         devicedata *devicej;
 
-        devicej = deviceinfo + j;
+        devicej = devicecoll.deviceinfo + j;
         if(devicej->filetype!=filetype)continue;
         if(times_local==devicej->times)devicej->times=NULL;
       }
@@ -5255,11 +5200,11 @@ FILE_SIZE ReadDeviceData(char *file, int filetype, int loadstatus){
 vdevicedata *GetVDevice(float *xyzval){
   int j;
 
-  for(j=0;j<nvdeviceinfo;j++){
+  for(j=0;j<devicecoll.nvdeviceinfo;j++){
     vdevicedata *vdevj;
     float *xyzj;
 
-    vdevj = vdeviceinfo + j;
+    vdevj = devicecoll.vdeviceinfo + j;
 
     xyzj = vdevj->valdev->xyz;
     if(ABS(xyzval[0]-xyzj[0])>EPSDEV)continue;
@@ -5275,11 +5220,11 @@ vdevicedata *GetVDevice(float *xyzval){
 devicedata *GetDeviceFromPosition(float *xyzval, char *device_label, int device_type){
   int j;
 
-  for(j=0;j<ndeviceinfo;j++){
+  for(j=0;j<devicecoll.ndeviceinfo;j++){
     devicedata *devj;
     float *xyz;
 
-    devj = deviceinfo + j;
+    devj = devicecoll.deviceinfo + j;
     if(devj->filetype!=device_type)continue;
     xyz = devj->xyz;
     if(strcmp(devj->quantity,device_label)!=0)continue;
@@ -5299,16 +5244,16 @@ void UpdateColorDevices(void){
 
   colordev = devicetypes[devicetypes_index];
 
-  for(i=0;i<nvdeviceinfo;i++){
+  for(i=0;i<devicecoll.nvdeviceinfo;i++){
     vdevicedata *vdevi;
 
-    vdevi = vdeviceinfo + i;
+    vdevi = devicecoll.vdeviceinfo + i;
     vdevi->colordev=NULL;
   }
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devi;
     vdevicedata *vdevi;
-    devi = deviceinfo + i;
+    devi = devicecoll.deviceinfo + i;
     vdevi = devi->vdevice;
     if(vdevi==NULL)continue;
     if(strcmp(colordev->quantity,devi->quantity)==0){
@@ -5331,15 +5276,15 @@ int IsDupDeviceLabel(int index, int direction){
   }
   else{
     i1=index+1;
-    i2=ndeviceinfo;
+    i2=devicecoll.ndeviceinfo;
   }
-  dev_index = deviceinfo + index;
-  if(index<0||index>=ndeviceinfo||STRCMP(dev_index->deviceID,"null")==0||dev_index->in_devc_csv==0)return 0;
+  dev_index = devicecoll.deviceinfo + index;
+  if(index<0||index>=devicecoll.ndeviceinfo||STRCMP(dev_index->deviceID,"null")==0||dev_index->in_devc_csv==0)return 0;
 
   for(i=i1;i<i2;i++){
     devicedata *devi;
 
-    devi = deviceinfo + i;
+    devi = devicecoll.deviceinfo + i;
     if(STRCMP(devi->deviceID, "null")==0)continue;
     if(STRCMP(dev_index->deviceID,devi->deviceID)==0)return 1;
   }
@@ -5354,7 +5299,7 @@ void DeviceData2WindRose(int nr, int ntheta){
   int i;
 
   maxr_windrose = 0.0;
-  for(i = 0; i < nvdeviceinfo; i++){
+  for(i = 0; i < devicecoll.nvdeviceinfo; i++){
     vdevicedata *vdevicei;
     windrosedata *windroseinfo;
     devicedata *udev, *vdev, *wdev;
@@ -5364,7 +5309,7 @@ void DeviceData2WindRose(int nr, int ntheta){
     int use_uvw_dev = 0, use_angle_dev=0;
     int k;
 
-    vdevicei = vdeviceinfo + i;
+    vdevicei = devicecoll.vdeviceinfo + i;
     udev = vdevicei->udev;
     vdev = vdevicei->vdev;
     wdev = vdevicei->wdev;
@@ -5515,12 +5460,12 @@ void DeviceData2WindRose(int nr, int ntheta){
 
           xyzi = veldev->xyz;
           // find min rmin and max rmax
-          for(j = 0; j<nvdeviceinfo; j++){
+          for(j = 0; j<devicecoll.nvdeviceinfo; j++){
             vdevicedata *vdevicej;
             devicedata *angledevj, *veldevj;
             float *xyzj, rminj, rmaxj;
 
-            vdevicej = vdeviceinfo+j;
+            vdevicej = devicecoll.vdeviceinfo+j;
             angledevj = vdevicej->angledev;
             veldevj = vdevicej->veldev;
             if(angledevj==NULL||veldevj==NULL)continue;
@@ -5544,12 +5489,12 @@ void DeviceData2WindRose(int nr, int ntheta){
             }
           }
           // update windrose
-          for(j = 0; j<nvdeviceinfo; j++){
+          for(j = 0; j<devicecoll.nvdeviceinfo; j++){
             vdevicedata *vdevicej;
             devicedata *angledevj, *veldevj;
             float *xyzj;
 
-            vdevicej = vdeviceinfo+j;
+            vdevicej = devicecoll.vdeviceinfo+j;
             angledevj = vdevicej->angledev;
             veldevj = vdevicej->veldev;
             if(angledevj==NULL||veldevj==NULL)continue;
@@ -5579,23 +5524,23 @@ void SetupDeviceData(void){
   char **devcunits=NULL, **devclabels=NULL;
   int is_dup;
 
-  if(ndeviceinfo==0)return; // only setup device data once
+  if(devicecoll.ndeviceinfo==0)return; // only setup device data once
   devices_setup = 1;
-  FREEMEMORY(vdeviceinfo);
-  NewMemory((void **)&vdeviceinfo,ndeviceinfo*sizeof(vdevicedata));
-  FREEMEMORY(vdevices_sorted);
-  NewMemory((void **)&vdevices_sorted,3*ndeviceinfo*sizeof(vdevicesortdata));
-  nvdeviceinfo=0;
-  for(i=0;i<ndeviceinfo;i++){
+  FREEMEMORY(devicecoll.vdeviceinfo);
+  NewMemory((void **)&devicecoll.vdeviceinfo,devicecoll.ndeviceinfo*sizeof(vdevicedata));
+  FREEMEMORY(devicecoll.vdevices_sorted);
+  NewMemory((void **)&devicecoll.vdevices_sorted,3*devicecoll.ndeviceinfo*sizeof(vdevicesortdata));
+  devicecoll.nvdeviceinfo=0;
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     vdevicedata *vdevi;
     devicedata *devi,*devj;
     float *xyzval;
 
-    devi = deviceinfo+i;
+    devi = devicecoll.deviceinfo+i;
     xyzval = devi->xyz;
     devi->vdevice = NULL;
 
-    vdevi = vdeviceinfo+nvdeviceinfo;
+    vdevi = devicecoll.vdeviceinfo+devicecoll.nvdeviceinfo;
     vdevi->valdev = devi;
     vdevi->udev = NULL;
     vdevi->vdev = NULL;
@@ -5652,17 +5597,17 @@ void SetupDeviceData(void){
       vdevi->angledev!=NULL||vdevi->veldev!=NULL){
       vdevi->unique=1;
       vdevi->display = 1;
-      nvdeviceinfo++;
+      devicecoll.nvdeviceinfo++;
     }
   }
 
   // look for duplicate device labels
 
   is_dup=0;
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devi;
 
-    devi = deviceinfo + i;
+    devi = devicecoll.deviceinfo + i;
     if(STRCMP(devi->deviceID,"null")==0)continue;
     if(IsDupDeviceLabel(i,AFTER)==1){
       is_dup=1;
@@ -5673,29 +5618,29 @@ void SetupDeviceData(void){
     int ii;
 
     fprintf(stderr,"*** Warning: Duplicate device labels: ");
-    for(ii=0;ii<ndeviceinfo;ii++){
+    for(ii=0;ii<devicecoll.ndeviceinfo;ii++){
       devicedata *devi;
 
-      devi = deviceinfo + ii;
+      devi = devicecoll.deviceinfo + ii;
       if(STRCMP(devi->deviceID,"null")==0)continue;
       if(IsDupDeviceLabel(ii,BEFORE)==0&& IsDupDeviceLabel(ii,AFTER)==1){
         fprintf(stderr," %s,",devi->deviceID);
       }
     }
-    fprintf(stderr," found in %s\n",fds_filein);
+    fprintf(stderr," found in %s\n",paths.fds_filein);
   }
-  for(i=0;i<nvdeviceinfo;i++){
+  for(i=0;i<devicecoll.nvdeviceinfo;i++){
     vdevicedata *vdevi;
     int j;
     float *xyzi;
 
-    vdevi = vdeviceinfo + i;
+    vdevi = devicecoll.vdeviceinfo + i;
     xyzi = vdevi->valdev->xyz;
-    for(j=i+1;j<nvdeviceinfo;j++){
+    for(j=i+1;j<devicecoll.nvdeviceinfo;j++){
       vdevicedata *vdevj;
       float *xyzj;
 
-      vdevj = vdeviceinfo + j;
+      vdevj = devicecoll.vdeviceinfo + j;
       if(vdevj->unique==0)continue;
       xyzj = vdevj->valdev->xyz;
       if(ABS(xyzi[0]-xyzj[0])>EPSDEV)continue;
@@ -5705,12 +5650,12 @@ void SetupDeviceData(void){
     }
   }
   max_dev_vel=-1.0;
-  for(i=0;i<nvdeviceinfo;i++){
+  for(i=0;i<devicecoll.nvdeviceinfo;i++){
     vdevicedata *vdevi;
     devicedata *devval;
     int j;
 
-    vdevi = vdeviceinfo + i;
+    vdevi = devicecoll.vdeviceinfo + i;
     if(vdevi->unique==0)continue;
     devval = vdevi->valdev;
     if(vdevi->udev!=NULL)vdevi->udev->vdevice=vdevi;
@@ -5752,13 +5697,13 @@ void SetupDeviceData(void){
 
   // find devices linked with each vdevice
 
-  if(ndeviceinfo>0){
-    for(i=0;i<ndeviceinfo;i++){
+  if(devicecoll.ndeviceinfo>0){
+    for(i=0;i<devicecoll.ndeviceinfo;i++){
       devicedata *devi;
       float *xyzi;
       vdevicedata *vdevj;
 
-      devi = deviceinfo + i;
+      devi = devicecoll.deviceinfo + i;
       if(devi->vdevice!=NULL)continue;
       xyzi = devi->xyz;
       vdevj = GetVDevice(xyzi);
@@ -5767,29 +5712,29 @@ void SetupDeviceData(void){
   }
 
   //setup devicetypes
-  if(ndeviceinfo>0){
+  if(devicecoll.ndeviceinfo>0){
     ndevicetypes=0;
     FREEMEMORY(devicetypes);
-    NewMemory((void **)&devicetypes,ndeviceinfo*sizeof(devicedata *));
-    for(i=0;i<ndeviceinfo;i++){
+    NewMemory((void **)&devicetypes,devicecoll.ndeviceinfo*sizeof(devicedata *));
+    for(i=0;i<devicecoll.ndeviceinfo;i++){
       devicedata *devi;
 
-      devi = deviceinfo + i;
+      devi = devicecoll.deviceinfo + i;
       devi->type2=-1;
     }
-    for(i=0;i<ndeviceinfo;i++){
+    for(i=0;i<devicecoll.ndeviceinfo;i++){
       int j;
       devicedata *devi;
 
-      devi = deviceinfo + i;
+      devi = devicecoll.deviceinfo + i;
       if(devi->type2>=0||devi->nvals==0||strlen(devi->quantity)==0)continue;
       devi->type2=ndevicetypes;
       devi->type2vis=0;
       devicetypes[ndevicetypes++]=devi;
-      for(j=i+1;j<ndeviceinfo;j++){
+      for(j=i+1;j<devicecoll.ndeviceinfo;j++){
         devicedata *devj;
 
-        devj = deviceinfo + j;
+        devj = devicecoll.deviceinfo + j;
         if(devj->type2<0&&strcmp(devi->quantity,devj->quantity)==0){
           devj->type2=devi->type2;
         }
@@ -5797,25 +5742,25 @@ void SetupDeviceData(void){
     }
     if(ndevicetypes>0)devicetypes[0]->type2vis=1;
   }
-  for(i=0;i<nvdeviceinfo;i++){
+  for(i=0;i<devicecoll.nvdeviceinfo;i++){
     vdevicesortdata *vdevsorti;
 
-    vdevsorti = vdevices_sorted + i;
-    vdevsorti->vdeviceinfo = vdeviceinfo + i;
+    vdevsorti = devicecoll.vdevices_sorted + i;
+    vdevsorti->vdeviceinfo = devicecoll.vdeviceinfo + i;
     vdevsorti->dir = XDIR;
 
-    vdevsorti = vdevices_sorted + nvdeviceinfo + i;
-    vdevsorti->vdeviceinfo = vdeviceinfo + i;
+    vdevsorti = devicecoll.vdevices_sorted + devicecoll.nvdeviceinfo + i;
+    vdevsorti->vdeviceinfo = devicecoll.vdeviceinfo + i;
     vdevsorti->dir = YDIR;
 
-    vdevsorti = vdevices_sorted + 2*nvdeviceinfo + i;
-    vdevsorti->vdeviceinfo = vdeviceinfo + i;
+    vdevsorti = devicecoll.vdevices_sorted + 2*devicecoll.nvdeviceinfo + i;
+    vdevsorti->vdeviceinfo = devicecoll.vdeviceinfo + i;
     vdevsorti->dir = ZDIR;
   }
-  for(i = 0; i<nvdeviceinfo; i++){
+  for(i = 0; i<devicecoll.nvdeviceinfo; i++){
     vdevicedata *vdevicei;
 
-    vdevicei = vdeviceinfo+i;
+    vdevicei = devicecoll.vdeviceinfo+i;
     vdevicei->nwindroseinfo = 0;
     vdevicei->windroseinfo = NULL;
   }
@@ -5844,10 +5789,10 @@ void InitializeDeviceCsvData(int flag){
   INIT_PRINT_TIMER(device_timer);
   ReadDeviceData(NULL, CSV_FDS, UNLOAD);
   ReadDeviceData(NULL, CSV_EXP, UNLOAD);
-  for(i = 0; i < ncsvfileinfo; i++){
+  for(i = 0; i < csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvi;
 
-    csvi = csvfileinfo + i;
+    csvi = csvcoll.csvfileinfo + i;
     if(strcmp(csvi->c_type, "devc") == 0)file_size += ReadDeviceData(csvi->file, CSV_FDS, flag);
     if(strcmp(csvi->c_type, "ext") == 0)file_size += ReadDeviceData(csvi->file, CSV_EXP, flag);
   }
@@ -5882,12 +5827,12 @@ void UpdateObjectUsed(void){
     obj_typei = objectscoll->object_defs[i];
     obj_typei->used_by_device = 0;
   }
-  for(i = 0; i<ndeviceinfo; i++){
+  for(i = 0; i<devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
     propdata *propi;
     int jj;
 
-    devicei = deviceinfo+i;
+    devicei = devicecoll.deviceinfo+i;
     propi = devicei->prop;
     if(propi==NULL)continue;
     for(jj = 0; jj<propi->nsmokeview_ids; jj++){
@@ -5968,10 +5913,10 @@ void InitDevicePlane(devicedata *devicei){
     rgbcolor[1]=0.0;
     rgbcolor[2]=0.0;
     rgbcolor[3]=1.0;
-    devicei->color=GetColorPtr(rgbcolor);
+    devicei->color=GetColorPtr(&colorcoll, rgbcolor);
   }
   colorindex=0;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
     float xvert[12], yvert[12], zvert[12];
@@ -5983,7 +5928,7 @@ void InitDevicePlane(devicedata *devicei){
     InitIsoSurface(devicei->plane_surface[i],level,devicei->color,colorindex);
     devicei->plane_surface[i]->cullfaces=1;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
 
     xx[0]=meshi->xyz_bar0[XXX];
     xx[1]=SMV2FDS_X(meshi->xyz_bar[XXX]);
@@ -6020,57 +5965,8 @@ void InitDevicePlane(devicedata *devicei){
                      closestnodes, nvert, triangles, ntriangles);
     GetNormalSurface(devicei->plane_surface[i]);
     CompressIsoSurface(devicei->plane_surface[i],1,
-          xbar0,2*xbar,ybar0,2*ybar,zbar0,zbar);
+          sextras.xbar0,2*sextras.xbar,sextras.ybar0,2*sextras.ybar,sextras.zbar0,sextras.zbar);
     SmoothIsoSurface(devicei->plane_surface[i]);
   }
 
 }
-
-/* ----------------------- UpdatePartClassDepend ----------------------------- */
-
-void UpdatePartClassDepend(partclassdata *partclassi){
-  int i;
-
-  if(partclassi->prop!=NULL){
-    sv_object_frame *obj_frame;
-    int nvar;
-
-    obj_frame=partclassi->prop->smv_object->obj_frames[0];
-    for(i=0;i<partclassi->nvars_dep-3;i++){
-      char *var;
-
-      var=partclassi->vars_dep[i];
-      partclassi->vars_dep_index[i]= GetObjectFrameTokenLoc(var,obj_frame);
-    }
-    nvar = partclassi->nvars_dep;
-    partclassi->vars_dep_index[nvar-3]= GetObjectFrameTokenLoc("R",obj_frame);
-    partclassi->vars_dep_index[nvar-2]= GetObjectFrameTokenLoc("G",obj_frame);
-    partclassi->vars_dep_index[nvar-1]= GetObjectFrameTokenLoc("B",obj_frame);
-  }
-}
-
-/* ------------------ Normalize ------------------------ */
-
-void Normalize(float *xyz, int n){
-  float norm,norm2;
-  int i;
-
-  norm2 = 0.0;
-
-  for(i=0;i<n;i++){
-    norm2 += xyz[i]*xyz[i];
-  }
-  norm = sqrt(norm2);
-  if(norm<0.00001){
-    for(i=0;i<n-1;i++){
-      xyz[i]=0.0;
-    }
-    xyz[n-1]=1.0;
-  }
-  else{
-    for(i=0;i<n;i++){
-      xyz[i]/=norm;
-    }
-  }
-}
-

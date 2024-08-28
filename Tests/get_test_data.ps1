@@ -1,9 +1,9 @@
-$commit = "bf2446b600b4062196923a74cd2cf67c3b7be76d"
+$commit_fig = "83e6a770f511e315af21be5868d758b99f0a83ad"
 
 $zip_path = "$env:temp\test-data.zip"
 $unzip_path = "$env:temp\test-data-out"
-Invoke-WebRequest -Uri https://github.com/firemodels/fig/archive/$commit.zip -OutFile $zip_path
+Invoke-WebRequest -Uri https://github.com/firemodels/fig/archive/$commit_fig.zip -OutFile $zip_path
 Expand-Archive $zip_path -DestinationPath $unzip_path -Force
 mkdir fig -Force
-Move-Item $unzip_path/fig-$commit/* fig -Force
+Move-Item $unzip_path/fig-$commit_fig/* fig -Force
 Copy-Item -Force -Recurse fig/smv/Tests/Visualization ../Verification

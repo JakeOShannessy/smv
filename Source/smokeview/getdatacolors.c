@@ -231,7 +231,7 @@ void UpdateAllBoundaryColors(int flag){
     switch(patchi->patch_filetype){
       case PATCH_STRUCTURED_NODE_CENTER:
       case PATCH_STRUCTURED_CELL_CENTER:
-        meshi = meshinfo+patchi->blocknumber;
+        meshi = meshescoll.meshinfo+patchi->blocknumber;
         if(meshi->patchval==NULL||meshi->cpatchval==NULL)continue;
         list[nlist++] = i;
         break;
@@ -266,11 +266,11 @@ void UpdateAllBoundaryColors(int flag){
               meshdata *meshi;
               int npatchvals;
 
-              meshi = meshinfo+patchi->blocknumber;
+              meshi = meshescoll.meshinfo+patchi->blocknumber;
               npatchvals = meshi->npatch_times*meshi->npatchsize;
               GetBoundaryColors3(patchi, meshi->patchval, 0, npatchvals, meshi->cpatchval,
                                  &glui_patchmin, &glui_patchmax,
-                                 nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
+                                 sextras.nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
                                  &patchi->extreme_min, &patchi->extreme_max, flag);
             }
             break;
@@ -278,7 +278,7 @@ void UpdateAllBoundaryColors(int flag){
           case PATCH_GEOMETRY_SLICE:
             GetBoundaryColors3(patchi, patchi->geom_vals, 0, patchi->geom_nvals, patchi->geom_ivals,
                                &valmin, &valmax,
-                               nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
+                               sextras.nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
                                &patchi->extreme_min, &patchi->extreme_max, flag);
             break;
           default:
@@ -645,7 +645,7 @@ void GetPlot3DColors(int plot3dvar, float *ttmin, float *ttmax,
     for(i = 0; i<nplot3dinfo; i++){
       p = plot3dinfo+i;
       if(p->loaded==0||p->display==0)continue;
-      meshi = meshinfo+p->blocknumber;
+      meshi = meshescoll.meshinfo+p->blocknumber;
       ntotal = (meshi->ibar+1)*(meshi->jbar+1)*(meshi->kbar+1);
 
       if(meshi->qdata!=NULL){
@@ -698,7 +698,7 @@ void GetPlot3DColors(int plot3dvar, float *ttmin, float *ttmax,
     for(i = 0; i<nplot3dinfo; i++){
       p = plot3dinfo+i;
       if(p->loaded==0||p->display==0)continue;
-      meshi = meshinfo+p->blocknumber;
+      meshi = meshescoll.meshinfo+p->blocknumber;
       ntotal = (meshi->ibar+1)*(meshi->jbar+1)*(meshi->kbar+1);
 
       if(meshi->qdata==NULL){
@@ -768,7 +768,7 @@ void UpdateSliceColors(int last_slice){
     slicedata *sd;
 
     i = slice_loaded_list[ii];
-    sd = sliceinfo+i;
+    sd = slicecoll.sliceinfo+i;
     if(sd->vloaded==0&&sd->display==0)continue;
     if(sd->slicefile_labelindex==slicefile_labelindex){
       int set_slicecolor;
@@ -795,7 +795,7 @@ void UpdateSliceBounds2(void){
     float qmin, qmax;
 
     i = slice_loaded_list[ii];
-    sd = sliceinfo+i;
+    sd = slicecoll.sliceinfo+i;
     if(sd->display==0)continue;
     GLUIGetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin, &qmin, &set_valmax, &qmax);
     sd->valmin_slice      = qmin;
@@ -804,15 +804,15 @@ void UpdateSliceBounds2(void){
     sd->globalmax_slice   = qmax;
     SetSliceColors(qmin, qmax, sd, 0, &error);
   }
-  for(ii = 0; ii<nvsliceinfo; ii++){
+  for(ii = 0; ii<slicecoll.nvsliceinfo; ii++){
     vslicedata *vd;
     slicedata *sd;
     int set_valmin, set_valmax;
     float qmin, qmax;
 
-    vd = vsliceinfo+ii;
+    vd = slicecoll.vsliceinfo+ii;
     if(vd->loaded==0||vd->display==0||vd->ival==-1)continue;
-    sd = sliceinfo+vd->ival;
+    sd = slicecoll.sliceinfo+vd->ival;
     GLUIGetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin, &qmin, &set_valmax, &qmax);
     sd->valmin_slice    = qmin;
     sd->valmax_slice    = qmax;
@@ -905,14 +905,14 @@ void InitCadColors(void){
   switch(setbw){
    case 0:
     for(n=0;n<nrgb_cad;n++){
-      xx = (float)n/(float)nrgb_cad * (float)(nrgb-1);
+      xx = (float)n/(float)nrgb_cad * (float)(sextras.nrgb-1);
       i1 = (int)xx;
       i2 = (int)(xx+1);
       f2 = xx - (float)i1;
       f1 = 1.0f - f2;
       sum=0.0;
       for(i=0;i<3;i++){
-        rgb_cad[n][i] = f1*rgb[i1][i] + f2*rgb[i2][i];
+        rgb_cad[n][i] = f1*sextras.rgb[i1][i] + f2*sextras.rgb[i2][i];
         sum += rgb_cad[n][i]*rgb_cad[n][i];
       }
       sum=sqrt((double)sum);
@@ -1002,32 +1002,32 @@ void InitRGB(void){
   if(use_transparency_data==1)transparent_level_local=transparent_level;
 
   if(setbw==0){
-    ConvertColor(TO_COLOR);
+    ConvertColor(colorcoll, TO_COLOR);
     if(nrgb_ini > 0){
-      nrgb = nrgb_ini;
+      sextras.nrgb = nrgb_ini;
       for(n=0;n<nrgb_ini;n++){
-        rgb[n][0] = rgb_ini[n*3];
-        rgb[n][1] = rgb_ini[n*3+1];
-        rgb[n][2] = rgb_ini[n*3+2];
-        rgb[n][3] = transparent_level_local;
+        sextras.rgb[n][0] = rgb_ini[n*3];
+        sextras.rgb[n][1] = rgb_ini[n*3+1];
+        sextras.rgb[n][2] = rgb_ini[n*3+2];
+        sextras.rgb[n][3] = transparent_level_local;
       }
     }
     else{
-      for(n=0;n<nrgb;n++){
-        rgb[n][0] = rgb_base[n][0];
-        rgb[n][1] = rgb_base[n][1];
-        rgb[n][2] = rgb_base[n][2];
-        rgb[n][3] = transparent_level_local;
+      for(n=0;n<sextras.nrgb;n++){
+        sextras.rgb[n][0] = rgb_base[n][0];
+        sextras.rgb[n][1] = rgb_base[n][1];
+        sextras.rgb[n][2] = rgb_base[n][2];
+        sextras.rgb[n][3] = transparent_level_local;
       }
     }
   }
   else{
-    ConvertColor(TO_BW);
-    for(n=0;n<nrgb;n++){
-      rgb[n][0] = bw_base[n][0];
-      rgb[n][1] = bw_base[n][1];
-      rgb[n][2] = bw_base[n][2];
-      rgb[n][3] = transparent_level_local;
+    ConvertColor(colorcoll, TO_BW);
+    for(n=0;n<sextras.nrgb;n++){
+      sextras.rgb[n][0] = bw_base[n][0];
+      sextras.rgb[n][1] = bw_base[n][1];
+      sextras.rgb[n][2] = bw_base[n][2];
+      sextras.rgb[n][3] = transparent_level_local;
     }
   }
 }
@@ -1042,7 +1042,7 @@ void UpdateCO2Colormap(void){
 
   if(use_transparency_data==1)transparent_level_local=transparent_level;
 
-  co2_cb = colorbarinfo[co2_colorbar_index].colorbar_rgb;
+  co2_cb = colorbars.colorbarinfo[colorbars.co2_colorbar_index].colorbar_rgb;
   rgb_colormap = rgb_sliceco2colormap_01;
 
   switch(co2_colormap_type){
@@ -1081,7 +1081,7 @@ void UpdateSmokeColormap(int option){
 
   if(have_fire==HRRPUV_index&&option==RENDER_SLICE){
     valmin=global_hrrpuv_min;
-    valcut=global_hrrpuv_cutoff;
+    valcut=sextras.global_hrrpuv_cutoff;
     valmax=global_hrrpuv_max;
     rgb_colormap = rgb_slicesmokecolormap_01;
   }
@@ -1097,8 +1097,8 @@ void UpdateSmokeColormap(int option){
 
   if(use_transparency_data==1)transparent_level_local=transparent_level;
 
-  alpha_rgb = colorbarinfo[colorbartype].colorbar_alpha;
-  fire_cb = colorbarinfo[fire_colorbar_index].colorbar_rgb;
+  alpha_rgb = colorbars.colorbarinfo[colorbartype].colorbar_alpha;
+  fire_cb = colorbars.colorbarinfo[colorbars.fire_colorbar_index].colorbar_rgb;
 
   switch(fire_colormap_type){
     case FIRECOLORMAP_DIRECT:
@@ -1209,13 +1209,13 @@ void UpdateRGBColors(int colorbar_index){
     rgb_trans[4*n+2]=0.0;
     rgb_trans[4*n+3]=(float)n/(float)(nrgb_full-1);
   }
-  if(colorbarinfo!=NULL){
+  if(colorbars.colorbarinfo!=NULL){
     unsigned char *alpha_rgb;
     colorbardata *cbi;
 
-    cbi = colorbarinfo + colorbartype;
+    cbi = colorbars.colorbarinfo + colorbartype;
 
-    alpha_rgb = colorbarinfo[colorbartype].colorbar_alpha;
+    alpha_rgb = colorbars.colorbarinfo[colorbartype].colorbar_alpha;
     for(n=0;n<nrgb_full;n++){
       rgb_full[n][0]=cbi->colorbar_rgb[3*n];
       rgb_full[n][1]=cbi->colorbar_rgb[3*n+1];
@@ -1353,51 +1353,51 @@ void UpdateRGBColors(int colorbar_index){
     rgb2ptr=&(rgb2[0][0]);
   }
   if(colorbar_index!=0){
-    for(n=0;n<nrgb;n++){
-      nn=n*(nrgb_full-1)/(nrgb-1);
-      rgb[n][0] = rgb_full[nn][0];
-      rgb[n][1] = rgb_full[nn][1];
-      rgb[n][2] = rgb_full[nn][2];
-      rgb[n][3] = transparent_level_local;
+    for(n=0;n<sextras.nrgb;n++){
+      nn=n*(nrgb_full-1)/(sextras.nrgb-1);
+      sextras.rgb[n][0] = rgb_full[nn][0];
+      sextras.rgb[n][1] = rgb_full[nn][1];
+      sextras.rgb[n][2] = rgb_full[nn][2];
+      sextras.rgb[n][3] = transparent_level_local;
     }
   }
-  for(n=nrgb;n<nrgb+nrgb2;n++){
-    rgb[n][0]=rgb2ptr[3*(n-nrgb)];
-    rgb[n][1]=rgb2ptr[3*(n-nrgb)+1];
-    rgb[n][2]=rgb2ptr[3*(n-nrgb)+2];
-    rgb[n][3]=transparent_level_local;
+  for(n=sextras.nrgb;n<sextras.nrgb+sextras.nrgb2;n++){
+    sextras.rgb[n][0]=rgb2ptr[3*(n-sextras.nrgb)];
+    sextras.rgb[n][1]=rgb2ptr[3*(n-sextras.nrgb)+1];
+    sextras.rgb[n][2]=rgb2ptr[3*(n-sextras.nrgb)+2];
+    sextras.rgb[n][3]=transparent_level_local;
   }
-  rgb_white=nrgb;
-  rgb_yellow=nrgb+1;
-  rgb_blue=nrgb+2;
-  rgb_red=nrgb+3;
+  rgb_white=sextras.nrgb;
+  rgb_yellow=sextras.nrgb+1;
+  rgb_blue=sextras.nrgb+2;
+  rgb_red=sextras.nrgb+3;
 
   if(background_flip==0){
     for(i=0;i<3;i++){
       foregroundcolor[i]=foregroundbasecolor[i];
       backgroundcolor[i]=backgroundbasecolor[i];
     }
-    rgb[rgb_white][0]=1.0;
-    rgb[rgb_white][1]=1.0;
-    rgb[rgb_white][2]=1.0;
-    rgb[rgb_black][0]=0.0;
-    rgb[rgb_black][1]=0.0;
-    rgb[rgb_black][2]=0.0;
+    sextras.rgb[rgb_white][0]=1.0;
+    sextras.rgb[rgb_white][1]=1.0;
+    sextras.rgb[rgb_white][2]=1.0;
+    sextras.rgb[rgb_black][0]=0.0;
+    sextras.rgb[rgb_black][1]=0.0;
+    sextras.rgb[rgb_black][2]=0.0;
   }
   else{
     for(i=0;i<3;i++){
       foregroundcolor[i]=backgroundbasecolor[i];
       backgroundcolor[i]=foregroundbasecolor[i];
     }
-    rgb[rgb_white][0]=0.0;  //xxx fix or take out
-    rgb[rgb_white][1]=0.0;
-    rgb[rgb_white][2]=0.0;
-    rgb[rgb_black][0]=1.0;
-    rgb[rgb_black][1]=1.0;
-    rgb[rgb_black][2]=1.0;
+    sextras.rgb[rgb_white][0]=0.0;  //xxx fix or take out
+    sextras.rgb[rgb_white][1]=0.0;
+    sextras.rgb[rgb_white][2]=0.0;
+    sextras.rgb[rgb_black][0]=1.0;
+    sextras.rgb[rgb_black][1]=1.0;
+    sextras.rgb[rgb_black][2]=1.0;
   }
-  for(i=0;i<nmeshes;i++){
-    meshi=meshinfo + i;
+  for(i=0;i<meshescoll.nmeshes;i++){
+    meshi=meshescoll.meshinfo + i;
     vent_offset = 6*meshi->nbptrs;
     outline_offset = vent_offset + meshi->nvents;
     if(meshi->faceinfo == NULL)continue;
@@ -1555,10 +1555,10 @@ void UpdateChopColors(void){
   if(showall_3dslices==1){
     int slice3d_loaded = 0;
 
-    for(i=0;i<nsliceinfo;i++){
+    for(i=0;i<slicecoll.nsliceinfo;i++){
       slicedata *slicei;
 
-      slicei = sliceinfo + i;
+      slicei = slicecoll.sliceinfo + i;
       if(slicei->volslice==1&&slicei->loaded==1&&slicei->display==1){
         slice3d_loaded = 1;
         break;
@@ -1713,18 +1713,18 @@ void UpdateChopColors(void){
         if(ii>NCHOP-1)continue;
         rgb_plot3d[4*i+3]=transparent_level_local*(float)ii/(float)(NCHOP-1);
       }
-      for(i = 0; i<nrgb-2; i++){
+      for(i = 0; i<sextras.nrgb-2; i++){
         int ii;
         float factor;
 
-        factor = 256.0/(float)(nrgb-2);
+        factor = 256.0/(float)(sextras.nrgb-2);
 
         ii = factor*((float)i+0.5);
         if(ii>255)ii = 255;
         rgb_plot3d_contour[i] = rgb_plot3d + 4*ii;
       }
-      rgb_plot3d_contour[nrgb-2] = rgb_plot3d;
-      rgb_plot3d_contour[nrgb-1] = rgb_plot3d + 4*255;
+      rgb_plot3d_contour[sextras.nrgb-2] = rgb_plot3d;
+      rgb_plot3d_contour[sextras.nrgb-1] = rgb_plot3d + 4*255;
     }
     if(setp3chopmax_temp_local==1){
       ichopmax=nrgb_full*(p3chopmax_temp_local - glui_p3min_local)/(glui_p3max_local - glui_p3min_local);
@@ -1773,50 +1773,6 @@ void GetRGB(unsigned int val, unsigned char *rr, unsigned char *gg, unsigned cha
   *rr=r; *gg=g; *bb=b;
 }
 
-/* ------------------ GetColorPtr ------------------------ */
-
-float *GetColorPtr(float *color){
-  colordata *colorptr,*oldlastcolor,*lastcolor;
-
-  int i;
-
-  if(firstcolor==NULL){
-    NewMemory((void *)&firstcolor,sizeof(colordata));
-    for(i=0;i<4;i++){
-      firstcolor->color[i]=color[i];
-      firstcolor->full_color[i]=color[i];
-    }
-    firstcolor->bw_color[0] = TOBW(color);
-    firstcolor->bw_color[1] = firstcolor->bw_color[0];
-    firstcolor->bw_color[2] = firstcolor->bw_color[0];
-    firstcolor->bw_color[3] = color[3];
-    firstcolor->nextcolor=NULL;
-    return firstcolor->color;
-  }
-  oldlastcolor = firstcolor;
-  for(colorptr = firstcolor; colorptr!=NULL; colorptr = colorptr->nextcolor){
-    oldlastcolor=colorptr;
-    if(ABS(colorptr->color[0]-color[0])>0.0001)continue;
-    if(ABS(colorptr->color[1]-color[1])>0.0001)continue;
-    if(ABS(colorptr->color[2]-color[2])>0.0001)continue;
-    if(ABS(colorptr->color[3]-color[3])>0.0001)continue;
-    return colorptr->color;
-  }
-  lastcolor=NULL;
-  NewMemory((void *)&lastcolor,sizeof(colordata));
-  oldlastcolor->nextcolor=lastcolor;
-  for(i=0;i<4;i++){
-    lastcolor->color[i]=color[i];
-    lastcolor->full_color[i]=color[i];
-  }
-  lastcolor->bw_color[0] = TOBW(color);
-  lastcolor->bw_color[1] = lastcolor->bw_color[0];
-  lastcolor->bw_color[2] = lastcolor->bw_color[0];
-  lastcolor->bw_color[3] = color[3];
-  lastcolor->nextcolor=NULL;
-  return lastcolor->color;
-}
-
 /* ------------------ GetColorTranPtr ------------------------ */
 
 float *GetColorTranPtr(float *color, float transparency){
@@ -1826,25 +1782,24 @@ float *GetColorTranPtr(float *color, float transparency){
   col[1] = color[1];
   col[2] = color[2];
   col[3] = transparency;
-  return GetColorPtr(col);
+  return GetColorPtr(&colorcoll, col);
 }
 
   /* ------------------ ConvertColor ------------------------ */
 
-void ConvertColor(int flag){
+void ConvertColor(color_collection coll, int flag){
   colordata *colorptr;
-  extern colordata *firstcolor;
 
   switch(flag){
    case TO_BW:
-    for(colorptr=firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
+    for(colorptr=coll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
       colorptr->color[0]=colorptr->bw_color[0];
       colorptr->color[1]=colorptr->bw_color[1];
       colorptr->color[2]=colorptr->bw_color[2];
     }
     break;
    case TO_COLOR:
-    for(colorptr=firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
+    for(colorptr=coll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
       colorptr->color[0]=colorptr->full_color[0];
       colorptr->color[1]=colorptr->full_color[1];
       colorptr->color[2]=colorptr->full_color[2];

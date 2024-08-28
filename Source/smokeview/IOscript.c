@@ -1668,12 +1668,12 @@ int GetVolFrameMax(int meshnum){
   int i, volframemax=-1;
 
   volframemax = -1;
-  for(i = 0; i<nmeshes; i++){
+  for(i = 0; i<meshescoll.nmeshes; i++){
     meshdata *meshi;
     volrenderdata *vr;
 
     if(meshnum!=i && meshnum>=0)continue;
-    meshi = meshinfo+i;
+    meshi = meshescoll.meshinfo+i;
     vr = meshi->volrenderinfo;
     volframemax = MAX(volframemax,vr->ntimes);
   }
@@ -1688,7 +1688,7 @@ void LoadSmokeFrame(int meshnum, int framenum){
   int max_frames = -1, frame_old;
   float valtime;
 
-  if(meshnum > nmeshes - 1||meshnum<-1)meshnum = -1;
+  if(meshnum > meshescoll.nmeshes - 1||meshnum<-1)meshnum = -1;
 
   max_frames = GetVolFrameMax(meshnum);
   if(max_frames > 0)GLUIUpdateLoadFrameMax(max_frames);
@@ -1696,12 +1696,12 @@ void LoadSmokeFrame(int meshnum, int framenum){
   framenum = CLAMP(framenum, 0, max_frames-1);
   if(framenum!=frame_old)GLUIUpdateLoadFrameVal(framenum);
 
-  for(i = 0; i<nmeshes; i++){
+  for(i = 0; i<meshescoll.nmeshes; i++){
     meshdata *meshi;
     volrenderdata *vr;
 
     if(meshnum != i && meshnum >= 0)continue;
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     vr = meshi->volrenderinfo;
     FreeVolsmokeFrame(vr, framenum);
     ReadVolsmokeFrame(vr, framenum, &first);
@@ -1741,9 +1741,9 @@ void LoadTimeFrame(int meshnum, float timeval){
   int update_timebounds = 0;
 
   meshnum_orig = meshnum;
-  if(meshnum<0||meshnum>nmeshes-1)meshnum = 0;
+  if(meshnum<0||meshnum>meshescoll.nmeshes-1)meshnum = 0;
 
-  meshi = meshinfo+meshnum;
+  meshi = meshescoll.meshinfo+meshnum;
   vr = meshi->volrenderinfo;
 
   if(vr->times_defined==0)LoadSmokeFrame(meshnum_orig, 0);
@@ -1841,7 +1841,7 @@ void ScriptLoadIsoFrame(scriptdata *scripti, int flag){
   index = scripti->ival;
   framenum = scripti->ival2;
   fileindex = scripti->ival4;
-  if(index > nmeshes - 1)index = -1;
+  if(index > meshescoll.nmeshes - 1)index = -1;
 
   update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
   CancelUpdateTriangles();
@@ -2001,11 +2001,11 @@ void ScriptLoadVolSmoke(scriptdata *scripti){
     read_vol_mesh=VOL_READALL;
     ReadVolsmokeAllFramesAllMeshes2(NULL);
   }
-  else if(imesh>=0&&imesh<nmeshes){
+  else if(imesh>=0&&imesh<meshescoll.nmeshes){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo + imesh;
+    meshi = meshescoll.meshinfo + imesh;
     vr = meshi->volrenderinfo;
     ReadVolsmokeAllFrames(vr);
   }
@@ -2019,25 +2019,25 @@ void ScriptLoad3dSmoke(scriptdata *scripti){
   int count=0;
 
   PRINTF("script: loading smoke3d files of type: %s\n\n",scripti->cval);
-  for(i = 0; i < nsmoke3dinfo; i++){
+  for(i = 0; i < smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dinfo + i;
+    smoke3di = smoke3dcoll.smoke3dinfo + i;
     smoke3di->finalize = 0;
   }
-  for(i = nsmoke3dinfo - 1; i >= 0; i--){
+  for(i = smoke3dcoll.nsmoke3dinfo - 1; i >= 0; i--){
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dinfo + i;
+    smoke3di = smoke3dcoll.smoke3dinfo + i;
     if(MatchUpper(smoke3di->label.longlabel, scripti->cval) == MATCH){
       smoke3di->finalize = 1;
       break;
     }
   }
-  for(i=0;i<nsmoke3dinfo;i++){
+  for(i=0;i<smoke3dcoll.nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dinfo + i;
+    smoke3di = smoke3dcoll.smoke3dinfo + i;
     if(MatchUpper(smoke3di->label.longlabel,scripti->cval) == MATCH){
       ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
       count++;
@@ -2097,7 +2097,7 @@ int SliceMatch(scriptdata *scripti, slicedata *slicei){
     else{
       if(min[0]!=0||min[1]!=0||min[2]!=0)return 0;
     }
-    meshi = meshinfo+slicei->blocknumber;
+    meshi = meshescoll.meshinfo+slicei->blocknumber;
     if(max[0]!=meshi->ibar||max[1]!=meshi->jbar||max[2]!=meshi->kbar)return 0;
   }
   else{
@@ -2136,16 +2136,16 @@ void ScriptLoadVSLCF(scriptdata *scripti){
   }
   printf("\n");
 
-  for(i=0;i<nmultivsliceinfo;i++){
+  for(i=0;i<slicecoll.nmultivsliceinfo;i++){
     multivslicedata *mvslicei;
     vslicedata *vslicei;
     int j;
     slicedata *slicei;
 
-    mvslicei = multivsliceinfo + i;
+    mvslicei = slicecoll.multivsliceinfo + i;
     if(mvslicei->nvslices<=0)continue;
-    vslicei = vsliceinfo + mvslicei->ivslices[0];
-    slicei = sliceinfo + vslicei->ival;
+    vslicei = slicecoll.vsliceinfo + mvslicei->ivslices[0];
+    slicei = slicecoll.sliceinfo + vslicei->ival;
 
     if(SliceMatch(scripti, slicei)==0)continue;
 
@@ -2153,7 +2153,7 @@ void ScriptLoadVSLCF(scriptdata *scripti){
       vslicedata *vslicej;
       int finalize_save;
 
-      vslicej = vsliceinfo+mvslicei->ivslices[j];
+      vslicej = slicecoll.vsliceinfo+mvslicei->ivslices[j];
 //save finalize
       finalize_save = vslicej->finalize;
       if(j==mvslicei->nvslices-1){
@@ -2227,25 +2227,25 @@ void ScriptLoadSLCF(scriptdata *scripti){
   }
   printf("\n");
 
-  for(i = 0; i<nsliceinfo; i++){
+  for(i = 0; i<slicecoll.nsliceinfo; i++){
     slicedata *slicei;
 
-    slicei = sliceinfo+i;
+    slicei = slicecoll.sliceinfo+i;
     slicei->finalize = 0;
   }
-  for(i = nsliceinfo-1; i>=0; i--){
+  for(i = slicecoll.nsliceinfo-1; i>=0; i--){
     slicedata *slicei;
 
-    slicei = sliceinfo+i;
+    slicei = slicecoll.sliceinfo+i;
     if(SliceMatch(scripti, slicei)==0)continue;
     slicei->finalize = 1;
     break;
   }
 
-  for(i = 0; i<nsliceinfo; i++){
+  for(i = 0; i<slicecoll.nsliceinfo; i++){
     slicedata *slicei;
 
-    slicei = sliceinfo+i;
+    slicei = slicecoll.sliceinfo+i;
     if(SliceMatch(scripti, slicei)==0)continue;
 
     LoadSliceMenu(i);
@@ -2266,14 +2266,14 @@ void ScriptLoadSlice(scriptdata *scripti){
 
   PRINTF("script: loading slice files of type: %s\n\n",scripti->cval);
 
-  for(i=0;i<nmultisliceinfo;i++){
+  for(i=0;i<slicecoll.nmultisliceinfo;i++){
     multislicedata *mslicei;
     slicedata *slicei;
     int j;
 
-    mslicei = multisliceinfo + i;
+    mslicei = slicecoll.multisliceinfo + i;
     if(mslicei->nslices<=0)continue;
-    slicei = sliceinfo + mslicei->islices[0];
+    slicei = slicecoll.sliceinfo + mslicei->islices[0];
     if(MatchUpper(slicei->label.longlabel,scripti->cval) == NOTMATCH)continue;
     if(scripti->ival==0){
       if(slicei->volslice==0)continue;
@@ -2286,7 +2286,7 @@ void ScriptLoadSlice(scriptdata *scripti){
       slicedata *slicej;
       int finalize_save;
 
-      slicej = sliceinfo+mslicei->islices[j];
+      slicej = slicecoll.sliceinfo+mslicei->islices[j];
 //save finalize
       finalize_save = slicej->finalize;
       if(j==mslicei->nslices-1){
@@ -2297,7 +2297,7 @@ void ScriptLoadSlice(scriptdata *scripti){
       }
       LoadSliceMenu(mslicei->islices[j]);
       slicej->finalize = finalize_save;
-      slicej = sliceinfo + mslicei->islices[j];
+      slicej = slicecoll.sliceinfo + mslicei->islices[j];
       count++;
     }
     break;
@@ -2320,12 +2320,12 @@ void SetSliceGlobalBounds(char *type){
     int i;
     float valmin = 1000000000.0, valmax = -1000000000.0;
 
-    for(i = 0; i<nsliceinfo; i++){
+    for(i = 0; i<slicecoll.nsliceinfo; i++){
       slicedata *slicei;
       char *slice_type;
       FILE *stream;
 
-      slicei = sliceinfo+i;
+      slicei = slicecoll.sliceinfo+i;
       slice_type = slicei->label.shortlabel;
       if(strcmp(type, slice_type)!=0)continue;
       stream = fopen(slicei->bound_file, "r");
@@ -2359,14 +2359,14 @@ int GetNSliceGeomFrames(scriptdata *scripti){
   int i;
 
   nframes = -1;
-  for(i = 0; i<nmultisliceinfo; i++){
+  for(i = 0; i<slicecoll.nmultisliceinfo; i++){
     multislicedata *mslicei;
     slicedata *slicei;
     int j;
 
-    mslicei = multisliceinfo+i;
+    mslicei = slicecoll.multisliceinfo+i;
     if(mslicei->nslices<=0)continue;
-    slicei = sliceinfo+mslicei->islices[0];
+    slicei = slicecoll.sliceinfo+mslicei->islices[0];
     if(MatchUpper(slicei->label.longlabel, scripti->cval)==NOTMATCH)continue;
     if(scripti->ival==0){
       if(slicei->volslice==0)continue;
@@ -2379,7 +2379,7 @@ int GetNSliceGeomFrames(scriptdata *scripti){
  // determine number of time frames
 
     for(j = 0; j<mslicei->nslices; j++){
-      slicei = sliceinfo+mslicei->islices[j];
+      slicei = slicecoll.sliceinfo+mslicei->islices[j];
       if(slicei->nframes==0){
         if(slicei->slice_filetype==SLICE_GEOM){
           int nvals, error;
@@ -2421,10 +2421,10 @@ void ScriptLoadSliceRender(scriptdata *scripti){
     scripti->first = 0;
     scripti->exit = 0;
     frame_current = frame_start;
-    for(i = 0; i<nsliceinfo; i++){
+    for(i = 0; i<slicecoll.nsliceinfo; i++){
       slicedata *slicei;
 
-      slicei = sliceinfo+i;
+      slicei = slicecoll.sliceinfo+i;
       if(strcmp(slicei->label.longlabel, scripti->cval)==0){
         shortlabel = slicei->label.shortlabel;
         break;
@@ -2453,14 +2453,14 @@ void ScriptLoadSliceRender(scriptdata *scripti){
     PRINTF("\nFrame: %i of %i, ", frame_current, frames_total);
   }
 
-  for(i = 0; i<nmultisliceinfo; i++){
+  for(i = 0; i<slicecoll.nmultisliceinfo; i++){
     multislicedata *mslicei;
     slicedata *slicei;
     int j;
 
-    mslicei = multisliceinfo+i;
+    mslicei = slicecoll.multisliceinfo+i;
     if(mslicei->nslices<=0)continue;
-    slicei = sliceinfo+mslicei->islices[0];
+    slicei = slicecoll.sliceinfo+mslicei->islices[0];
     if(MatchUpper(slicei->label.longlabel, scripti->cval)==NOTMATCH)continue;
     if(scripti->ival==0){
       if(slicei->volslice==0)continue;
@@ -2486,7 +2486,7 @@ void ScriptLoadSliceRender(scriptdata *scripti){
       float time_value;
       FILE_SIZE slicefile_size;
 
-      slicej = sliceinfo+mslicei->islices[j];
+      slicej = slicecoll.sliceinfo+mslicei->islices[j];
 //save finalize
       finalize_save = slicej->finalize;
       if(j==mslicei->nslices-1){
@@ -2672,10 +2672,10 @@ void ScriptLoadSliceM(scriptdata *scripti, int meshnum){
 
   PRINTF("script: loading slice files of type: %s in mesh %i\n\n", scripti->cval,meshnum);
 
-  for(i = 0; i < nsliceinfo; i++){
+  for(i = 0; i < slicecoll.nsliceinfo; i++){
     slicedata *slicei;
 
-    slicei = sliceinfo + i;
+    slicei = slicecoll.sliceinfo + i;
     if(slicei->blocknumber + 1 != meshnum)continue;
     if(MatchUpper(slicei->label.longlabel, scripti->cval) == NOTMATCH)continue;
     if(scripti->ival == 0){
@@ -2686,7 +2686,7 @@ void ScriptLoadSliceM(scriptdata *scripti, int meshnum){
       min = slicei->ijk_min;
       max = slicei->ijk_max;
       if(min[0] != 0 || min[1] != 0 || min[2] != 0)continue;
-      meshi = meshinfo + slicei->blocknumber;
+      meshi = meshescoll.meshinfo + slicei->blocknumber;
       if(max[0] != meshi->ibar || max[1] != meshi->jbar || max[2] != meshi->kbar)continue;
     }
     else{
@@ -2705,16 +2705,16 @@ void ScriptLoadVSlice(scriptdata *scripti){
 
   PRINTF("script: loading vector slice files of type: %s\n\n",scripti->cval);
 
-  for(i=0;i<nmultivsliceinfo;i++){
+  for(i=0;i<slicecoll.nmultivsliceinfo;i++){
     multivslicedata *mvslicei;
     vslicedata *vslicei;
     int j;
     slicedata *slicei;
 
-    mvslicei = multivsliceinfo + i;
+    mvslicei = slicecoll.multivsliceinfo + i;
     if(mvslicei->nvslices<=0)continue;
-    vslicei = vsliceinfo + mvslicei->ivslices[0];
-    slicei = sliceinfo + vslicei->ival;
+    vslicei = slicecoll.vsliceinfo + mvslicei->ivslices[0];
+    slicei = slicecoll.sliceinfo + vslicei->ival;
     if(MatchUpper(slicei->label.longlabel,scripti->cval) == NOTMATCH)continue;
     if(scripti->ival == 0){
       if(slicei->volslice == 0)continue;
@@ -2727,7 +2727,7 @@ void ScriptLoadVSlice(scriptdata *scripti){
       vslicedata *vslicej;
       int finalize_save;
 
-      vslicej = vsliceinfo+mvslicei->ivslices[j];
+      vslicej = slicecoll.vsliceinfo+mvslicei->ivslices[j];
 //save finalize
       finalize_save = vslicej->finalize;
       if(j==mvslicei->nvslices-1){
@@ -2756,16 +2756,16 @@ void ScriptLoadVSliceM(scriptdata *scripti, int meshnum){
 
   PRINTF("script: loading vector slice files of type: %s in mesh %i\n\n", scripti->cval,meshnum);
 
-  for(i=0;i<nmultivsliceinfo;i++){
+  for(i=0;i<slicecoll.nmultivsliceinfo;i++){
     multivslicedata *mvslicei;
     vslicedata *vslicei;
     int j;
     slicedata *slicei;
 
-    mvslicei = multivsliceinfo + i;
+    mvslicei = slicecoll.multivsliceinfo + i;
     if(mvslicei->nvslices<=0)continue;
-    vslicei = vsliceinfo + mvslicei->ivslices[0];
-    slicei = sliceinfo + vslicei->ival;
+    vslicei = slicecoll.vsliceinfo + mvslicei->ivslices[0];
+    slicei = slicecoll.sliceinfo + vslicei->ival;
     if(slicei->blocknumber + 1 != meshnum)continue;
     if(MatchUpper(slicei->label.longlabel,scripti->cval) == NOTMATCH)continue;
     if(scripti->ival == 0){
@@ -2795,10 +2795,10 @@ void ScriptLoadTour(scriptdata *scripti){
 
   PRINTF("script: loading tour %s\n\n",scripti->cval);
 
-  for(i=0;i<ntourinfo;i++){
+  for(i=0;i<tourcoll.ntourinfo;i++){
     tourdata *touri;
 
-    touri = tourinfo + i;
+    touri = tourcoll.tourinfo + i;
     if(strcmp(touri->label,scripti->cval)==0){
       TourMenu(i);
       viewtourfrompath=0;
@@ -2903,8 +2903,8 @@ void ScriptPlot3dProps(scriptdata *scripti){
     meshdata *gbsave,*gbi;
 
     gbsave=current_mesh;
-    for(i=0;i<nmeshes;i++){
-      gbi = meshinfo + i;
+    for(i=0;i<meshescoll.nmeshes;i++){
+      gbi = meshescoll.meshinfo + i;
       if(gbi->plot3dfilenum==-1)continue;
       UpdateCurrentMesh(gbi);
       UpdatePlotSlice(XDIR);
@@ -2948,9 +2948,9 @@ void ScriptSetCbar(scriptdata *scripti){
   int cb_index;
 
   if(scripti->cval!=NULL){
-    cb = GetColorbar(scripti->cval);
+    cb = GetColorbar(&colorbars, scripti->cval);
     if(cb != NULL){
-      cb_index = cb - colorbarinfo;
+      cb_index = cb - colorbars.colorbarinfo;
       ColorbarMenu(cb_index);
     }
   }
@@ -2961,7 +2961,7 @@ void ScriptSetCbar(scriptdata *scripti){
 void ScriptShowHVACDuctVal(scriptdata *scripti){
   int ductvalindex;
 
-  ductvalindex = GetHVACDuctValIndex(scripti->cval);
+  ductvalindex = GetHVACDuctValIndex(&hvaccoll, scripti->cval);
   if(ductvalindex>=0){
     HVACDuctValueMenu(ductvalindex);
   }
@@ -2975,7 +2975,7 @@ void ScriptShowHVACDuctVal(scriptdata *scripti){
 void ScriptShowHVACNodeVal(scriptdata *scripti){
   int nodevalindex;
 
-  nodevalindex = GetHVACNodeValIndex(scripti->cval);
+  nodevalindex = GetHVACNodeValIndex(&hvaccoll, scripti->cval);
   if(nodevalindex>=0){
     HVACNodeValueMenu(nodevalindex);
   }
@@ -3001,10 +3001,10 @@ void ScriptOutputSmokeSensors(void){
   // count smokesensors
 
   nsmokesensors=0;
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     if(STRCMP(devicei->object->label,"smokesensor")==0)nsmokesensors++;
   }
   if(nsmokesensors == 0)return;
@@ -3025,10 +3025,10 @@ void ScriptOutputSmokeSensors(void){
 
     j = 0;
     fprintf(stream_smokesensors, "Time,");
-    for(i = 0;i < ndeviceinfo;i++){
+    for(i = 0;i < devicecoll.ndeviceinfo;i++){
       devicedata *devicei;
 
-      devicei = deviceinfo + i;
+      devicei = devicecoll.deviceinfo + i;
       if(STRCMP(devicei->object->label, "smokesensor") == 0){
         j++;
         if(j == nsmokesensors){
@@ -3049,10 +3049,10 @@ void ScriptOutputSmokeSensors(void){
   }
   fprintf(stream_smokesensors,"%f,",sensor_time);
   j = 0;
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = deviceinfo + i;
+    devicei = devicecoll.deviceinfo + i;
     if(STRCMP(devicei->object->label,"smokesensor")==0){
       j++;
       if(j==nsmokesensors){
@@ -3092,9 +3092,9 @@ void ScriptShowPlot3dData(scriptdata *scripti){
   int isolevel;
 
   imesh = scripti->ival-1;
-  if(imesh<0||imesh>nmeshes-1)return;
+  if(imesh<0||imesh>meshescoll.nmeshes-1)return;
 
-  meshi = meshinfo + imesh;
+  meshi = meshescoll.meshinfo + imesh;
   UpdateCurrentMesh(meshi);
 
   dir = CLAMP(scripti->ival2,XDIR,ISO);
@@ -3187,10 +3187,10 @@ void ScriptLoadFile(scriptdata *scripti){
   int errorcode;
 
   PRINTF("script: loading file %s\n\n",scripti->cval);
-  for(i=0;i<nsliceinfo;i++){
+  for(i=0;i<slicecoll.nsliceinfo;i++){
     slicedata *sd;
 
-    sd = sliceinfo + i;
+    sd = slicecoll.sliceinfo + i;
     if(strcmp(sd->file,scripti->cval)==0){
       sd->finalize = 1;
       ReadSlice(sd->file, i, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR, &errorcode);
@@ -3229,10 +3229,10 @@ void ScriptLoadFile(scriptdata *scripti){
       return;
     }
   }
-  for(i=0;i<nsmoke3dinfo;i++){
+  for(i=0;i<smoke3dcoll.nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dinfo + i;
+    smoke3di = smoke3dcoll.smoke3dinfo + i;
     if(strcmp(smoke3di->file,scripti->cval)==0){
       smoke3di->finalize = 1;
       smoke3di->finalize = 1;
@@ -3363,12 +3363,12 @@ void ScriptLoadVecFile(scriptdata *scripti){
   int i;
 
   PRINTF("script: loading vector slice file %s\n\n",scripti->cval);
-  for(i=0;i<nvsliceinfo;i++){
+  for(i=0;i<slicecoll.nvsliceinfo;i++){
     slicedata *val;
     vslicedata *vslicei;
 
-    vslicei = vsliceinfo + i;
-    val = sliceinfo + vslicei->ival;
+    vslicei = slicecoll.vsliceinfo + i;
+    val = slicecoll.sliceinfo + vslicei->ival;
     if(val==NULL)continue;
     if(strcmp(val->reg_file,scripti->cval)==0){
       LoadVSliceMenu(i);
@@ -4082,8 +4082,8 @@ int RunScriptCommand(scriptdata *script_command){
           printf("***error: device %s does not exist\n", scripti->cval);
           break;
         }
-        dev_index += ndeviceinfo;                                       // show device
-        if(scripti->command==SCRIPT_HIDEDEV)dev_index += ndeviceinfo;  // hide device
+        dev_index += devicecoll.ndeviceinfo;                                       // show device
+        if(scripti->command==SCRIPT_HIDEDEV)dev_index += devicecoll.ndeviceinfo;  // hide device
         ShowDevicesMenu(dev_index);
       }
       break;

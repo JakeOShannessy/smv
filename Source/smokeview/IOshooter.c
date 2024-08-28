@@ -60,7 +60,7 @@ void IncrementShooterData(shootpointdata *pold, shootpointdata *pnew, float dtst
 
       GetShooterVel(uvw_air,xyznew);
       meshpoint = GetMeshNoFail(xyznew);
-      if(meshpoint==NULL)meshpoint=meshinfo;
+      if(meshpoint==NULL)meshpoint=meshescoll.meshinfo;
       grid_vel =  sqrt(uvwnew[0]*uvwnew[0]+uvwnew[1]*uvwnew[1]+uvwnew[2]*uvwnew[2]);
       if(grid_vel<0.01)grid_vel=0.01;
       dt = MIN(meshpoint->cellsize/grid_vel,dtstep-tstep);
@@ -172,7 +172,7 @@ void DrawShooter(void){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
 
   //glColor4fv(static_color);
   glBegin(GL_POINTS);

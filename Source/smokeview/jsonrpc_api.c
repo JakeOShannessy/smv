@@ -44,7 +44,7 @@ json_object *jsonrpc_Render(jrpc_context *context, json_object *params,
   const char *basename =
       json_object_get_string(json_object_object_get(params, "basename"));
   int ret = CApiRender(basename);
-  if (ret) {
+  if(ret) {
     context->error_code = 111;
     context->error_message = strdup("render failure");
   }
@@ -111,7 +111,7 @@ json_object *jsonrpc_SetFrame(jrpc_context *context, json_object *params,
 /// @brief Get the time value of the currently loaded frame.
 json_object *jsonrpc_GetTime(jrpc_context *context, json_object *params,
                              json_object *id) {
-  if (global_times != NULL && nglobal_times > 0) {
+  if(global_times != NULL && nglobal_times > 0) {
     float time = Gettime();
     json_object *result_root = json_object_new_double(time);
     return result_root;
@@ -124,7 +124,7 @@ json_object *jsonrpc_GetTime(jrpc_context *context, json_object *params,
 /// @brief Get the time value of the currently loaded frame.
 json_object *jsonrpc_GetNGlobalTimes(jrpc_context *context, json_object *params,
                                      json_object *id) {
-  if (global_times != NULL && nglobal_times > 0) {
+  if(global_times != NULL && nglobal_times > 0) {
     json_object *result_root = json_object_new_int(nglobal_times);
     return result_root;
   }
@@ -136,7 +136,7 @@ json_object *jsonrpc_GetNGlobalTimes(jrpc_context *context, json_object *params,
 /// @brief Shift to the closest frame to given a time value.
 json_object *jsonrpc_SetTime(jrpc_context *context, json_object *params,
                              json_object *id) {
-  if (!json_object_is_type(params, json_type_array)) {
+  if(!json_object_is_type(params, json_type_array)) {
     context->error_code = JRPC_INVALID_PARAMS;
     context->error_message = strdup("expected an array");
     return NULL;
@@ -144,7 +144,7 @@ json_object *jsonrpc_SetTime(jrpc_context *context, json_object *params,
   DisplayCB();
   float t = json_object_get_double(json_object_array_get_idx(params, 0));
   int return_code = Settime(t);
-  if (return_code) {
+  if(return_code) {
     context->error_code = 112;
     context->error_message = strdup("set_time failure");
   }
@@ -153,7 +153,7 @@ json_object *jsonrpc_SetTime(jrpc_context *context, json_object *params,
 
 json_object *jsonrpc_SetCameraAz(jrpc_context *context, json_object *params,
                                  json_object *id) {
-  if (!json_object_is_type(params, json_type_array)) {
+  if(!json_object_is_type(params, json_type_array)) {
     context->error_code = JRPC_INVALID_PARAMS;
     context->error_message = strdup("expected an array");
     return NULL;
@@ -190,31 +190,31 @@ json_object *jsonrpc_GetClipping(jrpc_context *context, json_object *params,
   json_object_object_add(result_root, "mode",
                          json_object_new_int(GetClippingMode()));
   json_object *x_object = json_object_new_object();
-  if (clipinfo.clip_xmin) {
+  if(clipinfo.clip_xmin) {
     json_object_object_add(x_object, "min",
                            json_object_new_double(clipinfo.xmin));
   }
-  if (clipinfo.clip_xmax) {
+  if(clipinfo.clip_xmax) {
     json_object_object_add(x_object, "max",
                            json_object_new_double(clipinfo.xmax));
   }
   json_object_object_add(result_root, "x", x_object);
   json_object *y_object = json_object_new_object();
-  if (clipinfo.clip_ymin) {
+  if(clipinfo.clip_ymin) {
     json_object_object_add(x_object, "min",
                            json_object_new_double(clipinfo.ymin));
   }
-  if (clipinfo.clip_ymax) {
+  if(clipinfo.clip_ymax) {
     json_object_object_add(x_object, "max",
                            json_object_new_double(clipinfo.ymax));
   }
   json_object_object_add(result_root, "y", y_object);
   json_object *z_object = json_object_new_object();
-  if (clipinfo.clip_zmin) {
+  if(clipinfo.clip_zmin) {
     json_object_object_add(x_object, "min",
                            json_object_new_double(clipinfo.zmin));
   }
-  if (clipinfo.clip_zmax) {
+  if(clipinfo.clip_zmax) {
     json_object_object_add(x_object, "max",
                            json_object_new_double(clipinfo.zmax));
   }
@@ -233,18 +233,18 @@ json_object *jsonrpc_GetClipping(jrpc_context *context, json_object *params,
 json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
                                  json_object *id) {
   json_object *mode_object;
-  if (json_object_object_get_ex(params, "mode", &mode_object)) {
+  if(json_object_object_get_ex(params, "mode", &mode_object)) {
     int mode = json_object_get_int(mode_object);
     SetClippingMode(mode);
   }
 
   json_object *x_object;
-  if (json_object_object_get_ex(params, "x", &x_object)) {
+  if(json_object_object_get_ex(params, "x", &x_object)) {
     json_object *min_object;
     float min;
     int clip_min;
-    if (json_object_object_get_ex(x_object, "min", &min_object)) {
-      if (min_object == NULL) {
+    if(json_object_object_get_ex(x_object, "min", &min_object)) {
+      if(min_object == NULL) {
         // If min is set to null, it means we should disable min clipping. We
         // keep set the value the current value.
         min = clipinfo.xmin;
@@ -261,8 +261,8 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
     json_object *max_object;
     float max;
     int clip_max;
-    if (json_object_object_get_ex(x_object, "max", &max_object)) {
-      if (max_object == NULL) {
+    if(json_object_object_get_ex(x_object, "max", &max_object)) {
+      if(max_object == NULL) {
         // If min is set to null, it means we should disable min clipping. We
         // keep set the value the current value.
         max = clipinfo.xmax;
@@ -278,12 +278,12 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
   }
 
   json_object *y_object;
-  if (json_object_object_get_ex(params, "y", &y_object)) {
+  if(json_object_object_get_ex(params, "y", &y_object)) {
     json_object *min_object;
     float min;
     int clip_min;
-    if (json_object_object_get_ex(y_object, "min", &min_object)) {
-      if (min_object == NULL) {
+    if(json_object_object_get_ex(y_object, "min", &min_object)) {
+      if(min_object == NULL) {
         // If min is set to null, it means we should disable min clipping. We
         // keep set the value the current value.
         min = clipinfo.ymin;
@@ -300,8 +300,8 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
     json_object *max_object;
     float max;
     int clip_max;
-    if (json_object_object_get_ex(y_object, "max", &max_object)) {
-      if (max_object == NULL) {
+    if(json_object_object_get_ex(y_object, "max", &max_object)) {
+      if(max_object == NULL) {
         // If min is set to null, it means we should disable min clipping. We
         // keep set the value the current value.
         max = clipinfo.ymax;
@@ -317,12 +317,12 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
   }
 
   json_object *z_object;
-  if (json_object_object_get_ex(params, "z", &z_object)) {
+  if(json_object_object_get_ex(params, "z", &z_object)) {
     json_object *min_object;
     float min;
     int clip_min;
-    if (json_object_object_get_ex(z_object, "min", &min_object)) {
-      if (min_object == NULL) {
+    if(json_object_object_get_ex(z_object, "min", &min_object)) {
+      if(min_object == NULL) {
         // If min is set to null, it means we should disable min clipping. We
         // keep set the value the current value.
         min = clipinfo.zmin;
@@ -339,8 +339,8 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
     json_object *max_object;
     float max;
     int clip_max;
-    if (json_object_object_get_ex(z_object, "max", &max_object)) {
-      if (max_object == NULL) {
+    if(json_object_object_get_ex(z_object, "max", &max_object)) {
+      if(max_object == NULL) {
         // If min is set to null, it means we should disable min clipping. We
         // keep set the value the current value.
         max = clipinfo.zmax;
@@ -363,11 +363,11 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
 json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
                                json_object *id) {
   struct json_object *mesh_array = json_object_new_array();
-  for (int i = 0; i < nmeshes; i++) {
-    meshdata *mesh = &meshinfo[i];
+  for(int i = 0; i < meshescoll.nmeshes; i++) {
+    meshdata *mesh = &meshescoll.meshinfo[i];
     struct json_object *mesh_obj = json_object_new_object();
     json_object_object_add(mesh_obj, "index", json_object_new_int(i + 1));
-    if (mesh->label != NULL) {
+    if(mesh->label != NULL) {
       json_object_object_add(mesh_obj, "id",
                              json_object_new_string(mesh->label));
     }
@@ -395,7 +395,7 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
     json_object_object_add(mesh_obj, "dimensions", mesh_dimensions);
 
     struct json_object *vents = json_object_new_array();
-    for (int i = 0; i < mesh->nvents; i++) {
+    for(int i = 0; i < mesh->nvents; i++) {
       ventdata *vent = &mesh->ventinfo[i];
       struct json_object *vent_obj = json_object_new_object();
       json_object_object_add(vent_obj, "index", json_object_new_int(i + 1));
@@ -440,21 +440,21 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
     json_object_object_add(mesh_obj, "vents", vents);
 
     struct json_object *xplt_orig = json_object_new_array();
-    for (size_t j = 0; j < mesh->ibar; j++) {
+    for(size_t j = 0; j < mesh->ibar; j++) {
       json_object_array_add(xplt_orig,
                             json_object_new_double(mesh->xplt_orig[j]));
     }
     json_object_object_add(mesh_obj, "xplt_orig", xplt_orig);
 
     struct json_object *yplt_orig = json_object_new_array();
-    for (size_t j = 0; j < mesh->jbar; j++) {
+    for(size_t j = 0; j < mesh->jbar; j++) {
       json_object_array_add(yplt_orig,
                             json_object_new_double(mesh->yplt_orig[j]));
     }
     json_object_object_add(mesh_obj, "yplt_orig", yplt_orig);
 
     struct json_object *zplt_orig = json_object_new_array();
-    for (size_t j = 0; j < mesh->kbar; j++) {
+    for(size_t j = 0; j < mesh->kbar; j++) {
       json_object_array_add(zplt_orig,
                             json_object_new_double(mesh->zplt_orig[j]));
     }
@@ -642,17 +642,17 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
 json_object *json_GetSmoke3ds(jrpc_context *context, json_object *params,
                               json_object *id) {
   struct json_object *smoke3ds = json_object_new_array();
-  for (int i = 0; i < nsmoke3dinfo; i++) {
-    smoke3ddata *val = &smoke3dinfo[i];
+  for(int i = 0; i < smoke3dcoll.nsmoke3dinfo; i++) {
+    smoke3ddata *val = &smoke3dcoll.smoke3dinfo[i];
     struct json_object *slice_obj = json_object_new_object();
     json_object_object_add(slice_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(slice_obj, "mesh",
                            json_object_new_int(val->blocknumber));
-    if (val->label.longlabel != NULL) {
+    if(val->label.longlabel != NULL) {
       json_object_object_add(slice_obj, "longlabel",
                              json_object_new_string(val->label.longlabel));
     }
-    if (val->label.shortlabel) {
+    if(val->label.shortlabel) {
       json_object_object_add(slice_obj, "shortlabel",
                              json_object_new_string(val->label.shortlabel));
     }
@@ -664,28 +664,28 @@ json_object *json_GetSmoke3ds(jrpc_context *context, json_object *params,
 
 json_object *json_GetSlices(void) {
   struct json_object *slices = json_object_new_array();
-  for (int i = 0; i < nsliceinfo; i++) {
-    slicedata *slice = &sliceinfo[i];
+  for(int i = 0; i < slicecoll.nsliceinfo; i++) {
+    slicedata *slice = &slicecoll.sliceinfo[i];
     struct json_object *slice_obj = json_object_new_object();
     json_object_object_add(slice_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(slice_obj, "mesh",
                            json_object_new_int(slice->blocknumber));
-    if (slice->label.longlabel != NULL) {
+    if(slice->label.longlabel != NULL) {
       json_object_object_add(slice_obj, "longlabel",
                              json_object_new_string(slice->label.longlabel));
     }
-    if (slice->label.shortlabel) {
+    if(slice->label.shortlabel) {
       json_object_object_add(slice_obj, "shortlabel",
                              json_object_new_string(slice->label.shortlabel));
     }
-    if (slice->slicelabel) {
+    if(slice->slicelabel) {
       json_object_object_add(slice_obj, "id",
                              json_object_new_string(slice->slicelabel));
     }
     json_object_object_add(slice_obj, "idir", json_object_new_int(slice->idir));
     json_object_object_add(slice_obj, "position_orig",
                            json_object_new_double(slice->position_orig));
-    if (slice->label.unit) {
+    if(slice->label.unit) {
       json_object_object_add(slice_obj, "unit",
                              json_object_new_string(slice->label.unit));
     }
@@ -717,8 +717,8 @@ json_object *jsonrpc_GetSlices(jrpc_context *context, json_object *params,
 json_object *jsonrpc_GetCsvs(jrpc_context *context, json_object *params,
                              json_object *id) {
   struct json_object *csv_files = json_object_new_array();
-  for (int i = 0; i < ncsvfileinfo; i++) {
-    csvfiledata *csv_file = &csvfileinfo[i];
+  for(int i = 0; i < csvcoll.ncsvfileinfo; i++) {
+    csvfiledata *csv_file = &csvcoll.csvfileinfo[i];
     struct json_object *csv_obj = json_object_new_object();
     json_object_object_add(csv_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(csv_obj, "filename",
@@ -747,7 +747,7 @@ json_object *CreateVectorJson(csvdata *csv_x, csvdata *csv_y) {
                          json_object_new_string(csv_y->label.unit));
   json_object_object_add(csv_obj, "y", y_obj);
   struct json_object *values = json_object_new_array();
-  for (int i = 0; i < csv_x->nvals; ++i) {
+  for(int i = 0; i < csv_x->nvals; ++i) {
     struct json_object *p_obj = json_object_new_object();
     json_object_object_add(p_obj, "x", json_object_new_double(csv_x->vals[i]));
     json_object_object_add(p_obj, "y", json_object_new_double(csv_y->vals[i]));
@@ -763,14 +763,14 @@ json_object *jsonrpc_GetCsvVectors(jrpc_context *context, json_object *params,
                                    json_object *id) {
   struct json_object *csv_files = json_object_new_object();
 
-  for (int i = 0; i < ncsvfileinfo; ++i) {
+  for(int i = 0; i < csvcoll.ncsvfileinfo; ++i) {
     struct json_object *csvs_obj = json_object_new_object();
-    json_object_object_add(csv_files, csvfileinfo[i].c_type, csvs_obj);
-    csvfiledata *csventry = &csvfileinfo[i];
-    if (!csventry->loaded) {
+    json_object_object_add(csv_files, csvcoll.csvfileinfo[i].c_type, csvs_obj);
+    csvfiledata *csventry = &csvcoll.csvfileinfo[i];
+    if(!csventry->loaded) {
       LoadCsv(csventry);
     }
-    for (size_t j = 0; j < csventry->ncsvinfo; j++) {
+    for(size_t j = 0; j < csventry->ncsvinfo; j++) {
       json_object *vector =
           CreateVectorJson(csventry->time, &(csventry->csvinfo[j]));
       json_object_object_add(csvs_obj, csventry->csvinfo[j].label.longlabel,
@@ -847,10 +847,10 @@ json_object *jsonrpc_LoadSliceIndices(jrpc_context *context,
                                       json_object *params, json_object *id) {
   int errorcode = 0;
   size_t n_files = json_object_array_length(params);
-  for (size_t n = 0; n < n_files; n++) {
+  for(size_t n = 0; n < n_files; n++) {
     int i = json_object_get_int(json_object_array_get_idx(params, n));
     Loadsliceindex(i, &errorcode);
-    if (errorcode) {
+    if(errorcode) {
       context->error_code = 115;
       context->error_message = strdup("could not load slice");
       return NULL;
@@ -863,15 +863,15 @@ json_object *jsonrpc_Load3dSmokeIndices(jrpc_context *context,
                                         json_object *params, json_object *id) {
   int errorcode = 0;
   size_t n_files = json_object_array_length(params);
-  for (size_t n = 0; n < n_files; n++) {
+  for(size_t n = 0; n < n_files; n++) {
     int i = json_object_get_int(json_object_array_get_idx(params, n));
     fprintf(stderr, "loading smoke3d index %d\n", i);
     smoke3ddata *smoke3di;
-    smoke3di = smoke3dinfo + i;
+    smoke3di = smoke3dcoll.smoke3dinfo + i;
     smoke3di->finalize = 0;
-    if (n == (n_files - 1)) smoke3di->finalize = 1;
+    if(n == (n_files - 1)) smoke3di->finalize = 1;
     ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
-    if (errorcode) {
+    if(errorcode) {
       context->error_code = 117;
       context->error_message = strdup("failed to load smoke3d");
     }
@@ -898,7 +898,7 @@ json_object *jsonrpc_GetRendertype(jrpc_context *context, json_object *params,
                                    json_object *id) {
   json_object *result_root = NULL;
   int render_type = GetRendertype();
-  switch (render_type) {
+  switch(render_type) {
   case JPEG:
     result_root = json_object_new_string("JPG");
     break;
@@ -926,7 +926,7 @@ json_object *jsonrpc_GetMovietype(jrpc_context *context, json_object *params,
                                   json_object *id) {
   json_object *result_root = NULL;
   int movie_type = GetMovietype();
-  switch (movie_type) {
+  switch(movie_type) {
   case WMV:
     result_root = json_object_new_string("WMV");
     break;
@@ -966,7 +966,7 @@ json_object *jsonrpc_Setrenderdir(jrpc_context *context, json_object *params,
                                   json_object *id) {
   const char *dir =
       json_object_get_string(json_object_array_get_idx(params, 0));
-  if (Setrenderdir(dir)) {
+  if(Setrenderdir(dir)) {
     context->error_code = 112;
     context->error_message = strdup("set render dir failure");
   }
@@ -984,7 +984,7 @@ json_object *jsonrpc_SetOrthoPreset(jrpc_context *context, json_object *params,
   DisplayCB();
   const char *viewpoint =
       json_object_get_string(json_object_array_get_idx(params, 0));
-  if (SetOrthoPreset(viewpoint)) {
+  if(SetOrthoPreset(viewpoint)) {
     context->error_code = 119;
     context->error_message = strdup("SetOrthoPreset failure");
   }
@@ -996,7 +996,7 @@ json_object *jsonrpc_Setviewpoint(jrpc_context *context, json_object *params,
                                   json_object *id) {
   const char *viewpoint =
       json_object_get_string(json_object_array_get_idx(params, 0));
-  if (Setviewpoint(viewpoint)) {
+  if(Setviewpoint(viewpoint)) {
     context->error_code = 113;
     context->error_message = strdup("set viewpoint failure");
   }
@@ -1035,7 +1035,7 @@ json_object *jsonrpc_SetColorbarFlip(jrpc_context *context, json_object *params,
 json_object *jsonrpc_Getcolorbarflip(jrpc_context *context, json_object *params,
                                      json_object *id) {
   int flip = Getcolorbarflip();
-  if (flip) {
+  if(flip) {
     return json_object_new_boolean(1);
   }
   else {
@@ -1069,7 +1069,7 @@ json_object *jsonrpc_SetNamedColorbar(jrpc_context *context,
   const char *name =
       json_object_get_string(json_object_array_get_idx(params, 0));
   int err = SetNamedColorbar(name);
-  if (err == 1) {
+  if(err == 1) {
     context->error_code = 125;
     context->error_message = strdup("not a valid colorbar name");
   }
@@ -1145,7 +1145,7 @@ json_object *jsonrpc_SetTitleVisibility(jrpc_context *context,
 json_object *jsonrpc_GetTitleVisibility(jrpc_context *context,
                                         json_object *params, json_object *id) {
   int v = GetTitleVisibility();
-  if (v) {
+  if(v) {
     return json_object_new_boolean(1);
   }
   else {
@@ -1167,7 +1167,7 @@ json_object *jsonrpc_GetSmvVersionVisibility(jrpc_context *context,
                                              json_object *params,
                                              json_object *id) {
   int v = GetSmvVersionVisibility();
-  if (v) {
+  if(v) {
     return json_object_new_boolean(1);
   }
   else {
@@ -1187,7 +1187,7 @@ json_object *jsonrpc_SetChidVisibility(jrpc_context *context,
 json_object *jsonrpc_GetChidVisibility(jrpc_context *context,
                                        json_object *params, json_object *id) {
   int v = GetChidVisibility();
-  if (v) {
+  if(v) {
     return json_object_new_boolean(1);
   }
   else {
@@ -1439,14 +1439,14 @@ json_object *jsonrpc_GetChidVisibility(jrpc_context *context,
 json_object *jsonrpc_CameraSetProjectionType(jrpc_context *context,
                                              json_object *params,
                                              json_object *id) {
-  if (!json_object_is_type(params, json_type_array)) {
+  if(!json_object_is_type(params, json_type_array)) {
     context->error_code = JRPC_INVALID_PARAMS;
     context->error_message = strdup("expected an array");
     return NULL;
   }
   int projection_type =
       json_object_get_int(json_object_array_get_idx(params, 0));
-  if (CameraSetProjectionType(projection_type)) {
+  if(CameraSetProjectionType(projection_type)) {
     context->error_code = 121;
     context->error_message = strdup("set proejction type failure");
   }
@@ -1618,13 +1618,13 @@ json_object *jsonrpc_SetSliceBounds(jrpc_context *context, json_object *params,
 json_object *jsonrpc_SetFontSize(jrpc_context *context, json_object *params,
                                  json_object *id) {
   json_object *arg0 = json_object_array_get_idx(params, 0);
-  if (json_object_is_type(arg0, json_type_string)) {
+  if(json_object_is_type(arg0, json_type_string)) {
     const char *size_name =
         json_object_get_string(json_object_array_get_idx(params, 0));
-    if (strcmp(size_name, "small") == 0) {
+    if(strcmp(size_name, "small") == 0) {
       SetFontsize(0);
     }
-    else if (strcmp(size_name, "large") == 0) {
+    else if(strcmp(size_name, "large") == 0) {
       SetFontsize(1);
     }
     else {
@@ -1632,9 +1632,9 @@ json_object *jsonrpc_SetFontSize(jrpc_context *context, json_object *params,
       context->error_message = strdup("invalid font size");
     }
   }
-  else if (json_object_is_type(arg0, json_type_int)) {
+  else if(json_object_is_type(arg0, json_type_int)) {
     int height2d = json_object_get_int(arg0);
-    if (SetScaledfontHeight2d(height2d)) {
+    if(SetScaledfontHeight2d(height2d)) {
       context->error_code = 133;
       context->error_message = strdup("could not set font size");
     }

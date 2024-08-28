@@ -12,7 +12,7 @@
 
 #include "shared_structures.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <windows.h>
 #endif
 #include GLU_H
@@ -299,91 +299,12 @@
 // BEGIN MAIN API
 
 /**
- * @brief The graphical definition of an object. This represents a single state.
- * This can form a node in a linked-list.
- */
-typedef struct _sv_object_frame {
-  int use_bw;
-  int error;
-  int display_list_ID;
-  int *symbols, nsymbols;
-  tokendata *tokens, **command_list;
-  int ntokens, ncommands, ntextures;
-  struct _sv_object *device;
-  struct _sv_object_frame *prev, *next;
-} sv_object_frame;
-
-/**
- * @brief An object that can be rendered. This can form a node in a linked-list.
- */
-typedef struct _sv_object {
-  char label[256];
-  /** @brief Is this object an avatar? */
-  int type;
-  int visible;
-  int used, used_by_device;
-  int use_displaylist;
-  int select_mode;
-  /** @brief The number of frames (i.e., possible states) associated with this
-   * object. */
-  int nframes;
-  /** @brief A list of possible graphical representations of this object. While
-   * described as a series of frames this is used as a number of different
-   * possible states, not an animation. */
-  sv_object_frame **obj_frames, first_frame, last_frame;
-  /** @brief If this sv_object is part of a linked list, a pointer to the
-   * previous sv_object in the list */
-  struct _sv_object *prev;
-  /** @brief If this sv_object is part of a linked list, a pointer to the
-   * next sv_object in the list */
-  struct _sv_object *next;
-} sv_object;
-
-/**
- * @brief A number of standard objects to be used.
- *
- */
-typedef struct {
-  sv_object *thcp_object_backup;
-  sv_object *target_object_backup;
-  sv_object *heat_detector_object_backup;
-  sv_object *sprinkler_upright_object_backup;
-  sv_object *smoke_detector_object_backup;
-  sv_object *error_device;
-  sv_object *missing_device;
-} std_objects;
-
-/**
- * @brief A collection of object definitions. At it's core this collection
- * contains a linked list, but also an array of pointers into that linked list.
- *
- */
-typedef struct {
-  /** @brief The number object definitions in object_defs. */
-  int nobject_defs;
-  /** @brief An array of pointers object definitions. */
-  sv_object **object_defs;
-  /** @brief The start of a linked list of object definitions. This is a dummy
-   * object and isn't actually used. */
-  sv_object object_def_first;
-  /** @brief The end of a linked list of object definitions. This is a dummy
-   * object and isn't actually used. */
-  sv_object object_def_last;
-  /** @brief A number of standard objects to be used. */
-  std_objects std_object_defs;
-  int iavatar_types;
-  int navatar_types;
-  sv_object **avatar_types;
-  sv_object *avatar_defs_backup[2];
-} object_collection;
-
-/**
  * @brief Initialise an @ref object_collection.
  *
  * @returns A @ref object_collection which has been properly initialized.
  */
 object_collection *CreateObjectCollection(void);
-
+int InitObjectCollection(object_collection *coll);
 /**
  * @brief Read objects from the standard file locations, using fallback objects
  * if object definitions are not found.

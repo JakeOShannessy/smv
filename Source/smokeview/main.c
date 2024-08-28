@@ -382,12 +382,12 @@ char *ProcessCommandLine(CommandlineArgs *args){
     }
   }
   if(filename_local!= NULL){
-    FREEMEMORY(fds_filein);
-    NewMemory((void **)&fds_filein, strlen(fdsprefix) + 6);
-    STRCPY(fds_filein, fdsprefix);
-    STRCAT(fds_filein, ".fds");
-    if(FILE_EXISTS(fds_filein) == NO){
-      FREEMEMORY(fds_filein);
+    FREEMEMORY(paths.fds_filein);
+    NewMemory((void **)&paths.fds_filein, strlen(fdsprefix) + 6);
+    STRCPY(paths.fds_filein, fdsprefix);
+    STRCAT(paths.fds_filein, ".fds");
+    if(FILE_EXISTS(paths.fds_filein) == NO){
+      FREEMEMORY(paths.fds_filein);
     }
   }
   if(ffmpeg_command_filename == NULL){
@@ -552,10 +552,10 @@ char *ProcessCommandLine(CommandlineArgs *args){
       isotest = 1;
     }
     if(args->smoke3d){
-      smoke3d_only = 1;
+      parse_opts.smoke3d_only = 1;
     }
     if(args->no_slcf){
-    handle_slice_files = 0;
+      parse_opts.handle_slice_files = 0;
     }
     if(args->show_help_summary){
       Usage(args->prog,HELP_SUMMARY);
@@ -566,8 +566,8 @@ char *ProcessCommandLine(CommandlineArgs *args){
       SMV_EXIT(0);
     }
     if(args->noblank){
-      iblank_set_on_commandline = 1;
-      use_iblank = 0;
+      sextras.iblank_set_on_commandline = 1;
+      sextras.use_iblank = 0;
     }
     if(args->nobounds){
       no_bounds = 1;
@@ -585,16 +585,16 @@ char *ProcessCommandLine(CommandlineArgs *args){
       print_geominfo = 1;
     }
     if(args->fast){
-      fast_startup = 1;
-      lookfor_compressed_files = 0;
+      parse_opts.fast_startup = 1;
+      parse_opts.lookfor_compressed_files = 0;
     }
     if(args->full){
-      fast_startup = 0;
-      lookfor_compressed_files = 1;
+      parse_opts.fast_startup = 0;
+      parse_opts.lookfor_compressed_files = 1;
     }
     if(args->blank){
-      iblank_set_on_commandline = 1;
-      use_iblank = 1;
+      sextras.iblank_set_on_commandline = 1;
+      sextras.use_iblank = 1;
     }
     if(args->gversion){
       vis_title_gversion = 1;
@@ -698,7 +698,7 @@ char *ProcessCommandLine(CommandlineArgs *args){
       noexit = 1;
     }
     if(args->setup){
-      setup_only = 1;
+      parse_opts.setup_only = 1;
     }
     if(args->bindir != NULL){
       SetSmvRootOverride(args->bindir);
@@ -791,9 +791,9 @@ int main(int argc, char **argv){
 #ifdef pp_LUA
   // If we are using lua, let lua take control here.
   // Initialise the lua interpreter, it does not take control at this point
-  L = InitLua();
+  lua_instance = InitLua();
   // This code branch gives more control to the interpreter during startup.
-  return_code = RunLuaBranch(L, argc, argv);
+  return_code = RunLuaBranch(lua_instance, argc, argv);
   // All of the below code is run by the lua interpreter, therefore if we want
   // to use the lua interpreter we ignore the code below and exit once the lua
   // run is complete.
