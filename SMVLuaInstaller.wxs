@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<?define ProductVersion = "1.16.2"?>
+<?define ProductVersion = "1.16.3"?>
 <?define ProductUpgradeCode = "1940d8a1-c842-442f-bf5d-00a570219bdb"?>
 
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
@@ -60,11 +60,13 @@
                                 <File Id='SMVLuaEXE' Name='smvlua.exe'
                                     Source='dist/bin/smokeview.exe' KeyPath='yes'>
                                 </File>
-                                <!-- <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File> -->
-                                <!-- <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File> -->
+                                <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File>
+                                <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File>
                                 <File Name='jsonrpc.dll' Source='dist/bin/jsonrpc.dll'> </File>
-                                <!-- <File Name='glew32.dll' Source='dist/bin/glew32.dll'> </File> -->
-                                <!-- <File Name='zlib1.dll' Source='dist/bin/zlib1.dll'> </File> -->
+                                <File Name='glew32.dll' Source='dist/bin/glew32.dll'> </File>
+                                <File Name='zlib1.dll' Source='dist/bin/zlib1.dll'> </File>
+                                <File Name='libgd.dll' Source='dist/bin/libgd.dll'> </File>
+                                <File Name='freeglut.dll' Source='dist/bin/freeglut.dll'> </File>
                                 <!-- <File Name='jpeg62.dll' Source='dist/bin/jpeg62.dll'> </File> -->
                                 <!-- <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'> </File> -->
                                 <!-- <File Name='getopt.dll' Source='dist/bin/getopt.dll'> </File> -->

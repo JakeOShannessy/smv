@@ -14,6 +14,7 @@
 #include "smokeviewvars.h"
 #include "command_args.h"
 #include "fopen.h"
+#include "jsonrpc_api.h"
 
 #ifdef WIN32
 #include <direct.h>
@@ -727,6 +728,14 @@ int CheckSMVFile(char *file, char *subdir){
   return 1;
 }
 
+json_object *subtract(jrpc_context *context, json_object *params,
+                      json_object *id) {
+  int a = json_object_get_int(json_object_array_get_idx(params, 0));
+  int b = json_object_get_int(json_object_array_get_idx(params, 1));
+  json_object *result_root = json_object_new_int(a - b);
+  return result_root;
+}
+
 /* ------------------ main ------------------------ */
 
 int main(int argc, char **argv){
@@ -818,7 +827,22 @@ int main(int argc, char **argv){
   }
   PRINTF("Startup time: %.1f s\n", startup_time);
 
+  pthread_t socket_thread;
+  server = jrpc_server_create();
+  jrpc_register_procedure(&server, &subtract, "subtract", NULL);
+  register_procedures(&server);
+  struct kickoff_info koi = {0};
+  koi.server = &server;
+  koi.sock_path = socket_path;
+
+  pthread_create(&socket_thread, NULL, kickoff_socket, &koi);
+
   glutMainLoop();
+
+  jrpc_server_destroy(&server);
+
+  pthread_join(socket_thread, NULL);
+
   FreeVars();
   return 0;
 }
