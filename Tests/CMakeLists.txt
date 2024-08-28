@@ -162,14 +162,14 @@ if ((NOT MACOSX) AND UNIX)
     target_link_libraries(test_root_dir m)
 endif()
 
-find_package(HDF5 REQUIRED)
+find_package(HDF5 REQUIRED COMPONENTS C HL)
 # create_hdf5
 add_executable(create_hdf5 create_hdf5.c
     # ../Source/shared/dmalloc.c
 )
 
 target_link_libraries(create_hdf5 PRIVATE hdf5::hdf5 )
-target_link_libraries(create_hdf5 PRIVATE ${HDF5_C_LIBRARIES})
+target_link_libraries(create_hdf5 PRIVATE ${HDF5_C_LIBRARIES} ${HDF5_C_HL_LIBRARIES})
 
 # target_include_directories(create_hdf5 PRIVATE
 #     ../Tests
