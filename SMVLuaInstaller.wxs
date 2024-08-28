@@ -60,14 +60,14 @@
                                 <File Id='SMVLuaEXE' Name='smvlua.exe'
                                     Source='dist/bin/smokeview.exe' KeyPath='yes'>
                                 </File>
-                                <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File>
-                                <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File>
+                                <!-- <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File> -->
+                                <!-- <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File> -->
                                 <File Name='jsonrpc.dll' Source='dist/bin/jsonrpc.dll'> </File>
-                                <File Name='glew32.dll' Source='dist/bin/glew32.dll'> </File>
-                                <File Name='zlib1.dll' Source='dist/bin/zlib1.dll'> </File>
-                                <File Name='jpeg62.dll' Source='dist/bin/jpeg62.dll'> </File>
-                                <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'> </File>
-                                <File Name='getopt.dll' Source='dist/bin/getopt.dll'> </File>
+                                <!-- <File Name='glew32.dll' Source='dist/bin/glew32.dll'> </File> -->
+                                <!-- <File Name='zlib1.dll' Source='dist/bin/zlib1.dll'> </File> -->
+                                <!-- <File Name='jpeg62.dll' Source='dist/bin/jpeg62.dll'> </File> -->
+                                <!-- <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'> </File> -->
+                                <!-- <File Name='getopt.dll' Source='dist/bin/getopt.dll'> </File> -->
                             </Component>
                         </Directory>
                     </Directory>
