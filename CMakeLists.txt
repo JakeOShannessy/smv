@@ -282,8 +282,7 @@ if (NOT json-c_FOUND)
     endif()
 else()
     target_link_libraries(smokeview PRIVATE json-c::json-c)
-    # install(FILES json-c::json-c)
-    # install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
+    install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
 endif()
 
 
@@ -305,7 +304,15 @@ target_link_libraries(smokeview PRIVATE glui_static)
 target_include_directories(smokeview PRIVATE Source/glui_v2_1_beta)
 if(WIN32)
     target_link_libraries(smokeview PRIVATE PThreads4W::PThreads4W)
-    install(IMPORTED_RUNTIME_ARTIFACTS PThreads4W::PThreads4W)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        install(DIRECTORY ${PThreads4W_DEBUG_DLL_DIR}/
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            FILES_MATCHING PATTERN "*.dll")
+    else()
+        install(DIRECTORY ${PThreads4W_DLL_DIR}/
+                DESTINATION ${CMAKE_INSTALL_BINDIR}
+                FILES_MATCHING PATTERN "*.dll")
+    endif()
 endif()
 # Selecting which GLUT version to use is the most platform-dependent part of the
 # build.
@@ -332,8 +339,17 @@ endif()
 if (JPEG_FOUND)
     target_link_libraries(smokeview PRIVATE JPEG::JPEG)
     # install(IMPORTED_RUNTIME_ARTIFACTS PThreads4W::PThreads4W)
+#     get_filename_component(jpeg_dir ${JPEG_LIBRARY_RELEASE} DIRECTORY)
+#     message(FATAL_ERROR "${jpeg_dir}")
+#     install(CODE [[
+#   file(GET_RUNTIME_DEPENDENCIES
+#   DIRECTORIES   ${jpeg_dir}
+#     )
+#   ]])
     # install(IMPORTED_RUNTIME_ARTIFACTS JPEG::JPEG)
-    # message(FATAL_ERROR "${JPEG_LIBRARY}")
+    # file(GET_RUNTIME_DEPENDENCIES JPEG::JPEG)
+    # message(FATAL_ERROR "${JPEG_LIBRARY_RELEASE}")
+    # install(FILES ${JPEG_LIBRARY_RELEASE} bin)
 #     install(
 #         FILES $<TARGET_FILE:JPEG::JPEG>
 #         DESTINATION ${CMAKE_INSTALL_BINDIR}
