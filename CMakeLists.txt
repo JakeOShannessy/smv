@@ -275,11 +275,7 @@ target_link_libraries(smokeview PRIVATE JPEG::JPEG)
 target_link_libraries(smokeview PRIVATE PNG::PNG)
 target_link_libraries(smokeview PRIVATE ZLIB::ZLIB)
 target_link_libraries(smokeview PRIVATE OpenGL::GL OpenGL::GLU)
-if (LIBGD_FOUND)
-    target_link_libraries(smokeview PRIVATE PkgConfig::LIBGD)
-else()
-    target_link_libraries(smokeview PRIVATE gd_static)
-endif()
+target_link_libraries(smokeview PRIVATE PkgConfig::LIBGD)
 
 target_include_directories(smokeview PRIVATE
     Source/smokeview
