@@ -16,7 +16,8 @@ target_include_directories(parse_simple_slice PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(parse_simple_slice PRIVATE ../Source/pthreads)
+    target_link_libraries(parse_simple_slice PRIVATE PThreads4W::PThreads4W)
+
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_slice m)
@@ -33,7 +34,7 @@ target_include_directories(parse_simple_bndf PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(parse_simple_bndf PRIVATE ../Source/pthreads)
+    target_link_libraries(parse_simple_bndf PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_bndf m)
@@ -51,7 +52,7 @@ target_include_directories(parse_simple_part PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(parse_simple_part PRIVATE ../Source/pthreads)
+    target_link_libraries(parse_simple_part PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_part m)
@@ -69,7 +70,7 @@ target_include_directories(parse_simple_pl3d PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(parse_simple_pl3d PRIVATE ../Source/pthreads)
+    target_link_libraries(parse_simple_pl3d PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_pl3d m)
@@ -100,7 +101,7 @@ else()
 endif()
 target_link_libraries(parse_cad PRIVATE OpenGL::GL OpenGL::GLU)
 if (WIN32)
-    target_include_directories(parse_cad PRIVATE ../Source/pthreads)
+    target_link_libraries(parse_cad PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_cad PRIVATE m)
@@ -124,7 +125,7 @@ target_include_directories(test_objects PRIVATE
     ../Source/glew
 )
 if (WIN32)
-    target_include_directories(test_objects PRIVATE ../Source/pthreads)
+    target_link_libraries(test_objects PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(test_objects m)
@@ -147,7 +148,7 @@ target_include_directories(parse_objects PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(parse_objects PRIVATE ../Source/pthreads)
+    target_link_libraries(parse_objects PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_objects m)
@@ -171,7 +172,7 @@ target_include_directories(parse_hvac_vals PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(parse_hvac_vals PRIVATE ../Source/pthreads)
+    target_link_libraries(parse_hvac_vals PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_hvac_vals m)
@@ -196,7 +197,7 @@ target_include_directories(parse_colorbar PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(parse_colorbar PRIVATE ../Source/pthreads)
+    target_link_libraries(parse_colorbar PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_colorbar m)
@@ -220,7 +221,7 @@ target_include_directories(test_labels PRIVATE
     ../Source/glew
 )
 if (WIN32)
-    target_include_directories(test_labels PRIVATE ../Source/pthreads)
+    target_link_libraries(test_labels PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(test_labels m)
@@ -237,7 +238,7 @@ target_include_directories(mem_test PRIVATE
     ../Source/shared
 )
 if (WIN32)
-    target_include_directories(mem_test PRIVATE ../Source/pthreads)
+    target_link_libraries(mem_test PRIVATE PThreads4W::PThreads4W)
 endif()
 
 # Arguments to this tests are <slice path> <number of frames in slice>

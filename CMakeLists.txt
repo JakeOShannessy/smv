@@ -59,8 +59,6 @@ find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
-# If GLEW is not found natively we compile it into smokeview directly later in
-# this file rather than adding a subdirectory
 find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -260,16 +258,11 @@ if (MACOSX)
 else()
     target_link_libraries(smokeview PRIVATE GLUT::GLUT)
 endif ()
+target_link_libraries(smokeview PRIVATE GLEW::GLEW)
 if (GLEW_FOUND)
-    target_link_libraries(smokeview PRIVATE GLEW::GLEW)
     # This line is a hack to work around the fact the code includes "glew.h"
-    # rather than <GL/glew.h>
+    # rather than <GL/glew.h> TODO: just change this
     target_include_directories(smokeview PRIVATE ${GLEW_INCLUDE_DIRS}/GL)
-else()
-    target_sources(smokeview PRIVATE
-        Source/glew/glew.c
-    )
-    target_include_directories(smokeview PRIVATE Source/glew)
 endif()
 target_link_libraries(smokeview PRIVATE JPEG::JPEG)
 target_link_libraries(smokeview PRIVATE PNG::PNG)
