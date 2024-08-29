@@ -26,6 +26,7 @@
 
 int ReadSMV(smv_case *scase, bufferstreamdata *stream);
 void ReadSMVOrig(smv_case *scase);
+void ReadSMVDynamic(smv_case *scase, char *file);
 
 /// @brief Given a file path, get the filename excluding the final extension.
 /// This allocates a new copy which can be deallocated with free().
@@ -460,7 +461,7 @@ int RunBenchmark(char *input_file, const char *fdsprefix) {
   show_timings = 1;
   ReadSMVOrig(scase);
   INIT_PRINT_TIMER(ReadSMVDynamic_time);
-  // ReadSMVDynamic(input_file);
+  ReadSMVDynamic(scase, input_file);
   STOP_TIMER(ReadSMVDynamic_time);
   fprintf(stderr, "ReadSMVDynamic:\t%8.3f ms\n", ReadSMVDynamic_time * 1000);
   STOP_TIMER(parse_time);

@@ -1779,7 +1779,7 @@ typedef struct {
 
   casepaths paths;
 
-  int nplot3d;
+  int nplot3dinfo;
   plot3ddata *plot3dinfo;
 
   int npartclassinfo;
