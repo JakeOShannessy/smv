@@ -21,6 +21,18 @@ build-release:
     cmake --build cbuild --config Release -v -j6
     cmake --install cbuild --config Release --prefix dist
 
+
+# Build the debug binaries with intel OneAPi
+build-intel:
+    cmd.exe "/K" '"C:\Program Files (x86)\Intel\oneAPI\setvars.bat" && powershell just build-intel-internal'
+
+build-intel-internal:
+    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-windows \
+        -DVCPKG_HOST_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE="../vcpkg/scripts/buildsystems/vcpkg.cmake" \
+        -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icx -GNinja
+    cmake --build cbuild --config Debug -j6
+    cmake --install cbuild --config Debug --prefix dist-debug
+
 # Build release and create MSI package
 package-windows: build-release
     candle "SMVLuaInstaller.wxs"
