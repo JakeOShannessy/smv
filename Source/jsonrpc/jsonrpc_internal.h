@@ -43,7 +43,6 @@ int jrpc_register_procedure(struct jrpc_server *server,
                             void *data);
 
 int jrpc_deregister_procedure(struct jrpc_server *server, char *name);
-static void *get_in_addr(struct sockaddr *sa);
 
 static int send_response(struct jrpc_connection *conn, const char *response);
 

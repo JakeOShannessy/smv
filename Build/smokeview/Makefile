@@ -40,7 +40,7 @@ SANITIZE_OPTIONS=-fsanitize=address -fsanitize=undefined -D pp_SANITIZE
 
 # The variable VPATH defines the source code directory relative to the current directory
 
-VPATH = $(SOURCE_DIR)/smokeview:$(SOURCE_DIR)/shared:$(SOURCE_DIR)/glew
+VPATH = $(SOURCE_DIR)/smokeview:$(SOURCE_DIR)/shared:$(SOURCE_DIR)/glew:$(SOURCE_DIR)/jsonrpc
 bin = .
 
 # Definition of the object variables
@@ -52,7 +52,8 @@ csrc = callbacks.c camera.c color2rgb.c readimage.c readslice.c readpart.c readg
       IOscript.c IOshooter.c IOslice.c IOsmoke.c IOtour.c IOvolsmoke.c IOwui.c IOzone.c IOframe.o isobox.c \
       main.c md5.c menus.c output.c readsmv.c renderhtml.c renderimage.c scontour2d.c sha1.c \
       sha256.c shaders.c showscene.c skybox.c smokestream.c smokeview.c smv_geometry.c startup.c fopen.c \
-      stdio_buffer.c stdio_m.c string_util.c threader.c translate.c unit.c update.c viewports.c colortable.c command_args.c
+      stdio_buffer.c stdio_m.c string_util.c threader.c translate.c unit.c update.c viewports.c colortable.c command_args.c \
+      jsonrpc.c jsonrpc_api.c c_api.c
 
 cppsrc = glui_bounds.o \
      glui_clip.cpp glui_colorbar.cpp glui_display.cpp glui_geometry.cpp glui_motion.cpp glui_objects.cpp \
@@ -76,7 +77,7 @@ endif
 
 objwin = $(obj:.o=.obj)
 
-INC += -I $(SOURCE_DIR)/glui_v2_1_beta -I $(SOURCE_DIR)/gd-2.0.15 -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview -I $(SOURCE_DIR)/glew -I $(SOURCE_DIR)/zlib128
+INC += -I $(SOURCE_DIR)/glui_v2_1_beta -I $(SOURCE_DIR)/gd-2.0.15 -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview -I $(SOURCE_DIR)/glew -I $(SOURCE_DIR)/zlib128  -I $(SOURCE_DIR)/jsonrpc
 
 # windows include directories
 
@@ -187,7 +188,7 @@ intel_win_64 : $(objwin)
 
 gnu_win_64 : INC       += -I $(SOURCE_DIR)/glui_gl -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview
 gnu_win_64 : CFLAGS    = -O0 -m64 $(D_FREEGLUT) -D GLEW_STATIC -D WIN32 -D pp_GCC -D NDEBUG -D __MINGW32__ -fno-builtin -Wno-write-strings $(GITINFO) $(GNU_COMPINFO) $(SMV_PROFILEFLAG)
-gnu_win_64 : LFLAGS    = -m64 $(SMV_LIBS_GNU) -lm -lopengl32 -lglu32 -lgdi32 -lwinmm -lcomdlg32 -lhid -lquadmath $(SMV_PROFILEFLAG)
+gnu_win_64 : LFLAGS    = -m64 $(SMV_LIBS_GNU) -lm -lopengl32 -lglu32 -lgdi32 -lwinmm -lcomdlg32 -lhid -lquadmath -ljson-c $(SMV_PROFILEFLAG)
 gnu_win_64 : CC        = gcc
 gnu_win_64 : CPP       = g++
 gnu_win_64 : exe       = smokeview_win_$(SMV_TESTSTRING)64$(SMV_PROFILESTRING)
@@ -207,7 +208,7 @@ gnu_win_64 : $(obj)
 
 gnu_win_64_db : INC       += -I $(SOURCE_DIR)/glui_gl -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview
 gnu_win_64_db : CFLAGS    = -O0 -m64 -g -Wunused-label -Wunused-value -Wunused-variable $(D_FREEGLUT) $(SMV_PROFILEFLAG) -D GLEW_STATIC -D WIN32 -D pp_GCC -D __MINGW32__ -fno-builtin -Wno-write-strings $(GITINFO) $(GNU_COMPINFO)
-gnu_win_64_db : LFLAGS    = -m64 $(SMV_LIBS_GNU) -lm -lopengl32 -lglu32 -lgdi32 -lwinmm -lcomdlg32 -lhid -lquadmath $(SMV_PROFILEFLAG)
+gnu_win_64_db : LFLAGS    = -m64 $(SMV_LIBS_GNU) -lm -lopengl32 -lglu32 -lgdi32 -lwinmm -lcomdlg32 -lhid -lquadmath -ljson-c $(SMV_PROFILEFLAG)
 gnu_win_64_db : CC        = gcc
 gnu_win_64_db : CPP       = g++
 gnu_win_64_db : exe       = smokeview_win_$(SMV_TESTSTRING)64_db$(SMV_PROFILESTRING)
@@ -220,7 +221,7 @@ gnu_win_64_db : $(obj)
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 
 SMV_LIBS_LINUX= -lglui -lglut -lgd -ljpeg -lpng -lz
-SYSTEM_LIBS_LINUX = -lpthread -lX11 -lXmu -lGLU -lGL -lm -lrt
+SYSTEM_LIBS_LINUX = -lpthread -lX11 -lXmu -lGLU -lGL -lm -lrt -ljson-c
 
 # to profile smokeview on linux
 # 1.  cd smv/Build/smokeview/intel_linux_64

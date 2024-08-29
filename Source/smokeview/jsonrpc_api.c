@@ -391,10 +391,10 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
     json_object_object_add(mesh_obj, "dimensions", mesh_dimensions);
 
     struct json_object *vents = json_object_new_array();
-    for(int i = 0; i < mesh->nvents; i++) {
-      ventdata *vent = &mesh->ventinfo[i];
+    for(int j = 0; j < mesh->nvents; j++) {
+      ventdata *vent = &mesh->ventinfo[j];
       struct json_object *vent_obj = json_object_new_object();
-      json_object_object_add(vent_obj, "index", json_object_new_int(i + 1));
+      json_object_object_add(vent_obj, "index", json_object_new_int(j + 1));
       // json_object_object_add(vent_obj, "filename",
       //                        json_object_new_string(csv_file->file));
       // json_object_object_add(vent_obj, "type",
@@ -1440,9 +1440,9 @@ json_object *jsonrpc_CameraSetProjectionType(jrpc_context *context,
     context->error_message = strdup("expected an array");
     return NULL;
   }
-  int projection_type =
+  int projection_type_local =
       json_object_get_int(json_object_array_get_idx(params, 0));
-  if(CameraSetProjectionType(projection_type)) {
+  if(CameraSetProjectionType(projection_type_local)) {
     context->error_code = 121;
     context->error_message = strdup("set proejction type failure");
   }
@@ -1737,62 +1737,62 @@ json_object *jsonrpc_DevicesHideAll(jrpc_context *context, json_object *params,
   return NULL;
 }
 
-int register_procedures(struct jrpc_server *server) {
-  jrpc_register_procedure(server, &jsonrpc_SetFrame, "set_frame", NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetTime, "set_time", NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetCameraAz, "set_camera_az", NULL);
+int register_procedures(struct jrpc_server *server_arg) {
+  jrpc_register_procedure(server_arg, &jsonrpc_SetFrame, "set_frame", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetTime, "set_time", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraAz, "set_camera_az", NULL);
 
-  jrpc_register_procedure(server, &jsonrpc_GetNGlobalTimes,
+  jrpc_register_procedure(server_arg, &jsonrpc_GetNGlobalTimes,
                           "get_n_global_times", NULL);
-  jrpc_register_procedure(server, &jsonrpc_GetTime, "get_time", NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetClipping, "set_clipping", NULL);
-  jrpc_register_procedure(server, &jsonrpc_Render, "render", NULL);
-  jrpc_register_procedure(server, &jsonrpc_Unloadall, "unload_all", NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetChidVisibility,
+  jrpc_register_procedure(server_arg, &jsonrpc_GetTime, "get_time", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetClipping, "set_clipping", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_Render, "render", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_Unloadall, "unload_all", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetChidVisibility,
                           "set_chid_visibility", NULL);
-  jrpc_register_procedure(server, &jsonrpc_ExitSmokeview, "exit", NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetSliceBounds, "set_slice_bounds",
+  jrpc_register_procedure(server_arg, &jsonrpc_ExitSmokeview, "exit", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetSliceBounds, "set_slice_bounds",
                           NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetWindowSize, "set_window_size",
+  jrpc_register_procedure(server_arg, &jsonrpc_SetWindowSize, "set_window_size",
                           NULL);
-  jrpc_register_procedure(server, &jsonrpc_LoadSliceIndices,
+  jrpc_register_procedure(server_arg, &jsonrpc_LoadSliceIndices,
                           "load_slice_indices", NULL);
-  jrpc_register_procedure(server, &jsonrpc_GetSlices, "get_slices", NULL);
-  jrpc_register_procedure(server, &json_GetSmoke3ds, "get_smoke3ds", NULL);
-  jrpc_register_procedure(server, &jsonrpc_Load3dSmokeIndices,
+  jrpc_register_procedure(server_arg, &jsonrpc_GetSlices, "get_slices", NULL);
+  jrpc_register_procedure(server_arg, &json_GetSmoke3ds, "get_smoke3ds", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_Load3dSmokeIndices,
                           "load_smoke3d_indices", NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetOrthoPreset, "set_ortho_preset",
+  jrpc_register_procedure(server_arg, &jsonrpc_SetOrthoPreset, "set_ortho_preset",
                           NULL);
-  jrpc_register_procedure(server, &jsonrpc_GetMeshes, "get_meshes", NULL);
-  jrpc_register_procedure(server, &jsonrpc_CameraSetProjectionType,
+  jrpc_register_procedure(server_arg, &jsonrpc_GetMeshes, "get_meshes", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_CameraSetProjectionType,
                           "set_projection_type", NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetNamedColorbar, "set_colorbar",
+  jrpc_register_procedure(server_arg, &jsonrpc_SetNamedColorbar, "set_colorbar",
                           NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetRendertype, "set_render_type",
+  jrpc_register_procedure(server_arg, &jsonrpc_SetRendertype, "set_render_type",
                           NULL);
-  jrpc_register_procedure(server, &jsonrpc_Setrenderdir, "set_render_dir",
+  jrpc_register_procedure(server_arg, &jsonrpc_Setrenderdir, "set_render_dir",
                           NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetFontSize, "set_font_size", NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetTitleVisibility,
+  jrpc_register_procedure(server_arg, &jsonrpc_SetFontSize, "set_font_size", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetTitleVisibility,
                           "set_title_visibility", NULL);
-  jrpc_register_procedure(server, &jsonrpc_GetTitleVisibility,
+  jrpc_register_procedure(server_arg, &jsonrpc_GetTitleVisibility,
                           "get_title_visibility", NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetSmvVersionVisibility,
+  jrpc_register_procedure(server_arg, &jsonrpc_SetSmvVersionVisibility,
                           "set_smv_version_visibility", NULL);
-  jrpc_register_procedure(server, &jsonrpc_GetSmvVersionVisibility,
+  jrpc_register_procedure(server_arg, &jsonrpc_GetSmvVersionVisibility,
                           "get_smv_version_visibility", NULL);
 
-  jrpc_register_procedure(server, &jsonrpc_BlockagesHideAll,
+  jrpc_register_procedure(server_arg, &jsonrpc_BlockagesHideAll,
                           "blockages_hide_all", NULL);
-  jrpc_register_procedure(server, &jsonrpc_SurfacesHideAll, "surfaces_hide_all",
+  jrpc_register_procedure(server_arg, &jsonrpc_SurfacesHideAll, "surfaces_hide_all",
                           NULL);
-  jrpc_register_procedure(server, &jsonrpc_OutlinesHide, "outlines_hide_all",
+  jrpc_register_procedure(server_arg, &jsonrpc_OutlinesHide, "outlines_hide_all",
                           NULL);
-  jrpc_register_procedure(server, &jsonrpc_DevicesHideAll, "devices_hide_all",
+  jrpc_register_procedure(server_arg, &jsonrpc_DevicesHideAll, "devices_hide_all",
                           NULL);
-  jrpc_register_procedure(server, &jsonrpc_GetCsvVectors, "get_csv_vectors",
+  jrpc_register_procedure(server_arg, &jsonrpc_GetCsvVectors, "get_csv_vectors",
                           NULL);
-  jrpc_register_procedure(server, &jsonrpc_SetColorbarFlip, "set_colorbar_flip",
+  jrpc_register_procedure(server_arg, &jsonrpc_SetColorbarFlip, "set_colorbar_flip",
                           NULL);
 
   return 0;

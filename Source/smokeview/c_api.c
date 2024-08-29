@@ -119,7 +119,6 @@ int CApiSetSliceBounds(const char *slice_type, int set_valmin, float valmin,
   slicebounds[slice_type_index].dlg_setvalmax = set_valmax;
   slicebounds[slice_type_index].dlg_valmin = valmin;
   slicebounds[slice_type_index].dlg_valmax = valmax;
-  int error = 0;
   GLUISetMinMax(BOUND_SLICE, slicebounds[slice_type_index].shortlabel,
                 set_valmin, valmin, set_valmax, valmax);
   UpdateSliceBounds2();

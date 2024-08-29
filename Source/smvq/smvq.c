@@ -255,10 +255,10 @@ int PrintJson(smv_case *scase) {
     json_object_object_add(mesh_obj, "dimensions", mesh_dimensions);
 
     struct json_object *vents = json_object_new_array();
-    for(int i = 0; i < mesh->nvents; i++) {
-      ventdata *vent = &mesh->ventinfo[i];
+    for(int j = 0; j < mesh->nvents; j++) {
+      ventdata *vent = &mesh->ventinfo[j];
       struct json_object *vent_obj = json_object_new_object();
-      json_object_object_add(vent_obj, "index", json_object_new_int(i + 1));
+      json_object_object_add(vent_obj, "index", json_object_new_int(j + 1));
       // json_object_object_add(vent_obj, "filename",
       //                        json_object_new_string(csv_file->file));
       // json_object_object_add(vent_obj, "type",
