@@ -4557,7 +4557,7 @@ void ScriptCB(int var){
     ScriptMenu(SCRIPT_STOP_RECORDING);
     break;
   case SCRIPT_RUNSCRIPT:
-    name = strdup(BUTTON_script_runscript->name.c_str());
+    name = BUTTON_script_runscript->name;
     PRINTF("running script: %s\n", name);
     ScriptMenu(LIST_scriptlist->get_int_val());
     break;
@@ -4571,7 +4571,7 @@ void ScriptCB(int var){
     }
     break;
   case SCRIPT_SAVEINI:
-    name = strdup(BUTTON_script_saveini->name.c_str());
+    name = BUTTON_script_saveini->name;
     if(strlen(name) > 0){
       inifiledata *inifile;
 

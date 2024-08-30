@@ -93,17 +93,23 @@ void PrintError(LPCTSTR errDesc) {
 }
 #else
 char *CreateTempPath() {
+  static const char *file_add = "/smv.sock";
   char *template_basis = "/tmp/smv_socket.XXXXXX";
-  char *template = malloc((strlen(template_basis) + 1) * sizeof(char));
+  char *template =
+      malloc((strlen(template_basis) + strlen(file_add) + 1) * sizeof(char));
   strcpy(template, template_basis);
   char *path = mkdtemp(template);
   fprintf(stderr, "template: %s\n", template);
   fprintf(stderr, "path: %s\n", path);
-  if (errno != 0) {
+  if(errno != 0) {
     fprintf(stderr, "Value of errno: %d\n", errno);
     fprintf(stderr, "Error reading from file: %s\n", strerror(errno));
-  }
+    free(template);
+    return NULL;
+  } else {
+  strcat(template, file_add);
   return path;
+  }
 }
 #endif
 
@@ -473,7 +479,8 @@ int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
   fprintf(stdout, "sock_path: %s\n", sock_path);
   strcpy(server->socket.sun_path, sock_path);
   UNLINK(server->socket.sun_path);
-  if(bind(server->fd, (struct sockaddr *)&server->socket, sizeof(struct sockaddr)) == -1) {
+  if(bind(server->fd, (struct sockaddr_un *)&server->socket,
+          sizeof(struct sockaddr_un)) == -1) {
     sock_error("bind");
     exit(1);
   }

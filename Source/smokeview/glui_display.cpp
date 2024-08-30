@@ -420,7 +420,7 @@ void TextLabelsCB(int var){
     memcpy(&LABEL_global_ptr->useforegroundcolor, &gl->useforegroundcolor, sizeof(int));
     break;
   case LB_PREVIOUS:
-    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text.c_str());
+    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text);
     new_label = LabelPrevious(&labelscoll, new_label);
     if(new_label == NULL)break;
     LABEL_global_ptr = new_label;
@@ -430,7 +430,7 @@ void TextLabelsCB(int var){
     }
     break;
   case LB_NEXT:
-    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text.c_str());
+    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text);
     new_label = LabelNext(&labelscoll, new_label);
     if(new_label == NULL)break;
     LABEL_global_ptr = new_label;
@@ -440,7 +440,7 @@ void TextLabelsCB(int var){
     }
     break;
   case LB_LIST:
-    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text.c_str());
+    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text);
     LABEL_global_ptr = new_label;
     if(new_label != NULL){
       LabelCopy(gl, new_label);
@@ -472,7 +472,7 @@ void TextLabelsCB(int var){
     TextLabelsCB(LB_LIST);
     break;
   case LB_DELETE:
-    strcpy(name, LIST_LB_labels->curr_text.c_str());
+    strcpy(name, LIST_LB_labels->curr_text);
     for(thislabel = labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);

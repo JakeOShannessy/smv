@@ -471,7 +471,7 @@ extern "C" void GLUIColorbarCB(int var){
       char *clabel;
 
       cbi = colorbars.colorbarinfo + colorbartype;
-      clabel = strdup(EDITTEXT_cb_label->get_text().c_str());
+      clabel = EDITTEXT_cb_label->get_text();
       strcpy(cbi->menu_label, clabel);
       LISTBOX_cb_edit->delete_item(colorbartype);
       LISTBOX_cb_edit->add_item(colorbartype, colorbar_label);
