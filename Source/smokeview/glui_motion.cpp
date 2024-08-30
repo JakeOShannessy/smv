@@ -1927,16 +1927,16 @@ extern "C" void GLUIToggleRollout(procdata *procinfo, int nprocinfo, int motion_
     mi = procinfo + i;
     if(mi->rollout_id==motion_id){
 #ifdef pp_OSX
-      int h;
+      // int h;
 #endif
 
       mi->rollout->open();
 #ifdef pp_OSX
-      h = mi->dialog->h;
-      if(monitor_screen_height!=-1&&h>monitor_screen_height){
-        mi->rollout->close();
-        printf("*** warning: screen not large enough to expand this dialog\n");
-      }
+      // h = mi->dialog->h;
+      // if(monitor_screen_height!=-1&&h>monitor_screen_height){
+      //   mi->rollout->close();
+      //   printf("*** warning: screen not large enough to expand this dialog\n");
+      // }
 #endif
     }
   }
