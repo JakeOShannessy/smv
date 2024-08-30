@@ -51,7 +51,9 @@ target_link_libraries(libsmv PRIVATE PNG::PNG)
 target_link_libraries(libsmv PUBLIC ZLIB::ZLIB)
 target_link_libraries(libsmv PRIVATE OpenGL::GL OpenGL::GLU)
 target_link_libraries(libsmv PRIVATE PkgConfig::LIBGD)
-target_link_libraries(libsmv PUBLIC m)
+if ((NOT MACOSX) AND UNIX)
+    target_link_libraries(libsmv PUBLIC m)
+endif()
 # target_include_directories(.
 #                            PUBLIC
 #                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
