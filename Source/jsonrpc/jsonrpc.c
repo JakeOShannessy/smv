@@ -11,7 +11,6 @@
 #define STRDUP strdup
 #endif
 
-
 #ifdef _WIN32
 //
 //  This application opens a file specified by the user and uses
@@ -94,9 +93,17 @@ void PrintError(LPCTSTR errDesc) {
 }
 #else
 char *CreateTempPath() {
-  char *template_basis = "smv_socket.XXXXXX";
+  char *template_basis = "/tmp/smv_socket.XXXXXX";
   char *template = malloc((strlen(template_basis) + 1) * sizeof(char));
-  return mkdtemp(template);
+  strcpy(template, template_basis);
+  char *path = mkdtemp(template);
+  fprintf(stderr, "template: %s\n", template);
+  fprintf(stderr, "path: %s\n", path);
+  if (errno != 0) {
+    fprintf(stderr, "Value of errno: %d\n", errno);
+    fprintf(stderr, "Error reading from file: %s\n", strerror(errno));
+  }
+  return path;
 }
 #endif
 
@@ -205,13 +212,14 @@ DLLEXPORT void *kickoff_socket(void *kickoff_info) {
   struct kickoff_info *koi = kickoff_info;
   struct jrpc_server *s_server = koi->server;
   char *sock_path;
-  if(koi->sock_path) {
-    sock_path = koi->sock_path;
+  if(koi->sock_path != NULL) {
+    sock_path = STRDUP(koi->sock_path);
   }
   else {
     sock_path = CreateTempPath();
   }
   jrpc_server_listen(s_server, sock_path);
+  free(sock_path);
   for(;;) {
     fprintf(stderr, "Waiting for a connection...\n");
     struct jrpc_connection conn = jrpc_server_connect(s_server);
@@ -465,9 +473,7 @@ int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
   fprintf(stdout, "sock_path: %s\n", sock_path);
   strcpy(server->socket.sun_path, sock_path);
   UNLINK(server->socket.sun_path);
-  size_t len =
-      strlen(server->socket.sun_path) + sizeof(server->socket.sun_family);
-  if(bind(server->fd, (struct sockaddr *)&server->socket, (int)len) == -1) {
+  if(bind(server->fd, (struct sockaddr *)&server->socket, sizeof(struct sockaddr)) == -1) {
     sock_error("bind");
     exit(1);
   }
