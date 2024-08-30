@@ -29,6 +29,7 @@ add_compile_definitions(pp_GITHASH="6.8.0+sc2.lua")
 # Options which can be configured (along with their defaults)
 option(BETA "Include beta functionality" OFF)
 option(STRICT_CHECKS "Run additional strict checks" OFF)
+option(VENDORED_UI_LIBS "Use the vendored GLUT" ON)
 
 # Ensure all files are in the right place to run the tests
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
@@ -52,7 +53,22 @@ if (LINUX)
 endif()
 
 find_package(OpenGL REQUIRED)
-find_package(GLUT REQUIRED)
+if (VENDORED_UI_LIBS)
+    add_subdirectory(Source/glut-3.7.6)
+    add_subdirectory(Source/glui_v2_1_beta)
+else()
+    find_package(GLUT REQUIRED)
+    if (WIN32)
+        find_package(GLUI REQUIRED)
+    else()
+            include(FetchContent)
+            FetchContent_Declare(
+                glui-git
+                GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
+                GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
+            )
+    endif()
+endif()
 find_package(GLEW REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
@@ -62,16 +78,6 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBGD REQUIRED IMPORTED_TARGET gdlib)
 if (WIN32)
     find_package(PThreads4W REQUIRED)
-endif()
-if (WIN32)
-    find_package(GLUI REQUIRED)
-else()
-        include(FetchContent)
-        FetchContent_Declare(
-            glui-git
-            GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
-            GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
-        )
 endif()
 
 if (NOT MSVC)

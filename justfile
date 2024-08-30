@@ -11,7 +11,7 @@ test:
 
 # Build the debug binaries
 build:
-    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-windows -DVCPKG_HOST_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE="../vcpkg/scripts/buildsystems/vcpkg.cmake"
+    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-windows-static -DVCPKG_HOST_TRIPLET=x64-windows-static -DCMAKE_TOOLCHAIN_FILE="../vcpkg/scripts/buildsystems/vcpkg.cmake"
     cmake --build cbuild --config Debug -j6
     cmake --install cbuild --config Debug --prefix dist-debug
 
