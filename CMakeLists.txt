@@ -63,16 +63,16 @@ pkg_check_modules(LIBGD REQUIRED IMPORTED_TARGET gdlib)
 if (WIN32)
     find_package(PThreads4W REQUIRED)
 endif()
-# if (WIN32)
-#     find_package(GLUI REQUIRED)
-# else()
-#         include(FetchContent)
-#         FetchContent_Declare(
-#             glui-git
-#             GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
-#             GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
-#         )
-# endif()
+if (WIN32)
+    find_package(GLUI REQUIRED)
+else()
+        include(FetchContent)
+        FetchContent_Declare(
+            glui-git
+            GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
+            GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
+        )
+endif()
 
 if (NOT MSVC)
     add_compile_options(-Wunused)
@@ -150,7 +150,6 @@ endif()
 
 # Libraries to build (which may be dependencies of the programs below)
 add_subdirectory(Source/shared)
-add_subdirectory(Source/glui_v2_1_beta)
 add_subdirectory(Source/jsonrpc)
 
 # The programs to build
