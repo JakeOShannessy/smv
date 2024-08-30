@@ -241,6 +241,34 @@ if (WIN32)
     target_link_libraries(mem_test PRIVATE PThreads4W::PThreads4W)
 endif()
 
+# test_image_render
+add_executable(test_image_render test_image_render.c
+    ../Source/shared/dmalloc.c
+    ../Source/shared/readobject.c
+    ../Source/shared/string_util.c
+    ../Source/shared/file_util.c
+    ../Source/shared/stdio_buffer.c
+    ../Source/shared/sha256.c
+    ../Source/shared/sha1.c
+    ../Source/shared/md5.c
+)
+
+target_include_directories(test_image_render PRIVATE
+    ../Tests
+    ../Source/shared
+)
+target_link_libraries(test_image_render PRIVATE PkgConfig::LIBGD)
+target_link_libraries(test_image_render PRIVATE OpenGL::GL OpenGL::GLU)
+target_link_libraries(test_image_render PRIVATE JPEG::JPEG)
+target_link_libraries(test_image_render PRIVATE PNG::PNG)
+if (WIN32)
+    target_link_libraries(test_image_render PRIVATE PThreads4W::PThreads4W)
+endif()
+if ((NOT MACOSX) AND UNIX)
+    target_link_libraries(test_image_render m)
+endif()
+
+
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
 add_test(NAME "Simple Slice - Complete"
@@ -295,3 +323,7 @@ add_test(NAME "Simple HVAC Vals - Complete"
 
 # add_test(NAME "smvq - parse smv file"
 #     COMMAND smvq ${CMAKE_SOURCE_DIR}/Tests/test_model_small/test_model_small.smv)
+
+
+# add_test(NAME "Test Image Render"
+#     COMMAND test_image_render)

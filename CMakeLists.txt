@@ -53,7 +53,6 @@ endif()
 
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
-find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
