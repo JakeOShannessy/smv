@@ -610,7 +610,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
   if(hvaccoll.nhvacinfo > 0){
     NewMemory(( void ** )&glui_hvac, sizeof(hvacdata));
     memcpy(glui_hvac, hvaccoll.hvacinfo, sizeof(hvacdata));
-    ROLLOUT_hvac = glui_geometry->add_rollout("HVAC", false, HVAC_ROLLOUT);
+    ROLLOUT_hvac = glui_geometry->add_rollout("HVAC", false, HVAC_ROLLOUT, GeomRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_hvac, glui_geometry);
     ADDPROCINFO(geomprocinfo, ngeomprocinfo, ROLLOUT_hvac, HVAC_ROLLOUT, glui_geometry);
 
@@ -735,7 +735,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
   }
 
   if(have_obsts == 1){
-    ROLLOUT_structured = glui_geometry->add_rollout("Structured", false, STRUCTURED_ROLLOUT);
+    ROLLOUT_structured = glui_geometry->add_rollout("Structured", false, STRUCTURED_ROLLOUT, GeomRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_structured, glui_geometry);
     ADDPROCINFO(geomprocinfo, ngeomprocinfo, ROLLOUT_structured, STRUCTURED_ROLLOUT, glui_geometry);
 
@@ -881,7 +881,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
   }
 
   if(ngeominfo>0){
-    ROLLOUT_unstructured = glui_geometry->add_rollout("Immersed", false, UNSTRUCTURED_ROLLOUT);
+    ROLLOUT_unstructured = glui_geometry->add_rollout("Immersed", false, UNSTRUCTURED_ROLLOUT, GeomRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_unstructured, glui_geometry);
     ADDPROCINFO(geomprocinfo, ngeomprocinfo, ROLLOUT_unstructured, UNSTRUCTURED_ROLLOUT, glui_geometry);
     if(unstructured_isopen==1)ROLLOUT_unstructured->open();
@@ -952,7 +952,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
     UpdateGeomAreas();
 
-    ROLLOUT_geom_properties = glui_geometry->add_rollout("Immersed diagnostics",false, IMMERSED_DIAGNOSTICS);
+    ROLLOUT_geom_properties = glui_geometry->add_rollout("Immersed diagnostics",false, IMMERSED_DIAGNOSTICS, GeomRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_geom_properties, glui_geometry);
     ADDPROCINFO(geomprocinfo, ngeomprocinfo, ROLLOUT_geom_properties, IMMERSED_DIAGNOSTICS, glui_geometry);
     PANEL_properties2 = glui_geometry->add_panel_to_panel(ROLLOUT_geom_properties,"",GLUI_PANEL_NONE);
@@ -1105,7 +1105,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
   }
 
   if(sextras.nterraininfo>0&&ngeominfo==0){
-    ROLLOUT_terrain = glui_geometry->add_rollout("Terrain", false, TERRAIN_ROLLOUT);
+    ROLLOUT_terrain = glui_geometry->add_rollout("Terrain", false, TERRAIN_ROLLOUT, GeomRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_terrain, glui_geometry);
     ADDPROCINFO(geomprocinfo, ngeomprocinfo, ROLLOUT_terrain, TERRAIN_ROLLOUT, glui_geometry);
 

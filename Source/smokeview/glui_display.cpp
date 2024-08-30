@@ -420,7 +420,7 @@ void TextLabelsCB(int var){
     memcpy(&LABEL_global_ptr->useforegroundcolor, &gl->useforegroundcolor, sizeof(int));
     break;
   case LB_PREVIOUS:
-    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text.c_str());
+    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text);
     new_label = LabelPrevious(&labelscoll, new_label);
     if(new_label == NULL)break;
     LABEL_global_ptr = new_label;
@@ -430,7 +430,7 @@ void TextLabelsCB(int var){
     }
     break;
   case LB_NEXT:
-    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text.c_str());
+    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text);
     new_label = LabelNext(&labelscoll, new_label);
     if(new_label == NULL)break;
     LABEL_global_ptr = new_label;
@@ -440,7 +440,7 @@ void TextLabelsCB(int var){
     }
     break;
   case LB_LIST:
-    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text.c_str());
+    new_label = LabelGet(&labelscoll, LIST_LB_labels->curr_text);
     LABEL_global_ptr = new_label;
     if(new_label != NULL){
       LabelCopy(gl, new_label);
@@ -472,7 +472,7 @@ void TextLabelsCB(int var){
     TextLabelsCB(LB_LIST);
     break;
   case LB_DELETE:
-    strcpy(name, LIST_LB_labels->curr_text.c_str());
+    strcpy(name, LIST_LB_labels->curr_text);
     for(thislabel = labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);
@@ -730,7 +730,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   // -------------- General Settings -------------------
 
-  ROLLOUT_general = glui_labels->add_rollout(_("General"),true,GENERAL_ROLLOUT);
+  ROLLOUT_general = glui_labels->add_rollout(_("General"),true,GENERAL_ROLLOUT,DisplayRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_general, glui_labels);
   ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_general, GENERAL_ROLLOUT, glui_labels);
 
@@ -894,7 +894,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
   CHECKBOX_texture_showall = glui_labels->add_checkbox_to_panel(PANEL_texture_display, _("show all"), &texture_showall, TEXTURE_SHOWALL, GLUITextureCB);
   CHECKBOX_texture_hideall = glui_labels->add_checkbox_to_panel(PANEL_texture_display, _("hide all"), &texture_hideall, TEXTURE_HIDEALL, GLUITextureCB);
 
-  ROLLOUT_light2 = glui_labels->add_rollout("Light",false);
+  ROLLOUT_light2 = glui_labels->add_rollout("Light",false,LIGHT_ROLLOUT,DisplayRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_light2, glui_labels);
   ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_light2, LIGHT_ROLLOUT, glui_labels);
 
@@ -958,7 +958,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   // -------------- Fonts -------------------
 
-  ROLLOUT_font = glui_labels->add_rollout("Fonts",false,FONTS_ROLLOUT);
+  ROLLOUT_font = glui_labels->add_rollout("Fonts",false,FONTS_ROLLOUT,DisplayRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_font, glui_labels);
   ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_font, FONTS_ROLLOUT, glui_labels);
 
@@ -984,7 +984,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   // -------------- User tick settings -------------------
 
-  ROLLOUT_user_tick = glui_labels->add_rollout("User ticks",false,TICKS_ROLLOUT);
+  ROLLOUT_user_tick = glui_labels->add_rollout("User ticks",false,TICKS_ROLLOUT,DisplayRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_user_tick, glui_labels);
   ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_user_tick, TICKS_ROLLOUT, glui_labels);
 
@@ -1050,7 +1050,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
   // -------------- User labels -------------------
 
   gl=&LABEL_local;
-  ROLLOUT_user_labels = glui_labels->add_rollout("Labels + Ticks",false,LABELS_ROLLOUT);
+  ROLLOUT_user_labels = glui_labels->add_rollout("Labels + Ticks",false,LABELS_ROLLOUT,DisplayRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_user_labels, glui_labels);
   ADDPROCINFO(displayprocinfo, ndisplayprocinfo, ROLLOUT_user_labels, LABELS_ROLLOUT, glui_labels);
 

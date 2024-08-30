@@ -156,7 +156,7 @@ extern "C" void GLUITourSetup(int main_window){
   glui_tour = GLUI_Master.create_glui(_("Tours"),0,dialogX0,dialogY0);
   glui_tour->hide();
 
-  ROLLOUT_circular = glui_tour->add_rollout(_("Modify circular tour"),false);
+  ROLLOUT_circular = glui_tour->add_rollout(_("Modify circular tour"),false, MODIFY_TOURS_ROLLOUT, ToursRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_circular, glui_tour);
   ADDPROCINFO(toursprocinfo, ntoursprocinfo, ROLLOUT_circular, MODIFY_TOURS_ROLLOUT, glui_tour);
 
@@ -177,7 +177,7 @@ extern "C" void GLUITourSetup(int main_window){
   SPINNER_tour_circular_view[1]=glui_tour->add_spinner_to_panel(PANEL_tour_circular_view,"y",GLUI_SPINNER_FLOAT,tour_circular_view+1,TOUR_CIRCULAR_UPDATE,TourCB);
   SPINNER_tour_circular_view[2]=glui_tour->add_spinner_to_panel(PANEL_tour_circular_view,"z",GLUI_SPINNER_FLOAT,tour_circular_view+2,TOUR_CIRCULAR_UPDATE,TourCB);
 
-  ROLLOUT_keyframe = glui_tour->add_rollout("Modify general tour",true);
+  ROLLOUT_keyframe = glui_tour->add_rollout("Modify general tour",true,KEYFRAME_TOURS_ROLLOUT, ToursRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_keyframe, glui_tour);
   ADDPROCINFO(toursprocinfo, ntoursprocinfo, ROLLOUT_keyframe, KEYFRAME_TOURS_ROLLOUT, glui_tour);
 
@@ -244,7 +244,7 @@ extern "C" void GLUITourSetup(int main_window){
   glui_tour->add_button_to_panel(PANEL_tournavigate, _("Next"), KEYFRAME_NEXT, TourCB);
   glui_tour->add_button_to_panel(PANEL_tournavigate, _("Insert after"), KEYFRAME_INSERT, TourCB);
 
-  ROLLOUT_settings = glui_tour->add_rollout(_("Settings"), true);
+  ROLLOUT_settings = glui_tour->add_rollout(_("Settings"), true, SETTINGS_TOURS_ROLLOUT, ToursRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_settings, glui_tour);
   ADDPROCINFO(toursprocinfo, ntoursprocinfo, ROLLOUT_settings, SETTINGS_TOURS_ROLLOUT, glui_tour);
 
