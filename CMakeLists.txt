@@ -51,14 +51,11 @@ if (LINUX)
     add_definitions(-Dpp_LINUX)
 endif()
 
-# GLUI has been modified for smokeview, so we have to vendor it and can't use a
-# native version.
-add_subdirectory(Source/glui_v2_1_beta)
-
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(GLUI REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -232,11 +229,7 @@ endif()
 if(WIN32)
   target_link_libraries(smokeview PRIVATE wsock32 ws2_32)
 endif()
-# GLUI can be provided natively, but there are modifications in the code
-# vendored with Smokeview that we rely on. Because of this custom code and the
-# potential conflict with native libs this needs to be early in the include order.
-target_link_libraries(smokeview PRIVATE glui_static)
-target_include_directories(smokeview PRIVATE Source/glui_v2_1_beta)
+target_link_libraries(smokeview PRIVATE glui::glui)
 if(WIN32)
     target_link_libraries(smokeview PRIVATE PThreads4W::PThreads4W)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")

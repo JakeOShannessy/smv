@@ -11,7 +11,7 @@
 #define TYPE_INI 1
 #endif
 
-EXTERNCPP labeldata *LabelGet(labels_collection *labelscoll, char *name);
+EXTERNCPP labeldata *LabelGet(labels_collection *labelscoll, const char *name);
 EXTERNCPP labeldata *LabelInsert(labels_collection *labelscoll,
                                  labeldata *labeltemp);
 
