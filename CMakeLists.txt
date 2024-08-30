@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.24)
 # Set a policy to use the newer MSVC ABI selection
 cmake_policy(SET CMP0091 NEW)
-# Set a policy to use the newer approach to timestampes in FetchContent
+# Set a policy to use the newer approach to timestamps in FetchContent
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.24")
     cmake_policy(SET CMP0135 NEW)
 endif()
