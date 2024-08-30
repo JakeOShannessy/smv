@@ -2087,6 +2087,8 @@ SVEXTERN tour_collection tourcoll = {.ntourinfo = 0,
 SVEXTERN tour_collection tourcoll;
 #endif
 
+SVEXTERN int SVDECL(show_version, 0), SVDECL(show_help, 0);
+
 SVEXTERN int SVDECL(selectedtour_index, TOURINDEX_MANUAL), SVDECL(selectedtour_index_old, TOURINDEX_MANUAL), SVDECL(selectedtour_index_ini, TOURINDEX_MANUAL);
 SVEXTERN int SVDECL(update_selectedtour_index,0);
 SVEXTERN int SVDECL(viewtourfrompath,0),SVDECL(viewalltours,0),SVDECL(viewanytours,0),SVDECL(edittour,0);

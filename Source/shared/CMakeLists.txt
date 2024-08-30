@@ -1,0 +1,72 @@
+add_library(libsmv SHARED
+    isobox.c
+    dmalloc.c
+    compress.c
+    file_util.c
+    string_util.c
+    threader.c
+    histogram.c
+    translate.c
+    csphere.c
+    md5.c
+    sha1.c
+    sha256.c
+    stdio_m.c
+    stdio_buffer.c
+    getdata.c
+    color2rgb.c
+    readimage.c
+    readcad.c
+    readgeom.c
+    colorbars.c
+    colorbar_defs.c
+    readhvac.c
+    readslice.c
+    readsmoke.c
+    readobject.c
+    readcad.c
+    readpart.c
+    readlabel.c
+    readtour.c
+)
+target_include_directories(libsmv PUBLIC
+    .
+    #TODO: this is a bit of a hack, it shouldn't really use options.h
+    ../smokeview
+)
+if(WIN32)
+    target_link_libraries(libsmv PRIVATE PThreads4W::PThreads4W)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        install(DIRECTORY ${PThreads4W_DEBUG_DLL_DIR}/
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            FILES_MATCHING PATTERN "*.dll")
+    else()
+        install(DIRECTORY ${PThreads4W_DLL_DIR}/
+                DESTINATION ${CMAKE_INSTALL_BINDIR}
+                FILES_MATCHING PATTERN "*.dll")
+    endif()
+endif()
+target_link_libraries(libsmv PRIVATE JPEG::JPEG)
+target_link_libraries(libsmv PRIVATE PNG::PNG)
+target_link_libraries(libsmv PRIVATE ZLIB::ZLIB)
+target_link_libraries(libsmv PRIVATE OpenGL::GL OpenGL::GLU)
+target_link_libraries(libsmv PRIVATE PkgConfig::LIBGD)
+# target_include_directories(.
+#                            PUBLIC
+#                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+#                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+# )
+# if(WIN32)
+#   target_link_libraries(jsonrpc PRIVATE wsock32 ws2_32)
+# endif()
+
+# find_package(json-c CONFIG REQUIRED)
+# target_link_libraries(jsonrpc PUBLIC json-c::json-c)
+
+# if(WIN32)
+#     find_package(PThreads4W REQUIRED)
+#     target_link_libraries(jsonrpc PRIVATE PThreads4W::PThreads4W)
+# endif()
+# target_include_directories(jsonrpc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
+# generate_export_header(jsonrpc)
+# install(TARGETS jsonrpc)

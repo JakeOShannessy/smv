@@ -149,6 +149,7 @@ if (smokeview_ini_status_code)
 endif()
 
 # Libraries to build (which may be dependencies of the programs below)
+add_subdirectory(Source/shared)
 add_subdirectory(Source/jsonrpc)
 
 # The programs to build

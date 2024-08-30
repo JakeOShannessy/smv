@@ -125,12 +125,12 @@ int main(int argc, char **argv){
     return 1;
   }
 
-  ParseCommonOptions(argc, argv);
-  if(show_help!=0){
-    Usage("set_path",show_help);
+  common_opts opts = ParseCommonOptions(argc, argv);
+  if(opts.show_help!=0){
+    Usage("set_path",opts.show_help);
     return 1;
   }
-  if(show_version==1){
+  if(opts.show_version==1){
     PRINTVERSION("set_file");
     return 1;
   }

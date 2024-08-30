@@ -42,12 +42,12 @@ int main(int argc, char **argv){
   SetStdOut(stdout);
   initMALLOC();
 
-  ParseCommonOptions(argc, argv);
-  if(show_help!=0){
-    Usage("fds2fed",show_help);
+  common_opts opts = ParseCommonOptions(argc, argv);
+  if(opts.show_help!=0){
+    Usage("fds2fed",opts.show_help);
     return 0;
   }
-  if(show_version==1){
+  if(opts.show_version==1){
     PRINTVERSION("fds2fed");
     return 0;
   }

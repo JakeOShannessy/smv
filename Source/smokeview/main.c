@@ -767,12 +767,12 @@ int main(int argc, char **argv){
   InitRandAB(1000000);
   InitVars();
 
-  ParseCommonOptions(argc, argv);
-  if(show_help==1){
+  common_opts opts = ParseCommonOptions(argc, argv);
+  if(opts.show_help==1){
     Usage("smokeview", HELP_SUMMARY);
     return 1;
   }
-  if(show_help==2){
+  if(opts.show_help==2){
     Usage("smokeview", HELP_ALL);
     return 1;
   }
