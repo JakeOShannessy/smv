@@ -6,8 +6,8 @@
 #include <windows.h>
 #endif
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+#include GL_H
+#include GLU_H
 #include <assert.h>
 #include <gd.h>
 #include <stdlib.h>
