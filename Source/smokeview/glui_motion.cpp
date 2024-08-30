@@ -663,7 +663,7 @@ void GetUniqueViewName(void){
   const char *label;
   char viewlabel[300];
 
-  label = EDIT_view_label->get_text().c_str();
+  label = EDIT_view_label->get_text();
   if(ViewExist(label) == 1){
     int i;
 
@@ -885,7 +885,7 @@ extern "C" void GLUIViewpointCB(int var){
     ival = LIST_viewpoints->get_int_val();
     selected_view = ival;
     // TODO: this introduces a memory leak
-    label = strdup(EDIT_view_label->get_text().c_str());
+    label = strdup(EDIT_view_label->get_text());
     cex = &camera_list_first;
     cex = cex->next;
     cex = cex->next;
@@ -920,7 +920,7 @@ extern "C" void GLUIViewpointCB(int var){
   case DELETE_VIEW:
     ival = LIST_viewpoints->get_int_val();
     // TODO: introduces memory leak
-    label = strdup(EDIT_view_label->get_text().c_str());
+    label = strdup(EDIT_view_label->get_text());
     cex = &camera_list_first;
     cex = cex->next;
     cex = cex->next;
@@ -2542,7 +2542,7 @@ extern "C" void GLUIAddListView(char *label_in){
   selected_view=ival;
   label=label_in;
   // TODO: introduces memory leak
-  if(label==NULL)label=strdup(EDIT_view_label->get_text().c_str());
+  if(label==NULL)label=strdup(EDIT_view_label->get_text());
   cex=&camera_list_first;
   cex=cex->next;
   cex=cex->next;
