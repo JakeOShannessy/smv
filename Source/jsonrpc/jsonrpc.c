@@ -4,6 +4,15 @@
 #include <stdbool.h>
 
 #ifdef _WIN32
+#define UNLINK _unlink
+#define STRDUP _strdup
+#else
+#define UNLINK unlink
+#define STRDUP strdup
+#endif
+
+
+#ifdef _WIN32
 //
 //  This application opens a file specified by the user and uses
 //  a temporary file to convert the file to upper case letters.
@@ -15,14 +24,6 @@
 #include <stdio.h>
 #include <tchar.h>
 #include <windows.h>
-
-#ifdef _WIN32
-#define UNLINK _unlink
-#define STRDUP _strdup
-#else
-#define UNLINK unlink
-#define STRDUP strdup
-#endif
 
 #define BUFSIZE 1024
 
