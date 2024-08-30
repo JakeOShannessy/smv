@@ -32,6 +32,7 @@
 #define DLLEXPORT __declspec(dllexport)
 #else
 #define DLLEXPORT
+typedef int SOCKET;
 #endif
 
 // SHARED
@@ -57,11 +58,11 @@
 #define JRPC_INTERNAL_ERROR -32693
 
 struct jrpc_connection {
-  int fd;
-  unsigned int buffer_size;
+  SOCKET fd;
+  size_t buffer_size;
   char *buffer;
   int debug_level;
-  unsigned int extra_chars_n;
+  size_t extra_chars_n;
   char *extra_chars;
   // Only used when acting as a client.
   int next_id;
@@ -106,7 +107,11 @@ struct jrpc_server {
 #endif
   struct sockaddr_un socket;
   struct sockaddr_un remote;
+#ifdef _WIN32
+  SOCKET fd;
+#else
   int fd;
+#endif
   int procedure_count;
   struct jrpc_procedure *procedures;
   int debug_level;

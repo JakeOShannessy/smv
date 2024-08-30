@@ -76,7 +76,7 @@ json_object *move_x(jrpc_context *context, json_object *params,
 char *strdup(const char *s);
 #endif
 void push_rpc(struct jrpc_server *server, json_object *jobj);
-int sockClose(int sock);
+int sockClose(SOCKET sock);
 json_object *pop_or_block(struct jrpc_connection *conn);
 void sock_error(const char *error_category);
 json_object *request_create(int id, const char *method, json_object *params);

@@ -16,95 +16,97 @@
 #include <tchar.h>
 #include <windows.h>
 
+#ifdef _WIN32
+#define UNLINK _unlink
+#define STRDUP _strdup
+#else
+#define UNLINK unlink
+#define STRDUP strdup
+#endif
+
 #define BUFSIZE 1024
 
 void PrintError(LPCTSTR errDesc);
 
-TCHAR *create_temp_path() {
-  HANDLE hFile = INVALID_HANDLE_VALUE;
-  HANDLE hTempFile = INVALID_HANDLE_VALUE;
+TCHAR *CreateTempPath() {
+  HANDLE h_file = INVALID_HANDLE_VALUE;
+  HANDLE h_temp_file = INVALID_HANDLE_VALUE;
 
-  BOOL fSuccess = FALSE;
-  UINT uRetVal = 0;
+  BOOL f_success = FALSE;
+  UINT u_ret_val = 0;
 
-  DWORD dwBytesRead = 0;
-  DWORD dwBytesWritten = 0;
+  DWORD dw_bytes_read = 0;
+  DWORD dw_bytes_written = 0;
 
-  TCHAR *szTempFileName = malloc(MAX_PATH * sizeof(TCHAR));
-  TCHAR lpTempPathBuffer[MAX_PATH];
-  char chBuffer[BUFSIZE];
-
-  LPCTSTR errMsg;
+  TCHAR *sz_temp_file_name = malloc(MAX_PATH * sizeof(TCHAR));
+  TCHAR lp_temp_path_buffer[MAX_PATH];
 
   //  Gets the temp path env string (no guarantee it's a valid path).
-  DWORD dwRetVal = 0;
-  dwRetVal = GetTempPath(MAX_PATH,          // length of the buffer
-                         lpTempPathBuffer); // buffer for path
-  if(dwRetVal > MAX_PATH || (dwRetVal == 0)) {
+  DWORD dw_ret_val = 0;
+  dw_ret_val = GetTempPath(MAX_PATH,             // length of the buffer
+                           lp_temp_path_buffer); // buffer for path
+  if(dw_ret_val > MAX_PATH || (dw_ret_val == 0)) {
     PrintError(TEXT("GetTempPath failed"));
-    if(!CloseHandle(hFile)) {
-      PrintError(TEXT("CloseHandle(hFile) failed"));
+    if(!CloseHandle(h_file)) {
+      PrintError(TEXT("CloseHandle(h_file) failed"));
       return NULL;
     }
     return NULL;
   }
 
   //  Generates a temporary file name.
-  uRetVal = GetTempFileName(lpTempPathBuffer,   // directory for tmp files
-                            TEXT("smv_socket"), // temp file name prefix
-                            0,                  // create unique name
-                            szTempFileName);    // buffer for name
-  if(uRetVal == 0) {
+  u_ret_val = GetTempFileName(lp_temp_path_buffer, // directory for tmp files
+                              TEXT("smv_socket"),  // temp file name prefix
+                              0,                   // create unique name
+                              sz_temp_file_name);  // buffer for name
+  if(u_ret_val == 0) {
     PrintError(TEXT("GetTempFileName failed"));
-    if(!CloseHandle(hFile)) {
-      PrintError(TEXT("CloseHandle(hFile) failed"));
+    if(!CloseHandle(h_file)) {
+      PrintError(TEXT("CloseHandle(h_file) failed"));
       return NULL;
     }
     return NULL;
   }
-  return szTempFileName;
+  return sz_temp_file_name;
 }
 
 //  ErrorMessage support function.
 //  Retrieves the system error message for the GetLastError() code.
 //  Note: caller must use LocalFree() on the returned LPCTSTR buffer.
 LPCTSTR ErrorMessage(DWORD error) {
-  LPVOID lpMsgBuf;
+  LPVOID lp_msg_buf;
 
   FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
                     FORMAT_MESSAGE_IGNORE_INSERTS,
                 NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                (LPTSTR)&lpMsgBuf, 0, NULL);
+                (LPTSTR)&lp_msg_buf, 0, NULL);
 
-  return ((LPCTSTR)lpMsgBuf);
+  return ((LPCTSTR)lp_msg_buf);
 }
 
 //  PrintError support function.
 //  Simple wrapper function for error output.
 void PrintError(LPCTSTR errDesc) {
-  LPCTSTR errMsg = ErrorMessage(GetLastError());
-  _tprintf(TEXT("\n** ERROR ** %s: %s\n"), errDesc, errMsg);
-  LocalFree((LPVOID)errMsg);
+  LPCTSTR err_msg = ErrorMessage(GetLastError());
+  _tprintf(TEXT("\n** ERROR ** %s: %s\n"), errDesc, err_msg);
+  LocalFree((LPVOID)err_msg);
 }
 #else
-char *create_temp_path() {
+char *CreateTempPath() {
   char *template_basis = "smv_socket.XXXXXX";
   char *template = malloc((strlen(template_basis) + 1) * sizeof(char));
   return mkdtemp(template);
 }
 #endif
 
-int sockClose(int sock) {
+int sockClose(SOCKET sock) {
 
   int status = 0;
 
 #ifdef _WIN32
-  fprintf(stderr, "sock: %d\n", sock);
   status = shutdown(sock, SD_SEND);
-  fprintf(stderr, "shutdown: %d\n", status);
   if(status == 0) {
     status = closesocket(sock);
-    fprintf(stderr, "closesocket: %d\n", status);
   }
   else {
     sock_error("shutdown");
@@ -119,7 +121,7 @@ int sockClose(int sock) {
   return status;
 }
 
-void cb_init(circular_buffer *cb, size_t capacity, size_t sz) {
+void CbInit(circular_buffer *cb, size_t capacity, size_t sz) {
   cb->buffer = malloc(capacity * sz);
   if(cb->buffer == NULL) {
     // memory allocation failure
@@ -133,7 +135,7 @@ void cb_init(circular_buffer *cb, size_t capacity, size_t sz) {
   cb->tail = cb->buffer;
 }
 
-void cb_free(circular_buffer *cb) {
+void CbFree(circular_buffer *cb) {
   free(cb->buffer);
   cb->buffer_end = NULL;
   cb->capacity = 0;
@@ -143,7 +145,7 @@ void cb_free(circular_buffer *cb) {
   cb->tail = NULL;
 }
 
-void cb_push_back(circular_buffer *cb, const void *item) {
+void CbPushBack(circular_buffer *cb, const void *item) {
   if(cb->count == cb->capacity) {
     // TODO: handle error
     // The buffer is at capacity
@@ -154,7 +156,7 @@ void cb_push_back(circular_buffer *cb, const void *item) {
   cb->count++;
 }
 
-void cb_pop_front(circular_buffer *cb, void *item) {
+void CbPopFront(circular_buffer *cb, void *item) {
   if(cb->count == 0) {
     // There are no items, return NULL
     item = NULL;
@@ -169,9 +171,9 @@ void cb_pop_front(circular_buffer *cb, void *item) {
 void push_rpc(struct jrpc_server *server, json_object *jobj) {
   pthread_mutex_lock(&server->rpc_mutex);
   if(server->rpc_buffer.buffer == NULL) {
-    cb_init(&server->rpc_buffer, 100, sizeof(json_object *));
+    CbInit(&server->rpc_buffer, 100, sizeof(json_object *));
   }
-  cb_push_back(&server->rpc_buffer, &jobj);
+  CbPushBack(&server->rpc_buffer, &jobj);
   fprintf(stderr, "rpc_len(socket_thread): %zu\n", server->rpc_buffer.count);
   pthread_mutex_unlock(&server->rpc_mutex);
 }
@@ -187,7 +189,7 @@ int process_rpcs(struct jrpc_server *server) {
   processing_rpc_recursion++;
   while(server->rpc_buffer.count > 0) {
     json_object *jobj = NULL;
-    cb_pop_front(&server->rpc_buffer, &jobj);
+    CbPopFront(&server->rpc_buffer, &jobj);
     if(jobj == NULL) break;
     // Do RPC actions
     eval_request(server, server->conn, jobj);
@@ -206,7 +208,7 @@ DLLEXPORT void *kickoff_socket(void *kickoff_info) {
     sock_path = koi->sock_path;
   }
   else {
-    sock_path = create_temp_path();
+    sock_path = CreateTempPath();
   }
   jrpc_server_listen(s_server, sock_path);
   for(;;) {
@@ -221,17 +223,6 @@ DLLEXPORT void *kickoff_socket(void *kickoff_info) {
   }
   return NULL;
 }
-#ifndef _WIN32
-char *strdup(const char *s) {
-  size_t slen = strlen(s);
-  char *result = malloc(slen + 1);
-  if(result == NULL) {
-    return NULL;
-  }
-  memcpy(result, s, slen + 1);
-  return result;
-}
-#endif
 
 static void jrpc_procedure_destroy(struct jrpc_procedure *procedure) {
   if(procedure->name) {
@@ -257,7 +248,7 @@ DLLEXPORT int jrpc_register_procedure(struct jrpc_server *server,
     if(!ptr) return -1;
     server->procedures = ptr;
   }
-  if((server->procedures[i].name = strdup(name)) == NULL) return -1;
+  if((server->procedures[i].name = STRDUP(name)) == NULL) return -1;
   server->procedures[i].function = function_pointer;
   server->procedures[i].data = data;
   return 0;
@@ -332,7 +323,7 @@ DLLEXPORT int jrpc_deregister_procedure(struct jrpc_server *server,
 
 static int send_response(struct jrpc_connection *conn, const char *response) {
   if(conn->debug_level > 1) fprintf(stderr, "JSON Response:\n%s\n", response);
-  send(conn->fd, response, strlen(response), 0);
+  send(conn->fd, response, (int)strlen(response), 0);
   send(conn->fd, "\n", 1, 0);
   return 0;
 }
@@ -441,7 +432,7 @@ static int eval_request(struct jrpc_server *server,
   }
 err:
   send_error(conn, JRPC_INVALID_REQUEST,
-             strdup("The JSON sent is not a valid Request object."), NULL);
+             "The JSON sent is not a valid Request object.", NULL);
   return -1;
 }
 
@@ -451,7 +442,7 @@ struct jrpc_server jrpc_server_create() {
   server.remote.sun_family = AF_UNIX;
   server.debug_level = 1;
   // TODO: what happens when the buffer limit is exceeded?
-  cb_init(&server.rpc_buffer, 100, sizeof(json_object *));
+  CbInit(&server.rpc_buffer, 100, sizeof(json_object *));
   server.conn = NULL;
   pthread_mutex_t rpc_mutex = PTHREAD_MUTEX_INITIALIZER;
   server.rpc_mutex = rpc_mutex;
@@ -472,9 +463,10 @@ int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
   }
   fprintf(stdout, "sock_path: %s\n", sock_path);
   strcpy(server->socket.sun_path, sock_path);
-  unlink(server->socket.sun_path);
-  int len = strlen(server->socket.sun_path) + sizeof(server->socket.sun_family);
-  if(bind(server->fd, (struct sockaddr *)&server->socket, len) == -1) {
+  UNLINK(server->socket.sun_path);
+  size_t len =
+      strlen(server->socket.sun_path) + sizeof(server->socket.sun_family);
+  if(bind(server->fd, (struct sockaddr *)&server->socket, (int)len) == -1) {
     sock_error("bind");
     exit(1);
   }
@@ -489,7 +481,7 @@ int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
 struct jrpc_connection jrpc_server_connect(struct jrpc_server *server) {
   struct jrpc_connection conn = connection_create(100);
   // TODO: consider handling multiple remotes
-  unsigned int slen = sizeof(server->remote);
+  int slen = (int)sizeof(server->remote);
   if((conn.fd = accept(server->fd, (struct sockaddr *)&server->remote,
                        &slen)) == -1) {
     sock_error("accept");
@@ -531,24 +523,22 @@ DLLEXPORT struct jrpc_connection jrpc_client_connect(struct jrpc_client *client,
                                                      const char *sock_path) {
   struct jrpc_connection conn = connection_create(100);
   connection_connect(client, &conn, sock_path);
-  fprintf(stderr, "fsock: %d\n", conn.fd);
   return conn;
 }
 
 DLLEXPORT struct jrpc_connection *
-jrpc_client_connect_ptr(struct jrpc_client *client, const char *sock_path) {
+JrpcClientConnectPtr(struct jrpc_client *client, const char *sock_path) {
   fprintf(stderr, "connect sock path: %s\n", sock_path);
   struct jrpc_connection *conn = malloc(sizeof(struct jrpc_connection));
   *conn = jrpc_client_connect(client, sock_path);
   return conn;
 }
 
-DLLEXPORT char *pop_or_block_s(struct jrpc_connection *conn) {
+DLLEXPORT char *PopOrBlockS(struct jrpc_connection *conn) {
   json_object *jobj = pop_or_block(conn);
   const char *sq =
       json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
-  // fprintf(stderr, "pop_or_block_s: %s\n", sq);
-  char *r = strdup(sq);
+  char *r = STRDUP(sq);
   json_object_put(jobj);
   return r;
 }
@@ -568,7 +558,7 @@ DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
   // This is the loop that handles JSON objects. It goes once around for each
   // object passed on the socket.
   json_object *jobj = NULL;
-  int stringlen = 0;
+  size_t stringlen = 0;
   // TODO: we give this an initial value so that we return an error if the
   // connection sends nothing.
   enum json_tokener_error jerr;
@@ -576,9 +566,8 @@ DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
   // object is parsed.
   do {
     if(conn->extra_chars) {
-      fprintf(stderr, "Parsing Extra Chars[%d]: >%s<\n", conn->extra_chars_n,
-              conn->extra_chars);
-      jobj = json_tokener_parse_ex(tok, conn->extra_chars, conn->extra_chars_n);
+      jobj = json_tokener_parse_ex(tok, conn->extra_chars,
+                                   (int)conn->extra_chars_n);
       conn->extra_chars = NULL;
       conn->extra_chars_n = 0;
     }
@@ -602,7 +591,7 @@ DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
       // string indicating we should start again.
       if(stringlen < n) {
         // parse the end into the existing object
-        jobj = json_tokener_parse_ex(tok, conn->buffer, stringlen);
+        jobj = json_tokener_parse_ex(tok, conn->buffer, (int)stringlen);
         // TODO: if we're in a failure state we should restart
         jerr = json_tokener_get_error(tok);
         if(jerr != json_tokener_success && stringlen > 0) {
@@ -640,15 +629,10 @@ int process_connection(struct jrpc_server *server,
   // This is the loop that handles JSON objects. It goes once around for each
   // object passed on the socket.
   for(;;) {
-    fprintf(stderr, "pop_or_block\n");
     json_object *jobj = pop_or_block(conn);
     if(jobj == NULL) break;
     // Success, add jobj to the buffer
     push_rpc(server, jobj);
-    const char *sq =
-        json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
-
-    fprintf(stderr, "received: %s\n", sq);
   }
   fprintf(stderr, "Connection done (server).\n");
 
@@ -671,8 +655,9 @@ void connection_connect(struct jrpc_client *client,
   }
 
   strcpy(client->socket.sun_path, sock_path);
-  int len = strlen(client->socket.sun_path) + sizeof(client->socket.sun_family);
-  if(connect(conn->fd, (struct sockaddr *)&client->socket, len) == -1) {
+  size_t len =
+      strlen(client->socket.sun_path) + sizeof(client->socket.sun_family);
+  if(connect(conn->fd, (struct sockaddr *)&client->socket, (int)len) == -1) {
     sock_error("connect");
     exit(1);
   }
@@ -717,8 +702,7 @@ void send_request(struct jrpc_connection *conn, json_object *request_object) {
   const char *str =
       json_object_to_json_string_ext(request_object, JSON_C_TO_STRING_PRETTY);
   // fprintf(stderr, "sending %s\n", str);
-  int r = send(conn->fd, str, strlen(str) + 1, 0);
-  fprintf(stderr, "send result =  %d\n", r);
+  int r = send(conn->fd, str, (int)(strlen(str) + 1), 0);
   if(r == -1) {
     sock_error("send");
     exit(1);
@@ -728,27 +712,25 @@ void send_request(struct jrpc_connection *conn, json_object *request_object) {
 void parse_response(struct jrpc_connection *conn, json_object *request_object) {
   const char *str =
       json_object_to_json_string_ext(request_object, JSON_C_TO_STRING_PRETTY);
-  if(send(conn->fd, str, strlen(str) + 1, 0) == -1) {
+  if(send(conn->fd, str, (int)strlen(str) + 1, 0) == -1) {
     sock_error("send");
     exit(1);
   }
 }
 DLLEXPORT int jrpc_send_request(struct jrpc_connection *conn,
                                 const char *method, json_object *params) {
-  fprintf(stderr, "sending %s\n", method);
   int request_id = conn->next_id;
   conn->next_id++;
   json_object *request_object = request_create(request_id, method, params);
   send_request(conn, request_object);
-  fprintf(stderr, "sent\n");
   json_object_put(request_object);
   return request_id;
 }
 
 DLLEXPORT int jrpc_send_request_s(struct jrpc_connection *conn,
                                   const char *method, const char *params_s) {
-  fprintf(stderr, "sending %s\n", method);
   json_tokener *tok = json_tokener_new();
-  json_object *params = json_tokener_parse_ex(tok, params_s, strlen(params_s));
+  json_object *params =
+      json_tokener_parse_ex(tok, params_s, (int)strlen(params_s));
   return jrpc_send_request(conn, method, params);
 }
