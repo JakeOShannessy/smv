@@ -807,7 +807,7 @@ int main(int argc, char **argv){
   InitStartupDirs();
   SetupGlut(argc,argv);
   START_TIMER(startup_time);
-
+  // TODO: this next step is now very slow.
   return_code= SetupCase(smv_filename);
   if(return_code!=0)return 1;
   if(convert_ini==1){

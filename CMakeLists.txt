@@ -52,10 +52,6 @@ if (LINUX)
     add_definitions(-Dpp_LINUX)
 endif()
 
-# GLUI has been modified for smokeview, so we have to vendor it and can't use a
-# native version.
-add_subdirectory(Source/glui_v2_1_beta)
-
 find_package(OpenGL REQUIRED)
 if (VENDORED_UI_LIBS)
     add_subdirectory(Source/glut-3.7.6)

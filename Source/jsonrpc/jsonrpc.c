@@ -473,7 +473,7 @@ int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
   fprintf(stdout, "sock_path: %s\n", sock_path);
   strcpy(server->socket.sun_path, sock_path);
   UNLINK(server->socket.sun_path);
-  if(bind(server->fd, (struct sockaddr *)&server->socket, sizeof(struct sockaddr)) == -1) {
+  if(bind(server->fd, (struct sockaddr *)&server->socket, sizeof(struct sockaddr_un)) == -1) {
     sock_error("bind");
     exit(1);
   }

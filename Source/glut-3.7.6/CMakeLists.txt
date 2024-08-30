@@ -67,7 +67,7 @@ if (UNIX)
 elseif (WIN32)
   target_sources(glut32_static PRIVATE ${WINDOWS_ONLY_FILES})
 endif ()
-target_include_directories(glut32_static PRIVATE ../glut_gl)
+target_include_directories(glut32_static PUBLIC ../glut_gl)
 set_target_properties(glut32_static PROPERTIES OUTPUT_NAME "glut32")
 
 if (WIN32)
