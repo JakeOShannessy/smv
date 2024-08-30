@@ -20,7 +20,7 @@ if (WIN32)
 
 endif()
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(parse_simple_slice m)
+    target_link_libraries(parse_simple_slice PRIVATE m)
 endif()
 
 # parse_simple_bndf
@@ -37,7 +37,7 @@ if (WIN32)
     target_link_libraries(parse_simple_bndf PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(parse_simple_bndf m)
+    target_link_libraries(parse_simple_bndf PRIVATE m)
 endif()
 
 
@@ -55,7 +55,7 @@ if (WIN32)
     target_link_libraries(parse_simple_part PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(parse_simple_part m)
+    target_link_libraries(parse_simple_part PRIVATE m)
 endif()
 
 
@@ -73,7 +73,7 @@ if (WIN32)
     target_link_libraries(parse_simple_pl3d PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(parse_simple_pl3d m)
+    target_link_libraries(parse_simple_pl3d PRIVATE m)
 endif()
 
 # parse_cad
@@ -128,7 +128,7 @@ if (WIN32)
     target_link_libraries(test_objects PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(test_objects m)
+    target_link_libraries(test_objects PRIVATE m)
 endif()
 
 # parse_objects
@@ -151,7 +151,7 @@ if (WIN32)
     target_link_libraries(parse_objects PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(parse_objects m)
+    target_link_libraries(parse_objects PRIVATE m)
 endif()
 
 # parse_hvac_vals
@@ -175,7 +175,7 @@ if (WIN32)
     target_link_libraries(parse_hvac_vals PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(parse_hvac_vals m)
+    target_link_libraries(parse_hvac_vals PRIVATE m)
 endif()
 
 # parse_colorbar
@@ -200,7 +200,7 @@ if (WIN32)
     target_link_libraries(parse_colorbar PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(parse_colorbar m)
+    target_link_libraries(parse_colorbar PRIVATE m)
 endif()
 
 # test_labels
@@ -224,7 +224,7 @@ if (WIN32)
     target_link_libraries(test_labels PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(test_labels m)
+    target_link_libraries(test_labels PRIVATE m)
 endif()
 
 
@@ -265,7 +265,7 @@ if (WIN32)
     target_link_libraries(test_image_render PRIVATE PThreads4W::PThreads4W)
 endif()
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(test_image_render m)
+    target_link_libraries(test_image_render PRIVATE m)
 endif()
 
 
