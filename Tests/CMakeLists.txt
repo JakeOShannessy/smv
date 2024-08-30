@@ -258,7 +258,11 @@ target_include_directories(test_image_render PRIVATE
     ../Source/shared
 )
 target_link_libraries(test_image_render PRIVATE PkgConfig::LIBGD)
-target_link_libraries(test_image_render PRIVATE OpenGL::GL OpenGL::GLU)
+if (WIN32 )
+    target_link_libraries(test_image_render PRIVATE OpenGL::GL OpenGL::GLU)
+else()
+    target_link_libraries(test_image_render PRIVATE OpenGL::OpenGL OpenGL::EGL OpenGL::GLU)
+endif()
 target_link_libraries(test_image_render PRIVATE JPEG::JPEG)
 target_link_libraries(test_image_render PRIVATE PNG::PNG)
 if (WIN32)
@@ -324,6 +328,7 @@ add_test(NAME "Simple HVAC Vals - Complete"
 # add_test(NAME "smvq - parse smv file"
 #     COMMAND smvq ${CMAKE_SOURCE_DIR}/Tests/test_model_small/test_model_small.smv)
 
-
-# add_test(NAME "Test Image Render"
-#     COMMAND test_image_render)
+if (NOT WIN32 )
+    add_test(NAME "Test Image Render"
+        COMMAND test_image_render)
+endif()

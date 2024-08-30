@@ -8,9 +8,11 @@
 
 #include GL_H
 #include GLU_H
+#include <EGL/egl.h>
 #include <assert.h>
 #include <gd.h>
 #include <stdlib.h>
+#include "file_util.h"
 
 #define PNG 0
 #define JPEG 1
@@ -96,8 +98,62 @@ int Image2FileNew(const char *filepath, int rendertype, int woffset, int width,
   return return_code;
 }
 
+static const EGLint configAttribs[] = {EGL_SURFACE_TYPE,
+                                       EGL_PBUFFER_BIT,
+                                       EGL_BLUE_SIZE,
+                                       8,
+                                       EGL_GREEN_SIZE,
+                                       8,
+                                       EGL_RED_SIZE,
+                                       8,
+                                       EGL_DEPTH_SIZE,
+                                       8,
+                                       EGL_RENDERABLE_TYPE,
+                                       EGL_OPENGL_BIT,
+                                       EGL_NONE};
+
+static const int pbufferWidth = 9;
+static const int pbufferHeight = 9;
+
+static const EGLint pbufferAttribs[] = {
+    EGL_WIDTH, pbufferWidth, EGL_HEIGHT, pbufferHeight, EGL_NONE,
+};
+
+int setup_gl() {
+  // 1. Initialize EGL
+  EGLDisplay eglDpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+
+  EGLint major, minor;
+
+  eglInitialize(eglDpy, &major, &minor);
+
+  // 2. Select an appropriate configuration
+  EGLint numConfigs;
+  EGLConfig eglCfg;
+
+  eglChooseConfig(eglDpy, configAttribs, &eglCfg, 1, &numConfigs);
+
+  // 3. Create a surface
+  EGLSurface eglSurf = eglCreatePbufferSurface(eglDpy, eglCfg, pbufferAttribs);
+
+  // 4. Bind the API
+  eglBindAPI(EGL_OPENGL_API);
+
+  // 5. Create a context and make it current
+  EGLContext eglCtx = eglCreateContext(eglDpy, eglCfg, EGL_NO_CONTEXT, NULL);
+
+  eglMakeCurrent(eglDpy, eglSurf, eglSurf, eglCtx);
+
+  // from now on use your OpenGL context
+
+  // 6. Terminate EGL when finished
+  eglTerminate(eglDpy);
+  return 0;
+}
+
 int main(int argc, char **argv) {
   initMALLOC();
+  int return_code = 0;
   // width_beg=woffset;
   // width_end=width+woffset;
   // height_beg=hoffset;
@@ -110,5 +166,8 @@ int main(int argc, char **argv) {
   // }
   // width2 = width_end-width_beg;
   // height2 = height_end-height_beg;
-  return Image2FileNew("test.png", PNG, 0, 100, 0, 100);
+  const char *filepath = "test.png";
+  return_code = Image2FileNew(filepath, PNG, 0, 100, 0, 100);
+  UNLINK(filepath);
+  return return_code;
 }
