@@ -42,36 +42,6 @@ add_executable(smokeview
     command_args.c
     jsonrpc_api.c
     c_api.c
-
-    ../shared/isobox.c
-    ../shared/dmalloc.c
-    ../shared/compress.c
-    ../shared/file_util.c
-    ../shared/string_util.c
-    ../shared/threader.c
-    ../shared/histogram.c
-    ../shared/translate.c
-    ../shared/csphere.c
-    ../shared/md5.c
-    ../shared/sha1.c
-    ../shared/sha256.c
-    ../shared/stdio_m.c
-    ../shared/stdio_buffer.c
-    ../shared/getdata.c
-    ../shared/color2rgb.c
-    ../shared/readimage.c
-    ../shared/readcad.c
-    ../shared/readgeom.c
-    ../shared/colorbars.c
-    ../shared/colorbar_defs.c
-    ../shared/readhvac.c
-    ../shared/readslice.c
-    ../shared/readsmoke.c
-    ../shared/readobject.c
-    ../shared/readcad.c
-    ../shared/readpart.c
-    ../shared/readlabel.c
-    ../shared/readtour.c
 )
 
 # GLUI sources are separate here. In some branches GLUI is conditional.
@@ -90,6 +60,7 @@ target_sources(smokeview PRIVATE
     glui_shooter.cpp
 )
 
+target_link_libraries(smokeview PRIVATE libsmv)
 target_link_libraries(smokeview PRIVATE json-c::json-c)
 if (BUILD_SHARED_LIBS)
     install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)

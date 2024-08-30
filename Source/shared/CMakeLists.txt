@@ -1,4 +1,4 @@
-add_library(libsmv SHARED
+add_library(libsmv
     isobox.c
     dmalloc.c
     compress.c
@@ -48,7 +48,7 @@ if(WIN32)
 endif()
 target_link_libraries(libsmv PRIVATE JPEG::JPEG)
 target_link_libraries(libsmv PRIVATE PNG::PNG)
-target_link_libraries(libsmv PRIVATE ZLIB::ZLIB)
+target_link_libraries(libsmv PUBLIC ZLIB::ZLIB)
 target_link_libraries(libsmv PRIVATE OpenGL::GL OpenGL::GLU)
 target_link_libraries(libsmv PRIVATE PkgConfig::LIBGD)
 # target_include_directories(.

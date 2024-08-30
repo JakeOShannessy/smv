@@ -1,6 +1,8 @@
 #ifndef OPTIONS_H_DEFINED
 #define OPTIONS_H_DEFINED
 
+#define pp_HASH
+
 #include "options_common.h"
 
 //#define pp_FRAME           // turn on frame code
