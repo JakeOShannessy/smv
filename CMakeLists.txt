@@ -1,5 +1,5 @@
 # We select CMake version 3.25 as it allows us to use the LINUX variable.
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.24)
 # Set a policy to use the newer MSVC ABI selection
 cmake_policy(SET CMP0091 NEW)
 # Set a policy to use the newer approach to timestampes in FetchContent
@@ -58,17 +58,20 @@ find_package(GLEW REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
 find_package(ZLIB REQUIRED)
-
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBGD REQUIRED IMPORTED_TARGET gdlib)
 if (WIN32)
+    find_package(PThreads4W REQUIRED)
+endif()
+if (WIN32)
     find_package(GLUI REQUIRED)
 else()
-    # pkg_check_modules(GLUI REQUIRED IMPORTED_TARGET glui)
-endif()
-
-if (WIN32)
-    find_package(PThreads4W REQUIRED)
+        include(FetchContent)
+        FetchContent_Declare(
+            glui-git
+            GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
+            GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
+        )
 endif()
 
 if (NOT MSVC)
@@ -232,10 +235,11 @@ else()
 endif()
 
 if(WIN32)
-  target_link_libraries(smokeview PRIVATE wsock32 ws2_32)
-  target_link_libraries(smokeview PRIVATE glui::glui)
+    target_link_libraries(smokeview PRIVATE wsock32 ws2_32)
+    target_link_libraries(smokeview PRIVATE glui::glui)
 else()
-  target_link_libraries(smokeview PRIVATE glui)
+    FetchContent_MakeAvailable(glui-git)
+    target_link_libraries(smokeview PRIVATE glui)
 endif()
 if(WIN32)
     target_link_libraries(smokeview PRIVATE PThreads4W::PThreads4W)

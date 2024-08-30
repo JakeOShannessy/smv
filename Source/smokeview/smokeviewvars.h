@@ -5,7 +5,7 @@
 #include <time.h>
 #include "MALLOCC.h"
 #ifdef CPP
-#include "glui.h"
+#include "GL/glui.h"
 #endif
 #include "datadefs.h"
 #include "translate.h"
