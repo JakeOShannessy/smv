@@ -1,0 +1,173 @@
+add_executable(smokeview
+    main.c
+    menus.c
+    IOscript.c
+    IOshooter.c
+    colortimebar.c
+    camera.c
+    IOgeometry.c
+    IOwui.c
+    IOobjects.c
+    IOtour.c
+    getdatacolors.c
+    smokeview.c
+    output.c
+    renderimage.c
+    renderhtml.c
+    getdatabounds.c
+    readsmv.c
+    scontour2d.c
+    IOvolsmoke.c
+    IOsmoke.c
+    IOplot3d.c
+    IOplot2d.c
+    IOslice.c
+    IOhvac.c
+    IOboundary.c
+    IOpart.c
+    IOzone.c
+    IOiso.c
+    callbacks.c
+    drawGeometry.c
+    skybox.c
+    update.c
+    viewports.c
+    smv_geometry.c
+    showscene.c
+    infoheader.c
+    startup.c
+    shaders.c
+    unit.c
+    colortable.c
+    command_args.c
+    jsonrpc_api.c
+    c_api.c
+
+    ../shared/isobox.c
+    ../shared/dmalloc.c
+    ../shared/compress.c
+    ../shared/file_util.c
+    ../shared/string_util.c
+    ../shared/threader.c
+    ../shared/histogram.c
+    ../shared/translate.c
+    ../shared/csphere.c
+    ../shared/md5.c
+    ../shared/sha1.c
+    ../shared/sha256.c
+    ../shared/stdio_m.c
+    ../shared/stdio_buffer.c
+    ../shared/getdata.c
+    ../shared/color2rgb.c
+    ../shared/readimage.c
+    ../shared/readcad.c
+    ../shared/readgeom.c
+    ../shared/colorbars.c
+    ../shared/colorbar_defs.c
+    ../shared/readhvac.c
+    ../shared/readslice.c
+    ../shared/readsmoke.c
+    ../shared/readobject.c
+    ../shared/readcad.c
+    ../shared/readpart.c
+    ../shared/readlabel.c
+    ../shared/readtour.c
+)
+
+# GLUI sources are separate here. In some branches GLUI is conditional.
+target_sources(smokeview PRIVATE
+    glui_smoke.cpp
+    glui_clip.cpp
+    glui_stereo.cpp
+    glui_geometry.cpp
+    glui_motion.cpp
+    glui_bounds.cpp
+    glui_colorbar.cpp
+    glui_display.cpp
+    glui_tour.cpp
+    glui_trainer.cpp
+    glui_objects.cpp
+    glui_shooter.cpp
+)
+
+target_link_libraries(smokeview PRIVATE json-c::json-c)
+if (BUILD_SHARED_LIBS)
+    install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
+endif()
+
+if(WIN32)
+    target_link_libraries(smokeview PRIVATE wsock32 ws2_32)
+    target_link_libraries(smokeview PRIVATE glui::glui)
+else()
+    FetchContent_MakeAvailable(glui-git)
+    target_link_libraries(smokeview PRIVATE glui)
+endif()
+
+if(WIN32)
+    target_link_libraries(smokeview PRIVATE PThreads4W::PThreads4W)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        install(DIRECTORY ${PThreads4W_DEBUG_DLL_DIR}/
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            FILES_MATCHING PATTERN "*.dll")
+    else()
+        install(DIRECTORY ${PThreads4W_DLL_DIR}/
+                DESTINATION ${CMAKE_INSTALL_BINDIR}
+                FILES_MATCHING PATTERN "*.dll")
+    endif()
+endif()
+
+# Selecting which GLUT version to use is the most platform-dependent part of the
+# build.
+if (MACOSX)
+    add_definitions(-Dpp_NOQUARTZ)
+    target_link_libraries(smokeview PRIVATE "-framework OpenGL" "-framework GLUT")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+else()
+    target_link_libraries(smokeview PRIVATE GLUT::GLUT)
+endif ()
+target_link_libraries(smokeview PRIVATE GLEW::GLEW)
+if (GLEW_FOUND)
+    # This line is a hack to work around the fact the code includes "glew.h"
+    # rather than <GL/glew.h> TODO: just change this
+    target_include_directories(smokeview PRIVATE ${GLEW_INCLUDE_DIRS}/GL)
+endif()
+target_link_libraries(smokeview PRIVATE JPEG::JPEG)
+target_link_libraries(smokeview PRIVATE PNG::PNG)
+target_link_libraries(smokeview PRIVATE ZLIB::ZLIB)
+target_link_libraries(smokeview PRIVATE OpenGL::GL OpenGL::GLU)
+target_link_libraries(smokeview PRIVATE PkgConfig::LIBGD)
+
+target_include_directories(smokeview PRIVATE
+    .
+    ../shared
+)
+
+if (BETA)
+    add_compile_definitions(pp_BETA)
+endif ()
+
+if (SMV_ROOT_OVERRIDE)
+    target_compile_definitions(smokeview PRIVATE SMV_ROOT_OVERRIDE="${SMV_ROOT_OVERRIDE}")
+endif()
+
+if (SMOKEVIEW_CONFIG_PATH)
+    target_compile_definitions(smokeview PRIVATE SMOKEVIEW_CONFIG_PATH="${SMOKEVIEW_CONFIG_PATH}")
+endif()
+
+if (SMOKEVIEW_OBJECT_DEFS_PATH)
+    target_compile_definitions(smokeview PRIVATE SMOKEVIEW_OBJECT_DEFS_PATH="${SMOKEVIEW_OBJECT_DEFS_PATH}")
+endif()
+
+target_link_libraries(smokeview PRIVATE jsonrpc)
+
+if (MSVC)
+    # The headers in Source/glut_gl redefine some macros. Ideally those headers
+    # could be removed but for now we just ignore the warning.
+    target_compile_options(smokeview PRIVATE /wd4005)
+endif()
+if (LINUX)
+    add_definitions(-Dpp_LINUX)
+    target_link_libraries(smokeview PRIVATE pthread X11 Xmu GLU GL m stdc++)
+endif()
+
+install(TARGETS smokeview jsonrpc)
