@@ -308,8 +308,11 @@ add_test(NAME "Mem Test"
 add_test(NAME "Simple HVAC Vals - Complete"
     COMMAND parse_hvac_vals ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_hvac.hvac)
 
-# add_test(NAME "smvq - parse smv file"
-#     COMMAND smvq ${CMAKE_SOURCE_DIR}/Tests/test_model_small/test_model_small.smv)
+# Only execute these tests if the "fig" directory exists
+if(EXISTS "${CMAKE_SOURCE_DIR}/Tests/fig")
+    add_test(NAME "smvq - parse smv file"
+        COMMAND smvq ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/test_model_small/test_model_small.smv)
+endif()
 
 add_test(NAME "Test Image Render"
     COMMAND test_image_render ${CMAKE_SOURCE_DIR}/Build/for_bundle/textures/nistleft.jpg)

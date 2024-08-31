@@ -1,5 +1,5 @@
 #!/bin/sh
-COMMIT_FIG=83e6a770f511e315af21be5868d758b99f0a83ad
+COMMIT_FIG=374d9db0062fd6dc38b30bc0d27cd84c9bb2b69d
 
 TEMP_DIR=$(mktemp -d)
 ZIP_PATH=$TEMP_DIR/test-data.zip
