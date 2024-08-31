@@ -1,5 +1,5 @@
-#ifndef _WIN32
 #include "options.h"
+#ifndef _WIN32
 #include "MALLOCC.h"
 #include "getdata.h"
 #endif
