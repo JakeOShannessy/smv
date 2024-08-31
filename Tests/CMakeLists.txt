@@ -247,7 +247,14 @@ add_executable(test_image_render test_image_render.c )
 target_link_libraries(test_image_render PRIVATE PkgConfig::LIBGD)
 if (NOT WIN32)
     target_link_libraries(test_image_render PRIVATE libsmv)
+endif()
+
+if (LINUX)
     target_link_libraries(test_image_render PRIVATE OpenGL::OpenGL OpenGL::EGL OpenGL::GLU)
+elseif(MACOSX)
+    add_definitions(-Dpp_NOQUARTZ)
+    target_link_libraries(test_image_render PRIVATE "-framework OpenGL" "-framework GLUT")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 endif()
 
 
