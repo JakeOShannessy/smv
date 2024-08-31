@@ -8,7 +8,7 @@
 #include <windows.h>
 #endif
 
-#ifndef _WIN32
+#if defined(__linux__)
 #include GL_H
 #include GLU_H
 #include "file_util.h"
