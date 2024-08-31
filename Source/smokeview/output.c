@@ -192,12 +192,12 @@ float GetCharAdvance(GLUTbitmapFont font, int c){
   const BitmapCharRec *ch;
   BitmapFontPtr fontinfo;
 
-#if defined(_WIN32)
-  extern void *__glutFont(void *font);
-  fontinfo = (BitmapFontPtr)__glutFont(font);
-#else
+// #if defined(_WIN32)
+//   extern void *__glutFont(void *font);
+//   fontinfo = (BitmapFontPtr)__glutFont(font);
+// #else
   fontinfo = (BitmapFontPtr)font;
-#endif
+// #endif
 
   if(c < fontinfo->first ||
      c >= fontinfo->first + fontinfo->num_chars)
@@ -234,12 +234,12 @@ void glutBitmapCharacterShiftLeft(GLUTbitmapFont font, int c, float advance){
   GLint swapbytes, lsbfirst, rowlength;
   GLint skiprows, skippixels, alignment;
 
-#if defined(_WIN32)
-  extern void *__glutFont(void *font);
-  fontinfo = (BitmapFontPtr)__glutFont(font);
-#else
+// #if defined(_WIN32)
+//   extern void *__glutFont(void *font);
+//   fontinfo = (BitmapFontPtr)__glutFont(font);
+// #else
   fontinfo = (BitmapFontPtr)font;
-#endif
+// #endif
 
   if(c < fontinfo->first ||
      c >= fontinfo->first + fontinfo->num_chars)
