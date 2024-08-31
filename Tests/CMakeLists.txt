@@ -307,4 +307,4 @@ add_test(NAME "Simple HVAC Vals - Complete"
 #     COMMAND smvq ${CMAKE_SOURCE_DIR}/Tests/test_model_small/test_model_small.smv)
 
 add_test(NAME "Test Image Render"
-    COMMAND test_image_render)
+    COMMAND test_image_render ${CMAKE_SOURCE_DIR}/Build/for_bundle/textures/nistleft.jpg)

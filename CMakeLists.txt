@@ -30,6 +30,7 @@ add_compile_definitions(pp_GITHASH="6.8.0+sc2.lua")
 option(BETA "Include beta functionality" OFF)
 option(STRICT_CHECKS "Run additional strict checks" OFF)
 option(VENDORED_UI_LIBS "Use the vendored GLUT" ON)
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # Ensure all files are in the right place to run the tests
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")

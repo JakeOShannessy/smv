@@ -296,7 +296,7 @@ int main(int argc, char **arg) {
   int new_width, new_height;
   double angle, a2;
 
-  char *file_in = "test.jpg";
+  char *file_in = arg[1];
   angle = strtod("30", 0);
   im = loadImage(file_in);
 

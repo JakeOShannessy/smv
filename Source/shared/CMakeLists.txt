@@ -1,4 +1,4 @@
-add_library(libsmv
+add_library(libsmv STATIC
     isobox.c
     dmalloc.c
     compress.c
