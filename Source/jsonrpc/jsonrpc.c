@@ -104,6 +104,8 @@ char *CreateTempPath() {
   if (errno != 0) {
     fprintf(stderr, "Value of errno: %d\n", errno);
     fprintf(stderr, "Error reading from file: %s\n", strerror(errno));
+    free(template);
+    return NULL;
   }
   return path;
 }
