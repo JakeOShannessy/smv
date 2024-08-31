@@ -1,28 +1,27 @@
-#include "options.h"
+// #include "options.h"
 // TODO: sort out imports
-#include "MALLOCC.h"
-#include "getdata.h"
+// #include "MALLOCC.h"
+// #include "getdata.h"
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
+#ifndef _WIN32
 #include GL_H
 #include GLU_H
+#include "file_util.h"
 #include <EGL/egl.h>
+#endif
 #include <assert.h>
 #include <gd.h>
+#include <math.h>
 #include <stdlib.h>
-#include "file_util.h"
 
 #define PNG 0
 #define JPEG 1
 #define IMAGE_NONE 2
 
-int show_help;
-int hash_option;
-int show_version;
-char append_string[1024];
-
+#ifndef _WIN32
 GLubyte *ReadImage(int woffset, int width, int hoffset, int height) {
   GLubyte *opengl_image;
   NEWMEMORY(opengl_image, width * height * sizeof(GLubyte) * 3);
@@ -97,7 +96,6 @@ int Image2FileNew(const char *filepath, int rendertype, int woffset, int width,
   FREEMEMORY(opengl_image);
   return return_code;
 }
-
 static const EGLint configAttribs[] = {EGL_SURFACE_TYPE,
                                        EGL_PBUFFER_BIT,
                                        EGL_BLUE_SIZE,
@@ -171,3 +169,179 @@ int main(int argc, char **argv) {
   UNLINK(filepath);
   return return_code;
 }
+#else
+
+int RenderToFile(const char *filepath, int rendertype, int woffset, int width,
+                 int hoffset, int height) {
+  FILE *file = fopen(filepath, "wb");
+  if(file == NULL) {
+    fprintf(stderr, "*** Error: unable to render screen image to %s", filepath);
+    return 1;
+  }
+
+  gdImagePtr gd_image = gdImageCreateTrueColor(width, height);
+
+  if(gd_image == NULL) {
+    fprintf(stderr, "*** Error: unable to create image");
+    return 1;
+  }
+
+  // for(int i = height - 1; i >= 0; i--) {
+  //   for(int j = 0; j < width; j++) {
+  //     unsigned int r, g, b;
+  //     int rgb_local;
+
+  //     r = 75;
+  //     g = 0;
+  //     b = 0;
+  //     rgb_local = (r << 16) | (g << 8) | b;
+  //     gdImageSetPixel(gd_image, j, i, rgb_local);
+  //   }
+  // }
+
+  switch(rendertype) {
+  case PNG:
+    gdImagePng(gd_image, file);
+    break;
+  case JPEG:
+    gdImageJpeg(gd_image, file, -1);
+    break;
+  default:
+    assert(0);
+    break;
+  }
+  // TODO: verify that the file has been created.
+
+  gdImageDestroy(gd_image);
+  fclose(file);
+  return 0;
+}
+
+// int main(int argc, char **argv) {
+//   FILE *f2 = fopen("abc.png", "wb");
+//   fclose(f2);
+//   int i;
+//   FILE *out;
+
+//   gdImagePtr im;
+//   gdImagePtr prev = NULL;
+//   int black;
+
+//   im = gdImageCreate(100, 100);
+//   if(!im) {
+//     fprintf(stderr, "can't create image");
+//     return 1;
+//   }
+
+//   out = fopen("anim.gif", "wb");
+//   if(!out) {
+//     fprintf(stderr, "can't create file %s", "anim.gif");
+//     return 1;
+//   }
+
+//   gdImageColorAllocate(im, 255, 255, 255); /* allocate white as side effect
+//   */ gdImageGifAnimBegin(im, out, 1, -1);
+
+//   for(i = 0; i < 20; i++) {
+//     int r, g, b;
+//     im = gdImageCreate(100, 100);
+//     r = rand() % 255;
+//     g = rand() % 255;
+//     b = rand() % 255;
+
+//     gdImageColorAllocate(im, 255, 255, 255); /* allocate white as side effect
+//     */ black = gdImageColorAllocate(im, r, g, b); printf("(%i, %i, %i)\n", r,
+//     g, b); gdImageFilledRectangle(im, rand() % 100, rand() % 100, rand() %
+//     100,
+//                            rand() % 100, black);
+//     gdImageGifAnimAdd(im, out, 1, 0, 0, 10, 1, prev);
+
+//     if(prev) {
+//       gdImageDestroy(prev);
+//     }
+//     prev = im;
+//   }
+
+//   gdImageGifAnimEnd(out);
+//   fclose(out);
+
+//   RenderToFile("some_test.png", PNG, 0, 100, 0, 100);
+//   return 0;
+// }
+
+gdImagePtr loadImage(const char *name) {
+  FILE *fp = fopen(name, "rb");
+  if(!fp) {
+    fprintf(stderr, "Can't open jpeg file: %s\n", name);
+    return NULL;
+  }
+  gdImagePtr im = gdImageCreateFromJpeg(fp);
+  fclose(fp);
+  return im;
+}
+
+int savePngImage(gdImagePtr im, const char *name) {
+  FILE *fp = fopen(name, "wb");
+  if(!fp) {
+    fprintf(stderr, "Can't save png image fromtiff.png\n");
+    return 0;
+  }
+  gdImagePng(im, fp);
+  fclose(fp);
+  return 1;
+}
+
+int main(int argc, char **arg) {
+  gdImagePtr im, im2;
+  int new_width, new_height;
+  double angle, a2;
+
+  char *file_in = "test.jpg";
+  angle = strtod("30", 0);
+  im = loadImage(file_in);
+
+  if(!im) {
+    fprintf(stderr, "Can't load PNG file <%s>", file_in);
+    return 1;
+  }
+
+  /*
+          cos adj hyp (cos = adjacent / hypotenuse)
+          sin op hyp (sin adjacent / hypotenuse)
+          + 10 pixels margin
+   */
+
+  /* to radian */
+  a2 = angle * .0174532925;
+
+  new_width =
+      fabs(ceil(cos(a2) * gdImageSX(im))) + fabs(sin(a2) * gdImageSY(im));
+  new_height =
+      fabs(ceil(cos(a2) * gdImageSY(im))) + fabs(sin(a2) * gdImageSX(im));
+
+  im2 = gdImageCreateTrueColor(new_width, new_height);
+  if(!im2) {
+    fprintf(stderr, "Can't create a new image");
+    gdImageDestroy(im);
+    return 1;
+  }
+
+  gdImageAlphaBlending(im2, 0);
+  gdImageFilledRectangle(im2, 0, 0, gdImageSX(im2), gdImageSY(im2),
+                         gdTrueColorAlpha(127, 0, 0, 127));
+
+  gdImageCopyRotated(im2, im, new_width / 2, new_height / 2, 0, 0,
+                     gdImageSX(im), gdImageSY(im), angle);
+  gdImageSaveAlpha(im2, 1);
+  if(!savePngImage(im2, "rotated.png")) {
+    fprintf(stderr, "Can't save PNG file rotated.png");
+    gdImageDestroy(im);
+    gdImageDestroy(im2);
+    return 1;
+  }
+
+  gdImageDestroy(im2);
+  gdImageDestroy(im);
+  return 0;
+}
+#endif
