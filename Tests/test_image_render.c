@@ -9,10 +9,10 @@
 #endif
 
 #if defined(__linux__)
-#include GL_H
-#include GLU_H
 #include <EGL/egl.h>
 #endif
+#include GL_H
+#include GLU_H
 #include "file_util.h"
 #include <assert.h>
 #include <gd.h>
