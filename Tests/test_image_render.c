@@ -11,9 +11,9 @@
 #if defined(__linux__)
 #include GL_H
 #include GLU_H
-#include "file_util.h"
 #include <EGL/egl.h>
 #endif
+#include "file_util.h"
 #include <assert.h>
 #include <gd.h>
 #include <math.h>
