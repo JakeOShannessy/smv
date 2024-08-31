@@ -27,6 +27,15 @@ include(GNUInstallDirs)
 add_definitions(-Dpp_CMAKE)
 add_compile_definitions(pp_GITHASH="6.8.0+sc2.lua")
 
+
+include(InstallRequiredSystemLibraries)
+# set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/License.txt")
+# set(CPACK_PACKAGE_VERSION_MAJOR "${Tutorial_VERSION_MAJOR}")
+# set(CPACK_PACKAGE_VERSION_MINOR "${Tutorial_VERSION_MINOR}")
+set(CPACK_GENERATOR "TGZ")
+set(CPACK_SOURCE_GENERATOR "TGZ")
+include(CPack)
+
 # Options which can be configured (along with their defaults)
 option(BETA "Include beta functionality" OFF)
 option(STRICT_CHECKS "Run additional strict checks" OFF)
