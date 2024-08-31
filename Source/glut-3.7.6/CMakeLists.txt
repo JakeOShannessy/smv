@@ -98,3 +98,5 @@ if (LINUX)
   # TODO: we shouldn't be ignoring these
   target_compile_options(glut32 PRIVATE -Wno-implicit-int -Wno-implicit-function-declaration -Wint-to-pointer-cast)
 endif()
+
+install(TARGETS glut32)

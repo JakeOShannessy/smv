@@ -93,10 +93,12 @@ void PrintError(LPCTSTR errDesc) {
 }
 #else
 char *CreateTempPath() {
-  char *template_basis = "/tmp/smv_socket.XXXXXX";
-  char *template = malloc((strlen(template_basis) + 1) * sizeof(char));
+  const char *template_basis = "/tmp/smv_socket.XXXXXX";
+  const char *file_add = "/smv.sock";
+  char *template = malloc((strlen(template_basis)+strlen(file_add) + 1) * sizeof(char));
   strcpy(template, template_basis);
   char *path = mkdtemp(template);
+  strcat(template, file_add);
   fprintf(stderr, "template: %s\n", template);
   fprintf(stderr, "path: %s\n", path);
   if (errno != 0) {
