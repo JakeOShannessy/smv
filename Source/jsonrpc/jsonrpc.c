@@ -95,13 +95,14 @@ void PrintError(LPCTSTR errDesc) {
 char *CreateTempPath() {
   const char *template_basis = "/tmp/smv_socket.XXXXXX";
   const char *file_add = "/smv.sock";
-  char *template = malloc((strlen(template_basis)+strlen(file_add) + 1) * sizeof(char));
+  char *template =
+      malloc((strlen(template_basis) + strlen(file_add) + 1) * sizeof(char));
   strcpy(template, template_basis);
   char *path = mkdtemp(template);
   strcat(template, file_add);
   fprintf(stderr, "template: %s\n", template);
   fprintf(stderr, "path: %s\n", path);
-  if (errno != 0) {
+  if(errno != 0) {
     fprintf(stderr, "Value of errno: %d\n", errno);
     fprintf(stderr, "Error reading from file: %s\n", strerror(errno));
     free(template);
@@ -477,7 +478,8 @@ int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
   fprintf(stdout, "sock_path: %s\n", sock_path);
   strcpy(server->socket.sun_path, sock_path);
   UNLINK(server->socket.sun_path);
-  if(bind(server->fd, (struct sockaddr *)&server->socket, sizeof(struct sockaddr_un)) == -1) {
+  if(bind(server->fd, (struct sockaddr *)&server->socket,
+          sizeof(struct sockaddr_un)) == -1) {
     sock_error("bind");
     exit(1);
   }
@@ -492,7 +494,7 @@ int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
 struct jrpc_connection jrpc_server_connect(struct jrpc_server *server) {
   struct jrpc_connection conn = connection_create(100);
   // TODO: consider handling multiple remotes
-  int slen = (int)sizeof(server->remote);
+  socklen_t slen = (socklen_t)sizeof(server->remote);
   if((conn.fd = accept(server->fd, (struct sockaddr *)&server->remote,
                        &slen)) == -1) {
     sock_error("accept");
