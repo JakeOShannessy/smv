@@ -56,7 +56,9 @@ endif()
 
 find_package(OpenGL REQUIRED)
 if (VENDORED_UI_LIBS)
-    add_subdirectory(Source/glut-3.7.6)
+    if (NOT MACOSX)
+        add_subdirectory(Source/glut-3.7.6)
+    endif()
     add_subdirectory(Source/glui_v2_1_beta)
 else()
     FetchContent_Declare(
