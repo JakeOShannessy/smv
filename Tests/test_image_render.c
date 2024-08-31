@@ -1,7 +1,9 @@
-// #include "options.h"
-// TODO: sort out imports
-// #include "MALLOCC.h"
-// #include "getdata.h"
+#ifndef _WIN32
+#include "options.h"
+#include "MALLOCC.h"
+#include "getdata.h"
+#endif
+
 #ifdef _WIN32
 #include <windows.h>
 #endif

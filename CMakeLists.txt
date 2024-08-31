@@ -9,6 +9,7 @@ endif()
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.19")
     cmake_policy(SET CMP0110 NEW)
 endif()
+include(FetchContent)
 
 # Selected the multithreaded runtime when using MSVC
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
@@ -58,17 +59,11 @@ if (VENDORED_UI_LIBS)
     add_subdirectory(Source/glut-3.7.6)
     add_subdirectory(Source/glui_v2_1_beta)
 else()
-    # find_package(GLUT REQUIRED)
-    # if (WIN32)
-    #     find_package(GLUI REQUIRED)
-    # else()
-        include(FetchContent)
-        FetchContent_Declare(
-            glui-git
-            GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
-            GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
-        )
-    # endif()
+    FetchContent_Declare(
+        glui-git
+        GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
+        GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
+    )
 endif()
 find_package(GLEW REQUIRED)
 find_package(JPEG REQUIRED)
