@@ -23,7 +23,7 @@
 #define JPEG 1
 #define IMAGE_NONE 2
 
-#ifndef _WIN32
+#if defined(__linux__)
 GLubyte *ReadImage(int woffset, int width, int hoffset, int height) {
   GLubyte *opengl_image;
   NEWMEMORY(opengl_image, width * height * sizeof(GLubyte) * 3);
