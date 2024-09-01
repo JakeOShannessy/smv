@@ -47,8 +47,8 @@ package-rpm:
 
 # Clean the ./dist folder
 clean-dist:
-    rm -r dist
+    cmake -E rm -r dist
 
 # Clean everything
 clean: clean-dist
-    rm -r cbuild
+    cmake -E rm -r cbuild
