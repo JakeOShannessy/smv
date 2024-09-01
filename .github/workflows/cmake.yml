@@ -168,8 +168,8 @@ jobs:
         with:
           name: smokeview-windows-msvc
           path: smokeview.exe
-      # - name: Archive installer
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: smokeview-windows-msvc.msi
-      #     path: SMVLuaInstaller.msi
+      - name: Archive installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: smokeview-windows-msvc.msi
+          path: Smokeview JSONRPC.msi
