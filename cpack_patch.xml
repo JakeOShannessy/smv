@@ -3,8 +3,8 @@
         <Property Id="ALLUSERS" Secure="yes" Value="2" />
         <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1" />
     </CPackWiXFragment>
-    <CPackWiXFragment Id="CM_CP_bin.smokeview.exe">
-        <Environment Id="PATH" Name="PATH" Value="[INSTALL_DIR]" Permanent="yes"
+    <CPackWiXFragment Id="CM_CP_smokeview.exe">
+        <Environment Id="PATH" Name="PATH" Value="[INSTALL_ROOT]" Permanent="yes"
             Part="last" Action="set" System="no" />
     </CPackWiXFragment>
 </CPackWiXPatch>
