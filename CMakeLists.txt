@@ -206,3 +206,5 @@ add_subdirectory(Source/timep)
 add_subdirectory(Source/wind2fds)
 
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/" DESTINATION .)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/smvq.cmd" DESTINATION .)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/smvlua.cmd" DESTINATION .)
