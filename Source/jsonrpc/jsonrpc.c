@@ -494,7 +494,11 @@ int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
 struct jrpc_connection jrpc_server_connect(struct jrpc_server *server) {
   struct jrpc_connection conn = connection_create(100);
   // TODO: consider handling multiple remotes
+#ifdef _WIN32
+  int slen = (int)sizeof(server->remote);
+#else
   socklen_t slen = (socklen_t)sizeof(server->remote);
+#endif
   if((conn.fd = accept(server->fd, (struct sockaddr *)&server->remote,
                        &slen)) == -1) {
     sock_error("accept");
