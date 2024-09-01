@@ -91,3 +91,5 @@ vcpkg_installed
 
 # Local config for some editors
 .vscode/
+
+_CPack_Packages/

@@ -21,6 +21,9 @@ build-release:
     cmake --build cbuild --config Release -v -j6
     cmake --install cbuild --config Release --prefix dist
 
+package-cmake: build-release
+     cpack --config ./cbuild/CPackConfig.cmake
+
 
 # Build the debug binaries with intel OneAPi
 build-intel:
@@ -36,7 +39,7 @@ build-intel-internal:
 # Build release and create MSI package
 package-windows: build-release
     candle "SMVLuaInstaller.wxs"
-    light "SMVLuaInstaller.wixobj"
+    light "SMVLuaInstaller.wixobj" -ext WixUIExtension
 
 # Build release and create RPM package
 package-rpm:

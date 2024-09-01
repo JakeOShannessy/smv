@@ -13,7 +13,7 @@ include(FetchContent)
 
 # Selected the multithreaded runtime when using MSVC
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-project(smv LANGUAGES C CXX)
+project(smv LANGUAGES C CXX VERSION 6.8.1)
 # Use C99
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -25,15 +25,25 @@ include(GNUInstallDirs)
 # Pass a flag to to the source code. There's no great need for this but allows
 # us to have conditional code based on the build method.
 add_definitions(-Dpp_CMAKE)
-add_compile_definitions(pp_GITHASH="6.8.0+sc2.lua")
+add_compile_definitions(pp_GITHASH="${PROJECT_VERSION}+sc2.lua")
 
 
 include(InstallRequiredSystemLibraries)
-# set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/License.txt")
-# set(CPACK_PACKAGE_VERSION_MAJOR "${Tutorial_VERSION_MAJOR}")
-# set(CPACK_PACKAGE_VERSION_MINOR "${Tutorial_VERSION_MINOR}")
-set(CPACK_GENERATOR "TGZ")
-set(CPACK_SOURCE_GENERATOR "TGZ")
+configure_file(LICENSE.md LICENSE.txt)
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_BINARY_DIR}/LICENSE.txt")
+set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+set(CPACK_GENERATOR "WIX")
+set(CPACK_WIX_UPGRADE_GUID "817B32C2-2611-4399-8744-657E9EC3C4BB")
+set(CPACK_WIX_INSTALL_SCOPE "perUser")
+# set(CPACK_SOURCE_GENERATOR "TGZ")
+set(CPACK_PACKAGE_NAME "Smokeview JSONRPC")
+set(CPACK_PACKAGE_VENDOR "firemodels")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+    "A modified smokeview with the ability to communicate via JSONRPC.")
+set(CPACK_WIX_PRODUCT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/icon.ico")
+set(CPACK_WIX_PATCH_FILE "${CMAKE_CURRENT_SOURCE_DIR}/cpack_patch.xml")
 include(CPack)
 
 # Options which can be configured (along with their defaults)
@@ -184,3 +194,5 @@ add_subdirectory(Source/smokezip)
 add_subdirectory(Source/smvq)
 add_subdirectory(Source/timep)
 add_subdirectory(Source/wind2fds)
+
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/" DESTINATION .)
