@@ -20,8 +20,17 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 # Requires adherence to this standard
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
-# GNUInstallDirs is used to set the appropriate paths on linux (/usr/lib64 etc).
-include(GNUInstallDirs)
+if(WIN32)
+    # Set the folder for executables and libraries as the install directory.
+    # Using the same conventions as  GNUInstallDirs may be better but this
+    # matches the current setup.
+    set(CMAKE_INSTALL_BINDIR ".")
+    set(CMAKE_INSTALL_LIBDIR ".")
+else()
+    # GNUInstallDirs is used to set the appropriate paths on linux (/usr/lib64
+    # etc).
+    include(GNUInstallDirs)
+endif()
 # Pass a flag to to the source code. There's no great need for this but allows
 # us to have conditional code based on the build method.
 add_definitions(-Dpp_CMAKE)

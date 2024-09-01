@@ -62,9 +62,9 @@ target_sources(smokeview PRIVATE
 
 target_link_libraries(smokeview PRIVATE libsmv)
 target_link_libraries(smokeview PRIVATE json-c::json-c)
-if (BUILD_SHARED_LIBS)
-    install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
-endif()
+# if (BUILD_SHARED_LIBS)
+#     install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
+# endif()
 
 if(WIN32)
     target_link_libraries(smokeview PRIVATE wsock32 ws2_32)
