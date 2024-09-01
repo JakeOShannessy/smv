@@ -151,12 +151,9 @@ jobs:
       - name: build installer
         shell: cmd
         run: |
-          echo %PATH%
           set PATH=%PATH%;C:\Program Files (x86)\WiX Toolset v3.11\bin
-          echo %PATH%
           cmake --install ${{github.workspace}}\cbuild --config ${{env.BUILD_TYPE}} --prefix dist
-          candle "SMVLuaInstaller.wxs"
-          light "SMVLuaInstaller.wixobj"
+          cpack --config ./cbuild/CPackConfig.cmake
       - name: Download test data
         working-directory: ${{github.workspace}}/Tests
         shell: pwsh
@@ -171,8 +168,8 @@ jobs:
         with:
           name: smokeview-windows-msvc
           path: smokeview.exe
-      - name: Archive installer
-        uses: actions/upload-artifact@v3
-        with:
-          name: smokeview-windows-msvc.msi
-          path: SMVLuaInstaller.msi
+      # - name: Archive installer
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: smokeview-windows-msvc.msi
+      #     path: SMVLuaInstaller.msi
