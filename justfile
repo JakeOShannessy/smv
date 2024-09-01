@@ -45,10 +45,6 @@ package-windows: build-release
 package-rpm:
     ./buildrpm.sh
 
-# Clean the ./dist folder
-clean-dist:
-    cmake -E rm -r dist
-
 # Clean everything
-clean: clean-dist
-    cmake -E rm -r cbuild
+clean:
+    cmake -E rm -rf cbuild  _CPack_Packages dist-debug dist
