@@ -5,6 +5,16 @@ add_test(NAME "Execute smokeview" COMMAND smokeview -v)
 add_test(NAME "Execute smokezip" COMMAND smokezip)
 add_test(NAME "Execute smvq" COMMAND smvq -V)
 
+set(FIG_COMMIT "374d9db0062fd6dc38b30bc0d27cd84c9bb2b69d")
+
+FetchContent_Declare(
+    test_data
+    GIT_REPOSITORY https://github.com/JakeOShannessy/fig.git
+    GIT_TAG        ${FIG_COMMIT}
+)
+FetchContent_MakeAvailable(test_data)
+set(FIG_DIR ${test_data_SOURCE_DIR})
+
 # parse_simple_slice
 add_executable(parse_simple_slice parse_simple_slice.c
     ../Source/shared/getdata.c
@@ -259,27 +269,27 @@ endif()
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
 add_test(NAME "Simple Slice - Complete"
-    COMMAND parse_simple_slice ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_slice.sf 3)
+    COMMAND parse_simple_slice ${FIG_DIR}/smv/Tests/simple_slice.sf 3)
 # Simple slice is a finished slice file with the last of the three frames cut in
 # half (to simulate a partially written slice file)
 add_test(NAME "Simple Slice - Last Frame Half Truncated"
-    COMMAND parse_simple_slice ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/truncated_slice.sf 2)
+    COMMAND parse_simple_slice ${FIG_DIR}/smv/Tests/truncated_slice.sf 2)
 
 # Arguments to this tests are <bndf path> <number of frames in bndf>
 # Simple slice is a finished slice file with 2 frames, why 2 frames for boundary
 # files?
 add_test(NAME "Simple BNDF - Complete"
-    COMMAND parse_simple_bndf ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_bndf.bf 2)
+    COMMAND parse_simple_bndf ${FIG_DIR}/smv/Tests/simple_bndf.bf 2)
 
 # Arguments to this tests are <bndf path> <number of frames in bndf>
 # Simple slice is a finished slice file with 3 frames
 add_test(NAME "Simple PRT5 - Complete"
-    COMMAND parse_simple_part ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_part.prt5 3)
+    COMMAND parse_simple_part ${FIG_DIR}/smv/Tests/simple_part.prt5 3)
 
 # Arguments to this tests are <bndf path> <number of frames in bndf>
 # Simple slice is a finished slice file with 3 frames
 add_test(NAME "Simple PL3d - Complete"
-    COMMAND parse_simple_pl3d ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_pl3d.q)
+    COMMAND parse_simple_pl3d ${FIG_DIR}/smv/Tests/simple_pl3d.q)
 
 add_test(NAME "Parse CAD"
     COMMAND parse_cad)
@@ -306,13 +316,11 @@ add_test(NAME "Mem Test"
     COMMAND mem_test)
 
 add_test(NAME "Simple HVAC Vals - Complete"
-    COMMAND parse_hvac_vals ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_hvac.hvac)
+    COMMAND parse_hvac_vals ${FIG_DIR}/smv/Tests/simple_hvac.hvac)
 
 # Only execute these tests if the "fig" directory exists
-if(EXISTS "${CMAKE_SOURCE_DIR}/Tests/fig")
-    add_test(NAME "smvq - parse smv file"
-        COMMAND smvq ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/test_model_small/test_model_small.smv)
-endif()
+add_test(NAME "smvq - parse smv file"
+    COMMAND smvq ${FIG_DIR}/smv/Tests/test_model_small/test_model_small.smv)
 
 add_test(NAME "Test Image Render"
     COMMAND test_image_render ${CMAKE_SOURCE_DIR}/Build/for_bundle/textures/nistleft.jpg)
