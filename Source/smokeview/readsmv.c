@@ -929,10 +929,6 @@ void FreeLabels(flowlabels *flowlabel){
 void InitMesh(meshdata *meshi){
   int i;
 
-#ifdef pp_BOUNDMEM
-  meshi->buffer1 = NULL;
-  meshi->buffer2 = NULL;
-#endif
   meshi->use = 1;
   meshi->isliceinfo    = 0;
   meshi->nsliceinfo    = 0;
@@ -1077,26 +1073,11 @@ void InitMesh(meshdata *meshi){
   meshi->nvents = 0;
   meshi->ndummyvents = 0;
   meshi->ncvents = 0;
-  meshi->npatches = 0;
-  meshi->boundarytype = NULL;
   meshi->offset[XXX] = 0.0;
   meshi->offset[YYY] = 0.0;
   meshi->offset[ZZZ] = 0.0;
-  meshi->boundarytype = NULL;
-  meshi->patchdir = NULL;
-  meshi->patch_surfindex = NULL;
-  meshi->pi1 = NULL;
-  meshi->pi2 = NULL;
-  meshi->pj1 = NULL;
-  meshi->pj2 = NULL;
-  meshi->pk1 = NULL;
-  meshi->pk2 = NULL;
-  meshi->meshonpatch = NULL;
-  meshi->blockonpatch = NULL;
   meshi->ptype = NULL;
-  meshi->boundary_row = NULL, meshi->boundary_col = NULL, meshi->blockstart = NULL;
   meshi->zipoffset = NULL, meshi->zipsize = NULL;
-  meshi->vis_boundaries = NULL;
   meshi->xyzpatch = NULL;
   meshi->xyzpatch_threshold = NULL;
   meshi->patchventcolors = NULL;
@@ -3754,11 +3735,6 @@ void UpdateMeshCoords(void){
     }
   }
 
-  {
-    meshdata *meshi;
-    meshi=meshescoll.meshinfo;
-    veclength = meshi->xplt[1]-meshi->xplt[0];
-  }
   min_gridcell_size=meshescoll.meshinfo->xplt[1]-meshescoll.meshinfo->xplt[0];
   for(i=0;i<meshescoll.nmeshes;i++){
     float dx, dy, dz;
@@ -3772,16 +3748,6 @@ void UpdateMeshCoords(void){
     min_gridcell_size=MIN(dy,min_gridcell_size);
     min_gridcell_size=MIN(dz,min_gridcell_size);
   }
-  for(i=0;i<meshescoll.nmeshes;i++){
-    meshdata *meshi;
-
-    meshi=meshescoll.meshinfo+i;
-    if(veclength>meshi->xplt[1]-meshi->xplt[0])veclength=meshi->xplt[1]-meshi->xplt[0];
-    if(veclength>meshi->yplt[1]-meshi->yplt[0])veclength=meshi->yplt[1]-meshi->yplt[0];
-    if(veclength>meshi->zplt[1]-meshi->zplt[0])veclength=meshi->zplt[1]-meshi->zplt[0];
-  }
-  veclength = SCALE2SMV(veclength);
-  veclength = 0.01;
 
   for(igrid=0;igrid<meshescoll.nmeshes;igrid++){
     meshdata *meshi;
@@ -5285,7 +5251,6 @@ int ParseBNDFCount(void){
 
 int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, int *ioffset_in, patchdata **patchgeom_in, int *ipatch_in, char buffers[6][256]){
   patchdata *patchi;
-  int version;
   int blocknumber;
   size_t len;
   char *filetype_label;
@@ -5318,9 +5283,9 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   else{
     blocknumber = 0;
   }
-  version = 0;
   if(len>5){
     char *buffer3;
+    int version=0;
 
     buffer3 = buffer+4;
     sscanf(buffer3, "%i %i", &blocknumber, &version);
@@ -5343,11 +5308,11 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   patchi->valmin_patch      = 1.0;
   patchi->valmax_patch      = 0.0;
   patchi->skip              = 0;
-  patchi->version           = version;
   patchi->ntimes            = 0;
   patchi->ntimes_old        = 0;
   patchi->hist_update = 0;
   patchi->filetype_label    = NULL;
+  patchi->patchfaceinfo = NULL;
   patchi->patch_filetype    = PATCH_STRUCTURED_NODE_CENTER;
   patchi->structured        = YES;
   patchi->boundary          = 1;
@@ -6987,6 +6952,71 @@ void *CheckFiles(void *arg){
   THREAD_EXIT(checkfiles_threads);
 }
 
+
+#ifdef pp_INIT_PATCHES
+/* ------------------ InitMeshBlockages ------------------------ */
+
+void InitMeshBlockages(void){
+  int i;
+
+  for(i = 0;i < meshescoll.nmeshes;i++){
+    meshdata *meshi;
+    int j;
+    int counts[6];
+    int *is_extface;
+
+    meshi = meshescoll.meshinfo + i;
+    if(meshi->nbptrs == 0)continue;
+    is_extface = meshi->is_extface;
+    for(j=0; j< 6; j++){
+      counts[j]            = 0;
+      meshi->bc_faces[j]   = NULL;
+      meshi->n_bc_faces[j] = 0;
+    }
+    for(j=0; j<meshi->nbptrs; j++){
+      blockagedata *bc;
+
+      bc = meshi->blockageinfoptrs[j];
+
+      if(bc->ijk[0] == 0 && is_extface[0] == MESH_INT)counts[0]++;
+      if(bc->ijk[1] == meshi->ibar &&  is_extface[1] == MESH_INT)counts[1]++;
+      if(bc->ijk[2] == 0 && is_extface[2] == MESH_INT)counts[2]++;
+      if(bc->ijk[3] == meshi->jbar && is_extface[3] == MESH_INT)counts[3]++;
+      if(bc->ijk[4] == 0 && is_extface[4] == MESH_INT)counts[4]++;
+      if(bc->ijk[5] == meshi->kbar && is_extface[5] == MESH_INT)counts[5]++;
+    }
+    for(j=0; j<6; j++){
+      if(counts[j]>0)NewMemory((void **)&meshi->bc_faces[j],  meshi->nbptrs*sizeof(blockagedata *));
+      meshi->n_bc_faces[j] = counts[j];
+      counts[j] = 0;
+    }
+    for(j=0; j<meshi->nbptrs; j++){
+      blockagedata *bc;
+      blockagedata **bclist;
+
+      bc = meshi->blockageinfoptrs[j];
+
+      bclist = meshi->bc_faces[0];
+      if(bc->ijk[0] == 0 && is_extface[0] == MESH_INT)          bclist[counts[0]++] = bc;
+
+      bclist = meshi->bc_faces[1];
+      if(bc->ijk[1] == meshi->ibar && is_extface[1] == MESH_INT)bclist[counts[1]++] = bc;
+
+      bclist = meshi->bc_faces[2];
+      if(bc->ijk[2] == 0 && is_extface[2] == MESH_INT)          bclist[counts[2]++] = bc;
+
+      bclist = meshi->bc_faces[3];
+      if(bc->ijk[3] == meshi->jbar && is_extface[3] == MESH_INT)bclist[counts[3]++] = bc;
+
+      bclist = meshi->bc_faces[4];
+      if(bc->ijk[4] == 0 && is_extface[4] == MESH_INT)          bclist[counts[4]++] = bc;
+
+      bclist = meshi->bc_faces[5];
+      if(bc->ijk[5] == meshi->kbar && is_extface[5] == MESH_INT)bclist[counts[5]++] = bc;
+    }
+  }
+}
+#endif
 
 /* ------------------ GetSliceParmInfo ------------------------ */
 
@@ -12032,6 +12062,10 @@ int ReadSMV_Configure(){
 
   SetInteriorBlockages(1);
   PRINT_TIMER(timer_readsmv, "SetInteriorBlockages");
+
+#ifdef pp_INIT_PATCHES
+  InitMeshBlockages();
+#endif
 
   PRINTF("%s", _("complete"));
   PRINTF("\n\n");
