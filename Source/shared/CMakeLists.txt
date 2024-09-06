@@ -16,6 +16,8 @@ add_library(libsmv STATIC
     stdio_buffer.c
     getdata.c
     color2rgb.c
+    colorbars.c
+    colorbar_defs.c
     readimage.c
     readcad.c
     readgeom.c
@@ -28,6 +30,7 @@ add_library(libsmv STATIC
     readtour.c
     scontour2d.c
 )
+target_compile_definitions(libsmv PUBLIC pp_HASH)
 target_include_directories(libsmv PUBLIC
     .
     #TODO: this is a bit of a hack, it shouldn't really use options.h

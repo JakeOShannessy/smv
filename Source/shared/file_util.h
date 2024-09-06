@@ -269,6 +269,8 @@ EXTERNCPP int IsSootFile(char *shortlabel, char *longlabel);
 
 EXTERNCPP char *LastName(char *argi);
 
+EXTERNCPP char *JoinPath(const char *path, const char *segment);
+
 // vvvvvvvvvvvvvvvvvvvvvvvv variables vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 #ifndef STREXTERN
