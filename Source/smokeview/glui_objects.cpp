@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "glui.h"
 
 #define NEW_CURVE      0
 #define EXISTING_CURVE 1

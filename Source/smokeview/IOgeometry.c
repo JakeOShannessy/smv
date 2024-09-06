@@ -2225,7 +2225,9 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
 
     label = patchi->label.shortlabel;
 
+#ifdef pp_GLUI
     GLUIGetMinMax(BOUND_PATCH, label, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
     int convert = 0;
     if(patchi->patch_filetype != PATCH_GEOMETRY_BOUNDARY && patchi->patch_filetype != PATCH_GEOMETRY_SLICE)convert = 0;
     GetBoundaryColors3(patchi, patchi->geom_vals, 0, patchi->geom_nvals, patchi->geom_ivals,
@@ -2289,7 +2291,9 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     slicefile_labelindex = GetSliceBoundsIndexFromLabel(patchi->label.shortlabel);
     UpdateAllSliceColors(slicefile_labelindex, errorcode);
     list_slice_index = slicefile_labelindex;
+#ifdef pp_GLUI
     SliceBounds2Glui(slicefile_labelindex);
+#endif
 
     GetSliceColors(patchi->geom_vals, patchi->geom_nvals, patchi->geom_ivals,
       glui_slicemin, glui_slicemax, nrgb_full, sextras.nrgb,
@@ -2319,15 +2323,19 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
       bound_type = BOUND_SLICE;
     }
 
+#ifdef pp_GLUI
     bounds = GLUIGetBoundsData(bound_type);
+#endif
     INIT_PRINT_TIMER(geom_bounds_timer);
     int bound_update = 0;
     if(force_bound_update == 1 || current_script_command != NULL)bound_update = 1;
     if(patchi->boundary == 1){
       if(bound_update==1||patch_bounds_defined==0 || BuildGbndFile(BOUND_PATCH) == 1){
         GetGlobalPatchBounds(1,DONOT_SET_MINMAX_FLAG);
+#ifdef pp_GLUI
         SetLoadedPatchBounds(NULL, 0);
         GLUIPatchBoundsCPP_CB(BOUND_DONTUPDATE_COLORS);
+#endif
 #ifdef pp_RECOMPUTE_DEBUG
         recompute = 1;
 #endif
@@ -2336,7 +2344,9 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     else{
       if(bound_update==1||slice_bounds_defined==0|| BuildGbndFile(BOUND_SLICE) ==1){
         GetGlobalSliceBounds(1, DONOT_SET_MINMAX_FLAG);
+#ifdef pp_GLUI
         SetLoadedSliceBounds(NULL, 0);
+#endif
 #ifdef pp_RECOMPUTE_DEBUG
         recompute = 1;
 #endif
@@ -2349,7 +2359,9 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
         int set_valmin, set_valmax;
         float valmin_dlg, valmax_dlg;
 
+#ifdef pp_GLUI
         GLUIGetMinMax(BOUND_SLICE, bounds->label, &set_valmin, &valmin_dlg, &set_valmax, &valmax_dlg);
+#endif
       }
     }
     PRINT_TIMER(geom_bounds_timer, "update boundary bounds");
@@ -3836,7 +3848,9 @@ void DrawGeomData(int flag, slicedata *sd, patchdata *patchi, int geom_type){
   float ttmin, ttmax;
 
   label = patchi->label.shortlabel;
+#ifdef pp_GLUI
   GLUIGetOnlyMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
+#endif
 
   float rvals[3];
   float valmin, valmax;

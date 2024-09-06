@@ -16,6 +16,10 @@
 
 #include "IOscript.h"
 
+#ifdef pp_IMGUI
+#include "gui/gui.h"
+#endif
+
 int nrenderonce=0;
 
 /* ------------------ GetGridIndex ------------------------ */
@@ -303,8 +307,10 @@ void MouseEditTour(int x, int y){
       selected_tour=NULL;
       itourknots=-1;
     }
+#ifdef pp_GLUI
     GLUISetTourKeyframe();
     GLUIUpdateTourControls();
+#endif
     tour_drag=1;
   }
   glShadeModel(GL_SMOOTH);
@@ -431,7 +437,9 @@ void MouseEditBlockage(int x, int y){
         assert(FFALSE);
         break;
     }
+#ifdef pp_GLUI
     GLUIUpdateBlockVals(SELECT_BLOCKS);
+#endif
   }
 }
 
@@ -592,7 +600,9 @@ void MouseSelectGeom(int x, int y){
         verti = geomlisti->verts+selected_geom_vertex2;
         xyz2 = verti->xyz;
       }
+#ifdef pp_GLUI
       GLUIUpdateVertexInfo(xyz1, xyz2);
+#endif
     }
       break;
     case GEOM_PROP_TRIANGLE:
@@ -603,7 +613,9 @@ void MouseSelectGeom(int x, int y){
 
         trii = geomlisti->triangles+selected_geom_triangle;
         tri_surf = trii->geomsurf;
+#ifdef pp_GLUI
         GLUIUpdateTriangleInfo(tri_surf, trii->area);
+#endif
       }
       break;
     default:
@@ -775,7 +787,9 @@ int ColorbarClick(int x, int y){
   int return_val;
 
   colorbar_index = GetColorbarIndex(x, y);
+#ifdef pp_GLUI
   UpdateColorbarSelectionIndex(colorbar_index);
+#endif
   return_val = HandleColorbarIndex(colorbar_index);
   return return_val;
 }
@@ -986,6 +1000,11 @@ void UpdateMouseInfo(int flag, int xm, int ym){
 
 void MouseCB(int button, int state, int xm, int ym){
   float *eye_xyz;
+#ifdef pp_IMGUI
+  if(imgui_mouse(button,state,xm,ym)) {
+    return;
+  }
+#endif
 
 #ifdef pp_OSX_HIGHRES
   if(double_scale==1){
@@ -998,8 +1017,10 @@ void MouseCB(int button, int state, int xm, int ym){
   timebar_drag  = 0;
 
   if(autofreeze_volsmoke==ON&&nvolsmoke_loaded>0){
+#ifdef pp_GLUI
     if(state==GLUT_DOWN)GLUIUpdateFreeze(ON);
     if(state==GLUT_UP)GLUIUpdateFreeze(OFF);
+#endif
   }
   if(state == GLUT_UP){
     alt_ctrl_key_state = KEY_NONE;
@@ -1014,7 +1035,9 @@ void MouseCB(int button, int state, int xm, int ym){
   }
 
   if(trainer_mode==1){
+#ifdef pp_GLUI
     GLUISetViewListManual();
+#endif
   }
   eye_xyz = camera_current->eye;
   if(selected_view!=-999){
@@ -1023,7 +1046,7 @@ void MouseCB(int button, int state, int xm, int ym){
   }
   glui_move_mode=-1;
   move_gslice=0;
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 
   if(state==GLUT_UP){
     tour_drag=0;
@@ -1032,12 +1055,16 @@ void MouseCB(int button, int state, int xm, int ym){
     eye_xyz0[0]=eye_xyz[0];
     eye_xyz0[1]=eye_xyz[1];
     eye_xyz0[2]=eye_xyz[2];
+#ifdef pp_GLUI
     GLUIUpdateTranslate();
+#endif
     timebar_drag=0;
     colorbar_drag=0;
     colorbar_splitdrag=0;
     GLUTSETCURSOR(GLUT_CURSOR_LEFT_ARROW);
+#ifdef pp_GLUI
     GLUIUpdateTrainerMoves();
+#endif
     geom_bounding_box_mousedown = 0;
     return;
   }
@@ -1065,7 +1092,9 @@ void MouseCB(int button, int state, int xm, int ym){
 
     if(button==GLUT_LEFT_BUTTON){
       if(blockageSelect == 1){
+#ifdef pp_GLUI
         GLUIGetGeomDialogState();
+#endif
         if(structured_isopen == 1 && unstructured_isopen == 0)MouseEditBlockage(xm, ym);
       }
       if(edittour==1&&blockageSelect==0)MouseEditTour(xm,ym);
@@ -1074,7 +1103,7 @@ void MouseCB(int button, int state, int xm, int ym){
       if(select_geom!=GEOM_PROP_NONE)MouseSelectGeom(xm, ym);
       if(select_part == 1 && npartloaded>0)MouseSelectPart(xm, ym);
     }
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     if( showtime==1 || showplot3d==1){
       if(ColorbarClick(xm,ym)==1)return;
     }
@@ -1085,7 +1114,9 @@ void MouseCB(int button, int state, int xm, int ym){
     if(canrestorelastview==0){
       updatemenu=1;
       canrestorelastview=1;
+#ifdef pp_GLUI
       GLUIEnableResetSavedView();
+#endif
     }
     switch(button){
       case GLUT_MIDDLE_BUTTON:
@@ -1128,9 +1159,11 @@ void MouseCB(int button, int state, int xm, int ym){
     mouse_down_xy0[0]=xm;
     mouse_down_xy0[1]=ym;
   }
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   if(blockageSelect == 1){
+#ifdef pp_GLUI
     GLUIGetGeomDialogState();
+#endif
     if(structured_isopen == 1 && unstructured_isopen == 0)DisplayCB();
   }
 }
@@ -1183,7 +1216,9 @@ void DragColorbarEditNode(int xm, int ym){
     cb_rgb[0] = CLAMP(cb_rgb[0]+255*xyz[0],0,255);
     cb_rgb[1] = CLAMP(cb_rgb[1]+255*xyz[1],0,255);
     cb_rgb[2] = CLAMP(cb_rgb[2]+255*xyz[2],0,255);
+#ifdef pp_GLUI
     GLUIColorbarCB(COLORBAR_RGB);
+#endif
 
     mouse_down_xy0[0] = xm;
     mouse_down_xy0[1] = ym;
@@ -1244,8 +1279,10 @@ void DragTourNode(int xm, int ym){
 
 // update tour data structures with new tour node location
 
+#ifdef pp_GLUI
         GLUIUpdateTourParms();
         GLUIUpdateKeyframe();
+#endif
       }
       break;
     default:
@@ -1270,7 +1307,9 @@ void MoveGenSlice(int xm, int ym){
         delev = 360.0*dym/(float)screenHeight;
         gslice_normal_azelev[0] += daz;
         gslice_normal_azelev[1] += delev;
+#ifdef pp_GLUI
         GLUIUpdateGsliceParms();
+#endif
         start_xyz0[0]=xm;
         start_xyz0[1]=ym;
       }
@@ -1292,7 +1331,9 @@ void MoveGenSlice(int xm, int ym){
         gslice_xyz0[1] = gslice_xyz[1];
         mouse_down_xy0[0]=xm;
         mouse_down_xy0[1]=ym;
+#ifdef pp_GLUI
         GLUIUpdateGsliceParms();
+#endif
       }
       break;
     case KEY_ALT:
@@ -1303,7 +1344,9 @@ void MoveGenSlice(int xm, int ym){
         yy = yy/(float)screenHeight;
 
         gslice_xyz[2] = gslice_xyz0[2] - SMV2FDS_Z(4*(xyzbox-FDS2SMV_Z(gslice_xyz0[2]))*yy);
+#ifdef pp_GLUI
         GLUIUpdateGsliceParms();
+#endif
       }
       break;
     case KEY_SHIFT:
@@ -1422,8 +1465,10 @@ void MoveScene(int xm, int ym){
       aperture_glui = CLAMP(aperture_glui0 + aperture_max*yy,aperture_min,aperture_max);
 #define APERTURE 15
 #define ZOOM 12
+#ifdef pp_GLUI
       GLUISceneMotionCB(APERTURE);
       GLUISceneMotionCB(ZOOM);
+#endif
       break;
     default:
       assert(FFALSE);
@@ -1451,6 +1496,11 @@ int ThrottleGpu(void){
 /* ------------------ MouseDragCB ------------------------ */
 
 void MouseDragCB(int xm, int ym){
+#ifdef pp_IMGUI
+  if (imgui_motion(xm,ym)) {
+    return;
+  }
+#endif
 #ifdef pp_OSX_HIGHRES
   if(double_scale==1){
     xm *= 2;
@@ -1465,7 +1515,7 @@ void MouseDragCB(int xm, int ym){
   }
 #endif
 
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 
   if( colorbar_drag==1&&(showtime==1 || showplot3d==1)){
     ColorbarDrag(xm,ym);
@@ -1613,6 +1663,7 @@ void Keyboard(unsigned char key, int flag){
 #else
     keystate = (GLUT_ACTIVE_ALT|GLUT_ACTIVE_CTRL)&GLUTGETMODIFIERS();
 #endif
+  printf("keyboard: %c, %d\n",key,keystate);
     if(scriptoutstream!=NULL&&key!='t'&&key!='r'&&key!='R'&&key!=' '&&key!='-'){
       fprintf(scriptoutstream,"KEYBOARD\n");
       switch(keystate){
@@ -1634,7 +1685,7 @@ void Keyboard(unsigned char key, int flag){
   else if(flag==FROM_SMOKEVIEW_ALT){
     keystate=GLUT_ACTIVE_ALT;
   }
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
   key2 = (char)key;
 
   switch(key2){
@@ -1694,7 +1745,9 @@ void Keyboard(unsigned char key, int flag){
       break;
     case 'a':
       if(showtour_dialog==1&&edittour==1){
+#ifdef pp_GLUI
         AddDeleteKeyframe(ADD_KEYFRAME);
+#endif
         break;
       }
       if(rotation_type==EYE_CENTERED){
@@ -1723,7 +1776,9 @@ void Keyboard(unsigned char key, int flag){
           vecfactor*=1.5;
         }
         PRINTF("vector length factor: %f\n",vecfactor);
+#ifdef pp_GLUI
         GLUIUpdateVecFactor();
+#endif
       }
       if(visVector==1&&nplot3dloaded>0){
         gbsave=current_mesh;
@@ -1747,7 +1802,9 @@ void Keyboard(unsigned char key, int flag){
         show_geom_boundingbox = SHOW_BOUNDING_BOX_MOUSE_DOWN;
         printf("show bounding box when mouse is down: on\n");
       }
+#ifdef pp_GLUI
       GLUIUpdateGeomBoundingBox();
+#endif
 
       break;
     case 'b':
@@ -1789,7 +1846,9 @@ void Keyboard(unsigned char key, int flag){
           if(contour_type==LINE_CONTOURS)printf("line coloring\n");
           if(contour_type==STEPPED_CONTOURS)printf("stepped coloring\n");
           if(contour_type==SHADED_CONTOURS)printf("continuous coloring\n");
+#ifdef pp_GLUI
           GLUIUpdatePlot3dDisplay();
+#endif
           UpdateRGBColors(colorbar_select_index);
         }
       }
@@ -1818,7 +1877,9 @@ void Keyboard(unsigned char key, int flag){
         break;
       }
       if(key2=='d'&&showtour_dialog==1&&edittour==1){
+#ifdef pp_GLUI
         AddDeleteKeyframe(DELETE_KEYFRAME);
+#endif
         break;
       }
       switch(keystate){
@@ -1851,8 +1912,10 @@ void Keyboard(unsigned char key, int flag){
       default:
         rotation_type++;
         if(rotation_type>3)rotation_type=0;
+#ifdef pp_GLUI
         GLUIRotationTypeCB(rotation_type);
         GLUIUpdateRotationType(rotation_type);
+#endif
         HandleRotationType(ROTATION_2AXIS);
       }
       break;
@@ -1863,8 +1926,10 @@ void Keyboard(unsigned char key, int flag){
       hide_overlaps=1-hide_overlaps;
       updatehiddenfaces=1;
       UpdateHiddenFaces();
+#ifdef pp_GLUI
       GLUIUpdateShowHideButtons();
-      glutPostRedisplay();
+#endif
+      GLUTPOSTREDISPLAY;
       break;
     case 'g':
       switch(keystate){
@@ -1910,7 +1975,9 @@ void Keyboard(unsigned char key, int flag){
         usegpu=0;
       }
       if(smoke3dcoll.nsmoke3dinfo>0){
+#ifdef pp_GLUI
         GLUIUpdateSmoke3dFlags();
+#endif
       }
       PrintGPUState();
       return;
@@ -1992,7 +2059,9 @@ void Keyboard(unsigned char key, int flag){
     case 'I':
       sextras.show_slice_in_obst++;
       if(sextras.show_slice_in_obst>3)sextras.show_slice_in_obst = 0;
+#ifdef pp_GLUI
       GLUISliceInObstMenu2Dialog(sextras.show_slice_in_obst);
+#endif
       updatemenu = 1;
       break;
     case 'j':
@@ -2003,7 +2072,9 @@ void Keyboard(unsigned char key, int flag){
       else{
         sensorrelsize *= 1.5;
       }
+#ifdef pp_GLUI
       GLUIUpdateDeviceSize();
+#endif
       break;
     case '`':
       if(devicecoll.ndeviceinfo>0){
@@ -2045,8 +2116,10 @@ void Keyboard(unsigned char key, int flag){
       fix_window_aspect = 1 - fix_window_aspect;
       if(fix_window_aspect == 1)printf("fix window aspect ratio: on\n");
       if(fix_window_aspect == 0)printf("fix window aspect ratio: off\n");
+#ifdef pp_GLUI
       GLUISceneMotionCB(WINDOW_PRESERVE);
       GLUIUpdateWindowAspect();
+#endif
       break;
     case 'k':
       if(keystate==GLUT_ACTIVE_ALT){ // toggle device selection
@@ -2113,7 +2186,9 @@ void Keyboard(unsigned char key, int flag){
         UpdateGridClip(0);
         UpdateGridClip(1);
         UpdateGridClip(2);
+#ifdef pp_GLUI
         GLUIUpdateClip();
+#endif
       }
       if(clip_commandline==0){
         visGrid = NOGRID_PROBE2;
@@ -2142,7 +2217,9 @@ void Keyboard(unsigned char key, int flag){
       else{
         printf("hide cface normals\n");
       }
+#ifdef pp_GLUI
       GLUIUpdateCfaces();
+#endif
       break;
     case 'N':
       force_bound_update = 1 - force_bound_update;
@@ -2182,7 +2259,9 @@ void Keyboard(unsigned char key, int flag){
       if(show_faces_shaded==0&&show_faces_outline==0)printf("hidden");
       printf("\n");
     }
+#ifdef pp_GLUI
     GLUIUpdateGeometryControls();
+#endif
       switch(visBlocks){
         case visBLOCKAsInput:
         case visBLOCKAsInputOutline:
@@ -2231,7 +2310,7 @@ void Keyboard(unsigned char key, int flag){
           visFrame = 1;
           updatefacelists = 1;
           updatemenu = 1;
-          glutPostRedisplay();
+          GLUTPOSTREDISPLAY;
         }
         if(highlight_flag>2&&sextras.noutlineinfo>0)highlight_flag=0;
         if(highlight_flag>1&&sextras.noutlineinfo==0)highlight_flag=0;
@@ -2256,9 +2335,13 @@ void Keyboard(unsigned char key, int flag){
 
         if(is_part_loaded==1||is_plot3d_loaded==1){
           if(is_part_loaded==1){
+#ifdef pp_GLUI
             GLUIIncrementPartPropIndex();
+#endif
 #define BOUND_PERCENTILE_DRAW          120
+#ifdef pp_GLUI
             GLUIPartBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
+#endif
           }
           if(is_plot3d_loaded==1){
             plotn += FlowDir;
@@ -2270,8 +2353,10 @@ void Keyboard(unsigned char key, int flag){
             }
             UpdateAllPlotSlices();
             if(visiso==1&&cache_plot3d_data==1)UpdateSurface();
+#ifdef pp_GLUI
             GLUIUpdatePlot3dListIndex();
             GLUIPlot3DBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
+#endif
           }
         }
         else{
@@ -2279,7 +2364,9 @@ void Keyboard(unsigned char key, int flag){
             devicetypes_index++;
             if(devicetypes_index>=ndevicetypes)devicetypes_index = 0;
             updatemenu = 1;
+#ifdef pp_GLUI
             GLUIUpdateDeviceTypes(devicetypes_index);
+#endif
           }
         }
       }
@@ -2317,7 +2404,9 @@ void Keyboard(unsigned char key, int flag){
         if(show_faces_outline==1)printf("outlines");
         if(show_faces_shaded==0&&show_faces_outline==0)printf("hidden");
         printf("\n");
+#ifdef pp_GLUI
         GLUIUpdateCfaces();
+#endif
       }
       if(blocklocation==BLOCKlocation_grid)printf("blocklocation: snapped to grid\n");
       if(blocklocation==BLOCKlocation_exact)printf("blocklocation: as input\n");
@@ -2329,7 +2418,9 @@ void Keyboard(unsigned char key, int flag){
         else{
           blockage_as_input=0;
         }
+#ifdef pp_GLUI
         GLUIObjectCB(BLOCKAGE_AS_INPUT2);
+#endif
       }
       updatefacelists = 1;
       break;
@@ -2359,7 +2450,9 @@ void Keyboard(unsigned char key, int flag){
 
         if(keystate==GLUT_ACTIVE_ALT&&strncmp((const char *)&key2, "r", 1) == 0){
           research_mode = 1-research_mode;
+#ifdef pp_GLUI
           GLUIUpdatdateResearchModeCPP();
+#endif
           update_research_mode = 1;
           return;
         }
@@ -2503,7 +2596,9 @@ void Keyboard(unsigned char key, int flag){
         stereotype++;
         if(stereotype>5)stereotype=0;
         if(stereotype==STEREO_TIME&&videoSTEREO!=1)stereotype=STEREO_LR;
+#ifdef pp_GLUI
         GLUIUpdateStereo();
+#endif
         break;
       default:
         vectorskip--;
@@ -2545,12 +2640,16 @@ void Keyboard(unsigned char key, int flag){
           render_skip = RENDER_CURRENT_SINGLE;
         }
         updatemenu = 1;
+#ifdef pp_GLUI
         UpdateRenderListSkip();
+#endif
       }
       break;
     case 'T':
       vishmsTimelabel = 1-vishmsTimelabel;
+#ifdef pp_GLUI
       GLUISetLabelControls();
+#endif
       break;
     case 'u':
     case 'U':
@@ -2570,13 +2669,17 @@ void Keyboard(unsigned char key, int flag){
       break;
     case '|':
       projection_type = 1-projection_type;
+#ifdef pp_GLUI
       GLUISceneMotionCB(PROJECTION);
+#endif
       break;
     case 'v':
       switch(keystate){
         case GLUT_ACTIVE_ALT:
           projection_type = 1 - projection_type;
+#ifdef pp_GLUI
           GLUISceneMotionCB(PROJECTION);
+#endif
           break;
         default:
           visVector=1-visVector;
@@ -2587,7 +2690,9 @@ void Keyboard(unsigned char key, int flag){
     case 'V':
       if(nvolrenderinfo>0){
         usevolrender=1-usevolrender;
+#ifdef pp_GLUI
         GLUIUpdateSmoke3dFlags();
+#endif
 #ifdef pp_GPU
         PrintGPUState();
 #endif
@@ -2604,7 +2709,9 @@ void Keyboard(unsigned char key, int flag){
           }
           else{
             vis_gslice_data = 1 - vis_gslice_data;
+#ifdef pp_GLUI
             GLUIUpdateGsliceParms();
+#endif
           }
           break;
       }
@@ -2629,7 +2736,9 @@ void Keyboard(unsigned char key, int flag){
 	      assert(FFALSE);
 	      break;
       }
+#ifdef pp_GLUI
       GLUIUpdateClipAll();
+#endif
       break;
     case 'x':
     case 'X':
@@ -2652,7 +2761,9 @@ void Keyboard(unsigned char key, int flag){
           }
           if(clipinfo.clip_xmax==0)printf("off\n");
         }
+#ifdef pp_GLUI
         GLUIUpdateClip();
+#endif
       }
 #ifdef pp_DIALOG_SHORTCUTS
       if(keystate==GLUT_ACTIVE_ALT){
@@ -2692,7 +2803,9 @@ void Keyboard(unsigned char key, int flag){
           }
           if(clipinfo.clip_ymax==0)printf("off\n");
         }
+#ifdef pp_GLUI
         GLUIUpdateClip();
+#endif
       }
       visy_all = 1-visy_all;
       if(visx_all==1||visy_all==1||visz_all==1)update_slice2device = 1;
@@ -2710,16 +2823,22 @@ void Keyboard(unsigned char key, int flag){
           }
           if(clipinfo.clip_zmax==0)printf("off\n");
         }
+#ifdef pp_GLUI
         GLUIUpdateClip();
+#endif
       }
       rotate_center = 1-rotate_center;
       if(rotate_center==1&&have_geom_bb==1){
         printf("rotate about FDS+GEOM center\n");
+#ifdef pp_GLUI
         UpdateGluiRotateAbout(ROTATE_ABOUT_WORLD_CENTER);
+#endif
       }
       else{
         printf("rotate about FDS domain center\n");
+#ifdef pp_GLUI
         UpdateGluiRotateAbout(ROTATE_ABOUT_FDS_CENTER);
+#endif
       }
       break;
     case 'z':
@@ -2733,7 +2852,9 @@ void Keyboard(unsigned char key, int flag){
           }
           if(clipinfo.clip_zmin==0)printf("off\n");
         }
+#ifdef pp_GLUI
         GLUIUpdateClip();
+#endif
       }
 #ifdef pp_DIALOG_SHORTCUTS
       if(keystate==GLUT_ACTIVE_ALT){
@@ -2771,14 +2892,18 @@ void Keyboard(unsigned char key, int flag){
         if(select_geom==GEOM_PROP_VERTEX2)printf("select vertex 2\n");
         if(select_geom==GEOM_PROP_TRIANGLE)printf("select triangle\n");
         if(select_geom==GEOM_PROP_SURF)printf("select surf\n");
+#ifdef pp_GLUI
         GLUIUpdateSelectGeom();
+#endif
       }
       break;
     case '!':
       SnapScene();
       break;
     case '"':
+#ifdef pp_GLUI
       GLUIShowPlot2D();
+#endif
       break;
     case '@':
       show_slice_values_all_regions = 1 - show_slice_values_all_regions;
@@ -2793,7 +2918,9 @@ void Keyboard(unsigned char key, int flag){
         show_slice_values[2]=0;
       }
 #define IMMERSED_SWITCH_CELLTYPE 0
+#ifdef pp_GLUI
       GLUIImmersedBoundCB(IMMERSED_SWITCH_CELLTYPE);
+#endif
       break;
     case '.':
       lock_mouse_aperture = 1 - lock_mouse_aperture;
@@ -2811,7 +2938,9 @@ void Keyboard(unsigned char key, int flag){
       }
       vectorpointsize+=2;
       if(vectorpointsize>20.0)vectorpointsize = 1.0;
+#ifdef pp_GLUI
       GLUIUpdateVectorpointsize();
+#endif
       updatemenu = 1;
       break;
     case '>':
@@ -2824,7 +2953,9 @@ void Keyboard(unsigned char key, int flag){
       }
       vectorpointsize-=2;
       if(vectorpointsize<1.0)vectorpointsize = 20.0;
+#ifdef pp_GLUI
       GLUIUpdateVectorpointsize();
+#endif
       updatemenu = 1;
       break;
     case '#':
@@ -2848,7 +2979,9 @@ void Keyboard(unsigned char key, int flag){
         if(n_partload_threads == 1)printf("parallel particle loading: on(1 thread)\n");
       }
       if(use_partload_threads==0)printf("parallel particle loading: off\n");
+#ifdef pp_GLUI
       GLUIUpdatePartFast();
+#endif
       break;
     case '$':
       if(keystate == GLUT_ACTIVE_ALT){
@@ -2856,12 +2989,16 @@ void Keyboard(unsigned char key, int flag){
         if(trainer_active == 1){
           PRINTF("Trainer mode active\n");
           trainer_mode = 1;
+#ifdef pp_GLUI
           GLUIShowTrainer();
+#endif
         }
         if(trainer_active == 0){
           PRINTF("Trainer mode inactive\n");
           trainer_mode = 0;
+#ifdef pp_GLUI
           GLUIHideTrainer();
+#endif
         }
       }
       else{
@@ -2869,7 +3006,9 @@ void Keyboard(unsigned char key, int flag){
         if(force_alpha_opaque == 1)printf("force smoke/fire opaqueness: yes\n");
         if(force_alpha_opaque == 0)printf("force smoke/fire opaqueness: no\n");
         sextras.update_smoke_alphas = 1;
+#ifdef pp_GLUI
         GLUIForceAlphaOpaque();
+#endif
         GLUTPOSTREDISPLAY;
       }
       break;
@@ -2909,14 +3048,18 @@ void Keyboard(unsigned char key, int flag){
       if(key2==']')partpointsize++;
       partpointsize = CLAMP(partpointsize, PART_MIN_SIZE, PART_MAX_SIZE);
       printf("particle size: %f\n", partpointsize);
+#ifdef pp_GLUI
       GLUIUpdatePartPointSize();
+#endif
       break;
     case ';':
       ColorbarMenu(COLORBAR_FLIP);
       break;
 #ifdef pp_REFRESH
     case '_':
+#ifdef pp_GLUI
       GLUIRefreshDialogs();
+#endif
       break;
 #endif
     case '{':
@@ -3005,17 +3148,22 @@ void Keyboard(unsigned char key, int flag){
       plotiso[plotn-1] += FlowDir;
       UpdateSurface();
     }
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
   }
   if(iplot_state!=0)UpdatePlotSlice(iplot_state);
 }
 
 /* ------------------ KeyboardCB ------------------------ */
 
-void KeyboardCB(unsigned char key, int x, int y){
-  Keyboard(key,FROM_CALLBACK);
-  glutPostRedisplay();
-  updatemenu=1;
+void KeyboardCB(unsigned char key, int x, int y) {
+#ifdef pp_IMGUI
+  if (imgui_keyboard(key, x, y)) {
+    return;
+  }
+#endif
+  Keyboard(key, FROM_CALLBACK);
+  GLUTPOSTREDISPLAY;
+  updatemenu = 1;
 }
 
 /* ------------------ HandleRotationType ------------------------ */
@@ -3058,7 +3206,9 @@ void HandleRotationType(int flag){
     assert(FFALSE);
     break;
   }
+#ifdef pp_GLUI
   GLUIShowHideTranslate(rotation_type);
+#endif
   rotation_type_old = rotation_type;
 }
 
@@ -3112,7 +3262,7 @@ void SpecialKeyboardCB(int key, int x, int y){
 
   special_modifier = glutGetModifiers() & GLUT_ACTIVE_SHIFT;
 
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 
   if(rotation_type==EYE_CENTERED){
     keymode=EYE_MODE;
@@ -3219,7 +3369,9 @@ void HandlePLOT3DKeys(int  key){
       else{
         clipinfo.xmin = SetClipVal(0);
       }
+#ifdef pp_GLUI
       GLUIUpdateClip();
+#endif
     }
     break;
   case GLUT_KEY_RIGHT:
@@ -3233,7 +3385,9 @@ void HandlePLOT3DKeys(int  key){
       else{
         clipinfo.xmin = SetClipVal(0);
       }
+#ifdef pp_GLUI
       GLUIUpdateClip();
+#endif
     }
     break;
   case GLUT_KEY_DOWN:
@@ -3247,7 +3401,9 @@ void HandlePLOT3DKeys(int  key){
       else{
         clipinfo.ymin = SetClipVal(1);
       }
+#ifdef pp_GLUI
       GLUIUpdateClip();
+#endif
     }
     break;
   case GLUT_KEY_UP:
@@ -3261,7 +3417,9 @@ void HandlePLOT3DKeys(int  key){
       else{
         clipinfo.ymin = SetClipVal(1);
       }
+#ifdef pp_GLUI
       GLUIUpdateClip();
+#endif
     }
     break;
   case GLUT_KEY_PAGE_DOWN:
@@ -3275,7 +3433,9 @@ void HandlePLOT3DKeys(int  key){
       else{
         clipinfo.zmin = SetClipVal(2);
       }
+#ifdef pp_GLUI
       GLUIUpdateClip();
+#endif
     }
     break;
   case GLUT_KEY_PAGE_UP:
@@ -3289,7 +3449,9 @@ void HandlePLOT3DKeys(int  key){
       else{
         clipinfo.zmin = SetClipVal(2);
       }
+#ifdef pp_GLUI
       GLUIUpdateClip();
+#endif
     }
     break;
   case GLUT_KEY_HOME:
@@ -3495,7 +3657,9 @@ void HandleMoveKeys(int  key){
     eye_xyz0[0]=eye_xyz[0];
     eye_xyz0[1]=eye_xyz[1];
     eye_xyz0[2]=eye_xyz[2];
+#ifdef pp_GLUI
     GLUIUpdateTranslate();
+#endif
   }
 }
 
@@ -3661,13 +3825,18 @@ void SetScreenSize(int *width, int *height){
     int width_low, height_low, width_high, height_high;
 
     GetRenderResolution(&width_low, &height_low, &width_high, &height_high);
+#ifdef pp_GLUI
     GLUIUpdateRenderRadioButtons(width_low, height_low, width_high, height_high);
+#endif
   }
 }
 
 /* ------------------ ReshapeCB ------------------------ */
 
 void ReshapeCB(int width, int height){
+#ifdef pp_IMGUI
+  imgui_reshape(width,height);
+#endif
   if(disable_reshape==1)return;
   updatemenu=1;
   if(update_reshape==0){
@@ -3676,16 +3845,22 @@ void ReshapeCB(int width, int height){
   if(fix_window_aspect==1){
     glui_screenWidth=width;
     glui_screenHeight=glui_screenWidth*window_aspect;
+#ifdef pp_GLUI
     GLUISceneMotionCB(WINDOW_RESIZE);
+#endif
   }
   else{
     SetScreenSize(&width,&height);
   }
+#ifdef pp_GLUI
   GLUIGetPixelsPerTriangle();
+#endif
   windowresized=1;
   CopyCamera(camera_current,camera_save);
   windowsize_pointer_old = -1;
+#ifdef pp_GLUI
   GLUIUpdateWindowSizeList();
+#endif
   update_reshape = 2;
  }
 
@@ -3945,11 +4120,15 @@ void DoScript(void){
       else if(IS_LOADRENDER){
         if(current_script_command->exit==0){
           if(render_resolution==RENDER_RESOLUTION_360){
+#ifdef pp_GLUI
             if(viewpoint_script_ptr!=NULL)GLUISetCurrentViewPoint(viewpoint_script);
+#endif
             render_size_index=RenderWindow;
             resolution_multiplier = 1;
+#ifdef pp_GLUI
             RenderCB(RENDER_RESOLUTION);
             RenderCB(RENDER_START_360);
+#endif
           }
           RenderState(RENDER_ON);
           if(current_script_command->command == SCRIPT_LOADSLICERENDER){
@@ -3988,7 +4167,9 @@ void DoScript(void){
         SMV_EXIT(0);
       }
       if(current_script_command==NULL){
+#ifdef pp_GLUI
         GLUIScriptEnable();
+#endif
       }
     }
     else{
@@ -4014,7 +4195,7 @@ void DoScript(void){
     if(current_script_command!=NULL&&current_script_command->command==SCRIPT_RENDERONCE){
       nrenderonce++;
     }
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
   }
   else{
     first_frame_index=0;
@@ -4144,6 +4325,10 @@ void DoNonStereo(void){
 
 void DisplayCB(void){
   SNIFF_ERRORS("DisplayDB: start");
+#ifdef pp_IMGUI
+  imgui_display_start();
+#endif
+
   DoScript();
   UpdateDisplay();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -4155,6 +4340,9 @@ void DisplayCB(void){
   else{
     DoStereo();
   }
+#ifdef pp_IMGUI
+  imgui_display_end();
+#endif
 }
 
 /* ------------------ SetMainWindow ------------------------ */
@@ -4184,5 +4372,5 @@ void ResizeWindow(int width, int height){
     }
   }
   glutReshapeWindow(width,height);
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }

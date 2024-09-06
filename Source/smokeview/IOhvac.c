@@ -29,7 +29,9 @@ void UpdateHVACDuctColorLabels(int index){
   float valmin, valmax;
 
   hi = hvaccoll.hvacductvalsinfo->duct_vars + index;
+#ifdef pp_GLUI
   GLUIGetMinMax(BOUND_HVACDUCT, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
   GetColorbarLabels(valmin, valmax, sextras.nrgb, hi->colorlabels, hi->levels256);
 }
 
@@ -41,7 +43,9 @@ void UpdateHVACNodeColorLabels(int index){
   float valmin, valmax;
 
   hi = hvaccoll.hvacnodevalsinfo->node_vars + index;
+#ifdef pp_GLUI
   GLUIGetMinMax(BOUND_HVACNODE, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
   GetColorbarLabels(valmin, valmax, sextras.nrgb, hi->colorlabels, hi->levels256);
 }
 
@@ -56,7 +60,9 @@ void UpdateAllHVACColorLabels(void){
     float valmin, valmax;
 
     hi = hvaccoll.hvacductvalsinfo->duct_vars + i;
+#ifdef pp_GLUI
     GLUIGetMinMax(BOUND_HVACDUCT, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
     GetColorbarLabels(hi->valmin, hi->valmax, sextras.nrgb, hi->colorlabels, hi->levels256);
   }
   for(i = 0; i < hvaccoll.hvacnodevalsinfo->n_node_vars; i++){
@@ -65,7 +71,9 @@ void UpdateAllHVACColorLabels(void){
     float valmin, valmax;
 
     hi = hvaccoll.hvacnodevalsinfo->node_vars + i;
+#ifdef pp_GLUI
     GLUIGetMinMax(BOUND_HVACNODE, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
     GetColorbarLabels(valmin, valmax, sextras.nrgb, hi->colorlabels, hi->levels256);
   }
 }
@@ -84,8 +92,10 @@ void ReadHVACData(int flag){
     UpdateAllHVACColorLabels();
     GetGlobalHVACNodeBounds(1);
     GetGlobalHVACDuctBounds(1);
+#ifdef pp_GLUI
     GLUIUpdateHVACDuctType();
     GLUISetValTypeIndex(BOUND_HVACDUCT, 0);
+#endif
 
     STOP_TIMER(total_time);
     PRINTF("Loading %s", hvaccoll.hvacductvalsinfo->file);
@@ -368,7 +378,9 @@ void DrawHVAC(hvacdata *hvaci){
   hvacvaldata *ductvar;
   if(global_times != NULL && hvaccoll.hvacductvar_index>=0){
     ductvar = hvaccoll.hvacductvalsinfo->duct_vars + hvaccoll.hvacductvar_index;
+#ifdef pp_GLUI
     GLUIGetOnlyMinMax(BOUND_HVACDUCT, ductvar->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
   }
 
   glLineWidth(hvaci->duct_width);

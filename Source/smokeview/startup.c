@@ -14,9 +14,14 @@
 
 #include "infoheader.h"
 #include "stdio_buffer.h"
+#include "smokeheaders.h"
 
 #include "readobject.h"
 #include "readlabel.h"
+
+#ifdef pp_IMGUI
+  #include "gui/gui.h"
+#endif
 
 /* ------------------ InitDefaultCameras ------------------------ */
 
@@ -44,8 +49,10 @@ void InitDefaultCameras(void){
 
   camera_external->zoom = zoom;
   CopyCamera(camera_current, camera_external);
+#ifdef pp_GLUI
   strcpy(camera_label, camera_current->name);
   GLUIUpdateCameraLabel();
+#endif
 
   CopyCamera(camera_save, camera_current);
   CopyCamera(camera_last, camera_current);
@@ -53,7 +60,9 @@ void InitDefaultCameras(void){
   InitCameraList();
   AddDefaultViewpoints();
   CopyCamera(camera_external_save, camera_external);
+#ifdef pp_GLUI
   GLUIUpdateViewpointList();
+#endif
 }
 
 /* ------------------ InitMisc ------------------------ */
@@ -139,6 +148,7 @@ void InitMisc(void){
   mat_specular2[3] = 1.0;
 
   glui_curve_default.use_foreground_color = 1;
+#ifdef pp_GLUI
   glui_curve_default.color[0]           = 0;
   glui_curve_default.color[1]           = 0;
   glui_curve_default.color[2]           = 0;
@@ -154,6 +164,7 @@ void InitMisc(void){
   strcpy(glui_curve_default.scaled_unit,  "");
 
   GLUIResetView(startup_view_ini);
+#endif
   UpdateShow();
 }
 
@@ -263,10 +274,12 @@ int SetupCase(char *filename){
     ReadSMVOrig();
 #endif
   }
+#ifdef pp_GLUI
   if(return_code==0&&trainer_mode==1){
     GLUIShowTrainer();
     GLUIShowAlert();
   }
+#endif
   switch(return_code){
     case 1:
       fprintf(stderr,"*** Error: Smokeview file, %s, not found\n",input_file);
@@ -303,7 +316,9 @@ int SetupCase(char *filename){
   PRINT_TIMER(timer_start, "UpdateRGBColors");
 
   if(use_graphics==0){
+#ifdef pp_GLUI
     GLUISliceBoundsSetupNoGraphics();
+#endif
     return 0;
   }
   glui_defined = 1;
@@ -313,6 +328,7 @@ int SetupCase(char *filename){
   PRINT_TIMER(timer_start, "InitTranslate");
 
   if(tourcoll.ntourinfo==0)SetupTour();
+#ifdef pp_GLUI
   InitRolloutList();
   GLUIColorbarSetup(mainwindow_id);
   GLUIMotionSetup(mainwindow_id);
@@ -327,6 +343,7 @@ int SetupCase(char *filename){
   GLUIAlertSetup(mainwindow_id);
   GLUIStereoSetup(mainwindow_id);
   GLUI3dSmokeSetup(mainwindow_id);
+#endif
   PRINT_TIMER(timer_start, "all dialogs");
 
   UpdateLights(light_position0, light_position1);
@@ -337,7 +354,9 @@ int SetupCase(char *filename){
   glutShowWindow();
   glutSetWindowTitle(fdsprefix);
   InitMisc();
+#ifdef pp_GLUI
   GLUITrainerSetup(mainwindow_id);
+#endif
   glutDetachMenu(GLUT_RIGHT_BUTTON);
   attachmenu_status = 0;
   THREADcontrol(checkfiles_threads, THREAD_LOCK);
@@ -345,10 +364,12 @@ int SetupCase(char *filename){
   THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
   attachmenu_status = 1;
+#ifdef pp_GLUI
   if(trainer_mode==1){
     GLUIShowTrainer();
     GLUIShowAlert();
   }
+#endif
   // initialize info header
   initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash, chidfilebase, fds_title);
   PRINT_TIMER(timer_start, "glut routines");
@@ -627,6 +648,9 @@ void InitOpenGL(int option){
 
 #ifdef _DEBUG
   if(option==PRINT)PRINTF("%s",_("   Initializing callbacks - "));
+#endif
+#ifdef pp_IMGUI
+  setupImgui();
 #endif
   glutSpecialUpFunc(SpecialKeyboardUpCB);
   glutKeyboardUpFunc(KeyboardUpCB);
@@ -1222,7 +1246,9 @@ void InitOpenGL(int option){
     UpdateFrameNumber(0);
     updatemenu=1;
     update_load_files=0;
+#ifdef pp_GLUI
     GLUIHideAlert();
+#endif
     TrainerViewMenu(trainerview);
   }
 

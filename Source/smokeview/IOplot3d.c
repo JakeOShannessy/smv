@@ -135,7 +135,9 @@ void  UpdatePlot3DColors(plot3ddata *plot3di, int flag, int *errorcode){
 
   int num;
 
+#ifdef pp_GLUI
   GLUIGetMinMaxAll(BOUND_PLOT3D, setp3min_all, p3min_all, setp3max_all, p3max_all, &num);
+#endif
   *errorcode=AllocatePlot3DColorLabels(plot3di);
   if(*errorcode==1)return;
   for(nn = 0; nn < numplot3dvars; nn++){
@@ -470,7 +472,9 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
         void BoundsUpdate(int file_type);
         if(no_bounds==0 || force_bounds==1)BoundsUpdate(BOUND_PLOT3D);
         ComputeLoadedPlot3DBounds(valmin_loaded, valmax_loaded);
+#ifdef pp_GLUI
         GLUISetLoadedMinMaxAll(BOUND_PLOT3D, valmin_loaded, valmax_loaded, plot3dinfo->nplot3dvars);
+#endif
       }
       UpdateAllPlot3DColors(0);
       UpdatePlotSlice(XDIR);
@@ -500,7 +504,9 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
     UpdateSurface();
   }
 
+#ifdef pp_GLUI
   GLUIUpdatePlot3dListIndex();
+#endif
   PrintMemoryInfo;
   update_times = 1;
   UpdateUnitDefs();
@@ -560,7 +566,9 @@ void DrawPlot3dTexture(meshdata *meshi){
   plotz = meshi->iplotz_all[iplotz_all];
   qdata = meshi->qdata;
 
+#ifdef pp_GLUI
   GLUIGetMinMaxAll(BOUND_PLOT3D, setp3min_all, p3min_all, setp3max_all, p3max_all, &num);
+#endif
   float ttmin, ttmax;
 
   ttmin = p3min_all[plotn-1];

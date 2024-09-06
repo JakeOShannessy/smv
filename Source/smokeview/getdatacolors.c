@@ -164,7 +164,9 @@ void GetBoundaryColors3(patchdata *patchi, float *t, int start, int nt, unsigned
   char *label;
 
   label = patchi->label.shortlabel;
+#ifdef pp_GLUI
   GLUIGetMinMax(BOUND_PATCH, label, &set_valmin, ttmin, &set_valmax, ttmax);
+#endif
   new_tmin = *ttmin;
   new_tmax = *ttmax;
 
@@ -247,7 +249,9 @@ void UpdateAllBoundaryColors(int flag){
     }
   }
   if(nlist>0){
+#ifdef pp_GLUI
     SetLoadedPatchBounds(list, nlist);
+#endif
     for(i = 0; i<nlist; i++){
       patchdata *patchi;
 
@@ -258,7 +262,9 @@ void UpdateAllBoundaryColors(int flag){
         char *label;
 
         label = patchi->label.shortlabel;
+#ifdef pp_GLUI
         GLUIGetMinMax(BOUND_PATCH, label, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
         switch(patchi->patch_filetype){
           case PATCH_STRUCTURED_NODE_CENTER:
           case PATCH_STRUCTURED_CELL_CENTER:
@@ -351,6 +357,7 @@ void GetPartColors(partdata *parti, int nlevel, int flag){
   int *part_set_valmin, *part_set_valmax;
   float *part_valmin, *part_valmax;
 
+#ifdef pp_GLUI
   num = GLUIGetNValtypes(BOUND_PART);
   NewMemory((void **)&part_set_valmin, num*sizeof(int));
   NewMemory((void **)&part_valmin,     num*sizeof(float));
@@ -536,6 +543,7 @@ void GetPartColors(partdata *parti, int nlevel, int flag){
   FREEMEMORY(part_valmin);
   FREEMEMORY(part_set_valmax);
   FREEMEMORY(part_valmax);
+#endif
 }
 
 /* ------------------ GetZoneColor ------------------------ */
@@ -797,7 +805,9 @@ void UpdateSliceBounds2(void){
     i = slice_loaded_list[ii];
     sd = slicecoll.sliceinfo+i;
     if(sd->display==0)continue;
+#ifdef pp_GLUI
     GLUIGetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin, &qmin, &set_valmax, &qmax);
+#endif
     sd->valmin_slice      = qmin;
     sd->valmax_slice      = qmax;
     sd->globalmin_slice   = qmin;
@@ -813,7 +823,9 @@ void UpdateSliceBounds2(void){
     vd = slicecoll.vsliceinfo+ii;
     if(vd->loaded==0||vd->display==0||vd->ival==-1)continue;
     sd = slicecoll.sliceinfo+vd->ival;
+#ifdef pp_GLUI
     GLUIGetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin, &qmin, &set_valmax, &qmax);
+#endif
     sd->valmin_slice    = qmin;
     sd->valmax_slice    = qmax;
     sd->globalmin_slice = qmin;
@@ -1437,7 +1449,11 @@ void UpdateChopColors(void){
   cpp_boundsdata *bounds;
 
   SNIFF_ERRORS("UpdateChopColors: start");
+#ifdef pp_GLUI
   bounds                = GLUIGetBoundsData(BOUND_PATCH);
+#else
+  bounds = NULL;
+#endif
   if(bounds!=NULL){
     setpatchchopmin_local = bounds->set_chopmin;
     setpatchchopmax_local = bounds->set_chopmax;
@@ -1445,7 +1461,9 @@ void UpdateChopColors(void){
     patchchopmax_local = bounds->chopmax;
   }
 
+#ifdef pp_GLUI
   bounds                     = GLUIGetBoundsData(BOUND_SLICE);
+#endif
   if(bounds!=NULL){
     glui_setslicechopmin_local = bounds->set_chopmin;
     glui_setslicechopmax_local = bounds->set_chopmax;
@@ -1453,7 +1471,9 @@ void UpdateChopColors(void){
     glui_slicechopmax_local = bounds->chopmax;
   }
 
+#ifdef pp_GLUI
   bounds               = GLUIGetBoundsData(BOUND_PART);
+#endif
   if(bounds!=NULL){
     setpartchopmin_local = bounds->set_chopmin;
     setpartchopmax_local = bounds->set_chopmax;
@@ -1463,7 +1483,9 @@ void UpdateChopColors(void){
     glui_partmax_local = bounds->valmax[bounds->set_valmax];
   }
 
+#ifdef pp_GLUI
   bounds                  = GLUIGetBoundsData(BOUND_PLOT3D);
+#endif
   if(bounds!=NULL){
     setp3chopmin_temp_local = bounds->set_chopmin;
     setp3chopmax_temp_local = bounds->set_chopmax;

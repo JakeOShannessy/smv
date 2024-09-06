@@ -164,7 +164,9 @@ void SetViewPoint(int option){
   }
   if(option==RESTORE_EXTERIOR_VIEW_ZOOM)camera_current->zoom=zooms[zoomindex];
   zoom=camera_current->zoom;
+#ifdef pp_GLUI
   GLUIUpdateZoom();
+#endif
 }
 
 /* ------------------ InitVolrenderScript ------------------------ */

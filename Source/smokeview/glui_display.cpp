@@ -9,6 +9,7 @@
 #include "smokeviewvars.h"
 #include "colorbars.h"
 #include "readlabel.h"
+#include "glui.h"
 
 GLUI *glui_labels=NULL;
 

@@ -163,8 +163,10 @@ void MakeMovie(void){
 
 // enable movie making button
 
+#ifdef pp_GLUI
   EnableDisableMakeMovie(ON);
   EnableDisablePlayMovie();
+#endif
 }
 
 /* ------------------ ResetRenderResolution ------------------------ */

@@ -2113,7 +2113,9 @@ void FinalizePartLoad(partdata *parti){
 
   INIT_PRINT_TIMER(part_time1);
   GetGlobalPartBounds(ALL_FILES);
+#ifdef pp_GLUI
   SetLoadedPartBounds(NULL, 0);
+#endif
   PRINT_TIMER(part_time1, "particle get bounds time");
   if(cache_part_data==1){
     INIT_PRINT_TIMER(part_time2);
@@ -2128,7 +2130,9 @@ void FinalizePartLoad(partdata *parti){
     PRINT_TIMER(part_time2, "particle update colors time");
   }
 #define BOUND_PERCENTILE_DRAW          120
+#ifdef pp_GLUI
   GLUIPartBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
+#endif
   parttype = 0;
   ParticlePropShowMenu(part5colorindex);
   plotstate = GetPlotState(DYNAMIC_PLOTS);
@@ -2136,7 +2140,7 @@ void FinalizePartLoad(partdata *parti){
   UpdatePart5Extremes();
   updatemenu = 1;
   ForceIdle();
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }
 
 /* -----  ------------- ReadPart ------------------------ */

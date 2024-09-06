@@ -8,6 +8,8 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "smokeheaders.h"
+#include "glui.h"
 
 GLUI *glui_shooter=NULL;
 

@@ -10,6 +10,7 @@
 #include "smokeviewvars.h"
 #include "glui_tour.h"
 #include "readtour.h"
+#include "glui.h"
 
 static int tour_hide=0;
 static char tour_label[sizeof(GLUI_String)];

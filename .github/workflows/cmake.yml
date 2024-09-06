@@ -7,8 +7,9 @@ env:
 
 jobs:
   build_unix_gcc:
-    # Set the name of this build, variable depending on the OS
-    name: build ${{ matrix.os }} - gcc
+    # Set the name of this build, variable depending on the OS and whether it
+    # includes the lua engine
+    name: build ${{ matrix.os }} - glui=${{ matrix.glui }} - gcc
     strategy:
       fail-fast: false
       # The matrix sets all the different combinations of builds, e.g. platforms
@@ -18,6 +19,9 @@ jobs:
           - ubuntu-latest
           - macos-latest
     # Set the platform to build on
+        glui:
+          - on
+          - off
     runs-on: ${{ matrix.os }}
     steps:
       # Check out the smv repo
@@ -55,7 +59,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+          cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLUI=${{ matrix.glui }}
           cmake --build ${{github.workspace}}/cbuild -j4
           cp ${{github.workspace}}/cbuild/smokeview smokeview
       # Run the CMake-based tests on MacOS
@@ -114,12 +118,15 @@ jobs:
   #        name: smokeview-${{ runner.os }}
   #        path: smokeview
   build_windows_msvc:
-    name: build ${{ matrix.os }} - msvc
+    name: build ${{ matrix.os }} - glui=${{ matrix.glui }} - msvc
     strategy:
       fail-fast: false
       matrix:
         os:
           - windows-2022
+        glui:
+          - on
+          - off
     runs-on: ${{ matrix.os }}
     defaults:
       run:

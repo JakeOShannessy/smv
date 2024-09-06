@@ -151,7 +151,9 @@ void StartScript(void){
     if(stderr2!=NULL)fprintf(stderr2,"*** Error: Smokeview script does not exist\n");
     return;
   }
+#ifdef pp_GLUI
   GLUIScriptDisable();
+#endif
   current_script_command=scriptinfo-1;
   use_iso_threads_save = use_iso_threads;
   use_iso_threads = 0;
@@ -1659,7 +1661,9 @@ void ScriptRender360All(scriptdata *scripti){
   PrintRenderMessage(skip_local,first_frame_index);
   render_mode = RENDER_360;
   SkipMenu(skip_local);
+#ifdef pp_GLUI
   RenderCB(RENDER_START);
+#endif
 }
 
 /* ------------------ GetVolFrameMax ------------------------ */
@@ -1691,10 +1695,14 @@ void LoadSmokeFrame(int meshnum, int framenum){
   if(meshnum > meshescoll.nmeshes - 1||meshnum<-1)meshnum = -1;
 
   max_frames = GetVolFrameMax(meshnum);
+#ifdef pp_GLUI
   if(max_frames > 0)GLUIUpdateLoadFrameMax(max_frames);
+#endif
   frame_old = framenum;
   framenum = CLAMP(framenum, 0, max_frames-1);
+#ifdef pp_GLUI
   if(framenum!=frame_old)GLUIUpdateLoadFrameVal(framenum);
+#endif
 
   for(i = 0; i<meshescoll.nmeshes; i++){
     meshdata *meshi;
@@ -1727,7 +1735,9 @@ void LoadSmokeFrame(int meshnum, int framenum){
   stept=1;
   Keyboard('t', FROM_SMOKEVIEW);
   UpdateTimeLabels();
+#ifdef pp_GLUI
   GLUIUpdateLoadTimeVal(valtime);
+#endif
 }
 
 /* ------------------ LoadTimeFrame ------------------------ */
@@ -1762,7 +1772,9 @@ void LoadTimeFrame(int meshnum, float timeval){
       update_timebounds = 1;
     }
   }
+#ifdef pp_GLUI
   if(update_timebounds==1)GLUIUpdateTimeFrameBounds(time_framemin, time_framemax);
+#endif
 
   vrtime = vr->times[0];
   mindiff = ABS(timeval-vrtime);
@@ -1777,7 +1789,9 @@ void LoadTimeFrame(int meshnum, float timeval){
       smokeframe = i;
     }
   }
+#ifdef pp_GLUI
   GLUIUpdateLoadFrameVal(smokeframe);
+#endif
   LoadSmokeFrame(meshnum, smokeframe);
 }
 
@@ -1918,7 +1932,9 @@ void ScriptMakeMovie(scriptdata *scripti){
   strcpy(movie_name, scripti->cval);
   strcpy(render_file_base,scripti->cval2);
   movie_framerate=scripti->fval;
+#ifdef pp_GLUI
   RenderCB(MAKE_MOVIE);
+#endif
 }
 
 /* ------------------ ScriptLoadParticles ------------------------ */
@@ -2473,7 +2489,9 @@ void ScriptLoadSliceRender(scriptdata *scripti){
     float slice_load_time = 0.0;
     FILE_SIZE total_slice_size = 0.0;
 
+#ifdef pp_GLUI
     SetLoadedSliceBounds(mslicei->islices, mslicei->nslices);
+#endif
 
     START_TIMER(slice_load_time);
     GLUTSETCURSOR(GLUT_CURSOR_WAIT);
@@ -2888,16 +2906,22 @@ void ScriptPlot3dProps(scriptdata *scripti){
   }
   UpdateAllPlotSlices();
   if(visiso==1)UpdateSurface();
+#ifdef pp_GLUI
   GLUIUpdatePlot3dListIndex();
+#endif
 
   vecfactor=1.0;
   if(scripti->fval>=0.0)vecfactor=scripti->fval;
+#ifdef pp_GLUI
   GLUIUpdateVectorWidgets();
+#endif
 
   PRINTF("script: vecfactor=%f\n",vecfactor);
 
   contour_type=CLAMP(scripti->ival4,0,2);
+#ifdef pp_GLUI
   GLUIUpdatePlot3dDisplay();
+#endif
 
   if(visVector==1&&nplot3dloaded>0){
     meshdata *gbsave,*gbi;
@@ -3070,17 +3094,21 @@ void ScriptOutputSmokeSensors(void){
 
 void ScriptXYZView(float x, float y, float z, float az, float elev){
   use_customview = 0;
+#ifdef pp_GLUI
   GLUISceneMotionCB(CUSTOM_VIEW);
   GLUIViewpointCB(RESTORE_VIEW);
+#endif
   set_view_xyz[0]      = x;
   set_view_xyz[1]      = y;
   set_view_xyz[2]      = z;
   customview_azimuth   = az;
   customview_elevation = elev;
   use_customview       = 1;
+#ifdef pp_GLUI
   GLUISceneMotionCB(CUSTOM_VIEW);
   GLUISceneMotionCB(SET_VIEW_XYZ);
   GLUIUpdatePosView();
+#endif
 }
 
 /* ------------------ ScriptShowPlot3dData ------------------------ */
@@ -3348,7 +3376,9 @@ void ScriptLoadPlot3D(scriptdata *scripti){
     }
   }
   UpdateRGBColors(colorbar_select_index);
+#ifdef pp_GLUI
   GLUISetLabelControls();
+#endif
   if(count == 0){
     fprintf(stderr, "*** Error: Plot3d file failed to load\n");
     if(stderr2!=NULL)fprintf(stderr2, "*** Error: Plot3d file failed to load\n");
@@ -3407,8 +3437,10 @@ void ScriptSetTourKeyFrame(scriptdata *scripti){
   }
   if(minkey!=NULL){
     NewSelect(minkey);
+#ifdef pp_GLUI
     GLUISetTourKeyframe();
     GLUIUpdateTourControls();
+#endif
   }
 }
 
@@ -3431,7 +3463,9 @@ void ScriptSetTourView(scriptdata *scripti){
       viewtourfrompath=0;
       break;
   }
+#ifdef pp_GLUI
   GLUIUpdateTourState();
+#endif
 }
 
 /* ------------------ ScriptSetSliceBounds ------------------------ */
@@ -3544,7 +3578,9 @@ void ScriptProjection(scriptdata *scripti){
   else{
     projection_type = PROJECTION_ORTHOGRAPHIC;
   }
+#ifdef pp_GLUI
   GLUISceneMotionCB(PROJECTION);
+#endif
 }
 
 //    sscanf(buffer,"%i %i %i %i",&vis_gslice_data, &show_gslice_triangles, &show_gslice_triangulation, &show_gslice_normal);
@@ -3643,8 +3679,10 @@ void ScriptSetClipx(scriptdata *scripti){
   clipinfo.clip_xmax = scripti->ival2;
   clipinfo.xmin      = scripti->fval;
   clipinfo.xmax      = scripti->fval2;
+#ifdef pp_GLUI
   ClipCB(CLIP_xlower);
   ClipCB(CLIP_xupper);
+#endif
 }
 
 /* ------------------ ScriptSetClipy ------------------------ */
@@ -3654,8 +3692,10 @@ void ScriptSetClipy(scriptdata *scripti){
   clipinfo.clip_ymax = scripti->ival2;
   clipinfo.ymin      = scripti->fval;
   clipinfo.ymax      = scripti->fval2;
+#ifdef pp_GLUI
   ClipCB(CLIP_ylower);
   ClipCB(CLIP_yupper);
+#endif
 }
 
 /* ------------------ ScriptSetClipz ------------------------ */
@@ -3665,8 +3705,10 @@ void ScriptSetClipz(scriptdata *scripti){
   clipinfo.clip_zmax = scripti->ival2;
   clipinfo.zmin      = scripti->fval;
   clipinfo.zmax      = scripti->fval2;
+#ifdef pp_GLUI
   ClipCB(CLIP_zlower);
   ClipCB(CLIP_zupper);
+#endif
 }
 
 /* ------------------ ScriptSetClipMode ------------------------ */
@@ -3739,10 +3781,14 @@ void ScriptViewXYZMINMAXOrtho(int command){
     assert(FFALSE);
     break;
   }
+#ifdef pp_GLUI
   GLUIResetView(EXTERNAL_VIEW);
+#endif
   use_customview=0;
+#ifdef pp_GLUI
   GLUISceneMotionCB(CUSTOM_VIEW);
   GLUISceneMotionCB(ZAXIS_CUSTOM);
+#endif
 }
 
 
@@ -3807,20 +3853,26 @@ void SetViewZMAXPersp(void){
   zcen = zbarORIG+DL;
   elevation = -89.9;
   azimuth = 0.0;
+#ifdef pp_GLUI
   GLUIResetView(EXTERNAL_VIEW);
+#endif
 
   use_customview = 0;
+#ifdef pp_GLUI
   GLUISceneMotionCB(CUSTOM_VIEW);
   GLUIViewpointCB(RESTORE_VIEW);
+#endif
   set_view_xyz[0]      = xcen;
   set_view_xyz[1]      = ycen;
   set_view_xyz[2]      = zcen;
   customview_azimuth   = azimuth;
   customview_elevation = elevation;
   use_customview       = 1;
+#ifdef pp_GLUI
   GLUISceneMotionCB(CUSTOM_VIEW);
   GLUISceneMotionCB(SET_VIEW_XYZ);
   GLUIUpdatePosView();
+#endif
 }
 
 /* ------------------ RunScriptCommand ------------------------ */
@@ -3874,21 +3926,31 @@ int RunScriptCommand(scriptdata *script_command){
       break;
     case SCRIPT_RENDERTYPE:
       if(STRCMP(scripti->cval, "JPG")==0){
+#ifdef pp_GLUI
         UpdateRenderType(JPEG);
+#endif
       }
       else{
+#ifdef pp_GLUI
         UpdateRenderType(PNG);
+#endif
       }
       break;
     case SCRIPT_MOVIETYPE:
       if(STRCMP(scripti->cval, "WMV") == 0){
+#ifdef pp_GLUI
         UpdateMovieType(WMV);
+#endif
       }
       if(STRCMP(scripti->cval, "MP4") == 0){
+#ifdef pp_GLUI
         UpdateMovieType(MP4);
+#endif
       }
       else{
+#ifdef pp_GLUI
         UpdateMovieType(AVI);
+#endif
       }
       break;
     case SCRIPT_RENDERDIR:

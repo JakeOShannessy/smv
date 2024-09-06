@@ -146,7 +146,9 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
 /* ------------------ UpdateTrianglesAll ------------------------ */
 
 void *UpdateTrianglesAll(void *arg){
+#ifdef pp_GLUI
   UpdateTriangles(GEOM_DYNAMIC, GEOM_UPDATE_ALL);
+#endif
   THREAD_EXIT(triangles_threads);
 }
 
@@ -629,9 +631,11 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
       iisottype = GetIsoTType(isoi);
    //   SyncIsoBounds();
       SetIsoLabels(isoi->tmin, isoi->tmax, isoi, errorcode);
+#ifdef pp_GLUI
       GLUIUpdateIsoBounds();
       GLUIIsoBoundCB(ISO_VALMIN);
       GLUIIsoBoundCB(ISO_VALMAX);
+#endif
     }
   }
   PrintMemoryInfo;

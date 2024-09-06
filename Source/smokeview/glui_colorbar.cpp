@@ -11,6 +11,7 @@
 #include "glui_bounds.h"
 
 #include "colorbars.h"
+#include "glui.h"
 
 GLUI *glui_colorbar=NULL;
 

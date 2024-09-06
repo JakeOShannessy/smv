@@ -26,6 +26,7 @@ EXTERNCPP void UpdateGluiMergeSmoke(void);
 
 
 //*** glui_bounds.cpp headers
+#ifdef pp_GLUI
 EXTERNCPP int  GLUIGetChopHide(char *label);
 EXTERNCPP void GLUISetChopHide(char *label, int val);
 
@@ -37,8 +38,6 @@ EXTERNCPP int  GLUISetChopMax(int type, char *label, int set_chopmax, float chop
 EXTERNCPP void GLUIUpdateTextureDisplay(void);
 EXTERNCPP void GLUIUpdateLoadAllSlices(void);
 EXTERNCPP void GLUIUpdateMeshBounds(void);
-EXTERNCPP void DrawBoxMinMax(float *bbmin, float *bbmax, float *box_color);
-EXTERNCPP void DrawBox(float *bb, float *box_color);
 EXTERNCPP void GLUIUpdateLoadWhenLoaded(void);
 EXTERNCPP void GLUIBoundsSetup(int main_window);
 EXTERNCPP void GLUIUpdatePartPointSize(void);
@@ -125,8 +124,6 @@ EXTERNCPP void GLUISliceBoundCB(int var);
 EXTERNCPP void GLUIUpdateChar(void);
 EXTERNCPP void GLUIUpdateTracers(void);
 EXTERNCPP void GLUIUpdateShowHideButtons(void);
-EXTERNCPP void UpdateTriangles(int time_flag, int update);
-EXTERNCPP void CancelUpdateTriangles(void);
 #ifdef pp_REFRESH
 EXTERNCPP void GLUIRefreshDialogs(void);
 #endif
@@ -317,6 +314,11 @@ EXTERNCPP void GLUIShowAlert(void);
 EXTERNCPP void GLUIHideAlert(void);
 EXTERNCPP void GLUIShowTrainer(void);
 EXTERNCPP void GLUIHideTrainer(void);
+#endif
+EXTERNCPP void DrawBoxMinMax(float *bbmin, float *bbmax, float *box_color);
+EXTERNCPP void DrawBox(float *bb, float *box_color);
+EXTERNCPP void UpdateTriangles(int time_flag, int update);
+EXTERNCPP void CancelUpdateTriangles(void);
 
 // gen plot routines
 
@@ -360,7 +362,9 @@ EXTERNCPP void DrawObstBoundingBox(void);
 EXTERNCPP void DrawGeomBoundingBox(float *boundingbox_color);
 EXTERNCPP void ClassifyGeom(geomdata *geomi, int *geom_frame_index);
 
+#ifdef pp_GLUI
 EXTERNCPP void GLUIUpdateCfaces(void);
+#endif
 
 EXTERNCPP void SetTimeState(void);
 
@@ -492,7 +496,9 @@ EXTERNCPP void CreatePartSizeFile(partdata *parti);
 EXTERNCPP void GetAllPartBounds(void);
 EXTERNCPP void MergeAllPartBounds(void);
 #ifdef CPP
+#ifdef pp_GLUI
 EXTERNCPP void InsertRollout(GLUI_Rollout *rollout, GLUI *dialog);
+#endif
 #endif
 
 EXTERNCPP void InitializeDeviceCsvData(int flag);
