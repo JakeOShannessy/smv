@@ -2314,7 +2314,7 @@ void UpdateShowScene(void){
     END_SHOW_UPDATE(update_frame);
   }
 #endif
-#ifdef pp_SMOKE_SPEEDUP
+#ifdef pp_SMOKE_SPEEDUP  
   if(update_smoke3dmenulabels == 1){
     SHOW_UPDATE(update_smoke3dmenulabels);
     update_smoke3dmenulabels = 0;
