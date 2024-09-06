@@ -2482,7 +2482,9 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
       BlockageMenu(visBLOCKHide);
     }
     CheckMemory;
+#ifdef pp_GLUI
     GLUIUpdateBoundaryListIndex(patchfilenum);
+#endif
     cpp_boundsdata *bounds;
 
     if(runscript == 0){
@@ -2490,21 +2492,29 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
     }
     int set_valmin_save, set_valmax_save;
     float qmin_save, qmax_save;
+#ifdef pp_GLUI
     GLUIGetMinMax(BOUND_PATCH, patchi->label.shortlabel, &set_valmin_save, &qmin_save, &set_valmax_save, &qmax_save);
+#endif
     if(force_bound_update==1||patch_bounds_defined==0 || BuildGbndFile(BOUND_PATCH) == 1){
       GetGlobalPatchBounds(1,DONOT_SET_MINMAX_FLAG);
+#ifdef pp_GLUI
       SetLoadedPatchBounds(NULL, 0);
       GLUIPatchBoundsCPP_CB(BOUND_DONTUPDATE_COLORS);
+#endif
 #ifdef pp_RECOMPUTE_DEBUG
       recompute = 1;
 #endif
     }
     else{
+#ifdef pp_GLUI
       bounds = GLUIGetBoundsData(BOUND_PATCH);
+#endif
       if(bounds->set_valmin==BOUND_PERCENTILE_MIN||bounds->set_valmax==BOUND_PERCENTILE_MAX){
         float global_min=0.0, global_max=1.0;
+#ifdef pp_GLUI
         GLUIGetGlobalBoundsMinMax(BOUND_PATCH, bounds->label, &global_min, &global_max);
         GLUIPatchBoundsCPP_CB(BOUND_UPDATE_COLORS);
+#endif
       }
     }
     if(set_valmin_save == 0){
@@ -2517,7 +2527,9 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
       UpdateAllBoundaryColors(0);
     }
 #define BOUND_PERCENTILE_DRAW          120
+#ifdef pp_GLUI
     GLUIPatchBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
+#endif
   }
 
   if(wallcenter==1){
@@ -2927,7 +2939,9 @@ void DrawBoundaryTexture(const meshdata *meshi){
   float ttmin, ttmax;
 
   label = patchi->label.shortlabel;
+#ifdef pp_GLUI
   GLUIGetOnlyMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
+#endif
 
   if(patch_times[0]>global_times[itimes]||patchi->display==0)return;
   if(cullfaces==1)glDisable(GL_CULL_FACE);
@@ -3305,7 +3319,9 @@ void DrawBoundaryTextureThreshold(const meshdata *meshi){
   float ttmin, ttmax;
 
   label = patchi->label.shortlabel;
+#ifdef pp_GLUI
   GLUIGetMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
+#endif
 
   if(cullfaces==1)glDisable(GL_CULL_FACE);
 
@@ -3866,7 +3882,9 @@ void DrawBoundaryCellCenter(const meshdata *meshi){
   patchi = patchinfo+meshi->patchfilenum;
 
   label = patchi->label.shortlabel;
+#ifdef pp_GLUI
   GLUIGetOnlyMinMax(BOUND_PATCH, label, &set_valmin, &ttmin, &set_valmax, &ttmax);
+#endif
   if(ttmin>=ttmax){
     ttmin = 0.0;
     ttmax = 1.0;

@@ -537,7 +537,9 @@ void GetGlobalPlot3DBounds(void){
       boundscppi->chopmax = p3max_global[0];
     }
   }
+#ifdef pp_GLUI
   GLUISetGlobalMinMaxAll(BOUND_PLOT3D, p3min_global, p3max_global, plot3dinfo->nplot3dvars);
+#endif
 }
 
 /* ------------------ GetLoadedPlot3dBounds ------------------------ */

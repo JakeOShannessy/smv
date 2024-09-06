@@ -45,20 +45,22 @@ add_executable(smokeview
 )
 
 # GLUI sources are separate here. In some branches GLUI is conditional.
-target_sources(smokeview PRIVATE
-    glui_smoke.cpp
-    glui_clip.cpp
-    glui_stereo.cpp
-    glui_geometry.cpp
-    glui_motion.cpp
-    glui_bounds.cpp
-    glui_colorbar.cpp
-    glui_display.cpp
-    glui_tour.cpp
-    glui_trainer.cpp
-    glui_objects.cpp
-    glui_shooter.cpp
-)
+if (GLUI)
+    target_sources(smokeview PRIVATE
+        glui_smoke.cpp
+        glui_clip.cpp
+        glui_stereo.cpp
+        glui_geometry.cpp
+        glui_motion.cpp
+        glui_bounds.cpp
+        glui_colorbar.cpp
+        glui_display.cpp
+        glui_tour.cpp
+        glui_trainer.cpp
+        glui_objects.cpp
+        glui_shooter.cpp
+    )
+endif()
 
 target_link_libraries(smokeview PRIVATE libsmv)
 target_link_libraries(smokeview PRIVATE json-c::json-c)
@@ -69,13 +71,15 @@ target_link_libraries(smokeview PRIVATE json-c::json-c)
 if(WIN32)
     target_link_libraries(smokeview PRIVATE wsock32 ws2_32)
 endif()
-if (VENDORED_UI_LIBS)
-    target_include_directories(smokeview PRIVATE ../glui_v2_1_beta)
-    target_link_libraries(smokeview PRIVATE glui_static)
-    install(TARGETS glui_static)
-else()
-    FetchContent_MakeAvailable(glui-git)
-    target_link_libraries(smokeview PRIVATE glui)
+if (GLUI)
+    if (VENDORED_UI_LIBS)
+        target_include_directories(smokeview PRIVATE ../glui_v2_1_beta)
+        target_link_libraries(smokeview PRIVATE glui_static)
+        install(TARGETS glui_static)
+    else()
+        FetchContent_MakeAvailable(glui-git)
+        target_link_libraries(smokeview PRIVATE glui)
+    endif()
 endif()
 
 if(WIN32)

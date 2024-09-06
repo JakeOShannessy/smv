@@ -11,9 +11,11 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "structures.h"
 #include "IOvolsmoke.h"
 #include "glui_motion.h"
 #include "readgeom.h"
+#include "glui.h"
 
 #define ROTATE_TRANSLATE
 #ifdef pp_OSX_HIGHRES

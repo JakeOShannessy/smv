@@ -471,7 +471,9 @@ FILE_SIZE ReadAllCSVFiles(int flag){
 
   if(csvcoll.ncsvfileinfo == 0)return 0;
 #define GENPLOT_REM_ALL_PLOTS       136
+#ifdef pp_GLUI
   GenPlotCB(GENPLOT_REM_ALL_PLOTS);
+#endif
   for(i = 0; i < csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
@@ -490,7 +492,9 @@ FILE_SIZE ReadAllCSVFiles(int flag){
     file_size += ReadCSVFile(csvfi, flag);
     plot2d_max_columns = MAX(plot2d_max_columns, csvfi->ncsvinfo);
     csvfi->defined = CSV_DEFINED;
+#ifdef pp_GLUI
     UpdateCSVFileTypes();
+#endif
   }
   for(i = 0; i < csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
@@ -3048,8 +3052,9 @@ void UpdateBoundInfo(void){
     }
   }
   PRINT_TIMER(bound_timer, "hvacbounds");
-
+#ifdef pp_GLUI
   GLUIUpdateChar();
+#endif
   PRINT_TIMER(bound_timer, "GLUIUpdateChar");
 #ifdef pp_PARTBOUND_MULTI
   if(partbound_threads == NULL){
@@ -6859,7 +6864,9 @@ void *Compress(void *arg){
   char shellcommand[1024];
 
   PRINTF("Compressing...\n");
+#ifdef pp_GLUI
   GLUICompressOnOff(OFF);
+#endif
 
   WriteIni(LOCAL_INI, NULL);
 
@@ -6884,7 +6891,9 @@ void *Compress(void *arg){
   system(shellcommand);
   UpdateSmoke3dMenuLabels();
   UpdateBoundaryMenuLabels();
+#ifdef pp_GLUI
   GLUICompressOnOff(ON);
+#endif
   updatemenu = 1;
   PRINTF("Compression completed\n");
   THREAD_EXIT(compress_threads);
@@ -12237,7 +12246,9 @@ void SetHVACDuctBounds(int set_valmin, float valmin, int set_valmax, float valma
     if(strcmp(quantity, "") == 0 || strcmp(quantity, boundi->shortlabel) == 0){
       hvacductbounds[i].dlg_setvalmin = glui_setpatchmin;
       hvacductbounds[i].dlg_setvalmax = glui_setpatchmax;
+#ifdef pp_GLUI
       GLUISetMinMax(BOUND_HVACDUCT, boundi->shortlabel, set_valmin, valmin, set_valmax, valmax);
+#endif
       update_glui_bounds = 1;
     }
   }
@@ -12255,7 +12266,9 @@ void SetHVACNodeBounds(int set_valmin, float valmin, int set_valmax, float valma
     if(strcmp(quantity, "") == 0 || strcmp(quantity, boundi->shortlabel) == 0){
       hvacnodebounds[i].dlg_setvalmin = glui_setpatchmin;
       hvacnodebounds[i].dlg_setvalmax = glui_setpatchmax;
+#ifdef pp_GLUI
       GLUISetMinMax(BOUND_HVACNODE, boundi->shortlabel, set_valmin, valmin, set_valmax, valmax);
+#endif
       update_glui_bounds = 1;
     }
   }
@@ -12274,7 +12287,9 @@ void SetBoundBounds(int set_valmin, float valmin, int set_valmax, float valmax, 
     if(strcmp(quantity, "")==0||strcmp(quantity, boundi->shortlabel)==0){
       patchbounds[i].dlg_setvalmin = glui_setpatchmin;
       patchbounds[i].dlg_setvalmax = glui_setpatchmax;
+#ifdef pp_GLUI
       GLUISetMinMax(BOUND_PATCH, boundi->shortlabel, set_valmin, valmin, set_valmax, valmax);
+#endif
       update_glui_bounds = 1;
     }
   }
@@ -12291,7 +12306,9 @@ void SetSliceBounds(int set_valmin, float valmin, int set_valmax, float valmax, 
       slicebounds[i].dlg_setvalmax = set_valmax;
       slicebounds[i].dlg_valmin = valmin;
       slicebounds[i].dlg_valmax = valmax;
+#ifdef pp_GLUI
       GLUISetMinMax(BOUND_SLICE, slicebounds[i].shortlabel, set_valmin, valmin, set_valmax, valmax);
+#endif
       update_glui_bounds = 1;
       if(strcmp(slicebounds[i].shortlabel, buffer2)==0){
         break;
@@ -12309,7 +12326,9 @@ void SetPatchMin(int set_valmin, float valmin, char *buffer2){
     if(strcmp(buffer2, "") == 0 || strcmp(patchbounds[i].shortlabel, buffer2) == 0){
       patchbounds[i].dlg_setvalmin = set_valmin;
       patchbounds[i].dlg_valmin = valmin;
+#ifdef pp_GLUI
       GLUISetMin(BOUND_PATCH, patchbounds[i].shortlabel, set_valmin, valmin);
+#endif
       update_glui_bounds = 1;
       if(strcmp(patchbounds[i].shortlabel, buffer2) == 0)break;
     }
@@ -12325,7 +12344,9 @@ void SetPatchMax(int set_valmax, float valmax, char *buffer2){
     if(strcmp(buffer2, "") == 0 || strcmp(patchbounds[i].shortlabel, buffer2) == 0){
       patchbounds[i].dlg_setvalmax = set_valmax;
       patchbounds[i].dlg_valmax = valmax;
+#ifdef pp_GLUI
       GLUISetMax(BOUND_PATCH, patchbounds[i].shortlabel, set_valmax, valmax);
+#endif
       update_glui_bounds = 1;
       if(strcmp(patchbounds[i].shortlabel, buffer2) == 0)break;
     }
@@ -12340,7 +12361,9 @@ void SetSliceMin(int set_valmin, float valmin, char *buffer2){
     if(strcmp(buffer2, "") == 0 || strcmp(slicebounds[i].shortlabel, buffer2) == 0){
       slicebounds[i].dlg_setvalmin = set_valmin;
       slicebounds[i].dlg_valmin    = valmin;
+#ifdef pp_GLUI
       GLUISetMin(BOUND_SLICE, slicebounds[i].shortlabel, set_valmin, valmin);
+#endif
       update_glui_bounds = 1;
       if(strcmp(slicebounds[i].shortlabel, buffer2) == 0)break;
     }
@@ -12356,7 +12379,9 @@ void SetSliceMax(int set_valmax, float valmax, char *buffer2){
     if(strcmp(buffer2, "") == 0 || strcmp(slicebounds[i].shortlabel, buffer2) == 0){
       slicebounds[i].dlg_setvalmax = set_valmax;
       slicebounds[i].dlg_valmax    = valmax;
+#ifdef pp_GLUI
       GLUISetMax(BOUND_SLICE, slicebounds[i].shortlabel, set_valmax, valmax);
+#endif
       update_glui_bounds = 1;
       if(strcmp(slicebounds[i].shortlabel, buffer2) == 0)break;
     }
@@ -12607,7 +12632,9 @@ int ReadIni2(char *inifile, int localfile){
         update_splitcolorbar = 1;
       }
       else{
+#ifdef pp_GLUI
         GLUISplitCB(SPLIT_COLORBAR);
+#endif
       }
       continue;
     }
@@ -12702,7 +12729,9 @@ int ReadIni2(char *inifile, int localfile){
              &plot2d_show_yaxis_units, &plot2d_show_plots
              );
       update_device_timeaverage = 1;
+#ifdef pp_GLUI
       GLUIUpdateDeviceAdd();
+#endif
       for(i=0;i<nplot2dini;i++){
         plot2ddata *plot2di;
         char *labelptr;
@@ -13031,7 +13060,9 @@ int ReadIni2(char *inifile, int localfile){
       sscanf(buffer, "%i", &stereotype);
       stereotype = CLAMP(stereotype, 0, 5);
       if(stereotype == STEREO_TIME&&videoSTEREO != 1)stereotype = STEREO_NONE;
+#ifdef pp_GLUI
       GLUIUpdateStereo();
+#endif
       continue;
     }
     if(MatchINI(buffer, "TERRAINPARMS") == 1){
@@ -13104,7 +13135,9 @@ int ReadIni2(char *inifile, int localfile){
           p3min_all[iplot3d]    = p3mintemp;
           p3max_all[iplot3d]    = p3maxtemp;
           if(plot3dinfo!=NULL){
+#ifdef pp_GLUI
             GLUISetMinMax(BOUND_PLOT3D, plot3dinfo[0].label[iplot3d].shortlabel, isetmin, p3mintemp, isetmax, p3maxtemp);
+#endif
             update_glui_bounds = 1;
           }
         }
@@ -13472,8 +13505,10 @@ int ReadIni2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &projection_type);
       projection_type = CLAMP(projection_type, 0, 1);
+#ifdef pp_GLUI
       GLUISceneMotionCB(PROJECTION);
       GLUIUpdateProjectionType();
+#endif
       continue;
     }
     if(MatchINI(buffer, "V_PARTICLES") == 1){
@@ -13600,8 +13635,9 @@ int ReadIni2(char *inifile, int localfile){
 #define MAX_PART_TYPES 100
           if(strcmp(short_label, "")==0){
             int npart_types;
-
+#ifdef pp_GLUI
             npart_types = GLUIGetNValtypes(BOUND_PART);
+#endif
             if(npart_types>0){
               int  *ivmins, *ivmaxs;
               float *vmins, *vmaxs;
@@ -13626,7 +13662,9 @@ int ReadIni2(char *inifile, int localfile){
                 vmins[i]  = vmin;
                 vmaxs[i]  = vmax;
               }
+#ifdef pp_GLUI
               GLUISetMinMaxAll(BOUND_PART, ivmins, vmins, ivmaxs, vmaxs, npart_types);
+#endif
               if(npart_types>MAX_PART_TYPES){
                 FREEMEMORY(ivmins);
                 FREEMEMORY(vmins);
@@ -13636,7 +13674,9 @@ int ReadIni2(char *inifile, int localfile){
             }
           }
           else{
+#ifdef pp_GLUI
             GLUISetMinMax(BOUND_PART, short_label, ivmin, vmin, ivmax, vmax);
+#endif
           }
           update_glui_bounds=1;
         }
@@ -13896,7 +13936,9 @@ int ReadIni2(char *inifile, int localfile){
       if(setzonemax == PERCENTILE_MIN)setzonemax = GLOBAL_MIN;
       if(setzonemin == SET_MIN)zonemin = zoneusermin;
       if(setzonemax == SET_MAX)zonemax = zoneusermax;
+#ifdef pp_GLUI
       GLUIUpdateZoneBounds();
+#endif
       continue;
     }
     if(MatchINI(buffer, "V_TARGET") == 1){
@@ -14244,7 +14286,9 @@ int ReadIni2(char *inifile, int localfile){
     if(MatchINI(buffer, "RENDERFILETYPE") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i %i %i", &render_filetype, &movie_filetype, &render_resolution);
+#ifdef pp_GLUI
       RenderCB(RENDER_RESOLUTION);
+#endif
       continue;
     }
     if(MatchINI(buffer, "MOVIEFILETYPE") == 1){
@@ -14465,7 +14509,9 @@ int ReadIni2(char *inifile, int localfile){
     if(MatchINI(buffer, "BACKGROUNDCOLOR") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", backgroundbasecolor, backgroundbasecolor + 1, backgroundbasecolor + 2);
+#ifdef pp_GLUI
       GLUISetColorControls();
+#endif
       continue;
     }
     if(MatchINI(buffer, "SURFCOLORS")==1){
@@ -14545,7 +14591,9 @@ int ReadIni2(char *inifile, int localfile){
     if(MatchINI(buffer, "FOREGROUNDCOLOR") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", foregroundbasecolor, foregroundbasecolor + 1, foregroundbasecolor + 2);
+#ifdef pp_GLUI
       GLUISetColorControls();
+#endif
       continue;
     }
     if(MatchINI(buffer, "BLOCKCOLOR") == 1){
@@ -15050,8 +15098,9 @@ int ReadIni2(char *inifile, int localfile){
       strcpy(ci->name, bufferptr);
       InitCameraList();
       InsertCamera(&camera_list_first, ci, bufferptr);
-
+#ifdef pp_GLUI
       GLUIEnableResetSavedView();
+#endif
       ci->dirty = 1;
       ci->defined = 1;
       continue;
@@ -15091,7 +15140,9 @@ int ReadIni2(char *inifile, int localfile){
           rgbi->color[2] = CLAMP(colori[2], 0, 255);
           rgbi->color[3] = CLAMP(colori[3], 0, 255);
         }
+#ifdef pp_GLUI
         UpdateColorTable(ctableinfo, nctableinfo);
+#endif
         FREEMEMORY(ctableinfo);
       }
       continue;
@@ -15120,7 +15171,9 @@ int ReadIni2(char *inifile, int localfile){
         iso_color[3] = CLAMP(iso_color[3], 0.0, 1.0);
       }
       UpdateIsoColors();
+#ifdef pp_GLUI
       GLUIUpdateIsoColorlevel();
+#endif
       continue;
     }
     if(MatchINI(buffer, "UNITCLASSES") == 1){
@@ -16594,8 +16647,9 @@ void WriteIniLocal(FILE *fileout){
       char *label;
 
       label = patchi->label.shortlabel;
-
+#ifdef pp_GLUI
       GLUIGetOnlyMinMax(BOUND_PATCH, label, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
       fprintf(fileout, "V2_BOUNDARY\n");
       fprintf(fileout, " %i %f %i %f %s\n", set_valmin, valmin, set_valmax, valmax, label);
     }
@@ -16621,8 +16675,9 @@ void WriteIniLocal(FILE *fileout){
       char *label;
 
       label = propi->label->shortlabel;
-
+#ifdef pp_GLUI
       GLUIGetOnlyMinMax(BOUND_PART, label, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
       fprintf(fileout, " %i %f %i %f %s\n", set_valmin, valmin, set_valmax, valmax, label);
     }
   }
@@ -16643,7 +16698,9 @@ void WriteIniLocal(FILE *fileout){
       char *label;
 
       label = plot3dinfo[0].label[i].shortlabel;
+#ifdef pp_GLUI
       GLUIGetOnlyMinMax(BOUND_PLOT3D, label, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
       fprintf(fileout, " %i %i %f %i %f %s\n", i+1, set_valmin, valmin, set_valmax, valmax, label);
     }
     }
@@ -16656,7 +16713,9 @@ void WriteIniLocal(FILE *fileout){
       char *label;
 
       label = hvacductbounds[i].label->shortlabel;
+#ifdef pp_GLUI
       GLUIGetOnlyMinMax(BOUND_HVACDUCT, label, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
       fprintf(fileout, " %i %f %i %f %s\n", set_valmin, valmin, set_valmax, valmax, label);
     }
   }
@@ -16668,7 +16727,9 @@ void WriteIniLocal(FILE *fileout){
       char *label;
 
       label = hvacnodebounds[i].label->shortlabel;
+#ifdef pp_GLUI
       GLUIGetOnlyMinMax(BOUND_HVACNODE, label, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
       fprintf(fileout, " %i %f %i %f %s\n", set_valmin, valmin, set_valmax, valmax, label);
     }
   }
@@ -16680,7 +16741,9 @@ void WriteIniLocal(FILE *fileout){
       char *label;
 
       label = slicebounds[i].label->shortlabel;
+#ifdef pp_GLUI
       GLUIGetOnlyMinMax(BOUND_SLICE, label, &set_valmin, &valmin, &set_valmax, &valmax);
+#endif
       fprintf(fileout, " %i %f %i %f %s : %f %f %i\n", set_valmin, valmin, set_valmax, valmax, label,
         slicebounds[i].line_contour_min, slicebounds[i].line_contour_max, slicebounds[i].line_contour_num
         );
@@ -17024,8 +17087,9 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i\n", tload_zipstep);
 
   fprintf(fileout,"\n *** VIEW PARAMETERS ***\n\n");
-
+#ifdef pp_GLUI
   GLUIGetGeomDialogState();
+#endif
   fprintf(fileout, "APERTURE\n");
   fprintf(fileout, " %i\n", apertureindex);
   fprintf(fileout, "BLOCKLOCATION\n");
@@ -17285,8 +17349,9 @@ void WriteIni(int flag,char *filename){
   {
     if(nwindrosez_showhide > 0){
       int ii;
-
+#ifdef pp_GLUI
       GLUIUpdateWindRoseDevices(UPDATE_WINDROSE_SHOWHIDE);
+#endif
       fprintf(fileout, "WINDROSESHOWHIDE\n");
       fprintf(fileout, " %i\n", nwindrosez_showhide);
       for(ii = 0; ii < nwindrosez_showhide; ii++){

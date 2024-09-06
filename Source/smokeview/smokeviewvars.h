@@ -5,7 +5,9 @@
 #include <time.h>
 #include "MALLOCC.h"
 #ifdef CPP
+#ifdef pp_GLUI
 #include "glui.h"
+#endif
 #endif
 #include "datadefs.h"
 #include "translate.h"
@@ -997,9 +999,11 @@ SVEXTERN int SVDECL(plot2d_max_columns, 0);
 SVEXTERN int SVDECL(deviceunits_index, 0);
 SVEXTERN int SVDECL(plot2d_dialogs_defined, 0);
 SVEXTERN int SVDECL(glui_device_unit_index, -1);
+#ifdef pp_GLUI
 SVEXTERN int SVDECL(glui_device_index, 0);
 SVEXTERN int SVDECL(glui_hrr_unit_index, -1);
 SVEXTERN int SVDECL(glui_hrr_index, 1);
+#endif
 SVEXTERN plot2ddata SVDECL(*glui_plot2dinfo, NULL), SVDECL(*plot2dinfo, NULL), SVDECL(*plot2dini, NULL);
 SVEXTERN int SVDECL(nplot2dinfo, 0), SVDECL(iplot2dinfo, 0), SVDECL(nplot2dini, 0);
 SVEXTERN curvedata glui_curve, glui_curve_default;

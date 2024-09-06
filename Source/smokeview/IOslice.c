@@ -896,7 +896,9 @@ FILE_SIZE ReadVSlice(int ivslice, int time_frame, float *time_value, int load_fl
     slicedata *sd = NULL;
 
     sd = slicecoll.sliceinfo + vd->ival;
+#ifdef pp_GLUI
     GLUIGetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin_save, &qmin_save, &set_valmax_save, &qmax_save);
+#endif
   }
   if(vd->iu!=-1){
     slicedata *u=NULL;
@@ -1436,7 +1438,9 @@ void UpdateAllSliceLabels(int slicetype, int *errorcode){
     }
     if(*errorcode!=0)return;
   }
+#ifdef pp_GLUI
   SliceBounds2Glui(slicetype);
+#endif
 }
 
 /* ------------------ SetSliceColors ------------------------ */
@@ -1507,7 +1511,9 @@ void UpdateAllSliceColors(int slicetype, int *errorcode){
     SetSliceColors(valmin,valmax,sd,1,errorcode);
     if(*errorcode!=0)return;
   }
+#ifdef pp_GLUI
   SliceBounds2Glui(slicetype);
+#endif
 }
 
 /* ------------------ SliceCompare ------------------------ */
@@ -3979,7 +3985,9 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
         if(sd->compression_type == UNCOMPRESSED){
           UpdateSliceBounds();
           list_slice_index = slicefile_labelindex;
+#ifdef pp_GLUI
           SliceBounds2Glui(slicefile_labelindex);
+#endif
           UpdateAllSliceColors(slicefile_labelindex, errorcode);
         }
         else{
@@ -4292,14 +4300,19 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
     }
     int set_valmin_save, set_valmax_save;
     float qmin_save, qmax_save;
+#ifdef pp_GLUI
     GLUIGetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin_save, &qmin_save, &set_valmax_save, &qmax_save);
+#endif
     if(force_bound_update==1||slice_bounds_defined==0|| BuildGbndFile(BOUND_SLICE) ==1){
 #ifdef pp_RECOMPUTE_DEBUG
       recompute = 1;
 #endif
       GetGlobalSliceBounds(1, DONOT_SET_MINMAX_FLAG);
+#ifdef pp_GLUI
       SetLoadedSliceBounds(NULL, 0);
+#endif
     }
+#ifdef pp_GLUI
     GLUIGetMinMax(BOUND_SLICE, sd->label.shortlabel, &set_valmin, &qmin, &set_valmax, &qmax);
     float valmin_loaded = 1.0, valmax_loaded = 0;
     if(set_valmin != 0 || set_valmax != 0){
@@ -4336,8 +4349,11 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
       qmax = valmax_loaded;
       SetSliceMax(BOUND_LOADED_MAX, valmax_loaded, sd->label.shortlabel);
     }
+#endif
 #define BOUND_PERCENTILE_DRAW          120
+#ifdef pp_GLUI
     GLUIHVACSliceBoundsCPP_CB(BOUND_PERCENTILE_DRAW);
+#endif
     colorbar_slice_min = qmin;
     colorbar_slice_max = qmax;
     UpdateUnitDefs();
@@ -4412,8 +4428,10 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
       float chopmax = 121.0;
 
       if(global_times != NULL)chopmax = global_times[nglobal_times-1] + 0.5;
+#ifdef pp_GLUI
       GLUISetChopMax(BOUND_SLICE, sd->label.shortlabel, set_chopmax, chopmax);
       GLUISetChopHide("TOA", 1);
+#endif
     }
     else{
       is_toa_slice = 0;
@@ -5355,11 +5373,13 @@ void DrawVolSliceTerrain(const slicedata *sd){
   float chopmin, chopmax;
   int slice_interp;
 
+#ifdef pp_GLUI
   slice_interp = GLUIGetChopHide(sd->label.shortlabel);
   if(slice_interp == 1){
     GLUIGetChopMin(BOUND_SLICE, sd->label.shortlabel, &set_chopmin, &chopmin);
     GLUIGetChopMax(BOUND_SLICE, sd->label.shortlabel, &set_chopmax, &chopmax);
   }
+#endif
 
   if(cullfaces == 1)glDisable(GL_CULL_FACE);
 
@@ -5699,11 +5719,13 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
   int set_chopmin=0, set_chopmax=0;
   float chopmin, chopmax;
 
+#ifdef pp_GLUI
   slice_interp = GLUIGetChopHide(sd->label.shortlabel);
   if(slice_interp == 1){
     GLUIGetChopMin(BOUND_SLICE, sd->label.shortlabel, &set_chopmin, &chopmin);
     GLUIGetChopMax(BOUND_SLICE, sd->label.shortlabel, &set_chopmax, &chopmax);
   }
+#endif
 
   xplt = meshi->xplt;
   yplt = meshi->yplt;

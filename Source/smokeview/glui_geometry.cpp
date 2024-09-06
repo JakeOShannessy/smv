@@ -8,6 +8,7 @@
 #include GLUT_H
 
 #include "smokeviewvars.h"
+#include "glui.h"
 
 void TerrainCB(int var);
 void VolumeCB(int var);

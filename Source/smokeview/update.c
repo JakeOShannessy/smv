@@ -1702,7 +1702,9 @@ void UpdateTimes(void){
     UpdateTimeLabels();
     PRINT_TIMER(timer_labels, "UpdateTimes: time labels");
     INIT_PRINT_TIMER(timer_bounds);
+#ifdef pp_GLUI
     GLUIUpdateTimeBounds(global_times[0],global_times[nglobal_times-1]);
+#endif
     PRINT_TIMER(timer_bounds, "UpdateTimes: time bound");
   }
   CheckMemory;
@@ -1969,7 +1971,9 @@ void UpdateColorTable(colortabledata *ctableinfo, int nctableinfo){
     strcpy(newentryi->label, fromi->label);
   }
   ResizeMemory((void **)&colortableinfo, ncolortableinfo*sizeof(colortabledata));
+#ifdef pp_GLUI
   GLUIUpdateColorTableList(ncolortableinfo_old);
+#endif
 }
 
 /* ------------------ HaveFire ------------------------ */
@@ -2324,14 +2328,18 @@ void UpdateShowScene(void){
   if(update_glui_merge_smoke == 1){
     SHOW_UPDATE(update_glui_merge_smoke);
     update_glui_merge_smoke = 0;
+#ifdef pp_GLUI
     GLUISmoke3dCB(MERGE_SMOKE);
+#endif
     END_SHOW_UPDATE(update_glui_merge_smoke);
   }
 #endif
   if(glui_meshclip_defined==1&&update_meshclip == 1){
     SHOW_UPDATE(update_meshclip);
     update_meshclip = 0;
+#ifdef pp_GLUI
     GLUIUpdateMeshBounds();
+#endif
     END_SHOW_UPDATE(update_meshclip);
   }
   if(update_csv_load == 1){
@@ -2343,7 +2351,9 @@ void UpdateShowScene(void){
   if(sextras.update_terrain_type == 1){
     SHOW_UPDATE(update_terrain_type);
     sextras.update_terrain_type = 0;
+#ifdef pp_GLUI
     GLUIUpdateTerrain();
+#endif
     END_SHOW_UPDATE(update_terrain_type);
   }
   if(update_iso_ini == 1){
@@ -2373,13 +2383,17 @@ void UpdateShowScene(void){
   if(update_plot2dini == 1){
     SHOW_UPDATE(update_plot2dini);
     update_plot2dini = 0;
+#ifdef pp_GLUI
     GLUIUpdatePlot2DINI();
+#endif
     END_SHOW_UPDATE(update_plot2dini);
   }
   if(update_device_timeaverage == 1){
     SHOW_UPDATE(update_device_timeaverage);
     update_device_timeaverage = 0;
+#ifdef pp_GLUI
     GLUIDeviceCB(DEVICE_TIMEAVERAGE);
+#endif
     END_SHOW_UPDATE(update_device_timeaverage);
   }
   if(sextras.update_smoke_alphas==1){
@@ -2398,7 +2412,9 @@ void UpdateShowScene(void){
   if(update_slicexyz==1){
     SHOW_UPDATE(update_slicexyz);
     update_slicexyz = 0;
+#ifdef pp_GLUI
     GLUIUpdateSliceXYZ();
+#endif
     END_SHOW_UPDATE(update_slicexyz);
   }
   if(update_vectorskip == 1){
@@ -2410,17 +2426,23 @@ void UpdateShowScene(void){
   if(update_plot_label == 1){
     SHOW_UPDATE(update_plot_label);
     update_plot_label = 0;
+#ifdef pp_GLUI
     GLUIUpdatePlotLabel();
+#endif
     END_SHOW_UPDATE(update_plot_label);
   }
   if(open_movie_dialog==1){
     SHOW_UPDATE(open_movie_dialog);
     open_movie_dialog = 0;
     if(have_slurm==1&&nmovie_queues>0){
+#ifdef pp_GLUI
       GLUIShowMotion(DIALOG_MOVIE_BATCH);
+#endif
     }
     else{
+#ifdef pp_GLUI
       GLUIShowMotion(DIALOG_MOVIE);
+#endif
     }
     END_SHOW_UPDATE(open_movie_dialog);
   }
@@ -2436,14 +2458,18 @@ void UpdateShowScene(void){
   if(update_smokefire_colors==1){
     SHOW_UPDATE(update_smokefire_colors);
     update_smokefire_colors = 0;
+#ifdef pp_GLUI
     GLUISmoke3dCB(UPDATE_SMOKEFIRE_COLORS);
     GLUISmoke3dCB(UPDATE_SMOKEFIRE_COLORS2);
     GLUISmoke3dCB(USE_OPACITY_DEPTH);
+#endif
     END_SHOW_UPDATE(update_smokefire_colors);
   }
   if(update_splitcolorbar==1){
     SHOW_UPDATE(update_splitcolorbar);
+#ifdef pp_GLUI
     GLUISplitCB(SPLIT_COLORBAR);
+#endif
     update_splitcolorbar = 0;
     END_SHOW_UPDATE(update_splitcolorbar);
   }
@@ -2456,7 +2482,9 @@ void UpdateShowScene(void){
   if(update_movie_parms==1){
     SHOW_UPDATE(update_movie_parms);
     update_movie_parms = 0;
+#ifdef pp_GLUI
     GLUIUpdateMovieParms();
+#endif
     END_SHOW_UPDATE(update_movie_parms);
   }
 #ifdef pp_REFRESH
@@ -2467,12 +2495,14 @@ void UpdateShowScene(void){
     END_SHOW_UPDATE(update_refresh);
   }
 #endif
+#ifdef pp_GLUI
   if(update_glui_devices==1){
     SHOW_UPDATE(update_glui_devices);
     update_glui_devices = 0;
     GLUIUpdateDevices();
     END_SHOW_UPDATE(update_glui_devices);
   }
+#endif
   if(update_times==1){
     SHOW_UPDATE(update_times);
     update_times = 0;
@@ -2496,11 +2526,15 @@ void UpdateShowScene(void){
   }
   if(update_playmovie==1){
     SHOW_UPDATE(update_playmovie);
+#ifdef pp_GLUI
     EnableDisablePlayMovie();
+#endif
     update_playmovie = 0;
     END_SHOW_UPDATE(update_playmovie);
   }
+#ifdef pp_GLUI
   UpdateRenderStartButton();
+#endif
   if(update_makemovie == 1||output_ffmpeg_command==1){
     SHOW_UPDATE(update_makemovie);
     MakeMovie();
@@ -2520,7 +2554,9 @@ void UpdateShowScene(void){
   }
   if(update_startup_view>0){
     SHOW_UPDATE(update_startup_view);
+#ifdef pp_GLUI
     GLUISetCurrentViewPoint(viewpoint_label_startup);
+#endif
     update_rotation_center = 0;
     update_rotation_center_ini = 0;
     update_startup_view--;
@@ -2528,37 +2564,49 @@ void UpdateShowScene(void){
   }
   if(update_saving_viewpoint>0){
     SHOW_UPDATE(update_saving_viewpoint);
+#ifdef pp_GLUI
     GLUISetCurrentViewPoint(viewpoint_label_saved);
+#endif
     update_saving_viewpoint--;
     END_SHOW_UPDATE(update_saving_viewpoint);
   }
   if(update_viewpoint_script>0){
     SHOW_UPDATE(update_viewpoint_script);
+#ifdef pp_GLUI
     GLUISetCurrentViewPoint(viewpoint_script);
+#endif
     update_viewpoint_script--;
     END_SHOW_UPDATE(update_viewpoint_script);
   }
   if(update_tour_list == 1){
     SHOW_UPDATE(update_tour_list);
+#ifdef pp_GLUI
     GLUIUpdateTourList();
+#endif
     END_SHOW_UPDATE(update_tour_list);
   }
   if(update_gslice == 1){
     SHOW_UPDATE(update_gslice);
+#ifdef pp_GLUI
     GLUIUpdateGsliceParms();
+#endif
     END_SHOW_UPDATE(update_gslice);
   }
   if(update_rotation_center == 1){
     SHOW_UPDATE(update_rotation_center);
     camera_current->rotation_index = glui_rotation_index;
+#ifdef pp_GLUI
     GLUISceneMotionCB(ROTATE_ABOUT);
+#endif
     update_rotation_center = 0;
     END_SHOW_UPDATE(update_rotation_center);
   }
   if(update_rotation_center_ini == 1){
     SHOW_UPDATE(update_rotation_center_ini);
     camera_current->rotation_index = glui_rotation_index_ini;
+#ifdef pp_GLUI
     GLUISceneMotionCB(ROTATE_ABOUT);
+#endif
     update_rotation_center_ini = 0;
     END_SHOW_UPDATE(update_rotation_center_ini);
   }
@@ -2570,13 +2618,17 @@ void UpdateShowScene(void){
   if(updateclipvals == 1){
     SHOW_UPDATE(updateclipvals);
     Clip2Cam(camera_current);
+#ifdef pp_GLUI
     GLUIUpdateClipAll();
+#endif
     updateclipvals = 0;
     END_SHOW_UPDATE(updateclipvals);
   }
   if(update_selectedtour_index == 1){
     SHOW_UPDATE(update_selectedtour_index);
+#ifdef pp_GLUI
     GLUIUpdateTourIndex();
+#endif
     END_SHOW_UPDATE(update_selectedtour_index);
   }
   if(trainer_mode == 1 && fontindex != LARGE_FONT){
@@ -2947,7 +2999,9 @@ void HandleMakeMovie(void){
     THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
     return;
   }
+#ifdef pp_GLUI
   GLUIEnableDisableMakeMovieCPP(OFF);
+#endif
   update_makemovie = 1;
   THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
 }
@@ -2956,7 +3010,9 @@ void HandleMakeMovie(void){
 
 void EnableDisableMakeMovie(int onoff){
   THREADcontrol(ffmpeg_threads, THREAD_LOCK);
+#ifdef pp_GLUI
   GLUIEnableDisableMakeMovieCPP(onoff);
+#endif
   THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
 }
 
@@ -2964,7 +3020,9 @@ void EnableDisableMakeMovie(int onoff){
 
 void EnableDisablePlayMovie(void){
   THREADcontrol(ffmpeg_threads, THREAD_LOCK);
+#ifdef pp_GLUI
   GLUIEnableDisablePlayMovieCPP();
+#endif
   THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
 }
 
@@ -2987,11 +3045,15 @@ void UpdateDisplay(void){
   }
   if(update_fire_alpha==1){
     update_fire_alpha=0;
+#ifdef pp_GLUI
     GLUIUpdateFireAlpha();
+#endif
   }
   if(update_texturebar==1){
     update_texturebar = 0;
+#ifdef pp_GLUI
     UpdateTexturebar();
+#endif
   }
   if(update_make_iblank == 1){
     int ig;
@@ -3031,10 +3093,14 @@ void UpdateDisplay(void){
   if(update_ff == 1){
     update_ff = 0;
     if(have_ffmpeg == 1){
+#ifdef pp_GLUI
       GLUIEnableDisableMakeMovieCPP(ON);
+#endif
     }
     else{
+#ifdef pp_GLUI
       GLUIEnableDisableMakeMovieCPP(OFF);
+#endif
     }
   }
   THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
@@ -3043,22 +3109,30 @@ void UpdateDisplay(void){
     ReadIni(NULL);
 
     update_glui_bounds = 0;
+#ifdef pp_GLUI
     GLUIUpdateBounds();
+#endif
   }
   if(update_colorbar_list == 1){
+#ifdef pp_GLUI
     GLUIUpdateColorbarList();
+#endif
     update_colorbar_list = 0;
   }
   if(update_glui_bounds==1){
     update_glui_bounds = 0;
+#ifdef pp_GLUI
     GLUIUpdateBounds();
+#endif
   }
   if(update_cache_data==1){
     update_cache_data = 0;
+#ifdef pp_GLUI
     GLUISetCacheFlag(BOUND_PLOT3D, cache_plot3d_data);
     GLUISetCacheFlag(BOUND_PART, cache_part_data);
     GLUISetCacheFlag(BOUND_PATCH, cache_boundary_data);
     GLUISetCacheFlag(BOUND_SLICE, cache_slice_data);
+#endif
   }
   if(update_chop_colors==1){
     update_chop_colors = 0;
@@ -3066,7 +3140,9 @@ void UpdateDisplay(void){
   }
   if(update_zaxis_custom == 1){
     update_zaxis_custom = 0;
+#ifdef pp_GLUI
     GLUIUpdateZAxisCustom();
+#endif
   }
   if(update_flipped_colorbar == 1){
     update_flipped_colorbar = 0;
@@ -3077,7 +3153,9 @@ void UpdateDisplay(void){
     SmokeColorbarMenu(colorbars.fire_colorbar_index);
   }
   if(update_colorbar_dialog == 1){
+#ifdef pp_GLUI
     UpdateNodeLabel(colorbars.colorbarinfo + colorbartype);
+#endif
     update_colorbar_dialog = 0;
   }
   if(update_colorbartype == 1){
@@ -3118,7 +3196,9 @@ void UpdateDisplay(void){
   }
   if(update_screensize == 1){
     update_screensize = 0;
+#ifdef pp_GLUI
     GLUIUpdateWindowSizeList();
+#endif
 #ifdef pp_OSX_HIGHRES
     if(double_scale==1){
       screenWidthINI  /= 2;
@@ -3153,11 +3233,15 @@ void UpdateDisplay(void){
   }
   if(update_fire_colorbar_index == 1){
     SmokeColorbarMenu(fire_colorbar_index_ini);
+#ifdef pp_GLUI
     GLUIUpdateFireColorbarList();
+#endif
     update_fire_colorbar_index = 0;
   }
   if(update_co2_colorbar_index==1){
+#ifdef pp_GLUI
     GLUIUpdateCO2ColorbarList(co2_colorbar_index_ini);
+#endif
     update_co2_colorbar_index = 0;
   }
   if(update_colorbar_select_index == 1 && colorbar_select_index >= 0 && colorbar_select_index <= 255){
@@ -3165,24 +3249,32 @@ void UpdateDisplay(void){
     UpdateRGBColors(colorbar_select_index);
   }
   if(update_windrose_showhide==1){
+#ifdef pp_GLUI
     GLUIUpdateWindRoseDevices(UPDATE_WINDROSE_DEVICE);
+#endif
   }
   if(update_research_mode == 1){
     update_research_mode = 0;
+#ifdef pp_GLUI
     GLUIUpdateResearchMode();
+#endif
   }
   if(update_colorbar_digits==1){
     update_colorbar_digits = 0;
+#ifdef pp_GLUI
     GLUISetColorbarDigitsCPP(ncolorlabel_digits);
     GLUISetColorbarDigits();
+#endif
   }
   if(update_visColorbars==1){
     update_visColorbars = 0;
     visColorbarVertical = visColorbarVertical_val;
     visColorbarHorizontal = visColorbarHorizontal_val;
     vis_colorbar = GetColorbarState();
+#ifdef pp_GLUI
     GLUIUpdateColorbarControls();
     GLUIUpdateColorbarControls2();
+#endif
     updatemenu = 1;
   }
   if(update_windrose==1){
@@ -3192,7 +3284,9 @@ void UpdateDisplay(void){
 #ifdef pp_REFRESH
   if(refresh_glui_dialogs>=-1){
     refresh_glui_dialogs--;
+#ifdef pp_GLUI
     GLUIRefreshDialogs();
+#endif
   }
 #endif
 }

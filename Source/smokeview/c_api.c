@@ -119,8 +119,10 @@ int CApiSetSliceBounds(const char *slice_type, int set_valmin, float valmin,
   slicebounds[slice_type_index].dlg_setvalmax = set_valmax;
   slicebounds[slice_type_index].dlg_valmin = valmin;
   slicebounds[slice_type_index].dlg_valmax = valmax;
+#ifdef pp_GLUI
   GLUISetMinMax(BOUND_SLICE, slicebounds[slice_type_index].shortlabel,
                 set_valmin, valmin, set_valmax, valmax);
+#endif
   UpdateSliceBounds2();
   return 0;
 }
@@ -242,10 +244,12 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
       FCLOSE(smv_streaminfo);
     }
   }
+#ifdef pp_GLUI
   if(return_code == 0 && trainer_mode == 1) {
     GLUIShowTrainer();
     GLUIShowAlert();
   }
+#endif
   switch(return_code) {
   case 1:
     fprintf(stderr, "*** Error: Smokeview file, %s, not found\n", input_file);
@@ -282,6 +286,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
   FREEMEMORY(smv_bindir);
 
   if(tourcoll.ntourinfo == 0) SetupTour();
+#ifdef pp_GLUI
   InitRolloutList();
   GLUIColorbarSetup(mainwindow_id);
   GLUIMotionSetup(mainwindow_id);
@@ -295,6 +300,8 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
   GLUIAlertSetup(mainwindow_id);
   GLUIStereoSetup(mainwindow_id);
   GLUI3dSmokeSetup(mainwindow_id);
+#endif
+
 
   UpdateLights(light_position0, light_position1);
 
@@ -304,14 +311,20 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
   glutShowWindow();
   glutSetWindowTitle(fdsprefix);
   InitMisc();
+#ifdef pp_GLUI
   GLUITrainerSetup(mainwindow_id);
+#endif
+
   glutDetachMenu(GLUT_RIGHT_BUTTON);
   InitMenus();
   glutAttachMenu(GLUT_RIGHT_BUTTON);
   if(trainer_mode == 1) {
+#ifdef pp_GLUI
     GLUIShowTrainer();
     GLUIShowAlert();
+#endif
   }
+
   // initialize info header
   initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash,
                        chidfilebase, fds_title);
@@ -746,8 +759,10 @@ void Settourkeyframe(float keyframe_time) {
   }
   if(minkey != NULL) {
     NewSelect(minkey);
+#ifdef pp_GLUI
     GLUISetTourKeyframe();
     GLUIUpdateTourControls();
+#endif
   }
 }
 
@@ -791,7 +806,9 @@ void Settourview(int edittourArg, int mode, int show_tourlocusArg,
     viewtourfrompath = 0;
     break;
   }
+#ifdef pp_GLUI
   GLUIUpdateTourState();
+#endif
 }
 
 /// @brief Get the current frame number.
@@ -897,9 +914,13 @@ void SetColorbar(size_t value) {
   colorbars.iso_colorbar_index = value;
   iso_colorbar = colorbars.colorbarinfo + colorbars.iso_colorbar_index;
   update_texturebar = 1;
+#ifdef pp_GLUI
   GLUIUpdateListIsoColorobar();
+#endif
   UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
+#ifdef pp_GLUI
   GLUIUpdateColorbarType();
+#endif
   if(colorbartype == colorbars.bw_colorbar_index &&
      colorbars.bw_colorbar_index >= 0) {
     setbwdata = 1;
@@ -907,8 +928,10 @@ void SetColorbar(size_t value) {
   else {
     setbwdata = 0;
   }
+#ifdef pp_GLUI
   GLUIIsoBoundCB(ISO_COLORS);
   GLUISetLabelControls();
+#endif
   if(value > -10) {
     UpdateRGBColors(COLORBAR_INDEX_NONE);
   }
@@ -1049,14 +1072,18 @@ void DevicesHideAll() {
 // axis visibility
 void SetAxisVisibility(int setting) {
   visaxislabels = setting;
+#ifdef pp_GLUI
   GLUIUpdateVisAxisLabels();
+#endif
 }
 
 int GetAxisVisibility() { return visaxislabels; }
 
 void ToggleAxisVisibility() {
   visaxislabels = 1 - visaxislabels;
+#ifdef pp_GLUI
   GLUIUpdateVisAxisLabels();
+#endif
 }
 
 // framelabel visibility
@@ -1189,14 +1216,18 @@ void SetAllLabelVisibility(int setting) {
 // time
 void SetTimehms(int setting) {
   vishmsTimelabel = 1 - vishmsTimelabel;
+#ifdef pp_GLUI
   GLUISetLabelControls();
+#endif
 }
 
 int GetTimehms() { return vishmsTimelabel; }
 
 void ToggleTimehms() {
   vishmsTimelabel = 1 - vishmsTimelabel;
+#ifdef pp_GLUI
   GLUISetLabelControls();
+#endif
 }
 
 void SetUnits(int unitclass, int unit_index) {
@@ -1442,12 +1473,15 @@ int SetRendertype(const char *type) {
   else {
     return 1;
   }
+#ifdef pp_GLUI
   UpdateRenderType(render_filetype);
+#endif
 }
 
 int GetRendertype() { return render_filetype; }
 
 void SetMovietype(const char *type) {
+#ifdef pp_GLUI
   if(STRCMP(type, "WMV") == 0) {
     UpdateMovieType(WMV);
   }
@@ -1457,6 +1491,7 @@ void SetMovietype(const char *type) {
   else {
     UpdateMovieType(AVI);
   }
+#endif
 }
 
 int GetMovietype() { return movie_filetype; }
@@ -1465,7 +1500,9 @@ void Makemovie(const char *name, const char *base, float framerate_arg) {
   strcpy(movie_name, name);
   strcpy(render_file_base, base);
   movie_framerate = framerate_arg;
+#ifdef pp_GLUI
   RenderCB(MAKE_MOVIE);
+#endif
 }
 
 int Loadtour(const char *tourname) {
@@ -1583,14 +1620,20 @@ void Plot3dprops(int variable_index, int showvector, int vector_length_index,
   }
   UpdateAllPlotSlices();
   if(visiso == 1) UpdateSurface();
+#ifdef pp_GLUI
   GLUIUpdatePlot3dListIndex();
+#endif
 
   vecfactor = 1.0;
   if(vector_length >= 0.0) vecfactor = vector_length;
+#ifdef pp_GLUI
   GLUIUpdateVectorWidgets();
+#endif
 
   contour_type = CLAMP(display_type, 0, 2);
+#ifdef pp_GLUI
   GLUIUpdatePlot3dDisplay();
+#endif
 
   if(visVector == 1 && nplot3dloaded == 1) {
     meshdata *gbsave, *gbi;
@@ -1675,7 +1718,9 @@ void Loadplot3d(int meshnumber, float time_local) {
     }
   }
   UpdateRGBColors(COLORBAR_INDEX_NONE);
+#ifdef pp_GLUI
   GLUISetLabelControls();
+#endif
   if(count == 0) fprintf(stderr, "*** Error: Plot3d file failed to load\n");
 
   // UpdateMenu();
@@ -1942,8 +1987,10 @@ int GetClippingMode() { return clip_mode; }
 void SetClippingMode(int mode) {
   clip_mode = mode;
   updatefacelists = 1;
+#ifdef pp_GLUI
   GLUIUpdateClip();
   GLUIUpdateClipAll();
+#endif
 }
 
 void SetSceneclipX(int clipMin, float min, int clipMax, float max) {
@@ -1953,24 +2000,30 @@ void SetSceneclipX(int clipMin, float min, int clipMax, float max) {
   clipinfo.clip_xmax = clipMax;
   clipinfo.xmax = max;
   updatefacelists = 1;
+#ifdef pp_GLUI
   GLUIUpdateClip();
   GLUIUpdateClipAll();
+#endif
 }
 
 void SetSceneclipXMin(int flag, float value) {
   clipinfo.clip_xmin = flag;
   clipinfo.xmin = value;
   updatefacelists = 1;
+#ifdef pp_GLUI
   GLUIUpdateClip();
   GLUIUpdateClipAll();
+#endif
 }
 
 void SetSceneclipXMax(int flag, float value) {
   clipinfo.clip_xmax = flag;
   clipinfo.xmax = value;
   updatefacelists = 1;
+#ifdef pp_GLUI
   GLUIUpdateClip();
   GLUIUpdateClipAll();
+#endif
 }
 
 void SetSceneclipY(int clipMin, float min, int clipMax, float max) {
@@ -1980,24 +2033,30 @@ void SetSceneclipY(int clipMin, float min, int clipMax, float max) {
   clipinfo.clip_ymax = clipMax;
   clipinfo.ymax = max;
   updatefacelists = 1;
+#ifdef pp_GLUI
   GLUIUpdateClip();
   GLUIUpdateClipAll();
+#endif
 }
 
 void SetSceneclipYMin(int flag, float value) {
   clipinfo.clip_ymin = flag;
   clipinfo.ymin = value;
   updatefacelists = 1;
+#ifdef pp_GLUI
   GLUIUpdateClip();
   GLUIUpdateClipAll();
+#endif
 }
 
 void SetSceneclipYMax(int flag, float value) {
   clipinfo.clip_ymax = flag;
   clipinfo.ymax = value;
   updatefacelists = 1;
+#ifdef pp_GLUI
   GLUIUpdateClip();
   GLUIUpdateClipAll();
+#endif
 }
 
 void SetSceneclipZ(int clipMin, float min, int clipMax, float max) {
@@ -2007,24 +2066,30 @@ void SetSceneclipZ(int clipMin, float min, int clipMax, float max) {
   clipinfo.clip_zmax = clipMax;
   clipinfo.zmax = max;
   updatefacelists = 1;
+#ifdef pp_GLUI
   GLUIUpdateClip();
   GLUIUpdateClipAll();
+#endif
 }
 
 void SetSceneclipZMin(int flag, float value) {
   clipinfo.clip_zmin = flag;
   clipinfo.zmin = value;
   updatefacelists = 1;
+#ifdef pp_GLUI
   GLUIUpdateClip();
   GLUIUpdateClipAll();
+#endif
 }
 
 void SetSceneclipZMax(int flag, float value) {
   clipinfo.clip_zmax = flag;
   clipinfo.zmax = value;
   updatefacelists = 1;
+#ifdef pp_GLUI
   GLUIUpdateClip();
   GLUIUpdateClipAll();
+#endif
 }
 
 int Setrenderdir(const char *dir) {
@@ -2108,7 +2173,9 @@ void Setgridparms(int x_vis, int y_vis, int z_vis, int x_plot, int y_plot,
 /// than default.
 void Setcolorbarflip(int flip) {
   colorbar_flip = flip;
+#ifdef pp_GLUI
   GLUIUpdateColorbarFlip();
+#endif
   UpdateRGBColors(COLORBAR_INDEX_NONE);
 }
 
@@ -2121,8 +2188,10 @@ int Getcolorbarflip() { return colorbar_flip; }
 void CameraSetRotationType(int rotation_typev) {
   rotation_type = rotation_typev;
   camera_current->rotation_type = rotation_typev;
+#ifdef pp_GLUI
   GLUIRotationTypeCB(rotation_type);
   GLUIUpdateRotationType(rotation_type);
+#endif
   HandleRotationType(ROTATION_2AXIS);
 }
 
@@ -2227,7 +2296,10 @@ int SetBackgroundcolor(float r, float g, float b) {
   backgroundbasecolor[0] = r;
   backgroundbasecolor[1] = g;
   backgroundbasecolor[2] = b;
+#ifdef pp_GLUI
   GLUISetColorControls();
+#endif
+
   GLUTPOSTREDISPLAY;
   return 0;
 } // BACKGROUNDCOLOR
@@ -2382,7 +2454,9 @@ int SetIsocolors(float shininess, float transparency, int transparency_option,
     iso_color[3] = CLAMP(colors[nn][3], 0.0, 1.0);
   }
   UpdateIsoColors();
+#ifdef pp_GLUI
   GLUIUpdateIsoColorlevel();
+#endif
   return 0;
 } // ISOCOLORS
 
@@ -3789,7 +3863,9 @@ int SetShowdevicevals(int vshowdeviceval, int vshowvdeviceval,
   showdevice_type = vshowdevicetype;
   showdevice_unit = vshowdeviceunit;
   devicetypes_index = CLAMP(vdevicetypes_index, 0, ndevicetypes - 1);
+#ifdef pp_GLUI
   GLUIUpdateDevices();
+#endif
   return 0;
 } // SHOWDEVICEVALS
 
@@ -3958,7 +4034,9 @@ int SetPl3dBoundMin(int pl3dValueIndex, int set, float value) {
   setp3min_all[pl3dValueIndex] = set;
   p3min_all[pl3dValueIndex] = value;
   // TODO: remove this reload and hardcoded value
+#ifdef pp_GLUI
   GLUIPlot3DBoundCB(7);
+#endif
   return 0;
 }
 
@@ -3966,7 +4044,9 @@ int SetPl3dBoundMax(int pl3dValueIndex, int set, float value) {
   setp3max_all[pl3dValueIndex] = set;
   p3max_all[pl3dValueIndex] = value;
   // TODO: remove this reload and hardcoded value
+#ifdef pp_GLUI
   GLUIPlot3DBoundCB(7);
+#endif
   return 0;
 }
 

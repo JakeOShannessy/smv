@@ -684,6 +684,7 @@ void SortColorBars(void){
 
 void UpdateColorbarDialogs(void){
   SortColorBars();
+#ifdef pp_GLUI
   GLUIUpdateColorbarListEdit(1, CB_DELETE);
   GLUIUpdateColorbarListBound(1);
   GLUIUpdateColorbarListEdit(2, CB_DELETE);
@@ -693,6 +694,7 @@ void UpdateColorbarDialogs(void){
   GLUIUpdateColorbarBound();
   GLUIUpdateColorbarEdit();
   GLUIColorbarCB(COLORBAR_LIST);
+#endif
 }
 
 /* ------------------ AddColorbar ------------------------ */
@@ -730,8 +732,10 @@ int AddColorbar(int icolorbar){
   if(cbnew != NULL){
     colorbartype = cbnew - colorbars.colorbarinfo;
   }
+#ifdef pp_GLUI
   GLUISetColorbarListEdit(colorbartype);
   GLUISetColorbarListBound(colorbartype);
+#endif
   return colorbartype;
 }
 

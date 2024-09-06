@@ -9,6 +9,7 @@
 
 #include "smokeviewdefs.h"
 #include "smokeviewvars.h"
+#include "structures.h"
 #include "IOscript.h"
 #include "MALLOCC.h"
 #include "glui_smoke.h"
@@ -16,6 +17,7 @@
 #include "histogram.h"
 
 #include "colorbars.h"
+#include "glui.h"
 
 void SetResearchMode(int flag);
 int GetCacheFlag(int type);

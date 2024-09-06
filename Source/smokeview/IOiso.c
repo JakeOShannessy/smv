@@ -629,9 +629,11 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
       iisottype = GetIsoTType(isoi);
    //   SyncIsoBounds();
       SetIsoLabels(isoi->tmin, isoi->tmax, isoi, errorcode);
+#ifdef pp_GLUI
       GLUIUpdateIsoBounds();
       GLUIIsoBoundCB(ISO_VALMIN);
       GLUIIsoBoundCB(ISO_VALMAX);
+#endif
     }
   }
   PrintMemoryInfo;

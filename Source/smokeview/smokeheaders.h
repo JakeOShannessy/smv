@@ -26,6 +26,7 @@ EXTERNCPP void UpdateGluiMergeSmoke(void);
 
 
 //*** glui_bounds.cpp headers
+#ifdef pp_GLUI
 EXTERNCPP int  GLUIGetChopHide(char *label);
 EXTERNCPP void GLUISetChopHide(char *label, int val);
 
@@ -317,7 +318,7 @@ EXTERNCPP void GLUIShowAlert(void);
 EXTERNCPP void GLUIHideAlert(void);
 EXTERNCPP void GLUIShowTrainer(void);
 EXTERNCPP void GLUIHideTrainer(void);
-
+#endif
 // gen plot routines
 
 EXTERNCPP void PrintFileLoadTimes(int file_count, FILE_SIZE load_size, float load_time);
@@ -360,7 +361,9 @@ EXTERNCPP void DrawObstBoundingBox(void);
 EXTERNCPP void DrawGeomBoundingBox(float *boundingbox_color);
 EXTERNCPP void ClassifyGeom(geomdata *geomi, int *geom_frame_index);
 
+#ifdef pp_GLUI
 EXTERNCPP void GLUIUpdateCfaces(void);
+#endif
 
 EXTERNCPP void SetTimeState(void);
 
@@ -492,7 +495,9 @@ EXTERNCPP void CreatePartSizeFile(partdata *parti);
 EXTERNCPP void GetAllPartBounds(void);
 EXTERNCPP void MergeAllPartBounds(void);
 #ifdef CPP
+#ifdef pp_GLUI
 EXTERNCPP void InsertRollout(GLUI_Rollout *rollout, GLUI *dialog);
+#endif
 #endif
 
 EXTERNCPP void InitializeDeviceCsvData(int flag);

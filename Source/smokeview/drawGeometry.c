@@ -2537,7 +2537,7 @@ void UpdateFaceLists(void){
   nface_outlines=0;
   nface_transparent=0;
   if(opengldefined==1){
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
   }
   // if we are not showing boundary files then don't try to hide blockages
   if(showplot3d == 0){
@@ -4690,7 +4690,9 @@ void DrawBlockages(int mode, int trans_flag){
   if(trans_flag!=DRAW_TRANSPARENT&&blocklocation!=BLOCKlocation_cad){
     if(mode==SELECTOBJECT){
       if(blockageSelect==1){
+#ifdef pp_GLUI
         GLUIGetGeomDialogState();
+#endif
         if(structured_isopen == 1 && unstructured_isopen == 0){
           DrawSelectFaces();
           return;
@@ -4736,7 +4738,9 @@ void LevelScene(int level_x, int level_y, float *quat){
 
     elev = camera_current->az_elev+1;
     *elev = 0.0;
+#ifdef pp_GLUI
     GLUIUpdateTrainerMoves();
+#endif
     camera_current->dirty=1;
   }
 
@@ -4785,7 +4789,9 @@ void SnapScene(void){
     ielev = (*elev-DELTA/2.0)/DELTA;
   }
   *elev = (int)(DELTA*ielev);
+#ifdef pp_GLUI
   GLUIUpdateTrainerMoves();
+#endif
   camera_current->dirty=1;
 
   if(rotation_type==ROTATION_3AXIS&&key_state == KEY_NONE){
