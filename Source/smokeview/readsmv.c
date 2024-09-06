@@ -13634,10 +13634,9 @@ int ReadIni2(char *inifile, int localfile){
           }
 #define MAX_PART_TYPES 100
           if(strcmp(short_label, "")==0){
-            int npart_types;
 #ifdef pp_GLUI
+            int npart_types;
             npart_types = GLUIGetNValtypes(BOUND_PART);
-#endif
             if(npart_types>0){
               int  *ivmins, *ivmaxs;
               float *vmins, *vmaxs;
@@ -13662,9 +13661,7 @@ int ReadIni2(char *inifile, int localfile){
                 vmins[i]  = vmin;
                 vmaxs[i]  = vmax;
               }
-#ifdef pp_GLUI
               GLUISetMinMaxAll(BOUND_PART, ivmins, vmins, ivmaxs, vmaxs, npart_types);
-#endif
               if(npart_types>MAX_PART_TYPES){
                 FREEMEMORY(ivmins);
                 FREEMEMORY(vmins);
@@ -13672,6 +13669,7 @@ int ReadIni2(char *inifile, int localfile){
                 FREEMEMORY(vmaxs);
               }
             }
+#endif
           }
           else{
 #ifdef pp_GLUI

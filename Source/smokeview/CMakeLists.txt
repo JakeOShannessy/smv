@@ -61,6 +61,13 @@ if (GLUI)
         glui_shooter.cpp
     )
 endif()
+if (IMGUI)
+    find_package(imgui REQUIRED)
+    target_sources(smokeview PRIVATE
+        gui/gui.cpp
+    )
+    target_link_libraries(smokeview PRIVATE imgui::imgui)
+endif()
 
 target_link_libraries(smokeview PRIVATE libsmv)
 target_link_libraries(smokeview PRIVATE json-c::json-c)

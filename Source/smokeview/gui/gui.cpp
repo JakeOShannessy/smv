@@ -40,7 +40,7 @@ extern "C" void MouseCB(int button, int state, int xm, int ym);
 extern "C" void KeyboardCB(unsigned char key, int x, int y);
 
 // Our state
-static bool show_demo_window = false;
+static bool show_demo_window = true;
 static bool show_clipping_window = false;
 static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -152,13 +152,13 @@ extern "C" void imgui_display_start() {
   // Start the Dear ImGui frame
   ImGui_ImplOpenGL2_NewFrame();
   ImGui_ImplGLUT_NewFrame();
+  ImGui::NewFrame();
 
   my_display_code();
 
   // Rendering
   ImGui::Render();
 
-  ImGuiIO &io = ImGui::GetIO();
 
   // Reshape both underlying smokeview render and imgui elements
   // ReshapeCB(io.DisplaySize.x, io.DisplaySize.y);
@@ -166,7 +166,13 @@ extern "C" void imgui_display_start() {
 }
 
 extern "C" void imgui_display_end() {
+  ImGuiIO &io = ImGui::GetIO();
+  glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
+  glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+  glClear(GL_COLOR_BUFFER_BIT);
   ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+  glutSwapBuffers();
+  glutPostRedisplay();
 }
 
 // void glut_display_func() {

@@ -14,9 +14,14 @@
 
 #include "infoheader.h"
 #include "stdio_buffer.h"
+#include "smokeheaders.h"
 
 #include "readobject.h"
 #include "readlabel.h"
+
+#ifdef pp_IMGUI
+  #include "gui/gui.h"
+#endif
 
 /* ------------------ InitDefaultCameras ------------------------ */
 
@@ -1158,9 +1163,7 @@ void InitOpenGL(int option){
       if(parti->autoload==1)ReadPart(parti->file, i, LOAD, &errorcode);
     }
     update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
-#ifdef pp_GLUI
     CancelUpdateTriangles();
-#endif
     for(i = 0; i<nisoinfo; i++){
       isodata *isoi;
 

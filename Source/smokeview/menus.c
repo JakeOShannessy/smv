@@ -15,6 +15,7 @@
 
 #include "string_util.h"
 #include "smokeviewvars.h"
+#include "smokeheaders.h"
 #include "IOvolsmoke.h"
 #include "readhvac.h"
 #include "readobject.h"

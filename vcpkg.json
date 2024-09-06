@@ -9,6 +9,13 @@
     "getopt",
     "libjpeg-turbo",
     "libpng",
+    {
+      "name": "imgui",
+      "features": [
+        "glut-binding",
+        "opengl2-binding"
+      ]
+    },
     "pkgconf",
     {
       "name": "libgd",

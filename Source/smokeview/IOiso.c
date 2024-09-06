@@ -146,7 +146,9 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
 /* ------------------ UpdateTrianglesAll ------------------------ */
 
 void *UpdateTrianglesAll(void *arg){
+#ifdef pp_GLUI
   UpdateTriangles(GEOM_DYNAMIC, GEOM_UPDATE_ALL);
+#endif
   THREAD_EXIT(triangles_threads);
 }
 
