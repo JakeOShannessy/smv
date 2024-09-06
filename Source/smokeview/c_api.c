@@ -366,7 +366,9 @@ int Loadfile(const char *filename) {
       return errorcode;
     }
   }
+#ifdef pp_GLUI
   CancelUpdateTriangles();
+#endif
   for(size_t i = 0; i < nisoinfo; i++) {
     isodata *isoi;
 

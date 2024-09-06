@@ -976,7 +976,9 @@ json_object *jsonrpc_Getrenderdir(jrpc_context *context, json_object *params,
 
 json_object *jsonrpc_SetOrthoPreset(jrpc_context *context, json_object *params,
                                     json_object *id) {
+#ifdef pp_GLUI
   GLUIUpdateTranslate();
+#endif
   DisplayCB();
   const char *viewpoint =
       json_object_get_string(json_object_array_get_idx(params, 0));

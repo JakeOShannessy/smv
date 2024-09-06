@@ -323,8 +323,8 @@ int SetupCase(char *filename){
   PRINT_TIMER(timer_start, "InitTranslate");
 
   if(tourcoll.ntourinfo==0)SetupTour();
-  InitRolloutList();
 #ifdef pp_GLUI
+  InitRolloutList();
   GLUIColorbarSetup(mainwindow_id);
   GLUIMotionSetup(mainwindow_id);
   GLUIBoundsSetup(mainwindow_id);
@@ -1158,7 +1158,9 @@ void InitOpenGL(int option){
       if(parti->autoload==1)ReadPart(parti->file, i, LOAD, &errorcode);
     }
     update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
+#ifdef pp_GLUI
     CancelUpdateTriangles();
+#endif
     for(i = 0; i<nisoinfo; i++){
       isodata *isoi;
 
