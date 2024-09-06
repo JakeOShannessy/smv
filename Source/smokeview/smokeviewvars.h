@@ -1110,6 +1110,15 @@ SVEXTERN float partfacedir[3]={0.0,0.0,1.0};
 SVEXTERN float partfacedir[3];
 #endif
 SVEXTERN int SVDECL(demo_option,0);
+#ifdef pp_PATCH_DEBUG
+#ifdef INMAIN
+SVEXTERN int boundary_debug_plane[6] = {0, 0, 0, 0, 0, 0};
+#else
+SVEXTERN int boundary_debug_plane[6];
+#endif
+SVEXTERN int SVDECL(boundary_debug_mesh, 1), SVDECL(boundary_debug_obst, 0), SVDECL(outout_patch_faces, 0);
+SVEXTERN int SVDECL(boundary_interface_unhide, 0), SVDECL(boundary_interface_faces, 0), SVDECL(boundary_loaded, 0);
+#endif
 
 SVEXTERN int colorbar_font_height, font_height;
 SVEXTERN void SVDECL(*colorbar_font_ptr, NULL), SVDECL(*font_ptr,NULL);
@@ -1389,7 +1398,7 @@ SVEXTERN int SVDECL(showhide_option,SHOWALL_FILES);
 SVEXTERN int SVDECL(xyz_dir,0);
 SVEXTERN int SVDECL(which_face,2);
 
-SVEXTERN float SVDECL(vecfactor,1.0),SVDECL(veclength,0.0);
+SVEXTERN float SVDECL(vecfactor,1.0);
 
 SVEXTERN int SVDECL(glui_active,0);
 
@@ -1488,7 +1497,7 @@ SVEXTERN float SVDECL(glui_partmin,1.0), SVDECL(glui_partmax,0.0);
 SVEXTERN float SVDECL(glui_slicemin,1.0),       SVDECL(glui_slicemax,0.0);
 
 SVEXTERN float SVDECL(zonemin,1.0), SVDECL(zonemax,0.0);
-SVEXTERN float SVDECL(speedmax,0.0);
+SVEXTERN float SVDECL(plot3d_uvw_max,1.0);
 SVEXTERN float SVDECL(hrrpuv_max_smv,1200.0);
 SVEXTERN int SVDECL(FlowDir,1),SVDECL(ClipDir,1);
 SVEXTERN int SVDECL(plotn,1);

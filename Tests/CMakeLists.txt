@@ -240,6 +240,29 @@ if (WIN32)
     target_include_directories(mem_test PRIVATE ../Source/pthreads)
 endif()
 
+# test_root_dir
+add_executable(test_root_dir test_root_dir.c
+    ../Source/shared/dmalloc.c
+    ../Source/shared/readobject.c
+    ../Source/shared/string_util.c
+    ../Source/shared/file_util.c
+    ../Source/shared/stdio_buffer.c
+    ../Source/shared/sha256.c
+    ../Source/shared/sha1.c
+    ../Source/shared/md5.c
+)
+
+target_include_directories(test_root_dir PRIVATE
+    ../Tests
+    ../Source/shared
+)
+if (WIN32)
+    target_include_directories(test_root_dir PRIVATE ../Source/pthreads)
+endif()
+if ((NOT MACOSX) AND UNIX)
+    target_link_libraries(test_root_dir m)
+endif()
+
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
 add_test(NAME "Simple Slice - Complete"
@@ -294,3 +317,6 @@ add_test(NAME "Simple HVAC Vals - Complete"
 
 # add_test(NAME "smvq - parse smv file"
 #     COMMAND smvq ${CMAKE_SOURCE_DIR}/Tests/test_model_small/test_model_small.smv)
+
+add_test(NAME "Test Root Dir"
+    COMMAND test_root_dir)

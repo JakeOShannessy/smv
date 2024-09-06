@@ -233,6 +233,8 @@ typedef struct _meshdata {
   unsigned char *iblank_smoke3d;
   int iblank_smoke3d_defined;
   struct _blockagedata **blockageinfoptrs;
+  struct _blockagedata **bc_faces[6];
+  int  n_bc_faces[6];
   int *obst_bysize;
   struct _ventdata *ventinfo;
   struct _cventdata *cventinfo;
@@ -246,7 +248,7 @@ typedef struct _meshdata {
   float *dx_xz, *dy_xz, *dz_xz;
   float *dx_yz, *dy_yz, *dz_yz;
   char *c_iblank_xy, *c_iblank_xz, *c_iblank_yz;
-  float plot3d_speedmax;
+  float plot3d_speedmax, plot3d_uvw_max;
   struct _contour *plot3dcontour1, *plot3dcontour2, *plot3dcontour3;
   struct _isosurface *currentsurf, *currentsurf2;
   struct _isosurface *blockagesurface;
@@ -276,25 +278,11 @@ typedef struct _meshdata {
 
   struct _meshdata *skip_nabors[6];
 
-#ifdef pp_BOUNDMEM
-  unsigned char *buffer1;
-#endif
-  struct _meshdata **meshonpatch;
-  int *blockonpatch;
-  int *patchdir, *patch_surfindex;
-  int *pi1, *pi2, *pj1, *pj2, *pk1, *pk2;
-  int *boundarytype;
-  int *vis_boundaries;
-  int *boundary_row, *boundary_col, *blockstart;
-
   struct _meshdata *nabors[6];
   struct _supermeshdata *super;
   int *ptype;
   unsigned int *zipoffset, *zipsize;
 
-#ifdef pp_BOUNDMEM
-  unsigned char *buffer2;
-#endif
   float *xyzpatch, *xyzpatch_threshold;
   float *thresholdtime;
   int *patchblank;
@@ -307,7 +295,7 @@ typedef struct _meshdata {
 #endif
   unsigned char *patch_times_map;
   float **patchventcolors;
-  int npatch_times, npatches;
+  int npatch_times;
   int patch_itime;
   int *patch_timeslist;
   int npatchsize;
@@ -1358,11 +1346,11 @@ typedef struct _globalboundsdata {
   float valmins[MAXPLOT3DVARS], valmaxs[MAXPLOT3DVARS];
 } globalboundsdata;
 
-/* --------------------------  patchfacedata
- * ------------------------------------ */
+/* --------------------------  patchfacedata -------------------------------- */
 
-typedef struct _patchfacedata {
-  int ib[6], dir, vis, nrow, ncol, start, type, internal;
+typedef struct _patchfacedata{
+  int ib[6], dir, vis, nrow, ncol, start, type, internal_mesh_face;
+  int obst_index, mesh_index;
   struct _meshdata *meshinfo;
   struct _blockagedata *obst;
 } patchfacedata;
@@ -1371,16 +1359,15 @@ typedef struct _patchfacedata {
 
 typedef struct _patchdata {
   int seq_id, autoload;
-  char *file, *size_file, *bound_file;
+  char *file,*size_file,*bound_file;
   int have_bound_file;
   char *comp_file, *reg_file;
   char *filetype_label;
   geomdata *geominfo;
   int *geom_offsets;
-  int skip, dir;
+  int skip,dir;
   float xyz_min[3], xyz_max[3];
   int ntimes, ntimes_old;
-  int version;
   int patch_filetype, structured;
   int shortlabel_index;
   int *cvals_offsets, *cvals_sizes;
@@ -1392,26 +1379,25 @@ typedef struct _patchdata {
   int compression_type, compression_type_temp;
   int setvalmin, setvalmax;
   float valmin_patch, valmax_patch;
-  float valmin_glui, valmax_glui;
+  float valmin_glui,  valmax_glui;
   int setchopmin, setchopmax;
   float chopmin, chopmax;
   float diff_valmin, diff_valmax;
-  int blocknumber, loaded, display;
+  int blocknumber,loaded,display;
   float *geom_times, *geom_vals;
-  int *geom_timeslist, geom_itime;
+  int *geom_timeslist,geom_itime;
   unsigned char *geom_times_map;
   unsigned char *geom_ivals;
   int *geom_ivals_static_offset, *geom_ivals_dynamic_offset;
-  int *geom_vals_static_offset, *geom_vals_dynamic_offset;
+  int *geom_vals_static_offset,  *geom_vals_dynamic_offset;
   unsigned char *geom_ival_static, *geom_ival_dynamic;
-  float *geom_val_static, *geom_val_dynamic;
+  float         *geom_val_static,  *geom_val_dynamic;
   int geom_nval_static, geom_nval_dynamic;
   int *geom_nstatics, *geom_ndynamics;
   int geom_vert2tri;
   int geom_nvals, ngeom_times;
   flowlabels label;
-  char menulabel[128], menulabel_base[128], menulabel_suffix[128],
-      gslicedir[50];
+  char menulabel[128], menulabel_base[128], menulabel_suffix[128], gslicedir[50];
   int ijk[6];
   int extreme_min, extreme_max;
   time_t modtime;
@@ -1421,6 +1407,9 @@ typedef struct _patchdata {
   boundsdata *bounds2;
   int npatches;
   patchfacedata *patchfaceinfo;
+#ifdef pp_INIT_PATCHES
+  patchfacedata *meshfaceinfo[6];
+#endif
 #ifdef pp_BOUNDFRAME
   framedata *frameinfo;
 #endif
