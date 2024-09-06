@@ -60,6 +60,7 @@ add_executable(smvq smvq.c
     ../shared/readimage.c
     ../shared/readcad.c
     ../shared/readgeom.c
+    ../shared/readsmoke.c
     ../shared/readobject.c
     ../shared/readtour.c
     ../shared/readlabel.c
