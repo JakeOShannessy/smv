@@ -229,7 +229,7 @@ void SetClipControls(int val){
     clipinfo.ymax = yclip_max;
     clipinfo.zmax = zclip_max;
   }
-  if(val >= 1 && val <= nmeshes){
+  if(val >= 1 && val <= meshescoll.nmeshes){
     meshdata *meshi;
     float *xplt, *yplt, *zplt;
 
@@ -239,7 +239,7 @@ void SetClipControls(int val){
     dyclip = (ybarORIG - ybar0ORIG) / 1000.0;
     dzclip = (zbarORIG - zbar0ORIG) / 1000.0;
 
-    meshi = meshinfo + val - 1;
+    meshi = meshescoll.meshinfo + val - 1;
 
     xplt = meshi->xplt_orig;
     yplt = meshi->yplt_orig;

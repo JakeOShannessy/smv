@@ -437,7 +437,7 @@ void DrawPart(const partdata *parti, int mode){
                 float zoffset;
                 int loc;
 
-                zoffset = GetZCellValOffset(meshinfo, xpos[j], ypos[j], &loc);
+                zoffset = GetZCellValOffset(meshescoll.meshinfo, xpos[j], ypos[j], &loc);
                 if(vis[j] == 1)glVertex3f(xpos[j], ypos[j], zpos[j] + zoffset);
               }
             }
@@ -2313,16 +2313,16 @@ void UpdatePartMenuLabels(void){
       STRCPY(parti->menulabel,"");
       STRCAT(parti->menulabel, "particles");
       lenlabel=strlen(parti->menulabel);
-      if(nmeshes>1){
+      if(meshescoll.nmeshes>1){
         meshdata *partmesh;
 
-        partmesh = meshinfo + parti->blocknumber;
+        partmesh = meshescoll.meshinfo + parti->blocknumber;
         sprintf(label,"%s",partmesh->label);
         if(lenlabel>0)STRCAT(parti->menulabel,", ");
         STRCAT(parti->menulabel,label);
       }
       if(showfiles==1||lenlabel==0){
-        if(nmeshes>1||lenlabel>0)STRCAT(parti->menulabel,", ");
+        if(meshescoll.nmeshes>1||lenlabel>0)STRCAT(parti->menulabel,", ");
         STRCAT(parti->menulabel,parti->file);
       }
     }

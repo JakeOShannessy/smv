@@ -20,13 +20,13 @@ void DrawCircVentsApproxSolid(int option){
   assert(option==VENT_CIRCLE||option==VENT_RECTANGLE);
 
   glBegin(GL_TRIANGLES);
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
     float *xplt, *yplt, *zplt;
     float dx, dy, dz, dxyz;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     xplt = meshi->xplt;
     yplt = meshi->yplt;
     zplt = meshi->zplt;
@@ -172,13 +172,13 @@ void DrawCircVentsApproxOutline(int option){
   assert(option==VENT_CIRCLE||option==VENT_RECTANGLE);
 
   glBegin(GL_LINES);
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
     float *xplt, *yplt, *zplt;
     float dx, dy, dz, dxyz;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     xplt = meshi->xplt;
     yplt = meshi->yplt;
     zplt = meshi->zplt;
@@ -355,11 +355,11 @@ void DrawCircVentsExactSolid(int option){
 
   if(option==VENT_HIDE)return;
   assert(option==VENT_CIRCLE||option==VENT_RECTANGLE);
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     for(j=0;j<meshi->ncvents;j++){
       cventdata *cvi;
       float x0, yy0, z0;
@@ -465,11 +465,11 @@ void DrawCircVentsExactOutline(int option){
 
   if(option==VENT_HIDE)return;
   assert(option==VENT_CIRCLE||option==VENT_RECTANGLE);
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     for(j=0;j<meshi->ncvents;j++){
       cventdata *cvi;
       float x0, yy0, z0;
@@ -605,10 +605,10 @@ void UpdateIndexColors(void){
     }
   }
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     for(j=0;j<meshi->nbptrs;j++){
       blockagedata *bc;
 
@@ -844,10 +844,10 @@ void GetBlockVals(  float *xmin, float *xmax,
 int HaveCircularVents(void){
   int i;
 
-  for(i = 0; i < nmeshes; i++){
+  for(i = 0; i < meshescoll.nmeshes; i++){
     meshdata* meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
 
     if(meshi->ncvents > 0)return 1;
   }
@@ -859,13 +859,13 @@ void SetCVentDirs(void){
   int ii;
 
   InitCircle(90,&cvent_circ);
-  for(ii=0;ii<nmeshes;ii++){
+  for(ii=0;ii<meshescoll.nmeshes;ii++){
     meshdata *meshi;
     int ibar, jbar;
     char *c_iblank;
     int iv;
 
-    meshi=meshinfo+ii;
+    meshi=meshescoll.meshinfo+ii;
 
     ibar = meshi->ibar;
     jbar = meshi->jbar;
@@ -1052,13 +1052,13 @@ void SetCVentDirs(void){
 
   // set up blanking arrays for circular vents
 
-  for(ii=0;ii<nmeshes;ii++){
+  for(ii=0;ii<meshescoll.nmeshes;ii++){
     meshdata *meshi;
     int iv,i,j,k;
     unsigned char *blank;
     float *xplt, *yplt, *zplt;
 
-    meshi=meshinfo+ii;
+    meshi=meshescoll.meshinfo+ii;
 
     xplt = meshi->xplt_cen;
     yplt = meshi->yplt_cen;
@@ -1174,11 +1174,11 @@ void SetCVentDirs(void){
     }
   }
 
-  for(ii = 0; ii < nmeshes; ii++){
+  for(ii = 0; ii < meshescoll.nmeshes; ii++){
     meshdata *meshi;
     int iv;
 
-    meshi = meshinfo + ii;
+    meshi = meshescoll.meshinfo + ii;
     for(iv = 0; iv < meshi->ncvents; iv++){
       cventdata *cvi;
 
@@ -1217,7 +1217,7 @@ void SetVentDirs(void){
   INIT_PRINT_TIMER(vent_setup_timer);
   n_mirrorvents = 0;
   n_openvents = 0;
-  for(ii=0;ii<nmeshes;ii++){
+  for(ii=0;ii<meshescoll.nmeshes;ii++){
     meshdata *meshi;
     float *xplttemp;
     float *yplttemp;
@@ -1232,7 +1232,7 @@ void SetVentDirs(void){
     int ventdir;
     float voffset, offset;
 
-    meshi=meshinfo+ii;
+    meshi=meshescoll.meshinfo+ii;
 
     ibar = meshi->ibar;
     jbar = meshi->jbar;
@@ -1455,10 +1455,10 @@ int InBlockage(const meshdata *meshi,float x, float y, float z){
 int InAnyBlockage(float *xyz){
   int i;
 
-  for(i = 0; i<nmeshes; i++){
+  for(i = 0; i<meshescoll.nmeshes; i++){
     meshdata *meshi;
 
-    meshi = meshinfo+i;
+    meshi = meshescoll.meshinfo+i;
     if(InBlockage(meshi, xyz[0], xyz[1], xyz[2])==1)return 1;
   }
   return 0;
@@ -1469,11 +1469,11 @@ int InAnyBlockage(float *xyz){
 void SetInteriorBlockages(int flag){
   int i;
 
-  for(i=0; i<nmeshes; i++){
+  for(i=0; i<meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     for(j=0; j<meshi->nbptrs; j++){
       blockagedata *bc;
       int k;
@@ -1516,11 +1516,11 @@ void SetInteriorBlockages(int flag){
     }
   }
   if(flag==0)return;
-  for(i = 0; i<nmeshes; i++){
+  for(i = 0; i<meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
 
-    meshi = meshinfo+i;
+    meshi = meshescoll.meshinfo+i;
     for(j = 0; j<meshi->nbptrs; j++){
       blockagedata *bc;
       int k;
@@ -1914,7 +1914,7 @@ void ObstOrVent2Faces(const meshdata *meshi,blockagedata *bc,
   }
 
   for(j=0;j<jend;j++){
-    faceptr->meshindex=meshi-meshinfo;
+    faceptr->meshindex=meshi-meshescoll.meshinfo;
     faceptr->type2=facetype;
     faceptr->is_interior=0;
     faceptr->show_bothsides=0;
@@ -2296,12 +2296,12 @@ void UpdateFaces(void){
   AllocateFaces();
   updatefaces=0;
   have_vents_int=0;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     facedata *faceptr;
     int j;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     faceptr = meshi->faceinfo;
     for(j=0;j<meshi->nbptrs;j++){
       blockagedata *bc;
@@ -2364,11 +2364,11 @@ void SetCullVis(void){
     InitCullGeom(cullgeom);
     UpdateFaceLists();
   }
-  for(imesh=0;imesh<nmeshes;imesh++){
+  for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
     int iport;
     meshdata *meshi;
 
-    meshi = meshinfo + imesh;
+    meshi = meshescoll.meshinfo + imesh;
     meshi->in_frustum = MeshInFrustum(meshi);
     for(iport=0;iport<meshi->ncullgeominfo;iport++){
       culldata *culli;
@@ -2542,7 +2542,7 @@ void UpdateFaceLists(void){
     if(use_tload_begin == 1 && global_times != NULL && global_times[itimes] < tload_begin)check_blockhide = 0;
     if(use_tload_end == 1 && global_times != NULL && global_times[itimes] > tload_end)check_blockhide = 0;
   }
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int patchfilenum;
     int j;
@@ -2550,7 +2550,7 @@ void UpdateFaceLists(void){
     int loadpatch, local_showpatch;
     int vent_offset, outline_offset, exteriorsurface_offset;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     for(j=0;j<meshi->nfaces;j++){
       facedata *facej;
 
@@ -2864,10 +2864,10 @@ void UpdateFaceLists(void){
     }
   }
   n_geom_triangles=0;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshinfo  + i;
+    meshi = meshescoll.meshinfo  + i;
     n_geom_triangles += meshi->nface_textures+meshi->nface_normals_single+meshi->nface_normals_double;
   }
 }
@@ -2880,11 +2880,11 @@ void DrawSelectFaces(){
 
   DISABLE_LIGHTING;
   glBegin(GL_QUADS);
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
 
-    meshi=meshinfo + i;
+    meshi=meshescoll.meshinfo + i;
     for(j=0;j<meshi->nbptrs;j++){
       int k;
 
@@ -2969,12 +2969,12 @@ void DrawFaces(){
     glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
     glEnable(GL_COLOR_MATERIAL);
     glBegin(GL_TRIANGLES);
-    for(j=0;j<nmeshes;j++){
+    for(j=0;j<meshescoll.nmeshes;j++){
       facedata **face_START;
       meshdata *meshi;
       int i;
 
-      meshi=meshinfo + j;
+      meshi=meshescoll.meshinfo + j;
       if(meshi->blockvis==0)continue;
 
       // DOWN_X faces
@@ -3039,11 +3039,11 @@ void DrawFaces(){
     glEnable(GL_COLOR_MATERIAL);
     if(cullfaces==1)glDisable(GL_CULL_FACE);
     glBegin(GL_QUADS);
-    for(j=0;j<nmeshes;j++){
+    for(j=0;j<meshescoll.nmeshes;j++){
       meshdata *meshi;
       int i;
 
-      meshi=meshinfo + j;
+      meshi=meshescoll.meshinfo + j;
       for(i=0;i<meshi->nface_normals_double;i++){
         facedata *facei;
         float *vertices;
@@ -3108,11 +3108,11 @@ void DrawFaces(){
     AntiAliasLine(ON);
     glLineWidth(linewidth);
     glBegin(GL_LINES);
-    for(j=0;j<nmeshes;j++){
+    for(j=0;j<meshescoll.nmeshes;j++){
       meshdata *meshi;
       int i;
 
-      meshi = meshinfo + j;
+      meshi = meshescoll.meshinfo + j;
       if(meshi->blockvis==0)continue;
       for(i=0;i<meshi->nface_outlines;i++){
         facedata *facei;
@@ -3130,7 +3130,7 @@ void DrawFaces(){
         }
         if(facei->type2!=OUTLINE_FRAME_face||highlight_flag==1){
           glEnd();
-          if(nmeshes>1&&facei->type2==OUTLINE_FRAME_face&&
+          if(meshescoll.nmeshes>1&&facei->type2==OUTLINE_FRAME_face&&
             highlight_mesh==facei->meshindex&&highlight_flag==1){
             glLineWidth(highlight_linewidth);
           }
@@ -3168,11 +3168,11 @@ void DrawFaces(){
     glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,block_specular2);
     glEnable(GL_TEXTURE_2D);
     glColor4ub(255, 255, 255, 255);
-    for(j=0;j<nmeshes;j++){
+    for(j=0;j<meshescoll.nmeshes;j++){
       meshdata *meshi;
       int i;
 
-      meshi = meshinfo + j;
+      meshi = meshescoll.meshinfo + j;
       if(meshi->blockvis==0)continue;
       for(i=0;i<meshi->nface_textures;i++){
         facedata *facei;
@@ -3362,11 +3362,11 @@ void DrawTransparentFaces(){
     glEnable(GL_COLOR_MATERIAL);
     if(cullfaces==1)glDisable(GL_CULL_FACE);
     glBegin(GL_QUADS);
-    for(j=0;j<nmeshes;j++){
+    for(j=0;j<meshescoll.nmeshes;j++){
       meshdata *meshi;
       int i;
 
-      meshi=meshinfo + j;
+      meshi=meshescoll.meshinfo + j;
       for(i=0;i<meshi->nface_transparent_double;i++){
         facedata *facei;
         float *vertices;
@@ -3505,11 +3505,11 @@ void UpdateHiddenFaces(){
 
   updatehiddenfaces=0;
   if(hide_overlaps!=0)PRINTF("  identifying hidden faces -");
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
 
-    meshi=meshinfo + i;
+    meshi=meshescoll.meshinfo + i;
 
     for(j=0;j<6*meshi->nbptrs;j++){
       facedata *facej;
@@ -3523,11 +3523,11 @@ void UpdateHiddenFaces(){
     if(hide_overlaps!=0)PRINTF(" complete\n");
     return;
   }
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
 
-    meshi=meshinfo + i;
+    meshi=meshescoll.meshinfo + i;
     if(hide_overlaps==0)continue;
     for(j=0;j<6*meshi->nbptrs;j++){
       int k;
@@ -3548,11 +3548,11 @@ void UpdateHiddenFaces(){
       }
     }
   }
-  for(i = 0; i < nmeshes; i++){
+  for(i = 0; i < meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     // x plane faces
     for(j = 3; j < 6 * meshi->nbptrs; j += 6){
       facedata *facej;
@@ -3640,11 +3640,11 @@ void AllocateFaces(){
   int abortflag=0;
 
   FREEMEMORY(face_transparent);
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int ntotal;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     ntotal = 6*meshi->nbptrs + meshi->nvents+12;
     ntotal2 += ntotal;
 
@@ -3682,11 +3682,11 @@ void AllocateFaces(){
     mem_sum=0;
     nfaces_temp=0;
     ntotal2=0;
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<meshescoll.nmeshes;i++){
       int ntotal;
       meshdata *meshi;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
 
       ntotal = 6*meshi->nbptrs + meshi->nvents+12;
       nfaces_temp+=(6*meshi->nbptrs);
@@ -3741,10 +3741,10 @@ void UpdateSelectBlocks(void){
   int ntotal=0;
   int local_count=0;
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     ntotal += meshi->nbptrs;
   }
   if(ntotal==0)return;
@@ -3757,11 +3757,11 @@ void UpdateSelectBlocks(void){
   for(i=0;i<ntotal;i++){
     sortedblocklist[i]=i;
   }
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     for(j=0;j<meshi->nbptrs;j++){
       blockagedata *bc;
 
@@ -3785,10 +3785,10 @@ void UpdateSelectFaces(void){
   FREEMEMORY(selectfaceinfo);
 
   ntotalfaces=0;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=meshinfo + i;
+    meshi=meshescoll.meshinfo + i;
     ntotalfaces += 6*meshi->nbptrs;
   }
   if(ntotalfaces==0)return;
@@ -3803,11 +3803,11 @@ void UpdateSelectFaces(void){
      up z */
   ntotalfaces=0;
   sd = selectfaceinfo;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi=meshinfo + i;
+    meshi=meshescoll.meshinfo + i;
     for(j=0;j<meshi->nbptrs;j++){
       int k;
 
@@ -4078,10 +4078,10 @@ void InitUserTicks(void){
   user_tick_max[1]=-1000000000.0;
   user_tick_max[2]=-1000000000.0;
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     user_tick_min[0]=MIN(meshi->boxmin[0],user_tick_min[0]);
     user_tick_min[1]=MIN(meshi->boxmin[1],user_tick_min[1]);
     user_tick_min[2]=MIN(meshi->boxmin[2],user_tick_min[2]);
@@ -4848,11 +4848,11 @@ void DrawFacesOLD(){
       glEnable(GL_COLOR_MATERIAL);
     }
     glBegin(GL_TRIANGLES);
-    for(j=0;j<nmeshes;j++){
+    for(j=0;j<meshescoll.nmeshes;j++){
       meshdata *meshi;
       int i;
 
-      meshi=meshinfo + j;
+      meshi=meshescoll.meshinfo + j;
       if(meshi->blockvis==0)continue;
       for(i=0;i<meshi->nface_normals_single;i++){
         facedata *facei;
@@ -4928,11 +4928,11 @@ void DrawFacesOLD(){
     if(cullfaces==1)glDisable(GL_CULL_FACE);
     AntiAliasLine(ON);
     glBegin(GL_QUADS);
-    for(j=0;j<nmeshes;j++){
+    for(j=0;j<meshescoll.nmeshes;j++){
       meshdata *meshi;
       int i;
 
-      meshi=meshinfo + j;
+      meshi=meshescoll.meshinfo + j;
       for(i=0;i<meshi->nface_normals_double;i++){
         facedata *facei;
         float *vertices;
@@ -5001,11 +5001,11 @@ void DrawFacesOLD(){
     AntiAliasLine(ON);
     glLineWidth(linewidth);
     glBegin(GL_LINES);
-    for(j=0;j<nmeshes;j++){
+    for(j=0;j<meshescoll.nmeshes;j++){
       meshdata *meshi;
       int i;
 
-      meshi = meshinfo + j;
+      meshi = meshescoll.meshinfo + j;
       if(meshi->blockvis==0)continue;
       for(i=0;i<meshi->nface_outlines;i++){
         facedata *facei;
@@ -5024,7 +5024,7 @@ void DrawFacesOLD(){
         }
         if(facei->type2!=OUTLINE_FRAME_face||highlight_flag==1){
           glEnd();
-          if(nmeshes>1&&facei->type2==OUTLINE_FRAME_face&&
+          if(meshescoll.nmeshes>1&&facei->type2==OUTLINE_FRAME_face&&
             highlight_mesh==facei->meshindex&&highlight_flag==1){
             glLineWidth(highlight_linewidth);
           }
@@ -5069,11 +5069,11 @@ void DrawFacesOLD(){
     }
     glEnable(GL_TEXTURE_2D);
     glColor4ub(255, 255, 255, 255);
-    for(j=0;j<nmeshes;j++){
+    for(j=0;j<meshescoll.nmeshes;j++){
       meshdata *meshi;
       int i;
 
-      meshi = meshinfo + j;
+      meshi = meshescoll.meshinfo + j;
       if(meshi->blockvis==0)continue;
       for(i=0;i<meshi->nface_textures;i++){
         facedata *facei;
@@ -5137,7 +5137,7 @@ void InitCullGeom(int cullgeomflag){
 
   update_initcullgeom=0;
   updatefacelists=1;
-  for(imesh=0;imesh<nmeshes;imesh++){
+  for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
     meshdata *meshi;
     int iskip, jskip, kskip;
     int ibeg, iend, jbeg, jend, kbeg, kend;
@@ -5146,7 +5146,7 @@ void InitCullGeom(int cullgeomflag){
     int nx, ny, nz;
     int *nxyzgeomcull, *nxyzskipgeomcull;
 
-    meshi=meshinfo+imesh;
+    meshi=meshescoll.meshinfo+imesh;
 
     GetCullSkips(meshi,cullgeomflag,cullgeom_portsize,&iskip,&jskip,&kskip);
     nx = (meshi->ibar-1)/iskip + 1;
@@ -5325,10 +5325,10 @@ int CompareBlockage(const void *arg1, const void *arg2){
 void RemoveDupBlockages(void){
   int i;
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
 
     if(meshi->nbptrs>1){
       blockagedata **bclist;
@@ -5424,11 +5424,11 @@ void GetObstLabels(const char *filein){
   }
   fclose(stream_in);
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
     for(j=0;j<meshi->nbptrs;j++){
       blockagedata *bc;
       int id;

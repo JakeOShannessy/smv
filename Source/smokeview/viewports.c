@@ -992,12 +992,12 @@ void ViewportInfo(int quad, GLint screen_left, GLint screen_down){
 
     if(mesh_xyz==NULL){
       sprintf(meshlabel,"mesh: %i",highlight_mesh+1);
-      mesh_xyz = meshinfo + highlight_mesh;
+      mesh_xyz = meshescoll.meshinfo + highlight_mesh;
     }
     else{
       int imesh;
 
-      imesh = mesh_xyz-meshinfo+1;
+      imesh = mesh_xyz-meshescoll.meshinfo+1;
       sprintf(meshlabel,"mesh: %i",imesh);
     }
     OutputText(VP_info.left+h_space,VP_info.down+v_space+info_lines*(v_space+VP_info.text_height), meshlabel);
@@ -1436,8 +1436,8 @@ int CompareMeshes(const void *arg1, const void *arg2){
 
   smoke3di = *(smoke3ddata **)arg1;
   smoke3dj = *(smoke3ddata **)arg2;
-  meshi = meshinfo + smoke3di->blocknumber;
-  meshj = meshinfo + smoke3dj->blocknumber;
+  meshi = meshescoll.meshinfo + smoke3di->blocknumber;
+  meshj = meshescoll.meshinfo + smoke3dj->blocknumber;
   if(meshi == meshj)return 0;
   xyzmini = meshi->boxmin;
   xyzmaxi = meshi->boxmax;
@@ -1549,17 +1549,17 @@ void GetEyePos(float *mm){
   smv_eyepos[2] = -(mm[8]*mm[12] + mm[9]*mm[13] + mm[10]*mm[14])/mscale[2];
   SMV2FDS_XYZ(fds_eyepos, smv_eyepos);
 
-  for(i = 0; i<nmeshes; i++){
+  for(i = 0; i<meshescoll.nmeshes; i++){
     meshdata *meshi;
 
-    meshi = meshinfo+i;
+    meshi = meshescoll.meshinfo+i;
     scene_center[0] += meshi->boxmiddle[0];
     scene_center[1] += meshi->boxmiddle[1];
     scene_center[2] += meshi->boxmiddle[2];
   }
-  scene_center[0] /= nmeshes;
-  scene_center[1] /= nmeshes;
-  scene_center[2] /= nmeshes;
+  scene_center[0] /= meshescoll.nmeshes;
+  scene_center[1] /= meshescoll.nmeshes;
+  scene_center[2] /= meshescoll.nmeshes;
   fds_viewdir[0] = scene_center[0] - fds_eyepos[0];
   fds_viewdir[1] = scene_center[1] - fds_eyepos[1];
   fds_viewdir[2] = scene_center[2] - fds_eyepos[2];
@@ -1624,14 +1624,14 @@ void GetVolSmokeDir(float *mm){
   eye_position_smv[1] = -DOT3(mm + 4, mm + 12) / mscale[1];
   eye_position_smv[2] = -DOT3(mm + 8, mm + 12) / mscale[2];
 
-  for(j = 0;j<nmeshes;j++){
+  for(j = 0;j<meshescoll.nmeshes;j++){
     meshdata *meshj;
     int *inside;
     int *drawsides;
     float x0, x1, yy0, yy1, z0, z1;
     float xcen, ycen, zcen;
 
-    meshj = meshinfo + j;
+    meshj = meshescoll.meshinfo + j;
 
     inside = &meshj->inside;
     drawsides = meshj->drawsides;
@@ -1727,12 +1727,12 @@ void GetVolSmokeDir(float *mm){
 
   // turn off drawing for mesh sides that are on the inside of a supermesh
   if(combine_meshes == 1){
-    for(i = 0;i<nmeshes;i++){
+    for(i = 0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
       int *drawsides, *extsides;
       int jj;
 
-      meshi = meshinfo + i;
+      meshi = meshescoll.meshinfo + i;
       drawsides = meshi->drawsides;
       extsides = meshi->extsides;
       for(jj = 0;jj<7;jj++){
@@ -1762,13 +1762,13 @@ void GetVolSmokeDir(float *mm){
 
   vi = volfacelistinfo;
   nvolfacelistinfo = 0;
-  for(i = 0;i<nmeshes;i++){
+  for(i = 0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int facemap[7] = {12,6,0,0,3,9,15};
     volrenderdata *vr;
     int *drawsides;
 
-    meshi = meshinfo + i;
+    meshi = meshescoll.meshinfo + i;
 
     drawsides = meshi->drawsides;
 
@@ -1827,13 +1827,13 @@ void GetSmokeDir(float *mm){
   eye_position_smv[1] = -DOT3(mm + 4, mm + 12) / mscale[1];
   eye_position_smv[2] = -DOT3(mm + 8, mm + 12) / mscale[2];
 
-  for(j = 0;j<nmeshes;j++){
+  for(j = 0;j<meshescoll.nmeshes;j++){
     meshdata  *meshj;
     int i;
     float absangle, cosangle, minangle, mincosangle;
     int iminangle, alphadir, minalphadir;
 
-    meshj = meshinfo + j;
+    meshj = meshescoll.meshinfo + j;
     dx = meshj->boxmiddle_scaled[0] - eye_position_smv[0];
     dy = meshj->boxmiddle_scaled[1] - eye_position_smv[1];
     dz = meshj->boxmiddle_scaled[2] - eye_position_smv[2];

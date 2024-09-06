@@ -336,6 +336,11 @@ typedef struct _circdata {
   int ncirc;
 } circdata;
 
+typedef struct {
+  meshdata *meshinfo;
+  int nmeshes;
+} meshescollection;
+
 /* --------------------------  labeldata ------------------------------------ */
 
 typedef struct _labeldata {
