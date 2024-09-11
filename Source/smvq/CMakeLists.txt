@@ -19,6 +19,7 @@ add_executable(smvq smvq.c
     ../shared/color2rgb.c
     ../shared/readimage.c
     ../shared/readcad.c
+    ../shared/readhvac.c
     ../shared/readgeom.c
     ../shared/colorbars.c
     ../shared/colorbar_defs.c
