@@ -1300,8 +1300,7 @@ typedef struct _isodata {
 #endif
 } isodata;
 
-/* --------------------------  boundsdata ------------------------------------
- */
+/* --------------------------  boundsdata ----------------------------------- */
 
 typedef struct _boundsdata {
   char *shortlabel;
@@ -1335,8 +1334,7 @@ typedef struct _boundata {
   int defined;
 } bounddata;
 
-/* --------------------------  globalboundsdata
- * ------------------------------------ */
+/* --------------------------  globalboundsdata ----------------------------- */
 
 typedef struct _globalboundsdata {
   char *file;
@@ -1346,10 +1344,9 @@ typedef struct _globalboundsdata {
   float valmins[MAXPLOT3DVARS], valmaxs[MAXPLOT3DVARS];
 } globalboundsdata;
 
-/* --------------------------  patchfacedata
- * ------------------------------------ */
+/* --------------------------  patchfacedata -------------------------------- */
 
-typedef struct _patchfacedata {
+typedef struct _patchfacedata{
   int ib[6], dir, vis, nrow, ncol, start, type, internal_mesh_face;
   int obst_index, mesh_index;
   struct _meshdata *meshinfo;
@@ -1408,9 +1405,7 @@ typedef struct _patchdata {
   boundsdata *bounds2;
   int npatches;
   patchfacedata *patchfaceinfo;
-#ifdef pp_INIT_PATCHES
   patchfacedata *meshfaceinfo[6];
-#endif
 #ifdef pp_BOUNDFRAME
   framedata *frameinfo;
 #endif
