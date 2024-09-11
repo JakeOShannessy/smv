@@ -6956,8 +6956,6 @@ void *CheckFiles(void *arg){
   THREAD_EXIT(checkfiles_threads);
 }
 
-
-#ifdef pp_INIT_PATCHES
 /* ------------------ InitMeshBlockages ------------------------ */
 
 void InitMeshBlockages(void){
@@ -7020,7 +7018,6 @@ void InitMeshBlockages(void){
     }
   }
 }
-#endif
 
 /* ------------------ GetSliceParmInfo ------------------------ */
 
@@ -12067,9 +12064,7 @@ int ReadSMV_Configure(){
   SetInteriorBlockages(1);
   PRINT_TIMER(timer_readsmv, "SetInteriorBlockages");
 
-#ifdef pp_INIT_PATCHES
   InitMeshBlockages();
-#endif
 
   PRINTF("%s", _("complete"));
   PRINTF("\n\n");
