@@ -16,6 +16,7 @@
 #include "readgeom.h"
 #include "readobject.h"
 #include "readtour.h"
+#include "readsmoke.h"
 
 #define CONV(p,pl,pr,pxl,pxr) ( (pxl) + ((pxr)-(pxl))*((p)-(pl))/((pr)-(pl)) )
 #define TIMEBAR_HEIGHT 20
