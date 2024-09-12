@@ -81,6 +81,24 @@ void InitVals(hvacdatacollection *hvaccoll, const char *file) {
 
 int main(int argc, char **argv) {
   initMALLOC();
+  int error = 0;
+
+  char *val_spec = "HVACVALS\
+ HVAC_damper.hvac                                                                                                                                                                                                                                          \
+ 0\
+ 4\
+ DUCT VELOCITY\
+ vel_d\
+ m/s\
+ DUCT LOSS\
+ loss_d\
+ \
+ OXYGEN DUCT VOLUME FRACTION\
+ X_d_O2\
+ mol/mol\
+ NITROGEN DUCT VOLUME FRACTION\
+ X_d_N2\
+ mol/mol";
 
   fprintf(stderr, "file: %s\n", argv[1]);
   hvacdatacollection hvaccoll = {0};
@@ -88,7 +106,6 @@ int main(int argc, char **argv) {
 
   FILE_SIZE file_size;
   int ret = ReadHVACData0(&hvaccoll, 0, &file_size);
-  fprintf(stderr, "parse result: %d\n", ret);
   if (ret) return ret;
   for (int i = 0; i < hvaccoll.hvacductvalsinfo->n_duct_vars; i++) {
     hvacvaldata *hi = hvaccoll.hvacductvalsinfo->duct_vars + i;

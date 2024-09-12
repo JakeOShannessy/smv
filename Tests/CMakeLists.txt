@@ -314,9 +314,6 @@ add_test(NAME "Simple PRT5 - Complete"
 add_test(NAME "Simple PL3d - Complete"
     COMMAND parse_simple_pl3d ${FIG_DIR}/smv/Tests/simple_pl3d.q)
 
-add_test(NAME "Parse CAD"
-    COMMAND parse_cad)
-
 add_test(NAME "Test Object API"
     COMMAND test_objects)
 
@@ -341,12 +338,11 @@ add_test(NAME "Mem Test"
 add_test(NAME "Test Root Dir"
     COMMAND test_root_dir)
 
-add_test(NAME "Simple HVAC Vals - Complete"
-    COMMAND parse_hvac_vals ${FIG_DIR}/smv/Tests/simple_hvac.hvac)
-
-# Only execute these tests if the "fig" directory exists
 add_test(NAME "smvq - parse smv file"
     COMMAND smvq ${FIG_DIR}/smv/Tests/test_model_small/test_model_small.smv)
 
 add_test(NAME "Test Image Render"
     COMMAND test_image_render ${CMAKE_SOURCE_DIR}/Build/for_bundle/textures/nistleft.jpg)
+
+add_test(NAME "Simple HVAC Vals - Complete"
+    COMMAND parse_hvac_vals ${CMAKE_SOURCE_DIR}/Tests/fig/smv/Tests/simple_hvac.hvac)

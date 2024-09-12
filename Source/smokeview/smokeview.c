@@ -222,13 +222,14 @@ void DisplayVersionInfo(char *progname){
   if(smv_bindir){
     PRINTF("Root directory   : %s\n", smv_bindir);
   }
-
-  if(smokeviewini_filename != NULL && FileExistsOrig(smokeviewini_filename) == 1){
-    PRINTF("Global ini       : %s\n", smokeviewini_filename);
+  char *smokeviewini = GetSmokeviewIni();
+  if(smokeviewini != NULL && FileExistsOrig(smokeviewini) == 1){
+    PRINTF("Global ini       : %s\n", smokeviewini);
   }
   else{
     PRINTF("Global ini       : not found\n");
   }
+  FREEMEMORY(smokeviewini);
   char fullini_filename[256];
   strcpy(fullini_filename, "");
   if(paths.caseini_filename != NULL){

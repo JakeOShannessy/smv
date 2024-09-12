@@ -952,6 +952,10 @@ void InitMesh(meshdata *meshi){
   memset(meshi->gsliceinfo, 0, sizeof(meshplanedata));
   NewMemory((void **)&meshi->volrenderinfo, sizeof(volrenderdata));
   memset(meshi->volrenderinfo, 0, sizeof(volrenderdata));
+  for(i=0; i<6; i++){
+    meshi->bc_faces[i]   = NULL;
+    meshi->n_bc_faces[i] = 0;
+  }
 
   meshi->terrain = NULL;
   meshi->boundary_mask = NULL;

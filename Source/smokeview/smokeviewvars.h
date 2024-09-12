@@ -141,8 +141,12 @@ SVEXTERN hvacdatacollection hvaccoll = {
   .hvacnodevar_index= -1,
   0
 };
+SVEXTERN int hvac_duct_color[3] = { 63,0,15};
+SVEXTERN int hvac_node_color[3] = { 63,0,15};
 #else
 SVEXTERN hvacdatacollection hvaccoll;
+SVEXTERN int hvac_duct_color[3];
+SVEXTERN int hvac_node_color[3];
 #endif
 
 
