@@ -45,11 +45,9 @@ typedef struct _treedata {
 
 /* --------------------------  langlistdata ------------------------------------
  */
-#ifdef pp_SMOKEDRAW_SPEEDUP
 typedef struct _smokethreaddata {
   int ithread, nthreads;
 } smokethreaddata;
-#endif
 
 /* --------------------------  colortabledata
  * ------------------------------------ */

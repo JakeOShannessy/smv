@@ -19,11 +19,8 @@ EXTERNCPP void *GetGlobalSliceBoundsFull(void *arg);
 EXTERNCPP void *UpdateTrianglesAll(void *arg);
 EXTERNCPP void *ReadVolsmokeAllFramesAllMeshes2(void *arg);
 EXTERNCPP void *SetupAllIsosurfaces(void *arg);
-#ifdef pp_SMOKEDRAW_SPEEDUP
 EXTERNCPP void *MtMergeSmoke3D(void *arg);
 EXTERNCPP void UpdateGluiMergeSmoke(void);
-#endif
-
 
 //*** glui_bounds.cpp headers
 EXTERNCPP int  GLUIGetChopHide(char *label);
@@ -1069,9 +1066,7 @@ EXTERNCPP void GetGlobalDeviceBounds(int type);
 EXTERNCPP float GetDeviceVal(float time_local, devicedata *devicei, int *valid);
 EXTERNCPP void InitMenus(void);
 
-#ifdef pp_PATCH_DEBUG
 EXTERNCPP void DrawMeshBlockFaces(void);
-#endif
 
 EXTERNCPP int ReadSMV(bufferstreamdata *stream);
 EXTERNCPP void ReadSMVOrig(void);

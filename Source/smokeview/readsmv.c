@@ -5201,9 +5201,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
   FGETS(buffer, 255, stream);
   sscanf(buffer, "%i", &parti->nclasses);
   if(parti->nclasses>0){
-    if(parti->file != NULL){
-      parti->partclassptr = (partclassdata **)PARTBUFFER(parti->nclasses*sizeof(partclassdata *));
-    }
+    NewMemory((void **)&parti->partclassptr, parti->nclasses*sizeof(partclassdata *));
     for(i = 0; i<parti->nclasses; i++){
       int iclass;
       int ic, iii;
@@ -5588,8 +5586,7 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
     smoke3di->reg_file = SMOKE3DBUFFER(len + 1);
     STRCPY(smoke3di->reg_file, bufferptr);
     for(i=0; i<6; i++){
-      smoke3di->alphas_dir[i] = (unsigned char *)sextras.smoke3d_buffer;
-      sextras.smoke3d_buffer += 256;
+      smoke3di->alphas_dir[i] = (unsigned char *)SMOKE3DBUFFER(256);
     }
     smoke3di->ntimes = 0;
     smoke3di->ntimes_old = 0;
@@ -7070,9 +7067,7 @@ int ReadSMV_Init(){
 #ifdef pp_FDS
     use_readsmvorig_threads = 0;
 #endif
-#ifdef pp_SMOKEDRAW_SPEEDUP
     use_mergesmoke_threads  = 0;
-#endif
   }
 
   START_TIMER(getfilelist_time);
@@ -8176,15 +8171,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     npropinfo=1;
   }
 
-  if(npartinfo>0){
-    if(NewMemory((void **)&sextras.part_buffer, 4*npartinfo*MAXFILELEN) == 0)return 2;
-  }
-  if(slicecoll.nsliceinfo>0){
-    if(NewMemory((void **)&sextras.slice_buffer, 7*slicecoll.nsliceinfo*MAXFILELEN) == 0)return 2;
-  }
-  if(smoke3dcoll.nsmoke3dinfo>0){
-    if(NewMemory((void **)&sextras.smoke3d_buffer, 9*smoke3dcoll.nsmoke3dinfo*MAXFILELEN) == 0)return 2;
-  }
+  if(npartinfo>0 && NewMemory((void **)&sextras.part_buffer,       3*npartinfo*MAXFILELEN)    == 0)return 2;
+  if(slicecoll.nsliceinfo>0 && NewMemory((void **)&sextras.slice_buffer,     7*slicecoll.nsliceinfo*MAXFILELEN)   == 0)return 2;
+  if(smoke3dcoll.nsmoke3dinfo>0 && NewMemory((void **)&sextras.smoke3d_buffer, 9*smoke3dcoll.nsmoke3dinfo*MAXFILELEN) == 0)return 2;
 
   PRINT_TIMER(timer_readsmv, "pass 1");
 
@@ -11893,7 +11882,6 @@ int ReadSMV_Configure(){
   MakeIBlankCarve();
   PRINT_TIMER(timer_readsmv, "MakeIBlankCarve");
 
-#ifdef pp_SMOKEDRAW_SPEEDUP
   if(mergesmoke_threads == NULL){
     mergesmoke_threads = THREADinit(&n_mergesmoke_threads, &use_mergesmoke_threads, MtMergeSmoke3D);
     for(i = 0; i < n_mergesmoke_threads; i++){
@@ -11901,7 +11889,6 @@ int ReadSMV_Configure(){
       smokethreadinfo[i].nthreads = n_mergesmoke_threads;
     }
   }
-#endif
 
   if(ffmpeg_threads == NULL){
     ffmpeg_threads = THREADinit(&n_ffmpeg_threads, &use_ffmpeg_threads, SetupFF);
@@ -13940,15 +13927,6 @@ int ReadIni2(char *inifile, int localfile){
       sscanf(buffer, "%i", &tload_zipstep);
       tload_zipstep = MAX(tload_zipstep, 1);
       tload_zipskip = tload_zipstep - 1;
-      continue;
-    }
-    if(MatchINI(buffer, "SMOKELOAD")==1){
-      fgets(buffer, 255, stream);
-#ifdef pp_SMOKE16
-      sscanf(buffer, "%i %i %i", &use_smokeload_threads, &n_smokeload_threads, &load_smoke16);
-#else
-      sscanf(buffer, "%i %i", &use_smokeload_threads, &n_smokeload_threads);
-#endif
       continue;
     }
     if(MatchINI(buffer, "LOADINC") == 1){
@@ -17009,12 +16987,6 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i %i %f %i %i %i %i %i\n", research_mode, 1, colorbar_shift, ncolorlabel_digits, force_fixedpoint, ngridloc_digits, sliceval_ndigits, force_exponential);
   fprintf(fileout, "SLICEAVERAGE\n");
   fprintf(fileout, " %i %f %i\n", slice_average_flag, slice_average_interval, vis_slice_average);
-  fprintf(fileout, "SMOKELOAD\n");
-#ifdef pp_SMOKE16
-  fprintf(fileout, " %i %i %i\n", use_smokeload_threads, n_smokeload_threads, load_smoke16);
-#else
-  fprintf(fileout, " %i %i\n", use_smokeload_threads, n_smokeload_threads);
-#endif
   fprintf(fileout, "SLICEDATAOUT\n");
   fprintf(fileout, " %i \n", output_slicedata);
   fprintf(fileout, "USER_ROTATE\n");
