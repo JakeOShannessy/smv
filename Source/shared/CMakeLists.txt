@@ -25,7 +25,6 @@ add_library(libsmv STATIC
     readsmoke.c
     readobject.c
     readcad.c
-    readpart.c
     readlabel.c
     readtour.c
 )

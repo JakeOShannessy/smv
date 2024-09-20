@@ -22,8 +22,6 @@
 
 #include "IOscript.h"
 
-#include "readpart.h"
-
 #ifdef WIN32
 #define snprintf _snprintf
 #endif

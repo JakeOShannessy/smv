@@ -1711,7 +1711,8 @@ void UpdatePartClassDepend(partclassdata *partclassi){
     partclassi->vars_dep_index[nvar-2]= GetObjectFrameTokenLoc("G",obj_frame);
     partclassi->vars_dep_index[nvar-1]= GetObjectFrameTokenLoc("B",obj_frame);
   }
-  
+}
+
 /* ----------------------- GetNDevices ----------------------------- */
 #define BUFFER_LEN 255
 int GetNDevices(char *file) {

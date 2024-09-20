@@ -153,48 +153,6 @@ typedef struct _tourdata {
   int isDefault;
 } tourdata;
 
-/* --------------------------  partpropdata ------------------------------------
- */
-
-typedef struct _partpropdata {
-  flowlabels *label;
-  float *partlabelvals;
-  unsigned char *class_present, *class_vis;
-  unsigned int *class_types;
-  int display;
-  float ppartlevels256[256];
-  float valmin, valmax;
-  int imin, imax;
-  float dlg_global_valmin, dlg_global_valmax;
-  int set_global_bounds;
-  float user_min, user_max;
-  int setvalmin, setvalmax;
-  float chopmin, chopmax;
-  int setchopmin, setchopmax;
-  int extreme_min, extreme_max;
-} partpropdata;
-
-/* ------------------------- partclassdata ---------------------------------- */
-
-typedef struct _partclassdata {
-  char *name;
-  int col_diameter, col_length, col_azimuth, col_elevation;
-  int col_u_vel, col_v_vel, col_w_vel;
-  float dx, dy, dz;
-  float diameter, length, azimuth, elevation;
-  char *device_name;
-  propdata *prop;
-  sv_object *sphere, *smv_device;
-  int vis_type;
-  int maxpoints, ntypes;
-  float *xyz, *rgb;
-  int nvars_dep;
-  int vars_dep_index[PROPVARMAX];
-  float fvars_dep[PROPVARMAX];
-  char *vars_dep[PROPVARMAX];
-  flowlabels *labels;
-} partclassdata;
-
 /* --------------------------  texturedata ---------------------------------- */
 
 typedef struct _texturedata {
@@ -417,8 +375,7 @@ typedef struct _meshdata {
   int use;
 } meshdata;
 
-/* --------------------------  cellmeshdata ------------------------------------
- */
+/* --------------------------  cellmeshdata --------------------------------- */
 
 typedef struct _cellmeshdata {
   int nxyz[3];
@@ -426,8 +383,7 @@ typedef struct _cellmeshdata {
   meshdata **cellmeshes;
 } cellmeshdata;
 
-/* --------------------------  supermeshdata
- * ------------------------------------ */
+/* --------------------------  supermeshdata -------------------------------- */
 
 typedef struct _supermeshdata {
 #ifdef pp_GPU
@@ -442,61 +398,6 @@ typedef struct _supermeshdata {
   meshdata **meshes;
   int ibar, jbar, kbar;
 } supermeshdata;
-
-/* --------------------------  tokendata ------------------------------------ */
-
-typedef struct _tokendata {
-  float var, *varptr, default_val;
-  int command, loc, type, reads, nvars, noutvars, is_label, is_string,
-      is_texturefile;
-  struct _sv_object *included_object;
-  int included_frame;
-  int texture_index;
-  struct _tokendata *next, *elsenext;
-  char token[64], tokenlabel[64], tokenfulllabel[64];
-  char string[256], default_string[256], *stringptr;
-} tokendata;
-
-/**
- * @brief The graphical definition of an object. This represents a single state.
- * This can form a node in a linked-list.
- */
-typedef struct _sv_object_frame {
-  int use_bw;
-  int error;
-  int display_list_ID;
-  int *symbols, nsymbols;
-  tokendata *tokens, **command_list;
-  int ntokens, ncommands, ntextures;
-  struct _sv_object *device;
-  struct _sv_object_frame *prev, *next;
-} sv_object_frame;
-
-/**
- * @brief An object that can be rendered. This can form a node in a linked-list.
- */
-typedef struct _sv_object {
-  char label[256];
-  /** @brief Is this object an avatar? */
-  int type;
-  int visible;
-  int used, used_by_device;
-  int use_displaylist;
-  int select_mode;
-  /** @brief The number of frames (i.e., possible states) associated with this
-   * object. */
-  int nframes;
-  /** @brief A list of possible graphical representations of this object. While
-   * described as a series of frames this is used as a number of different
-   * possible states, not an animation. */
-  sv_object_frame **obj_frames, first_frame, last_frame;
-  /** @brief If this sv_object is part of a linked list, a pointer to the
-   * previous sv_object in the list */
-  struct _sv_object *prev;
-  /** @brief If this sv_object is part of a linked list, a pointer to the
-   * next sv_object in the list */
-  struct _sv_object *next;
-} sv_object;
 
 /* --------------------------  propdata ------------------------------------- */
 #define PROPVARMAX 100
@@ -516,8 +417,28 @@ typedef struct _propdata {
   int tag_number;
 } propdata;
 
-/* --------------------------  partclassdata
- * ------------------------------------ */
+
+/* --------------------------  partpropdata --------------------------------- */
+
+typedef struct _partpropdata {
+  flowlabels *label;
+  float *partlabelvals;
+  unsigned char *class_present, *class_vis;
+  unsigned int *class_types;
+  int display;
+  float ppartlevels256[256];
+  float valmin, valmax;
+  int imin, imax;
+  float dlg_global_valmin, dlg_global_valmax;
+  int set_global_bounds;
+  float user_min, user_max;
+  int setvalmin, setvalmax;
+  float chopmin, chopmax;
+  int setchopmin, setchopmax;
+  int extreme_min, extreme_max;
+} partpropdata;
+
+/* ------------------------- partclassdata ---------------------------------- */
 
 typedef struct _partclassdata {
   char *name;
@@ -554,7 +475,7 @@ typedef struct _part5data {
   unsigned char **cvals;
 } part5data;
 
-/* --------------------------  partdata ------------------------------------ */
+/* --------------------------  partdata ------------------------------------- */
 
 typedef struct _partdata {
   FILE_m *stream;
@@ -641,16 +562,14 @@ typedef struct _device {
   int valid;
 } devicedata;
 
-/* --------------------------  windrosedata ------------------------------------
- */
+/* --------------------------  windrosedata --------------------------------- */
 
 typedef struct _windrosedata {
   histogramdata histogram[3];
   float *xyz;
 } windrosedata;
 
-/* --------------------------  vdevicedata ------------------------------------
- */
+/* --------------------------  vdevicedata ---------------------------------- */
 
 typedef struct _vdevicedata {
   int unique, filetype, display;
@@ -660,8 +579,7 @@ typedef struct _vdevicedata {
       *sd_veldev, *sd_angledev;
 } vdevicedata;
 
-/* --------------------------  vdevicesortdata
- * ------------------------------------ */
+/* --------------------------  vdevicesortdata ------------------------------ */
 
 typedef struct _vdevicesortdata {
   int dir;
@@ -822,8 +740,7 @@ typedef struct _surfdata {
   float geom_area;
 } surfdata;
 
-/* -------------------------- blockagedata ------------------------------------
- */
+/* -------------------------- blockagedata ---------------------------------- */
 
 typedef struct _blockagedata {
   int ijk[6];
