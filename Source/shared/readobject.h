@@ -373,5 +373,6 @@ void UpdateDeviceTextures(object_collection *objectscoll, int ndeviceinfo,
                           propdata *propinfo, int *ndevice_texture_list,
                           int **device_texture_list_indexptr,
                           char ***device_texture_listptr);
+EXTERNCPP void UpdatePartClassDepend(partclassdata *partclassi);
 
 #endif

@@ -9,6 +9,64 @@
 #endif
 #include GLU_H
 #include GL_H
+#include "string_util.h"
+
+#define PROPVARMAX 100
+
+/* --------------------------  tokendata ------------------------------------ */
+
+typedef struct _tokendata {
+  float var, *varptr, default_val;
+  int command, loc, type, reads, nvars, noutvars, is_label, is_string,
+      is_texturefile;
+  struct _sv_object *included_object;
+  int included_frame;
+  int texture_index;
+  struct _tokendata *next, *elsenext;
+  char token[64], tokenlabel[64], tokenfulllabel[64];
+  char string[256], default_string[256], *stringptr;
+} tokendata;
+
+/**
+ * @brief The graphical definition of an object. This represents a single state.
+ * This can form a node in a linked-list.
+ */
+typedef struct _sv_object_frame {
+  int use_bw;
+  int error;
+  int display_list_ID;
+  int *symbols, nsymbols;
+  tokendata *tokens, **command_list;
+  int ntokens, ncommands, ntextures;
+  struct _sv_object *device;
+  struct _sv_object_frame *prev, *next;
+} sv_object_frame;
+
+/**
+ * @brief An object that can be rendered. This can form a node in a linked-list.
+ */
+typedef struct _sv_object {
+  char label[256];
+  /** @brief Is this object an avatar? */
+  int type;
+  int visible;
+  int used, used_by_device;
+  int use_displaylist;
+  int select_mode;
+  /** @brief The number of frames (i.e., possible states) associated with this
+   * object. */
+  int nframes;
+  /** @brief A list of possible graphical representations of this object. While
+   * described as a series of frames this is used as a number of different
+   * possible states, not an animation. */
+  sv_object_frame **obj_frames, first_frame, last_frame;
+  /** @brief If this sv_object is part of a linked list, a pointer to the
+   * previous sv_object in the list */
+  struct _sv_object *prev;
+  /** @brief If this sv_object is part of a linked list, a pointer to the
+   * next sv_object in the list */
+  struct _sv_object *next;
+} sv_object;
 
 #include "colorbars.h"
 #include "contourdefs.h"
@@ -115,6 +173,27 @@ typedef struct _partpropdata {
   int setchopmin, setchopmax;
   int extreme_min, extreme_max;
 } partpropdata;
+
+/* ------------------------- partclassdata ---------------------------------- */
+
+typedef struct _partclassdata {
+  char *name;
+  int col_diameter, col_length, col_azimuth, col_elevation;
+  int col_u_vel, col_v_vel, col_w_vel;
+  float dx, dy, dz;
+  float diameter, length, azimuth, elevation;
+  char *device_name;
+  propdata *prop;
+  sv_object *sphere, *smv_device;
+  int vis_type;
+  int maxpoints, ntypes;
+  float *xyz, *rgb;
+  int nvars_dep;
+  int vars_dep_index[PROPVARMAX];
+  float fvars_dep[PROPVARMAX];
+  char *vars_dep[PROPVARMAX];
+  flowlabels *labels;
+} partclassdata;
 
 /* --------------------------  texturedata ---------------------------------- */
 
