@@ -15,7 +15,6 @@
 void Usage(int option){
   char githash[100];
   char gitdate[100];
-  char buffer[1024];
 
   GetGitInfo(githash,gitdate);    // get githash
 
@@ -98,7 +97,7 @@ int main(int argc, char **argv){
 
   common_opts opts = ParseCommonOptions(argc, argv);
   if(opts.show_help!=0){
-    Usage("wind2fds",opts.show_help);
+    Usage(opts.show_help);
     return 1;
   }
   if(opts.show_version==1){

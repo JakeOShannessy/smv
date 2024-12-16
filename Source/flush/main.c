@@ -30,7 +30,7 @@ void Usage(int option){
 
   GetGitInfo(githash,gitdate);    // get githash
 
-  
+
   fprintf(stdout, "\nflush [options]\n");
   fprintf(stdout, "%s %s\n\n", githash, __DATE__);
   fprintf(stdout, "flush the cache\n\n");
@@ -78,7 +78,7 @@ int main(int argc, char **argv){
 
   common_opts opts = ParseCommonOptions(argc, argv);
   if(opts.show_help!=0){
-    Usage("flushcache",opts.show_help);
+    Usage(opts.show_help);
     return 1;
   }
   if(opts.show_version==1){

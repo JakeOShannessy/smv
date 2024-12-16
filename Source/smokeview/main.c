@@ -16,6 +16,9 @@
 #include "fopen.h"
 #include "jsonrpc_api.h"
 
+#include "IOscript.h"
+#include "IOvolsmoke.h"
+
 #ifdef WIN32
 #include <direct.h>
 #endif
@@ -774,11 +777,11 @@ int main(int argc, char **argv){
 
   common_opts opts = ParseCommonOptions(argc, argv);
   if(opts.show_help==1){
-    Usage("smokeview", HELP_SUMMARY);
+    Usage(HELP_SUMMARY);
     return 1;
   }
   if(opts.show_help==2){
-    Usage("smokeview", HELP_ALL);
+    Usage(HELP_ALL);
     return 1;
   }
 

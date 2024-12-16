@@ -42,7 +42,7 @@ int main(int argc, char **argv){
 
   common_opts opts = ParseCommonOptions(argc, argv);
   if(opts.show_help!=0){
-    Usage("fds2fed",opts.show_help);
+    Usage(opts.show_help);
     return 0;
   }
   if(opts.show_version==1){
