@@ -7,6 +7,9 @@
 
 
 #include "smokeviewvars.h"
+#include "glui_motion.h"
+#include "IOscript.h"
+#include "viewports.h"
 
 /* ------------------ Zoom2Aperture ------------------------ */
 
@@ -159,7 +162,7 @@ void UpdateCameraYpos(cameradata *ci, int option){
   ci->isometric_y = (eyeyfactor-1.0)*xyzbox;
 }
 
-/* ------------------ SetCameraView ------------------------ */
+/* ------------------ SetCameraViewPersp ------------------------ */
 
 void SetCameraViewPersp(cameradata *ca, int option){
   float az = 0.0, elev = 0.0;
@@ -386,7 +389,7 @@ void UpdateCamera(cameradata *ca){
     ca->ymax=clipinfo.ymax;
     ca->zmax=clipinfo.zmax;
   }
-  GLUIUpdateSetViewXYZ(ca->eye);
+  GLUISetPosXYZSMV(ca->eye);
   ca->dirty=0;
 }
 

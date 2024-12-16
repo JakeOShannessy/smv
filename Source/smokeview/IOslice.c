@@ -15,6 +15,9 @@
 #include "smokeviewvars.h"
 #include "IOscript.h"
 #include "getdata.h"
+#include "glui_bounds.h"
+
+#include "readslice.h"
 
 #include "readslice.h"
 
@@ -740,7 +743,7 @@ int GetSliceHeader0(char *comp_file, char *size_file, int compression_type, int 
 
 int GetSliceHeader(char *comp_file, char *size_file, int compression_type,
   int framestep, int set_tmin, int set_tmax, float tmin_local, float tmax_local,
-  int *nx, int *ny, int *nz, int *nsteps, int *ntotal, float *valmin, float *valmax){
+  int *nx, int *ny, int *nz, int *nsteps, FILE_SIZE *ntotal, float *valmin, float *valmax){
   FILE *stream;
   int i1, i2, jj1, j2, k1, k2;
   float time_local;
@@ -1632,8 +1635,8 @@ void UpdateSliceMenuLabels(sliceparmdata *sp){
       STRCAT(sd->menulabel," (RLE)");
     }
     for(i=1;i<sp->nsliceinfo;i++){
-      sdold = slicecoll.sliceinfo + sextras.sliceorderindex[i - 1];
       sd = slicecoll.sliceinfo + sextras.sliceorderindex[i];
+      sdold = slicecoll.sliceinfo + sextras.sliceorderindex[i - 1];
       cdir = GetMSliceDir(mslicei);
       STRCPY(sd->menulabel, cdir);
       if(NewMultiSlice(sdold,sd)==1){
@@ -3485,7 +3488,7 @@ FILE_SIZE GetSliceData(slicedata *sd, const char *slicefilename, int time_frame,
   int count;
   int iis1, iis2;
   int ijk[6];
-  int file_size;
+  FILE_SIZE file_size;
   FILEBUFFER *stream=NULL;
   int returncode=0;
   float *qq;
@@ -3509,6 +3512,7 @@ FILE_SIZE GetSliceData(slicedata *sd, const char *slicefilename, int time_frame,
   FSEEK_SLICE(stream, 3*(4+30+4), SEEK_CUR);
 
   FORT_SLICEREAD(ijk, 6, stream);
+  file_size += (FILE_SIZE)(4 + 6*4 + 4);
   if(returncode==0){
     FCLOSE_SLICE(stream);
     return file_size;
@@ -3540,7 +3544,6 @@ FILE_SIZE GetSliceData(slicedata *sd, const char *slicefilename, int time_frame,
   jp2 = ijk[3];
   kp1 = ijk[4];
   kp2 = ijk[5];
-  file_size = 6*4;
   *is1ptr = ip1;
   *is2ptr = ip2;
   *js1ptr = jp1;
@@ -3592,8 +3595,8 @@ FILE_SIZE GetSliceData(slicedata *sd, const char *slicefilename, int time_frame,
       break;
     }
     FORT_SLICEREAD(&timeval, 1, stream);
+    file_size += (FILE_SIZE)(4 + 4 + 4);
     if(returncode==0)break;
-    file_size = file_size+4;
     if((settmin_s_arg!=0&&timeval<tmin_s_arg)){
       loadframe = 0;
     }
@@ -3603,6 +3606,7 @@ FILE_SIZE GetSliceData(slicedata *sd, const char *slicefilename, int time_frame,
     if(settmax_s_arg!=0&&timeval>tmax_s_arg)break;
     //    read(lu11, iostat = error)(((qq(i, j, k), i = 1, nxsp), j = 1, nysp), k = 1, nzsp)
     FORT_SLICEREAD(qq, nxsp*nysp*nzsp, stream);
+    file_size += (FILE_SIZE)(4 + 4*nxsp*nysp*nzsp + 4);
     if(returncode==0||nsteps>=*ntimesptr)break;
     count++;
     if(count%tload_step_arg!=0)loadframe = 0;
@@ -3651,7 +3655,6 @@ FILE_SIZE GetSliceData(slicedata *sd, const char *slicefilename, int time_frame,
     }
     timesptr[nsteps] = timeval;
     nsteps = nsteps+1;
-    file_size += 4*nxsp*nysp*nzsp;
 
     if(*idirptr==3){
       float *qqto, *qqfrom;
@@ -3851,13 +3854,13 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
   vslicedata *vd;
   meshdata *meshi;
 
-  updatemenu = 1;
-  update_plot_label = 1;
-  FILE_SIZE return_filesize=0;
-  int file_size=0;
+  FILE_SIZE file_size=0;
 #ifdef pp_memstatus
   unsigned int availmemory;
 #endif
+
+  updatemenu = 1;
+  update_plot_label = 1;
 
 #ifndef pp_SLICEFRAME
 #ifndef pp_FSEEK
@@ -4045,7 +4048,7 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
       }
       else{
         if(time_frame==ALL_FRAMES){
-          sd->ntimes = (int)(GetFileSizeSMV(file)-headersize)/framesize;
+          sd->ntimes = (FILE_SIZE)(GetFileSizeSMV(file)-headersize)/framesize;
           if(tload_step>1)sd->ntimes /= tload_step;
         }
       }
@@ -4083,7 +4086,6 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
       }
       MakeTimesMap(sd->times, &sd->times_map, sd->ntimes);
       file_size = sd->ncompressed;
-      return_filesize = (FILE_SIZE)file_size;
     }
     else{
       int return_val;
@@ -4113,17 +4115,16 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
       }
       if(sd->ntimes > ntimes_slice_old){
 #ifdef pp_SLICEFRAME
-        return_filesize = sd->frameinfo->filesize;
+        file_size = sd->frameinfo->filesize;
         qmin = frame_valmin;
         qmax = frame_valmax;
 #else
-        return_filesize = GetSliceData(sd, file, time_frame, &sd->is1, &sd->is2, &sd->js1, &sd->js2, &sd->ks1, &sd->ks2, &sd->idir,
+        file_size = GetSliceData(sd, file, time_frame, &sd->is1, &sd->is2, &sd->js1, &sd->js2, &sd->ks1, &sd->ks2, &sd->idir,
             &qmin, &qmax, sd->qslicedata, sd->times, ntimes_slice_old, &sd->ntimes,
             tload_step, use_tload_begin, use_tload_end, sextras.tload_begin, sextras.tload_end
           );
 #endif
         MakeTimesMap(sd->times, &sd->times_map, sd->ntimes);
-        file_size = (int)return_filesize;
         sd->valmin_slice = qmin;
         sd->valmax_slice = qmax;
 
@@ -4520,7 +4521,7 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
     sd->frameinfo->total_time = total_time;
   }
 #endif
-  return return_filesize;
+  return file_size;
 }
 
 /* ------------------ UpdateSlice3DTexture ------------------------ */
@@ -9225,13 +9226,13 @@ void GenerateSliceMenu(int option){
     max2 = MAX(5, max2) + 1;
     max3 = 4;
     max4 = MAX(8, max4) + 1;
-    char cform1[20], cform2[20], cform3[20], cform4[20];
+    char cform1[200], cform2[200], cform3[200], cform4[200];
     sprintf(cform1, "%s%i.%is", "%",max1,max1);/* %20.20s*/
     sprintf(cform2, "%s-%i.%is", "%", max2,max2);
     sprintf(cform3, "%s%i.%is", "%", max3,max3);
     sprintf(cform4, "%s%i.%is", "%", max4,max4);
 
-    char format[256];
+    char format[1024];
     sprintf(format, "%s, %s, %s, %s\n",cform1, cform2, cform3, cform4);
 
     fprintf(stream, "\n");
@@ -9245,7 +9246,7 @@ void GenerateSliceMenu(int option){
       slicemenudata *slicemi;
       char *quantity, cposition[25];
       float position;
-      char index[10], cdir[10];
+      char index[100], cdir[100];
 
       slicemi = slicemenu_sorted[i];
       slicei = slicemi->sliceinfo;

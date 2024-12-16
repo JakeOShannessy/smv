@@ -11,6 +11,7 @@
 #include <float.h>
 
 #include "smokeviewvars.h"
+#include "glui_smoke.h"
 #include "IOvolsmoke.h"
 #include "compress.h"
 #include "getdata.h"
@@ -1517,12 +1518,12 @@ void InitAlphas(unsigned char *alphanew,
   }
   alphanew[0] = 0;
   if(force_alpha_opaque==1){
-    for(i = 1; i<254; i++){
+    for(i = 1; i<255; i++){
       alphanew[i] = (unsigned char)254;
     }
   }
   else{
-    for(i = 1; i<254; i++){
+    for(i = 1; i<255; i++){
       float val;
       int ival;
 
@@ -3835,7 +3836,7 @@ void SetSmokeColorFlags(smoke3d_collection *smoke3dcoll_arg){
     int j;
 
     smoke3di = smoke3dcoll_arg->smoke3dinfo+i;
-    for(j = 0;j < smoke3dcoll_arg->nsmoke3dtypes;j++){
+    for(j = 0;j <smoke3dcoll_arg->nsmoke3dtypes;j++){
       smoke3di->smokestate[j].color = NULL;
       smoke3di->smokestate[j].index = -1;
     }

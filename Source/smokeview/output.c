@@ -226,6 +226,49 @@ float GetStringLength(char *string){
   return length;
 }
 
+/* ------------------------ GetStringWidth ------------------------- */
+
+int GetStringWidth(char *string){
+  char *c;
+  int length = 0;
+
+  if(string == NULL)return 0;
+  switch(fontindex){
+  case SMALL_FONT:
+    for(c = string; *c != '\0'; c++){
+      length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, *c);
+    }
+    length *= (288.0 / 235.0);
+#ifdef pp_OSX_HIGHRES
+    if(double_scale == 1){
+      length *= 2;
+    }
+#endif
+    break;
+  case LARGE_FONT:
+    for(c = string; *c != '\0'; c++){
+      length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_18, *c);
+    }
+    length *= (416.0 / 423.0);
+#ifdef pp_OSX_HIGHRES
+    if(double_scale == 1){
+      length *= 2;
+    }
+#endif
+    break;
+  case SCALED_FONT:
+    for(c = string; *c != '\0'; c++){
+      length += glutStrokeWidth(GLUT_STROKE_ROMAN, *c);
+    }
+    length *= (283.0 / 402.0) * scale_2d_x;
+    break;
+  default:
+    assert(FFALSE);
+    break;
+  }
+  return length;
+}
+
 /* ------------------ glutBitmapCharacterShiftLeft ------------------------ */
 
 void glutBitmapCharacterShiftLeft(GLUTbitmapFont font, int c, float advance){
@@ -310,16 +353,12 @@ void Output3TextRight(float *color, float x, float y, float z, char *string, flo
   }
 }
 
-/* ------------------ OutputLargeText ------------------------ */
-
-void OutputLargeText(float x, float y, char *string){
-  char *c;
-
-  if(string==NULL)return;
-  glColor3fv(foregroundcolor);
-  glRasterPos2f(x, y);
-  for(c=string; *c!='\0'; c++){
-    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18,(unsigned char)*c);
+void ScaleFont2D(void){
+  if(render_mode == RENDER_360){
+    glLineWidth(( float )resolution_multiplier * ( float )scaled_font2d_thickness);
+  }
+  else{
+    glLineWidth(( float )scaled_font2d_thickness);
   }
 }
 
@@ -472,15 +511,6 @@ void DrawLabels(labels_collection *labelscoll_arg){
 }
 
 /* ----------------------- ScaleFont2D ----------------------------- */
-
-void ScaleFont2D(void){
-  if(render_mode == RENDER_360){
-    glLineWidth((float)resolution_multiplier*(float)scaled_font2d_thickness);
-  }
-  else{
-    glLineWidth((float)scaled_font2d_thickness);
-  }
-}
 
 /* ----------------------- ScaleFont3D ----------------------------- */
 

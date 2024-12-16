@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "glui_bounds.h"
 #include "histogram.h"
 #include "compress.h"
 #include "IOobjects.h"
@@ -261,11 +262,20 @@ void DrawPart(const partdata *parti, int mode){
 
             if(datacopy->partclassbase->vis_type == PART_POINTS){
               if(select_part == 1 && selected_part_index > 0 && mode == DRAWSCENE){
+                float *rvals=NULL;
+
+                if(itype>=0)rvals = datacopy->rvals + itype*datacopy->npoints_file;
                 for(j = 0; j < datacopy->npoints_file; j += partdrawskip){
                   if(vis[j] == 1 && datacopy->tags[j]==selected_part_index){
-                    char taglabel[32];
+                    char taglabel[64];
 
-                    sprintf(taglabel, "%i", selected_part_index);
+
+                    if(itype >= 0){
+                      sprintf(taglabel, "%i: %f", selected_part_index, rvals[j]);
+                    }
+                    else{
+                      sprintf(taglabel, "%i", selected_part_index);
+                    }
                     Output3Text(foregroundcolor, xpos[j], ypos[j], zpos[j], taglabel);
                   }
                 }
@@ -950,7 +960,6 @@ void CreatePartBoundFile(partdata *parti){
   int nparts_local, *numtypes_local = NULL, numtypes_temp_local[2];
   FILE *stream_out_local=NULL;
 
-
   if(parti->reg_file == NULL)return;
   stream = fopen_b(parti->reg_file, NULL, 0, "rb");
   if(stream==NULL)return;
@@ -1177,6 +1186,40 @@ void GeneratePartHistograms(void){
   }
 }
 
+/* ------------------ SortPartTags ------------------------ */
+
+void SortPartTags(partdata *parti){
+  int i;
+  part5data *datacopy_local;
+
+  datacopy_local = parti->data5;
+  for(i = 0; i < parti->ntimes; i++){
+    int class_index;
+
+    for(class_index = 0; class_index < parti->nclasses; class_index++){
+      qsort(datacopy_local->sort_tags, ( size_t )datacopy_local->npoints_file, 2*sizeof(int), CompareTags);
+      datacopy_local++;
+    }
+  }
+}
+
+/* ------------------ SortAllPartTags ------------------------ */
+
+void *SortAllPartTags(void *arg){
+  int i;
+
+  INIT_PRINT_TIMER(timer_sortparttags);
+  for(i = 0; i < npartinfo; i++){
+    partdata *parti;
+
+    parti = partinfo + i;
+    if(parti->loaded == 0)continue;
+    SortPartTags(parti);
+  }
+  PRINT_TIMER(timer_sortparttags, "SortPartTags");
+  THREAD_EXIT(sorttags_threads);
+}
+
 /* ------------------ GetPartData ------------------------ */
 
 void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
@@ -1306,7 +1349,6 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
             sort_tags_local[2*j]=datacopy_local->tags[j];
             sort_tags_local[2*j+1]=j;
           }
-          qsort( sort_tags_local, (size_t)nparts_local, 2*sizeof(int), CompareTags);
         }
       }
       else{
@@ -1447,6 +1489,15 @@ partpropdata *GetPartProp(char *label){
     if(strcmp(propi->label->longlabel,label)==0)return propi;
   }
   return NULL;
+}
+
+/* ------------------ SetStreakShow ------------------------ */
+
+void SetStreakShow(int show){
+  if(show == 1){
+    THREADcontrol(sorttags_threads, THREAD_JOIN);
+  }
+  streak5show = show;
 }
 
 /* ------------------ InitPartProp ------------------------ */
@@ -1713,7 +1764,7 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
     float time_local;
 
     if(nframes_all_local >= frameinfo->nframes)break;
-    fseek_m(stream, 4+frameinfo->offsets[nframes_all_local], SEEK_SET);
+    fseek_m_long(stream, (long long)(4+frameinfo->offsets[nframes_all_local]), SEEK_SET);
     count = fread_m(&time_local, 4, 1, stream);
     if(count != 1||nframes_all_local == npart_frames_max)break;
     nframes_all_local++;
@@ -1757,7 +1808,7 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
     int j, count;
     float time_local;
 
-    fseek_m(stream, 4 + frameinfo->offsets[i], SEEK_SET);
+    fseek_m_long(stream, (long long)(4 + frameinfo->offsets[i]), SEEK_SET);
     count = fread_m(&time_local, 4, 1, stream);
     fseek_m(stream, 4, SEEK_CUR);
     if(count != 1)break;
@@ -2108,6 +2159,10 @@ void FinalizePartLoad(partdata *parti){
     }
   }
   visParticles = 1;
+  THREADrun(sorttags_threads);
+  if(runscript == 1 || streak5show == 1){
+    THREADcontrol(sorttags_threads, THREAD_JOIN);
+  }
 
   // generate histograms now rather than in the background if a script is running
 
@@ -2229,7 +2284,9 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int load_flag, int *errorcode_
     return 0.0;
   }
   CheckMemory;
+  INIT_PRINT_TIMER(timer_getpartdata);
   GetPartData(parti, nf_all_local, &file_size_local);
+  PRINT_TIMER(timer_getpartdata, "GetPartData");
   CheckMemory;
   THREADcontrol(partload_threads, THREAD_LOCK);
   parti->loaded = 1;
@@ -2258,7 +2315,7 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int load_flag, int *errorcode_
     if(parti->finalize == 1){
       INIT_PRINT_TIMER(finalize_part);
       FinalizePartLoad(parti);
-      PRINT_TIMER(finalize_part, "finalize particle time");
+      PRINT_TIMER(finalize_part, "FinalizePartLoad");
     }
     STOP_TIMER(load_time_local);
 #ifndef pp_PARTFRAME

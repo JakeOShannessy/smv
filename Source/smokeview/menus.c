@@ -15,10 +15,15 @@
 
 #include "string_util.h"
 #include "smokeviewvars.h"
+#include "glui_bounds.h"
+#include "glui_motion.h"
 #include "IOvolsmoke.h"
 #include "readhvac.h"
 #include "readobject.h"
 #include "readsmoke.h"
+#include "viewports.h"
+#include "IOscript.h"
+#include "IOobjects.h"
 
 void LoadHVACMenu(int value);
 void LoadPlot2DMenu(int value);
@@ -64,7 +69,6 @@ float     part_load_time;
 
 #define MENU_OPTION_TRAINERMENU 2
 
-#define MENU_BNDF_SHOW_MESH_INTERFACE -8
 #define MENU_BNDF_MIRROR              -5
 #define MENU_BNDF_OPEN                -9
 
@@ -1036,6 +1040,10 @@ void ColorbarMenu(int value){
      GLUISetLabelControls();
      GLUIUpdateTransparency();
      break;
+   case COLORBAR_DECIMAL:
+     force_decimal = 1 - force_decimal;
+     update_colorbar_digits = 1;
+     break;
    case COLORBAR_CONTINUOUS:
      contour_type=SHADED_CONTOURS;
      UpdateRGBColors(colorbar_select_index);
@@ -1932,6 +1940,15 @@ void ResetMenu(int value){
 /* ------------------ ResetDefaultMenu ------------------------ */
 
 void ResetDefaultMenu(int var){
+  if(var == XYZ_CENTER){
+    float xyz_center[3];
+
+    xyz_center[0] = (xbarFDS + xbar0FDS)/2.0;
+    xyz_center[1] = (ybarFDS + ybar0FDS)/2.0;
+    xyz_center[2] = zbar0FDS;
+    GLUISetPosXYZFDS(xyz_center);
+    return;
+  }
   if(var==2){
     int i;
 
@@ -3419,7 +3436,7 @@ char *FileSize2Label(char *label, FILE_SIZE bytes){
 /* ------------------ Plot3DSummary ------------------------ */
 
 void Plot3DSummary(char *label, int count, FILE_SIZE file_size, float timer){
-  char size_label[256], time_label[256], time_label2[256];
+  char size_label[256], time_label[512], time_label2[256];
 
   sprintf(label, "PLOT3D: loaded %i files, %s", count, FileSize2Label(size_label, file_size));
   Float2String(time_label2, timer, ncolorlabel_digits, force_fixedpoint);
@@ -3904,14 +3921,14 @@ void ParticleStreakShowMenu(int value){
 
   if(value==-1)return;
   if(value==MENU_STREAK_HIDE){
-    streak5show=0;
+    SetStreakShow(0);
     streak5step=0;
   }
   else if(value==MENU_STREAK_HEAD){
     showstreakhead=1-showstreakhead;
   }
   else{
-    streak5show=1;
+    SetStreakShow(1);
     streak5step=0;
     rvalue=streak_rvalue[value];
     UpdateStreakValue(rvalue-0.001);
@@ -4154,9 +4171,6 @@ void LoadAllPartFiles(int partnum){
 
 void SetupPart(int value){
   int i;
-
-#define SETVALMIN 1
-#define SETVALMAX 2
   int *list = NULL, nlist = 0;
 
   NewMemory((void **)&list, npartinfo*sizeof(int));
@@ -6219,10 +6233,6 @@ void LoadBoundaryMenu(int value){
       show_open_boundary = 1 - show_open_boundary;
       updatemenu = 1;
       break;
-    case MENU_BNDF_SHOW_MESH_INTERFACE:
-      show_bndf_mesh_interface = 1-show_bndf_mesh_interface;
-      updatemenu = 1;
-      break;
     case MENU_BOUNDARY_SETTINGS:
       GLUIShowBoundsDialog(DLG_BOUNDARY);
       break;
@@ -6272,6 +6282,56 @@ void LoadBoundaryMenu(int value){
   GLUTSETCURSOR(GLUT_CURSOR_LEFT_ARROW);
 }
 
+/* ------------------ GetInternalFaceShow ------------------------ */
+
+int GetInternalFaceShow(void){
+  int show = 1;
+
+  if(boundary_loaded == 1){
+    cpp_boundsdata *bounds;
+    bounds = GLUIGetBoundsData(BOUND_PATCH);
+    if(bounds->set_chopmax == 1 || bounds->set_chopmin == 1){
+      update_bound_chop_data = 1;
+      show = 1;
+    }
+    else{
+      update_bound_chop_data = 0;
+      if(show_all_interior_patch_data == 0){
+        show = 0;
+      }
+      else{
+        show = 1;
+      }
+    }
+  }
+  else{
+    show = 1;
+  }
+  return show;
+}
+
+/* ------------------ ShowInternalBlockages ------------------------ */
+
+void ShowInternalBlockages(void){
+  int show;
+
+  show = GetInternalFaceShow();
+  hide_internal_blockages = 1 - show;
+  if(show == 0){
+    outline_state=OUTLINE_NONE;
+    solid_state=visBLOCKHide;
+  }
+  else{
+    visBlocks=visBLOCKNormal;
+    solid_state=visBLOCKNormal;
+    outline_state=OUTLINE_NONE;
+    GeometryMenu(17 + TERRAIN_HIDDEN);
+  }
+  updatemenu = 1;
+  sextras.updatefaces = 1;
+  updatefacelists = 1;
+}
+
 /* ------------------ ShowBoundaryMenu ------------------------ */
 
 void ShowBoundaryMenu(int value){
@@ -6298,27 +6358,26 @@ void ShowBoundaryMenu(int value){
     GLUIUpdateChar();
   }
   if(value==GLUI_SHOWALL_BOUNDARY||value==GLUI_HIDEALL_BOUNDARY){
-    int i;
-
     if(value == GLUI_SHOWALL_BOUNDARY){
       show_boundaryfiles = 1;
+      ShowBoundaryMenu(SHOW_INTERIOR_WALL_MENU);
+      ShowBoundaryMenu(SHOW_EXTERIOR_WALL_MENU);
     }
     if(value == GLUI_HIDEALL_BOUNDARY){
       show_boundaryfiles = 0;
+      ShowBoundaryMenu(HIDE_INTERIOR_WALL_MENU);
+      ShowBoundaryMenu(HIDE_EXTERIOR_WALL_MENU);
     }
-    for(i=0;i<npatchinfo;i++){
-      patchdata *patchi;
-
-      patchi = patchinfo + i;
-      if(patchi->loaded == 0)continue;
-      if(patchi->structured == YES)patchi->display=show_boundaryfiles;
-    }
+    updatefacelists = 1;
+    sextras.updatefaces = 1;
+    ShowInternalBlockages();
+    update_patch_vis = 1;
   }
   if(value<0){
-    if(value==ShowEXTERIORwallmenu||value==HideEXTERIORwallmenu){
+    if(value==SHOW_EXTERIOR_WALL_MENU||value==HIDE_EXTERIOR_WALL_MENU){
       int i,val;
 
-      if(value==ShowEXTERIORwallmenu){
+      if(value==SHOW_EXTERIOR_WALL_MENU){
         val = 1;
       }
       else{
@@ -6343,14 +6402,14 @@ void ShowBoundaryMenu(int value){
       for(i=1;i<7;i++){
         vis_boundary_type[i]=val;
       }
+      update_patch_vis = 1;
     }
-    else if(value==INTERIORwallmenu){
-      int val;
+    else if(value==INTERIOR_WALL_MENU){
       int i;
 
-      allinterior = 1 - allinterior;
-      val = allinterior;
-      vis_boundary_type[INTERIORwall]=val;
+      hide_all_interior_patch_data    = show_all_interior_patch_data;
+      show_all_interior_patch_data    = 1 - show_all_interior_patch_data;
+      vis_boundary_type[INTERIORwall] = show_all_interior_patch_data;
       for(i = 0;i < npatchinfo;i++){
         patchdata *patchi;
         int n;
@@ -6362,10 +6421,17 @@ void ShowBoundaryMenu(int value){
 
           pfi = patchi->patchfaceinfo + n;
           if(pfi->type == INTERIORwall){
-            pfi->vis = val;
+            pfi->vis = show_all_interior_patch_data;
           }
         }
       }
+      ShowInternalBlockages();
+      UpdateShowIntPatch(hide_all_interior_patch_data, show_all_interior_patch_data);
+    }
+    else if(value == SHOW_INTERIOR_WALL_MENU || value == HIDE_INTERIOR_WALL_MENU){
+      if(value == SHOW_INTERIOR_WALL_MENU)show_all_interior_patch_data = 1;
+      if(value == HIDE_INTERIOR_WALL_MENU)show_all_interior_patch_data = 0;
+      ShowBoundaryMenu(INTERIOR_WALL_MENU);
     }
     if(value==INI_EXTERIORwallmenu){
       int i;
@@ -6408,6 +6474,7 @@ void ShowBoundaryMenu(int value){
         }
       }
     }
+    update_patch_vis = 1;
   }
   plotstate=GetPlotState(DYNAMIC_PLOTS);
 }
@@ -6592,7 +6659,7 @@ void ImmersedMenu(int value){
 }
 
 /* ------------------ BlockageMenu ------------------------ */
-void GeometryMenu(int val);
+
 void BlockageMenu(int value){
   int change_state=0;
 
@@ -6776,7 +6843,6 @@ void BlockageMenu(int value){
   visBLOCKold=value;
   updatemenu=1;
   updatefacelists=1;
-  updatehiddenfaces=1;
   GLUTPOSTREDISPLAY;
 }
 
@@ -8490,6 +8556,7 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
   else{
     glutAddMenuEntry(_("Show slice file sizes"), MENU_SLICE_FILE_SIZES);
   }
+  glutAddMenuEntry("-", MENU_DUMMY);
   glutAddMenuEntry(_("Settings..."), MENU_SLICE_SETTINGS);
   if(nmultisliceloaded+geom_slice_loaded>1){
     GLUTADDSUBMENU(_("Unload"), unloadmultislicemenu);
@@ -8731,11 +8798,11 @@ void InitMultiVectorLoadMenu(int *loadmultivslicemenuptr, int *loadsubmvslicemen
     if(nsubvectorslicez>0)GLUTADDSUBMENU("Load all z vector slices",       loadsubvectorslicezmenu);
     if(nsubvectorslicexyz>0)GLUTADDSUBMENU("Load all x,y,z vector slices", loadsubvectorslicexyzmenu);
   }
-  if(slicecoll.nmultivsliceinfo>0)glutAddMenuEntry("-", MENU_DUMMY);
 
   if(nslicedups > 0){
     GLUTADDSUBMENU(_("Duplicate vector slices"), duplicatevectorslicemenu);
   }
+  glutAddMenuEntry("-", MENU_DUMMY);
   glutAddMenuEntry(_("Settings..."), MENU_LOADVSLICE_SETTINGS);
   if(nvsliceloaded>1){
     GLUTADDSUBMENU(_("Unload"),unloadmultivslicemenu);
@@ -8923,7 +8990,6 @@ static int sliceloadoptionmenu = 0, vectorsliceloadoptionmenu = 0;
 static int isosurfacemenu=0, isovariablemenu=0, levelmenu=0;
 static int fontmenu=0, aperturemenu=0,dialogmenu=0,zoommenu=0;
 static int gridslicemenu=0, griddigitsmenu=0, blockagemenu=0, immersedmenu=0, loadpatchmenu=0, ventmenu=0, circularventmenu=0;
-static int includepatchmenu=0;
 static int loadisomenu=0, isosurfacetypemenu=0,showpatchextmenu=0;
 static int geometrymenu=0, loadunloadmenu=0, reloadmenu=0, fileinfomenu=0, aboutmenu=0, disclaimermenu=0, terrain_obst_showmenu=0;
 static int scriptmenu=0;
@@ -8951,7 +9017,6 @@ static int particlestreakshowmenu=0;
 static int tourmenu=0,tourcopymenu=0;
 static int trainerviewmenu=0,mainmenu=0,zoneshowmenu=0,particleshowmenu=0;
 static int showobjectsmenu=0,showdevicesmenu=0,showobjectsplotmenu=0,devicetypemenu=0,spheresegmentmenu=0,propmenu=0;
-static int unloadplot3dmenu=0, unloadpatchmenu=0;
 static int showmultislicemenu=0;
 static int textureshowmenu=0;
 #ifdef _DEBUG
@@ -9084,29 +9149,48 @@ static int menu_count=0;
       next_total+=vis_boundary_type[i];
     }
     if(next_total == 6){
-      glutAddMenuEntry(_("*Show all"),  ShowEXTERIORwallmenu);
-      glutAddMenuEntry(_("Hide all"),   HideEXTERIORwallmenu);
+      show_all_exterior_patch_data = 1;
+      hide_all_exterior_patch_data = 0;
+      glutAddMenuEntry(_("*Show all"),  SHOW_EXTERIOR_WALL_MENU);
+      glutAddMenuEntry(_("Hide all"),   HIDE_EXTERIOR_WALL_MENU);
     }
     else if(next_total == 0){
-      glutAddMenuEntry(_("Show all"),  ShowEXTERIORwallmenu);
-      glutAddMenuEntry(_("*Hide all"), HideEXTERIORwallmenu);
+      show_all_exterior_patch_data = 0;
+      hide_all_exterior_patch_data = 1;
+      glutAddMenuEntry(_("Show all"),  SHOW_EXTERIOR_WALL_MENU);
+      glutAddMenuEntry(_("*Hide all"), HIDE_EXTERIOR_WALL_MENU);
     }
     else{
-      glutAddMenuEntry(_("#Show all"),  ShowEXTERIORwallmenu);
-      glutAddMenuEntry(_("#Hide all"),  HideEXTERIORwallmenu);
+      show_all_exterior_patch_data = 0;
+      hide_all_exterior_patch_data = 0;
+      glutAddMenuEntry(_("#Show all"),  SHOW_EXTERIOR_WALL_MENU);
+      glutAddMenuEntry(_("#Hide all"),  HIDE_EXTERIOR_WALL_MENU);
     }
-    if(IsBoundaryType(FRONTwall) == 1 && vis_boundary_type[FRONTwall] == 1)glutAddMenuEntry(_("*Front"), FRONTwallmenu);
-    if(IsBoundaryType(FRONTwall) == 1 && vis_boundary_type[FRONTwall] == 0)glutAddMenuEntry(_("Front"), FRONTwallmenu);
-    if(IsBoundaryType(BACKwall) == 1 && vis_boundary_type[BACKwall] == 1)glutAddMenuEntry(_("*Back"), BACKwallmenu);
-    if(IsBoundaryType(BACKwall) == 1 && vis_boundary_type[BACKwall] == 0)glutAddMenuEntry(_("Back"), BACKwallmenu);
-    if(IsBoundaryType(LEFTwall) == 1 && vis_boundary_type[LEFTwall] == 1)glutAddMenuEntry(_("*Left"), LEFTwallmenu);
-    if(IsBoundaryType(LEFTwall) == 1 && vis_boundary_type[LEFTwall] == 0)glutAddMenuEntry(_("Left"), LEFTwallmenu);
-    if(IsBoundaryType(RIGHTwall) == 1 && vis_boundary_type[RIGHTwall] == 1)glutAddMenuEntry(_("*Right"), RIGHTwallmenu);
-    if(IsBoundaryType(RIGHTwall) == 1 && vis_boundary_type[RIGHTwall] == 0)glutAddMenuEntry(_("Right"), RIGHTwallmenu);
-    if(IsBoundaryType(UPwall) == 1 && vis_boundary_type[UPwall] == 1)glutAddMenuEntry(_("*Up"), UPwallmenu);
-    if(IsBoundaryType(UPwall) == 1 && vis_boundary_type[UPwall] == 0)glutAddMenuEntry(_("Up"), UPwallmenu);
-    if(IsBoundaryType(DOWNwall) == 1 && vis_boundary_type[DOWNwall] == 1)glutAddMenuEntry(_("*Down"), DOWNwallmenu);
-    if(IsBoundaryType(DOWNwall) == 1 && vis_boundary_type[DOWNwall] == 0)glutAddMenuEntry(_("Down"), DOWNwallmenu);
+    UpdateShowExtPatch(show_all_exterior_patch_data, hide_all_exterior_patch_data);
+    if(IsBoundaryType(FRONTwall) == 1){
+      if(vis_boundary_type[FRONTwall] == 1)glutAddMenuEntry(_("*Front"), FRONTwallmenu);
+      if(vis_boundary_type[FRONTwall] == 0)glutAddMenuEntry(_("Front"), FRONTwallmenu);
+    }
+    if(IsBoundaryType(BACKwall) == 1){
+      if(vis_boundary_type[BACKwall] == 1)glutAddMenuEntry(_("*Back"), BACKwallmenu);
+      if(vis_boundary_type[BACKwall] == 0)glutAddMenuEntry(_("Back"), BACKwallmenu);
+    }
+    if(IsBoundaryType(LEFTwall) == 1){
+      if(vis_boundary_type[LEFTwall] == 1)glutAddMenuEntry(_("*Left"), LEFTwallmenu);
+      if(vis_boundary_type[LEFTwall] == 0)glutAddMenuEntry(_("Left"), LEFTwallmenu);
+    }
+    if(IsBoundaryType(RIGHTwall) == 1){
+      if(vis_boundary_type[RIGHTwall] == 1)glutAddMenuEntry(_("*Right"), RIGHTwallmenu);
+      if(vis_boundary_type[RIGHTwall] == 0)glutAddMenuEntry(_("Right"), RIGHTwallmenu);
+    }
+    if(IsBoundaryType(UPwall) == 1){
+      if(vis_boundary_type[UPwall] == 1)glutAddMenuEntry(_("*Up"), UPwallmenu);
+      if(vis_boundary_type[UPwall] == 0)glutAddMenuEntry(_("Up"), UPwallmenu);
+    }
+    if(IsBoundaryType(DOWNwall) == 1){
+      if(vis_boundary_type[DOWNwall] == 1)glutAddMenuEntry(_("*Down"), DOWNwallmenu);
+      if(vis_boundary_type[DOWNwall] == 0)glutAddMenuEntry(_("Down"), DOWNwallmenu);
+    }
 
     CREATEMENU(showpatchmenu,ShowBoundaryMenu);
     if(npatchloaded>0){
@@ -9140,11 +9224,11 @@ static int menu_count=0;
         else{
           if(show_boundaryfiles==1){
             glutAddMenuEntry("*Show all", GLUI_SHOWALL_BOUNDARY);
-            glutAddMenuEntry("Hide all",  GLUI_SHOWALL_BOUNDARY);
+            glutAddMenuEntry("Hide all",  GLUI_HIDEALL_BOUNDARY);
           }
           else{
             glutAddMenuEntry("Show all",  GLUI_SHOWALL_BOUNDARY);
-            glutAddMenuEntry("*Hide all", GLUI_SHOWALL_BOUNDARY);
+            glutAddMenuEntry("*Hide all", GLUI_HIDEALL_BOUNDARY);
           }
         }
       }
@@ -9183,8 +9267,8 @@ static int menu_count=0;
       }
     }
     GLUTADDSUBMENU(_("Exterior"), showpatchextmenu);
-    if(vis_boundary_type[INTERIORwall]==1)glutAddMenuEntry(_("*Interior"),INTERIORwallmenu);
-    if(vis_boundary_type[INTERIORwall]==0)glutAddMenuEntry(_("Interior"),INTERIORwallmenu);
+    if(vis_boundary_type[INTERIORwall]==1)glutAddMenuEntry(_("*Interior"), INTERIOR_WALL_MENU);
+    if(vis_boundary_type[INTERIORwall]==0)glutAddMenuEntry(_("Interior"),  INTERIOR_WALL_MENU);
   }
 
   /* --------------------------------terrain menu -------------------------- */
@@ -9402,7 +9486,7 @@ static int menu_count=0;
         glutAddMenuEntry(levellabel2,sextras.nrgb-2-i);
       }
       else{
-        char chari[4];
+        char chari[20];
 
         if(plotiso[plotn-1]==i&&visiso==1){
           sprintf(chari,"*%i",i+1);
@@ -10951,6 +11035,12 @@ static int menu_count=0;
   GLUTADDSUBMENU(_("Colorbar"),colorbarsmenu);
   GLUTADDSUBMENU(_("Colorbar type"), colorbarshademenu);
   GLUTADDSUBMENU(_("Colorbar digits"), colorbardigitmenu);
+  if(force_decimal == 1){
+    glutAddMenuEntry(_("  *Force decimal in colorbar labels"), COLORBAR_DECIMAL);
+  }
+  else{
+    glutAddMenuEntry(_("  Force decimal in colorbar labels"), COLORBAR_DECIMAL);
+  }
   if(use_transparency_data==1){
     glutAddMenuEntry(_("  *Transparent (data)"),COLORBAR_TRANSPARENT);
   }
@@ -11151,6 +11241,7 @@ static int menu_count=0;
     }
     glutAddMenuEntry(line, ca->view_id);
   }
+  glutAddMenuEntry("center", XYZ_CENTER);
 
   /* --------------------------------reset menu -------------------------- */
 
@@ -11590,7 +11681,7 @@ static int menu_count=0;
   if(showtour_dialog==1)glutAddMenuEntry(_("*Create/modify tours...  ALT t"), DIALOG_TOUR_HIDE);
   if(showtour_dialog==0)glutAddMenuEntry(_("Create/modify tours...  ALT t"), DIALOG_TOUR_SHOW);
   glutAddMenuEntry(_("Edit colorbar...  ALT C"), DIALOG_COLORBAR);
-  if(sextras.isZoneFireModel==0){
+  if(sextras.isZoneFireModel==0 && have_geometry_dialog==1){
     glutAddMenuEntry(_("Examine geometry...  ALT e"), DIALOG_GEOMETRY);
   }
 #else
@@ -11598,7 +11689,7 @@ static int menu_count=0;
   if(showtour_dialog==1)glutAddMenuEntry(_("*Create/edit tours..."), DIALOG_TOUR_HIDE);
   if(showtour_dialog==0)glutAddMenuEntry(_("Create/edit tours..."), DIALOG_TOUR_SHOW);
   glutAddMenuEntry(_("Edit colorbar...  "), DIALOG_COLORBAR);
-  if(sextras.isZoneFireModel==0){
+  if(sextras.isZoneFireModel == 0 && have_geometry_dialog == 1){
     glutAddMenuEntry(_("Examine geometry...  "), DIALOG_GEOMETRY);
   }
 #endif
@@ -11942,12 +12033,13 @@ static int menu_count=0;
     glutAddMenuEntry(render_label, MENU_DUMMY);
   }
   glutAddMenuEntry("  ALT r: toggle research mode (global min/max for coloring data, turn off axis label smoothing)", MENU_DUMMY);
-  glutAddMenuEntry(_("  W: toggle clipping modes - use ALT c to specify clipping planes"), MENU_DUMMY);
-  glutAddMenuEntry(_("  -/space bar: decrement/increment time step, 2D contour planes, 3D contour levels"), MENU_DUMMY);
-  glutAddMenuEntry("", MENU_DUMMY);
   if(n_embedded_meshes > 0){
     glutAddMenuEntry(_("  ALT u: toggle coarse slice display in embedded mesh"), MENU_DUMMY);
   }
+  glutAddMenuEntry("      U: toggle toggle between original and fast blockage drawing", MENU_DUMMY);
+  glutAddMenuEntry(_("  W: toggle clipping modes - use ALT c to specify clipping planes"), MENU_DUMMY);
+  glutAddMenuEntry(_("  -/space bar: decrement/increment time step, 2D contour planes, 3D contour levels"), MENU_DUMMY);
+  glutAddMenuEntry("", MENU_DUMMY);
   glutAddMenuEntry(_("  ALT v: toggle projection mode (perspective and size preserving)"), MENU_DUMMY);
   if(clip_commandline==1){
     glutAddMenuEntry(_("  x/y/z: toggle lower x/y/z clip planes"), MENU_DUMMY);
@@ -12075,8 +12167,8 @@ static int menu_count=0;
       if(meshescoll.nmeshes>1){
       }
     }
-    glutAddMenuEntry("-",MENU_DUMMY);
     glutAddMenuEntry("Particle number/file size", MENU_PART_NUM_FILE_SIZE);
+    glutAddMenuEntry("-",MENU_DUMMY);
     glutAddMenuEntry(_("Settings..."),     MENU_PART_SETTINGS);
     glutAddMenuEntry(_("Unload"), MENU_PARTICLE_UNLOAD_ALL);
   }
@@ -12267,9 +12359,14 @@ static int menu_count=0;
         }
 #endif
         glutAddMenuEntry(_("3D smoke file sizes"), MENU_SMOKE_FILE_SIZES);
+        glutAddMenuEntry("-", MENU_DUMMY3);
         glutAddMenuEntry(_("Settings..."), MENU_SMOKE_SETTINGS);
-        if(nsmoke3dloaded==1)glutAddMenuEntry(_("Unload"),UNLOAD_ALL);
-        if(nsmoke3dloaded>1)GLUTADDSUBMENU(_("Unload"),unloadsmoke3dmenu);
+        if(nsmoke3dloaded > 1){
+          GLUTADDSUBMENU(_("Unload"), unloadsmoke3dmenu);
+        }
+        else{
+          glutAddMenuEntry(_("Unload"), UNLOAD_ALL);
+        }
       }
     }
 
@@ -12279,23 +12376,6 @@ static int menu_count=0;
       plot3ddata *plot3dim1, *plot3di;
       char menulabel[1024];
       int ii;
-
-      CREATEMENU(unloadplot3dmenu,UnloadPlot3dMenu);
-      for(ii=0;ii<nplot3dinfo;ii++){
-        i=plot3dorderindex[ii];
-        plot3di = plot3dinfo + i;
-        if(ii==0){
-          strcpy(menulabel,plot3di->longlabel);
-          glutAddMenuEntry(menulabel,MENU_PLOT3D_DUMMY);
-        }
-        if(ii!=0&&strcmp(plot3di->longlabel,plot3dinfo[plot3dorderindex[ii-1]].longlabel)!=0){
-          glutAddMenuEntry(plot3di->longlabel,MENU_PLOT3D_DUMMY);
-        }
-        if(plot3di->loaded==0)continue;
-        STRCPY(menulabel,plot3dinfo[i].menulabel);
-        glutAddMenuEntry(menulabel,i);
-      }
-      glutAddMenuEntry(_("Unload all"),UNLOAD_ALL);
 
       nloadsubplot3dmenu=1;
       for(ii=1;ii<nplot3dinfo;ii++){
@@ -12413,12 +12493,7 @@ static int menu_count=0;
         if(ii==nplot3dinfo-1){
           glutAddMenuEntry("-", MENU_PLOT3D_DUMMY);
           glutAddMenuEntry(_("Settings..."), MENU_PLOT3D_SETTINGS);
-          if(nplot3dloaded>1){
-            GLUTADDSUBMENU(_("Unload"), unloadplot3dmenu);
-          }
-          else{
-            glutAddMenuEntry(_("Unload"), UNLOAD_ALL);
-          }
+          glutAddMenuEntry(_("Unload"), UNLOAD_ALL);
         }
       }
     }
@@ -12427,42 +12502,8 @@ static int menu_count=0;
 
     if(npatchinfo>0){
       int ii;
-      int npatchloaded2=0;
-
-      if(meshescoll.nmeshes>1||n_mirrorvents>0||n_openvents>0){
-        CREATEMENU(includepatchmenu, LoadBoundaryMenu);
-        if(meshescoll.nmeshes>1){
-          if(show_bndf_mesh_interface==1)glutAddMenuEntry("*Mesh interface", MENU_BNDF_SHOW_MESH_INTERFACE);
-          if(show_bndf_mesh_interface==0)glutAddMenuEntry("Mesh interface", MENU_BNDF_SHOW_MESH_INTERFACE);
-        }
-        if(n_mirrorvents>0){
-          if(show_mirror_boundary==1)glutAddMenuEntry("*Mirror surface", MENU_BNDF_MIRROR);
-          if(show_mirror_boundary==0)glutAddMenuEntry("Mirror surface", MENU_BNDF_MIRROR);
-        }
-        if(n_openvents>0){
-          if(show_open_boundary==1)glutAddMenuEntry("*Open vent", MENU_BNDF_OPEN);
-          if(show_open_boundary==0)glutAddMenuEntry("Open vent", MENU_BNDF_OPEN);
-        }
-      }
 
       nloadpatchsubmenus=0;
-
-      CREATEMENU(unloadpatchmenu,UnloadBoundaryMenu);
-      for(ii=0;ii<npatchinfo;ii++){
-        patchdata *patchi;
-        char menulabel[1024];
-
-        i = patchorderindex[ii];
-        patchi = patchinfo + i;
-        if(patchi->loaded==1){
-          if(patchi->filetype_label==NULL||strcmp(patchi->filetype_label, "INCLUDE_GEOM")!=0){
-            STRCPY(menulabel, patchi->menulabel);
-            glutAddMenuEntry(menulabel, i);
-            npatchloaded2++;
-          }
-        }
-      }
-      glutAddMenuEntry(_("Unload all"),UNLOAD_ALL);
 
       if(meshescoll.nmeshes>1&&loadpatchsubmenus==NULL){
         NewMemory((void **)&loadpatchsubmenus,npatchinfo*sizeof(int));
@@ -12496,20 +12537,12 @@ static int menu_count=0;
           glutAddMenuEntry(menulabel,i);
         }
       }
-
-//*** these same lines also appear below
-      glutAddMenuEntry("-",MENU_DUMMY3);
-
       if(nboundaryslicedups>0){
         GLUTADDSUBMENU(_("Duplicate boundary slices"),duplicateboundaryslicemenu);
       }
+      glutAddMenuEntry("-",MENU_DUMMY3);
       glutAddMenuEntry(_("Settings..."), MENU_BOUNDARY_SETTINGS);
-      if(npatchloaded2>1){
-        GLUTADDSUBMENU(_("Unload"),unloadpatchmenu);
-      }
-      else{
-       glutAddMenuEntry(_("Unload"),UNLOAD_ALL);
-      }
+      glutAddMenuEntry(_("Unload"),UNLOAD_ALL);
 
       if(nboundaryslicedups>0){
         CREATEMENU(duplicateboundaryslicemenu,LoadBoundaryMenu);
@@ -12638,12 +12671,7 @@ static int menu_count=0;
         GLUTADDSUBMENU(_("Duplicate boundary slices"),duplicateboundaryslicemenu);
       }
       glutAddMenuEntry(_("Settings..."), MENU_BOUNDARY_SETTINGS);
-      if(npatchloaded2>1){
-        GLUTADDSUBMENU(_("Unload"),unloadpatchmenu);
-      }
-      else{
-       glutAddMenuEntry(_("Unload"),UNLOAD_ALL);
-      }
+      glutAddMenuEntry(_("Unload"),UNLOAD_ALL);
     }
 
 /* --------------------------------load iso menu -------------------------- */
@@ -12846,7 +12874,7 @@ static int menu_count=0;
     glutAddMenuEntry(_("smv"), RELOAD_SMV_FILE);
     glutAddMenuEntry("-", MENU_DUMMY);
     glutAddMenuEntry(_("When:"), MENU_DUMMY);
-    glutAddMenuEntry(_("  now (all meshes)"),RELOAD_SWITCH);
+    glutAddMenuEntry(_("  now"),RELOAD_SWITCH);
     if(periodic_reload_value==1)glutAddMenuEntry(_("   *every minute"),1);
     if(periodic_reload_value!=1)glutAddMenuEntry(_("   every minute"),1);
     if(periodic_reload_value==5)glutAddMenuEntry(_("   *every 5 minutes"),5);

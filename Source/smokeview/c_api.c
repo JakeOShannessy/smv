@@ -8,18 +8,14 @@
 #include GLUT_H
 
 #include "smokeviewvars.h"
-
 #include "smokeheaders.h"
-
 #include "IOvolsmoke.h"
-
 #include "infoheader.h"
-
 #include "glui_bounds.h"
-
+#include "glui_motion.h"
+#include "glui_smoke.h"
 #include "c_api.h"
 #include "gd.h"
-
 #include "IOscript.h"
 
 #ifdef WIN32
@@ -2559,7 +2555,7 @@ int SetTicklinewidth(float v) {
 } // TICKLINEWIDTH
 
 int SetUsenewdrawface(int v) {
-  use_new_drawface = v;
+  blockage_draw_option = v;
   return 0;
 } // USENEWDRAWFACE
 

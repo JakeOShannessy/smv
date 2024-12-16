@@ -17,6 +17,9 @@
 
 #include "readobject.h"
 #include "readlabel.h"
+#include "glui_bounds.h"
+#include "glui_motion.h"
+#include "glui_smoke.h"
 
 /* ------------------ InitDefaultCameras ------------------------ */
 
@@ -259,9 +262,7 @@ int SetupCase(char *filename){
     }
 
   // read casename.smo (only OBST lines) to define a one mesh version of OBST's
-#ifndef pp_FDS
     ReadSMVOrig();
-#endif
   }
   if(return_code==0&&trainer_mode==1){
     GLUIShowTrainer();
@@ -1678,7 +1679,6 @@ void InitVars(void){
     for(iii=0;iii<7;iii++){
       vis_boundary_type[iii]=1;
     }
-    vis_boundary_type[0]=1;
     for(iii=0;iii<MAXPLOT3DVARS;iii++){
       p3min_all[iii]    = 1.0f;
       p3chopmin[iii]    = 1.0f;

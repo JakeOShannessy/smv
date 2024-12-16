@@ -12,6 +12,9 @@
 #include "smokeviewvars.h"
 #include "IOvolsmoke.h"
 #include "glui_motion.h"
+#include "glui_bounds.h"
+#include "glui_smoke.h"
+#include "IOobjects.h"
 #include "fopen.h"
 
 #include "IOscript.h"
@@ -116,7 +119,7 @@ void NextXIndex(int inc,int flag){
   }
 }
 
-/* ------------------ next_yindex ------------------------ */
+/* ------------------ NextYIndex ------------------------ */
 
 void NextYIndex(int inc,int flag){
   int i,j,first;
@@ -178,7 +181,7 @@ void NextYIndex(int inc,int flag){
   }
 }
 
-/* ------------------ next_zindex ------------------------ */
+/* ------------------ NextZIndex ------------------------ */
 
 void NextZIndex(int inc,int flag){
   int i,j,first;
@@ -671,11 +674,14 @@ void CheckTimeBound(void){
       sd->itime=sd->ntimes-1;
       if(sd->volslice==1)sd->itime--;
     }
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<npatchinfo;i++){
+      patchdata *patchi;
       meshdata *meshi;
 
-      meshi=meshescoll.meshinfo+i;
-      meshi->patch_itime=meshi->npatch_times-1;
+      patchi=patchinfo+i;
+      if(patchi->loaded == 0)continue;
+      meshi = meshescoll.meshinfo + patchi->blocknumber;
+      meshi->patch_itime=patchi->ntimes-1;
     }
     for(i=0;i<meshescoll.nmeshes;i++){
       meshdata *meshi;
@@ -980,11 +986,11 @@ void UpdateMouseInfo(int flag, int xm, int ym){
   camera_current->quat_defined=1;
 }
 
-/* ------------------ MouseCB ------------------------ */
+/* ------------------ MouseCBWorker ------------------------ */
 
 #define DELTA_TIME 0.25
 
-void MouseCB(int button, int state, int xm, int ym){
+void MouseCBWorker(int button, int state, int xm, int ym){
   float *eye_xyz;
 
 #ifdef pp_OSX_HIGHRES
@@ -1023,7 +1029,6 @@ void MouseCB(int button, int state, int xm, int ym){
   }
   glui_move_mode=-1;
   move_gslice=0;
-  glutPostRedisplay();
 
   if(state==GLUT_UP){
     tour_drag=0;
@@ -1039,6 +1044,7 @@ void MouseCB(int button, int state, int xm, int ym){
     GLUTSETCURSOR(GLUT_CURSOR_LEFT_ARROW);
     GLUIUpdateTrainerMoves();
     geom_bounding_box_mousedown = 0;
+    glutPostRedisplay();
     return;
   }
 
@@ -1074,9 +1080,11 @@ void MouseCB(int button, int state, int xm, int ym){
       if(select_geom!=GEOM_PROP_NONE)MouseSelectGeom(xm, ym);
       if(select_part == 1 && npartloaded>0)MouseSelectPart(xm, ym);
     }
-    glutPostRedisplay();
     if( showtime==1 || showplot3d==1){
-      if(ColorbarClick(xm,ym)==1)return;
+      if(ColorbarClick(xm, ym) == 1){
+        glutPostRedisplay();
+        return;
+      }
     }
     if(visTimebar==1&&showtime==1){
       if(TimebarClick(xm,ym)==1)return;
@@ -1133,6 +1141,14 @@ void MouseCB(int button, int state, int xm, int ym){
     GLUIGetGeomDialogState();
     if(structured_isopen == 1 && unstructured_isopen == 0)DisplayCB();
   }
+}
+
+/* ------------------ MouseCB ------------------------ */
+
+void MouseCB(int button, int state, int xm, int ym){
+  INIT_PRINT_TIMER(timer_mouse_down);
+  MouseCBWorker(button, state, xm, ym);
+  PRINT_TIMER(timer_mouse_down, "MouseCB");
 }
 
 /* ------------------ ColorbarDrag ------------------------ */
@@ -1459,38 +1475,42 @@ void MouseDragCB(int xm, int ym){
 #endif
 
   in_external=0;
-#ifdef pp_GPUTHROTTLE
+#ifdef pp_GPU
   if(usegpu==1&&showvolrender==1&&show_volsmoke_moving==1){
     if(ThrottleGpu()==1)return;
   }
 #endif
 
-  glutPostRedisplay();
-
   if( colorbar_drag==1&&(showtime==1 || showplot3d==1)){
     ColorbarDrag(xm,ym);
+    glutPostRedisplay();
     return;
   }
   if(timebar_drag==1){
     TimebarDrag(xm);
+    glutPostRedisplay();
     return;
   }
   if(move_gslice==1){
     MoveGenSlice(xm,ym);
+    glutPostRedisplay();
     return;
   }
   if(tour_drag==1){
     DragTourNode(xm,ym);
+    glutPostRedisplay();
     return;
   }
   if(colorbaredit_drag==1){
     DragColorbarEditNode(xm, ym);
+    glutPostRedisplay();
     return;
   }
   if(rotation_type==ROTATION_3AXIS&&(key_state == KEY_NONE||key_state == KEY_SHIFT)){
     UpdateMouseInfo(MOUSE_MOTION,xm,ym);
   }
   MoveScene(xm,ym);
+  glutPostRedisplay();
 }
 
 /* ------------------ KeyboardUpCB ------------------------ */
@@ -1551,7 +1571,7 @@ int IsPlot3DLoaded(void){
   return 0;
 }
 
-/* ------------------ Plot3DListMenu ------------------------ */
+/* ------------------ GetPlot3DTimeList ------------------------ */
 
 int GetPlot3DTimeList(int inc){
   float time;
@@ -1861,8 +1881,6 @@ void Keyboard(unsigned char key, int flag){
       break;
     case 'F':
       hide_overlaps=1-hide_overlaps;
-      updatehiddenfaces=1;
-      UpdateHiddenFaces();
       GLUIUpdateShowHideButtons();
       glutPostRedisplay();
       break;
@@ -2065,22 +2083,6 @@ void Keyboard(unsigned char key, int flag){
         if(visTimebar==1)PRINTF("Time bar visible\n");
       }
       break;
-    case 'm':
-      switch(keystate){
-      case GLUT_ACTIVE_ALT:
-#ifdef pp_DIALOG_SHORTCUTS
-        DialogMenu(DIALOG_MOTION); // motion dialog
-        break;
-#endif
-      case GLUT_ACTIVE_CTRL:
-      default:
-        if(meshescoll.nmeshes>1){
-          highlight_mesh++;
-          if(highlight_mesh>meshescoll.nmeshes-1)highlight_mesh=0;
-          UpdateCurrentMesh(meshescoll.meshinfo+highlight_mesh);
-        }
-      }
-      break;
     case 'l':
     case 'L':
 #ifdef pp_MEMDEBUG
@@ -2100,6 +2102,22 @@ void Keyboard(unsigned char key, int flag){
       }
       printf("nopeninfo: %i\n", nopeninfo);
 #endif
+      break;
+    case 'm':
+      switch(keystate){
+      case GLUT_ACTIVE_ALT:
+#ifdef pp_DIALOG_SHORTCUTS
+        DialogMenu(DIALOG_MOTION); // motion dialog
+        break;
+#endif
+      case GLUT_ACTIVE_CTRL:
+      default:
+        if(meshescoll.nmeshes>1){
+          highlight_mesh++;
+          if(highlight_mesh>meshescoll.nmeshes-1)highlight_mesh=0;
+          UpdateCurrentMesh(meshescoll.meshinfo+highlight_mesh);
+        }
+      }
       break;
     case 'M':
       clip_commandline = 1-clip_commandline;
@@ -2553,7 +2571,6 @@ void Keyboard(unsigned char key, int flag){
       GLUISetLabelControls();
       break;
     case 'u':
-    case 'U':
       switch(keystate){
         case GLUT_ACTIVE_ALT:
           skip_slice_in_embedded_mesh = 1 - skip_slice_in_embedded_mesh;
@@ -2567,6 +2584,16 @@ void Keyboard(unsigned char key, int flag){
           }
           break;
       }
+      break;
+    case 'U':
+      blockage_draw_option++;
+      if(blockage_draw_option > 3)blockage_draw_option = 0;
+      updatefacelists = 1;
+      GLUIUpdateFastBlockageDraw();
+      if(blockage_draw_option == 0)printf("original blockage drawing\n");
+      if(blockage_draw_option == 1)printf("fast blockage drawing\n");
+      if(blockage_draw_option == 2)printf("debug blockage drawing\n");
+      if(blockage_draw_option == 3)printf("debug blockage drawing, draw only hidden faces\n");
       break;
     case '|':
       projection_type = 1-projection_type;
@@ -3665,6 +3692,7 @@ void SetScreenSize(int *width, int *height){
   }
 }
 
+
 /* ------------------ ReshapeCB ------------------------ */
 
 void ReshapeCB(int width, int height){
@@ -3682,8 +3710,12 @@ void ReshapeCB(int width, int height){
     SetScreenSize(&width,&height);
   }
   GLUIGetPixelsPerTriangle();
+
   windowresized=1;
   CopyCamera(camera_current,camera_save);
+  // don't update faces after resizing the window
+  sextras.updatefaces = 0;
+  updatefacelists = 0;
   windowsize_pointer_old = -1;
   GLUIUpdateWindowSizeList();
   update_reshape = 2;
@@ -4165,6 +4197,7 @@ void SetMainWindow(void){
 }
 
 /* ------------------ ResizeWindow ------------------------ */
+
 
 void ResizeWindow(int width, int height){
   float wscaled, hscaled;

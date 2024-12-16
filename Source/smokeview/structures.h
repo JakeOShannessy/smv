@@ -135,13 +135,11 @@ typedef struct _facedata {
   int meshindex, blockageindex;
   int imin, imax, jmin, jmax, kmin, kmax;
   float xmin, xmax, ymin, ymax, zmin, zmax;
-  int dir,hidden,dup,interior;
-  int del;
+  int dir, hidden, dup, interior;
   int transparent;
-  int patchpresent;
   struct _culldata *cullport;
   int **showtimelist_handle;
-  int show_bothsides, is_interior;
+  int show_bothsides;
   struct _blockagedata *bc;
   surfdata *surfinfo;
   texturedata *textureinfo;

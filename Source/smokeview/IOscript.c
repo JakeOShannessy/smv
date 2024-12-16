@@ -13,6 +13,8 @@
 #include "IOscript.h"
 #include "glui_motion.h"
 #include "glui_smoke.h"
+#include "glui_bounds.h"
+#include "IOobjects.h"
 
 static char param_buffer[1024];
 static int param_status, line_number;
@@ -324,6 +326,8 @@ void InitKeywords(void){
   InitKeyword("SETCBAR",             SCRIPT_SETCBAR, 1);             // documented
   InitKeyword("SETCBARLAB",          SCRIPT_SETCBARLAB, 0);
   InitKeyword("SETCBARRGB",          SCRIPT_SETCBARRGB, 0);
+  InitKeyword("HILIGHTMINVALS",      SCRIPT_HILIGHTMINVALS, 4);      // documented
+  InitKeyword("HILIGHTMAXVALS",      SCRIPT_HILIGHTMAXVALS, 4);      // documented
 
 // tour
   InitKeyword("LOADTOUR",            SCRIPT_LOADTOUR, 1);            // documented
@@ -854,7 +858,21 @@ int CompileScript(char *scriptfile){
         sscanf(param_buffer, "%i %i", &scripti->ival, &scripti->ival2);
         break;
 
-// RENDERTYPE
+// HILIGHTMINVALS
+//  show/hide r g b (int)
+// HILIGHTMAXVALS
+//  show/hide r g b (int)
+      case SCRIPT_HILIGHTMAXVALS:
+      case SCRIPT_HILIGHTMINVALS:
+        SETbuffer;
+        sscanf(param_buffer, "%i %i %i %i", &scripti->ival, &scripti->ival2, &scripti->ival3, &scripti->ival4);
+        scripti->ival  = CLAMP(scripti->ival,  0, 1);
+        scripti->ival2 = CLAMP(scripti->ival2, 0, 255);
+        scripti->ival3 = CLAMP(scripti->ival3, 0, 255);
+        scripti->ival4 = CLAMP(scripti->ival4, 0, 255);
+        break;
+
+        // RENDERTYPE
 //  jpg or png  (char)
       case SCRIPT_RENDERTYPE:
         SETcval;
@@ -3072,9 +3090,9 @@ void ScriptXYZView(float x, float y, float z, float az, float elev){
   use_customview = 0;
   GLUISceneMotionCB(CUSTOM_VIEW);
   GLUIViewpointCB(RESTORE_VIEW);
-  set_view_xyz[0]      = x;
-  set_view_xyz[1]      = y;
-  set_view_xyz[2]      = z;
+  glui_xyz_fds[0]      = x;
+  glui_xyz_fds[1]      = y;
+  glui_xyz_fds[2]      = z;
   customview_azimuth   = az;
   customview_elevation = elev;
   use_customview       = 1;
@@ -3165,6 +3183,35 @@ void ScriptPartClassType(scriptdata *scripti){
     fprintf(stderr, "*** Error: particle class type %s failed to be set\n", scripti->cval);
     if(stderr2!=NULL)fprintf(stderr2, "*** Error: particle class type %s failed to be set\n", scripti->cval);
   }
+}
+
+/* ------------------ ScriptHilightMinMaxVals ------------------------ */
+
+void ScriptHilightMinMaxVals(scriptdata *scripti, int flag){
+  switch(flag){
+  case 0:
+    show_extreme_mindata = scripti->ival;
+    if(show_extreme_mindata == 1){
+      glui_down_rgb[0] = scripti->ival2;
+      glui_down_rgb[1] = scripti->ival3;
+      glui_down_rgb[2] = scripti->ival4;
+      GLUIUpdateExtremeVals();
+    }
+    break;
+  case 1:
+    show_extreme_maxdata = scripti->ival;
+    if(show_extreme_maxdata == 1){
+      glui_up_rgb[0] = scripti->ival2;
+      glui_up_rgb[1] = scripti->ival3;
+      glui_up_rgb[2] = scripti->ival4;
+      GLUIUpdateExtremeVals();
+    }
+    break;
+  default:
+    assert(0);
+    break;
+  }
+  GLUIUpdateExtreme();
 }
 
 /* ------------------ ScriptLoadIniFile ------------------------ */
@@ -3747,6 +3794,7 @@ void ScriptViewXYZMINMAXOrtho(int command){
 
 
 /* ------------------ ScriptViewXYZMINMAXPersp ------------------------ */
+
 void ResetDefaultMenu(int var);
 void ScriptViewXYZMINMAXPersp(int command){
   switch(command){
@@ -3812,9 +3860,9 @@ void SetViewZMAXPersp(void){
   use_customview = 0;
   GLUISceneMotionCB(CUSTOM_VIEW);
   GLUIViewpointCB(RESTORE_VIEW);
-  set_view_xyz[0]      = xcen;
-  set_view_xyz[1]      = ycen;
-  set_view_xyz[2]      = zcen;
+  glui_xyz_fds[0]      = xcen;
+  glui_xyz_fds[1]      = ycen;
+  glui_xyz_fds[2]      = zcen;
   customview_azimuth   = azimuth;
   customview_elevation = elevation;
   use_customview       = 1;
@@ -3879,6 +3927,12 @@ int RunScriptCommand(scriptdata *script_command){
       else{
         UpdateRenderType(PNG);
       }
+      break;
+    case SCRIPT_HILIGHTMINVALS:
+      ScriptHilightMinMaxVals(scripti, 0);
+      break;
+    case SCRIPT_HILIGHTMAXVALS:
+      ScriptHilightMinMaxVals(scripti, 1);
       break;
     case SCRIPT_MOVIETYPE:
       if(STRCMP(scripti->cval, "WMV") == 0){

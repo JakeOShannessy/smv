@@ -10,9 +10,10 @@
 #include "smokeviewdefs.h"
 #include "smokeviewvars.h"
 #include "IOscript.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "glui_smoke.h"
 #include "glui_bounds.h"
+#include "glui_motion.h"
 #include "histogram.h"
 
 #include "colorbars.h"
@@ -22,8 +23,6 @@ int GetCacheFlag(int type);
 int GetValType(int type);
 void SliceInObstDialog2Menu(void);
 void GLUIPlot3DBoundCB(int var);
-
-#define MESH_EPS 0.0001
 
 GLUI *glui_bounds=NULL;
 
@@ -2282,6 +2281,7 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
   int i;
   cpp_boundsdata *bounds;
 
+  bounds = patchboundsCPP.get_bounds_data();
   patchboundsCPP.CB(var);
   switch(var){
     case BOUND_VALMIN:
@@ -2290,13 +2290,23 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
     case BOUND_SETVALMAX:
       UpdateAllBoundaryColors(0);
       break;
-    case BOUND_VAL_TYPE:
-    case BOUND_CHOPMIN:
-    case BOUND_CHOPMAX:
     case BOUND_SETCHOPMIN:
     case BOUND_SETCHOPMAX:
-    case BOUND_COLORBAR_DIGITS:
+    case BOUND_CHOPMIN:
+    case BOUND_CHOPMAX:
     case BOUND_CHOP_HIDE:
+      updatefacelists = 1;
+      sextras.updatefaces = 1;
+      if(bounds->set_chopmax == 1 || bounds->set_chopmin == 1){
+        update_bound_chop_data = 1;
+        hide_internal_blockages = 0;
+      }
+      else{
+        update_bound_chop_data = 0;
+      }
+      break;
+    case BOUND_VAL_TYPE:
+    case BOUND_COLORBAR_DIGITS:
       break;
     case BOUND_PERCENTILE_MINVAL:
     case BOUND_PERCENTILE_MAXVAL:
@@ -2713,8 +2723,6 @@ extern GLUI *glui_clip, *glui_colorbar, *glui_labels, *glui_geometry, *glui_moti
 extern GLUI *glui_shooter, *glui_tour, *glui_stereo, *glui_trainer;
 #endif
 
-int cb_up_rgb[3], cb_down_rgb[3];
-
 GLUI_Listbox *LISTBOX_cb_bound = NULL;
 
 GLUI_Rollout *ROLLOUT_zone_bound=NULL;
@@ -2796,12 +2804,13 @@ GLUI_Panel *PANEL_mesh2 = NULL;
 GLUI_Panel *PANEL_addmesh = NULL;
 GLUI_Panel *PANEL_addremovemesh = NULL;
 GLUI_Panel *PANEL_boundary_temp_threshold=NULL;
+GLUI_Panel *PANEL_boundary_exterior_data = NULL;
+GLUI_Panel *PANEL_boundary_interior_data = NULL;
 GLUI_Panel *PANEL_slice_buttonsA = NULL;
 GLUI_Panel *PANEL_slice_buttonsB = NULL;
 GLUI_Panel *PANEL_boundary_outline_type = NULL;
 GLUI_Panel *PANEL_iso1 = NULL;
 GLUI_Panel *PANEL_iso2 = NULL;
-GLUI_Panel *PANEL_geomexp = NULL;
 GLUI_Panel *PANEL_slice_smoke = NULL;
 GLUI_Panel *PANEL_immersed = NULL;
 GLUI_Panel *PANEL_immersed_region = NULL;
@@ -2852,7 +2861,6 @@ GLUI_Panel *PANEL_slice_plot2df = NULL;
 GLUI_Panel *PANEL_loadbounds = NULL;
 GLUI_Panel *PANEL_intersection_box = NULL;
 GLUI_Panel *PANEL_read_test = NULL;
-GLUI_Panel *PANEL_boundary_debug=NULL;
 
 GLUI_Spinner *SPINNER_partdrawskip = NULL;
 GLUI_Spinner *SPINNER_sliceval_ndigits = NULL;
@@ -2870,7 +2878,6 @@ GLUI_Spinner *SPINNER_line_contour_width=NULL;
 GLUI_Spinner *SPINNER_line_contour_min=NULL;
 GLUI_Spinner *SPINNER_line_contour_max=NULL;
 GLUI_Spinner *SPINNER_timebounds=NULL;
-GLUI_Spinner *SPINNER_boundary_debug_mesh=NULL;
 #ifdef pp_FRAME
 GLUI_Spinner *SPINNER_nframe_threads = NULL;
 #endif
@@ -2923,6 +2930,12 @@ GLUI_Checkbox *CHECKBOX_sortslices_debug = NULL;
 GLUI_Checkbox *CHECKBOX_visColorbarHorizontal2 = NULL;
 GLUI_Checkbox *CHECKBOX_visColorbarVertical2 = NULL;
 GLUI_Checkbox *CHECKBOX_show_boundary_outline=NULL;
+GLUI_Checkbox *CHECKBOX_show_all_exterior_patch_data = NULL;
+GLUI_Checkbox *CHECKBOX_hide_all_exterior_patch_data = NULL;
+GLUI_Checkbox *CHECKBOX_show_all_interior_patch_data = NULL;
+GLUI_Checkbox *CHECKBOX_hide_all_interior_patch_data = NULL;
+GLUI_Checkbox *CHECKBOX_show_exterior_walls[7];
+
 #ifndef pp_PARTFRAME
 GLUI_Checkbox *CHECKBOX_use_partload_threads = NULL;
 #endif
@@ -2955,7 +2968,6 @@ GLUI_Checkbox *CHECKBOX_slice_load_incremental=NULL;
 GLUI_Checkbox *CHECKBOX_color_vector_black = NULL;
 GLUI_Checkbox *CHECKBOX_show_node_slices_and_vectors=NULL;
 GLUI_Checkbox *CHECKBOX_show_cell_slices_and_vectors=NULL;
-GLUI_Checkbox *CHECKBOX_showpatch_both=NULL;
 GLUI_Checkbox *CHECKBOX_showchar=NULL, *CHECKBOX_showonlychar;
 GLUI_Checkbox *CHECKBOX_script_step=NULL;
 GLUI_Checkbox *CHECKBOX_constant_coloring=NULL;
@@ -2977,6 +2989,8 @@ GLUI_Checkbox *CHECKBOX_use_tload_skip=NULL;
 GLUI_Checkbox *CHECKBOX_colorbar_flip = NULL;
 GLUI_Checkbox *CHECKBOX_fixedpoint=NULL;
 GLUI_Checkbox *CHECKBOX_exponential=NULL;
+GLUI_Checkbox *CHECKBOX_force_decimal=NULL;
+GLUI_Checkbox *CHECKBOX_force_zero_pad = NULL;
 GLUI_Checkbox *CHECKBOX_colorbar_autoflip = NULL;
 GLUI_Checkbox *CHECKBOX_labels_shadedata = NULL;
 GLUI_Checkbox *CHECKBOX_labels_shade = NULL;
@@ -3023,7 +3037,6 @@ GLUI_RadioButton *RADIOBUTTON_zone_permax=NULL;
 
 #define FLIP                  19
 #define CB_USE_LIGHTING      120
-#define COLORBAR_EXTREME_RGB  15
 #define COLORBAR_EXTREME      16
 // #define SPLIT_COLORBAR         1 now defined in smokeviewdefs.h
 #define COLORBAR_SHOWSPLIT    17
@@ -3035,7 +3048,7 @@ GLUI_RadioButton *RADIOBUTTON_zone_permax=NULL;
 #define ISO_ROLLOUT      3
 #define PART_ROLLOUT     4
 #define PLOT3D_ROLLOUT   6
-#define SLICE_ROLLOUT    7
+#define SLICE_ROLLOUT_BOUNDS    7
 #define HVACDUCT_ROLLOUT 8
 #define HVACNODE_ROLLOUT 9
 
@@ -3121,6 +3134,20 @@ int      nparticleprocinfo=0;
 
 procdata  subboundprocinfo[5];
 int       nsubboundprocinfo=0;
+
+/* ------------------ UpdateShowExtPatch ------------------------ */
+
+extern "C" void UpdateShowExtPatch(int show_option, int hide_option){
+  if(CHECKBOX_show_all_exterior_patch_data != NULL)CHECKBOX_show_all_exterior_patch_data->set_int_val(show_option);
+  if(CHECKBOX_hide_all_exterior_patch_data != NULL)CHECKBOX_hide_all_exterior_patch_data->set_int_val(hide_option);
+}
+
+/* ------------------ UpdateShowIntPatch ------------------------ */
+
+extern "C" void UpdateShowIntPatch(int show_option, int hide_option){
+  if(CHECKBOX_show_all_interior_patch_data != NULL)CHECKBOX_show_all_interior_patch_data->set_int_val(show_option);
+  if(CHECKBOX_hide_all_interior_patch_data != NULL)CHECKBOX_hide_all_interior_patch_data->set_int_val(hide_option);
+}
 
 /* ------------------ UpdateColorbarSelectionIndex ------------------------ */
 
@@ -3251,15 +3278,19 @@ extern "C" void GLUISplitCB(int var){
 
 extern "C" void GLUIExtremeCB(int var){
   colorbardata *cbi;
-  unsigned char *rgb_nodes;
   int i;
 
   switch(var){
   case COLORBAR_EXTREME:
+    if(colorbartype<0||colorbartype>=colorbars.ncolorbars)return;
+    cbi = colorbars.colorbarinfo + colorbartype;
     if(show_extreme_mindata==1){
       if(SPINNER_down_red!=NULL)SPINNER_down_red->enable();
       if(SPINNER_down_green!=NULL)SPINNER_down_green->enable();
       if(SPINNER_down_blue!=NULL)SPINNER_down_blue->enable();
+      for(i = 0; i<3; i++){
+        rgb_below_min[i] = glui_down_rgb[i];
+      }
     }
     else{
       if(SPINNER_down_red!=NULL)SPINNER_down_red->disable();
@@ -3270,36 +3301,22 @@ extern "C" void GLUIExtremeCB(int var){
       if(SPINNER_up_red!=NULL)SPINNER_up_red->enable();
       if(SPINNER_up_green!=NULL)SPINNER_up_green->enable();
       if(SPINNER_up_blue!=NULL)SPINNER_up_blue->enable();
+      for(i = 0; i<3; i++){
+        rgb_above_max[i] = glui_up_rgb[i];
+      }
     }
     else{
       if(SPINNER_up_red!=NULL)SPINNER_up_red->disable();
       if(SPINNER_up_green!=NULL)SPINNER_up_green->disable();
       if(SPINNER_up_blue!=NULL)SPINNER_up_blue->disable();
     }
-    if(colorbartype<0||colorbartype>=colorbars.ncolorbars)return;
-    cbi = colorbars.colorbarinfo+colorbartype;
     RemapColorbar(cbi, show_extreme_mindata, rgb_below_min,
                   show_extreme_maxdata, rgb_above_max);
     UpdateRGBColors(colorbar_select_index);
     updatemenu = 1;
     break;
-  case COLORBAR_EXTREME_RGB:
-    if(colorbartype<0||colorbartype>=colorbars.ncolorbars)return;
-    cbi = colorbars.colorbarinfo+colorbartype;
-
-    rgb_nodes = rgb_above_max;
-    for(i = 0; i<3; i++){
-      rgb_nodes[i] = cb_up_rgb[i];
-    }
-    rgb_nodes = rgb_below_min;
-    for(i = 0; i<3; i++){
-      rgb_nodes[i] = cb_down_rgb[i];
-    }
-    RemapColorbar(cbi, show_extreme_mindata, rgb_below_min,
-                  show_extreme_maxdata, rgb_above_max);
-    UpdateRGBColors(colorbar_select_index);
-    break;
   default:
+    assert(0);
     break;
   }
 }
@@ -3352,6 +3369,8 @@ extern "C" void GLUISetColorbarDigits(void){
   SPINNER_ncolorlabel_digits->set_int_val(ncolorlabel_digits);
   CHECKBOX_fixedpoint->set_int_val(force_fixedpoint);
   CHECKBOX_exponential->set_int_val(force_exponential);
+  CHECKBOX_force_decimal->set_int_val(force_decimal);
+  CHECKBOX_force_zero_pad->set_int_val(force_zero_pad);
 }
 
 /* ------------------ GLUIUpdateColorbarFlip ------------------------ */
@@ -3549,7 +3568,7 @@ void BoundRolloutCB(int var){
     if(var==ZONE_ROLLOUT){
       GLUISliceBoundCB(SETZONEVALMINMAX);
     }
-    if(var==SLICE_ROLLOUT){
+    if(var==SLICE_ROLLOUT_BOUNDS){
       list_slice_index = CLAMP(list_slice_index,0,nlist_slice_index-1);
       if(RADIO_slice!=NULL)RADIO_slice->set_int_val(list_slice_index);
       GLUISliceBoundCB(FILETYPE_INDEX);
@@ -3952,27 +3971,14 @@ extern "C" void GLUIImmersedBoundCB(int var){
   }
 }
 
-/* ------------------ BoundMeshCB ------------------------ */
-
-void BoundMeshCB(int var){
-  if(have_removable_obsts == 1 && meshescoll.nmeshes>1 && boundary_loaded == 1 && var == USE_MESH_INTERFACE_PATCHES){
-    if(boundary_interface_faces == 1){
-      BlockageMenu(visBLOCKHide);
-    }
-    else{
-      BlockageMenu(visBLOCKAsInput);
-    }
-  }
-}
-
 /* ------------------ BoundBoundCB ------------------------ */
 
-void BoundBoundCB(int var){
+extern "C" void BoundBoundCB(int var){
   int i;
 #ifdef pp_FRAME
   char ctime[1024];
   bufferdata *bufferinfo=NULL;
-  int nread;
+  FILE_SIZE nread;
   float read_time;
 #endif
 
@@ -4007,9 +4013,98 @@ void BoundBoundCB(int var){
     UpdateBoundarySliceDups();
     updatemenu = 1;
     break;
-  case SHOWPATCH_BOTH:
+  case SHOW_ALL_INTERIOR_PATCH_DATA:
+    hide_all_interior_patch_data = 1 - hide_all_interior_patch_data;
+    show_all_interior_patch_data = 1 - hide_all_interior_patch_data;
+    ShowBoundaryMenu(INTERIOR_WALL_MENU);
+    break;
+  case HIDE_ALL_INTERIOR_PATCH_DATA:
+    show_all_interior_patch_data = 1 - show_all_interior_patch_data;
+    hide_all_interior_patch_data = 1 - show_all_interior_patch_data;
+    ShowBoundaryMenu(INTERIOR_WALL_MENU);
+    break;
+  case SHOW_ALL_EXTERIOR_PATCH_DATA:
+    if(show_all_exterior_patch_data==1){
+      ShowBoundaryMenu(SHOW_EXTERIOR_WALL_MENU);
+      for(i=1; i<7; i++){
+        if(CHECKBOX_show_exterior_walls[i]!=NULL)CHECKBOX_show_exterior_walls[i]->set_int_val(vis_boundary_type[i]);
+      }
+      if(hide_all_exterior_patch_data == 1){
+        hide_all_exterior_patch_data = 0;
+        if(CHECKBOX_hide_all_exterior_patch_data!=NULL)CHECKBOX_hide_all_exterior_patch_data->set_int_val(0);
+      }
+    }
+    else{
+      ShowBoundaryMenu(HIDE_EXTERIOR_WALL_MENU);
+      for(i = 1; i < 7; i++){
+        if(CHECKBOX_show_exterior_walls[i]!=NULL)CHECKBOX_show_exterior_walls[i]->set_int_val(vis_boundary_type[i]);
+      }
+      if(CHECKBOX_hide_all_exterior_patch_data!=NULL)CHECKBOX_hide_all_exterior_patch_data->set_int_val(1);
+    }
+    updatemenu = 1;
+    break;
+  case HIDE_ALL_EXTERIOR_PATCH_DATA:
+    if(hide_all_exterior_patch_data==1){
+      ShowBoundaryMenu(HIDE_EXTERIOR_WALL_MENU);
+      for(i=1; i<7; i++){
+        if(CHECKBOX_show_exterior_walls[i]!=NULL)CHECKBOX_show_exterior_walls[i]->set_int_val(vis_boundary_type[i]);
+      }
+      if(show_all_exterior_patch_data == 1){
+        show_all_exterior_patch_data = 0;
+        if(CHECKBOX_show_all_exterior_patch_data!=NULL)CHECKBOX_show_all_exterior_patch_data->set_int_val(0);
+      }
+    }
+    else{
+      ShowBoundaryMenu(SHOW_EXTERIOR_WALL_MENU);
+      for(i = 1; i < 7; i++){
+        if(CHECKBOX_show_exterior_walls[i]!=NULL)CHECKBOX_show_exterior_walls[i]->set_int_val(vis_boundary_type[i]);
+      }
+      if(CHECKBOX_show_all_exterior_patch_data!=NULL)CHECKBOX_show_all_exterior_patch_data->set_int_val(1);
+    }
+    break;
+  case SHOW_EXTERIOR_PATCH_DATA:
+    {
+      int show_all_ext = 1;
+      int hide_all_ext = 1;
+      for(i=1; i<7; i++){
+        if(vis_boundary_type[i] == 1)hide_all_ext = 0;
+        if(vis_boundary_type[i] == 0)show_all_ext = 0;
+        if(CHECKBOX_show_exterior_walls[i]!=NULL)CHECKBOX_show_exterior_walls[i]->set_int_val(vis_boundary_type[i]);
+      }
+      if(show_all_ext == 1){
+        show_all_exterior_patch_data = 1;
+        if(CHECKBOX_show_all_exterior_patch_data!=NULL)CHECKBOX_show_all_exterior_patch_data->set_int_val(1);
+        if(CHECKBOX_hide_all_exterior_patch_data!=NULL)CHECKBOX_hide_all_exterior_patch_data->set_int_val(0);
+        BoundBoundCB(SHOW_ALL_EXTERIOR_PATCH_DATA);
+      }
+      else if(hide_all_ext == 1){
+        hide_all_exterior_patch_data = 1;
+        if(CHECKBOX_show_all_exterior_patch_data!=NULL)CHECKBOX_show_all_exterior_patch_data->set_int_val(0);
+        if(CHECKBOX_hide_all_exterior_patch_data!=NULL)CHECKBOX_hide_all_exterior_patch_data->set_int_val(1);
+        BoundBoundCB(HIDE_ALL_EXTERIOR_PATCH_DATA);
+      }
+      else{
+        for(i = 0;i < npatchinfo;i++){
+          patchdata *patchi;
+          int n;
+
+          patchi = patchinfo + i;
+          if(patchi->loaded == 0)continue;
+          for(n = 0;n < patchi->npatches;n++){
+            patchfacedata *pfi;
+            int wall_index;
+
+            pfi = patchi->patchfaceinfo + n;
+            wall_index = pfi->type;
+            if(wall_index>=1 && wall_index<=6){
+              pfi->vis = vis_boundary_type[wall_index];
+            }
+          }
+        }
+      }
+    }
+    updatemenu = 1;
     updatefacelists = 1;
-    updatehiddenfaces = 1;
     break;
   case CACHE_DATA:
     if(PANEL_keep_bound_data !=NULL){
@@ -4043,7 +4138,7 @@ void BoundBoundCB(int var){
       assert(FFALSE);
       break;
     }
-    UpdateHideBoundarySurface();
+    updatefacelists = 1;
     break;
   case SETCHOPMAXVAL:
     UpdateChopColors();
@@ -4057,7 +4152,7 @@ void BoundBoundCB(int var){
       assert(FFALSE);
       break;
     }
-    UpdateHideBoundarySurface();
+    updatefacelists = 1;
     break;
   case CHOPVALMIN:
     GLUI2GlobalBoundaryBounds(patchlabellist[list_patch_index]);
@@ -4087,7 +4182,7 @@ void BoundBoundCB(int var){
     BoundBoundCB(SETVALMAX);
 
     list_patch_index_old = list_patch_index;
-    UpdateHideBoundarySurface();
+    updatefacelists = 1;
     break;
   case SETVALMIN:
     BoundBoundCB(FILE_UPDATE);
@@ -4137,7 +4232,7 @@ void BoundBoundCB(int var){
     }
     updatemenu = 1;
     break;
-  case STARTUP:
+  case BOUND_STARTUP:
     BoundsDlgCB(SAVE_SETTINGS_BOUNDS);
     break;
   case SAVE_FILE_LIST:
@@ -4998,10 +5093,6 @@ extern "C" void GLUIBoundsSetup(int main_window){
       BoundBoundCB(BOUNDARY_EDGETYPE);
       BoundBoundCB(SHOW_BOUNDARY_OUTLINE);
 
-      PANEL_geomexp = glui_bounds->add_panel_to_panel(ROLLOUT_boundary_settings,"experimental");
-      glui_bounds->add_checkbox_to_panel(PANEL_geomexp, _("smooth normals"), &geomdata_smoothnormals);
-      glui_bounds->add_checkbox_to_panel(PANEL_geomexp, _("lighting"), &geomdata_lighting);
-
       glui_bounds->add_spinner_to_panel(ROLLOUT_boundary_settings, "line width", GLUI_SPINNER_FLOAT, &geomboundary_linewidth);
       glui_bounds->add_spinner_to_panel(ROLLOUT_boundary_settings, "point size", GLUI_SPINNER_FLOAT, &geomboundary_pointsize);
       glui_bounds->add_separator_to_panel(ROLLOUT_boundary_settings);
@@ -5020,23 +5111,26 @@ extern "C" void GLUIBoundsSetup(int main_window){
       }
       BoundBoundCB(SHOWCHAR);
     }
-    CHECKBOX_showpatch_both = glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_settings, _("Display exterior data"), &showpatch_both, SHOWPATCH_BOTH, BoundBoundCB);
 
-    PANEL_boundary_debug = glui_bounds->add_panel_to_panel(ROLLOUT_boundary_settings, _("Debug - show interior mesh patches"));
+    PANEL_boundary_exterior_data = glui_bounds->add_panel_to_panel(ROLLOUT_boundary_settings,"exterior data");
+    CHECKBOX_show_all_exterior_patch_data   = glui_bounds->add_checkbox_to_panel(PANEL_boundary_exterior_data, _("Show all"),  &show_all_exterior_patch_data,  SHOW_ALL_EXTERIOR_PATCH_DATA, BoundBoundCB);
+    CHECKBOX_show_exterior_walls[LEFTwall]  = glui_bounds->add_checkbox_to_panel(PANEL_boundary_exterior_data, _("left wall"),  vis_boundary_type + LEFTwall,  SHOW_EXTERIOR_PATCH_DATA,     BoundBoundCB);
+    CHECKBOX_show_exterior_walls[FRONTwall] = glui_bounds->add_checkbox_to_panel(PANEL_boundary_exterior_data, _("front wall"), vis_boundary_type + FRONTwall, SHOW_EXTERIOR_PATCH_DATA,     BoundBoundCB);
+    CHECKBOX_show_exterior_walls[DOWNwall]  = glui_bounds->add_checkbox_to_panel(PANEL_boundary_exterior_data, _("lower wall"), vis_boundary_type + DOWNwall,  SHOW_EXTERIOR_PATCH_DATA,     BoundBoundCB);
+    glui_bounds->add_column_to_panel(PANEL_boundary_exterior_data, false);
 
-    glui_bounds->add_checkbox_to_panel(PANEL_boundary_debug, _("xmin"), boundary_debug_plane);
-    glui_bounds->add_checkbox_to_panel(PANEL_boundary_debug, _("ymin"), boundary_debug_plane+2);
-    glui_bounds->add_checkbox_to_panel(PANEL_boundary_debug, _("zmin"), boundary_debug_plane+4);
-    SPINNER_boundary_debug_mesh = glui_bounds->add_spinner_to_panel(PANEL_boundary_debug, "mesh", GLUI_SPINNER_INT, &boundary_debug_mesh);
-    SPINNER_boundary_debug_mesh->set_int_limits(1, meshescoll.nmeshes);
-    glui_bounds->add_checkbox_to_panel(PANEL_boundary_debug, _("debug obsts"), &boundary_debug_obst);
-    glui_bounds->add_checkbox_to_panel(PANEL_boundary_debug, _("output patch face info"), &outout_patch_faces);
-    glui_bounds->add_checkbox_to_panel(PANEL_boundary_debug, _("use mesh interface patches"), &boundary_interface_faces, USE_MESH_INTERFACE_PATCHES, BoundMeshCB);
-    glui_bounds->add_column_to_panel(PANEL_boundary_debug, false);
+    CHECKBOX_hide_all_exterior_patch_data   = glui_bounds->add_checkbox_to_panel(PANEL_boundary_exterior_data, _("Hide all"),  &hide_all_exterior_patch_data,  HIDE_ALL_EXTERIOR_PATCH_DATA, BoundBoundCB);
+    CHECKBOX_show_exterior_walls[RIGHTwall] = glui_bounds->add_checkbox_to_panel(PANEL_boundary_exterior_data, _("right wall"), vis_boundary_type + RIGHTwall, SHOW_EXTERIOR_PATCH_DATA,     BoundBoundCB);
+    CHECKBOX_show_exterior_walls[BACKwall]  = glui_bounds->add_checkbox_to_panel(PANEL_boundary_exterior_data, _("back wall"),  vis_boundary_type + BACKwall,  SHOW_EXTERIOR_PATCH_DATA,     BoundBoundCB);
+    CHECKBOX_show_exterior_walls[UPwall]    = glui_bounds->add_checkbox_to_panel(PANEL_boundary_exterior_data, _("upper wall"), vis_boundary_type + UPwall,    SHOW_EXTERIOR_PATCH_DATA,     BoundBoundCB);
 
-    glui_bounds->add_checkbox_to_panel(PANEL_boundary_debug, _("xmax"), boundary_debug_plane+1);
-    glui_bounds->add_checkbox_to_panel(PANEL_boundary_debug, _("ymax"), boundary_debug_plane+3);
-    glui_bounds->add_checkbox_to_panel(PANEL_boundary_debug, _("zmax"), boundary_debug_plane+5);
+    PANEL_boundary_interior_data = glui_bounds->add_panel_to_panel(ROLLOUT_boundary_settings,"interior data");
+    CHECKBOX_show_all_interior_patch_data = glui_bounds->add_checkbox_to_panel(PANEL_boundary_interior_data, _("Show all"), &hide_all_interior_patch_data, SHOW_ALL_INTERIOR_PATCH_DATA, BoundBoundCB);
+    glui_bounds->add_column_to_panel(PANEL_boundary_interior_data, false);
+    CHECKBOX_hide_all_interior_patch_data = glui_bounds->add_checkbox_to_panel(PANEL_boundary_interior_data, _("Hide all"), &show_all_interior_patch_data, HIDE_ALL_INTERIOR_PATCH_DATA, BoundBoundCB);
+
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_settings, _("output patch info when loading"),     &outout_patch_faces);
+
     if(nboundaryslicedups > 0){
       ROLLOUT_boundary_duplicates = glui_bounds->add_rollout_to_panel(ROLLOUT_bound, "Duplicates", false,BOUNDARY_DUPLICATE_ROLLOUT,SubBoundRolloutCB);
       INSERT_ROLLOUT(ROLLOUT_boundary_duplicates, glui_bounds);
@@ -5292,9 +5386,9 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
 
   if(slicecoll.nsliceinfo>0){
     glui_active=1;
-    ROLLOUT_slice = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,"Slice",false,SLICE_ROLLOUT,BoundRolloutCB);
+    ROLLOUT_slice = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,"Slice",false,SLICE_ROLLOUT_BOUNDS,BoundRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_slice, glui_bounds);
-    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_slice, SLICE_ROLLOUT, glui_bounds);
+    ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_slice, SLICE_ROLLOUT_BOUNDS, glui_bounds);
 
     sliceboundsCPP.setup("slice", ROLLOUT_slice, slicebounds_cpp, nslicebounds_cpp, &cache_slice_data, HIDE_CACHE_CHECKBOX, GLUIHVACSliceBoundsCPP_CB,
       SliceRolloutCB, sliceprocinfo, &nsliceprocinfo);
@@ -5551,7 +5645,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
   INSERT_ROLLOUT(ROLLOUT_autoload, glui_bounds);
   ADDPROCINFO(loadprocinfo, nloadprocinfo, ROLLOUT_autoload, LOAD_AUTO_ROLLOUT, glui_bounds);
 
-  glui_bounds->add_checkbox_to_panel(ROLLOUT_autoload, _("Auto load at startup"), &loadfiles_at_startup, STARTUP, BoundBoundCB);
+  glui_bounds->add_checkbox_to_panel(ROLLOUT_autoload, _("Auto load at startup"), &loadfiles_at_startup, BOUND_STARTUP, BoundBoundCB);
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, _("Save auto load file list"), SAVE_FILE_LIST, BoundBoundCB);
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, _("Auto load now"), LOAD_FILES, BoundBoundCB);
 
@@ -5688,12 +5782,14 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
   SPINNER_colorbar_select_index->set_int_limits(-1, 255);
   SPINNER_colorbar_selection_width = glui_bounds->add_spinner_to_panel(PANEL_colorbar_properties, _("selection width:"),    GLUI_SPINNER_INT, &colorbar_selection_width, COLORBAND,  GLUISliceBoundCB);
   SPINNER_colorbar_selection_width->set_int_limits(COLORBAR_SELECTION_WIDTH_MIN, COLORBAR_SELECTION_WIDTH_MAX);
-  SPINNER_ncolorlabel_digits = glui_bounds->add_spinner_to_panel(PANEL_colorbar_properties, _("label digits:"), GLUI_SPINNER_INT, &ncolorlabel_digits, COLORLABEL_DIGITS, GLUISliceBoundCB);
+  SPINNER_ncolorlabel_digits = glui_bounds->add_spinner_to_panel(PANEL_colorbar_properties, _("max label digits:"), GLUI_SPINNER_INT, &ncolorlabel_digits, COLORLABEL_DIGITS, GLUISliceBoundCB);
   SPINNER_ncolorlabel_digits->set_int_limits(COLORBAR_NDECIMALS_MIN, COLORBAR_NDECIMALS_MAX, GLUI_LIMIT_CLAMP);
-  SPINNER_ncolorlabel_padding = glui_bounds->add_spinner_to_panel(PANEL_colorbar_properties, _("padding:"), GLUI_SPINNER_INT, &ncolorlabel_padding, COLORLABEL_DIGITS, GLUISliceBoundCB);
+  SPINNER_ncolorlabel_padding = glui_bounds->add_spinner_to_panel(PANEL_colorbar_properties, _("extra space:"), GLUI_SPINNER_INT, &ncolorlabel_padding, COLORLABEL_DIGITS, GLUISliceBoundCB);
   SPINNER_ncolorlabel_padding->set_int_limits(0, 8, GLUI_LIMIT_CLAMP);
-  CHECKBOX_fixedpoint  = glui_bounds->add_checkbox_to_panel(PANEL_colorbar_properties, _("force fixed point labels"), &force_fixedpoint,  COLORLABEL_DIGITS, GLUISliceBoundCB);
-  CHECKBOX_exponential = glui_bounds->add_checkbox_to_panel(PANEL_colorbar_properties, _("force exponential labels"), &force_exponential, FORCE_EXPONENTIAL, GLUISliceBoundCB);
+  CHECKBOX_fixedpoint     = glui_bounds->add_checkbox_to_panel(PANEL_colorbar_properties, _("force fixed point labels"), &force_fixedpoint,  COLORLABEL_DIGITS,   GLUISliceBoundCB);
+  CHECKBOX_exponential    = glui_bounds->add_checkbox_to_panel(PANEL_colorbar_properties, _("force exponential labels"), &force_exponential, FORCE_EXPONENTIAL,   GLUISliceBoundCB);
+  CHECKBOX_force_decimal  = glui_bounds->add_checkbox_to_panel(PANEL_colorbar_properties, _("force decimal in labels"),  &force_decimal,     COLORLABEL_DIGITS,   GLUISliceBoundCB);
+  CHECKBOX_force_zero_pad = glui_bounds->add_checkbox_to_panel(PANEL_colorbar_properties, _("force zero padding"), &force_zero_pad,          COLORLABEL_ZERO_PAD, GLUISliceBoundCB);
 
   glui_bounds->add_column_to_panel(PANEL_cb11, false);
 
@@ -5727,9 +5823,9 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
   CHECKBOX_show_extreme_mindata = glui_bounds->add_checkbox_to_panel(PANEL_extreme_min, _("Color below min"), &show_extreme_mindata, COLORBAR_EXTREME,
   GLUIExtremeCB);
 
-  SPINNER_down_red = glui_bounds->add_spinner_to_panel(PANEL_extreme_min, _("red"), GLUI_SPINNER_INT, cb_down_rgb, COLORBAR_EXTREME_RGB, GLUIExtremeCB);
-  SPINNER_down_green = glui_bounds->add_spinner_to_panel(PANEL_extreme_min, _("green"), GLUI_SPINNER_INT, cb_down_rgb+1, COLORBAR_EXTREME_RGB, GLUIExtremeCB);
-  SPINNER_down_blue = glui_bounds->add_spinner_to_panel(PANEL_extreme_min, _("blue"), GLUI_SPINNER_INT, cb_down_rgb+2, COLORBAR_EXTREME_RGB, GLUIExtremeCB);
+  SPINNER_down_red   = glui_bounds->add_spinner_to_panel(PANEL_extreme_min, _("red"),   GLUI_SPINNER_INT, glui_down_rgb,   COLORBAR_EXTREME, GLUIExtremeCB);
+  SPINNER_down_green = glui_bounds->add_spinner_to_panel(PANEL_extreme_min, _("green"), GLUI_SPINNER_INT, glui_down_rgb+1, COLORBAR_EXTREME, GLUIExtremeCB);
+  SPINNER_down_blue  = glui_bounds->add_spinner_to_panel(PANEL_extreme_min, _("blue"),  GLUI_SPINNER_INT, glui_down_rgb+2, COLORBAR_EXTREME, GLUIExtremeCB);
   SPINNER_down_red->set_int_limits(0, 255);
   SPINNER_down_green->set_int_limits(0, 255);
   SPINNER_down_blue->set_int_limits(0, 255);
@@ -5740,9 +5836,9 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
 
   CHECKBOX_show_extreme_maxdata = glui_bounds->add_checkbox_to_panel(PANEL_extreme_max, _("Color above max"), &show_extreme_maxdata, COLORBAR_EXTREME, GLUIExtremeCB);
 
-  SPINNER_up_red = glui_bounds->add_spinner_to_panel(PANEL_extreme_max, _("red"), GLUI_SPINNER_INT, cb_up_rgb, COLORBAR_EXTREME_RGB, GLUIExtremeCB);
-  SPINNER_up_green = glui_bounds->add_spinner_to_panel(PANEL_extreme_max, _("green"), GLUI_SPINNER_INT, cb_up_rgb+1, COLORBAR_EXTREME_RGB, GLUIExtremeCB);
-  SPINNER_up_blue = glui_bounds->add_spinner_to_panel(PANEL_extreme_max, _("blue"), GLUI_SPINNER_INT, cb_up_rgb+2, COLORBAR_EXTREME_RGB, GLUIExtremeCB);
+  SPINNER_up_red   = glui_bounds->add_spinner_to_panel(PANEL_extreme_max, _("red"),   GLUI_SPINNER_INT, glui_up_rgb,   COLORBAR_EXTREME, GLUIExtremeCB);
+  SPINNER_up_green = glui_bounds->add_spinner_to_panel(PANEL_extreme_max, _("green"), GLUI_SPINNER_INT, glui_up_rgb+1, COLORBAR_EXTREME, GLUIExtremeCB);
+  SPINNER_up_blue  = glui_bounds->add_spinner_to_panel(PANEL_extreme_max, _("blue"),  GLUI_SPINNER_INT, glui_up_rgb+2, COLORBAR_EXTREME, GLUIExtremeCB);
   SPINNER_up_red->set_int_limits(0, 255);
   SPINNER_up_green->set_int_limits(0, 255);
   SPINNER_up_blue->set_int_limits(0, 255);
@@ -5750,7 +5846,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
   if(use_data_extremes==0){
     CHECKBOX_show_extreme_maxdata->set_int_val(0);
     CHECKBOX_show_extreme_mindata->set_int_val(0);
-    GLUIExtremeCB(COLORBAR_EXTREME_RGB);
+    GLUIExtremeCB(COLORBAR_EXTREME);
   }
   GLUIColorbarGlobal2Local();
 
@@ -6381,10 +6477,10 @@ void PartBoundCB(int var){
   case STREAKLENGTH:
     UpdateStreakValue(float_streak5value-0.001);
     if(float_streak5value==0.0){
-      streak5show=0;
+      SetStreakShow(0);
     }
     else{
-      streak5show=1;
+      SetStreakShow(1);
     }
     updatemenu=1;
     break;
@@ -6701,8 +6797,25 @@ extern "C" void GLUISliceBoundCB(int var){
       break;
     case COLORLABEL_DIGITS:
       if(force_exponential==1&&force_fixedpoint==1)force_exponential=0;
+      if(force_decimal==0){
+        force_zero_pad = 0;
+        CHECKBOX_force_zero_pad->set_int_val(force_zero_pad);
+      }
+      if(force_exponential == 1){
+        force_zero_pad = 0;
+        force_decimal = 1;
+        CHECKBOX_force_zero_pad->set_int_val(force_zero_pad);
+        CHECKBOX_force_decimal->set_int_val(force_decimal);
+      }
       updatemenu = 1;
       update_colorbar_digits = 1;
+      break;
+    case COLORLABEL_ZERO_PAD:
+      if(force_zero_pad == 1){
+        force_decimal = 1;
+        CHECKBOX_force_decimal->set_int_val(force_decimal);
+      }
+      GLUISliceBoundCB(COLORLABEL_DIGITS);
       break;
     case SLICE_OPTION:
       updatemenu = 1;

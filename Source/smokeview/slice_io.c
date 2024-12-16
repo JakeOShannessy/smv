@@ -1,4 +1,4 @@
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "options.h"
 #include "smokeviewvars.h"
 #include "structures.h"

@@ -16,7 +16,6 @@ add_executable(smokeview
     renderhtml.c
     getdatabounds.c
     readsmv.c
-    scontour2d.c
     IOvolsmoke.c
     IOsmoke.c
     IOplot3d.c

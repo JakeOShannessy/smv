@@ -6,7 +6,7 @@
 
 #include "options_common.h"
 
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "colorbars.h"
 #include "datadefs.h"
 

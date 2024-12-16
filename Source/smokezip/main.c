@@ -7,27 +7,24 @@
 #include <math.h>
 #include "svzip.h"
 #include "string_util.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 
 //dummy change to bump version number to 1.4.8
 //dummy change to force githash update
 
 /* ------------------ Usage ------------------------ */
 
-void Usage(char *prog, int option){
-  char smv_version[100];
-  char buffer[1000];
+void Usage(int option){
   char githash[256];
   char gitdate[256];
 
-  GetProgVersion(smv_version);  // get Smokeview version (ie 5.x.z)
   GetGitInfo(githash, gitdate);    // get githash
 
   PRINTF("\n");
-  PRINTF("  smokezip %s(%s) - %s\n\n", smv_version, githash, __DATE__);
-  PRINTF("  Compress FDS data files\n\n");
-  PRINTF("  %s [options] casename\n\n", GetBaseFileName(buffer, prog));
-  PRINTF("  casename - Smokeview .smv file for case to be compressed\n\n");
+  PRINTF("smokezip [options] casename\n");
+  PRINTF("%s - %s\n\n", githash, __DATE__);
+  PRINTF("Compress FDS data files\n\n");
+  PRINTF("casename - Smokeview .smv file for case to be compressed\n\n");
   PRINTF("options:\n");
   PRINTF("  -c  - cleans or removes all compressed files\n");
 #ifdef pp_THREAD
@@ -259,7 +256,7 @@ int main(int argc, char **argv){
         break;
 #endif
       default:
-        Usage(argv[0],HELP_ALL);
+        Usage(HELP_ALL);
         return 1;
       }
     }
@@ -277,7 +274,7 @@ int main(int argc, char **argv){
   // construct smv filename
 
   if(filebase==NULL){
-    Usage(argv[0],HELP_ALL);
+    Usage(HELP_ALL);
     return 1;
   }
 #ifdef pp_THREAD

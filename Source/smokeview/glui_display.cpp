@@ -7,6 +7,8 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "glui_bounds.h"
+#include "glui_motion.h"
 #include "colorbars.h"
 #include "readlabel.h"
 
@@ -21,6 +23,10 @@ GLUI_Listbox *LIST_surfs=NULL;
 
 #ifdef pp_REFRESH
 GLUI_Spinner *SPINNER_refresh_rate=NULL;
+#endif
+
+#ifdef pp_SKY
+GLUI_Spinner *SPINNER_sky_diam = NULL;
 #endif
 
 GLUI_Spinner *SPINNER_LB_tick_xbeg=NULL;
@@ -89,6 +95,9 @@ GLUI_Spinner *SPINNER_spec_blue = NULL;
 GLUI_Spinner *SPINNER_spec_grey = NULL;
 GLUI_Spinner *SPINNER_shininess = NULL;
 GLUI_Spinner *SPINNER_ngridloc_digits = NULL;
+GLUI_Spinner *SPINNER_mesh_debug = NULL;
+GLUI_Spinner *SPINNER_blockage_min_debug = NULL;
+GLUI_Spinner *SPINNER_blockage_n_debug = NULL;
 
 GLUI_Checkbox *CHECKBOX_visaxislabels = NULL;
 GLUI_Checkbox *CHECKBOX_labels_showtick = NULL;
@@ -122,7 +131,6 @@ GLUI_Checkbox *CHECKBOX_user_ticks_show_x=NULL;
 GLUI_Checkbox *CHECKBOX_user_ticks_show_y=NULL;
 GLUI_Checkbox *CHECKBOX_user_ticks_show_z=NULL;
 GLUI_Checkbox *CHECKBOX_tick_auto=NULL;
-GLUI_Checkbox *CHECKBOX_label_1=NULL;
 GLUI_Checkbox *CHECKBOX_label_2=NULL;
 GLUI_Checkbox *CHECKBOX_label_3=NULL;
 GLUI_Checkbox *CHECKBOX_labels_flip=NULL;
@@ -142,6 +150,7 @@ GLUI_Rollout *ROLLOUT_general=NULL;
 GLUI_Rollout *ROLLOUT_north = NULL;
 GLUI_Rollout *ROLLOUT_light2 = NULL;
 
+GLUI_Panel *PANEL_blockage_drawing = NULL;
 GLUI_Panel *PANEL_boundingbox = NULL;
 GLUI_Panel *PANEL_titles=NULL;
 GLUI_Panel *PANEL_screen = NULL;
@@ -176,6 +185,7 @@ GLUI_Panel *PANEL_texture_display = NULL;
 GLUI_RadioGroup *RADIO_show_geom_boundingbox = NULL;
 GLUI_RadioGroup *RADIO_timebar_overlap = NULL;
 GLUI_RadioGroup *RADIO_fontsize = NULL;
+GLUI_RadioGroup *RADIOBUTTON_label_1 = NULL;
 GLUI_RadioButton *RADIOBUTTON_label_1a=NULL;
 GLUI_RadioButton *RADIOBUTTON_label_1b=NULL;
 GLUI_RadioButton *RADIOBUTTON_label_1c=NULL;
@@ -194,8 +204,6 @@ GLUI_Button *BUTTON_label_4=NULL;
 #define TEXTURE_SHOWALL 0
 #define TEXTURE_HIDEALL 1
 
-#define COLORBAR_EXTREME_RGB 15
-#define COLORBAR_EXTREME     16
 #define FLIP                 19
 #define APPLY_VENTOFFSET     20
 
@@ -217,6 +225,11 @@ GLUI_Button *BUTTON_label_4=NULL;
 #define LB_VISLABELS 11
 #define LB_TICK_XYZ 12
 #define LB_SHOW_TICK 13
+
+#ifdef pp_SKY
+#define SKY_DIAM 0
+#define SKY_VIS  1
+#endif
 
 #define LABELS_label           0
 //#define LABELS_vcolorbar      34  movied to smokeviewdefs.h
@@ -302,6 +315,13 @@ extern "C" void GLUIUpdateBackgroundFlip(int flip){
 
 extern "C" void GLUIUpdateTimebarOverlap(void){
   RADIO_timebar_overlap->set_int_val(timebar_overlap);
+}
+
+
+/* ------------------ GLUIUpdateTimebarOverlap ------------------------ */
+
+extern "C" void GLUIUpdateFastBlockageDraw(void){
+  if(RADIOBUTTON_label_1 != NULL)RADIOBUTTON_label_1->set_int_val(blockage_draw_option);
 }
 
 /* ------------------ DisplayRolloutCB ------------------------ */
@@ -643,7 +663,6 @@ void SurfaceCB(int var){
       surfi->color = GetColorPtr(&colorcoll, s_color);
       updatefacelists = 1;
       sextras.updatefaces = 1;
-      updatehiddenfaces = 1;
     }
     break;
   case SURFACE_SELECT:
@@ -716,6 +735,28 @@ extern "C" void GLUITextureCB(int var){
   }
 }
 
+#ifdef pp_SKY
+/* ------------------ GLUISkyCB ------------------------ */
+
+void GLUISkyCB(int var){
+  switch (var){
+    case SKY_DIAM:
+      if(sky_diam<1.0){
+        sky_diam = 1.0;
+        if(SPINNER_sky_diam!=NULL)SPINNER_sky_diam->set_float_val(sky_diam);
+      }
+      GetBoxSkyCorners();
+      break;
+    case SKY_VIS:
+      GetBoxSkyCorners();
+      break;
+    default:
+      assert(0);
+      break;
+  }
+}
+#endif
+
 /* ------------------ GLUIDisplaySetup ------------------------ */
 
 extern "C" void GLUIDisplaySetup(int main_window){
@@ -751,6 +792,11 @@ extern "C" void GLUIDisplaySetup(int main_window){
 #ifdef pp_memstatus
   CHECKBOX_labels_availmemory = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Memory load"), &visAvailmemory, LABELS_label, GLUILabelsCB);
 #endif
+#ifdef pp_SKY
+  glui_labels->add_checkbox_to_panel(PANEL_gen1, _("show sky"), &visSky, SKY_VIS, GLUISkyCB);
+  SPINNER_sky_diam = glui_labels->add_spinner_to_panel(PANEL_gen1, _("sky diameter"), GLUI_SPINNER_FLOAT, &sky_diam, SKY_DIAM, GLUISkyCB);
+#endif
+
 
   glui_labels->add_column_to_panel(PANEL_gen1, false);
 
@@ -877,7 +923,17 @@ extern "C" void GLUIDisplaySetup(int main_window){
   glui_labels->add_radiobutton_to_group(RADIO_timebar_overlap,_("Never"));
   glui_labels->add_radiobutton_to_group(RADIO_timebar_overlap,_("Only if timebar hidden"));
 
-  CHECKBOX_label_1=glui_labels->add_checkbox_to_panel(PANEL_gen3,_("Fast blockage drawing"),&use_new_drawface,LABELS_drawface,GLUILabelsCB);
+  PANEL_blockage_drawing = glui_labels->add_panel_to_panel(PANEL_gen3,_("Surface/blockage drawing"));
+  RADIOBUTTON_label_1 = glui_labels->add_radiogroup_to_panel(PANEL_blockage_drawing, &blockage_draw_option, LABELS_drawface, GLUILabelsCB);
+  glui_labels->add_radiobutton_to_group(RADIOBUTTON_label_1, _("original"));
+  glui_labels->add_radiobutton_to_group(RADIOBUTTON_label_1, _("default"));
+  glui_labels->add_radiobutton_to_group(RADIOBUTTON_label_1, _("debug"));
+  glui_labels->add_radiobutton_to_group(RADIOBUTTON_label_1, _("debug - draw only hidden faces"));
+  SPINNER_mesh_debug = glui_labels->add_spinner_to_panel(PANEL_blockage_drawing, "mesh:", GLUI_SPINNER_INT, &mesh_index_debug);
+  SPINNER_blockage_min_debug = glui_labels->add_spinner_to_panel(PANEL_blockage_drawing, "min blockage index:", GLUI_SPINNER_INT, &min_blockage_index_debug);
+  SPINNER_blockage_n_debug = glui_labels->add_spinner_to_panel(PANEL_blockage_drawing, "number of blockages:", GLUI_SPINNER_INT, &n_blockages_debug);
+  GLUILabelsCB(LABELS_drawface);
+
   CHECKBOX_label_2=glui_labels->add_checkbox_to_panel(PANEL_gen3,_("Sort transparent faces"),&sort_transparent_faces,LABELS_drawface,GLUILabelsCB);
   CHECKBOX_label_3=glui_labels->add_checkbox_to_panel(PANEL_gen3,_("Hide overlaps"),&hide_overlaps,LABELS_hide_overlaps,GLUILabelsCB);
 
@@ -1259,12 +1315,26 @@ extern "C" void GLUILabelsCB(int var){
       break;
   case LABELS_hide_overlaps:
     updatefacelists=1;
-    updatehiddenfaces=1;
-    UpdateHiddenFaces();
     glutPostRedisplay();
     break;
   case LABELS_drawface:
     updatefacelists=1;
+    if(
+        SPINNER_mesh_debug != NULL &&
+        SPINNER_blockage_min_debug != NULL &&
+        SPINNER_blockage_n_debug != NULL
+      ){
+      if(blockage_draw_option == 0 || blockage_draw_option == 1){
+        SPINNER_mesh_debug->disable();
+        SPINNER_blockage_min_debug->disable();
+        SPINNER_blockage_n_debug->disable();
+      }
+      else{
+        SPINNER_mesh_debug->enable();
+        SPINNER_blockage_min_debug->enable();
+        SPINNER_blockage_n_debug->enable();
+      }
+    }
     break;
   case CB_USE_LIGHTING:
   case LABELS_shownorth:

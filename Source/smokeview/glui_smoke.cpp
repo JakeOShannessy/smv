@@ -10,6 +10,9 @@
 #include "IOvolsmoke.h"
 #include "glui_smoke.h"
 #include "glui_tour.h"
+#include "glui_bounds.h"
+#include "glui_motion.h"
+#include "IOscript.h"
 
 extern GLUI_Rollout *ROLLOUT_smoke3d;
 extern GLUI *glui_bounds;
@@ -625,8 +628,6 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   CHECKBOX_smokecullflag = glui_3dsmoke->add_checkbox_to_panel(PANEL_skip_planes, "Cull hidden planes", &smokecullflag);
   GLUISmoke3dCB(SMOKE_SKIP_X);
 
-
-
   //---------------------------------------------Volume render settings--------------------------------------------------------------
 
   if(nvolrenderinfo > 0){
@@ -788,7 +789,7 @@ void GLUIGetPixelsPerTriangle(void){
   float x_pixels_per_triangle=1000000.0, y_pixels_per_triangle=1000000.0, pixels_per_triangle;
   char label[500];
 
-  if(STATIC_pixels_per_triangle == NULL)return;
+  if(STATIC_pixels_per_triangle == NULL)return; 
   if(nplotx_all>0)x_pixels_per_triangle = smoke3d_skipx*(float)glui_screenWidth/(float)nplotx_all;
   if(nploty_all>0)y_pixels_per_triangle = smoke3d_skipy*(float)glui_screenHeight/(float)nploty_all;
   pixels_per_triangle = MIN(x_pixels_per_triangle, y_pixels_per_triangle);

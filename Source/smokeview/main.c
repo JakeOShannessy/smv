@@ -24,11 +24,16 @@
 
 /* ------------------ Usage ------------------------ */
 
-void Usage(char *prog,int option){
-  PRINTF("%s\n", release_title);
+void Usage(int option){
+  char githash[100];
+  char gitdate[100];
+
+  GetGitInfo(githash, gitdate);    // get githash
+
+  PRINTF("\nsmokeview [options] casename\n");
+  PRINTF("%s - %s\n\n", githash, __DATE__);
   PRINTF("%s\n\n", _("Visualize fire/smoke flow simulations."));
-  PRINTF("Usage: %s [options] casename", prog);
-  PRINTF("\n\n");
+  PRINTF("options:\n");
   PRINTF("%s\n", _(" casename       - project id (file names without the extension)"));
   PRINTF("%s\n", _(" -bindir dir    - specify location of smokeview bin directory"));
   PRINTF("%s\n", _(" -ini           - output smokeview parameter values to smokeview.ini"));
@@ -295,8 +300,8 @@ char *ProcessCommandLine(CommandlineArgs *args){
 #ifdef pp_FRAME
   FREEMEMORY(frametest_filename);
   NewMemory((void **)&frametest_filename, len_casename + strlen(".tst") + 1);
-  STRCPY(caseini_filename, fdsprefix);
-  STRCAT(caseini_filename, ".tst");
+  STRCPY(frametest_filename, fdsprefix);
+  STRCAT(frametest_filename, ".tst");
 #endif
 
   FREEMEMORY(fedsmv_filename);
@@ -550,11 +555,11 @@ char *ProcessCommandLine(CommandlineArgs *args){
       parse_opts.handle_slice_files = 0;
     }
     if(args->show_help_summary){
-      Usage(args->prog,HELP_SUMMARY);
+      Usage(HELP_SUMMARY);
       SMV_EXIT(0);
     }
     if(args->show_help_all){
-      Usage(args->prog,HELP_ALL);
+      Usage(HELP_ALL);
       SMV_EXIT(0);
     }
     if(args->noblank){
@@ -779,19 +784,10 @@ int main(int argc, char **argv){
 
   smv_filename = ParseCommandline(argc, argv);
 
-#ifdef WIN32
-  if(Which("fds_local.bat", &fdsprog) != NULL)strcpy(fdsprog, "fds_local.bat");
-#else
-  Which("fds", &fdsprog);
-#endif
-
-  if(smv_filename == NULL){
+  if(smv_filename == NULL && show_version == 1){
+    InitStartupDirs();
     DisplayVersionInfo("Smokeview ");
     SMV_EXIT(0);
-  }
-  if(show_version==1 || smv_filename==NULL){
-    PRINTVERSION("smokeview");
-    return 1;
   }
   if(CheckSMVFile(smv_filename, smokeview_casedir)==0){
     SMV_EXIT(1);

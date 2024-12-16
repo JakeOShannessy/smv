@@ -104,9 +104,8 @@ GLUI_Spinner *SPINNER_gslice_center_y=NULL;
 GLUI_Spinner *SPINNER_gslice_center_z=NULL;
 GLUI_Spinner *SPINNER_gslice_normal_az=NULL;
 GLUI_Spinner *SPINNER_gslice_normal_elev=NULL;
-GLUI_Spinner *SPINNER_set_view_x=NULL;
-GLUI_Spinner *SPINNER_set_view_y=NULL;
-GLUI_Spinner *SPINNER_set_view_z=NULL;
+GLUI_Spinner *SPINNER_glui_xyz_fds[3];
+GLUI_Spinner **SPINNER_glui_xyz_fds_check=NULL;
 GLUI_Spinner *SPINNER_zaxis_angles[3];
 GLUI_Spinner *SPINNER_zoom=NULL,*SPINNER_aperture=NULL;
 GLUI_Spinner *SPINNER_window_width=NULL, *SPINNER_window_height=NULL;
@@ -398,9 +397,9 @@ extern "C" void GLUIUpdateUseGeomFactors(void){
 /* ------------------ GLUIUpdatePosView ------------------------ */
 
 extern "C" void GLUIUpdatePosView(void){
-  SPINNER_set_view_x->set_float_val(set_view_xyz[0]);
-  SPINNER_set_view_y->set_float_val(set_view_xyz[1]);
-  SPINNER_set_view_z->set_float_val(set_view_xyz[2]);
+  SPINNER_glui_xyz_fds[0]->set_float_val(glui_xyz_fds[0]);
+  SPINNER_glui_xyz_fds[1]->set_float_val(glui_xyz_fds[1]);
+  SPINNER_glui_xyz_fds[2]->set_float_val(glui_xyz_fds[2]);
   SPINNER_customview_azimuth->set_float_val(customview_azimuth);
   SPINNER_customview_elevation->set_float_val(customview_elevation);
   CHECKBOX_use_customview->set_int_val(use_customview);
@@ -632,18 +631,30 @@ extern "C" void GLUIUpdateRotationType(int val){
   if(RADIO_rotation_type!=NULL)RADIO_rotation_type->set_int_val(rotation_type);
 }
 
-/* ------------------ GLUIUpdateSetViewXYZ ------------------------ */
+/* ------------------ GLUISetPosXYZSMV ------------------------ */
 
-extern "C" void GLUIUpdateSetViewXYZ(float *xyz){
+extern "C" void GLUISetPosXYZSMV(float *xyz){
   if(xyz==NULL)return;
-  if(SPINNER_set_view_x==NULL||SPINNER_set_view_y==NULL||SPINNER_set_view_z==NULL)return;
+  if(SPINNER_glui_xyz_fds_check == NULL)return;
 
-  SMV2FDS_XYZ(set_view_xyz,xyz);
+  SMV2FDS_XYZ(glui_xyz_fds,xyz);
 
-  SPINNER_set_view_x->set_float_val(set_view_xyz[0]);
-  SPINNER_set_view_y->set_float_val(set_view_xyz[1]);
-  SPINNER_set_view_z->set_float_val(set_view_xyz[2]);
+  SPINNER_glui_xyz_fds[0]->set_float_val(glui_xyz_fds[0]);
+  SPINNER_glui_xyz_fds[1]->set_float_val(glui_xyz_fds[1]);
+  SPINNER_glui_xyz_fds[2]->set_float_val(glui_xyz_fds[2]);
 }
+
+/* ------------------ GLUISetPosXYZFDS ------------------------ */
+
+extern "C" void GLUISetPosXYZFDS(float *xyz){
+  if(SPINNER_glui_xyz_fds_check == NULL)return;
+  SPINNER_glui_xyz_fds[0]->set_float_val(xyz[0]);
+  SPINNER_glui_xyz_fds[1]->set_float_val(xyz[1]);
+  SPINNER_glui_xyz_fds[2]->set_float_val(xyz[2]);
+  memcpy(glui_xyz_fds, xyz, 3*sizeof(float));
+  GLUISceneMotionCB(SET_VIEW_XYZ);
+}
+
 
 /* ------------------ ViewExist ------------------------ */
 
@@ -982,7 +993,7 @@ extern "C" void GLUIViewpointCB(int var){
       }
     }
     break;
-  case STARTUP:
+  case MOTION_STARTUP:
     startup_view_ini = LIST_viewpoints->get_int_val();
     {
       char *cam_label;
@@ -1181,9 +1192,10 @@ extern "C" void GLUIMotionSetup(int main_window){
 
   PANEL_specify = glui_motion->add_panel_to_panel(ROLLOUT_view, _("Position"));
 
-  SPINNER_set_view_x = glui_motion->add_spinner_to_panel(PANEL_specify, "x:", GLUI_SPINNER_FLOAT,   set_view_xyz, SET_VIEW_XYZ, GLUISceneMotionCB);
-  SPINNER_set_view_y = glui_motion->add_spinner_to_panel(PANEL_specify, "y:", GLUI_SPINNER_FLOAT, set_view_xyz+1, SET_VIEW_XYZ, GLUISceneMotionCB);
-  SPINNER_set_view_z = glui_motion->add_spinner_to_panel(PANEL_specify, "z:", GLUI_SPINNER_FLOAT, set_view_xyz+2, SET_VIEW_XYZ, GLUISceneMotionCB);
+  SPINNER_glui_xyz_fds[0] = glui_motion->add_spinner_to_panel(PANEL_specify, "x:", GLUI_SPINNER_FLOAT, glui_xyz_fds,   SET_VIEW_XYZ, GLUISceneMotionCB);
+  SPINNER_glui_xyz_fds[1] = glui_motion->add_spinner_to_panel(PANEL_specify, "y:", GLUI_SPINNER_FLOAT, glui_xyz_fds+1, SET_VIEW_XYZ, GLUISceneMotionCB);
+  SPINNER_glui_xyz_fds[2] = glui_motion->add_spinner_to_panel(PANEL_specify, "z:", GLUI_SPINNER_FLOAT, glui_xyz_fds+2, SET_VIEW_XYZ, GLUISceneMotionCB);
+  SPINNER_glui_xyz_fds_check = SPINNER_glui_xyz_fds;
 
   PANEL_custom_view = glui_motion->add_panel_to_panel(ROLLOUT_view, _("View"));
 
@@ -1294,9 +1306,9 @@ extern "C" void GLUIMotionSetup(int main_window){
   ROLLOUT_orientation->close();
   zaxis_custom=0;
 
-  ROLLOUT_gslice = glui_motion->add_rollout_to_panel(ROLLOUT_motion, _("Slice motion"),false,SLICE_ROLLOUT,MotionRolloutCB);
+  ROLLOUT_gslice = glui_motion->add_rollout_to_panel(ROLLOUT_motion, _("Slice motion"),false,SLICE_ROLLOUT_MOTION,MotionRolloutCB);
   INSERT_ROLLOUT(ROLLOUT_gslice, glui_motion);
-  ADDPROCINFO(motionprocinfo,nmotionprocinfo,ROLLOUT_gslice,SLICE_ROLLOUT, glui_motion);
+  ADDPROCINFO(motionprocinfo,nmotionprocinfo,ROLLOUT_gslice,SLICE_ROLLOUT_MOTION, glui_motion);
 
   if(gslice_xyz[0]<-1000000.0&&gslice_xyz[1]<-1000000.0&&gslice_xyz[2]<-1000000.0){
     gslice_xyz[0]=(sextras.xbar0+SMV2FDS_X(sextras.xbar))/2.0;
@@ -1353,7 +1365,7 @@ extern "C" void GLUIMotionSetup(int main_window){
 
   BUTTON_add_view = glui_motion->add_button_to_panel(PANEL_reset2, _("Add"), ADD_VIEW, GLUIViewpointCB);
   BUTTON_replace_view = glui_motion->add_button_to_panel(PANEL_reset2, _("Replace"), REPLACE_VIEW, GLUIViewpointCB);
-  BUTTON_startup = glui_motion->add_button_to_panel(PANEL_reset2, _("Apply at startup"),  STARTUP,            GLUIViewpointCB);
+  BUTTON_startup = glui_motion->add_button_to_panel(PANEL_reset2, _("Apply at startup"),  MOTION_STARTUP,            GLUIViewpointCB);
   EDIT_view_label = glui_motion->add_edittext_to_panel(PANEL_reset2, _("Edit:"), GLUI_EDITTEXT_TEXT, camera_label, LABEL_VIEW, GLUIViewpointCB);
 
   ROLLOUT_projection = glui_motion->add_rollout_to_panel(ROLLOUT_viewA,_("Window properties"), false,WINDOW_ROLLOUT,MotionRolloutCB);
@@ -1745,7 +1757,7 @@ extern "C" void GLUIUpdateTranslate(void){
     ROTATE_eye_z->set_x(camera_current->azimuth);
 #endif
   }
-  GLUIUpdateSetViewXYZ(camera_current->eye);
+  GLUISetPosXYZSMV(camera_current->eye);
 }
 
 /* ------------------ GLUIUpdateRotationIndex ------------------------ */
@@ -2007,7 +2019,7 @@ extern "C" void GLUISceneMotionCB(int var){
     return;
   }
 
-#ifdef pp_GPUTHROTTLE
+#ifdef pp_GPU
   if(usegpu==1&&showvolrender==1&&show_volsmoke_moving==1&&
      (var==EYE_ROTATE||var==EYE_ROTATE_90||var==ROTATE_2AXIS||var==TRANSLATE_XY||var==GLUI_Z)
     ){
@@ -2401,7 +2413,7 @@ extern "C" void GLUISceneMotionCB(int var){
       }
       break;
     case SET_VIEW_XYZ:
-      FDS2SMV_XYZ(eye_xyz,set_view_xyz);
+      FDS2SMV_XYZ(eye_xyz,glui_xyz_fds);
       eye_xyz0[0]=eye_xyz[0];
       eye_xyz0[1]=eye_xyz[1];
       eye_xyz0[2]=eye_xyz[2];
@@ -2511,7 +2523,7 @@ extern "C" void GLUIShowMotion(int menu_id){
 /* ------------------ GLUISetStartupView ------------------------ */
 
  extern "C" void GLUISetStartupView(void){
-  GLUIViewpointCB(STARTUP);
+  GLUIViewpointCB(MOTION_STARTUP);
 }
 
 /* ------------------ GLUIAddListView ------------------------ */

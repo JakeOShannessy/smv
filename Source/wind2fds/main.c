@@ -6,29 +6,25 @@
 #include "datadefs.h"
 #include "string_util.h"
 #include "file_util.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 
 //dummy change to bump version number to  0.9
 
 /* ------------------ Usage ------------------------ */
 
-void Usage(char *prog, int option){
-  char prog_version[100];
+void Usage(int option){
   char githash[100];
   char gitdate[100];
   char buffer[1024];
 
-  GetProgVersion(prog_version);  // get version (ie 5.x.z)
   GetGitInfo(githash,gitdate);    // get githash
 
   printf("\n");
-  printf("wind2fds %s(%s) - %s\n", prog_version, githash, __DATE__);
-  printf("  Convert spreadsheets containing wind data to files compatible with Smokeview:\n\n");
-  printf("  %s", GetBaseFileName(buffer, prog));
-  printf(" prog [-prefix label] [-offset x y z] input_file [output_file]\n\n");
+  printf("wind2fds [-prefix label] [-offset x y z] input_file [output_file]\n");
+  printf("%s - %s\n\n", githash, __DATE__);
+  printf("Convert spreadsheets containing wind data to files compatible with Smokeview:\n\n");
 
-  printf("where\n\n");
-
+  printf("options:\n");
   printf("  -prefix label  - prefix column headers with label\n");
   printf("  -offset x y z  - offset sensor locations by (x,y,z)\n");
   UsageCommon(HELP_SUMMARY);

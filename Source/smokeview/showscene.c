@@ -116,12 +116,6 @@ void ShowScene2(int mode){
       SNIFF_ERRORS("after outputAxisLables");
     }
 
-    /* ++++++++++++++++++++++++ draw sensors/sprinklers/heat detectors +++++++++++++++++++++++++ */
-
-    if(boundary_debug_obst==1){
-      DrawMeshBlockFaces();
-    }
-
     /* ++++++++++++++++++++++++ draw user ticks +++++++++++++++++++++++++ */
 
     if(visUSERticks == 1){
@@ -146,6 +140,14 @@ void ShowScene2(int mode){
       UNCLIP;
       DrawGravityAxis();
       SNIFF_ERRORS("after drawaxis");
+    }
+
+    /* ++++++++++++++++++++++++ draw outlnes when boundary files are displayed +++++++++++++++++++++++++ */
+
+    if(hide_internal_blockages == 1){
+      if(outline_state == OUTLINE_ONLY || outline_state == OUTLINE_ADDED){
+        DrawObstOutlines();
+      }
     }
 
     /* ++++++++++++++++++++++++ draw fds specified blockage outlines +++++++++++++++++++++++++ */
@@ -207,7 +209,7 @@ void ShowScene2(int mode){
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
       glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
-      DrawBox(meshclip, box_red);
+      DrawBoxOutline(meshclip, box_red);
       glPopMatrix();
     }
 
@@ -316,6 +318,9 @@ void ShowScene2(int mode){
     DrawBlockages(mode, DRAW_OPAQUE);
     SNIFF_ERRORS("DrawBlockages");
   }
+#ifdef pp_SKY
+  if(visSky == 1)DrawHalfSphere();
+#endif
 
   /* ++++++++++++++++++++++++ draw opaque cfaces +++++++++++++++++++++++++ */
 
@@ -676,7 +681,6 @@ void ShowScene(int mode, int view_mode, int quad, GLint s_left, GLint s_down, sc
       SNIFF_ERRORS("after DrawColorbarPathRGB");
     }
     else{
-      void DrawColorbarPathCIELab(void);
       DrawColorbarPathCIELab();
       SNIFF_ERRORS("after DrawColorbarPathCIELab");
     }

@@ -16,6 +16,8 @@
 #include "IOvolsmoke.h"
 #include "stdio_buffer.h"
 #include "glui_motion.h"
+#include "glui_bounds.h"
+#include "shared_structures.h"
 #include "readimage.h"
 #include "readhvac.h"
 #include "readslice.h"
@@ -28,6 +30,8 @@
 #include "readcad.h"
 #include "readsmoke.h"
 #include "shared_structures.h"
+#include "IOscript.h"
+#include "IOobjects.h"
 
 #define BREAK break
 #define BREAK2 \
@@ -69,7 +73,7 @@ int GetHrrCsvCol(char *label){
   return -1;
 }
 
-/* ----------------------- GetTokens ----------------------------- */
+/* ----------------------- GetTokensBlank ----------------------------- */
 
 int GetTokensBlank(char *buffer, char **tokens){
 
@@ -470,7 +474,7 @@ FILE_SIZE ReadAllCSVFiles(int flag){
 
   if(csvcoll.ncsvfileinfo == 0)return 0;
 #define GENPLOT_REM_ALL_PLOTS       136
-  GenPlotCB(GENPLOT_REM_ALL_PLOTS);
+  GLUIGenPlotCB(GENPLOT_REM_ALL_PLOTS);
   for(i = 0; i < csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
@@ -978,7 +982,7 @@ void InitMesh(meshdata *meshi){
   meshi->nsmokeplaneinfo = 0;
   meshi->opacity_adjustments = NULL;
   for(i = 0; i<6; i++){
-    meshi->is_extface[i] = MESH_EXT;
+    meshi->is_extface[i] = 1;
   }
   meshi->ncutcells = 0;
   meshi->cutcells = NULL;
@@ -1081,7 +1085,8 @@ void InitMesh(meshdata *meshi){
   meshi->offset[ZZZ] = 0.0;
   meshi->ptype = NULL;
   meshi->zipoffset = NULL, meshi->zipsize = NULL;
-  meshi->xyzpatch = NULL;
+  meshi->xyzpatch_offset = NULL;
+  meshi->xyzpatch_no_offset = NULL;
   meshi->xyzpatch_threshold = NULL;
   meshi->patchventcolors = NULL;
   meshi->cpatchval = NULL;
@@ -1115,6 +1120,7 @@ void InitMesh(meshdata *meshi){
   meshi->zheat = NULL;
   meshi->theat = NULL;
   meshi->blockageinfoptrs = NULL;
+  meshi->blockageinfo     = NULL;
 
   meshi->faceinfo = NULL;
   meshi->face_normals_single = NULL;
@@ -1203,6 +1209,8 @@ ventdata *GetCloseVent(meshdata *ventmesh, int ivent){
   }
   return close_vent;
 }
+
+/* ------------------ UpdateSMVDynamic ------------------------ */
 
 /// @brief Re-read an *.smv file to read any updates.
 /// @param file The path to the *.smv file.
@@ -2802,11 +2810,61 @@ void InitTextures0(void){
     }
   }
   PRINT_TIMER(texture_timer, "terrain texture setup");
+
+#ifdef pp_SKY
+  // define sky texture
+
+  if(nsky_texture > 0){
+    texturedata *tt;
+    unsigned char *floortex=NULL;
+    int texwid, texht;
+
+    int is_transparent;
+
+    tt                 = sky_texture;
+    tt->loaded         = 0;
+    tt->used           = 0;
+    tt->display        = 0;
+    tt->is_transparent = 0;
+
+    glGenTextures(1, &tt->name);
+    glBindTexture(GL_TEXTURE_2D, tt->name);
+    floortex = NULL;
+    if(tt->file != NULL){
+#ifdef _DEBUG
+      PRINTF("sky texture file: %s\n", tt->file);
+#endif
+      floortex = ReadPicture(texturedir, tt->file, &texwid, &texht, &is_transparent, 0);
+      tt->is_transparent = is_transparent;
+      if(floortex == NULL)PRINTF("***Error: Texture file %s failed to load\n", tt->file);
+    }
+    if(floortex != NULL){
+      glTexImage2D(GL_TEXTURE_2D, 0, 4, texwid, texht, 0, GL_RGBA, GL_UNSIGNED_BYTE, floortex);
+      glGenerateMipmap(GL_TEXTURE_2D);
+      SNIFF_ERRORS("after glTexImage2D for terrain texture");
+
+      FREEMEMORY(floortex);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      tt->loaded = 1;
+      tt->display = 1;
+    }
+  }
+  PRINT_TIMER(texture_timer, "sky texture setup");
+#endif
 }
 
   /* ------------------ InitTextures ------------------------ */
 
 void InitTextures(int use_graphics_arg){
+  int max_textures;
+
+  max_textures = surf_coll.nsurfinfo + device_texture_list_coll.ndevice_texture_list + terrain_texture_coll.nterrain_textures;
+#ifdef pp_SKY
+  max_textures = nsky_texture;
+#endif
   INIT_PRINT_TIMER(total_texture_time);
   UpdateDeviceTextures(objectscoll, devicecoll.ndeviceinfo, devicecoll.deviceinfo,
                        npropinfo, propinfo, &device_texture_list_coll.ndevice_texture_list,
@@ -3151,6 +3209,68 @@ void UpdateBlockType(void){
   }
 }
 
+#ifdef pp_SKY
+
+/* ------------------ GetBoxSkyCorners ------------------------ */
+
+void GetBoxSkyCorners(void){
+  float dxFDS, dyFDS, dzFDS, radius;
+  float xmin, ymin, zmin;
+  float xmax, ymax, zmax;
+
+  dxFDS = (xbarFDS - xbar0FDS);
+  dyFDS = (ybarFDS - ybar0FDS);
+  dzFDS = (zbarFDS - zbar0FDS);
+  radius = sqrt(dxFDS * dxFDS + dyFDS * dyFDS + dzFDS * dzFDS) / 2.0;
+
+  xmin = (xbar0FDS + xbarFDS) / 2.0 - sky_diam * radius;
+  xmax = (xbar0FDS + xbarFDS) / 2.0 + sky_diam * radius;
+  ymin = (ybar0FDS + ybarFDS) / 2.0 - sky_diam * radius;
+  ymax = (ybar0FDS + ybarFDS) / 2.0 + sky_diam * radius;
+  zmin = 0.0;
+  zmax = sky_diam * radius;
+
+  xmin = FDS2SMV_X(xmin);
+  xmax = FDS2SMV_X(xmax);
+  ymin = FDS2SMV_Y(ymin);
+  ymax = FDS2SMV_Y(ymax);
+  zmin = FDS2SMV_Z(zmin);
+  zmax = FDS2SMV_Z(zmax);
+
+  box_sky_corners[0][0] = xmin;
+  box_sky_corners[0][1] = ymin;
+  box_sky_corners[0][2] = zmin;
+
+  box_sky_corners[1][0] = xmax;
+  box_sky_corners[1][1] = ymin;
+  box_sky_corners[1][2] = zmin;
+
+  box_sky_corners[2][0] = xmin;
+  box_sky_corners[2][1] = ymax;
+  box_sky_corners[2][2] = zmin;
+
+  box_sky_corners[3][0] = xmax;
+  box_sky_corners[3][1] = ymax;
+  box_sky_corners[3][2] = zmin;
+
+  box_sky_corners[4][0] = xmin;
+  box_sky_corners[4][1] = ymin;
+  box_sky_corners[4][2] = zmax;
+
+  box_sky_corners[5][0] = xmax;
+  box_sky_corners[5][1] = ymin;
+  box_sky_corners[5][2] = zmax;
+
+  box_sky_corners[6][0] = xmin;
+  box_sky_corners[6][1] = ymax;
+  box_sky_corners[6][2] = zmax;
+
+  box_sky_corners[7][0] = xmax;
+  box_sky_corners[7][1] = ymax;
+  box_sky_corners[7][2] = zmax;
+}
+#endif
+
 /* ------------------ GetBoxGeomCorners ------------------------ */
 
 void GetBoxGeomCorners(void){
@@ -3229,7 +3349,6 @@ void GetBoxGeomCorners(void){
   box_geom_corners[7][0] = xmax;
   box_geom_corners[7][1] = ymax;
   box_geom_corners[7][2] = zmax;
-
 }
 
   /* ------------------ GetBoxCorners ------------------------ */
@@ -4163,9 +4282,6 @@ void InitObst(blockagedata *bc, surfdata *surf, int index, int meshindex){
     bc->surf[i] = surf;
     bc->faceinfo[i] = NULL;
   }
-  for(i = 0; i<7; i++){
-    bc->patchvis[i] = 1;
-  }
   sprintf(blocklabel, "**blockage %i", index);
   len = strlen(blocklabel);
   NewMemory((void **)&bc->label, ((unsigned int)(len + 1))*sizeof(char));
@@ -4309,7 +4425,7 @@ int SurfIdCompare(const void *arg1, const void *arg2){
   return(strcmp(surfi->surfacelabel, surfj->surfacelabel));
 }
 
-/* ------------------ updated_sorted_surfidlist ------------------------ */
+/* ------------------ UpdateSortedSurfIdList ------------------------ */
 
 void UpdateSortedSurfIdList(void){
   int i;
@@ -4744,32 +4860,32 @@ void SetupMeshWalls(void){
     xyz[0] = bmin[0] - EPSMESH;
     xyz[1] = bmid[1];
     xyz[2] = bmid[2];
-    if(InExterior(xyz) == 0)is_extface[0] = MESH_INT;
+    if(InExterior(xyz) == 0)is_extface[0] = 0;
 
     xyz[0] = bmax[0] + EPSMESH;
     xyz[1] = bmid[1];
     xyz[2] = bmid[2];
-    if(InExterior(xyz) == 0)is_extface[1] = MESH_INT;
+    if(InExterior(xyz) == 0)is_extface[1] = 0;
 
     xyz[0] = bmid[0];
     xyz[1] = bmin[1] - EPSMESH;
     xyz[2] = bmid[2];
-    if(InExterior(xyz) == 0)is_extface[2] = MESH_INT;
+    if(InExterior(xyz) == 0)is_extface[2] = 0;
 
     xyz[0] = bmid[0];
     xyz[1] = bmax[1] + EPSMESH;
     xyz[2] = bmid[2];
-    if(InExterior(xyz) == 0)is_extface[3] = MESH_INT;
+    if(InExterior(xyz) == 0)is_extface[3] = 0;
 
     xyz[0] = bmid[0];
     xyz[1] = bmid[1];
     xyz[2] = bmin[2] - EPSMESH;
-    if(InExterior(xyz) == 0)is_extface[4] = MESH_INT;
+    if(InExterior(xyz) == 0)is_extface[4] = 0;
 
     xyz[0] = bmid[0];
     xyz[1] = bmid[1];
     xyz[2] = bmax[2] + EPSMESH;
-    if(InExterior(xyz) == 0)is_extface[5] = MESH_INT;
+    if(InExterior(xyz) == 0)is_extface[5] = 0;
   }
 }
 
@@ -6328,7 +6444,7 @@ void GenerateViewpointMenu(void){
   fprintf(stream, format, "index", "viewpoint");
   fprintf(stream, format, "d", "delete");
   for(i = 0; i<nviewpoints; i++){
-    char index[10];
+    char index[20];
 
     sprintf(index, "%i", count++);
     fprintf(stream, format, index, all_viewpoints[i]);
@@ -6336,7 +6452,7 @@ void GenerateViewpointMenu(void){
   fclose(stream);
 }
 
-/* ------------------ UpdateVents ------------------------ */
+/* ------------------ UpdateEvents ------------------------ */
 
 void UpdateEvents(void){
   FILE *stream = NULL;
@@ -6486,188 +6602,6 @@ blockagedata *GetBlockagePtr(float *xyz){
   }
   return NULL;
 }
-
-#ifdef pp_FDS
-/* ------------------ SkipFdsContinueLines ------------------------ */
-
-void SkipFdsContinueLines(FILE *streamin, FILE *streamout, char *buffer){
-  char *slash;
-
-  slash = strrchr(buffer, '/');
-  while(slash==NULL){
-    if(fgets(buffer, 255, streamin) == NULL)return;
-    slash = strrchr(buffer, '/');
-  }
-}
-
-/* ------------------ ConvertFDSInputFile ------------------------ */
-
-char *ConvertFDSInputFile(char *filein, int *ijk_arg, float *xb_arg){
-  FILE *streamin, *streamout;
-  char *ext, fileout[1024], chid0[1024];
-  int ijk[3] = {32, 32, 32};
-  float xb[6] = {0.0, 1.6, 0.0, 1.6, 0.0, 3.2};
-  int outmesh=1;
-
-  if(filein == NULL)return NULL;
-
-  strcpy(fileout, filein);
-  ext = strrchr(fileout, '.');
-  if(ext != NULL)ext[0] = 0;
-  strcat(fileout, "_1m.fds");
-
-  strcpy(chid0, filein);
-  ext = strrchr(chid0, '.');
-  if(ext != NULL)ext[0] = 0;
-  strcat(chid0, "_1m");
-
-  streamin = fopen(filein, "r");
-  if(streamin == NULL)return NULL;
-
-  streamout = fopen(fileout, "w");
-  if(streamout == NULL){
-    fclose(streamin);
-    return NULL;
-  }
-
-  if(ijk_arg != NULL)memcpy(ijk, ijk_arg, 3 * sizeof(int));
-  if(xb_arg != NULL)memcpy(xb, xb_arg, 6 * sizeof(float));
-  while(!feof(streamin)){
-    char buffer[255], *first;
-
-    if(fgets(buffer, 255, streamin) == NULL)break;
-    first = TrimFrontBack(buffer);
-    if(first==NULL || first[0] != '&'){
-      fprintf(streamout, "%s\n", buffer);
-      continue;
-    }
-    if(strncmp(first, "&HEAD", 5) == 0){
-      fprintf(streamout, "&HEAD CHID='%s' /\n", chid0);
-      SkipFdsContinueLines(streamin, streamout, buffer);
-      continue;
-    }
-    else if(strncmp(first, "&MESH", 5) == 0){
-      if(outmesh==1){
-        int i;
-        char czero[256];
-
-        outmesh=0;
-        fprintf(streamout, "&MESH IJK=%i,%i,%i, XB=", ijk[0], ijk[1], ijk[2]);
-        for(i = 0;i < 5;i++){
-          fprintf(streamout, "%s,", Val2String(xb[i], czero));
-        }
-        fprintf(streamout, "%s /\n", Val2String(xb[5], czero));
-      }
-      SkipFdsContinueLines(streamin, streamout, buffer);
-      continue;
-    }
-    else if(strncmp(first, "&TIME", 5) == 0){
-      fprintf(streamout, "&TIME T_END=0.0 /\n");
-      SkipFdsContinueLines(streamin, streamout, buffer);
-      continue;
-    }
-    fprintf(streamout, "%s\n", buffer);
-  }
-  fclose(streamin);
-  fclose(streamout);
-
-  char *outfile;
-  NewMemory((void **)&outfile, strlen(fileout)+1);
-  strcpy(outfile, fileout);
-  return outfile;
-}
-
-/* ------------------ GenerateSmvOrigFile ------------------------ */
-
-int GenerateSmvOrigFile(void){
-  int i;
-  int ijk[6];
-  float xb[6];
-  float dxmin, dymin, dzmin;
-
-  if(fdsprog == NULL)return 0;
-  if(FileExistsOrig(smv_orig_filename) == 1 && IsFileNewer(smv_orig_filename, smv_filename) == 1)return 0;
-
-  xb[0] = xbar0ORIG;
-  xb[1] = xbarORIG;
-  xb[2] = ybar0ORIG;
-  xb[3] = ybarORIG;
-  xb[4] = zbar0ORIG;
-  xb[5] = zbarORIG;
-  for(i = 0; i < nmeshes; i++){
-    meshdata *meshi;
-    float dx, dy, dz;
-    float *xplt, *yplt, *zplt;
-
-    meshi = meshinfo + i;
-    xplt = meshi->xplt_orig;
-    yplt = meshi->yplt_orig;
-    zplt = meshi->zplt_orig;
-    dx = (xplt[meshi->ibar] - xplt[0]) / (float)meshi->ibar;
-    dy = (yplt[meshi->jbar] - yplt[0]) / (float)meshi->jbar;
-    dz = (zplt[meshi->kbar] - zplt[0]) / (float)meshi->kbar;
-    if(i == 0){
-      dxmin = dx;
-      dymin = dy;
-      dzmin = dz;
-    }
-    else{
-      dxmin = MIN(dx, dxmin);
-      dymin = MIN(dy, dymin);
-      dzmin = MIN(dz, dzmin);
-    }
-  }
-  float nx, ny, nz;
-
-  nx = (xbarORIG - xbar0ORIG) / dxmin + 1;
-  ny = (ybarORIG - ybar0ORIG) / dymin + 1;
-  nz = (zbarORIG - zbar0ORIG) / dzmin + 1;
-  if(nx * ny * nz > 10000000.0)return 0;
-
-  ijk[0] = (int)nx;
-  ijk[1] = (int)ny;
-  ijk[2] = (int)nz;
-
-  char *fdsonemesh, command_line[1024], smvonemesh[1024], gitonemesh[1024], *ext;
-
-  fdsonemesh = ConvertFDSInputFile(fds_filein, ijk, xb);
-  if(FileExistsOrig(fdsonemesh) == 0 || fdsprog == NULL)return 0;
-
-// setup and run fds case
-  strcpy(command_line, fdsprog);
-  strcat(command_line, " ");
-  strcat(command_line, fdsonemesh);
-  strcat(command_line, " > Nul 2> Nul");
-  system(command_line);
-
-  strcpy(smvonemesh, fdsonemesh);
-  ext = strrchr(smvonemesh, '.');
-  if(ext!=NULL)ext[0]=0;
-  strcat(smvonemesh, ".smv");
-  if(FileExistsOrig(smvonemesh) == 0)return 0;
-
-  strcpy(gitonemesh, fdsonemesh);
-  ext = strrchr(gitonemesh, '.');
-  if(ext != NULL)ext[0] = 0;
-  strcat(gitonemesh, "_git.txt");
-
-  FileCopy(smvonemesh, smv_orig_filename);
-  FileErase(fdsonemesh);
-  FileErase(smvonemesh);
-  FileErase(gitonemesh);
-  return 1;
-}
-
-/* ------------------ GenerateSmvOrigFileWrapper ------------------------ */
-
-void *GenerateSmvOrigFileWrapper(void *arg){
-  if(GenerateSmvOrigFile()==1){
-    printf("%s generated\n", smv_orig_filename);
-  }
-  ReadSMVOrig();
-  THREAD_EXIT(readsmvorig_threads);
-}
-#endif
 
 /* ------------------ ReadSMVOrig ------------------------ */
 
@@ -6962,9 +6896,13 @@ void InitMeshBlockages(void){
     int j;
     int counts[6];
     int *is_extface;
+    float *xplt, *yplt, *zplt;
 
     meshi = meshescoll.meshinfo + i;
     if(meshi->nbptrs == 0)continue;
+    xplt = meshi->xplt_orig;
+    yplt = meshi->yplt_orig;
+    zplt = meshi->zplt_orig;
     is_extface = meshi->is_extface;
     for(j=0; j< 6; j++){
       counts[j]            = 0;
@@ -6976,12 +6914,12 @@ void InitMeshBlockages(void){
 
       bc = meshi->blockageinfoptrs[j];
 
-      if(bc->ijk[0] == 0 && is_extface[0] == MESH_INT)counts[0]++;
-      if(bc->ijk[1] == meshi->ibar &&  is_extface[1] == MESH_INT)counts[1]++;
-      if(bc->ijk[2] == 0 && is_extface[2] == MESH_INT)counts[2]++;
-      if(bc->ijk[3] == meshi->jbar && is_extface[3] == MESH_INT)counts[3]++;
-      if(bc->ijk[4] == 0 && is_extface[4] == MESH_INT)counts[4]++;
-      if(bc->ijk[5] == meshi->kbar && is_extface[5] == MESH_INT)counts[5]++;
+      if(bc->ijk[0] == 0           && is_extface[0] == 0)counts[0]++;
+      if(bc->ijk[1] == meshi->ibar && is_extface[1] == 0)counts[1]++;
+      if(bc->ijk[2] == 0           && is_extface[2] == 0)counts[2]++;
+      if(bc->ijk[3] == meshi->jbar && is_extface[3] == 0)counts[3]++;
+      if(bc->ijk[4] == 0           && is_extface[4] == 0)counts[4]++;
+      if(bc->ijk[5] == meshi->kbar && is_extface[5] == 0)counts[5]++;
     }
     for(j=0; j<6; j++){
       if(counts[j]>0)NewMemory((void **)&meshi->bc_faces[j],  meshi->nbptrs*sizeof(blockagedata *));
@@ -6994,23 +6932,27 @@ void InitMeshBlockages(void){
 
       bc = meshi->blockageinfoptrs[j];
 
-      bclist = meshi->bc_faces[0];
-      if(bc->ijk[0] == 0 && is_extface[0] == MESH_INT)          bclist[counts[0]++] = bc;
+      bclist = meshi->bc_faces[0]; if(bc->ijk[0] == 0           && is_extface[0] == 0)bclist[counts[0]++] = bc;
+      bclist = meshi->bc_faces[1]; if(bc->ijk[1] == meshi->ibar && is_extface[1] == 0)bclist[counts[1]++] = bc;
+      bclist = meshi->bc_faces[2]; if(bc->ijk[2] == 0           && is_extface[2] == 0)bclist[counts[2]++] = bc;
+      bclist = meshi->bc_faces[3]; if(bc->ijk[3] == meshi->jbar && is_extface[3] == 0)bclist[counts[3]++] = bc;
+      bclist = meshi->bc_faces[4]; if(bc->ijk[4] == 0           && is_extface[4] == 0)bclist[counts[4]++] = bc;
+      bclist = meshi->bc_faces[5]; if(bc->ijk[5] == meshi->kbar && is_extface[5] == 0)bclist[counts[5]++] = bc;
+    }
+    for(j = 0;j < meshi->nbptrs;j++){
+      blockagedata *bc;
+      float *xyz;
+      int *ijk;
 
-      bclist = meshi->bc_faces[1];
-      if(bc->ijk[1] == meshi->ibar && is_extface[1] == MESH_INT)bclist[counts[1]++] = bc;
-
-      bclist = meshi->bc_faces[2];
-      if(bc->ijk[2] == 0 && is_extface[2] == MESH_INT)          bclist[counts[2]++] = bc;
-
-      bclist = meshi->bc_faces[3];
-      if(bc->ijk[3] == meshi->jbar && is_extface[3] == MESH_INT)bclist[counts[3]++] = bc;
-
-      bclist = meshi->bc_faces[4];
-      if(bc->ijk[4] == 0 && is_extface[4] == MESH_INT)          bclist[counts[4]++] = bc;
-
-      bclist = meshi->bc_faces[5];
-      if(bc->ijk[5] == meshi->kbar && is_extface[5] == MESH_INT)bclist[counts[5]++] = bc;
+      bc = meshi->blockageinfoptrs[j];
+      xyz = bc->xyz;
+      ijk = bc->ijk;
+      xyz[0] = xplt[ijk[0]];
+      xyz[1] = xplt[ijk[1]];
+      xyz[2] = yplt[ijk[2]];
+      xyz[3] = yplt[ijk[3]];
+      xyz[4] = zplt[ijk[4]];
+      xyz[5] = zplt[ijk[5]];
     }
   }
 }
@@ -7033,7 +6975,6 @@ void SetSliceParmInfo(sliceparmdata *sp){
   sp->nmultivsliceinfo = slicecoll.nmultivsliceinfo;
 }
 
-/* ------------------ ReadSMV ------------------------ */
 static float processing_time;
 static float getfilelist_time;
 static float pass0_time;
@@ -7042,6 +6983,9 @@ static float pass2_time;
 static float pass3_time;
 static float pass4_time;
 static float pass5_time;
+
+
+/* ------------------ ReadSMV_Init ------------------------ */
 
 /// @brief Initialise any global variables necessary to being parsing an SMV
 /// file. This should be called before @ref ReadSMV_Parse.
@@ -7063,10 +7007,8 @@ int ReadSMV_Init(){
     use_ffmpeg_threads      = 0;
     use_readallgeom_threads = 0;
     use_isosurface_threads  = 0;
-#ifdef pp_FDS
-    use_readsmvorig_threads = 0;
-#endif
     use_mergesmoke_threads  = 0;
+    use_meshnabors_threads  = 0;
   }
 
   START_TIMER(getfilelist_time);
@@ -7349,6 +7291,68 @@ int ReadSMV_Init(){
   STOP_TIMER(pass0_time );
   PRINT_TIMER(timer_readsmv, "readsmv setup");
   return 0;
+}
+
+#define VENT_EPS 0.02
+
+/* ------------------ SetExternalVents ------------------------ */
+
+void SetExternalVents(void){
+  int i;
+
+  for(i = 0;i < meshescoll.nmeshes;i++){
+    int j;
+    meshdata *meshi;
+
+    meshi = meshescoll.meshinfo + i;
+    for(j = 0;j < meshi->nvents;j++){
+      ventdata *vj;
+      float xyz[3];
+
+      vj = meshi->ventinfo + j;
+      vj->wall_type = INTERIORwall;
+      switch(vj->dir){
+      case UP_X:
+        xyz[0] =  vj->xvent1_orig - VENT_EPS;
+        xyz[1] = (vj->yvent1_orig + vj->yvent2_orig) / 2.0;
+        xyz[2] = (vj->zvent1_orig + vj->zvent2_orig) / 2.0;
+        if(InExterior(xyz)==1)vj->wall_type = LEFTwall;
+        break;
+      case DOWN_X:
+        xyz[0] =  vj->xvent1_orig + VENT_EPS;
+        xyz[1] = (vj->yvent1_orig + vj->yvent2_orig) / 2.0;
+        xyz[2] = (vj->zvent1_orig + vj->zvent2_orig) / 2.0;
+        if(InExterior(xyz) == 1)vj->wall_type = RIGHTwall;
+        break;
+      case UP_Y:
+        xyz[0] = (vj->xvent1_orig + vj->xvent2_orig) / 2.0;
+        xyz[1] =  vj->yvent1_orig - VENT_EPS;
+        xyz[2] = (vj->zvent1_orig + vj->zvent2_orig) / 2.0;
+        if(InExterior(xyz)==1)vj->wall_type = FRONTwall;
+        break;
+      case DOWN_Y:
+        xyz[0] = (vj->xvent1_orig + vj->xvent2_orig) / 2.0;
+        xyz[1] = vj->yvent1_orig  + VENT_EPS;
+        xyz[2] = (vj->zvent1_orig + vj->zvent2_orig) / 2.0;
+        if(InExterior(xyz)==1)vj->wall_type = BACKwall;
+        break;
+      case UP_Z:
+        xyz[0] = (vj->xvent1_orig + vj->xvent2_orig) / 2.0;
+        xyz[1] = (vj->yvent1_orig + vj->yvent2_orig) / 2.0;
+        xyz[2] = vj->zvent1_orig  - VENT_EPS;
+        if(InExterior(xyz)==1)vj->wall_type = DOWNwall;
+        break;
+      case DOWN_Z:
+        xyz[0] = (vj->xvent1_orig + vj->xvent2_orig) / 2.0;
+        xyz[1] = (vj->yvent1_orig + vj->yvent2_orig) / 2.0;
+        xyz[2] = vj->zvent1_orig  + VENT_EPS;
+        if(InExterior(xyz)==1)vj->wall_type = UPwall;
+        break;
+      default:
+        vj->wall_type = INTERIORwall;
+      }
+    }
+  }
 }
 
 /* ------------------ ReadSMV_Parse ------------------------ */
@@ -7644,6 +7648,28 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       }
       continue;
     }
+#ifdef pp_SKY
+    if(MatchSMV(buffer, "SKYIMAGE") == 1){
+      char *buff2;
+      int len_buffer;
+
+      if(sky_texture != NULL){
+        FREEMEMORY(sky_texture->file);
+        FREEMEMORY(sky_texture);
+      }
+      nsky_texture = 1;
+      NewMemory((void **)&sky_texture, nsky_texture * sizeof(texturedata));
+      FGETS(buffer, 255, stream);
+      buff2 = TrimFrontBack(buffer);
+      len_buffer = strlen(buff2);
+      sky_texture->file = NULL;
+      if(len_buffer > 0 && strcmp(buff2, "null") != 0){
+         NewMemory((void **)&sky_texture->file, (len_buffer + 1) * sizeof(char));
+         strcpy(sky_texture->file, buff2);
+      }
+      continue;
+    }
+#endif
     if(
       (MatchSMV(buffer,"DEVICE") == 1)&&
       (MatchSMV(buffer,"DEVICE_ACT") != 1)
@@ -9216,14 +9242,6 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       float *xplt_cen, *yplt_cen,*zplt_cen;
       int *imap, *jmap, *kmap;
 
-//      int lenbuffer;
-
-//      TrimBack(buffer);
-//      lenbuffer=strlen(buffer);
-//      if(lenbuffer>4){
-//        if(buffer[5]!=' ')continue;
-//      }
-
       igrid++;
       if(meshescoll.meshinfo!=NULL){
         size_t len_meshlabel;
@@ -10556,6 +10574,7 @@ typedef struct {
       meshi->blockageinfoptrs=NULL;
       if(n_blocks_normal>0){
         NewMemory((void **)&meshi->blockageinfoptrs,sizeof(blockagedata *)*n_blocks_normal);
+        NewMemory(( void ** )&meshi->blockageinfo,  sizeof(blockagedata)  *n_blocks_normal);
       }
 
       ntotal_blockages+=n_blocks_normal;
@@ -10569,8 +10588,7 @@ typedef struct {
           continue;
         }
         nn++;
-        meshi->blockageinfoptrs[nn]=NULL;
-        NewMemory((void **)&meshi->blockageinfoptrs[nn],sizeof(blockagedata));
+        meshi->blockageinfoptrs[nn] = meshi->blockageinfo + nn;
         bc=meshi->blockageinfoptrs[nn];
         InitObst(bc,surfacedefault,nn+1,iobst-1);
         FGETS(buffer,255,stream);
@@ -10710,12 +10728,25 @@ typedef struct {
         FGETS(buffer,255,stream);
         {
           char *exclaim;
+          int hidden6[6] = {-1,-1,-1,-1,-1,-1};
 
+          memcpy(bc->hidden6, hidden6, 6*sizeof(int));
           exclaim = strchr(buffer, '!');
           if(exclaim != NULL){
             exclaim[0] = 0;
             exclaim = TrimFront(exclaim + 1);
-            if(exclaim[0] == 'F' || exclaim[0] == 'f')have_removable_obsts = 1;
+            if(exclaim[0] == 'T' || exclaim[0] == 't')have_removable_obsts = 1;
+            exclaim++;
+            if(strlen(exclaim) > 0){
+              sscanf(exclaim, "%i %i %i %i %i %i",
+                hidden6, hidden6 + 1, hidden6 + 2, hidden6 + 3, hidden6 + 4, hidden6 + 5);
+              int ii;
+              for(ii = 0; ii < 6; ii++){
+                if(hidden6[i] >= 0)hidden6[ii] = 1 - hidden6[ii];
+              }
+              memcpy(bc->hidden6, hidden6, 6*sizeof(int));
+              if(hidden6[0] >= 0)have_hidden6 = 1;
+            }
           }
         }
         ijk = bc->ijk;
@@ -11044,6 +11075,7 @@ typedef struct {
         vi->usecolorindex=0;
         vi->nshowtime=0;
         vi->isOpenvent=0;
+        vi->wall_type = INTERIORwall;
         vi->isMirrorvent = 0;
         vi->hideboundary=0;
         vi->surf[0]=vent_surfacedefault;
@@ -11763,13 +11795,6 @@ int ReadSMV_Configure(){
   UpdateMeshCoords();
   PRINT_TIMER(timer_readsmv, "UpdateMeshCoords");
 
-#ifdef pp_FDS
-    if(readsmvorig_threads == NULL){
-      readsmvorig_threads = THREADinit(&n_readsmvorig_threads, &use_readsmvorig_threads, GenerateSmvOrigFileWrapper);
-    }
-    THREADrun(readsmvorig_threads);
-#endif
-
   UpdateSmoke3DTypes();
   PRINT_TIMER(timer_readsmv, "UpdateSmoke3DTypes");
   CheckMemory;
@@ -11895,6 +11920,10 @@ int ReadSMV_Configure(){
   THREADrun(ffmpeg_threads);
   PRINT_TIMER(timer_readsmv, "SetupFFMT");
 
+  if(sorttags_threads == NULL){
+    sorttags_threads = THREADinit(&n_sorttags_threads, &use_sorttags_threads, SortAllPartTags);
+  }
+
   if(isosurface_threads == NULL){
     isosurface_threads = THREADinit(&n_isosurface_threads, &use_isosurface_threads, SetupAllIsosurfaces);
   }
@@ -11948,10 +11977,10 @@ int ReadSMV_Configure(){
   UpdateBoundaryTypes();
   PRINT_TIMER(timer_readsmv, "UpdateBoundaryTypes");
 
-  if(meshescoll.nmeshes < 100 || parse_opts.fast_startup == 0){
-    InitNabors();
-    PRINT_TIMER(timer_readsmv, "update nabors");
+  if(meshnabors_threads == NULL){
+    meshnabors_threads = THREADinit(&n_meshnabors_threads, &use_meshnabors_threads, InitNabors);
   }
+  THREADrun(meshnabors_threads);
 
   UpdateTerrain(1); // xxslow
   UpdateTerrainColors();
@@ -12022,6 +12051,9 @@ int ReadSMV_Configure(){
   UpdateTriangles(GEOM_STATIC,GEOM_UPDATE_ALL);
   GetFaceInfo();
   GetBoxGeomCorners();
+#ifdef pp_SKY
+  GetBoxSkyCorners();
+#endif
   PRINT_TIMER(timer_readsmv, "update trianglesfaces");
 
   if(ngeominfo>0&&sextras.auto_terrain==1){
@@ -12047,10 +12079,11 @@ int ReadSMV_Configure(){
   InitPlot2D(glui_plot2dinfo, 0);
   PRINT_TIMER(timer_readsmv, "InitPlot2D");
 
-  SetInteriorBlockages(1);
+  SetInteriorBlockages();
   PRINT_TIMER(timer_readsmv, "SetInteriorBlockages");
 
   InitMeshBlockages();
+  SetExternalVents();
 
   PRINTF("%s", _("complete"));
   PRINTF("\n\n");
@@ -12077,7 +12110,8 @@ int ReadSMV_Configure(){
   return 0;
 }
 
-/* ------------------ ReadSMV_Init ------------------------ */
+/* ------------------ ReadSMV ------------------------ */
+
 /// @brief Parse an SMV file.
 /// @param stream the file stream to parse.
 /// @return zero on sucess, non-zero on error
@@ -12087,6 +12121,8 @@ int ReadSMV(bufferstreamdata *stream){
   ReadSMV_Configure();
   return 0;
 }
+
+/* ------------------ UpdateUseTextures ------------------------ */
 
 void UpdateUseTextures(void){
   int i;
@@ -12392,7 +12428,7 @@ int ReadIni2(char *inifile, int localfile){
       int dummy;
 
       fgets(buffer, 255, stream);
-      sscanf(buffer, " %i %i %f %i %i %i %i %i", &research_mode, &dummy, &colorbar_shift, &ncolorlabel_digits, &force_fixedpoint, &ngridloc_digits, &sliceval_ndigits, &force_exponential);
+      sscanf(buffer, " %i %i %f %i %i %i %i %i %i %i", &research_mode, &dummy, &colorbar_shift, &ncolorlabel_digits, &force_fixedpoint, &ngridloc_digits, &sliceval_ndigits, &force_exponential, &force_decimal, &force_zero_pad);
       colorbar_shift = CLAMP(colorbar_shift, COLORBAR_SHIFT_MIN, COLORBAR_SHIFT_MAX);
       if(research_mode==1&&research_mode_override==0)research_mode=0;
       ncolorlabel_digits = CLAMP(ncolorlabel_digits, COLORBAR_NDECIMALS_MIN, COLORBAR_NDECIMALS_MAX);
@@ -12401,7 +12437,9 @@ int ReadIni2(char *inifile, int localfile){
       ONEORZERO(research_mode);
       ONEORZERO(force_fixedpoint);
       ONEORZERO(force_exponential);
-      if(force_fixedpoint==1&&force_exponential==1)force_exponential = 0;
+      ONEORZERO(force_decimal);
+      ONEORZERO(force_zero_pad);
+      if(force_fixedpoint == 1 && force_exponential == 1)force_exponential = 0;
       update_research_mode=1;
       continue;
     }
@@ -12463,6 +12501,8 @@ int ReadIni2(char *inifile, int localfile){
       update_ini_boundary_type = 1;
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i %i %i %i %i %i %i %i %i", vbt,vbt+1,vbt+2,vbt+3,vbt+4,vbt+5,vbt+6, &show_mirror_boundary, &show_mirror_boundary);
+      show_all_interior_patch_data = vbt[INTERIORwall];
+      hide_all_interior_patch_data = 1 - show_all_interior_patch_data;
       continue;
     }
     if(MatchINI(buffer, "GEOMBOUNDARYPROPS")==1){
@@ -12809,10 +12849,11 @@ int ReadIni2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i %f %i", &scaled_font3d_height, &scaled_font3d_height2width, &scaled_font3d_thickness);
     }
-    if(MatchINI(buffer, "USENEWDRAWFACE") == 1){
+    if(MatchINI(buffer, "NEWDRAWFACE") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &use_new_drawface);
-      ONEORZERO(use_new_drawface);
+      sscanf(buffer, "%i", &blockage_draw_option);
+      updatefacelists = 1;
+      blockage_draw_option = CLAMP(blockage_draw_option, 0, 3);
       continue;
     }
     if(MatchINI(buffer, "TLOAD") == 1){
@@ -12879,11 +12920,6 @@ int ReadIni2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &showpatch_both);
       ONEORZERO(showpatch_both);
-    }
-    if(MatchINI(buffer, "BOUNDARYMESH") == 1){
-      fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &show_bndf_mesh_interface);
-      ONEORZERO(show_bndf_mesh_interface);
     }
     if(MatchINI(buffer, "MESHOFFSET") == 1){
       int meshnum;
@@ -13231,8 +13267,11 @@ int ReadIni2(char *inifile, int localfile){
       skyi = skyboxinfo;
 
       for(i = 0; i<6; i++){
+        char *skybox_texture;
+
         fgets(buffer, 255, stream);
-        LoadSkyTexture(buffer, skyi->face + i);
+        skybox_texture = TrimFrontBack(buffer);
+        LoadSkyTexture(skybox_texture, skyi->face + i);
       }
     }
     if(MatchINI(buffer, "C_PLOT3D")==1){
@@ -13744,8 +13783,8 @@ int ReadIni2(char *inifile, int localfile){
       int setvalmin, setvalmax;
       char *isolabel;
 
-#define SETVALMIN 1
-#define SETVALMAX 1
+#define SETVALMIN_ORIG 1
+#define SETVALMAX_ORIG 1
 
       fgets(buffer, 255, stream);
       strcpy(buffer2, "");
@@ -13757,8 +13796,8 @@ int ReadIni2(char *inifile, int localfile){
           isobounds[i].ini_defined = 1;
           isobounds[i].ini_setvalmin = setvalmin;
           isobounds[i].ini_setvalmax = setvalmax;
-          if(setvalmin == SETVALMIN)isobounds[i].ini_valmin = valmin;
-          if(setvalmax == SETVALMAX)isobounds[i].ini_valmax = valmax;
+          if(setvalmin == SETVALMIN_ORIG)isobounds[i].ini_valmin = valmin;
+          if(setvalmax == SETVALMAX_ORIG)isobounds[i].ini_valmax = valmax;
           update_iso_ini = 1;
           break;
         }
@@ -14740,6 +14779,14 @@ int ReadIni2(char *inifile, int localfile){
       zonecolortype = CLAMP(zonecolortype, 0, 2);
       continue;
     }
+#ifdef pp_SKY
+    if(MatchINI(buffer, "SHOWSKY") == 1){
+      fgets(buffer, 255, stream);
+      sscanf(buffer, "%i", &visSky);
+      ONEORZERO(visSky);
+      continue;
+    }
+#endif
     if(MatchINI(buffer, "SHOWSMOKEPART") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &visSmokePart);
@@ -16670,9 +16717,6 @@ void WriteIniLocal(FILE *fileout){
     fprintf(fileout, "ZONEVIEW\n");
     fprintf(fileout, " %f\n", zone_hvac_diam);
   }
-
-  // write out labels to casename.evt if this file exsits
-  //WriteLabels(&labelscoll);
 }
 
   /* ------------------ WriteIni ------------------------ */
@@ -16921,8 +16965,8 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %f\n", streaklinewidth);
   fprintf(fileout, "TICKLINEWIDTH\n");
   fprintf(fileout, " %f\n", ticklinewidth);
-  fprintf(fileout, "USENEWDRAWFACE\n");
-  fprintf(fileout, " %i\n", use_new_drawface);
+  fprintf(fileout, "NEWDRAWFACE\n");
+  fprintf(fileout, " %i\n", blockage_draw_option);
   fprintf(fileout, "VECCONTOURS\n");
   fprintf(fileout, " %i %i\n", show_node_slices_and_vectors,show_cell_slices_and_vectors);
   fprintf(fileout, "VECLENGTH\n");
@@ -16983,7 +17027,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "PARTFAST\n");
   fprintf(fileout, " %i %i %i\n", partfast, use_partload_threads, n_partload_threads);
   fprintf(fileout, "RESEARCHMODE\n");
-  fprintf(fileout, " %i %i %f %i %i %i %i %i\n", research_mode, 1, colorbar_shift, ncolorlabel_digits, force_fixedpoint, ngridloc_digits, sliceval_ndigits, force_exponential);
+  fprintf(fileout, " %i %i %f %i %i %i %i %i %i %i\n", research_mode, 1, colorbar_shift, ncolorlabel_digits, force_fixedpoint, ngridloc_digits, sliceval_ndigits, force_exponential, force_decimal, force_zero_pad);
   fprintf(fileout, "SLICEAVERAGE\n");
   fprintf(fileout, " %i %f %i\n", slice_average_flag, slice_average_interval, vis_slice_average);
   fprintf(fileout, "SLICEDATAOUT\n");
@@ -17004,8 +17048,6 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i %f %i %i %i %i\n", showbeam_as_line,beam_line_width,use_beamcolor,beam_color[0], beam_color[1], beam_color[2]);
   fprintf(fileout, "BLENDMODE\n");
   fprintf(fileout, " %i %i %i\n", slices3d_max_blending, hrrpuv_max_blending,showall_3dslices);
-  fprintf(fileout, "BOUNDARYMESH\n");
-  fprintf(fileout, " %i\n", show_bndf_mesh_interface);
   fprintf(fileout, "BOUNDARYTWOSIDE\n");
   fprintf(fileout, " %i\n", showpatch_both);
   fprintf(fileout, "CLIP\n");
@@ -17176,6 +17218,10 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i\n", sextras.show_slice_in_obst);
   fprintf(fileout, "SHOWSMOKEPART\n");
   fprintf(fileout, " %i\n", visSmokePart);
+#ifdef pp_SKY
+  fprintf(fileout, "SHOWSKY\n");
+  fprintf(fileout, " %i\n", visSky);
+#endif
   fprintf(fileout, "SHOWSPRINKPART\n");
   fprintf(fileout, " %i\n", visSprinkPart);
   fprintf(fileout, "SHOWSTREAK\n");
@@ -17480,18 +17526,13 @@ void WriteIni(int flag,char *filename){
     flag == LOCAL_INI))OutputViewpoints(fileout);
 
   {
-    char version[256];
     char githash[256];
     char gitdate[256];
 
-    GetProgVersion(version);
     GetGitInfo(githash,gitdate);    // get githash
     fprintf(fileout,"\n\n");
     fprintf(fileout,"# FDS/Smokeview Environment\n");
     fprintf(fileout,"# -------------------------\n\n");
-    if(strcmp(version,"")!=0){
-      fprintf(fileout,"# Smokeview Version: %s\n",version);
-    }
     fprintf(fileout,"# Smokeview Build: %s\n",githash);
     fprintf(fileout,"# Smokeview Build Date: %s\n",__DATE__);
     if(fds_version!=NULL){

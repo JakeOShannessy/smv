@@ -29,7 +29,7 @@
 #include <dirent.h>
 #include <libgen.h>
 #endif
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "string_util.h"
 #include "file_util.h"
 #include "threader.h"
@@ -658,7 +658,7 @@ void PrintTime(const char *filepath, int line, float *timer, const char *label, 
 bufferdata *InitBufferData(char *file){
   bufferdata *buffinfo = NULL;
   unsigned char *buffer = NULL;
-  int nbuffer = 0;
+  FILE_SIZE nbuffer = 0;
 
   NewMemory((void **)&buffinfo, sizeof(bufferdata));
   buffinfo->file = file;
@@ -680,7 +680,7 @@ void FreeBufferInfo(bufferdata *bufferinfo){
 
 /* ------------------ File2Buffer ------------------------ */
 
-bufferdata *File2Buffer(char *file, bufferdata *bufferinfo,  int *nreadptr){
+bufferdata *File2Buffer(char *file, bufferdata *bufferinfo,  FILE_SIZE *nreadptr){
   FILE_SIZE nfile, offset_buffer = 0, offset_file = 0, nread_actual, nread_try;
 
   *nreadptr = 0;

@@ -7,7 +7,7 @@
 #include <math.h>
 #include "string_util.h"
 #include "file_util.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -24,14 +24,17 @@ int write_buffer=0;
 
 /* ------------------ Usage ------------------------ */
 
-void Usage(char *prog, int option){
+void Usage(int option){
  char githash[LEN_BUFFER];
  char gitdate[LEN_BUFFER];
 
   GetGitInfo(githash,gitdate);    // get githash
 
-  fprintf(stdout, "\n%s (%s) %s\n", prog, githash, __DATE__);
-  fprintf(stdout, "flush the cache\n");
+  
+  fprintf(stdout, "\nflush [options]\n");
+  fprintf(stdout, "%s %s\n\n", githash, __DATE__);
+  fprintf(stdout, "flush the cache\n\n");
+  PRINTF("options:\n");
   PRINTF("%s\n", " -g size - allocate a memory buffer of 'size' GB");
   PRINTF("%s\n", " -w      - initialize buffer");
   UsageCommon(HELP_SUMMARY);

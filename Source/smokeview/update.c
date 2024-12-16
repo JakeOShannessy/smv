@@ -14,6 +14,8 @@
 #include "IOscript.h"
 #include "glui_smoke.h"
 #include "glui_motion.h"
+#include "glui_bounds.h"
+#include "IOobjects.h"
 
 /* ------------------ CompareFloat ------------------------ */
 
@@ -843,7 +845,7 @@ void SynchTimes(void){
       if(meshi->patchfilenum<0||meshi->patch_times==NULL)continue;
       patchi=patchinfo+meshi->patchfilenum;
       if(patchi->structured == NO||patchi->loaded==0)continue;
-      meshi->patch_timeslist[n] = GetDataTimeFrame(global_times[n], meshi->patch_times_map, meshi->patch_times,meshi->npatch_times);
+      meshi->patch_timeslist[n] = GetDataTimeFrame(global_times[n], meshi->patch_times_map, meshi->patch_times,patchi->ntimes);
     }
 
   /* synchronize isosurface times */
@@ -1342,7 +1344,7 @@ void UpdateTimes(void){
     if(filenum!=-1){
       patchi=patchinfo+filenum;
       if(patchi->loaded==1&&patchi->structured == YES){
-        MergeGlobalTimes(meshi->patch_times, meshi->npatch_times);
+        MergeGlobalTimes(meshi->patch_times, patchi->ntimes);
       }
     }
   }
@@ -1678,9 +1680,6 @@ void UpdateTimes(void){
     SynchTimes();
     PRINT_TIMER(timer_synch_times, "timer: SynchTimes");
   }
-#ifdef pp_UPDATE_FACES
-  updatefaces=1;
-#endif
   if(nglobal_times>0){
     INIT_PRINT_TIMER(timer_labels);
     UpdateTimeLabels();
@@ -2035,6 +2034,7 @@ void OutputFrameSteps(void){
   char size_label[256], geom_slice_label[256], slice_label[256], part_label[256];
   char iso_label[256],  smoke_label[256],      bound_label[256], geom_bound_label[256];
   char time_label[256], time_label2[256],      time_label3[256];
+  char file_count_label[256];
 
   show = 0;
   strcpy(geom_slice_label, "");
@@ -2069,7 +2069,9 @@ void OutputFrameSteps(void){
     total_wrapup_time += frameinfo->total_time;
   }
   if(count > 0){
-    sprintf(slice_label, "   slice(structured): loaded %i frames, %i files, %s", frames_read, count, Bytes2Label(size_label, bytes_read));
+    strcpy(file_count_label, "file");
+    if(count > 1)strcpy(file_count_label, "s");
+    sprintf(slice_label, "   slice(structured): loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
     strcpy(time_label, "");
     Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
     Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
@@ -2102,7 +2104,9 @@ void OutputFrameSteps(void){
     total_wrapup_time += frameinfo->total_time;
   }
   if(count > 0){
-    sprintf(geom_slice_label, "         slice(geom): loaded %i frames, %i files, %s", frames_read, count, Bytes2Label(size_label, bytes_read));
+    strcpy(file_count_label, "file");
+    if(count > 1)strcpy(file_count_label, "s");
+    sprintf(geom_slice_label, "         slice(geom): loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
     strcpy(time_label, "");
     Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
     Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
@@ -2118,10 +2122,10 @@ void OutputFrameSteps(void){
   frames_read       = 0;
   total_time        = 0.0;
   total_wrapup_time = 0.0;
-  for(i = 0;i < nsmoke3dinfo;i++){
+  for(i = 0;i < smoke3dcoll.nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dinfo + i;
+    smoke3di = smoke3dcoll.smoke3dinfo + i;
     if(smoke3di->loaded == 0 || smoke3di->frameinfo == NULL || smoke3di->frameinfo->update == 0)continue;
     smoke3di->frameinfo->update = 0;
     count++;
@@ -2131,7 +2135,9 @@ void OutputFrameSteps(void){
     total_wrapup_time += smoke3di->frameinfo->total_time;
   }
   if(count > 0){
-    sprintf(smoke_label, "            3D smoke: loaded %i frames, %i files, %s", frames_read, count, Bytes2Label(size_label, bytes_read));
+    strcpy(file_count_label, "file");
+    if(count > 1)strcpy(file_count_label, "s");
+    sprintf(smoke_label, "            3D smoke: loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
     strcpy(time_label, "");
     Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
     Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
@@ -2163,7 +2169,9 @@ void OutputFrameSteps(void){
     total_wrapup_time += patchi->frameinfo->total_time;
   }
   if(count > 0){
-    sprintf(bound_label, "boundary(structured): loaded %i frames, %i files, %s", frames_read, count, Bytes2Label(size_label, bytes_read));
+    strcpy(file_count_label, "file");
+    if(count > 1)strcpy(file_count_label, "s");
+    sprintf(bound_label, "boundary(structured): loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
     strcpy(time_label, "");
     Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
     Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
@@ -2193,7 +2201,9 @@ void OutputFrameSteps(void){
     total_wrapup_time += patchi->frameinfo->total_time;
   }
   if(count > 0){
-    sprintf(geom_bound_label, "      boundary(geom): loaded %i frames, %i files, %s", frames_read, count, Bytes2Label(size_label, bytes_read));
+    strcpy(file_count_label, "file");
+    if(count > 1)strcpy(file_count_label, "s");
+    sprintf(geom_bound_label, "      boundary(geom): loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
     strcpy(time_label, "");
     Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
     Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
@@ -2222,7 +2232,9 @@ void OutputFrameSteps(void){
     total_wrapup_time += isoi->frameinfo->total_time;
   }
   if(count > 0){
-    sprintf(iso_label, "          isosurface: loaded %i frames, %i files, %s", frames_read, count, Bytes2Label(size_label, bytes_read));
+    strcpy(file_count_label, "file");
+    if(count > 1)strcpy(file_count_label, "s");
+    sprintf(iso_label, "          isosurface: loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
     strcpy(time_label, "");
     Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
     Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
@@ -2251,7 +2263,9 @@ void OutputFrameSteps(void){
     total_wrapup_time += parti->frameinfo->total_time;
   }
   if(count > 0){
-    sprintf(part_label, "            particle: loaded %i frames, %i files, %s", frames_read, count, Bytes2Label(size_label, bytes_read));
+    strcpy(file_count_label, "file");
+    if(count > 1)strcpy(file_count_label, "s");
+    sprintf(part_label, "            particle: loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
     strcpy(time_label, "");
     Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
     Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
@@ -2298,6 +2312,12 @@ void UpdateShowScene(void){
     END_SHOW_UPDATE(update_frame);
   }
 #endif
+#define SHOW_EXTERIOR_PATCH_DATA     32
+void BoundBoundCB(int var);
+  if(update_patch_vis == 1){
+    BoundBoundCB(SHOW_EXTERIOR_PATCH_DATA);
+    update_patch_vis = 0;
+  }
   if(update_smoke3dmenulabels == 1){
     SHOW_UPDATE(update_smoke3dmenulabels);
     update_smoke3dmenulabels = 0;
@@ -2591,7 +2611,9 @@ void UpdateShowScene(void){
     SMV_EXIT(0);
     END_SHOW_UPDATE(update_ssf);
   }
+  INIT_PRINT_TIMER(timer_updateshow);
   UpdateShow();
+  PRINT_TIMER(timer_updateshow, "UpdateShow");
   if(global_times!=NULL&&updateUpdateFrameRateMenu==1){
     SHOW_UPDATE(updateUpdateFrameRateMenu);
     FrameRateMenu(frameratevalue);
@@ -2965,7 +2987,13 @@ void UpdateDisplay(void){
   }
   if(update_ini_boundary_type==1){
     update_ini_boundary_type = 0;
+    ShowBoundaryMenu(INTERIOR_WALL_MENU);
     ShowBoundaryMenu(INI_EXTERIORwallmenu);
+  }
+  if(update_boundary_loaded == 1){ // a hack, shouldn't be necessary
+    update_boundary_loaded = 0;
+    ShowBoundaryMenu(INTERIOR_WALL_MENU);
+    ShowBoundaryMenu(INTERIOR_WALL_MENU);
   }
   if(update_fire_alpha==1){
     update_fire_alpha=0;
@@ -2997,6 +3025,33 @@ void UpdateDisplay(void){
       meshi->c_iblank_y0        = meshi->c_iblank_y0_temp;
       meshi->c_iblank_z0        = meshi->c_iblank_z0_temp;
     }
+    INIT_PRINT_TIMER(timer_hidden_blockages);
+    int nhidden_faces = 0, ntotal_obsts = 0;
+    for(ig = 0; ig < meshescoll.nmeshes; ig++){
+      meshdata *meshi;
+      int j;
+
+      meshi = meshescoll.meshinfo + ig;
+      void SetHiddenBlockages(meshdata *meshi);
+      if(have_hidden6 == 0){
+        if(ig == 0)printf("setting hidden blockages\n");
+        SetHiddenBlockages(meshi);
+      }
+      for(j = 0; j < meshi->nbptrs; j++){
+        blockagedata *bc;
+
+        bc = meshi->blockageinfoptrs[j];
+        if(bc->hidden6[0] == 1)nhidden_faces++;
+        if(bc->hidden6[1] == 1)nhidden_faces++;
+        if(bc->hidden6[2] == 1)nhidden_faces++;
+        if(bc->hidden6[3] == 1)nhidden_faces++;
+        if(bc->hidden6[4] == 1)nhidden_faces++;
+        if(bc->hidden6[5] == 1)nhidden_faces++;
+      }
+      ntotal_obsts += meshi->nbptrs;
+    }
+    if(nhidden_faces > 0)printf("%i blockage faces out of %i hidden\n", nhidden_faces, 6*ntotal_obsts);
+    PRINT_TIMER(timer_hidden_blockages, "SetHiddenBlockages");
     update_make_iblank = 0;
     update_setvents    = 1;
     update_setcvents   = 1;
@@ -3059,7 +3114,7 @@ void UpdateDisplay(void){
     SmokeColorbarMenu(colorbars.fire_colorbar_index);
   }
   if(update_colorbar_dialog == 1){
-    UpdateNodeLabel(colorbars.colorbarinfo + colorbartype);
+    GLUIUpdateNodeLabel(colorbars.colorbarinfo + colorbartype);
     update_colorbar_dialog = 0;
   }
   if(update_colorbartype == 1){
@@ -3110,6 +3165,7 @@ void UpdateDisplay(void){
     ResizeWindow(screenWidthINI, screenHeightINI);
   }
   if(updatemenu == 1 && usemenu == 1 && menustatus == GLUT_MENU_NOT_IN_USE){
+    INIT_PRINT_TIMER(timer_update_menus);
     glutDetachMenu(GLUT_RIGHT_BUTTON);
     attachmenu_status = 0;
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
@@ -3118,6 +3174,7 @@ void UpdateDisplay(void){
     glutAttachMenu(GLUT_RIGHT_BUTTON);
     attachmenu_status = 1;
     updatemenu = 0;
+    PRINT_TIMER(timer_update_menus, "update menus");
   }
   if(attachmenu_print == 1){
     if(attachmenu_status == 1)printf("menus attached(%i)\n",attachmenu_counter++);

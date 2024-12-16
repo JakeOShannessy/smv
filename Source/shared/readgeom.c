@@ -1,4 +1,4 @@
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "gd.h"
 #include "options.h"
 #include "string_util.h"
@@ -6,7 +6,7 @@
 
 #include "datadefs.h"
 #include "histogram.h"
-#include "isodefs.h"
+#include "isobox.h"
 #include "readgeom.h"
 #include "smokeviewdefs.h"
 #include "stdio_m.h"

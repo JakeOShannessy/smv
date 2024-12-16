@@ -6,6 +6,7 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "glui_bounds.h"
 
 #define EXPMIN -1
 #define EXPMAX 3
@@ -267,7 +268,7 @@ void UpdateAllBoundaryColors(int flag){
               int npatchvals;
 
               meshi = meshescoll.meshinfo+patchi->blocknumber;
-              npatchvals = meshi->npatch_times*meshi->npatchsize;
+              npatchvals = patchi->ntimes*meshi->npatchsize;
               GetBoundaryColors3(patchi, meshi->patchval, 0, npatchvals, meshi->cpatchval,
                                  &glui_patchmin, &glui_patchmax,
                                  sextras.nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
@@ -991,6 +992,32 @@ void UpdateTexturebar(void){
   }
 #endif
 
+}
+
+  /* ------------------ ConvertColor ------------------------ */
+
+void ConvertColor(color_collection coll, int flag){
+  colordata *colorptr;
+
+  switch(flag){
+   case TO_BW:
+    for(colorptr=coll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
+      colorptr->color[0]=colorptr->bw_color[0];
+      colorptr->color[1]=colorptr->bw_color[1];
+      colorptr->color[2]=colorptr->bw_color[2];
+    }
+    break;
+   case TO_COLOR:
+    for(colorptr=coll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
+      colorptr->color[0]=colorptr->full_color[0];
+      colorptr->color[1]=colorptr->full_color[1];
+      colorptr->color[2]=colorptr->full_color[2];
+    }
+    break;
+   default:
+     assert(FFALSE);
+     break;
+  }
 }
 
 /* ------------------ InitRGB ------------------------ */
@@ -1783,30 +1810,4 @@ float *GetColorTranPtr(float *color, float transparency){
   col[2] = color[2];
   col[3] = transparency;
   return GetColorPtr(&colorcoll, col);
-}
-
-  /* ------------------ ConvertColor ------------------------ */
-
-void ConvertColor(color_collection coll, int flag){
-  colordata *colorptr;
-
-  switch(flag){
-   case TO_BW:
-    for(colorptr=coll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
-      colorptr->color[0]=colorptr->bw_color[0];
-      colorptr->color[1]=colorptr->bw_color[1];
-      colorptr->color[2]=colorptr->bw_color[2];
-    }
-    break;
-   case TO_COLOR:
-    for(colorptr=coll.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
-      colorptr->color[0]=colorptr->full_color[0];
-      colorptr->color[1]=colorptr->full_color[1];
-      colorptr->color[2]=colorptr->full_color[2];
-    }
-    break;
-   default:
-     assert(FFALSE);
-     break;
-  }
 }

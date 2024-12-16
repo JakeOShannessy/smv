@@ -5,20 +5,23 @@
 #include <math.h>
 #include <string.h>
 
-#include "MALLOCC.h"
-#include "contourdefs.h"
+#include "dmalloc.h"
+#include "scontour2d.h"
 #include "histogram.h"
 #include "smokeviewdefs.h"
 #include "string_util.h"
-#include "isodefs.h"
+#include "isobox.h"
 #include "structures.h"
 #include "readsmoke.h"
 
 /* ------------------ FreeSmoke3d ------------------------ */
 
 void FreeSmoke3D(smoke3ddata *smoke3di){
-
   smoke3di->lastiframe = -999;
+#ifdef pp_SMOKEFRAME
+  FRAMEFree(smoke3di->frameinfo);
+  smoke3di->frameinfo = NULL;
+#endif
   FREEMEMORY(smoke3di->smokeframe_in);
   FREEMEMORY(smoke3di->smokeframe_out);
   FREEMEMORY(smoke3di->timeslist);
@@ -30,7 +33,9 @@ void FreeSmoke3D(smoke3ddata *smoke3di){
   FREEMEMORY(smoke3di->frame_all_zeros);
   FREEMEMORY(smoke3di->smoke_boxmin);
   FREEMEMORY(smoke3di->smoke_boxmax);
+#ifndef pp_SMOKEFRAME
   FREEMEMORY(smoke3di->smoke_comp_all);
+#endif
   FREEMEMORY(smoke3di->smokeframe_comp_list);
   FREEMEMORY(smoke3di->smokeview_tmp);
   FREEMEMORY(smoke3di->smokeframe_loaded);

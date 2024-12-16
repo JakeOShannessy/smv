@@ -9,6 +9,7 @@
 #include GLUT_H
 
 #include "smokeviewvars.h"
+#include "glui_bounds.h"
 #include "IOvolsmoke.h"
 #include "infoheader.h"
 #include "readsmoke.h"
@@ -20,49 +21,6 @@
 
 #define CONV(p,pl,pr,pxl,pxr) ( (pxl) + ((pxr)-(pxl))*((p)-(pl))/((pr)-(pl)) )
 #define TIMEBAR_HEIGHT 20
-
-/* ------------------------ GetStringWidth ------------------------- */
-
-int GetStringWidth(char *string){
-  char *c;
-  int length=0;
-
-  if(string==NULL)return 0;
-  switch(fontindex){
-    case SMALL_FONT:
-      for(c=string;*c!='\0';c++){
-        length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, *c);
-      }
-      length *= (288.0/235.0);
-#ifdef pp_OSX_HIGHRES
-      if(double_scale==1){
-        length *= 2;
-      }
-#endif
-      break;
-    case LARGE_FONT:
-      for(c=string;*c!='\0';c++){
-        length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_18, *c);
-      }
-      length *= (416.0/423.0);
-#ifdef pp_OSX_HIGHRES
-      if(double_scale==1){
-        length *= 2;
-      }
-#endif
-      break;
-    case SCALED_FONT:
-      for(c=string;*c!='\0';c++){
-        length += glutStrokeWidth(GLUT_STROKE_ROMAN, *c);
-      }
-      length *= (283.0/402.0)*scale_2d_x;
-      break;
-    default:
-      assert(FFALSE);
-      break;
-  }
-  return length;
-}
 
 /* ------------------ GetColorbarLabelWidth ------------------------ */
 
@@ -2358,6 +2316,17 @@ void GetMinMaxDepth(float *min_depth, float *max_depth){
     *min_depth = MIN(*min_depth, mindist);
     *max_depth = MAX(*max_depth, maxdist);
   }
+
+#ifdef pp_SKY
+  // get distance to each corner of the skybox
+  if(visSky == 1){
+    float mindist, maxdist;
+
+    DistPointBox(smv_eyepos, box_sky_corners, &mindist, &maxdist);
+    *min_depth = MIN(*min_depth, mindist);
+    *max_depth = MAX(*max_depth, maxdist);
+  }
+#endif
 
   // get distance to each tour node
 

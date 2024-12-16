@@ -12,6 +12,7 @@ $QFDS -d Visualization -p 8 -n 8 mplume5c8.fds
 $QFDS -d Visualization objects_dynamic.fds
 $QFDS -d Visualization objects_elem.fds
 $QFDS -d Visualization objects_static.fds
+$QFDS -p 2 -d Visualization obst_remove.fds
 $QFDS -d Visualization part_color.fds
 $QFDS -d Visualization plume5c.fds
 $QFDS -d Visualization plume5cdelta.fds
@@ -44,7 +45,6 @@ $QFDS -d Visualization -p 4 thouse5delta.fds
 $QFDS -d Visualization tour.fds
 $QFDS -d Visualization transparency.fds
 $QFDS -d Visualization vcirctest.fds
-$QFDS -d Visualization vcirctest2.fds
 $QFDS -d Visualization -p 3 vectorskipx.fds
 $QFDS -d Visualization -p 3 vectorskipy.fds
 $QFDS -d Visualization -p 3 vectorskipz.fds

@@ -316,7 +316,7 @@ void InitMesh(meshdata *meshi){
   meshi->nsmokeplaneinfo = 0;
   meshi->opacity_adjustments = NULL;
   for(i = 0; i<6; i++){
-    meshi->is_extface[i] = MESH_EXT;
+    meshi->is_extface[i] = 1;
   }
   meshi->ncutcells = 0;
   meshi->cutcells = NULL;
@@ -419,7 +419,8 @@ void InitMesh(meshdata *meshi){
   meshi->offset[ZZZ] = 0.0;
   meshi->ptype = NULL;
   meshi->zipoffset = NULL, meshi->zipsize = NULL;
-  meshi->xyzpatch = NULL;
+  meshi->xyzpatch_offset = NULL;
+  meshi->xyzpatch_no_offset = NULL;
   meshi->xyzpatch_threshold = NULL;
   meshi->patchventcolors = NULL;
   meshi->cpatchval = NULL;
@@ -1140,9 +1141,6 @@ void InitObst(blockagedata *bc, surfdata *surf, int index, int meshindex){
     bc->surf_index[i] = -1;
     bc->surf[i] = surf;
     bc->faceinfo[i] = NULL;
-  }
-  for(i = 0; i<7; i++){
-    bc->patchvis[i] = 1;
   }
   sprintf(blocklabel, "**blockage %i", index);
   len = strlen(blocklabel);

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "stdio_m.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "IOframe.h"
 #include "file_util.h"
 
@@ -172,7 +172,7 @@ bufferdata *FRAMEReadFrame(framedata *fi, int iframe, int nframes, int *nreadptr
   bufferinfo->nbuffer = total_size;
   fi->frames_read     = nframes;
   fi->update          = 1;
-  
+
   fread(buffer, 1, fi->headersize, stream);
   fseek(stream, fi->offsets[iframe], SEEK_SET);
   nread = fread(buffer+fi->headersize, 1, total_size, stream);
@@ -196,7 +196,7 @@ void FRAMESetTimes(framedata *fi, int iframe, int nframes){
   if(last_frame>fi->nframes - 1)last_frame = fi->nframes-1;
   nframes = last_frame + 1 - first_frame;
   for(i = first_frame;i <= last_frame;i++){
-    int offset;
+    FILE_SIZE offset;
 
     offset = fi->offsets[i];
     if(fi->file_type == FORTRAN_FILE)offset += 4;
@@ -259,7 +259,8 @@ framedata *FRAMELoadData(framedata *frameinfo, char *file, int load_flag, int ti
                   void GetFrameInfo(bufferdata *bufferinfo, int *headersize, int **sizes, int *nsizes,
                                     int **subframeptrs, int **subframesizesptr, int *nsubframes,
                                     int *compression_type, FILE_SIZE *filesizeptr)){
-  int nframes_before, nframes_after, nread;
+  int nframes_before, nframes_after;
+  FILE_SIZE nread;
   float load_time;
 
   if(file_type != C_FILE)file_type = FORTRAN_FILE;
@@ -422,7 +423,7 @@ void GetSmoke3DFrameInfo(bufferdata *bufferinfo, int *headersizeptr, int **frame
   *nframesptr = nframes;
   *filesizeptr = filesize;
 }
-  
+
 /* ------------------ GetBoundaryFrameInfo ------------------------ */
 
 void GetBoundaryFrameInfo(bufferdata *bufferinfo, int *headersizeptr, int **framesptr, int *nframesptr, 
@@ -583,7 +584,7 @@ void GetSliceFrameInfo(bufferdata *bufferinfo, int *headersizeptr, int **framesp
   int returncode;
   int *subframeoffsets = NULL, *subframesizes = NULL;
   int nsubframes;
-  
+
   nsubframes = 1;
   NewMemory((void **)&subframeoffsets, nsubframes * sizeof(int));
   NewMemory((void **)&subframesizes,   nsubframes * sizeof(int));
@@ -621,9 +622,9 @@ void GetSliceFrameInfo(bufferdata *bufferinfo, int *headersizeptr, int **framesp
   framesize  = 4 + 4 + 4;                  // time
   framesize += 4 + 4*(nxsp*nysp*nzsp) + 4; // data
   subframesizes[0] = nxsp * nysp * nzsp;
-  
+
   filesize = bufferinfo->nbuffer;
-  nframes = (int)(filesize - headersize)/framesize; // time frames
+  nframes = (FILE_SIZE)(filesize - headersize)/framesize; // time frames
   NewMemory((void **)&frames, nframes *sizeof(int));
   int i;
   for(i=0;i< nframes;i++){
@@ -852,7 +853,7 @@ void GetPartFrameInfo(bufferdata *bufferinfo, int *headersizeptr, int **framespt
   headersize += 4 + 4 + 4; // n_part
 
   NewMemory((void **)&nquants, 2*n_part*sizeof(int));
-  
+
   int i;
   for(i=0; i<n_part; i++){
     int labelsize;

@@ -9,6 +9,8 @@
 
 #include "smokeviewvars.h"
 #include "glui_tour.h"
+#include "glui_motion.h"
+#include "glui_smoke.h"
 #include "readtour.h"
 
 static int tour_hide=0;

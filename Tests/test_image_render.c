@@ -1,6 +1,6 @@
 #include "options.h"
 #ifndef _WIN32
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "getdata.h"
 #endif
 

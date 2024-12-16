@@ -7,7 +7,7 @@
 #include <math.h>
 #include "string_util.h"
 #include "file_util.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -32,8 +32,9 @@ void Usage(char *prog, int option){
 
   GetGitInfo(githash,gitdate);    // get githash
 
-  fprintf(stdout, "\n%s (%s) %s\n", prog, githash, __DATE__);
-  fprintf(stdout, "get timep\n");
+  fprintf(stdout, "\ntimep [options]\n");
+  fprintf(stdout, "%s %s\n\n", githash, __DATE__);
+  printf("options:\n");
   UsageCommon(HELP_SUMMARY);
   if(option == HELP_ALL){
     UsageCommon(HELP_ALL);

@@ -70,6 +70,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define VIEW_YMAX                   -3
 #define VIEW_ZMIN                   -4
 #define VIEW_ZMAX                   -5
+#define XYZ_CENTER                 -6
 
 #define DEVICE_devicetypes     28
 
@@ -134,12 +135,9 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define COLORBAR_LISTA               30
 #define COLORBAR_LISTB               31
 
-
-#define MESH_INT  0
-#define MESH_EXT  1
-#define MESH_BOTH 2
-
+//*** need to consolidate these two parameters
 #define MESHEPS 0.001
+#define MESH_EPS 0.0001
 
 #define PART_BOUND_UNDEFINED 0
 #define PART_BOUND_COMPUTING 1
@@ -842,10 +840,12 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define HTML_CURRENT_TIME         0
 #define HTML_ALL_TIMES            1
 
-#define ShowEXTERIORwallmenu           -1
-#define HideEXTERIORwallmenu          -19
+#define SHOW_EXTERIOR_WALL_MENU           -1
+#define HIDE_EXTERIOR_WALL_MENU          -19
+#define SHOW_INTERIOR_WALL_MENU          -21
+#define HIDE_INTERIOR_WALL_MENU          -22
 #define INI_EXTERIORwallmenu          -20
-#define INTERIORwallmenu               -2
+#define INTERIOR_WALL_MENU               -2
 #define FRONTwallmenu                  -3
 #define BACKwallmenu                   -4
 #define LEFTwallmenu                   -5
@@ -899,6 +899,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MENU_COLORBAR_SETTINGS   -22
 #define USE_LIGHTING             -25
 #define TOGGLE_LIGHTING          -26
+#define COLORBAR_DECIMAL         -27
 
 #define LOAD        0
 #define UNLOAD      1
@@ -1034,10 +1035,8 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define MENU_SHOWHIDE_FLIP 15
 
-#define MAX_SMV_FILENAME_BUFFER 1024
+#define MAX_SMV_FILENAME_BUFFER       1024
 #define MAX_LUASCRIPT_FILENAME_BUFFER 1024
-// TODO: this was set to 256 in some parts of the code, but should probably be
-// increase (or dynamically allocated).
-#define MAX_SCRIPT_FILENAME_BUFFER 256
+#define MAX_SCRIPT_FILENAME_BUFFER    1024
 
 #endif

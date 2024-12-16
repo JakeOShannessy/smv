@@ -7,7 +7,10 @@
 #include GLUT_H
 
 #include "smokeviewvars.h"
+#include "glui_bounds.h"
+#include "string_util.h"
 #include "IOscript.h"
+#include "viewports.h"
 
 #include "colorbars.h"
 
@@ -1900,7 +1903,7 @@ void DrawVerticalColorbarRegLabels(void){
       val = ScaleFloat2Float(val, partfactor);
       colorbar_vals[i] = val;
     }
-    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, force_decimal, force_zero_pad, exp_factor_label);
     max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
     for(i = 0; i < sextras.nrgb - 1; i++){
       float vert_position;
@@ -2048,7 +2051,7 @@ void DrawVerticalColorbarRegLabels(void){
         }
         colorbar_vals[i] = val;
       }
-      Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+      Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, force_decimal, force_zero_pad, exp_factor_label);
       max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
       for(i = 0; i < sextras.nrgb - 1; i++){
         float vert_position;
@@ -2132,7 +2135,7 @@ void DrawVerticalColorbarRegLabels(void){
       colorbar_vals[i] = val;
       GetMantissaExponent(ABS(val), colorbar_exponents + i);
     }
-    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, force_decimal, force_zero_pad, exp_factor_label);
     max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
     for(i = 0; i < sextras.nrgb - 1; i++){
       float vert_position;
@@ -2181,7 +2184,7 @@ void DrawVerticalColorbarRegLabels(void){
       colorbar_vals[i] = val;
       GetMantissaExponent(ABS(val), colorbar_exponents + i);
     }
-    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, force_decimal, force_zero_pad, exp_factor_label);
     max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
     for(i = 0; i < sextras.nrgb - 1; i++){
       float vert_position;
@@ -2301,7 +2304,7 @@ void DrawVerticalColorbarRegLabels(void){
       colorbar_vals[i] = val;
       GetMantissaExponent(ABS(val), colorbar_exponents + i);
     }
-    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+    Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, force_decimal, force_zero_pad, exp_factor_label);
     max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
     for(i = 0; i < sextras.nrgb - 1; i++){
       float vert_position;
@@ -2497,7 +2500,7 @@ void DrawVerticalColorbarRegLabels(void){
         colorbar_vals[i] = val;
         GetMantissaExponent(ABS(val), colorbar_exponents + i);
       }
-      Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+      Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-1, ncolorlabel_digits, force_fixedpoint, force_exponential, force_decimal, force_zero_pad, exp_factor_label);
       max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
       for(i = 0; i < sextras.nrgb - 1; i++){
         float vert_position;
@@ -2518,7 +2521,7 @@ void DrawVerticalColorbarRegLabels(void){
         val = tttmin + (float)(i +0.5)*plot3drange / (sextras.nrgb - 2);
         colorbar_vals[i] = val;
       }
-      Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-2, ncolorlabel_digits, force_fixedpoint, force_exponential, exp_factor_label);
+      Floats2Strings(colorbar_labels, colorbar_vals, sextras.nrgb-2, ncolorlabel_digits, force_fixedpoint, force_exponential, force_decimal, force_zero_pad, exp_factor_label);
       max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
       for(i = 0; i < sextras.nrgb - 2; i++){
         vert_position = MIX2(i+0.5, sextras.nrgb - 2, vcolorbar_top_pos, vcolorbar_down_pos);

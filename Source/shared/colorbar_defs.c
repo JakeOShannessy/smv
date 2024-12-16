@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "colorbars.h"
 
 // rainbow colorbar

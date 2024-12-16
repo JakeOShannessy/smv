@@ -1,8 +1,11 @@
 #ifndef SHARED_STRUCTURES_H_DEFINED
 #define SHARED_STRUCTURES_H_DEFINED
-#include "isodefs.h"
+#include "isobox.h"
 #include "options.h"
 #include <stdio.h>
+#ifdef pp_FRAME
+#include "IOframe.h"
+#endif
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -69,10 +72,10 @@ typedef struct _sv_object {
 } sv_object;
 
 #include "colorbars.h"
-#include "contourdefs.h"
+#include "scontour2d.h"
 #include "csphere.h"
 #include "histogram.h"
-#include "isodefs.h"
+#include "isobox.h"
 #include "stdio_m.h"
 #include "string_util.h"
 
@@ -267,8 +270,7 @@ typedef struct _meshdata {
   int zdist_flag;
   unsigned char *iblank_smoke3d;
   int iblank_smoke3d_defined;
-  struct _blockagedata **blockageinfoptrs;
-  struct _blockagedata **bc_faces[6];
+  struct _blockagedata **blockageinfoptrs, *blockageinfo, **bc_faces[6];
   int  n_bc_faces[6];
   int *obst_bysize;
   struct _ventdata *ventinfo;
@@ -311,14 +313,13 @@ typedef struct _meshdata {
   float norm[3];
   float dplane_min[4], dplane_max[4];
 
-  struct _meshdata *skip_nabors[6];
-
-  struct _meshdata *nabors[6];
+  struct _meshdata *skip_nabors[6], *nabors[6];
   struct _supermeshdata *super;
+
   int *ptype;
   unsigned int *zipoffset, *zipsize;
 
-  float *xyzpatch, *xyzpatch_threshold;
+  float *xyzpatch_offset, *xyzpatch_no_offset, *xyzpatch_threshold;
   float *thresholdtime;
   int *patchblank;
 
@@ -330,7 +331,6 @@ typedef struct _meshdata {
 #endif
   unsigned char *patch_times_map;
   float **patchventcolors;
-  int npatch_times;
   int patch_itime;
   int *patch_timeslist;
   int npatchsize;
@@ -599,27 +599,6 @@ typedef struct _clipdata {
   float zmin, zmax;
 } clipdata;
 
-/* --------------------------  circdata ------------------------------------- */
-
-typedef struct _circdata {
-  float *xcirc, *ycirc;
-  int ncirc;
-} circdata;
-
-typedef struct {
-  meshdata *meshinfo;
-  int nmeshes;
-} meshescollection;
-/* --------------------------  hrrdata ------------------------------------ */
-
-typedef struct _hrrdata {
-  float *vals, *vals_orig, valmin, valmax;
-  int inlist1;
-  int nvals;
-  int base_col;
-  flowlabels label;
-} hrrdata;
-
 /* --------------------------  compdata ------------------------------------ */
 
 typedef struct _compdata {
@@ -641,7 +620,7 @@ typedef struct _slicedata {
   unsigned char *slice_mask;
   int compression_type;
   int colorbar_autoflip;
-  int ncompressed;
+  FILE_SIZE ncompressed;
   int slice_filetype;
   struct _multislicedata *mslice;
   int menu_show;
@@ -657,7 +636,7 @@ typedef struct _slicedata {
   int setvalmin, setvalmax;
   float globalmin_slice, globalmax_slice;
   float valmin_slice, valmax_slice;
-  float diff_valmin, diff_valmax;
+  float diff_valmin,  diff_valmax;
   flowlabels label;
   float *qslicedata, *qsliceframe, *times, *qslice;
   unsigned char *times_map;
@@ -671,7 +650,7 @@ typedef struct _slicedata {
   char menulabel[128];
   char menulabel2[128];
   float *rgb_slice_ptr[256];
-  int ntimes, ntimes_old, itime;
+  int ntimes,ntimes_old,itime;
   unsigned char *iqsliceframe;
   float above_ground_level;
   int have_agl_data;
@@ -682,7 +661,7 @@ typedef struct _slicedata {
   int n_imap, n_jmap, n_kmap;
   int plotx, ploty, plotz;
   int ijk_min[3], ijk_max[3];
-  float xmin, xmax, ymin, ymax, zmin, zmax;
+  float xmin,xmax,ymin,ymax,zmin,zmax;
   float xyz_min[3], xyz_max[3];
   int nsliceijk;
   int *timeslist;
@@ -709,6 +688,67 @@ typedef struct _slicedata {
   framedata *frameinfo;
 #endif
 } slicedata;
+
+/* --------------------------  multislicedata ------------------------------------ */
+
+typedef struct _multislicedata {
+  int seq_id, autoload;
+  int loaded, display, loadable;
+  int *islices, nslices;
+  int slice_filetype;
+  char menulabel[128];
+  char menulabel2[128];
+} multislicedata;
+
+/* --------------------------  multivslicedata ------------------------------------ */
+
+typedef struct _multivslicedata {
+  int seq_id, autoload;
+  int loaded,display,mvslicefile_labelindex,loadable;
+  int nvslices;
+  int *ivslices;
+  char menulabel[128];
+  char menulabel2[128];
+} multivslicedata;
+
+/* --------------------------  vslicedata ------------------------------------ */
+
+typedef struct _vslicedata {
+  int seq_id, autoload, reload;
+  slicedata *u,*v,*w,*val;
+  int volslice;
+  int iu, iv, iw, ival;
+  int skip;
+  int finalize;
+  int loaded,display;
+  float valmin, valmax;
+  int vslice_filetype;
+  int vslicefile_labelindex;
+  char menulabel[128];
+  char menulabel2[128];
+} vslicedata;
+
+
+/* --------------------------  circdata ------------------------------------- */
+
+typedef struct _circdata {
+  float *xcirc, *ycirc;
+  int ncirc;
+} circdata;
+
+typedef struct {
+  meshdata *meshinfo;
+  int nmeshes;
+} meshescollection;
+/* --------------------------  hrrdata ------------------------------------ */
+
+typedef struct _hrrdata {
+  float *vals, *vals_orig, valmin, valmax;
+  int inlist1;
+  int nvals;
+  int base_col;
+  flowlabels label;
+} hrrdata;
 
 /* --------------------------  surfdata ------------------------------------ */
 
@@ -740,23 +780,23 @@ typedef struct _surfdata {
   float geom_area;
 } surfdata;
 
-/* -------------------------- blockagedata ---------------------------------- */
+/* -------------------------- blockagedata ------------------------------------ */
 
 typedef struct _blockagedata {
   int ijk[6];
   float xmin, xmax, ymin, ymax, zmin, zmax;
-  float xyzEXACT[6], xyzDELTA[18];
+  float xyz[6], xyzEXACT[6], xyzDELTA[18];
   struct _surfdata *surf[6];
   struct _propdata *prop;
-  int walltype, walltypeORIG;
+  int walltype,walltypeORIG;
   int surf_index[6];
-  int patchvis[7];
   int usecolorindex;
-  int blockage_id, dup;
+  int blockage_id,dup;
   int is_wuiblock;
   int hole;
   int nnodes;
   int hidden, invisible, interior[6];
+  int hidden6[6];
   int transparent;
   int meshindex;
   int del;
@@ -789,12 +829,13 @@ typedef struct _xbdata {
 /* --------------------------  ventdata ------------------------------------ */
 
 typedef struct _ventdata {
-  int type, dummy;
+  int type,dummy;
   struct _ventdata *dummyptr;
   int hideboundary;
-  int dir, dir2, vent_id;
+  int dir,dir2,vent_id;
   int useventcolor;
   int isOpenvent, isMirrorvent;
+  int wall_type;
   float xvent1_orig, xvent2_orig;
   float yvent1_orig, yvent2_orig;
   float zvent1_orig, zvent2_orig;
@@ -810,7 +851,7 @@ typedef struct _ventdata {
   int *showtimelist;
   unsigned char *showhide;
   int nshowtime;
-  float *color, *color_bak;
+  float *color,*color_bak;
   int transparent;
   int colorindex;
   int usecolorindex;
@@ -978,48 +1019,6 @@ typedef struct {
   int *device_texture_list_index;
   // texturedata *device_textures;
 } device_texture_list_collection;
-
-/* --------------------------  multislicedata
- * ------------------------------------ */
-
-typedef struct _multislicedata {
-  int seq_id, autoload;
-  int loaded, display, loadable;
-  int *islices, nslices;
-  int slice_filetype;
-  char menulabel[128];
-  char menulabel2[128];
-} multislicedata;
-
-/* --------------------------  multivslicedata
- * ------------------------------------ */
-
-typedef struct _multivslicedata {
-  int seq_id, autoload;
-  int loaded, display, mvslicefile_labelindex, loadable;
-  int nvslices;
-  int *ivslices;
-  char menulabel[128];
-  char menulabel2[128];
-} multivslicedata;
-
-/* --------------------------  vslicedata ------------------------------------
- */
-
-typedef struct _vslicedata {
-  int seq_id, autoload, reload;
-  slicedata *u, *v, *w, *val;
-  int volslice;
-  int iu, iv, iw, ival;
-  int skip;
-  int finalize;
-  int loaded, display;
-  float valmin, valmax;
-  int vslice_filetype;
-  int vslicefile_labelindex;
-  char menulabel[128];
-  char menulabel2[128];
-} vslicedata;
 
 typedef struct {
   int nsliceinfo;

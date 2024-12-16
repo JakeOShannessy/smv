@@ -27,6 +27,7 @@ add_library(libsmv STATIC
     readcad.c
     readlabel.c
     readtour.c
+    scontour2d.c
 )
 target_include_directories(libsmv PUBLIC
     .

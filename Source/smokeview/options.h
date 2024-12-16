@@ -7,17 +7,14 @@
 
 //#define pp_FRAME           // turn on frame code
 //#define pp_SHOW_UPDATE      // show what is being update in UpdateShowScene routine
-//#define pp_UPDATE_FACES     // update faces in UpdateTimes routine (probably not necessary)
 //#define pp_PARTBOUND_MULTI // compute particle bounds in the background
 //#define pp_LUA            // turn on LUA option
 //#define pp_SMOKE16        // load 16 bit smoke files
 #define pp_FAST             // set fast startup by default
 #define pp_GPU              // support the GPU
 #define pp_THREAD           // turn on multi-threading
-#ifdef pp_GPU
-#define pp_GPUTHROTTLE      // pp_GPU directive must also be set
-#endif
-//#define pp_FDS            // create a 1 mesh input file
+//#define pp_SKYBOX_FLOOR     // use DrawFloor routine when using a skybox (probably not necessary)
+//#define pp_SKY              // add sky, a blue hemisphere, above the scene
 
 #ifdef pp_FRAME          // turn on each frame type if pp_FRAME is set
 #define pp_BOUNDFRAME    // turn on frame code for boundary files
@@ -58,6 +55,7 @@
 #ifndef pp_NOQUARTZ     // if used, passed in from the command line so we don'thave to change source
 #define pp_QUARTZ       // use Quartz
 #endif
+#define GL_SILENCE_DEPRECATION
 #endif
 
 #ifdef pp_QUARTZ

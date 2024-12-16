@@ -18,6 +18,13 @@
                            fread(var,4,size,SLICEFILE);\
                            FSEEK(SLICEFILE,TRAILER_SIZE,SEEK_CUR)
 
+#ifndef VEC4EQCONS
+#define VEC4EQCONS(y,x)\
+  (y)[0]=(x);\
+  (y)[1]=(x);\
+  (y)[2]=(x);\
+  (y)[3]=(x)
+#endif
 
 #define INTERP3D(data,value) \
     if(slicetype==SLICE_NODE_CENTER){\
@@ -1046,9 +1053,10 @@ void SetSuperIndex(meshdata *meshi, int dir){
 
 /* ------------------ InitNabors ------------------------ */
 
-void InitNabors(void){
+void *InitNabors(void *arg){
   int i;
 
+  INIT_PRINT_TIMER(timer_init_nabors);
   for(i = 0;i<meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
@@ -1119,6 +1127,8 @@ void InitNabors(void){
     xyz[2] = meshi->boxmax[2] + meshi->boxeps_fds[2];
     meshi->skip_nabors[MUP] = GetMesh(xyz);
   }
+  PRINT_TIMER(timer_init_nabors, "InitNabors");
+  THREAD_EXIT(meshnabors_threads);
 }
 
 /* ------------------ InitSuperMesh ------------------------ */
@@ -1130,7 +1140,7 @@ void InitSuperMesh(void){
 
   // determine mesh connectivity
 
-  InitNabors();
+  THREADcontrol(meshnabors_threads, THREAD_JOIN);
 
   // merge connected meshes to form supermeshes
 
@@ -2269,8 +2279,8 @@ void UpdateVolsmokeSupertexture(supermeshdata *smesh){
     ni = meshi->ibar+1;
     nj = meshi->jbar+1;
     nk = meshi->kbar+1;
-#ifdef pp_GPUTHROTTLE
-  GPUnframes+=3*ni*nj*nk;
+#ifdef pp_GPU
+    GPUnframes += 3*ni*nj*nk;
 #endif
     glTexSubImage3D(GL_TEXTURE_3D,0,s_offset[0],s_offset[1],s_offset[2],ni,nj,nk,GL_RED, GL_FLOAT, smokedataptr);
   }
@@ -2292,8 +2302,8 @@ void UpdateVolsmokeSupertexture(supermeshdata *smesh){
     ni = meshi->ibar+1;
     nj = meshi->jbar+1;
     nk = meshi->kbar+1;
-#ifdef pp_GPUTHROTTLE
-    GPUnframes+=3*ni*nj*nk;
+#ifdef pp_GPU
+    GPUnframes += 3*ni*nj*nk;
 #endif
 
     glTexSubImage3D(GL_TEXTURE_3D,0,s_offset[0],s_offset[1],s_offset[2],ni,nj,nk,GL_RED, GL_FLOAT, firedataptr);
@@ -2316,8 +2326,8 @@ void UpdateVolsmokeSupertexture(supermeshdata *smesh){
     ni = meshi->ibar;
     nj = meshi->jbar;
     nk = meshi->kbar;
-#ifdef pp_GPUTHROTTLE
-    GPUnframes+=3*ni*nj*nk;
+#ifdef pp_GPU
+    GPUnframes += 3*ni*nj*nk;
 #endif
 
     if(meshi->f_iblank_cell != NULL){
@@ -2343,8 +2353,8 @@ void UpdateVolsmokeTexture(meshdata *meshi){
   ni = meshi->ibar+1;
   nj = meshi->jbar+1;
   nk = meshi->kbar+1;
-#ifdef pp_GPUTHROTTLE
-  GPUnframes+=3*ni*nj*nk;
+#ifdef pp_GPU
+  GPUnframes += 3*ni*nj*nk;
 #endif
   glActiveTexture(GL_TEXTURE0);
   glTexSubImage3D(GL_TEXTURE_3D,0,ijk_offset[0],ijk_offset[1],ijk_offset[2],ni,nj,nk,GL_RED, GL_FLOAT, smokedata_local);
@@ -2378,7 +2388,7 @@ void DrawSmoke3DGPUVol(void){
   float dcell;
 
 //  SVEXTERN int GPUload[30],GPUtime[30],SVDECL(nGPUframes,0),SVDECL(iGPUframes,0);
-#ifdef pp_GPUTHROTTLE
+#ifdef pp_GPU
   START_TIMER(thisGPUtime);
   if(thisGPUtime>lastGPUtime+0.25){
 #ifdef _DEBUG

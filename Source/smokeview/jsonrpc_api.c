@@ -15,6 +15,8 @@
 
 #include "c_api.h"
 
+#include "glui_motion.h"
+
 #include GLUT_H
 #include "gd.h"
 

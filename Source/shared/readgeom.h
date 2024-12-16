@@ -1,12 +1,9 @@
 #ifndef READGEOM_H_DEFINED
 #define READGEOM_H_DEFINED
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "gd.h"
 #include "options.h"
 #include "string_util.h"
-#ifdef pp_ISOFRAME
-#include "IOframe.h"
-#endif
 
 #include "shared_structures.h"
 
