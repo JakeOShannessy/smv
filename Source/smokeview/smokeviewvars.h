@@ -2272,7 +2272,6 @@ SVEXTERN patchdata SVDECL(*patchinfo,NULL);
 SVEXTERN isodata SVDECL(*isoinfo,NULL);
 
 SVEXTERN blockagedata SVDECL(*bchighlight,NULL),SVDECL(*bchighlight_old,NULL);
-SVEXTERN cadgeom_collection SVDECL(*cadgeomcoll,NULL);
 
 SVEXTERN int SVDECL(smokediff,0);
 SVEXTERN int SVDECL(buffertype,DOUBLE_BUFFER);

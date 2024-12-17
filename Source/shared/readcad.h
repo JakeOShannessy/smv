@@ -6,11 +6,13 @@
 /**
  * @brief Initialise an @ref cadgeom_collection.
  *
+ * @param[out] coll The memory to initialise the colleciton in.
  * @param capacity The maximum capacity of this collection.
  *
- * @returns A @ref cadgeom_collection which has been properly initialized.
+ * @returns zero on suceess, error code otherwise
  */
-cadgeom_collection *CreateCADGeomCollection(int capacity);
+int CreateCADGeomCollection(cadgeom_collection *coll,
+                                            int capacity);
 
 int InitCADGeomCollection(cadgeom_collection *coll, int capacity);
 

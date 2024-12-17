@@ -4012,11 +4012,11 @@ void UpdateMeshCoords(void){
       vi->zmax = FDS2SMV_Z(vi->zmax);
     }
   }
-  for(i=0;i<NCADGeom(cadgeomcoll);i++){
+  for(i=0;i<NCADGeom(&scase.cadgeomcoll);i++){
     cadgeomdata *cd;
     int j;
 
-    cd=cadgeomcoll->cadgeominfo+i;
+    cd=scase.cadgeomcoll.cadgeominfo+i;
     for(j=0;j<cd->nquads;j++){
       int k;
       cadquad *quadi;
@@ -8162,12 +8162,12 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   FREEMEMORY(scase.surfcoll.surfinfo);
   if(NewMemory((void **)&scase.surfcoll.surfinfo,(n_surf_keywords+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
 
-  if (cadgeomcoll != NULL) FreeCADGeomCollection(cadgeomcoll);
+  FreeCADGeomCollection(&scase.cadgeomcoll);
   if (n_cadgeom_keywords > 0) {
     // Allocate a fixed-size collection large enough to hold each of the CADGEOM
     // definitions.
-    cadgeomcoll = CreateCADGeomCollection(n_cadgeom_keywords);
-    if (cadgeomcoll == NULL) return 2;
+    int err = CreateCADGeomCollection(&scase.cadgeomcoll, n_cadgeom_keywords);
+    if (err == 0) return 2;
   }
 
   if(sextras.noutlineinfo>0){
@@ -9087,7 +9087,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       }
       bufferptr=TrimFrontBack(buffer);
       if (FILE_EXISTS_CASEDIR(bufferptr) == YES) {
-        ReadCADGeomToCollection(cadgeomcoll, bufferptr, block_shininess);
+        ReadCADGeomToCollection(&scase.cadgeomcoll, bufferptr, block_shininess);
       }
       else {
         PRINTF(_("***Error: CAD geometry file: %s could not be opened"),

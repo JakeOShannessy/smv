@@ -3746,7 +3746,7 @@ void DrawTransparentFaces(){
   float highlight_color[4]={1.0,0.0,0.0,1.0};
   int drawing_transparent, drawing_blockage_transparent, drawing_vent_transparent;
 
-  if(blocklocation==BLOCKlocation_cad||(NCADGeom(cadgeomcoll)!=0&&show_cad_and_grid==1))return;
+  if(blocklocation==BLOCKlocation_cad||(NCADGeom(&scase.cadgeomcoll)!=0&&show_cad_and_grid==1))return;
 
   GetDrawingParms(&drawing_transparent, &drawing_blockage_transparent, &drawing_vent_transparent);
 
@@ -5055,11 +5055,11 @@ void DrawBlockages(int mode, int trans_flag){
     }
   }
 
-  if(blocklocation==BLOCKlocation_cad||(NCADGeom(cadgeomcoll)!=0&&show_cad_and_grid==1)){
+  if(blocklocation==BLOCKlocation_cad||(NCADGeom(&scase.cadgeomcoll)!=0&&show_cad_and_grid==1)){
     int ntriangles=0;
 
-    for(i=0;i<NCADGeom(cadgeomcoll);i++){
-      cd=cadgeomcoll->cadgeominfo+i;
+    for(i=0;i<NCADGeom(&scase.cadgeomcoll);i++){
+      cd=scase.cadgeomcoll.cadgeominfo+i;
       if(cd->version==1){
         if(trans_flag==DRAW_TRANSPARENT)continue;
         if(clip_mode==CLIP_BLOCKAGES)SetClipPlanes(&clipinfo,CLIP_ON);
