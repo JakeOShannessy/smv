@@ -92,7 +92,7 @@ void NextXIndex(int inc,int flag){
 
         slicei = slicecoll.sliceinfo + i;
         if(slicei->loaded==0||slicei->display==0)continue;
-        meshi = meshescoll.meshinfo + slicei->blocknumber;
+        meshi = scase.meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iplotx_all[iplotx_all]!=-1)return;
       }
       for(i=0;i<slicecoll.nvsliceinfo;i++){
@@ -101,7 +101,7 @@ void NextXIndex(int inc,int flag){
 
         vslicei = slicecoll.vsliceinfo + i;
         if(vslicei->loaded==0||vslicei->display==0)continue;
-        meshi = meshescoll.meshinfo + vslicei->val->blocknumber;
+        meshi = scase.meshescoll.meshinfo + vslicei->val->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
     }
@@ -112,7 +112,7 @@ void NextXIndex(int inc,int flag){
 
         plot3di = plot3dinfo + i;
         if(plot3di->loaded==0||plot3di->display==0)continue;
-        meshi = meshescoll.meshinfo + plot3di->blocknumber;
+        meshi = scase.meshescoll.meshinfo + plot3di->blocknumber;
         if(meshi->iplotx_all[iplotx_all]!=-1)return;
       }
     }
@@ -154,7 +154,7 @@ void NextYIndex(int inc,int flag){
 
         slicei = slicecoll.sliceinfo + i;
         if(slicei->loaded==0||slicei->display==0)continue;
-        meshi = meshescoll.meshinfo + slicei->blocknumber;
+        meshi = scase.meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
       for(i=0;i<slicecoll.nvsliceinfo;i++){
@@ -163,7 +163,7 @@ void NextYIndex(int inc,int flag){
 
         vslicei = slicecoll.vsliceinfo + i;
         if(vslicei->loaded==0||vslicei->display==0)continue;
-        meshi = meshescoll.meshinfo + vslicei->val->blocknumber;
+        meshi = scase.meshescoll.meshinfo + vslicei->val->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
     }
@@ -174,7 +174,7 @@ void NextYIndex(int inc,int flag){
 
         plot3di = plot3dinfo + i;
         if(plot3di->loaded==0||plot3di->display==0)continue;
-        meshi = meshescoll.meshinfo + plot3di->blocknumber;
+        meshi = scase.meshescoll.meshinfo + plot3di->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
     }
@@ -216,7 +216,7 @@ void NextZIndex(int inc,int flag){
 
         slicei = slicecoll.sliceinfo + i;
         if(slicei->loaded==0||slicei->display==0)continue;
-        meshi = meshescoll.meshinfo + slicei->blocknumber;
+        meshi = scase.meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iplotz_all[iplotz_all]!=-1)return;
       }
       for(i=0;i<slicecoll.nvsliceinfo;i++){
@@ -225,7 +225,7 @@ void NextZIndex(int inc,int flag){
 
         vslicei = slicecoll.vsliceinfo + i;
         if(vslicei->loaded==0||vslicei->display==0)continue;
-        meshi = meshescoll.meshinfo + vslicei->val->blocknumber;
+        meshi = scase.meshescoll.meshinfo + vslicei->val->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
     }
@@ -236,7 +236,7 @@ void NextZIndex(int inc,int flag){
 
         plot3di = plot3dinfo + i;
         if(plot3di->loaded==0||plot3di->display==0)continue;
-        meshi = meshescoll.meshinfo + plot3di->blocknumber;
+        meshi = scase.meshescoll.meshinfo + plot3di->blocknumber;
         if(meshi->iplotz_all[iplotz_all]!=-1)return;
       }
     }
@@ -389,7 +389,7 @@ void MouseEditBlockage(int x, int y){
     sd = selectfaceinfo + val;
     highlight_block=sd->blockage;
     highlight_mesh=sd->mesh;
-    meshi = meshescoll.meshinfo + highlight_mesh;
+    meshi = scase.meshescoll.meshinfo + highlight_mesh;
     UpdateCurrentMesh(meshi);
     bchighlight_old=bchighlight;
     bchighlight = meshi->blockageinfoptrs[highlight_block];
@@ -643,17 +643,17 @@ void CheckTimeBound(void){
       sd=slicecoll.sliceinfo+i;
       sd->itime=0;
     }
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi=meshescoll.meshinfo+i;
+      meshi=scase.meshescoll.meshinfo+i;
 
       meshi->patch_itime=0;
     }
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi=meshescoll.meshinfo+i;
+      meshi=scase.meshescoll.meshinfo+i;
       if(meshi->iso_times==NULL)continue;
       meshi->iso_itime=0;
     }
@@ -680,24 +680,24 @@ void CheckTimeBound(void){
 
       patchi=patchinfo+i;
       if(patchi->loaded == 0)continue;
-      meshi = meshescoll.meshinfo + patchi->blocknumber;
+      meshi = scase.meshescoll.meshinfo + patchi->blocknumber;
       meshi->patch_itime=patchi->ntimes-1;
     }
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi=meshescoll.meshinfo+i;
+      meshi=scase.meshescoll.meshinfo+i;
       if(meshi->iso_times==NULL)continue;
       meshi->iso_itime=meshi->niso_times-1;
     }
   }
   /* set blockage visibility */
 
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi=meshescoll.meshinfo+i;
+    meshi=scase.meshescoll.meshinfo+i;
     for(j=0;j<meshi->nbptrs;j++){
       blockagedata *bc;
 
@@ -1747,8 +1747,8 @@ void Keyboard(unsigned char key, int flag){
       }
       if(visVector==1&&nplot3dloaded>0){
         gbsave=current_mesh;
-        for(i=0;i<meshescoll.nmeshes;i++){
-          gbi = meshescoll.meshinfo + i;
+        for(i=0;i<scase.meshescoll.nmeshes;i++){
+          gbi = scase.meshescoll.meshinfo + i;
           if(gbi->plot3dfilenum==-1)continue;
           UpdateCurrentMesh(gbi);
           UpdatePlotSlice(XDIR);
@@ -2112,10 +2112,10 @@ void Keyboard(unsigned char key, int flag){
 #endif
       case GLUT_ACTIVE_CTRL:
       default:
-        if(meshescoll.nmeshes>1){
+        if(scase.meshescoll.nmeshes>1){
           highlight_mesh++;
-          if(highlight_mesh>meshescoll.nmeshes-1)highlight_mesh=0;
-          UpdateCurrentMesh(meshescoll.meshinfo+highlight_mesh);
+          if(highlight_mesh>scase.meshescoll.nmeshes-1)highlight_mesh=0;
+          UpdateCurrentMesh(scase.meshescoll.meshinfo+highlight_mesh);
         }
       }
       break;
@@ -2412,14 +2412,14 @@ void Keyboard(unsigned char key, int flag){
             fprintf(scriptoutstream,"SETTIMEVAL\n");
             fprintf(scriptoutstream," %f\n",timeval);
             if(nvolrenderinfo>0&&load_at_rendertimes==1){
-              for(i=0;i<meshescoll.nmeshes;i++){
+              for(i=0;i<scase.meshescoll.nmeshes;i++){
                 meshdata *meshi;
                 volrenderdata *vr;
                 int j;
                 int framenum;
                 float timediffmin;
 
-                meshi = meshescoll.meshinfo + i;
+                meshi = scase.meshescoll.meshinfo + i;
                 vr = meshi->volrenderinfo;
                 if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
                 if(vr->loaded==0||vr->display==0)continue;
@@ -2442,12 +2442,12 @@ void Keyboard(unsigned char key, int flag){
           else{
             int show_plot3dkeywords=0;
 
-            for(i=0;i<meshescoll.nmeshes;i++){
+            for(i=0;i<scase.meshescoll.nmeshes;i++){
               meshdata *meshi;
               plot3ddata *plot3di;
               float *xp, *yp, *zp;
 
-              meshi = meshescoll.meshinfo  + i;
+              meshi = scase.meshescoll.meshinfo  + i;
               if(meshi->plot3dfilenum==-1)continue;
 
               plot3di = plot3dinfo + meshi->plot3dfilenum;
@@ -3167,12 +3167,12 @@ void SpecialKeyboardCB(int key, int x, int y){
 float SetClipVal(int flag){
   int i;
 
-  for(i = 0; i<meshescoll.nmeshes; i++){
+  for(i = 0; i<scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     float *xplt, *yplt, *zplt;
     int plotx, ploty, plotz;
 
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
 
     switch(flag){
       case 0:
@@ -3386,7 +3386,7 @@ void HandleMoveKeys(int  key){
 
   glui_move_mode=-1;
 
-  INC_XY=SCALE2SMV(meshescoll.meshinfo->cellsize);
+  INC_XY=SCALE2SMV(scase.meshescoll.meshinfo->cellsize);
   INC_Z=INC_XY;
   INC_ANGLE = 5*INC_ANGLE0;
 
@@ -3744,7 +3744,7 @@ void UpdatePlot3dTitle(void){
   GetBaseTitle("Smokeview ", title_base);
   STRCPY(plot3d_title, title_base);
   meshi = current_mesh;
-  if(meshi == NULL)meshi = meshescoll.meshinfo;
+  if(meshi == NULL)meshi = scase.meshescoll.meshinfo;
   filenum = meshi->plot3dfilenum;
   if(filenum != -1){
     plot3di = plot3dinfo + meshi->plot3dfilenum;

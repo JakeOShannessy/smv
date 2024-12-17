@@ -19,12 +19,12 @@
 #define USEMESH_DRAW -1
 #define IF_NOT_USEMESH_RETURN0(loaded,blocknum)\
   if(loaded==1)return 0;\
-  if((blocknum)>=0 && meshescoll.meshinfo[(blocknum)].use == 0){\
+  if((blocknum)>=0 && scase.meshescoll.meshinfo[(blocknum)].use == 0){\
     return 0;\
    }
 #define IF_NOT_USEMESH_CONTINUE(loaded,blocknum)\
   if(loaded==1)continue;\
-  if((blocknum)>=0 && meshescoll.meshinfo[(blocknum)].use == 0){\
+  if((blocknum)>=0 && scase.meshescoll.meshinfo[(blocknum)].use == 0){\
     continue;\
    }
 

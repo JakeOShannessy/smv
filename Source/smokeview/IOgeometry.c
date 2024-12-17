@@ -3223,11 +3223,11 @@ FILE_SIZE ReadGeom0(geomdata *geomi, int load_flag, int type, int *geom_frame_in
 int InMesh(float *xyz){
   int i;
 
-  for(i = 0;i < meshescoll.nmeshes;i++){
+  for(i = 0;i < scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     float *boxmin, *boxmax;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     boxmin = meshi->boxmin;
     boxmax = meshi->boxmax;
     if(xyz[0]<boxmin[0] || xyz[0]>boxmax[0])continue;

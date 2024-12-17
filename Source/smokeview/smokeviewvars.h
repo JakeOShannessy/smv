@@ -1833,7 +1833,7 @@ SVEXTERN int SVDECL(tour_usecurrent,0);
 SVEXTERN int SVDECL(output_slicedata,0),SVDECL(output_patchdata,0);
 SVEXTERN f_units SVDECL(*unitclasses,NULL),SVDECL(*unitclasses_default,NULL),SVDECL(*unitclasses_ini,NULL);
 SVEXTERN int SVDECL(nunitclasses,0),SVDECL(nunitclasses_default,0),SVDECL(nunitclasses_ini,0);
-SVEXTERN meshescollection SVDECL(meshescoll, {0});
+SVEXTERN smv_case SVDECL(scase, {0});
 SVEXTERN meshdata SVDECL(*current_mesh,NULL), SVDECL(*mesh_save,NULL);
 SVEXTERN supermeshdata SVDECL(*supermeshinfo,NULL);
 SVEXTERN int SVDECL(nsupermeshinfo,0);

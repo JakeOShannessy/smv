@@ -361,8 +361,8 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
 json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
                                json_object *id) {
   struct json_object *mesh_array = json_object_new_array();
-  for(int i = 0; i < meshescoll.nmeshes; i++) {
-    meshdata *mesh = &meshescoll.meshinfo[i];
+  for(int i = 0; i < scase.meshescoll.nmeshes; i++) {
+    meshdata *mesh = &scase.meshescoll.meshinfo[i];
     struct json_object *mesh_obj = json_object_new_object();
     json_object_object_add(mesh_obj, "index", json_object_new_int(i + 1));
     if(mesh->label != NULL) {

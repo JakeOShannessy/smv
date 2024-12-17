@@ -32,7 +32,7 @@ void OutputBoundaryData(patchdata *patchi){
   meshdata *meshi;
 
   patchfile = patchi->file;
-  meshi = meshescoll.meshinfo + patchi->blocknumber;
+  meshi = scase.meshescoll.meshinfo + patchi->blocknumber;
 
   if(patchout_tmin > patchout_tmax)return;
   strcpy(csvfile, patchi->file);
@@ -201,11 +201,11 @@ void InitVentColors(void){
   int i;
 
   nventcolors = 0;
-  for(i = 0; i < meshescoll.nmeshes; i++){
+  for(i = 0; i < scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int j;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     for(j = 0; j<meshi->nvents; j++){
       ventdata *venti;
 
@@ -219,11 +219,11 @@ void InitVentColors(void){
     ventcolors[i] = NULL;
   }
   ventcolors[0] = surf_coll.surfinfo->color;
-  for(i = 0; i < meshescoll.nmeshes; i++){
+  for(i = 0; i < scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int j;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     for(j = 0; j < meshi->nvents; j++){
       ventdata *venti;
       int vent_id;
@@ -266,7 +266,7 @@ int NodeInBlockage(const meshdata *meshnode, int i, int j, int k, int *imesh, in
 
   *imesh = -1;
 
-  for(ii = 0; ii < meshescoll.nmeshes; ii++){
+  for(ii = 0; ii < scase.meshescoll.nmeshes; ii++){
     int jj;
     meshdata *meshii;
     blockagedata *bc;
@@ -278,7 +278,7 @@ int NodeInBlockage(const meshdata *meshnode, int i, int j, int k, int *imesh, in
     float zb_min, zb_max;
     float *xplt, *yplt, *zplt;
 
-    meshii = meshescoll.meshinfo + ii;
+    meshii = scase.meshescoll.meshinfo + ii;
     if(meshnode == meshii)continue;
 
     xplt = meshii->xplt;
@@ -989,7 +989,7 @@ void GetBoundaryHeader2(char *file, patchfacedata *patchfaceinfo, int nmeshes_ar
     patchfaceinfo->mesh_index = mesh_index;
     patchfaceinfo->meshinfo = NULL;
     patchfaceinfo->obst     = NULL;
-    if(mesh_index >= 0 && mesh_index < nmeshes_arg)patchfaceinfo->meshinfo = meshescoll.meshinfo + mesh_index;
+    if(mesh_index >= 0 && mesh_index < nmeshes_arg)patchfaceinfo->meshinfo = scase.meshescoll.meshinfo + mesh_index;
     if(patchfaceinfo->meshinfo != NULL && obst_index>=0 && obst_index<patchfaceinfo->meshinfo->nbptrs)patchfaceinfo->obst = patchfaceinfo->meshinfo->blockageinfoptrs[obst_index];
   }
   fclose(stream);
@@ -1153,7 +1153,7 @@ void ComputeLoadedPatchHist(char *label, histogramdata **histptr, float *global_
           int npatchvals;
           meshdata *meshi;
 
-          meshi = meshescoll.meshinfo+patchi->blocknumber;
+          meshi = scase.meshescoll.meshinfo+patchi->blocknumber;
           npatchvals = patchi->ntimes*meshi->npatchsize;
           MergeVals2Histogram(meshi->patchval, NULL, NULL, npatchvals, hist);
         }
@@ -1244,7 +1244,7 @@ void GetPatchSizes2(FILE_m *stream, int npatch, int nmeshes_arg, int *npatchsize
     mesh_index = ijkp[8] - 1;
     pfi->meshinfo = NULL;
     pfi->obst     = NULL;
-    if(mesh_index >= 0 && mesh_index < nmeshes_arg)pfi->meshinfo = meshescoll.meshinfo + ijkp[8] - 1;
+    if(mesh_index >= 0 && mesh_index < nmeshes_arg)pfi->meshinfo = scase.meshescoll.meshinfo + ijkp[8] - 1;
     if(pfi->meshinfo != NULL && obst_index >= 0 && obst_index < pfi->meshinfo->nbptrs)pfi->obst = pfi->meshinfo->blockageinfoptrs[obst_index];
     pfi->obst_index = obst_index;
     pfi->mesh_index = mesh_index;
@@ -1395,7 +1395,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
   file = patchi->file;
   blocknumber = patchi->blocknumber;
   highlight_mesh = blocknumber;
-  meshi = meshescoll.meshinfo+blocknumber;
+  meshi = scase.meshescoll.meshinfo+blocknumber;
   UpdateCurrentMesh(meshi);
   if(load_flag!=RELOAD&&load_flag!=UNLOAD&&meshi->patchfilenum >= 0 && meshi->patchfilenum < npatchinfo){
     patchdata *patchold;
@@ -1450,7 +1450,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
 
   if(load_flag==UNLOAD){
     boundary_loaded = 0;
-    if(boundary_interface_unhide == 1 && have_removable_obsts == 1 && meshescoll.nmeshes>1){
+    if(boundary_interface_unhide == 1 && have_removable_obsts == 1 && scase.meshescoll.nmeshes>1){
       BlockageMenu(visBLOCKAsInput);
     }
     UpdateBoundaryType();
@@ -1536,7 +1536,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
   }
 
   if(patchi->compression_type==UNCOMPRESSED){
-    GetPatchSizes2(stream, patchi->npatches, meshescoll.nmeshes, &meshi->npatchsize, patchi->patchfaceinfo, &headersize, &framesize);
+    GetPatchSizes2(stream, patchi->npatches, scase.meshescoll.nmeshes, &meshi->npatchsize, patchi->patchfaceinfo, &headersize, &framesize);
 
     // loadpatchbysteps
     //  0 - load entire uncompressed data set
@@ -1555,7 +1555,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
     int nnsize=0;
     int i;
 
-    GetBoundaryHeader2(file, patchi->patchfaceinfo, meshescoll.nmeshes);
+    GetBoundaryHeader2(file, patchi->patchfaceinfo, scase.meshescoll.nmeshes);
     for(i=0;i<patchi->npatches;i++){
       int ii1, ii2, jj1, jj2, kk1, kk2;
       patchfacedata *pfi;
@@ -2072,7 +2072,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
           int filesize;
           int imesh;
 
-          imesh = (int)(meshi - meshescoll.meshinfo);
+          imesh = (int)(meshi - scase.meshescoll.meshinfo);
 
           GetPatchData(imesh,stream,patchi->npatches,patchi->patchfaceinfo,
           meshi->patch_timesi,meshi->patchval_iframe,&npatchval_iframe,&filesize, &error);
@@ -2332,7 +2332,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
 
       pi = patchinfo + i;
       if(pi->loaded == 0)continue;
-      mi = meshescoll.meshinfo + pi->blocknumber;
+      mi = scase.meshescoll.meshinfo + pi->blocknumber;
       mi->maxtimes_boundary = mintimes;
     }
   }
@@ -3365,7 +3365,7 @@ void MakeBoundaryMask(patchdata *patchi){
   int n;
 
   if(patchi->blocknumber < 0)return;
-  meshi = meshescoll.meshinfo + patchi->blocknumber;
+  meshi = scase.meshescoll.meshinfo + patchi->blocknumber;
   if(meshi->boundary_mask != NULL|| meshi->npatchsize <= 0)return;
   NewMemory((void **)&meshi->boundary_mask, meshi->npatchsize);
   memset(meshi->boundary_mask, 0, meshi->npatchsize);
@@ -3757,7 +3757,7 @@ void DrawBoundaryFrame(int flag){
     patchi = patchinfo + i;
     IF_NOT_USEMESH_CONTINUE(USEMESH_DRAW, patchi->blocknumber);
     if(patchi->structured == NO)continue;
-    meshi = meshescoll.meshinfo + patchi->blocknumber;
+    meshi = scase.meshescoll.meshinfo + patchi->blocknumber;
     if(meshi->use == 0)continue;
     if(patchi->loaded == 0 || patchi->display == 0 || patchi->shortlabel_index != iboundarytype)continue;
     if(patchi->npatches < 0)continue;
@@ -3866,13 +3866,13 @@ void UpdateBoundaryMenuLabels(void){
       patchi = patchinfo + i;
       STRCPY(patchi->menulabel, "");
       STRCPY(patchi->menulabel_suffix, "");
-      if(meshescoll.nmeshes == 1){
+      if(scase.meshescoll.nmeshes == 1){
         STRCAT(patchi->menulabel, patchi->label.longlabel);
       }
       else{
         meshdata *patchmesh;
 
-        patchmesh = meshescoll.meshinfo + patchi->blocknumber;
+        patchmesh = scase.meshescoll.meshinfo + patchi->blocknumber;
         sprintf(label,"%s",patchmesh->label);
         STRCAT(patchi->menulabel,label);
       }
@@ -3955,7 +3955,7 @@ int IsBoundaryDuplicate(patchdata *patchi, int flag){
   if(patchi->dir == 0)return 0;
   xyzmini = patchi->xyz_min;
   xyzmaxi = patchi->xyz_max;
-  meshi = meshescoll.meshinfo + patchi->blocknumber;
+  meshi = scase.meshescoll.meshinfo + patchi->blocknumber;
   labeli = &(patchi->label);
   for(j=0;j<npatchinfo;j++){ // identify duplicate slices
     patchdata *patchj;
@@ -3965,7 +3965,7 @@ int IsBoundaryDuplicate(patchdata *patchi, int flag){
 
     patchj = patchinfo + j;
     labelj = &(patchj->label);
-    meshj = meshescoll.meshinfo + patchj->blocknumber;
+    meshj = scase.meshescoll.meshinfo + patchj->blocknumber;
 
     if(patchj==patchi||patchj->skip==1)continue;
     if(patchj->structured == YES||patchj->patch_filetype!=PATCH_GEOMETRY_SLICE)continue;
@@ -4049,7 +4049,7 @@ void GetBoundaryParams(void){
     if(patchi->structured == YES || patchi->patch_filetype != PATCH_GEOMETRY_SLICE)continue;
 
     ijk = patchi->ijk;
-    meshi = meshescoll.meshinfo + patchi->blocknumber;
+    meshi = scase.meshescoll.meshinfo + patchi->blocknumber;
 
     xplt = meshi->xplt;
     yplt = meshi->yplt;

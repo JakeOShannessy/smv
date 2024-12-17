@@ -231,7 +231,7 @@ void SetCameraView(cameradata *ca, int option){
 
 void InitCamera(cameradata *ci,char *name){
   strcpy(ci->name,name);
-  ci->rotation_index=meshescoll.nmeshes;
+  ci->rotation_index=scase.meshescoll.nmeshes;
   ci->defined=1;
   ci->azimuth=0.0;
   ci->view_angle=0.0;
@@ -365,13 +365,13 @@ void CopyCamera(cameradata *to, cameradata *from){
 void UpdateCamera(cameradata *ca){
   if(ca==camera_current){
     rotation_type=ca->rotation_type;
-    if(ca->rotation_index>=0&&ca->rotation_index<meshescoll.nmeshes){
-      UpdateCurrentMesh(meshescoll.meshinfo + ca->rotation_index);
+    if(ca->rotation_index>=0&&ca->rotation_index<scase.meshescoll.nmeshes){
+      UpdateCurrentMesh(scase.meshescoll.meshinfo + ca->rotation_index);
     }
     else{
-      UpdateCurrentMesh(meshescoll.meshinfo);
+      UpdateCurrentMesh(scase.meshescoll.meshinfo);
     }
-    highlight_mesh = current_mesh-meshescoll.meshinfo;
+    highlight_mesh = current_mesh-scase.meshescoll.meshinfo;
     HandleRotationType(EYE_CENTERED);
     GLUIUpdateMeshList1(ca->rotation_index);
     GLUIUpdateTrainerMoves();

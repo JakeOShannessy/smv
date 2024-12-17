@@ -2174,8 +2174,8 @@ void RenderMenu(int value){
         sd=slicecoll.sliceinfo+i;
         sd->itime=0;
       }
-      for(i=0;i<meshescoll.nmeshes;i++){
-        meshi=meshescoll.meshinfo+i;
+      for(i=0;i<scase.meshescoll.nmeshes;i++){
+        meshi=scase.meshescoll.meshinfo+i;
         meshi->patch_itime=0;
       }
     }
@@ -3124,7 +3124,7 @@ void LoadVolsmoke3DMenu(int value){
     volrenderdata *vr;
 
     update_smokecolorbar = 1;
-    meshi = meshescoll.meshinfo + value;
+    meshi = scase.meshescoll.meshinfo + value;
     vr = meshi->volrenderinfo;
     if(vr->smokeslice != NULL&&vr->fireslice != NULL){
       if(scriptoutstream != NULL){
@@ -4753,7 +4753,7 @@ void ShowVolsmoke3DMenu(int value){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshescoll.meshinfo + value;
+    meshi = scase.meshescoll.meshinfo + value;
     vr = meshi->volrenderinfo;
     if(vr->fireslice!=NULL||vr->smokeslice!=NULL){
       if(vr->loaded==1){
@@ -4772,11 +4772,11 @@ void ShowVolsmoke3DMenu(int value){
     else if(value==TOGGLE_VOLSMOKE){  // show all
       show_volsmokefiles=1-show_volsmokefiles;
     }
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
       volrenderdata *vr;
 
-      meshi = meshescoll.meshinfo + i;
+      meshi = scase.meshescoll.meshinfo + i;
       vr = meshi->volrenderinfo;
       if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
       if(vr->loaded==1){
@@ -4799,11 +4799,11 @@ void UnLoadVolsmoke3DMenu(int value){
   updatemenu=1;
   if(value<0){
     if(value==UNLOAD_ALL){
-      for(i=0;i<meshescoll.nmeshes;i++){
+      for(i=0;i<scase.meshescoll.nmeshes;i++){
         meshdata *meshi;
         volrenderdata *vr;
 
-        meshi = meshescoll.meshinfo + i;
+        meshi = scase.meshescoll.meshinfo + i;
         vr = meshi->volrenderinfo;
         if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
         if(vr->loaded==1){
@@ -4816,7 +4816,7 @@ void UnLoadVolsmoke3DMenu(int value){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshescoll.meshinfo + value;
+    meshi = scase.meshescoll.meshinfo + value;
     vr = meshi->volrenderinfo;
     if(vr->fireslice!=NULL||vr->smokeslice!=NULL){
       UnloadVolsmokeAllFrames(vr);
@@ -5975,7 +5975,7 @@ void LoadAllIsos(int iso_type){
       if(iso_type == isoi->type&&isoi->blocknumber >= 0){
         meshdata *meshi;
 
-        meshi = meshescoll.meshinfo + isoi->blocknumber;
+        meshi = scase.meshescoll.meshinfo + isoi->blocknumber;
         UnloadIso(meshi);
       }
     }
@@ -7739,10 +7739,10 @@ int GetNTotalVents(void){
   int ntotal_vents = 0;
   int i;
 
-  for(i = 0; i < meshescoll.nmeshes; i++){
+  for(i = 0; i < scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     ntotal_vents += meshi->nvents;
   }
   return ntotal_vents;
@@ -8495,7 +8495,7 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
       nloadsubmslicemenu++;
     }
   }
-  if(meshescoll.nmeshes>0){
+  if(scase.meshescoll.nmeshes>0){
     int ii;
 
     iloadsubpatchmenu_s = 0;
@@ -9052,7 +9052,7 @@ static int menu_count=0;
       meshdata *meshi;
 
       sd = slicecoll.sliceinfo + mslicei->islices[j];
-      meshi = meshescoll.meshinfo + sd->blocknumber;
+      meshi = scase.meshescoll.meshinfo + sd->blocknumber;
       if(meshi->use == 1)mslicei->loadable = 1;
       if(sd->loaded==1)mslicei->loaded++;
       if(sd->display==1)mslicei->display++;
@@ -9085,7 +9085,7 @@ static int menu_count=0;
 
       vd = slicecoll.vsliceinfo + mvslicei->ivslices[j];
       valslice = slicecoll.sliceinfo + vd->ival;
-      meshi = meshescoll.meshinfo + valslice->blocknumber;
+      meshi = scase.meshescoll.meshinfo + valslice->blocknumber;
       if(meshi->use==1)mvslicei->loadable = 1;
       if(vd->loaded==1)mvslicei->loaded++;
       if(vd->display==1)mvslicei->display++;
@@ -10942,7 +10942,7 @@ static int menu_count=0;
       if((visAIso & 2) != 2)glutAddMenuEntry(_("Outline"), MENU_ISOSHOW_OUTLINE);
       if((visAIso & 4) == 4)glutAddMenuEntry(_("*Points"), MENU_ISOSHOW_POINTS);
       if((visAIso & 4) != 4)glutAddMenuEntry(_("Points"), MENU_ISOSHOW_POINTS);
-      hmesh=meshescoll.meshinfo+highlight_mesh;
+      hmesh=scase.meshescoll.meshinfo+highlight_mesh;
       if(hmesh->isofilenum!=-1){
         char levellabel[1024];
 
@@ -12128,7 +12128,7 @@ static int menu_count=0;
     int ii;
     int doit = 0;
 
-    if(meshescoll.nmeshes==1){
+    if(scase.meshescoll.nmeshes==1){
       CREATEMENU(particlemenu,LoadParticleMenu);
       doit = 1;
     }
@@ -12147,7 +12147,7 @@ static int menu_count=0;
         glutAddMenuEntry(menulabel, i);
       }
     }
-    if(meshescoll.nmeshes>1){
+    if(scase.meshescoll.nmeshes>1){
       char menulabel[1024];
 
       CREATEMENU(particlemenu,LoadParticleMenu);
@@ -12164,7 +12164,7 @@ static int menu_count=0;
       glutAddMenuEntry("-",MENU_DUMMY);
       if(partfast==1)glutAddMenuEntry(_("*Fast loading"), MENU_PART_PARTFAST);
       if(partfast==0)glutAddMenuEntry(_("Fast loading"), MENU_PART_PARTFAST);
-      if(meshescoll.nmeshes>1){
+      if(scase.meshescoll.nmeshes>1){
       }
     }
     glutAddMenuEntry("Particle number/file size", MENU_PART_NUM_FILE_SIZE);
@@ -12233,11 +12233,11 @@ static int menu_count=0;
         strcpy(vlabel,_("3D smoke (Volume rendered)"));
         glutAddMenuEntry(vlabel,UNLOAD_ALL);
       }
-      for(i=0;i<meshescoll.nmeshes;i++){
+      for(i=0;i<scase.meshescoll.nmeshes;i++){
         meshdata *meshi;
         volrenderdata *vr;
 
-        meshi = meshescoll.meshinfo + i;
+        meshi = scase.meshescoll.meshinfo + i;
         vr = meshi->volrenderinfo;
         if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
         if(vr->loaded==0)continue;
@@ -12287,13 +12287,13 @@ static int menu_count=0;
       }
     {
       if(smoke3dcoll.nsmoke3dinfo>0){
-        if(meshescoll.nmeshes==1){
+        if(scase.meshescoll.nmeshes==1){
           CREATEMENU(loadsmoke3dmenu,LoadSmoke3DMenu);
         }
 
         int ii;
         for(ii = 0; ii<smoke3dcoll.nsmoke3dtypes; ii++){
-          if(meshescoll.nmeshes>1){
+          if(scase.meshescoll.nmeshes>1){
             CREATEMENU(smoke3dcoll.smoke3dtypes[ii].menu_id, LoadSmoke3DMenu);
           }
           for(i = 0; i<smoke3dcoll.nsmoke3dinfo; i++){
@@ -12310,7 +12310,7 @@ static int menu_count=0;
             glutAddMenuEntry(menulabel, i);
           }
         }
-        if(meshescoll.nmeshes>1){
+        if(scase.meshescoll.nmeshes>1){
           CREATEMENU(loadsmoke3dmenu,LoadSmoke3DMenu);
           // multi mesh smoke menus items
           for(ii = 0; ii<smoke3dcoll.nsmoke3dtypes; ii++){
@@ -12443,7 +12443,7 @@ static int menu_count=0;
           sprintf(menulabel,"  %s%f", prefix, plot3di->time);
           TrimZeros(menulabel);
           strcat(menulabel," s");
-          if(meshescoll.nmeshes>1){
+          if(scase.meshescoll.nmeshes>1){
             glutAddMenuEntry(menulabel,-100000+nloadsubplot3dmenu);
           }
           else{
@@ -12476,7 +12476,7 @@ static int menu_count=0;
             sprintf(menulabel,"  %s%f",prefix, plot3di->time);
             TrimZeros(menulabel);
             strcat(menulabel," s");
-            if(meshescoll.nmeshes>1){
+            if(scase.meshescoll.nmeshes>1){
               glutAddMenuEntry(menulabel,-100000+nloadsubplot3dmenu);
             }
             else{
@@ -12505,11 +12505,11 @@ static int menu_count=0;
 
       nloadpatchsubmenus=0;
 
-      if(meshescoll.nmeshes>1&&loadpatchsubmenus==NULL){
+      if(scase.meshescoll.nmeshes>1&&loadpatchsubmenus==NULL){
         NewMemory((void **)&loadpatchsubmenus,npatchinfo*sizeof(int));
       }
 
-      if(meshescoll.nmeshes>1){
+      if(scase.meshescoll.nmeshes>1){
         CREATEMENU(loadpatchsubmenus[nloadpatchsubmenus],LoadBoundaryMenu);
         nloadpatchsubmenus++;
       }
@@ -12525,7 +12525,7 @@ static int menu_count=0;
         patchi = patchinfo + i;
         if(ii>0){
           patchim1 = patchinfo + patchorderindex[ii-1];
-          if(meshescoll.nmeshes>1&&strcmp(patchim1->label.longlabel,patchi->label.longlabel)!=0){
+          if(scase.meshescoll.nmeshes>1&&strcmp(patchim1->label.longlabel,patchi->label.longlabel)!=0){
             CREATEMENU(loadpatchsubmenus[nloadpatchsubmenus],LoadBoundaryMenu);
             nloadpatchsubmenus++;
           }
@@ -12565,7 +12565,7 @@ static int menu_count=0;
           glutAddMenuEntry(_("  keep coarse"), MENU_KEEP_COARSE);
         }
       }
-      if(meshescoll.nmeshes>1){
+      if(scase.meshescoll.nmeshes>1){
 
 // count patch submenus
 
@@ -12689,7 +12689,7 @@ static int menu_count=0;
         nisosubmenus++;
       }
 
-      if(meshescoll.nmeshes==1){
+      if(scase.meshescoll.nmeshes==1){
         CREATEMENU(loadisomenu,LoadIsoMenu);
       }
       for(ii=0;ii<nisoinfo;ii++){
@@ -12700,7 +12700,7 @@ static int menu_count=0;
         if(ii>0){
           iso1 = isoinfo + isoorderindex[ii-1];
           iso2 = isoinfo + isoorderindex[ii];
-          if(meshescoll.nmeshes>1&&strcmp(iso1->surface_label.longlabel,iso2->surface_label.longlabel)!=0){
+          if(scase.meshescoll.nmeshes>1&&strcmp(iso1->surface_label.longlabel,iso2->surface_label.longlabel)!=0){
             CREATEMENU(isosubmenus[nisosubmenus],LoadIsoMenu);
             nisosubmenus++;
           }
@@ -12719,7 +12719,7 @@ static int menu_count=0;
         int useitem;
         isodata *isoi, *isoj;
 
-        if(meshescoll.nmeshes>1){
+        if(scase.meshescoll.nmeshes>1){
           CREATEMENU(loadisomenu,LoadIsoMenu);
           for(i=0;i<nisoinfo;i++){
             int j;

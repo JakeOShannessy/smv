@@ -2025,7 +2025,7 @@ int HavePlot3DData(void){
     plot3di = plot3dinfo+i;
     if(plot3di->loaded==0)continue;
     if(plot3di->blocknumber<0)return 0;
-    meshi = meshescoll.meshinfo+plot3di->blocknumber;
+    meshi = scase.meshescoll.meshinfo+plot3di->blocknumber;
     if(meshi->qdata==NULL)return 0;
   }
   return 1;
@@ -2259,7 +2259,7 @@ int HavePatchData(void){
     switch(patchi->patch_filetype){
       case PATCH_STRUCTURED_NODE_CENTER:
       case PATCH_STRUCTURED_CELL_CENTER:
-        meshi = meshescoll.meshinfo+patchi->blocknumber;
+        meshi = scase.meshescoll.meshinfo+patchi->blocknumber;
         if(meshi->patchval==NULL||meshi->cpatchval==NULL)return 0;
         break;
       case PATCH_GEOMETRY_BOUNDARY:
@@ -4294,7 +4294,7 @@ void UpdateBoundaryFiles(void){
 
     patchi = patchinfo + i;
     if(patchi->loaded == 0 || patchi->blocknumber < 0)continue;
-    meshi = meshescoll.meshinfo + patchi->blocknumber;
+    meshi = scase.meshescoll.meshinfo + patchi->blocknumber;
     if(meshi->use == 1 && patchi->display == 0){
       patchi->display = 1;
       updatefacelists = 1;
@@ -4329,10 +4329,10 @@ void MeshBoundCB(int var){
     MeshBoundCB(USEMESH_XYZ);
     break;
   case USEMESH_REMOVE_ALL:
-    for(i = 0; i < meshescoll.nmeshes; i++){
+    for(i = 0; i < scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
-      meshi = meshescoll.meshinfo + i;
+      meshi = scase.meshescoll.meshinfo + i;
       meshi->use = 0;
     }
     break;
@@ -4340,7 +4340,7 @@ void MeshBoundCB(int var){
     {
       meshdata *meshi;
 
-      meshi = meshescoll.meshinfo + set_mesh - 1;
+      meshi = scase.meshescoll.meshinfo + set_mesh - 1;
       meshclip[0] = meshi->boxmin[0];
       meshclip[2] = meshi->boxmin[1];
       meshclip[4] = meshi->boxmin[2];
@@ -4360,7 +4360,7 @@ void MeshBoundCB(int var){
   {
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + set_mesh - 1;
+    meshi = scase.meshescoll.meshinfo + set_mesh - 1;
     meshi->use = 0;
   }
   break;
@@ -4373,18 +4373,18 @@ void MeshBoundCB(int var){
     break;
   case USEMESH_XYZ:
     updatemenu = 1;
-    for(i = 0;i < meshescoll.nmeshes;i++){
+    for(i = 0;i < scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = meshescoll.meshinfo + i;
+      meshi = scase.meshescoll.meshinfo + i;
       meshi->use = 1;
     }
     if(use_meshclip[0] == 0 && use_meshclip[1] == 0 && use_meshclip[2] == 0 &&
        use_meshclip[3] == 0 && use_meshclip[4] == 0 && use_meshclip[5] == 0)break;
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = meshescoll.meshinfo + i;
+      meshi = scase.meshescoll.meshinfo + i;
       float meshclip_min[3],  meshclip_max[3];
       int use_meshclip_min[3], use_meshclip_max[3];
       meshclip_min[0] = meshclip[0];
@@ -5583,10 +5583,10 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
     glui_bounds->add_spinner_to_panel(PANEL_slice_misc, "slice offset", GLUI_SPINNER_FLOAT, &slice_dz);
     CHECKBOX_sortslices = glui_bounds->add_checkbox_to_panel(PANEL_slice_misc, "sort slices(back to front)", &sortslices, SORTSLICES, GLUISliceBoundCB);
     CHECKBOX_sortslices_debug = glui_bounds->add_checkbox_to_panel(PANEL_slice_misc, "sort slices(debug)", &sortslices_debug, SORTSLICES_DEBUG, GLUISliceBoundCB);
-    for(i = 0; i<meshescoll.nmeshes; i++){
+    for(i = 0; i<scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
-      meshi = meshescoll.meshinfo+i;
+      meshi = scase.meshescoll.meshinfo+i;
       max_slice_skip = MAX(max_slice_skip, meshi->ibar/2);
       max_slice_skip = MAX(max_slice_skip, meshi->jbar/2);
       max_slice_skip = MAX(max_slice_skip, meshi->kbar/2);
@@ -5732,7 +5732,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
 
   PANEL_addmesh = glui_bounds->add_panel_to_panel(PANEL_setmesh, "", false);
   SPINNER_set_mesh = glui_bounds->add_spinner_to_panel(PANEL_addmesh, "mesh:", GLUI_SPINNER_INT, &set_mesh);
-  SPINNER_set_mesh->set_int_limits(1, meshescoll.nmeshes);
+  SPINNER_set_mesh->set_int_limits(1, scase.meshescoll.nmeshes);
   glui_bounds->add_column_to_panel(PANEL_addmesh, false);
   glui_bounds->add_button_to_panel(PANEL_addmesh, "Add", USEMESH_SET_ONE, MeshBoundCB);
   glui_bounds->add_column_to_panel(PANEL_addmesh, false);

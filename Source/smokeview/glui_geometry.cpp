@@ -838,7 +838,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
       char meshlabel[255];
 
       strcpy(meshlabel, _("Mesh:"));
-      strcat(meshlabel, meshescoll.meshinfo->label);
+      strcat(meshlabel, scase.meshescoll.meshinfo->label);
       STATIC_mesh_index = glui_geometry->add_statictext_to_panel(PANEL_obj_stretch4, meshlabel);
 
     }
@@ -891,10 +891,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
     ADDPROCINFO(geomprocinfo, ngeomprocinfo, ROLLOUT_unstructured, UNSTRUCTURED_ROLLOUT, glui_geometry);
     if(unstructured_isopen==1)ROLLOUT_unstructured->open();
 
-    for(i = 0; i<meshescoll.nmeshes; i++){
+    for(i = 0; i<scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
-      meshi = meshescoll.meshinfo+i;
+      meshi = scase.meshescoll.meshinfo+i;
       if(meshi->ncutcells>0){
         glui_geometry->add_checkbox_to_panel(ROLLOUT_unstructured, _("Show cutcells"), &show_cutcells);
         break;
@@ -1445,8 +1445,8 @@ extern "C" void GLUIUpdateBlockVals(int flag){
       char dialog_id[255];
       meshdata *blockmesh;
 
-      if(meshescoll.nmeshes>1){
-        blockmesh = meshescoll.meshinfo + bchighlight->meshindex;
+      if(scase.meshescoll.nmeshes>1){
+        blockmesh = scase.meshescoll.meshinfo + bchighlight->meshindex;
 //        sprintf(dialog_label,"Mesh label: %s",blockmesh->label);
         snprintf(dialog_label,sizeof(dialog_label),"Mesh label: %s",blockmesh->label);
         STATIC_mesh_index->set_text(dialog_label);

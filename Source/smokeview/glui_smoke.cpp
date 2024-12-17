@@ -365,7 +365,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
 
   if(smoke3dcoll.nsmoke3dinfo<=0&&nvolrenderinfo<=0)return;
   if(CHECKBOX_meshvisptr!=NULL)FREEMEMORY(CHECKBOX_meshvisptr);
-  NewMemory((void **)&CHECKBOX_meshvisptr,meshescoll.nmeshes*sizeof(GLUI_Checkbox *));
+  NewMemory((void **)&CHECKBOX_meshvisptr,scase.meshescoll.nmeshes*sizeof(GLUI_Checkbox *));
 
   glui_3dsmoke=glui_bounds;
 
@@ -789,7 +789,7 @@ void GLUIGetPixelsPerTriangle(void){
   float x_pixels_per_triangle=1000000.0, y_pixels_per_triangle=1000000.0, pixels_per_triangle;
   char label[500];
 
-  if(STATIC_pixels_per_triangle == NULL)return; 
+  if(STATIC_pixels_per_triangle == NULL)return;
   if(nplotx_all>0)x_pixels_per_triangle = smoke3d_skipx*(float)glui_screenWidth/(float)nplotx_all;
   if(nploty_all>0)y_pixels_per_triangle = smoke3d_skipy*(float)glui_screenHeight/(float)nploty_all;
   pixels_per_triangle = MIN(x_pixels_per_triangle, y_pixels_per_triangle);
@@ -1054,10 +1054,10 @@ extern "C" void GLUISmoke3dCB(int var){
     voltest_soot2 = log(2.0)/(mass_extinct*voltest_depth2);
     break;
   case VOLTEST_UPDATE:
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = meshescoll.meshinfo + i;
+      meshi = scase.meshescoll.meshinfo + i;
       if(meshi->volrenderinfo->loaded == 0)continue;
       meshi->voltest_update = 1;
     }
@@ -1264,10 +1264,10 @@ extern "C" void GLUISmoke3dCB(int var){
     IdleCB();
     break;
   case UPDATE_SMOKECOLORS:
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = meshescoll.meshinfo + i;
+      meshi = scase.meshescoll.meshinfo + i;
       meshi->update_smoke3dcolors=1;
     }
     glutPostRedisplay();
@@ -1298,7 +1298,7 @@ extern "C" void GLUISmoke3dCB(int var){
     {
       volrenderdata *vr;
 
-      vr = meshescoll.meshinfo->volrenderinfo;
+      vr = scase.meshescoll.meshinfo->volrenderinfo;
       if(vr!=NULL&&vr->smokeslice!=NULL&&vr->smokeslice->slice_filetype==SLICE_CELL_CENTER){
         if(usegpu==1&&combine_meshes==1){
           combine_meshes=0;

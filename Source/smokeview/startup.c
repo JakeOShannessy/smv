@@ -99,19 +99,19 @@ void InitMisc(void){
     modelview_setup[i+4*i]=1.0;
   }
 
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=meshescoll.meshinfo+i;
+    meshi=scase.meshescoll.meshinfo+i;
     InitContour(meshi->plot3dcontour1,rgb_plot3d_contour,sextras.nrgb);
     InitContour(meshi->plot3dcontour2,rgb_plot3d_contour,sextras.nrgb);
     InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,sextras.nrgb);
   }
 
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=meshescoll.meshinfo+i;
+    meshi=scase.meshescoll.meshinfo+i;
     meshi->currentsurf->defined=0;
     meshi->currentsurf2->defined=0;
   }

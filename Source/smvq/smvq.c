@@ -9,8 +9,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "dmalloc.h"
 #include "datadefs.h"
+#include "dmalloc.h"
 #include "readlabel.h"
 #include "readobject.h"
 #include "shared_structures.h"

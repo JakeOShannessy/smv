@@ -544,7 +544,7 @@ void BoundsUpdateDoit(int file_type){
           float *vals;
           int j;
 
-          meshi = meshescoll.meshinfo + patchi->blocknumber;
+          meshi = scase.meshescoll.meshinfo + patchi->blocknumber;
           if(meshi->boundary_mask == NULL && patchi->patch_filetype == PATCH_STRUCTURED_CELL_CENTER){
             MakeBoundaryMask(patchi);
           }
@@ -593,7 +593,7 @@ void BoundsUpdateDoit(int file_type){
       int ii, jj, kk, nn;
       float valmins[MAXPLOT3DVARS], valmaxs[MAXPLOT3DVARS];
 
-      meshi = meshescoll.meshinfo + plot3di->blocknumber;
+      meshi = scase.meshescoll.meshinfo + plot3di->blocknumber;
       nx = meshi->ibar + 1;
       ny = meshi->jbar + 1;
       nz = meshi->kbar + 1;

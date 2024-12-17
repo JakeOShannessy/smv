@@ -1321,11 +1321,11 @@ void Loadvolsmoke(int meshnumber) {
     read_vol_mesh = VOL_READALL;
     ReadVolsmokeAllFramesAllMeshes2(NULL);
   }
-  else if(imesh >= 0 && imesh < meshescoll.nmeshes) {
+  else if(imesh >= 0 && imesh < scase.meshescoll.nmeshes) {
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshescoll.meshinfo + imesh;
+    meshi = scase.meshescoll.meshinfo + imesh;
     vr = meshi->volrenderinfo;
     ReadVolsmokeAllFrames(vr);
   }
@@ -1342,13 +1342,13 @@ void Loadvolsmokeframe(int meshnumber, int framenumber, int flag) {
 
   index = meshnumber;
   framenum = framenumber;
-  if(index > meshescoll.nmeshes - 1) index = -1;
-  for(size_t i = 0; i < meshescoll.nmeshes; i++) {
+  if(index > scase.meshescoll.nmeshes - 1) index = -1;
+  for(size_t i = 0; i < scase.meshescoll.nmeshes; i++) {
     if(index == i || index < 0) {
       meshdata *meshi;
       volrenderdata *vr;
 
-      meshi = meshescoll.meshinfo + i;
+      meshi = scase.meshescoll.meshinfo + i;
       vr = meshi->volrenderinfo;
       FreeVolsmokeFrame(vr, framenum);
       ReadVolsmokeFrame(vr, framenum, &first);
@@ -1590,8 +1590,8 @@ void Plot3dprops(int variable_index, int showvector, int vector_length_index,
     meshdata *gbsave, *gbi;
 
     gbsave = current_mesh;
-    for(size_t i = 0; i < meshescoll.nmeshes; i++) {
-      gbi = meshescoll.meshinfo + i;
+    for(size_t i = 0; i < scase.meshescoll.nmeshes; i++) {
+      gbi = scase.meshescoll.meshinfo + i;
       if(gbi->plot3dfilenum == -1) continue;
       UpdateCurrentMesh(gbi);
       UpdatePlotSlice(XDIR);
@@ -1608,9 +1608,9 @@ void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
   int dir;
   float val;
 
-  if(meshnumber < 0 || meshnumber > meshescoll.nmeshes - 1) return;
+  if(meshnumber < 0 || meshnumber > scase.meshescoll.nmeshes - 1) return;
 
-  meshi = meshescoll.meshinfo + meshnumber;
+  meshi = scase.meshescoll.meshinfo + meshnumber;
   UpdateCurrentMesh(meshi);
 
   dir = CLAMP(plane_orientation, XDIR, ISO);
@@ -2760,8 +2760,8 @@ int SetIsotran2(int v) {
 int SetMeshvis(int n, int vals[]) {
   meshdata *meshi;
   for(size_t i = 0; i < n; i++) {
-    if(i > meshescoll.nmeshes - 1) break;
-    meshi = meshescoll.meshinfo + i;
+    if(i > scase.meshescoll.nmeshes - 1) break;
+    meshi = scase.meshescoll.meshinfo + i;
     meshi->blockvis = vals[i];
     ONEORZERO(meshi->blockvis);
   }
@@ -2769,10 +2769,10 @@ int SetMeshvis(int n, int vals[]) {
 } // MESHVIS
 
 int SetMeshoffset(int meshnum, int value) {
-  if(meshnum >= 0 && meshnum < meshescoll.nmeshes) {
+  if(meshnum >= 0 && meshnum < scase.meshescoll.nmeshes) {
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + meshnum;
+    meshi = scase.meshescoll.meshinfo + meshnum;
     meshi->mesh_offset_ptr = meshi->mesh_offset;
     return 0;
   }

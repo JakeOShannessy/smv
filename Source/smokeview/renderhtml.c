@@ -148,7 +148,7 @@ void GetBndfNodeVerts(int option, int option2, int *offset,
     patchi = patchinfo+i;
     if(patchi->loaded==0||patchi->display==0||patchi->structured==NO)continue;
     if(patchi->patch_filetype!=PATCH_STRUCTURED_NODE_CENTER)continue;
-    meshpatch0 = meshescoll.meshinfo+patchi->blocknumber;
+    meshpatch0 = scase.meshescoll.meshinfo+patchi->blocknumber;
     if(first==1){
       first = 0;
       minsteps = patchi->ntimes;
@@ -185,7 +185,7 @@ void GetBndfNodeVerts(int option, int option2, int *offset,
       if(patchi->loaded==0||patchi->display==0||patchi->structured==NO)continue;
       if(patchi->patch_filetype!=PATCH_STRUCTURED_NODE_CENTER)continue;
 
-      meshpatch = meshescoll.meshinfo+patchi->blocknumber;
+      meshpatch = scase.meshescoll.meshinfo+patchi->blocknumber;
 
       cpatch_time = meshpatch->cpatchval+itime*meshpatch->npatchsize;
       if(itime==ibeg){
@@ -361,7 +361,7 @@ void GetSliceCellVerts(int option, int option2, int *offset, float *verts, unsig
           float  constval;
           int n, i, j, k;
 
-          meshi = meshescoll.meshinfo+slicei->blocknumber;
+          meshi = scase.meshescoll.meshinfo+slicei->blocknumber;
 
           xplt = meshi->xplt;
           yplt = meshi->yplt;
@@ -712,7 +712,7 @@ void GetSliceNodeVerts(int option, int option2,
           int nx, ny, nxy;
           float agl;
 
-          meshi = meshescoll.meshinfo+slicei->blocknumber;
+          meshi = scase.meshescoll.meshinfo+slicei->blocknumber;
           nx = meshi->ibar+1;
           ny = meshi->jbar+1;
           nxy = nx*ny;
@@ -1484,10 +1484,10 @@ void ObstLitTriangles2Geom(float **vertsptr, float **normalsptr, float **colorsp
 
   // count triangle vertices and indices for blockes
 
-  for(j = 0; j<meshescoll.nmeshes; j++){
+  for(j = 0; j<scase.meshescoll.nmeshes; j++){
     meshdata *meshi;
 
-    meshi     = meshescoll.meshinfo+j;
+    meshi     = scase.meshescoll.meshinfo+j;
     nverts   += meshi->nbptrs*24*3;    // 24 vertices per blockages * 3 coordinates per vertex
     n4verts  += meshi->nbptrs*24*4;    // 24 vertices per blockages * 4 coordinates per vertex
     nindices += meshi->nbptrs*6*2*3;   // 6 faces per blockage * 2 triangles per face * 3 indicies per triangle
@@ -1518,11 +1518,11 @@ void ObstLitTriangles2Geom(float **vertsptr, float **normalsptr, float **colorsp
 
   // load blockage info into data structures
 
-  for(j = 0; j<meshescoll.nmeshes; j++){
+  for(j = 0; j<scase.meshescoll.nmeshes; j++){
     meshdata *meshi;
     int i;
 
-    meshi = meshescoll.meshinfo+j;
+    meshi = scase.meshescoll.meshinfo+j;
     for(i = 0; i<meshi->nbptrs; i++){
       blockagedata *bc;
       float xyz[72];
@@ -2234,10 +2234,10 @@ int Smv2Html(char *html_file, int option, int from_where){
   GeomLitTriangles2Geom(&vertsGeomLit, &normalsGeomLit, &colorsGeomLit, &nvertsGeomLit, &facesGeomLit, &nfacesGeomLit);
   Lines2Geom(&vertsLine, &colorsLine, &nvertsLine, &facesLine, &nfacesLine);
 
-  for(i = 0;i<meshescoll.nmeshes;i++){
+  for(i = 0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
     if(meshi->nbptrs>0){
       have_blockages = 1;
       break;

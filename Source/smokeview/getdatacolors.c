@@ -232,7 +232,7 @@ void UpdateAllBoundaryColors(int flag){
     switch(patchi->patch_filetype){
       case PATCH_STRUCTURED_NODE_CENTER:
       case PATCH_STRUCTURED_CELL_CENTER:
-        meshi = meshescoll.meshinfo+patchi->blocknumber;
+        meshi = scase.meshescoll.meshinfo+patchi->blocknumber;
         if(meshi->patchval==NULL||meshi->cpatchval==NULL)continue;
         list[nlist++] = i;
         break;
@@ -267,7 +267,7 @@ void UpdateAllBoundaryColors(int flag){
               meshdata *meshi;
               int npatchvals;
 
-              meshi = meshescoll.meshinfo+patchi->blocknumber;
+              meshi = scase.meshescoll.meshinfo+patchi->blocknumber;
               npatchvals = patchi->ntimes*meshi->npatchsize;
               GetBoundaryColors3(patchi, meshi->patchval, 0, npatchvals, meshi->cpatchval,
                                  &glui_patchmin, &glui_patchmax,
@@ -646,7 +646,7 @@ void GetPlot3DColors(int plot3dvar, float *ttmin, float *ttmax,
     for(i = 0; i<nplot3dinfo; i++){
       p = plot3dinfo+i;
       if(p->loaded==0||p->display==0)continue;
-      meshi = meshescoll.meshinfo+p->blocknumber;
+      meshi = scase.meshescoll.meshinfo+p->blocknumber;
       ntotal = (meshi->ibar+1)*(meshi->jbar+1)*(meshi->kbar+1);
 
       if(meshi->qdata!=NULL){
@@ -699,7 +699,7 @@ void GetPlot3DColors(int plot3dvar, float *ttmin, float *ttmax,
     for(i = 0; i<nplot3dinfo; i++){
       p = plot3dinfo+i;
       if(p->loaded==0||p->display==0)continue;
-      meshi = meshescoll.meshinfo+p->blocknumber;
+      meshi = scase.meshescoll.meshinfo+p->blocknumber;
       ntotal = (meshi->ibar+1)*(meshi->jbar+1)*(meshi->kbar+1);
 
       if(meshi->qdata==NULL){
@@ -1423,8 +1423,8 @@ void UpdateRGBColors(int colorbar_index){
     sextras.rgb[rgb_black][1]=1.0;
     sextras.rgb[rgb_black][2]=1.0;
   }
-  for(i=0;i<meshescoll.nmeshes;i++){
-    meshi=meshescoll.meshinfo + i;
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
+    meshi=scase.meshescoll.meshinfo + i;
     vent_offset = 6*meshi->nbptrs;
     outline_offset = vent_offset + meshi->nvents;
     if(meshi->faceinfo == NULL)continue;

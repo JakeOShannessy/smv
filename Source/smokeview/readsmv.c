@@ -1258,11 +1258,11 @@ void ReadSMVDynamic(char *file){
   }
   nplot3dinfo=0;
 
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi=meshescoll.meshinfo+i;
+    meshi=scase.meshescoll.meshinfo+i;
     for(j=0;j<meshi->nbptrs;j++){
       blockagedata *bc_local;
 
@@ -1353,7 +1353,7 @@ void ReadSMVDynamic(char *file){
          MatchSMV(buffer, "OPEN_VENT") == 1)isvent = 1;
       if(MatchSMV(buffer,"CLOSE_VENT") == 1 ||
          MatchSMV(buffer, "CLOSE_CVENT") == 1)showvent = 0;
-      if(meshescoll.nmeshes>1){
+      if(scase.meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1366,7 +1366,7 @@ void ReadSMVDynamic(char *file){
           sscanf(buffer+10,"%i",&blocknumber);
           blocknumber--;
           if(blocknumber<0)blocknumber=0;
-          if(blocknumber>meshescoll.nmeshes-1)blocknumber=meshescoll.nmeshes-1;
+          if(blocknumber>scase.meshescoll.nmeshes-1)blocknumber=scase.meshescoll.nmeshes-1;
         }
       }
       else{
@@ -1374,10 +1374,10 @@ void ReadSMVDynamic(char *file){
           sscanf(buffer+11,"%i",&blocknumber);
           blocknumber--;
           if(blocknumber<0)blocknumber=0;
-          if(blocknumber>meshescoll.nmeshes-1)blocknumber=meshescoll.nmeshes-1;
+          if(blocknumber>scase.meshescoll.nmeshes-1)blocknumber=scase.meshescoll.nmeshes-1;
         }
       }
-      meshi=meshescoll.meshinfo + blocknumber;
+      meshi=scase.meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
@@ -1415,7 +1415,7 @@ void ReadSMVDynamic(char *file){
       blockagedata *bc;
 
       do_pass2=1;
-      if(meshescoll.nmeshes>1){
+      if(scase.meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1423,9 +1423,9 @@ void ReadSMVDynamic(char *file){
       }
       if(strlen(buffer)>10){
         sscanf(buffer,"%s %i",buffer2,&blocktemp);
-        if(blocktemp>0&&blocktemp<=meshescoll.nmeshes)blocknumber = blocktemp-1;
+        if(blocktemp>0&&blocktemp<=scase.meshescoll.nmeshes)blocknumber = blocktemp-1;
       }
-      meshi=meshescoll.meshinfo + blocknumber;
+      meshi=scase.meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
@@ -1512,7 +1512,7 @@ void ReadSMVDynamic(char *file){
       int blocknumber,blocktemp;
       int nn;
 
-      if(meshescoll.nmeshes>1){
+      if(scase.meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1520,9 +1520,9 @@ void ReadSMVDynamic(char *file){
       }
       if(strlen(buffer)>9){
         sscanf(buffer,"%s %i",buffer2,&blocktemp);
-        if(blocktemp>0&&blocktemp<=meshescoll.nmeshes)blocknumber = blocktemp-1;
+        if(blocktemp>0&&blocktemp<=scase.meshescoll.nmeshes)blocknumber = blocktemp-1;
       }
-      meshi=meshescoll.meshinfo + blocknumber;
+      meshi=scase.meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&nn,&time_local);
       if(meshi->theat!=NULL && nn>=1 && nn <= meshi->nheat){
@@ -1555,7 +1555,7 @@ void ReadSMVDynamic(char *file){
       int blocknumber,blocktemp;
       int nn;
 
-      if(meshescoll.nmeshes>1){
+      if(scase.meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1563,9 +1563,9 @@ void ReadSMVDynamic(char *file){
       }
       if(strlen(buffer)>9){
         sscanf(buffer,"%s %i",buffer2,&blocktemp);
-        if(blocktemp>0&&blocktemp<=meshescoll.nmeshes)blocknumber = blocktemp-1;
+        if(blocktemp>0&&blocktemp<=scase.meshescoll.nmeshes)blocknumber = blocktemp-1;
       }
-      meshi=meshescoll.meshinfo + blocknumber;
+      meshi=scase.meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&nn,&time_local);
       if(meshi->tspr!=NULL && nn <= meshi->nspr && nn > 0){
@@ -1679,7 +1679,7 @@ void ReadSMVDynamic(char *file){
       TrimBack(buffer);
       len=strlen(buffer);
       blocknumber = 0;
-      if(meshescoll.nmeshes>1){
+      if(scase.meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1687,7 +1687,7 @@ void ReadSMVDynamic(char *file){
       }
       if(strlen(buffer)>5){
         sscanf(buffer,"%s %f %i",buffer2,&time_local,&blocktemp);
-        if(blocktemp>0&&blocktemp<=meshescoll.nmeshes)blocknumber = blocktemp-1;
+        if(blocktemp>0&&blocktemp<=scase.meshescoll.nmeshes)blocknumber = blocktemp-1;
       }
       else{
         time_local=-1.0;
@@ -1808,7 +1808,7 @@ void ReadSMVDynamic(char *file){
          MatchSMV(buffer, "OPEN_VENT") == 1)isvent = 1;
       if(MatchSMV(buffer,"CLOSE_VENT") == 1||
          MatchSMV(buffer, "CLOSE_CVENT") == 1)showvent=0;
-      if(meshescoll.nmeshes>1){
+      if(scase.meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1821,7 +1821,7 @@ void ReadSMVDynamic(char *file){
           sscanf(buffer+10,"%i",&blocknumber);
           blocknumber--;
           if(blocknumber<0)blocknumber=0;
-          if(blocknumber>meshescoll.nmeshes-1)blocknumber=meshescoll.nmeshes-1;
+          if(blocknumber>scase.meshescoll.nmeshes-1)blocknumber=scase.meshescoll.nmeshes-1;
         }
       }
       else{
@@ -1829,10 +1829,10 @@ void ReadSMVDynamic(char *file){
           sscanf(buffer+11,"%i",&blocknumber);
           blocknumber--;
           if(blocknumber<0)blocknumber=0;
-          if(blocknumber>meshescoll.nmeshes-1)blocknumber=meshescoll.nmeshes-1;
+          if(blocknumber>scase.meshescoll.nmeshes-1)blocknumber=scase.meshescoll.nmeshes-1;
         }
       }
-      meshi=meshescoll.meshinfo + blocknumber;
+      meshi=scase.meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
@@ -1889,7 +1889,7 @@ void ReadSMVDynamic(char *file){
       int blocknumber,tempval,showobst,blocktemp;
       blockagedata *bc;
 
-      if(meshescoll.nmeshes>1){
+      if(scase.meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1897,11 +1897,11 @@ void ReadSMVDynamic(char *file){
       }
       if(strlen(buffer)>10){
         sscanf(buffer,"%s %i",buffer2,&blocktemp);
-        if(blocktemp>0&&blocktemp<=meshescoll.nmeshes)blocknumber = blocktemp-1;
+        if(blocktemp>0&&blocktemp<=scase.meshescoll.nmeshes)blocknumber = blocktemp-1;
       }
       showobst=0;
       if(MatchSMV(buffer,"SHOW_OBST") == 1)showobst=1;
-      meshi=meshescoll.meshinfo + blocknumber;
+      meshi=scase.meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
@@ -2090,8 +2090,8 @@ void InitDevice(devicedata *devicei, float *xyz, int is_beam, float *xyz1, float
   if(STRCMP(devicei->object->label, "plane") == 0){
     float color[4];
 
-    NewMemory((void **)&devicei->plane_surface, meshescoll.nmeshes * sizeof(isosurface *));
-    for(i = 0; i < meshescoll.nmeshes; i++){
+    NewMemory((void **)&devicei->plane_surface, scase.meshescoll.nmeshes * sizeof(isosurface *));
+    for(i = 0; i < scase.meshescoll.nmeshes; i++){
       NewMemory((void **)&devicei->plane_surface[i], sizeof(isosurface));
     }
     if(nparams >= 3){
@@ -3165,10 +3165,10 @@ r g b           colors used if colorindex==-3
 void UpdateVentOffset(void){
   int i;
 
-  for(i = 0;i < meshescoll.nmeshes;i++){
+  for(i = 0;i < scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     meshi->vent_offset[XXX] = ventoffset_factor*(meshi->xplt[1] - meshi->xplt[0]);
     meshi->vent_offset[YYY] = ventoffset_factor*(meshi->yplt[1] - meshi->yplt[0]);
     meshi->vent_offset[ZZZ] = ventoffset_factor*(meshi->zplt[1] - meshi->zplt[0]);
@@ -3185,10 +3185,10 @@ void UpdateBlockType(void){
   nopenvents = 0;
   nopenvents_nonoutline = 0;
   sextras.ndummyvents = 0;
-  for(igrid = 0; igrid<meshescoll.nmeshes; igrid++){
+  for(igrid = 0; igrid<scase.meshescoll.nmeshes; igrid++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo+igrid;
+    meshi = scase.meshescoll.meshinfo+igrid;
     for(i = 0; i<meshi->nbptrs; i++){
       blockagedata *bc;
 
@@ -3392,11 +3392,11 @@ void GetBoxCorners(float xbar_local, float ybar_local, float zbar_local){
 void UpdateMeshBoxBounds(void){
   int i;
 
-  for(i = 0; i<meshescoll.nmeshes;  i++){
+  for(i = 0; i<scase.meshescoll.nmeshes;  i++){
     meshdata *meshi;
 
     // xplt, yplt, zplt has original coordinates because this routine is called before UpdateMeshCoords
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
     meshi->boxmin[0] = meshi->xplt[0];
     meshi->boxmin[1] = meshi->yplt[0];
     meshi->boxmin[2] = meshi->zplt[0];
@@ -3571,11 +3571,11 @@ void UpdateMeshCoords(void){
   /* define highlighted block */
 
   /* add in offsets */
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int ii;
 
-    meshi=meshescoll.meshinfo+i;
+    meshi=scase.meshescoll.meshinfo+i;
     meshi->xyz_bar[XXX] += meshi->offset[XXX];
     meshi->xyz_bar[YYY] += meshi->offset[YYY];
     meshi->xyz_bar[ZZZ] += meshi->offset[ZZZ];
@@ -3603,11 +3603,11 @@ void UpdateMeshCoords(void){
     meshi->ycen+=meshi->offset[YYY];
     meshi->zcen+=meshi->offset[ZZZ];
   }
-  for(i=1;i<meshescoll.nmeshes;i++){
+  for(i=1;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=meshescoll.meshinfo+i;
-    if(meshi->xyz_bar0[ZZZ]!=meshescoll.meshinfo->xyz_bar0[ZZZ]){
+    meshi=scase.meshescoll.meshinfo+i;
+    if(meshi->xyz_bar0[ZZZ]!=scase.meshescoll.meshinfo->xyz_bar0[ZZZ]){
       visFloor=0;
       updatefacelists=1;
       updatemenu=1;
@@ -3615,18 +3615,18 @@ void UpdateMeshCoords(void){
     }
   }
 
-  ijkbarmax=meshescoll.meshinfo->ibar;
-  for(i=0;i<meshescoll.nmeshes;i++){
+  ijkbarmax=scase.meshescoll.meshinfo->ibar;
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=meshescoll.meshinfo+i;
+    meshi=scase.meshescoll.meshinfo+i;
 
     ijkbarmax = MAX(ijkbarmax,meshi->ibar);
     ijkbarmax = MAX(ijkbarmax,meshi->jbar);
     ijkbarmax = MAX(ijkbarmax,meshi->kbar);
   }
 
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     float xminmax[2], yminmax[2], zminmax[2];
     float *verts;
@@ -3635,7 +3635,7 @@ void UpdateMeshCoords(void){
     int zindex[8]={0,0,0,0,1,1,1,1};
     int j;
 
-    meshi=meshescoll.meshinfo+i;
+    meshi=scase.meshescoll.meshinfo+i;
     if(i==0){
       sextras.xbar = meshi->xyz_bar[XXX];
       sextras.ybar = meshi->xyz_bar[YYY];
@@ -3811,7 +3811,7 @@ void UpdateMeshCoords(void){
   sextras.zbar = FDS2SMV_Z(sextras.zbar);
 
   float outline_offset;
-  outline_offset = (meshescoll.meshinfo->zplt[1] - meshescoll.meshinfo->zplt[0]) / 10.0;
+  outline_offset = (scase.meshescoll.meshinfo->zplt[1] - scase.meshescoll.meshinfo->zplt[0]) / 10.0;
   if(sextras.is_terrain_case==1){
     geom_dz_offset = outline_offset;
     geom_norm_offset = 0.0;
@@ -3822,10 +3822,10 @@ void UpdateMeshCoords(void){
   }
   GetBoxCorners(sextras.xbar, sextras.ybar, sextras.zbar);
 
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=meshescoll.meshinfo+i;
+    meshi=scase.meshescoll.meshinfo+i;
     /* compute a local scaling factor for each block */
     meshi->xyzmaxdiff=MAX(MAX(meshi->xyz_bar[XXX]-meshi->xyz_bar0[XXX],meshi->xyz_bar[YYY]-meshi->xyz_bar0[YYY]),meshi->xyz_bar[ZZZ]-meshi->xyz_bar0[ZZZ]);
 
@@ -3857,12 +3857,12 @@ void UpdateMeshCoords(void){
     }
   }
 
-  min_gridcell_size=meshescoll.meshinfo->xplt[1]-meshescoll.meshinfo->xplt[0];
-  for(i=0;i<meshescoll.nmeshes;i++){
+  min_gridcell_size=scase.meshescoll.meshinfo->xplt[1]-scase.meshescoll.meshinfo->xplt[0];
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     float dx, dy, dz;
     meshdata *meshi;
 
-    meshi=meshescoll.meshinfo+i;
+    meshi=scase.meshescoll.meshinfo+i;
     dx = meshi->xplt[1] - meshi->xplt[0];
     dy = meshi->yplt[1] - meshi->yplt[0];
     dz = meshi->zplt[1] - meshi->zplt[0];
@@ -3871,7 +3871,7 @@ void UpdateMeshCoords(void){
     min_gridcell_size=MIN(dz,min_gridcell_size);
   }
 
-  for(igrid=0;igrid<meshescoll.nmeshes;igrid++){
+  for(igrid=0;igrid<scase.meshescoll.nmeshes;igrid++){
     meshdata *meshi;
     float *face_centers;
     float *xplt_cen, *yplt_cen, *zplt_cen;
@@ -3882,7 +3882,7 @@ void UpdateMeshCoords(void){
     float dx, dy, dz;
     float *dplane_min, *dplane_max;
 
-    meshi=meshescoll.meshinfo+igrid;
+    meshi=scase.meshescoll.meshinfo+igrid;
     ibar=meshi->ibar;
     jbar=meshi->jbar;
     kbar=meshi->kbar;
@@ -3974,15 +3974,15 @@ void UpdateMeshCoords(void){
     face_centers[17]=meshi->boxmax_scaled[2];
   }
   if(sextras.nterraininfo>0){
-    boundaryoffset = (meshescoll.meshinfo->zplt_orig[1] - meshescoll.meshinfo->zplt_orig[0]) / 10.0;
+    boundaryoffset = (scase.meshescoll.meshinfo->zplt_orig[1] - scase.meshescoll.meshinfo->zplt_orig[0]) / 10.0;
   }
 
   UpdateBlockType();
 
-  for(igrid=0;igrid<meshescoll.nmeshes;igrid++){
+  for(igrid=0;igrid<scase.meshescoll.nmeshes;igrid++){
     meshdata *meshi;
 
-    meshi=meshescoll.meshinfo+igrid;
+    meshi=scase.meshescoll.meshinfo+igrid;
     for(i=0;i<meshi->nbptrs;i++){
       blockagedata *bc;
 
@@ -4066,7 +4066,7 @@ void UpdateMeshCoords(void){
     zvi->z1 = FDS2SMV_Z(zvi->z1);
   }
 
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     float *xspr, *yspr, *zspr;
     float *xsprplot, *ysprplot, *zsprplot;
@@ -4074,7 +4074,7 @@ void UpdateMeshCoords(void){
     float *xheatplot, *yheatplot, *zheatplot;
     float *offset;
 
-    meshi=meshescoll.meshinfo + i;
+    meshi=scase.meshescoll.meshinfo + i;
     offset = meshi->offset;
     xsprplot = meshi->xsprplot;
     ysprplot = meshi->ysprplot;
@@ -4112,18 +4112,18 @@ void UpdateMeshCoords(void){
   }
   UpdateVentOffset();
   if(smoke3dcoll.nsmoke3dinfo>0)NewMemory((void **)&smoke3dcoll.smoke3dinfo_sorted,smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata *));
-  NewMemory((void **)&meshvisptr,meshescoll.nmeshes*sizeof(int));
-  for(i=0;i<meshescoll.nmeshes;i++){
+  NewMemory((void **)&meshvisptr,scase.meshescoll.nmeshes*sizeof(int));
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshvisptr[i]=1;
   }
   for(i=0;i<smoke3dcoll.nsmoke3dinfo;i++){
     smoke3dcoll.smoke3dinfo_sorted[i]=smoke3dcoll.smoke3dinfo+i;
   }
-  for(i = 0; i<meshescoll.nmeshes; i++){
+  for(i = 0; i<scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     float dx, dy, dz;
 
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
 
     dx = meshi->xplt_orig[1]-meshi->xplt_orig[0];
     dy = meshi->yplt_orig[1]-meshi->yplt_orig[0];
@@ -4750,37 +4750,37 @@ void InitCellMeshInfo(void){
   dxyz      = cellmeshinfo->dxyz;
   nxyz      = cellmeshinfo->nxyz;
 
-  x = meshescoll.meshinfo->xplt_orig;
-  y = meshescoll.meshinfo->yplt_orig;
-  z = meshescoll.meshinfo->zplt_orig;
+  x = scase.meshescoll.meshinfo->xplt_orig;
+  y = scase.meshescoll.meshinfo->yplt_orig;
+  z = scase.meshescoll.meshinfo->zplt_orig;
 
   xyzminmax[0] = x[0];
-  xyzminmax[1] = x[meshescoll.meshinfo->ibar];
+  xyzminmax[1] = x[scase.meshescoll.meshinfo->ibar];
   xyzminmax[2] = y[0];
-  xyzminmax[3] = y[meshescoll.meshinfo->jbar];
+  xyzminmax[3] = y[scase.meshescoll.meshinfo->jbar];
   xyzminmax[4] = z[0];
-  xyzminmax[5] = z[meshescoll.meshinfo->kbar];
-  dxyz[0] = x[meshescoll.meshinfo->ibar] - x[0];
-  dxyz[1] = y[meshescoll.meshinfo->jbar] - y[0];
-  dxyz[2] = z[meshescoll.meshinfo->kbar] - z[0];
+  xyzminmax[5] = z[scase.meshescoll.meshinfo->kbar];
+  dxyz[0] = x[scase.meshescoll.meshinfo->ibar] - x[0];
+  dxyz[1] = y[scase.meshescoll.meshinfo->jbar] - y[0];
+  dxyz[2] = z[scase.meshescoll.meshinfo->kbar] - z[0];
 
-  for(i = 1; i<meshescoll.nmeshes;i++){
+  for(i = 1; i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     x = meshi->xplt_orig;
     y = meshi->yplt_orig;
     z = meshi->zplt_orig;
 
     xyzminmax[0] = MIN(xyzminmax[0], x[0]);
-    xyzminmax[1] = MAX(xyzminmax[1], x[meshescoll.meshinfo->ibar]);
+    xyzminmax[1] = MAX(xyzminmax[1], x[scase.meshescoll.meshinfo->ibar]);
     xyzminmax[2] = MIN(xyzminmax[2], y[0]);
-    xyzminmax[3] = MAX(xyzminmax[3], y[meshescoll.meshinfo->jbar]);
+    xyzminmax[3] = MAX(xyzminmax[3], y[scase.meshescoll.meshinfo->jbar]);
     xyzminmax[4] = MIN(xyzminmax[4], z[0]);
-    xyzminmax[5] = MAX(xyzminmax[5], z[meshescoll.meshinfo->kbar]);
-    dxyz[0] = MIN(dxyz[0], x[meshescoll.meshinfo->ibar] - x[0]);
-    dxyz[1] = MIN(dxyz[1], y[meshescoll.meshinfo->jbar] - y[0]);
-    dxyz[2] = MIN(dxyz[2], z[meshescoll.meshinfo->kbar] - z[0]);
+    xyzminmax[5] = MAX(xyzminmax[5], z[scase.meshescoll.meshinfo->kbar]);
+    dxyz[0] = MIN(dxyz[0], x[scase.meshescoll.meshinfo->ibar] - x[0]);
+    dxyz[1] = MIN(dxyz[1], y[scase.meshescoll.meshinfo->jbar] - y[0]);
+    dxyz[2] = MIN(dxyz[2], z[scase.meshescoll.meshinfo->kbar] - z[0]);
   }
   dxyz[0] /= (float)CELLMESH_FACTOR;
   dxyz[1] /= (float)CELLMESH_FACTOR;
@@ -4795,12 +4795,12 @@ void InitCellMeshInfo(void){
   for(i=0;i<ntotal;i++){
     cellmeshinfo->cellmeshes[i] = NULL;
   }
-  for(i = 0;i < meshescoll.nmeshes;i++){
+  for(i = 0;i < scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int i1, i2, j1, j2, k1, k2;
     float xmin, xmax, ymin, ymax, zmin, zmax;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     x = meshi->xplt_orig;
     y = meshi->yplt_orig;
     z = meshi->zplt_orig;
@@ -4842,12 +4842,12 @@ void SetupMeshWalls(void){
   int i;
   if(cellmeshinfo == NULL)InitCellMeshInfo();
 
-  for(i = 0; i < meshescoll.nmeshes; i++){
+  for(i = 0; i < scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     float xyz[3], *bmin, *bmax, bmid[3];
     int *is_extface;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     bmin = meshi->boxmin;
     bmax = meshi->boxmax;
     is_extface = meshi->is_extface;
@@ -5030,7 +5030,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
   TrimBack(buffer);
   len = strlen(buffer);
 
-  if(meshescoll.nmeshes>1){
+  if(scase.meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5226,7 +5226,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
   parti = partinfo+ipart;
   lenkey = 4;
   len = strlen(buffer);
-  if(meshescoll.nmeshes>1){
+  if(scase.meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5394,7 +5394,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   TrimBack(buffer);
   len = strlen(buffer);
 
-  if(meshescoll.nmeshes>1){
+  if(scase.meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5583,7 +5583,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   patchi->chopmin = 1.0;
   patchi->setchopmax = 0;
   patchi->chopmax = 0.0;
-  meshescoll.meshinfo[blocknumber].patchfilenum = -1;
+  scase.meshescoll.meshinfo[blocknumber].patchfilenum = -1;
   {
     char geomlabel2[256], *geomptr = NULL;
 
@@ -5664,7 +5664,7 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
 
   TrimBack(buffer);
   len = strlen(buffer);
-  if(meshescoll.nmeshes>1){
+  if(scase.meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5950,7 +5950,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   }
   TrimBack(buffer);
   len = strlen(buffer);
-  if(meshescoll.nmeshes>1){
+  if(scase.meshescoll.nmeshes>1){
     blocknumber = ioffset_in-1;
   }
   else{
@@ -6224,7 +6224,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
   {
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo+blocknumber;
+    meshi = scase.meshescoll.meshinfo+blocknumber;
     sd->full_mesh = NO;
     if(sd->is2-sd->is1==meshi->ibar &&
       sd->js2-sd->js1==meshi->jbar &&
@@ -6246,7 +6246,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
 
   meshdata *meshi;
 
-  meshi = meshescoll.meshinfo + blocknumber;
+  meshi = scase.meshescoll.meshinfo + blocknumber;
   meshi->nsliceinfo++;
 
   if(slicegeom==1){
@@ -6580,11 +6580,11 @@ blockagedata *GetBlockagePtr(float *xyz){
   xyzcenter[0] = (xyz[0]+xyz[1])/2.0;
   xyzcenter[1] = (xyz[2]+xyz[3])/2.0;
   xyzcenter[2] = (xyz[4]+xyz[5])/2.0;
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     if(xyzcenter[0]<meshi->boxmin[0]||xyzcenter[0]>meshi->boxmax[0])continue;
     if(xyzcenter[1]<meshi->boxmin[1]||xyzcenter[1]>meshi->boxmax[1])continue;
     if(xyzcenter[2]<meshi->boxmin[2]||xyzcenter[2]>meshi->boxmax[2])continue;
@@ -6891,14 +6891,14 @@ void *CheckFiles(void *arg){
 void InitMeshBlockages(void){
   int i;
 
-  for(i = 0;i < meshescoll.nmeshes;i++){
+  for(i = 0;i < scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
     int counts[6];
     int *is_extface;
     float *xplt, *yplt, *zplt;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     if(meshi->nbptrs == 0)continue;
     xplt = meshi->xplt_orig;
     yplt = meshi->yplt_orig;
@@ -7260,7 +7260,7 @@ int ReadSMV_Init(){
   sextras.ntrnx=0;
   sextras.ntrny=0;
   sextras.ntrnz=0;
-  meshescoll.nmeshes=0;
+  scase.meshescoll.nmeshes=0;
   sextras.npdim=0;
   sextras.nVENT=0;
   sextras.nCVENT=0;
@@ -7300,11 +7300,11 @@ int ReadSMV_Init(){
 void SetExternalVents(void){
   int i;
 
-  for(i = 0;i < meshescoll.nmeshes;i++){
+  for(i = 0;i < scase.meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     for(j = 0;j < meshi->nvents;j++){
       ventdata *vj;
       float xyz[3];
@@ -7793,7 +7793,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     }
     if(MatchSMV(buffer,"GRID") == 1){
       GRIDpresent=1;
-      meshescoll.nmeshes++;
+      scase.meshescoll.nmeshes++;
       continue;
     }
     if(MatchSMV(buffer,"OFFSET") == 1){
@@ -7948,7 +7948,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
    NewMemory((void **)&fds_githash,7+1);
    strcpy(fds_githash,"unknown");
  }
- if(nisoinfo>0&&meshescoll.nmeshes>0)nisos_per_mesh = MAX(nisoinfo / meshescoll.nmeshes,1);
+ if(nisoinfo>0&&scase.meshescoll.nmeshes>0)nisos_per_mesh = MAX(nisoinfo / scase.meshescoll.nmeshes,1);
  NewMemory((void **)&csvcoll.csvfileinfo,(csvcoll.ncsvfileinfo+CFAST_CSV_MAX+2)*sizeof(csvfiledata));
  csvcoll.ncsvfileinfo=0;
  if(ngeominfo>0){
@@ -8016,8 +8016,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
      BUT if any one is present then the number of each must be equal
   */
 
-  if(meshescoll.nmeshes==0&&sextras.ntrnx==0&&sextras.ntrny==0&&sextras.ntrnz==0&&sextras.npdim==0&&sextras.nOBST==0&&sextras.nVENT==0&&sextras.noffset==0){
-    meshescoll.nmeshes=1;
+  if(scase.meshescoll.nmeshes==0&&sextras.ntrnx==0&&sextras.ntrny==0&&sextras.ntrnz==0&&sextras.npdim==0&&sextras.nOBST==0&&sextras.nVENT==0&&sextras.noffset==0){
+    scase.meshescoll.nmeshes=1;
     sextras.ntrnx=1;
     sextras.ntrny=1;
     sextras.ntrnz=1;
@@ -8026,41 +8026,41 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     sextras.noffset=1;
   }
   else{
-    if(meshescoll.nmeshes>1){
-      if((meshescoll.nmeshes!=sextras.ntrnx||meshescoll.nmeshes!=sextras.ntrny||meshescoll.nmeshes!=sextras.ntrnz||meshescoll.nmeshes!=sextras.npdim||meshescoll.nmeshes!=sextras.nOBST||meshescoll.nmeshes!=sextras.nVENT||meshescoll.nmeshes!=sextras.noffset)&&
-         (sextras.nCVENT!=0&&sextras.nCVENT!=meshescoll.nmeshes)){
+    if(scase.meshescoll.nmeshes>1){
+      if((scase.meshescoll.nmeshes!=sextras.ntrnx||scase.meshescoll.nmeshes!=sextras.ntrny||scase.meshescoll.nmeshes!=sextras.ntrnz||scase.meshescoll.nmeshes!=sextras.npdim||scase.meshescoll.nmeshes!=sextras.nOBST||scase.meshescoll.nmeshes!=sextras.nVENT||scase.meshescoll.nmeshes!=sextras.noffset)&&
+         (sextras.nCVENT!=0&&sextras.nCVENT!=scase.meshescoll.nmeshes)){
         fprintf(stderr,"*** Error:\n");
-        if(meshescoll.nmeshes!=sextras.ntrnx)fprintf(stderr,"*** Error:  found %i TRNX keywords, was expecting %i\n",sextras.ntrnx,meshescoll.nmeshes);
-        if(meshescoll.nmeshes!=sextras.ntrny)fprintf(stderr,"*** Error:  found %i TRNY keywords, was expecting %i\n",sextras.ntrny,meshescoll.nmeshes);
-        if(meshescoll.nmeshes!=sextras.ntrnz)fprintf(stderr,"*** Error:  found %i TRNZ keywords, was expecting %i\n",sextras.ntrnz,meshescoll.nmeshes);
-        if(meshescoll.nmeshes!=sextras.npdim)fprintf(stderr,"*** Error:  found %i PDIM keywords, was expecting %i\n",sextras.npdim,meshescoll.nmeshes);
-        if(meshescoll.nmeshes!=sextras.nOBST)fprintf(stderr,"*** Error:  found %i OBST keywords, was expecting %i\n",sextras.nOBST,meshescoll.nmeshes);
-        if(meshescoll.nmeshes!=sextras.nVENT)fprintf(stderr,"*** Error:  found %i VENT keywords, was expecting %i\n",sextras.nVENT,meshescoll.nmeshes);
-        if(sextras.nCVENT!=0&&meshescoll.nmeshes!=sextras.nCVENT)fprintf(stderr,"*** Error:  found %i CVENT keywords, was expecting %i\n",sextras.noffset,meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=sextras.ntrnx)fprintf(stderr,"*** Error:  found %i TRNX keywords, was expecting %i\n",sextras.ntrnx,scase.meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=sextras.ntrny)fprintf(stderr,"*** Error:  found %i TRNY keywords, was expecting %i\n",sextras.ntrny,scase.meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=sextras.ntrnz)fprintf(stderr,"*** Error:  found %i TRNZ keywords, was expecting %i\n",sextras.ntrnz,scase.meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=sextras.npdim)fprintf(stderr,"*** Error:  found %i PDIM keywords, was expecting %i\n",sextras.npdim,scase.meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=sextras.nOBST)fprintf(stderr,"*** Error:  found %i OBST keywords, was expecting %i\n",sextras.nOBST,scase.meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=sextras.nVENT)fprintf(stderr,"*** Error:  found %i VENT keywords, was expecting %i\n",sextras.nVENT,scase.meshescoll.nmeshes);
+        if(sextras.nCVENT!=0&&scase.meshescoll.nmeshes!=sextras.nCVENT)fprintf(stderr,"*** Error:  found %i CVENT keywords, was expecting %i\n",sextras.noffset,scase.meshescoll.nmeshes);
         return 2;
       }
     }
   }
-  FREEMEMORY(meshescoll.meshinfo);
-  if(NewMemory((void **)&meshescoll.meshinfo,meshescoll.nmeshes*sizeof(meshdata))==0)return 2;
-  for(i = 0; i < meshescoll.nmeshes; i++){
+  FREEMEMORY(scase.meshescoll.meshinfo);
+  if(NewMemory((void **)&scase.meshescoll.meshinfo,scase.meshescoll.nmeshes*sizeof(meshdata))==0)return 2;
+  for(i = 0; i < scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     InitMesh(meshi); // initialize mesh here so order of order GRID/TERRAIN keywords won't cause a problem
   }
   FREEMEMORY(supermeshinfo);
-  if(NewMemory((void **)&supermeshinfo,meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
-  meshescoll.meshinfo->plot3dfilenum=-1;
-  UpdateCurrentMesh(meshescoll.meshinfo);
-  for(i=0;i<meshescoll.nmeshes;i++){
+  if(NewMemory((void **)&supermeshinfo,scase.meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
+  scase.meshescoll.meshinfo->plot3dfilenum=-1;
+  UpdateCurrentMesh(scase.meshescoll.meshinfo);
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     supermeshdata *smeshi;
 
     smeshi = supermeshinfo + i;
     smeshi->nmeshes=0;
 
-    meshi=meshescoll.meshinfo+i;
+    meshi=scase.meshescoll.meshinfo+i;
     meshi->ibar=0;
     meshi->jbar=0;
     meshi->kbar=0;
@@ -8078,7 +8078,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       sextras.ybar0 = 0.0;    sextras.ybar = 1.0;
       sextras.zbar0 = 0.0;    sextras.zbar = 1.0;
     }
-    meshi=meshescoll.meshinfo;
+    meshi=scase.meshescoll.meshinfo;
     meshi->xyz_bar0[XXX]=sextras.xbar0;
     meshi->xyz_bar[XXX] =sextras.xbar;
     meshi->xcen=(sextras.xbar+sextras.xbar0)/2.0;
@@ -8538,7 +8538,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&nobsts);
 
-      meshi=meshescoll.meshinfo+iobst-1;
+      meshi=scase.meshescoll.meshinfo+iobst-1;
 
       if(nobsts<=0)continue;
 
@@ -8710,8 +8710,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       else{
         mesh_terrain--;                 // mesh_terrain on TERRAIN line goes from 1 to number of meshes so subtract 1
       }
-      meshescoll.meshinfo[mesh_terrain].terrain = terraini;
-      terraini->terrain_mesh = meshescoll.meshinfo+mesh_terrain;
+      scase.meshescoll.meshinfo[mesh_terrain].terrain = terraini;
+      terraini->terrain_mesh = scase.meshescoll.meshinfo+mesh_terrain;
       terraini->defined = 0;
       sextras.nterraininfo++;
       continue;
@@ -9243,11 +9243,11 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int *imap, *jmap, *kmap;
 
       igrid++;
-      if(meshescoll.meshinfo!=NULL){
+      if(scase.meshescoll.meshinfo!=NULL){
         size_t len_meshlabel;
         char *meshlabel;
 
-        meshi=meshescoll.meshinfo+igrid-1;
+        meshi=scase.meshescoll.meshinfo+igrid-1;
         len_meshlabel=0;
         if(strlen(buffer)>5){
           meshlabel=TrimFront(buffer+5);
@@ -9299,7 +9299,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         NewMemory((void **)&jmap, sizeof(int) * (jbartemp + 1)) == 0 ||
         NewMemory((void **)&kmap, sizeof(int) * (kbartemp + 1)) == 0
         )return 2;
-      if(meshescoll.meshinfo!=NULL){
+      if(scase.meshescoll.meshinfo!=NULL){
         meshi->xplt=xp;
         meshi->yplt=yp;
         meshi->zplt=zp;
@@ -9487,7 +9487,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     for(nn=0;nn<=kbartemp;nn++){
       zp[nn]=sextras.zbar0+(float)nn*(sextras.zbar-sextras.zbar0)/(float)kbartemp;
     }
-    meshi=meshescoll.meshinfo;
+    meshi=scase.meshescoll.meshinfo;
     meshi->xplt=xp;
     meshi->yplt=yp;
     meshi->zplt=zp;
@@ -9507,7 +9507,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   if(sextras.setPDIM==0&&roomdefined==1){
     meshdata *meshi;
 
-    meshi=meshescoll.meshinfo;
+    meshi=scase.meshescoll.meshinfo;
     meshi->xyz_bar0[XXX]=sextras.xbar0;
     meshi->xyz_bar[XXX] =sextras.xbar;
     meshi->xcen=(sextras.xbar+sextras.xbar0)/2.0;
@@ -9579,8 +9579,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int imesh,ncutcells;
 
       sscanf(buffer+10,"%i",&imesh);
-      imesh=CLAMP(imesh-1,0,meshescoll.nmeshes-1);
-      meshi = meshescoll.meshinfo + imesh;
+      imesh=CLAMP(imesh-1,0,scase.meshescoll.nmeshes-1);
+      meshi = scase.meshescoll.meshinfo + imesh;
 
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&ncutcells);
@@ -9646,7 +9646,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int tempval;
 
       if(ioffset==0)ioffset=1;
-      meshi=meshescoll.meshinfo + ioffset - 1;
+      meshi=scase.meshescoll.meshinfo + ioffset - 1;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
@@ -9714,7 +9714,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       char *device_label;
       int tempval;
 
-      meshi=meshescoll.meshinfo + ioffset - 1;
+      meshi=scase.meshescoll.meshinfo + ioffset - 1;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
@@ -9793,7 +9793,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int tempval;
       int  nn;
 
-      meshi=meshescoll.meshinfo + ioffset - 1;
+      meshi=scase.meshescoll.meshinfo + ioffset - 1;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
@@ -10110,7 +10110,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       meshdata *meshi;
 
       ioffset++;
-      meshi=meshescoll.meshinfo+ioffset-1;
+      meshi=scase.meshescoll.meshinfo+ioffset-1;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f",meshi->offset,meshi->offset+1,meshi->offset+2);
       continue;
@@ -10349,7 +10349,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       float *meshrgb;
 
       ipdim++;
-      meshi=meshescoll.meshinfo+ipdim-1;
+      meshi=scase.meshescoll.meshinfo+ipdim-1;
       meshrgb = meshi->meshrgb;
 
       FGETS(buffer,255,stream);
@@ -10407,9 +10407,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int nn;
 
       itrnx++;
-      xpltcopy=meshescoll.meshinfo[itrnx-1].xplt;
-      xpltdcopy=meshescoll.meshinfo[itrnx - 1].xpltd;
-      ibartemp=meshescoll.meshinfo[itrnx-1].ibar;
+      xpltcopy=scase.meshescoll.meshinfo[itrnx-1].xplt;
+      xpltdcopy=scase.meshescoll.meshinfo[itrnx - 1].xpltd;
+      ibartemp=scase.meshescoll.meshinfo[itrnx-1].ibar;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i ",&idummy);
       for(nn=0;nn<idummy;nn++){
@@ -10434,9 +10434,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int nn;
 
       itrny++;
-      ypltcopy=meshescoll.meshinfo[itrny-1].yplt;
-      ypltdcopy = meshescoll.meshinfo[itrny - 1].ypltd;
-      jbartemp=meshescoll.meshinfo[itrny-1].jbar;
+      ypltcopy=scase.meshescoll.meshinfo[itrny-1].yplt;
+      ypltdcopy = scase.meshescoll.meshinfo[itrny - 1].ypltd;
+      jbartemp=scase.meshescoll.meshinfo[itrny-1].jbar;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i ",&idummy);
       for(nn=0;nn<idummy;nn++){
@@ -10461,9 +10461,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int nn;
 
       itrnz++;
-      zpltcopy=meshescoll.meshinfo[itrnz-1].zplt;
-      zpltdcopy=meshescoll.meshinfo[itrnz - 1].zpltd;
-      kbartemp=meshescoll.meshinfo[itrnz-1].kbar;
+      zpltcopy=scase.meshescoll.meshinfo[itrnz-1].zplt;
+      zpltdcopy=scase.meshescoll.meshinfo[itrnz - 1].zpltd;
+      kbartemp=scase.meshescoll.meshinfo[itrnz-1].kbar;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i ",&idummy);
       for(nn=0;nn<idummy;nn++){
@@ -10557,7 +10557,7 @@ typedef struct {
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&n_blocks);
 
-      meshi=meshescoll.meshinfo+iobst-1;
+      meshi=scase.meshescoll.meshinfo+iobst-1;
       if(n_blocks<=0)n_blocks=0;
       meshi->nbptrs=n_blocks;
       n_blocks_normal=n_blocks;
@@ -10873,7 +10873,7 @@ typedef struct {
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&ncv);
 
-      meshi = meshescoll.meshinfo + icvent - 1;
+      meshi = scase.meshescoll.meshinfo + icvent - 1;
       meshi->cventinfo=NULL;
       meshi->ncvents=ncv;
       if(ncv==0)continue;
@@ -11038,7 +11038,7 @@ typedef struct {
       int nn;
 
       ivent++;
-      meshi=meshescoll.meshinfo+ivent-1;
+      meshi=scase.meshescoll.meshinfo+ivent-1;
       xplttemp=meshi->xplt;
       yplttemp=meshi->yplt;
       zplttemp=meshi->zplt;
@@ -11633,7 +11633,7 @@ typedef struct {
       if(n_blocks<=0)n_blocks=0;
       if(n_blocks==0)continue;
 
-      meshi=meshescoll.meshinfo+iobst-1;
+      meshi=scase.meshescoll.meshinfo+iobst-1;
 
       for(nn=0;nn<n_blocks;nn++){
         FGETS(buffer,255,stream);
@@ -11702,10 +11702,10 @@ int ReadSMV_Configure(){
   PRINT_TIMER(fdsrunning_timer, "filesize_timer");   // if file size changes then assume fds is running
 
   have_obsts = 0;
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     if(meshi->nbptrs>0){
       have_obsts = 1;
       break;
@@ -11735,7 +11735,7 @@ int ReadSMV_Configure(){
   UpdateINIList();
   PRINT_TIMER(timer_readsmv, "UpdateINIList");
 
-  if(meshescoll.meshinfo!=NULL&&meshescoll.meshinfo->jbar==1)force_isometric=1;
+  if(scase.meshescoll.meshinfo!=NULL&&scase.meshescoll.meshinfo->jbar==1)force_isometric=1;
 
   if(paths.hrr_csv_filename != NULL)ReadHRR(LOAD);
   PRINT_TIMER(timer_readsmv, "ReadHRR");
@@ -11934,7 +11934,7 @@ int ReadSMV_Configure(){
   MakeIBlankSmoke3D();
   PRINT_TIMER(timer_readsmv, "MakeIBlankSmoke3D");
 
-  if(HaveCircularVents()==1|| meshescoll.nmeshes < 100 || parse_opts.fast_startup == 0){
+  if(HaveCircularVents()==1|| scase.meshescoll.nmeshes < 100 || parse_opts.fast_startup == 0){
     MakeIBlank();
     PRINT_TIMER(timer_readsmv, "MakeIBlank");
   }
@@ -12016,10 +12016,10 @@ int ReadSMV_Configure(){
   {
     int ntotal=0;
 
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = meshescoll.meshinfo + i;
+      meshi = scase.meshescoll.meshinfo + i;
       ntotal += meshi->nbptrs;
     }
     FREEMEMORY(changed_idlist);
@@ -12133,11 +12133,11 @@ void UpdateUseTextures(void){
     texti=texture_coll.textureinfo + i;
     texti->used=0;
   }
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi=meshescoll.meshinfo + i;
+    meshi=scase.meshescoll.meshinfo + i;
     if(texture_coll.textureinfo!=NULL){
       for(j=0;j<meshi->nbptrs;j++){
         int k;
@@ -12926,10 +12926,10 @@ int ReadIni2(char *inifile, int localfile){
 
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &meshnum);
-      if(meshnum >= 0 && meshnum<meshescoll.nmeshes){
+      if(meshnum >= 0 && meshnum<scase.meshescoll.nmeshes){
         meshdata *meshi;
 
-        meshi = meshescoll.meshinfo + meshnum;
+        meshi = scase.meshescoll.meshinfo + meshnum;
         meshi->mesh_offset_ptr = meshi->mesh_offset;
       }
       continue;
@@ -12958,8 +12958,8 @@ int ReadIni2(char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &nm);
       for(i = 0; i<nm; i++){
-        if(i>meshescoll.nmeshes - 1)break;
-        meshi = meshescoll.meshinfo + i;
+        if(i>scase.meshescoll.nmeshes - 1)break;
+        meshi = scase.meshescoll.meshinfo + i;
         fgets(buffer, 255, stream);
         sscanf(buffer, "%i", &meshi->blockvis);
         ONEORZERO(meshi->blockvis);
@@ -13945,7 +13945,7 @@ int ReadIni2(char *inifile, int localfile){
     if(MatchINI(buffer, "OUTLINEMODE") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i %i", &highlight_flag, &outline_color_flag);
-      if(meshescoll.nmeshes<2){
+      if(scase.meshescoll.nmeshes<2){
         ONEORZERO(highlight_flag);
       }
       continue;
@@ -17114,23 +17114,23 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i\n", gvec_down);
   fprintf(fileout, "ISOTRAN2\n");
   fprintf(fileout, " %i\n", transparent_state);
-  for(i = 0; i < meshescoll.nmeshes; i++){
+  for(i = 0; i < scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     if(meshi->mesh_offset_ptr != NULL){
       fprintf(fileout, "MESHOFFSET\n");
       fprintf(fileout, " %i\n", i);
     }
   }
-  if(meshescoll.nmeshes>1){
+  if(scase.meshescoll.nmeshes>1){
     fprintf(fileout,"MESHVIS\n");
-    fprintf(fileout," %i\n",meshescoll.nmeshes);
+    fprintf(fileout," %i\n",scase.meshescoll.nmeshes);
 
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = meshescoll.meshinfo + i;
+      meshi = scase.meshescoll.meshinfo + i;
       fprintf(fileout," %i\n",meshi->blockvis);
     }
   }
@@ -17618,11 +17618,11 @@ void UpdateLoadedLists(void){
 
   nvolsmoke_loaded = 0;
   if(nvolrenderinfo>0){
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
       volrenderdata *vr;
 
-      meshi = meshescoll.meshinfo + i;
+      meshi = scase.meshescoll.meshinfo + i;
       vr = meshi->volrenderinfo;
       if(vr==NULL||vr->fireslice==NULL||vr->smokeslice==NULL)continue;
       if(vr->loaded==0||vr->display==0)continue;

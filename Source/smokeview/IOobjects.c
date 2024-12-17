@@ -1601,7 +1601,7 @@ void DrawHalfSphere(void){
     for(i = 0; i < nlong_hsphere; i++){
       float x[4], y[4], z[4];
       int ip1;
-      
+
       ip1 = i + 1;
 
       x[0] = c_long[i]*c_lat[j];
@@ -3367,7 +3367,7 @@ float *InitSphere2(int nlat, int nlong){
   }
   c_long[nlong] = 1.0;
   s_long[nlong] = 0.0;
-  
+
   return sphere;
 }
 #endif
@@ -3459,7 +3459,7 @@ void DrawDevices(int mode){
       if(devicei->plane_surface != NULL){
         int j;
 
-        for(j = 0;j < meshescoll.nmeshes;j++){
+        for(j = 0;j < scase.meshescoll.nmeshes;j++){
           DrawStaticIso(devicei->plane_surface[j], -1, 0, 2, 0, devicei->line_width);
           DrawStaticIso(devicei->plane_surface[j], 2, 0, 2, 0, devicei->line_width);
         }
@@ -6105,7 +6105,7 @@ void InitDevicePlane(devicedata *devicei){
     devicei->color=GetColorPtr(&colorcoll, rgbcolor);
   }
   colorindex=0;
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
     float xvert[12], yvert[12], zvert[12];
@@ -6117,7 +6117,7 @@ void InitDevicePlane(devicedata *devicei){
     InitIsoSurface(devicei->plane_surface[i],level,devicei->color,colorindex);
     devicei->plane_surface[i]->cullfaces=1;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
 
     xx[0]=meshi->xyz_bar0[XXX];
     xx[1]=SMV2FDS_X(meshi->xyz_bar[XXX]);

@@ -217,8 +217,8 @@ void UnloadIso(meshdata *meshi){
   ib->display = 0;
   plotstate = GetPlotState(DYNAMIC_PLOTS);
   meshi->isofilenum = -1;
-  for(i = 0;i < meshescoll.nmeshes;i++){
-    meshi2 = meshescoll.meshinfo + i;
+  for(i = 0;i < scase.meshescoll.nmeshes;i++){
+    meshi2 = scase.meshescoll.meshinfo + i;
     if(meshi2->isofilenum != -1)nloaded++;
   }
   if(nloaded == 0){
@@ -415,7 +415,7 @@ void SyncIsoBounds(){
     if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
     if(iisottype != GetIsoTType(isoi))continue;
 
-    meshi = meshescoll.meshinfo + isoi->blocknumber;
+    meshi = scase.meshescoll.meshinfo + isoi->blocknumber;
     asurface = meshi->animatedsurfaces;
 
     for(ii = 0;ii < meshi->niso_times;ii++){
@@ -475,7 +475,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     }
 #endif
   }
-  meshi = meshescoll.meshinfo + isoi->blocknumber;
+  meshi = scase.meshescoll.meshinfo + isoi->blocknumber;
   geomi = isoi->geominfo;
 #ifdef pp_ISOFRAME
   if(load_flag != RELOAD){
@@ -681,7 +681,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
   if(ib->loaded==0&&flag==UNLOAD)return;
   blocknumber=ib->blocknumber;
   ib->isoupdate_timestep=-1;
-  meshi = meshescoll.meshinfo+blocknumber;
+  meshi = scase.meshescoll.meshinfo+blocknumber;
   UnloadIso(meshi);
   UnloadIsoTrans();
   ib->loaded=0;
@@ -1672,10 +1672,10 @@ void UpdateIsoMenuLabels(void){
     for(i=0;i<nisoinfo;i++){
       isoi = isoinfo + i;
 
-      if(meshescoll.nmeshes>1){
+      if(scase.meshescoll.nmeshes>1){
         meshdata *isomesh;
 
-        isomesh = meshescoll.meshinfo + isoi->blocknumber;
+        isomesh = scase.meshescoll.meshinfo + isoi->blocknumber;
         sprintf(label,"%s",isomesh->label);
         STRCPY(isoi->menulabel,label);
       }
@@ -1703,8 +1703,8 @@ void UpdateIsoShowLevels(void){
   nisolevels=loaded_isomesh->nisolevels;
   showlevels=loaded_isomesh->showlevels;
 
-  for(j=0;j<meshescoll.nmeshes;j++){
-    meshi = meshescoll.meshinfo+j;
+  for(j=0;j<scase.meshescoll.nmeshes;j++){
+    meshi = scase.meshescoll.meshinfo+j;
     if(meshi->isofilenum==-1)continue;
     for(i=0;i<nisolevels;i++){
       if(i<meshi->nisolevels)meshi->showlevels[i]=showlevels[i];
@@ -1856,7 +1856,7 @@ void UpdateIsoTriangles(int flag){
         isoi = isoinfo+i;
         if(isoi->geomflag==1||isoi->loaded==0||isoi->display==0)continue;
 
-        meshi = meshescoll.meshinfo + isoi->blocknumber;
+        meshi = scase.meshescoll.meshinfo + isoi->blocknumber;
         asurface = meshi->animatedsurfaces + iitime*meshi->nisolevels;
         for(ilev=0;ilev<meshi->nisolevels;ilev++){
           asurfi = asurface + ilev;
@@ -1901,7 +1901,7 @@ void UpdateIsoTriangles(int flag){
       if(isoi->geomflag==1||isoi->loaded==0||isoi->display==0)continue;
 
       CheckMemory;
-      meshi = meshescoll.meshinfo + isoi->blocknumber;
+      meshi = scase.meshescoll.meshinfo + isoi->blocknumber;
       asurface = meshi->animatedsurfaces + meshi->iso_itime*meshi->nisolevels;
       showlevels=meshi->showlevels;
 
@@ -2020,7 +2020,7 @@ meshdata *GetLoadedIsoMesh(void){
 
     isoi = isoinfo + i;
     if(isoi->loaded==0)continue;
-    mesh2 = meshescoll.meshinfo + isoi->blocknumber;
+    mesh2 = scase.meshescoll.meshinfo + isoi->blocknumber;
     if(nsteps==-1||mesh2->niso_times<nsteps){
       return_mesh = mesh2;
       nsteps=mesh2->niso_times;

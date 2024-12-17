@@ -290,11 +290,11 @@ void UpdatePlotxyzAll(void){
   float *xp, *yp, *zp;
   float dxyz_min=100000.0;
 
-  for(i = 0;i < meshescoll.nmeshes;i++){
+  for(i = 0;i < scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     float *xplt, *yplt, *zplt, *dxyz;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     xplt = meshi->xplt_orig;
     yplt = meshi->yplt_orig;
     zplt = meshi->zplt_orig;
@@ -310,10 +310,10 @@ void UpdatePlotxyzAll(void){
   nplotx_all=0;
   nploty_all=0;
   nplotz_all=0;
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     nplotx_all+=(meshi->ibar+1);
     nploty_all+=(meshi->jbar+1);
     nplotz_all+=(meshi->kbar+1);
@@ -342,11 +342,11 @@ void UpdatePlotxyzAll(void){
   xp = plotx_all;
   yp = ploty_all;
   zp = plotz_all;
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     for(j=0;j<meshi->ibar+1;j++){
       *xp++ = meshi->xplt[j];
     }
@@ -379,11 +379,11 @@ void UpdatePlotxyzAll(void){
   RemoveDupFloats(&plotx_all,&nplotx_all,&iplotx_all,dxyz_min);
   RemoveDupFloats(&ploty_all,&nploty_all,&iploty_all,dxyz_min);
   RemoveDupFloats(&plotz_all,&nplotz_all,&iplotz_all,dxyz_min);
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     NewMemory((void **)&meshi->iplotx_all,nplotx_all*sizeof(int));
     NewMemory((void **)&meshi->iploty_all,nploty_all*sizeof(int));
     NewMemory((void **)&meshi->iplotz_all,nplotz_all*sizeof(int));
@@ -419,29 +419,29 @@ void UpdatePlotxyzAll(void){
       meshi->iplotz_all[j]=ival;
     }
   }
-  for(i = 0; i<meshescoll.nmeshes; i++){
+  for(i = 0; i<scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int ival;
 
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
     ival = ClosestNodeIndex(sextras.xbar/2.0, meshi->xplt, meshi->ibar+1);
     if(ival<0)continue;
     iplotx_all = ival;
   }
-  for(i = 0; i<meshescoll.nmeshes; i++){
+  for(i = 0; i<scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int ival;
 
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
     ival = ClosestNodeIndex(sextras.ybar/2.0, meshi->yplt, meshi->jbar+1);
     if(ival<0)continue;
     iploty_all = ival;
   }
-  for(i = 0; i<meshescoll.nmeshes; i++){
+  for(i = 0; i<scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int ival;
 
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
     ival = ClosestNodeIndex(sextras.zbar/2.0, meshi->zplt, meshi->kbar+1);
     if(ival<0)continue;
     iplotz_all = ival;
@@ -478,10 +478,10 @@ int InExterior(float *xyz){
   if(x < xbar0FDS || x > xbarFDS)return 1;
   if(y < ybar0FDS || y > ybarFDS)return 1;
   if(z < zbar0FDS || z > zbarFDS)return 1;
-  for(i = 0;i < meshescoll.nmeshes;i++){
+  for(i = 0;i < scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
     if(x >= meshi->xplt_orig[0] && x <= meshi->xplt_orig[meshi->ibar] &&
        y >= meshi->yplt_orig[0] && y <= meshi->yplt_orig[meshi->jbar] &&
        z >= meshi->zplt_orig[0] && z <= meshi->zplt_orig[meshi->kbar]){
@@ -496,12 +496,12 @@ int InExterior(float *xyz){
 meshdata *GetMesh(float *xyz){
   int i;
 
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int ibar, jbar, kbar;
     float *xplt, *yplt, *zplt;
 
-    meshi = meshescoll.meshinfo + i;
+    meshi = scase.meshescoll.meshinfo + i;
 
     ibar = meshi->ibar;
     jbar = meshi->jbar;
@@ -526,12 +526,12 @@ meshdata *GetMesh(float *xyz){
 int OnMeshBoundary(float *xyz){
   int i;
 
-  for(i = 0; i<meshescoll.nmeshes; i++){
+  for(i = 0; i<scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int ibar, jbar, kbar;
     float *xplt, *yplt, *zplt;
 
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
 
     ibar = meshi->ibar;
     jbar = meshi->jbar;
@@ -589,12 +589,12 @@ int OnMeshBoundary(float *xyz){
 meshdata *GetMeshNoFail(float *xyz){
   int i;
 
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int ibar, jbar, kbar;
     float *xplt, *yplt, *zplt;
 
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
 
     ibar = meshi->ibar;
     jbar = meshi->jbar;
@@ -611,12 +611,12 @@ meshdata *GetMeshNoFail(float *xyz){
       return meshi;
     }
   }
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int ibar, jbar, kbar;
     float *xplt, *yplt, *zplt;
 
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
 
     ibar = meshi->ibar;
     jbar = meshi->jbar;
@@ -633,7 +633,7 @@ meshdata *GetMeshNoFail(float *xyz){
       return meshi;
     }
   }
-  return meshescoll.meshinfo;
+  return scase.meshescoll.meshinfo;
 }
 
 /* ------------------ ExtractFrustum ------------------------ */
@@ -1042,8 +1042,8 @@ float GetBlockageDistance(float x, float y, float z){
   float view_height;
   char *iblank_cell;
 
-  for(i=0;i<meshescoll.nmeshes;i++){
-    meshi = meshescoll.meshinfo+i;
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
+    meshi = scase.meshescoll.meshinfo+i;
 
     iblank_cell = meshi->c_iblank_cell;
 
@@ -1095,20 +1095,20 @@ int MakeIBlankCarve(void){
   char *ib_embed;
 
   n_embedded_meshes=0;
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
     meshi->c_iblank_embed=NULL;
   }
-  if(meshescoll.nmeshes==1)return 0;
+  if(scase.meshescoll.nmeshes==1)return 0;
 
 
-  for(i=0;i<meshescoll.nmeshes;i++){
+  for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int n_embedded;
 
-    meshi = meshescoll.meshinfo+i;
+    meshi = scase.meshescoll.meshinfo+i;
     ibar = meshi->ibar;
     jbar = meshi->jbar;
     kbar = meshi->kbar;
@@ -1123,11 +1123,11 @@ int MakeIBlankCarve(void){
     // check to see if there are any embedded meshes
 
     n_embedded=0;
-    for(j=0;j<meshescoll.nmeshes;j++){
+    for(j=0;j<scase.meshescoll.nmeshes;j++){
       meshdata *meshj;
 
       if(i==j)continue;
-      meshj = meshescoll.meshinfo + j;
+      meshj = scase.meshescoll.meshinfo + j;
       if(
         meshi->boxmin[0]<=meshj->boxmin[0]&&meshj->boxmax[0]<=meshi->boxmax[0]&&
         meshi->boxmin[1]<=meshj->boxmin[1]&&meshj->boxmax[1]<=meshi->boxmax[1]&&
@@ -1148,14 +1148,14 @@ int MakeIBlankCarve(void){
     for(j=0;j<ijksize;j++){
       ib_embed[j]=EMBED_NO;
     }
-    for(j=0;j<meshescoll.nmeshes;j++){
+    for(j=0;j<scase.meshescoll.nmeshes;j++){
       meshdata *meshj;
       int i1, i2, jj1, j2, k1, k2;
       int ii, jj, kk;
       float *xplt, *yplt, *zplt;
 
       if(i==j)continue;
-      meshj = meshescoll.meshinfo + j;
+      meshj = scase.meshescoll.meshinfo + j;
       // meshj is embedded inside meshi
       if(
         meshi->boxmin[0]>meshj->boxmin[0]||meshj->boxmax[0]>meshi->boxmax[0]||
@@ -1351,7 +1351,7 @@ int MakeIBlank(void){
   int ig;
 
   if(sextras.use_iblank==0)return 0;
-  for(ig=0;ig<meshescoll.nmeshes;ig++){
+  for(ig=0;ig<scase.meshescoll.nmeshes;ig++){
     meshdata *meshi;
     int nx, ny, nxy, ibarjbar;
     int ibar,jbar,kbar;
@@ -1360,7 +1360,7 @@ int MakeIBlank(void){
     int ii,ijksize;
     int i,j,k;
 
-    meshi = meshescoll.meshinfo+ig;
+    meshi = scase.meshescoll.meshinfo+ig;
 
     ibar = meshi->ibar;
     jbar = meshi->jbar;
@@ -1544,10 +1544,10 @@ int MakeIBlank(void){
       }
     }
   }
-  for(ig = 0; ig < meshescoll.nmeshes; ig++){
+  for(ig = 0; ig < scase.meshescoll.nmeshes; ig++){
     meshdata *meshi;
 
-    meshi = meshescoll.meshinfo + ig;
+    meshi = scase.meshescoll.meshinfo + ig;
     meshi->c_iblank_node_temp = meshi->c_iblank_node0_temp;
     meshi->c_iblank_cell_temp = meshi->c_iblank_cell0_temp;
     meshi->f_iblank_cell_temp = meshi->f_iblank_cell0_temp;

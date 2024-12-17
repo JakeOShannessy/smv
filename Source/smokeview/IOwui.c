@@ -772,7 +772,7 @@ float GetZCellVal(meshdata *meshi,float xval, float yval, float *zval_offset, in
 
   if(meshi==NULL)meshstart=0;
   if(zval_offset!=NULL)*zval_offset=0.0;
-  for(imesh=meshstart;imesh<meshescoll.nmeshes;imesh++){
+  for(imesh=meshstart;imesh<scase.meshescoll.nmeshes;imesh++){
     meshdata *meshj;
     float *xplt, *yplt;
     int ibar, jbar;
@@ -781,7 +781,7 @@ float GetZCellVal(meshdata *meshi,float xval, float yval, float *zval_offset, in
       meshj=meshi;
     }
     else{
-      meshj=meshescoll.meshinfo+imesh;
+      meshj=scase.meshescoll.meshinfo+imesh;
       if(meshi==meshj)continue;
     }
     xplt = meshj->xplt_orig;
@@ -827,7 +827,7 @@ float GetZCellValOffset(meshdata *meshi,float xval, float yval, int *loc){
 
   if(meshi==NULL)meshstart=0;
 
-  for(imesh=meshstart;imesh<meshescoll.nmeshes;imesh++){
+  for(imesh=meshstart;imesh<scase.meshescoll.nmeshes;imesh++){
     meshdata *meshj;
     float *xplt, *yplt;
     int ibar, jbar;
@@ -836,7 +836,7 @@ float GetZCellValOffset(meshdata *meshi,float xval, float yval, int *loc){
       meshj=meshi;
     }
     else{
-      meshj=meshescoll.meshinfo+imesh;
+      meshj=scase.meshescoll.meshinfo+imesh;
       if(meshi==meshj)continue;
     }
 
@@ -910,14 +910,14 @@ float GetZTerrain(float x, float y){
 void ComputeTerrainNormalsManual(void){
   int imesh;
 
-  for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
+  for(imesh=0;imesh<scase.meshescoll.nmeshes;imesh++){
     meshdata *meshi;
     terraindata *terri;
     float *znode;
     int j;
     int nycell;
 
-    meshi = meshescoll.meshinfo + imesh;
+    meshi = scase.meshescoll.meshinfo + imesh;
     terri = meshi->terrain;
     if(terri==NULL)continue;
     znode = terri->znode;
@@ -998,7 +998,7 @@ void ComputeTerrainNormalsAuto(void){
   int imesh;
   float zmin, zmax;
 
-  for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
+  for(imesh=0;imesh<scase.meshescoll.nmeshes;imesh++){
     meshdata *meshi;
     terraindata *terri;
     int j;
@@ -1007,7 +1007,7 @@ void ComputeTerrainNormalsAuto(void){
     int nycell;
     unsigned char *uc_znormal;
 
-    meshi = meshescoll.meshinfo + imesh;
+    meshi = scase.meshescoll.meshinfo + imesh;
 
     terri = meshi->terrain;
 
@@ -1158,14 +1158,14 @@ void ComputeTerrainNormalsAuto(void){
     }
   }
 
-  zmin = meshescoll.meshinfo->terrain->znode[0];
+  zmin = scase.meshescoll.meshinfo->terrain->znode[0];
   zmax = zmin;
-  for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
+  for(imesh=0;imesh<scase.meshescoll.nmeshes;imesh++){
     meshdata *meshi;
     terraindata *terri;
     int i;
 
-    meshi = meshescoll.meshinfo + imesh;
+    meshi = scase.meshescoll.meshinfo + imesh;
     terri = meshi->terrain;
 
     for(i=0;i<(terri->ibar+1)*(terri->jbar+1);i++){
@@ -1864,7 +1864,7 @@ void UpdateTerrain(int allocate_memory){
     int i;
 
     if(sextras.manual_terrain==0){
-      sextras.nterraininfo = meshescoll.nmeshes;
+      sextras.nterraininfo = scase.meshescoll.nmeshes;
       if(allocate_memory==1&&sextras.manual_terrain==0){
         NewMemory((void **)&sextras.terraininfo, sextras.nterraininfo*sizeof(terraindata));
         for(i = 0; i<sextras.nterraininfo; i++){
@@ -1876,13 +1876,13 @@ void UpdateTerrain(int allocate_memory){
       }
     }
 
-    for(i=0;i<meshescoll.nmeshes;i++){
+    for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
       terraindata *terri;
       float xmin, xmax, ymin, ymax;
       int nx, ny;
 
-      meshi=meshescoll.meshinfo + i;
+      meshi=scase.meshescoll.meshinfo + i;
       if(sextras.manual_terrain==1){
         terri = meshi->terrain;
       }
@@ -1910,11 +1910,11 @@ void UpdateTerrain(int allocate_memory){
   if(allocate_memory==1){
     int i;
 
-    for(i = 0; i<meshescoll.nmeshes; i++){
+    for(i = 0; i<scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
       int ii;
 
-      meshi = meshescoll.meshinfo+i;
+      meshi = scase.meshescoll.meshinfo+i;
       // compute elevations for terrain in each mesh
       // really only need to do this for one mesh in a column but computation isquick and doesn't take a lot of space
       // so doing it for all meshes keeps code simpler
@@ -1931,7 +1931,7 @@ void UpdateTerrain(int allocate_memory){
 
       slicei = slicecoll.sliceinfo + i;
       if(slicei->slice_filetype!=SLICE_TERRAIN)continue;
-      meshi = meshescoll.meshinfo + slicei->blocknumber;
+      meshi = scase.meshescoll.meshinfo + slicei->blocknumber;
       zmin = meshi->zplt_orig[0];
       zmax = meshi->zplt_orig[meshi->kbar];
       agl = slicei->above_ground_level;
@@ -1951,7 +1951,7 @@ void UpdateTerrain(int allocate_memory){
   if(sextras.nterraininfo>0){
     int imesh;
 
-    for(imesh=0;imesh<meshescoll.nmeshes;imesh++){
+    for(imesh=0;imesh<scase.meshescoll.nmeshes;imesh++){
       meshdata *meshi;
       terraindata *terri;
       float *znode, *znode_scaled;
@@ -1959,7 +1959,7 @@ void UpdateTerrain(int allocate_memory){
       float mesh_zmin, mesh_zmax;
       float t_zmin, t_zmax;
 
-      meshi=meshescoll.meshinfo + imesh;
+      meshi=scase.meshescoll.meshinfo + imesh;
       terri = meshi->terrain;
       if(terri==NULL)continue;
       terri->terrain_mesh = meshi;
