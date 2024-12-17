@@ -363,7 +363,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   int i;
 
 
-  if(smoke3dcoll.nsmoke3dinfo<=0&&nvolrenderinfo<=0)return;
+  if(scase.smoke3dcoll.nsmoke3dinfo<=0&&nvolrenderinfo<=0)return;
   if(CHECKBOX_meshvisptr!=NULL)FREEMEMORY(CHECKBOX_meshvisptr);
   NewMemory((void **)&CHECKBOX_meshvisptr,scase.meshescoll.nmeshes*sizeof(GLUI_Checkbox *));
 
@@ -411,7 +411,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
 
   //---------------------------------------------Slice render settings--------------------------------------------------------------
 
-  if(smoke3dcoll.nsmoke3dinfo>0){
+  if(scase.smoke3dcoll.nsmoke3dinfo>0){
     if(nvolrenderinfo > 0){
       ROLLOUT_slices = glui_3dsmoke->add_rollout_to_panel(ROLLOUT_smoke3d, _("Slice render settings"), false, SLICERENDER_ROLLOUT, SmokeRolloutCB);
       INSERT_ROLLOUT(ROLLOUT_slices, glui_3dsmoke);
@@ -602,9 +602,9 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   GLUISmoke3dCB(UPDATE_SMOKEFIRE_COLORS2);
   GLUISmoke3dCB(USE_SMOKE_RGB);
 
-  if(smoke3dcoll.nsmoke3dinfo<=0||nvolrenderinfo<=0){
+  if(scase.smoke3dcoll.nsmoke3dinfo<=0||nvolrenderinfo<=0){
     smoke_render_option=RENDER_SLICE;
-    if(smoke3dcoll.nsmoke3dinfo>0)smoke_render_option=RENDER_SLICE;
+    if(scase.smoke3dcoll.nsmoke3dinfo>0)smoke_render_option=RENDER_SLICE;
     if(nvolrenderinfo>0)smoke_render_option=RENDER_VOLUME;
   }
 
@@ -1031,7 +1031,7 @@ extern "C" void GLUISmoke3dCB(int var){
     break;
   case EXTINCTION_RESET_FDS:
     if(SOOT_index>=0){
-      glui_smoke3d_extinct = smoke3dcoll.smoke3dtypes[SOOT_index].extinction;
+      glui_smoke3d_extinct = scase.smoke3dcoll.smoke3dtypes[SOOT_index].extinction;
       if(SPINNER_smoke3d_extinct2!=NULL)SPINNER_smoke3d_extinct2->set_float_val(glui_smoke3d_extinct);
       if(SPINNER_smoke3d_extinct!=NULL)SPINNER_smoke3d_extinct->set_float_val(glui_smoke3d_extinct);
       GLUISmoke3dCB(SMOKE_EXTINCT);

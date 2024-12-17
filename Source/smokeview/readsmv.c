@@ -3414,10 +3414,10 @@ void UpdateMeshBoxBounds(void){
 int GetSmoke3DType(char *label){
   int i;
 
-  for(i=0; i<smoke3dcoll.nsmoke3dtypes; i++){
+  for(i=0; i<scase.smoke3dcoll.nsmoke3dtypes; i++){
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dcoll.smoke3dtypes[i].smoke3d;
+    smoke3di = scase.smoke3dcoll.smoke3dtypes[i].smoke3d;
     if(Match(smoke3di->label.shortlabel, label)==1)return i;
   }
   return -1;
@@ -3461,22 +3461,22 @@ int CompareSmoketypes(const void *arg1, const void *arg2){
 void UpdateSmoke3DTypes(void){
   int i;
 
-  if(smoke3dcoll.nsmoke3dinfo==0)return;
-  NewMemory((void **)&smoke3dcoll.smoke3dtypes, smoke3dcoll.nsmoke3dinfo*sizeof(smoke3dtypedata));
-  for(i = 0; i<smoke3dcoll.nsmoke3dinfo; i++){
+  if(scase.smoke3dcoll.nsmoke3dinfo==0)return;
+  NewMemory((void **)&scase.smoke3dcoll.smoke3dtypes, scase.smoke3dcoll.nsmoke3dinfo*sizeof(smoke3dtypedata));
+  for(i = 0; i<scase.smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
     int j, doit;
     char *labeli;
     smoke3dtypedata *typen;
 
-    smoke3di = smoke3dcoll.smoke3dinfo+i;
+    smoke3di = scase.smoke3dcoll.smoke3dinfo+i;
     labeli = smoke3di->label.shortlabel;
     doit = 1;
     for(j = 0; j<i; j++){
       smoke3ddata *smoke3dj;
       char *labelj;
 
-      smoke3dj = smoke3dcoll.smoke3dinfo+j;
+      smoke3dj = scase.smoke3dcoll.smoke3dinfo+j;
       labelj = smoke3dj->label.shortlabel;
       if(strcmp(labeli, labelj)==0){
         doit = 0;
@@ -3484,53 +3484,53 @@ void UpdateSmoke3DTypes(void){
       }
     }
     if(doit==1){
-      typen = smoke3dcoll.smoke3dtypes+smoke3dcoll.nsmoke3dtypes;
+      typen = scase.smoke3dcoll.smoke3dtypes+scase.smoke3dcoll.nsmoke3dtypes;
       typen->smoke3d = smoke3di;
       typen->shortlabel = smoke3di->label.shortlabel;
       typen->longlabel = smoke3di->label.longlabel;
       typen->extinction = smoke3di->extinct;
-      smoke3dcoll.nsmoke3dtypes++;
+      scase.smoke3dcoll.nsmoke3dtypes++;
     }
   }
-  if(smoke3dcoll.nsmoke3dtypes>0){
-    qsort((smoke3ddata **)smoke3dcoll.smoke3dtypes, smoke3dcoll.nsmoke3dtypes, sizeof(smoke3dtypedata), CompareSmoketypes);
-    ResizeMemory((void **)&smoke3dcoll.smoke3dtypes, smoke3dcoll.nsmoke3dtypes*sizeof(smoke3dtypedata));
+  if(scase.smoke3dcoll.nsmoke3dtypes>0){
+    qsort((smoke3ddata **)scase.smoke3dcoll.smoke3dtypes, scase.smoke3dcoll.nsmoke3dtypes, sizeof(smoke3dtypedata), CompareSmoketypes);
+    ResizeMemory((void **)&scase.smoke3dcoll.smoke3dtypes, scase.smoke3dcoll.nsmoke3dtypes*sizeof(smoke3dtypedata));
   }
   else{
-    FREEMEMORY(smoke3dcoll.smoke3dtypes);
+    FREEMEMORY(scase.smoke3dcoll.smoke3dtypes);
   }
-  for(i = 0; i<smoke3dcoll.nsmoke3dinfo; i++){
+  for(i = 0; i<scase.smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
     int j;
     smokestatedata *smokestate;
 
-    smoke3di = smoke3dcoll.smoke3dinfo+i;
+    smoke3di = scase.smoke3dcoll.smoke3dinfo+i;
     smoke3di->type = GetSmoke3DType(smoke3di->label.shortlabel);
 
-    NewMemory((void **)&smokestate, smoke3dcoll.nsmoke3dtypes*sizeof(smokestatedata));
+    NewMemory((void **)&smokestate, scase.smoke3dcoll.nsmoke3dtypes*sizeof(smokestatedata));
     smoke3di->smokestate = smokestate;
-    for(j = 0; j<smoke3dcoll.nsmoke3dtypes; j++){
+    for(j = 0; j<scase.smoke3dcoll.nsmoke3dtypes; j++){
       smoke3di->smokestate[j].color = NULL;
       smoke3di->smokestate[j].index = -1;
     }
   }
-  smoke3dcoll.smoke3d_other     = smoke3dcoll.nsmoke3dtypes;
+  scase.smoke3dcoll.smoke3d_other     = scase.smoke3dcoll.nsmoke3dtypes;
   SOOT_index   = -1;
   HRRPUV_index = -1;
   TEMP_index   = -1;
   CO2_index    = -1;
 
-  for(i = 0; i<smoke3dcoll.nsmoke3dtypes; i++){
+  for(i = 0; i<scase.smoke3dcoll.nsmoke3dtypes; i++){
     smoke3ddata *smoke3di;
     char *label;
     float ext;
 
-    smoke3di = smoke3dcoll.smoke3dtypes[i].smoke3d;
+    smoke3di = scase.smoke3dcoll.smoke3dtypes[i].smoke3d;
     label = smoke3di->label.shortlabel;
     ext = smoke3di->extinct;
     if(ext>0.0){
       SOOT_index = i;
-      glui_smoke3d_extinct = smoke3dcoll.smoke3dtypes[i].extinction;
+      glui_smoke3d_extinct = scase.smoke3dcoll.smoke3dtypes[i].extinction;
       continue;
     }
     if(Match(label, "hrrpuv")==1){
@@ -4111,13 +4111,13 @@ void UpdateMeshCoords(void){
     }
   }
   UpdateVentOffset();
-  if(smoke3dcoll.nsmoke3dinfo>0)NewMemory((void **)&smoke3dcoll.smoke3dinfo_sorted,smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata *));
+  if(scase.smoke3dcoll.nsmoke3dinfo>0)NewMemory((void **)&scase.smoke3dcoll.smoke3dinfo_sorted,scase.smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata *));
   NewMemory((void **)&meshvisptr,scase.meshescoll.nmeshes*sizeof(int));
   for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshvisptr[i]=1;
   }
-  for(i=0;i<smoke3dcoll.nsmoke3dinfo;i++){
-    smoke3dcoll.smoke3dinfo_sorted[i]=smoke3dcoll.smoke3dinfo+i;
+  for(i=0;i<scase.smoke3dcoll.nsmoke3dinfo;i++){
+    scase.smoke3dcoll.smoke3dinfo_sorted[i]=scase.smoke3dcoll.smoke3dinfo+i;
   }
   for(i = 0; i<scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
@@ -5632,7 +5632,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
 
 void ParseSMOKE3DCount(void){
   if(parse_opts.setup_only==1)return;
-  smoke3dcoll.nsmoke3dinfo++;
+  scase.smoke3dcoll.nsmoke3dinfo++;
 }
 
 /* ------------------ ParseSMOKE3DProcess ------------------------ */
@@ -5678,7 +5678,7 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
     blocknumber--;
   }
   if(FGETS(buffer, 255, stream)==NULL){
-    smoke3dcoll.nsmoke3dinfo--;
+    scase.smoke3dcoll.nsmoke3dinfo--;
     return RETURN_BREAK;
   }
   bufferptr = TrimFrontBack(buffer);
@@ -5688,10 +5688,10 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
     smoke3ddata *smoke3di;
     int i;
 
-    smoke3di = smoke3dcoll.smoke3dinfo+ismoke3d;
+    smoke3di = scase.smoke3dcoll.smoke3dinfo+ismoke3d;
 
 #ifdef _DEBUG
-    if(smoke3dcoll.nsmoke3dinfo>500&&(ismoke3d%100==0||ismoke3d==smoke3dcoll.nsmoke3dinfo-1)){
+    if(scase.smoke3dcoll.nsmoke3dinfo>500&&(ismoke3d%100==0||ismoke3d==scase.smoke3dcoll.nsmoke3dinfo-1)){
       PRINTF("     examining %i'st 3D smoke file\n", ismoke3dcount);
     }
 #endif
@@ -6845,11 +6845,11 @@ void *CheckFiles(void *arg){
     }
     THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   }
-  for(i = 0;i < smoke3dcoll.nsmoke3dinfo;i++){
+  for(i = 0;i < scase.smoke3dcoll.nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
     int have_file;
 
-    smoke3di = smoke3dcoll.smoke3dinfo + i;
+    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
     have_file = FILE_EXISTS_CASEDIR(smoke3di->comp_file);
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
     if(have_file == YES){
@@ -6871,10 +6871,10 @@ void *CheckFiles(void *arg){
       patchi->file = patchi->comp_file;
     }
   }
-  for(i = 0; i < smoke3dcoll.nsmoke3dinfo; i++){
+  for(i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dcoll.smoke3dinfo + i;
+    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
     if(smoke3di->compression_type_temp == COMPRESSED_ZLIB){
       smoke3di->file = smoke3di->comp_file;
       smoke3di->is_zlib = 1;
@@ -7204,18 +7204,18 @@ int ReadSMV_Init(){
   }
   nzoneinfo=0;
 
-  if(smoke3dcoll.nsmoke3dinfo>0){
+  if(scase.smoke3dcoll.nsmoke3dinfo>0){
     {
       smoke3ddata *smoke3di;
 
-      for(i=0;i<smoke3dcoll.nsmoke3dinfo;i++){
-        smoke3di = smoke3dcoll.smoke3dinfo + i;
+      for(i=0;i<scase.smoke3dcoll.nsmoke3dinfo;i++){
+        smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
         FreeSmoke3D(smoke3di);
         FREEMEMORY(smoke3di->comp_file);
         FREEMEMORY(smoke3di->reg_file);
       }
-      FREEMEMORY(smoke3dcoll.smoke3dinfo);
-      smoke3dcoll.nsmoke3dinfo=0;
+      FREEMEMORY(scase.smoke3dcoll.smoke3dinfo);
+      scase.smoke3dcoll.nsmoke3dinfo=0;
     }
   }
 
@@ -8111,8 +8111,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     }
     sliceinfo_copy=scase.slicecoll.sliceinfo;
   }
-  if(smoke3dcoll.nsmoke3dinfo>0){
-    if(NewMemory( (void **)&smoke3dcoll.smoke3dinfo, smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata))==0)return 2;
+  if(scase.smoke3dcoll.nsmoke3dinfo>0){
+    if(NewMemory( (void **)&scase.smoke3dcoll.smoke3dinfo, scase.smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata))==0)return 2;
   }
 
   FREEMEMORY(patchinfo);
@@ -8198,7 +8198,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
   if(npartinfo>0 && NewMemory((void **)&sextras.part_buffer,       3*npartinfo*MAXFILELEN)    == 0)return 2;
   if(scase.slicecoll.nsliceinfo>0 && NewMemory((void **)&sextras.slice_buffer,     7*scase.slicecoll.nsliceinfo*MAXFILELEN)   == 0)return 2;
-  if(smoke3dcoll.nsmoke3dinfo>0 && NewMemory((void **)&sextras.smoke3d_buffer, 9*smoke3dcoll.nsmoke3dinfo*MAXFILELEN) == 0)return 2;
+  if(scase.smoke3dcoll.nsmoke3dinfo>0 && NewMemory((void **)&sextras.smoke3d_buffer, 9*scase.smoke3dcoll.nsmoke3dinfo*MAXFILELEN) == 0)return 2;
 
   PRINT_TIMER(timer_readsmv, "pass 1");
 

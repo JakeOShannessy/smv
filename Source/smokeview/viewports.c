@@ -1479,8 +1479,8 @@ int CompareMeshes(const void *arg1, const void *arg2){
 /* ------------------ SortSmoke3dinfo ------------------------ */
 
 void SortSmoke3dinfo(void){
-  if(smoke3dcoll.nsmoke3dinfo > 1){
-    qsort((meshdata **)smoke3dcoll.smoke3dinfo_sorted, (size_t)smoke3dcoll.nsmoke3dinfo, sizeof(smoke3ddata *), CompareMeshes);
+  if(scase.smoke3dcoll.nsmoke3dinfo > 1){
+    qsort((meshdata **)scase.smoke3dcoll.smoke3dinfo_sorted, (size_t)scase.smoke3dcoll.nsmoke3dinfo, sizeof(smoke3ddata *), CompareMeshes);
   }
 }
 
@@ -2645,7 +2645,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       ComputeAllSmokecolors();
 #endif
     }
-    if(smoke3dcoll.nsmoke3dinfo>0&&show3dsmoke==1){
+    if(scase.smoke3dcoll.nsmoke3dinfo>0&&show3dsmoke==1){
       SortSmoke3dinfo();
       GetSmokeDir(modelview_scratch);
       SNIFF_ERRORS("after GetSmokeDir");

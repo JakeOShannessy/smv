@@ -640,8 +640,8 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
 json_object *json_GetSmoke3ds(jrpc_context *context, json_object *params,
                               json_object *id) {
   struct json_object *smoke3ds = json_object_new_array();
-  for(int i = 0; i < smoke3dcoll.nsmoke3dinfo; i++) {
-    smoke3ddata *val = &smoke3dcoll.smoke3dinfo[i];
+  for(int i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
+    smoke3ddata *val = &scase.smoke3dcoll.smoke3dinfo[i];
     struct json_object *slice_obj = json_object_new_object();
     json_object_object_add(slice_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(slice_obj, "mesh",
@@ -865,7 +865,7 @@ json_object *jsonrpc_Load3dSmokeIndices(jrpc_context *context,
     int i = json_object_get_int(json_object_array_get_idx(params, n));
     fprintf(stderr, "loading smoke3d index %d\n", i);
     smoke3ddata *smoke3di;
-    smoke3di = smoke3dcoll.smoke3dinfo + i;
+    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
     smoke3di->finalize = 0;
     if(n == (n_files - 1)) smoke3di->finalize = 1;
     ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);

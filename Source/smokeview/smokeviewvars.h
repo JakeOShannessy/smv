@@ -2225,8 +2225,6 @@ SVEXTERN int setp3chopmin_temp, setp3chopmax_temp;
 SVEXTERN float p3chopmin_temp, p3chopmax_temp;
 SVEXTERN float glui_p3min, glui_p3max;
 
-SVEXTERN smoke3d_collection SVDECL(smoke3dcoll,{0});
-
 SVEXTERN int SVDECL(bound_slice_init, 1);
 SVEXTERN int SVDECL(bound_part_init, 1);
 SVEXTERN int SVDECL(bound_hvacduct_init, 1);
