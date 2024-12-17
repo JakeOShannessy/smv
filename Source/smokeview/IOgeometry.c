@@ -3478,7 +3478,7 @@ FILE_SIZE ReadGeom2(geomdata *geomi, int load_flag, int type){
           have_geom_factors = 1;
         }
 
-        if(terrain_texture_coll.terrain_textures!=NULL){
+        if(scase.terrain_texture_coll.terrain_textures!=NULL){
           float xfactor, yfactor;
 
           xfactor = 1.0;

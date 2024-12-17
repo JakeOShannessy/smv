@@ -2555,8 +2555,8 @@ void TextureShowMenu(int value){
 
     geomi = geominfo + i;
     surf = geomi->surfgeom;
-    if(terrain_texture_coll.terrain_textures!=NULL){
-      textii = terrain_texture_coll.terrain_textures+iterrain_textures;
+    if(scase.terrain_texture_coll.terrain_textures!=NULL){
+      textii = scase.terrain_texture_coll.terrain_textures+iterrain_textures;
     }
     else{
       if(surf!=NULL)textii = surf->textureinfo;
@@ -7105,8 +7105,8 @@ void TerrainGeomShowMenu(int value){
   if(value>=0){
     texturedata *texti;
 
-    if(value>=0&&value<terrain_texture_coll.nterrain_textures){
-      texti = terrain_texture_coll.terrain_textures+value;
+    if(value>=0&&value<scase.terrain_texture_coll.nterrain_textures){
+      texti = scase.terrain_texture_coll.terrain_textures+value;
       texti->display = 1-texti->display;
       GLUIUpdateTerrainTexture(value);
     }
@@ -9274,12 +9274,12 @@ static int menu_count=0;
   /* --------------------------------terrain menu -------------------------- */
 
 
-  if(terrain_texture_coll.nterrain_textures>0){
+  if(scase.terrain_texture_coll.nterrain_textures>0){
     CREATEMENU(terrain_geom_showmenu, TerrainGeomShowMenu);
-    for(i = 0; i<terrain_texture_coll.nterrain_textures; i++){
+    for(i = 0; i<scase.terrain_texture_coll.nterrain_textures; i++){
       texturedata *texti;
 
-      texti = terrain_texture_coll.terrain_textures+i;
+      texti = scase.terrain_texture_coll.terrain_textures+i;
       if(texti->loaded==1){
         char tlabel[256];
 
@@ -9334,7 +9334,7 @@ static int menu_count=0;
     glutAddMenuEntry(_("   Outside FDS domain"), GEOMETRY_OUTSIDE_DOMAIN);
   }
   glutAddMenuEntry("-", GEOMETRY_DUMMY);
-  if(terrain_texture_coll.nterrain_textures>0){
+  if(scase.terrain_texture_coll.nterrain_textures>0){
     GLUTADDSUBMENU(_("Terrain images"), terrain_geom_showmenu);
   }
   if(terrain_nindices>0){
@@ -9600,8 +9600,8 @@ static int menu_count=0;
 
       texti = scase.texture_coll.textureinfo + i;
       if(texti->loaded == 0 || texti->used == 0)continue;
-      if(terrain_texture_coll.terrain_textures != NULL){
-        if(texti >= terrain_texture_coll.terrain_textures && texti < terrain_texture_coll.terrain_textures + terrain_texture_coll.nterrain_textures)continue;
+      if(scase.terrain_texture_coll.terrain_textures != NULL){
+        if(texti >= scase.terrain_texture_coll.terrain_textures && texti < scase.terrain_texture_coll.terrain_textures + scase.terrain_texture_coll.nterrain_textures)continue;
       }
       ntextures_used++;
       if(texti->display==1){
@@ -9798,7 +9798,7 @@ static int menu_count=0;
   if(terrain_showonly_top==0)glutAddMenuEntry(_("Show only top surface"),  17 + TERRAIN_TOP);
   if(sextras.visTerrainType==TERRAIN_SURFACE)glutAddMenuEntry(_("*3D surface"),17+TERRAIN_SURFACE);
   if(sextras.visTerrainType!=TERRAIN_SURFACE)glutAddMenuEntry(_("3D surface"),17+TERRAIN_SURFACE);
-  if(terrain_texture_coll.terrain_textures!=NULL){ // &&terrain_texture->loaded==1
+  if(scase.terrain_texture_coll.terrain_textures!=NULL){ // &&terrain_texture->loaded==1
     if(sextras.visTerrainType==TERRAIN_IMAGE)glutAddMenuEntry(_("*Image"),17+TERRAIN_IMAGE);
     if(sextras.visTerrainType!=TERRAIN_IMAGE)glutAddMenuEntry(_("Image"),17+TERRAIN_IMAGE);
   }
@@ -11462,7 +11462,7 @@ static int menu_count=0;
   }
   if(titlesafe_offset==0)glutAddMenuEntry(_("Offset window"), MENU_SHOWHIDE_OFFSET);
   if(titlesafe_offset!=0)glutAddMenuEntry(_("*Offset window"),MENU_SHOWHIDE_OFFSET);
-  if(ntextures_loaded_used>terrain_texture_coll.nterrain_textures){
+  if(ntextures_loaded_used>scase.terrain_texture_coll.nterrain_textures){
     GLUTADDSUBMENU(_("Textures"),textureshowmenu);
   }
 #ifdef pp_MEMPRINT

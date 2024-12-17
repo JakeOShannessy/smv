@@ -225,10 +225,10 @@ extern "C" void GLUIUpdateHVACViews(void){
   /* ------------------ GLUIUpdateTerrainTexture ------------------------ */
 
 extern "C" void GLUIUpdateTerrainTexture(int val){
-  if(CHECKBOX_terrain_texture_show!=NULL&&val>=0&&val<terrain_texture_coll.nterrain_textures){
+  if(CHECKBOX_terrain_texture_show!=NULL&&val>=0&&val<scase.terrain_texture_coll.nterrain_textures){
     texturedata *texti;
 
-    texti = terrain_texture_coll.terrain_textures+val;
+    texti = scase.terrain_texture_coll.terrain_textures+val;
     if(texti->loaded==1&&CHECKBOX_terrain_texture_show[val]!=NULL){
       CHECKBOX_terrain_texture_show[val]->set_int_val(texti->display);
     }
@@ -1073,13 +1073,13 @@ extern "C" void GLUIGeometrySetup(int main_window){
     SPINNER_geom_vert_exag = glui_geometry->add_spinner_to_panel(PANEL_geomtest2, "vertical exaggeration", GLUI_SPINNER_FLOAT, &geom_vert_exag, GEOM_VERT_EXAG, VolumeCB);
     SPINNER_geom_vert_exag->set_float_limits(0.1, 10.0);
 
-    if(terrain_texture_coll.nterrain_textures>0){
-      NewMemory((void **)&CHECKBOX_terrain_texture_show, sizeof(GLUI_Checkbox *)*terrain_texture_coll.nterrain_textures);
+    if(scase.terrain_texture_coll.nterrain_textures>0){
+      NewMemory((void **)&CHECKBOX_terrain_texture_show, sizeof(GLUI_Checkbox *)*scase.terrain_texture_coll.nterrain_textures);
       PANEL_terrain_images = glui_geometry->add_panel_to_panel(PANEL_group1, "terrain images");
-      for(i = 0; i<terrain_texture_coll.nterrain_textures; i++){
+      for(i = 0; i<scase.terrain_texture_coll.nterrain_textures; i++){
         texturedata *texti;
 
-        texti = terrain_texture_coll.terrain_textures+i;
+        texti = scase.terrain_texture_coll.terrain_textures+i;
         if(texti->loaded==1){
           CHECKBOX_terrain_texture_show[i] = glui_geometry->add_checkbox_to_panel(PANEL_terrain_images, texti->file, &(texti->display), i, TerrainTextureCB);
         }
@@ -1301,11 +1301,11 @@ void VolumeCB(int var){
     SPINNER_geom_zlevel->set_float_limits(terrain_zmin, terrain_zmax);
     UpdateChopColors();
   case SHOW_TEXTURE_1D_IMAGE:
-    if(show_texture_1dimage == 1&&terrain_texture_coll.nterrain_textures>0){
-      for(i=0; i<terrain_texture_coll.nterrain_textures; i++){
+    if(show_texture_1dimage == 1&&scase.terrain_texture_coll.nterrain_textures>0){
+      for(i=0; i<scase.terrain_texture_coll.nterrain_textures; i++){
         texturedata *texti;
 
-        texti = terrain_texture_coll.terrain_textures+i;
+        texti = scase.terrain_texture_coll.terrain_textures+i;
         if(texti->loaded==1){
           texti->display = 0;
           GLUIUpdateTerrainTexture(i);

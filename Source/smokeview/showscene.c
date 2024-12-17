@@ -380,7 +380,7 @@ void ShowScene2(int mode){
         DrawTerrainOBST(terri, flag);
         break;
       case TERRAIN_IMAGE:
-        if(terrain_texture_coll.terrain_textures != NULL&&terrain_texture_coll.terrain_textures[iterrain_textures].loaded == 1){
+        if(scase.terrain_texture_coll.terrain_textures != NULL&&scase.terrain_texture_coll.terrain_textures[iterrain_textures].loaded == 1){
           DrawTerrainOBSTTexture(terri);
         }
         else{

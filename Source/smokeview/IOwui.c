@@ -134,10 +134,10 @@ int HaveTerrainTexture(int *draw_surfaceptr){
   int draw_texture = 0, draw_surface = 1;
   int i;
 
-  for(i = 0; i < terrain_texture_coll.nterrain_textures; i++){
+  for(i = 0; i < scase.terrain_texture_coll.nterrain_textures; i++){
     texturedata *texti;
 
-    texti = terrain_texture_coll.terrain_textures + i;
+    texti = scase.terrain_texture_coll.terrain_textures + i;
     if(texti->loaded == 1 && texti->display == 1){
       draw_texture = 1;
       if(texti->is_transparent == 0)draw_surface = 0; // don't draw a surface if we are drawing a texture
@@ -152,10 +152,10 @@ int HaveTerrainTexture(int *draw_surfaceptr){
 int GetNTerrainTexturesLoaded(void){
   int count, i, opaque_texture_index = -1;
 
-  for(i = 0; i < terrain_texture_coll.nterrain_textures; i++){
+  for(i = 0; i < scase.terrain_texture_coll.nterrain_textures; i++){
     texturedata *texti;
 
-    texti = terrain_texture_coll.terrain_textures + i;
+    texti = scase.terrain_texture_coll.terrain_textures + i;
     if(texti->loaded == 1 && texti->display == 1 && texti->is_transparent == 0){
       opaque_texture_index = i;
       break;
@@ -163,16 +163,16 @@ int GetNTerrainTexturesLoaded(void){
   }
 
   count = 0;
-  for(i = -1; i<terrain_texture_coll.nterrain_textures; i++){
+  for(i = -1; i<scase.terrain_texture_coll.nterrain_textures; i++){
     texturedata *texti;
 
     if(i==-1){
       if(opaque_texture_index==-1)continue;
-      texti = terrain_texture_coll.terrain_textures+opaque_texture_index;
+      texti = scase.terrain_texture_coll.terrain_textures+opaque_texture_index;
     }
     else{
       if(i==opaque_texture_index)continue;
-      texti = terrain_texture_coll.terrain_textures+i;
+      texti = scase.terrain_texture_coll.terrain_textures+i;
     }
     if(texti->loaded==0||texti->display==0)continue;
     count++;
@@ -559,10 +559,10 @@ void DrawTerrainGeom(int option){
     int ii;
     int opaque_texture_index = -1;
 
-    for(i = 0; i<terrain_texture_coll.nterrain_textures; i++){
+    for(i = 0; i<scase.terrain_texture_coll.nterrain_textures; i++){
       texturedata *texti;
 
-      texti = terrain_texture_coll.terrain_textures+i;
+      texti = scase.terrain_texture_coll.terrain_textures+i;
       if(texti->loaded==1&&texti->display==1&&texti->is_transparent==0){
         opaque_texture_index = i;
         break;
@@ -575,18 +575,18 @@ void DrawTerrainGeom(int option){
     int count = 0;
     int is_transparent=0;
     TransparentOff();
-    for(ii = -1; ii<terrain_texture_coll.nterrain_textures; ii++){
+    for(ii = -1; ii<scase.terrain_texture_coll.nterrain_textures; ii++){
       float dz;
       texturedata *texti;
 
       // draw opaque texture first
       if(ii==-1){
         if(opaque_texture_index==-1)continue;
-        texti = terrain_texture_coll.terrain_textures+opaque_texture_index;
+        texti = scase.terrain_texture_coll.terrain_textures+opaque_texture_index;
       }
       else{
         if(ii==opaque_texture_index)continue;
-        texti = terrain_texture_coll.terrain_textures+ii;
+        texti = scase.terrain_texture_coll.terrain_textures+ii;
       }
       if(texti->loaded==0||texti->display==0)continue;
       dz = SCALE2FDS((float)(count)*FDS_OFFSET);
@@ -1664,7 +1664,7 @@ void DrawTerrainOBSTTexture(terraindata *terri){
   glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
   glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
   glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D,terrain_texture_coll.terrain_textures[iterrain_textures].name);
+  glBindTexture(GL_TEXTURE_2D,scase.terrain_texture_coll.terrain_textures[iterrain_textures].name);
 
   glEnable(GL_COLOR_MATERIAL);
   glColor4fv(terrain_color);

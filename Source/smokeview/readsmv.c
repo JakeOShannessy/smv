@@ -2531,10 +2531,10 @@ int IsTerrainTexture(texturedata *texti){
   int i;
 
   is_terrain_texture=0;
-  for(i=0;i<terrain_texture_coll.nterrain_textures;i++){
+  for(i=0;i<scase.terrain_texture_coll.nterrain_textures;i++){
     texturedata *tt;
 
-    tt = terrain_texture_coll.terrain_textures + i;
+    tt = scase.terrain_texture_coll.terrain_textures + i;
     if(tt->file==NULL||strcmp(tt->file, texti->file)!=0)continue;
     return 1;
   }
@@ -2586,16 +2586,16 @@ void InitTextures0(void){
   }
   PRINT_TIMER(texture_timer, "device textures");
 
-  if(terrain_texture_coll.nterrain_textures>0){
+  if(scase.terrain_texture_coll.nterrain_textures>0){
     texturedata *texture_base;
 
     texture_base = scase.texture_coll.textureinfo + scase.texture_coll.ntextureinfo;
-    for(i=0;i<terrain_texture_coll.nterrain_textures;i++){
+    for(i=0;i<scase.terrain_texture_coll.nterrain_textures;i++){
       char *texturefile;
       texturedata *texti;
       int len;
 
-      texturefile = terrain_texture_coll.terrain_textures[i].file;
+      texturefile = scase.terrain_texture_coll.terrain_textures[i].file;
       texti = scase.texture_coll.textureinfo + scase.texture_coll.ntextureinfo;
       len = strlen(texturefile);
       NewMemory((void **)&texti->file,(len+1)*sizeof(char));
@@ -2605,8 +2605,8 @@ void InitTextures0(void){
       texti->display=0;
       scase.texture_coll.ntextureinfo++;
     }
-    FREEMEMORY(terrain_texture_coll.terrain_textures);
-    terrain_texture_coll.terrain_textures = texture_base;
+    FREEMEMORY(scase.terrain_texture_coll.terrain_textures);
+    scase.terrain_texture_coll.terrain_textures = texture_base;
   }
   PRINT_TIMER(texture_timer, "terrain textures");
 
@@ -2768,15 +2768,15 @@ void InitTextures0(void){
 
   // define terrain texture
 
-  if(terrain_texture_coll.nterrain_textures>0){
+  if(scase.terrain_texture_coll.nterrain_textures>0){
     texturedata *tt;
     unsigned char *floortex;
     int texwid, texht, nloaded=0;
 
-    for(i=0;i<terrain_texture_coll.nterrain_textures;i++){
+    for(i=0;i<scase.terrain_texture_coll.nterrain_textures;i++){
       int is_transparent;
 
-      tt = terrain_texture_coll.terrain_textures + i;
+      tt = scase.terrain_texture_coll.terrain_textures + i;
       tt->loaded=0;
       tt->used=0;
       tt->display=0;
@@ -2861,7 +2861,7 @@ void InitTextures0(void){
 void InitTextures(int use_graphics_arg){
   int max_textures;
 
-  max_textures = scase.surfcoll.nsurfinfo + device_texture_list_coll.ndevice_texture_list + terrain_texture_coll.nterrain_textures;
+  max_textures = scase.surfcoll.nsurfinfo + device_texture_list_coll.ndevice_texture_list + scase.terrain_texture_coll.nterrain_textures;
 #ifdef pp_SKY
   max_textures = nsky_texture;
 #endif
@@ -2870,7 +2870,7 @@ void InitTextures(int use_graphics_arg){
                        npropinfo, propinfo, &device_texture_list_coll.ndevice_texture_list,
                        &device_texture_list_coll.device_texture_list_index, &device_texture_list_coll.device_texture_list);
   if(scase.surfcoll.nsurfinfo>0||device_texture_list_coll.ndevice_texture_list>0){
-    if(NewMemory((void **)&scase.texture_coll.textureinfo, (scase.surfcoll.nsurfinfo+device_texture_list_coll.ndevice_texture_list+terrain_texture_coll.nterrain_textures)*sizeof(texturedata))==0)return;
+    if(NewMemory((void **)&scase.texture_coll.textureinfo, (scase.surfcoll.nsurfinfo+device_texture_list_coll.ndevice_texture_list+scase.terrain_texture_coll.nterrain_textures)*sizeof(texturedata))==0)return;
   }
   if(use_graphics_arg==1){
     InitTextures0();
@@ -7286,7 +7286,7 @@ int ReadSMV_Init(){
   FREEMEMORY(zventinfo);
   FREEMEMORY(scase.texture_coll.textureinfo);
   FREEMEMORY(scase.surfcoll.surfinfo);
-  FREEMEMORY(terrain_texture_coll.terrain_textures);
+  FREEMEMORY(scase.terrain_texture_coll.terrain_textures);
 
   STOP_TIMER(pass0_time );
   PRINT_TIMER(timer_readsmv, "readsmv setup");
@@ -7606,10 +7606,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       TrimBack(buff2);
       len_buffer = strlen(buff2);
       if(len_buffer>0&&strcmp(buff2, "null")!=0){
-        terrain_texture_coll.nterrain_textures = 1;
-        NewMemory((void **)&terrain_texture_coll.terrain_textures, sizeof(texturedata));
-        NewMemory((void **)&(terrain_texture_coll.terrain_textures->file), (len_buffer+1)*sizeof(char));
-        strcpy(terrain_texture_coll.terrain_textures->file, buff2);
+        scase.terrain_texture_coll.nterrain_textures = 1;
+        NewMemory((void **)&scase.terrain_texture_coll.terrain_textures, sizeof(texturedata));
+        NewMemory((void **)&(scase.terrain_texture_coll.terrain_textures->file), (len_buffer+1)*sizeof(char));
+        strcpy(scase.terrain_texture_coll.terrain_textures->file, buff2);
       }
       have_auto_terrain_image=1;
       continue;
@@ -7620,29 +7620,29 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
       sextras.is_terrain_case = 1;
       if(have_auto_terrain_image == 1){
-        FREEMEMORY(terrain_texture_coll.terrain_textures->file);
-        FREEMEMORY(terrain_texture_coll.terrain_textures);
+        FREEMEMORY(scase.terrain_texture_coll.terrain_textures->file);
+        FREEMEMORY(scase.terrain_texture_coll.terrain_textures);
       }
-      terrain_texture_coll.nterrain_textures = 1;
+      scase.terrain_texture_coll.nterrain_textures = 1;
       blank = strchr(buffer,' ');
       if(blank!=NULL){
         int nvals=0;
 
         sscanf(blank+1,"%i",&nvals);
-        if(nvals!=0)terrain_texture_coll.nterrain_textures = MAX(nvals,0);
+        if(nvals!=0)scase.terrain_texture_coll.nterrain_textures = MAX(nvals,0);
       }
 
 
-      if(terrain_texture_coll.nterrain_textures>0){
-        NewMemory((void **)&terrain_texture_coll.terrain_textures, terrain_texture_coll.nterrain_textures*sizeof(texturedata));
+      if(scase.terrain_texture_coll.nterrain_textures>0){
+        NewMemory((void **)&scase.terrain_texture_coll.terrain_textures, scase.terrain_texture_coll.nterrain_textures*sizeof(texturedata));
 
-        for(i=0;i<terrain_texture_coll.nterrain_textures;i++){
+        for(i=0;i<scase.terrain_texture_coll.nterrain_textures;i++){
           FGETS(buffer, 255, stream);
           buff2 = TrimFrontBack(buffer);
           len_buffer = strlen(buff2);
           if(len_buffer>0&&strcmp(buff2, "null")!=0){
-            NewMemory((void **)&terrain_texture_coll.terrain_textures[i].file, (len_buffer+1)*sizeof(char));
-            strcpy(terrain_texture_coll.terrain_textures[i].file, buff2);
+            NewMemory((void **)&scase.terrain_texture_coll.terrain_textures[i].file, (len_buffer+1)*sizeof(char));
+            strcpy(scase.terrain_texture_coll.terrain_textures[i].file, buff2);
           }
         }
       }
@@ -12207,12 +12207,12 @@ void UpdateUseTextures(void){
       }
     }
   }
-  if(terrain_texture_coll.nterrain_textures>0){
-    for(i=0;i<terrain_texture_coll.nterrain_textures;i++){
+  if(scase.terrain_texture_coll.nterrain_textures>0){
+    for(i=0;i<scase.terrain_texture_coll.nterrain_textures;i++){
       texturedata *texti;
 
-      texti =scase.texture_coll.textureinfo + scase.texture_coll.ntextureinfo - terrain_texture_coll.nterrain_textures + i;
-      if(texti == terrain_texture_coll.terrain_textures + i){
+      texti =scase.texture_coll.textureinfo + scase.texture_coll.ntextureinfo - scase.terrain_texture_coll.nterrain_textures + i;
+      if(texti == scase.terrain_texture_coll.terrain_textures + i){
         texti->used = 1;
       }
     }
@@ -15280,11 +15280,11 @@ int ReadIni2(char *inifile, int localfile){
         if(fgets(buffer, 255, stream)==NULL)break;
         sscanf(buffer, "%i %i %i %i %i",
           &nt, &terrain_show_geometry_surface, &terrain_show_geometry_outline, &terrain_show_geometry_points, &terrain_showonly_top);
-        if(terrain_texture_coll.terrain_textures!=NULL){
-          for(i = 0; i<MIN(nt, terrain_texture_coll.nterrain_textures); i++){
+        if(scase.terrain_texture_coll.terrain_textures!=NULL){
+          for(i = 0; i<MIN(nt, scase.terrain_texture_coll.nterrain_textures); i++){
             texturedata *texti;
 
-            texti = terrain_texture_coll.terrain_textures+i;
+            texti = scase.terrain_texture_coll.terrain_textures+i;
             if(fgets(buffer, 255, stream)==NULL)break;
             sscanf(buffer, "%i ", &(texti->display));
           }
@@ -16467,11 +16467,11 @@ void WriteIniLocal(FILE *fileout){
   }
   fprintf(fileout, "SHOWGEOMTERRAIN\n");
   fprintf(fileout, "%i %i %i %i %i\n",
-    terrain_texture_coll.nterrain_textures, terrain_show_geometry_surface, terrain_show_geometry_outline, terrain_show_geometry_points, terrain_showonly_top);
-  for(i = 0; i<terrain_texture_coll.nterrain_textures; i++){
+    scase.terrain_texture_coll.nterrain_textures, terrain_show_geometry_surface, terrain_show_geometry_outline, terrain_show_geometry_points, terrain_showonly_top);
+  for(i = 0; i<scase.terrain_texture_coll.nterrain_textures; i++){
     texturedata *texti;
 
-    texti = terrain_texture_coll.terrain_textures+i;
+    texti = scase.terrain_texture_coll.terrain_textures+i;
     fprintf(fileout, "%i\n", texti->display);
   }
 
