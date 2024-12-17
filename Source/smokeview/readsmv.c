@@ -6648,15 +6648,15 @@ void ReadSMVOrig(void){
       float *xyz;
       int i;
 
-      FREEMEMORY(obstcoll.obstinfo);
+      FREEMEMORY(scase.obstcoll.obstinfo);
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &obstcoll.nobstinfo);
-      NewMemory((void **)&obstcoll.obstinfo, obstcoll.nobstinfo*sizeof(xbdata));
-      for(i = 0; i<obstcoll.nobstinfo; i++){
+      sscanf(buffer, "%i", &scase.obstcoll.nobstinfo);
+      NewMemory((void **)&scase.obstcoll.obstinfo, scase.obstcoll.nobstinfo*sizeof(xbdata));
+      for(i = 0; i<scase.obstcoll.nobstinfo; i++){
         xbdata *obi;
         int blockid, *surf_index;
 
-        obi = obstcoll.obstinfo+i;
+        obi = scase.obstcoll.obstinfo+i;
         xyz = obi->xyz;
         surf_index = obi->surf_index;
         fgets(buffer, 255, stream);
@@ -6665,13 +6665,13 @@ void ReadSMVOrig(void){
              &blockid,
              surf_index, surf_index+1, surf_index+2, surf_index+3, surf_index+4, surf_index+5);
       }
-      for(i = 0; i<obstcoll.nobstinfo; i++){
+      for(i = 0; i<scase.obstcoll.nobstinfo; i++){
         xbdata *obi;
         int dummy[6];
         float s_color[4];
         int colorindex, blocktype;
 
-        obi = obstcoll.obstinfo+i;
+        obi = scase.obstcoll.obstinfo+i;
         obi->transparent   = 0;
         obi->invisible     = 0;
         obi->usecolorindex = 0;
