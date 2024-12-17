@@ -2353,10 +2353,10 @@ void Keyboard(unsigned char key, int flag){
       break;
     case 'Q':
       showhide_textures = 1-showhide_textures;
-      for(i = 0; i<texture_coll.ntextureinfo; i++){
+      for(i = 0; i<scase.texture_coll.ntextureinfo; i++){
         texturedata *texti;
 
-        texti = texture_coll.textureinfo+i;
+        texti = scase.texture_coll.textureinfo+i;
         if(texti->loaded==0||texti->used==0)continue;
         if(texti->display==0){ // if any textures are hidden then show them all
           showhide_textures = 1;

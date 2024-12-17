@@ -312,10 +312,10 @@ extern "C" void GLUIGetGeomDialogState(void){
 int HaveTexture(void){
   int i;
 
-  for(i = 0; i < texture_coll.ntextureinfo; i++){
+  for(i = 0; i < scase.texture_coll.ntextureinfo; i++){
     texturedata *texti;
 
-    texti = texture_coll.textureinfo + i;
+    texti = scase.texture_coll.textureinfo + i;
     if(texti->loaded == 1 && texti->used == 1)return 1;
   }
   return 0;

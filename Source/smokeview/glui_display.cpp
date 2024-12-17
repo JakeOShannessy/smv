@@ -693,8 +693,8 @@ extern "C" void GLUIUpdateTextureDisplay(void){
   int i;
   int showall = 1, hideall = 1, update=0;
 
-  for(i = 0;i < texture_coll.ntextureinfo;i++){
-    texti = texture_coll.textureinfo + i;
+  for(i = 0;i < scase.texture_coll.ntextureinfo;i++){
+    texti = scase.texture_coll.textureinfo + i;
     if(texti->loaded == 0 || texti->used == 0)continue;
     if(texti->display == 0)showall=0;
     if(texti->display == 1)hideall = 0;

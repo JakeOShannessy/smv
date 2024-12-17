@@ -2499,10 +2499,10 @@ void TextureShowMenu(int value){
 
   updatefacelists=1;
   if(value>=0){
-    texti = texture_coll.textureinfo + value;
+    texti = scase.texture_coll.textureinfo + value;
     texti->display = 1-texti->display;
-    for(i=0;i<texture_coll.ntextureinfo;i++){
-      texti = texture_coll.textureinfo + i;
+    for(i=0;i<scase.texture_coll.ntextureinfo;i++){
+      texti = scase.texture_coll.textureinfo + i;
       if(texti->loaded==0||texti->used==0)continue;
       if(texti->display==0){
         showall_textures = 0;
@@ -2517,8 +2517,8 @@ void TextureShowMenu(int value){
     case MENU_TEXTURE_SHOWALL2:
       // load all textures if none are loaded
       loadall_textures = 1;
-      for(i = 0; i < texture_coll.ntextureinfo; i++){
-        texti = texture_coll.textureinfo + i;
+      for(i = 0; i < scase.texture_coll.ntextureinfo; i++){
+        texti = scase.texture_coll.textureinfo + i;
         if(texti->loaded == 1 && texti->used == 1&&texti->display==1){
           loadall_textures = 0;
           break;
@@ -2527,16 +2527,16 @@ void TextureShowMenu(int value){
       // if loadall_textures==1 then fall through and run MENU_TEXTURE_SHOWALL block
       if(loadall_textures == 0)break;
     case MENU_TEXTURE_SHOWALL:
-      for(i=0;i<texture_coll.ntextureinfo;i++){
-        texti = texture_coll.textureinfo + i;
+      for(i=0;i<scase.texture_coll.ntextureinfo;i++){
+        texti = scase.texture_coll.textureinfo + i;
         if(texti->loaded==0||texti->used==0)continue;
         texti->display=1;
       }
       showall_textures=1;
       break;
     case MENU_TEXTURE_HIDEALL:
-      for(i=0;i<texture_coll.ntextureinfo;i++){
-        texti = texture_coll.textureinfo + i;
+      for(i=0;i<scase.texture_coll.ntextureinfo;i++){
+        texti = scase.texture_coll.textureinfo + i;
         if(texti->loaded==0||texti->used==0)continue;
         texti->display=0;
       }
@@ -2567,8 +2567,8 @@ void TextureShowMenu(int value){
     }
   }
 
-  for(i=0;i<texture_coll.ntextureinfo;i++){
-    texti = texture_coll.textureinfo + i;
+  for(i=0;i<scase.texture_coll.ntextureinfo;i++){
+    texti = scase.texture_coll.textureinfo + i;
     if(texti->loaded==1&&texti->used==1&&texti->display==1){
       if(value!=visBLOCKOutline&&value!=visBLOCKSolidOutline&&value!=visBLOCKHide){
         BlockageMenu(visBLOCKAsInput);
@@ -9594,11 +9594,11 @@ static int menu_count=0;
 
     CREATEMENU(textureshowmenu,TextureShowMenu);
     ntextures_used=0;
-    for(i=0;i<texture_coll.ntextureinfo;i++){
+    for(i=0;i<scase.texture_coll.ntextureinfo;i++){
       texturedata *texti;
       char menulabel[1024];
 
-      texti = texture_coll.textureinfo + i;
+      texti = scase.texture_coll.textureinfo + i;
       if(texti->loaded == 0 || texti->used == 0)continue;
       if(terrain_texture_coll.terrain_textures != NULL){
         if(texti >= terrain_texture_coll.terrain_textures && texti < terrain_texture_coll.terrain_textures + terrain_texture_coll.nterrain_textures)continue;
