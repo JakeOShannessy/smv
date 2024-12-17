@@ -6772,10 +6772,10 @@ extern "C" void GLUISliceBoundCB(int var){
       break;
     case SORT_SURFACES:
       sort_geometry=sort_iso_triangles;
-      for(i=surf_coll.nsurfinfo;i<surf_coll.nsurfinfo+MAX_ISO_COLORS+1;i++){
+      for(i=scase.surfcoll.nsurfinfo;i<scase.surfcoll.nsurfinfo+MAX_ISO_COLORS+1;i++){
         surfdata *surfi;
 
-        surfi = surf_coll.surfinfo + i;
+        surfi = scase.surfcoll.surfinfo + i;
         surfi->transparent_level=transparent_level;
       }
       CHECKBOX_sort2->set_int_val(sort_iso_triangles);
@@ -6845,10 +6845,10 @@ extern "C" void GLUISliceBoundCB(int var){
       updatemenu = 1;
       break;
     case TRANSPARENTLEVEL:
-      for(i=surf_coll.nsurfinfo;i<surf_coll.nsurfinfo+MAX_ISO_COLORS+1;i++){
+      for(i=scase.surfcoll.nsurfinfo;i<scase.surfcoll.nsurfinfo+MAX_ISO_COLORS+1;i++){
         surfdata *surfi;
 
-        surfi = surf_coll.surfinfo + i;
+        surfi = scase.surfcoll.surfinfo + i;
         surfi->transparent_level=transparent_level;
       }
       UpdateRGBColors(colorbar_select_index);

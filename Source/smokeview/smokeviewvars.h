@@ -2133,7 +2133,6 @@ SVEXTERN int SVDECL(visCadTextures,1), SVDECL(visTerrainTexture,1);
 SVEXTERN int SVDECL(viscolorbarpath,0);
 SVEXTERN int SVDECL(*sortedblocklist,NULL),SVDECL(*changed_idlist,NULL),SVDECL(nchanged_idlist,0);
 SVEXTERN int SVDECL(nselectblocks,0);
-SVEXTERN surf_collection SVDECL(surf_coll, {0});
 #ifdef INMAIN
 SVEXTERN int surface_indices[7]={0,0,0,0,0,0};
 #else

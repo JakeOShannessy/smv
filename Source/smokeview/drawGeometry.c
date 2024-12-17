@@ -596,10 +596,10 @@ void UpdateIndexColors(void){
   if(strcmp(surfacedefault->surfacelabel,"INERT")==0){
     surfacedefault->color=block_ambient2;
   }
-  for(i=0;i<surf_coll.nsurfinfo;i++){
+  for(i=0;i<scase.surfcoll.nsurfinfo;i++){
     surfdata *surfi;
 
-    surfi = surf_coll.surfinfo + i;
+    surfi = scase.surfcoll.surfinfo + i;
     if(strcmp(surfi->surfacelabel,"INERT")==0){
       surfi->color=block_ambient2;
     }

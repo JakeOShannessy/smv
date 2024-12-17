@@ -465,10 +465,10 @@ void UpdateGeomAreas(void){
 
     // initialize surf values
 
-    for(i = 0; i<surf_coll.nsurfinfo; i++){
+    for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surf_coll.surfinfo+i;
+      surfi = scase.surfcoll.surfinfo+i;
       surfi->geom_area = 0.0;
       surfi->axis[0] = 0.0;
       surfi->axis[1] = 0.0;
@@ -506,10 +506,10 @@ void UpdateGeomAreas(void){
 
     // normalize median
 
-    for(i = 0; i<surf_coll.nsurfinfo; i++){
+    for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surf_coll.surfinfo+i;
+      surfi = scase.surfcoll.surfinfo+i;
       if(surfi->ntris>0){
         surfi->axis[0] /= surfi->ntris;
         surfi->axis[1] /= surfi->ntris;
@@ -1253,13 +1253,13 @@ void DrawGeom(int flag, int timestate){
       glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
       glLineWidth(glui_surf_axis_width);
       glBegin(GL_LINES);
-      for(i = 0; i<surf_coll.nsurfinfo;  i++){
+      for(i = 0; i<scase.surfcoll.nsurfinfo;  i++){
         surfdata *surfi;
         float *axis;
         float x0, y0, z0;
         float x1, y1, z1;
 
-        surfi = surf_coll.surfinfo+i;
+        surfi = scase.surfcoll.surfinfo+i;
         if(surfi->ntris==0)continue;
         axis = surfi->axis;
 
@@ -1286,13 +1286,13 @@ void DrawGeom(int flag, int timestate){
         Output3Text(foregroundcolor, x0, y0, z1, "Z");
       }
       glEnd();
-      for(i = 0; i<surf_coll.nsurfinfo; i++){
+      for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
         surfdata *surfi;
         float *axis;
         float x0, y0, z0;
         float x1, y1, z1;
 
-        surfi = surf_coll.surfinfo+i;
+        surfi = scase.surfcoll.surfinfo+i;
         if(surfi->ntris==0)continue;
         axis = surfi->axis;
 
@@ -3181,7 +3181,7 @@ FILE_SIZE ReadGeom0(geomdata *geomi, int load_flag, int type, int *geom_frame_in
       if(count_read != ntris)break;
       return_filesize += 4+ntris*4+4;
 
-      if(type==GEOM_ISO)offset=surf_coll.nsurfinfo;
+      if(type==GEOM_ISO)offset=scase.surfcoll.nsurfinfo;
       for(ii=0;ii<ntris;ii++){
         surfdata *surfi;
 
@@ -3189,7 +3189,7 @@ FILE_SIZE ReadGeom0(geomdata *geomi, int load_flag, int type, int *geom_frame_in
         triangles[ii].verts[1]=verts+ijk[3*ii+1]-1;
         triangles[ii].verts[2]=verts+ijk[3*ii+2]-1;
 
-        surfi = surf_coll.surfinfo+CLAMP(surf_ind[ii]+offset, surf_coll.nsurfinfo+1, surf_coll.nsurfinfo+MAX_ISO_COLORS);
+        surfi = scase.surfcoll.surfinfo+CLAMP(surf_ind[ii]+offset, scase.surfcoll.nsurfinfo+1, scase.surfcoll.nsurfinfo+MAX_ISO_COLORS);
         triangles[ii].geomsurf=surfi;
         if(geomi->file2_tris!=NULL){
           triangles[ii].geomobj = geomi->geomobjinfo + geomi->file2_tris[ii] - 1;
@@ -3591,14 +3591,14 @@ FILE_SIZE ReadGeom2(geomdata *geomi, int load_flag, int type){
         triangles[ii].geomtype = type;
         switch(type){
         case GEOM_CGEOM:
-          surfi=surf_coll.surfinfo + CLAMP(surf_ind[ii],0,surf_coll.nsurfinfo-1);
+          surfi=scase.surfcoll.surfinfo + CLAMP(surf_ind[ii],0,scase.surfcoll.nsurfinfo-1);
           triangles[ii].insolid = locations[ii];
           triangles[ii].geomobj = geominfo->geomobjinfo+geom_ind[ii]-1;
           break;
         case GEOM_GEOM:
         case GEOM_ISO:
-          surfi=surf_coll.surfinfo + CLAMP(surf_ind[ii],0,surf_coll.nsurfinfo-1);
-          if(type==GEOM_ISO)surfi+=surf_coll.nsurfinfo;
+          surfi=scase.surfcoll.surfinfo + CLAMP(surf_ind[ii],0,scase.surfcoll.nsurfinfo-1);
+          if(type==GEOM_ISO)surfi+=scase.surfcoll.nsurfinfo;
           triangles[ii].insolid = surf_ind[ii];
           if(geomi->file2_tris!=NULL){
             triangles[ii].geomobj = geomi->geomobjinfo+geomi->file2_tris[ii]-1;
@@ -3614,7 +3614,7 @@ FILE_SIZE ReadGeom2(geomdata *geomi, int load_flag, int type){
           break;
         case GEOM_SLICE:
         case GEOM_BOUNDARY:
-          surfi=surf_coll.surfinfo;
+          surfi=scase.surfcoll.surfinfo;
           triangles[ii].insolid = 0;
           break;
 	    default:
@@ -4948,7 +4948,7 @@ void ShowHideSortGeometry(int sort_geom, float *mm){
             if(tri->geomsurf!=NULL&&tri->geomsurf->transparent_level>=1.0)is_opaque = 1;
           }
           if(geom_force_transparent == 1)is_opaque = 0;
-          isurf = tri->geomsurf - surf_coll.surfinfo - surf_coll.nsurfinfo - 1;
+          isurf = tri->geomsurf - scase.surfcoll.surfinfo - scase.surfcoll.nsurfinfo - 1;
           tri->geomlisti = geomlisti;
           if((geomi->geomtype==GEOM_ISO&&showlevels != NULL&&showlevels[isurf] == 0) || tri->geomsurf->transparent_level <= 0.0){
             continue;

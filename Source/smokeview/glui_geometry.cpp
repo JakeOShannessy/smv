@@ -750,15 +750,15 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
     glui_geometry->add_column_to_panel(PANEL_faces, false);
 
-    if(surf_coll.nsurfinfo>0){
+    if(scase.surfcoll.nsurfinfo>0){
       glui_geometry->add_statictext_to_panel(PANEL_faces, "");
 
       LIST_obst_surface[DOWN_X] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Left"), surface_indices+DOWN_X, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[DOWN_X]->set_w(260);
-      for(i = 0; i<surf_coll.nsurfinfo; i++){
+      for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+        surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -767,10 +767,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
       LIST_obst_surface[UP_X] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Right"), surface_indices+UP_X, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[UP_X]->set_w(260);
-      for(i = 0; i<surf_coll.nsurfinfo; i++){
+      for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+        surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -779,10 +779,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
       LIST_obst_surface[DOWN_Y] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Front"), surface_indices+DOWN_Y, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[DOWN_Y]->set_w(260);
-      for(i = 0; i<surf_coll.nsurfinfo; i++){
+      for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+        surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -791,10 +791,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
       LIST_obst_surface[UP_Y] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Back"), surface_indices+UP_Y, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[UP_Y]->set_w(260);
-      for(i = 0; i<surf_coll.nsurfinfo; i++){
+      for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+        surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -803,10 +803,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
       LIST_obst_surface[DOWN_Z] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Down"), surface_indices+DOWN_Z, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[DOWN_Z]->set_w(260);
-      for(i = 0; i<surf_coll.nsurfinfo; i++){
+      for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+        surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -815,10 +815,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
       LIST_obst_surface[UP_Z] = glui_geometry->add_listbox_to_panel(PANEL_faces, _("Up"), surface_indices+UP_Z, UPDATE_LIST, GLUIObjectCB);
       LIST_obst_surface[UP_Z]->set_w(260);
-      for(i = 0; i<surf_coll.nsurfinfo; i++){
+      for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+        surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
         if(surfi->used_by_obst!=1)continue;
         if(surfi->obst_surface==0)continue;
         surfacelabel = surfi->surfacelabel;
@@ -994,10 +994,10 @@ extern "C" void GLUIGeometrySetup(int main_window){
       int ii;
 
       ii = 0;
-      for(i = 0; i<surf_coll.nsurfinfo; i++){
+      for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+        surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
         if(surfi->used_by_geom==1){
           char label[100];
 
@@ -1196,10 +1196,10 @@ void VolumeCB(int var){
   int i;
   switch(var){
   case SURF_GET:
-    for(i = 0; i<surf_coll.nsurfinfo; i++){
+    for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+      surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
       if(surfi->in_geom_list==geom_surf_index){
         int *rgb_local;
         float *axis;
@@ -1224,10 +1224,10 @@ void VolumeCB(int var){
     }
     break;
   case SURF_SET:
-    for(i = 0; i<surf_coll.nsurfinfo; i++){
+    for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+      surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
       if(surfi->in_geom_list==geom_surf_index){
         int *rgb_local;
         float *axis;
@@ -1434,7 +1434,7 @@ extern "C" void GLUIUpdateBlockVals(int flag){
   EDIT_ymax->set_float_val(ymax);
   EDIT_zmin->set_float_val(zmin);
   EDIT_zmax->set_float_val(zmax);
-  if(bchighlight!=NULL&&surf_coll.nsurfinfo>0){
+  if(bchighlight!=NULL&&scase.surfcoll.nsurfinfo>0){
     wall_case=bchighlight->walltype;
     GLUIObjectCB(RADIO_WALL);
   }
@@ -1481,19 +1481,19 @@ extern "C" void GLUIUpdateBlockVals(int flag){
         break;
       }
 
-      if(surf_coll.nsurfinfo>0){
+      if(scase.surfcoll.nsurfinfo>0){
         for(i=0;i<6;i++){
-          surface_indices[i] = surf_coll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
-          surface_indices_bak[i] = surf_coll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
+          surface_indices[i] = scase.surfcoll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
+          surface_indices_bak[i] = scase.surfcoll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
           LIST_obst_surface[i]->set_int_val(surface_indices[i]);
         }
       }
     }
     else{
-      if(surf_coll.nsurfinfo>0){
+      if(scase.surfcoll.nsurfinfo>0){
         for(i=0;i<6;i++){
-          surface_indices[i]=surf_coll.inv_sorted_surfidlist[0];
-          surface_indices_bak[i]=surf_coll.inv_sorted_surfidlist[0];
+          surface_indices[i]=scase.surfcoll.inv_sorted_surfidlist[0];
+          surface_indices_bak[i]=scase.surfcoll.inv_sorted_surfidlist[0];
           LIST_obst_surface[i]->set_int_val(surface_indices[i]);
         }
       }
@@ -1513,7 +1513,7 @@ extern "C" void GLUIObjectCB(int var){
       switch(wall_case){
       case WALL_1:
         temp=surface_indices_bak[UP_Z];
-        if(surf_coll.nsurfinfo>0){
+        if(scase.surfcoll.nsurfinfo>0){
           for(i=0;i<6;i++){
             surface_indices[i]=temp;
             LIST_obst_surface[i]->set_int_val(temp);
@@ -1521,7 +1521,7 @@ extern "C" void GLUIObjectCB(int var){
         }
         break;
       case WALL_3:
-        if(surf_coll.nsurfinfo>0){
+        if(scase.surfcoll.nsurfinfo>0){
           for(i=0;i<6;i++){
             temp=surface_indices_bak[i];
             surface_indices[i]=temp;
@@ -1530,7 +1530,7 @@ extern "C" void GLUIObjectCB(int var){
         }
         break;
       case WALL_6:
-        if(surf_coll.nsurfinfo>0){
+        if(scase.surfcoll.nsurfinfo>0){
           for(i=0;i<6;i++){
             temp=surface_indices_bak[i];
             surface_indices[i]=temp;
@@ -1545,8 +1545,8 @@ extern "C" void GLUIObjectCB(int var){
 
       if(bchighlight!=NULL){
         for(i=0;i<6;i++){
-          bchighlight->surf[i]=surf_coll.surfinfo+surf_coll.sorted_surfidlist[surface_indices_bak[i]];
-          bchighlight->surf_index[i]=surf_coll.sorted_surfidlist[surface_indices_bak[i]];
+          bchighlight->surf[i]=scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[surface_indices_bak[i]];
+          bchighlight->surf_index[i]=scase.surfcoll.sorted_surfidlist[surface_indices_bak[i]];
         }
         bchighlight->changed_surface=1;
         if(bchighlight->blockage_id>0&&bchighlight->blockage_id<=nchanged_idlist){
@@ -1558,7 +1558,7 @@ extern "C" void GLUIObjectCB(int var){
       }
       break;
     case RADIO_WALL:
-      if(surf_coll.nsurfinfo==0)break;
+      if(scase.surfcoll.nsurfinfo==0)break;
       if(bchighlight!=NULL){
         bchighlight->walltype=wall_case;
       }

@@ -218,7 +218,7 @@ void InitVentColors(void){
   for(i = 0; i < nventcolors; i++){
     ventcolors[i] = NULL;
   }
-  ventcolors[0] = surf_coll.surfinfo->color;
+  ventcolors[0] = scase.surfcoll.surfinfo->color;
   for(i = 0; i < scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int j;

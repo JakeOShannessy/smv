@@ -1210,7 +1210,7 @@ void IsoShowMenu(int value){
     for(i=0;i<loaded_isomesh->nisolevels;i++){
       surfdata *surfi;
 
-      surfi = surf_coll.surfinfo + surf_coll.nsurfinfo + 1 + i;
+      surfi = scase.surfcoll.surfinfo + scase.surfcoll.nsurfinfo + 1 + i;
       surfi->transparent_level=1.0;
     }
     use_transparency_data=0;
@@ -1221,7 +1221,7 @@ void IsoShowMenu(int value){
     for(i=0;i<loaded_isomesh->nisolevels;i++){
       surfdata *surfi;
 
-      surfi = surf_coll.surfinfo + surf_coll.nsurfinfo + 1 + i;
+      surfi = scase.surfcoll.surfinfo + scase.surfcoll.nsurfinfo + 1 + i;
       surfi->transparent_level=transparent_level;
     }
     use_transparency_data=1;
@@ -1232,10 +1232,10 @@ void IsoShowMenu(int value){
     for(i=0;i<loaded_isomesh->nisolevels;i++){
       surfdata *surfi;
 
-      surfi = surf_coll.surfinfo + surf_coll.nsurfinfo + 1 + i;
+      surfi = scase.surfcoll.surfinfo + scase.surfcoll.nsurfinfo + 1 + i;
       surfi->transparent_level=transparent_level;
     }
-    surf_coll.surfinfo[surf_coll.nsurfinfo+1].transparent_level=1.0;
+    scase.surfcoll.surfinfo[scase.surfcoll.nsurfinfo+1].transparent_level=1.0;
     use_transparency_data=1;
     break;
    case MENU_ISOSHOW_MAXSOLID:
@@ -1244,11 +1244,11 @@ void IsoShowMenu(int value){
     for(i=0;i<loaded_isomesh->nisolevels;i++){
       surfdata *surfi;
 
-      surfi = surf_coll.surfinfo + surf_coll.nsurfinfo + 1 + i;
+      surfi = scase.surfcoll.surfinfo + scase.surfcoll.nsurfinfo + 1 + i;
       surfi->transparent_level=transparent_level;
     }
     use_transparency_data=1;
-    surf_coll.surfinfo[surf_coll.nsurfinfo+1+loaded_isomesh->nisolevels-1].transparent_level=1.0;
+    scase.surfcoll.surfinfo[scase.surfcoll.nsurfinfo+1+loaded_isomesh->nisolevels-1].transparent_level=1.0;
     break;
    case MENU_ISOSHOW_HIDEALL:
     show_iso_shaded=0;

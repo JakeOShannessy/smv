@@ -2549,12 +2549,12 @@ void InitTextures0(void){
 
   INIT_PRINT_TIMER(texture_timer);
   texture_coll.ntextureinfo = 0;
-  for(i=0;i<surf_coll.nsurfinfo;i++){
+  for(i=0;i<scase.surfcoll.nsurfinfo;i++){
     surfdata *surfi;
     texturedata *texti;
     int len;
 
-    surfi = surf_coll.surfinfo + i;
+    surfi = scase.surfcoll.surfinfo + i;
     if(surfi->texturefile==NULL)continue;
     texti = texture_coll.textureinfo + texture_coll.ntextureinfo;
     len = strlen(surfi->texturefile);
@@ -2861,7 +2861,7 @@ void InitTextures0(void){
 void InitTextures(int use_graphics_arg){
   int max_textures;
 
-  max_textures = surf_coll.nsurfinfo + device_texture_list_coll.ndevice_texture_list + terrain_texture_coll.nterrain_textures;
+  max_textures = scase.surfcoll.nsurfinfo + device_texture_list_coll.ndevice_texture_list + terrain_texture_coll.nterrain_textures;
 #ifdef pp_SKY
   max_textures = nsky_texture;
 #endif
@@ -2869,8 +2869,8 @@ void InitTextures(int use_graphics_arg){
   UpdateDeviceTextures(objectscoll, devicecoll.ndeviceinfo, devicecoll.deviceinfo,
                        npropinfo, propinfo, &device_texture_list_coll.ndevice_texture_list,
                        &device_texture_list_coll.device_texture_list_index, &device_texture_list_coll.device_texture_list);
-  if(surf_coll.nsurfinfo>0||device_texture_list_coll.ndevice_texture_list>0){
-    if(NewMemory((void **)&texture_coll.textureinfo, (surf_coll.nsurfinfo+device_texture_list_coll.ndevice_texture_list+terrain_texture_coll.nterrain_textures)*sizeof(texturedata))==0)return;
+  if(scase.surfcoll.nsurfinfo>0||device_texture_list_coll.ndevice_texture_list>0){
+    if(NewMemory((void **)&texture_coll.textureinfo, (scase.surfcoll.nsurfinfo+device_texture_list_coll.ndevice_texture_list+terrain_texture_coll.nterrain_textures)*sizeof(texturedata))==0)return;
   }
   if(use_graphics_arg==1){
     InitTextures0();
@@ -4207,10 +4207,10 @@ int CreateNullLabel(flowlabels *flowlabel){
 surfdata *GetSurface(char *label){
   int i;
 
-  for(i = 0; i < surf_coll.nsurfinfo; i++){
+  for(i = 0; i < scase.surfcoll.nsurfinfo; i++){
     surfdata *surfi;
 
-    surfi = surf_coll.surfinfo + i;
+    surfi = scase.surfcoll.surfinfo + i;
     if(strcmp(surfi->surfacelabel, label) == 0)return surfi;
   }
   return surfacedefault;
@@ -4373,10 +4373,10 @@ void SetSurfaceIndex(blockagedata *bc){
     bc->surf_index[i] = -1;
     bclabel = bc->surf[i]->surfacelabel;
     if(bc->surf[i] == NULL)continue;
-    for(jj = 1; jj < surf_coll.nsurfinfo + 1; jj++){
+    for(jj = 1; jj < scase.surfcoll.nsurfinfo + 1; jj++){
       j = jj;
-      if(jj == surf_coll.nsurfinfo)j = 0;
-      surfj = surf_coll.surfinfo + j;
+      if(jj == scase.surfcoll.nsurfinfo)j = 0;
+      surfj = scase.surfcoll.surfinfo + j;
       surflabel = surfj->surfacelabel;
       if(strcmp(bclabel, surflabel) != 0)continue;
       bc->surf_index[i] = j;
@@ -4419,8 +4419,8 @@ int SurfIdCompare(const void *arg1, const void *arg2){
   i = *(int *)arg1;
   j = *(int *)arg2;
 
-  surfi = surf_coll.surfinfo+i;
-  surfj = surf_coll.surfinfo+j;
+  surfi = scase.surfcoll.surfinfo+i;
+  surfj = scase.surfcoll.surfinfo+j;
 
   return(strcmp(surfi->surfacelabel, surfj->surfacelabel));
 }
@@ -4430,20 +4430,20 @@ int SurfIdCompare(const void *arg1, const void *arg2){
 void UpdateSortedSurfIdList(void){
   int i;
 
-  FREEMEMORY(surf_coll.sorted_surfidlist);
-  FREEMEMORY(surf_coll.inv_sorted_surfidlist);
-  NewMemory((void **)&surf_coll.sorted_surfidlist, surf_coll.nsurfinfo*sizeof(int));
-  NewMemory((void **)&surf_coll.inv_sorted_surfidlist, surf_coll.nsurfinfo*sizeof(int));
+  FREEMEMORY(scase.surfcoll.sorted_surfidlist);
+  FREEMEMORY(scase.surfcoll.inv_sorted_surfidlist);
+  NewMemory((void **)&scase.surfcoll.sorted_surfidlist, scase.surfcoll.nsurfinfo*sizeof(int));
+  NewMemory((void **)&scase.surfcoll.inv_sorted_surfidlist, scase.surfcoll.nsurfinfo*sizeof(int));
 
 
-  surf_coll.nsorted_surfidlist = surf_coll.nsurfinfo;
-  for(i = 0; i<surf_coll.nsorted_surfidlist; i++){
-    surf_coll.sorted_surfidlist[i] = i;
+  scase.surfcoll.nsorted_surfidlist = scase.surfcoll.nsurfinfo;
+  for(i = 0; i<scase.surfcoll.nsorted_surfidlist; i++){
+    scase.surfcoll.sorted_surfidlist[i] = i;
   }
 
-  qsort((int *)surf_coll.sorted_surfidlist, (size_t)surf_coll.nsurfinfo, sizeof(int), SurfIdCompare);
-  for(i = 0; i<surf_coll.nsorted_surfidlist; i++){
-    surf_coll.inv_sorted_surfidlist[surf_coll.sorted_surfidlist[i]] = i;
+  qsort((int *)scase.surfcoll.sorted_surfidlist, (size_t)scase.surfcoll.nsurfinfo, sizeof(int), SurfIdCompare);
+  for(i = 0; i<scase.surfcoll.nsorted_surfidlist; i++){
+    scase.surfcoll.inv_sorted_surfidlist[scase.surfcoll.sorted_surfidlist[i]] = i;
   }
 }
 
@@ -4465,23 +4465,23 @@ void ParseDatabase(char *file){
 
   /* free memory called before */
 
-  for(i = 0; i<surf_coll.nsurfids; i++){
-    surf_id = surf_coll.surfids[i].label;
+  for(i = 0; i<scase.surfcoll.nsurfids; i++){
+    surf_id = scase.surfcoll.surfids[i].label;
     FREEMEMORY(surf_id);
   }
-  FREEMEMORY(surf_coll.surfids);
-  surf_coll.nsurfids = 0;
+  FREEMEMORY(scase.surfcoll.surfids);
+  scase.surfcoll.nsurfids = 0;
 
 
   if(file==NULL||strlen(file)==0||(stream = fopen(file, "r"))==NULL){
-    NewMemory((void **)&surf_coll.surfids, (surf_coll.nsurfids+1)*sizeof(surfid));
+    NewMemory((void **)&scase.surfcoll.surfids, (scase.surfcoll.nsurfids+1)*sizeof(surfid));
     surf_id = NULL;
     NewMemory((void **)&surf_id, 6);
     strcpy(surf_id, "INERT");
-    surf_coll.surfids[0].label = surf_id;
-    surf_coll.surfids[0].location = 0;
-    surf_coll.surfids[0].show = 1;
-    surf_coll.nsurfids = 1;
+    scase.surfcoll.surfids[0].label = surf_id;
+    scase.surfcoll.surfids[0].location = 0;
+    scase.surfcoll.surfids[0].show = 1;
+    scase.surfcoll.nsurfids = 1;
   }
 
   else{
@@ -4511,24 +4511,24 @@ void ParseDatabase(char *file){
         buffer3 = buffer2;
       }
       start = STRSTR(buffer3, "ID");
-      if(start!=NULL)surf_coll.nsurfids++;
+      if(start!=NULL)scase.surfcoll.nsurfids++;
     }
 
     /* allocate memory */
 
-    NewMemory((void **)&surf_coll.surfids, (surf_coll.nsurfids+1)*sizeof(surfid));
+    NewMemory((void **)&scase.surfcoll.surfids, (scase.surfcoll.nsurfids+1)*sizeof(surfid));
     surf_id = NULL;
     NewMemory((void **)&surf_id, 6);
     strcpy(surf_id, "INERT");
-    surf_coll.surfids[0].label = surf_id;
-    surf_coll.surfids[0].location = 0;
-    surf_coll.surfids[0].show = 1;
+    scase.surfcoll.surfids[0].label = surf_id;
+    scase.surfcoll.surfids[0].location = 0;
+    scase.surfcoll.surfids[0].show = 1;
 
 
     /* now look for IDs and copy them into an array */
 
     rewind(stream);
-    surf_coll.nsurfids = 1;
+    scase.surfcoll.nsurfids = 1;
     while(!feof(stream)){
       if(fgets(buffer, 1000, stream)==NULL)break;
       if(STRSTR(buffer, "&SURF")==NULL)continue;
@@ -4550,7 +4550,7 @@ void ParseDatabase(char *file){
         buffer3 = buffer2;
       }
       start = STRSTR(buffer3+3, "ID");
-      if(start!=NULL)surf_coll.nsurfids++;
+      if(start!=NULL)scase.surfcoll.nsurfids++;
       surf_id = NULL;
       surf_id2 = NULL;
       for(c = start; c!=NULL&&*c!='\0'; c++){
@@ -4562,9 +4562,9 @@ void ParseDatabase(char *file){
           *c = '\0';
           NewMemory((void **)&surf_id2, strlen(surf_id)+1);
           strcpy(surf_id2, surf_id);
-          surf_coll.surfids[ surf_coll.nsurfids-1].label = surf_id2;
-          surf_coll.surfids[ surf_coll.nsurfids-1].location = 1;
-          surf_coll.surfids[ surf_coll.nsurfids-1].show = 1;
+          scase.surfcoll.surfids[ scase.surfcoll.nsurfids-1].label = surf_id2;
+          scase.surfcoll.surfids[ scase.surfcoll.nsurfids-1].location = 1;
+          scase.surfcoll.surfids[ scase.surfcoll.nsurfids-1].show = 1;
           break;
         }
       }
@@ -4576,11 +4576,11 @@ void ParseDatabase(char *file){
   /*** debug: make sure ->show is defined for all cases ***/
 
   nsurfids_shown = 0;
-  for(i = 0; i<surf_coll.nsurfids; i++){
-    labeli = surf_coll.surfids[i].label;
+  for(i = 0; i<scase.surfcoll.nsurfids; i++){
+    labeli = scase.surfcoll.surfids[i].label;
     nexti = 0;
-    for(j = 0; j<surf_coll.nsurfinfo; j++){
-      surfj = surf_coll.surfinfo+j;
+    for(j = 0; j<scase.surfcoll.nsurfinfo; j++){
+      surfj = scase.surfcoll.surfinfo+j;
       labelj = surfj->surfacelabel;
       if(strcmp(labeli, labelj)==0){
         nexti = 1;
@@ -4588,18 +4588,18 @@ void ParseDatabase(char *file){
       }
     }
     if(nexti==1){
-      surf_coll.surfids[i].show = 0;
+      scase.surfcoll.surfids[i].show = 0;
       continue;
     }
     for(j = 0; j<i; j++){
-      labelj = surf_coll.surfids[j].label;
+      labelj = scase.surfcoll.surfids[j].label;
       if(strcmp(labeli, labelj)==0){
         nexti = 1;
         break;
       }
     }
     if(nexti==1){
-      surf_coll.surfids[i].show = 0;
+      scase.surfcoll.surfids[i].show = 0;
       continue;
     }
     nsurfids_shown++;
@@ -4609,34 +4609,34 @@ void ParseDatabase(char *file){
   /* add surfaces found in database to those surfaces defined in previous SURF lines */
 
   if(nsurfids_shown>0){
-    if(surf_coll.nsurfinfo==0){
-      FREEMEMORY(surf_coll.surfinfo);
+    if(scase.surfcoll.nsurfinfo==0){
+      FREEMEMORY(scase.surfcoll.surfinfo);
       FREEMEMORY(texture_coll.textureinfo);
-      NewMemory((void **)&surf_coll.surfinfo, (nsurfids_shown+MAX_ISO_COLORS+1)*sizeof(surfdata));
+      NewMemory((void **)&scase.surfcoll.surfinfo, (nsurfids_shown+MAX_ISO_COLORS+1)*sizeof(surfdata));
       NewMemory((void **)&texture_coll.textureinfo, nsurfids_shown*sizeof(texturedata));
     }
-    if(surf_coll.nsurfinfo>0){
-      if(surf_coll.surfinfo==NULL){
-        NewMemory((void **)&surf_coll.surfinfo, (nsurfids_shown+surf_coll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
+    if(scase.surfcoll.nsurfinfo>0){
+      if(scase.surfcoll.surfinfo==NULL){
+        NewMemory((void **)&scase.surfcoll.surfinfo, (nsurfids_shown+scase.surfcoll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
       }
       else{
-        ResizeMemory((void **)&surf_coll.surfinfo, (nsurfids_shown+surf_coll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
+        ResizeMemory((void **)&scase.surfcoll.surfinfo, (nsurfids_shown+scase.surfcoll.nsurfinfo+MAX_ISO_COLORS+1)*sizeof(surfdata));
       }
       if(texture_coll.textureinfo==NULL){
-        NewMemory((void **)&texture_coll.textureinfo, (nsurfids_shown+surf_coll.nsurfinfo)*sizeof(texturedata));
+        NewMemory((void **)&texture_coll.textureinfo, (nsurfids_shown+scase.surfcoll.nsurfinfo)*sizeof(texturedata));
       }
       else{
-        ResizeMemory((void **)&texture_coll.textureinfo, (nsurfids_shown+surf_coll.nsurfinfo)*sizeof(texturedata));
+        ResizeMemory((void **)&texture_coll.textureinfo, (nsurfids_shown+scase.surfcoll.nsurfinfo)*sizeof(texturedata));
       }
     }
-    surfj = surf_coll.surfinfo+surf_coll.nsurfinfo-1;
-    for(j = 0; j<surf_coll.nsurfids; j++){
-      if(surf_coll.surfids[j].show==0)continue;
+    surfj = scase.surfcoll.surfinfo+scase.surfcoll.nsurfinfo-1;
+    for(j = 0; j<scase.surfcoll.nsurfids; j++){
+      if(scase.surfcoll.surfids[j].show==0)continue;
       surfj++;
       InitSurface(surfj);
-      surfj->surfacelabel = surf_coll.surfids[j].label;
+      surfj->surfacelabel = scase.surfcoll.surfids[j].label;
     }
-    surf_coll.nsurfinfo += nsurfids_shown;
+    scase.surfcoll.nsurfinfo += nsurfids_shown;
   }
   UpdateSortedSurfIdList();
 }
@@ -6264,7 +6264,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
 void FreeSliceData(void){
   int i;
 
-  FREEMEMORY(surf_coll.surfinfo);
+  FREEMEMORY(scase.surfcoll.surfinfo);
   if(slicecoll.nsliceinfo>0){
     for(i = 0; i<slicecoll.nsliceinfo; i++){
       slicedata *sd;
@@ -6716,9 +6716,9 @@ void ReadSMVOrig(void){
         for(j=0;j<6;j++){
           obi->surfs[0] = NULL;
         }
-        if(surf_coll.surfinfo!=NULL){
+        if(scase.surfcoll.surfinfo!=NULL){
           for(j=0;j<6;j++){
-            if(obi->surf_index[j]>=0)obi->surfs[j] = surf_coll.surfinfo + obi->surf_index[j];
+            if(obi->surf_index[j]>=0)obi->surfs[j] = scase.surfcoll.surfinfo + obi->surf_index[j];
           }
         }
         obi->bc = GetBlockagePtr(obi->xyz);
@@ -7267,7 +7267,7 @@ int ReadSMV_Init(){
   sextras.ncvents=0;
   sextras.nOBST=0;
   sextras.noffset=0;
-  surf_coll.nsurfinfo=0;
+  scase.surfcoll.nsurfinfo=0;
   nvent_transparent=0;
 
   sextras.setPDIM=0;
@@ -7285,7 +7285,7 @@ int ReadSMV_Init(){
   FREEMEMORY(zoneinfo);
   FREEMEMORY(zventinfo);
   FREEMEMORY(texture_coll.textureinfo);
-  FREEMEMORY(surf_coll.surfinfo);
+  FREEMEMORY(scase.surfcoll.surfinfo);
   FREEMEMORY(terrain_texture_coll.terrain_textures);
 
   STOP_TIMER(pass0_time );
@@ -8159,8 +8159,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   sextras.nzmvents = 0;
 
   FREEMEMORY(texture_coll.textureinfo);
-  FREEMEMORY(surf_coll.surfinfo);
-  if(NewMemory((void **)&surf_coll.surfinfo,(n_surf_keywords+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
+  FREEMEMORY(scase.surfcoll.surfinfo);
+  if(NewMemory((void **)&scase.surfcoll.surfinfo,(n_surf_keywords+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
 
   if (cadgeomcoll != NULL) FreeCADGeomCollection(cadgeomcoll);
   if (n_cadgeom_keywords > 0) {
@@ -9131,7 +9131,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       size_t len;
       char *buffer3;
 
-      surfi = surf_coll.surfinfo + surf_coll.nsurfinfo;
+      surfi = scase.surfcoll.surfinfo + scase.surfcoll.nsurfinfo;
       InitSurface(surfi);
       FGETS(buffer,255,stream);
       TrimBack(buffer);
@@ -9144,7 +9144,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         surfi->obst_surface=0;
       }
       if(strstr(surfi->surfacelabel,"INERT")!=NULL){
-        surf_coll.surfinfo[0].obst_surface=1;
+        scase.surfcoll.surfinfo[0].obst_surface=1;
       }
 
       temp_ignition=TEMP_IGNITION_MAX;
@@ -9225,7 +9225,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           fprintf(stderr,"*** Error: The texture file %s was not found\n",buffer3);
         }
       }
-      surf_coll.nsurfinfo++;
+      scase.surfcoll.nsurfinfo++;
       continue;
     }
 
@@ -9991,24 +9991,24 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   */
 
   surfacedefault=&sextras.sdefault;
-  for(i=0;i<surf_coll.nsurfinfo;i++){
-    if(strcmp(sextras.surfacedefaultlabel,surf_coll.surfinfo[i].surfacelabel)==0){
-      surfacedefault=surf_coll.surfinfo+i;
+  for(i=0;i<scase.surfcoll.nsurfinfo;i++){
+    if(strcmp(sextras.surfacedefaultlabel,scase.surfcoll.surfinfo[i].surfacelabel)==0){
+      surfacedefault=scase.surfcoll.surfinfo+i;
       break;
     }
   }
   vent_surfacedefault=&sextras.v_surfacedefault;
-  for(i=0;i<surf_coll.nsurfinfo;i++){
-    if(strcmp(vent_surfacedefault->surfacelabel,surf_coll.surfinfo[i].surfacelabel)==0){
-      vent_surfacedefault=surf_coll.surfinfo+i;
+  for(i=0;i<scase.surfcoll.nsurfinfo;i++){
+    if(strcmp(vent_surfacedefault->surfacelabel,scase.surfcoll.surfinfo[i].surfacelabel)==0){
+      vent_surfacedefault=scase.surfcoll.surfinfo+i;
       break;
     }
   }
 
   sextras.exterior_surfacedefault=&sextras.e_surfacedefault;
-  for(i=0;i<surf_coll.nsurfinfo;i++){
-    if(strcmp(sextras.exterior_surfacedefault->surfacelabel,surf_coll.surfinfo[i].surfacelabel)==0){
-      sextras.exterior_surfacedefault=surf_coll.surfinfo+i;
+  for(i=0;i<scase.surfcoll.nsurfinfo;i++){
+    if(strcmp(sextras.exterior_surfacedefault->surfacelabel,scase.surfcoll.surfinfo[i].surfacelabel)==0){
+      sextras.exterior_surfacedefault=scase.surfcoll.surfinfo+i;
       break;
     }
   }
@@ -10670,8 +10670,8 @@ typedef struct {
         for(i=0;i<6;i++){
           surfdata *surfi;
 
-          if(surf_coll.surfinfo==NULL||s_num[i]<0||s_num[i]>=surf_coll.nsurfinfo)continue;
-          surfi=surf_coll.surfinfo+s_num[i];
+          if(scase.surfcoll.surfinfo==NULL||s_num[i]<0||s_num[i]>=scase.surfcoll.nsurfinfo)continue;
+          surfi=scase.surfcoll.surfinfo+s_num[i];
           bc->surf[i]=surfi;
         }
         for(i=0;i<6;i++){
@@ -10914,8 +10914,8 @@ typedef struct {
           &cvi->xmin,&cvi->xmax,&cvi->ymin,&cvi->ymax,&cvi->zmin,&cvi->zmax,
           &cvi->cvent_id,s_num,t_origin,t_origin+1,t_origin+2);
 
-        if(surf_coll.surfinfo!=NULL&&s_num[0]>=0&&s_num[0]<surf_coll.nsurfinfo){
-          cvi->surf[0]=surf_coll.surfinfo+s_num[0];
+        if(scase.surfcoll.surfinfo!=NULL&&s_num[0]>=0&&s_num[0]<scase.surfcoll.nsurfinfo){
+          cvi->surf[0]=scase.surfcoll.surfinfo+s_num[0];
           if(cvi->surf[0]!=NULL&&strncmp(cvi->surf[0]->surfacelabel,"OPEN",4)==0){
             cvi->isOpenvent=1;
           }
@@ -11151,13 +11151,13 @@ typedef struct {
             vi->surf[0]=sextras.exterior_surfacedefault;
           }
         }
-        if(surf_coll.surfinfo!=NULL&&s_num[0]>=0&&s_num[0]<surf_coll.nsurfinfo){
-          vi->surf[0]=surf_coll.surfinfo+s_num[0];
+        if(scase.surfcoll.surfinfo!=NULL&&s_num[0]>=0&&s_num[0]<scase.surfcoll.nsurfinfo){
+          vi->surf[0]=scase.surfcoll.surfinfo+s_num[0];
           if(strncmp(vi->surf[0]->surfacelabel,"OPEN",4)==0)vi->isOpenvent=1;
           if(strncmp(vi->surf[0]->surfacelabel, "MIRROR", 6)==0)vi->isMirrorvent = 1;
           vi->surf[0]->used_by_vent=1;
         }
-        vi->color_bak=surf_coll.surfinfo[0].color;
+        vi->color_bak=scase.surfcoll.surfinfo[0].color;
       }
       for(nn=0;nn<nvents+12;nn++){
         ventdata *vi;
@@ -16876,19 +16876,19 @@ void WriteIni(int flag,char *filename){
     int scount;
 
     scount = 0;
-    for(i = 0; i<surf_coll.nsurfinfo; i++){
+    for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+      surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
       if(surfi->used_by_geom==1)scount++;
     }
     if(scount>0){
       fprintf(fileout, "SURFCOLORS\n");
       fprintf(fileout, " %i %i\n", scount, use_surf_color);
-      for(i = 0; i<surf_coll.nsurfinfo; i++){
+      for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+        surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
         if(surfi->used_by_geom==1){
           int *ini_surf_color;
 
@@ -16902,19 +16902,19 @@ void WriteIni(int flag,char *filename){
     int scount;
 
     scount = 0;
-    for(i = 0; i<surf_coll.nsurfinfo; i++){
+    for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+      surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
       if(surfi->in_color_dialog==1&&surfi->color!=surfi->color_orig)scount++;
     }
     if(scount>0){
       fprintf(fileout, "OBSTSURFCOLORS\n");
       fprintf(fileout, " %i %i\n", scount, use_surf_color);
-      for(i = 0; i<surf_coll.nsurfinfo; i++){
+      for(i = 0; i<scase.surfcoll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = surf_coll.surfinfo+surf_coll.sorted_surfidlist[i];
+        surfi = scase.surfcoll.surfinfo+scase.surfcoll.sorted_surfidlist[i];
         if(surfi->in_color_dialog==1&&surfi->color!=surfi->color_orig){
           float *color;
 

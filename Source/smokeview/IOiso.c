@@ -549,7 +549,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     FREEMEMORY(isoi->geom_ndynamics);
   }
 
-  surfi = surf_coll.surfinfo + surf_coll.nsurfinfo+1;
+  surfi = scase.surfcoll.surfinfo + scase.surfcoll.nsurfinfo+1;
   UpdateIsoColors();
   if(strcmp(isoi->surface_label.shortlabel,"hrrpuv")==0){
     surfi->color=GetColorPtr(&colorcoll, hrrpuv_iso_color);
@@ -2037,7 +2037,7 @@ void UpdateIsoColors(void){
   for(i = 0; i < MAX_ISO_COLORS; i++){
     surfdata *surfi;
 
-    surfi = surf_coll.surfinfo + i + surf_coll.nsurfinfo + 1;
+    surfi = scase.surfcoll.surfinfo + i + scase.surfcoll.nsurfinfo + 1;
     surfi->transparent_level = iso_colors[4*i+3];
     if(setbwdata == 1){
       surfi->color = iso_colorsbw + 4*i;

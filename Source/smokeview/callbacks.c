@@ -394,8 +394,8 @@ void MouseEditBlockage(int x, int y){
     bchighlight_old=bchighlight;
     bchighlight = meshi->blockageinfoptrs[highlight_block];
     for(i=0;i<6;i++){
-      surface_indices[i]=surf_coll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
-      surface_indices_bak[i]=surf_coll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
+      surface_indices[i]=scase.surfcoll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
+      surface_indices_bak[i]=scase.surfcoll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
     }
 
     glShadeModel(GL_SMOOTH);
