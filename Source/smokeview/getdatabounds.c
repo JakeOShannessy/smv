@@ -348,7 +348,7 @@ int GetNinfo(int file_type){
 
   ASSERT_BOUND_TYPE;
   if(file_type == BOUND_SLICE){
-    ninfo = slicecoll.nsliceinfo;
+    ninfo = scase.slicecoll.nsliceinfo;
   }
   else if(file_type == BOUND_PATCH){
     ninfo = npatchinfo;
@@ -402,7 +402,7 @@ char *GetRegFile(int file_type, int i){
 
   ASSERT_BOUND_TYPE;
   if(file_type == BOUND_SLICE){
-    reg_file = slicecoll.sliceinfo[i].reg_file;
+    reg_file = scase.slicecoll.sliceinfo[i].reg_file;
   }
   else if(file_type == BOUND_PATCH){
     reg_file = patchinfo[i].reg_file;
@@ -477,7 +477,7 @@ void BoundsUpdateDoit(int file_type){
     plot3ddata *plot3di;
 
     if(file_type == BOUND_SLICE){
-      slicei = slicecoll.sliceinfo + i;
+      slicei = scase.slicecoll.sliceinfo + i;
       if(slicei->loaded == 0)continue;
     }
     else if(file_type == BOUND_PATCH){
@@ -492,7 +492,7 @@ void BoundsUpdateDoit(int file_type){
     key_index = ( char ** )bsearch(( char * )&reg_file, sorted_filenames, ninfo, sizeof(char *), CompareBoundFileName);
     if(key_index == NULL)continue;
     index = ( int )(key_index - sorted_filenames);
-    if(index<0 || index>slicecoll.nsliceinfo - 1)continue;
+    if(index<0 || index>scase.slicecoll.nsliceinfo - 1)continue;
     fi = globalboundsinfo + index;
     if(fi->defined == 1 && is_fds_running == 0)continue;
     valmin = 0.0;
@@ -679,7 +679,7 @@ char *GetShortLabel(int file_type, int i, int ilabel){
 
   ASSERT_BOUND_TYPE;
   if(file_type == BOUND_SLICE){
-    shortlabel = slicecoll.sliceinfo[i].label.shortlabel;
+    shortlabel = scase.slicecoll.sliceinfo[i].label.shortlabel;
   }
   else if(file_type == BOUND_PATCH){
     shortlabel = patchinfo[i].label.shortlabel;
@@ -806,13 +806,13 @@ void BoundsUpdateWrapup(int file_type){
     key_index = ( char ** )bsearch(( char * )&reg_file, sorted_filenames, ninfo, sizeof(char *), CompareBoundFileName);
     if(key_index == NULL)continue;
     index = ( int )(key_index - sorted_filenames);
-    if(index<0 || index>slicecoll.nsliceinfo - 1)continue;
+    if(index<0 || index>scase.slicecoll.nsliceinfo - 1)continue;
     fi = globalboundsinfo + index;
     if(fi->defined == 0)continue;
     if(file_type == BOUND_SLICE){
       slicedata *slicei;
 
-      slicei = slicecoll.sliceinfo + i;
+      slicei = scase.slicecoll.sliceinfo + i;
       slicei->valmin_slice = fi->valmins[0];
       slicei->valmax_slice = fi->valmaxs[0];
     }
@@ -897,7 +897,7 @@ char *GetBoundFile(int file_type, int i){
 
   ASSERT_BOUND_TYPE;
   if(file_type == BOUND_SLICE){
-    bound_file = slicecoll.sliceinfo[i].bound_file;
+    bound_file = scase.slicecoll.sliceinfo[i].bound_file;
   }
   else if(file_type == BOUND_PATCH){
     bound_file = patchinfo[i].bound_file;
@@ -1423,7 +1423,7 @@ void GetGlobalSliceBounds(int flag, int set_flag){
   int i;
 
   if(no_bounds == 1 && force_bounds==0)flag = 0;
-  if(slicecoll.nsliceinfo==0)return;
+  if(scase.slicecoll.nsliceinfo==0)return;
   for(i = 0;i<nslicebounds;i++){
     boundsdata *boundi;
 
@@ -1433,13 +1433,13 @@ void GetGlobalSliceBounds(int flag, int set_flag){
   }
   if(no_bounds==0 || force_bounds==1)BoundsUpdate(BOUND_SLICE);
   INIT_PRINT_TIMER(slicebounds_timer);
-  for(i = 0;i<slicecoll.nsliceinfo;i++){
+  for(i = 0;i<scase.slicecoll.nsliceinfo;i++){
     slicedata *slicei;
     float valmin, valmax;
     boundsdata *boundi;
     int doit;
 
-    slicei = slicecoll.sliceinfo+i;
+    slicei = scase.slicecoll.sliceinfo+i;
     if(slicei->valmin_slice>slicei->valmax_slice ||
        current_script_command==NULL || NOT_LOADRENDER)doit=1;
     if(flag==0){
@@ -1450,7 +1450,7 @@ void GetGlobalSliceBounds(int flag, int set_flag){
     if(force_bound_update == 1||nzoneinfo>0)doit = 1;
 
     if(doit==1){
-      BoundsGet(slicei->reg_file, sliceglobalboundsinfo, sorted_slice_filenames, slicecoll.nsliceinfo, 1, &valmin, &valmax);
+      BoundsGet(slicei->reg_file, sliceglobalboundsinfo, sorted_slice_filenames, scase.slicecoll.nsliceinfo, 1, &valmin, &valmax);
       if(valmin>valmax)continue;
       slicei->valmin_slice = valmin;
       slicei->valmax_slice = valmax;

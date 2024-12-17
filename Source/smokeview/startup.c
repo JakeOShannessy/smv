@@ -707,10 +707,10 @@ void InitOpenGL(int option){
  void Set3DSmokeStartup(void){
    int i;
 
-    for(i=0;i<slicecoll.nvsliceinfo;i++){
+    for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
       vslicedata *vslicei;
 
-      vslicei = slicecoll.vsliceinfo + i;
+      vslicei = scase.slicecoll.vsliceinfo + i;
 
       if(vslicei->loaded==1){
         vslicei->autoload=1;
@@ -779,10 +779,10 @@ void InitOpenGL(int option){
         isoi->autoload=0;
       }
     }
-    for(i=0;i<slicecoll.nsliceinfo;i++){
+    for(i=0;i<scase.slicecoll.nsliceinfo;i++){
       slicedata *slicei;
 
-      slicei = slicecoll.sliceinfo + i;
+      slicei = scase.slicecoll.sliceinfo + i;
 
       if(slicei->loaded==1){
         slicei->autoload=1;
@@ -871,20 +871,20 @@ void InitOpenGL(int option){
    // startup vslice
 
    nstartup=0;
-   for(i=0;i<slicecoll.nvsliceinfo;i++){
+   for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
       vslicedata *vslicei;
 
-      vslicei = slicecoll.vsliceinfo + i;
+      vslicei = scase.slicecoll.vsliceinfo + i;
 
       if(vslicei->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"VSLICEAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<slicecoll.nvsliceinfo;i++){
+     for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
         vslicedata *vslicei;
 
-        vslicei = slicecoll.vsliceinfo + i;
+        vslicei = scase.slicecoll.vsliceinfo + i;
 
         if(vslicei->loaded==1)fprintf(fileout," %i\n",vslicei->seq_id);
      }
@@ -893,20 +893,20 @@ void InitOpenGL(int option){
    // startup slice
 
    nstartup=0;
-   for(i=0;i<slicecoll.nsliceinfo;i++){
+   for(i=0;i<scase.slicecoll.nsliceinfo;i++){
       slicedata *slicei;
 
-      slicei = slicecoll.sliceinfo + i;
+      slicei = scase.slicecoll.sliceinfo + i;
 
       if(slicei->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"SLICEAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<slicecoll.nsliceinfo;i++){
+     for(i=0;i<scase.slicecoll.nsliceinfo;i++){
         slicedata *slicei;
 
-        slicei = slicecoll.sliceinfo + i;
+        slicei = scase.slicecoll.sliceinfo + i;
         if(slicei->loaded==1)fprintf(fileout," %i\n",slicei->seq_id);
      }
    }
@@ -914,10 +914,10 @@ void InitOpenGL(int option){
    // startup mslice
 
    nstartup=0;
-   for(i=0;i<slicecoll.nmultisliceinfo;i++){
+   for(i=0;i<scase.slicecoll.nmultisliceinfo;i++){
       multislicedata *mslicei;
 
-      mslicei = slicecoll.multisliceinfo + i;
+      mslicei = scase.slicecoll.multisliceinfo + i;
       mslicei->loadable = 1;
 
       if(mslicei->loaded==1)nstartup++;
@@ -925,10 +925,10 @@ void InitOpenGL(int option){
    if(nstartup!=0){
      fprintf(fileout,"MSLICEAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<slicecoll.nmultisliceinfo;i++){
+     for(i=0;i<scase.slicecoll.nmultisliceinfo;i++){
         multislicedata *mslicei;
 
-        mslicei = slicecoll.multisliceinfo + i;
+        mslicei = scase.slicecoll.multisliceinfo + i;
         mslicei->loadable = 1;
         if(mslicei->loaded==1)fprintf(fileout," %i\n",i);
      }
@@ -1063,10 +1063,10 @@ void InitOpenGL(int option){
 
   void GetStartupSlice(int seq_id){
     int i;
-    for(i=0;i<slicecoll.nsliceinfo;i++){
+    for(i=0;i<scase.slicecoll.nsliceinfo;i++){
       slicedata *slicei;
 
-      slicei = slicecoll.sliceinfo + i;
+      slicei = scase.slicecoll.sliceinfo + i;
 
       if(slicei->seq_id==seq_id){
         slicei->autoload=1;
@@ -1079,10 +1079,10 @@ void InitOpenGL(int option){
 
   void GetStartupVSlice(int seq_id){
     int i;
-    for(i=0;i<slicecoll.nvsliceinfo;i++){
+    for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
       vslicedata *vslicei;
 
-      vslicei = slicecoll.vsliceinfo + i;
+      vslicei = scase.slicecoll.vsliceinfo + i;
 
       if(vslicei->seq_id==seq_id){
         vslicei->autoload=1;
@@ -1154,19 +1154,19 @@ void InitOpenGL(int option){
     update_readiso_geom_wrapup = UPDATE_ISO_OFF;
 
     int lastslice=0;
-    for(i = slicecoll.nvsliceinfo-1; i>=0; i--){
+    for(i = scase.slicecoll.nvsliceinfo-1; i>=0; i--){
       vslicedata *vslicei;
 
-      vslicei = slicecoll.vsliceinfo+i;
+      vslicei = scase.slicecoll.vsliceinfo+i;
       if(vslicei->autoload==1){
         lastslice = i;
         break;
       }
     }
-    for(i = 0; i<slicecoll.nvsliceinfo; i++){
+    for(i = 0; i<scase.slicecoll.nvsliceinfo; i++){
       vslicedata *vslicei;
 
-      vslicei = slicecoll.vsliceinfo + i;
+      vslicei = scase.slicecoll.vsliceinfo + i;
       if(vslicei->autoload==0&&vslicei->loaded==1){
         ReadVSlice(i, ALL_FRAMES, NULL, UNLOAD, DEFER_SLICECOLOR, &errorcode);
       }
@@ -1183,21 +1183,21 @@ void InitOpenGL(int option){
     {
       int last_slice;
 
-      last_slice = slicecoll.nsliceinfo - 1;
-      for(i = slicecoll.nsliceinfo-1; i >=0; i--){
+      last_slice = scase.slicecoll.nsliceinfo - 1;
+      for(i = scase.slicecoll.nsliceinfo-1; i >=0; i--){
         slicedata *slicei;
 
-        slicei = slicecoll.sliceinfo + i;
+        slicei = scase.slicecoll.sliceinfo + i;
         if((slicei->autoload == 0 && slicei->loaded == 1)||(slicei->autoload == 1 && slicei->loaded == 0)){
           last_slice = i;
           break;
         }
       }
-      for(i = 0; i < slicecoll.nsliceinfo; i++){
+      for(i = 0; i < scase.slicecoll.nsliceinfo; i++){
         slicedata *slicei;
         int set_slicecolor;
 
-        slicei = slicecoll.sliceinfo + i;
+        slicei = scase.slicecoll.sliceinfo + i;
         set_slicecolor = DEFER_SLICECOLOR;
         if(i == last_slice)set_slicecolor = SET_SLICECOLOR;
         if(slicei->autoload == 0 && slicei->loaded == 1)ReadSlice(slicei->file, i, ALL_FRAMES, NULL, UNLOAD, set_slicecolor,&errorcode);

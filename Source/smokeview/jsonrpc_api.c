@@ -662,8 +662,8 @@ json_object *json_GetSmoke3ds(jrpc_context *context, json_object *params,
 
 json_object *json_GetSlices(void) {
   struct json_object *slices = json_object_new_array();
-  for(int i = 0; i < slicecoll.nsliceinfo; i++) {
-    slicedata *slice = &slicecoll.sliceinfo[i];
+  for(int i = 0; i < scase.slicecoll.nsliceinfo; i++) {
+    slicedata *slice = &scase.slicecoll.sliceinfo[i];
     struct json_object *slice_obj = json_object_new_object();
     json_object_object_add(slice_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(slice_obj, "mesh",

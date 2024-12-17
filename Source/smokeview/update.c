@@ -123,7 +123,7 @@ void UpdateFrameNumber(int changetime){
         slicedata *sd;
 
         i = slice_loaded_list[ii];
-        sd = slicecoll.sliceinfo+i;
+        sd = scase.slicecoll.sliceinfo+i;
         if(sd->slice_filetype == SLICE_GEOM){
           patchdata *patchi;
 
@@ -245,18 +245,18 @@ void UpdateFileLoad(void){
   }
 
   nsliceloaded = 0;
-  for(i = 0; i<slicecoll.nsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nsliceinfo; i++){
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo+i;
+    slicei = scase.slicecoll.sliceinfo+i;
     if(slicei->loaded==1)nsliceloaded++;
   }
 
   nvsliceloaded = 0;
-  for(i = 0; i<slicecoll.nvsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nvsliceinfo; i++){
     vslicedata *vslicei;
 
-    vslicei = slicecoll.vsliceinfo+i;
+    vslicei = scase.slicecoll.vsliceinfo+i;
     if(vslicei->loaded==1)nvsliceloaded++;
   }
 
@@ -418,7 +418,7 @@ void UpdateShow(void){
       slicedata *sd;
 
       i=slice_loaded_list[ii];
-      sd = slicecoll.sliceinfo+i;
+      sd = scase.slicecoll.sliceinfo+i;
       if(sd->display==0||sd->slicefile_labelindex!=slicefile_labelindex)continue;
       if(sd->volslice==1&&sd->slice_filetype==SLICE_NODE_CENTER&&vis_gslice_data==1)SHOW_gslice_data=1;
       if(sd->ntimes>0){
@@ -434,7 +434,7 @@ void UpdateShow(void){
       slicedata *sd;
 
       i=slice_loaded_list[ii];
-      sd = slicecoll.sliceinfo+i;
+      sd = scase.slicecoll.sliceinfo+i;
       if(sd->display==0||sd->slicefile_labelindex!=slicefile_labelindex)continue;
       if(sd->constant_color!=NULL)continue;
       if(sd->ntimes>0){
@@ -447,7 +447,7 @@ void UpdateShow(void){
         slicedata *sd;
 
         i=slice_loaded_list[ii];
-        sd = slicecoll.sliceinfo+i;
+        sd = scase.slicecoll.sliceinfo+i;
         if(sd->display==0||sd->slicefile_labelindex!=slicefile_labelindex)continue;
         if(sd->extreme_max==1){
           have_extreme_maxdata=1;
@@ -460,7 +460,7 @@ void UpdateShow(void){
         slicedata *sd;
 
         i=slice_loaded_list[ii];
-        sd = slicecoll.sliceinfo+i;
+        sd = scase.slicecoll.sliceinfo+i;
         if(sd->display==0||sd->slicefile_labelindex!=slicefile_labelindex)continue;
         if(sd->extreme_min==1){
           have_extreme_mindata=1;
@@ -505,27 +505,27 @@ void UpdateShow(void){
   vsliceflag=0;
   vslicecolorbarflag=0;
   if(visTimeSlice==1){
-    for(i=0;i<slicecoll.nvsliceinfo;i++){
+    for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
       vslicedata *vd;
       slicedata *sd;
 
-      vd = slicecoll.vsliceinfo+i;
+      vd = scase.slicecoll.vsliceinfo+i;
       if(vd->loaded==0||vd->display==0)continue;
-      sd = slicecoll.sliceinfo + vd->ival;
+      sd = scase.slicecoll.sliceinfo + vd->ival;
 
       if(sd->slicefile_labelindex!=slicefile_labelindex)continue;
       if(sd->volslice==1&&sd->slice_filetype==SLICE_NODE_CENTER&&vis_gslice_data==1)SHOW_gslice_data=1;
       vsliceflag=1;
       break;
     }
-    for(i=0;i<slicecoll.nvsliceinfo;i++){
+    for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
       slicedata *sd;
       vslicedata *vd;
 
-      vd = slicecoll.vsliceinfo+i;
-      sd = slicecoll.sliceinfo + vd->ival;
+      vd = scase.slicecoll.vsliceinfo+i;
+      sd = scase.slicecoll.sliceinfo + vd->ival;
       if(vd->loaded==0||vd->display==0)continue;
-      if(slicecoll.sliceinfo[vd->ival].slicefile_labelindex!=slicefile_labelindex)continue;
+      if(scase.slicecoll.sliceinfo[vd->ival].slicefile_labelindex!=slicefile_labelindex)continue;
       if(sd->constant_color!=NULL)continue;
       vslicecolorbarflag=1;
       break;
@@ -806,7 +806,7 @@ void SynchTimes(void){
     for(jj=0;jj<nslice_loaded;jj++){
       slicedata *sd;
 
-      sd = slicecoll.sliceinfo + slice_loaded_list[jj];
+      sd = scase.slicecoll.sliceinfo + slice_loaded_list[jj];
       if(sd->slice_filetype == SLICE_GEOM){
         sd->patchgeom->geom_timeslist[n] = GetDataTimeFrame(global_times[n], sd->patchgeom->geom_times_map , sd->patchgeom->geom_times, sd->ntimes);
       }
@@ -891,10 +891,10 @@ int GetLoadvfileinfo(FILE *stream, char *filename){
 
   TrimBack(filename);
   fileptr = TrimFront(filename);
-  for(i = 0; i<slicecoll.nsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nsliceinfo; i++){
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo+i;
+    slicei = scase.slicecoll.sliceinfo+i;
     if(strcmp(fileptr, slicei->file)==0){
       fprintf(stream, "// LOADVFILE\n");
       fprintf(stream, "//  %s\n", slicei->file);
@@ -921,10 +921,10 @@ int GetLoadfileinfo(FILE *stream, char *filename){
 
   TrimBack(filename);
   fileptr = TrimFront(filename);
-  for(i = 0; i<slicecoll.nsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nsliceinfo; i++){
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo+i;
+    slicei = scase.slicecoll.sliceinfo+i;
     if(strcmp(fileptr, slicei->file)==0){
       fprintf(stream, "// LOADFILE\n");
       fprintf(stream, "//  %s\n", slicei->file);
@@ -1201,17 +1201,17 @@ void MergeGlobalTimes(float *time_in, int ntimes_in){
 #ifdef pp_SLICEFRAME
 void UpdateSliceNtimes(void){
   int minslice_index = 1000000000, i;
-  for(i = 0;i < slicecoll.nsliceinfo;i++){
+  for(i = 0;i < scase.slicecoll.nsliceinfo;i++){
     slicedata *sd;
 
-    sd = slicecoll.sliceinfo + i;
+    sd = scase.slicecoll.sliceinfo + i;
     if(sd->loaded == 0 || sd->display == 0)continue;
     minslice_index = MIN(minslice_index, sd->ntimes);
   }
-  for(i = 0;i < slicecoll.nsliceinfo;i++){
+  for(i = 0;i < scase.slicecoll.nsliceinfo;i++){
     slicedata *sd;
 
-    sd = slicecoll.sliceinfo + i;
+    sd = scase.slicecoll.sliceinfo + i;
     if(sd->loaded == 0 || sd->display == 0)continue;
     sd->ntimes = minslice_index;
   }
@@ -1316,10 +1316,10 @@ void UpdateTimes(void){
     }
   }
   INIT_PRINT_TIMER(slice_timer);
-  for(i=0;i<slicecoll.nsliceinfo;i++){
+  for(i=0;i<scase.slicecoll.nsliceinfo;i++){
     slicedata *sd;
 
-    sd=slicecoll.sliceinfo+i;
+    sd=scase.slicecoll.sliceinfo+i;
     if(sd->loaded==1||sd->vloaded==1){
       MergeGlobalTimes(sd->times, sd->ntimes);
     }
@@ -1443,10 +1443,10 @@ void UpdateTimes(void){
     NewMemory((void **)&shooter_timeslist,nshooter_frames*sizeof(int));
   }
 
-  for(i=0;i<slicecoll.nsliceinfo;i++){
+  for(i=0;i<scase.slicecoll.nsliceinfo;i++){
     slicedata *sd;
 
-    sd = slicecoll.sliceinfo + i;
+    sd = scase.slicecoll.sliceinfo + i;
     if(sd->loaded==0)continue;
     if(sd->slice_filetype == SLICE_GEOM){
       FREEMEMORY(sd->patchgeom->geom_timeslist);
@@ -1539,10 +1539,10 @@ void UpdateTimes(void){
     meshi=scase.meshescoll.meshinfo+i;
     meshi->patch_itime=0;
   }
-  for(i=0;i<slicecoll.nsliceinfo;i++){
+  for(i=0;i<scase.slicecoll.nsliceinfo;i++){
     slicedata *sd;
 
-    sd = slicecoll.sliceinfo + i;
+    sd = scase.slicecoll.sliceinfo + i;
     sd->itime=0;
   }
   for(i=0;i<scase.meshescoll.nmeshes;i++){
@@ -1745,16 +1745,16 @@ int GetPlotStateSub(int choice){
       for(i=0;i<nslice_loaded;i++){
         slicedata *slicei;
 
-        slicei = slicecoll.sliceinfo + slice_loaded_list[i];
+        slicei = scase.slicecoll.sliceinfo + slice_loaded_list[i];
         if(slicei->display==0||slicei->slicefile_labelindex!=slicefile_labelindex)continue;
         stept = 1;
         return DYNAMIC_PLOTS;
       }
       if(visGrid==0)stept = 1;
-      for(i=0;i<slicecoll.nvsliceinfo;i++){
+      for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
         vslicedata *vslicei;
 
-        vslicei = slicecoll.vsliceinfo + i;
+        vslicei = scase.slicecoll.vsliceinfo + i;
         if(vslicei->display==0||vslicei->vslicefile_labelindex!=slicefile_labelindex)continue;
         return DYNAMIC_PLOTS;
       }
@@ -2052,11 +2052,11 @@ void OutputFrameSteps(void){
   frames_read       = 0;
   total_time        = 0.0;
   total_wrapup_time = 0.0;
-  for(i = 0;i < slicecoll.nsliceinfo;i++){
+  for(i = 0;i < scase.slicecoll.nsliceinfo;i++){
     slicedata *slicei;
     framedata *frameinfo=NULL;
 
-    slicei = slicecoll.sliceinfo + i;
+    slicei = scase.slicecoll.sliceinfo + i;
     if(slicei->loaded == 0)continue;
     if(slicei->slice_filetype == SLICE_GEOM)continue;
     frameinfo = slicei->frameinfo;
@@ -2087,11 +2087,11 @@ void OutputFrameSteps(void){
   frames_read = 0;
   total_time = 0.0;
   total_wrapup_time = 0.0;
-  for(i = 0; i < slicecoll.nsliceinfo; i++){
+  for(i = 0; i < scase.slicecoll.nsliceinfo; i++){
     slicedata *slicei;
     framedata *frameinfo = NULL;
 
-    slicei = slicecoll.sliceinfo + i;
+    slicei = scase.slicecoll.sliceinfo + i;
     if(slicei->loaded == 0 || slicei->slice_filetype != SLICE_GEOM)continue;
     frameinfo = slicei->frameinfo;
     if(slicei->patchgeom != NULL)frameinfo = slicei->patchgeom->frameinfo;
@@ -2650,7 +2650,7 @@ void UpdateFlippedColorbar(void){
   for(i = 0;i < nslice_loaded;i++){
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo + slice_loaded_list[i];
+    slicei = scase.slicecoll.sliceinfo + slice_loaded_list[i];
     if(slicei->slicefile_labelindex!=slicefile_labelindex)continue;
     if(slicei->display == 0)continue;
     if(slicei->colorbar_autoflip == 1&&colorbar_autoflip == 1){
@@ -2752,14 +2752,14 @@ void OutputBounds(void){
     char *label, *unit;
     int i;
 
-    label = slicecoll.sliceinfo[update_slice_bounds].label.longlabel;
-    unit = slicecoll.sliceinfo[update_slice_bounds].label.unit;
-    for(i=0;i<slicecoll.nsliceinfo;i++){
+    label = scase.slicecoll.sliceinfo[update_slice_bounds].label.longlabel;
+    unit = scase.slicecoll.sliceinfo[update_slice_bounds].label.unit;
+    for(i=0;i<scase.slicecoll.nsliceinfo;i++){
       slicedata *slicei;
       char *labeli;
       meshdata *meshi;
 
-      slicei = slicecoll.sliceinfo + i;
+      slicei = scase.slicecoll.sliceinfo + i;
       if(slicei->loaded==0)continue;
       meshi = scase.meshescoll.meshinfo+slicei->blocknumber;
       labeli = slicei->label.longlabel;

@@ -86,20 +86,20 @@ void NextXIndex(int inc,int flag){
     if(iplotx_all>nplotx_all-1)iplotx_all=0;
     if(visGrid!=NOGRID_NOPROBE)return;
     if(plotstate==DYNAMIC_PLOTS){
-      for(i=0;i<slicecoll.nsliceinfo;i++){
+      for(i=0;i<scase.slicecoll.nsliceinfo;i++){
         slicedata *slicei;
         meshdata *meshi;
 
-        slicei = slicecoll.sliceinfo + i;
+        slicei = scase.slicecoll.sliceinfo + i;
         if(slicei->loaded==0||slicei->display==0)continue;
         meshi = scase.meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iplotx_all[iplotx_all]!=-1)return;
       }
-      for(i=0;i<slicecoll.nvsliceinfo;i++){
+      for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
         vslicedata *vslicei;
         meshdata *meshi;
 
-        vslicei = slicecoll.vsliceinfo + i;
+        vslicei = scase.slicecoll.vsliceinfo + i;
         if(vslicei->loaded==0||vslicei->display==0)continue;
         meshi = scase.meshescoll.meshinfo + vslicei->val->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
@@ -148,20 +148,20 @@ void NextYIndex(int inc,int flag){
     if(iploty_all>nploty_all-1)iploty_all=0;
     if(visGrid!=NOGRID_NOPROBE)return;
     if(plotstate==DYNAMIC_PLOTS){
-      for(i=0;i<slicecoll.nsliceinfo;i++){
+      for(i=0;i<scase.slicecoll.nsliceinfo;i++){
         slicedata *slicei;
         meshdata *meshi;
 
-        slicei = slicecoll.sliceinfo + i;
+        slicei = scase.slicecoll.sliceinfo + i;
         if(slicei->loaded==0||slicei->display==0)continue;
         meshi = scase.meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
-      for(i=0;i<slicecoll.nvsliceinfo;i++){
+      for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
         vslicedata *vslicei;
         meshdata *meshi;
 
-        vslicei = slicecoll.vsliceinfo + i;
+        vslicei = scase.slicecoll.vsliceinfo + i;
         if(vslicei->loaded==0||vslicei->display==0)continue;
         meshi = scase.meshescoll.meshinfo + vslicei->val->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
@@ -210,20 +210,20 @@ void NextZIndex(int inc,int flag){
     if(iplotz_all>nplotz_all-1)iplotz_all=0;
     if(visGrid!=NOGRID_NOPROBE)return;
     if(plotstate==DYNAMIC_PLOTS){
-      for(i=0;i<slicecoll.nsliceinfo;i++){
+      for(i=0;i<scase.slicecoll.nsliceinfo;i++){
         slicedata *slicei;
         meshdata *meshi;
 
-        slicei = slicecoll.sliceinfo + i;
+        slicei = scase.slicecoll.sliceinfo + i;
         if(slicei->loaded==0||slicei->display==0)continue;
         meshi = scase.meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iplotz_all[iplotz_all]!=-1)return;
       }
-      for(i=0;i<slicecoll.nvsliceinfo;i++){
+      for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
         vslicedata *vslicei;
         meshdata *meshi;
 
-        vslicei = slicecoll.vsliceinfo + i;
+        vslicei = scase.slicecoll.vsliceinfo + i;
         if(vslicei->loaded==0||vslicei->display==0)continue;
         meshi = scase.meshescoll.meshinfo + vslicei->val->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
@@ -637,10 +637,10 @@ void CheckTimeBound(void){
         current_script_command->exit=1;
       }
     }
-    for(i=0;i<slicecoll.nsliceinfo;i++){
+    for(i=0;i<scase.slicecoll.nsliceinfo;i++){
       slicedata *sd;
 
-      sd=slicecoll.sliceinfo+i;
+      sd=scase.slicecoll.sliceinfo+i;
       sd->itime=0;
     }
     for(i=0;i<scase.meshescoll.nmeshes;i++){
@@ -667,10 +667,10 @@ void CheckTimeBound(void){
       parti=partinfo+i;
       parti->itime=parti->ntimes-1;
     }
-    for(i=0;i<slicecoll.nsliceinfo;i++){
+    for(i=0;i<scase.slicecoll.nsliceinfo;i++){
       slicedata *sd;
 
-      sd=slicecoll.sliceinfo+i;
+      sd=scase.slicecoll.sliceinfo+i;
       sd->itime=sd->ntimes-1;
       if(sd->volslice==1)sd->itime--;
     }
@@ -1952,16 +1952,16 @@ void Keyboard(unsigned char key, int flag){
       {
         int nslice_loaded_local=0, nvslice_loaded_local=0;
 
-        for(i=0;i<slicecoll.nsliceinfo;i++){
+        for(i=0;i<scase.slicecoll.nsliceinfo;i++){
           slicedata *sd;
 
-          sd = slicecoll.sliceinfo + i;
+          sd = scase.slicecoll.sliceinfo + i;
           if(sd->loaded==1)nslice_loaded_local++;
         }
-        for(i=0;i<slicecoll.nvsliceinfo;i++){
+        for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
           vslicedata *vd;
 
-          vd = slicecoll.vsliceinfo + i;
+          vd = scase.slicecoll.vsliceinfo + i;
           if(vd->loaded==1)nvslice_loaded_local++;
         }
         stept=1;

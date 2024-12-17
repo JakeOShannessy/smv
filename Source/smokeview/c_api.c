@@ -319,10 +319,10 @@ int Loadfile(const char *filename) {
     return 1;
   }
 
-  for(size_t i = 0; i < slicecoll.nsliceinfo; i++) {
+  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
     slicedata *sd;
 
-    sd = slicecoll.sliceinfo + i;
+    sd = scase.slicecoll.sliceinfo + i;
     if(strcmp(sd->file, filename) == 0) {
       ReadSlice(sd->file, i, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR,
                 &errorcode);
@@ -403,12 +403,12 @@ void Loadinifile(const char *filepath) {
 }
 
 int Loadvfile(const char *filepath) {
-  for(size_t i = 0; i < slicecoll.nvsliceinfo; i++) {
+  for(size_t i = 0; i < scase.slicecoll.nvsliceinfo; i++) {
     slicedata *val;
     vslicedata *vslicei;
 
-    vslicei = slicecoll.vsliceinfo + i;
-    val = slicecoll.sliceinfo + vslicei->ival;
+    vslicei = scase.slicecoll.vsliceinfo + i;
+    val = scase.slicecoll.sliceinfo + vslicei->ival;
     if(val == NULL) continue;
     if(strcmp(val->reg_file, filepath) == 0) {
       LoadVSliceMenu(i);
@@ -1702,21 +1702,21 @@ void Loadiso(const char *type) {
 }
 
 FILE_SIZE Loadsliceindex(size_t index, int *errorcode) {
-  return ReadSlice(slicecoll.sliceinfo[index].file, (int)index, ALL_FRAMES,
+  return ReadSlice(scase.slicecoll.sliceinfo[index].file, (int)index, ALL_FRAMES,
                    NULL, LOAD, SET_SLICECOLOR, errorcode);
 }
 
 void Loadslice(const char *type, int axis, float distance) {
   int count = 0;
-  for(int i = 0; i < slicecoll.nmultisliceinfo; i++) {
+  for(int i = 0; i < scase.slicecoll.nmultisliceinfo; i++) {
     multislicedata *mslicei;
     slicedata *slicei;
     int j;
     float delta_orig;
 
-    mslicei = slicecoll.multisliceinfo + i;
+    mslicei = scase.slicecoll.multisliceinfo + i;
     if(mslicei->nslices <= 0) continue;
-    slicei = slicecoll.sliceinfo + mslicei->islices[0];
+    slicei = scase.slicecoll.sliceinfo + mslicei->islices[0];
     if(MatchUpper(slicei->label.longlabel, type) == 0) continue;
     if(slicei->idir != axis) continue;
     delta_orig = slicei->position_orig - distance;
@@ -1739,14 +1739,14 @@ void Loadslice(const char *type, int axis, float distance) {
 void Loadvslice(const char *type, int axis, float distance) {
   float delta_orig;
   int count = 0;
-  for(int i = 0; i < slicecoll.nmultivsliceinfo; i++) {
+  for(int i = 0; i < scase.slicecoll.nmultivsliceinfo; i++) {
     multivslicedata *mvslicei;
     int j;
     slicedata *slicei;
 
-    mvslicei = slicecoll.multivsliceinfo + i;
+    mvslicei = scase.slicecoll.multivsliceinfo + i;
     if(mvslicei->nvslices <= 0) continue;
-    slicei = slicecoll.sliceinfo + mvslicei->ivslices[0];
+    slicei = scase.slicecoll.sliceinfo + mvslicei->ivslices[0];
     if(MatchUpper(slicei->label.longlabel, type) == 0) continue;
     if(slicei->idir != axis) continue;
     delta_orig = slicei->position_orig - distance;
@@ -1774,7 +1774,7 @@ void Unloadslice(int value) {
   if(value >= 0) {
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo + value;
+    slicei = scase.slicecoll.sliceinfo + value;
 
     if(slicei->slice_filetype == SLICE_GEOM) {
       ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
@@ -1790,10 +1790,10 @@ void Unloadslice(int value) {
   }
   else {
     if(value == UNLOAD_ALL) {
-      for(size_t i = 0; i < slicecoll.nsliceinfo; i++) {
+      for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
         slicedata *slicei;
 
-        slicei = slicecoll.sliceinfo + i;
+        slicei = scase.slicecoll.sliceinfo + i;
         if(slicei->slice_filetype == SLICE_GEOM) {
           ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
                        &errorcode);
@@ -1829,10 +1829,10 @@ int Unloadall() {
   if(nvolrenderinfo > 0) {
     LoadVolsmoke3DMenu(UNLOAD_ALL);
   }
-  for(size_t i = 0; i < slicecoll.nsliceinfo; i++) {
+  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo + i;
+    slicei = scase.slicecoll.sliceinfo + i;
     if(slicei->loaded == 1) {
       if(slicei->slice_filetype == SLICE_GEOM) {
         ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
@@ -3634,10 +3634,10 @@ int SetMsliceauto(int n, int vals[]) {
   for(size_t i = 0; i < n3dsmokes; i++) {
     seq_id = vals[i];
 
-    if(seq_id >= 0 && seq_id < slicecoll.nmultisliceinfo) {
+    if(seq_id >= 0 && seq_id < scase.slicecoll.nmultisliceinfo) {
       multislicedata *mslicei;
 
-      mslicei = slicecoll.multisliceinfo + seq_id;
+      mslicei = scase.slicecoll.multisliceinfo + seq_id;
       mslicei->autoload = 1;
     }
   }
@@ -4116,8 +4116,8 @@ int ShowSlicesShowall() {
 
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
-  for(size_t i = 0; i < slicecoll.nsliceinfo; i++) {
-    slicecoll.sliceinfo[i].display = 1;
+  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
+    scase.slicecoll.sliceinfo[i].display = 1;
   }
   showall_slices = 1;
   UpdateSliceFilenum();
@@ -4132,8 +4132,8 @@ int ShowSlicesHideall() {
 
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
-  for(size_t i = 0; i < slicecoll.nsliceinfo; i++) {
-    slicecoll.sliceinfo[i].display = 0;
+  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
+    scase.slicecoll.sliceinfo[i].display = 0;
   }
   showall_slices = 0;
   UpdateSliceFilenum();

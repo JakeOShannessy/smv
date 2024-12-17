@@ -1322,14 +1322,14 @@ void InitVolRender(void){
     vr->is_compressed=0;
     vr->times_defined=0;
   }
-  for(i=0;i<slicecoll.nsliceinfo;i++){
+  for(i=0;i<scase.slicecoll.nsliceinfo;i++){
     slicedata *slicei;
     char *shortlabel, *longlabel;
     int blocknumber;
     meshdata *meshi;
     volrenderdata *vr;
 
-    slicei = slicecoll.sliceinfo + i;
+    slicei = scase.slicecoll.sliceinfo + i;
     blocknumber = slicei->blocknumber;
     if(blocknumber<0||blocknumber>=scase.meshescoll.nmeshes)continue;
     shortlabel = slicei->label.shortlabel;

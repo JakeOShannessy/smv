@@ -529,8 +529,8 @@ void HideAllSlices(void){
   int i;
 
   GLUTSETCURSOR(GLUT_CURSOR_WAIT);
-  for(i = 0; i < slicecoll.nsliceinfo; i++){
-    slicecoll.sliceinfo[i].display = 0;
+  for(i = 0; i < scase.slicecoll.nsliceinfo; i++){
+    scase.slicecoll.sliceinfo[i].display = 0;
   }
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
@@ -589,10 +589,10 @@ void ShowMultiSliceMenu(int value){
       multislicedata *mslicei;
       slicedata *sd;
 
-      mslicei = slicecoll.multisliceinfo+value;
+      mslicei = scase.slicecoll.multisliceinfo+value;
       mdisplay = 0;
 
-      sd = slicecoll.sliceinfo+mslicei->islices[0];
+      sd = scase.slicecoll.sliceinfo+mslicei->islices[0];
       if(slicefile_labelindex==sd->slicefile_labelindex){
         if(plotstate!=DYNAMIC_PLOTS){
           plotstate = DYNAMIC_PLOTS;
@@ -609,12 +609,12 @@ void ShowMultiSliceMenu(int value){
       }
       else{
         plotstate = DYNAMIC_PLOTS;
-        sd = slicecoll.sliceinfo+mslicei->islices[0];
+        sd = scase.slicecoll.sliceinfo+mslicei->islices[0];
         slicefile_labelindex = sd->slicefile_labelindex;
         mdisplay = 1;
       }
       for(i = 0; i<mslicei->nslices; i++){
-        sd = slicecoll.sliceinfo+mslicei->islices[i];
+        sd = scase.slicecoll.sliceinfo+mslicei->islices[i];
         if(sd->loaded==0)continue;
         sd->display = mdisplay;
       }
@@ -634,17 +634,17 @@ void ShowAllSlices(char *type1, char *type2){
 
   GLUTSETCURSOR(GLUT_CURSOR_WAIT);
   if(trainer_showall_mslice == 1){
-    for(i = 0; i < slicecoll.nsliceinfo; i++){
+    for(i = 0; i < scase.slicecoll.nsliceinfo; i++){
       slicedata *slicei;
 
-      slicei = slicecoll.sliceinfo + i;
+      slicei = scase.slicecoll.sliceinfo + i;
       slicei->display = 0;
       if(slicei->loaded == 0)continue;
       if(
         (type1 != NULL&&STRCMP(slicei->label.longlabel, type1) == 0) ||
         (type2 != NULL&&STRCMP(slicei->label.longlabel, type2) == 0)
        ){
-        slicecoll.sliceinfo[i].display = 1;
+        scase.slicecoll.sliceinfo[i].display = 1;
         slicefile_labelindex = slicei->slicefile_labelindex;
       }
     }
@@ -1328,8 +1328,8 @@ void ShowVSliceMenu(int value){
     if(value == SHOW_ALL)showall_slices = 1 - showall_slices;
     if(value == GLUI_SHOWALL_VSLICE)showall_slices = 1;
     if(value == GLUI_HIDEALL_VSLICE)showall_slices = 0;
-    for(i=0;i<slicecoll.nvsliceinfo;i++){
-      vd = slicecoll.vsliceinfo+i;
+    for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
+      vd = scase.slicecoll.vsliceinfo+i;
       if(vd->loaded==0)continue;
       vd->display= showall_slices;
     }
@@ -1360,8 +1360,8 @@ void ShowVSliceMenu(int value){
     show_cell_slices_and_vectors=1-show_cell_slices_and_vectors;
     return;
   }
-  vd = slicecoll.vsliceinfo + value;
-  if(slicefile_labelindex==slicecoll.sliceinfo[vd->ival].slicefile_labelindex){
+  vd = scase.slicecoll.vsliceinfo + value;
+  if(slicefile_labelindex==scase.slicecoll.sliceinfo[vd->ival].slicefile_labelindex){
     if(plotstate!=DYNAMIC_PLOTS){
       plotstate=DYNAMIC_PLOTS;
       vd->display=1;
@@ -1372,30 +1372,30 @@ void ShowVSliceMenu(int value){
     if(vd->iu!=-1){
       slicedata *sd;
 
-      sd = slicecoll.sliceinfo+vd->iu;
+      sd = scase.slicecoll.sliceinfo+vd->iu;
       sd->vloaded=vd->display;
     }
     if(vd->iv!=-1){
       slicedata *sd;
 
-      sd = slicecoll.sliceinfo+vd->iv;
+      sd = scase.slicecoll.sliceinfo+vd->iv;
       sd->vloaded=vd->display;
     }
     if(vd->iw!=-1){
       slicedata *sd;
 
-      sd = slicecoll.sliceinfo+vd->iw;
+      sd = scase.slicecoll.sliceinfo+vd->iw;
       sd->vloaded=vd->display;
     }
     if(vd->ival!=-1){
       slicedata *sd;
 
-      sd = slicecoll.sliceinfo+vd->ival;
+      sd = scase.slicecoll.sliceinfo+vd->ival;
       sd->vloaded=vd->display;
     }
   }
   else{
-    slicefile_labelindex = slicecoll.sliceinfo[vd->ival].slicefile_labelindex;
+    slicefile_labelindex = scase.slicecoll.sliceinfo[vd->ival].slicefile_labelindex;
     vd->display=1;
   }
   plotstate=GetPlotState(DYNAMIC_PLOTS);
@@ -1426,8 +1426,8 @@ void ShowHideSliceMenu(int value){
       if(value == GLUI_SHOWALL)showall_slices = 1;
       if(value == GLUI_HIDEALL)showall_slices = 0;
       if(value == SHOW_ALL)showall_slices = 1-showall_slices;
-      for(i=0;i<slicecoll.nsliceinfo;i++){
-        slicecoll.sliceinfo[i].display=showall_slices;
+      for(i=0;i<scase.slicecoll.nsliceinfo;i++){
+        scase.slicecoll.sliceinfo[i].display=showall_slices;
       }
       break;
     case MENU_SHOWSLICE_IN_GAS:
@@ -1461,7 +1461,7 @@ void ShowHideSliceMenu(int value){
   else{
     slicedata *sd;
 
-    sd = slicecoll.sliceinfo + value;
+    sd = scase.slicecoll.sliceinfo + value;
     if(slicefile_labelindex==sd->slicefile_labelindex){
       if(plotstate!=DYNAMIC_PLOTS){
         plotstate=DYNAMIC_PLOTS;
@@ -2170,8 +2170,8 @@ void RenderMenu(int value){
     else{
       if(stept == 0)Keyboard('t', FROM_SMOKEVIEW);
       ResetItimes0();
-      for(i=0;i<slicecoll.nsliceinfo;i++){
-        sd=slicecoll.sliceinfo+i;
+      for(i=0;i<scase.slicecoll.nsliceinfo;i++){
+        sd=scase.slicecoll.sliceinfo+i;
         sd->itime=0;
       }
       for(i=0;i<scase.meshescoll.nmeshes;i++){
@@ -3195,12 +3195,12 @@ void UnloadAllSliceFiles(char *longlabel){
   int len;
 
   if(longlabel!=NULL)len = strlen(longlabel);
-  for(i=0; i<slicecoll.nvsliceinfo; i++){
+  for(i=0; i<scase.slicecoll.nvsliceinfo; i++){
     vslicedata *vslicei;
     char *label2;
     int len2;
 
-    vslicei = slicecoll.vsliceinfo+i;
+    vslicei = scase.slicecoll.vsliceinfo+i;
     if(vslicei->loaded==0)continue;
     if(vslicei->val==NULL)continue;
     label2 = vslicei->val->label.longlabel;
@@ -3209,12 +3209,12 @@ void UnloadAllSliceFiles(char *longlabel){
       ReadVSlice(i,ALL_FRAMES, NULL, UNLOAD, DEFER_SLICECOLOR, &errorcode);
     }
   }
-  for(i=0; i<slicecoll.nsliceinfo; i++){
+  for(i=0; i<scase.slicecoll.nsliceinfo; i++){
     slicedata *slicei;
     char *label2;
     int len2;
 
-    slicei = slicecoll.sliceinfo+i;
+    slicei = scase.slicecoll.sliceinfo+i;
     if(slicei->loaded==0||slicei->vloaded==1)continue;
     label2 = slicei->label.longlabel;
     len2 = strlen(label2);
@@ -3229,30 +3229,30 @@ void UnloadAllSliceFiles(char *longlabel){
 void ReloadAllVectorSliceFiles(int load_flag){
   int i, errorcode;
 
-  for(i = 0; i<slicecoll.nsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nsliceinfo; i++){
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo+i;
+    slicei = scase.slicecoll.sliceinfo+i;
     slicei->uvw = 0;
   }
-  for(i = 0; i<slicecoll.nvsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nvsliceinfo; i++){
     vslicedata *vslicei;
 
-    vslicei = slicecoll.vsliceinfo+i;
+    vslicei = scase.slicecoll.vsliceinfo+i;
     vslicei->reload = 0;
     if(vslicei->loaded==1&&vslicei->display==1)vslicei->reload = 1;
-    if(vslicei->iu>=0)slicecoll.sliceinfo[vslicei->iu].uvw = 1;
-    if(vslicei->iv>=0)slicecoll.sliceinfo[vslicei->iv].uvw = 1;
-    if(vslicei->iw>=0)slicecoll.sliceinfo[vslicei->iw].uvw = 1;
+    if(vslicei->iu>=0)scase.slicecoll.sliceinfo[vslicei->iu].uvw = 1;
+    if(vslicei->iv>=0)scase.slicecoll.sliceinfo[vslicei->iv].uvw = 1;
+    if(vslicei->iw>=0)scase.slicecoll.sliceinfo[vslicei->iw].uvw = 1;
   }
 
     //*** reload vector slice files
 
 #ifndef pp_SLICEFRAME
-  for(i = 0; i<slicecoll.nvsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nvsliceinfo; i++){
     vslicedata *vslicei;
 
-    vslicei = slicecoll.vsliceinfo+i;
+    vslicei = scase.slicecoll.vsliceinfo+i;
     if(vslicei->reload==1){
       ReadVSlice(i, ALL_FRAMES, NULL, UNLOAD, DEFER_SLICECOLOR, &errorcode);
     }
@@ -3260,19 +3260,19 @@ void ReloadAllVectorSliceFiles(int load_flag){
 #endif
   int lastslice=0;
 
-  for(i = slicecoll.nvsliceinfo-1; i>=0; i--){
+  for(i = scase.slicecoll.nvsliceinfo-1; i>=0; i--){
     vslicedata *vslicei;
 
-    vslicei = slicecoll.vsliceinfo+i;
+    vslicei = scase.slicecoll.vsliceinfo+i;
     if(vslicei->reload==1){
       lastslice = i;
       break;
     }
   }
-  for(i = 0; i<slicecoll.nvsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nvsliceinfo; i++){
     vslicedata *vslicei;
 
-    vslicei = slicecoll.vsliceinfo+i;
+    vslicei = scase.slicecoll.vsliceinfo+i;
     if(vslicei->reload==1){
       if(i==lastslice){
         ReadVSlice(i, ALL_FRAMES, NULL, load_flag, SET_SLICECOLOR, &errorcode);
@@ -3295,15 +3295,15 @@ void ReloadAllSliceFiles(int load_flag){
   float load_time;
   slicedata **reload_slicelist;
 
-  if(slicecoll.nsliceinfo == 0)return;
-  NewMemory((void **)&reload_slicelist, slicecoll.nsliceinfo*sizeof(slicedata *));
+  if(scase.slicecoll.nsliceinfo == 0)return;
+  NewMemory((void **)&reload_slicelist, scase.slicecoll.nsliceinfo*sizeof(slicedata *));
   slicefile_labelindex_save = slicefile_labelindex;
   START_TIMER(load_time);
 
-  for(ii=0; ii<slicecoll.nsliceinfo; ii++){
+  for(ii=0; ii<scase.slicecoll.nsliceinfo; ii++){
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo+ii;
+    slicei = scase.slicecoll.sliceinfo+ii;
     reload_slicelist[ii] = NULL;
     if(slicei->loaded==1&&slicei->display==1){ // don't reload a slice file that is part of a vector slice
       if(slicei->vloaded==0){
@@ -3311,14 +3311,14 @@ void ReloadAllSliceFiles(int load_flag){
       }
     }
   }
-  for(ii = 0; ii < slicecoll.nsliceinfo; ii++){
+  for(ii = 0; ii < scase.slicecoll.nsliceinfo; ii++){
     slicedata *slicei;
     int i;
     int errorcode;
 
     slicei = reload_slicelist[ii];
     if(slicei==NULL)continue;
-    i = slicei-slicecoll.sliceinfo;
+    i = slicei-scase.slicecoll.sliceinfo;
 
     if(slicei->slice_filetype == SLICE_GEOM){
 #ifdef pp_SLICEFRAME
@@ -3469,10 +3469,10 @@ void LoadUnloadMenu(int value){
 
     LoadVSliceMenu2(UNLOAD_ALL);
 
-    for(i = 0; i < slicecoll.nsliceinfo; i++){
+    for(i = 0; i < scase.slicecoll.nsliceinfo; i++){
       slicedata *slicei;
 
-      slicei = slicecoll.sliceinfo + i;
+      slicei = scase.slicecoll.sliceinfo + i;
       if(slicei->loaded == 1){
         if(slicei->slice_filetype == SLICE_GEOM){
           ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0, &errorcode);
@@ -4461,19 +4461,19 @@ void UnloadVSliceMenu(int value){
   else if(value==UNLOAD_ALL){
     int lastslice=0;
 
-    for(i = slicecoll.nvsliceinfo-1; i>=0; i--){
+    for(i = scase.slicecoll.nvsliceinfo-1; i>=0; i--){
       vslicedata *vslicei;
 
-      vslicei = slicecoll.vsliceinfo+i;
+      vslicei = scase.slicecoll.vsliceinfo+i;
       if(vslicei->loaded==1){
         lastslice = i;
         break;
       }
     }
-    for(i=0;i<slicecoll.nvsliceinfo;i++){
+    for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
       vslicedata *vslicei;
 
-      vslicei = slicecoll.vsliceinfo+i;
+      vslicei = scase.slicecoll.vsliceinfo+i;
       if(vslicei->loaded==1){
         if(lastslice==i){
           ReadVSlice(i, ALL_FRAMES, NULL, UNLOAD, SET_SLICECOLOR, &errorcode);
@@ -4540,19 +4540,19 @@ FILE_SIZE LoadVSliceMenu2(int value){
   if(value==UNLOAD_ALL){
     int lastslice=0;
 
-    for(i=slicecoll.nvsliceinfo-1;i>=0;i--){
+    for(i=scase.slicecoll.nvsliceinfo-1;i>=0;i--){
       vslicedata *vslicei;
 
-      vslicei = slicecoll.vsliceinfo + i;
+      vslicei = scase.slicecoll.vsliceinfo + i;
       if(vslicei->loaded==1){
         lastslice = i;
         break;
       }
     }
-    for(i=0;i<slicecoll.nvsliceinfo;i++){
+    for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
       vslicedata *vslicei;
 
-      vslicei = slicecoll.vsliceinfo + i;
+      vslicei = scase.slicecoll.vsliceinfo + i;
       if(vslicei->loaded==1){
         if(lastslice==i){
           ReadVSlice(i,ALL_FRAMES, NULL,  UNLOAD, SET_SLICECOLOR, &errorcode);
@@ -4572,7 +4572,7 @@ FILE_SIZE LoadVSliceMenu2(int value){
     slicedata *slicei;
 
     return_filesize = ReadVSlice(value, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR, &errorcode);
-    vslicei = slicecoll.vsliceinfo + value;
+    vslicei = scase.slicecoll.vsliceinfo + value;
     slicei = vslicei->val;
     if(script_multivslice==0&&slicei!=NULL&&scriptoutstream!=NULL){
       fprintf(scriptoutstream,"LOADVSLICEM\n");
@@ -4598,27 +4598,27 @@ FILE_SIZE LoadVSliceMenu2(int value){
     submenutype=value/4;
     dir=value%4;
     submenutype=subvslice_menuindex[submenutype];
-    vslicei = slicecoll.vsliceinfo + submenutype;
-    slicei = slicecoll.sliceinfo + vslicei->ival;
+    vslicei = scase.slicecoll.vsliceinfo + submenutype;
+    slicei = scase.slicecoll.sliceinfo + vslicei->ival;
     submenulabel = slicei->label.longlabel;
     START_TIMER(load_time);
 
-    for(i = slicecoll.nvsliceinfo-1; i>=0; i--){
+    for(i = scase.slicecoll.nvsliceinfo-1; i>=0; i--){
       char *longlabel;
 
-      vslicei = slicecoll.vsliceinfo+i;
-      slicei = slicecoll.sliceinfo+vslicei->ival;
+      vslicei = scase.slicecoll.vsliceinfo+i;
+      slicei = scase.slicecoll.sliceinfo+vslicei->ival;
       longlabel = slicei->label.longlabel;
       if(strcmp(longlabel, submenulabel)!=0)continue;
       if(dir!=0&&dir!=slicei->idir)continue;
       lastslice = i;
       break;
     }
-    for(i=0;i<slicecoll.nvsliceinfo;i++){
+    for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
       char *longlabel;
 
-      vslicei = slicecoll.vsliceinfo + i;
-      slicei=slicecoll.sliceinfo + vslicei->ival;
+      vslicei = scase.slicecoll.vsliceinfo + i;
+      slicei=scase.slicecoll.sliceinfo + vslicei->ival;
       longlabel = slicei->label.longlabel;
       if(strcmp(longlabel,submenulabel)!=0)continue;
       if(dir!=0&&dir!=slicei->idir)continue;
@@ -4667,7 +4667,7 @@ void UnloadSliceMenu(int value){
   if(value>=0){
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo+value;
+    slicei = scase.slicecoll.sliceinfo+value;
 
     if(slicei->slice_filetype==SLICE_GEOM){
       ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0, &errorcode);
@@ -4681,10 +4681,10 @@ void UnloadSliceMenu(int value){
   }
   else{
     if(value==UNLOAD_ALL){
-      for(i=0;i<slicecoll.nsliceinfo;i++){
+      for(i=0;i<scase.slicecoll.nsliceinfo;i++){
         slicedata *slicei;
 
-        slicei = slicecoll.sliceinfo+i;
+        slicei = scase.slicecoll.sliceinfo+i;
         if(slicei->slice_filetype == SLICE_GEOM){
           ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0, &errorcode);
         }
@@ -4711,7 +4711,7 @@ void UnloadMultiVSliceMenu(int value){
   multivslicedata *mvslicei;
 
   if(value>=0){
-    mvslicei = slicecoll.multivsliceinfo + value;
+    mvslicei = scase.slicecoll.multivsliceinfo + value;
     for(i=0;i<mvslicei->nvslices;i++){
       UnloadSliceMenu(mvslicei->ivslices[i]);
     }
@@ -4728,7 +4728,7 @@ void UnloadMultiSliceMenu(int value){
   multislicedata *mslicei;
 
   if(value>=0){
-    mslicei = slicecoll.multisliceinfo + value;
+    mslicei = scase.slicecoll.multisliceinfo + value;
     for(i=0;i<mslicei->nslices;i++){
       UnloadSliceMenu(mslicei->islices[i]);
     }
@@ -5066,8 +5066,8 @@ int AnySmoke(void){
 int AnySlices(const char *type){
   int i;
 
-  for(i=0;i<slicecoll.nsliceinfo;i++){
-    if(STRCMP(slicecoll.sliceinfo[i].label.longlabel,type)==0)return 1;
+  for(i=0;i<scase.slicecoll.nsliceinfo;i++){
+    if(STRCMP(scase.slicecoll.sliceinfo[i].label.longlabel,type)==0)return 1;
   }
   return 0;
 }
@@ -5080,7 +5080,7 @@ FILE_SIZE LoadSlicei(int set_slicecolor, int value, int time_frame, float *time_
   FILE_SIZE return_filesize=0;
 
   SNIFF_ERRORS("LoadSlicei: start");
-  slicei = slicecoll.sliceinfo + value;
+  slicei = scase.slicecoll.sliceinfo + value;
   slicei->loading=1;
   if(script_multislice == 0 && scriptoutstream != NULL){
     fprintf(scriptoutstream, "LOADSLICEM\n");
@@ -5109,12 +5109,12 @@ FILE_SIZE LoadAllSliceFiles(int last_slice, char *submenulabel, int dir, int *fc
   int i, file_count=0, errorcode;
   FILE_SIZE load_size = 0;
 
-  for(i = 0; i<slicecoll.nsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nsliceinfo; i++){
     char *longlabel;
     int set_slicecolor;
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo+i;
+    slicei = scase.slicecoll.sliceinfo+i;
     longlabel = slicei->label.longlabel;
     if(strcmp(longlabel, submenulabel)!=0)continue;
     if(dir!=0&&dir!=slicei->idir)continue;
@@ -5159,8 +5159,8 @@ void LoadSliceMenu(int value){
 #endif
 
       case UNLOAD_ALL:
-        for(i=0;i<slicecoll.nsliceinfo;i++){
-          slicei = slicecoll.sliceinfo + i;
+        for(i=0;i<scase.slicecoll.nsliceinfo;i++){
+          slicei = scase.slicecoll.sliceinfo + i;
           if(slicei->loaded == 1){
             if(slicei->slice_filetype == SLICE_GEOM){
               ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0, &errorcode);
@@ -5187,15 +5187,15 @@ void LoadSliceMenu(int value){
         value = -(1000 + value);
         submenutype=value/4;
         submenutype=subslice_menuindex[submenutype];
-        slicei = slicecoll.sliceinfo + submenutype;
+        slicei = scase.slicecoll.sliceinfo + submenutype;
 #ifndef pp_SLICEFRAME
         submenulabel = slicei->label.longlabel;
         dir=value%4;
-        last_slice = slicecoll.nsliceinfo - 1;
-        for(i = slicecoll.nsliceinfo-1; i>=0; i--){
+        last_slice = scase.slicecoll.nsliceinfo - 1;
+        for(i = scase.slicecoll.nsliceinfo-1; i>=0; i--){
           char *longlabel;
 
-          slicei = slicecoll.sliceinfo + i;
+          slicei = scase.slicecoll.sliceinfo + i;
           longlabel = slicei->label.longlabel;
           if(strcmp(longlabel, submenulabel) != 0)continue;
           if(dir != 0 && dir != slicei->idir)continue;
@@ -5229,12 +5229,12 @@ void LoadMultiVSliceMenu(int value){
   if(value>=0){
     multivslicedata *mvslicei;
 
-    mvslicei = slicecoll.multivsliceinfo + value;
+    mvslicei = scase.slicecoll.multivsliceinfo + value;
     if(scriptoutstream!=NULL){
       if(mvslicei->nvslices>0){
         slicedata *slicei;
 
-        slicei = slicecoll.sliceinfo + mvslicei->ivslices[0];
+        slicei = scase.slicecoll.sliceinfo + mvslicei->ivslices[0];
         fprintf(scriptoutstream,"LOADVSLICE\n");
         fprintf(scriptoutstream," %s\n",slicei->label.longlabel);
         fprintf(scriptoutstream," %i %f\n",slicei->idir,slicei->position_orig);
@@ -5245,8 +5245,8 @@ void LoadMultiVSliceMenu(int value){
       char *longlabel=NULL;
       vslicedata *vslice1;
 
-      vslice1 = slicecoll.vsliceinfo+mvslicei->ivslices[0];
-      if(vslice1->ival>=0)longlabel = slicecoll.sliceinfo[vslice1->ival].label.longlabel;
+      vslice1 = scase.slicecoll.vsliceinfo+mvslicei->ivslices[0];
+      if(vslice1->ival>=0)longlabel = scase.slicecoll.sliceinfo[vslice1->ival].label.longlabel;
       UnloadAllSliceFiles(longlabel); // unload all vector slices except for the type being loaded now
       if(load_only_when_unloaded == 0){
         for(i = 0; i < mvslicei->nvslices; i++){
@@ -5258,14 +5258,14 @@ void LoadMultiVSliceMenu(int value){
       for(i = 0; i<mvslicei->nvslices; i++){
         vslicedata *vslicei;
 
-        vslicei = slicecoll.vsliceinfo+mvslicei->ivslices[i];
+        vslicei = scase.slicecoll.vsliceinfo+mvslicei->ivslices[i];
         vslicei->finalize = 0;
       }
       for(i = mvslicei->nvslices-1; i>=0; i--){
         vslicedata *vslicei;
 
-        vslicei = slicecoll.vsliceinfo+mvslicei->ivslices[i];
-        IF_NOT_USEMESH_CONTINUE(vslicei->loaded,slicecoll.sliceinfo[vslicei->ival].blocknumber);
+        vslicei = scase.slicecoll.vsliceinfo+mvslicei->ivslices[i];
+        IF_NOT_USEMESH_CONTINUE(vslicei->loaded,scase.slicecoll.sliceinfo[vslicei->ival].blocknumber);
         if(vslicei->skip==0&&vslicei->loaded==0){
           vslicei->finalize = 1;
           break;
@@ -5274,8 +5274,8 @@ void LoadMultiVSliceMenu(int value){
       for(i = 0; i<mvslicei->nvslices; i++){
         vslicedata *vslicei;
 
-        vslicei = slicecoll.vsliceinfo + mvslicei->ivslices[i];
-        IF_NOT_USEMESH_CONTINUE(vslicei->loaded,slicecoll.sliceinfo[vslicei->ival].blocknumber);
+        vslicei = scase.slicecoll.vsliceinfo + mvslicei->ivslices[i];
+        IF_NOT_USEMESH_CONTINUE(vslicei->loaded,scase.slicecoll.sliceinfo[vslicei->ival].blocknumber);
         if(vslicei->skip==0&&vslicei->loaded==0){
 #ifdef pp_SLICEFRAME
           LoadVSliceMenu2(mvslicei->ivslices[i]);
@@ -5303,18 +5303,18 @@ void LoadMultiVSliceMenu(int value){
     dir=value%4;
     submenutype=msubvslice_menuindex[submenutype];
 
-    slicei = slicecoll.sliceinfo + submenutype;
+    slicei = scase.slicecoll.sliceinfo + submenutype;
     submenulabel = slicei->label.longlabel;
     START_TIMER(load_time);
-    for(i = 0; i<slicecoll.nmultivsliceinfo; i++){
+    for(i = 0; i<scase.slicecoll.nmultivsliceinfo; i++){
       char *longlabel;
       multivslicedata *mvslicei;
       slicedata *slicej;
       vslicedata *vslicej;
 
-      mvslicei = slicecoll.multivsliceinfo + i;
-      vslicej = slicecoll.vsliceinfo + mvslicei->ivslices[0];
-      slicej = slicecoll.sliceinfo+vslicej->ival;
+      mvslicei = scase.slicecoll.multivsliceinfo + i;
+      vslicej = scase.slicecoll.vsliceinfo + mvslicei->ivslices[0];
+      slicej = scase.slicecoll.sliceinfo+vslicej->ival;
       longlabel = slicej->label.longlabel;
       if(strcmp(longlabel,submenulabel)!=0)continue;
       if(dir!=0&&dir!=slicej->idir)continue;
@@ -5386,7 +5386,7 @@ FILE_SIZE LoadAllMSlicesMT(int last_slice, multislicedata *mslicei, int *fcount)
     slicedata *slicei;
     int set_slicecolor;
 
-    slicei = slicecoll.sliceinfo + mslicei->islices[i];
+    slicei = scase.slicecoll.sliceinfo + mslicei->islices[i];
     set_slicecolor = DEFER_SLICECOLOR;
     IF_NOT_USEMESH_CONTINUE(slicei->loaded,slicei->blocknumber);
 
@@ -5433,12 +5433,12 @@ void LoadMultiSliceMenu(int value){
   if(value>=0){
     multislicedata *mslicei;
 
-    mslicei = slicecoll.multisliceinfo + value;
+    mslicei = scase.slicecoll.multisliceinfo + value;
     if(scriptoutstream!=NULL){
       if(mslicei->nslices>0){
         slicedata *slicei;
 
-        slicei = slicecoll.sliceinfo + mslicei->islices[0];
+        slicei = scase.slicecoll.sliceinfo + mslicei->islices[0];
         fprintf(scriptoutstream,"LOADSLICE\n");
         fprintf(scriptoutstream," %s\n",slicei->label.longlabel);
         fprintf(scriptoutstream," %i %f\n",slicei->idir,slicei->position_orig);
@@ -5451,7 +5451,7 @@ void LoadMultiSliceMenu(int value){
 
       char *longlabel;
 
-      longlabel = slicecoll.sliceinfo[mslicei->islices[0]].label.longlabel;
+      longlabel = scase.slicecoll.sliceinfo[mslicei->islices[0]].label.longlabel;
       UnloadAllSliceFiles(longlabel); // unload all slice and vector slices not of type 'longlabel'
       if(load_only_when_unloaded == 0){ // unload slice being loaded if it is already loaded and of the same type
         for(i = 0;i<mslicei->nslices; i++){
@@ -5462,7 +5462,7 @@ void LoadMultiSliceMenu(int value){
       for(i = mslicei->nslices-1; i >=0; i--){
         slicedata *slicei;
 
-        slicei = slicecoll.sliceinfo + mslicei->islices[i];
+        slicei = scase.slicecoll.sliceinfo + mslicei->islices[i];
         IF_NOT_USEMESH_CONTINUE(slicei->loaded,slicei->blocknumber);
         if(slicei->slice_filetype==SLICE_TERRAIN&&slicei->have_agl_data==0)continue;
         if(slicei->skipdup== 0){
@@ -5473,7 +5473,7 @@ void LoadMultiSliceMenu(int value){
       for(i = 0; i < mslicei->nslices; i++){
         slicedata *slicei;
 
-        slicei = slicecoll.sliceinfo + mslicei->islices[i];
+        slicei = scase.slicecoll.sliceinfo + mslicei->islices[i];
         if(slicei->skipdup== 1 && slicei->loaded == 1){
           UnloadSliceMenu(mslicei->islices[i]);
         }
@@ -5512,13 +5512,13 @@ void LoadMultiSliceMenu(int value){
     submenutype=value/4;
     dir=value%4;
     submenutype=msubslice_menuindex[submenutype];
-    slicei = slicecoll.sliceinfo + submenutype;
+    slicei = scase.slicecoll.sliceinfo + submenutype;
     submenulabel = slicei->label.longlabel;
     START_TIMER(load_time);
-    for(i = 0; i<slicecoll.nsliceinfo; i++){
+    for(i = 0; i<scase.slicecoll.nsliceinfo; i++){
       char *longlabel;
 
-      slicei = slicecoll.sliceinfo + i;
+      slicei = scase.slicecoll.sliceinfo + i;
       if(slicei->skipdup== 1)continue;
       longlabel = slicei->label.longlabel;
       if(strcmp(longlabel,submenulabel)!=0)continue;
@@ -5621,12 +5621,12 @@ void LoadAllMultiSliceMenu(void){
   char *label;
 
   label = slicebounds_cpp[sliceload_boundtype].label;
-  for(i = 0; i < slicecoll.nmultisliceinfo; i++){
+  for(i = 0; i < scase.slicecoll.nmultisliceinfo; i++){
     multislicedata *mslicei;
     slicedata *slicei;
 
-    mslicei = slicecoll.multisliceinfo + i;
-    slicei = slicecoll.sliceinfo + mslicei->islices[0];
+    mslicei = scase.slicecoll.multisliceinfo + i;
+    slicei = scase.slicecoll.sliceinfo + mslicei->islices[0];
     if(slicei->volslice == 1)continue;
     if(sliceload_dir == 0 && slicei->idir != 1)continue;
     if(sliceload_dir == 1 && slicei->idir != 2)continue;
@@ -5645,14 +5645,14 @@ void LoadAllMultiVSliceMenu(void){
   char *label;
 
   label = slicebounds_cpp[sliceload_boundtype].label;
-  for(i = 0; i < slicecoll.nmultivsliceinfo; i++){
+  for(i = 0; i < scase.slicecoll.nmultivsliceinfo; i++){
     multivslicedata *mvslicei;
     slicedata *slicei;
     vslicedata *vslicei;
 
-    mvslicei = slicecoll.multivsliceinfo + i;
-    vslicei = slicecoll.vsliceinfo + mvslicei->ivslices[0];
-    slicei = slicecoll.sliceinfo + vslicei->ival;
+    mvslicei = scase.slicecoll.multivsliceinfo + i;
+    vslicei = scase.slicecoll.vsliceinfo + mvslicei->ivslices[0];
+    slicei = scase.slicecoll.sliceinfo + vslicei->ival;
     if(slicei->volslice == 1)continue;
     if(sliceload_dir == 0 && slicei->idir != 1)continue;
     if(sliceload_dir == 1 && slicei->idir != 2)continue;
@@ -7951,14 +7951,14 @@ void InitShowMultiSliceMenu(int *showmultislicemenuptr, int showhideslicemenu, i
 
     CREATEMENU(showmultislicemenu, ShowMultiSliceMenu);
     *showmultislicemenuptr = showmultislicemenu;
-    for(i = 0; i<slicecoll.nmultisliceinfo; i++){
+    for(i = 0; i<scase.slicecoll.nmultisliceinfo; i++){
       slicedata *sd;
       char menulabel[1024];
       multislicedata *mslicei;
 
-      mslicei = slicecoll.multisliceinfo+i;
+      mslicei = scase.slicecoll.multisliceinfo+i;
       if(mslicei->loaded==0)continue;
-      sd = slicecoll.sliceinfo+mslicei->islices[0];
+      sd = scase.slicecoll.sliceinfo+mslicei->islices[0];
       STRCPY(menulabel, "");
       if(plotstate==DYNAMIC_PLOTS&&mslicei->display!=0&&sd->slicefile_labelindex==slicefile_labelindex){
         if(mslicei->display==1){
@@ -8031,11 +8031,11 @@ void InitUnloadSliceMenu(int *unloadslicemenuptr){
 
   CREATEMENU(unloadslicemenu,UnloadSliceMenu);
   *unloadslicemenuptr = unloadslicemenu;
-  for(i=0;i<slicecoll.nsliceinfo;i++){
+  for(i=0;i<scase.slicecoll.nsliceinfo;i++){
     slicedata *sd;
     char menulabel[1024];
 
-    sd = slicecoll.sliceinfo + sextras.sliceorderindex[i];
+    sd = scase.slicecoll.sliceinfo + sextras.sliceorderindex[i];
     if(sd->loaded==1){
       STRCPY(menulabel,sd->menulabel2);
       glutAddMenuEntry(menulabel,sextras.sliceorderindex[i]);
@@ -8121,10 +8121,10 @@ void InitUnloadMultiSliceMenu(int *unloadmultislicemenuptr){
   CREATEMENU(unloadmultislicemenu, UnloadMultiSliceMenu);
   *unloadmultislicemenuptr = unloadmultislicemenu;
 
-  for(i = 0; i<slicecoll.nmultisliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nmultisliceinfo; i++){
     multislicedata *mslicei;
 
-    mslicei = slicecoll.multisliceinfo+i;
+    mslicei = scase.slicecoll.multisliceinfo+i;
     if(mslicei->loaded!=0){
       glutAddMenuEntry(mslicei->menulabel2, i);
     }
@@ -8148,11 +8148,11 @@ void InitLoadMultiSubMenu(int **loadsubmslicemenuptr, int *nmultisliceloadedptr)
 
   nmultisliceloaded = 0;
   nloadsubmslicemenu = 1;
-  for(i = 1;i<slicecoll.nmultisliceinfo;i++){
+  for(i = 1;i<scase.slicecoll.nmultisliceinfo;i++){
     slicedata *sd, *sdim1;
 
-    sd = slicecoll.sliceinfo+(slicecoll.multisliceinfo+i)->islices[0];
-    sdim1 = slicecoll.sliceinfo+(slicecoll.multisliceinfo+i-1)->islices[0];
+    sd = scase.slicecoll.sliceinfo+(scase.slicecoll.multisliceinfo+i)->islices[0];
+    sdim1 = scase.slicecoll.sliceinfo+(scase.slicecoll.multisliceinfo+i-1)->islices[0];
     if(strcmp(sd->label.longlabel, sdim1->label.longlabel)!=0)nloadsubmslicemenu++;
   }
   loadsubmslicemenu = *loadsubmslicemenuptr;
@@ -8162,17 +8162,17 @@ void InitLoadMultiSubMenu(int **loadsubmslicemenuptr, int *nmultisliceloadedptr)
     loadsubmslicemenu[i] = 0;
   }
   nloadsubmslicemenu = 0;
-  for(i = 0;i<slicecoll.nmultisliceinfo;i++){
+  for(i = 0;i<scase.slicecoll.nmultisliceinfo;i++){
     slicedata *sd, *sdim1;
     char menulabel[1024];
     multislicedata *mslicei,*msliceim1;
 
     if(i>0){
-      msliceim1 = slicecoll.multisliceinfo+i-1;
-      sdim1 = slicecoll.sliceinfo+msliceim1->islices[0];
+      msliceim1 = scase.slicecoll.multisliceinfo+i-1;
+      sdim1 = scase.slicecoll.sliceinfo+msliceim1->islices[0];
     }
-    mslicei = slicecoll.multisliceinfo+i;
-    sd = slicecoll.sliceinfo+mslicei->islices[0];
+    mslicei = scase.slicecoll.multisliceinfo+i;
+    sd = scase.slicecoll.sliceinfo+mslicei->islices[0];
 
     if(i==0||strcmp(sd->label.longlabel, sdim1->label.longlabel)!=0){
       msubslice_menuindex[nloadsubmslicemenu]=mslicei->islices[0];
@@ -8252,19 +8252,19 @@ int CompareSubSliceMenu(const void *arg1, const void *arg2){
 void InitSubSliceMenuInfo(){
   int i;
 
-  if(slicecoll.nsliceinfo == 0 || subslicemenuinfo != NULL)return;
+  if(scase.slicecoll.nsliceinfo == 0 || subslicemenuinfo != NULL)return;
   INIT_PRINT_TIMER(subslicemenu_timer);
-  NewMemory((void **)&subslicemenuinfo, slicecoll.nsliceinfo * sizeof(subslicemenudata));
+  NewMemory((void **)&subslicemenuinfo, scase.slicecoll.nsliceinfo * sizeof(subslicemenudata));
   nsubslicex = 0;
   nsubslicey = 0;
   nsubslicez = 0;
   nsubslicexyz = 0;
-  for(i = 0;i<slicecoll.nmultisliceinfo;i++){
+  for(i = 0;i<scase.slicecoll.nmultisliceinfo;i++){
     slicedata *sd, *sdim1;
     subslicemenudata *si;
 
-    sd = slicecoll.sliceinfo+(slicecoll.multisliceinfo+i)->islices[0];
-    if(i>0)sdim1 = slicecoll.sliceinfo+(slicecoll.multisliceinfo+i-1)->islices[0];
+    sd = scase.slicecoll.sliceinfo+(scase.slicecoll.multisliceinfo+i)->islices[0];
+    if(i>0)sdim1 = scase.slicecoll.sliceinfo+(scase.slicecoll.multisliceinfo+i-1)->islices[0];
 
     if(i==0||strcmp(sd->label.longlabel, sdim1->label.longlabel)!=0){
       si = subslicemenuinfo + nsubslicemenuinfo;
@@ -8312,24 +8312,24 @@ void InitSubSliceMenuInfo(){
 void InitSubVectorSliceMenuInfo(){
   int i;
 
-  if(slicecoll.nmultivsliceinfo == 0 || subvectorslicemenuinfo != NULL)return;
+  if(scase.slicecoll.nmultivsliceinfo == 0 || subvectorslicemenuinfo != NULL)return;
   INIT_PRINT_TIMER(subvectorslicemenu_timer);
-  NewMemory((void **)&subvectorslicemenuinfo, slicecoll.nmultivsliceinfo * sizeof(subslicemenudata));
+  NewMemory((void **)&subvectorslicemenuinfo, scase.slicecoll.nmultivsliceinfo * sizeof(subslicemenudata));
   nsubvectorslicex = 0;
   nsubvectorslicey = 0;
   nsubvectorslicez = 0;
   nsubvectorslicexyz = 0;
-  for(i = 0; i<slicecoll.nmultivsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nmultivsliceinfo; i++){
     vslicedata *vi, *vim1;
     slicedata *si, *sim1;
     subslicemenudata *vd;
 
-    vi = slicecoll.vsliceinfo+(slicecoll.multivsliceinfo+i)->ivslices[0];
-    si = slicecoll.sliceinfo+vi->ival;
+    vi = scase.slicecoll.vsliceinfo+(scase.slicecoll.multivsliceinfo+i)->ivslices[0];
+    si = scase.slicecoll.sliceinfo+vi->ival;
 
     if(i>0){
-      vim1 = slicecoll.vsliceinfo+(slicecoll.multivsliceinfo+i-1)->ivslices[0];
-      sim1 = slicecoll.sliceinfo+vim1->ival;
+      vim1 = scase.slicecoll.vsliceinfo+(scase.slicecoll.multivsliceinfo+i-1)->ivslices[0];
+      sim1 = scase.slicecoll.sliceinfo+vim1->ival;
     }
     if(i==0||(i>0&&strcmp(si->label.longlabel, sim1->label.longlabel)!=0)){
       vd = subvectorslicemenuinfo + nsubvectorslicemenuinfo;
@@ -8481,11 +8481,11 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
   CREATEMENU(loadmultislicemenu, LoadMultiSliceMenu);
   *loadmultislicemenuptr = loadmultislicemenu;
   nloadsubmslicemenu = 0;
-  for(i = 0;i<slicecoll.nmultisliceinfo;i++){
+  for(i = 0;i<scase.slicecoll.nmultisliceinfo;i++){
     slicedata *sd, *sdim1;
 
-    sd = slicecoll.sliceinfo+(slicecoll.multisliceinfo+i)->islices[0];
-    if(i>0)sdim1 = slicecoll.sliceinfo+(slicecoll.multisliceinfo+i-1)->islices[0];
+    sd = scase.slicecoll.sliceinfo+(scase.slicecoll.multisliceinfo+i)->islices[0];
+    if(i>0)sdim1 = scase.slicecoll.sliceinfo+(scase.slicecoll.multisliceinfo+i-1)->islices[0];
 
     if(i==0||strcmp(sd->label.longlabel, sdim1->label.longlabel)!=0){
       char mlabel[1024];
@@ -8524,7 +8524,7 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
     if(nsubslicez>0)GLUTADDSUBMENU("Load all z slices",     loadsubslicezmenu);
     if(nsubslicexyz>0)GLUTADDSUBMENU("Load all x,y,z slices", loadsubslicexyzmenu);
   }
-  if(slicecoll.nmultisliceinfo>0)glutAddMenuEntry("-", MENU_DUMMY);
+  if(scase.slicecoll.nmultisliceinfo>0)glutAddMenuEntry("-", MENU_DUMMY);
 
   GLUTADDSUBMENU(_("Skip"), sliceskipmenu);
   if(sortslices == 1){
@@ -8573,12 +8573,12 @@ void InitUnloadVSLiceMenu(int *unloadvslicemenuptr){
 
   CREATEMENU(unloadvslicemenu,UnloadVSliceMenu);
   *unloadvslicemenuptr = unloadvslicemenu;
-  for(ii=0;ii<slicecoll.nvsliceinfo;ii++){
+  for(ii=0;ii<scase.slicecoll.nvsliceinfo;ii++){
     vslicedata *vd;
     int i;
 
     i = sextras.vsliceorderindex[ii];
-    vd = slicecoll.vsliceinfo + i;
+    vd = scase.slicecoll.vsliceinfo + i;
     if(vd->loaded==0)continue;
     glutAddMenuEntry(vd->menulabel2,i);
   }
@@ -8629,10 +8629,10 @@ void InitMultiVectorUnloadSliceMenu(int *unloadmultivslicemenuptr){
 
   CREATEMENU(unloadmultivslicemenu, UnloadMultiVSliceMenu);
   *unloadmultivslicemenuptr = unloadmultivslicemenu;
-  for(i = 0; i<slicecoll.nmultivsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nmultivsliceinfo; i++){
     multivslicedata *mvslicei;
 
-    mvslicei = slicecoll.multivsliceinfo+i;
+    mvslicei = scase.slicecoll.multivsliceinfo+i;
     if(mvslicei->loaded!=0){
       glutAddMenuEntry(mvslicei->menulabel2, i);
     }
@@ -8649,14 +8649,14 @@ void InitMultiVectorSubMenu(int **loadsubmvslicemenuptr){
 
 
   nloadsubmvslicemenu = 1;
-  for(i = 1; i<slicecoll.nmultivsliceinfo; i++){
+  for(i = 1; i<scase.slicecoll.nmultivsliceinfo; i++){
     vslicedata *vi, *vim1;
     slicedata *si, *sim1;
 
-    vi = slicecoll.vsliceinfo+(slicecoll.multivsliceinfo+i)->ivslices[0];
-    vim1 = slicecoll.vsliceinfo+(slicecoll.multivsliceinfo+i-1)->ivslices[0];
-    si = slicecoll.sliceinfo+vi->ival;
-    sim1 = slicecoll.sliceinfo+vim1->ival;
+    vi = scase.slicecoll.vsliceinfo+(scase.slicecoll.multivsliceinfo+i)->ivslices[0];
+    vim1 = scase.slicecoll.vsliceinfo+(scase.slicecoll.multivsliceinfo+i-1)->ivslices[0];
+    si = scase.slicecoll.sliceinfo+vi->ival;
+    sim1 = scase.slicecoll.sliceinfo+vim1->ival;
     if(strcmp(si->label.longlabel, sim1->label.longlabel)!=0){
       nloadsubmvslicemenu++;
     }
@@ -8669,20 +8669,20 @@ void InitMultiVectorSubMenu(int **loadsubmvslicemenuptr){
   }
 
   nloadsubmvslicemenu = 0;
-  for(i = 0; i<slicecoll.nmultivsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nmultivsliceinfo; i++){
     vslicedata *vi, *vim1;
     slicedata *si, *sim1;
     char menulabel[1024];
     multivslicedata *mvslicei;
 
-    mvslicei = slicecoll.multivsliceinfo+i;
+    mvslicei = scase.slicecoll.multivsliceinfo+i;
 
     if(i>0){
-      vim1 = slicecoll.vsliceinfo+(slicecoll.multivsliceinfo+i-1)->ivslices[0];
-      sim1 = slicecoll.sliceinfo+vim1->ival;
+      vim1 = scase.slicecoll.vsliceinfo+(scase.slicecoll.multivsliceinfo+i-1)->ivslices[0];
+      sim1 = scase.slicecoll.sliceinfo+vim1->ival;
     }
-    vi = slicecoll.vsliceinfo+mvslicei->ivslices[0];
-    si = slicecoll.sliceinfo+vi->ival;
+    vi = scase.slicecoll.vsliceinfo+mvslicei->ivslices[0];
+    si = scase.slicecoll.sliceinfo+vi->ival;
     if(i==0||strcmp(si->label.longlabel, sim1->label.longlabel)!=0){
       CREATEMENU(loadsubmvslicemenu[nloadsubmvslicemenu], LoadMultiVSliceMenu);
       msubvslice_menuindex[nloadsubmvslicemenu] = vi->ival;
@@ -8773,15 +8773,15 @@ void InitMultiVectorLoadMenu(int *loadmultivslicemenuptr, int *loadsubmvslicemen
   nloadsubmvslicemenu = 0;
   CREATEMENU(loadmultivslicemenu, LoadMultiVSliceMenu);
   *loadmultivslicemenuptr = loadmultivslicemenu;
-  for(i = 0; i<slicecoll.nmultivsliceinfo; i++){
+  for(i = 0; i<scase.slicecoll.nmultivsliceinfo; i++){
     vslicedata *vi, *vim1;
     slicedata *si, *sim1;
 
-    vi = slicecoll.vsliceinfo+(slicecoll.multivsliceinfo+i)->ivslices[0];
-    si = slicecoll.sliceinfo+vi->ival;
+    vi = scase.slicecoll.vsliceinfo+(scase.slicecoll.multivsliceinfo+i)->ivslices[0];
+    si = scase.slicecoll.sliceinfo+vi->ival;
     if(i>0){
-      vim1 = slicecoll.vsliceinfo+(slicecoll.multivsliceinfo+i-1)->ivslices[0];
-      sim1 = slicecoll.sliceinfo+vim1->ival;
+      vim1 = scase.slicecoll.vsliceinfo+(scase.slicecoll.multivsliceinfo+i-1)->ivslices[0];
+      sim1 = scase.slicecoll.sliceinfo+vim1->ival;
     }
     if(i==0||(i>0&&strcmp(si->label.longlabel, sim1->label.longlabel)!=0)){
       char mlabel[1024];
@@ -9039,11 +9039,11 @@ static int menu_count=0;
   }
   nmenus = 0;
 
-  for(i=0;i<slicecoll.nmultisliceinfo;i++){
+  for(i=0;i<scase.slicecoll.nmultisliceinfo;i++){
     multislicedata *mslicei;
     int j;
 
-    mslicei = slicecoll.multisliceinfo + i;
+    mslicei = scase.slicecoll.multisliceinfo + i;
     mslicei->loaded=0;
     mslicei->display=0;
     mslicei->loadable = 0;
@@ -9051,7 +9051,7 @@ static int menu_count=0;
       slicedata *sd;
       meshdata *meshi;
 
-      sd = slicecoll.sliceinfo + mslicei->islices[j];
+      sd = scase.slicecoll.sliceinfo + mslicei->islices[j];
       meshi = scase.meshescoll.meshinfo + sd->blocknumber;
       if(meshi->use == 1)mslicei->loadable = 1;
       if(sd->loaded==1)mslicei->loaded++;
@@ -9070,11 +9070,11 @@ static int menu_count=0;
       mslicei->display=1;
     }
   }
-  for(i=0;i<slicecoll.nmultivsliceinfo;i++){
+  for(i=0;i<scase.slicecoll.nmultivsliceinfo;i++){
     multivslicedata *mvslicei;
     int j;
 
-    mvslicei = slicecoll.multivsliceinfo + i;
+    mvslicei = scase.slicecoll.multivsliceinfo + i;
     mvslicei->loaded   = 0;
     mvslicei->display  = 0;
     mvslicei->loadable = 0;
@@ -9083,8 +9083,8 @@ static int menu_count=0;
       meshdata *meshi;
       slicedata *valslice;
 
-      vd = slicecoll.vsliceinfo + mvslicei->ivslices[j];
-      valslice = slicecoll.sliceinfo + vd->ival;
+      vd = scase.slicecoll.vsliceinfo + mvslicei->ivslices[j];
+      valslice = scase.slicecoll.sliceinfo + vd->ival;
       meshi = scase.meshescoll.meshinfo + valslice->blocknumber;
       if(meshi->use==1)mvslicei->loadable = 1;
       if(vd->loaded==1)mvslicei->loaded++;
@@ -11060,7 +11060,7 @@ static int menu_count=0;
   if(nvsliceloaded==0){
     vd_shown=NULL;
   }
-  if(slicecoll.nvsliceinfo>0&&nvsliceloaded>0){
+  if(scase.slicecoll.nvsliceinfo>0&&nvsliceloaded>0){
     CREATEMENU(showvslicemenu,ShowVSliceMenu);
     if(vd_shown!=NULL&&nvsliceloaded!=0){
       char menulabel[1024];
@@ -11068,7 +11068,7 @@ static int menu_count=0;
 
       STRCPY(menulabel, "");
       if(showall_slices==1)STRCAT(menulabel, "*");
-      slice_shown = slicecoll.sliceinfo+vd_shown->ival;
+      slice_shown = scase.slicecoll.sliceinfo+vd_shown->ival;
       STRCAT(menulabel, slice_shown->label.longlabel);
       STRCAT(menulabel, ", ");
       STRCAT(menulabel, slice_shown->cdir);
@@ -11652,7 +11652,7 @@ static int menu_count=0;
   CREATEMENU(filesdialogmenu, DialogMenu);
   glutAddMenuEntry(_("Auto load data files..."), DIALOG_AUTOLOAD);
 #ifdef pp_COMPRESS
-  if(smokezippath!=NULL&&(npatchinfo>0||smoke3dcoll.nsmoke3dinfo>0||slicecoll.nsliceinfo>0)){
+  if(smokezippath!=NULL&&(npatchinfo>0||smoke3dcoll.nsmoke3dinfo>0||scase.slicecoll.nsliceinfo>0)){
 #ifdef pp_DIALOG_SHORTCUTS
     glutAddMenuEntry(_("Compress data files...  ALT z"), DIALOG_SMOKEZIP);
 #else
@@ -12173,7 +12173,7 @@ static int menu_count=0;
     glutAddMenuEntry(_("Unload"), MENU_PARTICLE_UNLOAD_ALL);
   }
 
-  if(slicecoll.nvsliceinfo>0){
+  if(scase.slicecoll.nvsliceinfo>0){
 
   //*** setup vector slice menus
 
@@ -12201,7 +12201,7 @@ static int menu_count=0;
 
   //*** setup slice menus
 
-  if(slicecoll.nsliceinfo>0||have_geom_slice_menus==1){
+  if(scase.slicecoll.nsliceinfo>0||have_geom_slice_menus==1){
     InitUnloadSliceMenu(&unloadslicemenu);
     InitSliceSkipMenu(&sliceskipmenu);
   }
@@ -12779,7 +12779,7 @@ static int menu_count=0;
 /* -------------------------------- compress menu -------------------------- */
 
 #ifdef pp_COMPRESS
-    if(smokezippath != NULL && (npatchinfo > 0 || smoke3dcoll.nsmoke3dinfo > 0 || slicecoll.nsliceinfo > 0)){
+    if(smokezippath != NULL && (npatchinfo > 0 || smoke3dcoll.nsmoke3dinfo > 0 || scase.slicecoll.nsliceinfo > 0)){
     CREATEMENU(compressmenu,CompressMenu);
     glutAddMenuEntry(_("Compression options"),MENU_DUMMY);  // -c
     if(overwrite_all==1){
@@ -13013,7 +13013,7 @@ static int menu_count=0;
         }
         GLUTADDSUBMENU(loadmenulabel, loadmultislicemenu);
       }
-      else if(slicecoll.nsliceinfo > 0){
+      else if(scase.slicecoll.nsliceinfo > 0){
         strcpy(loadmenulabel, "Slice");
         if(tload_step > 1){
           sprintf(steplabel, "/Skip %i", tload_skip);
@@ -13032,7 +13032,7 @@ static int menu_count=0;
         }
         GLUTADDSUBMENU(loadmenulabel,loadmultivslicemenu);
       }
-      else if(slicecoll.nvsliceinfo>0){
+      else if(scase.slicecoll.nvsliceinfo>0){
         strcpy(loadmenulabel,_("Vector slice"));
         if(tload_step > 1){
           sprintf(steplabel,"/Skip %i",tload_skip);
@@ -13094,7 +13094,7 @@ static int menu_count=0;
       GLUTADDSUBMENU(_("Configuration files"),smokeviewinimenu);
       GLUTADDSUBMENU(_("Scripts"),scriptmenu);
 #ifdef pp_COMPRESS
-      if(smokezippath!=NULL&&(npatchinfo>0||smoke3dcoll.nsmoke3dinfo>0||slicecoll.nsliceinfo>0)){
+      if(smokezippath!=NULL&&(npatchinfo>0||smoke3dcoll.nsmoke3dinfo>0||scase.slicecoll.nsliceinfo>0)){
         GLUTADDSUBMENU(_("Compression"),compressmenu);
       }
 #endif
