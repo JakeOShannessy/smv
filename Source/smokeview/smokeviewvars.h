@@ -2264,7 +2264,6 @@ SVEXTERN int SVDECL(visMAINmenus,0);
 SVEXTERN int SVDECL(ijkbarmax,5);
 SVEXTERN int SVDECL(blockage_as_input,0), SVDECL(blockage_snapped,1);
 SVEXTERN int SVDECL(show_cad_and_grid,0);
-SVEXTERN labels_collection SVDECL(labelscoll, {0});
 SVEXTERN int SVDECL(*isotypes,NULL), SVDECL(*boundarytypes,NULL);
 SVEXTERN plot3ddata SVDECL(*plot3dinfo,NULL);
 SVEXTERN int SVDECL(iplot3dtimelist, -1), SVDECL(nplot3dtimelist, 0);

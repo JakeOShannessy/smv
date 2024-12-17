@@ -434,7 +434,7 @@ void ShowScene2(int mode){
 
   if(visLabels == 1){
     CLIP_GEOMETRY;
-    DrawLabels(&labelscoll);
+    DrawLabels(&scase.labelscoll);
   }
 
   /* ++++++++++++++++++++++++ draw animated isosurfaces +++++++++++++++++++++++++ */

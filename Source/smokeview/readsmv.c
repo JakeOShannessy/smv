@@ -6536,7 +6536,7 @@ void UpdateEvents(void){
 
       label.useforegroundcolor = 0;
       label.show_always = 0;
-      LabelInsert(&labelscoll, &label);
+      LabelInsert(&scase.labelscoll, &label);
       event_file_exists = 1;
     }
   }
@@ -8938,7 +8938,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         rgbtemp[0]=frgbtemp[0]*255;
         rgbtemp[1]=frgbtemp[1]*255;
         rgbtemp[2]=frgbtemp[2]*255;
-        LabelInsert(&labelscoll, labeli);
+        LabelInsert(&scase.labelscoll, labeli);
       }
       continue;
     }
@@ -15549,7 +15549,7 @@ int ReadIni2(char *inifile, int localfile){
         TrimBack(buffer);
         bufferptr = TrimFront(buffer);
         strcpy(labeli->name, bufferptr);
-        LabelInsert(&labelscoll, labeli);
+        LabelInsert(&scase.labelscoll, labeli);
         continue;
       }
       if(MatchINI(buffer, "VIEWTIMES") == 1){
@@ -16245,7 +16245,7 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, " %i %i %i %i\n", vis_gslice_data, show_gslice_triangles, show_gslice_triangulation, show_gslice_normal);
   fprintf(fileout, " %f %f %f\n", gslice_xyz[0], gslice_xyz[1], gslice_xyz[2]);
   fprintf(fileout, " %f %f\n", gslice_normal_azelev[0], gslice_normal_azelev[1]);
-  for(thislabel = labelscoll.label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
+  for(thislabel = scase.labelscoll.label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
     labeldata *labeli;
     float *xyz, *rgbtemp, *tstart_stop;
     int *useforegroundcolor, *show_always;

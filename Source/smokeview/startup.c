@@ -1372,7 +1372,7 @@ void InitVars(void){
   strcpy((char *)degC,"C");
   strcpy((char *)degF,"F");
 
-  InitLabelsCollection(&labelscoll);
+  InitLabelsCollection(&scase.labelscoll);
 
   {
     labeldata *gl;
