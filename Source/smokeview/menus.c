@@ -11715,7 +11715,7 @@ static int menu_count=0;
   if(devicecoll.ndeviceinfo>0&&GetNumActiveDevices()>0){
     glutAddMenuEntry(_("Devices/Objects"), DIALOG_DEVICE);
   }
-  if((csvcoll.ncsvfileinfo>0&&have_ext==0)||(csvcoll.ncsvfileinfo>1&&have_ext==1)){
+  if((scase.csvcoll.ncsvfileinfo>0&&have_ext==0)||(scase.csvcoll.ncsvfileinfo>1&&have_ext==1)){
     glutAddMenuEntry(_("2D plots"), DIALOG_2DPLOTS);
   }
   glutAddMenuEntry(_("Show/Hide..."), DIALOG_SHOWFILES);

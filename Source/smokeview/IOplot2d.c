@@ -15,7 +15,7 @@ csvdata *GetCsvData(int file_index, int col_index, csvfiledata **csvf_ptr){
   csvfiledata *csvfi;
   csvdata *csvi=NULL;
 
-  csvfi = csvcoll.csvfileinfo    + file_index;
+  csvfi = scase.csvcoll.csvfileinfo    + file_index;
   if(csvfi->csvinfo!=NULL)csvi  = csvfi->csvinfo + col_index;
   if(csvf_ptr != NULL)*csvf_ptr = csvfi;
   return csvi;
@@ -372,11 +372,11 @@ void UpdateCurveBounds(plot2ddata *plot2di, int option){
       strcpy(curve->scaled_unit,  "");
     }
   }
-  for(i = 0; i<csvcoll.ncsvfileinfo; i++){
+  for(i = 0; i<scase.csvcoll.ncsvfileinfo; i++){
     int j;
     csvfiledata *csvfi;
 
-    csvfi = csvcoll.csvfileinfo+i;
+    csvfi = scase.csvcoll.csvfileinfo+i;
     if(csvfi->defined != CSV_DEFINED)continue;
     for(j = 0; j<csvfi->ncsvinfo; j++){
       csvdata *csvi;

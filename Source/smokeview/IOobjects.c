@@ -5978,10 +5978,10 @@ void InitializeDeviceCsvData(int flag){
   INIT_PRINT_TIMER(device_timer);
   ReadDeviceData(NULL, CSV_FDS, UNLOAD);
   ReadDeviceData(NULL, CSV_EXP, UNLOAD);
-  for(i = 0; i < csvcoll.ncsvfileinfo; i++){
+  for(i = 0; i < scase.csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvi;
 
-    csvi = csvcoll.csvfileinfo + i;
+    csvi = scase.csvcoll.csvfileinfo + i;
     if(strcmp(csvi->c_type, "devc") == 0)file_size += ReadDeviceData(csvi->file, CSV_FDS, flag);
     if(strcmp(csvi->c_type, "ext") == 0)file_size += ReadDeviceData(csvi->file, CSV_EXP, flag);
   }

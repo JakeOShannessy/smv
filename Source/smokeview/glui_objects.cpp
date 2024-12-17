@@ -493,7 +493,7 @@ void AddCSVCurve(plot2ddata *plot2di, int index, int option){
       if(unit!=curve->scaled_unit)strcpy(curve->scaled_unit,  unit);
     }
     else{
-      csvfi  = csvcoll.csvfileinfo+curve->csv_file_index;
+      csvfi  = scase.csvcoll.csvfileinfo+curve->csv_file_index;
       c_type = curve->c_type;
       csvi   = csvfi->csvinfo+curve->csv_col_index;
     }
@@ -818,7 +818,7 @@ char *GetCsvType(void){
   csvfiledata *csvfi;
 
   if(glui_csv_file_index>=0){
-    csvfi = csvcoll.csvfileinfo+glui_csv_file_index;
+    csvfi = scase.csvcoll.csvfileinfo+glui_csv_file_index;
     return csvfi->c_type;
   }
   else{
@@ -1726,10 +1726,10 @@ float GetDeviceTminTmax(void){
 int HaveExt(void){
   int i;
 
-  for(i = 0; i<csvcoll.ncsvfileinfo; i++){
+  for(i = 0; i<scase.csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
-    csvfi = csvcoll.csvfileinfo+i;
+    csvfi = scase.csvcoll.csvfileinfo+i;
     if(strcmp(csvfi->c_type, "ext")==0)return 1;
   }
   return 0;
@@ -1761,10 +1761,10 @@ extern "C" void GLUIUpdatePlot2DINI(void){
 void UpdateCSVFileTypes(void){
   int i;
 
-  for(i = 0; i<csvcoll.ncsvfileinfo; i++){
+  for(i = 0; i<scase.csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
-    csvfi = csvcoll.csvfileinfo+i;
+    csvfi = scase.csvcoll.csvfileinfo+i;
     if(strcmp(csvfi->c_type, "ext")!=0 && csvfi->glui_defined==0 && csvfi->defined == CSV_DEFINED && LIST_csvfile != NULL){
       csvfi->glui_defined = CSV_DEFINED;
       LIST_csvfile->add_item(i, csvfi->c_type);
@@ -1794,7 +1794,7 @@ extern "C" void GLUIPlot2DSetup(int main_window){
   }
 
   have_ext = HaveExt();
-  if((csvcoll.ncsvfileinfo>0&&have_ext==0)||(csvcoll.ncsvfileinfo>1&&have_ext==1)){
+  if((scase.csvcoll.ncsvfileinfo>0&&have_ext==0)||(scase.csvcoll.ncsvfileinfo>1&&have_ext==1)){
     int i;
 
     glui_plot2d = GLUI_Master.create_glui("2D plots", 0, dialogX0, dialogY0);

@@ -472,20 +472,20 @@ FILE_SIZE ReadAllCSVFiles(int flag){
   int i;
   FILE_SIZE file_size=0;
 
-  if(csvcoll.ncsvfileinfo == 0)return 0;
+  if(scase.csvcoll.ncsvfileinfo == 0)return 0;
 #define GENPLOT_REM_ALL_PLOTS       136
   GLUIGenPlotCB(GENPLOT_REM_ALL_PLOTS);
-  for(i = 0; i < csvcoll.ncsvfileinfo; i++){
+  for(i = 0; i < scase.csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
-    csvfi = csvcoll.csvfileinfo + i;
+    csvfi = scase.csvcoll.csvfileinfo + i;
     ReadCSVFile(csvfi, UNLOAD);
   }
   if(flag == UNLOAD)return 0;
-  for(i = 0; i < csvcoll.ncsvfileinfo; i++){
+  for(i = 0; i < scase.csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
-    csvfi = csvcoll.csvfileinfo + i;
+    csvfi = scase.csvcoll.csvfileinfo + i;
     if(csvfi->defined == CSV_DEFINING|| csvfi->defined == CSV_DEFINED){
       continue;
     }
@@ -495,10 +495,10 @@ FILE_SIZE ReadAllCSVFiles(int flag){
     csvfi->defined = CSV_DEFINED;
     UpdateCSVFileTypes();
   }
-  for(i = 0; i < csvcoll.ncsvfileinfo; i++){
+  for(i = 0; i < scase.csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
-    csvfi = csvcoll.csvfileinfo + i;
+    csvfi = scase.csvcoll.csvfileinfo + i;
     if(csvfi->defined != CSV_DEFINED){
       break;
     }
@@ -6760,15 +6760,15 @@ void AddCfastCsvfi(char *suffix, char *type, int format){
   strcpy(filename, fdsprefix);
   strcat(filename, suffix);
   strcat(filename, ".csv");
-  for(i=0;i<csvcoll.ncsvfileinfo;i++){
+  for(i=0;i<scase.csvcoll.ncsvfileinfo;i++){
     csvfiledata *csvfi;
 
-    csvfi = csvcoll.csvfileinfo + i;
+    csvfi = scase.csvcoll.csvfileinfo + i;
     if(strcmp(csvfi->c_type,type)==0)return;
   }
   if(FILE_EXISTS_CASEDIR(filename) == NO)return;
-  InitCSV(csvcoll.csvfileinfo + csvcoll.ncsvfileinfo, filename, type, format);
-  csvcoll.ncsvfileinfo++;
+  InitCSV(scase.csvcoll.csvfileinfo + scase.csvcoll.ncsvfileinfo, filename, type, format);
+  scase.csvcoll.ncsvfileinfo++;
 }
 
   /* ------------------ AddCfastCsvf ------------------------ */
@@ -7049,16 +7049,16 @@ int ReadSMV_Init(){
   PRINT_TIMER(timer_setup, "InitSpherePoints");
   ntotal_blockages=0;
 
-  if(csvcoll.ncsvfileinfo>0){
+  if(scase.csvcoll.ncsvfileinfo>0){
     csvfiledata *csvi;
 
-    for(i=0;i<csvcoll.ncsvfileinfo;i++){
-      csvi = csvcoll.csvfileinfo + i;
+    for(i=0;i<scase.csvcoll.ncsvfileinfo;i++){
+      csvi = scase.csvcoll.csvfileinfo + i;
       FREEMEMORY(csvi->file);
     }
-    FREEMEMORY(csvcoll.csvfileinfo);
+    FREEMEMORY(scase.csvcoll.csvfileinfo);
   }
-  csvcoll.ncsvfileinfo=0;
+  scase.csvcoll.ncsvfileinfo=0;
 
   if(ngeominfo>0){
     for(i=0;i<ngeominfo;i++){
@@ -7538,7 +7538,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       FGETS(buffer2,255,stream);
       TrimBack(buffer2);
       file_ptr=TrimFront(buffer2);
-      if(FILE_EXISTS_CASEDIR(file_ptr)==YES)csvcoll.ncsvfileinfo++;
+      if(FILE_EXISTS_CASEDIR(file_ptr)==YES)scase.csvcoll.ncsvfileinfo++;
       continue;
     }
     if(MatchSMV(buffer, "CGEOM")==1){
@@ -7949,8 +7949,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
    strcpy(fds_githash,"unknown");
  }
  if(nisoinfo>0&&scase.meshescoll.nmeshes>0)nisos_per_mesh = MAX(nisoinfo / scase.meshescoll.nmeshes,1);
- NewMemory((void **)&csvcoll.csvfileinfo,(csvcoll.ncsvfileinfo+CFAST_CSV_MAX+2)*sizeof(csvfiledata));
- csvcoll.ncsvfileinfo=0;
+ NewMemory((void **)&scase.csvcoll.csvfileinfo,(scase.csvcoll.ncsvfileinfo+CFAST_CSV_MAX+2)*sizeof(csvfiledata));
+ scase.csvcoll.ncsvfileinfo=0;
  if(ngeominfo>0){
    NewMemory((void **)&geominfo,ngeominfo*sizeof(geomdata));
    ngeominfo=0;
@@ -8287,10 +8287,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       file_ptr=TrimFront(buffer2);
       if(FILE_EXISTS_CASEDIR(file_ptr) == NO)continue;
 
-      csvi = csvcoll.csvfileinfo + csvcoll.ncsvfileinfo;
+      csvi = scase.csvcoll.csvfileinfo + scase.csvcoll.ncsvfileinfo;
       InitCSV(csvi, file_ptr, type_ptr, CSV_FDS_FORMAT);
 
-      csvcoll.ncsvfileinfo++;
+      scase.csvcoll.ncsvfileinfo++;
       continue;
     }
   /*
@@ -9530,10 +9530,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     csvfiledata *csvi;
     char csv_type[256];
 
-    csvi = csvcoll.csvfileinfo + csvcoll.ncsvfileinfo;
+    csvi = scase.csvcoll.csvfileinfo + scase.csvcoll.ncsvfileinfo;
     strcpy(csv_type, "ext");
     InitCSV(csvi, expcsv_filename, csv_type, CSV_FDS_FORMAT);
-    csvcoll.ncsvfileinfo++;
+    scase.csvcoll.ncsvfileinfo++;
   }
 
   PRINTF("%s","  pass 3\n");
@@ -9931,14 +9931,14 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
   // look for DEVICE entries in "experimental" spread sheet files
 
-  if(csvcoll.ncsvfileinfo>0){
+  if(scase.csvcoll.ncsvfileinfo>0){
     int *nexp_devices=NULL;
 
-    NewMemory((void **)&nexp_devices,(csvcoll.ncsvfileinfo+1)*sizeof(int));
-    for(i=0;i<csvcoll.ncsvfileinfo;i++){
+    NewMemory((void **)&nexp_devices,(scase.csvcoll.ncsvfileinfo+1)*sizeof(int));
+    for(i=0;i<scase.csvcoll.ncsvfileinfo;i++){
       csvfiledata *csvi;
 
-      csvi = csvcoll.csvfileinfo + i;
+      csvi = scase.csvcoll.csvfileinfo + i;
       if(strcmp(csvi->c_type, "ext") == 0){
         nexp_devices[i] = GetNDevices(csvi->file);
         devicecoll.ndeviceinfo_exp += nexp_devices[i];
@@ -9956,10 +9956,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       devicedata *devicecopy2;
 
       devicecopy2 = devicecoll.deviceinfo+devicecoll.ndeviceinfo;
-      for(i=0;i<csvcoll.ncsvfileinfo;i++){
+      for(i=0;i<scase.csvcoll.ncsvfileinfo;i++){
         csvfiledata *csvi;
 
-        csvi = csvcoll.csvfileinfo + i;
+        csvi = scase.csvcoll.csvfileinfo + i;
         if(strcmp(csvi->c_type, "ext") == 0){
           ReadDeviceHeader(csvi->file,devicecopy2,nexp_devices[i]);
           devicecopy2 += nexp_devices[i];
@@ -12768,7 +12768,7 @@ int ReadIni2(char *inifile, int localfile){
           plot2di->curve[j].csv_file_index = file_index;
           plot2di->curve[j].csv_col_index  = col_index;
           curve                            = plot2di->curve+j;
-          strcpy(curve->c_type, csvcoll.csvfileinfo[file_index].c_type);
+          strcpy(curve->c_type, scase.csvcoll.csvfileinfo[file_index].c_type);
           curve->color[0]                  = color[0];
           curve->color[1]                  = color[1];
           curve->color[2]                  = color[2];
@@ -12778,7 +12778,7 @@ int ReadIni2(char *inifile, int localfile){
           curve->vals                      = NULL;
           curve->use_foreground_color      = use_foreground_color;
           if(strcmp(curve->c_type, "devc")==0){
-            curve->quantity = csvcoll.csvfileinfo[file_index].csvinfo[col_index].label.longlabel;
+            curve->quantity = scase.csvcoll.csvfileinfo[file_index].csvinfo[col_index].label.longlabel;
           }
           else{
             curve->quantity = NULL;

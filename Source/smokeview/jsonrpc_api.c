@@ -715,8 +715,8 @@ json_object *jsonrpc_GetSlices(jrpc_context *context, json_object *params,
 json_object *jsonrpc_GetCsvs(jrpc_context *context, json_object *params,
                              json_object *id) {
   struct json_object *csv_files = json_object_new_array();
-  for(int i = 0; i < csvcoll.ncsvfileinfo; i++) {
-    csvfiledata *csv_file = &csvcoll.csvfileinfo[i];
+  for(int i = 0; i < scase.csvcoll.ncsvfileinfo; i++) {
+    csvfiledata *csv_file = &scase.csvcoll.csvfileinfo[i];
     struct json_object *csv_obj = json_object_new_object();
     json_object_object_add(csv_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(csv_obj, "filename",
@@ -761,10 +761,10 @@ json_object *jsonrpc_GetCsvVectors(jrpc_context *context, json_object *params,
                                    json_object *id) {
   struct json_object *csv_files = json_object_new_object();
 
-  for(int i = 0; i < csvcoll.ncsvfileinfo; ++i) {
+  for(int i = 0; i < scase.csvcoll.ncsvfileinfo; ++i) {
     struct json_object *csvs_obj = json_object_new_object();
-    json_object_object_add(csv_files, csvcoll.csvfileinfo[i].c_type, csvs_obj);
-    csvfiledata *csventry = &csvcoll.csvfileinfo[i];
+    json_object_object_add(csv_files, scase.csvcoll.csvfileinfo[i].c_type, csvs_obj);
+    csvfiledata *csventry = &scase.csvcoll.csvfileinfo[i];
     if(!csventry->loaded) {
       LoadCsv(csventry);
     }
