@@ -1843,7 +1843,6 @@ SVEXTERN int SVDECL(last_prop_display,-1);
 SVEXTERN int SVDECL(devicetypes_index,0);
 
 SVEXTERN float SVDECL(plot2d_hrr_min,0.0), SVDECL(plot2d_hrr_max,1.0);
-SVEXTERN device_collection SVDECL(devicecoll,{0});
 
 SVEXTERN int SVDECL(have_ext, 0);
 SVEXTERN int SVDECL(ntreedeviceinfo, 0), SVDECL(mintreesize, 3);

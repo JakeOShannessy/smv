@@ -291,7 +291,7 @@ extern "C" void GLUIUpdateWindRoseDevices(int option){
       vdevicesortdata *vdevsorti;
       vdevicedata *vd;
 
-      vdevsorti = devicecoll.vdevices_sorted+j;
+      vdevsorti = scase.devicecoll.vdevices_sorted+j;
       vd = vdevsorti->vdeviceinfo;
       if(vd->udev==NULL&&vd->vdev==NULL&&vd->wdev==NULL&&
          vd->angledev == NULL&&vd->veldev == NULL)continue;
@@ -363,7 +363,7 @@ void UpdateShowWindRoses(void){
       vdevicesortdata *vdevsorti;
       vdevicedata *vd;
 
-      vdevsorti = devicecoll.vdevices_sorted + j;
+      vdevsorti = scase.devicecoll.vdevices_sorted + j;
       vd = vdevsorti->vdeviceinfo;
       if(vd->udev==NULL&&vd->vdev==NULL&&vd->wdev==NULL&&
          vd->angledev == NULL&&vd->veldev == NULL)continue;
@@ -499,7 +499,7 @@ void AddCSVCurve(plot2ddata *plot2di, int index, int option){
     }
     if(c_type!=curve->c_type)strcpy(curve->c_type, c_type);
     if(strcmp(c_type, "devc")==0){
-      curve->quantity = devicecoll.deviceinfo[curve->csv_col_index-1].quantity;
+      curve->quantity = scase.devicecoll.deviceinfo[curve->csv_col_index-1].quantity;
     }
     plot2di->ncurves = nplots+1;
     strcpy(label, c_type);
@@ -1012,7 +1012,7 @@ int InDevList(devicedata *devi, int n){
   for(j = 0; j<n; j++){
     devicedata *devj;
 
-    devj = devicecoll.deviceinfo+j;
+    devj = scase.devicecoll.deviceinfo+j;
     if(strcmp(devi->quantity, devj->quantity)==0&&devj->inlist==1)return 1;
   }
   return 0;
@@ -1023,25 +1023,25 @@ int InDevList(devicedata *devi, int n){
 void UpdatePlotDevList(void){
   int i;
 
-  for(i = 0; i<devicecoll.ndeviceinfo; i++){
+  for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
     devicedata *devi;
 
-    devi = devicecoll.deviceinfo + i;
+    devi = scase.devicecoll.deviceinfo + i;
     devi->inlist = 0;
   }
   LIST_plot_add_dev->delete_item(-1);
-  for(i = 0; i<devicecoll.ndeviceinfo; i++){
+  for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
     devicedata *devi;
 
-    devi = devicecoll.deviceinfo+i;
+    devi = scase.devicecoll.deviceinfo+i;
     devi->inlist = 1 - InDevList(devi, i);
     LIST_plot_add_dev->delete_item(i);
   }
   LIST_plot_add_dev->add_item(-1, "");
-  for(i = 0; i<devicecoll.ndeviceinfo; i++){
+  for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
     devicedata *devi;
 
-    devi = devicecoll.deviceinfo+i;
+    devi = scase.devicecoll.deviceinfo+i;
     if(devi->inlist==1){
       char label[64];
 
@@ -1126,7 +1126,7 @@ void GLUIGenPlotCB(int var){
       unit = GetPlotUnit(glui_plot2dinfo, index);
       UpdateCurveControls(unit);
       if(BUTTON_plot_position != NULL){
-        if(glui_plot2dinfo->curve_index<devicecoll.ndeviceinfo){
+        if(glui_plot2dinfo->curve_index<scase.devicecoll.ndeviceinfo){
         }
         else{
           strcpy(label, "Set to device location");
@@ -1221,10 +1221,10 @@ void GLUIGenPlotCB(int var){
       SetPlot2DShowLabel();
       break;
     case GENPLOT_SET_PLOTPOS:
-      if(glui_plot2dinfo->curve_index<devicecoll.ndeviceinfo){
+      if(glui_plot2dinfo->curve_index<scase.devicecoll.ndeviceinfo){
         float *plot_xyz;
 
-        plot_xyz = devicecoll.deviceinfo[glui_plot2dinfo->curve_index].xyz;
+        plot_xyz = scase.devicecoll.deviceinfo[glui_plot2dinfo->curve_index].xyz;
         memcpy(glui_plot2dinfo->xyz, plot_xyz, 3 * sizeof(float));
         SPINNER_genplot_x->set_float_val(plot_xyz[0]);
         SPINNER_genplot_y->set_float_val(plot_xyz[1]);
@@ -1321,7 +1321,7 @@ void GLUIGenPlotCB(int var){
     case GENPLOT_RESET_DEV_PLOTS:
       char *dev_pos;
 
-      dev_pos = devicecoll.deviceinfo[idevice_add].quantity;
+      dev_pos = scase.devicecoll.deviceinfo[idevice_add].quantity;
       for(i = 0; i<nplot2dinfo; i++){
         plot2ddata *plot2di;
         curvedata *curvei;
@@ -1344,18 +1344,18 @@ void GLUIGenPlotCB(int var){
       char *dev_quant;
 
       GLUIGenPlotCB(GENPLOT_REM_DEV_PLOTS);
-      dev_quant = devicecoll.deviceinfo[idevice_add].quantity;
+      dev_quant = scase.devicecoll.deviceinfo[idevice_add].quantity;
       glui_csv_file_index = 0;
       LIST_csvfile->set_int_val(glui_csv_file_index);
       GLUIGenPlotCB(GENPLOT_CSV_FILETYPE);
-      for(i=0;i<devicecoll.ndeviceinfo;i++){
+      for(i=0;i<scase.devicecoll.ndeviceinfo;i++){
         devicedata *devi;
 
-        devi = devicecoll.deviceinfo + i;
+        devi = scase.devicecoll.deviceinfo + i;
         if(strcmp(devi->quantity, dev_quant)!=0)continue;
         GLUIGenPlotCB(GENPLOT_ADD_PLOT);
 
-        icsv_cols = devi - devicecoll.deviceinfo +1;
+        icsv_cols = devi - scase.devicecoll.deviceinfo +1;
         LIST_csvID->set_int_val(icsv_cols);
         GLUIGenPlotCB(GENPLOT_ADD_CURVE);
 
@@ -1545,7 +1545,7 @@ extern "C" void GLUIDeviceCB(int var){
     for(j = treei->first; j<=treei->last; j++){
       vdevicesortdata *vdevsorti;
 
-      vdevsorti = devicecoll.vdevices_sorted+j;
+      vdevsorti = scase.devicecoll.vdevices_sorted+j;
       if(vdevsorti->dir==ZDIR){
         vdevicedata *vd;
 
@@ -1566,7 +1566,7 @@ extern "C" void GLUIDeviceCB(int var){
     for(j = treei->first; j<=treei->last; j++){
       vdevicesortdata *vdevsorti;
 
-      vdevsorti = devicecoll.vdevices_sorted+j;
+      vdevsorti = scase.devicecoll.vdevices_sorted+j;
       if(vdevsorti->dir==ZDIR){
         vdevicedata *vd;
 
@@ -1594,10 +1594,10 @@ extern "C" void GLUIDeviceCB(int var){
     updatemenu = 1;
     break;
   case DEVICE_TIMEAVERAGE:
-    for(i = 0; i<devicecoll.ndeviceinfo; i++){
+    for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
       devicedata *devicei;
 
-      devicei = devicecoll.deviceinfo+i;
+      devicei = scase.devicecoll.deviceinfo+i;
       devicei->update_avg = 1;
     }
     for(i = 0; i<nplot2dinfo; i++){
@@ -1699,11 +1699,11 @@ float GetDeviceTminTmax(void){
   float return_val=1.0;
   int first = 1, i;
 
-  for(i = 0; i<devicecoll.ndeviceinfo; i++){
+  for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
     float *times;
 
-    devicei = devicecoll.deviceinfo+i;
+    devicei = scase.devicecoll.deviceinfo+i;
     times = devicei->times;
     if(times!=NULL&&devicei->nvals>0){
       float tval;
@@ -1813,18 +1813,18 @@ extern "C" void GLUIPlot2DSetup(int main_window){
     CHECKBOX_show_genplot  = glui_plot2d->add_checkbox_to_panel(PANEL_plots, "show", &(glui_plot2dinfo->show), GENPLOT_SHOW_PLOT, GLUIGenPlotCB);
     glui_plot2d->add_checkbox_to_panel(PANEL_plots, "show plots", &plot2d_show_plots, GENPLOT_SHOW_PLOTS, GLUIGenPlotCB);
 
-    if(devicecoll.ndeviceinfo>0){
+    if(scase.devicecoll.ndeviceinfo>0){
       ROLLOUT_devplots = glui_plot2d->add_rollout_to_panel(PANEL_plots, "add plots at device locations", 0);
-      for(i = 0; i<devicecoll.ndeviceinfo; i++){
+      for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
         devicedata *devi;
 
-        devi = devicecoll.deviceinfo+i;
+        devi = scase.devicecoll.deviceinfo+i;
         devi->inlist = 0;
       }
-      for(i = 0; i<devicecoll.ndeviceinfo; i++){
+      for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
         devicedata *devi;
 
-        devi = devicecoll.deviceinfo+i;
+        devi = scase.devicecoll.deviceinfo+i;
         devi->inlist = 1-InDevList(devi, i);
       }
       LIST_plot_add_dev = glui_plot2d->add_listbox_to_panel(ROLLOUT_devplots,    "Add:",    &idevice_add,  GENPLOT_ADD_DEV_PLOTS,  GLUIGenPlotCB);
@@ -2028,7 +2028,7 @@ extern "C" void GLUIDeviceSetup(int main_window){
   glui_device = GLUI_Master.create_glui("Devices/Objects/2D plots",0,dialogX0,dialogY0);
   glui_device->hide();
 
-  if(devicecoll.ndeviceinfo>0){
+  if(scase.devicecoll.ndeviceinfo>0){
     int i;
 
     PANEL_objects = glui_device->add_panel("Devices/Objects/2D plots", false);
@@ -2061,7 +2061,7 @@ extern "C" void GLUIDeviceSetup(int main_window){
       INSERT_ROLLOUT(ROLLOUT_velocityvectors, glui_device);
       ADDPROCINFO(deviceprocinfo, ndeviceprocinfo, ROLLOUT_velocityvectors, FLOWVECTORS_ROLLOUT, glui_device);
 
-      if(devicecoll.nvdeviceinfo==0)ROLLOUT_velocityvectors->disable();
+      if(scase.devicecoll.nvdeviceinfo==0)ROLLOUT_velocityvectors->disable();
       CHECKBOX_device_1 = glui_device->add_checkbox_to_panel(ROLLOUT_velocityvectors, _("Show"), &showvdevice_val);
       PANEL_vector_type = glui_device->add_panel_to_panel(ROLLOUT_velocityvectors, _("type"), true);
       RADIO_vectortype = glui_device->add_radiogroup_to_panel(PANEL_vector_type, &vectortype);
@@ -2157,7 +2157,7 @@ extern "C" void GLUIDeviceSetup(int main_window){
             vdevicesortdata *vdevsorti;
             vdevicedata *vd;
 
-            vdevsorti = devicecoll.vdevices_sorted+j;
+            vdevsorti = scase.devicecoll.vdevices_sorted+j;
             vd = vdevsorti->vdeviceinfo;
             if(vd->udev==NULL&&vd->vdev==NULL&&vd->wdev==NULL&&
                vd->angledev==NULL&&vd->veldev==NULL)continue;
@@ -2197,7 +2197,7 @@ extern "C" void GLUIDeviceSetup(int main_window){
             vdevicesortdata *vdevsorti;
             vdevicedata *vd;
 
-            vdevsorti = devicecoll.vdevices_sorted+j;
+            vdevsorti = scase.devicecoll.vdevices_sorted+j;
             vd = vdevsorti->vdeviceinfo;
             xyz = NULL;
             if(xyz==NULL&&vd->udev!=NULL)xyz = vd->udev->xyz;

@@ -659,13 +659,13 @@ int SVimage2var(int rendertype, int woffset, int width, int hoffset, int height,
      show_smokesensors != SMOKESENSORS_HIDDEN) {
     int idev;
 
-    for(idev = 0; idev < devicecoll.ndeviceinfo; idev++) {
+    for(idev = 0; idev < scase.devicecoll.ndeviceinfo; idev++) {
       devicedata *devicei;
       int idev_col, idev_row;
       int col_offset, row_offset;
       unsigned int red = 255 << 16;
 
-      devicei = devicecoll.deviceinfo + idev;
+      devicei = scase.devicecoll.deviceinfo + idev;
 
       if(devicei->object->visible == 0 || devicei->show == 0) continue;
       if(strcmp(devicei->object->label, "smokesensor") != 0) continue;

@@ -1288,10 +1288,10 @@ void ReadSMVDynamic(char *file){
       FREEMEMORY(cvi->showtime);
     }
   }
-  for(i=devicecoll.ndeviceinfo_exp;i<devicecoll.ndeviceinfo;i++){
+  for(i=scase.devicecoll.ndeviceinfo_exp;i<scase.devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei =devicecoll.deviceinfo + i;
+    devicei =scase.devicecoll.deviceinfo + i;
     devicei->nstate_changes=0;
     FREEMEMORY(devicei->act_times);
     FREEMEMORY(devicei->state_values);
@@ -1494,8 +1494,8 @@ void ReadSMVDynamic(char *file){
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f %i",&idevice,&act_time,&act_state);
       idevice--;
-      if(idevice>=0&&idevice<devicecoll.ndeviceinfo){
-        devicei = devicecoll.deviceinfo + idevice;
+      if(idevice>=0&&idevice<scase.devicecoll.ndeviceinfo){
+        devicei = scase.devicecoll.deviceinfo + idevice;
         devicei->act_time=act_time;
         devicei->nstate_changes++;
       }
@@ -1530,10 +1530,10 @@ void ReadSMVDynamic(char *file){
         int count=0;
 
         meshi->theat[nn-1]=time_local;
-        for(idev=0;idev<devicecoll.ndeviceinfo;idev++){
+        for(idev=0;idev<scase.devicecoll.ndeviceinfo;idev++){
           devicedata *devicei;
 
-          devicei = devicecoll.deviceinfo + idev;
+          devicei = scase.devicecoll.deviceinfo + idev;
           if(devicei->type==DEVICE_HEAT){
             count++;
             if(nn==count){
@@ -1574,10 +1574,10 @@ void ReadSMVDynamic(char *file){
 
         meshi->tspr[nn-1]=time_local;
 
-        for(idev=0;idev<devicecoll.ndeviceinfo;idev++){
+        for(idev=0;idev<scase.devicecoll.ndeviceinfo;idev++){
           devicedata *devicei;
 
-          devicei = devicecoll.deviceinfo + idev;
+          devicei = scase.devicecoll.deviceinfo + idev;
           if(devicei->type==DEVICE_SPRK){
             count++;
             if(nn==count){
@@ -1601,10 +1601,10 @@ void ReadSMVDynamic(char *file){
 
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&nn,&time_local);
-      for(idev=0;idev<devicecoll.ndeviceinfo;idev++){
+      for(idev=0;idev<scase.devicecoll.ndeviceinfo;idev++){
         devicedata *devicei;
 
-        devicei = devicecoll.deviceinfo + idev;
+        devicei = scase.devicecoll.deviceinfo + idev;
         if(devicei->type==DEVICE_SMOKE){
           count++;
           if(nn==count){
@@ -1637,10 +1637,10 @@ void ReadSMVDynamic(char *file){
       ResizeMemory((void **)&plot3dinfo,nplot3dinfo*sizeof(plot3ddata));
     }
   }
-  for(i=0;i<devicecoll.ndeviceinfo;i++){
+  for(i=0;i<scase.devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = devicecoll.deviceinfo + i;
+    devicei = scase.devicecoll.deviceinfo + i;
     devicei->istate_changes=0;
   }
 
@@ -1948,10 +1948,10 @@ void ReadSMVDynamic(char *file){
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f %i",&idevice,&act_time,&act_state);
       idevice--;
-      if(idevice>=0&&idevice<devicecoll.ndeviceinfo){
+      if(idevice>=0&&idevice<scase.devicecoll.ndeviceinfo){
         int istate;
 
-        devicei = devicecoll.deviceinfo + idevice;
+        devicei = scase.devicecoll.deviceinfo + idevice;
         devicei->act_time=act_time;
         if(devicei->act_times==NULL){
           devicei->nstate_changes++;
@@ -2866,7 +2866,7 @@ void InitTextures(int use_graphics_arg){
   max_textures = nsky_texture;
 #endif
   INIT_PRINT_TIMER(total_texture_time);
-  UpdateDeviceTextures(objectscoll, devicecoll.ndeviceinfo, devicecoll.deviceinfo,
+  UpdateDeviceTextures(objectscoll, scase.devicecoll.ndeviceinfo, scase.devicecoll.deviceinfo,
                        npropinfo, propinfo, &device_texture_list_coll.ndevice_texture_list,
                        &device_texture_list_coll.device_texture_list_index, &device_texture_list_coll.device_texture_list);
   if(scase.surfcoll.nsurfinfo>0||device_texture_list_coll.ndevice_texture_list>0){
@@ -7160,11 +7160,11 @@ int ReadSMV_Init(){
   }
   npartclassinfo=0;
 
-  if(devicecoll.ndeviceinfo>0){
-    for(i=0;i<devicecoll.ndeviceinfo;i++){
+  if(scase.devicecoll.ndeviceinfo>0){
+    for(i=0;i<scase.devicecoll.ndeviceinfo;i++){
     }
-    FREEMEMORY(devicecoll.deviceinfo);
-    devicecoll.ndeviceinfo=0;
+    FREEMEMORY(scase.devicecoll.deviceinfo);
+    scase.devicecoll.ndeviceinfo=0;
   }
 
   // read in device (.svo) definitions
@@ -7676,7 +7676,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       ){
       FGETS(buffer,255,stream);
       FGETS(buffer,255,stream);
-      devicecoll.ndeviceinfo++;
+      scase.devicecoll.ndeviceinfo++;
       continue;
     }
     if(
@@ -7690,7 +7690,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&local_ntc);
       if(local_ntc<0)local_ntc=0;
-      devicecoll.ndeviceinfo+=local_ntc;
+      scase.devicecoll.ndeviceinfo+=local_ntc;
       for(i=0;i<local_ntc;i++){
         FGETS(buffer,255,stream);
       }
@@ -9519,11 +9519,11 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     meshi->zcen=(sextras.zbar+sextras.zbar0)/2.0;
   }
 
-  if(devicecoll.ndeviceinfo>0){
-    if(NewMemory((void **)&devicecoll.deviceinfo,devicecoll.ndeviceinfo*sizeof(devicedata))==0)return 2;
-    devicecopy=devicecoll.deviceinfo;
+  if(scase.devicecoll.ndeviceinfo>0){
+    if(NewMemory((void **)&scase.devicecoll.deviceinfo,scase.devicecoll.ndeviceinfo*sizeof(devicedata))==0)return 2;
+    devicecopy=scase.devicecoll.deviceinfo;
   }
-  devicecoll.ndeviceinfo=0;
+  scase.devicecoll.ndeviceinfo=0;
   REWIND(stream);
 
   if(FILE_EXISTS_CASEDIR(expcsv_filename)==YES){
@@ -9627,11 +9627,11 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       ){
       devicedata *devicei;
 
-      devicei = devicecoll.deviceinfo + devicecoll.ndeviceinfo;
+      devicei = scase.devicecoll.deviceinfo + scase.devicecoll.ndeviceinfo;
       ParseDevicekeyword(stream,devicei);
       CheckMemory;
       update_device = 1;
-      devicecoll.ndeviceinfo++;
+      scase.devicecoll.ndeviceinfo++;
       continue;
     }
   /*
@@ -9699,7 +9699,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           devicecopy->prop=NULL;
 
           devicecopy++;
-          devicecoll.ndeviceinfo++;
+          scase.devicecoll.ndeviceinfo++;
         }
       }
       continue;
@@ -9775,7 +9775,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           InitDevice(devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
 
           devicecopy++;
-          devicecoll.ndeviceinfo++;
+          scase.devicecoll.ndeviceinfo++;
 
           xsprcopy++; ysprcopy++; zsprcopy++;
         }
@@ -9854,7 +9854,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           devicecopy->prop=NULL;
 
           devicecopy++;
-          devicecoll.ndeviceinfo++;
+          scase.devicecoll.ndeviceinfo++;
           xheatcopy++; yheatcopy++; zheatcopy++;
 
         }
@@ -9912,7 +9912,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         InitDevice(devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
 
         devicecopy++;
-        devicecoll.ndeviceinfo++;
+        scase.devicecoll.ndeviceinfo++;
 
       }
       continue;
@@ -9941,21 +9941,21 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       csvi = scase.csvcoll.csvfileinfo + i;
       if(strcmp(csvi->c_type, "ext") == 0){
         nexp_devices[i] = GetNDevices(csvi->file);
-        devicecoll.ndeviceinfo_exp += nexp_devices[i];
+        scase.devicecoll.ndeviceinfo_exp += nexp_devices[i];
       }
     }
-    if(devicecoll.ndeviceinfo>0){
-      if(devicecoll.ndeviceinfo_exp>0){
-        ResizeMemory((void **)&devicecoll.deviceinfo,(devicecoll.ndeviceinfo_exp+devicecoll.ndeviceinfo)*sizeof(devicedata));
+    if(scase.devicecoll.ndeviceinfo>0){
+      if(scase.devicecoll.ndeviceinfo_exp>0){
+        ResizeMemory((void **)&scase.devicecoll.deviceinfo,(scase.devicecoll.ndeviceinfo_exp+scase.devicecoll.ndeviceinfo)*sizeof(devicedata));
       }
     }
     else{
-      if(devicecoll.ndeviceinfo_exp>0)NewMemory((void **)&devicecoll.deviceinfo,devicecoll.ndeviceinfo_exp*sizeof(devicedata));
+      if(scase.devicecoll.ndeviceinfo_exp>0)NewMemory((void **)&scase.devicecoll.deviceinfo,scase.devicecoll.ndeviceinfo_exp*sizeof(devicedata));
     }
-    if(devicecoll.ndeviceinfo_exp >0){
+    if(scase.devicecoll.ndeviceinfo_exp >0){
       devicedata *devicecopy2;
 
-      devicecopy2 = devicecoll.deviceinfo+devicecoll.ndeviceinfo;
+      devicecopy2 = scase.devicecoll.deviceinfo+scase.devicecoll.ndeviceinfo;
       for(i=0;i<scase.csvcoll.ncsvfileinfo;i++){
         csvfiledata *csvi;
 
@@ -9966,13 +9966,13 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         }
       }
     }
-    devicecoll.ndeviceinfo += devicecoll.ndeviceinfo_exp;
+    scase.devicecoll.ndeviceinfo += scase.devicecoll.ndeviceinfo_exp;
     FREEMEMORY(nexp_devices);
   }
-  for(i = 0; i < devicecoll.ndeviceinfo; i++){
+  for(i = 0; i < scase.devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
 
-    devicei = devicecoll.deviceinfo + i;
+    devicei = scase.devicecoll.deviceinfo + i;
     if(strcmp(devicei->deviceID, "null") == 0){
       sprintf(devicei->deviceID, "DEV%03i", i + 1);
     }
@@ -11886,11 +11886,11 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "GetGSliceParams");
 
   active_smokesensors=0;
-  for(i=0;i<devicecoll.ndeviceinfo;i++){
+  for(i=0;i<scase.devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
     char *label;
 
-    devicei = devicecoll.deviceinfo + i;
+    devicei = scase.devicecoll.deviceinfo + i;
     devicei->device_mesh= GetMeshNoFail(devicei->xyz);
     label = devicei->object->label;
     if(strcmp(label,"smokesensor")==0){

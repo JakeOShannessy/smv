@@ -6947,16 +6947,16 @@ void DeviceTypeMenu(int val){
 /* ------------------ ShowDevicesMenu ------------------------ */
 
 void ShowDevicesMenu(int value){
-  if(value==MENU_DUMMY||devicecoll.ndeviceinfo<=0)return;
+  if(value==MENU_DUMMY||scase.devicecoll.ndeviceinfo<=0)return;
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
   if(value==MENU_DEVICES_SHOWALL||value==MENU_DEVICES_HIDEALL){
     int i;
 
-    for(i=0; i<devicecoll.ndeviceinfo; i++){
+    for(i=0; i<scase.devicecoll.ndeviceinfo; i++){
       devicedata *devicei;
 
-      devicei = devicecoll.deviceinfo + i;
+      devicei = scase.devicecoll.deviceinfo + i;
       if(value==MENU_DEVICES_SHOWALL){
         devicei->show = 1;
       }
@@ -6970,11 +6970,11 @@ void ShowDevicesMenu(int value){
     int ival, itype;
     devicedata *devicei;
 
-    if(value >= 3 * devicecoll.ndeviceinfo)return;
-    ival = value % devicecoll.ndeviceinfo;
-    itype = value / devicecoll.ndeviceinfo;
+    if(value >= 3 * scase.devicecoll.ndeviceinfo)return;
+    ival = value % scase.devicecoll.ndeviceinfo;
+    itype = value / scase.devicecoll.ndeviceinfo;
 
-    devicei = devicecoll.deviceinfo + ival;
+    devicei = scase.devicecoll.deviceinfo + ival;
     //             0 <= value <   ndeviceinfo : toggle
     //   ndeviceinfo <= value < 2*ndeviceinfo : show
     // 2*ndeviceinfo <= value < 3*ndeviceinfo : hide
@@ -9905,15 +9905,15 @@ static int menu_count=0;
     glutAddMenuEntry(_("Settings..."), MENU_DEVICE_SETTINGS);
   }
   if(objectscoll->nobject_defs>0){
-    if(devicecoll.ndeviceinfo > 0){
+    if(scase.devicecoll.ndeviceinfo > 0){
       int showall=1, hideall=1;
 
       CREATEMENU(showdevicesmenu, ShowDevicesMenu);
-      for(i = 0; i < devicecoll.ndeviceinfo; i++){
+      for(i = 0; i < scase.devicecoll.ndeviceinfo; i++){
         devicedata *devicei;
         char devicelabel[256];
 
-        devicei = devicecoll.deviceinfo + i;
+        devicei = scase.devicecoll.deviceinfo + i;
         strcpy(devicelabel, "");
         if(devicei->show==1){
           strcat(devicelabel,"*");
@@ -9952,7 +9952,7 @@ static int menu_count=0;
       if(show_missing_objects==1)glutAddMenuEntry(_("*undefined"),OBJECT_MISSING);
       if(show_missing_objects == 0)glutAddMenuEntry(_("undefined"),OBJECT_MISSING);
     }
-    if(devicecoll.ndeviceinfo>0){
+    if(scase.devicecoll.ndeviceinfo>0){
       glutAddMenuEntry("-",MENU_DUMMY);
       if(select_device==1){
         glutAddMenuEntry(_("*Select"),OBJECT_SELECT);
@@ -9984,11 +9984,11 @@ static int menu_count=0;
       }
     }
     glutAddMenuEntry("-",MENU_DUMMY);
-    if(devicecoll.ndeviceinfo > 0){
+    if(scase.devicecoll.ndeviceinfo > 0){
       GLUTADDSUBMENU(_("Show/Hide devices"), showdevicesmenu);
     }
     GLUTADDSUBMENU(_("Segments"),spheresegmentmenu);
-    if(objectscoll->nobject_defs>0&&devicecoll.ndeviceinfo>0){
+    if(objectscoll->nobject_defs>0&&scase.devicecoll.ndeviceinfo>0){
       glutAddMenuEntry("-",MENU_DUMMY);
       GLUTADDSUBMENU(_("Plot data"),showobjectsplotmenu);
     }
@@ -11712,7 +11712,7 @@ static int menu_count=0;
   /* --------------------------------data dialog menu -------------------------- */
 
   CREATEMENU(datadialogmenu, DialogMenu);
-  if(devicecoll.ndeviceinfo>0&&GetNumActiveDevices()>0){
+  if(scase.devicecoll.ndeviceinfo>0&&GetNumActiveDevices()>0){
     glutAddMenuEntry(_("Devices/Objects"), DIALOG_DEVICE);
   }
   if((scase.csvcoll.ncsvfileinfo>0&&have_ext==0)||(scase.csvcoll.ncsvfileinfo>1&&have_ext==1)){
@@ -12009,7 +12009,7 @@ static int menu_count=0;
   if(ntotal_blockages>0||sextras.isZoneFireModel==1){
     glutAddMenuEntry(_("  g: toggle grid visibility modes"), MENU_DUMMY);
   }
-  if(devicecoll.ndeviceinfo > 0 && GetNumActiveDevices() > 0){
+  if(scase.devicecoll.ndeviceinfo > 0 && GetNumActiveDevices() > 0){
     glutAddMenuEntry("  j/ALT j: increase/decrease object size", MENU_DUMMY);
   }
   if(have_cface_normals == CFACE_NORMALS_YES){
@@ -12863,7 +12863,7 @@ static int menu_count=0;
     }
 
     glutAddMenuEntry("-", MENU_DUMMY);
-    if(devicecoll.ndeviceinfo>0){
+    if(scase.devicecoll.ndeviceinfo>0){
       glutAddMenuEntry(_("Read .svo files"),MENU_READSVO);
     }
     glutAddMenuEntry("Save settings (all cases - smokeview.ini)", MENU_WRITEINI);

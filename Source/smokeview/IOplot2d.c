@@ -631,18 +631,18 @@ void DrawGenPlots(void){
 void SetupPlot2DUnitData(void){
 
   //setup deviceunits
-  if(devicecoll.ndeviceinfo > 0){
+  if(scase.devicecoll.ndeviceinfo > 0){
     int i;
 
     ndeviceunits = 0;
     FREEMEMORY(deviceunits);
-    NewMemory((void **)&deviceunits, devicecoll.ndeviceinfo * sizeof(devicedata *));
-    for(i = 0; i < devicecoll.ndeviceinfo; i++){
+    NewMemory((void **)&deviceunits, scase.devicecoll.ndeviceinfo * sizeof(devicedata *));
+    for(i = 0; i < scase.devicecoll.ndeviceinfo; i++){
       int j;
       devicedata *devi;
       int skip_dev;
 
-      devi = devicecoll.deviceinfo + i;
+      devi = scase.devicecoll.deviceinfo + i;
       if(devi->nvals == 0 || strlen(devi->quantity) == 0 || strlen(devi->unit) == 0)continue;
       skip_dev = 0;
       for(j = 0; j < ndeviceunits; j++){
@@ -750,7 +750,7 @@ void GetPlot2DBounds(plot2ddata *plot2di, float *valmin, float *valmax){
 /* ------------------ InitPlot2D ------------------------ */
 
 void InitPlot2D(plot2ddata *plot2di, int plot_index){
-  if(devicecoll.ndeviceinfo == 0 && nhrrinfo == 0)return;
+  if(scase.devicecoll.ndeviceinfo == 0 && nhrrinfo == 0)return;
   plot2di->ncurves = 0;
   plot2di->ncurves_ini = 0;
   plot2di->show = 1;
@@ -976,10 +976,10 @@ void DrawDevicePlots(void){
   int i;
 
   if(vis_device_plot!=DEVICE_PLOT_HIDDEN){
-    for(i = 0; i<devicecoll.ndeviceinfo; i++){
+    for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
       devicedata *devicei;
 
-      devicei = devicecoll.deviceinfo+i;
+      devicei = scase.devicecoll.deviceinfo+i;
       if(vis_device_plot==DEVICE_PLOT_SHOW_SELECTED&&devicei->selected==0)continue;
       if(devicei->times==NULL||devicei->vals==NULL)continue;
       if(devicei->update_avg==1){

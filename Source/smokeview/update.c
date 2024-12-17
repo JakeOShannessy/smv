@@ -357,10 +357,10 @@ void UpdateShow(void){
   }
 
   if(showdevice_val==1||vis_device_plot!=DEVICE_PLOT_HIDDEN){
-    for(i = 0; i<devicecoll.ndeviceinfo; i++){
+    for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
       devicedata *devicei;
 
-      devicei = devicecoll.deviceinfo+i;
+      devicei = scase.devicecoll.deviceinfo+i;
       if(devicei->type2==devicetypes_index&&devicei->object->visible==1&&devicei->show==1){
         showdeviceflag = 1;
         break;
@@ -1282,10 +1282,10 @@ void UpdateTimes(void){
     }
   }
   if(showdevice_val==1||vis_device_plot!=DEVICE_PLOT_HIDDEN){
-    for(i = 0; i<devicecoll.ndeviceinfo; i++){
+    for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
       devicedata *devicei;
 
-      devicei = devicecoll.deviceinfo+i;
+      devicei = scase.devicecoll.deviceinfo+i;
       if(devicei->object->visible==0||devicei->nvals==0)continue;
       if(devicei->show == 0)continue;
       if(devicei->type2==devicetypes_index){
@@ -1593,10 +1593,10 @@ void UpdateTimes(void){
   /* determine state of each device at each time step */
 
   INIT_PRINT_TIMER(timer_device);
-  for(i=0;i<devicecoll.ndeviceinfo;i++){
+  for(i=0;i<scase.devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = devicecoll.deviceinfo + i;
+    devicei = scase.devicecoll.deviceinfo + i;
     if(devicei->object->visible == 0 || devicei->show == 0)continue;
     if(devicei->nstate_changes==0)continue;
     FREEMEMORY(devicei->showstatelist);
@@ -1731,10 +1731,10 @@ int GetPlotStateSub(int choice){
         return DYNAMIC_PLOTS;
       }
       if(showdevice_val==1||vis_device_plot!=DEVICE_PLOT_HIDDEN){
-        for(i = 0; i<devicecoll.ndeviceinfo; i++){
+        for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
           devicedata *devicei;
 
-          devicei = devicecoll.deviceinfo+i;
+          devicei = scase.devicecoll.deviceinfo+i;
           if(devicei->object->visible == 0 || devicei->show == 0)continue;
           if(devicei->type2==devicetypes_index){
             stept = 1;
