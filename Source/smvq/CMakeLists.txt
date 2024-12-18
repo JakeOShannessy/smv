@@ -1,4 +1,3 @@
-
 # smvq
 add_executable(smvq smvq.c
     ../shared/readsmvfile.c

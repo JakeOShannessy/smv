@@ -1,4 +1,3 @@
-
 if (WIN32)
     # set_path
     add_executable(set_path main.c )

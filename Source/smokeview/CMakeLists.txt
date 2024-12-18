@@ -1,3 +1,4 @@
+# smokeview
 add_executable(smokeview
     main.c
     menus.c

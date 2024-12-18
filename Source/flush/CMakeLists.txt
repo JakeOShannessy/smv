@@ -1,4 +1,3 @@
-
 # flush
 add_executable(flush main.c)
 target_include_directories(flush PRIVATE .)

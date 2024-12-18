@@ -1,4 +1,3 @@
-
 # smokezip
 add_executable(smokezip
     main.c
