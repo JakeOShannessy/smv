@@ -4686,8 +4686,8 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
 
       texturefile = (toki - 2)->stringptr;
 
-      for(i = 0;i < device_texture_list_coll.ndevice_texture_list;i++){
-        if(strcmp(device_texture_list_coll.device_texture_list[i], texturefile) == 0){
+      for(i = 0;i < scase.device_texture_list_coll.ndevice_texture_list;i++){
+        if(strcmp(scase.device_texture_list_coll.device_texture_list[i], texturefile) == 0){
           textureindex = i;
           break;
         }

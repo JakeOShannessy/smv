@@ -1842,7 +1842,6 @@ SVEXTERN treedevicedata SVDECL(**zwindtreeinfo, NULL);
 SVEXTERN int SVDECL(show_smokesensors,SMOKESENSORS_0255),SVDECL(active_smokesensors,0),SVDECL(test_smokesensors,0);
 SVEXTERN float SVDECL(smoke3d_cvis,1.0);
 SVEXTERN std_objects SVDECL(std_object_defs,{0});
-SVEXTERN device_texture_list_collection SVDECL(device_texture_list_coll,{0});
 SVEXTERN float treecolor[4];
 #ifdef INMAIN
 SVEXTERN float treecharcolor[4]={0.3,0.3,0.3,1.0};

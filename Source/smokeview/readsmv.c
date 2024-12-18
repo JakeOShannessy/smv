@@ -2568,16 +2568,16 @@ void InitTextures0(void){
   }
   PRINT_TIMER(texture_timer, "SURF textures");
 
-  for(i=0;i<device_texture_list_coll.ndevice_texture_list;i++){
+  for(i=0;i<scase.device_texture_list_coll.ndevice_texture_list;i++){
     char *texturefile;
     texturedata *texti;
     int len;
 
-    texturefile = device_texture_list_coll.device_texture_list[i];
+    texturefile = scase.device_texture_list_coll.device_texture_list[i];
     texti = scase.texture_coll.textureinfo + scase.texture_coll.ntextureinfo;
     len = strlen(texturefile);
     NewMemory((void **)&texti->file,(len+1)*sizeof(char));
-    device_texture_list_coll.device_texture_list_index[i]=scase.texture_coll.ntextureinfo;
+    scase.device_texture_list_coll.device_texture_list_index[i]=scase.texture_coll.ntextureinfo;
     strcpy(texti->file,texturefile);
     texti->loaded=0;
     texti->used=0;
@@ -2861,16 +2861,16 @@ void InitTextures0(void){
 void InitTextures(int use_graphics_arg){
   int max_textures;
 
-  max_textures = scase.surfcoll.nsurfinfo + device_texture_list_coll.ndevice_texture_list + scase.terrain_texture_coll.nterrain_textures;
+  max_textures = scase.surfcoll.nsurfinfo + scase.device_texture_list_coll.ndevice_texture_list + scase.terrain_texture_coll.nterrain_textures;
 #ifdef pp_SKY
   max_textures = nsky_texture;
 #endif
   INIT_PRINT_TIMER(total_texture_time);
   UpdateDeviceTextures(&scase.objectscoll, scase.devicecoll.ndeviceinfo, scase.devicecoll.deviceinfo,
-                       scase.propcoll.npropinfo, scase.propcoll.propinfo, &device_texture_list_coll.ndevice_texture_list,
-                       &device_texture_list_coll.device_texture_list_index, &device_texture_list_coll.device_texture_list);
-  if(scase.surfcoll.nsurfinfo>0||device_texture_list_coll.ndevice_texture_list>0){
-    if(NewMemory((void **)&scase.texture_coll.textureinfo, (scase.surfcoll.nsurfinfo+device_texture_list_coll.ndevice_texture_list+scase.terrain_texture_coll.nterrain_textures)*sizeof(texturedata))==0)return;
+                       scase.propcoll.npropinfo, scase.propcoll.propinfo, &scase.device_texture_list_coll.ndevice_texture_list,
+                       &scase.device_texture_list_coll.device_texture_list_index, &scase.device_texture_list_coll.device_texture_list);
+  if(scase.surfcoll.nsurfinfo>0||scase.device_texture_list_coll.ndevice_texture_list>0){
+    if(NewMemory((void **)&scase.texture_coll.textureinfo, (scase.surfcoll.nsurfinfo+scase.device_texture_list_coll.ndevice_texture_list+scase.terrain_texture_coll.nterrain_textures)*sizeof(texturedata))==0)return;
   }
   if(use_graphics_arg==1){
     InitTextures0();
@@ -12182,11 +12182,11 @@ void UpdateUseTextures(void){
       }
     }
   }
-  for(i=0;i<device_texture_list_coll.ndevice_texture_list;i++){
+  for(i=0;i<scase.device_texture_list_coll.ndevice_texture_list;i++){
     int texture_index;
     texturedata *texti;
 
-    texture_index  = device_texture_list_coll.device_texture_list_index[i];
+    texture_index  = scase.device_texture_list_coll.device_texture_list_index[i];
     texti=scase.texture_coll.textureinfo + texture_index;
     if(texti!=NULL&&texti->loaded==1){
       if(usetextures==1)texti->display=1;
