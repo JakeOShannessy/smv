@@ -1823,7 +1823,7 @@ int Unloadall() {
   if(scriptoutstream != NULL) {
     fprintf(scriptoutstream, "UNLOADALL\n");
   }
-  if(paths.hrr_csv_filename != NULL) {
+  if(scase.paths.hrr_csv_filename != NULL) {
     ReadHRR(UNLOAD);
   }
   if(nvolrenderinfo > 0) {

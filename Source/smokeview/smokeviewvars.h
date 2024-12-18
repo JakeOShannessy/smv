@@ -1960,7 +1960,6 @@ SVEXTERN char SVDECL(*log_filename,NULL);
 SVEXTERN FILE SVDECL(*LOG_FILENAME,NULL);
 SVEXTERN char SVDECL(*flushfile,NULL), SVDECL(*chidfilebase,NULL);
 SVEXTERN int SVDECL(csv_loaded, 0), SVDECL(devices_setup,0),SVDECL(update_csv_load,0);
-SVEXTERN casepaths SVDECL(paths,{0});
 SVEXTERN char SVDECL(*smokezippath,NULL), SVDECL(*smokeviewpath,NULL), SVDECL(*fdsprog, NULL);
 SVEXTERN char SVDECL(*INI_fds_filein,NULL);
 SVEXTERN char SVDECL(*caseini_filename,NULL);

@@ -1631,9 +1631,9 @@ void DialogMenu(int value){
   case DIALOG_GEOMETRY:
     showedit_dialog=1-showedit_dialog;
     if(showedit_dialog==1){
-      if(paths.fds_filein!=NULL&&updategetobstlabels==1){
+      if(scase.paths.fds_filein!=NULL&&updategetobstlabels==1){
         CheckMemoryOff;
-        GetObstLabels(paths.fds_filein);
+        GetObstLabels(scase.paths.fds_filein);
         CheckMemoryOn;
         updategetobstlabels=0;
       }
@@ -3525,7 +3525,7 @@ void LoadUnloadMenu(int value){
     load_flag = LOAD;
 #endif
     THREADcontrol(compress_threads, THREAD_LOCK);
-    if(paths.hrr_csv_filename!=NULL){
+    if(scase.paths.hrr_csv_filename!=NULL){
       ReadHRR(LOAD);
     }
 

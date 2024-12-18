@@ -382,12 +382,12 @@ char *ProcessCommandLine(CommandlineArgs *args){
     }
   }
   if(filename_local!= NULL){
-    FREEMEMORY(paths.fds_filein);
-    NewMemory((void **)&paths.fds_filein, strlen(fdsprefix) + 6);
-    STRCPY(paths.fds_filein, fdsprefix);
-    STRCAT(paths.fds_filein, ".fds");
-    if(FILE_EXISTS(paths.fds_filein) == NO){
-      FREEMEMORY(paths.fds_filein);
+    FREEMEMORY(scase.paths.fds_filein);
+    NewMemory((void **)&scase.paths.fds_filein, strlen(fdsprefix) + 6);
+    STRCPY(scase.paths.fds_filein, fdsprefix);
+    STRCAT(scase.paths.fds_filein, ".fds");
+    if(FILE_EXISTS(scase.paths.fds_filein) == NO){
+      FREEMEMORY(scase.paths.fds_filein);
     }
   }
   if(ffmpeg_command_filename == NULL){

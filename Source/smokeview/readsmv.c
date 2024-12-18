@@ -540,7 +540,7 @@ void ReadHRR(int flag){
   qradi_col = -1;
   if(flag==UNLOAD)return;
 
-  stream = fopen(paths.hrr_csv_filename, "r");
+  stream = fopen(scase.paths.hrr_csv_filename, "r");
   if(stream==NULL)return;
 
   len_buffer = GetRowCols(stream, &nrows, &ncols);
@@ -2457,43 +2457,43 @@ int GetInpf(bufferstreamdata *stream_in){
       bufferptr=TrimFrontBack(buffer);
 
       len=strlen(bufferptr);
-      FREEMEMORY(paths.fds_filein);
-      if(NewMemory((void **)&paths.fds_filein,(unsigned int)(len+1))==0)return 2;
-      STRCPY(paths.fds_filein,bufferptr);
-      if(FILE_EXISTS_CASEDIR(paths.fds_filein)==NO){
-        FreeMemory(paths.fds_filein);
+      FREEMEMORY(scase.paths.fds_filein);
+      if(NewMemory((void **)&scase.paths.fds_filein,(unsigned int)(len+1))==0)return 2;
+      STRCPY(scase.paths.fds_filein,bufferptr);
+      if(FILE_EXISTS_CASEDIR(scase.paths.fds_filein)==NO){
+        FreeMemory(scase.paths.fds_filein);
       }
 
       if(chidfilebase==NULL){
         char *chidptr=NULL;
         char buffer_chid[1024];
 
-        if(paths.fds_filein!=NULL)chidptr=GetChid(paths.fds_filein,buffer_chid);
+        if(scase.paths.fds_filein!=NULL)chidptr=GetChid(scase.paths.fds_filein,buffer_chid);
         if(chidptr!=NULL){
           NewMemory((void **)&chidfilebase,(unsigned int)(strlen(chidptr)+1));
           STRCPY(chidfilebase,chidptr);
         }
       }
       if(chidfilebase!=NULL){
-        NewMemory((void **)&paths.hrr_csv_filename,(unsigned int)(strlen(chidfilebase)+8+1));
-        STRCPY(paths.hrr_csv_filename,chidfilebase);
-        STRCAT(paths.hrr_csv_filename,"_hrr.csv");
-        if(FILE_EXISTS_CASEDIR(paths.hrr_csv_filename)==NO){
-          FREEMEMORY(paths.hrr_csv_filename);
+        NewMemory((void **)&scase.paths.hrr_csv_filename,(unsigned int)(strlen(chidfilebase)+8+1));
+        STRCPY(scase.paths.hrr_csv_filename,chidfilebase);
+        STRCAT(scase.paths.hrr_csv_filename,"_hrr.csv");
+        if(FILE_EXISTS_CASEDIR(scase.paths.hrr_csv_filename)==NO){
+          FREEMEMORY(scase.paths.hrr_csv_filename);
         }
 
-        NewMemory((void **)&paths.devc_csv_filename,(unsigned int)(strlen(chidfilebase)+9+1));
-        STRCPY(paths.devc_csv_filename,chidfilebase);
-        STRCAT(paths.devc_csv_filename,"_devc.csv");
-        if(FILE_EXISTS_CASEDIR(paths.devc_csv_filename)==NO){
-          FREEMEMORY(paths.devc_csv_filename);
+        NewMemory((void **)&scase.paths.devc_csv_filename,(unsigned int)(strlen(chidfilebase)+9+1));
+        STRCPY(scase.paths.devc_csv_filename,chidfilebase);
+        STRCAT(scase.paths.devc_csv_filename,"_devc.csv");
+        if(FILE_EXISTS_CASEDIR(scase.paths.devc_csv_filename)==NO){
+          FREEMEMORY(scase.paths.devc_csv_filename);
         }
 
-        NewMemory((void **)&paths.exp_csv_filename,(unsigned int)(strlen(chidfilebase)+8+1));
-        STRCPY(paths.exp_csv_filename,chidfilebase);
-        STRCAT(paths.exp_csv_filename,"_exp.csv");
-        if(FILE_EXISTS_CASEDIR(paths.exp_csv_filename)==NO){
-          FREEMEMORY(paths.exp_csv_filename);
+        NewMemory((void **)&scase.paths.exp_csv_filename,(unsigned int)(strlen(chidfilebase)+8+1));
+        STRCPY(scase.paths.exp_csv_filename,chidfilebase);
+        STRCAT(scase.paths.exp_csv_filename,"_exp.csv");
+        if(FILE_EXISTS_CASEDIR(scase.paths.exp_csv_filename)==NO){
+          FREEMEMORY(scase.paths.exp_csv_filename);
         }
       }
       break;
@@ -5173,16 +5173,16 @@ int ParseCHIDProcess(bufferstreamdata *stream, int option){
   }
   bufferptr = TrimFrontBack(buffer);
   len = strlen(bufferptr);
-  FREEMEMORY(paths.chidfilebase);
-  NewMemory((void **)&paths.chidfilebase, (unsigned int)(len+1));
-  STRCPY(paths.chidfilebase, bufferptr);
+  FREEMEMORY(scase.paths.chidfilebase);
+  NewMemory((void **)&scase.paths.chidfilebase, (unsigned int)(len+1));
+  STRCPY(scase.paths.chidfilebase, bufferptr);
 
-  if(paths.chidfilebase!=NULL){
-    NewMemory((void **)&paths.hrr_csv_filename, (unsigned int)(strlen(paths.chidfilebase)+8+1));
-    STRCPY(paths.hrr_csv_filename, chidfilebase);
-    STRCAT(paths.hrr_csv_filename, "_hrr.csv");
-    if(FILE_EXISTS_CASEDIR(paths.hrr_csv_filename)==NO){
-      FREEMEMORY(paths.hrr_csv_filename);
+  if(scase.paths.chidfilebase!=NULL){
+    NewMemory((void **)&scase.paths.hrr_csv_filename, (unsigned int)(strlen(scase.paths.chidfilebase)+8+1));
+    STRCPY(scase.paths.hrr_csv_filename, chidfilebase);
+    STRCAT(scase.paths.hrr_csv_filename, "_hrr.csv");
+    if(FILE_EXISTS_CASEDIR(scase.paths.hrr_csv_filename)==NO){
+      FREEMEMORY(scase.paths.hrr_csv_filename);
     }
   }
   return RETURN_CONTINUE;
@@ -11737,7 +11737,7 @@ int ReadSMV_Configure(){
 
   if(scase.meshescoll.meshinfo!=NULL&&scase.meshescoll.meshinfo->jbar==1)force_isometric=1;
 
-  if(paths.hrr_csv_filename != NULL)ReadHRR(LOAD);
+  if(scase.paths.hrr_csv_filename != NULL)ReadHRR(LOAD);
   PRINT_TIMER(timer_readsmv, "ReadHRR");
 
   if(runscript == 1){
@@ -17326,9 +17326,9 @@ void WriteIni(int flag,char *filename){
 
   fprintf(fileout, "SHOWSLICEVALS\n");
   fprintf(fileout, " %i\n", show_slice_values_all_regions);
-  if(paths.fds_filein != NULL&&strlen(paths.fds_filein) > 0){
+  if(scase.paths.fds_filein != NULL&&strlen(scase.paths.fds_filein) > 0){
     fprintf(fileout, "INPUT_FILE\n");
-    fprintf(fileout, " %s\n", paths.fds_filein);
+    fprintf(fileout, " %s\n", scase.paths.fds_filein);
   }
   fprintf(fileout, "LABELSTARTUPVIEW\n");
   fprintf(fileout, " %s\n", viewpoint_label_startup);
@@ -17522,7 +17522,7 @@ void WriteIni(int flag,char *filename){
 
   if(flag == LOCAL_INI)WriteIniLocal(fileout);
   if(
-    ((INI_fds_filein != NULL&&paths.fds_filein != NULL&&strcmp(INI_fds_filein, paths.fds_filein) == 0) ||
+    ((INI_fds_filein != NULL&&scase.paths.fds_filein != NULL&&strcmp(INI_fds_filein, scase.paths.fds_filein) == 0) ||
     flag == LOCAL_INI))OutputViewpoints(fileout);
 
   {
