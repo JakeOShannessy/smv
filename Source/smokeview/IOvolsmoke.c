@@ -1144,14 +1144,14 @@ void InitSuperMesh(void){
 
   // merge connected meshes to form supermeshes
 
-  nsupermeshinfo = 0;
+  scase.nsupermeshinfo = 0;
   thismesh = GetMinMesh();
-  for(smesh = supermeshinfo, thismesh = GetMinMesh();thismesh!=NULL;thismesh = GetMinMesh(), smesh++){
+  for(smesh = scase.supermeshinfo, thismesh = GetMinMesh();thismesh!=NULL;thismesh = GetMinMesh(), smesh++){
     MakeSMesh(smesh, thismesh);
-    nsupermeshinfo++;
+    scase.nsupermeshinfo++;
   }
 
-  for(smesh = supermeshinfo;smesh!=supermeshinfo+nsupermeshinfo;smesh++){
+  for(smesh = scase.supermeshinfo;smesh!=scase.supermeshinfo+scase.nsupermeshinfo;smesh++){
     meshdata *nab;
     float *smin, *smax;
     int nsize;
@@ -1238,8 +1238,8 @@ void InitSuperMesh(void){
   }
 #ifdef pp_GPU
   if(gpuactive==1){
-    for(i = 0;i<nsupermeshinfo;i++){
-      smesh = supermeshinfo+i;
+    for(i = 0;i<scase.nsupermeshinfo;i++){
+      smesh = scase.supermeshinfo+i;
       InitVolsmokeSuperTexture(smesh);
     }
   }
@@ -3034,10 +3034,10 @@ void UnloadVolsmokeSuperTextures(void){
   int i, doit;
 
   doit = 0;
-  for(i = 0;i<nsupermeshinfo;i++){
+  for(i = 0;i<scase.nsupermeshinfo;i++){
     supermeshdata *smesh;
 
-    smesh = supermeshinfo+i;
+    smesh = scase.supermeshinfo+i;
     if(smesh->volsmoke_texture_buffer!=NULL||smesh->volfire_texture_buffer!=NULL){
       doit = 1;
       break;
@@ -3045,10 +3045,10 @@ void UnloadVolsmokeSuperTextures(void){
   }
   if(doit==0)return;
   PRINTF("Unloading smoke and fire textures for each supermesh\n");
-  for(i = 0;i<nsupermeshinfo;i++){
+  for(i = 0;i<scase.nsupermeshinfo;i++){
     supermeshdata *smesh;
 
-    smesh = supermeshinfo+i;
+    smesh = scase.supermeshinfo+i;
     FREEMEMORY(smesh->volfire_texture_buffer);
     FREEMEMORY(smesh->volsmoke_texture_buffer);
   }
@@ -3156,10 +3156,10 @@ void DefineVolsmokeTextures(void){
 
   if(combine_meshes==1&&gpuactive==1){
 #ifdef pp_GPU
-    for(i=0;i<nsupermeshinfo;i++){
+    for(i=0;i<scase.nsupermeshinfo;i++){
       supermeshdata *smesh;
 
-      smesh = supermeshinfo + i;
+      smesh = scase.supermeshinfo + i;
       InitVolsmokeSuperTexture(smesh);
     }
 #endif

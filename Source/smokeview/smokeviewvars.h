@@ -1825,8 +1825,6 @@ SVEXTERN f_units SVDECL(*unitclasses,NULL),SVDECL(*unitclasses_default,NULL),SVD
 SVEXTERN int SVDECL(nunitclasses,0),SVDECL(nunitclasses_default,0),SVDECL(nunitclasses_ini,0);
 SVEXTERN smv_case SVDECL(scase, {0});
 SVEXTERN meshdata SVDECL(*current_mesh,NULL), SVDECL(*mesh_save,NULL);
-SVEXTERN supermeshdata SVDECL(*supermeshinfo,NULL);
-SVEXTERN int SVDECL(nsupermeshinfo,0);
 SVEXTERN meshdata SVDECL(*mesh_last,NULL), SVDECL(*loaded_isomesh,NULL);
 SVEXTERN float SVDECL(devicenorm_length,0.1);
 SVEXTERN float max_dev_vel;

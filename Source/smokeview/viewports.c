@@ -1703,10 +1703,10 @@ void GetVolSmokeDir(float *mm){
         }
       }
     }
-    for(i = 0;i<nsupermeshinfo;i++){
+    for(i = 0;i<scase.nsupermeshinfo;i++){
       supermeshdata *smesh;
 
-      smesh = supermeshinfo + i;
+      smesh = scase.supermeshinfo + i;
       for(j = 0;j<7;j++){
         smesh->drawsides[j] = 0;
       }

@@ -8049,15 +8049,15 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     meshi = scase.meshescoll.meshinfo + i;
     InitMesh(meshi); // initialize mesh here so order of order GRID/TERRAIN keywords won't cause a problem
   }
-  FREEMEMORY(supermeshinfo);
-  if(NewMemory((void **)&supermeshinfo,scase.meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
+  FREEMEMORY(scase.supermeshinfo);
+  if(NewMemory((void **)&scase.supermeshinfo,scase.meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
   scase.meshescoll.meshinfo->plot3dfilenum=-1;
   UpdateCurrentMesh(scase.meshescoll.meshinfo);
   for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     supermeshdata *smeshi;
 
-    smeshi = supermeshinfo + i;
+    smeshi = scase.supermeshinfo + i;
     smeshi->nmeshes=0;
 
     meshi=scase.meshescoll.meshinfo+i;
