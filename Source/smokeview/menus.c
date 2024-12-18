@@ -2824,7 +2824,7 @@ void SmokeviewIniMenu(int value){
     WriteIni(LOCAL_INI,NULL);
     break;
   case MENU_READSVO:
-    ReadDefaultObjectCollection(objectscoll, fdsprefix, setbw, sextras.isZoneFireModel);
+    ReadDefaultObjectCollection(&scase.objectscoll, fdsprefix, setbw, sextras.isZoneFireModel);
     break;
   case MENU_DUMMY:
     break;
@@ -3820,9 +3820,9 @@ void TourMenu(int value){
   default:
     if(value<-22){
       tourlocus_type=2;
-      objectscoll->iavatar_types=(-value-23);
+      scase.objectscoll.iavatar_types=(-value-23);
       if(selectedtour_index>=0&&selectedtour_index<tourcoll.ntourinfo){
-        tourcoll.tourinfo[selectedtour_index].glui_avatar_index=objectscoll->iavatar_types;
+        tourcoll.tourinfo[selectedtour_index].glui_avatar_index=scase.objectscoll.iavatar_types;
       }
     }
 
@@ -6920,16 +6920,16 @@ void TitleMenu(int value){
 void ShowADeviceType(void){
   int i;
 
-  for(i=0;i<objectscoll->nobject_defs;i++){
+  for(i=0;i<scase.objectscoll.nobject_defs;i++){
     sv_object *obj_typei;
 
-    obj_typei = objectscoll->object_defs[i];
+    obj_typei = scase.objectscoll.object_defs[i];
     if(obj_typei->used_by_device==1&&obj_typei->visible==1)return;
   }
-  for(i=0;i<objectscoll->nobject_defs;i++){
+  for(i=0;i<scase.objectscoll.nobject_defs;i++){
     sv_object *obj_typei;
 
-    obj_typei = objectscoll->object_defs[i];
+    obj_typei = scase.objectscoll.object_defs[i];
     if(obj_typei->used_by_device==1){
       obj_typei->visible=1;
       return;
@@ -6990,8 +6990,8 @@ void ShowObjectsMenu(int value){
   sv_object *objecti;
   int i;
 
-  if(value>=0&&value<objectscoll->nobject_defs){
-    objecti = objectscoll->object_defs[value];
+  if(value>=0&&value<scase.objectscoll.nobject_defs){
+    objecti = scase.objectscoll.object_defs[value];
     objecti->visible = 1 - objecti->visible;
     if(showdevice_val==1||vis_device_plot!=DEVICE_PLOT_HIDDEN){
       update_times = 1;
@@ -7004,14 +7004,14 @@ void ShowObjectsMenu(int value){
     show_missing_objects = 1 - show_missing_objects;
   }
   else if(value==OBJECT_SHOWALL){
-    for(i=0;i<objectscoll->nobject_defs;i++){
-      objecti = objectscoll->object_defs[i];
+    for(i=0;i<scase.objectscoll.nobject_defs;i++){
+      objecti = scase.objectscoll.object_defs[i];
       objecti->visible=1;
     }
   }
   else if(value==OBJECT_HIDEALL){
-    for(i=0;i<objectscoll->nobject_defs;i++){
-      objecti = objectscoll->object_defs[i];
+    for(i=0;i<scase.objectscoll.nobject_defs;i++){
+      objecti = scase.objectscoll.object_defs[i];
       objecti->visible=0;
     }
   }
@@ -7720,13 +7720,13 @@ void GeometryMainMenu(int value){
 int GetNumActiveDevices(void){
   int num_activedevices = 0;
 
-  if(objectscoll->nobject_defs > 0){
+  if(scase.objectscoll.nobject_defs > 0){
     int i;
 
-    for(i = 0; i < objectscoll->nobject_defs; i++){
+    for(i = 0; i < scase.objectscoll.nobject_defs; i++){
       sv_object *obj_typei;
 
-      obj_typei = objectscoll->object_defs[i];
+      obj_typei = scase.objectscoll.object_defs[i];
       if(obj_typei->used_by_device == 1)num_activedevices++;
     }
   }
@@ -9805,7 +9805,7 @@ static int menu_count=0;
   if(sextras.visTerrainType==TERRAIN_HIDDEN)glutAddMenuEntry(_("*Hidden"),17+TERRAIN_HIDDEN);
   if(sextras.visTerrainType!=TERRAIN_HIDDEN)glutAddMenuEntry(_("Hidden"),17+TERRAIN_HIDDEN);
 
-  if(objectscoll->nobject_defs>0){
+  if(scase.objectscoll.nobject_defs>0){
     int multiprop;
 
     multiprop=0;
@@ -9884,12 +9884,12 @@ static int menu_count=0;
       glutAddMenuEntry(qlabel, i);
     }
   }
-  if(objectscoll->nobject_defs>0||hrrptr!=NULL){
+  if(scase.objectscoll.nobject_defs>0||hrrptr!=NULL){
     CREATEMENU(showobjectsplotmenu,ShowObjectsMenu);
     if(ndevicetypes>0){
       GLUTADDSUBMENU(_("quantity"),devicetypemenu);
     }
-    if(objectscoll->nobject_defs>0){
+    if(scase.objectscoll.nobject_defs>0){
       if(vis_device_plot==DEVICE_PLOT_SHOW_ALL)glutAddMenuEntry(      "*All devices",           OBJECT_PLOT_SHOW_ALL);
       if(vis_device_plot!=DEVICE_PLOT_SHOW_ALL)glutAddMenuEntry(      "All devices",            OBJECT_PLOT_SHOW_ALL);
       if(vis_device_plot==DEVICE_PLOT_SHOW_SELECTED)glutAddMenuEntry( "*Selected devices",      OBJECT_PLOT_SHOW_SELECTED);
@@ -9904,7 +9904,7 @@ static int menu_count=0;
     if(showdevice_val==0)glutAddMenuEntry(_("Show values"),  OBJECT_VALUES);
     glutAddMenuEntry(_("Settings..."), MENU_DEVICE_SETTINGS);
   }
-  if(objectscoll->nobject_defs>0){
+  if(scase.objectscoll.nobject_defs>0){
     if(scase.devicecoll.ndeviceinfo > 0){
       int showall=1, hideall=1;
 
@@ -9933,10 +9933,10 @@ static int menu_count=0;
     }
 
     CREATEMENU(showobjectsmenu,ShowObjectsMenu);
-    for(i=0;i<objectscoll->nobject_defs;i++){
+    for(i=0;i<scase.objectscoll.nobject_defs;i++){
       sv_object *obj_typei;
 
-      obj_typei = objectscoll->object_defs[i];
+      obj_typei = scase.objectscoll.object_defs[i];
       if(obj_typei->used_by_device==1){
         char obj_menu[256];
 
@@ -9988,7 +9988,7 @@ static int menu_count=0;
       GLUTADDSUBMENU(_("Show/Hide devices"), showdevicesmenu);
     }
     GLUTADDSUBMENU(_("Segments"),spheresegmentmenu);
-    if(objectscoll->nobject_defs>0&&scase.devicecoll.ndeviceinfo>0){
+    if(scase.objectscoll.nobject_defs>0&&scase.devicecoll.ndeviceinfo>0){
       glutAddMenuEntry("-",MENU_DUMMY);
       GLUTADDSUBMENU(_("Plot data"),showobjectsplotmenu);
     }
@@ -11146,10 +11146,10 @@ static int menu_count=0;
         STRCPY(menulabel,touri->menulabel);
       }
       glui_avatar_index_local = touri->glui_avatar_index;
-      if(glui_avatar_index_local>=0&&glui_avatar_index_local<objectscoll->navatar_types){
+      if(glui_avatar_index_local>=0&&glui_avatar_index_local<scase.objectscoll.navatar_types){
         sv_object *avatari;
 
-        avatari=objectscoll->avatar_types[glui_avatar_index_local];
+        avatari=scase.objectscoll.avatar_types[glui_avatar_index_local];
         strcat(menulabel,"(");
         strcat(menulabel,avatari->label);
         strcat(menulabel,")");
@@ -11398,13 +11398,13 @@ static int menu_count=0;
     showhide_data = 1;
     GLUTADDSUBMENU(_("Zone"), zoneshowmenu);
   }
-  if(objectscoll->nobject_defs>0){
+  if(scase.objectscoll.nobject_defs>0){
     int num_activedevices=0;
 
-    for(i = 0; i<objectscoll->nobject_defs; i++){
+    for(i = 0; i<scase.objectscoll.nobject_defs; i++){
       sv_object *obj_typei;
 
-      obj_typei = objectscoll->object_defs[i];
+      obj_typei = scase.objectscoll.object_defs[i];
       if(obj_typei->used==1)num_activedevices++;
     }
 
@@ -11416,10 +11416,10 @@ static int menu_count=0;
       */
     }
     else{
-      for(i=0;i<objectscoll->nobject_defs;i++){
+      for(i=0;i<scase.objectscoll.nobject_defs;i++){
         sv_object *obj_typei;
 
-        obj_typei = objectscoll->object_defs[i];
+        obj_typei = scase.objectscoll.object_defs[i];
         if(obj_typei->used==1){
           char obj_menu[256];
 

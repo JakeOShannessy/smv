@@ -1569,7 +1569,7 @@ void InitVars(void){
   strcpy(sextras.surfacedefaultlabel,"");
   if(streak_index>=0)float_streak5value=streak_rvalue[streak_index];
 
-  objectscoll = CreateObjectCollection();
+  InitObjectCollection(&scase.objectscoll);
 
   GetTitle("Smokeview ", release_title);
   GetTitle("Smokeview ", plot3d_title);
@@ -1689,5 +1689,5 @@ void InitVars(void){
 }
 
 void FreeVars(void){
-  FreeObjectCollection(objectscoll);
+  FreeObjectCollection(&scase.objectscoll);
 }
