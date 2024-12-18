@@ -808,7 +808,7 @@ PROP
   char buffer[255];
   int i;
 
-  propi = propinfo + npropinfo;
+  propi = scase.propcoll.propinfo + scase.propcoll.npropinfo;
 
   strcpy(proplabel,"Human_props(default)");           // from input
 
@@ -2055,11 +2055,11 @@ void GetLabels(char *buffer, char **label1, char **label2){
 propdata *GetPropID(char *prop_id){
   int i;
 
-  if(propinfo == NULL || prop_id == NULL || strlen(prop_id) == 0)return NULL;
-  for(i = 0; i < npropinfo; i++){
+  if(scase.propcoll.propinfo == NULL || prop_id == NULL || strlen(prop_id) == 0)return NULL;
+  for(i = 0; i < scase.propcoll.npropinfo; i++){
     propdata *propi;
 
-    propi = propinfo + i;
+    propi = scase.propcoll.propinfo + i;
 
     if(strcmp(propi->label, prop_id) == 0)return propi;
   }
@@ -2867,7 +2867,7 @@ void InitTextures(int use_graphics_arg){
 #endif
   INIT_PRINT_TIMER(total_texture_time);
   UpdateDeviceTextures(objectscoll, scase.devicecoll.ndeviceinfo, scase.devicecoll.deviceinfo,
-                       npropinfo, propinfo, &device_texture_list_coll.ndevice_texture_list,
+                       scase.propcoll.npropinfo, scase.propcoll.propinfo, &device_texture_list_coll.ndevice_texture_list,
                        &device_texture_list_coll.device_texture_list_index, &device_texture_list_coll.device_texture_list);
   if(scase.surfcoll.nsurfinfo>0||device_texture_list_coll.ndevice_texture_list>0){
     if(NewMemory((void **)&scase.texture_coll.textureinfo, (scase.surfcoll.nsurfinfo+device_texture_list_coll.ndevice_texture_list+scase.terrain_texture_coll.nterrain_textures)*sizeof(texturedata))==0)return;
@@ -7018,7 +7018,7 @@ int ReadSMV_Init(){
 
   START_TIMER(pass0_time);
 
-  npropinfo=1; // the 0'th prop is the default human property
+  scase.propcoll.npropinfo=1; // the 0'th prop is the default human property
 
   FREEMEMORY(fds_title);
 
@@ -7551,7 +7551,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"PROP") == 1){
-      npropinfo++;
+      scase.propcoll.npropinfo++;
       continue;
     }
     if(MatchSMV(buffer,"SMOKEDIFF") == 1){
@@ -7959,9 +7959,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
    NewMemory((void **)&cgeominfo, ncgeominfo*sizeof(geomdata));
    ncgeominfo = 0;
  }
- if(npropinfo>0){
-   NewMemory((void **)&propinfo,npropinfo*sizeof(propdata));
-   npropinfo=1; // the 0'th prop is the default human property
+ if(scase.propcoll.npropinfo>0){
+   NewMemory((void **)&scase.propcoll.propinfo,scase.propcoll.npropinfo*sizeof(propdata));
+   scase.propcoll.npropinfo=1; // the 0'th prop is the default human property
  }
  if(sextras.nterraininfo>0){
    NewMemory((void **)&sextras.terraininfo,sextras.nterraininfo*sizeof(terraindata));
@@ -8190,10 +8190,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     sextras.ntickinfo_smv=0;
   }
 
-  if(npropinfo>0){
-    npropinfo=0;
+  if(scase.propcoll.npropinfo>0){
+    scase.propcoll.npropinfo=0;
     InitDefaultProp();
-    npropinfo=1;
+    scase.propcoll.npropinfo=1;
   }
 
   if(npartinfo>0 && NewMemory((void **)&sextras.part_buffer,       3*npartinfo*MAXFILELEN)    == 0)return 2;
@@ -8578,7 +8578,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int nsmokeview_ids;
       char *smokeview_id;
 
-      propi = propinfo + npropinfo;
+      propi = scase.propcoll.propinfo + scase.propcoll.npropinfo;
 
       if(FGETS(proplabel,255,stream)==NULL){
         BREAK;  // prop label
@@ -8676,7 +8676,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         GetIndepVarIndices(propi->smv_object,propi->vars_indep,propi->nvars_indep,propi->vars_indep_index);
       }
       propi->ntextures=ntextures_local;
-      npropinfo++;
+      scase.propcoll.npropinfo++;
       continue;
     }
 
@@ -10619,10 +10619,10 @@ typedef struct {
           proplabel++;
           TrimBack(proplabel);
           proplabel = TrimFront(proplabel);
-          for(i=0;i<npropinfo;i++){
+          for(i=0;i<scase.propcoll.npropinfo;i++){
             propdata *propi;
 
-            propi = propinfo + i;
+            propi = scase.propcoll.propinfo + i;
             if(STRCMP(proplabel,propi->label)==0){
               prop = propi;
               propi->inblockage=1;
@@ -15735,8 +15735,8 @@ int ReadIni2(char *inifile, int localfile){
 
           fgets(buffer, 255, stream);
           sscanf(buffer, "%i %i", &ind, &val);
-          if(ind<0 || ind>npropinfo - 1)continue;
-          propi = propinfo + ind;
+          if(ind<0 || ind>scase.propcoll.npropinfo - 1)continue;
+          propi = scase.propcoll.propinfo + ind;
           if(val<0 || val>propi->nsmokeview_ids - 1)continue;
           propi->smokeview_id = propi->smokeview_ids[val];
           propi->smv_object = propi->smv_objects[val];
@@ -16321,15 +16321,15 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, "PARTSKIP\n");
   fprintf(fileout, " %i\n", partdrawskip);
 
-  if(npropinfo>0){
+  if(scase.propcoll.npropinfo>0){
     fprintf(fileout, "PROPINDEX\n");
-    fprintf(fileout, " %i\n", npropinfo);
-    for(i = 0; i < npropinfo; i++){
+    fprintf(fileout, " %i\n", scase.propcoll.npropinfo);
+    for(i = 0; i < scase.propcoll.npropinfo; i++){
       propdata *propi;
       int offset;
       int jj;
 
-      propi = propinfo + i;
+      propi = scase.propcoll.propinfo + i;
       offset = -1;
       for(jj = 0; jj < propi->nsmokeview_ids; jj++){
         if(strcmp(propi->smokeview_id, propi->smokeview_ids[jj]) == 0){

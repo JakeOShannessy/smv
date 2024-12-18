@@ -3951,12 +3951,12 @@ void PropMenu(int value){
 
   // value = iobject*npropinfo + iprop
 
-  iprop = value%npropinfo;
-  iobject = value / npropinfo;
-  if(iprop >= 0 && iprop < npropinfo){
+  iprop = value%scase.propcoll.npropinfo;
+  iobject = value / scase.propcoll.npropinfo;
+  if(iprop >= 0 && iprop < scase.propcoll.npropinfo){
     propdata *propi;
 
-    propi = propinfo + iprop;
+    propi = scase.propcoll.propinfo + iprop;
     if(iobject >= 0 && iobject < propi->nsmokeview_ids){
       int i;
 
@@ -6828,10 +6828,10 @@ void BlockageMenu(int value){
    default:
      if(value<0){
        value=-value-1;
-       if(value>=0&&value<=npropinfo-1){
+       if(value>=0&&value<=scase.propcoll.npropinfo-1){
          propdata *propi;
 
-         propi = propinfo + value;
+         propi = scase.propcoll.propinfo + value;
          propi->blockvis=1-propi->blockvis;
        }
      }
@@ -9443,10 +9443,10 @@ static int menu_count=0;
   {
     int nblockprop=0;
 
-    for(i=0;i<npropinfo;i++){
+    for(i=0;i<scase.propcoll.npropinfo;i++){
       propdata *propi;
 
-      propi = propinfo + i;
+      propi = scase.propcoll.propinfo + i;
       if(propi->inblockage==1)nblockprop++;
     }
     if(nblockprop>0){
@@ -9454,10 +9454,10 @@ static int menu_count=0;
 
       glutAddMenuEntry("-",MENU_DUMMY);
       glutAddMenuEntry(_("Show/Hide blockage types:"),MENU_DUMMY);
-      for(i=0;i<npropinfo;i++){
+      for(i=0;i<scase.propcoll.npropinfo;i++){
         propdata *propi;
 
-        propi = propinfo + i;
+        propi = scase.propcoll.propinfo + i;
         if(propi->inblockage==1){
           strcpy(propmenulabel,"    ");
           if(propi->blockvis==1)strcat(propmenulabel,"*");
@@ -9809,17 +9809,17 @@ static int menu_count=0;
     int multiprop;
 
     multiprop=0;
-    for(i=0;i<npropinfo;i++){
+    for(i=0;i<scase.propcoll.npropinfo;i++){
       propdata *propi;
 
-      propi = propinfo + i;
+      propi = scase.propcoll.propinfo + i;
       if(propi->nsmokeview_ids>1)multiprop=1;
     }
     if(multiprop==1){
-      for(i=0;i<npropinfo;i++){
+      for(i=0;i<scase.propcoll.npropinfo;i++){
         propdata *propi;
 
-        propi = propinfo + i;
+        propi = scase.propcoll.propinfo + i;
         CREATEMENU(propi->menu_id,PropMenu);
         if(propi->nsmokeview_ids>1){
           int jj;
@@ -9831,15 +9831,15 @@ static int menu_count=0;
               strcat(menulabel,"*");
             }
             strcat(menulabel,propi->smokeview_ids[jj]);
-            glutAddMenuEntry(menulabel,jj*npropinfo+i);
+            glutAddMenuEntry(menulabel,jj*scase.propcoll.npropinfo+i);
           }
         }
       }
       CREATEMENU(propmenu,PropMenu);
-      for(i=0;i<npropinfo;i++){
+      for(i=0;i<scase.propcoll.npropinfo;i++){
         propdata *propi;
 
-        propi = propinfo + i;
+        propi = scase.propcoll.propinfo + i;
         if(propi->nsmokeview_ids>1){
           GLUTADDSUBMENU(propi->label,propi->menu_id);
         }
@@ -10691,7 +10691,7 @@ static int menu_count=0;
                 for(iii=0;iii<propclass->nsmokeview_ids;iii++){
                   int propvalue, showvalue, menuvalue;
 
-                  propvalue = iii*npropinfo + (propclass-propinfo);
+                  propvalue = iii*scase.propcoll.npropinfo + (propclass-scase.propcoll.propinfo);
                   showvalue = -10-5*j-PART_SMV_DEVICE;
                   menuvalue = (-1-propvalue)*10000 + showvalue;
                   // propvalue = (-menuvalue)/10000-1;

@@ -1033,8 +1033,6 @@ SVEXTERN float hrrpuv_iso_color[4]={1.0,0.5,0.0,1.0};
 #else
 SVEXTERN float hrrpuv_iso_color[4];
 #endif
-SVEXTERN int npropinfo;
-SVEXTERN propdata SVDECL(*propinfo,NULL);
 SVEXTERN float SVDECL(right_green,0.0), SVDECL(right_blue,1.0);
 
 SVEXTERN int SVDECL(saved_colorbar, -1);

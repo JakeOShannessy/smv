@@ -3704,8 +3704,8 @@ int SetPropindex(int nvals, int *vals) {
     int ind, val;
     ind = *(vals + (i * PROPINDEX_STRIDE + 0));
     val = *(vals + (i * PROPINDEX_STRIDE + 1));
-    if(ind < 0 || ind > npropinfo - 1) return 0;
-    propi = propinfo + ind;
+    if(ind < 0 || ind > scase.propcoll.npropinfo - 1) return 0;
+    propi = scase.propcoll.propinfo + ind;
     if(val < 0 || val > propi->nsmokeview_ids - 1) return 0;
     propi->smokeview_id = propi->smokeview_ids[val];
     propi->smv_object = propi->smv_objects[val];
