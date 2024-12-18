@@ -1066,7 +1066,7 @@ void SetResearchMode(int flag){
   if(npatchinfo>0)patchboundsCPP.set_research_mode(flag);
   if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.set_research_mode(flag);
   if(npartinfo>0)partboundsCPP.set_research_mode(flag);
-  if(nplot3dinfo>0)plot3dboundsCPP.set_research_mode(flag);
+  if(scase.nplot3dinfo>0)plot3dboundsCPP.set_research_mode(flag);
   if(nhvacductbounds>0)hvacductboundsCPP.set_research_mode(flag);
   if(nhvacnodebounds > 0)hvacnodeboundsCPP.set_research_mode(flag);
 }
@@ -1077,7 +1077,7 @@ extern "C" void GLUISetColorbarDigitsCPP(int ndigits){
   if(npatchinfo>0)patchboundsCPP.set_colorbar_digits(ndigits);
   if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.set_colorbar_digits(ndigits);
   if(npartinfo>0)partboundsCPP.set_colorbar_digits(ndigits);
-  if(nplot3dinfo>0)plot3dboundsCPP.set_colorbar_digits(ndigits);
+  if(scase.nplot3dinfo>0)plot3dboundsCPP.set_colorbar_digits(ndigits);
 }
 
   /* ------------------ InResearchMode ------------------------ */
@@ -1085,7 +1085,7 @@ extern "C" void GLUISetColorbarDigitsCPP(int ndigits){
 int InResearchMode(void){
   if(npatchinfo>0&&patchboundsCPP.in_research_mode()==0)return 0;
   if(npartinfo>0&&partboundsCPP.in_research_mode()==0)return 0;
-  if(nplot3dinfo>0&&plot3dboundsCPP.in_research_mode()==0)return 0;
+  if(scase.nplot3dinfo>0&&plot3dboundsCPP.in_research_mode()==0)return 0;
   if(scase.slicecoll.nsliceinfo>0&&sliceboundsCPP.in_research_mode()==0)return 0;
   if(nhvacductbounds>0&&hvacductboundsCPP.in_research_mode()==0)return 0;
   if(nhvacnodebounds > 0 && hvacnodeboundsCPP.in_research_mode() == 0)return 0;
@@ -1109,7 +1109,7 @@ extern "C" cpp_boundsdata *GLUIGetBoundsData(int type){
       if(npartinfo>0)return partboundsCPP.get_bounds_data();
       break;
     case BOUND_PLOT3D:
-      if(nplot3dinfo>0)return plot3dboundsCPP.get_bounds_data();
+      if(scase.nplot3dinfo>0)return plot3dboundsCPP.get_bounds_data();
       break;
     case BOUND_SLICE:
       if(scase.slicecoll.nsliceinfo>0)return sliceboundsCPP.get_bounds_data();
@@ -1138,7 +1138,7 @@ extern "C" void GLUIGetGlobalBoundsMinMax(int type, char *label, float *valmin, 
       if(npartinfo>0)partboundsCPP.get_global_minmax(label, valmin, valmax);
       break;
     case BOUND_PLOT3D:
-      if(nplot3dinfo>0)plot3dboundsCPP.get_global_minmax(label, valmin, valmax);
+      if(scase.nplot3dinfo>0)plot3dboundsCPP.get_global_minmax(label, valmin, valmax);
       break;
     case BOUND_SLICE:
       if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.get_global_minmax(label, valmin, valmax);
@@ -1166,7 +1166,7 @@ extern "C" void GLUISetCacheFlag(int type, int cache_flag){
       if(npartinfo>0)partboundsCPP.set_cache_flag(cache_flag);
       break;
     case BOUND_PLOT3D:
-      if(nplot3dinfo>0)plot3dboundsCPP.set_cache_flag(cache_flag);
+      if(scase.nplot3dinfo>0)plot3dboundsCPP.set_cache_flag(cache_flag);
       break;
     case BOUND_SLICE:
       if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.set_cache_flag(cache_flag);
@@ -1194,7 +1194,7 @@ int GetCacheFlag(int type){
       if(npartinfo>0)return partboundsCPP.get_cache_flag();
       break;
     case BOUND_PLOT3D:
-      if(nplot3dinfo>0)return plot3dboundsCPP.get_cache_flag();
+      if(scase.nplot3dinfo>0)return plot3dboundsCPP.get_cache_flag();
       break;
     case BOUND_SLICE:
       if(scase.slicecoll.nsliceinfo>0)return sliceboundsCPP.get_cache_flag();
@@ -1227,7 +1227,7 @@ extern "C" void GLUIUpdateBounds(void){
     partboundsCPP.CB(BOUND_SETCHOPMAX);
   }
 
-  if(nplot3dinfo>0){
+  if(scase.nplot3dinfo>0){
     plot3dboundsCPP.CB(BOUND_VAL_TYPE);
     plot3dboundsCPP.CB(BOUND_SETCHOPMIN);
     plot3dboundsCPP.CB(BOUND_SETCHOPMAX);
@@ -1257,7 +1257,7 @@ int GetValType(int type){
       if(npartinfo>0)return partboundsCPP.get_valtype();
       break;
     case BOUND_PLOT3D:
-      if(nplot3dinfo>0)return plot3dboundsCPP.get_valtype();
+      if(scase.nplot3dinfo>0)return plot3dboundsCPP.get_valtype();
       break;
     case BOUND_SLICE:
       if(scase.slicecoll.nsliceinfo>0)return sliceboundsCPP.get_valtype();
@@ -1299,7 +1299,7 @@ extern "C" int GLUIGetChopMin(int type, char *label, int *set_chopmin, float *ch
       if(npartinfo>0)return partboundsCPP.get_chopmin(label, set_chopmin, chopmin);
       break;
     case BOUND_PLOT3D:
-      if(nplot3dinfo>0)return plot3dboundsCPP.get_chopmin(label, set_chopmin, chopmin);
+      if(scase.nplot3dinfo>0)return plot3dboundsCPP.get_chopmin(label, set_chopmin, chopmin);
       break;
     case BOUND_SLICE:
       if(scase.slicecoll.nsliceinfo>0)return sliceboundsCPP.get_chopmin(label, set_chopmin, chopmin);
@@ -1328,7 +1328,7 @@ extern "C" int GLUIGetChopMax(int type, char *label, int *set_chopmax, float *ch
       if(npartinfo>0)return partboundsCPP.get_chopmax(label, set_chopmax, chopmax);
       break;
     case BOUND_PLOT3D:
-      if(nplot3dinfo>0)return plot3dboundsCPP.get_chopmax(label, set_chopmax, chopmax);
+      if(scase.nplot3dinfo>0)return plot3dboundsCPP.get_chopmax(label, set_chopmax, chopmax);
       break;
     case BOUND_SLICE:
       if(scase.slicecoll.nsliceinfo>0)return sliceboundsCPP.get_chopmax(label, set_chopmax, chopmax);
@@ -1357,7 +1357,7 @@ extern "C" int GLUISetChopMin(int type, char *label, int set_chopmin, float chop
     if(npartinfo > 0)return partboundsCPP.set_chopmin(label, set_chopmin, chopmin);
     break;
   case BOUND_PLOT3D:
-    if(nplot3dinfo > 0)return plot3dboundsCPP.set_chopmin(label, set_chopmin, chopmin);
+    if(scase.nplot3dinfo > 0)return plot3dboundsCPP.set_chopmin(label, set_chopmin, chopmin);
     break;
   case BOUND_SLICE:
     if(scase.slicecoll.nsliceinfo > 0)return sliceboundsCPP.set_chopmin(label, set_chopmin, chopmin);
@@ -1386,7 +1386,7 @@ extern "C" int GLUISetChopMax(int type, char *label, int set_chopmax, float chop
     if(npartinfo > 0)return partboundsCPP.set_chopmax(label, set_chopmax, chopmax);
     break;
   case BOUND_PLOT3D:
-    if(nplot3dinfo > 0)return plot3dboundsCPP.set_chopmax(label, set_chopmax, chopmax);
+    if(scase.nplot3dinfo > 0)return plot3dboundsCPP.set_chopmax(label, set_chopmax, chopmax);
     break;
   case BOUND_SLICE:
     if(scase.slicecoll.nsliceinfo > 0)return sliceboundsCPP.set_chopmax(label, set_chopmax, chopmax);
@@ -1415,7 +1415,7 @@ extern "C" int GLUIGetNValtypes(int type){
       if(npartinfo>0)return partboundsCPP.get_nvaltypes();
       break;
     case BOUND_PLOT3D:
-      if(nplot3dinfo>0)return plot3dboundsCPP.get_nvaltypes();
+      if(scase.nplot3dinfo>0)return plot3dboundsCPP.get_nvaltypes();
       break;
     case BOUND_SLICE:
       if(scase.slicecoll.nsliceinfo>0)return sliceboundsCPP.get_nvaltypes();
@@ -1444,7 +1444,7 @@ extern "C" void GLUISetValTypeIndex(int type, int valtype_index){
       if(npartinfo>0)partboundsCPP.set_valtype_index(valtype_index);
       break;
     case BOUND_PLOT3D:
-      if(nplot3dinfo>0)plot3dboundsCPP.set_valtype_index(valtype_index);
+      if(scase.nplot3dinfo>0)plot3dboundsCPP.set_valtype_index(valtype_index);
       break;
     case BOUND_SLICE:
       if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.set_valtype_index(valtype_index);
@@ -1484,7 +1484,7 @@ extern "C" void GLUIGetOnlyMinMax(int type, char *label, int *set_valmin, float 
       }
       break;
     case BOUND_PLOT3D:
-      if(nplot3dinfo>0){
+      if(scase.nplot3dinfo>0){
         plot3dboundsCPP.get_min(label, set_valmin, valmin);
         plot3dboundsCPP.get_max(label, set_valmax, valmax);
       }
@@ -1534,7 +1534,7 @@ extern "C" void GLUIGetMinMax(int type, char *label, int *set_valmin, float *val
       }
       break;
     case BOUND_PLOT3D:
-      if(nplot3dinfo>0){
+      if(scase.nplot3dinfo>0){
         plot3dboundsCPP.set_valtype(label);
         plot3dboundsCPP.get_min(label, set_valmin, valmin);
         plot3dboundsCPP.get_max(label, set_valmax, valmax);
@@ -1835,7 +1835,7 @@ extern "C" void GLUIHVACDuctBoundsCPP_CB(int var){
   case BOUND_RESEARCH_MODE:
     if(npartinfo > 0)partboundsCPP.CB(BOUND_RESEARCH_MODE);
     if(npatchinfo > 0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
-    if(nplot3dinfo > 0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
+    if(scase.nplot3dinfo > 0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
     if(scase.slicecoll.nsliceinfo > 0)sliceboundsCPP.CB(BOUND_RESEARCH_MODE);
     GLUIHVACDuctBoundsCPP_CB(BOUND_UPDATE_COLORS);
     break;
@@ -1867,7 +1867,7 @@ extern "C" void GLUIHVACNodeBoundsCPP_CB(int var){
   case BOUND_RESEARCH_MODE:
     if(npartinfo > 0)partboundsCPP.CB(BOUND_RESEARCH_MODE);
     if(npatchinfo > 0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
-    if(nplot3dinfo > 0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
+    if(scase.nplot3dinfo > 0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
     if(scase.slicecoll.nsliceinfo > 0)sliceboundsCPP.CB(BOUND_RESEARCH_MODE);
     GLUIHVACNodeBoundsCPP_CB(BOUND_UPDATE_COLORS);
     break;
@@ -1958,7 +1958,7 @@ extern "C" void GLUIHVACSliceBoundsCPP_CB(int var){
     case BOUND_RESEARCH_MODE:
       if(npartinfo>0)partboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(npatchinfo>0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
-      if(nplot3dinfo>0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
+      if(scase.nplot3dinfo>0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(nhvacductbounds>0)hvacductboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(nhvacnodebounds > 0)hvacnodeboundsCPP.CB(BOUND_RESEARCH_MODE);
       break;
@@ -2018,11 +2018,11 @@ extern "C" void GLUIHVACSliceBoundsCPP_CB(int var){
 int HavePlot3DData(void){
   int i;
 
-  for(i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<scase.nplot3dinfo; i++){
     meshdata *meshi;
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo+i;
+    plot3di = scase.plot3dinfo+i;
     if(plot3di->loaded==0)continue;
     if(plot3di->blocknumber<0)return 0;
     meshi = scase.meshescoll.meshinfo+plot3di->blocknumber;
@@ -2099,20 +2099,20 @@ extern "C" void GLUIPlot3DBoundsCPP_CB(int var){
       hist_update = 0;
       plot3d_loaded = 0;
       bounds = GLUIGetBoundsData(BOUND_PLOT3D);
-      for(i = 0;i < nplot3dinfo;i++){
+      for(i = 0;i < scase.nplot3dinfo;i++){
         plot3ddata *plot3di;
 
-        plot3di = plot3dinfo + i;
+        plot3di = scase.plot3dinfo + i;
         if(plot3di->loaded == 0)continue;
         plot3d_loaded = 1;
         if(plot3di->hist_update == 1)hist_update = 1;
         plot3di->hist_update = 0;
       }
       if(hist_update == 1){
-        for(i = 0;i < nplot3dinfo;i++){
+        for(i = 0;i < scase.nplot3dinfo;i++){
           plot3ddata *plot3di;
 
-          plot3di = plot3dinfo + i;
+          plot3di = scase.plot3dinfo + i;
           if(plot3di->loaded == 0)continue;
           GetPlot3DHists(plot3di);
         }
@@ -2187,7 +2187,7 @@ extern "C" void GLUIPartBoundsCPP_CB(int var){
       break;
     case BOUND_RESEARCH_MODE:
       if(npatchinfo>0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
-      if(nplot3dinfo>0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
+      if(scase.nplot3dinfo>0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(nhvacductbounds>0)hvacductboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(nhvacnodebounds > 0)hvacnodeboundsCPP.CB(BOUND_RESEARCH_MODE);
@@ -2360,7 +2360,7 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
       break;
     case BOUND_RESEARCH_MODE:
       if(npartinfo>0)partboundsCPP.CB(BOUND_RESEARCH_MODE);
-      if(nplot3dinfo>0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
+      if(scase.nplot3dinfo>0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(nhvacductbounds>0)hvacductboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(nhvacnodebounds > 0)hvacnodeboundsCPP.CB(BOUND_RESEARCH_MODE);
@@ -2420,7 +2420,7 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
 extern "C" void GLUIUpdatdateResearchModeCPP(void){
   if(npatchinfo>0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
   if(npartinfo>0)partboundsCPP.CB(BOUND_RESEARCH_MODE);
-  if(nplot3dinfo>0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
+  if(scase.nplot3dinfo>0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
   if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.CB(BOUND_RESEARCH_MODE);
 }
 
@@ -2576,11 +2576,11 @@ void SetLoadedPlot3DBounds(void){
   for(j = 0; j<MAXPLOT3DVARS; j++){
     valmin[j] = 1.0;
     valmax[j] = 0.0;
-    for(i = 0; i <nplot3dinfo; i++){
+    for(i = 0; i <scase.nplot3dinfo; i++){
       float *valmin_fds, *valmax_fds;
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo+i;
+      plot3di = scase.plot3dinfo+i;
       if(plot3di->loadnow == 0)continue;
       valmin_fds = plot3di->valmin_plot3d;
       valmax_fds = plot3di->valmax_plot3d;
@@ -2594,11 +2594,11 @@ void SetLoadedPlot3DBounds(void){
       }
     }
 
-    for(i = 0; i<nplot3dinfo; i++){
+    for(i = 0; i<scase.nplot3dinfo; i++){
       float *valmin_fds, *valmax_fds;
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo+i;
+      plot3di = scase.plot3dinfo+i;
       if(plot3di->loaded==0)continue;
       valmin_fds = plot3di->valmin_plot3d;
       valmax_fds = plot3di->valmax_plot3d;
@@ -4873,7 +4873,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
   // -------------- Show/Hide Loaded files -------------------
 
-  if(npartinfo > 0 || scase.slicecoll.nsliceinfo > 0 || scase.slicecoll.nvsliceinfo > 0 || scase.nisoinfo > 0 || npatchinfo || scase.smoke3dcoll.nsmoke3dinfo > 0 || nplot3dinfo > 0){
+  if(npartinfo > 0 || scase.slicecoll.nsliceinfo > 0 || scase.slicecoll.nvsliceinfo > 0 || scase.nisoinfo > 0 || npatchinfo || scase.smoke3dcoll.nsmoke3dinfo > 0 || scase.nplot3dinfo > 0){
     ROLLOUT_showhide = glui_bounds->add_rollout_to_panel(ROLLOUT_files,_("Show/Hide"), false, SHOWHIDE_ROLLOUT, FileRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_showhide, glui_bounds);
     ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_showhide, SHOWHIDE_ROLLOUT, glui_bounds);
@@ -4891,7 +4891,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
     if(scase.nisoinfo > 0)BUTTON_ISO = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Isosurface", FILESHOW_isosurface, FileShowCB);
     if(npatchinfo > 0)BUTTON_BOUNDARY = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Boundary", FILESHOW_boundary, FileShowCB);
     if(scase.smoke3dcoll.nsmoke3dinfo > 0)BUTTON_3DSMOKE = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "3D smoke/fire", FILESHOW_3dsmoke, FileShowCB);
-    if(nplot3dinfo > 0)BUTTON_PLOT3D = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Plot3D", FILESHOW_plot3d, FileShowCB);
+    if(scase.nplot3dinfo > 0)BUTTON_PLOT3D = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Plot3D", FILESHOW_plot3d, FileShowCB);
     glui_bounds->add_button_to_panel(ROLLOUT_showhide, "File Sizes", FILESHOW_sizes, FileShowCB);
 
 
@@ -5302,7 +5302,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
   // ----------------------------------- Plot3D ----------------------------------------
 
-  if(nplot3dinfo>0){
+  if(scase.nplot3dinfo>0){
     glui_active=1;
     ROLLOUT_plot3d = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,"Plot3D",false,PLOT3D_ROLLOUT,BoundRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_plot3d, glui_bounds);
@@ -6020,8 +6020,8 @@ extern "C" void GLUIPlot3DBoundCB(int var){
    p3chopmax_temp=p3chopmax[list_p3_index];
    setp3chopmin_temp=setp3chopmin[list_p3_index];
    setp3chopmax_temp=setp3chopmax[list_p3_index];
-   if(plot3dinfo!=NULL){
-     plot3dmin_unit = (unsigned char *)plot3dinfo->label[list_p3_index].unit;
+   if(scase.plot3dinfo!=NULL){
+     plot3dmin_unit = (unsigned char *)scase.plot3dinfo->label[list_p3_index].unit;
      plot3dmax_unit = plot3dmin_unit;
    }
 
@@ -6085,8 +6085,8 @@ extern "C" void GLUIPlot3DBoundCB(int var){
     break;
   case FILE_RELOAD:
    GLUIPlot3DBoundCB(FILE_UPDATE);
-   for(i=0;i<nplot3dinfo;i++){
-     if(plot3dinfo[i].loaded==0)continue;
+   for(i=0;i<scase.nplot3dinfo;i++){
+     if(scase.plot3dinfo[i].loaded==0)continue;
      LoadPlot3dMenu(i);
    }
    break;

@@ -285,10 +285,10 @@ void UpdateFileLoad(void){
   }
 
   nplot3dloaded = 0;
-  for(i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo+i;
+    plot3di = scase.plot3dinfo+i;
     if(plot3di->loaded==1)nplot3dloaded++;
   }
 
@@ -635,9 +635,9 @@ void UpdateShow(void){
       meshi=scase.meshescoll.meshinfo+i;
       ii=meshi->plot3dfilenum;
       if(ii==-1)continue;
-      if(plot3dinfo[ii].loaded==0)continue;
-      if(plot3dinfo[ii].display==0)continue;
-      if(plot3dinfo[ii].extreme_min[plotn-1]==1)have_extreme_mindata=1;
+      if(scase.plot3dinfo[ii].loaded==0)continue;
+      if(scase.plot3dinfo[ii].display==0)continue;
+      if(scase.plot3dinfo[ii].extreme_min[plotn-1]==1)have_extreme_mindata=1;
     }
     for(i=0;i<scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
@@ -646,9 +646,9 @@ void UpdateShow(void){
       meshi=scase.meshescoll.meshinfo+i;
       ii=meshi->plot3dfilenum;
       if(ii==-1)continue;
-      if(plot3dinfo[ii].loaded==0)continue;
-      if(plot3dinfo[ii].display==0)continue;
-      if(plot3dinfo[ii].extreme_max[plotn-1]==1)have_extreme_maxdata=1;
+      if(scase.plot3dinfo[ii].loaded==0)continue;
+      if(scase.plot3dinfo[ii].display==0)continue;
+      if(scase.plot3dinfo[ii].extreme_max[plotn-1]==1)have_extreme_maxdata=1;
     }
   }
 
@@ -1304,10 +1304,10 @@ void UpdateTimes(void){
   if(visShooter!=0&&shooter_active==1){
     nglobal_times = MAX(nglobal_times,nshooter_frames);
   }
-  for(i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<scase.nplot3dinfo; i++){
     plot3ddata *pd;
 
-    pd = plot3dinfo+i;
+    pd = scase.plot3dinfo+i;
     if(pd->loaded==1){
       float ptime[1];
 
@@ -1707,7 +1707,7 @@ int GetPlotStateSub(int choice){
 
         meshi=scase.meshescoll.meshinfo + i;
         if(meshi->plot3dfilenum==-1)continue;
-        ploti = plot3dinfo + meshi->plot3dfilenum;
+        ploti = scase.plot3dinfo + meshi->plot3dfilenum;
         if(ploti->loaded==0||ploti->display==0)continue;
         if(visx_all==0&&visy_all==0&&visz_all==0&&visiso==0)continue;
         return STATIC_PLOTS;
@@ -2883,15 +2883,15 @@ void OutputBounds(void){
     int i, j;
     plot3ddata *p;
 
-    p = plot3dinfo+update_plot3d_bounds;
+    p = scase.plot3dinfo+update_plot3d_bounds;
 
     if(scase.meshescoll.nmeshes>1&&bounds_each_mesh==1){
       printf("\n");
-      for(i = 0; i<nplot3dinfo; i++){
+      for(i = 0; i<scase.nplot3dinfo; i++){
         plot3ddata *plot3di;
         meshdata *meshi;
 
-        plot3di = plot3dinfo+i;
+        plot3di = scase.plot3dinfo+i;
         if(plot3di->loaded==0)continue;
         meshi = scase.meshescoll.meshinfo+plot3di->blocknumber;
         for(j = 0; j<MAXPLOT3DVARS; j++){
@@ -2905,19 +2905,19 @@ void OutputBounds(void){
       }
     }
 
-    p = plot3dinfo+update_plot3d_bounds;
+    p = scase.plot3dinfo+update_plot3d_bounds;
     for(j=0;j<MAXPLOT3DVARS;j++){
 
-      label = plot3dinfo[update_plot3d_bounds].label[j].longlabel;
-      unit = plot3dinfo[update_plot3d_bounds].label[j].unit;
+      label = scase.plot3dinfo[update_plot3d_bounds].label[j].longlabel;
+      unit = scase.plot3dinfo[update_plot3d_bounds].label[j].unit;
       valmin_fds = 1.0;
       valmax_fds = 0.0;
       valmin_smv = 1.0;
       valmax_smv = 0.0;
-      for(i = 0; i<nplot3dinfo; i++){
+      for(i = 0; i<scase.nplot3dinfo; i++){
         plot3ddata *plot3di;
 
-        plot3di = plot3dinfo+i;
+        plot3di = scase.plot3dinfo+i;
         if(plot3di->loaded==0)continue;
         if(valmin_fds>valmax_fds){
           valmin_fds = plot3di->valmin_plot3d[j];

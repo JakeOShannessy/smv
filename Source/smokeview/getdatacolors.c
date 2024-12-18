@@ -643,8 +643,8 @@ void GetPlot3DColors(int plot3dvar, float *ttmin, float *ttmax,
       factor = 0.0f;
     }
 
-    for(i = 0; i<nplot3dinfo; i++){
-      p = plot3dinfo+i;
+    for(i = 0; i<scase.nplot3dinfo; i++){
+      p = scase.plot3dinfo+i;
       if(p->loaded==0||p->display==0)continue;
       meshi = scase.meshescoll.meshinfo+p->blocknumber;
       ntotal = (meshi->ibar+1)*(meshi->jbar+1)*(meshi->kbar+1);
@@ -696,8 +696,8 @@ void GetPlot3DColors(int plot3dvar, float *ttmin, float *ttmax,
   }
 
   if(flag==1){
-    for(i = 0; i<nplot3dinfo; i++){
-      p = plot3dinfo+i;
+    for(i = 0; i<scase.nplot3dinfo; i++){
+      p = scase.plot3dinfo+i;
       if(p->loaded==0||p->display==0)continue;
       meshi = scase.meshescoll.meshinfo+p->blocknumber;
       ntotal = (meshi->ibar+1)*(meshi->jbar+1)*(meshi->kbar+1);
@@ -724,11 +724,11 @@ void GetPlot3DColors(int plot3dvar, float *ttmin, float *ttmax,
 void UpdateAllPlot3DColors(int flag){
   int i, updated=0;
 
-  for(i = 0; i < nplot3dinfo; i++){
+  for(i = 0; i < scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
     int errorcode;
 
-    plot3di = plot3dinfo + i;
+    plot3di = scase.plot3dinfo + i;
     if(plot3di->loaded == 1){
       UpdatePlot3DColors(plot3di, flag, &errorcode);
       updated = 1;

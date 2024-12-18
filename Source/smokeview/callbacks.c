@@ -106,11 +106,11 @@ void NextXIndex(int inc,int flag){
       }
     }
     else{
-      for(i=0;i<nplot3dinfo;i++){
+      for(i=0;i<scase.nplot3dinfo;i++){
         plot3ddata *plot3di;
         meshdata *meshi;
 
-        plot3di = plot3dinfo + i;
+        plot3di = scase.plot3dinfo + i;
         if(plot3di->loaded==0||plot3di->display==0)continue;
         meshi = scase.meshescoll.meshinfo + plot3di->blocknumber;
         if(meshi->iplotx_all[iplotx_all]!=-1)return;
@@ -168,11 +168,11 @@ void NextYIndex(int inc,int flag){
       }
     }
     else{
-      for(i=0;i<nplot3dinfo;i++){
+      for(i=0;i<scase.nplot3dinfo;i++){
         plot3ddata *plot3di;
         meshdata *meshi;
 
-        plot3di = plot3dinfo + i;
+        plot3di = scase.plot3dinfo + i;
         if(plot3di->loaded==0||plot3di->display==0)continue;
         meshi = scase.meshescoll.meshinfo + plot3di->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
@@ -230,11 +230,11 @@ void NextZIndex(int inc,int flag){
       }
     }
     else{
-      for(i=0;i<nplot3dinfo;i++){
+      for(i=0;i<scase.nplot3dinfo;i++){
         plot3ddata *plot3di;
         meshdata *meshi;
 
-        plot3di = plot3dinfo + i;
+        plot3di = scase.plot3dinfo + i;
         if(plot3di->loaded==0||plot3di->display==0)continue;
         meshi = scase.meshescoll.meshinfo + plot3di->blocknumber;
         if(meshi->iplotz_all[iplotz_all]!=-1)return;
@@ -1561,10 +1561,10 @@ int IsPartLoaded(void){
 int IsPlot3DLoaded(void){
   int i;
 
-  for(i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo+i;
+    plot3di = scase.plot3dinfo+i;
     if(plot3di->loaded==0||plot3di->display==0)continue;
     return 1;
   }
@@ -1582,10 +1582,10 @@ int GetPlot3DTimeList(int inc){
   if(nplot3dtimelist<=1)return 0;
   delta_time = (plot3dtimelist[1]-plot3dtimelist[0])/2.0;
 
-  for(i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo+i;
+    plot3di = scase.plot3dinfo+i;
     if(plot3di->loaded==1){
       time = plot3di->time;
       have_plot3d = 1;
@@ -2450,7 +2450,7 @@ void Keyboard(unsigned char key, int flag){
               meshi = scase.meshescoll.meshinfo  + i;
               if(meshi->plot3dfilenum==-1)continue;
 
-              plot3di = plot3dinfo + meshi->plot3dfilenum;
+              plot3di = scase.plot3dinfo + meshi->plot3dfilenum;
               if(plot3di->display==0)continue;
               show_plot3dkeywords=1;
               xp = meshi->xplt_orig;
@@ -3747,7 +3747,7 @@ void UpdatePlot3dTitle(void){
   if(meshi == NULL)meshi = scase.meshescoll.meshinfo;
   filenum = meshi->plot3dfilenum;
   if(filenum != -1){
-    plot3di = plot3dinfo + meshi->plot3dfilenum;
+    plot3di = scase.plot3dinfo + meshi->plot3dfilenum;
     STRCAT(plot3d_title, ", ");
     STRCAT(plot3d_title, plot3di->file);
   }

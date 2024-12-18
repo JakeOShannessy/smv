@@ -74,11 +74,11 @@ void SetUnitVis(void){
     }
     if(uci->visible==1)continue;
 
-    for(j=0;j<nplot3dinfo;j++){
+    for(j=0;j<scase.nplot3dinfo;j++){
       plot3ddata *plot3dj;
       int n;
 
-      plot3dj = plot3dinfo + j;
+      plot3dj = scase.plot3dinfo + j;
       for(n=0;n<5;n++){
         if(IsUnitPresent(plot3dj->label[n].unit,uci->units->unit)==1){
           uci->visible=1;
@@ -151,11 +151,11 @@ void UpdateUnitDefs(void){
     }
 
     firstplot3d=1;
-    for(j=0;j<nplot3dinfo;j++){
+    for(j=0;j<scase.nplot3dinfo;j++){
       plot3ddata *plot3dj;
       int n;
 
-      plot3dj = plot3dinfo + j;
+      plot3dj = scase.plot3dinfo + j;
       if(plot3dj->loaded==0||plot3dj->display==0)continue;
       for(n=0;n<5;n++){
         if(UnitTypeMatch(plot3dj->label[n].unit,unitclasses+i)!=0)continue;

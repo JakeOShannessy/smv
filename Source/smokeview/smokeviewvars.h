@@ -1559,7 +1559,7 @@ SVEXTERN int SVDECL(isotest,0);
 SVEXTERN int SVDECL(isolevelindex,0), SVDECL(isolevelindex2,0);
 SVEXTERN int SVDECL(n_devices,0);
 
-SVEXTERN int SVDECL(npartinfo,0), SVDECL(nplot3dinfo,0), SVDECL(npatchinfo,0);
+SVEXTERN int SVDECL(npartinfo,0), SVDECL(npatchinfo,0);
 SVEXTERN float SVDECL(*globalmin_part, NULL), SVDECL(*globalmax_part, NULL);
 
 SVEXTERN int SVDECL(sliceload_boundtype, 0);
@@ -2258,7 +2258,6 @@ SVEXTERN int SVDECL(ijkbarmax,5);
 SVEXTERN int SVDECL(blockage_as_input,0), SVDECL(blockage_snapped,1);
 SVEXTERN int SVDECL(show_cad_and_grid,0);
 SVEXTERN int SVDECL(*isotypes,NULL), SVDECL(*boundarytypes,NULL);
-SVEXTERN plot3ddata SVDECL(*plot3dinfo,NULL);
 SVEXTERN int SVDECL(iplot3dtimelist, -1), SVDECL(nplot3dtimelist, 0);
 SVEXTERN float SVDECL(*plot3dtimelist,NULL);
 SVEXTERN patchdata SVDECL(*patchinfo,NULL);

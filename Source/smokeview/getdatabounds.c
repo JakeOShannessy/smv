@@ -354,7 +354,7 @@ int GetNinfo(int file_type){
     ninfo = npatchinfo;
   }
   else if(file_type == BOUND_PLOT3D){
-    ninfo = nplot3dinfo;
+    ninfo = scase.nplot3dinfo;
   }
   return ninfo;
 }
@@ -408,7 +408,7 @@ char *GetRegFile(int file_type, int i){
     reg_file = patchinfo[i].reg_file;
   }
   else if(file_type == BOUND_PLOT3D){
-    reg_file = plot3dinfo[i].reg_file;
+    reg_file = scase.plot3dinfo[i].reg_file;
   }
   return reg_file;
 }
@@ -485,7 +485,7 @@ void BoundsUpdateDoit(int file_type){
       if(patchi->loaded == 0)continue;
     }
     else if(file_type == BOUND_PLOT3D){
-      plot3di = plot3dinfo + i;
+      plot3di = scase.plot3dinfo + i;
       if(plot3di->loaded == 0)continue;
     }
     reg_file = GetRegFile(file_type, i);
@@ -619,7 +619,7 @@ void BoundsUpdateDoit(int file_type){
       }
       fi->defined = 1;
       fi->nbounds = 5;
-      if(plot3dinfo != NULL)fi->nbounds = plot3di->nplot3dvars;
+      if(scase.plot3dinfo != NULL)fi->nbounds = plot3di->nplot3dvars;
     }
   }
 }
@@ -662,8 +662,8 @@ int GetNBounds(int file_type){
     nbounds = 1;
   }
   else if(file_type == BOUND_PLOT3D){
-    if(plot3dinfo != NULL){
-      nbounds = plot3dinfo->nplot3dvars;
+    if(scase.plot3dinfo != NULL){
+      nbounds = scase.plot3dinfo->nplot3dvars;
     }
     else{
       nbounds = 5;
@@ -685,7 +685,7 @@ char *GetShortLabel(int file_type, int i, int ilabel){
     shortlabel = patchinfo[i].label.shortlabel;
   }
   else if(file_type == BOUND_PLOT3D){
-    shortlabel = plot3dinfo[i].label[ilabel].shortlabel;
+    shortlabel = scase.plot3dinfo[i].label[ilabel].shortlabel;
   }
   return shortlabel;
 }
@@ -826,7 +826,7 @@ void BoundsUpdateWrapup(int file_type){
     else if(file_type == BOUND_PLOT3D){
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo + i;
+      plot3di = scase.plot3dinfo + i;
       memcpy(plot3di->valmin_plot3d, fi->valmins, plot3di->nplot3dvars * sizeof(float));
       memcpy(plot3di->valmax_plot3d, fi->valmaxs, plot3di->nplot3dvars * sizeof(float));
     }
@@ -903,7 +903,7 @@ char *GetBoundFile(int file_type, int i){
     bound_file = patchinfo[i].bound_file;
   }
   else if(file_type == BOUND_PLOT3D){
-    bound_file = plot3dinfo[i].bound_file;
+    bound_file = scase.plot3dinfo[i].bound_file;
   }
   return bound_file;
 }
@@ -1014,7 +1014,7 @@ void BoundsUpdateSetup(int file_type){
         fi->nbounds = 1;
         if(file_type == BOUND_PLOT3D){
           fi->nbounds = 5;
-          if(plot3dinfo != NULL)fi->nbounds = plot3dinfo->nplot3dvars;
+          if(scase.plot3dinfo != NULL)fi->nbounds = scase.plot3dinfo->nplot3dvars;
         }
         memcpy(fi->valmins, valmins, fi->nbounds * sizeof(float));
         memcpy(fi->valmaxs, valmaxs, fi->nbounds * sizeof(float));
@@ -1247,24 +1247,24 @@ int GetPlot3DFileBounds(char *file, float *valmin, float *valmax){
 void GetGlobalPlot3DBounds(void){
   int i;
 
-  if(nplot3dinfo <= 0)return;
+  if(scase.nplot3dinfo <= 0)return;
   if(no_bounds==0 || force_bounds==1)BoundsUpdate(BOUND_PLOT3D);
-  for(i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo+i;
-    plot3di->have_bound_file = BoundsGet(plot3di->reg_file, plot3dglobalboundsinfo, sorted_plot3d_filenames, nplot3dinfo, plot3di->nplot3dvars, plot3di->valmin_plot3d, plot3di->valmax_plot3d);
+    plot3di = scase.plot3dinfo+i;
+    plot3di->have_bound_file = BoundsGet(plot3di->reg_file, plot3dglobalboundsinfo, sorted_plot3d_filenames, scase.nplot3dinfo, plot3di->nplot3dvars, plot3di->valmin_plot3d, plot3di->valmax_plot3d);
   }
   for(i = 0; i<MAXPLOT3DVARS; i++){
     p3min_all[i] = 1.0;
     p3max_all[i] = 0.0;
   }
-  for(i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
     int j;
     float *valmin_fds, *valmax_fds;
 
-    plot3di = plot3dinfo+i;
+    plot3di = scase.plot3dinfo+i;
     if(plot3di->have_bound_file == 0)continue;
     valmin_fds = plot3di->valmin_plot3d;
     valmax_fds = plot3di->valmax_plot3d;
@@ -1287,15 +1287,15 @@ void GetGlobalPlot3DBounds(void){
   }
 
   nplot3dbounds_cpp = 0;
-  if(nplot3dinfo>0&&plot3dbounds_cpp==NULL){ // only initialize once
-    nplot3dbounds_cpp = plot3dinfo[0].nplot3dvars;
+  if(scase.nplot3dinfo>0&&plot3dbounds_cpp==NULL){ // only initialize once
+    nplot3dbounds_cpp = scase.plot3dinfo[0].nplot3dvars;
     NewMemory((void **)&plot3dbounds_cpp, nplot3dbounds_cpp*sizeof(cpp_boundsdata));
     for(i = 0; i<nplot3dbounds_cpp; i++){
       cpp_boundsdata *boundscppi;
 
       boundscppi = plot3dbounds_cpp+i;
-      strcpy(boundscppi->label, plot3dinfo->label[i].shortlabel);
-      strcpy(boundscppi->unit, plot3dinfo->label[i].unit);
+      strcpy(boundscppi->label, scase.plot3dinfo->label[i].shortlabel);
+      strcpy(boundscppi->unit, scase.plot3dinfo->label[i].unit);
 
       boundscppi->cache = cache_plot3d_data;
       boundscppi->set_valtype = 0;
@@ -1318,7 +1318,7 @@ void GetGlobalPlot3DBounds(void){
       boundscppi->chopmax = p3max_global[0];
     }
   }
-  GLUISetGlobalMinMaxAll(BOUND_PLOT3D, p3min_global, p3max_global, plot3dinfo->nplot3dvars);
+  GLUISetGlobalMinMaxAll(BOUND_PLOT3D, p3min_global, p3max_global, scase.plot3dinfo->nplot3dvars);
 }
 
 /* ------------------ GetLoadedPlot3dBounds ------------------------ */
@@ -1328,10 +1328,10 @@ void GetLoadedPlot3dBounds(int *compute_loaded, float *loaded_min, float *loaded
   int plot3d_loaded = 0;
 
 #define BOUNDS_LOADED 1
-  for(i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo+i;
+    plot3di = scase.plot3dinfo+i;
     if(plot3di->loaded==0)continue;
     plot3d_loaded = 1;
     break;
@@ -1349,11 +1349,11 @@ void GetLoadedPlot3dBounds(int *compute_loaded, float *loaded_min, float *loaded
     loaded_min[i] = 1.0;
     loaded_max[i] = 0.0;
   }
-  for(i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
     int j;
 
-    plot3di = plot3dinfo+i;
+    plot3di = scase.plot3dinfo+i;
     if(plot3di->loaded==0)continue;
     for(j = 0; j< MAXPLOT3DVARS; j++){
       if(compute_loaded!=NULL&&compute_loaded[j]!=BOUNDS_LOADED)continue;

@@ -3296,10 +3296,10 @@ void ScriptLoadFile(scriptdata *scripti){
       return;
     }
   }
-  for(i=0;i<nplot3dinfo;i++){
+  for(i=0;i<scase.nplot3dinfo;i++){
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo + i;
+    plot3di = scase.plot3dinfo + i;
     if(strcmp(plot3di->file,scripti->cval)==0){
       plot3di->finalize = 1;
       ReadPlot3D(plot3di->file,i,LOAD,&errorcode);
@@ -3329,27 +3329,27 @@ int GetPlot3DTimeIndex(float time){
   int index;
 
   if(plot3dorderindex == NULL){
-    NewMemory((void **)&plot3dorderindex, sizeof(int) * nplot3dinfo);
-    for(i = 0;i < nplot3dinfo;i++){
+    NewMemory((void **)&plot3dorderindex, sizeof(int) * scase.nplot3dinfo);
+    for(i = 0;i < scase.nplot3dinfo;i++){
       plot3dorderindex[i] = i;
     }
     int Plot3dCompare(const void *arg1, const void *arg2);
-    qsort((int *)plot3dorderindex, (size_t)nplot3dinfo, sizeof(int), Plot3dCompare);
+    qsort((int *)plot3dorderindex, (size_t)scase.nplot3dinfo, sizeof(int), Plot3dCompare);
   }
   index = 0;
-  for(i = 0;i < nplot3dinfo;i++){
+  for(i = 0;i < scase.nplot3dinfo;i++){
     int ii;
     plot3ddata *plot3di;
 
     ii = plot3dorderindex[i];
-    plot3di = plot3dinfo + ii;
+    plot3di = scase.plot3dinfo + ii;
     if(i == 0){
       if(ABS(time - plot3di->time) < 0.1)return 0;
     }
     else{
       plot3ddata *plot3dim1;
 
-      plot3dim1 = plot3dinfo + plot3dorderindex[i - 1];
+      plot3dim1 = scase.plot3dinfo + plot3dorderindex[i - 1];
       if(ABS(plot3di->time - plot3dim1->time) > 0.1){
         index++;
         if(ABS(time - plot3di->time) < 0.1)return index;
@@ -3371,10 +3371,10 @@ void ScriptLoadPlot3D(scriptdata *scripti){
   blocknum = scripti->ival-1;
 
   if(blocknum >= 0){
-    for(i = 0;i < nplot3dinfo;i++){
+    for(i = 0;i < scase.nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo + i;
+      plot3di = scase.plot3dinfo + i;
       if(plot3di->blocknumber == blocknum && ABS(plot3di->time - time_local) < 0.5){
         count++;
         LoadPlot3dMenu(i);
@@ -3387,10 +3387,10 @@ void ScriptLoadPlot3D(scriptdata *scripti){
     index = GetPlot3DTimeIndex(time_local);
     LoadPlot3dMenu(-100000+index);
     count = 0;
-    for(i = 0;i < nplot3dinfo;i++){
+    for(i = 0;i < scase.nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo + i;
+      plot3di = scase.plot3dinfo + i;
       if(plot3di->loaded == 1)count++;
     }
   }

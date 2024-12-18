@@ -72,11 +72,11 @@ void MergePlot3DHistograms(void){
       InitHistogram(full_plot3D_histograms+i, NHIST_BUCKETS, NULL, NULL);
     }
   }
-  for(i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
     int k;
 
-    plot3di = plot3dinfo+i;
+    plot3di = scase.plot3dinfo+i;
     if(plot3di->loaded==0)continue;
     for(k = 0; k<plot3di->nplot3dvars; k++){
       MergeHistogram(full_plot3D_histograms+k, plot3di->histograms[k], MERGE_BOUNDS);
@@ -89,8 +89,8 @@ void MergePlot3DHistograms(void){
 int Plot3dCompare(const void *arg1, const void *arg2){
   plot3ddata *plot3di, *plot3dj;
 
-  plot3di = plot3dinfo + *(int *)arg1;
-  plot3dj = plot3dinfo + *(int *)arg2;
+  plot3di = scase.plot3dinfo + *(int *)arg1;
+  plot3dj = scase.plot3dinfo + *(int *)arg2;
 
   if(strcmp(plot3di->longlabel,plot3dj->longlabel)<0)return -1;
   if(strcmp(plot3di->longlabel,plot3dj->longlabel)>0)return 1;
@@ -107,7 +107,7 @@ int AllocatePlot3DColorLabels(plot3ddata *plot3di){
   int nn, error;
   int ifile;
 
-  ifile = plot3di-plot3dinfo;
+  ifile = plot3di-scase.plot3dinfo;
   for(nn = 0; nn<numplot3dvars; nn++){
     int n;
 
@@ -157,7 +157,7 @@ void  UpdatePlot3DColors(plot3ddata *plot3di, int flag, int *errorcode){
   *errorcode=AllocatePlot3DColorLabels(plot3di);
   if(*errorcode==1)return;
   for(nn = 0; nn < numplot3dvars; nn++){
-    if(nplot3dinfo > 0){
+    if(scase.nplot3dinfo > 0){
       shortp3label[nn] = plot3di->label[nn].shortlabel;
       unitp3label[nn] = plot3di->label[nn].unit;
     }
@@ -215,11 +215,11 @@ void ComputeLoadedPlot3DBounds(float *valmin_loaded, float *valmax_loaded){
   int i, first;
 
   plot3d_uvw_max = 1.0;
-  for(first = 1, i = 0; i < nplot3dinfo; i++){
+  for(first = 1, i = 0; i < scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
     meshdata *meshi;
 
-    plot3di = plot3dinfo + i;
+    plot3di = scase.plot3dinfo + i;
     if(plot3di->loaded == 0)continue;
     meshi = scase.meshescoll.meshinfo + plot3di->blocknumber;
     plot3d_uvw_max = MAX(plot3d_uvw_max, meshi->plot3d_uvw_max);
@@ -248,10 +248,10 @@ void UpdatePlot3DFileLoad(void){
   int i;
 
   nplot3dloaded = 0;
-  for(i = 0; i<nplot3dinfo; i++){
+  for(i = 0; i<scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo+i;
+    plot3di = scase.plot3dinfo+i;
     if(plot3di->loaded==1)nplot3dloaded++;
   }
 }
@@ -275,8 +275,8 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   START_TIMER(total_time);
   *errorcode=0;
 
-  assert(ifile>=0&&ifile<nplot3dinfo);
-  p=plot3dinfo+ifile;
+  assert(ifile>=0&&ifile<scase.nplot3dinfo);
+  p=scase.plot3dinfo+ifile;
   if(flag==UNLOAD&&p->loaded==0)return 0;
 
   highlight_mesh=p->blocknumber;
@@ -286,7 +286,7 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   if(meshi->plot3dfilenum!=-1){
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo+meshi->plot3dfilenum;
+    plot3di = scase.plot3dinfo+meshi->plot3dfilenum;
     FreeAllMemory(plot3di->memory_id);
     colorlabeliso = NULL;
     colorlabelp3  = NULL;
@@ -297,8 +297,8 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   else{
     pn = meshi->plot3dfilenum;
     if(pn!=-1){
-      plot3dinfo[pn].loaded=0;
-      plot3dinfo[pn].display=0;
+      scase.plot3dinfo[pn].loaded=0;
+      scase.plot3dinfo[pn].display=0;
     }
     meshi->plot3dfilenum=ifile;
   }
@@ -344,10 +344,10 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   ntotal = nx*ny*nz;
   numplot3dvars=5;
 
-  uindex = plot3dinfo[ifile].u;
-  vindex = plot3dinfo[ifile].v;
-  windex = plot3dinfo[ifile].w;
-  if(uindex!=-1||vindex!=-1||windex!=-1)numplot3dvars=plot3dinfo[ifile].nplot3dvars;
+  uindex = scase.plot3dinfo[ifile].u;
+  vindex = scase.plot3dinfo[ifile].v;
+  windex = scase.plot3dinfo[ifile].w;
+  if(uindex!=-1||vindex!=-1||windex!=-1)numplot3dvars=scase.plot3dinfo[ifile].nplot3dvars;
 
   if(NewMemoryMemID((void **)&meshi->qdata,numplot3dvars*ntotal*sizeof(float), p->memory_id)==0){
     *errorcode=1;
@@ -488,7 +488,7 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
         void BoundsUpdate(int file_type);
         if(no_bounds==0 || force_bounds==1)BoundsUpdate(BOUND_PLOT3D);
         ComputeLoadedPlot3DBounds(valmin_loaded, valmax_loaded);
-        GLUISetLoadedMinMaxAll(BOUND_PLOT3D, valmin_loaded, valmax_loaded, plot3dinfo->nplot3dvars);
+        GLUISetLoadedMinMaxAll(BOUND_PLOT3D, valmin_loaded, valmax_loaded, scase.plot3dinfo->nplot3dvars);
       }
       UpdateAllPlot3DColors(0);
       UpdatePlotSlice(XDIR);
@@ -994,7 +994,7 @@ void DrawPlot3dFrame(void){
     meshi=scase.meshescoll.meshinfo+i;
     if(meshi->use == 0)continue;
     if(meshi->plot3dfilenum==-1)continue;
-    if(plot3dinfo[meshi->plot3dfilenum].display==0)continue;
+    if(scase.plot3dinfo[meshi->plot3dfilenum].display==0)continue;
     DrawPlot3dTexture(meshi);
   }
 }
@@ -1650,16 +1650,16 @@ void UpdatePlot3dMenuLabels(void){
   plot3ddata *plot3di;
   char label[128];
 
-  if(nplot3dinfo>0){
+  if(scase.nplot3dinfo>0){
     FREEMEMORY(plot3dorderindex);
-    NewMemory((void **)&plot3dorderindex,sizeof(int)*nplot3dinfo);
-    for(i=0;i<nplot3dinfo;i++){
+    NewMemory((void **)&plot3dorderindex,sizeof(int)*scase.nplot3dinfo);
+    for(i=0;i<scase.nplot3dinfo;i++){
       plot3dorderindex[i]=i;
     }
-    qsort( (int *)plot3dorderindex, (size_t)nplot3dinfo, sizeof(int), Plot3dCompare);
+    qsort( (int *)plot3dorderindex, (size_t)scase.nplot3dinfo, sizeof(int), Plot3dCompare);
 
-    for(i=0;i<nplot3dinfo;i++){
-      plot3di = plot3dinfo + i;
+    for(i=0;i<scase.nplot3dinfo;i++){
+      plot3di = scase.plot3dinfo + i;
       STRCPY(plot3di->menulabel,plot3di->longlabel);
       STRCPY(plot3di->menulabel,"");
       if(plot3di->time>=0.0){
@@ -1707,18 +1707,18 @@ void InitPlot3dTimeList(void){
 
   FREEMEMORY(plot3dtimelist);
   nplot3dtimelist=0;
-  if(nplot3dinfo>0){
-    NewMemory((void **)&plot3dtimelist,nplot3dinfo*sizeof(float));
+  if(scase.nplot3dinfo>0){
+    NewMemory((void **)&plot3dtimelist,scase.nplot3dinfo*sizeof(float));
   }
   if(plot3dtimelist==NULL)return;
 
-  for(i=0;i<nplot3dinfo;i++){
-    plot3di = plot3dinfo + i;
+  for(i=0;i<scase.nplot3dinfo;i++){
+    plot3di = scase.plot3dinfo + i;
     plot3dtimelist[i]=plot3di->time;
   }
-  qsort( (float *)plot3dtimelist, (size_t)nplot3dinfo, sizeof(int), Plot3dListCompare);
+  qsort( (float *)plot3dtimelist, (size_t)scase.nplot3dinfo, sizeof(int), Plot3dListCompare);
   lasttime_local=-999999.0;
-  for(i=0;i<nplot3dinfo;i++){
+  for(i=0;i<scase.nplot3dinfo;i++){
     val=plot3dtimelist[i];
     if(ABS((double)(val-lasttime_local))>0.1){
       nplot3dtimelist++;
@@ -1802,10 +1802,10 @@ void GetPlot3dUVW(float xyz[3], float uvw[3]){
 int GetPlot3dTime(float *time_local){
   int i;
 
-  for(i=0;i<nplot3dinfo;i++){
+  for(i=0;i<scase.nplot3dinfo;i++){
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo + i;
+    plot3di = scase.plot3dinfo + i;
     if(plot3di->loaded==0||plot3di->display==0)continue;
     *time_local = plot3di->time;
     return 1;

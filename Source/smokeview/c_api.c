@@ -378,10 +378,10 @@ int Loadfile(const char *filename) {
       return errorcode;
     }
   }
-  for(size_t i = 0; i < nplot3dinfo; i++) {
+  for(size_t i = 0; i < scase.nplot3dinfo; i++) {
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo + i;
+    plot3di = scase.plot3dinfo + i;
     if(strcmp(plot3di->file, filename) == 0) {
       ReadPlot3D(plot3di->file, i, LOAD, &errorcode);
       UpdateMenu();
@@ -1658,10 +1658,10 @@ void Loadplot3d(int meshnumber, float time_local) {
   size_t count = 0;
   int blocknum = meshnumber - 1;
 
-  for(size_t i = 0; i < nplot3dinfo; i++) {
+  for(size_t i = 0; i < scase.nplot3dinfo; i++) {
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo + i;
+    plot3di = scase.plot3dinfo + i;
     if(plot3di->blocknumber == blocknum &&
        ABS(plot3di->time - time_local) < 0.5) {
       count++;
@@ -1844,7 +1844,7 @@ int Unloadall() {
       }
     }
   }
-  for(size_t i = 0; i < nplot3dinfo; i++) {
+  for(size_t i = 0; i < scase.nplot3dinfo; i++) {
     ReadPlot3D("", i, UNLOAD, &errorcode);
   }
   for(size_t i = 0; i < npatchinfo; i++) {

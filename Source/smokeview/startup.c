@@ -731,10 +731,10 @@ void InitOpenGL(int option){
         parti->autoload=0;
       }
     }
-    for(i=0;i<nplot3dinfo;i++){
+    for(i=0;i<scase.nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo + i;
+      plot3di = scase.plot3dinfo + i;
 
       if(plot3di->loaded==1){
         plot3di->autoload=1;
@@ -827,20 +827,20 @@ void InitOpenGL(int option){
    // startup plot3d
 
    nstartup=0;
-   for(i=0;i<nplot3dinfo;i++){
+   for(i=0;i<scase.nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo + i;
+      plot3di = scase.plot3dinfo + i;
 
       if(plot3di->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"PLOT3DAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<nplot3dinfo;i++){
+     for(i=0;i<scase.nplot3dinfo;i++){
         plot3ddata *plot3di;
 
-        plot3di = plot3dinfo + i;
+        plot3di = scase.plot3dinfo + i;
 
         if(plot3di->loaded==1)fprintf(fileout," %i\n",plot3di->seq_id);
      }
@@ -1000,10 +1000,10 @@ void InitOpenGL(int option){
 
   void GetStartupPlot3D(int seq_id){
     int i;
-    for(i=0;i<nplot3dinfo;i++){
+    for(i=0;i<scase.nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo + i;
+      plot3di = scase.plot3dinfo + i;
       if(plot3di->seq_id==seq_id){
         plot3di->autoload=1;
         return;
@@ -1098,25 +1098,25 @@ void InitOpenGL(int option){
     int errorcode;
 
 //    GLUIShowAlert();
-    for(i = 0; i<nplot3dinfo; i++){
+    for(i = 0; i<scase.nplot3dinfo; i++){
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo+i;
+      plot3di = scase.plot3dinfo+i;
       plot3di->finalize = 0;
     }
-    for(i = nplot3dinfo-1;i>=0; i--){
+    for(i = scase.nplot3dinfo-1;i>=0; i--){
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo+i;
+      plot3di = scase.plot3dinfo+i;
       if(plot3di->autoload==1){
         plot3di->finalize = 1;
         break;
       }
     }
-    for(i=0;i<nplot3dinfo;i++){
+    for(i=0;i<scase.nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo + i;
+      plot3di = scase.plot3dinfo + i;
       if(plot3di->autoload==0&&plot3di->loaded==1){
         ReadPlot3D(plot3di->file,i,UNLOAD,&errorcode);
       }

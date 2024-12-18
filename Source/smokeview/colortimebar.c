@@ -1314,7 +1314,7 @@ void DrawHorizontalColorbarRegLabels(void){
     char unitlabel[256];
     int plot3dunitclass, plot3dunittype;
 
-    up3label = plot3dinfo[0].label[plotn - 1].unit;
+    up3label = scase.plot3dinfo[0].label[plotn - 1].unit;
     strcpy(unitlabel, up3label);
     GetUnitInfo(up3label, &plot3dunitclass, &plot3dunittype);
     if(plot3dunitclass >= 0 && plot3dunitclass < nunitclasses){
@@ -1324,7 +1324,7 @@ void DrawHorizontalColorbarRegLabels(void){
         strcpy(unitlabel, unitclasses[plot3dunitclass].units[plot3dunittype].unit);
       }
     }
-    p3label = plot3dinfo[0].label[plotn - 1].shortlabel;
+    p3label = scase.plot3dinfo[0].label[plotn - 1].shortlabel;
     glPushMatrix();
     glTranslatef(type_label_left, type_label_down, 0.0);
     OutputBarText(0.0, 3 * (VP_vcolorbar.text_height + v_space), foreground_color, "Plot3D");
@@ -2452,7 +2452,7 @@ void DrawVerticalColorbarRegLabels(void){
     char unitlabel[256];
     int plot3dunitclass, plot3dunittype;
 
-    up3label = plot3dinfo[0].label[plotn-1].unit;
+    up3label = scase.plot3dinfo[0].label[plotn-1].unit;
     strcpy(unitlabel, up3label);
     GetUnitInfo(up3label, &plot3dunitclass, &plot3dunittype);
     if(plot3dunitclass>=0&&plot3dunitclass<nunitclasses){
@@ -2544,7 +2544,7 @@ void DrawVerticalColorbarRegLabels(void){
     char unitlabel[256];
     int plot3dunitclass, plot3dunittype;
 
-    up3label = plot3dinfo[0].label[plotn - 1].unit;
+    up3label = scase.plot3dinfo[0].label[plotn - 1].unit;
     strcpy(unitlabel, up3label);
     GetUnitInfo(up3label, &plot3dunitclass, &plot3dunittype);
     if(plot3dunitclass >= 0 && plot3dunitclass < nunitclasses){
@@ -2554,7 +2554,7 @@ void DrawVerticalColorbarRegLabels(void){
         strcpy(unitlabel, unitclasses[plot3dunitclass].units[plot3dunittype].unit);
       }
     }
-    p3label = plot3dinfo[0].label[plotn - 1].shortlabel;
+    p3label = scase.plot3dinfo[0].label[plotn - 1].shortlabel;
     glPushMatrix();
     glTranslatef(
       vcolorbar_left_pos - colorbar_label_width,

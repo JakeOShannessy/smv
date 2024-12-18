@@ -1238,25 +1238,25 @@ void ReadSMVDynamic(char *file){
 
   stream->fileinfo = fopen_buffer(file,"r", 1, 0);
 
-  nplot3dinfo_old=nplot3dinfo;
+  nplot3dinfo_old=scase.nplot3dinfo;
 
   updatefacelists=1;
   updatemenu=1;
-  if(nplot3dinfo>0){
+  if(scase.nplot3dinfo>0){
     int n;
 
-    for(i=0;i<nplot3dinfo;i++){
+    for(i=0;i<scase.nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo + i;
+      plot3di = scase.plot3dinfo + i;
       for(n=0;n<6;n++){
         FreeLabels(&plot3di->label[n]);
       }
       FREEMEMORY(plot3di->reg_file);
     }
-//    FREEMEMORY(plot3dinfo);
+//    FREEMEMORY(scase.plot3dinfo);
   }
-  nplot3dinfo=0;
+  scase.nplot3dinfo=0;
 
   for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
@@ -1330,7 +1330,7 @@ void ReadSMVDynamic(char *file){
       for(n = 0; n<5; n++){
         if(ReadLabels(NULL, stream, NULL)==LABEL_ERR)break;
       }
-      nplot3dinfo++;
+      scase.nplot3dinfo++;
       continue;
     }
 /*
@@ -1629,12 +1629,12 @@ void ReadSMVDynamic(char *file){
 
   // ------------------------------- pass 1 dynamic - end ------------------------------------
 
-  if(nplot3dinfo>0){
-    if(plot3dinfo==NULL){
-      NewMemory((void **)&plot3dinfo,nplot3dinfo*sizeof(plot3ddata));
+  if(scase.nplot3dinfo>0){
+    if(scase.plot3dinfo==NULL){
+      NewMemory((void **)&scase.plot3dinfo,scase.nplot3dinfo*sizeof(plot3ddata));
     }
     else{
-      ResizeMemory((void **)&plot3dinfo,nplot3dinfo*sizeof(plot3ddata));
+      ResizeMemory((void **)&scase.plot3dinfo,scase.nplot3dinfo*sizeof(plot3ddata));
     }
   }
   for(i=0;i<scase.devicecoll.ndeviceinfo;i++){
@@ -1693,13 +1693,13 @@ void ReadSMVDynamic(char *file){
         time_local=-1.0;
       }
       if(FGETS(buffer,255,stream)==NULL){
-        nplot3dinfo--;
+        scase.nplot3dinfo--;
         break;
       }
       bufferptr=TrimFrontBack(buffer);
       len=strlen(bufferptr);
 
-      plot3di=plot3dinfo+iplot3d;
+      plot3di=scase.plot3dinfo+iplot3d;
       for(i = 0; i < 5; i++){
         plot3di->valmin_plot3d[i] = 1.0;
         plot3di->valmax_plot3d[i] = 0.0;
@@ -1717,7 +1717,7 @@ void ReadSMVDynamic(char *file){
         plot3di->histograms[i] = NULL;
       }
 
-      if(plot3di>plot3dinfo+nplot3dinfo_old-1){
+      if(plot3di>scase.plot3dinfo+nplot3dinfo_old-1){
         plot3di->loaded=0;
         plot3di->display=0;
       }
@@ -1755,7 +1755,7 @@ void ReadSMVDynamic(char *file){
           }
         }
         if(read_ok==NO){
-          nplot3dinfo--;
+          scase.nplot3dinfo--;
           continue;
         }
         if(plot3di->u>-1||plot3di->v>-1||plot3di->w>-1){
@@ -1786,7 +1786,7 @@ void ReadSMVDynamic(char *file){
         for(n = 0;n<5;n++){
           if(ReadLabels(&plot3di->label[n], stream, NULL)==LABEL_ERR)break;
         }
-        nplot3dinfo--;
+        scase.nplot3dinfo--;
       }
       continue;
     }
@@ -2002,10 +2002,10 @@ void ReadSMVDynamic(char *file){
         sscanf(buffer,"%f %f %f %f",valmin +i,valmax+i, percentile_min+i,percentile_max+i);
       }
 
-      for(i=0;i<nplot3dinfo;i++){
+      for(i=0;i<scase.nplot3dinfo;i++){
         plot3ddata *plot3di;
 
-        plot3di = plot3dinfo + i;
+        plot3di = scase.plot3dinfo + i;
         if(strcmp(file_ptr,plot3di->file)==0){
           int j;
 
@@ -7275,7 +7275,7 @@ int ReadSMV_Init(){
   FREEMEMORY(scase.slicecoll.vsliceinfo);
   FREEMEMORY(scase.slicecoll.sliceinfo);
 
-  FREEMEMORY(plot3dinfo);
+  FREEMEMORY(scase.plot3dinfo);
   FREEMEMORY(patchinfo);
   FREEMEMORY(boundarytypes);
   FREEMEMORY(scase.isoinfo);
@@ -13124,8 +13124,8 @@ int ReadIni2(char *inifile, int localfile){
           setp3max_all[iplot3d] = isetmax;
           p3min_all[iplot3d]    = p3mintemp;
           p3max_all[iplot3d]    = p3maxtemp;
-          if(plot3dinfo!=NULL){
-            GLUISetMinMax(BOUND_PLOT3D, plot3dinfo[0].label[iplot3d].shortlabel, isetmin, p3mintemp, isetmax, p3maxtemp);
+          if(scase.plot3dinfo!=NULL){
+            GLUISetMinMax(BOUND_PLOT3D, scase.plot3dinfo[0].label[iplot3d].shortlabel, isetmin, p3mintemp, isetmax, p3maxtemp);
             update_glui_bounds = 1;
           }
         }
@@ -16655,17 +16655,17 @@ void WriteIniLocal(FILE *fileout){
     n3d = MAXPLOT3DVARS;
     if(n3d<numplot3dvars)n3d = numplot3dvars;
     if(n3d>MAXPLOT3DVARS)n3d = MAXPLOT3DVARS;
-    if(plot3dinfo!=NULL){
+    if(scase.plot3dinfo!=NULL){
       fprintf(fileout, "V2_PLOT3D\n");
       fprintf(fileout, " %i\n", n3d);
     }
     for(i = 0; i < n3d; i++){
-    if(plot3dinfo!=NULL){
+    if(scase.plot3dinfo!=NULL){
       int set_valmin=0, set_valmax=0;
       float valmin=1.0, valmax=0.0;
       char *label;
 
-      label = plot3dinfo[0].label[i].shortlabel;
+      label = scase.plot3dinfo[0].label[i].shortlabel;
       GLUIGetOnlyMinMax(BOUND_PLOT3D, label, &set_valmin, &valmin, &set_valmax, &valmax);
       fprintf(fileout, " %i %i %f %i %f %s\n", i+1, set_valmin, valmin, set_valmax, valmax, label);
     }
