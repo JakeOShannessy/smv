@@ -7279,7 +7279,7 @@ int ReadSMV_Init(){
   FREEMEMORY(scase.patchinfo);
   FREEMEMORY(boundarytypes);
   FREEMEMORY(scase.isoinfo);
-  FREEMEMORY(isotypes);
+  FREEMEMORY(scase.isotypes);
   FREEMEMORY(scase.roominfo);
   FREEMEMORY(scase.fireinfo);
   FREEMEMORY(scase.zoneinfo);
@@ -8131,10 +8131,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     if(NewMemory((void **)&boundarytypes,scase.npatchinfo*sizeof(int))==0)return 2;
   }
   FREEMEMORY(scase.isoinfo);
-  FREEMEMORY(isotypes);
+  FREEMEMORY(scase.isotypes);
   if(scase.nisoinfo>0){
     if(NewMemory((void **)&scase.isoinfo,scase.nisoinfo*sizeof(isodata))==0)return 2;
-    if(NewMemory((void **)&isotypes,scase.nisoinfo*sizeof(int))==0)return 2;
+    if(NewMemory((void **)&scase.isotypes,scase.nisoinfo*sizeof(int))==0)return 2;
   }
   FREEMEMORY(scase.roominfo);
   if(scase.nrooms>0){

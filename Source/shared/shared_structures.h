@@ -1770,6 +1770,8 @@ typedef struct {
   isodata *isoinfo;
 
   int *boundarytypes;
+
+  int nisotypes;
   int *isotypes;
 
   int nrooms;

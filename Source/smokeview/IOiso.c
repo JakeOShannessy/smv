@@ -237,8 +237,8 @@ int GetIsoType(const isodata *isoi){
   isodata *isoi2;
   int j;
 
-  for(j = 0;j < nisotypes;j++){
-    isoi2 = scase.isoinfo + isotypes[j];
+  for(j = 0;j < scase.nisotypes;j++){
+    isoi2 = scase.isoinfo + scase.isotypes[j];
 
     if(strcmp(isoi->surface_label.longlabel, isoi2->surface_label.longlabel) == 0)return j;
   }
@@ -1590,9 +1590,9 @@ int GetIsoIndex(const isodata *isoi){
   isodata *isoi2;
   int j;
 
-  for(j = 0;j < nisotypes;j++){
-    isoi2 = scase.isoinfo + isotypes[j];
-    if(strcmp(isoi->surface_label.longlabel, isoi2->surface_label.longlabel) == 0)return isotypes[j];
+  for(j = 0;j < scase.nisotypes;j++){
+    isoi2 = scase.isoinfo + scase.isotypes[j];
+    if(strcmp(isoi->surface_label.longlabel, isoi2->surface_label.longlabel) == 0)return scase.isotypes[j];
   }
   return -1;
 }
@@ -1603,10 +1603,10 @@ void UpdateIsoTypes(void){
   int i;
   isodata *isoi;
 
-  nisotypes = 0;
+  scase.nisotypes = 0;
   for(i=0;i<scase.nisoinfo;i++){
     isoi = scase.isoinfo+i;
-    if(GetIsoIndex(isoi)==-1)isotypes[nisotypes++]=i;
+    if(GetIsoIndex(isoi)==-1)scase.isotypes[scase.nisotypes++]=i;
   }
   for(i=0;i<scase.nisoinfo;i++){
     isoi = scase.isoinfo+i;
