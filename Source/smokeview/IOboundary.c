@@ -186,11 +186,11 @@ void OutputBoundaryData(patchdata *patchi){
 int GetBoundaryIndex(const patchdata *patchi){
   int j;
 
-  for(j = 0; j < nboundarytypes; j++){
+  for(j = 0; j < scase.nboundarytypes; j++){
     patchdata *patchi2;
 
-    patchi2 = scase.patchinfo + boundarytypes[j];
-    if(strcmp(patchi->label.shortlabel, patchi2->label.shortlabel) == 0)return boundarytypes[j];
+    patchi2 = scase.patchinfo + scase.boundarytypes[j];
+    if(strcmp(patchi->label.shortlabel, patchi2->label.shortlabel) == 0)return scase.boundarytypes[j];
   }
   return -1;
 }
@@ -3788,10 +3788,10 @@ void UpdateBoundaryTypes(void){
   int i;
   patchdata *patchi;
 
-  nboundarytypes = 0;
+  scase.nboundarytypes = 0;
   for(i=0;i<scase.npatchinfo;i++){
     patchi = scase.patchinfo+i;
-    if(GetBoundaryIndex(patchi)==-1)boundarytypes[nboundarytypes++]=i;
+    if(GetBoundaryIndex(patchi)==-1)scase.boundarytypes[scase.nboundarytypes++]=i;
   }
   for(i=0;i<scase.npatchinfo;i++){
     patchi = scase.patchinfo+i;
@@ -3804,10 +3804,10 @@ void UpdateBoundaryTypes(void){
 int GetBoundaryType(const patchdata *patchi){
   int j;
 
-  for(j=0;j<nboundarytypes;j++){
+  for(j=0;j<scase.nboundarytypes;j++){
     patchdata *patchi2;
 
-    patchi2 = scase.patchinfo+boundarytypes[j];
+    patchi2 = scase.patchinfo+scase.boundarytypes[j];
     if(strcmp(patchi->label.shortlabel,patchi2->label.shortlabel)==0)return j;
   }
   return -1;

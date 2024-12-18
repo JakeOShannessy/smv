@@ -1769,6 +1769,7 @@ typedef struct {
   int nisoinfo;
   isodata *isoinfo;
 
+  int nboundarytypes;
   int *boundarytypes;
 
   int nisotypes;

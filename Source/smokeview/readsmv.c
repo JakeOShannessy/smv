@@ -7277,7 +7277,7 @@ int ReadSMV_Init(){
 
   FREEMEMORY(scase.plot3dinfo);
   FREEMEMORY(scase.patchinfo);
-  FREEMEMORY(boundarytypes);
+  FREEMEMORY(scase.boundarytypes);
   FREEMEMORY(scase.isoinfo);
   FREEMEMORY(scase.isotypes);
   FREEMEMORY(scase.roominfo);
@@ -8116,7 +8116,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   }
 
   FREEMEMORY(scase.patchinfo);
-  FREEMEMORY(boundarytypes);
+  FREEMEMORY(scase.boundarytypes);
   if(scase.npatchinfo!=0){
     if(NewMemory((void **)&scase.patchinfo,scase.npatchinfo*sizeof(patchdata))==0)return 2;
     for(i=0;i<scase.npatchinfo;i++){
@@ -8128,7 +8128,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       patchi->file=NULL;
       patchi->size_file=NULL;
     }
-    if(NewMemory((void **)&boundarytypes,scase.npatchinfo*sizeof(int))==0)return 2;
+    if(NewMemory((void **)&scase.boundarytypes,scase.npatchinfo*sizeof(int))==0)return 2;
   }
   FREEMEMORY(scase.isoinfo);
   FREEMEMORY(scase.isotypes);

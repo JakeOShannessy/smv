@@ -2234,7 +2234,6 @@ SVEXTERN int SVDECL(visMAINmenus,0);
 SVEXTERN int SVDECL(ijkbarmax,5);
 SVEXTERN int SVDECL(blockage_as_input,0), SVDECL(blockage_snapped,1);
 SVEXTERN int SVDECL(show_cad_and_grid,0);
-SVEXTERN int SVDECL(*boundarytypes,NULL);
 SVEXTERN int SVDECL(iplot3dtimelist, -1), SVDECL(nplot3dtimelist, 0);
 SVEXTERN float SVDECL(*plot3dtimelist,NULL);
 
@@ -2246,7 +2245,6 @@ SVEXTERN int SVDECL(opengldefined,0);
 SVEXTERN int SVDECL(restart_time,0);
 SVEXTERN int SVDECL(*isosubmenus,NULL), nisosubmenus;
 SVEXTERN int SVDECL(*loadpatchsubmenus,NULL), nloadpatchsubmenus;
-SVEXTERN int nboundarytypes;
 SVEXTERN char SVDECL(**patchlabellist,NULL);
 SVEXTERN char SVDECL(*socket_path,NULL);
 SVEXTERN int SVDECL(*patchlabellist_index,NULL);

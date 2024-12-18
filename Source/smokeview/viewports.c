@@ -54,7 +54,7 @@ void GetColorbarLabelWidth(int show_slice_colorbar_local, int showcfast_local,
     patchdata *patchi;
     char boundary_colorlabel[256];
 
-    patchi = scase.patchinfo+boundarytypes[iboundarytype];
+    patchi = scase.patchinfo+scase.boundarytypes[iboundarytype];
 
     *boundary_label_width = MAX(*boundary_label_width, GetStringWidth("BNDRYA"));
 
