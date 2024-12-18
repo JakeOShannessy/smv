@@ -1,5 +1,4 @@
 #include "options.h"
-#include "glew.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
