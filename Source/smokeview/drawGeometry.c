@@ -395,7 +395,7 @@ void DrawCircVentsExactSolid(int option){
       vcolor[2]=color[2]*255;
       glPushMatrix();
       glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-      glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
+      glTranslatef(-scase.xbar0,-scase.ybar0,-scase.zbar0);
       if(option==VENT_CIRCLE){
         clipdata circleclip;
         float *ventmin, *ventmax;
@@ -505,7 +505,7 @@ void DrawCircVentsExactOutline(int option){
       vcolor[2]=color[2]*255;
       glPushMatrix();
       glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-      glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
+      glTranslatef(-scase.xbar0,-scase.ybar0,-scase.zbar0);
       if(option==VENT_CIRCLE){
         clipdata circleclip;
         float *ventmin, *ventmax;
@@ -591,7 +591,7 @@ void UpdateIndexColors(void){
   int j;
   float s_color[4];
 
-  sextras.updateindexcolors=0;
+  scase.updateindexcolors=0;
 
   if(strcmp(surfacedefault->surfacelabel,"INERT")==0){
     surfacedefault->color=block_ambient2;
@@ -619,7 +619,7 @@ void UpdateIndexColors(void){
       if(bc->usecolorindex==1){
         colorindex=bc->colorindex;
         if(colorindex>=0){
-          bc->color = GetColorPtr(&scase.colorcoll, sextras.rgb[sextras.nrgb+colorindex]);
+          bc->color = GetColorPtr(&scase.colorcoll, scase.rgb[scase.nrgb+colorindex]);
         }
       }
     }
@@ -630,15 +630,15 @@ void UpdateIndexColors(void){
       if(vi->usecolorindex==1){
         colorindex=vi->colorindex;
 
-        s_color[0]=sextras.rgb[sextras.nrgb+colorindex][0];
-        s_color[1]=sextras.rgb[sextras.nrgb+colorindex][1];
-        s_color[2]=sextras.rgb[sextras.nrgb+colorindex][2];
+        s_color[0]=scase.rgb[scase.nrgb+colorindex][0];
+        s_color[1]=scase.rgb[scase.nrgb+colorindex][1];
+        s_color[2]=scase.rgb[scase.nrgb+colorindex][2];
         s_color[3]=1.0;
         vi->color = GetColorPtr(&scase.colorcoll, s_color);
       }
     }
   }
-  sextras.updatefaces=1;
+  scase.updatefaces=1;
 }
 
 
@@ -649,9 +649,9 @@ void DrawObstOutlines(void){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
+  glTranslatef(-scase.xbar0, -scase.ybar0, -scase.zbar0);
   AntiAliasLine(ON);
-  glLineWidth(sextras.linewidth);
+  glLineWidth(scase.linewidth);
   glBegin(GL_LINES);
   for(n = 0; n < scase.meshescoll.nmeshes; n++){
     int i;
@@ -722,9 +722,9 @@ void DrawOrigObstOutlines(void){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
+  glTranslatef(-scase.xbar0,-scase.ybar0,-scase.zbar0);
   AntiAliasLine(ON);
-  glLineWidth(sextras.linewidth);
+  glLineWidth(scase.linewidth);
   glBegin(GL_LINES);
   for(i=0; i<scase.obstcoll.nobstinfo; i++){
     xbdata *obi;
@@ -784,18 +784,18 @@ void DrawOrigObstOutlines(void){
 void DrawOutlines(void){
   int i;
 
-  if(sextras.noutlineinfo<=0)return;
+  if(scase.noutlineinfo<=0)return;
   AntiAliasLine(ON);
-  glLineWidth(sextras.linewidth);
+  glLineWidth(scase.linewidth);
   glBegin(GL_LINES);
   glColor3fv(foregroundcolor);
-  for(i=0;i<sextras.noutlineinfo;i++){
+  for(i=0;i<scase.noutlineinfo;i++){
     outlinedata *outlinei;
     float *xx1, *yy1, *zz1;
     float *xx2, *yy2, *zz2;
     int j;
 
-    outlinei = sextras.outlineinfo + i;
+    outlinei = scase.outlineinfo + i;
     xx1 = outlinei->x1;
     xx2 = outlinei->x2;
     yy1 = outlinei->y1;
@@ -994,7 +994,7 @@ void SetCVentDirs(void){
             for(k=cvi->kmin;k<=cvi->kmax;k++){
               int state1, state2;
 
-              if(sextras.use_iblank==1&&c_iblank!=NULL){
+              if(scase.use_iblank==1&&c_iblank!=NULL){
                 state1=c_iblank[IJKCELL(i-1,j,k)];
                 state2=c_iblank[IJKCELL(i,j,k)];
               }
@@ -1041,7 +1041,7 @@ void SetCVentDirs(void){
             for(k=cvi->kmin;k<=cvi->kmax;k++){
               int state1, state2;
 
-              if(sextras.use_iblank==1&&c_iblank!=NULL){
+              if(scase.use_iblank==1&&c_iblank!=NULL){
                 state1=c_iblank[IJKCELL(i,j-1,k)];
                 state2=c_iblank[IJKCELL(i,j,k)];
               }
@@ -1088,7 +1088,7 @@ void SetCVentDirs(void){
             for(j=cvi->jmin;j<=cvi->jmax;j++){
               int state1, state2;
 
-              if(sextras.use_iblank==1&&c_iblank!=NULL){
+              if(scase.use_iblank==1&&c_iblank!=NULL){
                 state1=c_iblank[IJKCELL(i,j,k-1)];
                 state2=c_iblank[IJKCELL(i,j,k)];
               }
@@ -1346,7 +1346,7 @@ void SetVentDirs(void){
             for(k=vi->kmin;k<=MIN(vi->kmax,kbar-1);k++){
               int state1, state2;
 
-              if(sextras.use_iblank==1&&c_iblank!=NULL){
+              if(scase.use_iblank==1&&c_iblank!=NULL){
                 state1=c_iblank[IJKCELL(i-1,j,k)];
                 state2=c_iblank[IJKCELL(i,j,k)];
               }
@@ -1399,7 +1399,7 @@ void SetVentDirs(void){
             for(k=vi->kmin;k<=MIN(vi->kmax,kbar-1);k++){
               int state1, state2;
 
-              if(sextras.use_iblank==1&&c_iblank!=NULL){
+              if(scase.use_iblank==1&&c_iblank!=NULL){
                 state1=c_iblank[IJKCELL(i,j-1,k)];
                 state2=c_iblank[IJKCELL(i,j,k)];
               }
@@ -1452,7 +1452,7 @@ void SetVentDirs(void){
             for(j=vi->jmin;j<=MIN(vi->jmax,jbar-1);j++){
               int state1, state2;
 
-              if(sextras.use_iblank==1&&c_iblank!=NULL){
+              if(scase.use_iblank==1&&c_iblank!=NULL){
                 state1=c_iblank[IJKCELL(i,j,k-1)];
                 state2=c_iblank[IJKCELL(i,j,k)];
               }
@@ -1999,7 +1999,7 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
         faceptr->linewidth=&solidlinewidth;
       }
       else{
-        faceptr->linewidth=&sextras.linewidth;
+        faceptr->linewidth=&scase.linewidth;
       }
       faceptr->showtimelist_handle=&bc->showtimelist;
       faceptr->surfinfo=bc->surf[j];
@@ -2012,10 +2012,10 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
       faceptr->texture_origin=vi->texture_origin;
       faceptr->transparent=vi->transparent;
       if(faceptr->type2==OUTLINE_FRAME_face){
-        faceptr->linewidth=&sextras.linewidth;
+        faceptr->linewidth=&scase.linewidth;
       }
       else{
-        faceptr->linewidth=&sextras.ventlinewidth;
+        faceptr->linewidth=&scase.ventlinewidth;
       }
       faceptr->showtimelist_handle=&vi->showtimelist;
       faceptr->surfinfo=vi->surf[j];
@@ -2145,8 +2145,8 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
        ytex = zz;
        xtex2 = xx2;
        ytex2 = zz2;
-       xstart = &sextras.xbar0;
-       ystart = &sextras.zbar0;
+       xstart = &scase.xbar0;
+       ystart = &scase.zbar0;
        if(bc!=NULL)faceptr->interior = bc->interior[2];
        break;
      case UP_X:
@@ -2157,8 +2157,8 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
        ytex = zz;
        xtex2 = yy2;
        ytex2 = zz2;
-       xstart = &sextras.ybar0;
-       ystart = &sextras.zbar0;
+       xstart = &scase.ybar0;
+       ystart = &scase.zbar0;
        if(bc!=NULL)faceptr->interior = bc->interior[1];
        break;
      case UP_Y:
@@ -2169,8 +2169,8 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
        ytex = zz;
        xtex2 = xx2;
        ytex2 = zz2;
-       xstart = &sextras.xbar0;
-       ystart = &sextras.zbar0;
+       xstart = &scase.xbar0;
+       ystart = &scase.zbar0;
        if(bc!=NULL)faceptr->interior = bc->interior[3];
        break;
      case DOWN_X:
@@ -2181,8 +2181,8 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
        ytex2 = zz2;
        faceptr->normal[0]=(float)-1.0;
        faceptr->imax=faceptr->imin;
-       xstart = &sextras.ybar0;
-       ystart = &sextras.zbar0;
+       xstart = &scase.ybar0;
+       ystart = &scase.zbar0;
        if(bc!=NULL)faceptr->interior = bc->interior[0];
        break;
      case DOWN_Z:
@@ -2193,8 +2193,8 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
        ytex2 = yy2;
        faceptr->normal[2]=(float)-1.0;
        faceptr->kmax=faceptr->kmin;
-       xstart = &sextras.xbar0;
-       ystart = &sextras.ybar0;
+       xstart = &scase.xbar0;
+       ystart = &scase.ybar0;
        if(bc!=NULL)faceptr->interior = bc->interior[4];
        break;
      case UP_Z:
@@ -2205,8 +2205,8 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
        ytex2 = yy2;
        faceptr->normal[2]=(float)1.0;
        faceptr->kmin=faceptr->kmax;
-       xstart = &sextras.xbar0;
-       ystart = &sextras.ybar0;
+       xstart = &scase.xbar0;
+       ystart = &scase.ybar0;
        if(bc!=NULL)faceptr->interior = bc->interior[5];
        break;
      default:
@@ -2341,7 +2341,7 @@ void UpdateFacesWorker(void){
   INIT_PRINT_TIMER(timer_allocate_faces);
   AllocateFaces();
   PRINT_TIMER(timer_allocate_faces, "AllocateFaces");
-  sextras.updatefaces=0;
+  scase.updatefaces=0;
   have_vents_int=0;
 
   INIT_PRINT_TIMER(timer_update_faces_1);
@@ -2356,7 +2356,7 @@ void UpdateFacesWorker(void){
       blockagedata *bc;
 
       bc = meshi->blockageinfoptrs[j];
-      if(sextras.visTerrainType!=TERRAIN_HIDDEN&&bc->is_wuiblock==1)continue;
+      if(scase.visTerrainType!=TERRAIN_HIDDEN&&bc->is_wuiblock==1)continue;
       ObstOrVent2Faces(meshi,bc,NULL,faceptr,BLOCK_face);
       faceptr += 6;
     }
@@ -2737,7 +2737,7 @@ void UpdateFaceListsWorker(void){
       if(j>=vent_offset&&j<vent_offset+meshi->nvents){
         if(visOpenVents==0&&vi->isOpenvent==1)continue;
         if(visDummyVents==0&&vi->dummy==1)continue;
-        if(sextras.visOtherVents==0&&vi->isOpenvent==0&&vi->dummy==0)continue;
+        if(scase.visOtherVents==0&&vi->isOpenvent==0&&vi->dummy==0)continue;
         if(
            patchi!=NULL
            &&patchi->loaded==1
@@ -3080,7 +3080,7 @@ void DrawObstsDebug(void){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
+  glTranslatef(-scase.xbar0,-scase.ybar0,-scase.zbar0);
   if(light_faces == 1){
     ENABLE_LIGHTING;
     glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
@@ -3296,7 +3296,7 @@ void DrawFacesOLD(){
 
     DISABLE_LIGHTING;
     AntiAliasLine(ON);
-    glLineWidth(sextras.linewidth);
+    glLineWidth(scase.linewidth);
     glBegin(GL_LINES);
     for(j = 0; j < scase.meshescoll.nmeshes; j++){
       meshdata *meshi;
@@ -3581,7 +3581,7 @@ void DrawFaces(){
 
     DISABLE_LIGHTING;
     AntiAliasLine(ON);
-    glLineWidth(sextras.linewidth);
+    glLineWidth(scase.linewidth);
     glBegin(GL_LINES);
     for(j=0;j<scase.meshescoll.nmeshes;j++){
       meshdata *meshi;
@@ -4636,7 +4636,7 @@ void DrawUserTicks(void){
   }
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
+  glTranslatef(-scase.xbar0,-scase.ybar0,-scase.zbar0);
 
  //*** x axis tick/labels
 
@@ -4937,34 +4937,34 @@ void DrawUserTicks(void){
 /* ------------------ DrawGravityAxis ------------------------ */
 
 void DrawGravityAxis(void){
-  glLineWidth(sextras.linewidth);
+  glLineWidth(scase.linewidth);
   glBegin(GL_LINES);
 
   // x axis
   glColor3f(0.0,0.0,1.0);
-  glVertex3f(sextras.xbar/2.0,sextras.ybar/2.0,sextras.zbar/2.0);
-  glVertex3f(sextras.xbar/2.0,sextras.ybar/2.0,sextras.zbar/2.0+0.5);
+  glVertex3f(scase.xbar/2.0,scase.ybar/2.0,scase.zbar/2.0);
+  glVertex3f(scase.xbar/2.0,scase.ybar/2.0,scase.zbar/2.0+0.5);
 
   // y axis
   glColor3f(0.0,1.0,0.0);
-  glVertex3f(sextras.xbar/2.0,sextras.ybar/2.0,sextras.zbar/2.0);
-  glVertex3f(sextras.xbar/2.0,sextras.ybar/2.0+0.5,sextras.zbar/2.0);
+  glVertex3f(scase.xbar/2.0,scase.ybar/2.0,scase.zbar/2.0);
+  glVertex3f(scase.xbar/2.0,scase.ybar/2.0+0.5,scase.zbar/2.0);
 
   // z axis
   glColor3f(1.0,0.0,0.0);
-  glVertex3f(sextras.xbar/2.0,sextras.ybar/2.0,sextras.zbar/2.0);
-  glVertex3f(sextras.xbar/2.0+0.5,sextras.ybar/2.0,sextras.zbar/2.0);
+  glVertex3f(scase.xbar/2.0,scase.ybar/2.0,scase.zbar/2.0);
+  glVertex3f(scase.xbar/2.0+0.5,scase.ybar/2.0,scase.zbar/2.0);
 
   // gravity vector
   glColor3fv(foregroundcolor);
-  glVertex3f(sextras.xbar/2.0,sextras.ybar/2.0,sextras.zbar/2.0);
-  glVertex3f(sextras.xbar/2.0+sextras.gvecunit[0],sextras.ybar/2.0+sextras.gvecunit[1],sextras.zbar/2.0+sextras.gvecunit[2]);
+  glVertex3f(scase.xbar/2.0,scase.ybar/2.0,scase.zbar/2.0);
+  glVertex3f(scase.xbar/2.0+scase.gvecunit[0],scase.ybar/2.0+scase.gvecunit[1],scase.zbar/2.0+scase.gvecunit[2]);
 
   glEnd();
-  Output3Text(foregroundcolor, sextras.xbar / 2.0, sextras.ybar / 2.0, sextras.zbar / 2.0 + 0.5, "z");
-  Output3Text(foregroundcolor, sextras.xbar / 2.0, sextras.ybar / 2.0 + 0.5, sextras.zbar / 2.0, "y");
-  Output3Text(foregroundcolor, sextras.xbar / 2.0 + 0.5, sextras.ybar / 2.0, sextras.zbar / 2.0, "x");
-  Output3Text(foregroundcolor, sextras.xbar / 2.0 + sextras.gvecunit[0], sextras.ybar / 2.0 + sextras.gvecunit[1], sextras.zbar / 2.0 + sextras.gvecunit[2], "g");
+  Output3Text(foregroundcolor, scase.xbar / 2.0, scase.ybar / 2.0, scase.zbar / 2.0 + 0.5, "z");
+  Output3Text(foregroundcolor, scase.xbar / 2.0, scase.ybar / 2.0 + 0.5, scase.zbar / 2.0, "y");
+  Output3Text(foregroundcolor, scase.xbar / 2.0 + 0.5, scase.ybar / 2.0, scase.zbar / 2.0, "x");
+  Output3Text(foregroundcolor, scase.xbar / 2.0 + scase.gvecunit[0], scase.ybar / 2.0 + scase.gvecunit[1], scase.zbar / 2.0 + scase.gvecunit[2], "g");
 }
 
 /* ------------------ DrawTicks ------------------------ */
@@ -4974,8 +4974,8 @@ void DrawTicks(void){
   tickdata *ticki;
   float *dxyz,xyz[3],xyz2[3],*begt,*endt,dbar[3];
 
-  for(i=0;i<sextras.ntickinfo;i++){
-    ticki = sextras.tickinfo + i;
+  for(i=0;i<scase.ntickinfo;i++){
+    ticki = scase.tickinfo + i;
     begt = ticki->begin;
     endt = ticki->end;
 

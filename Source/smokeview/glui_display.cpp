@@ -662,7 +662,7 @@ void SurfaceCB(int var){
       s_color[3] = surfi->transparent_level;
       surfi->color = GetColorPtr(&scase.colorcoll, s_color);
       updatefacelists = 1;
-      sextras.updatefaces = 1;
+      scase.updatefaces = 1;
     }
     break;
   case SURFACE_SELECT:
@@ -823,7 +823,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
   glui_labels->add_radiobutton_to_group(RADIO_show_geom_boundingbox, "when mouse is pressed");
   glui_labels->add_radiobutton_to_group(RADIO_show_geom_boundingbox, "never");
 
-  if(sextras.ntickinfo > 0){
+  if(scase.ntickinfo > 0){
     CHECKBOX_labels_ticks->enable();
   }
   else{
@@ -843,7 +843,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
   PANEL_gen3=glui_labels->add_panel_to_panel(ROLLOUT_general,"",GLUI_PANEL_NONE);
 
   PANEL_linewidth=glui_labels->add_panel_to_panel(PANEL_gen3,"line width");
-  SPINNER_linewidth=glui_labels->add_spinner_to_panel(PANEL_linewidth,_("blockage"),GLUI_SPINNER_FLOAT,&sextras.linewidth);
+  SPINNER_linewidth=glui_labels->add_spinner_to_panel(PANEL_linewidth,_("blockage"),GLUI_SPINNER_FLOAT,&scase.linewidth);
   SPINNER_linewidth->set_float_limits(1.0,10.0,GLUI_LIMIT_CLAMP);
   SPINNER_gridlinewidth=glui_labels->add_spinner_to_panel(PANEL_linewidth,_("grid"),GLUI_SPINNER_FLOAT,&gridlinewidth);
   SPINNER_gridlinewidth->set_float_limits(1.0,10.0,GLUI_LIMIT_CLAMP);
@@ -904,7 +904,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
     SPINNER_zone_hvac_diam->set_float_limits(0.0, 1.0, GLUI_LIMIT_CLAMP);
   }
 
-  if(sextras.have_northangle==1){
+  if(scase.have_northangle==1){
     ROLLOUT_north = glui_labels->add_rollout_to_panel(PANEL_gen3,_("North direction"),false);
     INSERT_ROLLOUT(ROLLOUT_north, glui_labels);
     CHECKBOX_shownorth=glui_labels->add_checkbox_to_panel(ROLLOUT_north,_("show"),&vis_northangle,LABELS_shownorth,GLUILabelsCB);
@@ -1307,7 +1307,7 @@ extern "C" void GLUILabelsCB(int var){
     break;
   case APPLY_VENTOFFSET:
     UpdateVentOffset();
-    sextras.updatefaces=1;
+    scase.updatefaces=1;
     break;
   case FLIP:
       colorbar_flip = 1 - colorbar_flip;

@@ -271,7 +271,7 @@ void UpdateAllBoundaryColors(int flag){
               npatchvals = patchi->ntimes*meshi->npatchsize;
               GetBoundaryColors3(patchi, meshi->patchval, 0, npatchvals, meshi->cpatchval,
                                  &glui_patchmin, &glui_patchmax,
-                                 sextras.nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
+                                 scase.nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
                                  &patchi->extreme_min, &patchi->extreme_max, flag);
             }
             break;
@@ -279,7 +279,7 @@ void UpdateAllBoundaryColors(int flag){
           case PATCH_GEOMETRY_SLICE:
             GetBoundaryColors3(patchi, patchi->geom_vals, 0, patchi->geom_nvals, patchi->geom_ivals,
                                &valmin, &valmax,
-                               sextras.nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
+                               scase.nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
                                &patchi->extreme_min, &patchi->extreme_max, flag);
             break;
           default:
@@ -906,14 +906,14 @@ void InitCadColors(void){
   switch(setbw){
    case 0:
     for(n=0;n<nrgb_cad;n++){
-      xx = (float)n/(float)nrgb_cad * (float)(sextras.nrgb-1);
+      xx = (float)n/(float)nrgb_cad * (float)(scase.nrgb-1);
       i1 = (int)xx;
       i2 = (int)(xx+1);
       f2 = xx - (float)i1;
       f1 = 1.0f - f2;
       sum=0.0;
       for(i=0;i<3;i++){
-        rgb_cad[n][i] = f1*sextras.rgb[i1][i] + f2*sextras.rgb[i2][i];
+        rgb_cad[n][i] = f1*scase.rgb[i1][i] + f2*scase.rgb[i2][i];
         sum += rgb_cad[n][i]*rgb_cad[n][i];
       }
       sum=sqrt((double)sum);
@@ -1031,30 +1031,30 @@ void InitRGB(void){
   if(setbw==0){
     ConvertColor(scase.colorcoll, TO_COLOR);
     if(nrgb_ini > 0){
-      sextras.nrgb = nrgb_ini;
+      scase.nrgb = nrgb_ini;
       for(n=0;n<nrgb_ini;n++){
-        sextras.rgb[n][0] = rgb_ini[n*3];
-        sextras.rgb[n][1] = rgb_ini[n*3+1];
-        sextras.rgb[n][2] = rgb_ini[n*3+2];
-        sextras.rgb[n][3] = transparent_level_local;
+        scase.rgb[n][0] = rgb_ini[n*3];
+        scase.rgb[n][1] = rgb_ini[n*3+1];
+        scase.rgb[n][2] = rgb_ini[n*3+2];
+        scase.rgb[n][3] = transparent_level_local;
       }
     }
     else{
-      for(n=0;n<sextras.nrgb;n++){
-        sextras.rgb[n][0] = rgb_base[n][0];
-        sextras.rgb[n][1] = rgb_base[n][1];
-        sextras.rgb[n][2] = rgb_base[n][2];
-        sextras.rgb[n][3] = transparent_level_local;
+      for(n=0;n<scase.nrgb;n++){
+        scase.rgb[n][0] = rgb_base[n][0];
+        scase.rgb[n][1] = rgb_base[n][1];
+        scase.rgb[n][2] = rgb_base[n][2];
+        scase.rgb[n][3] = transparent_level_local;
       }
     }
   }
   else{
     ConvertColor(scase.colorcoll, TO_BW);
-    for(n=0;n<sextras.nrgb;n++){
-      sextras.rgb[n][0] = bw_base[n][0];
-      sextras.rgb[n][1] = bw_base[n][1];
-      sextras.rgb[n][2] = bw_base[n][2];
-      sextras.rgb[n][3] = transparent_level_local;
+    for(n=0;n<scase.nrgb;n++){
+      scase.rgb[n][0] = bw_base[n][0];
+      scase.rgb[n][1] = bw_base[n][1];
+      scase.rgb[n][2] = bw_base[n][2];
+      scase.rgb[n][3] = transparent_level_local;
     }
   }
 }
@@ -1108,7 +1108,7 @@ void UpdateSmokeColormap(int option){
 
   if(have_fire==HRRPUV_index&&option==RENDER_SLICE){
     valmin=global_hrrpuv_min;
-    valcut=sextras.global_hrrpuv_cutoff;
+    valcut=scase.global_hrrpuv_cutoff;
     valmax=global_hrrpuv_max;
     rgb_colormap = rgb_slicesmokecolormap_01;
   }
@@ -1380,48 +1380,48 @@ void UpdateRGBColors(int colorbar_index){
     rgb2ptr=&(rgb2[0][0]);
   }
   if(colorbar_index!=0){
-    for(n=0;n<sextras.nrgb;n++){
-      nn=n*(nrgb_full-1)/(sextras.nrgb-1);
-      sextras.rgb[n][0] = rgb_full[nn][0];
-      sextras.rgb[n][1] = rgb_full[nn][1];
-      sextras.rgb[n][2] = rgb_full[nn][2];
-      sextras.rgb[n][3] = transparent_level_local;
+    for(n=0;n<scase.nrgb;n++){
+      nn=n*(nrgb_full-1)/(scase.nrgb-1);
+      scase.rgb[n][0] = rgb_full[nn][0];
+      scase.rgb[n][1] = rgb_full[nn][1];
+      scase.rgb[n][2] = rgb_full[nn][2];
+      scase.rgb[n][3] = transparent_level_local;
     }
   }
-  for(n=sextras.nrgb;n<sextras.nrgb+sextras.nrgb2;n++){
-    sextras.rgb[n][0]=rgb2ptr[3*(n-sextras.nrgb)];
-    sextras.rgb[n][1]=rgb2ptr[3*(n-sextras.nrgb)+1];
-    sextras.rgb[n][2]=rgb2ptr[3*(n-sextras.nrgb)+2];
-    sextras.rgb[n][3]=transparent_level_local;
+  for(n=scase.nrgb;n<scase.nrgb+scase.nrgb2;n++){
+    scase.rgb[n][0]=rgb2ptr[3*(n-scase.nrgb)];
+    scase.rgb[n][1]=rgb2ptr[3*(n-scase.nrgb)+1];
+    scase.rgb[n][2]=rgb2ptr[3*(n-scase.nrgb)+2];
+    scase.rgb[n][3]=transparent_level_local;
   }
-  rgb_white=sextras.nrgb;
-  rgb_yellow=sextras.nrgb+1;
-  rgb_blue=sextras.nrgb+2;
-  rgb_red=sextras.nrgb+3;
+  rgb_white=scase.nrgb;
+  rgb_yellow=scase.nrgb+1;
+  rgb_blue=scase.nrgb+2;
+  rgb_red=scase.nrgb+3;
 
   if(background_flip==0){
     for(i=0;i<3;i++){
       foregroundcolor[i]=foregroundbasecolor[i];
       backgroundcolor[i]=backgroundbasecolor[i];
     }
-    sextras.rgb[rgb_white][0]=1.0;
-    sextras.rgb[rgb_white][1]=1.0;
-    sextras.rgb[rgb_white][2]=1.0;
-    sextras.rgb[rgb_black][0]=0.0;
-    sextras.rgb[rgb_black][1]=0.0;
-    sextras.rgb[rgb_black][2]=0.0;
+    scase.rgb[rgb_white][0]=1.0;
+    scase.rgb[rgb_white][1]=1.0;
+    scase.rgb[rgb_white][2]=1.0;
+    scase.rgb[rgb_black][0]=0.0;
+    scase.rgb[rgb_black][1]=0.0;
+    scase.rgb[rgb_black][2]=0.0;
   }
   else{
     for(i=0;i<3;i++){
       foregroundcolor[i]=backgroundbasecolor[i];
       backgroundcolor[i]=foregroundbasecolor[i];
     }
-    sextras.rgb[rgb_white][0]=0.0;  //xxx fix or take out
-    sextras.rgb[rgb_white][1]=0.0;
-    sextras.rgb[rgb_white][2]=0.0;
-    sextras.rgb[rgb_black][0]=1.0;
-    sextras.rgb[rgb_black][1]=1.0;
-    sextras.rgb[rgb_black][2]=1.0;
+    scase.rgb[rgb_white][0]=0.0;  //xxx fix or take out
+    scase.rgb[rgb_white][1]=0.0;
+    scase.rgb[rgb_white][2]=0.0;
+    scase.rgb[rgb_black][0]=1.0;
+    scase.rgb[rgb_black][1]=1.0;
+    scase.rgb[rgb_black][2]=1.0;
   }
   for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshi=scase.meshescoll.meshinfo + i;
@@ -1740,18 +1740,18 @@ void UpdateChopColors(void){
         if(ii>NCHOP-1)continue;
         rgb_plot3d[4*i+3]=transparent_level_local*(float)ii/(float)(NCHOP-1);
       }
-      for(i = 0; i<sextras.nrgb-2; i++){
+      for(i = 0; i<scase.nrgb-2; i++){
         int ii;
         float factor;
 
-        factor = 256.0/(float)(sextras.nrgb-2);
+        factor = 256.0/(float)(scase.nrgb-2);
 
         ii = factor*((float)i+0.5);
         if(ii>255)ii = 255;
         rgb_plot3d_contour[i] = rgb_plot3d + 4*ii;
       }
-      rgb_plot3d_contour[sextras.nrgb-2] = rgb_plot3d;
-      rgb_plot3d_contour[sextras.nrgb-1] = rgb_plot3d + 4*255;
+      rgb_plot3d_contour[scase.nrgb-2] = rgb_plot3d;
+      rgb_plot3d_contour[scase.nrgb-1] = rgb_plot3d + 4*255;
     }
     if(setp3chopmax_temp_local==1){
       ichopmax=nrgb_full*(p3chopmax_temp_local - glui_p3min_local)/(glui_p3max_local - glui_p3min_local);

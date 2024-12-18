@@ -133,8 +133,8 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
     if(skip_frame==1)continue;
     i++;
     if(i%tload_step!=0)continue;
-    if((use_tload_begin==1&&time_local<sextras.tload_begin))continue;
-    if((use_tload_end==1&&time_local>sextras.tload_end))continue;
+    if((use_tload_begin==1&&time_local<scase.tload_begin))continue;
+    if((use_tload_end==1&&time_local>scase.tload_end))continue;
 
     *nvertices += nvertices_i;
     *ntriangles += ntriangles_i;
@@ -787,7 +787,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       time_max=time_local;
     }
     meshi->iso_times[itime]=time_local;
-    if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<sextras.tload_begin)||(use_tload_end==1&&time_local>sextras.tload_end)||skip_frame==1){
+    if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<scase.tload_begin)||(use_tload_end==1&&time_local>scase.tload_end)||skip_frame==1){
     }
     for(ilevel=0;ilevel<meshi->nisolevels;ilevel++){
       int nvertices_i, ntriangles_i;
@@ -809,7 +809,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       asurface->niso_triangles=ntriangles_i/3;
       asurface->niso_vertices=nvertices_i;
 
-      if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<sextras.tload_begin)||(use_tload_end==1&&time_local>sextras.tload_end)||skip_frame==1){
+      if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<scase.tload_begin)||(use_tload_end==1&&time_local>scase.tload_end)||skip_frame==1){
         skip_local=0;
         if(nvertices_i<=0||ntriangles_i<=0)continue;
         skip_local += (6*nvertices_i);
@@ -1018,7 +1018,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
 
           v1 = asurface->iso_vertices + ivert;
           ReduceToUnit(vertnorms+3*ivert);
-          v1->cnorm=(unsigned char)GetNormalIndex(sextras.sphereinfo,vertnorms+3*ivert);
+          v1->cnorm=(unsigned char)GetNormalIndex(scase.sphereinfo,vertnorms+3*ivert);
         }
         FREEMEMORY(vertnorms);
       }
@@ -1030,7 +1030,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       meshi->niso_times=itime;
       break;
     }
-    if(skip_frame==1||iitime%tload_step!=0||(use_tload_begin==1&&time_local<sextras.tload_begin)||(use_tload_end==1&&time_local>sextras.tload_end)){
+    if(skip_frame==1||iitime%tload_step!=0||(use_tload_begin==1&&time_local<scase.tload_begin)||(use_tload_end==1&&time_local>scase.tload_end)){
     }
     else{
       itime++;
@@ -1168,15 +1168,15 @@ void DrawIsoOrig(int tranflag){
         v3 = tri->v3;
 
         glTexCoord1f(v1->ctexturecolor/255.0);
-        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v1->cnorm));
+        glNormal3fv(GetNormalVectorPtr(scase.sphereinfo,v1->cnorm));
         glVertex3fv(v1->xyz);
 
         glTexCoord1f(v2->ctexturecolor/255.0);
-        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v2->cnorm));
+        glNormal3fv(GetNormalVectorPtr(scase.sphereinfo,v2->cnorm));
         glVertex3fv(v2->xyz);
 
         glTexCoord1f(v3->ctexturecolor/255.0);
-        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v3->cnorm));
+        glNormal3fv(GetNormalVectorPtr(scase.sphereinfo,v3->cnorm));
         glVertex3fv(v3->xyz);
       }
     }
@@ -1192,15 +1192,15 @@ void DrawIsoOrig(int tranflag){
         v3 = tri->v3;
 
         glColor4fv(v1->color);
-        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v1->cnorm));
+        glNormal3fv(GetNormalVectorPtr(scase.sphereinfo,v1->cnorm));
         glVertex3fv(v1->xyz);
 
         glColor4fv(v2->color);
-        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v2->cnorm));
+        glNormal3fv(GetNormalVectorPtr(scase.sphereinfo,v2->cnorm));
         glVertex3fv(v2->xyz);
 
         glColor4fv(v3->color);
-        glNormal3fv(GetNormalVectorPtr(sextras.sphereinfo,v3->cnorm));
+        glNormal3fv(GetNormalVectorPtr(scase.sphereinfo,v3->cnorm));
         glVertex3fv(v3->xyz);
       }
     }
@@ -1334,8 +1334,8 @@ void DrawIsoOrig(int tranflag){
 
 void DrawIso(int tranflag){
   if(niso_opaques>0||niso_trans>0){
-    if(use_tload_begin==1&&global_times[itimes]<sextras.tload_begin)return;
-    if(use_tload_end==1&&global_times[itimes]>sextras.tload_end)return;
+    if(use_tload_begin==1&&global_times[itimes]<scase.tload_begin)return;
+    if(use_tload_end==1&&global_times[itimes]>scase.tload_end)return;
     DrawIsoOrig(tranflag);
   }
 }
@@ -1725,7 +1725,7 @@ void SetIsoLabels(float smin, float smax,
 
   *errorcode=0;
   PRINTF("setting up iso labels \n");
-  GetColorbarLabels(smin,smax,sextras.nrgb,sb->colorlabels,sb->levels256);
+  GetColorbarLabels(smin,smax,scase.nrgb,sb->colorlabels,sb->levels256);
 }
 
 /* ------------------ CompareIsoTriangles ------------------------ */

@@ -427,7 +427,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
     SPINNER_load_3dsmoke->set_float_limits(0.0, 255.0);
 
 #define HRRPUV_CUTOFF_MAX (hrrpuv_max_smv-0.01)
-    SPINNER_load_hrrpuv = glui_3dsmoke->add_spinner_to_panel(PANEL_load_options, _("HRRPUV >"), GLUI_SPINNER_FLOAT, &sextras.load_hrrpuv_cutoff);
+    SPINNER_load_hrrpuv = glui_3dsmoke->add_spinner_to_panel(PANEL_load_options, _("HRRPUV >"), GLUI_SPINNER_FLOAT, &scase.load_hrrpuv_cutoff);
     SPINNER_load_hrrpuv->set_float_limits(0.0, HRRPUV_CUTOFF_MAX);
 
     glui_3dsmoke->add_checkbox_to_panel(PANEL_load_options,"override cutoffs", &override_3dsmoke_cutoff);
@@ -492,7 +492,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   }
 
   PANEL_fire_cutoff = glui_3dsmoke->add_panel_to_panel(ROLLOUT_firecolor, "Color as fire when:");
-  SPINNER_hrrpuv_cutoff = glui_3dsmoke->add_spinner_to_panel(PANEL_fire_cutoff, "HRRPUV (kW/m3) > ", GLUI_SPINNER_FLOAT, &sextras.global_hrrpuv_cutoff, GLOBAL_FIRE_CUTOFF, GLUISmoke3dCB);
+  SPINNER_hrrpuv_cutoff = glui_3dsmoke->add_spinner_to_panel(PANEL_fire_cutoff, "HRRPUV (kW/m3) > ", GLUI_SPINNER_FLOAT, &scase.global_hrrpuv_cutoff, GLOBAL_FIRE_CUTOFF, GLUISmoke3dCB);
   SPINNER_hrrpuv_cutoff->set_float_limits(0.0, HRRPUV_CUTOFF_MAX);
   {
     char temp_cutoff_label[300];
@@ -817,7 +817,7 @@ extern "C" void GLUISmoke3dCB(int var){
   float temp_min, temp_max;
 
   case FORCE_ALPHA_OPAQUE:
-    sextras.update_smoke_alphas = 1;
+    scase.update_smoke_alphas = 1;
     updatemenu = 1;
     break;
   case USE_FIRE_ALPHA:
@@ -1044,10 +1044,10 @@ extern "C" void GLUISmoke3dCB(int var){
     GLUISmoke3dCB(SMOKE_EXTINCT);
     break;
   case CUTOFF_RESET:
-    sextras.global_hrrpuv_cutoff = sextras.global_hrrpuv_cutoff_default;
+    scase.global_hrrpuv_cutoff = scase.global_hrrpuv_cutoff_default;
     global_temp_cutoff = global_temp_cutoff_default;
     SPINNER_temperature_cutoff->set_float_val(global_temp_cutoff);
-    SPINNER_hrrpuv_cutoff->set_float_val(sextras.global_hrrpuv_cutoff);
+    SPINNER_hrrpuv_cutoff->set_float_val(scase.global_hrrpuv_cutoff);
     break;
   case VOLTEST_DEPTH:
     voltest_soot1 = log(2.0)/(mass_extinct*voltest_depth1);
@@ -1277,7 +1277,7 @@ extern "C" void GLUISmoke3dCB(int var){
     IdleCB();
      break;
    case SMOKE_EXTINCT:
-     sextras.update_smoke_alphas = 1;
+     scase.update_smoke_alphas = 1;
      glui_smoke3d_extinct = MAX(glui_smoke3d_extinct, 0.0);
      SPINNER_smoke3d_extinct->set_float_val(glui_smoke3d_extinct);
      SPINNER_smoke3d_extinct2->set_float_val(glui_smoke3d_extinct);

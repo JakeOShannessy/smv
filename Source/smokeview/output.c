@@ -49,14 +49,14 @@ void OutputAxisLabels(){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
+  glTranslatef(-scase.xbar0,-scase.ybar0,-scase.zbar0);
 
-  x = (sextras.xbar0+xbarORIG)/2.0;
-  y = (sextras.ybar0+ybarORIG)/2.0;
-  z = (sextras.zbar0+zbarORIG)/2.0;
-  x0 = sextras.xbar0 - SCALE2FDS(0.02);
-  y0 = sextras.ybar0 - SCALE2FDS(0.02);
-  z0 = sextras.zbar0 - SCALE2FDS(0.02);
+  x = (scase.xbar0+xbarORIG)/2.0;
+  y = (scase.ybar0+ybarORIG)/2.0;
+  z = (scase.zbar0+zbarORIG)/2.0;
+  x0 = scase.xbar0 - SCALE2FDS(0.02);
+  y0 = scase.ybar0 - SCALE2FDS(0.02);
+  z0 = scase.zbar0 - SCALE2FDS(0.02);
 
   Output3Text(foregroundcolor,   x,y0, z0, "X");
   Output3Text(foregroundcolor, x0,  y, z0, "Y");
@@ -465,7 +465,7 @@ void DrawLabels(labels_collection *labelscoll_arg){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
+  glTranslatef(-scase.xbar0,-scase.ybar0,-scase.zbar0);
   for(thislabel=first_label->next;thislabel->next!=NULL;thislabel=thislabel->next){
     float *labelcolor,*tstart_stop,*xyz;
     int drawlabel;

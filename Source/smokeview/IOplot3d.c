@@ -117,7 +117,7 @@ int AllocatePlot3DColorLabels(plot3ddata *plot3di){
     }
 
     if(p3levels[nn]==NULL){
-      if(NewMemoryMemID((void **)&p3levels[nn], (sextras.nrgb+1)*sizeof(float), plot3di->memory_id)==0){
+      if(NewMemoryMemID((void **)&p3levels[nn], (scase.nrgb+1)*sizeof(float), plot3di->memory_id)==0){
         ReadPlot3D("", ifile, UNLOAD, &error);
         if(error==1)return 1;
       }
@@ -128,7 +128,7 @@ int AllocatePlot3DColorLabels(plot3ddata *plot3di){
         if(error==1)return 1;
       }
     }
-    for(n = 0; n<sextras.nrgb; n++){
+    for(n = 0; n<scase.nrgb; n++){
       if(colorlabelp3[nn][n]==NULL){
         if(NewMemoryMemID((void **)&(*(colorlabelp3+nn))[n], 11, plot3di->memory_id)==0){
           ReadPlot3D("", ifile, UNLOAD, &error);
@@ -169,7 +169,7 @@ void  UpdatePlot3DColors(plot3ddata *plot3di, int flag, int *errorcode){
       unitp3label[nn] = blank_global;
     }
     GetPlot3DColors(nn, p3min_all + nn, p3max_all + nn,
-                    nrgb_full, sextras.nrgb - 1, colorlabelp3[nn], colorlabeliso[nn], p3levels[nn], p3levels256[nn],
+                    nrgb_full, scase.nrgb - 1, colorlabelp3[nn], colorlabeliso[nn], p3levels[nn], p3levels256[nn],
                     plot3di->extreme_min + nn, plot3di->extreme_max + nn, flag);
   }
 }
@@ -308,9 +308,9 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   FreeContour(meshi->plot3dcontour1);
   FreeContour(meshi->plot3dcontour2);
   FreeContour(meshi->plot3dcontour3);
-  InitContour(meshi->plot3dcontour1,rgb_plot3d_contour,sextras.nrgb);
-  InitContour(meshi->plot3dcontour2,rgb_plot3d_contour,sextras.nrgb);
-  InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,sextras.nrgb);
+  InitContour(meshi->plot3dcontour1,rgb_plot3d_contour,scase.nrgb);
+  InitContour(meshi->plot3dcontour2,rgb_plot3d_contour,scase.nrgb);
+  InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,scase.nrgb);
 
 
   for(i=0;i<scase.meshescoll.nmeshes;i++){
@@ -1032,13 +1032,13 @@ void UpdateSurface(void){
     currentsurf2ptr = meshi->currentsurf2;
     qdata=meshi->qdata;
     if(plotiso[plotn-1]<0){
-      plotiso[plotn-1]=sextras.nrgb-3;
+      plotiso[plotn-1]=scase.nrgb-3;
     }
-    if(plotiso[plotn-1]>sextras.nrgb-3){
+    if(plotiso[plotn-1]>scase.nrgb-3){
       plotiso[plotn-1]=0;
     }
     colorindex=plotiso[plotn-1];
-    level = p3min_all[plotn-1] + (colorindex+0.5)*(p3max_all[plotn-1]-p3min_all[plotn-1])/((float)sextras.nrgb-2.0f);
+    level = p3min_all[plotn-1] + (colorindex+0.5)*(p3max_all[plotn-1]-p3min_all[plotn-1])/((float)scase.nrgb-2.0f);
     isolevelindex=colorindex;
     isolevelindex2=colorindex;
     FreeSurface(currentsurfptr);
@@ -1054,9 +1054,9 @@ void UpdateSurface(void){
 
     if(surfincrement!=0){
       colorindex2=colorindex+surfincrement;
-      if(colorindex2<0)colorindex2=sextras.nrgb-2;
-      if(colorindex2>sextras.nrgb-2)colorindex2=0;
-      level2 = p3min_all[plotn-1] + colorindex2*(p3max_all[plotn-1]-p3min_all[plotn-1])/((float)sextras.nrgb-2.0f);
+      if(colorindex2<0)colorindex2=scase.nrgb-2;
+      if(colorindex2>scase.nrgb-2)colorindex2=0;
+      level2 = p3min_all[plotn-1] + colorindex2*(p3max_all[plotn-1]-p3min_all[plotn-1])/((float)scase.nrgb-2.0f);
       FreeSurface(currentsurf2ptr);
       InitIsoSurface(currentsurf2ptr, level2, rgb_plot3d_contour[colorindex2],-999);
       GetIsoSurface(currentsurf2ptr,qdata+(plotn-1)*plot3dsize,NULL,iblank_cell,level2,
@@ -1307,7 +1307,7 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
     dy_yzcopy = dy_yz;
     dz_yzcopy = dz_yz;
     iblank_yz = NULL;
-    if(sextras.use_iblank == 1 && c_iblank_x != NULL){
+    if(scase.use_iblank == 1 && c_iblank_x != NULL){
       NewMemory((void **)&iblank_yz, (jbar + 1)*(kbar + 1) * sizeof(char));
       for(j = 0;j < jbar;j++){
         for(k = 0;k < kbar;k++){
@@ -1339,7 +1339,7 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
       }
     }
     FreeContour(plot3dcontour1ptr);
-    InitContour(plot3dcontour1ptr, rgb_plot3d_contour, sextras.nrgb);
+    InitContour(plot3dcontour1ptr, rgb_plot3d_contour, scase.nrgb);
     SetContourSlice(plot3dcontour1ptr, 1, xplt[plotx]);
     GetContours(yplt, zplt, jbar + 1, kbar + 1, yzcolorfbase, iblank_yz, p3levels[plotn - 1], DONT_GET_AREAS, DATA_FORTRAN, plot3dcontour1ptr);
     FREEMEMORY(iblank_yz);
@@ -1356,7 +1356,7 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
     dy_xzcopy = dy_xz;
     dz_xzcopy = dz_xz;
     iblank_xz = NULL;
-    if(sextras.use_iblank == 1 && c_iblank_y != NULL){
+    if(scase.use_iblank == 1 && c_iblank_y != NULL){
       NewMemory((void **)&iblank_xz, (ibar + 1)*(kbar + 1) * sizeof(char));
       for(i = 0;i < ibar;i++){
         for(k = 0;k < kbar;k++){
@@ -1388,7 +1388,7 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
       }
     }
     FreeContour(plot3dcontour2ptr);
-    InitContour(plot3dcontour2ptr, rgb_plot3d_contour, sextras.nrgb);
+    InitContour(plot3dcontour2ptr, rgb_plot3d_contour, scase.nrgb);
     SetContourSlice(plot3dcontour2ptr, 2, yplt[ploty]);
     GetContours(xplt, zplt, ibar + 1, kbar + 1, xzcolorfbase, iblank_xz, p3levels[plotn - 1], DONT_GET_AREAS, DATA_FORTRAN, plot3dcontour2ptr);
     FREEMEMORY(iblank_xz);
@@ -1405,7 +1405,7 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
     dy_xycopy = dy_xy;
     dz_xycopy = dz_xy;
     iblank_xy = NULL;
-    if(sextras.use_iblank == 1 && c_iblank_z != NULL){
+    if(scase.use_iblank == 1 && c_iblank_z != NULL){
       NewMemory((void **)&iblank_xy, (ibar + 1)*(jbar + 1) * sizeof(char));
       for(i = 0;i < ibar;i++){
         for(j = 0;j < jbar;j++){
@@ -1437,7 +1437,7 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
       }
     }
     FreeContour(plot3dcontour3ptr);
-    InitContour(plot3dcontour3ptr, rgb_plot3d_contour, sextras.nrgb);
+    InitContour(plot3dcontour3ptr, rgb_plot3d_contour, scase.nrgb);
     SetContourSlice(plot3dcontour3ptr, 3, zplt[plotz]);
     GetContours(xplt, yplt, ibar + 1, jbar + 1, xycolorfbase, iblank_xy, p3levels[plotn - 1], DONT_GET_AREAS, DATA_FORTRAN, plot3dcontour3ptr);
     FREEMEMORY(iblank_xy);

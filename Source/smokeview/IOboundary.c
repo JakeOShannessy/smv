@@ -1425,7 +1425,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
 
   nbb = meshi->nbptrs;
   if(nbb==0)nbb=1;
-  sextras.updatefaces=1;
+  scase.updatefaces=1;
   *errorcode=0;
   if(load_flag != RELOAD){
     FREEMEMORY(meshi->xyzpatch_offset);
@@ -2148,7 +2148,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
     }
     CheckMemory;
     if(error!=0)break;
-    if(use_tload_end!=0&&*meshi->patch_timesi>sextras.tload_end)break;
+    if(use_tload_end!=0&&*meshi->patch_timesi>scase.tload_end)break;
 
     switch(loadpatchbysteps){
       case UNCOMPRESSED_ALLFRAMES:
@@ -2183,7 +2183,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
   for(n=0;n<MAXRGB;n++){
     colorlabelpatch[n]=NULL;
   }
-  for(n=0;n<sextras.nrgb;n++){
+  for(n=0;n<scase.nrgb;n++){
     if(NewResizeMemory(colorlabelpatch[n],11)==0){
       *errorcode=1;
       if(loadpatchbysteps!=COMPRESSED_ALLFRAMES){
@@ -2219,13 +2219,13 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
     }
     GetBoundaryColors3(patchi, meshi->patchval, patchstart, npatchvals, meshi->cpatchval,
                        &glui_patchmin, &glui_patchmax,
-                       sextras.nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
+                       scase.nrgb, colorlabelpatch, colorvaluespatch, boundarylevels256,
                        &patchi->extreme_min, &patchi->extreme_max, 0);
     break;
   case COMPRESSED_ALLFRAMES:
     GetBoundaryLabels(
       glui_patchmin, glui_patchmax,
-      colorlabelpatch,colorvaluespatch,boundarylevels256,sextras.nrgb);
+      colorlabelpatch,colorvaluespatch,boundarylevels256,scase.nrgb);
     break;
   default:
     assert(FFALSE);
@@ -3726,8 +3726,8 @@ meshdata *GetPatchMeshNabor(meshdata *meshi, int *ib){
 void DrawBoundaryFrame(int flag){
   int i;
 
-  if(use_tload_begin==1 && global_times[itimes]<sextras.tload_begin)return;
-  if(use_tload_end==1   && global_times[itimes]>sextras.tload_end)return;
+  if(use_tload_begin==1 && global_times[itimes]<scase.tload_begin)return;
+  if(use_tload_end==1   && global_times[itimes]>scase.tload_end)return;
 
   for(i=0;i<scase.npatchinfo;i++){
     patchdata *patchi;

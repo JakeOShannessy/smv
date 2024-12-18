@@ -850,7 +850,7 @@ int Settime(float timeval) {
 /// @brief Show slices in blockages.
 /// @param setting Boolean
 void SetSliceInObst(int setting) {
-  sextras.show_slice_in_obst = setting;
+  scase.show_slice_in_obst = setting;
   // UpdateSliceFilenum();
   // plotstate=GetPlotState(DYNAMIC_PLOTS);
   //
@@ -860,7 +860,7 @@ void SetSliceInObst(int setting) {
 
 /// @brief Check if slices are being shown in obstructions.
 /// @return
-int GetSliceInObst() { return sextras.show_slice_in_obst; }
+int GetSliceInObst() { return scase.show_slice_in_obst; }
 
 /// @brief Set the colorbar to one named @p name
 /// @param name
@@ -1003,7 +1003,7 @@ int GetChidVisibility() { return vis_title_CHID; }
 void ToggleChidVisibility() { vis_title_CHID = 1 - vis_title_CHID; }
 
 void BlockagesShowAll() {
-  if(sextras.isZoneFireModel) visFrame = 1;
+  if(scase.isZoneFireModel) visFrame = 1;
   /*
   visFloor=1;
   visWalls=1;
@@ -1019,17 +1019,17 @@ void BlockageMenu(int value);
 void BlockagesHideAll() { BlockageMenu(visBLOCKHide); }
 // TODO: clarify behaviour under isZoneFireModel
 void OutlinesHide() {
-  if(sextras.isZoneFireModel == 0) visFrame = 0;
+  if(scase.isZoneFireModel == 0) visFrame = 0;
 }
 void OutlinesShow() {
-  if(sextras.isZoneFireModel == 0) visFrame = 1;
+  if(scase.isZoneFireModel == 0) visFrame = 1;
 }
 
 void SurfacesHideAll() {
   visVents = 0;
   visOpenVents = 0;
   visDummyVents = 0;
-  sextras.visOtherVents = 0;
+  scase.visOtherVents = 0;
   visCircularVents = VENT_HIDE;
 }
 
@@ -1263,11 +1263,11 @@ int BlockageOutlineColor(int setting) {
   switch(setting) {
   case 0:
     outline_color_flag = 0;
-    sextras.updatefaces = 1;
+    scase.updatefaces = 1;
     break;
   case 1:
     outline_color_flag = 1;
-    sextras.updatefaces = 1;
+    scase.updatefaces = 1;
     break;
   default:
     return 1;
@@ -2185,7 +2185,7 @@ float CameraGetElev() { return camera_current->az_elev[1]; }
 
 void MoveScene(int xm, int ym);
 int CameraZoomToFit() {
-  float offset = (sextras.zbar - sextras.ybar) / 2.0;
+  float offset = (scase.zbar - scase.ybar) / 2.0;
   camera_current->eye[1] += offset * 2;
   eye_xyz0[1] = camera_current->eye[1];
   in_external = 0;
@@ -2495,7 +2495,7 @@ int SetIsopointsize(float v) {
 } // ISOPOINTSIZE
 
 int SetLinewidth(float v) {
-  sextras.linewidth = v;
+  scase.linewidth = v;
   return 0;
 } // LINEWIDTH
 
@@ -2579,7 +2579,7 @@ int SetVectorpointsize(float v) {
 } // VECTORPOINTSIZE
 
 int SetVentlinewidth(float v) {
-  sextras.ventlinewidth = v;
+  scase.ventlinewidth = v;
   return 0;
 } // VENTLINEWIDTH
 
@@ -2947,7 +2947,7 @@ int SetShowopenvents(int a, int b) {
 } // SHOWOPENVENTS
 
 int SetShowothervents(int v) {
-  sextras.visOtherVents = v;
+  scase.visOtherVents = v;
   return 0;
 } // SHOWOTHERVENTS
 
@@ -2958,7 +2958,7 @@ int SetShowsensors(int a, int b) {
 } // SHOWSENSORS
 
 int SetShowsliceinobst(int v) {
-  sextras.show_slice_in_obst = v;
+  scase.show_slice_in_obst = v;
   return 0;
 } // SHOWSLICEINOBST
 
@@ -2981,7 +2981,7 @@ int SetShowstreak(int show, int step, int showhead, int index) {
 } // SHOWSTREAK
 
 int SetShowterrain(int v) {
-  sextras.visTerrainType = v;
+  scase.visTerrainType = v;
   return 0;
 } // SHOWTERRAIN
 
@@ -3406,7 +3406,7 @@ int SetSmokeskip(int v) {
 } // SMOKESKIP
 
 int SetSmokealbedo(float v) {
-  sextras.smoke_albedo = v;
+  scase.smoke_albedo = v;
   return 0;
 } // SMOKEALBEDO
 
@@ -3967,9 +3967,9 @@ int SetPl3dBoundMax(int pl3dValueIndex, int set, float value) {
 int SetTload(int beginFlag, float beginVal, int endFlag, int endVal,
              int skipFlag, int skipVal) {
   use_tload_begin = beginFlag;
-  sextras.tload_begin = beginVal;
+  scase.tload_begin = beginVal;
   use_tload_end = endFlag;
-  sextras.tload_end = endVal;
+  scase.tload_end = endVal;
   use_tload_skip = skipFlag;
   tload_skip = skipVal;
   return 0;

@@ -36,7 +36,7 @@ void InitDefaultCameras(void){
   }
 
   strcpy(name_external, "external");
-  if(sextras.is_terrain_case==1){
+  if(scase.is_terrain_case==1){
     CopyCamera(camera_external, camera_defaults[5]);
     strcpy(camera_external->name, name_external);
   }
@@ -68,14 +68,14 @@ void InitMisc(void){
   NewMemory((void **)&plotiso, MAXPLOT3DVARS*sizeof(int));
 
   if(colorbar_vals==NULL){
-    NewMemory((void **)&colorbar_vals, sextras.nrgb*sizeof(float));
+    NewMemory((void **)&colorbar_vals, scase.nrgb*sizeof(float));
   }
   if(colorbar_exponents==NULL){
-    NewMemory((void **)&colorbar_exponents, sextras.nrgb*sizeof(int));
+    NewMemory((void **)&colorbar_exponents, scase.nrgb*sizeof(int));
   }
   if(colorbar_labels==NULL){
-    NewMemory((void **)&colorbar_labels, sextras.nrgb*sizeof(char *));
-    for(i = 0; i<sextras.nrgb; i++){
+    NewMemory((void **)&colorbar_labels, scase.nrgb*sizeof(char *));
+    for(i = 0; i<scase.nrgb; i++){
       NewMemory((void **)&colorbar_labels[i], 256);
     }
   }
@@ -89,7 +89,7 @@ void InitMisc(void){
     }
   }
   for(i=0;i<MAXPLOT3DVARS;i++){
-    plotiso[i]=sextras.nrgb/2;
+    plotiso[i]=scase.nrgb/2;
   }
 
   for(i=0;i<16;i++){
@@ -103,9 +103,9 @@ void InitMisc(void){
     meshdata *meshi;
 
     meshi=scase.meshescoll.meshinfo+i;
-    InitContour(meshi->plot3dcontour1,rgb_plot3d_contour,sextras.nrgb);
-    InitContour(meshi->plot3dcontour2,rgb_plot3d_contour,sextras.nrgb);
-    InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,sextras.nrgb);
+    InitContour(meshi->plot3dcontour1,rgb_plot3d_contour,scase.nrgb);
+    InitContour(meshi->plot3dcontour2,rgb_plot3d_contour,scase.nrgb);
+    InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,scase.nrgb);
   }
 
   for(i=0;i<scase.meshescoll.nmeshes;i++){
@@ -118,7 +118,7 @@ void InitMisc(void){
 
   /* initialize box sizes, lighting parameters */
 
-  xyzbox = MAX(MAX(sextras.xbar,sextras.ybar),sextras.zbar);
+  xyzbox = MAX(MAX(scase.xbar,scase.ybar),scase.zbar);
 
   InitDefaultCameras();
 
@@ -535,21 +535,21 @@ void SetupGlut(int argc, char **argv){
 
   NewMemory((void **)&rgbptr,MAXRGB*sizeof(float *));
   for(i=0;i<MAXRGB;i++){
-    rgbptr[i]=&sextras.rgb[i][0];
+    rgbptr[i]=&scase.rgb[i][0];
   }
   NewMemory((void **)&rgb_plot3d_contour,MAXRGB*sizeof(float *));
-  for(i=0;i<sextras.nrgb-2;i++){
+  for(i=0;i<scase.nrgb-2;i++){
     int ii;
     float factor;
 
-    factor=256.0/(float)(sextras.nrgb-2);
+    factor=256.0/(float)(scase.nrgb-2);
 
     ii = factor*((float)i+0.5);
     if(ii>255)ii=255;
     rgb_plot3d_contour[i]=&rgb_full[ii][0];
   }
-  rgb_plot3d_contour[sextras.nrgb-2]=&rgb_full[0][0];
-  rgb_plot3d_contour[sextras.nrgb-1]=&rgb_full[255][0];
+  rgb_plot3d_contour[scase.nrgb-2]=&rgb_full[0][0];
+  rgb_plot3d_contour[scase.nrgb-1]=&rgb_full[255][0];
 }
 
 /* ------------------ GetOpenGLVersion ------------------------ */
@@ -1527,7 +1527,7 @@ void InitVars(void){
   blocklocation=BLOCKlocation_grid;
   render_window_size=RenderWindow;
   RenderMenu(render_window_size);
-  solidlinewidth=sextras.linewidth;
+  solidlinewidth=scase.linewidth;
   setbwSAVE=setbw;
 
   glui_backgroundbasecolor[0] = 255 * backgroundbasecolor[0];
@@ -1566,7 +1566,7 @@ void InitVars(void){
   strcpy(ext_jpg,".jpg");
   render_filetype=PNG;
 
-  strcpy(sextras.surfacedefaultlabel,"");
+  strcpy(scase.surfacedefaultlabel,"");
   if(streak_index>=0)float_streak5value=streak_rvalue[streak_index];
 
   InitObjectCollection(&scase.objectscoll);

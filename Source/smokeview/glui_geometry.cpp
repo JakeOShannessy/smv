@@ -463,7 +463,7 @@ extern "C" void GLUIHVAC2Glui(int index){
 extern "C" void GLUIUpdateTerrain(void){
   if(CHECKBOX_terrain_top_surface!=NULL)CHECKBOX_terrain_top_surface->set_int_val(terrain_showonly_top);
   if(CHECKBOX_showonly_top != NULL)CHECKBOX_showonly_top->set_int_val(terrain_showonly_top);
-  if(RADIO_terrain_type!=NULL)RADIO_terrain_type->set_int_val(sextras.visTerrainType);
+  if(RADIO_terrain_type!=NULL)RADIO_terrain_type->set_int_val(scase.visTerrainType);
 }
 
 /* ------------------ GLUIUpdateHVACVarLists ------------------------ */
@@ -1109,7 +1109,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
     BUTTON_reset_zbounds = glui_geometry->add_button_to_panel(PANEL_elevation_color, _("Reset"), RESET_ZBOUNDS, VolumeCB);
   }
 
-  if(sextras.nterraininfo>0&&scase.ngeominfo==0){
+  if(scase.nterraininfo>0&&scase.ngeominfo==0){
     have_geometry_dialog = 1;
     ROLLOUT_terrain = glui_geometry->add_rollout("Terrain", false, TERRAIN_ROLLOUT, GeomRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_terrain, glui_geometry);
@@ -1117,7 +1117,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
 
     CHECKBOX_terrain_top_surface = glui_geometry->add_checkbox_to_panel(ROLLOUT_terrain, "Show only top surface",
       &terrain_showonly_top, TERRAIN_TOP_ONLY, TerrainCB);
-    RADIO_terrain_type = glui_geometry->add_radiogroup_to_panel(ROLLOUT_terrain, &sextras.visTerrainType, TERRAIN_TYPE, TerrainCB);
+    RADIO_terrain_type = glui_geometry->add_radiogroup_to_panel(ROLLOUT_terrain, &scase.visTerrainType, TERRAIN_TYPE, TerrainCB);
     glui_geometry->add_radiobutton_to_group(RADIO_terrain_type, "3D surface");
     glui_geometry->add_radiobutton_to_group(RADIO_terrain_type, "Image");
     glui_geometry->add_radiobutton_to_group(RADIO_terrain_type, "Hidden");
@@ -1147,7 +1147,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
 void TerrainCB(int var){
   switch(var){
     case TERRAIN_TYPE:
-      GeometryMenu(17+sextras.visTerrainType);
+      GeometryMenu(17+scase.visTerrainType);
       break;
     case TERRAIN_TOP_ONLY:
       terrain_showonly_top = 1 - terrain_showonly_top;

@@ -96,21 +96,21 @@ void DrawGenCurve(int option, plot2ddata *plot2di, curvedata *curve, float size_
     if(use_tload_begin==1||use_tload_end==1){
       if(use_tload_begin==1){
         for(i=0;i<n;i++){
-          if(sextras.tload_begin<x[i]){
+          if(scase.tload_begin<x[i]){
             itbeg = i;
             break;
           }
         }
-        xmin = sextras.tload_begin;
+        xmin = scase.tload_begin;
       }
       if(use_tload_end==1){
         for(i=n-1;i>=0;i--){
-          if(x[i]<sextras.tload_end){
+          if(x[i]<scase.tload_end){
             itend = i;
             break;
           }
         }
-        xmax = sextras.tload_end;
+        xmax = scase.tload_end;
       }
     }
     if(xmax==xmin)xmax = xmin+1.0;

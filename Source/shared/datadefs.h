@@ -41,13 +41,13 @@
 #define REL_VAL(val, valmin, valmax) ((float)((val)-(valmin))/(float)((valmax)-(valmin)))
 #define SHIFT_VAL(val, valmin, valmax, shift_val) ((valmin) + ((valmax)-(valmin))*pow(REL_VAL((val),(valmin),(valmax)),(shift_val)))
 
-#define FDS2SMV_X(x) (((x)-sextras.xbar0)/xyzmaxdiff)
-#define FDS2SMV_Y(y) (((y)-sextras.ybar0)/xyzmaxdiff)
-#define FDS2SMV_Z(z) (((z)-sextras.zbar0)/xyzmaxdiff)
+#define FDS2SMV_X(x) (((x)-scase.xbar0)/xyzmaxdiff)
+#define FDS2SMV_Y(y) (((y)-scase.ybar0)/xyzmaxdiff)
+#define FDS2SMV_Z(z) (((z)-scase.zbar0)/xyzmaxdiff)
 
-#define SMV2FDS_X(x) (sextras.xbar0+(x)*xyzmaxdiff)
-#define SMV2FDS_Y(y) (sextras.ybar0+(y)*xyzmaxdiff)
-#define SMV2FDS_Z(z) (sextras.zbar0+(z)*xyzmaxdiff)
+#define SMV2FDS_X(x) (scase.xbar0+(x)*xyzmaxdiff)
+#define SMV2FDS_Y(y) (scase.ybar0+(y)*xyzmaxdiff)
+#define SMV2FDS_Z(z) (scase.zbar0+(z)*xyzmaxdiff)
 
 #define DONOT_SET_MINMAX_FLAG 0
 #define SET_MINMAX_FLAG       1

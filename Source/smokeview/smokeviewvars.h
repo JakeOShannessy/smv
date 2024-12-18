@@ -263,43 +263,6 @@ SVEXTERN int SVDECL(nsubvectorslicex, 0), SVDECL(nsubvectorslicey, 0), SVDECL(ns
 SVEXTERN slicemenudata SVDECL(**slicemenu_sorted, NULL);
 SVEXTERN int SVDECL(plot_option, 0);
 SVEXTERN float hrr_valmin, hrr_valmax;
-#ifdef INMAIN
-SVEXTERN smv_extras sextras = {
-    .fuel_hoc = -1.0,
-    0,
-    .have_cface_normals = CFACE_NORMALS_NO,
-    .gvecphys = {0.0, 0.0, -9.8},
-    .gvecunit = {0.0, 0.0, -1.0},
-    .global_tbegin = 1.0,
-    .global_tend = 0.0,
-    .tload_begin = 0.0,
-    .tload_end = 0.0,
-    .load_hrrpuv_cutoff = 200.0,
-    .global_hrrpuv_cutoff = 200.0,
-    .global_hrrpuv_cutoff_default = 200.0,
-    .smoke_albedo = 0.3,
-    .smoke_albedo_base = 0.3,
-    .xbar = 1.0,
-    .ybar = 1.0,
-    .zbar = 1.0,
-    .show_slice_in_obst = ONLY_IN_GAS,
-    .use_iblank = 1,
-    .visOtherVents = 1,
-    .visOtherVentsSAVE = 1,
-    .hvac_duct_color = {63, 0, 15},
-    .hvac_node_color = {63, 0, 15},
-    .block_shininess = 100.0,
-    .nrgb2 = 8,
-    .pref = 101325.0,
-    .pamb = 0.0,
-    .tamb = 293.15,
-    .nrgb = NRGB,
-    .linewidth = 2.0,
-    .ventlinewidth = 2.0,
-};
-#else
-SVEXTERN smv_extras sextras;
-#endif
 SVEXTERN int SVDECL(visFrameTimelabel, 1);
 SVEXTERN int SVDECL(rotation_axis, 1);
 SVEXTERN ztreedevicedata SVDECL(*ztreedeviceinfo, NULL);
@@ -1101,7 +1064,7 @@ SVEXTERN hrrdata SVDECL(*hrrinfo, NULL), SVDECL(*hrrptr, NULL), SVDECL(*timeptr,
 SVEXTERN int SVDECL(nhrrinfo, 0);
 SVEXTERN int SVDECL(time_col, -1), SVDECL(hrr_col, -1), SVDECL(mlr_col, -1);
 SVEXTERN int SVDECL(glui_hrr, 1);
-SVEXTERN float SVDECL(fuel_hoc, -1.0), SVDECL(fuel_hoc_default, -1.0);
+SVEXTERN float SVDECL(fuel_hoc_default, -1.0);
 SVEXTERN char fuel_name[256];
 SVEXTERN int SVDECL(qradi_col, -1), SVDECL(chirad_col, -1), SVDECL(nhrrhcinfo, 0);
 SVEXTERN int SVDECL(have_mlr, 0);
@@ -1833,6 +1796,36 @@ SVEXTERN smv_case scase = {.tourcoll = {.ntourinfo = 0,
                                         .tour_dist3 = NULL,
                                         .tour_tstart = 0.0,
                                         .tour_tstop = 100.0},
+                           .fuel_hoc = -1.0,
+                           .have_cface_normals = CFACE_NORMALS_NO,
+                           .gvecphys = {0.0, 0.0, -9.8},
+                           .gvecunit = {0.0, 0.0, -1.0},
+                           .global_tbegin = 1.0,
+                           .global_tend = 0.0,
+                           .tload_begin = 0.0,
+                           .tload_end = 0.0,
+                           .load_hrrpuv_cutoff = 200.0,
+                           .global_hrrpuv_cutoff = 200.0,
+                           .global_hrrpuv_cutoff_default = 200.0,
+                           .smoke_albedo = 0.3,
+                           .smoke_albedo_base = 0.3,
+                           .xbar = 1.0,
+                           .ybar = 1.0,
+                           .zbar = 1.0,
+                           .show_slice_in_obst = ONLY_IN_GAS,
+                           .use_iblank = 1,
+                           .visOtherVents = 1,
+                           .visOtherVentsSAVE = 1,
+                           .hvac_duct_color = {63, 0, 15},
+                           .hvac_node_color = {63, 0, 15},
+                           .block_shininess = 100.0,
+                           .nrgb2 = 8,
+                           .pref = 101325.0,
+                           .pamb = 0.0,
+                           .tamb = 293.15,
+                           .nrgb = NRGB,
+                           .linewidth = 2.0,
+                           .ventlinewidth = 2.0,
                            0};
 #else
 SVEXTERN smv_case scase;

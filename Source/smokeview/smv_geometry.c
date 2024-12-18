@@ -424,7 +424,7 @@ void UpdatePlotxyzAll(void){
     int ival;
 
     meshi = scase.meshescoll.meshinfo+i;
-    ival = ClosestNodeIndex(sextras.xbar/2.0, meshi->xplt, meshi->ibar+1);
+    ival = ClosestNodeIndex(scase.xbar/2.0, meshi->xplt, meshi->ibar+1);
     if(ival<0)continue;
     iplotx_all = ival;
   }
@@ -433,7 +433,7 @@ void UpdatePlotxyzAll(void){
     int ival;
 
     meshi = scase.meshescoll.meshinfo+i;
-    ival = ClosestNodeIndex(sextras.ybar/2.0, meshi->yplt, meshi->jbar+1);
+    ival = ClosestNodeIndex(scase.ybar/2.0, meshi->yplt, meshi->jbar+1);
     if(ival<0)continue;
     iploty_all = ival;
   }
@@ -442,7 +442,7 @@ void UpdatePlotxyzAll(void){
     int ival;
 
     meshi = scase.meshescoll.meshinfo+i;
-    ival = ClosestNodeIndex(sextras.zbar/2.0, meshi->zplt, meshi->kbar+1);
+    ival = ClosestNodeIndex(scase.zbar/2.0, meshi->zplt, meshi->kbar+1);
     if(ival<0)continue;
     iplotz_all = ival;
   }
@@ -1140,7 +1140,7 @@ int MakeIBlankCarve(void){
     if(n_embedded==0)continue;
 
     ib_embed=NULL;
-    if(sextras.use_iblank==1){
+    if(scase.use_iblank==1){
       if(NewMemory((void **)&ib_embed,ijksize*sizeof(char))==0)return 1;
     }
     meshi->c_iblank_embed=ib_embed;
@@ -1350,7 +1350,7 @@ void SetHiddenBlockages(meshdata *meshi){
 int MakeIBlank(void){
   int ig;
 
-  if(sextras.use_iblank==0)return 0;
+  if(scase.use_iblank==0)return 0;
   for(ig=0;ig<scase.meshescoll.nmeshes;ig++){
     meshdata *meshi;
     int nx, ny, nxy, ibarjbar;
@@ -1598,9 +1598,9 @@ void InitClip(void){
   clip_i=0;
   clip_j=0;
   clip_k=0;
-  sextras.clip_I=0;
-  sextras.clip_J=0;
-  sextras.clip_K=0;
+  scase.clip_I=0;
+  scase.clip_J=0;
+  scase.clip_K=0;
 
   stepclip_xmin=0,stepclip_ymin=0,stepclip_zmin=0;
   stepclip_xmax=0,stepclip_ymax=0,stepclip_zmax=0;

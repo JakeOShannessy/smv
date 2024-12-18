@@ -198,7 +198,7 @@ void DrawPart(const partdata *parti, int mode){
   float valmin, valmax;
 
   if(nglobal_times<1||parti->times[0] > global_times[itimes])return;
-  if(sextras.nterraininfo > 0 && ABS(vertical_factor - 1.0) > 0.01){
+  if(scase.nterraininfo > 0 && ABS(vertical_factor - 1.0) > 0.01){
     offset_terrain = 1;
   }
   else{
@@ -221,7 +221,7 @@ void DrawPart(const partdata *parti, int mode){
   CheckMemory;
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
+  glTranslatef(-scase.xbar0, -scase.ybar0, -scase.zbar0);
   if(part5show == 1){
     if(streak5show == 0 || (streak5show == 1 && showstreakhead == 1)){
       for(i = 0;i < parti->nclasses;i++){
@@ -377,9 +377,9 @@ void DrawPart(const partdata *parti, int mode){
                 CopyDepVals(partclassi, datacopy, colorptr, prop, j);
                 glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
 
-                partfacedir[0] = sextras.xbar0 + SCALE2SMV(fds_eyepos[0]) - xpos[j];
-                partfacedir[1] = sextras.ybar0 + SCALE2SMV(fds_eyepos[1]) - ypos[j];
-                partfacedir[2] = sextras.zbar0 + SCALE2SMV(fds_eyepos[2]) - zpos[j];
+                partfacedir[0] = scase.xbar0 + SCALE2SMV(fds_eyepos[0]) - xpos[j];
+                partfacedir[1] = scase.ybar0 + SCALE2SMV(fds_eyepos[1]) - ypos[j];
+                partfacedir[2] = scase.zbar0 + SCALE2SMV(fds_eyepos[2]) - zpos[j];
 
                 DrawSmvObject(prop->smv_object, 0, prop, 0, NULL, 0);
                 glPopMatrix();
@@ -587,8 +587,8 @@ void DrawPartFrame(int mode){
   partdata *parti;
   int i;
 
-  if(use_tload_begin==1&&global_times[itimes]<sextras.tload_begin)return;
-  if(use_tload_end==1&&global_times[itimes]>sextras.tload_end)return;
+  if(use_tload_begin==1&&global_times[itimes]<scase.tload_begin)return;
+  if(use_tload_end==1&&global_times[itimes]>scase.tload_end)return;
   for(i=0;i<scase.npartinfo;i++){
     parti = scase.partinfo + i;
     if(parti->loaded==0||parti->display==0)continue;
@@ -1302,8 +1302,8 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
     if(count_read!=1)goto wrapup;
 
     if((tload_step>1       && count_local%tload_step!=0)||
-       (use_tload_begin==1 && time_local<sextras.tload_begin-TEPS)||
-       (use_tload_end==1   && time_local>sextras.tload_end+TEPS)){
+       (use_tload_begin==1 && time_local<scase.tload_begin-TEPS)||
+       (use_tload_end==1   && time_local>scase.tload_end+TEPS)){
       doit_local=0;
     }
     else{
@@ -1939,8 +1939,8 @@ int GetPartHeader(partdata * parti, int *nf_all, int option_arg, int print_optio
     if(exitloop_local == 1)break;
     nframes_all_local++;
     if(tload_step>1       && (nframes_all_local-1)%tload_step!=0)continue;
-    if(use_tload_begin==1 && time_local<sextras.tload_begin-TEPS)continue;
-    if(use_tload_end==1   && time_local>sextras.tload_end+TEPS)break;
+    if(use_tload_begin==1 && time_local<scase.tload_begin-TEPS)continue;
+    if(use_tload_end==1   && time_local>scase.tload_end+TEPS)break;
     (parti->ntimes)++;
   }
   rewind(stream);
@@ -2000,8 +2000,8 @@ int GetPartHeader(partdata * parti, int *nf_all, int option_arg, int print_optio
       parti->filepos[count_local] = filepos_local;               // record file position for every frame
       skipit = 0;
       if(tload_step>1       && count_local%tload_step!=0)skipit = 1;
-      if(use_tload_begin==1 && time_local<sextras.tload_begin-TEPS)skipit = 1;
-      if(use_tload_end==1   && time_local>sextras.tload_end+TEPS)break;
+      if(use_tload_begin==1 && time_local<scase.tload_begin-TEPS)skipit = 1;
+      if(use_tload_end==1   && time_local>scase.tload_end+TEPS)break;
       if(skipit == 1){
         for(j=0;j<parti->nclasses;j++){
           if(fgets(buffer_local,255,stream)==NULL){
@@ -2104,7 +2104,7 @@ void UpdatePartColors(partdata *parti, int flag){
       for(n = 0; n<MAXRGB; n++){
         colorlabelpart[n] = NULL;
       }
-      for(n = 0; n<sextras.nrgb; n++){
+      for(n = 0; n<scase.nrgb; n++){
         NewMemory((void **)&colorlabelpart[n], 11);
       }
     }
@@ -2112,7 +2112,7 @@ void UpdatePartColors(partdata *parti, int flag){
   if(parti!=NULL){
     if(parti->loaded==1&&parti->display==1){
       if(parti->stream!=NULL){
-        GetPartColors(parti, sextras.nrgb, flag);
+        GetPartColors(parti, scase.nrgb, flag);
       }
       else{
         printf("***warning: particle data in %s was unloaded, colors not updated\n",parti->file);
@@ -2136,7 +2136,7 @@ void UpdatePartColors(partdata *parti, int flag){
 
       partj = scase.partinfo+j;
       if(partj->loaded==1&&partj->display==1){
-        GetPartColors(partj, sextras.nrgb, flag);
+        GetPartColors(partj, scase.nrgb, flag);
       }
     }
   }

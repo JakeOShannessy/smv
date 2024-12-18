@@ -85,11 +85,11 @@ void ClipCB(int var){
     GLUIUpdateShowRotationCenter();
     break;
   case CLIP_MESH:
-    if(sextras.clip_mesh == 0){
+    if(scase.clip_mesh == 0){
       SetClipControls(DEFAULT_VALS);
     }
     else{
-      SetClipControls(sextras.clip_mesh);
+      SetClipControls(scase.clip_mesh);
     }
     break;
   case SAVE_SETTINGS_CLIP:
@@ -144,7 +144,7 @@ void ClipCB(int var){
       CHECKBOX_clip_ymax->enable();
       CHECKBOX_clip_zmax->enable();
       show_bothsides_blockages = 1;
-      sextras.updatefaces = 1;
+      scase.updatefaces = 1;
     }
     else{
       SPINNER_clip_xmin->disable();
@@ -161,7 +161,7 @@ void ClipCB(int var){
       CHECKBOX_clip_ymax->disable();
       CHECKBOX_clip_zmax->disable();
       show_bothsides_blockages = 0;
-      sextras.updatefaces = 1;
+      scase.updatefaces = 1;
     }
     break;
   case SPINNER_xlower:
@@ -335,11 +335,11 @@ extern "C" void GLUIClipSetup(int main_window){
     SetClipControls(INI_VALS);  // clip vals from ini file
   }
   else{
-    if(sextras.clip_mesh==0){
+    if(scase.clip_mesh==0){
       SetClipControls(DEFAULT_VALS);  // clip vals from global scene
     }
     else{
-      SetClipControls(sextras.clip_mesh);  // clip vals from mesh clip_mesh
+      SetClipControls(scase.clip_mesh);  // clip vals from mesh clip_mesh
     }
   }
 

@@ -2296,7 +2296,7 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
     case BOUND_CHOPMAX:
     case BOUND_CHOP_HIDE:
       updatefacelists = 1;
-      sextras.updatefaces = 1;
+      scase.updatefaces = 1;
       if(bounds->set_chopmax == 1 || bounds->set_chopmin == 1){
         update_bound_chop_data = 1;
         hide_internal_blockages = 0;
@@ -3478,16 +3478,16 @@ void UpdateIsoControls(void){
 /* ------------------ GLUISliceInObstMenu2Dialog ------------------------ */
 
 extern "C" void GLUISliceInObstMenu2Dialog(int var){
-  sextras.show_slice_in_obst = var;
-  if(sextras.show_slice_in_obst==GAS_AND_SOLID){
+  scase.show_slice_in_obst = var;
+  if(scase.show_slice_in_obst==GAS_AND_SOLID){
     show_slice_in_gas   = 1;
     show_slice_in_solid = 1;
   }
-  else if(sextras.show_slice_in_obst==ONLY_IN_GAS){
+  else if(scase.show_slice_in_obst==ONLY_IN_GAS){
     show_slice_in_gas   = 1;
     show_slice_in_solid = 0;
   }
-  else if(sextras.show_slice_in_obst==ONLY_IN_SOLID){
+  else if(scase.show_slice_in_obst==ONLY_IN_SOLID){
     show_slice_in_gas   = 0;
     show_slice_in_solid = 1;
   }
@@ -3504,16 +3504,16 @@ extern "C" void GLUISliceInObstMenu2Dialog(int var){
 
 void SliceInObstDialog2Menu(void){
   if(show_slice_shaded[IN_GAS_GLUI] == 1 && show_slice_shaded[IN_SOLID_GLUI] == 1){
-    sextras.show_slice_in_obst = GAS_AND_SOLID;
+    scase.show_slice_in_obst = GAS_AND_SOLID;
   }
   else if(show_slice_shaded[IN_GAS_GLUI] == 1 && show_slice_shaded[IN_SOLID_GLUI] == 0){
-    sextras.show_slice_in_obst = ONLY_IN_GAS;
+    scase.show_slice_in_obst = ONLY_IN_GAS;
   }
   else if(show_slice_shaded[IN_GAS_GLUI] == 0 && show_slice_shaded[IN_SOLID_GLUI] == 1){
-    sextras.show_slice_in_obst = ONLY_IN_SOLID;
+    scase.show_slice_in_obst = ONLY_IN_SOLID;
   }
   else{
-    sextras.show_slice_in_obst = NEITHER_GAS_NOR_SOLID;
+    scase.show_slice_in_obst = NEITHER_GAS_NOR_SOLID;
   }
   updatemenu = 1;
 }
@@ -3999,7 +3999,7 @@ extern "C" void BoundBoundCB(int var){
     break;
 #endif
   case SHOW_BOUNDARY_OUTLINE:
-    if(sextras.ngeom_data==0)break;
+    if(scase.ngeom_data==0)break;
     if(show_boundary_outline==1&&boundary_edgetype==OUTLINE_HIDDEN)boundary_edgetype = OUTLINE_POLYGON;
     if(show_boundary_outline==0&&boundary_edgetype!=OUTLINE_HIDDEN)boundary_edgetype = OUTLINE_HIDDEN;
     if(boundary_edgetype!=RADIO_boundary_edgetype->get_int_val())RADIO_boundary_edgetype->set_int_val(boundary_edgetype);
@@ -4553,10 +4553,10 @@ void TimeBoundCB(int var){
   case SET_FDS_TIMES:
     use_tload_begin = 1;
     use_tload_end   = 1;
-    sextras.tload_begin     = sextras.global_tbegin;
-    sextras.tload_end       = sextras.global_tend;
-    SPINNER_tload_begin->set_float_val(sextras.tload_begin);
-    SPINNER_tload_end->set_float_val(sextras.tload_end);
+    scase.tload_begin     = scase.global_tbegin;
+    scase.tload_end       = scase.global_tend;
+    SPINNER_tload_begin->set_float_val(scase.tload_begin);
+    SPINNER_tload_end->set_float_val(scase.tload_end);
     CHECKBOX_use_tload_begin->set_int_val(use_tload_begin);
     CHECKBOX_use_tload_end->set_int_val(use_tload_end);
     TimeBoundCB(TBOUNDS);
@@ -4747,12 +4747,12 @@ void ScriptCB(int var){
 extern "C" void GLUIUpdateBoundTbounds(void){
   use_tload_end   = use_tload_end2;
   use_tload_begin = use_tload_begin2;
-  sextras.tload_end       = tload_end2;
-  sextras.tload_begin     = tload_begin2;
+  scase.tload_end       = tload_end2;
+  scase.tload_begin     = tload_begin2;
   if(CHECKBOX_use_tload_begin!=NULL)CHECKBOX_use_tload_begin->set_int_val(use_tload_begin);
   if(CHECKBOX_use_tload_end!=NULL)CHECKBOX_use_tload_end->set_int_val(use_tload_end);
-  if(SPINNER_tload_end!=NULL)SPINNER_tload_end->set_float_val(sextras.tload_end);
-  if(SPINNER_tload_begin!=NULL)SPINNER_tload_begin->set_float_val(sextras.tload_begin);
+  if(SPINNER_tload_end!=NULL)SPINNER_tload_end->set_float_val(scase.tload_end);
+  if(SPINNER_tload_begin!=NULL)SPINNER_tload_begin->set_float_val(scase.tload_begin);
 }
 
 /* ------------------ GLUIUpdateSliceXYZ ------------------------ */
@@ -5080,7 +5080,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
     INSERT_ROLLOUT(ROLLOUT_boundary_settings, glui_bounds);
     ADDPROCINFO(subboundprocinfo, nsubboundprocinfo, ROLLOUT_boundary_settings, BOUNDARY_SETTINGS_ROLLOUT, glui_bounds);
 
-    if(sextras.ngeom_data > 0){
+    if(scase.ngeom_data > 0){
       glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_settings, _("shaded"), &show_boundary_shaded);
       CHECKBOX_show_boundary_outline=glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_settings, _("outline"), &show_boundary_outline, SHOW_BOUNDARY_OUTLINE, BoundBoundCB);
       glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_settings, _("points"), &show_boundary_points);
@@ -5505,7 +5505,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
 
 
     RADIO_button_cutcell = glui_bounds->add_radiobutton_to_group(RADIO_slice_celltype, "cut cell");
-    if(sextras.ngeom_data==0)RADIO_button_cutcell->disable();
+    if(scase.ngeom_data==0)RADIO_button_cutcell->disable();
 
     PANEL_immersed_outlinetype = glui_bounds->add_panel_to_panel(PANEL_immersed, "outline type", true);
     RADIO_slice_edgetype = glui_bounds->add_radiogroup_to_panel(PANEL_immersed_outlinetype, &glui_slice_edgetype, IMMERSED_SWITCH_EDGETYPE, GLUIImmersedBoundCB);
@@ -5552,17 +5552,17 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
     CHECKBOX_show_node_slices_and_vectors = glui_bounds->add_checkbox_to_panel(PANEL_showslice, _("node centered slices"), &show_node_slices_and_vectors);
     CHECKBOX_show_node_slices_and_vectors = glui_bounds->add_checkbox_to_panel(PANEL_showslice, _("cell centered slices"), &show_cell_slices_and_vectors);
 
-    if(sextras.ngeom_data > 0)glui_bounds->add_column_to_panel(ROLLOUT_slice_settings, false);
+    if(scase.ngeom_data > 0)glui_bounds->add_column_to_panel(ROLLOUT_slice_settings, false);
 
-    if(sextras.show_slice_in_obst==ONLY_IN_GAS){
+    if(scase.show_slice_in_obst==ONLY_IN_GAS){
       show_slice_in_gas   = 1;
       show_slice_in_solid = 0;
     }
-    else if(sextras.show_slice_in_obst==GAS_AND_SOLID){
+    else if(scase.show_slice_in_obst==GAS_AND_SOLID){
       show_slice_in_gas   = 1;
       show_slice_in_solid = 1;
     }
-    else if(sextras.show_slice_in_obst==ONLY_IN_SOLID){
+    else if(scase.show_slice_in_obst==ONLY_IN_SOLID){
       show_slice_in_gas   = 0;
       show_slice_in_solid = 1;
     }
@@ -5571,7 +5571,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
       show_slice_in_solid = 0;
     }
 
-    if(sextras.ngeom_data == 0)glui_bounds->add_column_to_panel(ROLLOUT_slice_settings, false);
+    if(scase.ngeom_data == 0)glui_bounds->add_column_to_panel(ROLLOUT_slice_settings, false);
 
     PANEL_slice_smoke = glui_bounds->add_panel_to_panel(ROLLOUT_slice_settings, "slice(fire)", true);
     glui_bounds->add_checkbox_to_panel(PANEL_slice_smoke, _("max blending"), &slices3d_max_blending);
@@ -5596,7 +5596,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
     GLUISliceBoundCB(SLICE_SKIP);
     glui_bounds->add_checkbox_to_panel(PANEL_slice_misc, _("Output data (press r)"), &output_slicedata);
 
-    if(sextras.nterraininfo>0){
+    if(scase.nterraininfo>0){
       glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_settings, _("terrain slice overlap"), &terrain_slice_overlap);
       glui_bounds->add_checkbox_to_panel(ROLLOUT_slice_settings, _("actual agl offset"), &agl_offset_actual);
     }
@@ -5664,12 +5664,12 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
   glui_bounds->add_button_to_panel(ROLLOUT_time2, _("Use FDS start/end times"), SET_FDS_TIMES, TimeBoundCB);
 
   PANEL_time2a = glui_bounds->add_panel_to_panel(ROLLOUT_time2, "", false);
-  SPINNER_tload_begin = glui_bounds->add_spinner_to_panel(PANEL_time2a, _("min time"), GLUI_SPINNER_FLOAT, &sextras.tload_begin, TBOUNDS, TimeBoundCB);
+  SPINNER_tload_begin = glui_bounds->add_spinner_to_panel(PANEL_time2a, _("min time"), GLUI_SPINNER_FLOAT, &scase.tload_begin, TBOUNDS, TimeBoundCB);
   glui_bounds->add_column_to_panel(PANEL_time2a, false);
   CHECKBOX_use_tload_begin = glui_bounds->add_checkbox_to_panel(PANEL_time2a, "", &use_tload_begin, TBOUNDS_USE, TimeBoundCB);
 
   PANEL_time2b = glui_bounds->add_panel_to_panel(ROLLOUT_time2, "", false);
-  SPINNER_tload_end = glui_bounds->add_spinner_to_panel(PANEL_time2b, _("max time"), GLUI_SPINNER_FLOAT, &sextras.tload_end, TBOUNDS, TimeBoundCB);
+  SPINNER_tload_end = glui_bounds->add_spinner_to_panel(PANEL_time2b, _("max time"), GLUI_SPINNER_FLOAT, &scase.tload_end, TBOUNDS, TimeBoundCB);
   glui_bounds->add_column_to_panel(PANEL_time2b, false);
   CHECKBOX_use_tload_end = glui_bounds->add_checkbox_to_panel(PANEL_time2b, "", &use_tload_end, TBOUNDS_USE, TimeBoundCB);
 
@@ -6705,13 +6705,13 @@ extern "C" void GLUISliceBoundCB(int var){
       update_vectorskip = 1;
       break;
     case ZONEVALMINMAX:
-      GetZoneColors(zonetu, nzonetotal, izonetu, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
-      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
-      if(have_zonefl==1)GetZoneColors(zonefl, nzonetotal, izonefl, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
-      if(have_zonelw==1)GetZoneColors(zonelw, nzonetotal, izonelw, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
-      if(have_zoneuw==1)GetZoneColors(zoneuw, nzonetotal, izoneuw, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
-      if(have_zonecl==1)GetZoneColors(zonecl, nzonetotal, izonecl, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
-      if(have_target_data==1)GetZoneColors(zonetargets, nzonetotal_targets, izonetargets, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+      GetZoneColors(zonetu, nzonetotal, izonetu, zonemin, zonemax, scase.nrgb, nrgb_full, scase.colorlabelzone, colorvalueszone, zonelevels256);
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, scase.nrgb, nrgb_full, scase.colorlabelzone, colorvalueszone, zonelevels256);
+      if(have_zonefl==1)GetZoneColors(zonefl, nzonetotal, izonefl, zonemin, zonemax, scase.nrgb, nrgb_full, scase.colorlabelzone, colorvalueszone, zonelevels256);
+      if(have_zonelw==1)GetZoneColors(zonelw, nzonetotal, izonelw, zonemin, zonemax, scase.nrgb, nrgb_full, scase.colorlabelzone, colorvalueszone, zonelevels256);
+      if(have_zoneuw==1)GetZoneColors(zoneuw, nzonetotal, izoneuw, zonemin, zonemax, scase.nrgb, nrgb_full, scase.colorlabelzone, colorvalueszone, zonelevels256);
+      if(have_zonecl==1)GetZoneColors(zonecl, nzonetotal, izonecl, zonemin, zonemax, scase.nrgb, nrgb_full, scase.colorlabelzone, colorvalueszone, zonelevels256);
+      if(have_target_data==1)GetZoneColors(zonetargets, nzonetotal_targets, izonetargets, zonemin, zonemax, scase.nrgb, nrgb_full, scase.colorlabelzone, colorvalueszone, zonelevels256);
       zoneusermin=zonemin;
       zoneusermax=zonemax;
       break;
@@ -6730,8 +6730,8 @@ extern "C" void GLUISliceBoundCB(int var){
       else{
         EDIT_zone_max->set_float_val(zoneglobalmax);
       }
-      GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
-      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, sextras.nrgb, nrgb_full, sextras.colorlabelzone, colorvalueszone, zonelevels256);
+      GetZoneColors(zonetu, nzonetotal, izonetu,zonemin, zonemax, scase.nrgb, nrgb_full, scase.colorlabelzone, colorvalueszone, zonelevels256);
+      GetZoneColors(zonetl, nzonetotal, izonetl, zonemin, zonemax, scase.nrgb, nrgb_full, scase.colorlabelzone, colorvalueszone, zonelevels256);
       break;
     case COLORBAR_LIST2:
       int list_index;

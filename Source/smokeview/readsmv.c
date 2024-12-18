@@ -51,9 +51,9 @@
 #define ZVENT_1ROOM 1
 #define ZVENT_2ROOM 2
 
-#define PARTBUFFER(len)    sextras.part_buffer;    sextras.part_buffer    += (len)
-#define SMOKE3DBUFFER(len) sextras.smoke3d_buffer; sextras.smoke3d_buffer += (len)
-#define SLICEBUFFER(len)   sextras.slice_buffer;   sextras.slice_buffer   += (len)
+#define PARTBUFFER(len)    scase.part_buffer;    scase.part_buffer    += (len)
+#define SMOKE3DBUFFER(len) scase.smoke3d_buffer; scase.smoke3d_buffer += (len)
+#define SLICEBUFFER(len)   scase.slice_buffer;   scase.slice_buffer   += (len)
 
 int GetNDevices(char *file);
 
@@ -149,7 +149,7 @@ void UpdateHoc(void){
       memcpy(hi->vals, hi_from->vals, hi_from->nvals*sizeof(float));
       hi->nvals = hi_from->nvals;
       for(j = 0; j<hi->nvals; j++){
-        hi->vals[j] *= fuel_hoc;
+        hi->vals[j] *= scase.fuel_hoc;
       }
       memcpy(hi->vals_orig, hi->vals, hi->nvals*sizeof(float));
 
@@ -519,8 +519,8 @@ void ReadHRR(int flag){
   char *buffer, *buffer_labels, *buffer_units, *buffer_temp;
   int len_buffer;
 
-  GetHoc(&fuel_hoc, fuel_name);
-  fuel_hoc_default = fuel_hoc;
+  GetHoc(&scase.fuel_hoc, fuel_name);
+  fuel_hoc_default = scase.fuel_hoc;
   if(nhrrinfo>0){
     for(i=0;i<nhrrinfo;i++){
       hrrdata *hi;
@@ -904,15 +904,15 @@ void UpdateINIList(void){
 
   strcpy(filter,fdsprefix);
   strcat(filter,"*.ini");
-  FreeFileList(sextras.filelist_coll.ini_filelist,&sextras.filelist_coll.nini_filelist);
-  sextras.filelist_coll.nini_filelist=GetFileListSize(".",filter, FILE_MODE);
-  if(sextras.filelist_coll.nini_filelist>0){
-    MakeFileList(".",filter,sextras.filelist_coll.nini_filelist,NO,&sextras.filelist_coll.ini_filelist, FILE_MODE);
+  FreeFileList(scase.filelist_coll.ini_filelist,&scase.filelist_coll.nini_filelist);
+  scase.filelist_coll.nini_filelist=GetFileListSize(".",filter, FILE_MODE);
+  if(scase.filelist_coll.nini_filelist>0){
+    MakeFileList(".",filter,scase.filelist_coll.nini_filelist,NO,&scase.filelist_coll.ini_filelist, FILE_MODE);
 
-    for(i=0;i<sextras.filelist_coll.nini_filelist;i++){
+    for(i=0;i<scase.filelist_coll.nini_filelist;i++){
       filelistdata *filei;
 
-      filei = sextras.filelist_coll.ini_filelist + i;
+      filei = scase.filelist_coll.ini_filelist + i;
       if(filei->type!=0)continue;
       InsertIniFile(filei->file);
     }
@@ -1710,8 +1710,8 @@ void ReadSMVDynamic(char *file){
       plot3di->time=time_local;
       plot3di->finalize = 1;
       plot3di->hist_update = 0;
-      sextras.nmemory_ids++;
-      plot3di->memory_id = sextras.nmemory_ids;
+      scase.nmemory_ids++;
+      plot3di->memory_id = scase.nmemory_ids;
 
       for(i=0;i<MAXPLOT3DVARS;i++){
         plot3di->histograms[i] = NULL;
@@ -2126,8 +2126,8 @@ void InitDevice(devicedata *devicei, float *xyz, int is_beam, float *xyz1, float
     devicei->xyz2[2]   = xyz2[2];
     devicei->have_xyz2 = 1;
   }
-  if(xyz1!=NULL&&xyz2!=NULL)sextras.have_object_box = 1;
-  if(is_beam == 1)sextras.have_beam = 1;
+  if(xyz1!=NULL&&xyz2!=NULL)scase.have_object_box = 1;
+  if(is_beam == 1)scase.have_beam = 1;
   devicei->is_beam = is_beam;
   norm = sqrt(xyzn[0] * xyzn[0] + xyzn[1] * xyzn[1] + xyzn[2] * xyzn[2]);
   if(norm != 0.0){
@@ -2212,7 +2212,7 @@ void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
   if(devicei->object==scase.objectscoll.std_object_defs.missing_device&&tok3!=NULL){
     devicei->object = GetSmvObjectType(&scase.objectscoll,  tok3,scase.objectscoll.std_object_defs.missing_device);
   }
-  if(devicei->object == scase.objectscoll.std_object_defs.missing_device)sextras.have_missing_objects = 1;
+  if(devicei->object == scase.objectscoll.std_object_defs.missing_device)scase.have_missing_objects = 1;
   devicei->params=NULL;
   devicei->times=NULL;
   devicei->vals=NULL;
@@ -2343,7 +2343,7 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
   if(devicei->object==scase.objectscoll.std_object_defs.missing_device&&tok3!=NULL){
     devicei->object = GetSmvObjectType(&scase.objectscoll,  tok3, scase.objectscoll.std_object_defs.missing_device);
   }
-  if(devicei->object==scase.objectscoll.std_object_defs.missing_device)sextras.have_missing_objects = 1;
+  if(devicei->object==scase.objectscoll.std_object_defs.missing_device)scase.have_missing_objects = 1;
   devicei->params = NULL;
   devicei->times = NULL;
   devicei->vals = NULL;
@@ -3184,7 +3184,7 @@ void UpdateBlockType(void){
   ntransparentvents = 0;
   nopenvents = 0;
   nopenvents_nonoutline = 0;
-  sextras.ndummyvents = 0;
+  scase.ndummyvents = 0;
   for(igrid = 0; igrid<scase.meshescoll.nmeshes; igrid++){
     meshdata *meshi;
 
@@ -3203,7 +3203,7 @@ void UpdateBlockType(void){
         nopenvents++;
         if(vi->type!=BLOCK_OUTLINE)nopenvents_nonoutline++;
       }
-      if(vi->dummy==1)sextras.ndummyvents++;
+      if(vi->dummy==1)scase.ndummyvents++;
       if(vi->color[3]<0.99)ntransparentvents++;
     }
   }
@@ -3556,15 +3556,15 @@ void UpdateMeshCoords(void){
   int factor;
   int igrid;
 
-  if(sextras.setPDIM==0){
+  if(scase.setPDIM==0){
     for(nn=0;nn<=current_mesh->ibar;nn++){
-      current_mesh->xplt[nn]=sextras.xbar0+(float)nn*(sextras.xbar-sextras.xbar0)/(float)current_mesh->ibar;
+      current_mesh->xplt[nn]=scase.xbar0+(float)nn*(scase.xbar-scase.xbar0)/(float)current_mesh->ibar;
     }
     for(nn=0;nn<=current_mesh->jbar;nn++){
-      current_mesh->yplt[nn]=sextras.ybar0+(float)nn*(sextras.ybar-sextras.ybar0)/(float)current_mesh->jbar;
+      current_mesh->yplt[nn]=scase.ybar0+(float)nn*(scase.ybar-scase.ybar0)/(float)current_mesh->jbar;
     }
     for(nn=0;nn<=current_mesh->kbar;nn++){
-      current_mesh->zplt[nn]=sextras.zbar0+(float)nn*(sextras.zbar-sextras.zbar0)/(float)current_mesh->kbar;
+      current_mesh->zplt[nn]=scase.zbar0+(float)nn*(scase.zbar-scase.zbar0)/(float)current_mesh->kbar;
     }
   }
 
@@ -3637,20 +3637,20 @@ void UpdateMeshCoords(void){
 
     meshi=scase.meshescoll.meshinfo+i;
     if(i==0){
-      sextras.xbar = meshi->xyz_bar[XXX];
-      sextras.ybar = meshi->xyz_bar[YYY];
-      sextras.zbar = meshi->xyz_bar[ZZZ];
+      scase.xbar = meshi->xyz_bar[XXX];
+      scase.ybar = meshi->xyz_bar[YYY];
+      scase.zbar = meshi->xyz_bar[ZZZ];
 
-      sextras.xbar0 = meshi->xyz_bar0[XXX];
-      sextras.ybar0 = meshi->xyz_bar0[YYY];
-      sextras.zbar0 = meshi->xyz_bar0[ZZZ];
+      scase.xbar0 = meshi->xyz_bar0[XXX];
+      scase.ybar0 = meshi->xyz_bar0[YYY];
+      scase.zbar0 = meshi->xyz_bar0[ZZZ];
     }
-    sextras.xbar = MAX(sextras.xbar, meshi->xyz_bar[XXX]);
-    sextras.ybar = MAX(sextras.ybar, meshi->xyz_bar[YYY]);
-    sextras.zbar = MAX(sextras.zbar, meshi->xyz_bar[ZZZ]);
-    sextras.xbar0 = MIN(sextras.xbar0, meshi->xyz_bar0[XXX]);
-    sextras.ybar0 = MIN(sextras.ybar0, meshi->xyz_bar0[YYY]);
-    sextras.zbar0 = MIN(sextras.zbar0, meshi->xyz_bar0[ZZZ]);
+    scase.xbar = MAX(scase.xbar, meshi->xyz_bar[XXX]);
+    scase.ybar = MAX(scase.ybar, meshi->xyz_bar[YYY]);
+    scase.zbar = MAX(scase.zbar, meshi->xyz_bar[ZZZ]);
+    scase.xbar0 = MIN(scase.xbar0, meshi->xyz_bar0[XXX]);
+    scase.ybar0 = MIN(scase.ybar0, meshi->xyz_bar0[YYY]);
+    scase.zbar0 = MIN(scase.zbar0, meshi->xyz_bar0[ZZZ]);
 
     xminmax[0] = meshi->xyz_bar0[XXX];
     xminmax[1] = meshi->xyz_bar[XXX];
@@ -3666,12 +3666,12 @@ void UpdateMeshCoords(void){
     }
   }
 
-  xbar0FDS = sextras.xbar0;
-  ybar0FDS = sextras.ybar0;
-  zbar0FDS = sextras.zbar0;
-  xbarFDS  = sextras.xbar;
-  ybarFDS  = sextras.ybar;
-  zbarFDS  = sextras.zbar;
+  xbar0FDS = scase.xbar0;
+  ybar0FDS = scase.ybar0;
+  zbar0FDS = scase.zbar0;
+  xbarFDS  = scase.xbar;
+  ybarFDS  = scase.ybar;
+  zbarFDS  = scase.zbar;
 
   use_meshclip[0] = 0;
   use_meshclip[1] = 0;
@@ -3720,12 +3720,12 @@ void UpdateMeshCoords(void){
         zmin = MIN(xyz[2], zmin);
         zmax = MAX(xyz[2], zmax);
       }
-      sextras.xbar0 = MIN(sextras.xbar0, xmin);
-      sextras.ybar0 = MIN(sextras.ybar0, ymin);
-      sextras.zbar0 = MIN(sextras.zbar0, zmin);
-      sextras.xbar = MAX(sextras.xbar, xmax);
-      sextras.ybar = MAX(sextras.ybar, ymax);
-      sextras.zbar = MAX(sextras.zbar, zmax);
+      scase.xbar0 = MIN(scase.xbar0, xmin);
+      scase.ybar0 = MIN(scase.ybar0, ymin);
+      scase.zbar0 = MIN(scase.zbar0, zmin);
+      scase.xbar = MAX(scase.xbar, xmax);
+      scase.ybar = MAX(scase.ybar, ymax);
+      scase.zbar = MAX(scase.zbar, zmax);
       geom_bounding_box[0] = MIN(xmin, geom_bounding_box[0]);
       geom_bounding_box[1] = MAX(xmax, geom_bounding_box[1]);
       geom_bounding_box[2] = MIN(ymin, geom_bounding_box[2]);
@@ -3737,18 +3737,18 @@ void UpdateMeshCoords(void){
   }
 
   factor = 256*128;
-  dxsbar = (sextras.xbar-sextras.xbar0)/factor;
-  dysbar = (sextras.ybar-sextras.ybar0)/factor;
-  dzsbar = (sextras.zbar-sextras.zbar0)/factor;
+  dxsbar = (scase.xbar-scase.xbar0)/factor;
+  dysbar = (scase.ybar-scase.ybar0)/factor;
+  dzsbar = (scase.zbar-scase.zbar0)/factor;
 
   for(nn=0;nn<factor;nn++){
-    xplts[nn]=sextras.xbar0+((float)nn+0.5)*dxsbar;
+    xplts[nn]=scase.xbar0+((float)nn+0.5)*dxsbar;
   }
   for(nn=0;nn<factor;nn++){
-    yplts[nn]=sextras.ybar0+((float)nn+0.5)*dysbar;
+    yplts[nn]=scase.ybar0+((float)nn+0.5)*dysbar;
   }
   for(nn=0;nn<factor;nn++){
-    zplts[nn]=sextras.zbar0+((float)nn+0.5)*dzsbar;
+    zplts[nn]=scase.zbar0+((float)nn+0.5)*dzsbar;
   }
 
   /* compute scaling factors */
@@ -3756,20 +3756,20 @@ void UpdateMeshCoords(void){
   {
     float dxclip, dyclip, dzclip;
 
-    dxclip = (sextras.xbar-sextras.xbar0)/1000.0;
-    dyclip = (sextras.ybar-sextras.ybar0)/1000.0;
-    dzclip = (sextras.zbar-sextras.zbar0)/1000.0;
-    xclip_min = sextras.xbar0-dxclip;
-    yclip_min = sextras.ybar0-dyclip;
-    zclip_min = sextras.zbar0-dzclip;
-    xclip_max = sextras.xbar+dxclip;
-    yclip_max = sextras.ybar+dyclip;
-    zclip_max = sextras.zbar+dzclip;
+    dxclip = (scase.xbar-scase.xbar0)/1000.0;
+    dyclip = (scase.ybar-scase.ybar0)/1000.0;
+    dzclip = (scase.zbar-scase.zbar0)/1000.0;
+    xclip_min = scase.xbar0-dxclip;
+    yclip_min = scase.ybar0-dyclip;
+    zclip_min = scase.zbar0-dzclip;
+    xclip_max = scase.xbar+dxclip;
+    yclip_max = scase.ybar+dyclip;
+    zclip_max = scase.zbar+dzclip;
   }
 
   // compute scaling factor used in NORMALIXE_X, NORMALIZE_Y, NORMALIZE_Z macros
 
-  xyzmaxdiff=MAX(MAX(sextras.xbar-sextras.xbar0,sextras.ybar-sextras.ybar0),sextras.zbar-sextras.zbar0);
+  xyzmaxdiff=MAX(MAX(scase.xbar-scase.xbar0,scase.ybar-scase.ybar0),scase.zbar-scase.zbar0);
 
   // normalize various coordinates.
 
@@ -3785,12 +3785,12 @@ void UpdateMeshCoords(void){
 
   /* rescale both global and local xbar, ybar and zbar */
 
-  xbar0ORIG = sextras.xbar0;
-  ybar0ORIG = sextras.ybar0;
-  zbar0ORIG = sextras.zbar0;
-  xbarORIG = sextras.xbar;
-  ybarORIG = sextras.ybar;
-  zbarORIG = sextras.zbar;
+  xbar0ORIG = scase.xbar0;
+  ybar0ORIG = scase.ybar0;
+  zbar0ORIG = scase.zbar0;
+  xbarORIG = scase.xbar;
+  ybarORIG = scase.ybar;
+  zbarORIG = scase.zbar;
 
   patchout_xmin = xbar0ORIG;
   patchout_xmax = xbarORIG;
@@ -3806,13 +3806,13 @@ void UpdateMeshCoords(void){
     patchout_tmax = 1.0;
   }
 
-  sextras.xbar = FDS2SMV_X(sextras.xbar);
-  sextras.ybar = FDS2SMV_Y(sextras.ybar);
-  sextras.zbar = FDS2SMV_Z(sextras.zbar);
+  scase.xbar = FDS2SMV_X(scase.xbar);
+  scase.ybar = FDS2SMV_Y(scase.ybar);
+  scase.zbar = FDS2SMV_Z(scase.zbar);
 
   float outline_offset;
   outline_offset = (scase.meshescoll.meshinfo->zplt[1] - scase.meshescoll.meshinfo->zplt[0]) / 10.0;
-  if(sextras.is_terrain_case==1){
+  if(scase.is_terrain_case==1){
     geom_dz_offset = outline_offset;
     geom_norm_offset = 0.0;
   }
@@ -3820,7 +3820,7 @@ void UpdateMeshCoords(void){
     geom_dz_offset = 0.0;
     geom_norm_offset = outline_offset;
   }
-  GetBoxCorners(sextras.xbar, sextras.ybar, sextras.zbar);
+  GetBoxCorners(scase.xbar, scase.ybar, scase.zbar);
 
   for(i=0;i<scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
@@ -3835,12 +3835,12 @@ void UpdateMeshCoords(void){
     meshi->zcen = FDS2SMV_Z(meshi->zcen);
   }
 
-  for(i=0;i<sextras.noutlineinfo;i++){
+  for(i=0;i<scase.noutlineinfo;i++){
     outlinedata *outlinei;
     float *x1, *x2, *yy1, *yy2, *z1, *z2;
     int j;
 
-    outlinei = sextras.outlineinfo + i;
+    outlinei = scase.outlineinfo + i;
     x1 = outlinei->x1;
     x2 = outlinei->x2;
     yy1 = outlinei->y1;
@@ -3973,7 +3973,7 @@ void UpdateMeshCoords(void){
     face_centers[14]=meshi->boxmin_scaled[2];
     face_centers[17]=meshi->boxmax_scaled[2];
   }
-  if(sextras.nterraininfo>0){
+  if(scase.nterraininfo>0){
     boundaryoffset = (scase.meshescoll.meshinfo->zplt_orig[1] - scase.meshescoll.meshinfo->zplt_orig[0]) / 10.0;
   }
 
@@ -4239,9 +4239,9 @@ void InitObst(blockagedata *bc, surfdata *surf, int index, int meshindex){
   bc->meshindex = meshindex;
   bc->hidden = 0;
   bc->invisible = 0;
-  bc->texture_origin[0] = sextras.texture_origin[0];
-  bc->texture_origin[1] = sextras.texture_origin[1];
-  bc->texture_origin[2] = sextras.texture_origin[2];
+  bc->texture_origin[0] = scase.texture_origin[0];
+  bc->texture_origin[1] = scase.texture_origin[1];
+  bc->texture_origin[2] = scase.texture_origin[2];
 
   /*
   new OBST format:
@@ -4904,12 +4904,12 @@ void MakeFileLists(void){
 
   // create a list of all files in the current directory
 
-  sextras.filelist_coll.nfilelist_casename = GetFileListSize(".", filter_casename, FILE_MODE);
-  MakeFileList(".", filter_casename, sextras.filelist_coll.nfilelist_casename, YES, &sextras.filelist_coll.filelist_casename, FILE_MODE);
+  scase.filelist_coll.nfilelist_casename = GetFileListSize(".", filter_casename, FILE_MODE);
+  MakeFileList(".", filter_casename, scase.filelist_coll.nfilelist_casename, YES, &scase.filelist_coll.filelist_casename, FILE_MODE);
 
   strcpy(filter_casedir, "");
-  sextras.filelist_coll.nfilelist_casedir = GetFileListSize(".", filter_casedir, FILE_MODE);
-  MakeFileList(".", filter_casedir, sextras.filelist_coll.nfilelist_casedir, YES, &sextras.filelist_coll.filelist_casedir, FILE_MODE);
+  scase.filelist_coll.nfilelist_casedir = GetFileListSize(".", filter_casedir, FILE_MODE);
+  MakeFileList(".", filter_casedir, scase.filelist_coll.nfilelist_casedir, YES, &scase.filelist_coll.filelist_casedir, FILE_MODE);
 }
 
 #define RETURN_TWO        2
@@ -5067,7 +5067,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
   isoi->geomflag = geomflag;
   isoi->nlevels = 0;
   isoi->levels = NULL;
-  isoi->memory_id = ++sextras.nmemory_ids;
+  isoi->memory_id = ++scase.nmemory_ids;
   isoi->geom_nstatics = NULL;
   isoi->geom_ndynamics = NULL;
   isoi->geom_times = NULL;
@@ -5081,8 +5081,8 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
   isoi->color_label.unit = NULL;
   isoi->geominfo = NULL;
   NewMemory((void **)&isoi->geominfo, sizeof(geomdata));
-  sextras.nmemory_ids++;
-  isoi->geominfo->memory_id = sextras.nmemory_ids;
+  scase.nmemory_ids++;
+  isoi->geominfo->memory_id = scase.nmemory_ids;
   InitGeom(isoi->geominfo, GEOM_ISO, NOT_FDSBLOCK, CFACE_NORMALS_NO,blocknumber);
 
   bufferptr = TrimFrontBack(buffer);
@@ -5437,7 +5437,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
     patchi->patch_filetype = PATCH_STRUCTURED_CELL_CENTER;
   }
   if(Match(buffer, "BNDE")==1){
-    sextras.ngeom_data++;
+    scase.ngeom_data++;
     patchi->patch_filetype = PATCH_GEOMETRY_BOUNDARY;
     patchi->structured = NO;
   }
@@ -5446,7 +5446,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
     char *sliceparms;
 
     CheckMemory;
-    sextras.ngeom_data++;
+    scase.ngeom_data++;
     patchi->patch_filetype = PATCH_GEOMETRY_SLICE;
     patchi->structured = NO;
     patchi->boundary = 0;
@@ -5815,7 +5815,7 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
       strcat(smoke3di->cextinct, cextinct);
       strcat(smoke3di->cextinct, ")");
     }
-    sextras.update_smoke_alphas = 1;
+    scase.update_smoke_alphas = 1;
   }
   return RETURN_CONTINUE;
 }
@@ -5945,7 +5945,7 @@ int ParseSLCFProcess(int option, bufferstreamdata *stream, char *buffer, int *nn
     terrain = 1;
   }
   if(Match(buffer, "SLCC")==1){
-    sextras.cellcenter_slice_active = 1;
+    scase.cellcenter_slice_active = 1;
     cellcenter = 1;
   }
   TrimBack(buffer);
@@ -6274,7 +6274,7 @@ void FreeSliceData(void){
       FREEMEMORY(sd->comp_file);
       FREEMEMORY(sd->size_file);
     }
-    FREEMEMORY(sextras.sliceorderindex);
+    FREEMEMORY(scase.sliceorderindex);
     for(i = 0; i<scase.slicecoll.nmultisliceinfo; i++){
       multislicedata *mslicei;
 
@@ -6291,7 +6291,7 @@ void FreeSliceData(void){
   //*** free multi-vector slice data
 
   if(scase.slicecoll.nvsliceinfo>0){
-    FREEMEMORY(sextras.vsliceorderindex);
+    FREEMEMORY(scase.vsliceorderindex);
     for(i = 0; i<scase.slicecoll.nmultivsliceinfo; i++){
       multivslicedata *mvslicei;
 
@@ -6528,7 +6528,7 @@ void UpdateEvents(void){
       rgblabel[0] = 255;
       rgblabel[1] = 255;
       rgblabel[2] = 255;
-      memcpy(label.rgb, sextras.rgb, 3*sizeof(int));
+      memcpy(label.rgb, scase.rgb, 3*sizeof(int));
       frgb[0] = (float)rgblabel[0]/255.0;
       frgb[1] = (float)rgblabel[1]/255.0;
       frgb[2] = (float)rgblabel[2]/255.0;
@@ -6699,14 +6699,14 @@ void ReadSMVOrig(void){
           obi->invisible=1;
         }
         if(colorindex>=0){
-          obi->color = GetColorPtr(&scase.colorcoll, sextras.rgb[sextras.nrgb+colorindex]);
+          obi->color = GetColorPtr(&scase.colorcoll, scase.rgb[scase.nrgb+colorindex]);
           obi->usecolorindex=1;
           obi->colorindex=colorindex;
-          sextras.updateindexcolors=1;
+          scase.updateindexcolors=1;
         }
         if(colorindex==-3){
           obi->color = GetColorPtr(&scase.colorcoll, s_color);
-          sextras.updateindexcolors=1;
+          scase.updateindexcolors=1;
         }
         obi->colorindex = colorindex;
         obi->blocktype = blocktype;
@@ -6830,7 +6830,7 @@ void *CheckFiles(void *arg){
   int i;
 
   THREADcontrol(checkfiles_threads, THREAD_LOCK);
-  sextras.have_compressed_files = 0;
+  scase.have_compressed_files = 0;
   THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   for(i = 0;i < scase.npatchinfo;i++){
     patchdata *patchi;
@@ -6841,7 +6841,7 @@ void *CheckFiles(void *arg){
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
     if(have_file == YES){
       patchi->compression_type_temp = COMPRESSED_ZLIB;
-      sextras.have_compressed_files = 1;
+      scase.have_compressed_files = 1;
     }
     THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   }
@@ -6854,11 +6854,11 @@ void *CheckFiles(void *arg){
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
     if(have_file == YES){
       smoke3di->compression_type_temp = COMPRESSED_ZLIB;
-      sextras.have_compressed_files = 1;
+      scase.have_compressed_files = 1;
     }
     THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   }
-  if(sextras.have_compressed_files == 0){
+  if(scase.have_compressed_files == 0){
     THREAD_EXIT(checkfiles_threads);
   }
   THREADcontrol(checkfiles_threads, THREAD_LOCK);
@@ -7022,29 +7022,29 @@ int ReadSMV_Init(){
 
   FREEMEMORY(fds_title);
 
-  FREEMEMORY(sextras.treeinfo);
-  sextras.ntreeinfo=0;
+  FREEMEMORY(scase.treeinfo);
+  scase.ntreeinfo=0;
 
   int i;
-  for(i=0;i<sextras.nterraininfo;i++){
+  for(i=0;i<scase.nterraininfo;i++){
     terraindata *terri;
 
-    terri = sextras.terraininfo + i;
+    terri = scase.terraininfo + i;
     FREEMEMORY(terri->xplt);
     FREEMEMORY(terri->yplt);
     FREEMEMORY(terri->zcell);
     FREEMEMORY(terri->znode);
   }
-  FREEMEMORY(sextras.terraininfo);
-  sextras.nterraininfo=0;
-  sextras.niso_compressed=0;
-  if(sextras.sphereinfo==NULL){
-    NewMemory((void **)&sextras.sphereinfo,sizeof(spherepoints));
-    InitSpherePoints(sextras.sphereinfo,14);
+  FREEMEMORY(scase.terraininfo);
+  scase.nterraininfo=0;
+  scase.niso_compressed=0;
+  if(scase.sphereinfo==NULL){
+    NewMemory((void **)&scase.sphereinfo,sizeof(spherepoints));
+    InitSpherePoints(scase.sphereinfo,14);
   }
-  if(sextras.wui_sphereinfo==NULL){
-    NewMemory((void **)&sextras.wui_sphereinfo,sizeof(spherepoints));
-    InitSpherePoints(sextras.wui_sphereinfo,14);
+  if(scase.wui_sphereinfo==NULL){
+    NewMemory((void **)&scase.wui_sphereinfo,sizeof(spherepoints));
+    InitSpherePoints(scase.wui_sphereinfo,14);
   }
   PRINT_TIMER(timer_setup, "InitSpherePoints");
   ntotal_blockages=0;
@@ -7086,9 +7086,9 @@ int ReadSMV_Init(){
     scase.ncgeominfo = 0;
   }
 
-  FREEMEMORY(sextras.tickinfo);
-  sextras.ntickinfo=0;
-  sextras.ntickinfo_smv=0;
+  FREEMEMORY(scase.tickinfo);
+  scase.ntickinfo=0;
+  scase.ntickinfo_smv=0;
 
   FREEMEMORY(camera_external);
   NewMemory((void **)&camera_external,sizeof(cameradata));
@@ -7114,26 +7114,26 @@ int ReadSMV_Init(){
   FREEMEMORY(camera_last);
   NewMemory((void **)&camera_last,sizeof(cameradata));
 
-  sextras.updatefaces=1;
+  scase.updatefaces=1;
   scase.nfires=0;
   scase.nrooms=0;
 
   START_TIMER(timer_setup);
-  InitSurface(&sextras.sdefault);
+  InitSurface(&scase.sdefault);
   PRINT_TIMER(timer_setup, "InitSurface");
-  NewMemory((void **)&sextras.sdefault.surfacelabel,(5+1));
-  strcpy(sextras.sdefault.surfacelabel,"INERT");
+  NewMemory((void **)&scase.sdefault.surfacelabel,(5+1));
+  strcpy(scase.sdefault.surfacelabel,"INERT");
 
-  InitVentSurface(&sextras.v_surfacedefault);
+  InitVentSurface(&scase.v_surfacedefault);
   PRINT_TIMER(timer_setup, "InitVentSurface");
-  NewMemory((void **)&sextras.v_surfacedefault.surfacelabel,(4+1));
-  strcpy(sextras.v_surfacedefault.surfacelabel,"VENT");
+  NewMemory((void **)&scase.v_surfacedefault.surfacelabel,(4+1));
+  strcpy(scase.v_surfacedefault.surfacelabel,"VENT");
 
-  InitSurface(&sextras.e_surfacedefault);
+  InitSurface(&scase.e_surfacedefault);
   PRINT_TIMER(timer_setup, "InitSurface");
-  NewMemory((void **)&sextras.e_surfacedefault.surfacelabel,(8+1));
-  strcpy(sextras.e_surfacedefault.surfacelabel,"EXTERIOR");
-  sextras.e_surfacedefault.color=mat_ambient2;
+  NewMemory((void **)&scase.e_surfacedefault.surfacelabel,(8+1));
+  strcpy(scase.e_surfacedefault.surfacelabel,"EXTERIOR");
+  scase.e_surfacedefault.color=mat_ambient2;
 
   // free memory for particle class
 
@@ -7170,14 +7170,14 @@ int ReadSMV_Init(){
   // read in device (.svo) definitions
 
   START_TIMER(timer_setup);
-  ReadDefaultObjectCollection(&scase.objectscoll, fdsprefix, setbw, sextras.isZoneFireModel);
+  ReadDefaultObjectCollection(&scase.objectscoll, fdsprefix, setbw, scase.isZoneFireModel);
   PRINT_TIMER(timer_setup, "InitSurface");
 
-  if(sextras.noutlineinfo>0){
-    for(i=0;i<sextras.noutlineinfo;i++){
+  if(scase.noutlineinfo>0){
+    for(i=0;i<scase.noutlineinfo;i++){
       outlinedata *outlinei;
 
-      outlinei = sextras.outlineinfo + i;
+      outlinei = scase.outlineinfo + i;
       FREEMEMORY(outlinei->x1);
       FREEMEMORY(outlinei->y1);
       FREEMEMORY(outlinei->z1);
@@ -7185,8 +7185,8 @@ int ReadSMV_Init(){
       FREEMEMORY(outlinei->y2);
       FREEMEMORY(outlinei->z2);
     }
-    FREEMEMORY(sextras.outlineinfo);
-    sextras.noutlineinfo=0;
+    FREEMEMORY(scase.outlineinfo);
+    scase.noutlineinfo=0;
   }
 
   if(scase.nzoneinfo>0){
@@ -7256,21 +7256,21 @@ int ReadSMV_Init(){
   }
   scase.nisoinfo=0;
 
-  sextras.updateindexcolors=0;
-  sextras.ntrnx=0;
-  sextras.ntrny=0;
-  sextras.ntrnz=0;
+  scase.updateindexcolors=0;
+  scase.ntrnx=0;
+  scase.ntrny=0;
+  scase.ntrnz=0;
   scase.meshescoll.nmeshes=0;
-  sextras.npdim=0;
-  sextras.nVENT=0;
-  sextras.nCVENT=0;
-  sextras.ncvents=0;
-  sextras.nOBST=0;
-  sextras.noffset=0;
+  scase.npdim=0;
+  scase.nVENT=0;
+  scase.nCVENT=0;
+  scase.ncvents=0;
+  scase.nOBST=0;
+  scase.noffset=0;
   scase.surfcoll.nsurfinfo=0;
   nvent_transparent=0;
 
-  sextras.setPDIM=0;
+  scase.setPDIM=0;
 
   FREEMEMORY(scase.slicecoll.vsliceinfo);
   FREEMEMORY(scase.slicecoll.sliceinfo);
@@ -7408,9 +7408,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   nvents=0;
   igrid=0;
   ioffset=0;
-  sextras.ntc_total=0;
-  sextras.nspr_total=0;
-  sextras.nheat_total=0;
+  scase.ntc_total=0;
+  scase.nspr_total=0;
+  scase.nheat_total=0;
   PRINTF("%s","  pass 1\n");
   for(;;){
     if(FEOF(stream)!=0){
@@ -7503,28 +7503,28 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     }
     if(MatchSMV(buffer, "SOLID_HT3D")==1){
       FGETS(buffer, 255, stream);
-      sscanf(buffer, "%i", &sextras.solid_ht3d);
-      ONEORZERO(sextras.solid_ht3d);
-      if(sextras.solid_ht3d==1)sextras.show_slice_in_obst=GAS_AND_SOLID;
+      sscanf(buffer, "%i", &scase.solid_ht3d);
+      ONEORZERO(scase.solid_ht3d);
+      if(scase.solid_ht3d==1)scase.show_slice_in_obst=GAS_AND_SOLID;
       continue;
     }
     if(MatchSMV(buffer, "IBLANK")==1){
       FGETS(buffer, 255, stream);
-      if(sextras.iblank_set_on_commandline==0){
-        sscanf(buffer, "%i", &sextras.use_iblank);
-        sextras.use_iblank = CLAMP(sextras.use_iblank, 0, 1);
+      if(scase.iblank_set_on_commandline==0){
+        sscanf(buffer, "%i", &scase.use_iblank);
+        scase.use_iblank = CLAMP(scase.use_iblank, 0, 1);
       }
       continue;
     }
     if(MatchSMV(buffer,"GVEC") == 1){
       FGETS(buffer,255,stream);
-      sscanf(buffer,"%f %f %f",sextras.gvecphys,sextras.gvecphys+1,sextras.gvecphys+2);
-      sextras.gvecunit[0]=sextras.gvecphys[0];
-      sextras.gvecunit[1]=sextras.gvecphys[1];
-      sextras.gvecunit[2]=sextras.gvecphys[2];
-      NORMALIZE3(sextras.gvecunit);
-      if(NORM3(sextras.gvecphys)>0.0){
-        sextras.have_gvec=1;
+      sscanf(buffer,"%f %f %f",scase.gvecphys,scase.gvecphys+1,scase.gvecphys+2);
+      scase.gvecunit[0]=scase.gvecphys[0];
+      scase.gvecunit[1]=scase.gvecphys[1];
+      scase.gvecunit[2]=scase.gvecphys[2];
+      NORMALIZE3(scase.gvecunit);
+      if(NORM3(scase.gvecphys)>0.0){
+        scase.have_gvec=1;
       }
       continue;
     }
@@ -7560,22 +7560,22 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     }
     if(MatchSMV(buffer,"ALBEDO") == 1){
       FGETS(buffer,255,stream);
-      sscanf(buffer,"%f",&sextras.smoke_albedo);
-      sextras.smoke_albedo = CLAMP(sextras.smoke_albedo, 0.0, 1.0);
-      sextras.smoke_albedo_base = sextras.smoke_albedo;
+      sscanf(buffer,"%f",&scase.smoke_albedo);
+      scase.smoke_albedo = CLAMP(scase.smoke_albedo, 0.0, 1.0);
+      scase.smoke_albedo_base = scase.smoke_albedo;
       continue;
     }
     if(MatchSMV(buffer, "NORTHANGLE")==1){
       FGETS(buffer, 255, stream);
-      sscanf(buffer, "%f", &sextras.northangle);
-      sextras.northangle = CLAMP(sextras.northangle, -180.0, 180.0);
-      sextras.have_northangle = 1;
+      sscanf(buffer, "%f", &scase.northangle);
+      scase.northangle = CLAMP(scase.northangle, -180.0, 180.0);
+      scase.have_northangle = 1;
       continue;
     }
     if(MatchSMV(buffer,"TERRAIN") == 1){
-      sextras.manual_terrain = 1;
+      scase.manual_terrain = 1;
       FGETS(buffer, 255, stream);
-      sextras.nterraininfo++;
+      scase.nterraininfo++;
       continue;
     }
     if(MatchSMV(buffer,"CLASS_OF_PARTICLES") == 1){
@@ -7586,21 +7586,21 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int len_buffer;
       char *buff2;
 
-      sextras.is_terrain_case = 1;
-      sextras.auto_terrain=1;
+      scase.is_terrain_case = 1;
+      scase.auto_terrain=1;
       FGETS(buffer,255,stream);
-      sscanf(buffer,"%i",&sextras.visTerrainType);
-      sextras.visTerrainType=CLAMP(sextras.visTerrainType,0,4);
-      if(sextras.visTerrainType==TERRAIN_HIDDEN){
-        if(sextras.visOtherVents!=sextras.visOtherVentsSAVE)sextras.visOtherVents=sextras.visOtherVentsSAVE;
+      sscanf(buffer,"%i",&scase.visTerrainType);
+      scase.visTerrainType=CLAMP(scase.visTerrainType,0,4);
+      if(scase.visTerrainType==TERRAIN_HIDDEN){
+        if(scase.visOtherVents!=scase.visOtherVentsSAVE)scase.visOtherVents=scase.visOtherVentsSAVE;
       }
       else{
-        if(sextras.visOtherVents!=0){
-          sextras.visOtherVentsSAVE=sextras.visOtherVents;
-          sextras.visOtherVents=0;
+        if(scase.visOtherVents!=0){
+          scase.visOtherVentsSAVE=scase.visOtherVents;
+          scase.visOtherVents=0;
         }
       }
-      sextras.update_terrain_type = 1;
+      scase.update_terrain_type = 1;
       FGETS(buffer,255,stream);
       buff2 = TrimFront(buffer);
       TrimBack(buff2);
@@ -7618,7 +7618,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int len_buffer;
       char *buff2, *blank;
 
-      sextras.is_terrain_case = 1;
+      scase.is_terrain_case = 1;
       if(have_auto_terrain_image == 1){
         FREEMEMORY(scase.terrain_texture_coll.terrain_textures->file);
         FREEMEMORY(scase.terrain_texture_coll.terrain_textures);
@@ -7724,7 +7724,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
-      sscanf(buffer,"%f %f %f",sextras.texture_origin,sextras.texture_origin+1,sextras.texture_origin+2);
+      sscanf(buffer,"%f %f %f",scase.texture_origin,scase.texture_origin+1,scase.texture_origin+2);
       continue;
     }
 
@@ -7757,34 +7757,34 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         BREAK;
       }
       sscanf(buffer,"%f %f %i",&scase.tourcoll.tour_tstart,&scase.tourcoll.tour_tstop,&scase.tourcoll.tour_ntimes);
-      sextras.global_tbegin = scase.tourcoll.tour_tstart;
-      sextras.tload_begin   = scase.tourcoll.tour_tstart;
+      scase.global_tbegin = scase.tourcoll.tour_tstart;
+      scase.tload_begin   = scase.tourcoll.tour_tstart;
 
-      sextras.global_tend   = scase.tourcoll.tour_tstop;
-      sextras.tload_end     = scase.tourcoll.tour_tstop;
+      scase.global_tend   = scase.tourcoll.tour_tstop;
+      scase.tload_end     = scase.tourcoll.tour_tstop;
       if(scase.tourcoll.tour_ntimes<2)scase.tourcoll.tour_ntimes=2;
       ReallocTourMemory(&scase.tourcoll);
       continue;
     }
     if(MatchSMV(buffer,"OUTLINE") == 1){
-      sextras.noutlineinfo++;
+      scase.noutlineinfo++;
       continue;
     }
     if(MatchSMV(buffer,"TICKS") == 1){
-      sextras.ntickinfo++;
-      sextras.ntickinfo_smv++;
+      scase.ntickinfo++;
+      scase.ntickinfo_smv++;
       continue;
     }
     if(MatchSMV(buffer,"TRNX") == 1){
-      sextras.ntrnx++;
+      scase.ntrnx++;
       continue;
     }
     if(MatchSMV(buffer,"TRNY") == 1){
-      sextras.ntrny++;
+      scase.ntrny++;
       continue;
     }
     if(MatchSMV(buffer,"TRNZ") == 1){
-      sextras.ntrnz++;
+      scase.ntrnz++;
       continue;
     }
     if(MatchSMV(buffer,"SURFACE") ==1){
@@ -7797,18 +7797,18 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"OFFSET") == 1){
-      sextras.noffset++;
+      scase.noffset++;
       continue;
     }
     if(MatchSMV(buffer,"PDIM") == 1){
-      sextras.npdim++;
-      sextras.setPDIM=1;
+      scase.npdim++;
+      scase.setPDIM=1;
       FGETS(buffer,255,stream);
-      sscanf(buffer,"%f %f %f %f %f %f",&sextras.xbar0,&sextras.xbar,&sextras.ybar0,&sextras.ybar,&sextras.zbar0,&sextras.zbar);
+      sscanf(buffer,"%f %f %f %f %f %f",&scase.xbar0,&scase.xbar,&scase.ybar0,&scase.ybar,&scase.zbar0,&scase.zbar);
       continue;
     }
     if(MatchSMV(buffer,"OBST") == 1){
-      sextras.nOBST++;
+      scase.nOBST++;
       continue;
     }
     if(MatchSMV(buffer,"CADGEOM") == 1){
@@ -7816,11 +7816,11 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"CVENT") == 1){
-      sextras.nCVENT++;
+      scase.nCVENT++;
       continue;
     }
     if(MatchSMV(buffer,"VENT") == 1){
-      sextras.nVENT++;
+      scase.nVENT++;
       continue;
     }
     if(
@@ -7897,7 +7897,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     }
 
     if(MatchSMV(buffer,"ROOM") == 1){
-      sextras.isZoneFireModel=1;
+      scase.isZoneFireModel=1;
       scase.nrooms++;
       continue;
     }
@@ -7963,9 +7963,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
    NewMemory((void **)&scase.propcoll.propinfo,scase.propcoll.npropinfo*sizeof(propdata));
    scase.propcoll.npropinfo=1; // the 0'th prop is the default human property
  }
- if(sextras.nterraininfo>0){
-   NewMemory((void **)&sextras.terraininfo,sextras.nterraininfo*sizeof(terraindata));
-   sextras.nterraininfo=0;
+ if(scase.nterraininfo>0){
+   NewMemory((void **)&scase.terraininfo,scase.nterraininfo*sizeof(terraindata));
+   scase.nterraininfo=0;
  }
  if(scase.npartclassinfo>=0){
    float rgb_class[4];
@@ -8016,27 +8016,27 @@ int ReadSMV_Parse(bufferstreamdata *stream){
      BUT if any one is present then the number of each must be equal
   */
 
-  if(scase.meshescoll.nmeshes==0&&sextras.ntrnx==0&&sextras.ntrny==0&&sextras.ntrnz==0&&sextras.npdim==0&&sextras.nOBST==0&&sextras.nVENT==0&&sextras.noffset==0){
+  if(scase.meshescoll.nmeshes==0&&scase.ntrnx==0&&scase.ntrny==0&&scase.ntrnz==0&&scase.npdim==0&&scase.nOBST==0&&scase.nVENT==0&&scase.noffset==0){
     scase.meshescoll.nmeshes=1;
-    sextras.ntrnx=1;
-    sextras.ntrny=1;
-    sextras.ntrnz=1;
-    sextras.npdim=1;
-    sextras.nOBST=1;
-    sextras.noffset=1;
+    scase.ntrnx=1;
+    scase.ntrny=1;
+    scase.ntrnz=1;
+    scase.npdim=1;
+    scase.nOBST=1;
+    scase.noffset=1;
   }
   else{
     if(scase.meshescoll.nmeshes>1){
-      if((scase.meshescoll.nmeshes!=sextras.ntrnx||scase.meshescoll.nmeshes!=sextras.ntrny||scase.meshescoll.nmeshes!=sextras.ntrnz||scase.meshescoll.nmeshes!=sextras.npdim||scase.meshescoll.nmeshes!=sextras.nOBST||scase.meshescoll.nmeshes!=sextras.nVENT||scase.meshescoll.nmeshes!=sextras.noffset)&&
-         (sextras.nCVENT!=0&&sextras.nCVENT!=scase.meshescoll.nmeshes)){
+      if((scase.meshescoll.nmeshes!=scase.ntrnx||scase.meshescoll.nmeshes!=scase.ntrny||scase.meshescoll.nmeshes!=scase.ntrnz||scase.meshescoll.nmeshes!=scase.npdim||scase.meshescoll.nmeshes!=scase.nOBST||scase.meshescoll.nmeshes!=scase.nVENT||scase.meshescoll.nmeshes!=scase.noffset)&&
+         (scase.nCVENT!=0&&scase.nCVENT!=scase.meshescoll.nmeshes)){
         fprintf(stderr,"*** Error:\n");
-        if(scase.meshescoll.nmeshes!=sextras.ntrnx)fprintf(stderr,"*** Error:  found %i TRNX keywords, was expecting %i\n",sextras.ntrnx,scase.meshescoll.nmeshes);
-        if(scase.meshescoll.nmeshes!=sextras.ntrny)fprintf(stderr,"*** Error:  found %i TRNY keywords, was expecting %i\n",sextras.ntrny,scase.meshescoll.nmeshes);
-        if(scase.meshescoll.nmeshes!=sextras.ntrnz)fprintf(stderr,"*** Error:  found %i TRNZ keywords, was expecting %i\n",sextras.ntrnz,scase.meshescoll.nmeshes);
-        if(scase.meshescoll.nmeshes!=sextras.npdim)fprintf(stderr,"*** Error:  found %i PDIM keywords, was expecting %i\n",sextras.npdim,scase.meshescoll.nmeshes);
-        if(scase.meshescoll.nmeshes!=sextras.nOBST)fprintf(stderr,"*** Error:  found %i OBST keywords, was expecting %i\n",sextras.nOBST,scase.meshescoll.nmeshes);
-        if(scase.meshescoll.nmeshes!=sextras.nVENT)fprintf(stderr,"*** Error:  found %i VENT keywords, was expecting %i\n",sextras.nVENT,scase.meshescoll.nmeshes);
-        if(sextras.nCVENT!=0&&scase.meshescoll.nmeshes!=sextras.nCVENT)fprintf(stderr,"*** Error:  found %i CVENT keywords, was expecting %i\n",sextras.noffset,scase.meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=scase.ntrnx)fprintf(stderr,"*** Error:  found %i TRNX keywords, was expecting %i\n",scase.ntrnx,scase.meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=scase.ntrny)fprintf(stderr,"*** Error:  found %i TRNY keywords, was expecting %i\n",scase.ntrny,scase.meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=scase.ntrnz)fprintf(stderr,"*** Error:  found %i TRNZ keywords, was expecting %i\n",scase.ntrnz,scase.meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=scase.npdim)fprintf(stderr,"*** Error:  found %i PDIM keywords, was expecting %i\n",scase.npdim,scase.meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=scase.nOBST)fprintf(stderr,"*** Error:  found %i OBST keywords, was expecting %i\n",scase.nOBST,scase.meshescoll.nmeshes);
+        if(scase.meshescoll.nmeshes!=scase.nVENT)fprintf(stderr,"*** Error:  found %i VENT keywords, was expecting %i\n",scase.nVENT,scase.meshescoll.nmeshes);
+        if(scase.nCVENT!=0&&scase.meshescoll.nmeshes!=scase.nCVENT)fprintf(stderr,"*** Error:  found %i CVENT keywords, was expecting %i\n",scase.noffset,scase.meshescoll.nmeshes);
         return 2;
       }
     }
@@ -8070,24 +8070,24 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     meshi->plotn=1;
     meshi->itextureoffset=0;
   }
-  if(sextras.setPDIM==0){
+  if(scase.setPDIM==0){
     meshdata *meshi;
 
     if(roomdefined==0){
-      sextras.xbar0 = 0.0;    sextras.xbar = 1.0;
-      sextras.ybar0 = 0.0;    sextras.ybar = 1.0;
-      sextras.zbar0 = 0.0;    sextras.zbar = 1.0;
+      scase.xbar0 = 0.0;    scase.xbar = 1.0;
+      scase.ybar0 = 0.0;    scase.ybar = 1.0;
+      scase.zbar0 = 0.0;    scase.zbar = 1.0;
     }
     meshi=scase.meshescoll.meshinfo;
-    meshi->xyz_bar0[XXX]=sextras.xbar0;
-    meshi->xyz_bar[XXX] =sextras.xbar;
-    meshi->xcen=(sextras.xbar+sextras.xbar0)/2.0;
-    meshi->xyz_bar0[YYY]=sextras.ybar0;
-    meshi->xyz_bar[YYY] =sextras.ybar;
-    meshi->ycen=(sextras.ybar+sextras.ybar0)/2.0;
-    meshi->xyz_bar0[ZZZ]=sextras.zbar0;
-    meshi->xyz_bar[ZZZ] =sextras.zbar;
-    meshi->zcen=(sextras.zbar+sextras.zbar0)/2.0;
+    meshi->xyz_bar0[XXX]=scase.xbar0;
+    meshi->xyz_bar[XXX] =scase.xbar;
+    meshi->xcen=(scase.xbar+scase.xbar0)/2.0;
+    meshi->xyz_bar0[YYY]=scase.ybar0;
+    meshi->xyz_bar[YYY] =scase.ybar;
+    meshi->ycen=(scase.ybar+scase.ybar0)/2.0;
+    meshi->xyz_bar0[ZZZ]=scase.zbar0;
+    meshi->xyz_bar[ZZZ] =scase.zbar;
+    meshi->zcen=(scase.zbar+scase.zbar0)/2.0;
   }
 
   // define labels and memory for default colorbars
@@ -8154,9 +8154,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     if(NewMemory((void **)&scase.zventinfo,scase.nzvents*sizeof(zventdata))==0)return 2;
   }
   scase.nzvents=0;
-  sextras.nzhvents=0;
-  sextras.nzvvents=0;
-  sextras.nzmvents = 0;
+  scase.nzhvents=0;
+  scase.nzvvents=0;
+  scase.nzmvents = 0;
 
   FREEMEMORY(scase.texture_coll.textureinfo);
   FREEMEMORY(scase.surfcoll.surfinfo);
@@ -8170,12 +8170,12 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     if (err == 0) return 2;
   }
 
-  if(sextras.noutlineinfo>0){
-    if(NewMemory((void **)&sextras.outlineinfo,sextras.noutlineinfo*sizeof(outlinedata))==0)return 2;
-    for(i=0;i<sextras.noutlineinfo;i++){
+  if(scase.noutlineinfo>0){
+    if(NewMemory((void **)&scase.outlineinfo,scase.noutlineinfo*sizeof(outlinedata))==0)return 2;
+    for(i=0;i<scase.noutlineinfo;i++){
       outlinedata *outlinei;
 
-      outlinei = sextras.outlineinfo + i;
+      outlinei = scase.outlineinfo + i;
       outlinei->x1=NULL;
       outlinei->x2=NULL;
       outlinei->y1=NULL;
@@ -8184,10 +8184,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       outlinei->z2=NULL;
     }
   }
-  if(sextras.ntickinfo>0){
-    if(NewMemory((void **)&sextras.tickinfo,sextras.ntickinfo*sizeof(tickdata))==0)return 2;
-    sextras.ntickinfo=0;
-    sextras.ntickinfo_smv=0;
+  if(scase.ntickinfo>0){
+    if(NewMemory((void **)&scase.tickinfo,scase.ntickinfo*sizeof(tickdata))==0)return 2;
+    scase.ntickinfo=0;
+    scase.ntickinfo_smv=0;
   }
 
   if(scase.propcoll.npropinfo>0){
@@ -8196,9 +8196,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     scase.propcoll.npropinfo=1;
   }
 
-  if(scase.npartinfo>0 && NewMemory((void **)&sextras.part_buffer,       3*scase.npartinfo*MAXFILELEN)    == 0)return 2;
-  if(scase.slicecoll.nsliceinfo>0 && NewMemory((void **)&sextras.slice_buffer,     7*scase.slicecoll.nsliceinfo*MAXFILELEN)   == 0)return 2;
-  if(scase.smoke3dcoll.nsmoke3dinfo>0 && NewMemory((void **)&sextras.smoke3d_buffer, 9*scase.smoke3dcoll.nsmoke3dinfo*MAXFILELEN) == 0)return 2;
+  if(scase.npartinfo>0 && NewMemory((void **)&scase.part_buffer,       3*scase.npartinfo*MAXFILELEN)    == 0)return 2;
+  if(scase.slicecoll.nsliceinfo>0 && NewMemory((void **)&scase.slice_buffer,     7*scase.slicecoll.nsliceinfo*MAXFILELEN)   == 0)return 2;
+  if(scase.smoke3dcoll.nsmoke3dinfo>0 && NewMemory((void **)&scase.smoke3d_buffer, 9*scase.smoke3dcoll.nsmoke3dinfo*MAXFILELEN) == 0)return 2;
 
   PRINT_TIMER(timer_readsmv, "pass 1");
 
@@ -8211,8 +8211,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   startpass=1;
   ioffset=0;
   iobst=0;
-  sextras.noutlineinfo=0;
-  if(sextras.noffset==0)ioffset=1;
+  scase.noutlineinfo=0;
+  if(scase.noffset==0)ioffset=1;
 
   REWIND(stream);
   PRINTF("%s","  pass 2\n");
@@ -8256,7 +8256,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   */
     if(MatchSMV(buffer, "HVAC") == 1){
       int r =
-          ParseHVACEntry(&hvaccoll, stream, sextras.hvac_node_color, sextras.hvac_duct_color);
+          ParseHVACEntry(&hvaccoll, stream, scase.hvac_node_color, scase.hvac_duct_color);
       if (r == 1) {
         BREAK;
       }
@@ -8300,7 +8300,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   */
     if(MatchSMV(buffer, "TIMES")==1){
       FGETS(buffer, 255, stream);
-      sscanf(buffer, "%f %f", &sextras.global_tbegin, &sextras.global_tend);
+      sscanf(buffer, "%f %f", &scase.global_tbegin, &scase.global_tend);
       continue;
     }
   /*
@@ -8357,7 +8357,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       if(have_vectors!=CFACE_NORMALS_YES)have_vectors=CFACE_NORMALS_NO;
       if(have_vectors == CFACE_NORMALS_YES)have_cface_normals = CFACE_NORMALS_YES;
       InitGeom(geomi, GEOM_CGEOM, FDSBLOCK, have_vectors,-1);
-      geomi->memory_id = ++sextras.nmemory_ids;
+      geomi->memory_id = ++scase.nmemory_ids;
 
       FGETS(buffer,255,stream);
       TrimBack(buffer);
@@ -8382,7 +8382,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       geomi = scase.geominfo + scase.ngeominfo;
       geomi->ngeomobjinfo=0;
       geomi->geomobjinfo=NULL;
-      geomi->memory_id = ++sextras.nmemory_ids;
+      geomi->memory_id = ++scase.nmemory_ids;
 
       TrimBack(buffer);
       if(strlen(buffer)>4){
@@ -8492,8 +8492,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
             geomi->is_terrain = is_terrain;
           }
           if(geomi->is_terrain==1){
-            sextras.is_terrain_case = 1;
-            sextras.auto_terrain = 1;
+            scase.is_terrain_case = 1;
+            scase.auto_terrain = 1;
           }
           if(texture_mapping!=NULL&&strcmp(texture_mapping,"SPHERICAL")==0){
             geomobji->texture_mapping=TEXTURE_SPHERICAL;
@@ -8527,7 +8527,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     +++++++++++++++++++++++++++++ OBST ++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
-    if(MatchSMV(buffer,"OBST") == 1&&sextras.auto_terrain==1){
+    if(MatchSMV(buffer,"OBST") == 1&&scase.auto_terrain==1){
       int nobsts=0;
       meshdata *meshi;
       unsigned char *is_block_terrain;
@@ -8702,10 +8702,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       NewMemory((void **)&file, len_buffer+1);
       strcpy(file, buffer_ptr);
 
-      terraini = sextras.terraininfo + sextras.nterraininfo;
+      terraini = scase.terraininfo + scase.nterraininfo;
       terraini->file = file;
       if(mesh_terrain==-1){
-        mesh_terrain = sextras.nterraininfo;    // no mesh_terrain on TERRAIN line so assume that number of TERRAIN and MESH lines are the same
+        mesh_terrain = scase.nterraininfo;    // no mesh_terrain on TERRAIN line so assume that number of TERRAIN and MESH lines are the same
       }
       else{
         mesh_terrain--;                 // mesh_terrain on TERRAIN line goes from 1 to number of meshes so subtract 1
@@ -8713,7 +8713,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       scase.meshescoll.meshinfo[mesh_terrain].terrain = terraini;
       terraini->terrain_mesh = scase.meshescoll.meshinfo+mesh_terrain;
       terraini->defined = 0;
-      sextras.nterraininfo++;
+      scase.nterraininfo++;
       continue;
     }
   /*
@@ -8950,8 +8950,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   */
 
     if(MatchSMV(buffer,"TICKS") == 1){
-      sextras.ntickinfo++;
-      sextras.ntickinfo_smv++;
+      scase.ntickinfo++;
+      scase.ntickinfo_smv++;
       {
         tickdata *ticki;
         float *begt, *endt;
@@ -8961,7 +8961,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         float *dxyz;
         float sum;
 
-        ticki = sextras.tickinfo + sextras.ntickinfo - 1;
+        ticki = scase.tickinfo + scase.ntickinfo - 1;
         begt = ticki->begin;
         endt = ticki->end;
         nbarst=&ticki->nbars;
@@ -9051,8 +9051,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     if(MatchSMV(buffer,"OUTLINE") == 1){
       outlinedata *outlinei;
 
-      sextras.noutlineinfo++;
-      outlinei = sextras.outlineinfo + sextras.noutlineinfo - 1;
+      scase.noutlineinfo++;
+      outlinei = scase.outlineinfo + scase.noutlineinfo - 1;
       if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
@@ -9115,7 +9115,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
       FGETS(buffer,255,stream);
       bufferptr=TrimFrontBack(buffer);
-      strcpy(sextras.surfacedefaultlabel,TrimFront(bufferptr));
+      strcpy(scase.surfacedefaultlabel,TrimFront(bufferptr));
       continue;
     }
   /*
@@ -9357,11 +9357,11 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       if(filename!=NULL)period=strrchr(filename,'.');
       if(filename!=NULL&&period!=NULL&&strcmp(period,".csv")==0){
         zonei->csv=1;
-        sextras.zonecsv=1;
+        scase.zonecsv=1;
       }
       else{
         zonei->csv=0;
-        sextras.zonecsv=0;
+        scase.zonecsv=0;
         filename= GetZoneFileName(bufferptr);
       }
 
@@ -9386,19 +9386,19 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         }
         izone_local++;
       }
-      if(sextras.colorlabelzone!=NULL){
+      if(scase.colorlabelzone!=NULL){
         for(n=0;n<MAXRGB;n++){
-          FREEMEMORY(sextras.colorlabelzone[n]);
+          FREEMEMORY(scase.colorlabelzone[n]);
         }
-        FREEMEMORY(sextras.colorlabelzone);
+        FREEMEMORY(scase.colorlabelzone);
       }
       CheckMemory;
-      NewMemory((void **)&sextras.colorlabelzone,MAXRGB*sizeof(char *));
+      NewMemory((void **)&scase.colorlabelzone,MAXRGB*sizeof(char *));
       for(n=0;n<MAXRGB;n++){
-        sextras.colorlabelzone[n]=NULL;
+        scase.colorlabelzone[n]=NULL;
       }
-      for(n=0;n<sextras.nrgb;n++){
-        NewMemory((void **)&sextras.colorlabelzone[n],11);
+      for(n=0;n<scase.nrgb;n++){
+        NewMemory((void **)&scase.colorlabelzone[n],11);
       }
       continue;
     }
@@ -9410,7 +9410,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     if(MatchSMV(buffer,"ROOM") == 1){
       roomdata *roomi;
 
-      sextras.isZoneFireModel=1;
+      scase.isZoneFireModel=1;
       visFrame=0;
       roomdefined=1;
       iroom++;
@@ -9433,13 +9433,13 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       roomi->y1=roomi->y0+roomi->dy;
       roomi->z1=roomi->z0+roomi->dz;
 
-      if(sextras.setPDIM==0){
-        if(roomi->x0<sextras.xbar0)sextras.xbar0=roomi->x0;
-        if(roomi->y0<sextras.ybar0)sextras.ybar0=roomi->y0;
-        if(roomi->z0<sextras.zbar0)sextras.zbar0=roomi->z0;
-        if(roomi->x1>sextras.xbar)sextras.xbar=roomi->x1;
-        if(roomi->y1>sextras.ybar)sextras.ybar=roomi->y1;
-        if(roomi->z1>sextras.zbar)sextras.zbar=roomi->z1;
+      if(scase.setPDIM==0){
+        if(roomi->x0<scase.xbar0)scase.xbar0=roomi->x0;
+        if(roomi->y0<scase.ybar0)scase.ybar0=roomi->y0;
+        if(roomi->z0<scase.zbar0)scase.zbar0=roomi->z0;
+        if(roomi->x1>scase.xbar)scase.xbar=roomi->x1;
+        if(roomi->y1>scase.ybar)scase.ybar=roomi->y1;
+        if(roomi->z1>scase.zbar)scase.zbar=roomi->z1;
       }
       continue;
     }
@@ -9479,13 +9479,13 @@ int ReadSMV_Parse(bufferstreamdata *stream){
        NewMemory((void **)&zp2,sizeof(float)*(kbartemp+1))==0
        )return 2;
     for(nn=0;nn<=ibartemp;nn++){
-      xp[nn]=sextras.xbar0+(float)nn*(sextras.xbar-sextras.xbar0)/(float)ibartemp;
+      xp[nn]=scase.xbar0+(float)nn*(scase.xbar-scase.xbar0)/(float)ibartemp;
     }
     for(nn=0;nn<=jbartemp;nn++){
-      yp[nn]=sextras.ybar0+(float)nn*(sextras.ybar-sextras.ybar0)/(float)jbartemp;
+      yp[nn]=scase.ybar0+(float)nn*(scase.ybar-scase.ybar0)/(float)jbartemp;
     }
     for(nn=0;nn<=kbartemp;nn++){
-      zp[nn]=sextras.zbar0+(float)nn*(sextras.zbar-sextras.zbar0)/(float)kbartemp;
+      zp[nn]=scase.zbar0+(float)nn*(scase.zbar-scase.zbar0)/(float)kbartemp;
     }
     meshi=scase.meshescoll.meshinfo;
     meshi->xplt=xp;
@@ -9504,19 +9504,19 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     meshi->ploty=jbartemp/2;
     meshi->plotz=kbartemp/2;
   }
-  if(sextras.setPDIM==0&&roomdefined==1){
+  if(scase.setPDIM==0&&roomdefined==1){
     meshdata *meshi;
 
     meshi=scase.meshescoll.meshinfo;
-    meshi->xyz_bar0[XXX]=sextras.xbar0;
-    meshi->xyz_bar[XXX] =sextras.xbar;
-    meshi->xcen=(sextras.xbar+sextras.xbar0)/2.0;
-    meshi->xyz_bar0[YYY]=sextras.ybar0;
-    meshi->xyz_bar[YYY] =sextras.ybar;
-    meshi->ycen=(sextras.ybar+sextras.ybar0)/2.0;
-    meshi->xyz_bar0[ZZZ]=sextras.zbar0;
-    meshi->xyz_bar[ZZZ] =sextras.zbar;
-    meshi->zcen=(sextras.zbar+sextras.zbar0)/2.0;
+    meshi->xyz_bar0[XXX]=scase.xbar0;
+    meshi->xyz_bar[XXX] =scase.xbar;
+    meshi->xcen=(scase.xbar+scase.xbar0)/2.0;
+    meshi->xyz_bar0[YYY]=scase.ybar0;
+    meshi->xyz_bar[YYY] =scase.ybar;
+    meshi->ycen=(scase.ybar+scase.ybar0)/2.0;
+    meshi->xyz_bar0[ZZZ]=scase.zbar0;
+    meshi->xyz_bar[ZZZ] =scase.zbar;
+    meshi->zcen=(scase.zbar+scase.zbar0)/2.0;
   }
 
   if(scase.devicecoll.ndeviceinfo>0){
@@ -9566,7 +9566,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
-      sscanf(buffer,"%f %f %f",&sextras.pref,&sextras.pamb,&sextras.tamb);
+      sscanf(buffer,"%f %f %f",&scase.pref,&scase.pamb,&scase.tamb);
       continue;
     }
     /*
@@ -9651,7 +9651,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->ntc=tempval;
-      sextras.ntc_total += meshi->ntc;
+      scase.ntc_total += meshi->ntc;
       hasSensorNorm=0;
       if(meshi->ntc>0){
         int nn;
@@ -9683,7 +9683,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
             xyznorm[2]/=normdenom;
           }
           if(device_label==NULL){
-            if(sextras.isZoneFireModel==1){
+            if(scase.isZoneFireModel==1){
               devicecopy->object = GetSmvObjectType(&scase.objectscoll,  "target",scase.objectscoll.std_object_defs.thcp_object_backup);
             }
             else{
@@ -9719,7 +9719,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->nspr=tempval;
-      sextras.nspr_total += meshi->nspr;
+      scase.nspr_total += meshi->nspr;
       if(meshi->nspr>0){
         float *xsprcopy, *ysprcopy, *zsprcopy;
         int nn;
@@ -9798,7 +9798,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       sscanf(buffer,"%i",&tempval);
       if(tempval<0)tempval=0;
       meshi->nheat=tempval;
-      sextras.nheat_total += meshi->nheat;
+      scase.nheat_total += meshi->nheat;
       if(meshi->nheat>0){
         float *xheatcopy, *yheatcopy, *zheatcopy;
 
@@ -9990,14 +9990,14 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
   */
 
-  surfacedefault=&sextras.sdefault;
+  surfacedefault=&scase.sdefault;
   for(i=0;i<scase.surfcoll.nsurfinfo;i++){
-    if(strcmp(sextras.surfacedefaultlabel,scase.surfcoll.surfinfo[i].surfacelabel)==0){
+    if(strcmp(scase.surfacedefaultlabel,scase.surfcoll.surfinfo[i].surfacelabel)==0){
       surfacedefault=scase.surfcoll.surfinfo+i;
       break;
     }
   }
-  vent_surfacedefault=&sextras.v_surfacedefault;
+  vent_surfacedefault=&scase.v_surfacedefault;
   for(i=0;i<scase.surfcoll.nsurfinfo;i++){
     if(strcmp(vent_surfacedefault->surfacelabel,scase.surfcoll.surfinfo[i].surfacelabel)==0){
       vent_surfacedefault=scase.surfcoll.surfinfo+i;
@@ -10005,10 +10005,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     }
   }
 
-  sextras.exterior_surfacedefault=&sextras.e_surfacedefault;
+  scase.exterior_surfacedefault=&scase.e_surfacedefault;
   for(i=0;i<scase.surfcoll.nsurfinfo;i++){
-    if(strcmp(sextras.exterior_surfacedefault->surfacelabel,scase.surfcoll.surfinfo[i].surfacelabel)==0){
-      sextras.exterior_surfacedefault=scase.surfcoll.surfinfo+i;
+    if(strcmp(scase.exterior_surfacedefault->surfacelabel,scase.surfcoll.surfinfo[i].surfacelabel)==0){
+      scase.exterior_surfacedefault=scase.surfcoll.surfinfo+i;
       break;
     }
   }
@@ -10017,7 +10017,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   itrnx=0, itrny=0, itrnz=0, igrid=0, ipdim=0, iobst=0, ivent=0, icvent=0;
   ioffset=0;
   scase.npartclassinfo=0;
-  if(sextras.noffset==0)ioffset=1;
+  if(scase.noffset==0)ioffset=1;
   PRINT_TIMER(timer_readsmv, "pass 3");
 
 /*
@@ -10039,8 +10039,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       BREAK;
     }
 
-    if(sextras.nVENT==0){
-      sextras.nVENT=0;
+    if(scase.nVENT==0){
+      scase.nVENT=0;
       strcpy(buffer,"VENT");
     }
     else{
@@ -10092,9 +10092,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       sscanf(buffer,"%i",&nhrrpuvcut);
       if(nhrrpuvcut>=1){
         FGETS(buffer,255,stream);
-        sscanf(buffer,"%f",&sextras.global_hrrpuv_cutoff_default);
-        sextras.global_hrrpuv_cutoff = sextras.global_hrrpuv_cutoff_default;
-        sextras.load_hrrpuv_cutoff = sextras.global_hrrpuv_cutoff;
+        sscanf(buffer,"%f",&scase.global_hrrpuv_cutoff_default);
+        scase.global_hrrpuv_cutoff = scase.global_hrrpuv_cutoff_default;
+        scase.load_hrrpuv_cutoff = scase.global_hrrpuv_cutoff;
         for(i=1;i<nhrrpuvcut;i++){
           FGETS(buffer,255,stream);
         }
@@ -10161,7 +10161,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       if(vent_type==HFLOW_VENT){
         float area_fraction=1.0;
 
-        sextras.nzhvents++;
+        scase.nzhvents++;
         sscanf(buffer,"%i %i %i %f %f %f %f %f %f %f %f",
           &roomfrom,&roomto, &wall,&vent_width,&ventoffset,&bottom,&top,
           color,color+1,color+2,&area_fraction
@@ -10216,7 +10216,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         int r_from, r_to;
         float area_fraction=1.0;
 
-        sextras.nzvvents++;
+        scase.nzvvents++;
         sscanf(buffer,"%i %i %i %f %i %f %f %f %f",
           &r_from,&r_to,&wall,&vent_area,&vertical_vent_type,
           color,color+1,color+2, &area_fraction
@@ -10265,7 +10265,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         zvi->color = GetColorPtr(&scase.colorcoll, color);
       }
       else if(vent_type==MFLOW_VENT){
-        sextras.nzmvents++;
+        scase.nzmvents++;
         ReadZVentData(zvi, buffer, ZVENT_1ROOM);
       }
       CheckMemory;
@@ -10291,15 +10291,15 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       CheckMemory;
       switch(vent_type){
       case HFLOW_VENT:
-        sextras.nzhvents++;
+        scase.nzhvents++;
         ReadZVentData(zvi, buffer,ZVENT_2ROOM);
         break;
       case VFLOW_VENT:
-        sextras.nzvvents++;
+        scase.nzvvents++;
         ReadZVentData(zvi, buffer, ZVENT_2ROOM);
         break;
       case MFLOW_VENT:
-        sextras.nzmvents++;
+        scase.nzmvents++;
         ReadZVentData(zvi, buffer, ZVENT_1ROOM);
         break;
       default:
@@ -10353,7 +10353,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       meshrgb = meshi->meshrgb;
 
       FGETS(buffer,255,stream);
-      sscanf(buffer,"%f %f %f %f %f %f %f %f %f",&sextras.xbar0,&sextras.xbar,&sextras.ybar0,&sextras.ybar,&sextras.zbar0,&sextras.zbar,meshrgb,meshrgb+1,meshrgb+2);
+      sscanf(buffer,"%f %f %f %f %f %f %f %f %f",&scase.xbar0,&scase.xbar,&scase.ybar0,&scase.ybar,&scase.zbar0,&scase.zbar,meshrgb,meshrgb+1,meshrgb+2);
 
       if(meshrgb[0]!=0.0||meshrgb[1]!=0.0||meshrgb[2]!=0.0){
         meshi->meshrgb_ptr=meshi->meshrgb;
@@ -10362,35 +10362,35 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         meshi->meshrgb_ptr=NULL;
       }
 
-      meshi->xyz_bar0[XXX]=sextras.xbar0;
-      meshi->xyz_bar[XXX] =sextras.xbar;
-      meshi->xcen=(sextras.xbar+sextras.xbar0)/2.0;
-      meshi->xyz_bar0[YYY]=sextras.ybar0;
-      meshi->xyz_bar[YYY] =sextras.ybar;
-      meshi->ycen =(sextras.ybar+sextras.ybar0)/2.0;
-      meshi->xyz_bar0[ZZZ]=sextras.zbar0;
-      meshi->xyz_bar[ZZZ] =sextras.zbar;
-      meshi->zcen =(sextras.zbar+sextras.zbar0)/2.0;
-      InitBoxClipInfo(meshi->box_clipinfo,sextras.xbar0,sextras.xbar,sextras.ybar0,sextras.ybar,sextras.zbar0,sextras.zbar);
-      if(sextras.ntrnx==0){
+      meshi->xyz_bar0[XXX]=scase.xbar0;
+      meshi->xyz_bar[XXX] =scase.xbar;
+      meshi->xcen=(scase.xbar+scase.xbar0)/2.0;
+      meshi->xyz_bar0[YYY]=scase.ybar0;
+      meshi->xyz_bar[YYY] =scase.ybar;
+      meshi->ycen =(scase.ybar+scase.ybar0)/2.0;
+      meshi->xyz_bar0[ZZZ]=scase.zbar0;
+      meshi->xyz_bar[ZZZ] =scase.zbar;
+      meshi->zcen =(scase.zbar+scase.zbar0)/2.0;
+      InitBoxClipInfo(meshi->box_clipinfo,scase.xbar0,scase.xbar,scase.ybar0,scase.ybar,scase.zbar0,scase.zbar);
+      if(scase.ntrnx==0){
         int nn;
 
         for(nn = 0; nn<=meshi->ibar; nn++){
-          meshi->xplt[nn] = sextras.xbar0+(float)nn*(sextras.xbar-sextras.xbar0)/(float)meshi->ibar;
+          meshi->xplt[nn] = scase.xbar0+(float)nn*(scase.xbar-scase.xbar0)/(float)meshi->ibar;
         }
       }
-      if(sextras.ntrny==0){
+      if(scase.ntrny==0){
         int nn;
 
         for(nn = 0; nn<=meshi->jbar; nn++){
-          meshi->yplt[nn] = sextras.ybar0+(float)nn*(sextras.ybar-sextras.ybar0)/(float)meshi->jbar;
+          meshi->yplt[nn] = scase.ybar0+(float)nn*(scase.ybar-scase.ybar0)/(float)meshi->jbar;
         }
       }
-      if(sextras.ntrnz==0){
+      if(scase.ntrnz==0){
         int nn;
 
         for(nn = 0; nn<=meshi->kbar; nn++){
-          meshi->zplt[nn]=sextras.zbar0+(float)nn*(sextras.zbar-sextras.zbar0)/(float)meshi->kbar;
+          meshi->zplt[nn]=scase.zbar0+(float)nn*(scase.zbar-scase.zbar0)/(float)meshi->kbar;
         }
       }
       continue;
@@ -10491,15 +10491,15 @@ typedef struct {
 */
     if(MatchSMV(buffer,"TREE") == 1){
       FGETS(buffer,255,stream);
-      if(sextras.ntreeinfo!=0)continue;
-      sscanf(buffer,"%i",&sextras.ntreeinfo);
-      if(sextras.ntreeinfo>0){
-        NewMemory((void **)&sextras.treeinfo,sizeof(treedata)*sextras.ntreeinfo);
-        for(i=0;i<sextras.ntreeinfo;i++){
+      if(scase.ntreeinfo!=0)continue;
+      sscanf(buffer,"%i",&scase.ntreeinfo);
+      if(scase.ntreeinfo>0){
+        NewMemory((void **)&scase.treeinfo,sizeof(treedata)*scase.ntreeinfo);
+        for(i=0;i<scase.ntreeinfo;i++){
           treedata *treei;
           float *xyz;
 
-          treei = sextras.treeinfo + i;
+          treei = scase.treeinfo + i;
           treei->time_char=-1.0;
           treei->time_complete=-1.0;
           xyz = treei->xyz;
@@ -10522,11 +10522,11 @@ typedef struct {
       float tree_time;
       treedata *treei;
 
-      if(sextras.ntreeinfo==0)continue;
+      if(scase.ntreeinfo==0)continue;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %i %f",&tree_index,&tree_state,&tree_time);
-      if(tree_index>=1&&tree_index<=sextras.ntreeinfo){
-        treei = sextras.treeinfo + tree_index - 1;
+      if(tree_index>=1&&tree_index<=scase.ntreeinfo){
+        treei = scase.treeinfo + tree_index - 1;
         if(tree_state==1){
           treei->time_char = tree_time;
         }
@@ -10563,7 +10563,7 @@ typedef struct {
       n_blocks_normal=n_blocks;
       if(n_blocks==0)continue;
 
-      if(sextras.auto_terrain==1||sextras.manual_terrain==1){
+      if(scase.auto_terrain==1||scase.manual_terrain==1){
         is_block_terrain=meshi->is_block_terrain;
         n_blocks_normal=0;
         for(iblock=0;iblock<n_blocks;iblock++){
@@ -10583,7 +10583,7 @@ typedef struct {
         int s_num[6];
         blockagedata *bc;
 
-        if((sextras.auto_terrain==1||sextras.manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
+        if((scase.auto_terrain==1||scase.manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
           FGETS(buffer,255,stream);
           continue;
         }
@@ -10635,9 +10635,9 @@ typedef struct {
           float t_origin[3];
           float *xyzEXACT;
 
-          t_origin[0]=sextras.texture_origin[0];
-          t_origin[1]=sextras.texture_origin[1];
-          t_origin[2]=sextras.texture_origin[2];
+          t_origin[0]=scase.texture_origin[0];
+          t_origin[1]=scase.texture_origin[1];
+          t_origin[2]=scase.texture_origin[2];
           xyzEXACT = bc->xyzEXACT;
           sscanf(buffer,"%f %f %f %f %f %f %i %i %i %i %i %i %i %f %f %f",
             xyzEXACT,xyzEXACT+1,xyzEXACT+2,xyzEXACT+3,xyzEXACT+4,xyzEXACT+5,
@@ -10686,7 +10686,7 @@ typedef struct {
         int *ijk;
         int colorindex, blocktype;
 
-        if((sextras.auto_terrain==1||sextras.manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
+        if((scase.auto_terrain==1||scase.manual_terrain==1)&&meshi->is_block_terrain!=NULL&&meshi->is_block_terrain[iblock]==1){
           FGETS(buffer,255,stream);
           continue;
         }
@@ -10809,10 +10809,10 @@ typedef struct {
         }
         else{
           if(colorindex>=0){
-            bc->color = GetColorPtr(&scase.colorcoll, sextras.rgb[sextras.nrgb+colorindex]);
+            bc->color = GetColorPtr(&scase.colorcoll, scase.rgb[scase.nrgb+colorindex]);
             bc->usecolorindex=1;
             bc->colorindex=colorindex;
-            sextras.updateindexcolors=1;
+            scase.updateindexcolors=1;
           }
         }
 
@@ -10829,7 +10829,7 @@ typedef struct {
         }
         else{
           if(colorindex==-1){
-            sextras.updateindexcolors=1;
+            scase.updateindexcolors=1;
           }
         }
       }
@@ -10877,7 +10877,7 @@ typedef struct {
       meshi->cventinfo=NULL;
       meshi->ncvents=ncv;
       if(ncv==0)continue;
-      sextras.ncvents+=ncv;
+      scase.ncvents+=ncv;
 
       NewMemory((void **)&cvinfo,ncv*sizeof(cventdata));
       meshi->cventinfo=cvinfo;
@@ -10892,9 +10892,9 @@ typedef struct {
         cvi->isOpenvent=0;
         cvi->surf[0]=vent_surfacedefault;
         cvi->textureinfo[0]=NULL;
-        cvi->texture_origin[0]=sextras.texture_origin[0];
-        cvi->texture_origin[1]=sextras.texture_origin[1];
-        cvi->texture_origin[2]=sextras.texture_origin[2];
+        cvi->texture_origin[0]=scase.texture_origin[0];
+        cvi->texture_origin[1]=scase.texture_origin[1];
+        cvi->texture_origin[2]=scase.texture_origin[2];
         cvi->useventcolor=1;
         cvi->hideboundary=0;
         cvi->cvent_id=-1;
@@ -10906,9 +10906,9 @@ typedef struct {
 
         origin=cvi->origin;
         s_num[0]=-1;
-        t_origin[0]=sextras.texture_origin[0];
-        t_origin[1]=sextras.texture_origin[1];
-        t_origin[2]=sextras.texture_origin[2];
+        t_origin[0]=scase.texture_origin[0];
+        t_origin[1]=scase.texture_origin[1];
+        t_origin[2]=scase.texture_origin[2];
         FGETS(buffer,255,stream);
         sscanf(buffer,"%f %f %f %f %f %f %i %i %f %f %f",
           &cvi->xmin,&cvi->xmax,&cvi->ymin,&cvi->ymax,&cvi->zmin,&cvi->zmax,
@@ -10922,9 +10922,9 @@ typedef struct {
           cvi->surf[0]->used_by_vent=1;
         }
         if(t_origin[0]<=-998.0){
-          t_origin[0]=sextras.texture_origin[0];
-          t_origin[1]=sextras.texture_origin[1];
-          t_origin[2]=sextras.texture_origin[2];
+          t_origin[0]=scase.texture_origin[0];
+          t_origin[1]=scase.texture_origin[1];
+          t_origin[2]=scase.texture_origin[2];
         }
         cvi->texture_origin[0]=t_origin[0];
         cvi->texture_origin[1]=t_origin[1];
@@ -10988,10 +10988,10 @@ typedef struct {
 
         if(ABS(ventindex)!=99){
           ventindex=ABS(ventindex);
-          if(ventindex>sextras.nrgb2-1)ventindex=sextras.nrgb2-1;
-          s_color[0]=sextras.rgb[sextras.nrgb+ventindex][0];
-          s_color[1]=sextras.rgb[sextras.nrgb+ventindex][1];
-          s_color[2]=sextras.rgb[sextras.nrgb+ventindex][2];
+          if(ventindex>scase.nrgb2-1)ventindex=scase.nrgb2-1;
+          s_color[0]=scase.rgb[scase.nrgb+ventindex][0];
+          s_color[1]=scase.rgb[scase.nrgb+ventindex][1];
+          s_color[2]=scase.rgb[scase.nrgb+ventindex][2];
           s_color[3]=1.0;
           cvi->useventcolor=1;
         }
@@ -11042,22 +11042,22 @@ typedef struct {
       xplttemp=meshi->xplt;
       yplttemp=meshi->yplt;
       zplttemp=meshi->zplt;
-      if(sextras.nVENT==0){
+      if(scase.nVENT==0){
         strcpy(buffer,"0 0");
-        sextras.nVENT=1;
+        scase.nVENT=1;
       }
       else{
         FGETS(buffer,255,stream);
       }
-      sextras.ndummyvents=0;
-      sscanf(buffer,"%i %i",&nvents,&sextras.ndummyvents);
-      if(sextras.ndummyvents!=0){
+      scase.ndummyvents=0;
+      sscanf(buffer,"%i %i",&nvents,&scase.ndummyvents);
+      if(scase.ndummyvents!=0){
         visFloor=0;
         visCeiling=0;
         visWalls=0;
       }
       meshi->nvents=nvents;
-      meshi->ndummyvents=sextras.ndummyvents;
+      meshi->ndummyvents=scase.ndummyvents;
       vinfo=NULL;
       meshi->ventinfo=vinfo;
       if(NewMemory((void **)&vinfo,(nvents+12)*sizeof(ventdata))==0)return 2;
@@ -11080,11 +11080,11 @@ typedef struct {
         vi->hideboundary=0;
         vi->surf[0]=vent_surfacedefault;
         vi->textureinfo[0]=NULL;
-        vi->texture_origin[0]=sextras.texture_origin[0];
-        vi->texture_origin[1]=sextras.texture_origin[1];
-        vi->texture_origin[2]=sextras.texture_origin[2];
+        vi->texture_origin[0]=scase.texture_origin[0];
+        vi->texture_origin[1]=scase.texture_origin[1];
+        vi->texture_origin[2]=scase.texture_origin[2];
         vi->colorindex=-1;
-        if(nn>nvents-sextras.ndummyvents-1&&nn<nvents){
+        if(nn>nvents-scase.ndummyvents-1&&nn<nvents){
           vi->dummy=1;
         }
         else{
@@ -11094,17 +11094,17 @@ typedef struct {
         if(nn<nvents){
           float t_origin[3];
 
-          t_origin[0]=sextras.texture_origin[0];
-          t_origin[1]=sextras.texture_origin[1];
-          t_origin[2]=sextras.texture_origin[2];
+          t_origin[0]=scase.texture_origin[0];
+          t_origin[1]=scase.texture_origin[1];
+          t_origin[2]=scase.texture_origin[2];
           FGETS(buffer,255,stream);
           sscanf(buffer,"%f %f %f %f %f %f %i %i %f %f %f",
                  &vi->xmin,&vi->xmax,&vi->ymin,&vi->ymax,&vi->zmin,&vi->zmax,
                  &vi->vent_id,s_num,t_origin,t_origin+1,t_origin+2);
           if(t_origin[0]<=-998.0){
-            t_origin[0]=sextras.texture_origin[0];
-            t_origin[1]=sextras.texture_origin[1];
-            t_origin[2]=sextras.texture_origin[2];
+            t_origin[0]=scase.texture_origin[0];
+            t_origin[1]=scase.texture_origin[1];
+            t_origin[2]=scase.texture_origin[2];
           }
           vi->texture_origin[0]=t_origin[0];
           vi->texture_origin[1]=t_origin[1];
@@ -11148,7 +11148,7 @@ typedef struct {
             break;
           }
           if(nn>=nvents+6){
-            vi->surf[0]=sextras.exterior_surfacedefault;
+            vi->surf[0]=scase.exterior_surfacedefault;
           }
         }
         if(scase.surfcoll.surfinfo!=NULL&&s_num[0]>=0&&s_num[0]<scase.surfcoll.nsurfinfo){
@@ -11228,15 +11228,15 @@ typedef struct {
           if(venttype!=-99)vi->type=venttype;
           if(ABS(ventindex)!=99){
             ventindex=ABS(ventindex);
-            if(ventindex>sextras.nrgb2-1)ventindex=sextras.nrgb2-1;
-            s_color[0]=sextras.rgb[sextras.nrgb+ventindex][0];
-            s_color[1]=sextras.rgb[sextras.nrgb+ventindex][1];
-            s_color[2]=sextras.rgb[sextras.nrgb+ventindex][2];
+            if(ventindex>scase.nrgb2-1)ventindex=scase.nrgb2-1;
+            s_color[0]=scase.rgb[scase.nrgb+ventindex][0];
+            s_color[1]=scase.rgb[scase.nrgb+ventindex][1];
+            s_color[2]=scase.rgb[scase.nrgb+ventindex][2];
             s_color[3]=1.0;
             vi->colorindex=ventindex;
             vi->usecolorindex=1;
             vi->useventcolor=1;
-            sextras.updateindexcolors=1;
+            scase.updateindexcolors=1;
           }
           vi->color = GetColorPtr(&scase.colorcoll, s_color);
         }
@@ -11294,7 +11294,7 @@ typedef struct {
           }
         }
         if(vi->transparent==1)nvent_transparent++;
-        vi->linewidth=&sextras.ventlinewidth;
+        vi->linewidth=&scase.ventlinewidth;
         vi->showhide=NULL;
         vi->showtime=NULL;
         vi->showtimelist=NULL;
@@ -11321,12 +11321,12 @@ typedef struct {
         }
         assert(vi->color!=NULL);
       }
-      for(nn=0;nn<nvents-sextras.ndummyvents;nn++){
+      for(nn=0;nn<nvents-scase.ndummyvents;nn++){
         int j;
         ventdata *vi;
 
         vi = meshi->ventinfo + nn;
-        for(j=nvents-sextras.ndummyvents;j<nvents;j++){ // look for dummy vent that matches real vent
+        for(j=nvents-scase.ndummyvents;j<nvents;j++){ // look for dummy vent that matches real vent
           ventdata *vj;
 
           vj = meshi->ventinfo + j;
@@ -11513,8 +11513,8 @@ typedef struct {
 
   START_TIMER(pass5_time);
 
-  if(sextras.auto_terrain==1&&sextras.manual_terrain==0){
-    sextras.nOBST=0;
+  if(scase.auto_terrain==1&&scase.manual_terrain==0){
+    scase.nOBST=0;
     iobst=0;
   }
 
@@ -11532,12 +11532,12 @@ typedef struct {
  */
 
   REWIND(stream);
-  if(do_pass4==1||(sextras.auto_terrain==1&&sextras.manual_terrain==0)){
+  if(do_pass4==1||(scase.auto_terrain==1&&scase.manual_terrain==0)){
     do_pass5 = 1;
     PRINTF("%s","  pass 5\n");
   }
 
-  while(((sextras.auto_terrain==1&&sextras.manual_terrain==0)||do_pass4==1)){
+  while(((scase.auto_terrain==1&&scase.manual_terrain==0)||do_pass4==1)){
     if(FEOF(stream)!=0){
       BREAK;
     }
@@ -11618,13 +11618,13 @@ typedef struct {
     ++++++++++++++++++++++ OBST +++++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     */
-    if(MatchSMV(buffer, "OBST")==1&&sextras.auto_terrain==1&&sextras.manual_terrain==0){
+    if(MatchSMV(buffer, "OBST")==1&&scase.auto_terrain==1&&scase.manual_terrain==0){
       meshdata *meshi;
       int n_blocks;
       int iblock;
       int nn;
 
-      sextras.nOBST++;
+      scase.nOBST++;
       iobst++;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i",&n_blocks);
@@ -11663,7 +11663,7 @@ typedef struct {
   else{
     pass5_time = 0.0;
   }
-  sextras.clip_I=ibartemp; sextras.clip_J=jbartemp; sextras.clip_K=kbartemp;
+  scase.clip_I=ibartemp; scase.clip_J=jbartemp; scase.clip_K=kbartemp;
   return 0;
 }
 
@@ -11757,7 +11757,7 @@ int ReadSMV_Configure(){
   InitClip();
   PRINT_TIMER(timer_readsmv, "InitClip");
 
-  if(sextras.noutlineinfo>0){
+  if(scase.noutlineinfo>0){
     highlight_flag=2;
   }
   else{
@@ -11838,10 +11838,10 @@ int ReadSMV_Configure(){
     partfast = 1;
   }
 
-  shooter_xyz[0]=sextras.xbar/2.0;
+  shooter_xyz[0]=scase.xbar/2.0;
   shooter_xyz[1] = 0.0;
-  shooter_xyz[2] = sextras.zbar/2.0;
-  shooter_dxyz[0]=sextras.xbar/4.0;
+  shooter_xyz[2] = scase.zbar/2.0;
+  shooter_dxyz[0]=scase.xbar/4.0;
   shooter_dxyz[1]=0.0;
   shooter_dxyz[2]=0.0;
   shooter_nparts=100;
@@ -11949,8 +11949,8 @@ int ReadSMV_Configure(){
   UpdateFaces();
   PRINT_TIMER(timer_readsmv, "UpdateFaces");
 
-  xcenGLOBAL=sextras.xbar/2.0;  ycenGLOBAL=sextras.ybar/2.0; zcenGLOBAL=sextras.zbar/2.0;
-  xcenCUSTOM=sextras.xbar/2.0;  ycenCUSTOM=sextras.ybar/2.0; zcenCUSTOM=sextras.zbar/2.0;
+  xcenGLOBAL=scase.xbar/2.0;  ycenGLOBAL=scase.ybar/2.0; zcenGLOBAL=scase.zbar/2.0;
+  xcenCUSTOM=scase.xbar/2.0;  ycenCUSTOM=scase.ybar/2.0; zcenCUSTOM=scase.zbar/2.0;
 
   glui_rotation_index = ROTATE_ABOUT_FDS_CENTER;
 
@@ -12056,7 +12056,7 @@ int ReadSMV_Configure(){
 #endif
   PRINT_TIMER(timer_readsmv, "update trianglesfaces");
 
-  if(scase.ngeominfo>0&&sextras.auto_terrain==1){
+  if(scase.ngeominfo>0&&scase.auto_terrain==1){
     START_TIMER(timer_readsmv);
     GenerateTerrainGeom(&terrain_vertices, &terrain_indices, &terrain_nindices);
     PRINT_TIMER(timer_readsmv, "GenerateTerrainGeom");
@@ -12162,7 +12162,7 @@ void UpdateUseTextures(void){
       if(vi->surf[0]==NULL){
         if(vent_surfacedefault!=NULL){
           if(j>=meshi->nvents+6){
-            vi->surf[0]=sextras.exterior_surfacedefault;
+            vi->surf[0]=scase.exterior_surfacedefault;
           }
           else{
             vi->surf[0]=vent_surfacedefault;
@@ -12690,7 +12690,7 @@ int ReadIni2(char *inifile, int localfile){
     }
     if(MatchINI(buffer, "SHOWHRRPLOT")==1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, " %i %i %f %f %i", &glui_hrr, &hoc_hrr, &fuel_hoc, &plot2d_size_factor, &vis_hrr_plot);
+      sscanf(buffer, " %i %i %f %f %i", &glui_hrr, &hoc_hrr, &scase.fuel_hoc, &plot2d_size_factor, &vis_hrr_plot);
       continue;
     }
     if(MatchINI(buffer, "SHOWDEVICEPLOTS")==1){
@@ -12858,7 +12858,7 @@ int ReadIni2(char *inifile, int localfile){
     }
     if(MatchINI(buffer, "TLOAD") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %f %i %f %i %i", &use_tload_begin, &sextras.tload_begin, &use_tload_end, &sextras.tload_end, &use_tload_skip, &tload_skip);
+      sscanf(buffer, "%i %f %i %f %i %i", &use_tload_begin, &scase.tload_begin, &use_tload_end, &scase.tload_end, &use_tload_skip, &tload_skip);
       continue;
     }
     if(MatchINI(buffer, "VOLSMOKE") == 1){
@@ -13043,7 +13043,7 @@ int ReadIni2(char *inifile, int localfile){
 
     if(MatchINI(buffer, "SHOWTERRAIN") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %i", &sextras.visTerrainType, &terrain_slice_overlap);
+      sscanf(buffer, "%i %i", &scase.visTerrainType, &terrain_slice_overlap);
       continue;
     }
     if(MatchINI(buffer, "STEREO") == 1){
@@ -13334,10 +13334,10 @@ int ReadIni2(char *inifile, int localfile){
       continue;
     }
     if(MatchINI(buffer, "SHOWSLICEINOBST") == 1){
-      if((localfile==0&&sextras.solid_ht3d==0)||localfile==1){
+      if((localfile==0&&scase.solid_ht3d==0)||localfile==1){
         fgets(buffer, 255, stream);
-        sscanf(buffer, "%i", &sextras.show_slice_in_obst);
-        sextras.show_slice_in_obst=CLAMP(sextras.show_slice_in_obst,0,2);
+        sscanf(buffer, "%i", &scase.show_slice_in_obst);
+        scase.show_slice_in_obst=CLAMP(scase.show_slice_in_obst,0,2);
       }
       continue;
     }
@@ -14175,13 +14175,13 @@ int ReadIni2(char *inifile, int localfile){
     }
     if(MatchINI(buffer, "LINEWIDTH") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%f ", &sextras.linewidth);
-      solidlinewidth = sextras.linewidth;
+      sscanf(buffer, "%f ", &scase.linewidth);
+      solidlinewidth = scase.linewidth;
       continue;
     }
     if(MatchINI(buffer, "VENTLINEWIDTH") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%f ", &sextras.ventlinewidth);
+      sscanf(buffer, "%f ", &scase.ventlinewidth);
       continue;
     }
     if(MatchINI(buffer, "BOUNDARYOFFSET") == 1){
@@ -14438,8 +14438,8 @@ int ReadIni2(char *inifile, int localfile){
       sscanf(buffer, "%f %f %f", ventcolor_temp, ventcolor_temp + 1, ventcolor_temp + 2);
       ventcolor_temp[3] = 1.0;
       ventcolor = GetColorPtr(&scase.colorcoll, ventcolor_temp);
-      sextras.updatefaces = 1;
-      sextras.updateindexcolors = 1;
+      scase.updatefaces = 1;
+      scase.updateindexcolors = 1;
       continue;
     }
     if(MatchINI(buffer, "STATICPARTCOLOR") == 1){
@@ -14570,8 +14570,8 @@ int ReadIni2(char *inifile, int localfile){
       sscanf(buffer, "%f %f %f", blockcolor_temp, blockcolor_temp + 1, blockcolor_temp + 2);
       blockcolor_temp[3] = 1.0;
       block_ambient2 = GetColorPtr(&scase.colorcoll, blockcolor_temp);
-      sextras.updatefaces = 1;
-      sextras.updateindexcolors = 1;
+      scase.updatefaces = 1;
+      scase.updateindexcolors = 1;
       continue;
     }
     if(MatchINI(buffer, "BLOCKLOCATION") == 1){
@@ -14594,8 +14594,8 @@ int ReadIni2(char *inifile, int localfile){
     if(MatchINI(buffer, "BLOCKSHININESS") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f", &block_shininess);
-      sextras.updatefaces = 1;
-      sextras.updateindexcolors = 1;
+      scase.updatefaces = 1;
+      scase.updateindexcolors = 1;
       continue;
     }
     if(MatchINI(buffer, "BLOCKSPECULAR") == 1){
@@ -14605,8 +14605,8 @@ int ReadIni2(char *inifile, int localfile){
       sscanf(buffer, "%f %f %f", blockspec_temp, blockspec_temp + 1, blockspec_temp + 2);
       blockspec_temp[3] = 1.0;
       block_specular2 = GetColorPtr(&scase.colorcoll, blockspec_temp);
-      sextras.updatefaces = 1;
-      sextras.updateindexcolors = 1;
+      scase.updatefaces = 1;
+      scase.updateindexcolors = 1;
       continue;
     }
     if(MatchINI(buffer, "SHOWOPENVENTS") == 1){
@@ -14621,8 +14621,8 @@ int ReadIni2(char *inifile, int localfile){
     }
     if(MatchINI(buffer, "SHOWOTHERVENTS") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &sextras.visOtherVents);
-      ONEORZERO(sextras.visOtherVents);
+      sscanf(buffer, "%i", &scase.visOtherVents);
+      ONEORZERO(scase.visOtherVents);
       continue;
     }
     if(MatchINI(buffer, "SHOWCVENTS") == 1){
@@ -15192,8 +15192,8 @@ int ReadIni2(char *inifile, int localfile){
       }
       if(MatchINI(buffer, "SMOKEALBEDO") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
-        sscanf(buffer, "%f", &sextras.smoke_albedo);
-        sextras.smoke_albedo = CLAMP(sextras.smoke_albedo, 0.0, 1.0);
+        sscanf(buffer, "%f", &scase.smoke_albedo);
+        scase.smoke_albedo = CLAMP(scase.smoke_albedo, 0.0, 1.0);
         continue;
       }
       if(MatchINI(buffer, "SMOKEFIREPROP") == 1){
@@ -15240,8 +15240,8 @@ int ReadIni2(char *inifile, int localfile){
        }
       if(MatchINI(buffer, "HRRPUVCUTOFF")==1){
         if(fgets(buffer, 255, stream)==NULL)break;
-        sscanf(buffer, "%f", &sextras.global_hrrpuv_cutoff_default);
-        sextras.global_hrrpuv_cutoff = sextras.global_hrrpuv_cutoff_default;
+        sscanf(buffer, "%f", &scase.global_hrrpuv_cutoff_default);
+        scase.global_hrrpuv_cutoff = scase.global_hrrpuv_cutoff_default;
         continue;
       }
       if(MatchINI(buffer, "FIREDEPTH") == 1){
@@ -15460,7 +15460,7 @@ int ReadIni2(char *inifile, int localfile){
       }
       if(MatchINI(buffer, "SMOKE3DCUTOFFS") == 1){
         fgets(buffer, 255, stream);
-        sscanf(buffer, "%f %f", &load_3dsmoke_cutoff, &sextras.load_hrrpuv_cutoff);
+        sscanf(buffer, "%f %f", &load_3dsmoke_cutoff, &scase.load_hrrpuv_cutoff);
         continue;
       }
 
@@ -15630,12 +15630,12 @@ int ReadIni2(char *inifile, int localfile){
       */
 
       if(MatchINI(buffer, "TICKS") == 1){
-        sextras.ntickinfo++;
-        if(sextras.tickinfo==NULL){
-          NewMemory((void **)&sextras.tickinfo, (sextras.ntickinfo)*sizeof(tickdata));
+        scase.ntickinfo++;
+        if(scase.tickinfo==NULL){
+          NewMemory((void **)&scase.tickinfo, (scase.ntickinfo)*sizeof(tickdata));
         }
         else{
-          ResizeMemory((void **)&sextras.tickinfo, (sextras.ntickinfo)*sizeof(tickdata));
+          ResizeMemory((void **)&scase.tickinfo, (scase.ntickinfo)*sizeof(tickdata));
         }
 
         {
@@ -15647,7 +15647,7 @@ int ReadIni2(char *inifile, int localfile){
           float *dxyz;
           float sum;
 
-          ticki = sextras.tickinfo + sextras.ntickinfo - 1;
+          ticki = scase.tickinfo + scase.ntickinfo - 1;
           begt = ticki->begin;
           endt = ticki->end;
           nbarst = &ticki->nbars;
@@ -16091,7 +16091,7 @@ int ReadIni(char *inifile){
   //
   // Last definition wins.
 
-  sextras.ntickinfo=sextras.ntickinfo_smv;
+  scase.ntickinfo=scase.ntickinfo_smv;
   strcpy(smvprogini,"");
 
   char *smvini_path = GetSmokeviewIni();
@@ -16439,7 +16439,7 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, "SHOWDEVICEVALS\n");
   fprintf(fileout, " %i %i %i %i %i %i %i %i %i\n", showdevice_val, showvdevice_val, devicetypes_index, colordevice_val, vectortype, viswindrose, showdevice_type,showdevice_unit,showdevice_id);
   fprintf(fileout, "SHOWHRRPLOT\n");
-  fprintf(fileout, " %i %i %f %f %i\n", glui_hrr, hoc_hrr, fuel_hoc, plot2d_size_factor, vis_hrr_plot);
+  fprintf(fileout, " %i %i %f %f %i\n", glui_hrr, hoc_hrr, scase.fuel_hoc, plot2d_size_factor, vis_hrr_plot);
   fprintf(fileout, "SHOWMISSINGOBJECTS\n");
   fprintf(fileout, " %i\n", show_missing_objects);
   fprintf(fileout, "SHOWSLICEPLOT\n");
@@ -16449,14 +16449,14 @@ void WriteIniLocal(FILE *fileout){
                     slice_dxyz[0], slice_dxyz[1], slice_dxyz[2], average_plot2d_slice_region, show_plot2d_slice_position
                     );
   fprintf(fileout, "SMOKE3DCUTOFFS\n");
-  fprintf(fileout, " %f %f\n", load_3dsmoke_cutoff, sextras.load_hrrpuv_cutoff);
-  for(i = sextras.ntickinfo_smv; i < sextras.ntickinfo; i++){
+  fprintf(fileout, " %f %f\n", load_3dsmoke_cutoff, scase.load_hrrpuv_cutoff);
+  for(i = scase.ntickinfo_smv; i < scase.ntickinfo; i++){
     float *begt;
     float *endt;
     float *rgbtemp;
     tickdata *ticki;
 
-    ticki = sextras.tickinfo + i;
+    ticki = scase.tickinfo + i;
     begt = ticki->begin;
     endt = ticki->end;
     rgbtemp = ticki->rgb;
@@ -16606,7 +16606,7 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, "TIMEOFFSET\n");
   fprintf(fileout, " %f\n", timeoffset);
   fprintf(fileout, "TLOAD\n");
-  fprintf(fileout, " %i %f %i %f %i %i\n", use_tload_begin, sextras.tload_begin, use_tload_end, sextras.tload_end, use_tload_skip, tload_skip);
+  fprintf(fileout, " %i %f %i %f %i %i\n", use_tload_begin, scase.tload_begin, use_tload_end, scase.tload_end, use_tload_skip, tload_skip);
   for(i = 0; i < scase.npatchinfo; i++){
     patchdata *patchi;
 
@@ -16786,10 +16786,10 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "COLORBAR\n");
   {
     int usetexturebar = 1; //for older smokeviews
-    fprintf(fileout, " %i %i %i %i\n", sextras.nrgb, usetexturebar, colorbar_select_index, colorbar_selection_width);
+    fprintf(fileout, " %i %i %i %i\n", scase.nrgb, usetexturebar, colorbar_select_index, colorbar_selection_width);
   }
-  for(i=0;i<sextras.nrgb;i++){
-    fprintf(fileout," %f %f %f\n",sextras.rgb[i][0],sextras.rgb[i][1],sextras.rgb[i][2]);
+  for(i=0;i<scase.nrgb;i++){
+    fprintf(fileout," %f %f %f\n",scase.rgb[i][0],scase.rgb[i][1],scase.rgb[i][2]);
   }
   fprintf(fileout,"COLOR2BAR\n");
   fprintf(fileout," %i\n",8);
@@ -16940,7 +16940,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "ISOPOINTSIZE\n");
   fprintf(fileout, " %f\n", isopointsize);
   fprintf(fileout, "LINEWIDTH\n");
-  fprintf(fileout, " %f\n", sextras.linewidth);
+  fprintf(fileout, " %f\n", scase.linewidth);
   fprintf(fileout, "PARTPOINTSIZE\n");
   fprintf(fileout, " %f\n", partpointsize);
   fprintf(fileout, "PLOT3DLINEWIDTH\n");
@@ -16976,7 +16976,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "VECTORPOINTSIZE\n");
   fprintf(fileout," %f\n",vectorpointsize);
   fprintf(fileout, "VENTLINEWIDTH\n");
-  fprintf(fileout, " %f\n", sextras.ventlinewidth);
+  fprintf(fileout, " %f\n", scase.ventlinewidth);
   fprintf(fileout, "VENTOFFSET\n");
   fprintf(fileout, " %f\n", ventoffset_factor);
   fprintf(fileout, "WINDOWOFFSET\n");
@@ -17209,13 +17209,13 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "SHOWOPENVENTS\n");
   fprintf(fileout, " %i %i\n", visOpenVents, visOpenVentsAsOutline);
   fprintf(fileout, "SHOWOTHERVENTS\n");
-  fprintf(fileout, " %i\n", sextras.visOtherVents);
+  fprintf(fileout, " %i\n", scase.visOtherVents);
   fprintf(fileout, "SHOWROOMS\n");
   fprintf(fileout, " %i\n", visCompartments);
   fprintf(fileout, "SHOWSENSORS\n");
   fprintf(fileout, " %i %i\n", visSensor, visSensorNorm);
   fprintf(fileout, "SHOWSLICEINOBST\n");
-  fprintf(fileout, " %i\n", sextras.show_slice_in_obst);
+  fprintf(fileout, " %i\n", scase.show_slice_in_obst);
   fprintf(fileout, "SHOWSMOKEPART\n");
   fprintf(fileout, " %i\n", visSmokePart);
 #ifdef pp_SKY
@@ -17227,7 +17227,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "SHOWSTREAK\n");
   fprintf(fileout, " %i %i %i %i\n", streak5show, streak5step, showstreakhead, streak_index);
   fprintf(fileout, "SHOWTERRAIN\n");
-  fprintf(fileout, " %i %i\n", sextras.visTerrainType, terrain_slice_overlap);
+  fprintf(fileout, " %i %i\n", scase.visTerrainType, terrain_slice_overlap);
   fprintf(fileout, "SHOWTHRESHOLD\n");
   fprintf(fileout, " %i %i %f\n", vis_threshold, vis_onlythreshold, temp_threshold);
   fprintf(fileout, "SHOWTICKS\n");
@@ -17435,7 +17435,7 @@ void WriteIni(int flag,char *filename){
     }
   }
   fprintf(fileout, "HRRPUVCUTOFF\n");
-  fprintf(fileout, " %f\n", sextras.global_hrrpuv_cutoff);
+  fprintf(fileout, " %f\n", scase.global_hrrpuv_cutoff);
   fprintf(fileout, "SHOWEXTREMEDATA\n");
   {
     int show_extremedata = 0;
@@ -17449,9 +17449,9 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i %i %i %i\n", smoke_color_int255[0], smoke_color_int255[1], smoke_color_int255[2], force_gray_smoke);
   fprintf(fileout, "SMOKECULL\n");
   fprintf(fileout," %i\n",smokecullflag);
-  if(ABS(sextras.smoke_albedo - sextras.smoke_albedo_base) > 0.001){
+  if(ABS(scase.smoke_albedo - scase.smoke_albedo_base) > 0.001){
     fprintf(fileout, "SMOKEALBEDO\n");
-    fprintf(fileout, " %f\n", sextras.smoke_albedo);
+    fprintf(fileout, " %f\n", scase.smoke_albedo);
   }
   if((have_fire == NO_FIRE && have_smoke == NO_SMOKE)||(have_fire != NO_FIRE && have_smoke != NO_SMOKE)){
     fprintf(fileout, "SMOKEFIREPROP\n");

@@ -1801,9 +1801,6 @@ typedef struct {
   int nsupermeshinfo;
   supermeshdata *supermeshinfo;
 
-} smv_case;
-
-typedef struct {
   /// @brief The HoC of the fuel if present. -1.0 otherwise.
   float fuel_hoc;
   /// @brief Is this case a terrain case?
@@ -1882,7 +1879,7 @@ typedef struct {
   float smoke_albedo;
   float smoke_albedo_base;
 
-  // TODO: the below probably don't really belong heer
+  // TODO: the below probably don't really belong here
   filelist_collection filelist_coll;
   float xbar;
   float ybar;
@@ -1921,7 +1918,7 @@ typedef struct {
   int nrgb;
   float linewidth, ventlinewidth;
   float rgb[MAXRGB][4];
-} smv_extras;
+} smv_case;
 
 // TODO: remove each of these struct fields as global variables
 typedef struct {

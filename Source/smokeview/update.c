@@ -1056,7 +1056,7 @@ void TruncateGlobalTimes(void){
   iend = nglobal_times - 1;
   if(use_tload_begin==1){
     for(i=0;i<nglobal_times;i++){
-      if(sextras.tload_begin<global_times[i]){
+      if(scase.tload_begin<global_times[i]){
         ibeg = i;
         break;
       }
@@ -1064,7 +1064,7 @@ void TruncateGlobalTimes(void){
   }
   if(use_tload_end==1){
     for(i=nglobal_times-1;i>=0;i--){
-      if(global_times[i]<sextras.tload_end){
+      if(global_times[i]<scase.tload_end){
         iend = i;
         break;
       }
@@ -1075,10 +1075,10 @@ void TruncateGlobalTimes(void){
   }
   nglobal_times = iend + 1 - ibeg;
   if(use_tload_begin==1){
-    MergeGlobalTimes(&sextras.tload_begin, 1);
+    MergeGlobalTimes(&scase.tload_begin, 1);
   }
   if(use_tload_end==1){
-    MergeGlobalTimes(&sextras.tload_end, 1);
+    MergeGlobalTimes(&scase.tload_end, 1);
   }
 }
 
@@ -1264,10 +1264,10 @@ void UpdateTimes(void){
     MergeGlobalTimes(hvaccoll.hvacnodevalsinfo->times, hvaccoll.hvacnodevalsinfo->ntimes);
   }
   if(use_tload_begin==1){
-    MergeGlobalTimes(&sextras.tload_begin, 1);
+    MergeGlobalTimes(&scase.tload_begin, 1);
   }
   if(use_tload_end==1){
-    MergeGlobalTimes(&sextras.tload_end, 1);
+    MergeGlobalTimes(&scase.tload_end, 1);
   }
 
   if(vis_hrr_plot==1&&hrrptr!=NULL){
@@ -2342,9 +2342,9 @@ void BoundBoundCB(int var);
     update_csv_load = 0;
     END_SHOW_UPDATE(update_csv_load);
   }
-  if(sextras.update_terrain_type == 1){
+  if(scase.update_terrain_type == 1){
     SHOW_UPDATE(update_terrain_type);
-    sextras.update_terrain_type = 0;
+    scase.update_terrain_type = 0;
     GLUIUpdateTerrain();
     END_SHOW_UPDATE(update_terrain_type);
   }
@@ -2384,9 +2384,9 @@ void BoundBoundCB(int var);
     GLUIDeviceCB(DEVICE_TIMEAVERAGE);
     END_SHOW_UPDATE(update_device_timeaverage);
   }
-  if(sextras.update_smoke_alphas==1){
+  if(scase.update_smoke_alphas==1){
     SHOW_UPDATE(update_smoke_alphas);
-    sextras.update_smoke_alphas = 0;
+    scase.update_smoke_alphas = 0;
     UpdateSmokeAlphas();
     END_SHOW_UPDATE(update_smoke_alphas);
   }
@@ -2430,7 +2430,7 @@ void BoundBoundCB(int var);
     SHOW_UPDATE(terrain_update_normals);
     terrain_update_normals = 0;
     UpdateAllGeomTriangles();
-    if(sextras.auto_terrain==1){
+    if(scase.auto_terrain==1){
       GenerateTerrainGeom(&terrain_vertices, &terrain_indices, &terrain_nindices);
     }
     END_SHOW_UPDATE(terrain_update_normals);
@@ -2586,7 +2586,7 @@ void BoundBoundCB(int var);
     FontMenu(LARGE_FONT);
     END_SHOW_UPDATE(trainer_mode);
   }
-  if(sextras.updateindexcolors == 1){
+  if(scase.updateindexcolors == 1){
     SHOW_UPDATE(updateindexcolors);
     UpdateIndexColors();
     END_SHOW_UPDATE(updateindexcolors);
@@ -2619,8 +2619,8 @@ void BoundBoundCB(int var);
     FrameRateMenu(frameratevalue);
     END_SHOW_UPDATE(updateUpdateFrameRateMenu);
   }
-  if(sextras.updatefaces == 1){
-    sextras.updatefaces = 0;
+  if(scase.updatefaces == 1){
+    scase.updatefaces = 0;
     SHOW_UPDATE(updatefaces);
     INIT_PRINT_TIMER(timer_update_faces);
     UpdateFaces();

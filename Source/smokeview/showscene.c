@@ -23,7 +23,7 @@ void DrawLights(float *position0, float *position1){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
+  glTranslatef(-scase.xbar0, -scase.ybar0, -scase.zbar0);
   glLineWidth(10.0);
   glBegin(GL_LINES);
   glColor3f(0.0, 0.0, 0.0);
@@ -76,7 +76,7 @@ void ShowScene2(int mode){
 
     /* ++++++++++++++++++++++++ DrawTrees +++++++++++++++++++++++++ */
 
-    if(sextras.ntreeinfo>0){
+    if(scase.ntreeinfo>0){
       CLIP_GEOMETRY;
       DrawTrees();
       SNIFF_ERRORS("after DrawTrees");
@@ -97,7 +97,7 @@ void ShowScene2(int mode){
 
     /* ++++++++++++++++++++++++ draw circular vents +++++++++++++++++++++++++ */
 
-    if(sextras.ncvents>0 && visCircularVents != VENT_HIDE && showpatch==0){
+    if(scase.ncvents>0 && visCircularVents != VENT_HIDE && showpatch==0){
       CLIP_GEOMETRY;
       DrawCircVents(visCircularVents);
     }
@@ -128,7 +128,7 @@ void ShowScene2(int mode){
 
     /* ++++++++++++++++++++++++ draw ticks +++++++++++++++++++++++++ */
 
-    if(visFDSticks == 1 && sextras.ntickinfo>0){
+    if(visFDSticks == 1 && scase.ntickinfo>0){
       UNCLIP;
       DrawTicks();
       SNIFF_ERRORS("after DrawTicks");
@@ -165,7 +165,7 @@ void ShowScene2(int mode){
     /* ++++++++++++++++++++++++ draw simulation frame (corners at (0,0,0) and (xbar,ybar,zbar) +++++++++++++++++++++++++ */
 
 
-    if(geom_bounding_box_mousedown==1||(sextras.isZoneFireModel == 0 && visFrame == 1 && highlight_flag == 2)){
+    if(geom_bounding_box_mousedown==1||(scase.isZoneFireModel == 0 && visFrame == 1 && highlight_flag == 2)){
       CLIP_GEOMETRY;
       DrawOutlines();
       SNIFF_ERRORS("after DrawOutlines");
@@ -208,7 +208,7 @@ void ShowScene2(int mode){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
+      glTranslatef(-scase.xbar0, -scase.ybar0, -scase.zbar0);
       DrawBoxOutline(meshclip, box_red);
       glPopMatrix();
     }
@@ -229,7 +229,7 @@ void ShowScene2(int mode){
 
     /* ++++++++++++++++++++++++ draw mesh +++++++++++++++++++++++++ */
 
-    if(sextras.setPDIM == 1){
+    if(scase.setPDIM == 1){
       if(visGrid != NOGRID_NOPROBE){
         int igrid;
         meshdata *meshi;
@@ -302,7 +302,7 @@ void ShowScene2(int mode){
   if(show_parallax == 1){
     UNCLIP;
     AntiAliasLine(ON);
-    glLineWidth(sextras.linewidth);
+    glLineWidth(scase.linewidth);
     glBegin(GL_LINES);
     glColor3fv(foregroundcolor);
     glVertex3f(0.75, 0.0, 0.25);
@@ -354,7 +354,7 @@ void ShowScene2(int mode){
   CLIP_GEOMETRY;
   DrawTerrainGeom(DRAW_OPAQUE);
 
-  if(sextras.visTerrainType != TERRAIN_HIDDEN&&sextras.nterraininfo>0&&scase.ngeominfo==0 && geom_bounding_box_mousedown==0){
+  if(scase.visTerrainType != TERRAIN_HIDDEN&&scase.nterraininfo>0&&scase.ngeominfo==0 && geom_bounding_box_mousedown==0){
     int i;
 
     //shaded  17 0
@@ -371,11 +371,11 @@ void ShowScene2(int mode){
       flag = TERRAIN_TOP_SIDE;
     }
     CLIP_GEOMETRY;
-    for(i = 0;i<sextras.nterraininfo;i++){
+    for(i = 0;i<scase.nterraininfo;i++){
       terraindata *terri;
 
-      terri = sextras.terraininfo + i;
-      switch(sextras.visTerrainType){
+      terri = scase.terraininfo + i;
+      switch(scase.visTerrainType){
       case TERRAIN_SURFACE:
         DrawTerrainOBST(terri, flag);
         break;
@@ -392,7 +392,7 @@ void ShowScene2(int mode){
         break;
       }
     }
-    if(sextras.visTerrainType==TERRAIN_IMAGE||sextras.visTerrainType==TERRAIN_SURFACE){
+    if(scase.visTerrainType==TERRAIN_IMAGE||scase.visTerrainType==TERRAIN_SURFACE){
       if(terrain_showonly_top==0){
         for(i = 0; i<scase.meshescoll.nmeshes; i++){
           meshdata *meshi;

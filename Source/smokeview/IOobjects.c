@@ -376,7 +376,7 @@ void DrawDevicesVal(void){
   if(fontindex==SCALED_FONT)ScaleFont3D();
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
+  glTranslatef(-scase.xbar0,-scase.ybar0,-scase.zbar0);
   if(active_smokesensors==1&&show_smokesensors!=SMOKESENSORS_HIDDEN){
     GetDeviceScreenCoords();
   }
@@ -808,7 +808,7 @@ void DrawTargetNorm(void){
   devicedata *devicei;
   float *xyz, *xyznorm;
 
-  if(sextras.isZoneFireModel==1&&hasSensorNorm==1&&visSensor==1&&visSensorNorm==1){
+  if(scase.isZoneFireModel==1&&hasSensorNorm==1&&visSensor==1&&visSensorNorm==1){
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
     glBegin(GL_LINES);
@@ -821,7 +821,7 @@ void DrawTargetNorm(void){
 
       if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(STRCMP(devicei->object->label,"sensor")==0&&visSensor==0)continue;
-      if(sextras.isZoneFireModel==1&&STRCMP(devicei->object->label,"target")==0&&visSensor==0)continue;
+      if(scase.isZoneFireModel==1&&STRCMP(devicei->object->label,"target")==0&&visSensor==0)continue;
       xyz = devicei->xyz;
       xyznorm = devicei->xyznorm;
       glVertex3fv(xyz);
@@ -3430,7 +3430,7 @@ void DrawDevices(int mode){
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
+      glTranslatef(-scase.xbar0, -scase.ybar0, -scase.zbar0);
       for(i = 0; i<scase.devicecoll.ndeviceinfo; i++){
         devicedata *devicei;
         float *xyz1, *xyz2, dxyz[3];
@@ -3481,7 +3481,7 @@ void DrawDevices(int mode){
 
     glPushMatrix();
     glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-    glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
+    glTranslatef(-scase.xbar0, -scase.ybar0, -scase.zbar0);
     glPointSize(vectorpointsize);
     arrow_color[0] = 255 * foregroundcolor[0];
     arrow_color[1] = 255 * foregroundcolor[1];
@@ -3818,7 +3818,7 @@ void DrawDevices(int mode){
   glPushMatrix();
   glPushAttrib(GL_POINT_BIT | GL_LINE_BIT);
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-sextras.xbar0, -sextras.ybar0, -sextras.zbar0);
+  glTranslatef(-scase.xbar0, -scase.ybar0, -scase.zbar0);
   for(ii = 0;ii < scase.devicecoll.ndeviceinfo;ii++){
     devicedata *devicei;
     int tagval;
@@ -3834,9 +3834,9 @@ void DrawDevices(int mode){
     if(devicei->object->visible == 0 || (devicei->prop != NULL&&devicei->prop->smv_object->visible == 0))continue;
     if(devicei->plane_surface != NULL)continue;
     if(devicei->show == 0)continue;
-    if(sextras.isZoneFireModel == 1 && STRCMP(devicei->object->label, "target") == 0 && visSensor == 0)continue;
+    if(scase.isZoneFireModel == 1 && STRCMP(devicei->object->label, "target") == 0 && visSensor == 0)continue;
     if(devicei->in_zone_csv == 1&&strcmp(devicei->deviceID,"TARGET")!=0)continue;
-    if(sextras.isZoneFireModel == 1 && STRCMP(devicei->deviceID, "TIME") == 0)continue;
+    if(scase.isZoneFireModel == 1 && STRCMP(devicei->deviceID, "TIME") == 0)continue;
     save_use_displaylist = devicei->object->use_displaylist;
     tagval = ii + 1;
     if(select_device == 1 && show_mode == SELECTOBJECT){
@@ -6154,7 +6154,7 @@ void InitDevicePlane(devicedata *devicei){
                      closestnodes, nvert, triangles, ntriangles);
     GetNormalSurface(devicei->plane_surface[i]);
     CompressIsoSurface(devicei->plane_surface[i],1,
-          sextras.xbar0,2*sextras.xbar,sextras.ybar0,2*sextras.ybar,sextras.zbar0,sextras.zbar);
+          scase.xbar0,2*scase.xbar,scase.ybar0,2*scase.ybar,scase.zbar0,scase.zbar);
     SmoothIsoSurface(devicei->plane_surface[i]);
   }
 

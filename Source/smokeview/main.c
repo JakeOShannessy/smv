@@ -566,8 +566,8 @@ char *ProcessCommandLine(CommandlineArgs *args){
       SMV_EXIT(0);
     }
     if(args->noblank){
-      sextras.iblank_set_on_commandline = 1;
-      sextras.use_iblank = 0;
+      scase.iblank_set_on_commandline = 1;
+      scase.use_iblank = 0;
     }
     if(args->nobounds){
       no_bounds = 1;
@@ -593,8 +593,8 @@ char *ProcessCommandLine(CommandlineArgs *args){
       parse_opts.lookfor_compressed_files = 1;
     }
     if(args->blank){
-      sextras.iblank_set_on_commandline = 1;
-      sextras.use_iblank = 1;
+      scase.iblank_set_on_commandline = 1;
+      scase.use_iblank = 1;
     }
     if(args->gversion){
       vis_title_gversion = 1;

@@ -104,9 +104,9 @@ typedef struct {
 
 #define FILE_EXISTS(a) FileExists(a, NULL, 0, NULL, 0)
 #define FILE_EXISTS_CASEDIR(a)                                                 \
-  FileExists(a, sextras.filelist_coll.filelist_casename, sextras.filelist_coll.nfilelist_casename, \
-             sextras.filelist_coll.filelist_casedir,       \
-             sextras.filelist_coll.nfilelist_casedir)
+  FileExists(a, scase.filelist_coll.filelist_casename, scase.filelist_coll.nfilelist_casename, \
+             scase.filelist_coll.filelist_casedir,       \
+             scase.filelist_coll.nfilelist_casedir)
 int FileExistsOrig(char *filename);
 
 #ifdef WIN32

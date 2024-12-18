@@ -845,7 +845,7 @@ void LabelMenu(int value){
     visLabels=1;
     visMeshlabel=1;
     vis_slice_average=1;
-    if(sextras.ntickinfo>0)visFDSticks=1;
+    if(scase.ntickinfo>0)visFDSticks=1;
     visgridloc=1;
     vis_hrr_label=1;
     show_firecutoff=1;
@@ -868,7 +868,7 @@ void LabelMenu(int value){
     visMeshlabel=0;
     vis_hrr_label=0;
     show_firecutoff=0;
-    if(sextras.ntickinfo>0)visFDSticks=0;
+    if(scase.ntickinfo>0)visFDSticks=0;
     visgridloc=0;
     vis_slice_average=0;
 #ifdef pp_memstatus
@@ -2824,7 +2824,7 @@ void SmokeviewIniMenu(int value){
     WriteIni(LOCAL_INI,NULL);
     break;
   case MENU_READSVO:
-    ReadDefaultObjectCollection(&scase.objectscoll, fdsprefix, setbw, sextras.isZoneFireModel);
+    ReadDefaultObjectCollection(&scase.objectscoll, fdsprefix, setbw, scase.isZoneFireModel);
     break;
   case MENU_DUMMY:
     break;
@@ -6328,7 +6328,7 @@ void ShowInternalBlockages(void){
     GeometryMenu(17 + TERRAIN_HIDDEN);
   }
   updatemenu = 1;
-  sextras.updatefaces = 1;
+  scase.updatefaces = 1;
   updatefacelists = 1;
 }
 
@@ -6369,7 +6369,7 @@ void ShowBoundaryMenu(int value){
       ShowBoundaryMenu(HIDE_EXTERIOR_WALL_MENU);
     }
     updatefacelists = 1;
-    sextras.updatefaces = 1;
+    scase.updatefaces = 1;
     ShowInternalBlockages();
     update_patch_vis = 1;
   }
@@ -6488,7 +6488,7 @@ void VentMenu(int value){
     visVents=1;
     visOpenVents=1;
     visDummyVents=1;
-    sextras.visOtherVents=1;
+    scase.visOtherVents=1;
     visCircularVents=VENT_CIRCLE;
     break;
   case MENU_VENT_OPEN:
@@ -6502,24 +6502,24 @@ void VentMenu(int value){
     break;
   case MENU_VENT_TWOINTERIOR:
      show_bothsides_int=1-show_bothsides_int;
-     sextras.updatefaces=1;
+     scase.updatefaces=1;
      break;
   case MENU_VENT_TWOEXTERIOR:
      show_bothsides_ext = 1 - show_bothsides_ext;
-     sextras.updatefaces=1;
+     scase.updatefaces=1;
      break;
   case MENU_VENT_TRANSPARENT:
      show_transparent_vents=1-show_transparent_vents;
-     sextras.updatefaces=1;
+     scase.updatefaces=1;
      break;
   case MENU_VENT_OTHER:
-     sextras.visOtherVents=1-sextras.visOtherVents;
+     scase.visOtherVents=1-scase.visOtherVents;
      break;
    case HIDE_ALL_VENTS: // Hide all vents
      visVents=0;
      visOpenVents=0;
      visDummyVents=0;
-     sextras.visOtherVents=0;
+     scase.visOtherVents=0;
      visCircularVents=VENT_HIDE;
      break;
    case MENU_VENT_CIRCLE:
@@ -6705,7 +6705,7 @@ void BlockageMenu(int value){
       break;
     case visBLOCKOutlineColor:
       outline_color_flag = 1 - outline_color_flag;
-      sextras.updatefaces=1;
+      scase.updatefaces=1;
       break;
     case visBLOCKOnlyOutline:
       if(outline_state!=OUTLINE_ONLY){
@@ -6800,7 +6800,7 @@ void BlockageMenu(int value){
    case visBLOCKHide:
    case visBLOCKSolidOutline:
      visBlocks=value;
-     if(value==visBLOCKSolidOutline||visBLOCKold==visBLOCKSolidOutline)sextras.updatefaces=1;
+     if(value==visBLOCKSolidOutline||visBLOCKold==visBLOCKSolidOutline)scase.updatefaces=1;
      GLUIUpdateTrainerOutline();
      break;
    case BLOCKlocation_grid:
@@ -7231,7 +7231,7 @@ void ZoneShowMenu(int value){
       visVentMFlow=0;
     }
     break;
-#define VISVENTFLOW     if((sextras.nzhvents>0&&visVentHFlow==1)||(sextras.nzvvents>0&&visVentVFlow==1)||(sextras.nzmvents>0&&visVentMFlow==1)){\
+#define VISVENTFLOW     if((scase.nzhvents>0&&visVentHFlow==1)||(scase.nzvvents>0&&visVentVFlow==1)||(scase.nzmvents>0&&visVentMFlow==1)){\
       visVentFlow = 1;\
     }\
     else{\
@@ -7614,7 +7614,7 @@ void GeometryMenu(int value){
 
   switch(value){
   case GEOM_Outline:
-    if(sextras.isZoneFireModel==0)visFrame=1-visFrame;
+    if(scase.isZoneFireModel==0)visFrame=1-visFrame;
     break;
   case 5:
     visFloor=1-visFloor;
@@ -7632,21 +7632,21 @@ void GeometryMenu(int value){
   case 17+TERRAIN_SURFACE:
   case 17+TERRAIN_IMAGE:
   case 17+TERRAIN_HIDDEN:
-    sextras.visTerrainType = value-17;
+    scase.visTerrainType = value-17;
     GLUIUpdateTerrain();
-    if(sextras.visTerrainType == TERRAIN_HIDDEN){
-      if(sextras.visOtherVents!=sextras.visOtherVentsSAVE){
-        sextras.visOtherVents=sextras.visOtherVentsSAVE;
+    if(scase.visTerrainType == TERRAIN_HIDDEN){
+      if(scase.visOtherVents!=scase.visOtherVentsSAVE){
+        scase.visOtherVents=scase.visOtherVentsSAVE;
       }
     }
     else{
-      if(sextras.visOtherVents!=0){
-        sextras.visOtherVentsSAVE=sextras.visOtherVents;
-        sextras.visOtherVents=0;
+      if(scase.visOtherVents!=0){
+        scase.visOtherVentsSAVE=scase.visOtherVents;
+        scase.visOtherVents=0;
       }
       BlockageMenu(visBLOCKHide);
     }
-    if(sextras.visTerrainType==TERRAIN_SURFACE){
+    if(scase.visTerrainType==TERRAIN_SURFACE){
       planar_terrain_slice=0;
     }
     else{
@@ -7654,7 +7654,7 @@ void GeometryMenu(int value){
     }
     break;
   case GEOM_ShowAll:
-    if(sextras.isZoneFireModel)visFrame=1;
+    if(scase.isZoneFireModel)visFrame=1;
     show_faces_shaded=1;
     visFloor = 1;
     visFrame = 1;
@@ -7898,22 +7898,22 @@ void InitShowSliceMenu(int *showhideslicemenuptr, int patchgeom_slice_showhide){
 
       if(nsliceloaded>0){
         glutAddMenuEntry(_("Show in:"), MENU_DUMMY);
-        if(sextras.show_slice_in_obst==ONLY_IN_GAS){
+        if(scase.show_slice_in_obst==ONLY_IN_GAS){
           glutAddMenuEntry(_("  *gas"), MENU_SHOWSLICE_IN_GAS);
           glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
           glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
         }
-        if(sextras.show_slice_in_obst==GAS_AND_SOLID){
+        if(scase.show_slice_in_obst==GAS_AND_SOLID){
           glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
           glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
           glutAddMenuEntry(_("  *gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
         }
-        if(sextras.show_slice_in_obst==ONLY_IN_SOLID){
+        if(scase.show_slice_in_obst==ONLY_IN_SOLID){
           glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
           glutAddMenuEntry(_("  *solid"), MENU_SHOWSLICE_IN_SOLID);
           glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
         }
-        if(sextras.show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
+        if(scase.show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
           glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
           glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
           glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
@@ -7995,22 +7995,22 @@ void InitShowMultiSliceMenu(int *showmultislicemenuptr, int showhideslicemenu, i
     }
     if(nsliceloaded>0){
       glutAddMenuEntry(_("  Show in:"), MENU_DUMMY);
-      if(sextras.show_slice_in_obst==ONLY_IN_GAS){
+      if(scase.show_slice_in_obst==ONLY_IN_GAS){
         glutAddMenuEntry(_("    *gas"), MENU_SHOWSLICE_IN_GAS);
         glutAddMenuEntry(_("    solid"), MENU_SHOWSLICE_IN_SOLID);
         glutAddMenuEntry(_("    gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
       }
-      if(sextras.show_slice_in_obst==GAS_AND_SOLID){
+      if(scase.show_slice_in_obst==GAS_AND_SOLID){
         glutAddMenuEntry(_("    gas"), MENU_SHOWSLICE_IN_GAS);
         glutAddMenuEntry(_("    solid"), MENU_SHOWSLICE_IN_SOLID);
         glutAddMenuEntry(_("    *gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
       }
-      if(sextras.show_slice_in_obst==ONLY_IN_SOLID){
+      if(scase.show_slice_in_obst==ONLY_IN_SOLID){
         glutAddMenuEntry(_("    gas"), MENU_SHOWSLICE_IN_GAS);
         glutAddMenuEntry(_("    *solid"), MENU_SHOWSLICE_IN_SOLID);
         glutAddMenuEntry(_("    gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
       }
-      if(sextras.show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
+      if(scase.show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
         glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
         glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
         glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
@@ -8035,10 +8035,10 @@ void InitUnloadSliceMenu(int *unloadslicemenuptr){
     slicedata *sd;
     char menulabel[1024];
 
-    sd = scase.slicecoll.sliceinfo + sextras.sliceorderindex[i];
+    sd = scase.slicecoll.sliceinfo + scase.sliceorderindex[i];
     if(sd->loaded==1){
       STRCPY(menulabel,sd->menulabel2);
-      glutAddMenuEntry(menulabel,sextras.sliceorderindex[i]);
+      glutAddMenuEntry(menulabel,scase.sliceorderindex[i]);
     }
   }
   for(i = 0;i<scase.npatchinfo;i++){
@@ -8577,7 +8577,7 @@ void InitUnloadVSLiceMenu(int *unloadvslicemenuptr){
     vslicedata *vd;
     int i;
 
-    i = sextras.vsliceorderindex[ii];
+    i = scase.vsliceorderindex[ii];
     vd = scase.slicecoll.vsliceinfo + i;
     if(vd->loaded==0)continue;
     glutAddMenuEntry(vd->menulabel2,i);
@@ -9472,18 +9472,18 @@ static int menu_count=0;
 
   if(scase.nplot3dinfo>0){
     CREATEMENU(levelmenu,LevelMenu);
-    for(i=1;i<sextras.nrgb-1;i++){
+    for(i=1;i<scase.nrgb-1;i++){
       if(colorlabeliso!=NULL){
         char *colorlabel;
         char levellabel2[256];
 
-        colorlabel=&colorlabeliso[plotn-1][sextras.nrgb-2-i][0];
+        colorlabel=&colorlabeliso[plotn-1][scase.nrgb-2-i][0];
         strcpy(levellabel2,"");
-        if(plotiso[plotn-1]==sextras.nrgb-2-i&&visiso==1){
+        if(plotiso[plotn-1]==scase.nrgb-2-i&&visiso==1){
           strcat(levellabel2,"*");
         }
         strcat(levellabel2,colorlabel);
-        glutAddMenuEntry(levellabel2,sextras.nrgb-2-i);
+        glutAddMenuEntry(levellabel2,scase.nrgb-2-i);
       }
       else{
         char chari[20];
@@ -9750,25 +9750,25 @@ static int menu_count=0;
       if(visOpenVents == 1)glutAddMenuEntry(_("*Open"), MENU_VENT_OPEN);
       if(visOpenVents == 0)glutAddMenuEntry(_("Open"), MENU_VENT_OPEN);
     }
-    if(sextras.ndummyvents>0){
+    if(scase.ndummyvents>0){
       if(visDummyVents == 1)glutAddMenuEntry(_("*Exterior"), MENU_VENT_EXTERIOR);
       if(visDummyVents == 0)glutAddMenuEntry(_("Exterior"), MENU_VENT_EXTERIOR);
     }
-    if(sextras.ncvents>0){
+    if(scase.ncvents>0){
       if(visCircularVents!=VENT_HIDE)GLUTADDSUBMENU(_("*Circular"),circularventmenu);
       if(visCircularVents==VENT_HIDE)GLUTADDSUBMENU(_("Circular"),circularventmenu);
     }
-    if(GetNTotalVents()>nopenvents+sextras.ndummyvents){
-      if(sextras.visOtherVents == 1)glutAddMenuEntry(_("*Other"), MENU_VENT_OTHER);
-      if(sextras.visOtherVents == 0)glutAddMenuEntry(_("Other"), MENU_VENT_OTHER);
+    if(GetNTotalVents()>nopenvents+scase.ndummyvents){
+      if(scase.visOtherVents == 1)glutAddMenuEntry(_("*Other"), MENU_VENT_OTHER);
+      if(scase.visOtherVents == 0)glutAddMenuEntry(_("Other"), MENU_VENT_OTHER);
     }
-    if(visOpenVents==1&&visDummyVents==1&&sextras.visOtherVents==1){
+    if(visOpenVents==1&&visDummyVents==1&&scase.visOtherVents==1){
       glutAddMenuEntry(_("*Show all"),SHOW_ALL_VENTS);
     }
     else{
       glutAddMenuEntry(_("Show all"),SHOW_ALL_VENTS);
     }
-    if(visOpenVents==0&&visDummyVents==0&&sextras.visOtherVents==0){
+    if(visOpenVents==0&&visDummyVents==0&&scase.visOtherVents==0){
       glutAddMenuEntry(_("*Hide all"),HIDE_ALL_VENTS);
     }
     else{
@@ -9796,14 +9796,14 @@ static int menu_count=0;
   CREATEMENU(terrain_obst_showmenu, GeometryMenu);
   if(terrain_showonly_top==1)glutAddMenuEntry(_("*Show only top surface"), 17 + TERRAIN_TOP);
   if(terrain_showonly_top==0)glutAddMenuEntry(_("Show only top surface"),  17 + TERRAIN_TOP);
-  if(sextras.visTerrainType==TERRAIN_SURFACE)glutAddMenuEntry(_("*3D surface"),17+TERRAIN_SURFACE);
-  if(sextras.visTerrainType!=TERRAIN_SURFACE)glutAddMenuEntry(_("3D surface"),17+TERRAIN_SURFACE);
+  if(scase.visTerrainType==TERRAIN_SURFACE)glutAddMenuEntry(_("*3D surface"),17+TERRAIN_SURFACE);
+  if(scase.visTerrainType!=TERRAIN_SURFACE)glutAddMenuEntry(_("3D surface"),17+TERRAIN_SURFACE);
   if(scase.terrain_texture_coll.terrain_textures!=NULL){ // &&terrain_texture->loaded==1
-    if(sextras.visTerrainType==TERRAIN_IMAGE)glutAddMenuEntry(_("*Image"),17+TERRAIN_IMAGE);
-    if(sextras.visTerrainType!=TERRAIN_IMAGE)glutAddMenuEntry(_("Image"),17+TERRAIN_IMAGE);
+    if(scase.visTerrainType==TERRAIN_IMAGE)glutAddMenuEntry(_("*Image"),17+TERRAIN_IMAGE);
+    if(scase.visTerrainType!=TERRAIN_IMAGE)glutAddMenuEntry(_("Image"),17+TERRAIN_IMAGE);
   }
-  if(sextras.visTerrainType==TERRAIN_HIDDEN)glutAddMenuEntry(_("*Hidden"),17+TERRAIN_HIDDEN);
-  if(sextras.visTerrainType!=TERRAIN_HIDDEN)glutAddMenuEntry(_("Hidden"),17+TERRAIN_HIDDEN);
+  if(scase.visTerrainType==TERRAIN_HIDDEN)glutAddMenuEntry(_("*Hidden"),17+TERRAIN_HIDDEN);
+  if(scase.visTerrainType!=TERRAIN_HIDDEN)glutAddMenuEntry(_("Hidden"),17+TERRAIN_HIDDEN);
 
   if(scase.objectscoll.nobject_defs>0){
     int multiprop;
@@ -9948,7 +9948,7 @@ static int menu_count=0;
         glutAddMenuEntry(obj_menu,i);
       }
     }
-    if(sextras.have_missing_objects == 1&&sextras.isZoneFireModel==0){
+    if(scase.have_missing_objects == 1&&scase.isZoneFireModel==0){
       if(show_missing_objects==1)glutAddMenuEntry(_("*undefined"),OBJECT_MISSING);
       if(show_missing_objects == 0)glutAddMenuEntry(_("undefined"),OBJECT_MISSING);
     }
@@ -9963,7 +9963,7 @@ static int menu_count=0;
     }
     if(object_outlines==0)glutAddMenuEntry(_("Outline"),OBJECT_OUTLINE);
     if(object_outlines==1)glutAddMenuEntry(_("*Outline"),OBJECT_OUTLINE);
-    if(sextras.have_object_box==1){
+    if(scase.have_object_box==1){
       if(object_box==0)glutAddMenuEntry(_("Show XB"), OBJECT_BOX);
       if(object_box==1)glutAddMenuEntry(_("*Show XB"), OBJECT_BOX);
     }
@@ -9975,7 +9975,7 @@ static int menu_count=0;
     else{
       glutAddMenuEntry(_("Show orientation"),OBJECT_ORIENTATION);
     }
-    if(sextras.have_beam == 1){
+    if(scase.have_beam == 1){
       if(showbeam_as_line == 1){
         glutAddMenuEntry(_("*Show beam as line"), OBJECT_SHOWBEAM);
       }
@@ -10231,7 +10231,7 @@ static int menu_count=0;
     }
   }
   GLUTADDSUBMENU(_("Grid"),gridslicemenu);
-  if(sextras.isZoneFireModel==0){
+  if(scase.isZoneFireModel==0){
     if(visFrame==1)glutAddMenuEntry(_("*Outline"), GEOM_Outline);
     if(visFrame==0)glutAddMenuEntry(_("Outline"), GEOM_Outline);
   }
@@ -10334,11 +10334,11 @@ static int menu_count=0;
 
   if(visaxislabels == 1)glutAddMenuEntry(_("*Axis"), MENU_LABEL_axis);
   if(visaxislabels == 0)glutAddMenuEntry(_("Axis"), MENU_LABEL_axis);
-  if(sextras.have_northangle==1){
+  if(scase.have_northangle==1){
     if(vis_northangle==1)glutAddMenuEntry(_("*North"), MENU_LABEL_northangle);
     if(vis_northangle==0)glutAddMenuEntry(_("North"), MENU_LABEL_northangle);
   }
-  if(sextras.ntickinfo>0){
+  if(scase.ntickinfo>0){
     if(visFDSticks == 0)glutAddMenuEntry(_("FDS generated ticks"), MENU_LABEL_fdsticks);
     if(visFDSticks == 1)glutAddMenuEntry(_("*FDS generated ticks"), MENU_LABEL_fdsticks);
   }
@@ -10519,7 +10519,7 @@ static int menu_count=0;
       else{
         glutAddMenuEntry(_("Vent flow"), MENU_ZONE_VENTS);
       }
-      if(sextras.nzhvents>0){
+      if(scase.nzhvents>0){
         if(visVentHFlow == 1){
           glutAddMenuEntry(_("   *Horizontal"), MENU_ZONE_HVENTS);
         }
@@ -10549,7 +10549,7 @@ static int menu_count=0;
           }
         }
       }
-      if(sextras.nzvvents>0){
+      if(scase.nzvvents>0){
         if(visVentVFlow==1){
           glutAddMenuEntry(_("   *Vertical"), MENU_ZONE_VVENTS);
         }
@@ -10557,7 +10557,7 @@ static int menu_count=0;
           glutAddMenuEntry(_("   Vertical"), MENU_ZONE_VVENTS);
         }
       }
-      if(sextras.nzmvents>0){
+      if(scase.nzmvents>0){
         if(visVentMFlow==1){
           glutAddMenuEntry(_("   *Mechanical"), MENU_ZONE_MVENTS);
         }
@@ -10951,7 +10951,7 @@ static int menu_count=0;
         STRCAT(levellabel,_("Levels"));
         GLUTADDSUBMENU(levellabel,isolevelmenu);
       }
-      if(sextras.niso_compressed==0){
+      if(scase.niso_compressed==0){
         if(smooth_iso_normal == 1)glutAddMenuEntry(_("*Smooth"), MENU_ISOSHOW_SMOOTH);
         if(smooth_iso_normal == 0)glutAddMenuEntry(_("Smooth"), MENU_ISOSHOW_SMOOTH);
       }
@@ -11079,22 +11079,22 @@ static int menu_count=0;
       glutAddMenuEntry(menulabel,SHOW_ALL);
     }
     glutAddMenuEntry(_("  Show in:"), MENU_DUMMY);
-    if(sextras.show_slice_in_obst==ONLY_IN_GAS){
+    if(scase.show_slice_in_obst==ONLY_IN_GAS){
       glutAddMenuEntry(_("    *gas"),  MENU_SHOWSLICE_IN_GAS);
       glutAddMenuEntry(_("    solid"), MENU_SHOWSLICE_IN_SOLID);
       glutAddMenuEntry(_("    gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
     }
-    if(sextras.show_slice_in_obst==GAS_AND_SOLID){
+    if(scase.show_slice_in_obst==GAS_AND_SOLID){
       glutAddMenuEntry(_("    gas"), MENU_SHOWSLICE_IN_GAS);
       glutAddMenuEntry(_("    solid"), MENU_SHOWSLICE_IN_SOLID);
       glutAddMenuEntry(_("    *gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
     }
-    if(sextras.show_slice_in_obst==ONLY_IN_SOLID){
+    if(scase.show_slice_in_obst==ONLY_IN_SOLID){
       glutAddMenuEntry(_("    gas"), MENU_SHOWSLICE_IN_GAS);
       glutAddMenuEntry(_("    *solid"), MENU_SHOWSLICE_IN_SOLID);
       glutAddMenuEntry(_("    gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
     }
-    if(sextras.show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
+    if(scase.show_slice_in_obst==NEITHER_GAS_NOR_SOLID){
       glutAddMenuEntry(_("  gas"), MENU_SHOWSLICE_IN_GAS);
       glutAddMenuEntry(_("  solid"), MENU_SHOWSLICE_IN_SOLID);
       glutAddMenuEntry(_("  gas and solid"), MENU_SHOWSLICE_IN_GASANDSOLID);
@@ -11330,10 +11330,10 @@ static int menu_count=0;
   GLUTADDSUBMENU(_("Color"), colorbarmenu);
   GLUTADDSUBMENU(_("Geometry"),geometrymenu);
   if(hvaccoll.nhvacinfo>0)GLUTADDSUBMENU(_("HVAC"), hvacmenu);
-  if(sextras.nterraininfo>0&&scase.ngeominfo==0){
+  if(scase.nterraininfo>0&&scase.ngeominfo==0){
     GLUTADDSUBMENU(_("Terrain"), terrain_obst_showmenu);
   }
-  if(GetNumActiveDevices()>0||sextras.ncvents>0){
+  if(GetNumActiveDevices()>0||scase.ncvents>0){
     GLUTADDSUBMENU(_("Devices"), showobjectsmenu);
   }
   GLUTADDSUBMENU(_("Labels"),labelmenu);
@@ -11434,9 +11434,9 @@ static int menu_count=0;
       }
     }
   }
-  if(sextras.ntc_total>0){
+  if(scase.ntc_total>0){
     showhide_data = 1;
-    if(sextras.isZoneFireModel==1){
+    if(scase.isZoneFireModel==1){
       if(visSensor==1)glutAddMenuEntry(_("*Targets"), MENU_SHOWHIDE_SENSOR);
       if(visSensor==0)glutAddMenuEntry(_("Targets"), MENU_SHOWHIDE_SENSOR);
       if(hasSensorNorm==1){
@@ -11681,7 +11681,7 @@ static int menu_count=0;
   if(showtour_dialog==1)glutAddMenuEntry(_("*Create/modify tours...  ALT t"), DIALOG_TOUR_HIDE);
   if(showtour_dialog==0)glutAddMenuEntry(_("Create/modify tours...  ALT t"), DIALOG_TOUR_SHOW);
   glutAddMenuEntry(_("Edit colorbar...  ALT C"), DIALOG_COLORBAR);
-  if(sextras.isZoneFireModel==0 && have_geometry_dialog==1){
+  if(scase.isZoneFireModel==0 && have_geometry_dialog==1){
     glutAddMenuEntry(_("Examine geometry...  ALT e"), DIALOG_GEOMETRY);
   }
 #else
@@ -11689,11 +11689,11 @@ static int menu_count=0;
   if(showtour_dialog==1)glutAddMenuEntry(_("*Create/edit tours..."), DIALOG_TOUR_HIDE);
   if(showtour_dialog==0)glutAddMenuEntry(_("Create/edit tours..."), DIALOG_TOUR_SHOW);
   glutAddMenuEntry(_("Edit colorbar...  "), DIALOG_COLORBAR);
-  if(sextras.isZoneFireModel == 0 && have_geometry_dialog == 1){
+  if(scase.isZoneFireModel == 0 && have_geometry_dialog == 1){
     glutAddMenuEntry(_("Examine geometry...  "), DIALOG_GEOMETRY);
   }
 #endif
-  if(sextras.nterraininfo>0&&scase.ngeominfo==0){
+  if(scase.nterraininfo>0&&scase.ngeominfo==0){
     glutAddMenuEntry(_("Terrain..."), DIALOG_TERRAIN);
   }
   if(hvaccoll.nhvacinfo > 0){
@@ -11974,7 +11974,7 @@ static int menu_count=0;
     glutAddMenuEntry(_("  s,S: increase/decrease interval between adjacent vectors"), MENU_DUMMY);
     glutAddMenuEntry(_("  t: set/unset single time step mode"), MENU_DUMMY);
     glutAddMenuEntry(_("  T: time display between 'Time s' and 'h:m:s'"), MENU_DUMMY);
-    if(sextras.cellcenter_slice_active==1){
+    if(scase.cellcenter_slice_active==1){
       glutAddMenuEntry(_("     (also, toggles cell center display on/off)"), MENU_DUMMY);
       glutAddMenuEntry(_("  @: display FDS values in cell centered slices"), MENU_DUMMY);
     }
@@ -12006,7 +12006,7 @@ static int menu_count=0;
   glutAddMenuEntry(_("Misc"), MENU_DUMMY);
   glutAddMenuEntry(_("  A: toggle between plot types (device and HRRPUV)"), MENU_DUMMY);
   glutAddMenuEntry(_("  e: toggle between view rotation types: scene centered 2 axis, 1 axis, 3 axis and eye centered"), MENU_DUMMY);
-  if(ntotal_blockages>0||sextras.isZoneFireModel==1){
+  if(ntotal_blockages>0||scase.isZoneFireModel==1){
     glutAddMenuEntry(_("  g: toggle grid visibility modes"), MENU_DUMMY);
   }
   if(scase.devicecoll.ndeviceinfo > 0 && GetNumActiveDevices() > 0){
@@ -12999,7 +12999,7 @@ static int menu_count=0;
 
       // terrain
 
-      if(sextras.manual_terrain==1&&sextras.nterraininfo>0){
+      if(scase.manual_terrain==1&&scase.nterraininfo>0){
  //       GLUTADDSUBMENU(_("Terrain"),loadterrainmenu);
       }
 
