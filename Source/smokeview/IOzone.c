@@ -1032,12 +1032,12 @@ void ReadZone(int ifile, int flag, int *errorcode){
     FREEMEMORY(zonefheight);
     FREEMEMORY(zonefdiam);
     FREEMEMORY(zonefbase);
-    if(nfires!=0){
+    if(scase.nfires!=0){
       if(
-        NewMemory((void **)&zoneqfire,nfires*nzone_times*sizeof(float))==0||
-        NewMemory((void **)&zonefheight,nfires*nzone_times*sizeof(float))==0||
-        NewMemory((void **)&zonefdiam,nfires*nzone_times*sizeof(float))==0||
-        NewMemory((void **)&zonefbase,nfires*nzone_times*sizeof(float))==0
+        NewMemory((void **)&zoneqfire,scase.nfires*nzone_times*sizeof(float))==0||
+        NewMemory((void **)&zonefheight,scase.nfires*nzone_times*sizeof(float))==0||
+        NewMemory((void **)&zonefdiam,scase.nfires*nzone_times*sizeof(float))==0||
+        NewMemory((void **)&zonefbase,scase.nfires*nzone_times*sizeof(float))==0
         ){
         *errorcode=1;
         return;
@@ -1098,7 +1098,7 @@ void ReadZone(int ifile, int flag, int *errorcode){
   }
   CheckMemory;
   if(zonei->csv==1){
-    GetZoneDataCSV(nzone_times,scase.nrooms,  nfires, ntargets_local,
+    GetZoneDataCSV(nzone_times,scase.nrooms,  scase.nfires, ntargets_local,
                    zone_times,zoneqfire, zonefheight, zonefbase, zonefdiam,
                    zonepr,zoneylay,zonetl,zonetu,zonerhol,zonerhou,&zoneodl,&zoneodu, zonevents,
                    zoneslab_n, zoneslab_T, zoneslab_F, zoneslab_YB, zoneslab_YT,
@@ -1107,7 +1107,7 @@ void ReadZone(int ifile, int flag, int *errorcode){
                    &error);
   }
   else{
-    getzonedata(file,&nzone_times,&scase.nrooms, &nfires, zone_times,zoneqfire,zonepr,zoneylay,zonetl,zonetu,&error);
+    getzonedata(file,&nzone_times,&scase.nrooms, &scase.nfires, zone_times,zoneqfire,zonepr,zoneylay,zonetl,zonetu,&error);
   }
   CheckMemory;
 
@@ -2252,13 +2252,13 @@ void DrawZoneFireData(void){
   if(zone_times[0]>global_times[itimes])return;
   if(cullfaces==1)glDisable(GL_CULL_FACE);
 
-  zoneqfirebase = zoneqfire + izone*nfires;
-  zonefheightbase = zonefheight + izone*nfires;
-  zonefdiambase = zonefdiam + izone*nfires;
-  zonefbasebase = zonefbase + izone*nfires;
+  zoneqfirebase = zoneqfire + izone*scase.nfires;
+  zonefheightbase = zonefheight + izone*scase.nfires;
+  zonefdiambase = zonefdiam + izone*scase.nfires;
+  zonefbasebase = zonefbase + izone*scase.nfires;
 
   if(viszonefire==1){
-    for(i=0;i<nfires;i++){
+    for(i=0;i<scase.nfires;i++){
       float qdot;
       float diameter, flameheight, maxheight;
 
@@ -2271,7 +2271,7 @@ void DrawZoneFireData(void){
           meshdata *meshi;
 
           // radius/plumeheight = .268 = atan(15 degrees)
-          firei = fireinfo + i;
+          firei = scase.fireinfo + i;
           roomi = scase.roominfo + firei->roomnumber-1;
           meshi = scase.meshescoll.meshinfo + firei->roomnumber-1;
           diameter = SCALE2SMV(zonefdiambase[i]);
@@ -2293,7 +2293,7 @@ void DrawZoneFireData(void){
           meshdata *meshi;
 
           // radius/plumeheight = .268 = atan(15 degrees)
-          firei = fireinfo + i;
+          firei = scase.fireinfo + i;
           roomi = scase.roominfo + firei->roomnumber-1;
           meshi = scase.meshescoll.meshinfo + firei->roomnumber-1;
           maxheight=roomi->z1-firei->absz;

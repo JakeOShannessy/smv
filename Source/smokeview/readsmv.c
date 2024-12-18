@@ -4044,10 +4044,10 @@ void UpdateMeshCoords(void){
     roomi->dy=SCALE2SMV(roomi->dy);
     roomi->dz=SCALE2SMV(roomi->dz);
   }
-  for(n=0;n<nfires;n++){
+  for(n=0;n<scase.nfires;n++){
     firedata *firen;
 
-    firen = fireinfo + n;
+    firen = scase.fireinfo + n;
     firen->absx=FDS2SMV_X(firen->absx);
     firen->absy=FDS2SMV_Y(firen->absy);
     firen->absz=FDS2SMV_Z(firen->absz);
@@ -7115,7 +7115,7 @@ int ReadSMV_Init(){
   NewMemory((void **)&camera_last,sizeof(cameradata));
 
   sextras.updatefaces=1;
-  nfires=0;
+  scase.nfires=0;
   scase.nrooms=0;
 
   START_TIMER(timer_setup);
@@ -7281,7 +7281,7 @@ int ReadSMV_Init(){
   FREEMEMORY(scase.isoinfo);
   FREEMEMORY(isotypes);
   FREEMEMORY(scase.roominfo);
-  FREEMEMORY(fireinfo);
+  FREEMEMORY(scase.fireinfo);
   FREEMEMORY(zoneinfo);
   FREEMEMORY(zventinfo);
   FREEMEMORY(scase.texture_coll.textureinfo);
@@ -7902,7 +7902,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"FIRE") == 1){
-      nfires++;
+      scase.nfires++;
       continue;
     }
     if(MatchSMV(buffer,"ZONE") == 1){
@@ -8140,9 +8140,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   if(scase.nrooms>0){
     if(NewMemory((void **)&scase.roominfo,(scase.nrooms+1)*sizeof(roomdata))==0)return 2;
   }
-  FREEMEMORY(fireinfo);
-  if(nfires>0){
-    if(NewMemory((void **)&fireinfo,nfires*sizeof(firedata))==0)return 2;
+  FREEMEMORY(scase.fireinfo);
+  if(scase.nfires>0){
+    if(NewMemory((void **)&scase.fireinfo,scase.nfires*sizeof(firedata))==0)return 2;
   }
   FREEMEMORY(zoneinfo);
   if(nzoneinfo>0){
@@ -10322,7 +10322,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       if(FGETS(buffer,255,stream)==NULL){
         BREAK;
       }
-      firei = fireinfo + ifire - 1;
+      firei = scase.fireinfo + ifire - 1;
       sscanf(buffer,"%i %f %f %f",&roomnumber,&firei->x,&firei->y,&firei->z);
       if(roomnumber>=1&&roomnumber<=scase.nrooms){
         roomdata *roomi;

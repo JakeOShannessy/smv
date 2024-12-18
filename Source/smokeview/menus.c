@@ -10566,7 +10566,7 @@ static int menu_count=0;
         }
       }
     }
-    if(nfires>0){
+    if(scase.nfires>0){
       if(viszonefire==1){
         glutAddMenuEntry(_("*Fires"), MENU_ZONE_FIRES);
       }
