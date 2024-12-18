@@ -1408,7 +1408,7 @@ SVEXTERN int SVDECL(glui_active,0);
 SVEXTERN int SVDECL(old_draw_colorlabel,0);
 SVEXTERN int SVDECL(vis3DSmoke3D,1);
 SVEXTERN int SVDECL(smokeskip,1),SVDECL(smokeskipm1,0);
-SVEXTERN int SVDECL(nrooms,0),SVDECL(nzoneinfo,0), SVDECL(nfires,0);
+SVEXTERN int SVDECL(nzoneinfo,0), SVDECL(nfires,0);
 SVEXTERN float SVDECL(scene_aspect_ratio,1.0);
 
 SVEXTERN int SVDECL(fix_window_aspect, 0);
@@ -2163,7 +2163,6 @@ SVEXTERN int ntextures_loaded_used, SVDECL(iterrain_textures,0);
 SVEXTERN int SVDECL(nskyboxinfo,0);
 SVEXTERN skyboxdata SVDECL(*skyboxinfo,NULL);
 SVEXTERN firedata SVDECL(*fireinfo,NULL);
-SVEXTERN roomdata SVDECL(*roominfo,NULL);
 SVEXTERN zventdata SVDECL(*zventinfo,NULL);
 SVEXTERN zonedata SVDECL(*zoneinfo,NULL);
 SVEXTERN zonedata SVDECL(*activezone,NULL);

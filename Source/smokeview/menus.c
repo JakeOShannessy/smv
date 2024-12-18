@@ -10214,7 +10214,7 @@ static int menu_count=0;
     GLUTADDSUBMENU(_("Immersed"), immersedmenu);
   }
   if(GetNTotalVents()>0)GLUTADDSUBMENU(_("Surfaces"), ventmenu);
-  if(nrooms > 0){
+  if(scase.nrooms > 0){
     if(visCompartments == 1){
       glutAddMenuEntry(_("*Compartments"), GEOM_Compartments);
     }

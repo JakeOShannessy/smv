@@ -4030,10 +4030,10 @@ void UpdateMeshCoords(void){
       }
     }
   }
-  for(n=0;n<nrooms;n++){
+  for(n=0;n<scase.nrooms;n++){
     roomdata *roomi;
 
-    roomi = roominfo + n;
+    roomi = scase.roominfo + n;
     roomi->x0=FDS2SMV_X(roomi->x0);
     roomi->y0=FDS2SMV_Y(roomi->y0);
     roomi->z0=FDS2SMV_Z(roomi->z0);
@@ -4668,11 +4668,11 @@ void ReadZVentData(zventdata *zvi, char *buffer, int flag){
     roomto = roomfrom;
   }
 
-  if(roomfrom<1 || roomfrom>nrooms)roomfrom = nrooms + 1;
-  roomi = roominfo + roomfrom - 1;
+  if(roomfrom<1 || roomfrom>scase.nrooms)roomfrom = scase.nrooms + 1;
+  roomi = scase.roominfo + roomfrom - 1;
   zvi->room1 = roomi;
-  if(roomto<1 || roomto>nrooms)roomto = nrooms + 1;
-  zvi->room2 = roominfo + roomto - 1;
+  if(roomto<1 || roomto>scase.nrooms)roomto = scase.nrooms + 1;
+  zvi->room2 = scase.roominfo + roomto - 1;
   zvi->x0 = roomi->x0 + xyz[0];
   zvi->x1 = roomi->x0 + xyz[1];
   zvi->y0 = roomi->y0 + xyz[2];
@@ -7116,7 +7116,7 @@ int ReadSMV_Init(){
 
   sextras.updatefaces=1;
   nfires=0;
-  nrooms=0;
+  scase.nrooms=0;
 
   START_TIMER(timer_setup);
   InitSurface(&sextras.sdefault);
@@ -7280,7 +7280,7 @@ int ReadSMV_Init(){
   FREEMEMORY(boundarytypes);
   FREEMEMORY(scase.isoinfo);
   FREEMEMORY(isotypes);
-  FREEMEMORY(roominfo);
+  FREEMEMORY(scase.roominfo);
   FREEMEMORY(fireinfo);
   FREEMEMORY(zoneinfo);
   FREEMEMORY(zventinfo);
@@ -7898,7 +7898,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
     if(MatchSMV(buffer,"ROOM") == 1){
       sextras.isZoneFireModel=1;
-      nrooms++;
+      scase.nrooms++;
       continue;
     }
     if(MatchSMV(buffer,"FIRE") == 1){
@@ -8136,9 +8136,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     if(NewMemory((void **)&scase.isoinfo,scase.nisoinfo*sizeof(isodata))==0)return 2;
     if(NewMemory((void **)&isotypes,scase.nisoinfo*sizeof(int))==0)return 2;
   }
-  FREEMEMORY(roominfo);
-  if(nrooms>0){
-    if(NewMemory((void **)&roominfo,(nrooms+1)*sizeof(roomdata))==0)return 2;
+  FREEMEMORY(scase.roominfo);
+  if(scase.nrooms>0){
+    if(NewMemory((void **)&scase.roominfo,(scase.nrooms+1)*sizeof(roomdata))==0)return 2;
   }
   FREEMEMORY(fireinfo);
   if(nfires>0){
@@ -9414,7 +9414,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       visFrame=0;
       roomdefined=1;
       iroom++;
-      roomi = roominfo + iroom - 1;
+      roomi = scase.roominfo + iroom - 1;
       roomi->valid=0;
       if(FGETS(buffer,255,stream)==NULL){
         BREAK;
@@ -10169,12 +10169,12 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
         zvi->area=vent_width*(top-bottom);
 
-        if(roomfrom<1||roomfrom>nrooms)roomfrom=nrooms+1;
-        roomi = roominfo + roomfrom-1;
+        if(roomfrom<1||roomfrom>scase.nrooms)roomfrom=scase.nrooms+1;
+        roomi = scase.roominfo + roomfrom-1;
         zvi->room1 = roomi;
 
-        if(roomto<1||roomto>nrooms)roomto=nrooms+1;
-        zvi->room2=roominfo+roomto-1;
+        if(roomto<1||roomto>scase.nrooms)roomto=scase.nrooms+1;
+        zvi->room2=scase.roominfo+roomto-1;
 
         zvi->wall=wall;
         zvi->z0=roomi->z0+bottom;
@@ -10224,14 +10224,14 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         zvi->wall=wall;
         roomfrom=r_from;
         roomto=r_to;
-        if(roomfrom<1||roomfrom>nrooms){
+        if(roomfrom<1||roomfrom>scase.nrooms){
           roomfrom=r_to;
           roomto=r_from;
-          if(roomfrom<1||roomfrom>nrooms){
+          if(roomfrom<1||roomfrom>scase.nrooms){
             roomfrom=1;
           }
         }
-        roomi = roominfo + roomfrom - 1;
+        roomi = scase.roominfo + roomfrom - 1;
         vent_area=ABS(vent_area);
         ventside=sqrt(vent_area);
         xcen = (roomi->x0+roomi->x1)/2.0;
@@ -10324,10 +10324,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       }
       firei = fireinfo + ifire - 1;
       sscanf(buffer,"%i %f %f %f",&roomnumber,&firei->x,&firei->y,&firei->z);
-      if(roomnumber>=1&&roomnumber<=nrooms){
+      if(roomnumber>=1&&roomnumber<=scase.nrooms){
         roomdata *roomi;
 
-        roomi = roominfo + roomnumber - 1;
+        roomi = scase.roominfo + roomnumber - 1;
         firei->valid=1;
         firei->roomnumber=roomnumber;
         firei->absx=roomi->x0+firei->x;

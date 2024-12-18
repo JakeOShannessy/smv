@@ -1798,9 +1798,9 @@ void Keyboard(unsigned char key, int flag){
 #endif
       case GLUT_ACTIVE_CTRL:
       default:
-        if(nrooms>0){
+        if(scase.nrooms>0){
           zone_highlight_room++;
-          if(zone_highlight_room>=nrooms)zone_highlight_room=0;
+          if(zone_highlight_room>=scase.nrooms)zone_highlight_room=0;
           PRINTF("room %i\n",zone_highlight_room+1);
         }
         else{
@@ -1823,7 +1823,7 @@ void Keyboard(unsigned char key, int flag){
 #endif
         case GLUT_ACTIVE_CTRL:
         default:
-          if(nrooms>0){
+          if(scase.nrooms>0){
             zone_highlight = 1 - zone_highlight;
             if(zone_highlight==1){
               PRINTF("room %i\n",zone_highlight_room+1);

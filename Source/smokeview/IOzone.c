@@ -626,13 +626,13 @@ void FillZoneData(int izone_index){
   float R = (gamma - 1.0)*CP / gamma;
 
   if(ReadZoneFile == 0)return;
-  pr0 = zonepr + izone_index*nrooms;
-  ylay0 = zoneylay + izone_index*nrooms;
-  tl0 = zonetl + izone_index*nrooms;
-  tu0 = zonetu + izone_index*nrooms;
+  pr0 = zonepr + izone_index*scase.nrooms;
+  ylay0 = zoneylay + izone_index*scase.nrooms;
+  tl0 = zonetl + izone_index*scase.nrooms;
+  tu0 = zonetu + izone_index*scase.nrooms;
   if(zone_rho == 1){
-    rhol0 = zonerhol + izone_index*nrooms;
-    rhou0 = zonerhou + izone_index*nrooms;
+    rhol0 = zonerhol + izone_index*scase.nrooms;
+    rhou0 = zonerhou + izone_index*scase.nrooms;
   }
   ntotal_vents = sextras.nzhvents + sextras.nzvvents + sextras.nzmvents;
   hvent0 = zonevents + izone_index*ntotal_vents;
@@ -641,8 +641,8 @@ void FillZoneData(int izone_index){
   zoneslab_F0 = zoneslab_F + izone_index*MAX_HSLABS*ntotal_vents;
   zoneslab_YB0 = zoneslab_YB + izone_index*MAX_HSLABS*ntotal_vents;
   zoneslab_YT0 = zoneslab_YT + izone_index*MAX_HSLABS*ntotal_vents;
-  if(zoneodl != NULL)odl0 = zoneodl + izone_index*nrooms;
-  if(zoneodu != NULL)odu0 = zoneodu + izone_index*nrooms;
+  if(zoneodl != NULL)odl0 = zoneodl + izone_index*scase.nrooms;
+  if(zoneodu != NULL)odu0 = zoneodu + izone_index*scase.nrooms;
   for(ivent = 0;ivent < sextras.nzhvents + sextras.nzvvents + sextras.nzmvents;ivent++){
     zventdata *zventi;
     int islab;
@@ -661,8 +661,8 @@ void FillZoneData(int izone_index){
       zventi->slab_temp[islab] = zoneslab_T0[iislab];
     }
   }
-  for(iroom = 0;iroom < nrooms;iroom++){
-    roomi = roominfo + iroom;
+  for(iroom = 0;iroom < scase.nrooms;iroom++){
+    roomi = scase.roominfo + iroom;
     roomi->pfloor = pr0[iroom];
     roomi->ylay = ylay0[iroom];
     roomi->tl = C2K(tl0[iroom]);
@@ -680,7 +680,7 @@ void FillZoneData(int izone_index){
     if(zoneodl != NULL)roomi->od_L = 1.0 / MAX(odl0[iroom], 0.0001);
     if(zoneodu != NULL)roomi->od_U = 1.0 / MAX(odu0[iroom], 0.0001);
   }
-  roomi = roominfo + nrooms;
+  roomi = scase.roominfo + scase.nrooms;
   roomi->pfloor = 0.0;
   roomi->ylay = 99999.0;
   roomi->tl = sextras.tamb;
@@ -937,12 +937,12 @@ void ReadZone(int ifile, int flag, int *errorcode){
     nzvvents2=sextras.nzvvents;
   }
   CheckMemory;
-  if(error!=0||nrooms!=nrooms2||nzone_times==0||sextras.nzhvents!=nzhvents2||sextras.nzvvents!=nzvvents2||sextras.nzmvents!=nzmvents2){
+  if(error!=0||scase.nrooms!=nrooms2||nzone_times==0||sextras.nzhvents!=nzhvents2||sextras.nzvvents!=nzvvents2||sextras.nzmvents!=nzmvents2){
     showzone=0;
     UpdateTimes();
     ReadZoneFile=0;
-    if(nrooms!=nrooms2){
-      fprintf(stderr,"*** Error: number of rooms specified in the smv file (%i)\n",nrooms);
+    if(scase.nrooms!=nrooms2){
+      fprintf(stderr,"*** Error: number of rooms specified in the smv file (%i)\n",scase.nrooms);
       fprintf(stderr,"    not consistent with the number specified in the zone file (%i)\n",nrooms2);
     }
     if(sextras.nzhvents!=nzhvents2){
@@ -975,7 +975,7 @@ void ReadZone(int ifile, int flag, int *errorcode){
 
   PRINTF("Loading zone data: %s\n",file);
 
-  ntotal_rooms = nrooms*nzone_times;
+  ntotal_rooms = scase.nrooms*nzone_times;
   nzonetotal=ntotal_rooms;
 
   if(ntotal_rooms>0){
@@ -1098,7 +1098,7 @@ void ReadZone(int ifile, int flag, int *errorcode){
   }
   CheckMemory;
   if(zonei->csv==1){
-    GetZoneDataCSV(nzone_times,nrooms,  nfires, ntargets_local,
+    GetZoneDataCSV(nzone_times,scase.nrooms,  nfires, ntargets_local,
                    zone_times,zoneqfire, zonefheight, zonefbase, zonefdiam,
                    zonepr,zoneylay,zonetl,zonetu,zonerhol,zonerhou,&zoneodl,&zoneodu, zonevents,
                    zoneslab_n, zoneslab_T, zoneslab_F, zoneslab_YB, zoneslab_YT,
@@ -1107,14 +1107,14 @@ void ReadZone(int ifile, int flag, int *errorcode){
                    &error);
   }
   else{
-    getzonedata(file,&nzone_times,&nrooms, &nfires, zone_times,zoneqfire,zonepr,zoneylay,zonetl,zonetu,&error);
+    getzonedata(file,&nzone_times,&scase.nrooms, &nfires, zone_times,zoneqfire,zonepr,zoneylay,zonetl,zonetu,&error);
   }
   CheckMemory;
 
   if(zonei->csv==0){
     ii=0;
     for(i=0;i<nzone_times;i++){
-      for(j=0;j<nrooms;j++){
+      for(j=0;j<scase.nrooms;j++){
         zonetu[ii] = K2C(zonetu[ii]);
         zonetl[ii] = K2C(zonetl[ii]);
         ii++;
@@ -1124,7 +1124,7 @@ void ReadZone(int ifile, int flag, int *errorcode){
   CheckMemory;
   ii = 0;
   for(i=0;i<nzone_times;i++){
-    for(j=0;j<nrooms;j++){
+    for(j=0;j<scase.nrooms;j++){
       if(zonetu[ii]>=500.0){
         hazardcolor[ii]=RED;
       }
@@ -1287,7 +1287,7 @@ void DrawZoneRoomGeom(void){
     AntiAliasLine(ON);
     glBegin(GL_LINES);
 
-    for(i = 0; i < nrooms; i++){
+    for(i = 0; i < scase.nrooms; i++){
       roomdata *roomi;
       float xroom0, yroom0, zroom0, xroom, yroom, zroom;
 
@@ -1304,7 +1304,7 @@ void DrawZoneRoomGeom(void){
         glColor4fv(foregroundcolor);
       }
 
-      roomi = roominfo + i;
+      roomi = scase.roominfo + i;
       xroom0 = roomi->x0;
       yroom0 = roomi->y0;
       zroom0 = roomi->z0;
@@ -1702,21 +1702,21 @@ void DrawZoneWallData(void){
 
   FillZoneData(izone);
 
-  cl = izonecl + izone*nrooms;
-  uw = izoneuw + izone*nrooms;
-  lw = izonelw + izone*nrooms;
-  fl = izonefl + izone*nrooms;
+  cl = izonecl + izone*scase.nrooms;
+  uw = izoneuw + izone*scase.nrooms;
+  lw = izonelw + izone*scase.nrooms;
+  fl = izonefl + izone*scase.nrooms;
 
 
 /* draw the frame */
 
   glBegin(GL_TRIANGLES);
 
-  for(i = 0; i < nrooms; i++){
+  for(i = 0; i < scase.nrooms; i++){
     roomdata *roomi;
     float x0, y0, z0, x1, y1, z1, z;
 
-    roomi = roominfo + i;
+    roomi = scase.roominfo + i;
     x0 = roomi->x0;
     y0 = roomi->y0;
     z0 = roomi->z0;
@@ -2272,7 +2272,7 @@ void DrawZoneFireData(void){
 
           // radius/plumeheight = .268 = atan(15 degrees)
           firei = fireinfo + i;
-          roomi = roominfo + firei->roomnumber-1;
+          roomi = scase.roominfo + firei->roomnumber-1;
           meshi = scase.meshescoll.meshinfo + firei->roomnumber-1;
           diameter = SCALE2SMV(zonefdiambase[i]);
           deltaz = SCALE2SMV(zonefbasebase[i]);
@@ -2294,7 +2294,7 @@ void DrawZoneFireData(void){
 
           // radius/plumeheight = .268 = atan(15 degrees)
           firei = fireinfo + i;
-          roomi = roominfo + firei->roomnumber-1;
+          roomi = scase.roominfo + firei->roomnumber-1;
           meshi = scase.meshescoll.meshinfo + firei->roomnumber-1;
           maxheight=roomi->z1-firei->absz;
           flameheight = SCALE2SMV((0.23f*pow((double)qdot,(double)0.4)/(1.0f+2.0f*0.268f)));
@@ -2332,10 +2332,10 @@ void DrawZoneRoomData(void){
   if(cullfaces==1)glDisable(GL_CULL_FACE);
   if(use_transparency_data==1)TransparentOn();
 
-  izonetubase = izonetu + izone*nrooms;
-  izonetlbase = izonetl + izone*nrooms;
-  hazardcolorbase = hazardcolor + izone*nrooms;
-  zoneylaybase = zoneylay + izone*nrooms;
+  izonetubase = izonetu + izone*scase.nrooms;
+  izonetlbase = izonetl + izone*scase.nrooms;
+  hazardcolorbase = hazardcolor + izone*scase.nrooms;
+  zoneylaybase = zoneylay + izone*scase.nrooms;
 
   if(zonecolortype==ZONEHAZARD_COLOR){
     zonecolorbaseU=hazardcolorbase;
@@ -2350,12 +2350,12 @@ void DrawZoneRoomData(void){
      LoadZoneSmokeShaders();
    }
 #endif
-  for(i=0;i<nrooms;i++){
+  for(i=0;i<scase.nrooms;i++){
     roomdata *roomi;
     unsigned char colorU;
     unsigned char colorL;
 
-    roomi = roominfo + i;
+    roomi = scase.roominfo + i;
 
     ylay = *(zoneylaybase+i);
     colorU = *(zonecolorbaseU+i);

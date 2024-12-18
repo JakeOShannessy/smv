@@ -1849,7 +1849,7 @@ extern "C" void GLUIPlot2DSetup(int main_window){
 
     if(sextras.isZoneFireModel==1){
       LIST_curve_compartments = glui_plot2d->add_listbox_to_panel(PANEL_add_curve1, "compartment:", &icsv_compartments, GENPLOT_CURVE_UNIT, GLUIGenPlotCB);
-      for(i = 0;i < nrooms;i++){
+      for(i = 0;i < scase.nrooms;i++){
         char label[100];
 
         snprintf(label, sizeof(label), "%i", i + 1);

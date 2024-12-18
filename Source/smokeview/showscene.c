@@ -446,7 +446,7 @@ void ShowScene2(int mode){
 
   /* ++++++++++++++++++++++++ draw zone fire modeling info +++++++++++++++++++++++++ */
 
-  if(nrooms>0){
+  if(scase.nrooms>0){
     CLIP_GEOMETRY;
     DrawZoneRoomGeom();
     SNIFF_ERRORS("after DrawZoneRoomGeom");
@@ -556,7 +556,7 @@ void ShowScene2(int mode){
 
   /* ++++++++++++++++++++++++ draw zone fire modeling info +++++++++++++++++++++++++ */
 
-  if(nrooms>0 && showzone == 1){
+  if(scase.nrooms>0 && showzone == 1){
     CLIP_VALS;
     DrawZoneRoomData();
     SNIFF_ERRORS("after DrawZoneRoomData");

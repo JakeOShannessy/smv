@@ -2035,10 +2035,10 @@ void GetZoneSmokeDir(float *mm){
   eye_position_smv[1] = -(mm[4] * mm[12] + mm[5] * mm[13] + mm[6] * mm[14]) / mscale[1];
   eye_position_smv[2] = -(mm[8] * mm[12] + mm[9] * mm[13] + mm[10] * mm[14]) / mscale[2];
 
-  for(j = 0;j<nrooms;j++){
+  for(j = 0;j<scase.nrooms;j++){
     roomdata *roomj;
 
-    roomj = roominfo + j;
+    roomj = scase.roominfo + j;
 
     roomj->zoneinside = 0;
     if(
@@ -2633,7 +2633,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
     if(show_gslice_triangles==1||SHOW_gslice_data==1){
       UpdateGslicePlanes();
     }
-    if(nrooms>0){
+    if(scase.nrooms>0){
       GetZoneSmokeDir(modelview_scratch);
     }
     if(nvolrenderinfo>0&&showvolrender==1&&usevolrender==1){
