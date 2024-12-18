@@ -1783,10 +1783,10 @@ int GetPlotStateSub(int choice){
         if(isoi->display==0)continue;
         return DYNAMIC_PLOTS;
       }
-      for(i=0;i<nzoneinfo;i++){
+      for(i=0;i<scase.nzoneinfo;i++){
         zonedata *zonei;
 
-        zonei = zoneinfo + i;
+        zonei = scase.zoneinfo + i;
         if(zonei->loaded==0||zonei->display==0)continue;
         return DYNAMIC_PLOTS;
       }

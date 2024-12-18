@@ -899,7 +899,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   CHECKBOX_visaxislabels = glui_labels->add_checkbox_to_panel(PANEL_gen3, _("Show axis labels"), &visaxislabels, UPDATEMENU, UpdateMenuCB);
 
-  if(nzoneinfo > 0){
+  if(scase.nzoneinfo > 0){
     SPINNER_zone_hvac_diam = glui_labels->add_spinner_to_panel(PANEL_gen3, "HVAC (cfast)", GLUI_SPINNER_FLOAT, &zone_hvac_diam);
     SPINNER_zone_hvac_diam->set_float_limits(0.0, 1.0, GLUI_LIMIT_CLAMP);
   }

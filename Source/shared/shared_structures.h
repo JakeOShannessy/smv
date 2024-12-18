@@ -1780,6 +1780,8 @@ typedef struct {
 
   int nzoneinfo;
   zonedata *zoneinfo;
+
+  int nzvents;
   zventdata *zventinfo;
 
   int npartinfo;
@@ -1833,7 +1835,6 @@ typedef struct {
   int clip_mesh;
   int setPDIM;
   int zonecsv;
-  int nzvents;
   int nzhvents;
   int nzvvents;
   int nzmvents;

@@ -4822,7 +4822,7 @@ devicedata *GetCSVDeviceFromLabel(char *label, int index){
     devicedata *devicei;
 
     devicei = scase.devicecoll.deviceinfo+i;
-    if(nzoneinfo==0){
+    if(scase.nzoneinfo==0){
       if(STRCMP(devicei->labelptr, label)==0)return devicei;
     }
     else{
@@ -5167,7 +5167,7 @@ void SetupZoneDevs(void){
   int i;
 
   show_missing_objects = 0;
-  for(i=0;i<nzoneinfo;i++){
+  for(i=0;i<scase.nzoneinfo;i++){
     FILE *stream;
     char *file;
     int nrows, ncols, buffer_len,ntokens;
@@ -5175,7 +5175,7 @@ void SetupZoneDevs(void){
     zonedata *zonei;
     int j;
 
-    zonei = zoneinfo + i;
+    zonei = scase.zoneinfo + i;
     if(zonei->csv!=1)continue;
     file = zonei->file;
 

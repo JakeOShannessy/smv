@@ -3871,7 +3871,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
        MatchSMV(buffer, "HFLOWGEOM")==1||
        MatchSMV(buffer, "VFLOWGEOM")==1||
        MatchSMV(buffer, "MFLOWGEOM")==1){
-      sextras.nzvents++;
+      scase->nzvents++;
       continue;
     }
     if(MatchSMV(buffer, "HVENTGEOM")==1||
@@ -4101,11 +4101,11 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
     if(NewMemory((void **)&scase->zoneinfo,scase->nzoneinfo*sizeof(zonedata))==0)return 2;
   }
   FREEMEMORY(scase->zventinfo);
-  if(nzventsnew>0)sextras.nzvents=nzventsnew;
-  if(sextras.nzvents>0){
-    if(NewMemory((void **)&scase->zventinfo,sextras.nzvents*sizeof(zventdata))==0)return 2;
+  if(nzventsnew>0)scase->nzvents=nzventsnew;
+  if(scase->nzvents>0){
+    if(NewMemory((void **)&scase->zventinfo,scase->nzvents*sizeof(zventdata))==0)return 2;
   }
-  sextras.nzvents=0;
+  scase->nzvents=0;
   sextras.nzhvents=0;
   sextras.nzvvents=0;
   sextras.nzmvents = 0;
@@ -6109,8 +6109,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       float color[4];
       float vent_width,ventoffset,bottom,top;
 
-      sextras.nzvents++;
-      zvi = scase->zventinfo + sextras.nzvents - 1;
+      scase->nzvents++;
+      zvi = scase->zventinfo + scase->nzvents - 1;
       if(MatchSMV(buffer,"VFLOWGEOM")==1||
          MatchSMV(buffer,"VVENTGEOM")==1)vent_type=VFLOW_VENT;
       if(MatchSMV(buffer, "MFLOWGEOM") == 1 ||
@@ -6245,8 +6245,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       if(MatchSMV(buffer, "MFLOWPOS") == 1 ||
          MatchSMV(buffer, "MVENTPOS") == 1)vent_type = MFLOW_VENT;
 
-      sextras.nzvents++;
-      zvi = scase->zventinfo + sextras.nzvents - 1;
+      scase->nzvents++;
+      zvi = scase->zventinfo + scase->nzvents - 1;
 
       zvi->vent_type = vent_type;
       if(FGETS(buffer, 255, stream) == NULL){

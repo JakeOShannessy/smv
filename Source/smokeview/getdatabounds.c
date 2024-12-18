@@ -1447,7 +1447,7 @@ void GetGlobalSliceBounds(int flag, int set_flag){
        slicei->valmin_slice = 0.0;
        slicei->valmax_slice = 1.0;
     }
-    if(force_bound_update == 1||nzoneinfo>0)doit = 1;
+    if(force_bound_update == 1||scase.nzoneinfo>0)doit = 1;
 
     if(doit==1){
       BoundsGet(slicei->reg_file, sliceglobalboundsinfo, sorted_slice_filenames, scase.slicecoll.nsliceinfo, 1, &valmin, &valmax);

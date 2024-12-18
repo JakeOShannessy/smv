@@ -3564,7 +3564,7 @@ void LoadRolloutCB(int var){
 
 void BoundRolloutCB(int var){
   GLUIToggleRollout(boundprocinfo, nboundprocinfo, var);
-  if(nzoneinfo>0){
+  if(scase.nzoneinfo>0){
     if(var==ZONE_ROLLOUT){
       GLUISliceBoundCB(SETZONEVALMINMAX);
     }
@@ -5007,7 +5007,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
   /*  zone (cfast) */
 
-  if(nzoneinfo>0){
+  if(scase.nzoneinfo>0){
     ROLLOUT_zone_bound = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,_("Zone/slice temperatures"),false,ZONE_ROLLOUT,BoundRolloutCB);
     ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_zone_bound, ZONE_ROLLOUT, glui_bounds);
 

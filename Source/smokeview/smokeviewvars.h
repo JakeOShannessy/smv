@@ -1403,7 +1403,6 @@ SVEXTERN int SVDECL(glui_active,0);
 SVEXTERN int SVDECL(old_draw_colorlabel,0);
 SVEXTERN int SVDECL(vis3DSmoke3D,1);
 SVEXTERN int SVDECL(smokeskip,1),SVDECL(smokeskipm1,0);
-SVEXTERN int SVDECL(nzoneinfo,0);
 SVEXTERN float SVDECL(scene_aspect_ratio,1.0);
 
 SVEXTERN int SVDECL(fix_window_aspect, 0);
@@ -2148,8 +2147,6 @@ SVEXTERN int SVDECL(updateUpdateFrameRateMenu,0);
 SVEXTERN int ntextures_loaded_used, SVDECL(iterrain_textures,0);
 SVEXTERN int SVDECL(nskyboxinfo,0);
 SVEXTERN skyboxdata SVDECL(*skyboxinfo,NULL);
-SVEXTERN zventdata SVDECL(*zventinfo,NULL);
-SVEXTERN zonedata SVDECL(*zoneinfo,NULL);
 SVEXTERN zonedata SVDECL(*activezone,NULL);
 SVEXTERN int SVDECL(update_screensize,0);
 SVEXTERN int SVDECL(part5show,1);

@@ -3494,7 +3494,7 @@ void LoadUnloadMenu(int value){
     for(i=0;i<scase.nisoinfo;i++){
       ReadIso("",i,UNLOAD,NULL,&errorcode);
     }
-    for(i=0;i<nzoneinfo;i++){
+    for(i=0;i<scase.nzoneinfo;i++){
       ReadZone(i,UNLOAD,&errorcode);
     }
     if(scase.smoke3dcoll.nsmoke3dinfo > 0){
@@ -4433,14 +4433,14 @@ void ZoneMenu(int value){
     if(scriptoutstream!=NULL){
       zonedata *zonei;
 
-      zonei = zoneinfo + value;
+      zonei = scase.zoneinfo + value;
       fprintf(scriptoutstream,"LOADFILE\n");
       fprintf(scriptoutstream," %s\n",zonei->file);
     }
     ReadZone(value,LOAD,&errorcode);
   }
   else{
-    for(i=0;i<nzoneinfo;i++){
+    for(i=0;i<scase.nzoneinfo;i++){
       ReadZone(i,UNLOAD,&errorcode);
     }
   }
@@ -10222,7 +10222,7 @@ static int menu_count=0;
       glutAddMenuEntry(_("Compartments"), GEOM_Compartments);
     }
   }
-  if(sextras.nzvents > 0){
+  if(scase.nzvents > 0){
     if(visVents == 1){
       glutAddMenuEntry(_("*Vents"), GEOM_Vents);
     }
@@ -10432,7 +10432,7 @@ static int menu_count=0;
 
 /* --------------------------------zone show menu -------------------------- */
 
-  if(nzoneinfo>0&&(ReadZoneFile==1||sextras.nzvents>0)){
+  if(scase.nzoneinfo>0&&(ReadZoneFile==1||scase.nzvents>0)){
     CREATEMENU(zoneshowmenu,ZoneShowMenu);
     glutAddMenuEntry(_("Layers"),MENU_DUMMY);
     glutAddMenuEntry(_("   Representation:"),MENU_DUMMY);
@@ -10512,7 +10512,7 @@ static int menu_count=0;
         glutAddMenuEntry(_("Targets"), MENU_ZONE_TARGETS);
       }
     }
-    if(sextras.nzvents>0){
+    if(scase.nzvents>0){
       if(visVentFlow==1){
         glutAddMenuEntry(_("*Vent flow"), MENU_ZONE_VENTS);
       }
@@ -11394,7 +11394,7 @@ static int menu_count=0;
     }
   }
 
-  if(nzoneinfo>0&&(ReadZoneFile==1||sextras.nzvents>0)){
+  if(scase.nzoneinfo>0&&(ReadZoneFile==1||scase.nzvents>0)){
     showhide_data = 1;
     GLUTADDSUBMENU(_("Zone"), zoneshowmenu);
   }
@@ -12754,14 +12754,14 @@ static int menu_count=0;
 
 /* --------------------------------zone menu -------------------------- */
 
-    if(nzoneinfo>0){
+    if(scase.nzoneinfo>0){
       CREATEMENU(zonemenu,ZoneMenu);
-      for(i=0;i<nzoneinfo;i++){
+      for(i=0;i<scase.nzoneinfo;i++){
         zonedata *zonei;
         char menulabel[1024];
         int n;
 
-        zonei = zoneinfo + i;
+        zonei = scase.zoneinfo + i;
         STRCPY(menulabel, "");
         if(zonei->loaded==1)STRCAT(menulabel,"*");
         STRCAT(menulabel,zonei->file);
@@ -13080,7 +13080,7 @@ static int menu_count=0;
 
       // zone fire
 
-      if(nzoneinfo>0){
+      if(scase.nzoneinfo>0){
         strcpy(loadmenulabel,"Zone fire");
         GLUTADDSUBMENU(loadmenulabel,zonemenu);
       }

@@ -647,7 +647,7 @@ void FillZoneData(int izone_index){
     zventdata *zventi;
     int islab;
 
-    zventi = zventinfo + ivent;
+    zventi = scase.zventinfo + ivent;
     zventi->area_fraction = CLAMP(hvent0[ivent] / zventi->area, 0.0, 1.0);
 
     zventi->nslab = zoneslab_n0[ivent];
@@ -770,21 +770,21 @@ void GetZoneVentBounds(void){
   int i;
 #define VEL_MAX  100000000.0
 #define VEL_MIN -100000000.0
-  for(i = 0;i < sextras.nzvents;i++){
+  for(i = 0;i < scase.nzvents;i++){
     zventdata *zvi;
 
-    zvi = zventinfo + i;
+    zvi = scase.zventinfo + i;
     zvi->g_vmax = VEL_MIN;
     zvi->g_vmin = VEL_MAX;
   }
   for(izone = 0;izone < nzone_times;izone++){
     FillZoneData(izone);
-    for(i = 0;i < sextras.nzvents;i++){
+    for(i = 0;i < scase.nzvents;i++){
       int j;
       zventdata *zvi;
       float zelev[NELEV_ZONE];
 
-      zvi = zventinfo + i;
+      zvi = scase.zventinfo + i;
       if(zvi->area_fraction < 0.0001)continue;
       if(zvi->vent_type == VFLOW_VENT || zvi->vent_type == MFLOW_VENT)continue;
       for(j = 0;j < NELEV_ZONE;j++){
@@ -796,10 +796,10 @@ void GetZoneVentBounds(void){
     }
   }
   zone_maxventflow = 0.0;
-  for(i = 0;i < sextras.nzvents;i++){
+  for(i = 0;i < scase.nzvents;i++){
     zventdata *zvi;
 
-    zvi = zventinfo + i;
+    zvi = scase.zventinfo + i;
     if(zvi->vent_type == VFLOW_VENT || zvi->vent_type == MFLOW_VENT)continue;
     if(ABS(zvi->g_vmin)<VEL_MAX-1.0)zone_maxventflow = MAX(ABS(zvi->g_vmin), zone_maxventflow);
     if(ABS(zvi->g_vmax)<VEL_MAX-1.0)zone_maxventflow = MAX(ABS(zvi->g_vmax), zone_maxventflow);
@@ -874,8 +874,8 @@ void ReadZone(int ifile, int flag, int *errorcode){
 
   *errorcode=0;
 
-  assert(ifile>=0&&ifile<nzoneinfo);
-  zonei = zoneinfo + ifile;
+  assert(ifile>=0&&ifile<scase.nzoneinfo);
+  zonei = scase.zoneinfo + ifile;
   file = zonei->file;
   if(zonei->loaded==0&&flag==UNLOAD)return;
   FREEMEMORY(zonevents);
@@ -1194,7 +1194,7 @@ void ReadZone(int ifile, int flag, int *errorcode){
   plotstate=GetPlotState(DYNAMIC_PLOTS);
   UpdateTimes();
   updatemenu=1;
-  activezone = zoneinfo + ifile;
+  activezone = scase.zoneinfo + ifile;
   if(sextras.nzhvents>0||sextras.nzvvents>0||sextras.nzmvents>0){
     PRINTF("computing vent bounds\n");
     GetZoneVentBounds();
@@ -1354,11 +1354,11 @@ void DrawZoneRoomGeom(void){
   }
 
   if(visVents==1){
-    for(i=0;i<sextras.nzvents;i++){
+    for(i=0;i<scase.nzvents;i++){
       zventdata *zvi;
       float x1, x2, y1, y2, z1, z2;
 
-      zvi = zventinfo + i;
+      zvi = scase.zventinfo + i;
       x1 = zvi->x0;
       x2 = zvi->x1;
       y1 = zvi->y0;
@@ -1477,12 +1477,12 @@ void DrawZoneVentDataProfile(void){
 
   if(cullfaces==1)glDisable(GL_CULL_FACE);
 
-  for(i=0;i<sextras.nzvents;i++){
+  for(i=0;i<scase.nzvents;i++){
     int j;
     zventdata *zvi;
     float zelev[NELEV_ZONE];
 
-    zvi = zventinfo + i;
+    zvi = scase.zventinfo + i;
     assert(zvi->z0 <= zvi->z1);
     if(zvi->vent_type==VFLOW_VENT||zvi->vent_type==MFLOW_VENT)continue;
     for(j=0;j<NELEV_ZONE;j++){
@@ -1491,14 +1491,14 @@ void DrawZoneVentDataProfile(void){
     GetZoneVentVel(zelev, NELEV_ZONE, zvi->room1, zvi->room2, zvi->vdata, &zvi->vmin, &zvi->vmax, zvi->itempdata);
   }
   factor = 0.1*zone_ventfactor/zone_maxventflow;
-  for(i=0;i<sextras.nzvents;i++){
+  for(i=0;i<scase.nzvents;i++){
     zventdata *zvi;
     int j;
     float zelev[NELEV_ZONE];
     float *vcolor1,*vcolor2;
     float xmid, ymid;
 
-    zvi = zventinfo + i;
+    zvi = scase.zventinfo + i;
 
     if(zvi->vent_type==VFLOW_VENT||zvi->vent_type==MFLOW_VENT)continue;
     for(j=0;j<NELEV_ZONE;j++){
@@ -1614,12 +1614,12 @@ void DrawZoneVentDataSlab(void){
 
   if(cullfaces==1)glDisable(GL_CULL_FACE);
 
-  for(i = 0; i<sextras.nzvents; i++){
+  for(i = 0; i<scase.nzvents; i++){
     zventdata *zvi;
     int islab;
     float xmid, ymid;
 
-    zvi = zventinfo+i;
+    zvi = scase.zventinfo+i;
 
     if((visVentHFlow==0||visventslab!=1)&&zvi->vent_type==HFLOW_VENT)continue;
     if(visVentVFlow==0&&zvi->vent_type==VFLOW_VENT)continue;

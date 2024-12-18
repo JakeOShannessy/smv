@@ -4053,10 +4053,10 @@ void UpdateMeshCoords(void){
     firen->absz=FDS2SMV_Z(firen->absz);
     firen->dz=SCALE2SMV(firen->dz);
   }
-  for(n=0;n<sextras.nzvents;n++){
+  for(n=0;n<scase.nzvents;n++){
     zventdata *zvi;
 
-    zvi = zventinfo + n;
+    zvi = scase.zventinfo + n;
 
     zvi->x0 = FDS2SMV_X(zvi->x0);
     zvi->x1 = FDS2SMV_X(zvi->x1);
@@ -7189,20 +7189,20 @@ int ReadSMV_Init(){
     sextras.noutlineinfo=0;
   }
 
-  if(nzoneinfo>0){
-    for(i=0;i<nzoneinfo;i++){
+  if(scase.nzoneinfo>0){
+    for(i=0;i<scase.nzoneinfo;i++){
       zonedata *zonei;
       int n;
 
-      zonei = zoneinfo + i;
+      zonei = scase.zoneinfo + i;
       for(n=0;n<4;n++){
         FreeLabels(&zonei->label[n]);
       }
       FREEMEMORY(zonei->file);
     }
-    FREEMEMORY(zoneinfo);
+    FREEMEMORY(scase.zoneinfo);
   }
-  nzoneinfo=0;
+  scase.nzoneinfo=0;
 
   if(scase.smoke3dcoll.nsmoke3dinfo>0){
     {
@@ -7282,8 +7282,8 @@ int ReadSMV_Init(){
   FREEMEMORY(isotypes);
   FREEMEMORY(scase.roominfo);
   FREEMEMORY(scase.fireinfo);
-  FREEMEMORY(zoneinfo);
-  FREEMEMORY(zventinfo);
+  FREEMEMORY(scase.zoneinfo);
+  FREEMEMORY(scase.zventinfo);
   FREEMEMORY(scase.texture_coll.textureinfo);
   FREEMEMORY(scase.surfcoll.surfinfo);
   FREEMEMORY(scase.terrain_texture_coll.terrain_textures);
@@ -7906,14 +7906,14 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"ZONE") == 1){
-      nzoneinfo++;
+      scase.nzoneinfo++;
       continue;
     }
     if(MatchSMV(buffer, "VENTGEOM")==1||
        MatchSMV(buffer, "HFLOWGEOM")==1||
        MatchSMV(buffer, "VFLOWGEOM")==1||
        MatchSMV(buffer, "MFLOWGEOM")==1){
-      sextras.nzvents++;
+      scase.nzvents++;
       continue;
     }
     if(MatchSMV(buffer, "HVENTGEOM")==1||
@@ -8144,16 +8144,16 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   if(scase.nfires>0){
     if(NewMemory((void **)&scase.fireinfo,scase.nfires*sizeof(firedata))==0)return 2;
   }
-  FREEMEMORY(zoneinfo);
-  if(nzoneinfo>0){
-    if(NewMemory((void **)&zoneinfo,nzoneinfo*sizeof(zonedata))==0)return 2;
+  FREEMEMORY(scase.zoneinfo);
+  if(scase.nzoneinfo>0){
+    if(NewMemory((void **)&scase.zoneinfo,scase.nzoneinfo*sizeof(zonedata))==0)return 2;
   }
-  FREEMEMORY(zventinfo);
-  if(nzventsnew>0)sextras.nzvents=nzventsnew;
-  if(sextras.nzvents>0){
-    if(NewMemory((void **)&zventinfo,sextras.nzvents*sizeof(zventdata))==0)return 2;
+  FREEMEMORY(scase.zventinfo);
+  if(nzventsnew>0)scase.nzvents=nzventsnew;
+  if(scase.nzvents>0){
+    if(NewMemory((void **)&scase.zventinfo,scase.nzvents*sizeof(zventdata))==0)return 2;
   }
-  sextras.nzvents=0;
+  scase.nzvents=0;
   sextras.nzhvents=0;
   sextras.nzvvents=0;
   sextras.nzmvents = 0;
@@ -9341,9 +9341,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int n;
       char *bufferptr;
 
-      zonei = zoneinfo + izone_local;
+      zonei = scase.zoneinfo + izone_local;
       if(FGETS(buffer,255,stream)==NULL){
-        nzoneinfo--;
+        scase.nzoneinfo--;
         BREAK;
       }
       bufferptr=TrimFrontBack(buffer);
@@ -9373,7 +9373,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
             return 2;
           }
         }
-        nzoneinfo--;
+        scase.nzoneinfo--;
       }
       else{
         len=strlen(filename);
@@ -10144,8 +10144,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       float color[4];
       float vent_width,ventoffset,bottom,top;
 
-      sextras.nzvents++;
-      zvi = zventinfo + sextras.nzvents - 1;
+      scase.nzvents++;
+      zvi = scase.zventinfo + scase.nzvents - 1;
       if(MatchSMV(buffer,"VFLOWGEOM")==1||
          MatchSMV(buffer,"VVENTGEOM")==1)vent_type=VFLOW_VENT;
       if(MatchSMV(buffer, "MFLOWGEOM") == 1 ||
@@ -10280,8 +10280,8 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       if(MatchSMV(buffer, "MFLOWPOS") == 1 ||
          MatchSMV(buffer, "MVENTPOS") == 1)vent_type = MFLOW_VENT;
 
-      sextras.nzvents++;
-      zvi = zventinfo + sextras.nzvents - 1;
+      scase.nzvents++;
+      zvi = scase.zventinfo + scase.nzvents - 1;
 
       zvi->vent_type = vent_type;
       if(FGETS(buffer, 255, stream) == NULL){
@@ -11748,7 +11748,7 @@ int ReadSMV_Configure(){
   SetupPlot2DUnitData();
   PRINT_TIMER(timer_readsmv, "SetupPlot2DUnitData");
 
-  if(nzoneinfo>0)SetupZoneDevs();
+  if(scase.nzoneinfo>0)SetupZoneDevs();
   PRINT_TIMER(timer_readsmv, "SetupPlot2DUnitData");
 
   InitPartProp();
@@ -16711,7 +16711,7 @@ void WriteIniLocal(FILE *fileout){
   }
   fprintf(fileout, "V_TARGET\n");
   fprintf(fileout, " %i %f %i %f\n", settargetmin, targetmin, settargetmax, targetmax);
-  if(nzoneinfo > 0){
+  if(scase.nzoneinfo > 0){
     fprintf(fileout, "V_ZONE\n");
     fprintf(fileout, " %i %f %i %f\n", setzonemin, zoneusermin, setzonemax, zoneusermax);
     fprintf(fileout, "ZONEVIEW\n");

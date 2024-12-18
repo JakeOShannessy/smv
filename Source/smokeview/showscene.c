@@ -456,7 +456,7 @@ void ShowScene2(int mode){
       DrawZoneFireData();
       SNIFF_ERRORS("after DrawZoneFireData");
       if(ReadZoneFile == 1){
-        if(sextras.nzvents>0){
+        if(scase.nzvents>0){
           DrawZoneVentData();
           SNIFF_ERRORS("after DrawZoneVentData");
         }

@@ -369,10 +369,10 @@ int Loadfile(const char *filename) {
       return errorcode;
     }
   }
-  for(size_t i = 0; i < nzoneinfo; i++) {
+  for(size_t i = 0; i < scase.nzoneinfo; i++) {
     zonedata *zonei;
 
-    zonei = zoneinfo + i;
+    zonei = scase.zoneinfo + i;
     if(strcmp(zonei->file, filename) == 0) {
       ReadZone(i, LOAD, &errorcode);
       return errorcode;
@@ -1856,7 +1856,7 @@ int Unloadall() {
   for(size_t i = 0; i < scase.nisoinfo; i++) {
     ReadIso("", i, UNLOAD, NULL, &errorcode);
   }
-  for(size_t i = 0; i < nzoneinfo; i++) {
+  for(size_t i = 0; i < scase.nzoneinfo; i++) {
     ReadZone(i, UNLOAD, &errorcode);
   }
   for(size_t i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {

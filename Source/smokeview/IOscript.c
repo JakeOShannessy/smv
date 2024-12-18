@@ -3287,10 +3287,10 @@ void ScriptLoadFile(scriptdata *scripti){
       return;
     }
   }
-  for(i=0;i<nzoneinfo;i++){
+  for(i=0;i<scase.nzoneinfo;i++){
     zonedata *zonei;
 
-    zonei = zoneinfo + i;
+    zonei = scase.zoneinfo + i;
     if(strcmp(zonei->file,scripti->cval)==0){
       ReadZone(i,LOAD,&errorcode);
       return;
