@@ -1029,7 +1029,7 @@ void InitRGB(void){
   if(use_transparency_data==1)transparent_level_local=transparent_level;
 
   if(setbw==0){
-    ConvertColor(colorcoll, TO_COLOR);
+    ConvertColor(scase.colorcoll, TO_COLOR);
     if(nrgb_ini > 0){
       sextras.nrgb = nrgb_ini;
       for(n=0;n<nrgb_ini;n++){
@@ -1049,7 +1049,7 @@ void InitRGB(void){
     }
   }
   else{
-    ConvertColor(colorcoll, TO_BW);
+    ConvertColor(scase.colorcoll, TO_BW);
     for(n=0;n<sextras.nrgb;n++){
       sextras.rgb[n][0] = bw_base[n][0];
       sextras.rgb[n][1] = bw_base[n][1];
@@ -1809,5 +1809,5 @@ float *GetColorTranPtr(float *color, float transparency){
   col[1] = color[1];
   col[2] = color[2];
   col[3] = transparency;
-  return GetColorPtr(&colorcoll, col);
+  return GetColorPtr(&scase.colorcoll, col);
 }

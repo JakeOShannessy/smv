@@ -552,7 +552,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
   surfi = scase.surfcoll.surfinfo + scase.surfcoll.nsurfinfo+1;
   UpdateIsoColors();
   if(strcmp(isoi->surface_label.shortlabel,"hrrpuv")==0){
-    surfi->color=GetColorPtr(&colorcoll, hrrpuv_iso_color);
+    surfi->color=GetColorPtr(&scase.colorcoll, hrrpuv_iso_color);
   }
 
   meshi->isofilenum=ifile;
@@ -760,9 +760,9 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
     float fed_yellow[]={1.0,1.0,0.0,1.0};
     float fed_red[]={1.0,0.0,0.0,1.0};
 
-    fed_colors[0]=GetColorPtr(&colorcoll, fed_blue);
-    fed_colors[1]=GetColorPtr(&colorcoll, fed_yellow);
-    fed_colors[2]=GetColorPtr(&colorcoll, fed_red);
+    fed_colors[0]=GetColorPtr(&scase.colorcoll, fed_blue);
+    fed_colors[1]=GetColorPtr(&scase.colorcoll, fed_yellow);
+    fed_colors[2]=GetColorPtr(&scase.colorcoll, fed_red);
   }
   asurface=meshi->animatedsurfaces;
   break_frame=0;

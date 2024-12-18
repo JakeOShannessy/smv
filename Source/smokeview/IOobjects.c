@@ -6102,7 +6102,7 @@ void InitDevicePlane(devicedata *devicei){
     rgbcolor[1]=0.0;
     rgbcolor[2]=0.0;
     rgbcolor[3]=1.0;
-    devicei->color=GetColorPtr(&colorcoll, rgbcolor);
+    devicei->color=GetColorPtr(&scase.colorcoll, rgbcolor);
   }
   colorindex=0;
   for(i=0;i<scase.meshescoll.nmeshes;i++){
