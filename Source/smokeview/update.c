@@ -38,10 +38,10 @@ void UpdateFrameNumber(int changetime){
     force_redisplay=0;
     itimeold=itimes;
     if(showsmoke==1){
-      for(i=0;i<npartinfo;i++){
+      for(i=0;i<scase.npartinfo;i++){
         partdata *parti;
 
-        parti = partinfo+i;
+        parti = scase.partinfo+i;
         if(parti->loaded==0||parti->timeslist==NULL)continue;
         parti->itime=parti->timeslist[itimes];
       }
@@ -237,10 +237,10 @@ void UpdateFileLoad(void){
   int i;
 
   npartloaded = 0;
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
     if(parti->loaded==1)npartloaded++;
   }
 
@@ -305,10 +305,10 @@ void UpdateFileLoad(void){
 
   npart5loaded = 0;
   npartloaded = 0;
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
     if(parti->loaded==1)npartloaded++;
     if(parti->loaded==1)npart5loaded++;
   }
@@ -558,10 +558,10 @@ void UpdateShow(void){
 
   partflag=0;
   if(visParticles==1&&visTimeParticles==1){
-    for(i=0;i<npartinfo;i++){
+    for(i=0;i<scase.npartinfo;i++){
       partdata *parti;
 
-      parti = partinfo + i;
+      parti = scase.partinfo + i;
       if(parti->loaded==1&&parti->display==1){
         partflag=1;
         break;
@@ -775,10 +775,10 @@ void SynchTimes(void){
 
   /* synchronize particle times */
 
-    for(j=0;j<npartinfo;j++){
+    for(j=0;j<scase.npartinfo;j++){
       partdata *parti;
 
-      parti=partinfo+j;
+      parti=scase.partinfo+j;
       if(parti->loaded==0)continue;
       parti->timeslist[n] = GetDataTimeFrame(global_times[n], parti->times_map, parti->times,parti->ntimes);
     }
@@ -1390,10 +1390,10 @@ void UpdateTimes(void){
       PRINT_TIMER(smoke3d_timer, "UpdateTimes: smoke3d");
     }
   }
-  for(i = 0; i < npartinfo; i++){
+  for(i = 0; i < scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     if(parti->loaded == 0)continue;
     MergeGlobalTimes(parti->times, parti->ntimes);
   }
@@ -1423,10 +1423,10 @@ void UpdateTimes(void){
     FREEMEMORY(geomi->timeslist);
     if(nglobal_times>0)NewMemory((void **)&geomi->timeslist,nglobal_times*sizeof(int));
   }
-  for(i=0;i<npartinfo;i++){
+  for(i=0;i<scase.npartinfo;i++){
     partdata *parti;
 
-    parti=partinfo+i;
+    parti=scase.partinfo+i;
     FREEMEMORY(parti->timeslist);
     if(nglobal_times>0)NewMemory((void **)&parti->timeslist,nglobal_times*sizeof(int));
   }
@@ -1552,10 +1552,10 @@ void UpdateTimes(void){
     if(meshi->iso_times==NULL)continue;
     meshi->iso_itime=0;
   }
-  for(i=0;i<npartinfo;i++){
+  for(i=0;i<scase.npartinfo;i++){
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     parti->itime=0;
   }
   PRINT_TIMER(timer_setpointers, "UpdateTimes: set pointer");
@@ -1768,10 +1768,10 @@ int GetPlotStateSub(int choice){
           if(patchi->boundary == 0 && patchi->shortlabel_index == slicefile_labelindex)return DYNAMIC_PLOTS;
         }
       }
-      for(i=0;i<npartinfo;i++){
+      for(i=0;i<scase.npartinfo;i++){
         partdata *parti;
 
-        parti = partinfo + i;
+        parti = scase.partinfo + i;
         if(parti->loaded==0||parti->display==0)continue;
         return DYNAMIC_PLOTS;
       }
@@ -2250,10 +2250,10 @@ void OutputFrameSteps(void){
   frames_read = 0;
   total_time = 0.0;
   total_wrapup_time = 0.0;
-  for(i = 0;i < npartinfo;i++){
+  for(i = 0;i < scase.npartinfo;i++){
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     if(parti->loaded == 0 || parti->frameinfo == NULL || parti->frameinfo->update == 0)continue;
     parti->frameinfo->update = 0;
     count++;
@@ -2827,11 +2827,11 @@ void OutputBounds(void){
     int i, j;
 
     if(scase.meshescoll.nmeshes>1&&scase.meshescoll.nmeshes>1&&bounds_each_mesh==1){
-      for(i = 0; i<npartinfo; i++){
+      for(i = 0; i<scase.npartinfo; i++){
         partdata *parti;
         meshdata *meshi;
 
-        parti = partinfo+i;
+        parti = scase.partinfo+i;
         if(parti->loaded==0)continue;
         meshi = scase.meshescoll.meshinfo + parti->blocknumber;
         for(j = 0; j<npart5prop; j++){
@@ -2858,10 +2858,10 @@ void OutputBounds(void){
       unit = propj->label->unit;
       valmin_part = 1.0;
       valmax_part = 0.0;
-      for(i = 0; i<npartinfo; i++){
+      for(i = 0; i<scase.npartinfo; i++){
         partdata *parti;
 
-        parti = partinfo+i;
+        parti = scase.partinfo+i;
         if(parti->loaded==0)continue;
         if(valmin_part>valmax_part){
           valmin_part = parti->valmin_part[j];

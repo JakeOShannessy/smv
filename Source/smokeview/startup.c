@@ -719,10 +719,10 @@ void InitOpenGL(int option){
         vslicei->autoload=0;
       }
     }
-    for(i=0;i<npartinfo;i++){
+    for(i=0;i<scase.npartinfo;i++){
       partdata *parti;
 
-      parti = partinfo + i;
+      parti = scase.partinfo + i;
 
       if(parti->loaded==1){
         parti->autoload=1;
@@ -805,20 +805,20 @@ void InitOpenGL(int option){
    // startup particle
 
    nstartup=0;
-   for(i=0;i<npartinfo;i++){
+   for(i=0;i<scase.npartinfo;i++){
       partdata *parti;
 
-      parti = partinfo + i;
+      parti = scase.partinfo + i;
 
       if(parti->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"PARTAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<npartinfo;i++){
+     for(i=0;i<scase.npartinfo;i++){
         partdata *parti;
 
-        parti = partinfo + i;
+        parti = scase.partinfo + i;
 
         if(parti->loaded==1)fprintf(fileout," %i\n",parti->seq_id);
      }
@@ -985,10 +985,10 @@ void InitOpenGL(int option){
 
   void GetStartupPart(int seq_id){
     int i;
-    for(i=0;i<npartinfo;i++){
+    for(i=0;i<scase.npartinfo;i++){
       partdata *parti;
 
-      parti = partinfo + i;
+      parti = scase.partinfo + i;
       if(parti->seq_id==seq_id){
         parti->autoload=1;
         return;
@@ -1125,17 +1125,17 @@ void InitOpenGL(int option){
       }
     }
     npartframes_max=GetMinPartFrames(PARTFILE_RELOADALL);
-    for(i=0;i<npartinfo;i++){
+    for(i=0;i<scase.npartinfo;i++){
       partdata *parti;
 
-      parti = partinfo + i;
+      parti = scase.partinfo + i;
       if(parti->autoload==0&&parti->loaded==1)ReadPart(parti->file, i, UNLOAD, &errorcode);
       if(parti->autoload==1)ReadPart(parti->file, i, UNLOAD, &errorcode);
     }
-    for(i=0;i<npartinfo;i++){
+    for(i=0;i<scase.npartinfo;i++){
       partdata *parti;
 
-      parti = partinfo + i;
+      parti = scase.partinfo + i;
       if(parti->autoload==0&&parti->loaded==1)ReadPart(parti->file, i, UNLOAD, &errorcode);
       if(parti->autoload==1)ReadPart(parti->file, i, LOAD, &errorcode);
     }

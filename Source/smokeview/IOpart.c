@@ -24,10 +24,10 @@
 void ClosePartFiles(void){
   int i;
 
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
     if(parti->loaded==1&&parti->stream!=NULL){
       fclose_m(parti->stream);
       parti->stream = NULL;
@@ -153,7 +153,7 @@ int GetTagIndex(const partdata *partin_arg, part5data **datain_arg, int tagval_a
 
   if(flag==LOADING&&partfast==YES)return -1;
 
-  for(i = -1; i < npartinfo; i++){
+  for(i = -1; i < scase.npartinfo; i++){
     const partdata *parti_local;
 
     if(i == -1){
@@ -161,7 +161,7 @@ int GetTagIndex(const partdata *partin_arg, part5data **datain_arg, int tagval_a
       data_local = *datain_arg;
     }
     else{
-      parti_local = partinfo + i;
+      parti_local = scase.partinfo + i;
       if(parti_local== partin_arg)continue;
       if(parti_local->loaded == 0 || parti_local->display == 0)continue;
       data_local = parti_local->data5 + (*datain_arg- partin_arg->data5);
@@ -589,8 +589,8 @@ void DrawPartFrame(int mode){
 
   if(use_tload_begin==1&&global_times[itimes]<sextras.tload_begin)return;
   if(use_tload_end==1&&global_times[itimes]>sextras.tload_end)return;
-  for(i=0;i<npartinfo;i++){
-    parti = partinfo + i;
+  for(i=0;i<scase.npartinfo;i++){
+    parti = scase.partinfo + i;
     if(parti->loaded==0||parti->display==0)continue;
     IF_NOT_USEMESH_CONTINUE(USEMESH_DRAW,parti->blocknumber);
     DrawPart(parti, mode);
@@ -671,8 +671,8 @@ int ComparePart(const void *arg1, const void *arg2){
   i = *(int *)arg1;
   j = *(int *)arg2;
 
-  parti = partinfo + i;
-  partj = partinfo + j;
+  parti = scase.partinfo + i;
+  partj = scase.partinfo + j;
 
   if(parti->blocknumber<partj->blocknumber)return -1;
   if(parti->blocknumber>partj->blocknumber)return 1;
@@ -1141,11 +1141,11 @@ void MergePartHistograms(void){
   for(i=0;i<npart5prop;i++){
     InitHistogram(full_part_histogram+i, NHIST_BUCKETS, NULL, NULL);
   }
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
     int j;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     if(parti->loaded==0)continue;
     for(j = 0; j < parti->nclasses; j++){
       partclassdata *partclassi;
@@ -1171,10 +1171,10 @@ void MergePartHistograms(void){
 void GeneratePartHistograms(void){
   int i;
 
-  for(i=0;i<npartinfo;i++){
+  for(i=0;i<scase.npartinfo;i++){
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     if(parti->loaded==1){
       GetPartHistogramFile(parti);
     }
@@ -1209,10 +1209,10 @@ void *SortAllPartTags(void *arg){
   int i;
 
   INIT_PRINT_TIMER(timer_sortparttags);
-  for(i = 0; i < npartinfo; i++){
+  for(i = 0; i < scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     if(parti->loaded == 0)continue;
     SortPartTags(parti);
   }
@@ -1694,11 +1694,11 @@ int GetMinPartFrames(int flag){
   int min_frames=-1;
 
   INIT_PRINT_TIMER(timer_nparts);
-  for(i=0;i<npartinfo;i++){
+  for(i=0;i<scase.npartinfo;i++){
     partdata *parti;
     int nframes;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     if(flag == PARTFILE_LOADALL ||
       (flag == PARTFILE_RELOADALL&&parti->loaded == 1) ||
       (flag >= 0 && i == flag)){
@@ -1931,7 +1931,7 @@ int GetPartHeader(partdata * parti, int *nf_all, int option_arg, int print_optio
     sscanf(buffer_local,"%f",&time_local);
     exitloop_local =0;
     for(i=0;i<parti->nclasses;i++){
-      if(fgets(buffer_local,255,stream)==NULL||(npartinfo>1&&npartframes_max!=-1&&nframes_all_local+1>npartframes_max)){
+      if(fgets(buffer_local,255,stream)==NULL||(scase.npartinfo>1&&npartframes_max!=-1&&nframes_all_local+1>npartframes_max)){
         exitloop_local =1;
         break;
       }
@@ -2120,10 +2120,10 @@ void UpdatePartColors(partdata *parti, int flag){
     }
   }
   else{
-    for(j = 0; j<npartinfo; j++){
+    for(j = 0; j<scase.npartinfo; j++){
       partdata *partj;
 
-      partj = partinfo+j;
+      partj = scase.partinfo+j;
       if(partj->loaded==1&&partj->display==1){
         if(partj->stream==NULL){
           printf("***warning: particle data in one or more particle files was unloaded, colors not updated\n");
@@ -2131,10 +2131,10 @@ void UpdatePartColors(partdata *parti, int flag){
         }
       }
     }
-    for(j = 0; j<npartinfo; j++){
+    for(j = 0; j<scase.npartinfo; j++){
       partdata *partj;
 
-      partj = partinfo+j;
+      partj = scase.partinfo+j;
       if(partj->loaded==1&&partj->display==1){
         GetPartColors(partj, sextras.nrgb, flag);
       }
@@ -2147,10 +2147,10 @@ void UpdatePartColors(partdata *parti, int flag){
 void FinalizePartLoad(partdata *parti){
   int j;
 
-  for(j = 0; j<npartinfo; j++){
+  for(j = 0; j<scase.npartinfo; j++){
     partdata *partj;
 
-    partj = partinfo+j;
+    partj = scase.partinfo+j;
     if(partj->request_load==1){
       MakeTimesMap(partj->times, &partj->times_map, partj->ntimes);
       partj->request_load = 0;
@@ -2172,10 +2172,10 @@ void FinalizePartLoad(partdata *parti){
   PRINT_TIMER(part_time1, "particle get bounds time");
   if(cache_part_data==1){
     INIT_PRINT_TIMER(part_time2);
-    for(j = 0; j<npartinfo; j++){
+    for(j = 0; j<scase.npartinfo; j++){
       partdata *partj;
 
-      partj = partinfo+j;
+      partj = scase.partinfo+j;
       if(partj->loaded==1){
         UpdatePartColors(partj, 0);
       }
@@ -2212,8 +2212,8 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int load_flag, int *errorcode_
   START_TIMER(total_time);
 #endif
   START_TIMER(load_time_local);
-  assert(ifile_arg>=0&&ifile_arg<npartinfo);
-  parti=partinfo+ifile_arg;
+  assert(ifile_arg>=0&&ifile_arg<scase.npartinfo);
+  parti=scase.partinfo+ifile_arg;
 
 #ifdef pp_PARTFRAME
   FreeAllPart5Data(parti, load_flag);
@@ -2305,7 +2305,7 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int load_flag, int *errorcode_
 
   parti->request_load = 1;
   if(use_partload_threads==1){
-    if(npartinfo>1){
+    if(scase.npartinfo>1){
       THREADcontrol(partload_threads, THREAD_LOCK);
       PrintPartLoadSummary(PART_AFTER, PART_LOADING);
       THREADcontrol(partload_threads, THREAD_UNLOCK);
@@ -2348,16 +2348,16 @@ void UpdatePartMenuLabels(void){
   char label[128];
   int lenlabel;
 
-  if(npartinfo>0){
+  if(scase.npartinfo>0){
     FREEMEMORY(partorderindex);
-    NewMemory((void **)&partorderindex,sizeof(int)*npartinfo);
-    for(i=0;i<npartinfo;i++){
+    NewMemory((void **)&partorderindex,sizeof(int)*scase.npartinfo);
+    for(i=0;i<scase.npartinfo;i++){
       partorderindex[i]=i;
     }
-    qsort( (int *)partorderindex, (size_t)npartinfo, sizeof(int), ComparePart);
+    qsort( (int *)partorderindex, (size_t)scase.npartinfo, sizeof(int), ComparePart);
 
-    for(i=0;i<npartinfo;i++){
-      parti = partinfo + i;
+    for(i=0;i<scase.npartinfo;i++){
+      parti = scase.partinfo + i;
       STRCPY(parti->menulabel,"");
       STRCAT(parti->menulabel, "particles");
       lenlabel=strlen(parti->menulabel);

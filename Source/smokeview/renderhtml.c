@@ -34,10 +34,10 @@ void GetPartVerts(int option, int option2, int *offset,
 
   *nverts = 0;
   *nindices  = 0;
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
     if(parti->loaded==0||parti->display==0)continue;
     parttime = parti;
     if(first==1){
@@ -59,10 +59,10 @@ void GetPartVerts(int option, int option2, int *offset,
     iend = parttime->itime+1;
   }
   for(itime = ibeg; itime<iend; itime++){
-    for(i = 0; i<npartinfo; i++){
+    for(i = 0; i<scase.npartinfo; i++){
       partdata *parti;
 
-      parti = partinfo+i;
+      parti = scase.partinfo+i;
       if(parti->loaded==0||parti->display==0||part5show==0)continue;
       if(streak5show == 0 || (streak5show == 1 && showstreakhead == 1)){
         part5data *datacopy;
@@ -76,11 +76,11 @@ void GetPartVerts(int option, int option2, int *offset,
   if(option==0)return;
   for(itime = ibeg; itime<iend; itime++){
     frame_sizes[itime-ibeg] = 0;
-    for(i = 0; i<npartinfo; i++){
+    for(i = 0; i<scase.npartinfo; i++){
       partdata *parti;
       int j;
 
-      parti = partinfo+i;
+      parti = scase.partinfo+i;
       if(parti->loaded==0||parti->display==0||part5show==0)continue;
       if(streak5show==0||(streak5show==1&&showstreakhead==1)){
         part5data *datacopy;
@@ -1254,7 +1254,7 @@ void PartNodeVerts2Geom(webgeomdata *part_node_web, int option){
   float *verts, *verts_save, *colors, *colors_save;
   int *indices, *indices_save, *framesizes;
 
-  if(npartinfo>0){
+  if(scase.npartinfo>0){
     int npart_verts, npart_indices;
 
     GetPartVerts(0, option, NULL, NULL, NULL, &npart_verts, NULL, &npart_indices, NULL, &(part_node_web->nframes));
@@ -1285,7 +1285,7 @@ void PartNodeVerts2Geom(webgeomdata *part_node_web, int option){
 
   // load particle file data into data structures
 
-  if(npartinfo>0){
+  if(scase.npartinfo>0){
     int npart_verts, npart_indices;
 
 

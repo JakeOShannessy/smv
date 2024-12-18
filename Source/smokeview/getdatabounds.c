@@ -76,13 +76,13 @@ int GetGlobalPartBounds(int flag){
   int nloaded_files = 0;
 
 
-  if(part_bound_buffer == NULL && npartinfo > 0 && npart5prop>0){
-    NewMemory((void **)&part_bound_buffer, 2*npartinfo*npart5prop*sizeof(float));
-    for(i = 0; i < npartinfo; i++){
+  if(part_bound_buffer == NULL && scase.npartinfo > 0 && npart5prop>0){
+    NewMemory((void **)&part_bound_buffer, 2*scase.npartinfo*npart5prop*sizeof(float));
+    for(i = 0; i < scase.npartinfo; i++){
       partdata *parti;
       int j;
 
-      parti = partinfo + i;
+      parti = scase.partinfo + i;
       if(parti->loaded == 1)nloaded_files++;
       parti->valmin_part = part_bound_buffer;
       part_bound_buffer += npart5prop;
@@ -103,12 +103,12 @@ int GetGlobalPartBounds(int flag){
     partmins[i] = 1.0;
     partmaxs[i] = 0.0;
   }
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
     int j;
     float *valmin_part, *valmax_part;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
     if(flag==LOADED_FILES&&parti->loaded==0)continue;
     valmin_part = parti->valmin_part;
     valmax_part = parti->valmax_part;
@@ -1858,11 +1858,11 @@ void MergeAllPartBounds(void){
 
   // find min/max over all particle files
 
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
     int j;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
     if(parti->bounds_set==0)continue;
     for(j = 0; j<npart5prop; j++){
       partpropdata *propj;
@@ -1879,7 +1879,7 @@ void MergeAllPartBounds(void){
     stream = FOPEN_2DIR(part_globalbound_filename, "w");
     if(stream!=NULL){
       global_have_global_bound_file = 1;
-      global_part_boundsize = GetFileSizeSMV(partinfo->bound_file);
+      global_part_boundsize = GetFileSizeSMV(scase.partinfo->bound_file);
       fprintf(stream,"%i %i\n",npart5prop,(int)global_part_boundsize);
       for(i=0;i<npart5prop;i++){
         partpropdata *propi;
@@ -1906,10 +1906,10 @@ void PrintPartLoadSummary(int option_arg,int type_arg){
   int j;
 
   nsize_local = 0;
-  for(j = 0; j<npartinfo; j++){
+  for(j = 0; j<scase.npartinfo; j++){
     partdata *partj;
 
-    partj = partinfo+j;
+    partj = scase.partinfo+j;
     if(type_arg==PART_SIZING&&partj->boundstatus==PART_BOUND_COMPUTING)nsize_local++;
     if(type_arg==PART_LOADING&&partj->loadstatus==FILE_LOADING)nsize_local++;
   }
@@ -1918,11 +1918,11 @@ void PrintPartLoadSummary(int option_arg,int type_arg){
 
     if(type_arg==PART_LOADING)printf("loading: ");
     isize_local = 0;
-    for(j = 0; j<npartinfo; j++){
+    for(j = 0; j<scase.npartinfo; j++){
       partdata *partj;
       int doit;
 
-      partj = partinfo+j;
+      partj = scase.partinfo+j;
       doit = 0;
       if(type_arg==PART_LOADING&&partj->loadstatus==FILE_LOADING)doit = 1;
       if(doit==1){
@@ -1951,7 +1951,7 @@ void GetAllPartBounds(void){
 
   // find min/max for each particle file
 
-  if(global_part_boundsize==0)global_part_boundsize = GetFileSizeSMV(partinfo->bound_file);
+  if(global_part_boundsize==0)global_part_boundsize = GetFileSizeSMV(scase.partinfo->bound_file);
 
   stream = FOPEN_2DIR(part_globalbound_filename, "r");
   if(stream!=NULL){
@@ -1973,9 +1973,9 @@ void GetAllPartBounds(void){
         propi->dlg_global_valmax = valmax;
       }
       fclose(stream);
-      for(i = 0; i<npartinfo; i++){
+      for(i = 0; i<scase.npartinfo; i++){
         partdata *parti;
-        parti              = partinfo+i;
+        parti              = scase.partinfo+i;
         parti->boundstatus = PART_BOUND_DEFINED;
         parti->bounds_set  = 1;
       }
@@ -1993,10 +1993,10 @@ void GetAllPartBounds(void){
   }
   THREADcontrol(partload_threads, THREAD_UNLOCK);
 
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
     THREADcontrol(partload_threads, THREAD_LOCK);
     if(parti->boundstatus!=PART_BOUND_UNDEFINED){
       THREADcontrol(partload_threads, THREAD_UNLOCK);

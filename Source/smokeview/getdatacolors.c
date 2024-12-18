@@ -1771,10 +1771,10 @@ void UpdateChopColors(void){
       }
     }
   }
-  for(i=0;i<npartinfo;i++){
+  for(i=0;i<scase.npartinfo;i++){
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     if(parti->loaded==0)continue;
     AdjustPart5Chops(); // only needs to be called once
     break;

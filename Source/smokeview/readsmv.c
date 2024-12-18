@@ -5200,7 +5200,7 @@ int ReadSMVCHID(bufferstreamdata *stream){
 
 void ParsePRT5Count(void){
   if(parse_opts.setup_only==1||parse_opts.smoke3d_only==1)return;
-  npartinfo++;
+  scase.npartinfo++;
 }
 
 /* ------------------ ParsePRT5Process ------------------------ */
@@ -5223,7 +5223,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
 
   nn_part++;
   *nn_part_in = nn_part;
-  parti = partinfo+ipart;
+  parti = scase.partinfo+ipart;
   lenkey = 4;
   len = strlen(buffer);
   if(scase.meshescoll.nmeshes>1){
@@ -5252,7 +5252,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
   parti->hist_update = 0;
   parti->skipload = 1;
   if(FGETS(buffer, 255, stream)==NULL){
-    npartinfo--;
+    scase.npartinfo--;
     return RETURN_BREAK;
   }
 
@@ -5351,7 +5351,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
     *ipart_in = ipart;
   }
   else{
-    npartinfo--;
+    scase.npartinfo--;
   }
   return RETURN_CONTINUE;
 }
@@ -7219,15 +7219,15 @@ int ReadSMV_Init(){
     }
   }
 
-  if(npartinfo>0){
-    for(i=0;i<npartinfo;i++){
-      FREEMEMORY(partinfo[i].partclassptr);
-      FREEMEMORY(partinfo[i].reg_file);
-      FREEMEMORY(partinfo[i].size_file);
+  if(scase.npartinfo>0){
+    for(i=0;i<scase.npartinfo;i++){
+      FREEMEMORY(scase.partinfo[i].partclassptr);
+      FREEMEMORY(scase.partinfo[i].reg_file);
+      FREEMEMORY(scase.partinfo[i].size_file);
     }
-    FREEMEMORY(partinfo);
+    FREEMEMORY(scase.partinfo);
   }
-  npartinfo=0;
+  scase.npartinfo=0;
 
 
   //*** free slice data
@@ -8092,9 +8092,9 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
   // define labels and memory for default colorbars
 
-  FREEMEMORY(partinfo);
-  if(npartinfo!=0){
-    if(NewMemory((void **)&partinfo,npartinfo*sizeof(partdata))==0)return 2;
+  FREEMEMORY(scase.partinfo);
+  if(scase.npartinfo!=0){
+    if(NewMemory((void **)&scase.partinfo,scase.npartinfo*sizeof(partdata))==0)return 2;
   }
 
   FREEMEMORY(scase.slicecoll.vsliceinfo);
@@ -8196,7 +8196,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     scase.propcoll.npropinfo=1;
   }
 
-  if(npartinfo>0 && NewMemory((void **)&sextras.part_buffer,       3*npartinfo*MAXFILELEN)    == 0)return 2;
+  if(scase.npartinfo>0 && NewMemory((void **)&sextras.part_buffer,       3*scase.npartinfo*MAXFILELEN)    == 0)return 2;
   if(scase.slicecoll.nsliceinfo>0 && NewMemory((void **)&sextras.slice_buffer,     7*scase.slicecoll.nsliceinfo*MAXFILELEN)   == 0)return 2;
   if(scase.smoke3dcoll.nsmoke3dinfo>0 && NewMemory((void **)&sextras.smoke3d_buffer, 9*scase.smoke3dcoll.nsmoke3dinfo*MAXFILELEN) == 0)return 2;
 
@@ -11831,7 +11831,7 @@ int ReadSMV_Configure(){
         partclassi->dz =              sin(elevation)*length/2.0;
     }
   }
-  if(npartinfo>=64){
+  if(scase.npartinfo>=64){
 #ifndef pp_PARTFRAME
     use_partload_threads = 1;
 #endif

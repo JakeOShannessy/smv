@@ -3255,10 +3255,10 @@ void ScriptLoadFile(scriptdata *scripti){
     }
   }
   npartframes_max=GetMinPartFrames(PARTFILE_LOADALL);
-  for(i=0;i<npartinfo;i++){
+  for(i=0;i<scase.npartinfo;i++){
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     if(strcmp(parti->file,scripti->cval)==0){
       parti->finalize = 1;
       LoadParticleMenu(i);

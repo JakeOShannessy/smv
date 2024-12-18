@@ -448,15 +448,15 @@ void GetFileSizes(void){
   }
 
   printf("\n");
-  if(npartinfo>0){
+  if(scase.npartinfo>0){
     float part = 0.0;
     char label[100];
 
-    for(i = 0; i<npartinfo; i++){
+    for(i = 0; i<scase.npartinfo; i++){
       partdata *parti;
       FILE_SIZE file_size;
 
-      parti = partinfo+i;
+      parti = scase.partinfo+i;
       file_size = GetFileSizeSMV(parti->file);
       part += file_size;
     }
@@ -2218,12 +2218,12 @@ void ParticleShowMenu(int value){
   partdata *parti;
   int i;
 
-  if(npartinfo==0)return;
+  if(scase.npartinfo==0)return;
   if(value==MENU_DUMMY)return;
   if(value<0){
     value = -value;
     value--;
-    parti = partinfo + value;
+    parti = scase.partinfo + value;
     parti->display = 1 - parti->display;
     updatemenu=1;
     GLUTPOSTREDISPLAY;
@@ -2246,8 +2246,8 @@ void ParticleShowMenu(int value){
       case MENU_PARTSHOW_SHOWALL:
         visSprinkPart=1;
         visSmokePart=2;
-        for(i=0;i<npartinfo;i++){
-          parti = partinfo + i;
+        for(i=0;i<scase.npartinfo;i++){
+          parti = scase.partinfo + i;
           if(parti->loaded==0)continue;
           parti->display=1;
         }
@@ -2257,8 +2257,8 @@ void ParticleShowMenu(int value){
       case MENU_PARTSHOW_HIDEALL:
         visSprinkPart=0;
         visSmokePart=0;
-        for(i=0;i<npartinfo;i++){
-          parti = partinfo + i;
+        for(i=0;i<scase.npartinfo;i++){
+          parti = scase.partinfo + i;
           if(parti->loaded==0)continue;
           parti->display=0;
         }
@@ -2285,8 +2285,8 @@ void ParticleShowMenu(int value){
       case 3:
         visSprinkPart=1;
         visSmokePart=2;
-        for(i=0;i<npartinfo;i++){
-          parti = partinfo + i;
+        for(i=0;i<scase.npartinfo;i++){
+          parti = scase.partinfo + i;
           if(parti->loaded==0)continue;
           parti->display=1;
         }
@@ -3488,7 +3488,7 @@ void LoadUnloadMenu(int value){
     for(i=0;i<scase.npatchinfo;i++){
       ReadBoundary(i,UNLOAD,&errorcode);
     }
-    for(i=0;i<npartinfo;i++){
+    for(i=0;i<scase.npartinfo;i++){
       ReadPart("",i,UNLOAD,&errorcode);
     }
     for(i=0;i<scase.nisoinfo;i++){
@@ -3621,10 +3621,10 @@ void LoadUnloadMenu(int value){
     }
 #else
     int npartloaded_local = 0;
-    for(i=0;i<npartinfo;i++){
+    for(i=0;i<scase.npartinfo;i++){
       partdata *parti;
 
-      parti = partinfo+i;
+      parti = scase.partinfo+i;
       if(parti->loaded==1){
         parti->reload=1;
         npartloaded_local++;
@@ -3901,8 +3901,8 @@ void UpdateStreakValue(float value){
       break;
     }
   }
-  for(i=0;i<npartinfo;i++){
-    parti = partinfo + i;
+  for(i=0;i<scase.npartinfo;i++){
+    parti = scase.partinfo + i;
     if(parti->loaded==1)break;
   }
   if(parti!=NULL&&parti->loaded==1&&parti->ntimes>1){
@@ -4107,11 +4107,11 @@ void ParticlePropShowMenu(int value){
 void UnloadAllPartFiles(void){
   int i;
 
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
     int errorcode;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
     if(parti->loaded==0)continue;
     ReadPart(parti->file, i, UNLOAD, &errorcode);
   }
@@ -4122,12 +4122,12 @@ void UnloadAllPartFiles(void){
 void LoadAllPartFiles(int partnum){
   int i;
 
-  for(i = 0;i<npartinfo;i++){
+  for(i = 0;i<scase.npartinfo;i++){
     partdata *parti;
     int errorcode;
     FILE_SIZE file_size;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
 #ifdef pp_PARTFRAME
     if(partnum != RELOAD_LOADED_PART_FILES && partnum != LOAD_ALL_PART_FILES){
       IF_NOT_USEMESH_CONTINUE(parti->loaded, parti->blocknumber);
@@ -4173,11 +4173,11 @@ void SetupPart(int value){
   int i;
   int *list = NULL, nlist = 0;
 
-  NewMemory((void **)&list, npartinfo*sizeof(int));
-  for(i = 0; i<npartinfo; i++){
+  NewMemory((void **)&list, scase.npartinfo*sizeof(int));
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
     if(
       load_only_when_unloaded == 0 &&
       parti->loaded == 1){
@@ -4192,10 +4192,10 @@ void SetupPart(int value){
   }
   SetLoadedPartBounds(list, nlist);
   FREEMEMORY(list);
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
     parti->finalize = 0;
     parti->skipload = 1;
     parti->loadstatus = FILE_UNLOADED;
@@ -4209,16 +4209,16 @@ void SetupPart(int value){
   if(value>=0){
     partdata *parti;
 
-    parti = partinfo+value;
-    assert(value>=0&&value<npartinfo);
-    value = CLAMP(value, 0, npartinfo-1);
+    parti = scase.partinfo+value;
+    assert(value>=0&&value<scase.npartinfo);
+    value = CLAMP(value, 0, scase.npartinfo-1);
     parti->finalize = 1;
   }
   else{
-    for(i = npartinfo-1; i>=0; i--){
+    for(i = scase.npartinfo-1; i>=0; i--){
       partdata *parti;
 
-      parti = partinfo+i;
+      parti = scase.partinfo+i;
       if(parti->skipload==1)continue;
       parti->finalize = 1;
       break;
@@ -4261,16 +4261,16 @@ void LoadAllPartFilesMT(int partnum){
 
   INIT_PRINT_TIMER(part_timer);
   if(partnum < 0){
-    for(i = 0; i < npartinfo; i++){
+    for(i = 0; i < scase.npartinfo; i++){
       partdata *parti;
 
-      parti = partinfo + i;
+      parti = scase.partinfo + i;
       parti->finalize = 0;
     }
-    for(i = npartinfo - 1; i >= 0; i--){
+    for(i = scase.npartinfo - 1; i >= 0; i--){
       partdata *parti;
 
-      parti = partinfo + i;
+      parti = scase.partinfo + i;
       if(parti->loaded == 1){
         parti->finalize = 1;
         FinalizePartLoad(parti);
@@ -4279,7 +4279,7 @@ void LoadAllPartFilesMT(int partnum){
     }
   }
   else{
-    FinalizePartLoad(partinfo + partnum);
+    FinalizePartLoad(scase.partinfo + partnum);
   }
   PRINT_TIMER(part_timer, "finalize particle time");
 }
@@ -4299,7 +4299,7 @@ void LoadParticleMenu(int value){
     char  *partfile;
     partdata *parti;
 
-    parti = partinfo + value;
+    parti = scase.partinfo + value;
     partfile = parti->file;
     parti->finalize = 1;
     if(scriptoutstream!=NULL){
@@ -4311,12 +4311,12 @@ void LoadParticleMenu(int value){
     if(scriptoutstream==NULL||script_defer_loading==0){
       SetupPart(value);                                                // load only particle file with index value
       LoadAllPartFilesMT(value);
-      if(partinfo[value].file_size == 0.0)printf("***warning: particle file has no particles\n");
+      if(scase.partinfo[value].file_size == 0.0)printf("***warning: particle file has no particles\n");
     }
   }
   else{
     if(value==MENU_PARTICLE_UNLOAD_ALL){
-      for(i=0;i<npartinfo;i++){
+      for(i=0;i<scase.npartinfo;i++){
         ReadPart("", i, UNLOAD, &errorcode);
       }
     }
@@ -4332,20 +4332,20 @@ void LoadParticleMenu(int value){
     }
     else if(value == MENU_PART_NUM_FILE_SIZE){
       int total = 0;
-      for(i = 0;i < npartinfo;i++){
+      for(i = 0;i < scase.npartinfo;i++){
         partdata *parti;
 
-        parti = partinfo + i;
+        parti = scase.partinfo + i;
         total += parti->npoints_file;
       }
       printf("Particle number/file size: %i/", total);
       FILE_SIZE total_size;
 
       total_size=0;
-      for(i = 0; i < npartinfo; i++){
+      for(i = 0; i < scase.npartinfo; i++){
         partdata *parti;
 
-        parti = partinfo + i;
+        parti = scase.partinfo + i;
         total_size += GetFileSizeSMV(parti->reg_file);
       }
       if(total_size > 1000000000){
@@ -4390,19 +4390,19 @@ void LoadParticleMenu(int value){
 
         START_TIMER(part_load_time);
         int have_particles = 0, load_particles=0;
-        for(i = 0; i<npartinfo; i++){
+        for(i = 0; i<scase.npartinfo; i++){
           partdata *parti;
 
-          parti = partinfo+i;
+          parti = scase.partinfo+i;
           parti->file_size = 0;
           if(parti->skipload==0)load_particles = 1;
         }
         if(load_particles==1){
           LoadAllPartFilesMT(LOAD_ALL_PART_FILES);
-          for(i = 0; i<npartinfo; i++){
+          for(i = 0; i<scase.npartinfo; i++){
             partdata *parti;
 
-            parti = partinfo+i;
+            parti = scase.partinfo+i;
             if(parti->file_size>0){
               have_particles = 1;
               break;
@@ -7851,10 +7851,10 @@ void Plot3DLoadState(float time, int  *load_state){
 void PartLoadState(int  *load_state){
   int i, total=0, loaded=0;
 
-  for(i=0; i<npartinfo; i++){
+  for(i=0; i<scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     total++;
     if(parti->loaded==1)loaded++;
   }
@@ -10779,17 +10779,17 @@ static int menu_count=0;
 
 /* --------------------------------particle show menu -------------------------- */
 
-  if(npartinfo>0){
+  if(scase.npartinfo>0){
     int ii;
     int showall;
 
     CREATEMENU(particleshowmenu,ParticleShowMenu);
-    for(ii=0;ii<npartinfo;ii++){
+    for(ii=0;ii<scase.npartinfo;ii++){
       partdata *parti;
       char menulabel[1024];
 
       i = partorderindex[ii];
-      parti = partinfo + i;
+      parti = scase.partinfo + i;
       if(parti->loaded==0)continue;
       STRCPY(menulabel,"");
       if(parti->display==1)STRCAT(menulabel,"*");
@@ -12124,7 +12124,7 @@ static int menu_count=0;
 
   /* --------------------------------particle menu -------------------------- */
 
-  if(npartinfo>0){
+  if(scase.npartinfo>0){
     int ii;
     int doit = 0;
 
@@ -12133,16 +12133,16 @@ static int menu_count=0;
       doit = 1;
     }
     if(doit == 1){
-      for(ii = 0;ii < npartinfo;ii++){
+      for(ii = 0;ii < scase.npartinfo;ii++){
         char menulabel[1024];
 
         i = partorderindex[ii];
-        if(partinfo[i].loaded == 1){
+        if(scase.partinfo[i].loaded == 1){
           STRCPY(menulabel, "*");
-          STRCAT(menulabel, partinfo[i].menulabel);
+          STRCAT(menulabel, scase.partinfo[i].menulabel);
         }
         else{
-          STRCPY(menulabel, partinfo[i].menulabel);
+          STRCPY(menulabel, scase.partinfo[i].menulabel);
         }
         glutAddMenuEntry(menulabel, i);
       }
@@ -12151,7 +12151,7 @@ static int menu_count=0;
       char menulabel[1024];
 
       CREATEMENU(particlemenu,LoadParticleMenu);
-      if(npartinfo > 0){
+      if(scase.npartinfo > 0){
         int part_load_state;
 
         PartLoadState(&part_load_state);
@@ -13065,7 +13065,7 @@ static int menu_count=0;
 
       // particle
 
-      if(npartinfo>0){
+      if(scase.npartinfo>0){
         strcpy(loadmenulabel,"Particles");
         if(tload_step > 1){
           sprintf(steplabel,"/Skip Frame %i",tload_skip);

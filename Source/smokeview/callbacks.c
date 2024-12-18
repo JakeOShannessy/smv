@@ -661,10 +661,10 @@ void CheckTimeBound(void){
   if((timebar_drag==0&&itimes<0)||(timebar_drag==1&&itimes>nglobal_times-1)){
     izone=nzone_times-1;
     itimes=nglobal_times-1;
-    for(i=0;i<npartinfo;i++){
+    for(i=0;i<scase.npartinfo;i++){
       partdata *parti;
 
-      parti=partinfo+i;
+      parti=scase.partinfo+i;
       parti->itime=parti->ntimes-1;
     }
     for(i=0;i<scase.slicecoll.nsliceinfo;i++){
@@ -1546,10 +1546,10 @@ void PrintGPUState(void){
 int IsPartLoaded(void){
   int i;
 
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo+i;
+    parti = scase.partinfo+i;
     if(parti->loaded==0||parti->display==0)continue;
     return 1;
   }
@@ -2862,7 +2862,7 @@ void Keyboard(unsigned char key, int flag){
       partfast = 1 - partfast;
 #ifndef pp_PARTFRAME
       if(current_script_command==NULL){
-        if(npartinfo>1){
+        if(scase.npartinfo>1){
           use_partload_threads = partfast;
         }
         else{

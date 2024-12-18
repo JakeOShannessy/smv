@@ -338,10 +338,10 @@ int Loadfile(const char *filename) {
       return errorcode;
     }
   }
-  for(size_t i = 0; i < npartinfo; i++) {
+  for(size_t i = 0; i < scase.npartinfo; i++) {
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     if(strcmp(parti->file, filename) == 0) {
       LoadParticleMenu(i);
       return errorcode;
@@ -1493,17 +1493,17 @@ void Loadparticles(const char *name) {
   int count = 0;
 
   npartframes_max = GetMinPartFrames(PARTFILE_LOADALL);
-  for(size_t i = 0; i < npartinfo; i++) {
+  for(size_t i = 0; i < scase.npartinfo; i++) {
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     ReadPart(parti->file, i, UNLOAD, &errorcode);
     count++;
   }
-  for(size_t i = 0; i < npartinfo; i++) {
+  for(size_t i = 0; i < scase.npartinfo; i++) {
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     ReadPart(parti->file, i, LOAD, &errorcode);
     count++;
   }
@@ -1850,7 +1850,7 @@ int Unloadall() {
   for(size_t i = 0; i < scase.npatchinfo; i++) {
     ReadBoundary(i, UNLOAD, &errorcode);
   }
-  for(size_t i = 0; i < npartinfo; i++) {
+  for(size_t i = 0; i < scase.npartinfo; i++) {
     ReadPart("", i, UNLOAD, &errorcode);
   }
   for(size_t i = 0; i < scase.nisoinfo; i++) {

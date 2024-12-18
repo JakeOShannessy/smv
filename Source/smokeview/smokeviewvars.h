@@ -1558,7 +1558,6 @@ SVEXTERN int SVDECL(isotest,0);
 SVEXTERN int SVDECL(isolevelindex,0), SVDECL(isolevelindex2,0);
 SVEXTERN int SVDECL(n_devices,0);
 
-SVEXTERN int SVDECL(npartinfo,0);
 SVEXTERN float SVDECL(*globalmin_part, NULL), SVDECL(*globalmax_part, NULL);
 
 SVEXTERN int SVDECL(sliceload_boundtype, 0);
@@ -2165,7 +2164,6 @@ SVEXTERN skyboxdata SVDECL(*skyboxinfo,NULL);
 SVEXTERN zventdata SVDECL(*zventinfo,NULL);
 SVEXTERN zonedata SVDECL(*zoneinfo,NULL);
 SVEXTERN zonedata SVDECL(*activezone,NULL);
-SVEXTERN partdata SVDECL(*partinfo,NULL);
 SVEXTERN int SVDECL(update_screensize,0);
 SVEXTERN int SVDECL(part5show,1);
 SVEXTERN int SVDECL(streak5show,0),streak5value, SVDECL(streak5step,0), SVDECL(showstreakhead,1);
