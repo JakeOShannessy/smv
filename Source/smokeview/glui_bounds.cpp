@@ -4873,7 +4873,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
   // -------------- Show/Hide Loaded files -------------------
 
-  if(npartinfo > 0 || scase.slicecoll.nsliceinfo > 0 || scase.slicecoll.nvsliceinfo > 0 || nisoinfo > 0 || npatchinfo || scase.smoke3dcoll.nsmoke3dinfo > 0 || nplot3dinfo > 0){
+  if(npartinfo > 0 || scase.slicecoll.nsliceinfo > 0 || scase.slicecoll.nvsliceinfo > 0 || scase.nisoinfo > 0 || npatchinfo || scase.smoke3dcoll.nsmoke3dinfo > 0 || nplot3dinfo > 0){
     ROLLOUT_showhide = glui_bounds->add_rollout_to_panel(ROLLOUT_files,_("Show/Hide"), false, SHOWHIDE_ROLLOUT, FileRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_showhide, glui_bounds);
     ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_showhide, SHOWHIDE_ROLLOUT, glui_bounds);
@@ -4888,7 +4888,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
     if(npartinfo > 0)BUTTON_PART = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Particle", FILESHOW_particle, FileShowCB);
     if(scase.slicecoll.nsliceinfo > 0)BUTTON_SLICE = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Slice", FILESHOW_slice, FileShowCB);
     if(scase.slicecoll.nvsliceinfo > 0)BUTTON_VSLICE = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Vector", FILESHOW_vslice, FileShowCB);
-    if(nisoinfo > 0)BUTTON_ISO = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Isosurface", FILESHOW_isosurface, FileShowCB);
+    if(scase.nisoinfo > 0)BUTTON_ISO = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Isosurface", FILESHOW_isosurface, FileShowCB);
     if(npatchinfo > 0)BUTTON_BOUNDARY = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Boundary", FILESHOW_boundary, FileShowCB);
     if(scase.smoke3dcoll.nsmoke3dinfo > 0)BUTTON_3DSMOKE = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "3D smoke/fire", FILESHOW_3dsmoke, FileShowCB);
     if(nplot3dinfo > 0)BUTTON_PLOT3D = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Plot3D", FILESHOW_plot3d, FileShowCB);
@@ -5145,7 +5145,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
   // ----------------------------------- Isosurface ----------------------------------------
 
-  if(nisoinfo>0){
+  if(scase.nisoinfo>0){
     ROLLOUT_iso = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds, "Isosurface", false, ISO_ROLLOUT, BoundRolloutCB);
     ADDPROCINFO(boundprocinfo, nboundprocinfo, ROLLOUT_iso, ISO_ROLLOUT, glui_bounds);
 

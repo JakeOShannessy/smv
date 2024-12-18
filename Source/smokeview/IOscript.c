@@ -1863,11 +1863,11 @@ void ScriptLoadIsoFrame(scriptdata *scripti, int flag){
 
   update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
   CancelUpdateTriangles();
-  for(i = 0; i < nisoinfo; i++){
+  for(i = 0; i < scase.nisoinfo; i++){
     int errorcode;
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->isof_index + 1 == fileindex){
       ReadIso(isoi->file, i, LOAD, &framenum, &errorcode);
     }
@@ -1908,7 +1908,7 @@ void ScriptIsoRenderAll(scriptdata *scripti){
   //  start_frame == scripti->ival3
   //  &ISOF index == scripti->ival4
 
-  if(nisoinfo == 0){
+  if(scase.nisoinfo == 0){
     PRINTF("*** Error: there is no isosurface data to render\n");
     ScriptMenu(SCRIPT_CANCEL);
     return;
@@ -1957,18 +1957,18 @@ void ScriptLoadIso(scriptdata *scripti, int meshnum){
 
   update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
   CancelUpdateTriangles();
-  for(i = nisoinfo - 1; i >= 0; i--){
+  for(i = scase.nisoinfo - 1; i >= 0; i--){
     isodata* isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     isoi->finalize = 0;
   }
-  for(i = nisoinfo-1; i >=0; i--){
+  for(i = scase.nisoinfo-1; i >=0; i--){
     isodata* isoi;
     char label2[100];
     int lencval, lenlabel;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(meshnum != -1 && isoi->blocknumber + 1 != meshnum)continue;
     lencval = strlen(scripti->cval);
     lenlabel = strlen(isoi->surface_label.longlabel);
@@ -1980,13 +1980,13 @@ void ScriptLoadIso(scriptdata *scripti, int meshnum){
       }
     }
   }
-  for(i = 0; i<nisoinfo; i++){
+  for(i = 0; i<scase.nisoinfo; i++){
     int errorcode;
     isodata *isoi;
     char label2[100];
     int lencval, lenlabel;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(meshnum != -1 && isoi->blocknumber+1 != meshnum)continue;
     lencval = strlen(scripti->cval);
     lenlabel = strlen(isoi->surface_label.longlabel);
@@ -3266,10 +3266,10 @@ void ScriptLoadFile(scriptdata *scripti){
     }
   }
   CancelUpdateTriangles();
-  for(i=0;i<nisoinfo;i++){
+  for(i=0;i<scase.nisoinfo;i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(strcmp(isoi->file,scripti->cval)==0){
       ReadIso(isoi->file,i,LOAD,NULL,&errorcode);
       if(update_readiso_geom_wrapup == UPDATE_ISO_ONE_NOW)ReadIsoGeomWrapup(FOREGROUND);

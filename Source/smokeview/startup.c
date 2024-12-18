@@ -767,10 +767,10 @@ void InitOpenGL(int option){
         patchi->autoload=0;
       }
     }
-    for(i=0;i<nisoinfo;i++){
+    for(i=0;i<scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = isoinfo + i;
+      isoi = scase.isoinfo + i;
 
       if(isoi->loaded==1){
         isoi->autoload=1;
@@ -849,20 +849,20 @@ void InitOpenGL(int option){
    // startup iso
 
    nstartup=0;
-   for(i=0;i<nisoinfo;i++){
+   for(i=0;i<scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = isoinfo + i;
+      isoi = scase.isoinfo + i;
 
       if(isoi->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"ISOAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<nisoinfo;i++){
+     for(i=0;i<scase.nisoinfo;i++){
         isodata *isoi;
 
-        isoi = isoinfo + i;
+        isoi = scase.isoinfo + i;
 
         if(isoi->loaded==1)fprintf(fileout," %i\n",isoi->seq_id);
      }
@@ -1047,10 +1047,10 @@ void InitOpenGL(int option){
 
   void GetStartupISO(int seq_id){
     int i;
-    for(i=0;i<nisoinfo;i++){
+    for(i=0;i<scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = isoinfo + i;
+      isoi = scase.isoinfo + i;
 
       if(isoi->seq_id==seq_id){
         isoi->autoload=1;
@@ -1141,10 +1141,10 @@ void InitOpenGL(int option){
     }
     update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
     CancelUpdateTriangles();
-    for(i = 0; i<nisoinfo; i++){
+    for(i = 0; i<scase.nisoinfo; i++){
       isodata *isoi;
 
-      isoi = isoinfo + i;
+      isoi = scase.isoinfo + i;
       if(isoi->autoload==0&&isoi->loaded==1)ReadIso(isoi->file,i,UNLOAD,NULL,&errorcode);
       if(isoi->autoload == 1){
         ReadIso(isoi->file, i, LOAD,NULL, &errorcode);

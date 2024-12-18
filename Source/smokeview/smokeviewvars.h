@@ -1570,7 +1570,7 @@ SVEXTERN int SVDECL(sliceload_isvector, 0);
 SVEXTERN sliceparmdata sliceparminfo;
 
 SVEXTERN int SVDECL(nslicebounds, 0), SVDECL(npatchbounds,0), SVDECL(npatch2,0);
-SVEXTERN int SVDECL(nisoinfo,0), SVDECL(niso_bounds,0);
+SVEXTERN int SVDECL(niso_bounds,0);
 SVEXTERN int SVDECL(visLabels,0);
 SVEXTERN float SVDECL(framerate,-1.0);
 SVEXTERN int SVDECL(seqnum,0),SVDECL(RenderTime,0),SVDECL(RenderTimeOld,0), SVDECL(itime_cycle,0);
@@ -2262,7 +2262,6 @@ SVEXTERN plot3ddata SVDECL(*plot3dinfo,NULL);
 SVEXTERN int SVDECL(iplot3dtimelist, -1), SVDECL(nplot3dtimelist, 0);
 SVEXTERN float SVDECL(*plot3dtimelist,NULL);
 SVEXTERN patchdata SVDECL(*patchinfo,NULL);
-SVEXTERN isodata SVDECL(*isoinfo,NULL);
 
 SVEXTERN blockagedata SVDECL(*bchighlight,NULL),SVDECL(*bchighlight_old,NULL);
 

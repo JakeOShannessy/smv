@@ -4819,7 +4819,7 @@ void GetGeomInfoPtrs(int flag){
   if(flag==1){
     int count;
 
-    count = nisoinfo+ngeominfo;
+    count = scase.nisoinfo+ngeominfo;
     if(count>0){
       NewMemory((void **)&gptr, count*sizeof(geomdata *));
     }
@@ -4852,11 +4852,11 @@ void GetGeomInfoPtrs(int flag){
     // hide geometry if we are displaying a boundary file over top of it
     if(geomi->loaded==1&&geomi->display==1&&geomi->geomtype==GEOM_GEOM&&hide_geom==0)ngeominfoptrs++;
   }
-  for(i=0;i<nisoinfo;i++){
+  for(i=0;i<scase.nisoinfo;i++){
     isodata *isoi;
     geomdata *geomi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->loaded==0||isoi->display==0)continue;
     geomi = isoi->geominfo;
     if(geomi==NULL)continue;
@@ -4872,11 +4872,11 @@ void GetGeomInfoPtrs(int flag){
     geomi = geominfo + i;
     if(geomi->loaded==1&&geomi->display==1&&geomi->geomtype==GEOM_GEOM&&hide_geom == 0)*gptr++=geomi;
   }
-  for(i=0;i<nisoinfo;i++){
+  for(i=0;i<scase.nisoinfo;i++){
     isodata *isoi;
     geomdata *geomi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->loaded==0||isoi->display==0)continue;
     geomi = isoi->geominfo;
     if(geomi==NULL||geomi->loaded==0||geomi->display==0)continue;

@@ -2885,16 +2885,16 @@ void UpdateBoundInfo(void){
   float bound_timer;
 
   START_TIMER(bound_timer);
-  if(nisoinfo>0){
+  if(scase.nisoinfo>0){
     FREEMEMORY(isoindex);
     FREEMEMORY(isobounds);
-    NewMemory((void*)&isoindex,nisoinfo*sizeof(int));
-    NewMemory((void*)&isobounds,nisoinfo*sizeof(boundsdata));
+    NewMemory((void*)&isoindex,scase.nisoinfo*sizeof(int));
+    NewMemory((void*)&isobounds,scase.nisoinfo*sizeof(boundsdata));
     niso_bounds=0;
-    for(i=0;i<nisoinfo;i++){
+    for(i=0;i<scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = isoinfo + i;
+      isoi = scase.isoinfo + i;
       if(isoi->dataflag==0)continue;
       isoi->firstshort_iso=1;
       isoindex[niso_bounds]=i;
@@ -2917,7 +2917,7 @@ void UpdateBoundInfo(void){
       for(n=0;n<i;n++){
         isodata *ison;
 
-        ison = isoinfo + n;
+        ison = scase.isoinfo + n;
         if(ison->dataflag==0)continue;
         if(strcmp(isoi->color_label.shortlabel,ison->color_label.shortlabel)==0){
           isoi->firstshort_iso=0;
@@ -4982,10 +4982,10 @@ void SetupIsosurface(isodata *isoi){
 void *SetupAllIsosurfaces(void *arg){
   int i;
 
-  for(i = 0; i < nisoinfo; i++){
+  for(i = 0; i < scase.nisoinfo; i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     SetupIsosurface(isoi);
   }
   THREAD_EXIT(isosurface_threads);
@@ -4995,7 +4995,7 @@ void *SetupAllIsosurfaces(void *arg){
 
 void ParseISOFCount(void){
   if(parse_opts.setup_only == 1 || parse_opts.smoke3d_only == 1)return;
-  nisoinfo++;
+  scase.nisoinfo++;
 }
 
 /* ------------------ ParseISOFProcess ------------------------ */
@@ -5020,7 +5020,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
   nn_iso = *nn_iso_in;
   nisos_per_mesh = nisos_per_mesh_in;
 
-  isoi = isoinfo+iiso;
+  isoi = scase.isoinfo+iiso;
   isoi->isof_index = nn_iso%nisos_per_mesh;
   nn_iso++;
   *nn_iso_in = nn_iso;
@@ -5047,7 +5047,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
     blocknumber--;
   }
   if(FGETS(buffer, 255, stream)==NULL){
-    nisoinfo--;
+    scase.nisoinfo--;
     return RETURN_BREAK;
   }
 
@@ -5104,7 +5104,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
 
   if(isoi->dataflag==1&&isoi->geomflag==1){
     if(FGETS(tbuffer, 255, stream)==NULL){
-      nisoinfo--;
+      scase.nisoinfo--;
       return RETURN_BREAK;
     }
     TrimBack(tbuffer);
@@ -5144,7 +5144,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
     if(isoi->dataflag==1){
       if(ReadLabels(&isoi->color_label, stream, NULL)==LABEL_ERR)return 2;
     }
-    nisoinfo--;
+    scase.nisoinfo--;
   }
   return RETURN_CONTINUE;
 }
@@ -7247,14 +7247,14 @@ int ReadSMV_Init(){
   }
   npatchinfo=0;
 
-  if(nisoinfo>0){
-    for(i=0;i<nisoinfo;i++){
-      FreeLabels(&isoinfo[i].surface_label);
-      FREEMEMORY(isoinfo[i].file);
+  if(scase.nisoinfo>0){
+    for(i=0;i<scase.nisoinfo;i++){
+      FreeLabels(&scase.isoinfo[i].surface_label);
+      FREEMEMORY(scase.isoinfo[i].file);
     }
-    FREEMEMORY(isoinfo);
+    FREEMEMORY(scase.isoinfo);
   }
-  nisoinfo=0;
+  scase.nisoinfo=0;
 
   sextras.updateindexcolors=0;
   sextras.ntrnx=0;
@@ -7278,7 +7278,7 @@ int ReadSMV_Init(){
   FREEMEMORY(plot3dinfo);
   FREEMEMORY(patchinfo);
   FREEMEMORY(boundarytypes);
-  FREEMEMORY(isoinfo);
+  FREEMEMORY(scase.isoinfo);
   FREEMEMORY(isotypes);
   FREEMEMORY(roominfo);
   FREEMEMORY(fireinfo);
@@ -7948,7 +7948,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
    NewMemory((void **)&fds_githash,7+1);
    strcpy(fds_githash,"unknown");
  }
- if(nisoinfo>0&&scase.meshescoll.nmeshes>0)nisos_per_mesh = MAX(nisoinfo / scase.meshescoll.nmeshes,1);
+ if(scase.nisoinfo>0&&scase.meshescoll.nmeshes>0)nisos_per_mesh = MAX(scase.nisoinfo / scase.meshescoll.nmeshes,1);
  NewMemory((void **)&scase.csvcoll.csvfileinfo,(scase.csvcoll.ncsvfileinfo+CFAST_CSV_MAX+2)*sizeof(csvfiledata));
  scase.csvcoll.ncsvfileinfo=0;
  if(ngeominfo>0){
@@ -8130,11 +8130,11 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     }
     if(NewMemory((void **)&boundarytypes,npatchinfo*sizeof(int))==0)return 2;
   }
-  FREEMEMORY(isoinfo);
+  FREEMEMORY(scase.isoinfo);
   FREEMEMORY(isotypes);
-  if(nisoinfo>0){
-    if(NewMemory((void **)&isoinfo,nisoinfo*sizeof(isodata))==0)return 2;
-    if(NewMemory((void **)&isotypes,nisoinfo*sizeof(int))==0)return 2;
+  if(scase.nisoinfo>0){
+    if(NewMemory((void **)&scase.isoinfo,scase.nisoinfo*sizeof(isodata))==0)return 2;
+    if(NewMemory((void **)&isotypes,scase.nisoinfo*sizeof(int))==0)return 2;
   }
   FREEMEMORY(roominfo);
   if(nrooms>0){

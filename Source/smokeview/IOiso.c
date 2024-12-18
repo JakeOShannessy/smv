@@ -200,7 +200,7 @@ void UnloadIso(meshdata *meshi){
   meshdata *meshi2;
 
   if(meshi->isofilenum == -1)return;
-  ib = isoinfo + meshi->isofilenum;
+  ib = scase.isoinfo + meshi->isofilenum;
 #ifdef pp_SLICEFRAME
   FRAMEFree(ib->frameinfo);
   ib->frameinfo = NULL;
@@ -238,7 +238,7 @@ int GetIsoType(const isodata *isoi){
   int j;
 
   for(j = 0;j < nisotypes;j++){
-    isoi2 = isoinfo + isotypes[j];
+    isoi2 = scase.isoinfo + isotypes[j];
 
     if(strcmp(isoi->surface_label.longlabel, isoi2->surface_label.longlabel) == 0)return j;
   }
@@ -326,10 +326,10 @@ void OutputIsoBounds(isodata *isoi){
 void OutputAllIsoBounds(void){
   int i;
 
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < scase.nisoinfo;i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->loaded == 0||isoi->geominfo==NULL)continue;
     OutputIsoBounds(isoi);
   }
@@ -344,8 +344,8 @@ int GetIsoTType(const isodata *isoi){
 
   if(isoi->dataflag == 0)return -1;
   jj = 0;
-  for(j = 0;j < nisoinfo;j++){
-    isoi2 = isoinfo + j;
+  for(j = 0;j < scase.nisoinfo;j++){
+    isoi2 = scase.isoinfo + j;
 
     if(isoi2->dataflag == 0)continue;
     if(isoi2->firstshort_iso == 0)continue;
@@ -365,10 +365,10 @@ void SyncIsoBounds(){
   // find number of iso-surfaces with values
 
   ncount = 0;
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < scase.nisoinfo;i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
     ncount++;
   }
@@ -376,10 +376,10 @@ void SyncIsoBounds(){
 
   // find min and max bounds for valued iso-surfaces
 
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < scase.nisoinfo;i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
     if(firsttime == 1){
       firsttime = 0;
@@ -394,10 +394,10 @@ void SyncIsoBounds(){
 
   // set min and max bounds for valued iso-surfaces
 
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < scase.nisoinfo;i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
     isoi->tmin = tmin_local;
     isoi->tmax = tmax_local;
@@ -405,13 +405,13 @@ void SyncIsoBounds(){
 
   // rescale all data
 
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < scase.nisoinfo;i++){
     isodata *isoi;
     meshdata *meshi;
     int ii;
     isosurface *asurface;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
     if(iisottype != GetIsoTType(isoi))continue;
 
@@ -462,7 +462,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
 #ifdef pp_ISOFRAME
   START_TIMER(total_time);
 #endif
-  isoi = isoinfo + ifile;
+  isoi = scase.isoinfo + ifile;
   if(load_flag==LOAD||load_flag==RELOAD){
     THREADcontrol(isosurface_threads, THREAD_JOIN);
   }
@@ -604,10 +604,10 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     if(isoi->finalize == 1){
       iso_global_min = 1.0;
       iso_global_max = 0.0;
-      for(i = 0;i < nisoinfo;i++){
+      for(i = 0;i < scase.nisoinfo;i++){
         isodata *isoj;
 
-        isoj = isoinfo + i;
+        isoj = scase.isoinfo + i;
         if(isoj->loaded == 0)continue;
         if(iso_global_min > iso_valmax){
           iso_global_min = isoj->globalmin_iso;
@@ -618,10 +618,10 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
           iso_global_max = MAX(iso_global_max, isoj->globalmax_iso);
         }
       }
-      for(i = 0;i < nisoinfo;i++){
+      for(i = 0;i < scase.nisoinfo;i++){
         isodata *isoj;
 
-        isoj = isoinfo + i;
+        isoj = scase.isoinfo + i;
         if(isoj->loaded == 0)continue;
         isoj->globalmin_iso = iso_global_min;
         isoj->globalmax_iso = iso_global_max;
@@ -676,8 +676,8 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
   if(flag==LOAD){
     THREADcontrol(isosurface_threads, THREAD_JOIN);
   }
-  assert(ifile>=0&&ifile<nisoinfo);
-  ib = isoinfo+ifile;
+  assert(ifile>=0&&ifile<scase.nisoinfo);
+  ib = scase.isoinfo+ifile;
   if(ib->loaded==0&&flag==UNLOAD)return;
   blocknumber=ib->blocknumber;
   ib->isoupdate_timestep=-1;
@@ -1086,9 +1086,9 @@ FILE_SIZE ReadIso(const char *file, int ifile, int flag, int *geom_frame_index, 
   FILE_SIZE return_filesize=0;
 
   SetTimeState();
-  if(ifile>=0&&ifile<nisoinfo){
+  if(ifile>=0&&ifile<scase.nisoinfo){
 
-    isoi = isoinfo+ifile;
+    isoi = scase.isoinfo+ifile;
     if(flag == UNLOAD && isoi->loaded == 0)return 0;
 #ifdef pp_ISOFRAME
     if(flag != RELOAD)PRINTF("Loading %s(%s)", file, isoi->surface_label.shortlabel);
@@ -1118,7 +1118,7 @@ void DrawIsoOrig(int tranflag){
   CheckMemory;
   if(tranflag==DRAW_TRANSPARENT&&((visAIso&1)==0))return;
   if(meshi->isofilenum>=0){
-    isoi = isoinfo + meshi->isofilenum;
+    isoi = scase.isoinfo + meshi->isofilenum;
   }
 
   iso_lighting=1;
@@ -1591,7 +1591,7 @@ int GetIsoIndex(const isodata *isoi){
   int j;
 
   for(j = 0;j < nisotypes;j++){
-    isoi2 = isoinfo + isotypes[j];
+    isoi2 = scase.isoinfo + isotypes[j];
     if(strcmp(isoi->surface_label.longlabel, isoi2->surface_label.longlabel) == 0)return isotypes[j];
   }
   return -1;
@@ -1604,12 +1604,12 @@ void UpdateIsoTypes(void){
   isodata *isoi;
 
   nisotypes = 0;
-  for(i=0;i<nisoinfo;i++){
-    isoi = isoinfo+i;
+  for(i=0;i<scase.nisoinfo;i++){
+    isoi = scase.isoinfo+i;
     if(GetIsoIndex(isoi)==-1)isotypes[nisotypes++]=i;
   }
-  for(i=0;i<nisoinfo;i++){
-    isoi = isoinfo+i;
+  for(i=0;i<scase.nisoinfo;i++){
+    isoi = scase.isoinfo+i;
     isoi->type= GetIsoType(isoi);
   }
 }
@@ -1621,14 +1621,14 @@ void UpdateIsoType(void){
   isodata *isoi;
 
 
-  for(i=0;i<nisoinfo;i++){
-    isoi = isoinfo + i;
+  for(i=0;i<scase.nisoinfo;i++){
+    isoi = scase.isoinfo + i;
     if(isoi->loaded==0)continue;
     if(isoi->display==1&&isoi->type==iisotype)return;
   }
 
-  for(i=0;i<nisoinfo;i++){
-    isoi = isoinfo + i;
+  for(i=0;i<scase.nisoinfo;i++){
+    isoi = scase.isoinfo + i;
     if(isoi->loaded==0)continue;
     if(isoi->display==1){
       iisotype = GetIsoIndex(isoi);
@@ -1644,8 +1644,8 @@ void UpdateIsoType(void){
 int IsoCompare(const void *arg1, const void *arg2){
   isodata *isoi, *isoj;
 
-  isoi = isoinfo + *(int *)arg1;
-  isoj = isoinfo + *(int *)arg2;
+  isoi = scase.isoinfo + *(int *)arg1;
+  isoj = scase.isoinfo + *(int *)arg2;
 
   if(strcmp(isoi->surface_label.longlabel,isoj->surface_label.longlabel)<0)return -1;
   if(strcmp(isoi->surface_label.longlabel,isoj->surface_label.longlabel)>0)return 1;
@@ -1661,16 +1661,16 @@ void UpdateIsoMenuLabels(void){
   isodata *isoi;
   char label[128];
 
-  if(nisoinfo>0){
+  if(scase.nisoinfo>0){
     FREEMEMORY(isoorderindex);
-    NewMemory((void **)&isoorderindex,sizeof(int)*nisoinfo);
-    for(i=0;i<nisoinfo;i++){
+    NewMemory((void **)&isoorderindex,sizeof(int)*scase.nisoinfo);
+    for(i=0;i<scase.nisoinfo;i++){
       isoorderindex[i]=i;
     }
-    qsort( (int *)isoorderindex, (size_t)nisoinfo, sizeof(int), IsoCompare);
+    qsort( (int *)isoorderindex, (size_t)scase.nisoinfo, sizeof(int), IsoCompare);
 
-    for(i=0;i<nisoinfo;i++){
-      isoi = isoinfo + i;
+    for(i=0;i<scase.nisoinfo;i++){
+      isoi = scase.isoinfo + i;
 
       if(scase.meshescoll.nmeshes>1){
         meshdata *isomesh;
@@ -1849,11 +1849,11 @@ void UpdateIsoTriangles(int flag){
       int i;
 
       ntris=0;
-      for(i=0;i<nisoinfo;i++){
+      for(i=0;i<scase.nisoinfo;i++){
         isodata *isoi;
         int ilev;
 
-        isoi = isoinfo+i;
+        isoi = scase.isoinfo+i;
         if(isoi->geomflag==1||isoi->loaded==0||isoi->display==0)continue;
 
         meshi = scase.meshescoll.meshinfo + isoi->blocknumber;
@@ -1894,10 +1894,10 @@ void UpdateIsoTriangles(int flag){
     iso_opaques_tmp=iso_opaques;
     niso_trans=0;
     niso_opaques=0;
-    for(i=0;i<nisoinfo;i++){
+    for(i=0;i<scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = isoinfo+i;
+      isoi = scase.isoinfo+i;
       if(isoi->geomflag==1||isoi->loaded==0||isoi->display==0)continue;
 
       CheckMemory;
@@ -2012,13 +2012,13 @@ meshdata *GetLoadedIsoMesh(void){
   meshdata *return_mesh;
   int i,nsteps=-1;
 
-  if(isoinfo==NULL)return NULL;
+  if(scase.isoinfo==NULL)return NULL;
   return_mesh=NULL;
-  for(i=0;i<nisoinfo;i++){
+  for(i=0;i<scase.nisoinfo;i++){
     meshdata *mesh2;
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->loaded==0)continue;
     mesh2 = scase.meshescoll.meshinfo + isoi->blocknumber;
     if(nsteps==-1||mesh2->niso_times<nsteps){

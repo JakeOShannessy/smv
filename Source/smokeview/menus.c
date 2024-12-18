@@ -515,10 +515,10 @@ void HideAllSmoke(void){
     smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
     if(smoke3di->loaded == 1)smoke3di->display = 0;
   }
-  for(i = 0; i < nisoinfo; i++){
+  for(i = 0; i < scase.nisoinfo; i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->loaded == 1)isoi->display = 0;
   }
 }
@@ -547,10 +547,10 @@ void ShowAllSmoke(void){
     smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
     if(smoke3di->loaded == 1)smoke3di->display = 1;
   }
-  for(i = 0; i < nisoinfo; i++){
+  for(i = 0; i < scase.nisoinfo; i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->loaded == 1)isoi->display = 1;
   }
 }
@@ -1273,7 +1273,7 @@ void IsoShowMenu(int value){
      showlevels[value-100] = 1 - showlevels[value-100];
     }
     else if(value>=1000&&value<=10000){      // we can only have 9900 isosurface files
-     isoi = isoinfo + value - 1000;          // hope that is enough!!
+     isoi = scase.isoinfo + value - 1000;          // hope that is enough!!
      if(plotstate!=DYNAMIC_PLOTS){
        plotstate=DYNAMIC_PLOTS;
        isoi->display=1;
@@ -1302,8 +1302,8 @@ void IsoShowMenu(int value){
       else if(value==TOGGLE_ISO){
         show_isofiles = 1 - show_isofiles;
       }
-      for(i=0;i<nisoinfo;i++){
-        isoinfo[i].display=show_isofiles;
+      for(i=0;i<scase.nisoinfo;i++){
+        scase.isoinfo[i].display=show_isofiles;
       }
       UpdateShow();
     }
@@ -3491,7 +3491,7 @@ void LoadUnloadMenu(int value){
     for(i=0;i<npartinfo;i++){
       ReadPart("",i,UNLOAD,&errorcode);
     }
-    for(i=0;i<nisoinfo;i++){
+    for(i=0;i<scase.nisoinfo;i++){
       ReadIso("",i,UNLOAD,NULL,&errorcode);
     }
     for(i=0;i<nzoneinfo;i++){
@@ -3645,10 +3645,10 @@ void LoadUnloadMenu(int value){
 
     update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
     CancelUpdateTriangles();
-    for(i = 0; i<nisoinfo; i++){
+    for(i = 0; i<scase.nisoinfo; i++){
       isodata *isoi;
 
-      isoi = isoinfo + i;
+      isoi = scase.isoinfo + i;
       if(isoi->loaded==0)continue;
 #ifdef pp_ISOFRAME
       ReadIso(isoi->file, i, load_flag, NULL, &errorcode);
@@ -5938,7 +5938,7 @@ FILE_SIZE LoadIsoI(int value){
   START_TIMER(total_time);
   THREADcontrol(isosurface_threads, THREAD_JOIN);
   ReadIsoFile=1;
-  isoi = isoinfo + value;
+  isoi = scase.isoinfo + value;
   file=isoi->file;
   isoi->loading=1;
   if(script_iso==0&&scriptoutstream!=NULL){
@@ -5968,10 +5968,10 @@ void LoadAllIsos(int iso_type){
   float load_time=0.0;
 
   if(load_only_when_unloaded == 0){
-    for(i = 0; i < nisoinfo; i++){
+    for(i = 0; i < scase.nisoinfo; i++){
       isodata *isoi;
 
-      isoi = isoinfo + i;
+      isoi = scase.isoinfo + i;
       if(iso_type == isoi->type&&isoi->blocknumber >= 0){
         meshdata *meshi;
 
@@ -5982,26 +5982,26 @@ void LoadAllIsos(int iso_type){
   }
   START_TIMER(load_time);
   CancelUpdateTriangles();
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < scase.nisoinfo;i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     isoi->finalize = 0;
   }
-  for(i = nisoinfo-1;i>=0;i--){
+  for(i = scase.nisoinfo-1;i>=0;i--){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     IF_NOT_USEMESH_CONTINUE(isoi->loaded, isoi->blocknumber);
     if(iso_type==isoi->type){
       isoi->finalize = 1;
       break;
     }
   }
-  for(i = 0; i < nisoinfo; i++){
+  for(i = 0; i < scase.nisoinfo; i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     IF_NOT_USEMESH_CONTINUE(isoi->loaded,isoi->blocknumber);
     if(iso_type==isoi->type){
 #ifdef pp_ISOFRAME
@@ -6030,10 +6030,10 @@ void LoadIsoMenu(int value){
   GLUTSETCURSOR(GLUT_CURSOR_WAIT);
   if(value>=0){
     if(load_only_when_unloaded == 0){
-      for(i = 0;i < nisoinfo;i++){
+      for(i = 0;i < scase.nisoinfo;i++){
         isodata *isoi;
 
-        isoi = isoinfo + i;
+        isoi = scase.isoinfo + i;
         isoi->finalize = 0;
         if(isoi->loaded == 1)ReadIso("", i, UNLOAD, NULL, &errorcode);
       }
@@ -6041,17 +6041,17 @@ void LoadIsoMenu(int value){
     for(i=0;i<1;i++){
       isodata *isoi;
 
-      isoi = isoinfo + value;
+      isoi = scase.isoinfo + value;
       isoi->finalize = 1;
       IF_NOT_USEMESH_CONTINUE(isoi->loaded,isoi->blocknumber);
       LoadIsoI(value);
     }
   }
   if(value==-1){
-    for(i=0;i<nisoinfo;i++){
+    for(i=0;i<scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = isoinfo + i;
+      isoi = scase.isoinfo + i;
       if(isoi->loaded==1)ReadIso("",i,UNLOAD,NULL,&errorcode);
     }
   }
@@ -6063,7 +6063,7 @@ void LoadIsoMenu(int value){
     isodata *isoi;
 
     ii = -(value + 10);
-    isoi = isoinfo + ii;
+    isoi = scase.isoinfo + ii;
     if(scriptoutstream!=NULL){
       script_iso=1;
       fprintf(scriptoutstream,"LOADISO\n");
@@ -7773,10 +7773,10 @@ int IsBoundaryType(int type){
 void IsoLoadState(isodata *isoi, int  *load_state){
   int i, total=0, loaded=0;
 
-  for(i=0; i<nisoinfo; i++){
+  for(i=0; i<scase.nisoinfo; i++){
     isodata *isoii;
 
-    isoii = isoinfo + i;
+    isoii = scase.isoinfo + i;
     if(strcmp(isoi->surface_label.longlabel, isoii->surface_label.longlabel)!=0)continue;
     total++;
     if(isoii->loaded==1)loaded++;
@@ -10873,7 +10873,7 @@ static int menu_count=0;
 
 /* --------------------------------iso level menu -------------------------- */
 
-  if(loaded_isomesh!=NULL&&nisoinfo>0&&ReadIsoFile==1){
+  if(loaded_isomesh!=NULL&&scase.nisoinfo>0&&ReadIsoFile==1){
     CREATEMENU(isolevelmenu,IsoShowMenu);
     if(loaded_isomesh->nisolevels>0&&loaded_isomesh->showlevels!=NULL){
       int showflag,hideflag;
@@ -10891,7 +10891,7 @@ static int menu_count=0;
           sprintf(levellabel,"%f ",loaded_isomesh->isolevels[i]);
         }
         if(loaded_isomesh->isofilenum!=-1){
-          STRCAT(levellabel,isoinfo[loaded_isomesh->isofilenum].surface_label.unit);
+          STRCAT(levellabel,scase.isoinfo[loaded_isomesh->isofilenum].surface_label.unit);
         }
         else{
           STRCAT(levellabel,"");
@@ -10921,7 +10921,7 @@ static int menu_count=0;
 
 /* --------------------------------iso show menu -------------------------- */
 
-    if(nisoinfo>0&&ReadIsoFile==1){
+    if(scase.nisoinfo>0&&ReadIsoFile==1){
       meshdata *hmesh;
       isodata *iso2;
 
@@ -10946,7 +10946,7 @@ static int menu_count=0;
       if(hmesh->isofilenum!=-1){
         char levellabel[1024];
 
-        STRCPY(levellabel,isoinfo[hmesh->isofilenum].surface_label.shortlabel);
+        STRCPY(levellabel,scase.isoinfo[hmesh->isofilenum].surface_label.shortlabel);
         STRCAT(levellabel," ");
         STRCAT(levellabel,_("Levels"));
         GLUTADDSUBMENU(levellabel,isolevelmenu);
@@ -11363,10 +11363,10 @@ static int menu_count=0;
   if(ReadIsoFile==1){
     int niso_loaded=0;
 
-    for(i=0;i<nisoinfo;i++){
+    for(i=0;i<scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = isoinfo + i;
+      isoi = scase.isoinfo + i;
       if(isoi->loaded==1)niso_loaded++;
     }
 
@@ -12676,12 +12676,12 @@ static int menu_count=0;
 
 /* --------------------------------load iso menu -------------------------- */
 
-    if(nisoinfo>0){
+    if(scase.nisoinfo>0){
       int ii;
 
-      if(nisoinfo>0){
+      if(scase.nisoinfo>0){
         if(isosubmenus==NULL){
-          NewMemory((void **)&isosubmenus,nisoinfo*sizeof(int));
+          NewMemory((void **)&isosubmenus,scase.nisoinfo*sizeof(int));
         }
         nisosubmenus=0;
 
@@ -12692,25 +12692,25 @@ static int menu_count=0;
       if(scase.meshescoll.nmeshes==1){
         CREATEMENU(loadisomenu,LoadIsoMenu);
       }
-      for(ii=0;ii<nisoinfo;ii++){
+      for(ii=0;ii<scase.nisoinfo;ii++){
         isodata *iso1, *iso2;
         char menulabel[1024];
 
         i = isoorderindex[ii];
         if(ii>0){
-          iso1 = isoinfo + isoorderindex[ii-1];
-          iso2 = isoinfo + isoorderindex[ii];
+          iso1 = scase.isoinfo + isoorderindex[ii-1];
+          iso2 = scase.isoinfo + isoorderindex[ii];
           if(scase.meshescoll.nmeshes>1&&strcmp(iso1->surface_label.longlabel,iso2->surface_label.longlabel)!=0){
             CREATEMENU(isosubmenus[nisosubmenus],LoadIsoMenu);
             nisosubmenus++;
           }
         }
-        if(isoinfo[i].loaded==1){
+        if(scase.isoinfo[i].loaded==1){
           STRCPY(menulabel,"*");
-          STRCAT(menulabel,isoinfo[i].menulabel);
+          STRCAT(menulabel,scase.isoinfo[i].menulabel);
         }
         else{
-          STRCPY(menulabel,isoinfo[i].menulabel);
+          STRCPY(menulabel,scase.isoinfo[i].menulabel);
         }
         glutAddMenuEntry(menulabel,i);
       }
@@ -12721,13 +12721,13 @@ static int menu_count=0;
 
         if(scase.meshescoll.nmeshes>1){
           CREATEMENU(loadisomenu,LoadIsoMenu);
-          for(i=0;i<nisoinfo;i++){
+          for(i=0;i<scase.nisoinfo;i++){
             int j;
 
             useitem=i;
-            isoi = isoinfo + i;
+            isoi = scase.isoinfo + i;
             for(j=0;j<i;j++){
-              isoj = isoinfo + j;
+              isoj = scase.isoinfo + j;
               if(strcmp(isoi->surface_label.longlabel,isoj->surface_label.longlabel)==0){
                 useitem=-1;
                 break;
@@ -13043,7 +13043,7 @@ static int menu_count=0;
 
       // isosurface
 
-      if(nisoinfo>0){
+      if(scase.nisoinfo>0){
         strcpy(loadmenulabel,"Isosurface");
         if(tload_step > 1){
           sprintf(steplabel,"/Skip %i",tload_skip);

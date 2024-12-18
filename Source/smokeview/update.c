@@ -218,8 +218,8 @@ void UpdateFrameNumber(int changetime){
       meshdata *meshi;
 
       CheckMemory;
-      for(i=0;i<nisoinfo;i++){
-        isoi = isoinfo + i;
+      for(i=0;i<scase.nisoinfo;i++){
+        isoi = scase.isoinfo + i;
         meshi = scase.meshescoll.meshinfo + isoi->blocknumber;
         if(isoi->loaded==0||meshi->iso_times==NULL||meshi->iso_timeslist==NULL)continue;
         meshi->iso_itime=meshi->iso_timeslist[itimes];
@@ -261,10 +261,10 @@ void UpdateFileLoad(void){
   }
 
   nisoloaded = 0;
-  for(i = 0; i<nisoinfo; i++){
+  for(i = 0; i<scase.nisoinfo; i++){
     isodata *isoi;
 
-    isoi = isoinfo+i;
+    isoi = scase.isoinfo+i;
     if(isoi->loaded==1)nisoloaded++;
   }
 
@@ -487,10 +487,10 @@ void UpdateShow(void){
   isoflag=0;
   tisoflag=0;
   if(visTimeIso==1){
-    for(i=0;i<nisoinfo;i++){
+    for(i=0;i<scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = isoinfo+i;
+      isoi = scase.isoinfo+i;
       if(isoi->loaded==0)continue;
       if(isoi->display==1&&isoi->type==iisotype){
         isoflag=1;
@@ -940,10 +940,10 @@ int GetLoadfileinfo(FILE *stream, char *filename){
       return 1;
     }
   }
-  for(i = 0; i < nisoinfo; i++){
+  for(i = 0; i < scase.nisoinfo; i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(strcmp(fileptr, isoi->file) == 0){
       fprintf(stream, "// LOADFILE\n");
       fprintf(stream, "//  %s\n", isoi->file);
@@ -1354,11 +1354,11 @@ void UpdateTimes(void){
   }
   if(ReadIsoFile==1&&visAIso!=0){
     INIT_PRINT_TIMER(iso_timer);
-    for(i=0;i<nisoinfo;i++){
+    for(i=0;i<scase.nisoinfo;i++){
       meshdata *meshi;
       isodata *ib;
 
-      ib = isoinfo+i;
+      ib = scase.isoinfo+i;
       if(ib->geomflag==1||ib->loaded==0)continue;
       meshi=scase.meshescoll.meshinfo + ib->blocknumber;
       MergeGlobalTimes(meshi->iso_times, meshi->niso_times);
@@ -1775,10 +1775,10 @@ int GetPlotStateSub(int choice){
         if(parti->loaded==0||parti->display==0)continue;
         return DYNAMIC_PLOTS;
       }
-      for(i=0;i<nisoinfo;i++){
+      for(i=0;i<scase.nisoinfo;i++){
         isodata *isoi;
 
-        isoi = isoinfo + i;
+        isoi = scase.isoinfo + i;
         if(isoi->loaded==0)continue;
         if(isoi->display==0)continue;
         return DYNAMIC_PLOTS;
@@ -2219,10 +2219,10 @@ void OutputFrameSteps(void){
   frames_read = 0;
   total_time = 0.0;
   total_wrapup_time = 0.0;
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < scase.nisoinfo;i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(isoi->loaded == 0 || isoi->frameinfo == NULL || isoi->frameinfo->update == 0)continue;
     isoi->frameinfo->update = 0;
     count++;

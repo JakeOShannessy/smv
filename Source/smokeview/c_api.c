@@ -348,10 +348,10 @@ int Loadfile(const char *filename) {
     }
   }
   CancelUpdateTriangles();
-  for(size_t i = 0; i < nisoinfo; i++) {
+  for(size_t i = 0; i < scase.nisoinfo; i++) {
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(strcmp(isoi->file, filename) == 0) {
       ReadIso(isoi->file, i, LOAD, NULL, &errorcode);
       if(update_readiso_geom_wrapup == UPDATE_ISO_ONE_NOW)
@@ -1679,11 +1679,11 @@ void Loadiso(const char *type) {
   int count = 0;
 
   update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
-  for(size_t i = 0; i < nisoinfo; i++) {
+  for(size_t i = 0; i < scase.nisoinfo; i++) {
     int errorcode;
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(STRCMP(isoi->surface_label.longlabel, type) == 0) {
       ReadIso(isoi->file, i, LOAD, NULL, &errorcode);
       count++;
@@ -1853,7 +1853,7 @@ int Unloadall() {
   for(size_t i = 0; i < npartinfo; i++) {
     ReadPart("", i, UNLOAD, &errorcode);
   }
-  for(size_t i = 0; i < nisoinfo; i++) {
+  for(size_t i = 0; i < scase.nisoinfo; i++) {
     ReadIso("", i, UNLOAD, NULL, &errorcode);
   }
   for(size_t i = 0; i < nzoneinfo; i++) {
