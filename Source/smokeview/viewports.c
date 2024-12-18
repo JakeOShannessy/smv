@@ -2333,11 +2333,11 @@ void GetMinMaxDepth(float *min_depth, float *max_depth){
   if(edittour==1){
     int i;
 
-    for(i = 0; i<tourcoll.ntourinfo; i++){
+    for(i = 0; i<scase.tourcoll.ntourinfo; i++){
       tourdata *touri;
       keyframe *keyj;
 
-      touri = tourcoll.tourinfo+i;
+      touri = scase.tourcoll.tourinfo+i;
       for(keyj = (touri->first_frame).next; keyj->next!=NULL; keyj = keyj->next){
         float dist, dx, dy, dz;
 
@@ -2377,7 +2377,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
     if((tour_snap==1||viewtourfrompath==1)&&selectedtour_index>=0){
       tourdata *touri;
 
-      touri = tourcoll.tourinfo + selectedtour_index;
+      touri = scase.tourcoll.tourinfo + selectedtour_index;
       if(tour_snap==1){
         SetTourXYZView(tour_snap_time, touri);
       }
@@ -2503,7 +2503,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
 
       if(plotstate==DYNAMIC_PLOTS&&selected_tour!=NULL&&selected_tour->timeslist!=NULL){
         if((tour_snap==1||viewtourfrompath==1)&&selectedtour_index>=0){
-          touri = tourcoll.tourinfo + selectedtour_index;
+          touri = scase.tourcoll.tourinfo + selectedtour_index;
           if(tour_snap==1){
             SetTourXYZView(tour_snap_time, touri);
           }

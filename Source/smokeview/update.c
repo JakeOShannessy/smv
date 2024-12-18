@@ -371,9 +371,9 @@ void UpdateShow(void){
   {
     tourdata *touri;
 
-    if(tourcoll.ntourinfo>0){
-      for(i=0;i<tourcoll.ntourinfo;i++){
-        touri = tourcoll.tourinfo + i;
+    if(scase.tourcoll.ntourinfo>0){
+      for(i=0;i<scase.tourcoll.ntourinfo;i++){
+        touri = scase.tourcoll.tourinfo + i;
         if(touri->display==1){
           showtours=1;
           break;
@@ -751,10 +751,10 @@ void SynchTimes(void){
 
   /* synchronize tour times */
 
-    for(j=0;j<tourcoll.ntourinfo;j++){
+    for(j=0;j<scase.tourcoll.ntourinfo;j++){
       tourdata *tourj;
 
-      tourj = tourcoll.tourinfo + j;
+      tourj = scase.tourcoll.tourinfo + j;
       if(tourj->display==0)continue;
       tourj->timeslist[n] = GetDataTimeFrame(global_times[n], NULL, tourj->path_times,tourj->ntimes);
     }
@@ -1398,10 +1398,10 @@ void UpdateTimes(void){
     MergeGlobalTimes(parti->times, parti->ntimes);
   }
 
-  for(i=0;i<tourcoll.ntourinfo;i++){
+  for(i=0;i<scase.tourcoll.ntourinfo;i++){
     tourdata *touri;
 
-    touri = tourcoll.tourinfo + i;
+    touri = scase.tourcoll.tourinfo + i;
     if(touri->display==0)continue;
     MergeGlobalTimes(touri->path_times, touri->ntimes);
   }
@@ -1430,10 +1430,10 @@ void UpdateTimes(void){
     FREEMEMORY(parti->timeslist);
     if(nglobal_times>0)NewMemory((void **)&parti->timeslist,nglobal_times*sizeof(int));
   }
-  for(i=0;i<tourcoll.ntourinfo;i++){
+  for(i=0;i<scase.tourcoll.ntourinfo;i++){
     tourdata *touri;
 
-    touri=tourcoll.tourinfo + i;
+    touri=scase.tourcoll.tourinfo + i;
     if(touri->display==0)continue;
     FREEMEMORY(touri->timeslist);
     if(nglobal_times>0)NewMemory((void **)&touri->timeslist,nglobal_times*sizeof(int));
@@ -1790,10 +1790,10 @@ int GetPlotStateSub(int choice){
         if(zonei->loaded==0||zonei->display==0)continue;
         return DYNAMIC_PLOTS;
       }
-      for(i=0;i<tourcoll.ntourinfo;i++){
+      for(i=0;i<scase.tourcoll.ntourinfo;i++){
         tourdata *touri;
 
-        touri = tourcoll.tourinfo + i;
+        touri = scase.tourcoll.tourinfo + i;
         if(touri->display==0)continue;
         return DYNAMIC_PLOTS;
       }

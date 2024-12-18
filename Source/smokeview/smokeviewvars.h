@@ -1823,7 +1823,21 @@ SVEXTERN int SVDECL(tour_usecurrent,0);
 SVEXTERN int SVDECL(output_slicedata,0),SVDECL(output_patchdata,0);
 SVEXTERN f_units SVDECL(*unitclasses,NULL),SVDECL(*unitclasses_default,NULL),SVDECL(*unitclasses_ini,NULL);
 SVEXTERN int SVDECL(nunitclasses,0),SVDECL(nunitclasses_default,0),SVDECL(nunitclasses_ini,0);
-SVEXTERN smv_case SVDECL(scase, {0});
+#ifdef INMAIN
+SVEXTERN smv_case scase = {.tourcoll = {.ntourinfo = 0,
+                                        .tourinfo = NULL,
+                                        .tour_ntimes = 1000,
+                                        .tour_t = NULL,
+                                        .tour_t2 = NULL,
+                                        .tour_dist = NULL,
+                                        .tour_dist2 = NULL,
+                                        .tour_dist3 = NULL,
+                                        .tour_tstart = 0.0,
+                                        .tour_tstop = 100.0},
+                           0};
+#else
+SVEXTERN smv_case scase;
+#endif
 SVEXTERN meshdata SVDECL(*current_mesh,NULL), SVDECL(*mesh_save,NULL);
 SVEXTERN meshdata SVDECL(*mesh_last,NULL), SVDECL(*loaded_isomesh,NULL);
 SVEXTERN float SVDECL(devicenorm_length,0.1);
@@ -2081,22 +2095,6 @@ SVEXTERN float SVDECL(global_hrrpuv_min,0.0),SVDECL(global_hrrpuv_max,1200.0);
 SVEXTERN int SVDECL(volbw,0);
 SVEXTERN float SVDECL(tourrad_avatar,0.1);
 SVEXTERN int SVDECL(dirtycircletour,0);
-
-#ifdef INMAIN
-SVEXTERN tour_collection tourcoll = {.ntourinfo = 0,
-                                     .tourinfo = NULL,
-                                     .tour_ntimes = 1000,
-                                     .tour_t = NULL,
-                                     .tour_t2 = NULL,
-                                     .tour_dist = NULL,
-                                     .tour_dist2 = NULL,
-                                     .tour_dist3 = NULL,
-                                     .tour_tstart = 0.0,
-                                     .tour_tstop = 100.0
-                                     };
-#else
-SVEXTERN tour_collection tourcoll;
-#endif
 
 SVEXTERN int SVDECL(show_version, 0), SVDECL(show_help, 0);
 

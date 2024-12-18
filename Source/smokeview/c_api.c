@@ -275,7 +275,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
   InitTranslate(smv_bindir, tr_name);
   FREEMEMORY(smv_bindir);
 
-  if(tourcoll.ntourinfo == 0) SetupTour();
+  if(scase.tourcoll.ntourinfo == 0) SetupTour();
   InitRolloutList();
   GLUIColorbarSetup(mainwindow_id);
   GLUIMotionSetup(mainwindow_id);
@@ -1466,10 +1466,10 @@ int Loadtour(const char *tourname) {
   int count = 0;
   int errorcode = 0;
 
-  for(size_t i = 0; i < tourcoll.ntourinfo; i++) {
+  for(size_t i = 0; i < scase.tourcoll.ntourinfo; i++) {
     tourdata *touri;
 
-    touri = tourcoll.tourinfo + i;
+    touri = scase.tourcoll.tourinfo + i;
     if(strcmp(touri->label, tourname) == 0) {
       TourMenu(i);
       viewtourfrompath = 0;
@@ -3528,9 +3528,9 @@ int SetViewalltours(int v) {
 } // VIEWALLTOURS
 
 int SetViewtimes(float start, float stop, int ntimes) {
-  tourcoll.tour_tstart = start;
-  tourcoll.tour_tstop = stop;
-  tourcoll.tour_ntimes = ntimes;
+  scase.tourcoll.tour_tstart = start;
+  scase.tourcoll.tour_tstop = stop;
+  scase.tourcoll.tour_ntimes = ntimes;
   return 0;
 } // VIEWTIMES
 

@@ -3760,16 +3760,16 @@ void TourMenu(int value){
     DialogMenu(DIALOG_TOUR_SHOW);
     break;
   case MENU_TOUR_CLEARALL:
-    for(i=0;i<tourcoll.ntourinfo;i++){  // clear all tours
-      touri = tourcoll.tourinfo + i;
+    for(i=0;i<scase.tourcoll.ntourinfo;i++){  // clear all tours
+      touri = scase.tourcoll.tourinfo + i;
       touri->display=touri->display2;
     }
     if(viewtourfrompath==1){
       SetViewPoint(RESTORE_EXTERIOR_VIEW);
     }
     from_glui_trainer=0;
-    for(i=0;i<tourcoll.ntourinfo;i++){
-      touri = tourcoll.tourinfo + i;
+    for(i=0;i<scase.tourcoll.ntourinfo;i++){
+      touri = scase.tourcoll.tourinfo + i;
       if(touri->display==1){
         selected_tour=touri;
         break;
@@ -3778,8 +3778,8 @@ void TourMenu(int value){
     selected_tour=NULL;
     break;
   case MENU_TOUR_MANUAL:
-    for(i=0;i<tourcoll.ntourinfo;i++){  // clear all tours
-      touri = tourcoll.tourinfo + i;
+    for(i=0;i<scase.tourcoll.ntourinfo;i++){  // clear all tours
+      touri = scase.tourcoll.tourinfo + i;
       touri->display=0;
     }
     if(viewtourfrompath==1){
@@ -3799,8 +3799,8 @@ void TourMenu(int value){
     }
     break;
   case MENU_TOUR_SHOWALL:               // show all tours
-    for(i=0;i<tourcoll.ntourinfo;i++){
-      touri = tourcoll.tourinfo + i;
+    for(i=0;i<scase.tourcoll.ntourinfo;i++){
+      touri = scase.tourcoll.tourinfo + i;
       touri->display=1;
     }
     plotstate=GetPlotState(DYNAMIC_PLOTS);
@@ -3810,8 +3810,8 @@ void TourMenu(int value){
     if(viewtourfrompath==0)SetViewPoint(RESTORE_EXTERIOR_VIEW);
     break;
   case MENU_TOUR_DEFAULT:
-    for(i=0;i<tourcoll.ntourinfo;i++){
-      touri = tourcoll.tourinfo + i;
+    for(i=0;i<scase.tourcoll.ntourinfo;i++){
+      touri = scase.tourcoll.tourinfo + i;
       touri->display=0;
     }
     SetViewPoint(RESTORE_EXTERIOR_VIEW);
@@ -3821,17 +3821,17 @@ void TourMenu(int value){
     if(value<-22){
       tourlocus_type=2;
       scase.objectscoll.iavatar_types=(-value-23);
-      if(selectedtour_index>=0&&selectedtour_index<tourcoll.ntourinfo){
-        tourcoll.tourinfo[selectedtour_index].glui_avatar_index=scase.objectscoll.iavatar_types;
+      if(selectedtour_index>=0&&selectedtour_index<scase.tourcoll.ntourinfo){
+        scase.tourcoll.tourinfo[selectedtour_index].glui_avatar_index=scase.objectscoll.iavatar_types;
       }
     }
 
     //  show one tour
 
-    if(value>=0&&value<tourcoll.ntourinfo){
+    if(value>=0&&value<scase.tourcoll.ntourinfo){
       int j;
 
-      touri = tourcoll.tourinfo + value;
+      touri = scase.tourcoll.tourinfo + value;
       touri->display = 1 - touri->display;
       if(touri->display==1){
         selectedtour_index=value;
@@ -3839,10 +3839,10 @@ void TourMenu(int value){
         selected_tour=touri;
       }
       else{
-        for(j=0;j<tourcoll.ntourinfo;j++){
+        for(j=0;j<scase.tourcoll.ntourinfo;j++){
           tourdata *tourj;
 
-          tourj = tourcoll.tourinfo + j;
+          tourj = scase.tourcoll.tourinfo + j;
           if(touri==tourj||tourj->display==0)continue;
           selectedtour_index=j;
           selected_frame=tourj->first_frame.next;
@@ -3883,7 +3883,7 @@ void SetTour(tourdata *thetour){
   int tournumber;
 
   if(thetour==NULL)return;
-  tournumber = thetour - tourcoll.tourinfo;
+  tournumber = thetour - scase.tourcoll.tourinfo;
   TourMenu(tournumber);
 }
 
@@ -6666,11 +6666,11 @@ void BlockageMenu(int value){
   if(value==ANIMATE_BLOCKAGES){
     animate_blockages = 1 - animate_blockages;
     if(animate_blockages==1){
-      tourcoll.tourinfo->display = 0;
+      scase.tourcoll.tourinfo->display = 0;
       show_avatar = 0;
     }
     if(animate_blockages==0){
-      tourcoll.tourinfo->display = 1;
+      scase.tourcoll.tourinfo->display = 1;
     }
     TourMenu(0);
     updatemenu = 1;
@@ -9374,7 +9374,7 @@ static int menu_count=0;
 
   CREATEMENU(blockagemenu,BlockageMenu);
   glutAddMenuEntry(_("View Method:"),MENU_DUMMY);
-  if(tourcoll.tourinfo!=NULL&&have_animate_blockages == 1){
+  if(scase.tourcoll.tourinfo!=NULL&&have_animate_blockages == 1){
     if(animate_blockages == 1)glutAddMenuEntry(_("   *Animate blockages"), ANIMATE_BLOCKAGES);
     if(animate_blockages==0)glutAddMenuEntry(_("   Animate blockages"),    ANIMATE_BLOCKAGES);
   }
@@ -11114,10 +11114,10 @@ static int menu_count=0;
 
   CREATEMENU(tourcopymenu, TourCopyMenu);
   glutAddMenuEntry("Path through domain", -1);
-  for(i = 0; i < tourcoll.ntourinfo; i++){
+  for(i = 0; i < scase.tourcoll.ntourinfo; i++){
     tourdata *touri;
 
-    touri = tourcoll.tourinfo + i;
+    touri = scase.tourcoll.tourinfo + i;
     glutAddMenuEntry(touri->menulabel, i);
   }
 
@@ -11126,14 +11126,14 @@ static int menu_count=0;
   CREATEMENU(tourmenu,TourMenu);
 
   GLUTADDSUBMENU(_("New"),tourcopymenu);
-  if(tourcoll.ntourinfo>0){
+  if(scase.tourcoll.ntourinfo>0){
     glutAddMenuEntry("-",MENU_DUMMY);
-    for(i=0;i<tourcoll.ntourinfo;i++){
+    for(i=0;i<scase.tourcoll.ntourinfo;i++){
       tourdata *touri;
       int glui_avatar_index_local;
       char menulabel[1024];
 
-      touri =tourcoll. tourinfo + i;
+      touri =scase.tourcoll. tourinfo + i;
       if(touri->display==1){
         STRCPY(menulabel,"");
         if(selectedtour_index==i){
@@ -11163,7 +11163,7 @@ static int menu_count=0;
       strcpy(menulabel,"");
       if(viewtourfrompath==1)strcat(menulabel,"*");
       strcat(menulabel,"View from ");
-      strcat(menulabel,tourcoll.tourinfo[selectedtour_index].label);
+      strcat(menulabel,scase.tourcoll.tourinfo[selectedtour_index].label);
       glutAddMenuEntry(menulabel,MENU_TOUR_VIEWFROMROUTE);
     }
     glutAddMenuEntry("-",MENU_DUMMY);
