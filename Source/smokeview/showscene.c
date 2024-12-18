@@ -329,10 +329,10 @@ void ShowScene2(int mode){
     if(use_cfaces==1){
       int i;
 
-      for(i = 0; i<ncgeominfo; i++){
+      for(i = 0; i<scase.ncgeominfo; i++){
         geomdata *geomi;
 
-        geomi = cgeominfo+i;
+        geomi = scase.cgeominfo+i;
         DrawCGeom(DRAW_OPAQUE, geomi);
       }
     }
@@ -354,7 +354,7 @@ void ShowScene2(int mode){
   CLIP_GEOMETRY;
   DrawTerrainGeom(DRAW_OPAQUE);
 
-  if(sextras.visTerrainType != TERRAIN_HIDDEN&&sextras.nterraininfo>0&&ngeominfo==0 && geom_bounding_box_mousedown==0){
+  if(sextras.visTerrainType != TERRAIN_HIDDEN&&sextras.nterraininfo>0&&scase.ngeominfo==0 && geom_bounding_box_mousedown==0){
     int i;
 
     //shaded  17 0
@@ -484,14 +484,14 @@ void ShowScene2(int mode){
 
   /* ++++++++++++++++++++++++ draw transparent cfaces +++++++++++++++++++++++++ */
 
-  if(ncgeominfo > 0){
+  if(scase.ncgeominfo > 0){
     if(use_cfaces == 1){
       int i;
 
-      for(i = 0; i < ncgeominfo; i++){
+      for(i = 0; i < scase.ncgeominfo; i++){
         geomdata *geomi;
 
-        geomi = cgeominfo + i;
+        geomi = scase.cgeominfo + i;
         DrawCGeom(DRAW_TRANSPARENT, geomi);
       }
     }

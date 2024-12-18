@@ -884,7 +884,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
     EDIT_zmax->set_float_limits(zplt_orig[0], zplt_orig[kbar], GLUI_LIMIT_CLAMP);
   }
 
-  if(ngeominfo>0){
+  if(scase.ngeominfo>0){
     have_geometry_dialog = 1;
     ROLLOUT_unstructured = glui_geometry->add_rollout("Immersed", false, UNSTRUCTURED_ROLLOUT, GeomRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_unstructured, glui_geometry);
@@ -911,7 +911,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
     CHECKBOX_surface_outline = glui_geometry->add_checkbox_to_panel(PANEL_triangles, "outline", &show_faces_outline, VOL_SHOWHIDE, VolumeCB);
     CHECKBOX_surface_points = glui_geometry->add_checkbox_to_panel(PANEL_triangles,  "points",  &show_geom_verts,    VOL_SHOWHIDE, VolumeCB);
 
-    if(ncgeominfo>0){
+    if(scase.ncgeominfo>0){
       glui_geometry->add_column_to_panel(PANEL_face_cface, false);
       PANEL_cfaces = glui_geometry->add_panel_to_panel(PANEL_face_cface, "cfaces");
       PANEL_cfaces->set_alignment(GLUI_ALIGN_LEFT);
@@ -1109,7 +1109,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
     BUTTON_reset_zbounds = glui_geometry->add_button_to_panel(PANEL_elevation_color, _("Reset"), RESET_ZBOUNDS, VolumeCB);
   }
 
-  if(sextras.nterraininfo>0&&ngeominfo==0){
+  if(sextras.nterraininfo>0&&scase.ngeominfo==0){
     have_geometry_dialog = 1;
     ROLLOUT_terrain = glui_geometry->add_rollout("Terrain", false, TERRAIN_ROLLOUT, GeomRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_terrain, glui_geometry);
@@ -1167,8 +1167,8 @@ void GetGeomZBounds(float *zmin, float *zmax){
   geomlistdata *terrain;
   int first = 1;
 
-  if(geominfo->geomlistinfo == NULL)return;
-  terrain = geominfo->geomlistinfo - 1;
+  if(scase.geominfo->geomlistinfo == NULL)return;
+  terrain = scase.geominfo->geomlistinfo - 1;
 
   for(i = 0; i < terrain->nverts; i++){
     vertdata *verti;

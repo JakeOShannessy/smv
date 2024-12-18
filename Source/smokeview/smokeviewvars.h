@@ -1050,11 +1050,6 @@ SVEXTERN int SVDECL(show_slice_in_solid, 0), SVDECL(show_slice_in_gas, 1);
 SVEXTERN int SVDECL(skip_slice_in_embedded_mesh,0);
 SVEXTERN int n_embedded_meshes;
 
-SVEXTERN geomdata SVDECL(*geominfo,NULL);
-SVEXTERN int SVDECL(ngeominfo,0);
-SVEXTERN geomdata SVDECL(*cgeominfo, NULL);
-SVEXTERN int SVDECL(ncgeominfo, 0);
-
 SVEXTERN int npartframes_max;
 SVEXTERN int SVDECL(force_isometric,0);
 SVEXTERN int SVDECL(update_startup_view,0);

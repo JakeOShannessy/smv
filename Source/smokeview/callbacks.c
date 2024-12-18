@@ -2168,7 +2168,7 @@ void Keyboard(unsigned char key, int flag){
       if(force_bound_update == 0)printf("bound updates: only when bound files have changed\n");
       break;
     case 'O':
-    if(ncgeominfo>0){
+    if(scase.ngeominfo>0){
       if(show_faces_outline==0&&show_faces_shaded==1){
         show_faces_outline = 1;
         show_faces_shaded = 1;
@@ -2321,7 +2321,7 @@ void Keyboard(unsigned char key, int flag){
       if((NCADGeom(&scase.cadgeomcoll)==0&&blocklocation>BLOCKlocation_exact)||blocklocation>BLOCKlocation_cad){
         blocklocation=BLOCKlocation_grid;
       }
-      if(ncgeominfo>0){
+      if(scase.ncgeominfo>0){
         if(blocklocation==BLOCKlocation_grid){
           use_cfaces = 1;
           printf("cfaces: ");
@@ -2790,7 +2790,7 @@ void Keyboard(unsigned char key, int flag){
       Quat2Rot(quat_general,quat_rotation);
       break;
     case '=':
-      if(ngeominfo>0){
+      if(scase.ngeominfo>0){
         select_geom++;
         if(select_geom==5)select_geom=0;
         if(select_geom==GEOM_PROP_NONE)printf("geometry selection off\n");

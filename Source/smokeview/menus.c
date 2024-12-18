@@ -2548,12 +2548,12 @@ void TextureShowMenu(int value){
     }
   }
   visGeomTextures=0;
-  for(i=0;i<ngeominfo;i++){
+  for(i=0;i<scase.ngeominfo;i++){
     geomdata *geomi;
     surfdata *surf;
     texturedata *textii=NULL;
 
-    geomi = geominfo + i;
+    geomi = scase.geominfo + i;
     surf = geomi->surfgeom;
     if(scase.terrain_texture_coll.terrain_textures!=NULL){
       textii = scase.terrain_texture_coll.terrain_textures+iterrain_textures;
@@ -10210,7 +10210,7 @@ static int menu_count=0;
 
   CREATEMENU(geometrymenu,GeometryMainMenu);
   if(ntotal_blockages>0)GLUTADDSUBMENU(_("Obstacles"),blockagemenu);
-  if(ngeominfo>0){
+  if(scase.ngeominfo>0){
     GLUTADDSUBMENU(_("Immersed"), immersedmenu);
   }
   if(GetNTotalVents()>0)GLUTADDSUBMENU(_("Surfaces"), ventmenu);
@@ -11330,7 +11330,7 @@ static int menu_count=0;
   GLUTADDSUBMENU(_("Color"), colorbarmenu);
   GLUTADDSUBMENU(_("Geometry"),geometrymenu);
   if(hvaccoll.nhvacinfo>0)GLUTADDSUBMENU(_("HVAC"), hvacmenu);
-  if(sextras.nterraininfo>0&&ngeominfo==0){
+  if(sextras.nterraininfo>0&&scase.ngeominfo==0){
     GLUTADDSUBMENU(_("Terrain"), terrain_obst_showmenu);
   }
   if(GetNumActiveDevices()>0||sextras.ncvents>0){
@@ -11693,7 +11693,7 @@ static int menu_count=0;
     glutAddMenuEntry(_("Examine geometry...  "), DIALOG_GEOMETRY);
   }
 #endif
-  if(sextras.nterraininfo>0&&ngeominfo==0){
+  if(sextras.nterraininfo>0&&scase.ngeominfo==0){
     glutAddMenuEntry(_("Terrain..."), DIALOG_TERRAIN);
   }
   if(hvaccoll.nhvacinfo > 0){
@@ -12054,7 +12054,7 @@ static int menu_count=0;
   else{
     glutAddMenuEntry(_("  #: save settings (create casename.ini file)"), MENU_DUMMY);
   }
-  if(ngeominfo){
+  if(scase.ngeominfo){
     glutAddMenuEntry(_("  =: toggle vertex selected in examine geometry dialog"), MENU_DUMMY);
     glutAddMenuEntry(_("  Z: toggle rotation center between FDS and FDS+GEOM center"), MENU_DUMMY);
   }

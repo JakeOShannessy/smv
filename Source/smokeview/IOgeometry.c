@@ -316,10 +316,10 @@ void ClassifyGeom(geomdata *geomi, int *geom_frame_index){
 void *ClassifyAllGeom(void *arg){
   int i;
 
-  for(i = 0; i < ngeominfo; i++){
+  for(i = 0; i < scase.ngeominfo; i++){
     geomdata *geomi;
 
-    geomi = geominfo + i;
+    geomi = scase.geominfo + i;
     THREADcontrol(readallgeom_threads, THREAD_LOCK);
     if(geomi->read_status != 0){
       THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
@@ -335,10 +335,10 @@ void *ClassifyAllGeom(void *arg){
     geomi->read_status = 2;
     THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
   }
-  for(i = 0; i < ncgeominfo; i++){
+  for(i = 0; i < scase.ncgeominfo; i++){
     geomdata *geomi;
 
-    geomi = cgeominfo + i;
+    geomi = scase.cgeominfo + i;
     THREADcontrol(readallgeom_threads, THREAD_LOCK);
     if(geomi->read_status != 0){
       THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
@@ -845,11 +845,11 @@ void DrawGeomBoundingBox(float *boundingbox_color){
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),vertical_factor*SCALE2SMV(1.0));
   glTranslatef(-sextras.xbar0,-sextras.ybar0,-sextras.zbar0);
-  for(i = 0; i<ngeominfo; i++){
+  for(i = 0; i<scase.ngeominfo; i++){
     geomdata *geomi;
     int j, have_box;
 
-    geomi = geominfo + i;
+    geomi = scase.geominfo + i;
     if(geomi->geomtype!=GEOM_GEOM)continue;
     have_box = 0;
     for(j = 0; j<geomi->ngeomobjinfo; j++){
@@ -2822,16 +2822,16 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
 void SetupReadAllGeom(void){
   int i;
 
-  for(i = 0; i<ngeominfo; i++){
+  for(i = 0; i<scase.ngeominfo; i++){
     geomdata *geomi;
 
-    geomi = geominfo+i;
+    geomi = scase.geominfo+i;
     geomi->read_status = 0;
   }
-  for(i = 0; i<ncgeominfo; i++){
+  for(i = 0; i<scase.ncgeominfo; i++){
     geomdata *geomi;
 
-    geomi = cgeominfo+i;
+    geomi = scase.cgeominfo+i;
     geomi->read_status = 0;
   }
 }
@@ -2945,10 +2945,10 @@ void UpdateGeomTriangles(geomdata *geomi, int geom_type){
 void *ReadAllGeom(void *arg){
   int i;
 
-  for(i=0;i<ngeominfo;i++){
+  for(i=0;i<scase.ngeominfo;i++){
     geomdata *geomi;
 
-    geomi = geominfo + i;
+    geomi = scase.geominfo + i;
     THREADcontrol(readallgeom_threads, THREAD_LOCK);
     if(geomi->read_status!=0){
       THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
@@ -2962,10 +2962,10 @@ void *ReadAllGeom(void *arg){
     geomi->read_status = 2;
     THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
   }
-  for(i = 0; i<ncgeominfo; i++){
+  for(i = 0; i<scase.ngeominfo; i++){
     geomdata *geomi;
 
-    geomi = cgeominfo+i;
+    geomi = scase.cgeominfo+i;
     THREADcontrol(readallgeom_threads, THREAD_LOCK);
     if(geomi->read_status!=0){
       THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
@@ -2988,10 +2988,10 @@ void *ReadAllGeom(void *arg){
 void UpdateAllGeomTriangles(void){
   int i;
 
-  for(i = 0; i<ngeominfo; i++){
+  for(i = 0; i<scase.ngeominfo; i++){
     geomdata *geomi;
 
-    geomi = geominfo+i;
+    geomi = scase.geominfo+i;
     UpdateGeomTriangles(geomi, GEOM_STATIC);
   }
 }
@@ -3593,7 +3593,7 @@ FILE_SIZE ReadGeom2(geomdata *geomi, int load_flag, int type){
         case GEOM_CGEOM:
           surfi=scase.surfcoll.surfinfo + CLAMP(surf_ind[ii],0,scase.surfcoll.nsurfinfo-1);
           triangles[ii].insolid = locations[ii];
-          triangles[ii].geomobj = geominfo->geomobjinfo+geom_ind[ii]-1;
+          triangles[ii].geomobj = scase.geominfo->geomobjinfo+geom_ind[ii]-1;
           break;
         case GEOM_GEOM:
         case GEOM_ISO:
@@ -4819,7 +4819,7 @@ void GetGeomInfoPtrs(int flag){
   if(flag==1){
     int count;
 
-    count = scase.nisoinfo+ngeominfo;
+    count = scase.nisoinfo+scase.ngeominfo;
     if(count>0){
       NewMemory((void **)&gptr, count*sizeof(geomdata *));
     }
@@ -4845,10 +4845,10 @@ void GetGeomInfoPtrs(int flag){
   // count size of geominfoptrs array
 
   ngeominfoptrs=0;
-  for(i=0;i<ngeominfo;i++){
+  for(i=0;i<scase.ngeominfo;i++){
     geomdata *geomi;
 
-    geomi = geominfo + i;
+    geomi = scase.geominfo + i;
     // hide geometry if we are displaying a boundary file over top of it
     if(geomi->loaded==1&&geomi->display==1&&geomi->geomtype==GEOM_GEOM&&hide_geom==0)ngeominfoptrs++;
   }
@@ -4866,10 +4866,10 @@ void GetGeomInfoPtrs(int flag){
 
   // put pointers into geominfoptrs array
 
-  for(i=0;i<ngeominfo;i++){
+  for(i=0;i<scase.ngeominfo;i++){
     geomdata *geomi;
 
-    geomi = geominfo + i;
+    geomi = scase.geominfo + i;
     if(geomi->loaded==1&&geomi->display==1&&geomi->geomtype==GEOM_GEOM&&hide_geom == 0)*gptr++=geomi;
   }
   for(i=0;i<scase.nisoinfo;i++){

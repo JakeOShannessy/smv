@@ -3282,9 +3282,9 @@ void GetBoxGeomCorners(void){
   geomlistdata *geomlisti;
 
   have_box_geom_corners = 0;
-  if(geominfo==NULL||geominfo->geomlistinfo==NULL||geominfo==0)return;
+  if(scase.geominfo==NULL||scase.geominfo->geomlistinfo==NULL||scase.geominfo==0)return;
 
-  geomi = geominfo;
+  geomi = scase.geominfo;
   geomlisti = geomi->geomlistinfo-1;
   if(geomlisti->nverts<=0)return;
 
@@ -3687,8 +3687,8 @@ void UpdateMeshCoords(void){
   meshclip[5] = zbarFDS;
 
   geomlistdata *geomlisti;
-  if(geominfo!=NULL&&geominfo->geomlistinfo!=NULL){
-    geomlisti = geominfo->geomlistinfo-1;
+  if(scase.geominfo!=NULL&&scase.geominfo->geomlistinfo!=NULL){
+    geomlisti = scase.geominfo->geomlistinfo-1;
     if(geomlisti->nverts>0){
       vertdata *verti;
       float *xyz;
@@ -5529,15 +5529,15 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
       }
     }
 
-    if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY&&ncgeominfo>0){
-      patchi->geominfo = cgeominfo+blocknumber;
+    if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY&&scase.ncgeominfo>0){
+      patchi->geominfo = scase.cgeominfo+blocknumber;
     }
     else{
       geomfile = TrimFrontBack(buffer);
-      for(igeom = 0; igeom<ngeominfo; igeom++){
+      for(igeom = 0; igeom<scase.ngeominfo; igeom++){
         geomdata *geomi;
 
-        geomi = geominfo+igeom;
+        geomi = scase.geominfo+igeom;
         if(strcmp(geomi->file, geomfile)==0){
           patchi->geominfo = geomi;
           if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY){
@@ -7060,30 +7060,30 @@ int ReadSMV_Init(){
   }
   scase.csvcoll.ncsvfileinfo=0;
 
-  if(ngeominfo>0){
-    for(i=0;i<ngeominfo;i++){
+  if(scase.ngeominfo>0){
+    for(i=0;i<scase.ngeominfo;i++){
       geomdata *geomi;
 
-      geomi = geominfo + i;
+      geomi = scase.geominfo + i;
       if(geomi->ngeomobjinfo>0){
         FREEMEMORY(geomi->geomobjinfo);
         geomi->ngeomobjinfo=0;
       }
       FREEMEMORY(geomi->file);
     }
-    FREEMEMORY(geominfo);
-    ngeominfo=0;
+    FREEMEMORY(scase.geominfo);
+    scase.ngeominfo=0;
   }
 
-  if(ncgeominfo>0){
-    for(i = 0; i<ncgeominfo; i++){
+  if(scase.ncgeominfo>0){
+    for(i = 0; i<scase.ncgeominfo; i++){
       geomdata *geomi;
 
-      geomi = cgeominfo+i;
+      geomi = scase.cgeominfo+i;
       FREEMEMORY(geomi->file);
     }
-    FREEMEMORY(cgeominfo);
-    ncgeominfo = 0;
+    FREEMEMORY(scase.cgeominfo);
+    scase.ncgeominfo = 0;
   }
 
   FREEMEMORY(sextras.tickinfo);
@@ -7542,12 +7542,12 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer, "CGEOM")==1){
-      ncgeominfo++;
+      scase.ncgeominfo++;
       continue;
     }
     if(MatchSMV(buffer, "GEOM") == 1 ||
        MatchSMV(buffer, "SGEOM") == 1){
-      ngeominfo++;
+      scase.ngeominfo++;
       continue;
     }
     if(MatchSMV(buffer,"PROP") == 1){
@@ -7951,13 +7951,13 @@ int ReadSMV_Parse(bufferstreamdata *stream){
  if(scase.nisoinfo>0&&scase.meshescoll.nmeshes>0)nisos_per_mesh = MAX(scase.nisoinfo / scase.meshescoll.nmeshes,1);
  NewMemory((void **)&scase.csvcoll.csvfileinfo,(scase.csvcoll.ncsvfileinfo+CFAST_CSV_MAX+2)*sizeof(csvfiledata));
  scase.csvcoll.ncsvfileinfo=0;
- if(ngeominfo>0){
-   NewMemory((void **)&geominfo,ngeominfo*sizeof(geomdata));
-   ngeominfo=0;
+ if(scase.ngeominfo>0){
+   NewMemory((void **)&scase.geominfo,scase.ngeominfo*sizeof(geomdata));
+   scase.ngeominfo=0;
  }
- if(ncgeominfo>0){
-   NewMemory((void **)&cgeominfo, ncgeominfo*sizeof(geomdata));
-   ncgeominfo = 0;
+ if(scase.ncgeominfo>0){
+   NewMemory((void **)&scase.cgeominfo, scase.ncgeominfo*sizeof(geomdata));
+   scase.ncgeominfo = 0;
  }
  if(scase.propcoll.npropinfo>0){
    NewMemory((void **)&scase.propcoll.propinfo,scase.propcoll.npropinfo*sizeof(propdata));
@@ -8326,10 +8326,10 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           FGETS(buffer, 255, stream);
           sscanf(buffer, "%f %f %f %f %f %f", xyz, xyz+1, xyz+2, xyz+3, xyz+4, xyz+5);
         }
-        if(ngeominfo>0){
+        if(scase.ngeominfo>0){
           geomdata *geomi;
 
-          geomi = geominfo+ngeominfo-1;
+          geomi = scase.geominfo+scase.ngeominfo-1;
           for(i = 0; i<MIN(nbounds, geomi->ngeomobjinfo); i++){
             geomobjdata *geomobji;
 
@@ -8351,7 +8351,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       char *buff2;
       int have_vectors = CFACE_NORMALS_NO;
 
-      geomi = cgeominfo+ncgeominfo;
+      geomi = scase.cgeominfo+scase.ncgeominfo;
       buff2 = buffer+6;
       sscanf(buff2, "%i", &have_vectors);
       if(have_vectors!=CFACE_NORMALS_YES)have_vectors=CFACE_NORMALS_NO;
@@ -8364,7 +8364,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       buff2 = TrimFront(buffer);
       NewMemory((void **)&geomi->file,strlen(buff2)+1);
       strcpy(geomi->file,buff2);
-      ncgeominfo++;
+      scase.ncgeominfo++;
     }
 
     /*
@@ -8379,7 +8379,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       int ngeomobjinfo=0;
       int is_geom=0;
 
-      geomi = geominfo + ngeominfo;
+      geomi = scase.geominfo + scase.ngeominfo;
       geomi->ngeomobjinfo=0;
       geomi->geomobjinfo=NULL;
       geomi->memory_id = ++sextras.nmemory_ids;
@@ -8518,7 +8518,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         }
       }
 
-      ngeominfo++;
+      scase.ngeominfo++;
       continue;
     }
 
@@ -12056,7 +12056,7 @@ int ReadSMV_Configure(){
 #endif
   PRINT_TIMER(timer_readsmv, "update trianglesfaces");
 
-  if(ngeominfo>0&&sextras.auto_terrain==1){
+  if(scase.ngeominfo>0&&sextras.auto_terrain==1){
     START_TIMER(timer_readsmv);
     GenerateTerrainGeom(&terrain_vertices, &terrain_indices, &terrain_nindices);
     PRINT_TIMER(timer_readsmv, "GenerateTerrainGeom");
@@ -12193,10 +12193,10 @@ void UpdateUseTextures(void){
       texti->used=1;
     }
   }
-  for(i=0;i<ngeominfo;i++){
+  for(i=0;i<scase.ngeominfo;i++){
     geomdata *geomi;
 
-    geomi = geominfo + i;
+    geomi = scase.geominfo + i;
     if(scase.texture_coll.textureinfo!=NULL&&geomi->surfgeom!=NULL){
         texturedata *texti;
 

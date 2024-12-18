@@ -534,10 +534,10 @@ void UpdateShow(void){
 
   patchflag=0;
   if(visTimeBoundary==1){
-    for(i = 0; i < ngeominfo; i++){
+    for(i = 0; i < scase.ngeominfo; i++){
       geomdata *geomi;
 
-      geomi = geominfo + i;
+      geomi = scase.geominfo + i;
       geomi->patchactive = 0;
     }
     wall_cell_color_flag=0;
@@ -2426,7 +2426,7 @@ void BoundBoundCB(int var);
     }
     END_SHOW_UPDATE(open_movie_dialog);
   }
-  if(terrain_update_normals==1&&ngeominfo>0){
+  if(terrain_update_normals==1&&scase.ngeominfo>0){
     SHOW_UPDATE(terrain_update_normals);
     terrain_update_normals = 0;
     UpdateAllGeomTriangles();
