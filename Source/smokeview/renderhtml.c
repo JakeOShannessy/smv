@@ -142,10 +142,10 @@ void GetBndfNodeVerts(int option, int option2, int *offset,
   *nframes = 0;
   *nverts = 0;
   *ntris = 0;
-  for(i = 0;i<npatchinfo;i++){
+  for(i = 0;i<scase.npatchinfo;i++){
     patchdata *patchi;
 
-    patchi = patchinfo+i;
+    patchi = scase.patchinfo+i;
     if(patchi->loaded==0||patchi->display==0||patchi->structured==NO)continue;
     if(patchi->patch_filetype!=PATCH_STRUCTURED_NODE_CENTER)continue;
     meshpatch0 = scase.meshescoll.meshinfo+patchi->blocknumber;
@@ -175,13 +175,13 @@ void GetBndfNodeVerts(int option, int option2, int *offset,
   for(itime = ibeg; itime<iend; itime++){
     int j;
 
-    for(j = 0;j<npatchinfo;j++){
+    for(j = 0;j<scase.npatchinfo;j++){
       patchdata *patchi;
       meshdata *meshpatch;
       int n;
       unsigned char *cpatch_time;
 
-      patchi = patchinfo + j;
+      patchi = scase.patchinfo + j;
       if(patchi->loaded==0||patchi->display==0||patchi->structured==NO)continue;
       if(patchi->patch_filetype!=PATCH_STRUCTURED_NODE_CENTER)continue;
 
@@ -1200,7 +1200,7 @@ void BndfNodeTriangles2Geom(webgeomdata *bndf_node_web, int option){
   unsigned char *textures, *textures_save;
   int *indices, *indices_save;
 
-  if(npatchinfo>0){
+  if(scase.npatchinfo>0){
     int nbndf_node_verts, nbndf_node_tris;
 
     GetBndfNodeVerts(0, option, NULL, NULL, NULL, &nbndf_node_verts,
@@ -1229,7 +1229,7 @@ void BndfNodeTriangles2Geom(webgeomdata *bndf_node_web, int option){
 
   // load slice file data into data structures
 
-  if(npatchinfo>0){
+  if(scase.npatchinfo>0){
     int nbndf_node_verts, nbndf_node_tris;
 
     GetBndfNodeVerts(1, option, &offset, verts, textures, &nbndf_node_verts,

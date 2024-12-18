@@ -351,7 +351,7 @@ int GetNinfo(int file_type){
     ninfo = scase.slicecoll.nsliceinfo;
   }
   else if(file_type == BOUND_PATCH){
-    ninfo = npatchinfo;
+    ninfo = scase.npatchinfo;
   }
   else if(file_type == BOUND_PLOT3D){
     ninfo = scase.nplot3dinfo;
@@ -405,7 +405,7 @@ char *GetRegFile(int file_type, int i){
     reg_file = scase.slicecoll.sliceinfo[i].reg_file;
   }
   else if(file_type == BOUND_PATCH){
-    reg_file = patchinfo[i].reg_file;
+    reg_file = scase.patchinfo[i].reg_file;
   }
   else if(file_type == BOUND_PLOT3D){
     reg_file = scase.plot3dinfo[i].reg_file;
@@ -481,7 +481,7 @@ void BoundsUpdateDoit(int file_type){
       if(slicei->loaded == 0)continue;
     }
     else if(file_type == BOUND_PATCH){
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
       if(patchi->loaded == 0)continue;
     }
     else if(file_type == BOUND_PLOT3D){
@@ -682,7 +682,7 @@ char *GetShortLabel(int file_type, int i, int ilabel){
     shortlabel = scase.slicecoll.sliceinfo[i].label.shortlabel;
   }
   else if(file_type == BOUND_PATCH){
-    shortlabel = patchinfo[i].label.shortlabel;
+    shortlabel = scase.patchinfo[i].label.shortlabel;
   }
   else if(file_type == BOUND_PLOT3D){
     shortlabel = scase.plot3dinfo[i].label[ilabel].shortlabel;
@@ -819,7 +819,7 @@ void BoundsUpdateWrapup(int file_type){
     else if(file_type == BOUND_PATCH){
       patchdata *patchi;
 
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
       patchi->valmin_patch = fi->valmins[0];
       patchi->valmax_patch = fi->valmaxs[0];
     }
@@ -900,7 +900,7 @@ char *GetBoundFile(int file_type, int i){
     bound_file = scase.slicecoll.sliceinfo[i].bound_file;
   }
   else if(file_type == BOUND_PATCH){
-    bound_file = patchinfo[i].bound_file;
+    bound_file = scase.patchinfo[i].bound_file;
   }
   else if(file_type == BOUND_PLOT3D){
     bound_file = scase.plot3dinfo[i].bound_file;
@@ -1080,7 +1080,7 @@ void BoundsUpdate(int file_type){
 void GetGlobalPatchBounds(int flag, int set_flag){
   int i;
 
-  if(npatchinfo==0)return;
+  if(scase.npatchinfo==0)return;
   if(no_bounds == 1 && force_bounds==0)flag = 0;
   for(i = 0; i < npatchbounds; i++){
     boundsdata *boundi;
@@ -1090,13 +1090,13 @@ void GetGlobalPatchBounds(int flag, int set_flag){
     boundi->dlg_global_valmax = 0.0;
   }
   if(flag==1)BoundsUpdate(BOUND_PATCH);
-  for(i = 0; i < npatchinfo; i++){
+  for(i = 0; i < scase.npatchinfo; i++){
     patchdata *patchi;
     float valmin, valmax;
     boundsdata *boundi;
     int doit;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
 
     doit = 0;
     if(patchi->valmin_patch > patchi->valmax_patch ||
@@ -1114,10 +1114,10 @@ void GetGlobalPatchBounds(int flag, int set_flag){
         valmax = patchi->frameinfo->valmax;
       }
       else{
-        BoundsGet(patchi->reg_file, patchglobalboundsinfo, sorted_patch_filenames, npatchinfo, 1, &valmin, &valmax);
+        BoundsGet(patchi->reg_file, patchglobalboundsinfo, sorted_patch_filenames, scase.npatchinfo, 1, &valmin, &valmax);
       }
 #else
-      BoundsGet(patchi->reg_file, patchglobalboundsinfo, sorted_patch_filenames, npatchinfo, 1, &valmin, &valmax);
+      BoundsGet(patchi->reg_file, patchglobalboundsinfo, sorted_patch_filenames, scase.npatchinfo, 1, &valmin, &valmax);
 #endif
       if(valmin > valmax)continue;
       patchi->valmin_patch = valmin;
@@ -1146,10 +1146,10 @@ void GetGlobalPatchBounds(int flag, int set_flag){
     boundi = patchbounds + i;
     boundi->dlg_valmin = boundi->dlg_global_valmin;
     boundi->dlg_valmax = boundi->dlg_global_valmax;
-    for(j = 0; j < npatchinfo; j++){
+    for(j = 0; j < scase.npatchinfo; j++){
       patchdata *patchj;
 
-      patchj = patchinfo + j;
+      patchj = scase.patchinfo + j;
       if(strcmp(patchj->label.shortlabel, boundi->shortlabel) == 0){
         patchj->valmin_glui = boundi->dlg_global_valmin;
         patchj->valmax_glui = boundi->dlg_global_valmax;

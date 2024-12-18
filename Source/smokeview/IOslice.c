@@ -1987,12 +1987,12 @@ int NewMultiSlice(slicedata *sdold, slicedata *sd){
 void GetGSliceParams(void){
   int i;
 
-  for(i = 0; i < npatchinfo;i++){
+  for(i = 0; i < scase.npatchinfo;i++){
     int ii1, ii2, jj1, jj2, kk1, kk2;
     patchdata *patchi;
     meshdata *meshi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     meshi = scase.meshescoll.meshinfo + patchi->blocknumber;
     strcpy(patchi->gslicedir, "");
     if(patchi->structured == YES)continue;
@@ -7574,10 +7574,10 @@ void DrawSliceFrame(){
       glBlendEquation(GL_FUNC_ADD);
     }
   }
-  for(ii = 0; ii < npatchinfo; ii++){
+  for(ii = 0; ii < scase.npatchinfo; ii++){
     patchdata *patchi;
 
-    patchi = patchinfo + ii;
+    patchi = scase.patchinfo + ii;
     if(patchi->boundary==0 && patchi->loaded == 1 && patchi->display == 1){
       DrawGeomData(DRAW_TRANSPARENT, NULL, patchi, GEOM_STATIC);
       DrawGeomData(DRAW_TRANSPARENT, NULL, patchi, GEOM_DYNAMIC);

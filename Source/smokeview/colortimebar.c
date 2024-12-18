@@ -1287,7 +1287,7 @@ void DrawHorizontalColorbarRegLabels(void){
     patchdata *patchi;
     int patchunitclass, patchunittype;
 
-    patchi = patchinfo + boundarytypes[iboundarytype];
+    patchi = scase.patchinfo + boundarytypes[iboundarytype];
     strcpy(unitlabel, patchi->label.unit);
     GetUnitInfo(patchi->label.unit, &patchunitclass, &patchunittype);
     if(patchunitclass >= 0 && patchunitclass < nunitclasses){
@@ -2255,7 +2255,7 @@ void DrawVerticalColorbarRegLabels(void){
     patchdata *patchi;
     int patchunitclass, patchunittype;
 
-    patchi = patchinfo + boundarytypes[iboundarytype];
+    patchi = scase.patchinfo + boundarytypes[iboundarytype];
     strcpy(unitlabel, patchi->label.unit);
     GetUnitInfo(patchi->label.unit, &patchunitclass, &patchunittype);
     if(patchunitclass >= 0 && patchunitclass < nunitclasses){
@@ -2325,7 +2325,7 @@ void DrawVerticalColorbarRegLabels(void){
     patchdata *patchi;
     int patchunitclass, patchunittype;
 
-    patchi = patchinfo + boundarytypes[iboundarytype];
+    patchi = scase.patchinfo + boundarytypes[iboundarytype];
     strcpy(unitlabel, patchi->label.unit);
     GetUnitInfo(patchi->label.unit, &patchunitclass, &patchunittype);
     if(patchunitclass >= 0 && patchunitclass < nunitclasses){

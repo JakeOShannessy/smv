@@ -329,10 +329,10 @@ int Loadfile(const char *filename) {
       return errorcode;
     }
   }
-  for(size_t i = 0; i < npatchinfo; i++) {
+  for(size_t i = 0; i < scase.npatchinfo; i++) {
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(strcmp(patchi->file, filename) == 0) {
       ReadBoundary(i, LOAD, &errorcode);
       return errorcode;
@@ -423,10 +423,10 @@ void Loadboundaryfile(const char *filepath) {
   int errorcode;
   int count = 0;
 
-  for(size_t i = 0; i < npatchinfo; i++) {
+  for(size_t i = 0; i < scase.npatchinfo; i++) {
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(strcmp(patchi->label.longlabel, filepath) == 0) {
       THREADcontrol(compress_threads, THREAD_LOCK);
       ReadBoundary(i, LOAD, &errorcode);
@@ -1803,10 +1803,10 @@ void Unloadslice(int value) {
                     &errorcode);
         }
       }
-      for(size_t i = 0; i < npatchinfo; i++) {
+      for(size_t i = 0; i < scase.npatchinfo; i++) {
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->filetype_label != NULL &&
            strcmp(patchi->filetype_label, "INCLUDE_GEOM") == 0) {
           UnloadBoundaryMenu(i);
@@ -1847,7 +1847,7 @@ int Unloadall() {
   for(size_t i = 0; i < scase.nplot3dinfo; i++) {
     ReadPlot3D("", i, UNLOAD, &errorcode);
   }
-  for(size_t i = 0; i < npatchinfo; i++) {
+  for(size_t i = 0; i < scase.npatchinfo; i++) {
     ReadBoundary(i, UNLOAD, &errorcode);
   }
   for(size_t i = 0; i < npartinfo; i++) {

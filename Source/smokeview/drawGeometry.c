@@ -2698,7 +2698,7 @@ void UpdateFaceListsWorker(void){
 
     patchfilenum=meshi->patchfilenum;
     patchi=NULL;
-    if(showplot3d == 0 && patchfilenum>=0 && patchfilenum<npatchinfo)patchi = patchinfo + patchfilenum;
+    if(showplot3d == 0 && patchfilenum>=0 && patchfilenum<scase.npatchinfo)patchi = scase.patchinfo + patchfilenum;
     ShowHideInternalFaces(meshi, show);
 
     n_normals_single=0;

@@ -2842,10 +2842,10 @@ void ScriptLoadBoundary(scriptdata *scripti, int meshnum){
   int count=0;
 
   PRINTF("Script: loading boundary files of type: %s\n\n",scripti->cval);
-  for(i=0;i<npatchinfo;i++){
+  for(i=0;i<scase.npatchinfo;i++){
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(meshnum == -1 || patchi->blocknumber + 1 == meshnum){
       if(strcmp(patchi->label.longlabel, scripti->cval) == 0){
         THREADcontrol(compress_threads, THREAD_LOCK);
@@ -3244,10 +3244,10 @@ void ScriptLoadFile(scriptdata *scripti){
       return;
     }
   }
-  for(i=0;i<npatchinfo;i++){
+  for(i=0;i<scase.npatchinfo;i++){
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(strcmp(patchi->file,scripti->cval)==0){
       patchi->finalize = 1;
       ReadBoundary(i,LOAD,&errorcode);

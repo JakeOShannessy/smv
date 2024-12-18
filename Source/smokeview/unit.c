@@ -63,10 +63,10 @@ void SetUnitVis(void){
     }
     if(uci->visible==1)continue;
 
-    for(j=0;j<npatchinfo;j++){
+    for(j=0;j<scase.npatchinfo;j++){
       patchdata *patchj;
 
-      patchj = patchinfo + j;
+      patchj = scase.patchinfo + j;
       if(IsUnitPresent(patchj->label.unit,uci->units->unit)==1){
         uci->visible=1;
         break;
@@ -115,10 +115,10 @@ void UpdateUnitDefs(void){
     int firstslice, firstpatch, firstplot3d, diff_index;
 
     firstpatch=1;
-    for(j=0;j<npatchinfo;j++){
+    for(j=0;j<scase.npatchinfo;j++){
       patchdata *patchj;
 
-      patchj = patchinfo + j;
+      patchj = scase.patchinfo + j;
       if(patchj->loaded==0||patchj->display==0)continue;
       if(UnitTypeMatch(patchj->label.unit,unitclasses+i)!=0)continue;
       if(firstpatch==1){

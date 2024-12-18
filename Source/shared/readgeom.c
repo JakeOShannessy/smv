@@ -617,14 +617,14 @@ void DecimateAllTerrains(void){
     meshi = meshinfo + i;
     meshi->decimated = 0;
   }
-  for(i = 0; i < npatchinfo; i++){
+  for(i = 0; i < scase.nscase.patchinfochinfo; i++){
     meshdata *meshi;
     patchdata *patchi;
     geomlistdata *geomlisti;
     int nx, ny;
     float *boxmin, *boxmax;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(patchi->loaded == 0 || patchi->display == 0 || patchi->blocknumber < 0)
       continue;
     meshi = meshinfo + patchi->blocknumber;

@@ -112,19 +112,19 @@ void WriteBoundIni(void){
 
   if(fullfilename == NULL)return;
 
-  for(i = 0; i < npatchinfo; i++){
+  for(i = 0; i < scase.npatchinfo; i++){
     bounddata *boundi;
     patchdata *patchi;
     int skipi;
     int j;
 
     skipi = 0;
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(patchi->bounds.defined == 0)continue;
     for(j = 0; j < i - 1; j++){
       patchdata *patchj;
 
-      patchj = patchinfo + j;
+      patchj = scase.patchinfo + j;
       if(patchi->shortlabel_index == patchj->shortlabel_index&&patchi->patch_filetype == patchj->patch_filetype){
         skipi = 1;
         break;
@@ -220,14 +220,14 @@ void GetBoundaryColors3(patchdata *patchi, float *t, int start, int nt, unsigned
 void UpdateAllBoundaryColors(int flag){
   int i, *list = NULL, nlist = 0;
 
-  if(npatchinfo==0)return;
-  NewMemory((void **)&list, npatchinfo*sizeof(int));
+  if(scase.npatchinfo==0)return;
+  NewMemory((void **)&list, scase.npatchinfo*sizeof(int));
   nlist = 0;
-  for(i = 0; i<npatchinfo; i++){
+  for(i = 0; i<scase.npatchinfo; i++){
     meshdata *meshi;
     patchdata *patchi;
 
-    patchi = patchinfo+i;
+    patchi = scase.patchinfo+i;
     if(patchi->loaded==0)continue;
     switch(patchi->patch_filetype){
       case PATCH_STRUCTURED_NODE_CENTER:
@@ -252,7 +252,7 @@ void UpdateAllBoundaryColors(int flag){
     for(i = 0; i<nlist; i++){
       patchdata *patchi;
 
-      patchi = patchinfo+list[i];
+      patchi = scase.patchinfo+list[i];
       if(patchi->loaded==1){
         int set_valmin, set_valmax;
         float valmin, valmax;

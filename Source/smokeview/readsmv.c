@@ -2973,20 +2973,20 @@ void UpdateBoundInfo(void){
   PRINT_TIMER(bound_timer, "slicebounds");
 
   canshow_threshold=0;
-  if(npatchinfo>0){
+  if(scase.npatchinfo>0){
     FREEMEMORY(patchbounds);
-    NewMemory((void*)&patchbounds, npatchinfo*sizeof(boundsdata));
+    NewMemory((void*)&patchbounds, scase.npatchinfo*sizeof(boundsdata));
     npatchbounds = 0;
     npatch2=0;
     FREEMEMORY(patchlabellist);
     FREEMEMORY(patchlabellist_index);
-    NewMemory((void **)&patchlabellist,npatchinfo*sizeof(char *));
-    NewMemory((void **)&patchlabellist_index,npatchinfo*sizeof(int));
-    for(i=0;i<npatchinfo;i++){
+    NewMemory((void **)&patchlabellist,scase.npatchinfo*sizeof(char *));
+    NewMemory((void **)&patchlabellist_index,scase.npatchinfo*sizeof(int));
+    for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
       boundsdata *sbi;
 
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
       patchi->firstshort_patch=1;
       if(strncmp(patchi->label.shortlabel,"temp",4)==0||
          strncmp(patchi->label.shortlabel,"TEMP",4)==0){
@@ -2998,7 +2998,7 @@ void UpdateBoundInfo(void){
       for(n=0;n<i;n++){
         patchdata *patchn;
 
-        patchn = patchinfo + n;
+        patchn = scase.patchinfo + n;
         if(strcmp(patchi->label.shortlabel,patchn->label.shortlabel)==0){
           patchi->firstshort_patch = 0;
           npatch2--;
@@ -3025,7 +3025,7 @@ void UpdateBoundInfo(void){
       for(n = 0; n<i; n++){
         patchdata *patchn;
 
-        patchn = patchinfo+n;
+        patchn = scase.patchinfo+n;
         if(strcmp(patchi->label.shortlabel, patchn->label.shortlabel)==0){
           patchi->firstshort_patch = 0;
           npatchbounds--;
@@ -5360,7 +5360,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
 
 int ParseBNDFCount(void){
   if(parse_opts.setup_only==1||parse_opts.smoke3d_only==1)return RETURN_CONTINUE;
-  npatchinfo++;
+  scase.npatchinfo++;
   return RETURN_CONTINUE;
 }
 
@@ -5412,7 +5412,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
     patchi = patchgeom;
   }
   else{
-    patchi = patchinfo+ipatch;
+    patchi = scase.patchinfo+ipatch;
   }
 
   for(i = 0; i<6; i++){
@@ -5483,7 +5483,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   }
   else{
     if(FGETS(buffer, 255, stream)==NULL){
-      npatchinfo--;
+      scase.npatchinfo--;
       return RETURN_BREAK;
     }
   }
@@ -5524,7 +5524,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
     }
     else{
       if(FGETS(buffer, 255, stream)==NULL){
-        npatchinfo--;
+        scase.npatchinfo--;
         return RETURN_BREAK;
       }
     }
@@ -6832,11 +6832,11 @@ void *CheckFiles(void *arg){
   THREADcontrol(checkfiles_threads, THREAD_LOCK);
   sextras.have_compressed_files = 0;
   THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
-  for(i = 0;i < npatchinfo;i++){
+  for(i = 0;i < scase.npatchinfo;i++){
     patchdata *patchi;
     int have_file;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     have_file = FILE_EXISTS_CASEDIR(patchi->comp_file);
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
     if(have_file == YES){
@@ -6862,10 +6862,10 @@ void *CheckFiles(void *arg){
     THREAD_EXIT(checkfiles_threads);
   }
   THREADcontrol(checkfiles_threads, THREAD_LOCK);
-  for(i = 0; i < npatchinfo; i++){
+  for(i = 0; i < scase.npatchinfo; i++){
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(patchi->compression_type_temp == COMPRESSED_ZLIB){
       patchi->compression_type = COMPRESSED_ZLIB;
       patchi->file = patchi->comp_file;
@@ -7233,19 +7233,19 @@ int ReadSMV_Init(){
   //*** free slice data
   FreeSliceData();
 
-  if(npatchinfo>0){
-    for(i=0;i<npatchinfo;i++){
+  if(scase.npatchinfo>0){
+    for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
       FreeLabels(&patchi->label);
       FREEMEMORY(patchi->reg_file);
       FREEMEMORY(patchi->comp_file);
       FREEMEMORY(patchi->size_file);
     }
-    FREEMEMORY(patchinfo);
+    FREEMEMORY(scase.patchinfo);
   }
-  npatchinfo=0;
+  scase.npatchinfo=0;
 
   if(scase.nisoinfo>0){
     for(i=0;i<scase.nisoinfo;i++){
@@ -7276,7 +7276,7 @@ int ReadSMV_Init(){
   FREEMEMORY(scase.slicecoll.sliceinfo);
 
   FREEMEMORY(scase.plot3dinfo);
-  FREEMEMORY(patchinfo);
+  FREEMEMORY(scase.patchinfo);
   FREEMEMORY(boundarytypes);
   FREEMEMORY(scase.isoinfo);
   FREEMEMORY(isotypes);
@@ -8115,20 +8115,20 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     if(NewMemory( (void **)&scase.smoke3dcoll.smoke3dinfo, scase.smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata))==0)return 2;
   }
 
-  FREEMEMORY(patchinfo);
+  FREEMEMORY(scase.patchinfo);
   FREEMEMORY(boundarytypes);
-  if(npatchinfo!=0){
-    if(NewMemory((void **)&patchinfo,npatchinfo*sizeof(patchdata))==0)return 2;
-    for(i=0;i<npatchinfo;i++){
+  if(scase.npatchinfo!=0){
+    if(NewMemory((void **)&scase.patchinfo,scase.npatchinfo*sizeof(patchdata))==0)return 2;
+    for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
       patchi->reg_file=NULL;
       patchi->comp_file=NULL;
       patchi->file=NULL;
       patchi->size_file=NULL;
     }
-    if(NewMemory((void **)&boundarytypes,npatchinfo*sizeof(int))==0)return 2;
+    if(NewMemory((void **)&boundarytypes,scase.npatchinfo*sizeof(int))==0)return 2;
   }
   FREEMEMORY(scase.isoinfo);
   FREEMEMORY(isotypes);
@@ -11570,10 +11570,10 @@ typedef struct {
       FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f %f",&valmin,&valmax,&percentile_min,&percentile_max);
 
-      for(i=0;i<npatchinfo;i++){
+      for(i=0;i<scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(strcmp(file_ptr,patchi->file)==0){
           patchi->diff_valmin=percentile_min;
           patchi->diff_valmax=percentile_max;
@@ -16607,10 +16607,10 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, " %f\n", timeoffset);
   fprintf(fileout, "TLOAD\n");
   fprintf(fileout, " %i %f %i %f %i %i\n", use_tload_begin, sextras.tload_begin, use_tload_end, sextras.tload_end, use_tload_skip, tload_skip);
-  for(i = 0; i < npatchinfo; i++){
+  for(i = 0; i < scase.npatchinfo; i++){
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(patchi->firstshort_patch == 1){
       int set_valmin=0, set_valmax=0;
       float valmin=1.0, valmax=0.0;
@@ -17611,8 +17611,8 @@ void UpdateLoadedLists(void){
   }
 
   ngeomslice_loaded = 0;
-  for(i=0;i<npatchinfo;i++){
-    patchi = patchinfo + i;
+  for(i=0;i<scase.npatchinfo;i++){
+    patchi = scase.patchinfo + i;
     if(patchi->loaded==1&&patchi->boundary == 0)ngeomslice_loaded++;
   }
 

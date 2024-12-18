@@ -1063,7 +1063,7 @@ extern "C" void GLUISliceBoundsSetupNoGraphics(void){
 /* ------------------ SetResearchMode ------------------------ */
 
 void SetResearchMode(int flag){
-  if(npatchinfo>0)patchboundsCPP.set_research_mode(flag);
+  if(scase.npatchinfo>0)patchboundsCPP.set_research_mode(flag);
   if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.set_research_mode(flag);
   if(npartinfo>0)partboundsCPP.set_research_mode(flag);
   if(scase.nplot3dinfo>0)plot3dboundsCPP.set_research_mode(flag);
@@ -1074,7 +1074,7 @@ void SetResearchMode(int flag){
 /* ------------------ GLUISetColorbarDigitsCPP ------------------------ */
 
 extern "C" void GLUISetColorbarDigitsCPP(int ndigits){
-  if(npatchinfo>0)patchboundsCPP.set_colorbar_digits(ndigits);
+  if(scase.npatchinfo>0)patchboundsCPP.set_colorbar_digits(ndigits);
   if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.set_colorbar_digits(ndigits);
   if(npartinfo>0)partboundsCPP.set_colorbar_digits(ndigits);
   if(scase.nplot3dinfo>0)plot3dboundsCPP.set_colorbar_digits(ndigits);
@@ -1083,7 +1083,7 @@ extern "C" void GLUISetColorbarDigitsCPP(int ndigits){
   /* ------------------ InResearchMode ------------------------ */
 
 int InResearchMode(void){
-  if(npatchinfo>0&&patchboundsCPP.in_research_mode()==0)return 0;
+  if(scase.npatchinfo>0&&patchboundsCPP.in_research_mode()==0)return 0;
   if(npartinfo>0&&partboundsCPP.in_research_mode()==0)return 0;
   if(scase.nplot3dinfo>0&&plot3dboundsCPP.in_research_mode()==0)return 0;
   if(scase.slicecoll.nsliceinfo>0&&sliceboundsCPP.in_research_mode()==0)return 0;
@@ -1103,7 +1103,7 @@ extern "C" cpp_boundsdata *GLUIGetBoundsData(int type){
       if(nhvacnodebounds > 0)return hvacnodeboundsCPP.get_bounds_data();
       break;
     case BOUND_PATCH:
-      if(npatchinfo>0)return patchboundsCPP.get_bounds_data();
+      if(scase.npatchinfo>0)return patchboundsCPP.get_bounds_data();
       break;
     case BOUND_PART:
       if(npartinfo>0)return partboundsCPP.get_bounds_data();
@@ -1132,7 +1132,7 @@ extern "C" void GLUIGetGlobalBoundsMinMax(int type, char *label, float *valmin, 
       if(nhvacnodebounds > 0)hvacnodeboundsCPP.get_global_minmax(label, valmin, valmax);
       break;
     case BOUND_PATCH:
-      if(npatchinfo>0)patchboundsCPP.get_global_minmax(label, valmin, valmax);
+      if(scase.npatchinfo>0)patchboundsCPP.get_global_minmax(label, valmin, valmax);
       break;
     case BOUND_PART:
       if(npartinfo>0)partboundsCPP.get_global_minmax(label, valmin, valmax);
@@ -1160,7 +1160,7 @@ extern "C" void GLUISetCacheFlag(int type, int cache_flag){
       if(nhvacnodebounds > 0)hvacnodeboundsCPP.set_cache_flag(cache_flag);
       break;
     case BOUND_PATCH:
-      if(npatchinfo>0)patchboundsCPP.set_cache_flag(cache_flag);
+      if(scase.npatchinfo>0)patchboundsCPP.set_cache_flag(cache_flag);
       break;
     case BOUND_PART:
       if(npartinfo>0)partboundsCPP.set_cache_flag(cache_flag);
@@ -1188,7 +1188,7 @@ int GetCacheFlag(int type){
       if(nhvacnodebounds > 0)return hvacnodeboundsCPP.get_cache_flag();
       break;
     case BOUND_PATCH:
-      if(npatchinfo>0)return patchboundsCPP.get_cache_flag();
+      if(scase.npatchinfo>0)return patchboundsCPP.get_cache_flag();
       break;
     case BOUND_PART:
       if(npartinfo>0)return partboundsCPP.get_cache_flag();
@@ -1215,7 +1215,7 @@ extern "C" void GLUIUpdateBounds(void){
   if(nhvacnodebounds > 0){
     hvacnodeboundsCPP.CB(BOUND_VAL_TYPE);
   }
-  if(npatchinfo>0){
+  if(scase.npatchinfo>0){
     patchboundsCPP.CB(BOUND_VAL_TYPE);
     patchboundsCPP.CB(BOUND_SETCHOPMIN);
     patchboundsCPP.CB(BOUND_SETCHOPMAX);
@@ -1251,7 +1251,7 @@ int GetValType(int type){
       if(nhvacnodebounds > 0)return hvacnodeboundsCPP.get_valtype();
       break;
     case BOUND_PATCH:
-      if(npatchinfo>0)return patchboundsCPP.get_valtype();
+      if(scase.npatchinfo>0)return patchboundsCPP.get_valtype();
       break;
     case BOUND_PART:
       if(npartinfo>0)return partboundsCPP.get_valtype();
@@ -1293,7 +1293,7 @@ extern "C" int GLUIGetChopMin(int type, char *label, int *set_chopmin, float *ch
       if(nhvacnodebounds > 0)return hvacnodeboundsCPP.get_chopmin(label, set_chopmin, chopmin);
       break;
     case BOUND_PATCH:
-      if(npatchinfo>0)return patchboundsCPP.get_chopmin(label, set_chopmin, chopmin);
+      if(scase.npatchinfo>0)return patchboundsCPP.get_chopmin(label, set_chopmin, chopmin);
       break;
     case BOUND_PART:
       if(npartinfo>0)return partboundsCPP.get_chopmin(label, set_chopmin, chopmin);
@@ -1322,7 +1322,7 @@ extern "C" int GLUIGetChopMax(int type, char *label, int *set_chopmax, float *ch
       if(nhvacnodebounds > 0)return hvacnodeboundsCPP.get_chopmax(label, set_chopmax, chopmax);
       break;
     case BOUND_PATCH:
-      if(npatchinfo>0)return patchboundsCPP.get_chopmax(label, set_chopmax, chopmax);
+      if(scase.npatchinfo>0)return patchboundsCPP.get_chopmax(label, set_chopmax, chopmax);
       break;
     case BOUND_PART:
       if(npartinfo>0)return partboundsCPP.get_chopmax(label, set_chopmax, chopmax);
@@ -1351,7 +1351,7 @@ extern "C" int GLUISetChopMin(int type, char *label, int set_chopmin, float chop
     if(nhvacnodebounds > 0)return hvacnodeboundsCPP.set_chopmin(label, set_chopmin, chopmin);
     break;
   case BOUND_PATCH:
-    if(npatchinfo > 0)return patchboundsCPP.set_chopmin(label, set_chopmin, chopmin);
+    if(scase.npatchinfo > 0)return patchboundsCPP.set_chopmin(label, set_chopmin, chopmin);
     break;
   case BOUND_PART:
     if(npartinfo > 0)return partboundsCPP.set_chopmin(label, set_chopmin, chopmin);
@@ -1380,7 +1380,7 @@ extern "C" int GLUISetChopMax(int type, char *label, int set_chopmax, float chop
     if(nhvacnodebounds > 0)return hvacnodeboundsCPP.set_chopmax(label, set_chopmax, chopmax);
     break;
   case BOUND_PATCH:
-    if(npatchinfo > 0)return patchboundsCPP.set_chopmax(label, set_chopmax, chopmax);
+    if(scase.npatchinfo > 0)return patchboundsCPP.set_chopmax(label, set_chopmax, chopmax);
     break;
   case BOUND_PART:
     if(npartinfo > 0)return partboundsCPP.set_chopmax(label, set_chopmax, chopmax);
@@ -1409,7 +1409,7 @@ extern "C" int GLUIGetNValtypes(int type){
       if(nhvacnodebounds > 0)return hvacnodeboundsCPP.get_nvaltypes();
       break;
     case BOUND_PATCH:
-      if(npatchinfo>0)return patchboundsCPP.get_nvaltypes();
+      if(scase.npatchinfo>0)return patchboundsCPP.get_nvaltypes();
       break;
     case BOUND_PART:
       if(npartinfo>0)return partboundsCPP.get_nvaltypes();
@@ -1438,7 +1438,7 @@ extern "C" void GLUISetValTypeIndex(int type, int valtype_index){
       if(nhvacnodebounds > 0)hvacnodeboundsCPP.set_valtype_index(valtype_index);
       break;
     case BOUND_PATCH:
-      if(npatchinfo>0)patchboundsCPP.set_valtype_index(valtype_index);
+      if(scase.npatchinfo>0)patchboundsCPP.set_valtype_index(valtype_index);
       break;
     case BOUND_PART:
       if(npartinfo>0)partboundsCPP.set_valtype_index(valtype_index);
@@ -1472,7 +1472,7 @@ extern "C" void GLUIGetOnlyMinMax(int type, char *label, int *set_valmin, float 
       }
       break;
     case BOUND_PATCH:
-      if(npatchinfo>0){
+      if(scase.npatchinfo>0){
         patchboundsCPP.get_min(label, set_valmin, valmin);
         patchboundsCPP.get_max(label, set_valmax, valmax);
       }
@@ -1520,7 +1520,7 @@ extern "C" void GLUIGetMinMax(int type, char *label, int *set_valmin, float *val
       }
       break;
     case BOUND_PATCH:
-      if(npatchinfo>0){
+      if(scase.npatchinfo>0){
         patchboundsCPP.set_valtype(label);
         patchboundsCPP.get_min(label, set_valmin, valmin);
         patchboundsCPP.get_max(label, set_valmax, valmax);
@@ -1834,7 +1834,7 @@ extern "C" void GLUIHVACDuctBoundsCPP_CB(int var){
     break;
   case BOUND_RESEARCH_MODE:
     if(npartinfo > 0)partboundsCPP.CB(BOUND_RESEARCH_MODE);
-    if(npatchinfo > 0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
+    if(scase.npatchinfo > 0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
     if(scase.nplot3dinfo > 0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
     if(scase.slicecoll.nsliceinfo > 0)sliceboundsCPP.CB(BOUND_RESEARCH_MODE);
     GLUIHVACDuctBoundsCPP_CB(BOUND_UPDATE_COLORS);
@@ -1866,7 +1866,7 @@ extern "C" void GLUIHVACNodeBoundsCPP_CB(int var){
     break;
   case BOUND_RESEARCH_MODE:
     if(npartinfo > 0)partboundsCPP.CB(BOUND_RESEARCH_MODE);
-    if(npatchinfo > 0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
+    if(scase.npatchinfo > 0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
     if(scase.nplot3dinfo > 0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
     if(scase.slicecoll.nsliceinfo > 0)sliceboundsCPP.CB(BOUND_RESEARCH_MODE);
     GLUIHVACNodeBoundsCPP_CB(BOUND_UPDATE_COLORS);
@@ -1957,7 +1957,7 @@ extern "C" void GLUIHVACSliceBoundsCPP_CB(int var){
       break;
     case BOUND_RESEARCH_MODE:
       if(npartinfo>0)partboundsCPP.CB(BOUND_RESEARCH_MODE);
-      if(npatchinfo>0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
+      if(scase.npatchinfo>0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(scase.nplot3dinfo>0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(nhvacductbounds>0)hvacductboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(nhvacnodebounds > 0)hvacnodeboundsCPP.CB(BOUND_RESEARCH_MODE);
@@ -2078,7 +2078,7 @@ extern "C" void GLUIPlot3DBoundsCPP_CB(int var){
       break;
     case BOUND_RESEARCH_MODE:
       if(npartinfo>0)partboundsCPP.CB(BOUND_RESEARCH_MODE);
-      if(npatchinfo>0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
+      if(scase.npatchinfo>0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(nhvacductbounds>0)hvacductboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(nhvacnodebounds > 0)hvacnodeboundsCPP.CB(BOUND_RESEARCH_MODE);
@@ -2186,7 +2186,7 @@ extern "C" void GLUIPartBoundsCPP_CB(int var){
       }
       break;
     case BOUND_RESEARCH_MODE:
-      if(npatchinfo>0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
+      if(scase.npatchinfo>0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(scase.nplot3dinfo>0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.CB(BOUND_RESEARCH_MODE);
       if(nhvacductbounds>0)hvacductboundsCPP.CB(BOUND_RESEARCH_MODE);
@@ -2250,11 +2250,11 @@ extern "C" void GLUIPartBoundsCPP_CB(int var){
 int HavePatchData(void){
   int i;
 
-  for(i = 0; i<npatchinfo; i++){
+  for(i = 0; i<scase.npatchinfo; i++){
     patchdata *patchi;
     meshdata *meshi;
 
-    patchi = patchinfo+i;
+    patchi = scase.patchinfo+i;
     if(patchi->loaded==0)continue;
     switch(patchi->patch_filetype){
       case PATCH_STRUCTURED_NODE_CENTER:
@@ -2335,25 +2335,25 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
       break;
     case BOUND_RELOAD_DATA:
       SetLoadedPatchBounds(NULL, 0);
-      for(i = 0; i<npatchinfo; i++){
+      for(i = 0; i<scase.npatchinfo; i++){
         patchdata *patchi;
 
-        patchi = patchinfo+i;
+        patchi = scase.patchinfo+i;
         patchi->finalize = 0;
       }
-      for(i = npatchinfo-1; i>=0;  i--){
+      for(i = scase.npatchinfo-1; i>=0;  i--){
         patchdata *patchi;
 
-        patchi = patchinfo+i;
+        patchi = scase.patchinfo+i;
         if(patchi->loaded==0)continue;
         patchi->finalize = 1;
         break;
       }
-      for(i = 0; i<npatchinfo; i++){
+      for(i = 0; i<scase.npatchinfo; i++){
         patchdata *patchi;
         int errorcode;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->loaded == 0)continue;
         ReadBoundary(i,LOAD,&errorcode);
       }
@@ -2381,10 +2381,10 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
       hist_update = 0;
       bound_loaded = 0;
       bounds = GLUIGetBoundsData(BOUND_PATCH);
-      for(i = 0;i < npatchinfo;i++){
+      for(i = 0;i < scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->loaded == 0)continue;
         bound_loaded = 1;
         if(patchi->hist_update == 1)hist_update = 1;
@@ -2418,7 +2418,7 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
 /* ------------------ GLUIUpdatdateResearchModeCPP ------------------------ */
 
 extern "C" void GLUIUpdatdateResearchModeCPP(void){
-  if(npatchinfo>0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
+  if(scase.npatchinfo>0)patchboundsCPP.CB(BOUND_RESEARCH_MODE);
   if(npartinfo>0)partboundsCPP.CB(BOUND_RESEARCH_MODE);
   if(scase.nplot3dinfo>0)plot3dboundsCPP.CB(BOUND_RESEARCH_MODE);
   if(scase.slicecoll.nsliceinfo>0)sliceboundsCPP.CB(BOUND_RESEARCH_MODE);
@@ -2506,8 +2506,8 @@ void SetLoadedPatchBounds(int *list, int nlist){
   int i;
 
   if(list==NULL){
-    for(i = 0; i<npatchinfo; i++){
-      patchi = patchinfo+i;
+    for(i = 0; i<scase.npatchinfo; i++){
+      patchi = scase.patchinfo+i;
       if(patchi->loaded==1&&patchi->display==1){
         label = patchi->label.shortlabel;
         break;
@@ -2515,7 +2515,7 @@ void SetLoadedPatchBounds(int *list, int nlist){
     }
   }
   else{
-    patchi = patchinfo+list[0];
+    patchi = scase.patchinfo+list[0];
     label = patchi->label.shortlabel;
   }
   if(label==NULL)return;
@@ -2524,7 +2524,7 @@ void SetLoadedPatchBounds(int *list, int nlist){
   valmax = 0.0;
   if(list==NULL)nlist = 0;
   for(i = 0; i<nlist; i++){
-    patchi = patchinfo+list[i];
+    patchi = scase.patchinfo+list[i];
     if(valmin>valmax){
       valmin = patchi->valmin_patch;
       valmax = patchi->valmax_patch;
@@ -2534,8 +2534,8 @@ void SetLoadedPatchBounds(int *list, int nlist){
       valmax = MAX(valmax, patchi->valmax_patch);
     }
   }
-  for(i = 0; i<npatchinfo; i++){
-    patchi = patchinfo+i;
+  for(i = 0; i<scase.npatchinfo; i++){
+    patchi = scase.patchinfo+i;
     if(patchi->loaded==0)continue;
     if(strcmp(patchi->label.shortlabel, label)!=0)continue;
     if(valmin>valmax){
@@ -4084,11 +4084,11 @@ extern "C" void BoundBoundCB(int var){
         BoundBoundCB(HIDE_ALL_EXTERIOR_PATCH_DATA);
       }
       else{
-        for(i = 0;i < npatchinfo;i++){
+        for(i = 0;i < scase.npatchinfo;i++){
           patchdata *patchi;
           int n;
 
-          patchi = patchinfo + i;
+          patchi = scase.patchinfo + i;
           if(patchi->loaded == 0)continue;
           for(n = 0;n < patchi->npatches;n++){
             patchfacedata *pfi;
@@ -4200,12 +4200,12 @@ extern "C" void BoundBoundCB(int var){
     UpdateAllBoundaryColors(1);
     break;
   case FILE_RELOAD:
-    if(npatchinfo>0){
+    if(scase.npatchinfo>0){
 //      BoundBoundCB(FILE_UPDATE);
-      for(i = 0;i < npatchinfo;i++){
+      for(i = 0;i < scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->loaded == 0)continue;
         LoadBoundaryMenu(i);
       }
@@ -4288,11 +4288,11 @@ void CheckBounds(int var){
 void UpdateBoundaryFiles(void){
   int i;
 
-  for(i = 0;i < npatchinfo;i++){
+  for(i = 0;i < scase.npatchinfo;i++){
     patchdata *patchi;
     meshdata *meshi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(patchi->loaded == 0 || patchi->blocknumber < 0)continue;
     meshi = scase.meshescoll.meshinfo + patchi->blocknumber;
     if(meshi->use == 1 && patchi->display == 0){
@@ -4873,7 +4873,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
   // -------------- Show/Hide Loaded files -------------------
 
-  if(npartinfo > 0 || scase.slicecoll.nsliceinfo > 0 || scase.slicecoll.nvsliceinfo > 0 || scase.nisoinfo > 0 || npatchinfo || scase.smoke3dcoll.nsmoke3dinfo > 0 || scase.nplot3dinfo > 0){
+  if(npartinfo > 0 || scase.slicecoll.nsliceinfo > 0 || scase.slicecoll.nvsliceinfo > 0 || scase.nisoinfo > 0 || scase.npatchinfo || scase.smoke3dcoll.nsmoke3dinfo > 0 || scase.nplot3dinfo > 0){
     ROLLOUT_showhide = glui_bounds->add_rollout_to_panel(ROLLOUT_files,_("Show/Hide"), false, SHOWHIDE_ROLLOUT, FileRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_showhide, glui_bounds);
     ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_showhide, SHOWHIDE_ROLLOUT, glui_bounds);
@@ -4889,7 +4889,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
     if(scase.slicecoll.nsliceinfo > 0)BUTTON_SLICE = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Slice", FILESHOW_slice, FileShowCB);
     if(scase.slicecoll.nvsliceinfo > 0)BUTTON_VSLICE = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Vector", FILESHOW_vslice, FileShowCB);
     if(scase.nisoinfo > 0)BUTTON_ISO = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Isosurface", FILESHOW_isosurface, FileShowCB);
-    if(npatchinfo > 0)BUTTON_BOUNDARY = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Boundary", FILESHOW_boundary, FileShowCB);
+    if(scase.npatchinfo > 0)BUTTON_BOUNDARY = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Boundary", FILESHOW_boundary, FileShowCB);
     if(scase.smoke3dcoll.nsmoke3dinfo > 0)BUTTON_3DSMOKE = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "3D smoke/fire", FILESHOW_3dsmoke, FileShowCB);
     if(scase.nplot3dinfo > 0)BUTTON_PLOT3D = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Plot3D", FILESHOW_plot3d, FileShowCB);
     glui_bounds->add_button_to_panel(ROLLOUT_showhide, "File Sizes", FILESHOW_sizes, FileShowCB);
@@ -4900,7 +4900,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
 
 #ifdef pp_COMPRESS
-  if(smokezippath != NULL && (npatchinfo > 0 || scase.smoke3dcoll.nsmoke3dinfo > 0 || scase.slicecoll.nsliceinfo > 0)){
+  if(smokezippath != NULL && (scase.npatchinfo > 0 || scase.smoke3dcoll.nsmoke3dinfo > 0 || scase.slicecoll.nsliceinfo > 0)){
     ROLLOUT_compress = glui_bounds->add_rollout_to_panel(ROLLOUT_files,_("Compress"), false, COMPRESS_ROLLOUT, FileRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_compress, glui_bounds);
     ADDPROCINFO(fileprocinfo, nfileprocinfo, ROLLOUT_compress, COMPRESS_ROLLOUT, glui_bounds);
@@ -5046,7 +5046,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
   // ----------------------------------- Boundary ----------------------------------------
 
-  if(npatchinfo>0){
+  if(scase.npatchinfo>0){
     glui_active=1;
     ROLLOUT_bound = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds,_("Boundary"),false,BOUNDARY_ROLLOUT,BoundRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_bound, glui_bounds);
@@ -6375,7 +6375,7 @@ extern "C" void GLUIUpdateBoundaryListIndex(int patchfilenum){
   for(i=0;i<npatch2;i++){
     patchdata *patchi;
 
-    patchi = patchinfo + patchfilenum;
+    patchi = scase.patchinfo + patchfilenum;
     if(strcmp(patchlabellist[i],patchi->label.shortlabel)==0){
       if(RADIO_bf == NULL){
         list_patch_index = i;

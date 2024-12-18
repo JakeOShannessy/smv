@@ -154,10 +154,10 @@ void UpdateFrameNumber(int changetime){
           slice_time = sd->itime;
         }
       }
-      for(i = 0; i < npatchinfo; i++){
+      for(i = 0; i < scase.npatchinfo; i++){
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->structured == YES || patchi->boundary == 1 || patchi->geom_times == NULL || patchi->geom_timeslist == NULL)continue;
         patchi->geom_itime = patchi->geom_timeslist[itimes];
         patchi->geom_ival_static  = patchi->geom_ivals + patchi->geom_ivals_static_offset[patchi->geom_itime];
@@ -178,10 +178,10 @@ void UpdateFrameNumber(int changetime){
       PRINT_TIMER(merge_smoke_time, "UpdateSmoke3D + MergeSmoke3D");
     }
     if(showpatch==1){
-      for(i=0;i<npatchinfo;i++){
+      for(i=0;i<scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->structured == YES||patchi->boundary==0||patchi->geom_times==NULL||patchi->geom_timeslist==NULL)continue;
         patchi->geom_itime=patchi->geom_timeslist[itimes];
         if(patchi->geom_ivals != NULL){
@@ -197,8 +197,8 @@ void UpdateFrameNumber(int changetime){
         meshdata *meshi;
 
         meshi = scase.meshescoll.meshinfo+i;
-        if(meshi->patchfilenum < 0||meshi->patchfilenum>npatchinfo-1)continue;
-        patchi=patchinfo + meshi->patchfilenum;
+        if(meshi->patchfilenum < 0||meshi->patchfilenum>scase.npatchinfo-1)continue;
+        patchi=scase.patchinfo + meshi->patchfilenum;
         if(patchi->structured == NO||meshi->patch_times==NULL||meshi->patch_timeslist==NULL)continue;
         meshi->patch_itime=meshi->patch_timeslist[itimes];
         if(patchi->compression_type==UNCOMPRESSED){
@@ -269,10 +269,10 @@ void UpdateFileLoad(void){
   }
 
   npatchloaded = 0;
-  for(i = 0; i<npatchinfo; i++){
+  for(i = 0; i<scase.npatchinfo; i++){
     patchdata *patchi;
 
-    patchi = patchinfo+i;
+    patchi = scase.patchinfo+i;
     if(patchi->loaded==1)npatchloaded++;
   }
 
@@ -468,10 +468,10 @@ void UpdateShow(void){
         }
       }
     }
-    for(i=0;i<npatchinfo;i++){
+    for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi=patchinfo+i;
+      patchi=scase.patchinfo+i;
       if(patchi->loaded == 0)continue;
       if(patchi->boundary == 0 && patchi->display == 1 && patchi->shortlabel_index == slicefile_labelindex){
         sliceflag = 1;
@@ -541,10 +541,10 @@ void UpdateShow(void){
       geomi->patchactive = 0;
     }
     wall_cell_color_flag=0;
-    for(i=0;i<npatchinfo;i++){
+    for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi=patchinfo+i;
+      patchi=scase.patchinfo+i;
       if(patchi->loaded == 0)continue;
       if(patchi->boundary == 1 && patchi->display == 1 && patchi->shortlabel_index == iboundarytype){
         if(strcmp(patchi->label.shortlabel, "wc") == 0)wall_cell_color_flag = 1;
@@ -608,7 +608,7 @@ void UpdateShow(void){
 
         meshi=scase.meshescoll.meshinfo+i;
         if(meshi->patch_times==NULL)continue;
-        patchi = patchinfo+meshi->patchfilenum;
+        patchi = scase.patchinfo+meshi->patchfilenum;
         if(patchi->loaded==1&&patchi->display==1&&patchi->shortlabel_index ==iboundarytype){
           meshi->visInteriorBoundaries=1;
         }
@@ -829,10 +829,10 @@ void SynchTimes(void){
 
   /* synchronize patch times */
 
-    for(j=0;j<npatchinfo;j++){
+    for(j=0;j<scase.npatchinfo;j++){
       patchdata *patchi;
 
-      patchi = patchinfo + j;
+      patchi = scase.patchinfo + j;
       if(patchi->loaded==0)continue;
       if(patchi->structured == YES)continue;
       patchi->geom_timeslist[n] = GetDataTimeFrame(global_times[n], patchi->geom_times_map, patchi->geom_times,patchi->ngeom_times);
@@ -843,7 +843,7 @@ void SynchTimes(void){
 
       meshi=scase.meshescoll.meshinfo+j;
       if(meshi->patchfilenum<0||meshi->patch_times==NULL)continue;
-      patchi=patchinfo+meshi->patchfilenum;
+      patchi=scase.patchinfo+meshi->patchfilenum;
       if(patchi->structured == NO||patchi->loaded==0)continue;
       meshi->patch_timeslist[n] = GetDataTimeFrame(global_times[n], meshi->patch_times_map, meshi->patch_times,patchi->ntimes);
     }
@@ -954,10 +954,10 @@ int GetLoadfileinfo(FILE *stream, char *filename){
     }
 
   }
-  for(i = 0; i < npatchinfo; i++){
+  for(i = 0; i < scase.npatchinfo; i++){
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(strcmp(fileptr, patchi->file) == 0){
       fprintf(stream, "// LOADFILE\n");
       fprintf(stream, "//  %s\n", patchi->file);
@@ -1325,10 +1325,10 @@ void UpdateTimes(void){
     }
   }
   PRINT_TIMER(slice_timer, "UpdateTimes: slice");
-  for(i=0;i<npatchinfo;i++){
+  for(i=0;i<scase.npatchinfo;i++){
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(patchi->loaded==1&&patchi->structured == NO){
       MergeGlobalTimes(patchi->geom_times, patchi->ngeom_times);
     }
@@ -1342,7 +1342,7 @@ void UpdateTimes(void){
     meshi=scase.meshescoll.meshinfo+i;
     filenum =meshi->patchfilenum;
     if(filenum!=-1){
-      patchi=patchinfo+filenum;
+      patchi=scase.patchinfo+filenum;
       if(patchi->loaded==1&&patchi->structured == YES){
         MergeGlobalTimes(meshi->patch_times, patchi->ntimes);
       }
@@ -1488,10 +1488,10 @@ void UpdateTimes(void){
     if(nglobal_times>0)NewMemory((void **)&meshi->iso_timeslist,  nglobal_times*sizeof(int));
   }
 
-  for(i=0;i<npatchinfo;i++){
+  for(i=0;i<scase.npatchinfo;i++){
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     FREEMEMORY(patchi->geom_timeslist);
     if(patchi->structured == YES)continue;
     if(patchi->geom_times==NULL)continue;
@@ -1758,10 +1758,10 @@ int GetPlotStateSub(int choice){
         if(vslicei->display==0||vslicei->vslicefile_labelindex!=slicefile_labelindex)continue;
         return DYNAMIC_PLOTS;
       }
-      for(i=0;i<npatchinfo;i++){
+      for(i=0;i<scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->loaded == 0)continue;
         if(patchi->display == 1){
           if(patchi->boundary == 1 && patchi->shortlabel_index == iboundarytype)return DYNAMIC_PLOTS;
@@ -2153,10 +2153,10 @@ void OutputFrameSteps(void){
   frames_read = 0;
   total_time = 0.0;
   total_wrapup_time = 0.0;
-  for(i = 0;i < npatchinfo;i++){
+  for(i = 0;i < scase.npatchinfo;i++){
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(patchi->loaded == 0)continue;
     if(patchi->patch_filetype !=PATCH_STRUCTURED_NODE_CENTER &&  patchi->patch_filetype != PATCH_STRUCTURED_CELL_CENTER)continue;
     if(patchi->frameinfo == NULL || patchi->frameinfo->update == 0)continue;
@@ -2187,10 +2187,10 @@ void OutputFrameSteps(void){
   frames_read = 0;
   total_time = 0.0;
   total_wrapup_time = 0.0;
-  for(i = 0;i < npatchinfo;i++){
+  for(i = 0;i < scase.npatchinfo;i++){
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(patchi->loaded == 0 || patchi->patch_filetype != PATCH_GEOMETRY_BOUNDARY)continue;
     if(patchi->frameinfo == NULL || patchi->frameinfo->update == 0)continue;
     patchi->frameinfo->update = 0;
@@ -2793,14 +2793,14 @@ void OutputBounds(void){
     char *label, *unit;
     int i;
 
-    label = patchinfo[update_patch_bounds].label.longlabel;
-    unit = patchinfo[update_patch_bounds].label.unit;
-    for(i=0;i<npatchinfo;i++){
+    label = scase.patchinfo[update_patch_bounds].label.longlabel;
+    unit = scase.patchinfo[update_patch_bounds].label.unit;
+    for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
       char *labeli;
       meshdata *meshi;
 
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
       if(patchi->loaded==0)continue;
       meshi = scase.meshescoll.meshinfo+patchi->blocknumber;
       labeli = patchi->label.longlabel;

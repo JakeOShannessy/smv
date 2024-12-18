@@ -197,10 +197,10 @@ void ReadBoundINI(void){
       TrimBack(buffer2);
       buffer2ptr = TrimFront(buffer2);
       lenbuffer2 = strlen(buffer2ptr);
-      for(i = 0; i < npatchinfo; i++){
+      for(i = 0; i < scase.npatchinfo; i++){
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(lenbuffer2 != 0 &&
           strcmp(patchi->label.shortlabel, buffer2ptr) == 0 &&
           patchi->patch_filetype == filetype){
@@ -755,10 +755,10 @@ void InitOpenGL(int option){
         smoke3di->autoload=0;
       }
     }
-    for(i=0;i<npatchinfo;i++){
+    for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
 
       if(patchi->loaded==1){
         patchi->autoload=1;
@@ -959,20 +959,20 @@ void InitOpenGL(int option){
    // startup patch
 
    nstartup=0;
-   for(i=0;i<npatchinfo;i++){
+   for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
 
       if(patchi->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"PATCHAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<npatchinfo;i++){
+     for(i=0;i<scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
 
         if(patchi->loaded==1)fprintf(fileout," %i\n",patchi->seq_id);
      }
@@ -1015,10 +1015,10 @@ void InitOpenGL(int option){
 
   void GetStartupBoundary(int seq_id){
     int i;
-    for(i=0;i<npatchinfo;i++){
+    for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
       if(patchi->seq_id==seq_id){
         patchi->autoload=1;
         return;
@@ -1212,10 +1212,10 @@ void InitOpenGL(int option){
       if(smoke3di->autoload==0&&smoke3di->loaded==1)ReadSmoke3D(ALL_SMOKE_FRAMES, i, UNLOAD, FIRST_TIME, &errorcode);
       if(smoke3di->autoload==1)ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
     }
-    for(i=0;i<npatchinfo;i++){
+    for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
       if(patchi->autoload==0&&patchi->loaded==1)ReadBoundary(i,UNLOAD,&errorcode);
       if(patchi->autoload==1)ReadBoundary(i,LOAD,&errorcode);
     }

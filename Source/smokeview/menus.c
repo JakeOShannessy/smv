@@ -467,17 +467,17 @@ void GetFileSizes(void){
   }
 
   printf("\n");
-  if(npatchinfo>0){
+  if(scase.npatchinfo>0){
     patchdata **patchlist;
     float sum = 0.0, compressed_sum=0;
 
     printf("boundary files sizes: \n");
-    NewMemory((void **)&patchlist, npatchinfo*sizeof(patchdata *));
-    for(i = 0; i<npatchinfo; i++){
-      patchlist[i] = patchinfo+i;
+    NewMemory((void **)&patchlist, scase.npatchinfo*sizeof(patchdata *));
+    for(i = 0; i<scase.npatchinfo; i++){
+      patchlist[i] = scase.patchinfo+i;
     }
-    qsort((patchdata **)patchlist, (size_t)npatchinfo, sizeof(patchdata *), ComparePatchLabels);
-    for(i = 0; i<npatchinfo; i++){
+    qsort((patchdata **)patchlist, (size_t)scase.npatchinfo, sizeof(patchdata *), ComparePatchLabels);
+    for(i = 0; i<scase.npatchinfo; i++){
       patchdata *patchi, *patchim1;
       FILE_SIZE file_size, compressed_file_size;
 
@@ -495,7 +495,7 @@ void GetFileSizes(void){
         sum = file_size;
         compressed_sum = compressed_file_size;
       }
-      if(i==npatchinfo-1){
+      if(i==scase.npatchinfo-1){
         PrintFileSizes(patchi->label.longlabel,sum,compressed_sum);
       }
     }
@@ -3485,7 +3485,7 @@ void LoadUnloadMenu(int value){
     for(i = 0; i<scase.nplot3dinfo; i++){
       ReadPlot3D("",i,UNLOAD,&errorcode);
     }
-    for(i=0;i<npatchinfo;i++){
+    for(i=0;i<scase.npatchinfo;i++){
       ReadBoundary(i,UNLOAD,&errorcode);
     }
     for(i=0;i<npartinfo;i++){
@@ -3578,10 +3578,10 @@ void LoadUnloadMenu(int value){
 
     //*** reload boundary files
 
-    for(i = 0;i < npatchinfo;i++){
+    for(i = 0;i < scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
       assert(patchi->loaded==0||patchi->loaded==1);
       if(patchi->loaded == 1){
 #ifdef pp_BOUNDFRAME
@@ -4500,10 +4500,10 @@ void UnloadBoundaryMenu(int value){
     ReadBoundary(value,UNLOAD,&errorcode);
   }
   else{
-    for(i=0;i<npatchinfo;i++){
+    for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = patchinfo+i;
+      patchi = scase.patchinfo+i;
       if(patchi->filetype_label==NULL||strcmp(patchi->filetype_label, "INCLUDE_GEOM")!=0){
         ReadBoundary(i,UNLOAD,&errorcode);
       }
@@ -4692,10 +4692,10 @@ void UnloadSliceMenu(int value){
           ReadSlice("",i, ALL_FRAMES, NULL, UNLOAD,DEFER_SLICECOLOR,&errorcode);
         }
       }
-      for(i=0;i<npatchinfo;i++){
+      for(i=0;i<scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->filetype_label!=NULL&&strcmp(patchi->filetype_label, "INCLUDE_GEOM")==0){
           UnloadBoundaryMenu(i);
         }
@@ -6099,10 +6099,10 @@ void LoadBoundaryMenu(int value){
   GLUTSETCURSOR(GLUT_CURSOR_WAIT);
   if(value>=0){
     if(load_only_when_unloaded == 0){
-      for(i = 0;i < npatchinfo;i++){
+      for(i = 0;i < scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->loaded == 1){
           ReadBoundary(i, UNLOAD, &errorcode);
         }
@@ -6111,7 +6111,7 @@ void LoadBoundaryMenu(int value){
     if(scriptoutstream!=NULL){
       patchdata *patchi;
 
-      patchi = patchinfo + value;
+      patchi = scase.patchinfo + value;
       fprintf(scriptoutstream,"// LOADFILE\n");
       fprintf(scriptoutstream,"//  %s\n",patchi->file);
       fprintf(scriptoutstream, "LOADBOUNDARYM\n");
@@ -6122,7 +6122,7 @@ void LoadBoundaryMenu(int value){
       for(i = 0;i < 1;i++){
         patchdata *patchi;
 
-        patchi = patchinfo + value;
+        patchi = scase.patchinfo + value;
         IF_NOT_USEMESH_CONTINUE(patchi->loaded, patchi->blocknumber);
         THREADcontrol(compress_threads, THREAD_LOCK);
         SetLoadedPatchBounds(&value, 1);
@@ -6138,7 +6138,7 @@ void LoadBoundaryMenu(int value){
     patchdata *patchj;
 
     value = -(value + 10);
-    patchj = patchinfo + value;
+    patchj = scase.patchinfo + value;
     if(scriptoutstream!=NULL){
       fprintf(scriptoutstream,"LOADBOUNDARY\n");
       fprintf(scriptoutstream," %s\n",patchj->label.longlabel);
@@ -6153,10 +6153,10 @@ void LoadBoundaryMenu(int value){
       START_TIMER(load_time);
 
       // only perform wrapup operations when loading last boundary file
-      for(i = 0; i<npatchinfo;i++){
+      for(i = 0; i<scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo+i;
+        patchi = scase.patchinfo+i;
         patchi->finalize = 0;
         if(patchi->loaded == 1
           && load_only_when_unloaded == 0
@@ -6166,22 +6166,22 @@ void LoadBoundaryMenu(int value){
       }
       int *list=NULL, nlist=0;
 
-      NewMemory((void **)&list,npatchinfo*sizeof(int));
+      NewMemory((void **)&list,scase.npatchinfo*sizeof(int));
       nlist=0;
-      for(i = 0; i<npatchinfo;i++){
+      for(i = 0; i<scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo+i;
+        patchi = scase.patchinfo+i;
         if(InPatchList(patchj, patchi)==1){
           list[nlist++]=i;
         }
       }
       SetLoadedPatchBounds(list, nlist);
       FREEMEMORY(list);
-      for(i = npatchinfo-1; i>=0; i--){
+      for(i = scase.npatchinfo-1; i>=0; i--){
         patchdata *patchi;
 
-        patchi = patchinfo+i;
+        patchi = scase.patchinfo+i;
         IF_NOT_USEMESH_CONTINUE(patchi->loaded,patchi->blocknumber);
         if(FileExistsOrig(patchi->reg_file) == NO)continue;
         if(InPatchList(patchj, patchi)==1){
@@ -6191,10 +6191,10 @@ void LoadBoundaryMenu(int value){
           break;
         }
       }
-      for(i=0;i<npatchinfo;i++){
+      for(i=0;i<scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         IF_NOT_USEMESH_CONTINUE(patchi->loaded,patchi->blocknumber);
         if(InPatchList(patchj, patchi)==1){
           THREADcontrol(compress_threads, THREAD_LOCK);
@@ -6266,10 +6266,10 @@ void LoadBoundaryMenu(int value){
       }
       break;
     default:
-      for(i=0;i<npatchinfo;i++){
+      for(i=0;i<scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo+i;
+        patchi = scase.patchinfo+i;
         if(patchi->filetype_label==NULL||strcmp(patchi->filetype_label, "INCLUDE_GEOM")!=0){
           ReadBoundary(i, UNLOAD, &errorcode);
         }
@@ -6342,12 +6342,12 @@ void ShowBoundaryMenu(int value){
     patchdata *patchj;
     int i;
 
-    patchj = patchinfo + value-1000;
+    patchj = scase.patchinfo + value-1000;
     patchj->display = 1 - patchj->display;
-    for(i=0;i<npatchinfo;i++){
+    for(i=0;i<scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = patchinfo + i;
+      patchi = scase.patchinfo + i;
       if(patchi->loaded == 0)continue;
       if(strcmp(patchi->label.longlabel,patchj->label.longlabel)==0)patchi->display=patchj->display;
     }
@@ -6383,12 +6383,12 @@ void ShowBoundaryMenu(int value){
       else{
         val = 0;
       }
-      for(i = 0;i < npatchinfo;i++){
+      for(i = 0;i < scase.npatchinfo;i++){
         int n;
 
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->loaded == 0)continue;
         for(n = 0;n < patchi->npatches;n++){
           patchfacedata *pfi;
@@ -6410,11 +6410,11 @@ void ShowBoundaryMenu(int value){
       hide_all_interior_patch_data    = show_all_interior_patch_data;
       show_all_interior_patch_data    = 1 - show_all_interior_patch_data;
       vis_boundary_type[INTERIORwall] = show_all_interior_patch_data;
-      for(i = 0;i < npatchinfo;i++){
+      for(i = 0;i < scase.npatchinfo;i++){
         patchdata *patchi;
         int n;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->loaded == 0)continue;
         for(n = 0;n < patchi->npatches;n++){
           patchfacedata *pfi;
@@ -6436,12 +6436,12 @@ void ShowBoundaryMenu(int value){
     if(value==INI_EXTERIORwallmenu){
       int i;
 
-      for(i = 0;i < npatchinfo;i++){
+      for(i = 0;i < scase.npatchinfo;i++){
         int n;
 
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->loaded == 0)continue;
         for(n = 0;n < patchi->npatches;n++){
           patchfacedata *pfi;
@@ -6457,11 +6457,11 @@ void ShowBoundaryMenu(int value){
       int i;
 
       value = -(value + 2); /* map xxxwallmenu to xxxwall */
-      for(i = 0;i < npatchinfo;i++){
+      for(i = 0;i < scase.npatchinfo;i++){
         patchdata *patchi;
         int n;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->loaded == 0)continue;
         for(n = 0;n < patchi->npatches;n++){
           patchfacedata *pfi;
@@ -7753,11 +7753,11 @@ int GetNTotalVents(void){
 int IsBoundaryType(int type){
   int i;
 
-  for(i = 0; i < npatchinfo; i++){
+  for(i = 0; i < scase.npatchinfo; i++){
     patchdata *patchi;
     int n;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     for(n = 0; n < patchi->npatches; n++){
       patchfacedata *pfi;
 
@@ -7799,10 +7799,10 @@ void IsoLoadState(isodata *isoi, int  *load_state){
 void PatchLoadState(patchdata *patchi, int  *load_state){
   int i, total=0, loaded=0;
 
-  for(i=0; i<npatchinfo; i++){
+  for(i=0; i<scase.npatchinfo; i++){
     patchdata *patchii;
 
-    patchii = patchinfo + i;
+    patchii = scase.patchinfo + i;
     if(strcmp(patchi->label.longlabel, patchii->label.longlabel)!=0)continue;
     total++;
     if(patchii->loaded==1)loaded++;
@@ -7976,11 +7976,11 @@ void InitShowMultiSliceMenu(int *showmultislicemenuptr, int showhideslicemenu, i
       glutAddMenuEntry(menulabel, i);
     }
     // loaded geometry slice entries
-    for(ii = 0; ii<npatchinfo; ii++){
+    for(ii = 0; ii<scase.npatchinfo; ii++){
       patchdata *patchi;
 
       i = patchorderindex[ii];
-      patchi = patchinfo+i;
+      patchi = scase.patchinfo+i;
       if(patchi->loaded==1&&patchi->filetype_label!=NULL&&strcmp(patchi->filetype_label, "INCLUDE_GEOM")==0){
         if(patchim1==NULL||strcmp(patchi->label.longlabel, patchim1->label.longlabel)!=0){
           char mlabel[128];
@@ -8041,10 +8041,10 @@ void InitUnloadSliceMenu(int *unloadslicemenuptr){
       glutAddMenuEntry(menulabel,sextras.sliceorderindex[i]);
     }
   }
-  for(i = 0;i<npatchinfo;i++){
+  for(i = 0;i<scase.npatchinfo;i++){
     patchdata *patchi;
 
-    patchi = patchinfo+i;
+    patchi = scase.patchinfo+i;
     if(patchi->loaded==1&&patchi->filetype_label!=NULL&&strcmp(patchi->filetype_label, "INCLUDE_GEOM")==0){
       glutAddMenuEntry(patchi->label.longlabel, -3-i);
       geom_slice_loaded++;
@@ -8129,10 +8129,10 @@ void InitUnloadMultiSliceMenu(int *unloadmultislicemenuptr){
       glutAddMenuEntry(mslicei->menulabel2, i);
     }
   }
-  for(i = 0; i<npatchinfo; i++){
+  for(i = 0; i<scase.npatchinfo; i++){
     patchdata *patchi;
 
-    patchi = patchinfo+i;
+    patchi = scase.patchinfo+i;
     if(patchi->loaded==1&&patchi->filetype_label!=NULL&&strcmp(patchi->filetype_label, "INCLUDE_GEOM")==0){
       glutAddMenuEntry(patchi->label.longlabel, -3-i);
     }
@@ -8499,16 +8499,16 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
     int ii;
 
     iloadsubpatchmenu_s = 0;
-    for(ii = 0;ii<npatchinfo;ii++){
+    for(ii = 0;ii<scase.npatchinfo;ii++){
       int im1;
       patchdata *patchi, *patchim1;
 
       i = patchorderindex[ii];
       if(ii>0){
         im1 = patchorderindex[ii-1];
-        patchim1 = patchinfo+im1;
+        patchim1 = scase.patchinfo+im1;
       }
-      patchi = patchinfo+i;
+      patchi = scase.patchinfo+i;
       if(ii==0||strcmp(patchi->menulabel_base, patchim1->menulabel_base)!=0){
         if(nsubpatchmenus_s[iloadsubpatchmenu_s]>0){
           GLUTADDSUBMENU(patchi->menulabel_base, loadsubpatchmenu_s[iloadsubpatchmenu_s]);
@@ -8821,7 +8821,7 @@ void InitPatchSubMenus(int **loadsubpatchmenu_sptr, int **nsubpatchmenus_sptr){
 
   have_geom_slice_menus=0;
   nloadsubpatchmenu_s = 0;
-  for(ii = 0;ii<npatchinfo;ii++){
+  for(ii = 0;ii<scase.npatchinfo;ii++){
     int im1;
     patchdata *patchi, *patchim1;
     int i;
@@ -8829,9 +8829,9 @@ void InitPatchSubMenus(int **loadsubpatchmenu_sptr, int **nsubpatchmenus_sptr){
     i = patchorderindex[ii];
     if(ii>0){
       im1 = patchorderindex[ii-1];
-      patchim1 = patchinfo+im1;
+      patchim1 = scase.patchinfo+im1;
     }
-    patchi = patchinfo+i;
+    patchi = scase.patchinfo+i;
     if(ii==0||strcmp(patchi->menulabel_base, patchim1->menulabel_base)!=0){
       nloadsubpatchmenu_s++;
     }
@@ -8854,16 +8854,16 @@ void InitPatchSubMenus(int **loadsubpatchmenu_sptr, int **nsubpatchmenus_sptr){
   }
 
   iloadsubpatchmenu_s = 0;
-  for(ii = 0;ii<npatchinfo;ii++){
+  for(ii = 0;ii<scase.npatchinfo;ii++){
     int im1, i;
     patchdata *patchi, *patchim1;
 
     i = patchorderindex[ii];
     if(ii>0){
       im1 = patchorderindex[ii-1];
-      patchim1 = patchinfo+im1;
+      patchim1 = scase.patchinfo+im1;
     }
-    patchi = patchinfo+i;
+    patchi = scase.patchinfo+i;
     if(ii==0||strcmp(patchi->menulabel_base, patchim1->menulabel_base)!=0){
       CREATEMENU(loadsubpatchmenu_s[iloadsubpatchmenu_s], LoadBoundaryMenu);
       iloadsubpatchmenu_s++;
@@ -9127,10 +9127,10 @@ static int menu_count=0;
   }
 
   patchgeom_slice_showhide = 0;
-  for(i=0;i<npatchinfo;i++){
+  for(i=0;i<scase.npatchinfo;i++){
     patchdata *patchi;
 
-    patchi = patchinfo+i;
+    patchi = scase.patchinfo+i;
     if(patchi->loaded==1){
       if(patchi->filetype_label!=NULL&&strcmp(patchi->filetype_label, "INCLUDE_GEOM")==0){
         patchgeom_slice_showhide = 1;
@@ -9139,7 +9139,7 @@ static int menu_count=0;
   }
 
 /* --------------------------------patch menu -------------------------- */
-  if(npatchinfo>0){
+  if(scase.npatchinfo>0){
     int ii;
     char menulabel[1024];
     int next_total=0;
@@ -9196,10 +9196,10 @@ static int menu_count=0;
     if(npatchloaded>0){
       patchdata *patchi=NULL, *patchim1=NULL;
 
-      for(ii = 0;ii<npatchinfo;ii++){
+      for(ii = 0;ii<scase.npatchinfo;ii++){
 
         i = patchorderindex[ii];
-        patchi = patchinfo+i;
+        patchi = scase.patchinfo+i;
         if(patchi->loaded==0)continue;
         if(patchi->filetype_label!=NULL&&strcmp(patchi->filetype_label, "INCLUDE_GEOM")==0)continue;
         if(ii>0){
@@ -9237,19 +9237,19 @@ static int menu_count=0;
     {
       int local_do_threshold=0;
 
-      for(i = 0;i<npatchinfo;i++){
+      for(i = 0;i<scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = patchinfo+i;
+        patchi = scase.patchinfo+i;
         if(patchi->loaded==0)continue;
         if(patchi->filetype_label!=NULL&&strcmp(patchi->filetype_label, "INCLUDE_GEOM")==0)continue;
         npatchloaded++;
       }
-      for(ii=0;ii<npatchinfo;ii++){
+      for(ii=0;ii<scase.npatchinfo;ii++){
         patchdata *patchi;
 
         i = patchorderindex[ii];
-        patchi = patchinfo+i;
+        patchi = scase.patchinfo+i;
         if(patchi->loaded==0)continue;
         if(activate_threshold==1){
           if(
@@ -11652,7 +11652,7 @@ static int menu_count=0;
   CREATEMENU(filesdialogmenu, DialogMenu);
   glutAddMenuEntry(_("Auto load data files..."), DIALOG_AUTOLOAD);
 #ifdef pp_COMPRESS
-  if(smokezippath!=NULL&&(npatchinfo>0||scase.smoke3dcoll.nsmoke3dinfo>0||scase.slicecoll.nsliceinfo>0)){
+  if(smokezippath!=NULL&&(scase.npatchinfo>0||scase.smoke3dcoll.nsmoke3dinfo>0||scase.slicecoll.nsliceinfo>0)){
 #ifdef pp_DIALOG_SHORTCUTS
     glutAddMenuEntry(_("Compress data files...  ALT z"), DIALOG_SMOKEZIP);
 #else
@@ -12500,13 +12500,13 @@ static int menu_count=0;
 
 /* --------------------------------load patch menu -------------------------- */
 
-    if(npatchinfo>0){
+    if(scase.npatchinfo>0){
       int ii;
 
       nloadpatchsubmenus=0;
 
       if(scase.meshescoll.nmeshes>1&&loadpatchsubmenus==NULL){
-        NewMemory((void **)&loadpatchsubmenus,npatchinfo*sizeof(int));
+        NewMemory((void **)&loadpatchsubmenus,scase.npatchinfo*sizeof(int));
       }
 
       if(scase.meshescoll.nmeshes>1){
@@ -12517,14 +12517,14 @@ static int menu_count=0;
         CREATEMENU(loadpatchmenu,LoadBoundaryMenu);
       }
 
-      for(ii=0;ii<npatchinfo;ii++){
+      for(ii=0;ii<scase.npatchinfo;ii++){
         patchdata *patchim1, *patchi;
         char menulabel[1024];
 
         i = patchorderindex[ii];
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(ii>0){
-          patchim1 = patchinfo + patchorderindex[ii-1];
+          patchim1 = scase.patchinfo + patchorderindex[ii-1];
           if(scase.meshescoll.nmeshes>1&&strcmp(patchim1->label.longlabel,patchi->label.longlabel)!=0){
             CREATEMENU(loadpatchsubmenus[nloadpatchsubmenus],LoadBoundaryMenu);
             nloadpatchsubmenus++;
@@ -12570,16 +12570,16 @@ static int menu_count=0;
 // count patch submenus
 
         nloadsubpatchmenu_b=0;
-        for(ii=0;ii<npatchinfo;ii++){
+        for(ii=0;ii<scase.npatchinfo;ii++){
           int im1;
           patchdata *patchi, *patchim1;
 
           i = patchorderindex[ii];
           if(ii>0){
             im1 = patchorderindex[ii-1];
-            patchim1=patchinfo + im1;
+            patchim1=scase.patchinfo + im1;
           }
-          patchi = patchinfo + i;
+          patchi = scase.patchinfo + i;
           if(ii==0||strcmp(patchi->menulabel_base,patchim1->menulabel_base)!=0){
             nloadsubpatchmenu_b++;
           }
@@ -12597,16 +12597,16 @@ static int menu_count=0;
         }
 
         iloadsubpatchmenu_b=0;
-        for(ii=0;ii<npatchinfo;ii++){
+        for(ii=0;ii<scase.npatchinfo;ii++){
           int im1;
           patchdata *patchi, *patchim1;
 
           i = patchorderindex[ii];
           if(ii>0){
             im1 = patchorderindex[ii-1];
-            patchim1=patchinfo + im1;
+            patchim1=scase.patchinfo + im1;
           }
-          patchi = patchinfo + i;
+          patchi = scase.patchinfo + i;
           if(ii==0||strcmp(patchi->menulabel_base,patchim1->menulabel_base)!=0){
             CREATEMENU(loadsubpatchmenu_b[iloadsubpatchmenu_b],LoadBoundaryMenu);
             iloadsubpatchmenu_b++;
@@ -12629,16 +12629,16 @@ static int menu_count=0;
 
         CREATEMENU(loadpatchmenu,LoadBoundaryMenu);
         iloadsubpatchmenu_b=0;
-        for(ii=0;ii<npatchinfo;ii++){
+        for(ii=0;ii<scase.npatchinfo;ii++){
           int im1;
           patchdata *patchi, *patchim1;
 
           i = patchorderindex[ii];
           if(ii>0){
             im1 = patchorderindex[ii-1];
-            patchim1=patchinfo + im1;
+            patchim1=scase.patchinfo + im1;
           }
-          patchi = patchinfo + i;
+          patchi = scase.patchinfo + i;
           if(ii==0||strcmp(patchi->menulabel_base,patchim1->menulabel_base)!=0){
             int nsubmenus;
 
@@ -12779,7 +12779,7 @@ static int menu_count=0;
 /* -------------------------------- compress menu -------------------------- */
 
 #ifdef pp_COMPRESS
-    if(smokezippath != NULL && (npatchinfo > 0 || scase.smoke3dcoll.nsmoke3dinfo > 0 || scase.slicecoll.nsliceinfo > 0)){
+    if(smokezippath != NULL && (scase.npatchinfo > 0 || scase.smoke3dcoll.nsmoke3dinfo > 0 || scase.slicecoll.nsliceinfo > 0)){
     CREATEMENU(compressmenu,CompressMenu);
     glutAddMenuEntry(_("Compression options"),MENU_DUMMY);  // -c
     if(overwrite_all==1){
@@ -13054,7 +13054,7 @@ static int menu_count=0;
 
       // boundary
 
-      if(npatchinfo>0){
+      if(scase.npatchinfo>0){
         strcpy(loadmenulabel,"Boundary");
         if(tload_step > 1){
           sprintf(steplabel,"/Skip %i",tload_skip);
@@ -13094,7 +13094,7 @@ static int menu_count=0;
       GLUTADDSUBMENU(_("Configuration files"),smokeviewinimenu);
       GLUTADDSUBMENU(_("Scripts"),scriptmenu);
 #ifdef pp_COMPRESS
-      if(smokezippath!=NULL&&(npatchinfo>0||scase.smoke3dcoll.nsmoke3dinfo>0||scase.slicecoll.nsliceinfo>0)){
+      if(smokezippath!=NULL&&(scase.npatchinfo>0||scase.smoke3dcoll.nsmoke3dinfo>0||scase.slicecoll.nsliceinfo>0)){
         GLUTADDSUBMENU(_("Compression"),compressmenu);
       }
 #endif
