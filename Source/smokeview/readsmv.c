@@ -5325,12 +5325,12 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
       if(parti->file==NULL)continue;
       sscanf(buffer, "%i", &iclass);
       if(iclass<1)iclass = 1;
-      if(iclass>npartclassinfo)iclass = npartclassinfo;
+      if(iclass>scase.npartclassinfo)iclass = scase.npartclassinfo;
       ic = 0;
-      for(iii = 0; iii<npartclassinfo; iii++){
+      for(iii = 0; iii<scase.npartclassinfo; iii++){
         partclassdata *pci;
 
-        pci = partclassinfo+iii;
+        pci = scase.partclassinfo+iii;
         if(iclass-1==ic){
           parti->partclassptr[i] = pci;
           break;
@@ -5344,7 +5344,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
 
   if(parti->file!=NULL&&parti->nclasses==0){
     NewMemory((void **)&parti->partclassptr, sizeof(partclassdata *));
-    parti->partclassptr[i] = partclassinfo+parti->nclasses;
+    parti->partclassptr[i] = scase.partclassinfo+parti->nclasses;
   }
   if(parse_opts.fast_startup==1||(parti->file!=NULL&&FILE_EXISTS_CASEDIR(parti->file)==YES)){
     ipart++;
@@ -7137,13 +7137,13 @@ int ReadSMV_Init(){
 
   // free memory for particle class
 
-  if(partclassinfo!=NULL){
+  if(scase.partclassinfo!=NULL){
     int j;
 
-    for(i=0;i<npartclassinfo+1;i++){
+    for(i=0;i<scase.npartclassinfo+1;i++){
       partclassdata *partclassi;
 
-      partclassi = partclassinfo + i;
+      partclassi = scase.partclassinfo + i;
       FREEMEMORY(partclassi->name);
       if(partclassi->ntypes>0){
         for(j=0;j<partclassi->ntypes;j++){
@@ -7156,9 +7156,9 @@ int ReadSMV_Init(){
         partclassi->ntypes=0;
       }
     }
-    FREEMEMORY(partclassinfo);
+    FREEMEMORY(scase.partclassinfo);
   }
-  npartclassinfo=0;
+  scase.npartclassinfo=0;
 
   if(scase.devicecoll.ndeviceinfo>0){
     for(i=0;i<scase.devicecoll.ndeviceinfo;i++){
@@ -7579,7 +7579,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       continue;
     }
     if(MatchSMV(buffer,"CLASS_OF_PARTICLES") == 1){
-      npartclassinfo++;
+      scase.npartclassinfo++;
       continue;
     }
     if(MatchSMV(buffer,"AUTOTERRAIN") == 1){
@@ -7967,16 +7967,16 @@ int ReadSMV_Parse(bufferstreamdata *stream){
    NewMemory((void **)&sextras.terraininfo,sextras.nterraininfo*sizeof(terraindata));
    sextras.nterraininfo=0;
  }
- if(npartclassinfo>=0){
+ if(scase.npartclassinfo>=0){
    float rgb_class[4];
    partclassdata *partclassi;
    size_t len;
 
-   NewMemory((void **)&partclassinfo,(npartclassinfo+1)*sizeof(partclassdata));
+   NewMemory((void **)&scase.partclassinfo,(scase.npartclassinfo+1)*sizeof(partclassdata));
 
    // define a dummy class
 
-   partclassi = partclassinfo + npartclassinfo;
+   partclassi = scase.partclassinfo + scase.npartclassinfo;
    strcpy(buffer,"Default");
    TrimBack(buffer);
    len=strlen(buffer);
@@ -8000,7 +8000,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
    NewMemory((void **)&partclassi->labels,sizeof(flowlabels));
    CreateNullLabel(partclassi->labels);
 
-   npartclassinfo=0;
+   scase.npartclassinfo=0;
 
 
  }
@@ -8747,7 +8747,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       char *prop_id;
       size_t len;
 
-      partclassi = partclassinfo + npartclassinfo;
+      partclassi = scase.partclassinfo + scase.npartclassinfo;
       FGETS(buffer,255,stream);
 
       GetLabels(buffer,&device_ptr,&prop_id);
@@ -8880,7 +8880,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         partclassi->azimuth=azimuth;
         partclassi->elevation=elevation;
       }
-      npartclassinfo++;
+      scase.npartclassinfo++;
       continue;
     }
 
@@ -10016,7 +10016,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   nvents=0;
   itrnx=0, itrny=0, itrnz=0, igrid=0, ipdim=0, iobst=0, ivent=0, icvent=0;
   ioffset=0;
-  npartclassinfo=0;
+  scase.npartclassinfo=0;
   if(sextras.noffset==0)ioffset=1;
   PRINT_TIMER(timer_readsmv, "pass 3");
 
@@ -10069,14 +10069,14 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       char *device_ptr;
       char *prop_id;
 
-      partclassi = partclassinfo + npartclassinfo;
+      partclassi = scase.partclassinfo + scase.npartclassinfo;
       FGETS(buffer,255,stream);
 
       GetLabels(buffer,&device_ptr,&prop_id);
       partclassi->prop=GetPropID(prop_id);
       UpdatePartClassDepend(partclassi);
 
-      npartclassinfo++;
+      scase.npartclassinfo++;
       continue;
     }
 
@@ -11813,10 +11813,10 @@ int ReadSMV_Configure(){
   /* compute global bar's and box's */
 
 
-  for(i=0;i<npartclassinfo;i++){
+  for(i=0;i<scase.npartclassinfo;i++){
     partclassdata *partclassi;
 
-    partclassi = partclassinfo + i;
+    partclassi = scase.partclassinfo + i;
 
     if(partclassi->device_name!=NULL){
         float length, azimuth, elevation;
@@ -14037,7 +14037,7 @@ int ReadIni2(char *inifile, int localfile){
         TrimBack(buffer);
         token = strtok(buffer, " ");
         j = 0;
-        while(token != NULL&&j<npartclassinfo){
+        while(token != NULL&&j<scase.npartclassinfo){
           int visval;
 
           sscanf(token, "%i", &visval);
@@ -15741,10 +15741,10 @@ int ReadIni2(char *inifile, int localfile){
           propi->smokeview_id = propi->smokeview_ids[val];
           propi->smv_object = propi->smv_objects[val];
         }
-        for(i = 0; i<npartclassinfo; i++){
+        for(i = 0; i<scase.npartclassinfo; i++){
           partclassdata *partclassi;
 
-          partclassi = partclassinfo + i;
+          partclassi = scase.partclassinfo + i;
           UpdatePartClassDepend(partclassi);
 
         }
@@ -15760,9 +15760,9 @@ int ReadIni2(char *inifile, int localfile){
         for(j = 0; j<ntemp; j++){
           partclassdata *partclassj;
 
-          if(j>npartclassinfo)break;
+          if(j>scase.npartclassinfo)break;
 
-          partclassj = partclassinfo + j;
+          partclassj = scase.partclassinfo + j;
           fgets(buffer, 255, stream);
           sscanf(buffer, "%i", &partclassj->vis_type);
         }
@@ -16288,7 +16288,7 @@ void WriteIniLocal(FILE *fileout){
 
       propi = part5propinfo + i;
       fprintf(fileout, " ");
-      for(j = 0; j < npartclassinfo; j++){
+      for(j = 0; j < scase.npartclassinfo; j++){
         fprintf(fileout, " %i ", (int)propi->class_vis[j]);
       }
       fprintf(fileout, "\n");
@@ -16306,15 +16306,15 @@ void WriteIniLocal(FILE *fileout){
 
   }
 
-  if(npartclassinfo > 0){
+  if(scase.npartclassinfo > 0){
     int j;
 
     fprintf(fileout, "partclassdataVIS\n");
-    fprintf(fileout, " %i\n", npartclassinfo);
-    for(j = 0; j<npartclassinfo; j++){
+    fprintf(fileout, " %i\n", scase.npartclassinfo);
+    for(j = 0; j<scase.npartclassinfo; j++){
       partclassdata *partclassj;
 
-      partclassj = partclassinfo + j;
+      partclassj = scase.partclassinfo + j;
       fprintf(fileout, " %i\n", partclassj->vis_type);
     }
   }

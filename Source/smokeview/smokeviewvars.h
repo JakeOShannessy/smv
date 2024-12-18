@@ -2167,9 +2167,7 @@ SVEXTERN float streak_rvalue[8]={0.25,0.5,1.0,2.0,4.0,8.0,16.0,32.0};
 SVEXTERN float streak_rvalue[8];
 #endif
 SVEXTERN int SVDECL(streak_index,-1), SVDECL(update_streaks,0);
-SVEXTERN float SVDECL(float_streak5value,0.0);
-SVEXTERN partclassdata SVDECL(*partclassinfo,NULL);
-SVEXTERN int SVDECL(npartclassinfo,0);
+SVEXTERN float SVDECL(float_streak5value,0.0);;
 SVEXTERN partpropdata SVDECL(*part5propinfo,NULL), SVDECL(*current_property,NULL);
 SVEXTERN int SVDECL(npart5prop,0),ipart5prop,ipart5prop_old;
 SVEXTERN int SVDECL(global_prop_index,-1);

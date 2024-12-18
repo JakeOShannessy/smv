@@ -6036,13 +6036,13 @@ void UpdateObjectUsed(void){
     int j;
 
     partpropi = part5propinfo+i;
-    for(j = 0; j<npartclassinfo; j++){
+    for(j = 0; j<scase.npartclassinfo; j++){
       partclassdata *partclassj;
       propdata *propi;
       int jj;
 
       if(partpropi->class_present[j]==0)continue;
-      partclassj = partclassinfo+j;
+      partclassj = scase.partclassinfo+j;
       propi = partclassj->prop;
       if(propi==NULL)continue;
       for(jj = 0; jj<propi->nsmokeview_ids; jj++){

@@ -1539,11 +1539,11 @@ void Partclasstype(const char *part_type) {
 
     propi = part5propinfo + i;
     if(propi->display == 0) continue;
-    for(j = 0; j < npartclassinfo; j++) {
+    for(j = 0; j < scase.npartclassinfo; j++) {
       partclassdata *partclassj;
 
       if(propi->class_present[j] == 0) continue;
-      partclassj = partclassinfo + j;
+      partclassj = scase.partclassinfo + j;
       if(strcmp(partclassj->name, part_type) == 0) {
         ParticlePropShowMenu(-10 - j);
         count++;
@@ -3663,7 +3663,7 @@ int SetCompressauto(int v) {
 //     trim_back(buffer);
 //     token = strtok(buffer, " ");
 //     j = 0;
-//     while(token != NULL&&j<npartclassinfo){
+//     while(token != NULL&&j<scase.npartclassinfo){
 //       int visval;
 
 //       sscanf(token, "%i", &visval);
@@ -3710,10 +3710,10 @@ int SetPropindex(int nvals, int *vals) {
     propi->smokeview_id = propi->smokeview_ids[val];
     propi->smv_object = propi->smv_objects[val];
   }
-  for(size_t i = 0; i < npartclassinfo; i++) {
+  for(size_t i = 0; i < scase.npartclassinfo; i++) {
     partclassdata *partclassi;
 
-    partclassi = partclassinfo + i;
+    partclassi = scase.partclassinfo + i;
     UpdatePartClassDepend(partclassi);
   }
   return 0;

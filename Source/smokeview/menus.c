@@ -3967,10 +3967,10 @@ void PropMenu(int value){
         propi->vars_indep, propi->nvars_indep,
         propi->vars_indep_index);
 
-      for(i = 0;i < npartclassinfo;i++){
+      for(i = 0;i < scase.npartclassinfo;i++){
         partclassdata *partclassi;
 
-        partclassi = partclassinfo + i;
+        partclassi = scase.partclassinfo + i;
         UpdatePartClassDepend(partclassi);
 
       }
@@ -4032,7 +4032,7 @@ void ParticlePropShowMenu(int value){
       int i;
 
       vis = current_property->class_vis;
-      for(i=0;i< npartclassinfo;i++){
+      for(i=0;i< scase.npartclassinfo;i++){
         vis[i]=1;
       }
     }
@@ -4043,7 +4043,7 @@ void ParticlePropShowMenu(int value){
       int i;
 
       vis = current_property->class_vis;
-      for(i=0;i< npartclassinfo;i++){
+      for(i=0;i< scase.npartclassinfo;i++){
         vis[i]=0;
       }
     }
@@ -4093,7 +4093,7 @@ void ParticlePropShowMenu(int value){
     else{
       partclassdata *partclassj;
 
-      partclassj = partclassinfo + iclass;
+      partclassj = scase.partclassinfo + iclass;
       partclassj->vis_type=vistype;
       PropMenu(propvalue);
     }
@@ -10578,7 +10578,7 @@ static int menu_count=0;
 
   /* --------------------------------particle class show menu -------------------------- */
 
-  if(npartclassinfo>0){
+  if(scase.npartclassinfo>0){
     int ntypes;
 
     CREATEMENU(particlestreakshowmenu,ParticleStreakShowMenu);
@@ -10610,8 +10610,8 @@ static int menu_count=0;
 
 // allocate memory for particle property sub-menus
 
-    if(npart5prop*npartclassinfo>0){
-      NewMemory((void **)&particlepropshowsubmenu,npart5prop*npartclassinfo*sizeof(int));
+    if(npart5prop*scase.npartclassinfo>0){
+      NewMemory((void **)&particlepropshowsubmenu,npart5prop*scase.npartclassinfo*sizeof(int));
     }
 
       ntypes=0;
@@ -10621,12 +10621,12 @@ static int menu_count=0;
 
         propi = part5propinfo + i;
         if(propi->display==0)continue;
-        for(j=0;j<npartclassinfo;j++){
+        for(j=0;j<scase.npartclassinfo;j++){
           partclassdata *partclassj;
           char menulabel[1024];
 
           if(propi->class_present[j]==0)continue;
-          partclassj = partclassinfo + j;
+          partclassj = scase.partclassinfo + j;
           CREATEMENU(particlepropshowsubmenu[ntypes],ParticlePropShowMenu);
           ntypes++;
           if(propi->class_vis[j]==1){
@@ -10742,12 +10742,12 @@ static int menu_count=0;
 
         propi = part5propinfo + i;
         if(propi->display==0)continue;
-        for(j=0;j<npartclassinfo;j++){
+        for(j=0;j<scase.npartclassinfo;j++){
           partclassdata *partclassj;
           char menulabel[1024];
 
           if(propi->class_present[j]==0)continue;
-          partclassj = partclassinfo + j;
+          partclassj = scase.partclassinfo + j;
           ntypes++;
           if(propi->class_vis[j]==1){
             strcpy(menulabel,"  *");

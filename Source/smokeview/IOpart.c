@@ -232,7 +232,7 @@ void DrawPart(const partdata *parti, int mode){
         int show_default;
 
         partclassi = parti->partclassptr[i];
-        partclass_index = partclassi - partclassinfo;
+        partclass_index = partclassi - scase.partclassinfo;
 
         vistype = current_property->class_present[partclass_index];
         class_vis = current_property->class_vis[partclass_index];
@@ -484,7 +484,7 @@ void DrawPart(const partdata *parti, int mode){
       int partclass_index, itype, vistype, class_vis;
 
       partclassi = parti->partclassptr[i];
-      partclass_index = partclassi - partclassinfo;
+      partclass_index = partclassi - scase.partclassinfo;
 
       vistype = current_property->class_present[partclass_index];
       class_vis = current_property->class_vis[partclass_index];
@@ -1458,9 +1458,9 @@ int GetPartPropIndex(int class_i, int class_i_j){
   partclassdata *partclassi;
   flowlabels *labels, *labelj;
 
-  assert(class_i>=0&&class_i<npartclassinfo);
-  class_i = CLAMP(class_i,0, npartclassinfo-1);
-  partclassi = partclassinfo+class_i;
+  assert(class_i>=0&&class_i<scase.npartclassinfo);
+  class_i = CLAMP(class_i,0, scase.npartclassinfo-1);
+  partclassi = scase.partclassinfo+class_i;
 
   labels = partclassi->labels;
   assert(class_i_j>=0&&class_i_j<partclassi->ntypes);
@@ -1513,10 +1513,10 @@ void InitPartProp(void){
 
   // 1.  count max number of distinct variables
 
-  for(i=0;i<npartclassinfo;i++){
+  for(i=0;i<scase.npartclassinfo;i++){
     partclassdata *partclassi;
 
-    partclassi = partclassinfo + i;
+    partclassi = scase.partclassinfo + i;
     npart5prop+=(partclassi->ntypes-1);  // don't include first type which is hidden
   }
 
@@ -1526,10 +1526,10 @@ void InitPartProp(void){
     NewMemory((void **)&part5propinfo,npart5prop*sizeof(partpropdata));
     npart5prop=0;
 
-    for(i=0;i<npartclassinfo;i++){
+    for(i=0;i<scase.npartclassinfo;i++){
       partclassdata *partclassi;
 
-      partclassi = partclassinfo + i;
+      partclassi = scase.partclassinfo + i;
       for(j=1;j<partclassi->ntypes;j++){ // skip over first type which is hidden
         flowlabels *flowlabel;
         int define_it;
@@ -1587,19 +1587,19 @@ void InitPartProp(void){
     propi->class_present=NULL;
     propi->class_vis=NULL;
     propi->class_types=NULL;
-    NewMemory((void **)&propi->class_types,npartclassinfo*sizeof(unsigned int));
-    NewMemory((void **)&propi->class_present,npartclassinfo*sizeof(unsigned char));
-    NewMemory((void **)&propi->class_vis,npartclassinfo*sizeof(unsigned char));
-    for(ii=0;ii<npartclassinfo;ii++){
+    NewMemory((void **)&propi->class_types,scase.npartclassinfo*sizeof(unsigned int));
+    NewMemory((void **)&propi->class_present,scase.npartclassinfo*sizeof(unsigned char));
+    NewMemory((void **)&propi->class_vis,scase.npartclassinfo*sizeof(unsigned char));
+    for(ii=0;ii<scase.npartclassinfo;ii++){
       propi->class_vis[ii]=1;
       propi->class_present[ii]=0;
       propi->class_types[ii]=0;
     }
   }
-  for(i=0;i<npartclassinfo;i++){
+  for(i=0;i<scase.npartclassinfo;i++){
     partclassdata *partclassi;
 
-    partclassi = partclassinfo + i;
+    partclassi = scase.partclassinfo + i;
     for(j=1;j<partclassi->ntypes;j++){
       flowlabels *flowlabel;
       partpropdata *classprop;

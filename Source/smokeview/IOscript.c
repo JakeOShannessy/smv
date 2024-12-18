@@ -3168,11 +3168,11 @@ void ScriptPartClassType(scriptdata *scripti){
 
     propi = part5propinfo + i;
     if(propi->display==0)continue;
-    for(j=0;j<npartclassinfo;j++){
+    for(j=0;j<scase.npartclassinfo;j++){
       partclassdata *partclassj;
 
       if(propi->class_present[j]==0)continue;
-      partclassj = partclassinfo + j;
+      partclassj = scase.partclassinfo + j;
       if(strcmp(partclassj->name,scripti->cval)==0){
         ParticlePropShowMenu(-10-j);
         count++;

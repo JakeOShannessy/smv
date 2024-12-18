@@ -95,7 +95,7 @@ void GetPartVerts(int option, int option2, int *offset,
         zpos = datacopy->zpos;
 
         partclassi = parti->partclassptr[i];
-        partclass_index = partclassi - partclassinfo;
+        partclass_index = partclassi - scase.partclassinfo;
         itype = current_property->class_types[partclass_index];
 
         for(j=0;j<datacopy->npoints_file;j++){
