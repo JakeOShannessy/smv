@@ -247,10 +247,8 @@ typedef struct _meshdata {
   int n_imap, n_jmap, n_kmap;
 
   unsigned char *boundary_mask;
-  char *c_iblank_node0, *c_iblank_cell0, *c_iblank_x0, *c_iblank_y0,
-      *c_iblank_z0;
-  char *c_iblank_node0_temp, *c_iblank_cell0_temp, *c_iblank_x0_temp,
-      *c_iblank_y0_temp, *c_iblank_z0_temp;
+  char *c_iblank_node0,      *c_iblank_cell0,      *c_iblank_x0,      *c_iblank_y0,      *c_iblank_z0;
+  char *c_iblank_node0_temp, *c_iblank_cell0_temp, *c_iblank_x0_temp, *c_iblank_y0_temp, *c_iblank_z0_temp;
   char *c_iblank_node_html;
   char *c_iblank_node_html_temp;
   float *f_iblank_cell0;
@@ -259,9 +257,8 @@ typedef struct _meshdata {
   float *block_zdist0;
   float *opacity_adjustments;
 
-  char *c_iblank_node, *c_iblank_cell, *c_iblank_x, *c_iblank_y, *c_iblank_z;
-  char *c_iblank_node_temp, *c_iblank_cell_temp, *c_iblank_x_temp,
-      *c_iblank_y_temp, *c_iblank_z_temp;
+  char *c_iblank_node,      *c_iblank_cell,      *c_iblank_x,      *c_iblank_y,      *c_iblank_z;
+  char *c_iblank_node_temp, *c_iblank_cell_temp, *c_iblank_x_temp, *c_iblank_y_temp, *c_iblank_z_temp;
   float *f_iblank_cell;
   float *f_iblank_cell_temp;
   char *c_iblank_embed;
@@ -307,7 +304,7 @@ typedef struct _meshdata {
   unsigned char *iso_times_map;
   int *iso_timeslist;
   int iso_itime;
-  int smokedir, smokedir_old;
+  int smokedir,smokedir_old;
   float dxDdx, dyDdx, dzDdx, dxyDdx, dxzDdx, dyzDdx, dxyz_orig[3];
   float smoke_dist[6];
   float norm[3];
@@ -355,16 +352,16 @@ typedef struct _meshdata {
 
   struct _clipdata *box_clipinfo;
 
-  unsigned char *merge_color, *merge_alpha;
+  unsigned char *merge_color,*merge_alpha;
   unsigned char *smokecolor_ptr, *smokealpha_ptr;
 
   char *label;
 
-  int ncullgeominfo, nxyzgeomcull[3], nxyzskipgeomcull[3];
+  int ncullgeominfo,nxyzgeomcull[3],nxyzskipgeomcull[3];
   struct _culldata *cullgeominfo;
 
   struct _volrenderdata *volrenderinfo;
-  int nslicex, nslicey, nslicez;
+  int  nslicex,  nslicey,  nslicez;
   struct _slicedata **slicex, **slicey, **slicez;
 
   struct _meshplanedata *gsliceinfo;
