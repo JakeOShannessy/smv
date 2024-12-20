@@ -285,9 +285,6 @@ add_test(NAME "Parse Colorbar"
 add_test(NAME "Simple HVAC Vals - Complete"
     COMMAND parse_hvac_vals ${FIG_DIR}/smv/Tests/simple_hvac.hvac)
 
-add_test(NAME "Parse Colorbar"
-    COMMAND parse_colorbar ${CMAKE_SOURCE_DIR}/Build/for_bundle/colorbars/divergent/CET-D01.csv)
-
 add_test(NAME "Test Labels API"
     COMMAND test_labels)
 
