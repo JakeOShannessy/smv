@@ -19,8 +19,6 @@
 
 #include "readslice.h"
 
-#include "readslice.h"
-
 #define SLICE_HEADER_SIZE 4
 #define SLICE_TRAILER_SIZE 4
 
