@@ -30,6 +30,11 @@ build:
     cmake --build cbuild --config Debug -j6
     cmake --install cbuild --config Debug --prefix dist-debug
 
+build-strict:
+    cmake -B cbuild -DSTRICT_CHECKS=ON -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=ON
+    cmake --build cbuild --config Debug -j6
+    cmake --install cbuild --config Debug --prefix dist-debug
+
 # Build the release binaries
 build-release:
     cmake -B cbuild -DCMAKE_BUILD_TYPE=Release
