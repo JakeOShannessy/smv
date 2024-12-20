@@ -224,16 +224,25 @@ void DisplayVersionInfo(char *progname){
   if(smv_bindir){
     PRINTF("Root directory   : %s\n", smv_bindir);
   }
-  char *smokeviewini = GetSmokeviewIni();
-  if(smokeviewini != NULL && FileExistsOrig(smokeviewini) == 1){
-    PRINTF("Global ini       : %s\n", smokeviewini);
+  char *global_ini_path = GetSystemIniPath();
+  if(global_ini_path != NULL && FileExistsOrig(global_ini_path) == 1){
+    PRINTF("Global ini       : %s\n", global_ini_path);
   }
   else{
     PRINTF("Global ini       : not found\n");
   }
-  FREEMEMORY(smokeviewini);
+  FREEMEMORY(global_ini_path);
+  char *user_ini_path = GetUserIniPath();
+  if(user_ini_path != NULL && FileExistsOrig(user_ini_path) == 1){
+    PRINTF("User ini         : %s\n", user_ini_path);
+  }
+  else{
+    PRINTF("User ini         : not found\n");
+  }
+  FREEMEMORY(user_ini_path);
   char fullini_filename[256];
   strcpy(fullini_filename, "");
+  char *smokeview_scratchdir = GetUserConfigDir();
   if(scase.paths.caseini_filename != NULL){
     if(FileExistsOrig(scase.paths.caseini_filename) == 1){
       char cwdpath[1000];
@@ -248,6 +257,7 @@ void DisplayVersionInfo(char *progname){
       if(FileExistsOrig(fullini_filename)==0)strcpy(fullini_filename, "");
     }
   }
+  FREEMEMORY(smokeview_scratchdir);
   if(smv_filename != NULL || show_version == 0){
     if(strlen(fullini_filename) > 0){
       PRINTF("Casename ini     : %s\n", fullini_filename);

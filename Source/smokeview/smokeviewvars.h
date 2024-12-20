@@ -1114,7 +1114,7 @@ SVEXTERN float glui_xyz_fds[3],user_zaxis[3];
   SVEXTERN float zaxis_angles_orig[3];
 #endif
 
-SVEXTERN char SVDECL(*smokeviewini_filename, NULL);
+SVEXTERN spherepoints SVDECL(*sphereinfo,NULL), SVDECL(*wui_sphereinfo,NULL);
 
 #ifdef INMAIN
 SVEXTERN float tourcol_selectedpathline[3]={1.0,0.0,0.0};
@@ -1746,8 +1746,6 @@ SVEXTERN float redcolor[4];
 #endif
 
 SVEXTERN int SVDECL(loadfiles_at_startup,0);
-
-SVEXTERN char SVDECL(*smokeview_scratchdir,NULL);
 
 SVEXTERN int SVDECL(nmenus,0);
 #define MAXMENUS 10000

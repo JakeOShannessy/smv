@@ -9,6 +9,8 @@
 #define TERRAIN_FIRE_LINE_UPDATE 39
 #endif
 
+#include "colorbars.h"
+
 //*** glui_clip.cpp headers
 
 EXTERNCPP void GLUIClipSetup(int main_window);

@@ -650,6 +650,7 @@ void SortColorBars(void){
   cb = GetColorbar(&colorbars, "black->white");
   if(cb != NULL)colorbars.bw_colorbar_index = cb - colorbars.colorbarinfo;
 
+  // TODO: what if there is no "fire" colorbar
   cb = GetColorbar(&colorbars, "fire");
   colorbars.fire_colorbar_index=cb-colorbars.colorbarinfo;
   fire_colorbar=cb;

@@ -533,7 +533,7 @@ void RemapColorbar(colorbardata *cbi, int show_extreme_mindata,
 /* ------------------ ReadCSVColorbar ------------------------ */
 
 int ReadCSVColorbar(colorbardata *colorbar, const char *filepath,
-                    const char *colorbar_type, int type) {
+                     const char *colorbar_type, int type) {
   int n = 0;
   char buffer[255];
   int have_name = 0;
@@ -759,7 +759,7 @@ EXTERNCPP void InitDefaultColorbars(colorbar_collection *colorbars, int nini,
   ReadColorbarSubDir(colorbars, "divergent", CB_DIVERGENT);
 
   // Add user colorbars as defined in the confid directory.
-  char *colorbars_user_dir = GetConfigSubDir("colorbars");
+  char *colorbars_user_dir = GetUserConfigSubPath("colorbars");
   ReadColorbarDir(colorbars, colorbars_user_dir, "user defined", CB_USER);
   FREEMEMORY(colorbars_user_dir);
 

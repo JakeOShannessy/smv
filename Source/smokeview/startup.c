@@ -230,7 +230,9 @@ int SetupCase(char *filename){
   NewMemory((void **)&part_globalbound_filename, strlen(fdsprefix)+strlen(".prt.gbnd")+1);
   STRCPY(part_globalbound_filename, fdsprefix);
   STRCAT(part_globalbound_filename, ".prt.gbnd");
+  char *smokeview_scratchdir = GetUserConfigDir();
   part_globalbound_filename = GetFileName(smokeview_scratchdir, part_globalbound_filename, NOT_FORCE_IN_DIR);
+  FREEMEMORY(smokeview_scratchdir);
 
   // setup input files names
 
@@ -367,7 +369,9 @@ int GetScreenHeight(void){
   strcpy(command,"system_profiler SPDisplaysDataType | grep Resolution | awk '{print $4}' | tail -1 >& ");
   strcpy(height_file, fdsprefix);
   strcat(height_file, ".hgt");
+  char *smokeview_scratchdir = GetUserConfigDir();
   full_height_file = GetFileName(smokeview_scratchdir, height_file, NOT_FORCE_IN_DIR);
+  FREEMEMORY(smokeview_scratchdir);
   strcat(command,full_height_file);
   system(command);
   stream = fopen(full_height_file,"r");
@@ -382,55 +386,30 @@ int GetScreenHeight(void){
 }
 #endif
 
-char *GetSmokeviewIni() {
-  char *smv_bindir = GetSmvRootDir();
-  char *path;
-  NEWMEMORY(path, (unsigned int)(strlen(smv_bindir) + 14));
-  STRCPY(path, smv_bindir);
-  STRCAT(path, "smokeview.ini");
-  FREEMEMORY(smv_bindir);
-  return path;
-}
-
-char *GetSmokeviewHtml() {
-  char *smv_bindir = GetSmvRootDir();
-  char *path;
-  NEWMEMORY(path, (unsigned int)(strlen(smv_bindir) + 14));
-  STRCPY(path, smv_bindir);
-  STRCAT(path, "smokeview.html");
-  FREEMEMORY(smv_bindir);
-  return path;
-}
-
-char *GetSmokeviewHtmlVr() {
-  char *smv_bindir = GetSmvRootDir();
-  char *path;
-  NEWMEMORY(path, (unsigned int)(strlen(smv_bindir) + 14));
-  STRCPY(path, smv_bindir);
-  STRCAT(path, "smokeview_vr.html");
-  FREEMEMORY(smv_bindir);
-  return path;
-}
-
 /* ------------------ InitStartupDirs ------------------------ */
 
 void InitStartupDirs(void){
   startup_pass = 2;
 
-  char *config_dir = GetConfigDir();
-  if(FileExistsOrig(config_dir)==NO){
-    MKDIR(config_dir);
+  // Create the user config directory if it doesn't already exist.
+  char *smokeview_scratchdir = GetUserConfigDir();
+  if(FileExistsOrig(smokeview_scratchdir)==NO){
+    MKDIR(smokeview_scratchdir);
   }
-  FREEMEMORY(config_dir);
+  FREEMEMORY(smokeview_scratchdir);
 
-  char *colorbars_user_dir_local = GetConfigSubDir("colorbars");
-  if(FileExistsOrig(colorbars_user_dir_local)==NO){
-    MKDIR(colorbars_user_dir_local);
+  // Create the colorbar directory if it doesn't already exist.
+  char *colorbars_user_dir = GetUserConfigSubPath("colorbars");
+  if(FileExistsOrig(colorbars_user_dir)==NO){
+    MKDIR(colorbars_user_dir);
   }
-  FREEMEMORY(colorbars_user_dir_local);
+  FREEMEMORY(colorbars_user_dir);
 
   if(verbose_output==1)PRINTF("Scratch directory: %s\n", smokeview_scratchdir);
+  char *smokeviewini_filename = GetSystemIniPath();
   if(verbose_output==1)PRINTF("    smokeview.ini: %s\n", smokeviewini_filename);
+  FREEMEMORY(smokeviewini_filename);
+  FREEMEMORY(smokeview_scratchdir);
 
 #ifdef pp_OSX
   monitor_screen_height = GetScreenHeight();

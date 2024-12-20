@@ -22,6 +22,7 @@
 #include "readobject.h"
 #include "readsmoke.h"
 #include "viewports.h"
+#include "colorbars.h"
 #include "IOscript.h"
 #include "IOobjects.h"
 
@@ -12858,8 +12859,9 @@ static int menu_count=0;
         n_inifiles++;
       }
     }
-    char *smokeviewini = GetSmokeviewIni();
-    if( n_inifiles>0||FILE_EXISTS(smokeviewini_filename)==YES||FILE_EXISTS(caseini_filename)==YES||FILE_EXISTS(smokeviewini)==YES){
+    char *global_ini_path = GetSystemIniPath();
+    char *user_ini_path = GetUserIniPath();
+    if( n_inifiles>0||FILE_EXISTS(user_ini_path)==YES||FILE_EXISTS(caseini_filename)==YES||FILE_EXISTS(global_ini_path)==YES){
       if(n_inifiles==0){
         glutAddMenuEntry(_("Read ini files"),MENU_READINI);
       }
@@ -12867,7 +12869,8 @@ static int menu_count=0;
         GLUTADDSUBMENU(_("Read ini files"),inisubmenu);
       }
     }
-    FREEMEMORY(smokeviewini);
+    FREEMEMORY(global_ini_path);
+    FREEMEMORY(user_ini_path);
    }
 
 

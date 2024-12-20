@@ -96,7 +96,7 @@ EXTERNCPP colorbardata *NewColorbar(colorbar_collection *colorbars);
  * @return 0 on success, non-zero on failure.
  */
 EXTERNCPP int ReadCSVColorbar(colorbardata *colorbar, const char *filepath,
-                              const char *colorbar_type, int type);
+                     const char *colorbar_type, int type);
 /**
  * @brief Initialize the default colorbars. This includes:
  *    - Initializing the colorbars which are hardcoded.
@@ -121,6 +121,8 @@ EXTERNCPP void InitDefaultColorbars(colorbar_collection *colorbars, int nini,
                                     int show_extreme_maxdata,
                                     unsigned char rgb_above_max[3],
                                     colorbardata *colorbarcopyinfo);
+
+
 
 EXTERNCPP void AdjustColorBar(colorbardata *cbi);
 EXTERNCPP void RemapColorbar(colorbardata *cbi, int show_extreme_mindata,

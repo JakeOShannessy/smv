@@ -153,6 +153,7 @@ EXTERNCPP FILE_SIZE fread_p(char *file, unsigned char *buffer, FILE_SIZE offset,
 EXTERNCPP void FileErase(char *file);
 EXTERNCPP FILE *FOPEN(const char *file, const char *mode);
 EXTERNCPP FILE *fopen_indir(char *dir, char *file, char *mode);
+EXTERNCPP FILE *fopen_2dir_scratch(char *file, char *mode);
 EXTERNCPP FILE *fopen_2dir(char *file, char *mode, char *scratch_dir);
 EXTERNCPP void TestWrite(char *scratchdir, char **fileptr);
 EXTERNCPP int FFLUSH(void);
@@ -217,6 +218,13 @@ EXTERNCPP char *GetBinPath();
  */
 EXTERNCPP char *GetSmvRootDir();
 /**
+ * @brief Get the path of a subdirectory of the smokeview root directory.
+ *
+ * @return A buffer allocated by NEWMEMORY or NULL if an error occurred
+ * (including hitting the maximum buffer size).
+ */
+EXTERNCPP char *GetSmvRootSubPath(const char *subdir);
+/**
  * @brief Set the override value for the SMV root. Generally this is used
  * because the -bindir commandline parameter is set.
  *
@@ -231,7 +239,7 @@ EXTERNCPP void SetSmvRootOverride(const char *path);
  * @return A buffer allocated by NEWMEMORY or NULL if an error occurred
  * (including hitting the maximum buffer size).
  */
-EXTERNCPP char *GetConfigDir();
+EXTERNCPP char *GetUserConfigDir();
 /**
  * @brief Get the path of a subdirectory of the smokeview config directory. This
  * is generally in the form $HOME/.smokeview/${subdir}.
@@ -239,10 +247,22 @@ EXTERNCPP char *GetConfigDir();
  * @return A buffer allocated by NEWMEMORY or NULL if an error occurred
  * (including hitting the maximum buffer size).
  */
-EXTERNCPP char *GetConfigSubDir(const char *subdir);
-EXTERNCPP char *GetSmokeviewIni();
-EXTERNCPP char *GetSmokeviewHtml();
-EXTERNCPP char *GetSmokeviewHtmlVr();
+EXTERNCPP char *GetUserConfigSubPath(const char *subdir);
+/**
+ * @brief Get the path to the smokeview configuration file in the root directory
+ * (i.e. the install directory).
+ *
+ * @return The path to the configuration file, allocated with NEWMEMORY.
+ */
+EXTERNCPP char *GetSystemIniPath();
+/**
+ * @brief Get the path to the smokeview configuration file in the user's config
+ * directory. This is usually $HOME/.smokeview/smokeview.ini.
+ *
+ * @return The path allocated with NEWMEMORY.
+ */
+EXTERNCPP char *GetUserIniPath();
+EXTERNCPP char *GetSmokeviewHtmlPath();
 EXTERNCPP void PrintTime(const char *tag, int line, float *timer,
                          const char *label, int stop_flag);
 

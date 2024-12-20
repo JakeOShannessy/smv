@@ -9163,19 +9163,12 @@ int CompareSliceMenuInfo(const void *arg1, const void *arg2){
 /* ------------------ GenerateSliceMenu ------------------------ */
 
 void GenerateSliceMenu(int option){
-  char slicemenu_filename[256];
   int i;
   FILE *stream = NULL;
 
   if(scase.slicecoll.nsliceinfo==0)return;
 
-  strcpy(slicemenu_filename, "");
-  if(smokeview_scratchdir!=NULL){
-    strcat(slicemenu_filename, smokeview_scratchdir);
-    strcat(slicemenu_filename, dirseparator);
-  }
-  strcat(slicemenu_filename, fdsprefix);
-  strcat(slicemenu_filename, ".slcf");
+  char *slicemenu_filename = GetUserConfigSubPath(".slcf");
 
   // if we can't write out to the slice menu file then abort
 
@@ -9195,6 +9188,7 @@ void GenerateSliceMenu(int option){
 
   if(nslicemenuinfo==0){
     FREEMEMORY(slicemenuinfo);
+    FREEMEMORY(slicemenu_filename);
     return;
   }
   NewMemory((void **)&slicemenu_sorted, nslicemenuinfo*sizeof(slicemenudata));
@@ -9207,7 +9201,10 @@ void GenerateSliceMenu(int option){
     int max1 = 0, max2 = 0, max3 = 0, max4 = 0;
 
     stream = fopen(slicemenu_filename, "w");
-    if(stream==NULL)return;
+    if(stream==NULL){
+      FREEMEMORY(slicemenu_filename);
+      return;
+    }
     for(i = 0; i<nslicemenuinfo; i++){
       slicedata *slicei;
       slicemenudata *slicemi;
@@ -9263,6 +9260,7 @@ void GenerateSliceMenu(int option){
     }
     fclose(stream);
   }
+  FREEMEMORY(slicemenu_filename);
 }
 
 /* ------------------ CompareSliceX ------------------------ */

@@ -66,6 +66,56 @@ target_link_libraries(parse_colorbar PRIVATE libsmv)
 add_executable(test_labels test_labels.c)
 target_link_libraries(test_labels PRIVATE libsmv)
 
+# parse_objects
+add_executable(parse_objects parse_objects.c
+    ../Source/shared/dmalloc.c
+    ../Source/shared/readobject.c
+    ../Source/shared/string_util.c
+    ../Source/shared/file_util.c
+    ../Source/shared/stdio_buffer.c
+    ../Source/shared/sha256.c
+    ../Source/shared/sha1.c
+    ../Source/shared/md5.c
+)
+
+target_include_directories(parse_objects PRIVATE
+    ../Tests
+    ../Source/shared
+)
+if (WIN32)
+    target_include_directories(parse_objects PRIVATE ../Source/pthreads)
+endif()
+if ((NOT MACOSX) AND UNIX)
+    target_link_libraries(parse_objects m)
+endif()
+
+
+# parse_colorbar
+add_executable(parse_colorbar parse_colorbar.c
+    ../Source/shared/getdata.c
+    ../Source/shared/dmalloc.c
+    ../Source/shared/colorbars.c
+    ../Source/shared/colorbar_defs.c
+    ../Source/shared/file_util.c
+    ../Source/shared/string_util.c
+    ../Source/shared/stdio_buffer.c
+    ../Source/shared/sha256.c
+    ../Source/shared/sha1.c
+    ../Source/shared/md5.c
+)
+
+target_include_directories(parse_colorbar PRIVATE
+    ../Tests
+    ../Source/shared
+)
+if (WIN32)
+    target_include_directories(parse_colorbar PRIVATE ../Source/pthreads)
+endif()
+if ((NOT MACOSX) AND UNIX)
+    target_link_libraries(parse_colorbar m)
+endif()
+
+
 # mem_test
 add_executable(mem_test mem_test.c)
 target_link_libraries(mem_test PRIVATE libsmv)
@@ -117,6 +167,9 @@ add_test(NAME "Simple PL3d - Complete"
 add_test(NAME "Parse CAD"
     COMMAND parse_cad)
 
+add_test(NAME "Test Object API"
+    COMMAND test_objects)
+
 # This test will still pass as it will simply try to parse as many objects as
 # possible.
 add_test(NAME "Test Object API (bad objects)"
@@ -125,6 +178,9 @@ add_test(NAME "Test Object API (bad objects)"
 
 add_test(NAME "Test Object API (for bundle)"
     COMMAND parse_objects ${CMAKE_SOURCE_DIR}/Build/for_bundle/objects.svo)
+
+add_test(NAME "Parse Colorbar"
+    COMMAND parse_colorbar ${CMAKE_SOURCE_DIR}/Build/for_bundle/colorbars/divergent/CET-D01.csv)
 
 add_test(NAME "Simple HVAC Vals - Complete"
     COMMAND parse_hvac_vals ${FIG_DIR}/smv/Tests/simple_hvac.hvac)

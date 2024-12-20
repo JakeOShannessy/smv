@@ -5273,7 +5273,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
   STRCAT(parti->size_file, ".sz");
 
   // parti->size_file can't be written to, then put it in a world writable temp directory
-
+  char *smokeview_scratchdir = GetUserConfigDir();
   if(FILE_EXISTS_CASEDIR(parti->size_file)==NO&&curdir_writable==NO&&smokeview_scratchdir!=NULL){
     len = strlen(smokeview_scratchdir)+strlen(bufferptr)+1+3+1;
     parti->size_file = NULL;
@@ -5283,6 +5283,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
     STRCAT(parti->size_file, bufferptr);
     STRCAT(parti->size_file, ".sz");
   }
+  FREEMEMORY(smokeview_scratchdir);
 
   // parti->hist_file can't be written to, then put it in a world writable temp directory
 
@@ -6415,10 +6416,12 @@ void GenerateViewpointMenu(void){
   char casenameini[256];
 
   strcpy(viewpiontemenu_filename, "");
+  char *smokeview_scratchdir = GetUserConfigDir();
   if(smokeview_scratchdir!=NULL){
     strcat(viewpiontemenu_filename, smokeview_scratchdir);
     strcat(viewpiontemenu_filename, dirseparator);
   }
+  FREEMEMORY(smokeview_scratchdir);
   strcat(viewpiontemenu_filename, fdsprefix);
   strcat(viewpiontemenu_filename, ".viewpoints");
   strcpy(casenameini, fdsprefix);
@@ -12386,7 +12389,7 @@ void SetSliceMax(int set_valmax, float valmax, char *buffer2){
 
 /* ------------------ ReadIni2 ------------------------ */
 
-int ReadIni2(char *inifile, int localfile){
+int ReadIni2(const char *inifile, int localfile){
   int i;
   FILE *stream;
   int have_tours=0, have_tour7=0;
@@ -16057,27 +16060,22 @@ int ReadIni2(char *inifile, int localfile){
 
 /* ------------------ ReadBinIni ------------------------ */
 
-int ReadBinIni(void) {
-  char *smvini_path = GetSmokeviewIni();
+int ReadBinIni(void){
+  char *smokeviewini = GetSystemIniPath();
   //*** read in config files if they exist
-
   // smokeview.ini ini in install directory
-
-  if (smvini_path != NULL) {
-    int returnval;
-
-    returnval = ReadIni2(smvini_path, 0);
-    FREEMEMORY(smvini_path);
-    return returnval;
+  int returnval = 0;
+  if(smokeviewini!=NULL){
+    returnval = ReadIni2(smokeviewini, 0);
   }
-
-  return 0;
+  FREEMEMORY(smokeviewini);
+  return returnval;
 }
 
 /* ------------------ ReadIni ------------------------ */
 
 int ReadIni(char *inifile){
-  char smvprogini[1024];
+  char *smvprogini_ptr=NULL;
 
   // There are 7 places to retrieve configuration file from:
   //
@@ -16092,23 +16090,21 @@ int ReadIni(char *inifile){
   //
   // Last definition wins.
 
-  scase.ntickinfo=scase.ntickinfo_smv;
-  strcpy(smvprogini,"");
-
-  char *smvini_path = GetSmokeviewIni();
+  ntickinfo=ntickinfo_smv;
 
   // Read "smokeview.ini" from bin dir
-  if(smvini_path!=NULL){
+  char *global_ini = GetSystemIniPath();
+  if(global_ini!=NULL){
     int returnval;
 
-    returnval = ReadIni2(smvini_path, 0);
+    returnval = ReadIni2(global_ini, 0);
     if(returnval==2)return 2;
     if(returnval == 0 && readini_output==1){
       if(verbose_output==1)PRINTF("- complete\n");
     }
     UpdateTerrainOptions();
   }
-  FREEMEMORY(smvini_path);
+  FREEMEMORY(global_ini);
 
   // Read "${fdsprefix}.ini" from the current directory
   if(caseini_filename!=NULL){
@@ -16120,12 +16116,8 @@ int ReadIni(char *inifile){
     // if directory is not writable then look for another ini file in the scratch directory
     strcpy(localdir, ".");
     if(Writable(localdir)==0){
-      char *scratch_ini_filename;
       // Read "${fdsprefix}.ini" from the scratch directory
-      NewMemory((void **)&scratch_ini_filename, strlen(smokeview_scratchdir)+1+strlen(caseini_filename)+1);
-      strcpy(scratch_ini_filename, smokeview_scratchdir);
-      strcat(scratch_ini_filename, dirseparator);
-      strcat(scratch_ini_filename, caseini_filename);
+      char *scratch_ini_filename = GetUserConfigSubPath(caseini_filename);
       returnval = ReadIni2(scratch_ini_filename, 1);
       FREEMEMORY(scratch_ini_filename);
     }
@@ -16726,6 +16718,8 @@ void WriteIni(int flag,char *filename){
   FILE *fileout=NULL;
   int i;
   char *outfilename=NULL, *outfiledir=NULL;
+  char *smokeviewini_filename = GetSystemIniPath();
+  char *smokeview_scratchdir = GetUserConfigDir();
 
   switch(flag){
   case GLOBAL_INI:
@@ -16767,7 +16761,7 @@ void WriteIni(int flag,char *filename){
       printf("in directory %s\n", outfiledir);
     }
   }
-
+  FREEMEMORY(smokeviewini_filename);
 
   fprintf(fileout,"# NIST Smokeview configuration file, Release %s\n\n",__DATE__);
   fprintf(fileout, "\n ------------ global ini settings ------------\n\n");
@@ -17593,6 +17587,7 @@ void WriteIni(int flag,char *filename){
   if(fileout!=stdout){
     fclose(fileout);
   }
+  FREEMEMORY(smokeview_scratchdir);
 }
 
 /* ------------------ UpdateLoadedLists ------------------------ */

@@ -210,9 +210,10 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
             strlen(fdsprefix) + strlen(".prt5.gbnd") + 1);
   STRCPY(part_globalbound_filename, fdsprefix);
   STRCAT(part_globalbound_filename, ".prt5.gbnd");
+  char *smokeview_scratchdir = GetUserConfigDir();
   part_globalbound_filename = GetFileName(
       smokeview_scratchdir, part_globalbound_filename, NOT_FORCE_IN_DIR);
-
+  FREEMEMORY(smokeview_scratchdir);
   // setup input files names
 
   input_file = smv_filename;
@@ -875,8 +876,8 @@ ERROR_CODE SetNamedColorbar(const char *name) {
 }
 
 ERROR_CODE GetNamedColorbar(const char *name, size_t *index) {
-  for(size_t i = 0; i < colorbars.ncolorbars; i++) {
-    if(strcmp(colorbars.colorbarinfo[i].menu_label, name) == 0) {
+  for (size_t i = 0; i < colorbars.ncolorbars; i++) {
+    if (strcmp(colorbars.colorbarinfo[i].menu_label, name) == 0) {
       *index = i;
       return 0;
     }
@@ -894,8 +895,7 @@ void SetColorbar(size_t value) {
   GLUIUpdateListIsoColorobar();
   UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
   GLUIUpdateColorbarType();
-  if(colorbartype == colorbars.bw_colorbar_index &&
-     colorbars.bw_colorbar_index >= 0) {
+  if(colorbartype == colorbars.bw_colorbar_index && colorbars.bw_colorbar_index >= 0) {
     setbwdata = 1;
   }
   else {
