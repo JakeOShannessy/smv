@@ -1321,6 +1321,10 @@ char *GetUserIniPath() {
   return GetUserConfigSubPath("smokeview.ini");
 }
 
+char *GetUserColorbarDirPath() {
+  return GetUserConfigSubPath("colorbars");
+}
+
 char *GetSmokeviewHtmlPath() {
   return GetSmvRootSubPath("smokeview.html");
 }

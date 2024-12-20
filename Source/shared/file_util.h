@@ -262,6 +262,7 @@ EXTERNCPP char *GetSystemIniPath();
  * @return The path allocated with NEWMEMORY.
  */
 EXTERNCPP char *GetUserIniPath();
+EXTERNCPP char *GetUserColorbarDirPath();
 EXTERNCPP char *GetSmokeviewHtmlPath();
 EXTERNCPP void PrintTime(const char *tag, int line, float *timer,
                          const char *label, int stop_flag);

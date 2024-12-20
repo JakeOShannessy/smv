@@ -758,8 +758,8 @@ EXTERNCPP void InitDefaultColorbars(colorbar_collection *colorbars, int nini,
   ReadColorbarSubDir(colorbars, "rainbow", CB_RAINBOW);
   ReadColorbarSubDir(colorbars, "divergent", CB_DIVERGENT);
 
-  // Add user colorbars as defined in the confid directory.
-  char *colorbars_user_dir = GetUserConfigSubPath("colorbars");
+  // Add user colorbars as defined in the config directory.
+  char *colorbars_user_dir = GetUserColorbarDirPath();
   ReadColorbarDir(colorbars, colorbars_user_dir, "user defined", CB_USER);
   FREEMEMORY(colorbars_user_dir);
 

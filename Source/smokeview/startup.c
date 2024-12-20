@@ -399,17 +399,17 @@ void InitStartupDirs(void){
   FREEMEMORY(smokeview_scratchdir);
 
   // Create the colorbar directory if it doesn't already exist.
-  char *colorbars_user_dir = GetUserConfigSubPath("colorbars");
+  char *colorbars_user_dir = GetUserColorbarDirPath();
   if(FileExistsOrig(colorbars_user_dir)==NO){
     MKDIR(colorbars_user_dir);
   }
+  FREEMEMORY(colorbars_user_dir);
 
   if(verbose_output==1)PRINTF("Scratch directory: %s\n", smokeview_scratchdir);
   char *smokeviewini_filename = GetSystemIniPath();
   if(verbose_output==1)PRINTF("    smokeview.ini: %s\n", smokeviewini_filename);
   FREEMEMORY(smokeviewini_filename);
   FREEMEMORY(smokeview_scratchdir);
-  FREEMEMORY(colorbars_user_dir);
 
 #ifdef pp_OSX
   monitor_screen_height = GetScreenHeight();
