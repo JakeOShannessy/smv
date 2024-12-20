@@ -617,24 +617,24 @@ void DecimateAllTerrains(void){
     meshi = meshinfo + i;
     meshi->decimated = 0;
   }
-  for(i = 0; i < npatchinfo; i++){
+  for(i = 0; i < scase.nscase.patchinfochinfo; i++){
     meshdata *meshi;
     patchdata *patchi;
     geomlistdata *geomlisti;
     int nx, ny;
     float *boxmin, *boxmax;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(patchi->loaded == 0 || patchi->display == 0 || patchi->blocknumber < 0)
       continue;
     meshi = meshinfo + patchi->blocknumber;
     if(meshi->decimated == 1) continue;
-    if(patchi->geominfo == NULL || patchi->geominfo->display == 0 ||
-        patchi->geominfo->loaded == 0)
+    if(patchi->scase.geominfo == NULL || patchi->scase.geominfo->display == 0 ||
+        patchi->scase.geominfo->loaded == 0)
       continue;
 
     meshi->decimated = 1;
-    geomlisti = patchi->geominfo->geomlistinfo - 1;
+    geomlisti = patchi->scase.geominfo->geomlistinfo - 1;
     boxmin = meshi->boxmin;
     boxmax = meshi->boxmax;
     nx = MAX((boxmax[0] - boxmin[0]) / terrain_decimate_delta + 1, 2);

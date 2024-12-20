@@ -17,6 +17,17 @@
 #define INTERP_RGB 0
 #define INTERP_LAB 1
 
+#define TOBW(col) (0.299 * (col)[0] + 0.587 * (col)[1] + 0.114 * (col)[2])
+
+typedef struct _colordata {
+  float color[4], full_color[4], bw_color[4];
+  struct _colordata *nextcolor;
+} colordata;
+
+typedef struct {
+  colordata *firstcolor;
+} color_collection;
+
 typedef struct _colorbardata {
   /// @brief The label used in GUI menus
   char menu_label[1024];

@@ -189,50 +189,27 @@ int SetGlobalFilenames(const char *fdsprefix_arg) {
   return 0;
 }
 
-int RunBenchmark(char *input_file) {
-  initMALLOC();
-  InitVars();
-  SetGlobalFilenames(fdsprefix);
-
-  INIT_PRINT_TIMER(parse_time);
-  fprintf(stderr, "reading:\t%s\n", input_file);
-  {
-    bufferstreamdata *smv_streaminfo = GetSMVBuffer(input_file);
-    if (smv_streaminfo == NULL) {
-      fprintf(stderr, "could not open %s\n", input_file);
-      return 1;
-    }
-    INIT_PRINT_TIMER(ReadSMV_time);
-    int return_code = ReadSMV(smv_streaminfo);
-    STOP_TIMER(ReadSMV_time);
-    fprintf(stderr, "ReadSMV:\t%8.3f ms\n", ReadSMV_time * 1000);
-    if (smv_streaminfo != NULL) {
-      FCLOSE(smv_streaminfo);
-    }
-    if (return_code) return return_code;
-  }
-  show_timings = 1;
-  ReadSMVOrig();
-  INIT_PRINT_TIMER(ReadSMVDynamic_time);
-  ReadSMVDynamic(input_file);
-  STOP_TIMER(ReadSMVDynamic_time);
-  fprintf(stderr, "ReadSMVDynamic:\t%8.3f ms\n", ReadSMVDynamic_time * 1000);
-  STOP_TIMER(parse_time);
-  fprintf(stderr, "Total Time:\t%8.3f ms\n", parse_time * 1000);
+int PrintJson(smv_case *scase) {
   struct json_object *jobj = json_object_new_object();
   json_object_object_add(jobj, "version", json_object_new_int(1));
-  json_object_object_add(jobj, "chid", json_object_new_string(chidfilebase));
-  if (fds_title != NULL) {
-    json_object_object_add(jobj, "title", json_object_new_string(fds_title));
+  json_object_object_add(jobj, "chid",
+                         json_object_new_string(scase->paths.chidfilebase));
+  if(scase->paths.fds_filein != NULL) {
+    json_object_object_add(jobj, "input_file",
+                           json_object_new_string(scase->paths.fds_filein));
+  }
+  if(scase->fds_title != NULL) {
+    json_object_object_add(jobj, "title",
+                           json_object_new_string(scase->fds_title));
   }
   json_object_object_add(jobj, "fds_version",
-                         json_object_new_string(fds_version));
+                         json_object_new_string(scase->fds_version));
   struct json_object *mesh_array = json_object_new_array();
-  for (int i = 0; i < nmeshes; i++) {
-    meshdata *mesh = &meshinfo[i];
+  for(int i = 0; i < scase->meshescoll.nmeshes; i++) {
+    meshdata *mesh = &scase->meshescoll.meshinfo[i];
     struct json_object *mesh_obj = json_object_new_object();
     json_object_object_add(mesh_obj, "index", json_object_new_int(i + 1));
-    if (mesh->label != NULL) {
+    if(mesh->label != NULL) {
       json_object_object_add(mesh_obj, "id",
                              json_object_new_string(mesh->label));
     }
@@ -251,7 +228,7 @@ int RunBenchmark(char *input_file) {
                            json_object_new_double(mesh->x1));
     json_object_object_add(mesh_dimensions, "y_min",
                            json_object_new_double(mesh->y0));
-    json_object_object_add(mesh_dimensions, "y_ax",
+    json_object_object_add(mesh_dimensions, "y_max",
                            json_object_new_double(mesh->y1));
     json_object_object_add(mesh_dimensions, "z_min",
                            json_object_new_double(mesh->z0));
@@ -265,8 +242,8 @@ int RunBenchmark(char *input_file) {
   // TODO: the parse rejects CSV files that it doesn't find in it's own working
   // directory.
   struct json_object *csv_files = json_object_new_array();
-  for (int i = 0; i < ncsvfileinfo; i++) {
-    csvfiledata *csv_file = &csvfileinfo[i];
+  for(int i = 0; i < scase->csvcoll.ncsvfileinfo; i++) {
+    csvfiledata *csv_file = &scase->csvcoll.csvfileinfo[i];
     struct json_object *csv_obj = json_object_new_object();
     json_object_object_add(csv_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(csv_obj, "filename",
@@ -279,8 +256,8 @@ int RunBenchmark(char *input_file) {
 
   // Add devices to JSON
   struct json_object *devices = json_object_new_array();
-  for (int i = 0; i < ndeviceinfo; i++) {
-    devicedata *device = &deviceinfo[i];
+  for(int i = 0; i < scase->devicecoll.ndeviceinfo; i++) {
+    devicedata *device = &scase->devicecoll.deviceinfo[i];
     struct json_object *device_obj = json_object_new_object();
     json_object_object_add(device_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(device_obj, "id",
@@ -319,8 +296,8 @@ int RunBenchmark(char *input_file) {
 
   // Add slices to JSON
   struct json_object *slices = json_object_new_array();
-  for (int i = 0; i < slicecoll.nsliceinfo; i++) {
-    slicedata *slice = &slicecoll.sliceinfo[i];
+  for(int i = 0; i < scase->slicecoll.nsliceinfo; i++) {
+    slicedata *slice = &scase->slicecoll.sliceinfo[i];
     struct json_object *slice_obj = json_object_new_object();
     json_object_object_add(slice_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(slice_obj, "mesh",
@@ -361,8 +338,8 @@ int RunBenchmark(char *input_file) {
 
   // Add surfaces to JSON
   struct json_object *surfaces = json_object_new_array();
-  for (int i = 0; i < nsurfinfo; i++) {
-    surfdata *surf = &surfinfo[i];
+  for(int i = 0; i < scase->surfcoll.nsurfinfo; i++) {
+    surfdata *surf = &scase->surfcoll.surfinfo[i];
     struct json_object *surf_obj = json_object_new_object();
     json_object_object_add(surf_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(surf_obj, "id",
@@ -373,8 +350,8 @@ int RunBenchmark(char *input_file) {
 
   // Add materials to JSON
   struct json_object *materials = json_object_new_array();
-  for (int i = 0; i < nsurfinfo; i++) {
-    surfdata *surf = &surfinfo[i];
+  for(int i = 0; i < scase->surfcoll.nsurfinfo; i++) {
+    surfdata *surf = &scase->surfcoll.surfinfo[i];
     struct json_object *surf_obj = json_object_new_object();
     json_object_object_add(surf_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(surf_obj, "id",
@@ -436,7 +413,7 @@ int main(int argc, char **argv) {
     return 1;
   }
   fdsprefix = GetBaseName(input_file);
-  int result = RunBenchmark(input_file);
+  int result = PrintJson(&scase);
   if (fdsprefix != NULL) free(fdsprefix);
   return result;
 }

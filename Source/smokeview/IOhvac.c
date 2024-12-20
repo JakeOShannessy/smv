@@ -31,7 +31,7 @@ void UpdateHVACDuctColorLabels(int index){
 
   hi = hvaccoll.hvacductvalsinfo->duct_vars + index;
   GLUIGetMinMax(BOUND_HVACDUCT, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
-  GetColorbarLabels(valmin, valmax, nrgb, hi->colorlabels, hi->levels256);
+  GetColorbarLabels(valmin, valmax, scase.nrgb, hi->colorlabels, hi->levels256);
 }
 
 /* ------------------ UpdateHVACColorNodeLabels ------------------------ */
@@ -43,7 +43,7 @@ void UpdateHVACNodeColorLabels(int index){
 
   hi = hvaccoll.hvacnodevalsinfo->node_vars + index;
   GLUIGetMinMax(BOUND_HVACNODE, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
-  GetColorbarLabels(valmin, valmax, nrgb, hi->colorlabels, hi->levels256);
+  GetColorbarLabels(valmin, valmax, scase.nrgb, hi->colorlabels, hi->levels256);
 }
 
 /* ------------------ UpdateAllHVACColorLabels ------------------------ */
@@ -58,7 +58,7 @@ void UpdateAllHVACColorLabels(void){
 
     hi = hvaccoll.hvacductvalsinfo->duct_vars + i;
     GLUIGetMinMax(BOUND_HVACDUCT, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
-    GetColorbarLabels(hi->valmin, hi->valmax, nrgb, hi->colorlabels, hi->levels256);
+    GetColorbarLabels(hi->valmin, hi->valmax, scase.nrgb, hi->colorlabels, hi->levels256);
   }
   for(i = 0; i < hvaccoll.hvacnodevalsinfo->n_node_vars; i++){
     hvacvaldata *hi;
@@ -67,7 +67,7 @@ void UpdateAllHVACColorLabels(void){
 
     hi = hvaccoll.hvacnodevalsinfo->node_vars + i;
     GLUIGetMinMax(BOUND_HVACNODE, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
-    GetColorbarLabels(valmin, valmax, nrgb, hi->colorlabels, hi->levels256);
+    GetColorbarLabels(valmin, valmax, scase.nrgb, hi->colorlabels, hi->levels256);
   }
 }
 
@@ -360,7 +360,7 @@ void DrawHVAC(hvacdata *hvaci){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
+  glTranslatef(-scase.xbar0, -scase.ybar0, -scase.zbar0);
 
   // draw ducts
 
