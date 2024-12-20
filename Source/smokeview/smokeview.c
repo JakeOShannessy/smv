@@ -268,11 +268,6 @@ void DisplayVersionInfo(char *progname){
   }
   FREEMEMORY(smv_progname);
   FREEMEMORY(smv_bindir);
-  char *config_dir = GetConfigDir();
-  if(config_dir){
-    PRINTF("Config directory : %s\n", config_dir);
-  }
-  FREEMEMORY(config_dir);
 }
 
 /* ------------------ IsFDSRunning ------------------------ */
