@@ -99,12 +99,12 @@ void UpdateCameraYpos(cameradata *ci, int option){
     ci->zcen = FDS2SMV_Z((geom_zmin+geom_zmax)/2.0);
   }
   else{
-    dx = xbar;
-    dy = ybar;
-    dz = zbar;
-    ci->xcen = xbar/2.0;
-    ci->ycen = ybar/2.0;
-    ci->zcen = zbar/2.0;
+    dx = scase.xbar;
+    dy = scase.ybar;
+    dz = scase.zbar;
+    ci->xcen = scase.xbar/2.0;
+    ci->ycen = scase.ybar/2.0;
+    ci->zcen = scase.zbar/2.0;
   }
   switch(option){
     case 1:
@@ -231,13 +231,13 @@ void SetCameraView(cameradata *ca, int option){
 
 void InitCamera(cameradata *ci,char *name){
   strcpy(ci->name,name);
-  ci->rotation_index=nmeshes;
+  ci->rotation_index=scase.meshescoll.nmeshes;
   ci->defined=1;
   ci->azimuth=0.0;
   ci->view_angle=0.0;
-  ci->eye[0]=eyexfactor*xbar;
+  ci->eye[0]=eyexfactor*scase.xbar;
   UpdateCameraYpos(ci, 2);
-  ci->eye[2]=eyezfactor*zbar;
+  ci->eye[2]=eyezfactor*scase.zbar;
   ci->eye_save[0]=ci->eye[0];
   ci->eye_save[1]=ci->eye[1];
   ci->eye_save[2]=ci->eye[2];
@@ -255,9 +255,9 @@ void InitCamera(cameradata *ci,char *name){
   ci->view[0]=0.0;
   ci->view[1]=0.0;
   ci->view[2]=0.0;
-  ci->xcen=xbar/2.0;
-  ci->ycen=ybar/2.0;
-  ci->zcen=zbar/2.0;
+  ci->xcen=scase.xbar/2.0;
+  ci->ycen=scase.ybar/2.0;
+  ci->zcen=scase.zbar/2.0;
   ci->rotation_type=rotation_type;
 
   ci->azimuth=0.0;
@@ -365,13 +365,13 @@ void CopyCamera(cameradata *to, cameradata *from){
 void UpdateCamera(cameradata *ca){
   if(ca==camera_current){
     rotation_type=ca->rotation_type;
-    if(ca->rotation_index>=0&&ca->rotation_index<nmeshes){
-      UpdateCurrentMesh(meshinfo + ca->rotation_index);
+    if(ca->rotation_index>=0&&ca->rotation_index<scase.meshescoll.nmeshes){
+      UpdateCurrentMesh(scase.meshescoll.meshinfo + ca->rotation_index);
     }
     else{
-      UpdateCurrentMesh(meshinfo);
+      UpdateCurrentMesh(scase.meshescoll.meshinfo);
     }
-    highlight_mesh = current_mesh-meshinfo;
+    highlight_mesh = current_mesh-scase.meshescoll.meshinfo;
     HandleRotationType(EYE_CENTERED);
     GLUIUpdateMeshList1(ca->rotation_index);
     GLUIUpdateTrainerMoves();

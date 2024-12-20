@@ -360,11 +360,11 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
 
       time_local = global_times[itimes];
       dt = ABS(global_times[1] - global_times[0]);
-      maxtime = MAX(ABS(global_times[nglobal_times-1]), ABS(global_tend));
-      maxtime = MAX(maxtime, ABS(global_tbegin));
+      maxtime = MAX(ABS(global_times[nglobal_times-1]), ABS(scase.global_tend));
+      maxtime = MAX(maxtime, ABS(scase.global_tbegin));
       maxtime = MAX(maxtime, 10.0);
       //allow space for minus sign
-      if(global_tend<0.0 || global_tbegin<0.0 || global_times[nglobal_times-1] < 0.0)maxtime *= 10.0;
+      if(scase.global_tend<0.0 || scase.global_tbegin<0.0 || global_times[nglobal_times-1] < 0.0)maxtime *= 10.0;
       timelabelptr = Time2RenderLabel(time_local, dt, maxtime, timelabel_local);
       strcpy(suffix, timelabelptr);
       strcat(suffix, "s");
@@ -422,7 +422,7 @@ void OutputSliceData(void){
 
   for(ii = 0; ii < nslice_loaded; ii++){
     i = slice_loaded_list[ii];
-    sd = slicecoll.sliceinfo + i;
+    sd = scase.slicecoll.sliceinfo + i;
     if(sd->display == 0 || sd->slicefile_labelindex != slicefile_labelindex)continue;
     if(sd->times[0] > global_times[itimes])continue;
 
@@ -1115,13 +1115,13 @@ void SetSmokeSensor(gdImagePtr RENDERimage, int width, int height){
   if(test_smokesensors == 1 && active_smokesensors == 1 && show_smokesensors != SMOKESENSORS_HIDDEN){
     int idev;
 
-    for(idev = 0; idev < ndeviceinfo; idev++){
+    for(idev = 0; idev < scase.devicecoll.ndeviceinfo; idev++){
       devicedata *devicei;
       int idev_col, idev_row;
       int col_offset, row_offset;
       unsigned int red = 255 << 16;
 
-      devicei = deviceinfo + idev;
+      devicei = scase.devicecoll.deviceinfo + idev;
 
       if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(strcmp(devicei->object->label, "smokesensor") != 0)continue;

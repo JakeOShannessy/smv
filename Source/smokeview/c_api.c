@@ -280,7 +280,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
   InitTranslate(smv_bindir, tr_name);
   FREEMEMORY(smv_bindir);
 
-  if(tourcoll.ntourinfo == 0) SetupTour();
+  if(scase.tourcoll.ntourinfo == 0) SetupTour();
   InitRolloutList();
   GLUIColorbarSetup(mainwindow_id);
   GLUIMotionSetup(mainwindow_id);
@@ -324,39 +324,39 @@ int Loadfile(const char *filename) {
     return 1;
   }
 
-  for(size_t i = 0; i < slicecoll.nsliceinfo; i++) {
+  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
     slicedata *sd;
 
-    sd = slicecoll.sliceinfo + i;
+    sd = scase.slicecoll.sliceinfo + i;
     if(strcmp(sd->file, filename) == 0) {
       ReadSlice(sd->file, i, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR,
                 &errorcode);
       return errorcode;
     }
   }
-  for(size_t i = 0; i < npatchinfo; i++) {
+  for(size_t i = 0; i < scase.npatchinfo; i++) {
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(strcmp(patchi->file, filename) == 0) {
       ReadBoundary(i, LOAD, &errorcode);
       return errorcode;
     }
   }
-  for(size_t i = 0; i < npartinfo; i++) {
+  for(size_t i = 0; i < scase.npartinfo; i++) {
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     if(strcmp(parti->file, filename) == 0) {
       LoadParticleMenu(i);
       return errorcode;
     }
   }
   CancelUpdateTriangles();
-  for(size_t i = 0; i < nisoinfo; i++) {
+  for(size_t i = 0; i < scase.nisoinfo; i++) {
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(strcmp(isoi->file, filename) == 0) {
       ReadIso(isoi->file, i, LOAD, NULL, &errorcode);
       if(update_readiso_geom_wrapup == UPDATE_ISO_ONE_NOW)
@@ -364,29 +364,29 @@ int Loadfile(const char *filename) {
       return errorcode;
     }
   }
-  for(size_t i = 0; i < smoke3dcoll.nsmoke3dinfo; i++) {
+  for(size_t i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dcoll.smoke3dinfo + i;
+    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
     if(strcmp(smoke3di->file, filename) == 0) {
       smoke3di->finalize = 1;
       ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
       return errorcode;
     }
   }
-  for(size_t i = 0; i < nzoneinfo; i++) {
+  for(size_t i = 0; i < scase.nzoneinfo; i++) {
     zonedata *zonei;
 
-    zonei = zoneinfo + i;
+    zonei = scase.zoneinfo + i;
     if(strcmp(zonei->file, filename) == 0) {
       ReadZone(i, LOAD, &errorcode);
       return errorcode;
     }
   }
-  for(size_t i = 0; i < nplot3dinfo; i++) {
+  for(size_t i = 0; i < scase.nplot3dinfo; i++) {
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo + i;
+    plot3di = scase.plot3dinfo + i;
     if(strcmp(plot3di->file, filename) == 0) {
       ReadPlot3D(plot3di->file, i, LOAD, &errorcode);
       UpdateMenu();
@@ -408,12 +408,12 @@ void Loadinifile(const char *filepath) {
 }
 
 int Loadvfile(const char *filepath) {
-  for(size_t i = 0; i < slicecoll.nvsliceinfo; i++) {
+  for(size_t i = 0; i < scase.slicecoll.nvsliceinfo; i++) {
     slicedata *val;
     vslicedata *vslicei;
 
-    vslicei = slicecoll.vsliceinfo + i;
-    val = slicecoll.sliceinfo + vslicei->ival;
+    vslicei = scase.slicecoll.vsliceinfo + i;
+    val = scase.slicecoll.sliceinfo + vslicei->ival;
     if(val == NULL) continue;
     if(strcmp(val->reg_file, filepath) == 0) {
       LoadVSliceMenu(i);
@@ -428,10 +428,10 @@ void Loadboundaryfile(const char *filepath) {
   int errorcode;
   int count = 0;
 
-  for(size_t i = 0; i < npatchinfo; i++) {
+  for(size_t i = 0; i < scase.npatchinfo; i++) {
     patchdata *patchi;
 
-    patchi = patchinfo + i;
+    patchi = scase.patchinfo + i;
     if(strcmp(patchi->label.longlabel, filepath) == 0) {
       THREADcontrol(compress_threads, THREAD_LOCK);
       ReadBoundary(i, LOAD, &errorcode);
@@ -464,9 +464,7 @@ void Renderclip(int flag, int left, int right, int bottom, int top) {
 }
 
 ERROR_CODE CApiRender(const char *filename) {
-  // runluascript=0;
   DisplayCB();
-  // runluascript=1;
   // strcpy(render_file_base,filename);
   return RenderFrameLua(VIEW_CENTER, filename);
 }
@@ -761,7 +759,7 @@ int Settime(float timeval) {
 /// @brief Show slices in blockages.
 /// @param setting Boolean
 void SetSliceInObst(int setting) {
-  show_slice_in_obst = setting;
+  scase.show_slice_in_obst = setting;
   // UpdateSliceFilenum();
   // plotstate=GetPlotState(DYNAMIC_PLOTS);
   //
@@ -771,7 +769,7 @@ void SetSliceInObst(int setting) {
 
 /// @brief Check if slices are being shown in obstructions.
 /// @return
-int GetSliceInObst() { return show_slice_in_obst; }
+int GetSliceInObst() { return scase.show_slice_in_obst; }
 
 /// @brief Set the colorbar to one named @p name
 /// @param name
@@ -913,7 +911,7 @@ int GetChidVisibility() { return vis_title_CHID; }
 void ToggleChidVisibility() { vis_title_CHID = 1 - vis_title_CHID; }
 
 void BlockagesShowAll() {
-  if(isZoneFireModel) visFrame = 1;
+  if(scase.isZoneFireModel) visFrame = 1;
   /*
   visFloor=1;
   visWalls=1;
@@ -929,23 +927,23 @@ void BlockageMenu(int value);
 void BlockagesHideAll() { BlockageMenu(visBLOCKHide); }
 // TODO: clarify behaviour under isZoneFireModel
 void OutlinesHide() {
-  if(isZoneFireModel == 0) visFrame = 1 - visFrame;
+  if(scase.isZoneFireModel == 0) visFrame = 0;
 }
 void OutlinesShow() {
-  if(isZoneFireModel == 0) visFrame = 1 - visFrame;
+  if(scase.isZoneFireModel == 0) visFrame = 1;
 }
 
 void SurfacesHideAll() {
   visVents = 0;
   visOpenVents = 0;
   visDummyVents = 0;
-  visOtherVents = 0;
+  scase.visOtherVents = 0;
   visCircularVents = VENT_HIDE;
 }
 
 void DevicesHideAll() {
-  for(size_t i = 0; i < objectscoll->nobject_defs; i++) {
-    sv_object *objecti = objectscoll->object_defs[i];
+  for(size_t i = 0; i < scase.objectscoll.nobject_defs; i++) {
+    sv_object *objecti = scase.objectscoll.object_defs[i];
     objecti->visible = 0;
   }
 }
@@ -1173,11 +1171,11 @@ int BlockageOutlineColor(int setting) {
   switch(setting) {
   case 0:
     outline_color_flag = 0;
-    updatefaces = 1;
+    scase.updatefaces = 1;
     break;
   case 1:
     outline_color_flag = 1;
-    updatefaces = 1;
+    scase.updatefaces = 1;
     break;
   default:
     return 1;
@@ -1231,11 +1229,11 @@ void Loadvolsmoke(int meshnumber) {
     read_vol_mesh = VOL_READALL;
     ReadVolsmokeAllFramesAllMeshes2(NULL);
   }
-  else if(imesh >= 0 && imesh < nmeshes) {
+  else if(imesh >= 0 && imesh < scase.meshescoll.nmeshes) {
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo + imesh;
+    meshi = scase.meshescoll.meshinfo + imesh;
     vr = meshi->volrenderinfo;
     ReadVolsmokeAllFrames(vr);
   }
@@ -1249,17 +1247,16 @@ void Loadvolsmoke(int meshnumber) {
 void Loadvolsmokeframe(int meshnumber, int framenumber, int flag) {
   int framenum, index;
   int first = 1;
-  int i;
 
   index = meshnumber;
   framenum = framenumber;
-  if(index > nmeshes - 1) index = -1;
-  for(i = 0; i < nmeshes; i++) {
+  if(index > scase.meshescoll.nmeshes - 1) index = -1;
+  for(size_t i = 0; i < scase.meshescoll.nmeshes; i++) {
     if(index == i || index < 0) {
       meshdata *meshi;
       volrenderdata *vr;
 
-      meshi = meshinfo + i;
+      meshi = scase.meshescoll.meshinfo + i;
       vr = meshi->volrenderinfo;
       FreeVolsmokeFrame(vr, framenum);
       ReadVolsmokeFrame(vr, framenum, &first);
@@ -1276,7 +1273,7 @@ void Loadvolsmokeframe(int meshnumber, int framenumber, int flag) {
   UpdateTimes();
   force_redisplay = 1;
   UpdateFrameNumber(framenum);
-  i = framenum;
+  int i = framenum;
   itimes = i;
   script_itime = i;
   stept = 1;
@@ -1293,30 +1290,30 @@ void Load3dsmoke(const char *smoke_type) {
   int count = 0;
   int lastsmoke;
 
-  for(size_t i = smoke3dcoll.nsmoke3dinfo - 1; i >= 0; i--) {
+  for(size_t i = scase.smoke3dcoll.nsmoke3dinfo - 1; i >= 0; i--) {
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dcoll.smoke3dinfo + i;
+    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
     if(MatchUpper(smoke3di->label.longlabel, smoke_type) == MATCH) {
       lastsmoke = i;
       break;
     }
   }
 
-  for(size_t i = smoke3dcoll.nsmoke3dinfo - 1; i >= 0; i--) {
+  for(size_t i = scase.smoke3dcoll.nsmoke3dinfo - 1; i >= 0; i--) {
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dcoll.smoke3dinfo + i;
+    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
     if(MatchUpper(smoke3di->label.longlabel, smoke_type) == MATCH) {
       lastsmoke = i;
       break;
     }
   }
 
-  for(size_t i = 0; i < smoke3dcoll.nsmoke3dinfo; i++) {
+  for(size_t i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
     smoke3ddata *smoke3di;
 
-    smoke3di = smoke3dcoll.smoke3dinfo + i;
+    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
     if(MatchUpper(smoke3di->label.longlabel, smoke_type) == MATCH) {
       smoke3di->finalize = 0;
       if(lastsmoke == i) smoke3di->finalize = 1;
@@ -1377,10 +1374,10 @@ int Loadtour(const char *tourname) {
   int count = 0;
   int errorcode = 0;
 
-  for(size_t i = 0; i < tourcoll.ntourinfo; i++) {
+  for(size_t i = 0; i < scase.tourcoll.ntourinfo; i++) {
     tourdata *touri;
 
-    touri = tourcoll.tourinfo + i;
+    touri = scase.tourcoll.tourinfo + i;
     if(strcmp(touri->label, tourname) == 0) {
       TourMenu(i);
       viewtourfrompath = 0;
@@ -1404,17 +1401,17 @@ void Loadparticles(const char *name) {
   int count = 0;
 
   npartframes_max = GetMinPartFrames(PARTFILE_LOADALL);
-  for(size_t i = 0; i < npartinfo; i++) {
+  for(size_t i = 0; i < scase.npartinfo; i++) {
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     ReadPart(parti->file, i, UNLOAD, &errorcode);
     count++;
   }
-  for(size_t i = 0; i < npartinfo; i++) {
+  for(size_t i = 0; i < scase.npartinfo; i++) {
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = scase.partinfo + i;
     ReadPart(parti->file, i, LOAD, &errorcode);
     count++;
   }
@@ -1450,11 +1447,11 @@ void Partclasstype(const char *part_type) {
 
     propi = part5propinfo + i;
     if(propi->display == 0) continue;
-    for(j = 0; j < npartclassinfo; j++) {
+    for(j = 0; j < scase.npartclassinfo; j++) {
       partclassdata *partclassj;
 
       if(propi->class_present[j] == 0) continue;
-      partclassj = partclassinfo + j;
+      partclassj = scase.partclassinfo + j;
       if(strcmp(partclassj->name, part_type) == 0) {
         ParticlePropShowMenu(-10 - j);
         count++;
@@ -1501,8 +1498,8 @@ void Plot3dprops(int variable_index, int showvector, int vector_length_index,
     meshdata *gbsave, *gbi;
 
     gbsave = current_mesh;
-    for(size_t i = 0; i < nmeshes; i++) {
-      gbi = meshinfo + i;
+    for(size_t i = 0; i < scase.meshescoll.nmeshes; i++) {
+      gbi = scase.meshescoll.meshinfo + i;
       if(gbi->plot3dfilenum == -1) continue;
       UpdateCurrentMesh(gbi);
       UpdatePlotSlice(XDIR);
@@ -1519,9 +1516,9 @@ void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
   int dir;
   float val;
 
-  if(meshnumber < 0 || meshnumber > nmeshes - 1) return;
+  if(meshnumber < 0 || meshnumber > scase.meshescoll.nmeshes - 1) return;
 
-  meshi = meshinfo + meshnumber;
+  meshi = scase.meshescoll.meshinfo + meshnumber;
   UpdateCurrentMesh(meshi);
 
   dir = CLAMP(plane_orientation, XDIR, ISO);
@@ -1569,10 +1566,10 @@ void Loadplot3d(int meshnumber, float time_local) {
   size_t count = 0;
   int blocknum = meshnumber - 1;
 
-  for(size_t i = 0; i < nplot3dinfo; i++) {
+  for(size_t i = 0; i < scase.nplot3dinfo; i++) {
     plot3ddata *plot3di;
 
-    plot3di = plot3dinfo + i;
+    plot3di = scase.plot3dinfo + i;
     if(plot3di->blocknumber == blocknum &&
        ABS(plot3di->time - time_local) < 0.5) {
       count++;
@@ -1590,11 +1587,11 @@ void Loadiso(const char *type) {
   int count = 0;
 
   update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
-  for(size_t i = 0; i < nisoinfo; i++) {
+  for(size_t i = 0; i < scase.nisoinfo; i++) {
     int errorcode;
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = scase.isoinfo + i;
     if(STRCMP(isoi->surface_label.longlabel, type) == 0) {
       ReadIso(isoi->file, i, LOAD, NULL, &errorcode);
       count++;
@@ -1613,21 +1610,21 @@ void Loadiso(const char *type) {
 }
 
 FILE_SIZE Loadsliceindex(size_t index, int *errorcode) {
-  return ReadSlice(slicecoll.sliceinfo[index].file, (int)index, ALL_FRAMES, NULL, LOAD,
-                   SET_SLICECOLOR, errorcode);
+  return ReadSlice(scase.slicecoll.sliceinfo[index].file, (int)index, ALL_FRAMES,
+                   NULL, LOAD, SET_SLICECOLOR, errorcode);
 }
 
 void Loadslice(const char *type, int axis, float distance) {
   int count = 0;
-  for(int i = 0; i < slicecoll.nmultisliceinfo; i++) {
+  for(int i = 0; i < scase.slicecoll.nmultisliceinfo; i++) {
     multislicedata *mslicei;
     slicedata *slicei;
     int j;
     float delta_orig;
 
-    mslicei = slicecoll.multisliceinfo + i;
+    mslicei = scase.slicecoll.multisliceinfo + i;
     if(mslicei->nslices <= 0) continue;
-    slicei = slicecoll.sliceinfo + mslicei->islices[0];
+    slicei = scase.slicecoll.sliceinfo + mslicei->islices[0];
     if(MatchUpper(slicei->label.longlabel, type) == 0) continue;
     if(slicei->idir != axis) continue;
     delta_orig = slicei->position_orig - distance;
@@ -1650,14 +1647,14 @@ void Loadslice(const char *type, int axis, float distance) {
 void Loadvslice(const char *type, int axis, float distance) {
   float delta_orig;
   int count = 0;
-  for(int i = 0; i < slicecoll.nmultivsliceinfo; i++) {
+  for(int i = 0; i < scase.slicecoll.nmultivsliceinfo; i++) {
     multivslicedata *mvslicei;
     int j;
     slicedata *slicei;
 
-    mvslicei = slicecoll.multivsliceinfo + i;
+    mvslicei = scase.slicecoll.multivsliceinfo + i;
     if(mvslicei->nvslices <= 0) continue;
-    slicei = slicecoll.sliceinfo + mvslicei->ivslices[0];
+    slicei = scase.slicecoll.sliceinfo + mvslicei->ivslices[0];
     if(MatchUpper(slicei->label.longlabel, type) == 0) continue;
     if(slicei->idir != axis) continue;
     delta_orig = slicei->position_orig - distance;
@@ -1685,7 +1682,7 @@ void Unloadslice(int value) {
   if(value >= 0) {
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo + value;
+    slicei = scase.slicecoll.sliceinfo + value;
 
     if(slicei->slice_filetype == SLICE_GEOM) {
       ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
@@ -1701,10 +1698,10 @@ void Unloadslice(int value) {
   }
   else {
     if(value == UNLOAD_ALL) {
-      for(size_t i = 0; i < slicecoll.nsliceinfo; i++) {
+      for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
         slicedata *slicei;
 
-        slicei = slicecoll.sliceinfo + i;
+        slicei = scase.slicecoll.sliceinfo + i;
         if(slicei->slice_filetype == SLICE_GEOM) {
           ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
                        &errorcode);
@@ -1714,10 +1711,10 @@ void Unloadslice(int value) {
                     &errorcode);
         }
       }
-      for(size_t i = 0; i < npatchinfo; i++) {
+      for(size_t i = 0; i < scase.npatchinfo; i++) {
         patchdata *patchi;
 
-        patchi = patchinfo + i;
+        patchi = scase.patchinfo + i;
         if(patchi->filetype_label != NULL &&
            strcmp(patchi->filetype_label, "INCLUDE_GEOM") == 0) {
           UnloadBoundaryMenu(i);
@@ -1734,16 +1731,16 @@ int Unloadall() {
   if(scriptoutstream != NULL) {
     fprintf(scriptoutstream, "UNLOADALL\n");
   }
-  if(hrr_csv_filename != NULL) {
+  if(scase.paths.hrr_csv_filename != NULL) {
     ReadHRR(UNLOAD);
   }
   if(nvolrenderinfo > 0) {
     LoadVolsmoke3DMenu(UNLOAD_ALL);
   }
-  for(size_t i = 0; i < slicecoll.nsliceinfo; i++) {
+  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
     slicedata *slicei;
 
-    slicei = slicecoll.sliceinfo + i;
+    slicei = scase.slicecoll.sliceinfo + i;
     if(slicei->loaded == 1) {
       if(slicei->slice_filetype == SLICE_GEOM) {
         ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
@@ -1755,22 +1752,22 @@ int Unloadall() {
       }
     }
   }
-  for(size_t i = 0; i < nplot3dinfo; i++) {
+  for(size_t i = 0; i < scase.nplot3dinfo; i++) {
     ReadPlot3D("", i, UNLOAD, &errorcode);
   }
-  for(size_t i = 0; i < npatchinfo; i++) {
+  for(size_t i = 0; i < scase.npatchinfo; i++) {
     ReadBoundary(i, UNLOAD, &errorcode);
   }
-  for(size_t i = 0; i < npartinfo; i++) {
+  for(size_t i = 0; i < scase.npartinfo; i++) {
     ReadPart("", i, UNLOAD, &errorcode);
   }
-  for(size_t i = 0; i < nisoinfo; i++) {
+  for(size_t i = 0; i < scase.nisoinfo; i++) {
     ReadIso("", i, UNLOAD, NULL, &errorcode);
   }
-  for(size_t i = 0; i < nzoneinfo; i++) {
+  for(size_t i = 0; i < scase.nzoneinfo; i++) {
     ReadZone(i, UNLOAD, &errorcode);
   }
-  for(size_t i = 0; i < smoke3dcoll.nsmoke3dinfo; i++) {
+  for(size_t i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
     ReadSmoke3D(ALL_SMOKE_FRAMES, i, UNLOAD, FIRST_TIME, &errorcode);
   }
   if(nvolrenderinfo > 0) {
@@ -1816,6 +1813,7 @@ int Setviewpoint(const char *viewpoint) {
 /// @return
 int SetOrthoPreset(const char *viewpoint) {
   int command;
+  fprintf(stderr, "setting ortho %s\n", viewpoint);
   if(STRCMP(viewpoint, "XMIN") == 0) {
     command = SCRIPT_VIEWXMIN;
   }
@@ -2095,7 +2093,7 @@ float CameraGetElev() { return camera_current->az_elev[1]; }
 
 void MoveScene(int xm, int ym);
 int CameraZoomToFit() {
-  float offset = (zbar - ybar) / 2.0;
+  float offset = (scase.zbar - scase.ybar) / 2.0;
   camera_current->eye[1] += offset * 2;
   eye_xyz0[1] = camera_current->eye[1];
   in_external = 0;
@@ -2405,7 +2403,7 @@ int SetIsopointsize(float v) {
 } // ISOPOINTSIZE
 
 int SetLinewidth(float v) {
-  linewidth = v;
+  scase.linewidth = v;
   return 0;
 } // LINEWIDTH
 
@@ -2489,7 +2487,7 @@ int SetVectorpointsize(float v) {
 } // VECTORPOINTSIZE
 
 int SetVentlinewidth(float v) {
-  ventlinewidth = v;
+  scase.ventlinewidth = v;
   return 0;
 } // VENTLINEWIDTH
 
@@ -2670,8 +2668,8 @@ int SetIsotran2(int v) {
 int SetMeshvis(int n, int vals[]) {
   meshdata *meshi;
   for(size_t i = 0; i < n; i++) {
-    if(i > nmeshes - 1) break;
-    meshi = meshinfo + i;
+    if(i > scase.meshescoll.nmeshes - 1) break;
+    meshi = scase.meshescoll.meshinfo + i;
     meshi->blockvis = vals[i];
     ONEORZERO(meshi->blockvis);
   }
@@ -2679,10 +2677,10 @@ int SetMeshvis(int n, int vals[]) {
 } // MESHVIS
 
 int SetMeshoffset(int meshnum, int value) {
-  if(meshnum >= 0 && meshnum < nmeshes) {
+  if(meshnum >= 0 && meshnum < scase.meshescoll.nmeshes) {
     meshdata *meshi;
 
-    meshi = meshinfo + meshnum;
+    meshi = scase.meshescoll.meshinfo + meshnum;
     meshi->mesh_offset_ptr = meshi->mesh_offset;
     return 0;
   }
@@ -2857,7 +2855,7 @@ int SetShowopenvents(int a, int b) {
 } // SHOWOPENVENTS
 
 int SetShowothervents(int v) {
-  visOtherVents = v;
+  scase.visOtherVents = v;
   return 0;
 } // SHOWOTHERVENTS
 
@@ -2868,7 +2866,7 @@ int SetShowsensors(int a, int b) {
 } // SHOWSENSORS
 
 int SetShowsliceinobst(int v) {
-  show_slice_in_obst = v;
+  scase.show_slice_in_obst = v;
   return 0;
 } // SHOWSLICEINOBST
 
@@ -2891,7 +2889,7 @@ int SetShowstreak(int show, int step, int showhead, int index) {
 } // SHOWSTREAK
 
 int SetShowterrain(int v) {
-  visTerrainType = v;
+  scase.visTerrainType = v;
   return 0;
 } // SHOWTERRAIN
 
@@ -3316,7 +3314,7 @@ int SetSmokeskip(int v) {
 } // SMOKESKIP
 
 int SetSmokealbedo(float v) {
-  smoke_albedo = v;
+  scase.smoke_albedo = v;
   return 0;
 } // SMOKEALBEDO
 
@@ -3438,9 +3436,9 @@ int SetViewalltours(int v) {
 } // VIEWALLTOURS
 
 int SetViewtimes(float start, float stop, int ntimes) {
-  tourcoll.tour_tstart = start;
-  tourcoll.tour_tstop = stop;
-  tourcoll.tour_ntimes = ntimes;
+  scase.tourcoll.tour_tstart = start;
+  scase.tourcoll.tour_tstop = stop;
+  scase.tourcoll.tour_ntimes = ntimes;
   return 0;
 } // VIEWTIMES
 
@@ -3544,10 +3542,10 @@ int SetMsliceauto(int n, int vals[]) {
   for(size_t i = 0; i < n3dsmokes; i++) {
     seq_id = vals[i];
 
-    if(seq_id >= 0 && seq_id < slicecoll.nmultisliceinfo) {
+    if(seq_id >= 0 && seq_id < scase.slicecoll.nmultisliceinfo) {
       multislicedata *mslicei;
 
-      mslicei = slicecoll.multisliceinfo + seq_id;
+      mslicei = scase.slicecoll.multisliceinfo + seq_id;
       mslicei->autoload = 1;
     }
   }
@@ -3573,7 +3571,7 @@ int SetCompressauto(int v) {
 //     trim_back(buffer);
 //     token = strtok(buffer, " ");
 //     j = 0;
-//     while(token != NULL&&j<npartclassinfo){
+//     while(token != NULL&&j<scase.npartclassinfo){
 //       int visval;
 
 //       sscanf(token, "%i", &visval);
@@ -3614,16 +3612,16 @@ int SetPropindex(int nvals, int *vals) {
     int ind, val;
     ind = *(vals + (i * PROPINDEX_STRIDE + 0));
     val = *(vals + (i * PROPINDEX_STRIDE + 1));
-    if(ind < 0 || ind > npropinfo - 1) return 0;
-    propi = propinfo + ind;
+    if(ind < 0 || ind > scase.propcoll.npropinfo - 1) return 0;
+    propi = scase.propcoll.propinfo + ind;
     if(val < 0 || val > propi->nsmokeview_ids - 1) return 0;
     propi->smokeview_id = propi->smokeview_ids[val];
     propi->smv_object = propi->smv_objects[val];
   }
-  for(size_t i = 0; i < npartclassinfo; i++) {
+  for(size_t i = 0; i < scase.npartclassinfo; i++) {
     partclassdata *partclassi;
 
-    partclassi = partclassinfo + i;
+    partclassi = scase.partclassinfo + i;
     UpdatePartClassDepend(partclassi);
   }
   return 0;
@@ -3665,13 +3663,13 @@ int SetShowdevices(int ndevices_ini, const char *const *names) {
 
   char tempname[255]; // temporary buffer to convert from const string
 
-  for(size_t i = 0; i < objectscoll->nobject_defs; i++) {
-    obj_typei = objectscoll->object_defs[i];
+  for(size_t i = 0; i < scase.objectscoll.nobject_defs; i++) {
+    obj_typei = scase.objectscoll.object_defs[i];
     obj_typei->visible = 0;
   }
   for(size_t i = 0; i < ndevices_ini; i++) {
     strncpy(tempname, names[i], 255 - 1); // use temp buffer
-    obj_typei = GetSmvObject(objectscoll, tempname);
+    obj_typei = GetSmvObject(&scase.objectscoll, tempname);
     // obj_typei = GetSmvObject(names[i]);
     if(obj_typei != NULL) {
       obj_typei->visible = 1;
@@ -3877,9 +3875,9 @@ int SetPl3dBoundMax(int pl3dValueIndex, int set, float value) {
 int SetTload(int beginFlag, float beginVal, int endFlag, int endVal,
              int skipFlag, int skipVal) {
   use_tload_begin = beginFlag;
-  tload_begin = beginVal;
+  scase.tload_begin = beginVal;
   use_tload_end = endFlag;
-  tload_end = endVal;
+  scase.tload_end = endVal;
   use_tload_skip = skipFlag;
   tload_skip = skipVal;
   return 0;
@@ -4000,8 +3998,8 @@ int ShowSmoke3dShowall() {
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
   plotstate = DYNAMIC_PLOTS;
-  for(size_t i = 0; i < smoke3dcoll.nsmoke3dinfo; i++) {
-    smoke3di = smoke3dcoll.smoke3dinfo + i;
+  for(size_t i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
+    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
     if(smoke3di->loaded == 1) smoke3di->display = 1;
   }
   GLUTPOSTREDISPLAY;
@@ -4014,8 +4012,8 @@ int ShowSmoke3dHideall() {
 
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
-  for(size_t i = 0; i < smoke3dcoll.nsmoke3dinfo; i++) {
-    smoke3di = smoke3dcoll.smoke3dinfo + i;
+  for(size_t i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
+    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
     if(smoke3di->loaded == 1) smoke3di->display = 0;
   }
   UpdateShow();
@@ -4026,8 +4024,8 @@ int ShowSlicesShowall() {
 
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
-  for(size_t i = 0; i < slicecoll.nsliceinfo; i++) {
-    slicecoll.sliceinfo[i].display = 1;
+  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
+    scase.slicecoll.sliceinfo[i].display = 1;
   }
   showall_slices = 1;
   UpdateSliceFilenum();
@@ -4042,8 +4040,8 @@ int ShowSlicesHideall() {
 
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
-  for(size_t i = 0; i < slicecoll.nsliceinfo; i++) {
-   slicecoll.sliceinfo[i].display = 0;
+  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
+    scase.slicecoll.sliceinfo[i].display = 0;
   }
   showall_slices = 0;
   UpdateSliceFilenum();

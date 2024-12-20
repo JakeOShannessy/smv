@@ -243,17 +243,17 @@ void DisplayVersionInfo(char *progname){
   char fullini_filename[256];
   strcpy(fullini_filename, "");
   char *smokeview_scratchdir = GetUserConfigDir();
-  if(caseini_filename != NULL){
-    if(FileExistsOrig(caseini_filename) == 1){
+  if(scase.paths.caseini_filename != NULL){
+    if(FileExistsOrig(scase.paths.caseini_filename) == 1){
       char cwdpath[1000];
       GETCWD(cwdpath, 1000);
       strcpy(fullini_filename, cwdpath);
       strcat(fullini_filename, dirseparator);
-      strcat(fullini_filename, caseini_filename);
+      strcat(fullini_filename, scase.paths.caseini_filename);
     }
     else if(smokeview_scratchdir!=NULL){
       strcpy(fullini_filename, smokeview_scratchdir);
-      strcat(fullini_filename, caseini_filename);
+      strcat(fullini_filename, scase.paths.caseini_filename);
       if(FileExistsOrig(fullini_filename)==0)strcpy(fullini_filename, "");
     }
   }

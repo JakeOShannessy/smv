@@ -384,12 +384,12 @@ char *ProcessCommandLine(CommandlineArgs *args){
     }
   }
   if(filename_local!= NULL){
-    FREEMEMORY(fds_filein);
-    NewMemory((void **)&fds_filein, strlen(fdsprefix) + 6);
-    STRCPY(fds_filein, fdsprefix);
-    STRCAT(fds_filein, ".fds");
-    if(FILE_EXISTS(fds_filein) == NO){
-      FREEMEMORY(fds_filein);
+    FREEMEMORY(scase.paths.fds_filein);
+    NewMemory((void **)&scase.paths.fds_filein, strlen(fdsprefix) + 6);
+    STRCPY(scase.paths.fds_filein, fdsprefix);
+    STRCAT(scase.paths.fds_filein, ".fds");
+    if(FILE_EXISTS(scase.paths.fds_filein) == NO){
+      FREEMEMORY(scase.paths.fds_filein);
     }
   }
   if(ffmpeg_command_filename == NULL){
@@ -568,8 +568,8 @@ char *ProcessCommandLine(CommandlineArgs *args){
       SMV_EXIT(0);
     }
     if(args->noblank){
-      iblank_set_on_commandline = 1;
-      use_iblank = 0;
+      scase.iblank_set_on_commandline = 1;
+      scase.use_iblank = 0;
     }
     if(args->nobounds){
       no_bounds = 1;
@@ -595,8 +595,8 @@ char *ProcessCommandLine(CommandlineArgs *args){
       lookfor_compressed_files = 1;
     }
     if(args->blank){
-      iblank_set_on_commandline = 1;
-      use_iblank = 1;
+      scase.iblank_set_on_commandline = 1;
+      scase.use_iblank = 1;
     }
     if(args->gversion){
       vis_title_gversion = 1;
