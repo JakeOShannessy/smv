@@ -1825,8 +1825,8 @@ SVEXTERN smv_case scase = {.tourcoll = {.ntourinfo = 0,
                            .tamb = 293.15,
                            .nrgb = NRGB,
                            .linewidth = 2.0,
-                           .ventlinewidth = 2.0,
-                           0};
+                           .ventlinewidth = 2.0
+                          };
 #else
 SVEXTERN smv_case scase;
 #endif

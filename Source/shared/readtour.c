@@ -19,7 +19,9 @@
 #include "readtour.h"
 #include "readgeom.h"
 
-EXTERNCPP void ReallocTourMemory(tour_collection *tourcoll) {
+#include "shared_structures.h"
+
+void ReallocTourMemory(tour_collection *tourcoll) {
   tourdata *touri;
 
   if(tourcoll->tour_ntimes > 0) {

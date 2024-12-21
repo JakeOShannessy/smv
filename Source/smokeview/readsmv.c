@@ -8169,7 +8169,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   if (n_cadgeom_keywords > 0) {
     // Allocate a fixed-size collection large enough to hold each of the CADGEOM
     // definitions.
-    int err = CreateCADGeomCollection(&scase.cadgeomcoll, n_cadgeom_keywords);
+    int err = InitCADGeomCollection(&scase.cadgeomcoll, n_cadgeom_keywords);
     if (err == 0) return 2;
   }
 
@@ -16088,7 +16088,7 @@ int ReadIni(char *inifile){
   //
   // Last definition wins.
 
-  ntickinfo=ntickinfo_smv;
+  scase.ntickinfo=scase.ntickinfo_smv;
 
   // Read "smokeview.ini" from bin dir
   char *global_ini = GetSystemIniPath();

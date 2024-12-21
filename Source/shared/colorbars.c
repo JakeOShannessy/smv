@@ -65,8 +65,7 @@ float *GetColorPtr(color_collection *colorcoll, float *color) {
 
 /* ------------------ GetColorbar ------------------------ */
 
-colorbardata *GetColorbar(colorbar_collection *colorbars,
-                          const char *menu_label) {
+colorbardata *GetColorbar(colorbar_collection *colorbars, const char *menu_label) {
   for (int i = 0; i < colorbars->ncolorbars; i++) {
     colorbardata *cb = colorbars->colorbarinfo + i;
     if (strcmp(cb->menu_label, menu_label) == 0) return cb;

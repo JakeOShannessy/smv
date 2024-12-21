@@ -9,7 +9,7 @@
 #define TERRAIN_FIRE_LINE_UPDATE 39
 #endif
 
-#include "colorbars.h"
+#include "shared_structures.h"
 
 //*** glui_clip.cpp headers
 
@@ -301,6 +301,7 @@ EXTERNCPP int  WriteFileBounds(char *file, float valmin, float valmax);
 
 //*** getdatacolors.c headers
 
+EXTERNCPP void ConvertColor(color_collection coll, int flag);
 EXTERNCPP void GetBoundaryColors(float *t, int nt, unsigned char *it,
               int settmin, float *tmin, int settmax, float *tmax,
               float *tmin_global, float *tmax_global,
@@ -317,6 +318,7 @@ EXTERNCPP void GetBoundaryLabels(
               char **labels, float *boundaryvaluespatch, float *tvals256, int nlevel);
 EXTERNCPP void GetColorbarLabels(float tmin, float tmax, int nlevel,
               char labels[12][11],float *tlevels256);
+EXTERNCPP float *GetColorPtr(color_collection *colorcoll, float *color);
 EXTERNCPP float *GetColorTranPtr(float *color, float transparency);
 EXTERNCPP void GetPartColors(partdata *parti, int nlevels, int flag);
 EXTERNCPP void GetPlot3DColors(int iplot, float *ttmin, float *ttmax,

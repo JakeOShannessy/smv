@@ -425,16 +425,17 @@ int InitCADGeomCollection(cadgeom_collection *coll, int capacity) {
   return 0;
 }
 
-int CreateCADGeomCollection(cadgeom_collection *coll, int capacity) {
-  if (capacity == 0) return 1;
-  if(NEWMEMORY(coll, sizeof(cadgeom_collection)) == 0) return 2;
+cadgeom_collection *CreateCADGeomCollection(int capacity) {
+  cadgeom_collection *coll;
+  if(NewMemory((void **)&coll, capacity * sizeof(cadgeom_collection)) == 0)
+    return NULL;
   int ret = InitCADGeomCollection(coll, capacity);
   if(ret != 0) {
     FREEMEMORY(coll);
-    return 3;
+    return NULL;
   }
   else {
-    return 0;
+    return coll;
   }
 }
 
