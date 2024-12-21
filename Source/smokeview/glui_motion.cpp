@@ -235,7 +235,7 @@ void MakeMovieBashScript(void){
   fprintf(stream, "SMOKEVIEW=$FIREMODELS/smv/Build/smokeview/intel_linux_64/smokeview_linux_64\n");
 
 
-  fprintf(stream, "$QSMV -j SV_ -P $NPROCS -q $QUEUE -e $SMOKEVIEW -c %s %s\n", movie_ssf_script, fdsprefix);
+  fprintf(stream, "$QSMV -j SV_ -P $NPROCS -q $QUEUE -e $SMOKEVIEW -c %s %s\n", movie_ssf_script, scase.fdsprefix);
   fprintf(stream, "$MAKEMOVIE -i . -j SV_ -o %s %s %s\n", movie_htmldir, movie_basename, movie_basename);
 
   email_ptr = TrimFrontBack(movie_email);
@@ -463,8 +463,8 @@ extern "C" void GLUISetColorControls(void){
 void MovieCB(int val){
   switch(val){
     case MOVIE_SLICE_INDEX:
-      //sprintf(movie_basename, "%s_slice_%i", fdsprefix, movie_slice_index+1);
-      snprintf(movie_basename, sizeof(movie_basename), "%s_slice_%i", fdsprefix, movie_slice_index+1);
+      //sprintf(movie_basename, "%s_slice_%i", scase.fdsprefix, movie_slice_index+1);
+      snprintf(movie_basename, sizeof(movie_basename), "%s_slice_%i", scase.fdsprefix, movie_slice_index+1);
 
       strcpy(movie_ssf_script, movie_basename);
       strcat(movie_ssf_script, ".ssf");

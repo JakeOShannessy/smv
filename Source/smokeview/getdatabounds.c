@@ -869,22 +869,22 @@ void DefineGbndFilename(int file_type){
   ASSERT_BOUND_TYPE;
   if(file_type == BOUND_SLICE){
     if(slice_gbnd_filename == NULL){
-      NewMemory(( void ** )&slice_gbnd_filename, strlen(fdsprefix) + strlen(".sf.gbnd") + 1);
-      strcpy(slice_gbnd_filename, fdsprefix);
+      NewMemory(( void ** )&slice_gbnd_filename, strlen(scase.fdsprefix) + strlen(".sf.gbnd") + 1);
+      strcpy(slice_gbnd_filename, scase.fdsprefix);
       strcat(slice_gbnd_filename, ".sf.gbnd");
     }
   }
   else if(file_type == BOUND_PATCH){
     if(patch_gbnd_filename == NULL){
-      NewMemory(( void ** )&patch_gbnd_filename, strlen(fdsprefix) + strlen(".bf.gbnd") + 1);
-      strcpy(patch_gbnd_filename, fdsprefix);
+      NewMemory(( void ** )&patch_gbnd_filename, strlen(scase.fdsprefix) + strlen(".bf.gbnd") + 1);
+      strcpy(patch_gbnd_filename, scase.fdsprefix);
       strcat(patch_gbnd_filename, ".bf.gbnd");
     }
   }
   else if(file_type == BOUND_PLOT3D){
     if(plot3d_gbnd_filename == NULL){
-      NewMemory(( void ** )&plot3d_gbnd_filename, strlen(fdsprefix) + strlen(".q.gbnd") + 1);
-      strcpy(plot3d_gbnd_filename, fdsprefix);
+      NewMemory(( void ** )&plot3d_gbnd_filename, strlen(scase.fdsprefix) + strlen(".q.gbnd") + 1);
+      strcpy(plot3d_gbnd_filename, scase.fdsprefix);
       strcat(plot3d_gbnd_filename, ".q.gbnd");
     }
   }

@@ -267,7 +267,7 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
       use_scriptfile = 1;
     }
     else{
-      strcpy(renderfile_name, fdsprefix);
+      strcpy(renderfile_name, scase.fdsprefix);
     }
     if(script_dir_path != NULL&&strlen(script_dir_path) > 0){
       if(strlen(script_dir_path) == 2 && script_dir_path[0] == '.'&&script_dir_path[1] == dirseparator[0]){

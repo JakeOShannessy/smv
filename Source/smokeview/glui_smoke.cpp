@@ -730,7 +730,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
       LISTBOX_VOL_tour->set_int_val(selectedtour_index);
     }
 
-    strcpy(vol_prefix, fdsprefix);
+    strcpy(vol_prefix, scase.fdsprefix);
     EDIT_vol_prefix = glui_3dsmoke->add_edittext_to_panel(ROLLOUT_generate_images, "image prefix:", GLUI_EDITTEXT_TEXT, vol_prefix, VOL_PREFIX, GLUISmoke3dCB);
     EDIT_vol_prefix->set_w(200);
 
@@ -789,7 +789,7 @@ void GLUIGetPixelsPerTriangle(void){
   float x_pixels_per_triangle=1000000.0, y_pixels_per_triangle=1000000.0, pixels_per_triangle;
   char label[500];
 
-  if(STATIC_pixels_per_triangle == NULL)return; 
+  if(STATIC_pixels_per_triangle == NULL)return;
   if(nplotx_all>0)x_pixels_per_triangle = smoke3d_skipx*(float)glui_screenWidth/(float)nplotx_all;
   if(nploty_all>0)y_pixels_per_triangle = smoke3d_skipy*(float)glui_screenHeight/(float)nploty_all;
   pixels_per_triangle = MIN(x_pixels_per_triangle, y_pixels_per_triangle);
@@ -992,7 +992,7 @@ extern "C" void GLUISmoke3dCB(int var){
     }
     TrimBack(vol_prefix);
     vol_prefixptr=TrimFront(vol_prefix);
-    if(strlen(vol_prefixptr)==0)vol_prefixptr=fdsprefix;
+    if(strlen(vol_prefixptr)==0)vol_prefixptr=scase.fdsprefix;
     InitVolrenderScript(vol_prefixptr, tour_label, vol_startframe0, vol_skipframe0);
     break;
   case NONGPU_VOL_FACTOR:

@@ -178,9 +178,9 @@ void InitVolrenderScript(char *prefix, char *tour_label, int startframe, int ski
   if(volrender_scriptname==NULL){
     int len;
 
-    len = strlen(fdsprefix)+strlen("_volrender.ssf")+1;
+    len = strlen(scase.fdsprefix)+strlen("_volrender.ssf")+1;
     NewMemory((void **)&volrender_scriptname,(unsigned int)(len));
-    STRCPY(volrender_scriptname,fdsprefix);
+    STRCPY(volrender_scriptname,scase.fdsprefix);
     STRCAT(volrender_scriptname,"_volrender.ssf");
   }
 
@@ -206,8 +206,8 @@ void InitVolrenderScript(char *prefix, char *tour_label, int startframe, int ski
 
 void DisplayVersionInfo(char *progname){
   PRINTVERSION(progname);
-  if(fds_version!=NULL){
-    PRINTF("FDS Build        : %s\n",fds_githash);
+  if(scase.fds_version!=NULL){
+    PRINTF("FDS Build        : %s\n",scase.fds_githash);
   }
   char *smv_progname = GetBinPath();
   PRINTF("Smokeview path   : %s\n",smv_progname);

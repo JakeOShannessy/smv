@@ -151,8 +151,8 @@ int Loadsmvall(const char *input_filename) {
   int return_code;
   // fdsprefix and input_filename_ext are global and defined in smokeviewvars.h
   // TODO: move these into the model information namespace
-  ParseSmvFilepath(input_filename, fdsprefix, input_filename_ext);
-  return_code = Loadsmv(fdsprefix, input_filename_ext);
+  ParseSmvFilepath(input_filename, scase.fdsprefix, input_filename_ext);
+  return_code = Loadsmv(scase.fdsprefix, input_filename_ext);
 #ifdef pp_HIST
   if(return_code == 0 && update_bounds == 1) return_code = Update_Bounds();
 #endif

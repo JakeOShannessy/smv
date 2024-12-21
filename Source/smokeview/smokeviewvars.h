@@ -1571,7 +1571,6 @@ SVEXTERN slicedata SVDECL(*sd_shown,NULL);
 SVEXTERN vslicedata SVDECL(*vd_shown,NULL);
 SVEXTERN int SVDECL(showall_slices,1);
 SVEXTERN float zterrain_max, zterrain_min;
-SVEXTERN char SVDECL(*fds_version, NULL), SVDECL(*fds_githash, NULL);
 SVEXTERN char smv_githash[256], smv_gitdate[256];
 SVEXTERN int SVDECL(visMeshlabel, 1);
 SVEXTERN int SVDECL(visOpenVents,1),SVDECL(visDummyVents,1),SVDECL(visCircularVents,VENT_CIRCLE);
@@ -1904,7 +1903,7 @@ SVEXTERN float SVDECL(reset_time,0.0),SVDECL(start_frametime,0.0),SVDECL(stop_fr
 SVEXTERN float SVDECL(max_velocity,0.0);
 SVEXTERN int nslice_loaded, ngeomslice_loaded, nvolsmoke_loaded;
 SVEXTERN int SVDECL(*slice_loaded_list,NULL), SVDECL(*slice_sorted_loaded_list,NULL);
-SVEXTERN char SVDECL(*fdsprefix,NULL), SVDECL(*fdsprefix2,NULL);
+SVEXTERN char SVDECL(*fdsprefix2,NULL);
 SVEXTERN char SVDECL(*endian_filename,NULL);
 SVEXTERN char SVDECL(*target_filename,NULL);
 

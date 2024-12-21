@@ -2822,7 +2822,7 @@ void SmokeviewIniMenu(int value){
     WriteIni(LOCAL_INI,NULL);
     break;
   case MENU_READSVO:
-    ReadDefaultObjectCollection(&scase.objectscoll, fdsprefix, setbw, scase.isZoneFireModel);
+    ReadDefaultObjectCollection(&scase.objectscoll, scase.fdsprefix, setbw, scase.isZoneFireModel);
     break;
   case MENU_DUMMY:
     break;
@@ -11892,12 +11892,12 @@ static int menu_count=0;
     strcat(compiler_version_label, " ");
     strcat(compiler_version_label, pp_COMPVER);
     glutAddMenuEntry(compiler_version_label, 1);
-    if(fds_version!=NULL){
-      sprintf(menulabel, "  FDS version: %s", fds_version);
+    if(scase.fds_version!=NULL){
+      sprintf(menulabel, "  FDS version: %s", scase.fds_version);
       glutAddMenuEntry(menulabel, 1);
     }
-    if(fds_githash!=NULL){
-      sprintf(menulabel,"  FDS build: %s",fds_githash);
+    if(scase.fds_githash!=NULL){
+      sprintf(menulabel,"  FDS build: %s",scase.fds_githash);
       glutAddMenuEntry(menulabel,1);
     }
 #ifdef pp_GPU

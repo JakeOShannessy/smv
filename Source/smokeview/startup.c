@@ -230,8 +230,8 @@ int SetupCase(char *filename){
 
   return_code=-1;
   FREEMEMORY(part_globalbound_filename);
-  NewMemory((void **)&part_globalbound_filename, strlen(fdsprefix)+strlen(".prt.gbnd")+1);
-  STRCPY(part_globalbound_filename, fdsprefix);
+  NewMemory((void **)&part_globalbound_filename, strlen(scase.fdsprefix)+strlen(".prt.gbnd")+1);
+  STRCPY(part_globalbound_filename, scase.fdsprefix);
   STRCAT(part_globalbound_filename, ".prt.gbnd");
   char *smokeview_scratchdir = GetUserConfigDir();
   part_globalbound_filename = GetFileName(smokeview_scratchdir, part_globalbound_filename, NOT_FORCE_IN_DIR);
@@ -341,7 +341,7 @@ int SetupCase(char *filename){
 
   SetMainWindow();
   glutShowWindow();
-  glutSetWindowTitle(fdsprefix);
+  glutSetWindowTitle(scase.fdsprefix);
   InitMisc();
   GLUITrainerSetup(mainwindow_id);
   glutDetachMenu(GLUT_RIGHT_BUTTON);
@@ -356,7 +356,7 @@ int SetupCase(char *filename){
     GLUIShowAlert();
   }
   // initialize info header
-  initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash, chidfilebase, fds_title);
+  initialiseInfoHeader(&titleinfo, release_title, smv_githash, scase.fds_githash, chidfilebase, fds_title);
   PRINT_TIMER(timer_start, "glut routines");
   return 0;
 }
@@ -370,7 +370,7 @@ int GetScreenHeight(void){
   int screen_height=-1;
 
   strcpy(command,"system_profiler SPDisplaysDataType | grep Resolution | awk '{print $4}' | tail -1 >& ");
-  strcpy(height_file, fdsprefix);
+  strcpy(height_file, scase.fdsprefix);
   strcat(height_file, ".hgt");
   char *smokeview_scratchdir = GetUserConfigDir();
   full_height_file = GetFileName(smokeview_scratchdir, height_file, NOT_FORCE_IN_DIR);
@@ -1670,5 +1670,5 @@ void InitVars(void){
 }
 
 void FreeVars(void){
-  FreeObjectCollection(&scase.objectscoll);
+  ClearObjectCollection(&scase.objectscoll);
 }

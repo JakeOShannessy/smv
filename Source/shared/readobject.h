@@ -322,6 +322,13 @@ void ReadDefaultObjectCollection(object_collection *objectscoll,
                                  const char *fdsprefix, int setbw,
                                  int isZoneFireModel);
 /**
+ * @brief Remove all objects in the object collection. This does not free the
+ * object collection itself.
+ *
+ * @param objectscoll
+ */
+void ClearObjectCollection(object_collection *objectscoll);
+/**
  * @brief Free an @ref object_collection previously created by @ref
  * CreateObjectCollection.
  *
