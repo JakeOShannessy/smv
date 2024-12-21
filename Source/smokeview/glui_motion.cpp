@@ -2646,7 +2646,7 @@ void RenderCB(int var){
     case RENDER_TYPE:
       break;
     case RENDER_HTML:
-      Smv2Html(html_filename, HTML_CURRENT_TIME, FROM_SMOKEVIEW);
+      Smv2Html(scase.paths.html_filename, HTML_CURRENT_TIME, FROM_SMOKEVIEW);
       break;
 #ifdef pp_RENDER360_DEBUG
     case RENDER_DEBUG_360:

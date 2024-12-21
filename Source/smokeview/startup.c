@@ -244,22 +244,22 @@ int SetupCase(char *filename){
     trainer_mode=1;
     trainer_active=1;
     if(strcmp(input_filename_ext,".svd")==0){
-      input_file=trainer_filename;
+      input_file=scase.paths.trainer_filename;
     }
     else if(strcmp(input_filename_ext,".smt")==0){
-      input_file=test_filename;
+      input_file=scase.paths.test_filename;
     }
   }
   {
     bufferstreamdata *smv_streaminfo = NULL;
 
     PRINTF("reading  %s\n", input_file);
-    if(FileExistsOrig(smvzip_filename) == 1){
+    if(FileExistsOrig(scase.paths.smvzip_filename) == 1){
       lookfor_compressed_files = 1;
     }
     smv_streaminfo = GetSMVBuffer(input_file);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, iso_filename);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, fedsmv_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, scase.paths.iso_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, scase.paths.fedsmv_filename);
 
     return_code = ReadSMV(smv_streaminfo);
     if(smv_streaminfo!=NULL){

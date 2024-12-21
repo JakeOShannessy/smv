@@ -48,9 +48,9 @@ char *GetBaseName(const char *input_file) {
 
 int SetGlobalFilenames(const char *fdsprefix_arg) {
   int len_casename = strlen(fdsprefix_arg);
-  strcpy(scase.paths.movie_name, fdsprefix_arg);
-  strcpy(scase.paths.render_file_base, fdsprefix_arg);
-  strcpy(scase.paths.html_file_base, fdsprefix_arg);
+  strcpy(movie_name, fdsprefix_arg);
+  strcpy(render_file_base, fdsprefix_arg);
+  strcpy(html_file_base, fdsprefix_arg);
 
   FREEMEMORY(scase.paths.log_filename);
   NewMemory((void **)&scase.paths.log_filename, len_casename + strlen(".smvlog") + 1);

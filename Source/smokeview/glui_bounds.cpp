@@ -4702,7 +4702,7 @@ void ScriptCB(int var){
     id = LIST_ini_list->get_int_val();
     ini_filename = GetIniFileName(id);
     if(ini_filename == NULL)break;
-    if(strcmp(ini_filename, caseini_filename) == 0){
+    if(strcmp(ini_filename, scase.paths.caseini_filename) == 0){
       ReadIni(NULL);
     }
     else if(id >= 0){

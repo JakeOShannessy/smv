@@ -258,8 +258,8 @@ char *ProcessCommandLine(CommandlineArgs *args){
   strcpy(html_file_base, fdsprefix);
   smv_ext = strstr(html_file_base, ".smv");
   if(smv_ext!=NULL)*smv_ext = 0;
-  FREEMEMORY(trainer_filename);
-  FREEMEMORY(test_filename);
+  FREEMEMORY(scase.paths.trainer_filename);
+  FREEMEMORY(scase.paths.test_filename);
 
   strcpy(input_filename_ext, "");
 
@@ -280,94 +280,94 @@ char *ProcessCommandLine(CommandlineArgs *args){
         STRCPY(fdsprefix, argi);
         strcpy(movie_name, fdsprefix);
         strcpy(render_file_base, fdsprefix);
-        FREEMEMORY(trainer_filename);
-        NewMemory((void **)&trainer_filename, (unsigned int)(len_casename + 7));
-        STRCPY(trainer_filename, argi);
-        STRCAT(trainer_filename, ".svd");
-        FREEMEMORY(test_filename);
-        NewMemory((void **)&test_filename, (unsigned int)(len_casename + 7));
-        STRCPY(test_filename, argi);
-        STRCAT(test_filename, ".smt");
+        FREEMEMORY(scase.paths.trainer_filename);
+        NewMemory((void **)&scase.paths.trainer_filename, (unsigned int)(len_casename + 7));
+        STRCPY(scase.paths.trainer_filename, argi);
+        STRCAT(scase.paths.trainer_filename, ".svd");
+        FREEMEMORY(scase.paths.test_filename);
+        NewMemory((void **)&scase.paths.test_filename, (unsigned int)(len_casename + 7));
+        STRCPY(scase.paths.test_filename, argi);
+        STRCAT(scase.paths.test_filename, ".smt");
       }
     }
   }
 
-  FREEMEMORY(log_filename);
-  NewMemory((void **)&log_filename, len_casename + strlen(".smvlog") + 1);
-  STRCPY(log_filename, fdsprefix);
-  STRCAT(log_filename, ".smvlog");
+  FREEMEMORY(scase.paths.log_filename);
+  NewMemory((void **)&scase.paths.log_filename, len_casename + strlen(".smvlog") + 1);
+  STRCPY(scase.paths.log_filename, fdsprefix);
+  STRCAT(scase.paths.log_filename, ".smvlog");
 
-  FREEMEMORY(caseini_filename);
-  NewMemory((void **)&caseini_filename, len_casename + strlen(".ini") + 1);
-  STRCPY(caseini_filename, fdsprefix);
-  STRCAT(caseini_filename, ".ini");
+  FREEMEMORY(scase.paths.caseini_filename);
+  NewMemory((void **)&scase.paths.caseini_filename, len_casename + strlen(".ini") + 1);
+  STRCPY(scase.paths.caseini_filename, fdsprefix);
+  STRCAT(scase.paths.caseini_filename, ".ini");
 
 #ifdef pp_FRAME
-  FREEMEMORY(frametest_filename);
-  NewMemory((void **)&frametest_filename, len_casename + strlen(".tst") + 1);
-  STRCPY(frametest_filename, fdsprefix);
-  STRCAT(frametest_filename, ".tst");
+  FREEMEMORY(scase.paths.frametest_filename);
+  NewMemory((void **)&scase.paths.frametest_filename, len_casename + strlen(".tst") + 1);
+  STRCPY(scase.paths.frametest_filename, fdsprefix);
+  STRCAT(scase.paths.frametest_filename, ".tst");
 #endif
 
-  FREEMEMORY(fedsmv_filename);
-  NewMemory((void **)&fedsmv_filename, len_casename + strlen(".fedsmv") + 1);
-  STRCPY(fedsmv_filename, fdsprefix);
-  STRCAT(fedsmv_filename, ".fedsmv");
+  FREEMEMORY(scase.paths.fedsmv_filename);
+  NewMemory((void **)&scase.paths.fedsmv_filename, len_casename + strlen(".fedsmv") + 1);
+  STRCPY(scase.paths.fedsmv_filename, fdsprefix);
+  STRCAT(scase.paths.fedsmv_filename, ".fedsmv");
 
-  FREEMEMORY(expcsv_filename);
-  NewMemory((void **)&expcsv_filename, len_casename + strlen("_exp.csv") + 1);
-  STRCPY(expcsv_filename, fdsprefix);
-  STRCAT(expcsv_filename, "_exp.csv");
+  FREEMEMORY(scase.paths.expcsv_filename);
+  NewMemory((void **)&scase.paths.expcsv_filename, len_casename + strlen("_exp.csv") + 1);
+  STRCPY(scase.paths.expcsv_filename, fdsprefix);
+  STRCAT(scase.paths.expcsv_filename, "_exp.csv");
 
-  FREEMEMORY(stepcsv_filename);
-  NewMemory((void **)&stepcsv_filename, len_casename + strlen("_steps.csv") + 1);
-  STRCPY(stepcsv_filename, fdsprefix);
-  STRCAT(stepcsv_filename, "_steps.csv");
+  FREEMEMORY(scase.paths.stepcsv_filename);
+  NewMemory((void **)&scase.paths.stepcsv_filename, len_casename + strlen("_steps.csv") + 1);
+  STRCPY(scase.paths.stepcsv_filename, fdsprefix);
+  STRCAT(scase.paths.stepcsv_filename, "_steps.csv");
 
-  FREEMEMORY(dEcsv_filename);
-  NewMemory((void **)&dEcsv_filename, len_casename + strlen("_dE.csv") + 1);
-  STRCPY(dEcsv_filename, fdsprefix);
-  STRCAT(dEcsv_filename, "_dE.csv");
+  FREEMEMORY(scase.paths.dEcsv_filename);
+  NewMemory((void **)&scase.paths.dEcsv_filename, len_casename + strlen("_dE.csv") + 1);
+  STRCPY(scase.paths.dEcsv_filename, fdsprefix);
+  STRCAT(scase.paths.dEcsv_filename, "_dE.csv");
 
-  FREEMEMORY(html_filename);
-  NewMemory((void **)&html_filename, len_casename+strlen(".html")+1);
-  STRCPY(html_filename, fdsprefix);
-  STRCAT(html_filename, ".html");
+  FREEMEMORY(scase.paths.html_filename);
+  NewMemory((void **)&scase.paths.html_filename, len_casename+strlen(".html")+1);
+  STRCPY(scase.paths.html_filename, fdsprefix);
+  STRCAT(scase.paths.html_filename, ".html");
 
-  FREEMEMORY(smv_orig_filename);
-  NewMemory((void **)&smv_orig_filename, len_casename+strlen(".smo")+1);
-  STRCPY(smv_orig_filename, fdsprefix);
-  STRCAT(smv_orig_filename, ".smo");
+  FREEMEMORY(scase.paths.smv_orig_filename);
+  NewMemory((void **)&scase.paths.smv_orig_filename, len_casename+strlen(".smo")+1);
+  STRCPY(scase.paths.smv_orig_filename, fdsprefix);
+  STRCAT(scase.paths.smv_orig_filename, ".smo");
 
-  FREEMEMORY(hrr_filename);
-  NewMemory((void **)&hrr_filename, len_casename+strlen("_hrr.csv")+1);
-  STRCPY(hrr_filename, fdsprefix);
-  STRCAT(hrr_filename, "_hrr.csv");
+  FREEMEMORY(scase.paths.hrr_filename);
+  NewMemory((void **)&scase.paths.hrr_filename, len_casename+strlen("_hrr.csv")+1);
+  STRCPY(scase.paths.hrr_filename, fdsprefix);
+  STRCAT(scase.paths.hrr_filename, "_hrr.csv");
 
-  FREEMEMORY(htmlvr_filename);
-  NewMemory((void **)&htmlvr_filename, len_casename+strlen("_vr.html")+1);
-  STRCPY(htmlvr_filename, fdsprefix);
-  STRCAT(htmlvr_filename, "_vr.html");
+  FREEMEMORY(scase.paths.htmlvr_filename);
+  NewMemory((void **)&scase.paths.htmlvr_filename, len_casename+strlen("_vr.html")+1);
+  STRCPY(scase.paths.htmlvr_filename, fdsprefix);
+  STRCAT(scase.paths.htmlvr_filename, "_vr.html");
 
-  FREEMEMORY(htmlobst_filename);
-  NewMemory((void **)&htmlobst_filename, len_casename+strlen("_obst.json")+1);
-  STRCPY(htmlobst_filename, fdsprefix);
-  STRCAT(htmlobst_filename, "_obst.json");
+  FREEMEMORY(scase.paths.htmlobst_filename);
+  NewMemory((void **)&scase.paths.htmlobst_filename, len_casename+strlen("_obst.json")+1);
+  STRCPY(scase.paths.htmlobst_filename, fdsprefix);
+  STRCAT(scase.paths.htmlobst_filename, "_obst.json");
 
-  FREEMEMORY(htmlslicenode_filename);
-  NewMemory((void **)&htmlslicenode_filename, len_casename+strlen("_slicenode.json")+1);
-  STRCPY(htmlslicenode_filename, fdsprefix);
-  STRCAT(htmlslicenode_filename, "_slicenode.json");
+  FREEMEMORY(scase.paths.htmlslicenode_filename);
+  NewMemory((void **)&scase.paths.htmlslicenode_filename, len_casename+strlen("_slicenode.json")+1);
+  STRCPY(scase.paths.htmlslicenode_filename, fdsprefix);
+  STRCAT(scase.paths.htmlslicenode_filename, "_slicenode.json");
 
-  FREEMEMORY(htmlslicecell_filename);
-  NewMemory((void **)&htmlslicecell_filename, len_casename+strlen("_slicecell.json")+1);
-  STRCPY(htmlslicecell_filename, fdsprefix);
-  STRCAT(htmlslicecell_filename, "_slicecell.json");
+  FREEMEMORY(scase.paths.htmlslicecell_filename);
+  NewMemory((void **)&scase.paths.htmlslicecell_filename, len_casename+strlen("_slicecell.json")+1);
+  STRCPY(scase.paths.htmlslicecell_filename, fdsprefix);
+  STRCAT(scase.paths.htmlslicecell_filename, "_slicecell.json");
 
-  FREEMEMORY(event_filename);
-  NewMemory((void **)&event_filename, len_casename+strlen("_events.csv")+1);
-  STRCPY(event_filename, fdsprefix);
-  STRCAT(event_filename, "_events.csv");
+  FREEMEMORY(scase.paths.event_filename);
+  NewMemory((void **)&scase.paths.event_filename, len_casename+strlen("_events.csv")+1);
+  STRCPY(scase.paths.event_filename, fdsprefix);
+  STRCAT(scase.paths.event_filename, "_events.csv");
 
   if(filename_local==NULL){
     NewMemory((void **)&filename_local, (unsigned int)(len_casename+6));
@@ -392,35 +392,35 @@ char *ProcessCommandLine(CommandlineArgs *args){
       FREEMEMORY(scase.paths.fds_filein);
     }
   }
-  if(ffmpeg_command_filename == NULL){
-    NewMemory((void **)&ffmpeg_command_filename, (unsigned int)(len_casename + 12));
-    STRCPY(ffmpeg_command_filename, fdsprefix);
-    STRCAT(ffmpeg_command_filename, "_ffmpeg");
+  if(scase.paths.ffmpeg_command_filename == NULL){
+    NewMemory((void **)&scase.paths.ffmpeg_command_filename, (unsigned int)(len_casename + 12));
+    STRCPY(scase.paths.ffmpeg_command_filename, fdsprefix);
+    STRCAT(scase.paths.ffmpeg_command_filename, "_ffmpeg");
 #ifdef WIN32
-    STRCAT(ffmpeg_command_filename,".bat");
+    STRCAT(scase.paths.ffmpeg_command_filename,".bat");
 #else
-    STRCAT(ffmpeg_command_filename,".sh");
+    STRCAT(scase.paths.ffmpeg_command_filename,".sh");
 #endif
   }
-  if(stop_filename == NULL){
-    NewMemory((void **)&stop_filename, (unsigned int)(len_casename + strlen(".stop") + 1));
-    STRCPY(stop_filename, fdsprefix);
-    STRCAT(stop_filename, ".stop");
+  if(scase.paths.stop_filename == NULL){
+    NewMemory((void **)&scase.paths.stop_filename, (unsigned int)(len_casename + strlen(".stop") + 1));
+    STRCPY(scase.paths.stop_filename, fdsprefix);
+    STRCAT(scase.paths.stop_filename, ".stop");
   }
-  if(smvzip_filename == NULL){
-    NewMemory((void **)&smvzip_filename, (unsigned int)(len_casename + strlen(".smvzip") + 1));
-    STRCPY(smvzip_filename, fdsprefix);
-    STRCAT(smvzip_filename, ".smvzip");
+  if(scase.paths.smvzip_filename == NULL){
+    NewMemory((void **)&scase.paths.smvzip_filename, (unsigned int)(len_casename + strlen(".smvzip") + 1));
+    STRCPY(scase.paths.smvzip_filename, fdsprefix);
+    STRCAT(scase.paths.smvzip_filename, ".smvzip");
   }
-  if(sliceinfo_filename == NULL){
-    NewMemory((void **)&sliceinfo_filename, strlen(fdsprefix) + strlen(".sinfo") + 1);
-    STRCPY(sliceinfo_filename, fdsprefix);
-    STRCAT(sliceinfo_filename, ".sinfo");
+  if(scase.paths.sliceinfo_filename == NULL){
+    NewMemory((void **)&scase.paths.sliceinfo_filename, strlen(fdsprefix) + strlen(".sinfo") + 1);
+    STRCPY(scase.paths.sliceinfo_filename, fdsprefix);
+    STRCAT(scase.paths.sliceinfo_filename, ".sinfo");
   }
-  if(deviceinfo_filename==NULL){
-    NewMemory((void **)&deviceinfo_filename, strlen(fdsprefix)+strlen("_device.info")+1);
-    STRCPY(deviceinfo_filename, fdsprefix);
-    STRCAT(deviceinfo_filename, "_device.info");
+  if(scase.paths.deviceinfo_filename==NULL){
+    NewMemory((void **)&scase.paths.deviceinfo_filename, strlen(fdsprefix)+strlen("_device.info")+1);
+    STRCPY(scase.paths.deviceinfo_filename, fdsprefix);
+    STRCAT(scase.paths.deviceinfo_filename, "_device.info");
   }
 
   // if smokezip created part2iso files then concatenate .smv entries found in the .isosmv file
@@ -429,27 +429,27 @@ char *ProcessCommandLine(CommandlineArgs *args){
   {
     FILE *stream_iso = NULL;
 
-    NewMemory((void **)&iso_filename, len_casename + strlen(".isosmv") + 1);
-    STRCPY(iso_filename, fdsprefix);
-    STRCAT(iso_filename, ".isosmv");
-    stream_iso = fopen(iso_filename, "r");
+    NewMemory((void **)&scase.paths.iso_filename, len_casename + strlen(".isosmv") + 1);
+    STRCPY(scase.paths.iso_filename, fdsprefix);
+    STRCAT(scase.paths.iso_filename, ".isosmv");
+    stream_iso = fopen(scase.paths.iso_filename, "r");
     if(stream_iso != NULL){
       fclose(stream_iso);
     }
     else{
-      FREEMEMORY(iso_filename);
+      FREEMEMORY(scase.paths.iso_filename);
     }
   }
 
-  if(trainer_filename == NULL){
-    NewMemory((void **)&trainer_filename, (unsigned int)(len_casename + 6));
-    STRCPY(trainer_filename, fdsprefix);
-    STRCAT(trainer_filename, ".svd");
+  if(scase.paths.trainer_filename == NULL){
+    NewMemory((void **)&scase.paths.trainer_filename, (unsigned int)(len_casename + 6));
+    STRCPY(scase.paths.trainer_filename, fdsprefix);
+    STRCAT(scase.paths.trainer_filename, ".svd");
   }
-  if(test_filename == NULL){
-    NewMemory((void **)&test_filename, (unsigned int)(len_casename + 6));
-    STRCPY(test_filename, fdsprefix);
-    STRCAT(test_filename, ".svd");
+  if(scase.paths.test_filename == NULL){
+    NewMemory((void **)&scase.paths.test_filename, (unsigned int)(len_casename + 6));
+    STRCPY(scase.paths.test_filename, fdsprefix);
+    STRCAT(scase.paths.test_filename, ".svd");
   }
 
 #ifdef pp_OSX_HIGHRES
@@ -602,7 +602,7 @@ char *ProcessCommandLine(CommandlineArgs *args){
       vis_title_gversion = 1;
     }
     if(args->redirect){
-      LOG_FILENAME = fopen(log_filename, "w");
+      LOG_FILENAME = fopen(scase.paths.log_filename, "w");
       if(LOG_FILENAME != NULL){
         redirect = 1;
         SetStdOut(LOG_FILENAME);

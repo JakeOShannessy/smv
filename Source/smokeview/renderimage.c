@@ -141,10 +141,10 @@ void MakeMovie(void){
 
 // make movie
     if(output_ffmpeg_command==1){
-      if(ffmpeg_command_filename!=NULL){
+      if(scase.paths.ffmpeg_command_filename!=NULL){
         FILE *stream_ffmpeg=NULL;
 
-        stream_ffmpeg = fopen(ffmpeg_command_filename,"w");
+        stream_ffmpeg = fopen(scase.paths.ffmpeg_command_filename,"w");
         if(stream_ffmpeg!=NULL){
 #ifdef WIN32
           fprintf(stream_ffmpeg,"@echo off\n");

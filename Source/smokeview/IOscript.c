@@ -1933,6 +1933,7 @@ void ScriptIsoRenderAll(scriptdata *scripti){
 /* ------------------ ScriptMakeMovie ------------------------ */
 
 void ScriptMakeMovie(scriptdata *scripti){
+  // TODO: there will be an allocation issue here.
   strcpy(movie_name, scripti->cval);
   strcpy(render_file_base,scripti->cval2);
   movie_framerate=scripti->fval;

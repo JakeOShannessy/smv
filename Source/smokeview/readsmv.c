@@ -6458,7 +6458,7 @@ void UpdateEvents(void){
   char **tokens;
   int i;
 
-  stream = fopen(event_filename, "r");
+  stream = fopen(scase.paths.event_filename, "r");
   if(stream==NULL)return;
 
   buffer_len = GetRowCols(stream, &nrows, &ncols);
@@ -6606,9 +6606,9 @@ blockagedata *GetBlockagePtr(float *xyz){
 void ReadSMVOrig(void){
   FILE *stream=NULL;
 
-  stream = fopen(smv_orig_filename, "r");
+  stream = fopen(scase.paths.smv_orig_filename, "r");
   if(stream == NULL)return;
-  PRINTF("reading  %s\n", smv_orig_filename);
+  PRINTF("reading  %s\n", scase.paths.smv_orig_filename);
 
   for(;;){
     char buffer[255];
@@ -9524,13 +9524,13 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   scase.devicecoll.ndeviceinfo=0;
   REWIND(stream);
 
-  if(FILE_EXISTS_CASEDIR(expcsv_filename)==YES){
+  if(FILE_EXISTS_CASEDIR(scase.paths.expcsv_filename)==YES){
     csvfiledata *csvi;
     char csv_type[256];
 
     csvi = scase.csvcoll.csvfileinfo + scase.csvcoll.ncsvfileinfo;
     strcpy(csv_type, "ext");
-    InitCSV(csvi, expcsv_filename, csv_type, CSV_FDS_FORMAT);
+    InitCSV(csvi, scase.paths.expcsv_filename, csv_type, CSV_FDS_FORMAT);
     scase.csvcoll.ncsvfileinfo++;
   }
 
@@ -11695,7 +11695,7 @@ int ReadSMV_Configure(){
   PRINTF("  wrapping up\n");
 
   INIT_PRINT_TIMER(fdsrunning_timer);
-  last_size_for_slice = GetFileSizeSMV(stepcsv_filename); // used by IsFDSRunning
+  last_size_for_slice = GetFileSizeSMV(scase.paths.stepcsv_filename); // used by IsFDSRunning
   last_size_for_boundary = last_size_for_slice;
   PRINT_TIMER(fdsrunning_timer, "filesize_timer");   // if file size changes then assume fds is running
 
@@ -16100,17 +16100,17 @@ int ReadIni(char *inifile){
   FREEMEMORY(global_ini);
 
   // Read "${fdsprefix}.ini" from the current directory
-  if(caseini_filename!=NULL){
+  if(scase.paths.caseini_filename!=NULL){
     int returnval;
     char localdir[10];
 
-    returnval = ReadIni2(caseini_filename, 1);
+    returnval = ReadIni2(scase.paths.caseini_filename, 1);
 
     // if directory is not writable then look for another ini file in the scratch directory
     strcpy(localdir, ".");
     if(Writable(localdir)==0){
       // Read "${fdsprefix}.ini" from the scratch directory
-      char *scratch_ini_filename = GetUserConfigSubPath(caseini_filename);
+      char *scratch_ini_filename = GetUserConfigSubPath(scase.paths.caseini_filename);
       returnval = ReadIni2(scratch_ini_filename, 1);
       FREEMEMORY(scratch_ini_filename);
     }
@@ -16727,12 +16727,12 @@ void WriteIni(int flag,char *filename){
     outfilename=filename;
     break;
   case LOCAL_INI:
-    fileout=fopen(caseini_filename,"w");
+    fileout=fopen(scase.paths.caseini_filename,"w");
     if(fileout==NULL&&smokeview_scratchdir!=NULL){
-      fileout = fopen_indir(smokeview_scratchdir, caseini_filename, "w");
+      fileout = fopen_indir(smokeview_scratchdir, scase.paths.caseini_filename, "w");
       outfiledir = smokeview_scratchdir;
      }
-    outfilename=caseini_filename;
+    outfilename=scase.paths.caseini_filename;
     break;
   default:
     assert(FFALSE);

@@ -275,7 +275,7 @@ void DisplayVersionInfo(char *progname){
 int IsFDSRunning(FILE_SIZE *last_size){
   FILE_SIZE file_size;
 
-  file_size = GetFileSizeSMV(stepcsv_filename);
+  file_size = GetFileSizeSMV(scase.paths.stepcsv_filename);
   if(file_size != *last_size){
     *last_size = file_size;
     return 1;
@@ -289,15 +289,15 @@ int BuildGbndFile(int file_type){
   switch(file_type){
     case BOUND_SLICE:
       if(FileExistsOrig(slice_gbnd_filename)==0)return 1;
-      if(IsFileNewer(stepcsv_filename, slice_gbnd_filename)==1)return 1;
+      if(IsFileNewer(scase.paths.stepcsv_filename, slice_gbnd_filename)==1)return 1;
       break;
     case BOUND_PATCH:
       if(FileExistsOrig(patch_gbnd_filename)==0)return 1;
-      if(IsFileNewer(stepcsv_filename, patch_gbnd_filename)==1)return 1;
+      if(IsFileNewer(scase.paths.stepcsv_filename, patch_gbnd_filename)==1)return 1;
       break;
     case BOUND_PLOT3D:
       if(FileExistsOrig(plot3d_gbnd_filename)==0)return 1;
-      if(IsFileNewer(stepcsv_filename, plot3d_gbnd_filename)==1)return 1;
+      if(IsFileNewer(scase.paths.stepcsv_filename, plot3d_gbnd_filename)==1)return 1;
       break;
     default:
       assert(FFALSE);
