@@ -55,9 +55,6 @@ char *GetBaseName(const char *input_file) {
 
 int SetGlobalFilenames(smv_case *scase, const char *fdsprefix_arg) {
   int len_casename = strlen(fdsprefix_arg);
-  strcpy(scase->paths.movie_name, fdsprefix_arg);
-  strcpy(scase->paths.render_file_base, fdsprefix_arg);
-  strcpy(scase->paths.html_file_base, fdsprefix_arg);
 
   FREEMEMORY(scase->paths.log_filename);
   NewMemory((void **)&scase->paths.log_filename, len_casename + strlen(".smvlog") + 1);
@@ -203,8 +200,14 @@ int PrintJson(smv_case *scase) {
     json_object_object_add(jobj, "title",
                            json_object_new_string(scase->fds_title));
   }
+  if(scase->fds_title != NULL) {
+    json_object_object_add(jobj, "title",
+                           json_object_new_string(scase->fds_title));
+  }
+  if(scase->fds_version != NULL) {
   json_object_object_add(jobj, "fds_version",
                          json_object_new_string(scase->fds_version));
+  }
   struct json_object *mesh_array = json_object_new_array();
   for(int i = 0; i < scase->meshescoll.nmeshes; i++) {
     meshdata *mesh = &scase->meshescoll.meshinfo[i];

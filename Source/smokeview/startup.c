@@ -227,8 +227,8 @@ int SetupCase(char *filename){
 
   return_code=-1;
   FREEMEMORY(part_globalbound_filename);
-  NewMemory((void **)&part_globalbound_filename, strlen(fdsprefix)+strlen(".prt.gbnd")+1);
-  STRCPY(part_globalbound_filename, fdsprefix);
+  NewMemory((void **)&part_globalbound_filename, strlen(scase.fdsprefix)+strlen(".prt.gbnd")+1);
+  STRCPY(part_globalbound_filename, scase.fdsprefix);
   STRCAT(part_globalbound_filename, ".prt.gbnd");
   char *smokeview_scratchdir = GetUserConfigDir();
   part_globalbound_filename = GetFileName(smokeview_scratchdir, part_globalbound_filename, NOT_FORCE_IN_DIR);
@@ -241,22 +241,22 @@ int SetupCase(char *filename){
     trainer_mode=1;
     trainer_active=1;
     if(strcmp(input_filename_ext,".svd")==0){
-      input_file=trainer_filename;
+      input_file=scase.paths.trainer_filename;
     }
     else if(strcmp(input_filename_ext,".smt")==0){
-      input_file=test_filename;
+      input_file=scase.paths.test_filename;
     }
   }
   {
     bufferstreamdata *smv_streaminfo = NULL;
 
     PRINTF("reading  %s\n", input_file);
-    if(FileExistsOrig(smvzip_filename) == 1){
+    if(FileExistsOrig(scase.paths.smvzip_filename) == 1){
       parse_opts.lookfor_compressed_files = 1;
     }
     smv_streaminfo = GetSMVBuffer(input_file);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, iso_filename);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, fedsmv_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, scase.paths.iso_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, scase.paths.fedsmv_filename);
 
     return_code = ReadSMV(smv_streaminfo);
     if(smv_streaminfo!=NULL){
@@ -338,7 +338,7 @@ int SetupCase(char *filename){
 
   SetMainWindow();
   glutShowWindow();
-  glutSetWindowTitle(fdsprefix);
+  glutSetWindowTitle(scase.fdsprefix);
   InitMisc();
   GLUITrainerSetup(mainwindow_id);
   glutDetachMenu(GLUT_RIGHT_BUTTON);
@@ -353,7 +353,7 @@ int SetupCase(char *filename){
     GLUIShowAlert();
   }
   // initialize info header
-  initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash, chidfilebase, fds_title);
+  initialiseInfoHeader(&titleinfo, release_title, smv_githash, scase.fds_githash, chidfilebase, fds_title);
   PRINT_TIMER(timer_start, "glut routines");
   return 0;
 }
@@ -367,7 +367,7 @@ int GetScreenHeight(void){
   int screen_height=-1;
 
   strcpy(command,"system_profiler SPDisplaysDataType | grep Resolution | awk '{print $4}' | tail -1 >& ");
-  strcpy(height_file, fdsprefix);
+  strcpy(height_file, scase.fdsprefix);
   strcat(height_file, ".hgt");
   char *smokeview_scratchdir = GetUserConfigDir();
   full_height_file = GetFileName(smokeview_scratchdir, height_file, NOT_FORCE_IN_DIR);
@@ -1668,5 +1668,5 @@ void InitVars(void){
 }
 
 void FreeVars(void){
-  FreeObjectCollection(&scase.objectscoll);
+  ClearObjectCollection(&scase.objectscoll);
 }

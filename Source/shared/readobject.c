@@ -1172,9 +1172,9 @@ sv_object *InitSmvObject1(object_collection *objectscoll, const char *label,
   return object;
 }
 
-/* ----------------------- FreeObjectCollection ----------------------------- */
+/* ----------------------- ClearObjectCollection ----------------------------- */
 
-void FreeObjectCollection(object_collection *objectscoll){
+void ClearObjectCollection(object_collection *objectscoll){
   sv_object *object;
 
   for(;;){
@@ -1182,6 +1182,12 @@ void FreeObjectCollection(object_collection *objectscoll){
     if(object->prev == NULL) break;
     FreeObject(object);
   }
+}
+
+/* ----------------------- FreeObjectCollection ----------------------------- */
+
+void FreeObjectCollection(object_collection *objectscoll){
+  ClearObjectCollection(objectscoll);
   FreeMemory(objectscoll);
 }
 

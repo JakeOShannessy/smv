@@ -153,7 +153,6 @@ SVEXTERN float SVDECL(*part_bound_buffer, NULL);
 
 SVEXTERN FILE_SIZE SVDECL(last_size_for_slice, 0);
 SVEXTERN FILE_SIZE SVDECL(last_size_for_boundary, 0);
-SVEXTERN char SVDECL(*stepcsv_filename, NULL);
 
 SVEXTERN char SVDECL(*plot3d_gbnd_filename, NULL), SVDECL(**sorted_plot3d_filenames, NULL);
 SVEXTERN char SVDECL(*slice_gbnd_filename,  NULL), SVDECL(**sorted_slice_filenames,  NULL);
@@ -456,7 +455,6 @@ SVEXTERN int SVDECL(iso_opacity_change, 1);
 #ifdef pp_RENDER360_DEBUG
 SVEXTERN int SVDECL(debug_360, 0), SVDECL(debug_360_skip_x,25), SVDECL(debug_360_skip_y,25);
 #endif
-SVEXTERN char SVDECL(*ffmpeg_command_filename, NULL);
 SVEXTERN int SVDECL(output_ffmpeg_command, 0);
 SVEXTERN int SVDECL(margin360_size, 0);
 
@@ -639,7 +637,6 @@ SVEXTERN int SVDECL(*colorbar_list_inverse, NULL);
 SVEXTERN int SVDECL(show_Lab_dist_bars, 0);
 SVEXTERN int SVDECL(update_colorbar_orig, 0);
 SVEXTERN float SVDECL(*lab_check_xyz, NULL);
-SVEXTERN char SVDECL(*dEcsv_filename, NULL);
 SVEXTERN float cb_lab2[3], cb_frgb2[3];
 SVEXTERN int cb_rgb2[3];
 SVEXTERN int SVDECL(index_colorbar1, 0), SVDECL(index_colorbar2, 1);
@@ -1581,7 +1578,6 @@ SVEXTERN slicedata SVDECL(*sd_shown,NULL);
 SVEXTERN vslicedata SVDECL(*vd_shown,NULL);
 SVEXTERN int SVDECL(showall_slices,1);
 SVEXTERN float zterrain_max, zterrain_min;
-SVEXTERN char SVDECL(*fds_version, NULL), SVDECL(*fds_githash, NULL);
 SVEXTERN char smv_githash[256], smv_gitdate[256];
 SVEXTERN int SVDECL(visMeshlabel, 1);
 SVEXTERN int SVDECL(visOpenVents,1),SVDECL(visDummyVents,1),SVDECL(visCircularVents,VENT_CIRCLE);
@@ -1914,22 +1910,16 @@ SVEXTERN float SVDECL(reset_time,0.0),SVDECL(start_frametime,0.0),SVDECL(stop_fr
 SVEXTERN float SVDECL(max_velocity,0.0);
 SVEXTERN int nslice_loaded, ngeomslice_loaded, nvolsmoke_loaded;
 SVEXTERN int SVDECL(*slice_loaded_list,NULL), SVDECL(*slice_sorted_loaded_list,NULL);
-SVEXTERN char SVDECL(*fdsprefix,NULL), SVDECL(*fdsprefix2,NULL);
+SVEXTERN char SVDECL(*fdsprefix2,NULL);
 SVEXTERN char SVDECL(*endian_filename,NULL);
 SVEXTERN char SVDECL(*target_filename,NULL);
 
 SVEXTERN int SVDECL(update_bounds,0);
-SVEXTERN char SVDECL(*trainer_filename,NULL), SVDECL(*test_filename,NULL);
 SVEXTERN FILE SVDECL(*STREAM_SB,NULL);
 SVEXTERN float SVDECL(temp_threshold,400.0);
-SVEXTERN char SVDECL(*smv_filename,NULL),SVDECL(*smv_orig_filename,NULL),SVDECL(*stop_filename,NULL);
-SVEXTERN char SVDECL(*smvzip_filename, NULL);
+SVEXTERN char SVDECL(*smv_filename,NULL);
 SVEXTERN int  SVDECL(have_multislice, 0), SVDECL(have_multivslice, 0);
-SVEXTERN char SVDECL(*hrr_filename, NULL);
 SVEXTERN char SVDECL(*part_globalbound_filename, NULL);
-SVEXTERN char SVDECL(*sliceinfo_filename,NULL);
-SVEXTERN char SVDECL(*deviceinfo_filename, NULL);
-SVEXTERN char SVDECL(*iso_filename,NULL);
 SVEXTERN char SVDECL(*smokeview_casedir, NULL);
 SVEXTERN int SVDECL(update_vectorskip, 0);
 SVEXTERN int SVDECL(smoke_offaxis, 0), SVDECL(smoke_adjust, 1);
@@ -1948,26 +1938,16 @@ SVEXTERN float slice_xyz[3], slice_dxyz[3];
 SVEXTERN int   SVDECL(update_slice2device, 0);
 SVEXTERN int SVDECL(script_multislice,0), SVDECL(script_multivslice,0), SVDECL(script_iso,0);
 SVEXTERN FILE SVDECL(*scriptoutstream,NULL);
-SVEXTERN char SVDECL(*log_filename,NULL);
 SVEXTERN FILE SVDECL(*LOG_FILENAME,NULL);
 SVEXTERN char SVDECL(*flushfile,NULL), SVDECL(*chidfilebase,NULL);
 SVEXTERN int SVDECL(csv_loaded, 0), SVDECL(devices_setup,0),SVDECL(update_csv_load,0);
 SVEXTERN char SVDECL(*smokezippath,NULL), SVDECL(*smokeviewpath,NULL), SVDECL(*fdsprog, NULL);
 SVEXTERN char SVDECL(*INI_fds_filein,NULL);
-SVEXTERN char SVDECL(*caseini_filename,NULL);
 #ifdef pp_FRAME
 SVEXTERN char SVDECL(*frametest_filename, NULL);
 #endif
-SVEXTERN char SVDECL(*fedsmv_filename, NULL);
-SVEXTERN char SVDECL(*expcsv_filename, NULL);
-SVEXTERN char SVDECL(*event_filename, NULL);
 SVEXTERN int SVDECL(event_file_exists,0);
 SVEXTERN char SVDECL(*zonelonglabels,NULL), SVDECL(*zoneshortlabels,NULL), SVDECL(*zoneunits,NULL);
-SVEXTERN char SVDECL(*html_filename, NULL);
-SVEXTERN char SVDECL(*htmlvr_filename, NULL);
-SVEXTERN char SVDECL(*htmlslicenode_filename, NULL);
-SVEXTERN char SVDECL(*htmlslicecell_filename, NULL);
-SVEXTERN char SVDECL(*htmlobst_filename, NULL);
 SVEXTERN int SVDECL(overwrite_all,0),SVDECL(erase_all,0);
 SVEXTERN int SVDECL(compress_autoloaded,0);
 SVEXTERN tridata SVDECL(**opaque_triangles,NULL),SVDECL(**transparent_triangles,NULL),SVDECL(**alltriangles,NULL);

@@ -2113,20 +2113,20 @@ void RenderMenu(int value){
 
       json_option = HTML_CURRENT_TIME;
       if(value==RenderJSONALL)json_option = HTML_ALL_TIMES;
-      if(Obst2Data(htmlobst_filename)!=0){
-        printf("blockage data output to %s\n", htmlobst_filename);
+      if(Obst2Data(scase.paths.htmlobst_filename)!=0){
+        printf("blockage data output to %s\n", scase.paths.htmlobst_filename);
       }
       else{
         printf("no blockage data to output\n");
       }
-      if(SliceNode2Data(htmlslicenode_filename, json_option)!=0){
-        printf("node centered slice file data output to %s\n", htmlslicenode_filename);
+      if(SliceNode2Data(scase.paths.htmlslicenode_filename, json_option)!=0){
+        printf("node centered slice file data output to %s\n", scase.paths.htmlslicenode_filename);
       }
       else{
         printf("no node centered slice file data to output\n");
       }
-      if(SliceCell2Data(htmlslicecell_filename, json_option)!=0){
-        printf("cell centered slice file data output to %s\n", htmlslicecell_filename);
+      if(SliceCell2Data(scase.paths.htmlslicecell_filename, json_option)!=0){
+        printf("cell centered slice file data output to %s\n", scase.paths.htmlslicecell_filename);
       }
       else{
         printf("no cell centered slice file data to output\n");
@@ -2135,10 +2135,10 @@ void RenderMenu(int value){
     }
     break;
   case RenderHTML:
-    Smv2Html(html_filename,   HTML_CURRENT_TIME, FROM_SMOKEVIEW);
+    Smv2Html(scase.paths.html_filename,   HTML_CURRENT_TIME, FROM_SMOKEVIEW);
     break;
   case RenderHTMLALL:
-    Smv2Html(html_filename,   HTML_ALL_TIMES, FROM_SMOKEVIEW);
+    Smv2Html(scase.paths.html_filename,   HTML_ALL_TIMES, FROM_SMOKEVIEW);
     break;
   case RenderCancel:
     RenderState(RENDER_OFF);
@@ -2825,7 +2825,7 @@ void SmokeviewIniMenu(int value){
     WriteIni(LOCAL_INI,NULL);
     break;
   case MENU_READSVO:
-    ReadDefaultObjectCollection(&scase.objectscoll, fdsprefix, setbw, scase.isZoneFireModel);
+    ReadDefaultObjectCollection(&scase.objectscoll, scase.fdsprefix, setbw, scase.isZoneFireModel);
     break;
   case MENU_DUMMY:
     break;
@@ -3720,7 +3720,7 @@ void LoadUnloadMenu(int value){
       LOG_FILENAME=NULL;
     }
     if(redirect==1){
-      LOG_FILENAME=fopen(log_filename,"w");
+      LOG_FILENAME=fopen(scase.paths.log_filename,"w");
       if(LOG_FILENAME==NULL)redirect=0;
     }
     if(redirect==1){
@@ -11895,12 +11895,12 @@ static int menu_count=0;
     strcat(compiler_version_label, " ");
     strcat(compiler_version_label, pp_COMPVER);
     glutAddMenuEntry(compiler_version_label, 1);
-    if(fds_version!=NULL){
-      sprintf(menulabel, "  FDS version: %s", fds_version);
+    if(scase.fds_version!=NULL){
+      sprintf(menulabel, "  FDS version: %s", scase.fds_version);
       glutAddMenuEntry(menulabel, 1);
     }
-    if(fds_githash!=NULL){
-      sprintf(menulabel,"  FDS build: %s",fds_githash);
+    if(scase.fds_githash!=NULL){
+      sprintf(menulabel,"  FDS build: %s",scase.fds_githash);
       glutAddMenuEntry(menulabel,1);
     }
 #ifdef pp_GPU
@@ -12065,10 +12065,10 @@ static int menu_count=0;
     glutAddMenuEntry(_("  x/y/z: toggle lower x/y/z clip planes"), MENU_DUMMY);
     glutAddMenuEntry(_("  X/Y/Z: toggle upper x/y/z clip planes"), MENU_DUMMY);
   }
-  if(caseini_filename!=NULL&&strlen(caseini_filename)>0){
+  if(scase.paths.caseini_filename!=NULL&&strlen(scase.paths.caseini_filename)>0){
     char inilabel[512];
 
-    sprintf(inilabel,"  #: save settings to %s",caseini_filename);
+    sprintf(inilabel,"  #: save settings to %s",scase.paths.caseini_filename);
     glutAddMenuEntry(inilabel,MENU_DUMMY);
   }
   else{
@@ -12835,8 +12835,8 @@ static int menu_count=0;
     }
     if(n_inifiles>0){
       CREATEMENU(inisubmenu,IniSubMenu);
-      if(caseini_filename!=NULL&&FILE_EXISTS(caseini_filename)==YES){
-        glutAddMenuEntry(caseini_filename,MENU_READCASEINI);
+      if(scase.paths.caseini_filename!=NULL&&FILE_EXISTS(scase.paths.caseini_filename)==YES){
+        glutAddMenuEntry(scase.paths.caseini_filename,MENU_READCASEINI);
       }
       for(inifile=first_inifile.next;inifile->next!=NULL;inifile=inifile->next){
         if(inifile->file!=NULL&&FILE_EXISTS(inifile->file)==YES){
@@ -12861,7 +12861,7 @@ static int menu_count=0;
     }
     char *global_ini_path = GetSystemIniPath();
     char *user_ini_path = GetUserIniPath();
-    if( n_inifiles>0||FILE_EXISTS(user_ini_path)==YES||FILE_EXISTS(caseini_filename)==YES||FILE_EXISTS(global_ini_path)==YES){
+    if( n_inifiles>0||FILE_EXISTS(user_ini_path)==YES||FILE_EXISTS(scase.paths.caseini_filename)==YES||FILE_EXISTS(global_ini_path)==YES){
       if(n_inifiles==0){
         glutAddMenuEntry(_("Read ini files"),MENU_READINI);
       }
@@ -12878,7 +12878,7 @@ static int menu_count=0;
       char caselabel[255];
 
       STRCPY(caselabel,_("Save settings (this case - "));
-      STRCAT(caselabel,caseini_filename);
+      STRCAT(caselabel,scase.paths.caseini_filename);
       STRCAT(caselabel, ")");
 
       glutAddMenuEntry(caselabel,MENU_WRITECASEINI);
@@ -13127,7 +13127,7 @@ static int menu_count=0;
         strcpy(menulabel,"");
         if(redirect==1)strcat(menulabel,"*");
         strcat(menulabel,"Redirect messages to ");
-        strcat(menulabel,log_filename);
+        strcat(menulabel,scase.paths.log_filename);
         glutAddMenuEntry(menulabel,REDIRECT);
       }
 

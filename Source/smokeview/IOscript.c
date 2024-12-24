@@ -29,11 +29,11 @@ void GetNewScriptFileName(char *newscriptfilename){
 
   for(i=0;i<1000;i++){
     if(i==0){
-      strcpy(buffer,fdsprefix);
+      strcpy(buffer,scase.fdsprefix);
       strcat(buffer,".ssf");
     }
     else{
-      sprintf(buffer,"%s_%03i.ssf",fdsprefix,i);
+      sprintf(buffer,"%s_%03i.ssf",scase.fdsprefix,i);
     }
     nexti=0;
     for(scriptfile=first_scriptfile.next;scriptfile->next!=NULL;scriptfile=scriptfile->next){
@@ -1933,6 +1933,7 @@ void ScriptIsoRenderAll(scriptdata *scripti){
 /* ------------------ ScriptMakeMovie ------------------------ */
 
 void ScriptMakeMovie(scriptdata *scripti){
+  // TODO: there will be an allocation issue here.
   strcpy(movie_name, scripti->cval);
   strcpy(render_file_base,scripti->cval2);
   movie_framerate=scripti->fval;
@@ -3030,8 +3031,8 @@ void ScriptOutputSmokeSensors(void){
   // first time, create a file to put smokesensor values in
 
   if(file_smokesensors==NULL){
-    NewMemory((void **)&file_smokesensors,strlen(fdsprefix)+17+1);
-    strcpy(file_smokesensors,fdsprefix);
+    NewMemory((void **)&file_smokesensors,strlen(scase.fdsprefix)+17+1);
+    strcpy(file_smokesensors,scase.fdsprefix);
     strcat(file_smokesensors,"_ss.csv");
     stream_smokesensors = fopen(file_smokesensors, "w");
 

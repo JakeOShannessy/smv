@@ -100,7 +100,7 @@ void GetHoc(float *hoc, char *name){
     strcpy(name, fuelinfo->fuel);
     return;
   }
-  strcpy(outfile, fdsprefix);
+  strcpy(outfile, scase.fdsprefix);
   strcat(outfile, ".out");
   stream = fopen(outfile, "r");
   if(stream==NULL){
@@ -902,7 +902,7 @@ void UpdateINIList(void){
   char filter[256];
   int i;
 
-  strcpy(filter,fdsprefix);
+  strcpy(filter,scase.fdsprefix);
   strcat(filter,"*.ini");
   FreeFileList(scase.filelist_coll.ini_filelist,&scase.filelist_coll.nini_filelist);
   scase.filelist_coll.nini_filelist=GetFileListSize(".",filter, FILE_MODE);
@@ -4897,8 +4897,8 @@ void MakeFileLists(void){
   // create list of all files for the case being visualized (casename*.* )
 
   strcpy(filter_casename, "");
-  if(fdsprefix != NULL&&strlen(fdsprefix) > 0){
-    strcat(filter_casename, fdsprefix);
+  if(scase.fdsprefix != NULL&&strlen(scase.fdsprefix) > 0){
+    strcat(filter_casename, scase.fdsprefix);
     strcat(filter_casename, "*");
   }
 
@@ -6422,9 +6422,9 @@ void GenerateViewpointMenu(void){
     strcat(viewpiontemenu_filename, dirseparator);
   }
   FREEMEMORY(smokeview_scratchdir);
-  strcat(viewpiontemenu_filename, fdsprefix);
+  strcat(viewpiontemenu_filename, scase.fdsprefix);
   strcat(viewpiontemenu_filename, ".viewpoints");
-  strcpy(casenameini, fdsprefix);
+  strcpy(casenameini, scase.fdsprefix);
   strcat(casenameini, ".ini");
 
   nviewpoints = GetAllViewPoints(casenameini, &all_viewpoints);
@@ -6463,7 +6463,7 @@ void UpdateEvents(void){
   char **tokens;
   int i;
 
-  stream = fopen(event_filename, "r");
+  stream = fopen(scase.paths.event_filename, "r");
   if(stream==NULL)return;
 
   buffer_len = GetRowCols(stream, &nrows, &ncols);
@@ -6611,9 +6611,9 @@ blockagedata *GetBlockagePtr(float *xyz){
 void ReadSMVOrig(void){
   FILE *stream=NULL;
 
-  stream = fopen(smv_orig_filename, "r");
+  stream = fopen(scase.paths.smv_orig_filename, "r");
   if(stream == NULL)return;
-  PRINTF("reading  %s\n", smv_orig_filename);
+  PRINTF("reading  %s\n", scase.paths.smv_orig_filename);
 
   for(;;){
     char buffer[255];
@@ -6760,7 +6760,7 @@ void AddCfastCsvfi(char *suffix, char *type, int format){
   char filename[255];
   int i;
 
-  strcpy(filename, fdsprefix);
+  strcpy(filename, scase.fdsprefix);
   strcat(filename, suffix);
   strcat(filename, ".csv");
   for(i=0;i<scase.csvcoll.ncsvfileinfo;i++){
@@ -7173,7 +7173,7 @@ int ReadSMV_Init(){
   // read in device (.svo) definitions
 
   START_TIMER(timer_setup);
-  ReadDefaultObjectCollection(&scase.objectscoll, fdsprefix, setbw, scase.isZoneFireModel);
+  ReadDefaultObjectCollection(&scase.objectscoll, scase.fdsprefix, setbw, scase.isZoneFireModel);
   PRINT_TIMER(timer_setup, "InitSurface");
 
   if(scase.noutlineinfo>0){
@@ -7710,16 +7710,16 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       buffptr = TrimFront(buffer);
       lenbuffer = strlen(buffptr);
       if(lenbuffer>0){
-        NewMemory((void **)&fds_version,lenbuffer+1);
-        NewMemory((void **)&fds_githash, lenbuffer+1);
-        strcpy(fds_version,buffer);
-        strcpy(fds_githash, buffer);
+        NewMemory((void **)&scase.fds_version,lenbuffer+1);
+        NewMemory((void **)&scase.fds_githash, lenbuffer+1);
+        strcpy(scase.fds_version,buffer);
+        strcpy(scase.fds_githash, buffer);
       }
       else{
-        NewMemory((void **)&fds_version,7+1);
-        NewMemory((void **)&fds_githash, 7+1);
-        strcpy(fds_version,"unknown");
-        strcpy(fds_githash, "unknown");
+        NewMemory((void **)&scase.fds_version,7+1);
+        NewMemory((void **)&scase.fds_githash, 7+1);
+        strcpy(scase.fds_version,"unknown");
+        strcpy(scase.fds_githash, "unknown");
       }
       continue;
     }
@@ -7943,13 +7943,13 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
   START_TIMER(pass2_time);
 
- if(fds_version==NULL){
-   NewMemory((void **)&fds_version,7+1);
-   strcpy(fds_version,"unknown");
+ if(scase.fds_version==NULL){
+   NewMemory((void **)&scase.fds_version,7+1);
+   strcpy(scase.fds_version,"unknown");
  }
- if(fds_githash==NULL){
-   NewMemory((void **)&fds_githash,7+1);
-   strcpy(fds_githash,"unknown");
+ if(scase.fds_githash==NULL){
+   NewMemory((void **)&scase.fds_githash,7+1);
+   strcpy(scase.fds_githash,"unknown");
  }
  if(scase.nisoinfo>0&&scase.meshescoll.nmeshes>0)nisos_per_mesh = MAX(scase.nisoinfo / scase.meshescoll.nmeshes,1);
  NewMemory((void **)&scase.csvcoll.csvfileinfo,(scase.csvcoll.ncsvfileinfo+CFAST_CSV_MAX+2)*sizeof(csvfiledata));
@@ -9529,13 +9529,13 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   scase.devicecoll.ndeviceinfo=0;
   REWIND(stream);
 
-  if(FILE_EXISTS_CASEDIR(expcsv_filename)==YES){
+  if(FILE_EXISTS_CASEDIR(scase.paths.expcsv_filename)==YES){
     csvfiledata *csvi;
     char csv_type[256];
 
     csvi = scase.csvcoll.csvfileinfo + scase.csvcoll.ncsvfileinfo;
     strcpy(csv_type, "ext");
-    InitCSV(csvi, expcsv_filename, csv_type, CSV_FDS_FORMAT);
+    InitCSV(csvi, scase.paths.expcsv_filename, csv_type, CSV_FDS_FORMAT);
     scase.csvcoll.ncsvfileinfo++;
   }
 
@@ -11700,7 +11700,7 @@ int ReadSMV_Configure(){
   PRINTF("  wrapping up\n");
 
   INIT_PRINT_TIMER(fdsrunning_timer);
-  last_size_for_slice = GetFileSizeSMV(stepcsv_filename); // used by IsFDSRunning
+  last_size_for_slice = GetFileSizeSMV(scase.paths.stepcsv_filename); // used by IsFDSRunning
   last_size_for_boundary = last_size_for_slice;
   PRINT_TIMER(fdsrunning_timer, "filesize_timer");   // if file size changes then assume fds is running
 
@@ -16105,17 +16105,17 @@ int ReadIni(char *inifile){
   FREEMEMORY(global_ini);
 
   // Read "${fdsprefix}.ini" from the current directory
-  if(caseini_filename!=NULL){
+  if(scase.paths.caseini_filename!=NULL){
     int returnval;
     char localdir[10];
 
-    returnval = ReadIni2(caseini_filename, 1);
+    returnval = ReadIni2(scase.paths.caseini_filename, 1);
 
     // if directory is not writable then look for another ini file in the scratch directory
     strcpy(localdir, ".");
     if(Writable(localdir)==0){
       // Read "${fdsprefix}.ini" from the scratch directory
-      char *scratch_ini_filename = GetUserConfigSubPath(caseini_filename);
+      char *scratch_ini_filename = GetUserConfigSubPath(scase.paths.caseini_filename);
       returnval = ReadIni2(scratch_ini_filename, 1);
       FREEMEMORY(scratch_ini_filename);
     }
@@ -16732,12 +16732,12 @@ void WriteIni(int flag,char *filename){
     outfilename=filename;
     break;
   case LOCAL_INI:
-    fileout=fopen(caseini_filename,"w");
+    fileout=fopen(scase.paths.caseini_filename,"w");
     if(fileout==NULL&&smokeview_scratchdir!=NULL){
-      fileout = fopen_indir(smokeview_scratchdir, caseini_filename, "w");
+      fileout = fopen_indir(smokeview_scratchdir, scase.paths.caseini_filename, "w");
       outfiledir = smokeview_scratchdir;
      }
-    outfilename=caseini_filename;
+    outfilename=scase.paths.caseini_filename;
     break;
   default:
     assert(FFALSE);
@@ -17528,11 +17528,11 @@ void WriteIni(int flag,char *filename){
     fprintf(fileout,"# -------------------------\n\n");
     fprintf(fileout,"# Smokeview Build: %s\n",githash);
     fprintf(fileout,"# Smokeview Build Date: %s\n",__DATE__);
-    if(fds_version!=NULL){
-      fprintf(fileout,"# FDS Version: %s\n",fds_version);
+    if(scase.fds_version!=NULL){
+      fprintf(fileout,"# FDS Version: %s\n",scase.fds_version);
     }
-    if(fds_githash!=NULL){
-      fprintf(fileout, "# FDS Build: %s\n", fds_githash);
+    if(scase.fds_githash!=NULL){
+      fprintf(fileout, "# FDS Build: %s\n", scase.fds_githash);
     }
     fprintf(fileout,"# Platform: WIN64\n");
 #ifdef pp_OSX

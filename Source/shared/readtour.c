@@ -21,6 +21,8 @@
 
 #include "shared_structures.h"
 
+#include "shared_structures.h"
+
 void ReallocTourMemory(tour_collection *tourcoll) {
   tourdata *touri;
 

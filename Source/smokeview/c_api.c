@@ -147,8 +147,8 @@ int Loadsmvall(const char *input_filename) {
   int return_code;
   // fdsprefix and input_filename_ext are global and defined in smokeviewvars.h
   // TODO: move these into the model information namespace
-  ParseSmvFilepath(input_filename, fdsprefix, input_filename_ext);
-  return_code = Loadsmv(fdsprefix, input_filename_ext);
+  ParseSmvFilepath(input_filename, scase.fdsprefix, input_filename_ext);
+  return_code = Loadsmv(scase.fdsprefix, input_filename_ext);
 #ifdef pp_HIST
   if(return_code == 0 && update_bounds == 1) return_code = Update_Bounds();
 #endif
@@ -187,14 +187,14 @@ int ParseSmvFilepath(const char *smv_filepath, char *fdsprefix_arg,
         fdsprefix_arg[strlen(fdsprefix_arg) - 4] = 0;
         strcpy(movie_name, fdsprefix_arg);
         strcpy(render_file_base, fdsprefix_arg);
-        FREEMEMORY(trainer_filename);
-        NewMemory((void **)&trainer_filename, (unsigned int)(len_casename + 7));
-        STRCPY(trainer_filename, smv_filepath);
-        STRCAT(trainer_filename, ".svd");
-        FREEMEMORY(test_filename);
-        NewMemory((void **)&test_filename, (unsigned int)(len_casename + 7));
-        STRCPY(test_filename, smv_filepath);
-        STRCAT(test_filename, ".smt");
+        FREEMEMORY(scase.paths.trainer_filename);
+        NewMemory((void **)&scase.paths.trainer_filename, (unsigned int)(len_casename + 7));
+        STRCPY(scase.paths.trainer_filename, smv_filepath);
+        STRCAT(scase.paths.trainer_filename, ".svd");
+        FREEMEMORY(scase.paths.test_filename);
+        NewMemory((void **)&scase.paths.test_filename, (unsigned int)(len_casename + 7));
+        STRCPY(scase.paths.test_filename, smv_filepath);
+        STRCAT(scase.paths.test_filename, ".smt");
       }
     }
   }
@@ -207,8 +207,8 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
 
   FREEMEMORY(part_globalbound_filename);
   NewMemory((void **)&part_globalbound_filename,
-            strlen(fdsprefix) + strlen(".prt5.gbnd") + 1);
-  STRCPY(part_globalbound_filename, fdsprefix);
+            strlen(scase.fdsprefix) + strlen(".prt5.gbnd") + 1);
+  STRCPY(part_globalbound_filename, scase.fdsprefix);
   STRCAT(part_globalbound_filename, ".prt5.gbnd");
   char *smokeview_scratchdir = GetUserConfigDir();
   part_globalbound_filename = GetFileName(
@@ -221,17 +221,17 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
     trainer_mode = 1;
     trainer_active = 1;
     if(strcmp(input_filename_ext_arg, ".svd") == 0) {
-      input_file = trainer_filename;
+      input_file = scase.paths.trainer_filename;
     }
     else if(strcmp(input_filename_ext_arg, ".smt") == 0) {
-      input_file = test_filename;
+      input_file = scase.paths.test_filename;
     }
   }
   {
     bufferstreamdata *smv_streaminfo = NULL;
     smv_streaminfo = GetSMVBuffer(input_file);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, iso_filename);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, fedsmv_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, scase.paths.iso_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, scase.paths.fedsmv_filename);
     return_code = ReadSMV(smv_streaminfo);
     if(smv_streaminfo != NULL) {
       FCLOSE(smv_streaminfo);
@@ -297,7 +297,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
 
   SetMainWindow();
   glutShowWindow();
-  glutSetWindowTitle(fdsprefix);
+  glutSetWindowTitle(scase.fdsprefix);
   InitMisc();
   GLUITrainerSetup(mainwindow_id);
   glutDetachMenu(GLUT_RIGHT_BUTTON);
@@ -308,7 +308,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
     GLUIShowAlert();
   }
   // initialize info header
-  initialiseInfoHeader(&titleinfo, release_title, smv_githash, fds_githash,
+  initialiseInfoHeader(&titleinfo, release_title, smv_githash, scase.fds_githash,
                        chidfilebase, fds_title);
   return 0;
 }

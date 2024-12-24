@@ -433,7 +433,7 @@ void WriteLabels(labels_collection *labelscoll_arg){
   char quote[2];
 
   if(event_file_exists==0)return;
-  stream = fopen(event_filename, "w");
+  stream = fopen(scase.paths.event_filename, "w");
   if(stream==NULL)return;
 
   first_label = labelscoll_arg->label_first_ptr;

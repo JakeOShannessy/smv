@@ -1059,12 +1059,18 @@ typedef struct {
   char *hrr_csv_filename;
   char *devc_csv_filename;
   char *exp_csv_filename;
+  char *stepcsv_filename;
 
-  char *movie_name;
-  char *render_file_base;
-  char *html_file_base;
+  // The base names are properties of the GUI
+  // char *movie_name;
+  // char *render_file_base;
+  // char *html_file_base;
   char *log_filename;
   char *caseini_filename;
+  char *fedsmv_filename;
+#ifdef pp_FRAME
+  char *frametest_filename;
+#endif
   char *expcsv_filename;
   char *dEcsv_filename;
   char *html_filename;

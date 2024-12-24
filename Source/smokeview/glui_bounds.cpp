@@ -4649,7 +4649,7 @@ void ScriptCB(int var){
     suffix = TrimFront(script_renderfilesuffix);
     strcpy(script_renderfile, "");
     if(strlen(suffix) > 0){
-      strcpy(script_renderfile, fdsprefix);
+      strcpy(script_renderfile, scase.fdsprefix);
       strcat(script_renderfile, "_");
       strcat(script_renderfile, suffix);
       strcpy(label, _("Render: "));
@@ -4702,7 +4702,7 @@ void ScriptCB(int var){
     id = LIST_ini_list->get_int_val();
     ini_filename = GetIniFileName(id);
     if(ini_filename == NULL)break;
-    if(strcmp(ini_filename, caseini_filename) == 0){
+    if(strcmp(ini_filename, scase.paths.caseini_filename) == 0){
       ReadIni(NULL);
     }
     else if(id >= 0){
@@ -4726,7 +4726,7 @@ void ScriptCB(int var){
     break;
   case SCRIPT_EDIT_INI:
     strcpy(label, _("Save "));
-    strcat(label, fdsprefix);
+    strcat(label, scase.fdsprefix);
     TrimBack(script_inifile_suffix);
     if(strlen(script_inifile_suffix) > 0){
       strcat(label, "_");
@@ -6656,7 +6656,7 @@ extern "C" void GLUISliceBoundCB(int var){
       break;
     case SLICE_PLOT_FILENAME:
       use_slice = 0;
-      strcpy(slice_plot_filename, fdsprefix);
+      strcpy(slice_plot_filename, scase.fdsprefix);
       strcat(slice_plot_filename, "_slice");
       for(i = 0; i < scase.slicecoll.nsliceinfo; i++){
         slicedata *slicei;
