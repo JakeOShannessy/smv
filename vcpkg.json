@@ -10,8 +10,14 @@
     "libjpeg-turbo",
     "libpng",
     "pkgconf",
-    { "name": "libgd", "default-features": false },
-    "lua",
+    {
+      "name": "libgd",
+      "default-features": false,
+      "features": [
+        "png",
+        "jpeg"
+      ]
+    },
     "pthreads",
     "json-c"
   ]
