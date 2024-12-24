@@ -17,7 +17,7 @@
 #include "readobject.h"
 #include "readtour.h"
 
-/* ------------------ ReallocTourMemory ------------------------ */
+#include "shared_structures.h"
 
 void ReallocTourMemory(tour_collection *tourcoll) {
   tourdata *touri;
