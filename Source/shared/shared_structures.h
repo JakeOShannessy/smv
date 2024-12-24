@@ -1765,6 +1765,10 @@ typedef struct {
   int nfires;
   firedata *fireinfo;
 
+  int nhrrinfo;
+  int nhrrcinfo;
+  hrrdata *hrrinfo;
+
   int nzoneinfo;
   zonedata *zoneinfo;
 
