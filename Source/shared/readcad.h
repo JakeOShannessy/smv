@@ -48,7 +48,7 @@ void FreeCADGeomCollection(cadgeom_collection *coll);
  */
 int ReadCADGeomToCollection(cadgeom_collection *coll, const char *file,
                             GLfloat block_shininess);
-
+int InitCADGeomCollection(cadgeom_collection *coll, int capacity);
 /**
  * @brief Return the number of CAD object definitions.
  *
