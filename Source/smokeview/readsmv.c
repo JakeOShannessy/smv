@@ -29,9 +29,8 @@
 #include "colorbars.h"
 #include "readcad.h"
 #include "readsmoke.h"
-#include "shared_structures.h"
-#include "IOscript.h"
 #include "IOobjects.h"
+#include "IOscript.h"
 
 #define BREAK break
 #define BREAK2 \

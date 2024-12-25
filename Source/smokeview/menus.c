@@ -20,11 +20,11 @@
 #include "IOvolsmoke.h"
 #include "readhvac.h"
 #include "readobject.h"
+#include "IOobjects.h"
+#include "IOscript.h"
 #include "readsmoke.h"
 #include "viewports.h"
 #include "colorbars.h"
-#include "IOscript.h"
-#include "IOobjects.h"
 
 void LoadHVACMenu(int value);
 void LoadPlot2DMenu(int value);
