@@ -13,6 +13,7 @@
 
 #include "file_util.h"
 #include "stdio_buffer.h"
+
 #include "shared_structures.h"
 
 #define DUCT_COMPONENT_TEXT 0

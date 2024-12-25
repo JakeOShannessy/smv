@@ -8,15 +8,15 @@
 #include "dmalloc.h"
 #include "scontour2d.h"
 #include "histogram.h"
+#include "isobox.h"
+#include "readsmoke.h"
 #include "smokeviewdefs.h"
 #include "string_util.h"
-#include "isobox.h"
 #include "structures.h"
-#include "readsmoke.h"
 
 /* ------------------ FreeSmoke3d ------------------------ */
 
-void FreeSmoke3D(smoke3ddata *smoke3di){
+void FreeSmoke3D(smoke3ddata *smoke3di) {
   smoke3di->lastiframe = -999;
 #ifdef pp_SMOKEFRAME
   FRAMEFree(smoke3di->frameinfo);

@@ -159,7 +159,7 @@ int GetTokenLoc(char *var, sv_object_frame *frame) {
 /* ------------------ ParseSmvObjectString ------------------------ */
 
 void ParseSmvObjectString(object_collection *objectscoll, char *string,
-                          char **tokens, int *ntokens, int setbw) {
+                          char **tokens, int *ntokens, int setbw){
   int i, len, in_quote, in_token, last_in_token, ntok2 = 0;
   char *c;
   char *tokens_head[BUFFER_SIZE], *tokens_tail[BUFFER_SIZE];
@@ -1501,7 +1501,7 @@ object_collection *CreateObjectCollection(void) {
   }
 }
 
-void LoadDefaultObjectDefs(object_collection *objectscoll) {
+void LoadDefaultObjectDefs(object_collection *objectscoll){
   objectscoll->nobject_defs = 4;
   FREEMEMORY(objectscoll->object_defs);
   NewMemory((void **)&objectscoll->object_defs, 4 * sizeof(sv_object *));
