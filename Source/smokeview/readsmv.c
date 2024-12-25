@@ -8159,7 +8159,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   FREEMEMORY(global_scase.surfcoll.surfinfo);
   if(NewMemory((void **)&global_scase.surfcoll.surfinfo,(n_surf_keywords+MAX_ISO_COLORS+1)*sizeof(surfdata))==0)return 2;
 
-  FreeCADGeomCollection(&global_scase.cadgeomcoll);
+  ClearCADGeomCollection(&global_scase.cadgeomcoll);
   if (n_cadgeom_keywords > 0) {
     // Allocate a fixed-size collection large enough to hold each of the CADGEOM
     // definitions.

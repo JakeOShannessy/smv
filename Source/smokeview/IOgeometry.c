@@ -2996,7 +2996,7 @@ void *ReadAllGeom(void *arg){
     geomi->read_status = 2;
     THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
   }
-  for(i = 0; i<global_scase.ngeominfo; i++){
+  for(i = 0; i<global_scase.ncgeominfo; i++){
     geomdata *geomi;
 
     geomi = global_scase.cgeominfo+i;
