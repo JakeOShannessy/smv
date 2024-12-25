@@ -17,16 +17,14 @@
 #define INTERP_RGB 0
 #define INTERP_LAB 1
 
-#define TOBW(col) (0.299 * (col)[0] + 0.587 * (col)[1] + 0.114 * (col)[2])
+#define TOBW(col) ( 0.299*(col)[0] + 0.587*(col)[1] + 0.114*(col)[2])
+
+/* --------------------------  colordata ------------------------------------ */
 
 typedef struct _colordata {
   float color[4], full_color[4], bw_color[4];
   struct _colordata *nextcolor;
 } colordata;
-
-typedef struct {
-  colordata *firstcolor;
-} color_collection;
 
 typedef struct _colorbardata {
   /// @brief The label used in GUI menus
@@ -68,6 +66,8 @@ typedef struct {
   int co2_colorbar_index;
   int iso_colorbar_index;
 } colorbar_collection;
+
+EXTERNCPP float *GetColorPtr(colordata *firstcolor, float *color);
 
 /**
  * @brief Get a colorbar given a label.
@@ -134,6 +134,4 @@ EXTERNCPP void CheckLab(void);
 EXTERNCPP void FRgb2Lab(float *rgb_arg, float *lab);
 EXTERNCPP void GetColorDist(colorbardata *cbi, int option, float *min,
                             float *max);
-
-EXTERNCPP float *GetColorPtr(color_collection *colorcoll, float *color);
 #endif

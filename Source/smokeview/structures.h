@@ -18,7 +18,7 @@
 #include "readobject.h"
 #include "shared_structures.h"
 
-/* --------------------------  langlistdata ------------------------------------ */
+/* --------------------------  langlistdata --------------------------------- */
 
 typedef struct _lanlistdata {
   char *file;
@@ -52,7 +52,7 @@ typedef struct _screendata {
   float view[3], up[3], right[3];
 } screendata;
 
-/* --------------------------  shootpointdata ------------------------------------ */
+/* --------------------------  shootpointdata ------------------------------- */
 
 typedef struct _shootpointdata {
   struct _shootpointdata *prev;
@@ -95,7 +95,7 @@ typedef struct _scriptfiledata {
   char *file;
 } scriptfiledata;
 
-/* --------------------------  scriptdata ------------------------------------ */
+/* --------------------------  scriptdata ----------------------------------- */
 
 typedef struct _scriptdata {
   int command;
@@ -155,7 +155,7 @@ typedef struct _selectdadta {
 
 
 
-/* --------------------------  volfacelistdata ------------------------------------ */
+/* --------------------------  volfacelistdata ------------------------------ */
 
 typedef struct _volfacelistdata {
   float *xyz,dist2;
@@ -191,7 +191,7 @@ typedef struct _curvedata{
   float linewidth;
 } curvedata;
 
-/* --------------------------  plot2ddata ------------------------------------ */
+/* --------------------------  plot2ddata ----------------------------------- */
 
 #define PLOT2D_MAX_CURVES 50
 typedef struct _plot2ddata{
@@ -205,21 +205,21 @@ typedef struct _plot2ddata{
 } plot2ddata;
 
 
-/* --------------------------  treedevicedata ------------------------------------ */
+/* --------------------------  treedevicedata ------------------------------- */
 
 typedef struct _treedevicedata {
   int first, last, n, nz;
   float *xyz;
 } treedevicedata;
 
-/* --------------------------  ztreedevicedata ------------------------------------ */
+/* --------------------------  ztreedevicedata ------------------------------ */
 
 typedef struct _ztreedevicedata {
   char *quantity, *unit;
   int first, n;
 } ztreedevicedata;
 
-/* --------------------------  camviewdata ------------------------------------ */
+/* --------------------------  camviewdata ---------------------------------- */
 
 typedef struct _camviewdata {
   float time, eye0[3], view0[3], aperture, up[3];

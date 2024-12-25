@@ -51,10 +51,13 @@
 #define SMOKE3DBUFFER(len) scase->smoke3d_buffer; scase->smoke3d_buffer += (len)
 #define SLICEBUFFER(len)   scase->slice_buffer;   scase->slice_buffer   += (len)
 
-#define FILE_EXISTS_CASEDIR(a)                                                 \
-  FileExists(a, scase->filelist_coll.filelist_casename, scase->filelist_coll.nfilelist_casename, \
-             scase->filelist_coll.filelist_casedir,       \
-             scase->filelist_coll.nfilelist_casedir)
+
+int FileExistsCaseDir(smv_case *scase, char *filename) {
+  return FileExists(filename, scase->filelist_coll.filelist_casename,
+                    scase->filelist_coll.nfilelist_casename,
+                    scase->filelist_coll.filelist_casedir,
+                    scase->filelist_coll.nfilelist_casedir);
+}
 
 // TODO: Things that can be moved to after parse are marked with the label
 // POSTPARSE: <explanation>
@@ -562,7 +565,7 @@ void InitDevice(smv_case *scase, devicedata *devicei, float *xyz, int is_beam, f
       color[1] = params[1];
       color[2] = params[2];
       color[3] = 1.0;
-      devicei->color = GetColorPtr(&scase->colorcoll, color);
+      devicei->color = GetColorPtr(scase->firstcolor, color);
     }
     if(nparams >= 4){
       devicei->line_width = params[3];
@@ -938,21 +941,21 @@ int GetInpf(smv_case *scase, bufferstreamdata *stream_in){
         NewMemory((void **)&scase->paths.hrr_csv_filename,(unsigned int)(strlen(scase->paths.chidfilebase)+8+1));
         STRCPY(scase->paths.hrr_csv_filename,scase->paths.chidfilebase);
         STRCAT(scase->paths.hrr_csv_filename,"_hrr.csv");
-        if(FILE_EXISTS_CASEDIR(scase->paths.hrr_csv_filename)==NO){
+        if(FileExistsCaseDir(scase, scase->paths.hrr_csv_filename)==NO){
           FREEMEMORY(scase->paths.hrr_csv_filename);
         }
 
         NewMemory((void **)&scase->paths.devc_csv_filename,(unsigned int)(strlen(scase->paths.chidfilebase)+9+1));
         STRCPY(scase->paths.devc_csv_filename,scase->paths.chidfilebase);
         STRCAT(scase->paths.devc_csv_filename,"_devc.csv");
-        if(FILE_EXISTS_CASEDIR(scase->paths.devc_csv_filename)==NO){
+        if(FileExistsCaseDir(scase, scase->paths.devc_csv_filename)==NO){
           FREEMEMORY(scase->paths.devc_csv_filename);
         }
 
         NewMemory((void **)&scase->paths.exp_csv_filename,(unsigned int)(strlen(scase->paths.chidfilebase)+8+1));
         STRCPY(scase->paths.exp_csv_filename,scase->paths.chidfilebase);
         STRCAT(scase->paths.exp_csv_filename,"_exp.csv");
-        if(FILE_EXISTS_CASEDIR(scase->paths.exp_csv_filename)==NO){
+        if(FileExistsCaseDir(scase, scase->paths.exp_csv_filename)==NO){
           FREEMEMORY(scase->paths.exp_csv_filename);
         }
       }
@@ -1374,7 +1377,7 @@ void ReadZVentData(smv_case *scase, zventdata *zvi, char *buffer, int flag){
       zvi->wall = TOP_WALL;
     }
   }
-  zvi->color = GetColorPtr(&scase->colorcoll, color);
+  zvi->color = GetColorPtr(scase->firstcolor, color);
   zvi->area_fraction = area_fraction;
 }
 
@@ -1532,7 +1535,7 @@ int ParseISOFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
     strcpy(isoi->tfile, tbufferptr);
   }
 
-  if(parse_opts.fast_startup==1||FILE_EXISTS_CASEDIR(isoi->reg_file)==YES){
+  if(parse_opts.fast_startup==1||FileExistsCaseDir(scase, isoi->reg_file)==YES){
     isoi->get_isolevels = 1;
     isoi->file = isoi->reg_file;
     if(ReadLabels(&isoi->surface_label, stream, NULL)==LABEL_ERR)return 2;
@@ -1600,7 +1603,7 @@ int ParseCHIDProcess(smv_case *scase, casepaths *paths, bufferstreamdata *stream
     NewMemory((void **)&paths->hrr_csv_filename, (unsigned int)(strlen(paths->chidfilebase)+8+1));
     STRCPY(paths->hrr_csv_filename, paths->chidfilebase);
     STRCAT(paths->hrr_csv_filename, "_hrr.csv");
-    if(FILE_EXISTS_CASEDIR(paths->hrr_csv_filename)==NO){
+    if(FileExistsCaseDir(scase, paths->hrr_csv_filename)==NO){
       FREEMEMORY(paths->hrr_csv_filename);
     }
   }
@@ -1687,7 +1690,7 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
 
   // POSTPARSE: If the current directory isn't writable, set the size file path
   // for each file to the scratch directory (if it exists).
-  if(FILE_EXISTS_CASEDIR(parti->size_file)==NO&&scase->curdir_writable==NO&&scase->smokeview_scratchdir!=NULL){
+  if(FileExistsCaseDir(scase, parti->size_file)==NO&&scase->curdir_writable==NO&&scase->smokeview_scratchdir!=NULL){
     len = strlen(scase->smokeview_scratchdir)+strlen(bufferptr)+1+3+1;
     parti->size_file = NULL;
     if(NewMemory((void **)&parti->size_file, (unsigned int)len)==0)return RETURN_TWO;
@@ -1700,7 +1703,7 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
   // parti->hist_file can't be written to, then put it in a world writable temp directory
 
   parti->compression_type = UNCOMPRESSED;
-  if(FILE_EXISTS_CASEDIR(parti->reg_file)==YES){
+  if(FileExistsCaseDir(scase, parti->reg_file)==YES){
     parti->file = parti->reg_file;
   }
   else{
@@ -1759,7 +1762,7 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
     NewMemory((void **)&parti->partclassptr, sizeof(partclassdata *));
     parti->partclassptr[i] = scase->partclassinfo+parti->nclasses;
   }
-  if(parse_opts.fast_startup==1||(parti->file!=NULL&&FILE_EXISTS_CASEDIR(parti->file)==YES)){
+  if(parse_opts.fast_startup==1||(parti->file!=NULL&&FileExistsCaseDir(scase, parti->file)==YES)){
     ipart++;
     *ipart_in = ipart;
   }
@@ -1917,7 +1920,7 @@ int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
   STRCPY(patchi->size_file, bufferptr);
   //      STRCAT(patchi->size_file,".szz"); when we actully use file check both .sz and .szz extensions
 
-  if(parse_opts.lookfor_compressed_files==1&&FILE_EXISTS_CASEDIR(patchi->comp_file) == YES){
+  if(parse_opts.lookfor_compressed_files==1&&FileExistsCaseDir(scase, patchi->comp_file) == YES){
     patchi->compression_type = COMPRESSED_ZLIB;
     patchi->file             = patchi->comp_file;
   }
@@ -2167,7 +2170,7 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
     smoke3di->comp_file = SMOKE3DBUFFER(len + 1);
     STRCPY(smoke3di->comp_file, buffer2);
 
-    if(scase->have_compressed_files==1&&FILE_EXISTS_CASEDIR(smoke3di->comp_file) == YES){
+    if(scase->have_compressed_files==1&&FileExistsCaseDir(scase, smoke3di->comp_file) == YES){
       smoke3di->file = smoke3di->comp_file;
       smoke3di->is_zlib = 1;
       smoke3di->compression_type = COMPRESSED_ZLIB;
@@ -2186,7 +2189,7 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
     strcat(buffer16, ".s16");
     smoke3di->s16_file = SMOKE3DBUFFER(strlen(buffer16) + 1);
     STRCPY(smoke3di->s16_file, buffer16);
-    if(FILE_EXISTS_CASEDIR(smoke3di->s16_file)==YES){
+    if(FileExistsCaseDir(scase, smoke3di->s16_file)==YES){
       smoke3di->is_s16 = 1;
       have_smoke16 = 1;
     }
@@ -2445,10 +2448,10 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
   has_reg = NO;
   compression_type = UNCOMPRESSED;
   if(parse_opts.lookfor_compressed_files==1){
-    if(FILE_EXISTS_CASEDIR(rle_file)==YES)compression_type  = COMPRESSED_RLE;
-    if(FILE_EXISTS_CASEDIR(zlib_file)==YES)compression_type = COMPRESSED_ZLIB;
+    if(FileExistsCaseDir(scase, rle_file)==YES)compression_type  = COMPRESSED_RLE;
+    if(FileExistsCaseDir(scase, zlib_file)==YES)compression_type = COMPRESSED_ZLIB;
   }
-  if(compression_type==UNCOMPRESSED&&(parse_opts.fast_startup==1||FILE_EXISTS_CASEDIR(bufferptr)==YES))has_reg = YES;
+  if(compression_type==UNCOMPRESSED&&(parse_opts.fast_startup==1||FileExistsCaseDir(scase, bufferptr)==YES))has_reg = YES;
   if(has_reg==NO&&compression_type==UNCOMPRESSED){
     scase->slicecoll.nsliceinfo--;
 
@@ -2932,13 +2935,13 @@ void ReadSMVOrig(smv_case *scase){
           obi->invisible=1;
         }
         if(colorindex>=0){
-          obi->color = GetColorPtr(&scase->colorcoll, scase->rgb[scase->nrgb+colorindex]);
+          obi->color = GetColorPtr(scase->firstcolor, scase->rgb[scase->nrgb+colorindex]);
           obi->usecolorindex=1;
           obi->colorindex=colorindex;
           scase->updateindexcolors=1;
         }
         if(colorindex==-3){
-          obi->color = GetColorPtr(&scase->colorcoll, s_color);
+          obi->color = GetColorPtr(scase->firstcolor, s_color);
           scase->updateindexcolors=1;
         }
         obi->colorindex = colorindex;
@@ -2999,7 +3002,7 @@ void AddCfastCsvfi(smv_case *scase, char *suffix, char *type, int format){
     csvfi = scase->csvcoll.csvfileinfo + i;
     if(strcmp(csvfi->c_type,type)==0)return;
   }
-  if(FILE_EXISTS_CASEDIR(filename) == NO)return;
+  if(FileExistsCaseDir(scase, filename) == NO)return;
   InitCSV(scase->csvcoll.csvfileinfo + scase->csvcoll.ncsvfileinfo, filename, type, format);
   scase->csvcoll.ncsvfileinfo++;
 }
@@ -3489,7 +3492,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       FGETS(buffer2,255,stream);
       TrimBack(buffer2);
       file_ptr=TrimFront(buffer2);
-      if(FILE_EXISTS_CASEDIR(file_ptr)==YES)scase->csvcoll.ncsvfileinfo++;
+      if(FileExistsCaseDir(scase, file_ptr)==YES)scase->csvcoll.ncsvfileinfo++;
       continue;
     }
     if(MatchSMV(buffer, "CGEOM")==1){
@@ -3919,7 +3922,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
    rgb_class[1]=0.0;
    rgb_class[2]=0.0;
    rgb_class[3]=1.0;
-   partclassi->rgb=GetColorPtr(&scase->colorcoll, rgb_class);
+   partclassi->rgb=GetColorPtr(scase->firstcolor, rgb_class);
 
    partclassi->ntypes=0;
    partclassi->xyz=NULL;
@@ -4216,7 +4219,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       }
       TrimBack(buffer2);
       file_ptr=TrimFront(buffer2);
-      if(FILE_EXISTS_CASEDIR(file_ptr) == NO)continue;
+      if(FileExistsCaseDir(scase, file_ptr) == NO)continue;
 
       csvi = scase->csvcoll.csvfileinfo + scase->csvcoll.ncsvfileinfo;
       InitCSV(csvi, file_ptr, type_ptr, CSV_FDS_FORMAT);
@@ -4343,7 +4346,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         if(ext!=NULL){
           ext[0] = 0;
           strcat(buff2,".ge2");
-          if(FILE_EXISTS_CASEDIR(buff2)==YES){
+          if(FileExistsCaseDir(scase, buff2)==YES){
             NewMemory((void **)&geomi->file2,strlen(buff2)+1);
             strcpy(geomi->file2,buff2);
             ReadGeomFile2(geomi);
@@ -4393,7 +4396,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
               fcolors[2] = colors[2]/255.0;
               if(transparency<0.0)transparency = 1.0;
               fcolors[3] = transparency;
-              geomobji->color = GetColorPtr(&scase->colorcoll, fcolors);
+              geomobji->color = GetColorPtr(scase->firstcolor, fcolors);
               geomobji->use_geom_color = 1;
             }
             geomobji->ntriangles = ntriangles;
@@ -4721,7 +4724,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f",rgb_class,rgb_class+1,rgb_class+2);
       rgb_class[3]=1.0;
-      partclassi->rgb=GetColorPtr(&scase->colorcoll, rgb_class);
+      partclassi->rgb=GetColorPtr(scase->firstcolor, rgb_class);
 
       partclassi->ntypes=0;
       partclassi->xyz=NULL;
@@ -5017,7 +5020,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         BREAK;
       }
       bufferptr=TrimFrontBack(buffer);
-      if (FILE_EXISTS_CASEDIR(bufferptr) == YES) {
+      if (FileExistsCaseDir(scase, bufferptr) == YES) {
         ReadCADGeomToCollection(&scase->cadgeomcoll, bufferptr, scase->block_shininess);
       }
       else {
@@ -5108,7 +5111,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         surfi->invisible = 1;
         surfi->type = BLOCK_hidden;
       }
-      surfi->color = GetColorPtr(&scase->colorcoll, s_color);
+      surfi->color = GetColorPtr(scase->firstcolor, s_color);
       if(s_color[3]<0.99){
         surfi->transparent=1;
         surfi->transparent_level = s_color[3];
@@ -5136,17 +5139,17 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         char texturebuffer[1024];
 
         found_texture=0;
-        if(scase->texturedir!=NULL&&FILE_EXISTS_CASEDIR(buffer3)==NO){
+        if(scase->texturedir!=NULL&&FileExistsCaseDir(scase, buffer3)==NO){
           STRCPY(texturebuffer,scase->texturedir);
           STRCAT(texturebuffer,dirseparator);
           STRCAT(texturebuffer,buffer3);
-          if(FILE_EXISTS_CASEDIR(texturebuffer)==YES){
+          if(FileExistsCaseDir(scase, texturebuffer)==YES){
             if(NewMemory((void **)&surfi->texturefile,strlen(texturebuffer)+1)==0)return 2;
             STRCPY(surfi->texturefile,texturebuffer);
             found_texture=1;
           }
         }
-        if(FILE_EXISTS_CASEDIR(buffer3)==YES){
+        if(FileExistsCaseDir(scase, buffer3)==YES){
           len=strlen(buffer3);
           if(NewMemory((void **)&surfi->texturefile,(unsigned int)(len+1))==0)return 2;
           STRCPY(surfi->texturefile,buffer3);
@@ -5466,7 +5469,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
   scase->devicecoll.ndeviceinfo=0;
   REWIND(stream);
 
-  if(FILE_EXISTS_CASEDIR(scase->paths.expcsv_filename)==YES){
+  if(FileExistsCaseDir(scase, scase->paths.expcsv_filename)==YES){
     csvfiledata *csvi;
     char csv_type[256];
 
@@ -6143,7 +6146,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         default:
           assert(FFALSE);
         }
-        zvi->color = GetColorPtr(&scase->colorcoll, color);
+        zvi->color = GetColorPtr(scase->firstcolor, color);
         zvi->area_fraction = area_fraction;
       }
       else if(vent_type==VFLOW_VENT){
@@ -6198,7 +6201,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         zvi->vertical_vent_type = vertical_vent_type;
         zvi->area = vent_area;
         zvi->area_fraction = area_fraction;
-        zvi->color = GetColorPtr(&scase->colorcoll, color);
+        zvi->color = GetColorPtr(scase->firstcolor, color);
       }
       else if(vent_type==MFLOW_VENT){
         scase->nzmvents++;
@@ -6715,14 +6718,14 @@ typedef struct {
             colorindex=-3;
           }
           if(s_color[0]>=0.0&&s_color[1]>=0.0&&s_color[2]>=0.0){
-            bc->color=GetColorPtr(&scase->colorcoll, s_color);
+            bc->color=GetColorPtr(scase->firstcolor, s_color);
           }
           bc->nnodes=(ijk[1]+1-ijk[0])*(ijk[3]+1-ijk[2])*(ijk[5]+1-ijk[4]);
           bc->useblockcolor = 1;
         }
         else{
           if(colorindex>=0){
-            bc->color = GetColorPtr(&scase->colorcoll, scase->rgb[scase->nrgb+colorindex]);
+            bc->color = GetColorPtr(scase->firstcolor, scase->rgb[scase->nrgb+colorindex]);
             bc->usecolorindex=1;
             bc->colorindex=colorindex;
             scase->updateindexcolors=1;
@@ -6909,7 +6912,7 @@ typedef struct {
           cvi->useventcolor=1;
         }
         s_color[3]=1.0; // set color to opaque until CVENT transparency is implemented
-        cvi->color = GetColorPtr(&scase->colorcoll, s_color);
+        cvi->color = GetColorPtr(scase->firstcolor, s_color);
       }
       continue;
     }
@@ -7151,7 +7154,7 @@ typedef struct {
             vi->useventcolor=1;
             scase->updateindexcolors=1;
           }
-          vi->color = GetColorPtr(&scase->colorcoll, s_color);
+          vi->color = GetColorPtr(scase->firstcolor, s_color);
         }
         else{
           iv1=0;
@@ -8114,7 +8117,7 @@ void ReadSMVDynamic(smv_case *scase, char *file){
 
       plot3di->file=plot3di->reg_file;
 
-      if(parse_opts.fast_startup==1||FILE_EXISTS_CASEDIR(plot3di->file)==YES){
+      if(parse_opts.fast_startup==1||FileExistsCaseDir(scase, plot3di->file)==YES){
         int n;
         int read_ok = YES;
 

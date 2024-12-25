@@ -361,8 +361,8 @@ json_object *jsonrpc_SetClipping(jrpc_context *context, json_object *params,
 json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
                                json_object *id) {
   struct json_object *mesh_array = json_object_new_array();
-  for(int i = 0; i < scase.meshescoll.nmeshes; i++) {
-    meshdata *mesh = &scase.meshescoll.meshinfo[i];
+  for(int i = 0; i < global_scase.meshescoll.nmeshes; i++) {
+    meshdata *mesh = &global_scase.meshescoll.meshinfo[i];
     struct json_object *mesh_obj = json_object_new_object();
     json_object_object_add(mesh_obj, "index", json_object_new_int(i + 1));
     if(mesh->label != NULL) {
@@ -640,8 +640,8 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
 json_object *json_GetSmoke3ds(jrpc_context *context, json_object *params,
                               json_object *id) {
   struct json_object *smoke3ds = json_object_new_array();
-  for(int i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
-    smoke3ddata *val = &scase.smoke3dcoll.smoke3dinfo[i];
+  for(int i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++) {
+    smoke3ddata *val = &global_scase.smoke3dcoll.smoke3dinfo[i];
     struct json_object *slice_obj = json_object_new_object();
     json_object_object_add(slice_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(slice_obj, "mesh",
@@ -662,8 +662,8 @@ json_object *json_GetSmoke3ds(jrpc_context *context, json_object *params,
 
 json_object *json_GetSlices(void) {
   struct json_object *slices = json_object_new_array();
-  for(int i = 0; i < scase.slicecoll.nsliceinfo; i++) {
-    slicedata *slice = &scase.slicecoll.sliceinfo[i];
+  for(int i = 0; i < global_scase.slicecoll.nsliceinfo; i++) {
+    slicedata *slice = &global_scase.slicecoll.sliceinfo[i];
     struct json_object *slice_obj = json_object_new_object();
     json_object_object_add(slice_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(slice_obj, "mesh",
@@ -715,8 +715,8 @@ json_object *jsonrpc_GetSlices(jrpc_context *context, json_object *params,
 json_object *jsonrpc_GetCsvs(jrpc_context *context, json_object *params,
                              json_object *id) {
   struct json_object *csv_files = json_object_new_array();
-  for(int i = 0; i < scase.csvcoll.ncsvfileinfo; i++) {
-    csvfiledata *csv_file = &scase.csvcoll.csvfileinfo[i];
+  for(int i = 0; i < global_scase.csvcoll.ncsvfileinfo; i++) {
+    csvfiledata *csv_file = &global_scase.csvcoll.csvfileinfo[i];
     struct json_object *csv_obj = json_object_new_object();
     json_object_object_add(csv_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(csv_obj, "filename",
@@ -761,10 +761,10 @@ json_object *jsonrpc_GetCsvVectors(jrpc_context *context, json_object *params,
                                    json_object *id) {
   struct json_object *csv_files = json_object_new_object();
 
-  for(int i = 0; i < scase.csvcoll.ncsvfileinfo; ++i) {
+  for(int i = 0; i < global_scase.csvcoll.ncsvfileinfo; ++i) {
     struct json_object *csvs_obj = json_object_new_object();
-    json_object_object_add(csv_files, scase.csvcoll.csvfileinfo[i].c_type, csvs_obj);
-    csvfiledata *csventry = &scase.csvcoll.csvfileinfo[i];
+    json_object_object_add(csv_files, global_scase.csvcoll.csvfileinfo[i].c_type, csvs_obj);
+    csvfiledata *csventry = &global_scase.csvcoll.csvfileinfo[i];
     if(!csventry->loaded) {
       LoadCsv(csventry);
     }
@@ -865,7 +865,7 @@ json_object *jsonrpc_Load3dSmokeIndices(jrpc_context *context,
     int i = json_object_get_int(json_object_array_get_idx(params, n));
     fprintf(stderr, "loading smoke3d index %d\n", i);
     smoke3ddata *smoke3di;
-    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
     smoke3di->finalize = 0;
     if(n == (n_files - 1)) smoke3di->finalize = 1;
     ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);

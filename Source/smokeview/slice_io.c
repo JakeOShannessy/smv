@@ -330,8 +330,8 @@ void ReadFed(int file_index, int time_frame, float *time_value, int flag,
   else if (file_type == FED_ISO) {
     isodata *isoi;
 
-    assert(file_index < scase.nisoinfo);
-    isoi = scase.isoinfo + file_index;
+    assert(file_index < global_scase.nisoinfo);
+    isoi = global_scase.isoinfo + file_index;
     fedi = isoi->fedptr;
   }
   else {

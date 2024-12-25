@@ -3,20 +3,37 @@
 
 #include "shared_structures.h"
 
-cadgeom_collection *CreateCADGeomCollection(int capacity);
 /**
- * @brief Initialise an @ref cadgeom_collection.
+ * @brief Create and initialise an @ref cadgeom_collection.
  *
  * @param[out] coll The memory to initialise the colleciton in.
  * @param capacity The maximum capacity of this collection.
  *
  * @returns zero on suceess, error code otherwise
  */
+cadgeom_collection *CreateCADGeomCollection(int capacity);
+
+/**
+ * @brief Initialise an already allocated cadgeom_collection. This is useful
+ * when the collection is allocated as part of a larger data structure.
+ *
+ * @param coll
+ * @param capacity
+ * @return int
+ */
 int InitCADGeomCollection(cadgeom_collection *coll, int capacity);
 
 /**
- * @brief Free an @ref cadgeom_collection previously created by @ref
- * CreateCADGeomCollection.
+ * @brief Clear an @ref cadgeom_collection. This does not free the data
+ * structure itself, but simply empties it.
+ *
+ * @param[inout] coll The @ref cadgeom_collection to clear.
+ */
+void ClearCADGeomCollection(cadgeom_collection *coll);
+
+/**
+ * @brief Free a @ref cadgeom_collection that was previously allocated with
+ * NewMemory or created by @ref CreateCADGeomCollection.
  *
  * @param[inout] coll The @ref cadgeom_collection to free.
  */

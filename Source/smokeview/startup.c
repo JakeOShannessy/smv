@@ -36,7 +36,7 @@ void InitDefaultCameras(void){
   }
 
   strcpy(name_external, "external");
-  if(scase.is_terrain_case==1){
+  if(global_scase.is_terrain_case==1){
     CopyCamera(camera_external, camera_defaults[5]);
     strcpy(camera_external->name, name_external);
   }
@@ -68,14 +68,14 @@ void InitMisc(void){
   NewMemory((void **)&plotiso, MAXPLOT3DVARS*sizeof(int));
 
   if(colorbar_vals==NULL){
-    NewMemory((void **)&colorbar_vals, scase.nrgb*sizeof(float));
+    NewMemory((void **)&colorbar_vals, global_scase.nrgb*sizeof(float));
   }
   if(colorbar_exponents==NULL){
-    NewMemory((void **)&colorbar_exponents, scase.nrgb*sizeof(int));
+    NewMemory((void **)&colorbar_exponents, global_scase.nrgb*sizeof(int));
   }
   if(colorbar_labels==NULL){
-    NewMemory((void **)&colorbar_labels, scase.nrgb*sizeof(char *));
-    for(i = 0; i<scase.nrgb; i++){
+    NewMemory((void **)&colorbar_labels, global_scase.nrgb*sizeof(char *));
+    for(i = 0; i<global_scase.nrgb; i++){
       NewMemory((void **)&colorbar_labels[i], 256);
     }
   }
@@ -89,7 +89,7 @@ void InitMisc(void){
     }
   }
   for(i=0;i<MAXPLOT3DVARS;i++){
-    plotiso[i]=scase.nrgb/2;
+    plotiso[i]=global_scase.nrgb/2;
   }
 
   for(i=0;i<16;i++){
@@ -99,26 +99,26 @@ void InitMisc(void){
     modelview_setup[i+4*i]=1.0;
   }
 
-  for(i=0;i<scase.meshescoll.nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=scase.meshescoll.meshinfo+i;
-    InitContour(meshi->plot3dcontour1,rgb_plot3d_contour,scase.nrgb);
-    InitContour(meshi->plot3dcontour2,rgb_plot3d_contour,scase.nrgb);
-    InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,scase.nrgb);
+    meshi=global_scase.meshescoll.meshinfo+i;
+    InitContour(meshi->plot3dcontour1,rgb_plot3d_contour,global_scase.nrgb);
+    InitContour(meshi->plot3dcontour2,rgb_plot3d_contour,global_scase.nrgb);
+    InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,global_scase.nrgb);
   }
 
-  for(i=0;i<scase.meshescoll.nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=scase.meshescoll.meshinfo+i;
+    meshi=global_scase.meshescoll.meshinfo+i;
     meshi->currentsurf->defined=0;
     meshi->currentsurf2->defined=0;
   }
 
   /* initialize box sizes, lighting parameters */
 
-  xyzbox = MAX(MAX(scase.xbar,scase.ybar),scase.zbar);
+  xyzbox = MAX(MAX(global_scase.xbar,global_scase.ybar),global_scase.zbar);
 
   InitDefaultCameras();
 
@@ -197,10 +197,10 @@ void ReadBoundINI(void){
       TrimBack(buffer2);
       buffer2ptr = TrimFront(buffer2);
       lenbuffer2 = strlen(buffer2ptr);
-      for(i = 0; i < scase.npatchinfo; i++){
+      for(i = 0; i < global_scase.npatchinfo; i++){
         patchdata *patchi;
 
-        patchi = scase.patchinfo + i;
+        patchi = global_scase.patchinfo + i;
         if(lenbuffer2 != 0 &&
           strcmp(patchi->label.shortlabel, buffer2ptr) == 0 &&
           patchi->patch_filetype == filetype){
@@ -227,8 +227,8 @@ int SetupCase(char *filename){
 
   return_code=-1;
   FREEMEMORY(part_globalbound_filename);
-  NewMemory((void **)&part_globalbound_filename, strlen(scase.fdsprefix)+strlen(".prt.gbnd")+1);
-  STRCPY(part_globalbound_filename, scase.fdsprefix);
+  NewMemory((void **)&part_globalbound_filename, strlen(global_scase.fdsprefix)+strlen(".prt.gbnd")+1);
+  STRCPY(part_globalbound_filename, global_scase.fdsprefix);
   STRCAT(part_globalbound_filename, ".prt.gbnd");
   char *smokeview_scratchdir = GetUserConfigDir();
   part_globalbound_filename = GetFileName(smokeview_scratchdir, part_globalbound_filename, NOT_FORCE_IN_DIR);
@@ -241,22 +241,22 @@ int SetupCase(char *filename){
     trainer_mode=1;
     trainer_active=1;
     if(strcmp(input_filename_ext,".svd")==0){
-      input_file=scase.paths.trainer_filename;
+      input_file=global_scase.paths.trainer_filename;
     }
     else if(strcmp(input_filename_ext,".smt")==0){
-      input_file=scase.paths.test_filename;
+      input_file=global_scase.paths.test_filename;
     }
   }
   {
     bufferstreamdata *smv_streaminfo = NULL;
 
     PRINTF("reading  %s\n", input_file);
-    if(FileExistsOrig(scase.paths.smvzip_filename) == 1){
+    if(FileExistsOrig(global_scase.paths.smvzip_filename) == 1){
       parse_opts.lookfor_compressed_files = 1;
     }
     smv_streaminfo = GetSMVBuffer(input_file);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, scase.paths.iso_filename);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, scase.paths.fedsmv_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, global_scase.paths.iso_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, global_scase.paths.fedsmv_filename);
 
     return_code = ReadSMV(smv_streaminfo);
     if(smv_streaminfo!=NULL){
@@ -315,7 +315,7 @@ int SetupCase(char *filename){
   FREEMEMORY(smv_bindir);
   PRINT_TIMER(timer_start, "InitTranslate");
 
-  if(scase.tourcoll.ntourinfo==0)SetupTour();
+  if(global_scase.tourcoll.ntourinfo==0)SetupTour();
   InitRolloutList();
   GLUIColorbarSetup(mainwindow_id);
   GLUIMotionSetup(mainwindow_id);
@@ -338,7 +338,7 @@ int SetupCase(char *filename){
 
   SetMainWindow();
   glutShowWindow();
-  glutSetWindowTitle(scase.fdsprefix);
+  glutSetWindowTitle(global_scase.fdsprefix);
   InitMisc();
   GLUITrainerSetup(mainwindow_id);
   glutDetachMenu(GLUT_RIGHT_BUTTON);
@@ -353,7 +353,7 @@ int SetupCase(char *filename){
     GLUIShowAlert();
   }
   // initialize info header
-  initialiseInfoHeader(&titleinfo, release_title, smv_githash, scase.fds_githash, chidfilebase, fds_title);
+  initialiseInfoHeader(&titleinfo, release_title, smv_githash, global_scase.fds_githash, chidfilebase, fds_title);
   PRINT_TIMER(timer_start, "glut routines");
   return 0;
 }
@@ -367,7 +367,7 @@ int GetScreenHeight(void){
   int screen_height=-1;
 
   strcpy(command,"system_profiler SPDisplaysDataType | grep Resolution | awk '{print $4}' | tail -1 >& ");
-  strcpy(height_file, scase.fdsprefix);
+  strcpy(height_file, global_scase.fdsprefix);
   strcat(height_file, ".hgt");
   char *smokeview_scratchdir = GetUserConfigDir();
   full_height_file = GetFileName(smokeview_scratchdir, height_file, NOT_FORCE_IN_DIR);
@@ -514,21 +514,21 @@ void SetupGlut(int argc, char **argv){
 
   NewMemory((void **)&rgbptr,MAXRGB*sizeof(float *));
   for(i=0;i<MAXRGB;i++){
-    rgbptr[i]=&scase.rgb[i][0];
+    rgbptr[i]=&global_scase.rgb[i][0];
   }
   NewMemory((void **)&rgb_plot3d_contour,MAXRGB*sizeof(float *));
-  for(i=0;i<scase.nrgb-2;i++){
+  for(i=0;i<global_scase.nrgb-2;i++){
     int ii;
     float factor;
 
-    factor=256.0/(float)(scase.nrgb-2);
+    factor=256.0/(float)(global_scase.nrgb-2);
 
     ii = factor*((float)i+0.5);
     if(ii>255)ii=255;
     rgb_plot3d_contour[i]=&rgb_full[ii][0];
   }
-  rgb_plot3d_contour[scase.nrgb-2]=&rgb_full[0][0];
-  rgb_plot3d_contour[scase.nrgb-1]=&rgb_full[255][0];
+  rgb_plot3d_contour[global_scase.nrgb-2]=&rgb_full[0][0];
+  rgb_plot3d_contour[global_scase.nrgb-1]=&rgb_full[255][0];
 }
 
 /* ------------------ GetOpenGLVersion ------------------------ */
@@ -686,10 +686,10 @@ void InitOpenGL(int option){
  void Set3DSmokeStartup(void){
    int i;
 
-    for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
+    for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
       vslicedata *vslicei;
 
-      vslicei = scase.slicecoll.vsliceinfo + i;
+      vslicei = global_scase.slicecoll.vsliceinfo + i;
 
       if(vslicei->loaded==1){
         vslicei->autoload=1;
@@ -698,10 +698,10 @@ void InitOpenGL(int option){
         vslicei->autoload=0;
       }
     }
-    for(i=0;i<scase.npartinfo;i++){
+    for(i=0;i<global_scase.npartinfo;i++){
       partdata *parti;
 
-      parti = scase.partinfo + i;
+      parti = global_scase.partinfo + i;
 
       if(parti->loaded==1){
         parti->autoload=1;
@@ -710,10 +710,10 @@ void InitOpenGL(int option){
         parti->autoload=0;
       }
     }
-    for(i=0;i<scase.nplot3dinfo;i++){
+    for(i=0;i<global_scase.nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = scase.plot3dinfo + i;
+      plot3di = global_scase.plot3dinfo + i;
 
       if(plot3di->loaded==1){
         plot3di->autoload=1;
@@ -722,10 +722,10 @@ void InitOpenGL(int option){
         plot3di->autoload=0;
       }
     }
-    for(i=0;i<scase.smoke3dcoll.nsmoke3dinfo;i++){
+    for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
       smoke3ddata *smoke3di;
 
-      smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+      smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
 
       if(smoke3di->loaded==1){
         smoke3di->autoload=1;
@@ -734,10 +734,10 @@ void InitOpenGL(int option){
         smoke3di->autoload=0;
       }
     }
-    for(i=0;i<scase.npatchinfo;i++){
+    for(i=0;i<global_scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = scase.patchinfo + i;
+      patchi = global_scase.patchinfo + i;
 
       if(patchi->loaded==1){
         patchi->autoload=1;
@@ -746,10 +746,10 @@ void InitOpenGL(int option){
         patchi->autoload=0;
       }
     }
-    for(i=0;i<scase.nisoinfo;i++){
+    for(i=0;i<global_scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = scase.isoinfo + i;
+      isoi = global_scase.isoinfo + i;
 
       if(isoi->loaded==1){
         isoi->autoload=1;
@@ -758,10 +758,10 @@ void InitOpenGL(int option){
         isoi->autoload=0;
       }
     }
-    for(i=0;i<scase.slicecoll.nsliceinfo;i++){
+    for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
       slicedata *slicei;
 
-      slicei = scase.slicecoll.sliceinfo + i;
+      slicei = global_scase.slicecoll.sliceinfo + i;
 
       if(slicei->loaded==1){
         slicei->autoload=1;
@@ -784,20 +784,20 @@ void InitOpenGL(int option){
    // startup particle
 
    nstartup=0;
-   for(i=0;i<scase.npartinfo;i++){
+   for(i=0;i<global_scase.npartinfo;i++){
       partdata *parti;
 
-      parti = scase.partinfo + i;
+      parti = global_scase.partinfo + i;
 
       if(parti->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"PARTAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<scase.npartinfo;i++){
+     for(i=0;i<global_scase.npartinfo;i++){
         partdata *parti;
 
-        parti = scase.partinfo + i;
+        parti = global_scase.partinfo + i;
 
         if(parti->loaded==1)fprintf(fileout," %i\n",parti->seq_id);
      }
@@ -806,20 +806,20 @@ void InitOpenGL(int option){
    // startup plot3d
 
    nstartup=0;
-   for(i=0;i<scase.nplot3dinfo;i++){
+   for(i=0;i<global_scase.nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = scase.plot3dinfo + i;
+      plot3di = global_scase.plot3dinfo + i;
 
       if(plot3di->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"PLOT3DAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<scase.nplot3dinfo;i++){
+     for(i=0;i<global_scase.nplot3dinfo;i++){
         plot3ddata *plot3di;
 
-        plot3di = scase.plot3dinfo + i;
+        plot3di = global_scase.plot3dinfo + i;
 
         if(plot3di->loaded==1)fprintf(fileout," %i\n",plot3di->seq_id);
      }
@@ -828,20 +828,20 @@ void InitOpenGL(int option){
    // startup iso
 
    nstartup=0;
-   for(i=0;i<scase.nisoinfo;i++){
+   for(i=0;i<global_scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = scase.isoinfo + i;
+      isoi = global_scase.isoinfo + i;
 
       if(isoi->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"ISOAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<scase.nisoinfo;i++){
+     for(i=0;i<global_scase.nisoinfo;i++){
         isodata *isoi;
 
-        isoi = scase.isoinfo + i;
+        isoi = global_scase.isoinfo + i;
 
         if(isoi->loaded==1)fprintf(fileout," %i\n",isoi->seq_id);
      }
@@ -850,20 +850,20 @@ void InitOpenGL(int option){
    // startup vslice
 
    nstartup=0;
-   for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
+   for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
       vslicedata *vslicei;
 
-      vslicei = scase.slicecoll.vsliceinfo + i;
+      vslicei = global_scase.slicecoll.vsliceinfo + i;
 
       if(vslicei->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"VSLICEAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
+     for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
         vslicedata *vslicei;
 
-        vslicei = scase.slicecoll.vsliceinfo + i;
+        vslicei = global_scase.slicecoll.vsliceinfo + i;
 
         if(vslicei->loaded==1)fprintf(fileout," %i\n",vslicei->seq_id);
      }
@@ -872,20 +872,20 @@ void InitOpenGL(int option){
    // startup slice
 
    nstartup=0;
-   for(i=0;i<scase.slicecoll.nsliceinfo;i++){
+   for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
       slicedata *slicei;
 
-      slicei = scase.slicecoll.sliceinfo + i;
+      slicei = global_scase.slicecoll.sliceinfo + i;
 
       if(slicei->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"SLICEAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<scase.slicecoll.nsliceinfo;i++){
+     for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
         slicedata *slicei;
 
-        slicei = scase.slicecoll.sliceinfo + i;
+        slicei = global_scase.slicecoll.sliceinfo + i;
         if(slicei->loaded==1)fprintf(fileout," %i\n",slicei->seq_id);
      }
    }
@@ -893,10 +893,10 @@ void InitOpenGL(int option){
    // startup mslice
 
    nstartup=0;
-   for(i=0;i<scase.slicecoll.nmultisliceinfo;i++){
+   for(i=0;i<global_scase.slicecoll.nmultisliceinfo;i++){
       multislicedata *mslicei;
 
-      mslicei = scase.slicecoll.multisliceinfo + i;
+      mslicei = global_scase.slicecoll.multisliceinfo + i;
       mslicei->loadable = 1;
 
       if(mslicei->loaded==1)nstartup++;
@@ -904,10 +904,10 @@ void InitOpenGL(int option){
    if(nstartup!=0){
      fprintf(fileout,"MSLICEAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<scase.slicecoll.nmultisliceinfo;i++){
+     for(i=0;i<global_scase.slicecoll.nmultisliceinfo;i++){
         multislicedata *mslicei;
 
-        mslicei = scase.slicecoll.multisliceinfo + i;
+        mslicei = global_scase.slicecoll.multisliceinfo + i;
         mslicei->loadable = 1;
         if(mslicei->loaded==1)fprintf(fileout," %i\n",i);
      }
@@ -916,20 +916,20 @@ void InitOpenGL(int option){
    // startup smoke
 
    nstartup=0;
-   for(i=0;i<scase.smoke3dcoll.nsmoke3dinfo;i++){
+   for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
       smoke3ddata *smoke3di;
 
-      smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+      smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
 
       if(smoke3di->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"S3DAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<scase.smoke3dcoll.nsmoke3dinfo;i++){
+     for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
         smoke3ddata *smoke3di;
 
-        smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+        smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
 
         if(smoke3di->loaded==1)fprintf(fileout," %i\n",smoke3di->seq_id);
      }
@@ -938,20 +938,20 @@ void InitOpenGL(int option){
    // startup patch
 
    nstartup=0;
-   for(i=0;i<scase.npatchinfo;i++){
+   for(i=0;i<global_scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = scase.patchinfo + i;
+      patchi = global_scase.patchinfo + i;
 
       if(patchi->loaded==1)nstartup++;
    }
    if(nstartup!=0){
      fprintf(fileout,"PATCHAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<scase.npatchinfo;i++){
+     for(i=0;i<global_scase.npatchinfo;i++){
         patchdata *patchi;
 
-        patchi = scase.patchinfo + i;
+        patchi = global_scase.patchinfo + i;
 
         if(patchi->loaded==1)fprintf(fileout," %i\n",patchi->seq_id);
      }
@@ -964,10 +964,10 @@ void InitOpenGL(int option){
 
   void GetStartupPart(int seq_id){
     int i;
-    for(i=0;i<scase.npartinfo;i++){
+    for(i=0;i<global_scase.npartinfo;i++){
       partdata *parti;
 
-      parti = scase.partinfo + i;
+      parti = global_scase.partinfo + i;
       if(parti->seq_id==seq_id){
         parti->autoload=1;
         return;
@@ -979,10 +979,10 @@ void InitOpenGL(int option){
 
   void GetStartupPlot3D(int seq_id){
     int i;
-    for(i=0;i<scase.nplot3dinfo;i++){
+    for(i=0;i<global_scase.nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = scase.plot3dinfo + i;
+      plot3di = global_scase.plot3dinfo + i;
       if(plot3di->seq_id==seq_id){
         plot3di->autoload=1;
         return;
@@ -994,10 +994,10 @@ void InitOpenGL(int option){
 
   void GetStartupBoundary(int seq_id){
     int i;
-    for(i=0;i<scase.npatchinfo;i++){
+    for(i=0;i<global_scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = scase.patchinfo + i;
+      patchi = global_scase.patchinfo + i;
       if(patchi->seq_id==seq_id){
         patchi->autoload=1;
         return;
@@ -1009,10 +1009,10 @@ void InitOpenGL(int option){
 
   void GetStartupSmoke(int seq_id){
     int i;
-    for(i=0;i<scase.smoke3dcoll.nsmoke3dinfo;i++){
+    for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
       smoke3ddata *smoke3di;
 
-      smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+      smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
 
       if(smoke3di->seq_id==seq_id){
         smoke3di->autoload=1;
@@ -1026,10 +1026,10 @@ void InitOpenGL(int option){
 
   void GetStartupISO(int seq_id){
     int i;
-    for(i=0;i<scase.nisoinfo;i++){
+    for(i=0;i<global_scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = scase.isoinfo + i;
+      isoi = global_scase.isoinfo + i;
 
       if(isoi->seq_id==seq_id){
         isoi->autoload=1;
@@ -1042,10 +1042,10 @@ void InitOpenGL(int option){
 
   void GetStartupSlice(int seq_id){
     int i;
-    for(i=0;i<scase.slicecoll.nsliceinfo;i++){
+    for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
       slicedata *slicei;
 
-      slicei = scase.slicecoll.sliceinfo + i;
+      slicei = global_scase.slicecoll.sliceinfo + i;
 
       if(slicei->seq_id==seq_id){
         slicei->autoload=1;
@@ -1058,10 +1058,10 @@ void InitOpenGL(int option){
 
   void GetStartupVSlice(int seq_id){
     int i;
-    for(i=0;i<scase.slicecoll.nvsliceinfo;i++){
+    for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
       vslicedata *vslicei;
 
-      vslicei = scase.slicecoll.vsliceinfo + i;
+      vslicei = global_scase.slicecoll.vsliceinfo + i;
 
       if(vslicei->seq_id==seq_id){
         vslicei->autoload=1;
@@ -1077,25 +1077,25 @@ void InitOpenGL(int option){
     int errorcode;
 
 //    GLUIShowAlert();
-    for(i = 0; i<scase.nplot3dinfo; i++){
+    for(i = 0; i<global_scase.nplot3dinfo; i++){
       plot3ddata *plot3di;
 
-      plot3di = scase.plot3dinfo+i;
+      plot3di = global_scase.plot3dinfo+i;
       plot3di->finalize = 0;
     }
-    for(i = scase.nplot3dinfo-1;i>=0; i--){
+    for(i = global_scase.nplot3dinfo-1;i>=0; i--){
       plot3ddata *plot3di;
 
-      plot3di = scase.plot3dinfo+i;
+      plot3di = global_scase.plot3dinfo+i;
       if(plot3di->autoload==1){
         plot3di->finalize = 1;
         break;
       }
     }
-    for(i=0;i<scase.nplot3dinfo;i++){
+    for(i=0;i<global_scase.nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = scase.plot3dinfo + i;
+      plot3di = global_scase.plot3dinfo + i;
       if(plot3di->autoload==0&&plot3di->loaded==1){
         ReadPlot3D(plot3di->file,i,UNLOAD,&errorcode);
       }
@@ -1104,26 +1104,26 @@ void InitOpenGL(int option){
       }
     }
     npartframes_max=GetMinPartFrames(PARTFILE_RELOADALL);
-    for(i=0;i<scase.npartinfo;i++){
+    for(i=0;i<global_scase.npartinfo;i++){
       partdata *parti;
 
-      parti = scase.partinfo + i;
+      parti = global_scase.partinfo + i;
       if(parti->autoload==0&&parti->loaded==1)ReadPart(parti->file, i, UNLOAD, &errorcode);
       if(parti->autoload==1)ReadPart(parti->file, i, UNLOAD, &errorcode);
     }
-    for(i=0;i<scase.npartinfo;i++){
+    for(i=0;i<global_scase.npartinfo;i++){
       partdata *parti;
 
-      parti = scase.partinfo + i;
+      parti = global_scase.partinfo + i;
       if(parti->autoload==0&&parti->loaded==1)ReadPart(parti->file, i, UNLOAD, &errorcode);
       if(parti->autoload==1)ReadPart(parti->file, i, LOAD, &errorcode);
     }
     update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
     CancelUpdateTriangles();
-    for(i = 0; i<scase.nisoinfo; i++){
+    for(i = 0; i<global_scase.nisoinfo; i++){
       isodata *isoi;
 
-      isoi = scase.isoinfo + i;
+      isoi = global_scase.isoinfo + i;
       if(isoi->autoload==0&&isoi->loaded==1)ReadIso(isoi->file,i,UNLOAD,NULL,&errorcode);
       if(isoi->autoload == 1){
         ReadIso(isoi->file, i, LOAD,NULL, &errorcode);
@@ -1133,19 +1133,19 @@ void InitOpenGL(int option){
     update_readiso_geom_wrapup = UPDATE_ISO_OFF;
 
     int lastslice=0;
-    for(i = scase.slicecoll.nvsliceinfo-1; i>=0; i--){
+    for(i = global_scase.slicecoll.nvsliceinfo-1; i>=0; i--){
       vslicedata *vslicei;
 
-      vslicei = scase.slicecoll.vsliceinfo+i;
+      vslicei = global_scase.slicecoll.vsliceinfo+i;
       if(vslicei->autoload==1){
         lastslice = i;
         break;
       }
     }
-    for(i = 0; i<scase.slicecoll.nvsliceinfo; i++){
+    for(i = 0; i<global_scase.slicecoll.nvsliceinfo; i++){
       vslicedata *vslicei;
 
-      vslicei = scase.slicecoll.vsliceinfo + i;
+      vslicei = global_scase.slicecoll.vsliceinfo + i;
       if(vslicei->autoload==0&&vslicei->loaded==1){
         ReadVSlice(i, ALL_FRAMES, NULL, UNLOAD, DEFER_SLICECOLOR, &errorcode);
       }
@@ -1162,21 +1162,21 @@ void InitOpenGL(int option){
     {
       int last_slice;
 
-      last_slice = scase.slicecoll.nsliceinfo - 1;
-      for(i = scase.slicecoll.nsliceinfo-1; i >=0; i--){
+      last_slice = global_scase.slicecoll.nsliceinfo - 1;
+      for(i = global_scase.slicecoll.nsliceinfo-1; i >=0; i--){
         slicedata *slicei;
 
-        slicei = scase.slicecoll.sliceinfo + i;
+        slicei = global_scase.slicecoll.sliceinfo + i;
         if((slicei->autoload == 0 && slicei->loaded == 1)||(slicei->autoload == 1 && slicei->loaded == 0)){
           last_slice = i;
           break;
         }
       }
-      for(i = 0; i < scase.slicecoll.nsliceinfo; i++){
+      for(i = 0; i < global_scase.slicecoll.nsliceinfo; i++){
         slicedata *slicei;
         int set_slicecolor;
 
-        slicei = scase.slicecoll.sliceinfo + i;
+        slicei = global_scase.slicecoll.sliceinfo + i;
         set_slicecolor = DEFER_SLICECOLOR;
         if(i == last_slice)set_slicecolor = SET_SLICECOLOR;
         if(slicei->autoload == 0 && slicei->loaded == 1)ReadSlice(slicei->file, i, ALL_FRAMES, NULL, UNLOAD, set_slicecolor,&errorcode);
@@ -1184,17 +1184,17 @@ void InitOpenGL(int option){
         }
       }
     }
-    for(i=0;i<scase.smoke3dcoll.nsmoke3dinfo;i++){
+    for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
       smoke3ddata *smoke3di;
 
-      smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+      smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
       if(smoke3di->autoload==0&&smoke3di->loaded==1)ReadSmoke3D(ALL_SMOKE_FRAMES, i, UNLOAD, FIRST_TIME, &errorcode);
       if(smoke3di->autoload==1)ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
     }
-    for(i=0;i<scase.npatchinfo;i++){
+    for(i=0;i<global_scase.npatchinfo;i++){
       patchdata *patchi;
 
-      patchi = scase.patchinfo + i;
+      patchi = global_scase.patchinfo + i;
       if(patchi->autoload==0&&patchi->loaded==1)ReadBoundary(i,UNLOAD,&errorcode);
       if(patchi->autoload==1)ReadBoundary(i,LOAD,&errorcode);
     }
@@ -1351,7 +1351,7 @@ void InitVars(void){
   strcpy((char *)degC,"C");
   strcpy((char *)degF,"F");
 
-  InitLabelsCollection(&scase.labelscoll);
+  InitLabelsCollection(&global_scase.labelscoll);
 
   {
     labeldata *gl;
@@ -1389,31 +1389,31 @@ void InitVars(void){
   mat_specular_orig[1]=0.5f;
   mat_specular_orig[2]=0.2f;
   mat_specular_orig[3]=1.0f;
-  mat_specular2=GetColorPtr(&scase.colorcoll, mat_specular_orig);
+  mat_specular2=GetColorPtr(global_scase.firstcolor, mat_specular_orig);
 
   mat_ambient_orig[0] = 0.5f;
   mat_ambient_orig[1] = 0.5f;
   mat_ambient_orig[2] = 0.2f;
   mat_ambient_orig[3] = 1.0f;
-  mat_ambient2=GetColorPtr(&scase.colorcoll, mat_ambient_orig);
+  mat_ambient2=GetColorPtr(global_scase.firstcolor, mat_ambient_orig);
 
   ventcolor_orig[0]=1.0;
   ventcolor_orig[1]=0.0;
   ventcolor_orig[2]=1.0;
   ventcolor_orig[3]=1.0;
-  ventcolor=GetColorPtr(&scase.colorcoll, ventcolor_orig);
+  ventcolor=GetColorPtr(global_scase.firstcolor, ventcolor_orig);
 
   block_ambient_orig[0] = 1.0;
   block_ambient_orig[1] = 0.8;
   block_ambient_orig[2] = 0.4;
   block_ambient_orig[3] = 1.0;
-  block_ambient2=GetColorPtr(&scase.colorcoll, block_ambient_orig);
+  block_ambient2=GetColorPtr(global_scase.firstcolor, block_ambient_orig);
 
   block_specular_orig[0] = 0.0;
   block_specular_orig[1] = 0.0;
   block_specular_orig[2] = 0.0;
   block_specular_orig[3] = 1.0;
-  block_specular2=GetColorPtr(&scase.colorcoll, block_specular_orig);
+  block_specular2=GetColorPtr(global_scase.firstcolor, block_specular_orig);
 
   for(i=0;i<256;i++){
     boundarylevels256[i]=(float)i/255.0;
@@ -1441,7 +1441,7 @@ void InitVars(void){
   direction_color[1]=64.0/255.0;
   direction_color[2]=139.0/255.0;
   direction_color[3]=1.0;
-  direction_color_ptr=GetColorPtr(&scase.colorcoll, direction_color);
+  direction_color_ptr=GetColorPtr(global_scase.firstcolor, direction_color);
 
   GetGitInfo(smv_githash,smv_gitdate);
 
@@ -1506,7 +1506,7 @@ void InitVars(void){
   blocklocation=BLOCKlocation_grid;
   render_window_size=RenderWindow;
   RenderMenu(render_window_size);
-  solidlinewidth=scase.linewidth;
+  solidlinewidth=global_scase.linewidth;
   setbwSAVE=setbw;
 
   glui_backgroundbasecolor[0] = 255 * backgroundbasecolor[0];
@@ -1545,10 +1545,10 @@ void InitVars(void){
   strcpy(ext_jpg,".jpg");
   render_filetype=PNG;
 
-  strcpy(scase.surfacedefaultlabel,"");
+  strcpy(global_scase.surfacedefaultlabel,"");
   if(streak_index>=0)float_streak5value=streak_rvalue[streak_index];
 
-  InitObjectCollection(&scase.objectscoll);
+  InitObjectCollection(&global_scase.objectscoll);
 
   GetTitle("Smokeview ", release_title);
   GetTitle("Smokeview ", plot3d_title);
@@ -1668,5 +1668,5 @@ void InitVars(void){
 }
 
 void FreeVars(void){
-  ClearObjectCollection(&scase.objectscoll);
+  ClearObjectCollection(&global_scase.objectscoll);
 }

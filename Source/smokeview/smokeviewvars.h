@@ -1782,7 +1782,7 @@ SVEXTERN int SVDECL(output_slicedata,0),SVDECL(output_patchdata,0);
 SVEXTERN f_units SVDECL(*unitclasses,NULL),SVDECL(*unitclasses_default,NULL),SVDECL(*unitclasses_ini,NULL);
 SVEXTERN int SVDECL(nunitclasses,0),SVDECL(nunitclasses_default,0),SVDECL(nunitclasses_ini,0);
 #ifdef INMAIN
-SVEXTERN smv_case scase = {.tourcoll = {.ntourinfo = 0,
+SVEXTERN smv_case global_scase = {.tourcoll = {.ntourinfo = 0,
                                         .tourinfo = NULL,
                                         .tour_ntimes = 1000,
                                         .tour_t = NULL,
@@ -1824,7 +1824,7 @@ SVEXTERN smv_case scase = {.tourcoll = {.ntourinfo = 0,
                            .ventlinewidth = 2.0
                           };
 #else
-SVEXTERN smv_case scase;
+SVEXTERN smv_case global_scase;
 #endif
 SVEXTERN meshdata SVDECL(*current_mesh,NULL), SVDECL(*mesh_save,NULL);
 SVEXTERN meshdata SVDECL(*mesh_last,NULL), SVDECL(*loaded_isomesh,NULL);

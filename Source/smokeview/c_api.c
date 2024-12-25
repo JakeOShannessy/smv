@@ -147,8 +147,8 @@ int Loadsmvall(const char *input_filename) {
   int return_code;
   // fdsprefix and input_filename_ext are global and defined in smokeviewvars.h
   // TODO: move these into the model information namespace
-  ParseSmvFilepath(input_filename, scase.fdsprefix, input_filename_ext);
-  return_code = Loadsmv(scase.fdsprefix, input_filename_ext);
+  ParseSmvFilepath(input_filename, global_scase.fdsprefix, input_filename_ext);
+  return_code = Loadsmv(global_scase.fdsprefix, input_filename_ext);
 #ifdef pp_HIST
   if(return_code == 0 && update_bounds == 1) return_code = Update_Bounds();
 #endif
@@ -187,14 +187,14 @@ int ParseSmvFilepath(const char *smv_filepath, char *fdsprefix_arg,
         fdsprefix_arg[strlen(fdsprefix_arg) - 4] = 0;
         strcpy(movie_name, fdsprefix_arg);
         strcpy(render_file_base, fdsprefix_arg);
-        FREEMEMORY(scase.paths.trainer_filename);
-        NewMemory((void **)&scase.paths.trainer_filename, (unsigned int)(len_casename + 7));
-        STRCPY(scase.paths.trainer_filename, smv_filepath);
-        STRCAT(scase.paths.trainer_filename, ".svd");
-        FREEMEMORY(scase.paths.test_filename);
-        NewMemory((void **)&scase.paths.test_filename, (unsigned int)(len_casename + 7));
-        STRCPY(scase.paths.test_filename, smv_filepath);
-        STRCAT(scase.paths.test_filename, ".smt");
+        FREEMEMORY(global_scase.paths.trainer_filename);
+        NewMemory((void **)&global_scase.paths.trainer_filename, (unsigned int)(len_casename + 7));
+        STRCPY(global_scase.paths.trainer_filename, smv_filepath);
+        STRCAT(global_scase.paths.trainer_filename, ".svd");
+        FREEMEMORY(global_scase.paths.test_filename);
+        NewMemory((void **)&global_scase.paths.test_filename, (unsigned int)(len_casename + 7));
+        STRCPY(global_scase.paths.test_filename, smv_filepath);
+        STRCAT(global_scase.paths.test_filename, ".smt");
       }
     }
   }
@@ -207,8 +207,8 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
 
   FREEMEMORY(part_globalbound_filename);
   NewMemory((void **)&part_globalbound_filename,
-            strlen(scase.fdsprefix) + strlen(".prt5.gbnd") + 1);
-  STRCPY(part_globalbound_filename, scase.fdsprefix);
+            strlen(global_scase.fdsprefix) + strlen(".prt5.gbnd") + 1);
+  STRCPY(part_globalbound_filename, global_scase.fdsprefix);
   STRCAT(part_globalbound_filename, ".prt5.gbnd");
   char *smokeview_scratchdir = GetUserConfigDir();
   part_globalbound_filename = GetFileName(
@@ -221,17 +221,17 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
     trainer_mode = 1;
     trainer_active = 1;
     if(strcmp(input_filename_ext_arg, ".svd") == 0) {
-      input_file = scase.paths.trainer_filename;
+      input_file = global_scase.paths.trainer_filename;
     }
     else if(strcmp(input_filename_ext_arg, ".smt") == 0) {
-      input_file = scase.paths.test_filename;
+      input_file = global_scase.paths.test_filename;
     }
   }
   {
     bufferstreamdata *smv_streaminfo = NULL;
     smv_streaminfo = GetSMVBuffer(input_file);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, scase.paths.iso_filename);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, scase.paths.fedsmv_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, global_scase.paths.iso_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, global_scase.paths.fedsmv_filename);
     return_code = ReadSMV(smv_streaminfo);
     if(smv_streaminfo != NULL) {
       FCLOSE(smv_streaminfo);
@@ -276,7 +276,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
   InitTranslate(smv_bindir, tr_name);
   FREEMEMORY(smv_bindir);
 
-  if(scase.tourcoll.ntourinfo == 0) SetupTour();
+  if(global_scase.tourcoll.ntourinfo == 0) SetupTour();
   InitRolloutList();
   GLUIColorbarSetup(mainwindow_id);
   GLUIMotionSetup(mainwindow_id);
@@ -297,7 +297,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
 
   SetMainWindow();
   glutShowWindow();
-  glutSetWindowTitle(scase.fdsprefix);
+  glutSetWindowTitle(global_scase.fdsprefix);
   InitMisc();
   GLUITrainerSetup(mainwindow_id);
   glutDetachMenu(GLUT_RIGHT_BUTTON);
@@ -308,7 +308,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
     GLUIShowAlert();
   }
   // initialize info header
-  initialiseInfoHeader(&titleinfo, release_title, smv_githash, scase.fds_githash,
+  initialiseInfoHeader(&titleinfo, release_title, smv_githash, global_scase.fds_githash,
                        chidfilebase, fds_title);
   return 0;
 }
@@ -320,39 +320,39 @@ int Loadfile(const char *filename) {
     return 1;
   }
 
-  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
+  for(size_t i = 0; i < global_scase.slicecoll.nsliceinfo; i++) {
     slicedata *sd;
 
-    sd = scase.slicecoll.sliceinfo + i;
+    sd = global_scase.slicecoll.sliceinfo + i;
     if(strcmp(sd->file, filename) == 0) {
       ReadSlice(sd->file, i, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR,
                 &errorcode);
       return errorcode;
     }
   }
-  for(size_t i = 0; i < scase.npatchinfo; i++) {
+  for(size_t i = 0; i < global_scase.npatchinfo; i++) {
     patchdata *patchi;
 
-    patchi = scase.patchinfo + i;
+    patchi = global_scase.patchinfo + i;
     if(strcmp(patchi->file, filename) == 0) {
       ReadBoundary(i, LOAD, &errorcode);
       return errorcode;
     }
   }
-  for(size_t i = 0; i < scase.npartinfo; i++) {
+  for(size_t i = 0; i < global_scase.npartinfo; i++) {
     partdata *parti;
 
-    parti = scase.partinfo + i;
+    parti = global_scase.partinfo + i;
     if(strcmp(parti->file, filename) == 0) {
       LoadParticleMenu(i);
       return errorcode;
     }
   }
   CancelUpdateTriangles();
-  for(size_t i = 0; i < scase.nisoinfo; i++) {
+  for(size_t i = 0; i < global_scase.nisoinfo; i++) {
     isodata *isoi;
 
-    isoi = scase.isoinfo + i;
+    isoi = global_scase.isoinfo + i;
     if(strcmp(isoi->file, filename) == 0) {
       ReadIso(isoi->file, i, LOAD, NULL, &errorcode);
       if(update_readiso_geom_wrapup == UPDATE_ISO_ONE_NOW)
@@ -360,29 +360,29 @@ int Loadfile(const char *filename) {
       return errorcode;
     }
   }
-  for(size_t i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
+  for(size_t i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++) {
     smoke3ddata *smoke3di;
 
-    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
     if(strcmp(smoke3di->file, filename) == 0) {
       smoke3di->finalize = 1;
       ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
       return errorcode;
     }
   }
-  for(size_t i = 0; i < scase.nzoneinfo; i++) {
+  for(size_t i = 0; i < global_scase.nzoneinfo; i++) {
     zonedata *zonei;
 
-    zonei = scase.zoneinfo + i;
+    zonei = global_scase.zoneinfo + i;
     if(strcmp(zonei->file, filename) == 0) {
       ReadZone(i, LOAD, &errorcode);
       return errorcode;
     }
   }
-  for(size_t i = 0; i < scase.nplot3dinfo; i++) {
+  for(size_t i = 0; i < global_scase.nplot3dinfo; i++) {
     plot3ddata *plot3di;
 
-    plot3di = scase.plot3dinfo + i;
+    plot3di = global_scase.plot3dinfo + i;
     if(strcmp(plot3di->file, filename) == 0) {
       ReadPlot3D(plot3di->file, i, LOAD, &errorcode);
       UpdateMenu();
@@ -404,12 +404,12 @@ void Loadinifile(const char *filepath) {
 }
 
 int Loadvfile(const char *filepath) {
-  for(size_t i = 0; i < scase.slicecoll.nvsliceinfo; i++) {
+  for(size_t i = 0; i < global_scase.slicecoll.nvsliceinfo; i++) {
     slicedata *val;
     vslicedata *vslicei;
 
-    vslicei = scase.slicecoll.vsliceinfo + i;
-    val = scase.slicecoll.sliceinfo + vslicei->ival;
+    vslicei = global_scase.slicecoll.vsliceinfo + i;
+    val = global_scase.slicecoll.sliceinfo + vslicei->ival;
     if(val == NULL) continue;
     if(strcmp(val->reg_file, filepath) == 0) {
       LoadVSliceMenu(i);
@@ -424,10 +424,10 @@ void Loadboundaryfile(const char *filepath) {
   int errorcode;
   int count = 0;
 
-  for(size_t i = 0; i < scase.npatchinfo; i++) {
+  for(size_t i = 0; i < global_scase.npatchinfo; i++) {
     patchdata *patchi;
 
-    patchi = scase.patchinfo + i;
+    patchi = global_scase.patchinfo + i;
     if(strcmp(patchi->label.longlabel, filepath) == 0) {
       THREADcontrol(compress_threads, THREAD_LOCK);
       ReadBoundary(i, LOAD, &errorcode);
@@ -660,13 +660,13 @@ int SVimage2var(int rendertype, int woffset, int width, int hoffset, int height,
      show_smokesensors != SMOKESENSORS_HIDDEN) {
     int idev;
 
-    for(idev = 0; idev < scase.devicecoll.ndeviceinfo; idev++) {
+    for(idev = 0; idev < global_scase.devicecoll.ndeviceinfo; idev++) {
       devicedata *devicei;
       int idev_col, idev_row;
       int col_offset, row_offset;
       unsigned int red = 255 << 16;
 
-      devicei = scase.devicecoll.deviceinfo + idev;
+      devicei = global_scase.devicecoll.deviceinfo + idev;
 
       if(devicei->object->visible == 0 || devicei->show == 0) continue;
       if(strcmp(devicei->object->label, "smokesensor") != 0) continue;
@@ -851,7 +851,7 @@ int Settime(float timeval) {
 /// @brief Show slices in blockages.
 /// @param setting Boolean
 void SetSliceInObst(int setting) {
-  scase.show_slice_in_obst = setting;
+  global_scase.show_slice_in_obst = setting;
   // UpdateSliceFilenum();
   // plotstate=GetPlotState(DYNAMIC_PLOTS);
   //
@@ -861,7 +861,7 @@ void SetSliceInObst(int setting) {
 
 /// @brief Check if slices are being shown in obstructions.
 /// @return
-int GetSliceInObst() { return scase.show_slice_in_obst; }
+int GetSliceInObst() { return global_scase.show_slice_in_obst; }
 
 /// @brief Set the colorbar to one named @p name
 /// @param name
@@ -1003,7 +1003,7 @@ int GetChidVisibility() { return vis_title_CHID; }
 void ToggleChidVisibility() { vis_title_CHID = 1 - vis_title_CHID; }
 
 void BlockagesShowAll() {
-  if(scase.isZoneFireModel) visFrame = 1;
+  if(global_scase.isZoneFireModel) visFrame = 1;
   /*
   visFloor=1;
   visWalls=1;
@@ -1019,23 +1019,23 @@ void BlockageMenu(int value);
 void BlockagesHideAll() { BlockageMenu(visBLOCKHide); }
 // TODO: clarify behaviour under isZoneFireModel
 void OutlinesHide() {
-  if(scase.isZoneFireModel == 0) visFrame = 0;
+  if(global_scase.isZoneFireModel == 0) visFrame = 0;
 }
 void OutlinesShow() {
-  if(scase.isZoneFireModel == 0) visFrame = 1;
+  if(global_scase.isZoneFireModel == 0) visFrame = 1;
 }
 
 void SurfacesHideAll() {
   visVents = 0;
   visOpenVents = 0;
   visDummyVents = 0;
-  scase.visOtherVents = 0;
+  global_scase.visOtherVents = 0;
   visCircularVents = VENT_HIDE;
 }
 
 void DevicesHideAll() {
-  for(size_t i = 0; i < scase.objectscoll.nobject_defs; i++) {
-    sv_object *objecti = scase.objectscoll.object_defs[i];
+  for(size_t i = 0; i < global_scase.objectscoll.nobject_defs; i++) {
+    sv_object *objecti = global_scase.objectscoll.object_defs[i];
     objecti->visible = 0;
   }
 }
@@ -1263,11 +1263,11 @@ int BlockageOutlineColor(int setting) {
   switch(setting) {
   case 0:
     outline_color_flag = 0;
-    scase.updatefaces = 1;
+    global_scase.updatefaces = 1;
     break;
   case 1:
     outline_color_flag = 1;
-    scase.updatefaces = 1;
+    global_scase.updatefaces = 1;
     break;
   default:
     return 1;
@@ -1321,11 +1321,11 @@ void Loadvolsmoke(int meshnumber) {
     read_vol_mesh = VOL_READALL;
     ReadVolsmokeAllFramesAllMeshes2(NULL);
   }
-  else if(imesh >= 0 && imesh < scase.meshescoll.nmeshes) {
+  else if(imesh >= 0 && imesh < global_scase.meshescoll.nmeshes) {
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = scase.meshescoll.meshinfo + imesh;
+    meshi = global_scase.meshescoll.meshinfo + imesh;
     vr = meshi->volrenderinfo;
     ReadVolsmokeAllFrames(vr);
   }
@@ -1342,13 +1342,13 @@ void Loadvolsmokeframe(int meshnumber, int framenumber, int flag) {
 
   index = meshnumber;
   framenum = framenumber;
-  if(index > scase.meshescoll.nmeshes - 1) index = -1;
-  for(size_t i = 0; i < scase.meshescoll.nmeshes; i++) {
+  if(index > global_scase.meshescoll.nmeshes - 1) index = -1;
+  for(size_t i = 0; i < global_scase.meshescoll.nmeshes; i++) {
     if(index == i || index < 0) {
       meshdata *meshi;
       volrenderdata *vr;
 
-      meshi = scase.meshescoll.meshinfo + i;
+      meshi = global_scase.meshescoll.meshinfo + i;
       vr = meshi->volrenderinfo;
       FreeVolsmokeFrame(vr, framenum);
       ReadVolsmokeFrame(vr, framenum, &first);
@@ -1382,30 +1382,30 @@ void Load3dsmoke(const char *smoke_type) {
   int count = 0;
   int lastsmoke;
 
-  for(size_t i = scase.smoke3dcoll.nsmoke3dinfo - 1; i >= 0; i--) {
+  for(size_t i = global_scase.smoke3dcoll.nsmoke3dinfo - 1; i >= 0; i--) {
     smoke3ddata *smoke3di;
 
-    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
     if(MatchUpper(smoke3di->label.longlabel, smoke_type) == MATCH) {
       lastsmoke = i;
       break;
     }
   }
 
-  for(size_t i = scase.smoke3dcoll.nsmoke3dinfo - 1; i >= 0; i--) {
+  for(size_t i = global_scase.smoke3dcoll.nsmoke3dinfo - 1; i >= 0; i--) {
     smoke3ddata *smoke3di;
 
-    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
     if(MatchUpper(smoke3di->label.longlabel, smoke_type) == MATCH) {
       lastsmoke = i;
       break;
     }
   }
 
-  for(size_t i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
+  for(size_t i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++) {
     smoke3ddata *smoke3di;
 
-    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
     if(MatchUpper(smoke3di->label.longlabel, smoke_type) == MATCH) {
       smoke3di->finalize = 0;
       if(lastsmoke == i) smoke3di->finalize = 1;
@@ -1466,10 +1466,10 @@ int Loadtour(const char *tourname) {
   int count = 0;
   int errorcode = 0;
 
-  for(size_t i = 0; i < scase.tourcoll.ntourinfo; i++) {
+  for(size_t i = 0; i < global_scase.tourcoll.ntourinfo; i++) {
     tourdata *touri;
 
-    touri = scase.tourcoll.tourinfo + i;
+    touri = global_scase.tourcoll.tourinfo + i;
     if(strcmp(touri->label, tourname) == 0) {
       TourMenu(i);
       viewtourfrompath = 0;
@@ -1493,17 +1493,17 @@ void Loadparticles(const char *name) {
   int count = 0;
 
   npartframes_max = GetMinPartFrames(PARTFILE_LOADALL);
-  for(size_t i = 0; i < scase.npartinfo; i++) {
+  for(size_t i = 0; i < global_scase.npartinfo; i++) {
     partdata *parti;
 
-    parti = scase.partinfo + i;
+    parti = global_scase.partinfo + i;
     ReadPart(parti->file, i, UNLOAD, &errorcode);
     count++;
   }
-  for(size_t i = 0; i < scase.npartinfo; i++) {
+  for(size_t i = 0; i < global_scase.npartinfo; i++) {
     partdata *parti;
 
-    parti = scase.partinfo + i;
+    parti = global_scase.partinfo + i;
     ReadPart(parti->file, i, LOAD, &errorcode);
     count++;
   }
@@ -1539,11 +1539,11 @@ void Partclasstype(const char *part_type) {
 
     propi = part5propinfo + i;
     if(propi->display == 0) continue;
-    for(j = 0; j < scase.npartclassinfo; j++) {
+    for(j = 0; j < global_scase.npartclassinfo; j++) {
       partclassdata *partclassj;
 
       if(propi->class_present[j] == 0) continue;
-      partclassj = scase.partclassinfo + j;
+      partclassj = global_scase.partclassinfo + j;
       if(strcmp(partclassj->name, part_type) == 0) {
         ParticlePropShowMenu(-10 - j);
         count++;
@@ -1590,8 +1590,8 @@ void Plot3dprops(int variable_index, int showvector, int vector_length_index,
     meshdata *gbsave, *gbi;
 
     gbsave = current_mesh;
-    for(size_t i = 0; i < scase.meshescoll.nmeshes; i++) {
-      gbi = scase.meshescoll.meshinfo + i;
+    for(size_t i = 0; i < global_scase.meshescoll.nmeshes; i++) {
+      gbi = global_scase.meshescoll.meshinfo + i;
       if(gbi->plot3dfilenum == -1) continue;
       UpdateCurrentMesh(gbi);
       UpdatePlotSlice(XDIR);
@@ -1608,9 +1608,9 @@ void ShowPlot3dData(int meshnumber, int plane_orientation, int display,
   int dir;
   float val;
 
-  if(meshnumber < 0 || meshnumber > scase.meshescoll.nmeshes - 1) return;
+  if(meshnumber < 0 || meshnumber > global_scase.meshescoll.nmeshes - 1) return;
 
-  meshi = scase.meshescoll.meshinfo + meshnumber;
+  meshi = global_scase.meshescoll.meshinfo + meshnumber;
   UpdateCurrentMesh(meshi);
 
   dir = CLAMP(plane_orientation, XDIR, ISO);
@@ -1658,10 +1658,10 @@ void Loadplot3d(int meshnumber, float time_local) {
   size_t count = 0;
   int blocknum = meshnumber - 1;
 
-  for(size_t i = 0; i < scase.nplot3dinfo; i++) {
+  for(size_t i = 0; i < global_scase.nplot3dinfo; i++) {
     plot3ddata *plot3di;
 
-    plot3di = scase.plot3dinfo + i;
+    plot3di = global_scase.plot3dinfo + i;
     if(plot3di->blocknumber == blocknum &&
        ABS(plot3di->time - time_local) < 0.5) {
       count++;
@@ -1679,11 +1679,11 @@ void Loadiso(const char *type) {
   int count = 0;
 
   update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
-  for(size_t i = 0; i < scase.nisoinfo; i++) {
+  for(size_t i = 0; i < global_scase.nisoinfo; i++) {
     int errorcode;
     isodata *isoi;
 
-    isoi = scase.isoinfo + i;
+    isoi = global_scase.isoinfo + i;
     if(STRCMP(isoi->surface_label.longlabel, type) == 0) {
       ReadIso(isoi->file, i, LOAD, NULL, &errorcode);
       count++;
@@ -1702,21 +1702,21 @@ void Loadiso(const char *type) {
 }
 
 FILE_SIZE Loadsliceindex(size_t index, int *errorcode) {
-  return ReadSlice(scase.slicecoll.sliceinfo[index].file, (int)index, ALL_FRAMES,
+  return ReadSlice(global_scase.slicecoll.sliceinfo[index].file, (int)index, ALL_FRAMES,
                    NULL, LOAD, SET_SLICECOLOR, errorcode);
 }
 
 void Loadslice(const char *type, int axis, float distance) {
   int count = 0;
-  for(int i = 0; i < scase.slicecoll.nmultisliceinfo; i++) {
+  for(int i = 0; i < global_scase.slicecoll.nmultisliceinfo; i++) {
     multislicedata *mslicei;
     slicedata *slicei;
     int j;
     float delta_orig;
 
-    mslicei = scase.slicecoll.multisliceinfo + i;
+    mslicei = global_scase.slicecoll.multisliceinfo + i;
     if(mslicei->nslices <= 0) continue;
-    slicei = scase.slicecoll.sliceinfo + mslicei->islices[0];
+    slicei = global_scase.slicecoll.sliceinfo + mslicei->islices[0];
     if(MatchUpper(slicei->label.longlabel, type) == 0) continue;
     if(slicei->idir != axis) continue;
     delta_orig = slicei->position_orig - distance;
@@ -1739,14 +1739,14 @@ void Loadslice(const char *type, int axis, float distance) {
 void Loadvslice(const char *type, int axis, float distance) {
   float delta_orig;
   int count = 0;
-  for(int i = 0; i < scase.slicecoll.nmultivsliceinfo; i++) {
+  for(int i = 0; i < global_scase.slicecoll.nmultivsliceinfo; i++) {
     multivslicedata *mvslicei;
     int j;
     slicedata *slicei;
 
-    mvslicei = scase.slicecoll.multivsliceinfo + i;
+    mvslicei = global_scase.slicecoll.multivsliceinfo + i;
     if(mvslicei->nvslices <= 0) continue;
-    slicei = scase.slicecoll.sliceinfo + mvslicei->ivslices[0];
+    slicei = global_scase.slicecoll.sliceinfo + mvslicei->ivslices[0];
     if(MatchUpper(slicei->label.longlabel, type) == 0) continue;
     if(slicei->idir != axis) continue;
     delta_orig = slicei->position_orig - distance;
@@ -1774,7 +1774,7 @@ void Unloadslice(int value) {
   if(value >= 0) {
     slicedata *slicei;
 
-    slicei = scase.slicecoll.sliceinfo + value;
+    slicei = global_scase.slicecoll.sliceinfo + value;
 
     if(slicei->slice_filetype == SLICE_GEOM) {
       ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
@@ -1790,10 +1790,10 @@ void Unloadslice(int value) {
   }
   else {
     if(value == UNLOAD_ALL) {
-      for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
+      for(size_t i = 0; i < global_scase.slicecoll.nsliceinfo; i++) {
         slicedata *slicei;
 
-        slicei = scase.slicecoll.sliceinfo + i;
+        slicei = global_scase.slicecoll.sliceinfo + i;
         if(slicei->slice_filetype == SLICE_GEOM) {
           ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
                        &errorcode);
@@ -1803,10 +1803,10 @@ void Unloadslice(int value) {
                     &errorcode);
         }
       }
-      for(size_t i = 0; i < scase.npatchinfo; i++) {
+      for(size_t i = 0; i < global_scase.npatchinfo; i++) {
         patchdata *patchi;
 
-        patchi = scase.patchinfo + i;
+        patchi = global_scase.patchinfo + i;
         if(patchi->filetype_label != NULL &&
            strcmp(patchi->filetype_label, "INCLUDE_GEOM") == 0) {
           UnloadBoundaryMenu(i);
@@ -1823,16 +1823,16 @@ int Unloadall() {
   if(scriptoutstream != NULL) {
     fprintf(scriptoutstream, "UNLOADALL\n");
   }
-  if(scase.paths.hrr_csv_filename != NULL) {
+  if(global_scase.paths.hrr_csv_filename != NULL) {
     ReadHRR(UNLOAD);
   }
   if(nvolrenderinfo > 0) {
     LoadVolsmoke3DMenu(UNLOAD_ALL);
   }
-  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
+  for(size_t i = 0; i < global_scase.slicecoll.nsliceinfo; i++) {
     slicedata *slicei;
 
-    slicei = scase.slicecoll.sliceinfo + i;
+    slicei = global_scase.slicecoll.sliceinfo + i;
     if(slicei->loaded == 1) {
       if(slicei->slice_filetype == SLICE_GEOM) {
         ReadGeomData(slicei->patchgeom, slicei, UNLOAD, ALL_FRAMES, NULL, 0,
@@ -1844,22 +1844,22 @@ int Unloadall() {
       }
     }
   }
-  for(size_t i = 0; i < scase.nplot3dinfo; i++) {
+  for(size_t i = 0; i < global_scase.nplot3dinfo; i++) {
     ReadPlot3D("", i, UNLOAD, &errorcode);
   }
-  for(size_t i = 0; i < scase.npatchinfo; i++) {
+  for(size_t i = 0; i < global_scase.npatchinfo; i++) {
     ReadBoundary(i, UNLOAD, &errorcode);
   }
-  for(size_t i = 0; i < scase.npartinfo; i++) {
+  for(size_t i = 0; i < global_scase.npartinfo; i++) {
     ReadPart("", i, UNLOAD, &errorcode);
   }
-  for(size_t i = 0; i < scase.nisoinfo; i++) {
+  for(size_t i = 0; i < global_scase.nisoinfo; i++) {
     ReadIso("", i, UNLOAD, NULL, &errorcode);
   }
-  for(size_t i = 0; i < scase.nzoneinfo; i++) {
+  for(size_t i = 0; i < global_scase.nzoneinfo; i++) {
     ReadZone(i, UNLOAD, &errorcode);
   }
-  for(size_t i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
+  for(size_t i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++) {
     ReadSmoke3D(ALL_SMOKE_FRAMES, i, UNLOAD, FIRST_TIME, &errorcode);
   }
   if(nvolrenderinfo > 0) {
@@ -2185,7 +2185,7 @@ float CameraGetElev() { return camera_current->az_elev[1]; }
 
 void MoveScene(int xm, int ym);
 int CameraZoomToFit() {
-  float offset = (scase.zbar - scase.ybar) / 2.0;
+  float offset = (global_scase.zbar - global_scase.ybar) / 2.0;
   camera_current->eye[1] += offset * 2;
   eye_xyz0[1] = camera_current->eye[1];
   in_external = 0;
@@ -2495,7 +2495,7 @@ int SetIsopointsize(float v) {
 } // ISOPOINTSIZE
 
 int SetLinewidth(float v) {
-  scase.linewidth = v;
+  global_scase.linewidth = v;
   return 0;
 } // LINEWIDTH
 
@@ -2579,7 +2579,7 @@ int SetVectorpointsize(float v) {
 } // VECTORPOINTSIZE
 
 int SetVentlinewidth(float v) {
-  scase.ventlinewidth = v;
+  global_scase.ventlinewidth = v;
   return 0;
 } // VENTLINEWIDTH
 
@@ -2760,8 +2760,8 @@ int SetIsotran2(int v) {
 int SetMeshvis(int n, int vals[]) {
   meshdata *meshi;
   for(size_t i = 0; i < n; i++) {
-    if(i > scase.meshescoll.nmeshes - 1) break;
-    meshi = scase.meshescoll.meshinfo + i;
+    if(i > global_scase.meshescoll.nmeshes - 1) break;
+    meshi = global_scase.meshescoll.meshinfo + i;
     meshi->blockvis = vals[i];
     ONEORZERO(meshi->blockvis);
   }
@@ -2769,10 +2769,10 @@ int SetMeshvis(int n, int vals[]) {
 } // MESHVIS
 
 int SetMeshoffset(int meshnum, int value) {
-  if(meshnum >= 0 && meshnum < scase.meshescoll.nmeshes) {
+  if(meshnum >= 0 && meshnum < global_scase.meshescoll.nmeshes) {
     meshdata *meshi;
 
-    meshi = scase.meshescoll.meshinfo + meshnum;
+    meshi = global_scase.meshescoll.meshinfo + meshnum;
     meshi->mesh_offset_ptr = meshi->mesh_offset;
     return 0;
   }
@@ -2947,7 +2947,7 @@ int SetShowopenvents(int a, int b) {
 } // SHOWOPENVENTS
 
 int SetShowothervents(int v) {
-  scase.visOtherVents = v;
+  global_scase.visOtherVents = v;
   return 0;
 } // SHOWOTHERVENTS
 
@@ -2958,7 +2958,7 @@ int SetShowsensors(int a, int b) {
 } // SHOWSENSORS
 
 int SetShowsliceinobst(int v) {
-  scase.show_slice_in_obst = v;
+  global_scase.show_slice_in_obst = v;
   return 0;
 } // SHOWSLICEINOBST
 
@@ -2981,7 +2981,7 @@ int SetShowstreak(int show, int step, int showhead, int index) {
 } // SHOWSTREAK
 
 int SetShowterrain(int v) {
-  scase.visTerrainType = v;
+  global_scase.visTerrainType = v;
   return 0;
 } // SHOWTERRAIN
 
@@ -3406,7 +3406,7 @@ int SetSmokeskip(int v) {
 } // SMOKESKIP
 
 int SetSmokealbedo(float v) {
-  scase.smoke_albedo = v;
+  global_scase.smoke_albedo = v;
   return 0;
 } // SMOKEALBEDO
 
@@ -3528,9 +3528,9 @@ int SetViewalltours(int v) {
 } // VIEWALLTOURS
 
 int SetViewtimes(float start, float stop, int ntimes) {
-  scase.tourcoll.tour_tstart = start;
-  scase.tourcoll.tour_tstop = stop;
-  scase.tourcoll.tour_ntimes = ntimes;
+  global_scase.tourcoll.tour_tstart = start;
+  global_scase.tourcoll.tour_tstop = stop;
+  global_scase.tourcoll.tour_ntimes = ntimes;
   return 0;
 } // VIEWTIMES
 
@@ -3634,10 +3634,10 @@ int SetMsliceauto(int n, int vals[]) {
   for(size_t i = 0; i < n3dsmokes; i++) {
     seq_id = vals[i];
 
-    if(seq_id >= 0 && seq_id < scase.slicecoll.nmultisliceinfo) {
+    if(seq_id >= 0 && seq_id < global_scase.slicecoll.nmultisliceinfo) {
       multislicedata *mslicei;
 
-      mslicei = scase.slicecoll.multisliceinfo + seq_id;
+      mslicei = global_scase.slicecoll.multisliceinfo + seq_id;
       mslicei->autoload = 1;
     }
   }
@@ -3663,7 +3663,7 @@ int SetCompressauto(int v) {
 //     trim_back(buffer);
 //     token = strtok(buffer, " ");
 //     j = 0;
-//     while(token != NULL&&j<scase.npartclassinfo){
+//     while(token != NULL&&j<global_scase.npartclassinfo){
 //       int visval;
 
 //       sscanf(token, "%i", &visval);
@@ -3704,16 +3704,16 @@ int SetPropindex(int nvals, int *vals) {
     int ind, val;
     ind = *(vals + (i * PROPINDEX_STRIDE + 0));
     val = *(vals + (i * PROPINDEX_STRIDE + 1));
-    if(ind < 0 || ind > scase.propcoll.npropinfo - 1) return 0;
-    propi = scase.propcoll.propinfo + ind;
+    if(ind < 0 || ind > global_scase.propcoll.npropinfo - 1) return 0;
+    propi = global_scase.propcoll.propinfo + ind;
     if(val < 0 || val > propi->nsmokeview_ids - 1) return 0;
     propi->smokeview_id = propi->smokeview_ids[val];
     propi->smv_object = propi->smv_objects[val];
   }
-  for(size_t i = 0; i < scase.npartclassinfo; i++) {
+  for(size_t i = 0; i < global_scase.npartclassinfo; i++) {
     partclassdata *partclassi;
 
-    partclassi = scase.partclassinfo + i;
+    partclassi = global_scase.partclassinfo + i;
     UpdatePartClassDepend(partclassi);
   }
   return 0;
@@ -3755,13 +3755,13 @@ int SetShowdevices(int ndevices_ini, const char *const *names) {
 
   char tempname[255]; // temporary buffer to convert from const string
 
-  for(size_t i = 0; i < scase.objectscoll.nobject_defs; i++) {
-    obj_typei = scase.objectscoll.object_defs[i];
+  for(size_t i = 0; i < global_scase.objectscoll.nobject_defs; i++) {
+    obj_typei = global_scase.objectscoll.object_defs[i];
     obj_typei->visible = 0;
   }
   for(size_t i = 0; i < ndevices_ini; i++) {
     strncpy(tempname, names[i], 255 - 1); // use temp buffer
-    obj_typei = GetSmvObject(&scase.objectscoll, tempname);
+    obj_typei = GetSmvObject(&global_scase.objectscoll, tempname);
     // obj_typei = GetSmvObject(names[i]);
     if(obj_typei != NULL) {
       obj_typei->visible = 1;
@@ -3967,9 +3967,9 @@ int SetPl3dBoundMax(int pl3dValueIndex, int set, float value) {
 int SetTload(int beginFlag, float beginVal, int endFlag, int endVal,
              int skipFlag, int skipVal) {
   use_tload_begin = beginFlag;
-  scase.tload_begin = beginVal;
+  global_scase.tload_begin = beginVal;
   use_tload_end = endFlag;
-  scase.tload_end = endVal;
+  global_scase.tload_end = endVal;
   use_tload_skip = skipFlag;
   tload_skip = skipVal;
   return 0;
@@ -4090,8 +4090,8 @@ int ShowSmoke3dShowall() {
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
   plotstate = DYNAMIC_PLOTS;
-  for(size_t i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
-    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+  for(size_t i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++) {
+    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
     if(smoke3di->loaded == 1) smoke3di->display = 1;
   }
   GLUTPOSTREDISPLAY;
@@ -4104,8 +4104,8 @@ int ShowSmoke3dHideall() {
 
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
-  for(size_t i = 0; i < scase.smoke3dcoll.nsmoke3dinfo; i++) {
-    smoke3di = scase.smoke3dcoll.smoke3dinfo + i;
+  for(size_t i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++) {
+    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
     if(smoke3di->loaded == 1) smoke3di->display = 0;
   }
   UpdateShow();
@@ -4116,8 +4116,8 @@ int ShowSlicesShowall() {
 
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
-  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
-    scase.slicecoll.sliceinfo[i].display = 1;
+  for(size_t i = 0; i < global_scase.slicecoll.nsliceinfo; i++) {
+    global_scase.slicecoll.sliceinfo[i].display = 1;
   }
   showall_slices = 1;
   UpdateSliceFilenum();
@@ -4132,8 +4132,8 @@ int ShowSlicesHideall() {
 
   updatemenu = 1;
   GLUTPOSTREDISPLAY;
-  for(size_t i = 0; i < scase.slicecoll.nsliceinfo; i++) {
-    scase.slicecoll.sliceinfo[i].display = 0;
+  for(size_t i = 0; i < global_scase.slicecoll.nsliceinfo; i++) {
+    global_scase.slicecoll.sliceinfo[i].display = 0;
   }
   showall_slices = 0;
   UpdateSliceFilenum();

@@ -445,6 +445,11 @@ void FreeCADGeom(cadgeomdata *cd) {
 }
 
 void FreeCADGeomCollection(cadgeom_collection *coll) {
+  ClearCADGeomCollection(coll);
+  FREEMEMORY(coll);
+}
+
+void ClearCADGeomCollection(cadgeom_collection *coll) {
   for(int i = 0; i < coll->ncadgeom; i++) {
     FreeCADGeom(&(coll->cadgeominfo[i]));
   }

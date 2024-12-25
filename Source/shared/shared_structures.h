@@ -83,8 +83,7 @@ typedef struct _sv_object {
 #define MAXRGB                  256
 #define MAXFILELEN 360
 
-/* --------------------------  outlinedata ------------------------------------
- */
+/* --------------------------  outlinedata ---------------------------------- */
 
 typedef struct _outlinedata {
   int nlines;
@@ -104,14 +103,12 @@ typedef struct _treedata {
   int state;
 } treedata;
 
-/* --------------------------  langlistdata ------------------------------------
- */
+/* --------------------------  langlistdata ---------- ---------------------- */
 typedef struct _smokethreaddata {
   int ithread, nthreads;
 } smokethreaddata;
 
-/* --------------------------  colortabledata
- * ------------------------------------ */
+/* --------------------------  colortabledata ------------------------------- */
 
 typedef struct _colortabledata {
   char label[1024];
@@ -164,8 +161,7 @@ typedef struct _texturedata {
   GLuint name;
 } texturedata;
 
-/* --------------------------  terraindata ------------------------------------
- */
+/* --------------------------  terraindata ---------------------------------- */
 
 typedef struct _terraindata {
   char *file;
@@ -858,8 +854,7 @@ typedef struct _ventdata {
   float *linewidth;
 } ventdata;
 
-/* --------------------------  plot3ddata ------------------------------------
- */
+/* --------------------------  plot3ddata ----------------------------------- */
 
 typedef struct _plot3ddata {
   int seq_id, autoload;
@@ -1101,8 +1096,7 @@ typedef struct _csvdata {
   int dimensionless, skip;
 } csvdata;
 
-/* --------------------------  _csvfiledata ------------------------------------
- */
+/* --------------------------  _csvfiledata --------------------------------- */
 
 #define CSV_FDS_FORMAT 0
 #define CSV_CFAST_FORMAT 1
@@ -1208,8 +1202,7 @@ typedef struct _tridata {
   edgedata *edges[3];
 } tridata;
 
-/* --------------------------  geomlistdata ------------------------------------
- */
+/* --------------------------  geomlistdata --------------------------------- */
 
 typedef struct _geomlistdata {
   int nverts, nedges, ntriangles, norms_defined;
@@ -1220,8 +1213,7 @@ typedef struct _geomlistdata {
   edgedata *edges;
 } geomlistdata;
 
-/* --------------------------  geomobjdata ------------------------------------
- */
+/* --------------------------  geomobjdata ---------------------------------- */
 
 typedef struct _geomobjdata {
   struct _surfdata *surf;
@@ -1609,15 +1601,13 @@ typedef struct {
   cadgeomdata *cadgeominfo;
 } cadgeom_collection;
 
-/* --------------------------  hvacconnectdata
- * ------------------------------------ */
+/* --------------------------  hvacconnectdata ------------------------------ */
 
 typedef struct hvacconnectdata {
   int index, display;
 } hvacconnectdata;
 
-/* --------------------------  hvacnodedata ------------------------------------
- */
+/* --------------------------  hvacnodedata --------------------------------- */
 
 typedef struct _hvacnodedata {
   char *node_name, *vent_name, *duct_name, *network_name;
@@ -1628,8 +1618,7 @@ typedef struct _hvacnodedata {
   float xyz[3], xyz_orig[3];
 } hvacnodedata;
 
-/* --------------------------  hvacductdata ------------------------------------
- */
+/* --------------------------  hvacductdata --------------------------------- */
 
 typedef struct _hvacductdata {
   char *duct_name, *network_name, c_component[4];
@@ -1660,8 +1649,7 @@ typedef struct _hvacdata {
   int duct_color[3], node_color[3];
 } hvacdata;
 
-/* --------------------------  hvacvaldata ------------------------------------
- */
+/* --------------------------  hvacvaldata ---------------------------------- */
 
 typedef struct _hvacvaldata {
   float *vals, valmin, valmax;
@@ -1673,8 +1661,7 @@ typedef struct _hvacvaldata {
   flowlabels label;
 } hvacvaldata;
 
-/* --------------------------  _hvacvalsdata
- * ------------------------------------ */
+/* --------------------------  hvacvalsdata --------------------------------- */
 
 typedef struct _hvacvalsdata {
   char *file;
@@ -1739,7 +1726,7 @@ typedef struct {
   char *fds_githash;
 
   meshescollection meshescoll;
-  color_collection colorcoll;
+  colordata *firstcolor;
   prop_collection propcoll;
   object_collection objectscoll;
   hrr_collection hrr_coll;
