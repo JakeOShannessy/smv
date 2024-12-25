@@ -194,8 +194,7 @@ typedef struct _meshdata {
   struct _meshdata *floor_mesh;
 #ifdef pp_GPU
   GLuint blockage_texture_id;
-  struct _smoke3ddata *smoke3d_soot, *smoke3d_hrrpuv, *smoke3d_temp,
-      *smoke3d_co2;
+  struct _smoke3ddata *smoke3d_soot, *smoke3d_hrrpuv, *smoke3d_temp, *smoke3d_co2;
   GLuint volsmoke_texture_id, volfire_texture_id;
   float *volsmoke_texture_buffer, *volfire_texture_buffer;
   int voltest_update;
@@ -222,9 +221,8 @@ typedef struct _meshdata {
                      //  mesh,
                      // MESH_BOTH if face i is neither
   int inside;
-  int in_frustum; // 1 if part or all of mesh is in the view frustum
-  float boxmin[3], boxmiddle[3], boxmax[3], dbox[3], boxeps[3], dcell,
-      dcell3[3], verts[24], eyedist;
+  int in_frustum;    // 1 if part or all of mesh is in the view frustum
+  float boxmin[3], boxmiddle[3], boxmax[3], dbox[3], boxeps[3], dcell, dcell3[3], verts[24], eyedist;
   float boxeps_fds[3];
   float slice_min[3], slice_max[3];
   float boxmin_scaled[3], boxmiddle_scaled[3], boxmax_scaled[3];
@@ -331,14 +329,13 @@ typedef struct _meshdata {
 
   int nface_textures, nface_outlines, nfaces;
   int nface_normals_single, nface_normals_double, nface_transparent_double;
-  struct _facedata *faceinfo, **face_normals_single, **face_normals_double,
-      **face_transparent_double, **face_textures, **face_outlines;
-  struct _facedata **face_normals_single_DOWN_X, **face_normals_single_UP_X;
-  struct _facedata **face_normals_single_DOWN_Y, **face_normals_single_UP_Y;
-  struct _facedata **face_normals_single_DOWN_Z, **face_normals_single_UP_Z;
-  int nface_normals_single_DOWN_X, nface_normals_single_UP_X;
-  int nface_normals_single_DOWN_Y, nface_normals_single_UP_Y;
-  int nface_normals_single_DOWN_Z, nface_normals_single_UP_Z;
+  struct _facedata *faceinfo, **face_normals_single, **face_normals_double, **face_transparent_double, **face_textures, **face_outlines;
+  struct _facedata **face_normals_single_DOWN_X,**face_normals_single_UP_X;
+  struct _facedata **face_normals_single_DOWN_Y,**face_normals_single_UP_Y;
+  struct _facedata **face_normals_single_DOWN_Z,**face_normals_single_UP_Z;
+  int nface_normals_single_DOWN_X,nface_normals_single_UP_X;
+  int nface_normals_single_DOWN_Y,nface_normals_single_UP_Y;
+  int nface_normals_single_DOWN_Z,nface_normals_single_UP_Z;
 
   int itextureoffset;
 
@@ -1445,16 +1442,14 @@ typedef struct _smokedata {
   unsigned char *frame_in, *frame_out, *view_tmp, *comp_all, **frame_comp_list;
 } smokedata;
 
-/* --------------------------  smokestatedata
- * ------------------------------------ */
+/* --------------------------  smokestatedata ------------------------------- */
 
 typedef struct {
   int loaded, index;
   unsigned char *color;
 } smokestatedata;
 
-/* --------------------------  smoke3ddata ------------------------------------
- */
+/* --------------------------  smoke3ddata ---------------------------------- */
 
 typedef struct _smoke3ddata {
   int seq_id, autoload;
@@ -1519,8 +1514,7 @@ typedef struct _smoke3ddata {
 #endif
 } smoke3ddata;
 
-/* --------------------------  smoke3dtypedata
- * ------------------------------------ */
+/* --------------------------  smoke3dtypedata ------------------------------ */
 
 typedef struct _smoke3dtypedata {
   char *shortlabel, *longlabel;

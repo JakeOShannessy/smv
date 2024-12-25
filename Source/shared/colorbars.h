@@ -133,4 +133,5 @@ EXTERNCPP void Lab2XYZ(float *xyz, float *lab);
 EXTERNCPP void CheckLab(void);
 EXTERNCPP void FRgb2Lab(float *rgb_arg, float *lab);
 EXTERNCPP void GetColorDist(colorbardata *cbi, int option, float *min, float *max);
+
 #endif
