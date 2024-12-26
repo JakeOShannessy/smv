@@ -5194,7 +5194,7 @@ void ParsePRT5Count(smv_case *scase){
 
 /* ------------------ ParsePRT5Process ------------------------ */
 
-int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, int *ipart_in, int *ioffset_in){
+int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, int *nn_part_in, int *ipart_in, int *ioffset_in){
   unsigned int lenkey;
   partdata *parti;
   int blocknumber;
@@ -5212,10 +5212,10 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
 
   nn_part++;
   *nn_part_in = nn_part;
-  parti = global_scase.partinfo+ipart;
+  parti = scase->partinfo+ipart;
   lenkey = 4;
   len = strlen(buffer);
-  if(global_scase.meshescoll.nmeshes>1){
+  if(scase->meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5241,7 +5241,7 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
   parti->hist_update = 0;
   parti->skipload = 1;
   if(FGETS(buffer, 255, stream)==NULL){
-    global_scase.npartinfo--;
+    scase->npartinfo--;
     return RETURN_BREAK;
   }
 
@@ -5315,12 +5315,12 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
       if(parti->file==NULL)continue;
       sscanf(buffer, "%i", &iclass);
       if(iclass<1)iclass = 1;
-      if(iclass>global_scase.npartclassinfo)iclass = global_scase.npartclassinfo;
+      if(iclass>scase->npartclassinfo)iclass = scase->npartclassinfo;
       ic = 0;
-      for(iii = 0; iii<global_scase.npartclassinfo; iii++){
+      for(iii = 0; iii<scase->npartclassinfo; iii++){
         partclassdata *pci;
 
-        pci = global_scase.partclassinfo+iii;
+        pci = scase->partclassinfo+iii;
         if(iclass-1==ic){
           parti->partclassptr[i] = pci;
           break;
@@ -5334,14 +5334,14 @@ int ParsePRT5Process(bufferstreamdata *stream, char *buffer, int *nn_part_in, in
 
   if(parti->file!=NULL&&parti->nclasses==0){
     NewMemory((void **)&parti->partclassptr, sizeof(partclassdata *));
-    parti->partclassptr[i] = global_scase.partclassinfo+parti->nclasses;
+    parti->partclassptr[i] = scase->partclassinfo+parti->nclasses;
   }
   if(fast_startup==1||(parti->file!=NULL&&FILE_EXISTS_CASEDIR(parti->file)==YES)){
     ipart++;
     *ipart_in = ipart;
   }
   else{
-    global_scase.npartinfo--;
+    scase->npartinfo--;
   }
   return RETURN_CONTINUE;
 }
@@ -11389,7 +11389,7 @@ typedef struct {
       int return_val;
 
       START_TIMER(PRT5_timer);
-      return_val = ParsePRT5Process(stream, buffer, &nn_part, &ipart, &ioffset);
+      return_val = ParsePRT5Process(&global_scase, stream, buffer, &nn_part, &ipart, &ioffset);
       CUM_TIMER(PRT5_timer, cum_PRT5_timer);
       if(return_val==RETURN_BREAK){
         BREAK;
