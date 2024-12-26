@@ -782,7 +782,7 @@ void InitProp(propdata *propi, int nsmokeview_ids, char *label){
 
 /* ------------------ InitDefaultProp ------------------------ */
 
-void InitDefaultProp(void){
+void InitDefaultProp(smv_case *scase){
 /*
 PROP
  Human_props
@@ -803,7 +803,7 @@ PROP
   char buffer[255];
   int i;
 
-  propi = global_scase.propcoll.propinfo + global_scase.propcoll.npropinfo;
+  propi = scase->propcoll.propinfo + scase->propcoll.npropinfo;
 
   strcpy(proplabel,"Human_props(default)");           // from input
 
@@ -819,7 +819,7 @@ PROP
     NewMemory((void **)&smokeview_id,lenbuf+1);
     strcpy(smokeview_id,buffer);
     propi->smokeview_ids[i]=smokeview_id;
-    propi->smv_objects[i]=GetSmvObjectType(&global_scase.objectscoll, propi->smokeview_ids[i],global_scase.objectscoll.std_object_defs.missing_device);
+    propi->smv_objects[i]=GetSmvObjectType(&scase->objectscoll, propi->smokeview_ids[i],scase->objectscoll.std_object_defs.missing_device);
   }
   propi->smv_object=propi->smv_objects[0];
   propi->smokeview_id=propi->smokeview_ids[0];
@@ -893,21 +893,21 @@ PROP
 
 /* ------------------ UpdateINIList ------------------------ */
 
-void UpdateINIList(void){
+void UpdateINIList(smv_case *scase){
   char filter[256];
   int i;
 
-  strcpy(filter,global_scase.fdsprefix);
+  strcpy(filter,scase->fdsprefix);
   strcat(filter,"*.ini");
-  FreeFileList(global_scase.filelist_coll.ini_filelist,&global_scase.filelist_coll.nini_filelist);
-  global_scase.filelist_coll.nini_filelist=GetFileListSize(".",filter, FILE_MODE);
-  if(global_scase.filelist_coll.nini_filelist>0){
-    MakeFileList(".",filter,global_scase.filelist_coll.nini_filelist,NO,&global_scase.filelist_coll.ini_filelist, FILE_MODE);
+  FreeFileList(scase->filelist_coll.ini_filelist,&scase->filelist_coll.nini_filelist);
+  scase->filelist_coll.nini_filelist=GetFileListSize(".",filter, FILE_MODE);
+  if(scase->filelist_coll.nini_filelist>0){
+    MakeFileList(".",filter,scase->filelist_coll.nini_filelist,NO,&scase->filelist_coll.ini_filelist, FILE_MODE);
 
-    for(i=0;i<global_scase.filelist_coll.nini_filelist;i++){
+    for(i=0;i<scase->filelist_coll.nini_filelist;i++){
       filelistdata *filei;
 
-      filei = global_scase.filelist_coll.ini_filelist + i;
+      filei = scase->filelist_coll.ini_filelist + i;
       if(filei->type!=0)continue;
       InsertIniFile(filei->file);
     }
@@ -8184,7 +8184,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
   if(global_scase.propcoll.npropinfo>0){
     global_scase.propcoll.npropinfo=0;
-    InitDefaultProp();
+    InitDefaultProp(&global_scase);
     global_scase.propcoll.npropinfo=1;
   }
 
@@ -11724,7 +11724,7 @@ int ReadSMV_Configure(){
   //RemoveDupBlockages();
   InitCullGeom(cullgeom);
   PRINT_TIMER(timer_readsmv, "InitCullGeom");
-  UpdateINIList();
+  UpdateINIList(&global_scase);
   PRINT_TIMER(timer_readsmv, "UpdateINIList");
 
   if(global_scase.meshescoll.meshinfo!=NULL&&global_scase.meshescoll.meshinfo->jbar==1)force_isometric=1;
@@ -12401,7 +12401,7 @@ int ReadIni2(const char *inifile, int localfile){
   nunitclasses_ini = 0;
 
   if(localfile == 1){
-    UpdateINIList();
+    UpdateINIList(&global_scase);
   }
 
   if(localfile == 1){
