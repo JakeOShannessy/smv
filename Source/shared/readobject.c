@@ -1474,6 +1474,7 @@ void InitStdObjectDefs(object_collection *objectscoll, int setbw,
   }
 }
 
+
 int InitObjectCollection(object_collection *coll) {
   // Set everything to NULL
   memset(coll, 0, sizeof(object_collection));
