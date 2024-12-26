@@ -86,7 +86,7 @@ int GetTokensBlank(char *buffer, char **tokens){
 
 /* ------------------ GetHoc ------------------------ */
 
-void GetHoc(float *hoc, char *name){
+void GetHoc(smv_case *scase, float *hoc, char *name){
   char outfile[256], buffer[255];
   FILE *stream;
 
@@ -95,7 +95,7 @@ void GetHoc(float *hoc, char *name){
     strcpy(name, fuelinfo->fuel);
     return;
   }
-  strcpy(outfile, global_scase.fdsprefix);
+  strcpy(outfile, scase->fdsprefix);
   strcat(outfile, ".out");
   stream = fopen(outfile, "r");
   if(stream==NULL){
@@ -514,7 +514,7 @@ void ReadHRR(smv_case *scase, int flag){
   char *buffer, *buffer_labels, *buffer_units, *buffer_temp;
   int len_buffer;
 
-  GetHoc(&scase->fuel_hoc, fuel_name);
+  GetHoc(scase, &scase->fuel_hoc, fuel_name);
   fuel_hoc_default = scase->fuel_hoc;
   if(scase->nhrrinfo>0){
     for(i=0;i<scase->nhrrinfo;i++){
