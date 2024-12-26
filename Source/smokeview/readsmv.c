@@ -503,7 +503,7 @@ FILE_SIZE ReadAllCSVFiles(smv_case *scase, int flag){
 
 /* ------------------ ReadHRR ------------------------ */
 
-void ReadHRR(int flag){
+void ReadHRR(smv_case *scase, int flag){
   FILE *stream;
   int nrows, ncols;
   char **labels, **units;
@@ -514,10 +514,10 @@ void ReadHRR(int flag){
   char *buffer, *buffer_labels, *buffer_units, *buffer_temp;
   int len_buffer;
 
-  GetHoc(&global_scase.fuel_hoc, fuel_name);
-  fuel_hoc_default = global_scase.fuel_hoc;
-  if(global_scase.nhrrinfo>0){
-    for(i=0;i<global_scase.nhrrinfo;i++){
+  GetHoc(&scase->fuel_hoc, fuel_name);
+  fuel_hoc_default = scase->fuel_hoc;
+  if(scase->nhrrinfo>0){
+    for(i=0;i<scase->nhrrinfo;i++){
       hrrdata *hi;
 
       hi = global_scase.hrrinfo + i;
@@ -535,7 +535,7 @@ void ReadHRR(int flag){
   qradi_col = -1;
   if(flag==UNLOAD)return;
 
-  stream = fopen(global_scase.paths.hrr_csv_filename, "r");
+  stream = fopen(scase->paths.hrr_csv_filename, "r");
   if(stream==NULL)return;
 
   len_buffer = GetRowCols(stream, &nrows, &ncols);
@@ -11729,7 +11729,7 @@ int ReadSMV_Configure(smv_case *scase){
 
   if(scase->meshescoll.meshinfo!=NULL&&scase->meshescoll.meshinfo->jbar==1)force_isometric=1;
 
-  if(scase->paths.hrr_csv_filename != NULL)ReadHRR(LOAD);
+  if(scase->paths.hrr_csv_filename != NULL)ReadHRR(scase, LOAD);
   PRINT_TIMER(timer_readsmv, "ReadHRR");
 
   if(runscript == 1){
