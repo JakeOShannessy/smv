@@ -2233,7 +2233,7 @@ void ParseDevicekeyword(smv_case *scase, BFILE *stream, devicedata *devicei){
   devicei->is_beam = is_beam;
 
   GetLabels(buffer,&prop_id,NULL);
-  devicei->prop=GetPropID(&global_scase, prop_id);
+  devicei->prop=GetPropID(scase, prop_id);
   if(prop_id!=NULL&&devicei->prop!=NULL&&devicei->prop->smv_object!=NULL){
     devicei->object=devicei->prop->smv_object;
   }
@@ -2361,7 +2361,7 @@ void ParseDevicekeyword2(smv_case *scase, FILE *stream, devicedata *devicei){
   devicei->is_beam = is_beam;
 
   GetLabels(buffer, &prop_id, NULL);
-  devicei->prop = GetPropID(&global_scase, prop_id);
+  devicei->prop = GetPropID(scase, prop_id);
   if(prop_id!=NULL&&devicei->prop!=NULL&&devicei->prop->smv_object!=NULL){
     devicei->object = devicei->prop->smv_object;
   }
