@@ -2268,7 +2268,7 @@ void ParseDevicekeyword(smv_case *scase, BFILE *stream, devicedata *devicei){
   }
 
   if(nparams<=0){
-    InitDevice(&global_scase, devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,0,NULL,labelptr);
+    InitDevice(scase, devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,0,NULL,labelptr);
   }
   else{
     float *params,*pc;
@@ -2284,7 +2284,7 @@ void ParseDevicekeyword(smv_case *scase, BFILE *stream, devicedata *devicei){
       sscanf(buffer,"%f %f %f %f %f %f",pc,pc+1,pc+2,pc+3,pc+4,pc+5);
       pc+=6;
     }
-    InitDevice(&global_scase, devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,nparams,params,labelptr);
+    InitDevice(scase, devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,nparams,params,labelptr);
   }
   GetElevAz(devicei->xyznorm,&devicei->dtheta,devicei->rotate_axis,NULL);
   if(nparams_textures>0){
@@ -2396,7 +2396,7 @@ void ParseDevicekeyword2(smv_case *scase, FILE *stream, devicedata *devicei){
   }
 
   if(nparams<=0){
-    InitDevice(&global_scase, devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, 0, NULL, labelptr);
+    InitDevice(scase, devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, 0, NULL, labelptr);
   }
   else{
     float *params, *pc;
@@ -2412,7 +2412,7 @@ void ParseDevicekeyword2(smv_case *scase, FILE *stream, devicedata *devicei){
       sscanf(buffer, "%f %f %f %f %f %f", pc, pc+1, pc+2, pc+3, pc+4, pc+5);
       pc += 6;
     }
-    InitDevice(&global_scase, devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, nparams, params, labelptr);
+    InitDevice(scase, devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, nparams, params, labelptr);
   }
   GetElevAz(devicei->xyznorm, &devicei->dtheta, devicei->rotate_axis, NULL);
   if(nparams_textures>0){
@@ -2618,7 +2618,7 @@ void InitTextures0(smv_case *scase){
 
     texti = scase->texture_coll.textureinfo + i;
     texti->loaded=0;
-    if(texti->file==NULL||IsDupTexture(&global_scase, texti)==1||IsTerrainTexture(&global_scase, texti)==1)continue;
+    if(texti->file==NULL||IsDupTexture(scase, texti)==1||IsTerrainTexture(scase, texti)==1)continue;
 
     CheckMemory;
     filename=strrchr(texti->file,*dirseparator);
@@ -3494,7 +3494,7 @@ void UpdateSmoke3DTypes(smv_case *scase){
     smokestatedata *smokestate;
 
     smoke3di = scase->smoke3dcoll.smoke3dinfo+i;
-    smoke3di->type = GetSmoke3DType(&global_scase, smoke3di->label.shortlabel);
+    smoke3di->type = GetSmoke3DType(scase, smoke3di->label.shortlabel);
 
     NewMemory((void **)&smokestate, scase->smoke3dcoll.nsmoke3dtypes*sizeof(smokestatedata));
     smoke3di->smokestate = smokestate;
@@ -3966,7 +3966,7 @@ void UpdateMeshCoords(smv_case *scase){
     boundaryoffset = (scase->meshescoll.meshinfo->zplt_orig[1] - scase->meshescoll.meshinfo->zplt_orig[0]) / 10.0;
   }
 
-  UpdateBlockType(&global_scase);
+  UpdateBlockType(scase);
 
   for(igrid=0;igrid<scase->meshescoll.nmeshes;igrid++){
     meshdata *meshi;
@@ -4099,7 +4099,7 @@ void UpdateMeshCoords(smv_case *scase){
       vi->zvent2plot=FDS2SMV_Z(offset[ZZZ]+vi->zvent2);
     }
   }
-  UpdateVentOffset(&global_scase);
+  UpdateVentOffset(scase);
   if(scase->smoke3dcoll.nsmoke3dinfo>0)NewMemory((void **)&scase->smoke3dcoll.smoke3dinfo_sorted,scase->smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata *));
   NewMemory((void **)&meshvisptr,scase->meshescoll.nmeshes*sizeof(int));
   for(i=0;i<scase->meshescoll.nmeshes;i++){
@@ -4342,7 +4342,7 @@ void ReadDeviceHeader(smv_case *scase, char *file, devicedata *devices, int ndev
       break;
     }
     if(strcmp(buffer, "DEVICE") == 0){
-      ParseDevicekeyword2(&global_scase, stream, devicecopy);
+      ParseDevicekeyword2(scase, stream, devicecopy);
       devicecopy++;
     }
   }
@@ -11769,7 +11769,7 @@ int ReadSMV_Configure(smv_case *scase){
     NewMemory((void **)&slice_sorted_loaded_list, scase->slicecoll.nsliceinfo*sizeof(int));
   }
 
-  UpdateLoadedLists();
+  UpdateLoadedLists(scase);
   PRINT_TIMER(timer_readsmv, "UpdateLoadedLists");
   CheckMemory;
 
@@ -12974,7 +12974,7 @@ int ReadIni2(smv_case *scase, const char *inifile, int localfile){
       sscanf(buffer, "%f %f %f", dc, dc + 1, dc + 2);
       dc[3] = 1.0;
       direction_color_ptr = GetColorPtr(direction_color);
-      GetSliceParmInfo(&global_scase, &sliceparminfo);
+      GetSliceParmInfo(scase, &sliceparminfo);
       UpdateSliceMenuShow(&sliceparminfo);
       continue;
     }
@@ -14489,7 +14489,7 @@ int ReadIni2(smv_case *scase, const char *inifile, int localfile){
         surflabel = strchr(buffer, ':');
         if(surflabel==NULL)continue;
         surflabel = TrimFrontBack(surflabel+1);
-        surfi = GetSurface(&global_scase, surflabel);
+        surfi = GetSurface(scase, surflabel);
         if(surfi==NULL)continue;
         ini_surf_color = surfi->geom_surf_color;
         sscanf(buffer, "%i %i %i", ini_surf_color, ini_surf_color+1, ini_surf_color+2);
@@ -14513,7 +14513,7 @@ int ReadIni2(smv_case *scase, const char *inifile, int localfile){
         surflabel = strchr(buffer, ':');
         if(surflabel==NULL)continue;
         surflabel = TrimFrontBack(surflabel+1);
-        surfi = GetSurface(&global_scase, surflabel);
+        surfi = GetSurface(scase, surflabel);
         if(surfi==NULL)continue;
         s_color[0] = -1.0;
         s_color[1] = -1.0;
@@ -17579,14 +17579,14 @@ void WriteIni(smv_case *scase, int flag,char *filename){
 
 /* ------------------ UpdateLoadedLists ------------------------ */
 
-void UpdateLoadedLists(void){
+void UpdateLoadedLists(smv_case *scase){
   int i;
   slicedata *slicei;
   patchdata *patchi;
 
   nslice_loaded=0;
-  for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
-    slicei = global_scase.slicecoll.sliceinfo + i;
+  for(i=0;i<scase->slicecoll.nsliceinfo;i++){
+    slicei = scase->slicecoll.sliceinfo + i;
     if(slicei->loaded==1){
       slice_loaded_list[nslice_loaded]=i;
       nslice_loaded++;
@@ -17594,18 +17594,18 @@ void UpdateLoadedLists(void){
   }
 
   ngeomslice_loaded = 0;
-  for(i=0;i<global_scase.npatchinfo;i++){
-    patchi = global_scase.patchinfo + i;
+  for(i=0;i<scase->npatchinfo;i++){
+    patchi = scase->patchinfo + i;
     if(patchi->loaded==1&&patchi->boundary == 0)ngeomslice_loaded++;
   }
 
   nvolsmoke_loaded = 0;
   if(nvolrenderinfo>0){
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0;i<scase->meshescoll.nmeshes;i++){
       meshdata *meshi;
       volrenderdata *vr;
 
-      meshi = global_scase.meshescoll.meshinfo + i;
+      meshi = scase->meshescoll.meshinfo + i;
       vr = meshi->volrenderinfo;
       if(vr==NULL||vr->fireslice==NULL||vr->smokeslice==NULL)continue;
       if(vr->loaded==0||vr->display==0)continue;
