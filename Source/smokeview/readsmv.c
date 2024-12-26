@@ -2063,7 +2063,7 @@ propdata *GetPropID(char *prop_id){
 
 /* ----------------------- InitDevice ----------------------------- */
 
-void InitDevice(devicedata *devicei, float *xyz, int is_beam, float *xyz1, float *xyz2, float *xyzn, int state0, int nparams, float *params, char *labelptr){
+void InitDevice(smv_case *scase, devicedata *devicei, float *xyz, int is_beam, float *xyz1, float *xyz2, float *xyzn, int state0, int nparams, float *params, char *labelptr){
   float norm;
   int i;
 
@@ -2085,8 +2085,8 @@ void InitDevice(devicedata *devicei, float *xyz, int is_beam, float *xyz1, float
   if(STRCMP(devicei->object->label, "plane") == 0){
     float color[4];
 
-    NewMemory((void **)&devicei->plane_surface, global_scase.meshescoll.nmeshes * sizeof(isosurface *));
-    for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
+    NewMemory((void **)&devicei->plane_surface, scase->meshescoll.nmeshes * sizeof(isosurface *));
+    for(i = 0; i < scase->meshescoll.nmeshes; i++){
       NewMemory((void **)&devicei->plane_surface[i], sizeof(isosurface));
     }
     if(nparams >= 3){
@@ -2121,8 +2121,8 @@ void InitDevice(devicedata *devicei, float *xyz, int is_beam, float *xyz1, float
     devicei->xyz2[2]   = xyz2[2];
     devicei->have_xyz2 = 1;
   }
-  if(xyz1!=NULL&&xyz2!=NULL)global_scase.have_object_box = 1;
-  if(is_beam == 1)global_scase.have_beam = 1;
+  if(xyz1!=NULL&&xyz2!=NULL)scase->have_object_box = 1;
+  if(is_beam == 1)scase->have_beam = 1;
   devicei->is_beam = is_beam;
   norm = sqrt(xyzn[0] * xyzn[0] + xyzn[1] * xyzn[1] + xyzn[2] * xyzn[2]);
   if(norm != 0.0){
@@ -2268,7 +2268,7 @@ void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
   }
 
   if(nparams<=0){
-    InitDevice(devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,0,NULL,labelptr);
+    InitDevice(&global_scase, devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,0,NULL,labelptr);
   }
   else{
     float *params,*pc;
@@ -2284,7 +2284,7 @@ void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
       sscanf(buffer,"%f %f %f %f %f %f",pc,pc+1,pc+2,pc+3,pc+4,pc+5);
       pc+=6;
     }
-    InitDevice(devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,nparams,params,labelptr);
+    InitDevice(&global_scase, devicei,xyz,is_beam,xyz1,xyz2,xyzn,state0,nparams,params,labelptr);
   }
   GetElevAz(devicei->xyznorm,&devicei->dtheta,devicei->rotate_axis,NULL);
   if(nparams_textures>0){
@@ -2396,7 +2396,7 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
   }
 
   if(nparams<=0){
-    InitDevice(devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, 0, NULL, labelptr);
+    InitDevice(&global_scase, devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, 0, NULL, labelptr);
   }
   else{
     float *params, *pc;
@@ -2412,7 +2412,7 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
       sscanf(buffer, "%f %f %f %f %f %f", pc, pc+1, pc+2, pc+3, pc+4, pc+5);
       pc += 6;
     }
-    InitDevice(devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, nparams, params, labelptr);
+    InitDevice(&global_scase, devicei, xyz, is_beam, xyz1, xyz2, xyzn, state0, nparams, params, labelptr);
   }
   GetElevAz(devicei->xyznorm, &devicei->dtheta, devicei->rotate_axis, NULL);
   if(nparams_textures>0){
@@ -9687,7 +9687,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-          InitDevice(devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,"target");
+          InitDevice(&global_scase, devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,"target");
           devicecopy->prop=NULL;
 
           devicecopy++;
@@ -9764,7 +9764,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-          InitDevice(devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
+          InitDevice(&global_scase, devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
 
           devicecopy++;
           global_scase.devicecoll.ndeviceinfo++;
@@ -9842,7 +9842,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
           }
           GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-          InitDevice(devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
+          InitDevice(&global_scase, devicecopy,NULL,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
           devicecopy->prop=NULL;
 
           devicecopy++;
@@ -9901,7 +9901,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
         }
         GetElevAz(xyznorm,&devicecopy->dtheta,devicecopy->rotate_axis,NULL);
 
-        InitDevice(devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
+        InitDevice(&global_scase, devicecopy,xyz,0,NULL,NULL,xyznorm,0,0,NULL,NULL);
 
         devicecopy++;
         global_scase.devicecoll.ndeviceinfo++;
