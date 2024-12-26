@@ -4416,23 +4416,23 @@ int SurfIdCompare(const void *arg1, const void *arg2){
 
 /* ------------------ UpdateSortedSurfIdList ------------------------ */
 
-void UpdateSortedSurfIdList(void){
+void UpdateSortedSurfIdList(smv_case *scase){
   int i;
 
-  FREEMEMORY(global_scase.surfcoll.sorted_surfidlist);
-  FREEMEMORY(global_scase.surfcoll.inv_sorted_surfidlist);
-  NewMemory((void **)&global_scase.surfcoll.sorted_surfidlist, global_scase.surfcoll.nsurfinfo*sizeof(int));
-  NewMemory((void **)&global_scase.surfcoll.inv_sorted_surfidlist, global_scase.surfcoll.nsurfinfo*sizeof(int));
+  FREEMEMORY(scase->surfcoll.sorted_surfidlist);
+  FREEMEMORY(scase->surfcoll.inv_sorted_surfidlist);
+  NewMemory((void **)&scase->surfcoll.sorted_surfidlist, scase->surfcoll.nsurfinfo*sizeof(int));
+  NewMemory((void **)&scase->surfcoll.inv_sorted_surfidlist, scase->surfcoll.nsurfinfo*sizeof(int));
 
 
-  global_scase.surfcoll.nsorted_surfidlist = global_scase.surfcoll.nsurfinfo;
-  for(i = 0; i<global_scase.surfcoll.nsorted_surfidlist; i++){
-    global_scase.surfcoll.sorted_surfidlist[i] = i;
+  scase->surfcoll.nsorted_surfidlist = scase->surfcoll.nsurfinfo;
+  for(i = 0; i<scase->surfcoll.nsorted_surfidlist; i++){
+    scase->surfcoll.sorted_surfidlist[i] = i;
   }
 
-  qsort((int *)global_scase.surfcoll.sorted_surfidlist, (size_t)global_scase.surfcoll.nsurfinfo, sizeof(int), SurfIdCompare);
-  for(i = 0; i<global_scase.surfcoll.nsorted_surfidlist; i++){
-    global_scase.surfcoll.inv_sorted_surfidlist[global_scase.surfcoll.sorted_surfidlist[i]] = i;
+  qsort((int *)scase->surfcoll.sorted_surfidlist, (size_t)scase->surfcoll.nsurfinfo, sizeof(int), SurfIdCompare);
+  for(i = 0; i<scase->surfcoll.nsorted_surfidlist; i++){
+    scase->surfcoll.inv_sorted_surfidlist[scase->surfcoll.sorted_surfidlist[i]] = i;
   }
 }
 
@@ -4627,7 +4627,7 @@ void ParseDatabase(char *file){
     }
     global_scase.surfcoll.nsurfinfo += nsurfids_shown;
   }
-  UpdateSortedSurfIdList();
+  UpdateSortedSurfIdList(&global_scase);
 }
 
 /* ------------------ ReadZVentData ------------------------ */
