@@ -3166,18 +3166,18 @@ void UpdateVentOffset(smv_case *scase){
 
 /* ------------------ UpdateBlockType ------------------------ */
 
-void UpdateBlockType(void){
+void UpdateBlockType(smv_case *scase){
   int igrid, i;
 
   ntransparentblocks = 0;
   ntransparentvents = 0;
   nopenvents = 0;
   nopenvents_nonoutline = 0;
-  global_scase.ndummyvents = 0;
-  for(igrid = 0; igrid<global_scase.meshescoll.nmeshes; igrid++){
+  scase->ndummyvents = 0;
+  for(igrid = 0; igrid<scase->meshescoll.nmeshes; igrid++){
     meshdata *meshi;
 
-    meshi = global_scase.meshescoll.meshinfo+igrid;
+    meshi = scase->meshescoll.meshinfo+igrid;
     for(i = 0; i<meshi->nbptrs; i++){
       blockagedata *bc;
 
@@ -3192,7 +3192,7 @@ void UpdateBlockType(void){
         nopenvents++;
         if(vi->type!=BLOCK_OUTLINE)nopenvents_nonoutline++;
       }
-      if(vi->dummy==1)global_scase.ndummyvents++;
+      if(vi->dummy==1)scase->ndummyvents++;
       if(vi->color[3]<0.99)ntransparentvents++;
     }
   }
@@ -3966,7 +3966,7 @@ void UpdateMeshCoords(void){
     boundaryoffset = (global_scase.meshescoll.meshinfo->zplt_orig[1] - global_scase.meshescoll.meshinfo->zplt_orig[0]) / 10.0;
   }
 
-  UpdateBlockType();
+  UpdateBlockType(&global_scase);
 
   for(igrid=0;igrid<global_scase.meshescoll.nmeshes;igrid++){
     meshdata *meshi;
