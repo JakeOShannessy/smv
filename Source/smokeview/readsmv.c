@@ -4970,11 +4970,12 @@ void SetupIsosurface(isodata *isoi){
 
 void *SetupAllIsosurfaces(void *arg){
   int i;
+  smv_case *scase = (smv_case *)arg;
 
-  for(i = 0; i < global_scase.nisoinfo; i++){
+  for(i = 0; i < scase->nisoinfo; i++){
     isodata *isoi;
 
-    isoi = global_scase.isoinfo + i;
+    isoi = scase->isoinfo + i;
     SetupIsosurface(isoi);
   }
   THREAD_EXIT(isosurface_threads);
@@ -11920,7 +11921,7 @@ int ReadSMV_Configure(smv_case *scase){
   if(isosurface_threads == NULL){
     isosurface_threads = THREADinit(&n_isosurface_threads, &use_isosurface_threads, SetupAllIsosurfaces);
   }
-  THREADrun(isosurface_threads);
+  THREADruni(isosurface_threads, (unsigned char*)&global_scase, sizeof(smv_case));
   THREADcontrol(isosurface_threads, THREAD_JOIN);
   PRINT_TIMER(timer_readsmv, "SetupAllIsosurfaces");
 
