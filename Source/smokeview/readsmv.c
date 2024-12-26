@@ -16049,13 +16049,13 @@ int ReadIni2(smv_case *scase, const char *inifile, int localfile){
 
 /* ------------------ ReadBinIni ------------------------ */
 
-int ReadBinIni(void){
+int ReadBinIni(smv_case *scase){
   char *smokeviewini = GetSystemIniPath();
   //*** read in config files if they exist
   // smokeview.ini ini in install directory
   int returnval = 0;
   if(smokeviewini!=NULL){
-    returnval = ReadIni2(&global_scase, smokeviewini, 0);
+    returnval = ReadIni2(scase, smokeviewini, 0);
   }
   FREEMEMORY(smokeviewini);
   return returnval;

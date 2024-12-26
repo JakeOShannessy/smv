@@ -2812,7 +2812,7 @@ void SmokeviewIniMenu(int value){
     UpdateRGBColors(colorbar_select_index);
     break;
   case MENU_REVERT_WRITEINI:
-    ReadBinIni();
+    ReadBinIni(&global_scase);
     break;
   case MENU_WRITEINI:
     WriteIni(GLOBAL_INI,NULL);

@@ -727,7 +727,7 @@ EXTERNCPP void GetBoxSkyCorners(void);
 EXTERNCPP void GetElevAz(float *xyznorm,float *dtheta, float *rotate_axis, float *dpsi);
 EXTERNCPP int GetSmoke3DType(smv_case *scase, char *label);
 EXTERNCPP FILE_SIZE ReadAllCSVFiles(smv_case *scase, int flag);
-EXTERNCPP int  ReadBinIni(void);
+EXTERNCPP int  ReadBinIni(smv_case *scase);
 EXTERNCPP FILE_SIZE ReadCSVFile(csvfiledata *csvfi, int flag);
 EXTERNCPP void ReadHRR(int flag);
 EXTERNCPP int  ReadIni(char *inifile);
