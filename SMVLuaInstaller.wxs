@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<?define ProductVersion = "1.16.11"?>
+<?define ProductVersion = "1.16.12"?>
 <?define ProductUpgradeCode = "1940d8a1-c842-442f-bf5d-00a570219bdb"?>
 
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
@@ -47,31 +47,31 @@
                             </File>
                             <File Id='SMVQScriptCMD' Name='smvq.cmd' Source='smvq.cmd'>
                             </File>
-                            <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File>
-                            <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File>
+                            <File Name='pthreadVC3.dll' Source='dist/pthreadVC3.dll'> </File>
+                            <File Name='json-c.dll' Source='dist/json-c.dll'> </File>
                         </Component>
                         <Directory Id='BINDIR' Name='bin'>
                             <Component Id='SMVQComponent'
                                 Guid='c84dc251-0843-4520-95da-1aa889ebd874' Win64="yes">
                                 <File Id='SMVQEXE' Name='smvq.exe'
-                                    Source='dist/bin/smvq.exe' KeyPath='yes'>
+                                    Source='dist/smvq.exe' KeyPath='yes'>
                                 </File>
                             </Component>
                             <Component Id='SMVLuaComponent'
                                 Guid='767754dc-8fe5-4cbf-920e-6051e321312f' Win64="yes">
                                 <File Id='SMVLuaEXE' Name='smvlua.exe'
-                                    Source='dist/bin/smokeview.exe' KeyPath='yes'>
+                                    Source='dist/smokeview.exe' KeyPath='yes'>
                                 </File>
-                                <File Name='jsonrpc.dll' Source='dist/bin/jsonrpc.dll'> </File>
-                                <File Name='glew32.dll' Source='dist/bin/glew32.dll'> </File>
-                                <File Name='zlib1.dll' Source='dist/bin/zlib1.dll'> </File>
-                                <File Name='libgd.dll' Source='dist/bin/libgd.dll'> </File>
-                                <File Name='freeglut.dll' Source='dist/bin/freeglut.dll'> </File>
-                                <File Name='jpeg62.dll' Source='dist/bin/jpeg62.dll'> </File>
-                                <File Name='glut32.dll' Source='dist/bin/glut32.dll'> </File>
-                                <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'>
+                                <File Name='jsonrpc.dll' Source='dist/jsonrpc.dll'> </File>
+                                <File Name='glew32.dll' Source='dist/glew32.dll'> </File>
+                                <File Name='zlib1.dll' Source='dist/zlib1.dll'> </File>
+                                <File Name='libgd.dll' Source='dist/libgd.dll'> </File>
+                                <File Name='freeglut.dll' Source='dist/freeglut.dll'> </File>
+                                <File Name='jpeg62.dll' Source='dist/jpeg62.dll'> </File>
+                                <File Name='glut32.dll' Source='dist/glut32.dll'> </File>
+                                <File Name='libpng16.dll' Source='dist/libpng16.dll'>
                                 </File>
-                                <File Name='getopt.dll' Source='dist/bin/getopt.dll'> </File>
+                                <File Name='getopt.dll' Source='dist/getopt.dll'> </File>
                             </Component>
                         </Directory>
                     </Directory>
