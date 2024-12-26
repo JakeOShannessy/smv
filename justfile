@@ -57,7 +57,7 @@ build-intel-internal:
     cmake --install cbuild --config Debug --prefix dist-debug
 
 # Build release and create MSI package
-package-windows: build-release
+package-windows: build-release-win
     candle "SMVLuaInstaller.wxs"
     light "SMVLuaInstaller.wixobj" -ext WixUIExtension
 
