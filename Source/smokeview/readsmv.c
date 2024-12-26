@@ -128,7 +128,7 @@ void GetHoc(smv_case *scase, float *hoc, char *name){
 
 /* ------------------ UpdateHoc ------------------------ */
 
-void UpdateHoc(void){
+void UpdateHoc(smv_case *scase){
   int i;
 
 // construct column for each MLR column by heat of combustion except for air and products
@@ -144,7 +144,7 @@ void UpdateHoc(void){
       memcpy(hi->vals, hi_from->vals, hi_from->nvals*sizeof(float));
       hi->nvals = hi_from->nvals;
       for(j = 0; j<hi->nvals; j++){
-        hi->vals[j] *= global_scase.fuel_hoc;
+        hi->vals[j] *= scase->fuel_hoc;
       }
       memcpy(hi->vals_orig, hi->vals, hi->nvals*sizeof(float));
 
@@ -677,7 +677,7 @@ NewMemory((void **)&valids,                    global_scase.nhrrinfo*sizeof(int)
     hi = global_scase.hrrinfo+i;
     hi->nvals = nrows-2;
   }
-  UpdateHoc();
+  UpdateHoc(scase);
   CheckMemory;
 
 //construct column of qradi/hrr

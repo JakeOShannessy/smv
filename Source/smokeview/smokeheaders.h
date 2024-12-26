@@ -742,7 +742,6 @@ EXTERNCPP void SetSliceMin(int set_valmin, float valmin, char *buffer2);
 EXTERNCPP void SetSliceMax(int set_valmax, float valmax, char *buffer2);
 EXTERNCPP void SetSliceParmInfo(smv_case *scase, sliceparmdata *sp);
 EXTERNCPP void *SetupAllIsosurfaces(void *arg);
-EXTERNCPP void UpdateHoc(void);
 EXTERNCPP void UpdateLoadedLists(smv_case *scase);
 EXTERNCPP void UpdateSMVDynamic(smv_case *scase, char *file);
 EXTERNCPP void UpdateUseTextures(smv_case *scase);
