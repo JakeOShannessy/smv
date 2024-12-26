@@ -4715,7 +4715,7 @@ void ReadZVentData(smv_case *scase, zventdata *zvi, char *buffer, int flag){
 
 /* ------------------ InitCellMeshInfo ------------------------ */
 
-void InitCellMeshInfo(void){
+void InitCellMeshInfo(smv_case *scase){
   int i, *nxyz, ntotal;
   float *xyzminmax, *dxyz;
   float *x, *y, *z;
@@ -4739,37 +4739,37 @@ void InitCellMeshInfo(void){
   dxyz      = cellmeshinfo->dxyz;
   nxyz      = cellmeshinfo->nxyz;
 
-  x = global_scase.meshescoll.meshinfo->xplt_orig;
-  y = global_scase.meshescoll.meshinfo->yplt_orig;
-  z = global_scase.meshescoll.meshinfo->zplt_orig;
+  x = scase->meshescoll.meshinfo->xplt_orig;
+  y = scase->meshescoll.meshinfo->yplt_orig;
+  z = scase->meshescoll.meshinfo->zplt_orig;
 
   xyzminmax[0] = x[0];
-  xyzminmax[1] = x[global_scase.meshescoll.meshinfo->ibar];
+  xyzminmax[1] = x[scase->meshescoll.meshinfo->ibar];
   xyzminmax[2] = y[0];
-  xyzminmax[3] = y[global_scase.meshescoll.meshinfo->jbar];
+  xyzminmax[3] = y[scase->meshescoll.meshinfo->jbar];
   xyzminmax[4] = z[0];
-  xyzminmax[5] = z[global_scase.meshescoll.meshinfo->kbar];
-  dxyz[0] = x[global_scase.meshescoll.meshinfo->ibar] - x[0];
-  dxyz[1] = y[global_scase.meshescoll.meshinfo->jbar] - y[0];
-  dxyz[2] = z[global_scase.meshescoll.meshinfo->kbar] - z[0];
+  xyzminmax[5] = z[scase->meshescoll.meshinfo->kbar];
+  dxyz[0] = x[scase->meshescoll.meshinfo->ibar] - x[0];
+  dxyz[1] = y[scase->meshescoll.meshinfo->jbar] - y[0];
+  dxyz[2] = z[scase->meshescoll.meshinfo->kbar] - z[0];
 
-  for(i = 1; i<global_scase.meshescoll.nmeshes;i++){
+  for(i = 1; i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = global_scase.meshescoll.meshinfo + i;
+    meshi = scase->meshescoll.meshinfo + i;
     x = meshi->xplt_orig;
     y = meshi->yplt_orig;
     z = meshi->zplt_orig;
 
     xyzminmax[0] = MIN(xyzminmax[0], x[0]);
-    xyzminmax[1] = MAX(xyzminmax[1], x[global_scase.meshescoll.meshinfo->ibar]);
+    xyzminmax[1] = MAX(xyzminmax[1], x[scase->meshescoll.meshinfo->ibar]);
     xyzminmax[2] = MIN(xyzminmax[2], y[0]);
-    xyzminmax[3] = MAX(xyzminmax[3], y[global_scase.meshescoll.meshinfo->jbar]);
+    xyzminmax[3] = MAX(xyzminmax[3], y[scase->meshescoll.meshinfo->jbar]);
     xyzminmax[4] = MIN(xyzminmax[4], z[0]);
-    xyzminmax[5] = MAX(xyzminmax[5], z[global_scase.meshescoll.meshinfo->kbar]);
-    dxyz[0] = MIN(dxyz[0], x[global_scase.meshescoll.meshinfo->ibar] - x[0]);
-    dxyz[1] = MIN(dxyz[1], y[global_scase.meshescoll.meshinfo->jbar] - y[0]);
-    dxyz[2] = MIN(dxyz[2], z[global_scase.meshescoll.meshinfo->kbar] - z[0]);
+    xyzminmax[5] = MAX(xyzminmax[5], z[scase->meshescoll.meshinfo->kbar]);
+    dxyz[0] = MIN(dxyz[0], x[scase->meshescoll.meshinfo->ibar] - x[0]);
+    dxyz[1] = MIN(dxyz[1], y[scase->meshescoll.meshinfo->jbar] - y[0]);
+    dxyz[2] = MIN(dxyz[2], z[scase->meshescoll.meshinfo->kbar] - z[0]);
   }
   dxyz[0] /= (float)CELLMESH_FACTOR;
   dxyz[1] /= (float)CELLMESH_FACTOR;
@@ -4784,12 +4784,12 @@ void InitCellMeshInfo(void){
   for(i=0;i<ntotal;i++){
     cellmeshinfo->cellmeshes[i] = NULL;
   }
-  for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+  for(i = 0;i < scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
     int i1, i2, j1, j2, k1, k2;
     float xmin, xmax, ymin, ymax, zmin, zmax;
 
-    meshi = global_scase.meshescoll.meshinfo + i;
+    meshi = scase->meshescoll.meshinfo + i;
     x = meshi->xplt_orig;
     y = meshi->yplt_orig;
     z = meshi->zplt_orig;
@@ -4829,7 +4829,7 @@ void InitCellMeshInfo(void){
 
 void SetupMeshWalls(void){
   int i;
-  if(cellmeshinfo == NULL)InitCellMeshInfo();
+  if(cellmeshinfo == NULL)InitCellMeshInfo(&global_scase);
 
   for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
@@ -12058,7 +12058,7 @@ int ReadSMV_Configure(){
   UpdateEvents();
   PRINT_TIMER(timer_readsmv, "UpdateEvents");
 
-  InitCellMeshInfo();
+  InitCellMeshInfo(&global_scase);
   PRINT_TIMER(timer_readsmv, "InitCellMeshInfo");
 
   SetupMeshWalls();
