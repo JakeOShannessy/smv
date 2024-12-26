@@ -3151,13 +3151,13 @@ r g b           colors used if colorindex==-3
 
 /* ------------------ UpdateVentOffset ------------------------ */
 
-void UpdateVentOffset(void){
+void UpdateVentOffset(smv_case *scase){
   int i;
 
-  for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+  for(i = 0;i < scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = global_scase.meshescoll.meshinfo + i;
+    meshi = scase->meshescoll.meshinfo + i;
     meshi->vent_offset[XXX] = ventoffset_factor*(meshi->xplt[1] - meshi->xplt[0]);
     meshi->vent_offset[YYY] = ventoffset_factor*(meshi->yplt[1] - meshi->yplt[0]);
     meshi->vent_offset[ZZZ] = ventoffset_factor*(meshi->zplt[1] - meshi->zplt[0]);
@@ -4099,7 +4099,7 @@ void UpdateMeshCoords(void){
       vi->zvent2plot=FDS2SMV_Z(offset[ZZZ]+vi->zvent2);
     }
   }
-  UpdateVentOffset();
+  UpdateVentOffset(&global_scase);
   if(global_scase.smoke3dcoll.nsmoke3dinfo>0)NewMemory((void **)&global_scase.smoke3dcoll.smoke3dinfo_sorted,global_scase.smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata *));
   NewMemory((void **)&meshvisptr,global_scase.meshescoll.nmeshes*sizeof(int));
   for(i=0;i<global_scase.meshescoll.nmeshes;i++){

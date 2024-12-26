@@ -1306,7 +1306,7 @@ extern "C" void GLUILabelsCB(int var){
     if(glui_tick_inside==1)user_tick_direction=-1.0;
     break;
   case APPLY_VENTOFFSET:
-    UpdateVentOffset();
+    UpdateVentOffset(&global_scase);
     global_scase.updatefaces=1;
     break;
   case FLIP:
