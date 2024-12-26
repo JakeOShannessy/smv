@@ -57,6 +57,9 @@ target_link_libraries(libsmv PRIVATE PkgConfig::LIBGD)
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(libsmv PUBLIC m)
 endif()
+if (SMV_ROOT_OVERRIDE)
+    target_compile_definitions(libsmv PRIVATE SMV_ROOT_OVERRIDE="${SMV_ROOT_OVERRIDE}")
+endif()
 # target_include_directories(.
 #                            PUBLIC
 #                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
