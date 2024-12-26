@@ -236,7 +236,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
     smv_streaminfo = GetSMVBuffer(input_file);
     smv_streaminfo = AppendFileBuffer(smv_streaminfo, iso_filename);
     smv_streaminfo = AppendFileBuffer(smv_streaminfo, fedsmv_filename);
-    return_code = ReadSMV(smv_streaminfo);
+    return_code = ReadSMV(&global_scase, smv_streaminfo);
     if(smv_streaminfo != NULL) {
       FCLOSE(smv_streaminfo);
     }

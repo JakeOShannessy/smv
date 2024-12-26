@@ -261,7 +261,7 @@ int SetupCase(char *filename){
     smv_streaminfo = AppendFileBuffer(smv_streaminfo, global_scase.paths.iso_filename);
     smv_streaminfo = AppendFileBuffer(smv_streaminfo, global_scase.paths.fedsmv_filename);
 
-    return_code = ReadSMV(smv_streaminfo);
+    return_code = ReadSMV(&global_scase, smv_streaminfo);
     if(smv_streaminfo!=NULL){
       FCLOSE(smv_streaminfo);
     }

@@ -12107,10 +12107,10 @@ int ReadSMV_Configure(smv_case *scase){
 /// @brief Parse an SMV file.
 /// @param stream the file stream to parse.
 /// @return zero on sucess, non-zero on error
-int ReadSMV(bufferstreamdata *stream){
-  ReadSMV_Init(&global_scase);
-  ReadSMV_Parse(&global_scase, stream);
-  ReadSMV_Configure(&global_scase);
+int ReadSMV(smv_case *scase, bufferstreamdata *stream){
+  ReadSMV_Init(scase);
+  ReadSMV_Parse(scase, stream);
+  ReadSMV_Configure(scase);
   return 0;
 }
 

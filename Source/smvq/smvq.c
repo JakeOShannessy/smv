@@ -378,7 +378,7 @@ int RunBenchmark(char *input_file) {
       return 1;
     }
     INIT_PRINT_TIMER(ReadSMV_time);
-    int return_code = ReadSMV(smv_streaminfo);
+    int return_code = ReadSMV(&global_scase, smv_streaminfo);
     STOP_TIMER(ReadSMV_time);
     fprintf(stderr, "ReadSMV:\t%8.3f ms\n", ReadSMV_time * 1000);
     if(smv_streaminfo != NULL) {
