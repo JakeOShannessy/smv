@@ -2047,14 +2047,14 @@ void GetLabels(char *buffer, char **label1, char **label2){
 
 /* ------------------ GetPropID ------------------------ */
 
-propdata *GetPropID(char *prop_id){
+propdata *GetPropID(smv_case *scase, char *prop_id){
   int i;
 
-  if(global_scase.propcoll.propinfo == NULL || prop_id == NULL || strlen(prop_id) == 0)return NULL;
-  for(i = 0; i < global_scase.propcoll.npropinfo; i++){
+  if(scase->propcoll.propinfo == NULL || prop_id == NULL || strlen(prop_id) == 0)return NULL;
+  for(i = 0; i < scase->propcoll.npropinfo; i++){
     propdata *propi;
 
-    propi = global_scase.propcoll.propinfo + i;
+    propi = scase->propcoll.propinfo + i;
 
     if(strcmp(propi->label, prop_id) == 0)return propi;
   }
@@ -2233,7 +2233,7 @@ void ParseDevicekeyword(smv_case *scase, BFILE *stream, devicedata *devicei){
   devicei->is_beam = is_beam;
 
   GetLabels(buffer,&prop_id,NULL);
-  devicei->prop=GetPropID(prop_id);
+  devicei->prop=GetPropID(&global_scase, prop_id);
   if(prop_id!=NULL&&devicei->prop!=NULL&&devicei->prop->smv_object!=NULL){
     devicei->object=devicei->prop->smv_object;
   }
@@ -2361,7 +2361,7 @@ void ParseDevicekeyword2(smv_case *scase, FILE *stream, devicedata *devicei){
   devicei->is_beam = is_beam;
 
   GetLabels(buffer, &prop_id, NULL);
-  devicei->prop = GetPropID(prop_id);
+  devicei->prop = GetPropID(&global_scase, prop_id);
   if(prop_id!=NULL&&devicei->prop!=NULL&&devicei->prop->smv_object!=NULL){
     devicei->object = devicei->prop->smv_object;
   }
@@ -10065,7 +10065,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       FGETS(buffer,255,stream);
 
       GetLabels(buffer,&device_ptr,&prop_id);
-      partclassi->prop=GetPropID(prop_id);
+      partclassi->prop=GetPropID(&global_scase, prop_id);
       UpdatePartClassDepend(partclassi);
 
       scase->npartclassinfo++;
