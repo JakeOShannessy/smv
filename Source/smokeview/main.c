@@ -175,7 +175,7 @@ char *ProcessCommandLine(CommandlineArgs *args){
     InitOpenGL(NO_PRINT);
     UpdateRGBColors(colorbar_select_index);
     InitStartupDirs();
-    WriteIni(GLOBAL_INI, NULL);
+    WriteIni(&global_scase, GLOBAL_INI, NULL);
     SMV_EXIT(0);
   }
   if(args->ng_ini){
@@ -183,7 +183,7 @@ char *ProcessCommandLine(CommandlineArgs *args){
     use_graphics = 0;
     UpdateRGBColors(colorbar_select_index);
     InitStartupDirs();
-    WriteIni(GLOBAL_INI, NULL);
+    WriteIni(&global_scase, GLOBAL_INI, NULL);
     SMV_EXIT(0);
   }
   if(args->print_version){

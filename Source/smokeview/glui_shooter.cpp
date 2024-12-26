@@ -261,7 +261,7 @@ void ShooterCB(int var){
     }
     break;
   case SAVE_SETTINGS_SHOOTER:
-    WriteIni(LOCAL_INI, NULL);
+    WriteIni(&global_scase, LOCAL_INI, NULL);
     break;
   case SHOOTER_CLOSE:
     GLUIHideShooter();

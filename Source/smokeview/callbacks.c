@@ -2856,7 +2856,7 @@ void Keyboard(unsigned char key, int flag){
       updatemenu = 1;
       break;
     case '#':
-      WriteIni(LOCAL_INI,NULL);
+      WriteIni(&global_scase, LOCAL_INI,NULL);
       break;
     case '/':
       updatemenu=1;

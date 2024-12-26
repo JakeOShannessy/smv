@@ -327,7 +327,7 @@ void BlockeditDlgCB(int var){
   switch(var){
   case SAVE_SETTINGS_GEOM:
     updatemenu = 1;
-    WriteIni(LOCAL_INI, NULL);
+    WriteIni(&global_scase, LOCAL_INI, NULL);
     break;
   case CLOSE_WINDOW:
     DialogMenu(DIALOG_GEOMETRY);

@@ -2715,7 +2715,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     slicei->ntimes = patchi->ngeom_times;
     slicei->times = patchi->geom_times;
 
-    UpdateLoadedLists();
+    UpdateLoadedLists(&global_scase);
     GetSliceDataBounds(slicei, &qmin, &qmax);
     slicei->globalmin_slice = qmin;
     slicei->globalmax_slice = qmax;

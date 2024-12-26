@@ -1449,7 +1449,7 @@ void GLUIGenPlotCB(int var){
       SetPlot2DBoundLabels(plot2dinfo+iplot2dinfo);
       break;
     case GENPLOT_SAVE:
-      WriteIni(LOCAL_INI, NULL);
+      WriteIni(&global_scase, LOCAL_INI, NULL);
       break;
     case GENPLOT_CLOSE:
       glui_plot2d->hide();
@@ -1674,7 +1674,7 @@ extern "C" void GLUIDeviceCB(int var){
     }
     break;
   case DEVICE_SAVE_SETTINGS_OBJECTS:
-    WriteIni(LOCAL_INI, NULL);
+    WriteIni(&global_scase, LOCAL_INI, NULL);
     break;
   case DEVICE_close:
     GLUIHideDevice();

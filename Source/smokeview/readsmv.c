@@ -6787,7 +6787,7 @@ void *Compress(void *arg){
   PRINTF("Compressing...\n");
   GLUICompressOnOff(OFF);
 
-  WriteIni(LOCAL_INI, NULL);
+  WriteIni(&global_scase, LOCAL_INI, NULL);
 
   // surround smokezip path name with "'s so that the system call can handle embedded blanks
 
@@ -16200,7 +16200,7 @@ void OutputViewpoints(FILE *fileout){
   /* ------------------ WriteIniLocal ------------------------ */
 
 
-void WriteIniLocal(FILE *fileout){
+void WriteIniLocal(smv_case *scase, FILE *fileout){
   int i;
   int ndevice_vis = 0;
   sv_object *obj_typei;
@@ -16225,7 +16225,7 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, " %i %i %i %i\n", vis_gslice_data, show_gslice_triangles, show_gslice_triangulation, show_gslice_normal);
   fprintf(fileout, " %f %f %f\n", gslice_xyz[0], gslice_xyz[1], gslice_xyz[2]);
   fprintf(fileout, " %f %f\n", gslice_normal_azelev[0], gslice_normal_azelev[1]);
-  for(thislabel = global_scase.labelscoll.label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
+  for(thislabel = scase->labelscoll.label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
     labeldata *labeli;
     float *xyz, *rgbtemp, *tstart_stop;
     int *useforegroundcolor, *show_always;
@@ -16268,7 +16268,7 @@ void WriteIniLocal(FILE *fileout){
 
       propi = part5propinfo + i;
       fprintf(fileout, " ");
-      for(j = 0; j < global_scase.npartclassinfo; j++){
+      for(j = 0; j < scase->npartclassinfo; j++){
         fprintf(fileout, " %i ", (int)propi->class_vis[j]);
       }
       fprintf(fileout, "\n");
@@ -16286,30 +16286,30 @@ void WriteIniLocal(FILE *fileout){
 
   }
 
-  if(global_scase.npartclassinfo > 0){
+  if(scase->npartclassinfo > 0){
     int j;
 
     fprintf(fileout, "partclassdataVIS\n");
-    fprintf(fileout, " %i\n", global_scase.npartclassinfo);
-    for(j = 0; j<global_scase.npartclassinfo; j++){
+    fprintf(fileout, " %i\n", scase->npartclassinfo);
+    for(j = 0; j<scase->npartclassinfo; j++){
       partclassdata *partclassj;
 
-      partclassj = global_scase.partclassinfo + j;
+      partclassj = scase->partclassinfo + j;
       fprintf(fileout, " %i\n", partclassj->vis_type);
     }
   }
   fprintf(fileout, "PARTSKIP\n");
   fprintf(fileout, " %i\n", partdrawskip);
 
-  if(global_scase.propcoll.npropinfo>0){
+  if(scase->propcoll.npropinfo>0){
     fprintf(fileout, "PROPINDEX\n");
-    fprintf(fileout, " %i\n", global_scase.propcoll.npropinfo);
-    for(i = 0; i < global_scase.propcoll.npropinfo; i++){
+    fprintf(fileout, " %i\n", scase->propcoll.npropinfo);
+    for(i = 0; i < scase->propcoll.npropinfo; i++){
       propdata *propi;
       int offset;
       int jj;
 
-      propi = global_scase.propcoll.propinfo + i;
+      propi = scase->propcoll.propinfo + i;
       offset = -1;
       for(jj = 0; jj < propi->nsmokeview_ids; jj++){
         if(strcmp(propi->smokeview_id, propi->smokeview_ids[jj]) == 0){
@@ -16338,16 +16338,16 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, " %i %i %i %i %i\n", shooter_fps, shooter_vel_type, shooter_nparts, visShooter, shooter_cont_update);
   fprintf(fileout, " %f %f\n", shooter_duration, shooter_v_inf);
 
-  for(i = 0; i < global_scase.objectscoll.nobject_defs; i++){
-    obj_typei = global_scase.objectscoll.object_defs[i];
+  for(i = 0; i < scase->objectscoll.nobject_defs; i++){
+    obj_typei = scase->objectscoll.object_defs[i];
     if(obj_typei->used == 1 && obj_typei->visible == 1){
       ndevice_vis++;
     }
   }
   fprintf(fileout, "SHOWDEVICES\n");
   fprintf(fileout, " %i %i %i\n", ndevice_vis, object_outlines, object_box);
-  for(i = 0; i < global_scase.objectscoll.nobject_defs; i++){
-    obj_typei = global_scase.objectscoll.object_defs[i];
+  for(i = 0; i < scase->objectscoll.nobject_defs; i++){
+    obj_typei = scase->objectscoll.object_defs[i];
     if(obj_typei->used == 1 && obj_typei->visible == 1){
       fprintf(fileout, " %s\n", obj_typei->label);
     }
@@ -16419,7 +16419,7 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, "SHOWDEVICEVALS\n");
   fprintf(fileout, " %i %i %i %i %i %i %i %i %i\n", showdevice_val, showvdevice_val, devicetypes_index, colordevice_val, vectortype, viswindrose, showdevice_type,showdevice_unit,showdevice_id);
   fprintf(fileout, "SHOWHRRPLOT\n");
-  fprintf(fileout, " %i %i %f %f %i\n", glui_hrr, hoc_hrr, global_scase.fuel_hoc, plot2d_size_factor, vis_hrr_plot);
+  fprintf(fileout, " %i %i %f %f %i\n", glui_hrr, hoc_hrr, scase->fuel_hoc, plot2d_size_factor, vis_hrr_plot);
   fprintf(fileout, "SHOWMISSINGOBJECTS\n");
   fprintf(fileout, " %i\n", show_missing_objects);
   fprintf(fileout, "SHOWSLICEPLOT\n");
@@ -16429,14 +16429,14 @@ void WriteIniLocal(FILE *fileout){
                     slice_dxyz[0], slice_dxyz[1], slice_dxyz[2], average_plot2d_slice_region, show_plot2d_slice_position
                     );
   fprintf(fileout, "SMOKE3DCUTOFFS\n");
-  fprintf(fileout, " %f %f\n", load_3dsmoke_cutoff, global_scase.load_hrrpuv_cutoff);
-  for(i = global_scase.ntickinfo_smv; i < global_scase.ntickinfo; i++){
+  fprintf(fileout, " %f %f\n", load_3dsmoke_cutoff, scase->load_hrrpuv_cutoff);
+  for(i = scase->ntickinfo_smv; i < scase->ntickinfo; i++){
     float *begt;
     float *endt;
     float *rgbtemp;
     tickdata *ticki;
 
-    ticki = global_scase.tickinfo + i;
+    ticki = scase->tickinfo + i;
     begt = ticki->begin;
     endt = ticki->end;
     rgbtemp = ticki->rgb;
@@ -16447,11 +16447,11 @@ void WriteIniLocal(FILE *fileout){
   }
   fprintf(fileout, "SHOWGEOMTERRAIN\n");
   fprintf(fileout, "%i %i %i %i %i\n",
-    global_scase.terrain_texture_coll.nterrain_textures, terrain_show_geometry_surface, terrain_show_geometry_outline, terrain_show_geometry_points, terrain_showonly_top);
-  for(i = 0; i<global_scase.terrain_texture_coll.nterrain_textures; i++){
+    scase->terrain_texture_coll.nterrain_textures, terrain_show_geometry_surface, terrain_show_geometry_outline, terrain_show_geometry_points, terrain_showonly_top);
+  for(i = 0; i<scase->terrain_texture_coll.nterrain_textures; i++){
     texturedata *texti;
 
-    texti = global_scase.terrain_texture_coll.terrain_textures+i;
+    texti = scase->terrain_texture_coll.terrain_textures+i;
     fprintf(fileout, "%i\n", texti->display);
   }
 
@@ -16464,13 +16464,13 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, "TOURINDEX\n");
   fprintf(fileout, " %i\n", selectedtour_index);
   startup_count = 0;
-  for(i = 0; i < global_scase.tourcoll.ntourinfo; i++){
+  for(i = 0; i < scase->tourcoll.ntourinfo; i++){
     tourdata *touri;
 
-    touri = global_scase.tourcoll.tourinfo + i;
+    touri = scase->tourcoll.tourinfo + i;
     if(touri->startup == 1)startup_count++;
   }
-  if(startup_count < global_scase.tourcoll.ntourinfo){
+  if(startup_count < scase->tourcoll.ntourinfo){
     //TOUR7
     // index
     //   tourlabel
@@ -16478,13 +16478,13 @@ void WriteIniLocal(FILE *fileout){
     //      time pause_time x y z
     //      vx vy vz
     fprintf(fileout, "TOUR7\n");
-    fprintf(fileout, " %i\n", global_scase.tourcoll.ntourinfo - startup_count);
-    for(i = 0; i < global_scase.tourcoll.ntourinfo; i++){
+    fprintf(fileout, " %i\n", scase->tourcoll.ntourinfo - startup_count);
+    for(i = 0; i < scase->tourcoll.ntourinfo; i++){
       tourdata *touri;
       keyframe *framei;
       int j;
 
-      touri =global_scase.tourcoll.tourinfo + i;
+      touri =scase->tourcoll.tourinfo + i;
       if(touri->startup == 1)continue;
 
       TrimBack(touri->label);
@@ -16586,11 +16586,11 @@ void WriteIniLocal(FILE *fileout){
   fprintf(fileout, "TIMEOFFSET\n");
   fprintf(fileout, " %f\n", timeoffset);
   fprintf(fileout, "TLOAD\n");
-  fprintf(fileout, " %i %f %i %f %i %i\n", use_tload_begin, global_scase.tload_begin, use_tload_end, global_scase.tload_end, use_tload_skip, tload_skip);
-  for(i = 0; i < global_scase.npatchinfo; i++){
+  fprintf(fileout, " %i %f %i %f %i %i\n", use_tload_begin, scase->tload_begin, use_tload_end, scase->tload_end, use_tload_skip, tload_skip);
+  for(i = 0; i < scase->npatchinfo; i++){
     patchdata *patchi;
 
-    patchi = global_scase.patchinfo + i;
+    patchi = scase->patchinfo + i;
     if(patchi->firstshort_patch == 1){
       int set_valmin=0, set_valmax=0;
       float valmin=1.0, valmax=0.0;
@@ -16635,17 +16635,17 @@ void WriteIniLocal(FILE *fileout){
     n3d = MAXPLOT3DVARS;
     if(n3d<numplot3dvars)n3d = numplot3dvars;
     if(n3d>MAXPLOT3DVARS)n3d = MAXPLOT3DVARS;
-    if(global_scase.plot3dinfo!=NULL){
+    if(scase->plot3dinfo!=NULL){
       fprintf(fileout, "V2_PLOT3D\n");
       fprintf(fileout, " %i\n", n3d);
     }
     for(i = 0; i < n3d; i++){
-    if(global_scase.plot3dinfo!=NULL){
+    if(scase->plot3dinfo!=NULL){
       int set_valmin=0, set_valmax=0;
       float valmin=1.0, valmax=0.0;
       char *label;
 
-      label = global_scase.plot3dinfo[0].label[i].shortlabel;
+      label = scase->plot3dinfo[0].label[i].shortlabel;
       GLUIGetOnlyMinMax(BOUND_PLOT3D, label, &set_valmin, &valmin, &set_valmax, &valmax);
       fprintf(fileout, " %i %i %f %i %f %s\n", i+1, set_valmin, valmin, set_valmax, valmax, label);
     }
@@ -16691,7 +16691,7 @@ void WriteIniLocal(FILE *fileout){
   }
   fprintf(fileout, "V_TARGET\n");
   fprintf(fileout, " %i %f %i %f\n", settargetmin, targetmin, settargetmax, targetmax);
-  if(global_scase.nzoneinfo > 0){
+  if(scase->nzoneinfo > 0){
     fprintf(fileout, "V_ZONE\n");
     fprintf(fileout, " %i %f %i %f\n", setzonemin, zoneusermin, setzonemax, zoneusermax);
     fprintf(fileout, "ZONEVIEW\n");
@@ -16701,7 +16701,7 @@ void WriteIniLocal(FILE *fileout){
 
   /* ------------------ WriteIni ------------------------ */
 
-void WriteIni(int flag,char *filename){
+void WriteIni(smv_case *scase, int flag,char *filename){
   FILE *fileout=NULL;
   int i;
   char *outfilename=NULL, *outfiledir=NULL;
@@ -16721,12 +16721,12 @@ void WriteIni(int flag,char *filename){
     outfilename=filename;
     break;
   case LOCAL_INI:
-    fileout=fopen(global_scase.paths.caseini_filename,"w");
+    fileout=fopen(scase->paths.caseini_filename,"w");
     if(fileout==NULL&&smokeview_scratchdir!=NULL){
-      fileout = fopen_indir(smokeview_scratchdir, global_scase.paths.caseini_filename, "w");
+      fileout = fopen_indir(smokeview_scratchdir, scase->paths.caseini_filename, "w");
       outfiledir = smokeview_scratchdir;
      }
-    outfilename=global_scase.paths.caseini_filename;
+    outfilename=scase->paths.caseini_filename;
     break;
   default:
     assert(FFALSE);
@@ -16768,10 +16768,10 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "COLORBAR\n");
   {
     int usetexturebar = 1; //for older smokeviews
-    fprintf(fileout, " %i %i %i %i\n", global_scase.nrgb, usetexturebar, colorbar_select_index, colorbar_selection_width);
+    fprintf(fileout, " %i %i %i %i\n", scase->nrgb, usetexturebar, colorbar_select_index, colorbar_selection_width);
   }
-  for(i=0;i<global_scase.nrgb;i++){
-    fprintf(fileout," %f %f %f\n",global_scase.rgb[i][0],global_scase.rgb[i][1],global_scase.rgb[i][2]);
+  for(i=0;i<scase->nrgb;i++){
+    fprintf(fileout," %f %f %f\n",scase->rgb[i][0],scase->rgb[i][1],scase->rgb[i][2]);
   }
   fprintf(fileout,"COLOR2BAR\n");
   fprintf(fileout," %i\n",8);
@@ -16858,19 +16858,19 @@ void WriteIni(int flag,char *filename){
     int scount;
 
     scount = 0;
-    for(i = 0; i<global_scase.surfcoll.nsurfinfo; i++){
+    for(i = 0; i<scase->surfcoll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = global_scase.surfcoll.surfinfo+global_scase.surfcoll.sorted_surfidlist[i];
+      surfi = scase->surfcoll.surfinfo+scase->surfcoll.sorted_surfidlist[i];
       if(surfi->used_by_geom==1)scount++;
     }
     if(scount>0){
       fprintf(fileout, "SURFCOLORS\n");
       fprintf(fileout, " %i %i\n", scount, use_surf_color);
-      for(i = 0; i<global_scase.surfcoll.nsurfinfo; i++){
+      for(i = 0; i<scase->surfcoll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = global_scase.surfcoll.surfinfo+global_scase.surfcoll.sorted_surfidlist[i];
+        surfi = scase->surfcoll.surfinfo+scase->surfcoll.sorted_surfidlist[i];
         if(surfi->used_by_geom==1){
           int *ini_surf_color;
 
@@ -16884,19 +16884,19 @@ void WriteIni(int flag,char *filename){
     int scount;
 
     scount = 0;
-    for(i = 0; i<global_scase.surfcoll.nsurfinfo; i++){
+    for(i = 0; i<scase->surfcoll.nsurfinfo; i++){
       surfdata *surfi;
 
-      surfi = global_scase.surfcoll.surfinfo+global_scase.surfcoll.sorted_surfidlist[i];
+      surfi = scase->surfcoll.surfinfo+scase->surfcoll.sorted_surfidlist[i];
       if(surfi->in_color_dialog==1&&surfi->color!=surfi->color_orig)scount++;
     }
     if(scount>0){
       fprintf(fileout, "OBSTSURFCOLORS\n");
       fprintf(fileout, " %i %i\n", scount, use_surf_color);
-      for(i = 0; i<global_scase.surfcoll.nsurfinfo; i++){
+      for(i = 0; i<scase->surfcoll.nsurfinfo; i++){
         surfdata *surfi;
 
-        surfi = global_scase.surfcoll.surfinfo+global_scase.surfcoll.sorted_surfidlist[i];
+        surfi = scase->surfcoll.surfinfo+scase->surfcoll.sorted_surfidlist[i];
         if(surfi->in_color_dialog==1&&surfi->color!=surfi->color_orig){
           float *color;
 
@@ -16922,7 +16922,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "ISOPOINTSIZE\n");
   fprintf(fileout, " %f\n", isopointsize);
   fprintf(fileout, "LINEWIDTH\n");
-  fprintf(fileout, " %f\n", global_scase.linewidth);
+  fprintf(fileout, " %f\n", scase->linewidth);
   fprintf(fileout, "PARTPOINTSIZE\n");
   fprintf(fileout, " %f\n", partpointsize);
   fprintf(fileout, "PLOT3DLINEWIDTH\n");
@@ -16958,7 +16958,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "VECTORPOINTSIZE\n");
   fprintf(fileout," %f\n",vectorpointsize);
   fprintf(fileout, "VENTLINEWIDTH\n");
-  fprintf(fileout, " %f\n", global_scase.ventlinewidth);
+  fprintf(fileout, " %f\n", scase->ventlinewidth);
   fprintf(fileout, "VENTOFFSET\n");
   fprintf(fileout, " %f\n", ventoffset_factor);
   fprintf(fileout, "WINDOWOFFSET\n");
@@ -17096,23 +17096,23 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i\n", gvec_down);
   fprintf(fileout, "ISOTRAN2\n");
   fprintf(fileout, " %i\n", transparent_state);
-  for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
+  for(i = 0; i < scase->meshescoll.nmeshes; i++){
     meshdata *meshi;
 
-    meshi = global_scase.meshescoll.meshinfo + i;
+    meshi = scase->meshescoll.meshinfo + i;
     if(meshi->mesh_offset_ptr != NULL){
       fprintf(fileout, "MESHOFFSET\n");
       fprintf(fileout, " %i\n", i);
     }
   }
-  if(global_scase.meshescoll.nmeshes>1){
+  if(scase->meshescoll.nmeshes>1){
     fprintf(fileout,"MESHVIS\n");
-    fprintf(fileout," %i\n",global_scase.meshescoll.nmeshes);
+    fprintf(fileout," %i\n",scase->meshescoll.nmeshes);
 
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0;i<scase->meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = global_scase.meshescoll.meshinfo + i;
+      meshi = scase->meshescoll.meshinfo + i;
       fprintf(fileout," %i\n",meshi->blockvis);
     }
   }
@@ -17191,13 +17191,13 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "SHOWOPENVENTS\n");
   fprintf(fileout, " %i %i\n", visOpenVents, visOpenVentsAsOutline);
   fprintf(fileout, "SHOWOTHERVENTS\n");
-  fprintf(fileout, " %i\n", global_scase.visOtherVents);
+  fprintf(fileout, " %i\n", scase->visOtherVents);
   fprintf(fileout, "SHOWROOMS\n");
   fprintf(fileout, " %i\n", visCompartments);
   fprintf(fileout, "SHOWSENSORS\n");
   fprintf(fileout, " %i %i\n", visSensor, visSensorNorm);
   fprintf(fileout, "SHOWSLICEINOBST\n");
-  fprintf(fileout, " %i\n", global_scase.show_slice_in_obst);
+  fprintf(fileout, " %i\n", scase->show_slice_in_obst);
   fprintf(fileout, "SHOWSMOKEPART\n");
   fprintf(fileout, " %i\n", visSmokePart);
 #ifdef pp_SKY
@@ -17209,7 +17209,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "SHOWSTREAK\n");
   fprintf(fileout, " %i %i %i %i\n", streak5show, streak5step, showstreakhead, streak_index);
   fprintf(fileout, "SHOWTERRAIN\n");
-  fprintf(fileout, " %i %i\n", global_scase.visTerrainType, terrain_slice_overlap);
+  fprintf(fileout, " %i %i\n", scase->visTerrainType, terrain_slice_overlap);
   fprintf(fileout, "SHOWTHRESHOLD\n");
   fprintf(fileout, " %i %i %f\n", vis_threshold, vis_onlythreshold, temp_threshold);
   fprintf(fileout, "SHOWTICKS\n");
@@ -17308,9 +17308,9 @@ void WriteIni(int flag,char *filename){
 
   fprintf(fileout, "SHOWSLICEVALS\n");
   fprintf(fileout, " %i\n", show_slice_values_all_regions);
-  if(global_scase.paths.fds_filein != NULL&&strlen(global_scase.paths.fds_filein) > 0){
+  if(scase->paths.fds_filein != NULL&&strlen(scase->paths.fds_filein) > 0){
     fprintf(fileout, "INPUT_FILE\n");
-    fprintf(fileout, " %s\n", global_scase.paths.fds_filein);
+    fprintf(fileout, " %s\n", scase->paths.fds_filein);
   }
   fprintf(fileout, "LABELSTARTUPVIEW\n");
   fprintf(fileout, " %s\n", viewpoint_label_startup);
@@ -17417,7 +17417,7 @@ void WriteIni(int flag,char *filename){
     }
   }
   fprintf(fileout, "HRRPUVCUTOFF\n");
-  fprintf(fileout, " %f\n", global_scase.global_hrrpuv_cutoff);
+  fprintf(fileout, " %f\n", scase->global_hrrpuv_cutoff);
   fprintf(fileout, "SHOWEXTREMEDATA\n");
   {
     int show_extremedata = 0;
@@ -17431,9 +17431,9 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i %i %i %i\n", smoke_color_int255[0], smoke_color_int255[1], smoke_color_int255[2], force_gray_smoke);
   fprintf(fileout, "SMOKECULL\n");
   fprintf(fileout," %i\n",smokecullflag);
-  if(ABS(global_scase.smoke_albedo - global_scase.smoke_albedo_base) > 0.001){
+  if(ABS(scase->smoke_albedo - scase->smoke_albedo_base) > 0.001){
     fprintf(fileout, "SMOKEALBEDO\n");
-    fprintf(fileout, " %f\n", global_scase.smoke_albedo);
+    fprintf(fileout, " %f\n", scase->smoke_albedo);
   }
   if((have_fire == NO_FIRE && have_smoke == NO_SMOKE)||(have_fire != NO_FIRE && have_smoke != NO_SMOKE)){
     fprintf(fileout, "SMOKEFIREPROP\n");
@@ -17497,14 +17497,14 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "VIEWALLTOURS\n");
   fprintf(fileout, " %i\n", viewalltours);
   fprintf(fileout, "VIEWTIMES\n");
-  fprintf(fileout, " %f %f %i\n", global_scase.tourcoll.tour_tstart, global_scase.tourcoll.tour_tstop, global_scase.tourcoll.tour_ntimes);
+  fprintf(fileout, " %f %f %i\n", scase->tourcoll.tour_tstart, scase->tourcoll.tour_tstop, scase->tourcoll.tour_ntimes);
   fprintf(fileout, "VIEWTOURFROMPATH\n");
   fprintf(fileout, " %i %i %f\n", viewtourfrompath, tour_snap, tour_snap_time);
 
 
-  if(flag == LOCAL_INI)WriteIniLocal(fileout);
+  if(flag == LOCAL_INI)WriteIniLocal(scase, fileout);
   if(
-    ((INI_fds_filein != NULL&&global_scase.paths.fds_filein != NULL&&strcmp(INI_fds_filein, global_scase.paths.fds_filein) == 0) ||
+    ((INI_fds_filein != NULL&&scase->paths.fds_filein != NULL&&strcmp(INI_fds_filein, scase->paths.fds_filein) == 0) ||
     flag == LOCAL_INI))OutputViewpoints(fileout);
 
   {
@@ -17517,11 +17517,11 @@ void WriteIni(int flag,char *filename){
     fprintf(fileout,"# -------------------------\n\n");
     fprintf(fileout,"# Smokeview Build: %s\n",githash);
     fprintf(fileout,"# Smokeview Build Date: %s\n",__DATE__);
-    if(global_scase.fds_version!=NULL){
-      fprintf(fileout,"# FDS Version: %s\n",global_scase.fds_version);
+    if(scase->fds_version!=NULL){
+      fprintf(fileout,"# FDS Version: %s\n",scase->fds_version);
     }
-    if(global_scase.fds_githash!=NULL){
-      fprintf(fileout, "# FDS Build: %s\n", global_scase.fds_githash);
+    if(scase->fds_githash!=NULL){
+      fprintf(fileout, "# FDS Build: %s\n", scase->fds_githash);
     }
     fprintf(fileout,"# Platform: WIN64\n");
 #ifdef pp_OSX

@@ -1004,7 +1004,7 @@ extern "C" void GLUIViewpointCB(int var){
       }
     }
     selected_view = startup_view_ini;
-    WriteIni(LOCAL_INI, NULL);
+    WriteIni(&global_scase, LOCAL_INI, NULL);
     break;
   case CYCLEVIEWS_USER:
   case CYCLEVIEWS_DEFAULT:
@@ -1115,7 +1115,7 @@ void MotionDlgCB(int var){
     break;
   case SAVE_SETTINGS_MOTION:
     updatemenu = 1;
-    WriteIni(LOCAL_INI, NULL);
+    WriteIni(&global_scase, LOCAL_INI, NULL);
     break;
   default:
     assert(FFALSE);
@@ -2634,7 +2634,7 @@ void RenderCB(int var){
     case MAKE_MOVIE_BATCH:
       GLUIViewpointCB(REPLACE_CURRENT_VIEW);
       ResetMenu(SAVE_CURRENT_VIEWPOINT);
-      WriteIni(SCRIPT_INI, movie_ini_filename);
+      WriteIni(&global_scase, SCRIPT_INI, movie_ini_filename);
       MakeMovieSMVScript();
       MakeMovieBashScript();
       break;

@@ -3869,7 +3869,7 @@ void BoundsDlgCB(int var){
 #endif
     break;
   case SAVE_SETTINGS_BOUNDS:
-    WriteIni(LOCAL_INI, NULL);
+    WriteIni(&global_scase, LOCAL_INI, NULL);
     break;
   case COMPRESS_FILES:
     PRINTF("compressing\n");
@@ -4688,12 +4688,12 @@ void ScriptCB(int var){
 
       strcpy(script_filename, name);
       inifile = InsertIniFile(name);
-      WriteIni(SCRIPT_INI, script_filename);
+      WriteIni(&global_scase, SCRIPT_INI, script_filename);
       if(inifile != NULL&&LIST_ini_list != NULL){
         LIST_ini_list->add_item(inifile->id, inifile->file);
       }
     }
-    WriteIni(LOCAL_INI, NULL);
+    WriteIni(&global_scase, LOCAL_INI, NULL);
     break;
   case SCRIPT_LOADINI:
   {

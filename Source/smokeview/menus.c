@@ -2815,11 +2815,11 @@ void SmokeviewIniMenu(int value){
     ReadBinIni(&global_scase);
     break;
   case MENU_WRITEINI:
-    WriteIni(GLOBAL_INI,NULL);
-    WriteIni(LOCAL_INI,NULL);
+    WriteIni(&global_scase, GLOBAL_INI,NULL);
+    WriteIni(&global_scase, LOCAL_INI,NULL);
     break;
   case MENU_WRITECASEINI:
-    WriteIni(LOCAL_INI,NULL);
+    WriteIni(&global_scase, LOCAL_INI,NULL);
     break;
   case MENU_READSVO:
     ReadDefaultObjectCollection(&global_scase.objectscoll, global_scase.fdsprefix, setbw, global_scase.isZoneFireModel);

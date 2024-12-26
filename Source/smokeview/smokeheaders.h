@@ -743,11 +743,11 @@ EXTERNCPP void SetSliceMax(int set_valmax, float valmax, char *buffer2);
 EXTERNCPP void SetSliceParmInfo(smv_case *scase, sliceparmdata *sp);
 EXTERNCPP void *SetupAllIsosurfaces(void *arg);
 EXTERNCPP void UpdateHoc(void);
-EXTERNCPP void UpdateLoadedLists(void);
+EXTERNCPP void UpdateLoadedLists(smv_case *scase);
 EXTERNCPP void UpdateSMVDynamic(char *file);
 EXTERNCPP void UpdateUseTextures(smv_case *scase);
 EXTERNCPP void UpdateVentOffset(smv_case *scase);
-EXTERNCPP void WriteIni(int flag,char *file);
+EXTERNCPP void WriteIni(smv_case *scase, int flag,char *file);
 
 //*** renderhtml.c headers
 

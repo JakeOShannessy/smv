@@ -519,7 +519,7 @@ void TourCB(int var){
     GLUIHideTour();
     break;
   case SAVE_SETTINGS_TOUR:
-    WriteIni(LOCAL_INI,NULL);
+    WriteIni(&global_scase, LOCAL_INI,NULL);
     break;
   case SHOWTOURROUTE:
     if(edittour==1&&selectedtour_index<0&&global_scase.tourcoll.ntourinfo>0){

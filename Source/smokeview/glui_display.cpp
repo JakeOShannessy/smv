@@ -1353,7 +1353,7 @@ extern "C" void GLUILabelsCB(int var){
     if(visUSERticks==1)ROLLOUT_user_tick->open();
     break;
   case SAVE_SETTINGS_DISPLAY:
-    WriteIni(LOCAL_INI,NULL);
+    WriteIni(&global_scase, LOCAL_INI,NULL);
     break;
   case LABELS_showall:
     LabelMenu(MENU_LABEL_ShowAll);

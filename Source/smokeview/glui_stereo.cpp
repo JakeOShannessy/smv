@@ -93,7 +93,7 @@ void StereoCB(int var){
     GLUIHideStereo();
     break;
   case SAVE_SETTINGS_STEREO:
-    WriteIni(LOCAL_INI, NULL);
+    WriteIni(&global_scase, LOCAL_INI, NULL);
     break;
   default:
     assert(FFALSE);

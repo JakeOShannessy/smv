@@ -1696,7 +1696,7 @@ void UpdateTimes(void){
 int GetPlotStateSub(int choice){
   int i;
 
-  UpdateLoadedLists();
+  UpdateLoadedLists(&global_scase);
   switch(choice){
     case STATIC_PLOTS:
     case STATIC_PLOTS_NORECURSE:
@@ -2601,7 +2601,7 @@ void BoundBoundCB(int var);
   }
   if(convert_ini == 1){
     SHOW_UPDATE(convert_ini);
-    WriteIni(SCRIPT_INI, ini_to);
+    WriteIni(&global_scase, SCRIPT_INI, ini_to);
     SMV_EXIT(0);
     END_SHOW_UPDATE(convert_ini);
   }

@@ -93,7 +93,7 @@ void ClipCB(int var){
     }
     break;
   case SAVE_SETTINGS_CLIP:
-    WriteIni(LOCAL_INI, NULL);
+    WriteIni(&global_scase, LOCAL_INI, NULL);
     break;
   case CLIP_CLOSE:
     GLUIHideClip();

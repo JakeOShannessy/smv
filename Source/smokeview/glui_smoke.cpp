@@ -1206,7 +1206,7 @@ extern "C" void GLUISmoke3dCB(int var){
     GLUISmoke3dCB(UPDATE_SMOKECOLORS);
     break;
   case SAVE_SETTINGS_SMOKE:
-    WriteIni(LOCAL_INI,NULL);
+    WriteIni(&global_scase, LOCAL_INI,NULL);
     break;
   case GLOBAL_FIRE_CUTOFF:
     glutPostRedisplay();

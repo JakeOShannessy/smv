@@ -486,7 +486,7 @@ extern "C" void GLUIColorbarCB(int var){
     break;
   case COLORBAR_SAVE_INI:
     updatemenu = 1;
-    WriteIni(LOCAL_INI, NULL);
+    WriteIni(&global_scase, LOCAL_INI, NULL);
     break;
   case COLORBAR_ADDPOINT:
     if(colorbartype >= colorbars.ncolorbars)return;
