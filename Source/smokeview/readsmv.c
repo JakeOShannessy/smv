@@ -5356,7 +5356,7 @@ int ParseBNDFCount(smv_case *scase){
 
 /* ------------------ ParseBNDFProcess ------------------------ */
 
-int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, int *ioffset_in, patchdata **patchgeom_in, int *ipatch_in, char buffers[6][256]){
+int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, int *nn_patch_in, int *ioffset_in, patchdata **patchgeom_in, int *ipatch_in, char buffers[6][256]){
   patchdata *patchi;
   int blocknumber;
   size_t len;
@@ -5384,7 +5384,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   TrimBack(buffer);
   len = strlen(buffer);
 
-  if(global_scase.meshescoll.nmeshes>1){
+  if(scase->meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5402,7 +5402,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
     patchi = patchgeom;
   }
   else{
-    patchi = global_scase.patchinfo+ipatch;
+    patchi = scase->patchinfo+ipatch;
   }
 
   for(i = 0; i<6; i++){
@@ -5427,7 +5427,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
     patchi->patch_filetype = PATCH_STRUCTURED_CELL_CENTER;
   }
   if(Match(buffer, "BNDE")==1){
-    global_scase.ngeom_data++;
+    scase->ngeom_data++;
     patchi->patch_filetype = PATCH_GEOMETRY_BOUNDARY;
     patchi->structured = NO;
   }
@@ -5436,7 +5436,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
     char *sliceparms;
 
     CheckMemory;
-    global_scase.ngeom_data++;
+    scase->ngeom_data++;
     patchi->patch_filetype = PATCH_GEOMETRY_SLICE;
     patchi->structured = NO;
     patchi->boundary = 0;
@@ -5473,7 +5473,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   }
   else{
     if(FGETS(buffer, 255, stream)==NULL){
-      global_scase.npatchinfo--;
+      scase->npatchinfo--;
       return RETURN_BREAK;
     }
   }
@@ -5514,20 +5514,20 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
     }
     else{
       if(FGETS(buffer, 255, stream)==NULL){
-        global_scase.npatchinfo--;
+        scase->npatchinfo--;
         return RETURN_BREAK;
       }
     }
 
-    if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY&&global_scase.ncgeominfo>0){
-      patchi->geominfo = global_scase.cgeominfo+blocknumber;
+    if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY&&scase->ncgeominfo>0){
+      patchi->geominfo = scase->cgeominfo+blocknumber;
     }
     else{
       geomfile = TrimFrontBack(buffer);
-      for(igeom = 0; igeom<global_scase.ngeominfo; igeom++){
+      for(igeom = 0; igeom<scase->ngeominfo; igeom++){
         geomdata *geomi;
 
-        geomi = global_scase.geominfo+igeom;
+        geomi = scase->geominfo+igeom;
         if(strcmp(geomi->file, geomfile)==0){
           patchi->geominfo = geomi;
           if(patchi->patch_filetype==PATCH_GEOMETRY_BOUNDARY){
@@ -5573,7 +5573,7 @@ int ParseBNDFProcess(bufferstreamdata *stream, char *buffer, int *nn_patch_in, i
   patchi->chopmin = 1.0;
   patchi->setchopmax = 0;
   patchi->chopmax = 0.0;
-  global_scase.meshescoll.meshinfo[blocknumber].patchfilenum = -1;
+  scase->meshescoll.meshinfo[blocknumber].patchfilenum = -1;
   {
     char geomlabel2[256], *geomptr = NULL;
 
@@ -11449,7 +11449,7 @@ typedef struct {
       int return_val;
 
       START_TIMER(BNDF_timer);
-      return_val = ParseBNDFProcess(stream, buffer, &nn_patch, &ioffset, &patchgeom, &ipatch, buffers);
+      return_val = ParseBNDFProcess(&global_scase, stream, buffer, &nn_patch, &ioffset, &patchgeom, &ipatch, buffers);
       CUM_TIMER(BNDF_timer, cum_BNDF_timer);
       if(return_val==RETURN_BREAK){
         BREAK;
