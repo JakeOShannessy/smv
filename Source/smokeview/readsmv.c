@@ -5142,7 +5142,7 @@ int ParseISOFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
 #define NO_SCAN 1
 /* ------------------ ParseCHIDProcess ------------------------ */
 
-int ParseCHIDProcess(bufferstreamdata *stream, int option){
+int ParseCHIDProcess(smv_case *scase, bufferstreamdata *stream, int option){
   size_t len;
   char buffer[255], *bufferptr;
 
@@ -5162,16 +5162,16 @@ int ParseCHIDProcess(bufferstreamdata *stream, int option){
   }
   bufferptr = TrimFrontBack(buffer);
   len = strlen(bufferptr);
-  FREEMEMORY(global_scase.paths.chidfilebase);
-  NewMemory((void **)&global_scase.paths.chidfilebase, (unsigned int)(len+1));
-  STRCPY(global_scase.paths.chidfilebase, bufferptr);
+  FREEMEMORY(scase->paths.chidfilebase);
+  NewMemory((void **)&scase->paths.chidfilebase, (unsigned int)(len+1));
+  STRCPY(scase->paths.chidfilebase, bufferptr);
 
-  if(global_scase.paths.chidfilebase!=NULL){
-    NewMemory((void **)&global_scase.paths.hrr_csv_filename, (unsigned int)(strlen(global_scase.paths.chidfilebase)+8+1));
-    STRCPY(global_scase.paths.hrr_csv_filename, chidfilebase);
-    STRCAT(global_scase.paths.hrr_csv_filename, "_hrr.csv");
-    if(FILE_EXISTS_CASEDIR(global_scase.paths.hrr_csv_filename)==NO){
-      FREEMEMORY(global_scase.paths.hrr_csv_filename);
+  if(scase->paths.chidfilebase!=NULL){
+    NewMemory((void **)&scase->paths.hrr_csv_filename, (unsigned int)(strlen(scase->paths.chidfilebase)+8+1));
+    STRCPY(scase->paths.hrr_csv_filename, chidfilebase);
+    STRCAT(scase->paths.hrr_csv_filename, "_hrr.csv");
+    if(FILE_EXISTS_CASEDIR(scase->paths.hrr_csv_filename)==NO){
+      FREEMEMORY(scase->paths.hrr_csv_filename);
     }
   }
   return RETURN_CONTINUE;
@@ -5179,8 +5179,8 @@ int ParseCHIDProcess(bufferstreamdata *stream, int option){
 
 /* ------------------ ReadSMVCHID ------------------------ */
 
-int ReadSMVCHID(bufferstreamdata *stream){
-  ParseCHIDProcess(stream, SCAN);
+int ReadSMVCHID(smv_case *scase, bufferstreamdata *stream){
+  ParseCHIDProcess(scase, stream, SCAN);
   return 0;
 }
 
