@@ -745,7 +745,7 @@ EXTERNCPP void *SetupAllIsosurfaces(void *arg);
 EXTERNCPP void UpdateHoc(void);
 EXTERNCPP void UpdateLoadedLists(void);
 EXTERNCPP void UpdateSMVDynamic(char *file);
-EXTERNCPP void UpdateUseTextures(void);
+EXTERNCPP void UpdateUseTextures(smv_case *scase);
 EXTERNCPP void UpdateVentOffset(smv_case *scase);
 EXTERNCPP void WriteIni(int flag,char *file);
 

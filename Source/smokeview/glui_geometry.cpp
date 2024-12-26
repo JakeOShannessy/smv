@@ -1553,7 +1553,7 @@ extern "C" void GLUIObjectCB(int var){
           changed_idlist[bchighlight->blockage_id]=1;
         }
         blockages_dirty=1;
-        UpdateUseTextures();
+        UpdateUseTextures(&global_scase);
         UpdateFaces();
       }
       break;

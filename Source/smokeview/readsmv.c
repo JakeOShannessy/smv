@@ -11798,7 +11798,7 @@ int ReadSMV_Configure(smv_case *scase){
   /*
     Associate a surface with each block.
   */
-  UpdateUseTextures();
+  UpdateUseTextures(scase);
   PRINT_TIMER(timer_readsmv, "UpdateUseTextures");
   CheckMemory;
 
@@ -12116,21 +12116,21 @@ int ReadSMV(smv_case *scase, bufferstreamdata *stream){
 
 /* ------------------ UpdateUseTextures ------------------------ */
 
-void UpdateUseTextures(void){
+void UpdateUseTextures(smv_case *scase){
   int i;
 
-  for(i=0;i<global_scase.texture_coll.ntextureinfo;i++){
+  for(i=0;i<scase->texture_coll.ntextureinfo;i++){
     texturedata *texti;
 
-    texti=global_scase.texture_coll.textureinfo + i;
+    texti=scase->texture_coll.textureinfo + i;
     texti->used=0;
   }
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi=global_scase.meshescoll.meshinfo + i;
-    if(global_scase.texture_coll.textureinfo!=NULL){
+    meshi=scase->meshescoll.meshinfo + i;
+    if(scase->texture_coll.textureinfo!=NULL){
       for(j=0;j<meshi->nbptrs;j++){
         int k;
         blockagedata *bc;
@@ -12154,14 +12154,14 @@ void UpdateUseTextures(void){
       if(vi->surf[0]==NULL){
         if(vent_surfacedefault!=NULL){
           if(j>=meshi->nvents+6){
-            vi->surf[0]=global_scase.exterior_surfacedefault;
+            vi->surf[0]=scase->exterior_surfacedefault;
           }
           else{
             vi->surf[0]=vent_surfacedefault;
           }
         }
       }
-      if(global_scase.texture_coll.textureinfo!=NULL){
+      if(scase->texture_coll.textureinfo!=NULL){
         if(vi->surf[0]!=NULL){
           texturedata *texti;
 
@@ -12174,22 +12174,22 @@ void UpdateUseTextures(void){
       }
     }
   }
-  for(i=0;i<global_scase.device_texture_list_coll.ndevice_texture_list;i++){
+  for(i=0;i<scase->device_texture_list_coll.ndevice_texture_list;i++){
     int texture_index;
     texturedata *texti;
 
-    texture_index  = global_scase.device_texture_list_coll.device_texture_list_index[i];
-    texti=global_scase.texture_coll.textureinfo + texture_index;
+    texture_index  = scase->device_texture_list_coll.device_texture_list_index[i];
+    texti=scase->texture_coll.textureinfo + texture_index;
     if(texti!=NULL&&texti->loaded==1){
       if(usetextures==1)texti->display=1;
       texti->used=1;
     }
   }
-  for(i=0;i<global_scase.ngeominfo;i++){
+  for(i=0;i<scase->ngeominfo;i++){
     geomdata *geomi;
 
-    geomi = global_scase.geominfo + i;
-    if(global_scase.texture_coll.textureinfo!=NULL&&geomi->surfgeom!=NULL){
+    geomi = scase->geominfo + i;
+    if(scase->texture_coll.textureinfo!=NULL&&geomi->surfgeom!=NULL){
         texturedata *texti;
 
       texti = geomi->surfgeom->textureinfo;
@@ -12199,21 +12199,21 @@ void UpdateUseTextures(void){
       }
     }
   }
-  if(global_scase.terrain_texture_coll.nterrain_textures>0){
-    for(i=0;i<global_scase.terrain_texture_coll.nterrain_textures;i++){
+  if(scase->terrain_texture_coll.nterrain_textures>0){
+    for(i=0;i<scase->terrain_texture_coll.nterrain_textures;i++){
       texturedata *texti;
 
-      texti =global_scase.texture_coll.textureinfo + global_scase.texture_coll.ntextureinfo - global_scase.terrain_texture_coll.nterrain_textures + i;
-      if(texti == global_scase.terrain_texture_coll.terrain_textures + i){
+      texti =scase->texture_coll.textureinfo + scase->texture_coll.ntextureinfo - scase->terrain_texture_coll.nterrain_textures + i;
+      if(texti == scase->terrain_texture_coll.terrain_textures + i){
         texti->used = 1;
       }
     }
   }
   ntextures_loaded_used=0;
-  for(i=0;i<global_scase.texture_coll.ntextureinfo;i++){
+  for(i=0;i<scase->texture_coll.ntextureinfo;i++){
     texturedata *texti;
 
-    texti = global_scase.texture_coll.textureinfo + i;
+    texti = scase->texture_coll.textureinfo + i;
     if(texti->loaded==0)continue;
     if(texti->used==0)continue;
     ntextures_loaded_used++;
