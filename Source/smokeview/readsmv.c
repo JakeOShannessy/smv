@@ -5348,9 +5348,9 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
 
 /* ------------------ ParseBNDFCount ------------------------ */
 
-int ParseBNDFCount(void){
+int ParseBNDFCount(smv_case *scase){
   if(setup_only==1||smoke3d_only==1)return RETURN_CONTINUE;
-  global_scase.npatchinfo++;
+  scase->npatchinfo++;
   return RETURN_CONTINUE;
 }
 
@@ -7874,7 +7874,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
        MatchSMV(buffer, "BNDE") == 1
       || MatchSMV(buffer, "BNDS") == 1
       ){
-      ParseBNDFCount();
+      ParseBNDFCount(&global_scase);
       continue;
     }
 
