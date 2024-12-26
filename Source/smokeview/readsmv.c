@@ -6783,11 +6783,12 @@ void AddCfastCsvf(smv_case *scase){
 
 void *Compress(void *arg){
   char shellcommand[1024];
+  smv_case *scase = (smv_case *)arg;
 
   PRINTF("Compressing...\n");
   GLUICompressOnOff(OFF);
 
-  WriteIni(&global_scase, LOCAL_INI, NULL);
+  WriteIni(scase, LOCAL_INI, NULL);
 
   // surround smokezip path name with "'s so that the system call can handle embedded blanks
 

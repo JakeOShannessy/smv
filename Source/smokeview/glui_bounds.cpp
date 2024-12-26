@@ -4216,7 +4216,7 @@ extern "C" void BoundBoundCB(int var){
     if(compress_threads == NULL){
       compress_threads = THREADinit(&n_compress_threads, &use_compress_threads, Compress);
     }
-    THREADrun(compress_threads);
+    THREADruni(compress_threads,(unsigned char *)&global_scase, sizeof(smv_case));
     break;
   case COMPRESS_AUTOLOADED:
     updatemenu = 1;

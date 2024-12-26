@@ -2758,7 +2758,7 @@ void CompressMenu(int value){
     if(compress_threads == NULL){
       compress_threads = THREADinit(&n_compress_threads, &use_compress_threads, Compress);
     }
-    THREADrun(compress_threads);
+    THREADruni(compress_threads,(unsigned char *)&global_scase, sizeof(smv_case));
     break;
   case MENU_OVERWRITECOMPRESS:
     erase_all=0;
@@ -2770,7 +2770,7 @@ void CompressMenu(int value){
     if(compress_threads == NULL){
       compress_threads = THREADinit(&n_compress_threads, &use_compress_threads, Compress);
     }
-    THREADrun(compress_threads);
+    THREADruni(compress_threads,(unsigned char *)&global_scase, sizeof(smv_case));
     break;
   case MENU_COMPRESSAUTOLOAD:
     compress_autoloaded=1-compress_autoloaded;
