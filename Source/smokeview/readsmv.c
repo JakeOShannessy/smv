@@ -6822,53 +6822,54 @@ void *Compress(void *arg){
 
 void *CheckFiles(void *arg){
   int i;
+  smv_case *scase = (smv_case *)arg;
 
   THREADcontrol(checkfiles_threads, THREAD_LOCK);
-  global_scase.have_compressed_files = 0;
+  scase->have_compressed_files = 0;
   THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
-  for(i = 0;i < global_scase.npatchinfo;i++){
+  for(i = 0;i < scase->npatchinfo;i++){
     patchdata *patchi;
     int have_file;
 
-    patchi = global_scase.patchinfo + i;
+    patchi = scase->patchinfo + i;
     have_file = FILE_EXISTS_CASEDIR(patchi->comp_file);
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
     if(have_file == YES){
       patchi->compression_type_temp = COMPRESSED_ZLIB;
-      global_scase.have_compressed_files = 1;
+      scase->have_compressed_files = 1;
     }
     THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   }
-  for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+  for(i = 0;i < scase->smoke3dcoll.nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
     int have_file;
 
-    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
+    smoke3di = scase->smoke3dcoll.smoke3dinfo + i;
     have_file = FILE_EXISTS_CASEDIR(smoke3di->comp_file);
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
     if(have_file == YES){
       smoke3di->compression_type_temp = COMPRESSED_ZLIB;
-      global_scase.have_compressed_files = 1;
+      scase->have_compressed_files = 1;
     }
     THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
   }
-  if(global_scase.have_compressed_files == 0){
+  if(scase->have_compressed_files == 0){
     THREAD_EXIT(checkfiles_threads);
   }
   THREADcontrol(checkfiles_threads, THREAD_LOCK);
-  for(i = 0; i < global_scase.npatchinfo; i++){
+  for(i = 0; i < scase->npatchinfo; i++){
     patchdata *patchi;
 
-    patchi = global_scase.patchinfo + i;
+    patchi = scase->patchinfo + i;
     if(patchi->compression_type_temp == COMPRESSED_ZLIB){
       patchi->compression_type = COMPRESSED_ZLIB;
       patchi->file = patchi->comp_file;
     }
   }
-  for(i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++){
+  for(i = 0; i < scase->smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
 
-    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
+    smoke3di = scase->smoke3dcoll.smoke3dinfo + i;
     if(smoke3di->compression_type_temp == COMPRESSED_ZLIB){
       smoke3di->file = smoke3di->comp_file;
       smoke3di->is_zlib = 1;
@@ -11710,7 +11711,7 @@ int ReadSMV_Configure(smv_case *scase){
   if(checkfiles_threads != NULL){
     checkfiles_threads = THREADinit(&n_checkfiles_threads, &use_checkfiles_threads, CheckFiles);
   }
-  THREADrun(checkfiles_threads);
+  THREADruni(checkfiles_threads, (unsigned char*)&global_scase, sizeof(smv_case));
   PRINT_TIMER(timer_readsmv, "CheckFiles");
   CheckMemory;
   UpdateIsoColors();
