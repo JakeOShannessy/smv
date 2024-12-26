@@ -20,6 +20,8 @@
 #include "readhvac.h"
 #include "shared_structures.h"
 
+/* ------------------ hvacval ------------------------ */
+
 static inline int hvacval(hvacdatacollection *hvaccoll, int itime, int iduct,
                           int icell) {
   return (itime)*hvaccoll->hvac_maxcells * hvaccoll->hvac_n_ducts +
@@ -552,6 +554,8 @@ void SetHVACInfo(hvacdatacollection *hvaccoll) {
   }
 }
 
+/* ------------------ ReadHVACData0 ------------------------ */
+
 int ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
                   FILE_SIZE *file_size) {
   FILE *stream = NULL;
@@ -754,6 +758,8 @@ int CompareLabel(const void *arg1, const void *arg2) {
 
   return strcmp(x, y);
 }
+
+/* ------------------ ParseHVACEntry ------------------------ */
 
 int ParseHVACEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream,
                    int hvac_node_color[3], int hvac_duct_color[3]) {
@@ -974,6 +980,8 @@ int ParseHVACEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream,
   SetHVACInfo(hvaccoll);
   return 0;
 }
+
+/* ------------------ ParseHVACValsEntry ------------------------ */
 
 int ParseHVACValsEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream) {
   char buffer[256];

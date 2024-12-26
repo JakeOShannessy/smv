@@ -301,6 +301,7 @@ void GetIndepVarIndices(sv_object *smv_object, char **var_indep_strings,
 }
 
 /* ----------------------- ParseObjectFrame ----------------------------- */
+
 // Previously ParseDeviceFrame
 char *ParseObjectFrame(object_collection *objectscoll, const char *buffer_in,
                        FILE *stream, int *eof, sv_object_frame *frame,
@@ -1076,8 +1077,7 @@ int GetTokenId(char *token, int *opptr, int *num_opptr, int *num_outopptr,
   return return_val;
 }
 
-/* ----------------------- GetObjectFrameTokenLoc -----------------------------
- */
+/* ------------------ GetObjectFrameTokenLoc ------------------------ */
 
 int GetObjectFrameTokenLoc(char *var, sv_object_frame *frame){
   int i;
@@ -1172,6 +1172,8 @@ sv_object *InitSmvObject1(object_collection *objectscoll, const char *label,
   return object;
 }
 
+/* ------------------ ClearObjectCollection ------------------------ */
+
 void ClearObjectCollection(object_collection *objectscoll){
   sv_object *object;
 
@@ -1181,6 +1183,8 @@ void ClearObjectCollection(object_collection *objectscoll){
     FreeObject(object);
   }
 }
+
+/* ------------------ FreeObjectCollection ------------------------ */
 
 void FreeObjectCollection(object_collection *objectscoll){
   ClearObjectCollection(objectscoll);
@@ -1433,6 +1437,8 @@ void InitAvatar(object_collection *objectscoll, int setbw){
   }
 }
 
+/* ------------------ InitStdObjectDefs ------------------------ */
+
 void InitStdObjectDefs(object_collection *objectscoll, int setbw,
                        int isZoneFireModel){
   if(isZoneFireModel == 1){
@@ -1474,6 +1480,7 @@ void InitStdObjectDefs(object_collection *objectscoll, int setbw,
   }
 }
 
+/* ------------------ InitObjectCollection ------------------------ */
 
 int InitObjectCollection(object_collection *coll) {
   // Set everything to NULL
@@ -1489,6 +1496,8 @@ int InitObjectCollection(object_collection *coll) {
   return 0;
 }
 
+/* ------------------ CreateObjectCollection ------------------------ */
+
 object_collection *CreateObjectCollection(void) {
   object_collection *coll;
   if(NEWMEMORY(coll, sizeof(object_collection)) == 0) return NULL;
@@ -1501,6 +1510,8 @@ object_collection *CreateObjectCollection(void) {
     return coll;
   }
 }
+
+/* ------------------ LoadDefaultObjectDefs ------------------------ */
 
 void LoadDefaultObjectDefs(object_collection *objectscoll){
   objectscoll->nobject_defs = 4;
