@@ -4989,7 +4989,7 @@ void ParseISOFCount(smv_case *scase){
 
 /* ------------------ ParseISOFProcess ------------------------ */
 
-int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *ioffset_in, int *nn_iso_in, int nisos_per_mesh_in){
+int ParseISOFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, int *iiso_in, int *ioffset_in, int *nn_iso_in, int nisos_per_mesh_in){
   isodata *isoi;
   int dataflag = 0, geomflag = 0;
   char tbuffer[255], *tbufferptr;
@@ -5009,7 +5009,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
   nn_iso = *nn_iso_in;
   nisos_per_mesh = nisos_per_mesh_in;
 
-  isoi = global_scase.isoinfo+iiso;
+  isoi = scase->isoinfo+iiso;
   isoi->isof_index = nn_iso%nisos_per_mesh;
   nn_iso++;
   *nn_iso_in = nn_iso;
@@ -5019,7 +5019,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
   TrimBack(buffer);
   len = strlen(buffer);
 
-  if(global_scase.meshescoll.nmeshes>1){
+  if(scase->meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5036,7 +5036,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
     blocknumber--;
   }
   if(FGETS(buffer, 255, stream)==NULL){
-    global_scase.nisoinfo--;
+    scase->nisoinfo--;
     return RETURN_BREAK;
   }
 
@@ -5056,7 +5056,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
   isoi->geomflag = geomflag;
   isoi->nlevels = 0;
   isoi->levels = NULL;
-  isoi->memory_id = ++global_scase.nmemory_ids;
+  isoi->memory_id = ++scase->nmemory_ids;
   isoi->geom_nstatics = NULL;
   isoi->geom_ndynamics = NULL;
   isoi->geom_times = NULL;
@@ -5070,8 +5070,8 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
   isoi->color_label.unit = NULL;
   isoi->geominfo = NULL;
   NewMemory((void **)&isoi->geominfo, sizeof(geomdata));
-  global_scase.nmemory_ids++;
-  isoi->geominfo->memory_id = global_scase.nmemory_ids;
+  scase->nmemory_ids++;
+  isoi->geominfo->memory_id = scase->nmemory_ids;
   InitGeom(isoi->geominfo, GEOM_ISO, NOT_FDSBLOCK, CFACE_NORMALS_NO,blocknumber);
 
   bufferptr = TrimFrontBack(buffer);
@@ -5093,7 +5093,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
 
   if(isoi->dataflag==1&&isoi->geomflag==1){
     if(FGETS(tbuffer, 255, stream)==NULL){
-      global_scase.nisoinfo--;
+      scase->nisoinfo--;
       return RETURN_BREAK;
     }
     TrimBack(tbuffer);
@@ -5133,7 +5133,7 @@ int ParseISOFProcess(bufferstreamdata *stream, char *buffer, int *iiso_in, int *
     if(isoi->dataflag==1){
       if(ReadLabels(&isoi->color_label, stream, NULL)==LABEL_ERR)return 2;
     }
-    global_scase.nisoinfo--;
+    scase->nisoinfo--;
   }
   return RETURN_CONTINUE;
 }
@@ -11479,7 +11479,7 @@ typedef struct {
       int return_val;
 
       START_TIMER(ISOF_timer);
-      return_val = ParseISOFProcess(stream, buffer, &iiso, &ioffset, &nn_iso, nisos_per_mesh);
+      return_val = ParseISOFProcess(&global_scase, stream, buffer, &iiso, &ioffset, &nn_iso, nisos_per_mesh);
       CUM_TIMER(ISOF_timer, cum_ISOF_timer);
       if(return_val==RETURN_BREAK){
         BREAK;
