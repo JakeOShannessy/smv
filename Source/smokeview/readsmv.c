@@ -488,7 +488,7 @@ FILE_SIZE ReadAllCSVFiles(smv_case *scase, int flag){
     file_size += ReadCSVFile(csvfi, flag);
     plot2d_max_columns = MAX(plot2d_max_columns, csvfi->ncsvinfo);
     csvfi->defined = CSV_DEFINED;
-    UpdateCSVFileTypes();
+    UpdateCSVFileTypes(scase);
   }
   for(i = 0; i < scase->csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;

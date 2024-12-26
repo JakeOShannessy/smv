@@ -107,7 +107,7 @@ EXTERNCPP void GLUIUpdateShowbeamAsLine(void);
 EXTERNCPP void GLUIUpdatePlot2DSize(void);
 EXTERNCPP void GLUIUpdateDeviceAdd(void);
 EXTERNCPP void GLUIGenPlotCB(int var);
-EXTERNCPP void UpdateCSVFileTypes(void);
+EXTERNCPP void UpdateCSVFileTypes(smv_case *scase);
 
 //*** glui_stereo.cpp headers
 
