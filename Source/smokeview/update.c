@@ -3077,7 +3077,7 @@ void UpdateDisplay(void){
   THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
   if(update_ini==1){
     update_ini = 0;
-    ReadIni(NULL);
+    ReadIni(&global_scase, NULL);
 
     update_glui_bounds = 0;
     GLUIUpdateBounds();

@@ -4703,7 +4703,7 @@ void ScriptCB(int var){
     ini_filename = GetIniFileName(id);
     if(ini_filename == NULL)break;
     if(strcmp(ini_filename, global_scase.paths.caseini_filename) == 0){
-      ReadIni(NULL);
+      ReadIni(&global_scase, NULL);
     }
     else if(id >= 0){
       char *script_filename2;
@@ -4712,7 +4712,7 @@ void ScriptCB(int var){
       script_filename2 = script_filename;
       strcpy(script_filename, ini_filename);
       windowresized = 0;
-      ReadIni(script_filename2);
+      ReadIni(&global_scase, script_filename2);
     }
     if(scriptoutstream != NULL){
       fprintf(scriptoutstream, "LOADINIFILE\n");

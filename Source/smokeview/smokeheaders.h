@@ -730,7 +730,7 @@ EXTERNCPP FILE_SIZE ReadAllCSVFiles(smv_case *scase, int flag);
 EXTERNCPP int  ReadBinIni(smv_case *scase);
 EXTERNCPP FILE_SIZE ReadCSVFile(csvfiledata *csvfi, int flag);
 EXTERNCPP void ReadHRR(int flag);
-EXTERNCPP int  ReadIni(char *inifile);
+EXTERNCPP int  ReadIni(smv_case *scase, char *inifile);
 EXTERNCPP int  ReadSMV(smv_case *scase, bufferstreamdata *stream);
 EXTERNCPP void ReadSMVDynamic(char *file);
 EXTERNCPP void ReadSMVOrig(smv_case *scase);

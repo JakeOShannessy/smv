@@ -158,7 +158,7 @@ int Loadsmvall(const char *input_filename) {
 #endif
   if(return_code != 0) return 1;
   // if(convert_ini==1){
-  // ReadIni(ini_from);
+  // ReadIni(&global_scase, ini_from);
   // }
   return 0;
 }
@@ -269,7 +269,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
   SetUnitVis();
 
   CheckMemory;
-  ReadIni(NULL);
+  ReadIni(&global_scase, NULL);
   ReadBoundINI();
 
   UpdateRGBColors(COLORBAR_INDEX_NONE);
@@ -404,7 +404,7 @@ void Loadinifile(const char *filepath) {
   windowresized = 0;
   char f[1048];
   strcpy(f, filepath);
-  ReadIni(f);
+  ReadIni(&global_scase, f);
 }
 
 int Loadvfile(const char *filepath) {

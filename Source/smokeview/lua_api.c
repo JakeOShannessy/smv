@@ -190,7 +190,7 @@ int RunLuaBranch(lua_State *L, int argc, char **argv) {
   if(return_code != 0) return 1;
   if(convert_ini == 1) {
     INIT_PRINT_TIMER(timer_read_ini);
-    ReadIni(ini_from);
+    ReadIni(&global_scase, ini_from);
     PRINT_TIMER(timer_read_ini, "ReadIni");
   }
   if(runhtmlscript == 1) {

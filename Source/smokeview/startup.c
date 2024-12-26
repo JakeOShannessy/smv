@@ -298,7 +298,7 @@ int SetupCase(char *filename){
 
   CheckMemory;
   readini_output = 0;
-  ReadIni(NULL);
+  ReadIni(&global_scase, NULL);
   readini_output = 1;
   PRINT_TIMER(timer_start, "init ReadINI");
 

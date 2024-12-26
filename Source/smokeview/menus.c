@@ -2788,7 +2788,7 @@ void CompressMenu(int value){
 
 void IniSubMenu(int value){
   if(value==MENU_READCASEINI){
-    ReadIni(NULL);
+    ReadIni(&global_scase, NULL);
   }
   else{
     char *ini_filename;
@@ -2799,7 +2799,7 @@ void IniSubMenu(int value){
     script_filename2=script_filename;
     strcpy(script_filename,ini_filename);
     windowresized=0;
-    ReadIni(script_filename2);
+    ReadIni(&global_scase, script_filename2);
   }
 }
 
@@ -2808,7 +2808,7 @@ void IniSubMenu(int value){
 void SmokeviewIniMenu(int value){
   switch(value){
   case MENU_READINI:
-    ReadIni(NULL);
+    ReadIni(&global_scase, NULL);
     UpdateRGBColors(colorbar_select_index);
     break;
   case MENU_REVERT_WRITEINI:

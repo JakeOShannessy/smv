@@ -16063,7 +16063,7 @@ int ReadBinIni(smv_case *scase){
 
 /* ------------------ ReadIni ------------------------ */
 
-int ReadIni(char *inifile){
+int ReadIni(smv_case *scase, char *inifile){
   // There are 7 places to retrieve configuration file from:
   //
   //   1. A file within the same directory as the smokeview executable named
@@ -16077,14 +16077,14 @@ int ReadIni(char *inifile){
   //
   // Last definition wins.
 
-  global_scase.ntickinfo=global_scase.ntickinfo_smv;
+  scase->ntickinfo=scase->ntickinfo_smv;
 
   // Read "smokeview.ini" from bin dir
   char *global_ini = GetSystemIniPath();
   if(global_ini!=NULL){
     int returnval;
 
-    returnval = ReadIni2(&global_scase, global_ini, 0);
+    returnval = ReadIni2(scase, global_ini, 0);
     if(returnval==2)return 2;
     if(returnval == 0 && readini_output==1){
       if(verbose_output==1)PRINTF("- complete\n");
@@ -16094,18 +16094,18 @@ int ReadIni(char *inifile){
   FREEMEMORY(global_ini);
 
   // Read "${fdsprefix}.ini" from the current directory
-  if(global_scase.paths.caseini_filename!=NULL){
+  if(scase->paths.caseini_filename!=NULL){
     int returnval;
     char localdir[10];
 
-    returnval = ReadIni2(&global_scase, global_scase.paths.caseini_filename, 1);
+    returnval = ReadIni2(scase, scase->paths.caseini_filename, 1);
 
     // if directory is not writable then look for another ini file in the scratch directory
     strcpy(localdir, ".");
     if(Writable(localdir)==0){
       // Read "${fdsprefix}.ini" from the scratch directory
-      char *scratch_ini_filename = GetUserConfigSubPath(global_scase.paths.caseini_filename);
-      returnval = ReadIni2(&global_scase, scratch_ini_filename, 1);
+      char *scratch_ini_filename = GetUserConfigSubPath(scase->paths.caseini_filename);
+      returnval = ReadIni2(scase, scratch_ini_filename, 1);
       FREEMEMORY(scratch_ini_filename);
     }
     if(returnval==2)return 2;
@@ -16118,7 +16118,7 @@ int ReadIni(char *inifile){
   if(inifile!=NULL){
     int return_code;
 
-    return_code = ReadIni2(&global_scase, inifile,1);
+    return_code = ReadIni2(scase, inifile,1);
     if(return_code == 0 && readini_output==1){
       if(verbose_output==1)PRINTF("- complete\n");
     }
