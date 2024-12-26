@@ -6043,7 +6043,7 @@ void InitializeDeviceCsvData(int flag){
   if(flag==LOAD)SetupDeviceData();
   PRINT_TIMER(setup_timer, "SetupDeviceData");
   INIT_PRINT_TIMER(csv_timer);
-  file_size += ReadAllCSVFiles(flag);
+  file_size += ReadAllCSVFiles(&global_scase, flag);
   PRINT_TIMER(csv_timer, "ReadAllCSVFiles");
   if(flag==LOAD){
     csv_loaded = 1;

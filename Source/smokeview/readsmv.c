@@ -463,24 +463,24 @@ int CompareCSV(const void *arg1, const void *arg2){
 
 /* ------------------ ReadAllCSVFiles ------------------------ */
 
-FILE_SIZE ReadAllCSVFiles(int flag){
+FILE_SIZE ReadAllCSVFiles(smv_case *scase, int flag){
   int i;
   FILE_SIZE file_size=0;
 
-  if(global_scase.csvcoll.ncsvfileinfo == 0)return 0;
+  if(scase->csvcoll.ncsvfileinfo == 0)return 0;
 #define GENPLOT_REM_ALL_PLOTS       136
   GLUIGenPlotCB(GENPLOT_REM_ALL_PLOTS);
-  for(i = 0; i < global_scase.csvcoll.ncsvfileinfo; i++){
+  for(i = 0; i < scase->csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
-    csvfi = global_scase.csvcoll.csvfileinfo + i;
+    csvfi = scase->csvcoll.csvfileinfo + i;
     ReadCSVFile(csvfi, UNLOAD);
   }
   if(flag == UNLOAD)return 0;
-  for(i = 0; i < global_scase.csvcoll.ncsvfileinfo; i++){
+  for(i = 0; i < scase->csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
-    csvfi = global_scase.csvcoll.csvfileinfo + i;
+    csvfi = scase->csvcoll.csvfileinfo + i;
     if(csvfi->defined == CSV_DEFINING|| csvfi->defined == CSV_DEFINED){
       continue;
     }
@@ -490,10 +490,10 @@ FILE_SIZE ReadAllCSVFiles(int flag){
     csvfi->defined = CSV_DEFINED;
     UpdateCSVFileTypes();
   }
-  for(i = 0; i < global_scase.csvcoll.ncsvfileinfo; i++){
+  for(i = 0; i < scase->csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvfi;
 
-    csvfi = global_scase.csvcoll.csvfileinfo + i;
+    csvfi = scase->csvcoll.csvfileinfo + i;
     if(csvfi->defined != CSV_DEFINED){
       break;
     }
