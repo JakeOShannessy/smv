@@ -4193,13 +4193,13 @@ int CreateNullLabel(flowlabels *flowlabel){
 
 /* ------------------ GetSurface ------------------------ */
 
-surfdata *GetSurface(char *label){
+surfdata *GetSurface(smv_case *scase, char *label){
   int i;
 
-  for(i = 0; i < global_scase.surfcoll.nsurfinfo; i++){
+  for(i = 0; i < scase->surfcoll.nsurfinfo; i++){
     surfdata *surfi;
 
-    surfi = global_scase.surfcoll.surfinfo + i;
+    surfi = scase->surfcoll.surfinfo + i;
     if(strcmp(surfi->surfacelabel, label) == 0)return surfi;
   }
   return surfacedefault;
@@ -8477,7 +8477,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
               surflabel[-1] = 0;
               TrimBack(surflabel);
               surflabel=TrimFront(surflabel+1);
-              geomi->surfgeom=GetSurface(surflabel);
+              geomi->surfgeom=GetSurface(&global_scase, surflabel);
               if(geomobji->color==NULL)geomobji->color = geomi->surfgeom->color;
             }
             sscanf(texture_vals, "%f %f %f %i", center, center+1, center+2, &is_terrain);
@@ -14489,7 +14489,7 @@ int ReadIni2(const char *inifile, int localfile){
         surflabel = strchr(buffer, ':');
         if(surflabel==NULL)continue;
         surflabel = TrimFrontBack(surflabel+1);
-        surfi = GetSurface(surflabel);
+        surfi = GetSurface(&global_scase, surflabel);
         if(surfi==NULL)continue;
         ini_surf_color = surfi->geom_surf_color;
         sscanf(buffer, "%i %i %i", ini_surf_color, ini_surf_color+1, ini_surf_color+2);
@@ -14513,7 +14513,7 @@ int ReadIni2(const char *inifile, int localfile){
         surflabel = strchr(buffer, ':');
         if(surflabel==NULL)continue;
         surflabel = TrimFrontBack(surflabel+1);
-        surfi = GetSurface(surflabel);
+        surfi = GetSurface(&global_scase, surflabel);
         if(surfi==NULL)continue;
         s_color[0] = -1.0;
         s_color[1] = -1.0;
