@@ -3539,32 +3539,32 @@ void UpdateSmoke3DTypes(smv_case *scase){
 
 /* ------------------ UpdateMeshCoords ------------------------ */
 
-void UpdateMeshCoords(void){
+void UpdateMeshCoords(smv_case *scase){
   int nn, i,n;
   float dxsbar, dysbar, dzsbar;
   int factor;
   int igrid;
 
-  if(global_scase.setPDIM==0){
+  if(scase->setPDIM==0){
     for(nn=0;nn<=current_mesh->ibar;nn++){
-      current_mesh->xplt[nn]=global_scase.xbar0+(float)nn*(global_scase.xbar-global_scase.xbar0)/(float)current_mesh->ibar;
+      current_mesh->xplt[nn]=scase->xbar0+(float)nn*(scase->xbar-scase->xbar0)/(float)current_mesh->ibar;
     }
     for(nn=0;nn<=current_mesh->jbar;nn++){
-      current_mesh->yplt[nn]=global_scase.ybar0+(float)nn*(global_scase.ybar-global_scase.ybar0)/(float)current_mesh->jbar;
+      current_mesh->yplt[nn]=scase->ybar0+(float)nn*(scase->ybar-scase->ybar0)/(float)current_mesh->jbar;
     }
     for(nn=0;nn<=current_mesh->kbar;nn++){
-      current_mesh->zplt[nn]=global_scase.zbar0+(float)nn*(global_scase.zbar-global_scase.zbar0)/(float)current_mesh->kbar;
+      current_mesh->zplt[nn]=scase->zbar0+(float)nn*(scase->zbar-scase->zbar0)/(float)current_mesh->kbar;
     }
   }
 
   /* define highlighted block */
 
   /* add in offsets */
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
     int ii;
 
-    meshi=global_scase.meshescoll.meshinfo+i;
+    meshi=scase->meshescoll.meshinfo+i;
     meshi->xyz_bar[XXX] += meshi->offset[XXX];
     meshi->xyz_bar[YYY] += meshi->offset[YYY];
     meshi->xyz_bar[ZZZ] += meshi->offset[ZZZ];
@@ -3592,11 +3592,11 @@ void UpdateMeshCoords(void){
     meshi->ycen+=meshi->offset[YYY];
     meshi->zcen+=meshi->offset[ZZZ];
   }
-  for(i=1;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=1;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=global_scase.meshescoll.meshinfo+i;
-    if(meshi->xyz_bar0[ZZZ]!=global_scase.meshescoll.meshinfo->xyz_bar0[ZZZ]){
+    meshi=scase->meshescoll.meshinfo+i;
+    if(meshi->xyz_bar0[ZZZ]!=scase->meshescoll.meshinfo->xyz_bar0[ZZZ]){
       visFloor=0;
       updatefacelists=1;
       updatemenu=1;
@@ -3604,18 +3604,18 @@ void UpdateMeshCoords(void){
     }
   }
 
-  ijkbarmax=global_scase.meshescoll.meshinfo->ibar;
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  ijkbarmax=scase->meshescoll.meshinfo->ibar;
+  for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=global_scase.meshescoll.meshinfo+i;
+    meshi=scase->meshescoll.meshinfo+i;
 
     ijkbarmax = MAX(ijkbarmax,meshi->ibar);
     ijkbarmax = MAX(ijkbarmax,meshi->jbar);
     ijkbarmax = MAX(ijkbarmax,meshi->kbar);
   }
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
     float xminmax[2], yminmax[2], zminmax[2];
     float *verts;
@@ -3624,22 +3624,22 @@ void UpdateMeshCoords(void){
     int zindex[8]={0,0,0,0,1,1,1,1};
     int j;
 
-    meshi=global_scase.meshescoll.meshinfo+i;
+    meshi=scase->meshescoll.meshinfo+i;
     if(i==0){
-      global_scase.xbar = meshi->xyz_bar[XXX];
-      global_scase.ybar = meshi->xyz_bar[YYY];
-      global_scase.zbar = meshi->xyz_bar[ZZZ];
+      scase->xbar = meshi->xyz_bar[XXX];
+      scase->ybar = meshi->xyz_bar[YYY];
+      scase->zbar = meshi->xyz_bar[ZZZ];
 
-      global_scase.xbar0 = meshi->xyz_bar0[XXX];
-      global_scase.ybar0 = meshi->xyz_bar0[YYY];
-      global_scase.zbar0 = meshi->xyz_bar0[ZZZ];
+      scase->xbar0 = meshi->xyz_bar0[XXX];
+      scase->ybar0 = meshi->xyz_bar0[YYY];
+      scase->zbar0 = meshi->xyz_bar0[ZZZ];
     }
-    global_scase.xbar = MAX(global_scase.xbar, meshi->xyz_bar[XXX]);
-    global_scase.ybar = MAX(global_scase.ybar, meshi->xyz_bar[YYY]);
-    global_scase.zbar = MAX(global_scase.zbar, meshi->xyz_bar[ZZZ]);
-    global_scase.xbar0 = MIN(global_scase.xbar0, meshi->xyz_bar0[XXX]);
-    global_scase.ybar0 = MIN(global_scase.ybar0, meshi->xyz_bar0[YYY]);
-    global_scase.zbar0 = MIN(global_scase.zbar0, meshi->xyz_bar0[ZZZ]);
+    scase->xbar = MAX(scase->xbar, meshi->xyz_bar[XXX]);
+    scase->ybar = MAX(scase->ybar, meshi->xyz_bar[YYY]);
+    scase->zbar = MAX(scase->zbar, meshi->xyz_bar[ZZZ]);
+    scase->xbar0 = MIN(scase->xbar0, meshi->xyz_bar0[XXX]);
+    scase->ybar0 = MIN(scase->ybar0, meshi->xyz_bar0[YYY]);
+    scase->zbar0 = MIN(scase->zbar0, meshi->xyz_bar0[ZZZ]);
 
     xminmax[0] = meshi->xyz_bar0[XXX];
     xminmax[1] = meshi->xyz_bar[XXX];
@@ -3655,12 +3655,12 @@ void UpdateMeshCoords(void){
     }
   }
 
-  xbar0FDS = global_scase.xbar0;
-  ybar0FDS = global_scase.ybar0;
-  zbar0FDS = global_scase.zbar0;
-  xbarFDS  = global_scase.xbar;
-  ybarFDS  = global_scase.ybar;
-  zbarFDS  = global_scase.zbar;
+  xbar0FDS = scase->xbar0;
+  ybar0FDS = scase->ybar0;
+  zbar0FDS = scase->zbar0;
+  xbarFDS  = scase->xbar;
+  ybarFDS  = scase->ybar;
+  zbarFDS  = scase->zbar;
 
   use_meshclip[0] = 0;
   use_meshclip[1] = 0;
@@ -3676,8 +3676,8 @@ void UpdateMeshCoords(void){
   meshclip[5] = zbarFDS;
 
   geomlistdata *geomlisti;
-  if(global_scase.geominfo!=NULL&&global_scase.geominfo->geomlistinfo!=NULL){
-    geomlisti = global_scase.geominfo->geomlistinfo-1;
+  if(scase->geominfo!=NULL&&scase->geominfo->geomlistinfo!=NULL){
+    geomlisti = scase->geominfo->geomlistinfo-1;
     if(geomlisti->nverts>0){
       vertdata *verti;
       float *xyz;
@@ -3709,12 +3709,12 @@ void UpdateMeshCoords(void){
         zmin = MIN(xyz[2], zmin);
         zmax = MAX(xyz[2], zmax);
       }
-      global_scase.xbar0 = MIN(global_scase.xbar0, xmin);
-      global_scase.ybar0 = MIN(global_scase.ybar0, ymin);
-      global_scase.zbar0 = MIN(global_scase.zbar0, zmin);
-      global_scase.xbar = MAX(global_scase.xbar, xmax);
-      global_scase.ybar = MAX(global_scase.ybar, ymax);
-      global_scase.zbar = MAX(global_scase.zbar, zmax);
+      scase->xbar0 = MIN(scase->xbar0, xmin);
+      scase->ybar0 = MIN(scase->ybar0, ymin);
+      scase->zbar0 = MIN(scase->zbar0, zmin);
+      scase->xbar = MAX(scase->xbar, xmax);
+      scase->ybar = MAX(scase->ybar, ymax);
+      scase->zbar = MAX(scase->zbar, zmax);
       geom_bounding_box[0] = MIN(xmin, geom_bounding_box[0]);
       geom_bounding_box[1] = MAX(xmax, geom_bounding_box[1]);
       geom_bounding_box[2] = MIN(ymin, geom_bounding_box[2]);
@@ -3726,18 +3726,18 @@ void UpdateMeshCoords(void){
   }
 
   factor = 256*128;
-  dxsbar = (global_scase.xbar-global_scase.xbar0)/factor;
-  dysbar = (global_scase.ybar-global_scase.ybar0)/factor;
-  dzsbar = (global_scase.zbar-global_scase.zbar0)/factor;
+  dxsbar = (scase->xbar-scase->xbar0)/factor;
+  dysbar = (scase->ybar-scase->ybar0)/factor;
+  dzsbar = (scase->zbar-scase->zbar0)/factor;
 
   for(nn=0;nn<factor;nn++){
-    xplts[nn]=global_scase.xbar0+((float)nn+0.5)*dxsbar;
+    xplts[nn]=scase->xbar0+((float)nn+0.5)*dxsbar;
   }
   for(nn=0;nn<factor;nn++){
-    yplts[nn]=global_scase.ybar0+((float)nn+0.5)*dysbar;
+    yplts[nn]=scase->ybar0+((float)nn+0.5)*dysbar;
   }
   for(nn=0;nn<factor;nn++){
-    zplts[nn]=global_scase.zbar0+((float)nn+0.5)*dzsbar;
+    zplts[nn]=scase->zbar0+((float)nn+0.5)*dzsbar;
   }
 
   /* compute scaling factors */
@@ -3745,20 +3745,20 @@ void UpdateMeshCoords(void){
   {
     float dxclip, dyclip, dzclip;
 
-    dxclip = (global_scase.xbar-global_scase.xbar0)/1000.0;
-    dyclip = (global_scase.ybar-global_scase.ybar0)/1000.0;
-    dzclip = (global_scase.zbar-global_scase.zbar0)/1000.0;
-    xclip_min = global_scase.xbar0-dxclip;
-    yclip_min = global_scase.ybar0-dyclip;
-    zclip_min = global_scase.zbar0-dzclip;
-    xclip_max = global_scase.xbar+dxclip;
-    yclip_max = global_scase.ybar+dyclip;
-    zclip_max = global_scase.zbar+dzclip;
+    dxclip = (scase->xbar-scase->xbar0)/1000.0;
+    dyclip = (scase->ybar-scase->ybar0)/1000.0;
+    dzclip = (scase->zbar-scase->zbar0)/1000.0;
+    xclip_min = scase->xbar0-dxclip;
+    yclip_min = scase->ybar0-dyclip;
+    zclip_min = scase->zbar0-dzclip;
+    xclip_max = scase->xbar+dxclip;
+    yclip_max = scase->ybar+dyclip;
+    zclip_max = scase->zbar+dzclip;
   }
 
   // compute scaling factor used in NORMALIXE_X, NORMALIZE_Y, NORMALIZE_Z macros
 
-  xyzmaxdiff=MAX(MAX(global_scase.xbar-global_scase.xbar0,global_scase.ybar-global_scase.ybar0),global_scase.zbar-global_scase.zbar0);
+  xyzmaxdiff=MAX(MAX(scase->xbar-scase->xbar0,scase->ybar-scase->ybar0),scase->zbar-scase->zbar0);
 
   // normalize various coordinates.
 
@@ -3774,12 +3774,12 @@ void UpdateMeshCoords(void){
 
   /* rescale both global and local xbar, ybar and zbar */
 
-  xbar0ORIG = global_scase.xbar0;
-  ybar0ORIG = global_scase.ybar0;
-  zbar0ORIG = global_scase.zbar0;
-  xbarORIG = global_scase.xbar;
-  ybarORIG = global_scase.ybar;
-  zbarORIG = global_scase.zbar;
+  xbar0ORIG = scase->xbar0;
+  ybar0ORIG = scase->ybar0;
+  zbar0ORIG = scase->zbar0;
+  xbarORIG = scase->xbar;
+  ybarORIG = scase->ybar;
+  zbarORIG = scase->zbar;
 
   patchout_xmin = xbar0ORIG;
   patchout_xmax = xbarORIG;
@@ -3788,20 +3788,20 @@ void UpdateMeshCoords(void){
   patchout_zmin = zbar0ORIG;
   patchout_zmax = zbarORIG;
   patchout_tmin = 0.0;
-  if(global_scase.tourcoll.tour_tstop>0.0){
-    patchout_tmax = global_scase.tourcoll.tour_tstop;
+  if(scase->tourcoll.tour_tstop>0.0){
+    patchout_tmax = scase->tourcoll.tour_tstop;
   }
   else{
     patchout_tmax = 1.0;
   }
 
-  global_scase.xbar = FDS2SMV_X(global_scase.xbar);
-  global_scase.ybar = FDS2SMV_Y(global_scase.ybar);
-  global_scase.zbar = FDS2SMV_Z(global_scase.zbar);
+  scase->xbar = FDS2SMV_X(scase->xbar);
+  scase->ybar = FDS2SMV_Y(scase->ybar);
+  scase->zbar = FDS2SMV_Z(scase->zbar);
 
   float outline_offset;
-  outline_offset = (global_scase.meshescoll.meshinfo->zplt[1] - global_scase.meshescoll.meshinfo->zplt[0]) / 10.0;
-  if(global_scase.is_terrain_case==1){
+  outline_offset = (scase->meshescoll.meshinfo->zplt[1] - scase->meshescoll.meshinfo->zplt[0]) / 10.0;
+  if(scase->is_terrain_case==1){
     geom_dz_offset = outline_offset;
     geom_norm_offset = 0.0;
   }
@@ -3809,12 +3809,12 @@ void UpdateMeshCoords(void){
     geom_dz_offset = 0.0;
     geom_norm_offset = outline_offset;
   }
-  GetBoxCorners(global_scase.xbar, global_scase.ybar, global_scase.zbar);
+  GetBoxCorners(scase->xbar, scase->ybar, scase->zbar);
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi=global_scase.meshescoll.meshinfo+i;
+    meshi=scase->meshescoll.meshinfo+i;
     /* compute a local scaling factor for each block */
     meshi->xyzmaxdiff=MAX(MAX(meshi->xyz_bar[XXX]-meshi->xyz_bar0[XXX],meshi->xyz_bar[YYY]-meshi->xyz_bar0[YYY]),meshi->xyz_bar[ZZZ]-meshi->xyz_bar0[ZZZ]);
 
@@ -3824,12 +3824,12 @@ void UpdateMeshCoords(void){
     meshi->zcen = FDS2SMV_Z(meshi->zcen);
   }
 
-  for(i=0;i<global_scase.noutlineinfo;i++){
+  for(i=0;i<scase->noutlineinfo;i++){
     outlinedata *outlinei;
     float *x1, *x2, *yy1, *yy2, *z1, *z2;
     int j;
 
-    outlinei = global_scase.outlineinfo + i;
+    outlinei = scase->outlineinfo + i;
     x1 = outlinei->x1;
     x2 = outlinei->x2;
     yy1 = outlinei->y1;
@@ -3846,12 +3846,12 @@ void UpdateMeshCoords(void){
     }
   }
 
-  min_gridcell_size=global_scase.meshescoll.meshinfo->xplt[1]-global_scase.meshescoll.meshinfo->xplt[0];
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  min_gridcell_size=scase->meshescoll.meshinfo->xplt[1]-scase->meshescoll.meshinfo->xplt[0];
+  for(i=0;i<scase->meshescoll.nmeshes;i++){
     float dx, dy, dz;
     meshdata *meshi;
 
-    meshi=global_scase.meshescoll.meshinfo+i;
+    meshi=scase->meshescoll.meshinfo+i;
     dx = meshi->xplt[1] - meshi->xplt[0];
     dy = meshi->yplt[1] - meshi->yplt[0];
     dz = meshi->zplt[1] - meshi->zplt[0];
@@ -3860,7 +3860,7 @@ void UpdateMeshCoords(void){
     min_gridcell_size=MIN(dz,min_gridcell_size);
   }
 
-  for(igrid=0;igrid<global_scase.meshescoll.nmeshes;igrid++){
+  for(igrid=0;igrid<scase->meshescoll.nmeshes;igrid++){
     meshdata *meshi;
     float *face_centers;
     float *xplt_cen, *yplt_cen, *zplt_cen;
@@ -3871,7 +3871,7 @@ void UpdateMeshCoords(void){
     float dx, dy, dz;
     float *dplane_min, *dplane_max;
 
-    meshi=global_scase.meshescoll.meshinfo+igrid;
+    meshi=scase->meshescoll.meshinfo+igrid;
     ibar=meshi->ibar;
     jbar=meshi->jbar;
     kbar=meshi->kbar;
@@ -3962,16 +3962,16 @@ void UpdateMeshCoords(void){
     face_centers[14]=meshi->boxmin_scaled[2];
     face_centers[17]=meshi->boxmax_scaled[2];
   }
-  if(global_scase.nterraininfo>0){
-    boundaryoffset = (global_scase.meshescoll.meshinfo->zplt_orig[1] - global_scase.meshescoll.meshinfo->zplt_orig[0]) / 10.0;
+  if(scase->nterraininfo>0){
+    boundaryoffset = (scase->meshescoll.meshinfo->zplt_orig[1] - scase->meshescoll.meshinfo->zplt_orig[0]) / 10.0;
   }
 
   UpdateBlockType(&global_scase);
 
-  for(igrid=0;igrid<global_scase.meshescoll.nmeshes;igrid++){
+  for(igrid=0;igrid<scase->meshescoll.nmeshes;igrid++){
     meshdata *meshi;
 
-    meshi=global_scase.meshescoll.meshinfo+igrid;
+    meshi=scase->meshescoll.meshinfo+igrid;
     for(i=0;i<meshi->nbptrs;i++){
       blockagedata *bc;
 
@@ -4001,11 +4001,11 @@ void UpdateMeshCoords(void){
       vi->zmax = FDS2SMV_Z(vi->zmax);
     }
   }
-  for(i=0;i<NCADGeom(&global_scase.cadgeomcoll);i++){
+  for(i=0;i<NCADGeom(&scase->cadgeomcoll);i++){
     cadgeomdata *cd;
     int j;
 
-    cd=global_scase.cadgeomcoll.cadgeominfo+i;
+    cd=scase->cadgeomcoll.cadgeominfo+i;
     for(j=0;j<cd->nquads;j++){
       int k;
       cadquad *quadi;
@@ -4019,10 +4019,10 @@ void UpdateMeshCoords(void){
       }
     }
   }
-  for(n=0;n<global_scase.nrooms;n++){
+  for(n=0;n<scase->nrooms;n++){
     roomdata *roomi;
 
-    roomi = global_scase.roominfo + n;
+    roomi = scase->roominfo + n;
     roomi->x0=FDS2SMV_X(roomi->x0);
     roomi->y0=FDS2SMV_Y(roomi->y0);
     roomi->z0=FDS2SMV_Z(roomi->z0);
@@ -4033,19 +4033,19 @@ void UpdateMeshCoords(void){
     roomi->dy=SCALE2SMV(roomi->dy);
     roomi->dz=SCALE2SMV(roomi->dz);
   }
-  for(n=0;n<global_scase.nfires;n++){
+  for(n=0;n<scase->nfires;n++){
     firedata *firen;
 
-    firen = global_scase.fireinfo + n;
+    firen = scase->fireinfo + n;
     firen->absx=FDS2SMV_X(firen->absx);
     firen->absy=FDS2SMV_Y(firen->absy);
     firen->absz=FDS2SMV_Z(firen->absz);
     firen->dz=SCALE2SMV(firen->dz);
   }
-  for(n=0;n<global_scase.nzvents;n++){
+  for(n=0;n<scase->nzvents;n++){
     zventdata *zvi;
 
-    zvi = global_scase.zventinfo + n;
+    zvi = scase->zventinfo + n;
 
     zvi->x0 = FDS2SMV_X(zvi->x0);
     zvi->x1 = FDS2SMV_X(zvi->x1);
@@ -4055,7 +4055,7 @@ void UpdateMeshCoords(void){
     zvi->z1 = FDS2SMV_Z(zvi->z1);
   }
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
     float *xspr, *yspr, *zspr;
     float *xsprplot, *ysprplot, *zsprplot;
@@ -4063,7 +4063,7 @@ void UpdateMeshCoords(void){
     float *xheatplot, *yheatplot, *zheatplot;
     float *offset;
 
-    meshi=global_scase.meshescoll.meshinfo + i;
+    meshi=scase->meshescoll.meshinfo + i;
     offset = meshi->offset;
     xsprplot = meshi->xsprplot;
     ysprplot = meshi->ysprplot;
@@ -4100,19 +4100,19 @@ void UpdateMeshCoords(void){
     }
   }
   UpdateVentOffset(&global_scase);
-  if(global_scase.smoke3dcoll.nsmoke3dinfo>0)NewMemory((void **)&global_scase.smoke3dcoll.smoke3dinfo_sorted,global_scase.smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata *));
-  NewMemory((void **)&meshvisptr,global_scase.meshescoll.nmeshes*sizeof(int));
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  if(scase->smoke3dcoll.nsmoke3dinfo>0)NewMemory((void **)&scase->smoke3dcoll.smoke3dinfo_sorted,scase->smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata *));
+  NewMemory((void **)&meshvisptr,scase->meshescoll.nmeshes*sizeof(int));
+  for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshvisptr[i]=1;
   }
-  for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
-    global_scase.smoke3dcoll.smoke3dinfo_sorted[i]=global_scase.smoke3dcoll.smoke3dinfo+i;
+  for(i=0;i<scase->smoke3dcoll.nsmoke3dinfo;i++){
+    scase->smoke3dcoll.smoke3dinfo_sorted[i]=scase->smoke3dcoll.smoke3dinfo+i;
   }
-  for(i = 0; i<global_scase.meshescoll.nmeshes; i++){
+  for(i = 0; i<scase->meshescoll.nmeshes; i++){
     meshdata *meshi;
     float dx, dy, dz;
 
-    meshi = global_scase.meshescoll.meshinfo+i;
+    meshi = scase->meshescoll.meshinfo+i;
 
     dx = meshi->xplt_orig[1]-meshi->xplt_orig[0];
     dy = meshi->yplt_orig[1]-meshi->yplt_orig[0];
@@ -11784,7 +11784,7 @@ int ReadSMV_Configure(){
   THREADcontrol(readallgeom_threads, THREAD_JOIN);
   PRINT_TIMER(timer_readsmv, "ReadAllGeomMT");
 
-  UpdateMeshCoords();
+  UpdateMeshCoords(&global_scase);
   PRINT_TIMER(timer_readsmv, "UpdateMeshCoords");
 
   UpdateSmoke3DTypes(&global_scase);
