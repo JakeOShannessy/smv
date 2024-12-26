@@ -7289,14 +7289,14 @@ int ReadSMV_Init(smv_case *scase){
 
 /* ------------------ SetExternalVents ------------------------ */
 
-void SetExternalVents(void){
+void SetExternalVents(smv_case *scase){
   int i;
 
-  for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+  for(i = 0;i < scase->meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
 
-    meshi = global_scase.meshescoll.meshinfo + i;
+    meshi = scase->meshescoll.meshinfo + i;
     for(j = 0;j < meshi->nvents;j++){
       ventdata *vj;
       float xyz[3];
@@ -12075,7 +12075,7 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "SetInteriorBlockages");
 
   InitMeshBlockages(&global_scase);
-  SetExternalVents();
+  SetExternalVents(&global_scase);
 
   PRINTF("%s", _("complete"));
   PRINTF("\n\n");
