@@ -5187,9 +5187,9 @@ int ReadSMVCHID(smv_case *scase, bufferstreamdata *stream){
 
 /* ------------------ ParsePRTCount ------------------------ */
 
-void ParsePRT5Count(void){
+void ParsePRT5Count(smv_case *scase){
   if(setup_only==1||smoke3d_only==1)return;
-  global_scase.npartinfo++;
+  scase->npartinfo++;
 }
 
 /* ------------------ ParsePRT5Process ------------------------ */
@@ -7833,7 +7833,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     if(MatchSMV(buffer,"PRT5")==1||
        MatchSMV(buffer,"EVA5")==1
       ){
-      ParsePRT5Count();
+      ParsePRT5Count(&global_scase);
       continue;
     }
 
