@@ -3400,13 +3400,13 @@ void UpdateMeshBoxBounds(smv_case *scase){
 
 /* ------------------ GetSmoke3DType ------------------------ */
 
-int GetSmoke3DType(char *label){
+int GetSmoke3DType(smv_case *scase, char *label){
   int i;
 
-  for(i=0; i<global_scase.smoke3dcoll.nsmoke3dtypes; i++){
+  for(i=0; i<scase->smoke3dcoll.nsmoke3dtypes; i++){
     smoke3ddata *smoke3di;
 
-    smoke3di = global_scase.smoke3dcoll.smoke3dtypes[i].smoke3d;
+    smoke3di = scase->smoke3dcoll.smoke3dtypes[i].smoke3d;
     if(Match(smoke3di->label.shortlabel, label)==1)return i;
   }
   return -1;
@@ -3494,7 +3494,7 @@ void UpdateSmoke3DTypes(void){
     smokestatedata *smokestate;
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo+i;
-    smoke3di->type = GetSmoke3DType(smoke3di->label.shortlabel);
+    smoke3di->type = GetSmoke3DType(&global_scase, smoke3di->label.shortlabel);
 
     NewMemory((void **)&smokestate, global_scase.smoke3dcoll.nsmoke3dtypes*sizeof(smokestatedata));
     smoke3di->smokestate = smokestate;
