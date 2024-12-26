@@ -4827,16 +4827,16 @@ void InitCellMeshInfo(smv_case *scase){
 
 /* ------------------ SetupMeshWalls ------------------------ */
 
-void SetupMeshWalls(void){
+void SetupMeshWalls(smv_case *scase){
   int i;
-  if(cellmeshinfo == NULL)InitCellMeshInfo(&global_scase);
+  if(cellmeshinfo == NULL)InitCellMeshInfo(scase);
 
-  for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
+  for(i = 0; i < scase->meshescoll.nmeshes; i++){
     meshdata *meshi;
     float xyz[3], *bmin, *bmax, bmid[3];
     int *is_extface;
 
-    meshi = global_scase.meshescoll.meshinfo + i;
+    meshi = scase->meshescoll.meshinfo + i;
     bmin = meshi->boxmin;
     bmax = meshi->boxmax;
     is_extface = meshi->is_extface;
@@ -12061,7 +12061,7 @@ int ReadSMV_Configure(){
   InitCellMeshInfo(&global_scase);
   PRINT_TIMER(timer_readsmv, "InitCellMeshInfo");
 
-  SetupMeshWalls();
+  SetupMeshWalls(&global_scase);
   PRINT_TIMER(timer_readsmv, "SetupMeshWalls");
 
   if(viswindrose==1)update_windrose = 1;
