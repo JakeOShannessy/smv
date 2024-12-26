@@ -2521,15 +2521,15 @@ int IsDupTexture(smv_case *scase, texturedata *texti){
 
 /* ------------------ IsTerrainTexture ------------------------ */
 
-int IsTerrainTexture(texturedata *texti){
+int IsTerrainTexture(smv_case *scase, texturedata *texti){
   int is_terrain_texture;
   int i;
 
   is_terrain_texture=0;
-  for(i=0;i<global_scase.terrain_texture_coll.nterrain_textures;i++){
+  for(i=0;i<scase->terrain_texture_coll.nterrain_textures;i++){
     texturedata *tt;
 
-    tt = global_scase.terrain_texture_coll.terrain_textures + i;
+    tt = scase->terrain_texture_coll.terrain_textures + i;
     if(tt->file==NULL||strcmp(tt->file, texti->file)!=0)continue;
     return 1;
   }
@@ -2618,7 +2618,7 @@ void InitTextures0(void){
 
     texti = global_scase.texture_coll.textureinfo + i;
     texti->loaded=0;
-    if(texti->file==NULL||IsDupTexture(&global_scase, texti)==1||IsTerrainTexture(texti)==1)continue;
+    if(texti->file==NULL||IsDupTexture(&global_scase, texti)==1||IsTerrainTexture(&global_scase, texti)==1)continue;
 
     CheckMemory;
     filename=strrchr(texti->file,*dirseparator);
