@@ -463,7 +463,7 @@ struct jrpc_server jrpc_server_create() {
 #ifdef _WIN32
   int rc = WSAStartup(MAKEWORD(2, 2), &server.wsa_data);
   if(rc != 0) {
-    printf("WSAStartup() error: %d\n", rc);
+    fprintf(stderr, "WSAStartup() error: %d\n", rc);
     exit(1);
   }
 #endif
@@ -519,7 +519,7 @@ DLLEXPORT struct jrpc_client jrpc_client_create() {
   int rc = WSAStartup(MAKEWORD(2, 2), &client.wsa_data);
   fprintf(stderr, "post WSAStartup\n");
   if(rc != 0) {
-    printf("WSAStartup() error: %d\n", rc);
+    fprintf(stderr, "WSAStartup() error: %d\n", rc);
     exit(1);
   }
 #endif
