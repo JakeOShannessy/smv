@@ -746,6 +746,9 @@ EXTERNCPP void UpdateLoadedLists(smv_case *scase);
 EXTERNCPP void UpdateSMVDynamic(smv_case *scase, char *file);
 EXTERNCPP void UpdateUseTextures(smv_case *scase);
 EXTERNCPP void UpdateVentOffset(smv_case *scase);
+EXTERNCPP surfdata *GetSurface(smv_case *scase, char *label);
+EXTERNCPP void UpdateINIList(smv_case *scase);
+EXTERNCPP void GetSliceParmInfo(smv_case *scase, sliceparmdata *sp);
 EXTERNCPP void WriteIni(smv_case *scase, int flag,char *file);
 
 //*** renderhtml.c headers
