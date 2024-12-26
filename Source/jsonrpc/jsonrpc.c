@@ -551,7 +551,28 @@ JrpcClientConnectPtr(struct jrpc_client *client, const char *sock_path) {
   return conn;
 }
 
+// TODO: this can be removed but can be kept as the old symbol name was
+// "jrpc_client_connect_ptr"
+DLLEXPORT struct jrpc_connection *
+jrpc_client_connect_ptr(struct jrpc_client *client, const char *sock_path) {
+  fprintf(stderr, "connect sock path: %s\n", sock_path);
+  struct jrpc_connection *conn = malloc(sizeof(struct jrpc_connection));
+  *conn = jrpc_client_connect(client, sock_path);
+  return conn;
+}
+
 DLLEXPORT char *PopOrBlockS(struct jrpc_connection *conn) {
+  json_object *jobj = pop_or_block(conn);
+  const char *sq =
+      json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
+  char *r = STRDUP(sq);
+  json_object_put(jobj);
+  return r;
+}
+
+// TODO: this can be removed but can be kept as the old symbol name was
+// "pop_or_block_s"
+DLLEXPORT char *pop_or_block_s(struct jrpc_connection *conn) {
   json_object *jobj = pop_or_block(conn);
   const char *sq =
       json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
