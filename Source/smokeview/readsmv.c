@@ -4632,7 +4632,7 @@ void ParseDatabase(smv_case *scase, char *file){
 
 /* ------------------ ReadZVentData ------------------------ */
 
-void ReadZVentData(zventdata *zvi, char *buffer, int flag){
+void ReadZVentData(smv_case *scase, zventdata *zvi, char *buffer, int flag){
   float dxyz[3];
   float xyz[6];
   float color[4];
@@ -4657,11 +4657,11 @@ void ReadZVentData(zventdata *zvi, char *buffer, int flag){
     roomto = roomfrom;
   }
 
-  if(roomfrom<1 || roomfrom>global_scase.nrooms)roomfrom = global_scase.nrooms + 1;
-  roomi = global_scase.roominfo + roomfrom - 1;
+  if(roomfrom<1 || roomfrom>scase->nrooms)roomfrom = scase->nrooms + 1;
+  roomi = scase->roominfo + roomfrom - 1;
   zvi->room1 = roomi;
-  if(roomto<1 || roomto>global_scase.nrooms)roomto = global_scase.nrooms + 1;
-  zvi->room2 = global_scase.roominfo + roomto - 1;
+  if(roomto<1 || roomto>scase->nrooms)roomto = scase->nrooms + 1;
+  zvi->room2 = scase->roominfo + roomto - 1;
   zvi->x0 = roomi->x0 + xyz[0];
   zvi->x1 = roomi->x0 + xyz[1];
   zvi->y0 = roomi->y0 + xyz[2];
@@ -10258,7 +10258,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       }
       else if(vent_type==MFLOW_VENT){
         global_scase.nzmvents++;
-        ReadZVentData(zvi, buffer, ZVENT_1ROOM);
+        ReadZVentData(&global_scase, zvi, buffer, ZVENT_1ROOM);
       }
       CheckMemory;
       continue;
@@ -10284,15 +10284,15 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       switch(vent_type){
       case HFLOW_VENT:
         global_scase.nzhvents++;
-        ReadZVentData(zvi, buffer,ZVENT_2ROOM);
+        ReadZVentData(&global_scase, zvi, buffer,ZVENT_2ROOM);
         break;
       case VFLOW_VENT:
         global_scase.nzvvents++;
-        ReadZVentData(zvi, buffer, ZVENT_2ROOM);
+        ReadZVentData(&global_scase, zvi, buffer, ZVENT_2ROOM);
         break;
       case MFLOW_VENT:
         global_scase.nzmvents++;
-        ReadZVentData(zvi, buffer, ZVENT_1ROOM);
+        ReadZVentData(&global_scase, zvi, buffer, ZVENT_1ROOM);
         break;
       default:
         assert(FFALSE);
