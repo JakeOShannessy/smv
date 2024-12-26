@@ -720,7 +720,7 @@ EXTERNCPP void ScaleFont3D(void);
 //*** readsmv.c headers
 
 EXTERNCPP void *CheckFiles(void *arg);
-EXTERNCPP void *Compress(smv_case *scase, void *arg);
+EXTERNCPP void *Compress(void *arg);
 #ifdef pp_SKY
 EXTERNCPP void GetBoxSkyCorners(void);
 #endif
