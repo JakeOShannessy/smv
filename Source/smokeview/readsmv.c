@@ -2538,77 +2538,77 @@ int IsTerrainTexture(smv_case *scase, texturedata *texti){
 
 /* ------------------ InitTextures0 ------------------------ */
 
-void InitTextures0(void){
+void InitTextures0(smv_case *scase){
   // get texture filename from SURF and device info
   int i;
 
   INIT_PRINT_TIMER(texture_timer);
-  global_scase.texture_coll.ntextureinfo = 0;
-  for(i=0;i<global_scase.surfcoll.nsurfinfo;i++){
+  scase->texture_coll.ntextureinfo = 0;
+  for(i=0;i<scase->surfcoll.nsurfinfo;i++){
     surfdata *surfi;
     texturedata *texti;
     int len;
 
-    surfi = global_scase.surfcoll.surfinfo + i;
+    surfi = scase->surfcoll.surfinfo + i;
     if(surfi->texturefile==NULL)continue;
-    texti = global_scase.texture_coll.textureinfo + global_scase.texture_coll.ntextureinfo;
+    texti = scase->texture_coll.textureinfo + scase->texture_coll.ntextureinfo;
     len = strlen(surfi->texturefile);
     NewMemory((void **)&texti->file,(len+1)*sizeof(char));
     strcpy(texti->file,surfi->texturefile);
     texti->loaded=0;
     texti->used=0;
     texti->display=0;
-    global_scase.texture_coll.ntextureinfo++;
-    surfi->textureinfo=global_scase.texture_coll.textureinfo+global_scase.texture_coll.ntextureinfo-1;
+    scase->texture_coll.ntextureinfo++;
+    surfi->textureinfo=scase->texture_coll.textureinfo+scase->texture_coll.ntextureinfo-1;
   }
   PRINT_TIMER(texture_timer, "SURF textures");
 
-  for(i=0;i<global_scase.device_texture_list_coll.ndevice_texture_list;i++){
+  for(i=0;i<scase->device_texture_list_coll.ndevice_texture_list;i++){
     char *texturefile;
     texturedata *texti;
     int len;
 
-    texturefile = global_scase.device_texture_list_coll.device_texture_list[i];
-    texti = global_scase.texture_coll.textureinfo + global_scase.texture_coll.ntextureinfo;
+    texturefile = scase->device_texture_list_coll.device_texture_list[i];
+    texti = scase->texture_coll.textureinfo + scase->texture_coll.ntextureinfo;
     len = strlen(texturefile);
     NewMemory((void **)&texti->file,(len+1)*sizeof(char));
-    global_scase.device_texture_list_coll.device_texture_list_index[i]=global_scase.texture_coll.ntextureinfo;
+    scase->device_texture_list_coll.device_texture_list_index[i]=scase->texture_coll.ntextureinfo;
     strcpy(texti->file,texturefile);
     texti->loaded=0;
     texti->used=0;
     texti->display=0;
-    global_scase.texture_coll.ntextureinfo++;
+    scase->texture_coll.ntextureinfo++;
   }
   PRINT_TIMER(texture_timer, "device textures");
 
-  if(global_scase.terrain_texture_coll.nterrain_textures>0){
+  if(scase->terrain_texture_coll.nterrain_textures>0){
     texturedata *texture_base;
 
-    texture_base = global_scase.texture_coll.textureinfo + global_scase.texture_coll.ntextureinfo;
-    for(i=0;i<global_scase.terrain_texture_coll.nterrain_textures;i++){
+    texture_base = scase->texture_coll.textureinfo + scase->texture_coll.ntextureinfo;
+    for(i=0;i<scase->terrain_texture_coll.nterrain_textures;i++){
       char *texturefile;
       texturedata *texti;
       int len;
 
-      texturefile = global_scase.terrain_texture_coll.terrain_textures[i].file;
-      texti = global_scase.texture_coll.textureinfo + global_scase.texture_coll.ntextureinfo;
+      texturefile = scase->terrain_texture_coll.terrain_textures[i].file;
+      texti = scase->texture_coll.textureinfo + scase->texture_coll.ntextureinfo;
       len = strlen(texturefile);
       NewMemory((void **)&texti->file,(len+1)*sizeof(char));
       strcpy(texti->file,texturefile);
       texti->loaded=0;
       texti->used=0;
       texti->display=0;
-      global_scase.texture_coll.ntextureinfo++;
+      scase->texture_coll.ntextureinfo++;
     }
-    FREEMEMORY(global_scase.terrain_texture_coll.terrain_textures);
-    global_scase.terrain_texture_coll.terrain_textures = texture_base;
+    FREEMEMORY(scase->terrain_texture_coll.terrain_textures);
+    scase->terrain_texture_coll.terrain_textures = texture_base;
   }
   PRINT_TIMER(texture_timer, "terrain textures");
 
   // check to see if texture files exist .
   // If so, then convert to OpenGL format
 
-  for(i=0;i<global_scase.texture_coll.ntextureinfo;i++){
+  for(i=0;i<scase->texture_coll.ntextureinfo;i++){
     unsigned char *floortex;
     int texwid, texht;
     texturedata *texti;
@@ -2616,7 +2616,7 @@ void InitTextures0(void){
     int max_texture_size;
     int is_transparent;
 
-    texti = global_scase.texture_coll.textureinfo + i;
+    texti = scase->texture_coll.textureinfo + i;
     texti->loaded=0;
     if(texti->file==NULL||IsDupTexture(&global_scase, texti)==1||IsTerrainTexture(&global_scase, texti)==1)continue;
 
@@ -2658,8 +2658,8 @@ void InitTextures0(void){
   }
 
   CheckMemory;
-  if(global_scase.texture_coll.ntextureinfo==0){
-    FREEMEMORY(global_scase.texture_coll.textureinfo);
+  if(scase->texture_coll.ntextureinfo==0){
+    FREEMEMORY(scase->texture_coll.textureinfo);
   }
 
   // define colorbar textures
@@ -2763,15 +2763,15 @@ void InitTextures0(void){
 
   // define terrain texture
 
-  if(global_scase.terrain_texture_coll.nterrain_textures>0){
+  if(scase->terrain_texture_coll.nterrain_textures>0){
     texturedata *tt;
     unsigned char *floortex;
     int texwid, texht, nloaded=0;
 
-    for(i=0;i<global_scase.terrain_texture_coll.nterrain_textures;i++){
+    for(i=0;i<scase->terrain_texture_coll.nterrain_textures;i++){
       int is_transparent;
 
-      tt = global_scase.terrain_texture_coll.terrain_textures + i;
+      tt = scase->terrain_texture_coll.terrain_textures + i;
       tt->loaded=0;
       tt->used=0;
       tt->display=0;
@@ -2853,16 +2853,16 @@ void InitTextures0(void){
 
   /* ------------------ InitTextures ------------------------ */
 
-void InitTextures(int use_graphics_arg){
+void InitTextures(smv_case *scase, int use_graphics_arg){
   INIT_PRINT_TIMER(total_texture_time);
-  UpdateDeviceTextures(&global_scase.objectscoll, global_scase.devicecoll.ndeviceinfo, global_scase.devicecoll.deviceinfo,
-                       global_scase.propcoll.npropinfo, global_scase.propcoll.propinfo, &global_scase.device_texture_list_coll.ndevice_texture_list,
-                       &global_scase.device_texture_list_coll.device_texture_list_index, &global_scase.device_texture_list_coll.device_texture_list);
-  if(global_scase.surfcoll.nsurfinfo>0||global_scase.device_texture_list_coll.ndevice_texture_list>0){
-    if(NewMemory((void **)&global_scase.texture_coll.textureinfo, (global_scase.surfcoll.nsurfinfo+global_scase.device_texture_list_coll.ndevice_texture_list+global_scase.terrain_texture_coll.nterrain_textures)*sizeof(texturedata))==0)return;
+  UpdateDeviceTextures(&scase->objectscoll, scase->devicecoll.ndeviceinfo, scase->devicecoll.deviceinfo,
+                       scase->propcoll.npropinfo, scase->propcoll.propinfo, &scase->device_texture_list_coll.ndevice_texture_list,
+                       &scase->device_texture_list_coll.device_texture_list_index, &scase->device_texture_list_coll.device_texture_list);
+  if(scase->surfcoll.nsurfinfo>0||scase->device_texture_list_coll.ndevice_texture_list>0){
+    if(NewMemory((void **)&scase->texture_coll.textureinfo, (scase->surfcoll.nsurfinfo+scase->device_texture_list_coll.ndevice_texture_list+scase->terrain_texture_coll.nterrain_textures)*sizeof(texturedata))==0)return;
   }
   if(use_graphics_arg==1){
-    InitTextures0();
+    InitTextures0(scase);
   }
   PRINT_TIMER(total_texture_time, "total texure time");
 }
@@ -9972,7 +9972,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
   // define texture data structures by constructing a list of unique file names from surfinfo and devices
 
- InitTextures(use_graphics);
+ InitTextures(&global_scase, use_graphics);
 
 /*
     Initialize blockage labels and blockage surface labels
