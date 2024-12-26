@@ -5,17 +5,6 @@ add_test(NAME "Execute smokeview" COMMAND smokeview -v)
 add_test(NAME "Execute smokezip" COMMAND smokezip)
 add_test(NAME "Execute smvq" COMMAND smvq -V)
 
-set(FIG_COMMIT "374d9db0062fd6dc38b30bc0d27cd84c9bb2b69d")
-
-FetchContent_Declare(
-    test_data
-    GIT_REPOSITORY https://github.com/JakeOShannessy/fig.git
-    GIT_TAG        ${FIG_COMMIT}
-)
-FetchContent_MakeAvailable(test_data)
-set(FIG_DIR ${test_data_SOURCE_DIR})
-
-
 set(FIG_COMMIT "513dc046131f5dfdda47ff485efc2db7243f06b1")
 
 FetchContent_Declare(
