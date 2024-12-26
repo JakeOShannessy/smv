@@ -6880,17 +6880,17 @@ void *CheckFiles(void *arg){
 
 /* ------------------ InitMeshBlockages ------------------------ */
 
-void InitMeshBlockages(void){
+void InitMeshBlockages(smv_case *scase){
   int i;
 
-  for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+  for(i = 0;i < scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
     int counts[6];
     int *is_extface;
     float *xplt, *yplt, *zplt;
 
-    meshi = global_scase.meshescoll.meshinfo + i;
+    meshi = scase->meshescoll.meshinfo + i;
     if(meshi->nbptrs == 0)continue;
     xplt = meshi->xplt_orig;
     yplt = meshi->yplt_orig;
@@ -12074,7 +12074,7 @@ int ReadSMV_Configure(){
   SetInteriorBlockages();
   PRINT_TIMER(timer_readsmv, "SetInteriorBlockages");
 
-  InitMeshBlockages();
+  InitMeshBlockages(&global_scase);
   SetExternalVents();
 
   PRINTF("%s", _("complete"));
