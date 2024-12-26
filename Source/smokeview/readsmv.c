@@ -12378,7 +12378,7 @@ void SetSliceMax(int set_valmax, float valmax, char *buffer2){
 
 /* ------------------ ReadIni2 ------------------------ */
 
-int ReadIni2(const char *inifile, int localfile){
+int ReadIni2(smv_case *scase, const char *inifile, int localfile){
   int i;
   FILE *stream;
   int have_tours=0, have_tour7=0;
@@ -12401,7 +12401,7 @@ int ReadIni2(const char *inifile, int localfile){
   nunitclasses_ini = 0;
 
   if(localfile == 1){
-    UpdateINIList(&global_scase);
+    UpdateINIList(scase);
   }
 
   if(localfile == 1){
@@ -12682,7 +12682,7 @@ int ReadIni2(const char *inifile, int localfile){
     }
     if(MatchINI(buffer, "SHOWHRRPLOT")==1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, " %i %i %f %f %i", &glui_hrr, &hoc_hrr, &global_scase.fuel_hoc, &plot2d_size_factor, &vis_hrr_plot);
+      sscanf(buffer, " %i %i %f %f %i", &glui_hrr, &hoc_hrr, &scase->fuel_hoc, &plot2d_size_factor, &vis_hrr_plot);
       continue;
     }
     if(MatchINI(buffer, "SHOWDEVICEPLOTS")==1){
@@ -12760,7 +12760,7 @@ int ReadIni2(const char *inifile, int localfile){
           plot2di->curve[j].csv_file_index = file_index;
           plot2di->curve[j].csv_col_index  = col_index;
           curve                            = plot2di->curve+j;
-          strcpy(curve->c_type, global_scase.csvcoll.csvfileinfo[file_index].c_type);
+          strcpy(curve->c_type, scase->csvcoll.csvfileinfo[file_index].c_type);
           curve->color[0]                  = color[0];
           curve->color[1]                  = color[1];
           curve->color[2]                  = color[2];
@@ -12770,7 +12770,7 @@ int ReadIni2(const char *inifile, int localfile){
           curve->vals                      = NULL;
           curve->use_foreground_color      = use_foreground_color;
           if(strcmp(curve->c_type, "devc")==0){
-            curve->quantity = global_scase.csvcoll.csvfileinfo[file_index].csvinfo[col_index].label.longlabel;
+            curve->quantity = scase->csvcoll.csvfileinfo[file_index].csvinfo[col_index].label.longlabel;
           }
           else{
             curve->quantity = NULL;
@@ -12850,7 +12850,7 @@ int ReadIni2(const char *inifile, int localfile){
     }
     if(MatchINI(buffer, "TLOAD") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %f %i %f %i %i", &use_tload_begin, &global_scase.tload_begin, &use_tload_end, &global_scase.tload_end, &use_tload_skip, &tload_skip);
+      sscanf(buffer, "%i %f %i %f %i %i", &use_tload_begin, &scase->tload_begin, &use_tload_end, &scase->tload_end, &use_tload_skip, &tload_skip);
       continue;
     }
     if(MatchINI(buffer, "VOLSMOKE") == 1){
@@ -12918,10 +12918,10 @@ int ReadIni2(const char *inifile, int localfile){
 
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &meshnum);
-      if(meshnum >= 0 && meshnum<global_scase.meshescoll.nmeshes){
+      if(meshnum >= 0 && meshnum<scase->meshescoll.nmeshes){
         meshdata *meshi;
 
-        meshi = global_scase.meshescoll.meshinfo + meshnum;
+        meshi = scase->meshescoll.meshinfo + meshnum;
         meshi->mesh_offset_ptr = meshi->mesh_offset;
       }
       continue;
@@ -12950,8 +12950,8 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &nm);
       for(i = 0; i<nm; i++){
-        if(i>global_scase.meshescoll.nmeshes - 1)break;
-        meshi = global_scase.meshescoll.meshinfo + i;
+        if(i>scase->meshescoll.nmeshes - 1)break;
+        meshi = scase->meshescoll.meshinfo + i;
         fgets(buffer, 255, stream);
         sscanf(buffer, "%i", &meshi->blockvis);
         ONEORZERO(meshi->blockvis);
@@ -13035,7 +13035,7 @@ int ReadIni2(const char *inifile, int localfile){
 
     if(MatchINI(buffer, "SHOWTERRAIN") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %i", &global_scase.visTerrainType, &terrain_slice_overlap);
+      sscanf(buffer, "%i %i", &scase->visTerrainType, &terrain_slice_overlap);
       continue;
     }
     if(MatchINI(buffer, "STEREO") == 1){
@@ -13116,8 +13116,8 @@ int ReadIni2(const char *inifile, int localfile){
           setp3max_all[iplot3d] = isetmax;
           p3min_all[iplot3d]    = p3mintemp;
           p3max_all[iplot3d]    = p3maxtemp;
-          if(global_scase.plot3dinfo!=NULL){
-            GLUISetMinMax(BOUND_PLOT3D, global_scase.plot3dinfo[0].label[iplot3d].shortlabel, isetmin, p3mintemp, isetmax, p3maxtemp);
+          if(scase->plot3dinfo!=NULL){
+            GLUISetMinMax(BOUND_PLOT3D, scase->plot3dinfo[0].label[iplot3d].shortlabel, isetmin, p3mintemp, isetmax, p3maxtemp);
             update_glui_bounds = 1;
           }
         }
@@ -13326,10 +13326,10 @@ int ReadIni2(const char *inifile, int localfile){
       continue;
     }
     if(MatchINI(buffer, "SHOWSLICEINOBST") == 1){
-      if((localfile==0&&global_scase.solid_ht3d==0)||localfile==1){
+      if((localfile==0&&scase->solid_ht3d==0)||localfile==1){
         fgets(buffer, 255, stream);
-        sscanf(buffer, "%i", &global_scase.show_slice_in_obst);
-        global_scase.show_slice_in_obst=CLAMP(global_scase.show_slice_in_obst,0,2);
+        sscanf(buffer, "%i", &scase->show_slice_in_obst);
+        scase->show_slice_in_obst=CLAMP(scase->show_slice_in_obst,0,2);
       }
       continue;
     }
@@ -13402,10 +13402,10 @@ int ReadIni2(const char *inifile, int localfile){
         fgets(buffer, 255, stream);
         sscanf(buffer, "%i", &seq_id);
 
-        if(seq_id >= 0 && seq_id<global_scase.slicecoll.nmultisliceinfo){
+        if(seq_id >= 0 && seq_id<scase->slicecoll.nmultisliceinfo){
           multislicedata *mslicei;
 
-          mslicei = global_scase.slicecoll.multisliceinfo + seq_id;
+          mslicei = scase->slicecoll.multisliceinfo + seq_id;
           mslicei->autoload = 1;
           mslicei->loadable = 1;
         }
@@ -13937,7 +13937,7 @@ int ReadIni2(const char *inifile, int localfile){
     if(MatchINI(buffer, "OUTLINEMODE") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i %i", &highlight_flag, &outline_color_flag);
-      if(global_scase.meshescoll.nmeshes<2){
+      if(scase->meshescoll.nmeshes<2){
         ONEORZERO(highlight_flag);
       }
       continue;
@@ -14029,7 +14029,7 @@ int ReadIni2(const char *inifile, int localfile){
         TrimBack(buffer);
         token = strtok(buffer, " ");
         j = 0;
-        while(token != NULL&&j<global_scase.npartclassinfo){
+        while(token != NULL&&j<scase->npartclassinfo){
           int visval;
 
           sscanf(token, "%i", &visval);
@@ -14167,13 +14167,13 @@ int ReadIni2(const char *inifile, int localfile){
     }
     if(MatchINI(buffer, "LINEWIDTH") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%f ", &global_scase.linewidth);
-      solidlinewidth = global_scase.linewidth;
+      sscanf(buffer, "%f ", &scase->linewidth);
+      solidlinewidth = scase->linewidth;
       continue;
     }
     if(MatchINI(buffer, "VENTLINEWIDTH") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%f ", &global_scase.ventlinewidth);
+      sscanf(buffer, "%f ", &scase->ventlinewidth);
       continue;
     }
     if(MatchINI(buffer, "BOUNDARYOFFSET") == 1){
@@ -14430,8 +14430,8 @@ int ReadIni2(const char *inifile, int localfile){
       sscanf(buffer, "%f %f %f", ventcolor_temp, ventcolor_temp + 1, ventcolor_temp + 2);
       ventcolor_temp[3] = 1.0;
       ventcolor = GetColorPtr(ventcolor_temp);
-      global_scase.updatefaces = 1;
-      global_scase.updateindexcolors = 1;
+      scase->updatefaces = 1;
+      scase->updateindexcolors = 1;
       continue;
     }
     if(MatchINI(buffer, "STATICPARTCOLOR") == 1){
@@ -14562,8 +14562,8 @@ int ReadIni2(const char *inifile, int localfile){
       sscanf(buffer, "%f %f %f", blockcolor_temp, blockcolor_temp + 1, blockcolor_temp + 2);
       blockcolor_temp[3] = 1.0;
       block_ambient2 = GetColorPtr(blockcolor_temp);
-      global_scase.updatefaces = 1;
-      global_scase.updateindexcolors = 1;
+      scase->updatefaces = 1;
+      scase->updateindexcolors = 1;
       continue;
     }
     if(MatchINI(buffer, "BLOCKLOCATION") == 1){
@@ -14586,8 +14586,8 @@ int ReadIni2(const char *inifile, int localfile){
     if(MatchINI(buffer, "BLOCKSHININESS") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f", &block_shininess);
-      global_scase.updatefaces = 1;
-      global_scase.updateindexcolors = 1;
+      scase->updatefaces = 1;
+      scase->updateindexcolors = 1;
       continue;
     }
     if(MatchINI(buffer, "BLOCKSPECULAR") == 1){
@@ -14597,8 +14597,8 @@ int ReadIni2(const char *inifile, int localfile){
       sscanf(buffer, "%f %f %f", blockspec_temp, blockspec_temp + 1, blockspec_temp + 2);
       blockspec_temp[3] = 1.0;
       block_specular2 = GetColorPtr(blockspec_temp);
-      global_scase.updatefaces = 1;
-      global_scase.updateindexcolors = 1;
+      scase->updatefaces = 1;
+      scase->updateindexcolors = 1;
       continue;
     }
     if(MatchINI(buffer, "SHOWOPENVENTS") == 1){
@@ -14613,8 +14613,8 @@ int ReadIni2(const char *inifile, int localfile){
     }
     if(MatchINI(buffer, "SHOWOTHERVENTS") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &global_scase.visOtherVents);
-      ONEORZERO(global_scase.visOtherVents);
+      sscanf(buffer, "%i", &scase->visOtherVents);
+      ONEORZERO(scase->visOtherVents);
       continue;
     }
     if(MatchINI(buffer, "SHOWCVENTS") == 1){
@@ -15185,8 +15185,8 @@ int ReadIni2(const char *inifile, int localfile){
       }
       if(MatchINI(buffer, "SMOKEALBEDO") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
-        sscanf(buffer, "%f", &global_scase.smoke_albedo);
-        global_scase.smoke_albedo = CLAMP(global_scase.smoke_albedo, 0.0, 1.0);
+        sscanf(buffer, "%f", &scase->smoke_albedo);
+        scase->smoke_albedo = CLAMP(scase->smoke_albedo, 0.0, 1.0);
         continue;
       }
       if(MatchINI(buffer, "SMOKEFIREPROP") == 1){
@@ -15233,8 +15233,8 @@ int ReadIni2(const char *inifile, int localfile){
        }
       if(MatchINI(buffer, "HRRPUVCUTOFF")==1){
         if(fgets(buffer, 255, stream)==NULL)break;
-        sscanf(buffer, "%f", &global_scase.global_hrrpuv_cutoff_default);
-        global_scase.global_hrrpuv_cutoff = global_scase.global_hrrpuv_cutoff_default;
+        sscanf(buffer, "%f", &scase->global_hrrpuv_cutoff_default);
+        scase->global_hrrpuv_cutoff = scase->global_hrrpuv_cutoff_default;
         continue;
       }
       if(MatchINI(buffer, "FIREDEPTH") == 1){
@@ -15273,11 +15273,11 @@ int ReadIni2(const char *inifile, int localfile){
         if(fgets(buffer, 255, stream)==NULL)break;
         sscanf(buffer, "%i %i %i %i %i",
           &nt, &terrain_show_geometry_surface, &terrain_show_geometry_outline, &terrain_show_geometry_points, &terrain_showonly_top);
-        if(global_scase.terrain_texture_coll.terrain_textures!=NULL){
-          for(i = 0; i<MIN(nt, global_scase.terrain_texture_coll.nterrain_textures); i++){
+        if(scase->terrain_texture_coll.terrain_textures!=NULL){
+          for(i = 0; i<MIN(nt, scase->terrain_texture_coll.nterrain_textures); i++){
             texturedata *texti;
 
-            texti = global_scase.terrain_texture_coll.terrain_textures+i;
+            texti = scase->terrain_texture_coll.terrain_textures+i;
             if(fgets(buffer, 255, stream)==NULL)break;
             sscanf(buffer, "%i ", &(texti->display));
           }
@@ -15453,7 +15453,7 @@ int ReadIni2(const char *inifile, int localfile){
       }
       if(MatchINI(buffer, "SMOKE3DCUTOFFS") == 1){
         fgets(buffer, 255, stream);
-        sscanf(buffer, "%f %f", &load_3dsmoke_cutoff, &global_scase.load_hrrpuv_cutoff);
+        sscanf(buffer, "%f %f", &load_3dsmoke_cutoff, &scase->load_hrrpuv_cutoff);
         continue;
       }
 
@@ -15542,14 +15542,14 @@ int ReadIni2(const char *inifile, int localfile){
         TrimBack(buffer);
         bufferptr = TrimFront(buffer);
         strcpy(labeli->name, bufferptr);
-        LabelInsert(&global_scase.labelscoll, labeli);
+        LabelInsert(&scase->labelscoll, labeli);
         continue;
       }
       if(MatchINI(buffer, "VIEWTIMES") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
-        sscanf(buffer, "%f %f %i", &global_scase.tourcoll.tour_tstart, &global_scase.tourcoll.tour_tstop, &global_scase.tourcoll.tour_ntimes);
-        if(global_scase.tourcoll.tour_ntimes<2)global_scase.tourcoll.tour_ntimes = 2;
-        ReallocTourMemory(&global_scase.tourcoll);
+        sscanf(buffer, "%f %f %i", &scase->tourcoll.tour_tstart, &scase->tourcoll.tour_tstop, &scase->tourcoll.tour_ntimes);
+        if(scase->tourcoll.tour_ntimes<2)scase->tourcoll.tour_ntimes = 2;
+        ReallocTourMemory(&scase->tourcoll);
         continue;
       }
       if(MatchINI(buffer, "SHOOTER") == 1){
@@ -15586,15 +15586,15 @@ int ReadIni2(const char *inifile, int localfile){
         fgets(buffer, 255, stream);
         sscanf(buffer, "%i %i %i", &ndevices_ini, &object_outlines, &object_box);
 
-        for(i = 0; i<global_scase.objectscoll.nobject_defs; i++){
-          obj_typei = global_scase.objectscoll.object_defs[i];
+        for(i = 0; i<scase->objectscoll.nobject_defs; i++){
+          obj_typei = scase->objectscoll.object_defs[i];
           obj_typei->visible = 0;
         }
         for(i = 0; i<ndevices_ini; i++){
           fgets(buffer, 255, stream);
           TrimBack(buffer);
           dev_label = TrimFront(buffer);
-          obj_typei = GetSmvObject(&global_scase.objectscoll, dev_label);
+          obj_typei = GetSmvObject(&scase->objectscoll, dev_label);
           if(obj_typei != NULL){
             obj_typei->visible = 1;
           }
@@ -15623,12 +15623,12 @@ int ReadIni2(const char *inifile, int localfile){
       */
 
       if(MatchINI(buffer, "TICKS") == 1){
-        global_scase.ntickinfo++;
-        if(global_scase.tickinfo==NULL){
-          NewMemory((void **)&global_scase.tickinfo, (global_scase.ntickinfo)*sizeof(tickdata));
+        scase->ntickinfo++;
+        if(scase->tickinfo==NULL){
+          NewMemory((void **)&scase->tickinfo, (scase->ntickinfo)*sizeof(tickdata));
         }
         else{
-          ResizeMemory((void **)&global_scase.tickinfo, (global_scase.ntickinfo)*sizeof(tickdata));
+          ResizeMemory((void **)&scase->tickinfo, (scase->ntickinfo)*sizeof(tickdata));
         }
 
         {
@@ -15640,7 +15640,7 @@ int ReadIni2(const char *inifile, int localfile){
           float *dxyz;
           float sum;
 
-          ticki = global_scase.tickinfo + global_scase.ntickinfo - 1;
+          ticki = scase->tickinfo + scase->ntickinfo - 1;
           begt = ticki->begin;
           endt = ticki->end;
           nbarst = &ticki->nbars;
@@ -15728,16 +15728,16 @@ int ReadIni2(const char *inifile, int localfile){
 
           fgets(buffer, 255, stream);
           sscanf(buffer, "%i %i", &ind, &val);
-          if(ind<0 || ind>global_scase.propcoll.npropinfo - 1)continue;
-          propi = global_scase.propcoll.propinfo + ind;
+          if(ind<0 || ind>scase->propcoll.npropinfo - 1)continue;
+          propi = scase->propcoll.propinfo + ind;
           if(val<0 || val>propi->nsmokeview_ids - 1)continue;
           propi->smokeview_id = propi->smokeview_ids[val];
           propi->smv_object = propi->smv_objects[val];
         }
-        for(i = 0; i<global_scase.npartclassinfo; i++){
+        for(i = 0; i<scase->npartclassinfo; i++){
           partclassdata *partclassi;
 
-          partclassi = global_scase.partclassinfo + i;
+          partclassi = scase->partclassinfo + i;
           UpdatePartClassDepend(partclassi);
 
         }
@@ -15753,9 +15753,9 @@ int ReadIni2(const char *inifile, int localfile){
         for(j = 0; j<ntemp; j++){
           partclassdata *partclassj;
 
-          if(j>global_scase.npartclassinfo)break;
+          if(j>scase->npartclassinfo)break;
 
-          partclassj = global_scase.partclassinfo + j;
+          partclassj = scase->partclassinfo + j;
           fgets(buffer, 255, stream);
           sscanf(buffer, "%i", &partclassj->vis_type);
         }
@@ -15802,42 +15802,42 @@ int ReadIni2(const char *inifile, int localfile){
         if(have_tours==0&&MatchINI(buffer, "TOUR7") == 1)tours_flag = 1;
         if(tours_flag == 1){
           have_tour7 = 1;
-          if(global_scase.tourcoll.ntourinfo > 0){
-            for(i = 0; i < global_scase.tourcoll.ntourinfo; i++){
+          if(scase->tourcoll.ntourinfo > 0){
+            for(i = 0; i < scase->tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = global_scase.tourcoll.tourinfo + i;
+              touri = scase->tourcoll.tourinfo + i;
               FreeTour(touri);
             }
-            FREEMEMORY(global_scase.tourcoll.tourinfo);
+            FREEMEMORY(scase->tourcoll.tourinfo);
           }
-          global_scase.tourcoll.ntourinfo = 0;
+          scase->tourcoll.ntourinfo = 0;
 
           fgets(buffer, 255, stream);
-          sscanf(buffer, "%i", &global_scase.tourcoll.ntourinfo);
-          global_scase.tourcoll.ntourinfo++;
-          if(global_scase.tourcoll.ntourinfo > 0){
-            if(NewMemory((void **)&global_scase.tourcoll.tourinfo, global_scase.tourcoll.ntourinfo*sizeof(tourdata)) == 0)return 2;
-            for(i = 0; i < global_scase.tourcoll.ntourinfo; i++){
+          sscanf(buffer, "%i", &scase->tourcoll.ntourinfo);
+          scase->tourcoll.ntourinfo++;
+          if(scase->tourcoll.ntourinfo > 0){
+            if(NewMemory((void **)&scase->tourcoll.tourinfo, scase->tourcoll.ntourinfo*sizeof(tourdata)) == 0)return 2;
+            for(i = 0; i < scase->tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = global_scase.tourcoll.tourinfo + i;
+              touri = scase->tourcoll.tourinfo + i;
               touri->path_times = NULL;
               touri->display = 0;
             }
           }
-          ReallocTourMemory(&global_scase.tourcoll);
-          InitCircularTour(global_scase.tourcoll.tourinfo,ncircletournodes,INIT);
+          ReallocTourMemory(&scase->tourcoll);
+          InitCircularTour(scase->tourcoll.tourinfo,ncircletournodes,INIT);
           {
             keyframe *thisframe, *addedframe;
             tourdata *touri;
             int glui_avatar_index_local;
 
-            for(i = 1; i < global_scase.tourcoll.ntourinfo; i++){
+            for(i = 1; i < scase->tourcoll.ntourinfo; i++){
               int j;
 
-              touri = global_scase.tourcoll.tourinfo + i;
-              InitTour(&global_scase.tourcoll, touri);
+              touri = scase->tourcoll.tourinfo + i;
+              InitTour(&scase->tourcoll, touri);
               fgets(buffer, 255, stream);
               TrimBack(buffer);
               strcpy(touri->label, TrimFront(buffer));
@@ -15845,13 +15845,13 @@ int ReadIni2(const char *inifile, int localfile){
               fgets(buffer, 255, stream);
               glui_avatar_index_local = 0;
               sscanf(buffer, "%i %i %i", &nkeyframes, &glui_avatar_index_local, &touri->display2);
-              glui_avatar_index_local = CLAMP(glui_avatar_index_local, 0, global_scase.objectscoll.navatar_types - 1);
+              glui_avatar_index_local = CLAMP(glui_avatar_index_local, 0, scase->objectscoll.navatar_types - 1);
               touri->glui_avatar_index = glui_avatar_index_local;
               if(touri->display2 != 1)touri->display2 = 0;
               touri->nkeyframes = nkeyframes;
 
               if(NewMemory((void **)&touri->keyframe_times, nkeyframes*sizeof(float)) == 0)return 2;
-              if(NewMemory((void **)&touri->path_times, global_scase.tourcoll.tour_ntimes*sizeof(float)) == 0)return 2;
+              if(NewMemory((void **)&touri->path_times, scase->tourcoll.tour_ntimes*sizeof(float)) == 0)return 2;
               thisframe = &touri->first_frame;
               for(j = 0; j < nkeyframes; j++){
                 key_pause_time = 0.0;
@@ -15871,10 +15871,10 @@ int ReadIni2(const char *inifile, int localfile){
             }
           }
           if(tours_flag == 1){
-            for(i = 0; i < global_scase.tourcoll.ntourinfo; i++){
+            for(i = 0; i < scase->tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = global_scase.tourcoll.tourinfo + i;
+              touri = scase->tourcoll.tourinfo + i;
               touri->first_frame.next->prev = &touri->first_frame;
               touri->last_frame.prev->next = &touri->last_frame;
             }
@@ -15888,7 +15888,7 @@ int ReadIni2(const char *inifile, int localfile){
             if(viewalltours == 1)TourMenu(MENU_TOUR_SHOWALL);
           }
           else{
-            global_scase.tourcoll.ntourinfo = 0;
+            scase->tourcoll.ntourinfo = 0;
           }
           strcpy(buffer, "1.00000 1.00000 2.0000 0");
           TrimMZeros(buffer);
@@ -15913,44 +15913,44 @@ int ReadIni2(const char *inifile, int localfile){
         if(have_tour7==0&&MatchINI(buffer, "TOURS") == 1)tours_flag = 1;
         if(tours_flag == 1){
           have_tours = 1;
-          if(global_scase.tourcoll.ntourinfo > 0){
-            for(i = 0; i < global_scase.tourcoll.ntourinfo; i++){
+          if(scase->tourcoll.ntourinfo > 0){
+            for(i = 0; i < scase->tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = global_scase.tourcoll.tourinfo + i;
+              touri = scase->tourcoll.tourinfo + i;
               FreeTour(touri);
             }
-            FREEMEMORY(global_scase.tourcoll.tourinfo);
+            FREEMEMORY(scase->tourcoll.tourinfo);
           }
-          global_scase.tourcoll.ntourinfo = 0;
+          scase->tourcoll.ntourinfo = 0;
 
           fgets(buffer, 255, stream);
-          sscanf(buffer, "%i", &global_scase.tourcoll.ntourinfo);
-          global_scase.tourcoll.ntourinfo++;
-          if(global_scase.tourcoll.ntourinfo > 0){
-            if(NewMemory((void **)&global_scase.tourcoll.tourinfo, global_scase.tourcoll.ntourinfo*sizeof(tourdata)) == 0)return 2;
-            for(i = 0; i < global_scase.tourcoll.ntourinfo; i++){
+          sscanf(buffer, "%i", &scase->tourcoll.ntourinfo);
+          scase->tourcoll.ntourinfo++;
+          if(scase->tourcoll.ntourinfo > 0){
+            if(NewMemory((void **)&scase->tourcoll.tourinfo, scase->tourcoll.ntourinfo*sizeof(tourdata)) == 0)return 2;
+            for(i = 0; i < scase->tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = global_scase.tourcoll.tourinfo + i;
+              touri = scase->tourcoll.tourinfo + i;
               touri->path_times = NULL;
               touri->display = 0;
             }
           }
-          ReallocTourMemory(&global_scase.tourcoll);
-          InitCircularTour(global_scase.tourcoll.tourinfo,ncircletournodes,INIT);
+          ReallocTourMemory(&scase->tourcoll);
+          InitCircularTour(scase->tourcoll.tourinfo,ncircletournodes,INIT);
           {
             keyframe *thisframe, *addedframe;
             tourdata *touri;
             int glui_avatar_index_local;
 
-            for(i = 1; i < global_scase.tourcoll.ntourinfo; i++){
+            for(i = 1; i < scase->tourcoll.ntourinfo; i++){
               int j;
               float dummy;
               int idummy;
 
-              touri = global_scase.tourcoll.tourinfo + i;
-              InitTour(&global_scase.tourcoll, touri);
+              touri = scase->tourcoll.tourinfo + i;
+              InitTour(&scase->tourcoll, touri);
               fgets(buffer, 255, stream);
               TrimBack(buffer);
               strcpy(touri->label, TrimFront(buffer));
@@ -15959,13 +15959,13 @@ int ReadIni2(const char *inifile, int localfile){
               glui_avatar_index_local = 0;
               sscanf(buffer, "%i %i %f %i %i",
                 &nkeyframes, &idummy, &dummy, &glui_avatar_index_local, &touri->display2);
-              glui_avatar_index_local = CLAMP(glui_avatar_index_local, 0, global_scase.objectscoll.navatar_types - 1);
+              glui_avatar_index_local = CLAMP(glui_avatar_index_local, 0, scase->objectscoll.navatar_types - 1);
               touri->glui_avatar_index = glui_avatar_index_local;
               if(touri->display2 != 1)touri->display2 = 0;
               touri->nkeyframes = nkeyframes;
 
               if(NewMemory((void **)&touri->keyframe_times, nkeyframes*sizeof(float)) == 0)return 2;
-              if(NewMemory((void **)&touri->path_times, global_scase.tourcoll.tour_ntimes*sizeof(float)) == 0)return 2;
+              if(NewMemory((void **)&touri->path_times, scase->tourcoll.tour_ntimes*sizeof(float)) == 0)return 2;
               thisframe = &touri->first_frame;
               for(j = 0; j < nkeyframes; j++){
                 key_view[0] = 0.0;
@@ -16012,10 +16012,10 @@ int ReadIni2(const char *inifile, int localfile){
             }
           }
           if(tours_flag == 1){
-            for(i = 0; i < global_scase.tourcoll.ntourinfo; i++){
+            for(i = 0; i < scase->tourcoll.ntourinfo; i++){
               tourdata *touri;
 
-              touri = global_scase.tourcoll.tourinfo + i;
+              touri = scase->tourcoll.tourinfo + i;
               touri->first_frame.next->prev = &touri->first_frame;
               touri->last_frame.prev->next = &touri->last_frame;
             }
@@ -16029,7 +16029,7 @@ int ReadIni2(const char *inifile, int localfile){
             if(viewalltours == 1)TourMenu(MENU_TOUR_SHOWALL);
           }
           else{
-            global_scase.tourcoll.ntourinfo = 0;
+            scase->tourcoll.ntourinfo = 0;
           }
           strcpy(buffer, "1.00000 1.00000 2.0000 0");
           TrimMZeros(buffer);
@@ -16055,7 +16055,7 @@ int ReadBinIni(void){
   // smokeview.ini ini in install directory
   int returnval = 0;
   if(smokeviewini!=NULL){
-    returnval = ReadIni2(smokeviewini, 0);
+    returnval = ReadIni2(&global_scase, smokeviewini, 0);
   }
   FREEMEMORY(smokeviewini);
   return returnval;
@@ -16084,7 +16084,7 @@ int ReadIni(char *inifile){
   if(global_ini!=NULL){
     int returnval;
 
-    returnval = ReadIni2(global_ini, 0);
+    returnval = ReadIni2(&global_scase, global_ini, 0);
     if(returnval==2)return 2;
     if(returnval == 0 && readini_output==1){
       if(verbose_output==1)PRINTF("- complete\n");
@@ -16098,14 +16098,14 @@ int ReadIni(char *inifile){
     int returnval;
     char localdir[10];
 
-    returnval = ReadIni2(global_scase.paths.caseini_filename, 1);
+    returnval = ReadIni2(&global_scase, global_scase.paths.caseini_filename, 1);
 
     // if directory is not writable then look for another ini file in the scratch directory
     strcpy(localdir, ".");
     if(Writable(localdir)==0){
       // Read "${fdsprefix}.ini" from the scratch directory
       char *scratch_ini_filename = GetUserConfigSubPath(global_scase.paths.caseini_filename);
-      returnval = ReadIni2(scratch_ini_filename, 1);
+      returnval = ReadIni2(&global_scase, scratch_ini_filename, 1);
       FREEMEMORY(scratch_ini_filename);
     }
     if(returnval==2)return 2;
@@ -16118,7 +16118,7 @@ int ReadIni(char *inifile){
   if(inifile!=NULL){
     int return_code;
 
-    return_code = ReadIni2(inifile,1);
+    return_code = ReadIni2(&global_scase, inifile,1);
     if(return_code == 0 && readini_output==1){
       if(verbose_output==1)PRINTF("- complete\n");
     }
