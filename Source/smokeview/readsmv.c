@@ -11339,7 +11339,7 @@ typedef struct {
     if(MatchSMV(buffer,"CHID") == 1){
       int return_val;
 
-      return_val = ParseCHIDProcess(stream, NO_SCAN);
+      return_val = ParseCHIDProcess(&global_scase, stream, NO_SCAN);
       if(return_val==RETURN_BREAK){
         BREAK;
       }
