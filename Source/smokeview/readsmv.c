@@ -3447,25 +3447,25 @@ int CompareSmoketypes(const void *arg1, const void *arg2){
 
 /* ------------------ UpdateSmokeTypes ------------------------ */
 
-void UpdateSmoke3DTypes(void){
+void UpdateSmoke3DTypes(smv_case *scase){
   int i;
 
-  if(global_scase.smoke3dcoll.nsmoke3dinfo==0)return;
-  NewMemory((void **)&global_scase.smoke3dcoll.smoke3dtypes, global_scase.smoke3dcoll.nsmoke3dinfo*sizeof(smoke3dtypedata));
-  for(i = 0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
+  if(scase->smoke3dcoll.nsmoke3dinfo==0)return;
+  NewMemory((void **)&scase->smoke3dcoll.smoke3dtypes, scase->smoke3dcoll.nsmoke3dinfo*sizeof(smoke3dtypedata));
+  for(i = 0; i<scase->smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
     int j, doit;
     char *labeli;
     smoke3dtypedata *typen;
 
-    smoke3di = global_scase.smoke3dcoll.smoke3dinfo+i;
+    smoke3di = scase->smoke3dcoll.smoke3dinfo+i;
     labeli = smoke3di->label.shortlabel;
     doit = 1;
     for(j = 0; j<i; j++){
       smoke3ddata *smoke3dj;
       char *labelj;
 
-      smoke3dj = global_scase.smoke3dcoll.smoke3dinfo+j;
+      smoke3dj = scase->smoke3dcoll.smoke3dinfo+j;
       labelj = smoke3dj->label.shortlabel;
       if(strcmp(labeli, labelj)==0){
         doit = 0;
@@ -3473,53 +3473,53 @@ void UpdateSmoke3DTypes(void){
       }
     }
     if(doit==1){
-      typen = global_scase.smoke3dcoll.smoke3dtypes+global_scase.smoke3dcoll.nsmoke3dtypes;
+      typen = scase->smoke3dcoll.smoke3dtypes+scase->smoke3dcoll.nsmoke3dtypes;
       typen->smoke3d = smoke3di;
       typen->shortlabel = smoke3di->label.shortlabel;
       typen->longlabel = smoke3di->label.longlabel;
       typen->extinction = smoke3di->extinct;
-      global_scase.smoke3dcoll.nsmoke3dtypes++;
+      scase->smoke3dcoll.nsmoke3dtypes++;
     }
   }
-  if(global_scase.smoke3dcoll.nsmoke3dtypes>0){
-    qsort((smoke3ddata **)global_scase.smoke3dcoll.smoke3dtypes, global_scase.smoke3dcoll.nsmoke3dtypes, sizeof(smoke3dtypedata), CompareSmoketypes);
-    ResizeMemory((void **)&global_scase.smoke3dcoll.smoke3dtypes, global_scase.smoke3dcoll.nsmoke3dtypes*sizeof(smoke3dtypedata));
+  if(scase->smoke3dcoll.nsmoke3dtypes>0){
+    qsort((smoke3ddata **)scase->smoke3dcoll.smoke3dtypes, scase->smoke3dcoll.nsmoke3dtypes, sizeof(smoke3dtypedata), CompareSmoketypes);
+    ResizeMemory((void **)&scase->smoke3dcoll.smoke3dtypes, scase->smoke3dcoll.nsmoke3dtypes*sizeof(smoke3dtypedata));
   }
   else{
-    FREEMEMORY(global_scase.smoke3dcoll.smoke3dtypes);
+    FREEMEMORY(scase->smoke3dcoll.smoke3dtypes);
   }
-  for(i = 0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
+  for(i = 0; i<scase->smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
     int j;
     smokestatedata *smokestate;
 
-    smoke3di = global_scase.smoke3dcoll.smoke3dinfo+i;
+    smoke3di = scase->smoke3dcoll.smoke3dinfo+i;
     smoke3di->type = GetSmoke3DType(&global_scase, smoke3di->label.shortlabel);
 
-    NewMemory((void **)&smokestate, global_scase.smoke3dcoll.nsmoke3dtypes*sizeof(smokestatedata));
+    NewMemory((void **)&smokestate, scase->smoke3dcoll.nsmoke3dtypes*sizeof(smokestatedata));
     smoke3di->smokestate = smokestate;
-    for(j = 0; j<global_scase.smoke3dcoll.nsmoke3dtypes; j++){
+    for(j = 0; j<scase->smoke3dcoll.nsmoke3dtypes; j++){
       smoke3di->smokestate[j].color = NULL;
       smoke3di->smokestate[j].index = -1;
     }
   }
-  global_scase.smoke3dcoll.smoke3d_other     = global_scase.smoke3dcoll.nsmoke3dtypes;
+  scase->smoke3dcoll.smoke3d_other     = scase->smoke3dcoll.nsmoke3dtypes;
   SOOT_index   = -1;
   HRRPUV_index = -1;
   TEMP_index   = -1;
   CO2_index    = -1;
 
-  for(i = 0; i<global_scase.smoke3dcoll.nsmoke3dtypes; i++){
+  for(i = 0; i<scase->smoke3dcoll.nsmoke3dtypes; i++){
     smoke3ddata *smoke3di;
     char *label;
     float ext;
 
-    smoke3di = global_scase.smoke3dcoll.smoke3dtypes[i].smoke3d;
+    smoke3di = scase->smoke3dcoll.smoke3dtypes[i].smoke3d;
     label = smoke3di->label.shortlabel;
     ext = smoke3di->extinct;
     if(ext>0.0){
       SOOT_index = i;
-      glui_smoke3d_extinct = global_scase.smoke3dcoll.smoke3dtypes[i].extinction;
+      glui_smoke3d_extinct = scase->smoke3dcoll.smoke3dtypes[i].extinction;
       continue;
     }
     if(Match(label, "hrrpuv")==1){
@@ -11787,7 +11787,7 @@ int ReadSMV_Configure(){
   UpdateMeshCoords();
   PRINT_TIMER(timer_readsmv, "UpdateMeshCoords");
 
-  UpdateSmoke3DTypes();
+  UpdateSmoke3DTypes(&global_scase);
   PRINT_TIMER(timer_readsmv, "UpdateSmoke3DTypes");
   CheckMemory;
 
