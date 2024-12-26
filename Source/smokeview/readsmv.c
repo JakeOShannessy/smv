@@ -2159,7 +2159,7 @@ void InitDevice(smv_case *scase, devicedata *devicei, float *xyz, int is_beam, f
 
 /* ------------------ ParseDevicekeyword ------------------------ */
 
-void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
+void ParseDevicekeyword(smv_case *scase, BFILE *stream, devicedata *devicei){
   float xyz[3]={0.0,0.0,0.0}, xyzn[3]={0.0,0.0,0.0};
   float xyz1[3] = { 0.0,0.0,0.0 }, xyz2[3] = { 0.0,0.0,0.0 };
   int state0=0;
@@ -2203,11 +2203,11 @@ void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
   else{
     strcpy(devicei->deviceID, tok1);
   }
-  devicei->object = GetSmvObjectType(&global_scase.objectscoll,  tok1,global_scase.objectscoll.std_object_defs.missing_device);
-  if(devicei->object==global_scase.objectscoll.std_object_defs.missing_device&&tok3!=NULL){
-    devicei->object = GetSmvObjectType(&global_scase.objectscoll,  tok3,global_scase.objectscoll.std_object_defs.missing_device);
+  devicei->object = GetSmvObjectType(&scase->objectscoll,  tok1,scase->objectscoll.std_object_defs.missing_device);
+  if(devicei->object==scase->objectscoll.std_object_defs.missing_device&&tok3!=NULL){
+    devicei->object = GetSmvObjectType(&scase->objectscoll,  tok3,scase->objectscoll.std_object_defs.missing_device);
   }
-  if(devicei->object == global_scase.objectscoll.std_object_defs.missing_device)global_scase.have_missing_objects = 1;
+  if(devicei->object == scase->objectscoll.std_object_defs.missing_device)scase->have_missing_objects = 1;
   devicei->params=NULL;
   devicei->times=NULL;
   devicei->vals=NULL;
@@ -2299,7 +2299,7 @@ void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
 
 /* ------------------ ParseDevicekeyword2 ------------------------ */
 
-void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
+void ParseDevicekeyword2(smv_case *scase, FILE *stream, devicedata *devicei){
   float xyz[3] = {0.0,0.0,0.0}, xyzn[3] = {0.0,0.0,0.0};
   float xyz1[3] = {0.0,0.0,0.0}, xyz2[3] = {0.0,0.0,0.0};
   int state0 = 0;
@@ -2334,11 +2334,11 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
   else{
     strcpy(devicei->deviceID, tok1);
   }
-  devicei->object = GetSmvObjectType(&global_scase.objectscoll,  tok1, global_scase.objectscoll.std_object_defs.missing_device);
-  if(devicei->object==global_scase.objectscoll.std_object_defs.missing_device&&tok3!=NULL){
-    devicei->object = GetSmvObjectType(&global_scase.objectscoll,  tok3, global_scase.objectscoll.std_object_defs.missing_device);
+  devicei->object = GetSmvObjectType(&scase->objectscoll,  tok1, scase->objectscoll.std_object_defs.missing_device);
+  if(devicei->object==scase->objectscoll.std_object_defs.missing_device&&tok3!=NULL){
+    devicei->object = GetSmvObjectType(&scase->objectscoll,  tok3, scase->objectscoll.std_object_defs.missing_device);
   }
-  if(devicei->object==global_scase.objectscoll.std_object_defs.missing_device)global_scase.have_missing_objects = 1;
+  if(devicei->object==scase->objectscoll.std_object_defs.missing_device)scase->have_missing_objects = 1;
   devicei->params = NULL;
   devicei->times = NULL;
   devicei->vals = NULL;
@@ -4342,7 +4342,7 @@ void ReadDeviceHeader(char *file, devicedata *devices, int ndevices){
       break;
     }
     if(strcmp(buffer, "DEVICE") == 0){
-      ParseDevicekeyword2(stream, devicecopy);
+      ParseDevicekeyword2(&global_scase, stream, devicecopy);
       devicecopy++;
     }
   }
@@ -9620,7 +9620,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       devicedata *devicei;
 
       devicei = global_scase.devicecoll.deviceinfo + global_scase.devicecoll.ndeviceinfo;
-      ParseDevicekeyword(stream,devicei);
+      ParseDevicekeyword(&global_scase, stream,devicei);
       CheckMemory;
       update_device = 1;
       global_scase.devicecoll.ndeviceinfo++;
