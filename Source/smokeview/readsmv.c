@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include "options.h"
 #include "glew.h"
 #include <assert.h>
