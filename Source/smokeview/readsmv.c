@@ -10065,7 +10065,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       FGETS(buffer,255,stream);
 
       GetLabels(buffer,&device_ptr,&prop_id);
-      partclassi->prop=GetPropID(&global_scase, prop_id);
+      partclassi->prop=GetPropID(scase, prop_id);
       UpdatePartClassDepend(partclassi);
 
       scase->npartclassinfo++;
