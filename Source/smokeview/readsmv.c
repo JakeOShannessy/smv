@@ -1209,9 +1209,9 @@ ventdata *GetCloseVent(meshdata *ventmesh, int ivent){
 
 /// @brief Re-read an *.smv file to read any updates.
 /// @param file The path to the *.smv file.
-void UpdateSMVDynamic(char *file){
+void UpdateSMVDynamic(smv_case *scase, char *file){
   INIT_PRINT_TIMER(smv_timer1);
-  ReadSMVDynamic(file);
+  ReadSMVDynamic(scase, file);
   PRINT_TIMER(smv_timer1, "ReadSMVDynamic");
   INIT_PRINT_TIMER(smv_timer2);
   UpdatePlot3dMenuLabels();
@@ -1222,7 +1222,7 @@ void UpdateSMVDynamic(char *file){
 }
 /* ------------------ ReadSMVDynamic ------------------------ */
 
-void ReadSMVDynamic(char *file){
+void ReadSMVDynamic(smv_case *scase, char *file){
   int ioffset;
   float time_local;
   int i;
@@ -1233,31 +1233,31 @@ void ReadSMVDynamic(char *file){
 
   stream->fileinfo = fopen_buffer(file,"r", 1, 0);
 
-  nplot3dinfo_old=global_scase.nplot3dinfo;
+  nplot3dinfo_old=scase->nplot3dinfo;
 
   updatefacelists=1;
   updatemenu=1;
-  if(global_scase.nplot3dinfo>0){
+  if(scase->nplot3dinfo>0){
     int n;
 
-    for(i=0;i<global_scase.nplot3dinfo;i++){
+    for(i=0;i<scase->nplot3dinfo;i++){
       plot3ddata *plot3di;
 
-      plot3di = global_scase.plot3dinfo + i;
+      plot3di = scase->plot3dinfo + i;
       for(n=0;n<6;n++){
         FreeLabels(&plot3di->label[n]);
       }
       FREEMEMORY(plot3di->reg_file);
     }
-//    FREEMEMORY(global_scase.plot3dinfo);
+//    FREEMEMORY(scase->plot3dinfo);
   }
-  global_scase.nplot3dinfo=0;
+  scase->nplot3dinfo=0;
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
     int j;
 
-    meshi=global_scase.meshescoll.meshinfo+i;
+    meshi=scase->meshescoll.meshinfo+i;
     for(j=0;j<meshi->nbptrs;j++){
       blockagedata *bc_local;
 
@@ -1283,10 +1283,10 @@ void ReadSMVDynamic(char *file){
       FREEMEMORY(cvi->showtime);
     }
   }
-  for(i=global_scase.devicecoll.ndeviceinfo_exp;i<global_scase.devicecoll.ndeviceinfo;i++){
+  for(i=scase->devicecoll.ndeviceinfo_exp;i<scase->devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei =global_scase.devicecoll.deviceinfo + i;
+    devicei =scase->devicecoll.deviceinfo + i;
     devicei->nstate_changes=0;
     FREEMEMORY(devicei->act_times);
     FREEMEMORY(devicei->state_values);
@@ -1325,7 +1325,7 @@ void ReadSMVDynamic(char *file){
       for(n = 0; n<5; n++){
         if(ReadLabels(NULL, stream, NULL)==LABEL_ERR)break;
       }
-      global_scase.nplot3dinfo++;
+      scase->nplot3dinfo++;
       continue;
     }
 /*
@@ -1348,7 +1348,7 @@ void ReadSMVDynamic(char *file){
          MatchSMV(buffer, "OPEN_VENT") == 1)isvent = 1;
       if(MatchSMV(buffer,"CLOSE_VENT") == 1 ||
          MatchSMV(buffer, "CLOSE_CVENT") == 1)showvent = 0;
-      if(global_scase.meshescoll.nmeshes>1){
+      if(scase->meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1361,7 +1361,7 @@ void ReadSMVDynamic(char *file){
           sscanf(buffer+10,"%i",&blocknumber);
           blocknumber--;
           if(blocknumber<0)blocknumber=0;
-          if(blocknumber>global_scase.meshescoll.nmeshes-1)blocknumber=global_scase.meshescoll.nmeshes-1;
+          if(blocknumber>scase->meshescoll.nmeshes-1)blocknumber=scase->meshescoll.nmeshes-1;
         }
       }
       else{
@@ -1369,10 +1369,10 @@ void ReadSMVDynamic(char *file){
           sscanf(buffer+11,"%i",&blocknumber);
           blocknumber--;
           if(blocknumber<0)blocknumber=0;
-          if(blocknumber>global_scase.meshescoll.nmeshes-1)blocknumber=global_scase.meshescoll.nmeshes-1;
+          if(blocknumber>scase->meshescoll.nmeshes-1)blocknumber=scase->meshescoll.nmeshes-1;
         }
       }
-      meshi=global_scase.meshescoll.meshinfo + blocknumber;
+      meshi=scase->meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
@@ -1410,7 +1410,7 @@ void ReadSMVDynamic(char *file){
       blockagedata *bc;
 
       do_pass2=1;
-      if(global_scase.meshescoll.nmeshes>1){
+      if(scase->meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1418,9 +1418,9 @@ void ReadSMVDynamic(char *file){
       }
       if(strlen(buffer)>10){
         sscanf(buffer,"%s %i",buffer2,&blocktemp);
-        if(blocktemp>0&&blocktemp<=global_scase.meshescoll.nmeshes)blocknumber = blocktemp-1;
+        if(blocktemp>0&&blocktemp<=scase->meshescoll.nmeshes)blocknumber = blocktemp-1;
       }
-      meshi=global_scase.meshescoll.meshinfo + blocknumber;
+      meshi=scase->meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
@@ -1489,8 +1489,8 @@ void ReadSMVDynamic(char *file){
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f %i",&idevice,&act_time,&act_state);
       idevice--;
-      if(idevice>=0&&idevice<global_scase.devicecoll.ndeviceinfo){
-        devicei = global_scase.devicecoll.deviceinfo + idevice;
+      if(idevice>=0&&idevice<scase->devicecoll.ndeviceinfo){
+        devicei = scase->devicecoll.deviceinfo + idevice;
         devicei->act_time=act_time;
         devicei->nstate_changes++;
       }
@@ -1507,7 +1507,7 @@ void ReadSMVDynamic(char *file){
       int blocknumber,blocktemp;
       int nn;
 
-      if(global_scase.meshescoll.nmeshes>1){
+      if(scase->meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1515,9 +1515,9 @@ void ReadSMVDynamic(char *file){
       }
       if(strlen(buffer)>9){
         sscanf(buffer,"%s %i",buffer2,&blocktemp);
-        if(blocktemp>0&&blocktemp<=global_scase.meshescoll.nmeshes)blocknumber = blocktemp-1;
+        if(blocktemp>0&&blocktemp<=scase->meshescoll.nmeshes)blocknumber = blocktemp-1;
       }
-      meshi=global_scase.meshescoll.meshinfo + blocknumber;
+      meshi=scase->meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&nn,&time_local);
       if(meshi->theat!=NULL && nn>=1 && nn <= meshi->nheat){
@@ -1525,10 +1525,10 @@ void ReadSMVDynamic(char *file){
         int count=0;
 
         meshi->theat[nn-1]=time_local;
-        for(idev=0;idev<global_scase.devicecoll.ndeviceinfo;idev++){
+        for(idev=0;idev<scase->devicecoll.ndeviceinfo;idev++){
           devicedata *devicei;
 
-          devicei = global_scase.devicecoll.deviceinfo + idev;
+          devicei = scase->devicecoll.deviceinfo + idev;
           if(devicei->type==DEVICE_HEAT){
             count++;
             if(nn==count){
@@ -1550,7 +1550,7 @@ void ReadSMVDynamic(char *file){
       int blocknumber,blocktemp;
       int nn;
 
-      if(global_scase.meshescoll.nmeshes>1){
+      if(scase->meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1558,9 +1558,9 @@ void ReadSMVDynamic(char *file){
       }
       if(strlen(buffer)>9){
         sscanf(buffer,"%s %i",buffer2,&blocktemp);
-        if(blocktemp>0&&blocktemp<=global_scase.meshescoll.nmeshes)blocknumber = blocktemp-1;
+        if(blocktemp>0&&blocktemp<=scase->meshescoll.nmeshes)blocknumber = blocktemp-1;
       }
-      meshi=global_scase.meshescoll.meshinfo + blocknumber;
+      meshi=scase->meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&nn,&time_local);
       if(meshi->tspr!=NULL && nn <= meshi->nspr && nn > 0){
@@ -1569,10 +1569,10 @@ void ReadSMVDynamic(char *file){
 
         meshi->tspr[nn-1]=time_local;
 
-        for(idev=0;idev<global_scase.devicecoll.ndeviceinfo;idev++){
+        for(idev=0;idev<scase->devicecoll.ndeviceinfo;idev++){
           devicedata *devicei;
 
-          devicei = global_scase.devicecoll.deviceinfo + idev;
+          devicei = scase->devicecoll.deviceinfo + idev;
           if(devicei->type==DEVICE_SPRK){
             count++;
             if(nn==count){
@@ -1596,10 +1596,10 @@ void ReadSMVDynamic(char *file){
 
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&nn,&time_local);
-      for(idev=0;idev<global_scase.devicecoll.ndeviceinfo;idev++){
+      for(idev=0;idev<scase->devicecoll.ndeviceinfo;idev++){
         devicedata *devicei;
 
-        devicei = global_scase.devicecoll.deviceinfo + idev;
+        devicei = scase->devicecoll.deviceinfo + idev;
         if(devicei->type==DEVICE_SMOKE){
           count++;
           if(nn==count){
@@ -1624,18 +1624,18 @@ void ReadSMVDynamic(char *file){
 
   // ------------------------------- pass 1 dynamic - end ------------------------------------
 
-  if(global_scase.nplot3dinfo>0){
-    if(global_scase.plot3dinfo==NULL){
-      NewMemory((void **)&global_scase.plot3dinfo,global_scase.nplot3dinfo*sizeof(plot3ddata));
+  if(scase->nplot3dinfo>0){
+    if(scase->plot3dinfo==NULL){
+      NewMemory((void **)&scase->plot3dinfo,scase->nplot3dinfo*sizeof(plot3ddata));
     }
     else{
-      ResizeMemory((void **)&global_scase.plot3dinfo,global_scase.nplot3dinfo*sizeof(plot3ddata));
+      ResizeMemory((void **)&scase->plot3dinfo,scase->nplot3dinfo*sizeof(plot3ddata));
     }
   }
-  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
+  for(i=0;i<scase->devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = global_scase.devicecoll.deviceinfo + i;
+    devicei = scase->devicecoll.deviceinfo + i;
     devicei->istate_changes=0;
   }
 
@@ -1674,7 +1674,7 @@ void ReadSMVDynamic(char *file){
       TrimBack(buffer);
       len=strlen(buffer);
       blocknumber = 0;
-      if(global_scase.meshescoll.nmeshes>1){
+      if(scase->meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1682,19 +1682,19 @@ void ReadSMVDynamic(char *file){
       }
       if(strlen(buffer)>5){
         sscanf(buffer,"%s %f %i",buffer2,&time_local,&blocktemp);
-        if(blocktemp>0&&blocktemp<=global_scase.meshescoll.nmeshes)blocknumber = blocktemp-1;
+        if(blocktemp>0&&blocktemp<=scase->meshescoll.nmeshes)blocknumber = blocktemp-1;
       }
       else{
         time_local=-1.0;
       }
       if(FGETS(buffer,255,stream)==NULL){
-        global_scase.nplot3dinfo--;
+        scase->nplot3dinfo--;
         break;
       }
       bufferptr=TrimFrontBack(buffer);
       len=strlen(bufferptr);
 
-      plot3di=global_scase.plot3dinfo+iplot3d;
+      plot3di=scase->plot3dinfo+iplot3d;
       for(i = 0; i < 5; i++){
         plot3di->valmin_plot3d[i] = 1.0;
         plot3di->valmax_plot3d[i] = 0.0;
@@ -1705,14 +1705,14 @@ void ReadSMVDynamic(char *file){
       plot3di->time=time_local;
       plot3di->finalize = 1;
       plot3di->hist_update = 0;
-      global_scase.nmemory_ids++;
-      plot3di->memory_id = global_scase.nmemory_ids;
+      scase->nmemory_ids++;
+      plot3di->memory_id = scase->nmemory_ids;
 
       for(i=0;i<MAXPLOT3DVARS;i++){
         plot3di->histograms[i] = NULL;
       }
 
-      if(plot3di>global_scase.plot3dinfo+nplot3dinfo_old-1){
+      if(plot3di>scase->plot3dinfo+nplot3dinfo_old-1){
         plot3di->loaded=0;
         plot3di->display=0;
       }
@@ -1750,7 +1750,7 @@ void ReadSMVDynamic(char *file){
           }
         }
         if(read_ok==NO){
-          global_scase.nplot3dinfo--;
+          scase->nplot3dinfo--;
           continue;
         }
         if(plot3di->u>-1||plot3di->v>-1||plot3di->w>-1){
@@ -1781,7 +1781,7 @@ void ReadSMVDynamic(char *file){
         for(n = 0;n<5;n++){
           if(ReadLabels(&plot3di->label[n], stream, NULL)==LABEL_ERR)break;
         }
-        global_scase.nplot3dinfo--;
+        scase->nplot3dinfo--;
       }
       continue;
     }
@@ -1803,7 +1803,7 @@ void ReadSMVDynamic(char *file){
          MatchSMV(buffer, "OPEN_VENT") == 1)isvent = 1;
       if(MatchSMV(buffer,"CLOSE_VENT") == 1||
          MatchSMV(buffer, "CLOSE_CVENT") == 1)showvent=0;
-      if(global_scase.meshescoll.nmeshes>1){
+      if(scase->meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1816,7 +1816,7 @@ void ReadSMVDynamic(char *file){
           sscanf(buffer+10,"%i",&blocknumber);
           blocknumber--;
           if(blocknumber<0)blocknumber=0;
-          if(blocknumber>global_scase.meshescoll.nmeshes-1)blocknumber=global_scase.meshescoll.nmeshes-1;
+          if(blocknumber>scase->meshescoll.nmeshes-1)blocknumber=scase->meshescoll.nmeshes-1;
         }
       }
       else{
@@ -1824,10 +1824,10 @@ void ReadSMVDynamic(char *file){
           sscanf(buffer+11,"%i",&blocknumber);
           blocknumber--;
           if(blocknumber<0)blocknumber=0;
-          if(blocknumber>global_scase.meshescoll.nmeshes-1)blocknumber=global_scase.meshescoll.nmeshes-1;
+          if(blocknumber>scase->meshescoll.nmeshes-1)blocknumber=scase->meshescoll.nmeshes-1;
         }
       }
-      meshi=global_scase.meshescoll.meshinfo + blocknumber;
+      meshi=scase->meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
@@ -1884,7 +1884,7 @@ void ReadSMVDynamic(char *file){
       int blocknumber,tempval,showobst,blocktemp;
       blockagedata *bc;
 
-      if(global_scase.meshescoll.nmeshes>1){
+      if(scase->meshescoll.nmeshes>1){
         blocknumber=ioffset-1;
       }
       else{
@@ -1892,11 +1892,11 @@ void ReadSMVDynamic(char *file){
       }
       if(strlen(buffer)>10){
         sscanf(buffer,"%s %i",buffer2,&blocktemp);
-        if(blocktemp>0&&blocktemp<=global_scase.meshescoll.nmeshes)blocknumber = blocktemp-1;
+        if(blocktemp>0&&blocktemp<=scase->meshescoll.nmeshes)blocknumber = blocktemp-1;
       }
       showobst=0;
       if(MatchSMV(buffer,"SHOW_OBST") == 1)showobst=1;
-      meshi=global_scase.meshescoll.meshinfo + blocknumber;
+      meshi=scase->meshescoll.meshinfo + blocknumber;
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f",&tempval,&time_local);
       tempval--;
@@ -1943,10 +1943,10 @@ void ReadSMVDynamic(char *file){
       FGETS(buffer,255,stream);
       sscanf(buffer,"%i %f %i",&idevice,&act_time,&act_state);
       idevice--;
-      if(idevice>=0&&idevice<global_scase.devicecoll.ndeviceinfo){
+      if(idevice>=0&&idevice<scase->devicecoll.ndeviceinfo){
         int istate;
 
-        devicei = global_scase.devicecoll.deviceinfo + idevice;
+        devicei = scase->devicecoll.deviceinfo + idevice;
         devicei->act_time=act_time;
         if(devicei->act_times==NULL){
           devicei->nstate_changes++;
@@ -1997,10 +1997,10 @@ void ReadSMVDynamic(char *file){
         sscanf(buffer,"%f %f %f %f",valmin +i,valmax+i, percentile_min+i,percentile_max+i);
       }
 
-      for(i=0;i<global_scase.nplot3dinfo;i++){
+      for(i=0;i<scase->nplot3dinfo;i++){
         plot3ddata *plot3di;
 
-        plot3di = global_scase.plot3dinfo + i;
+        plot3di = scase->plot3dinfo + i;
         if(strcmp(file_ptr,plot3di->file)==0){
           int j;
 

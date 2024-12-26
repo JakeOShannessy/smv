@@ -3010,7 +3010,7 @@ void ReloadMenu(int value){
     LoadUnloadMenu(RELOAD_INCREMENTAL_ALL);
     break;
   case RELOAD_SMV_FILE:
-    UpdateSMVDynamic(smv_filename);
+    UpdateSMVDynamic(&global_scase, smv_filename);
     break;
   case RELOAD_MODE_ALL:
     load_incremental = 0;
@@ -3660,7 +3660,7 @@ void LoadUnloadMenu(int value){
     update_readiso_geom_wrapup = UPDATE_ISO_OFF;
 
     // reload .smv file only if a plot3d file is loaded
-    if(plot3d_loaded==1)UpdateSMVDynamic(smv_filename);
+    if(plot3d_loaded==1)UpdateSMVDynamic(&global_scase, smv_filename);
 
     //*** reload csv data
 

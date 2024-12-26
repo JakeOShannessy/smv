@@ -254,7 +254,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
             input_file);
     return 2;
   case 0:
-    UpdateSMVDynamic(input_file);
+    UpdateSMVDynamic(&global_scase, input_file);
     break;
   case 3:
     return 3;
