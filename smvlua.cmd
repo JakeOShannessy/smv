@@ -1,3 +1,3 @@
 @echo off
 @REM set PATH=%PATH%;"%~dp0bin"
-call "%~dp0\smokeview.exe" %*
+call "%~dp0\bin\smokeview.exe" %*
