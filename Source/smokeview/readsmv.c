@@ -11664,7 +11664,7 @@ typedef struct {
 /// @brief Finish setting global variables after an SMV file has been parsed.
 /// This should be called after @ref ReadSMV_Parse.
 /// @return zero on success, nonzero on failure.
-int ReadSMV_Configure(){
+int ReadSMV_Configure(smv_case *scase){
   int i;
   float wrapup_time;
   float timer_readsmv;
@@ -11689,15 +11689,15 @@ int ReadSMV_Configure(){
   PRINTF("  wrapping up\n");
 
   INIT_PRINT_TIMER(fdsrunning_timer);
-  last_size_for_slice = GetFileSizeSMV(global_scase.paths.stepcsv_filename); // used by IsFDSRunning
+  last_size_for_slice = GetFileSizeSMV(scase->paths.stepcsv_filename); // used by IsFDSRunning
   last_size_for_boundary = last_size_for_slice;
   PRINT_TIMER(fdsrunning_timer, "filesize_timer");   // if file size changes then assume fds is running
 
   have_obsts = 0;
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = global_scase.meshescoll.meshinfo + i;
+    meshi = scase->meshescoll.meshinfo + i;
     if(meshi->nbptrs>0){
       have_obsts = 1;
       break;
@@ -11718,18 +11718,18 @@ int ReadSMV_Configure(){
   UpdateSmoke3dFileParms();
   PRINT_TIMER(timer_readsmv, "UpdateSmoke3dFileParms");
 
-  AddCfastCsvf(&global_scase);
+  AddCfastCsvf(scase);
   PRINT_TIMER(timer_readsmv, "AddCfastCsvf");
 
   //RemoveDupBlockages();
   InitCullGeom(cullgeom);
   PRINT_TIMER(timer_readsmv, "InitCullGeom");
-  UpdateINIList(&global_scase);
+  UpdateINIList(scase);
   PRINT_TIMER(timer_readsmv, "UpdateINIList");
 
-  if(global_scase.meshescoll.meshinfo!=NULL&&global_scase.meshescoll.meshinfo->jbar==1)force_isometric=1;
+  if(scase->meshescoll.meshinfo!=NULL&&scase->meshescoll.meshinfo->jbar==1)force_isometric=1;
 
-  if(global_scase.paths.hrr_csv_filename != NULL)ReadHRR(LOAD);
+  if(scase->paths.hrr_csv_filename != NULL)ReadHRR(LOAD);
   PRINT_TIMER(timer_readsmv, "ReadHRR");
 
   if(runscript == 1){
@@ -11740,7 +11740,7 @@ int ReadSMV_Configure(){
   SetupPlot2DUnitData();
   PRINT_TIMER(timer_readsmv, "SetupPlot2DUnitData");
 
-  if(global_scase.nzoneinfo>0)SetupZoneDevs();
+  if(scase->nzoneinfo>0)SetupZoneDevs();
   PRINT_TIMER(timer_readsmv, "SetupPlot2DUnitData");
 
   InitPartProp();
@@ -11749,7 +11749,7 @@ int ReadSMV_Configure(){
   InitClip();
   PRINT_TIMER(timer_readsmv, "InitClip");
 
-  if(global_scase.noutlineinfo>0){
+  if(scase->noutlineinfo>0){
     highlight_flag=2;
   }
   else{
@@ -11761,19 +11761,19 @@ int ReadSMV_Configure(){
   // update loaded lists
 
   FREEMEMORY(slice_loaded_list);
-  if(global_scase.slicecoll.nsliceinfo>0){
-    NewMemory((void **)&slice_loaded_list,global_scase.slicecoll.nsliceinfo*sizeof(int));
+  if(scase->slicecoll.nsliceinfo>0){
+    NewMemory((void **)&slice_loaded_list,scase->slicecoll.nsliceinfo*sizeof(int));
   }
   FREEMEMORY(slice_sorted_loaded_list);
-  if(global_scase.slicecoll.nsliceinfo>0){
-    NewMemory((void **)&slice_sorted_loaded_list, global_scase.slicecoll.nsliceinfo*sizeof(int));
+  if(scase->slicecoll.nsliceinfo>0){
+    NewMemory((void **)&slice_sorted_loaded_list, scase->slicecoll.nsliceinfo*sizeof(int));
   }
 
   UpdateLoadedLists();
   PRINT_TIMER(timer_readsmv, "UpdateLoadedLists");
   CheckMemory;
 
-  UpdateMeshBoxBounds(&global_scase);
+  UpdateMeshBoxBounds(scase);
   PRINT_TIMER(timer_readsmv, "UpdateMeshBoxBounds");
 
   SetupReadAllGeom();
@@ -11784,10 +11784,10 @@ int ReadSMV_Configure(){
   THREADcontrol(readallgeom_threads, THREAD_JOIN);
   PRINT_TIMER(timer_readsmv, "ReadAllGeomMT");
 
-  UpdateMeshCoords(&global_scase);
+  UpdateMeshCoords(scase);
   PRINT_TIMER(timer_readsmv, "UpdateMeshCoords");
 
-  UpdateSmoke3DTypes(&global_scase);
+  UpdateSmoke3DTypes(scase);
   PRINT_TIMER(timer_readsmv, "UpdateSmoke3DTypes");
   CheckMemory;
 
@@ -11805,10 +11805,10 @@ int ReadSMV_Configure(){
   /* compute global bar's and box's */
 
 
-  for(i=0;i<global_scase.npartclassinfo;i++){
+  for(i=0;i<scase->npartclassinfo;i++){
     partclassdata *partclassi;
 
-    partclassi = global_scase.partclassinfo + i;
+    partclassi = scase->partclassinfo + i;
 
     if(partclassi->device_name!=NULL){
         float length, azimuth, elevation;
@@ -11823,17 +11823,17 @@ int ReadSMV_Configure(){
         partclassi->dz =              sin(elevation)*length/2.0;
     }
   }
-  if(global_scase.npartinfo>=64){
+  if(scase->npartinfo>=64){
 #ifndef pp_PARTFRAME
     use_partload_threads = 1;
 #endif
     partfast = 1;
   }
 
-  shooter_xyz[0]=global_scase.xbar/2.0;
+  shooter_xyz[0]=scase->xbar/2.0;
   shooter_xyz[1] = 0.0;
-  shooter_xyz[2] = global_scase.zbar/2.0;
-  shooter_dxyz[0]=global_scase.xbar/4.0;
+  shooter_xyz[2] = scase->zbar/2.0;
+  shooter_dxyz[0]=scase->xbar/4.0;
   shooter_dxyz[1]=0.0;
   shooter_dxyz[2]=0.0;
   shooter_nparts=100;
@@ -11846,12 +11846,12 @@ int ReadSMV_Configure(){
   CheckMemory;
 
   START_TIMER(timer_readsmv);
-  SetSliceParmInfo(&global_scase, &sliceparminfo);
+  SetSliceParmInfo(scase, &sliceparminfo);
   PRINT_TIMER(timer_readsmv, "SetSliceParmInfo");
-  global_scase.slicecoll.nsliceinfo            = 0;
-  global_scase.slicecoll.nmultisliceinfo       = 0;
-  global_scase.slicecoll.nmultivsliceinfo      = 0;
-  global_scase.slicecoll.nvsliceinfo           = 0;
+  scase->slicecoll.nsliceinfo            = 0;
+  scase->slicecoll.nmultisliceinfo       = 0;
+  scase->slicecoll.nmultivsliceinfo      = 0;
+  scase->slicecoll.nvsliceinfo           = 0;
   if(sliceparms_threads == NULL){
     sliceparms_threads = THREADinit(&n_sliceparms_threads, &use_sliceparms_threads, UpdateVSlices);
   }
@@ -11859,7 +11859,7 @@ int ReadSMV_Configure(){
   THREADcontrol(sliceparms_threads, THREAD_JOIN);
   PRINT_TIMER(timer_readsmv, "UpdateVSlices");
 
-  GetSliceParmInfo(&global_scase, &sliceparminfo);
+  GetSliceParmInfo(scase, &sliceparminfo);
   PRINT_TIMER(timer_readsmv, "GetSliceParmInfo");
   if(update_slice==1)return 3;
 
@@ -11867,7 +11867,7 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "GenerateSliceMenu");
 
   if(generate_info_from_commandline==1){
-    GenerateViewpointMenu(&global_scase);
+    GenerateViewpointMenu(scase);
     SMV_EXIT(0);
   }
 
@@ -11878,11 +11878,11 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "GetGSliceParams");
 
   active_smokesensors=0;
-  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
+  for(i=0;i<scase->devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
     char *label;
 
-    devicei = global_scase.devicecoll.deviceinfo + i;
+    devicei = scase->devicecoll.deviceinfo + i;
     devicei->device_mesh= GetMeshNoFail(devicei->xyz);
     label = devicei->object->label;
     if(strcmp(label,"smokesensor")==0){
@@ -11926,7 +11926,7 @@ int ReadSMV_Configure(){
   MakeIBlankSmoke3D();
   PRINT_TIMER(timer_readsmv, "MakeIBlankSmoke3D");
 
-  if(HaveCircularVents()==1|| global_scase.meshescoll.nmeshes < 100 || fast_startup == 0){
+  if(HaveCircularVents()==1|| scase->meshescoll.nmeshes < 100 || fast_startup == 0){
     MakeIBlank();
     PRINT_TIMER(timer_readsmv, "MakeIBlank");
   }
@@ -11941,12 +11941,12 @@ int ReadSMV_Configure(){
   UpdateFaces();
   PRINT_TIMER(timer_readsmv, "UpdateFaces");
 
-  xcenGLOBAL=global_scase.xbar/2.0;  ycenGLOBAL=global_scase.ybar/2.0; zcenGLOBAL=global_scase.zbar/2.0;
-  xcenCUSTOM=global_scase.xbar/2.0;  ycenCUSTOM=global_scase.ybar/2.0; zcenCUSTOM=global_scase.zbar/2.0;
+  xcenGLOBAL=scase->xbar/2.0;  ycenGLOBAL=scase->ybar/2.0; zcenGLOBAL=scase->zbar/2.0;
+  xcenCUSTOM=scase->xbar/2.0;  ycenCUSTOM=scase->ybar/2.0; zcenCUSTOM=scase->zbar/2.0;
 
   glui_rotation_index = ROTATE_ABOUT_FDS_CENTER;
 
-  UpdateBoundInfo(&global_scase);
+  UpdateBoundInfo(scase);
   PRINT_TIMER(timer_readsmv, "UpdateBoundInfo");
 
   UpdateObjectUsed();
@@ -12008,10 +12008,10 @@ int ReadSMV_Configure(){
   {
     int ntotal=0;
 
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0;i<scase->meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = global_scase.meshescoll.meshinfo + i;
+      meshi = scase->meshescoll.meshinfo + i;
       ntotal += meshi->nbptrs;
     }
     FREEMEMORY(changed_idlist);
@@ -12042,26 +12042,26 @@ int ReadSMV_Configure(){
 
   UpdateTriangles(GEOM_STATIC,GEOM_UPDATE_ALL);
   GetFaceInfo();
-  GetBoxGeomCorners(&global_scase);
+  GetBoxGeomCorners(scase);
 #ifdef pp_SKY
   GetBoxSkyCorners();
 #endif
   PRINT_TIMER(timer_readsmv, "update trianglesfaces");
 
-  if(global_scase.ngeominfo>0&&global_scase.auto_terrain==1){
+  if(scase->ngeominfo>0&&scase->auto_terrain==1){
     START_TIMER(timer_readsmv);
     GenerateTerrainGeom(&terrain_vertices, &terrain_indices, &terrain_nindices);
     PRINT_TIMER(timer_readsmv, "GenerateTerrainGeom");
   }
 
   // update event labels
-  UpdateEvents(&global_scase);
+  UpdateEvents(scase);
   PRINT_TIMER(timer_readsmv, "UpdateEvents");
 
-  InitCellMeshInfo(&global_scase);
+  InitCellMeshInfo(scase);
   PRINT_TIMER(timer_readsmv, "InitCellMeshInfo");
 
-  SetupMeshWalls(&global_scase);
+  SetupMeshWalls(scase);
   PRINT_TIMER(timer_readsmv, "SetupMeshWalls");
 
   if(viswindrose==1)update_windrose = 1;
@@ -12074,8 +12074,8 @@ int ReadSMV_Configure(){
   SetInteriorBlockages();
   PRINT_TIMER(timer_readsmv, "SetInteriorBlockages");
 
-  InitMeshBlockages(&global_scase);
-  SetExternalVents(&global_scase);
+  InitMeshBlockages(scase);
+  SetExternalVents(scase);
 
   PRINTF("%s", _("complete"));
   PRINTF("\n\n");
@@ -12110,7 +12110,7 @@ int ReadSMV_Configure(){
 int ReadSMV(bufferstreamdata *stream){
   ReadSMV_Init(&global_scase);
   ReadSMV_Parse(&global_scase, stream);
-  ReadSMV_Configure();
+  ReadSMV_Configure(&global_scase);
   return 0;
 }
 
