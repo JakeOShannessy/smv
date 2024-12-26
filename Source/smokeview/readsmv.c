@@ -2869,21 +2869,21 @@ void InitTextures(smv_case *scase, int use_graphics_arg){
 
   /* ------------------ UpdateBoundInfo ------------------------ */
 
-void UpdateBoundInfo(void){
+void UpdateBoundInfo(smv_case *scase){
   int i,n;
   float bound_timer;
 
   START_TIMER(bound_timer);
-  if(global_scase.nisoinfo>0){
+  if(scase->nisoinfo>0){
     FREEMEMORY(isoindex);
     FREEMEMORY(isobounds);
-    NewMemory((void*)&isoindex,global_scase.nisoinfo*sizeof(int));
-    NewMemory((void*)&isobounds,global_scase.nisoinfo*sizeof(boundsdata));
+    NewMemory((void*)&isoindex,scase->nisoinfo*sizeof(int));
+    NewMemory((void*)&isobounds,scase->nisoinfo*sizeof(boundsdata));
     niso_bounds=0;
-    for(i=0;i<global_scase.nisoinfo;i++){
+    for(i=0;i<scase->nisoinfo;i++){
       isodata *isoi;
 
-      isoi = global_scase.isoinfo + i;
+      isoi = scase->isoinfo + i;
       if(isoi->dataflag==0)continue;
       isoi->firstshort_iso=1;
       isoindex[niso_bounds]=i;
@@ -2906,7 +2906,7 @@ void UpdateBoundInfo(void){
       for(n=0;n<i;n++){
         isodata *ison;
 
-        ison = global_scase.isoinfo + n;
+        ison = scase->isoinfo + n;
         if(ison->dataflag==0)continue;
         if(strcmp(isoi->color_label.shortlabel,ison->color_label.shortlabel)==0){
           isoi->firstshort_iso=0;
@@ -2918,15 +2918,15 @@ void UpdateBoundInfo(void){
   }
   PRINT_TIMER(bound_timer, "isobounds");
 
-  if(global_scase.slicecoll.nsliceinfo > 0){
+  if(scase->slicecoll.nsliceinfo > 0){
     FREEMEMORY(slicebounds);
-    NewMemory((void*)&slicebounds,global_scase.slicecoll.nsliceinfo*sizeof(boundsdata));
+    NewMemory((void*)&slicebounds,scase->slicecoll.nsliceinfo*sizeof(boundsdata));
     nslicebounds=0;
-    for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+    for(i=0;i<scase->slicecoll.nsliceinfo;i++){
       slicedata *slicei;
       boundsdata *sbi;
 
-      slicei = global_scase.slicecoll.sliceinfo + i;
+      slicei = scase->slicecoll.sliceinfo + i;
       slicei->valmin_slice =1.0;
       slicei->valmax_slice =0.0;
       slicei->setvalmin=0;
@@ -2951,7 +2951,7 @@ void UpdateBoundInfo(void){
       for(n=0;n<i;n++){
         slicedata *slicen;
 
-        slicen = global_scase.slicecoll.sliceinfo + n;
+        slicen = scase->slicecoll.sliceinfo + n;
         if(strcmp(slicei->label.shortlabel,slicen->label.shortlabel)==0){
           nslicebounds--;
           break;
@@ -2962,20 +2962,20 @@ void UpdateBoundInfo(void){
   PRINT_TIMER(bound_timer, "slicebounds");
 
   canshow_threshold=0;
-  if(global_scase.npatchinfo>0){
+  if(scase->npatchinfo>0){
     FREEMEMORY(patchbounds);
-    NewMemory((void*)&patchbounds, global_scase.npatchinfo*sizeof(boundsdata));
+    NewMemory((void*)&patchbounds, scase->npatchinfo*sizeof(boundsdata));
     npatchbounds = 0;
     npatch2=0;
     FREEMEMORY(patchlabellist);
     FREEMEMORY(patchlabellist_index);
-    NewMemory((void **)&patchlabellist,global_scase.npatchinfo*sizeof(char *));
-    NewMemory((void **)&patchlabellist_index,global_scase.npatchinfo*sizeof(int));
-    for(i=0;i<global_scase.npatchinfo;i++){
+    NewMemory((void **)&patchlabellist,scase->npatchinfo*sizeof(char *));
+    NewMemory((void **)&patchlabellist_index,scase->npatchinfo*sizeof(int));
+    for(i=0;i<scase->npatchinfo;i++){
       patchdata *patchi;
       boundsdata *sbi;
 
-      patchi = global_scase.patchinfo + i;
+      patchi = scase->patchinfo + i;
       patchi->firstshort_patch=1;
       if(strncmp(patchi->label.shortlabel,"temp",4)==0||
          strncmp(patchi->label.shortlabel,"TEMP",4)==0){
@@ -2987,7 +2987,7 @@ void UpdateBoundInfo(void){
       for(n=0;n<i;n++){
         patchdata *patchn;
 
-        patchn = global_scase.patchinfo + n;
+        patchn = scase->patchinfo + n;
         if(strcmp(patchi->label.shortlabel,patchn->label.shortlabel)==0){
           patchi->firstshort_patch = 0;
           npatch2--;
@@ -3014,7 +3014,7 @@ void UpdateBoundInfo(void){
       for(n = 0; n<i; n++){
         patchdata *patchn;
 
-        patchn = global_scase.patchinfo+n;
+        patchn = scase->patchinfo+n;
         if(strcmp(patchi->label.shortlabel, patchn->label.shortlabel)==0){
           patchi->firstshort_patch = 0;
           npatchbounds--;
@@ -11946,7 +11946,7 @@ int ReadSMV_Configure(){
 
   glui_rotation_index = ROTATE_ABOUT_FDS_CENTER;
 
-  UpdateBoundInfo();
+  UpdateBoundInfo(&global_scase);
   PRINT_TIMER(timer_readsmv, "UpdateBoundInfo");
 
   UpdateObjectUsed();
