@@ -3378,14 +3378,14 @@ void GetBoxCorners(float xbar_local, float ybar_local, float zbar_local){
 
 /* ------------------ UpdateMeshBoxBounds ------------------------ */
 
-void UpdateMeshBoxBounds(void){
+void UpdateMeshBoxBounds(smv_case *scase){
   int i;
 
-  for(i = 0; i<global_scase.meshescoll.nmeshes;  i++){
+  for(i = 0; i<scase->meshescoll.nmeshes;  i++){
     meshdata *meshi;
 
     // xplt, yplt, zplt has original coordinates because this routine is called before UpdateMeshCoords
-    meshi = global_scase.meshescoll.meshinfo+i;
+    meshi = scase->meshescoll.meshinfo+i;
     meshi->boxmin[0] = meshi->xplt[0];
     meshi->boxmin[1] = meshi->yplt[0];
     meshi->boxmin[2] = meshi->zplt[0];
@@ -11773,7 +11773,7 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "UpdateLoadedLists");
   CheckMemory;
 
-  UpdateMeshBoxBounds();
+  UpdateMeshBoxBounds(&global_scase);
   PRINT_TIMER(timer_readsmv, "UpdateMeshBoxBounds");
 
   SetupReadAllGeom();
