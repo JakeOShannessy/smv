@@ -18,6 +18,7 @@ add_executable(smvq smvq.c
     ../smokeview/getdatabounds.c
     ../smokeview/readsmv.c
     ../smokeview/readini.c
+    ../smokeview/readcsv.c
     ../smokeview/IOvolsmoke.c
     ../smokeview/IOsmoke.c
     ../smokeview/IOplot3d.c
