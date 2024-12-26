@@ -2499,16 +2499,16 @@ int GetInpf(smv_case *scase, bufferstreamdata *stream_in){
 
 /* ------------------ IsDupTexture ------------------------ */
 
-int IsDupTexture(texturedata *texti){
+int IsDupTexture(smv_case *scase, texturedata *texti){
   int dup_texture;
   int i, j;
 
-  i = texti - global_scase.texture_coll.textureinfo;
+  i = texti - scase->texture_coll.textureinfo;
   dup_texture=0;
   for(j=0;j<i;j++){
     texturedata *textj;
 
-    textj = global_scase.texture_coll.textureinfo + j;
+    textj = scase->texture_coll.textureinfo + j;
     if(textj->loaded==0)continue;
     if(strcmp(texti->file,textj->file)==0){
       texti->name=textj->name;
@@ -2618,7 +2618,7 @@ void InitTextures0(void){
 
     texti = global_scase.texture_coll.textureinfo + i;
     texti->loaded=0;
-    if(texti->file==NULL||IsDupTexture(texti)==1||IsTerrainTexture(texti)==1)continue;
+    if(texti->file==NULL||IsDupTexture(&global_scase, texti)==1||IsTerrainTexture(texti)==1)continue;
 
     CheckMemory;
     filename=strrchr(texti->file,*dirseparator);
