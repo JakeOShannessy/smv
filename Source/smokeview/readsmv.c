@@ -46,9 +46,9 @@
 #define ZVENT_1ROOM 1
 #define ZVENT_2ROOM 2
 
-#define PARTBUFFER(len)    global_scase.part_buffer;    global_scase.part_buffer    += (len)
-#define SMOKE3DBUFFER(len) global_scase.smoke3d_buffer; global_scase.smoke3d_buffer += (len)
-#define SLICEBUFFER(len)   global_scase.slice_buffer;   global_scase.slice_buffer   += (len)
+#define PARTBUFFER(len)    scase->part_buffer;    scase->part_buffer    += (len)
+#define SMOKE3DBUFFER(len) scase->smoke3d_buffer; scase->smoke3d_buffer += (len)
+#define SLICEBUFFER(len)   scase->slice_buffer;   scase->slice_buffer   += (len)
 
 int GetNDevices(char *file);
 
@@ -4400,16 +4400,16 @@ void SetSurfaceIndex(smv_case *scase, blockagedata *bc){
 }
 
 /* ------------------ SurfIdCompare ------------------------ */
+#ifdef _WIN32
+int SurfIdCompare(void *surfinfo, const void *arg1, const void *arg2) {
+#else
+int SurfIdCompare(const void *arg1, const void *arg2, void *surfinfo) {
+#endif
+  int i = *(int *)arg1;
+  int j = *(int *)arg2;
 
-int SurfIdCompare(const void *arg1, const void *arg2){
-  surfdata *surfi, *surfj;
-  int i, j;
-
-  i = *(int *)arg1;
-  j = *(int *)arg2;
-
-  surfi = global_scase.surfcoll.surfinfo+i;
-  surfj = global_scase.surfcoll.surfinfo+j;
+  surfdata *surfi = (surfdata *)surfinfo+i;
+  surfdata *surfj = (surfdata *)surfinfo+j;
 
   return(strcmp(surfi->surfacelabel, surfj->surfacelabel));
 }
@@ -4430,7 +4430,11 @@ void UpdateSortedSurfIdList(smv_case *scase){
     scase->surfcoll.sorted_surfidlist[i] = i;
   }
 
-  qsort((int *)scase->surfcoll.sorted_surfidlist, (size_t)scase->surfcoll.nsurfinfo, sizeof(int), SurfIdCompare);
+#ifdef _WIN32
+  qsort_s(scase->surfcoll.sorted_surfidlist, (size_t)scase->surfcoll.nsurfinfo, sizeof(int), SurfIdCompare,(void *)scase->surfcoll.surfinfo);
+#else
+  qsort_r(scase->surfcoll.sorted_surfidlist, (size_t)scase->surfcoll.nsurfinfo, sizeof(int), SurfIdCompare,(void *)scase->surfcoll.surfinfo);
+#endif
   for(i = 0; i<scase->surfcoll.nsorted_surfidlist; i++){
     scase->surfcoll.inv_sorted_surfidlist[scase->surfcoll.sorted_surfidlist[i]] = i;
   }
@@ -11711,7 +11715,7 @@ int ReadSMV_Configure(smv_case *scase){
   if(checkfiles_threads != NULL){
     checkfiles_threads = THREADinit(&n_checkfiles_threads, &use_checkfiles_threads, CheckFiles);
   }
-  THREADruni(checkfiles_threads, (unsigned char*)&global_scase, sizeof(smv_case));
+  THREADruni(checkfiles_threads, (unsigned char*)scase, sizeof(smv_case));
   PRINT_TIMER(timer_readsmv, "CheckFiles");
   CheckMemory;
   UpdateIsoColors();
@@ -11922,7 +11926,7 @@ int ReadSMV_Configure(smv_case *scase){
   if(isosurface_threads == NULL){
     isosurface_threads = THREADinit(&n_isosurface_threads, &use_isosurface_threads, SetupAllIsosurfaces);
   }
-  THREADruni(isosurface_threads, (unsigned char*)&global_scase, sizeof(smv_case));
+  THREADruni(isosurface_threads, (unsigned char*)scase, sizeof(smv_case));
   THREADcontrol(isosurface_threads, THREAD_JOIN);
   PRINT_TIMER(timer_readsmv, "SetupAllIsosurfaces");
 
