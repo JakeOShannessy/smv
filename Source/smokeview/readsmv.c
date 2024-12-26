@@ -6395,7 +6395,7 @@ int GetAllViewPoints(char *casenameini, char ***all_viewpoints_ptr){
 }
 /* ------------------ GenerateViewpointMenu ------------------------ */
 
-void GenerateViewpointMenu(void){
+void GenerateViewpointMenu(smv_case *scase){
   char viewpiontemenu_filename[256];
   FILE *stream = NULL;
   int i;
@@ -6411,9 +6411,9 @@ void GenerateViewpointMenu(void){
     strcat(viewpiontemenu_filename, dirseparator);
   }
   FREEMEMORY(smokeview_scratchdir);
-  strcat(viewpiontemenu_filename, global_scase.fdsprefix);
+  strcat(viewpiontemenu_filename, scase->fdsprefix);
   strcat(viewpiontemenu_filename, ".viewpoints");
-  strcpy(casenameini, global_scase.fdsprefix);
+  strcpy(casenameini, scase->fdsprefix);
   strcat(casenameini, ".ini");
 
   nviewpoints = GetAllViewPoints(casenameini, &all_viewpoints);
@@ -7847,7 +7847,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       ){
       int return_val;
 
-      return_val = ParseSLCFCount(NO_SCAN, stream, buffer, &nslicefiles);
+      return_val = ParseSLCFCount(&global_scase, NO_SCAN, stream, buffer, &nslicefiles);
       if(return_val==RETURN_BREAK){
         BREAK;
       }
@@ -11419,7 +11419,7 @@ typedef struct {
       int return_val;
 
       START_TIMER(SLCF_timer);
-      return_val = ParseSLCFProcess(NO_SCAN, stream, buffer, &nn_slice, ioffset, &nslicefiles, &sliceinfo_copy, &patchgeom, buffers);
+      return_val = ParseSLCFProcess(&global_scase, NO_SCAN, stream, buffer, &nn_slice, ioffset, &nslicefiles, &sliceinfo_copy, &patchgeom, buffers);
       CUM_TIMER(SLCF_timer, cum_SLCF_timer);
       if(return_val==RETURN_BREAK){
         BREAK;
@@ -11867,7 +11867,7 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "GenerateSliceMenu");
 
   if(generate_info_from_commandline==1){
-    GenerateViewpointMenu();
+    GenerateViewpointMenu(&global_scase);
     SMV_EXIT(0);
   }
 
