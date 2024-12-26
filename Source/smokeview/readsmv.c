@@ -5620,14 +5620,14 @@ int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
 
 /* ------------------ ParseSMOKE3DCount ------------------------ */
 
-void ParseSMOKE3DCount(void){
+void ParseSMOKE3DCount(smv_case *scase){
   if(setup_only==1)return;
-  global_scase.smoke3dcoll.nsmoke3dinfo++;
+  scase->smoke3dcoll.nsmoke3dinfo++;
 }
 
 /* ------------------ ParseSMOKE3DProcess ------------------------ */
 
-int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_in, int *ioffset_in, int *ismoke3dcount_in, int *ismoke3d_in){
+int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, int *nn_smoke3d_in, int *ioffset_in, int *ismoke3dcount_in, int *ismoke3d_in){
   size_t len;
   size_t lenbuffer;
   int filetype = C_GENERATED;
@@ -5654,7 +5654,7 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
 
   TrimBack(buffer);
   len = strlen(buffer);
-  if(global_scase.meshescoll.nmeshes>1){
+  if(scase->meshescoll.nmeshes>1){
     blocknumber = ioffset-1;
   }
   else{
@@ -5668,7 +5668,7 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
     blocknumber--;
   }
   if(FGETS(buffer, 255, stream)==NULL){
-    global_scase.smoke3dcoll.nsmoke3dinfo--;
+    scase->smoke3dcoll.nsmoke3dinfo--;
     return RETURN_BREAK;
   }
   bufferptr = TrimFrontBack(buffer);
@@ -5678,10 +5678,10 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
     smoke3ddata *smoke3di;
     int i;
 
-    smoke3di = global_scase.smoke3dcoll.smoke3dinfo+ismoke3d;
+    smoke3di = scase->smoke3dcoll.smoke3dinfo+ismoke3d;
 
 #ifdef _DEBUG
-    if(global_scase.smoke3dcoll.nsmoke3dinfo>500&&(ismoke3d%100==0||ismoke3d==global_scase.smoke3dcoll.nsmoke3dinfo-1)){
+    if(scase->smoke3dcoll.nsmoke3dinfo>500&&(ismoke3d%100==0||ismoke3d==scase->smoke3dcoll.nsmoke3dinfo-1)){
       PRINTF("     examining %i'st 3D smoke file\n", ismoke3dcount);
     }
 #endif
@@ -5805,7 +5805,7 @@ int ParseSMOKE3DProcess(bufferstreamdata *stream, char *buffer, int *nn_smoke3d_
       strcat(smoke3di->cextinct, cextinct);
       strcat(smoke3di->cextinct, ")");
     }
-    global_scase.update_smoke_alphas = 1;
+    scase->update_smoke_alphas = 1;
   }
   return RETURN_CONTINUE;
 }
@@ -7863,7 +7863,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       MatchSMV(buffer, "SMOKE3D") == 1  ||
       MatchSMV(buffer, "SMOKF3D") == 1  ||
       MatchSMV(buffer, "SMOKG3D") == 1){
-      ParseSMOKE3DCount();
+      ParseSMOKE3DCount(&global_scase);
       continue;
     }
 
@@ -11364,7 +11364,7 @@ typedef struct {
       int return_val;
 
       START_TIMER(SMOKE3D_timer);
-      return_val = ParseSMOKE3DProcess(stream, buffer, &nn_smoke3d, &ioffset, &ismoke3dcount, &ismoke3d);
+      return_val = ParseSMOKE3DProcess(&global_scase, stream, buffer, &nn_smoke3d, &ioffset, &ismoke3dcount, &ismoke3d);
       CUM_TIMER(SMOKE3D_timer, cum_SMOKE3D_timer);
       if(return_val==RETURN_BREAK){
         BREAK;
