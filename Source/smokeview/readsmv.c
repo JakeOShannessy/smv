@@ -6951,20 +6951,20 @@ void InitMeshBlockages(smv_case *scase){
 
 /* ------------------ GetSliceParmInfo ------------------------ */
 
-void GetSliceParmInfo(sliceparmdata *sp){
-  global_scase.slicecoll.nsliceinfo = sp->nsliceinfo;
-  global_scase.slicecoll.nmultisliceinfo=sp->nmultisliceinfo;
-  global_scase.slicecoll.nvsliceinfo = sp->nvsliceinfo;
-  global_scase.slicecoll.nmultivsliceinfo =sp->nmultivsliceinfo;
+void GetSliceParmInfo(smv_case *scase, sliceparmdata *sp){
+  scase->slicecoll.nsliceinfo = sp->nsliceinfo;
+  scase->slicecoll.nmultisliceinfo=sp->nmultisliceinfo;
+  scase->slicecoll.nvsliceinfo = sp->nvsliceinfo;
+  scase->slicecoll.nmultivsliceinfo =sp->nmultivsliceinfo;
 }
 
 /* ------------------ SetSliceParmInfo ------------------------ */
 
-void SetSliceParmInfo(sliceparmdata *sp){
-  sp->nsliceinfo       = global_scase.slicecoll.nsliceinfo;
-  sp->nmultisliceinfo  = global_scase.slicecoll.nmultisliceinfo;
-  sp->nvsliceinfo      = global_scase.slicecoll.nvsliceinfo;
-  sp->nmultivsliceinfo = global_scase.slicecoll.nmultivsliceinfo;
+void SetSliceParmInfo(smv_case *scase, sliceparmdata *sp){
+  sp->nsliceinfo       = scase->slicecoll.nsliceinfo;
+  sp->nmultisliceinfo  = scase->slicecoll.nmultisliceinfo;
+  sp->nvsliceinfo      = scase->slicecoll.nvsliceinfo;
+  sp->nmultivsliceinfo = scase->slicecoll.nmultivsliceinfo;
 }
 
 static float processing_time;
@@ -11846,7 +11846,7 @@ int ReadSMV_Configure(){
   CheckMemory;
 
   START_TIMER(timer_readsmv);
-  SetSliceParmInfo(&sliceparminfo);
+  SetSliceParmInfo(&global_scase, &sliceparminfo);
   PRINT_TIMER(timer_readsmv, "SetSliceParmInfo");
   global_scase.slicecoll.nsliceinfo            = 0;
   global_scase.slicecoll.nmultisliceinfo       = 0;
@@ -11859,7 +11859,7 @@ int ReadSMV_Configure(){
   THREADcontrol(sliceparms_threads, THREAD_JOIN);
   PRINT_TIMER(timer_readsmv, "UpdateVSlices");
 
-  GetSliceParmInfo(&sliceparminfo);
+  GetSliceParmInfo(&global_scase, &sliceparminfo);
   PRINT_TIMER(timer_readsmv, "GetSliceParmInfo");
   if(update_slice==1)return 3;
 
@@ -12974,7 +12974,7 @@ int ReadIni2(const char *inifile, int localfile){
       sscanf(buffer, "%f %f %f", dc, dc + 1, dc + 2);
       dc[3] = 1.0;
       direction_color_ptr = GetColorPtr(direction_color);
-      GetSliceParmInfo(&sliceparminfo);
+      GetSliceParmInfo(&global_scase, &sliceparminfo);
       UpdateSliceMenuShow(&sliceparminfo);
       continue;
     }

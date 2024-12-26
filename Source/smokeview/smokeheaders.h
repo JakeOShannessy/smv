@@ -725,7 +725,6 @@ EXTERNCPP void *Compress(void *arg);
 EXTERNCPP void GetBoxSkyCorners(void);
 #endif
 EXTERNCPP void GetElevAz(float *xyznorm,float *dtheta, float *rotate_axis, float *dpsi);
-EXTERNCPP void GetSliceParmInfo(sliceparmdata *sp);
 EXTERNCPP int GetSmoke3DType(smv_case *scase, char *label);
 EXTERNCPP FILE_SIZE ReadAllCSVFiles(smv_case *scase, int flag);
 EXTERNCPP int  ReadBinIni(void);
@@ -741,7 +740,7 @@ EXTERNCPP void SetPatchMax(int set_valmax, float valmax, char *buffer2);
 EXTERNCPP void SetSliceBounds(int set_valmin, float valmin, int set_valmax, float valmax, char *buffer2);
 EXTERNCPP void SetSliceMin(int set_valmin, float valmin, char *buffer2);
 EXTERNCPP void SetSliceMax(int set_valmax, float valmax, char *buffer2);
-EXTERNCPP void SetSliceParmInfo(sliceparmdata *sp);
+EXTERNCPP void SetSliceParmInfo(smv_case *scase, sliceparmdata *sp);
 EXTERNCPP void *SetupAllIsosurfaces(void *arg);
 EXTERNCPP void UpdateHoc(void);
 EXTERNCPP void UpdateLoadedLists(void);
