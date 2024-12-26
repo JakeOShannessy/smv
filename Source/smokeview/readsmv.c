@@ -6446,13 +6446,13 @@ void GenerateViewpointMenu(smv_case *scase){
 
 /* ------------------ UpdateEvents ------------------------ */
 
-void UpdateEvents(void){
+void UpdateEvents(smv_case *scase){
   FILE *stream = NULL;
   int nrows, ncols, buffer_len;
   char **tokens;
   int i;
 
-  stream = fopen(global_scase.paths.event_filename, "r");
+  stream = fopen(scase->paths.event_filename, "r");
   if(stream==NULL)return;
 
   buffer_len = GetRowCols(stream, &nrows, &ncols);
@@ -6520,7 +6520,7 @@ void UpdateEvents(void){
       rgblabel[0] = 255;
       rgblabel[1] = 255;
       rgblabel[2] = 255;
-      memcpy(label.rgb, global_scase.rgb, 3*sizeof(int));
+      memcpy(label.rgb, scase->rgb, 3*sizeof(int));
       frgb[0] = (float)rgblabel[0]/255.0;
       frgb[1] = (float)rgblabel[1]/255.0;
       frgb[2] = (float)rgblabel[2]/255.0;
@@ -6528,7 +6528,7 @@ void UpdateEvents(void){
 
       label.useforegroundcolor = 0;
       label.show_always = 0;
-      LabelInsert(&global_scase.labelscoll, &label);
+      LabelInsert(&scase->labelscoll, &label);
       event_file_exists = 1;
     }
   }
@@ -12055,7 +12055,7 @@ int ReadSMV_Configure(){
   }
 
   // update event labels
-  UpdateEvents();
+  UpdateEvents(&global_scase);
   PRINT_TIMER(timer_readsmv, "UpdateEvents");
 
   InitCellMeshInfo(&global_scase);
