@@ -3262,7 +3262,7 @@ void GetBoxSkyCorners(void){
 
 /* ------------------ GetBoxGeomCorners ------------------------ */
 
-void GetBoxGeomCorners(void){
+void GetBoxGeomCorners(smv_case *scase){
   float xmin, xmax, ymin, ymax, zmin, zmax;
   int i;
   float *xyz;
@@ -3271,9 +3271,9 @@ void GetBoxGeomCorners(void){
   geomlistdata *geomlisti;
 
   have_box_geom_corners = 0;
-  if(global_scase.geominfo==NULL||global_scase.geominfo->geomlistinfo==NULL||global_scase.geominfo==0)return;
+  if(scase->geominfo==NULL||scase->geominfo->geomlistinfo==NULL||scase->geominfo==0)return;
 
-  geomi = global_scase.geominfo;
+  geomi = scase->geominfo;
   geomlisti = geomi->geomlistinfo-1;
   if(geomlisti->nverts<=0)return;
 
@@ -12042,7 +12042,7 @@ int ReadSMV_Configure(){
 
   UpdateTriangles(GEOM_STATIC,GEOM_UPDATE_ALL);
   GetFaceInfo();
-  GetBoxGeomCorners();
+  GetBoxGeomCorners(&global_scase);
 #ifdef pp_SKY
   GetBoxSkyCorners();
 #endif
