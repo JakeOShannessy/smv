@@ -4982,9 +4982,9 @@ void *SetupAllIsosurfaces(void *arg){
 
 /* ------------------ ParseISOFCount ------------------------ */
 
-void ParseISOFCount(void){
+void ParseISOFCount(smv_case *scase){
   if(setup_only == 1 || smoke3d_only == 1)return;
-  global_scase.nisoinfo++;
+  scase->nisoinfo++;
 }
 
 /* ------------------ ParseISOFProcess ------------------------ */
@@ -7884,7 +7884,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
        MatchSMV(buffer,"TISOF")==1||
        MatchSMV(buffer,"ISOG") == 1||
        MatchSMV(buffer, "TISOG")==1){
-      ParseISOFCount();
+      ParseISOFCount(&global_scase);
       continue;
     }
 
