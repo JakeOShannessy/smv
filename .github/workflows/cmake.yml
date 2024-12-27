@@ -50,6 +50,7 @@ jobs:
         shell: bash
         run: |
           source ../emsdk/emsdk_env.sh
+          emcc --show-ports
           emcmake cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
           cmake --build ${{github.workspace}}/cbuild -j4
   build_unix_gcc:
