@@ -19,7 +19,7 @@ extern int show_timings;
 #include <unistd.h>
 #endif
 
-#if defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))
+#if defined(__linux__) || (defined(__APPLE__) && defined(__MACH__)) || defined(__EMSCRIPTEN__)
 #include <sys/stat.h>
 #include <unistd.h>
 #endif

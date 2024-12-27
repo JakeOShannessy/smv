@@ -84,25 +84,28 @@ if (LINUX)
 endif()
 
 find_package(OpenGL REQUIRED)
-if (VENDORED_UI_LIBS)
-    if (NOT MACOSX)
-        add_subdirectory(Source/glut-3.7.6)
-    endif()
-    add_subdirectory(Source/glui_v2_1_beta)
-else()
+
+if (EMSCRIPTEN)
     FetchContent_Declare(
-        glui-git
-        GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
-        GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
+        json-c
+        GIT_REPOSITORY https://github.com/json-c/json-c.git
+        GIT_TAG        ee83daa4093dfbc4bfd63468dcf2bd7c636d7a0e
+        OVERRIDE_FIND_PACKAGE
+    )
+    FetchContent_Declare(
+        libgd
+        GIT_REPOSITORY https://github.com/libgd/libgd.git
+        GIT_TAG        0e55e7c30ae976cac381092d5398f08a8ada19cf
+        OVERRIDE_FIND_PACKAGE
     )
 endif()
-find_package(GLEW REQUIRED)
-find_package(JPEG REQUIRED)
-find_package(PNG REQUIRED)
-find_package(ZLIB REQUIRED)
+find_package(GLEW)
+find_package(JPEG)
+find_package(PNG)
+find_package(ZLIB)
 find_package(json-c CONFIG REQUIRED)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBGD REQUIRED IMPORTED_TARGET gdlib)
+find_package(PkgConfig)
+pkg_check_modules(LIBGD IMPORTED_TARGET gdlib)
 if (WIN32)
     find_package(PThreads4W REQUIRED)
 endif()
@@ -180,39 +183,53 @@ list(GET smokeview_ini_status 0 smokeview_ini_status_code)
 if (smokeview_ini_status_code)
     message(FATAL_ERROR "Could not download smokeview.ini ${smokeview_ini_status_code}")
 endif()
-
-# Libraries to build (which may be dependencies of the programs below)
 add_subdirectory(Source/shared)
-add_subdirectory(Source/jsonrpc)
-
-# The programs to build
-add_subdirectory(Source/background)
-add_subdirectory(Source/convert)
-add_subdirectory(Source/env2mod)
-add_subdirectory(Source/fds2fed)
-add_subdirectory(Source/flush)
-add_subdirectory(Source/get_time)
-add_subdirectory(Source/getdate)
-if (pp_HASH)
-    add_subdirectory(Source/hashfile)
-endif()
-add_subdirectory(Source/makepo)
-add_subdirectory(Source/mergepo)
-add_subdirectory(Source/runbatch)
-add_subdirectory(Source/set_path)
-add_subdirectory(Source/smokediff)
-add_subdirectory(Source/smokeview)
-add_subdirectory(Source/smokezip)
 add_subdirectory(Source/smvq)
-add_subdirectory(Source/timep)
-add_subdirectory(Source/wind2fds)
 
-# Install config files
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/smokeview.ini" DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/smokeview")
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/objects.svo" DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/smokeview")
+if (NOT(EMSCRIPTEN))
+    if (VENDORED_UI_LIBS)
+        if (NOT MACOSX)
+            add_subdirectory(Source/glut-3.7.6)
+        endif()
+        add_subdirectory(Source/glui_v2_1_beta)
+    else()
+        FetchContent_Declare(
+            glui-git
+            GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
+            GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
+        )
+    endif()
+    # Libraries to build (which may be dependencies of the programs below)
+    add_subdirectory(Source/jsonrpc)
 
-# Install aliases on Windows
-if (WIN32)
-    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/smvq.cmd" DESTINATION .)
-    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/smvlua.cmd" DESTINATION .)
+    # The programs to build
+    add_subdirectory(Source/background)
+    add_subdirectory(Source/convert)
+    add_subdirectory(Source/env2mod)
+    add_subdirectory(Source/fds2fed)
+    add_subdirectory(Source/flush)
+    add_subdirectory(Source/get_time)
+    add_subdirectory(Source/getdate)
+    if (pp_HASH)
+        add_subdirectory(Source/hashfile)
+    endif()
+    add_subdirectory(Source/makepo)
+    add_subdirectory(Source/mergepo)
+    add_subdirectory(Source/runbatch)
+    add_subdirectory(Source/set_path)
+    add_subdirectory(Source/smokediff)
+    add_subdirectory(Source/smokeview)
+    add_subdirectory(Source/smokezip)
+    add_subdirectory(Source/timep)
+    add_subdirectory(Source/wind2fds)
+
+    # Install config files
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/smokeview.ini" DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/smokeview")
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/objects.svo" DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/smokeview")
+
+    # Install aliases on Windows
+    if (WIN32)
+        install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/smvq.cmd" DESTINATION .)
+        install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/smvlua.cmd" DESTINATION .)
+    endif()
 endif()
