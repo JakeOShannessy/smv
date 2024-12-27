@@ -30,7 +30,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install build-essential freeglut3-dev libx11-dev \
                                libxmu-dev libxi-dev libglew-dev libgd-dev \
-                               libjson-c-dev emscripten
+                               libjson-c-dev libpng-dev libjpeg-dev zlib1g-dev \
+                               emscripten
       # If we are building on linux configure the environment to use gcc as the
       # compiler
       - name: set linux gcc
