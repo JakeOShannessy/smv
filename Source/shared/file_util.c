@@ -1121,7 +1121,7 @@ char *GetBinDir(){
   PathAddBackslashA(buffer);
   return buffer;
 }
-#elif __linux__
+#elif __linux__ || __EMSCRIPTEN__
 
 /* ------------------ GetBinPath - linux ------------------------ */
 
@@ -1152,6 +1152,7 @@ char *GetBinPath(){
 
 char *GetBinDir(){
   char *buffer = GetBinPath();
+  if(buffer == NULL) return NULL;
   dirname(buffer);
   int pathlen = strlen(buffer);
   RESIZEMEMORY(buffer, pathlen + 2);

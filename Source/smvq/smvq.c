@@ -60,42 +60,50 @@ int SetGlobalFilenames(smv_case *scase) {
   int len_casename = strlen(scase->fdsprefix);
 
   FREEMEMORY(scase->paths.log_filename);
-  NewMemory((void **)&scase->paths.log_filename, len_casename + strlen(".smvlog") + 1);
+  NewMemory((void **)&scase->paths.log_filename,
+            len_casename + strlen(".smvlog") + 1);
   STRCPY(scase->paths.log_filename, scase->fdsprefix);
   STRCAT(scase->paths.log_filename, ".smvlog");
 
   FREEMEMORY(scase->paths.caseini_filename);
-  NewMemory((void **)&scase->paths.caseini_filename, len_casename + strlen(".ini") + 1);
+  NewMemory((void **)&scase->paths.caseini_filename,
+            len_casename + strlen(".ini") + 1);
   STRCPY(scase->paths.caseini_filename, scase->fdsprefix);
   STRCAT(scase->paths.caseini_filename, ".ini");
 
   FREEMEMORY(scase->paths.expcsv_filename);
-  NewMemory((void **)&scase->paths.expcsv_filename, len_casename + strlen("_exp.csv") + 1);
+  NewMemory((void **)&scase->paths.expcsv_filename,
+            len_casename + strlen("_exp.csv") + 1);
   STRCPY(scase->paths.expcsv_filename, scase->fdsprefix);
   STRCAT(scase->paths.expcsv_filename, "_exp.csv");
 
   FREEMEMORY(scase->paths.dEcsv_filename);
-  NewMemory((void **)&scase->paths.dEcsv_filename, len_casename + strlen("_dE.csv") + 1);
+  NewMemory((void **)&scase->paths.dEcsv_filename,
+            len_casename + strlen("_dE.csv") + 1);
   STRCPY(scase->paths.dEcsv_filename, scase->fdsprefix);
   STRCAT(scase->paths.dEcsv_filename, "_dE.csv");
 
   FREEMEMORY(scase->paths.html_filename);
-  NewMemory((void **)&scase->paths.html_filename, len_casename + strlen(".html") + 1);
+  NewMemory((void **)&scase->paths.html_filename,
+            len_casename + strlen(".html") + 1);
   STRCPY(scase->paths.html_filename, scase->fdsprefix);
   STRCAT(scase->paths.html_filename, ".html");
 
   FREEMEMORY(scase->paths.smv_orig_filename);
-  NewMemory((void **)&scase->paths.smv_orig_filename, len_casename + strlen(".smo") + 1);
+  NewMemory((void **)&scase->paths.smv_orig_filename,
+            len_casename + strlen(".smo") + 1);
   STRCPY(scase->paths.smv_orig_filename, scase->fdsprefix);
   STRCAT(scase->paths.smv_orig_filename, ".smo");
 
   FREEMEMORY(scase->paths.hrr_filename);
-  NewMemory((void **)&scase->paths.hrr_filename, len_casename + strlen("_hrr.csv") + 1);
+  NewMemory((void **)&scase->paths.hrr_filename,
+            len_casename + strlen("_hrr.csv") + 1);
   STRCPY(scase->paths.hrr_filename, scase->fdsprefix);
   STRCAT(scase->paths.hrr_filename, "_hrr.csv");
 
   FREEMEMORY(scase->paths.htmlvr_filename);
-  NewMemory((void **)&scase->paths.htmlvr_filename, len_casename + strlen("_vr.html") + 1);
+  NewMemory((void **)&scase->paths.htmlvr_filename,
+            len_casename + strlen("_vr.html") + 1);
   STRCPY(scase->paths.htmlvr_filename, scase->fdsprefix);
   STRCAT(scase->paths.htmlvr_filename, "_vr.html");
 
@@ -118,11 +126,12 @@ int SetGlobalFilenames(smv_case *scase) {
   STRCAT(scase->paths.htmlslicecell_filename, "_slicecell.json");
 
   FREEMEMORY(scase->paths.event_filename);
-  NewMemory((void **)&scase->paths.event_filename, len_casename + strlen("_events.csv") + 1);
+  NewMemory((void **)&scase->paths.event_filename,
+            len_casename + strlen("_events.csv") + 1);
   STRCPY(scase->paths.event_filename, scase->fdsprefix);
   STRCAT(scase->paths.event_filename, "_events.csv");
 
-  if (scase->paths.ffmpeg_command_filename == NULL) {
+  if(scase->paths.ffmpeg_command_filename == NULL) {
     NewMemory((void **)&scase->paths.ffmpeg_command_filename,
               (unsigned int)(len_casename + 12));
     STRCPY(scase->paths.ffmpeg_command_filename, scase->fdsprefix);
@@ -139,13 +148,13 @@ int SetGlobalFilenames(smv_case *scase) {
     STRCPY(scase->paths.smvzip_filename, scase->fdsprefix);
     STRCAT(scase->paths.smvzip_filename, ".smvzip");
   }
-  if (scase->paths.sliceinfo_filename == NULL) {
+  if(scase->paths.sliceinfo_filename == NULL) {
     NewMemory((void **)&scase->paths.sliceinfo_filename,
               strlen(scase->fdsprefix) + strlen(".sinfo") + 1);
     STRCPY(scase->paths.sliceinfo_filename, scase->fdsprefix);
     STRCAT(scase->paths.sliceinfo_filename, ".sinfo");
   }
-  if (scase->paths.deviceinfo_filename == NULL) {
+  if(scase->paths.deviceinfo_filename == NULL) {
     NewMemory((void **)&scase->paths.deviceinfo_filename,
               strlen(scase->fdsprefix) + strlen("_device.info") + 1);
     STRCPY(scase->paths.deviceinfo_filename, scase->fdsprefix);
@@ -159,11 +168,12 @@ int SetGlobalFilenames(smv_case *scase) {
   {
     FILE *stream_iso = NULL;
 
-    NewMemory((void **)&scase->paths.iso_filename, len_casename + strlen(".isosmv") + 1);
+    NewMemory((void **)&scase->paths.iso_filename,
+              len_casename + strlen(".isosmv") + 1);
     STRCPY(scase->paths.iso_filename, scase->fdsprefix);
     STRCAT(scase->paths.iso_filename, ".isosmv");
     stream_iso = fopen(scase->paths.iso_filename, "r");
-    if (stream_iso != NULL) {
+    if(stream_iso != NULL) {
       fclose(stream_iso);
     }
     else {
@@ -171,20 +181,22 @@ int SetGlobalFilenames(smv_case *scase) {
     }
   }
 
-  if (scase->paths.trainer_filename == NULL) {
-    NewMemory((void **)&scase->paths.trainer_filename, (unsigned int)(len_casename + 6));
+  if(scase->paths.trainer_filename == NULL) {
+    NewMemory((void **)&scase->paths.trainer_filename,
+              (unsigned int)(len_casename + 6));
     STRCPY(scase->paths.trainer_filename, scase->fdsprefix);
     STRCAT(scase->paths.trainer_filename, ".svd");
   }
-  if (scase->paths.test_filename == NULL) {
-    NewMemory((void **)&scase->paths.test_filename, (unsigned int)(len_casename + 6));
+  if(scase->paths.test_filename == NULL) {
+    NewMemory((void **)&scase->paths.test_filename,
+              (unsigned int)(len_casename + 6));
     STRCPY(scase->paths.test_filename, scase->fdsprefix);
     STRCAT(scase->paths.test_filename, ".svd");
   }
   return 0;
 }
 
-int PrintJson(smv_case *scase) {
+struct json_object *PrintJson(smv_case *scase) {
   struct json_object *jobj = json_object_new_object();
   json_object_object_add(jobj, "version", json_object_new_int(1));
   json_object_object_add(jobj, "chid",
@@ -198,8 +210,8 @@ int PrintJson(smv_case *scase) {
                            json_object_new_string(scase->fds_title));
   }
   if(scase->fds_version != NULL) {
-  json_object_object_add(jobj, "fds_version",
-                         json_object_new_string(scase->fds_version));
+    json_object_object_add(jobj, "fds_version",
+                           json_object_new_string(scase->fds_version));
   }
   struct json_object *mesh_array = json_object_new_array();
   for(int i = 0; i < scase->meshescoll.nmeshes; i++) {
@@ -399,14 +411,10 @@ int PrintJson(smv_case *scase) {
   }
   json_object_object_add(jobj, "surfaces", materials);
 
-  const char *json_output =
-      json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
-  printf("%s\n", json_output);
-  json_object_put(jobj);
-  return 0;
+  return jobj;
 }
-void InitScase(smv_case *scase);
-int RunSmvq(char *input_file, const char *fdsprefix) {
+
+struct json_object *RunBenchmark(char *input_file, const char *fdsprefix) {
   initMALLOC();
 
   smv_case *scase = CreateScase();
@@ -420,19 +428,19 @@ int RunSmvq(char *input_file, const char *fdsprefix) {
     bufferstreamdata *smv_streaminfo = GetSMVBuffer(input_file);
     if(smv_streaminfo == NULL) {
       fprintf(stderr, "could not open %s\n", input_file);
-      return 1;
+      return NULL;
     }
     INIT_PRINT_TIMER(ReadSMV_time);
     int return_code = 0;
     return_code = ReadSMV_Init(scase);
-    if(return_code) return return_code;
+    if(return_code) return NULL;
     return_code = ReadSMV_Parse(scase, smv_streaminfo);
     STOP_TIMER(ReadSMV_time);
     fprintf(stderr, "ReadSMV:\t%8.3f ms\n", ReadSMV_time * 1000);
     if(smv_streaminfo != NULL) {
       FCLOSE(smv_streaminfo);
     }
-    if(return_code) return return_code;
+    if(return_code) return NULL;
   }
   show_timings = 1;
   ReadSMVOrig(scase);
@@ -442,11 +450,10 @@ int RunSmvq(char *input_file, const char *fdsprefix) {
   fprintf(stderr, "ReadSMVDynamic:\t%8.3f ms\n", ReadSMVDynamic_time * 1000);
   STOP_TIMER(parse_time);
   fprintf(stderr, "Total Time:\t%8.3f ms\n", parse_time * 1000);
-  PrintJson(scase);
-  // FreeVars();
-  return 0;
+  return PrintJson(scase);
 }
 
+#ifndef __EMSCRIPTEN__
 int main(int argc, char **argv) {
 
   bool print_help = false;
@@ -492,6 +499,23 @@ int main(int argc, char **argv) {
     return 1;
   }
   char *fdsprefix = GetBaseName(input_file);
-  int result = RunSmvq(input_file, fdsprefix);
-  return result;
+  struct json_object *jobj = RunBenchmark(input_file, fdsprefix);
+  free(fdsprefix);
+  const char *json_output =
+      json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
+  printf("%s\n", json_output);
+  json_object_put(jobj);
+  return 0;
+}
+#endif
+
+char *RunSmvq(const char *input_file) {
+  char *fdsprefix = GetBaseName(input_file);
+  struct json_object *jobj = RunBenchmark(input_file, fdsprefix);
+  free(fdsprefix);
+  const char *json_output =
+      json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
+  char *res = strdup(json_output);
+  json_object_put(jobj);
+  return res;
 }

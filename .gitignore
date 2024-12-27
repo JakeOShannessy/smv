@@ -76,6 +76,9 @@ Validation/*/FDS_Output_Files/*.csv
 cbuild/
 dist/
 dist-debug/
+dist-wasm/
+rpmbuild/
+vcpkg_installed
 
 # Local config for some editors
 .vscode/
