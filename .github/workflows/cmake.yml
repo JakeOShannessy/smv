@@ -30,8 +30,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install build-essential freeglut3-dev libx11-dev \
                                libxmu-dev libxi-dev libglew-dev libgd-dev \
-                               libjson-c-dev libpng-dev libjpeg-dev zlib1g-dev \
-                               emscripten
+                               libjson-c-dev libpng-dev libjpeg-dev zlib1g-dev
+      - name: Install Emscripten
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install latest
+          ./emsdk activate latest
       # If we are building on linux configure the environment to use gcc as the
       # compiler
       - name: set linux gcc
@@ -44,6 +49,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
+          source ~/emsdk/emsdk_env.sh
           emcmake cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
           cmake --build ${{github.workspace}}/cbuild -j4
   build_unix_gcc:
