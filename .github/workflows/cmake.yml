@@ -33,8 +33,8 @@ jobs:
                                libjson-c-dev libpng-dev libjpeg-dev zlib1g-dev
       - name: Install Emscripten
         run: |
-          git clone https://github.com/emscripten-core/emsdk.git
-          cd emsdk
+          git clone https://github.com/emscripten-core/emsdk.git ../emsdk
+          cd ../emsdk
           ./emsdk install latest
           ./emsdk activate latest
       # If we are building on linux configure the environment to use gcc as the
@@ -49,7 +49,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          source ~/emsdk/emsdk_env.sh
+          source ../emsdk/emsdk_env.sh
           emcmake cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
           cmake --build ${{github.workspace}}/cbuild -j4
   build_unix_gcc:
