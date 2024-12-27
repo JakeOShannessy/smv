@@ -6,6 +6,45 @@ env:
   BUILD_TYPE: Release
 
 jobs:
+  build_emscripten:
+    # Set the name of this build, variable depending on the OS
+    name: build ${{ matrix.os }} - emcc
+    strategy:
+      fail-fast: false
+      # The matrix sets all the different combinations of builds, e.g. platforms
+      # and build configurations
+      matrix:
+        os:
+          - ubuntu-latest
+    # Set the platform to build on
+    runs-on: ${{ matrix.os }}
+    steps:
+      # Check out the smv repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+      # If we are currently building on Linux (ubuntu) install all the native
+      # pre-requisites
+      - name: Install linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential freeglut3-dev libx11-dev \
+                               libxmu-dev libxi-dev libglew-dev libgd-dev \
+                               libjson-c-dev emscripten
+      # If we are building on linux configure the environment to use gcc as the
+      # compiler
+      - name: set linux gcc
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          echo "CC=emcc" >> $GITHUB_ENV
+          echo "CXX=emcc" >> $GITHUB_ENV
+      # Run cmake to build smokeview
+      - name: Build
+        shell: bash
+        run: |
+          emcmake cmake -B ${{github.workspace}}/cbuild -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+          cmake --build ${{github.workspace}}/cbuild -j4
   build_unix_gcc:
     # Set the name of this build, variable depending on the OS
     name: build ${{ matrix.os }} - gcc
