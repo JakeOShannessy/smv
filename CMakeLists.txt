@@ -224,8 +224,13 @@ if (NOT(EMSCRIPTEN))
     add_subdirectory(Source/wind2fds)
 
     # Install config files
-    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/smokeview.ini" DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/smokeview")
-    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/objects.svo" DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/smokeview")
+    if (WIN32)
+        set(CONF_DIR ".")
+    else()
+        set(CONF_DIR "${CMAKE_INSTALL_SYSCONFDIR}/smokeview")
+    endif()
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/smokeview.ini" DESTINATION "${CONF_DIR}")
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/objects.svo" DESTINATION "${CONF_DIR}")
 
     # Install aliases on Windows
     if (WIN32)
