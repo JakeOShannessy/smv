@@ -2908,7 +2908,7 @@ void Keyboard(unsigned char key, int flag){
       break;
     case '&':
       if(keystate==GLUT_ACTIVE_ALT){
-        if(hvaccoll.nhvacinfo > 0){
+        if(global_scase.hvaccoll.nhvacinfo > 0){
           ToggleMetroMode();
           PRINTF("HVAC metro view mode=%i\n", hvac_metro_view);
         }

@@ -5360,7 +5360,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
   // ----------------------------------- HVAC ducts ----------------------------------------
 
-  if(hvaccoll.nhvacinfo > 0&&nhvacductbounds_cpp>0){
+  if(global_scase.hvaccoll.nhvacinfo > 0&&nhvacductbounds_cpp>0){
     glui_active = 1;
     ROLLOUT_hvacduct = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds, "HVAC ducts", false, HVACDUCT_ROLLOUT, BoundRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_hvacduct, glui_bounds);
@@ -5373,7 +5373,7 @@ hvacductboundsCPP.setup("hvac", ROLLOUT_hvacduct, hvacductbounds_cpp, nhvacductb
 
   // ----------------------------------- HVAC nodes ----------------------------------------
 
-  if(hvaccoll.nhvacinfo > 0 && nhvacnodebounds_cpp > 0){
+  if(global_scase.hvaccoll.nhvacinfo > 0 && nhvacnodebounds_cpp > 0){
     glui_active = 1;
     ROLLOUT_hvacnode = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds, "HVAC nodes", false, HVACNODE_ROLLOUT, BoundRolloutCB);
     INSERT_ROLLOUT(ROLLOUT_hvacnode, glui_bounds);

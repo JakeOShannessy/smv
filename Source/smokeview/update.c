@@ -352,7 +352,7 @@ void UpdateShow(void){
 
   if(vis_hrr_plot==1&&hrrptr!=NULL)showhrrflag = 1;
 
-  if(hvaccoll.hvacductvar_index >= 0 || hvaccoll.hvacnodevar_index >= 0){
+  if(global_scase.hvaccoll.hvacductvar_index >= 0 || global_scase.hvaccoll.hvacnodevar_index >= 0){
     showhvacflag = 1;
   }
 
@@ -658,8 +658,8 @@ void UpdateShow(void){
     if(slicecolorbarflag==1||vslicecolorbarflag==1)num_colorbars++;
     if(patchflag==1&&wall_cell_color_flag==0)num_colorbars++;
     if(ReadZoneFile==1)num_colorbars++;
-    if(hvaccoll.hvacductvar_index >= 0)num_colorbars++;
-    if(hvaccoll.hvacnodevar_index >= 0)num_colorbars++;
+    if(global_scase.hvaccoll.hvacductvar_index >= 0)num_colorbars++;
+    if(global_scase.hvaccoll.hvacnodevar_index >= 0)num_colorbars++;
 
     if(tisoflag==1){
       showiso_colorbar = 1;
@@ -1257,11 +1257,11 @@ void UpdateTimes(void){
       MergeGlobalTimes(stimes, 2);
     }
   }
-  if(hvaccoll.hvacductvar_index >= 0){
-    MergeGlobalTimes(hvaccoll.hvacductvalsinfo->times, hvaccoll.hvacductvalsinfo->ntimes);
+  if(global_scase.hvaccoll.hvacductvar_index >= 0){
+    MergeGlobalTimes(global_scase.hvaccoll.hvacductvalsinfo->times, global_scase.hvaccoll.hvacductvalsinfo->ntimes);
   }
-  if(hvaccoll.hvacnodevar_index >= 0){
-    MergeGlobalTimes(hvaccoll.hvacnodevalsinfo->times, hvaccoll.hvacnodevalsinfo->ntimes);
+  if(global_scase.hvaccoll.hvacnodevar_index >= 0){
+    MergeGlobalTimes(global_scase.hvaccoll.hvacnodevalsinfo->times, global_scase.hvaccoll.hvacnodevalsinfo->ntimes);
   }
   if(use_tload_begin==1){
     MergeGlobalTimes(&global_scase.tload_begin, 1);
@@ -1718,7 +1718,7 @@ int GetPlotStateSub(int choice){
       break;
     case DYNAMIC_PLOTS:
     case DYNAMIC_PLOTS_NORECURSE:
-      if(hvaccoll.hvacductvar_index>=0||hvaccoll.hvacnodevar_index>=0){
+      if(global_scase.hvaccoll.hvacductvar_index>=0||global_scase.hvaccoll.hvacnodevar_index>=0){
         stept = 1;
         return DYNAMIC_PLOTS;
       }

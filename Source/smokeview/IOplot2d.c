@@ -659,18 +659,18 @@ void SetupPlot2DUnitData(void){
     }
   }
   //setup hrrunits
-  if(nhrrinfo > 0){
+  if(global_scase.hrr_coll.nhrrinfo > 0){
     int i;
 
     nhrrunits = 0;
     FREEMEMORY(hrrunits);
-    NewMemory((void **)&hrrunits, nhrrinfo * sizeof(hrrdata *));
-    for(i = 0; i < nhrrinfo; i++){
+    NewMemory((void **)&hrrunits, global_scase.hrr_coll.nhrrinfo * sizeof(hrrdata *));
+    for(i = 0; i < global_scase.hrr_coll.nhrrinfo; i++){
       int j;
       hrrdata *hrri;
       int skip_hrr;
 
-      hrri = hrrinfo + i;
+      hrri = global_scase.hrr_coll.hrrinfo + i;
       if(hrri->nvals == 0 || strlen(hrri->label.shortlabel) == 0 || strlen(hrri->label.unit) == 0)continue;
       if(STRCMP(hrri->label.shortlabel, "Time") == 0)continue;
       skip_hrr = 0;
@@ -750,7 +750,7 @@ void GetPlot2DBounds(plot2ddata *plot2di, float *valmin, float *valmax){
 /* ------------------ InitPlot2D ------------------------ */
 
 void InitPlot2D(plot2ddata *plot2di, int plot_index){
-  if(global_scase.devicecoll.ndeviceinfo == 0 && nhrrinfo == 0)return;
+  if(global_scase.devicecoll.ndeviceinfo == 0 && global_scase.hrr_coll.nhrrinfo == 0)return;
   plot2di->ncurves = 0;
   plot2di->ncurves_ini = 0;
   plot2di->show = 1;

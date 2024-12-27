@@ -2980,7 +2980,7 @@ void ScriptSetCbar(scriptdata *scripti){
 void ScriptShowHVACDuctVal(scriptdata *scripti){
   int ductvalindex;
 
-  ductvalindex = GetHVACDuctValIndex(&hvaccoll, scripti->cval);
+  ductvalindex = GetHVACDuctValIndex(&global_scase.hvaccoll, scripti->cval);
   if(ductvalindex>=0){
     HVACDuctValueMenu(ductvalindex);
   }
@@ -2994,7 +2994,7 @@ void ScriptShowHVACDuctVal(scriptdata *scripti){
 void ScriptShowHVACNodeVal(scriptdata *scripti){
   int nodevalindex;
 
-  nodevalindex = GetHVACNodeValIndex(&hvaccoll, scripti->cval);
+  nodevalindex = GetHVACNodeValIndex(&global_scase.hvaccoll, scripti->cval);
   if(nodevalindex>=0){
     HVACNodeValueMenu(nodevalindex);
   }

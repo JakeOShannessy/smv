@@ -134,15 +134,9 @@ SVEXTERN int SVDECL(hvac_network_ductnode_index, -1);
 #define HVAC_NCIRC 72
 SVEXTERN float SVDECL(*hvac_circ_x, NULL), SVDECL(*hvac_circ_y, NULL);
 #ifdef INMAIN
-SVEXTERN hvacdatacollection hvaccoll = {
-  .hvacductvar_index= -1,
-  .hvacnodevar_index= -1,
-  0
-};
 SVEXTERN int hvac_duct_color[3] = { 63,0,15};
 SVEXTERN int hvac_node_color[3] = { 63,0,15};
 #else
-SVEXTERN hvacdatacollection hvaccoll;
 SVEXTERN int hvac_duct_color[3];
 SVEXTERN int hvac_node_color[3];
 #endif
@@ -1055,16 +1049,13 @@ SVEXTERN int SVDECL(vis_hrr_plot, 0);
 SVEXTERN int SVDECL(vis_slice_plot, 0);
 SVEXTERN int SVDECL(vis_colorbar_dists_plot, 0);
 
-SVEXTERN fueldata SVDECL(*fuelinfo, NULL);
-SVEXTERN int SVDECL(nfuelinfo, 0);
 SVEXTERN char hrrlabel[256];
-SVEXTERN hrrdata SVDECL(*hrrinfo, NULL), SVDECL(*hrrptr, NULL), SVDECL(*timeptr, NULL);
-SVEXTERN int SVDECL(nhrrinfo, 0);
+SVEXTERN hrrdata SVDECL(*hrrptr, NULL), SVDECL(*timeptr, NULL);
 SVEXTERN int SVDECL(time_col, -1), SVDECL(hrr_col, -1), SVDECL(mlr_col, -1);
 SVEXTERN int SVDECL(glui_hrr, 1);
 SVEXTERN float SVDECL(fuel_hoc_default, -1.0);
 SVEXTERN char fuel_name[256];
-SVEXTERN int SVDECL(qradi_col, -1), SVDECL(chirad_col, -1), SVDECL(nhrrhcinfo, 0);
+SVEXTERN int SVDECL(qradi_col, -1), SVDECL(chirad_col, -1);
 SVEXTERN int SVDECL(have_mlr, 0);
 SVEXTERN int SVDECL(hoc_hrr, 0);
 SVEXTERN int SVDECL(update_avg, 0);
@@ -1821,7 +1812,12 @@ SVEXTERN smv_case global_scase = {.tourcoll = {.ntourinfo = 0,
                            .tamb = 293.15,
                            .nrgb = NRGB,
                            .linewidth = 2.0,
-                           .ventlinewidth = 2.0
+                           .ventlinewidth = 2.0,
+                           .hvaccoll = {
+                              .hvacductvar_index= -1,
+                              .hvacnodevar_index= -1,
+                              0
+                            }
                           };
 #else
 SVEXTERN smv_case global_scase;

@@ -1544,10 +1544,10 @@ void GetHVACDuctBounds(char *shortlabel, float *valminptr, float *valmaxptr){
 
   *valminptr = 1.0;
   *valmaxptr = 0.0;
-  for(i=0;i< hvaccoll.hvacductvalsinfo->n_duct_vars;i++){
+  for(i=0;i< global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars;i++){
     hvacvaldata *hi;
 
-    hi = hvaccoll.hvacductvalsinfo->duct_vars + i;
+    hi = global_scase.hvaccoll.hvacductvalsinfo->duct_vars + i;
     if(strcmp(shortlabel, hi->label.shortlabel)!=0)continue;
     if(valmin<valmax){
       valmin = MIN(valmin,hi->valmin);
@@ -1570,10 +1570,10 @@ void GetHVACNodeBounds(char *shortlabel, float *valminptr, float *valmaxptr){
 
   *valminptr = 1.0;
   *valmaxptr = 0.0;
-  for(i = 0;i < hvaccoll.hvacnodevalsinfo->n_node_vars;i++){
+  for(i = 0;i < global_scase.hvaccoll.hvacnodevalsinfo->n_node_vars;i++){
     hvacvaldata *hi;
 
-    hi = hvaccoll.hvacnodevalsinfo->node_vars + i;
+    hi = global_scase.hvaccoll.hvacnodevalsinfo->node_vars + i;
     if(strcmp(shortlabel, hi->label.shortlabel) != 0)continue;
     if(valmin < valmax){
       valmin = MIN(valmin, hi->valmin);
@@ -1595,7 +1595,7 @@ void GetGlobalHVACDuctBounds(int flag){
 
   if(no_bounds == 1 && force_bounds==0)flag = 0;
   int nhvacboundsmax = 0;
-  if(hvaccoll.hvacductvalsinfo != NULL)nhvacboundsmax = hvaccoll.hvacductvalsinfo->n_duct_vars;
+  if(global_scase.hvaccoll.hvacductvalsinfo != NULL)nhvacboundsmax = global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars;
   if(nhvacboundsmax == 0)return;
   if(flag==0)ReadHVACData(BOUNDS_ONLY);
   for(i = 0;i < nhvacductbounds;i++){
@@ -1656,7 +1656,7 @@ void GetGlobalHVACNodeBounds(int flag){
 
   if(no_bounds == 1 && force_bounds==0)flag = 0;
   int nhvacboundsmax = 0;
-  if(hvaccoll.hvacnodevalsinfo != NULL)nhvacboundsmax = hvaccoll.hvacnodevalsinfo->n_duct_vars + hvaccoll.hvacnodevalsinfo->n_node_vars;
+  if(global_scase.hvaccoll.hvacnodevalsinfo != NULL)nhvacboundsmax = global_scase.hvaccoll.hvacnodevalsinfo->n_duct_vars + global_scase.hvaccoll.hvacnodevalsinfo->n_node_vars;
   if(nhvacboundsmax == 0)return;
   if(flag == 0)ReadHVACData(BOUNDS_ONLY);
   for(i = 0;i < nhvacnodebounds;i++){

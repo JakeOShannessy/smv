@@ -61,11 +61,11 @@ int GetNDevices(char *file);
 int GetHrrCsvCol(char *label){
   int i;
 
-  if(label==NULL||strlen(label)==0||nhrrinfo==0)return -1;
-  for(i = 0; i<nhrrinfo; i++){
+  if(label==NULL||strlen(label)==0||global_scase.hrr_coll.nhrrinfo==0)return -1;
+  for(i = 0; i<global_scase.hrr_coll.nhrrinfo; i++){
     hrrdata *hi;
 
-    hi = hrrinfo+i;
+    hi = global_scase.hrr_coll.hrrinfo+i;
     if(hi->label.shortlabel==NULL)continue;
     if(strcmp(hi->label.shortlabel, label)==0)return i;
   }
@@ -94,9 +94,9 @@ void GetHoc(float *hoc, char *name){
   char outfile[256], buffer[255];
   FILE *stream;
 
-  if(nfuelinfo > 0){
-    *hoc = fuelinfo->hoc;
-    strcpy(name, fuelinfo->fuel);
+  if(global_scase.fuelcoll.nfuelinfo > 0){
+    *hoc = global_scase.fuelcoll.fuelinfo->hoc;
+    strcpy(name, global_scase.fuelcoll.fuelinfo->fuel);
     return;
   }
   strcpy(outfile, global_scase.fdsprefix);
@@ -136,15 +136,15 @@ void UpdateHoc(void){
   int i;
 
 // construct column for each MLR column by heat of combustion except for air and products
-  for(i = nhrrinfo-nhrrhcinfo; i<nhrrinfo; i++){
+  for(i = global_scase.hrr_coll.nhrrinfo-global_scase.hrr_coll.nhrrhcinfo; i<global_scase.hrr_coll.nhrrinfo; i++){
     hrrdata *hi;
 
-    hi = hrrinfo+i;
+    hi = global_scase.hrr_coll.hrrinfo+i;
     if(hi->base_col>=0){
       hrrdata *hi_from;
       int j;
 
-      hi_from = hrrinfo+hi->base_col;
+      hi_from = global_scase.hrr_coll.hrrinfo+hi->base_col;
       memcpy(hi->vals, hi_from->vals, hi_from->nvals*sizeof(float));
       hi->nvals = hi_from->nvals;
       for(j = 0; j<hi->nvals; j++){
@@ -520,19 +520,19 @@ void ReadHRR(int flag){
 
   GetHoc(&global_scase.fuel_hoc, fuel_name);
   fuel_hoc_default = global_scase.fuel_hoc;
-  if(nhrrinfo>0){
-    for(i=0;i<nhrrinfo;i++){
+  if(global_scase.hrr_coll.nhrrinfo>0){
+    for(i=0;i<global_scase.hrr_coll.nhrrinfo;i++){
       hrrdata *hi;
 
-      hi = hrrinfo + i;
+      hi = global_scase.hrr_coll.hrrinfo + i;
       FREEMEMORY(hi->vals);
       FREEMEMORY(hi->vals_orig);
       FREEMEMORY(hi->label.longlabel);
       FREEMEMORY(hi->label.shortlabel);
       FREEMEMORY(hi->label.unit);
     }
-    FREEMEMORY(hrrinfo);
-    nhrrinfo = 0;
+    FREEMEMORY(global_scase.hrr_coll.hrrinfo);
+    global_scase.hrr_coll.nhrrinfo = 0;
   }
   time_col  = -1;
   hrr_col   = -1;
@@ -544,9 +544,9 @@ void ReadHRR(int flag){
 
   len_buffer = GetRowCols(stream, &nrows, &ncols);
   len_buffer = MAX(len_buffer + 100, 1000) + ncols;
-  nhrrinfo = ncols;
+  global_scase.hrr_coll.nhrrinfo = ncols;
 
-  if(nhrrinfo == 0)return;
+  if(global_scase.hrr_coll.nhrrinfo == 0)return;
   // allocate memory
 
   NewMemory((void **)&(buffer),        len_buffer);
@@ -554,17 +554,17 @@ void ReadHRR(int flag){
   NewMemory((void **)&(buffer_units),  len_buffer);
   NewMemory((void **)&(buffer_temp),   len_buffer);
 
-  NewMemory((void **)&labels,         nhrrinfo*sizeof(char *));
-  NewMemory((void **)&units,          nhrrinfo*sizeof(char *));
-  NewMemory((void **)&hrrinfo,      2*nhrrinfo*sizeof(hrrdata));
-  NewMemory((void **)&vals,           nhrrinfo*sizeof(float));
-  NewMemory((void **)&valids,         nhrrinfo*sizeof(int));
+  NewMemory((void **)&labels,                  global_scase.hrr_coll.nhrrinfo*sizeof(char *));
+  NewMemory((void **)&units,                   global_scase.hrr_coll.nhrrinfo*sizeof(char *));
+  NewMemory((void **)&global_scase.hrr_coll.hrrinfo,  2*global_scase.hrr_coll.nhrrinfo*sizeof(hrrdata));
+NewMemory((void **)&vals,                      global_scase.hrr_coll.nhrrinfo*sizeof(float));
+NewMemory((void **)&valids,                    global_scase.hrr_coll.nhrrinfo*sizeof(int));
 
 // initialize each column
-  for(i = 0; i<2*nhrrinfo; i++){
+  for(i = 0; i<2*global_scase.hrr_coll.nhrrinfo; i++){
     hrrdata *hi;
 
-    hi = hrrinfo+i;
+    hi = global_scase.hrr_coll.hrrinfo+i;
     NewMemory((void **)&hi->vals,      MAX(1,(nrows+10))*sizeof(float));
     NewMemory((void **)&hi->vals_orig, MAX(1,(nrows+10))*sizeof(float));
     hi->base_col = -1;
@@ -581,10 +581,10 @@ void ReadHRR(int flag){
   ParseCSV(buffer_labels, buffer_temp, labels, &nlabels);
   CheckMemory;
 
-  for(i = 0; i<nhrrinfo; i++){
+  for(i = 0; i<global_scase.hrr_coll.nhrrinfo; i++){
     hrrdata *hi;
 
-    hi = hrrinfo+i;
+    hi = global_scase.hrr_coll.hrrinfo+i;
     TrimBack(labels[i]);
     TrimBack(units[i]);
     hi->label.longlabel = NULL;
@@ -597,20 +597,20 @@ void ReadHRR(int flag){
 // find column index of several quantities
 
   time_col  = GetHrrCsvCol("Time");
-  if(time_col>=0)timeptr = hrrinfo+time_col;
+  if(time_col>=0)timeptr = global_scase.hrr_coll.hrrinfo+time_col;
 
   hrr_col   = GetHrrCsvCol("HRR");
-  if(hrr_col>=0&&time_col>=0)hrrptr = hrrinfo+hrr_col;
+  if(hrr_col>=0&&time_col>=0)hrrptr = global_scase.hrr_coll.hrrinfo+hrr_col;
 
   qradi_col = GetHrrCsvCol("Q_RADI");
   CheckMemory;
 
 // define column for each MLR column by heat of combustion except for air and products
-  nhrrhcinfo = 0;
-  for(i = 0; i<nhrrinfo; i++){
+  global_scase.hrr_coll.nhrrhcinfo = 0;
+  for(i = 0; i<global_scase.hrr_coll.nhrrinfo; i++){
     hrrdata *hi, *hi2;
 
-    hi = hrrinfo+i;
+    hi = global_scase.hrr_coll.hrrinfo+i;
     if(strlen(hi->label.longlabel)>3&&strncmp(hi->label.longlabel,"MLR_",4)==0){
       char label[256];
       int doit = 0;
@@ -619,7 +619,7 @@ void ReadHRR(int flag){
       if(strlen(fuel_name)>0&&strstr(hi->label.longlabel, fuel_name)!=NULL)doit = 1;
       if(doit==0&&strstr(hi->label.longlabel, "FUEL")!=NULL)doit = 1;
       if(doit==0)continue;
-      hi2 = hrrinfo + nhrrinfo + nhrrhcinfo;
+      hi2 = global_scase.hrr_coll.hrrinfo + global_scase.hrr_coll.nhrrinfo + global_scase.hrr_coll.nhrrhcinfo;
       hi2->base_col = i;
       strcpy(label, "HOC*");
       strcat(label, hi->label.longlabel);
@@ -627,9 +627,9 @@ void ReadHRR(int flag){
       hi2->label.shortlabel = NULL;
       hi2->label.unit = NULL;
       SetLabels(&(hi2->label), label, label, "kW");
-      mlr_col = hi2-hrrinfo;
+      mlr_col = hi2-global_scase.hrr_coll.hrrinfo;
       have_mlr = 1;
-      nhrrhcinfo++;
+      global_scase.hrr_coll.nhrrhcinfo++;
     }
   }
   CheckMemory;
@@ -642,10 +642,10 @@ void ReadHRR(int flag){
     if(strlen(buffer)==0)break;
     FParseCSV(buffer, vals, valids, ncols, &nvals);
     if(nvals<ncols)break;
-    for(i = 0; i<nhrrinfo; i++){
+    for(i = 0; i<global_scase.hrr_coll.nhrrinfo; i++){
       hrrdata *hi;
 
-      hi = hrrinfo+i;
+      hi = global_scase.hrr_coll.hrrinfo+i;
       hi->vals[irow] = 0.0;
       if(valids[i]==1)hi->vals[irow] = vals[i];
     }
@@ -660,8 +660,8 @@ void ReadHRR(int flag){
     hrrdata *hi_chirad;
 
 
-    chirad_col = nhrrinfo+nhrrhcinfo;
-    hi_chirad = hrrinfo+chirad_col;
+    chirad_col = global_scase.hrr_coll.nhrrinfo+global_scase.hrr_coll.nhrrhcinfo;
+    hi_chirad = global_scase.hrr_coll.hrrinfo+chirad_col;
 
     strcpy(label, "CHIRAD");
     hi_chirad->label.longlabel = NULL;
@@ -669,16 +669,16 @@ void ReadHRR(int flag){
     hi_chirad->label.unit = NULL;
     SetLabels(&(hi_chirad->label), label, label, "-");
     hi_chirad->nvals = nrows - 2;
-    nhrrhcinfo++;
+    global_scase.hrr_coll.nhrrhcinfo++;
   }
   CheckMemory;
 
-  nhrrinfo += nhrrhcinfo;
+  global_scase.hrr_coll.nhrrinfo += global_scase.hrr_coll.nhrrhcinfo;
 // construct column for each MLR column by heat of combustion except for air and products
-  for(i = nhrrinfo- nhrrhcinfo; i<nhrrinfo; i++){
+  for(i = global_scase.hrr_coll.nhrrinfo- global_scase.hrr_coll.nhrrhcinfo; i<global_scase.hrr_coll.nhrrinfo; i++){
     hrrdata *hi;
 
-    hi = hrrinfo+i;
+    hi = global_scase.hrr_coll.hrrinfo+i;
     hi->nvals = nrows-2;
   }
   UpdateHoc();
@@ -688,9 +688,9 @@ void ReadHRR(int flag){
   if(hrr_col>=0&&qradi_col>=0){
     hrrdata *hi_chirad, *hi_hrr, *hi_qradi;
 
-    hi_chirad = hrrinfo+chirad_col;
-    hi_hrr = hrrinfo+hrr_col;
-    hi_qradi = hrrinfo+qradi_col;
+    hi_chirad = global_scase.hrr_coll.hrrinfo+chirad_col;
+    hi_hrr = global_scase.hrr_coll.hrrinfo+hrr_col;
+    hi_qradi = global_scase.hrr_coll.hrrinfo+qradi_col;
     hi_chirad->nvals = MIN(hi_qradi->nvals, hi_hrr->nvals);
     for(i=0;i<hi_chirad->nvals;i++){
       if(hi_hrr->vals[i]!=0.0){
@@ -704,20 +704,20 @@ void ReadHRR(int flag){
   CheckMemory;
 
 //compute vals into vals_orig
-  for(i = 0; i<nhrrinfo; i++){
+  for(i = 0; i<global_scase.hrr_coll.nhrrinfo; i++){
     hrrdata *hi;
 
-    hi = hrrinfo+i;
+    hi = global_scase.hrr_coll.hrrinfo+i;
     memcpy(hi->vals_orig, hi->vals, hi->nvals*sizeof(float));
   }
 
 //compute min and max of each column
-  for(i = 0; i<nhrrinfo; i++){
+  for(i = 0; i<global_scase.hrr_coll.nhrrinfo; i++){
     hrrdata *hi;
     float valmin, valmax;
     int j;
 
-    hi = hrrinfo+i;
+    hi = global_scase.hrr_coll.hrrinfo+i;
     hi->nvals = irow;
     valmin = hi->vals[0];
     valmax = valmin;
@@ -731,10 +731,10 @@ void ReadHRR(int flag){
   CheckMemory;
 
 // free arrays that were not used
-  for(i = nhrrinfo; i<2*(nhrrinfo-nhrrhcinfo); i++){
+  for(i = global_scase.hrr_coll.nhrrinfo; i<2*(global_scase.hrr_coll.nhrrinfo-global_scase.hrr_coll.nhrrhcinfo); i++){
     hrrdata *hi;
 
-    hi = hrrinfo+i;
+    hi = global_scase.hrr_coll.hrrinfo+i;
     FREEMEMORY(hi->vals);
     FREEMEMORY(hi->vals_orig);
   }
@@ -1453,7 +1453,7 @@ void ReadSMVDynamic(char *file){
       ductname = strchr(buffer, ' ');
       if(ductname == NULL)continue;
       ductname = TrimFrontBack(ductname + 1);
-      ducti = GetHVACDuctID(&hvaccoll, ductname);
+      ducti = GetHVACDuctID(&global_scase.hvaccoll, ductname);
       if(ducti == NULL)continue;
 
       act_times  = ducti->act_times;
@@ -3030,27 +3030,27 @@ void UpdateBoundInfo(void){
   PRINT_TIMER(bound_timer, "boundary file bounds");
 
   int nhvacboundsmax = 0;
-  if(hvaccoll.hvacductvalsinfo != NULL)nhvacboundsmax += hvaccoll.hvacductvalsinfo->n_duct_vars;
-  if(hvaccoll.hvacnodevalsinfo != NULL)nhvacboundsmax += hvaccoll.hvacnodevalsinfo->n_node_vars;
+  if(global_scase.hvaccoll.hvacductvalsinfo != NULL)nhvacboundsmax += global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars;
+  if(global_scase.hvaccoll.hvacnodevalsinfo != NULL)nhvacboundsmax += global_scase.hvaccoll.hvacnodevalsinfo->n_node_vars;
   if(nhvacboundsmax>0){
     FREEMEMORY(hvacductbounds);
-    NewMemory((void*)&hvacductbounds,hvaccoll.hvacductvalsinfo->n_duct_vars*sizeof(boundsdata));
+    NewMemory((void*)&hvacductbounds,global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars*sizeof(boundsdata));
     nhvacductbounds=0;
 
     FREEMEMORY(hvacnodebounds);
-    NewMemory((void*)&hvacnodebounds,hvaccoll.hvacnodevalsinfo->n_node_vars*sizeof(boundsdata));
+    NewMemory((void*)&hvacnodebounds,global_scase.hvaccoll.hvacnodevalsinfo->n_node_vars*sizeof(boundsdata));
     nhvacnodebounds=0;
 
     for(i=0;i<nhvacboundsmax;i++){
       hvacvaldata *hi;
       boundsdata *hbi;
 
-      if(i<hvaccoll.hvacductvalsinfo->n_duct_vars){
-        hi = hvaccoll.hvacductvalsinfo->duct_vars + i;
+      if(i<global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars){
+        hi = global_scase.hvaccoll.hvacductvalsinfo->duct_vars + i;
         hbi = hvacductbounds + nhvacductbounds;
       }
       else{
-        hi = hvaccoll.hvacnodevalsinfo->node_vars + i - hvaccoll.hvacductvalsinfo->n_duct_vars;
+        hi = global_scase.hvaccoll.hvacnodevalsinfo->node_vars + i - global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars;
         hbi = hvacnodebounds + nhvacnodebounds;
       }
       hi->valmin=1.0;
@@ -3072,25 +3072,25 @@ void UpdateBoundInfo(void){
       hbi->line_contour_num = 1;
       hbi->label            = &(hi->label);
       int nbeg;
-      if(i<hvaccoll.hvacductvalsinfo->n_duct_vars){
+      if(i<global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars){
         nbeg = 0;
         nhvacductbounds++;
       }
       else{
-        nbeg = hvaccoll.hvacductvalsinfo->n_duct_vars;
+        nbeg = global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars;
         nhvacnodebounds++;
       }
       for(n=nbeg;n<i;n++){
         hvacvaldata *hn;
 
-        if(n<hvaccoll.hvacductvalsinfo->n_duct_vars){
-          hn = hvaccoll.hvacductvalsinfo->duct_vars + n;
+        if(n<global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars){
+          hn = global_scase.hvaccoll.hvacductvalsinfo->duct_vars + n;
         }
         else{
-          hn = hvaccoll.hvacnodevalsinfo->node_vars + n - hvaccoll.hvacductvalsinfo->n_duct_vars;
+          hn = global_scase.hvaccoll.hvacnodevalsinfo->node_vars + n - global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars;
         }
         if(strcmp(hi->label.shortlabel,hn->label.shortlabel)==0){
-          if(n<hvaccoll.hvacductvalsinfo->n_duct_vars){
+          if(n<global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars){
             nhvacductbounds--;
           }
           else{
@@ -7439,21 +7439,21 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
       FGETS(buffer, 255, stream);
       sscanf(buffer, "%i", &nfuelinfo_local);
-      if(fuelinfo==NULL){
-        nfuelinfo = nfuelinfo_local;
-        NewMemory((void **)&fuelinfo, nfuelinfo*sizeof(fueldata));
+      if(global_scase.fuelcoll.fuelinfo==NULL){
+        global_scase.fuelcoll.nfuelinfo = nfuelinfo_local;
+        NewMemory((void **)&global_scase.fuelcoll.fuelinfo, global_scase.fuelcoll.nfuelinfo*sizeof(fueldata));
       }
       else{
-        nfuelinfo = MIN(nfuelinfo_local, nfuelinfo);
-        ResizeMemory((void **)&fuelinfo, nfuelinfo*sizeof(fueldata));
+        global_scase.fuelcoll.nfuelinfo = MIN(nfuelinfo_local, global_scase.fuelcoll.nfuelinfo);
+        ResizeMemory((void **)&global_scase.fuelcoll.fuelinfo, global_scase.fuelcoll.nfuelinfo*sizeof(fueldata));
       }
 
       for(i=0; i<nfuelinfo_local; i++){
         fueldata *fueli;
 
         FGETS(buffer, 255, stream);
-        if(i<nfuelinfo){
-          fueli = fuelinfo + i;
+        if(i<global_scase.fuelcoll.nfuelinfo){
+          fueli = global_scase.fuelcoll.fuelinfo + i;
           sscanf(buffer, "%f", &(fueli->hoc));
         }
       }
@@ -7464,21 +7464,21 @@ int ReadSMV_Parse(bufferstreamdata *stream){
 
       FGETS(buffer, 255, stream);
       sscanf(buffer, "%i", &nfuelinfo_local);
-      if(fuelinfo==NULL){
-        nfuelinfo = nfuelinfo_local;
-        NewMemory((void **)&fuelinfo, nfuelinfo*sizeof(fueldata));
+      if(global_scase.fuelcoll.fuelinfo==NULL){
+        global_scase.fuelcoll.nfuelinfo = nfuelinfo_local;
+        NewMemory((void **)&global_scase.fuelcoll.fuelinfo, global_scase.fuelcoll.nfuelinfo*sizeof(fueldata));
       }
       else{
-        nfuelinfo = MIN(nfuelinfo_local, nfuelinfo);
-        ResizeMemory((void **)&fuelinfo, nfuelinfo*sizeof(fueldata));
+        global_scase.fuelcoll.nfuelinfo = MIN(nfuelinfo_local, global_scase.fuelcoll.nfuelinfo);
+        ResizeMemory((void **)&global_scase.fuelcoll.fuelinfo, global_scase.fuelcoll.nfuelinfo*sizeof(fueldata));
       }
 
       for(i=0; i<nfuelinfo_local; i++){
         fueldata *fueli;
 
         FGETS(buffer, 255, stream);
-        if(i<nfuelinfo){
-          fueli = fuelinfo + i;
+        if(i<global_scase.fuelcoll.nfuelinfo){
+          fueli = global_scase.fuelcoll.fuelinfo + i;
           fueli->fuel = GetStringPtr(buffer);
         }
       }
@@ -8237,7 +8237,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   */
     if(MatchSMV(buffer, "HVACVALS") == 1){
       int r =
-          ParseHVACValsEntry(&hvaccoll, stream );
+          ParseHVACValsEntry(&global_scase.hvaccoll, stream );
       if (r == 1) {
         BREAK;
       }
@@ -8252,7 +8252,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
   */
     if(MatchSMV(buffer, "HVAC") == 1){
       int r =
-          ParseHVACEntry(&hvaccoll, stream, global_scase.hvac_node_color, global_scase.hvac_duct_color);
+          ParseHVACEntry(&global_scase.hvaccoll, stream, global_scase.hvac_node_color, global_scase.hvac_duct_color);
       if (r == 1) {
         BREAK;
       }
@@ -12510,7 +12510,7 @@ int ReadIni2(const char *inifile, int localfile){
       ONEORZERO(boundary_edgetype);
       continue;
     }
-    if(MatchINI(buffer, "HVACVIEW") == 1&&hvaccoll.hvacinfo!=NULL&&hvaccoll.nhvacinfo > 0){
+    if(MatchINI(buffer, "HVACVIEW") == 1&&global_scase.hvaccoll.hvacinfo!=NULL&&global_scase.hvaccoll.nhvacinfo > 0){
       int nh, dummy;
       float rdummy;
 
@@ -12520,13 +12520,13 @@ int ReadIni2(const char *inifile, int localfile){
       ONEORZERO(hvac_metro_view);
       ONEORZERO(hvac_cell_view);
 
-      nh = MIN(hvaccoll.nhvacinfo, nh);
+      nh = MIN(global_scase.hvaccoll.nhvacinfo, nh);
       for(i = 0; i < nh; i++){
         hvacdata *hvaci;
         int dc[3], nc[3];
         int j;
 
-        hvaci = hvaccoll.hvacinfo + i;
+        hvaci = global_scase.hvaccoll.hvacinfo + i;
         fgets(buffer, 255, stream);
         sscanf(buffer, " %i %i %i %i %i %f %f %f %f %f",
           &hvaci->display,  &hvaci->show_node_labels, &hvaci->show_duct_labels,
@@ -17055,14 +17055,14 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i %i\n", freeze_volsmoke, autofreeze_volsmoke);
   fprintf(fileout, "GEOMBOUNDARYPROPS\n");
   fprintf(fileout, " %i %i %i %f %f %i\n",show_boundary_shaded, show_boundary_outline, show_boundary_points, geomboundary_linewidth, geomboundary_pointsize, boundary_edgetype);
-  if(hvaccoll.nhvacinfo > 0){
+  if(global_scase.hvaccoll.nhvacinfo > 0){
     fprintf(fileout, "HVACVIEW\n");
-    fprintf(fileout, " %i %i %i %i %f %i\n", hvaccoll.nhvacinfo, hvac_metro_view, 1, 0, 0.0, hvac_cell_view);
-    for(i = 0; i < hvaccoll.nhvacinfo; i++){
+    fprintf(fileout, " %i %i %i %i %f %i\n", global_scase.hvaccoll.nhvacinfo, hvac_metro_view, 1, 0, 0.0, hvac_cell_view);
+    for(i = 0; i < global_scase.hvaccoll.nhvacinfo; i++){
       hvacdata *hvaci;
       int *dc, *nc;
 
-      hvaci = hvaccoll.hvacinfo + i;
+      hvaci = global_scase.hvaccoll.hvacinfo + i;
       dc = hvaci->duct_color;
       nc = hvaci->node_color;
       fprintf(fileout, " %i %i %i %i %i %f %f %f %f %f\n",

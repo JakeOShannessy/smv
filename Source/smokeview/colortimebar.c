@@ -820,8 +820,8 @@ void UpdateShowColorbar(int *showcfast_arg, int *show_slice_colorbar_arg,
   int showcfast_local = 0;
   int show_slice_colorbar_local = 0;
 
-  if(hvaccoll.hvacductvar_index >= 0)*show_hvacduct_colorbar_arg = 1;
-  if(hvaccoll.hvacnodevar_index >= 0)*show_hvacnode_colorbar_arg = 1;
+  if(global_scase.hvaccoll.hvacductvar_index >= 0)*show_hvacduct_colorbar_arg = 1;
+  if(global_scase.hvaccoll.hvacnodevar_index >= 0)*show_hvacnode_colorbar_arg = 1;
   if(showzone==1&&zonecolortype==ZONETEMP_COLOR)showcfast_local = 1;
   if(showslice==1||(showcfast_local==0&&showvslice==1&&vslicecolorbarflag==1))show_slice_colorbar_local = 1;
   if(show_slice_colorbar_local==1&&showcfast_local==1&&strcmp(slicebounds[slicefile_labelindex].label->shortlabel, "TEMP")==0)show_slice_colorbar_local=0;
@@ -2103,12 +2103,12 @@ void DrawVerticalColorbarRegLabels(void){
 
   // -------------- HVAC node left labels ------------
 
-  if(show_hvacnode_colorbar_local==1 && hvaccoll.hvacnodevar_index>=0){
+  if(show_hvacnode_colorbar_local==1 && global_scase.hvaccoll.hvacnodevar_index>=0){
     hvacvaldata *hi;
     float tttval, tttmin, tttmax;
     float hvacrange;
 
-    hi = hvaccoll.hvacnodevalsinfo->node_vars + hvaccoll.hvacnodevar_index;
+    hi = global_scase.hvaccoll.hvacnodevalsinfo->node_vars + global_scase.hvaccoll.hvacnodevar_index;
     iposition = -1;
     tttmin = hi->levels256[0];
     tttmax = hi->levels256[255];
@@ -2152,12 +2152,12 @@ void DrawVerticalColorbarRegLabels(void){
 
   // -------------- HVAC duct left labels ------------
 
-  if(show_hvacduct_colorbar_local==1 && hvaccoll.hvacductvar_index>=0){
+  if(show_hvacduct_colorbar_local==1 && global_scase.hvaccoll.hvacductvar_index>=0){
     hvacvaldata *hi;
     float tttval, tttmin, tttmax;
     float hvacrange;
 
-    hi = hvaccoll.hvacductvalsinfo->duct_vars + hvaccoll.hvacductvar_index;
+    hi = global_scase.hvaccoll.hvacductvalsinfo->duct_vars + global_scase.hvaccoll.hvacductvar_index;
     iposition = -1;
     tttmin = hi->levels256[0];
     tttmax = hi->levels256[255];
@@ -2201,11 +2201,11 @@ void DrawVerticalColorbarRegLabels(void){
 
   // -------------- HVAC file node top labels ------------
 
-  if(show_hvacnode_colorbar_local==1 && hvaccoll.hvacnodevar_index>=0){
+  if(show_hvacnode_colorbar_local==1 && global_scase.hvaccoll.hvacnodevar_index>=0){
     char *slabel, *unitlabel;
     hvacvaldata *hi;
 
-    hi = hvaccoll.hvacnodevalsinfo->node_vars + hvaccoll.hvacnodevar_index;
+    hi = global_scase.hvaccoll.hvacnodevalsinfo->node_vars + global_scase.hvaccoll.hvacnodevar_index;
     slabel = hi->label.shortlabel;
     unitlabel = hi->label.unit;
 
@@ -2225,11 +2225,11 @@ void DrawVerticalColorbarRegLabels(void){
 
   // -------------- HVAC file duct top labels ------------
 
-  if(show_hvacduct_colorbar_local==1 && hvaccoll.hvacductvar_index >=0){
+  if(show_hvacduct_colorbar_local==1 && global_scase.hvaccoll.hvacductvar_index >=0){
     char *slabel, *unitlabel;
     hvacvaldata *hi;
 
-    hi = hvaccoll.hvacductvalsinfo->duct_vars + hvaccoll.hvacductvar_index;
+    hi = global_scase.hvaccoll.hvacductvalsinfo->duct_vars + global_scase.hvaccoll.hvacductvar_index;
     slabel = hi->label.shortlabel;
     unitlabel = hi->label.unit;
 
