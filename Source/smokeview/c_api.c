@@ -1061,7 +1061,7 @@ void SetFramelabelVisibility(int setting) {
   if(visFramelabel == 1) visTimebar = 1;
   if(visFramelabel == 1) {
     vis_hrr_label = 0;
-    if(hrrinfo != NULL) {
+    if(global_scase.hrr_coll.hrrinfo != NULL) {
       UpdateTimes();
     }
   }
@@ -1076,7 +1076,7 @@ void ToggleFramelabelVisibility() {
   if(visFramelabel == 1) visTimebar = 1;
   if(visFramelabel == 1) {
     vis_hrr_label = 0;
-    if(hrrinfo != NULL) {
+    if(global_scase.hrr_coll.hrrinfo != NULL) {
       UpdateTimes();
     }
   }
