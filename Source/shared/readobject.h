@@ -12,7 +12,7 @@
 
 #include "shared_structures.h"
 
-#if defined(_WIN32)
+#if defined(WIN32)
 #include <windows.h>
 #endif
 #include GLU_H
@@ -304,7 +304,6 @@
  * @returns A @ref object_collection which has been properly initialized.
  */
 object_collection *CreateObjectCollection(void);
-int InitObjectCollection(object_collection *coll);
 
 /**
  * @brief Initialise an already allocated object_collection. This is useful
