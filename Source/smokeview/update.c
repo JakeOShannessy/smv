@@ -690,38 +690,6 @@ void UpdateShow(void){
   }
 }
 
-/* ------------------ GetItime ------------------------ */
-
-int GetItime(int n, int *timeslist, unsigned char *times_map, float *times, int ntimes){
-  int istart=0;
-
-  if(n>0)istart=timeslist[n-1];
-  if(times_map == NULL){
-    while(1){
-      if(istart < ntimes - 1 && times[istart] <= global_times[n]){
-        istart++;
-        continue;
-      }
-      break;
-    }
-  }
-  else{
-    while(1){
-      if(times_map != NULL && istart >= 0 && istart < ntimes - 1 && times_map[istart] == 0){
-        istart++;
-        continue;
-      }
-      if(istart < ntimes - 1 && times[istart] <= global_times[n]){
-        istart++;
-        continue;
-      }
-      break;
-    }
-  }
-  istart=CLAMP(istart,0,ntimes-1);
-  return istart;
-}
-
 /* ------------------ GetDataTimeFrame ------------------------ */
 
 int GetDataTimeFrame(float time, unsigned char *times_map, float *times, int ntimes){
@@ -1981,7 +1949,7 @@ int HaveSootLoaded(void){
     smoke3ddata *smoke3di;
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo+i;
-    if(smoke3di->loaded==1&&smoke3di->extinct>0.0)return GetSmoke3DType(smoke3di->label.shortlabel);
+    if(smoke3di->loaded==1&&smoke3di->extinct>0.0)return GetSmoke3DType(&global_scase, smoke3di->label.shortlabel);
   }
   return NO_SMOKE;
 }
@@ -2293,6 +2261,41 @@ void OutputFrameSteps(void){
 #define END_SHOW_UPDATE(var)
 #endif
 
+/* ------------------ SetupAutoSmoke ------------------------ */
+
+void SetupAutoSmoke(void){
+  int i;
+
+  for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+    smoke3ddata *smoke3di;
+
+    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
+    smoke3di->autoload = 0;
+    if(smoke3di->type == CO2_index && loadfiles_commandline[LOAD_3DCO2] == 1){
+      smoke3di->autoload = 1;
+      continue;
+    }
+    if(smoke3di->type == HRRPUV_index && loadfiles_commandline[LOAD_3DHRRPUV] == 1){
+      smoke3di->autoload = 1;
+      continue;
+    }
+    if(smoke3di->type == SOOT_index && loadfiles_commandline[LOAD_3DSOOT] == 1){
+      smoke3di->autoload = 1;
+      continue;
+    }
+    if(smoke3di->type == TEMP_index && loadfiles_commandline[LOAD_3DTEMP] == 1){
+      smoke3di->autoload = 1;
+      continue;
+    }
+  }
+  for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+    smoke3ddata *smoke3di;
+
+    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
+    if(smoke3di->autoload == 1)printf("loaded: %i\n", i);
+  }
+}
+
 /* ------------------ UpdateShowScene ------------------------ */
 
 void UpdateShowScene(void){
@@ -2514,6 +2517,13 @@ void BoundBoundCB(int var);
     restart_time = 0;
     ResetItimes0();
     END_SHOW_UPDATE(restart_time);
+  }
+  if(loadfiles_commandline[0] == 1){
+    loadfiles_commandline[0] = 0;
+    loadfiles_at_startup     = 0;
+    update_load_files        = 0;
+    SetupAutoSmoke();
+    LoadFiles();
   }
   if(loadfiles_at_startup==1&&update_load_files == 1){
     SHOW_UPDATE(update_load_files);

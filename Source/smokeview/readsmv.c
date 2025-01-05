@@ -88,18 +88,24 @@ int GetTokensBlank(char *buffer, char **tokens){
   return nt;
 }
 
-/* ------------------ GetHoc ------------------------ */
-
-void GetHoc(float *hoc, char *name){
+/// @brief Given a case, if there are any fuels, take take the name and heat of
+/// combustion of that fuel and store those values in the output parameters. If
+/// there are no defined fuels, scan the ${fdsprefix}.out file to find the first
+/// "Heat of Combustion". If neither is found, hoc is set to 0.0 and name to the
+/// empty string.
+/// @param scase The case
+/// @param hoc A pointer in which to store the heat of combustion value
+/// @param name A pointer to a pre-allocated buffer in which to store the name of the species
+void GetHoc(smv_case *scase, float *hoc, char *name){
   char outfile[256], buffer[255];
   FILE *stream;
 
-  if(global_scase.fuelcoll.nfuelinfo > 0){
-    *hoc = global_scase.fuelcoll.fuelinfo->hoc;
-    strcpy(name, global_scase.fuelcoll.fuelinfo->fuel);
+  if(scase->fuelcoll.nfuelinfo > 0){
+    *hoc = scase->fuelcoll.fuelinfo->hoc;
+    strcpy(name, scase->fuelcoll.fuelinfo->fuel);
     return;
   }
-  strcpy(outfile, global_scase.fdsprefix);
+  strcpy(outfile, scase->fdsprefix);
   strcat(outfile, ".out");
   stream = fopen(outfile, "r");
   if(stream==NULL){
@@ -518,7 +524,7 @@ void ReadHRR(int flag){
   char *buffer, *buffer_labels, *buffer_units, *buffer_temp;
   int len_buffer;
 
-  GetHoc(&global_scase.fuel_hoc, fuel_name);
+  GetHoc(&global_scase, &global_scase.fuel_hoc, fuel_name);
   fuel_hoc_default = global_scase.fuel_hoc;
   if(global_scase.hrr_coll.nhrrinfo>0){
     for(i=0;i<global_scase.hrr_coll.nhrrinfo;i++){
@@ -2049,16 +2055,20 @@ void GetLabels(char *buffer, char **label1, char **label2){
   if(label1 != NULL)*label1 = tok1;
 }
 
-/* ------------------ GetPropID ------------------------ */
-
-propdata *GetPropID(char *prop_id){
+/// @brief Given a case, find the first instance of propdata that has the given
+/// prop_id.
+/// @param scase The case
+/// @param prop_id The id to search for
+/// @return A pointer to the first instance of propdata with the matching id.
+/// Returns NULL if there are no matching props.
+propdata *GetPropID(smv_case *scase, char *prop_id){
   int i;
 
-  if(global_scase.propcoll.propinfo == NULL || prop_id == NULL || strlen(prop_id) == 0)return NULL;
-  for(i = 0; i < global_scase.propcoll.npropinfo; i++){
+  if(scase->propcoll.propinfo == NULL || prop_id == NULL || strlen(prop_id) == 0)return NULL;
+  for(i = 0; i < scase->propcoll.npropinfo; i++){
     propdata *propi;
 
-    propi = global_scase.propcoll.propinfo + i;
+    propi = scase->propcoll.propinfo + i;
 
     if(strcmp(propi->label, prop_id) == 0)return propi;
   }
@@ -2237,7 +2247,7 @@ void ParseDevicekeyword(BFILE *stream, devicedata *devicei){
   devicei->is_beam = is_beam;
 
   GetLabels(buffer,&prop_id,NULL);
-  devicei->prop=GetPropID(prop_id);
+  devicei->prop=GetPropID(&global_scase, prop_id);
   if(prop_id!=NULL&&devicei->prop!=NULL&&devicei->prop->smv_object!=NULL){
     devicei->object=devicei->prop->smv_object;
   }
@@ -2365,7 +2375,7 @@ void ParseDevicekeyword2(FILE *stream, devicedata *devicei){
   devicei->is_beam = is_beam;
 
   GetLabels(buffer, &prop_id, NULL);
-  devicei->prop = GetPropID(prop_id);
+  devicei->prop = GetPropID(&global_scase, prop_id);
   if(prop_id!=NULL&&devicei->prop!=NULL&&devicei->prop->smv_object!=NULL){
     devicei->object = devicei->prop->smv_object;
   }
@@ -3402,15 +3412,19 @@ void UpdateMeshBoxBounds(void){
   }
 }
 
-/* ------------------ GetSmoke3DType ------------------------ */
-
-int GetSmoke3DType(char *label){
+/// @brief Given a case, find the first instance of smoke3dtype that has the
+/// given label.
+/// @param scase The case
+/// @param label The label to search for
+/// @return An offset into scase->smoke3dcoll.nsmoke3dtypes of the first
+/// matching smoke3dtype. Returns -1 if there are no matching props.
+int GetSmoke3DType(smv_case *scase, const char *label) {
   int i;
 
-  for(i=0; i<global_scase.smoke3dcoll.nsmoke3dtypes; i++){
+  for(i=0; i<scase->smoke3dcoll.nsmoke3dtypes; i++){
     smoke3ddata *smoke3di;
 
-    smoke3di = global_scase.smoke3dcoll.smoke3dtypes[i].smoke3d;
+    smoke3di = scase->smoke3dcoll.smoke3dtypes[i].smoke3d;
     if(Match(smoke3di->label.shortlabel, label)==1)return i;
   }
   return -1;
@@ -3498,7 +3512,7 @@ void UpdateSmoke3DTypes(void){
     smokestatedata *smokestate;
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo+i;
-    smoke3di->type = GetSmoke3DType(smoke3di->label.shortlabel);
+    smoke3di->type = GetSmoke3DType(&global_scase, smoke3di->label.shortlabel);
 
     NewMemory((void **)&smokestate, global_scase.smoke3dcoll.nsmoke3dtypes*sizeof(smokestatedata));
     smoke3di->smokestate = smokestate;
@@ -8171,7 +8185,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
     // Allocate a fixed-size collection large enough to hold each of the CADGEOM
     // definitions.
     int err = InitCADGeomCollection(&global_scase.cadgeomcoll, n_cadgeom_keywords);
-    if (err == 0) return 2;
+    if (err != 0) return 2;
   }
 
   if(global_scase.noutlineinfo>0){
@@ -10077,7 +10091,7 @@ int ReadSMV_Parse(bufferstreamdata *stream){
       FGETS(buffer,255,stream);
 
       GetLabels(buffer,&device_ptr,&prop_id);
-      partclassi->prop=GetPropID(prop_id);
+      partclassi->prop=GetPropID(&global_scase, prop_id);
       UpdatePartClassDepend(partclassi);
 
       global_scase.npartclassinfo++;
@@ -13381,6 +13395,12 @@ int ReadIni2(const char *inifile, int localfile){
 
         fgets(buffer, 255, stream);
         sscanf(buffer, "%i", &n3dsmokes);
+        for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+          vslicedata *vslicei;
+
+          vslicei = global_scase.slicecoll.vsliceinfo + i;
+          vslicei->autoload = 0;
+        }
         for(i = 0; i<n3dsmokes; i++){
           fgets(buffer, 255, stream);
           sscanf(buffer, "%i", &seq_id);
@@ -13409,6 +13429,13 @@ int ReadIni2(const char *inifile, int localfile){
 
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &n3dsmokes);
+      for(i = 0;i < global_scase.slicecoll.nmultisliceinfo;i++){
+        multislicedata *mslicei;
+
+        mslicei = global_scase.slicecoll.multisliceinfo + i;
+        mslicei->autoload = 0;
+        mslicei->loadable = 0;
+      }
       for(i = 0; i<n3dsmokes; i++){
 
         fgets(buffer, 255, stream);
@@ -13431,6 +13458,13 @@ int ReadIni2(const char *inifile, int localfile){
 
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &n3dsmokes);
+
+      for(i = 0; i < global_scase.npartinfo; i++){
+        partdata *parti;
+
+        parti = global_scase.partinfo + i;
+        parti->autoload = 0;
+      }
       for(i = 0; i<n3dsmokes; i++){
         fgets(buffer, 255, stream);
         sscanf(buffer, "%i", &seq_id);
@@ -15261,6 +15295,11 @@ int ReadIni2(const char *inifile, int localfile){
         sscanf(buffer, "%i %i %f", &viewtourfrompath, &tour_snap, &tour_snap_time);
         continue;
       }
+      if(MatchINI(buffer, "TOURCONSTANTVEL") == 1){
+        if(fgets(buffer, 255, stream) == NULL)break;
+        sscanf(buffer, "%i", &tour_constant_velocity);
+        continue;
+      }
       if(MatchINI(buffer, "VIEWALLTOURS") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
         sscanf(buffer, "%i", &viewalltours);
@@ -15868,17 +15907,20 @@ int ReadIni2(const char *inifile, int localfile){
               if(NewMemory((void **)&touri->path_times, global_scase.tourcoll.tour_ntimes*sizeof(float)) == 0)return 2;
               thisframe = &touri->first_frame;
               for(j = 0; j < nkeyframes; j++){
+                int key_set_time;
+
+                key_set_time = 0;
                 key_pause_time = 0.0;
                 key_view[0] = 0.0;
                 key_view[1] = 0.0;
                 key_view[2] = 0.0;
                 fgets(buffer, 255, stream);
-                sscanf(buffer, "%f %f %f %f %f",
-                  &key_time, &key_pause_time, key_xyz, key_xyz + 1, key_xyz + 2);
+                sscanf(buffer, "%f %f %f %f %f %i",
+                  &key_time, &key_pause_time, key_xyz, key_xyz + 1, key_xyz + 2, &key_set_time);
 
                 fgets(buffer, 255, stream);
                 sscanf(buffer, "%f %f %f", key_view, key_view + 1, key_view + 2);
-                addedframe = AddFrame(thisframe, key_time, key_pause_time, key_xyz, key_view);
+                addedframe = AddFrame(thisframe, key_time, key_pause_time, key_xyz, key_view, key_set_time);
                 thisframe = addedframe;
                 touri->keyframe_times[j] = key_time;
               }
@@ -16019,7 +16061,7 @@ int ReadIni2(const char *inifile, int localfile){
                 }
                 if(zzoom<0.25)zzoom = 0.25;
                 if(zzoom>4.00)zzoom = 4.0;
-                addedframe = AddFrame(thisframe, key_time, key_pause_time, key_xyz, key_view);
+                addedframe = AddFrame(thisframe, key_time, key_pause_time, key_xyz, key_view, 0);
                 thisframe = addedframe;
                 touri->keyframe_times[j] = key_time;
               }
@@ -16511,7 +16553,7 @@ void WriteIniLocal(FILE *fileout){
 
         framei = framei->next;
         SMV2FDS_XYZ(xyz_smv, framei->xyz_smv);
-        fprintf(fileout, "    %f %f %f %f %f\n", framei->time, framei->pause_time, xyz_smv[0], xyz_smv[1], xyz_smv[2]);
+        fprintf(fileout, "    %f %f %f %f %f %i\n", framei->time, framei->pause_time, xyz_smv[0], xyz_smv[1], xyz_smv[2], framei->set_tour_time);
 
         SMV2FDS_XYZ(view_smv, framei->view_smv);
         fprintf(fileout, "    %f %f %f\n", view_smv[0], view_smv[1], view_smv[2]);
@@ -17508,6 +17550,8 @@ void WriteIni(int flag,char *filename){
 
 
   }
+  fprintf(fileout, "TOURCONSTANTVEL\n");
+  fprintf(fileout, " %i\n", tour_constant_velocity);
   fprintf(fileout, "VIEWALLTOURS\n");
   fprintf(fileout, " %i\n", viewalltours);
   fprintf(fileout, "VIEWTIMES\n");

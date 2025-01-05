@@ -579,7 +579,7 @@ EXTERNCPP void UpdateSmokeAlphas(void);
 
 //*** IOtour.c headers
 
-EXTERNCPP keyframe *AddFrame(keyframe *framei, float time, float pause_time, float *xyz, float view[3]);
+EXTERNCPP keyframe *AddFrame(keyframe *framei, float time, float pause_time, float *xyz, float view[3], int set_time);
 EXTERNCPP tourdata *AddTour(char *label);
 EXTERNCPP void CreateTourPaths(void);
 EXTERNCPP keyframe *DeleteFrame(keyframe *step);
@@ -725,7 +725,7 @@ EXTERNCPP void GetBoxSkyCorners(void);
 #endif
 EXTERNCPP void GetElevAz(float *xyznorm,float *dtheta, float *rotate_axis, float *dpsi);
 EXTERNCPP void GetSliceParmInfo(sliceparmdata *sp);
-EXTERNCPP int GetSmoke3DType(char *label);
+EXTERNCPP int GetSmoke3DType(smv_case *scase, const char *label);
 EXTERNCPP void InitCellMeshInfo(void);
 EXTERNCPP FILE_SIZE ReadAllCSVFiles(int flag);
 EXTERNCPP int  ReadBinIni(void);
