@@ -1916,4 +1916,5 @@ typedef struct {
   float foregroundcolor[4];
 } parse_options;
 
+EXTERNCPP float *GetColorPtr(smv_case *scase, float *color);
 #endif

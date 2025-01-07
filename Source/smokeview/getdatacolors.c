@@ -1777,7 +1777,7 @@ float *GetColorTranPtr(float *color, float transparency){
   col[1] = color[1];
   col[2] = color[2];
   col[3] = transparency;
-  return GetColorPtr(global_scase.firstcolor, col);
+  return GetColorPtr(&global_scase, col);
 }
 
   /* ------------------ ConvertColor ------------------------ */

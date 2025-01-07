@@ -67,8 +67,6 @@ typedef struct {
   int iso_colorbar_index;
 } colorbar_collection;
 
-EXTERNCPP float *GetColorPtr(colordata *firstcolor, float *color);
-
 /**
  * @brief Get a colorbar given a label.
  *

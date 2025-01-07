@@ -18,7 +18,6 @@
 #include "dmalloc.h"
 
 #include "readcad.h"
-#include "smokeviewvars.h"
 #include <assert.h>
 
 void UpdateSortedSurfIdList(surf_collection *surfcoll);

@@ -9,6 +9,7 @@
 #include "dmalloc.h"
 #include "colorbars.h"
 #include "datadefs.h"
+#include "shared_structures.h"
 
 #include "file_util.h"
 #include "string_util.h"
@@ -21,26 +22,26 @@ void Rgbf2Lab(float *rgbf_arg, float *lab);
 
 /* ------------------ GetColorPtr ------------------------ */
 
-float *GetColorPtr(colordata *firstcolor, float *color){
+float *GetColorPtr(smv_case *scase, float *color){
   colordata *colorptr,*oldlastcolor,*lastcolor;
 
   int i;
 
-  if(firstcolor==NULL){
-    NewMemory((void *)&firstcolor,sizeof(colordata));
+  if(scase->firstcolor==NULL){
+    NewMemory((void *)&scase->firstcolor,sizeof(colordata));
     for(i=0;i<4;i++){
-      firstcolor->color[i]=color[i];
-      firstcolor->full_color[i]=color[i];
+      scase->firstcolor->color[i]=color[i];
+      scase->firstcolor->full_color[i]=color[i];
     }
-    firstcolor->bw_color[0] = TOBW(color);
-    firstcolor->bw_color[1] = firstcolor->bw_color[0];
-    firstcolor->bw_color[2] = firstcolor->bw_color[0];
-    firstcolor->bw_color[3] = color[3];
-    firstcolor->nextcolor=NULL;
-    return firstcolor->color;
+    scase->firstcolor->bw_color[0] = TOBW(color);
+    scase->firstcolor->bw_color[1] = scase->firstcolor->bw_color[0];
+    scase->firstcolor->bw_color[2] = scase->firstcolor->bw_color[0];
+    scase->firstcolor->bw_color[3] = color[3];
+    scase->firstcolor->nextcolor=NULL;
+    return scase->firstcolor->color;
   }
-  oldlastcolor = firstcolor;
-  for(colorptr = firstcolor; colorptr!=NULL; colorptr = colorptr->nextcolor){
+  oldlastcolor = scase->firstcolor;
+  for(colorptr = scase->firstcolor; colorptr!=NULL; colorptr = colorptr->nextcolor){
     oldlastcolor=colorptr;
     if(ABS(colorptr->color[0]-color[0])>0.0001)continue;
     if(ABS(colorptr->color[1]-color[1])>0.0001)continue;
