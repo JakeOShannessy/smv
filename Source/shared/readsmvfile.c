@@ -565,7 +565,7 @@ void InitDevice(smv_case *scase, devicedata *devicei, float *xyz, int is_beam, f
       color[1] = params[1];
       color[2] = params[2];
       color[3] = 1.0;
-      devicei->color = GetColorPtr(scase->firstcolor, color);
+      devicei->color = GetColorPtr(scase, color);
     }
     if(nparams >= 4){
       devicei->line_width = params[3];
@@ -1276,28 +1276,33 @@ int SurfIdCompare(const void *arg1, const void *arg2, void *surfinfo) {
   return(strcmp(surfi->surfacelabel, surfj->surfacelabel));
 }
 
-/* ------------------ updated_sorted_surfidlist ------------------------ */
+/* ------------------ UpdateSortedSurfIdList ------------------------ */
 
-void UpdateSortedSurfIdList(smv_case *scase){
+void UpdateSortedSurfIdList(surf_collection *surfcoll){
   int i;
 
-  FREEMEMORY(scase->surfcoll.sorted_surfidlist);
-  FREEMEMORY(scase->surfcoll.inv_sorted_surfidlist);
-  NewMemory((void **)&scase->surfcoll.sorted_surfidlist, scase->surfcoll.nsurfinfo*sizeof(int));
-  NewMemory((void **)&scase->surfcoll.inv_sorted_surfidlist, scase->surfcoll.nsurfinfo*sizeof(int));
+  FREEMEMORY(surfcoll->sorted_surfidlist);
+  FREEMEMORY(surfcoll->inv_sorted_surfidlist);
+  NewMemory((void **)&surfcoll->sorted_surfidlist, surfcoll->nsurfinfo*sizeof(int));
+  NewMemory((void **)&surfcoll->inv_sorted_surfidlist, surfcoll->nsurfinfo*sizeof(int));
 
 
-  scase->surfcoll.nsorted_surfidlist = scase->surfcoll.nsurfinfo;
-  for(i = 0; i<scase->surfcoll.nsorted_surfidlist; i++){
-    scase->surfcoll.sorted_surfidlist[i] = i;
+  surfcoll->nsorted_surfidlist = surfcoll->nsurfinfo;
+  for(i = 0; i<surfcoll->nsorted_surfidlist; i++){
+    surfcoll->sorted_surfidlist[i] = i;
   }
+// Sort surfaces by name in a separate list. Each platform has sort-with-context
+// (qsort_s, qsort_r) with either a different name or the arguments in a
+// different order. They are functionally the same.
 #ifdef _WIN32
-  qsort_s(scase->surfcoll.sorted_surfidlist, (size_t)scase->surfcoll.nsurfinfo, sizeof(int), SurfIdCompare,(void *)scase->surfcoll.surfinfo);
-#else
-  qsort_r(scase->surfcoll.sorted_surfidlist, (size_t)scase->surfcoll.nsurfinfo, sizeof(int), SurfIdCompare,(void *)scase->surfcoll.surfinfo);
+  qsort_s(surfcoll->sorted_surfidlist, (size_t)surfcoll->nsurfinfo, sizeof(int), SurfIdCompare,(void *)surfcoll->surfinfo);
+#elif __linux__
+  qsort_r(surfcoll->sorted_surfidlist, (size_t)surfcoll->nsurfinfo, sizeof(int), SurfIdCompare,(void *)surfcoll->surfinfo);
+#else // assumed to be osx
+  qsort_r(surfcoll->sorted_surfidlist, (size_t)surfcoll->nsurfinfo, sizeof(int), (void *)surfcoll->surfinfo, SurfIdCompare);
 #endif
-  for(i = 0; i<scase->surfcoll.nsorted_surfidlist; i++){
-    scase->surfcoll.inv_sorted_surfidlist[scase->surfcoll.sorted_surfidlist[i]] = i;
+  for(i = 0; i<surfcoll->nsorted_surfidlist; i++){
+    surfcoll->inv_sorted_surfidlist[surfcoll->sorted_surfidlist[i]] = i;
   }
 }
 
@@ -1377,7 +1382,7 @@ void ReadZVentData(smv_case *scase, zventdata *zvi, char *buffer, int flag){
       zvi->wall = TOP_WALL;
     }
   }
-  zvi->color = GetColorPtr(scase->firstcolor, color);
+  zvi->color = GetColorPtr(scase, color);
   zvi->area_fraction = area_fraction;
 }
 
@@ -2935,13 +2940,13 @@ void ReadSMVOrig(smv_case *scase){
           obi->invisible=1;
         }
         if(colorindex>=0){
-          obi->color = GetColorPtr(scase->firstcolor, scase->rgb[scase->nrgb+colorindex]);
+          obi->color = GetColorPtr(scase, scase->rgb[scase->nrgb+colorindex]);
           obi->usecolorindex=1;
           obi->colorindex=colorindex;
           scase->updateindexcolors=1;
         }
         if(colorindex==-3){
-          obi->color = GetColorPtr(scase->firstcolor, s_color);
+          obi->color = GetColorPtr(scase, s_color);
           scase->updateindexcolors=1;
         }
         obi->colorindex = colorindex;
@@ -3922,7 +3927,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
    rgb_class[1]=0.0;
    rgb_class[2]=0.0;
    rgb_class[3]=1.0;
-   partclassi->rgb=GetColorPtr(scase->firstcolor, rgb_class);
+   partclassi->rgb=GetColorPtr(scase, rgb_class);
 
    partclassi->ntypes=0;
    partclassi->xyz=NULL;
@@ -4396,7 +4401,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
               fcolors[2] = colors[2]/255.0;
               if(transparency<0.0)transparency = 1.0;
               fcolors[3] = transparency;
-              geomobji->color = GetColorPtr(scase->firstcolor, fcolors);
+              geomobji->color = GetColorPtr(scase, fcolors);
               geomobji->use_geom_color = 1;
             }
             geomobji->ntriangles = ntriangles;
@@ -4724,7 +4729,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
       FGETS(buffer,255,stream);
       sscanf(buffer,"%f %f %f",rgb_class,rgb_class+1,rgb_class+2);
       rgb_class[3]=1.0;
-      partclassi->rgb=GetColorPtr(scase->firstcolor, rgb_class);
+      partclassi->rgb=GetColorPtr(scase, rgb_class);
 
       partclassi->ntypes=0;
       partclassi->xyz=NULL;
@@ -5111,7 +5116,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         surfi->invisible = 1;
         surfi->type = BLOCK_hidden;
       }
-      surfi->color = GetColorPtr(scase->firstcolor, s_color);
+      surfi->color = GetColorPtr(scase, s_color);
       if(s_color[3]<0.99){
         surfi->transparent=1;
         surfi->transparent_level = s_color[3];
@@ -6146,7 +6151,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         default:
           assert(FFALSE);
         }
-        zvi->color = GetColorPtr(scase->firstcolor, color);
+        zvi->color = GetColorPtr(scase, color);
         zvi->area_fraction = area_fraction;
       }
       else if(vent_type==VFLOW_VENT){
@@ -6201,7 +6206,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream) {
         zvi->vertical_vent_type = vertical_vent_type;
         zvi->area = vent_area;
         zvi->area_fraction = area_fraction;
-        zvi->color = GetColorPtr(scase->firstcolor, color);
+        zvi->color = GetColorPtr(scase, color);
       }
       else if(vent_type==MFLOW_VENT){
         scase->nzmvents++;
@@ -6718,14 +6723,14 @@ typedef struct {
             colorindex=-3;
           }
           if(s_color[0]>=0.0&&s_color[1]>=0.0&&s_color[2]>=0.0){
-            bc->color=GetColorPtr(scase->firstcolor, s_color);
+            bc->color=GetColorPtr(scase, s_color);
           }
           bc->nnodes=(ijk[1]+1-ijk[0])*(ijk[3]+1-ijk[2])*(ijk[5]+1-ijk[4]);
           bc->useblockcolor = 1;
         }
         else{
           if(colorindex>=0){
-            bc->color = GetColorPtr(scase->firstcolor, scase->rgb[scase->nrgb+colorindex]);
+            bc->color = GetColorPtr(scase, scase->rgb[scase->nrgb+colorindex]);
             bc->usecolorindex=1;
             bc->colorindex=colorindex;
             scase->updateindexcolors=1;
@@ -6912,7 +6917,7 @@ typedef struct {
           cvi->useventcolor=1;
         }
         s_color[3]=1.0; // set color to opaque until CVENT transparency is implemented
-        cvi->color = GetColorPtr(scase->firstcolor, s_color);
+        cvi->color = GetColorPtr(scase, s_color);
       }
       continue;
     }
@@ -7154,7 +7159,7 @@ typedef struct {
             vi->useventcolor=1;
             scase->updateindexcolors=1;
           }
-          vi->color = GetColorPtr(scase->firstcolor, s_color);
+          vi->color = GetColorPtr(scase, s_color);
         }
         else{
           iv1=0;

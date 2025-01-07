@@ -79,7 +79,7 @@ add_executable(test_root_dir test_root_dir.c)
 target_link_libraries(test_root_dir PRIVATE libsmv)
 
 # sort_surfs
-add_executable(sort_surfs sort_surfs.c)
+add_executable(sort_surfs sort_surfs.c ../Source/shared/readsmvfile.c)
 target_include_directories(sort_surfs PRIVATE
     ../Tests
     # ../Source/shared
