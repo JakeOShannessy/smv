@@ -1,24 +1,11 @@
 #define INMAIN
-#define pp_GPU
-#define pp_RENDER360_DEBUG
-#define pp_memstatus
-#define pp_REFRESH
-#undef pp_OSX_HIGHRES
-#ifdef pp_OSX
-#ifndef pp_QUARTZ
-#define pp_REFRESH      // refresh glui dialogs when they change size
-#ifndef pp_OSX_LOWRES
-#define pp_OSX_HIGHRES
-#endif
-#endif
-#endif
 
 #include "options.h"
 
 #include "dmalloc.h"
 
 #include "readcad.h"
-#include "smokeviewvars.h"
+
 #include <assert.h>
 #include <string.h>
 
