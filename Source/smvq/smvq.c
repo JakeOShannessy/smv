@@ -12,7 +12,7 @@
 #include "dmalloc.h"
 #include "shared_structures.h"
 
-#include "smokeviewvars.h"
+#include "smokeviewdefs.h"
 #include "string_util.h"
 
 #include <json-c/json_object.h>
@@ -20,6 +20,55 @@
 #ifndef _WIN32
 #include <libgen.h>
 #endif
+
+int ReadSMV_Init(smv_case *scase);
+int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream);
+void ReadSMVDynamic(smv_case *scase, char *file);
+void ReadSMVOrig(smv_case *scase);
+
+smv_case global_scase = {
+    .tourcoll = {.ntourinfo = 0,
+                 .tourinfo = NULL,
+                 .tour_ntimes = 1000,
+                 .tour_t = NULL,
+                 .tour_t2 = NULL,
+                 .tour_dist = NULL,
+                 .tour_dist2 = NULL,
+                 .tour_dist3 = NULL,
+                 .tour_tstart = 0.0,
+                 .tour_tstop = 100.0},
+    .fuel_hoc = -1.0,
+    .fuel_hoc_default = -1.0,
+    .have_cface_normals = CFACE_NORMALS_NO,
+    .gvecphys = {0.0, 0.0, -9.8},
+    .gvecunit = {0.0, 0.0, -1.0},
+    .global_tbegin = 1.0,
+    .global_tend = 0.0,
+    .tload_begin = 0.0,
+    .tload_end = 0.0,
+    .load_hrrpuv_cutoff = 200.0,
+    .global_hrrpuv_cutoff = 200.0,
+    .global_hrrpuv_cutoff_default = 200.0,
+    .smoke_albedo = 0.3,
+    .smoke_albedo_base = 0.3,
+    .xbar = 1.0,
+    .ybar = 1.0,
+    .zbar = 1.0,
+    .show_slice_in_obst = ONLY_IN_GAS,
+    .use_iblank = 1,
+    .visOtherVents = 1,
+    .visOtherVentsSAVE = 1,
+    .hvac_duct_color = {63, 0, 15},
+    .hvac_node_color = {63, 0, 15},
+    .nrgb2 = 8,
+    .pref = 101325.0,
+    .pamb = 0.0,
+    .tamb = 293.15,
+    .nrgb = NRGB,
+    .linewidth = 2.0,
+    .ventlinewidth = 2.0,
+    .obst_bounding_box = {1.0, 0.0, 1.0, 0.0, 1.0, 0.0},
+    .hvaccoll = {.hvacductvar_index = -1, .hvacnodevar_index = -1, 0}};
 
 /// @brief Given a file path, get the filename excluding the final extension.
 /// This allocates a new copy which can be deallocated with free().
@@ -48,9 +97,6 @@ char *GetBaseName(const char *input_file) {
 
 int SetGlobalFilenames() {
   int len_casename = strlen(global_scase.fdsprefix);
-  strcpy(movie_name, global_scase.fdsprefix);
-  strcpy(render_file_base, global_scase.fdsprefix);
-  strcpy(html_file_base, global_scase.fdsprefix);
 
   FREEMEMORY(global_scase.paths.log_filename);
   NewMemory((void **)&global_scase.paths.log_filename, len_casename + strlen(".smvlog") + 1);
@@ -408,7 +454,7 @@ int PrintJson(smv_case *scase) {
 
 int RunBenchmark(char *input_file) {
   initMALLOC();
-  InitVars();
+  // InitVars();
   SetGlobalFilenames();
 
   INIT_PRINT_TIMER(parse_time);
@@ -420,7 +466,9 @@ int RunBenchmark(char *input_file) {
       return 1;
     }
     INIT_PRINT_TIMER(ReadSMV_time);
-    int return_code = ReadSMV(smv_streaminfo);
+    int return_code = 0;
+    return_code = ReadSMV_Init(&global_scase);
+    return_code = ReadSMV_Parse(&global_scase, smv_streaminfo);
     STOP_TIMER(ReadSMV_time);
     fprintf(stderr, "ReadSMV:\t%8.3f ms\n", ReadSMV_time * 1000);
     if(smv_streaminfo != NULL) {
@@ -437,7 +485,7 @@ int RunBenchmark(char *input_file) {
   STOP_TIMER(parse_time);
   fprintf(stderr, "Total Time:\t%8.3f ms\n", parse_time * 1000);
   PrintJson(&global_scase);
-  FreeVars();
+  // FreeVars();
   return 0;
 }
 
