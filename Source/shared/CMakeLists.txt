@@ -73,15 +73,4 @@ if ((NOT MACOSX) AND UNIX)
     target_link_libraries(libsmv PUBLIC m)
 endif()
 target_link_libraries(libsmv PRIVATE OpenGL::GL OpenGL::GLU)
-if (GLEW_FOUND)
-    target_link_libraries(libsmv PUBLIC GLEW::GLEW)
-    # This line is a hack to work around the fact the code includes "glew.h"
-    # rather than <GL/glew.h>
-    target_include_directories(libsmv PUBLIC ${GLEW_INCLUDE_DIRS}/GL)
-else()
-    target_sources(libsmv PUBLIC
-        ../glew/glew.c
-    )
-    target_include_directories(libsmv PUBLIC ../glew)
-endif()
 target_compile_definitions(libsmv PRIVATE ASLIB)

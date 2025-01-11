@@ -75,19 +75,6 @@ endif ()
 target_link_libraries(smokeview PRIVATE glui_static)
 target_include_directories(smokeview PRIVATE ../glui_v2_1_beta)
 
-if(WIN32)
-    target_link_libraries(smokeview PRIVATE PThreads4W::PThreads4W)
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        install(DIRECTORY ${PThreads4W_DEBUG_DLL_DIR}/
-            DESTINATION ${CMAKE_INSTALL_BINDIR}
-            FILES_MATCHING PATTERN "*.dll")
-    else()
-        install(DIRECTORY ${PThreads4W_DLL_DIR}/
-                DESTINATION ${CMAKE_INSTALL_BINDIR}
-                FILES_MATCHING PATTERN "*.dll")
-    endif()
-endif()
-
 # Selecting which GLUT version to use is the most platform-dependent part of the
 # build.
 if (MACOSX)
@@ -105,10 +92,6 @@ if (GLEW_FOUND)
     # rather than <GL/glew.h> TODO: just change this
     target_include_directories(smokeview PRIVATE ${GLEW_INCLUDE_DIRS}/GL)
 endif()
-target_link_libraries(smokeview PRIVATE JPEG::JPEG)
-target_link_libraries(smokeview PRIVATE PNG::PNG)
-target_link_libraries(smokeview PRIVATE ZLIB::ZLIB)
-target_link_libraries(smokeview PRIVATE OpenGL::GL OpenGL::GLU)
 
 target_include_directories(smokeview PRIVATE
     .
@@ -135,10 +118,6 @@ if (MSVC)
     # The headers in Source/glut_gl redefine some macros. Ideally those headers
     # could be removed but for now we just ignore the warning.
     target_compile_options(smokeview PRIVATE /wd4005)
-endif()
-if (LINUX)
-    add_definitions(-Dpp_LINUX)
-    target_link_libraries(smokeview PRIVATE pthread X11 Xmu GLU GL m stdc++)
 endif()
 
 target_link_libraries(smokeview PRIVATE libsmv)
