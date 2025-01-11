@@ -20,6 +20,7 @@
 #include "readcad.h"
 #include "smokeviewvars.h"
 #include <assert.h>
+#include <string.h>
 
 void UpdateSortedSurfIdList(surf_collection *surfcoll);
 void InitSurface(surfdata *surf);

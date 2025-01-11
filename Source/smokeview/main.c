@@ -14,6 +14,7 @@
 #include "fopen.h"
 #include "IOscript.h"
 #include "IOvolsmoke.h"
+#include "readlabel.h"
 
 #ifdef WIN32
 #include <direct.h>
