@@ -29,6 +29,8 @@ add_library(libsmv STATIC
     readlabel.c
     readtour.c
     scontour2d.c
+
+    ../smokeview/readsmv.c
 )
 target_include_directories(libsmv PUBLIC
     .
@@ -82,3 +84,4 @@ else()
     )
     target_include_directories(libsmv PUBLIC ../glew)
 endif()
+target_compile_definitions(libsmv PRIVATE ASLIB)

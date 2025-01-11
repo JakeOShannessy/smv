@@ -5208,26 +5208,6 @@ void SetupZoneDevs(void){
   }
 }
 
-/* ----------------------- GetDeviceLabel ----------------------------- */
-
-char *GetDeviceLabel(char *buffer){
-  char *label_present;
-
-  label_present = strstr(buffer, "#");
-  if(label_present == NULL) return NULL;
-  if(strlen(label_present) <= 1){
-    label_present[0] = 0;
-    return NULL;
-  }
-  label_present[0] = 0;
-  label_present++;
-  label_present = TrimFront(label_present);
-  TrimBack(label_present);
-  if(strlen(label_present) == 0) return NULL;
-  return label_present;
-}
-
-
 /* ----------------------- GetNDevices ----------------------------- */
 #define BUFFER_LEN 255
 int GetNDevices(char *file){
@@ -6211,29 +6191,4 @@ void InitDevicePlane(devicedata *devicei){
     SmoothIsoSurface(devicei->plane_surface[i]);
   }
 
-}
-
-/* ------------------ Normalize ------------------------ */
-
-void Normalize(float *xyz, int n){
-  float norm,norm2;
-  int i;
-
-  norm2 = 0.0;
-
-  for(i=0;i<n;i++){
-    norm2 += xyz[i]*xyz[i];
-  }
-  norm = sqrt(norm2);
-  if(norm<0.00001){
-    for(i=0;i<n-1;i++){
-      xyz[i]=0.0;
-    }
-    xyz[n-1]=1.0;
-  }
-  else{
-    for(i=0;i<n;i++){
-      xyz[i]/=norm;
-    }
-  }
 }

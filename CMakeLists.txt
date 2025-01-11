@@ -62,6 +62,7 @@ if (LINUX)
     add_definitions(-Dpp_LINUX)
 endif()
 
+add_compile_definitions(pp_CMAKE)
 
 find_package(OpenGL REQUIRED)
 if (NOT(WIN32))

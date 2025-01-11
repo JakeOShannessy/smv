@@ -137,4 +137,6 @@ if (LINUX)
     target_link_libraries(smvq PRIVATE pthread X11 Xmu GLU GL m stdc++)
 endif()
 
+target_link_libraries(smvq PRIVATE libsmv)
+
 install(TARGETS smvq)

@@ -5,7 +5,6 @@
 #endif
 
 #include "options.h"
-#include "glew.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,12 +17,21 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
+#include "glew.h"
 #include "smokeviewvars.h"
 #include "IOvolsmoke.h"
 #include "stdio_buffer.h"
 #include "glui_motion.h"
 #include "glui_bounds.h"
 #include "shared_structures.h"
+#include "IOobjects.h"
+#include "IOscript.h"
+#endif
+
+#include "translate.h"
+#include "file_util.h"
+#include "datadefs.h"
 #include "readimage.h"
 #include "readhvac.h"
 #include "readgeom.h"
@@ -31,14 +39,22 @@
 #include "readobject.h"
 #include "readlabel.h"
 #include "readsmoke.h"
-#include "IOobjects.h"
-#include "IOscript.h"
+#include "readcad.h"
+#include "readtour.h"
 
 #define BREAK break
 #define BREAK2 \
       if((stream==stream1&&stream2==NULL)||stream==stream2)break;\
       stream=stream2;\
       continue
+
+#define RETURN_TWO        2
+#define RETURN_BREAK      3
+#define RETURN_CONTINUE   4
+#define RETURN_PROCEED    5
+
+#define SCAN    0
+#define NO_SCAN 1
 
 #define COLOR_INVISIBLE -2
 
@@ -57,7 +73,32 @@
 #define SLICEBUFFER(len)   scase->slice_buffer;   scase->slice_buffer   += (len)
 
 int GetNDevices(char *file);
+void AddCfastCsvf(smv_case *scase);
+int ReadSMV_Init(smv_case *scase);
+int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream);
+int CompareSmoketypes(const void *arg1, const void *arg2);
+int IsDupTexture(smv_case *scase, texturedata *texti);
+int IsTerrainTexture(smv_case *scase, texturedata *texti);
+surfdata *GetSurface(smv_case *scase, const char *label);
+int ParseCHIDProcess(smv_case *scase, bufferstreamdata *stream, int option);
+float *GetColorPtr(smv_case *scase, float *color);
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
+parse_options parse_opts = {
+    .smoke3d_only = 0,
+    .setup_only = 0,
+#ifdef pp_FAST
+    .fast_startup = 1,
+    .lookfor_compressed_files = 0,
+#else
+    .fast_startup = 0,
+    .lookfor_compressed_files = 1,
+#endif
+    .handle_slice_files = 1
+};
+#endif
+
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ GetHrrCsvCol ------------------------ */
 
 int GetHrrCsvCol(smv_case *scase, char *label){
@@ -472,7 +513,9 @@ int CompareCSV(const void *arg1, const void *arg2){
 
   return strcmp(csvi->c_type, csvj->c_type);
 }
+#endif
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ ReadAllCSVFiles ------------------------ */
 
 FILE_SIZE ReadAllCSVFiles(int flag){
@@ -512,7 +555,9 @@ FILE_SIZE ReadAllCSVFiles(int flag){
   }
   return file_size;
 }
+#endif
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ ReadHRR ------------------------ */
 
 void ReadHRR(smv_case *scase, int flag){
@@ -604,13 +649,13 @@ void ReadHRR(smv_case *scase, int flag){
 
 // find column index of several quantities
 
-  scase->time_col  = GetHrrCsvCol(&global_scase, "Time");
+  scase->time_col  = GetHrrCsvCol(scase, "Time");
   if(scase->time_col>=0)scase->timeptr = scase->hrr_coll.hrrinfo+scase->time_col;
 
-  scase->hrr_col   = GetHrrCsvCol(&global_scase, "HRR");
+  scase->hrr_col   = GetHrrCsvCol(scase, "HRR");
   if(scase->hrr_col>=0&&scase->time_col>=0)scase->hrrptr = scase->hrr_coll.hrrinfo+scase->hrr_col;
 
-  scase->qradi_col = GetHrrCsvCol(&global_scase, "Q_RADI");
+  scase->qradi_col = GetHrrCsvCol(scase, "Q_RADI");
   CheckMemory;
 
 // define column for each MLR column by heat of combustion except for air and products
@@ -689,7 +734,7 @@ void ReadHRR(smv_case *scase, int flag){
     hi = scase->hrr_coll.hrrinfo+i;
     hi->nvals = nrows-2;
   }
-  UpdateHoc(&global_scase);
+  UpdateHoc(scase);
   CheckMemory;
 
 //construct column of qradi/hrr
@@ -902,7 +947,9 @@ PROP
   }
   propi->ntextures=ntextures_local;
 }
+#endif
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ UpdateINIList ------------------------ */
 
 void UpdateINIList(void){
@@ -925,7 +972,9 @@ void UpdateINIList(void){
     }
   }
 }
+#endif
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ FreeLabels ------------------------ */
 
 void FreeLabels(flowlabels *flowlabel){
@@ -1216,6 +1265,9 @@ ventdata *GetCloseVent(meshdata *ventmesh, int ivent){
   }
   return close_vent;
 }
+#endif
+
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 
 /* ------------------ UpdateSMVDynamic ------------------------ */
 
@@ -1223,6 +1275,10 @@ ventdata *GetCloseVent(meshdata *ventmesh, int ivent){
 /// @param file The path to the *.smv file.
 void UpdateSMVDynamic(char *file){
   INIT_PRINT_TIMER(smv_timer1);
+  // As we are going to re-read the smv file and update some values we need to
+  // set these two flags to ensure the GUI updates itself appropriately.
+  updatefacelists=1;
+  updatemenu=1;
   ReadSMVDynamic(&global_scase, file);
   PRINT_TIMER(smv_timer1, "ReadSMVDynamic");
   INIT_PRINT_TIMER(smv_timer2);
@@ -1232,6 +1288,8 @@ void UpdateSMVDynamic(char *file){
   GetGlobalPlot3DBounds();
   PRINT_TIMER(smv_timer2, "UpdateSMVDynamic wrapup");
 }
+#endif
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ ReadSMVDynamic ------------------------ */
 
 void ReadSMVDynamic(smv_case *scase, char *file){
@@ -1247,8 +1305,6 @@ void ReadSMVDynamic(smv_case *scase, char *file){
 
   nplot3dinfo_old=scase->nplot3dinfo;
 
-  updatefacelists=1;
-  updatemenu=1;
   if(scase->nplot3dinfo>0){
     int n;
 
@@ -2110,7 +2166,7 @@ void InitDevice(smv_case *scase, devicedata *devicei, float *xyz, int is_beam, f
       color[1] = params[1];
       color[2] = params[2];
       color[3] = 1.0;
-      devicei->color = GetColorPtr(&global_scase, color);
+      devicei->color = GetColorPtr(scase, color);
     }
     if(nparams >= 4){
       devicei->line_width = params[3];
@@ -2249,7 +2305,7 @@ void ParseDevicekeyword(smv_case *scase, BFILE *stream, devicedata *devicei){
   devicei->is_beam = is_beam;
 
   GetLabels(buffer,&prop_id,NULL);
-  devicei->prop=GetPropID(&global_scase, prop_id);
+  devicei->prop=GetPropID(scase, prop_id);
   if(prop_id!=NULL&&devicei->prop!=NULL&&devicei->prop->smv_object!=NULL){
     devicei->object=devicei->prop->smv_object;
   }
@@ -2377,7 +2433,7 @@ void ParseDevicekeyword2(smv_case *scase, FILE *stream, devicedata *devicei){
   devicei->is_beam = is_beam;
 
   GetLabels(buffer, &prop_id, NULL);
-  devicei->prop = GetPropID(&global_scase, prop_id);
+  devicei->prop = GetPropID(scase, prop_id);
   if(prop_id!=NULL&&devicei->prop!=NULL&&devicei->prop->smv_object!=NULL){
     devicei->object = devicei->prop->smv_object;
   }
@@ -2557,7 +2613,9 @@ int IsTerrainTexture(smv_case *scase, texturedata *texti){
   }
   return is_terrain_texture;
 }
+#endif
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ InitTextures0 ------------------------ */
 
 void InitTextures0(void){
@@ -3419,7 +3477,9 @@ void UpdateMeshBoxBounds(void){
     meshi->boxeps_fds[2] = (meshi->zplt[1] - meshi->zplt[0]) / 2.0;
   }
 }
+#endif
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /// @brief Given a case, find the first instance of smoke3dtype that has the
 /// given label.
 /// @param scase The case
@@ -3470,7 +3530,9 @@ int CompareSmoketypes(const void *arg1, const void *arg2){
 
   return strcmp(labeli, labelj);
 }
+#endif
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ UpdateSmokeTypes ------------------------ */
 
 void UpdateSmoke3DTypes(void){
@@ -4163,7 +4225,9 @@ void UpdateMeshCoords(void){
     meshi->smoke_dist[ALPHA_XZ] = dx*dz/sqrt(dx*dx + dz*dz);
   }
 }
+#endif
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ IsSliceDup ------------------------ */
 
 int IsSliceDup(smv_case *scase, slicedata *sd, int nslice){
@@ -4232,7 +4296,7 @@ surfdata *GetSurface(smv_case *scase, const char *label){
     surfi = scase->surfcoll.surfinfo + i;
     if(strcmp(surfi->surfacelabel, label) == 0)return surfi;
   }
-  return global_scase.surfacedefault;
+  return scase->surfacedefault;
 }
 
 /* ------------------ InitObst ------------------------ */
@@ -4746,10 +4810,12 @@ void ReadZVentData(smv_case *scase, zventdata *zvi, char *buffer, int flag){
       zvi->wall = TOP_WALL;
     }
   }
-  zvi->color = GetColorPtr(&global_scase, color);
+  zvi->color = GetColorPtr(scase, color);
   zvi->area_fraction = area_fraction;
 }
+#endif
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 #define CELLMESH_FACTOR 8
 #define IJKCELLINFO(ii,jj,kk) ((ii) + (jj)*nxyz[0] + (kk)*nxyz[0]*nxyz[1])
 
@@ -4917,7 +4983,9 @@ void SetupMeshWalls(void){
     if(InExterior(xyz) == 0)is_extface[5] = 0;
   }
 }
+#endif
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /// @brief Set the file lists of a case. That is, lists of files associated with the given case.
 /// @param[inout] scase The case
 void MakeFileLists(smv_case *scase){
@@ -4940,12 +5008,9 @@ void MakeFileLists(smv_case *scase){
   scase->filelist_coll.nfilelist_casedir = GetFileListSize(".", filter_casedir, FILE_MODE);
   MakeFileList(".", filter_casedir, scase->filelist_coll.nfilelist_casedir, YES, &scase->filelist_coll.filelist_casedir, FILE_MODE);
 }
+#endif
 
-#define RETURN_TWO        2
-#define RETURN_BREAK      3
-#define RETURN_CONTINUE   4
-#define RETURN_PROCEED    5
-
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ SetupIsosurface ------------------------ */
 
 void SetupIsosurface(isodata *isoi){
@@ -5019,7 +5084,9 @@ void *SetupAllIsosurfaces(void *arg){
   }
   THREAD_EXIT(isosurface_threads);
 }
+#endif
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ ParseISOFCount ------------------------ */
 
 void ParseISOFCount(smv_case *scase){
@@ -5178,8 +5245,6 @@ int ParseISOFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
   return RETURN_CONTINUE;
 }
 
-#define SCAN    0
-#define NO_SCAN 1
 /* ------------------ ParseCHIDProcess ------------------------ */
 
 int ParseCHIDProcess(smv_case *scase, bufferstreamdata *stream, int option){
@@ -5216,15 +5281,19 @@ int ParseCHIDProcess(smv_case *scase, bufferstreamdata *stream, int option){
   }
   return RETURN_CONTINUE;
 }
+#endif
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ ReadSMVCHID ------------------------ */
 
 int ReadSMVCHID(bufferstreamdata *stream){
   ParseCHIDProcess(&global_scase, stream, SCAN);
   return 0;
 }
+#endif
 
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ ParsePRTCount ------------------------ */
 
 void ParsePRT5Count(smv_case *scase){
@@ -6334,7 +6403,9 @@ void FreeSliceData(smv_case *scase){
     scase->slicecoll.nmultivsliceinfo = 0;
   }
 }
+#endif
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ GetViewPointPtr ------------------------ */
 
 char *GetViewPointPtr(char **viewpoint_list, int nviewpoint_list, char *viewpoint){
@@ -6576,7 +6647,9 @@ void UpdateEvents(void){
   }
   fclose(stream);
 }
+#endif
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ UpdateObstBoundingBox ------------------------ */
 
 void UpdateObstBoundingBox(smv_case *scase, float *XB){
@@ -6826,7 +6899,9 @@ void AddCfastCsvf(smv_case *scase){
  // AddCfastCsvfi(scase, "_slab",         "slab",         CSV_CFAST_FORMAT);
  // AddCfastCsvfi(scase, "_calculations", "calculations", CSV_CFAST_FORMAT);
 }
+#endif
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ Compress ------------------------ */
 
 void *Compress(void *arg){
@@ -7014,7 +7089,9 @@ void SetSliceParmInfo(sliceparmdata *sp){
   sp->nvsliceinfo      = global_scase.slicecoll.nvsliceinfo;
   sp->nmultivsliceinfo = global_scase.slicecoll.nmultivsliceinfo;
 }
+#endif
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ ReadSMV_Init ------------------------ */
 
 /// @brief Initialise any global variables necessary to being parsing an SMV
@@ -7031,15 +7108,6 @@ int ReadSMV_Init(smv_case *scase){
 #ifdef pp_ISOFRAME
   use_isosurface_threads = 0;
 #endif
-//** initialize multi-threading
-  if(runscript == 1){
-    use_checkfiles_threads  = 0;
-    use_ffmpeg_threads      = 0;
-    use_readallgeom_threads = 0;
-    use_isosurface_threads  = 0;
-    use_mergesmoke_threads  = 0;
-    use_meshnabors_threads  = 0;
-  }
 
   START_TIMER(scase->getfilelist_time);
   MakeFileLists(scase);
@@ -7050,7 +7118,7 @@ int ReadSMV_Init(smv_case *scase){
 
   scase->propcoll.npropinfo=1; // the 0'th prop is the default human property
 
-  FREEMEMORY(global_scase.fds_title);
+  FREEMEMORY(scase->fds_title);
 
   FREEMEMORY(scase->treeinfo);
   scase->ntreeinfo=0;
@@ -7298,7 +7366,9 @@ int ReadSMV_Init(smv_case *scase){
   PRINT_TIMER(timer_readsmv, "readsmv setup");
   return 0;
 }
+#endif
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 #define VENT_EPS 0.02
 
 /* ------------------ SetExternalVents ------------------------ */
@@ -7360,7 +7430,9 @@ void SetExternalVents(void){
     }
   }
 }
+#endif
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ ReadSMV_Parse ------------------------ */
 /// @brief Parse an SMV file into global variables. This should only be called
 /// after ReadSMV_Init to ensure that the appropriate variables are set.
@@ -7503,8 +7575,8 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       if(fds_title_local==NULL)continue;
       len_title = strlen(fds_title_local);
       if(len_title==0)continue;
-      NewMemory((void **)&global_scase.fds_title, len_title+1);
-      strcpy(global_scase.fds_title, fds_title_local);
+      NewMemory((void **)&scase->fds_title, len_title+1);
+      strcpy(scase->fds_title, fds_title_local);
       continue;
     }
     if(MatchSMV(buffer, "SOLID_HT3D")==1){
@@ -9417,7 +9489,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       roomdata *roomi;
 
       scase->isZoneFireModel=1;
-      global_scase.visFrame=0;
+      scase->visFrame=0;
       roomdefined=1;
       iroom++;
       roomi = scase->roominfo + iroom - 1;
@@ -9994,17 +10066,17 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
 
   */
 
-  global_scase.surfacedefault=&scase->sdefault;
+  scase->surfacedefault=&scase->sdefault;
   for(i=0;i<scase->surfcoll.nsurfinfo;i++){
     if(strcmp(scase->surfacedefaultlabel,scase->surfcoll.surfinfo[i].surfacelabel)==0){
-      global_scase.surfacedefault=scase->surfcoll.surfinfo+i;
+      scase->surfacedefault=scase->surfcoll.surfinfo+i;
       break;
     }
   }
-  global_scase.vent_surfacedefault=&scase->v_surfacedefault;
+  scase->vent_surfacedefault=&scase->v_surfacedefault;
   for(i=0;i<scase->surfcoll.nsurfinfo;i++){
-    if(strcmp(global_scase.vent_surfacedefault->surfacelabel,scase->surfcoll.surfinfo[i].surfacelabel)==0){
-      global_scase.vent_surfacedefault=scase->surfcoll.surfinfo+i;
+    if(strcmp(scase->vent_surfacedefault->surfacelabel,scase->surfcoll.surfinfo[i].surfacelabel)==0){
+      scase->vent_surfacedefault=scase->surfcoll.surfinfo+i;
       break;
     }
   }
@@ -10594,7 +10666,7 @@ typedef struct {
         nn++;
         meshi->blockageinfoptrs[nn] = meshi->blockageinfo + nn;
         bc=meshi->blockageinfoptrs[nn];
-        InitObst(scase,bc,global_scase.surfacedefault,nn+1,iobst-1);
+        InitObst(scase,bc,scase->surfacedefault,nn+1,iobst-1);
         FGETS(buffer,255,stream);
 
         char id_label[100], *id_labelptr;
@@ -10894,7 +10966,7 @@ typedef struct {
 
         cvi = meshi->cventinfo + j;
         cvi->isOpenvent=0;
-        cvi->surf[0]=global_scase.vent_surfacedefault;
+        cvi->surf[0]=scase->vent_surfacedefault;
         cvi->textureinfo[0]=NULL;
         cvi->texture_origin[0]=scase->texture_origin[0];
         cvi->texture_origin[1]=scase->texture_origin[1];
@@ -11056,9 +11128,9 @@ typedef struct {
       scase->ndummyvents=0;
       sscanf(buffer,"%i %i",&nvents,&scase->ndummyvents);
       if(scase->ndummyvents!=0){
-        global_scase.visFloor=0;
-        global_scase.visCeiling=0;
-        global_scase.visWalls=0;
+        scase->visFloor=0;
+        scase->visCeiling=0;
+        scase->visWalls=0;
       }
       meshi->nvents=nvents;
       meshi->ndummyvents=scase->ndummyvents;
@@ -11082,7 +11154,7 @@ typedef struct {
         vi->wall_type = INTERIORwall;
         vi->isMirrorvent = 0;
         vi->hideboundary=0;
-        vi->surf[0]=global_scase.vent_surfacedefault;
+        vi->surf[0]=scase->vent_surfacedefault;
         vi->textureinfo[0]=NULL;
         vi->texture_origin[0]=scase->texture_origin[0];
         vi->texture_origin[1]=scase->texture_origin[1];
@@ -11670,7 +11742,9 @@ typedef struct {
   scase->clip_I=ibartemp; scase->clip_J=jbartemp; scase->clip_K=kbartemp;
   return 0;
 }
+#endif
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ ReadSMV_Configure ------------------------ */
 
 /// @brief Finish setting global variables after an SMV file has been parsed.
@@ -12146,6 +12220,15 @@ int ReadSMV_Configure(){
 /// @param stream the file stream to parse.
 /// @return zero on sucess, non-zero on error
 int ReadSMV(bufferstreamdata *stream){
+  //** initialize multi-threading
+  if(runscript == 1){
+    use_checkfiles_threads  = 0;
+    use_ffmpeg_threads      = 0;
+    use_readallgeom_threads = 0;
+    use_isosurface_threads  = 0;
+    use_mergesmoke_threads  = 0;
+    use_meshnabors_threads  = 0;
+  }
   ReadSMV_Init(&global_scase);
   ReadSMV_Parse(&global_scase, stream);
   ReadSMV_Configure();
@@ -17684,27 +17767,4 @@ void UpdateLoadedLists(void){
     }
   }
 }
-
-/* ------------------ GetElevAz ------------------------ */
-
-void GetElevAz(float *xyznorm,float *dtheta,float *rotate_axis, float *dpsi){
-
-  // cos(dtheta) = (xyznorm .dot. vec3(0,0,1))/||xyznorm||
-  // rotate_axis = xyznorm .cross. vec3(0,0,1)
-
-  Normalize(xyznorm,3);
-  *dtheta = RAD2DEG*acos(xyznorm[2]);
-  rotate_axis[0]=-xyznorm[1];
-  rotate_axis[1]= xyznorm[0];
-  rotate_axis[2]=0.0;
-  Normalize(rotate_axis,2);
-  if(dpsi!=NULL){
-    float xyznorm2[2];
-
-    xyznorm2[0]=xyznorm[0];
-    xyznorm2[1]=xyznorm[1];
-    Normalize(xyznorm2,2);
-    *dpsi = RAD2DEG*acos(xyznorm2[1]);
-    if(xyznorm2[0]<0.0)*dpsi=-(*dpsi);
-  }
-}
+#endif

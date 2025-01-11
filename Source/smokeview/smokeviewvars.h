@@ -1082,7 +1082,7 @@ SVEXTERN float tourcol_avatar[3];
 #endif
 SVEXTERN float mat_ambient_orig[4];
 SVEXTERN float mat_specular_orig[4];
-SVEXTERN float SVDECL(*mat_ambient2,NULL), SVDECL(*mat_specular2,NULL);
+SVEXTERN float SVDECL(*mat_specular2,NULL);
 
 #ifdef INMAIN
 SVEXTERN GLfloat iso_specular[4]={0.7,0.7,0.7,1.0};
@@ -1092,10 +1092,8 @@ SVEXTERN GLfloat iso_specular[4];
 SVEXTERN GLfloat SVDECL(iso_shininess, 50.0), SVDECL(glui_shininess, 50.0);
 
 SVEXTERN float block_ambient_orig[4];
-SVEXTERN float SVDECL(*block_ambient2,NULL);
 SVEXTERN float block_specular_orig[4];
 SVEXTERN float SVDECL(*block_specular2,NULL);
-SVEXTERN GLfloat SVDECL(block_shininess,100.0);
 
 #ifdef INMAIN
 SVEXTERN GLfloat light_position0[4]={1.0,1.0,1.0,0.0};
@@ -1587,7 +1585,7 @@ SVEXTERN int SVDECL(nrgb2_ini,0);
 SVEXTERN int SVDECL(rgb_white,NRGB), SVDECL(rgb_yellow,NRGB+1), SVDECL(rgb_blue,NRGB+2), SVDECL(rgb_red,NRGB+3);
 SVEXTERN int SVDECL(rgb_green,NRGB+4), SVDECL(rgb_magenta,NRGB+5), SVDECL(rgb_cyan,NRGB+6), SVDECL(rgb_black,NRGB+7);
 SVEXTERN int SVDECL(num_colorbars,0);
-SVEXTERN int SVDECL(setbw,0),SVDECL(setbwdata,0);
+SVEXTERN int SVDECL(setbwdata,0);
 SVEXTERN int setbwSAVE;
 SVEXTERN int SVDECL(background_flip,1);
 SVEXTERN float SVDECL(transparent_level,0.8);
@@ -1646,7 +1644,6 @@ SVEXTERN int SVDECL(show_gslice_normal,0),SVDECL(show_gslice_normal_keyboard,0);
 
 
 SVEXTERN float ventcolor_orig[4];
-SVEXTERN float SVDECL(*ventcolor,NULL);
 #ifdef INMAIN
 SVEXTERN float static_color[4]={0.0,1.0,0.0,1.0};
 SVEXTERN float sensorcolor[4]={1.0,1.0,0.0,1.0};
@@ -1668,13 +1665,11 @@ SVEXTERN float heatoffcolor[4];
 SVEXTERN float backgroundbasecolor[4]  = {0.0, 0.0, 0.0, 1.0};
 SVEXTERN float backgroundcolor[4]      = {0.0, 0.0, 0.0, 1.0};
 SVEXTERN float foregroundbasecolor[4]  = {1.0, 1.0, 1.0, 1.0};
-SVEXTERN float foregroundcolor[4]      = {1.0, 1.0, 1.0, 1.0};
 SVEXTERN int   glui_outlinecolor[4]    = {0, 255, 255, 255};
 #else
 SVEXTERN float backgroundbasecolor[4];
 SVEXTERN float backgroundcolor[4];
 SVEXTERN float foregroundbasecolor[4];
-SVEXTERN float foregroundcolor[4];
 SVEXTERN int   glui_outlinecolor[4];
 #endif
 SVEXTERN int glui_foregroundbasecolor[4];
@@ -1785,18 +1780,6 @@ SVEXTERN smv_case global_scase = {.tourcoll = {.ntourinfo = 0,
                               0
                             }
                           };
-parse_options parse_opts = {
-    .smoke3d_only = 0,
-    .setup_only = 0,
-#ifdef pp_FAST
-    .fast_startup = 1,
-    .lookfor_compressed_files = 0,
-#else
-    .fast_startup = 0,
-    .lookfor_compressed_files = 1,
-#endif
-    .handle_slice_files = 1
-};
 #else
 SVEXTERN smv_case global_scase;
 SVEXTERN parse_options parse_opts;
