@@ -309,7 +309,7 @@ int Loadsmv(char *input_filename, char *input_filename_ext_arg) {
   }
   // initialize info header
   initialiseInfoHeader(&titleinfo, release_title, smv_githash, global_scase.fds_githash,
-                       chidfilebase, fds_title);
+                       global_scase.paths.chidfilebase, global_scase.fds_title);
   return 0;
 }
 
@@ -543,7 +543,7 @@ char *FormFilename(int view_mode, char *renderfile_name, char *renderfile_dir,
        (view_mode == VIEW_LEFT || view_mode == VIEW_RIGHT)) {
     }
 
-    snprintf(renderfile_name, 1024, "%s%s%s", chidfilebase, view_suffix,
+    snprintf(renderfile_name, 1024, "%s%s%s", global_scase.paths.chidfilebase, view_suffix,
              renderfile_ext);
   }
   else {
@@ -1003,7 +1003,7 @@ int GetChidVisibility() { return vis_title_CHID; }
 void ToggleChidVisibility() { vis_title_CHID = 1 - vis_title_CHID; }
 
 void BlockagesShowAll() {
-  if(global_scase.isZoneFireModel) visFrame = 1;
+  if(global_scase.isZoneFireModel) global_scase.visFrame = 1;
   /*
   visFloor=1;
   visWalls=1;
@@ -1019,10 +1019,10 @@ void BlockageMenu(int value);
 void BlockagesHideAll() { BlockageMenu(visBLOCKHide); }
 // TODO: clarify behaviour under isZoneFireModel
 void OutlinesHide() {
-  if(global_scase.isZoneFireModel == 0) visFrame = 0;
+  if(global_scase.isZoneFireModel == 0) global_scase.visFrame = 0;
 }
 void OutlinesShow() {
-  if(global_scase.isZoneFireModel == 0) visFrame = 1;
+  if(global_scase.isZoneFireModel == 0) global_scase.visFrame = 1;
 }
 
 void SurfacesHideAll() {
@@ -1096,12 +1096,12 @@ int GetGridlocVisibility() { return visgridloc; }
 void ToggleGridlocVisibility() { visgridloc = 1 - visgridloc; }
 
 // HRRPUV cutoff visibility
-void SetHrrcutoffVisibility(int setting) { show_hrrcutoff_active = setting; }
+void SetHrrcutoffVisibility(int setting) { global_scase.show_hrrcutoff_active = setting; }
 
-int GetHrrcutoffVisibility() { return show_hrrcutoff_active; }
+int GetHrrcutoffVisibility() { return global_scase.show_hrrcutoff_active; }
 
 void ToggleHrrcutoffVisibility() {
-  show_hrrcutoff_active = 1 - show_hrrcutoff_active;
+  global_scase.show_hrrcutoff_active = 1 - global_scase.show_hrrcutoff_active;
 }
 
 // HRR label
@@ -2857,7 +2857,7 @@ int SetShowcadopaque(int v) {
 } // SHOWCADOPAQUE
 
 int SetShowceiling(int v) {
-  visCeiling = v;
+  global_scase.visCeiling = v;
   return 0;
 } // SHOWCEILING
 
@@ -2878,12 +2878,12 @@ int SetShowdummyvents(int v) {
 } // SHOWDUMMYVENTS
 
 int SetShowfloor(int v) {
-  visFloor = v;
+  global_scase.visFloor = v;
   return 0;
 } // SHOWFLOOR
 
 int SetShowframe(int v) {
-  visFrame = v;
+  global_scase.visFrame = v;
   return 0;
 } // SHOWFRAME
 
@@ -3056,7 +3056,7 @@ int SetShowvents(int v) {
 } // SHOWVENTS
 
 int SetShowwalls(int v) {
-  visWalls = v;
+  global_scase.visWalls = v;
   return 0;
 } // SHOWWALLS
 

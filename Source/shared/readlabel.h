@@ -25,6 +25,7 @@ labels_collection *CreateLabelsCollection();
 EXTERNCPP void InitLabelsCollection(labels_collection *labelscoll);
 EXTERNCPP void FreeLabelsCollection(labels_collection *labelscoll);
 EXTERNCPP void LabelPrint(labels_collection *labelscoll);
+EXTERNCPP float *GetColorPtr(smv_case *scase, float *color);
 static inline int FileExistsCaseDir(smv_case *scase, char *filename) {
   return FileExists(filename, scase->filelist_coll.filelist_casename,
                     scase->filelist_coll.nfilelist_casename,
