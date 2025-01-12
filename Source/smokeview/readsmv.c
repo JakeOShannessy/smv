@@ -8134,7 +8134,6 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
   FREEMEMORY(scase->supermeshinfo);
   if(NewMemory((void **)&scase->supermeshinfo,scase->meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
   scase->meshescoll.meshinfo->plot3dfilenum=-1;
-  // UpdateCurrentMesh(scase->meshescoll.meshinfo);
   for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
     supermeshdata *smeshi;
@@ -11148,6 +11147,7 @@ typedef struct {
         ventdata *vi;
 
         vi=vinfo+nn;
+        vi->patch_index = -1;
         vi->type=VENT_SOLID;
         vi->dummyptr=NULL;
         vi->transparent=0;
