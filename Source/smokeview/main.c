@@ -18,6 +18,7 @@
 
 #include "IOscript.h"
 #include "IOvolsmoke.h"
+#include "readlabel.h"
 
 #ifdef WIN32
 #include <direct.h>
@@ -559,7 +560,7 @@ char *ProcessCommandLine(CommandlineArgs *args){
       parse_opts.smoke3d_only = 1;
     }
     if(args->no_slcf){
-      parse_opts.handle_slice_files = 0;
+    parse_opts.handle_slice_files = 0;
     }
     if(args->show_help_summary){
       Usage(HELP_SUMMARY);

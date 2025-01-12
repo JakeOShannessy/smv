@@ -18,46 +18,57 @@ set(FIG_DIR ${test_data_SOURCE_DIR})
 # parse_simple_slice
 add_executable(parse_simple_slice parse_simple_slice.c)
 target_link_libraries(parse_simple_slice PRIVATE libsmv)
+target_include_directories(parse_simple_slice PRIVATE .)
 
 # parse_simple_bndf
 add_executable(parse_simple_bndf parse_simple_bndf.c)
 target_link_libraries(parse_simple_bndf PRIVATE libsmv)
+target_include_directories(parse_simple_bndf PRIVATE .)
 
 # parse_simple_part
 add_executable(parse_simple_part parse_simple_part.c)
 target_link_libraries(parse_simple_part PRIVATE libsmv)
+target_include_directories(parse_simple_part PRIVATE .)
 
 # parse_simple_pl3d
 add_executable(parse_simple_pl3d parse_simple_pl3d.c)
 target_link_libraries(parse_simple_pl3d PRIVATE libsmv)
+target_include_directories(parse_simple_pl3d PRIVATE .)
 
 # parse_cad
 add_executable(parse_cad parse_cad.c)
 target_link_libraries(parse_cad PRIVATE libsmv)
+target_include_directories(parse_cad PRIVATE .)
 
 # test_objects
-add_executable(test_objects test_objects.c )
+add_executable(test_objects test_objects.c)
 target_link_libraries(test_objects PRIVATE libsmv)
-
-# parse_objects
-add_executable(parse_objects parse_objects.c)
-target_link_libraries(parse_objects PRIVATE libsmv)
+target_include_directories(test_objects PRIVATE .)
 
 # parse_hvac_vals
 add_executable(parse_hvac_vals parse_hvac_vals.c)
 target_link_libraries(parse_hvac_vals PRIVATE libsmv)
-
-# parse_colorbar
-add_executable(parse_colorbar parse_colorbar.c)
-target_link_libraries(parse_colorbar PRIVATE libsmv)
+target_include_directories(parse_hvac_vals PRIVATE .)
 
 # test_labels
 add_executable(test_labels test_labels.c)
 target_link_libraries(test_labels PRIVATE libsmv)
+target_include_directories(test_labels PRIVATE .)
+
+# parse_objects
+add_executable(parse_objects parse_objects.c)
+target_link_libraries(parse_objects PRIVATE libsmv)
+target_include_directories(parse_objects PRIVATE .)
+
+# parse_colorbar
+add_executable(parse_colorbar parse_colorbar.c)
+target_link_libraries(parse_colorbar PRIVATE libsmv)
+target_include_directories(parse_colorbar PRIVATE .)
 
 # mem_test
 add_executable(mem_test mem_test.c)
 target_link_libraries(mem_test PRIVATE libsmv)
+target_include_directories(mem_test PRIVATE .)
 
 # We don't have headless GL setup on windows so we skip it for now
 # test_image_render
@@ -77,47 +88,12 @@ endif()
 # test_root_dir
 add_executable(test_root_dir test_root_dir.c)
 target_link_libraries(test_root_dir PRIVATE libsmv)
+target_include_directories(test_root_dir PRIVATE .)
 
 # sort_surfs
-add_executable(sort_surfs sort_surfs.c ../Source/shared/readsmvfile.c)
-target_include_directories(sort_surfs PRIVATE
-    ../Tests
-    # ../Source/shared
-    # ../Source/glew
-    # ../Source/smokeview
-)
+add_executable(sort_surfs sort_surfs.c)
 target_link_libraries(sort_surfs PRIVATE libsmv)
-# target_link_libraries(sort_surfs PRIVATE jsonrpc)
-# if (WIN32)
-#     target_include_directories(sort_surfs PRIVATE ../Source/glut_gl)
-# else()
-#     target_include_directories(sort_surfs PRIVATE ../Source/glui_gl)
-# endif ()
-# target_link_libraries(sort_surfs PRIVATE glui_static)
-# target_include_directories(sort_surfs PRIVATE ../Source/glui_v2_1_beta)
-# if (MACOSX)
-#     add_definitions(-Dpp_NOQUARTZ)
-#     target_link_libraries(sort_surfs PRIVATE "-framework OpenGL" "-framework GLUT")
-#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
-# elseif (GLUT_FOUND)
-#     target_link_libraries(sort_surfs PRIVATE GLUT::GLUT)
-# else()
-#     target_link_libraries(sort_surfs PRIVATE glut32_static)
-# endif ()
-# target_link_libraries(sort_surfs PRIVATE GLEW::GLEW)
-# if (WIN32)
-#     target_include_directories(sort_surfs PRIVATE ../Source/pthreads)
-# endif()
-# if ((NOT MACOSX) AND UNIX)
-#     target_link_libraries(sort_surfs PRIVATE m)
-# endif()
-# target_link_libraries(sort_surfs PRIVATE JPEG::JPEG)
-# target_link_libraries(sort_surfs PRIVATE PNG::PNG)
-# target_link_libraries(sort_surfs PRIVATE ZLIB::ZLIB)
-# target_link_libraries(sort_surfs PRIVATE OpenGL::GL OpenGL::GLU)
-
-
-
+target_include_directories(sort_surfs PRIVATE .)
 
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames

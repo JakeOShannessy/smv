@@ -47,3 +47,6 @@ endif ()
 
 # Warnings for everything except MSVC
 target_compile_options(glui_static PRIVATE $<$<NOT:$<C_COMPILER_ID:MSVC>>: -Wno-write-strings>)
+if (NOT(WIN32))
+  target_link_libraries(glui_static PRIVATE stdc++)
+endif()

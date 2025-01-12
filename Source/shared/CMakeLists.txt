@@ -31,6 +31,8 @@ add_library(libsmv STATIC
     readlabel.c
     readtour.c
     scontour2d.c
+
+    ../smokeview/readsmv.c
 )
 target_include_directories(libsmv PUBLIC
     .
@@ -60,22 +62,5 @@ endif()
 if (SMV_ROOT_OVERRIDE)
     target_compile_definitions(libsmv PRIVATE SMV_ROOT_OVERRIDE="${SMV_ROOT_OVERRIDE}")
 endif()
-# target_include_directories(.
-#                            PUBLIC
-#                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
-#                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
-# )
-# if(WIN32)
-#   target_link_libraries(jsonrpc PRIVATE wsock32 ws2_32)
-# endif()
-
-# find_package(json-c CONFIG REQUIRED)
-# target_link_libraries(jsonrpc PUBLIC json-c::json-c)
-
-# if(WIN32)
-#     find_package(PThreads4W REQUIRED)
-#     target_link_libraries(jsonrpc PRIVATE PThreads4W::PThreads4W)
-# endif()
-# target_include_directories(jsonrpc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} )
-# generate_export_header(jsonrpc)
-# install(TARGETS jsonrpc)
+target_link_libraries(libsmv PRIVATE OpenGL::GL OpenGL::GLU)
+target_compile_definitions(libsmv PRIVATE ASLIB)

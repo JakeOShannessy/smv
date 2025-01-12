@@ -1728,9 +1728,78 @@ void UpdatePartClassDepend(partclassdata *partclassi){
   }
 }
 
+
+/* ----------------------- GetDeviceLabel ----------------------------- */
+
+char *GetDeviceLabel(char *buffer){
+  char *label_present;
+
+  label_present = strstr(buffer, "#");
+  if(label_present == NULL) return NULL;
+  if(strlen(label_present) <= 1){
+    label_present[0] = 0;
+    return NULL;
+  }
+  label_present[0] = 0;
+  label_present++;
+  label_present = TrimFront(label_present);
+  TrimBack(label_present);
+  if(strlen(label_present) == 0) return NULL;
+  return label_present;
+}
+
+/* ------------------ Normalize ------------------------ */
+
+void Normalize(float *xyz, int n){
+  float norm,norm2;
+  int i;
+
+  norm2 = 0.0;
+
+  for(i=0;i<n;i++){
+    norm2 += xyz[i]*xyz[i];
+  }
+  norm = sqrt(norm2);
+  if(norm<0.00001){
+    for(i=0;i<n-1;i++){
+      xyz[i]=0.0;
+    }
+    xyz[n-1]=1.0;
+  }
+  else{
+    for(i=0;i<n;i++){
+      xyz[i]/=norm;
+    }
+  }
+}
+/* ------------------ GetElevAz ------------------------ */
+
+void GetElevAz(float *xyznorm,float *dtheta,float *rotate_axis, float *dpsi){
+
+  // cos(dtheta) = (xyznorm .dot. vec3(0,0,1))/||xyznorm||
+  // rotate_axis = xyznorm .cross. vec3(0,0,1)
+
+  Normalize(xyznorm,3);
+  *dtheta = RAD2DEG*acos(xyznorm[2]);
+  rotate_axis[0]=-xyznorm[1];
+  rotate_axis[1]= xyznorm[0];
+  rotate_axis[2]=0.0;
+  Normalize(rotate_axis,2);
+  if(dpsi!=NULL){
+    float xyznorm2[2];
+
+    xyznorm2[0]=xyznorm[0];
+    xyznorm2[1]=xyznorm[1];
+    Normalize(xyznorm2,2);
+    *dpsi = RAD2DEG*acos(xyznorm2[1]);
+    if(xyznorm2[0]<0.0)*dpsi=-(*dpsi);
+  }
+}
+
+
 /* ----------------------- GetNDevices ----------------------------- */
 #define BUFFER_LEN 255
-int GetNDevices(char *file) {
+int GetNDevices(char *file){
   FILE *stream;
   char buffer[BUFFER_LEN], *comma;
   int buffer_len = BUFFER_LEN, nd = 0;
@@ -1742,42 +1811,23 @@ int GetNDevices(char *file) {
   comma = strchr(buffer, ',');
   if(comma != NULL) *comma = 0;
   TrimBack(buffer);
-  if(strcmp(buffer, "//HEADER") != 0) {
+  if(strcmp(buffer, "//HEADER") != 0){
     fclose(stream);
     return 0;
   }
 
-  while(!feof(stream)) {
+  while(!feof(stream)){
     fgets(buffer, buffer_len, stream);
     comma = strchr(buffer, ',');
     if(comma != NULL) *comma = 0;
     TrimBack(buffer);
-    if(strcmp(buffer, "//DATA") == 0) {
+    if(strcmp(buffer, "//DATA") == 0){
       break;
     }
-    if(strcmp(buffer, "DEVICE") == 0) {
+    if(strcmp(buffer, "DEVICE") == 0){
       nd++;
     }
   }
   fclose(stream);
   return nd;
-}
-
-/* ----------------------- GetDeviceLabel ----------------------------- */
-
-char *GetDeviceLabel(char *buffer) {
-  char *label_present;
-
-  label_present = strstr(buffer, "#");
-  if(label_present == NULL) return NULL;
-  if(strlen(label_present) <= 1) {
-    label_present[0] = 0;
-    return NULL;
-  }
-  label_present[0] = 0;
-  label_present++;
-  label_present = TrimFront(label_present);
-  TrimBack(label_present);
-  if(strlen(label_present) == 0) return NULL;
-  return label_present;
 }

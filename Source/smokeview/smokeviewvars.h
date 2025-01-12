@@ -134,13 +134,6 @@ SVEXTERN hvacdata SVDECL(*glui_hvac, NULL);
 SVEXTERN int SVDECL(hvac_network_ductnode_index, -1);
 #define HVAC_NCIRC 72
 SVEXTERN float SVDECL(*hvac_circ_x, NULL), SVDECL(*hvac_circ_y, NULL);
-#ifdef INMAIN
-SVEXTERN int hvac_duct_color[3] = { 63,0,15};
-SVEXTERN int hvac_node_color[3] = { 63,0,15};
-#else
-SVEXTERN int hvac_duct_color[3];
-SVEXTERN int hvac_node_color[3];
-#endif
 
 
 //*** buffers for consolidating memory allocations
@@ -343,7 +336,6 @@ SVEXTERN int SVDECL(show_terrain_normals, 0), SVDECL(show_terrain_grid,0);
 SVEXTERN int SVDECL(terrain_slice_overlap, 0);
 
 SVEXTERN int SVDECL(use_slice_glui_bounds, 0);
-SVEXTERN char SVDECL(*fds_title, NULL);
 SVEXTERN int SVDECL(vis_title_gversion,0);
 SVEXTERN int SVDECL(vis_title_smv_version, 1);
 SVEXTERN int SVDECL(vis_title_fds, 0);
@@ -423,7 +415,6 @@ SVEXTERN int SVDECL(update_times,0);
 SVEXTERN int SVDECL(show_geom_bndf, 0),SVDECL(glui_show_geom_bndf, 0);
 SVEXTERN int SVDECL(update_windrose, 0);
 SVEXTERN int SVDECL(update_use_lighting, 0), SVDECL(use_lighting, 1);
-SVEXTERN int SVDECL(update_device, 0);
 
 SVEXTERN cellmeshdata SVDECL(*cellmeshinfo, NULL);
 SVEXTERN int SVDECL(is_convex, 0);
@@ -473,27 +464,7 @@ SVEXTERN int SVDECL(research_mode_override, -1);
 
 SVEXTERN float SVDECL(geomboundary_pointsize, 5.0);
 SVEXTERN float SVDECL(geomboundary_linewidth, 5.0);
-#ifdef INMAIN
-#ifdef pp_FAST
-SVEXTERN parse_options parse_opts = {
-  .smoke3d_only = 0,
-  .setup_only = 0,
-  .fast_startup = 1,
-  .lookfor_compressed_files = 0,
-  .handle_slice_files= 1,
-};
-#else
-SVEXTERN parse_options parse_opts = {
-  .smoke3d_only = 0,
-  .setup_only = 0,
-  .fast_startup = 0,
-  .lookfor_compressed_files = 1,
-  .handle_slice_files= 1,
-};
-#endif
-#else
-SVEXTERN parse_options parse_opts;
-#endif
+
 SVEXTERN int SVDECL(update_tour_path,1);
 SVEXTERN int SVDECL(tour_circular_index, -1);
 SVEXTERN float tour_circular_center[3], tour_circular_radius, tour_circular_view[3], SVDECL(tour_circular_angle0,0.0);
@@ -579,7 +550,6 @@ SVEXTERN int SVDECL(smoke_framenumber, 0);
 SVEXTERN float SVDECL(time_frameval, 0.0), SVDECL(time_framemax,0.0), SVDECL(time_framemin,1.0);
 
 SVEXTERN int SVDECL(clip_rotate, 0);
-SVEXTERN int curdir_writable;
 SVEXTERN char SVDECL(*file_smokesensors, NULL);
 SVEXTERN int SVDECL(light_faces, 1);
 SVEXTERN int SVDECL(nwindrosez_checkboxes, 0);
@@ -899,7 +869,6 @@ SVEXTERN int SVDECL(show_faces_shaded, 1);
 SVEXTERN int SVDECL(show_faces_outline, 0);
 SVEXTERN int SVDECL(show_geom_verts, 0);
 SVEXTERN int SVDECL(show_cface_normals, 0);
-SVEXTERN int SVDECL(have_cface_normals, CFACE_NORMALS_NO);
 
 SVEXTERN int SVDECL(show_iso_normal, 0), SVDECL(smooth_iso_normal, 1);
 
@@ -1049,13 +1018,7 @@ SVEXTERN int SVDECL(vis_slice_plot, 0);
 SVEXTERN int SVDECL(vis_colorbar_dists_plot, 0);
 
 SVEXTERN char hrrlabel[256];
-SVEXTERN hrrdata SVDECL(*hrrptr, NULL), SVDECL(*timeptr, NULL);
-SVEXTERN int SVDECL(time_col, -1), SVDECL(hrr_col, -1), SVDECL(mlr_col, -1);
 SVEXTERN int SVDECL(glui_hrr, 1);
-SVEXTERN float SVDECL(fuel_hoc_default, -1.0);
-SVEXTERN char fuel_name[256];
-SVEXTERN int SVDECL(qradi_col, -1), SVDECL(chirad_col, -1);
-SVEXTERN int SVDECL(have_mlr, 0);
 SVEXTERN int SVDECL(hoc_hrr, 0);
 SVEXTERN int SVDECL(update_avg, 0);
 SVEXTERN int smoke_render_option;
@@ -1101,8 +1064,6 @@ SVEXTERN float glui_xyz_fds[3],user_zaxis[3];
   SVEXTERN float zaxis_angles_orig[3];
 #endif
 
-SVEXTERN spherepoints SVDECL(*sphereinfo,NULL), SVDECL(*wui_sphereinfo,NULL);
-
 #ifdef INMAIN
 SVEXTERN float tourcol_selectedpathline[3]={1.0,0.0,0.0};
 SVEXTERN float tourcol_selectedpathlineknots[3]={1.0,0.0,0.0};
@@ -1124,7 +1085,7 @@ SVEXTERN float tourcol_avatar[3];
 #endif
 SVEXTERN float mat_ambient_orig[4];
 SVEXTERN float mat_specular_orig[4];
-SVEXTERN float SVDECL(*mat_ambient2,NULL), SVDECL(*mat_specular2,NULL);
+SVEXTERN float SVDECL(*mat_specular2,NULL);
 
 #ifdef INMAIN
 SVEXTERN GLfloat iso_specular[4]={0.7,0.7,0.7,1.0};
@@ -1134,10 +1095,8 @@ SVEXTERN GLfloat iso_specular[4];
 SVEXTERN GLfloat SVDECL(iso_shininess, 50.0), SVDECL(glui_shininess, 50.0);
 
 SVEXTERN float block_ambient_orig[4];
-SVEXTERN float SVDECL(*block_ambient2,NULL);
 SVEXTERN float block_specular_orig[4];
 SVEXTERN float SVDECL(*block_specular2,NULL);
-SVEXTERN GLfloat SVDECL(block_shininess,100.0);
 
 #ifdef INMAIN
 SVEXTERN GLfloat light_position0[4]={1.0,1.0,1.0,0.0};
@@ -1527,9 +1486,7 @@ SVEXTERN int SVDECL(contour_type_save, -1);
 SVEXTERN int SVDECL(is_toa_slice, 0);
 SVEXTERN int SVDECL(cullfaces,1);
 SVEXTERN int SVDECL(showonly_hiddenfaces,0);
-SVEXTERN int SVDECL(have_removable_obsts, 0);
 SVEXTERN int SVDECL(update_bound_chop_data, 0);
-SVEXTERN int SVDECL(have_hidden6, 0);
 
 SVEXTERN int SVDECL(windowresized,0);
 
@@ -1588,11 +1545,10 @@ SVEXTERN int SVDECL(update_showblock_ini, 0);
 SVEXTERN int SVDECL(visTransparentBlockage,0);
 SVEXTERN int SVDECL(blocklocation,BLOCKlocation_grid);
 SVEXTERN int SVDECL(blocklocation_menu, BLOCKlocation_grid);
-SVEXTERN int SVDECL(visFloor,0), SVDECL(visFrame,1);
 SVEXTERN int SVDECL(visNormalEditColors,1);
-SVEXTERN int SVDECL(visWalls,0), SVDECL(visGrid,0), SVDECL(visCeiling,0);
+SVEXTERN int SVDECL(visGrid,0);
 SVEXTERN int SVDECL(visZonePlane,ZONE_YPLANE), SVDECL(viszonefire,1), SVDECL(visSZone,0);
-SVEXTERN int SVDECL(visSensor,1), SVDECL(visSensorNorm,1), SVDECL(hasSensorNorm,0);
+SVEXTERN int SVDECL(visSensor,1), SVDECL(visSensorNorm,1);
 SVEXTERN int SVDECL(visVents, 1), SVDECL(visVentFlow, 1),SVDECL(visVentHFlow, 1),SVDECL(visVentVFlow, 1),SVDECL(visVentMFlow, 1);
 SVEXTERN int SVDECL(update_ini_vents, 0);
 SVEXTERN int SVDECL(viewoption,0);
@@ -1632,7 +1588,7 @@ SVEXTERN int SVDECL(nrgb2_ini,0);
 SVEXTERN int SVDECL(rgb_white,NRGB), SVDECL(rgb_yellow,NRGB+1), SVDECL(rgb_blue,NRGB+2), SVDECL(rgb_red,NRGB+3);
 SVEXTERN int SVDECL(rgb_green,NRGB+4), SVDECL(rgb_magenta,NRGB+5), SVDECL(rgb_cyan,NRGB+6), SVDECL(rgb_black,NRGB+7);
 SVEXTERN int SVDECL(num_colorbars,0);
-SVEXTERN int SVDECL(setbw,0),SVDECL(setbwdata,0);
+SVEXTERN int SVDECL(setbwdata,0);
 SVEXTERN int setbwSAVE;
 SVEXTERN int SVDECL(background_flip,1);
 SVEXTERN float SVDECL(transparent_level,0.8);
@@ -1659,7 +1615,6 @@ SVEXTERN int SVDECL(tload_skip, 0), SVDECL(tload_step, 1);
 SVEXTERN float SVDECL(frameinterval,1);
 
 SVEXTERN int SVDECL(blockages_dirty,0);
-SVEXTERN int SVDECL(usetextures,0);
 SVEXTERN int SVDECL(canrestorelastview,0);
 SVEXTERN int SVDECL(ntargets,0);
 
@@ -1692,7 +1647,6 @@ SVEXTERN int SVDECL(show_gslice_normal,0),SVDECL(show_gslice_normal_keyboard,0);
 
 
 SVEXTERN float ventcolor_orig[4];
-SVEXTERN float SVDECL(*ventcolor,NULL);
 #ifdef INMAIN
 SVEXTERN float static_color[4]={0.0,1.0,0.0,1.0};
 SVEXTERN float sensorcolor[4]={1.0,1.0,0.0,1.0};
@@ -1714,13 +1668,11 @@ SVEXTERN float heatoffcolor[4];
 SVEXTERN float backgroundbasecolor[4]  = {0.0, 0.0, 0.0, 1.0};
 SVEXTERN float backgroundcolor[4]      = {0.0, 0.0, 0.0, 1.0};
 SVEXTERN float foregroundbasecolor[4]  = {1.0, 1.0, 1.0, 1.0};
-SVEXTERN float foregroundcolor[4]      = {1.0, 1.0, 1.0, 1.0};
 SVEXTERN int   glui_outlinecolor[4]    = {0, 255, 255, 255};
 #else
 SVEXTERN float backgroundbasecolor[4];
 SVEXTERN float backgroundcolor[4];
 SVEXTERN float foregroundbasecolor[4];
-SVEXTERN float foregroundcolor[4];
 SVEXTERN int   glui_outlinecolor[4];
 #endif
 SVEXTERN int glui_foregroundbasecolor[4];
@@ -1751,7 +1703,6 @@ SVEXTERN int SVDECL(nmenus,0);
 SVEXTERN menudata menuinfo[MAXMENUS];
 SVEXTERN int max_screenWidth, max_screenHeight;
 SVEXTERN int saveW, saveH;
-SVEXTERN char SVDECL(*texturedir,NULL);
 SVEXTERN char SVDECL(*colorbars_dir, NULL);
 SVEXTERN char SVDECL(*colorbars_linear_dir,  NULL);
 SVEXTERN char SVDECL(*colorbars_rainbow_dir, NULL);
@@ -1796,6 +1747,7 @@ SVEXTERN smv_case global_scase = {.tourcoll = {.ntourinfo = 0,
                                         .tour_tstart = 0.0,
                                         .tour_tstop = 100.0},
                            .fuel_hoc = -1.0,
+                           .fuel_hoc_default = -1.0,
                            .have_cface_normals = CFACE_NORMALS_NO,
                            .gvecphys = {0.0, 0.0, -9.8},
                            .gvecunit = {0.0, 0.0, -1.0},
@@ -1817,7 +1769,6 @@ SVEXTERN smv_case global_scase = {.tourcoll = {.ntourinfo = 0,
                            .visOtherVentsSAVE = 1,
                            .hvac_duct_color = {63, 0, 15},
                            .hvac_node_color = {63, 0, 15},
-                           .block_shininess = 100.0,
                            .nrgb2 = 8,
                            .pref = 101325.0,
                            .pamb = 0.0,
@@ -1834,6 +1785,7 @@ SVEXTERN smv_case global_scase = {.tourcoll = {.ntourinfo = 0,
                           };
 #else
 SVEXTERN smv_case global_scase;
+SVEXTERN parse_options parse_opts;
 #endif
 SVEXTERN meshdata SVDECL(*current_mesh,NULL), SVDECL(*mesh_save,NULL);
 SVEXTERN meshdata SVDECL(*mesh_last,NULL), SVDECL(*loaded_isomesh,NULL);
@@ -1870,17 +1822,14 @@ SVEXTERN tourdata SVDECL(*selected_tour,NULL);
 SVEXTERN int SVDECL(callfrom_tourglui,0);
 SVEXTERN int SVDECL(showtours_whenediting,0);
 
-SVEXTERN int SVDECL(*subslice_menuindex,NULL),SVDECL(*subvslice_menuindex,NULL);
-SVEXTERN int SVDECL(*msubslice_menuindex, NULL), SVDECL(*msubvslice_menuindex, NULL);
-
 SVEXTERN float xtimeleft, xtimeright;
 
 SVEXTERN int SVDECL(stereoactive,0);
 SVEXTERN int SVDECL(stereotype,STEREO_NONE), SVDECL(stereotypeOLD, STEREO_NONE);
 SVEXTERN int SVDECL(show_parallax,0), SVDECL(stereotype_frame, BOTH_EYES);
 
-SVEXTERN int SVDECL(show_firecutoff,0), SVDECL(show_hrrcutoff_active,0),SVDECL(hrrpuv_loaded,0);
-SVEXTERN int SVDECL(show_tempcutoff_active,0),SVDECL(temp_loaded,0);
+SVEXTERN int SVDECL(show_firecutoff,0),SVDECL(hrrpuv_loaded,0);
+SVEXTERN int SVDECL(temp_loaded,0);
 SVEXTERN int SVDECL(trainerview,1);
 SVEXTERN int SVDECL(apertureindex,1);
 SVEXTERN int SVDECL(projection_type, PROJECTION_PERSPECTIVE);
@@ -1948,7 +1897,7 @@ SVEXTERN int   SVDECL(update_slice2device, 0);
 SVEXTERN int SVDECL(script_multislice,0), SVDECL(script_multivslice,0), SVDECL(script_iso,0);
 SVEXTERN FILE SVDECL(*scriptoutstream,NULL);
 SVEXTERN FILE SVDECL(*LOG_FILENAME,NULL);
-SVEXTERN char SVDECL(*flushfile,NULL), SVDECL(*chidfilebase,NULL);
+SVEXTERN char SVDECL(*flushfile,NULL);
 SVEXTERN int SVDECL(csv_loaded, 0), SVDECL(devices_setup,0),SVDECL(update_csv_load,0);
 SVEXTERN char SVDECL(*smokezippath,NULL), SVDECL(*smokeviewpath,NULL), SVDECL(*fdsprog, NULL);
 SVEXTERN char SVDECL(*INI_fds_filein,NULL);
@@ -2057,7 +2006,6 @@ SVEXTERN int SVDECL(i_colortable_list,0);
 SVEXTERN int SVDECL(toggle_on, 0);
 SVEXTERN int SVDECL(update_load_files, 0);
 SVEXTERN int SVDECL(do_threshold,0);
-SVEXTERN int ntotal_blockages;
 SVEXTERN int SVDECL(show_path_knots,0);
 SVEXTERN int SVDECL(show_avatar,1);
 SVEXTERN int SVDECL(tourlocus_type,0);
@@ -2086,7 +2034,7 @@ SVEXTERN int SVDECL(showdebugtour, 1);
 #endif
 SVEXTERN int SVDECL(tour_constant_velocity, 1);
 
-SVEXTERN int SVDECL(have_animate_blockages, 0), SVDECL(animate_blockages, 0);
+SVEXTERN int SVDECL(animate_blockages, 0);
 SVEXTERN selectdata SVDECL(*selectfaceinfo,NULL);
 SVEXTERN blockagedata SVDECL(**selectblockinfo,NULL);
 SVEXTERN int SVDECL(visFDSticks,0);
@@ -2106,7 +2054,6 @@ SVEXTERN int surface_indices[7];
 #endif
 SVEXTERN int surface_indices_bak[7];
 SVEXTERN int SVDECL(wall_case,0);
-SVEXTERN surfdata SVDECL(*surfacedefault,NULL), SVDECL(*vent_surfacedefault,NULL);
 SVEXTERN int ntotalfaces;
 SVEXTERN texturedata SVDECL(*textureinfo,NULL), SVDECL(*terrain_textures,NULL);
 #ifdef pp_SKY
@@ -2148,7 +2095,6 @@ SVEXTERN partpropdata SVDECL(*part5propinfo,NULL), SVDECL(*current_property,NULL
 SVEXTERN int SVDECL(npart5prop,0),ipart5prop,ipart5prop_old;
 SVEXTERN int SVDECL(global_prop_index,-1);
 
-SVEXTERN slicedata SVDECL(**sliceinfoptrs, NULL);
 SVEXTERN splitslicedata SVDECL(*splitsliceinfo, NULL), SVDECL(**splitsliceinfoptr, NULL);
 SVEXTERN int SVDECL(nsplitsliceinfo, 0), SVDECL(nsplitsliceinfoMAX, 0);
 SVEXTERN int SVDECL(sortslices, 1), SVDECL(sortslices_debug, 0);
@@ -2157,9 +2103,6 @@ SVEXTERN slicedata SVDECL(**slicex, NULL), SVDECL(**slicey, NULL), SVDECL(**slic
 SVEXTERN fileboundsdata SVDECL(*sliceboundsinfo, NULL), SVDECL(*patchboundsinfo, NULL);
 SVEXTERN int SVDECL(nsliceboundsinfo, 0), SVDECL(npatchboundsinfo, 0);
 SVEXTERN camdata SVDECL(*caminfo,NULL);
-SVEXTERN outlinedata SVDECL(*outlineinfo,NULL);
-SVEXTERN int SVDECL(noutlineinfo,0);
-SVEXTERN int SVDECL(*sliceorderindex,NULL),SVDECL(*vsliceorderindex,NULL);
 SVEXTERN int SVDECL(*partorderindex,NULL);
 SVEXTERN int SVDECL(*patchorderindex,NULL),SVDECL(*isoorderindex,NULL),SVDECL(*plot3dorderindex,NULL);
 SVEXTERN int SVDECL(showfiles,0);
@@ -2224,7 +2167,6 @@ SVEXTERN float SVDECL(*plot3dtimelist,NULL);
 
 SVEXTERN blockagedata SVDECL(*bchighlight,NULL),SVDECL(*bchighlight_old,NULL);
 
-SVEXTERN int SVDECL(smokediff,0);
 SVEXTERN int SVDECL(buffertype,DOUBLE_BUFFER);
 SVEXTERN int SVDECL(opengldefined,0);
 SVEXTERN int SVDECL(restart_time,0);
@@ -2237,7 +2179,7 @@ SVEXTERN int SVDECL(*isoindex,NULL);
 
 SVEXTERN int have_vents_int;
 SVEXTERN int nface_outlines, nface_textures, nface_transparent;
-SVEXTERN int nface_normals_single, nface_normals_double, nface_transparent_double, nvent_transparent;
+SVEXTERN int nface_normals_single, nface_normals_double, nface_transparent_double;
 SVEXTERN int SVDECL(show_transparent_vents,1);
 SVEXTERN int SVDECL(show_bothsides_blockages, 0);
 SVEXTERN int SVDECL(show_bothsides_int,1), SVDECL(show_bothsides_ext,0);

@@ -808,7 +808,7 @@ void DrawTargetNorm(void){
   devicedata *devicei;
   float *xyz, *xyznorm;
 
-  if(global_scase.isZoneFireModel==1&&hasSensorNorm==1&&visSensor==1&&visSensorNorm==1){
+  if(global_scase.isZoneFireModel==1&&global_scase.hasSensorNorm==1&&visSensor==1&&visSensorNorm==1){
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
     glBegin(GL_LINES);
@@ -5210,7 +5210,7 @@ void SetupZoneDevs(void){
   }
 }
 
-void RewindDeviceFile(FILE *stream) {
+void RewindDeviceFile(FILE *stream){
 #define BUFFER_LEN 255
   char buffer[BUFFER_LEN], *comma;
   int found_data = 0, buffer_len = BUFFER_LEN;
