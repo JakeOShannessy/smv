@@ -2587,7 +2587,56 @@ int CompareColorFaces(const void *arg1, const void *arg2){
 
 /* ------------------ ShowHideInternalFaces ------------------------ */
 
-//***need to update
+#ifdef pp_BOUND_FACE
+void ShowHideInternalFaces(meshdata *meshi, int show){
+  int j;
+
+  for(j = 0;j < meshi->nbptrs;j++){
+    facedata *facej;
+
+    facej = meshi->faceinfo + 6 * j;
+    facej->hidden = 0; facej++;
+    facej->hidden = 0; facej++;
+    facej->hidden = 0; facej++;
+    facej->hidden = 0; facej++;
+    facej->hidden = 0; facej++;
+    facej->hidden = 0; facej++;
+  }
+  if(show == 1)return;
+
+  for(j = 0; j < meshi->nbptrs; j++){
+    facedata *facej;
+    blockagedata *bc;
+
+    bc = meshi->blockageinfoptrs[j];
+    facej = meshi->faceinfo + 6 * j;
+
+//down y
+    if(bc->patch_face_index[2]>=0)facej->hidden = 1;
+    facej++;
+
+// up x
+    if(bc->patch_face_index[1] >= 0)facej->hidden = 1;
+    facej++;
+
+//up y
+    if(bc->patch_face_index[3] >= 0 )facej->hidden = 1;
+    facej++;
+
+// down x
+    if(bc->patch_face_index[0] >= 0)facej->hidden = 1;
+    facej++;
+
+// down z
+    if(bc->patch_face_index[4] >= 0)facej->hidden = 1;
+    facej++;
+
+// up z
+    if(bc->patch_face_index[5] >= 0)facej->hidden = 1;
+    facej++;
+  }
+}
+#else
 void ShowHideInternalFaces(meshdata *meshi, int show){
   int j;
 
@@ -2649,19 +2698,23 @@ void ShowHideInternalFaces(meshdata *meshi, int show){
     facej++;
   }
 }
+#endif
 
 /* ------------------ IsVentVisible ------------------------ */
 
 int IsVentVisible(ventdata *vi){
   if(boundary_loaded == 0)return 1; // bouindary file not loaded
   if(vi->patch_index < 0)return 1;  // patch not associated with this vent
+
+  // show vent if boundary file is not visible on corresponding vent
   if(vi->wall_type == LEFTwall)return  1 - vis_boundary_type[LEFTwall];
   if(vi->wall_type == RIGHTwall)return 1 - vis_boundary_type[RIGHTwall];
   if(vi->wall_type == FRONTwall)return 1 - vis_boundary_type[FRONTwall];
   if(vi->wall_type == BACKwall)return  1 - vis_boundary_type[BACKwall];
   if(vi->wall_type == DOWNwall)return  1 - vis_boundary_type[DOWNwall];
   if(vi->wall_type == UPwall  )return  1 - vis_boundary_type[UPwall];
-  return 1;
+
+  return 0; //boundary file is visible so hide vent
 }
 
 /* ------------------ UpdateFaceListsWorker ------------------------ */
