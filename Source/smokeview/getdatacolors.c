@@ -1368,29 +1368,19 @@ void UpdateRGBColors(int colorbar_index){
   rgb_blue=global_scase.nrgb+2;
   rgb_red=global_scase.nrgb+3;
 
+  float zero3[3]={0.0, 0.0, 0.0}, one3[3]={1.0, 1.0, 1.0};
+
   if(background_flip==0){
-    for(i=0;i<3;i++){
-      foregroundcolor[i]=foregroundbasecolor[i];
-      backgroundcolor[i]=backgroundbasecolor[i];
-    }
-    global_scase.rgb[rgb_white][0]=1.0;
-    global_scase.rgb[rgb_white][1]=1.0;
-    global_scase.rgb[rgb_white][2]=1.0;
-    global_scase.rgb[rgb_black][0]=0.0;
-    global_scase.rgb[rgb_black][1]=0.0;
-    global_scase.rgb[rgb_black][2]=0.0;
+    memcpy(foregroundcolor,             foregroundbasecolor, 3*sizeof(float));
+    memcpy(backgroundcolor,             backgroundbasecolor, 3*sizeof(float));
+    memcpy(global_scase.rgb[rgb_white], one3,                3*sizeof(float));
+    memcpy(global_scase.rgb[rgb_black], zero3,               3*sizeof(float));
   }
   else{
-    for(i=0;i<3;i++){
-      foregroundcolor[i]=backgroundbasecolor[i];
-      backgroundcolor[i]=foregroundbasecolor[i];
-    }
-    global_scase.rgb[rgb_white][0]=0.0;  //xxx fix or take out
-    global_scase.rgb[rgb_white][1]=0.0;
-    global_scase.rgb[rgb_white][2]=0.0;
-    global_scase.rgb[rgb_black][0]=1.0;
-    global_scase.rgb[rgb_black][1]=1.0;
-    global_scase.rgb[rgb_black][2]=1.0;
+    memcpy(foregroundcolor,             backgroundbasecolor, 3*sizeof(float));
+    memcpy(backgroundcolor,             foregroundbasecolor, 3*sizeof(float));
+    memcpy(global_scase.rgb[rgb_white], zero3,               3*sizeof(float));
+    memcpy(global_scase.rgb[rgb_black], one3,                3*sizeof(float));
   }
   for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     int j;
@@ -1413,7 +1403,7 @@ void UpdateRGBColors(int colorbar_index){
 
 void UpdateChopColors(void){
   int i;
-  int ichopmin=0,ichopmax=nrgb_full;
+  int ichopmin=0,ichopmax;
 #define NCHOP 8
   float transparent_level_local=1.0;
 
@@ -1628,8 +1618,8 @@ void UpdateChopColors(void){
   if(slicebounds!=NULL&&slicefile_labelindex!=-1){
     float smin, smax;
 
-    smin=slicebounds[slicefile_labelindex].dlg_valmin;
-    smax=slicebounds[slicefile_labelindex].dlg_valmax;
+    //smin=slicebounds[slicefile_labelindex].dlg_valmin;
+    //smax=slicebounds[slicefile_labelindex].dlg_valmax;
     smin = colorbar_slice_min;
     smax = colorbar_slice_max;
 

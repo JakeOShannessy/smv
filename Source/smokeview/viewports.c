@@ -955,7 +955,6 @@ void ViewportInfo(int quad, GLint screen_left, GLint screen_down){
 
     if(mesh_xyz==NULL){
       sprintf(meshlabel,"mesh: %i",highlight_mesh+1);
-      mesh_xyz = global_scase.meshescoll.meshinfo + highlight_mesh;
     }
     else{
       int imesh;
@@ -1022,7 +1021,7 @@ void ViewportHrrPlot(int quad, GLint screen_left, GLint screen_down){
 /* ------------------------ OutputSlicePlot ------------------------- */
 
 void OutputSlicePlot(char *file){
-  int i, ntimes,first=1;
+  int i, ntimes=0,first=1;
   FILE *stream = NULL;
 
   if(file == NULL||strlen(file)==0)return;
@@ -1998,8 +1997,7 @@ void GetSmokeDir(float *mm){
       else{
         smoke_dist = meshj->smoke_dist[minalphadir];
       }
-      InitAlphas(soot->alphas_dir[minalphadir], soot->extinct, glui_smoke3d_extinct,
-        meshj->dxyz_orig[0], smoke_dist);
+      InitAlphas(soot->alphas_dir[minalphadir], soot->extinct, glui_smoke3d_extinct, meshj->dxyz_orig[0], smoke_dist);
     }
     if(demo_mode != 0){
       meshj->smokedir = 1;

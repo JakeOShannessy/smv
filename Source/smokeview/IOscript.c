@@ -781,6 +781,7 @@ int CompileScript(char *scriptfile){
 
 // UNLOADALL
       case SCRIPT_UNLOADALL:
+        break;
 
 // LOADPARTICLES
       case SCRIPT_LOADPARTICLES:
@@ -789,9 +790,11 @@ int CompileScript(char *scriptfile){
 
 // CBARFLIP:
       case SCRIPT_CBARFLIP:
+        break;
 
 // CBARNORMAL:
       case SCRIPT_CBARNORMAL:
+        break;
 
 // OUTPUTSMOKESENSORS
       case SCRIPT_OUTPUTSMOKESENSORS:
@@ -1552,7 +1555,9 @@ void GetWebFileName(char *web_filename, scriptdata *scripti){
       strcat(web_filename, dirseparator);
     }
   }
-  strcat(web_filename, scripti->cval2);
+  if(scripti->cval2 != NULL){
+    strcat(web_filename, scripti->cval2);
+  }
 }
 
 /* ------------------ ScriptRenderSliceNode ------------------------ */
@@ -1706,7 +1711,7 @@ void LoadSmokeFrame(int meshnum, int framenum){
   int first = 1;
   int i;
   int max_frames = -1, frame_old;
-  float valtime;
+  float valtime=0.0;
 
   if(meshnum > global_scase.meshescoll.nmeshes - 1||meshnum<-1)meshnum = -1;
 
@@ -1853,15 +1858,13 @@ void ScriptVolSmokeRenderAll(scriptdata *scripti){
 /* ------------------ ScriptLoadIsoFrame ------------------------ */
 
 void ScriptLoadIsoFrame(scriptdata *scripti, int flag){
-  int framenum, index;
+  int framenum;
   int i;
   int fileindex;
 
   THREADcontrol(isosurface_threads, THREAD_JOIN);
-  index = scripti->ival;
   framenum = scripti->ival2;
   fileindex = scripti->ival4;
-  if(index > global_scase.meshescoll.nmeshes - 1)index = -1;
 
   update_readiso_geom_wrapup = UPDATE_ISO_START_ALL;
   CancelUpdateTriangles();
@@ -1936,10 +1939,12 @@ void ScriptIsoRenderAll(scriptdata *scripti){
 
 void ScriptMakeMovie(scriptdata *scripti){
   // TODO: there will be an allocation issue here.
-  strcpy(movie_name, scripti->cval);
-  strcpy(render_file_base,scripti->cval2);
-  movie_framerate=scripti->fval;
-  RenderCB(MAKE_MOVIE);
+  if(scripti->cval != NULL && scripti->cval2 != NULL){
+    strcpy(movie_name, scripti->cval);
+    strcpy(render_file_base, scripti->cval2);
+    movie_framerate = scripti->fval;
+    RenderCB(MAKE_MOVIE);
+  }
 }
 
 /* ------------------ ScriptLoadParticles ------------------------ */
@@ -1973,7 +1978,8 @@ void ScriptLoadIso(scriptdata *scripti, int meshnum){
 
     isoi = global_scase.isoinfo + i;
     if(meshnum != -1 && isoi->blocknumber + 1 != meshnum)continue;
-    lencval = strlen(scripti->cval);
+    lencval = 0;
+    if(scripti->cval!=NULL)lencval = strlen(scripti->cval);
     lenlabel = strlen(isoi->surface_label.longlabel);
     if(lencval <= lenlabel){
       strncpy(label2, isoi->surface_label.longlabel, lencval);
@@ -1991,7 +1997,8 @@ void ScriptLoadIso(scriptdata *scripti, int meshnum){
 
     isoi = global_scase.isoinfo + i;
     if(meshnum != -1 && isoi->blocknumber+1 != meshnum)continue;
-    lencval = strlen(scripti->cval);
+    lencval = 0;
+    if(scripti->cval!=NULL)lencval = strlen(scripti->cval);
     lenlabel = strlen(isoi->surface_label.longlabel);
     if(lencval<=lenlabel){
       strncpy(label2, isoi->surface_label.longlabel, lencval);
@@ -2123,7 +2130,7 @@ int SliceMatch(scriptdata *scripti, slicedata *slicei){
   }
   else{
     if(slicei->slice_filetype==SLICE_TERRAIN){
-      if(strcmp(scripti->c_pbxyz, "AGL_SLICE")!=0)return 0;
+      if(scripti->c_pbxyz != NULL && strcmp(scripti->c_pbxyz, "AGL_SLICE")!=0)return 0;
       if(ABS(slicei->above_ground_level-scripti->pbxyz_val)>slicei->delta_orig)return 0;
     }
     else{
@@ -2318,7 +2325,6 @@ void ScriptLoadSlice(scriptdata *scripti){
       }
       LoadSliceMenu(mslicei->islices[j]);
       slicej->finalize = finalize_save;
-      slicej = global_scase.slicecoll.sliceinfo + mslicei->islices[j];
       count++;
     }
     break;
@@ -2564,7 +2570,6 @@ void ScriptLoadSliceRender(scriptdata *scripti){
     fprintf(stderr,  "*** Error: Slice files of type %s, frame %i failed to load\n", scripti->cval, frame_current);
     if(stderr2!=NULL)fprintf(stderr2, "*** Error: Slice files of type %s, frame %i failed to load\n", scripti->cval, frame_current);
     scripti->exit = 1;
-    valid_frame = 0;
     RenderState(RENDER_OFF);
   }
 }
@@ -2681,7 +2686,6 @@ void ScriptLoadSmokeRender(scriptdata *scripti){
     fprintf(stderr,  "*** Error: 3D smoke files of type %s, frame %i failed to load\n", scripti->cval, frame_current);
     if(stderr2!=NULL)fprintf(stderr2, "*** Error: Slice files of type %s, frame %i failed to load\n", scripti->cval, frame_current);
     scripti->exit = 1;
-    valid_frame = 0;
     RenderState(RENDER_OFF);
   }
 }
@@ -2820,7 +2824,7 @@ void ScriptLoadTour(scriptdata *scripti){
     tourdata *touri;
 
     touri = global_scase.tourcoll.tourinfo + i;
-    if(strcmp(touri->label,scripti->cval)==0){
+    if(scripti->cval!=NULL&&strcmp(touri->label,scripti->cval)==0){
       TourMenu(i);
       viewtourfrompath=0;
       TourMenu(MENU_TOUR_VIEWFROMROUTE);
@@ -2850,7 +2854,7 @@ void ScriptLoadBoundary(scriptdata *scripti, int meshnum){
 
     patchi = global_scase.patchinfo + i;
     if(meshnum == -1 || patchi->blocknumber + 1 == meshnum){
-      if(strcmp(patchi->label.longlabel, scripti->cval) == 0){
+      if(scripti->cval != NULL && strcmp(patchi->label.longlabel, scripti->cval) == 0){
         THREADcontrol(compress_threads, THREAD_LOCK);
         ReadBoundary(i, LOAD, &errorcode);
         count++;
@@ -2878,7 +2882,7 @@ void ScriptPartClassColor(scriptdata *scripti){
     partpropdata *propi;
 
     propi = part5propinfo + i;
-    if(strcmp(propi->label->longlabel,scripti->cval)==0){
+    if(scripti->cval != NULL && strcmp(propi->label->longlabel,scripti->cval)==0){
       ParticlePropShowMenu(i);
       return;
     }
@@ -3176,7 +3180,7 @@ void ScriptPartClassType(scriptdata *scripti){
 
       if(propi->class_present[j]==0)continue;
       partclassj = global_scase.partclassinfo + j;
-      if(strcmp(partclassj->name,scripti->cval)==0){
+      if(scripti->cval!=NULL&&strcmp(partclassj->name,scripti->cval)==0){
         ParticlePropShowMenu(-10-j);
         count++;
       }
@@ -3241,7 +3245,7 @@ void ScriptLoadFile(scriptdata *scripti){
     slicedata *sd;
 
     sd = global_scase.slicecoll.sliceinfo + i;
-    if(strcmp(sd->file,scripti->cval)==0){
+    if(scripti->cval != NULL && strcmp(sd->file,scripti->cval)==0){
       sd->finalize = 1;
       ReadSlice(sd->file, i, ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR, &errorcode);
       return;
@@ -3251,7 +3255,7 @@ void ScriptLoadFile(scriptdata *scripti){
     patchdata *patchi;
 
     patchi = global_scase.patchinfo + i;
-    if(strcmp(patchi->file,scripti->cval)==0){
+    if(scripti->cval != NULL && strcmp(patchi->file,scripti->cval)==0){
       patchi->finalize = 1;
       ReadBoundary(i,LOAD,&errorcode);
       return;
@@ -3262,7 +3266,7 @@ void ScriptLoadFile(scriptdata *scripti){
     partdata *parti;
 
     parti = global_scase.partinfo + i;
-    if(strcmp(parti->file,scripti->cval)==0){
+    if(scripti->cval != NULL && strcmp(parti->file,scripti->cval)==0){
       parti->finalize = 1;
       LoadParticleMenu(i);
       return;
@@ -3273,7 +3277,7 @@ void ScriptLoadFile(scriptdata *scripti){
     isodata *isoi;
 
     isoi = global_scase.isoinfo + i;
-    if(strcmp(isoi->file,scripti->cval)==0){
+    if(scripti->cval != NULL && strcmp(isoi->file,scripti->cval)==0){
       ReadIso(isoi->file,i,LOAD,NULL,&errorcode);
       if(update_readiso_geom_wrapup == UPDATE_ISO_ONE_NOW)ReadIsoGeomWrapup(FOREGROUND);
       return;
@@ -3283,7 +3287,7 @@ void ScriptLoadFile(scriptdata *scripti){
     smoke3ddata *smoke3di;
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
-    if(strcmp(smoke3di->file,scripti->cval)==0){
+    if(scripti->cval!=NULL&&strcmp(smoke3di->file,scripti->cval)==0){
       smoke3di->finalize = 1;
       smoke3di->finalize = 1;
       ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
@@ -3294,7 +3298,7 @@ void ScriptLoadFile(scriptdata *scripti){
     zonedata *zonei;
 
     zonei = global_scase.zoneinfo + i;
-    if(strcmp(zonei->file,scripti->cval)==0){
+    if(scripti->cval != NULL && strcmp(zonei->file,scripti->cval)==0){
       ReadZone(i,LOAD,&errorcode);
       return;
     }
@@ -3303,7 +3307,7 @@ void ScriptLoadFile(scriptdata *scripti){
     plot3ddata *plot3di;
 
     plot3di = global_scase.plot3dinfo + i;
-    if(strcmp(plot3di->file,scripti->cval)==0){
+    if(scripti->cval!=NULL&&strcmp(plot3di->file,scripti->cval)==0){
       plot3di->finalize = 1;
       ReadPlot3D(plot3di->file,i,LOAD,&errorcode);
       UpdateMenu();
@@ -3420,7 +3424,7 @@ void ScriptLoadVecFile(scriptdata *scripti){
     vslicei = global_scase.slicecoll.vsliceinfo + i;
     val = global_scase.slicecoll.sliceinfo + vslicei->ival;
     if(val==NULL)continue;
-    if(strcmp(val->reg_file,scripti->cval)==0){
+    if(scripti->cval!=NULL&&strcmp(val->reg_file,scripti->cval)==0){
       LoadVSliceMenu(i);
       return;
     }
@@ -3729,7 +3733,12 @@ void ScriptSetViewpoint(scriptdata *scripti){
 
   viewpoint = scripti->cval;
   update_viewpoint_script = 3;
-  strcpy(viewpoint_script, viewpoint);
+  if(viewpoint == NULL){
+    strcpy(viewpoint_script, "viewpoint");
+  }
+  else{
+    strcpy(viewpoint_script, viewpoint);
+  }
   viewpoint_script_ptr = NULL;
   PRINTF("script: set viewpoint to %s\n\n",viewpoint);
   if(GetCamera(viewpoint) == NULL){
@@ -3973,7 +3982,7 @@ int RunScriptCommand(scriptdata *script_command){
       }
       break;
     case SCRIPT_KEYBOARD:
-      {
+      if(scripti->cval!=NULL){
         char *key;
 
         script_keystate=0;
@@ -3981,8 +3990,8 @@ int RunScriptCommand(scriptdata *script_command){
         if(strncmp(scripti->cval,"ALT",3)==0)script_keystate=GLUT_ACTIVE_ALT;
 
         Keyboard(*key,FROM_SCRIPT);
-        returnval=1;
       }
+      returnval=1;
       break;
     case SCRIPT_SCENECLIP:
       clip_mode=scripti->ival;

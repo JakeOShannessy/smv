@@ -25,6 +25,9 @@
 #include "readsmoke.h"
 #include "viewports.h"
 #include "colorbars.h"
+#ifdef pp_SMOKE16
+#include "glui_smoke.h"
+#endif
 
 void LoadHVACMenu(int value);
 void LoadPlot2DMenu(int value);
@@ -389,16 +392,16 @@ int ComparePatchLabels(const void *arg1, const void *arg2){
 /* ----------------------- PrintFileSizes ----------------------------- */
 
 void PrintFileSizes(char *type, float val, float val2){
-  char label[100], label2[100], *labelptr, *labelptr2;
+  char label[100], label2[100], *labelptr=NULL, *labelptr2=NULL;
 
   if(val>0.0)labelptr=GetFloatFileSizeLabel(val, label);
   if(val2>0.0)labelptr2=GetFloatFileSizeLabel(val2, label2);
   if(val>0.0){
     if(val2>0.0){
-      printf("  %s/compressed: %s/%s\n", type,labelptr,labelptr2);
+      if(labelptr!=NULL&&labelptr2!=NULL)printf("  %s/compressed: %s/%s\n", type,labelptr,labelptr2);
     }
     else{
-      printf("  %s: %s\n", type,labelptr);
+      if(labelptr != NULL)printf("  %s: %s\n", type,labelptr);
     }
   }
 }
@@ -591,8 +594,6 @@ void ShowMultiSliceMenu(int value){
       slicedata *sd;
 
       mslicei = global_scase.slicecoll.multisliceinfo+value;
-      mdisplay = 0;
-
       sd = global_scase.slicecoll.sliceinfo+mslicei->islices[0];
       if(slicefile_labelindex==sd->slicefile_labelindex){
         if(plotstate!=DYNAMIC_PLOTS){
@@ -2444,7 +2445,7 @@ void OpenUrl(char *url){
 void HelpMenu(int value){
   switch(value){
     case MENU_HELP_FORUM:
-      OPENURL("https://groups.google.com/forum/?fromgroups#!forum/fds-smv");
+      OPENURL("https://github.com/firemodels/fds/discussions");
       break;
     case MENU_HELP_FDS_ISSUES:
       OPENURL("https://github.com/firemodels/fds/issues");
@@ -3067,6 +3068,8 @@ void MemoryTest(void){
     }
     STOP_TIMER(mem_timer);
 
+    diskread = 0;
+    diskwrite = 0;
     stream = fopen("test.bin", "wb");
     if(stream != NULL){
       diskwrite = 1;
@@ -4210,9 +4213,9 @@ void SetupPart(int value){
   if(value>=0){
     partdata *parti;
 
+    assert(value >= 0 && value < global_scase.npartinfo);
+    value = CLAMP(value, 0, global_scase.npartinfo - 1);
     parti = global_scase.partinfo+value;
-    assert(value>=0&&value<global_scase.npartinfo);
-    value = CLAMP(value, 0, global_scase.npartinfo-1);
     parti->finalize = 1;
   }
   else{
@@ -8462,7 +8465,7 @@ void InitLoadMultiSliceMenu(int *loadmultislicemenuptr, int *loadsubmslicemenu, 
   int i, loadmultislicemenu;
   int nloadsubmslicemenu;
   int iloadsubpatchmenu_s;
-  int loadsubslicexmenu, loadsubsliceymenu, loadsubslicezmenu, loadsubslicexyzmenu;
+  int loadsubslicexmenu=0, loadsubsliceymenu=0, loadsubslicezmenu=0, loadsubslicexyzmenu=0;
 
   InitSubSliceMenuInfo();
   if(nsubslicemenuinfo>0){
@@ -11985,7 +11988,7 @@ static int menu_count=0;
 #ifdef pp_LINUX
   glutAddMenuEntry(_("Downloads: https://pages.nist.gov/fds-smv/"),                                   MENU_HELP_DOWNLOADS);
   glutAddMenuEntry(_("Documentation:  https://pages.nist.gov/fds-smv/manuals.html"),                  MENU_HELP_DOCUMENTATION);
-  glutAddMenuEntry(_("Discussion forum: https://groups.google.com/forum/?fromgroups#!forum/fds-smv"), MENU_HELP_FORUM);
+  glutAddMenuEntry(_("Discussion forum: https://github.com/firemodels/fds/discussions"),              MENU_HELP_FORUM);
   glutAddMenuEntry(_("FDS issue tracker: https://github.com/firemodels/fds/issues"),                  MENU_HELP_FDS_ISSUES);
   glutAddMenuEntry(_("Smokeview issue tracker: https://github.com/firemodels/smv/issues"),            MENU_HELP_SMV_ISSUES);
   glutAddMenuEntry(_("Release notes: https://pages.nist.gov/fds-smv/smv_readme.html"),                MENU_HELP_RELEASENOTES);

@@ -1286,11 +1286,8 @@ void DrawSphereSeg(float anglemin, float anglemax, float rmin, float rmax){
   sini = sin(ai);
   for(j=0;j<NLONG;j++){
     aj = j*danglej;
-    ajp1 = (j+1)*danglej;
     cosj = cos(aj);
-    cosjp1 = cos(ajp1);
     sinj = sin(aj);
-    sinjp1 = sin(ajp1);
     glVertex3f(rmin*sini*cosj,rmin*sini*sinj,cosi*rmin);
 
     glVertex3f(rmax*sini*cosj,rmax*sini*sinj,cosi*rmax);
@@ -3829,7 +3826,6 @@ void DrawDevices(int mode){
     float *xyz;
 
     devicei = global_scase.devicecoll.deviceinfo + ii;
-    prop = devicei->prop;
 
     if(devicei->object->visible == 0 || (devicei->prop != NULL&&devicei->prop->smv_object->visible == 0))continue;
     if(devicei->plane_surface != NULL)continue;
@@ -4041,7 +4037,6 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
   rgbcolor[1] = 0;
   rgbcolor[2] = 0;
   rgbcolor[3] = 255;
-  rgbptr_local = rgbcolor;
   glPushMatrix();
 
   // copy in default values ( :var=value in objects.svo file )
@@ -4131,6 +4126,9 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
     float arg[NARGVAL], *argptr;
     int j;
 
+    for(j=0;j<NARGVAL;j++){
+      arg[j] = 0.0;
+    }
     if(ii == 0){
       toki = framei->command_list[0];
     }
@@ -4447,7 +4445,6 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
       valmax_rel = valmax - valmin;
 
       val_rel = fmod(val_rel, valmax_rel);
-      if(val_rel < 0.0)val += valmax_rel;
 
       *argptr = val_rel + valmin;
     }
@@ -4729,12 +4726,6 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
         rgbcolor[2] = arg[2];
         rgbcolor[3] = 255;
       }
-      if(select_device_color_ptr == NULL){
-        rgbptr_local = rgbcolor;
-      }
-      else{
-        rgbptr_local = select_device_color_ptr;
-      }
       break;
     case SV_SETLINEWIDTH:
     {
@@ -4752,12 +4743,6 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
       rgbcolor[1] = 255 * arg[0];
       rgbcolor[2] = 255 * arg[0];
       rgbcolor[3] = 255;
-      if(select_device_color_ptr == NULL){
-        rgbptr_local = rgbcolor;
-      }
-      else{
-        rgbptr_local = select_device_color_ptr;
-      }
     }
     break;
     case SV_DRAWLINE:
@@ -5625,7 +5610,7 @@ void DeviceData2WindRose(int nr, int ntheta){
       }
     }
     if(use_angle_dev==1){
-      float rmin, rmax;
+      float rmin=0.0, rmax=1.0;
 
       nvals = MIN(angledev->nvals, veldev->nvals);
       windrose_xy_active = 1;

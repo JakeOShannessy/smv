@@ -24,4 +24,3 @@ EXTERNCPP void MakeFireColors(float temp_min, float temp_max, int nfire_colors_a
 EXTERNCPP void *ReadVolsmokeAllFramesAllMeshes2(void *arg);
 
 #endif
-

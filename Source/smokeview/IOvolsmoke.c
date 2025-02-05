@@ -1057,42 +1057,44 @@ void *InitNabors(void *arg){
   int i;
 
   INIT_PRINT_TIMER(timer_init_nabors);
-  for(i = 0;i<global_scase.meshescoll.nmeshes;i++){
-    meshdata *meshi;
-    int j;
+  if(global_scase.have_mesh_nabors == 0){
+    for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+      meshdata *meshi;
+      int j;
 
-    meshi = global_scase.meshescoll.meshinfo+i;
-    meshi->is_bottom = IsBottomMesh(meshi);
-    for(j = 0;j<global_scase.meshescoll.nmeshes;j++){
-      meshdata *meshj;
+      meshi = global_scase.meshescoll.meshinfo + i;
+      meshi->is_bottom = IsBottomMesh(meshi);
+      for(j = 0;j < global_scase.meshescoll.nmeshes;j++){
+        meshdata *meshj;
 
-      if(i==j)continue;
+        if(i == j)continue;
 
-      meshj = global_scase.meshescoll.meshinfo+j;
+        meshj = global_scase.meshescoll.meshinfo + j;
 
-      if(MeshConnect(meshi, MLEFT, meshj)==1){
-        meshi->nabors[MRIGHT] = meshj;
-        continue;
-      }
-      if(MeshConnect(meshi, MRIGHT, meshj)==1){
-        meshi->nabors[MLEFT] = meshj;
-        continue;
-      }
-      if(MeshConnect(meshi, MFRONT, meshj)==1){
-        meshi->nabors[MBACK] = meshj;
-        continue;
-      }
-      if(MeshConnect(meshi, MBACK, meshj)==1){
-        meshi->nabors[MFRONT] = meshj;
-        continue;
-      }
-      if(MeshConnect(meshi, MDOWN, meshj)==1){
-        meshi->nabors[MUP] = meshj;
-        continue;
-      }
-      if(MeshConnect(meshi, MUP, meshj)==1){
-        meshi->nabors[MDOWN] = meshj;
-        continue;
+        if(MeshConnect(meshi, MLEFT, meshj) == 1){
+          meshi->nabors[MRIGHT] = meshj;
+          continue;
+        }
+        if(MeshConnect(meshi, MRIGHT, meshj) == 1){
+          meshi->nabors[MLEFT] = meshj;
+          continue;
+        }
+        if(MeshConnect(meshi, MFRONT, meshj) == 1){
+          meshi->nabors[MBACK] = meshj;
+          continue;
+        }
+        if(MeshConnect(meshi, MBACK, meshj) == 1){
+          meshi->nabors[MFRONT] = meshj;
+          continue;
+        }
+        if(MeshConnect(meshi, MDOWN, meshj) == 1){
+          meshi->nabors[MUP] = meshj;
+          continue;
+        }
+        if(MeshConnect(meshi, MUP, meshj) == 1){
+          meshi->nabors[MDOWN] = meshj;
+          continue;
+        }
       }
     }
   }
@@ -1145,7 +1147,6 @@ void InitSuperMesh(void){
   // merge connected meshes to form supermeshes
 
   global_scase.nsupermeshinfo = 0;
-  thismesh = GetMinMesh();
   for(smesh = global_scase.supermeshinfo, thismesh = GetMinMesh();thismesh!=NULL;thismesh = GetMinMesh(), smesh++){
     MakeSMesh(smesh, thismesh);
     global_scase.nsupermeshinfo++;
@@ -1454,7 +1455,7 @@ void IntegrateFireColors(float *integrated_firecolor, float *xyzvert, float dlen
   float dxyz[3];
   float distseg, dxseg, dyseg, dzseg;
   float xyz[3];
-  float *vert_beg, *vert_end;
+  float *vert_beg=NULL, *vert_end=NULL;
   int iwall_min=0;
   float xyzvals[3];
   char *blank_local;
@@ -1516,6 +1517,9 @@ void IntegrateFireColors(float *integrated_firecolor, float *xyzvert, float dlen
         }
       }
     }
+    vert_end[0] = 0.0;
+    vert_end[1] = 0.0;
+    vert_end[2] = 0.0;
     switch(iwall_min){
       case XWALLMIN:
         vert_end[0] = boxmin[0];
@@ -1567,8 +1571,6 @@ void IntegrateFireColors(float *integrated_firecolor, float *xyzvert, float dlen
   nsteps = 2*distseg/dlength;
   if(nsteps<1)nsteps=1;
   dlength=SCALE2FDS(distseg/(float)nsteps);
-  blank_local=NULL;
-  if(block_volsmoke==1)blank_local=meshi->c_iblank_cell;
   taun=1.0;
   alphan=0.0;
   for(i=0;i<nsteps;i++){
@@ -2751,14 +2753,14 @@ void ReadVolsmokeFrame(volrenderdata *vr, int framenum, int *first){
   if(load_volcompressed==1&&vr->smokeslice->vol_file!=NULL){
     volstream=fopen(vr->smokeslice->vol_file,"rb");
   }
-  if(volstream==NULL){
-    skip_local =           (HEADER_SIZE+30        +TRAILER_SIZE); // long label
-    skip_local +=          (HEADER_SIZE+30        +TRAILER_SIZE); // short label
-    skip_local +=          (HEADER_SIZE+30        +TRAILER_SIZE); // unit label
-    skip_local +=          (HEADER_SIZE+24        +TRAILER_SIZE); // is1, is2, js1, js2, ks1, ks2
-    skip_local += framenum*(HEADER_SIZE +4        +TRAILER_SIZE); // framenum time's
-    skip_local += (LINT)framenum*(LINT)(HEADER_SIZE +4*framesize+TRAILER_SIZE); // framenum slice data's
 
+  skip_local = (HEADER_SIZE + 30 + TRAILER_SIZE); // long label
+  skip_local += (HEADER_SIZE + 30 + TRAILER_SIZE); // short label
+  skip_local += (HEADER_SIZE + 30 + TRAILER_SIZE); // unit label
+  skip_local += (HEADER_SIZE + 24 + TRAILER_SIZE); // is1, is2, js1, js2, ks1, ks2
+  skip_local += framenum * (HEADER_SIZE + 4 + TRAILER_SIZE); // framenum time's
+  skip_local += ( LINT )framenum * ( LINT )(HEADER_SIZE + 4 * framesize + TRAILER_SIZE); // framenum slice data's
+  if(volstream==NULL){
     SLICEFILE=fopen(smokeslice->reg_file,"rb");
     if(SLICEFILE==NULL)return;
 

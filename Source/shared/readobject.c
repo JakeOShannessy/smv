@@ -165,6 +165,9 @@ void ParseSmvObjectString(object_collection *objectscoll, char *string,
   char *tokens_head[BUFFER_SIZE], *tokens_tail[BUFFER_SIZE];
   int in_head = 1, nhead = 0, ntail = 0;
 
+  for(i=0;i<BUFFER_SIZE;i++){
+    tokens_tail[i] = NULL;
+  }
   c = string;
   in_quote = 0;
   in_token = 0;
@@ -374,7 +377,7 @@ char *ParseObjectFrame(object_collection *objectscoll, const char *buffer_in,
   nsymbols = 0;
   ncommands = 0;
   for(i = 0; i < ntokens; i++){
-    tokendata *toki, *first_token = NULL;
+    tokendata *toki;
     char c;
 
     toki = frame->tokens + i;
@@ -384,7 +387,6 @@ char *ParseObjectFrame(object_collection *objectscoll, const char *buffer_in,
     toki->is_string = 0;
     toki->is_texturefile = 0;
     toki->next = NULL;
-    if(first_token == NULL && c != ':') first_token = toki;
     if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')){
       int use_displaylist;
       int nargs_actual, noutargs_actual;

@@ -213,7 +213,7 @@ typedef struct _meshdata {
 #endif
   float meshrgb[3], *meshrgb_ptr;
   float mesh_offset[3], *mesh_offset_ptr;
-  int blockvis;
+  int blockvis, datavis;
   float *xplt, *yplt, *zplt;
   double *xpltd, *ypltd, *zpltd;
   int ivolbar, jvolbar, kvolbar;
@@ -288,13 +288,6 @@ typedef struct _meshdata {
   struct _isosurface *currentsurf, *currentsurf2;
   struct _isosurface *blockagesurface;
   struct _isosurface **blockagesurfaces;
-  int ntc;
-  int nspr;
-  float *xsprplot, *ysprplot, *zsprplot, *tspr;
-  int nheat;
-  float *xheatplot, *yheatplot, *zheatplot, *theat;
-  float *xspr, *yspr, *zspr;
-  float *xheat, *yheat, *zheat;
 
   struct _isosurface *animatedsurfaces;
   int nisolevels, *showlevels;
@@ -791,11 +784,7 @@ typedef struct _blockagedata {
   int usecolorindex;
   int blockage_id,dup;
   int is_wuiblock;
-#ifdef pp_BOUND_FACE
   int patch_face_index[6];
-#else
-  int patch_index;
-#endif
   int hole;
   int nnodes;
   int hidden, invisible, interior[6];
@@ -1948,6 +1937,7 @@ typedef struct {
   int visOtherVents;
   int visOtherVentsSAVE;
   int update_terrain_type;
+  int have_mesh_nabors;
   int hvac_duct_color[3];
   int hvac_node_color[3];
   surfdata *surfacedefault, *vent_surfacedefault, *exterior_surfacedefault;

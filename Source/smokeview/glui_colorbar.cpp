@@ -200,6 +200,9 @@ void ColorbarSimple2General(colorbardata *cbi){
   int node_rgb[1024 * 3];
   int i;
 
+  for(i = 0;i < 1024 * 3;i++){
+    node_rgb[i] = 0;
+  }
   switch(colorbar_simple_type){
   case 0: // constant (1 node)
     cbi->nnodes = 1;
@@ -925,7 +928,7 @@ void AddColorbarListEdit(GLUI_Listbox *LIST_cbar, int index, char *label_arg, in
 extern "C" void GLUIUpdateColorbarListEdit(int flag, int del){
   int i;
   char label[64];
-  GLUI_Listbox *LISTBOX_cb;
+  GLUI_Listbox *LISTBOX_cb=NULL;
 
   switch(flag){
   case 1:
@@ -938,7 +941,6 @@ extern "C" void GLUIUpdateColorbarListEdit(int flag, int del){
     LISTBOX_cb = LISTBOX_cb_toggle_edit2;
     break;
   default:
-    LISTBOX_cb = LISTBOX_cb_edit;
     assert(FFALSE);
     break;
   }

@@ -412,40 +412,42 @@ void DrawCircVentsExactSolid(int option){
         SetClipPlanes(&circleclip,CLIP_ON_DENORMAL);
       }
       glTranslatef(x0,yy0,z0);
+      width  = 0.0;
+      height = 0.0;
       switch(cvi->dir){
         case DOWN_X:
           glTranslatef(-delta,0.0,0.0);
           glRotatef(-90.0,0.0,1.0,0.0);
-          width = cvi->ymax-cvi->ymin;
-          height = cvi->zmax-cvi->zmin;
+          width  += cvi->ymax-cvi->ymin;
+          height += cvi->zmax-cvi->zmin;
           break;
         case UP_X:
           glTranslatef(delta,0.0,0.0);
           glRotatef(-90.0,0.0,1.0,0.0);
-          width = cvi->ymax-cvi->ymin;
-          height = cvi->zmax-cvi->zmin;
+          width  += cvi->ymax-cvi->ymin;
+          height += cvi->zmax-cvi->zmin;
           break;
         case DOWN_Y:
           glTranslatef(0.0,-delta,0.0);
           glRotatef(90.0,1.0,0.0,0.0);
-          width = cvi->xmax-cvi->xmin;
-          height = cvi->zmax-cvi->zmin;
+          width  += cvi->xmax-cvi->xmin;
+          height += cvi->zmax-cvi->zmin;
           break;
         case UP_Y:
           glTranslatef(0.0,delta,0.0);
           glRotatef(90.0,1.0,0.0,0.0);
-          width = cvi->xmax-cvi->xmin;
-          height = cvi->zmax-cvi->zmin;
+          width  += cvi->xmax-cvi->xmin;
+          height += cvi->zmax-cvi->zmin;
           break;
         case DOWN_Z:
           glTranslatef(0.0,0.0,-delta);
-          width = cvi->xmax-cvi->xmin;
-          height = cvi->ymax-cvi->ymin;
+          width  += cvi->xmax-cvi->xmin;
+          height += cvi->ymax-cvi->ymin;
           break;
         case UP_Z:
           glTranslatef(0.0,0.0,delta);
-          width = cvi->xmax-cvi->xmin;
-          height = cvi->ymax-cvi->ymin;
+          width  += cvi->xmax-cvi->xmin;
+          height += cvi->ymax-cvi->ymin;
           break;
         default:
           assert(FFALSE);
@@ -522,40 +524,42 @@ void DrawCircVentsExactOutline(int option){
         SetClipPlanes(&circleclip,CLIP_ON_DENORMAL);
       }
       glTranslatef(x0,yy0,z0);
+      width  = 0.0;
+      height = 0.0;
       switch(cvi->dir){
         case DOWN_X:
           glTranslatef(-delta,0.0,0.0);
           glRotatef(-90.0,0.0,1.0,0.0);
-          width = cvi->ymax-cvi->ymin;
-          height = cvi->zmax-cvi->zmin;
+          width  += cvi->ymax-cvi->ymin;
+          height += cvi->zmax-cvi->zmin;
           break;
         case UP_X:
           glTranslatef(delta,0.0,0.0);
           glRotatef(-90.0,0.0,1.0,0.0);
-          width = cvi->ymax-cvi->ymin;
-          height = cvi->zmax-cvi->zmin;
+          width  += cvi->ymax-cvi->ymin;
+          height += cvi->zmax-cvi->zmin;
           break;
         case DOWN_Y:
           glTranslatef(0.0,-delta,0.0);
           glRotatef(90.0,1.0,0.0,0.0);
-          width = cvi->xmax-cvi->xmin;
-          height = cvi->zmax-cvi->zmin;
+          width  += cvi->xmax-cvi->xmin;
+          height += cvi->zmax-cvi->zmin;
           break;
         case UP_Y:
           glTranslatef(0.0,delta,0.0);
           glRotatef(90.0,1.0,0.0,0.0);
-          width = cvi->xmax-cvi->xmin;
-          height = cvi->zmax-cvi->zmin;
+          width  += cvi->xmax-cvi->xmin;
+          height += cvi->zmax-cvi->zmin;
           break;
         case DOWN_Z:
           glTranslatef(0.0,0.0,-delta);
-          width = cvi->xmax-cvi->xmin;
-          height = cvi->ymax-cvi->ymin;
+          width  += cvi->xmax-cvi->xmin;
+          height += cvi->ymax-cvi->ymin;
           break;
         case UP_Z:
           glTranslatef(0.0,0.0,delta);
-          width = cvi->xmax-cvi->xmin;
-          height = cvi->ymax-cvi->ymin;
+          width  += cvi->xmax-cvi->xmin;
+          height += cvi->ymax-cvi->ymin;
           break;
         default:
           assert(FFALSE);
@@ -672,7 +676,8 @@ void DrawObstOutlines(void){
       blockagedata *bc;
 
       bc = meshi->blockageinfoptrs[i];
-      if(bc != NULL && bc->showtimelist != NULL && bc->showtimelist[itimes] == 0)continue;
+      if(bc == NULL)continue;
+      if(bc->showtimelist != NULL && bc->showtimelist[itimes] == 0)continue;
       color = bc->color;
       if(color != oldcolor){
         glColor3fv(color);
@@ -961,7 +966,6 @@ void SetCVentDirs(void){
       if(cvi->imin==cvi->imax)dir=XDIR;
       if(cvi->jmin==cvi->jmax)dir=YDIR;
       if(cvi->kmin==cvi->kmax)dir=ZDIR;
-      orien=0;
 
       boxmin[0]=cvi->xmin;
       boxmin[1]=cvi->ymin;
@@ -1141,7 +1145,7 @@ void SetCVentDirs(void){
     zplt = meshi->zplt_cen;
     for(iv = 0;iv < meshi->ncvents;iv++){
       cventdata *cvi;
-      int nx, ny;
+      int nx=0, ny=0;
 
       cvi = meshi->cventinfo + iv;
 
@@ -1162,8 +1166,6 @@ void SetCVentDirs(void){
         ny = cvi->jmax - cvi->jmin;
         break;
       default:
-        nx = 0;
-        ny = 0;
         assert(FFALSE);
         break;
       }
@@ -1330,7 +1332,6 @@ void SetVentDirs(void){
       if(vi->imin==vi->imax)dir=XDIR;
       if(vi->jmin==vi->jmax)dir=YDIR;
       if(vi->kmin==vi->kmax)dir=ZDIR;
-      orien=0;
 
       switch(dir){
       case XDIR:
@@ -2587,7 +2588,6 @@ int CompareColorFaces(const void *arg1, const void *arg2){
 
 /* ------------------ ShowHideInternalFaces ------------------------ */
 
-#ifdef pp_BOUND_FACE
 void ShowHideInternalFaces(meshdata *meshi, int show){
   int j;
 
@@ -2612,93 +2612,30 @@ void ShowHideInternalFaces(meshdata *meshi, int show){
     facej = meshi->faceinfo + 6 * j;
 
 //down y
-    if(bc->patch_face_index[2]>=0)facej->hidden = 1;
+    if(bc->patch_face_index[2] >= 0 || (meshi->nabors[MFRONT] != NULL && bc->ijk[2]==0))facej->hidden = 1;
     facej++;
 
 // up x
-    if(bc->patch_face_index[1] >= 0)facej->hidden = 1;
+    if(bc->patch_face_index[1] >= 0 || (meshi->nabors[MRIGHT] != NULL && bc->ijk[1] == meshi->ibar))facej->hidden = 1;
     facej++;
 
 //up y
-    if(bc->patch_face_index[3] >= 0 )facej->hidden = 1;
+    if(bc->patch_face_index[3] >= 0 || (meshi->nabors[MBACK] != NULL && bc->ijk[3] == meshi->jbar))facej->hidden = 1;
     facej++;
 
 // down x
-    if(bc->patch_face_index[0] >= 0)facej->hidden = 1;
+    if(bc->patch_face_index[0] >= 0 || (meshi->nabors[MLEFT] != NULL && bc->ijk[0] == 0))facej->hidden = 1;
     facej++;
 
 // down z
-    if(bc->patch_face_index[4] >= 0)facej->hidden = 1;
+    if(bc->patch_face_index[4] >= 0 || (meshi->nabors[MDOWN] != NULL && bc->ijk[4] == 0))facej->hidden = 1;
     facej++;
 
 // up z
-    if(bc->patch_face_index[5] >= 0)facej->hidden = 1;
+    if(bc->patch_face_index[5] >= 0 || (meshi->nabors[MUP]   != NULL && bc->ijk[5] == meshi->kbar))facej->hidden = 1;
     facej++;
   }
 }
-#else
-void ShowHideInternalFaces(meshdata *meshi, int show){
-  int j;
-
-  for(j = 0;j < meshi->nbptrs;j++){
-    facedata *facej;
-
-    facej = meshi->faceinfo + 6 * j;
-    facej->hidden = 0; facej++;
-    facej->hidden = 0; facej++;
-    facej->hidden = 0; facej++;
-    facej->hidden = 0; facej++;
-    facej->hidden = 0; facej++;
-    facej->hidden = 0; facej++;
-  }
-  if(show == 1)return;
-  float eps_x, eps_y, eps_z;
-  float *xplt, *yplt, *zplt;
-
-  xplt = meshi->xplt_orig;
-  yplt = meshi->yplt_orig;
-  zplt = meshi->zplt_orig;
-  eps_x = (xplt[1] - xplt[0])/2.0;
-  eps_y = (yplt[1] - yplt[0])/2.0;
-  eps_z = (zplt[1] - zplt[0])/2.0;
-  for(j = 0; j < meshi->nbptrs; j++){
-    facedata *facej;
-    blockagedata *bc;
-
-    bc = meshi->blockageinfoptrs[j];
-    facej = meshi->faceinfo + 6 * j;
-
-    if(bc->patch_index < 0){
-      facej+=6;
-      continue;
-    }
-
-//down y
-    if(bc->xyzEXACT[2] > ybar0FDS + eps_y)facej->hidden = 1;
-    facej++;
-
-// up x
-    if(bc->xyzEXACT[1] < xbarFDS  - eps_x)facej->hidden = 1;
-    facej++;
-
-//up y
-    if(bc->xyzEXACT[3] < ybarFDS  - eps_y)facej->hidden = 1;
-    facej++;
-
-// down x
-    if(bc->xyzEXACT[0] > xbar0FDS + eps_x)facej->hidden = 1;
-    facej++;
-
-// down z
-    if(bc->xyzEXACT[4] > zbar0FDS + eps_z)facej->hidden = 1;
-    facej++;
-
-// up z
-    if(bc->xyzEXACT[5] < zbarFDS  - eps_z)facej->hidden = 1;
-    facej++;
-  }
-}
-#endif
 
 /* ------------------ IsVentVisible ------------------------ */
 
@@ -3189,7 +3126,7 @@ void DrawObstsDebug(void){
 /* ------------------ DrawFacesOLD ------------------------ */
 
 void DrawFacesOLD(int option){
-  float *new_color, *old_color = NULL;
+  float *new_color=NULL, *old_color = NULL;
   int **showtimelist_handle, *showtimelist;
   float up_color[4] = {0.9,0.9,0.9,1.0};
   float down_color[4] = {0.1,0.1,0.1,1.0};
@@ -3507,7 +3444,7 @@ void DrawFacesOLD(int option){
 /* ------------------ DrawFaces ------------------------ */
 
 void DrawFaces(){
-  float *new_color,*old_color=NULL;
+  float *new_color=NULL,*old_color=NULL;
   int **showtimelist_handle, *showtimelist;
   float up_color[4]={0.9,0.9,0.9,1.0};
   float down_color[4]={0.1,0.1,0.1,1.0};
@@ -3585,6 +3522,8 @@ void DrawFaces(){
   if(nface_normals_double>0){
     int j;
 
+    new_color = NULL;
+    old_color = NULL;
     ENABLE_LIGHTING;
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
@@ -3836,6 +3775,7 @@ void DrawTransparentFaces(){
   if(nface_transparent>0){
     int i;
 
+    new_color=block_ambient2;
     ENABLE_LIGHTING;
     glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&block_shininess);
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,block_ambient2);
@@ -4372,7 +4312,6 @@ void DrawDemo(int nlat, int nlong){
           xyz00 = sphere_xyz + sphere_index(i,j);
           xyz10 = sphere_xyz + sphere_index(i,j+1);
           xyz01 = sphere_xyz + sphere_index(i+1,j);
-          xyz11 = sphere_xyz + sphere_index(i+1,j+1);
           glVertex3fv(xyz00);
           glVertex3fv(xyz01);
           glVertex3fv(xyz00);
@@ -4604,7 +4543,7 @@ int GetTickDir(float *mm){
 void DrawUserTicks(void){
   int i;
   float xyz[3],xyz2[3];
-  float tick_origin[3], step[3];
+  float tick_origin[3]={0,0,0}, step[3]={0,0,0};
   int show_tick_x=0, show_tick_y=0, show_tick_z=0;
   float fds_tick_length;
 
@@ -5541,11 +5480,10 @@ void GetObstLabels(const char *filein){
       fgets(buffer,1000,stream_in);
     }
     obstlabel++;
-    lenlabel=strlen(obstlabel);
     obstlabel=TrimFront(obstlabel);
     TrimBack(obstlabel);
     lenlabel=strlen(obstlabel);
-    if(lenlabel>0){
+    if(lenlabel>0&&obstlabels!=NULL){
       NewMemory((void **)&obstlabels[fdsobstcount-1],(unsigned int)(lenlabel+1));
       strcpy(obstlabels[fdsobstcount-1],obstlabel);
     }
