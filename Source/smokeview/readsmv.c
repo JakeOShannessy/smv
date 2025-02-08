@@ -7083,6 +7083,7 @@ int ReadSMV_Init(smv_case *scase){
   }
   scase->npartclassinfo=0;
 
+  InitObjectCollection(&scase->objectscoll);
   if(scase->devicecoll.ndeviceinfo>0){
     for(i=0;i<scase->devicecoll.ndeviceinfo;i++){
     }

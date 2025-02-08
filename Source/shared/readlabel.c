@@ -5,13 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "datadefs.h"
 #include "dmalloc.h"
 #include "histogram.h"
 #include "isobox.h"
 #include "readlabel.h"
 #include "shared_structures.h"
 #include "string_util.h"
-#include "datadefs.h"
 
 /* ------------------ LabelGet ------------------------ */
 
@@ -47,7 +47,7 @@ void LabelInsertAfter(labeldata *listlabel, labeldata *label) {
   prev = listlabel;
   next = listlabel->next;
   prev->next = label;
-  if(next!=NULL)next->prev = label;
+  if(next != NULL) next->prev = label;
   label->prev = prev;
   label->next = next;
 }
@@ -85,7 +85,8 @@ labeldata *LabelInsert(labels_collection *labelscoll, labeldata *labeltemp) {
     LabelInsertAfter(labelscoll->label_first_ptr, newlabel);
     return newlabel;
   }
-  for(thislabel = labelscoll->label_first_ptr->next; thislabel!=NULL&&thislabel->next != NULL;
+  for(thislabel = labelscoll->label_first_ptr->next;
+      thislabel != NULL && thislabel->next != NULL;
       thislabel = thislabel->next) {
     labeldata *nextlabel;
 
