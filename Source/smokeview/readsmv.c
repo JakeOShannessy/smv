@@ -7022,7 +7022,7 @@ int ReadSMV_Init(smv_case *scase){
   // read in device (.svo) definitions
 
   START_TIMER(timer_setup);
-  ReadDefaultObjectCollection(&scase->objectscoll, scase->fdsprefix, setbw, scase->isZoneFireModel);
+  ReadDefaultObjectCollection(&scase->objectscoll, scase->fdsprefix, scase->isZoneFireModel);
   PRINT_TIMER(timer_setup, "InitSurface");
 
   if(scase->noutlineinfo>0){
@@ -9106,7 +9106,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       }
       else{
         FGETS(buffer,255,stream);
-        sscanf(buffer,"%i %i %i %i %i %i %i %i %i",&ibartemp,&jbartemp,&kbartemp, 
+        sscanf(buffer,"%i %i %i %i %i %i %i %i %i",&ibartemp,&jbartemp,&kbartemp,
           mesh_nabors, mesh_nabors+1, mesh_nabors+2, mesh_nabors+3, mesh_nabors+4, mesh_nabors+5);
           if(mesh_nabors[5]>=-1)have_mesh_nabors = 1;
       }
@@ -14788,7 +14788,7 @@ int ReadIni2(const char *inifile, int localfile){
       }
       if(MatchINI(buffer, "SMOKESKIP") == 1){
         int smokeskippm1_local;
-        
+
         if(fgets(buffer, 255, stream) == NULL)break;
         sscanf(buffer, "%i %i %i %i %i", &smokeskippm1_local, &smoke3d_skip, &smoke3d_skipx, &smoke3d_skipy, &smoke3d_skipz);
         if(smokeskippm1_local<0)smokeskippm1_local = 0;
@@ -16056,7 +16056,7 @@ void WriteIniLocal(FILE *fileout){
                     plot2d_size_factor, vis_slice_plot, slice_plot_bound_option,
                     slice_dxyz[0], slice_dxyz[1], slice_dxyz[2], average_plot2d_slice_region, show_plot2d_slice_position
                     );
-  
+
   for(i = global_scase.ntickinfo_smv; i < global_scase.ntickinfo; i++){
     float *begt;
     float *endt;
