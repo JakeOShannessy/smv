@@ -1092,7 +1092,6 @@ sv_object *InitSmvObject2(object_collection *objectscoll, const char *label,
       framei->error = 0;
       framei->device = object;
       ParseObjectFrame(objectscoll, commandsoff, NULL, &eof, framei, setbw);
-      framei->use_bw = setbw;
       framei->ntextures = 0;
     }
     else{
@@ -1101,7 +1100,6 @@ sv_object *InitSmvObject2(object_collection *objectscoll, const char *label,
       framei->device = object;
       ParseObjectFrame(objectscoll, commandson, NULL, &eof, framei, setbw);
       framei->error = 0;
-      framei->use_bw = setbw;
       framei->ntextures = 0;
     }
   }
@@ -1131,7 +1129,6 @@ sv_object *InitSmvObject1(object_collection *objectscoll, const char *label,
   framei->device = object;
   ParseObjectFrame(objectscoll, commands, NULL, &eof, framei, setbw);
   framei->error = 0;
-  framei->use_bw = setbw;
   framei->ntextures = 0;
   return object;
 }
@@ -1264,7 +1261,6 @@ int ReadObjectDefs(object_collection *objectscoll, const char *file,
       current_frame->next = next_frame;
       current_frame->prev = prev_frame;
 
-      current_frame->use_bw = setbw;
       current_frame->device = current_object;
       current_object->nframes++;
 
