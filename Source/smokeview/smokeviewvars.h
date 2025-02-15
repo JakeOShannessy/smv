@@ -1778,6 +1778,12 @@ SVEXTERN smv_case global_scase = {.tourcoll = {.ntourinfo = 0,
                            .linewidth = 2.0,
                            .ventlinewidth = 2.0,
                            .obst_bounding_box = {1.0,0.0,1.0,0.0,1.0,0.0},
+                           .color_defs = {
+                              .foregroundcolor = {1.0, 1.0, 1.0, 1.0},
+                              .block_ambient2 = {1.0, 0.8, 0.4, 1.0},
+                              .ventcolor = {1.0, 0.0, 1.0, 1.0},
+                              .block_shininess= 100.0
+                            },
                            .hvaccoll = {
                               .hvacductvar_index= -1,
                               .hvacnodevar_index= -1,

@@ -4189,13 +4189,13 @@ void InitSurface(surfdata *surf){
 
 /* ------------------ InitVentSurface ------------------------ */
 
-void InitVentSurface(surfdata *surf){
+void InitVentSurface(surfdata *surf, float color[4]){
   surf->emis = 1.0;
   surf->temp_ignition = TEMP_IGNITION_MAX;
   surf->surfacelabel = NULL;
   surf->texturefile = NULL;
   surf->textureinfo = NULL;
-  surf->color = ventcolor;
+  surf->color = color;
   surf->t_width = 1.0;
   surf->t_height = 1.0;
   surf->type = BLOCK_outline;
@@ -6861,6 +6861,7 @@ void SetSliceParmInfo(sliceparmdata *sp){
   sp->nmultivsliceinfo = global_scase.slicecoll.nmultivsliceinfo;
 }
 
+
 /* ------------------ ReadSMV_Init ------------------------ */
 
 /// @brief Initialise any global variables necessary to being parsing an SMV
@@ -6976,7 +6977,7 @@ int ReadSMV_Init(smv_case *scase){
   NewMemory((void **)&scase->sdefault.surfacelabel,(5+1));
   strcpy(scase->sdefault.surfacelabel,"INERT");
 
-  InitVentSurface(&scase->v_surfacedefault);
+  InitVentSurface(&scase->v_surfacedefault, scase->color_defs.ventcolor);
   PRINT_TIMER(timer_setup, "InitVentSurface");
   NewMemory((void **)&scase->v_surfacedefault.surfacelabel,(4+1));
   strcpy(scase->v_surfacedefault.surfacelabel,"VENT");
@@ -6985,7 +6986,7 @@ int ReadSMV_Init(smv_case *scase){
   PRINT_TIMER(timer_setup, "InitSurface");
   NewMemory((void **)&scase->e_surfacedefault.surfacelabel,(8+1));
   strcpy(scase->e_surfacedefault.surfacelabel,"EXTERIOR");
-  scase->e_surfacedefault.color=mat_ambient2;
+  scase->e_surfacedefault.color=scase->color_defs.block_ambient2;
 
   // free memory for particle class
 
@@ -8920,7 +8921,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       }
       bufferptr=TrimFrontBack(buffer);
       if (FileExistsCaseDir(scase, bufferptr) == YES) {
-        ReadCADGeomToCollection(&scase->cadgeomcoll, bufferptr, block_shininess);
+        ReadCADGeomToCollection(&scase->cadgeomcoll, bufferptr, scase->color_defs.block_shininess);
       }
       else {
         PRINTF(_("***Error: CAD geometry file: %s could not be opened"),
@@ -10884,7 +10885,7 @@ typedef struct {
         vi->kmin = kv1;
         vi->kmax = kv2;
         if(nn>=nvents&&nn<nvents+6){
-          vi->color=foregroundcolor;
+          vi->color=scase->color_defs.foregroundcolor;
         }
         assert(vi->color!=NULL);
       }
