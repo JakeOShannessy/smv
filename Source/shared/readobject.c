@@ -1539,7 +1539,7 @@ void ReadDefaultObjectCollection(object_collection *objectscoll,
 #ifdef SMOKEVIEW_OBJECT_DEFS_PATH
   // Read objects file pointed to be macro SMOKEVIEW_OBJECT_DEFS_PATH.
   // Useful when install paths differ per platform.
-  ReadObjectDefs(objectscoll, SMOKEVIEW_OBJECT_DEFS_PATH, set_bw);
+  ReadObjectDefs(objectscoll, SMOKEVIEW_OBJECT_DEFS_PATH);
 #endif
 
   // Read objects file from the envar SMOKEVIEW_OBJECT_DEFS
