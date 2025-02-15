@@ -1085,7 +1085,7 @@ SVEXTERN float tourcol_avatar[3];
 #endif
 SVEXTERN float mat_ambient_orig[4];
 SVEXTERN float mat_specular_orig[4];
-SVEXTERN float SVDECL(*mat_specular2,NULL);
+SVEXTERN float SVDECL(*mat_ambient2,NULL), SVDECL(*mat_specular2,NULL);
 
 #ifdef INMAIN
 SVEXTERN GLfloat iso_specular[4]={0.7,0.7,0.7,1.0};
@@ -1095,8 +1095,10 @@ SVEXTERN GLfloat iso_specular[4];
 SVEXTERN GLfloat SVDECL(iso_shininess, 50.0), SVDECL(glui_shininess, 50.0);
 
 SVEXTERN float block_ambient_orig[4];
+SVEXTERN float SVDECL(*block_ambient2,NULL);
 SVEXTERN float block_specular_orig[4];
 SVEXTERN float SVDECL(*block_specular2,NULL);
+SVEXTERN GLfloat SVDECL(block_shininess,100.0);
 
 #ifdef INMAIN
 SVEXTERN GLfloat light_position0[4]={1.0,1.0,1.0,0.0};
@@ -1647,6 +1649,7 @@ SVEXTERN int SVDECL(show_gslice_normal,0),SVDECL(show_gslice_normal_keyboard,0);
 
 
 SVEXTERN float ventcolor_orig[4];
+SVEXTERN float SVDECL(*ventcolor,NULL);
 #ifdef INMAIN
 SVEXTERN float static_color[4]={0.0,1.0,0.0,1.0};
 SVEXTERN float sensorcolor[4]={1.0,1.0,0.0,1.0};
@@ -1668,11 +1671,13 @@ SVEXTERN float heatoffcolor[4];
 SVEXTERN float backgroundbasecolor[4]  = {0.0, 0.0, 0.0, 1.0};
 SVEXTERN float backgroundcolor[4]      = {0.0, 0.0, 0.0, 1.0};
 SVEXTERN float foregroundbasecolor[4]  = {1.0, 1.0, 1.0, 1.0};
+SVEXTERN float foregroundcolor[4]      = {1.0, 1.0, 1.0, 1.0};
 SVEXTERN int   glui_outlinecolor[4]    = {0, 255, 255, 255};
 #else
 SVEXTERN float backgroundbasecolor[4];
 SVEXTERN float backgroundcolor[4];
 SVEXTERN float foregroundbasecolor[4];
+SVEXTERN float foregroundcolor[4];
 SVEXTERN int   glui_outlinecolor[4];
 #endif
 SVEXTERN int glui_foregroundbasecolor[4];
@@ -1777,6 +1782,12 @@ SVEXTERN smv_case global_scase = {.tourcoll = {.ntourinfo = 0,
                            .linewidth = 2.0,
                            .ventlinewidth = 2.0,
                            .obst_bounding_box = {1.0,0.0,1.0,0.0,1.0,0.0},
+                           .color_defs = {
+                              .foregroundcolor = {1.0, 1.0, 1.0, 1.0},
+                              .block_ambient2 = {1.0, 0.8, 0.4, 1.0},
+                              .ventcolor = {1.0, 0.0, 1.0, 1.0},
+                              .block_shininess= 100.0
+                            },
                            .hvaccoll = {
                               .hvacductvar_index= -1,
                               .hvacnodevar_index= -1,

@@ -3,6 +3,13 @@
 #include "dmalloc.h"
 #include "colorbars.h"
 
+// A series of color defaults
+float mat_ambient_orig[4] = {0.5f, 0.5f, 0.2f, 1.0f};
+float mat_specular_orig[4] = {0.5f, 0.5f, 0.2f, 1.0f};
+float ventcolor_orig[4] = {1.0, 0.0, 1.0, 1.0};
+float block_ambient_orig[4] = {1.0, 0.8, 0.4, 1.0};
+float block_specular_orig[4] = {0.0, 0.0, 0.0, 1.0};
+
 // rainbow colorbar
 void CreateColorbarRainbow(colorbardata *cbi) {
   memset(cbi, 0, sizeof(colorbardata));

@@ -458,44 +458,8 @@ int PrintJson(smv_case *scase) {
   return 0;
 }
 
-extern CCC float *block_ambient2;
-
 int RunBenchmark(char *input_file, const char *fdsprefix) {
   initMALLOC();
-  // float mat_specular_orig[4];
-  // mat_specular_orig[0] = 0.5f;
-  // mat_specular_orig[1] = 0.5f;
-  // mat_specular_orig[2] = 0.2f;
-  // mat_specular_orig[3] = 1.0f;
-  // mat_specular2 = GetColorPtr(&global_scase, mat_specular_orig);
-
-  float mat_ambient_orig[4];
-  mat_ambient_orig[0] = 0.5f;
-  mat_ambient_orig[1] = 0.5f;
-  mat_ambient_orig[2] = 0.2f;
-  mat_ambient_orig[3] = 1.0f;
-  mat_ambient2 = GetColorPtr(&global_scase, mat_ambient_orig);
-
-  float ventcolor_orig[4];
-  ventcolor_orig[0] = 1.0;
-  ventcolor_orig[1] = 0.0;
-  ventcolor_orig[2] = 1.0;
-  ventcolor_orig[3] = 1.0;
-  ventcolor = GetColorPtr(&global_scase, ventcolor_orig);
-
-  float block_ambient_orig[4];
-  block_ambient_orig[0] = 1.0;
-  block_ambient_orig[1] = 0.8;
-  block_ambient_orig[2] = 0.4;
-  block_ambient_orig[3] = 1.0;
-  block_ambient2 = GetColorPtr(&global_scase, block_ambient_orig);
-
-  // float block_specular_orig[4];
-  // block_specular_orig[0] = 0.0;
-  // block_specular_orig[1] = 0.0;
-  // block_specular_orig[2] = 0.0;
-  // block_specular_orig[3] = 1.0;
-  // block_specular2 = GetColorPtr(&global_scase, block_specular_orig);
 
   smv_case *scase;
   NEWMEMORY(scase, sizeof(smv_case));

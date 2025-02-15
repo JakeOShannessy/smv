@@ -1751,6 +1751,14 @@ typedef struct {
   labeldata *label_last_ptr;
 } labels_collection;
 
+struct color_defaults {
+  float foregroundcolor[4];
+  // float surfacedefault[4];
+  float block_ambient2[4];
+  float ventcolor[4];
+  GLfloat block_shininess;
+};
+
 /* --------------------------  smv_case ------------------------------------ */
 
 typedef struct {
@@ -1969,6 +1977,8 @@ typedef struct {
   int visFloor;
   int visWalls;
   int visCeiling;
+
+  struct color_defaults color_defs;
 
   float getfilelist_time;
   float pass0_time;

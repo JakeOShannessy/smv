@@ -289,8 +289,8 @@ float *GetColorPtr(smv_case *scase, float *color){
   return lastcolor->color;
 }
 
-float foregroundcolor[4] = {1.0, 1.0, 1.0, 1.0};
-float *block_ambient2 = NULL;
-float *ventcolor = NULL;
-GLfloat block_shininess = 100.0;
-float *mat_ambient2 = NULL;
+// float foregroundcolor[4] = {1.0, 1.0, 1.0, 1.0};
+// float *block_ambient2 = NULL;
+// float *ventcolor = NULL;
+// GLfloat block_shininess = 100.0;
+// float *mat_ambient2 = NULL;

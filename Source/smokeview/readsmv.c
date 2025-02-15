@@ -4232,7 +4232,7 @@ void InitObst(smv_case *scase, blockagedata *bc, surfdata *surf, int index, int 
 
 /* ------------------ InitSurface ------------------------ */
 
-void InitSurface(surfdata *surf){
+void InitSurface(surfdata *surf, float default_color[4]){
   surf->in_color_dialog = 0;
   surf->iso_level = -1;
   surf->used_by_obst = 0;
@@ -4245,7 +4245,7 @@ void InitSurface(surfdata *surf){
   surf->surfacelabel = NULL;
   surf->texturefile = NULL;
   surf->textureinfo = NULL;
-  surf->color = block_ambient2;
+  surf->color = default_color;
   surf->t_width = 1.0;
   surf->t_height = 1.0;
   surf->type = BLOCK_regular;
@@ -4257,13 +4257,13 @@ void InitSurface(surfdata *surf){
 
 /* ------------------ InitVentSurface ------------------------ */
 
-void InitVentSurface(surfdata *surf){
+void InitVentSurface(surfdata *surf, float color[4]){
   surf->emis = 1.0;
   surf->temp_ignition = TEMP_IGNITION_MAX;
   surf->surfacelabel = NULL;
   surf->texturefile = NULL;
   surf->textureinfo = NULL;
-  surf->color = ventcolor;
+  surf->color = color;
   surf->t_width = 1.0;
   surf->t_height = 1.0;
   surf->type = BLOCK_outline;
@@ -4584,7 +4584,7 @@ void ParseDatabase(smv_case *scase, char *file){
     for(j = 0; j<scase->surfcoll.nsurfids; j++){
       if(scase->surfcoll.surfids[j].show==0)continue;
       surfj++;
-      InitSurface(surfj);
+      InitSurface(surfj, scase->color_defs.block_ambient2);
       surfj->surfacelabel = scase->surfcoll.surfids[j].label;
     }
     scase->surfcoll.nsurfinfo += nsurfids_shown;
@@ -7043,21 +7043,21 @@ int ReadSMV_Init(smv_case *scase){
   scase->nrooms=0;
 
   START_TIMER(timer_setup);
-  InitSurface(&scase->sdefault);
+  InitSurface(&scase->sdefault, scase->color_defs.block_ambient2);
   PRINT_TIMER(timer_setup, "InitSurface");
   NewMemory((void **)&scase->sdefault.surfacelabel,(5+1));
   strcpy(scase->sdefault.surfacelabel,"INERT");
 
-  InitVentSurface(&scase->v_surfacedefault);
+  InitVentSurface(&scase->v_surfacedefault, scase->color_defs.ventcolor);
   PRINT_TIMER(timer_setup, "InitVentSurface");
   NewMemory((void **)&scase->v_surfacedefault.surfacelabel,(4+1));
   strcpy(scase->v_surfacedefault.surfacelabel,"VENT");
 
-  InitSurface(&scase->e_surfacedefault);
+  InitSurface(&scase->e_surfacedefault, scase->color_defs.block_ambient2);
   PRINT_TIMER(timer_setup, "InitSurface");
   NewMemory((void **)&scase->e_surfacedefault.surfacelabel,(8+1));
   strcpy(scase->e_surfacedefault.surfacelabel,"EXTERIOR");
-  scase->e_surfacedefault.color=mat_ambient2;
+  scase->e_surfacedefault.color=scase->color_defs.block_ambient2;
 
   // free memory for particle class
 
@@ -8996,7 +8996,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       }
       bufferptr=TrimFrontBack(buffer);
       if (FileExistsCaseDir(scase, bufferptr) == YES) {
-        ReadCADGeomToCollection(&scase->cadgeomcoll, bufferptr, block_shininess);
+        ReadCADGeomToCollection(&scase->cadgeomcoll, bufferptr, scase->color_defs.block_shininess);
       }
       else {
         PRINTF(_("***Error: CAD geometry file: %s could not be opened"),
@@ -9041,7 +9041,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       char *buffer3;
 
       surfi = scase->surfcoll.surfinfo + scase->surfcoll.nsurfinfo;
-      InitSurface(surfi);
+      InitSurface(surfi, scase->color_defs.block_ambient2);
       FGETS(buffer,255,stream);
       TrimBack(buffer);
       len=strlen(buffer);
@@ -10960,7 +10960,7 @@ typedef struct {
         vi->kmin = kv1;
         vi->kmax = kv2;
         if(nn>=nvents&&nn<nvents+6){
-          vi->color=foregroundcolor;
+          vi->color=scase->color_defs.foregroundcolor;
         }
         assert(vi->color!=NULL);
       }
