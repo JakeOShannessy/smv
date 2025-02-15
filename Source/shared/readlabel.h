@@ -37,7 +37,6 @@ extern CCC float *block_ambient2;
 extern CCC float *ventcolor;
 extern CCC GLfloat block_shininess;
 extern CCC float *mat_ambient2;
-extern CCC int setbw;
 
 extern CCC parse_options parse_opts;
 #endif

@@ -1588,7 +1588,7 @@ SVEXTERN int SVDECL(nrgb2_ini,0);
 SVEXTERN int SVDECL(rgb_white,NRGB), SVDECL(rgb_yellow,NRGB+1), SVDECL(rgb_blue,NRGB+2), SVDECL(rgb_red,NRGB+3);
 SVEXTERN int SVDECL(rgb_green,NRGB+4), SVDECL(rgb_magenta,NRGB+5), SVDECL(rgb_cyan,NRGB+6), SVDECL(rgb_black,NRGB+7);
 SVEXTERN int SVDECL(num_colorbars,0);
-SVEXTERN int SVDECL(setbwdata,0);
+SVEXTERN int SVDECL(setbw,0),SVDECL(setbwdata,0);
 SVEXTERN int setbwSAVE;
 SVEXTERN int SVDECL(background_flip,1);
 SVEXTERN float SVDECL(transparent_level,0.8);
