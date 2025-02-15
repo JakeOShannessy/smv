@@ -181,6 +181,12 @@ SVEXTERN char slice_plot_label[256];
 SVEXTERN int SVDECL(update_plot_label, 0);
 
 SVEXTERN int SVDECL(terrain_skip, 1);
+SVEXTERN int nsmoke3dtypes, smoke3d_other;
+SVEXTERN smoke3dtypedata SVDECL(*smoke3dtypes, NULL);
+#ifdef pp_SMOKETEST
+SVEXTERN int SVDECL(n_smoketest_planes,1), SVDECL(show_smoketest,0), SVDECL(smoketest_ialpha, 0);
+SVEXTERN float SVDECL(smoketest_alpha, 0.0);
+#endif
 
 SVEXTERN int SOOT_index, HRRPUV_index, TEMP_index, CO2_index;
 
@@ -223,6 +229,7 @@ SVEXTERN char viewpoint_script[256], SVDECL(*viewpoint_script_ptr, NULL);
 SVEXTERN char viewpoint_label_saved[256];
 SVEXTERN int SVDECL(update_saving_viewpoint, 0);
 SVEXTERN float SVDECL(timer_startup, 0.0), SVDECL(timer_render, -1.0);
+SVEXTERN float SVDECL(timer_mouse_motion, 0.0);
 SVEXTERN int SVDECL(frames_total, 0 );
 SVEXTERN int SVDECL(open_movie_dialog, 0);
 SVEXTERN int SVDECL(geom_bounding_box_mousedown, 0);
@@ -539,10 +546,6 @@ SVEXTERN float voltest_center[3] = {0.8, 0.8, 1.0};
 #else
 SVEXTERN float voltest_center[3];
 #endif
-#ifdef pp_SMOKE16
-SVEXTERN int SVDECL(show_3dsmoke_8bit, 1);
-SVEXTERN int SVDECL(show_3dsmoke_16bit, 0);
-#endif
 SVEXTERN int SVDECL(show_plot3dfiles, 1), SVDECL(show_isofiles,1);
 SVEXTERN int SVDECL(show_boundaryfiles, 1);
 
@@ -607,7 +610,6 @@ SVEXTERN int SVDECL(colorbar_toggle, 1);
 SVEXTERN int SVDECL(color_vector_black, 0);
 SVEXTERN float SVDECL(geom_transparency, 0.5);
 SVEXTERN int SVDECL(geom_force_transparent, 0);
-SVEXTERN float SVDECL(load_3dsmoke_cutoff, 1.0);
 SVEXTERN int SVDECL(override_3dsmoke_cutoff, 0);
 SVEXTERN int SVDECL(visCompartments, 1);
 SVEXTERN int render_mode, render_times;
@@ -653,10 +655,8 @@ SVEXTERN int colorsplit[12] = {0,0,0,  64,64,255,  0,192,0,  255,0,0};
 SVEXTERN int colorsplit[12];
 #endif
 
-#ifdef pp_SMOKE16
-SVEXTERN int SVDECL(load_smoke16, 0);
-SVEXTERN int SVDECL(have_smoke16, 0);
-#endif
+SVEXTERN int SVDECL(load_smoke_density, 1);
+SVEXTERN int SVDECL(have_smoke_density, 0);
 SVEXTERN int SVDECL(show_zlevel, 0);
 SVEXTERN float terrain_zlevel;
 SVEXTERN float terrain_zmin, terrain_zmax;
@@ -1314,7 +1314,7 @@ SVEXTERN int SVDECL(glui_active,0);
 
 SVEXTERN int SVDECL(old_draw_colorlabel,0);
 SVEXTERN int SVDECL(vis3DSmoke3D,1);
-SVEXTERN int SVDECL(smokeskip,1),SVDECL(smokeskipm1,0);
+SVEXTERN int SVDECL(smokeskip,1),SVDECL(smoke3d_frame_inc,1),SVDECL(update_smoke3d_frame_inc,0);;
 SVEXTERN float SVDECL(scene_aspect_ratio,1.0);
 
 SVEXTERN int SVDECL(fix_window_aspect, 0);

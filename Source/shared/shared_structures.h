@@ -37,9 +37,7 @@ typedef struct _tokendata {
  * This can form a node in a linked-list.
  */
 typedef struct _sv_object_frame {
-  int use_bw;
   int error;
-  int display_list_ID;
   int *symbols, nsymbols;
   tokendata *tokens, **command_list;
   int ntokens, ncommands, ntextures;
@@ -59,7 +57,6 @@ typedef struct _sv_object {
   int type;
   int visible;
   int used, used_by_device;
-  int use_displaylist;
   int select_mode;
   /** @brief The number of frames (i.e., possible states) associated with this
    * object. */
@@ -257,6 +254,7 @@ typedef struct _meshdata {
   char *c_iblank_embed0;
   float *block_zdist0;
   float *opacity_adjustments;
+  unsigned char *is_firenode, *is_firenodeptr;
 
   char *c_iblank_node,      *c_iblank_cell,      *c_iblank_x,      *c_iblank_y,      *c_iblank_z;
   char *c_iblank_node_temp, *c_iblank_cell_temp, *c_iblank_x_temp, *c_iblank_y_temp, *c_iblank_z_temp;
@@ -1483,17 +1481,14 @@ typedef struct _smoke3ddata {
   int seq_id, autoload;
   char *file;
   char *comp_file, *reg_file;
-#ifdef pp_SMOKE16
-  char *s16_file;
-#endif
+  char *smoke_density_file;
   int filetype;
   int skip_smoke, skip_fire;
   int is_smoke, is_fire;
   int loaded, request_load, finalize, display, primary_file;
   int is_zlib;
-#ifdef pp_SMOKE16
-  int is_s16;
-#endif
+  int is_smoke_density;
+  int soot_density_loaded;
   smokestatedata *smokestate;
   int blocknumber;
   int type;
@@ -1513,7 +1508,8 @@ typedef struct _smoke3ddata {
 #define ALPHA_XY 3
 #define ALPHA_YZ 4
 #define ALPHA_XZ 5
-  unsigned char *alphas_dir[6];
+  unsigned char *alphas_smokedir[6], *alphas_firedir[6];
+  unsigned char alphas_smokebuffer[6*256], alphas_firebuffer[6*256];
   int fire_alpha, co2_alpha;
   float fire_alphas[256], co2_alphas[256];
   int *timeslist;
@@ -1522,10 +1518,7 @@ typedef struct _smoke3ddata {
 
   int ncomp_smoke_total;
   int *nchars_compressed_smoke, *nchars_compressed_smoke_full;
-#ifdef pp_SMOKE16
-  unsigned short *val16s;
-  float *val16_mins, *val16_maxs, *times16;
-#endif
+  float *maxvals;
   float maxval;
   unsigned char *smokeframe_in, *smokeframe_out, **smokeframe_comp_list;
   unsigned char *smokeview_tmp;
