@@ -26,6 +26,7 @@ if(WIN32)
     # matches the current setup.
     set(CMAKE_INSTALL_BINDIR ".")
     set(CMAKE_INSTALL_LIBDIR ".")
+    set(CMAKE_INSTALL_SYSCONFDIR ".")
 else()
     # GNUInstallDirs is used to set the appropriate paths on linux (/usr/lib64
     # etc).
@@ -168,19 +169,6 @@ add_subdirectory(Tests)
 option(VERIFICATION_TESTS "Run larger verification tests" OFF)
 if (VERIFICATION_TESTS)
     add_subdirectory(Verification/Visualization)
-endif()
-
-# Retrieve configuration and data files from the bot repo
-file(DOWNLOAD "https://raw.githubusercontent.com/firemodels/bot/a0a9d710f7a55b4e04c9ac4e32a04e2efe197c47/Bundlebot/smv/for_bundle/objects.svo" "${CMAKE_BINARY_DIR}/objects.svo" STATUS object_svo_status)
-list(GET object_svo_status 0 object_svo_status_code)
-if (object_svo_status_code)
-    message(FATAL_ERROR "Could not download objects.svo ${smokeview_ini_status_code}")
-endif()
-
-file(DOWNLOAD "https://raw.githubusercontent.com/firemodels/bot/a0a9d710f7a55b4e04c9ac4e32a04e2efe197c47/Bundlebot/smv/for_bundle/smokeview.ini" "${CMAKE_BINARY_DIR}/smokeview.ini" STATUS smokeview_ini_status)
-list(GET smokeview_ini_status 0 smokeview_ini_status_code)
-if (smokeview_ini_status_code)
-    message(FATAL_ERROR "Could not download smokeview.ini ${smokeview_ini_status_code}")
 endif()
 
 # Libraries to build (which may be dependencies of the programs below)
