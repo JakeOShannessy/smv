@@ -118,16 +118,13 @@ jobs:
         working-directory: ${{github.workspace}}/cbuild
         run: |
           ctest -j10 -C ${{env.BUILD_TYPE}} --output-on-failure
-      - name: Set exec suffix
-        if: matrix.lua == 'on'
-        run: echo "exec_suffix=-lua" >> $GITHUB_ENV
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
           name: smokeview-windows-msvc
           path: smokeview.exe
       - name: Archive installer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: smokeview-windows-msvc.msi
           path: Smokeview JSONRPC.msi
