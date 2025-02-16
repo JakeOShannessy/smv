@@ -11785,9 +11785,8 @@ int ReadSMV_Configure(){
 /// @param scase An uninitialized scase
 void InitScase(smv_case *scase) {
   // zero-out the struct
-  memset(scase, 0, sizeof(smv_case));
+  // memset(scase, 0, sizeof(smv_case));
   // set all of the defaults that are non-zero
-
   scase->tourcoll.ntourinfo = 0;
   scase->tourcoll.tourinfo = NULL;
   scase->tourcoll.tour_ntimes = 1000;

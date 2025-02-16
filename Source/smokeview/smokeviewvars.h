@@ -1639,6 +1639,7 @@ SVEXTERN int SVDECL(vis_gslice_data,0),SVDECL(SHOW_gslice_data,0),SVDECL(SHOW_gs
 SVEXTERN int SVDECL(show_gslice_triangulation,0);
 SVEXTERN int SVDECL(show_gslice_normal,0),SVDECL(show_gslice_normal_keyboard,0);
 
+
 #ifdef INMAIN
 SVEXTERN float static_color[4]={0.0,1.0,0.0,1.0};
 SVEXTERN float sensorcolor[4]={1.0,1.0,0.0,1.0};
