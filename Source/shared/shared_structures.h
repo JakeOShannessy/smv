@@ -1752,10 +1752,11 @@ typedef struct {
 } labels_collection;
 
 struct color_defaults {
-  float foregroundcolor[4];
-  // float surfacedefault[4];
-  float block_ambient2[4];
-  float ventcolor[4];
+  float *block_ambient2;
+  float *ventcolor;
+  float *mat_specular2;
+  float *mat_ambient2;
+  float *block_specular2;
   GLfloat block_shininess;
 };
 

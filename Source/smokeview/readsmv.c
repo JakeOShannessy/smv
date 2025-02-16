@@ -2783,7 +2783,7 @@ void InitTextures0(void){
 #ifdef _DEBUG
       PRINTF("sky texture file: %s\n", tt->file);
 #endif
-      floortex = ReadPicture(texturedir, tt->file, &texwid, &texht, &is_transparent, 0);
+      floortex = ReadPicture(global_scase.texturedir, tt->file, &texwid, &texht, &is_transparent, 0);
       tt->is_transparent = is_transparent;
       if(floortex == NULL)PRINTF("***Error: Texture file %s failed to load\n", tt->file);
     }
@@ -4232,7 +4232,7 @@ void InitObst(smv_case *scase, blockagedata *bc, surfdata *surf, int index, int 
 
 /* ------------------ InitSurface ------------------------ */
 
-void InitSurface(surfdata *surf, float default_color[4]){
+void InitSurface(surfdata *surf, float *color){
   surf->in_color_dialog = 0;
   surf->iso_level = -1;
   surf->used_by_obst = 0;
@@ -4245,7 +4245,7 @@ void InitSurface(surfdata *surf, float default_color[4]){
   surf->surfacelabel = NULL;
   surf->texturefile = NULL;
   surf->textureinfo = NULL;
-  surf->color = default_color;
+  surf->color = color;
   surf->t_width = 1.0;
   surf->t_height = 1.0;
   surf->type = BLOCK_regular;
@@ -10960,7 +10960,7 @@ typedef struct {
         vi->kmin = kv1;
         vi->kmax = kv2;
         if(nn>=nvents&&nn<nvents+6){
-          vi->color=scase->color_defs.foregroundcolor;
+          vi->color=scase->color_defs.ventcolor;
         }
         assert(vi->color!=NULL);
       }
@@ -11779,12 +11779,98 @@ int ReadSMV_Configure(){
   return 0;
 }
 
+/// @brief Initialize a smokeview case (smv_case) which has already been
+/// allocated. This should be avoided and CreateScase/DestroyScase should be
+/// used instead.
+/// @param scase An uninitialized scase
+void InitScase(smv_case *scase) {
+  // zero-out the struct
+  memset(scase, 0, sizeof(smv_case));
+  // set all of the defaults that are non-zero
+
+  scase->tourcoll.ntourinfo = 0;
+  scase->tourcoll.tourinfo = NULL;
+  scase->tourcoll.tour_ntimes = 1000;
+  scase->tourcoll.tour_t = NULL;
+  scase->tourcoll.tour_t2 = NULL;
+  scase->tourcoll.tour_dist = NULL;
+  scase->tourcoll.tour_dist2 = NULL;
+  scase->tourcoll.tour_dist3 = NULL;
+  scase->tourcoll.tour_tstart = 0.0;
+  scase->tourcoll.tour_tstop = 100.0;
+  scase->fuel_hoc = -1.0;
+  scase->fuel_hoc_default = -1.0;
+  scase->have_cface_normals = CFACE_NORMALS_NO;
+  scase->gvecphys[2] =  -9.8;
+  scase->gvecunit[2] =  -1.0;
+  scase->global_tbegin = 1.0;
+  scase->load_hrrpuv_cutoff = 200.0;
+  scase->global_hrrpuv_cutoff = 200.0;
+  scase->global_hrrpuv_cutoff_default = 200.0;
+  scase->smoke_albedo = 0.3;
+  scase->smoke_albedo_base = 0.3;
+  scase->xbar = 1.0;
+  scase->ybar = 1.0;
+  scase->zbar = 1.0;
+  scase->show_slice_in_obst = ONLY_IN_GAS;
+  scase->use_iblank = 1;
+  scase->visOtherVents = 1;
+  scase->visOtherVentsSAVE = 1;
+  scase->hvac_duct_color[0] = 63;
+  scase->hvac_duct_color[1] = 0;
+  scase->hvac_duct_color[2] = 15;
+  scase->hvac_node_color[0] = 63;
+  scase->hvac_node_color[1] = 0;
+  scase->hvac_node_color[2] = 15;
+  scase->nrgb2 = 8;
+  scase->pref = 101325.0;
+  scase->pamb = 0.0;
+  scase->tamb = 293.15;
+  scase->nrgb = NRGB;
+  scase->linewidth = 2.0;
+  scase->ventlinewidth = 2.0;
+  scase->obst_bounding_box[0] = 1.0;
+  scase->obst_bounding_box[2] = 1.0;
+  scase->obst_bounding_box[4] = 1.0;
+  scase->hvaccoll.hvacductvar_index = -1;
+  scase->hvaccoll.hvacnodevar_index = -1;
+  // Initialize default colors
+  scase->color_defs.block_shininess = 100.0;
+  scase->color_defs.mat_specular2=GetColorPtr(scase, mat_specular_orig);
+  scase->color_defs.mat_ambient2=GetColorPtr(scase, mat_ambient_orig);
+  scase->color_defs.ventcolor=GetColorPtr(scase, ventcolor_orig);
+  scase->color_defs.block_ambient2=GetColorPtr(scase, block_ambient_orig);
+  scase->color_defs.block_specular2=GetColorPtr(scase, block_specular_orig);
+
+  InitLabelsCollection(&global_scase.labelscoll);
+
+  InitObjectCollection(&global_scase.objectscoll);
+}
+
+/// @brief Create and initalize and a smokeview case (smv_case).
+/// @return An initialized smv_case.
+smv_case *CreateScase() {
+  smv_case *scase;
+  NewMemory((void **)&scase, sizeof(smv_case));
+  InitScase(scase);
+  return scase;
+}
+
+/// @brief Cleanup and free the memory of an smv_case.
+/// @param scase An smv_case created with CreateScase.
+void DestroyScase(smv_case *scase) {
+  FreeObjectCollection(&scase->objectscoll);
+  FreeCADGeomCollection(&scase->cadgeomcoll);
+  FreeLabelsCollection(&scase->labelscoll);
+}
+
 /* ------------------ ReadSMV ------------------------ */
 
 /// @brief Parse an SMV file.
 /// @param stream the file stream to parse.
 /// @return zero on sucess, non-zero on error
 int ReadSMV(bufferstreamdata *stream){
+  InitScase(&global_scase);
   //** initialize multi-threading
   if(runscript == 1){
     use_checkfiles_threads  = 0;
@@ -14136,7 +14222,7 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", ventcolor_temp, ventcolor_temp + 1, ventcolor_temp + 2);
       ventcolor_temp[3] = 1.0;
-      ventcolor = GetColorPtr(&global_scase, ventcolor_temp);
+      global_scase.color_defs.ventcolor = GetColorPtr(&global_scase, ventcolor_temp);
       global_scase.updatefaces = 1;
       global_scase.updateindexcolors = 1;
       continue;
@@ -14284,14 +14370,14 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", blockcolor_temp, blockcolor_temp + 1, blockcolor_temp + 2);
       blockcolor_temp[3] = 1.0;
-      block_ambient2 = GetColorPtr(&global_scase, blockcolor_temp);
+      global_scase.color_defs.block_ambient2 = GetColorPtr(&global_scase, blockcolor_temp);
       global_scase.updatefaces = 1;
       global_scase.updateindexcolors = 1;
       continue;
     }
     if(MatchINI(buffer, "BLOCKSHININESS") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%f", &block_shininess);
+      sscanf(buffer, "%f", &global_scase.color_defs.block_shininess);
       global_scase.updatefaces = 1;
       global_scase.updateindexcolors = 1;
       continue;
@@ -14302,7 +14388,7 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f", blockspec_temp, blockspec_temp + 1, blockspec_temp + 2);
       blockspec_temp[3] = 1.0;
-      block_specular2 = GetColorPtr(&global_scase, blockspec_temp);
+      global_scase.color_defs.block_specular2 = GetColorPtr(&global_scase, blockspec_temp);
       global_scase.updatefaces = 1;
       global_scase.updateindexcolors = 1;
       continue;
@@ -16472,11 +16558,11 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "BACKGROUNDCOLOR\n");
   fprintf(fileout, " %f %f %f\n", backgroundbasecolor[0], backgroundbasecolor[1], backgroundbasecolor[2]);
   fprintf(fileout, "BLOCKCOLOR\n");
-  fprintf(fileout, " %f %f %f\n", block_ambient2[0], block_ambient2[1], block_ambient2[2]);
+  fprintf(fileout, " %f %f %f\n", global_scase.color_defs.block_ambient2[0], global_scase.color_defs.block_ambient2[1], global_scase.color_defs.block_ambient2[2]);
   fprintf(fileout, "BLOCKSHININESS\n");
-  fprintf(fileout, " %f\n", block_shininess);
+  fprintf(fileout, " %f\n", global_scase.color_defs.block_shininess);
   fprintf(fileout, "BLOCKSPECULAR\n");
-  fprintf(fileout, " %f %f %f\n", block_specular2[0], block_specular2[1], block_specular2[2]);
+  fprintf(fileout, " %f %f %f\n", global_scase.color_defs.block_specular2[0], global_scase.color_defs.block_specular2[1], global_scase.color_defs.block_specular2[2]);
   fprintf(fileout, "BOUNDCOLOR\n");
   fprintf(fileout, " %f %f %f\n", boundcolor[0], boundcolor[1], boundcolor[2]);
   fprintf(fileout, "COLORBAR\n");
@@ -16623,7 +16709,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "TIMEBARCOLOR\n");
   fprintf(fileout, " %f %f %f\n", timebarcolor[0], timebarcolor[1], timebarcolor[2]);
   fprintf(fileout, "VENTCOLOR\n");
-  fprintf(fileout," %f %f %f\n",ventcolor[0],ventcolor[1],ventcolor[2]);
+  fprintf(fileout," %f %f %f\n",global_scase.color_defs.ventcolor[0],global_scase.color_defs.ventcolor[1],global_scase.color_defs.ventcolor[2]);
 
   fprintf(fileout, "\n   *** SIZES/OFFSETS ***\n\n");
 

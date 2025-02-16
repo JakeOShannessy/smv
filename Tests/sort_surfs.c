@@ -10,7 +10,7 @@
 #include <string.h>
 
 void UpdateSortedSurfIdList(surf_collection *surfcoll);
-void InitSurface(surfdata *surf);
+void InitSurface(surfdata *surf, float *color);
 
 int show_help;
 int hash_option;
@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   NewMemory((void **)&surfcoll.surfinfo, N_SURFS * sizeof(surfdata));
   for(int i = 0; i < N_SURFS; i++) {
     surfdata *sd = surfcoll.surfinfo + i;
-    InitSurface(sd);
+    InitSurface(sd, block_ambient_orig);
     sd->surfacelabel = surf_names[i];
   }
   UpdateSortedSurfIdList(&surfcoll);

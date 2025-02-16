@@ -22,21 +22,19 @@
 
 #define TOBW(col) ( 0.299*(col)[0] + 0.587*(col)[1] + 0.114*(col)[2])
 
-// A series of color defaults
+// Define a number of readonly color defaults.
 #ifdef INMAIN
 SVEXTERN float mat_ambient_orig[4] = {0.5f, 0.5f, 0.2f, 1.0f};
 SVEXTERN float mat_specular_orig[4] = {0.5f, 0.5f, 0.2f, 1.0f};
 SVEXTERN float ventcolor_orig[4] = {1.0, 0.0, 1.0, 1.0};
 SVEXTERN float block_ambient_orig[4] = {1.0, 0.8, 0.4, 1.0};
 SVEXTERN float block_specular_orig[4] = {0.0, 0.0, 0.0, 1.0};
-SVEXTERN GLfloat block_shininess = 100.0;
 #else
 SVEXTERN float mat_ambient_orig[4];
 SVEXTERN float mat_specular_orig[4];
 SVEXTERN float ventcolor_orig[4];
 SVEXTERN float block_ambient_orig[4];
 SVEXTERN float block_specular_orig[4];
-SVEXTERN GLfloat block_shininess;
 #endif
 
 /* --------------------------  colordata ------------------------------------ */

@@ -646,8 +646,8 @@ void DrawWindRose(windrosedata *wr,int orientation){
     maxr = maxr_windrose;
   }
   ENABLE_LIGHTING;
-  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, block_ambient2);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &global_scase.color_defs.block_shininess);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, global_scase.color_defs.block_ambient2);
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
   glEnable(GL_COLOR_MATERIAL);
 
@@ -1578,7 +1578,7 @@ void DrawHalfSphere(void){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
+  glTranslatef(-global_scase.xbar0, -global_scase.ybar0, -global_scase.zbar0);
   glTranslatef(dxFDS/2.0,dyFDS/2.0,0.0);
   glScalef(diameter/2.0, diameter/2.0, diameter/2.0);
 
@@ -3419,8 +3419,8 @@ void DrawDevices(int mode){
     if(object_box==1){
       if(object_outlines==0){
         ENABLE_LIGHTING;
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, block_ambient2);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &global_scase.color_defs.block_shininess);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, global_scase.color_defs.block_ambient2);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
         glEnable(GL_COLOR_MATERIAL);
       }
@@ -3471,8 +3471,8 @@ void DrawDevices(int mode){
     int j;
 
     ENABLE_LIGHTING;
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, block_ambient2);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &global_scase.color_defs.block_shininess);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, global_scase.color_defs.block_ambient2);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
     glEnable(GL_COLOR_MATERIAL);
 
@@ -4087,8 +4087,8 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
   if(select_device_color_ptr == NULL&&recurse_level == 0){
     ENABLE_LIGHTING;
 
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, block_ambient2);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &global_scase.color_defs.block_shininess);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, global_scase.color_defs.block_ambient2);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
 
     glEnable(GL_COLOR_MATERIAL);
