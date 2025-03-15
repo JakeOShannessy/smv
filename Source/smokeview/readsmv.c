@@ -11778,7 +11778,8 @@ int ReadSMV_Configure(){
   PRINT_TIMER(total_wrapup_time, "total wrapup time");
   return 0;
 }
-
+#endif
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /// @brief Initialize a smokeview case (smv_case) which has already been
 /// allocated. This should be avoided and CreateScase/DestroyScase should be
 /// used instead.
@@ -11862,7 +11863,9 @@ void DestroyScase(smv_case *scase) {
   FreeCADGeomCollection(&scase->cadgeomcoll);
   FreeLabelsCollection(&scase->labelscoll);
 }
+#endif
 
+#if !defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ ReadSMV ------------------------ */
 
 /// @brief Parse an SMV file.

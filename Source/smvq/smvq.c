@@ -457,13 +457,14 @@ int PrintJson(smv_case *scase) {
   json_object_put(jobj);
   return 0;
 }
-
+void InitScase(smv_case *scase);
 int RunBenchmark(char *input_file, const char *fdsprefix) {
   initMALLOC();
 
   smv_case *scase;
   NEWMEMORY(scase, sizeof(smv_case));
   memset(scase, 0, sizeof(smv_case));
+  InitScase(scase);
   NEWMEMORY(scase->fdsprefix, (strlen(fdsprefix) + 1) * sizeof(char));
   STRCPY(scase->fdsprefix, fdsprefix);
   SetGlobalFilenames(scase);
