@@ -1732,18 +1732,6 @@ SVEXTERN f_units SVDECL(*unitclasses,NULL),SVDECL(*unitclasses_default,NULL),SVD
 SVEXTERN int SVDECL(nunitclasses,0),SVDECL(nunitclasses_default,0),SVDECL(nunitclasses_ini,0);
 #ifdef INMAIN
 SVEXTERN smv_case global_scase = {0};
-parse_options parse_opts = {
-    .smoke3d_only = 0,
-    .setup_only = 0,
-#ifdef pp_FAST
-    .fast_startup = 1,
-    .lookfor_compressed_files = 0,
-#else
-    .fast_startup = 0,
-    .lookfor_compressed_files = 1,
-#endif
-    .handle_slice_files = 1
-};
 #else
 SVEXTERN smv_case global_scase;
 SVEXTERN parse_options parse_opts;

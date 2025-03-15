@@ -2234,14 +2234,14 @@ int SetBlockcolor(float r, float g, float b) {
 } // BLOCKCOLOR
 
 int SetBlockshininess(float v) {
-  block_shininess = v;
+  global_scase.color_defs.block_shininess = v;
   return 0;
 } // BLOCKSHININESS
 
 int SetBlockspecular(float r, float g, float b) {
-  block_specular2[0] = r;
-  block_specular2[1] = g;
-  block_specular2[2] = b;
+  global_scase.color_defs.block_specular2[0] = r;
+  global_scase.color_defs.block_specular2[1] = g;
+  global_scase.color_defs.block_specular2[2] = b;
   return 0;
 } // BLOCKSPECULAR
 
@@ -2472,9 +2472,9 @@ int SetTimebarcolor(float r, float g, float b) {
 } // TIMEBARCOLOR
 
 int SetVentcolor(float r, float g, float b) {
-  ventcolor[0] = r;
-  ventcolor[1] = g;
-  ventcolor[2] = b;
+  global_scase.color_defs.ventcolor[0] = r;
+  global_scase.color_defs.ventcolor[1] = g;
+  global_scase.color_defs.ventcolor[2] = b;
   return 0;
 } // VENTCOLOR
 
