@@ -13,6 +13,7 @@
 
 #include "smokeviewvars.h"
 #include "glutbitmap.h"
+#include "readlabel.h"
 
 
 #define DENORMAL(x,i, n, min,max) ((min) + (i)*((max)-(min))/(n))
