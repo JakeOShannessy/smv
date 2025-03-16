@@ -1078,7 +1078,6 @@ void InitMesh(meshdata *meshi){
   meshi->slice3d_c_buffer = NULL;
 #endif
   meshi->mesh_offset_ptr = NULL;
-  meshi->cullgeominfo = NULL;
   meshi->blockvis = 1;
   meshi->datavis = 1;
   // set meshi->terrain to NULL just after meshinfo is allocated
@@ -2760,7 +2759,6 @@ void InitTextures0(void){
   }
   PRINT_TIMER(texture_timer, "terrain texture setup");
 
-#ifdef pp_SKY
   // define sky texture
 
   if(nsky_texture > 0){
@@ -2802,7 +2800,6 @@ void InitTextures0(void){
     }
   }
   PRINT_TIMER(texture_timer, "sky texture setup");
-#endif
 }
 
   /* ------------------ InitTextures ------------------------ */
@@ -3055,14 +3052,7 @@ void UpdateBoundInfo(void){
 
   GLUIUpdateChar();
   PRINT_TIMER(bound_timer, "GLUIUpdateChar");
-#ifdef pp_PARTBOUND_MULTI
-  if(partbound_threads == NULL){
-    partbound_threads = THREADinit(&n_partbound_threads, &use_partbound_threads, GetGlobalPartBoundsReduced);
-    THREADrun(partbound_threads);
-  }
-#else
   GetGlobalPartBounds(0);
-#endif
   PRINT_TIMER(bound_timer, "GetGlobalPartBounds");
 
   GetGlobalSliceBoundsReduced();
@@ -3152,8 +3142,6 @@ void UpdateBlockType(void){
   }
 }
 
-#ifdef pp_SKY
-
 /* ------------------ GetBoxSkyCorners ------------------------ */
 
 void GetBoxSkyCorners(void){
@@ -3212,7 +3200,6 @@ void GetBoxSkyCorners(void){
   box_sky_corners[7][1] = ymax;
   box_sky_corners[7][2] = zmax;
 }
-#endif
 
 /* ------------------ GetBoxGeomCorners ------------------------ */
 
@@ -7283,7 +7270,52 @@ void SetExternalVents(void){
 }
 #endif
 
-#if defined(ASLIB) || !defined(pp_CMAKE)
+/* ------------------ GetSkyBox ------------------------ */
+
+void GetSkyBoxTextures(void){
+  int have_textures = 1;
+  int i;
+
+  if(skyboxinfo != NULL)return;
+  for(i = 0; i < 6; i++){
+    char buffer[256];
+    char *sides[6] = {"_ymax.jpg", "_xmin.jpg", "_ymin.jpg", "_xmax.jpg", "_zmin.jpg", "_zmax.jpg"};
+
+    strcpy(buffer, global_scase.fdsprefix);
+    strcat(buffer, sides[i]);
+    if(FileExistsOrig(buffer) == 0){
+      have_textures = 0;
+      break;
+    }
+  }
+  if(have_textures == 0)return;
+  nskyboxinfo = 1;
+  NewMemory((void **)&skyboxinfo, nskyboxinfo * sizeof(skyboxdata));
+  for(i = 0; i < 6; i++){
+    char buffer[256];
+    char *sides[6] = {"_ymax.jpg", "_xmin.jpg", "_ymin.jpg", "_xmax.jpg", "_zmin.jpg", "_zmax.jpg"};
+
+    strcpy(buffer, global_scase.fdsprefix);
+    strcat(buffer, sides[i]);
+    LoadSkyTexture(buffer, skyboxinfo->face + i);
+  }
+}
+
+/* ------------------ GetSkyImage ------------------------ */
+
+void GetSkyImageTexture(void){
+  char buffer[256];
+  
+  strcpy(buffer, global_scase.fdsprefix);
+  strcat(buffer, "_sky.jpg");
+  if(sky_texture != NULL || FileExistsOrig(buffer) == 0)return;
+  
+  nsky_texture = 1;
+  NewMemory((void **)&sky_texture, nsky_texture * sizeof(texturedata));
+  NewMemory((void **)&sky_texture->file, (strlen(buffer) + 1) * sizeof(char));
+  strcpy(sky_texture->file, buffer);
+}
+
 /* ------------------ ReadSMV_Parse ------------------------ */
 /// @brief Parse an SMV file into global variables. This should only be called
 /// after ReadSMV_Init to ensure that the appropriate variables are set.
@@ -7576,7 +7608,6 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       }
       continue;
     }
-#ifdef pp_SKY
     if(MatchSMV(buffer, "SKYIMAGE") == 1){
       char *buff2;
       int len_buffer;
@@ -7597,7 +7628,6 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       }
       continue;
     }
-#endif
     if(
       (MatchSMV(buffer,"DEVICE") == 1)&&
       (MatchSMV(buffer,"DEVICE_ACT") != 1)
@@ -10383,7 +10413,7 @@ typedef struct {
                 hidden6, hidden6 + 1, hidden6 + 2, hidden6 + 3, hidden6 + 4, hidden6 + 5);
               int ii;
               for(ii = 0; ii < 6; ii++){
-                if(hidden6[i] >= 0)hidden6[ii] = 1 - hidden6[ii];
+                if(hidden6[ii] >= 0)hidden6[ii] = 1 - hidden6[ii];
               }
               memcpy(bc->hidden6, hidden6, 6*sizeof(int));
               if(hidden6[0] >= 0)scase->have_hidden6 = 1;
@@ -10538,6 +10568,7 @@ typedef struct {
         cvi->texture_origin[2]=scase->texture_origin[2];
         cvi->useventcolor=1;
         cvi->hideboundary=0;
+        cvi->have_boundary_file = 1;
         cvi->cvent_id=-1;
         cvi->color=NULL;
         cvi->blank=NULL;
@@ -10589,6 +10620,7 @@ typedef struct {
         float *vcolor;
         int venttype,ventindex;
         float s_color[4],s2_color[4];
+        int have_boundary_file;
 
         s2_color[0]=-1.0;
         s2_color[1]=-1.0;
@@ -10608,11 +10640,13 @@ typedef struct {
         s_color[2]=vcolor[2];
         s_color[3]=vcolor[3];
         venttype=-99;
+        have_boundary_file=1;
 
         FGETS(buffer,255,stream);
-        sscanf(buffer,"%i %i %i %i %i %i %i %i %f %f %f",
+        sscanf(buffer,"%i %i %i %i %i %i %i %i %f %f %f %i",
           &cvi->imin,&cvi->imax,&cvi->jmin,&cvi->jmax,&cvi->kmin,&cvi->kmax,
-          &ventindex,&venttype,s2_color,s2_color+1,s2_color+2);
+          &ventindex,&venttype,s2_color,s2_color+1,s2_color+2,&have_boundary_file);
+        cvi->have_boundary_file = have_boundary_file;
 
         // use color from &VENT
 
@@ -11339,6 +11373,8 @@ int ReadSMV_Configure(){
 
   PRINTF("  wrapping up\n");
 
+  GetSkyBoxTextures();
+  GetSkyImageTexture();
   InitTextures(use_graphics);
 
   FREEMEMORY(camera_external);
@@ -11380,7 +11416,7 @@ int ReadSMV_Configure(){
       break;
     }
   }
-  if(global_scase.ntotal_blockages > 250000)show_geom_boundingbox = SHOW_BOUNDING_BOX_MOUSE_DOWN;
+  if(global_scase.ntotal_blockages > 250000)hide_scene = 1;
 
   if(checkfiles_threads != NULL){
     checkfiles_threads = THREADinit(&n_checkfiles_threads, &use_checkfiles_threads, CheckFiles);
@@ -11399,8 +11435,6 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "AddCfastCsvf");
 
   //RemoveDupBlockages();
-  InitCullGeom(cullgeom);
-  PRINT_TIMER(timer_readsmv, "InitCullGeom");
   UpdateINIList();
   PRINT_TIMER(timer_readsmv, "UpdateINIList");
 
@@ -11575,14 +11609,6 @@ int ReadSMV_Configure(){
   MakeIBlankCarve();
   PRINT_TIMER(timer_readsmv, "MakeIBlankCarve");
 
-  if(mergesmoke_threads == NULL){
-    mergesmoke_threads = THREADinit(&n_mergesmoke_threads, &use_mergesmoke_threads, MtMergeSmoke3D);
-    for(i = 0; i < n_mergesmoke_threads; i++){
-      smokethreadinfo[i].ithread = i;
-      smokethreadinfo[i].nthreads = n_mergesmoke_threads;
-    }
-  }
-
   if(ffmpeg_threads == NULL){
     ffmpeg_threads = THREADinit(&n_ffmpeg_threads, &use_ffmpeg_threads, SetupFF);
   }
@@ -11720,9 +11746,7 @@ int ReadSMV_Configure(){
   UpdateTriangles(GEOM_STATIC,GEOM_UPDATE_ALL);
   GetFaceInfo();
   GetBoxGeomCorners();
-#ifdef pp_SKY
   GetBoxSkyCorners();
-#endif
   PRINT_TIMER(timer_readsmv, "update trianglesfaces");
 
   if(global_scase.ngeominfo>0&&global_scase.auto_terrain==1){
@@ -11753,6 +11777,10 @@ int ReadSMV_Configure(){
 
   InitMeshBlockages();
   SetExternalVents();
+
+  if(global_scase.meshescoll.nmeshes > 200){
+    hide_scene = 1;
+  }
 
   PRINTF("%s", _("complete"));
   PRINTF("\n\n");
@@ -12428,7 +12456,8 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i %i %i %i", &dummy, &dummy, &dummy, &dummy);
       fgets(buffer, 255, stream);
-      sscanf(buffer, " %f %f %i %i %i %i", &geom_vert_exag, &rdummy, &dummy, &dummy2, &show_geom_boundingbox, &show_geom_bndf );
+      sscanf(buffer, " %f %f %i %i %i %i", &geom_vert_exag, &rdummy, &dummy, &dummy2, &hide_scene, &show_geom_bndf );
+      if(hide_scene !=1)hide_scene = 0;
       continue;
     }
     if(MatchINI(buffer, "SHOWTRIANGLECOUNT") == 1){
@@ -13025,19 +13054,15 @@ int ReadIni2(const char *inifile, int localfile){
       continue;
     }
     if(MatchINI(buffer, "SKYBOX") == 1){
-      skyboxdata *skyi;
-
       FreeSkybox();
       nskyboxinfo = 1;
       NewMemory((void **)&skyboxinfo, nskyboxinfo*sizeof(skyboxdata));
-      skyi = skyboxinfo;
-
       for(i = 0; i<6; i++){
         char *skybox_texture;
 
         fgets(buffer, 255, stream);
         skybox_texture = TrimFrontBack(buffer);
-        LoadSkyTexture(skybox_texture, skyi->face + i);
+        LoadSkyTexture(skybox_texture, skyboxinfo->face + i);
       }
     }
     if(MatchINI(buffer, "C_PLOT3D")==1){
@@ -13461,9 +13486,6 @@ int ReadIni2(const char *inifile, int localfile){
       strcpy(buffer2, "");
       sscanf(buffer, "%i %f %i %f %s", &setvalmin, &valmin, &setvalmax, &valmax, buffer2);
       if(strcmp(buffer2, "")!=0&&strcmp(buffer2,"Uniform")!=0){
-#ifdef pp_PARTBOUND_MULTI
-        THREADcontrol(partbound_threads, THREAD_JOIN);
-#endif
         for(i = 0; i<npartbounds_cpp; i++){
           cpp_boundsdata *boundi;
 
@@ -13772,6 +13794,7 @@ int ReadIni2(const char *inifile, int localfile){
     if(MatchINI(buffer, "CLIP") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f", &nearclip, &farclip);
+      farclip_save = farclip;
       continue;
     }
     if(MatchINI(buffer, "SHOWTRACERSALWAYS") == 1){
@@ -14568,14 +14591,18 @@ int ReadIni2(const char *inifile, int localfile){
       zonecolortype = CLAMP(zonecolortype, 0, 2);
       continue;
     }
-#ifdef pp_SKY
-    if(MatchINI(buffer, "SHOWSKY") == 1){
+    if(MatchINI(buffer, "SHOWSKYSPHERE") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &visSky);
-      ONEORZERO(visSky);
+      sscanf(buffer, "%i %i %i %i %i %f", &visSkysphere, &visSkybox, &visSkyground, &visSkyboxoutline, &visSkySpheretexture, &sky_diam);
+      ONEORZERO(visSkysphere);
+      ONEORZERO(visSkybox);
+      ONEORZERO(visSkyground);
+      ONEORZERO(visSkyboxoutline);
+      ONEORZERO(visSkySpheretexture);
+      GLUISkyCB(SKY_BOX);
+      GLUISkyCB(SKY_SPHERE);
       continue;
     }
-#endif
     if(MatchINI(buffer, "SHOWSMOKEPART") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &visSmokePart);
@@ -15045,7 +15072,7 @@ int ReadIni2(const char *inifile, int localfile){
       }
       if(MatchINI(buffer, "VIEWTOURFROMPATH") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
-        sscanf(buffer, "%i %i %f", &viewtourfrompath, &tour_snap, &tour_snap_time);
+        sscanf(buffer, "%i", &viewtourfrompath);
         continue;
       }
       if(MatchINI(buffer, "TOURCONSTANTVEL") == 1){
@@ -15133,7 +15160,7 @@ int ReadIni2(const char *inifile, int localfile){
         ncolorbarini = MAX(ncolorbarini, 0);
         InitDefaultColorbars(&colorbars, ncolorbarini, show_extreme_mindata,
                              rgb_below_min, show_extreme_maxdata,
-                             rgb_above_max, colorbarcopyinfo);
+                             rgb_above_max, &colorbarcopyinfo);
         UpdateColorbarDialogs();
         UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
         update_colorbar_dialog = 0;
@@ -15944,7 +15971,7 @@ int ReadIni(char *inifile){
   }
   if(colorbars.ncolorbars<=colorbars.ndefaultcolorbars){
     InitDefaultColorbars(&colorbars, 0, show_extreme_mindata, rgb_below_min,
-                         show_extreme_maxdata, rgb_above_max, colorbarcopyinfo);
+                         show_extreme_maxdata, rgb_above_max, &colorbarcopyinfo);
     UpdateColorbarDialogs();
     UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
     update_colorbar_dialog = 0;
@@ -16340,9 +16367,6 @@ void WriteIniLocal(FILE *fileout){
         );
     }
   }
-#ifdef pp_PARTBOUND_MULTI
-  THREADcontrol(partbound_threads, THREAD_JOIN);
-#endif
   for(i = 0; i<npartbounds_cpp; i++){
     cpp_boundsdata *boundi;
 
@@ -16890,7 +16914,12 @@ void WriteIni(int flag,char *filename){
      0, 1, show_faces_shaded, show_faces_outline, smooth_geom_normal,
      geom_force_transparent, geom_transparency, geom_linewidth, use_geom_factors, show_cface_normals, geom_pointsize, geom_dz_offset, geom_norm_offset);
   fprintf(fileout, " %i %i %i %i\n", 0, 0, 0, 0);
-  fprintf(fileout, " %f %f %i %i %i %i\n", geom_vert_exag, 30.0, 0, 0, show_geom_boundingbox, show_geom_bndf);
+
+  int hide_scene_old;
+
+  hide_scene_old = hide_scene;
+  if(hide_scene != 1)hide_scene_old = 2;
+  fprintf(fileout, " %f %f %i %i %i %i\n", geom_vert_exag, 30.0, 0, 0, hide_scene_old, show_geom_bndf);
 
   fprintf(fileout, "GVERSION\n");
   fprintf(fileout, " %i\n", vis_title_gversion);
@@ -17002,10 +17031,8 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i\n", global_scase.show_slice_in_obst);
   fprintf(fileout, "SHOWSMOKEPART\n");
   fprintf(fileout, " %i\n", visSmokePart);
-#ifdef pp_SKY
-  fprintf(fileout, "SHOWSKY\n");
-  fprintf(fileout, " %i\n", visSky);
-#endif
+  fprintf(fileout, "SHOWSKYSPHERE\n");
+  fprintf(fileout, "%i %i %i %i %i %f\n", visSkysphere, visSkybox, visSkyground, visSkyboxoutline, visSkySpheretexture, sky_diam);
   fprintf(fileout, "SHOWSPRINKPART\n");
   fprintf(fileout, " %i\n", visSprinkPart);
   fprintf(fileout, "SHOWSTREAK\n");
@@ -17305,8 +17332,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "VIEWTIMES\n");
   fprintf(fileout, " %f %f %i\n", global_scase.tourcoll.tour_tstart, global_scase.tourcoll.tour_tstop, global_scase.tourcoll.tour_ntimes);
   fprintf(fileout, "VIEWTOURFROMPATH\n");
-  fprintf(fileout, " %i %i %f\n", viewtourfrompath, tour_snap, tour_snap_time);
-
+  fprintf(fileout, " %i %i %f\n", viewtourfrompath, 0, 0.0);
 
   if(flag == LOCAL_INI)WriteIniLocal(fileout);
   if(

@@ -25,9 +25,7 @@ GLUI_Listbox *LIST_surfs=NULL;
 GLUI_Spinner *SPINNER_refresh_rate=NULL;
 #endif
 
-#ifdef pp_SKY
 GLUI_Spinner *SPINNER_sky_diam = NULL;
-#endif
 
 GLUI_Spinner *SPINNER_LB_tick_xbeg=NULL;
 GLUI_Spinner *SPINNER_LB_tick_ybeg=NULL;
@@ -141,6 +139,11 @@ GLUI_Checkbox *CHECKBOX_ticks_outside = NULL;
 GLUI_Checkbox *CHECKBOX_labels_fds_title = NULL;
 GLUI_Checkbox *CHECKBOX_texture_showall = NULL;
 GLUI_Checkbox *CHECKBOX_texture_hideall = NULL;
+GLUI_Checkbox *CHECKBOX_hide_scene = NULL;
+GLUI_Checkbox *CHECKBOX_visSkybox = NULL;
+GLUI_Checkbox *CHECKBOX_visSkysphere = NULL;
+GLUI_Checkbox *CHECKBOX_visSkyground = NULL;
+GLUI_Checkbox *CHECKBOX_visSkyboxoutline;
 
 GLUI_Rollout *ROLLOUT_LB_tick0 = NULL;
 GLUI_Rollout *ROLLOUT_font=NULL;
@@ -150,9 +153,9 @@ GLUI_Rollout *ROLLOUT_general1 = NULL;
 GLUI_Rollout *ROLLOUT_general2 = NULL;
 GLUI_Rollout *ROLLOUT_north = NULL;
 GLUI_Rollout *ROLLOUT_light2 = NULL;
+GLUI_Rollout *ROLLOUT_sky = NULL;
 
 GLUI_Panel *PANEL_blockage_drawing = NULL;
-GLUI_Panel *PANEL_boundingbox = NULL;
 GLUI_Panel *PANEL_titles=NULL;
 GLUI_Panel *PANEL_screen = NULL;
 GLUI_Panel *PANEL_light=NULL;
@@ -182,8 +185,10 @@ GLUI_Panel *PANEL_linewidth = NULL;
 GLUI_Panel *PANEL_offset = NULL;
 GLUI_Panel *PANEL_surfs = NULL;
 GLUI_Panel *PANEL_texture_display = NULL;
+GLUI_Panel *PANEL_sky = NULL;
+GLUI_Panel *PANEL_sphere = NULL;
+GLUI_Panel *PANEL_box = NULL;
 
-GLUI_RadioGroup *RADIO_show_geom_boundingbox = NULL;
 GLUI_RadioGroup *RADIO_timebar_overlap = NULL;
 GLUI_RadioGroup *RADIO_fontsize = NULL;
 GLUI_RadioGroup *RADIOBUTTON_label_1 = NULL;
@@ -226,11 +231,6 @@ GLUI_Button *BUTTON_label_4=NULL;
 #define LB_VISLABELS 11
 #define LB_TICK_XYZ 12
 #define LB_SHOW_TICK 13
-
-#ifdef pp_SKY
-#define SKY_DIAM 0
-#define SKY_VIS  1
-#endif
 
 #define LABELS_label           0
 //#define LABELS_vcolorbar      34  movied to smokeviewdefs.h
@@ -289,11 +289,18 @@ GLUI_Button *BUTTON_label_4=NULL;
 #define TICKS_ROLLOUT     4
 #define LABELS_ROLLOUT    5
 #define LIGHT_ROLLOUT     6
+#define SKY_ROLLOUT       7
 
 #define UPDATEMENU 1
 
-procdata displayprocinfo[7];
+procdata displayprocinfo[8];
 int ndisplayprocinfo = 0;
+
+/* ------------------ GLUIUpdateVisSkyboxOutline ------------------------ */
+
+extern "C" void GLUIUpdateVisSkyboxOutline(void){
+  if(CHECKBOX_visSkyboxoutline != NULL)CHECKBOX_visSkyboxoutline->set_int_val(visSkyboxoutline);
+}
 
 /* ------------------ GLUIUpdateVisAxisLabels ------------------------ */
 
@@ -737,19 +744,40 @@ extern "C" void GLUITextureCB(int var){
   }
 }
 
-#ifdef pp_SKY
 /* ------------------ GLUISkyCB ------------------------ */
 
-void GLUISkyCB(int var){
+extern "C" void GLUISkyCB(int var){
+  float farclip_before;
+
+  farclip_before = farclip;
+  if(visSkybox == 1 || visSkysphere == 1){
+    farclip = MAX(farclip_save, sky_diam);
+  }
+  else{
+    farclip = farclip_save;
+  }
+  if(farclip != farclip_before){
+    GLUISceneMotionCB(NEARFARCLIP);
+    GLUIUpdateFarclip();
+  }
+
   switch (var){
-    case SKY_DIAM:
+    case SKY_BOX:
       if(sky_diam<1.0){
         sky_diam = 1.0;
         if(SPINNER_sky_diam!=NULL)SPINNER_sky_diam->set_float_val(sky_diam);
       }
+      if(visSkybox==1&&visSkysphere==1){
+        visSkysphere = 0;
+        CHECKBOX_visSkysphere->set_int_val(0);
+      }
       GetBoxSkyCorners();
       break;
-    case SKY_VIS:
+    case SKY_SPHERE:
+      if(visSkybox==1&&visSkysphere==1){
+        visSkybox = 0;
+        if(CHECKBOX_visSkybox!=NULL)CHECKBOX_visSkybox->set_int_val(0);
+      }
       GetBoxSkyCorners();
       break;
     default:
@@ -757,30 +785,29 @@ void GLUISkyCB(int var){
       break;
   }
 }
-#endif
 
 /* ------------------ GLUIDisplaySetup ------------------------ */
 
 extern "C" void GLUIDisplaySetup(int main_window){
   labeldata *gl;
 
-  if(glui_labels!=NULL){
+  if(glui_labels != NULL){
     glui_labels->close();
-    glui_labels=NULL;
+    glui_labels = NULL;
   }
-  glui_labels = GLUI_Master.create_glui("Display",0,dialogX0,dialogY0);
+  glui_labels = GLUI_Master.create_glui("Display", 0, dialogX0, dialogY0);
   glui_labels->hide();
 
-  // -------------- General1 Settings -------------------
+  // -------------- Labels/Titles/Bounding box -------------------
 
-  ROLLOUT_general1 = glui_labels->add_rollout(_("Labels/Titles/Bounding box"),true, GENERAL_ROLLOUT1, DisplayRolloutCB);
+  ROLLOUT_general1 = glui_labels->add_rollout(_("Labels/Titles/Bounding box"), true, GENERAL_ROLLOUT1, DisplayRolloutCB);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_general1, GENERAL_ROLLOUT1, glui_labels);
 
-  PANEL_gen1=glui_labels->add_panel_to_panel(ROLLOUT_general1,"",GLUI_PANEL_NONE);
+  PANEL_gen1 = glui_labels->add_panel_to_panel(ROLLOUT_general1, "", GLUI_PANEL_NONE);
 
-  if(global_scase.slicecoll.nsliceinfo>0)CHECKBOX_labels_average = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Average"), &vis_slice_average, LABELS_label, GLUILabelsCB);
+  if(global_scase.slicecoll.nsliceinfo > 0)CHECKBOX_labels_average = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Average"), &vis_slice_average, LABELS_label, GLUILabelsCB);
   CHECKBOX_labels_axis = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Axis"), &visaxislabels, LABELS_label, GLUILabelsCB);
-  CHECKBOX_visColorbarVertical   = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Colorbar(vertical)"),   &visColorbarVertical,   LABELS_vcolorbar, GLUILabelsCB);
+  CHECKBOX_visColorbarVertical = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Colorbar(vertical)"), &visColorbarVertical, LABELS_vcolorbar, GLUILabelsCB);
   CHECKBOX_visColorbarHorizontal = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Colorbar(horizontal)"), &visColorbarHorizontal, LABELS_hcolorbar, GLUILabelsCB);
   CHECKBOX_labels_timebar = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Timebar"), &visTimebar, LABELS_label, GLUILabelsCB);
   CHECKBOX_labels_framelabel = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Frame"), &visFramelabel, LABELS_label, GLUILabelsCB);
@@ -793,11 +820,6 @@ extern "C" void GLUIDisplaySetup(int main_window){
 #ifdef pp_memstatus
   CHECKBOX_labels_availmemory = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("Memory load"), &visAvailmemory, LABELS_label, GLUILabelsCB);
 #endif
-#ifdef pp_SKY
-  glui_labels->add_checkbox_to_panel(PANEL_gen1, _("show sky"), &visSky, SKY_VIS, GLUISkyCB);
-  SPINNER_sky_diam = glui_labels->add_spinner_to_panel(PANEL_gen1, _("sky diameter"), GLUI_SPINNER_FLOAT, &sky_diam, SKY_DIAM, GLUISkyCB);
-#endif
-
 
   glui_labels->add_column_to_panel(PANEL_gen1, false);
 
@@ -811,18 +833,13 @@ extern "C" void GLUIDisplaySetup(int main_window){
   SPINNER_refresh_rate->set_int_limits(0,10);
 #endif
 
+  CHECKBOX_hide_scene = glui_labels->add_checkbox_to_panel(PANEL_gen1, _("hide scene when mouse is pressed"), &hide_scene, LABELS_BOUNDING_BOX, GLUILabelsCB);
+
   PANEL_titles=glui_labels->add_panel_to_panel(PANEL_gen1,"Titles");
-  CHECKBOX_labels_title = glui_labels->add_checkbox_to_panel(PANEL_titles,     _("Smokeview version, build date"), &vis_title_smv_version, LABELS_label,   GLUILabelsCB);
+  CHECKBOX_labels_title = glui_labels->add_checkbox_to_panel(PANEL_titles,     _("Smokeview build date"), &vis_title_smv_version, LABELS_label,   GLUILabelsCB);
   CHECKBOX_labels_version = glui_labels->add_checkbox_to_panel(PANEL_titles,   _("FDS, Smokeview version"),        &vis_title_gversion,    LABELS_version, GLUILabelsCB);
   CHECKBOX_labels_fds_title = glui_labels->add_checkbox_to_panel(PANEL_titles, _("Input file title"),              &vis_title_fds,         LABELS_label,   GLUILabelsCB);
   CHECKBOX_labels_chid = glui_labels->add_checkbox_to_panel(PANEL_titles,      _("CHID"),                          &vis_title_CHID,        LABELS_label,   GLUILabelsCB);
-
-  PANEL_boundingbox = glui_labels->add_panel_to_panel(PANEL_gen1, "show bounding box");
-  PANEL_boundingbox->set_alignment(GLUI_ALIGN_LEFT);
-  RADIO_show_geom_boundingbox = glui_labels->add_radiogroup_to_panel(PANEL_boundingbox, &show_geom_boundingbox, LABELS_BOUNDING_BOX, GLUILabelsCB);
-  glui_labels->add_radiobutton_to_group(RADIO_show_geom_boundingbox, "always");
-  glui_labels->add_radiobutton_to_group(RADIO_show_geom_boundingbox, "when mouse is pressed");
-  glui_labels->add_radiobutton_to_group(RADIO_show_geom_boundingbox, "never");
 
   if(global_scase.ntickinfo > 0){
     CHECKBOX_labels_ticks->enable();
@@ -838,6 +855,8 @@ extern "C" void GLUIDisplaySetup(int main_window){
   BUTTON_label_1=glui_labels->add_button_to_panel(PANEL_gen2,_("Show all"),LABELS_showall,GLUILabelsCB);
   glui_labels->add_column_to_panel(PANEL_gen2,false);
   BUTTON_label_2=glui_labels->add_button_to_panel(PANEL_gen2,_("Hide all"),LABELS_hideall,GLUILabelsCB);
+
+  // -------------- Lines/Offsets/Surfaces/Other -------------------
 
   ROLLOUT_general2 = glui_labels->add_rollout(_("Lines/Offsets/Surfaces/Other"), false, GENERAL_ROLLOUT2, DisplayRolloutCB);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_general2, GENERAL_ROLLOUT2, glui_labels);
@@ -948,6 +967,8 @@ extern "C" void GLUIDisplaySetup(int main_window){
   PANEL_texture_display = glui_labels->add_panel_to_panel(ROLLOUT_general2, _("Textures"));
   CHECKBOX_texture_showall = glui_labels->add_checkbox_to_panel(PANEL_texture_display, _("show all"), &texture_showall, TEXTURE_SHOWALL, GLUITextureCB);
   CHECKBOX_texture_hideall = glui_labels->add_checkbox_to_panel(PANEL_texture_display, _("hide all"), &texture_hideall, TEXTURE_HIDEALL, GLUITextureCB);
+
+  // -------------- Light -------------------
 
   ROLLOUT_light2 = glui_labels->add_rollout("Light",false,LIGHT_ROLLOUT,DisplayRolloutCB);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_light2, LIGHT_ROLLOUT, glui_labels);
@@ -1189,6 +1210,23 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   TextLabelsCB(LB_LIST);
 
+  // -------------- Sky -------------------
+
+  ROLLOUT_sky = glui_labels->add_rollout("Sky/ground",false,SKY_ROLLOUT,DisplayRolloutCB);
+  TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_sky, SKY_ROLLOUT, glui_labels);
+  if(skyboxinfo != NULL){
+    PANEL_box=glui_labels->add_panel_to_panel(ROLLOUT_sky,_("box"));
+    CHECKBOX_visSkybox      = glui_labels->add_checkbox_to_panel(PANEL_box, _("show"), &visSkybox, SKY_BOX, GLUISkyCB);
+    CHECKBOX_visSkyboxoutline = glui_labels->add_checkbox_to_panel(PANEL_box, _("show box outlines"), &visSkyboxoutline);
+  }
+  PANEL_sphere=glui_labels->add_panel_to_panel(ROLLOUT_sky,_("hemisphere"));
+  CHECKBOX_visSkysphere = glui_labels->add_checkbox_to_panel(PANEL_sphere, _("show"), &visSkysphere, SKY_SPHERE, GLUISkyCB);
+  CHECKBOX_visSkyground = glui_labels->add_checkbox_to_panel(PANEL_sphere, _("show ground"), &visSkyground, SKY_SPHERE, GLUISkyCB);
+  SPINNER_sky_diam = glui_labels->add_spinner_to_panel(PANEL_sphere, _("diameter"), GLUI_SPINNER_FLOAT, &sky_diam, SKY_BOX, GLUISkyCB);
+  if(sky_texture != NULL){
+    glui_labels->add_checkbox_to_panel(PANEL_sphere, _("show texture"), &visSkySpheretexture, SKY_SPHERE, GLUISkyCB);
+  }
+
   // --------------
 
   PANEL_label2 = glui_labels->add_panel("",false);
@@ -1244,7 +1282,7 @@ extern "C" void GLUIUpdateColorbarControls(void){
 /* ------------------ GLUIUpdateGeomBoundingBox ------------------------ */
 
 extern "C" void GLUIUpdateGeomBoundingBox(void){
-  if(RADIO_show_geom_boundingbox != NULL)RADIO_show_geom_boundingbox->set_int_val(show_geom_boundingbox);
+  if(CHECKBOX_hide_scene != NULL)CHECKBOX_hide_scene->set_int_val(hide_scene);
 }
 
 /* ------------------ GLUILabelsCB ------------------------ */

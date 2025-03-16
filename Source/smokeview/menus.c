@@ -45,13 +45,12 @@ float     part_load_time;
 #define GEOM_TriangleCount           14
 #define GEOM_ShowAll                 11
 #define GEOM_HideAll                 13
-#define GEOM_BOUNDING_BOX_ALWAYS     10
 #define GEOM_BOUNDING_BOX_MOUSE_DOWN  9
+#define SKY_OUTLINE                   4
 
 #define MENU_TERRAIN_SHOW_SURFACE      -1
 #define MENU_TERRAIN_SHOW_LINES        -2
 #define MENU_TERRAIN_SHOW_POINTS       -3
-#define MENU_TERRAIN_BOUNDING_BOX      -5
 #define MENU_TERRAIN_BOUNDING_BOX_AUTO -6
 
 #define MENU_KEEP_ALL -2
@@ -3366,7 +3365,6 @@ void UnloadSmoke3D(smoke3ddata *smoke3di){
 void UnloadAllSmoke3D(int type){
   int i;
 
-  update_glui_merge_smoke = 1;
   if(global_scase.smoke3dcoll.nsmoke3dinfo > 0){
     for(i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++){
       smoke3ddata *smoke3di;
@@ -4338,15 +4336,12 @@ void LoadParticleMenu(int value){
       if(value == PARTFILE_LOADALL){
         SetupPart(value);
       }
-#ifdef pp_PART_COUNT
       if(value==PARTFILE_LOADALL){
         npartframes_max=GetMinPartFrames(PARTFILE_LOADALL);
       }
       else{
         npartframes_max=GetMinPartFrames(PARTFILE_RELOADALL);
       }
-#endif
-
       if(scriptoutstream==NULL||script_defer_loading==0){
 
         SetupPart(value);
@@ -6656,21 +6651,12 @@ void BlockageMenu(int value){
   if(solid_state<0)solid_state=visBlocks;
   if(outline_state<0)outline_state=OUTLINE_NONE;
   switch(value){
-    case GEOM_BOUNDING_BOX_ALWAYS:
-      if(show_geom_boundingbox==SHOW_BOUNDING_BOX_ALWAYS){
-        show_geom_boundingbox = SHOW_BOUNDING_BOX_NEVER;
-      }
-      else{
-        show_geom_boundingbox = SHOW_BOUNDING_BOX_ALWAYS;
-      }
-      GLUIUpdateGeomBoundingBox();
-      break;
     case GEOM_BOUNDING_BOX_MOUSE_DOWN:
-      if(show_geom_boundingbox==SHOW_BOUNDING_BOX_MOUSE_DOWN){
-        show_geom_boundingbox = SHOW_BOUNDING_BOX_NEVER;
+      if(hide_scene==1){
+        hide_scene = 0;
       }
       else{
-        show_geom_boundingbox = SHOW_BOUNDING_BOX_MOUSE_DOWN;
+        hide_scene = 1;
       }
       GLUIUpdateGeomBoundingBox();
       break;
@@ -6815,6 +6801,27 @@ void BlockageMenu(int value){
   updatemenu=1;
   updatefacelists=1;
   GLUTPOSTREDISPLAY;
+}
+
+/* ------------------ TranslateTypeMenu ------------------------ */
+
+void TranslateTypeMenu(int value){
+  assert(value>=0&&value<=2);
+  translation_type = CLAMP(value,0,2);
+  switch(translation_type){
+  case TRANSLATE_XY_option:
+    printf("translate left/right and front/back\n");
+    break;
+  case TRANSLATE_X_option:
+    printf("translate only left/right\n");
+    break;
+  case TRANSLATE_Y_option:
+    printf("translate only front/back\n");
+    break;
+  default:
+    assert(0);
+    break;
+  }
 }
 
 /* ------------------ RotateTypeMenu ------------------------ */
@@ -7093,21 +7100,12 @@ void TerrainGeomShowMenu(int value){
     case MENU_TERRAIN_SHOW_POINTS:
       terrain_show_geometry_points = 1-terrain_show_geometry_points;
       break;
-    case MENU_TERRAIN_BOUNDING_BOX:
-      if(show_geom_boundingbox==SHOW_BOUNDING_BOX_ALWAYS){
-        show_geom_boundingbox = SHOW_BOUNDING_BOX_NEVER;
-      }
-      else{
-        show_geom_boundingbox = SHOW_BOUNDING_BOX_ALWAYS;
-      }
-      GLUIUpdateGeomBoundingBox();
-      break;
     case MENU_TERRAIN_BOUNDING_BOX_AUTO:
-      if(show_geom_boundingbox==SHOW_BOUNDING_BOX_MOUSE_DOWN){
-        show_geom_boundingbox = SHOW_BOUNDING_BOX_NEVER;
+      if(hide_scene==1){
+        hide_scene = 0;
       }
       else{
-        show_geom_boundingbox = SHOW_BOUNDING_BOX_MOUSE_DOWN;
+        hide_scene = 1;
       }
       GLUIUpdateGeomBoundingBox();
       break;
@@ -7599,6 +7597,10 @@ int HaveBoundaryArrival(void){
 void GeometryMenu(int value){
 
   switch(value){
+  case SKY_OUTLINE:
+    visSkyboxoutline = 1 - visSkyboxoutline;
+    GLUIUpdateVisSkyboxOutline();
+    break;
   case GEOM_Outline:
     if(global_scase.isZoneFireModel==0)global_scase.visFrame=1-global_scase.visFrame;
     break;
@@ -7672,21 +7674,12 @@ void GeometryMenu(int value){
   case GEOM_Compartments:
     visCompartments = 1 - visCompartments;
     break;
-  case GEOM_BOUNDING_BOX_ALWAYS:
-    if(show_geom_boundingbox==SHOW_BOUNDING_BOX_ALWAYS){
-      show_geom_boundingbox = SHOW_BOUNDING_BOX_NEVER;
-    }
-    else{
-      show_geom_boundingbox = SHOW_BOUNDING_BOX_ALWAYS;
-    }
-    GLUIUpdateGeomBoundingBox();
-    break;
   case GEOM_BOUNDING_BOX_MOUSE_DOWN:
-    if(show_geom_boundingbox==SHOW_BOUNDING_BOX_MOUSE_DOWN){
-      show_geom_boundingbox = SHOW_BOUNDING_BOX_NEVER;
+    if(hide_scene==1){
+      hide_scene = 0;
     }
     else{
-      show_geom_boundingbox = SHOW_BOUNDING_BOX_MOUSE_DOWN;
+      hide_scene = 1;
     }
     GLUIUpdateGeomBoundingBox();
     break;
@@ -8962,7 +8955,7 @@ void InitMenus(void){
 
 static int filesdialogmenu = 0, viewdialogmenu = 0, datadialogmenu = 0, windowdialogmenu=0;
 static int labelmenu=0, titlemenu=0, colorbarmenu=0, colorbarsmenu=0, colorbarshademenu, smokecolorbarmenu=0, showhidemenu=0,colorbardigitmenu=0;
-static int optionmenu=0, rotatetypemenu=0;
+static int optionmenu=0, rotatetypemenu=0, translatetypemenu=0;
 static int colorbars_submenu1 = 0, colorbars_submenu2 = 0, colorbars_submenu3 = 0;
 static int colorbars_submenu4 = 0, colorbars_submenu5 = 0, colorbars_submenu6 = 0;
 static int colorbars_submenu7 = 0;
@@ -10227,16 +10220,24 @@ static int menu_count=0;
   }
   GLUTADDSUBMENU(_("Grid"),gridslicemenu);
   if(global_scase.isZoneFireModel==0){
-    if(global_scase.visFrame==1)glutAddMenuEntry(_("*Outline"), GEOM_Outline);
-    if(global_scase.visFrame==0)glutAddMenuEntry(_("Outline"), GEOM_Outline);
+    if(skyboxinfo==NULL){
+      if(global_scase.visFrame==1)glutAddMenuEntry(_("*Outline"), GEOM_Outline);
+      if(global_scase.visFrame==0)glutAddMenuEntry(_("Outline"), GEOM_Outline);
+    }
+    else{
+      if(global_scase.visFrame==1)glutAddMenuEntry(_("*Outline(FDS scene)"), GEOM_Outline);
+      if(global_scase.visFrame==0)glutAddMenuEntry(_("Outline(FDS scene)"), GEOM_Outline);
+    }
   }
   else{
     global_scase.visFrame=0;
   }
-  if(show_geom_boundingbox == SHOW_BOUNDING_BOX_ALWAYS)glutAddMenuEntry(_("*bounding box(always)"), GEOM_BOUNDING_BOX_ALWAYS);
-  if(show_geom_boundingbox != SHOW_BOUNDING_BOX_ALWAYS)glutAddMenuEntry(_("bounding box(always)"), GEOM_BOUNDING_BOX_ALWAYS);
-  if(show_geom_boundingbox == SHOW_BOUNDING_BOX_MOUSE_DOWN)glutAddMenuEntry(_("*bounding box(mouse down)"), GEOM_BOUNDING_BOX_MOUSE_DOWN);
-  if(show_geom_boundingbox != SHOW_BOUNDING_BOX_MOUSE_DOWN)glutAddMenuEntry(_("bounding box(mouse down)"), GEOM_BOUNDING_BOX_MOUSE_DOWN);
+  if(skyboxinfo!=NULL){
+    if(visSkyboxoutline==1)glutAddMenuEntry(_("*Outline(skybox images)"), SKY_OUTLINE);
+    if(visSkyboxoutline==0)glutAddMenuEntry(_("Outline(skybox images)"), SKY_OUTLINE);
+  }
+  if(hide_scene == 1)glutAddMenuEntry(_("*bounding box(mouse down)"), GEOM_BOUNDING_BOX_MOUSE_DOWN);
+  if(hide_scene != 1)glutAddMenuEntry(_("bounding box(mouse down)"), GEOM_BOUNDING_BOX_MOUSE_DOWN);
   if(NCADGeom(&global_scase.cadgeomcoll) == 0){
     if(blocklocation == BLOCKlocation_grid){
       glutAddMenuEntry("Locations(*actual,requested)", BLOCKlocation_grid);
@@ -10385,7 +10386,26 @@ static int menu_count=0;
   glutAddMenuEntry(_("Hide all"), MENU_LABEL_HideAll);
   glutAddMenuEntry(_("Settings..."), MENU_LABEL_SETTINGS);
 
-/* --------------------------------rotate type menu -------------------------- */
+  /* --------------------------------translate type menu -------------------------- */
+
+  CREATEMENU(translatetypemenu, TranslateTypeMenu);
+  if(translation_type==TRANSLATE_XY_option){
+    glutAddMenuEntry("*translate left/right and front/back", TRANSLATE_XY_option);
+    glutAddMenuEntry("translate only front/back", TRANSLATE_Y_option);
+    glutAddMenuEntry("translate only left/right", TRANSLATE_X_option);
+  }
+  if(translation_type==TRANSLATE_Y_option){
+    glutAddMenuEntry("translate left/right and front/back", TRANSLATE_XY_option);
+    glutAddMenuEntry("*translate only front/back", TRANSLATE_Y_option);
+    glutAddMenuEntry("translate only left/right", TRANSLATE_X_option);
+  }
+  if(translation_type==TRANSLATE_X_option){
+    glutAddMenuEntry("translate left/right and front/back", TRANSLATE_XY_option);
+    glutAddMenuEntry("translate only front/back", TRANSLATE_Y_option);
+    glutAddMenuEntry("*translate only left/right", TRANSLATE_X_option);
+  }
+
+  /* --------------------------------rotate type menu -------------------------- */
 
   CREATEMENU(rotatetypemenu,RotateTypeMenu);
   glutAddMenuEntry(_("Scene centered:"),MENU_DUMMY);
@@ -11820,6 +11840,7 @@ static int menu_count=0;
   CREATEMENU(optionmenu,OptionMenu);
   if(nunitclasses>0)GLUTADDSUBMENU(_("Display Units"),unitsmenu);
   GLUTADDSUBMENU(_("Rotation parameters"),rotatetypemenu);
+  GLUTADDSUBMENU(_("Translation parameters"), translatetypemenu);
   GLUTADDSUBMENU(_("Max frame rate"),frameratemenu);
   GLUTADDSUBMENU(_("Render"),rendermenu);
   GLUTADDSUBMENU(_("Tours"),tourmenu);
@@ -11893,9 +11914,6 @@ static int menu_count=0;
     glutAddMenuEntry("  Platform: WIN64", 1);
 #endif
 #ifdef pp_OSX
-#ifdef pp_QUARTZ
-    glutAddMenuEntry("  Platform: OSX64/QUARTZ", 1);
-#else
 #ifdef pp_OSX_HIGHRES
     if(double_scale==1){
       glutAddMenuEntry("  Platform: OSX64(high res fonts)", 1);
@@ -11905,7 +11923,6 @@ static int menu_count=0;
     }
 #else
     glutAddMenuEntry("  Platform: OSX64", 1);
-#endif
 #endif
 #endif
 #ifdef pp_LINUX
@@ -13148,12 +13165,6 @@ void MenuStatusCB(int status, int x, int y){
   float *eye_xyz;
 
   menustatus=status;
-  if(menustatus==GLUT_MENU_IN_USE &&  show_geom_boundingbox==SHOW_BOUNDING_BOX_MOUSE_DOWN){
-    geom_bounding_box_mousedown = 1;
-  }
-  else{
-    geom_bounding_box_mousedown = 0;
-  }
 
   /* keep scene from "bouncing" around when leaving a menu */
   start_xyz0[0]=x;

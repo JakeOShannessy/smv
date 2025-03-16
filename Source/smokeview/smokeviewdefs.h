@@ -112,10 +112,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define CFACE_NORMALS_NO  0
 #define CFACE_NORMALS_YES 1
 
-#define SHOW_BOUNDING_BOX_ALWAYS     0
-#define SHOW_BOUNDING_BOX_MOUSE_DOWN 1
-#define SHOW_BOUNDING_BOX_NEVER      2
-
 #define ALL_FRAMES       -1
 
 #define COLORBAR_SHIFT_MIN          0.1
@@ -187,6 +183,9 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define PRINT    1
 #define NO_PRINT 0
+
+#define SKY_BOX     0
+#define SKY_SPHERE  1
 
 #define TIMEBAR_OVERLAP_ALWAYS 0
 #define TIMEBAR_OVERLAP_NEVER  1
@@ -517,10 +516,15 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define TOGGLE_TITLE_SAFE          5
 #define RESTORE_EXTERIOR_VIEW_ZOOM 6
 
+#define TRANSLATE_XY_option        0
+#define TRANSLATE_Y_option         1
+#define TRANSLATE_X_option         2
+
 #define ROTATION_2AXIS             0
 #define EYE_CENTERED               1
 #define ROTATION_1AXIS             2
 #define ROTATION_3AXIS             3
+
 #define MENU_MOTION_SETTINGS       4
 #define MENU_MOTION_GRAVITY_VECTOR 5
 #define MENU_MOTION_Z_VECTOR       6

@@ -824,19 +824,6 @@ void DrawBoxMinMax(float *bbmin, float *bbmax, float *box_color){
   DrawBoxOutline(bb, box_color);
 }
 
-/* ------------------ DrawObstBoundingBox ------------------------ */
-
-void DrawObstBoundingBox(void){
-  if(global_scase.obst_bounding_box[0]>global_scase.obst_bounding_box[1])return;
-  if(global_scase.obst_bounding_box[2]>global_scase.obst_bounding_box[3])return;
-  if(global_scase.obst_bounding_box[4]>global_scase.obst_bounding_box[5])return;
-  glPushMatrix();
-  glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-global_scase.xbar0, -global_scase.ybar0, -global_scase.zbar0);
-  DrawBoxOutline(global_scase.obst_bounding_box, foregroundcolor);
-  glPopMatrix();
-}
-
 /* ------------------ DrawGeomBoundingBox ------------------------ */
 
 void DrawGeomBoundingBox(float *boundingbox_color){
@@ -888,7 +875,7 @@ void DrawGeom(int flag, int timestate){
   int texture_state = OFF, texture_first=1;
 
   if(global_scase.auto_terrain==1)return;
-  if(show_geom_boundingbox==SHOW_BOUNDING_BOX_ALWAYS||geom_bounding_box_mousedown==1){
+  if(hide_scene==1 && mouse_down==1){
     if(flag==DRAW_OPAQUE&&timestate==GEOM_STATIC&&have_geom_triangles==1){
       DrawGeomBoundingBox(NULL);
     }
@@ -2792,7 +2779,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     if(force_bound_update == 1 || current_script_command != NULL)bound_update = 1;
     if(patchi->boundary == 1){
       if(bound_update==1||patch_bounds_defined==0 || BuildGbndFile(BOUND_PATCH) == 1){
-        GetGlobalPatchBounds(1,DONOT_SET_MINMAX_FLAG);
+        GetGlobalPatchBounds(1,DONOT_SET_MINMAX_FLAG,patchi->label.shortlabel);
         SetLoadedPatchBounds(NULL, 0);
         GLUIPatchBoundsCPP_CB(BOUND_DONTUPDATE_COLORS);
 #ifdef pp_RECOMPUTE_DEBUG
@@ -2802,7 +2789,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     }
     else{
       if(bound_update==1||slice_bounds_defined==0|| BuildGbndFile(BOUND_SLICE) ==1){
-        GetGlobalSliceBounds(1, DONOT_SET_MINMAX_FLAG);
+        GetGlobalSliceBounds(1, DONOT_SET_MINMAX_FLAG,patchi->label.shortlabel);
         SetLoadedSliceBounds(NULL, 0);
 #ifdef pp_RECOMPUTE_DEBUG
         recompute = 1;
@@ -4635,7 +4622,7 @@ void DrawCGeom(int flag, geomdata *cgeom){
   geomdata *geomi;
 
   if(HaveTerrainTexture(NULL) == 1)return;
-  if(show_geom_boundingbox==SHOW_BOUNDING_BOX_ALWAYS||geom_bounding_box_mousedown==1){
+  if(hide_scene==1 && mouse_down==1){
     if(flag==DRAW_OPAQUE&&have_geom_triangles==1){
       DrawGeomBoundingBox(NULL);
     }

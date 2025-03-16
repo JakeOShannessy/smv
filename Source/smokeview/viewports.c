@@ -1237,7 +1237,7 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
     DrawHorizontalColorbars();
   }
 
-  if((visTimelabel == 1 || visFramelabel == 1 || vis_hrr_label == 1 || visTimebar == 1) && showtime==1 && geom_bounding_box_mousedown==0){
+  if((visTimelabel == 1 || visFramelabel == 1 || vis_hrr_label == 1 || visTimebar == 1) && showtime==1){
     if(visTimelabel==1){
       OutputText(VP_timebar.left,v_space, timelabel);
     }
@@ -2324,16 +2324,14 @@ void GetMinMaxDepth(float *min_depth, float *max_depth){
     *max_depth = MAX(*max_depth, maxdist);
   }
 
-#ifdef pp_SKY
   // get distance to each corner of the skybox
-  if(visSky == 1){
+  if(visSkysphere == 1){
     float mindist, maxdist;
 
     DistPointBox(smv_eyepos, box_sky_corners, &mindist, &maxdist);
     *min_depth = MIN(*min_depth, mindist);
     *max_depth = MAX(*max_depth, maxdist);
   }
-#endif
 
   // get distance to each tour node
 
@@ -2381,16 +2379,11 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
     VP_scene.width=screenWidth;
   }
   if(plotstate==DYNAMIC_PLOTS&&selected_tour!=NULL&&selected_tour->timeslist!=NULL){
-    if((tour_snap==1||viewtourfrompath==1)&&selectedtour_index>=0){
+    if(viewtourfrompath==1&&selectedtour_index>=0){
       tourdata *touri;
 
       touri = global_scase.tourcoll.tourinfo + selectedtour_index;
-      if(tour_snap==1){
-        SetTourXYZView(tour_snap_time, touri);
-      }
-      else{
-        SetTourXYZView(global_times[itimes], touri);
-      }
+      SetTourXYZView(global_times[itimes], touri);
       memcpy(camera_current->eye, touri->xyz_smv, 3*sizeof(float));
       camera_current->az_elev[1]=0.0;
       camera_current->az_elev[0]=0.0;
@@ -2509,14 +2502,9 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       tourdata *touri;
 
       if(plotstate==DYNAMIC_PLOTS&&selected_tour!=NULL&&selected_tour->timeslist!=NULL){
-        if((tour_snap==1||viewtourfrompath==1)&&selectedtour_index>=0){
+        if(viewtourfrompath==1&&selectedtour_index>=0){
           touri = global_scase.tourcoll.tourinfo + selectedtour_index;
-          if(tour_snap==1){
-            SetTourXYZView(tour_snap_time, touri);
-          }
-          else{
-            SetTourXYZView(global_times[itimes], touri);
-          }
+          SetTourXYZView(global_times[itimes], touri);
           viewx = touri->view_smv[0]+dEyeSeparation[0];
           viewy = touri->view_smv[1]-dEyeSeparation[1];
           viewz = touri->view_smv[2];
@@ -2668,6 +2656,5 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
 
     glScalef(mscale[0],mscale[1],mscale[2]);
     ExtractFrustum();
-    SetCullVis();
   }
 }

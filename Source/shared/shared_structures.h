@@ -348,9 +348,6 @@ typedef struct _meshdata {
 
   char *label;
 
-  int ncullgeominfo,nxyzgeomcull[3],nxyzskipgeomcull[3];
-  struct _culldata *cullgeominfo;
-
   struct _volrenderdata *volrenderinfo;
   int  nslicex,  nslicey,  nslicez;
   struct _slicedata **slicex, **slicey, **slicez;
@@ -949,7 +946,7 @@ typedef struct _cventdata {
   int nshowtime, *showtimelist;
   float *showtime;
   unsigned char *showhide;
-  int useventcolor, hideboundary;
+  int useventcolor, hideboundary, have_boundary_file;
   float origin[3], radius;
   float *color;
   surfdata *surf[1];
@@ -1098,7 +1095,6 @@ typedef struct {
   char *event_filename;
   char *ffmpeg_command_filename;
   char *fed_filename;
-  char *stop_filename;
   char *smvzip_filename;
   char *sliceinfo_filename;
   char *deviceinfo_filename;
@@ -1768,25 +1764,26 @@ typedef struct {
   char *fds_version;
   char *fds_githash;
 
-  meshescollection meshescoll;
   colordata *firstcolor;
-  prop_collection propcoll;
-  object_collection objectscoll;
-  hrr_collection hrr_coll;
-  smoke3d_collection smoke3dcoll;
-  surf_collection surfcoll;
-  slice_collection slicecoll;
-  texture_collection texture_coll;
-  terrain_texture_collection terrain_texture_coll;
+
+  cadgeom_collection             cadgeomcoll;
+  csv_collection                 csvcoll;
+  device_collection              devicecoll;
   device_texture_list_collection device_texture_list_coll;
-  device_collection devicecoll;
-  obst_collection obstcoll;
-  csv_collection csvcoll;
-  tour_collection tourcoll;
-  fuel_collection fuelcoll;
-  cadgeom_collection cadgeomcoll;
-  hvacdatacollection hvaccoll;
-  labels_collection labelscoll;
+  fuel_collection                fuelcoll;
+  hrr_collection                 hrr_coll;
+  hvacdatacollection             hvaccoll;
+  labels_collection              labelscoll;
+  meshescollection               meshescoll;
+  object_collection              objectscoll;
+  obst_collection                obstcoll;
+  prop_collection                propcoll;
+  slice_collection               slicecoll;
+  smoke3d_collection             smoke3dcoll;
+  surf_collection                surfcoll;
+  terrain_texture_collection     terrain_texture_coll;
+  texture_collection             texture_coll;
+  tour_collection                tourcoll;
 
   casepaths paths;
 

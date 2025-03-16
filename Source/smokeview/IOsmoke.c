@@ -3304,41 +3304,6 @@ int DrawSmoke3D(smoke3ddata *smoke3di){
   return nsmoke_triangles;
 }
 
-#ifdef pp_SMOKETEST
-void DrawSmokeTest(void){
-  int i;
-  float dy;
-
-
-  dy = 1.0/(float)n_smoketest_planes;
-  TransparentOn();
-  glBegin(GL_TRIANGLES);
-    for(i = n_smoketest_planes - 1;i >= 0; i--){
-    float y;
-
-    y = (float)i * dy;
-    glColor4f(0.0, 0.0, 0.0, smoketest_alpha);                                \
-     glVertex3f(0.0, y, 0.0);
-    glVertex3f(0.5,y,0.0);
-    glVertex3f(0.5,y,1.0);
-    glVertex3f(0.0,y,0.0);
-    glVertex3f(0.5,y,1.0);
-    glVertex3f(0.0,y,1.0);
-
-    glColor4ub(0,0,0,smoketest_ialpha);
-    glVertex3f(0.5, y, 0.0);
-    glVertex3f(1.0, y, 0.0);
-    glVertex3f(1.0, y, 1.0);
-    glVertex3f(0.5, y, 0.0);
-    glVertex3f(1.0, y, 1.0);
-    glVertex3f(0.5, y, 1.0);
-
-  }
-  glEnd();
-  TransparentOff();
-}
-#endif
-
 /* ------------------ DrawSmokeFrame ------------------------ */
 
 void DrawSmokeFrame(void){
@@ -4261,7 +4226,6 @@ FILE_SIZE ReadSmoke3D(int time_frame,int ifile_arg,int load_flag, int first_time
   int fortran_skip=0;
 #endif
 
-  update_glui_merge_smoke = 1;
   GLUTPOSTREDISPLAY;
   SetTimeState();
   update_smokefire_colors = 1;
@@ -4742,15 +4706,7 @@ void MergeSmoke3DColors(smoke3ddata *smoke3dset){
             alpha_smoke_local = smoke3di->fire_alpha;
           }
           else{
-#ifdef pp_FIREALPHA_CORRECTION
             alpha_smoke_local = CLAMP(smokecolor_data[j], 0, 255);
-#else
-            float opacity_multiplier, fcolor;
-
-            fcolor = (float)firecolor_data[j]/255.0;
-            opacity_multiplier = 1.0 + (emission_factor-1.0)*fcolor;
-            alpha_smoke_local = CLAMP(smokecolor_data[j] * opacity_multiplier, 0, 255);
-#endif
           }
         }
         else{
@@ -4934,31 +4890,10 @@ void MergeSmoke3D(smoke3ddata *smoke3dset){
   PRINT_TIMER(merge_smoke_time, "MergeSmoke3D");
 }
 
-/* ------------------ UpdateGluiMergeSmoke ------------------------ */
-
-void UpdateGluiMergeSmoke(void){
-  int use_threads_save;
-
-  use_threads_save = mergesmoke_threads->use_threads;
-  THREADcontrol(mergesmoke_threads, THREAD_LOCK);
-  n_mergesmoke_threads   = n_mergesmoke_glui_threads;
-  use_mergesmoke_threads = use_mergesmoke_glui_threads;
-  THREADcontrol(mergesmoke_threads, THREAD_UPDATE);
-  if(use_threads_save==1)THREADcontrol(mergesmoke_threads, THREAD_FORCE_UNLOCK);
-}
-
-/* ------------------ MtMergeSmoke3D ------------------------ */
-
-void *MtMergeSmoke3D(void *arg){
-  int nthreads, ithread;
+void MergeSmoke3DAll(void){
   int i;
-  smokethreaddata *smokei;
 
-  smokei = (smokethreaddata *)arg;
-
-  nthreads = smokei->nthreads;
-  ithread  = smokei->ithread;
-  for(i = ithread;i < global_scase.smoke3dcoll.nsmoke3dinfo;i += nthreads){
+  for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
@@ -4973,7 +4908,6 @@ void *MtMergeSmoke3D(void *arg){
     }
     MergeSmoke3D(smoke3di);
   }
-  THREAD_EXIT(mergesmoke_threads);
 }
 
 /* ------------------ UpdateSmoke3dMenuLabels ------------------------ */

@@ -192,7 +192,7 @@ void DrawTerrainGeom(int option){
 
   draw_texture = HaveTerrainTexture(&draw_surface);
   if(terrain_nindices<=0)return;
-  if(show_geom_boundingbox==SHOW_BOUNDING_BOX_ALWAYS||geom_bounding_box_mousedown==1){
+  if(hide_scene == 1 && mouse_down == 1){
     DrawGeomBoundingBox(foregroundcolor);
     return;
   }

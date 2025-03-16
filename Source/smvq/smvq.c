@@ -175,14 +175,8 @@ int SetGlobalFilenames(smv_case *scase) {
     STRCAT(scase->paths.ffmpeg_command_filename, ".sh");
 #endif
   }
-  if (scase->paths.stop_filename == NULL) {
-    NewMemory((void **)&scase->paths.stop_filename,
-              (unsigned int)(len_casename + strlen(".stop") + 1));
-    STRCPY(scase->paths.stop_filename, scase->fdsprefix);
-    STRCAT(scase->paths.stop_filename, ".stop");
-  }
-  if (scase->paths.smvzip_filename == NULL) {
-    NewMemory((void **)&scase->paths.smvzip_filename,
+  if (global_scase.paths.smvzip_filename == NULL) {
+    NewMemory((void **)&global_scase.paths.smvzip_filename,
               (unsigned int)(len_casename + strlen(".smvzip") + 1));
     STRCPY(scase->paths.smvzip_filename, scase->fdsprefix);
     STRCAT(scase->paths.smvzip_filename, ".smvzip");

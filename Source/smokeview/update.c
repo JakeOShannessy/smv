@@ -170,10 +170,7 @@ void UpdateFrameNumber(int changetime){
     }
     if(show3dsmoke==1 && global_scase.smoke3dcoll.nsmoke3dinfo > 0){
       INIT_PRINT_TIMER(merge_smoke_time);
-      THREADcontrol(mergesmoke_threads, THREAD_LOCK);
-      THREADruni(mergesmoke_threads, (unsigned char *)smokethreadinfo, sizeof(smokethreaddata));
-      THREADcontrol(mergesmoke_threads, THREAD_JOIN);
-      THREADcontrol(mergesmoke_threads, THREAD_UNLOCK);
+      MergeSmoke3DAll();
       PrintMemoryInfo;
       PRINT_TIMER(merge_smoke_time, "UpdateSmoke3D + MergeSmoke3D");
     }
@@ -2326,12 +2323,6 @@ void BoundBoundCB(int var);
     update_smoke3dmenulabels = 0;
     UpdateSmoke3dMenuLabels();
     END_SHOW_UPDATE(update_smoke3dmenulabels);
-  }
-  if(update_glui_merge_smoke == 1){
-    SHOW_UPDATE(update_glui_merge_smoke);
-    update_glui_merge_smoke = 0;
-    GLUISmoke3dCB(MERGE_SMOKE);
-    END_SHOW_UPDATE(update_glui_merge_smoke);
   }
   if(glui_meshclip_defined==1&&update_meshclip == 1){
     SHOW_UPDATE(update_meshclip);

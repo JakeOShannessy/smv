@@ -37,13 +37,6 @@
 
 //*** threader variables
 
-//***mergesmoke
-SVEXTERN int SVDECL(n_mergesmoke_threads, 4), SVDECL(use_mergesmoke_threads, 1);
-SVEXTERN threaderdata SVDECL(*mergesmoke_threads, NULL);
-SVEXTERN smokethreaddata smokethreadinfo[MAX_THREADS];
-SVEXTERN int SVDECL(n_mergesmoke_glui_threads, 4), SVDECL(use_mergesmoke_glui_threads, 1);
-SVEXTERN int SVDECL(update_glui_merge_smoke, 1);
-
 //***isosurface
 SVEXTERN int SVDECL(n_isosurface_threads, 1), SVDECL(use_isosurface_threads, 1);
 SVEXTERN threaderdata SVDECL(*isosurface_threads, NULL);
@@ -183,10 +176,6 @@ SVEXTERN int SVDECL(update_plot_label, 0);
 SVEXTERN int SVDECL(terrain_skip, 1);
 SVEXTERN int nsmoke3dtypes, smoke3d_other;
 SVEXTERN smoke3dtypedata SVDECL(*smoke3dtypes, NULL);
-#ifdef pp_SMOKETEST
-SVEXTERN int SVDECL(n_smoketest_planes,1), SVDECL(show_smoketest,0), SVDECL(smoketest_ialpha, 0);
-SVEXTERN float SVDECL(smoketest_alpha, 0.0);
-#endif
 
 SVEXTERN int SOOT_index, HRRPUV_index, TEMP_index, CO2_index;
 
@@ -207,7 +196,7 @@ SVEXTERN int SVDECL(frame360, 0);
 SVEXTERN int SVDECL(sliceval_ndigits, 0);
 SVEXTERN int SVDECL(rotate_center, 0);
 SVEXTERN int SVDECL(have_geom_bb, 0);
-SVEXTERN int SVDECL(show_geom_boundingbox, SHOW_BOUNDING_BOX_NEVER);
+SVEXTERN int SVDECL(hide_scene, 0);
 SVEXTERN int SVDECL(have_obsts, 0);
 SVEXTERN int SVDECL(have_geometry_dialog, 0);
 SVEXTERN int SVDECL(chop_patch, 0);
@@ -229,10 +218,8 @@ SVEXTERN char viewpoint_script[256], SVDECL(*viewpoint_script_ptr, NULL);
 SVEXTERN char viewpoint_label_saved[256];
 SVEXTERN int SVDECL(update_saving_viewpoint, 0);
 SVEXTERN float SVDECL(timer_startup, 0.0), SVDECL(timer_render, -1.0);
-SVEXTERN float SVDECL(timer_mouse_motion, 0.0);
 SVEXTERN int SVDECL(frames_total, 0 );
 SVEXTERN int SVDECL(open_movie_dialog, 0);
-SVEXTERN int SVDECL(geom_bounding_box_mousedown, 0);
 SVEXTERN float SVDECL(plot2d_time_average, 0.0);
 #ifdef pp_REFRESH
 SVEXTERN int SVDECL(periodic_refresh, 0), SVDECL(update_refresh, 1);
@@ -478,8 +465,6 @@ SVEXTERN float tour_circular_center[3], tour_circular_radius, tour_circular_view
 SVEXTERN float tour_circular_center_default[3], tour_circular_radius_default, tour_circular_view_default[3];
 SVEXTERN float SVDECL(tour_speedup_factor, 1.0);
 SVEXTERN int SVDECL(ncircletournodes, 16);
-SVEXTERN int SVDECL(tour_snap, 0);
-SVEXTERN float SVDECL(tour_snap_time, 0.0);
 
 SVEXTERN int SVDECL(render_resolution, RENDER_RESOLUTION_CURRENT);
 SVEXTERN int SVDECL(timebar_overlap, TIMEBAR_OVERLAP_AUTO);
@@ -577,10 +562,6 @@ SVEXTERN float smoke_test_target_color[4];
 SVEXTERN float SVDECL(smoke_test_range,1.0), SVDECL(smoke_test_opacity,0.5);
 SVEXTERN int SVDECL(smoke_test_nslices,3);
 
-#ifdef pp_SKY
-SVEXTERN int SVDECL(visSky, 0);
-SVEXTERN float box_sky_corners[8][3];
-#endif
 SVEXTERN float box_corners[8][3], box_geom_corners[8][3];
 SVEXTERN int SVDECL(have_box_geom_corners, 0);
 SVEXTERN float boxmin_global[3], boxmax_global[3], max_cell_length;
@@ -1370,6 +1351,7 @@ SVEXTERN int SVDECL(vectorskip,1);
 SVEXTERN int SVDECL(first_frame_index,0), SVDECL(izone,0);
 SVEXTERN int SVDECL(rotation_type,ROTATION_2AXIS),SVDECL(eyeview_level,1);
 SVEXTERN int SVDECL(rotation_type_old,ROTATION_2AXIS),SVDECL(eyeview_SAVE,0),SVDECL(eyeview_last,0);
+SVEXTERN int SVDECL(translation_type, 0);
 SVEXTERN int SVDECL(frameratevalue,1000);
 SVEXTERN int SVDECL(setpartmin,PERCENTILE_MIN),   SVDECL(setpartmax,PERCENTILE_MAX);
 SVEXTERN int SVDECL(setisomin, GLOBAL_MIN),   SVDECL(setisomax, GLOBAL_MAX);
@@ -1960,9 +1942,7 @@ SVEXTERN int SVDECL(show_avatar,1);
 SVEXTERN int SVDECL(tourlocus_type,0);
 SVEXTERN int SVDECL(glui_avatar_index,0);
 SVEXTERN int SVDECL(device_sphere_segments,6);
-#ifdef pp_SKY
 SVEXTERN int SVDECL(nlat_hsphere, 20), SVDECL(nlong_hsphere, 40);
-#endif
 SVEXTERN int ntexturestack;
 
 SVEXTERN float SVDECL(fire_opacity_factor,3.0),SVDECL(mass_extinct,8700.0);
@@ -2005,11 +1985,16 @@ SVEXTERN int surface_indices_bak[7];
 SVEXTERN int SVDECL(wall_case,0);
 SVEXTERN int ntotalfaces;
 SVEXTERN texturedata SVDECL(*textureinfo,NULL), SVDECL(*terrain_textures,NULL);
-#ifdef pp_SKY
+
+SVEXTERN int SVDECL(visSkysphere, 0), SVDECL(visSkybox, 1), SVDECL(visSkySpheretexture, 1);
+SVEXTERN float box_sky_corners[8][3];
+
 SVEXTERN texturedata SVDECL(*sky_texture, NULL);
 SVEXTERN int SVDECL(nsky_texture, 0);
 SVEXTERN float SVDECL(sky_diam, 4.0);
-#endif
+SVEXTERN int SVDECL(visSkyboxoutline, 0);
+SVEXTERN int SVDECL(visSkyground, 1);
+
 SVEXTERN GLuint texture_colorbar_id, texture_slice_colorbar_id, texture_patch_colorbar_id, texture_plot3d_colorbar_id, texture_iso_colorbar_id, terrain_colorbar_id;
 SVEXTERN GLuint volsmoke_colormap_id,slice3d_colormap_id,slicesmoke_colormap_id;
 SVEXTERN int SVDECL(volsmoke_colormap_id_defined,-1);
@@ -2022,7 +2007,7 @@ SVEXTERN float mscale[3];
 #endif
 SVEXTERN float xclip_min, yclip_min, zclip_min;
 SVEXTERN float xclip_max, yclip_max, zclip_max;
-SVEXTERN float SVDECL(nearclip, 0.001), SVDECL(farclip, 3.0);
+SVEXTERN float SVDECL(nearclip, 0.001), SVDECL(farclip, 3.0), SVDECL(farclip_save, 3.0);
 SVEXTERN int SVDECL(updateclipvals, 0);
 SVEXTERN int SVDECL(updateUpdateFrameRateMenu,0);
 SVEXTERN int ntextures_loaded_used, SVDECL(iterrain_textures,0);
