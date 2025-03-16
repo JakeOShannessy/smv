@@ -2761,14 +2761,14 @@ void InitTextures0(void){
 
   // define sky texture
 
-  if(nsky_texture > 0){
+  if(global_scase.nsky_texture > 0){
     texturedata *tt;
     unsigned char *floortex=NULL;
     int texwid, texht;
 
     int is_transparent;
 
-    tt                 = sky_texture;
+    tt                 = global_scase.sky_texture;
     tt->loaded         = 0;
     tt->used           = 0;
     tt->display        = 0;
@@ -7268,7 +7268,6 @@ void SetExternalVents(void){
     }
   }
 }
-#endif
 
 /* ------------------ GetSkyBox ------------------------ */
 
@@ -7297,7 +7296,7 @@ void GetSkyBoxTextures(void){
 
     strcpy(buffer, global_scase.fdsprefix);
     strcat(buffer, sides[i]);
-    LoadSkyTexture(buffer, skyboxinfo->face + i);
+    LoadSkyTexture(buffer,skyboxinfo->face + i);
   }
 }
 
@@ -7305,16 +7304,18 @@ void GetSkyBoxTextures(void){
 
 void GetSkyImageTexture(void){
   char buffer[256];
-  
+
   strcpy(buffer, global_scase.fdsprefix);
   strcat(buffer, "_sky.jpg");
-  if(sky_texture != NULL || FileExistsOrig(buffer) == 0)return;
-  
-  nsky_texture = 1;
-  NewMemory((void **)&sky_texture, nsky_texture * sizeof(texturedata));
-  NewMemory((void **)&sky_texture->file, (strlen(buffer) + 1) * sizeof(char));
-  strcpy(sky_texture->file, buffer);
+  if(global_scase.sky_texture != NULL || FileExistsOrig(buffer) == 0)return;
+
+  global_scase.nsky_texture = 1;
+  NewMemory((void **)&global_scase.sky_texture, global_scase.nsky_texture * sizeof(texturedata));
+  NewMemory((void **)&global_scase.sky_texture->file, (strlen(buffer) + 1) * sizeof(char));
+  strcpy(global_scase.sky_texture->file, buffer);
 }
+#endif
+#if defined(ASLIB) || !defined(pp_CMAKE)
 
 /* ------------------ ReadSMV_Parse ------------------------ */
 /// @brief Parse an SMV file into global variables. This should only be called
@@ -7612,19 +7613,19 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       char *buff2;
       int len_buffer;
 
-      if(sky_texture != NULL){
-        FREEMEMORY(sky_texture->file);
-        FREEMEMORY(sky_texture);
+      if(scase->sky_texture != NULL){
+        FREEMEMORY(scase->sky_texture->file);
+        FREEMEMORY(scase->sky_texture);
       }
-      nsky_texture = 1;
-      NewMemory((void **)&sky_texture, nsky_texture * sizeof(texturedata));
+      scase->nsky_texture = 1;
+      NewMemory((void **)&scase->sky_texture, scase->nsky_texture * sizeof(texturedata));
       FGETS(buffer, 255, stream);
       buff2 = TrimFrontBack(buffer);
       len_buffer = strlen(buff2);
-      sky_texture->file = NULL;
+      scase->sky_texture->file = NULL;
       if(len_buffer > 0 && strcmp(buff2, "null") != 0){
-         NewMemory((void **)&sky_texture->file, (len_buffer + 1) * sizeof(char));
-         strcpy(sky_texture->file, buff2);
+         NewMemory((void **)&scase->sky_texture->file, (len_buffer + 1) * sizeof(char));
+         strcpy(scase->sky_texture->file, buff2);
       }
       continue;
     }
@@ -11907,7 +11908,6 @@ int ReadSMV(bufferstreamdata *stream){
     use_ffmpeg_threads      = 0;
     use_readallgeom_threads = 0;
     use_isosurface_threads  = 0;
-    use_mergesmoke_threads  = 0;
     use_meshnabors_threads  = 0;
   }
   ReadSMV_Init(&global_scase);

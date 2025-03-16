@@ -13,7 +13,6 @@
 #include "string_util.h"
 #include "smokeviewvars.h"
 #include "command_args.h"
-#include "fopen.h"
 #include "jsonrpc_api.h"
 
 #include "IOscript.h"

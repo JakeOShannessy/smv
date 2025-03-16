@@ -1965,6 +1965,9 @@ typedef struct {
   int have_animate_blockages;
   int have_removable_obsts;
 
+  texturedata *sky_texture;
+  int nsky_texture;
+
   slicedata **sliceinfoptrs;
   int *subslice_menuindex;
   int *subvslice_menuindex;

@@ -112,7 +112,6 @@ endif()
 
 if (NOT MSVC)
     add_compile_options(-Wunused)
-    add_compile_definitions(_GNU_SOURCE)
 else()
     add_compile_options(/W3)
 endif()
