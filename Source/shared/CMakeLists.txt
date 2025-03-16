@@ -32,7 +32,7 @@ add_library(libsmv STATIC
     readtour.c
     scontour2d.c
 
-    # ../smokeview/readsmv.c
+    ../smokeview/readsmv.c
 )
 target_include_directories(libsmv PUBLIC
     .
