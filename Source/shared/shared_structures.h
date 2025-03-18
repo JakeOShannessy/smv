@@ -1936,7 +1936,6 @@ typedef struct {
   int visOtherVents;
   int visOtherVentsSAVE;
   int update_terrain_type;
-  int have_mesh_nabors;
   int hvac_duct_color[3];
   int hvac_node_color[3];
   surfdata *surfacedefault, *vent_surfacedefault, *exterior_surfacedefault;
