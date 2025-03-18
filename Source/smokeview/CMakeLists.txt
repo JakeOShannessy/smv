@@ -61,10 +61,15 @@ target_sources(smokeview PRIVATE
 )
 
 target_link_libraries(smokeview PRIVATE libsmv)
+# These include directories are an existing workaround that would be good to
+# remove.Because of this custom code and the potential conflict with native libs
+# this needs to be early in the include order.
+if (WIN32)
+    target_include_directories(smokeview PRIVATE ../glut_gl)
+else()
+    target_include_directories(smokeview PRIVATE ../glui_gl)
+endif ()
 target_link_libraries(smokeview PRIVATE json-c::json-c)
-# if (BUILD_SHARED_LIBS)
-#     install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
-# endif()
 
 if(WIN32)
     target_link_libraries(smokeview PRIVATE wsock32 ws2_32)
@@ -72,8 +77,6 @@ endif()
 if (VENDORED_UI_LIBS)
     target_include_directories(smokeview PRIVATE ../glui_v2_1_beta)
     target_link_libraries(smokeview PRIVATE glui_static)
-    # Don't need to install a static library
-    # install(TARGETS glui_static)
 else()
     FetchContent_MakeAvailable(glui-git)
     target_link_libraries(smokeview PRIVATE glui)
@@ -82,6 +85,7 @@ endif()
 # Selecting which GLUT version to use is the most platform-dependent part of the
 # build.
 if (MACOSX)
+    add_definitions(-Dpp_NOQUARTZ)
     target_link_libraries(smokeview PRIVATE "-framework OpenGL" "-framework GLUT")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 elseif (GLUT_FOUND)

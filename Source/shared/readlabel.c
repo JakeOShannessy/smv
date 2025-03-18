@@ -12,6 +12,7 @@
 #include "readlabel.h"
 #include "shared_structures.h"
 #include "string_util.h"
+#include "datadefs.h"
 
 /* ------------------ LabelGet ------------------------ */
 
@@ -245,19 +246,16 @@ void FreeLabelsCollection(labels_collection *labelscoll) {
   }
 }
 
+
 /* ------------------ GetColorPtr ------------------------ */
 
 float *GetColorPtr(smv_case *scase, float *color){
   colordata *colorptr,*oldlastcolor,*lastcolor;
 
-  int i;
-
   if(scase->firstcolor==NULL){
     NewMemory((void *)&scase->firstcolor,sizeof(colordata));
-    for(i=0;i<4;i++){
-      scase->firstcolor->color[i]=color[i];
-      scase->firstcolor->full_color[i]=color[i];
-    }
+    memcpy(scase->firstcolor->color,      color, 4*sizeof(float));
+    memcpy(scase->firstcolor->full_color, color, 4*sizeof(float));
     scase->firstcolor->bw_color[0] = TOBW(color);
     scase->firstcolor->bw_color[1] = scase->firstcolor->bw_color[0];
     scase->firstcolor->bw_color[2] = scase->firstcolor->bw_color[0];
@@ -277,10 +275,8 @@ float *GetColorPtr(smv_case *scase, float *color){
   lastcolor=NULL;
   NewMemory((void *)&lastcolor,sizeof(colordata));
   oldlastcolor->nextcolor=lastcolor;
-  for(i=0;i<4;i++){
-    lastcolor->color[i]=color[i];
-    lastcolor->full_color[i]=color[i];
-  }
+  memcpy(lastcolor->color,      color, 4*sizeof(float));
+  memcpy(lastcolor->full_color, color, 4*sizeof(float));
   lastcolor->bw_color[0] = TOBW(color);
   lastcolor->bw_color[1] = lastcolor->bw_color[0];
   lastcolor->bw_color[2] = lastcolor->bw_color[0];
@@ -288,9 +284,3 @@ float *GetColorPtr(smv_case *scase, float *color){
   lastcolor->nextcolor=NULL;
   return lastcolor->color;
 }
-
-// float foregroundcolor[4] = {1.0, 1.0, 1.0, 1.0};
-// float *block_ambient2 = NULL;
-// float *ventcolor = NULL;
-// GLfloat block_shininess = 100.0;
-// float *mat_ambient2 = NULL;

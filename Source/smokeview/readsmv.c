@@ -73,6 +73,9 @@
 #define SMOKE3DBUFFER(len) scase->smoke3d_buffer; scase->smoke3d_buffer += (len)
 #define SLICEBUFFER(len)   scase->slice_buffer;   scase->slice_buffer   += (len)
 
+#define SCAN    0
+#define NO_SCAN 1
+
 int GetNDevices(char *file);
 void AddCfastCsvf(smv_case *scase);
 int ReadSMV_Init(smv_case *scase);
@@ -83,6 +86,7 @@ int IsTerrainTexture(smv_case *scase, texturedata *texti);
 surfdata *GetSurface(smv_case *scase, const char *label);
 int ParseCHIDProcess(smv_case *scase, bufferstreamdata *stream, int option);
 float *GetColorPtr(smv_case *scase, float *color);
+void GetElevAz(float *xyznorm,float *dtheta,float *rotate_axis, float *dpsi);
 
 #if defined(ASLIB) || !defined(pp_CMAKE)
 parse_options parse_opts = {
@@ -4855,6 +4859,11 @@ void MakeFileLists(smv_case *scase){
 }
 #endif
 
+#define RETURN_TWO        2
+#define RETURN_BREAK      3
+#define RETURN_CONTINUE   4
+#define RETURN_PROCEED    5
+
 #if !defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ SetupIsosurface ------------------------ */
 
@@ -7315,8 +7324,8 @@ void GetSkyImageTexture(void){
   strcpy(global_scase.sky_texture->file, buffer);
 }
 #endif
-#if defined(ASLIB) || !defined(pp_CMAKE)
 
+#if defined(ASLIB) || !defined(pp_CMAKE)
 /* ------------------ ReadSMV_Parse ------------------------ */
 /// @brief Parse an SMV file into global variables. This should only be called
 /// after ReadSMV_Init to ensure that the appropriate variables are set.
@@ -7994,6 +8003,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
   FREEMEMORY(scase->supermeshinfo);
   if(NewMemory((void **)&scase->supermeshinfo,scase->meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
   scase->meshescoll.meshinfo->plot3dfilenum=-1;
+  // UpdateCurrentMesh(scase->meshescoll.meshinfo);
   for(i=0;i<scase->meshescoll.nmeshes;i++){
     meshdata *meshi;
     supermeshdata *smeshi;
@@ -11814,8 +11824,6 @@ int ReadSMV_Configure(){
 /// used instead.
 /// @param scase An uninitialized scase
 void InitScase(smv_case *scase) {
-  // zero-out the struct
-  // memset(scase, 0, sizeof(smv_case));
   // set all of the defaults that are non-zero
   scase->tourcoll.ntourinfo = 0;
   scase->tourcoll.tourinfo = NULL;
@@ -17443,6 +17451,33 @@ void UpdateLoadedLists(void){
       if(vr->loaded==0||vr->display==0)continue;
       nvolsmoke_loaded++;
     }
+  }
+}
+
+#endif
+#if defined(ASLIB) || !defined(pp_CMAKE)
+
+/* ------------------ GetElevAz ------------------------ */
+
+void GetElevAz(float *xyznorm,float *dtheta,float *rotate_axis, float *dpsi){
+
+  // cos(dtheta) = (xyznorm .dot. vec3(0,0,1))/||xyznorm||
+  // rotate_axis = xyznorm .cross. vec3(0,0,1)
+
+  Normalize(xyznorm,3);
+  *dtheta = RAD2DEG*acos(xyznorm[2]);
+  rotate_axis[0]=-xyznorm[1];
+  rotate_axis[1]= xyznorm[0];
+  rotate_axis[2]=0.0;
+  Normalize(rotate_axis,2);
+  if(dpsi!=NULL){
+    float xyznorm2[2];
+
+    xyznorm2[0]=xyznorm[0];
+    xyznorm2[1]=xyznorm[1];
+    Normalize(xyznorm2,2);
+    *dpsi = RAD2DEG*acos(xyznorm2[1]);
+    if(xyznorm2[0]<0.0)*dpsi=-(*dpsi);
   }
 }
 #endif

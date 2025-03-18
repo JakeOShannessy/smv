@@ -20,8 +20,6 @@
 #define INTERP_RGB 0
 #define INTERP_LAB 1
 
-#define TOBW(col) ( 0.299*(col)[0] + 0.587*(col)[1] + 0.114*(col)[2])
-
 // Define a number of readonly color defaults.
 #ifdef INMAIN
 SVEXTERN float mat_ambient_orig[4] = {0.5f, 0.5f, 0.2f, 1.0f};

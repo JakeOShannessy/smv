@@ -1964,6 +1964,10 @@ typedef struct {
 
   int have_animate_blockages;
   int have_removable_obsts;
+  int have_mesh_nabors;
+
+  texturedata *sky_texture;
+  int nsky_texture;
 
   texturedata *sky_texture;
   int nsky_texture;

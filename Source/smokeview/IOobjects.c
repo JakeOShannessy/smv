@@ -5219,6 +5219,25 @@ void SetupZoneDevs(void){
   }
 }
 
+/* ----------------------- GetDeviceLabel ----------------------------- */
+
+char *GetDeviceLabel(char *buffer){
+  char *label_present;
+
+  label_present = strstr(buffer, "#");
+  if(label_present == NULL) return NULL;
+  if(strlen(label_present) <= 1){
+    label_present[0] = 0;
+    return NULL;
+  }
+  label_present[0] = 0;
+  label_present++;
+  label_present = TrimFront(label_present);
+  TrimBack(label_present);
+  if(strlen(label_present) == 0) return NULL;
+  return label_present;
+}
+
 void RewindDeviceFile(FILE *stream){
 #define BUFFER_LEN 255
   char buffer[BUFFER_LEN], *comma;

@@ -1716,7 +1716,6 @@ SVEXTERN int SVDECL(nunitclasses,0),SVDECL(nunitclasses_default,0),SVDECL(nunitc
 SVEXTERN smv_case global_scase = {0};
 #else
 SVEXTERN smv_case global_scase;
-SVEXTERN parse_options parse_opts;
 #endif
 SVEXTERN meshdata SVDECL(*current_mesh,NULL), SVDECL(*mesh_save,NULL);
 SVEXTERN meshdata SVDECL(*mesh_last,NULL), SVDECL(*loaded_isomesh,NULL);

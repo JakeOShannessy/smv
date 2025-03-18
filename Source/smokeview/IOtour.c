@@ -452,7 +452,7 @@ void GetKeyXYZ(float t, keyframe *this_key, float *xyz){
   }
 }
 
- /* ------------------ SetTourXYZView ------------------------ */
+/* ------------------ SetTourXYZView ------------------------ */
 
 void SetTourXYZView(float t, tourdata *touri) {
   keyframe *this_key, *first_key, *last_key;

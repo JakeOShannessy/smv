@@ -18,52 +18,42 @@ set(FIG_DIR ${test_data_SOURCE_DIR})
 # parse_simple_slice
 add_executable(parse_simple_slice parse_simple_slice.c)
 target_link_libraries(parse_simple_slice PRIVATE libsmv)
-target_include_directories(parse_simple_slice PRIVATE .)
 
 # parse_simple_bndf
 add_executable(parse_simple_bndf parse_simple_bndf.c)
 target_link_libraries(parse_simple_bndf PRIVATE libsmv)
-target_include_directories(parse_simple_bndf PRIVATE .)
 
 # parse_simple_part
 add_executable(parse_simple_part parse_simple_part.c)
 target_link_libraries(parse_simple_part PRIVATE libsmv)
-target_include_directories(parse_simple_part PRIVATE .)
 
 # parse_simple_pl3d
 add_executable(parse_simple_pl3d parse_simple_pl3d.c)
 target_link_libraries(parse_simple_pl3d PRIVATE libsmv)
-target_include_directories(parse_simple_pl3d PRIVATE .)
 
 # parse_cad
 add_executable(parse_cad parse_cad.c)
 target_link_libraries(parse_cad PRIVATE libsmv)
-target_include_directories(parse_cad PRIVATE .)
 
 # test_objects
 add_executable(test_objects test_objects.c)
 target_link_libraries(test_objects PRIVATE libsmv)
-target_include_directories(test_objects PRIVATE .)
 
 # parse_hvac_vals
 add_executable(parse_hvac_vals parse_hvac_vals.c)
 target_link_libraries(parse_hvac_vals PRIVATE libsmv)
-target_include_directories(parse_hvac_vals PRIVATE .)
 
 # test_labels
 add_executable(test_labels test_labels.c)
 target_link_libraries(test_labels PRIVATE libsmv)
-target_include_directories(test_labels PRIVATE .)
 
 # parse_objects
 add_executable(parse_objects parse_objects.c)
 target_link_libraries(parse_objects PRIVATE libsmv)
-target_include_directories(parse_objects PRIVATE .)
 
 # parse_colorbar
 add_executable(parse_colorbar parse_colorbar.c)
 target_link_libraries(parse_colorbar PRIVATE libsmv)
-target_include_directories(parse_colorbar PRIVATE .)
 
 # mem_test
 add_executable(mem_test mem_test.c)
@@ -88,12 +78,11 @@ endif()
 # test_root_dir
 add_executable(test_root_dir test_root_dir.c)
 target_link_libraries(test_root_dir PRIVATE libsmv)
-target_include_directories(test_root_dir PRIVATE .)
 
 # sort_surfs
 add_executable(sort_surfs sort_surfs.c)
 target_link_libraries(sort_surfs PRIVATE libsmv)
-target_include_directories(sort_surfs PRIVATE .)
+
 
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
