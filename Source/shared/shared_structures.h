@@ -1969,9 +1969,6 @@ typedef struct {
   texturedata *sky_texture;
   int nsky_texture;
 
-  texturedata *sky_texture;
-  int nsky_texture;
-
   slicedata **sliceinfoptrs;
   int *subslice_menuindex;
   int *subvslice_menuindex;
