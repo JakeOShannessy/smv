@@ -472,7 +472,7 @@ extern "C" void GLUIColorbarCB(int var){
     break;
   case COLORBAR_LABEL:
     if(colorbartype < colorbars.ncolorbars){
-      char *clabel;
+      const char *clabel;
 
       cbi = colorbars.colorbarinfo + colorbartype;
       clabel = EDITTEXT_cb_label->get_text();
