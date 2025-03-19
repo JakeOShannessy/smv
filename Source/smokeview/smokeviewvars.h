@@ -3,7 +3,7 @@
 #include <time.h>
 #include "dmalloc.h"
 #ifdef CPP
-#include "glui.h"
+#include "GL/glui.h"
 #endif
 #include "datadefs.h"
 #include "translate.h"

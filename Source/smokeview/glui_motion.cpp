@@ -912,7 +912,11 @@ extern "C" void GLUIViewpointCB(int var){
   case REPLACE_VIEW:
     ival = LIST_viewpoints->get_int_val();
     selected_view = ival;
+#ifdef GLUI_CPP_STRING
     label = EDIT_view_label->get_text().c_str();
+#else
+    label = EDIT_view_label->get_text();
+#endif
     cex = &camera_list_first;
     cex = cex->next;
     cex = cex->next;
@@ -2566,7 +2570,11 @@ extern "C" void GLUIAddListView(char *label_in){
   }
   selected_view=ival;
   label=label_in;
+#ifdef GLUI_CPP_STRING
   if(label==NULL)label=EDIT_view_label->get_text().c_str();
+#else
+  if(label==NULL)label=EDIT_view_label->get_text();
+#endif
   cex=&camera_list_first;
   cex=cex->next;
   cex=cex->next;

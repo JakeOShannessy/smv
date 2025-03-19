@@ -92,16 +92,14 @@ if (VENDORED_UI_LIBS)
     if (NOT MACOSX)
         add_subdirectory(Source/glut-3.7.6)
     endif()
-    add_subdirectory(Source/glui_v2_1_beta)
-else()
-    # find_package(GLUI REQUIRED)
-    # pkg_check_modules(GLUI REQUIRED IMPORTED_TARGET glui)
-# add_subdirectory(Source/glui_v2_1_beta)
-    # FetchContent_Declare(
-    #     glui-git
-    #     GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
-    #     GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
-    # )
+    add_compile_definitions(GLUI_CPP_STRING)
+    FetchContent_Declare(
+        glui-git
+        EXCLUDE_FROM_ALL
+        GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
+        GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
+        FIND_PACKAGE_ARGS CONFIG NAMES GLUI
+    )
 endif()
 find_package(GLEW REQUIRED)
 find_package(JPEG REQUIRED)
@@ -142,6 +140,7 @@ if(STRICT_CHECKS AND (NOT MSVC))
     add_compile_options(-Wno-unused-result)
     add_compile_options(-Wno-format-overflow)
     add_compile_options(-Wno-format-truncation)
+    add_compile_options(-Wno-deprecated-declarations)
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:$<BUILD_INTERFACE:-Wno-overloaded-virtual;-Wno-unused-comparison>>")
 
 
