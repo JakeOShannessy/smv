@@ -4984,7 +4984,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
 #ifdef pp_COMPRESS
   if(smokezippath != NULL && (global_scase.npatchinfo > 0 || global_scase.smoke3dcoll.nsmoke3dinfo > 0 || global_scase.slicecoll.nsliceinfo > 0)){
-    ROLLOUT_compress = glui_bounds->add_rollout_to_panel(ROLLOUT_files, _("Compress"), false, COMPRESS_ROLLOUT, FileRolloutCB);
+    ROLLOUT_compress = glui_bounds->add_rollout_to_panel(ROLLOUT_files, _("Compress"), false, COMPRESS_ROLLOUT);
     TOGGLE_ROLLOUT(fileprocinfo, nfileprocinfo, ROLLOUT_compress, COMPRESS_ROLLOUT, glui_bounds);
 
     CHECKBOX_erase_all = glui_bounds->add_checkbox_to_panel(ROLLOUT_compress, _("Erase compressed files"),
