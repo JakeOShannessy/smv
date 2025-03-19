@@ -18,10 +18,12 @@ char append_string[1024];
 int main(int argc, char **argv) {
   initMALLOC();
   {
+#if DEBUG
     char *root = GetSmvRootDir();
     int root_len = strlen(root);
     assert(root_len > 0);
     assert(root[root_len - 1] == dirseparator[0]);
+#endif
   }
   return 0;
 }

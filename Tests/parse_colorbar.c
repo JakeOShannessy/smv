@@ -21,11 +21,14 @@ int main(int argc, char **argv) {
   const char *filename = argv[1];
   colorbardata *cb;
   NEWMEMORY(cb, sizeof(colorbardata));
-
+#if DEBUG
   int result = ReadCSVColorbar(cb, filename, "divergent", CB_DIVERGENT);
   assert(!result);
   assert(strcmp(cb->colorbar_type, "divergent") == 0);
   assert(strcmp(cb->menu_label, "light blue->white->light red") == 0);
   assert(cb->nnodes == 256);
+#else
+  ReadCSVColorbar(cb, filename, "divergent", CB_DIVERGENT);
+#endif
   return error;
 }
