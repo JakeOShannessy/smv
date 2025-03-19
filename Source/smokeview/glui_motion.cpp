@@ -687,12 +687,7 @@ void GetUniqueViewName(void){
   const char *label;
   char viewlabel[300];
 
-
-#if GLUI_VERSION >= 2.36f
-  label = EDIT_view_label->get_text().c_str();
-#else
   label = EDIT_view_label->get_text();
-#endif
   if(ViewExist(label) == 1){
     int i;
 
