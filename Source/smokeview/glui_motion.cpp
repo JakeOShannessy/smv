@@ -671,7 +671,7 @@ extern "C" void GLUISetPosXYZFDS(float *xyz){
 
 /* ------------------ ViewExist ------------------------ */
 
-int ViewExist(char *view){
+int ViewExist(const char *view){
   cameradata *ca;
 
   if(view == NULL)return 0;
@@ -684,7 +684,8 @@ int ViewExist(char *view){
 /* ------------------ GetUniqueViewName ------------------------ */
 
 void GetUniqueViewName(void){
-  char *label, viewlabel[300];
+  const char *label;
+  char viewlabel[300];
 
   label = EDIT_view_label->get_text();
   if(ViewExist(label) == 1){
@@ -847,7 +848,7 @@ extern "C" void GLUIViewpointCB(int var){
   int ival;
   int rotation_type_save;
   cameradata *cam1, *cex, *ca;
-  char *label;
+  const char *label;
   cameradata *prev, *next;
   int view_id;
 #ifdef pp_RENDER360_DEBUG
@@ -2541,7 +2542,7 @@ extern "C" void GLUIShowMotion(int menu_id){
 
 extern "C" void GLUIAddListView(char *label_in){
   int ival;
-  char *label;
+  const char *label;
   cameradata *cam1,*cam2,*cex,*ca;
 
   // ignore duplicate labels
