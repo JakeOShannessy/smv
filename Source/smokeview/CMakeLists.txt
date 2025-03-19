@@ -60,12 +60,6 @@ target_sources(smokeview PRIVATE
 )
 
 target_link_libraries(smokeview PRIVATE libsmv)
-# These include directories are an existing workaround that would be good to
-# remove.Because of this custom code and the potential conflict with native libs
-# this needs to be early in the include order.
-if (WIN32)
-    target_include_directories(smokeview PRIVATE ../glut_gl)
-endif ()
 target_link_libraries(smokeview PRIVATE json-c::json-c)
 # if (BUILD_SHARED_LIBS)
 #     install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
@@ -80,7 +74,11 @@ if (VENDORED_UI_LIBS)
     target_link_libraries(smokeview PRIVATE glui_static)
 else()
     find_package(GLUI REQUIRED)
-    target_link_libraries(smokeview PRIVATE glui)
+    if (WIN32)
+        target_link_libraries(smokeview PRIVATE glui::glui)
+    else()
+        target_link_libraries(smokeview PRIVATE glui)
+    endif()
 endif()
 
 # Selecting which GLUT version to use is the most platform-dependent part of the

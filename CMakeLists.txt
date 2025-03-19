@@ -10,7 +10,9 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.19")
     cmake_policy(SET CMP0110 NEW)
 endif()
 include(FetchContent)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+if(NOT WIN32)
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+endif()
 
 # Selected the multithreaded runtime when using MSVC
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
@@ -100,6 +102,8 @@ if (VENDORED_UI_LIBS)
         GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
         FIND_PACKAGE_ARGS CONFIG NAMES GLUI
     )
+elseif(WIN32)
+    add_compile_definitions(GLUI_CPP_STRING)
 endif()
 find_package(GLEW REQUIRED)
 find_package(JPEG REQUIRED)

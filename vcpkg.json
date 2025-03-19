@@ -6,6 +6,7 @@
     "zlib",
     "freeglut",
     "glew",
+    "glui",
     "getopt",
     "libjpeg-turbo",
     "libpng",
