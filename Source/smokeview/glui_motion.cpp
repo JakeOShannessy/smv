@@ -687,7 +687,12 @@ void GetUniqueViewName(void){
   const char *label;
   char viewlabel[300];
 
+
+#if GLUI_VERSION >= 2.36f
+  label = EDIT_view_label->get_text().c_str();
+#else
   label = EDIT_view_label->get_text();
+#endif
   if(ViewExist(label) == 1){
     int i;
 
@@ -908,7 +913,7 @@ extern "C" void GLUIViewpointCB(int var){
   case REPLACE_VIEW:
     ival = LIST_viewpoints->get_int_val();
     selected_view = ival;
-    label = EDIT_view_label->get_text();
+    label = EDIT_view_label->get_text().c_str();
     cex = &camera_list_first;
     cex = cex->next;
     cex = cex->next;
@@ -2562,7 +2567,7 @@ extern "C" void GLUIAddListView(char *label_in){
   }
   selected_view=ival;
   label=label_in;
-  if(label==NULL)label=EDIT_view_label->get_text();
+  if(label==NULL)label=EDIT_view_label->get_text().c_str();
   cex=&camera_list_first;
   cex=cex->next;
   cex=cex->next;
