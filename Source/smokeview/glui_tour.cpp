@@ -168,7 +168,7 @@ extern "C" void GLUITourSetup(int main_window){
   glui_tour = GLUI_Master.create_glui(_("Tours"),0,dialogX0,dialogY0);
   glui_tour->hide();
 
-  ROLLOUT_circular = glui_tour->add_rollout(_("Modify circular tour"),false, MODIFY_TOURS_ROLLOUT, ToursRolloutCB);
+  ROLLOUT_circular = glui_tour->add_rollout(_("Modify circular tour"),false, MODIFY_TOURS_ROLLOUT);
   TOGGLE_ROLLOUT(toursprocinfo, ntoursprocinfo, ROLLOUT_circular, MODIFY_TOURS_ROLLOUT, glui_tour);
 
   CHECKBOX_showtourroute2 = glui_tour->add_checkbox_to_panel(ROLLOUT_circular, _("Show tour"), &edittour, SHOWTOURROUTE2, TourCB);
@@ -191,7 +191,7 @@ extern "C" void GLUITourSetup(int main_window){
   SPINNER_tour_circular_view[1]=glui_tour->add_spinner_to_panel(PANEL_tour_circular_view,"y",GLUI_SPINNER_FLOAT,tour_circular_view+1,TOUR_CIRCULAR_UPDATE,TourCB);
   SPINNER_tour_circular_view[2]=glui_tour->add_spinner_to_panel(PANEL_tour_circular_view,"z",GLUI_SPINNER_FLOAT,tour_circular_view+2,TOUR_CIRCULAR_UPDATE,TourCB);
 
-  ROLLOUT_keyframe = glui_tour->add_rollout("Modify general tour",true,KEYFRAME_TOURS_ROLLOUT, ToursRolloutCB);
+  ROLLOUT_keyframe = glui_tour->add_rollout("Modify general tour",true,KEYFRAME_TOURS_ROLLOUT);
   TOGGLE_ROLLOUT(toursprocinfo, ntoursprocinfo, ROLLOUT_keyframe, KEYFRAME_TOURS_ROLLOUT, glui_tour);
 
   PANEL_tour = glui_tour->add_panel_to_panel(ROLLOUT_keyframe,"Tour", true);
@@ -237,7 +237,7 @@ extern "C" void GLUITourSetup(int main_window){
   CHECKBOX_tour_constant_velocity = glui_tour->add_checkbox_to_panel(PANEL_tour5, _("Constant velocity"),
     &tour_constant_velocity, TOUR_CONSTANT_VELOCITY, TourCB);
 
-  
+
   glui_tour->add_column_to_panel(PANEL_tour6, false);
   PANEL_tour7 = glui_tour->add_panel_to_panel(PANEL_tour6, "");
 

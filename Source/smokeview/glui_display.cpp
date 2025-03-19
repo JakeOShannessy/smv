@@ -449,7 +449,7 @@ void TextLabelsCB(int var){
     memcpy(&LABEL_global_ptr->useforegroundcolor, &gl->useforegroundcolor, sizeof(int));
     break;
   case LB_PREVIOUS:
-    new_label = LabelGet(&global_scase.labelscoll, LIST_LB_labels->curr_text);
+    new_label = LabelGet(&global_scase.labelscoll, LIST_LB_labels->curr_text.c_str());
     new_label = LabelPrevious(&global_scase.labelscoll, new_label);
     if(new_label == NULL)break;
     LABEL_global_ptr = new_label;
@@ -459,7 +459,7 @@ void TextLabelsCB(int var){
     }
     break;
   case LB_NEXT:
-    new_label = LabelGet(&global_scase.labelscoll, LIST_LB_labels->curr_text);
+    new_label = LabelGet(&global_scase.labelscoll, LIST_LB_labels->curr_text.c_str());
     new_label = LabelNext(&global_scase.labelscoll, new_label);
     if(new_label == NULL)break;
     LABEL_global_ptr = new_label;
@@ -469,7 +469,7 @@ void TextLabelsCB(int var){
     }
     break;
   case LB_LIST:
-    new_label = LabelGet(&global_scase.labelscoll, LIST_LB_labels->curr_text);
+    new_label = LabelGet(&global_scase.labelscoll, LIST_LB_labels->curr_text.c_str());
     LABEL_global_ptr = new_label;
     if(new_label != NULL){
       LabelCopy(gl, new_label);
@@ -501,7 +501,7 @@ void TextLabelsCB(int var){
     TextLabelsCB(LB_LIST);
     break;
   case LB_DELETE:
-    strcpy(name, LIST_LB_labels->curr_text);
+    strcpy(name, LIST_LB_labels->curr_text.c_str());
     for(thislabel = global_scase.labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);
@@ -800,7 +800,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   // -------------- Labels/Titles/Bounding box -------------------
 
-  ROLLOUT_general1 = glui_labels->add_rollout(_("Labels/Titles/Bounding box"), true, GENERAL_ROLLOUT1, DisplayRolloutCB);
+  ROLLOUT_general1 = glui_labels->add_rollout(_("Labels/Titles/Bounding box"), true, GENERAL_ROLLOUT1);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_general1, GENERAL_ROLLOUT1, glui_labels);
 
   PANEL_gen1 = glui_labels->add_panel_to_panel(ROLLOUT_general1, "", GLUI_PANEL_NONE);
@@ -858,7 +858,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   // -------------- Lines/Offsets/Surfaces/Other -------------------
 
-  ROLLOUT_general2 = glui_labels->add_rollout(_("Lines/Offsets/Surfaces/Other"), false, GENERAL_ROLLOUT2, DisplayRolloutCB);
+  ROLLOUT_general2 = glui_labels->add_rollout(_("Lines/Offsets/Surfaces/Other"), false, GENERAL_ROLLOUT2);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_general2, GENERAL_ROLLOUT2, glui_labels);
 
   PANEL_linewidth=glui_labels->add_panel_to_panel(ROLLOUT_general2,"line width");
@@ -970,7 +970,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   // -------------- Light -------------------
 
-  ROLLOUT_light2 = glui_labels->add_rollout("Light",false,LIGHT_ROLLOUT,DisplayRolloutCB);
+  ROLLOUT_light2 = glui_labels->add_rollout("Light",false,LIGHT_ROLLOUT);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_light2, LIGHT_ROLLOUT, glui_labels);
 
   for(i = 0; i<3;i++){
@@ -1033,7 +1033,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   // -------------- Fonts -------------------
 
-  ROLLOUT_font = glui_labels->add_rollout("Fonts",false,FONTS_ROLLOUT,DisplayRolloutCB);
+  ROLLOUT_font = glui_labels->add_rollout("Fonts",false,FONTS_ROLLOUT);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_font, FONTS_ROLLOUT, glui_labels);
 
   RADIO_fontsize = glui_labels->add_radiogroup_to_panel(ROLLOUT_font,&fontindex,LABELS_fontsize,GLUILabelsCB);
@@ -1058,7 +1058,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   // -------------- User tick settings -------------------
 
-  ROLLOUT_user_tick = glui_labels->add_rollout("User ticks",false,TICKS_ROLLOUT,DisplayRolloutCB);
+  ROLLOUT_user_tick = glui_labels->add_rollout("User ticks",false,TICKS_ROLLOUT);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_user_tick, TICKS_ROLLOUT, glui_labels);
 
   PANEL_tick1 = glui_labels->add_panel_to_panel(ROLLOUT_user_tick,_("Display"),true);
@@ -1123,7 +1123,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
   // -------------- User labels -------------------
 
   gl=&LABEL_local;
-  ROLLOUT_user_labels = glui_labels->add_rollout("Labels + Ticks",false,LABELS_ROLLOUT,DisplayRolloutCB);
+  ROLLOUT_user_labels = glui_labels->add_rollout("Labels + Ticks",false,LABELS_ROLLOUT);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_user_labels, LABELS_ROLLOUT, glui_labels);
 
   PANEL_LB_panel1 = glui_labels->add_panel_to_panel(ROLLOUT_user_labels,"",GLUI_PANEL_NONE);
@@ -1212,7 +1212,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   // -------------- Sky -------------------
 
-  ROLLOUT_sky = glui_labels->add_rollout("Sky/ground",false,SKY_ROLLOUT,DisplayRolloutCB);
+  ROLLOUT_sky = glui_labels->add_rollout("Sky/ground",false,SKY_ROLLOUT);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_sky, SKY_ROLLOUT, glui_labels);
   if(skyboxinfo != NULL){
     PANEL_box=glui_labels->add_panel_to_panel(ROLLOUT_sky,_("box"));
