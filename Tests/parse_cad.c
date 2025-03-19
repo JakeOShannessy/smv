@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
   cadgeom_collection *coll = CreateCADGeomCollection(20);
   assert(NCADGeom(coll) == 0);
   int res = ReadCADGeomToCollection(coll, input_path, 100.0);
-  fprintf(stderr, "#CAD defs: %i\n", NCADGeom(coll));
+  fprintf(stderr, "#CAD defs(%d): %i\n", NCADGeom(coll), res);
   assert(res == 0);
   assert(NCADGeom(coll) == 1);
   FreeCADGeomCollection(coll);
