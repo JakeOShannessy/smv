@@ -26,9 +26,20 @@ package-cmake-win: build-release-win
 
 # Build the debug binaries
 build:
-    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=ON
-    cmake --build cbuild --config Debug -j6
+    ~/emsdk/emsdk activate latest
+    CC=emcc CXX=emcc cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=ON
+    cmake --build cbuild --config Debug -j6 --target libsmv
     cmake --install cbuild --config Debug --prefix dist-debug
+
+build-wasm:
+    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=ON -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
+    cmake --build cbuild --config Debug -j6 -v --target smvq-wasm
+    cmake --install cbuild --config Debug --prefix dist-debug
+
+build-release-wasm:
+    cmake -B cbuild -DCMAKE_BUILD_TYPE=Release -DVENDORED_UI_LIBS=ON -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
+    cmake --build cbuild --config Release -j6
+    cmake --install cbuild --config Release --prefix dist-wasm
 
 build-strict:
     cmake -B cbuild -DSTRICT_CHECKS=ON -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=ON
