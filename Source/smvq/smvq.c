@@ -524,6 +524,7 @@ struct json_object *RunBenchmark(char *input_file, const char *fdsprefix) {
 char *RunSmvq(const char *input_file) {
   char *fdsprefix = GetBaseName(input_file);
   struct json_object *jobj = RunBenchmark(input_file, fdsprefix);
+  free(fdsprefix);
   const char *json_output =
       json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
   char *res = strdup(json_output);
