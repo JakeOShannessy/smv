@@ -192,8 +192,8 @@ int SetGlobalFilenames(smv_case *scase) {
 int PrintJson(smv_case *scase) {
   struct json_object *jobj = json_object_new_object();
   json_object_object_add(jobj, "version", json_object_new_int(1));
-  // json_object_object_add(jobj, "chid",
-  //                        json_object_new_string(scase->paths.chidfilebase));
+  json_object_object_add(jobj, "chid",
+                         json_object_new_string(scase->paths.chidfilebase));
   if(scase->paths.fds_filein != NULL) {
     json_object_object_add(jobj, "input_file",
                            json_object_new_string(scase->paths.fds_filein));
