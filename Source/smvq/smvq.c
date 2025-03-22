@@ -22,6 +22,10 @@
 #include <libgen.h>
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 int ReadSMV(smv_case *scase, bufferstreamdata *stream);
 void ReadSMVOrig(smv_case *scase);
 void ReadSMVDynamic(smv_case *scase, char *file);
@@ -188,8 +192,8 @@ int SetGlobalFilenames(smv_case *scase) {
 int PrintJson(smv_case *scase) {
   struct json_object *jobj = json_object_new_object();
   json_object_object_add(jobj, "version", json_object_new_int(1));
-  json_object_object_add(jobj, "chid",
-                         json_object_new_string(scase->paths.chidfilebase));
+  // json_object_object_add(jobj, "chid",
+  //                        json_object_new_string(scase->paths.chidfilebase));
   if(scase->paths.fds_filein != NULL) {
     json_object_object_add(jobj, "input_file",
                            json_object_new_string(scase->paths.fds_filein));
@@ -451,6 +455,18 @@ int RunBenchmark(char *input_file, const char *fdsprefix) {
 }
 
 int main(int argc, char **argv) {
+#ifdef __EMPSCRIPTEN__
+  // EM_ASM is a macro to call in-line JavaScript code.
+  EM_ASM(
+      // Make a directory other than '/'
+      // FS.mkdir('/');
+      FS.mount(NODEFS, {root : '/working'}, '/home');
+
+      // Then sync
+      FS.syncfs(true, function(err){
+                          // Error
+                      }););
+#endif
 
   bool print_help = false;
   bool print_version = false;
@@ -494,6 +510,12 @@ int main(int argc, char **argv) {
     fprintf(stderr, "No input file specified.\n");
     return 1;
   }
+  char *fdsprefix = GetBaseName(input_file);
+  int result = RunBenchmark(input_file, fdsprefix);
+  return result;
+}
+
+int RunSmvq(const char *input_file) {
   char *fdsprefix = GetBaseName(input_file);
   int result = RunBenchmark(input_file, fdsprefix);
   return result;
