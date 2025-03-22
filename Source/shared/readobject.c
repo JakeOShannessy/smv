@@ -1700,7 +1700,6 @@ void UpdatePartClassDepend(partclassdata *partclassi){
   }
 }
 
-
 /* ----------------------- GetNDevices ----------------------------- */
 #define BUFFER_LEN 255
 int GetNDevices(char *file){
