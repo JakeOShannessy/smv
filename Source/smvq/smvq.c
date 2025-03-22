@@ -460,66 +460,61 @@ struct json_object *RunBenchmark(char *input_file, const char *fdsprefix) {
   return PrintJson(scase);
 }
 
-// int main(int argc, char **argv) {
-// #ifdef __EMPSCRIPTEN__
-//   // EM_ASM is a macro to call in-line JavaScript code.
-//   EM_ASM(
-//       // Make a directory other than '/'
-//       // FS.mkdir('/');
-//       FS.mount(NODEFS, {root : '/working'}, '/home');
+#ifndef __EMSCRIPTEN__
+int main(int argc, char **argv) {
 
-//       // Then sync
-//       FS.syncfs(true, function(err){
-//                           // Error
-//                       }););
-// #endif
+  bool print_help = false;
+  bool print_version = false;
 
-//   bool print_help = false;
-//   bool print_version = false;
+  int c;
 
-//   int c;
+  opterr = 0;
 
-//   opterr = 0;
+  while((c = getopt(argc, argv, "hV")) != -1)
+    switch(c) {
+    case 'h':
+      print_help = true;
+      break;
+    case 'V':
+      print_version = true;
+      break;
+    case '?':
+      if(isprint(optopt))
+        fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+      else
+        fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+      return 1;
+    default:
+      abort();
+    }
+  if(print_help) {
+    printf("smvq-%s\n", PROGVERSION);
+    printf("\nUsage:  smvq [OPTIONS] <FILE>\n");
+    printf("\nOptions:\n");
+    printf("  -h Print help\n");
+    printf("  -V Print version\n");
+    return 0;
+  }
+  if(print_version) {
+    printf("smvq - smv query processor (v%s)\n", PROGVERSION);
+    return 0;
+  }
+  char *input_file = argv[optind];
 
-//   while((c = getopt(argc, argv, "hV")) != -1)
-//     switch(c) {
-//     case 'h':
-//       print_help = true;
-//       break;
-//     case 'V':
-//       print_version = true;
-//       break;
-//     case '?':
-//       if(isprint(optopt))
-//         fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-//       else
-//         fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
-//       return 1;
-//     default:
-//       abort();
-//     }
-//   if(print_help) {
-//     printf("smvq-%s\n", PROGVERSION);
-//     printf("\nUsage:  smvq [OPTIONS] <FILE>\n");
-//     printf("\nOptions:\n");
-//     printf("  -h Print help\n");
-//     printf("  -V Print version\n");
-//     return 0;
-//   }
-//   if(print_version) {
-//     printf("smvq - smv query processor (v%s)\n", PROGVERSION);
-//     return 0;
-//   }
-//   char *input_file = argv[optind];
-
-//   if(input_file == NULL) {
-//     fprintf(stderr, "No input file specified.\n");
-//     return 1;
-//   }
-//   char *fdsprefix = GetBaseName(input_file);
-//   int result = RunBenchmark(input_file, fdsprefix);
-//   return result;
-// }
+  if(input_file == NULL) {
+    fprintf(stderr, "No input file specified.\n");
+    return 1;
+  }
+  char *fdsprefix = GetBaseName(input_file);
+  struct json_object *jobj = RunBenchmark(input_file, fdsprefix);
+  free(fdsprefix);
+  const char *json_output =
+      json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
+  printf("%s\n", json_output);
+  json_object_put(jobj);
+  return 0;
+}
+#endif
 
 char *RunSmvq(const char *input_file) {
   char *fdsprefix = GetBaseName(input_file);

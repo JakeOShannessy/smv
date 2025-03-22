@@ -38,7 +38,7 @@ build-wasm:
 
 build-release-wasm:
     cmake -B cbuild -DCMAKE_BUILD_TYPE=Release -DVENDORED_UI_LIBS=ON -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
-    cmake --build cbuild --config Release -j6
+    cmake --build cbuild --config Release -j6 --target smvq-wasm
     cmake --install cbuild --config Release --prefix dist-wasm
 
 build-strict:
