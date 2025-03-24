@@ -13,11 +13,11 @@
 #include "dmalloc.h"
 #include "shared_structures.h"
 
+#include "readlabel.h"
+#include "readsmvfile.h"
 #include "smokeviewdefs.h"
 #include "string_util.h"
 #include <math.h>
-#include "readlabel.h"
-#include "readsmvfile.h"
 
 #include <json-c/json_object.h>
 
@@ -29,19 +29,19 @@ int ReadSMV_Init(smv_case *scase);
 int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream);
 void ReadSMVDynamic(smv_case *scase, char *file);
 void ReadSMVOrig(smv_case *scase);
-smv_case * CreateScase();
+smv_case *CreateScase();
 
 /// @brief Given a file path, get the filename excluding the final extension.
 /// This allocates a new copy which can be deallocated with free().
 /// @param input_file a file path
 /// @return an allocated string containing the basename or NULL on failure.
 char *GetBaseName(const char *input_file) {
-  if (input_file == NULL) return NULL;
+  if(input_file == NULL) return NULL;
 #ifdef _WIN32
   char *result = malloc(_MAX_FNAME + 1);
   errno_t err =
       _splitpath_s(input_file, NULL, 0, NULL, 0, result, _MAX_FNAME, NULL, 0);
-  if (err) return NULL;
+  if(err) return NULL;
 #else
   // POSIX basename can modify it's contents, so we'll make some copies.
   char *input_file_temp = strdup(input_file);
@@ -49,7 +49,7 @@ char *GetBaseName(const char *input_file) {
   char *bname = basename(input_file_temp);
   // If a '.' exists, set it to '\0' to trim the extension.
   char *dot = strrchr(bname, '.');
-  if (dot) *dot = '\0';
+  if(dot) *dot = '\0';
   char *result = strdup(bname);
   free(input_file_temp);
 #endif
@@ -142,7 +142,7 @@ int SetGlobalFilenames(smv_case *scase) {
     STRCAT(scase->paths.ffmpeg_command_filename, ".sh");
 #endif
   }
-  if (scase->paths.smvzip_filename == NULL) {
+  if(scase->paths.smvzip_filename == NULL) {
     NewMemory((void **)&scase->paths.smvzip_filename,
               (unsigned int)(len_casename + strlen(".smvzip") + 1));
     STRCPY(scase->paths.smvzip_filename, scase->fdsprefix);
@@ -319,7 +319,7 @@ struct json_object *PrintJson(smv_case *scase) {
                            json_object_new_string(device->labelptr));
     json_object_object_add(device_obj, "quantity",
                            json_object_new_string(device->quantity));
-    if (device->have_xyz) {
+    if(device->have_xyz) {
       struct json_object *device_position = json_object_new_object();
       json_object_object_add(device_position, "x",
                              json_object_new_double(device->xyz[0]));
@@ -329,9 +329,9 @@ struct json_object *PrintJson(smv_case *scase) {
                              json_object_new_double(device->xyz[2]));
       json_object_object_add(device_obj, "position", device_position);
     }
-    if (device->act_times != NULL) {
+    if(device->act_times != NULL) {
       struct json_object *state_changes = json_object_new_array();
-      for (int j = 0; j < device->nstate_changes; j++) {
+      for(int j = 0; j < device->nstate_changes; j++) {
         struct json_object *state_change = json_object_new_object();
         json_object_object_add(state_change, "time",
                                json_object_new_double(device->act_times[j]));
@@ -353,19 +353,19 @@ struct json_object *PrintJson(smv_case *scase) {
     json_object_object_add(slice_obj, "index", json_object_new_int(i + 1));
     json_object_object_add(slice_obj, "mesh",
                            json_object_new_int(slice->blocknumber));
-    if (slice->label.longlabel != NULL) {
+    if(slice->label.longlabel != NULL) {
       json_object_object_add(slice_obj, "longlabel",
                              json_object_new_string(slice->label.longlabel));
     }
-    if (slice->label.shortlabel) {
+    if(slice->label.shortlabel) {
       json_object_object_add(slice_obj, "shortlabel",
                              json_object_new_string(slice->label.shortlabel));
     }
-    if (slice->slicelabel) {
+    if(slice->slicelabel) {
       json_object_object_add(slice_obj, "id",
                              json_object_new_string(slice->slicelabel));
     }
-    if (slice->label.unit) {
+    if(slice->label.unit) {
       json_object_object_add(slice_obj, "unit",
                              json_object_new_string(slice->label.unit));
     }
@@ -423,7 +423,6 @@ struct json_object *RunBenchmark(char *input_file, const char *fdsprefix) {
   SetGlobalFilenames(scase);
 
   INIT_PRINT_TIMER(parse_time);
-  fprintf(stderr, "reading:\t%s\n", input_file);
   {
     bufferstreamdata *smv_streaminfo = GetSMVBuffer(input_file);
     if(smv_streaminfo == NULL) {
@@ -463,8 +462,8 @@ int main(int argc, char **argv) {
 
   opterr = 0;
 
-  while ((c = getopt(argc, argv, "hV")) != -1)
-    switch (c) {
+  while((c = getopt(argc, argv, "hV")) != -1)
+    switch(c) {
     case 'h':
       print_help = true;
       break;
@@ -472,7 +471,7 @@ int main(int argc, char **argv) {
       print_version = true;
       break;
     case '?':
-      if (isprint(optopt))
+      if(isprint(optopt))
         fprintf(stderr, "Unknown option `-%c'.\n", optopt);
       else
         fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
@@ -480,7 +479,7 @@ int main(int argc, char **argv) {
     default:
       abort();
     }
-  if (print_help) {
+  if(print_help) {
     printf("smvq-%s\n", PROGVERSION);
     printf("\nUsage:  smvq [OPTIONS] <FILE>\n");
     printf("\nOptions:\n");
@@ -488,7 +487,7 @@ int main(int argc, char **argv) {
     printf("  -V Print version\n");
     return 0;
   }
-  if (print_version) {
+  if(print_version) {
     printf("smvq - smv query processor (v%s)\n", PROGVERSION);
     return 0;
   }

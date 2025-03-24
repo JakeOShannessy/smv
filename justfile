@@ -26,20 +26,19 @@ package-cmake-win: build-release-win
 
 # Build the debug binaries
 build:
-    ~/emsdk/emsdk activate latest
-    CC=emcc CXX=emcc cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=ON
-    cmake --build cbuild --config Debug -j6 --target libsmv
+    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=ON
+    cmake --build cbuild --config Debug -j6
     cmake --install cbuild --config Debug --prefix dist-debug
 
 build-wasm:
     cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=ON -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
-    cmake --build cbuild --config Debug -j6 -v --target smvq-wasm
-    cmake --install cbuild --config Debug --prefix dist-debug
+    cmake --build cbuild --config Debug -j6 -v
+    cmake --install cbuild --config Debug --prefix dist-wasm
 
 build-wasm-win:
     cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=OFF -DCMAKE_TOOLCHAIN_FILE="~/Documents/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
     cmake --build cbuild --config Debug -j6 -v --target smvq-wasm
-    cmake --install cbuild --config Debug --prefix dist-debug
+    cmake --install cbuild --config Debug --prefix dist-wasm
 
 build-release-wasm:
     cmake -B cbuild -DCMAKE_BUILD_TYPE=Release -DVENDORED_UI_LIBS=ON -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
@@ -83,4 +82,4 @@ package-rpm:
 
 # Clean everything
 clean:
-    cmake -E rm -rf cbuild  _CPack_Packages dist-debug dist
+    cmake -E rm -rf cbuild  _CPack_Packages dist-debug dist dist-wasm

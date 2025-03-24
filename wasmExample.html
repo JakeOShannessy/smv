@@ -2390,13 +2390,15 @@ PRT5     4
       1
       1
 `;
-        // console.log(f);
         Module.onRuntimeInitialized = () => {
-            const RunSmvq =  Module.cwrap('RunSmvq', 'string', ['string'])
-            const filename = 'write_test.txt';
+            const RunSmvq = Module.cwrap('RunSmvq', 'string', ['string'])
+            const filename = 'input_file.smv';
             FS.writeFile(filename, input)
             console.log(filename)
+            const t1 = performance.now()
             const res = RunSmvq(filename)
+            const t2 = performance.now()
+            console.log(`parse time: ${t2 - t1} ms`);
             const R = JSON.parse(res);
             Module._free(res); // release the allocated memory
             console.log(R);
