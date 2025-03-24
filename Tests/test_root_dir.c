@@ -20,6 +20,7 @@ int main(int argc, char **argv) {
   {
     char *root = GetSmvRootDir();
     int root_len = strlen(root);
+    fprintf(stderr, "root_len: %i\n", root_len);
     assert(root_len > 0);
     assert(root[root_len - 1] == dirseparator[0]);
   }
