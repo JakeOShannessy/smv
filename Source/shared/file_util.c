@@ -768,7 +768,7 @@ bufferdata *File2Buffer(char *file, char *size_file, int *options, bufferdata *b
 
 /* ------------------ FileExistsOrig ------------------------ */
 
-int FileExistsOrig(char *filename){
+int FileExistsOrig(const char *filename){
   if(ACCESS(filename, F_OK) == -1){
     return NO;
   }
@@ -779,7 +779,7 @@ int FileExistsOrig(char *filename){
 
   /* ------------------ FileExists ------------------------ */
 
-int FileExists(char *filename, filelistdata *filelist, int nfilelist, filelistdata *filelist2, int nfilelist2){
+int FileExists(const char *filename, filelistdata *filelist, int nfilelist, filelistdata *filelist2, int nfilelist2){
 
 // returns YES if the file filename exists, NO otherwise
 
@@ -923,19 +923,25 @@ int CompareFileList(const void *arg1, const void *arg2){
 
 /* ------------------ FileInList ------------------------ */
 
-filelistdata *FileInList(char *file, filelistdata *filelist, int nfiles, filelistdata *filelist2, int nfiles2){
+filelistdata *FileInList(const char *file, filelistdata *filelist, int nfiles, filelistdata *filelist2, int nfiles2){
   filelistdata *entry=NULL, fileitem;
-
+  char *file_temp;
+  NewMemory((void **)&file_temp, (strlen(file) + 1) * sizeof(char));
+  strcpy(file_temp, file);
   if(file==NULL)return NULL;
-  fileitem.file = file;
+  fileitem.file = file_temp;
   fileitem.type = 0;
   if(filelist!=NULL&&nfiles>0){
     entry = bsearch(&fileitem, (filelistdata *)filelist, (size_t)nfiles, sizeof(filelistdata), CompareFileList);
-    if(entry!=NULL)return entry;
+    if(entry!=NULL){
+      FreeMemory(file_temp);
+      return entry;
+    }
   }
   if(filelist2!=NULL&&nfiles2>0){
     entry = bsearch(&fileitem, (filelistdata *)filelist2, (size_t)nfiles2, sizeof(filelistdata), CompareFileList);
   }
+  FreeMemory(file_temp);
   return entry;
 }
 
