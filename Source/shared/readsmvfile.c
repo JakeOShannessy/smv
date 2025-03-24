@@ -1151,7 +1151,7 @@ ventdata *GetCloseVent(meshdata *ventmesh, int ivent){
 
 /* ------------------ ReadSMVDynamic ------------------------ */
 
-void ReadSMVDynamic(smv_case *scase, char *file){
+void ReadSMVDynamic(smv_case *scase, const char *file){
   int ioffset;
   float time_local;
   int i;
@@ -9093,7 +9093,7 @@ smv_case *ScaseCreate() {
   return scase;
 }
 
-int ScaseParseFromPath(char *input_file, smv_case *scase) {
+int ScaseParseFromPath(const char *input_file, smv_case *scase) {
   const char *fdsprefix = GetBaseName(input_file);
   NEWMEMORY(scase->fdsprefix, (strlen(fdsprefix) + 1) * sizeof(char));
   STRCPY(scase->fdsprefix, fdsprefix);
@@ -9133,9 +9133,9 @@ int ScaseParseFromPath(char *input_file, smv_case *scase) {
 /// @brief Cleanup and free the memory of an smv_case.
 /// @param scase An smv_case created with ScaseCreate.
 void ScaseDestroy(smv_case *scase) {
-  FreeObjectCollection(&scase->objectscoll);
-  FreeCADGeomCollection(&scase->cadgeomcoll);
-  FreeLabelsCollection(&scase->labelscoll);
+  ClearObjectCollection(&scase->objectscoll);
+  ClearCADGeomCollection(&scase->cadgeomcoll);
+  ClearLabelsCollection(&scase->labelscoll);
 }
 
 
