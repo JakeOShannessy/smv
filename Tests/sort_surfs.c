@@ -1,11 +1,7 @@
 #define INMAIN
-
 #include "options.h"
-
 #include "dmalloc.h"
-
-#include "readcad.h"
-
+#include "shared_structures.h"
 #include <assert.h>
 #include <string.h>
 

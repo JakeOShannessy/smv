@@ -20,6 +20,7 @@
 #include "IOvolsmoke.h"
 #include "readhvac.h"
 #include "readobject.h"
+#include "readsmvfile.h"
 #include "IOobjects.h"
 #include "IOscript.h"
 #include "readsmoke.h"

@@ -17,6 +17,7 @@
 #include "c_api.h"
 #include "gd.h"
 #include "IOscript.h"
+#include "readsmvfile.h"
 
 #ifdef WIN32
 #define snprintf _snprintf

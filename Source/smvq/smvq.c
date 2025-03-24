@@ -17,6 +17,7 @@
 #include "string_util.h"
 #include <math.h>
 #include "readlabel.h"
+#include "readsmvfile.h"
 
 #include <json-c/json_object.h>
 
@@ -28,50 +29,7 @@ int ReadSMV_Init(smv_case *scase);
 int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream);
 void ReadSMVDynamic(smv_case *scase, char *file);
 void ReadSMVOrig(smv_case *scase);
-
-smv_case global_scase = {
-    .tourcoll = {.ntourinfo = 0,
-                 .tourinfo = NULL,
-                 .tour_ntimes = 1000,
-                 .tour_t = NULL,
-                 .tour_t2 = NULL,
-                 .tour_dist = NULL,
-                 .tour_dist2 = NULL,
-                 .tour_dist3 = NULL,
-                 .tour_tstart = 0.0,
-                 .tour_tstop = 100.0},
-    .fuel_hoc = -1.0,
-    .fuel_hoc_default = -1.0,
-    .have_cface_normals = CFACE_NORMALS_NO,
-    .gvecphys = {0.0, 0.0, -9.8},
-    .gvecunit = {0.0, 0.0, -1.0},
-    .global_tbegin = 1.0,
-    .global_tend = 0.0,
-    .tload_begin = 0.0,
-    .tload_end = 0.0,
-    .load_hrrpuv_cutoff = 200.0,
-    .global_hrrpuv_cutoff = 200.0,
-    .global_hrrpuv_cutoff_default = 200.0,
-    .smoke_albedo = 0.3,
-    .smoke_albedo_base = 0.3,
-    .xbar = 1.0,
-    .ybar = 1.0,
-    .zbar = 1.0,
-    .show_slice_in_obst = ONLY_IN_GAS,
-    .use_iblank = 1,
-    .visOtherVents = 1,
-    .visOtherVentsSAVE = 1,
-    .hvac_duct_color = {63, 0, 15},
-    .hvac_node_color = {63, 0, 15},
-    .nrgb2 = 8,
-    .pref = 101325.0,
-    .pamb = 0.0,
-    .tamb = 293.15,
-    .nrgb = NRGB,
-    .linewidth = 2.0,
-    .ventlinewidth = 2.0,
-    .obst_bounding_box = {1.0, 0.0, 1.0, 0.0, 1.0, 0.0},
-    .hvaccoll = {.hvacductvar_index = -1, .hvacnodevar_index = -1, 0}};
+smv_case * CreateScase();
 
 /// @brief Given a file path, get the filename excluding the final extension.
 /// This allocates a new copy which can be deallocated with free().
@@ -452,13 +410,10 @@ int PrintJson(smv_case *scase) {
   return 0;
 }
 void InitScase(smv_case *scase);
-int RunBenchmark(char *input_file, const char *fdsprefix) {
+int RunSmvq(char *input_file, const char *fdsprefix) {
   initMALLOC();
 
-  smv_case *scase;
-  NEWMEMORY(scase, sizeof(smv_case));
-  memset(scase, 0, sizeof(smv_case));
-  InitScase(scase);
+  smv_case *scase = CreateScase();
   NEWMEMORY(scase->fdsprefix, (strlen(fdsprefix) + 1) * sizeof(char));
   STRCPY(scase->fdsprefix, fdsprefix);
   SetGlobalFilenames(scase);
@@ -541,6 +496,6 @@ int main(int argc, char **argv) {
     return 1;
   }
   char *fdsprefix = GetBaseName(input_file);
-  int result = RunBenchmark(input_file, fdsprefix);
+  int result = RunSmvq(input_file, fdsprefix);
   return result;
 }

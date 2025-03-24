@@ -58,22 +58,12 @@ target_link_libraries(parse_colorbar PRIVATE libsmv)
 # mem_test
 add_executable(mem_test mem_test.c)
 target_link_libraries(mem_test PRIVATE libsmv)
-target_include_directories(mem_test PRIVATE .)
 
 # We don't have headless GL setup on windows so we skip it for now
 # test_image_render
 add_executable(test_image_render test_image_render.c )
 target_link_libraries(test_image_render PRIVATE PkgConfig::LIBGD)
 target_link_libraries(test_image_render PRIVATE libsmv)
-
-if (LINUX)
-    target_link_libraries(test_image_render PRIVATE OpenGL::OpenGL OpenGL::EGL OpenGL::GLU)
-elseif(MACOSX)
-    add_definitions(-Dpp_NOQUARTZ)
-    target_link_libraries(test_image_render PRIVATE "-framework OpenGL" "-framework GLUT")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
-endif()
-
 
 # test_root_dir
 add_executable(test_root_dir test_root_dir.c)
