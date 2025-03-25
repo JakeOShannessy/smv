@@ -38,6 +38,7 @@ target_include_directories(libsmv PUBLIC
     #TODO: this is a bit of a hack, it shouldn't really use options.h
     ../smokeview
 )
+target_include_directories(libsmv INTERFACE include())
 if(WIN32)
     target_link_libraries(libsmv PRIVATE PThreads4W::PThreads4W)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
