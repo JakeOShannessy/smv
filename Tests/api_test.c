@@ -1,3 +1,5 @@
+#include "options.h"
+
 #include "smv.h"
 
 int main(int argc, char **argv) {
