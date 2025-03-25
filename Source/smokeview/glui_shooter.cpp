@@ -283,7 +283,7 @@ extern "C" void GLUIShooterSetup(int main_window){
   glui_shooter = GLUI_Master.create_glui(_("Particle tracking"),0,dialogX0,dialogY0);
   glui_shooter->hide();
 
-  ROLLOUT_shooter_frame = glui_shooter->add_rollout(_("Starting locations/velocities"), true, START_SHOOTER_ROLLOUT, ShooterRolloutCB);
+  ROLLOUT_shooter_frame = glui_shooter->add_rollout(_("Starting locations/velocities"), true, START_SHOOTER_ROLLOUT);
   TOGGLE_ROLLOUT(shooterprocinfo, nshooterprocinfo, ROLLOUT_shooter_frame, START_SHOOTER_ROLLOUT, glui_shooter);
 
   PANEL_shooter_frameE=glui_shooter->add_panel_to_panel(ROLLOUT_shooter_frame,_("Positions"),false);
@@ -315,7 +315,7 @@ extern "C" void GLUIShooterSetup(int main_window){
   SPINNER_shooter_v=glui_shooter->add_spinner_to_panel(PANEL_shooter_frameF,"v",GLUI_SPINNER_FLOAT,shooter_uvw+1,SHOOTER_UVW,ShooterCB);
   SPINNER_shooter_w=glui_shooter->add_spinner_to_panel(PANEL_shooter_frameF,"w",GLUI_SPINNER_FLOAT,shooter_uvw+2,SHOOTER_UVW,ShooterCB);
 
-  ROLLOUT_shooter_velocity = glui_shooter->add_rollout(_("Background velocity field"), false, BACKGROUND_SHOOTER_ROLLOUT, ShooterRolloutCB);
+  ROLLOUT_shooter_velocity = glui_shooter->add_rollout(_("Background velocity field"), false, BACKGROUND_SHOOTER_ROLLOUT);
   TOGGLE_ROLLOUT(shooterprocinfo, nshooterprocinfo, ROLLOUT_shooter_velocity,BACKGROUND_SHOOTER_ROLLOUT, glui_shooter);
 
   RADIO_shooter_vel_type=glui_shooter->add_radiogroup_to_panel(ROLLOUT_shooter_velocity,&shooter_vel_type,SHOOTER_VEL_TYPE,ShooterCB);
@@ -352,7 +352,7 @@ extern "C" void GLUIShooterSetup(int main_window){
   SPINNER_shooter_veldir=glui_shooter->add_spinner_to_panel(PANEL_shooter_frameD,_("velocity direction (deg)"),GLUI_SPINNER_FLOAT,&shooter_veldir,SHOOTER_VEL,ShooterCB);
   SPINNER_shooter_veldir->set_float_limits(-180.0,180.0);
 
-  ROLLOUT_shooter_misc = glui_shooter->add_rollout("Misc", false, MISC_SHOOTER_ROLLOUT, ShooterRolloutCB);
+  ROLLOUT_shooter_misc = glui_shooter->add_rollout("Misc", false, MISC_SHOOTER_ROLLOUT);
   TOGGLE_ROLLOUT(shooterprocinfo, nshooterprocinfo, ROLLOUT_shooter_misc, MISC_SHOOTER_ROLLOUT, glui_shooter);
 
   PANEL_shooter_frameG = glui_shooter->add_panel_to_panel(ROLLOUT_shooter_misc, "", false);

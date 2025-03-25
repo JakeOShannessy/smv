@@ -472,10 +472,14 @@ extern "C" void GLUIColorbarCB(int var){
     break;
   case COLORBAR_LABEL:
     if(colorbartype < colorbars.ncolorbars){
-      char *clabel;
+      const char *clabel;
 
       cbi = colorbars.colorbarinfo + colorbartype;
+#ifdef GLUI_CPP_STRING
+      clabel = EDITTEXT_cb_label->get_text().c_str();
+#else
       clabel = EDITTEXT_cb_label->get_text();
+#endif
       strcpy(cbi->menu_label, clabel);
       LISTBOX_cb_edit->delete_item(colorbartype);
       LISTBOX_cb_edit->add_item(colorbartype, colorbar_label);

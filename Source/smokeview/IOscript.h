@@ -124,7 +124,7 @@ EXTERNCPP char *GetIniFileName(int id);
 EXTERNCPP void GetNewScriptFileName(char *newscriptfilename);
 EXTERNCPP char *GetScriptFileName(int id);
 EXTERNCPP int  GetVolFrameMax(int meshnum);
-EXTERNCPP inifiledata *InsertIniFile(char *file);
+EXTERNCPP inifiledata *InsertIniFile(const char *file);
 EXTERNCPP scriptfiledata *InsertScriptFile(char *file);
 EXTERNCPP void LoadSmokeFrame(int meshnum, int framenum);
 EXTERNCPP void LoadTimeFrame(int meshnum, float timeval);
@@ -140,4 +140,3 @@ EXTERNCPP void StartScript(void);
 
 
 #endif
-

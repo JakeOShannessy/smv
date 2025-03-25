@@ -15,7 +15,7 @@
 
 /* ------------------ LabelGet ------------------------ */
 
-labeldata *LabelGet(labels_collection *labelscoll, char *name) {
+labeldata *LabelGet(labels_collection *labelscoll, const char *name) {
   labeldata *thislabel;
 
   if(name == NULL) return NULL;

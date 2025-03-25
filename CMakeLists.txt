@@ -10,6 +10,9 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.19")
     cmake_policy(SET CMP0110 NEW)
 endif()
 include(FetchContent)
+if(NOT WIN32)
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+endif()
 
 # Selected the multithreaded runtime when using MSVC
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
@@ -60,7 +63,7 @@ message("Package Name: ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SY
 # Options which can be configured (along with their defaults)
 option(BETA "Include beta functionality" OFF)
 option(STRICT_CHECKS "Run additional strict checks" OFF)
-option(VENDORED_UI_LIBS "Use the vendored GLUT" ON)
+option(VENDORED_UI_LIBS "Use the vendored GLUT" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # Ensure all files are in the right place to run the tests
@@ -91,13 +94,16 @@ if (VENDORED_UI_LIBS)
     if (NOT MACOSX)
         add_subdirectory(Source/glut-3.7.6)
     endif()
-    add_subdirectory(Source/glui_v2_1_beta)
-else()
+    add_compile_definitions(GLUI_CPP_STRING)
     FetchContent_Declare(
         glui-git
+        EXCLUDE_FROM_ALL
         GIT_REPOSITORY https://github.com/JakeOShannessy/glui.git
         GIT_TAG        fb8380b8603b77aea997428af3fba41c70920b2f
+        FIND_PACKAGE_ARGS CONFIG NAMES GLUI
     )
+elseif(WIN32)
+    add_compile_definitions(GLUI_CPP_STRING)
 endif()
 find_package(GLEW REQUIRED)
 find_package(JPEG REQUIRED)
@@ -138,6 +144,7 @@ if(STRICT_CHECKS AND (NOT MSVC))
     add_compile_options(-Wno-unused-result)
     add_compile_options(-Wno-format-overflow)
     add_compile_options(-Wno-format-truncation)
+    add_compile_options(-Wno-deprecated-declarations)
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:$<BUILD_INTERFACE:-Wno-overloaded-virtual;-Wno-unused-comparison>>")
 
 
