@@ -9,11 +9,6 @@
 
 #include "readobject.h"
 
-int show_help;
-int hash_option;
-int show_version;
-char append_string[1024];
-
 int main(int argc, char **argv) {
   initMALLOC();
   if (argc > 1) {
@@ -22,6 +17,7 @@ int main(int argc, char **argv) {
     object_collection *objectscoll = CreateObjectCollection();
 #if DEBUG
     int result = ReadObjectDefs(objectscoll, file_path);
+    fprintf(stderr, "result: %i\n", result);
     // Two of the objects in this bad file are still parsable so we should
     // parse 2 object definitions.
     assert(result > 0);

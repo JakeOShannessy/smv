@@ -656,13 +656,22 @@ void PrintTime(const char *filepath, int line, float *timer, const char *label, 
 
 /* ------------------ InitBufferData ------------------------ */
 
-bufferdata *InitBufferData(char *file){
+bufferdata *InitBufferData(char *file, char *size_file, int *options){
   bufferdata *buffinfo = NULL;
   unsigned char *buffer = NULL;
   FILE_SIZE nbuffer = 0;
 
   NewMemory((void **)&buffinfo, sizeof(bufferdata));
   buffinfo->file = file;
+  buffinfo->size_file = size_file;
+  buffinfo->options = options;
+  if(options != NULL && options[0]>0){
+    int *optionsptr;
+
+    NewMemory((void **)&optionsptr, (options[0]+1)*sizeof(int));
+    memcpy(optionsptr, options, (options[0]+1)*sizeof(int));
+    buffinfo->options = optionsptr;
+  }
   nbuffer = GetFileSizeSMV(file);
   NewMemory((void **)&buffer, nbuffer);
   buffinfo->buffer   = buffer;
@@ -676,12 +685,13 @@ bufferdata *InitBufferData(char *file){
 void FreeBufferInfo(bufferdata *bufferinfo){
   if(bufferinfo == NULL)return;
   FREEMEMORY(bufferinfo->buffer);
+  FREEMEMORY(bufferinfo->options);
   FREEMEMORY(bufferinfo);
 }
 
 /* ------------------ File2Buffer ------------------------ */
 
-bufferdata *File2Buffer(char *file, bufferdata *bufferinfo,  FILE_SIZE *nreadptr){
+bufferdata *File2Buffer(char *file, char *size_file, int *options, bufferdata *bufferinfo,  FILE_SIZE *nreadptr){
   FILE_SIZE nfile=0, offset_buffer = 0, offset_file = 0, nread_actual, nread_try;
 
   *nreadptr = 0;
@@ -689,7 +699,7 @@ bufferdata *File2Buffer(char *file, bufferdata *bufferinfo,  FILE_SIZE *nreadptr
 
   INIT_PRINT_TIMER(timer_file2buffer);
   if(bufferinfo == NULL){ // read entire file
-    bufferinfo     = InitBufferData(file);
+    bufferinfo     = InitBufferData(file, size_file, options);
     offset_file    = 0;
     offset_buffer  = 0;
     nread_try      = bufferinfo->nbuffer;
@@ -758,7 +768,7 @@ bufferdata *File2Buffer(char *file, bufferdata *bufferinfo,  FILE_SIZE *nreadptr
 
 /* ------------------ FileExistsOrig ------------------------ */
 
-int FileExistsOrig(char *filename){
+int FileExistsOrig(const char *filename){
   if(ACCESS(filename, F_OK) == -1){
     return NO;
   }
@@ -769,7 +779,7 @@ int FileExistsOrig(char *filename){
 
   /* ------------------ FileExists ------------------------ */
 
-int FileExists(char *filename, filelistdata *filelist, int nfilelist, filelistdata *filelist2, int nfilelist2){
+int FileExists(const char *filename, filelistdata *filelist, int nfilelist, filelistdata *filelist2, int nfilelist2){
 
 // returns YES if the file filename exists, NO otherwise
 
@@ -890,19 +900,25 @@ int CompareFileList(const void *arg1, const void *arg2){
 
 /* ------------------ FileInList ------------------------ */
 
-filelistdata *FileInList(char *file, filelistdata *filelist, int nfiles, filelistdata *filelist2, int nfiles2){
+filelistdata *FileInList(const char *file, filelistdata *filelist, int nfiles, filelistdata *filelist2, int nfiles2){
   filelistdata *entry=NULL, fileitem;
-
+  char *file_temp;
+  NewMemory((void **)&file_temp, (strlen(file) + 1) * sizeof(char));
+  strcpy(file_temp, file);
   if(file==NULL)return NULL;
-  fileitem.file = file;
+  fileitem.file = file_temp;
   fileitem.type = 0;
   if(filelist!=NULL&&nfiles>0){
     entry = bsearch(&fileitem, (filelistdata *)filelist, (size_t)nfiles, sizeof(filelistdata), CompareFileList);
-    if(entry!=NULL)return entry;
+    if(entry!=NULL){
+      FreeMemory(file_temp);
+      return entry;
+    }
   }
   if(filelist2!=NULL&&nfiles2>0){
     entry = bsearch(&fileitem, (filelistdata *)filelist2, (size_t)nfiles2, sizeof(filelistdata), CompareFileList);
   }
+  FreeMemory(file_temp);
   return entry;
 }
 

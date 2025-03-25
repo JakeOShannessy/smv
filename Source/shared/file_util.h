@@ -56,10 +56,11 @@ typedef struct {
  */
 
 typedef struct {
-  char *file;
-  unsigned char *buffer; // copy of file
-  FILE_SIZE nbuffer;     // size of buffer
-  FILE_SIZE nfile;       // amount of data in buffer
+  char *file, *size_file;
+  int *options;           // parameter array
+  unsigned char *buffer;  // copy of file
+  FILE_SIZE nbuffer;      // size of buffer
+  FILE_SIZE nfile;        // amount of data in buffer
 } bufferdata;
 
 // vvvvvvvvvvvvvvvvvvvvvvvv preprocessing directives
@@ -102,7 +103,7 @@ typedef struct {
 #define BFILE bufferstreamdata
 
 #define FILE_EXISTS(a) FileExists(a, NULL, 0, NULL, 0)
-int FileExistsOrig(char *filename);
+int FileExistsOrig(const char *filename);
 
 #ifdef WIN32
 #define MKDIR(a) CreateDirectory(a, NULL)
@@ -142,8 +143,8 @@ int FileExistsOrig(char *filename);
 // vvvvvvvvvvvvvvvvvvvvvvvv headers vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 EXTERNCPP int MakeFile(char *file, int size);
 EXTERNCPP void FreeBufferInfo(bufferdata *bufferinfoptr);
-EXTERNCPP bufferdata *InitBufferData(char *file);
-EXTERNCPP bufferdata *File2Buffer(char *file, bufferdata *bufferinfo, FILE_SIZE *nreadptr);
+EXTERNCPP bufferdata *InitBufferData(char *file, char *size_file, int *options);
+EXTERNCPP bufferdata *File2Buffer(char *file, char *size_file, int *options, bufferdata *bufferinfo, FILE_SIZE *nreadptr);
 EXTERNCPP FILE_SIZE fread_p(char *file, unsigned char *buffer, FILE_SIZE offset, FILE_SIZE nchars, int nthreads);
 EXTERNCPP void FileErase(char *file);
 EXTERNCPP FILE *FOPEN(const char *file, const char *mode);
@@ -174,9 +175,9 @@ EXTERNCPP int GetFileInfo(char *filename, char *sourcedir, FILE_SIZE *filesize);
 EXTERNCPP char *GetZoneFileName(char *buffer);
 EXTERNCPP int Writable(char *dir);
 
-EXTERNCPP int FileExists(char *filename, filelistdata *filelist, int nfiles,
+EXTERNCPP int FileExists(const char *filename, filelistdata *filelist, int nfiles,
                          filelistdata *filelist2, int nfiles2);
-EXTERNCPP filelistdata *FileInList(char *file, filelistdata *filelist,
+EXTERNCPP filelistdata *FileInList(const char *file, filelistdata *filelist,
                                    int nfiles, filelistdata *filelist2,
                                    int nfiles2);
 EXTERNCPP void FreeFileList(filelistdata *filelist, int *nfilelist);

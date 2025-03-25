@@ -19,13 +19,28 @@ EXTERNCPP int CompareSmoketypes(const void *arg1, const void *arg2);
 EXTERNCPP int IsDupTexture(smv_case *scase, texturedata *texti);
 EXTERNCPP int IsTerrainTexture(smv_case *scase, texturedata *texti);
 EXTERNCPP surfdata *GetSurface(smv_case *scase, const char *label);
-EXTERNCPP int ParseCHIDProcess(smv_case *scase, bufferstreamdata *stream, int option);
+EXTERNCPP int ParseCHIDProcess(smv_case *scase, bufferstreamdata *stream,
+                               int option);
 EXTERNCPP float *GetColorPtr(smv_case *scase, float *color);
-EXTERNCPP void GetElevAz(float *xyznorm, float *dtheta, float *rotate_axis, float *dpsi);
+EXTERNCPP void GetElevAz(float *xyznorm, float *dtheta, float *rotate_axis,
+                         float *dpsi);
 EXTERNCPP void ReadSMVOrig(smv_case *scase);
-EXTERNCPP void ReadSMVDynamic(smv_case *scase, char *file);
+EXTERNCPP void ReadSMVDynamic(smv_case *scase, const char *file);
 EXTERNCPP FILE_SIZE ReadCSVFile(csvfiledata *csvfi, int flag);
 EXTERNCPP void ReadHRR(smv_case *scase, int flag);
 EXTERNCPP int GetSmoke3DType(smv_case *scase, const char *label);
 
+/// @brief Create and initalize and a smokeview case (smv_case). It is necessary
+/// to use this function rather than simply allocate the memory as certain
+/// initilization steps need to be taken before parsing occurs.
+/// @return An initialized smv_case.
+EXTERNCPP smv_case *ScaseCreate();
+/// @brief Read an SMV file and parse it into an object.
+/// @param[in] input_file Path to the SMV file
+/// @param[out] scase A struct to store the resulting parsed SMV file
+/// @return zero on success, nonzero on failure.
+EXTERNCPP int ScaseParseFromPath(const char *input_file, smv_case *scase);
+/// @brief Destroy an smv_case and free the associated memory
+/// @param[inout] scase The smv_case deconstruct and free.
+EXTERNCPP void ScaseDestroy(smv_case *scase);
 #endif
