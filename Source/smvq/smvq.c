@@ -1,29 +1,10 @@
-#define INMAIN
-#include "options.h"
 #include <ctype.h>
 #include <getopt.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#include "datadefs.h"
-#include "dmalloc.h"
-#include "shared_structures.h"
-
-#include "readlabel.h"
-#include "readsmvfile.h"
-#include "smokeviewdefs.h"
-#include "string_util.h"
-#include <math.h>
-
 #include <json-c/json_object.h>
 
-#ifndef _WIN32
-#include <libgen.h>
-#endif
+#include "smv.h"
 
 int PrintJson(smv_case *scase) {
   struct json_object *jobj = json_object_new_object();

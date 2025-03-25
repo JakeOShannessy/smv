@@ -67,6 +67,10 @@ target_link_libraries(test_root_dir PRIVATE libsmv)
 add_executable(sort_surfs sort_surfs.c)
 target_link_libraries(sort_surfs PRIVATE libsmv)
 
+# api_test
+add_executable(api_test api_test.c)
+target_link_libraries(api_test PRIVATE libsmv)
+
 
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
@@ -128,3 +132,6 @@ add_test(NAME "Sort Surfs"
 
 add_test(NAME "smvq - parse smv file"
     COMMAND smvq ${FIG_DIR}/smv/Tests/test_model_small/test_model_small.smv)
+
+add_test(NAME "api_test"
+    COMMAND api_test ${FIG_DIR}/smv/Tests/test_model_small/test_model_small.smv)
