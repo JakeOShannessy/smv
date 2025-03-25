@@ -26,12 +26,10 @@
 #include "datadefs.h"
 #include "file_util.h"
 #include "string_util.h"
-#ifdef pp_HASH
-#include "mbedtls/md5.h"
-#include "mbedtls/sha256.h"
-#include "mbedtls/sha1.h"
-#endif
-
+// #define OPENSSL_API_COMPAT 30000
+// #include <openssl/md5.h>
+// #include <openssl/sha.h>
+#include <openssl/evp.h>
 
 unsigned int *random_ints, nrandom_ints;
 
@@ -1808,17 +1806,28 @@ unsigned char *GetHashSHA1(char *file){
   {
     int i;
     unsigned char hash[HASH_SHA1_LEN], *return_hash;
-    mbedtls_sha1_context ctx;
     unsigned char data[HASH_BUFFER_LEN];
     size_t len_data;
 
-    mbedtls_sha1_init(&ctx);
-    mbedtls_sha1_starts(&ctx);
-    while((len_data = fread(data, 1, HASH_BUFFER_LEN, stream))!=0){
-      mbedtls_sha1_update(&ctx, data, len_data);
-    }
+    EVP_MD_CTX *mdctx;
+    unsigned char *md5_digest;
+    unsigned int md5_digest_len = EVP_MD_size(EVP_sha1());
+    // MD5_Init
+    mdctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(mdctx, EVP_sha1(), NULL);
 
-    mbedtls_sha1_finish(&ctx, hash);
+    // MD5_CTX context;
+    // MD5_Init(&context);
+    while((len_data = fread(data, 1, HASH_BUFFER_LEN, stream)) != 0) {
+      // MD5_Update
+      EVP_DigestUpdate(mdctx, data, len_data);
+      // MD5_Update(&context, data, len_data);
+    }
+    // MD5_Final
+    md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
+    EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
+    EVP_MD_CTX_free(mdctx);
+
     fclose(stream);
 
     NewMemory((void **)&return_hash, 2 * HASH_SHA1_LEN + 1);
@@ -1834,7 +1843,6 @@ unsigned char *GetHashSHA1(char *file){
 /* ------------------ GeHashMD5 ------------------------ */
 
 unsigned char *GetHashMD5(char *file){
-  mbedtls_md5_context ctx;
   FILE *stream=NULL;
   unsigned char data[HASH_BUFFER_LEN];
   unsigned char hash[HASH_MD5_LEN], *return_hash;
@@ -1868,12 +1876,26 @@ unsigned char *GetHashMD5(char *file){
     if(stream == NULL)return NULL;
   }
 
-  mbedtls_md5_init(&ctx);
-  mbedtls_md5_starts(&ctx);
-  while((len_data = fread(data, 1, HASH_BUFFER_LEN, stream)) != 0){
-    mbedtls_md5_update(&ctx, data, len_data);
+  EVP_MD_CTX *mdctx;
+  unsigned char *md5_digest;
+  unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
+
+  // MD5_Init
+  mdctx = EVP_MD_CTX_new();
+  EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
+
+  // MD5_CTX context;
+  // MD5_Init(&context);
+  while((len_data = fread(data, 1, HASH_BUFFER_LEN, stream)) != 0) {
+    // MD5_Update
+    EVP_DigestUpdate(mdctx, data, len_data);
+    // MD5_Update(&context, data, len_data);
   }
-  mbedtls_md5_finish(&ctx, hash);
+  // MD5_Final
+  md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
+  EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
+  EVP_MD_CTX_free(mdctx);
+  // MD5_Final(hash, &context);
   fclose(stream);
 
   NewMemory((void **)&return_hash, 2*HASH_MD5_LEN + 1);
@@ -1888,7 +1910,6 @@ unsigned char *GetHashMD5(char *file){
 /* ------------------ GetHashSHA256 ------------------------ */
 
 unsigned char *GetHashSHA256(char *file){
-  mbedtls_sha256_context ctx;
   FILE *stream = NULL;
   unsigned char data[HASH_BUFFER_LEN];
   unsigned char hash[HASH_SHA256_LEN], *return_hash;
@@ -1922,12 +1943,24 @@ unsigned char *GetHashSHA256(char *file){
     if(stream==NULL)return NULL;
   }
 
-  mbedtls_sha256_init(&ctx);
-  mbedtls_sha256_starts(&ctx,0);
-  while((len_data = fread(data, 1, HASH_BUFFER_LEN, stream))!=0){
-    mbedtls_sha256_update(&ctx, data, len_data);
-  }
-  mbedtls_sha256_finish(&ctx, hash);
+  EVP_MD_CTX *mdctx;
+    unsigned char *md5_digest;
+    unsigned int md5_digest_len = EVP_MD_size(EVP_sha256());
+    // MD5_Init
+    mdctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL);
+
+    // MD5_CTX context;
+    // MD5_Init(&context);
+    while((len_data = fread(data, 1, HASH_BUFFER_LEN, stream)) != 0) {
+      // MD5_Update
+      EVP_DigestUpdate(mdctx, data, len_data);
+      // MD5_Update(&context, data, len_data);
+    }
+    // MD5_Final
+    md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
+    EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
+    EVP_MD_CTX_free(mdctx);
   fclose(stream);
 
   NewMemory((void **)&return_hash, 2*HASH_SHA256_LEN+1);

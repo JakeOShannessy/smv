@@ -9,9 +9,6 @@ add_library(libsmv STATIC
     histogram.c
     translate.c
     csphere.c
-    md5.c
-    sha1.c
-    sha256.c
     stdio_m.c
     stdio_buffer.c
     getdata.c
@@ -51,6 +48,8 @@ if(WIN32)
                 FILES_MATCHING PATTERN "*.dll")
     endif()
 endif()
+find_package(OpenSSL REQUIRED )
+target_link_libraries(libsmv PRIVATE OpenSSL::Crypto)
 target_link_libraries(libsmv PRIVATE JPEG::JPEG)
 target_link_libraries(libsmv PRIVATE PNG::PNG)
 target_link_libraries(libsmv PUBLIC ZLIB::ZLIB)
