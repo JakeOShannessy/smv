@@ -1,10 +1,109 @@
+// _DEFAULT_SOURCE needs to be switched on to access strdup.
+#define _DEFAULT_SOURCE
+
 #include <ctype.h>
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdlib.h>
+
+#include "dmalloc.h"
+#include "smv.h"
+
+#include "csvs/smv_csvs.h"
 #include <json-c/json_object.h>
 
-#include "smv.h"
+#ifdef _WIN32
+#include <direct.h>
+#include <dirent_win.h>
+#include <io.h>
+#include <shlwapi.h>
+#pragma comment(lib, "shlwapi.lib")
+// disable warning about strdup
+#pragma warning (disable:4996)
+#else
+#include <dirent.h>
+#include <libgen.h>
+#include <unistd.h>
+#endif
+
+int PrintStepsJson(const char *path) {
+  struct step_iter iter = steps_iter_new(path);
+  for(;;) {
+    struct simulation_step step = {0};
+    int ret = steps_iter_next(&iter, &step);
+    if(ret) break;
+    struct json_object *jobj = json_object_new_object();
+    json_object_object_add(jobj, "index", json_object_new_int(step.index));
+    json_object_object_add(jobj, "wall_time",
+                           json_object_new_string(step.wall_time));
+    json_object_object_add(jobj, "step_size",
+                           json_object_new_double(step.step_size));
+    json_object_object_add(jobj, "simulation_time",
+                           json_object_new_double(step.simulation_time));
+    json_object_object_add(jobj, "cpu_time",
+                           json_object_new_double(step.cpu_time));
+    const char *json_output =
+        json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
+    printf("%s\n", json_output);
+    // TODO: consider just reusing this rather than freeing it here
+    json_object_put(jobj);
+  }
+  steps_iter_close(&iter);
+  return 0;
+}
+
+int PrintHrrJson(const char *path) {
+  struct float_iter iter = float_iter_new(path, "Time", "HRR");
+  for(;;) {
+    struct data_value step = {0};
+    int ret = float_iter_next(&iter, &step);
+    if(ret) break;
+    struct json_object *jobj = json_object_new_object();
+    json_object_object_add(jobj, "x", json_object_new_double(step.x));
+    json_object_object_add(jobj, "y", json_object_new_double(step.y));
+    const char *json_output =
+        json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
+    printf("%s\n", json_output);
+    // TODO: consider just reusing this rather than freeing it here
+    json_object_put(jobj);
+  }
+  float_iter_close(&iter);
+  return 0;
+}
+
+int PrintCsvJsonArray(const char *path, const char *csv_x, const char *csv_y) {
+  struct float_iter iter = float_iter_new(path, csv_x, csv_y);
+  struct json_object *jobj = json_object_new_object();
+  struct json_object *values = json_object_new_array();
+  for(;;) {
+    struct json_object *dv = json_object_new_object();
+    struct data_value step = {0};
+    int ret = float_iter_next(&iter, &step);
+    if(ret) break;
+    json_object_object_add(dv, "x", json_object_new_double(step.x));
+    json_object_object_add(dv, "y", json_object_new_double(step.y));
+    json_object_array_add(values, dv);
+  }
+  json_object_object_add(jobj, "values", values);
+  json_object_object_add(jobj, "name", json_object_new_string(csv_y));
+  json_object_object_add(
+      jobj, "x_units",
+      json_object_new_string(iter.state.col_units[iter.state.x_col_offset]));
+  json_object_object_add(jobj, "x_name",
+                         json_object_new_string(iter.state.x_name));
+  json_object_object_add(
+      jobj, "y_units",
+      json_object_new_string(iter.state.col_units[iter.state.y_col_offset]));
+  json_object_object_add(jobj, "y_name",
+                         json_object_new_string(iter.state.y_name));
+
+  const char *json_output =
+      json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PRETTY);
+  printf("%s\n", json_output);
+  json_object_put(jobj);
+  float_iter_close(&iter);
+  return 0;
+}
 
 int PrintJson(smv_case *scase) {
   struct json_object *jobj = json_object_new_object();
@@ -60,6 +159,10 @@ int PrintJson(smv_case *scase) {
       ventdata *vent = &mesh->ventinfo[j];
       struct json_object *vent_obj = json_object_new_object();
       json_object_object_add(vent_obj, "index", json_object_new_int(j + 1));
+      // json_object_object_add(vent_obj, "filename",
+      //                        json_object_new_string(csv_file->file));
+      // json_object_object_add(vent_obj, "type",
+      //                        json_object_new_string(csv_file->c_type));
       json_object_object_add(
           vent_obj, "surface_id",
           json_object_new_string(vent->surf[0]->surfacelabel));
@@ -227,9 +330,57 @@ int PrintJson(smv_case *scase) {
   json_object_put(jobj);
   return 0;
 }
+struct csv_opts {
+  char *csv_type;
+  char *csv_x;
+  char *csv_y;
+};
 
-int RunSmvq(const char *filepath) {
-  // Initialize the customized memory allocator that smokeview uses
+struct opts {
+  bool print_help;
+  bool print_version;
+  bool print_steps;
+  char *print_out_value;
+  struct csv_opts *csv_opts;
+};
+
+static bool IsValidCsvOpts(struct csv_opts *csv_opts) {
+  return csv_opts->csv_type != NULL && csv_opts->csv_x != NULL &&
+         csv_opts->csv_y != NULL;
+}
+
+static bool IsValidOpts(struct opts *opts) {
+  int nflags = 0;
+  if(opts->print_help) nflags++;
+  if(opts->print_version) nflags++;
+  if(opts->print_steps) nflags++;
+  if(opts->print_out_value != NULL) nflags++;
+  if(opts->csv_opts != NULL) nflags++;
+  if(nflags > 1) {
+    fprintf(stderr, "ERROR: multiple options selected\n");
+    return false;
+  }
+  if(opts->csv_opts != NULL && !IsValidCsvOpts(opts->csv_opts)) {
+    fprintf(stderr, "ERROR: CSV options specificied, but invalid. -f, -x, "
+                    "and -y must be specified together.\n");
+    return false;
+  }
+  return true;
+}
+
+char *DirPath(const char *path) {
+#ifdef _WIN32
+  char *dir = strdup(path);
+  PathRemoveFileSpecA(dir);
+#else
+  char *dtemp = strdup(path);
+  char *dir = strdup(dirname(dtemp));
+  free(dtemp);
+#endif
+  return dir;
+}
+
+int RunSmvq(const char *filepath, struct opts *opts) {
   initMALLOC();
   // Create and initialize an smv_case struct
   smv_case *scase = ScaseCreate();
@@ -240,29 +391,102 @@ int RunSmvq(const char *filepath) {
     fprintf(stderr, "failed to read smv file: %s\n", filepath);
     return result;
   }
-  // Print scase to stdout in JSON format
-  PrintJson(scase);
-  // Deconstruct and free scase
+  if(opts->print_steps) {
+    char *dir = DirPath(filepath);
+    char *p = JoinPath(dir, scase->paths.stepcsv_filename);
+    PrintStepsJson(p);
+    FreeMemory(p);
+    free(dir);
+  }
+  else if(opts->print_out_value != NULL) {
+    enum OutValue out_value;
+    if(!strcmp(opts->print_out_value, "run-data")) {
+      out_value = RUN_DATA;
+    }
+    else if(!strcmp(opts->print_out_value, "pressure-error")) {
+      out_value = PRESSURE_ERROR;
+    }
+    else if(!strcmp(opts->print_out_value, "velocity-error")) {
+      out_value = VELOCITY_ERROR;
+    }
+    else if(!strcmp(opts->print_out_value, "pressure-iterations")) {
+      out_value = PRESSURE_ITERATIONS;
+    }
+    else if(!strcmp(opts->print_out_value, "progress")) {
+      out_value = PROGRESS;
+    }
+    else {
+      fprintf(stderr, "%s is not a valid parse_out command\n",
+              opts->print_out_value);
+      return 1;
+    }
+    char *dir = DirPath(filepath);
+    char outfile[256];
+    strcpy(outfile, scase->fdsprefix);
+    strcat(outfile, ".out");
+    char *path = JoinPath(dir, outfile);
+    PrintOutData(path, out_value);
+    FreeMemory(path);
+    free(dir);
+  }
+  else if(opts->csv_opts != NULL) {
+    fprintf(stderr, "print_csv: %s %s %s\n", opts->csv_opts->csv_type,
+            opts->csv_opts->csv_x, opts->csv_opts->csv_y);
+    char *dir = DirPath(filepath);
+    char *csv_filename = NULL;
+    // TODO: should be using CHID not fdsprefix
+    NewMemory(
+        (void **)&csv_filename,
+        (strlen(scase->fdsprefix) + strlen(opts->csv_opts->csv_type) + 5 + 1) *
+            sizeof(char));
+    strcpy(csv_filename, scase->fdsprefix);
+    strcat(csv_filename, "_");
+    strcat(csv_filename, opts->csv_opts->csv_type);
+    strcat(csv_filename, ".csv");
+    char *csv_path = JoinPath(dir, csv_filename);
+    FreeMemory(csv_filename);
+    fprintf(stderr, "csv_path: %s\n", csv_path);
+    PrintCsvJsonArray(csv_path, opts->csv_opts->csv_x, opts->csv_opts->csv_y);
+    FreeMemory(csv_path);
+    free(dir);
+  }
+  else {
+    PrintJson(scase);
+  }
   ScaseDestroy(scase);
   return 0;
 }
 
 int main(int argc, char **argv) {
-
-  bool print_help = false;
-  bool print_version = false;
+  struct opts opts = {0};
+  struct csv_opts csv_opts = {0};
 
   int c;
 
   opterr = 0;
-
-  while((c = getopt(argc, argv, "hV")) != -1)
+  while((c = getopt(argc, argv, "hVsp:f:x:y:")) != -1)
     switch(c) {
     case 'h':
-      print_help = true;
+      opts.print_help = true;
       break;
     case 'V':
-      print_version = true;
+      opts.print_version = true;
+      break;
+    case 's':
+      opts.print_steps = true;
+      break;
+    case 'p':
+      opts.print_out_value = optarg;
+      break;
+    case 'f':
+      if(opts.csv_opts == NULL) opts.csv_opts = &csv_opts;
+      csv_opts.csv_type = optarg;
+      break;
+    case 'x':
+      csv_opts.csv_x = optarg;
+      break;
+    case 'y':
+      csv_opts.csv_y = optarg;
       break;
     case '?':
       if(isprint(optopt))
@@ -273,24 +497,40 @@ int main(int argc, char **argv) {
     default:
       abort();
     }
-  if(print_help) {
+  if(IsValidCsvOpts(&csv_opts)) {
+    opts.csv_opts = &csv_opts;
+  }
+  if(!IsValidOpts(&opts)) {
+    fprintf(stderr, "invalid commandline parameters");
+    return 1;
+  }
+  if(opts.print_help) {
     printf("smvq-%s\n", PROGVERSION);
     printf("\nUsage:  smvq [OPTIONS] <FILE>\n");
     printf("\nOptions:\n");
     printf("  -h Print help\n");
     printf("  -V Print version\n");
+    printf("  -s Print time steps\n");
+    printf("  -p <value> Print a given out value\n");
+    printf(
+        "  -f <value> Print a CSV entry of a given type (hrr, devc, etc.)\n");
+    printf(
+        "  -x <value> The name of x-value of the CSV data vector to export\n");
+    printf(
+        "  -y <value> The name of y-value of the CSV data vector to export\n");
     return 0;
   }
-  if(print_version) {
+  if(opts.print_version) {
     printf("smvq - smv query processor (v%s)\n", PROGVERSION);
     return 0;
   }
+
   char *filepath = argv[optind];
 
   if(filepath == NULL) {
     fprintf(stderr, "No input file specified.\n");
     return 1;
   }
-  int result = RunSmvq(filepath);
+  int result = RunSmvq(filepath, &opts);
   return result;
 }

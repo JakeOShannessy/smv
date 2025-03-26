@@ -1,8 +1,9 @@
 # smvq
-add_executable(smvq smvq.c)
+add_executable(smvq smvq.c csvs/csv_steps.c csvs/csv_floats.c csvs/csv_out.c)
 
-target_include_directories(smvq PRIVATE)
 target_link_libraries(smvq PRIVATE libsmv)
+find_library(CSVLIB csv REQUIRED)
+target_link_libraries(smvq PRIVATE ${CSVLIB})
 
 find_package(json-c CONFIG)
 if (NOT json-c_FOUND)
