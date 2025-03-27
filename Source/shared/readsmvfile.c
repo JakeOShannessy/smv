@@ -8916,7 +8916,7 @@ smv_case *ScaseCreate() {
 }
 
 int ScaseParseFromPath(const char *input_file, smv_case *scase) {
-  const char *fdsprefix = GetBaseName(input_file);
+  char *fdsprefix = GetBaseName(input_file);
   NEWMEMORY(scase->fdsprefix, (strlen(fdsprefix) + 1) * sizeof(char));
   STRCPY(scase->fdsprefix, fdsprefix);
   free(fdsprefix);
