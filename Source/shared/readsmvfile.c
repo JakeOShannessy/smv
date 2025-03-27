@@ -4575,272 +4575,9 @@ void AddCfastCsvf(smv_case *scase){
 /// file. This should be called before @ref ReadSMV_Parse.
 /// @return zero on success, nonzero on failure.
 int ReadSMV_Init(smv_case *scase){
-  float timer_readsmv;
-  float timer_setup;
-
-  START_TIMER(timer_setup);
-  START_TIMER(timer_readsmv);
-  START_TIMER(scase->processing_time);
-
-#ifdef pp_ISOFRAME
-  use_isosurface_threads = 0;
-#endif
-
-  START_TIMER(scase->getfilelist_time);
   MakeFileLists(scase);
-  PRINT_TIMER(timer_setup, "MakeFileLists");
-  STOP_TIMER(scase->getfilelist_time);
-
-  START_TIMER(scase->pass0_time);
-
-  scase->propcoll.npropinfo=1; // the 0'th prop is the default human property
-
-  FREEMEMORY(scase->fds_title);
-
-  FREEMEMORY(scase->treeinfo);
-  scase->ntreeinfo=0;
-
-  int i;
-  for(i=0;i<scase->nterraininfo;i++){
-    terraindata *terri;
-
-    terri = scase->terraininfo + i;
-    FREEMEMORY(terri->xplt);
-    FREEMEMORY(terri->yplt);
-    FREEMEMORY(terri->zcell);
-    FREEMEMORY(terri->znode);
-  }
-  FREEMEMORY(scase->terraininfo);
-  scase->nterraininfo=0;
-  scase->niso_compressed=0;
-  if(scase->sphereinfo==NULL){
-    NewMemory((void **)&scase->sphereinfo,sizeof(spherepoints));
-    InitSpherePoints(scase->sphereinfo,14);
-  }
-  if(scase->wui_sphereinfo==NULL){
-    NewMemory((void **)&scase->wui_sphereinfo,sizeof(spherepoints));
-    InitSpherePoints(scase->wui_sphereinfo,14);
-  }
-  PRINT_TIMER(timer_setup, "InitSpherePoints");
-  scase->ntotal_blockages=0;
-
-  if(scase->csvcoll.ncsvfileinfo>0){
-    csvfiledata *csvi;
-
-    for(i=0;i<scase->csvcoll.ncsvfileinfo;i++){
-      csvi = scase->csvcoll.csvfileinfo + i;
-      FREEMEMORY(csvi->file);
-    }
-    FREEMEMORY(scase->csvcoll.csvfileinfo);
-  }
-  scase->csvcoll.ncsvfileinfo=0;
-
-  if(scase->ngeominfo>0){
-    for(i=0;i<scase->ngeominfo;i++){
-      geomdata *geomi;
-
-      geomi = scase->geominfo + i;
-      if(geomi->ngeomobjinfo>0){
-        FREEMEMORY(geomi->geomobjinfo);
-        geomi->ngeomobjinfo=0;
-      }
-      FREEMEMORY(geomi->file);
-    }
-    FREEMEMORY(scase->geominfo);
-    scase->ngeominfo=0;
-  }
-
-  if(scase->ncgeominfo>0){
-    for(i = 0; i<scase->ncgeominfo; i++){
-      geomdata *geomi;
-
-      geomi = scase->cgeominfo+i;
-      FREEMEMORY(geomi->file);
-    }
-    FREEMEMORY(scase->cgeominfo);
-    scase->ncgeominfo = 0;
-  }
-
-  FREEMEMORY(scase->tickinfo);
-  scase->ntickinfo=0;
-  scase->ntickinfo_smv=0;
-
-  scase->updatefaces=1;
-  scase->nfires=0;
-  scase->nrooms=0;
-
-  START_TIMER(timer_setup);
-  InitSurface(&scase->sdefault, scase->color_defs.block_ambient2);
-  PRINT_TIMER(timer_setup, "InitSurface");
-  NewMemory((void **)&scase->sdefault.surfacelabel,(5+1));
-  strcpy(scase->sdefault.surfacelabel,"INERT");
-
-  InitVentSurface(&scase->v_surfacedefault, scase->color_defs.ventcolor);
-  PRINT_TIMER(timer_setup, "InitVentSurface");
-  NewMemory((void **)&scase->v_surfacedefault.surfacelabel,(4+1));
-  strcpy(scase->v_surfacedefault.surfacelabel,"VENT");
-
-  InitSurface(&scase->e_surfacedefault, scase->color_defs.block_ambient2);
-  PRINT_TIMER(timer_setup, "InitSurface");
-  NewMemory((void **)&scase->e_surfacedefault.surfacelabel,(8+1));
-  strcpy(scase->e_surfacedefault.surfacelabel,"EXTERIOR");
-  scase->e_surfacedefault.color=scase->color_defs.block_ambient2;
-
-  // free memory for particle class
-
-  if(scase->partclassinfo!=NULL){
-    int j;
-
-    for(i=0;i<scase->npartclassinfo+1;i++){
-      partclassdata *partclassi;
-
-      partclassi = scase->partclassinfo + i;
-      FREEMEMORY(partclassi->name);
-      if(partclassi->ntypes>0){
-        for(j=0;j<partclassi->ntypes;j++){
-          flowlabels *labelj;
-
-          labelj = partclassi->labels+j;
-          FreeLabels(labelj);
-        }
-        FREEMEMORY(partclassi->labels);
-        partclassi->ntypes=0;
-      }
-    }
-    FREEMEMORY(scase->partclassinfo);
-  }
-  scase->npartclassinfo=0;
-
-  if(scase->devicecoll.ndeviceinfo>0){
-    for(i=0;i<scase->devicecoll.ndeviceinfo;i++){
-    }
-    FREEMEMORY(scase->devicecoll.deviceinfo);
-    scase->devicecoll.ndeviceinfo=0;
-  }
-
   // read in device (.svo) definitions
-
-  START_TIMER(timer_setup);
   ReadDefaultObjectCollection(&scase->objectscoll, scase->fdsprefix, scase->isZoneFireModel);
-  PRINT_TIMER(timer_setup, "InitSurface");
-
-  if(scase->noutlineinfo>0){
-    for(i=0;i<scase->noutlineinfo;i++){
-      outlinedata *outlinei;
-
-      outlinei = scase->outlineinfo + i;
-      FREEMEMORY(outlinei->x1);
-      FREEMEMORY(outlinei->y1);
-      FREEMEMORY(outlinei->z1);
-      FREEMEMORY(outlinei->x2);
-      FREEMEMORY(outlinei->y2);
-      FREEMEMORY(outlinei->z2);
-    }
-    FREEMEMORY(scase->outlineinfo);
-    scase->noutlineinfo=0;
-  }
-
-  if(scase->nzoneinfo>0){
-    for(i=0;i<scase->nzoneinfo;i++){
-      zonedata *zonei;
-      int n;
-
-      zonei = scase->zoneinfo + i;
-      for(n=0;n<4;n++){
-        FreeLabels(&zonei->label[n]);
-      }
-      FREEMEMORY(zonei->file);
-    }
-    FREEMEMORY(scase->zoneinfo);
-  }
-  scase->nzoneinfo=0;
-
-  if(scase->smoke3dcoll.nsmoke3dinfo>0){
-    {
-      smoke3ddata *smoke3di;
-
-      for(i=0;i<scase->smoke3dcoll.nsmoke3dinfo;i++){
-        smoke3di = scase->smoke3dcoll.smoke3dinfo + i;
-        FreeSmoke3D(scase, smoke3di);
-        FREEMEMORY(smoke3di->comp_file);
-        FREEMEMORY(smoke3di->reg_file);
-      }
-      FREEMEMORY(scase->smoke3dcoll.smoke3dinfo);
-      scase->smoke3dcoll.nsmoke3dinfo=0;
-    }
-  }
-
-  if(scase->npartinfo>0){
-    for(i=0;i<scase->npartinfo;i++){
-      FREEMEMORY(scase->partinfo[i].partclassptr);
-      FREEMEMORY(scase->partinfo[i].reg_file);
-      FREEMEMORY(scase->partinfo[i].size_file);
-    }
-    FREEMEMORY(scase->partinfo);
-  }
-  scase->npartinfo=0;
-
-
-  //*** free slice data
-  FreeSliceData(scase);
-
-  if(scase->npatchinfo>0){
-    for(i=0;i<scase->npatchinfo;i++){
-      patchdata *patchi;
-
-      patchi = scase->patchinfo + i;
-      FreeLabels(&patchi->label);
-      FREEMEMORY(patchi->reg_file);
-      FREEMEMORY(patchi->comp_file);
-      FREEMEMORY(patchi->size_file);
-    }
-    FREEMEMORY(scase->patchinfo);
-  }
-  scase->npatchinfo=0;
-
-  if(scase->nisoinfo>0){
-    for(i=0;i<scase->nisoinfo;i++){
-      FreeLabels(&scase->isoinfo[i].surface_label);
-      FREEMEMORY(scase->isoinfo[i].file);
-    }
-    FREEMEMORY(scase->isoinfo);
-  }
-  scase->nisoinfo=0;
-
-  scase->updateindexcolors=0;
-  scase->ntrnx=0;
-  scase->ntrny=0;
-  scase->ntrnz=0;
-  scase->meshescoll.nmeshes=0;
-  scase->npdim=0;
-  scase->nVENT=0;
-  scase->nCVENT=0;
-  scase->ncvents=0;
-  scase->nOBST=0;
-  scase->noffset=0;
-  scase->surfcoll.nsurfinfo=0;
-  scase->nvent_transparent=0;
-
-  scase->setPDIM=0;
-
-  FREEMEMORY(scase->slicecoll.vsliceinfo);
-  FREEMEMORY(scase->slicecoll.sliceinfo);
-
-  FREEMEMORY(scase->plot3dinfo);
-  FREEMEMORY(scase->patchinfo);
-  FREEMEMORY(scase->boundarytypes);
-  FREEMEMORY(scase->isoinfo);
-  FREEMEMORY(scase->isotypes);
-  FREEMEMORY(scase->roominfo);
-  FREEMEMORY(scase->fireinfo);
-  FREEMEMORY(scase->zoneinfo);
-  FREEMEMORY(scase->zventinfo);
-  FREEMEMORY(scase->texture_coll.textureinfo);
-  FREEMEMORY(scase->surfcoll.surfinfo);
-  FREEMEMORY(scase->terrain_texture_coll.terrain_textures);
-
-  STOP_TIMER(scase->pass0_time );
-  PRINT_TIMER(timer_readsmv, "readsmv setup");
   return 0;
 }
 
@@ -8986,10 +8723,31 @@ void InitScase(smv_case *scase) {
   scase->color_defs.block_specular2=GetColorPtr(scase, block_specular_orig);
 
   scase->visFrame = 1;
+  scase->updatefaces=1;
+  scase->propcoll.npropinfo=1; // the 0'th prop is the default human property
 
   InitLabelsCollection(&scase->labelscoll);
 
   InitObjectCollection(&scase->objectscoll);
+
+  NewMemory((void **)&scase->sphereinfo, sizeof(spherepoints));
+  InitSpherePoints(scase->sphereinfo, 14);
+
+  NewMemory((void **)&scase->wui_sphereinfo, sizeof(spherepoints));
+  InitSpherePoints(scase->wui_sphereinfo, 14);
+
+  InitSurface(&scase->sdefault, scase->color_defs.block_ambient2);
+  NewMemory((void **)&scase->sdefault.surfacelabel,(5+1));
+  strcpy(scase->sdefault.surfacelabel,"INERT");
+
+  InitVentSurface(&scase->v_surfacedefault, scase->color_defs.ventcolor);
+  NewMemory((void **)&scase->v_surfacedefault.surfacelabel,(4+1));
+  strcpy(scase->v_surfacedefault.surfacelabel,"VENT");
+
+  InitSurface(&scase->e_surfacedefault, scase->color_defs.block_ambient2);
+  NewMemory((void **)&scase->e_surfacedefault.surfacelabel,(8+1));
+  strcpy(scase->e_surfacedefault.surfacelabel,"EXTERIOR");
+  scase->e_surfacedefault.color=scase->color_defs.block_ambient2;
 }
 
 int SetGlobalFilenames(smv_case *scase) {
@@ -9202,6 +8960,7 @@ void ScaseDestroy(smv_case *scase) {
   ClearObjectCollection(&scase->objectscoll);
   ClearCADGeomCollection(&scase->cadgeomcoll);
   ClearLabelsCollection(&scase->labelscoll);
+  FreeSliceData(scase);
 }
 
 
