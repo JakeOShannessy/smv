@@ -9277,15 +9277,13 @@ void OpenGLInit() {
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
     // std::vector<GLubyte> pixels(width * height * 4);
-    GLubyte *pixels = malloc(WIDTH * HEIGHT * 4 * sizeof(GLubyte));
-    glReadPixels(0, 0, WIDTH, HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    GLubyte *pixels = malloc(WIDTH * HEIGHT * 3 * sizeof(GLubyte));
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
     // At this point you can same the triangle pixel data as an image file,
     // e.g., PNG
 
-    eglDestroyContext(display, eglContext);
-    eglDestroySurface(display, surface);
-    eglTerminate(display);
 
     GLubyte *p = pixels;
 
@@ -9331,6 +9329,10 @@ void OpenGLInit() {
 
     gdImageDestroy(RENDERimage);
     free(pixels);
+
+    eglDestroyContext(display, eglContext);
+    eglDestroySurface(display, surface);
+    eglTerminate(display);
     PRINTF(" Completed.\n");
 }
 
