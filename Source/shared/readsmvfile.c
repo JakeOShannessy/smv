@@ -9140,14 +9140,6 @@ void OpenGLInit() {
   EGLDisplay display =
       eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, eglDevs[0], 0);
 #endif
-  const GLubyte *version_string = glGetString(GL_VERSION);
-  if(version_string == NULL) {
-    printf("OpenGL Version: NULL\n");
-    return;
-  }
-  else {
-    printf("OpenGL Version: %s\n", version_string);
-  }
   EGLint major;
   EGLint minor;
 
@@ -9171,7 +9163,8 @@ void OpenGLInit() {
   if(init_result != EGL_TRUE) {
     printf("eglInitialize failed\n");
     return;
-  } else {
+  }
+  else {
     printf("EGL initialized\n");
   }
   eglBindAPI(EGL_OPENGL_API);
@@ -9200,140 +9193,144 @@ void OpenGLInit() {
     printf("eglChooseConfig failed\n");
     return;
   }
-    EGLint contextAttribs[] = {EGL_CONTEXT_MAJOR_VERSION,
-                               3,
-                               EGL_CONTEXT_MINOR_VERSION,
-                               0,
-                               EGL_CONTEXT_OPENGL_PROFILE_MASK,
-                               EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
-                               EGL_NONE};
-    EGLContext eglContext =
-        eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
-    if(eglContext == NULL) {
-      fprintf(stderr, "Error: Could not produce opengl context\n");
-      return;
+  EGLint contextAttribs[] = {EGL_CONTEXT_MAJOR_VERSION,
+                             3,
+                             EGL_CONTEXT_MINOR_VERSION,
+                             0,
+                             EGL_CONTEXT_OPENGL_PROFILE_MASK,
+                             EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
+                             EGL_NONE};
+  const GLubyte *version_string = glGetString(GL_VERSION);
+  if(version_string == NULL) {
+    printf("OpenGL Version: NULL\n");
+    return;
+  }
+  else {
+    printf("OpenGL Version: %s\n", version_string);
+  }
+  EGLContext eglContext =
+      eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
+  if(eglContext == NULL) {
+    fprintf(stderr, "Error: Could not produce opengl context\n");
+    return;
+  }
+  EGLint surfaceAttribs[] = {EGL_WIDTH, WIDTH, EGL_HEIGHT, HEIGHT, EGL_NONE};
+  EGLSurface surface = eglCreatePbufferSurface(display, config, surfaceAttribs);
+  if(surface == EGL_NO_SURFACE) {
+    printf("eglCreatePbufferSurface failed\n");
+    return;
+  }
+
+  EGLBoolean make_current_result =
+      eglMakeCurrent(display, surface, surface, eglContext);
+  if(make_current_result != EGL_TRUE) {
+    printf("eglMakeCurrent failed\n");
+    return;
+  }
+
+  printf("%s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+  GLenum err = glewInit();
+  if(err != GLEW_OK) {
+    // TODO: for some reason this reports a failure but everything works
+    printf("   GLEW initialization failed(%d) %s\n", err,
+           glewGetErrorString(err));
+  }
+  // Compile vertex shader
+  fprintf(stderr, "Creating shader\n");
+  GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
+  fprintf(stderr, "Shader created\n");
+  glShaderSource(vertex, 1, &vertexShaderSource, NULL);
+  glCompileShader(vertex);
+
+  // Compile fragment shader
+  GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragment, 1, &fragmentShaderSource, NULL);
+  glCompileShader(fragment);
+
+  // uint32_t program = 0;
+  GLuint program = glCreateProgram();
+  glAttachShader(program, vertex);
+  glAttachShader(program, fragment);
+  glLinkProgram(program);
+
+  GLfloat vertices[] = {
+      0.0f, 0.5f, 0.0f, -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f,
+  };
+
+  GLuint vbo;
+  glGenBuffers(1, &vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glUseProgram(program);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+  glDrawArrays(GL_TRIANGLES, 0, 3);
+
+  // std::vector<GLubyte> pixels(width * height * 4);
+  GLubyte *pixels = malloc(WIDTH * HEIGHT * 3 * sizeof(GLubyte));
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  glReadPixels(0, 0, WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+
+  // At this point you can same the triangle pixel data as an image file,
+  // e.g., PNG
+
+  GLubyte *p = pixels;
+
+  gdImagePtr RENDERimage = gdImageCreateTrueColor(WIDTH, HEIGHT);
+
+  for(int i = HEIGHT - 1; i >= 0; i--) {
+    for(int j = 0; j < WIDTH; j++) {
+      unsigned int r, g, b;
+      int rgb_local;
+
+      r = *p++;
+      g = *p++;
+      b = *p++;
+      rgb_local = (r << 16) | (g << 8) | b;
+      gdImageSetPixel(RENDERimage, j, i, rgb_local);
     }
-    EGLint surfaceAttribs[] = {EGL_WIDTH, WIDTH, EGL_HEIGHT, HEIGHT, EGL_NONE};
-    EGLSurface surface =
-        eglCreatePbufferSurface(display, config, surfaceAttribs);
-    if(surface == EGL_NO_SURFACE) {
-      printf("eglCreatePbufferSurface failed\n");
-      return;
-    }
+  }
 
-    EGLBoolean make_current_result =
-        eglMakeCurrent(display, surface, surface, eglContext);
-    if(make_current_result != EGL_TRUE) {
-      printf("eglMakeCurrent failed\n");
-      return;
-    }
+  // SetSmokeSensor(RENDERimage,WIDTH, HEIGHT);
 
+  // output image
+  const char *renderfile = "test.png";
+  FILE *RENDERfile = fopen(renderfile, "wb");
+  if(RENDERfile == NULL) {
+    fprintf(stderr, "*** Error: unable to render screen image to %s",
+            renderfile);
+    return;
+  }
 
-    printf("%s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-    GLenum err = glewInit();
-    if(err != GLEW_OK) {
-      // TODO: for some reason this reports a failure but everything works
-      printf("   GLEW initialization failed(%d) %s\n",err, glewGetErrorString(err));
-    }
-    // Compile vertex shader
-    fprintf(stderr,"Creating shader\n");
-    GLuint  vertex = glCreateShader(GL_VERTEX_SHADER);
-    fprintf(stderr,"Shader created\n");
-    glShaderSource(vertex, 1, & vertexShaderSource, NULL);
-    glCompileShader(vertex);
+  gdImagePng(RENDERimage, RENDERfile);
+  // switch(rendertype){
+  // case PNG:
+  //   break;
+  // case JPEG:
+  //   gdImageJpeg(RENDERimage,RENDERfile,-1);
+  //   break;
+  // default:
+  //   assert(FFALSE);
+  //   break;
+  // }
 
-    // Compile fragment shader
-    GLuint  fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, & fragmentShaderSource, NULL);
-    glCompileShader(fragment);
+  fclose(RENDERfile);
 
-    // uint32_t program = 0;
-    GLuint  program = glCreateProgram();
-    glAttachShader(program, vertex);
-    glAttachShader(program, fragment);
-    glLinkProgram(program);
+  gdImageDestroy(RENDERimage);
+  free(pixels);
 
-    GLfloat vertices[] = {
-        0.0f,  0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-    };
-
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glColorMask (GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask (GL_TRUE);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glUseProgram(program);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    // std::vector<GLubyte> pixels(width * height * 4);
-    GLubyte *pixels = malloc(WIDTH * HEIGHT * 3 * sizeof(GLubyte));
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
-    // At this point you can same the triangle pixel data as an image file,
-    // e.g., PNG
-
-
-    GLubyte *p = pixels;
-
-    gdImagePtr RENDERimage = gdImageCreateTrueColor(WIDTH, HEIGHT);
-
-    for(int i = HEIGHT - 1; i >= 0; i--) {
-      for(int j = 0; j < WIDTH; j++) {
-        unsigned int r, g, b;
-        int rgb_local;
-
-        r = *p++;
-        g = *p++;
-        b = *p++;
-        rgb_local = (r << 16) | (g << 8) | b;
-        gdImageSetPixel(RENDERimage, j, i, rgb_local);
-      }
-    }
-
-    // SetSmokeSensor(RENDERimage,WIDTH, HEIGHT);
-
-    // output image
-    const char *renderfile = "test.png";
-    FILE *RENDERfile = fopen(renderfile, "wb");
-    if(RENDERfile == NULL) {
-      fprintf(stderr, "*** Error: unable to render screen image to %s",
-              renderfile);
-      return;
-    }
-
-    gdImagePng(RENDERimage, RENDERfile);
-    // switch(rendertype){
-    // case PNG:
-    //   break;
-    // case JPEG:
-    //   gdImageJpeg(RENDERimage,RENDERfile,-1);
-    //   break;
-    // default:
-    //   assert(FFALSE);
-    //   break;
-    // }
-
-    fclose(RENDERfile);
-
-    gdImageDestroy(RENDERimage);
-    free(pixels);
-
-    eglDestroyContext(display, eglContext);
-    eglDestroySurface(display, surface);
-    eglTerminate(display);
-    PRINTF(" Completed.\n");
+  eglDestroyContext(display, eglContext);
+  eglDestroySurface(display, surface);
+  eglTerminate(display);
+  PRINTF(" Completed.\n");
 }
 
 smv_case *ScaseCreate() {
