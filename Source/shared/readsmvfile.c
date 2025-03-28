@@ -9120,35 +9120,34 @@ const char* fragmentShaderSource =
 
 #define MAX_DEVICES 4
 void OpenGLInit() {
-
-  // BEGIN multidevice
-  // EGLDeviceEXT eglDevs[MAX_DEVICES];
-  // EGLint numDevices;
-
-  // PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT =
-  //     (PFNEGLQUERYDEVICESEXTPROC)eglGetProcAddress("eglQueryDevicesEXT");
-
-  // eglQueryDevicesEXT(MAX_DEVICES, eglDevs, &numDevices);
-
-  // printf("Detected %d devices\n", numDevices);
-
-  // PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
-  //     (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress(
-  //         "eglGetPlatformDisplayEXT");
-
-  // EGLDisplay display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, eglDevs[0], 0);
-          // END multidevice
-
-
-  // const GLubyte *version_string = glGetString(GL_VERSION);
-  // if(version_string == NULL) {
-  //   printf("OpenGL Version: NULL\n");
-  //   return;
-  // }
-  // else {
-  //   printf("OpenGL Version: %s\n", version_string);
-  // }
+#ifdef _WIN32
   EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+#else
+  EGLDeviceEXT eglDevs[MAX_DEVICES];
+  EGLint numDevices;
+
+  PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT =
+      (PFNEGLQUERYDEVICESEXTPROC)eglGetProcAddress("eglQueryDevicesEXT");
+
+  eglQueryDevicesEXT(MAX_DEVICES, eglDevs, &numDevices);
+
+  printf("Detected %d devices\n", numDevices);
+
+  PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
+      (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress(
+          "eglGetPlatformDisplayEXT");
+
+  EGLDisplay display =
+      eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, eglDevs[0], 0);
+#endif
+  const GLubyte *version_string = glGetString(GL_VERSION);
+  if(version_string == NULL) {
+    printf("OpenGL Version: NULL\n");
+    return;
+  }
+  else {
+    printf("OpenGL Version: %s\n", version_string);
+  }
   EGLint major;
   EGLint minor;
 
