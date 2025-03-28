@@ -9118,25 +9118,25 @@ const char* fragmentShaderSource =
     "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
     "}\n";
 
+#define MAX_DEVICES 4
 void OpenGLInit() {
 
   // BEGIN multidevice
-  static const int MAX_DEVICES = 4;
-  EGLDeviceEXT eglDevs[MAX_DEVICES];
-  EGLint numDevices;
+  // EGLDeviceEXT eglDevs[MAX_DEVICES];
+  // EGLint numDevices;
 
-  PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT =
-      (PFNEGLQUERYDEVICESEXTPROC)eglGetProcAddress("eglQueryDevicesEXT");
+  // PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT =
+  //     (PFNEGLQUERYDEVICESEXTPROC)eglGetProcAddress("eglQueryDevicesEXT");
 
-  eglQueryDevicesEXT(MAX_DEVICES, eglDevs, &numDevices);
+  // eglQueryDevicesEXT(MAX_DEVICES, eglDevs, &numDevices);
 
-  printf("Detected %d devices\n", numDevices);
+  // printf("Detected %d devices\n", numDevices);
 
-  PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
-      (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress(
-          "eglGetPlatformDisplayEXT");
+  // PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
+  //     (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress(
+  //         "eglGetPlatformDisplayEXT");
 
-  EGLDisplay display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, eglDevs[0], 0);
+  // EGLDisplay display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, eglDevs[0], 0);
           // END multidevice
 
 
@@ -9148,7 +9148,7 @@ void OpenGLInit() {
   // else {
   //   printf("OpenGL Version: %s\n", version_string);
   // }
-  // EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
   EGLint major;
   EGLint minor;
 

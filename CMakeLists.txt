@@ -88,9 +88,11 @@ endif()
 
 # add_compile_definitions(pp_CMAKE)
 
-find_package(OpenGL REQUIRED)
 if(WIN32)
+    find_package(OpenGL REQUIRED)
     add_compile_definitions(GLUI_CPP_STRING)
+else()
+    find_package(OpenGL REQUIRED COMPONENTS EGL)
 endif()
 find_package(GLEW REQUIRED)
 find_package(JPEG REQUIRED)

@@ -21,6 +21,7 @@
     },
     "lua",
     "pthreads",
-    "json-c"
+    "json-c",
+    "egl"
   ]
 }
