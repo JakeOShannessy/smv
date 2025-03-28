@@ -9200,14 +9200,6 @@ void OpenGLInit() {
                              EGL_CONTEXT_OPENGL_PROFILE_MASK,
                              EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
                              EGL_NONE};
-  const GLubyte *version_string = glGetString(GL_VERSION);
-  if(version_string == NULL) {
-    printf("OpenGL Version: NULL\n");
-    return;
-  }
-  else {
-    printf("OpenGL Version: %s\n", version_string);
-  }
   EGLContext eglContext =
       eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
   if(eglContext == NULL) {
@@ -9227,7 +9219,14 @@ void OpenGLInit() {
     printf("eglMakeCurrent failed\n");
     return;
   }
-
+  const GLubyte *version_string = glGetString(GL_VERSION);
+  if(version_string == NULL) {
+    printf("OpenGL Version: NULL\n");
+    return;
+  }
+  else {
+    printf("OpenGL Version: %s\n", version_string);
+  }
   printf("%s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
   GLenum err = glewInit();
   if(err != GLEW_OK) {
@@ -9236,9 +9235,7 @@ void OpenGLInit() {
            glewGetErrorString(err));
   }
   // Compile vertex shader
-  fprintf(stderr, "Creating shader\n");
   GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
-  fprintf(stderr, "Shader created\n");
   glShaderSource(vertex, 1, &vertexShaderSource, NULL);
   glCompileShader(vertex);
 
