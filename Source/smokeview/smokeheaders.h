@@ -249,7 +249,7 @@ EXTERNCPP void DrawBlockages(int mode, int flag);
 EXTERNCPP void DrawCADGeom(const cadgeomdata *cd);
 EXTERNCPP void DrawCircVents(int option);
 EXTERNCPP void DrawGravityAxis(void);
-EXTERNCPP void DrawObstOutlines(void);
+EXTERNCPP void DrawObstOutlines(smv_case *scase);
 EXTERNCPP void DrawOutlines(void);
 EXTERNCPP void DrawOrigObstOutlines(void);
 EXTERNCPP void DrawSelectFaces(void);
