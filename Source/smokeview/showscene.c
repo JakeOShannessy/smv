@@ -64,7 +64,7 @@ void ShowScene2(int mode){
 
     if(vis_northangle == 1){
       CLIP_GEOMETRY;
-      DrawNorth();
+      DrawNorth(&global_scase);
       SNIFF_ERRORS("after DrawNorth");
     }
 
