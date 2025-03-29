@@ -656,23 +656,23 @@ void UpdateIndexColors(void){
 
 /* ------------------ DrawObstOutlines ------------------------ */
 
-void DrawObstOutlines(void){
+void DrawObstOutlines(smv_case *scase){
   int n;
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-global_scase.xbar0, -global_scase.ybar0, -global_scase.zbar0);
+  glTranslatef(-scase->xbar0, -scase->ybar0, -scase->zbar0);
   AntiAliasLine(ON);
-  glLineWidth(global_scase.linewidth);
+  glLineWidth(scase->linewidth);
   glBegin(GL_LINES);
-  for(n = 0; n < global_scase.meshescoll.nmeshes; n++){
+  for(n = 0; n < scase->meshescoll.nmeshes; n++){
     int i;
     float xmin, xmax, ymin, ymax, zmin, zmax;
     meshdata *meshi;
     float *color, *oldcolor=NULL;
     float *xplt, *yplt, *zplt;
 
-    meshi = global_scase.meshescoll.meshinfo + n;
+    meshi = scase->meshescoll.meshinfo + n;
     xplt = meshi->xplt_orig;
     yplt = meshi->yplt_orig;
     zplt = meshi->zplt_orig;

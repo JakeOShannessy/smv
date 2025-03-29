@@ -252,7 +252,7 @@ EXTERNCPP void DrawCircVents(int option);
 EXTERNCPP void DrawDemo(int nlat, int nlong);
 EXTERNCPP void DrawDemo2(void);
 EXTERNCPP void DrawGravityAxis(void);
-EXTERNCPP void DrawObstOutlines(void);
+EXTERNCPP void DrawObstOutlines(smv_case *scase);
 EXTERNCPP void DrawOutlines(void);
 EXTERNCPP void DrawOrigObstOutlines(void);
 EXTERNCPP void DrawSelectFaces(void);

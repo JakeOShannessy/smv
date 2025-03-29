@@ -148,7 +148,7 @@ void ShowScene2(int mode){
 
     if(hide_internal_blockages == 1){
       if(outline_state == OUTLINE_ONLY || outline_state == OUTLINE_ADDED){
-        DrawObstOutlines();
+        DrawObstOutlines(&global_scase);
       }
     }
 
