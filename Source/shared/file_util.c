@@ -36,6 +36,7 @@
 #include "string_util.h"
 #include "file_util.h"
 #include "threader.h"
+#include <errno.h>
 
 FILE *alt_stdout=NULL;
 
@@ -257,8 +258,12 @@ unsigned int StreamCopy(FILE *stream_in, FILE *stream_out, int flag){
   unsigned int nchars = 0;
 
   if(stream_in == NULL || stream_out == NULL)return 0;
-
+  errno = 0;
   rewind(stream_in);
+  if(errno) {
+    fprintf(stderr, "*** Error: Unable to rewind stream\n");
+    return 0;
+  };
   c = fgetc(stream_in);
   while(c != EOF){
     if(flag == 0)return 1;
