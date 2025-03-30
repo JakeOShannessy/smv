@@ -29,7 +29,7 @@
 
 #ifdef INTEL_COMPILER_ANY
 #define pp_FSEEK
-#ifdef WIN32
+#ifdef _WIN32
 #define HAVE_MSVS
 #define INTEL_WIN_COMPILER
 #endif
@@ -51,7 +51,7 @@
 
 //*** options: windows
 
-#ifdef WIN32
+#ifdef _WIN32
 
 //*** needed when using Windows Intel compilers
 //    to prevent warnings/errors
@@ -111,7 +111,7 @@
   #define STRUCTSTAT struct __stat64
   #define STAT _stat64
 
-  #ifdef WIN32
+  #ifdef _WIN32
     #define LINT __int64
   #else
     #define LINT long long int

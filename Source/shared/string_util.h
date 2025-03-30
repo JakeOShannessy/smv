@@ -172,7 +172,7 @@ SVEXTERN int SVDECL(hash_option, HASH_SHA1);
 SVEXTERN int SVDECL(show_version, 0), SVDECL(show_help, 0);
 SVEXTERN char append_string[1024];
 
-#ifdef WIN32
+#ifdef _WIN32
 STREXTERN char STRDECL(dirseparator[],"\\");
 #else
 STREXTERN char STRDECL(dirseparator[],"/");

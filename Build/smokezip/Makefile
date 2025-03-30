@@ -38,7 +38,7 @@ objwin = $(obj:.o=.obj)
 # main has to be compiled without optimization (on a Windows PC) otherwise errors occcur
 # don't think the following is needed anymore - keeping it around for awhile to make it easier to put
 # back in case it is needed
-#main.obj: CFLAGS = -Od /nologo -D WIN32 -D pp_WIN_INTEL $(OPT)
+#main.obj: CFLAGS = -Od /nologo -D pp_WIN_INTEL $(OPT)
 
 #*** General Purpose Rules ***
 
@@ -56,7 +56,7 @@ no_target:
 # ------------- intel win 64 ----------------
 
 intel_win_64 : INC_DIR   += -I $(SOURCE_DIR)/pthreads
-intel_win_64 : CFLAGS    = -Od /nologo -D WIN32 -D PTW32_STATIC_LIB -D X64  $(OPT) $(GITINFO) $(INTEL_COMPINFO) $(SMV_TESTFLAG)
+intel_win_64 : CFLAGS    = -Od /nologo -D PTW32_STATIC_LIB -D X64  $(OPT) $(GITINFO) $(INTEL_COMPINFO) $(SMV_TESTFLAG)
 intel_win_64 : CC        = $(I_CC)
 intel_win_64 : exe       = smokezip_win_64.exe
 

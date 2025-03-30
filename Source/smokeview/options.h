@@ -22,7 +22,7 @@
 
 //*** options: windows
 
-#ifdef WIN32
+#ifdef _WIN32
 #define pp_memstatus
 #define pp_COMPRESS         // support for smokezip
 #define pp_DIALOG_SHORTCUTS // dialog shortcuts

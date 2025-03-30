@@ -8,7 +8,7 @@
 #include "string_util.h"
 #include "file_util.h"
 #include "dmalloc.h"
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -30,7 +30,7 @@ void Usage(int option){
 
   GetGitInfo(githash,gitdate);    // get githash
 
-  
+
   fprintf(stdout, "\nflush [options]\n");
   fprintf(stdout, "%s %s\n\n", githash, __DATE__);
   fprintf(stdout, "flush the cache\n\n");

@@ -76,8 +76,8 @@ if (UNIX AND NOT MACOSX)
 endif()
 # Set flags for Windows
 if (WIN32)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_WIN32)
-    add_compile_definitions(PTW32_BUILD PTW32_STATIC_LIB   X64 _WIN32 WIN32 _CONSOLE)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    add_compile_definitions(PTW32_BUILD PTW32_STATIC_LIB   X64 _CONSOLE)
 endif()
 
 add_compile_definitions(pp_CMAKE)

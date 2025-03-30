@@ -19,11 +19,11 @@
 #include "gd.h"
 #include "IOscript.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -583,7 +583,7 @@ int RenderFrameLua(int view_mode, const char *basename) {
     strcpy(renderfile_dir, ".");
   }
 
-#ifdef WIN32
+#ifdef _WIN32
   // reset display idle timer to prevent screen saver from activating
   SetThreadExecutionState(ES_DISPLAY_REQUIRED);
 #endif
@@ -609,7 +609,7 @@ int RenderFrameLuaVar(int view_mode, gdImagePtr *RENDERimage) {
   int screen_h;
   int return_code;
 
-#ifdef WIN32
+#ifdef _WIN32
   // reset display idle timer to prevent screen saver from activating
   SetThreadExecutionState(ES_DISPLAY_REQUIRED);
 #endif

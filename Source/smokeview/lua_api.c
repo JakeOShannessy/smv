@@ -30,7 +30,7 @@
 lua_State *lua_instance;
 int LuaDisplayCb(lua_State *L);
 
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #else
 #include <unistd.h>
@@ -82,7 +82,7 @@ int ProgramSetupLua(lua_State *L, int argc, char **argv) {
   InitScriptErrorFiles();
   char *smv_bindir = GetSmvRootDir();
   smokezippath = GetSmokeZipPath(smv_bindir);
-#ifdef WIN32
+#ifdef _WIN32
   have_ffmpeg = HaveProg("ffmpeg -version> Nul 2>Nul");
   have_ffplay = HaveProg("ffplay -version> Nul 2>Nul");
 #else

@@ -14,7 +14,7 @@
 #endif
 #endif
 #include <math.h>
-#ifdef WIN32
+#ifdef _WIN32
 #ifdef __MINGW32__
 #undef S_IFBLK
 #undef S_ISBLK
@@ -164,7 +164,7 @@ char *GetSmokeZipPath(char *progdir){
   }
 
   strcat(zip_path,"smokezip");
-#ifdef WIN32
+#ifdef _WIN32
   strcat(zip_path,".exe");
 #endif
   if(FILE_EXISTS(zip_path)==YES)return zip_path;
@@ -193,7 +193,7 @@ char *GetBaseFileName(char *buffer, const char *file){
   char *filebase,*ext;
 
   strcpy(buffer,file);
-#ifdef WIN32
+#ifdef _WIN32
   filebase=strrchr(buffer,'\\');
 #else
   filebase=strrchr(buffer,'/');
@@ -738,7 +738,7 @@ bufferdata *File2Buffer(char *file, char *size_file, int *options, bufferdata *b
 //#define XXX
 #ifdef XXX
   FILE *stream;
-#ifdef WIN32
+#ifdef _WIN32
   stream = _fsopen(file, "rb", _SH_DENYNO);
 #else
   stream = fopen(file, "rb");
@@ -837,7 +837,7 @@ FILE *fopen_indir(char *dir, char *file, char *mode){
 
   if(file==NULL||strlen(file)==0)return NULL;
   if(dir==NULL||strlen(dir)==0){
-#ifdef WIN32
+#ifdef _WIN32
     stream = _fsopen(file, mode, _SH_DENYNO);
 #else
     stream = fopen(file,mode);
@@ -852,7 +852,7 @@ FILE *fopen_indir(char *dir, char *file, char *mode){
     strcpy(filebuffer,dir);
     strcat(filebuffer,dirseparator);
     strcat(filebuffer,file);
-#ifdef WIN32
+#ifdef _WIN32
     stream = _fsopen(filebuffer, mode, _SH_DENYNO);
 #else
     stream = fopen(filebuffer, mode);
@@ -875,7 +875,7 @@ FILE *fopen_2dir(char *file, char *mode, char *scratch_dir){
   FILE *stream;
 
   if(file == NULL)return NULL;
-#ifdef WIN32
+#ifdef _WIN32
   stream = _fsopen(file,mode,_SH_DENYNO);
 #else
   stream = fopen(file,mode);
@@ -1268,7 +1268,7 @@ char *GetSmvRootSubPath(const char *subdir) {
 /* ------------------ GetHomeDir ------------------------ */
 
 char *GetHomeDir() {
-#ifdef WIN32
+#ifdef _WIN32
   char *homedir = getenv("userprofile");
 #else
   char *homedir = getenv("HOME");
@@ -1419,7 +1419,7 @@ char *Which(char *progname, char **fullprognameptr){
   char *dir,*pathentry;
   char pathsep[2], dirsep[2];
 
-#ifdef WIN32
+#ifdef _WIN32
   strcpy(pathsep,";");
   strcpy(dirsep,"\\");
 #else
@@ -1436,7 +1436,7 @@ char *Which(char *progname, char **fullprognameptr){
   NewMemory((void **)&pathlistcopy, (unsigned int)(strlen(pathlist)+1));
   strcpy(pathlistcopy, pathlist);
 
-#ifdef WIN32
+#ifdef _WIN32
   {
     const char *ext;
 

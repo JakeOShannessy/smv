@@ -23,7 +23,7 @@ extern int show_timings;
 #include <unistd.h>
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define PATH_MAX MAX_PATH
 #elif defined(__linux__)
 #include <linux/limits.h>
@@ -66,7 +66,7 @@ typedef struct {
 // vvvvvvvvvvvvvvvvvvvvvvvv preprocessing directives
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-#ifdef WIN32
+#ifdef _WIN32
 #define UNLINK _unlink
 #else
 #define UNLINK unlink
@@ -105,14 +105,14 @@ typedef struct {
 #define FILE_EXISTS(a) FileExists(a, NULL, 0, NULL, 0)
 int FileExistsOrig(char *filename);
 
-#ifdef WIN32
+#ifdef _WIN32
 #define MKDIR(a) CreateDirectory(a, NULL)
 #else
 #define MKDIR(a)                                                               \
   mkdir(a, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define ACCESS _access
 #define F_OK 0
 #define W_OK 2
@@ -128,7 +128,7 @@ int FileExistsOrig(char *filename);
 #define YES 1
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define CHDIR _chdir
 #define GETCWD _getcwd
 #define SEP '\\'
@@ -272,7 +272,7 @@ EXTERNCPP char *JoinPath(const char *path, const char *segment);
 // vvvvvvvvvvvvvvvvvvvvvvvv variables vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 #ifndef STREXTERN
-#ifdef WIN32
+#ifdef _WIN32
 STREXTERN char STRDECL(dirseparator[], "\\");
 #else
 STREXTERN char STRDECL(dirseparator[], "/");

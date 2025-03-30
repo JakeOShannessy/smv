@@ -14,7 +14,7 @@
 #include "IOscript.h"
 #include "IOvolsmoke.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <direct.h>
 #endif
 
@@ -222,7 +222,7 @@ char *ProcessCommandLine(CommandlineArgs *args){
     strcat(filename_local, ".smv");
   }
   else{
-#ifdef WIN32
+#ifdef _WIN32
     if(show_version == 0){
       int openfile, filelength;
 
@@ -399,7 +399,7 @@ char *ProcessCommandLine(CommandlineArgs *args){
     NewMemory((void **)&global_scase.paths.ffmpeg_command_filename, (unsigned int)(len_casename + 12));
     STRCPY(global_scase.paths.ffmpeg_command_filename, global_scase.fdsprefix);
     STRCAT(global_scase.paths.ffmpeg_command_filename, "_ffmpeg");
-#ifdef WIN32
+#ifdef _WIN32
     STRCAT(global_scase.paths.ffmpeg_command_filename,".bat");
 #else
     STRCAT(global_scase.paths.ffmpeg_command_filename,".sh");

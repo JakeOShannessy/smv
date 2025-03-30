@@ -2,7 +2,7 @@
 #include "glew.h"
 #include <assert.h>
 #include <stdio.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <share.h>
 #endif
 #include <stdlib.h>
@@ -72,7 +72,7 @@ meshdata *gslice_valmesh;
 slicedata *gslice_u, *gslice_v, *gslice_w;
 slicedata *gslice;
 
-#ifdef WIN32
+#ifdef _WIN32
 #define FOPEN(file,mode) _fsopen(file,mode,_SH_DENYNO)
 #else
 #define FOPEN(file,mode) fopen(file,mode)
@@ -2316,7 +2316,7 @@ void GetSliceParams(sliceparmdata *sp){
     }
     else if(sd->compression_type!=UNCOMPRESSED){
       int return_code;
-      
+
       is1 = 0;is2 = 0;js1 = 0;js2 = 0;ks1 = 0;ks2 = 0;
       error=0;
       return_code = GetSliceHeader0(sd->comp_file,sd->size_file,sd->compression_type,&is1,&is2,&js1,&js2,&ks1,&ks2, &sd->volslice);

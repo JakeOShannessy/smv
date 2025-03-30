@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <share.h>
 #endif
 #include "dmalloc.h"
@@ -34,7 +34,7 @@ _Static_assert(sizeof(float) == 4, "getdata.c assumes that float is 4 bytes");
 
 /* ------------------ FOPEN  ------------------------ */
 
-#ifdef WIN32
+#ifdef _WIN32
 FILE* FOPEN(const char* file, const char* mode){
   FILE* stream;
   stream = _fsopen(file, mode, _SH_DENYNO);

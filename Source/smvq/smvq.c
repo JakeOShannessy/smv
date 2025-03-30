@@ -120,7 +120,7 @@ int SetGlobalFilenames() {
               (unsigned int)(len_casename + 12));
     STRCPY(global_scase.paths.ffmpeg_command_filename, global_scase.fdsprefix);
     STRCAT(global_scase.paths.ffmpeg_command_filename, "_ffmpeg");
-#ifdef WIN32
+#ifdef _WIN32
     STRCAT(global_scase.paths.ffmpeg_command_filename, ".bat");
 #else
     STRCAT(global_scase.paths.ffmpeg_command_filename, ".sh");
