@@ -102,7 +102,7 @@ gnu_osx_64 : $(obj)
 
 # ------------- gnu osx 64 db ----------------
 
-gnu_osx_64_db : CFLAGS    = -O0 -m64 -Wall -D _DEBUG -D pp_OSX -D pp_GCC -Wno-deprecated-declarations -Wno-write-strings $(GNU_COMPINFO) $(GITINFO) $(SMV_TESTFLAG)
+gnu_osx_64_db : CFLAGS    = -O0 -m64 -Wall -D _DEBUG -D pp_GCC -Wno-deprecated-declarations -Wno-write-strings $(GNU_COMPINFO) $(GITINFO) $(SMV_TESTFLAG)
 gnu_osx_64_db : LFLAGS    = -m64
 gnu_osx_64_db : CC        = gcc
 gnu_osx_64_db : exe       = fds2fed_osx_64_db
