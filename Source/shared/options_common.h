@@ -123,7 +123,7 @@
   #define LINT long int
 #endif
 
-#ifdef CPP
+#ifdef __cplusplus
 #define CCC "C"
 #define EXTERNCPP extern "C"
 #else
