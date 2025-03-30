@@ -86,7 +86,7 @@ endif()
 
 # add_compile_definitions(pp_CMAKE)
 
-find_package(OpenGL REQUIRED)
+find_package(OpenGL REQUIRED COMPONENTS OpenGL EGL)
 if (VENDORED_UI_LIBS)
     if (NOT MACOSX)
         add_subdirectory(Source/glut-3.7.6)
