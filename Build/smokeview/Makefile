@@ -246,7 +246,7 @@ intel_win_64 : $(objwin)
 # ------------- gnu_win_64 ----------------
 
 gnu_win_64 : INC       += -I $(SOURCE_DIR)/glui_gl -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview
-gnu_win_64 : CFLAGS    = -O0 -m64 $(D_FREEGLUT) -D GLEW_STATIC -D pp_GCC -D NDEBUG -D __MINGW32__ -fno-builtin -Wno-write-strings $(GITINFO) $(GNU_COMPINFO) $(SMV_PROFILEFLAG)
+gnu_win_64 : CFLAGS    = -O0 -m64 $(D_FREEGLUT) -D GLEW_STATIC -D NDEBUG -D __MINGW32__ -fno-builtin -Wno-write-strings $(GITINFO) $(GNU_COMPINFO) $(SMV_PROFILEFLAG)
 gnu_win_64 : LFLAGS    = -m64 $(SMV_LIBS_GNU) -lm -lopengl32 -lglu32 -lgdi32 -lwinmm -lcomdlg32 -lhid -lquadmath $(SMV_PROFILEFLAG)
 gnu_win_64 : CC        = gcc
 gnu_win_64 : CPP       = g++
@@ -266,7 +266,7 @@ gnu_win_64 : $(obj)
 # 3.  type: gprof smokeview_application_name > results.out
 
 gnu_win_64_db : INC       += -I $(SOURCE_DIR)/glui_gl -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview
-gnu_win_64_db : CFLAGS    = -O0 -m64 -g -Wunused-label -Wunused-value -Wunused-variable $(D_FREEGLUT) $(SMV_PROFILEFLAG) -D GLEW_STATIC -D pp_GCC -D __MINGW32__ -fno-builtin -Wno-write-strings $(GITINFO) $(GNU_COMPINFO)
+gnu_win_64_db : CFLAGS    = -O0 -m64 -g -Wunused-label -Wunused-value -Wunused-variable $(D_FREEGLUT) $(SMV_PROFILEFLAG) -D GLEW_STATIC -D __MINGW32__ -fno-builtin -Wno-write-strings $(GITINFO) $(GNU_COMPINFO)
 gnu_win_64_db : LFLAGS    = -m64 $(SMV_LIBS_GNU) -lm -lopengl32 -lglu32 -lgdi32 -lwinmm -lcomdlg32 -lhid -lquadmath $(SMV_PROFILEFLAG)
 gnu_win_64_db : CC        = gcc
 gnu_win_64_db : CPP       = g++
@@ -342,7 +342,7 @@ intel_linux_64_db : $(obj)
 # ------------- gnu_linux_64_db ----------------
 
 gnu_linux_64_db : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
-gnu_linux_64_db : CFLAGS    = -O0  -m64 -ggdb -Wall -Wunreachable-code -Wswitch-default -Wshadow -Winit-self -Wundef -Wpointer-arith -Wuninitialized -Wno-address -Wno-format-overflow -Wno-format-truncation -Wno-undef -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG -D pp_GCC $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
+gnu_linux_64_db : CFLAGS    = -O0  -m64 -ggdb -Wall -Wunreachable-code -Wswitch-default -Wshadow -Winit-self -Wundef -Wpointer-arith -Wuninitialized -Wno-address -Wno-format-overflow -Wno-format-truncation -Wno-undef -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
 gnu_linux_64_db : C_STANDARD    = -std=gnu99
 gnu_linux_64_db : INC += -I $(SOURCE_DIR)/freeglut3.0.0/include
 ifeq ($(LUA_SCRIPTING),true)
@@ -363,7 +363,7 @@ gnu_linux_64_db : $(obj)
 
 gnu_linux_64 : DYNLIB_EXT = .so
 gnu_linux_64 : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
-gnu_linux_64 : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings           -D pp_GCC -D NDEBUG $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
+gnu_linux_64 : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings           -D NDEBUG $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
 gnu_linux_64 : C_STANDARD    = -std=gnu99
 gnu_linux_64 : INC += -I $(SOURCE_DIR)/freeglut3.0.0/include
 ifeq ($(LUA_SCRIPTING),true)
@@ -416,7 +416,7 @@ endif
 
 # ------------- gnu_osx_64_db ----------------
 
-gnu_osx_64_db : CFLAGS    = -O0 -ggdb -m64 -D _DEBUG -D pp_GCC $(SMV_TESTFLAG) -Wall -Wno-comment -Wno-deprecated-declarations $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
+gnu_osx_64_db : CFLAGS    = -O0 -ggdb -m64 -D _DEBUG $(SMV_TESTFLAG) -Wall -Wno-comment -Wno-deprecated-declarations $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
 gnu_osx_64_db : C_STANDARD    = -std=gnu99
 gnu_osx_64_db : LFLAGS    = -m64 -L$(LIB_DIR)/gnu_osx_64 $(SMV_LIBS_OSX) $(GLIBDIROPT) $(SMV_PROFILEFLAG)
 ifeq ($(GLUT),freeglut)
@@ -434,7 +434,7 @@ gnu_osx_64_db : $(obj)
 
 # ------------- gnu_osx_64 ----------------
 
-gnu_osx_64 : CFLAGS    = -O0 -m64              -D pp_GCC -D NDEBUG $(SMV_TESTFLAG) -Wall -Wno-comment -Wno-deprecated-declarations -Wno-write-strings $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
+gnu_osx_64 : CFLAGS    = -O0 -m64              -D NDEBUG $(SMV_TESTFLAG) -Wall -Wno-comment -Wno-deprecated-declarations -Wno-write-strings $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
 gnu_osx_64 : C_STANDARD    = -std=gnu99
 gnu_osx_64 : LFLAGS    = -m64 -L$(LIB_DIR)/gnu_osx_64 $(SMV_LIBS_OSX) $(GLIBDIROPT) $(SMV_PROFILEFLAG)
 ifeq ($(GLUT),freeglut)
