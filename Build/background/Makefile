@@ -85,7 +85,7 @@ win_check : $(win_chk)
 
 # ------------- intel Win 64 ----------------
 
-intel_win_64 : CFLAGS    = -O1 /nologo -D X64 -D WIN32 -I $(SOURCE_DIR)/pthreads -I $(SOURCE_DIR)/shared $(GITINFO) $(INTEL_COMPINFO)
+intel_win_64 : CFLAGS    = -O1 /nologo -D X64 -I $(SOURCE_DIR)/pthreads -I $(SOURCE_DIR)/shared $(GITINFO) $(INTEL_COMPINFO)
 intel_win_64 : CC        = $(I_CC)
 intel_win_64 : exe       = background_win_64.exe
 
@@ -94,7 +94,7 @@ intel_win_64 : $(objwin)
 
 # ------------- gnu Win 64 ----------------
 
-gnu_win_64 : CFLAGS    = -O0 -m64 -D WIN32 -D _WIN32 -D GLEW_STATIC -D MINGW
+gnu_win_64 : CFLAGS    = -O0 -m64 -D GLEW_STATIC -D MINGW
 gnu_win_64 : CC        = gcc
 gnu_win_64 : exe       = background_win_64.exe
 

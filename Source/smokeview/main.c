@@ -16,7 +16,7 @@
 #include "IOscript.h"
 #include "IOvolsmoke.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <direct.h>
 #include <windows.h>
 #include <shellapi.h>
@@ -223,7 +223,7 @@ char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
     strcat(filename_local, ".smv");
   }
   else{
-#ifdef WIN32
+#ifdef _WIN32
     if(opts->show_version == 0){
       int openfile, filelength;
 
