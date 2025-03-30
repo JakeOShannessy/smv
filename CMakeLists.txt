@@ -32,11 +32,7 @@ else()
     # etc).
     include(GNUInstallDirs)
 endif()
-# Pass a flag to to the source code. There's no great need for this but allows
-# us to have conditional code based on the build method.
-add_definitions(-Dpp_CMAKE)
 add_compile_definitions(pp_GITHASH="${PROJECT_VERSION}+sc2.lua")
-
 
 include(InstallRequiredSystemLibraries)
 configure_file(LICENSE.md LICENSE.txt)
@@ -78,8 +74,6 @@ if (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_compile_definitions(PTW32_BUILD PTW32_STATIC_LIB   X64 _CONSOLE)
 endif()
-
-add_compile_definitions(pp_CMAKE)
 
 find_package(OpenGL REQUIRED)
 if (VENDORED_UI_LIBS)
