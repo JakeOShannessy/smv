@@ -33,7 +33,7 @@
 
 //*** options: Linux
 
-#ifdef pp_LINUX
+#ifdef __linux__
 #define pp_REFRESH          // refresh glui dialogs when they change size
 #define pp_DIALOG_SHORTCUTS // dialog shortcuts
 #endif
@@ -64,4 +64,3 @@
 #define pp_RENDER360_DEBUG
 
 #endif
-

@@ -20,7 +20,7 @@
 
 //*** options: Linux
 
-#ifdef pp_LINUX
+#ifdef __linux__
 #define pp_THREAD
 #endif
 

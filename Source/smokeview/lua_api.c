@@ -4966,7 +4966,7 @@ void AddScriptPath(lua_State *L) {
   lua_getfield(L, -1, "path");
   const char *original_path = lua_tostring(L, -1);
   int new_length = strlen(original_path) + 1;
-#ifdef pp_LINUX
+#ifdef __linux__
   // Add script path for the linux install
   char *linux_share_path = ";/usr/share/smokeview/?.lua";
   new_length += strlen(linux_share_path);
@@ -4979,7 +4979,7 @@ void AddScriptPath(lua_State *L) {
   // Create the path.
   char *new_path = malloc(sizeof(char) * new_length);
   strcpy(new_path, original_path);
-#ifdef pp_LINUX
+#ifdef __linux__
   strcat(new_path, linux_share_path);
 #endif
   strcat(new_path, bin_path);
@@ -5003,7 +5003,7 @@ void AddCPath(lua_State *L) {
   lua_getfield(L, -1, "cpath");
   const char *original_path = lua_tostring(L, -1);
   int new_length = strlen(original_path) + 1;
-#ifdef pp_LINUX
+#ifdef __linux__
   char *so_extension = ".so";
 #else
   char *so_extension = ".dll";
