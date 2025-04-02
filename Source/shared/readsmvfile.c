@@ -4283,12 +4283,8 @@ void FreeSliceData(smv_case *scase){
   FREEMEMORY(scase->surfcoll.surfinfo);
   if(scase->slicecoll.nsliceinfo>0){
     for(i = 0; i<scase->slicecoll.nsliceinfo; i++){
-      slicedata *sd;
-      sd = scase->slicecoll.sliceinfo+i;
-      FreeLabels(&scase->slicecoll.sliceinfo[i].label);
-      FREEMEMORY(sd->reg_file);
-      FREEMEMORY(sd->comp_file);
-      FREEMEMORY(sd->size_file);
+      slicedata *sd = scase->slicecoll.sliceinfo+i;
+      FreeLabels(&sd->label);
     }
     FREEMEMORY(scase->sliceorderindex);
     for(i = 0; i<scase->slicecoll.nmultisliceinfo; i++){
