@@ -35,6 +35,10 @@
 #include "readtour.h"
 #include "readsmvfile.h"
 
+#ifdef pp_OSX
+#include <libgen.h>
+#endif
+
 #define BREAK break
 #define BREAK2 \
       if((stream==stream1&&stream2==NULL)||stream==stream2)break;\
