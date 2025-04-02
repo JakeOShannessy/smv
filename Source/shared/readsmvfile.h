@@ -40,6 +40,10 @@ EXTERNCPP smv_case *ScaseCreate();
 /// @param[out] scase A struct to store the resulting parsed SMV file
 /// @return zero on success, nonzero on failure.
 EXTERNCPP int ScaseParseFromPath(const char *input_file, smv_case *scase);
+/// @brief Clear the memory within an smv_case (i.e. unitialize) but don't free
+/// the struct itself. This is useful when the struct is a global.
+/// @param[inout] scase An smv_case.
+EXTERNCPP void ScaseClear(smv_case *scase);
 /// @brief Destroy an smv_case and free the associated memory
 /// @param[inout] scase The smv_case deconstruct and free.
 EXTERNCPP void ScaseDestroy(smv_case *scase);

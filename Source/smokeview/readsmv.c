@@ -2944,7 +2944,8 @@ int ReadSMV_Configure(){
 /// @param stream the file stream to parse.
 /// @return zero on success, non-zero on error
 int ReadSMV(bufferstreamdata *stream){
-  InitScase(&global_scase);
+  // TODO: reinstate
+  // InitScase(&global_scase);
   //** initialize multi-threading
   if(runscript == 1){
     use_checkfiles_threads  = 0;

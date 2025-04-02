@@ -8953,17 +8953,21 @@ int ScaseParseFromPath(const char *input_file, smv_case *scase) {
   return 0;
 }
 
-/* ------------------ ScaseDestroy ------------------------ */
-
-/// @brief Cleanup and free the memory of an smv_case.
-/// @param scase An smv_case created with ScaseCreate.
-void ScaseDestroy(smv_case *scase) {
+void ScaseClear(smv_case *scase) {
   ClearObjectCollection(&scase->objectscoll);
   ClearCADGeomCollection(&scase->cadgeomcoll);
   ClearLabelsCollection(&scase->labelscoll);
   FreeSliceData(scase);
 }
 
+/* ------------------ ScaseDestroy ------------------------ */
+
+/// @brief Cleanup and free the memory of an smv_case.
+/// @param scase An smv_case created with ScaseCreate.
+void ScaseDestroy(smv_case *scase) {
+  ScaseClear(scase);
+  FreeMemory(scase);
+}
 
 /* ------------------ GetElevAz ------------------------ */
 
