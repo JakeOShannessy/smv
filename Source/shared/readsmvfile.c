@@ -3747,6 +3747,9 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
 #endif
     smoke3di->smokeview_tmp = NULL;
     smoke3di->times = NULL;
+#ifdef pp_FIRE_HIST
+    smoke3di->histtimes = NULL;
+#endif
     smoke3di->times_map = NULL;
     smoke3di->use_smokeframe = NULL;
     smoke3di->smokeframe_loaded = NULL;
@@ -7291,6 +7294,27 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
     }
   /*
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    ++++++++++++++++++++++ HRRPUV_MINMAX ++++++++++++++++++++++++
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  */
+    if(MatchSMV(buffer, "HRRPUV_MINMAX") == 1){
+      FGETS(buffer, 255, stream);
+      sscanf(buffer, "%f %f", &scase->hrrpuv_min, &scase->hrrpuv_max);
+      continue;
+    }
+
+  /*
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    ++++++++++++++++++++++ TEMP_MINMAX ++++++++++++++++++++++++++
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  */
+    if(MatchSMV(buffer, "TEMP_MINMAX") == 1){
+      FGETS(buffer, 255, stream);
+      sscanf(buffer, "%f %f", &scase->temp_min, &scase->temp_max);
+      continue;
+    }
+  /*
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     ++++++++++++++++++++++ OFFSET ++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
@@ -8866,12 +8890,46 @@ typedef struct {
   return 0;
 }
 
+/* ------------------ InitScase ------------------------ */
+
 /// @brief Initialize a smokeview case (smv_case) which has already been
 /// allocated. This should be avoided and CreateScase/DestroyScase should be
 /// used instead.
 /// @param scase An uninitialized scase
 void InitScase(smv_case *scase) {
   // set all of the defaults that are non-zero
+
+  assert(scase->smoke3dcoll.nsmoke3dinfo == 0);
+  assert(scase->smoke3dcoll.smoke3dinfo == NULL);
+  assert(scase->smoke3dcoll.nsmoke3dtypes == 0);
+  assert(scase->smoke3dcoll.smoke3dtypes == NULL);
+  assert(scase->smoke3dcoll.smoke3d_other == 0);
+  assert(scase->smoke3dcoll.smoke3dinfo_sorted == NULL);
+  assert(scase->slicecoll.nsliceinfo == 0);
+  assert(scase->slicecoll.sliceinfo == NULL);
+  assert(scase->slicecoll.nmultisliceinfo == 0);
+  assert(scase->slicecoll.multisliceinfo == NULL);
+  assert(scase->slicecoll.nmultivsliceinfo == 0);
+  assert(scase->slicecoll.multivsliceinfo == NULL);
+  assert(scase->slicecoll.nvsliceinfo == 0);
+  assert(scase->slicecoll.vsliceinfo == NULL);
+  assert(NULL == 0);
+
+  scase->smoke3dcoll.nsmoke3dinfo       = 0;
+  scase->smoke3dcoll.smoke3dinfo        = NULL;
+  scase->smoke3dcoll.nsmoke3dtypes      = 0;
+  scase->smoke3dcoll.smoke3dtypes       = NULL;
+  scase->smoke3dcoll.smoke3d_other      = 0;
+  scase->smoke3dcoll.smoke3dinfo_sorted = NULL;
+  scase->slicecoll.nsliceinfo       = 0;
+  scase->slicecoll.sliceinfo        = NULL;
+  scase->slicecoll.nmultisliceinfo  = 0;
+  scase->slicecoll.multisliceinfo   = NULL;
+  scase->slicecoll.nmultivsliceinfo = 0;
+  scase->slicecoll.multivsliceinfo  = NULL;
+  scase->slicecoll.nvsliceinfo      = 0;
+  scase->slicecoll.vsliceinfo       = NULL;
+
   scase->tourcoll.ntourinfo = 0;
   scase->tourcoll.tourinfo = NULL;
   scase->tourcoll.tour_ntimes = 1000;
@@ -8890,6 +8948,10 @@ void InitScase(smv_case *scase) {
   scase->global_tbegin = 1.0;
   scase->smoke_albedo = 0.3;
   scase->smoke_albedo_base = 0.3;
+  scase->hrrpuv_min = 0.0;
+  scase->hrrpuv_max = 1200;
+  scase->temp_min = 0.0;
+  scase->temp_max = 2000;
   scase->xbar = 1.0;
   scase->ybar = 1.0;
   scase->zbar = 1.0;
@@ -8923,10 +8985,14 @@ void InitScase(smv_case *scase) {
   scase->color_defs.block_ambient2=GetColorPtr(scase, block_ambient_orig);
   scase->color_defs.block_specular2=GetColorPtr(scase, block_specular_orig);
 
+  scase->visFrame = 1;
+
   InitLabelsCollection(&scase->labelscoll);
 
   InitObjectCollection(&scase->objectscoll);
 }
+
+/* ------------------ CreateScase ------------------------ */
 
 /// @brief Create and initalize and a smokeview case (smv_case).
 /// @return An initialized smv_case.
@@ -8937,6 +9003,8 @@ smv_case *CreateScase() {
   InitScase(scase);
   return scase;
 }
+
+/* ------------------ DestroyScase ------------------------ */
 
 /// @brief Cleanup and free the memory of an smv_case.
 /// @param scase An smv_case created with CreateScase.

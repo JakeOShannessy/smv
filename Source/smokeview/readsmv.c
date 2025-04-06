@@ -2934,6 +2934,10 @@ int ReadSMV_Configure(){
   if(global_scase.meshescoll.nmeshes > 200){
     hide_scene = 1;
   }
+  if(global_scase.hrrpuvcut_set) {
+    global_hrrpuv_cb_min_default = global_scase.hrrpuvcut;
+    global_hrrpuv_cb_min = global_hrrpuv_cb_min_default;
+  }
 
   PRINTF("%s", _("complete"));
   PRINTF("\n\n");
@@ -2964,8 +2968,11 @@ int ReadSMV_Configure(){
 /// @brief Parse an SMV file.
 /// @param stream the file stream to parse.
 /// @return zero on success, non-zero on error
-int ReadSMV(bufferstreamdata *stream){
-  InitScase(&global_scase);
+int ReadSMV(bufferstreamdata *stream) {
+  // TODO: This is where global_scase should be initialised. However, it's
+  // currenly initialised in InitVars for a few compatability reasons. This
+  // would be a better location when those compatbilities are resolved.
+  // InitScase(&global_scase);
   //** initialize multi-threading
   if(runscript == 1){
     use_checkfiles_threads  = 0;
@@ -3726,7 +3733,7 @@ int ReadIni2(const char *inifile, int localfile){
         &glui_compress_volsmoke, &use_multi_threading, &load_at_rendertimes, &volbw, &show_volsmoke_moving);
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f %f %f %f %f %f",
-        &global_temp_min, &global_temp_cb_min_default, &global_temp_cb_max_default, &fire_opacity_factor, &mass_extinct, &gpu_vol_factor, &nongpu_vol_factor);
+        &global_scase.temp_min, &global_temp_cb_min_default, &global_temp_cb_max_default, &fire_opacity_factor, &mass_extinct, &gpu_vol_factor, &nongpu_vol_factor);
       global_temp_cb_min = global_temp_cb_min_default;
       global_temp_cb_max = global_temp_cb_max_default;
       ONEORZERO(glui_compress_volsmoke);
@@ -8337,7 +8344,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i %i %i %i %i\n",
     glui_compress_volsmoke, use_multi_threading, load_at_rendertimes, volbw, show_volsmoke_moving);
   fprintf(fileout, " %f %f %f %f %f %f %f\n",
-    global_temp_min, global_temp_cb_min, global_temp_cb_max, fire_opacity_factor, mass_extinct, gpu_vol_factor, nongpu_vol_factor);
+    global_scase.temp_min, global_temp_cb_min, global_temp_cb_max, fire_opacity_factor, mass_extinct, gpu_vol_factor, nongpu_vol_factor);
 
   fprintf(fileout, "\n *** ZONE FIRE PARAMETRES ***\n\n");
 

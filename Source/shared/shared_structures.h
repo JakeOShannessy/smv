@@ -1921,6 +1921,12 @@ typedef struct {
   int hrrpuvcut_set;
   float hrrpuvcut;
 
+  float hrrpuv_min;
+  float hrrpuv_max;
+
+  float temp_min;
+  float temp_max;
+
   // TODO: the below probably don't really belong here
   filelist_collection filelist_coll;
   float xbar;
