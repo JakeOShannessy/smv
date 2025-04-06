@@ -8,6 +8,7 @@ jobs:
     # Set the name of this build, variable depending on the OS and whether it
     # includes the lua engine
     name: build ${{ matrix.os }} - lua=${{ matrix.lua }} - gcc
+    environment: cov-env
     env:
       COVERAGE: on
     strategy:
