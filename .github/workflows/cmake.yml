@@ -83,6 +83,8 @@ jobs:
       - name: Codecov
         if: runner.os == 'Linux'
         uses: codecov/codecov-action@v3.1.0
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       # Set a suffix based on whether lua is included
       - name: Set exec suffix
         if: matrix.lua == 'on'
