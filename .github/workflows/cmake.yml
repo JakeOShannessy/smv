@@ -72,6 +72,8 @@ jobs:
         run: |
           xvfb-run ctest --test-dir cbuild -j10 --output-on-failure -V
       - name: run coverage
+        if: runner.os == 'Linux'
+        shell: bash
         run: |
           ctest -T Coverage --test-dir cbuild -j10 --output-on-failure -V
           lcov --capture --directory cbuild --output-file coverage.info
