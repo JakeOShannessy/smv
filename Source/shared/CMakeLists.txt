@@ -64,3 +64,8 @@ if (SMV_ROOT_OVERRIDE)
 endif()
 target_link_libraries(libsmv PRIVATE OpenGL::GL OpenGL::GLU)
 target_compile_definitions(libsmv PRIVATE ASLIB)
+
+if (COVERAGE)
+    target_compile_options(libsmv PUBLIC -coverage -O0 -fprofile-arcs -ftest-coverage)
+    target_link_options(libsmv PUBLIC -lgcov --coverage)
+endif()

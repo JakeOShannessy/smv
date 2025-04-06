@@ -33,12 +33,6 @@ if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_slice m)
 endif()
 
-if (COVERAGE)
-    target_compile_options(parse_simple_slice PRIVATE -coverage -O0 -fprofile-arcs -ftest-coverage)
-    target_link_options(parse_simple_slice PRIVATE -lgcov --coverage)
-endif()
-
-
 # parse_simple_bndf
 add_executable(parse_simple_bndf parse_simple_bndf.c)
 target_sources(parse_simple_bndf PRIVATE
@@ -55,11 +49,6 @@ if (WIN32)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_bndf m)
-endif()
-
-if (COVERAGE)
-    target_compile_options(parse_simple_bndf PRIVATE -coverage -O0 -fprofile-arcs -ftest-coverage)
-    target_link_options(parse_simple_bndf PRIVATE -lgcov --coverage)
 endif()
 
 # parse_simple_part
@@ -80,11 +69,6 @@ if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_part m)
 endif()
 
-if (COVERAGE)
-    target_compile_options(parse_simple_part PRIVATE -coverage -O0 -fprofile-arcs -ftest-coverage)
-    target_link_options(parse_simple_part PRIVATE -lgcov --coverage)
-endif()
-
 # parse_simple_pl3d
 add_executable(parse_simple_pl3d parse_simple_pl3d.c)
 target_sources(parse_simple_pl3d PRIVATE
@@ -101,11 +85,6 @@ if (WIN32)
 endif()
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(parse_simple_pl3d m)
-endif()
-
-if (COVERAGE)
-    target_compile_options(parse_simple_pl3d PRIVATE -coverage -O0 -fprofile-arcs -ftest-coverage)
-    target_link_options(parse_simple_pl3d PRIVATE -lgcov --coverage)
 endif()
 
 # parse_cad
