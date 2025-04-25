@@ -106,7 +106,7 @@ FILE_SIZE ReadAllCSVFiles(int flag){
     csvfiledata *csvfi;
 
     csvfi = global_scase.csvcoll.csvfileinfo + i;
-    ReadCSVFile(csvfi, UNLOAD);
+    ReadCSVFile(&global_scase, csvfi, UNLOAD);
   }
   if(flag == UNLOAD)return 0;
   for(i = 0; i < global_scase.csvcoll.ncsvfileinfo; i++){
@@ -117,7 +117,7 @@ FILE_SIZE ReadAllCSVFiles(int flag){
       continue;
     }
     csvfi->defined = CSV_DEFINING;
-    file_size += ReadCSVFile(csvfi, flag);
+    file_size += ReadCSVFile(&global_scase, csvfi, flag);
     plot2d_max_columns = MAX(plot2d_max_columns, csvfi->ncsvinfo);
     csvfi->defined = CSV_DEFINED;
     UpdateCSVFileTypes();
@@ -2527,6 +2527,27 @@ int ReadSMV_Configure(){
 
   PRINTF("  wrapping up\n");
 
+ // set results directory
+  if(global_scase.npartinfo > 0 && global_scase.results_dir == NULL){
+    global_scase.results_dir = SetResultsDir(global_scase.partinfo[0].reg_file);
+  }
+  if(global_scase.npatchinfo > 0 && global_scase.results_dir == NULL){
+    global_scase.results_dir = SetResultsDir(global_scase.patchinfo[0].reg_file);
+  }
+  if(global_scase.smoke3dcoll.nsmoke3dinfo > 0 && global_scase.results_dir == NULL){
+    global_scase.results_dir = SetResultsDir(global_scase.smoke3dcoll.smoke3dinfo[0].reg_file);
+  }
+  if(global_scase.slicecoll.nsliceinfo > 0 && global_scase.results_dir == NULL){
+    global_scase.results_dir = SetResultsDir(global_scase.slicecoll.sliceinfo[0].reg_file);
+  }
+  if(global_scase.nisoinfo > 0 && global_scase.results_dir == NULL){
+    global_scase.results_dir = SetResultsDir(global_scase.isoinfo[0].reg_file);
+  }
+  if(global_scase.nplot3dinfo > 0 && global_scase.results_dir == NULL){
+    global_scase.results_dir = SetResultsDir(global_scase.plot3dinfo[0].reg_file);
+  }
+
+
   GetSkyBoxTextures();
   GetSkyImageTexture();
   InitTextures(use_graphics);
@@ -2570,7 +2591,6 @@ int ReadSMV_Configure(){
       break;
     }
   }
-  if(global_scase.ntotal_blockages > 250000)hide_scene = 1;
 
   if(checkfiles_threads != NULL){
     checkfiles_threads = THREADinit(&n_checkfiles_threads, &use_checkfiles_threads, CheckFiles);
@@ -2901,6 +2921,15 @@ int ReadSMV_Configure(){
   GetFaceInfo();
   GetBoxGeomCorners();
   GetBoxSkyCorners();
+
+  //*** hide_scene when moving objects if there are are lot of OBSTs or geometry triangles
+  if(global_scase.ntotal_blockages > 250000 || GetNCGeomTriangles() > 250000)hide_scene = 1;
+
+  if(global_scase.meshescoll.nmeshes > 100){
+    blocklocation   = BLOCKlocation_exact;
+    glui_use_cfaces = 0;
+  }
+
   PRINT_TIMER(timer_readsmv, "update trianglesfaces");
 
   if(global_scase.ngeominfo>0&&global_scase.auto_terrain==1){
@@ -6223,13 +6252,14 @@ int ReadIni2(const char *inifile, int localfile){
         sscanf(buffer, "%i", &ncolorbarini);
 
         ncolorbarini = MAX(ncolorbarini, 0);
-        InitDefaultColorbars(&colorbars, ncolorbarini, show_extreme_mindata,
+        if(colorbars.ndefaultcolorbars==0){
+          InitDefaultColorbars(&colorbars, ncolorbarini, show_extreme_mindata,
                              rgb_below_min, show_extreme_maxdata,
                              rgb_above_max, &colorbarcopyinfo);
-        UpdateColorbarDialogs();
-        UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
-        update_colorbar_dialog = 0;
-
+          UpdateColorbarDialogs();
+          UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
+          update_colorbar_dialog = 0;
+        }
         colorbars.ncolorbars = colorbars.ndefaultcolorbars + ncolorbarini;
         for(n = colorbars.ndefaultcolorbars; n<colorbars.ncolorbars; n++){
           char *cb_buffptr;
@@ -7034,7 +7064,7 @@ int ReadIni(char *inifile){
   if(use_graphics==1){
     if(showall_textures==1)TextureShowMenu(MENU_TEXTURE_SHOWALL);
   }
-  if(colorbars.ncolorbars<=colorbars.ndefaultcolorbars){
+  if(colorbars.ndefaultcolorbars==0){
     InitDefaultColorbars(&colorbars, 0, show_extreme_mindata, rgb_below_min,
                          show_extreme_maxdata, rgb_above_max, &colorbarcopyinfo);
     UpdateColorbarDialogs();

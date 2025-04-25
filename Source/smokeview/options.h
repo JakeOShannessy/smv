@@ -11,6 +11,7 @@
 #define pp_GPU              // support the GPU
 #define pp_THREAD           // turn on multi-threading
 //#define pp_FIRE_HIST        // option to output histogram of 3d fire data
+//#define pp_SMOKE3D          // tentative correction to 3D smoke using temperature
 
 #ifdef pp_FRAME          // turn on each frame type if pp_FRAME is set
 #define pp_BOUNDFRAME    // turn on frame code for boundary files
@@ -40,7 +41,7 @@
 #define pp_DIALOG_SHORTCUTS // dialog shortcuts
 #endif
 
-//*** options: Mac
+//*** options: OSX
 
 #ifdef pp_OSX
 #define pp_SMOKE3D_FORCE        // always have at least one smoke3d entry to prevent crash when unloading slices

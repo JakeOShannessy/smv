@@ -602,7 +602,7 @@ int RenderFrameLua(int view_mode, const char *basename) {
 }
 
 void LoadCsv(csvfiledata *csventry) {
-  ReadCSVFile(csventry, LOAD);
+  ReadCSVFile(&global_scase, csventry, LOAD);
   csventry->loaded = 1;
 }
 

@@ -889,6 +889,64 @@ FILE *fopen_2dir_scratch(char *file, char *mode) {
   return f;
 }
 
+/* ------------------ fopen_3dir ------------------------ */
+
+FILE *fopen_3dir(char *file, char *mode, char *dir1, char *dir2, char *dir3){
+  FILE *stream;
+  char buffer[4096];
+  // try opening file in the current directory, dir1 then in dir2 then in dir3
+  // (currently results direcrory defined by fds, current directory, scratch directory)
+
+  if(file == NULL)return NULL;
+  if(dir1 != NULL){
+    strcpy(buffer, dir1);
+    strcat(buffer, dirseparator);
+    strcat(buffer, file);
+#ifdef WIN32
+    stream = _fsopen(buffer, mode, _SH_DENYNO);
+#else
+    stream = fopen(buffer, mode);
+#endif
+    if(stream!=NULL)return stream;
+  }
+  if(dir2 != NULL){
+    strcpy(buffer, dir2);
+    strcat(buffer, dirseparator);
+    strcat(buffer, file);
+#ifdef WIN32
+    stream = _fsopen(buffer, mode, _SH_DENYNO);
+#else
+    stream = fopen(buffer, mode);
+#endif
+  }
+  if(dir3 != NULL){
+    strcpy(buffer, dir3);
+    strcat(buffer, dirseparator);
+    strcat(buffer, file);
+#ifdef WIN32
+    stream = _fsopen(buffer, mode, _SH_DENYNO);
+#else
+    stream = fopen(buffer, mode);
+#endif
+  }
+  return stream;
+}
+
+/* ------------------ SetResultsDir ------------------------ */
+
+char *SetResultsDir(char *file){
+  char *dirsep, filecopy[1024], *results_dir;
+
+  if(file==NULL)return NULL;
+  strcpy(filecopy, file);
+  dirsep = strrchr(filecopy, '/');
+  if(dirsep == NULL)return NULL;
+  dirsep[0] = 0;
+  NewMemory((void **)&results_dir,strlen(filecopy)+1);
+  strcpy(results_dir, filecopy);
+  return results_dir;
+}
+
 /* ------------------ fopen_2dir ------------------------ */
 
 FILE *fopen_2dir(char *file, char *mode, char *scratch_dir){

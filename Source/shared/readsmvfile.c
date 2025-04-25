@@ -116,7 +116,7 @@ void GetHoc(smv_case *scase, float *hoc, char *name){
   }
   strcpy(outfile, scase->fdsprefix);
   strcat(outfile, ".out");
-  stream = fopen(outfile, "r");
+  stream = fopen_3dir(outfile, "r", scase->results_dir, ".", NULL);
   if(stream==NULL){
     *hoc = 0.0;
     strcpy(name, "");
@@ -205,7 +205,7 @@ int IsDimensionless(char *unit){
 
 /* ------------------ ReadCSVFile ------------------------ */
 
-FILE_SIZE ReadCSVFile(csvfiledata *csvfi, int flag){
+FILE_SIZE ReadCSVFile(smv_case *scase, csvfiledata *csvfi, int flag){
   FILE *stream;
   int nrows, ncols;
   int nunits, nlabels;
@@ -236,7 +236,10 @@ FILE_SIZE ReadCSVFile(csvfiledata *csvfi, int flag){
     return 0;
   }
 
-  stream = fopen(csvfi->file, "r");
+  char *results_dir=NULL;
+
+  if(scase != NULL)results_dir = scase->results_dir;
+  stream = fopen_3dir(csvfi->file, "r", results_dir, ".", NULL);
   if(stream == NULL){
     csvfi->defined = CSV_UNDEFINED;
     return 0;
@@ -517,7 +520,7 @@ void ReadHRR(smv_case *scase, int flag){
   scase->qradi_col = -1;
   if(flag==UNLOAD)return;
 
-  stream = fopen(scase->paths.hrr_csv_filename, "r");
+  stream = fopen_3dir(scase->paths.hrr_csv_filename, "r", scase->results_dir, ".", NULL);
   if(stream==NULL)return;
 
   len_buffer = GetRowCols(stream, &nrows, &ncols);
@@ -2600,7 +2603,7 @@ void ReadDeviceHeader(smv_case *scase, char *file, devicedata *devices, int ndev
   int buffer_len = BUFFER_LEN;
 
   if(file == NULL)return;
-  stream = fopen(file, "r");
+  stream = fopen_3dir(file, "r", scase->results_dir, ".", NULL);
   if(stream == NULL)return;
 
   devicecopy = devices;
@@ -2718,10 +2721,10 @@ void UpdateSortedSurfIdList(surf_collection *surfcoll){
 }
 
 
-/* ------------------ ParseDatabase ------------------------ */
-// TODO: this needs to be renamed as it never actually parses a database
-void ParseDatabase(smv_case *scase, char *file){
-  FILE *stream;
+/* ------------------ ParseSurfs ------------------------ */
+
+void ParseSurfs(smv_case *scase, char *file){
+  FILE *stream=NULL;
   char buffer[1000], *buffer2 = NULL, *buffer3, *slashptr;
   size_t lenbuffer, lenbuffer2;
   size_t sizebuffer2;
@@ -2742,8 +2745,8 @@ void ParseDatabase(smv_case *scase, char *file){
   FREEMEMORY(scase->surfcoll.surfids);
   scase->surfcoll.nsurfids = 0;
 
-
-  if(file==NULL||strlen(file)==0||(stream = fopen(file, "r"))==NULL){
+  if(file != NULL && strlen(file) != 0)stream = fopen_3dir(file, "r", scase->results_dir, ".", NULL);
+  if(file==NULL||strlen(file)==0||stream==NULL){
     NewMemory((void **)&scase->surfcoll.surfids, (scase->surfcoll.nsurfids+1)*sizeof(surfid));
     surf_id = NULL;
     NewMemory((void **)&surf_id, 6);
@@ -2753,7 +2756,6 @@ void ParseDatabase(smv_case *scase, char *file){
     scase->surfcoll.surfids[0].show = 1;
     scase->surfcoll.nsurfids = 1;
   }
-
   else{
     sizebuffer2 = 1001;
     NewMemory((void **)&buffer2, sizebuffer2);
@@ -3012,6 +3014,8 @@ void MakeFileLists(smv_case *scase){
   strcpy(filter_casedir, "");
   scase->filelist_coll.nfilelist_casedir = GetFileListSize(".", filter_casedir, FILE_MODE);
   MakeFileList(".", filter_casedir, scase->filelist_coll.nfilelist_casedir, YES, &scase->filelist_coll.filelist_casedir, FILE_MODE);
+
+  scase->results_dir = NULL;
 }
 
 #define RETURN_TWO        2
@@ -3786,7 +3790,14 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
     else{
       smoke3di->file = smoke3di->reg_file;
     }
-
+#ifdef pp_SMOKE3D_FORCE
+    if(strcmp(smoke3di->file, "dummy.xyz") == 0){
+      smoke3di->dummy = 1;
+    }
+    else{
+      smoke3di->dummy = 0;
+    }
+#endif
     char buffer_s3dd[256], *ext;
 
     strcpy(buffer_s3dd, bufferptr);
@@ -4844,7 +4855,32 @@ int ReadSMV_Init(smv_case *scase){
   return 0;
 }
 
+#ifdef pp_SMOKE3D_FORCE
+/* ------------------ HaveSmoke3D ------------------------ */
+
+int HaveSmoke3D(bufferstreamdata *stream){
+  char buffer[256];
+
+  for(;;){
+    if(FEOF(stream) != 0){
+      BREAK;
+    }
+    if(FGETS(buffer, 255, stream) == NULL){
+      BREAK;
+    }
+    TrimBack(buffer);
+    if(strncmp(buffer, " ", 1) == 0 || buffer[0] == 0)continue;
+    if(MatchSMV(buffer,"SMOKE3D") == 1 || MatchSMV(buffer,"SMOKF3D") == 1 || MatchSMV(buffer, "SMOKG3D") == 1){
+      rewind_buffer(stream->fileinfo);
+      return 1;
+      }
+  }
+  rewind_buffer(stream->fileinfo);
+  return 0;
+}
+#endif
 /* ------------------ ReadSMV_Parse ------------------------ */
+
 /// @brief Parse an SMV file into global variables. This should only be called
 /// after ReadSMV_Init to ensure that the appropriate variables are set.
 /// @param stream the smv file stream
@@ -6934,7 +6970,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
   START_TIMER(scase->pass3_time);
 
   CheckMemory;
-  ParseDatabase(scase, NULL);
+  ParseSurfs(scase, NULL);
 
   if(setGRID==0){
     meshdata *meshi;
