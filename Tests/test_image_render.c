@@ -185,6 +185,7 @@ int RenderToFile(const char *filepath, int rendertype, int woffset, int width,
 
   if(gd_image == NULL) {
     fprintf(stderr, "*** Error: unable to create image");
+    fclose(file);
     return 1;
   }
 
@@ -271,7 +272,7 @@ int RenderToFile(const char *filepath, int rendertype, int woffset, int width,
 //   return 0;
 // }
 
-gdImagePtr loadImage(const char *name) {
+gdImagePtr LoadImageJpeg(const char *name) {
   FILE *fp = fopen(name, "rb");
   if(!fp) {
     fprintf(stderr, "Can't open jpeg file: %s\n", name);
@@ -282,7 +283,7 @@ gdImagePtr loadImage(const char *name) {
   return im;
 }
 
-int savePngImage(gdImagePtr im, const char *name) {
+int SavePngImage(gdImagePtr im, const char *name) {
   FILE *fp = fopen(name, "wb");
   if(!fp) {
     fprintf(stderr, "Can't save png image fromtiff.png\n");
@@ -300,7 +301,7 @@ int main(int argc, char **arg) {
 
   char *file_in = arg[1];
   angle = strtod("30", 0);
-  im = loadImage(file_in);
+  im = LoadImageJpeg(file_in);
 
   if(!im) {
     fprintf(stderr, "Can't load PNG file <%s>", file_in);
@@ -335,7 +336,7 @@ int main(int argc, char **arg) {
   gdImageCopyRotated(im2, im, new_width / 2, new_height / 2, 0, 0,
                      gdImageSX(im), gdImageSY(im), angle);
   gdImageSaveAlpha(im2, 1);
-  if(!savePngImage(im2, "rotated.png")) {
+  if(!SavePngImage(im2, "rotated.png")) {
     fprintf(stderr, "Can't save PNG file rotated.png");
     gdImageDestroy(im);
     gdImageDestroy(im2);
