@@ -649,20 +649,6 @@ char *ProcessCommandLine(CommandlineArgs *args){
       use_iso_threads = 0;
       runhtmlscript = 1;
     }
-#ifdef pp_LUA
-    if(args->runluascript){
-      from_commandline = 1;
-      use_iso_threads=0;
-      strcpy(luascript_filename, "");
-      strncpy(luascript_filename, global_scase.fdsprefix, MAX_LUASCRIPT_FILENAME_BUFFER-5);
-      strcat(luascript_filename, ".lua");
-      runluascript = 1;
-    }
-    if(args->killscript){
-      from_commandline = 1;
-      exit_on_script_crash = 1;
-    }
-#endif
     if(args->scriptrenderdir != NULL){
       int nrenderdir = strlen(args->scriptrenderdir);
       if(nrenderdir>0){
@@ -706,7 +692,7 @@ char *ProcessCommandLine(CommandlineArgs *args){
           strcpy(scriptbuffer, args->htmlscript);
         }
         else{
-          fprintf(stderr, "*** Error: luascript filename exceeds maximum length of %d\n", MAX_SCRIPT_FILENAME_BUFFER-1);
+          fprintf(stderr, "*** Error: htmlscript filename exceeds maximum length of %d\n", MAX_SCRIPT_FILENAME_BUFFER-1);
           SMV_EXIT(1);
         }
       }
@@ -825,9 +811,6 @@ int main(int argc, char **argv){
   x[0] = 1.0;
   printf("after accessing null variable: %f\n", x[0]);
 */
-#ifdef pp_OPEN_TEST
-  InitOpenTest();
-#endif
   SetStdOut(stdout);
   initMALLOC();
   InitRandAB(1000000);

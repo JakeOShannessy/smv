@@ -13,7 +13,7 @@ include(FetchContent)
 
 # Selected the multithreaded runtime when using MSVC
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-project(smv LANGUAGES C CXX VERSION 1.18.0)
+project(smv LANGUAGES C CXX VERSION 1.19.0)
 # Use C99
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -35,7 +35,7 @@ endif()
 # Pass a flag to to the source code. There's no great need for this but allows
 # us to have conditional code based on the build method.
 # add_definitions(-Dpp_CMAKE)
-add_compile_definitions(pp_GITHASH="${PROJECT_VERSION}+sc2.lua")
+add_compile_definitions(pp_GITHASH="${PROJECT_VERSION}+sc2")
 
 
 include(InstallRequiredSystemLibraries)
