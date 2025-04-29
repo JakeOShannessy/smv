@@ -29,7 +29,7 @@ int hash_option;
 int show_version;
 char append_string[1024];
 
-void InitVals(hvacdatacollection *hvaccoll, const char *file) {
+void init_vals(hvacdatacollection *hvaccoll, const char *file) {
   NewMemory((void **)&(hvaccoll->hvacductvalsinfo), sizeof(hvacvalsdata));
   hvaccoll->hvacductvalsinfo->times = NULL;
   hvaccoll->hvacductvalsinfo->loaded = 0;
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
   initMALLOC();
   fprintf(stderr, "file: %s\n", argv[1]);
   hvacdatacollection hvaccoll = {0};
-  InitVals(&hvaccoll, argv[1]);
+  init_vals(&hvaccoll, argv[1]);
 
   FILE_SIZE file_size;
   int ret = ReadHVACData0(&hvaccoll, 0, &file_size);

@@ -12,10 +12,7 @@
 #include "glui_bounds.h"
 #include "IOvolsmoke.h"
 #include "infoheader.h"
-#include "readsmoke.h"
 #include "colorbars.h"
-#include "readgeom.h"
-#include "readobject.h"
 #include "readtour.h"
 #include "readsmoke.h"
 

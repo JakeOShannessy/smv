@@ -20,6 +20,7 @@ EXTERNCPP int IsDupTexture(smv_case *scase, texturedata *texti);
 EXTERNCPP int IsTerrainTexture(smv_case *scase, texturedata *texti);
 EXTERNCPP surfdata *GetSurface(smv_case *scase, const char *label);
 EXTERNCPP int ParseCHIDProcess(smv_case *scase, bufferstreamdata *stream, int option);
+EXTERNCPP float *GetColorPtr(smv_case *scase, float *color);
 EXTERNCPP void GetElevAz(float *xyznorm, float *dtheta, float *rotate_axis, float *dpsi);
 EXTERNCPP void ReadSMVOrig(smv_case *scase);
 EXTERNCPP void ReadSMVDynamic(smv_case *scase, char *file);

@@ -394,7 +394,5 @@ void UpdateDeviceTextures(object_collection *objectscoll, int ndeviceinfo,
                           int **device_texture_list_indexptr,
                           char ***device_texture_listptr);
 EXTERNCPP void UpdatePartClassDepend(partclassdata *partclassi);
-EXTERNCPP char *GetDeviceLabel(char *buffer);
-EXTERNCPP void GetElevAz(float *xyznorm,float *dtheta, float *rotate_axis, float *dpsi);
 
 #endif

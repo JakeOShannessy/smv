@@ -12,12 +12,12 @@
 #include "isobox.h"
 #include "smokeviewdefs.h"
 #include "string_util.h"
+#include "structures.h"
 
 #include "readobject.h"
 #include "readtour.h"
 
 #include "shared_structures.h"
-#include "readgeom.h"
 
 /* ------------------ ReallocTourMemory ------------------------ */
 

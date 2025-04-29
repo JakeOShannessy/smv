@@ -23,7 +23,6 @@
 #include "readsmvfile.h"
 #include "IOobjects.h"
 #include "IOscript.h"
-#include "readsmoke.h"
 #include "viewports.h"
 #include "colorbars.h"
 

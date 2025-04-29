@@ -7,7 +7,7 @@
 #include "IOframe.h"
 #endif
 
-#if defined(_WIN32)
+#if defined(WIN32)
 #include <windows.h>
 #endif
 #include GLU_H

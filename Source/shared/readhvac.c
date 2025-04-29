@@ -18,7 +18,6 @@
 #include "stdio_buffer.h"
 
 #include "readhvac.h"
-#include "shared_structures.h"
 
 /* ------------------ hvacval ------------------------ */
 

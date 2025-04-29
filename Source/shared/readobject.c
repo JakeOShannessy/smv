@@ -136,24 +136,6 @@ sv_object *GetSmvObjectType2(object_collection *objectscoll, char *olabel,
   return default_object;
 }
 
-/* ----------------------- GetTokenLoc ----------------------------- */
-
-int GetTokenLoc(char *var, sv_object_frame *frame) {
-  int i;
-
-  for(i = 0; i < frame->nsymbols; i++) {
-    int ii;
-    tokendata *toki;
-    char *token_var;
-
-    ii = frame->symbols[i];
-    toki = frame->tokens + ii;
-    token_var = toki->tokenlabel + 1;
-    if(STRCMP(var, token_var) == 0) return ii;
-  }
-  return -1;
-}
-
 /* ------------------ ParseSmvObjectString ------------------------ */
 
 void ParseSmvObjectString(object_collection *objectscoll, char *string,

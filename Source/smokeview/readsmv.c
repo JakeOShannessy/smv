@@ -27,23 +27,6 @@
 #include "IOobjects.h"
 #include "IOscript.h"
 
-#include "translate.h"
-#include "file_util.h"
-#include "datadefs.h"
-#include "readimage.h"
-#include "readhvac.h"
-#include "readslice.h"
-#include "readobject.h"
-#include "readsmoke.h"
-#include "readlabel.h"
-#include "readtour.h"
-#include "readgeom.h"
-#include "colorbars.h"
-#include "readcad.h"
-#include "readsmoke.h"
-#include "readcad.h"
-#include "readtour.h"
-
 
 #include "translate.h"
 #include "file_util.h"
@@ -68,14 +51,6 @@
       if((stream==stream1&&stream2==NULL)||stream==stream2)break;\
       stream=stream2;\
       continue
-
-#define RETURN_TWO        2
-#define RETURN_BREAK      3
-#define RETURN_CONTINUE   4
-#define RETURN_PROCEED    5
-
-#define SCAN    0
-#define NO_SCAN 1
 
 #define COLOR_INVISIBLE -2
 
@@ -1492,15 +1467,15 @@ void UpdateMeshCoords(void){
 
     for(i=0;i<ibar+1;i++){
       xplt_orig[i]=xplt[i];
-      xplt[i]=FDS2SMV_X(xplt[i]);
+      xplt[i]=FDS2SMV_X(meshi->xpltd[i]);
     }
     for(j=0;j<jbar+1;j++){
       yplt_orig[j]=yplt[j];
-      yplt[j]=FDS2SMV_Y(yplt[j]);
+      yplt[j]=FDS2SMV_Y(meshi->ypltd[j]);
     }
     for(k=0;k<kbar+1;k++){
       zplt_orig[k]=zplt[k];
-      zplt[k]=FDS2SMV_Z(zplt[k]);
+      zplt[k]=FDS2SMV_Z(meshi->zpltd[k]);
     }
 
     for(nn=0;nn<ibar;nn++){
