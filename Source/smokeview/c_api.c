@@ -580,16 +580,10 @@ void SetClippingMode(int mode) {
   GLUIUpdateClipAll();
 }
 
-void SetSceneclipX(int clipMin, float min, int clipMax, float max) {
-  clipinfo.clip_xmin = clipMin;
-  clipinfo.xmin = min;
-
-  clipinfo.clip_xmax = clipMax;
-  clipinfo.xmax = max;
-  updatefacelists = 1;
-  GLUIUpdateClip();
-  GLUIUpdateClipAll();
-}
+int SetFontsize(int v) {
+  FontMenu(v);
+  return 0;
+} // FONTSIZE
 
 void SetSceneclipXMin(int flag, float value) {
   clipinfo.clip_xmin = flag;
@@ -599,24 +593,9 @@ void SetSceneclipXMin(int flag, float value) {
   GLUIUpdateClipAll();
 }
 
-int SetFontsize(int v) {
-  FontMenu(v);
-  return 0;
-} // FONTSIZE
 void SetSceneclipXMax(int flag, float value) {
   clipinfo.clip_xmax = flag;
   clipinfo.xmax = value;
-  updatefacelists = 1;
-  GLUIUpdateClip();
-  GLUIUpdateClipAll();
-}
-
-void SetSceneclipY(int clipMin, float min, int clipMax, float max) {
-  clipinfo.clip_ymin = clipMin;
-  clipinfo.ymin = min;
-
-  clipinfo.clip_ymax = clipMax;
-  clipinfo.ymax = max;
   updatefacelists = 1;
   GLUIUpdateClip();
   GLUIUpdateClipAll();
@@ -633,17 +612,6 @@ void SetSceneclipYMin(int flag, float value) {
 void SetSceneclipYMax(int flag, float value) {
   clipinfo.clip_ymax = flag;
   clipinfo.ymax = value;
-  updatefacelists = 1;
-  GLUIUpdateClip();
-  GLUIUpdateClipAll();
-}
-
-void SetSceneclipZ(int clipMin, float min, int clipMax, float max) {
-  clipinfo.clip_zmin = clipMin;
-  clipinfo.zmin = min;
-
-  clipinfo.clip_zmax = clipMax;
-  clipinfo.zmax = max;
   updatefacelists = 1;
   GLUIUpdateClip();
   GLUIUpdateClipAll();
@@ -723,16 +691,6 @@ void Setcolorbarflip(int flip) {
 /// @brief Get whether the direction of the colorbar is flipped.
 /// @return
 int Getcolorbarflip() { return colorbar_flip; }
-
-void MoveScene(int xm, int ym);
-int CameraZoomToFit() {
-  float offset = (global_scase.zbar - global_scase.ybar) / 2.0;
-  camera_current->eye[1] += offset * 2;
-  eye_xyz0[1] = camera_current->eye[1];
-  in_external = 0;
-  first_display = 0;
-  return 0;
-}
 
 int CameraSetProjectionType(int pt) {
   camera_current->projection_type = pt;
