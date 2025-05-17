@@ -2000,6 +2000,13 @@ SVEXTERN texturedata SVDECL(*textureinfo,NULL), SVDECL(*terrain_textures,NULL);
 
 SVEXTERN int SVDECL(visSkysphere, 0), SVDECL(visSkybox, 1), SVDECL(visSkySpheretexture, 1);
 SVEXTERN float box_sky_corners[8][3];
+#ifdef INMAIN
+SVEXTERN  int horizon_color[3] = {160, 160, 255}, zenith_color[3] = {32, 32, 255}, ground_color[3]={87,108,67};
+SVEXTERN  int horizon_color_save[3] = {160, 160, 255}, zenith_color_save[3] = {32, 32, 255}, ground_color_save[3]={87,108,67};
+#else
+SVEXTERN  int horizon_color[3], zenith_color[3], ground_color[3];
+SVEXTERN  int horizon_color_save[3], zenith_color_save[3], ground_color_save[3];
+#endif
 
 SVEXTERN float SVDECL(sky_diam, 4.0);
 SVEXTERN int SVDECL(visSkyboxoutline, 0);
@@ -2009,7 +2016,6 @@ SVEXTERN GLuint texture_colorbar_id, texture_slice_colorbar_id, texture_patch_co
 SVEXTERN GLuint volsmoke_colormap_id,slice3d_colormap_id,slicesmoke_colormap_id;
 SVEXTERN int SVDECL(volsmoke_colormap_id_defined,-1);
 SVEXTERN int SVDECL(slice3d_colormap_id_defined,-1);
-SVEXTERN int SVDECL(slicesmoke_colormap_id_defined, -1);
 #ifdef INMAIN
 SVEXTERN float mscale[3]={1.0,1.0,1.0};
 #else

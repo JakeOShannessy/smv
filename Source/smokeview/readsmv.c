@@ -362,7 +362,8 @@ void InitTextures0(void){
 #endif
   glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_volsmokecolormap);
 
-  glGenTextures(1,&slicesmoke_colormap_id);
+  glActiveTexture(GL_TEXTURE2);
+  glGenTextures(1, &slicesmoke_colormap_id);
   glBindTexture(GL_TEXTURE_1D,slicesmoke_colormap_id);
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -372,6 +373,7 @@ void InitTextures0(void){
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 #endif
   glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_slicesmokecolormap_01);
+  glActiveTexture(GL_TEXTURE0);
 
   PRINT_TIMER(texture_timer, "texture setup");
   CheckMemory;
@@ -3319,6 +3321,33 @@ int ReadIni2(const char *inifile, int localfile){
       sscanf(buffer, " %i", &nframe_threads);
     }
 #endif
+    if(MatchINI(buffer, "COLORGROUND") == 1){
+      fgets(buffer, 255, stream);
+      sscanf(buffer, " %i %i %i", 
+        ground_color, ground_color+1, ground_color+2);
+      for(i = 0;i < 3;i++){
+        ground_color[i] = CLAMP(ground_color[i], 0, 255);
+        ground_color_save[i] = ground_color[i];
+      }
+    }
+    if(MatchINI(buffer, "COLORZENITH") == 1){
+      fgets(buffer, 255, stream);
+      sscanf(buffer, " %i %i %i",
+        zenith_color, zenith_color + 1, zenith_color + 2);
+      for(i = 0;i < 3;i++){
+        zenith_color[i] = CLAMP(zenith_color[i], 0, 255);
+        zenith_color_save[i] = zenith_color[i];
+      }
+    }
+    if(MatchINI(buffer, "COLORHORIZON") == 1){
+      fgets(buffer, 255, stream);
+      sscanf(buffer, " %i %i %i",
+        horizon_color, horizon_color + 1, horizon_color + 2);
+      for(i = 0;i < 3;i++){
+        horizon_color[i] = CLAMP(horizon_color[i], 0, 255);
+        horizon_color_save[i] = horizon_color[i];
+      }
+    }
     if(MatchINI(buffer, "LOADMESH") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i %i", &show_intersection_box, &show_intersected_meshes);
@@ -7928,6 +7957,12 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i\n", showpatch_both);
   fprintf(fileout, "CLIP\n");
   fprintf(fileout, " %f %f\n", nearclip, farclip);
+  fprintf(fileout, "COLORGROUND\n");
+  fprintf(fileout, " %i %i %i", ground_color[0], ground_color[1], ground_color[2]);
+  fprintf(fileout, "COLORZENITH\n");
+  fprintf(fileout, " %i %i %i", zenith_color[0], zenith_color[1], zenith_color[2]);
+  fprintf(fileout, "COLORHORIZON\n");
+  fprintf(fileout, " %i %i %i", horizon_color[0], horizon_color[1], horizon_color[2]);
   fprintf(fileout, "CONTOURTYPE\n");
   fprintf(fileout, " %i %i\n", contour_type, colorbar_linewidth);
   fprintf(fileout, "CULLFACES\n");
