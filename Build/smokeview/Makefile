@@ -91,7 +91,7 @@ endif
 
 objwin = $(obj:.o=.obj)
 
-INC += -I $(SOURCE_DIR)/glui_v2_1_beta -I $(SOURCE_DIR)/gd-2.0.15 -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview -I $(SOURCE_DIR)/glew -I $(SOURCE_DIR)/zlib128
+INC += -I $(SOURCE_DIR)/glui_v2_1_beta -I $(SOURCE_DIR)/gd-2.0.15 -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview -I $(SOURCE_DIR)/glew -I $(SOURCE_DIR)/zlib131
 
 # windows include directories
 
@@ -397,8 +397,8 @@ gnu_osx_64_db : CFLAGS   += -D FREEGLUT_STATIC
 else
 gnu_osx_64_db : LFLAGS   += -framework OpenGL -framework GLUT
 endif
-gnu_osx_64_db : CC        = gcc$(GLIBVERS)
-gnu_osx_64_db : CPP       = g++$(GLIBVERS)
+gnu_osx_64_db : CC        = ${COMPILER}
+gnu_osx_64_db : CPP       = ${COMPILER2}
 gnu_osx_64_db : exe       = smokeview_osx_$(SMV_TESTSTRING)64_db$(SMV_PROFILESTRING)
 
 gnu_osx_64_db : $(obj)
@@ -415,8 +415,8 @@ gnu_osx_64 : CFLAGS   += -D FREEGLUT_STATIC
 else
 gnu_osx_64 : LFLAGS   += -framework OpenGL -framework GLUT
 endif
-gnu_osx_64 : CC        = gcc$(GLIBVERS)
-gnu_osx_64 : CPP       = g++$(GLIBVERS)
+gnu_osx_64 : CC        = ${COMPILER}
+gnu_osx_64 : CPP       = ${COMPILER2}
 gnu_osx_64 : exe       = smokeview_osx_$(SMV_TESTSTRING)64$(SMV_PROFILESTRING)
 
 gnu_osx_64 : $(obj)
