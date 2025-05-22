@@ -672,13 +672,13 @@ int ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
       int k;
 
       FSEEK(stream, 4, SEEK_CUR);
-      fread(node_buffer, 4, n_node_vars, stream);
+      if(node_buffer != NULL) fread(node_buffer, 4, n_node_vars, stream);
       FSEEK(stream, 4, SEEK_CUR);
       for(k = 0; k < n_node_vars; k++) {
         hvacvaldata *hk;
 
         hk = hvaccoll->hvacnodevalsinfo->node_vars + k;
-        hk->vals[iframe + j * nframes] = node_buffer[k];
+        if(node_buffer != NULL) hk->vals[iframe + j * nframes] = node_buffer[k];
       }
     }
 
