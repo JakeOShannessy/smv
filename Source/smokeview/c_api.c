@@ -17,6 +17,7 @@
 #include "glui_motion.h"
 #include "glui_smoke.h"
 #include "infoheader.h"
+#include "paths.h"
 #include "readsmvfile.h"
 #include "smokeheaders.h"
 
@@ -212,7 +213,7 @@ char *FormFilename(int view_mode, char *renderfile_name, char *renderfile_dir,
        (view_mode == VIEW_LEFT || view_mode == VIEW_RIGHT)) {
     }
 
-    snprintf(renderfile_name, 1024, "%s%s%s", global_scase.paths.chidfilebase,
+    snprintf(renderfile_name, 1024, "%s%s%s", global_scase.chidfilebase,
              view_suffix, renderfile_ext);
   }
   else {
@@ -272,7 +273,6 @@ void LoadCsv(csvfiledata *csventry) {
   ReadCSVFile(&global_scase, csventry, LOAD);
   csventry->loaded = 1;
 }
-
 
 /// @brief Get the current frame number.
 /// @return Time value in seconds.
@@ -364,7 +364,8 @@ void SetColorbar(size_t value) {
   GLUIUpdateListIsoColorobar();
   UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
   GLUIUpdateColorbarType();
-  if(colorbartype == colorbars.bw_colorbar_index && colorbars.bw_colorbar_index >= 0) {
+  if(colorbartype == colorbars.bw_colorbar_index &&
+     colorbars.bw_colorbar_index >= 0) {
     setbwdata = 1;
   }
   else {
@@ -465,9 +466,11 @@ int Unloadall() {
   if(scriptoutstream != NULL) {
     fprintf(scriptoutstream, "UNLOADALL\n");
   }
-  if(global_scase.paths.hrr_csv_filename != NULL) {
+  char *hrr_csv_filename = CasePathHrrCsv(&global_scase);
+  if(FileExistsCaseDir(&global_scase, hrr_csv_filename) == YES) {
     ReadHRR(&global_scase, UNLOAD);
   }
+  FREEMEMORY(hrr_csv_filename);
   if(nvolrenderinfo > 0) {
     LoadVolsmoke3DMenu(UNLOAD_ALL);
   }
@@ -677,7 +680,6 @@ void Setwindowsize(int width, int height) {
   ResizeWindow(width, height);
   ReshapeCB(width, height);
 }
-
 
 /// @brief Set the firection of the colorbar.
 /// @param flip Boolean. If true, the colorbar runs in the opposite direction
