@@ -317,6 +317,7 @@ void GetSliceParms(const char *slicefilename, int *ip1, int *ip2, int *jp1,
 
     FILE *file = FOPEN(slicefilename, "rb");
     if(file == NULL){
+      fprintf(stderr, " The zone file name, %s does not exist\n", slicefilename);
       *error = 1;
       return;
     }
@@ -353,7 +354,8 @@ void GetSliceParms(const char *slicefilename, int *ip1, int *ip2, int *jp1,
 FILE *openpart(const char *partfilename, int *error){
   *error = 0;
   FILE *file = FOPEN(partfilename, "rb");
-  if(file == NULL){
+  if(file == NULL) {
+    fprintf(stderr, " Could not open %s\n", partfilename);
     *error = 1;
   }
   return file;
@@ -369,6 +371,7 @@ void openslice(const char *slicefilename, FILE **file, int *is1, int *is2,
   *error = 0;
   *file = FOPEN(slicefilename, "rb");
   if(*file == NULL){
+    fprintf(stderr, " Could not open %s\n", slicefilename);
     *error = 1;
     return;
   }
@@ -752,7 +755,10 @@ void writeslicedata(const char *slicefilename, int is1, int is2, int js1,
   int nxsp, nysp, nzsp;
 
   FILE *file = FOPEN(slicefilename, "wb");
-
+  if(file == NULL){
+    fprintf(stderr, " The slice file name, %s does not exist\n", slicefilename);
+    return;
+  }
   strncpy(longlbl, " ", 30);
   strncpy(shortlbl, " ", 30);
   strncpy(unitlbl, " ", 30);
@@ -832,7 +838,11 @@ void outsliceheader(const char *slicefilename, FILE **file, int ip1, int ip2,
   char shortlbl[31] = {0};
   char unitlbl[31] = {0};
   *file = FOPEN(slicefilename, "wb");
-
+  if(*file == NULL) {
+    fprintf(stderr, " Could not open %s\n", slicefilename);
+    *error = 1;
+    return;
+  }
   strncpy(longlbl, "long                          ", 31);
   strncpy(shortlbl, "short                         ", 31);
   strncpy(unitlbl, "unit                          ", 31);
@@ -875,7 +885,11 @@ void outboundaryheader(const char *boundaryfilename, FILE **file, int npatches,
 
   *error = 0;
   *file = FOPEN(boundaryfilename, "wb");
-
+  if(*file == NULL) {
+    fprintf(stderr, " Could not open %s\n", boundaryfilename);
+    *error = 1;
+    return;
+  }
   strncpy(blank, "                              ", 31);
   *error = fortwrite(blank, 30, 1, *file);
   *error = fortwrite(blank, 30, 1, *file);
@@ -1034,7 +1048,11 @@ void getplot3dq(const char *qfilename, int nx, int ny, int nz, float *qq, float 
 void plot3dout(const char *outfile, int nx, int ny, int nz, float *qout,
                int *error){
   FILE *file = FOPEN(outfile, "wb");
-
+  if(file == NULL) {
+    fprintf(stderr, " Could not open %s\n", outfile);
+    *error = 1;
+    return;
+  }
   uint32_t nxyz[3];
   nxyz[0] = nx;
   nxyz[1] = ny;
