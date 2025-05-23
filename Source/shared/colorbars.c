@@ -491,6 +491,7 @@ void RemapColorbar(colorbardata *cbi, int show_extreme_mindata,
 
 int ReadCSVColorbar(colorbardata *colorbar, const char *filepath,
                      const char *colorbar_type, int type){
+  int return_code = 0;
   int n = 0;
   char buffer[255];
   int have_name = 0;
@@ -523,12 +524,24 @@ int ReadCSVColorbar(colorbardata *colorbar, const char *filepath,
   rewind(stream);
   if(have_name == 1){
     fgets(buffer, 255, stream);
+    if(ferror(stream) || feof(stream)) {
+      perror("Error reading CSV colorbar");
+      return_code = 1;
+      goto end;
+    }
     TrimBack(buffer);
   }
   // Count the lines in the file TODO: rather than read the file twice (to count
   // lines), just reallocate memory when needed.
   for(;;){
-    if(fgets(buffer, 255, stream) == NULL) break;
+    if(fgets(buffer, 255, stream) == NULL) {
+      if(feof(stream))break;
+      if(ferror(stream)) {
+        perror("Error reading CSV colorbar");
+        return_code = 1;
+        goto end;
+      }
+    }
     n++;
   }
   rewind(stream);
@@ -540,12 +553,28 @@ int ReadCSVColorbar(colorbardata *colorbar, const char *filepath,
 
   if(have_name == 1){
     fgets(buffer, 255, stream);
+    if(feof(stream)) {
+      return_code = 1;
+      goto end;
+    };
+    if(ferror(stream)) {
+      perror("Error reading CSV colorbar");
+      return_code = 1;
+      goto end;
+    }
     TrimBack(buffer);
   }
   for(int i = 0; i < n; i++){
     char *crgb;
 
-    if(fgets(buffer, 255, stream) == NULL) break;
+    if(fgets(buffer, 255, stream) == NULL) {
+      if(feof(stream)) break;
+      if(ferror(stream)) {
+        perror("Error reading CSV colorbar");
+        return_code = 1;
+        goto end;
+      }
+    }
     TrimBack(buffer);
     crgb = strtok(buffer, ",");
     sscanf(crgb, "%i", rgbscopy);
@@ -562,8 +591,9 @@ int ReadCSVColorbar(colorbardata *colorbar, const char *filepath,
     rgbscopy += 3;
   }
   colorbar->nnodes = n;
+end:
   fclose(stream);
-  return 0;
+  return return_code;
 }
 
 /* ------------------ CreateColorbar ------------------------ */
