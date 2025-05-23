@@ -19,9 +19,9 @@
 
 #include "readhvac.h"
 
-/* ------------------ hvacval ------------------------ */
+/* ------------------ Hvacval ------------------------ */
 
-static inline int hvacval(hvacdatacollection *hvaccoll, int itime, int iduct,
+static inline int Hvacval(hvacdatacollection *hvaccoll, int itime, int iduct,
                           int icell) {
   return (itime)*hvaccoll->hvac_maxcells * hvaccoll->hvac_n_ducts +
          (iduct)*hvaccoll->hvac_maxcells + (icell);
@@ -565,13 +565,14 @@ void SetHVACInfo(hvacdatacollection *hvaccoll) {
 
 int ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
                   FILE_SIZE *file_size) {
+  int return_code = 0;
   FILE *stream = NULL;
   float *node_buffer = NULL, *duct_buffer = NULL, *ducttimes, *nodetimes;
   int max_node_buffer = 0, max_duct_buffer = 0;
   int parms[4], n_nodes, n_node_vars, n_ducts, n_duct_vars;
   int frame_size, header_size, nframes;
   int i, iframe;
-  int *duct_ncells;
+  int *duct_ncells = NULL;
 
   if(hvaccoll->hvacductvalsinfo == NULL) return 1;
   if(hvaccoll->hvacnodevalsinfo == NULL) return 1;
@@ -610,6 +611,11 @@ int ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
   frame_size = 4 + 4 + 4;             // time
   frame_size += n_nodes * (4 + 4 * n_node_vars + 4); // node data
   frame_size += n_ducts * (4 + 4 * n_duct_vars + 4); // duct data
+  if (frame_size <= 0) {
+    fprintf(stderr, "invalid hvac frame size\n");
+    return_code = 1;
+    goto end;
+  }
   *file_size = GetFileSizeSMV(hvaccoll->hvacductvalsinfo->file);
   nframes = (*file_size - header_size) / frame_size;
 
@@ -704,15 +710,12 @@ int ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
             hvacvaldata *hk;
 
             hk = hvaccoll->hvacductvalsinfo->duct_vars + ivar;
-            hk->vals[hvacval(hvaccoll, iframe, iduct, icell)] = duct_buffer[ivar];
+            hk->vals[Hvacval(hvaccoll, iframe, iduct, icell)] = duct_buffer[ivar];
           }
         }
       }
     }
   }
-  fclose(stream);
-  FREEMEMORY(duct_buffer);
-  FREEMEMORY(node_buffer);
 
   for(i = 0; i < n_node_vars; i++) {
     hvacvaldata *hi;
@@ -746,15 +749,19 @@ int ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
         for(iframe2 = 0; iframe2 < nframes; iframe2++) {
           int index;
 
-          index = hvacval(hvaccoll, iframe2, iduct, icell);
+          index = Hvacval(hvaccoll, iframe2, iduct, icell);
           hi->valmin = MIN(hi->vals[index], hi->valmin);
           hi->valmax = MAX(hi->vals[index], hi->valmax);
         }
       }
     }
   }
+end:
+  fclose(stream);
+  FREEMEMORY(duct_buffer);
+  FREEMEMORY(node_buffer);
   FREEMEMORY(duct_ncells);
-  return 0;
+  return return_code;
 }
 
 /* ------------------ CompareLabel ------------------------ */
