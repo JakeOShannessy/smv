@@ -3006,12 +3006,6 @@ void MakeFileLists(smv_case *scase){
 #define RETURN_CONTINUE   4
 #define RETURN_PROCEED    5
 
-/* ------------------ ParseISOFCount ------------------------ */
-
-void ParseISOFCount(smv_case *scase){
-  if(parse_opts.setup_only == 1 || parse_opts.smoke3d_only == 1)return;
-  scase->nisoinfo++;
-}
 
 /* ------------------ ParseISOFProcess ------------------------ */
 
@@ -3193,12 +3187,6 @@ int ParseCHIDProcess(smv_case *scase, bufferstreamdata *stream, int option){
   return RETURN_CONTINUE;
 }
 
-/* ------------------ ParsePRTCount ------------------------ */
-
-void ParsePRT5Count(smv_case *scase){
-  if(parse_opts.setup_only==1||parse_opts.smoke3d_only==1)return;
-  scase->npartinfo++;
-}
 
 /* ------------------ ParsePRT5Process ------------------------ */
 
@@ -3355,14 +3343,6 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
   else{
     scase->npartinfo--;
   }
-  return RETURN_CONTINUE;
-}
-
-/* ------------------ ParseBNDFCount ------------------------ */
-
-int ParseBNDFCount(smv_case *scase){
-  if(parse_opts.setup_only==1||parse_opts.smoke3d_only==1)return RETURN_CONTINUE;
-  scase->npatchinfo++;
   return RETURN_CONTINUE;
 }
 
@@ -3628,13 +3608,6 @@ int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
     }
   }
   return RETURN_CONTINUE;
-}
-
-/* ------------------ ParseSMOKE3DCount ------------------------ */
-
-void ParseSMOKE3DCount(smv_case *scase){
-  if(parse_opts.setup_only==1)return;
-  scase->smoke3dcoll.nsmoke3dinfo++;
 }
 
 /* ------------------ ParseSMOKE3DProcess ------------------------ */
