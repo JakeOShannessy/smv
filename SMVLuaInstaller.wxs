@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<?define ProductVersion = "1.20.0"?>
+<?define ProductVersion = "1.20.3"?>
 <?define ProductUpgradeCode = "1940d8a1-c842-442f-bf5d-00a570219bdb"?>
 
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
@@ -53,12 +53,18 @@
                         <Directory Id='BINDIR' Name='bin'>
                             <Component Id='SMVQComponent'
                                 Guid='c84dc251-0843-4520-95da-1aa889ebd874' Win64="yes">
+                                <Environment Id="SMVQ_PATH" Name="SMVQ_PATH"
+                                    Value="[BINDIR]\smvq.exe"
+                                    Permanent="no" Part="last" Action="set" System="no" />
                                 <File Id='SMVQEXE' Name='smvq.exe'
                                     Source='dist/smvq.exe' KeyPath='yes'>
                                 </File>
                             </Component>
                             <Component Id='SMVLuaComponent'
                                 Guid='767754dc-8fe5-4cbf-920e-6051e321312f' Win64="yes">
+                                <Environment Id="SMOKEVIEW_PATH" Name="SMOKEVIEW_PATH"
+                                    Value="[BINDIR]\smvlua.exe"
+                                    Permanent="no" Part="last" Action="set" System="no" />
                                 <File Id='SMVLuaEXE' Name='smvlua.exe'
                                     Source='dist/smokeview.exe' KeyPath='yes'>
                                 </File>
