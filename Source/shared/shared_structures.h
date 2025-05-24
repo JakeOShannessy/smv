@@ -721,6 +721,7 @@ typedef struct _circdata {
 typedef struct {
   meshdata *meshinfo;
   int nmeshes;
+  int capacity;
 } meshescollection;
 
 /* --------------------------  hrrdata ------------------------------------ */
@@ -1025,6 +1026,7 @@ typedef struct {
 
 typedef struct {
   int nsliceinfo;
+  size_t sliceinfo_capacity;
   slicedata *sliceinfo;
 
   int nmultisliceinfo;
@@ -1511,6 +1513,7 @@ typedef struct _smoke3dtypedata {
 typedef struct {
   int nsmoke3dinfo;
   smoke3ddata *smoke3dinfo;
+  size_t smoke3dinfo_capacity;
   smoke3ddata **smoke3dinfo_sorted;
   int nsmoke3dtypes;
   int smoke3d_other;
@@ -1773,12 +1776,14 @@ typedef struct {
 
   int npatchinfo;
   patchdata *patchinfo;
+  size_t patchinfo_capacity;
 
   int nisoinfo;
   isodata *isoinfo;
 
   int nboundarytypes;
   int *boundarytypes;
+  size_t boundarytypes_capacity;
 
   int nisotypes;
   int *isotypes;
@@ -1796,6 +1801,7 @@ typedef struct {
   zventdata *zventinfo;
 
   int npartinfo;
+  size_t partinfo_capacity;
   partdata *partinfo;
 
   int ngeominfo;
@@ -1850,7 +1856,6 @@ typedef struct {
   int ntreeinfo;
   char surfacedefaultlabel[256];
   int nterraininfo;
-  int noutlineinfo;
   int ntickinfo;
   int ntickinfo_smv;
   int ntc_total;
@@ -1862,7 +1867,11 @@ typedef struct {
   int clip_K;
   int visTerrainType;
   int have_gvec;
+
+  int noutlineinfo;
+  int outlineinfo_capacity;
   outlinedata *outlineinfo;
+
   treedata *treeinfo;
   terraindata *terraininfo;
   spherepoints *sphereinfo;
@@ -1902,8 +1911,11 @@ typedef struct {
   float ybar0;
   float zbar0;
   char *part_buffer;
+  size_t part_buffer_capacity;
   char *smoke3d_buffer;
+  size_t smoke3d_buffer_capacity;
   char *slice_buffer;
+  size_t slice_buffer_capacity;
   // TODO: this definitely doesn't belong here
   int curdir_writable;
   char *smokeview_scratchdir;

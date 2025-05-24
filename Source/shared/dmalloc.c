@@ -106,15 +106,17 @@ void PrintMemoryError(size_t size, const char *varname, const char *file, int li
 /* ------------------ _NewMemory ------------------------ */
 
 mallocflag _NewMemory(void **ppv, size_t size, int memory_id, const char *varname, const char *file, int linenumber){
-  mallocflag returnval;
+  *ppv = malloc(size);
+  return 1;
+  // mallocflag returnval;
 
-  LOCK_MEM;
-  returnval=_NewMemoryNOTHREAD(ppv, size, memory_id);
-  if(returnval!=1){
-     PrintMemoryError(size, varname, file, linenumber);
-  }
-  UNLOCK_MEM;
-  return returnval;
+  // LOCK_MEM;
+  // returnval=_NewMemoryNOTHREAD(ppv, size, memory_id);
+  // if(returnval!=1){
+  //    PrintMemoryError(size, varname, file, linenumber);
+  // }
+  // UNLOCK_MEM;
+  // return returnval;
 }
 
 /* ------------------ _NewMemoryNOTHREAD ------------------------ */
@@ -216,9 +218,10 @@ void FreeAllMemory(int memory_id){
 /* ------------------ FreeMemory ------------------------ */
 
 void FreeMemory(void *pv){
-  LOCK_MEM;
-  FreeMemoryNOTHREAD(pv);
-  UNLOCK_MEM;
+  free(pv);
+  // LOCK_MEM;
+  // FreeMemoryNOTHREAD(pv);
+  // UNLOCK_MEM;
 }
 
 /* ------------------ FreeMemoryNOTHREAD ------------------------ */
@@ -269,70 +272,72 @@ mallocflag _ResizeMemory(void **ppv, size_t sizeNew, int memory_id, const char *
 /* ------------------ _ResizeMemoryNOTHREAD ------------------------ */
 
 mallocflag _ResizeMemoryNOTHREAD(void **ppv, size_t sizeNew, int memory_id){
-  bbyte **ppold, *pbNew;
-  int infoblocksize;
-  MMdata *this_ptr, *prev_ptr, *next_ptr;
-#ifdef pp_MEMDEBUG
-  char *c;
-  size_t sizeOld;
-#endif
+  *ppv = realloc(*ppv, sizeNew);
+  return 1;
+//   bbyte **ppold, *pbNew;
+//   int infoblocksize;
+//   MMdata *this_ptr, *prev_ptr, *next_ptr;
+// #ifdef pp_MEMDEBUG
+//   char *c;
+//   size_t sizeOld;
+// #endif
 
-  infoblocksize=(sizeof(MMdata)+3)/4;
-  infoblocksize*=4;
+//   infoblocksize=(sizeof(MMdata)+3)/4;
+//   infoblocksize*=4;
 
-  ppold=(bbyte **)ppv;
-  assert(ppold != NULL && sizeNew != 0);
-#ifdef pp_MEMDEBUG
-  {
-    CheckMemoryNOTHREAD;
-    sizeOld = sizeofBlock(*ppold);
-    if(sizeNew<sizeOld){
-      memset((*ppold)+sizeNew,memGarbage,sizeOld-sizeNew);
-    }
-    else if(sizeNew > sizeOld){
-      void *pbForceNew;
+//   ppold=(bbyte **)ppv;
+//   assert(ppold != NULL && sizeNew != 0);
+// #ifdef pp_MEMDEBUG
+//   {
+//     CheckMemoryNOTHREAD;
+//     sizeOld = sizeofBlock(*ppold);
+//     if(sizeNew<sizeOld){
+//       memset((*ppold)+sizeNew,memGarbage,sizeOld-sizeNew);
+//     }
+//     else if(sizeNew > sizeOld){
+//       void *pbForceNew;
 
-      if(_NewMemoryNOTHREAD((void **)&pbForceNew, sizeNew, 0)){
-        memcpy(pbForceNew, *ppold, sizeOld);
-        FreeMemoryNOTHREAD(*ppold);
-        *ppold = pbForceNew;
-      }
-    }
-  }
-#endif
+//       if(_NewMemoryNOTHREAD((void **)&pbForceNew, sizeNew, 0)){
+//         memcpy(pbForceNew, *ppold, sizeOld);
+//         FreeMemoryNOTHREAD(*ppold);
+//         *ppold = pbForceNew;
+//       }
+//     }
+//   }
+// #endif
 
-  this_ptr=(MMdata *)((char *)(*ppold)-infoblocksize);
-  prev_ptr=this_ptr->prev;
-  next_ptr=this_ptr->next;
-  pbNew = realloc((char *)(*ppold)-infoblocksize, infoblocksize+sizeNew+sizeofDebugByte);
-  if(pbNew != NULL){
-    if(pbNew!=(char *)(*ppold)-infoblocksize){
-      this_ptr=(MMdata *)pbNew;
+//   this_ptr=(MMdata *)((char *)(*ppold)-infoblocksize);
+//   prev_ptr=this_ptr->prev;
+//   next_ptr=this_ptr->next;
+//   pbNew = realloc((char *)(*ppold)-infoblocksize, infoblocksize+sizeNew+sizeofDebugByte);
+//   if(pbNew != NULL){
+//     if(pbNew!=(char *)(*ppold)-infoblocksize){
+//       this_ptr=(MMdata *)pbNew;
 
-      prev_ptr->next=this_ptr;
-      next_ptr->prev=this_ptr;
+//       prev_ptr->next=this_ptr;
+//       next_ptr->prev=this_ptr;
 
-      this_ptr->size = sizeNew;
-      this_ptr->memory_id = memory_id;
-      this_ptr->next=next_ptr;
-      this_ptr->prev=prev_ptr;
-      this_ptr->marker=MARKER_BYTE;
-    }
-#ifdef pp_MEMDEBUG
-    {
-      if(sizeofDebugByte!=0){
-        c = pbNew + infoblocksize + sizeNew;
-        *c=(char)DEBUG_BYTE;
-      }
-      UpdateBlockInfo(*ppold, (char *)pbNew+infoblocksize, sizeNew);
-      if(sizeNew>sizeOld){
-        memset(pbNew+infoblocksize+sizeOld,memGarbage,sizeNew-sizeOld);
-      }
-    }
-#endif
-    *ppold = pbNew+infoblocksize;
-  }
-  return (pbNew != NULL);
+//       this_ptr->size = sizeNew;
+//       this_ptr->memory_id = memory_id;
+//       this_ptr->next=next_ptr;
+//       this_ptr->prev=prev_ptr;
+//       this_ptr->marker=MARKER_BYTE;
+//     }
+// #ifdef pp_MEMDEBUG
+//     {
+//       if(sizeofDebugByte!=0){
+//         c = pbNew + infoblocksize + sizeNew;
+//         *c=(char)DEBUG_BYTE;
+//       }
+//       UpdateBlockInfo(*ppold, (char *)pbNew+infoblocksize, sizeNew);
+//       if(sizeNew>sizeOld){
+//         memset(pbNew+infoblocksize+sizeOld,memGarbage,sizeNew-sizeOld);
+//       }
+//     }
+// #endif
+//     *ppold = pbNew+infoblocksize;
+//   }
+//   return (pbNew != NULL);
 }
 
 /* ------------------ SetMemCheck ------------------------ */
@@ -351,98 +356,100 @@ void SetMemCheck(float memGB){
 /* ------------------ __NewMemory ------------------------ */
 
 mallocflag __NewMemory(void **ppv, size_t size, int memory_id, const char *varname, const char *file, int linenumber){
-  void **ppb=(void **)ppv;
-  blockinfo *pbi;
-  int return_code;
-  const char *varname2;
-  const char *file2;
-  char ampersand='&';
-#ifdef WIN32
-  char dirsep='\\';
-#else
-  char dirsep='/';
-#endif
+  *ppv=malloc(size);
+//   void **ppb=(void **)ppv;
+//   blockinfo *pbi;
+//   int return_code;
+//   const char *varname2;
+//   const char *file2;
+//   char ampersand='&';
+// #ifdef WIN32
+//   char dirsep='\\';
+// #else
+//   char dirsep='/';
+// #endif
 
-#ifdef pp_MEM_DEBUG_PRINT
-  fprintf(stderr, "file: %s line: %i\n", file, linenumber);
-#endif
-  LOCK_MEM;
-  return_code=_NewMemoryNOTHREAD(ppb,size,memory_id);
-  if(return_code != 1){
-    PrintMemoryError(size, varname, file, linenumber);
-  }
-  pbi=GetBlockInfo((bbyte *)*ppb);
-  if(return_code == 1 && pbi == NULL){ // don't print error message twice
-    PrintMemoryError(size, varname, file, linenumber);
-  }
-  pbi->linenumber=linenumber;
+// #ifdef pp_MEM_DEBUG_PRINT
+//   fprintf(stderr, "file: %s line: %i\n", file, linenumber);
+// #endif
+//   LOCK_MEM;
+//   return_code=_NewMemoryNOTHREAD(ppb,size,memory_id);
+//   if(return_code != 1){
+//     PrintMemoryError(size, varname, file, linenumber);
+//   }
+//   pbi=GetBlockInfo((bbyte *)*ppb);
+//   if(return_code == 1 && pbi == NULL){ // don't print error message twice
+//     PrintMemoryError(size, varname, file, linenumber);
+//   }
+//   pbi->linenumber=linenumber;
 
-  file2=strrchr(file,dirsep);
-  if(file2==NULL){
-    file2=file;
-  }
-  else{
-    file2++;
-  }
-  if(strlen(file2)<256){
-    strcpy(pbi->filename,file2);
-  }
-  else{
-    strncpy(pbi->filename,file2,255);
-    strcat(pbi->filename,"\0");
-  }
+//   file2=strrchr(file,dirsep);
+//   if(file2==NULL){
+//     file2=file;
+//   }
+//   else{
+//     file2++;
+//   }
+//   if(strlen(file2)<256){
+//     strcpy(pbi->filename,file2);
+//   }
+//   else{
+//     strncpy(pbi->filename,file2,255);
+//     strcat(pbi->filename,"\0");
+//   }
 
-  varname2 = strchr(varname,ampersand);
-  if(varname2==NULL){
-    varname2=varname;
-  }
-  else{
-    varname2++;
-  }
-  if(strlen(varname2)<256){
-    strcpy(pbi->varname,varname2);
-  }
-  else{
-    strncpy(pbi->varname,varname2,255);
-    strcat(pbi->varname,"\0");
-  }
-  if(return_code!=1){
-    PrintMemoryError(size, varname, file, linenumber);
-  }
-  UNLOCK_MEM;
-  return return_code;
+//   varname2 = strchr(varname,ampersand);
+//   if(varname2==NULL){
+//     varname2=varname;
+//   }
+//   else{
+//     varname2++;
+//   }
+//   if(strlen(varname2)<256){
+//     strcpy(pbi->varname,varname2);
+//   }
+//   else{
+//     strncpy(pbi->varname,varname2,255);
+//     strcat(pbi->varname,"\0");
+//   }
+//   if(return_code!=1){
+//     PrintMemoryError(size, varname, file, linenumber);
+//   }
+//   UNLOCK_MEM;
+  return 1;
 }
 
 /* ------------------ __ResizeMemory ------------------------ */
 
 mallocflag __ResizeMemory(void **ppv, size_t size, int memory_id, const char *varname, const char *file, int linenumber){
-  void **ppb=(void **)ppv;
-  blockinfo *pbi;
-  int return_code;
+  *ppv = realloc(*ppv,size);
+  // void **ppb=(void **)ppv;
+  // blockinfo *pbi;
+  // int return_code;
 
-  LOCK_MEM;
-  return_code=_ResizeMemoryNOTHREAD(ppb,size,memory_id);
-  pbi=GetBlockInfo((bbyte *)*ppb);
-  pbi->linenumber=linenumber;
-  if(strlen(file)<256){
-    strcpy(pbi->filename,file);
-  }
-  else{
-    strncpy(pbi->filename,file,255);
-    strcat(pbi->filename,"\0");
-  }
-  if(strlen(varname)<256){
-    strcpy(pbi->varname,varname);
-  }
-  else{
-    strncpy(pbi->varname,varname,255);
-    strcat(pbi->varname,"\0");
-  }
-  if(return_code!=1){
-    PrintMemoryError(size, varname, file, linenumber);
-  }
-  UNLOCK_MEM;
-  return return_code;
+  // LOCK_MEM;
+  // return_code=_ResizeMemoryNOTHREAD(ppb,size,memory_id);
+  // pbi=GetBlockInfo((bbyte *)*ppb);
+  // pbi->linenumber=linenumber;
+  // if(strlen(file)<256){
+  //   strcpy(pbi->filename,file);
+  // }
+  // else{
+  //   strncpy(pbi->filename,file,255);
+  //   strcat(pbi->filename,"\0");
+  // }
+  // if(strlen(varname)<256){
+  //   strcpy(pbi->varname,varname);
+  // }
+  // else{
+  //   strncpy(pbi->varname,varname,255);
+  //   strcat(pbi->varname,"\0");
+  // }
+  // if(return_code!=1){
+  //   PrintMemoryError(size, varname, file, linenumber);
+  // }
+  // UNLOCK_MEM;
+  return 1;
 }
 
 static blockinfo *pbiHead = NULL;

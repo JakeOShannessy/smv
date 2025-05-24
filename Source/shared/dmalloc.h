@@ -173,5 +173,5 @@ void initMALLOC(void);
 void FreeAllMemory(int memory_id);
 mallocflag _ValidPointer(void *pv, size_t size);
 
-#define FREEMEMORY(f) if((f)!=NULL){LOCK_MEM;FreeMemoryNOTHREAD((f));UNLOCK_MEM;(f)=NULL;}
+#define FREEMEMORY(f) if((f)!=NULL){LOCK_MEM;FreeMemory((f));UNLOCK_MEM;(f)=NULL;}
 #endif
