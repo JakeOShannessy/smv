@@ -305,15 +305,15 @@ int RunSmvq(char *input_file, const char *fdsprefix) {
     }
     if(return_code) return return_code;
   }
-  show_timings = 1;
-  ReadSMVOrig(scase);
-  INIT_PRINT_TIMER(ReadSMVDynamic_time);
-  ReadSMVDynamic(scase, input_file);
-  STOP_TIMER(ReadSMVDynamic_time);
-  fprintf(stderr, "ReadSMVDynamic:\t%8.3f ms\n", ReadSMVDynamic_time * 1000);
+  // show_timings = 1;
+  // ReadSMVOrig(scase);
+  // INIT_PRINT_TIMER(ReadSMVDynamic_time);
+  // ReadSMVDynamic(scase, input_file);
+  // STOP_TIMER(ReadSMVDynamic_time);
+  // fprintf(stderr, "ReadSMVDynamic:\t%8.3f ms\n", ReadSMVDynamic_time * 1000);
   STOP_TIMER(parse_time);
   fprintf(stderr, "Total Time:\t%8.3f ms\n", parse_time * 1000);
-  PrintJson(scase);
+  // PrintJson(scase);
   // FreeVars();
   return 0;
 }

@@ -1547,7 +1547,7 @@ void ReadSMVDynamic(smv_case *scase, char *file){
 
       plot3di->file=plot3di->reg_file;
 
-      if(parse_opts.fast_startup==1||FileExistsCaseDir(scase, plot3di->file)==YES){
+      if(parse_opts.fast_startup==1 ){
         int n;
         int read_ok = YES;
 
@@ -3128,7 +3128,7 @@ int ParseISOFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
     strcpy(isoi->tfile, tbufferptr);
   }
 
-  if(parse_opts.fast_startup==1||FileExistsCaseDir(scase, isoi->reg_file)==YES){
+  if(parse_opts.fast_startup==1){
     isoi->get_isolevels = 1;
     isoi->file = isoi->reg_file;
     if(ReadLabels(&isoi->surface_label, stream, NULL)==LABEL_ERR)return 2;
@@ -3273,7 +3273,7 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
 
   // parti->size_file can't be written to, then put it in a world writable temp directory
   char *smokeview_scratchdir = GetUserConfigDir();
-  if(FileExistsCaseDir(scase, parti->size_file)==NO&&scase->curdir_writable==NO&&smokeview_scratchdir!=NULL){
+  if( scase->curdir_writable==NO&&smokeview_scratchdir!=NULL){
     len = strlen(smokeview_scratchdir)+strlen(bufferptr)+1+3+1;
     parti->size_file = NULL;
     if(NewMemory((void **)&parti->size_file, (unsigned int)len)==0)return RETURN_TWO;
@@ -3287,12 +3287,12 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
   // parti->hist_file can't be written to, then put it in a world writable temp directory
 
   parti->compression_type = UNCOMPRESSED;
-  if(FileExistsCaseDir(scase, parti->reg_file)==YES){
-    parti->file = parti->reg_file;
-  }
-  else{
-    parti->file = NULL;
-  }
+  parti->file = parti->reg_file;
+  // if(FileExistsCaseDir(scase, parti->reg_file)==YES){
+  // }
+  // else{
+  //   parti->file = NULL;
+  // }
   parti->compression_type = UNCOMPRESSED;
   parti->loaded = 0;
   parti->request_load = 0;
@@ -3348,7 +3348,7 @@ int ParsePRT5Process(smv_case *scase, bufferstreamdata *stream, char *buffer, in
     NewMemory((void **)&parti->partclassptr, sizeof(partclassdata *));
     parti->partclassptr[0] = scase->partclassinfo+parti->nclasses;
   }
-  if(parse_opts.fast_startup==1||(parti->file!=NULL&&FileExistsCaseDir(scase, parti->file)==YES)){
+  if(parse_opts.fast_startup==1||(parti->file!=NULL )){
     ipart++;
     *ipart_in = ipart;
   }
@@ -3508,7 +3508,7 @@ int ParseBNDFProcess(smv_case *scase, bufferstreamdata *stream, char *buffer, in
   STRCPY(patchi->size_file, bufferptr);
   //      STRCAT(patchi->size_file,".szz"); when we actully use file check both .sz and .szz extensions
 
-  if(parse_opts.lookfor_compressed_files==1&&FileExistsCaseDir(scase, patchi->comp_file) == YES){
+  if(parse_opts.lookfor_compressed_files==1 ){
     patchi->compression_type = COMPRESSED_ZLIB;
     patchi->file             = patchi->comp_file;
   }
@@ -3758,7 +3758,7 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
     // smoke3di->comp_file = SMOKE3DBUFFER(len + 1);
     // STRCPY(smoke3di->comp_file, buffer2);
 
-    if(FileExistsCaseDir(scase, smoke3di->comp_file) == YES){
+    if(1){
       smoke3di->file = smoke3di->comp_file;
       smoke3di->is_zlib = 1;
       smoke3di->compression_type = COMPRESSED_ZLIB;
@@ -3989,10 +3989,10 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, int 
   has_reg = NO;
   compression_type = UNCOMPRESSED;
   if(parse_opts.lookfor_compressed_files==1){
-    if(FileExistsCaseDir(scase, rle_file)==YES)compression_type  = COMPRESSED_RLE;
-    if(FileExistsCaseDir(scase, zlib_file)==YES)compression_type = COMPRESSED_ZLIB;
+    // if(FileExistsCaseDir(scase, rle_file)==YES)compression_type  = COMPRESSED_RLE;
+    // if(FileExistsCaseDir(scase, zlib_file)==YES)compression_type = COMPRESSED_ZLIB;
   }
-  if(compression_type==UNCOMPRESSED&&(parse_opts.fast_startup==1||FileExistsCaseDir(scase, bufferptr)==YES))has_reg = YES;
+  if(compression_type==UNCOMPRESSED&&(parse_opts.fast_startup==1 ))has_reg = YES;
   if(has_reg==NO&&compression_type==UNCOMPRESSED){
     scase->slicecoll.nsliceinfo--;
 
@@ -4476,7 +4476,7 @@ void AddCfastCsvfi(smv_case *scase, const char *suffix, const char *type, int fo
     csvfi = scase->csvcoll.csvfileinfo + i;
     if(strcmp(csvfi->c_type,type)==0) goto end;
   }
-  if(FileExistsCaseDir(scase, filename) == NO) goto end;
+  if(0) goto end;
   InitCSV(scase->csvcoll.csvfileinfo + scase->csvcoll.ncsvfileinfo, filename, type, format);
   scase->csvcoll.ncsvfileinfo++;
 end:
@@ -6721,7 +6721,7 @@ typedef struct {
       }
       TrimBack(buffer2);
       file_ptr=TrimFront(buffer2);
-      if(FileExistsCaseDir(scase, file_ptr) == NO)continue;
+      if(1)continue;
 
       csvi = scase->csvcoll.csvfileinfo + scase->csvcoll.ncsvfileinfo;
       InitCSV(csvi, file_ptr, type_ptr, CSV_FDS_FORMAT);
@@ -6848,11 +6848,11 @@ typedef struct {
         if(ext!=NULL){
           ext[0] = 0;
           strcat(buff2,".ge2");
-          if(FileExistsCaseDir(scase, buff2)==YES){
-            NewMemory((void **)&geomi->file2,strlen(buff2)+1);
-            strcpy(geomi->file2,buff2);
-            ReadGeomFile2(geomi);
-          }
+          // if(FileExistsCaseDir(scase, buff2)==YES){
+          //   NewMemory((void **)&geomi->file2,strlen(buff2)+1);
+          //   strcpy(geomi->file2,buff2);
+          //   ReadGeomFile2(geomi);
+          // }
         }
       }
 
@@ -7830,14 +7830,14 @@ typedef struct {
         BREAK;
       }
       bufferptr=TrimFrontBack(buffer);
-      if (FileExistsCaseDir(scase, bufferptr) == YES) {
-        ReadCADGeomToCollection(&scase->cadgeomcoll, bufferptr, scase->color_defs.block_shininess);
-      }
-      else {
-        PRINTF(_("***Error: CAD geometry file: %s could not be opened"),
-               bufferptr);
-        PRINTF("\n");
-      }
+      // if (FileExistsCaseDir(scase, bufferptr) == YES) {
+      //   ReadCADGeomToCollection(&scase->cadgeomcoll, bufferptr, scase->color_defs.block_shininess);
+      // }
+      // else {
+      //   PRINTF(_("***Error: CAD geometry file: %s could not be opened"),
+      //          bufferptr);
+      //   PRINTF("\n");
+      // }
       continue;
     }
   /*
@@ -7954,25 +7954,25 @@ typedef struct {
         char texturebuffer[1024];
 
         found_texture=0;
-        if(scase->texturedir!=NULL&&FileExistsCaseDir(scase, buffer3)==NO){
-          STRCPY(texturebuffer,scase->texturedir);
-          STRCAT(texturebuffer,dirseparator);
-          STRCAT(texturebuffer,buffer3);
-          if(FileExistsCaseDir(scase, texturebuffer)==YES){
-            if(NewMemory((void **)&surfi->texturefile,strlen(texturebuffer)+1)==0)return 2;
-            STRCPY(surfi->texturefile,texturebuffer);
-            found_texture=1;
-          }
-        }
-        if(FileExistsCaseDir(scase, buffer3)==YES){
-          len=strlen(buffer3);
-          if(NewMemory((void **)&surfi->texturefile,(unsigned int)(len+1))==0)return 2;
-          STRCPY(surfi->texturefile,buffer3);
-          found_texture=1;
-        }
-        if(buffer3!=NULL&&found_texture==0&&strncmp(buffer3,"null",4)!=0){
-          fprintf(stderr,"*** Error: The texture file %s was not found\n",buffer3);
-        }
+        // if(scase->texturedir!=NULL&&FileExistsCaseDir(scase, buffer3)==NO){
+        //   STRCPY(texturebuffer,scase->texturedir);
+        //   STRCAT(texturebuffer,dirseparator);
+        //   STRCAT(texturebuffer,buffer3);
+        //   if(FileExistsCaseDir(scase, texturebuffer)==YES){
+        //     if(NewMemory((void **)&surfi->texturefile,strlen(texturebuffer)+1)==0)return 2;
+        //     STRCPY(surfi->texturefile,texturebuffer);
+        //     found_texture=1;
+        //   }
+        // }
+        // if(FileExistsCaseDir(scase, buffer3)==YES){
+        //   len=strlen(buffer3);
+        //   if(NewMemory((void **)&surfi->texturefile,(unsigned int)(len+1))==0)return 2;
+        //   STRCPY(surfi->texturefile,buffer3);
+        //   found_texture=1;
+        // }
+        // if(buffer3!=NULL&&found_texture==0&&strncmp(buffer3,"null",4)!=0){
+        //   fprintf(stderr,"*** Error: The texture file %s was not found\n",buffer3);
+        // }
       }
       scase->surfcoll.nsurfinfo++;
       continue;
@@ -8291,15 +8291,15 @@ typedef struct {
   REWIND(stream);
 
   char *expcsv_filename = CasePathExpCsv(scase);
-  if(FileExistsCaseDir(scase, expcsv_filename)==YES){
-    csvfiledata *csvi;
-    char csv_type[256];
+  // if(FileExistsCaseDir(scase, expcsv_filename)==YES){
+  //   csvfiledata *csvi;
+  //   char csv_type[256];
 
-    csvi = scase->csvcoll.csvfileinfo + scase->csvcoll.ncsvfileinfo;
-    strcpy(csv_type, "ext");
-    InitCSV(csvi, expcsv_filename, csv_type, CSV_FDS_FORMAT);
-    scase->csvcoll.ncsvfileinfo++;
-  }
+  //   csvi = scase->csvcoll.csvfileinfo + scase->csvcoll.ncsvfileinfo;
+  //   strcpy(csv_type, "ext");
+  //   InitCSV(csvi, expcsv_filename, csv_type, CSV_FDS_FORMAT);
+  //   scase->csvcoll.ncsvfileinfo++;
+  // }
   FREEMEMORY(expcsv_filename);
 
   PRINTF("%s","  pass 3\n");
