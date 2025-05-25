@@ -545,7 +545,40 @@ json_object *jsonrpc_LoadSliceIndices(jrpc_context *context,
   size_t n_files = json_object_array_length(params);
   for(size_t n = 0; n < n_files; n++) {
     int i = json_object_get_int(json_object_array_get_idx(params, n));
-    Loadsliceindex(i, &errorcode);
+    Loadsliceindex(i, ALL_FRAMES, &errorcode);
+    if(errorcode) {
+      context->error_code = 115;
+      context->error_message = strdup("could not load slice");
+      return NULL;
+    }
+  }
+  return NULL;
+}
+
+json_object *jsonrpc_LoadSlices(jrpc_context *context, json_object *params,
+                                json_object *id) {
+  int errorcode = 0;
+  json_object *specs;
+// specs: { index: number; frame?: number }[]
+  int res = json_object_object_get_ex(params, "specs", &specs);
+  size_t n_files = json_object_array_length(specs);
+  const char *json_output =
+      json_object_to_json_string_ext(params, JSON_C_TO_STRING_PRETTY);
+  fprintf(stderr, "%s\n", json_output);
+  for(size_t n = 0; n < n_files; n++) {
+    json_object *spec = json_object_array_get_idx(specs, n);
+    json_object *index_obj;
+    int r2 = json_object_object_get_ex(spec, "index", &index_obj);
+    int index = json_object_get_int(index_obj);
+    json_object_put(index_obj);
+    int frame = ALL_FRAMES;
+    json_object *frame_obj;
+    if (json_object_object_get_ex(spec, "frame", &frame_obj)) {
+      frame = json_object_get_int(frame_obj);
+    json_object_put(frame_obj);
+    }
+    json_object_put(spec);
+    Loadsliceindex(index, frame, &errorcode);
     if(errorcode) {
       context->error_code = 115;
       context->error_message = strdup("could not load slice");
@@ -900,6 +933,7 @@ int register_procedures(struct jrpc_server *server_arg) {
                           NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_LoadSliceIndices,
                           "load_slice_indices", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_LoadSlices, "load_slices", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_GetSlices, "get_slices", NULL);
   jrpc_register_procedure(server_arg, &json_GetSmoke3ds, "get_smoke3ds", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_Load3dSmokeIndices,

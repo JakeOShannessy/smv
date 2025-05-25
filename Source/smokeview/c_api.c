@@ -454,9 +454,9 @@ void SetMovietype(const char *type) {
 
 int GetMovietype() { return movie_filetype; }
 
-FILE_SIZE Loadsliceindex(size_t index, int *errorcode) {
+FILE_SIZE Loadsliceindex(size_t index, int frame, int *errorcode) {
   return ReadSlice(global_scase.slicecoll.sliceinfo[index].file, (int)index,
-                   ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR, errorcode);
+                   frame, NULL, LOAD, SET_SLICECOLOR, errorcode);
 }
 
 /// @brief Unload all the currently loaded data.

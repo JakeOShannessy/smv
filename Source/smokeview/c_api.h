@@ -31,7 +31,7 @@ int SetRendertype(const char *type);
 int GetRendertype(void);
 void SetMovietype(const char *type);
 int GetMovietype(void);
-FILE_SIZE Loadsliceindex(size_t index, int *errorcode);
+FILE_SIZE Loadsliceindex(size_t index, int frame, int *errorcode);
 int Unloadall();
 void ExitSmokeview();
 void Setcolorbarflip(int flip);
