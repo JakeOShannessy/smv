@@ -1445,7 +1445,7 @@ void GetGlobalSliceBounds(int flag, int set_flag, char *label){
     slicedata *slicei;
     float valmin, valmax;
     boundsdata *boundi;
-    int doit;
+    int doit = 0;
 
     slicei = global_scase.slicecoll.sliceinfo+i;
     if(label != NULL && strcmp(slicei->label.shortlabel, label) != 0)continue;
@@ -1802,7 +1802,6 @@ int ReadPartBounds(partdata *parti,int read_bounds_arg){
 
   if(read_bounds_arg==1){
     parti->bounds_set = 1;
-    fclose(stream);
     return 0;
   }
 

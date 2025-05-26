@@ -1128,6 +1128,7 @@ void UpdateMeshCoords(void){
   int igrid;
 
   if(current_mesh == NULL)current_mesh = global_scase.meshescoll.meshinfo;
+  if(current_mesh == NULL)return;
   if(global_scase.setPDIM==0&&current_mesh!=NULL){
     for(nn=0;nn<=current_mesh->ibar;nn++){
       current_mesh->xplt[nn]=global_scase.xbar0+(float)nn*(global_scase.xbar-global_scase.xbar0)/(float)current_mesh->ibar;
@@ -7683,7 +7684,6 @@ void WriteIni(int flag,char *filename){
   if(fileout==NULL){
     if(outfilename!=NULL){
       fprintf(stderr,"*** Error: unable to open %s for writing ",outfilename);
-      return;
     }
     else{
       fprintf(stderr,"*** Error: unable to open ini file for output ");
@@ -7694,6 +7694,7 @@ void WriteIni(int flag,char *filename){
     else{
       printf("in directory %s\n", outfiledir);
     }
+    return;
   }
   FREEMEMORY(smokeviewini_filename);
 

@@ -993,7 +993,7 @@ extern "C" void GLUIViewpointCB(int var){
   case LIST_VIEW_FROM_DIALOG:
     {
       int camera_id;
-
+      if(LIST_viewpoints==NULL)return;
       camera_id = LIST_viewpoints->get_int_val();
       if(camera_id<=1){
         ResetDefaultMenu(camera_id);
