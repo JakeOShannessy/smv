@@ -705,6 +705,18 @@ int CameraSetProjectionType(int pt) {
 }
 
 void CameraSetAz(float az) { camera_current->az_elev[0] = az; }
+void CameraSetElev(float az) { camera_current->az_elev[0] = az; }
+void CameraSetEye(float x, float y, float z) {
+  camera_current->eye[0] = x;
+  camera_current->eye[1] = y;
+  camera_current->eye[2] = z;
+}
+void CameraSetZoom(float x) { zoom = x; }
+void CameraSetViewdir(float xcen, float ycen, float zcen) {
+  camera_current->xcen = xcen;
+  camera_current->ycen = ycen;
+  camera_current->zcen = zcen;
+}
 
 int SetScaledfont(int height2d, float height2dwidth, int thickness2d,
                   int height3d, float height3dwidth, int thickness3d) {

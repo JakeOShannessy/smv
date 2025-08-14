@@ -41,7 +41,11 @@ int SetOrthoPreset(const char *viewpoint);
 int Setrenderdir(const char *dir);
 void Setwindowsize(int width, int height);
 void CameraSetAz(float az);
+void CameraSetElev(float az);
+void CameraSetEye(float x, float y, float z);
+void CameraSetZoom(float x);
 int CameraSetProjectionType(int projection_type);
+void CameraSetViewdir(float xcen, float ycen, float zcen);
 
 int GetClippingMode();
 void SetClippingMode(int mode);
@@ -79,7 +83,7 @@ void SurfacesHideAll();
 // devices
 void DevicesHideAll();
 
-int SetFontsize(int v);             // FONTSIZE
+int SetFontsize(int v); // FONTSIZE
 int SetScaledfontHeight2d(int height2d);
 
 #define PROPINDEX_STRIDE 2

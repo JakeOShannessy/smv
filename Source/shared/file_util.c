@@ -387,7 +387,7 @@ int Writable(char *dir){
   }
 #else
   {
-    char tempfullfile[100], tempfile[40];
+    char tempfullfile[3000], tempfile[3000];
     FILE *stream;
 
     strcpy(tempfullfile,dir);

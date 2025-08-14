@@ -116,6 +116,56 @@ json_object *jsonrpc_SetCameraAz(jrpc_context *context, json_object *params,
   return NULL;
 }
 
+json_object *jsonrpc_SetCameraElev(jrpc_context *context, json_object *params,
+                                   json_object *id) {
+  if(!json_object_is_type(params, json_type_array)) {
+    context->error_code = JRPC_INVALID_PARAMS;
+    context->error_message = strdup("expected an array");
+    return NULL;
+  }
+  float elev = json_object_get_double(json_object_array_get_idx(params, 0));
+  CameraSetElev(elev);
+  return NULL;
+}
+
+json_object *jsonrpc_SetCameraEye(jrpc_context *context, json_object *params,
+                                  json_object *id) {
+  if(!json_object_is_type(params, json_type_array)) {
+    context->error_code = JRPC_INVALID_PARAMS;
+    context->error_message = strdup("expected an array");
+    return NULL;
+  }
+  float x = json_object_get_double(json_object_array_get_idx(params, 0));
+  float y = json_object_get_double(json_object_array_get_idx(params, 1));
+  float z = json_object_get_double(json_object_array_get_idx(params, 2));
+  CameraSetEye(x, y, z);
+  return NULL;
+}
+json_object *jsonrpc_SetCameraZoom(jrpc_context *context, json_object *params,
+                                   json_object *id) {
+  if(!json_object_is_type(params, json_type_array)) {
+    context->error_code = JRPC_INVALID_PARAMS;
+    context->error_message = strdup("expected an array");
+    return NULL;
+  }
+  float x = json_object_get_double(json_object_array_get_idx(params, 0));
+  CameraSetZoom(x);
+  return NULL;
+}
+json_object *jsonrpc_SetCameraViewDir(jrpc_context *context,
+                                      json_object *params, json_object *id) {
+  if(!json_object_is_type(params, json_type_array)) {
+    context->error_code = JRPC_INVALID_PARAMS;
+    context->error_message = strdup("expected an array");
+    return NULL;
+  }
+  float xcen = json_object_get_double(json_object_array_get_idx(params, 0));
+  float ycen = json_object_get_double(json_object_array_get_idx(params, 1));
+  float zcen = json_object_get_double(json_object_array_get_idx(params, 2));
+  CameraSetViewdir(xcen, ycen, zcen);
+  return NULL;
+}
+
 json_object *jsonrpc_GetClipping(jrpc_context *context, json_object *params,
                                  json_object *id) {
   json_object *result_root = json_object_new_object();
@@ -523,7 +573,8 @@ json_object *jsonrpc_GetCsvVectors(jrpc_context *context, json_object *params,
 
   for(int i = 0; i < global_scase.csvcoll.ncsvfileinfo; ++i) {
     struct json_object *csvs_obj = json_object_new_object();
-    json_object_object_add(csv_files, global_scase.csvcoll.csvfileinfo[i].c_type, csvs_obj);
+    json_object_object_add(
+        csv_files, global_scase.csvcoll.csvfileinfo[i].c_type, csvs_obj);
     csvfiledata *csventry = &global_scase.csvcoll.csvfileinfo[i];
     if(!csventry->loaded) {
       LoadCsv(csventry);
@@ -559,7 +610,7 @@ json_object *jsonrpc_LoadSlices(jrpc_context *context, json_object *params,
                                 json_object *id) {
   int errorcode = 0;
   json_object *specs;
-// specs: { index: number; frame?: number }[]
+  // specs: { index: number; frame?: number }[]
   int res = json_object_object_get_ex(params, "specs", &specs);
   size_t n_files = json_object_array_length(specs);
   const char *json_output =
@@ -573,9 +624,9 @@ json_object *jsonrpc_LoadSlices(jrpc_context *context, json_object *params,
     json_object_put(index_obj);
     int frame = ALL_FRAMES;
     json_object *frame_obj;
-    if (json_object_object_get_ex(spec, "frame", &frame_obj)) {
+    if(json_object_object_get_ex(spec, "frame", &frame_obj)) {
       frame = json_object_get_int(frame_obj);
-    json_object_put(frame_obj);
+      json_object_put(frame_obj);
     }
     json_object_put(spec);
     Loadsliceindex(index, frame, &errorcode);
@@ -917,18 +968,23 @@ int register_procedures(struct jrpc_server *server_arg) {
   jrpc_register_procedure(server_arg, &jsonrpc_SetFrame, "set_frame", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_SetTime, "set_time", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_SetCameraAz, "set_camera_az", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraElev, "set_camera_elev", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraEye, "set_camera_eye", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraZoom, "set_camera_zoom", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraViewDir, "set_camera_view_dir", NULL);
 
   jrpc_register_procedure(server_arg, &jsonrpc_GetNGlobalTimes,
                           "get_n_global_times", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_GetTime, "get_time", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetClipping, "set_clipping", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetClipping, "set_clipping",
+                          NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_Render, "render", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_Unloadall, "unload_all", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_SetChidVisibility,
                           "set_chid_visibility", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_ExitSmokeview, "exit", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetSliceBounds, "set_slice_bounds",
-                          NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetSliceBounds,
+                          "set_slice_bounds", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_SetWindowSize, "set_window_size",
                           NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_LoadSliceIndices,
@@ -938,8 +994,8 @@ int register_procedures(struct jrpc_server *server_arg) {
   jrpc_register_procedure(server_arg, &json_GetSmoke3ds, "get_smoke3ds", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_Load3dSmokeIndices,
                           "load_smoke3d_indices", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetOrthoPreset, "set_ortho_preset",
-                          NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetOrthoPreset,
+                          "set_ortho_preset", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_GetMeshes, "get_meshes", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_CameraSetProjectionType,
                           "set_projection_type", NULL);
@@ -949,7 +1005,8 @@ int register_procedures(struct jrpc_server *server_arg) {
                           NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_Setrenderdir, "set_render_dir",
                           NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetFontSize, "set_font_size", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetFontSize, "set_font_size",
+                          NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_SetTitleVisibility,
                           "set_title_visibility", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_GetTitleVisibility,
@@ -961,16 +1018,16 @@ int register_procedures(struct jrpc_server *server_arg) {
 
   jrpc_register_procedure(server_arg, &jsonrpc_BlockagesHideAll,
                           "blockages_hide_all", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SurfacesHideAll, "surfaces_hide_all",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_OutlinesHide, "outlines_hide_all",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_DevicesHideAll, "devices_hide_all",
-                          NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SurfacesHideAll,
+                          "surfaces_hide_all", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_OutlinesHide,
+                          "outlines_hide_all", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_DevicesHideAll,
+                          "devices_hide_all", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_GetCsvVectors, "get_csv_vectors",
                           NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetColorbarFlip, "set_colorbar_flip",
-                          NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetColorbarFlip,
+                          "set_colorbar_flip", NULL);
 
   return 0;
 }
