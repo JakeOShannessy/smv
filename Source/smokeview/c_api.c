@@ -357,25 +357,7 @@ ERROR_CODE GetNamedColorbar(const char *name, size_t *index) {
 /// @brief Set the colorbar to the given colorbar index.
 /// @param value
 void SetColorbar(size_t value) {
-  colorbartype = value;
-  colorbars.iso_colorbar_index = value;
-  iso_colorbar = colorbars.colorbarinfo + colorbars.iso_colorbar_index;
-  update_texturebar = 1;
-  GLUIUpdateListIsoColorobar();
-  UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
-  GLUIUpdateColorbarType();
-  if(colorbartype == colorbars.bw_colorbar_index &&
-     colorbars.bw_colorbar_index >= 0) {
-    setbwdata = 1;
-  }
-  else {
-    setbwdata = 0;
-  }
-  GLUIIsoBoundCB(ISO_COLORS);
-  GLUISetLabelControls();
-  if(value > -10) {
-    UpdateRGBColors(COLORBAR_INDEX_NONE);
-  }
+  ColorbarMenu(value);
 }
 /// @brief Set whether the title of the simulation is visible.
 /// @param setting Boolean value.
