@@ -363,17 +363,17 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
     json_object_object_add(mesh_obj, "coordinates", mesh_coordinates);
     struct json_object *mesh_dimensions = json_object_new_object();
     json_object_object_add(mesh_dimensions, "x_min",
-                           json_object_new_double(mesh->x0));
+                           json_object_new_double(mesh->boxmin_fds[0]));
     json_object_object_add(mesh_dimensions, "x_max",
-                           json_object_new_double(mesh->x1));
+                           json_object_new_double(mesh->boxmax_fds[0]));
     json_object_object_add(mesh_dimensions, "y_min",
-                           json_object_new_double(mesh->y0));
+                           json_object_new_double(mesh->boxmin_fds[1]));
     json_object_object_add(mesh_dimensions, "y_max",
-                           json_object_new_double(mesh->y1));
+                           json_object_new_double(mesh->boxmax_fds[1]));
     json_object_object_add(mesh_dimensions, "z_min",
-                           json_object_new_double(mesh->z0));
+                           json_object_new_double(mesh->boxmin_fds[2]));
     json_object_object_add(mesh_dimensions, "z_max",
-                           json_object_new_double(mesh->z1));
+                           json_object_new_double(mesh->boxmax_fds[2]));
     json_object_object_add(mesh_obj, "dimensions", mesh_dimensions);
 
     struct json_object *vents = json_object_new_array();
@@ -424,21 +424,21 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
     struct json_object *xplt_orig = json_object_new_array();
     for(size_t j = 0; j < mesh->ibar; j++) {
       json_object_array_add(xplt_orig,
-                            json_object_new_double(mesh->xplt_orig[j]));
+                            json_object_new_double(mesh->xplt_fds[j]));
     }
     json_object_object_add(mesh_obj, "xplt_orig", xplt_orig);
 
     struct json_object *yplt_orig = json_object_new_array();
     for(size_t j = 0; j < mesh->jbar; j++) {
       json_object_array_add(yplt_orig,
-                            json_object_new_double(mesh->yplt_orig[j]));
+                            json_object_new_double(mesh->xplt_fds[j]));
     }
     json_object_object_add(mesh_obj, "yplt_orig", yplt_orig);
 
     struct json_object *zplt_orig = json_object_new_array();
     for(size_t j = 0; j < mesh->kbar; j++) {
       json_object_array_add(zplt_orig,
-                            json_object_new_double(mesh->zplt_orig[j]));
+                            json_object_new_double(mesh->xplt_fds[j]));
     }
     json_object_object_add(mesh_obj, "zplt_orig", zplt_orig);
 
@@ -967,11 +967,16 @@ json_object *jsonrpc_DevicesHideAll(jrpc_context *context, json_object *params,
 int register_procedures(struct jrpc_server *server_arg) {
   jrpc_register_procedure(server_arg, &jsonrpc_SetFrame, "set_frame", NULL);
   jrpc_register_procedure(server_arg, &jsonrpc_SetTime, "set_time", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraAz, "set_camera_az", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraElev, "set_camera_elev", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraEye, "set_camera_eye", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraZoom, "set_camera_zoom", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraViewDir, "set_camera_view_dir", NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraAz, "set_camera_az",
+                          NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraElev, "set_camera_elev",
+                          NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraEye, "set_camera_eye",
+                          NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraZoom, "set_camera_zoom",
+                          NULL);
+  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraViewDir,
+                          "set_camera_view_dir", NULL);
 
   jrpc_register_procedure(server_arg, &jsonrpc_GetNGlobalTimes,
                           "get_n_global_times", NULL);

@@ -1600,17 +1600,17 @@ network being visualized.}\ \label{figHVACsettings}
 \begin{figure}[bph]
 \begin{center}
 \begin{tabular}{cc}
-\includegraphics[width=3.729166in]{SCRIPT_FIGURES/hvac_comp_00}&
-\includegraphics[width=3.729166in]{SCRIPT_FIGURES/hvac_comp_50}\\
+\includegraphics[width=3.5in]{SCRIPT_FIGURES/hvac_comp_00}&
+\includegraphics[width=3.5in]{SCRIPT_FIGURES/hvac_comp_50}\\
 0.0~s&5.0~s
 \end{tabular}
 \end{center}
 \caption
 [HVAC network example]
 {HVAC network example.
-This example illustrates an HVAC network showing a air coil, damper, fan and filter . The central sphere
-changes from green to color when activated.
-In addition, The damper is drawn vertically and the fan rotates when activated.}\ \label{figHVACexample}
+This example illustrates an HVAC network showing an air coil, damper, fan and filter . The central sphere color
+changes from green to when activated. The colored lines show the duct volume flow rates.
+In addition, the damper is drawn vertically and the fan rotates when activated.}\ \label{figHVACexample}
 \end{figure}
 
 
@@ -3908,6 +3908,15 @@ HIDEHVACVALS
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
+\hitemssf{LOADHVAC}
+Use LOADHVAC to load hvac data. LOADHVAC has no arguments.
+
+Usage:
+\begin{lstlisting}
+LOADHVAC
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
 \hitemssf{SHOWHVACDUCTVAL}This keyword shows the specified hvac duct quantity.
 Usage:
 \begin{lstlisting}
@@ -4267,6 +4276,20 @@ Usage:
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
+\hitemssf{SETCBARLAB}Set the colorbar to use Lab coordinates.
+Usage:
+\begin{lstlisting}
+ SETCBARLAB
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
+\hitemssf{SETCBARRGB}Set the colorbar to use RGB coordinates.
+Usage:
+\begin{lstlisting}
+ SETCBARRGB
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
 \hitemssf{SHOWCBAREDIT, HIDECBAREDIT}Show or hide the colorbar edit dialog box.
 Usage:
 \begin{lstlisting}
@@ -4367,6 +4390,13 @@ or
   ALT c
 \end{lstlisting}
 where {\tt c}\ is any keyboard character (recognized by Smokeview) and {\tt ALT}\ is the ALT key.
+
+%%+++++++++++++++++++++++
+\hitemssf{NOEXIT}Causes Smokeview not to quit.
+Usage:
+\begin{lstlisting}
+ NOEXIT
+\end{lstlisting}
 
 %%+++++++++++++++++++++++
 \hitemssf{PROJECTION}Set the projection type, 1 for perspective, 2 for size preserving.

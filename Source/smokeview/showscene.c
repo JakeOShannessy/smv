@@ -104,6 +104,16 @@ void ShowScene2(int mode){
       }
     }
 
+    /* ++++++++++++++++++++++++ draw sphere array +++++++++++++++++++++++++ */
+
+    if(sphere_show == 1){
+      CLIP_GEOMETRY;
+      if(mouse_down == 0 || hide_scene == 0){
+        void DrawSphereArray(void);
+        DrawSphereArray();
+      }
+    }
+
     /* ++++++++++++++++++++++++ draw sensors/sprinklers/heat detectors +++++++++++++++++++++++++ */
 
     CLIP_GEOMETRY;
@@ -183,8 +193,8 @@ void ShowScene2(int mode){
         float *xyz_min, *xyz_max;
 
         meshi = global_scase.meshescoll.meshinfo + i;
-        xyz_min = meshi->boxmin_scaled;
-        xyz_max = meshi->boxmax_scaled;
+        xyz_min = meshi->boxmin_smv;
+        xyz_max = meshi->boxmax_smv;
         if(meshi->use == 1){
           if(show_mesh_labels == 1){
             char label[32];

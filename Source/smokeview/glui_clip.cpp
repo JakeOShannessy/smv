@@ -71,6 +71,14 @@ extern "C" void GLUIUpdateShowRotationCenter2(void){
 /* ------------------ ClipCB ------------------------ */
 
 void ClipCB(int var){
+  meshdata *mesh0;
+  float dx, dy, dz;
+
+  mesh0 = global_scase.meshescoll.meshinfo;
+  dx = MAX(0.1, mesh0->boxeps_fds[0]);
+  dy = MAX(0.1, mesh0->boxeps_fds[1]);
+  dz = MAX(0.1, mesh0->boxeps_fds[2]);
+
   glutPostRedisplay();
   switch(var){
   case CLIP_ROTATE:
@@ -170,11 +178,45 @@ void ClipCB(int var){
     }
     break;
   case SPINNER_xlower:
+    if(clipinfo.xmin < xbar0ORIG) {
+      clipinfo.xmin = xbar0ORIG - dx;
+      SPINNER_clip_xmin->set_float_val(clipinfo.xmin);
+    }
+    updatefacelists = 1;
+    break;
   case SPINNER_xupper:
+    if(clipinfo.xmax > xbarORIG) {
+      clipinfo.xmax = xbarORIG + dx;
+      SPINNER_clip_xmax->set_float_val(clipinfo.xmax);
+    }
+    updatefacelists = 1;
+    break;
   case SPINNER_ylower:
+    if(clipinfo.ymin < ybar0ORIG) {
+      clipinfo.ymin = ybar0ORIG - dy;
+      SPINNER_clip_ymin->set_float_val(clipinfo.ymin);
+    }
+    updatefacelists = 1;
+    break;
   case SPINNER_yupper:
+    if(clipinfo.ymax > ybarORIG) {
+      clipinfo.ymax = ybarORIG + dy;
+      SPINNER_clip_ymax->set_float_val(clipinfo.ymax);
+    }
+    updatefacelists = 1;
+    break;
   case SPINNER_zlower:
+    if(clipinfo.zmin < zbar0ORIG) {
+      clipinfo.zmin = zbar0ORIG - dz;
+      SPINNER_clip_zmin->set_float_val(clipinfo.zmin);
+    }
+    updatefacelists = 1;
+    break;
   case SPINNER_zupper:
+    if(clipinfo.zmax > zbarORIG) {
+      clipinfo.zmax = zbarORIG + dz;
+      SPINNER_clip_zmax->set_float_val(clipinfo.zmax);
+    }
     updatefacelists = 1;
     break;
   default:
@@ -209,8 +251,10 @@ void ClipCB(int var){
     camera_current->zmin = clipinfo.zmin;
     camera_current->zmax = clipinfo.zmax;
     break;
+  case CLIP_CLOSE:
   case CLIP_ROTATE:
   case CLIP_SHOW_ROTATE2:
+  case SAVE_SETTINGS_CLIP:
     break;
   default:
     assert(FFALSE);
@@ -247,9 +291,9 @@ void SetClipControls(int val){
 
     meshi = global_scase.meshescoll.meshinfo + val - 1;
 
-    xplt = meshi->xplt_orig;
-    yplt = meshi->yplt_orig;
-    zplt = meshi->zplt_orig;
+    xplt = meshi->xplt_fds;
+    yplt = meshi->yplt_fds;
+    zplt = meshi->zplt_fds;
 
     clipinfo.xmin = xplt[0] - dxclip;
     clipinfo.ymin = yplt[0] - dyclip;
@@ -360,7 +404,9 @@ extern "C" void GLUIHideClip(void){
 /* ------------------ GLUIShowClip ------------------------ */
 
 extern "C" void GLUIShowClip(void){
-  if(glui_clip!=NULL)glui_clip->show();
+  if(glui_clip != NULL){
+    glui_clip->show();
+  }
 }
 
 /* ------------------ GLUIUpdateClip ------------------------ */

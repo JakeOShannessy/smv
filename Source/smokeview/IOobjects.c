@@ -41,6 +41,43 @@ int rgbsize = 0;
     return devicei->val;\
   }
 
+/* ----------------------- DrawSphereArray ----------------------------- */
+
+void DrawSphereArray(void){
+  int i;
+  unsigned char sphere_rgb_local[3];
+
+  sphere_rgb_local[0] = (unsigned char)sphere_rgb[0];
+  sphere_rgb_local[1] = (unsigned char)sphere_rgb[1];
+  sphere_rgb_local[2] = (unsigned char)sphere_rgb[2];
+
+  glPushMatrix();
+  glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
+  glTranslatef(-global_scase.xbar0,-global_scase.ybar0,-global_scase.zbar0);
+  for(i = 0;i < sphere_nxyz[0];i++){
+    int j;
+    float x;
+
+    x = sphere_xyz0[0] + i * sphere_dxyz[0];
+    for(j = 0;j < sphere_nxyz[1];j++){
+      int k;
+      float y;
+
+      y = sphere_xyz0[1] + j * sphere_dxyz[1];
+      for(k = 0;k < sphere_nxyz[2];k++){
+        float z;
+
+        z = sphere_xyz0[2] + k * sphere_dxyz[2];
+        glPushMatrix();
+        glTranslatef(x,y,z);
+        DrawSphere(sphere_diameter, sphere_rgb_local);
+        glPopMatrix();
+      }
+    }
+  }
+  glPopMatrix();
+}
+
 /* ----------------------- GetSmokeSensors ----------------------------- */
 
 void GetSmokeSensors(void){
@@ -353,7 +390,7 @@ void GetDeviceScreenCoords(void){
     if(STRCMP(label,"smokesensor")!=0)continue;
     xyz = devicei->xyz;
     device_mesh = devicei->device_mesh;
-    devicei->eyedist = GetPoint2BoxDist(device_mesh->boxmin,device_mesh->boxmax,xyz,fds_eyepos);
+    devicei->eyedist = GetPoint2BoxDist(device_mesh->boxmin_fds,device_mesh->boxmax_fds,xyz,fds_eyepos);
     ijk = devicei->screenijk;
     gluProject(xyz[0],xyz[1],xyz[2],mv_setup,projection_setup,viewport_setup,d_ijk,d_ijk+1,d_ijk+2);
     ijk[0] = d_ijk[0];

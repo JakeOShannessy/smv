@@ -5,26 +5,16 @@
 
 #include "options_common.h"
 
-//#define pp_FRAME            // turn on frame code
 //#define pp_SHOW_UPDATE      // show what is being updated in the UpdateShowScene routine
 #define pp_GPU              // support the GPU
 #define pp_THREAD           // turn on multi-threading
-
-#ifdef pp_FRAME          // turn on each frame type if pp_FRAME is set
-#define pp_BOUNDFRAME    // turn on frame code for boundary files
-#define pp_SMOKEFRAME    // turn on frame code for 3d smoke
-#define pp_ISOFRAME      // turn on frame code for isosurfaces
-#define pp_SLICEFRAME    // turn on frame code for slices
-#define pp_PARTFRAME     // turn on frame code for particles
-//#define pp_FRAME_DEBUG   // frame timing test
-//#define pp_FRAME_DEBUG2  // output frame times
-#endif
+#define pp_BOUNDS           // fix to bounds dialog box
+#define pp_BF_FIX       // fix to boundary file display
 
 //*** options: windows
 
 #ifdef WIN32
-#define pp_memstatus
-#define pp_COMPRESS         // support for smokezip
+#define pp_memload
 #define pp_DIALOG_SHORTCUTS // dialog shortcuts
 #ifdef pp_GPU
 #define pp_WINGPU           // only draw 3d slices with the GPU on windows

@@ -732,8 +732,8 @@ bufferdata *File2Buffer(char *file, char *size_file, int *options, bufferdata *b
   }
 //  nread = fread_p(file, buffer, offset, delta, nthreads);
 
-//#define XXX
-#ifdef XXX
+//#define XXXX
+#ifdef XXXX
   FILE *stream;
 #ifdef WIN32
   stream = _fsopen(file, "rb", _SH_DENYNO);
@@ -742,7 +742,7 @@ bufferdata *File2Buffer(char *file, char *size_file, int *options, bufferdata *b
 #endif
 #endif
 
-#ifndef XXX
+#ifndef XXXX
   FILE *stream;
   stream = fopen(file, "rb");
 #endif
@@ -892,7 +892,7 @@ FILE *fopen_2dir_scratch(char *file, char *mode) {
 /* ------------------ fopen_3dir ------------------------ */
 
 FILE *fopen_3dir(char *file, char *mode, char *dir1, char *dir2, char *dir3){
-  FILE *stream;
+  FILE *stream = NULL;
   char buffer[4096];
   // try opening file in the current directory, dir1 then in dir2 then in dir3
   // (currently results direcrory defined by fds, current directory, scratch directory)

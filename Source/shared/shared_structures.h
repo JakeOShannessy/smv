@@ -3,9 +3,6 @@
 #include "isobox.h"
 #include "options.h"
 #include <stdio.h>
-#ifdef pp_FRAME
-#include "IOframe.h"
-#endif
 
 #if defined(WIN32)
 #include <windows.h>
@@ -211,25 +208,25 @@ typedef struct _meshdata {
   float meshrgb[3], *meshrgb_ptr;
   float mesh_offset[3], *mesh_offset_ptr;
   int blockvis, datavis;
-  float *xplt, *yplt, *zplt;
-  double *xpltd, *ypltd, *zpltd;
   int ivolbar, jvolbar, kvolbar;
-  float *xvolplt, *yvolplt, *zvolplt;
-  float *xplt_cen, *yplt_cen, *zplt_cen;
-  float *xplt_orig, *yplt_orig, *zplt_orig;
-  float x0, x1, y0, y1, z0, z1;
+  float  *xplt_smv,     *yplt_smv,     *zplt_smv;
+  float  *xplt_fds,     *yplt_fds,     *zplt_fds;
+  double *xpltd_fds,    *ypltd_fds,    *zpltd_fds;
+  float  *xvolplt_smv,  *yvolplt_smv,  *zvolplt_smv;
+  float  *xplt_cen_smv, *yplt_cen_smv, *zplt_cen_smv;
+  float   xcen_smv,      ycen_smv,      zcen_smv;
+  float boxmin_fds[3], boxmiddle_fds[3], boxmax_fds[3], boxeps_fds[3];
+  float boxmin_smv[3], boxmiddle_smv[3], boxmax_smv[3], boxeps_smv[3];
+  float dbox_fds[3], dcell_smv, dcell3_smv[3];
   int drawsides[7];
   int extsides[7];   // 1 if on exterior side of a supermesh, 0 otherwise
   int is_extface[6]; // 1 if adjacent to exterior, 0 if adjacent to interior, -1 if unknown
   int inside;
   int in_frustum;    // 1 if part or all of mesh is in the view frustum
-  float boxmin[3], boxmiddle[3], boxmax[3], dbox[3], boxeps[3], dcell, dcell3[3], verts[24], eyedist;
-  float boxeps_fds[3];
+  float verts[24], eyedist;
   float slice_min[3], slice_max[3];
-  float boxmin_scaled[3], boxmiddle_scaled[3], boxmax_scaled[3];
   float xyz_bar0[3], xyz_bar[3];
-  float xcen, ycen, zcen;
-  float face_centers[18];
+  float face_centers_smv[18];
   float offset[3];
   float xyzmaxdiff;
   float boxoffset;
@@ -294,7 +291,7 @@ typedef struct _meshdata {
   int *iso_timeslist;
   int iso_itime;
   int smokedir,smokedir_old;
-  float dxDdx, dyDdx, dzDdx, dxyDdx, dxzDdx, dyzDdx, dxyz_orig[3];
+  float dxDdx, dyDdx, dzDdx, dxyDdx, dxzDdx, dyzDdx, dxyz_fds[3];
   float smoke_dist[6];
   float norm[3];
   float dplane_min[4], dplane_max[4];
@@ -312,9 +309,7 @@ typedef struct _meshdata {
   unsigned char *cpatchval_zlib, *cpatchval_iframe_zlib;
   unsigned char *cpatchval, *cpatchval_iframe;
   float *patch_times, *patch_timesi, *patchval;
-#ifndef pp_BOUNDFRAME
   float *patchval_iframe;
-#endif
   unsigned char *patch_times_map;
   float **patchventcolors;
   int patch_itime;
@@ -374,7 +369,7 @@ typedef struct _supermeshdata {
   float *volsmoke_texture_buffer, *volfire_texture_buffer;
 #endif
   float *f_iblank_cell;
-  float boxmin_scaled[3], boxmax_scaled[3];
+  float boxmin_smv[3], boxmax_smv[3];
   int drawsides[7];
   int nmeshes;
   meshdata **meshes;
@@ -475,9 +470,7 @@ typedef struct _partdata {
   float zoffset, *times;
   unsigned char *times_map;
   FILE_SIZE reg_file_size, file_size;
-#ifndef pp_PARTFRAME
   LINT *filepos;
-#endif
 
   char menulabel[128];
 
@@ -492,9 +485,6 @@ typedef struct _partdata {
   unsigned char *vis_part;
   int *sort_tags;
   unsigned char *irvals;
-#ifdef pp_PARTFRAME
-  framedata *frameinfo;
-#endif
 } partdata;
 
 /* --------------------------  device --------------------------------------- */
@@ -665,9 +655,6 @@ typedef struct _slicedata {
   FILE_SIZE file_size;
   int *geom_offsets;
   devicedata vals2d;
-#ifdef pp_SLICEFRAME
-  framedata *frameinfo;
-#endif
 } slicedata;
 
 /* --------------------------  multislicedata ------------------------------------ */
@@ -1221,9 +1208,6 @@ typedef struct _geomdata {
   geomobjdata *geomobjinfo;
   int *geomobj_offsets;
   int ngeomobj_offsets;
-#ifdef pp_ISOFRAME
-  framedata *frameinfo;
-#endif
 } geomdata;
 
 /* --------------------------  isodata ------------------------------------ */
@@ -1256,9 +1240,6 @@ typedef struct _isodata {
   unsigned char *geom_times_map;
   float globalmin_iso, globalmax_iso;
   int geom_nvals;
-#ifdef pp_ISOFRAME
-  framedata *frameinfo;
-#endif
 } isodata;
 
 /* --------------------------  boundsdata ----------------------------------- */
@@ -1367,9 +1348,6 @@ typedef struct _patchdata {
   int npatches;
   patchfacedata *patchfaceinfo;
   patchfacedata *meshfaceinfo[6];
-#ifdef pp_BOUNDFRAME
-  framedata *frameinfo;
-#endif
 } patchdata;
 
 /* --------------------------  std_objects ------------------------------------ */
@@ -1436,9 +1414,6 @@ typedef struct _smoke3ddata {
   char *file;
   char *comp_file, *reg_file;
   char *smoke_density_file;
-#ifdef pp_SMOKEFRAME
-  char *size_file;
-#endif
 #ifdef pp_SMOKE3D_FORCE
   int dummy;
 #endif
@@ -1483,17 +1458,12 @@ typedef struct _smoke3ddata {
   float maxval;
   unsigned char *smokeframe_in, *smokeframe_out, **smokeframe_comp_list;
   unsigned char *smokeview_tmp;
-#ifndef pp_SMOKEFRAME
   unsigned char *smoke_comp_all;
-#endif
   unsigned char *frame_all_zeros;
   FILE_SIZE file_size;
   float *smoke_boxmin, *smoke_boxmax;
   smokedata smoke;
   int dir;
-#ifdef pp_SMOKEFRAME
-  framedata *frameinfo;
-#endif
 } smoke3ddata;
 
 /* --------------------------  smoke3dtypedata ------------------------------ */
