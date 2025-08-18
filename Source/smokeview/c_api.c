@@ -356,9 +356,7 @@ ERROR_CODE GetNamedColorbar(const char *name, size_t *index) {
 
 /// @brief Set the colorbar to the given colorbar index.
 /// @param value
-void SetColorbar(size_t value) {
-  ColorbarMenu(value);
-}
+void SetColorbar(size_t value) { ColorbarMenu(value); }
 /// @brief Set whether the title of the simulation is visible.
 /// @param setting Boolean value.
 void SetTitleVisibility(int setting) { vis_title_fds = setting; }

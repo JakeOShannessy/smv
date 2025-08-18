@@ -431,14 +431,14 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
     struct json_object *yplt_orig = json_object_new_array();
     for(size_t j = 0; j < mesh->jbar; j++) {
       json_object_array_add(yplt_orig,
-                            json_object_new_double(mesh->xplt_fds[j]));
+                            json_object_new_double(mesh->yplt_fds[j]));
     }
     json_object_object_add(mesh_obj, "yplt_orig", yplt_orig);
 
     struct json_object *zplt_orig = json_object_new_array();
     for(size_t j = 0; j < mesh->kbar; j++) {
       json_object_array_add(zplt_orig,
-                            json_object_new_double(mesh->xplt_fds[j]));
+                            json_object_new_double(mesh->zplt_fds[j]));
     }
     json_object_object_add(mesh_obj, "zplt_orig", zplt_orig);
 
