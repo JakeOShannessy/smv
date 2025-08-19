@@ -36,6 +36,23 @@
 
 FILE *alt_stdout=NULL;
 
+wchar_t *convert_string_to_path(const char *path) {
+  int required_buffer_len = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
+  LPWSTR out = malloc(required_buffer_len * sizeof(WCHAR));
+  // TODO: Handle ERROR_INSUFFICIENT_BUFFER etc.
+  MultiByteToWideChar(CP_UTF8, 0, path, -1, out, required_buffer_len);
+  return out;
+}
+
+#ifdef WIN32
+int UNLINK(const char *file) {
+  wchar_t *path = convert_string_to_path(file);
+  int r = _wunlink(path);
+  free(path);
+  return r;
+}
+#endif
+
 /* ------------------ TestWrite ------------------------ */
 
 void TestWrite(char *scratchdir, char **fileptr){
@@ -394,7 +411,7 @@ int Writable(char *dir){
     strcat(tempfullfile,dirseparator);
     RandStr(tempfile,35);
     strcat(tempfullfile,tempfile);
-    stream = fopen(tempfullfile,"w");
+    stream = FOPEN(tempfullfile,"w");
     if(stream==NULL){
       UNLINK(tempfullfile);
       return NO;

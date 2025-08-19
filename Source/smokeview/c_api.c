@@ -629,7 +629,13 @@ int Setrenderdir(const char *dir) {
     mkdir(dir_path_temp);
 #elif defined(WIN32)
     fprintf(stderr, "%s\n", "making directory(win32)\n");
-    CreateDirectory(dir_path_temp, NULL);
+    int required_buffer_len = MultiByteToWideChar(CP_UTF8, 0, dir, -1, NULL, 0);
+    LPWSTR out = malloc(required_buffer_len * sizeof(WCHAR));
+    // TODO: Handle ERROR_INSUFFICIENT_BUFFER etc.
+    MultiByteToWideChar(CP_UTF8, 0, dir, -1, out, required_buffer_len);
+    fwprintf(stderr, L"creating: %s\n", out);
+    CreateDirectoryW(out, NULL);
+    free(out);
 #else // linux or osx
     fprintf(stderr, "%s\n", "making directory(linux/osx)\n");
     mkdir(dir_path_temp, 0755);

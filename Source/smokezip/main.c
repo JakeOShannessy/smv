@@ -351,7 +351,7 @@ int main(int argc, char **argv){
 
   if(GLOBcleanfiles==1){
     if(FileExistsOrig(smvzip_filename)==1){
-      UNLINK(smvzip_filename);
+      unlink(smvzip_filename);
     }
   }
   else{

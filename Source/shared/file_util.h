@@ -68,9 +68,7 @@ typedef struct {
 // vvvvvvvvvvvvvvvvvvvvvvvv preprocessing directives
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-#ifdef WIN32
-#define UNLINK _unlink
-#else
+#ifndef WIN32
 #define UNLINK unlink
 #endif
 
@@ -154,6 +152,9 @@ EXTERNCPP bufferdata *File2Buffer(char *file, char *size_file, int *options, buf
 EXTERNCPP FILE_SIZE fread_p(char *file, unsigned char *buffer, FILE_SIZE offset, FILE_SIZE nchars, int nthreads);
 EXTERNCPP void FileErase(char *file);
 EXTERNCPP FILE *FOPEN(const char *file, const char *mode);
+#ifdef WIN32
+EXTERNCPP wchar_t *convert_string_to_path(const char *path);
+#endif
 EXTERNCPP FILE *fopen_indir(char *dir, char *file, char *mode);
 EXTERNCPP FILE *fopen_2dir_scratch(char *file, char *mode);
 EXTERNCPP FILE *fopen_2dir(char *file, char *mode, char *scratch_dir);
