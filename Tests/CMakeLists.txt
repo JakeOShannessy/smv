@@ -69,6 +69,10 @@ target_link_libraries(test_image_render PRIVATE libsmv)
 add_executable(test_root_dir test_root_dir.c)
 target_link_libraries(test_root_dir PRIVATE libsmv)
 
+# test_unicode_paths
+add_executable(test_unicode_paths unicode_paths.c)
+target_link_libraries(test_unicode_paths PRIVATE libsmv)
+
 # sort_surfs
 add_executable(sort_surfs sort_surfs.c)
 target_link_libraries(sort_surfs PRIVATE libsmv)
@@ -128,6 +132,9 @@ add_test(NAME "Mem Test"
 
 add_test(NAME "Test Root Dir"
     COMMAND test_root_dir)
+
+add_test(NAME "Test Unicode Paths"
+    COMMAND test_unicode_paths ${CMAKE_SOURCE_DIR}/Tests/unicode_test_files)
 
 add_test(NAME "Sort Surfs"
     COMMAND sort_surfs)

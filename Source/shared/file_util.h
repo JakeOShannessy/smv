@@ -68,7 +68,9 @@ typedef struct {
 // vvvvvvvvvvvvvvvvvvvvvvvv preprocessing directives
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-#ifndef WIN32
+#ifdef WIN32
+int UNLINK(const char *file);
+#else
 #define UNLINK unlink
 #endif
 
