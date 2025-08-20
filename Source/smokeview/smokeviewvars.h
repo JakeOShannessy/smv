@@ -369,9 +369,15 @@ SVEXTERN int SVDECL(slice_fileupdate, 0);
 SVEXTERN int SVDECL(zone_temp_bounds_defined, 0);
 SVEXTERN int SVDECL(slice_temp_bounds_defined, 0);
 
-SVEXTERN int nplot3dloaded, nsmoke3dloaded, nisoloaded, nsliceloaded, nvsliceloaded, npartloaded, npatchloaded;
-SVEXTERN int nvolsmoke3dloaded;
-SVEXTERN int npart5loaded, npartloaded;
+SVEXTERN int nplot3dloaded, nsmoke3dloaded, nisoloaded, nsliceloaded, nvsliceloaded;
+SVEXTERN int npartloaded, npatchloaded, nvolsmoke3dloaded, npart5loaded, npartloaded;
+SVEXTERN int nplot3dvis, nsmoke3dvis, nisovis, nslicevis, nvslicevis;
+SVEXTERN int npatchvis, nvolsmoke3dvis, npart5vis, npartvis;
+
+SVEXTERN int SVDECL(nplot3dloaded_old,0),     SVDECL(nsmoke3dloaded_old,0), SVDECL(nisoloaded_old,0);
+SVEXTERN int SVDECL(nsliceloaded_old,0),      SVDECL(nvsliceloaded_old,0),  SVDECL(npatchloaded_old,0);
+SVEXTERN int SVDECL(nvolsmoke3dloaded_old,0), SVDECL(npart5loaded_old,0),   SVDECL(npartloaded_old,0);
+
 SVEXTERN int SVDECL(select_part, 0), SVDECL(selected_part_index, -1);
 SVEXTERN int SVDECL(smoke3d_compression_type, COMPRESSED_UNKNOWN);
 SVEXTERN int SVDECL(update_smoke3dmenulabels, 0);
@@ -953,9 +959,6 @@ SVEXTERN int SVDECL(update_initcullgeom,1),SVDECL(cullgeom,1);
 SVEXTERN int opengl_version;
 SVEXTERN char opengl_version_label[256];
 SVEXTERN int SVDECL(cull_meshes, 1);
-#ifdef pp_BF_FIX
-SVEXTERN int SVDECL(boundary_file_fix, 1);
-#endif
 
 SVEXTERN int SVDECL(usevolrender,1);
 #ifdef pp_GPU
@@ -1586,9 +1589,7 @@ SVEXTERN float SVDECL(max_mem_GB,0.0);
 #ifdef pp_memusage
 SVEXTERN int SVDECL(vismemusage,0);
 #endif
-#ifdef pp_memload
 SVEXTERN int SVDECL(vismemload, 0);
-#endif
 SVEXTERN float gslice_norm[3];
 #ifdef INMAIN
 SVEXTERN float glui_tour_view[3] = {0.0,0.0,0.0};
@@ -1874,7 +1875,6 @@ SVEXTERN float SVDECL(desired_view_height,1.5);
 SVEXTERN int thistime, lasttime, SVDECL(resetclock,1),SVDECL(initialtime,0);
 SVEXTERN int SVDECL(realtime_flag,0);
 SVEXTERN char timelabel[30];
-SVEXTERN char frameratelabel[30];
 SVEXTERN char framelabel[30];
 SVEXTERN float SVDECL(**p3levels,NULL), SVDECL(*zonelevels,NULL);
 SVEXTERN float SVDECL(**p3levels256,NULL);

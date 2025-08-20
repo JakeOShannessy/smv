@@ -8,13 +8,10 @@
 //#define pp_SHOW_UPDATE      // show what is being updated in the UpdateShowScene routine
 #define pp_GPU              // support the GPU
 #define pp_THREAD           // turn on multi-threading
-#define pp_BOUNDS           // fix to bounds dialog box
-#define pp_BF_FIX       // fix to boundary file display
 
 //*** options: windows
 
 #ifdef WIN32
-#define pp_memload
 #define pp_DIALOG_SHORTCUTS // dialog shortcuts
 #ifdef pp_GPU
 #define pp_WINGPU           // only draw 3d slices with the GPU on windows

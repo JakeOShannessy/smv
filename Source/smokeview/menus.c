@@ -829,15 +829,9 @@ void LabelMenu(int value){
     vis_title_CHID = 1;
     vis_title_gversion =1;
     visFramerate=1;
-#ifdef pp_memload
     vismemload = 1;
 #ifdef pp_memusage
     vismemusage = 0;
-#endif
-#else
-#ifdef pp_memusage
-    vismemusage = 1;
-#endif
 #endif
     visaxislabels=1;
     visTimelabel=1;
@@ -870,9 +864,7 @@ void LabelMenu(int value){
     if(global_scase.ntickinfo>0)visFDSticks=0;
     visgridloc=0;
     vis_slice_average=0;
-#ifdef pp_memload
     vismemload=0;
-#endif
 #ifdef pp_memusage
     vismemusage = 0;
 #endif
@@ -906,20 +898,16 @@ void LabelMenu(int value){
    case MENU_LABEL_meshlabel:
      visMeshlabel=1-visMeshlabel;
      break;
-#ifdef pp_memload
    case MENU_LABEL_memload:
      vismemload = 1 - vismemload;
 #ifdef pp_memusage
      if(vismemload==1)vismemusage=0;
 #endif
      break;
-#endif
 #ifdef pp_memusage
    case MENU_LABEL_memusage:
      vismemusage = 1 - vismemusage;
-#ifdef pp_memload
      if(vismemusage==1)vismemload=0;
-#endif
      break;
 #endif
    case MENU_LABEL_fdsticks:
@@ -2607,6 +2595,7 @@ void Plot3DShowMenu(int value){
      for(i=0;i<global_scase.nplot3dinfo;i++){
        if(global_scase.plot3dinfo[i].loaded==1)global_scase.plot3dinfo[i].display=show_plot3dfiles;
      }
+     updatefacelists = 1;
      break;
    default:
      if(value>=1000){
@@ -6086,7 +6075,8 @@ void LoadBoundaryMenu(int value){
 int GetInternalFaceShow(void){
   int show = 1;
 
-  if(boundary_loaded == 1){
+  if(plotstate != DYNAMIC_PLOTS) return show;
+  if(npatchvis>0){
     cpp_boundsdata *bounds;
     bounds = GLUIGetBoundsData(BOUND_PATCH);
     if(bounds->set_chopmax == 1 || bounds->set_chopmin == 1){
@@ -9521,7 +9511,8 @@ static int menu_count=0;
         plot3di = global_scase.plot3dinfo+i;
         if(plot3di->loaded==0)continue;
         strcpy(menulabel, "");
-        if(show_plot3dfiles==1)strcat(menulabel, "*");
+        if(plotstate == DYNAMIC_PLOTS)show_plot3dfiles = 0;
+        if(show_plot3dfiles == 1)strcat(menulabel, "*");
         strcat(menulabel, plot3di->timelabel);
         strcat(menulabel, ", ");
         strcat(menulabel, plot3di->longlabel);
@@ -10249,10 +10240,8 @@ static int menu_count=0;
     if(vis_hrr_label == 1)glutAddMenuEntry(_("*HRR"), MENU_LABEL_hrr);
     if(vis_hrr_label == 0)glutAddMenuEntry(_("HRR"), MENU_LABEL_hrr);
   }
-#ifdef pp_memload
   if(vismemload == 1)glutAddMenuEntry(_("*Memory load"), MENU_LABEL_memload);
   if(vismemload == 0)glutAddMenuEntry(_("Memory load"), MENU_LABEL_memload);
-#endif
 #ifdef pp_memusage
   if(vismemusage == 1)glutAddMenuEntry(_("*Memory usage"), MENU_LABEL_memusage);
   if(vismemusage == 0)glutAddMenuEntry(_("Memory usage"), MENU_LABEL_memusage);
