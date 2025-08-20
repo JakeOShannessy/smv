@@ -36,6 +36,7 @@
 
 FILE *alt_stdout=NULL;
 
+#ifdef WIN32
 wchar_t *convert_string_to_path(const char *path) {
   int required_buffer_len = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
   LPWSTR out = malloc(required_buffer_len * sizeof(WCHAR));
@@ -44,7 +45,6 @@ wchar_t *convert_string_to_path(const char *path) {
   return out;
 }
 
-#ifdef WIN32
 int UNLINK(const char *file) {
   wchar_t *path = convert_string_to_path(file);
   int r = _wunlink(path);
