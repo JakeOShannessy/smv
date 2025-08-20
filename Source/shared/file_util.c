@@ -37,20 +37,72 @@
 FILE *alt_stdout=NULL;
 
 #ifdef WIN32
-wchar_t *convert_string_to_path(const char *path) {
-  int required_buffer_len = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
-  LPWSTR out = malloc(required_buffer_len * sizeof(WCHAR));
-  // TODO: Handle ERROR_INSUFFICIENT_BUFFER etc.
-  MultiByteToWideChar(CP_UTF8, 0, path, -1, out, required_buffer_len);
+/// @brief Given a UTF-8 (or ASCII) string, convert it to Windows UTF-16.
+/// @param path a UTF-8 (or ASCII) string
+/// @return a UTF-16 string or NULL on error
+wchar_t *convert_utf8_to_utf16(const char *path) {
+  int r;
+  r = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
+  if(r == 0) goto err;
+  LPWSTR out;
+  NEWMEMORY(out, r * sizeof(WCHAR));
+  r = MultiByteToWideChar(CP_UTF8, 0, path, -1, out, r);
+  if(r == 0) goto err;
   return out;
+err:
+  // There was an error converting this string to utf-16. Produce a suitable
+  // error message and return NULL.
+  DWORD dw = GetLastError();
+  switch(dw) {
+  case ERROR_INSUFFICIENT_BUFFER:
+    fprintf(stderr, "A supplied buffer size was not large enough, or it was "
+                    "incorrectly set to NULL.\n");
+    break;
+  case ERROR_INVALID_FLAGS:
+    fprintf(stderr, "The values supplied for flags were not valid.\n");
+    break;
+  case ERROR_INVALID_PARAMETER:
+    fprintf(stderr, "Any of the parameter values was invalid.\n");
+    break;
+  case ERROR_NO_UNICODE_TRANSLATION:
+    fprintf(stderr, "Invalid Unicode was found in a string.\n");
+    break;
+  default:
+    break;
+  }
+  return NULL;
 }
 
-int UNLINK(const char *file) {
-  wchar_t *path = convert_string_to_path(file);
-  int r = _wunlink(path);
-  free(path);
+/* ------------------ FOPEN  ------------------------ */
+
+FILE *FOPEN(const char *file, const char *mode) {
+  wchar_t *path = convert_utf8_to_utf16(file);
+  wchar_t *wmode = convert_utf8_to_utf16(mode);
+  FILE *stream = _wfsopen(path, wmode, _SH_DENYNO);
+  FREEMEMORY(path);
+  FREEMEMORY(wmode);
+  return stream;
+}
+
+/* ------------------ MKDIR  ------------------------ */
+
+int MKDIR(const char *file) {
+  wchar_t *path = convert_utf8_to_utf16(file);
+  int r = CreateDirectoryW(path, NULL);
+  FREEMEMORY(path);
   return r;
 }
+
+/* ------------------ UNLINK  ----------------------- */
+
+int UNLINK(const char *file) {
+  wchar_t *path = convert_utf8_to_utf16(file);
+  int r = _wunlink(path);
+  FREEMEMORY(path);
+  return r;
+}
+#else
+FILE *FOPEN(const char *file, const char *mode) { return fopen(file, mode); }
 #endif
 
 /* ------------------ TestWrite ------------------------ */

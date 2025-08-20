@@ -8,7 +8,6 @@
 #include <string.h>
 #ifdef WIN32
 #include <share.h>
-#include <windows.h>
 #endif
 #include "dmalloc.h"
 #include "datadefs.h"
@@ -31,22 +30,6 @@
 _Static_assert(CHAR_BIT == 8, "getdata.c assumes that CHAR_BIT == 8");
 _Static_assert(sizeof(float) == 4, "getdata.c assumes that float is 4 bytes");
 #endif
-#endif
-
-/* ------------------ FOPEN  ------------------------ */
-
-#ifdef WIN32
-FILE *FOPEN(const char *file, const char *mode) {
-  wchar_t *path = convert_string_to_path(file);
-  wchar_t *wmode = convert_string_to_path(mode);
-  fwprintf(stderr, L"convert_string_to_path(%s)\n", path);
-  FILE *stream = _wfsopen(path, wmode, _SH_DENYNO);
-  free(path);
-  free(wmode);
-  return stream;
-}
-#else
-FILE *FOPEN(const char *file, const char *mode) { return fopen(file, mode); }
 #endif
 
 //  ------------------ fortread ------------------------
