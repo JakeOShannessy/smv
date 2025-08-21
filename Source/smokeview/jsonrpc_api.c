@@ -72,21 +72,32 @@ char *copy_convert(const char *s) {
 #ifdef WIN32
   return (char *)convert_utf8_to_utf16(s);
 #else
-  return strdup(s);
+  char *buf;
+  int l = strlen(s);
+  NEWMEMORY(buf, l * sizeof(char));
+  strcpy(buf, s);
+  return buf;
 #endif
+}
+
+/// @brief
+/// @param obj
+/// @return a string allocated with NEWMEMORY
+char *get_string_dup(struct json_object *obj) {
+  return copy_convert(json_object_get_string(obj));
 }
 
 /// @brief Render the current frame to a file.
 json_object *jsonrpc_Render(jrpc_context *context, json_object *params,
                             json_object *id) {
   DisplayCB();
-  const char *basename =
-      json_object_get_string(json_object_object_get(params, "basename"));
+  char *basename = get_string_dup(json_object_object_get(params, "basename"));
   int ret = CApiRender(basename);
   if(ret) {
     context->error_code = 111;
     context->error_message = strdup("render failure");
   }
+  FREEMEMORY(basename);
   return NULL;
 }
 
