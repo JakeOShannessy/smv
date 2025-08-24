@@ -19,7 +19,6 @@
         "jpeg"
       ]
     },
-    "lua",
     "pthreads",
     "json-c",
     "egl"

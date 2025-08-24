@@ -284,6 +284,7 @@ void InitKeywords(void){
   InitKeyword("HIDEHVACVALS",        SCRIPT_HIDEHVACVALS, 0);        // documented
   InitKeyword("SHOWHVACDUCTVAL",     SCRIPT_SHOWHVACDUCTVAL, 1);     // documented
   InitKeyword("SHOWHVACNODEVAL",     SCRIPT_SHOWHVACNODEVAL, 1);     // documented
+  InitKeyword("LOADHVAC",            SCRIPT_LOADHVAC, 0);            // documented
 
 // slice and vector slice files
   InitKeyword("LOADSLCF",            SCRIPT_LOADSLCF, 1);            // documented
@@ -324,8 +325,8 @@ void InitKeywords(void){
   InitKeyword("HIDECBAREDIT",        SCRIPT_HIDECBAREDIT, 0);        // documented
   InitKeyword("SHOWCBAREDIT",        SCRIPT_SHOWCBAREDIT, 0);        // documented
   InitKeyword("SETCBAR",             SCRIPT_SETCBAR, 1);             // documented
-  InitKeyword("SETCBARLAB",          SCRIPT_SETCBARLAB, 0);
-  InitKeyword("SETCBARRGB",          SCRIPT_SETCBARRGB, 0);
+  InitKeyword("SETCBARLAB",          SCRIPT_SETCBARLAB, 0);          // documented
+  InitKeyword("SETCBARRGB",          SCRIPT_SETCBARRGB, 0);          // documented
   InitKeyword("HILIGHTMINVALS",      SCRIPT_HILIGHTMINVALS, 4);      // documented
   InitKeyword("HILIGHTMAXVALS",      SCRIPT_HILIGHTMAXVALS, 4);      // documented
 
@@ -337,7 +338,7 @@ void InitKeywords(void){
 
 // controlling the scene
   InitKeyword("EXIT",                SCRIPT_EXIT, 0);                // documented
-  InitKeyword("NOEXIT",              SCRIPT_NOEXIT, 0);
+  InitKeyword("NOEXIT",              SCRIPT_NOEXIT, 0);              // documented
   InitKeyword("GSLICEORIEN",         SCRIPT_GSLICEORIEN, 1);         // documented
   InitKeyword("GSLICEPOS",           SCRIPT_GSLICEPOS, 1);           // documented
   InitKeyword("GSLICEVIEW",          SCRIPT_GSLICEVIEW, 1);          // documented
@@ -348,6 +349,8 @@ void InitKeywords(void){
   InitKeyword("SETCLIPX",            SCRIPT_SETCLIPX, 1);            // documented
   InitKeyword("SETCLIPY",            SCRIPT_SETCLIPY, 1);            // documented
   InitKeyword("SETCLIPZ",            SCRIPT_SETCLIPZ, 1);            // documented
+  InitKeyword("SETDEMOMODE",         SCRIPT_SETDEMOMODE, 1);
+  InitKeyword("SMOKEPROP",           SCRIPT_SMOKEPROP, 1);
   InitKeyword("SETTIMEVAL",          SCRIPT_SETTIMEVAL, 1);          // documented
   InitKeyword("SETVIEWPOINT",        SCRIPT_SETVIEWPOINT, 1);        // documented
   InitKeyword("VIEWXMIN",            SCRIPT_VIEWXMIN, 0);            // documented
@@ -388,7 +391,7 @@ void InitKeywords(void){
 
 // miscellaneous
 
-  InitKeyword("GPUOFF",              SCRIPT_GPUOFF, 0);
+  InitKeyword("GPUOFF",              SCRIPT_GPUOFF, 0);              // documented
   InitKeyword("LABEL",               SCRIPT_LABEL, 1);               // documented
   InitKeyword("RGBTEST",             SCRIPT_RGBTEST, 1);             // documented
   InitKeyword("UNLOADPLOT2D",        SCRIPT_UNLOADPLOT2D, 0);
@@ -835,7 +838,18 @@ int CompileScript(char *scriptfile){
         SETcval;
         break;
 
-// SHOWALLDEVS
+// SETDEMOMODE
+      case SCRIPT_SETDEMOMODE:
+        SETival;
+        scripti->ival = CLAMP(scripti->ival, 0, 5);
+        break;
+        
+// SMOKEPROP
+      case SCRIPT_SMOKEPROP:
+        SETfval;
+        break;
+
+        // SHOWALLDEVS
       case SCRIPT_SHOWALLDEVS:
         break;
 
@@ -1377,7 +1391,7 @@ int CompileScript(char *scriptfile){
                 scripti->cell_centered = itokens[i];
                 break;
 	      default:
-		assert(FFALSE);
+		       assert(FFALSE);
 		break;
             }
           }
@@ -1445,6 +1459,10 @@ int CompileScript(char *scriptfile){
         SETbuffer;
         sscanf(param_buffer," %i %f",&scripti->ival,&scripti->fval);
         scripti->need_graphics = 0;
+        break;
+
+// LOADHVAC
+      case SCRIPT_LOADHVAC:
         break;
 
 // SETTIMEVAL
@@ -2239,7 +2257,7 @@ void ScriptLoadSLCF(scriptdata *scripti){
   if(scripti->c_pbxyz!=NULL){
     if(count2++!=0)printf(", ");
     if(strcmp(scripti->c_pbxyz,"PB3D")==0){
-      PRINTF("PB3D=T\n");
+      PRINTF("PB3D=T");
     }
     else{
       PRINTF("%s=%f", scripti->c_pbxyz, scripti->pbxyz_val);
@@ -2943,14 +2961,12 @@ void ScriptPlot3dProps(scriptdata *scripti){
 /* ------------------ ScriptShowCbarEdit ------------------------ */
 
 void ScriptShowCbarEdit(scriptdata *scripti){
-  showcolorbar_dialog=0;
   DialogMenu(DIALOG_COLORBAR);
 }
 
 /* ------------------ ScriptHideCbarEdit ------------------------ */
 
 void ScriptHideCbarEdit(scriptdata *scripti){
-  showcolorbar_dialog=1;
   DialogMenu(DIALOG_COLORBAR);
 }
 
@@ -2979,6 +2995,19 @@ void ScriptSetCbar(scriptdata *scripti){
       ColorbarMenu(cb_index);
     }
   }
+}
+
+/* ------------------ ScriptSmokeprop ------------------------ */
+
+void ScriptSmokeprop(scriptdata *scripti) {
+  glui_mass_extinct = scripti->fval;
+  GLUISmoke3dCB(SMOKE_EXTINCT);
+}
+
+/* ------------------ ScriptSetDemoMode ------------------------ */
+
+void ScriptSetDemoMode(scriptdata *scripti){
+  demo_mode = scripti->ival;
 }
 
 /* ------------------ ScriptShowHVACDuctVAL ------------------------ */
@@ -3215,7 +3244,7 @@ void ScriptHilightMinMaxVals(scriptdata *scripti, int flag){
     }
     break;
   default:
-    assert(0);
+    assert(FFALSE);
     break;
   }
   GLUIUpdateExtreme();
@@ -4125,6 +4154,12 @@ int RunScriptCommand(scriptdata *script_command){
     case SCRIPT_SHOWHVACNODEVAL:
       ScriptShowHVACNodeVal(scripti);
       break;
+    case SCRIPT_SETDEMOMODE:
+      ScriptSetDemoMode(scripti);
+      break;
+    case SCRIPT_SMOKEPROP:
+      ScriptSmokeprop(scripti);
+      break;
     case SCRIPT_HIDEHVACVALS:
       ScriptHideHVACVals();
       break;
@@ -4212,6 +4247,9 @@ int RunScriptCommand(scriptdata *script_command){
       break;
     case SCRIPT_LOADSLCF:
       ScriptLoadSLCF(scripti);
+      break;
+    case SCRIPT_LOADHVAC:
+      LoadHVACMenu(MENU_HVAC_LOAD);
       break;
     case SCRIPT_UNLOADPLOT2D:
       ScriptUnLoadPlot2D(scripti);

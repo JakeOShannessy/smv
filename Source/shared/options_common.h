@@ -81,6 +81,9 @@
 //#define pp_MEMPRINT     // output memory allocation info
 #define pp_MEMDEBUG     // comment this line when debugging REALLY large cases (to avoid memory checks)
 #endif
+#ifdef pp_MEMDEBUG
+#define pp_memusage
+#endif
 
 //*** hash output
 
@@ -88,21 +91,6 @@
 #define PRINTVERSION(a) PRINTversion(a,hash_option)
 #else
 #define PRINTVERSION(a) PRINTversion(a)
-#endif
-
-// debugging macros
-
-#ifdef pp_TRACE
-#define BTRACE \
-  fprintf(stderr, "entering, file: %s, line: %d\n",__FILE__,__LINE__)
-#define TTRACE \
-  fprintf(stderr, "in, file: %s, line: %d\n",__FILE__,__LINE__)
-#define ETRACE \
-  fprintf(stderr, "leaving, file: %s, line: %d\n",__FILE__,__LINE__)
-#else
-#define BTRACE
-#define TTRACE
-#define ETRACE
 #endif
 
 #define FILE_SIZE unsigned long long

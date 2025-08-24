@@ -23,13 +23,28 @@ void FreeSmoke3D(smv_case *scase, smoke3ddata *smoke3di){
   FREEMEMORY(meshi->is_firenode);
   meshi->is_firenodeptr = NULL;
   smoke3di->lastiframe = -999;
-#ifdef pp_SMOKEFRAME
-  FRAMEFree(smoke3di->frameinfo);
-  smoke3di->frameinfo = NULL;
-#endif
+  float ext;
+  char *label;
+
+  label = smoke3di->label.shortlabel;
+  ext = smoke3di->extinct;
+  if(ext > 0.0) {
+    meshi->smoke3d_soot = NULL;
+  }
+  if(strcmp(label, "hrrpuv") == 0){
+    meshi->smoke3d_hrrpuv = NULL;
+  }
+  if(strcmp(label, "temp") == 0){
+    meshi->smoke3d_temp = NULL;
+  }
+  if(strcmp(label, "rho_CO2") == 0 || strcmp(label, "Y_CO2") == 0){
+    meshi->smoke3d_co2 = NULL;
+  }
+
   FREEMEMORY(smoke3di->smokeframe_in);
   FREEMEMORY(smoke3di->smokeframe_out);
   FREEMEMORY(smoke3di->timeslist);
+  FREEMEMORY(smoke3di->histtimes);
   FREEMEMORY(smoke3di->times);
   FREEMEMORY(smoke3di->times_map);
   FREEMEMORY(smoke3di->use_smokeframe);
@@ -39,9 +54,7 @@ void FreeSmoke3D(smv_case *scase, smoke3ddata *smoke3di){
   FREEMEMORY(smoke3di->smoke_boxmin);
   FREEMEMORY(smoke3di->smoke_boxmax);
   FREEMEMORY(smoke3di->maxvals);
-#ifndef pp_SMOKEFRAME
   FREEMEMORY(smoke3di->smoke_comp_all);
-#endif
   FREEMEMORY(smoke3di->smokeframe_comp_list);
   FREEMEMORY(smoke3di->smokeview_tmp);
   FREEMEMORY(smoke3di->smokeframe_loaded);

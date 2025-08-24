@@ -2,18 +2,41 @@
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include "datadefs.h"
+#include "dmalloc.h"
+#include "shared_structures.h"
+
+#include "readlabel.h"
+#include "readsmvfile.h"
+#include "smokeviewdefs.h"
+#include "string_util.h"
+#include <math.h>
+
 #include <json-c/json_object.h>
 
-#include "smv.h"
+#ifndef _WIN32
+#include <libgen.h>
+#endif
+
+int ReadSMV_Init(smv_case *scase);
+int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream);
+void ReadSMVDynamic(smv_case *scase, char *file);
+void ReadSMVOrig(smv_case *scase);
+char *GetBaseName(const char *input_file);
+smv_case *CreateScase();
 
 int PrintJson(smv_case *scase) {
   struct json_object *jobj = json_object_new_object();
   json_object_object_add(jobj, "version", json_object_new_int(1));
   json_object_object_add(jobj, "chid",
-                         json_object_new_string(scase->paths.chidfilebase));
-  if(scase->paths.fds_filein != NULL) {
+                         json_object_new_string(scase->chidfilebase));
+  if(scase->fds_filein != NULL) {
     json_object_object_add(jobj, "input_file",
-                           json_object_new_string(scase->paths.fds_filein));
+                           json_object_new_string(scase->fds_filein));
   }
   if(scase->fds_title != NULL) {
     json_object_object_add(jobj, "title",
@@ -42,17 +65,17 @@ int PrintJson(smv_case *scase) {
     json_object_object_add(mesh_obj, "coordinates", mesh_coordinates);
     struct json_object *mesh_dimensions = json_object_new_object();
     json_object_object_add(mesh_dimensions, "x_min",
-                           json_object_new_double(mesh->x0));
+                           json_object_new_double(mesh->boxmin_fds[0]));
     json_object_object_add(mesh_dimensions, "x_max",
-                           json_object_new_double(mesh->x1));
+                           json_object_new_double(mesh->boxmax_fds[0]));
     json_object_object_add(mesh_dimensions, "y_min",
-                           json_object_new_double(mesh->y0));
+                           json_object_new_double(mesh->boxmin_fds[1]));
     json_object_object_add(mesh_dimensions, "y_max",
-                           json_object_new_double(mesh->y1));
+                           json_object_new_double(mesh->boxmax_fds[1]));
     json_object_object_add(mesh_dimensions, "z_min",
-                           json_object_new_double(mesh->z0));
+                           json_object_new_double(mesh->boxmin_fds[2]));
     json_object_object_add(mesh_dimensions, "z_max",
-                           json_object_new_double(mesh->z1));
+                           json_object_new_double(mesh->boxmax_fds[2]));
     json_object_object_add(mesh_obj, "dimensions", mesh_dimensions);
 
     struct json_object *vents = json_object_new_array();
@@ -228,22 +251,38 @@ int PrintJson(smv_case *scase) {
   return 0;
 }
 
-int RunSmvq(const char *filepath) {
+int RunSmvq(const char *input_file, const char *fdsprefix) {
   // Initialize the customized memory allocator that smokeview uses
   initMALLOC();
-  // Create and initialize an smv_case struct
-  smv_case *scase = ScaseCreate();
-  // Parse a file at the given path into scase
-  int result = ScaseParseFromPath(filepath, scase);
-  // Error handling on parse failure
-  if(result) {
-    fprintf(stderr, "failed to read smv file: %s\n", filepath);
-    return result;
+
+  smv_case *scase = CreateScase();
+  NEWMEMORY(scase->fdsprefix, (strlen(fdsprefix) + 1) * sizeof(char));
+  STRCPY(scase->fdsprefix, fdsprefix);
+
+  INIT_PRINT_TIMER(parse_time);
+  fprintf(stderr, "reading:\t%s\n", input_file);
+  {
+    bufferstreamdata *smv_streaminfo = GetSMVBuffer(input_file);
+    if(smv_streaminfo == NULL) {
+      fprintf(stderr, "could not open %s\n", input_file);
+      return 1;
+    }
+    INIT_PRINT_TIMER(ReadSMV_time);
+    int return_code = 0;
+    return_code = ReadSMV_Init(scase);
+    if(return_code) return return_code;
+    return_code = ReadSMV_Parse(scase, smv_streaminfo);
+    STOP_TIMER(ReadSMV_time);
+    fprintf(stderr, "ReadSMV:\t%8.3f ms\n", ReadSMV_time * 1000);
+    if(smv_streaminfo != NULL) {
+      FCLOSE(smv_streaminfo);
+    }
+    if(return_code) return return_code;
   }
   // Print scase to stdout in JSON format
   PrintJson(scase);
   // Deconstruct and free scase
-  ScaseDestroy(scase);
+  DestroyScase(scase);
   return 0;
 }
 
@@ -285,12 +324,14 @@ int main(int argc, char **argv) {
     printf("smvq - smv query processor (v%s)\n", PROGVERSION);
     return 0;
   }
-  char *filepath = argv[optind];
+  char *input_file = argv[optind];
 
-  if(filepath == NULL) {
+  if(input_file == NULL) {
     fprintf(stderr, "No input file specified.\n");
     return 1;
   }
-  int result = RunSmvq(filepath);
+  char *fdsprefix = GetBaseName(input_file);
+  int result = RunSmvq(input_file, fdsprefix);
+  free(fdsprefix);
   return result;
 }

@@ -9,9 +9,6 @@
 #include <stdlib.h>
 #ifdef pp_OSX
 #include <unistd.h>
-#ifdef pp_LUA
-#include <sys/syslimits.h>
-#endif
 #endif
 #include <math.h>
 #ifdef WIN32
@@ -118,7 +115,7 @@ void CopyFILE(char *destdir, char *file_in, char *file_out, int mode){
     streamout=fopen(full_file_out,"ab");
   }
   else{
-    assert(0);
+    assert(FFALSE);
   }
 
   if(streamout==NULL){
@@ -735,8 +732,8 @@ bufferdata *File2Buffer(char *file, char *size_file, int *options, bufferdata *b
   }
 //  nread = fread_p(file, buffer, offset, delta, nthreads);
 
-//#define XXX
-#ifdef XXX
+//#define XXXX
+#ifdef XXXX
   FILE *stream;
 #ifdef WIN32
   stream = _fsopen(file, "rb", _SH_DENYNO);
@@ -745,7 +742,7 @@ bufferdata *File2Buffer(char *file, char *size_file, int *options, bufferdata *b
 #endif
 #endif
 
-#ifndef XXX
+#ifndef XXXX
   FILE *stream;
   stream = fopen(file, "rb");
 #endif
@@ -862,11 +859,92 @@ FILE *fopen_indir(char *dir, char *file, char *mode){
   return stream;
 }
 
+/* ------------------ GetScratchFilename ------------------------ */
+
+char *GetScratchFilename(char *file){
+  char *smokeview_scratchdir = GetUserConfigDir();
+  char *fullfile;
+
+  if(smokeview_scratchdir!=NULL){
+    int len;
+
+    len = strlen(file) + strlen(smokeview_scratchdir) + 2;
+      NewMemory((void **)&fullfile,len);
+      strcpy(fullfile, smokeview_scratchdir);
+      strcat(fullfile, dirseparator);
+      strcat(fullfile, file);
+  }
+  else{
+    fullfile = file;
+  }
+  return fullfile;
+}
+
+/* ------------------ fopen_2dir_scratch ------------------------ */
+
 FILE *fopen_2dir_scratch(char *file, char *mode) {
   char *smokeview_scratchdir = GetUserConfigDir();
   FILE *f = fopen_2dir(file, mode, smokeview_scratchdir);
   FREEMEMORY(smokeview_scratchdir);
   return f;
+}
+
+/* ------------------ fopen_3dir ------------------------ */
+
+FILE *fopen_3dir(char *file, char *mode, char *dir1, char *dir2, char *dir3){
+  FILE *stream = NULL;
+  char buffer[4096];
+  // try opening file in the current directory, dir1 then in dir2 then in dir3
+  // (currently results direcrory defined by fds, current directory, scratch directory)
+
+  if(file == NULL)return NULL;
+  if(dir1 != NULL){
+    strcpy(buffer, dir1);
+    strcat(buffer, dirseparator);
+    strcat(buffer, file);
+#ifdef WIN32
+    stream = _fsopen(buffer, mode, _SH_DENYNO);
+#else
+    stream = fopen(buffer, mode);
+#endif
+    if(stream!=NULL)return stream;
+  }
+  if(dir2 != NULL){
+    strcpy(buffer, dir2);
+    strcat(buffer, dirseparator);
+    strcat(buffer, file);
+#ifdef WIN32
+    stream = _fsopen(buffer, mode, _SH_DENYNO);
+#else
+    stream = fopen(buffer, mode);
+#endif
+  }
+  if(dir3 != NULL){
+    strcpy(buffer, dir3);
+    strcat(buffer, dirseparator);
+    strcat(buffer, file);
+#ifdef WIN32
+    stream = _fsopen(buffer, mode, _SH_DENYNO);
+#else
+    stream = fopen(buffer, mode);
+#endif
+  }
+  return stream;
+}
+
+/* ------------------ SetResultsDir ------------------------ */
+
+char *SetResultsDir(char *file){
+  char *dirsep, filecopy[1024], *results_dir;
+
+  if(file==NULL)return NULL;
+  strcpy(filecopy, file);
+  dirsep = strrchr(filecopy, '/');
+  if(dirsep == NULL)return NULL;
+  dirsep[0] = 0;
+  NewMemory((void **)&results_dir,strlen(filecopy)+1);
+  strcpy(results_dir, filecopy);
+  return results_dir;
 }
 
 /* ------------------ fopen_2dir ------------------------ */
@@ -1066,36 +1144,36 @@ char *GetFloatFileSizeLabel(float size, char *sizelabel){
   return sizelabel;
 }
 
-// Only allows something from NEWMEMORY
-char *JoinPath(const char *path, const char *segment) {
-  // TODO: replace with platform-specific functions
-  char *new_path;
-  if (path == NULL) {
-    if (segment == NULL) return NULL;
-    NEWMEMORY(new_path, (strlen(segment) + 1) * sizeof(char));
-    STRCPY(new_path, segment);
-    return new_path;
-  };
-  if (segment == NULL) {
-    NEWMEMORY(new_path, (strlen(path) + 1) * sizeof(char));
-    STRCPY(new_path, path);
-    return new_path;
-  };
-  int path_len = strlen(path);
-  int newlen = path_len + strlen(dirseparator) + strlen(segment) + 1;
-  NEWMEMORY(new_path, (newlen + 1) * sizeof(char));
-  strcpy(new_path, path);
-  strcat(new_path, dirseparator);
-  strcat(new_path, segment);
-  return new_path;
-}
-
 #ifdef _WIN32
+char *CombinePaths(const char *path_a, const char *path_b){
+  char *path_out;
+  NEWMEMORY(path_out, sizeof(char) * MAX_PATH);
+  // NB: This uses on older function in order to support "char *".
+  // PathAllocCombine would be better but requires switching to "wchar *".
+  char *result = PathCombineA(path_out, path_a, path_b);
+  if(result == NULL) FREEMEMORY(path_out);
+  return result;
+}
+#else
+char *CombinePaths(const char *path_a, const char *path_b) {
+  char *path_out;
+  size_t path_a_len = strlen(path_a);
+  size_t path_b_len = strlen(path_b);
+  size_t new_len = path_a_len + 1 + path_b_len;
+  NEWMEMORY(path_out, sizeof(char) * (new_len + 1));
+  STRCPY(path_out, path_a);
+  path_out[path_a_len] = '/';
+  path_out[path_a_len+1] = '\0';
+  STRCAT(path_out, path_b);
+  path_out[new_len] = '\0';
+  return path_out;
+}
+#endif
 
-/* ------------------ GetBinPath - windows ------------------------ */
-
+/* ------------------ GetBinPath ------------------------ */
+#ifdef _WIN32
 char *GetBinPath(){
-  size_t MAX_BUFFER_SIZE = MAX_PATH * 20;
+  size_t max_buffer_size = MAX_PATH * 20;
   char *buffer;
   size_t buffer_size = MAX_PATH * sizeof(char);
   NEWMEMORY(buffer, buffer_size);
@@ -1105,7 +1183,7 @@ char *GetBinPath(){
     if(dw == ERROR_SUCCESS){
       return buffer;
     }
-    else if(dw == ERROR_INSUFFICIENT_BUFFER && buffer_size < MAX_BUFFER_SIZE){
+    else if(dw == ERROR_INSUFFICIENT_BUFFER && buffer_size < max_buffer_size){
       // increase buffer size by a factor of 2
       buffer_size *= 2;
       RESIZEMEMORY(buffer, buffer_size);
@@ -1116,23 +1194,9 @@ char *GetBinPath(){
     }
   }
 }
-
-/* ------------------ GetBinDir - windows ------------------------ */
-
-char *GetBinDir(){
-  char *buffer = GetBinPath();
-  // NB: This uses on older function in order to support "char *".
-  // PathCchRemoveFileSpec would be better but requires switching to "wchar *".
-  PathRemoveFileSpecA(buffer);
-  PathAddBackslashA(buffer);
-  return buffer;
-}
 #elif __linux__
-
-/* ------------------ GetBinPath - linux ------------------------ */
-
 char *GetBinPath(){
-  size_t MAX_BUFFER_SIZE = 2048 * 20;
+  size_t max_buffer_size = 2048 * 20;
   char *buffer;
   size_t buffer_size = 256 * sizeof(char);
   NEWMEMORY(buffer, buffer_size);
@@ -1142,7 +1206,7 @@ char *GetBinPath(){
       buffer[ret] = '\0';
       return buffer;
     }
-    else if(ret == buffer_size && buffer_size < MAX_BUFFER_SIZE){
+    else if(ret == buffer_size && buffer_size < max_buffer_size) {
       // increase buffer size by a factor of 2
       buffer_size *= 2;
       RESIZEMEMORY(buffer, buffer_size);
@@ -1153,24 +1217,9 @@ char *GetBinPath(){
     }
   }
 }
-
-/* ------------------ GetBinDir - linux ------------------------ */
-
-char *GetBinDir(){
-  char *buffer = GetBinPath();
-  dirname(buffer);
-  int pathlen = strlen(buffer);
-  RESIZEMEMORY(buffer, pathlen + 2);
-  buffer[pathlen] = '/';
-  buffer[pathlen + 1] = '\0';
-  return buffer;
-}
 #else
-
-/* ------------------ GetBinPath - osx ------------------------ */
-
 char *GetBinPath(){
-  uint32_t  MAX_BUFFER_SIZE = 2048 * 20;
+  uint32_t  max_buffer_size = 2048 * 20;
   char *buffer;
   uint32_t buffer_size = 256 * sizeof(char);
   NEWMEMORY(buffer, buffer_size);
@@ -1179,7 +1228,7 @@ char *GetBinPath(){
     if(ret == 0){
       return buffer;
     }
-    else if(ret == -1 && buffer_size < MAX_BUFFER_SIZE){
+    else if(ret == -1 && buffer_size < max_buffer_size){
       // buffer_size has been set to the required buffer size by
       // _NSGetExecutablePath
       RESIZEMEMORY(buffer, buffer_size);
@@ -1190,9 +1239,29 @@ char *GetBinPath(){
     }
   }
 }
+#endif
 
-/* ------------------ GetBinDir - osx ------------------------ */
-
+/* ------------------ GetBinDir ------------------------ */
+#ifdef _WIN32
+char *GetBinDir(){
+  char *buffer = GetBinPath();
+  // NB: This uses on older function in order to support "char *".
+  // PathCchRemoveFileSpec would be better but requires switching to "wchar *".
+  PathRemoveFileSpecA(buffer);
+  PathAddBackslashA(buffer);
+  return buffer;
+}
+#elif __linux__
+char *GetBinDir(){
+  char *buffer = GetBinPath();
+  dirname(buffer);
+  int pathlen = strlen(buffer);
+  RESIZEMEMORY(buffer, pathlen + 2);
+  buffer[pathlen] = '/';
+  buffer[pathlen + 1] = '\0';
+  return buffer;
+}
+#else
 char *GetBinDir(){
   char *buffer = GetBinPath();
   // The BSD and OSX version of dirname uses an internal buffer, therefore we
@@ -1228,58 +1297,102 @@ void SetSmvRootOverride(const char *path){
 /* ------------------ GetSmvRootDir ------------------------ */
 
 char *GetSmvRootDir(){
-  char *envar_path = getenv("SMV_ROOT_OVERRIDE");
+  char *envar_path, *buffer;
+  int len;
+
+  envar_path = getenv("SMV_ROOT_OVERRIDE");
+
   if(smv_root_override != NULL){
     // Take the SMV_ROOT as defined on the command line
-    char *buffer;
-    int len = strlen(smv_root_override);
-    NEWMEMORY(buffer, (len + 1) * sizeof(char));
+    len = strlen(smv_root_override);
+    NEWMEMORY(buffer, (len + 2) * sizeof(char));
     STRCPY(buffer, smv_root_override);
-    buffer[len] = '\0';
-    return buffer;
   }
   else if(envar_path != NULL){
     // Take the SMV_ROOT as defined by the SMV_ROOT_OVERRIDE environment
     // variable
-    char *buffer;
-    int len = strlen(envar_path);
-    NEWMEMORY(buffer, (len + 1) * sizeof(char));
+
+    len = strlen(envar_path);
+    NEWMEMORY(buffer, (len + 2) * sizeof(char));
     STRCPY(buffer, envar_path);
-    buffer[len] = '\0';
-    return buffer;
   }
   else{
 #ifdef SMV_ROOT_OVERRIDE
     // Take the SMV_ROOT as defined by the SMV_ROOT_OVERRIDE macro
-    char *buffer;
-    int len = strlen(SMV_ROOT_OVERRIDE);
-    NEWMEMORY(buffer, (len + 1) * sizeof(char));
+    len = strlen(SMV_ROOT_OVERRIDE);
+    NEWMEMORY(buffer, (len + 2) * sizeof(char));
     STRCPY(buffer, SMV_ROOT_OVERRIDE);
-    buffer[len] = '\0';
-    return buffer;
 #else
     // Otherwise simply return the directory of the running executable (using
     // the platform-dependent code).
-    return GetBinDir();
+    char *bindir, repo_bindir[1024];
+    FILE *stream1=NULL, *stream2=NULL;
+
+    bindir =  GetBinDir();
+    if(bindir == NULL)return NULL;
+
+    strcpy(repo_bindir, bindir);
+    if(strcmp(bindir+strlen(bindir)-1,dirseparator)!=0)STRCAT(repo_bindir, dirseparator);
+
+    int i, count=0;
+
+    for(i = strlen(repo_bindir) - 1;i >= 0;i--){
+      if(repo_bindir[i] == dirseparator[0]){
+        count++;
+        if(count == 3){
+          repo_bindir[i] = 0;
+          strcat(repo_bindir, dirseparator);
+          strcat(repo_bindir, "for_bundle");
+          strcat(repo_bindir, dirseparator);
+          break;
+        }
+      }
+    }
+
+    stream1 = fopen_indir(bindir, ".smokeview_bin", "r");
+    if(stream1 == NULL && count==3)stream2 = fopen_indir(repo_bindir, ".smokeview_bin", "r");
+
+    if(stream1 != NULL || stream2 == NULL){
+      len = strlen(bindir);
+      NEWMEMORY(buffer, len + 2);
+      STRCPY(buffer, bindir);
+    }
+    else{ // look for root directory in ../../for_bundle
+          //  this is used when using smokeview located in the build directory
+      len = strlen(repo_bindir);
+      NEWMEMORY(buffer, len + 2);
+      STRCPY(buffer, repo_bindir);
+    }
+    if(stream1!=NULL)fclose(stream1);
+    if(stream2!=NULL)fclose(stream2);
 #endif
   }
+  len = strlen(buffer);
+  if(strcmp(buffer+len-1,dirseparator)!=0)STRCAT(buffer, dirseparator);
+  return buffer;
 }
+
+/* ------------------ GetSmvRootSubPath ------------------------ */
 
 char *GetSmvRootSubPath(const char *subdir) {
   char *root_dir = GetSmvRootDir();
   if (root_dir == NULL || subdir == NULL) return NULL;
-  return JoinPath(root_dir,subdir);
+  return CombinePaths(root_dir,subdir);
 }
 
 /* ------------------ GetHomeDir ------------------------ */
 
 char *GetHomeDir() {
 #ifdef WIN32
-  char *homedir = getenv("userprofile");
+  char *homedir_env = getenv("userprofile");
 #else
-  char *homedir = getenv("HOME");
+  char *homedir_env = getenv("HOME");
 #endif
-  if (homedir == NULL) return ".";
+  if(homedir_env == NULL) homedir_env = ".";
+  // For consistency allocate path using NEWMEMORY
+  char *homedir;
+  NEWMEMORY(homedir, sizeof(char) * (strlen(homedir_env) + 1));
+  STRCPY(homedir, homedir_env);
   return homedir;
 }
 
@@ -1287,14 +1400,9 @@ char *GetHomeDir() {
 
 char *GetUserConfigDir() {
   char *homedir = GetHomeDir();
-  if (homedir == NULL) return NULL;
-
-  char *config_path;
-  NEWMEMORY(config_path,
-            strlen(homedir) + strlen(dirseparator) + strlen(".smokeview") + 1);
-  strcpy(config_path, homedir);
-  strcat(config_path, dirseparator);
-  strcat(config_path, ".smokeview");
+  if(homedir == NULL) return NULL;
+  char *config_path = CombinePaths(homedir, ".smokeview");
+  FREEMEMORY(homedir);
   return config_path;
 }
 
@@ -1303,34 +1411,76 @@ char *GetUserConfigDir() {
 char *GetUserConfigSubPath(const char *subdir) {
   char *config_dir = GetUserConfigDir();
   if (config_dir == NULL || subdir == NULL) return NULL;
-  return JoinPath(config_dir,subdir);
+  return CombinePaths(config_dir,subdir);
 }
+
+/* ------------------ GetSystemIniPath ------------------------ */
 
 char *GetSystemIniPath() {
   return GetSmvRootSubPath("smokeview.ini");
 }
 
+/* ------------------ GetUserIniPath ------------------------ */
+
 char *GetUserIniPath() {
   return GetUserConfigSubPath("smokeview.ini");
 }
+
+/* ------------------ GetUserColorbarDirPath ------------------------ */
 
 char *GetUserColorbarDirPath() {
   return GetUserConfigSubPath("colorbars");
 }
 
+/* ------------------ GetSmokeviewHtmlPath ------------------------ */
+
 char *GetSmokeviewHtmlPath() {
   return GetSmvRootSubPath("smokeview.html");
 }
+
+/* ------------------ GetSmokeviewHtmlVrPath ------------------------ */
 
 // TODO: This is currently unused
 char *GetSmokeviewHtmlVrPath() {
   return GetSmvRootSubPath("smokeview_vr.html");
 }
 
+/* ------------------ GetSmvScreenIni ------------------------ */
+
 // TODO: This is currently unused
 char *GetSmvScreenIni() {
   return GetSmvRootSubPath("smv_screen.ini");
 }
+
+
+
+/* ------------------ GetSmvRootFile ----------------------- */
+
+char *GetSmvRootFile(const char *path) {
+  char *root_path = GetSmvRootDir();
+  char *result = CombinePaths(root_path, path);
+  FREEMEMORY(root_path);
+  return result;
+}
+
+/* ------------------ GetSmvUserDir ------------------------ */
+
+char *GetSmvUserDir() {
+  char *home_path = GetHomeDir();
+  char *result = CombinePaths(home_path, ".smokeview");
+  FREEMEMORY(home_path);
+  return result;
+}
+
+/* ------------------ GetSmvUserFile ----------------------- */
+
+char *GetSmvUserFile(const char *path) {
+  char *user_path = GetSmvUserDir();
+  char *result = CombinePaths(user_path, path);
+  FREEMEMORY(user_path);
+  return result;
+}
+
 
 /* ------------------ IsSootFile ------------------------ */
 

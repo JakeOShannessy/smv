@@ -1,10 +1,6 @@
 #ifndef SMOKEHEADERS_H_DEFINED
 #define SMOKEHEADERS_H_DEFINED
 
-#ifdef pp_LUA
-#include "gd.h"
-#endif
-
 #ifndef TERRAIN_FIRE_LINE_UPDATE
 #define TERRAIN_FIRE_LINE_UPDATE 39
 #endif
@@ -240,6 +236,7 @@ EXTERNCPP void UpdateCurrentColorbar(colorbardata *cb);
 EXTERNCPP void UpdateShowColorbar(int *showcfast_arg, int *show_slice_colorbar_arg,
   int *show_hvacduct_colorbar_arg, int *show_hvacnode_colorbar_arg);
 EXTERNCPP void UpdateTimeLabels(void);
+EXTERNCPP void UpdateOutlineMode(void);
 
 //*** drawGeometry.c headers
 
@@ -273,7 +270,7 @@ EXTERNCPP void RemoveDupBlockages(void);
 EXTERNCPP void SetCVentDirs(void);
 EXTERNCPP void SetInteriorBlockages(void);
 EXTERNCPP void SetVentDirs(void);
-EXTERNCPP void SnapScene(void);
+EXTERNCPP void SnapScene(int delta);
 EXTERNCPP void SortTransparentFaces(float *mm);
 EXTERNCPP void UpdateCADTextCoords(cadquad *quadi);
 EXTERNCPP void UpdateFaces(void);
@@ -340,14 +337,14 @@ EXTERNCPP int  GetZoneColor(float t, float tmin, float tmax, int nlevel);
 EXTERNCPP void InitCadColors(void);
 EXTERNCPP void InitRGB(void);
 EXTERNCPP void InitScase(smv_case *scase);
-EXTERNCPP smv_case * ScaseCreate();
-EXTERNCPP void ScaseDestroy(smv_case *scase);
+EXTERNCPP smv_case * CreateScase();
+EXTERNCPP void DestroyScase(smv_case *scase);
 EXTERNCPP void MakeColorLabels(char colorlabels[12][11], float colorvalues[12], float tmin_arg, float tmax_arg, int nlevel);
 EXTERNCPP void UpdateAllBoundaryColors(int flag);
 EXTERNCPP void UpdateChopColors(void);
 EXTERNCPP void UpdateAllPlot3DColors(int flag);
 EXTERNCPP void UpdateCO2Colormap(void);
-EXTERNCPP void UpdateSmokeColormap(int option);
+EXTERNCPP void UpdateSmokeColormap(void);
 EXTERNCPP void UpdatePart5Extremes(void);
 EXTERNCPP void UpdateRGBColors(int colorindex);
 EXTERNCPP void UpdateSliceBounds2(void);
@@ -385,6 +382,7 @@ EXTERNCPP void DrawBoxMinMax(float *bbmin, float *bbmax, float *box_color);
 EXTERNCPP void DrawBoxOutline(float *bb, float *box_color);
 EXTERNCPP void DrawBoxShaded(float *bb, int flag, int *hidden6, float *box_color);
 EXTERNCPP void DrawCGeom(int flag, geomdata *cgeom);
+EXTERNCPP int  GetNCGeomTriangles(void);
 EXTERNCPP void DrawGeom(int flag,int frameflag);
 EXTERNCPP void DrawGeomBoundingBox(float *boundingbox_color);
 EXTERNCPP void DrawGeomData(int flag, slicedata *sd, patchdata *patchi, int geom_type);
@@ -570,6 +568,7 @@ EXTERNCPP void InitAlphas(unsigned char *smokealphanew,  unsigned char *firealph
                           float base_extinct, int use_smoke_density, float maxval, float new_extinct,
                           float base_dx, float new_dx);
 EXTERNCPP int  IsSmokeComponentPresent(smoke3ddata *smoke3di);
+EXTERNCPP int  IsSmokeLoaded(smv_case *scase);
 EXTERNCPP void MakeIBlankSmoke3D(void);
 EXTERNCPP void MakeTimesMap(float *times, unsigned char **times_map_ptr, int n);
 EXTERNCPP void MergeSmoke3D(smoke3ddata *smoke3dset);
@@ -654,6 +653,7 @@ EXTERNCPP void LoadAllPartFilesMT(int val);
 EXTERNCPP void LoadAllPartFiles(int partnum);
 EXTERNCPP int  LoadAllPlot3D(float time);
 EXTERNCPP void LoadBoundaryMenu(int value);
+EXTERNCPP void LoadHVACMenu(int value);
 EXTERNCPP void LoadParticleMenu(int value);
 EXTERNCPP void LoadPlot3dMenu(int value);
 EXTERNCPP void LoadSliceMenu(int value);
@@ -774,9 +774,6 @@ EXTERNCPP void ResetRenderResolution(int *width_low, int *height_low, int *width
 EXTERNCPP void *SetupFF(void *arg);
 EXTERNCPP void SetupScreeninfo(void);
 EXTERNCPP int  SmokeviewImage2File(char *directory, char *GIFfilename, int rendertype, int woffset, int width, int hoffset, int height);
-#ifdef pp_LUA
-EXTERNCPP int SVimage2var(int rendertype, int woffset, int width, int hoffset, int height, gdImagePtr *RENDERimage);
-#endif
 
 //*** shaders.c headers
 
@@ -844,7 +841,6 @@ EXTERNCPP int  OnMeshBoundary(float *xyz);
 //*** startup.c headers
 
 EXTERNCPP void FreeVars(void);
-EXTERNCPP char *GetHomeDir(void);
 EXTERNCPP void GetStartupVSlice(int seq_id);
 EXTERNCPP void GetStartupSlice(int seq_id);
 EXTERNCPP void GetStartupPart(int seq_id);
@@ -854,7 +850,6 @@ EXTERNCPP void GetStartupISO(int seq_id);
 EXTERNCPP void GetStartupBoundary(int seq_id);
 EXTERNCPP int GLUTGetScreenWidth(void);
 EXTERNCPP int GLUTGetScreenHeight(void);
-EXTERNCPP void InitColorbarsDir(void);
 EXTERNCPP void InitOpenGL(int option);
 EXTERNCPP void InitScriptErrorFiles(void);
 EXTERNCPP void InitStartupDirs(void);

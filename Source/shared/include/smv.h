@@ -9,7 +9,7 @@ void initMALLOC(void);
 /// to use this function rather than simply allocate the memory as certain
 /// initilization steps need to be taken before parsing occurs.
 /// @return An initialized smv_case.
-EXTERNCPP smv_case *ScaseCreate();
+EXTERNCPP smv_case *CreateScase();
 
 /// @brief Read an SMV file and parse it into an object.
 /// @param[in] input_file Path to the SMV file
@@ -19,6 +19,6 @@ EXTERNCPP int ScaseParseFromPath(const char *input_file, smv_case *scase);
 
 /// @brief Destroy an smv_case and free the associated memory
 /// @param[inout] scase The smv_case deconstruct and free.
-EXTERNCPP void ScaseDestroy(smv_case *scase);
+EXTERNCPP void DestroyScase(smv_case *scase);
 
 #endif

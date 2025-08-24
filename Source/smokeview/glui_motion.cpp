@@ -14,6 +14,7 @@
 #include "IOvolsmoke.h"
 #include "glui_motion.h"
 #include "readgeom.h"
+#include "paths.h"
 
 #define ROTATE_TRANSLATE
 #ifdef pp_OSX_HIGHRES
@@ -87,6 +88,7 @@ GLUI_Rollout *ROLLOUT_middle = NULL;
 GLUI_Rollout *ROLLOUT_upper = NULL;
 #endif
 
+GLUI_Spinner *SPINNER_mesh_center_index = NULL;
 GLUI_Spinner *SPINNER_movie_nprocs=NULL;
 GLUI_Spinner *SPINNER_360_skip_x=NULL;
 GLUI_Spinner *SPINNER_360_skip_y=NULL;
@@ -1257,7 +1259,10 @@ extern "C" void GLUIMotionSetup(int main_window){
   else{
     LIST_rotate_about->add_item(ROTATE_ABOUT_WORLD_CENTER, _("FDS domain center"));
   }
+  LIST_rotate_about->add_item(ROTATE_ABOUT_MESH_CENTER,_("specified mesh center"));
   LIST_rotate_about->set_int_val(ROTATE_ABOUT_WORLD_CENTER);
+  SPINNER_mesh_center_index = glui_motion->add_spinner_to_panel(ROLLOUT_rotation_type, "mesh index:", GLUI_SPINNER_INT,&mesh_center_index, MESH_INDEX, GLUISceneMotionCB);
+  SPINNER_mesh_center_index->set_int_limits(1, global_scase.meshescoll.nmeshes);
 
   PANEL_user_center = glui_motion->add_panel_to_panel(ROLLOUT_rotation_type, "rotation center");
   CHECKBOX_show_rotation_center=glui_motion->add_checkbox_to_panel(PANEL_user_center,_("Show"),&show_rotation_center, CLIP_SHOW_ROTATE, GLUISceneMotionCB);
@@ -1783,9 +1788,9 @@ extern "C" void GLUIUpdateRotationIndex(int val){
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo + *rotation_index;
-    camera_current->xcen=meshi->xcen;
-    camera_current->ycen=meshi->ycen;
-    camera_current->zcen=meshi->zcen;
+    camera_current->xcen=meshi->xcen_smv;
+    camera_current->ycen=meshi->ycen_smv;
+    camera_current->zcen=meshi->zcen_smv;
   }
   else{
     if(custom_worldcenter==0){
@@ -2184,7 +2189,7 @@ extern "C" void GLUISceneMotionCB(int var){
       }
       break;
     case SNAPSCENE:
-      SnapScene();
+      SnapScene(45);
       break;
     case WINDOW_PRESERVE:
       if(fix_window_aspect==1){
@@ -2234,10 +2239,16 @@ extern "C" void GLUISceneMotionCB(int var){
       desired_view_height=0.6;
       break;
     case CUSTOM_ROTATION_XYZ:
+      SnapScene(0);
       xcenCUSTOM = FDS2SMV_X(xcenCUSTOMsmv);
       ycenCUSTOM = FDS2SMV_Y(ycenCUSTOMsmv);
       zcenCUSTOM = FDS2SMV_Z(zcenCUSTOMsmv);
       GLUIUpdateRotationIndex(ROTATE_ABOUT_USER_CENTER);
+      break;
+    case MESH_INDEX:
+      *rotation_index = ROTATE_ABOUT_MESH_CENTER;
+      LIST_rotate_about->set_int_val(ROTATE_ABOUT_MESH_CENTER);
+      GLUISceneMotionCB(ROTATE_ABOUT);
       break;
     case ROTATE_ABOUT:
       glui_rotation_index = *rotation_index;
@@ -2264,6 +2275,11 @@ extern "C" void GLUISceneMotionCB(int var){
         SPINNER_ycenCUSTOM->disable();
         SPINNER_zcenCUSTOM->disable();
       }
+      else if(*rotation_index==ROTATE_ABOUT_MESH_CENTER){
+        SPINNER_xcenCUSTOM->disable();
+        SPINNER_ycenCUSTOM->disable();
+        SPINNER_zcenCUSTOM->disable();
+      }
       else{
         custom_worldcenter=0;
         SPINNER_xcenCUSTOM->disable();
@@ -2273,6 +2289,9 @@ extern "C" void GLUISceneMotionCB(int var){
       if(*rotation_index>=0&&*rotation_index<global_scase.meshescoll.nmeshes){
         UpdateCurrentMesh(global_scase.meshescoll.meshinfo + (*rotation_index));
         GLUIUpdateRotationIndex(*rotation_index);
+      }
+      else if(*rotation_index==ROTATE_ABOUT_MESH_CENTER){
+        GLUIUpdateRotationIndex(mesh_center_index-1);
       }
       else if(*rotation_index==ROTATE_ABOUT_USER_CENTER){
         GLUIUpdateRotationIndex(ROTATE_ABOUT_USER_CENTER);
@@ -2511,7 +2530,7 @@ extern "C" void GLUIShowMotion(int menu_id){
       MotionRolloutCB(VIEWPOINTS_ROLLOUT);
       break;
     case DIALOG_MOTION:
-      MVRRolloutCB(RENDER_ROLLOUT);
+      MVRRolloutCB(MOTION_ROLLOUT);
 #ifdef ROTATE_TRANSLATE
       MotionRolloutCB(TRANSLATEROTATE_ROLLOUT);
 #endif
@@ -2525,7 +2544,7 @@ extern "C" void GLUIShowMotion(int menu_id){
     case DIALOG_MOVIE_BATCH:
       MVRRolloutCB(MOVIE_ROLLOUT_BATCH);
       break;
-    case DIALOG_WINDOW:
+    case DIALOG_WINDOW_PROPERTIES:
       MVRRolloutCB(VIEW_ROLLOUT);
       MotionRolloutCB(WINDOW_ROLLOUT);
       break;
@@ -2669,9 +2688,11 @@ void RenderCB(int var){
     case RENDER_LABEL:
     case RENDER_TYPE:
       break;
-    case RENDER_HTML:
-      Smv2Html(global_scase.paths.html_filename, HTML_CURRENT_TIME, FROM_SMOKEVIEW);
-      break;
+    case RENDER_HTML: {
+      char *html_filename = CasePathHtml(&global_scase);
+      Smv2Html(html_filename, HTML_CURRENT_TIME, FROM_SMOKEVIEW);
+      FREEMEMORY(html_filename);
+    } break;
 #ifdef pp_RENDER360_DEBUG
     case RENDER_DEBUG_360:
       if(debug_360_skip_x<2){

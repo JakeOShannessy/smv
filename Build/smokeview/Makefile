@@ -15,7 +15,6 @@ SMV_PROFILESTRING =
 include ../../scripts/intel_compiler.mak
 
 COMP_VERSION =
-LUA_SCRIPTING =
 ifeq ($(shell echo "check_quotes"),"check_quotes")
   GIT_HASH   := $(shell ..\..\..\Utilities\Scripts\githash)
   GIT_DATE   := $(shell ..\..\..\Utilities\Scripts\gitlog)
@@ -51,10 +50,10 @@ csrc = callbacks.c camera.c color2rgb.c readimage.c readgeom.c readobject.c read
        getdatacolors.c glew.c histogram.c infoheader.c readlabel.c readtour.c readhvac.c readslice.c  \
        readsmoke.c colorbars.c colorbar_defs.c IOboundary.c IOgeometry.c IOhvac.c IOiso.c IOobjects.c \
        IOpart.c IOplot2d.c IOplot3d.c IOscript.c IOshooter.c IOslice.c IOsmoke.c IOtour.c IOvolsmoke.c \
-       IOwui.c IOzone.c IOframe.c isobox.c main.c md5.c menus.c output.c readsmvfile.c readsmv.c renderhtml.c \
-       renderimage.c scontour2d.c sha1.c sha256.c shaders.c showscene.c skybox.c smokestream.c         \
+       IOwui.c IOzone.c isobox.c main.c md5.c menus.c output.c readsmvfile.c readsmv.c renderhtml.c \
+       renderimage.c scontour2d.c sha1.c sha256.c shaders.c showscene.c skybox.c \
        smokeview.c smv_geometry.c startup.c stdio_buffer.c stdio_m.c string_util.c threader.c  \
-       translate.c unit.c update.c viewports.c colortable.c command_args.c
+       translate.c unit.c update.c viewports.c colortable.c command_args.c paths.c
 
 cppsrc = glui_bounds.cpp  glui_clip.cpp glui_colorbar.cpp glui_display.cpp glui_geometry.cpp glui_motion.cpp \
          glui_objects.cpp glui_shooter.cpp glui_smoke.cpp glui_stereo.cpp glui_tour.cpp glui_trainer.cpp
@@ -82,7 +81,7 @@ CLANGWINSUMMARY=..\..\scripts\clang_summary.bat
 
 incs = compress.h scontour2d.h csphere.h datadefs.h dirent_win.h file_util.h glui_bounds.h \
        glui_motion.h glui_smoke.h glui_tour.h histogram.h infoheader.h interp.h isobox.h \
-       IOobjects.h IOscript.h IOvolsmoke.h lint.h lua_api.h dmalloc.h options.h options_common.h \
+       IOobjects.h IOscript.h IOvolsmoke.h lint.h dmalloc.h options.h options_common.h \
        pragmas.h smokeheaders.h smokeviewdefs.h smokeviewvars.h \
        stdio_buffer.h stdio_m.h string_util.h structures.h translate.h threader.h viewports.h command_args.h
 
@@ -90,14 +89,9 @@ ifeq ($(ICON),icon)
 obj += resource.o
 endif
 
-ifeq ($(LUA_SCRIPTING),true)
-obj += c_api.o lua_api.o
-incs += c_api.h
-endif
-
 objwin = $(obj:.o=.obj)
 
-INC += -I $(SOURCE_DIR)/glui_v2_1_beta -I $(SOURCE_DIR)/gd-2.0.15 -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview -I $(SOURCE_DIR)/glew -I $(SOURCE_DIR)/zlib128
+INC += -I $(SOURCE_DIR)/glui_v2_1_beta -I $(SOURCE_DIR)/gd-2.0.15 -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview -I $(SOURCE_DIR)/glew -I $(SOURCE_DIR)/zlib131
 
 # windows include directories
 
@@ -107,28 +101,6 @@ else
   WININC = -I $(SOURCE_DIR)/glut_gl
 endif
 WININC += -I $(SOURCE_DIR)/pthreads
-
-ifeq ($(LUA_SCRIPTING),true)
-INC += -I $(SOURCE_DIR)/lua-5.3.1/src
-endif
-
-SMVLUACORE_DIR = $(SOURCE_DIR)/smvluacore
-SMVLUACORE_FILES = $(SMVLUACORE_DIR)/smv.lua $(SMVLUACORE_DIR)/ssf.lua \
-	$(SMVLUACORE_DIR)/ssfparser.lua $(SMVLUACORE_DIR)/ssfcommands.lua \
-	$(SMVLUACORE_DIR)/clipping.lua $(SMVLUACORE_DIR)/bounds.lua \
-	$(SMVLUACORE_DIR)/render.lua $(SMVLUACORE_DIR)/load.lua \
-	$(SMVLUACORE_DIR)/view.lua $(SMVLUACORE_DIR)/tour.lua \
-	$(SMVLUACORE_DIR)/iniparser.lua $(SMVLUACORE_DIR)/inioptions.lua \
-	$(SMVLUACORE_DIR)/unload.lua $(SMVLUACORE_DIR)/constants.lua \
-	$(SMVLUACORE_DIR)/gnuplot.lua $(SMVLUACORE_DIR)/plot.lua \
-	$(SMVLUACORE_DIR)/pl3d.lua \
-	$(SMVLUACORE_DIR)/camera.lua
-SMVLUALIB_FILES = $(LIB_DIR_PLAT)/lfs$(DYNLIB_EXT)
-
-smvluacore: $(SMVLUACORE_FILES) $(SMVLUALIB_FILES)
-	cp $(SMVLUACORE_FILES) .
-	cp $(SMVLUALIB_FILES) .
-# cannot use $^ here
 
 #*** General Purpose Rules ***
 
@@ -190,6 +162,28 @@ SMV_LIBS_GNU = $(SMV_GNU_LIBDIR)\glui.a $(GLUT_GNU_LIB) $(SMV_GNU_LIBDIR)\gd.a $
 
 WIN32_LIBS = user32.lib gdi32.lib comdlg32.lib shell32.lib
 
+# ------------- intel_win_64_san ----------------
+
+intel_win_64_san : DYNLIB_EXT = .dll
+intel_win_64_san : INC += $(WININC) -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/smokeview
+intel_win_64_san : CFLAGS    = /Od /W4 /Wno-cast-function-type-mismatch /Wno-unused-function /Wno-unused-parameter
+intel_win_64_san : CFLAGS   += /debug:full /Zi  -D pp_INTEL -D _DEBUG -D WIN32 -D _CONSOLE -D X64 -D GLEW_STATIC
+intel_win_64_san : CFLAGS   += -D PTW32_STATIC_LIB $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO)
+intel_win_64_san : CFLAGS   += $(SANITIZE_OPTIONS)
+intel_win_64_san : C_STANDARD    = -Qstd=gnu99
+
+ifeq ($(GLUT),freeglut)
+intel_win_64_san : CFLAGS   += -D FREEGLUT_STATIC
+endif
+intel_win_64_san : LFLAGS    = /F32768000 /traceback /Zi $(SANITIZE_OPTIONS)
+intel_win_64_san : CC        = icx
+intel_win_64_san : CPP       = icx
+
+intel_win_64_san : exe       = smokeview_win_$(SMV_TESTSTRING)64
+
+intel_win_64_san : $(objwin)
+	$(CPP) -o $(bin)/$(exe) $(LFLAGS) $(objwin) $(WIN32_LIBS) $(SMV_LIBS_WIN)
+
 # ------------- intel_win_64_db ----------------
 
 intel_win_64_db : DYNLIB_EXT = .dll
@@ -226,11 +220,6 @@ endif
 intel_win_64 : C_STANDARD    = -Qstd=gnu99
 ifeq ($(GLUT),freeglut)
 intel_win_64 : CFLAGS   += -D FREEGLUT_STATIC
-endif
-ifeq ($(LUA_SCRIPTING),true)
-intel_win_64 : CFLAGS    += -D pp_LUA
-intel_win_64 : SMVLUACORE_FILES += $(SMV_WIN_LIBDIR)\lpeg.dll
-intel_win_64 : SMVLUACORE_FILES += $(SMV_WIN_LIBDIR)\lua.dll
 endif
 intel_win_64 : LFLAGS    = /F32768000 -D FREEGLUT_STATIC
 ifeq ($(SANITIZE),1)
@@ -299,12 +288,6 @@ intel_linux_64 : CFLAGS   += $(SANITIZE_OPTIONS)
 endif
 intel_linux_64 : C_STANDARD    = -std=gnu99
 intel_linux_64 : INC += -I $(SOURCE_DIR)/freeglut3.0.0/include
-intel_linux_64 : LIBLUA    =
-ifeq ($(LUA_SCRIPTING),true)
-intel_linux_64 : CFLAGS    += -D pp_LUA
-intel_linux_64 : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
-intel_linux_64 : LIBLUA    += $(LIB_DIR_PLAT)/liblua.a -ldl
-endif
 intel_linux_64 : LFLAGS    = -m64 $(INTEL_LIBS_LINUX) $(SMV_PROFILEFLAG)
 ifeq ($(SANITIZE),1)
 intel_linux_64 : LFLAGS   += $(SANITIZE_OPTIONS)
@@ -313,8 +296,8 @@ intel_linux_64 : CC        = icx
 intel_linux_64 : CPP       = icpx
 intel_linux_64 : exe       = smokeview_linux_$(SMV_TESTSTRING)64$(SMV_PROFILESTRING)
 
-intel_linux_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
-	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L$(LIB_DIR_PLAT) $(SMV_LIBS_LINUX) $(INTEL_LIBS_LINUX) $(SYSTEM_LIBS_LINUX) $(LIBLUA)
+intel_linux_64 : $(obj)
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L$(LIB_DIR_PLAT) $(SMV_LIBS_LINUX) $(INTEL_LIBS_LINUX) $(SYSTEM_LIBS_LINUX)
 
 # ------------- intel_linux_64_db ----------------
 
@@ -345,10 +328,6 @@ gnu_linux_64_db : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
 gnu_linux_64_db : CFLAGS    = -O0  -m64 -ggdb -Wall -Wunreachable-code -Wswitch-default -Wshadow -Winit-self -Wundef -Wpointer-arith -Wuninitialized -Wno-address -Wno-format-overflow -Wno-format-truncation -Wno-undef -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG -D pp_LINUX -D pp_GCC $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
 gnu_linux_64_db : C_STANDARD    = -std=gnu99
 gnu_linux_64_db : INC += -I $(SOURCE_DIR)/freeglut3.0.0/include
-ifeq ($(LUA_SCRIPTING),true)
-gnu_linux_64_db : CFLAGS    += -D pp_LUA
-gnu_linux_64_db : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
-endif
 gnu_linux_64_db : LFLAGS    = -m64 $(SMV_PROFILEFLAG)
 gnu_linux_64_db : CC        = gcc
 gnu_linux_64_db : CPP       = g++
@@ -356,8 +335,7 @@ gnu_linux_64_db : exe       = smokeview_linux_$(SMV_TESTSTRING)64_db$(SMV_PROFIL
 
 gnu_linux_64_db : $(obj)
 	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
-		$(SMV_LIBS_LINUX) $(SYSTEM_LIBS_LINUX) \
-		$(if $(LUA_SCRIPTING),$(LIB_DIR_PLAT)/liblua.a -ldl)
+		$(SMV_LIBS_LINUX) $(SYSTEM_LIBS_LINUX)
 
 # ------------- gnu_linux_64 ----------------
 
@@ -366,20 +344,14 @@ gnu_linux_64 : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
 gnu_linux_64 : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings           -D pp_LINUX -D pp_GCC -D NDEBUG $(SMV_TESTFLAG) $(GNU_COMPINFO) $(GITINFO) $(SMV_PROFILEFLAG)
 gnu_linux_64 : C_STANDARD    = -std=gnu99
 gnu_linux_64 : INC += -I $(SOURCE_DIR)/freeglut3.0.0/include
-ifeq ($(LUA_SCRIPTING),true)
-gnu_linux_64 : CFLAGS    += -D pp_LUA
-gnu_linux_64 : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lpeg.so
-gnu_linux_64 : SMVLUACORE_FILES += $(LIB_DIR_PLAT)/lua.so
-endif
 gnu_linux_64 : LFLAGS    = -m64 $(SMV_PROFILEFLAG)
 gnu_linux_64 : CC        = gcc
 gnu_linux_64 : CPP       = g++
 gnu_linux_64 : exe       = smokeview_linux_$(SMV_TESTSTRING)64$(SMV_PROFILESTRING)
 
-gnu_linux_64 : $(obj) $(if $(LUA_SCRIPTING),smvluacore)
+gnu_linux_64 : $(obj)
 	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS) -L $(LIB_DIR_PLAT) \
-		$(SMV_LIBS_LINUX) $(SYSTEM_LIBS_LINUX) \
-		$(if $(LUA_SCRIPTING),$(LIB_DIR_PLAT)/liblua.a -ldl)
+		$(SMV_LIBS_LINUX) $(SYSTEM_LIBS_LINUX)
 
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 # VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV   check source   VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
@@ -425,8 +397,8 @@ gnu_osx_64_db : CFLAGS   += -D FREEGLUT_STATIC
 else
 gnu_osx_64_db : LFLAGS   += -framework OpenGL -framework GLUT
 endif
-gnu_osx_64_db : CC        = gcc$(GLIBVERS)
-gnu_osx_64_db : CPP       = g++$(GLIBVERS)
+gnu_osx_64_db : CC        = ${COMPILER}
+gnu_osx_64_db : CPP       = ${COMPILER2}
 gnu_osx_64_db : exe       = smokeview_osx_$(SMV_TESTSTRING)64_db$(SMV_PROFILESTRING)
 
 gnu_osx_64_db : $(obj)
@@ -443,8 +415,8 @@ gnu_osx_64 : CFLAGS   += -D FREEGLUT_STATIC
 else
 gnu_osx_64 : LFLAGS   += -framework OpenGL -framework GLUT
 endif
-gnu_osx_64 : CC        = gcc$(GLIBVERS)
-gnu_osx_64 : CPP       = g++$(GLIBVERS)
+gnu_osx_64 : CC        = ${COMPILER}
+gnu_osx_64 : CPP       = ${COMPILER2}
 gnu_osx_64 : exe       = smokeview_osx_$(SMV_TESTSTRING)64$(SMV_PROFILESTRING)
 
 gnu_osx_64 : $(obj)
@@ -454,7 +426,7 @@ gnu_osx_64 : $(obj)
 
 .PHONY : clean
 clean:
-	rm -f *.o *.mod *.lua *.dll *.so
+	rm -f *.o *.mod *.dll *.so
 
 #-------------- force compilation of string_util.c -----------
 

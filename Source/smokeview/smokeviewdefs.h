@@ -184,8 +184,9 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define PRINT    1
 #define NO_PRINT 0
 
-#define SKY_BOX     0
-#define SKY_SPHERE  1
+#define SKY_BOX      0
+#define SKY_SPHERE   1
+#define RESET_COLORS 2
 
 #define TIMEBAR_OVERLAP_ALWAYS 0
 #define TIMEBAR_OVERLAP_NEVER  1
@@ -233,6 +234,8 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define ROTATE_ABOUT_CLIPPING_CENTER -2
 #define ROTATE_ABOUT_FDS_CENTER      -3
 #define ROTATE_ABOUT_WORLD_CENTER    -4
+#define ROTATE_ABOUT_MESH_CENTER     -5
+#define MESH_INDEX                   -6
 
 #define ONLY_IN_GAS           0
 #define GAS_AND_SOLID         1
@@ -433,9 +436,13 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define MAX_CELL_TYPES 3
 
-#define OUTLINE_POLYGON  0
-#define OUTLINE_TRIANGLE 1
-#define OUTLINE_HIDDEN   2
+#define GEOM_OUTLINE_POLYGON  0
+#define GEOM_OUTLINE_TRIANGLE 1
+#define GEOM_OUTLINE_HIDDEN   2
+
+#define SCENE_OUTLINE_HIDDEN 0
+#define SCENE_OUTLINE_MESH   1
+#define SCENE_OUTLINE_SCENE  2
 
 #define EMBED_YES 0
 #define EMBED_NO  1
@@ -626,7 +633,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define visBLOCKSolidOutline   12
 //#define visBLOCKFacet         3
 #define visBLOCKOutline         2
-#define visBLOCKHide            0
 #define visBLOCKTransparent    10
 #define visBLOCKAddOutline     14
 #define visBLOCKOnlyOutline    15
@@ -634,6 +640,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define visCADOpaque           17
 #define visLightFaces          18
 #define ANIMATE_BLOCKAGES      19
+#define visBLOCKHide            0
 
 #define OUTLINE_NONE     0
 #define OUTLINE_ONLY     1
@@ -875,8 +882,8 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define offsetscale 100
 
-#define FIRECOLORMAP_DIRECT     0
-#define FIRECOLORMAP_CONSTRAINT 1
+#define FIRECOLOR_RGB      0
+#define FIRECOLOR_COLORBAR 1
 
 #define CO2_RGB      0
 #define CO2_COLORBAR 1
@@ -924,8 +931,13 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define SCALED_FONT        2
 #define MENU_FONT_SETTINGS 3
 
+#ifndef FFALSE
 #define FFALSE 0
+#endif
+
+#ifndef TTRUE
 #define TTRUE  1
+#endif
 
 #define BLOCKAGE_AS_INPUT  35
 #define BLOCKAGE_AS_INPUT2 36
@@ -959,7 +971,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MENU_LABEL_hmslabel            11
 #define MENU_LABEL_grid                12
 #define MENU_LABEL_sliceaverage        13
-#define MENU_LABEL_firecutoff          14
 #define MENU_LABEL_userticks           15
 #define MENU_LABEL_ShowAll             16
 #define MENU_LABEL_HideAll             17
@@ -997,8 +1008,9 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define DIALOG_MOTION    29
 #define DIALOG_VIEW      30
 #define DIALOG_RENDER    31
-#define DIALOG_GEOMETRY  16
-#define DIALOG_SHOOTER   27
+#define DIALOG_GEOMETRY_OPEN  16
+#define DIALOG_GEOMETRY_CLOSE 50
+#define DIALOG_SHOOTER 27
 #define DIALOG_SMOKEZIP  24
 #define DIALOG_STEREO    19
 #define DIALOG_TOUR_SHOW 21
@@ -1008,12 +1020,12 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define DIALOG_SCRIPT    32
 #define DIALOG_CONFIG    34
 #define DIALOG_FONTS     35
-#define DIALOG_TICKS     36
-#define DIALOG_LABELS    37
+#define DIALOG_USER_TICKS   36
+#define DIALOG_LABELS_TICKS 37
 #define DIALOG_AUTOLOAD  38
 #define DIALOG_TIME      39
 #define DIALOG_SCALING   41
-#define DIALOG_WINDOW    42
+#define DIALOG_WINDOW_PROPERTIES 42
 #define DIALOG_MOVIE     43
 #define DIALOG_MOVIE_BATCH 45
 #define DIALOG_SHRINKALL -3

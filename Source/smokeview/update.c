@@ -201,9 +201,7 @@ void UpdateFrameNumber(int changetime){
         meshi->patch_itime=meshi->patch_timeslist[itimes];
         if(patchi->compression_type==UNCOMPRESSED){
 
-#ifndef pp_BOUNDFRAME
           meshi->patchval_iframe  = meshi->patchval  + meshi->patch_itime*meshi->npatchsize;
-#endif
           meshi->cpatchval_iframe = meshi->cpatchval + meshi->patch_itime * meshi->npatchsize;
         }
         else{
@@ -234,63 +232,80 @@ void UpdateFrameNumber(int changetime){
 void UpdateFileLoad(void){
   int i;
 
-  npartloaded = 0;
-  for(i = 0; i<global_scase.npartinfo; i++){
-    partdata *parti;
-
-    parti = global_scase.partinfo+i;
-    if(parti->loaded==1)npartloaded++;
-  }
-
   nsliceloaded = 0;
+  nslicevis = 0;
   for(i = 0; i<global_scase.slicecoll.nsliceinfo; i++){
     slicedata *slicei;
 
     slicei = global_scase.slicecoll.sliceinfo+i;
-    if(slicei->loaded==1)nsliceloaded++;
+    if(slicei->loaded==1){
+      nsliceloaded++;
+      if(slicei->display==1)nslicevis++;
+    }
   }
 
   nvsliceloaded = 0;
+  nvslicevis = 0;
   for(i = 0; i<global_scase.slicecoll.nvsliceinfo; i++){
     vslicedata *vslicei;
 
     vslicei = global_scase.slicecoll.vsliceinfo+i;
-    if(vslicei->loaded==1)nvsliceloaded++;
+    if(vslicei->loaded==1){
+      nvsliceloaded++;
+      if(vslicei->display==1)nvslicevis++;
+    }
   }
 
   nisoloaded = 0;
+  nisovis = 0;
   for(i = 0; i<global_scase.nisoinfo; i++){
     isodata *isoi;
 
     isoi = global_scase.isoinfo+i;
-    if(isoi->loaded==1)nisoloaded++;
+    if(isoi->loaded==1){
+      nisoloaded++;
+      if(isoi->display==1)nisovis++;
+    }
   }
 
   npatchloaded = 0;
+  npatchvis = 0;
   for(i = 0; i<global_scase.npatchinfo; i++){
     patchdata *patchi;
 
     patchi = global_scase.patchinfo+i;
-    if(patchi->loaded==1)npatchloaded++;
+    if(patchi->loaded==1){
+      npatchloaded++;
+      if(patchi->display==1)npatchvis++;
+    }
   }
 
   nsmoke3dloaded = 0;
+  nsmoke3dvis = 0;
   for(i = 0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo+i;
-    if(smoke3di->loaded==1)nsmoke3dloaded++;
+    if(smoke3di->loaded==1){
+      nsmoke3dloaded++;
+      if(smoke3di->display==1)nsmoke3dvis++;
+    }
   }
 
   nplot3dloaded = 0;
+  nplot3dvis = 0;
   for(i = 0; i<global_scase.nplot3dinfo; i++){
     plot3ddata *plot3di;
 
     plot3di = global_scase.plot3dinfo+i;
-    if(plot3di->loaded==1)nplot3dloaded++;
+    if(plot3di->loaded==1){
+      nplot3dloaded++;
+      if(plot3di->display==1)nplot3dvis++;
+    }
   }
 
   nvolsmoke3dloaded = 0;
+  nvolsmoke3dvis = 0;
   for(i = 0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     volrenderdata *vr;
@@ -298,18 +313,45 @@ void UpdateFileLoad(void){
     meshi = global_scase.meshescoll.meshinfo+i;
     vr = meshi->volrenderinfo;
     if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
-    if(vr->loaded==1)nvolsmoke3dloaded++;
+    if(vr->loaded==1){
+      nvolsmoke3dloaded++;
+      if(vr->display==1)nvolsmoke3dvis++;
+    }
   }
 
   npart5loaded = 0;
   npartloaded = 0;
+  npart5vis = 0;
+  npartvis = 0;
   for(i = 0; i<global_scase.npartinfo; i++){
     partdata *parti;
 
     parti = global_scase.partinfo+i;
-    if(parti->loaded==1)npartloaded++;
-    if(parti->loaded==1)npart5loaded++;
+    if(parti->loaded==1){
+      npartloaded++;
+      npart5loaded++;
+      if(parti->display==1){
+        npartvis++;
+        npart5vis++;
+      }
+    }
   }
+
+  if(nplot3dloaded_old != nplot3dloaded         || nsmoke3dloaded_old != nsmoke3dloaded ||
+     nisoloaded_old != nisoloaded               || nsliceloaded_old != nsliceloaded ||
+     nvsliceloaded_old != nvsliceloaded         || npatchloaded_old != npatchloaded ||
+     nvolsmoke3dloaded_old != nvolsmoke3dloaded || npart5loaded_old != npart5loaded ||
+    npartloaded_old != npartloaded)updatefacelists=1;
+
+  nplot3dloaded_old     = nplot3dloaded;
+  nsmoke3dloaded_old    = nsmoke3dloaded;
+  nisoloaded_old        = nisoloaded;
+  nsliceloaded_old      = nsliceloaded;
+  nvsliceloaded_old     = nvsliceloaded;
+  npatchloaded_old      = npatchloaded;
+  nvolsmoke3dloaded_old = nvolsmoke3dloaded;
+  npart5loaded_old      = npart5loaded;
+  npartloaded_old       = npartloaded;
 }
 
 /* ------------------ UpdateShow ------------------------ */
@@ -323,6 +365,7 @@ void UpdateShow(void){
   int showhvacflag;
 
   UpdateFileLoad();
+  if(nplot3dloaded > 0 || npatchloaded > 0)updatefacelists = 1;
   showtime             = 0;
   showtime2            = 0;
   showplot3d           = 0;
@@ -651,6 +694,7 @@ void UpdateShow(void){
   }
 
   num_colorbars=0;
+  showiso_colorbar = 0;
   if(plotstate==DYNAMIC_PLOTS){
     if(partflag==1&&parttype!=0)num_colorbars++;
     if(slicecolorbarflag==1||vslicecolorbarflag==1)num_colorbars++;
@@ -1161,28 +1205,6 @@ void MergeGlobalTimes(float *time_in, int ntimes_in){
   nglobal_times = n;
   FREEMEMORY(times_map);
 }
-
-  /* ------------------ UpdateSliceNtimes ------------------------ */
-
-#ifdef pp_SLICEFRAME
-void UpdateSliceNtimes(void){
-  int minslice_index = 1000000000, i;
-  for(i = 0;i < global_scase.slicecoll.nsliceinfo;i++){
-    slicedata *sd;
-
-    sd = global_scase.slicecoll.sliceinfo + i;
-    if(sd->loaded == 0 || sd->display == 0)continue;
-    minslice_index = MIN(minslice_index, sd->ntimes);
-  }
-  for(i = 0;i < global_scase.slicecoll.nsliceinfo;i++){
-    slicedata *sd;
-
-    sd = global_scase.slicecoll.sliceinfo + i;
-    if(sd->loaded == 0 || sd->display == 0)continue;
-    sd->ntimes = minslice_index;
-  }
-}
-#endif
 
   /* ------------------ UpdateTimes ------------------------ */
 
@@ -1990,267 +2012,6 @@ char *Bytes2Label(char *label, FILE_SIZE bytes){
   return label;
 }
 
-/* ------------------ OutputFrameSteps ------------------------ */
-
-#ifdef pp_FRAME
-void OutputFrameSteps(void){
-  int i, count, frames_read, show;
-  float total_time, total_wrapup_time;
-  FILE_SIZE bytes_read;
-  char size_label[256], geom_slice_label[256], slice_label[256], part_label[256];
-  char iso_label[256],  smoke_label[256],      bound_label[256], geom_bound_label[256];
-  char time_label[256], time_label2[256],      time_label3[256];
-  char file_count_label[256];
-
-  show = 0;
-  strcpy(geom_slice_label, "");
-  strcpy(slice_label, "");
-  strcpy(part_label, "");
-  strcpy(iso_label, "");
-  strcpy(smoke_label, "");
-  strcpy(bound_label, "");
-  strcpy(geom_bound_label, "");
-
-  //*** slice files
-
-  count             = 0;
-  bytes_read        = 0;
-  frames_read       = 0;
-  total_time        = 0.0;
-  total_wrapup_time = 0.0;
-  for(i = 0;i < global_scase.slicecoll.nsliceinfo;i++){
-    slicedata *slicei;
-    framedata *frameinfo=NULL;
-
-    slicei = global_scase.slicecoll.sliceinfo + i;
-    if(slicei->loaded == 0)continue;
-    if(slicei->slice_filetype == SLICE_GEOM)continue;
-    frameinfo = slicei->frameinfo;
-    if(frameinfo == NULL || frameinfo->update == 0)continue;
-    count++;
-    frameinfo->update = 0;
-    frames_read = MAX(frames_read, frameinfo->frames_read);
-    bytes_read += frameinfo->bytes_read;
-    total_time += frameinfo->load_time;
-    total_wrapup_time += frameinfo->total_time;
-  }
-  if(count > 0){
-    strcpy(file_count_label, "file");
-    if(count > 1)strcpy(file_count_label, "s");
-    sprintf(slice_label, "   slice(structured): loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
-    strcpy(time_label, "");
-    Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
-    Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
-    sprintf(time_label, " in %ss/%ss", time_label2, time_label3);
-    strcat(slice_label, time_label);
-    show = 1;
-  }
-
-  //*** geometry slice files
-
-  count = 0;
-  bytes_read = 0;
-  frames_read = 0;
-  total_time = 0.0;
-  total_wrapup_time = 0.0;
-  for(i = 0; i < global_scase.slicecoll.nsliceinfo; i++){
-    slicedata *slicei;
-    framedata *frameinfo = NULL;
-
-    slicei = global_scase.slicecoll.sliceinfo + i;
-    if(slicei->loaded == 0 || slicei->slice_filetype != SLICE_GEOM)continue;
-    frameinfo = slicei->frameinfo;
-    if(slicei->patchgeom != NULL)frameinfo = slicei->patchgeom->frameinfo;
-    if(frameinfo == NULL || frameinfo->update == 0)continue;
-    frameinfo->update = 0;
-    count++;
-    frames_read = MAX(frames_read, frameinfo->frames_read);
-    bytes_read += frameinfo->bytes_read;
-    total_time += frameinfo->load_time;
-    total_wrapup_time += frameinfo->total_time;
-  }
-  if(count > 0){
-    strcpy(file_count_label, "file");
-    if(count > 1)strcpy(file_count_label, "s");
-    sprintf(geom_slice_label, "         slice(geom): loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
-    strcpy(time_label, "");
-    Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
-    Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
-    sprintf(time_label, " in %ss/%ss", time_label2, time_label3);
-    strcat(geom_slice_label, time_label);
-    show = 1;
-  }
-
-  //*** 3d smoke files
-
-  count             = 0;
-  bytes_read        = 0;
-  frames_read       = 0;
-  total_time        = 0.0;
-  total_wrapup_time = 0.0;
-  for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
-    smoke3ddata *smoke3di;
-
-    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
-    if(smoke3di->loaded == 0 || smoke3di->frameinfo == NULL || smoke3di->frameinfo->update == 0)continue;
-    smoke3di->frameinfo->update = 0;
-    count++;
-    frames_read = MAX(frames_read, smoke3di->frameinfo->frames_read);
-    bytes_read += smoke3di->frameinfo->bytes_read;
-    total_time += smoke3di->frameinfo->load_time;
-    total_wrapup_time += smoke3di->frameinfo->total_time;
-  }
-  if(count > 0){
-    strcpy(file_count_label, "file");
-    if(count > 1)strcpy(file_count_label, "s");
-    sprintf(smoke_label, "            3D smoke: loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
-    strcpy(time_label, "");
-    Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
-    Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
-    sprintf(time_label, " in %ss/%ss", time_label2, time_label3);
-    strcat(smoke_label, time_label);
-    show = 1;
-  }
-
-  //*** boundary files
-
-  count = 0;
-  bytes_read = 0;
-  frames_read = 0;
-  total_time = 0.0;
-  total_wrapup_time = 0.0;
-  for(i = 0;i < global_scase.npatchinfo;i++){
-    patchdata *patchi;
-
-    patchi = global_scase.patchinfo + i;
-    if(patchi->loaded == 0)continue;
-    if(patchi->patch_filetype !=PATCH_STRUCTURED_NODE_CENTER &&  patchi->patch_filetype != PATCH_STRUCTURED_CELL_CENTER)continue;
-    if(patchi->frameinfo == NULL || patchi->frameinfo->update == 0)continue;
-
-    patchi->frameinfo->update = 0;
-    count++;
-    frames_read = MAX(frames_read, patchi->frameinfo->frames_read);
-    bytes_read += patchi->frameinfo->bytes_read;
-    total_time += patchi->frameinfo->load_time;
-    total_wrapup_time += patchi->frameinfo->total_time;
-  }
-  if(count > 0){
-    strcpy(file_count_label, "file");
-    if(count > 1)strcpy(file_count_label, "s");
-    sprintf(bound_label, "boundary(structured): loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
-    strcpy(time_label, "");
-    Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
-    Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
-    sprintf(time_label, " in %ss/%ss", time_label2, time_label3);
-    strcat(bound_label, time_label);
-    show = 1;
-  }
-
-  //*** geometry boundary files
-
-  count = 0;
-  bytes_read = 0;
-  frames_read = 0;
-  total_time = 0.0;
-  total_wrapup_time = 0.0;
-  for(i = 0;i < global_scase.npatchinfo;i++){
-    patchdata *patchi;
-
-    patchi = global_scase.patchinfo + i;
-    if(patchi->loaded == 0 || patchi->patch_filetype != PATCH_GEOMETRY_BOUNDARY)continue;
-    if(patchi->frameinfo == NULL || patchi->frameinfo->update == 0)continue;
-    patchi->frameinfo->update = 0;
-    count++;
-    frames_read = MAX(frames_read, patchi->frameinfo->frames_read);
-    bytes_read += patchi->frameinfo->bytes_read;
-    total_time += patchi->frameinfo->load_time;
-    total_wrapup_time += patchi->frameinfo->total_time;
-  }
-  if(count > 0){
-    strcpy(file_count_label, "file");
-    if(count > 1)strcpy(file_count_label, "s");
-    sprintf(geom_bound_label, "      boundary(geom): loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
-    strcpy(time_label, "");
-    Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
-    Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
-    sprintf(time_label, " in %ss/%ss", time_label2, time_label3);
-    strcat(geom_bound_label, time_label);
-    show = 1;
-  }
-
-  //*** isosurface files
-
-  count = 0;
-  bytes_read = 0;
-  frames_read = 0;
-  total_time = 0.0;
-  total_wrapup_time = 0.0;
-  for(i = 0;i < global_scase.nisoinfo;i++){
-    isodata *isoi;
-
-    isoi = global_scase.isoinfo + i;
-    if(isoi->loaded == 0 || isoi->frameinfo == NULL || isoi->frameinfo->update == 0)continue;
-    isoi->frameinfo->update = 0;
-    count++;
-    frames_read = MAX(frames_read, isoi->frameinfo->frames_read);
-    bytes_read += isoi->frameinfo->bytes_read;
-    total_time += isoi->frameinfo->load_time;
-    total_wrapup_time += isoi->frameinfo->total_time;
-  }
-  if(count > 0){
-    strcpy(file_count_label, "file");
-    if(count > 1)strcpy(file_count_label, "s");
-    sprintf(iso_label, "          isosurface: loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
-    strcpy(time_label, "");
-    Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
-    Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
-    sprintf(time_label, " in %ss/%ss", time_label2, time_label3);
-    strcat(iso_label, time_label);
-    show = 1;
-  }
-
-  //*** particle files
-
-  count = 0;
-  bytes_read = 0;
-  frames_read = 0;
-  total_time = 0.0;
-  total_wrapup_time = 0.0;
-  for(i = 0;i < global_scase.npartinfo;i++){
-    partdata *parti;
-
-    parti = global_scase.partinfo + i;
-    if(parti->loaded == 0 || parti->frameinfo == NULL || parti->frameinfo->update == 0)continue;
-    parti->frameinfo->update = 0;
-    count++;
-    frames_read  = MAX(frames_read, parti->frameinfo->frames_read);
-    bytes_read  += parti->frameinfo->bytes_read;
-    total_time += parti->frameinfo->load_time;
-    total_wrapup_time += parti->frameinfo->total_time;
-  }
-  if(count > 0){
-    strcpy(file_count_label, "file");
-    if(count > 1)strcpy(file_count_label, "s");
-    sprintf(part_label, "            particle: loaded %i frames, %i %s, %s", frames_read, count, file_count_label, Bytes2Label(size_label, bytes_read));
-    strcpy(time_label, "");
-    Float2String(time_label2, total_time, ncolorlabel_digits, force_fixedpoint);
-    Float2String(time_label3, total_wrapup_time, ncolorlabel_digits, force_fixedpoint);
-    sprintf(time_label, " in %ss/%ss", time_label2, time_label3);
-    strcat(part_label, time_label);
-    show = 1;
-  }
-  if(show == 1){
-    printf("\n");
-    if(strlen(geom_bound_label) > 0)printf("%s\n", geom_bound_label);
-    if(strlen(bound_label) > 0)printf("%s\n", bound_label);
-    if(strlen(iso_label) > 0)printf("%s\n",   iso_label);
-    if(strlen(part_label) > 0)printf("%s\n",  part_label);
-    if(strlen(geom_slice_label) > 0)printf("%s\n", geom_slice_label);
-    if(strlen(slice_label) > 0)printf("%s\n", slice_label);
-    if(strlen(smoke_label) > 0)printf("%s\n", smoke_label);
-  }
-}
-#endif
 #ifdef pp_SHOW_UPDATE
 #define SHOW_UPDATE(var) printf("updating: %s\n", #var);INIT_PRINT_TIMER(update_timer);updating=1
 #define END_SHOW_UPDATE(var) PRINT_TIMER(update_timer,#var)
@@ -2303,16 +2064,10 @@ void UpdateShowScene(void){
 
   have_fire  = HaveFireLoaded();
   have_smoke = HaveSootLoaded();
-#ifdef pp_FRAME
-  if(update_frame == 1){
-    SHOW_UPDATE(update_frame);
-    update_frame = 0;
-    OutputFrameSteps();
-    UpdateSliceNtimes();
-    update_times = 1;
-    END_SHOW_UPDATE(update_frame);
+  if(update_fire_histogram_now == 1){
+    update_fire_histogram_now = 0;
+    if(update_fire_histogram==1)GLUISmoke3dCB(UPDATE_FIRE_HISTOGRAM);
   }
-#endif
 #define SHOW_EXTERIOR_PATCH_DATA     32
 void BoundBoundCB(int var);
   if(update_patch_vis == 1){

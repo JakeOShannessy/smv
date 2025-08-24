@@ -1179,7 +1179,6 @@ int ReadObjectDefs(object_collection *objectscoll, const char *file){
 
   stream = fopen(file, "r");
   if(stream == NULL) return 0;
-  // if(verbose_output==1)PRINTF("reading %s ", file);
 
   firstdef = -1;
   buffer_ptr = NULL;
@@ -1342,10 +1341,6 @@ int ReadObjectDefs(object_collection *objectscoll, const char *file){
       objecti = objecti->next;
     }
   }
-  // if(verbose_output==1){
-  //   PRINTF("- complete");
-  //   PRINTF("\n\n");
-  // }
   PRINTF("%d object definitions read from %s\n", ndevices, file);
   return ndevices;
 }
@@ -1481,12 +1476,11 @@ void LoadDefaultObjectDefs(object_collection *objectscoll){
       objectscoll->std_object_defs.smoke_detector_object_backup;
 }
 
-/* ----------------------- InitObjectDefs ----------------------------- */
+/* ----------------------- ReadDefaultObjectCollection ----------------------------- */
 
 void ReadDefaultObjectCollection(object_collection *objectscoll,
                                  const char *fdsprefix,
                                  int isZoneFireModel){
-  char objectfile[1024];
 
   // There are 5 places to retrieve object definitions from:
   //
@@ -1499,23 +1493,24 @@ void ReadDefaultObjectCollection(object_collection *objectscoll,
   // Last definition wins.
 
   // Read "objects.svo" from bin dir
-  char *smv_bindir = GetSmvRootDir();
-  if(smv_bindir){
-    strcpy(objectfile, smv_bindir);
-    strcat(objectfile, "objects.svo");
-    ReadObjectDefs(objectscoll, objectfile);
+  char *path = GetSmvRootFile("objects.svo");
+  if(path != NULL){
+    ReadObjectDefs(objectscoll, path);
+    FREEMEMORY(path);
   }
-  FREEMEMORY(smv_bindir);
 
   // Read "objects.svo" from the current directory.
-  strcpy(objectfile, "objects.svo");
-  ReadObjectDefs(objectscoll, objectfile);
+  ReadObjectDefs(objectscoll, "objects.svo");
 
   // Read "${fdsprefix}.svo" from the current directory
   if(fdsprefix != NULL){
+    char *objectfile;
+    char *ext = ".svo";
+    NEWMEMORY(objectfile, sizeof(char) * (strlen(fdsprefix) + strlen(ext) + 1));
     strcpy(objectfile, fdsprefix);
-    strcat(objectfile, ".svo");
+    strcat(objectfile, ext);
     ReadObjectDefs(objectscoll, objectfile);
+    FREEMEMORY(objectfile);
   }
 
 #ifdef SMOKEVIEW_OBJECT_DEFS_PATH

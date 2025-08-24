@@ -8,7 +8,9 @@ extern int show_timings;
 #endif
 
 // vvvvvvvvvvvvvvvvvvvvvvvv header files vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
+#include <stddef.h>
+#include <stdio.h>
+#include "options_common.h"
 #include <time.h>
 #ifdef __MINGW32__
 #include "options.h"
@@ -78,6 +80,10 @@ typedef struct {
 #else
 #define FSEEK(a, b, c) fseeko(a, b, c)
 #define FTELL(a) ftello(a)
+#endif
+
+#ifndef FFALSE
+#define FFALSE 0
 #endif
 
 #define ALLDATA_OFFSET 0
@@ -151,6 +157,8 @@ EXTERNCPP FILE *FOPEN(const char *file, const char *mode);
 EXTERNCPP FILE *fopen_indir(char *dir, char *file, char *mode);
 EXTERNCPP FILE *fopen_2dir_scratch(char *file, char *mode);
 EXTERNCPP FILE *fopen_2dir(char *file, char *mode, char *scratch_dir);
+EXTERNCPP FILE *fopen_3dir(char *file, char *mode, char *dir1, char *dir2, char *dir3);
+EXTERNCPP char *SetResultsDir(char *file);
 EXTERNCPP void TestWrite(char *scratchdir, char **fileptr);
 EXTERNCPP int FFLUSH(void);
 EXTERNCPP int PRINTF(const char *format, ...);
@@ -228,6 +236,24 @@ EXTERNCPP char *GetSmvRootSubPath(const char *subdir);
  */
 EXTERNCPP void SetSmvRootOverride(const char *path);
 /**
+ * @brief Combine to paths, allocating a new path.
+ * @param path_a The first path (optional). Maximum length MAX_PATH
+ * @param path_b The second path. Maximum length MAX_PATH
+ * @return A new path allocated with NEWMEMORY or NULL if the path could not be
+ * constructed.
+ */
+EXTERNCPP char *CombinePaths(const char *path_a, const char *path_b);
+/**
+ * @brief Get the path of a file relative to the root directory.
+ * @param path The filename or path relative to the smv root directory (as
+ * defined by GetSmvRooDir).
+ * @return A new path allocated with NEWMEMORY or NULL if the path could not be
+ * constructed.
+ */
+EXTERNCPP char *GetSmvRootFile(const char *path);
+EXTERNCPP char *GetSmvUserDir();
+EXTERNCPP char *GetSmvUserFile(const char *path);
+/**
  * @brief Get the path of the smokeview config directory. This is generally in a
  * directory called ".smokeview" within the users home directory. E.g.,
  * $HOME/.smokeview.
@@ -236,6 +262,7 @@ EXTERNCPP void SetSmvRootOverride(const char *path);
  * (including hitting the maximum buffer size).
  */
 EXTERNCPP char *GetUserConfigDir();
+EXTERNCPP char *GetHomeDir(void);
 /**
  * @brief Get the path of a subdirectory of the smokeview config directory. This
  * is generally in the form $HOME/.smokeview/${subdir}.
@@ -257,6 +284,7 @@ EXTERNCPP char *GetSystemIniPath();
  *
  * @return The path allocated with NEWMEMORY.
  */
+EXTERNCPP char *GetScratchFilename(char *file);
 EXTERNCPP char *GetUserIniPath();
 EXTERNCPP char *GetUserColorbarDirPath();
 EXTERNCPP char *GetSmokeviewHtmlPath();
@@ -266,8 +294,6 @@ EXTERNCPP void PrintTime(const char *tag, int line, float *timer,
 EXTERNCPP int IsSootFile(char *shortlabel, char *longlabel);
 
 EXTERNCPP char *LastName(char *argi);
-
-EXTERNCPP char *JoinPath(const char *path, const char *segment);
 
 // vvvvvvvvvvvvvvvvvvvvvvvv variables vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 

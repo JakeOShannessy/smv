@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
   // Initialize the customized memory allocator that smokeview uses
   initMALLOC();
   // Create and initialize an smv_case struct
-  smv_case *scase = ScaseCreate();
+  smv_case *scase = CreateScase();
   // Parse a file at the given path into scase
   int result = ScaseParseFromPath(filepath, scase);
   // Error handling on parse failure
@@ -25,6 +25,6 @@ int main(int argc, char **argv) {
            mesh->ibar * mesh->jbar * mesh->kbar);
   }
   // Deconstruct and free scase
-  ScaseDestroy(scase);
+  DestroyScase(scase);
   return 0;
 }

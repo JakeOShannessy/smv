@@ -4,7 +4,7 @@ AR=ar
 
 CFLAGS=-g  -DHAVE_LIBPNG -DHAVE_LIBZ -DHAVE_LIBJPEG -DHAVE_LIBX11
 
-INCLUDEDIRS=-I. -I../png-1.6.21 -I../jpeg-9b -I../zlib128
+INCLUDEDIRS=-I. -I../png-1.6.48 -I../jpeg-9b -I../zlib131
 
 #
 #
@@ -22,7 +22,7 @@ COMPILER=gcc -fPIC
 #SIZE=-m32
 SIZE=-m64
 
-CC=$(COMPILER) $(SIZE) $(INCLUDEDIRS) -Wno-incompatible-function-pointer-types
+CC=$(COMPILER) $(SIZE) $(INCLUDEDIRS) -Wno-incompatible-function-pointer-types -Wno-incompatible-pointer-types
 
 .SUFFIXES:      .c .o .obj
 

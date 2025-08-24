@@ -1,6 +1,6 @@
 /// @file command_args.h
-#ifndef PATHS_H_DEFINED
-#define PATHS_H_DEFINED
+#ifndef COMMAND_ARGS_H_DEFINED
+#define COMMAND_ARGS_H_DEFINED
 
 #include <stdbool.h>
 #include "options.h"
@@ -88,15 +88,6 @@ typedef struct CommandlineArgs {
   char *script;
   /// @brief Run the HTML script at this path
   char *htmlscript;
-#ifdef pp_LUA
-  /// @brief Run the default lua script, i.e. CHID.lua
-  bool runluascript;
-  /// @brief If the lua script fails, kill smokeview and return an error exit
-  /// code.
-  bool killscript;
-  /// @brief Run a custom lua script at this path.
-  char *luascript;
-#endif
   /// @brief set directory containing script rendered images (override directory
   /// specified by RENDERDIR script keyword)
   char *scriptrenderdir;
