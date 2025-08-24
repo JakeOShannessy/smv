@@ -69,7 +69,7 @@ typedef struct {
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 #ifdef WIN32
-int UNLINK(const char *file);
+#define UNLINK _unlink
 #else
 #define UNLINK unlink
 #endif
@@ -112,7 +112,7 @@ int UNLINK(const char *file);
 int FileExistsOrig(char *filename);
 
 #ifdef WIN32
-int MKDIR(const char *file);
+#define MKDIR(a) CreateDirectory(a, NULL);
 #else
 #define MKDIR(a)                                                               \
   mkdir(a, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)
@@ -154,9 +154,6 @@ EXTERNCPP bufferdata *File2Buffer(char *file, char *size_file, int *options, buf
 EXTERNCPP FILE_SIZE fread_p(char *file, unsigned char *buffer, FILE_SIZE offset, FILE_SIZE nchars, int nthreads);
 EXTERNCPP void FileErase(char *file);
 EXTERNCPP FILE *FOPEN(const char *file, const char *mode);
-#ifdef WIN32
-EXTERNCPP wchar_t *convert_utf8_to_utf16(const char *path);
-#endif
 EXTERNCPP FILE *fopen_indir(char *dir, char *file, char *mode);
 EXTERNCPP FILE *fopen_2dir_scratch(char *file, char *mode);
 EXTERNCPP FILE *fopen_2dir(char *file, char *mode, char *scratch_dir);

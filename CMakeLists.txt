@@ -13,7 +13,7 @@ include(FetchContent)
 
 # Selected the multithreaded runtime when using MSVC
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-project(smv LANGUAGES C CXX VERSION 1.19.0)
+project(smv LANGUAGES C CXX VERSION 1.21.5)
 # Use C99
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -49,13 +49,14 @@ set(CPACK_WIX_UPGRADE_GUID "1940d8a1-c842-442f-bf5d-00a570219bdb")
 set(CPACK_WIX_INSTALL_SCOPE "perUser")
 set(CPACK_PACKAGE_NAME "Smokeview JSONRPC")
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
 set(CPACK_PACKAGE_VENDOR "firemodels")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "A modified smokeview with the ability to communicate via JSONRPC.")
 set(CPACK_WIX_PRODUCT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/icon.ico")
 set(CPACK_WIX_PATCH_FILE "${CMAKE_CURRENT_SOURCE_DIR}/cpack_patch.xml")
 include(CPack)
-message("Package Name: ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}.msi")
+message("Package Name: ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}.msi to ${CPACK_PACKAGE_INSTALL_DIRECTORY}")
 
 # Options which can be configured (along with their defaults)
 option(BETA "Include beta functionality" OFF)
