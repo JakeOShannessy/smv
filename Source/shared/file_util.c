@@ -388,7 +388,7 @@ int Writable(char *dir){
 #else
   {
 #define tempfile_length 35
-    char tempfile[tempfile_length];
+    char tempfile[tempfile_length+1];
     RandStr(tempfile, tempfile_length);
     char *temp_path = CombinePaths(dir, tempfile);
     FILE *stream = FOPEN(temp_path, "w");
