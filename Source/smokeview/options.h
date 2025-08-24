@@ -8,6 +8,7 @@
 //#define pp_SHOW_UPDATE      // show what is being updated in the UpdateShowScene routine
 #define pp_GPU              // support the GPU
 #define pp_THREAD           // turn on multi-threading
+#define pp_PART_SINGLE      // load particles using a single thread
 
 //*** options: windows
 

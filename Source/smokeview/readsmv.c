@@ -1097,7 +1097,7 @@ void UpdateSmoke3DTypes(void){
       ext = smoke3di->extinct;
       if(ext > 0.0){
         SOOT_index = i;
-        glui_smoke3d_extinct = global_scase.smoke3dcoll.smoke3dtypes[i].extinction;
+        glui_mass_extinct = global_scase.smoke3dcoll.smoke3dtypes[i].extinction;
         continue;
       }
       if(Match(label, "hrrpuv") == 1){
@@ -2723,7 +2723,11 @@ int ReadSMV_Configure(){
     }
   }
   if(global_scase.npartinfo>=64){
+#ifdef pp_PART_SINGLE
+    use_partload_threads = 0;
+#else
     use_partload_threads = 1;
+#endif
     partfast = 1;
   }
 
@@ -2802,6 +2806,9 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "SetupFFMT");
 
   if(sorttags_threads == NULL){
+#ifdef pp_PART_SINGLE
+    use_sorttags_threads = 0;
+#endif
     sorttags_threads = THREADinit(&n_sorttags_threads, &use_sorttags_threads, SortAllPartTags);
   }
 
@@ -3795,15 +3802,17 @@ int ReadIni2(const char *inifile, int localfile){
       sscanf(buffer, "%i %i %i %i %i",
         &glui_compress_volsmoke, &use_multi_threading, &load_at_rendertimes, &volbw, &show_volsmoke_moving);
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%f %f %f %f %f %f %f",
-        &global_scase.temp_min, &global_temp_cb_min_default, &global_temp_cb_max_default, &fire_opacity_factor, &mass_extinct, &gpu_vol_factor, &nongpu_vol_factor);
+      sscanf(buffer, "%f %f %f %f %f %f %f", &global_scase.temp_min,
+             &global_temp_cb_min_default, &global_temp_cb_max_default,
+             &fire_opacity_factor, &glui_mass_extinct, &gpu_vol_factor,
+             &nongpu_vol_factor);
       global_temp_cb_min = global_temp_cb_min_default;
       global_temp_cb_max = global_temp_cb_max_default;
       ONEORZERO(glui_compress_volsmoke);
       ONEORZERO(use_multi_threading);
       ONEORZERO(load_at_rendertimes);
       fire_opacity_factor = CLAMP(fire_opacity_factor, 1.0, 10.0);
-      mass_extinct = CLAMP(mass_extinct, 100.0, 100000.0);
+      glui_mass_extinct = CLAMP(glui_mass_extinct, 100.0, 100000.0);
       InitVolRenderSurface(NOT_FIRSTCALL);
       continue;
     }
@@ -5799,6 +5808,9 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       if(current_script_command==NULL){
         sscanf(buffer, "%i %i %i", &partfast, &use_partload_threads, &n_partload_threads);
+#ifdef pp_PART_SINGLE
+        use_partload_threads = 0;
+#endif
       }
       continue;
     }
@@ -6100,8 +6112,8 @@ int ReadIni2(const char *inifile, int localfile){
       }
       if(MatchINI(buffer, "SMOKEPROP")==1){
         if(fgets(buffer, 255, stream)==NULL)break;
-        sscanf(buffer, "%f", &glui_smoke3d_extinct);
-        glui_smoke3d_extinct_default = glui_smoke3d_extinct;
+        sscanf(buffer, "%f", &glui_mass_extinct);
+        glui_mass_extinct_default = glui_mass_extinct;
         continue;
       }
       if(MatchINI(buffer, "FIRECOLOR") == 1){
@@ -6974,18 +6986,13 @@ int ReadBinIni(void){
 /* ------------------ ReadIni ------------------------ */
 
 int ReadIni(char *inifile){
-  // There are 7 places to retrieve configuration file from:
+  // There are 3 places to retrieve configuration files:
   //
-  //   1. A file within the same directory as the smokeview executable named
-  //      "smokeview.ini".
-  //   2. A file in the user's config directory named "smokeview.ini".
-  //   3. A file in the current directory named "smokeview.ini".
-  //   4. A file in the current directory named "${fdsprefix}.ini".
-  //   5. A file in the scratch directory named "${fdsprefix}.ini".
-  //   6. A file pointed to by SMOKEVIEW_CONFIG_PATH.
-  //   7. A file pointed to be envar SMOKEVIEW_CONFIG.
-  //
-  // Last definition wins.
+  //   1. A file named smokeview.ini in the installation directory
+  //   2. A file named casename.ini in the current directory where casename
+  //      is the name of the case specified by the CHID parameter in the input file
+  //   3. A file named casename.ini in $HOME/.smokeview if the current directory
+  //      is not writable
 
   global_scase.ntickinfo=global_scase.ntickinfo_smv;
 
@@ -7612,7 +7619,7 @@ void WriteIni(int flag,char *filename){
   FILE *fileout=NULL;
   int i;
   char *outfilename=NULL, *outfiledir=NULL;
-  char *smokeviewini_filename = GetSystemIniPath();
+  char *smokeviewini_filename = CombinePaths(".","smokeview.ini");
   char *smokeview_scratchdir = GetUserConfigDir();
   char *caseini_filename = CasePathCaseIni(&global_scase);
 
@@ -7646,17 +7653,20 @@ void WriteIni(int flag,char *filename){
   if(fileout==NULL){
     if(outfilename!=NULL){
       fprintf(stderr,"*** Error: unable to open %s for writing ",outfilename);
-      return;
     }
     else{
       fprintf(stderr,"*** Error: unable to open ini file for output ");
     }
     if(outfiledir==NULL){
-      printf("in current directory\n");
+      printf("in the current directory\n");
     }
     else{
-      printf("in directory %s\n", outfiledir);
+      printf("in the directory %s\n", outfiledir);
     }
+    return;
+  }
+  if(outfilename != NULL){
+    printf("Settings output to %s\n", outfilename);
   }
   FREEMEMORY(smokeviewini_filename);
 
@@ -8365,8 +8375,8 @@ void WriteIni(int flag,char *filename){
     fprintf(fileout, " %i %i\n", use_opacity_depth, use_opacity_multiplier);
   }
   fprintf(fileout, "SMOKEPROP\n");
-  fprintf(fileout, " %f\n", glui_smoke3d_extinct);
-  glui_smoke3d_extinct_default = glui_smoke3d_extinct;
+  fprintf(fileout, " %f\n", glui_mass_extinct);
+  glui_mass_extinct_default = glui_mass_extinct;
   fprintf(fileout, "SMOKESKIP\n");
   fprintf(fileout," %i %i %i %i %i\n", smoke3d_frame_inc-1,smoke3d_skip, smoke3d_skipx, smoke3d_skipy, smoke3d_skipz);
 #ifdef pp_GPU
@@ -8376,8 +8386,9 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "VOLSMOKE\n");
   fprintf(fileout, " %i %i %i %i %i\n",
     glui_compress_volsmoke, use_multi_threading, load_at_rendertimes, volbw, show_volsmoke_moving);
-  fprintf(fileout, " %f %f %f %f %f %f %f\n",
-    global_scase.temp_min, global_temp_cb_min, global_temp_cb_max, fire_opacity_factor, mass_extinct, gpu_vol_factor, nongpu_vol_factor);
+  fprintf(fileout, " %f %f %f %f %f %f %f\n", global_scase.temp_min,
+          global_temp_cb_min, global_temp_cb_max, fire_opacity_factor,
+          glui_mass_extinct, gpu_vol_factor, nongpu_vol_factor);
 
   fprintf(fileout, "\n *** ZONE FIRE PARAMETRES ***\n\n");
 
