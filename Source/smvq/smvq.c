@@ -318,7 +318,15 @@ int RunSmvq(char *input_file, const char *fdsprefix) {
   return 0;
 }
 
-int main(int argc, char **argv) {
+#if defined(_WIN32) && defined(_UNICODE)
+#define OPTS L"hV"
+int wmain(int argc, wchar_t **argv)
+#else
+#define OPTS "hV"
+int main(int argc, char **argv)
+#endif
+{
+  initMALLOC();
 
   bool print_help = false;
   bool print_version = false;
@@ -327,7 +335,7 @@ int main(int argc, char **argv) {
 
   opterr = 0;
 
-  while((c = getopt(argc, argv, "hV")) != -1)
+  while((c = getopt(argc, argv, OPTS)) != -1)
     switch(c) {
     case 'h':
       print_help = true;
@@ -356,8 +364,11 @@ int main(int argc, char **argv) {
     printf("smvq - smv query processor (v%s)\n", PROGVERSION);
     return 0;
   }
+#if defined(_WIN32) && defined(_UNICODE)
+  char *input_file = convert_utf16_to_utf8(argv[optind]);
+#else
   char *input_file = argv[optind];
-
+#endif
   if(input_file == NULL) {
     fprintf(stderr, "No input file specified.\n");
     return 1;
@@ -365,5 +376,8 @@ int main(int argc, char **argv) {
   char *fdsprefix = GetBaseName(input_file);
   int result = RunSmvq(input_file, fdsprefix);
   free(fdsprefix);
+#if defined(_WIN32) && defined(_UNICODE)
+  FREEMEMORY(input_file);
+#endif
   return result;
 }
