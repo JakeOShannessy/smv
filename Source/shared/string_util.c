@@ -19,7 +19,7 @@
 #undef S_ISCHR
 #undef S_ISREG
 #endif
-#include <dirent_win.h>
+#include <windows.h>
 #else
 #include <dirent.h>
 #endif

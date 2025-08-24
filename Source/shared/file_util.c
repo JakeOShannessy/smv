@@ -22,9 +22,17 @@
 #endif
 #include <io.h>
 #include <direct.h>
-#include <dirent_win.h>
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
+
+#include <windows.h>
+#include <pathcch.h>
+#include <tchar.h>
+#include <stdio.h>
+#include <strsafe.h>
+#pragma comment(lib, "User32.lib")
+#pragma comment(lib, "PathCch.lib")
+
 #else
 #include <dirent.h>
 #include <libgen.h>
@@ -898,6 +906,7 @@ void FreeFileList(filelistdata *filelist, int *nfilelist){
 
 /* ------------------ GetFileListSize ------------------------ */
 
+#ifndef _WIN32
 int GetFileListSize(const char *path, char *filter, int mode){
   struct dirent *entry;
   DIR *dp;
@@ -918,6 +927,7 @@ int GetFileListSize(const char *path, char *filter, int mode){
   closedir(dp);
   return maxfiles;
 }
+#endif
 
 /* ------------------ fopen_indir  ------------------------ */
 
@@ -1062,6 +1072,145 @@ filelistdata *FileInList(char *file, filelistdata *filelist, int nfiles, filelis
   return entry;
 }
 
+#ifdef _WIN32
+void DisplayErrorBox(LPTSTR lpszFunction) {
+  // Retrieve the system error message for the last-error code
+
+  LPVOID lpMsgBuf;
+  LPVOID lpDisplayBuf;
+  DWORD dw = GetLastError();
+
+  FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                    FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPTSTR)&lpMsgBuf, 0, NULL);
+
+  // Display the error message and clean up
+
+  lpDisplayBuf =
+      (LPVOID)LocalAlloc(LMEM_ZEROINIT, (lstrlen((LPCTSTR)lpMsgBuf) +
+                                         lstrlen((LPCTSTR)lpszFunction) + 40) *
+                                            sizeof(TCHAR));
+  StringCchPrintf((LPTSTR)lpDisplayBuf, LocalSize(lpDisplayBuf) / sizeof(TCHAR),
+                  TEXT("%s failed with error %d: %s"), lpszFunction, dw,
+                  lpMsgBuf);
+  MessageBox(NULL, (LPCTSTR)lpDisplayBuf, TEXT("Error"), MB_OK);
+
+  LocalFree(lpMsgBuf);
+  LocalFree(lpDisplayBuf);
+}
+
+int MakeFileList(const char *path, char *filter, int maxfiles, int sort_files,
+                  filelistdata **filelist, int mode) {
+  int nfiles = 0;
+  filelistdata *flist;
+
+  if(maxfiles == 0 || path == NULL || filter == NULL) {
+    *filelist = NULL;
+    return 0;
+  }
+
+  WIN32_FIND_DATA ffd;
+  TCHAR szDir[MAX_PATH];
+  size_t length_of_arg;
+  HANDLE hFind = INVALID_HANDLE_VALUE;
+#ifdef UNICODE
+  StringCchLength(path, MAX_PATH, &length_of_arg);
+#else
+  length_of_arg = strlen(path);
+#endif
+  if(length_of_arg > (MAX_PATH - 3)) {
+    _ftprintf(stderr, TEXT("\nDirectory path is too long.\n"));
+    return (-1);
+  }
+#ifdef UNICODE
+  StringCchCopy(szDir, MAX_PATH, path);
+  StringCchCat(szDir, MAX_PATH, TEXT("\\*"));
+#else
+  strcpy(szDir, path);
+  strcat(szDir, "\\*");
+#endif
+
+  // Find the first file in the directory.
+
+  hFind = FindFirstFile(szDir, &ffd);
+
+  if(INVALID_HANDLE_VALUE == hFind) {
+    DisplayErrorBox(TEXT("FindFirstFile"));
+    return 0;
+  }
+  if(maxfiles > 0) {
+    *filelist = NULL;
+    // If maxfiles is less than zero we're only in count mode and don't need to
+    // allocate an array.
+    NewMemory((void **)&flist, maxfiles * sizeof(filelistdata));
+  }
+  do {
+    int is_dir = (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+    int rel_type =
+        (mode == DIR_MODE && is_dir) || (mode == FILE_MODE && !is_dir);
+    if(strcmp(ffd.cFileName, ".") == 0 || strcmp(ffd.cFileName, "..") == 0)
+      continue;
+    int cRes = MatchWild(ffd.cFileName, filter);
+    if(rel_type && cRes == 1) {
+      TCHAR *file;
+      filelistdata *flisti;
+      if(maxfiles > 0) {
+        // If maxfiles is less than zero we're only in count mode and don't need
+        // to record file names
+        flisti = flist + nfiles;
+        if(mode == DIR_MODE) {
+          size_t l1 = _tcslen(szDir);
+          size_t l2 = _tcslen(ffd.cFileName);
+#ifdef UNICODE
+          NEWMEMORY(file, l1 * 2 + l2 * 2 + 100);
+#else
+          NEWMEMORY(file, l1 + l2 + 100);
+#endif
+          PathCombine(file, szDir, ffd.cFileName);
+        }
+        else {
+          size_t l;
+          StringCchLength(ffd.cFileName, MAX_PATH, &l);
+          NEWMEMORY(file, l + 4);
+          PathCombine(file, NULL, ffd.cFileName);
+        }
+#if UNICODE
+        flisti->file = convert_utf16_to_utf8(file);
+#else
+        flisti->file = file;
+#endif
+        flisti->type = 0;
+      }
+      nfiles++;
+    }
+  } while(FindNextFile(hFind, &ffd) != 0);
+#if UNICODE
+  FREEMEMORY(filterA);
+#endif
+  DWORD dwError = 0;
+  dwError = GetLastError();
+  if(dwError != ERROR_NO_MORE_FILES) {
+    DisplayErrorBox(TEXT("FindFirstFile"));
+  }
+  FindClose(hFind);
+  if(sort_files == YES && nfiles > 0) {
+    qsort((filelistdata *)flist, (size_t)nfiles, sizeof(filelistdata),
+          CompareFileList);
+  }
+  if(maxfiles > 0) {
+    // If maxfiles is less than zero we're only in count mode and don't need
+    // to record file names
+    *filelist = flist;
+  }
+  return nfiles;
+}
+
+int GetFileListSize(const char *dir, char *filter, int mode) {
+  return MakeFileList(dir, filter, -1, 0, NULL, mode);
+}
+#else
+
 /* ------------------ MakeFileList ------------------------ */
 
 int MakeFileList(const char *path, char *filter, int maxfiles, int sort_files, filelistdata **filelist, int mode){
@@ -1115,6 +1264,8 @@ int MakeFileList(const char *path, char *filter, int maxfiles, int sort_files, f
   *filelist=flist;
   return nfiles;
 }
+
+#endif
 
 /* ------------------ GetFileSizeLabel ------------------------ */
 

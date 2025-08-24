@@ -63,6 +63,10 @@ target_link_libraries(mem_test PRIVATE libsmv)
 add_executable(test_root_dir test_root_dir.c)
 target_link_libraries(test_root_dir PRIVATE libsmv)
 
+# test_iter_dir
+add_executable(test_iter_dir test_iter_dir.c)
+target_link_libraries(test_iter_dir PRIVATE libsmv)
+
 # test_unicode_paths
 add_executable(test_unicode_paths unicode_paths.c)
 target_link_libraries(test_unicode_paths PRIVATE libsmv)
