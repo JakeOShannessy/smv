@@ -68,12 +68,6 @@ typedef struct {
 // vvvvvvvvvvvvvvvvvvvvvvvv preprocessing directives
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-#ifdef WIN32
-int UNLINK(const char *file);
-#else
-#define UNLINK unlink
-#endif
-
 #ifdef X64
 #define FSEEK(a, b, c) _fseeki64(a, b, c)
 #define FTELL(a) _ftelli64(a)
@@ -109,38 +103,27 @@ int UNLINK(const char *file);
 #define BFILE bufferstreamdata
 
 #ifdef X64
-  #define STRUCTSTAT struct __stat64
-
   #ifdef WIN32
     #define LINT __int64
-    int STAT(const char *file, STRUCTSTAT *buffer);
   #else
     #define LINT long long int
-    #define STAT _stat64
   #endif
 #else
-  #define STRUCTSTAT struct stat
-  #define STAT stat
-
   #define LINT long int
+#endif
+
+#ifdef X64
+  #define STRUCTSTAT struct __stat64
+#else
+  #define STRUCTSTAT struct stat
 #endif
 
 #define FILE_EXISTS(a) FileExists(a, NULL, 0, NULL, 0)
 int FileExistsOrig(char *filename);
 
 #ifdef WIN32
-int MKDIR(const char *file);
-#else
-#define MKDIR(a)                                                               \
-  mkdir(a, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)
-#endif
-
-#ifdef WIN32
-int ACCESS(const char *file, int mode);
 #define F_OK 0
 #define W_OK 2
-#else
-#define ACCESS access
 #endif
 
 #ifndef NO
@@ -152,11 +135,9 @@ int ACCESS(const char *file, int mode);
 #endif
 
 #ifdef WIN32
-int CHDIR(const char *file);
 #define GETCWD _getcwd
 #define SEP '\\'
 #else
-#define CHDIR chdir
 #define GETCWD getcwd
 #define SEP '/'
 #endif
@@ -171,6 +152,11 @@ EXTERNCPP bufferdata *File2Buffer(char *file, char *size_file, int *options, buf
 EXTERNCPP FILE_SIZE fread_p(char *file, unsigned char *buffer, FILE_SIZE offset, FILE_SIZE nchars, int nthreads);
 EXTERNCPP void FileErase(char *file);
 EXTERNCPP FILE *FOPEN(const char *file, const char *mode);
+EXTERNCPP int MKDIR(const char *file);
+EXTERNCPP int ACCESS(const char *file, int mode);
+EXTERNCPP int STAT(const char *file, STRUCTSTAT *buffer);
+EXTERNCPP int CHDIR(const char *file);
+EXTERNCPP int UNLINK(const char *file);
 EXTERNCPP FILE *fopen_indir(char *dir, char *file, char *mode);
 EXTERNCPP FILE *fopen_2dir_scratch(char *file, char *mode);
 EXTERNCPP FILE *fopen_2dir(char *file, char *mode, char *scratch_dir);

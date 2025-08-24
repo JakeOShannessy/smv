@@ -36,7 +36,7 @@
 
 unsigned int *random_ints, nrandom_ints;
 
-#ifdef WIN32
+#if defined(_WIN32) && defined(UNICODE_PATHS)
 /// @brief Given a UTF-8 (or ASCII) string, convert it to Windows UTF-16.
 /// @param string a UTF-8 (or ASCII) string
 /// @return a UTF-16 string or NULL on error

@@ -36,65 +36,101 @@
 
 FILE *alt_stdout=NULL;
 
-#ifdef WIN32
 /* ------------------ FOPEN  ------------------------ */
 
 FILE *FOPEN(const char *file, const char *mode) {
+#if defined(_WIN32) && defined(_UNICODE)
   wchar_t *path = convert_utf8_to_utf16(file);
   wchar_t *wmode = convert_utf8_to_utf16(mode);
   FILE *stream = _wfsopen(path, wmode, _SH_DENYNO);
   FREEMEMORY(path);
   FREEMEMORY(wmode);
   return stream;
+#elif defined(_WIN32)
+  return _fsopen(file, mode, _SH_DENYNO);
+#else
+  return fopen(file, mode);
+#endif
 }
 
 /* ------------------ MKDIR  ------------------------ */
 
 int MKDIR(const char *file) {
+#if defined(_WIN32) && defined(_UNICODE)
   wchar_t *path = convert_utf8_to_utf16(file);
   int r = CreateDirectoryW(path, NULL);
   FREEMEMORY(path);
   return r;
+#elif defined(_WIN32)
+  return CreateDirectoryA(path, NULL);
+#else
+  return mkdir(a, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+#endif
 }
 
 /* ------------------ ACCESS  ------------------------ */
 
 int ACCESS(const char *file, int mode) {
+#if defined(_WIN32) && defined(_UNICODE)
   wchar_t *path = convert_utf8_to_utf16(file);
   int r = _waccess(path, mode);
   FREEMEMORY(path);
   return r;
+#elif defined(_WIN32)
+  return _access(path, mode);
+#else
+  return access(file, mode);
+#endif
 }
 
 /* ------------------ STAT  ------------------------ */
 
-int STAT(char *file, STRUCTSTAT *buffer) {
+int STAT(const char *file, STRUCTSTAT *buffer) {
+#if defined(_WIN32) && defined(_UNICODE)
   wchar_t *path = convert_utf8_to_utf16(file);
   int r = _wstat64(path, buffer);
   FREEMEMORY(path);
   return r;
+#elif defined(_WIN32)
+  return _stat64(file, buffer);
+#else
+#ifdef X64
+  return stat(file, buffer);
+#else
+  return _stat64(file, buffer);
+#endif
+#endif
 }
 
 /* ------------------ CHDIR  ------------------------ */
 
 int CHDIR(const char *file) {
+#if defined(_WIN32) && defined(_UNICODE)
   wchar_t *path = convert_utf8_to_utf16(file);
   int r = SetCurrentDirectoryW(path);
   FREEMEMORY(path);
   return r;
+#elif defined(_WIN32)
+  return SetCurrentDirectoryA(path);
+#else
+  return chdir(file);
+#endif
 }
 
 /* ------------------ UNLINK  ----------------------- */
 
 int UNLINK(const char *file) {
+#if defined(_WIN32) && defined(_UNICODE)
   wchar_t *path = convert_utf8_to_utf16(file);
   int r = _wunlink(path);
   FREEMEMORY(path);
   return r;
-}
+#elif defined(_WIN32)
+  return _unlink(file);
 #else
-FILE *FOPEN(const char *file, const char *mode) { return fopen(file, mode); }
+  return unlink(file);
 #endif
+}
 
 /* ------------------ TestWrite ------------------------ */
 
