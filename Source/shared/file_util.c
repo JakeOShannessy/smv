@@ -39,7 +39,7 @@ FILE *alt_stdout=NULL;
 /* ------------------ FOPEN  ------------------------ */
 
 FILE *FOPEN(const char *file, const char *mode) {
-#if defined(_WIN32) && defined(_UNICODE)
+#if defined(_WIN32) && defined(UNICODE_PATHS)
   wchar_t *path = convert_utf8_to_utf16(file);
   wchar_t *wmode = convert_utf8_to_utf16(mode);
   FILE *stream = _wfsopen(path, wmode, _SH_DENYNO);
@@ -56,13 +56,13 @@ FILE *FOPEN(const char *file, const char *mode) {
 /* ------------------ MKDIR  ------------------------ */
 
 int MKDIR(const char *file) {
-#if defined(_WIN32) && defined(_UNICODE)
+#if defined(_WIN32) && defined(UNICODE_PATHS)
   wchar_t *path = convert_utf8_to_utf16(file);
   int r = CreateDirectoryW(path, NULL);
   FREEMEMORY(path);
   return r;
 #elif defined(_WIN32)
-  return CreateDirectoryA(path, NULL);
+  return CreateDirectoryA(file, NULL);
 #else
   return mkdir(a, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 #endif
@@ -71,13 +71,13 @@ int MKDIR(const char *file) {
 /* ------------------ ACCESS  ------------------------ */
 
 int ACCESS(const char *file, int mode) {
-#if defined(_WIN32) && defined(_UNICODE)
+#if defined(_WIN32) && defined(UNICODE_PATHS)
   wchar_t *path = convert_utf8_to_utf16(file);
   int r = _waccess(path, mode);
   FREEMEMORY(path);
   return r;
 #elif defined(_WIN32)
-  return _access(path, mode);
+  return _access(file, mode);
 #else
   return access(file, mode);
 #endif
@@ -86,7 +86,7 @@ int ACCESS(const char *file, int mode) {
 /* ------------------ STAT  ------------------------ */
 
 int STAT(const char *file, STRUCTSTAT *buffer) {
-#if defined(_WIN32) && defined(_UNICODE)
+#if defined(_WIN32) && defined(UNICODE_PATHS)
   wchar_t *path = convert_utf8_to_utf16(file);
   int r = _wstat64(path, buffer);
   FREEMEMORY(path);
@@ -105,13 +105,13 @@ int STAT(const char *file, STRUCTSTAT *buffer) {
 /* ------------------ CHDIR  ------------------------ */
 
 int CHDIR(const char *file) {
-#if defined(_WIN32) && defined(_UNICODE)
+#if defined(_WIN32) && defined(UNICODE_PATHS)
   wchar_t *path = convert_utf8_to_utf16(file);
   int r = SetCurrentDirectoryW(path);
   FREEMEMORY(path);
   return r;
 #elif defined(_WIN32)
-  return SetCurrentDirectoryA(path);
+  return SetCurrentDirectoryA(file);
 #else
   return chdir(file);
 #endif
@@ -120,7 +120,7 @@ int CHDIR(const char *file) {
 /* ------------------ UNLINK  ----------------------- */
 
 int UNLINK(const char *file) {
-#if defined(_WIN32) && defined(_UNICODE)
+#if defined(_WIN32) && defined(UNICODE_PATHS)
   wchar_t *path = convert_utf8_to_utf16(file);
   int r = _wunlink(path);
   FREEMEMORY(path);
@@ -193,7 +193,7 @@ void CopyFILE(char *destdir, char *file_in, char *file_out, int mode){
   size_t chars_in;
 
   if(destdir==NULL||file_in==NULL)return;
-  streamin=fopen(file_in,"rb");
+  streamin=FOPEN(file_in,"rb");
   if(streamin==NULL)return;
 
   full_file_out=NULL;
@@ -205,10 +205,10 @@ void CopyFILE(char *destdir, char *file_in, char *file_out, int mode){
   strcat(full_file_out,file_out);
 
   if(mode==REPLACE_FILE){
-    streamout=fopen(full_file_out,"wb");
+    streamout=FOPEN(full_file_out,"wb");
   }
   else if(mode==APPEND_FILE){
-    streamout=fopen(full_file_out,"ab");
+    streamout=FOPEN(full_file_out,"ab");
   }
   else{
     assert(FFALSE);
@@ -312,7 +312,7 @@ char *GetFileName(char *temp_dir, char *file, int force_in_temp_dir){
   TrimBack(file);
   file2=TrimFront(file);
   if(force_in_temp_dir==NOT_FORCE_IN_DIR){
-    stream=fopen(file2,"r");
+    stream=FOPEN(file2,"r");
     if(Writable(".")==YES||stream!=NULL){
       NewMemory((void **)&file_out,strlen(file2)+1);
       strcpy(file_out,file2);
@@ -377,9 +377,9 @@ void FileCopy(char *file_in, char *file_out){
   int c;
 
   if(file_in == NULL || file_out == NULL)return;
-  stream_in = fopen(file_in, "rb");
+  stream_in = FOPEN(file_in, "rb");
   if(stream_in == NULL)return;
-  stream_out = fopen(file_out, "wb");
+  stream_out = FOPEN(file_out, "wb");
   if(stream_out == NULL){
     fclose(stream_in);
     return;
@@ -404,16 +404,16 @@ int FileCat(char *file_in1, char *file_in2, char *file_out){
   if(file_in1==NULL||file_in2==NULL)return -1;
   if(file_out==NULL)return -2;
 
-  stream_in1=fopen(file_in1,"r");
+  stream_in1=FOPEN(file_in1,"r");
   if(stream_in1==NULL)return -1;
 
-  stream_in2=fopen(file_in2,"r");
+  stream_in2=FOPEN(file_in2,"r");
   if(stream_in2==NULL){
     fclose(stream_in1);
     return -1;
   }
 
-  stream_out=fopen(file_out,"w");
+  stream_out=FOPEN(file_out,"w");
   if(stream_out==NULL){
     fclose(stream_in1);
     fclose(stream_in2);
@@ -518,7 +518,7 @@ int IfFirstLineBlank(char *file){
   statfile1 = STAT(file, &statbuff1);
   if(statfile1!=0)return 1;
 
-  stream = fopen(file, "r");
+  stream = FOPEN(file, "r");
   if(stream==NULL||fgets(buffer, 255, stream)==NULL){
     if(stream!=NULL)fclose(stream);
     return 1;
@@ -613,7 +613,7 @@ void *fread_mt(void *mtfileinfo){
     file_end    = file_size - 1;
     buffer_size = file_end + 1 - file_beg;
   }
-  stream = fopen(file, "rb");
+  stream = FOPEN(file, "rb");
   if(stream == NULL){
 #ifdef pp_THREAD
     if(nthreads>1)pthread_exit(NULL);
@@ -663,7 +663,7 @@ int MakeFile(char *file, int size){
   int i;
 
   if(file == NULL || strlen(file) == 0)return 0;
-  stream = fopen(file, "w");
+  stream = FOPEN(file, "w");
   if(stream == NULL)return 0;
 
   NewMemory((void **)&buffer, BUFFERSIZE);
@@ -689,7 +689,7 @@ FILE_SIZE fread_p(char *file, unsigned char *buffer, FILE_SIZE offset, FILE_SIZE
   if(nthreads == 1){
     FILE *stream;
 
-    stream = fopen(file, "rb");
+    stream = FOPEN(file, "rb");
     if(stream == NULL)return 0;
     chars_read = fread(buffer, 1, mtfileinfo->file_size, stream);
     fclose(stream);
@@ -831,16 +831,12 @@ bufferdata *File2Buffer(char *file, char *size_file, int *options, bufferdata *b
 //#define XXXX
 #ifdef XXXX
   FILE *stream;
-#ifdef WIN32
-  stream = _fsopen(file, "rb", _SH_DENYNO);
-#else
-  stream = fopen(file, "rb");
-#endif
+  stream = FOPEN(file, "rb");
 #endif
 
 #ifndef XXXX
   FILE *stream;
-  stream = fopen(file, "rb");
+  stream = FOPEN(file, "rb");
 #endif
   if(stream == NULL){
     FreeBufferInfo(bufferinfo);
@@ -930,11 +926,7 @@ FILE *fopen_indir(char *dir, char *file, char *mode){
 
   if(file==NULL||strlen(file)==0)return NULL;
   if(dir==NULL||strlen(dir)==0){
-#ifdef WIN32
-    stream = _fsopen(file, mode, _SH_DENYNO);
-#else
-    stream = fopen(file,mode);
-#endif
+  stream = FOPEN(file, mode);
   }
   else{
     char *filebuffer;
@@ -945,11 +937,7 @@ FILE *fopen_indir(char *dir, char *file, char *mode){
     strcpy(filebuffer,dir);
     strcat(filebuffer,dirseparator);
     strcat(filebuffer,file);
-#ifdef WIN32
-    stream = _fsopen(filebuffer, mode, _SH_DENYNO);
-#else
-    stream = fopen(filebuffer, mode);
-#endif
+    stream = FOPEN(filebuffer, mode);
     FREEMEMORY(filebuffer);
   }
   return stream;
@@ -998,32 +986,20 @@ FILE *fopen_3dir(char *file, char *mode, char *dir1, char *dir2, char *dir3){
     strcpy(buffer, dir1);
     strcat(buffer, dirseparator);
     strcat(buffer, file);
-#ifdef WIN32
-    stream = _fsopen(buffer, mode, _SH_DENYNO);
-#else
-    stream = fopen(buffer, mode);
-#endif
+    stream = FOPEN(buffer, mode);
     if(stream!=NULL)return stream;
   }
   if(dir2 != NULL){
     strcpy(buffer, dir2);
     strcat(buffer, dirseparator);
     strcat(buffer, file);
-#ifdef WIN32
-    stream = _fsopen(buffer, mode, _SH_DENYNO);
-#else
-    stream = fopen(buffer, mode);
-#endif
+    stream = FOPEN(buffer, mode);
   }
   if(dir3 != NULL){
     strcpy(buffer, dir3);
     strcat(buffer, dirseparator);
     strcat(buffer, file);
-#ifdef WIN32
-    stream = _fsopen(buffer, mode, _SH_DENYNO);
-#else
-    stream = fopen(buffer, mode);
-#endif
+    stream = FOPEN(buffer, mode);
   }
   return stream;
 }
@@ -1049,11 +1025,7 @@ FILE *fopen_2dir(char *file, char *mode, char *scratch_dir){
   FILE *stream;
 
   if(file == NULL)return NULL;
-#ifdef WIN32
-  stream = _fsopen(file,mode,_SH_DENYNO);
-#else
-  stream = fopen(file,mode);
-#endif
+  stream = FOPEN(file, mode);
   if(stream == NULL && scratch_dir != NULL){
     stream = fopen_indir(scratch_dir, file, mode);
   }
