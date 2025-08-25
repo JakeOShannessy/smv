@@ -79,7 +79,7 @@ CLANGANALYZE=clang --analyze
 CLANGSUMMARY=../../scripts/clang_summary.sh
 CLANGWINSUMMARY=..\..\scripts\clang_summary.bat
 
-incs = compress.h scontour2d.h csphere.h datadefs.h file_util.h glui_bounds.h \
+incs = compress.h scontour2d.h csphere.h datadefs.h dirent_win.h file_util.h glui_bounds.h \
        glui_motion.h glui_smoke.h glui_tour.h histogram.h infoheader.h interp.h isobox.h \
        IOobjects.h IOscript.h IOvolsmoke.h lint.h dmalloc.h options.h options_common.h \
        pragmas.h smokeheaders.h smokeviewdefs.h smokeviewvars.h \
