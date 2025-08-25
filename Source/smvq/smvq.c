@@ -318,7 +318,7 @@ int RunSmvq(char *input_file, const char *fdsprefix) {
   return 0;
 }
 
-#if defined(_WIN32) && defined(_UNICODE)
+#if defined(_WIN32) && defined(UNICODE_PATHS)
 #define OPTS L"hV"
 int wmain(int argc, wchar_t **argv)
 #else
@@ -364,7 +364,7 @@ int main(int argc, char **argv)
     printf("smvq - smv query processor (v%s)\n", PROGVERSION);
     return 0;
   }
-#if defined(_WIN32) && defined(_UNICODE)
+#if defined(_WIN32) && defined(UNICODE_PATHS)
   char *input_file = convert_utf16_to_utf8(argv[optind]);
 #else
   char *input_file = argv[optind];
@@ -376,7 +376,7 @@ int main(int argc, char **argv)
   char *fdsprefix = GetBaseName(input_file);
   int result = RunSmvq(input_file, fdsprefix);
   free(fdsprefix);
-#if defined(_WIN32) && defined(_UNICODE)
+#if defined(_WIN32) && defined(UNICODE_PATHS)
   FREEMEMORY(input_file);
 #endif
   return result;
