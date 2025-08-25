@@ -334,8 +334,10 @@ int main(int argc, char **argv)
   opterr = 0;
 #if defined(_WIN32) && defined(UNICODE_PATHS)
   while((c = getopt_w(argc, argv, L"hV")) != -1)
-#else
+#elif defined(_WIN32)
   while((c = getopt_a(argc, argv, "hV")) != -1)
+#else
+  while((c = getopt(argc, argv, "hV")) != -1)
 #endif
     switch(c) {
     case 'h':

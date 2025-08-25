@@ -10,12 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <stdio.h>
-#include <strsafe.h>
-#include <tchar.h>
-#include <windows.h>
-#pragma comment(lib, "User32.lib")
-
 int show_help;
 int hash_option;
 int show_version;

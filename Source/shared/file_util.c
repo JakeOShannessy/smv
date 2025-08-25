@@ -104,9 +104,9 @@ int STAT(const char *file, STRUCTSTAT *buffer) {
   return _stat64(file, buffer);
 #else
 #ifdef X64
-  return stat(file, buffer);
-#else
   return _stat64(file, buffer);
+#else
+  return stat(file, buffer);
 #endif
 #endif
 }
