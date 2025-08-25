@@ -1114,23 +1114,13 @@ int MakeFileList(const char *path, char *filter, int maxfiles, int sort_files,
   TCHAR szDir[MAX_PATH];
   size_t length_of_arg;
   HANDLE hFind = INVALID_HANDLE_VALUE;
-#ifdef UNICODE
   StringCchLength(path, MAX_PATH, &length_of_arg);
-#else
-  length_of_arg = strlen(path);
-#endif
   if(length_of_arg > (MAX_PATH - 3)) {
     _ftprintf(stderr, TEXT("\nDirectory path is too long.\n"));
     return (-1);
   }
-#ifdef UNICODE
   StringCchCopy(szDir, MAX_PATH, path);
   StringCchCat(szDir, MAX_PATH, TEXT("\\*"));
-#else
-  strcpy(szDir, path);
-  strcat(szDir, "\\*");
-#endif
-
   // Find the first file in the directory.
 
   hFind = FindFirstFile(szDir, &ffd);
@@ -1163,16 +1153,18 @@ int MakeFileList(const char *path, char *filter, int maxfiles, int sort_files,
           size_t l1 = _tcslen(szDir);
           size_t l2 = _tcslen(ffd.cFileName);
 #ifdef UNICODE
-          NEWMEMORY(file, l1 * 2 + l2 * 2 + 100);
+          NEWMEMORY(file, l1 * 2 + l2 * 2 + 4);
 #else
-          NEWMEMORY(file, l1 + l2 + 100);
+          NEWMEMORY(file, l1 + l2 + 2);
 #endif
+#pragma warning(suppress : 4995)
           PathCombine(file, szDir, ffd.cFileName);
         }
         else {
           size_t l;
           StringCchLength(ffd.cFileName, MAX_PATH, &l);
           NEWMEMORY(file, l + 4);
+#pragma warning(suppress : 4995)
           PathCombine(file, NULL, ffd.cFileName);
         }
 #if UNICODE
@@ -1185,9 +1177,6 @@ int MakeFileList(const char *path, char *filter, int maxfiles, int sort_files,
       nfiles++;
     }
   } while(FindNextFile(hFind, &ffd) != 0);
-#if UNICODE
-  FREEMEMORY(filterA);
-#endif
   DWORD dwError = 0;
   dwError = GetLastError();
   if(dwError != ERROR_NO_MORE_FILES) {
@@ -1363,6 +1352,7 @@ char *CombinePaths(const char *path_a, const char *path_b){
   NEWMEMORY(path_out, sizeof(char) * MAX_PATH);
   // NB: This uses on older function in order to support "char *".
   // PathAllocCombine would be better but requires switching to "wchar *".
+#pragma warning(suppress : 4995)
   char *result = PathCombineA(path_out, path_a, path_b);
   if(result == NULL) FREEMEMORY(path_out);
   return result;
@@ -1461,6 +1451,7 @@ char *GetBinDir(){
   // NB: This uses on older function in order to support "char *".
   // PathCchRemoveFileSpec would be better but requires switching to "wchar *".
   PathRemoveFileSpecA(buffer);
+  #pragma warning(suppress : 4995)
   PathAddBackslashA(buffer);
   return buffer;
 }
