@@ -134,7 +134,7 @@ void WriteBoundIni(void){
 
     boundi = &patchi->bounds;
     if(stream == NULL){
-      stream = fopen(fullfilename, "w");
+      stream = FOPEN(fullfilename, "w");
       if(stream == NULL){
         FREEMEMORY(fullfilename);
         return;

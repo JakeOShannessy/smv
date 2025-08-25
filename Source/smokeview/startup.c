@@ -168,7 +168,7 @@ void ReadBoundINI(void){
   FILE *stream = NULL;
   char *fullfilename = NULL;
 
-  if(fullfilename != NULL)stream = fopen(fullfilename, "r");
+  if(fullfilename != NULL)stream = FOPEN(fullfilename, "r");
   if(stream == NULL || IsFileNewer(smv_filename, fullfilename) == 1){
     if(stream != NULL)fclose(stream);
     FREEMEMORY(fullfilename);
@@ -270,7 +270,7 @@ int SetupCase(char *filename){
     if(HaveSmoke3D(smv_streaminfo) == 0){
       FILE *stream_smoke3d = NULL;
       char *smoke3d_filename = CasePathSmoke3d(&global_scase);
-      stream_smoke3d = fopen(smoke3d_filename, "w");
+      stream_smoke3d = FOPEN(smoke3d_filename, "w");
       if(stream_smoke3d != NULL){
         fprintf(stream_smoke3d, "SMOKF3D 1 8700.0                                    \n");
         fprintf(stream_smoke3d, " dummy.xyz                                          \n");
@@ -402,7 +402,7 @@ int GetScreenHeight(void){
   FREEMEMORY(smokeview_scratchdir);
   strcat(command,full_height_file);
   system(command);
-  stream = fopen(full_height_file,"r");
+  stream = FOPEN(full_height_file,"r");
   if(stream!=NULL){
     fgets(buffer, 255, stream);
     sscanf(buffer, "%i", &screen_height);
