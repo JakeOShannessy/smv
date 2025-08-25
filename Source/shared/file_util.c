@@ -73,7 +73,7 @@ int MKDIR(const char *file) {
 #elif defined(_WIN32)
   return CreateDirectoryA(file, NULL);
 #else
-  return mkdir(a, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+  return mkdir(file, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 #endif
 }
 
