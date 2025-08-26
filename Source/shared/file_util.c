@@ -499,6 +499,7 @@ int Writable(char *dir){
     FILE *stream = FOPEN(temp_path, "w");
     if(stream == NULL) {
       UNLINK(temp_path);
+      FREEMEMORY(temp_path);
       return NO;
     }
     fclose(stream);
