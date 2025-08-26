@@ -391,7 +391,7 @@ int Writable(char *dir){
     char tempfile[tempfile_length+1];
     RandStr(tempfile, tempfile_length);
     char *temp_path = CombinePaths(dir, tempfile);
-    FILE *stream = FOPEN(temp_path, "w");
+    FILE *stream = fopen(temp_path, "w");
     FREEMEMORY(temp_path);
     if(stream == NULL) {
       UNLINK(temp_path);
@@ -916,6 +916,7 @@ FILE *fopen_3dir(char *file, char *mode, char *dir1, char *dir2, char *dir3){
 #else
     stream = fopen(buffer, mode);
 #endif
+    if(stream != NULL) return stream;
   }
   if(dir3 != NULL){
     strcpy(buffer, dir3);
