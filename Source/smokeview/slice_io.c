@@ -35,7 +35,7 @@ int MakeSliceSizefile(char *file, char *sizefile, int compression_type) {
   stream = FOPEN(file, "rb");
   if (stream == NULL) return 0;
 
-  sizestream = fopen(sizefile, "w");
+  sizestream = FOPEN(sizefile, "w");
   if (sizestream == NULL) {
     fclose(stream);
     return 0;
@@ -158,7 +158,7 @@ int GetSliceHeader(char *comp_file, char *size_file, int compression_type,
   if (stream == NULL) {
     if (MakeSliceSizefile(comp_file, size_file, compression_type) == 0)
       return 0;
-    stream = fopen(size_file, "r");
+    stream = FOPEN(size_file, "r");
     if (stream == NULL) return 0;
   }
 
@@ -290,7 +290,7 @@ void OutputFedCSV(void) {
   if (fed_areas == NULL) return;
   sprintf(fed_area_file_base, "%s_s%04i_fedarea.csv", fdsprefix, fed_seqnum++);
   fed_area_file = fed_area_file_base;
-  AREA_STREAM = fopen(fed_area_file, "w");
+  AREA_STREAM = FOPEN(fed_area_file, "w");
   if (AREA_STREAM == NULL) return;
 
   fprintf(AREA_STREAM,
@@ -388,7 +388,7 @@ void ReadFed(int file_index, int time_frame, float *time_value, int flag,
   if (file_type == FED_SLICE) {
     FILE *stream;
 
-    stream = fopen(slicei->bound_file, "r");
+    stream = FOPEN(slicei->bound_file, "r");
     if (stream != NULL) {
       slicei->have_bound_file = 1;
       fclose(stream);
@@ -577,7 +577,7 @@ void ReadFed(int file_index, int time_frame, float *time_value, int flag,
     if (file_type == FED_SLICE) {
       FILE *stream = NULL;
 
-      stream = fopen(slicei->bound_file, "w");
+      stream = FOPEN(slicei->bound_file, "w");
       if (stream != NULL) {
         fprintf(stream, "0.0 %f %f\n", fed_valmin, fed_valmax);
         fclose(stream);

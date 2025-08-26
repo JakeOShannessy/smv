@@ -14,6 +14,7 @@
 #include "infoheader.h"
 
 #include "c_api.h"
+#include "file_util.h"
 
 #include "glui_motion.h"
 
@@ -30,74 +31,17 @@
 #include <unistd.h>
 #endif
 
-#ifdef WIN32
-/// @brief Given a UTF-8 (or ASCII) string, convert it to Windows UTF-16.
-/// @param path a UTF-8 (or ASCII) string
-/// @return a UTF-16 string or NULL on error
-wchar_t *convert_utf8_to_utf16(const char *path) {
-  int r;
-  r = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
-  if(r == 0) goto err;
-  LPWSTR out;
-  NEWMEMORY(out, r * sizeof(WCHAR));
-  r = MultiByteToWideChar(CP_UTF8, 0, path, -1, out, r);
-  if(r == 0) goto err;
-  return out;
-err:
-  // There was an error converting this string to utf-16. Produce a suitable
-  // error message and return NULL.
-  DWORD dw = GetLastError();
-  switch(dw) {
-  case ERROR_INSUFFICIENT_BUFFER:
-    fprintf(stderr, "A supplied buffer size was not large enough, or it was "
-                    "incorrectly set to NULL.\n");
-    break;
-  case ERROR_INVALID_FLAGS:
-    fprintf(stderr, "The values supplied for flags were not valid.\n");
-    break;
-  case ERROR_INVALID_PARAMETER:
-    fprintf(stderr, "Any of the parameter values was invalid.\n");
-    break;
-  case ERROR_NO_UNICODE_TRANSLATION:
-    fprintf(stderr, "Invalid Unicode was found in a string.\n");
-    break;
-  default:
-    break;
-  }
-  return NULL;
-}
-#endif
-
-char *copy_convert(const char *s) {
-#ifdef WIN32
-  return (char *)convert_utf8_to_utf16(s);
-#else
-  char *buf;
-  int l = strlen(s);
-  NEWMEMORY(buf, l * sizeof(char));
-  strcpy(buf, s);
-  return buf;
-#endif
-}
-
-/// @brief
-/// @param obj
-/// @return a string allocated with NEWMEMORY
-char *get_string_dup(struct json_object *obj) {
-  return copy_convert(json_object_get_string(obj));
-}
 
 /// @brief Render the current frame to a file.
 json_object *jsonrpc_Render(jrpc_context *context, json_object *params,
                             json_object *id) {
   DisplayCB();
-  char *basename = get_string_dup(json_object_object_get(params, "basename"));
+  const char *basename = json_object_get_string(json_object_object_get(params, "basename"));
   int ret = CApiRender(basename);
   if(ret) {
     context->error_code = 111;
     context->error_message = strdup("render failure");
   }
-  FREEMEMORY(basename);
   return NULL;
 }
 
@@ -785,13 +729,11 @@ json_object *jsonrpc_Unloadall(jrpc_context *context, json_object *params,
 
 json_object *jsonrpc_Setrenderdir(jrpc_context *context, json_object *params,
                                   json_object *id) {
-  char *dir = copy_convert(
-      json_object_get_string(json_object_array_get_idx(params, 0)));
+  const char *dir = json_object_get_string(json_object_array_get_idx(params, 0));
   if(Setrenderdir(dir)) {
     context->error_code = 112;
     context->error_message = strdup("set render dir failure");
   }
-  FREEMEMORY(dir);
   return NULL;
 }
 

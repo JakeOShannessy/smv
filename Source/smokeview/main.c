@@ -23,6 +23,8 @@
 
 #ifdef WIN32
 #include <direct.h>
+#include <windows.h>
+#include <shellapi.h>
 #endif
 
 #include <assert.h>
@@ -470,7 +472,7 @@ char *ProcessCommandLine(CommandlineArgs *args){
     }
     if(args->redirect){
       char *log_filename = CasePathLogFile(&global_scase);
-      LOG_FILENAME = fopen(log_filename, "w");
+      LOG_FILENAME = FOPEN(log_filename, "w");
       FREEMEMORY(log_filename);
       if(LOG_FILENAME != NULL){
         redirect = 1;
@@ -599,7 +601,7 @@ int CheckSMVFile(char *file, char *subdir){
   else{
     casedirptr = subdir;
   }
-  stream = fopen(casename, "r");
+  stream = FOPEN(casename, "r");
   if(stream==NULL){
     stream = fopen_indir(casedirptr, casename, "r");
     if(stream==NULL){
@@ -619,6 +621,51 @@ json_object *subtract(jrpc_context *context, json_object *params,
   json_object *result_root = json_object_new_int(a - b);
   return result_root;
 }
+
+
+/// @brief Get the commandline arguments. On Unix-like systems this will just
+/// return argc and argv. On Windows this will retrieve the commandline
+/// arguments in a UTF-16 format and convert to UTF-8 in a newly allocated
+/// array.
+/// @param[in] argc argc as defined as an argument to main
+/// @param[in] argv argc as defined as an argument to main
+/// @param[out] n_args The number of arguments in the array
+/// @param[out] utf8_args A pointer to where the new array will be allocated
+void GetArgs(int argc, char **argv, int *n_args, char ***utf8_args) {
+#if defined(WIN32) && defined(UNICODE_PATHS)
+  LPWSTR *utf16_args = CommandLineToArgvW(GetCommandLineW(), n_args);
+  if(NULL == utf16_args) {
+    fprintf(stderr, "CommandLineToArgvW failed\n");
+    SMV_EXIT(1);
+  }
+  NEWMEMORY(*utf8_args, (*n_args) * sizeof(char *));
+  for(int i = 0; i < *n_args; i++) {
+    LPWSTR arg = utf16_args[i];
+    char *conv = convert_utf16_to_utf8(arg);
+    (*utf8_args)[i] = conv;
+  }
+  LocalFree(utf16_args);
+#else
+  *n_args = argc;
+  *utf8_args = argv;
+#endif
+}
+
+/// @brief Free an array previously allocated by GetArgs.
+/// @param[in] n_args The length of args
+/// @param[inout] args The array previously allocated by GetArgs
+void FreeArgs(int n_args, char **args) {
+#if defined(WIN32) && defined(UNICODE_PATHS)
+  // We only need to free argument memory on windows as that's the only time we
+  // allocate new memory. On other platforms the array returned by GetArgs is
+  // readonly.
+  for(int i = 0; i < n_args; i++) {
+    FREEMEMORY(args[i]);
+  }
+  FREEMEMORY(args);
+#endif
+}
+
 
 /* ------------------ main ------------------------ */
 
@@ -655,8 +702,15 @@ int main(int argc, char **argv){
   InitRandAB(1000000);
   InitVars();
 
-  common_opts opts = ParseCommonOptions(argc, argv);
-  if(opts.show_help==1){
+  // The number of commandline arguments
+  int n_args = 0;
+  // The commandline arguments in an array of UTF-8 encoded strings (length
+  // n_args)
+  char **utf8_args = NULL;
+  GetArgs(argc, argv, &n_args, &utf8_args);
+
+  common_opts opts = ParseCommonOptions(n_args, utf8_args);
+  if(show_help==1){
     Usage(HELP_SUMMARY);
     return 1;
   }
@@ -665,9 +719,9 @@ int main(int argc, char **argv){
     return 1;
   }
 
-  smv_filename = ParseCommandline(argc, argv);
 
-  if(smv_filename == NULL && opts.show_version == 1){
+  smv_filename = ParseCommandline(n_args, utf8_args);
+  if(smv_filename == NULL || opts.show_version == 1) {
     InitStartupDirs();
     DisplayVersionInfo("Smokeview ");
     SMV_EXIT(0);
@@ -684,7 +738,8 @@ int main(int argc, char **argv){
   FREEMEMORY(smv_bindir);
   InitStartupDirs();
   DisplayVersionInfo("Smokeview ");
-  SetupGlut(argc,argv);
+  SetupGlut(n_args,utf8_args);
+  FreeArgs(n_args, utf8_args);
   START_TIMER(startup_time);
   // TODO: this next step is now very slow.
   return_code= SetupCase(smv_filename);
