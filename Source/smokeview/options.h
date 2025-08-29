@@ -6,7 +6,7 @@
 //#define pp_SHOW_UPDATE      // show what is being updated in the UpdateShowScene routine
 #define pp_GPU              // support the GPU
 #define pp_THREAD           // turn on multi-threading
-#define pp_PART_SINGLE      // load particles using a single thread
+//#define pp_TERRAIN_HIDE     // hide terrain when hiding internal blockages
 
 //*** options: windows
 
@@ -34,9 +34,7 @@
 #undef pp_OSX_HIGHRES
 #ifdef pp_OSX
 #define pp_REFRESH      // refresh glui dialogs when they change size
-#ifndef pp_OSX_LOWRES
 #define pp_OSX_HIGHRES
-#endif
 #endif
 
 //*** options: for debugging
