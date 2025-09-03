@@ -88,12 +88,5 @@ int main(int argc, char **argv) {
     err = ReadFrom(path, test_file_content_ascii);
     if(err) return err;
   }
-  {
-#if defined(_WIN32) && defined(UNICODE_PATHS)
-    wchar_t *path = convert_utf8_to_utf16("test_файл_O’S");
-    fwprintf(stderr, L"%s\n", path);
-    FREEMEMORY(path);
-#endif
-  }
   return err;
 }

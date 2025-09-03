@@ -93,7 +93,7 @@ typedef struct {
 } common_opts;
 
 // vvvvvvvvvvvvvvvvvvvvvvvv headers vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-#if defined(_WIN32) && defined(UNICODE_PATHS)
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
 EXTERNCPP wchar_t *convert_utf8_to_utf16(const char *path);
 EXTERNCPP char *convert_utf16_to_utf8(const wchar_t *path);
 #endif
@@ -139,7 +139,7 @@ EXTERNCPP void           StripQuotes(char *buffer);
 EXTERNCPP void           StripCommas(char *buffer);
 EXTERNCPP int            GetRowCols(FILE *stream, int *nrows, int *ncols);
 
-EXTERNCPP char          *RemoveComment(char *buffer);
+EXTERNCPP void           RemoveComment(char *buffer);
 EXTERNCPP void           TrimBack(char *line);
 EXTERNCPP void           TrimCommas(char *line);
 EXTERNCPP char          *TrimFront(char *line);
