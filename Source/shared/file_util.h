@@ -121,7 +121,7 @@ typedef struct {
 #endif
 
 #define FILE_EXISTS(a) FileExists(a, NULL, 0, NULL, 0)
-int FileExistsOrig(const char *filename);
+int FileExistsOrig(char *filename);
 
 #ifdef WIN32
 #define F_OK 0
@@ -188,9 +188,9 @@ EXTERNCPP int GetFileInfo(char *filename, char *sourcedir, FILE_SIZE *filesize);
 EXTERNCPP char *GetZoneFileName(char *buffer);
 EXTERNCPP int Writable(char *dir);
 
-EXTERNCPP int FileExists(const char *filename, filelistdata *filelist, int nfiles,
+EXTERNCPP int FileExists(char *filename, filelistdata *filelist, int nfiles,
                          filelistdata *filelist2, int nfiles2);
-EXTERNCPP filelistdata *FileInList(const char *file, filelistdata *filelist,
+EXTERNCPP filelistdata *FileInList(char *file, filelistdata *filelist,
                                    int nfiles, filelistdata *filelist2,
                                    int nfiles2);
 EXTERNCPP void FreeFileList(filelistdata *filelist, int *nfilelist);

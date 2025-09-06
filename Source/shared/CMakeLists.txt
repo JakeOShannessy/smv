@@ -39,7 +39,6 @@ target_include_directories(libsmv PUBLIC
     #TODO: this is a bit of a hack, it shouldn't really use options.h
     ../smokeview
 )
-target_include_directories(libsmv INTERFACE include())
 if(WIN32)
     target_link_libraries(libsmv PRIVATE PThreads4W::PThreads4W)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -56,10 +55,6 @@ target_link_libraries(libsmv PRIVATE JPEG::JPEG)
 target_link_libraries(libsmv PRIVATE PNG::PNG)
 target_link_libraries(libsmv PUBLIC ZLIB::ZLIB)
 target_link_libraries(libsmv PRIVATE OpenGL::GL OpenGL::GLU)
-if (NOT WIN32)
-    target_link_libraries(libsmv PRIVATE OpenGL::EGL)
-endif()
-target_link_libraries(libsmv PRIVATE GLEW::GLEW)
 target_link_libraries(libsmv PRIVATE PkgConfig::LIBGD)
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(libsmv PUBLIC m)
@@ -67,13 +62,5 @@ endif()
 if (SMV_ROOT_OVERRIDE)
     target_compile_definitions(libsmv PRIVATE SMV_ROOT_OVERRIDE="${SMV_ROOT_OVERRIDE}")
 endif()
-
+target_link_libraries(libsmv PRIVATE OpenGL::GL OpenGL::GLU)
 target_compile_definitions(libsmv PRIVATE ASLIB)
-
-if(WIN32)
-    # find_package(unofficial-angle REQUIRED CONFIG)
-    # target_link_libraries(libsmv PRIVATE unofficial::angle::libGLESv2)
-    # Or use the EGL target
-    find_package(unofficial-angle REQUIRED CONFIG)
-    target_link_libraries(libsmv PRIVATE unofficial::angle::libEGL)
-endif()

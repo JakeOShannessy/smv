@@ -56,12 +56,13 @@ typedef struct {
 
 #endif
 
+#ifdef pp_HASH
 #define HASH_NONE   0
 #define HASH_MD5    1
 #define HASH_SHA1   2
 #define HASH_SHA256 3
 #define HASH_ALL    4
-
+#endif
 #define HELP_SUMMARY 1
 #define HELP_ALL 2
 
@@ -170,9 +171,11 @@ EXTERNCPP void           PRINTversion(char *progname);
 
 // vvvvvvvvvvvvvvvvvvvvvvvv variables vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-extern CCC int hash_option;
-extern CCC int show_version;
-extern CCC int show_help;
+#ifdef pp_HASH
+SVEXTERN int SVDECL(hash_option, HASH_SHA1);
+#endif
+SVEXTERN int SVDECL(show_version, 0), SVDECL(show_help, 0);
+SVEXTERN char append_string[1024];
 
 #ifdef WIN32
 STREXTERN char STRDECL(dirseparator[],"\\");

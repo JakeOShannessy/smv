@@ -3,7 +3,7 @@ include(CTest)
 add_test(NAME "Execute smokediff" COMMAND smokediff)
 add_test(NAME "Execute smokeview" COMMAND smokeview -v)
 add_test(NAME "Execute smokezip" COMMAND smokezip)
-add_test(NAME "Execute smvq" COMMAND smvq -V)
+
 
 set(FIG_COMMIT "513dc046131f5dfdda47ff485efc2db7243f06b1")
 
@@ -75,10 +75,6 @@ target_link_libraries(test_unicode_paths PRIVATE libsmv)
 add_executable(sort_surfs sort_surfs.c)
 target_link_libraries(sort_surfs PRIVATE libsmv)
 
-# api_test
-add_executable(api_test api_test.c)
-target_link_libraries(api_test PRIVATE libsmv)
-
 
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
@@ -140,9 +136,3 @@ add_test(NAME "Test Unicode Paths"
 
 add_test(NAME "Sort Surfs"
     COMMAND sort_surfs)
-
-add_test(NAME "smvq - parse smv file"
-    COMMAND smvq ${FIG_DIR}/smv/Tests/test_model_small/test_model_small.smv)
-
-add_test(NAME "api_test"
-    COMMAND api_test ${FIG_DIR}/smv/Tests/test_model_small/test_model_small.smv)

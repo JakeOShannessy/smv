@@ -1,6 +1,9 @@
+#define INMAIN
+#include "options.h"
 #include <ctype.h>
 #include <getopt.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -26,8 +29,32 @@ int ReadSMV_Init(smv_case *scase);
 int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream);
 void ReadSMVDynamic(smv_case *scase, char *file);
 void ReadSMVOrig(smv_case *scase);
-char *GetBaseName(const char *input_file);
 smv_case *CreateScase();
+
+/// @brief Given a file path, get the filename excluding the final extension.
+/// This allocates a new copy which can be deallocated with free().
+/// @param input_file a file path
+/// @return an allocated string containing the basename or NULL on failure.
+char *GetBaseName(const char *input_file) {
+  if(input_file == NULL) return NULL;
+#ifdef _WIN32
+  char *result = malloc(_MAX_FNAME + 1);
+  errno_t err =
+      _splitpath_s(input_file, NULL, 0, NULL, 0, result, _MAX_FNAME, NULL, 0);
+  if(err) return NULL;
+#else
+  // POSIX basename can modify it's contents, so we'll make some copies.
+  char *input_file_temp = strdup(input_file);
+  // Get the filename (final component of the path, including any extensions).
+  char *bname = basename(input_file_temp);
+  // If a '.' exists, set it to '\0' to trim the extension.
+  char *dot = strrchr(bname, '.');
+  if(dot) *dot = '\0';
+  char *result = strdup(bname);
+  free(input_file_temp);
+#endif
+  return result;
+}
 
 int PrintJson(smv_case *scase) {
   struct json_object *jobj = json_object_new_object();
@@ -250,9 +277,8 @@ int PrintJson(smv_case *scase) {
   json_object_put(jobj);
   return 0;
 }
-
-int RunSmvq(const char *input_file, const char *fdsprefix) {
-  // Initialize the customized memory allocator that smokeview uses
+void InitScase(smv_case *scase);
+int RunSmvq(char *input_file, const char *fdsprefix) {
   initMALLOC();
 
   smv_case *scase = CreateScase();
@@ -279,10 +305,16 @@ int RunSmvq(const char *input_file, const char *fdsprefix) {
     }
     if(return_code) return return_code;
   }
-  // Print scase to stdout in JSON format
+  show_timings = 1;
+  ReadSMVOrig(scase);
+  INIT_PRINT_TIMER(ReadSMVDynamic_time);
+  ReadSMVDynamic(scase, input_file);
+  STOP_TIMER(ReadSMVDynamic_time);
+  fprintf(stderr, "ReadSMVDynamic:\t%8.3f ms\n", ReadSMVDynamic_time * 1000);
+  STOP_TIMER(parse_time);
+  fprintf(stderr, "Total Time:\t%8.3f ms\n", parse_time * 1000);
   PrintJson(scase);
-  // Deconstruct and free scase
-  DestroyScase(scase);
+  // FreeVars();
   return 0;
 }
 

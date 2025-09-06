@@ -6,6 +6,11 @@
 
 #include <assert.h>
 
+int show_help;
+int hash_option;
+int show_version;
+char append_string[1024];
+
 int main(int argc, char **argv) {
   if(argc < 2) {
     fprintf(stderr, "error: insufficient arguments");
@@ -15,7 +20,6 @@ int main(int argc, char **argv) {
   cadgeom_collection *coll = CreateCADGeomCollection(20);
   assert(NCADGeom(coll) == 0);
   int res = ReadCADGeomToCollection(coll, input_path, 100.0);
-  fprintf(stderr, "res: %i\n", res);
   fprintf(stderr, "#CAD defs: %i\n", NCADGeom(coll));
   assert(res == 0);
   assert(NCADGeom(coll) == 1);

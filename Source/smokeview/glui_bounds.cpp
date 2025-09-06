@@ -3506,6 +3506,7 @@ void LoadRolloutCB(int var){
 /* ------------------ BoundRolloutCB ------------------------ */
 
 void BoundRolloutCB(int var){
+  fprintf(stderr, "BoundRolloutCB: %d\n",var);
   GLUIToggleRollout(boundprocinfo, nboundprocinfo, var);
   if(global_scase.nzoneinfo>0){
     if(var==ZONE_ROLLOUT){

@@ -224,7 +224,7 @@ void InitLabelsCollection(labels_collection *labelscoll) {
   strcpy(labelscoll->label_last_ptr->name, "last");
 }
 
-/* ------------------ ClearLabelsCollection ------------------------ */
+/* ------------------ FreeLabelsCollection ------------------------ */
 
 labels_collection *CreateLabelsCollection() {
   labels_collection *labelscoll;
@@ -233,9 +233,9 @@ labels_collection *CreateLabelsCollection() {
   return labelscoll;
 }
 
-/* ------------------ ClearLabelsCollection ------------------------ */
+/* ------------------ FreeLabelsCollection ------------------------ */
 
-void ClearLabelsCollection(labels_collection *labelscoll) {
+void FreeLabelsCollection(labels_collection *labelscoll) {
   labeldata *thislabel = labelscoll->label_first_ptr->next;
   while(thislabel->next != NULL) {
     labeldata *nextlabel = thislabel->next;

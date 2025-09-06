@@ -5,20 +5,6 @@
 #endif
 
 #include "options.h"
-
-#include <GL/glew.h>
-
-#define EGL_EGLEXT_PROTOTYPES
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-
-
-#include <GL/gl.h>
-
-#include <GL/glu.h>
-
-#include <gd.h>
-
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -1171,7 +1157,7 @@ ventdata *GetCloseVent(meshdata *ventmesh, int ivent){
 
 /* ------------------ ReadSMVDynamic ------------------------ */
 
-void ReadSMVDynamic(smv_case *scase, const char *file){
+void ReadSMVDynamic(smv_case *scase, char *file){
   int ioffset;
   float time_local;
   int i;
@@ -9009,262 +8995,6 @@ void InitScase(smv_case *scase) {
   InitObjectCollection(&scase->objectscoll);
 }
 
-/// @brief Given a file path, get the filename excluding the final extension.
-/// This allocates a new copy which can be deallocated with free().
-/// @param input_file a file path
-/// @return an allocated string containing the basename or NULL on failure.
-char *GetBaseName(const char *input_file) {
-  if (input_file == NULL) return NULL;
-#ifdef _WIN32
-  char *result = malloc(_MAX_FNAME + 1);
-  errno_t err =
-      _splitpath_s(input_file, NULL, 0, NULL, 0, result, _MAX_FNAME, NULL, 0);
-  if (err) return NULL;
-#else
-  // POSIX basename can modify it's contents, so we'll make some copies.
-  char *input_file_temp = strdup(input_file);
-  // Get the filename (final component of the path, including any extensions).
-  char *bname = basename(input_file_temp);
-  // If a '.' exists, set it to '\0' to trim the extension.
-  char *dot = strrchr(bname, '.');
-  if (dot) *dot = '\0';
-  char *result = strdup(bname);
-  free(input_file_temp);
-#endif
-  return result;
-}
-
-const int WIDTH = 512;
-const int HEIGHT = 512;
-
-const char* vertexShaderSource =
-    "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "void main()\n"
-    "{\n"
-    "    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "}\n";
-
-const char* fragmentShaderSource =
-    "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{\n"
-    "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "}\n";
-
-#define MAX_DEVICES 4
-void OpenGLInit() {
-#ifdef _WIN32
-  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-#else
-  EGLDeviceEXT eglDevs[MAX_DEVICES];
-  EGLint numDevices;
-
-  PFNEGLQUERYDEVICESEXTPROC eglQueryDevicesEXT =
-      (PFNEGLQUERYDEVICESEXTPROC)eglGetProcAddress("eglQueryDevicesEXT");
-
-  eglQueryDevicesEXT(MAX_DEVICES, eglDevs, &numDevices);
-
-  printf("Detected %d devices\n", numDevices);
-
-  PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
-      (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress(
-          "eglGetPlatformDisplayEXT");
-
-  EGLDisplay display =
-      eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT, eglDevs[0], 0);
-#endif
-  EGLint major;
-  EGLint minor;
-
-  EGLBoolean init_result = eglInitialize(display, &major, &minor);
-  switch(init_result) {
-  case EGL_FALSE:
-    printf("eglInitialize: EGL_FALSE\n");
-    break;
-
-  case EGL_BAD_DISPLAY:
-    printf("eglInitialize: EGL_BAD_DISPLAY\n");
-    break;
-
-  case EGL_NOT_INITIALIZED:
-    printf("eglInitialize: EGL_NOT_INITIALIZED\n");
-    break;
-
-  default:
-    break;
-  }
-  if(init_result != EGL_TRUE) {
-    printf("eglInitialize failed\n");
-    return;
-  }
-  else {
-    printf("EGL initialized\n");
-  }
-  eglBindAPI(EGL_OPENGL_API);
-  EGLint configAttribs[] = {EGL_SURFACE_TYPE,
-                            EGL_PBUFFER_BIT,
-                            EGL_RED_SIZE,
-                            8,
-                            EGL_GREEN_SIZE,
-                            8,
-                            EGL_BLUE_SIZE,
-                            8,
-                            EGL_ALPHA_SIZE,
-                            8,
-                            EGL_DEPTH_SIZE,
-                            24,
-                            EGL_STENCIL_SIZE,
-                            8,
-                            EGL_RENDERABLE_TYPE,
-                            EGL_OPENGL_BIT,
-                            EGL_NONE};
-  EGLConfig config;
-  EGLint numConfigs;
-  EGLBoolean choose_config_result =
-      eglChooseConfig(display, configAttribs, &config, 1, &numConfigs);
-  if(choose_config_result != EGL_TRUE) {
-    printf("eglChooseConfig failed\n");
-    return;
-  }
-  EGLint contextAttribs[] = {EGL_CONTEXT_MAJOR_VERSION,
-                             3,
-                             EGL_CONTEXT_MINOR_VERSION,
-                             0,
-                             EGL_CONTEXT_OPENGL_PROFILE_MASK,
-                             EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
-                             EGL_NONE};
-  EGLContext eglContext =
-      eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
-  if(eglContext == NULL) {
-    fprintf(stderr, "Error: Could not produce opengl context\n");
-    return;
-  }
-  EGLint surfaceAttribs[] = {EGL_WIDTH, WIDTH, EGL_HEIGHT, HEIGHT, EGL_NONE};
-  EGLSurface surface = eglCreatePbufferSurface(display, config, surfaceAttribs);
-  if(surface == EGL_NO_SURFACE) {
-    printf("eglCreatePbufferSurface failed\n");
-    return;
-  }
-
-  EGLBoolean make_current_result =
-      eglMakeCurrent(display, surface, surface, eglContext);
-  if(make_current_result != EGL_TRUE) {
-    printf("eglMakeCurrent failed\n");
-    return;
-  }
-  const GLubyte *version_string = glGetString(GL_VERSION);
-  if(version_string == NULL) {
-    printf("OpenGL Version: NULL\n");
-    return;
-  }
-  else {
-    printf("OpenGL Version: %s\n", version_string);
-  }
-  printf("%s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-  GLenum err = glewInit();
-  if(err != GLEW_OK) {
-    // TODO: for some reason this reports a failure but everything works
-    printf("   GLEW initialization failed(%d) %s\n", err,
-           glewGetErrorString(err));
-  }
-  // Compile vertex shader
-  GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex, 1, &vertexShaderSource, NULL);
-  glCompileShader(vertex);
-
-  // Compile fragment shader
-  GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragment, 1, &fragmentShaderSource, NULL);
-  glCompileShader(fragment);
-
-  // uint32_t program = 0;
-  GLuint program = glCreateProgram();
-  glAttachShader(program, vertex);
-  glAttachShader(program, fragment);
-  glLinkProgram(program);
-
-  GLfloat vertices[] = {
-      0.0f, 0.5f, 0.0f, -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f,
-  };
-
-  GLuint vbo;
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  glDepthMask(GL_TRUE);
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
-
-  glUseProgram(program);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-  glDrawArrays(GL_TRIANGLES, 0, 3);
-
-  // std::vector<GLubyte> pixels(width * height * 4);
-  GLubyte *pixels = malloc(WIDTH * HEIGHT * 3 * sizeof(GLubyte));
-  glPixelStorei(GL_PACK_ALIGNMENT, 1);
-  glReadPixels(0, 0, WIDTH, HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
-  // At this point you can same the triangle pixel data as an image file,
-  // e.g., PNG
-
-  GLubyte *p = pixels;
-
-  gdImagePtr RENDERimage = gdImageCreateTrueColor(WIDTH, HEIGHT);
-
-  for(int i = HEIGHT - 1; i >= 0; i--) {
-    for(int j = 0; j < WIDTH; j++) {
-      unsigned int r, g, b;
-      int rgb_local;
-
-      r = *p++;
-      g = *p++;
-      b = *p++;
-      rgb_local = (r << 16) | (g << 8) | b;
-      gdImageSetPixel(RENDERimage, j, i, rgb_local);
-    }
-  }
-
-  // SetSmokeSensor(RENDERimage,WIDTH, HEIGHT);
-
-  // output image
-  const char *renderfile = "test.png";
-  FILE *RENDERfile = fopen(renderfile, "wb");
-  if(RENDERfile == NULL) {
-    fprintf(stderr, "*** Error: unable to render screen image to %s",
-            renderfile);
-    return;
-  }
-
-  gdImagePng(RENDERimage, RENDERfile);
-  // switch(rendertype){
-  // case PNG:
-  //   break;
-  // case JPEG:
-  //   gdImageJpeg(RENDERimage,RENDERfile,-1);
-  //   break;
-  // default:
-  //   assert(FFALSE);
-  //   break;
-  // }
-
-  fclose(RENDERfile);
-
-  gdImageDestroy(RENDERimage);
-  free(pixels);
-
-  eglDestroyContext(display, eglContext);
-  eglDestroySurface(display, surface);
-  eglTerminate(display);
-  PRINTF(" Completed.\n");
-}
-
 /* ------------------ CreateScase ------------------------ */
 
 /// @brief Create and initalize and a smokeview case (smv_case).
@@ -9277,48 +9007,14 @@ smv_case *CreateScase() {
   return scase;
 }
 
-int ScaseParseFromPath(const char *input_file, smv_case *scase) {
-  const char *fdsprefix = GetBaseName(input_file);
-  NEWMEMORY(scase->fdsprefix, (strlen(fdsprefix) + 1) * sizeof(char));
-  STRCPY(scase->fdsprefix, fdsprefix);
-
-  INIT_PRINT_TIMER(parse_time);
-  fprintf(stderr, "reading:\t%s\n", input_file);
-  {
-    bufferstreamdata *smv_streaminfo = GetSMVBuffer(input_file);
-    if(smv_streaminfo == NULL) {
-      fprintf(stderr, "could not open %s\n", input_file);
-      return 1;
-    }
-    INIT_PRINT_TIMER(ReadSMV_time);
-    int return_code = 0;
-    return_code = ReadSMV_Init(scase);
-    if(return_code) return return_code;
-    return_code = ReadSMV_Parse(scase, smv_streaminfo);
-    STOP_TIMER(ReadSMV_time);
-    fprintf(stderr, "ReadSMV:\t%8.3f ms\n", ReadSMV_time * 1000);
-    if(smv_streaminfo != NULL) {
-      FCLOSE(smv_streaminfo);
-    }
-    if(return_code) return return_code;
-  }
-  show_timings = 1;
-  ReadSMVOrig(scase);
-  INIT_PRINT_TIMER(ReadSMVDynamic_time);
-  ReadSMVDynamic(scase, input_file);
-  STOP_TIMER(ReadSMVDynamic_time);
-  fprintf(stderr, "ReadSMVDynamic:\t%8.3f ms\n", ReadSMVDynamic_time * 1000);
-  STOP_TIMER(parse_time);
-  fprintf(stderr, "Total Time:\t%8.3f ms\n", parse_time * 1000);
-  return 0;
-}
+/* ------------------ DestroyScase ------------------------ */
 
 /// @brief Cleanup and free the memory of an smv_case.
 /// @param scase An smv_case created with CreateScase.
 void DestroyScase(smv_case *scase) {
-  ClearObjectCollection(&scase->objectscoll);
-  ClearCADGeomCollection(&scase->cadgeomcoll);
-  ClearLabelsCollection(&scase->labelscoll);
+  FreeObjectCollection(&scase->objectscoll);
+  FreeCADGeomCollection(&scase->cadgeomcoll);
+  FreeLabelsCollection(&scase->labelscoll);
 }
 
 

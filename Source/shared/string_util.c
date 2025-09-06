@@ -141,8 +141,8 @@ char *GetCharPtr(char *label) {
 }
 
 /* ----------------------- AppendString ----------------------------- */
+
 char *AppendString(char *S1, char *S2){
-  static char append_string[1024];
   strcpy(append_string, S1);
   strcat(append_string, S2);
   return append_string;
@@ -2048,9 +2048,7 @@ void UsageCommon(int option){
 }
 
 /* ------------------ ParseCommonOptions ------------------------ */
-int show_version = 0;
-int show_help = 0;
-int hash_option = HASH_SHA1;
+
 int ParseCommonOptions(int argc, char **argv){
   int i, no_minus,first_arg=0;
 
