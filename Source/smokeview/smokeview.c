@@ -187,7 +187,7 @@ void InitVolrenderScript(char *prefix, char *tour_label, int startframe, int ski
 
   sfd = InsertScriptFile(volrender_scriptname);
   if(sfd!=NULL)default_script=sfd;
-  script_stream=fopen(volrender_scriptname,"w");
+  script_stream=FOPEN(volrender_scriptname,"w");
   if(script_stream!=NULL){
     fprintf(script_stream,"RENDERDIR\n");
     fprintf(script_stream," .\n");
@@ -211,7 +211,7 @@ void DisplayVersionInfo(char *progname){
     PRINTF("FDS Build        : %s\n",global_scase.fds_githash);
   }
   char *smv_progname = GetBinPath();
-  PRINTF("Smokeview path   : %s\n",smv_progname);
+  PRINTF("Smokeview        : %s\n",smv_progname);
   FREEMEMORY(smv_progname);
   if(verbose_output == 1){
     if(smokezippath!=NULL)PRINTF("Smokezip path    : %s\n",smokezippath);
@@ -261,10 +261,10 @@ void DisplayVersionInfo(char *progname){
 
   char *objectfile = GetSmvRootFile("objects.svo");
   if(objectfile != NULL && FileExistsOrig(objectfile) == 1){
-    PRINTF("objects.svo      : %s\n", objectfile);
+    PRINTF("Object defs      : %s\n", objectfile);
   }
   else{
-    PRINTF("objects.svo      : not found\n");
+    PRINTF("Object defs      : not found\n");
   }
   FREEMEMORY(objectfile);
 

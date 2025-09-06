@@ -363,18 +363,20 @@ void InitTextures0(void){
 #endif
   glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_volsmokecolormap);
 
-  glActiveTexture(GL_TEXTURE2);
-  glGenTextures(1, &slicesmoke_colormap_id);
-  glBindTexture(GL_TEXTURE_1D,slicesmoke_colormap_id);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  if(gpuactive == 1){
+    glActiveTexture(GL_TEXTURE2);
+    glGenTextures(1, &slicesmoke_colormap_id);
+    glBindTexture(GL_TEXTURE_1D,slicesmoke_colormap_id);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 #ifdef pp_GPU
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 #else
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 #endif
-  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_slicesmokecolormap_01);
-  glActiveTexture(GL_TEXTURE0);
+    glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_slicesmokecolormap_01);
+    glActiveTexture(GL_TEXTURE0);
+  }
 
   PRINT_TIMER(texture_timer, "texture setup");
   CheckMemory;
@@ -1985,7 +1987,7 @@ int GetViewpoints(char *inifile, char ***viewpointlist_ptr){
   char **viewpointlist;
 
   if(inifile==NULL||strlen(inifile)==0)return 0;
-  stream = fopen(inifile, "r");
+  stream = FOPEN(inifile, "r");
   if(stream==NULL)return 0;
 
   int nviewpoints = 0;
@@ -2094,7 +2096,7 @@ void GenerateViewpointMenu(void){
   if(nviewpoints==0)return;
 
   // if we can't write out to the viewpoint menu file then abort
-  stream = fopen(viewpiontemenu_filename, "w");
+  stream = FOPEN(viewpiontemenu_filename, "w");
   if(stream==NULL)return;
 
   int max1 = 5;
@@ -2127,7 +2129,7 @@ void UpdateEvents(void){
   int i;
 
   char *event_filename = CasePathEvent(&global_scase);
-  stream = fopen(event_filename, "r");
+  stream = FOPEN(event_filename, "r");
   FREEMEMORY(event_filename);
   if(stream==NULL)return;
 
@@ -3302,7 +3304,7 @@ int ReadIni2(const char *inifile, int localfile){
   updatemenu = 1;
   updatefacelists = 1;
 
-  if((stream = fopen(inifile, "r")) == NULL)return 1;
+  if((stream = FOPEN(inifile, "r")) == NULL)return 1;
   if(readini_output==1){
     if(verbose_output==1)PRINTF("reading %s ", inifile);
   }
@@ -3909,11 +3911,11 @@ int ReadIni2(const char *inifile, int localfile){
     }
     if(MatchINI(buffer, "SPHEREARRAY") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%f %f %f %f %f %f", 
+      sscanf(buffer, "%f %f %f %f %f %f",
         sphere_xyz0, sphere_xyz0+1, sphere_xyz0+2,
         sphere_dxyz, sphere_dxyz+1, sphere_dxyz+2);
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %i %i %i %i %i", 
+      sscanf(buffer, "%i %i %i %i %i %i",
         sphere_nxyz, sphere_nxyz + 1, sphere_nxyz + 2,
         sphere_rgb,  sphere_rgb + 1,  sphere_rgb + 2
         );
@@ -6484,8 +6486,12 @@ int ReadIni2(const char *inifile, int localfile){
         continue;
       }
       if(MatchINI(buffer, "SCRIPTFILE") == 1){
+        char *front;
+
         if(fgets(buffer2, 255, stream) == NULL)break;
-        InsertScriptFile(RemoveComment(buffer2));
+        RemoveComment(buffer2);
+        front = TrimFront(buffer2);
+        InsertScriptFile(front);
         updatemenu = 1;
         continue;
       }
@@ -7616,19 +7622,19 @@ void WriteIni(int flag,char *filename){
 
   switch(flag){
   case GLOBAL_INI:
-    if(smokeviewini_filename!=NULL)fileout=fopen(smokeviewini_filename,"w");
+    if(smokeviewini_filename!=NULL)fileout=FOPEN(smokeviewini_filename,"w");
     outfilename= smokeviewini_filename;
     break;
   case STDOUT_INI:
     fileout=stdout;
     break;
   case SCRIPT_INI:
-    fileout=fopen(filename,"w");
+    fileout=FOPEN(filename,"w");
     outfilename=filename;
     break;
   case LOCAL_INI:
   {
-    fileout=fopen(caseini_filename,"w");
+    fileout=FOPEN(caseini_filename,"w");
     if(fileout==NULL&&smokeview_scratchdir!=NULL){
       fileout = fopen_indir(smokeview_scratchdir, caseini_filename, "w");
       outfiledir = smokeview_scratchdir;
