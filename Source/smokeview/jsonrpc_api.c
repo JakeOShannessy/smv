@@ -31,12 +31,12 @@
 #include <unistd.h>
 #endif
 
-
 /// @brief Render the current frame to a file.
 json_object *jsonrpc_Render(jrpc_context *context, json_object *params,
                             json_object *id) {
   DisplayCB();
-  const char *basename = json_object_get_string(json_object_object_get(params, "basename"));
+  const char *basename =
+      json_object_get_string(json_object_object_get(params, "basename"));
   int ret = CApiRender(basename);
   if(ret) {
     context->error_code = 111;
@@ -612,7 +612,12 @@ json_object *jsonrpc_LoadSlices(jrpc_context *context, json_object *params,
   int errorcode = 0;
   json_object *specs;
   // specs: { index: number; frame?: number }[]
-  int res = json_object_object_get_ex(params, "specs", &specs);
+  int specs_found = json_object_object_get_ex(params, "specs", &specs);
+  if(!specs_found) {
+      context->error_code = 117;
+      context->error_message = strdup("slice spec must include a value for specs");
+      return NULL;
+    }
   size_t n_files = json_object_array_length(specs);
   const char *json_output =
       json_object_to_json_string_ext(params, JSON_C_TO_STRING_PRETTY);
@@ -620,7 +625,12 @@ json_object *jsonrpc_LoadSlices(jrpc_context *context, json_object *params,
   for(size_t n = 0; n < n_files; n++) {
     json_object *spec = json_object_array_get_idx(specs, n);
     json_object *index_obj;
-    int r2 = json_object_object_get_ex(spec, "index", &index_obj);
+    int index_found = json_object_object_get_ex(spec, "index", &index_obj);
+    if(!index_found) {
+      context->error_code = 116;
+      context->error_message = strdup("slice spec must include a value for index");
+      return NULL;
+    }
     int index = json_object_get_int(index_obj);
     json_object_put(index_obj);
     int frame = ALL_FRAMES;
@@ -729,7 +739,8 @@ json_object *jsonrpc_Unloadall(jrpc_context *context, json_object *params,
 
 json_object *jsonrpc_Setrenderdir(jrpc_context *context, json_object *params,
                                   json_object *id) {
-  const char *dir = json_object_get_string(json_object_array_get_idx(params, 0));
+  const char *dir =
+      json_object_get_string(json_object_array_get_idx(params, 0));
   if(Setrenderdir(dir)) {
     context->error_code = 112;
     context->error_message = strdup("set render dir failure");
