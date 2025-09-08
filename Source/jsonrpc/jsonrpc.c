@@ -99,17 +99,15 @@ char *CreateTempPath() {
   char *template =
       malloc((strlen(template_basis) + strlen(file_add) + 1) * sizeof(char));
   strcpy(template, template_basis);
-  char *path = mkdtemp(template);
-  strcat(template, file_add);
-  fprintf(stderr, "template: %s\n", template);
-  fprintf(stderr, "path: %s\n", path);
-  if(errno != 0) {
+  if(mkdtemp(template) == NULL) {
     fprintf(stderr, "Value of errno: %d\n", errno);
     fprintf(stderr, "Error reading from file: %s\n", strerror(errno));
     free(template);
     return NULL;
   }
-  return path;
+  strcat(template, file_add);
+  fprintf(stderr, "template: %s\n", template);
+  return template;
 }
 #endif
 
