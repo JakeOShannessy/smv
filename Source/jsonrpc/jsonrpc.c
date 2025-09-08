@@ -2,6 +2,7 @@
 #include <json-c/json_object.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #ifdef _WIN32
 #define UNLINK _unlink
