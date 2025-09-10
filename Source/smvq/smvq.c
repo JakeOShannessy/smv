@@ -475,9 +475,6 @@ int main(int argc, char **argv)
   struct opts opts = {0};
   struct csv_opts csv_opts = {0};
 
-  bool print_help = false;
-  bool print_version = false;
-
   int c;
 
   opterr = 0;
