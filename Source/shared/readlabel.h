@@ -11,7 +11,7 @@
 #define TYPE_INI 1
 #endif
 
-EXTERNCPP labeldata *LabelGet(labels_collection *labelscoll, char *name);
+EXTERNCPP labeldata *LabelGet(labels_collection *labelscoll, const char *name);
 EXTERNCPP labeldata *LabelInsert(labels_collection *labelscoll,
                                  labeldata *labeltemp);
 
@@ -23,7 +23,7 @@ EXTERNCPP void LabelCopy(labeldata *label_to, labeldata *label_from);
 EXTERNCPP void LabelDelete(labeldata *label);
 labels_collection *CreateLabelsCollection();
 EXTERNCPP void InitLabelsCollection(labels_collection *labelscoll);
-EXTERNCPP void FreeLabelsCollection(labels_collection *labelscoll);
+EXTERNCPP void ClearLabelsCollection(labels_collection *labelscoll);
 EXTERNCPP void LabelPrint(labels_collection *labelscoll);
 static inline int FileExistsCaseDir(smv_case *scase, char *filename) {
   return FileExists(filename, scase->filelist_coll.filelist_casename,

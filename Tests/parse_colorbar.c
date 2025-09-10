@@ -4,27 +4,29 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "colorbars.h"
 
-int show_help;
-int hash_option;
-int show_version;
 
 int main(int argc, char **argv) {
   initMALLOC();
-  if (argc < 2) return 2;
+  if(argc < 2) return 2;
   int error = 0;
   const char *filename = argv[1];
   colorbardata *cb;
   NEWMEMORY(cb, sizeof(colorbardata));
-
+#if DEBUG
   int result = ReadCSVColorbar(cb, filename, "divergent", CB_DIVERGENT);
+  fprintf(stderr, "result: %i\n", result);
   assert(!result);
   assert(strcmp(cb->colorbar_type, "divergent") == 0);
   assert(strcmp(cb->menu_label, "light blue->white->light red") == 0);
   assert(cb->nnodes == 256);
+#else
+  ReadCSVColorbar(cb, filename, "divergent", CB_DIVERGENT);
+#endif
   return error;
 }

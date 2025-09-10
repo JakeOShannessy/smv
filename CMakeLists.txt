@@ -92,7 +92,7 @@ endif()
 
 add_compile_definitions(GL_SILENCE_DEPRECATION)
 
-find_package(OpenGL REQUIRED)
+    find_package(OpenGL REQUIRED)
 if (VENDORED_UI_LIBS)
     if (NOT MACOSX)
         add_subdirectory(Source/glut-3.7.6)

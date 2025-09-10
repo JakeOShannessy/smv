@@ -10,17 +10,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-int show_help;
-int hash_option;
-int show_version;
-
 int main(int argc, char **argv) {
   initMALLOC();
   {
+#if DEBUG
     char *root = GetSmvRootDir();
     int root_len = strlen(root);
+    fprintf(stderr, "root_len: %i\n", root_len);
     assert(root_len > 0);
     assert(root[root_len - 1] == dirseparator[0]);
+#endif
   }
   {
     char *path = CombinePaths("1234/abc/efg", "hij/klm");

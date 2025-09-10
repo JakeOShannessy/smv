@@ -228,7 +228,7 @@ void SetCameraView(cameradata *ca, int option){
 
 /* ------------------ InitCamera ------------------------ */
 
-void InitCamera(cameradata *ci,char *name){
+void InitCamera(cameradata *ci,const char *name){
   strcpy(ci->name,name);
   ci->rotation_index=global_scase.meshescoll.nmeshes;
   ci->defined=1;
@@ -442,7 +442,7 @@ void SortCameras(void){
 
 /* ------------------ InsertCamera ------------------------ */
 
-cameradata *InsertCamera(cameradata *cb,cameradata *source, char *name){
+cameradata *InsertCamera(cameradata *cb,cameradata *source, const char *name){
   cameradata *cam=NULL,*ca;
   int insert = 1;
 

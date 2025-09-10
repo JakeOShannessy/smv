@@ -11,10 +11,6 @@
 
 #include "readlabel.h"
 
-int show_help;
-int hash_option;
-int show_version;
-
 int main(int argc, char **argv) {
   initMALLOC();
   SetStdOut(stdout);
@@ -43,7 +39,7 @@ int main(int argc, char **argv) {
     assert(coll->label_first.next != &coll->label_last);
     // Do something with all of the labels
     LabelPrint(coll);
-    FreeLabelsCollection(coll);
+    ClearLabelsCollection(coll);
     // Check that collection is empty
     assert(coll->label_first.next == &coll->label_last);
   }

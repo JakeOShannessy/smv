@@ -76,7 +76,7 @@ char *GetIniFileName(int id){
 
 /* ------------------ InsertIniFile ------------------------ */
 
-inifiledata *InsertIniFile(char *file){
+inifiledata *InsertIniFile(const char *file){
   inifiledata *thisptr,*prevptr,*nextptr;
   int len;
   inifiledata *inifile;

@@ -1,60 +1,10 @@
-#define INMAIN
-#include "options.h"
 #include <ctype.h>
 #include <getopt.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#include "datadefs.h"
-#include "dmalloc.h"
-#include "shared_structures.h"
-
-#include "readlabel.h"
-#include "readsmvfile.h"
-#include "smokeviewdefs.h"
-#include "string_util.h"
-#include <math.h>
-
 #include <json-c/json_object.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
-#ifndef _WIN32
-#include <libgen.h>
-#endif
-
-int ReadSMV_Init(smv_case *scase);
-int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream);
-void ReadSMVDynamic(smv_case *scase, char *file);
-void ReadSMVOrig(smv_case *scase);
-smv_case *CreateScase();
-
-/// @brief Given a file path, get the filename excluding the final extension.
-/// This allocates a new copy which can be deallocated with free().
-/// @param input_file a file path
-/// @return an allocated string containing the basename or NULL on failure.
-char *GetBaseName(const char *input_file) {
-  if(input_file == NULL) return NULL;
-#ifdef _WIN32
-  char *result = malloc(_MAX_FNAME + 1);
-  errno_t err =
-      _splitpath_s(input_file, NULL, 0, NULL, 0, result, _MAX_FNAME, NULL, 0);
-  if(err) return NULL;
-#else
-  // POSIX basename can modify it's contents, so we'll make some copies.
-  char *input_file_temp = strdup(input_file);
-  // Get the filename (final component of the path, including any extensions).
-  char *bname = basename(input_file_temp);
-  // If a '.' exists, set it to '\0' to trim the extension.
-  char *dot = strrchr(bname, '.');
-  if(dot) *dot = '\0';
-  char *result = strdup(bname);
-  free(input_file_temp);
-#endif
-  return result;
-}
+#include "smv.h"
 
 int PrintJson(smv_case *scase) {
   struct json_object *jobj = json_object_new_object();
@@ -277,44 +227,23 @@ int PrintJson(smv_case *scase) {
   json_object_put(jobj);
   return 0;
 }
-void InitScase(smv_case *scase);
-int RunSmvq(char *input_file, const char *fdsprefix) {
+
+int RunSmvq(const char *filepath) {
+  // Initialize the customized memory allocator that smokeview uses
   initMALLOC();
-
-  smv_case *scase = CreateScase();
-  NEWMEMORY(scase->fdsprefix, (strlen(fdsprefix) + 1) * sizeof(char));
-  STRCPY(scase->fdsprefix, fdsprefix);
-
-  INIT_PRINT_TIMER(parse_time);
-  fprintf(stderr, "reading:\t%s\n", input_file);
-  {
-    bufferstreamdata *smv_streaminfo = GetSMVBuffer(input_file);
-    if(smv_streaminfo == NULL) {
-      fprintf(stderr, "could not open %s\n", input_file);
-      return 1;
-    }
-    INIT_PRINT_TIMER(ReadSMV_time);
-    int return_code = 0;
-    return_code = ReadSMV_Init(scase);
-    if(return_code) return return_code;
-    return_code = ReadSMV_Parse(scase, smv_streaminfo);
-    STOP_TIMER(ReadSMV_time);
-    fprintf(stderr, "ReadSMV:\t%8.3f ms\n", ReadSMV_time * 1000);
-    if(smv_streaminfo != NULL) {
-      FCLOSE(smv_streaminfo);
-    }
-    if(return_code) return return_code;
+  // Create and initialize an smv_case struct
+  smv_case *scase = ScaseCreate();
+  // Parse a file at the given path into scase
+  int result = ScaseParseFromPath(filepath, scase);
+  // Error handling on parse failure
+  if(result) {
+    fprintf(stderr, "failed to read smv file: %s\n", filepath);
+    return result;
   }
-  show_timings = 1;
-  ReadSMVOrig(scase);
-  INIT_PRINT_TIMER(ReadSMVDynamic_time);
-  ReadSMVDynamic(scase, input_file);
-  STOP_TIMER(ReadSMVDynamic_time);
-  fprintf(stderr, "ReadSMVDynamic:\t%8.3f ms\n", ReadSMVDynamic_time * 1000);
-  STOP_TIMER(parse_time);
-  fprintf(stderr, "Total Time:\t%8.3f ms\n", parse_time * 1000);
+  // Print scase to stdout in JSON format
   PrintJson(scase);
-  // FreeVars();
+  // Deconstruct and free scase
+  ScaseDestroy(scase);
   return 0;
 }
 
@@ -332,6 +261,7 @@ int main(int argc, char **argv)
   int c;
 
   opterr = 0;
+
 #if defined(_WIN32) && defined(pp_UNICODE_PATHS)
   while((c = getopt_w(argc, argv, L"hV")) != -1)
 #elif defined(_WIN32)
@@ -372,15 +302,11 @@ int main(int argc, char **argv)
 #else
   char *input_file = argv[optind];
 #endif
+
   if(input_file == NULL) {
     fprintf(stderr, "No input file specified.\n");
     return 1;
   }
-  char *fdsprefix = GetBaseName(input_file);
-  int result = RunSmvq(input_file, fdsprefix);
-  free(fdsprefix);
-#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
-  FREEMEMORY(input_file);
-#endif
+  int result = RunSmvq(input_file);
   return result;
 }
