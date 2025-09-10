@@ -8995,10 +8995,34 @@ void InitScase(smv_case *scase) {
   InitObjectCollection(&scase->objectscoll);
 }
 
-/* ------------------ CreateScase ------------------------ */
+/// @brief Given a file path, get the filename excluding the final extension.
+/// This allocates a new copy which can be deallocated with free().
+/// @param input_file a file path
+/// @return an allocated string containing the basename or NULL on failure.
+char *GetBaseName(const char *input_file) {
+  if(input_file == NULL) return NULL;
+#ifdef _WIN32
+  char *result = malloc(_MAX_FNAME + 1);
+  errno_t err =
+      _splitpath_s(input_file, NULL, 0, NULL, 0, result, _MAX_FNAME, NULL, 0);
+  if(err) {
+    free(result);
+    return NULL;
+  }
+#else
+  // POSIX basename can modify it's contents, so we'll make some copies.
+  char *input_file_temp = strdup(input_file);
+  // Get the filename (final component of the path, including any extensions).
+  char *bname = basename(input_file_temp);
+  // If a '.' exists, set it to '\0' to trim the extension.
+  char *dot = strrchr(bname, '.');
+  if(dot) *dot = '\0';
+  char *result = strdup(bname);
+  free(input_file_temp);
+#endif
+  return result;
+}
 
-/// @brief Create and initalize and a smokeview case (smv_case).
-/// @return An initialized smv_case.
 smv_case *CreateScase() {
   smv_case *scase;
   NewMemory((void **)&scase, sizeof(smv_case));
@@ -9007,7 +9031,42 @@ smv_case *CreateScase() {
   return scase;
 }
 
-/* ------------------ DestroyScase ------------------------ */
+int ScaseParseFromPath(char *input_file, smv_case *scase) {
+  char *fdsprefix = GetBaseName(input_file);
+  NEWMEMORY(scase->fdsprefix, (strlen(fdsprefix) + 1) * sizeof(char));
+  STRCPY(scase->fdsprefix, fdsprefix);
+  free(fdsprefix);
+
+  INIT_PRINT_TIMER(parse_time);
+  fprintf(stderr, "reading:\t%s\n", input_file);
+  {
+    bufferstreamdata *smv_streaminfo = GetSMVBuffer(input_file);
+    if(smv_streaminfo == NULL) {
+      fprintf(stderr, "could not open %s\n", input_file);
+      return 1;
+    }
+    INIT_PRINT_TIMER(ReadSMV_time);
+    int return_code = 0;
+    return_code = ReadSMV_Init(scase);
+    if(return_code) return return_code;
+    return_code = ReadSMV_Parse(scase, smv_streaminfo);
+    STOP_TIMER(ReadSMV_time);
+    fprintf(stderr, "ReadSMV:\t%8.3f ms\n", ReadSMV_time * 1000);
+    if(smv_streaminfo != NULL) {
+      FCLOSE(smv_streaminfo);
+    }
+    if(return_code) return return_code;
+  }
+  show_timings = 1;
+  ReadSMVOrig(scase);
+  INIT_PRINT_TIMER(ReadSMVDynamic_time);
+  ReadSMVDynamic(scase, input_file);
+  STOP_TIMER(ReadSMVDynamic_time);
+  fprintf(stderr, "ReadSMVDynamic:\t%8.3f ms\n", ReadSMVDynamic_time * 1000);
+  STOP_TIMER(parse_time);
+  fprintf(stderr, "Total Time:\t%8.3f ms\n", parse_time * 1000);
+  return 0;
+}
 
 /// @brief Cleanup and free the memory of an smv_case.
 /// @param scase An smv_case created with CreateScase.
