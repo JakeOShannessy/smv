@@ -26,12 +26,12 @@ unsigned char cpuusage(void);
 int get_ncores(void);
 float get_load(void);
 float get_host_load(char *host);
-unsigned char cpuusage_host(char *host,int ncores);
+int cpuusage_host(char *host,int ncores);
 #endif
 int get_host_ncores(char *host);
 
 #ifdef pp_OSX
-unsigned char cpuusage_host(char *host,int ncores);
+int cpuusage_host(char *host,int ncores);
 #endif
 
 #ifndef WIN32
@@ -223,7 +223,7 @@ int main(int argc, char **argv){
 #ifdef pp_LINUX
   nhostinfo=0;
   if(hostlistfile!=NULL){
-    stream=fopen(hostlistfile,"r");
+    stream=FOPEN(hostlistfile,"r");
   }
   if(hostlistfile!=NULL&&stream!=NULL){
     char buffer[255];
@@ -282,8 +282,6 @@ int main(int argc, char **argv){
     }
   }
   else{
-    cpu_usage=cpuusage();
-    mem_usage=memusage();
     Sleep(200);
     cpu_usage=cpuusage();
     mem_usage=memusage();
@@ -297,8 +295,6 @@ int main(int argc, char **argv){
 #else
   strcpy(command_buffer,"");
   if(hostinfo==NULL){
-    cpu_usage=cpuusage();
-    mem_usage=memusage();
     Sleep(200);
     cpu_usage=cpuusage();
     mem_usage=memusage();
@@ -383,7 +379,7 @@ int getnprocs(char *command){
 
   system("tasklist > process.out");
 
-  stream = fopen("process.out","r");
+  stream = FOPEN("process.out","r");
   if(stream==NULL)return 0;
 
   strcpy(com_copy, command);
@@ -428,9 +424,8 @@ unsigned char cpuusage(){
 
 // we cannot directly use GetSystemTimes on C language
 /* add this line :: pfnGetSystemTimes */
-  s_pfnGetSystemTimes(&ft_sys_idle,    /* System idle time */
-  &ft_sys_kernel,  /* system kernel time */
-  &ft_sys_user);   /* System user time */
+  if(s_pfnGetSystemTimes==NULL)return usage_local;
+  s_pfnGetSystemTimes(&ft_sys_idle,&ft_sys_kernel,&ft_sys_user);
 
   CopyMemory(&ul_sys_idle  , &ft_sys_idle  , sizeof(FILETIME)); // Could been optimized away...
   CopyMemory(&ul_sys_kernel, &ft_sys_kernel, sizeof(FILETIME)); // Could been optimized away...
@@ -494,7 +489,7 @@ void get_sysctl(char *host, char *var, int *ivar, float *fvar){
   strcat(command,sysctl_file);
   system(command);
 
-  stream=fopen(sysctl_file,"r");
+  stream=FOPEN(sysctl_file,"r");
   if(stream!=NULL){
     char buffer[255];
 
@@ -558,7 +553,7 @@ int get_ncores(void){
   int ncores=0;
   char buffer[255];
 
-  stream=fopen("/proc/cpuinfo","r");
+  stream=FOPEN("/proc/cpuinfo","r");
   if(stream==NULL)return 1;
   while(!feof(stream)){
     if(fgets(buffer,255,stream)==NULL)break;
@@ -592,7 +587,7 @@ int get_host_ncores(char *hosta){
 
   system(command);
 
-  stream=fopen(localfile,"r");
+  stream=FOPEN(localfile,"r");
   if(stream==NULL){
     printf("unable to open %s\n",localfile);
     return 1;
@@ -633,7 +628,7 @@ float get_host_load(char *host_arg){
 
   system(command);
 
-  stream=fopen(localfile,"r");
+  stream=FOPEN(localfile,"r");
   if(stream==NULL)return 1.0;
   if(fgets(buffer,255,stream)==NULL){
     fclose(stream);
@@ -652,7 +647,7 @@ float get_load(void){
   char buffer[255];
   float load1;
 
-  stream=fopen("/proc/loadavg","r");
+  stream=FOPEN("/proc/loadavg","r");
   if(stream==NULL)return 1.0;
   if(fgets(buffer,255,stream)==NULL){
     fclose(stream);
@@ -668,13 +663,13 @@ float get_load(void){
 
 /* ------------------ cpuusage_host ------------------------ */
 
-unsigned char cpuusage_host(char *hostb, int ncores){
+int cpuusage_host(char *hostb, int ncores){
   float load;
-  unsigned char usage;
+  int usage;
 
   load = get_host_load(hostb);
   if(load>ncores)load=ncores;
-  usage = 100*(load/(float)ncores);
+  usage = MAX(0,100*(load/(float)ncores));
   return usage;
 }
 

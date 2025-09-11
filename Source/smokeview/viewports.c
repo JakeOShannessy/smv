@@ -235,7 +235,6 @@ void GetViewportInfo(void){
   VP_hrr_plot.right = VP_hrr_plot.left + plot_width + GetStringWidth("XXXXXX");
   VP_hrr_plot.down  = v_space;
   VP_hrr_plot.top   = VP_hrr_plot.down + v_space + plot_width  + 4*GetFontHeight();
-;
   VP_hrr_plot.doit  = vis_hrr_plot;
   VP_hrr_plot.text_height = text_height;
   VP_hrr_plot.text_width  = text_width;
@@ -282,10 +281,12 @@ void GetViewportInfo(void){
     if(doit==0&&vis_slice_average==1&&show_slice_average&&slice_average_flag==1)doit=1;
   }
   if(show_horizontal_colorbar == 1
-#ifdef pp_memstatus
-    ||visAvailmemory==1
+    ||vismemload==1
+#ifdef pp_memusage
+     || vismemusage == 1
 #endif
-    )doit=1;
+  )
+    doit = 1;
 
   VP_timebar.left = titlesafe_offset;
   if(vis_hrr_plot==1 || vis_slice_plot==1||vis_colorbar_dists_plot==1)VP_timebar.left = VP_hrr_plot.right;
@@ -308,10 +309,12 @@ void GetViewportInfo(void){
     if(vis_hrr_plot==1 || vis_slice_plot==1||vis_colorbar_dists_plot==1)VP_timebar.width -= (VP_hrr_plot.right - titlesafe_offset);
     temp_height = text_height + v_space;
     if(visFramelabel==1||vis_hrr_label==1
-#ifdef  pp_memstatus
-      ||visAvailmemory==1
+      ||vismemload==1
+#ifdef pp_memusage
+       || vismemusage == 1
 #endif
-      )temp_height += (text_height+v_space);
+    )
+      temp_height += (text_height + v_space);
     VP_timebar.height = MAX(timebar_height + 2*v_space, temp_height);
     if(show_horizontal_colorbar==1)VP_timebar.height += hbar_height;
   }
@@ -1019,7 +1022,7 @@ void OutputSlicePlot(char *file){
   FILE *stream = NULL;
 
   if(file == NULL||strlen(file)==0)return;
-  stream = fopen(file, "w");
+  stream = FOPEN(file, "w");
   if(stream == NULL){
     printf("***error: %s not able to be opened for writing\n", file);
     return;
@@ -1180,14 +1183,14 @@ void ViewportSlicePlot(int quad, GLint screen_left, GLint screen_down){
 /* ------------------------ ViewportTimebar ------------------------- */
 
 void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
-#ifdef pp_memstatus
-  unsigned int availmemory;
-  char percen[] = "%";
-#endif
   int right_label_pos, timebar_right_pos;
   int timebar_left_pos;
   int time_width=0, hrr_width=0, frame_width=0;
-  int framerate_width=0, memusage_width=0, memavail_width=0;
+  int framerate_width = 0;
+  int memload_width = 0;
+#ifdef pp_memusage
+  int memusage_width = 0;
+#endif
   int delta = TIMEBAR_HEIGHT;
 
 #ifdef pp_OSX_HIGHRES
@@ -1200,12 +1203,17 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
 
   timebar_right_width = 0;
   if(visFramerate==1&&showtime==1)framerate_width = GetStringWidth("Frame rate: 99.99");
-  if(visUsagememory == 1)memavail_width = GetStringWidth("9999 MBx");
-#ifdef pp_memstatus
-  if(visAvailmemory == 1)memusage_width = GetStringWidth("Mem Load: 100%x");
+  timebar_right_width = framerate_width;
+#ifdef pp_memusage
+  if(vismemusage == 1) {
+    memusage_width = GetStringWidth("Mem Usage: 9999 MBx");
+    timebar_right_width = MAX(timebar_right_width, memusage_width);
+  }
 #endif
-  timebar_right_width = MAX(MAX(framerate_width, memavail_width), memusage_width);
-  timebar_right_width = MAX(timebar_right_width, delta);
+  if(vismemload == 1){
+    memload_width = GetStringWidth("Mem Load: 100%x");
+    timebar_right_width = MAX(timebar_right_width, memload_width);
+  }
 
   if(vis_hrr_label==1)hrr_width = GetStringWidth("HRR: 1000.0kW");
   if(visFrameTimelabel==1){
@@ -1255,32 +1263,36 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
   }
 
   if(visFramerate==1&&showtime==1){
+    char frameratelabel[30];
+
     sprintf(frameratelabel," Frame rate:%4.1f",framerate);
     OutputText(right_label_pos,v_space,frameratelabel);
   }
   if(show_slice_average==1&&vis_slice_average==1&&slice_average_flag==1){
-    sprintf(frameratelabel," AVG: %4.1f",slice_average_interval);
-    OutputText(right_label_pos,3*v_space+2*VP_timebar.text_height, frameratelabel); // test print
+    char sliceavglabel[30];
+
+    sprintf(sliceavglabel," AVG: %4.1f",slice_average_interval);
+    OutputText(right_label_pos,3*v_space+2*VP_timebar.text_height, sliceavglabel); // test print
   }
 
-#ifdef pp_memstatus
-  if(visAvailmemory==1){
-    MEMSTATUS(0,&availmemory,NULL,NULL);
-    sprintf(frameratelabel," Mem Load:%u%s",availmemory,percen);
-    if(visFramerate==1&&showtime==1){
-      OutputText(right_label_pos,2*v_space+VP_timebar.text_height,frameratelabel);
-    }
-    else{
-      OutputText(right_label_pos,v_space,frameratelabel);
+  if(vismemload==1){
+    int loadmemory;
+
+    loadmemory = MemoryLoad();
+    if(loadmemory >= 0){
+      char memloadlabel[30], percen[] = "%";
+
+      sprintf(memloadlabel, " Mem Load:%u%s", loadmemory, percen);
+      if(visFramerate == 1 && showtime == 1){
+        OutputText(right_label_pos, 2 * v_space + VP_timebar.text_height, memloadlabel);
+      }
+      else{
+        OutputText(right_label_pos, v_space, memloadlabel);
+      }
     }
   }
-#endif
-#ifdef pp_MEMDEBUG
-  if(visUsagememory==1
-#ifdef pp_memstatus
-     &&visAvailmemory==0
-#endif
-    ){
+#ifdef pp_memusage
+  if(vismemusage==1){
       char MEMlabel[128];
 
       getMemusage(MMtotalmemory,MEMlabel);
@@ -1336,10 +1348,10 @@ int CompareMeshes(const void *arg1, const void *arg2){
   meshi = global_scase.meshescoll.meshinfo + smoke3di->blocknumber;
   meshj = global_scase.meshescoll.meshinfo + smoke3dj->blocknumber;
   if(meshi == meshj)return 0;
-  xyzmini = meshi->boxmin;
-  xyzmaxi = meshi->boxmax;
-  xyzminj = meshj->boxmin;
-  xyzmaxj = meshj->boxmax;
+  xyzmini = meshi->boxmin_fds;
+  xyzmaxi = meshi->boxmax_fds;
+  xyzminj = meshj->boxmin_fds;
+  xyzmaxj = meshj->boxmax_fds;
   if(dir == 0){
     if(xyzmaxi[0] <= xyzminj[0])dir = 1;
     if(xyzmaxj[0] <= xyzmini[0])dir = -1;
@@ -1450,9 +1462,9 @@ void GetEyePos(float *mm){
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo+i;
-    scene_center[0] += meshi->boxmiddle[0];
-    scene_center[1] += meshi->boxmiddle[1];
-    scene_center[2] += meshi->boxmiddle[2];
+    scene_center[0] += meshi->boxmiddle_fds[0];
+    scene_center[1] += meshi->boxmiddle_fds[1];
+    scene_center[2] += meshi->boxmiddle_fds[2];
   }
   scene_center[0] /= global_scase.meshescoll.nmeshes;
   scene_center[1] /= global_scase.meshescoll.nmeshes;
@@ -1533,15 +1545,15 @@ void GetVolSmokeDir(float *mm){
     inside = &meshj->inside;
     drawsides = meshj->drawsides;
 
-      x0 = meshj->x0;
-      x1 = meshj->x1;
-     yy0 = meshj->y0;
-     yy1 = meshj->y1;
-      z0 = meshj->z0;
-      z1 = meshj->z1;
-    xcen = meshj->xcen;
-    ycen = meshj->ycen;
-    zcen = meshj->zcen;
+      x0 = meshj->boxmin_fds[0];
+      x1 = meshj->boxmax_fds[0];
+     yy0 = meshj->boxmin_fds[1];
+     yy1 = meshj->boxmax_fds[1];
+      z0 = meshj->boxmin_fds[2];
+      z1 = meshj->boxmax_fds[2];
+    xcen = meshj->xcen_smv;
+    ycen = meshj->ycen_smv;
+    zcen = meshj->zcen_smv;
 
     *inside = 0;
     if(
@@ -1680,7 +1692,7 @@ void GetVolSmokeDir(float *mm){
       if(drawsides[j + 3] == 0)continue;
       vi->facemesh = meshi;
       vi->iwall = j;
-      xyz = meshi->face_centers + facemap[j + 3];
+      xyz = meshi->face_centers_smv + facemap[j + 3];
 
       dx = xyz[0] - eye_position_smv[0];
       dy = xyz[1] - eye_position_smv[1];
@@ -1731,9 +1743,9 @@ void GetSmokeDir(float *mm){
     int iminangle, alphadir, minalphadir;
 
     meshj = global_scase.meshescoll.meshinfo + j;
-    dx = meshj->boxmiddle_scaled[0] - eye_position_smv[0];
-    dy = meshj->boxmiddle_scaled[1] - eye_position_smv[1];
-    dz = meshj->boxmiddle_scaled[2] - eye_position_smv[2];
+    dx = meshj->boxmiddle_smv[0] - eye_position_smv[0];
+    dy = meshj->boxmiddle_smv[1] - eye_position_smv[1];
+    dz = meshj->boxmiddle_smv[2] - eye_position_smv[2];
     meshj->eyedist = sqrt(dx*dx + dy*dy + dz*dz);
 
     minalphadir = ALPHA_X;
@@ -1777,8 +1789,8 @@ void GetSmokeDir(float *mm){
         break;
       case 4:
         alphadir = ALPHA_XY;
-        dx = meshj->xplt_orig[1] - meshj->xplt_orig[0];
-        dy = meshj->yplt_orig[1] - meshj->yplt_orig[0];
+        dx = meshj->xplt_fds[1] - meshj->xplt_fds[0];
+        dy = meshj->yplt_fds[1] - meshj->yplt_fds[0];
         factor = dx*dx + dy*dy;
         if(factor == 0.0){
           factor = 1.0;
@@ -1797,8 +1809,8 @@ void GetSmokeDir(float *mm){
         break;
       case 5:
         alphadir = ALPHA_XY;
-        dx = meshj->xplt_orig[1] - meshj->xplt_orig[0];
-        dy = meshj->yplt_orig[1] - meshj->yplt_orig[0];
+        dx = meshj->xplt_fds[1] - meshj->xplt_fds[0];
+        dy = meshj->yplt_fds[1] - meshj->yplt_fds[0];
         factor = dx*dx + dy*dy;
         if(factor == 0.0){
           factor = 1.0;
@@ -1817,8 +1829,8 @@ void GetSmokeDir(float *mm){
         break;
       case 6:
         alphadir = ALPHA_YZ;
-        dy = meshj->yplt_orig[1] - meshj->yplt_orig[0];
-        dz = meshj->zplt_orig[1] - meshj->zplt_orig[0];
+        dy = meshj->yplt_fds[1] - meshj->yplt_fds[0];
+        dz = meshj->zplt_fds[1] - meshj->zplt_fds[0];
         factor = dz*dz + dy*dy;
         if(factor == 0.0){
           factor = 1.0;
@@ -1837,8 +1849,8 @@ void GetSmokeDir(float *mm){
         break;
       case 7:
         alphadir = ALPHA_YZ;
-        dy = meshj->yplt_orig[1] - meshj->yplt_orig[0];
-        dz = meshj->zplt_orig[1] - meshj->zplt_orig[0];
+        dy = meshj->yplt_fds[1] - meshj->yplt_fds[0];
+        dz = meshj->zplt_fds[1] - meshj->zplt_fds[0];
         factor = dz*dz + dy*dy;
         if(factor == 0.0){
           factor = 1.0;
@@ -1857,8 +1869,8 @@ void GetSmokeDir(float *mm){
         break;
       case 8:
         alphadir = ALPHA_XZ;
-        dx = meshj->xplt_orig[1] - meshj->xplt_orig[0];
-        dz = meshj->zplt_orig[1] - meshj->zplt_orig[0];
+        dx = meshj->xplt_fds[1] - meshj->xplt_fds[0];
+        dz = meshj->zplt_fds[1] - meshj->zplt_fds[0];
         factor = dz*dz + dx*dx;
         if(factor == 0.0){
           factor = 1.0;
@@ -1877,8 +1889,8 @@ void GetSmokeDir(float *mm){
         break;
       case 9:
         alphadir = ALPHA_XZ;
-        dx = meshj->xplt_orig[1] - meshj->xplt_orig[0];
-        dz = meshj->zplt_orig[1] - meshj->zplt_orig[0];
+        dx = meshj->xplt_fds[1] - meshj->xplt_fds[0];
+        dz = meshj->zplt_fds[1] - meshj->zplt_fds[0];
         factor = dx*dx + dz*dz;
         if(factor == 0.0){
           factor = 1.0;
@@ -1942,7 +1954,7 @@ void GetSmokeDir(float *mm){
         use_soot_density = 1;
         maxval = soot->maxvals[soot->ismoke3d_time];
       }
-      InitAlphas(soot->alphas_smokedir[minalphadir], soot->alphas_firedir[minalphadir], soot->extinct, use_soot_density, maxval, glui_smoke3d_extinct, meshj->dxyz_orig[0], smoke_dist);
+      InitAlphas(soot->alphas_smokedir[minalphadir], soot->alphas_firedir[minalphadir], soot->extinct, use_soot_density, maxval, glui_mass_extinct, meshj->dxyz_fds[0], smoke_dist);
     }
     if(demo_mode != 0){
       meshj->smokedir = 1;
@@ -2293,6 +2305,29 @@ void GetMinMaxDepth(float *min_depth, float *max_depth){
   }
 }
 
+/* ------------------ UpdateMeshInFrustum ------------------------ */
+
+void UpdateMeshInFrustum(void) {
+  int i;
+
+  if(cull_meshes == 1){
+    for(i = 0; i < global_scase.meshescoll.nmeshes; i++) {
+      meshdata *meshi;
+
+      meshi = global_scase.meshescoll.meshinfo + i;
+      meshi->in_frustum = MeshInFrustum(meshi);
+    }
+  }
+  else {
+    for(i = 0; i < global_scase.meshescoll.nmeshes; i++) {
+      meshdata *meshi;
+
+      meshi = global_scase.meshescoll.meshinfo + i;
+      meshi->in_frustum = 1;
+    }
+  }
+}
+
 /* ----------------------- ViewportScene ----------------------------- */
 
 void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down, screendata *screen){
@@ -2500,7 +2535,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
 
     glMultMatrixf(modelview_identity);
 
-    glTranslatef(xcen,ycen,zcen);
+    glTranslatef(xcen*mscale[0],ycen*mscale[1],zcen*mscale[2]);
 
     // rotate scene
     if(rotation_type==ROTATION_3AXIS){
@@ -2554,7 +2589,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       glRotatef(zaxis_angles[2], u[0], u[1], u[2]);
     }
 
-    glTranslatef(-xcen*mscale[0],-ycen*mscale[1],-zcen*mscale[1]);
+    glTranslatef(-xcen*mscale[0],-ycen*mscale[1],-zcen*mscale[2]);
 
     glGetFloatv(GL_MODELVIEW_MATRIX,modelview_scratch);
     MatMultMat(inverse_modelview_setup,modelview_scratch,modelview_current);
@@ -2592,5 +2627,6 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
 
     glScalef(mscale[0],mscale[1],mscale[2]);
     ExtractFrustum();
+    UpdateMeshInFrustum();
   }
 }

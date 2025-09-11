@@ -17,6 +17,7 @@
 
 #include "readobject.h"
 #include "readgeom.h"
+#include "readsmvfile.h"
 
 static float *cos_long = NULL, *sin_long = NULL, *cos_lat = NULL, *sin_lat = NULL;
 static float *sphere_coords = NULL;
@@ -37,6 +38,43 @@ int rgbsize = 0;
     devicei->ival=(IVAL);\
     return devicei->val;\
   }
+
+/* ----------------------- DrawSphereArray ----------------------------- */
+
+void DrawSphereArray(void){
+  int i;
+  unsigned char sphere_rgb_local[3];
+
+  sphere_rgb_local[0] = (unsigned char)sphere_rgb[0];
+  sphere_rgb_local[1] = (unsigned char)sphere_rgb[1];
+  sphere_rgb_local[2] = (unsigned char)sphere_rgb[2];
+
+  glPushMatrix();
+  glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
+  glTranslatef(-global_scase.xbar0,-global_scase.ybar0,-global_scase.zbar0);
+  for(i = 0;i < sphere_nxyz[0];i++){
+    int j;
+    float x;
+
+    x = sphere_xyz0[0] + i * sphere_dxyz[0];
+    for(j = 0;j < sphere_nxyz[1];j++){
+      int k;
+      float y;
+
+      y = sphere_xyz0[1] + j * sphere_dxyz[1];
+      for(k = 0;k < sphere_nxyz[2];k++){
+        float z;
+
+        z = sphere_xyz0[2] + k * sphere_dxyz[2];
+        glPushMatrix();
+        glTranslatef(x,y,z);
+        DrawSphere(sphere_diameter, sphere_rgb_local);
+        glPopMatrix();
+      }
+    }
+  }
+  glPopMatrix();
+}
 
 /* ----------------------- GetSmokeSensors ----------------------------- */
 
@@ -350,7 +388,7 @@ void GetDeviceScreenCoords(void){
     if(STRCMP(label,"smokesensor")!=0)continue;
     xyz = devicei->xyz;
     device_mesh = devicei->device_mesh;
-    devicei->eyedist = GetPoint2BoxDist(device_mesh->boxmin,device_mesh->boxmax,xyz,fds_eyepos);
+    devicei->eyedist = GetPoint2BoxDist(device_mesh->boxmin_fds,device_mesh->boxmax_fds,xyz,fds_eyepos);
     ijk = devicei->screenijk;
     gluProject(xyz[0],xyz[1],xyz[2],mv_setup,projection_setup,viewport_setup,d_ijk,d_ijk+1,d_ijk+2);
     ijk[0] = d_ijk[0];
@@ -1581,11 +1619,14 @@ void DrawHalfSphere(void){
   }
 
   if(visSkyground == 1){
-    unsigned char forest_green[3]={87,108,67};
+    unsigned char ground_color_uc[3];
 
     j = nlat_hsphere / 2;
     glBegin(GL_TRIANGLES);
-    glColor3ubv(forest_green);
+    ground_color_uc[0] = (unsigned char)ground_color[0];
+    ground_color_uc[1] = (unsigned char)ground_color[1];
+    ground_color_uc[2] = (unsigned char)ground_color[2];
+    glColor3ubv(ground_color_uc);
     for(i = 0; i < nlong_hsphere; i++){
       int ip1;
       float x[2], y[2], z[2];
@@ -1633,17 +1674,17 @@ void DrawHalfSphere(void){
     if(use_sky == 0){
       float f1, f2;
 
-      f1 = (float)(j - nlat_hsphere / 2) / (float)nlats;
+      f1 = (float)(j - nlat_hsphere / 2)/(float)nlats;
       f2 = 1.0 - f1;
-      r[0] = (f1 * 32.0 + f2 * 160.0) / 256.0;
-      g[0] = r[0];
-      b[0] = 1.0;
+      r[0] = (f1*zenith_color[0] + f2*horizon_color[0])/255.0;
+      g[0] = (f1*zenith_color[1] + f2*horizon_color[1])/255.0;
+      b[0] = (f1*zenith_color[2] + f2*horizon_color[2])/255.0;
 
-      f1 = (float)(j+1 - nlat_hsphere / 2) / (float)nlats;
+      f1 = (float)(j+1 - nlat_hsphere / 2)/(float)nlats;
       f2 = 1.0 - f1;
-      r[1] = (f1 * 32.0 + f2 * 160.0) / 256.0;
-      g[1] = r[1];
-      b[1] = 1.0;
+      r[1] = (f1 * zenith_color[0] + f2 * horizon_color[0])/255.0;
+      g[1] = (f1 * zenith_color[1] + f2 * horizon_color[1])/255.0;
+      b[1] = (f1 * zenith_color[2] + f2 * horizon_color[2])/255.0;
     }
     for(i = 0; i < nlong_hsphere; i++){
       float x[4], y[4], z[4];
@@ -5186,7 +5227,7 @@ void SetupZoneDevs(void){
     if(zonei->csv!=1)continue;
     file = zonei->file;
 
-    stream=fopen(file,"r");
+    stream=FOPEN(file,"r");
     if(stream==NULL)continue;
     buffer_len=GetRowCols(stream,&nrows,&ncols);
     buffer_len += ncols;
@@ -5315,7 +5356,7 @@ FILE_SIZE ReadDeviceData(char *file, int filetype, int loadstatus){
 
   // find number of rows and columns
 
-  stream=fopen(file,"r");
+  stream=FOPEN(file,"r");
   if(stream==NULL)return 0;
   RewindDeviceFile(stream);
   buffer_len=GetRowCols(stream,&nrows,&ncols);
@@ -5842,7 +5883,7 @@ void SetupDeviceData(void){
         fprintf(stderr," %s,",devi->deviceID);
       }
     }
-    fprintf(stderr," found in %s\n",global_scase.paths.fds_filein);
+    fprintf(stderr," found in %s\n",global_scase.fds_filein);
   }
   for(i=0;i<global_scase.devicecoll.nvdeviceinfo;i++){
     vdevicedata *vdevi;

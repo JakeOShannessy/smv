@@ -14,9 +14,6 @@
 #include "glui_smoke.h"
 #include "IOobjects.h"
 
-#ifdef pp_LUA
-#include "lua_api.h"
-#endif
 #include "IOscript.h"
 
 int nrenderonce=0;
@@ -713,14 +710,30 @@ void CheckTimeBound(void){
 /* ------------------ GetColorbarIndex ------------------------ */
 
 int GetColorbarIndex(int x, int y){
-  if(vcolorbar_left_pos<=x&&x<=vcolorbar_right_pos){
+  if(visColorbarVertical == 1) {
+    if(vcolorbar_left_pos <= x && x <= vcolorbar_right_pos) {
       y = screenHeight - y;
-      if(vcolorbar_down_pos<=y&&y<=vcolorbar_top_pos){
+      if(vcolorbar_down_pos <= y && y <= vcolorbar_top_pos){
         int index;
-        index = CLAMP(255*(float)(y-vcolorbar_down_pos)/(float)(vcolorbar_top_pos - vcolorbar_down_pos),0,255);
+        index = CLAMP(255*(float)(y - vcolorbar_down_pos)/(float)(vcolorbar_top_pos-vcolorbar_down_pos),
+                      0, 255);
         return index;
       }
       return CB_SELECT_STOP;
+    }
+  }
+  else if(visColorbarHorizontal == 1) {
+    y = screenHeight - y;
+    if(hcolorbar_down_pos <= y && y <= hcolorbar_top_pos) {
+      if(hcolorbar_left_pos <= x && x <= hcolorbar_right_pos) {
+        int index;
+        index = CLAMP(255 * (float)(x - hcolorbar_left_pos) /
+                          (float)(hcolorbar_right_pos - hcolorbar_left_pos),
+                      0, 255);
+        return index;
+      }
+      return CB_SELECT_STOP;
+    }
   }
   return CB_SELECT_CONTINUE;
 }
@@ -1077,10 +1090,12 @@ void MouseCBWorker(int button, int state, int xm, int ym){
       if(select_geom!=GEOM_PROP_NONE)MouseSelectGeom(xm, ym);
       if(select_part == 1 && npartloaded>0)MouseSelectPart(xm, ym);
     }
-    if( showtime==1 || showplot3d==1){
-      if(ColorbarClick(xm, ym) == 1){
-        glutPostRedisplay();
-        return;
+    if(visColorbarVertical == 1 || visColorbarHorizontal == 1){
+      if(showtime == 1 || showplot3d == 1){
+        if(ColorbarClick(xm, ym) == 1){
+          glutPostRedisplay();
+          return;
+        }
       }
     }
     if(visTimebar==1&&showtime==1){
@@ -1850,7 +1865,7 @@ void Keyboard(unsigned char key, int flag){
       switch(keystate){
       case GLUT_ACTIVE_ALT:
 #ifdef pp_DIALOG_SHORTCUTS
-        DialogMenu(DIALOG_GEOMETRY); // edit geometry
+        DialogMenu(DIALOG_GEOMETRY_OPEN); // edit geometry
         break;
 #endif
       case GLUT_ACTIVE_CTRL:
@@ -1876,7 +1891,7 @@ void Keyboard(unsigned char key, int flag){
         printf("translate only front/back\n");
         break;
       default:
-        assert(0);
+        assert(FFALSE);
         break;
       }
       break;
@@ -2235,20 +2250,13 @@ void Keyboard(unsigned char key, int flag){
       }
       else{
         outline_mode++;
-        if(outline_mode!=SCENE_OUTLINE_HIDDEN&&global_scase.visFrame==0){
-          global_scase.visFrame = 1;
+        if(outline_mode!=SCENE_OUTLINE_HIDDEN){
           updatefacelists = 1;
           updatemenu = 1;
           glutPostRedisplay();
         }
         if(outline_mode>2&&global_scase.noutlineinfo>0)outline_mode=SCENE_OUTLINE_HIDDEN;
         if(outline_mode>1&&global_scase.noutlineinfo==0)outline_mode=SCENE_OUTLINE_HIDDEN;
-        if(outline_mode==SCENE_OUTLINE_HIDDEN){
-          global_scase.visFrame = 0;
-        }
-        else{
-          global_scase.visFrame = 1;
-        }
         if(outline_mode==SCENE_OUTLINE_HIDDEN)PRINTF("outline mode: hidden\n",outline_mode);
         if(outline_mode==SCENE_OUTLINE_MESH)PRINTF("outline mode: mesh\n",outline_mode);
         if(outline_mode==SCENE_OUTLINE_SCENE)PRINTF("outline mode: scene\n",outline_mode);
@@ -2455,9 +2463,9 @@ void Keyboard(unsigned char key, int flag){
               plot3di = global_scase.plot3dinfo + meshi->plot3dfilenum;
               if(plot3di->display==0)continue;
               show_plot3dkeywords=1;
-              xp = meshi->xplt_orig;
-              yp = meshi->yplt_orig;
-              zp = meshi->zplt_orig;
+              xp = meshi->xplt_fds;
+              yp = meshi->yplt_fds;
+              zp = meshi->zplt_fds;
               fprintf(scriptoutstream,"SHOWPLOT3DDATA\n");
               fprintf(scriptoutstream," %i %i %i %i %f\n",i+1,1, plotn,visx_all,xp[meshi->plotx]);
               fprintf(scriptoutstream,"SHOWPLOT3DDATA\n");
@@ -2504,7 +2512,7 @@ void Keyboard(unsigned char key, int flag){
         break;
 #endif
       case GLUT_ACTIVE_CTRL:
-        SnapScene();
+        SnapScene(45);
         break;
       default:
         if(rotation_type==EYE_CENTERED){
@@ -2804,7 +2812,7 @@ void Keyboard(unsigned char key, int flag){
       }
       break;
     case '!':
-      SnapScene();
+      SnapScene(45);
       break;
     case '"':
       GLUIShowPlot2D();
@@ -2862,7 +2870,6 @@ void Keyboard(unsigned char key, int flag){
     case '/':
       updatemenu=1;
       partfast = 1 - partfast;
-#ifndef pp_PARTFRAME
       if(current_script_command==NULL){
         if(global_scase.npartinfo>1){
           use_partload_threads = partfast;
@@ -2871,7 +2878,6 @@ void Keyboard(unsigned char key, int flag){
           use_partload_threads = 0;
         }
       }
-#endif
       if(use_partload_threads==1){
         if(n_partload_threads > 1)printf("parallel particle loading: on(%i threads)\n", n_partload_threads);
         if(n_partload_threads == 1)printf("parallel particle loading: on(1 thread)\n");
@@ -3178,17 +3184,17 @@ float SetClipVal(int flag){
 
     switch(flag){
       case 0:
-        xplt = meshi->xplt_orig;
+        xplt = meshi->xplt_fds;
         plotx = meshi->iplotx_all[iplotx_all];
         if(plotx>=0)return xplt[plotx];
         break;
       case 1:
-        yplt = meshi->yplt_orig;
+        yplt = meshi->yplt_fds;
         ploty = meshi->iploty_all[iploty_all];
         if(ploty>=0)return yplt[ploty];
         break;
       case 2:
-        zplt = meshi->zplt_orig;
+        zplt = meshi->zplt_fds;
         plotz = meshi->iplotz_all[iplotz_all];
         if(plotz>=0)return zplt[plotz];
         break;
@@ -3936,41 +3942,7 @@ void DoStereo(void){
   }
 }
 
-#ifdef pp_LUA
-/* ------------------ DoScriptLua ------------------------ */
-void DoScriptLua(void){
-  int script_return_code;
-  if(runluascript == 1){
-    if(strlen(luascript_filename)>0) LoadScript(luascript_filename);
-    runluascript = 0;
-    PRINTF("running lua script section\n");
-    fflush(stdout);
-    script_return_code = RunLuaScript();
-    if(script_return_code != LUA_OK && script_return_code != LUA_YIELD && exit_on_script_crash){
-        SMV_EXIT(1);
-    }
-  }
-}
-#endif
-
 /* ------------------ DoScript ------------------------ */
-#ifdef pp_LUA_SSF
-void DoScript(void){
-  int script_return_code;
-
-  if(runscript == 1){
-  // csv files are read in the background.  the following line ensures that they will all be read in
-  // before the script begins. gpf
-      runscript = 0;
-      PRINTF("running ssf script instruction\n");
-      fflush(stdout);
-      script_return_code = runSSFScript();
-      if(script_return_code != LUA_OK && script_return_code != LUA_YIELD && exit_on_script_crash){
-          SM_EXIT(1);
-      }
-    }
-}
-#else
 void DoScript(void){
   SNIFF_ERRORS("DoScript: start");
   if(runscript==1&&default_script!=NULL){
@@ -4081,7 +4053,6 @@ void DoScript(void){
     script_skipframe=-1;
   }
 }
-#endif
 
 /* ------------------ DoScriptHtml ------------------------ */
 
@@ -4205,9 +4176,6 @@ void DoNonStereo(void){
 void DisplayCB(void){
   SNIFF_ERRORS("DisplayDB: start");
   DoScript();
-#ifdef pp_LUA
-  DoScriptLua();
-#endif
   UpdateDisplay();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   if(stereotype==STEREO_NONE){

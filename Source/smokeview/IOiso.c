@@ -9,6 +9,7 @@
 #include "smokeviewvars.h"
 #include "glui_bounds.h"
 #include "getdata.h"
+#include "readsmvfile.h"
 
 /* ------------------ GetIsoLevels ------------------------ */
 
@@ -21,7 +22,7 @@ void GetIsoLevels(const char *isofile, int dataflag, float **levelsptr, float **
   int i;
   float **colorlevels=NULL;
 
-  isostreamptr=fopen(isofile,"rb");
+  isostreamptr=FOPEN(isofile,"rb");
 
   fread(&one,4,1,isostreamptr);
   if(dataflag!=0){
@@ -62,7 +63,7 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
   int skip_local;
   float ttmin, ttmax;
 
-  *isostreamptr=fopen(isofile,"rb");
+  *isostreamptr=FOPEN(isofile,"rb");
 
   *tmin_local=1000000000.;
   *tmax_local=-1000000000.;
@@ -201,11 +202,6 @@ void UnloadIso(meshdata *meshi){
 
   if(meshi->isofilenum == -1)return;
   ib = global_scase.isoinfo + meshi->isofilenum;
-#ifdef pp_SLICEFRAME
-  FRAMEFree(ib->frameinfo);
-  ib->frameinfo = NULL;
-  ib->geominfo->frameinfo = NULL;
-#endif
 
   FreeAllMemory(ib->memory_id);
   meshi->iso_times = NULL;
@@ -279,7 +275,7 @@ void OutputIsoBounds(isodata *isoi){
   geomi = isoi->geominfo;
   strcpy(file, geomi->file);
   strcat(file, ".csv");
-  stream = fopen(file, "w");
+  stream = FOPEN(file, "w");
   if(stream == NULL)return;
   if(geomi->ntimes <= 0){
     fclose(stream);
@@ -454,63 +450,21 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
   int i;
   surfdata *surfi;
   FILE_SIZE return_filesize=0;
-#ifdef pp_ISOFRAME
-  int time_frame = ALL_FRAMES;
-  float total_time;
-#endif
 
-#ifdef pp_ISOFRAME
-  START_TIMER(total_time);
-#endif
   isoi = global_scase.isoinfo + ifile;
   if(load_flag==LOAD||load_flag==RELOAD){
     THREADcontrol(isosurface_threads, THREAD_JOIN);
   }
   if(load_flag==UNLOAD){
     CancelUpdateTriangles();
-#ifdef pp_ISOFRAME
-    if(isoi->frameinfo != NULL){
-      FRAMEFree(isoi->frameinfo);
-      isoi->frameinfo = NULL;
-    }
-#endif
   }
   meshi = global_scase.meshescoll.meshinfo + isoi->blocknumber;
   geomi = isoi->geominfo;
-#ifdef pp_ISOFRAME
-  if(load_flag != RELOAD){
-    UnloadIso(meshi);
-    FreeAllMemory(isoi->memory_id);
-  }
-#else
   UnloadIso(meshi);
   FreeAllMemory(isoi->memory_id);
-#endif
   meshi->showlevels = NULL;
   meshi->isolevels = NULL;
-#ifdef pp_ISOFRAME
-  unsigned char *buffer=NULL;
-  int nbuffer=0;
-
-  if(load_flag != UNLOAD){
-    isoi->frameinfo = FRAMELoadData(isoi->frameinfo, isoi->file, isoi->size_file, NULL, load_flag, time_frame, FORTRAN_FILE, GetIsoFrameInfo);
-    update_frame = 1;
-
-    geomi->frameinfo = isoi->frameinfo;
-    if(isoi->frameinfo != NULL){
-      buffer  = isoi->frameinfo->bufferinfo->buffer;
-      nbuffer = isoi->frameinfo->bufferinfo->nbuffer;
-    }
-    else{
-      buffer  = NULL;
-      nbuffer = 0;
-    }
-  }
-  return_filesize = ReadGeom(geomi, buffer, nbuffer, load_flag, GEOM_ISO, geom_frame_index);
-  if(load_flag != UNLOAD && isoi->frameinfo != NULL)return_filesize = isoi->frameinfo->bytes_read;
-#else
   return_filesize = ReadGeom(geomi, NULL, 0, load_flag, GEOM_ISO, geom_frame_index);
-#endif
 
   if(load_flag==UNLOAD){
     meshi->isofilenum = -1;
@@ -639,12 +593,6 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
 
   GLUTPOSTREDISPLAY;
   CheckMemory;
-#ifdef pp_ISOFRAME
-  if(isoi->frameinfo != NULL){
-    STOP_TIMER(total_time);
-    isoi->frameinfo->total_time = total_time;
-  }
-#endif
   return return_filesize;
 }
 
@@ -1089,11 +1037,7 @@ FILE_SIZE ReadIso(const char *file, int ifile, int flag, int *geom_frame_index, 
 
     isoi = global_scase.isoinfo+ifile;
     if(flag == UNLOAD && isoi->loaded == 0)return 0;
-#ifdef pp_ISOFRAME
-    if(flag != RELOAD)PRINTF("Loading %s(%s)", file, isoi->surface_label.shortlabel);
-#else
     if(flag==LOAD)PRINTF("Loading %s(%s)", file,isoi->surface_label.shortlabel);
-#endif
       if(isoi->geomflag==1){
         return_filesize=ReadIsoGeom(ifile,flag,geom_frame_index,errorcode);
       }

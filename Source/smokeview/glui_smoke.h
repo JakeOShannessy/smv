@@ -23,9 +23,7 @@
 #define USE_SMOKE_RGB         87
 #define USE_FIRE_RGB          88
 #define USE_FIRE_COLORMAP     89
-#ifdef pp_FIRE_HIST
 #define UPDATE_FIRE_HISTOGRAM 116
-#endif
 #define USE_CO2_RGB           90
 #define USE_CO2_COLORMAP      91
 #define SET_RGB_COLORGB_CHECKBOXES 92
@@ -81,6 +79,7 @@
 #define FORCE_ALPHA_OPAQUE 104
 #define SMOKE_FRAME_INC 113
 #define REFRESH_FIRE       114
+#define SMOKE_DEMO_MODE    117
 
 #define GLOBAL_HRRPUV_MIN  101
 #define GLOBAL_HRRPUV_MAX  102

@@ -56,7 +56,7 @@ int main(int argc, char **argv){
   bufferstreamdata *smv_buffer1, *smv_buffer2;
   char smv1_out[1024];
   char svdlogfile[1024];
-  char *smoke1, *smoke2, smv_out[1024];
+  char *smoke1=NULL, *smoke2=NULL, smv_out[1024];
   char smoke1a[1024], smoke2a[1024];
   char smoke1b[1024], smoke2b[1024];
   char fed_smoke1[1024], fed_smoke2[1024];
@@ -230,9 +230,9 @@ int main(int argc, char **argv){
   if(redirect==1){
     strcpy(svdlogfile,"");
     if(destdir!=NULL)strcat(svdlogfile,destdir);
-    strcat(svdlogfile,smv1);
+    if(smv1!=NULL)strcat(svdlogfile,smv1);
     strcat(svdlogfile,"_diff.svdlog");
-    LOG_FILENAME=fopen(svdlogfile,"w");
+    LOG_FILENAME=FOPEN(svdlogfile,"w");
     if(LOG_FILENAME!=NULL){
       SetStdOut(LOG_FILENAME);
     }
@@ -248,15 +248,15 @@ int main(int argc, char **argv){
   }
   MakeOutFile(smv_out,destdir,smv1_out,".smv");
 
-  stream_out=fopen(smv_out,"w");
+  stream_out=FOPEN(smv_out,"w");
   if(stream_out==NULL){
     fprintf(stderr,"*** Error The .smv file, %s, could not be opened for output.\n",smv_out);
   }
-  stream_in1=fopen(smoke1,"r");
+  stream_in1=FOPEN(smoke1,"r");
   if(stream_in1==NULL){
     fprintf(stderr,"*** Error The .smv file, %s, could not be opened for input\n",smoke1);
   }
-  stream_in2=fopen(smoke2,"r");
+  stream_in2=FOPEN(smoke2,"r");
   if(stream_in2==NULL){
     fprintf(stderr,"*** Error The .smv file, %s, could not be opened for input.\n",smoke2);
   }

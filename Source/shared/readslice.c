@@ -1,7 +1,6 @@
 #include "options.h"
 #include "dmalloc.h"
 #include "string_util.h"
-#include "gd.h"
 #include <math.h>
 
 #include <string.h>
@@ -18,7 +17,7 @@ void GetSliceFileHeader(char *file, int *ip1, int *ip2, int *jp1, int *jp2, int 
   FILE *stream = NULL;
   int vals[6];
 
-  stream = fopen(file, "rb");
+  stream = FOPEN(file, "rb");
   *error = 1;
   *ip1 = 0;
   *ip2 = 0;

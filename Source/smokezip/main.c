@@ -285,7 +285,6 @@ int main(int argc, char **argv){
     ext=filebase+filelen-4;
     if(strcmp(ext,".smv")==0){
       ext[0]=0;
-      filelen=strlen(filebase);
     }
   }
   NewMemory((void **)&smvzip_filename, (unsigned int)(strlen(filebase) + strlen(".smvzip") + 1));
@@ -317,7 +316,7 @@ int main(int argc, char **argv){
       strcat(smzlogfile,filebase);
     }
     strcat(smzlogfile,".smzlog");
-    SMZLOG_STREAM=fopen(smzlogfile,"w");
+    SMZLOG_STREAM=FOPEN(smzlogfile,"w");
     if(SMZLOG_STREAM!=NULL){
       SetStdOut(SMZLOG_STREAM);
     }
@@ -358,7 +357,7 @@ int main(int argc, char **argv){
   else{
     FILE *stream;
 
-    stream = fopen(smvzip_filename, "w");
+    stream = FOPEN(smvzip_filename, "w");
     if(stream!=NULL){
       fprintf(stream, "1\n");
       fclose(stream);

@@ -363,9 +363,9 @@ void GetSliceCellVerts(int option, int option2, int *offset, float *verts, unsig
 
           meshi = global_scase.meshescoll.meshinfo+slicei->blocknumber;
 
-          xplt = meshi->xplt;
-          yplt = meshi->yplt;
-          zplt = meshi->zplt;
+          xplt = meshi->xplt_smv;
+          yplt = meshi->yplt_smv;
+          zplt = meshi->zplt_smv;
           plotx = slicei->is1;
           ploty = slicei->js1;
           plotz = slicei->ks1;
@@ -717,14 +717,14 @@ void GetSliceNodeVerts(int option, int option2,
           ny = meshi->jbar+1;
           nxy = nx*ny;
           iblank = meshi->c_iblank_node_html;
-          xplt = meshi->xplt;
-          yplt = meshi->yplt;
+          xplt = meshi->xplt_smv;
+          yplt = meshi->yplt_smv;
           if(slicei->slice_filetype==SLICE_TERRAIN){
             agl = SCALE2FDS(.005) + slicei->above_ground_level;
             zplt = meshi->terrain->znode;
           }
           else{
-            zplt = meshi->zplt;
+            zplt = meshi->zplt_smv;
           }
           plotx = slicei->is1;
           ploty = slicei->js1;
@@ -1028,9 +1028,9 @@ void GetBlockNodes(const meshdata *meshi, blockagedata *bc, float *xyz, float *n
     0, 2, 1, 0, 3, 2
   };
 
-  xplt = meshi->xplt;
-  yplt = meshi->yplt;
-  zplt = meshi->zplt;
+  xplt = meshi->xplt_smv;
+  yplt = meshi->yplt_smv;
+  zplt = meshi->zplt_smv;
 
   xminmax[0] = xplt[bc->ijk[IMIN]];
   xminmax[1] = xplt[bc->ijk[IMAX]];
@@ -1705,7 +1705,7 @@ void OutputFixedFrameData(char *html_file, webgeomdata *webgi ,float *colorbar){
   FILE *stream_out = NULL;
 
   if(webgi->nframes<=0||webgi->nverts<=0||webgi->framesize<=0||webgi->nindices<=0)return;
-  stream_out = fopen(html_file, "w");
+  stream_out = FOPEN(html_file, "w");
   if(stream_out==NULL)return;
 
   fprintf(stream_out, "{\n");
@@ -2025,7 +2025,7 @@ int Obst2Data(char *html_file){
     FREEMEMORY(facesObstLit);
     return 0;
   }
-  stream_out = fopen(html_file, "w");
+  stream_out = FOPEN(html_file, "w");
   if(stream_out==NULL)return 0;
 
   fprintf(stream_out,"{\n");
@@ -2084,7 +2084,7 @@ int Smv2Geom(char *html_file){
   FILE *stream_out;
   int i;
 
-  stream_out = fopen(html_file, "w");
+  stream_out = FOPEN(html_file, "w");
   if(stream_out != NULL){
     GeomLitTriangles2Geom(&vertsGeomLit, &normalsGeomLit, &colorsGeomLit, &nvertsGeomLit, &facesGeomLit, &nfacesGeomLit);
 
@@ -2175,7 +2175,7 @@ int Smv2Html(char *html_file, int option, int from_where){
   webgeomdata slice_node_web, slice_cell_web, slice_geom_web, bndf_node_web, part_node_web;
 
   template_file = GetSmokeviewHtmlPath();
-  stream_in = fopen(template_file, "r");
+  stream_in = FOPEN(template_file, "r");
   if(stream_in==NULL){
     printf("***error: smokeview html template file %s failed to open\n", template_file);
     return 1;
@@ -2194,7 +2194,7 @@ int Smv2Html(char *html_file, int option, int from_where){
       return 1;
     }
   }
-  stream_out = fopen(html_fullfile, "w");
+  stream_out = FOPEN(html_fullfile, "w");
   if(stream_out==NULL){
     printf("***error: html output file %s failed to open for output\n", html_fullfile);
     fclose(stream_in);

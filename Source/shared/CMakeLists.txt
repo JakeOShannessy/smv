@@ -31,8 +31,8 @@ add_library(libsmv STATIC
     readlabel.c
     readtour.c
     scontour2d.c
-
-    # ../smokeview/readsmv.c
+    readsmvfile.c
+    "paths.c"
 )
 target_include_directories(libsmv PUBLIC
     .

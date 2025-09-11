@@ -81,6 +81,9 @@
 //#define pp_MEMPRINT     // output memory allocation info
 #define pp_MEMDEBUG     // comment this line when debugging REALLY large cases (to avoid memory checks)
 #endif
+#ifdef pp_MEMDEBUG
+#define pp_memusage
+#endif
 
 //*** hash output
 
@@ -90,38 +93,7 @@
 #define PRINTVERSION(a) PRINTversion(a)
 #endif
 
-// debugging macros
-
-#ifdef pp_TRACE
-#define BTRACE \
-  fprintf(stderr, "entering, file: %s, line: %d\n",__FILE__,__LINE__)
-#define TTRACE \
-  fprintf(stderr, "in, file: %s, line: %d\n",__FILE__,__LINE__)
-#define ETRACE \
-  fprintf(stderr, "leaving, file: %s, line: %d\n",__FILE__,__LINE__)
-#else
-#define BTRACE
-#define TTRACE
-#define ETRACE
-#endif
-
 #define FILE_SIZE unsigned long long
-
-#ifdef X64
-  #define STRUCTSTAT struct __stat64
-  #define STAT _stat64
-
-  #ifdef WIN32
-    #define LINT __int64
-  #else
-    #define LINT long long int
-  #endif
-#else
-  #define STRUCTSTAT struct stat
-  #define STAT stat
-
-  #define LINT long int
-#endif
 
 #ifdef CPP
 #define CCC "C"

@@ -84,12 +84,17 @@ typedef struct {
 #endif
 
 // vvvvvvvvvvvvvvvvvvvvvvvv headers vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+EXTERNCPP wchar_t *convert_utf8_to_utf16(const char *path);
+EXTERNCPP char *convert_utf16_to_utf8(const wchar_t *path);
+#endif
+EXTERNCPP char          *ConcatLabels(char *label1, char *label2, char *label3, char *label);
 EXTERNCPP char          *GetCharPtr(char *label);
 EXTERNCPP char          *GetStringPtr(char *buffer);
 EXTERNCPP char          *GetStringPtr(char *buffer);
 EXTERNCPP char          *GetFloatLabel(float val, char *label);
 EXTERNCPP char          *GetIntLabel(int val, char *label);
-EXTERNCPP char          *AppendString(char *S1, char *S2);
+EXTERNCPP char          *AppendString(const char *S1, const char *S2);
 EXTERNCPP void           UsageCommon(int option);
 EXTERNCPP int            ParseCommonOptions(int argc, char **argv);
 EXTERNCPP void           InitRandAB(int size);
@@ -125,7 +130,7 @@ EXTERNCPP void           StripQuotes(char *buffer);
 EXTERNCPP void           StripCommas(char *buffer);
 EXTERNCPP int            GetRowCols(FILE *stream, int *nrows, int *ncols);
 
-EXTERNCPP char          *RemoveComment(char *buffer);
+EXTERNCPP void           RemoveComment(char *buffer);
 EXTERNCPP void           TrimBack(char *line);
 EXTERNCPP void           TrimCommas(char *line);
 EXTERNCPP char          *TrimFront(char *line);
@@ -138,8 +143,8 @@ EXTERNCPP void           TrimMZeros(char *line);
 EXTERNCPP char          *Strstr(char *c, char *key);
 EXTERNCPP char          *STRSTR(char *c, const char *key);
 EXTERNCPP void           ScaleString(const char *stringfrom, char *stringto, const float *scale);
-EXTERNCPP void           ScaleFloat2String(float floatfrom, char *stringto, const float *scale);
-EXTERNCPP float          ScaleFloat2Float(float floatfrom, const float *scale);
+EXTERNCPP void           ScaleFloat2String(float floatfrom, char *stringto, const float *scale, int ndigits, int fixedpoint_labels);
+EXTERNCPP float          ScaleFloat(float floatfrom, const float *scale);
 EXTERNCPP void           Num2String(char *string, float tval);
 EXTERNCPP void           Float2String(char *string, float tval, int ndecimals, int fixed_point);
 EXTERNCPP void           Floats2Strings(char **c_vals, float *vals, int nvals, int ndigits, int fixedpoint_labels, int exponential_labels, int decimal_labels, int zero_pad, char *exp_offset_label);
@@ -170,7 +175,6 @@ EXTERNCPP void           PRINTversion(char *progname);
 SVEXTERN int SVDECL(hash_option, HASH_SHA1);
 #endif
 SVEXTERN int SVDECL(show_version, 0), SVDECL(show_help, 0);
-SVEXTERN char append_string[1024];
 
 #ifdef WIN32
 STREXTERN char STRDECL(dirseparator[],"\\");

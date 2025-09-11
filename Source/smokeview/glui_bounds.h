@@ -133,9 +133,6 @@
 #define SORTSLICES       126
 #define SORTSLICES_DEBUG 127
 #define SLICE_OPTION 131
-#ifdef pp_FRAME
-#define READ_TEST 132
-#endif
 #define COLORINDEX 133
 
 #define UPDATE_VECTOR          101
@@ -163,9 +160,6 @@
 #define SLICE_LOAD_INCREMENTAL 17
 
 //*** glui_bounds.cpp headers
-
-EXTERNCPP int  GLUIGetChopHide(char *label);
-EXTERNCPP void GLUISetChopHide(char *label, int val);
 
 EXTERNCPP int  GLUIGetChopMin(int type, char *label, int *set_valmin, float *valmin);
 EXTERNCPP int  GLUIGetChopMax(int type, char *label, int *set_valmax, float *valmax);

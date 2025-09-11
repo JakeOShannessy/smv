@@ -7,6 +7,7 @@
 
 #include "smokeviewvars.h"
 #include "glui_bounds.h"
+#include "readsmvfile.h"
 
 #define EXPMIN -1
 #define EXPMAX 3
@@ -101,51 +102,6 @@ void GetBoundaryColors(float *t, int nt, unsigned char *it,
   Num2String(&labels[nlevel-2][0],tval);
   tval = local_tmax;
   Num2String(&labels[nlevel-1][0],tval);
-}
-
-/* ------------------ WriteBoundIni ------------------------ */
-
-void WriteBoundIni(void){
-  FILE *stream = NULL;
-  char *fullfilename = NULL;
-  int i;
-
-  if(fullfilename == NULL)return;
-
-  for(i = 0; i < global_scase.npatchinfo; i++){
-    bounddata *boundi;
-    patchdata *patchi;
-    int skipi;
-    int j;
-
-    skipi = 0;
-    patchi = global_scase.patchinfo + i;
-    if(patchi->bounds.defined == 0)continue;
-    for(j = 0; j < i - 1; j++){
-      patchdata *patchj;
-
-      patchj = global_scase.patchinfo + j;
-      if(patchi->shortlabel_index == patchj->shortlabel_index&&patchi->patch_filetype == patchj->patch_filetype){
-        skipi = 1;
-        break;
-      }
-    }
-    if(skipi == 1)continue;
-
-    boundi = &patchi->bounds;
-    if(stream == NULL){
-      stream = fopen(fullfilename, "w");
-      if(stream == NULL){
-        FREEMEMORY(fullfilename);
-        return;
-      }
-    }
-    float dummy = 0.0;
-    fprintf(stream, "B_BOUNDARY\n");
-    fprintf(stream, " %f %f %f %f %i %s\n", boundi->global_min, dummy, dummy, boundi->global_max, patchi->patch_filetype, patchi->label.shortlabel);
-  }
-  if(stream != NULL)fclose(stream);
-  FREEMEMORY(fullfilename);
 }
 
 /* ------------------ GetBoundaryColors3 ------------------------ */
@@ -969,9 +925,13 @@ void UpdateTexturebar(void){
   glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,256,0,GL_RGBA,GL_FLOAT,rgb_iso);
   SNIFF_ERRORS("UpdateTexturebar - glTexImage1D (rgb_iso) ");
 
-  glBindTexture(GL_TEXTURE_1D,slicesmoke_colormap_id);
-  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_slicesmokecolormap_01);
-  SNIFF_ERRORS("UpdateTexturebar - glTexImage1D (rgb_slicesmokecolormap_01) ");
+  if(gpuactive == 1){
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_1D, slicesmoke_colormap_id);
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, MAXSMOKERGB, 0, GL_RGBA, GL_FLOAT, rgb_slicesmokecolormap_01);
+    SNIFF_ERRORS("UpdateTexturebar - glTexImage1D (rgb_slicesmokecolormap_01)");
+    glActiveTexture(GL_TEXTURE0);
+  }
 
   glBindTexture(GL_TEXTURE_1D,volsmoke_colormap_id);
   glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_volsmokecolormap);
@@ -1071,7 +1031,7 @@ void UpdateCO2Colormap(void){
 
 /* ------------------ UpdateSmokeColormap ------------------------ */
 
-void UpdateSmokeColormap(int option){
+void UpdateSmokeColormap(void){
   int n;
   float transparent_level_local=1.0;
   unsigned char *alpha_rgb;
@@ -1079,18 +1039,21 @@ void UpdateSmokeColormap(int option){
   float valmin=0.0, valmax=1.0;
   float valmin_cb=0.0, valmax_cb=1.0;
   float *rgb_colormap=NULL;
+  int is_smoke_loaded;
+
+  is_smoke_loaded = IsSmokeLoaded(&global_scase);
 
   rgb_colormap = rgb_slicesmokecolormap_01;
   if(have_fire==HRRPUV_index){
-    valmin    = global_hrrpuv_min;
+    valmin    = global_scase.hrrpuv_min;
     valmin_cb = global_hrrpuv_cb_min;
-    valmax    = global_hrrpuv_max;
+    valmax    = global_scase.hrrpuv_max;
     valmax_cb = global_hrrpuv_cb_max;
   }
   if(have_fire==TEMP_index){
-    valmin    = global_temp_min;
+    valmin    = global_scase.temp_min;
     valmin_cb = global_temp_cb_min;
-    valmax    = global_temp_max;
+    valmax    = global_scase.temp_max;
     valmax_cb = global_temp_cb_max;
   }
 
@@ -1106,12 +1069,12 @@ void UpdateSmokeColormap(int option){
       for(n=0;n<MAXSMOKERGB;n++){
         int use_smoke;
 
-        use_smoke = 1;
+        use_smoke = is_smoke_loaded;
         if(have_fire==HRRPUV_index||have_fire==TEMP_index){
           float val;
 
           val = valmin + (float)n*(valmax-valmin)/(float)(MAXSMOKERGB-1);
-          if(val>valmin_cb){
+          if(val>=valmin_cb){
             use_smoke = 0;
           }
         }
@@ -1139,12 +1102,10 @@ void UpdateSmokeColormap(int option){
         int use_smoke;
         float val;
 
-        use_smoke = 1;
+        use_smoke = is_smoke_loaded;
+        val = valmin + (float)n*(valmax-valmin)/(float)(MAXSMOKERGB-1);
         if(have_fire==HRRPUV_index||have_fire==TEMP_index){
-          val = valmin + (float)n*(valmax-valmin)/(float)(MAXSMOKERGB-1);
-          if(val>valmin_cb){
-            use_smoke = 0;
-          }
+          if(val>valmin_cb)use_smoke = 0;
         }
         if(use_smoke==1){
           rgb_colormap[4*n+0] = (float)smoke_color_int255[0]/255.0;
@@ -1219,8 +1180,7 @@ void UpdateRGBColors(int colorbar_index){
         rgb_full[n][3]=transparent_level_local;
       }
     }
-    UpdateSmokeColormap(RENDER_SLICE);
-    UpdateSmokeColormap(RENDER_VOLUME);
+    UpdateSmokeColormap();
   }
   else{
     for(n=0;n<nrgb_full;n++){
@@ -1552,12 +1512,13 @@ void UpdateChopColors(void){
       }
     }
   }
-  {
+  bounds = GLUIGetBoundsData(BOUND_PATCH);
+  if(bounds != NULL){
     float smin, smax;
     int chop_patch_local;
 
-    smin = boundarylevels256[0];
-    smax = boundarylevels256[255];
+    smin = bounds->glui_valmin;
+    smax = bounds->glui_valmax;
 
 // make boundary opacities same as base colorbar opaque except when greater than chopmax or less than chopmin values
     if(setpatchchopmin_local==1){
@@ -1606,14 +1567,12 @@ void UpdateChopColors(void){
       updatefacelists = 1;
     }
   }
-  if(slicebounds!=NULL&&slicefile_labelindex!=-1){
+  bounds = GLUIGetBoundsData(BOUND_SLICE);
+  if(bounds!=NULL){
     float smin, smax;
 
-    //smin=slicebounds[slicefile_labelindex].dlg_valmin;
-    //smax=slicebounds[slicefile_labelindex].dlg_valmax;
-    smin = colorbar_slice_min;
-    smax = colorbar_slice_max;
-
+    smin = bounds->glui_valmin;
+    smax = bounds->glui_valmax;
     if(glui_setslicechopmin_local==1){
       ichopmin=nrgb_full*(glui_slicechopmin_local-smin)/(smax-smin);
       if(ichopmin<0)ichopmin=0;

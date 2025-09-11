@@ -1,0 +1,41 @@
+
+// put rendered files in specified directory
+
+LABEL
+  put rendered files in specified directory
+
+RENDERDIR
+ ..\..\Manuals\SMV_Technical_Reference_Guide\SCRIPT_FIGURES
+
+// render 3D smoke
+
+LABEL
+  render 3D smoke
+
+UNLOADALL
+LOAD3DSMOKE
+ SOOT DENSITY
+LOAD3DSMOKE
+ HRRPUV
+LOADINIFILE
+ tdemo.ini
+SETTIMEVAL
+ 10.000000
+RENDERONCE
+ tdemo_fullv1_010s
+SETVIEWPOINT
+ view 2
+RENDERONCE
+ tdemo_fullv2_010s
+SETVIEWPOINT
+ view 1
+SETDEMOMODE
+ 5
+SMOKEPROP
+ 30000
+SETTIMEVAL
+ 10.000000
+RENDERONCE
+ tdemo_sidev1_010s
+ 
+

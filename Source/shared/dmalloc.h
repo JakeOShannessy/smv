@@ -83,18 +83,7 @@ MMEXTERN pthread_mutex_t mutexMEM;
 #define NEWMEMORY(f,g)       NewMemory((void **)&(f),(g))
 #define RESIZEMEMORY(f,g) ResizeMemory((void **)&(f),(g))
 
-#ifdef pp_memstatus
-#ifdef WIN32
-void _memorystatus(unsigned int size,unsigned int *availmem, unsigned int *memused, unsigned int *totalmem);
-#define MEMSTATUS(f,g,h,i) _memorystatus(f,g,h,i)
-#else
-#define MEMSTATUS(f,g,h,i)
-#endif
-#endif
-
-#ifndef pp_memstatus
-#define MEMSTATUS(f,g,h,i)
-#endif
+int MemoryLoad(void);
 
 #ifdef pp_MEMPRINT
 #define PrintMemoryInfo \

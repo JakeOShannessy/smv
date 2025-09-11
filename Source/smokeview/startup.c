@@ -13,16 +13,15 @@
 #include GLUT_H
 
 #include "infoheader.h"
-#ifdef pp_LUA
-#include "lua_api.h"
-#endif
 #include "stdio_buffer.h"
 
 #include "readobject.h"
 #include "readlabel.h"
+#include "readsmvfile.h"
 #include "glui_bounds.h"
 #include "glui_motion.h"
 #include "glui_smoke.h"
+#include "paths.h"
 
 /* ------------------ InitDefaultCameras ------------------------ */
 
@@ -163,65 +162,6 @@ void InitMisc(void){
   UpdateShow();
 }
 
-/* ------------------ ReadBoundINI ------------------------ */
-
-void ReadBoundINI(void){
-  FILE *stream = NULL;
-  char *fullfilename = NULL;
-
-  if(fullfilename != NULL)stream = fopen(fullfilename, "r");
-  if(stream == NULL || IsFileNewer(smv_filename, fullfilename) == 1){
-    if(stream != NULL)fclose(stream);
-    FREEMEMORY(fullfilename);
-    return;
-  }
-  if(verbose_output==1){
-    PRINTF("%s", _("reading: "));
-    PRINTF("%s\n", fullfilename);
-  }
-
-  while(!feof(stream)){
-    char buffer[255], buffer2[255];
-
-    CheckMemory;
-    if(fgets(buffer, 255, stream) == NULL)break;
-
-    if(Match(buffer, "B_BOUNDARY") == 1){
-      float gmin, gmax;
-      float pmin, pmax;
-      int filetype;
-      char *buffer2ptr;
-      int lenbuffer2;
-      int i;
-
-      fgets(buffer, 255, stream);
-      strcpy(buffer2, "");
-      sscanf(buffer, "%f %f %f %f %i %s", &gmin, &pmin, &pmax, &gmax, &filetype, buffer2);
-      TrimBack(buffer2);
-      buffer2ptr = TrimFront(buffer2);
-      lenbuffer2 = strlen(buffer2ptr);
-      for(i = 0; i < global_scase.npatchinfo; i++){
-        patchdata *patchi;
-
-        patchi = global_scase.patchinfo + i;
-        if(lenbuffer2 != 0 &&
-          strcmp(patchi->label.shortlabel, buffer2ptr) == 0 &&
-          patchi->patch_filetype == filetype){
-          bounddata *boundi;
-
-          boundi = &patchi->bounds;
-          boundi->defined = 1;
-          boundi->global_min = gmin;
-          boundi->global_max = gmax;
-        }
-      }
-      continue;
-    }
-  }
-  FREEMEMORY(fullfilename);
-  return;
-}
-
 /* ------------------ SetupCase ------------------------ */
 
 int SetupCase(char *filename){
@@ -238,40 +178,50 @@ int SetupCase(char *filename){
 
   // setup input files names
 
-  input_file = filename;
+  NewMemory((void **)&input_file, sizeof(char) * (strlen(filename) + 1));
+  STRCPY(input_file, filename);
   if(strcmp(input_filename_ext,".svd")==0||demo_option==1){
     trainer_mode=1;
     trainer_active=1;
     if(strcmp(input_filename_ext,".svd")==0){
-      input_file=global_scase.paths.trainer_filename;
+      input_file=CasePathTrainer(&global_scase);
     }
     else if(strcmp(input_filename_ext,".smt")==0){
-      input_file=global_scase.paths.test_filename;
+      input_file=CasePathTest(&global_scase);
     }
   }
   {
     bufferstreamdata *smv_streaminfo = NULL;
 
     PRINTF("reading  %s\n", input_file);
-    if(FileExistsOrig(global_scase.paths.smvzip_filename) == 1){
+    char *smvzip_filename = CasePathSmvZip(&global_scase);
+    if(FileExistsOrig(smvzip_filename) == 1){
       parse_opts.lookfor_compressed_files = 1;
     }
+    FREEMEMORY(smvzip_filename);
+    char *iso_filename = CasePathIso(&global_scase);
+    char *fedsmv_filename = CasePathFed(&global_scase);
     smv_streaminfo = GetSMVBuffer(input_file);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, global_scase.paths.iso_filename);
-    smv_streaminfo = AppendFileBuffer(smv_streaminfo, global_scase.paths.fedsmv_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, iso_filename);
+    smv_streaminfo = AppendFileBuffer(smv_streaminfo, fedsmv_filename);
+    FREEMEMORY(iso_filename);
+    FREEMEMORY(fedsmv_filename);
 
 #ifdef pp_SMOKE3D_FORCE
-    FILE *stream_smoke3d=NULL;
-
-    stream_smoke3d = fopen(global_scase.paths.smoke3d_filename, "w");
-    if(stream_smoke3d!=NULL){
-      fprintf(stream_smoke3d,"SMOKF3D 1 8700.0                                    \n");
-      fprintf(stream_smoke3d," dummy.xyz                                          \n");
-      fprintf(stream_smoke3d," SOOT DENSITY                                       \n");
-      fprintf(stream_smoke3d," rho_C                                              \n");
-      fprintf(stream_smoke3d," kg / m3                                            \n");
-      fclose(stream_smoke3d);
-      smv_streaminfo = AppendFileBuffer(smv_streaminfo, global_scase.paths.smoke3d_filename);
+    if(HaveSmoke3D(smv_streaminfo) == 0){
+      FILE *stream_smoke3d = NULL;
+      char *smoke3d_filename = CasePathSmoke3d(&global_scase);
+      stream_smoke3d = FOPEN(smoke3d_filename, "w");
+      if(stream_smoke3d != NULL){
+        fprintf(stream_smoke3d, "SMOKF3D 1 8700.0                                    \n");
+        fprintf(stream_smoke3d, " dummy.xyz                                          \n");
+        fprintf(stream_smoke3d, " SOOT DENSITY                                       \n");
+        fprintf(stream_smoke3d, " rho_C                                              \n");
+        fprintf(stream_smoke3d, " kg / m3                                            \n");
+        fclose(stream_smoke3d);
+        smv_streaminfo = AppendFileBuffer(smv_streaminfo, smoke3d_filename);
+      }
+      FREEMEMORY(smoke3d_filename);
     }
 #endif
     return_code = ReadSMV(smv_streaminfo);
@@ -289,12 +239,15 @@ int SetupCase(char *filename){
   switch(return_code){
     case 1:
       fprintf(stderr,"*** Error: Smokeview file, %s, not found\n",input_file);
+      FREEMEMORY(input_file);
       return 1;
     case 2:
       fprintf(stderr,"*** Error: problem reading Smokeview file, %s\n",input_file);
+      FREEMEMORY(input_file);
       return 2;
     case 0:
       UpdateSMVDynamic(input_file);
+      FREEMEMORY(input_file);
       break;
     case 3:
       return 3;
@@ -313,10 +266,6 @@ int SetupCase(char *filename){
   readini_output = 0;
   ReadIni(NULL);
   readini_output = 1;
-  PRINT_TIMER(timer_start, "init ReadINI");
-
-  ReadBoundINI();
-  PRINT_TIMER(timer_start, "ReadBoundINI");
 
   UpdateRGBColors(colorbar_select_index);
   PRINT_TIMER(timer_start, "UpdateRGBColors");
@@ -369,7 +318,7 @@ int SetupCase(char *filename){
     GLUIShowAlert();
   }
   // initialize info header
-  initialiseInfoHeader(&titleinfo, release_title, smv_githash, global_scase.fds_githash, global_scase.paths.chidfilebase, global_scase.fds_title);
+  initialiseInfoHeader(&titleinfo, release_title, smv_githash, global_scase.fds_githash, global_scase.chidfilebase, global_scase.fds_title);
   PRINT_TIMER(timer_start, "glut routines");
   return 0;
 }
@@ -390,7 +339,7 @@ int GetScreenHeight(void){
   FREEMEMORY(smokeview_scratchdir);
   strcat(command,full_height_file);
   system(command);
-  stream = fopen(full_height_file,"r");
+  stream = FOPEN(full_height_file,"r");
   if(stream!=NULL){
     fgets(buffer, 255, stream);
     sscanf(buffer, "%i", &screen_height);
@@ -1250,9 +1199,10 @@ void AutoLoadSmoke3D(int smoke3d_type){
     update_load_files=0;
     GLUIHideAlert();
    // TrainerViewMenu(trainerview); // this breaks auto slice loading
-  }
+}
 
-  /* ------------------ InitTextureDir ------------------------ */
+
+/* ------------------ InitTextureDir ------------------------ */
 
 void InitTextureDir(void){
   char *texture_buffer;
@@ -1682,6 +1632,8 @@ void InitVars(void){
     }
   }
 }
+
+/* ------------------ FreeVars ------------------------ */
 
 void FreeVars(void){
   ClearObjectCollection(&global_scase.objectscoll);

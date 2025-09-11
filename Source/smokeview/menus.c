@@ -18,10 +18,12 @@
 #include "IOvolsmoke.h"
 #include "readhvac.h"
 #include "readobject.h"
+#include "readsmvfile.h"
 #include "IOobjects.h"
 #include "IOscript.h"
 #include "viewports.h"
 #include "colorbars.h"
+#include "paths.h"
 
 void LoadHVACMenu(int value);
 void LoadPlot2DMenu(int value);
@@ -38,7 +40,9 @@ float     part_load_time;
 
 #define GEOM_Vents                   15
 #define GEOM_Compartments            16
-#define GEOM_Outline                  3
+#define GEOM_OutlineA                -1
+#define GEOM_OutlineB                -2
+#define GEOM_OutlineC                -3
 #define GEOM_TriangleCount           14
 #define GEOM_ShowAll                 11
 #define GEOM_HideAll                 13
@@ -80,13 +84,13 @@ float     part_load_time;
 #define MENU_TRAINER_CLEAR 998
 #define MENU_MAIN_QUIT 3
 
-#define MENU_READCASEINI    -1
-#define MENU_READINI         1
-#define MENU_WRITEINI        2
-#define MENU_WRITECASEINI    3
-#define MENU_READSVO         4
-#define MENU_CONFIG_SETTINGS 5
-#define MENU_REVERT_WRITEINI 6
+#define MENU_READCASEINI       -1
+#define MENU_READINI            1
+#define MENU_WRITE_SMOKEVIEWINI 2
+#define MENU_WRITE_CASEINI      3
+#define MENU_READSVO            4
+#define MENU_CONFIG_SETTINGS    5
+#define MENU_REVERT_WRITEINI    6
 
 #define MENU_DUMMY2 -1
 
@@ -211,7 +215,7 @@ float     part_load_time;
 
 #define MENU_TIMEVIEW             -103
 #define SAVE_VIEWPOINT            -101
-//#define SAVE_CURRENT_VIEWPOINT    -115 movied to smokeviewdefs.h
+//#define SAVE_CURRENT_VIEWPOINT    -115 moved to smokeviewdefs.h
 #define SAVE_VIEWPOINT_AS_STARTUP -106
 #define MENU_STARTUPVIEW          -102
 #define MENU_OUTLINEVIEW          -104
@@ -439,12 +443,9 @@ void GetFileSizes(void){
     PrintFileSizes("hrrpuv",hrrpuv,hrrpuv2);
     PrintFileSizes("temp",temp,temp2);
     PrintFileSizes("co2",co2,co22);
-  }
-  else{
-    printf("3d smoke file sizes: no files found\n");
+    printf("\n");
   }
 
-  printf("\n");
   if(global_scase.npartinfo>0){
     float part = 0.0;
     char label[100];
@@ -458,12 +459,9 @@ void GetFileSizes(void){
       part += file_size;
     }
     printf("particle files: %s\n", GetFloatFileSizeLabel(part, label));
-  }
-  else{
-    printf("particle files: no files found\n");
+    printf("\n");
   }
 
-  printf("\n");
   if(global_scase.npatchinfo>0){
     patchdata **patchlist;
     float sum = 0.0, compressed_sum=0;
@@ -496,9 +494,7 @@ void GetFileSizes(void){
         PrintFileSizes(patchi->label.longlabel,sum,compressed_sum);
       }
     }
-  }
-  else{
-    printf("boundary files sizes: no files found\n");
+    printf("\n");
   }
 }
 
@@ -831,8 +827,9 @@ void LabelMenu(int value){
     vis_title_CHID = 1;
     vis_title_gversion =1;
     visFramerate=1;
-#ifdef pp_memstatus
-    visAvailmemory=1;
+    vismemload = 1;
+#ifdef pp_memusage
+    vismemusage = 0;
 #endif
     visaxislabels=1;
     visTimelabel=1;
@@ -843,7 +840,7 @@ void LabelMenu(int value){
     if(global_scase.ntickinfo>0)visFDSticks=1;
     visgridloc=1;
     vis_hrr_label=1;
-    visFramelabel=1;
+    visFrameTimelabel=1;
     break;
    case MENU_LABEL_HideAll:
     visUSERticks=0;
@@ -859,13 +856,15 @@ void LabelMenu(int value){
     visLabels=0;
     visTimelabel=0;
     visFramelabel=0;
+    visFrameTimelabel=0;
     visMeshlabel=0;
     vis_hrr_label=0;
     if(global_scase.ntickinfo>0)visFDSticks=0;
     visgridloc=0;
     vis_slice_average=0;
-#ifdef pp_memstatus
-    visAvailmemory=0;
+    vismemload=0;
+#ifdef pp_memusage
+    vismemusage = 0;
 #endif
     break;
    case MENU_LABEL_northangle:
@@ -897,17 +896,16 @@ void LabelMenu(int value){
    case MENU_LABEL_meshlabel:
      visMeshlabel=1-visMeshlabel;
      break;
-#ifdef pp_memstatus
    case MENU_LABEL_memload:
-     visAvailmemory = 1 - visAvailmemory;
+     vismemload = 1 - vismemload;
+#ifdef pp_memusage
+     if(vismemload==1)vismemusage=0;
+#endif
      break;
-#endif
-#ifdef pp_MEMDEBUG
+#ifdef pp_memusage
    case MENU_LABEL_memusage:
-     visUsagememory = 1 - visUsagememory;
-#ifdef pp_memstatus
-     if(visUsagememory==1)visAvailmemory=0;
-#endif
+     vismemusage = 1 - vismemusage;
+     if(vismemusage==1)vismemload=0;
      break;
 #endif
    case MENU_LABEL_fdsticks:
@@ -1549,12 +1547,12 @@ void DialogMenu(int value){
   case DIALOG_MOVIE_BATCH:
   case DIALOG_SCALING:
   case DIALOG_VIEW:
-  case DIALOG_WINDOW:
+  case DIALOG_WINDOW_PROPERTIES:
     GLUIShowMotion(value);
     break;
-  case DIALOG_TICKS:
+  case DIALOG_USER_TICKS:
   case DIALOG_FONTS:
-  case DIALOG_LABELS:
+  case DIALOG_LABELS_TICKS:
   case DIALOG_DISPLAY:
     GLUIShowDisplay(value);
     break;
@@ -1571,54 +1569,34 @@ void DialogMenu(int value){
     GLUIShowStereo();
     break;
   case DIALOG_COLORBAR:
-    showcolorbar_dialog=1-showcolorbar_dialog;
-    if(showcolorbar_dialog==1){
-      GLUIShowColorbar();
-    }
-    if(showcolorbar_dialog==0){
-      GLUIHideColorbar();
-    }
+    GLUIShowColorbar();
     break;
   case DIALOG_HVAC:
-    showhvac_dialog = 1 - showhvac_dialog;
-    if(showhvac_dialog == 1){
-      GLUIShowHVAC();
-    }
-    if(showhvac_dialog == 0){
-      GLUIHideHVAC();
-    }
+    GLUIShowHVAC();
     break;
-  case DIALOG_GEOMETRY:
-    showedit_dialog=1-showedit_dialog;
-    if(showedit_dialog==1){
-      if(global_scase.paths.fds_filein!=NULL&&updategetobstlabels==1){
-        CheckMemoryOff;
-        GetObstLabels(global_scase.paths.fds_filein);
-        CheckMemoryOn;
-        updategetobstlabels=0;
-      }
-      GLUIShowGeometry();
-      visBlocks=visBLOCKNormal;
+  case DIALOG_GEOMETRY_CLOSE:
+    GLUIHideGeometry();
+    GLUIUpdateTrainerOutline();
+    break;
+  case DIALOG_GEOMETRY_OPEN:
+    if(global_scase.fds_filein!=NULL&&updategetobstlabels==1){
+      CheckMemoryOff;
+      GetObstLabels(global_scase.fds_filein);
+      CheckMemoryOn;
+      updategetobstlabels=0;
     }
-    if(showedit_dialog==0){
-      GLUIHideGeometry();
-    }
+    GLUIShowGeometry();
+    visBlocks=visBLOCKNormal;
     GLUIUpdateTrainerOutline();
     break;
   case DIALOG_TERRAIN:
-    showterrain_dialog = 1 - showterrain_dialog;
-    if(showterrain_dialog == 1){
-      GLUIShowTerrain();
-    }
-    else{
-      GLUIHideTerrain();
-    }
+    GLUIShowTerrain();
     break;
   case DIALOG_SHRINKALL:
     GLUIShrinkDialogs();
     break;
   case DIALOG_HIDEALL:
-    showcolorbar_dialog = 0;
+    GLUIHideTerrain();
     GLUIHideShooter();
     GLUIHideDisplay();
     GLUIHideBounds();
@@ -1627,9 +1605,10 @@ void DialogMenu(int value){
     GLUIHideClip();
     GLUIHideStereo();
     GLUIHideColorbar();
-    if(showedit_dialog==1)DialogMenu(DIALOG_GEOMETRY);
+    if(showedit_dialog==1)DialogMenu(DIALOG_GEOMETRY_CLOSE);
     GLUIHideTrainer();
     GLUIHideDevice();
+    GLUIHidePlot2D();
     break;
   default:
     assert(FFALSE);
@@ -2068,37 +2047,51 @@ void RenderMenu(int value){
   case RenderJSON:
   case RenderJSONALL:
     {
+
+      char *htmlobst_filename = CasePathHtmlObst(&global_scase);
+      char *htmlslicenode_filename = CasePathHtmlSliceNode(&global_scase);
+      char *htmlslicecell_filename = CasePathHtmlSliceCell(&global_scase);
       int json_option;
 
       json_option = HTML_CURRENT_TIME;
       if(value==RenderJSONALL)json_option = HTML_ALL_TIMES;
-      if(Obst2Data(global_scase.paths.htmlobst_filename)!=0){
-        printf("blockage data output to %s\n", global_scase.paths.htmlobst_filename);
+      if(Obst2Data(htmlobst_filename)!=0){
+        printf("blockage data output to %s\n",htmlobst_filename);
       }
       else{
         printf("no blockage data to output\n");
       }
-      if(SliceNode2Data(global_scase.paths.htmlslicenode_filename, json_option)!=0){
-        printf("node centered slice file data output to %s\n", global_scase.paths.htmlslicenode_filename);
+      if(SliceNode2Data(htmlslicenode_filename, json_option)!=0){
+        printf("node centered slice file data output to %s\n", htmlslicenode_filename);
       }
       else{
         printf("no node centered slice file data to output\n");
       }
-      if(SliceCell2Data(global_scase.paths.htmlslicecell_filename, json_option)!=0){
-        printf("cell centered slice file data output to %s\n", global_scase.paths.htmlslicecell_filename);
+      if(SliceCell2Data(htmlslicecell_filename, json_option)!=0){
+        printf("cell centered slice file data output to %s\n", htmlslicecell_filename);
       }
       else{
         printf("no cell centered slice file data to output\n");
       }
+      FREEMEMORY(htmlobst_filename);
+      FREEMEMORY(htmlslicenode_filename);
+      FREEMEMORY(htmlslicecell_filename);
       break;
     }
     break;
-  case RenderHTML:
-    Smv2Html(global_scase.paths.html_filename,   HTML_CURRENT_TIME, FROM_SMOKEVIEW);
+    case RenderHTML: {
+      char *html_filename = CasePathHtml(&global_scase);
+      Smv2Html(html_filename, HTML_CURRENT_TIME,
+               FROM_SMOKEVIEW);
+      FREEMEMORY(html_filename);
+    }
     break;
-  case RenderHTMLALL:
-    Smv2Html(global_scase.paths.html_filename,   HTML_ALL_TIMES, FROM_SMOKEVIEW);
-    break;
+    case RenderHTMLALL: {
+      char *html_filename = CasePathHtml(&global_scase);
+      Smv2Html(html_filename, HTML_ALL_TIMES, FROM_SMOKEVIEW);
+      FREEMEMORY(html_filename);
+
+    } break;
   case RenderCancel:
     RenderState(RENDER_OFF);
     break;
@@ -2600,6 +2593,7 @@ void Plot3DShowMenu(int value){
      for(i=0;i<global_scase.nplot3dinfo;i++){
        if(global_scase.plot3dinfo[i].loaded==1)global_scase.plot3dinfo[i].display=show_plot3dfiles;
      }
+     updatefacelists = 1;
      break;
    default:
      if(value>=1000){
@@ -2703,8 +2697,6 @@ void GridSliceMenu(int value){
   GLUTPOSTREDISPLAY;
 }
 
-#ifdef pp_COMPRESS
-
 /* ------------------ CompressMenu ------------------------ */
 
 void CompressMenu(int value){
@@ -2744,7 +2736,6 @@ void CompressMenu(int value){
   }
   updatemenu=1;
 }
-#endif
 
 /* ------------------ IniSubMenu ------------------------ */
 
@@ -2776,11 +2767,10 @@ void SmokeviewIniMenu(int value){
   case MENU_REVERT_WRITEINI:
     ReadBinIni();
     break;
-  case MENU_WRITEINI:
+  case MENU_WRITE_SMOKEVIEWINI:
     WriteIni(GLOBAL_INI,NULL);
-    WriteIni(LOCAL_INI,NULL);
     break;
-  case MENU_WRITECASEINI:
+  case MENU_WRITE_CASEINI:
     WriteIni(LOCAL_INI,NULL);
     break;
   case MENU_READSVO:
@@ -2871,7 +2861,7 @@ void ScriptMenu(int value){
       GLUIUpdateScriptStart();
       GetNewScriptFileName(newscriptfilename);
       script_recording = InsertScriptFile(newscriptfilename);
-      scriptoutstream=fopen(newscriptfilename,"w");
+      scriptoutstream=FOPEN(newscriptfilename,"w");
       if(scriptoutstream!=NULL){
         PRINTF("Script recorder on\n");
         script_recording->recording=1;
@@ -3028,7 +3018,7 @@ void MemoryTest(void){
 
     diskread = 0;
     diskwrite = 0;
-    stream = fopen("test.bin", "wb");
+    stream = FOPEN("test.bin", "wb");
     if(stream != NULL){
       diskwrite = 1;
       START_TIMER(diskwrite_timer);
@@ -3037,7 +3027,7 @@ void MemoryTest(void){
       }
       STOP_TIMER(diskwrite_timer);
       fclose(stream);
-      stream = fopen("test.bin", "rb");
+      stream = FOPEN("test.bin", "rb");
       if(stream != NULL){
         diskread = 1;
         START_TIMER(diskread_timer);
@@ -3057,7 +3047,7 @@ void MemoryTest(void){
     }
     if(stream!=NULL){
       fclose(stream);
-      stream = fopen("test.bin", "wb");
+      stream = FOPEN("test.bin", "wb");
       if(stream != NULL){
         fwrite(buffer1, 1, 1, stream);
         fclose(stream);
@@ -3210,7 +3200,6 @@ void ReloadAllVectorSliceFiles(int load_flag){
 
     //*** reload vector slice files
 
-#ifndef pp_SLICEFRAME
   for(i = 0; i<global_scase.slicecoll.nvsliceinfo; i++){
     vslicedata *vslicei;
 
@@ -3219,7 +3208,6 @@ void ReloadAllVectorSliceFiles(int load_flag){
       ReadVSlice(i, ALL_FRAMES, NULL, UNLOAD, DEFER_SLICECOLOR, &errorcode);
     }
   }
-#endif
   int lastslice=0;
 
   for(i = global_scase.slicecoll.nvsliceinfo-1; i>=0; i--){
@@ -3250,10 +3238,8 @@ void ReloadAllVectorSliceFiles(int load_flag){
 
 void ReloadAllSliceFiles(int load_flag){
   int ii;
-#ifndef pp_SLICEFRAME
   int file_count = 0;
   float load_size = 0.0;
-#endif
   float load_time;
   slicedata **reload_slicelist;
 
@@ -3283,28 +3269,16 @@ void ReloadAllSliceFiles(int load_flag){
     i = slicei-global_scase.slicecoll.sliceinfo;
 
     if(slicei->slice_filetype == SLICE_GEOM){
-#ifdef pp_SLICEFRAME
-      ReadGeomData(slicei->patchgeom, slicei, load_flag, ALL_FRAMES, NULL, 0, &errorcode);
-#else
       load_size+=ReadGeomData(slicei->patchgeom, slicei, LOAD, ALL_FRAMES, NULL, 0, &errorcode);
-#endif
     }
     else{
-#ifdef pp_SLICEFRAME
-      ReadSlice(slicei->file, i, ALL_FRAMES, NULL, load_flag, DEFER_SLICECOLOR, &errorcode);
-#else
       load_size += ReadSlice(slicei->file, i, ALL_FRAMES, NULL, LOAD, DEFER_SLICECOLOR, &errorcode);
-#endif
     }
-#ifndef pp_SLICEFRAME
     file_count++;
-#endif
   }
   STOP_TIMER(load_time);
   FREEMEMORY(reload_slicelist);
-#ifndef pp_SLICEFRAME
   PrintFileLoadTimes(file_count,load_size,load_time);
-#endif
   slicefile_labelindex = slicefile_labelindex_save;
 }
 
@@ -3336,7 +3310,7 @@ void LoadPlot2DMenu(int value){
     }
     break;
   default:
-    assert(0);
+    assert(FFALSE);
     break;
   }
 }
@@ -3476,20 +3450,13 @@ void LoadUnloadMenu(int value){
     break;
   case RELOADALL:
   case RELOAD_INCREMENTAL_ALL:
-#ifdef pp_FRAME
-    if(value == RELOADALL){
-      load_flag = LOAD;
-    }
-    else{
-      load_flag = RELOAD;
-    }
-#else
     load_flag = LOAD;
-#endif
     THREADcontrol(compress_threads, THREAD_LOCK);
-    if(global_scase.paths.hrr_csv_filename!=NULL){
+    char *hrr_csv_filename = CasePathHrrCsv(&global_scase);
+    if(FileExistsCaseDir(&global_scase, hrr_csv_filename) == YES) {
       ReadHRR(&global_scase, LOAD);
     }
+    FREEMEMORY(hrr_csv_filename);
 
     //*** reload hvac file
       if(global_scase.hvaccoll.hvacductvalsinfo!=NULL&&global_scase.hvaccoll.hvacductvalsinfo->loaded==1){
@@ -3546,14 +3513,7 @@ void LoadUnloadMenu(int value){
       patchi = global_scase.patchinfo + i;
       assert(patchi->loaded==0||patchi->loaded==1);
       if(patchi->loaded == 1){
-#ifdef pp_BOUNDFRAME
-        if(patchi->structured == YES){
-          PRINTF("Loading %s(%s)", patchi->file, patchi->label.shortlabel);
-        }
-        ReadBoundary(i, load_flag, &errorcode);
-#else
         ReadBoundary(i, LOAD,&errorcode);
-#endif
       }
     }
 
@@ -3564,44 +3524,24 @@ void LoadUnloadMenu(int value){
 
       smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
       if(smoke3di->request_load==1){
-#ifdef pp_SMOKEFRAME
-        ReadSmoke3D(ALL_SMOKE_FRAMES, i, load_flag, FIRST_TIME, &errorcode);
-#else
+        ReadSmoke3D(ALL_SMOKE_FRAMES, i, UNLOAD, FIRST_TIME, &errorcode);
         ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
-#endif
       }
     }
 
     //*** reload particle files
 
-#ifdef pp_PARTFRAME
-    if(value == RELOADALL){
-      LoadAllPartFilesMT(LOAD_ALL_PART_FILES);
-    }
-    else{
-      LoadAllPartFilesMT(RELOAD_LOADED_PART_FILES);
-    }
-#else
     int npartloaded_local = 0;
     for(i=0;i<global_scase.npartinfo;i++){
       partdata *parti;
 
       parti = global_scase.partinfo+i;
       if(parti->loaded==1){
-        parti->reload=1;
-        npartloaded_local++;
-        ReadPart(parti->file,i,UNLOAD,&errorcode);
+        npartloaded_local = 1;
+        break;
       }
-      else{
-        parti->reload=0;
-      }
-      parti->loadstatus = FILE_UNLOADED;
     }
-    if(npartloaded_local>0){
-      npartframes_max = GetMinPartFrames(PARTFILE_RELOADALL);
-      LoadAllPartFilesMT(RELOAD_LOADED_PART_FILES);
-    }
-#endif
+    if(npartloaded_local>0)LoadParticleMenu(MENU_PARTICLE_ALLMESHES);
 
     //*** reload isosurface files
 
@@ -3612,13 +3552,8 @@ void LoadUnloadMenu(int value){
 
       isoi = global_scase.isoinfo + i;
       if(isoi->loaded==0)continue;
-#ifdef pp_ISOFRAME
-      ReadIso(isoi->file, i, load_flag, NULL, &errorcode);
-      if(isoi->frameinfo==NULL||isoi->frameinfo->frames_read>0)printf("\n");
-#else
       ReadIso(isoi->file,i,LOAD,NULL,&errorcode);
       printf("\n");
-#endif
     }
     if(update_readiso_geom_wrapup == UPDATE_ISO_ALL_NOW)ReadIsoGeomWrapup(BACKGROUND);
     update_readiso_geom_wrapup = UPDATE_ISO_OFF;
@@ -3681,7 +3616,9 @@ void LoadUnloadMenu(int value){
       LOG_FILENAME=NULL;
     }
     if(redirect==1){
-      LOG_FILENAME=fopen(global_scase.paths.log_filename,"w");
+      char *log_filename = CasePathLogFile(&global_scase);
+      LOG_FILENAME=FOPEN(log_filename,"w");
+      FREEMEMORY(log_filename);
       if(LOG_FILENAME==NULL)redirect=0;
     }
     if(redirect==1){
@@ -4091,34 +4028,16 @@ void LoadAllPartFiles(int partnum){
 
     parti = global_scase.partinfo+i;
     if(parti->file == NULL)continue;
-#ifdef pp_PARTFRAME
-    if(partnum != RELOAD_LOADED_PART_FILES && partnum != LOAD_ALL_PART_FILES){
-      IF_NOT_USEMESH_CONTINUE(parti->loaded, parti->blocknumber);
-    }
-#else
     IF_NOT_USEMESH_CONTINUE(parti->loaded,parti->blocknumber);
-#endif
     if(parti->skipload==1)continue;
     if(partnum>=0&&i!=partnum)continue;  //  load only particle file with file index partnum
     THREADcontrol(partload_threads, THREAD_LOCK);                      //  or load all particle files
     if(parti->loadstatus==FILE_UNLOADED
-#ifdef pp_PARTFRAME
-      || partnum==RELOAD_LOADED_PART_FILES || partnum == LOAD_ALL_PART_FILES
-#endif
      ){
       if(partnum==LOAD_ALL_PART_FILES||(partnum==RELOAD_LOADED_PART_FILES&&parti->loaded==1)||partnum==i){
         parti->loadstatus = FILE_LOADING;
         THREADcontrol(partload_threads, THREAD_UNLOCK);
-#ifdef pp_PARTFRAME
-        if(partnum == RELOAD_LOADED_PART_FILES){
-          file_size = ReadPart(parti->file, i, RELOAD, &errorcode);
-        }
-        else{
-          file_size = ReadPart(parti->file, i, LOAD, &errorcode);
-        }
-#else
         file_size = ReadPart(parti->file, i, LOAD, &errorcode);
-#endif
         THREADcontrol(partload_threads, THREAD_LOCK);
         parti->loadstatus = FILE_LOADED;
         part_load_size += file_size;
@@ -4196,11 +4115,7 @@ void *MtLoadAllPartFiles(void *arg){
 
   valptr = (int *)(arg);
   LoadAllPartFiles(*valptr);
-#ifdef pp_PARTFRAME
-  return NULL;
-#else
   THREAD_EXIT(partload_threads);
-#endif
 }
 
 /* ------------------ LoadAllPartFilesMT ------------------------ */
@@ -4209,9 +4124,6 @@ void LoadAllPartFilesMT(int partnum){
   int i;
 
   INIT_PRINT_TIMER(part_load_timer);
-#ifdef pp_PARTFRAME
-  LoadAllPartFiles(partnum);
-#else
   if(partload_threads == NULL){
     partload_threads = THREADinit(&n_partload_threads, &use_partload_threads, MtLoadAllPartFiles);
   }
@@ -4219,7 +4131,6 @@ void LoadAllPartFilesMT(int partnum){
   partnuminfo[0] = partnum;
   THREADruni(partload_threads, (unsigned char *)partnuminfo, 0);
   THREADcontrol(partload_threads, THREAD_JOIN);
-#endif
   PRINT_TIMER(part_load_timer, "LoadAllPartFilesMT");
 
   INIT_PRINT_TIMER(part_timer);
@@ -4346,7 +4257,7 @@ void LoadParticleMenu(int value){
           UnloadAllPartFiles();
         }
 
-        // load particle files unless we are reloading and the were not loaded before
+        // load particle files unless we are reloading and they were not loaded before
 
         START_TIMER(part_load_time);
         int have_particles = 0, load_particles=0;
@@ -4369,9 +4280,7 @@ void LoadParticleMenu(int value){
             }
           }
           STOP_TIMER(part_load_time);
-#ifndef pp_PARTFRAME
           PrintFileLoadTimes(part_file_count,part_load_size,part_load_time);
-#endif
           if(have_particles==0)printf("***warning: particle files have no particles\n");
         }
 
@@ -4445,7 +4354,7 @@ void UnloadVSliceMenu(int value){
     }
   }
   else if(value==-2){
-    assert(0);
+    assert(FFALSE);
   }
 }
 
@@ -4547,10 +4456,8 @@ FILE_SIZE LoadVSliceMenu2(int value){
     vslicedata *vslicei;
     slicedata *slicei;
     int dir;
-#ifndef pp_SLICEFRAME
     int file_count = 0;
     float load_size = 0.0;
-#endif
     float load_time;
     int lastslice=0;
 
@@ -4582,29 +4489,16 @@ FILE_SIZE LoadVSliceMenu2(int value){
       longlabel = slicei->label.longlabel;
       if(strcmp(longlabel,submenulabel)!=0)continue;
       if(dir!=0&&dir!=slicei->idir)continue;
-#ifndef pp_SLICEFRAME
       file_count++;
-#endif
-#ifdef pp_SLICEFRAME
-      if(lastslice==i){
-        ReadVSlice(i,ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR, &errorcode);
-      }
-      else{
-        ReadVSlice(i,ALL_FRAMES, NULL, LOAD, DEFER_SLICECOLOR, &errorcode);
-      }
-#else
       if(lastslice==i){
         load_size+=ReadVSlice(i,ALL_FRAMES, NULL, LOAD, SET_SLICECOLOR, &errorcode);
       }
       else{
         load_size+=ReadVSlice(i,ALL_FRAMES, NULL, LOAD, DEFER_SLICECOLOR, &errorcode);
       }
-#endif
     }
     STOP_TIMER(load_time);
-#ifndef pp_SLICEFRAME
     PrintFileLoadTimes(file_count,load_size,load_time);
-#endif
   }
   GLUTSETCURSOR(GLUT_CURSOR_LEFT_ARROW);
   return return_filesize;
@@ -4862,9 +4756,7 @@ void LoadSmoke3DMenu(int value){
   int i,errorcode;
   int file_count;
   float load_time;
-#ifndef pp_SMOKEFRAME
   float load_size;
-#endif
 
 #define MENU_DUMMY_SMOKE           -9
 #define MENU_SMOKE_SETTINGS        -4
@@ -4872,9 +4764,7 @@ void LoadSmoke3DMenu(int value){
 
   if(value == MENU_DUMMY_SMOKE)return;
   START_TIMER(load_time);
-#ifndef pp_SMOKEFRAME
   load_size = 0.0;
-#endif
   file_count=0;
   GLUTSETCURSOR(GLUT_CURSOR_WAIT);
   if(value>=0){
@@ -4987,17 +4877,11 @@ void LoadSmoke3DMenu(int value){
       if(smoke3di->type == HRRPUV_index)type = 2;
       if(smoke3di->type == TEMP_index)type = 4;
       if(smoke3di->type == CO2_index)type = 8;
-#ifdef pp_SMOKEFRAME
-      LoadSmoke3D(type, ALL_SMOKE_FRAMES, &file_count, NULL);
-#else
       load_size=LoadSmoke3D(type, ALL_SMOKE_FRAMES, &file_count, NULL);
-#endif
     }
   }
   STOP_TIMER(load_time);
-#ifndef pp_SMOKEFRAME
   PrintFileLoadTimes(file_count, load_size, load_time);
-#endif
   updatemenu=1;
   GLUTPOSTREDISPLAY;
   GLUTSETCURSOR(GLUT_CURSOR_LEFT_ARROW);
@@ -5086,10 +4970,8 @@ FILE_SIZE LoadAllSliceFiles(int last_slice, char *submenulabel, int dir, int *fc
 
 void LoadSliceMenu(int value){
   int errorcode,i;
-#ifndef pp_SLICEFRAME
   float load_time, load_size = 0.0;
   int file_count=0;
-#endif
 
   SNIFF_ERRORS("LoadSliceMenu: start");
   if(value==MENU_DUMMY)return;
@@ -5101,12 +4983,10 @@ void LoadSliceMenu(int value){
   else{
     switch(value){
       slicedata *slicei;
-#ifndef pp_SLICEFRAME
       int submenutype;
       char *submenulabel;
       int dir;
       int last_slice;
-#endif
 
       case UNLOAD_ALL:
         for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
@@ -5134,10 +5014,6 @@ void LoadSliceMenu(int value){
       case MENU_SLICE_SETTINGS:
         GLUIShowBoundsDialog(DLG_SLICE);
         break;
-#ifdef pp_SLICEFRAME
-      default:
-        break;
-#else
       default:
         value = -(1000 + value);
         submenutype=value/4;
@@ -5161,7 +5037,6 @@ void LoadSliceMenu(int value){
         STOP_TIMER(load_time);
         PrintFileLoadTimes(file_count,load_size,load_time);
         break;
-#endif
       }
   }
   updatemenu=1;
@@ -5174,10 +5049,8 @@ void LoadSliceMenu(int value){
 
 void LoadMultiVSliceMenu(int value){
   int i;
-#ifndef pp_SLICEFRAME
   int file_count = 0;
   float load_size = 0.0;
-#endif
   float load_time;
 
   if(value==MENU_DUMMY)return;
@@ -5232,19 +5105,13 @@ void LoadMultiVSliceMenu(int value){
         vslicei = global_scase.slicecoll.vsliceinfo + mvslicei->ivslices[i];
         IF_NOT_USEMESH_CONTINUE(vslicei->loaded,global_scase.slicecoll.sliceinfo[vslicei->ival].blocknumber);
         if(vslicei->skip==0&&vslicei->loaded==0){
-#ifdef pp_SLICEFRAME
-          LoadVSliceMenu2(mvslicei->ivslices[i]);
-#else
           load_size+=LoadVSliceMenu2(mvslicei->ivslices[i]);
           file_count++;
-#endif
         }
         if(vslicei->skip==1&&vslicei->loaded==1)UnloadVSliceMenu(mvslicei->ivslices[i]);
       }
       STOP_TIMER(load_time);
-#ifndef pp_SLICEFRAME
       PrintFileLoadTimes(file_count,load_size,load_time);
-#endif
     }
     script_multivslice=0;
   }
@@ -5274,14 +5141,10 @@ void LoadMultiVSliceMenu(int value){
       if(strcmp(longlabel,submenulabel)!=0)continue;
       if(dir!=0&&dir!=slicej->idir)continue;
       LoadMultiVSliceMenu(i);
-#ifndef pp_SLICEFRAME
       file_count++;
-#endif
     }
     STOP_TIMER(load_time);
-#ifndef pp_SLICEFRAME
     PrintFileLoadTimes(file_count,load_size,load_time);
-#endif
   }
   else{
     switch(value){
@@ -5373,9 +5236,7 @@ FILE_SIZE LoadAllMSlices(int last_slice, multislicedata *mslicei){
   SetLoadedSliceBounds(mslicei->islices, mslicei->nslices);
   file_size = LoadAllMSlicesMT(last_slice, mslicei, &file_count);
   STOP_TIMER(load_time);
-#ifndef pp_SLICEFRAME
   PrintFileLoadTimes(file_count,(float)file_size,load_time);
-#endif
   return file_size;
 }
 
@@ -5458,10 +5319,8 @@ void LoadMultiSliceMenu(int value){
     char *submenulabel;
     slicedata *slicei;
     float load_time;
-#ifndef pp_SLICEFRAME
     float load_size = 0.0;
     int file_count = 0;
-#endif
 
     value = -(1000 + value);
     submenutype=value/4;
@@ -5479,14 +5338,6 @@ void LoadMultiSliceMenu(int value){
       if(strcmp(longlabel,submenulabel)!=0)continue;
       if(dir!=0&&dir!=slicei->idir)continue;
       if(dir!=0&&slicei->volslice==1)continue;
-#ifdef pp_SLICEFRAME
-      if(slicei->slice_filetype == SLICE_GEOM){
-        ReadGeomData(slicei->patchgeom, slicei, LOAD, ALL_FRAMES, NULL, 0, &errorcode);
-      }
-      else{
-        ReadSlice(slicei->file,i, ALL_FRAMES, NULL, LOAD,SET_SLICECOLOR,&errorcode);
-      }
-#else
       if(slicei->slice_filetype == SLICE_GEOM){
         load_size += ReadGeomData(slicei->patchgeom, slicei, LOAD, ALL_FRAMES, NULL, 0, &errorcode);
       }
@@ -5494,13 +5345,10 @@ void LoadMultiSliceMenu(int value){
         load_size += ReadSlice(slicei->file,i, ALL_FRAMES, NULL, LOAD,SET_SLICECOLOR,&errorcode);
       }
       file_count++;
-#endif
     }
     UpdateTimes();
     STOP_TIMER(load_time);
-#ifndef pp_SLICEFRAME
     PrintFileLoadTimes(file_count,load_size,load_time);
-#endif
   }
   else{
     switch(value){
@@ -5917,10 +5765,8 @@ FILE_SIZE LoadIsoI(int value){
 
 void LoadAllIsos(int iso_type){
   int i;
-#ifndef pp_ISOFRAME
   int file_count=0;
   float load_size=0.0;
-#endif
   float load_time=0.0;
 
   if(load_only_when_unloaded == 0){
@@ -5960,18 +5806,12 @@ void LoadAllIsos(int iso_type){
     isoi = global_scase.isoinfo + i;
     IF_NOT_USEMESH_CONTINUE(isoi->loaded,isoi->blocknumber);
     if(iso_type==isoi->type){
-#ifdef pp_ISOFRAME
-      LoadIsoI(i);
-#else
       load_size+=LoadIsoI(i);
       file_count++;
-#endif
     }
   }
   STOP_TIMER(load_time);
-#ifndef pp_ISOFRAME
   PrintFileLoadTimes(file_count,load_size,load_time);
-#endif
 }
 
 /* ------------------ LoadIsoMenu ------------------------ */
@@ -6100,10 +5940,8 @@ void LoadBoundaryMenu(int value){
       fprintf(scriptoutstream," %s\n",patchj->label.longlabel);
     }
     if(scriptoutstream==NULL||script_defer_loading==0){
-#ifndef pp_BOUNDFRAME
       int file_count=0;
       float load_size=0.0;
-#endif
       float load_time=0.0;
 
       START_TIMER(load_time);
@@ -6157,24 +5995,16 @@ void LoadBoundaryMenu(int value){
           if(patchi->structured == YES){
             PRINTF("Loading %s(%s)", patchi->file, patchi->label.shortlabel);
           }
-#ifdef pp_BOUNDFRAME
-          ReadBoundary(i, LOAD, &errorcode);
-#else
           load_size+=ReadBoundary(i, LOAD, &errorcode);
-#endif
           if(patchi->structured!=NO&&patchi->finalize==1){
             UpdateTriangles(GEOM_STATIC, GEOM_UPDATE_ALL);
           }
-#ifndef pp_BOUNDFRAME
           file_count++;
-#endif
           THREADcontrol(compress_threads, THREAD_UNLOCK);
         }
       }
       STOP_TIMER(load_time);
-#ifndef pp_BOUNDFRAME
       PrintFileLoadTimes(file_count,load_size,load_time);
-#endif
     }
     force_redisplay=1;
     UpdateFrameNumber(0);
@@ -6243,7 +6073,8 @@ void LoadBoundaryMenu(int value){
 int GetInternalFaceShow(void){
   int show = 1;
 
-  if(boundary_loaded == 1){
+  if(plotstate != DYNAMIC_PLOTS) return show;
+  if(npatchvis>0){
     cpp_boundsdata *bounds;
     bounds = GLUIGetBoundsData(BOUND_PATCH);
     if(bounds->set_chopmax == 1 || bounds->set_chopmin == 1){
@@ -6289,7 +6120,9 @@ void ShowInternalBlockages(void){
       solid_state = visBLOCKNormal;
       outline_state = OUTLINE_NONE;
     }
+#ifdef pp_TERRAIN_HIDE
     GeometryMenu(17 + TERRAIN_HIDDEN);
+#endif
   }
   updatemenu = 1;
   global_scase.updatefaces = 1;
@@ -6806,6 +6639,8 @@ void BlockageMenu(int value){
 void TranslateTypeMenu(int value){
   assert(value>=0&&value<=2);
   translation_type = CLAMP(value,0,2);
+  updatemenu = 1;
+  GLUTPOSTREDISPLAY;
   switch(translation_type){
   case TRANSLATE_XY_option:
     printf("translate left/right and front/back\n");
@@ -6817,7 +6652,7 @@ void TranslateTypeMenu(int value){
     printf("translate only front/back\n");
     break;
   default:
-    assert(0);
+    assert(FFALSE);
     break;
   }
 }
@@ -7108,7 +6943,7 @@ void TerrainGeomShowMenu(int value){
       GLUIUpdateGeomBoundingBox();
       break;
     default:
-      assert(0);
+      assert(FFALSE);
       break;
     }
   }
@@ -7590,23 +7425,58 @@ int HaveBoundaryArrival(void){
   return 0;
 }
 
-  /* ------------------ GeometryMenu ------------------------ */
+/* ------------------ GeometryOutlineMenu ------------------------ */
 
-void GeometryMenu(int value){
-
+void GeometryOutlineMenu(int value){
+  if(global_scase.isZoneFireModel == 1)return;
   switch(value){
   case SKY_OUTLINE:
     visSkyboxoutline = 1 - visSkyboxoutline;
     GLUIUpdateVisSkyboxOutline();
     break;
-  case GEOM_Outline:
-    if(global_scase.isZoneFireModel == 0){
-      global_scase.visFrame = 1 - global_scase.visFrame;
-      UpdateOutlineMode();
+  case GEOM_OutlineA:
+    if(outline_mode != SCENE_OUTLINE_HIDDEN){
+      outline_mode = SCENE_OUTLINE_HIDDEN;
     }
-    if(outline_mode==SCENE_OUTLINE_HIDDEN)PRINTF("outline mode: hidden\n",outline_mode);
-    if(outline_mode==SCENE_OUTLINE_MESH)PRINTF("outline mode: mesh\n",outline_mode);
-    if(outline_mode==SCENE_OUTLINE_SCENE)PRINTF("outline mode: scene\n",outline_mode);
+    else{
+      outline_mode = SCENE_OUTLINE_SCENE;
+    }
+    break;
+  case GEOM_OutlineB:
+    if(outline_mode == SCENE_OUTLINE_MESH){
+      outline_mode = SCENE_OUTLINE_HIDDEN;
+    }
+    else{
+      outline_mode = SCENE_OUTLINE_MESH;
+    }
+    break;
+  case GEOM_OutlineC:
+    if(outline_mode == SCENE_OUTLINE_SCENE){
+      outline_mode = SCENE_OUTLINE_HIDDEN;
+    }
+    else{
+      outline_mode = SCENE_OUTLINE_SCENE;
+    }
+    break;
+  default:
+    assert(FFALSE);
+    break;
+  }
+  if(outline_mode == SCENE_OUTLINE_HIDDEN)PRINTF("outline mode: hidden\n", outline_mode);
+  if(outline_mode == SCENE_OUTLINE_MESH)PRINTF("outline mode: mesh\n", outline_mode);
+  if(outline_mode == SCENE_OUTLINE_SCENE)PRINTF("outline mode: scene\n", outline_mode);
+  updatefacelists = 1;
+  updatemenu = 1;
+  GLUTPOSTREDISPLAY;
+}
+
+  /* ------------------ GeometryMenu ------------------------ */
+
+void GeometryMenu(int value){
+
+  switch(value){
+  case GEOM_OutlineC:
+    GeometryOutlineMenu(value);
     break;
   case 5:
     global_scase.visFloor=1-global_scase.visFloor;
@@ -7657,14 +7527,12 @@ void GeometryMenu(int value){
   case GEOM_ShowAll:
     show_faces_shaded=1;
     global_scase.visFloor = 1;
-    global_scase.visFrame = 1;
-    UpdateOutlineMode();
+    outline_mode = SCENE_OUTLINE_SCENE;
     BlockageMenu(visBLOCKAsInput);
     VentMenu(SHOW_ALL_VENTS);
     break;
   case GEOM_HideAll:
-    global_scase.visFrame=0;
-    UpdateOutlineMode();
+    outline_mode = SCENE_OUTLINE_HIDDEN;
     global_scase.visFloor=0;
     global_scase.visWalls=0;
     global_scase.visCeiling=0;
@@ -8971,9 +8839,7 @@ static int resetmenu=0, defaultviewmenu=0, frameratemenu=0, rendermenu=0, smokev
 static int terrain_geom_showmenu = 0;
 static int render_resolutionmenu=0, render_filetypemenu=0, render_filesuffixmenu=0, render_skipmenu=0;
 static int render_startmenu = 0;
-#ifdef pp_COMPRESS
 static int compressmenu=0;
-#endif
 static int showhideslicemenu=0, sliceskipmenu=0, showvslicemenu=0;
 static int loadsubslicexmenu=0, loadsubsliceymenu=0, loadsubslicezmenu=0, loadsubslicexyzmenu=0;
 static int loadsubvectorslicexmenu=0, loadsubvectorsliceymenu=0, loadsubvectorslicezmenu=0, loadsubvectorslicexyzmenu=0;
@@ -8984,7 +8850,7 @@ static int isosurfacemenu=0, isovariablemenu=0, levelmenu=0;
 static int fontmenu=0, aperturemenu=0,dialogmenu=0,zoommenu=0;
 static int gridslicemenu=0, griddigitsmenu=0, blockagemenu=0, immersedmenu=0, loadpatchmenu=0, ventmenu=0, circularventmenu=0;
 static int loadisomenu=0, isosurfacetypemenu=0,showpatchextmenu=0;
-static int geometrymenu=0, loadunloadmenu=0, reloadmenu=0, fileinfomenu=0, aboutmenu=0, disclaimermenu=0, terrain_obst_showmenu=0;
+static int geometrymenu=0, geometryoutlinemenu=0, loadunloadmenu=0, reloadmenu=0, fileinfomenu=0, aboutmenu=0, disclaimermenu=0, terrain_obst_showmenu=0;
 static int scriptmenu=0;
 static int hvacmenu = 0, hvacnetworkmenu, showcomponentmenu = 0, showfiltermenu = 0, connectivitymenu = 0;
 static int hvacvaluemenu = 0, hvacnodevaluemenu = 0, hvacductvaluemenu = 0;
@@ -9363,7 +9229,7 @@ static int menu_count=0;
     glutAddMenuEntry(_("Hilight skinny triangles"), GEOMETRY_HILIGHTSKINNY);
   }
 
-/* --------------------------------blockage menu -------------------------- */
+  /* --------------------------------blockage menu -------------------------- */
 
   CREATEMENU(blockagemenu,BlockageMenu);
   glutAddMenuEntry(_("View Method:"),MENU_DUMMY);
@@ -9645,7 +9511,8 @@ static int menu_count=0;
         plot3di = global_scase.plot3dinfo+i;
         if(plot3di->loaded==0)continue;
         strcpy(menulabel, "");
-        if(show_plot3dfiles==1)strcat(menulabel, "*");
+        if(plotstate == DYNAMIC_PLOTS)show_plot3dfiles = 0;
+        if(show_plot3dfiles == 1)strcat(menulabel, "*");
         strcat(menulabel, plot3di->timelabel);
         strcat(menulabel, ", ");
         strcat(menulabel, plot3di->longlabel);
@@ -10199,6 +10066,31 @@ static int menu_count=0;
     glutAddMenuEntry(_("Settings..."), MENU_HVAC_DIALOG_HVAC);
   }
 
+  /* --------------------------------geometryoutlinemenu menu -------------------------- */
+
+  CREATEMENU(geometryoutlinemenu,GeometryOutlineMenu);
+  if(global_scase.isZoneFireModel==0){
+    char skylabel[32] = "", label[128];
+    char label2a[128] = "", label2b[128] = "mesh";
+    char label3a[128] = "", label3b[128] = "scene";
+
+    if(outline_mode == SCENE_OUTLINE_MESH)strcpy(label2a,   "*");
+    if(outline_mode == SCENE_OUTLINE_SCENE)strcpy(label3a,  "*");
+    if(skyboxinfo != NULL)strcpy(skylabel,"(FDS scene)");
+
+    if(global_scase.meshescoll.nmeshes > 1){
+      glutAddMenuEntry(ConcatLabels(label2a, label2b, skylabel, label), GEOM_OutlineB);
+    }
+    glutAddMenuEntry(ConcatLabels(label3a, label3b, skylabel, label), GEOM_OutlineC);
+  }
+  else{
+    outline_mode = SCENE_OUTLINE_HIDDEN;
+  }
+  if(skyboxinfo!=NULL){
+    if(visSkyboxoutline==1)glutAddMenuEntry(_("*Outline(skybox images)"), SKY_OUTLINE);
+    if(visSkyboxoutline==0)glutAddMenuEntry(_("Outline(skybox images)"),  SKY_OUTLINE);
+  }
+
   /* --------------------------------geometry menu -------------------------- */
 
   CREATEMENU(geometrymenu,GeometryMainMenu);
@@ -10224,32 +10116,26 @@ static int menu_count=0;
     }
   }
   GLUTADDSUBMENU(_("Grid"),gridslicemenu);
-  if(global_scase.isZoneFireModel==0){
-    if(skyboxinfo==NULL){
-      if(global_scase.visFrame==1)glutAddMenuEntry(_("*Outline"), GEOM_Outline);
-      if(global_scase.visFrame==0)glutAddMenuEntry(_("Outline"), GEOM_Outline);
+  if(global_scase.meshescoll.nmeshes > 1||skyboxinfo!=NULL){
+    if(outline_mode != SCENE_OUTLINE_HIDDEN || (skyboxinfo != NULL && visSkyboxoutline == 1)){
+      GLUTADDSUBMENU("*Outline",geometryoutlinemenu);
     }
     else{
-      if(global_scase.visFrame==1)glutAddMenuEntry(_("*Outline(FDS scene)"), GEOM_Outline);
-      if(global_scase.visFrame==0)glutAddMenuEntry(_("Outline(FDS scene)"), GEOM_Outline);
+      GLUTADDSUBMENU(_("Outline"),geometryoutlinemenu);
     }
   }
   else{
-    global_scase.visFrame=0;
-    UpdateOutlineMode();
+    if(outline_mode==SCENE_OUTLINE_HIDDEN)glutAddMenuEntry("Outline",  GEOM_OutlineC);
+    if(outline_mode!=SCENE_OUTLINE_HIDDEN)glutAddMenuEntry("*Outline", GEOM_OutlineC);
   }
-  if(skyboxinfo!=NULL){
-    if(visSkyboxoutline==1)glutAddMenuEntry(_("*Outline(skybox images)"), SKY_OUTLINE);
-    if(visSkyboxoutline==0)glutAddMenuEntry(_("Outline(skybox images)"), SKY_OUTLINE);
-  }
-  if(hide_scene == 1)glutAddMenuEntry(_("*bounding box(mouse down)"), GEOM_BOUNDING_BOX_MOUSE_DOWN);
-  if(hide_scene != 1)glutAddMenuEntry(_("bounding box(mouse down)"), GEOM_BOUNDING_BOX_MOUSE_DOWN);
+  if(hide_scene == 1)glutAddMenuEntry(_("*Show only bounding box when mouse is down"), GEOM_BOUNDING_BOX_MOUSE_DOWN);
+  if(hide_scene != 1)glutAddMenuEntry(_("Show only bounding box when mouse is down"), GEOM_BOUNDING_BOX_MOUSE_DOWN);
   if(NCADGeom(&global_scase.cadgeomcoll) == 0){
     if(blocklocation == BLOCKlocation_grid){
-      glutAddMenuEntry("Locations(*actual,requested)", BLOCKlocation_grid);
+      glutAddMenuEntry("Geometry positions(*as computed,as input)", BLOCKlocation_grid);
     }
     if(blocklocation == BLOCKlocation_exact){
-      glutAddMenuEntry("Locations(actual,*requested)", BLOCKlocation_exact);
+      glutAddMenuEntry("Geometry positions(as computed,*as input)", BLOCKlocation_exact);
     }
   }
   else{
@@ -10354,13 +10240,11 @@ static int menu_count=0;
     if(vis_hrr_label == 1)glutAddMenuEntry(_("*HRR"), MENU_LABEL_hrr);
     if(vis_hrr_label == 0)glutAddMenuEntry(_("HRR"), MENU_LABEL_hrr);
   }
-#ifdef pp_memstatus
-  if(visAvailmemory == 1)glutAddMenuEntry(_("*Memory load"), MENU_LABEL_memload);
-  if(visAvailmemory == 0)glutAddMenuEntry(_("Memory load"), MENU_LABEL_memload);
-#endif
-#ifdef pp_MEMDEBUG
-  if(visUsagememory == 1)glutAddMenuEntry(_("*Memory usage"), MENU_LABEL_memusage);
-  if(visUsagememory == 0)glutAddMenuEntry(_("Memory usage"), MENU_LABEL_memusage);
+  if(vismemload == 1)glutAddMenuEntry(_("*Memory load"), MENU_LABEL_memload);
+  if(vismemload == 0)glutAddMenuEntry(_("Memory load"), MENU_LABEL_memload);
+#ifdef pp_memusage
+  if(vismemusage == 1)glutAddMenuEntry(_("*Memory usage"), MENU_LABEL_memusage);
+  if(vismemusage == 0)glutAddMenuEntry(_("Memory usage"), MENU_LABEL_memusage);
 #endif
   if(visMeshlabel == 1)glutAddMenuEntry(_("*Mesh"), MENU_LABEL_meshlabel);
   if(visMeshlabel == 0)glutAddMenuEntry(_("Mesh"), MENU_LABEL_meshlabel);
@@ -11652,7 +11536,6 @@ static int menu_count=0;
 
   CREATEMENU(filesdialogmenu, DialogMenu);
   glutAddMenuEntry(_("Auto load data files..."), DIALOG_AUTOLOAD);
-#ifdef pp_COMPRESS
   if(smokezippath!=NULL&&(global_scase.npatchinfo>0||global_scase.smoke3dcoll.nsmoke3dinfo>0||global_scase.slicecoll.nsliceinfo>0)){
 #ifdef pp_DIALOG_SHORTCUTS
     glutAddMenuEntry(_("Compress data files...  ALT z"), DIALOG_SMOKEZIP);
@@ -11660,7 +11543,6 @@ static int menu_count=0;
     glutAddMenuEntry(_("Compress data files..."), DIALOG_SMOKEZIP);
 #endif
   }
-#endif
   glutAddMenuEntry(_("Save/load configuration files..."), DIALOG_CONFIG);
   glutAddMenuEntry(_("Render images..."), DIALOG_RENDER);
   THREADcontrol(ffmpeg_threads, THREAD_LOCK);
@@ -11678,20 +11560,18 @@ static int menu_count=0;
 
   CREATEMENU(viewdialogmenu, DialogMenu);
 #ifdef pp_DIALOG_SHORTCUTS
-  glutAddMenuEntry(_("Clip scene...  ALT c"), DIALOG_CLIP);
-  if(showtour_dialog==1)glutAddMenuEntry(_("*Create/modify tours...  ALT t"), DIALOG_TOUR_HIDE);
-  if(showtour_dialog==0)glutAddMenuEntry(_("Create/modify tours...  ALT t"), DIALOG_TOUR_SHOW);
-  glutAddMenuEntry(_("Edit colorbar...  ALT C"), DIALOG_COLORBAR);
+  glutAddMenuEntry("Clipping...  ALT c", DIALOG_CLIP);
+  glutAddMenuEntry(_("Tours...  ALT t"), DIALOG_TOUR_SHOW);
+  glutAddMenuEntry("Edit Colorbar...  ALT C", DIALOG_COLORBAR);
   if(global_scase.isZoneFireModel==0 && have_geometry_dialog==1){
-    glutAddMenuEntry(_("Examine geometry...  ALT e"), DIALOG_GEOMETRY);
+    glutAddMenuEntry(_("Examine geometry...  ALT e"), DIALOG_GEOMETRY_OPEN);
   }
 #else
-  glutAddMenuEntry(_("Clip scene..."), DIALOG_CLIP);
-  if(showtour_dialog==1)glutAddMenuEntry(_("*Create/edit tours..."), DIALOG_TOUR_HIDE);
-  if(showtour_dialog==0)glutAddMenuEntry(_("Create/edit tours..."), DIALOG_TOUR_SHOW);
-  glutAddMenuEntry(_("Edit colorbar...  "), DIALOG_COLORBAR);
+  glutAddMenuEntry("Clip scene...", DIALOG_CLIP);
+  glutAddMenuEntry(_("Tours..."), DIALOG_TOUR_SHOW);
+  glutAddMenuEntry("Edit Colorbar...  ", DIALOG_COLORBAR);
   if(global_scase.isZoneFireModel == 0 && have_geometry_dialog == 1){
-    glutAddMenuEntry(_("Examine geometry...  "), DIALOG_GEOMETRY);
+    glutAddMenuEntry(_("Examine geometry...  "), DIALOG_GEOMETRY_OPEN);
   }
 #endif
   if(global_scase.nterraininfo>0&&global_scase.ngeominfo==0){
@@ -11700,12 +11580,14 @@ static int menu_count=0;
   if(global_scase.hvaccoll.nhvacinfo > 0){
     glutAddMenuEntry(_("HVAC settings..."), DIALOG_HVAC);
   }
-  if(have_vr==1){
-    glutAddMenuEntry(_("Stereo/VR settings..."), DIALOG_STEREO);
+  char stereo_label[32];
+  if(have_vr == 1){
+    strcpy(stereo_label, "Stereo/VR settings...");
   }
   else{
-    glutAddMenuEntry(_("Stereo settings..."), DIALOG_STEREO);
+    strcpy(stereo_label, "Stereo settings...");
   }
+  glutAddMenuEntry(stereo_label, DIALOG_STEREO);
   if(trainer_active==1){
     glutAddMenuEntry(_("Trainer..."), DIALOG_TRAINER);
   }
@@ -11719,32 +11601,32 @@ static int menu_count=0;
   if((global_scase.csvcoll.ncsvfileinfo>0&&have_ext==0)||(global_scase.csvcoll.ncsvfileinfo>1&&have_ext==1)){
     glutAddMenuEntry(_("2D plots"), DIALOG_2DPLOTS);
   }
-  glutAddMenuEntry(_("Show/Hide..."), DIALOG_SHOWFILES);
-  glutAddMenuEntry(_("Particle tracking..."), DIALOG_SHOOTER);
+  glutAddMenuEntry(_("Show/Hide data files..."), DIALOG_SHOWFILES);
+  glutAddMenuEntry(_("Particle tracking..."),    DIALOG_SHOOTER);
 
   /* --------------------------------window menu -------------------------- */
 
   CREATEMENU(windowdialogmenu, DialogMenu);
-  glutAddMenuEntry(_("Fonts..."), DIALOG_FONTS);
-  glutAddMenuEntry(_("User ticks..."), DIALOG_TICKS);
-  glutAddMenuEntry(_("Labels..."), DIALOG_LABELS);
-  glutAddMenuEntry(_("Properties..."), DIALOG_WINDOW);
-  glutAddMenuEntry(_("Scaling..."), DIALOG_SCALING);
+  glutAddMenuEntry(_("Fonts..."),             DIALOG_FONTS);
+  glutAddMenuEntry(_("User ticks..."),        DIALOG_USER_TICKS);
+  glutAddMenuEntry(_("Labels + Ticks..."),    DIALOG_LABELS_TICKS);
+  glutAddMenuEntry(_("Window properties..."), DIALOG_WINDOW_PROPERTIES);
+  glutAddMenuEntry(_("Scaling..."),           DIALOG_SCALING);
 
   /* --------------------------------dialog menu -------------------------- */
 
   CREATEMENU(dialogmenu,DialogMenu);
 
-  glutAddMenuEntry(_("Display...  ALT D"), DIALOG_DISPLAY);
+  glutAddMenuEntry(_("Display...  ALT D"),            DIALOG_DISPLAY);
   glutAddMenuEntry(_("Files/Data/Coloring... ALT b"), DIALOG_BOUNDS);
-  glutAddMenuEntry(_("Motion/View/Render...  ALT m"),DIALOG_MOTION);
-  glutAddMenuEntry(_("Viewpoints... ALT g"),DIALOG_VIEW);
+  glutAddMenuEntry(_("Motion/View/Render...  ALT m"), DIALOG_MOTION);
+  glutAddMenuEntry(_("Viewpoints... ALT g"),          DIALOG_VIEW);
 
   glutAddMenuEntry("-",MENU_DUMMY2);
 
-  GLUTADDSUBMENU(_("Data"), datadialogmenu);
-  GLUTADDSUBMENU(_("Files"), filesdialogmenu);
-  GLUTADDSUBMENU(_("View"), viewdialogmenu);
+  GLUTADDSUBMENU(_("Data"),   datadialogmenu);
+  GLUTADDSUBMENU(_("Files"),  filesdialogmenu);
+  GLUTADDSUBMENU(_("View"),   viewdialogmenu);
   GLUTADDSUBMENU(_("Window"), windowdialogmenu);
 
   glutAddMenuEntry("-",MENU_DUMMY2);
@@ -11832,8 +11714,8 @@ static int menu_count=0;
 
   CREATEMENU(optionmenu,OptionMenu);
   if(nunitclasses>0)GLUTADDSUBMENU(_("Display Units"),unitsmenu);
-  GLUTADDSUBMENU(_("Rotation parameters"),rotatetypemenu);
-  GLUTADDSUBMENU(_("Translation parameters"), translatetypemenu);
+  GLUTADDSUBMENU(_("Rotation options"),rotatetypemenu);
+  GLUTADDSUBMENU(_("Translation options"), translatetypemenu);
   GLUTADDSUBMENU(_("Max frame rate"),frameratemenu);
   GLUTADDSUBMENU(_("Render"),rendermenu);
   GLUTADDSUBMENU(_("Tours"),tourmenu);
@@ -12003,6 +11885,7 @@ static int menu_count=0;
   }
   glutAddMenuEntry(_("Misc"), MENU_DUMMY);
   glutAddMenuEntry(_("  A: toggle between plot types (device and HRRPUV)"), MENU_DUMMY);
+  glutAddMenuEntry(_("  B: when the mouse is down, hide OBSTS and geometry - draw an outline instead"), MENU_DUMMY);
   glutAddMenuEntry(_("  e: toggle between view rotation types: scene centered 2 axis, 1 axis, 3 axis and eye centered"), MENU_DUMMY);
   if(global_scase.ntotal_blockages>0||global_scase.isZoneFireModel==1){
     glutAddMenuEntry(_("  g: toggle grid visibility modes"), MENU_DUMMY);
@@ -12043,14 +11926,18 @@ static int menu_count=0;
     glutAddMenuEntry(_("  x/y/z: toggle lower x/y/z clip planes"), MENU_DUMMY);
     glutAddMenuEntry(_("  X/Y/Z: toggle upper x/y/z clip planes"), MENU_DUMMY);
   }
-  if(global_scase.paths.caseini_filename!=NULL&&strlen(global_scase.paths.caseini_filename)>0){
-    char inilabel[512];
+  {
+    char *caseini_filename = CasePathCaseIni(&global_scase);
+    if(caseini_filename != NULL && strlen(caseini_filename) > 0){
+      char inilabel[512];
 
-    sprintf(inilabel,"  #: save settings to %s",global_scase.paths.caseini_filename);
-    glutAddMenuEntry(inilabel,MENU_DUMMY);
-  }
-  else{
-    glutAddMenuEntry(_("  #: save settings (create casename.ini file)"), MENU_DUMMY);
+      sprintf(inilabel, "  #: save settings to %s", caseini_filename);
+      glutAddMenuEntry(inilabel, MENU_DUMMY);
+    }
+    else{
+      glutAddMenuEntry(_("  #: save settings (create casename.ini file)"), MENU_DUMMY);
+    }
+    FREEMEMORY(caseini_filename);
   }
   if(global_scase.ngeominfo){
     glutAddMenuEntry(_("  =: toggle vertex selected in examine geometry dialog"), MENU_DUMMY);
@@ -12772,7 +12659,6 @@ static int menu_count=0;
 
 /* -------------------------------- compress menu -------------------------- */
 
-#ifdef pp_COMPRESS
     if(smokezippath != NULL && (global_scase.npatchinfo > 0 || global_scase.smoke3dcoll.nsmoke3dinfo > 0 || global_scase.slicecoll.nsliceinfo > 0)){
     CREATEMENU(compressmenu,CompressMenu);
     glutAddMenuEntry(_("Compression options"),MENU_DUMMY);  // -c
@@ -12793,8 +12679,6 @@ static int menu_count=0;
     glutAddMenuEntry(_("Erase compressed files"),MENU_ERASECOMPRESS);  // -c
     glutAddMenuEntry(_("Settings..."), MENU_COMPRESS_SETTINGS);
   }
-#endif
-
 
 /* --------------------------------inisub menu -------------------------- */
   {
@@ -12809,9 +12693,11 @@ static int menu_count=0;
     }
     if(n_inifiles>0){
       CREATEMENU(inisubmenu,IniSubMenu);
-      if(global_scase.paths.caseini_filename!=NULL&&FILE_EXISTS(global_scase.paths.caseini_filename)==YES){
-        glutAddMenuEntry(global_scase.paths.caseini_filename,MENU_READCASEINI);
+      char *caseini_filename = CasePathCaseIni(&global_scase);
+      if(FILE_EXISTS(caseini_filename)==YES){
+        glutAddMenuEntry(caseini_filename,MENU_READCASEINI);
       }
+      FREEMEMORY(caseini_filename);
       for(inifile=first_inifile.next;inifile->next!=NULL;inifile=inifile->next){
         if(inifile->file!=NULL&&FILE_EXISTS(inifile->file)==YES){
           glutAddMenuEntry(inifile->file,inifile->id);
@@ -12835,14 +12721,16 @@ static int menu_count=0;
     }
     char *global_ini_path = GetSystemIniPath();
     char *user_ini_path = GetUserIniPath();
-    if( n_inifiles>0||FILE_EXISTS(user_ini_path)==YES||FILE_EXISTS(global_scase.paths.caseini_filename)==YES||FILE_EXISTS(global_ini_path)==YES){
+    char *caseini_filename = CasePathCaseIni(&global_scase);
+    if( n_inifiles>0||FILE_EXISTS(user_ini_path)==YES||FILE_EXISTS(caseini_filename)==YES||FILE_EXISTS(global_ini_path)==YES){
       if(n_inifiles==0){
-        glutAddMenuEntry(_("Read ini files"),MENU_READINI);
+        glutAddMenuEntry(_("Read ini file"),MENU_READINI);
       }
       else{
-        GLUTADDSUBMENU(_("Read ini files"),inisubmenu);
+        GLUTADDSUBMENU(_("Read ini file"),inisubmenu);
       }
     }
+    FREEMEMORY(caseini_filename);
     FREEMEMORY(global_ini_path);
     FREEMEMORY(user_ini_path);
    }
@@ -12851,18 +12739,19 @@ static int menu_count=0;
     {
       char caselabel[255];
 
-      STRCPY(caselabel,_("Save settings (this case - "));
-      STRCAT(caselabel,global_scase.paths.caseini_filename);
-      STRCAT(caselabel, ")");
+      char *caseini_filename = CasePathCaseIni(&global_scase);
+      STRCPY(caselabel, _("Save settings to "));
+      STRCAT(caselabel, caseini_filename);
+      FREEMEMORY(caseini_filename);
 
-      glutAddMenuEntry(caselabel,MENU_WRITECASEINI);
+      glutAddMenuEntry(caselabel,MENU_WRITE_CASEINI);
     }
 
     glutAddMenuEntry("-", MENU_DUMMY);
     if(global_scase.devicecoll.ndeviceinfo>0){
       glutAddMenuEntry(_("Read .svo files"),MENU_READSVO);
     }
-    glutAddMenuEntry("Save settings (all cases - smokeview.ini)", MENU_WRITEINI);
+    glutAddMenuEntry("Save settings to smokeview.ini", MENU_WRITE_SMOKEVIEWINI);
     glutAddMenuEntry("Revert settings to installation defaults", MENU_REVERT_WRITEINI);
     glutAddMenuEntry(_("Settings..."), MENU_CONFIG_SETTINGS);
 
@@ -13101,11 +12990,9 @@ static int menu_count=0;
       }
       GLUTADDSUBMENU(_("Configuration files"),smokeviewinimenu);
       GLUTADDSUBMENU(_("Scripts"),scriptmenu);
-#ifdef pp_COMPRESS
       if(smokezippath!=NULL&&(global_scase.npatchinfo>0||global_scase.smoke3dcoll.nsmoke3dinfo>0||global_scase.slicecoll.nsliceinfo>0)){
         GLUTADDSUBMENU(_("Compression"),compressmenu);
       }
-#endif
       GLUTADDSUBMENU(_("Misc"),fileinfomenu);
       {
         char menulabel[1024];
@@ -13113,7 +13000,9 @@ static int menu_count=0;
         strcpy(menulabel,"");
         if(redirect==1)strcat(menulabel,"*");
         strcat(menulabel,"Redirect messages to ");
-        strcat(menulabel,global_scase.paths.log_filename);
+        char *log_filename = CasePathLogFile(&global_scase);
+        strcat(menulabel,log_filename);
+        FREEMEMORY(log_filename);
         glutAddMenuEntry(menulabel,REDIRECT);
       }
 

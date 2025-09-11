@@ -548,7 +548,7 @@ void SetHVACInfo(hvacdatacollection *hvaccoll) {
       }
       break;
     default:
-      assert(0);
+      assert(FFALSE);
       break;
     }
     GetCellXYZs(ducti->xyz_reg, ducti->nxyz_reg, ducti->nduct_cells,
@@ -595,7 +595,7 @@ int ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
   hvaccoll->hvacnodevalsinfo->loaded = 0;
   if(flag == 1 /*TODO: should be 'UNLOAD'*/) return 2;
 
-  stream = fopen(hvaccoll->hvacductvalsinfo->file, "rb");
+  stream = FOPEN(hvaccoll->hvacductvalsinfo->file, "rb");
   if(stream == NULL) return 3;
 
   FSEEK(stream, 4, SEEK_CUR);

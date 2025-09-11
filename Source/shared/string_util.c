@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
 #ifdef pp_OSX
 #include <unistd.h>
 #endif
@@ -19,6 +20,7 @@
 #undef S_ISREG
 #endif
 #include <dirent_win.h>
+#include <windows.h>
 #else
 #include <dirent.h>
 #endif
@@ -34,6 +36,93 @@
 
 
 unsigned int *random_ints, nrandom_ints;
+
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+/// @brief Given a UTF-8 (or ASCII) string, convert it to Windows UTF-16.
+/// @param string a UTF-8 (or ASCII) string
+/// @return a UTF-16 string or NULL on error
+wchar_t *convert_utf8_to_utf16(const char *input_string) {
+  int r;
+  r = MultiByteToWideChar(CP_UTF8, 0, input_string, -1, NULL, 0);
+  if(r == 0) goto err;
+  LPWSTR output_string;
+  NEWMEMORY(output_string, r * sizeof(WCHAR));
+  r = MultiByteToWideChar(CP_UTF8, 0, input_string, -1, output_string, r);
+  if(r == 0) goto err;
+  return output_string;
+err:
+  // There was an error converting this string to utf-16. Produce a suitable
+  // error message and return NULL.
+  DWORD dw = GetLastError();
+  switch(dw) {
+  case ERROR_INSUFFICIENT_BUFFER:
+    fprintf(stderr, "A supplied buffer size was not large enough, or it was "
+                    "incorrectly set to NULL.\n");
+    break;
+  case ERROR_INVALID_FLAGS:
+    fprintf(stderr, "The values supplied for flags were not valid.\n");
+    break;
+  case ERROR_INVALID_PARAMETER:
+    fprintf(stderr, "Any of the parameter values was invalid.\n");
+    break;
+  case ERROR_NO_UNICODE_TRANSLATION:
+    fprintf(stderr, "Invalid Unicode was found in a string.\n");
+    break;
+  default:
+    break;
+  }
+  return NULL;
+}
+
+/// @brief Given a (Windows) UTF-16 string, convert to UTF-8.
+/// @param string a (Windows) UTF-16 string
+/// @return a UTF-8 string or NULL on error
+char *convert_utf16_to_utf8(const wchar_t *input_string) {
+  int r;
+  r = WideCharToMultiByte(CP_UTF8, 0, input_string, -1, NULL, 0, NULL, NULL);
+  if(r == 0) goto err;
+  char *output_string;
+  NEWMEMORY(output_string, r * sizeof(char));
+  r = WideCharToMultiByte(CP_UTF8, 0, input_string, -1, output_string, r, NULL, NULL);
+  if(r == 0) goto err;
+  return output_string;
+err:
+  // There was an error converting this string to utf-8. Produce a suitable
+  // error message and return NULL.
+  DWORD dw = GetLastError();
+  switch(dw) {
+  case ERROR_INSUFFICIENT_BUFFER:
+    fprintf(stderr, "A supplied buffer size was not large enough, or it was "
+                    "incorrectly set to NULL.\n");
+    break;
+  case ERROR_INVALID_FLAGS:
+    fprintf(stderr, "The values supplied for flags were not valid.\n");
+    break;
+  case ERROR_INVALID_PARAMETER:
+    fprintf(stderr, "Any of the parameter values was invalid.\n");
+    break;
+  case ERROR_NO_UNICODE_TRANSLATION:
+    fprintf(stderr, "Invalid Unicode was found in a string.\n");
+    break;
+  default:
+    break;
+  }
+  return NULL;
+}
+#endif
+
+/* ------------------ ConcatLabels ------------------------ */
+
+char *ConcatLabels(char *label1, char *label2, char *label3, char *label){
+  assert(label!=NULL);
+  assert(label1!=NULL||label2!=NULL||label3!=NULL);
+  if(label == NULL)return NULL;
+  strcpy(label, "");
+  if(label1!=NULL)strcpy(label, label1);
+  if(label2!=NULL)strcat(label, label2);
+  if(label3!=NULL)strcat(label, label3);
+  return label;
+}
 
 /* ------------------ GetCharPtr ------------------------ */
 
@@ -53,7 +142,9 @@ char *GetCharPtr(char *label) {
 
 /* ----------------------- AppendString ----------------------------- */
 
-char *AppendString(char *S1, char *S2){
+char *AppendString(const char *S1, const char *S2){
+#define APPEND_BUFFER_SIZE 1024
+  static char append_string[APPEND_BUFFER_SIZE];
   strcpy(append_string, S1);
   strcat(append_string, S2);
   return append_string;
@@ -455,18 +546,18 @@ void ScaleString(const char *stringfrom, char *stringto, const float *scale){
   Num2String(stringto,val);
 }
 
-/* ------------------ ScaleFloat2Float ------------------------ */
+/* ------------------ ScaleFloat ------------------------ */
 
-float ScaleFloat2Float(float floatfrom, const float *scale){
+float ScaleFloat(float floatfrom, const float *scale){
   if(scale!=NULL)floatfrom = scale[0]*floatfrom+scale[1];
   return floatfrom;
 }
 
 /* ------------------ ScaleFloat2String ------------------------ */
 
-void ScaleFloat2String(float floatfrom, char *stringto, const float *scale){
+void ScaleFloat2String(float floatfrom, char *stringto, const float *scale, int ndigits, int fixedpoint_labels){
   if(scale!=NULL)floatfrom = scale[0]*floatfrom+scale[1];
-  Num2String(stringto, floatfrom);
+  Float2String(stringto, floatfrom, ndigits, fixedpoint_labels);
 }
 
 /* ------------------ GetFormat ------------------------ */
@@ -989,7 +1080,7 @@ char *GetChid(char *file, char *buffer){
   int found1st, found2nd;
 
   if(file==NULL)return NULL;
-  stream=fopen(file,"r");
+  stream=FOPEN(file,"r");
   if(stream==NULL)return NULL;
 
   found1st=0;
@@ -1336,13 +1427,12 @@ int MatchWild(char *pTameText, char *pWildText){
 
 /* ----------------------- RemoveComment ----------------------------- */
 
-char *RemoveComment(char *buffer){
+void RemoveComment(char *buffer){
   char *comment;
 
   comment = strstr(buffer,"//");
   if(comment!=NULL)comment[0]=0;
   TrimBack(buffer);
-  return TrimFront(buffer);
 }
 
 /* ------------------ SetLabelsIso ------------------------ */
@@ -1779,7 +1869,7 @@ unsigned char *GetHashSHA1(char *file){
   FILE *stream = NULL;
 
   if(file==NULL)return NULL;
-  stream = fopen(file, "rb");
+  stream = FOPEN(file, "rb");
   if(stream==NULL){
     char *pathentry, fullpath[1024];
 
@@ -1801,7 +1891,7 @@ unsigned char *GetHashSHA1(char *file){
     }
 #endif
 
-    stream = fopen(fullpath, "rb");
+    stream = FOPEN(fullpath, "rb");
     if(stream==NULL)return NULL;
   }
 
@@ -1842,7 +1932,7 @@ unsigned char *GetHashMD5(char *file){
   size_t len_data;
 
   if(file==NULL)return NULL;
-  stream = fopen(file, "rb");
+  stream = FOPEN(file, "rb");
   if(stream == NULL){
     char *pathentry, fullpath[1024];
 
@@ -1864,7 +1954,7 @@ unsigned char *GetHashMD5(char *file){
     }
 #endif
 
-    stream = fopen(fullpath, "rb");
+    stream = FOPEN(fullpath, "rb");
     if(stream == NULL)return NULL;
   }
 
@@ -1896,7 +1986,7 @@ unsigned char *GetHashSHA256(char *file){
   size_t len_data;
 
   if(file==NULL)return NULL;
-  stream = fopen(file, "rb");
+  stream = FOPEN(file, "rb");
   if(stream==NULL){
     char *pathentry, fullpath[1024];
 
@@ -1918,7 +2008,7 @@ unsigned char *GetHashSHA256(char *file){
     }
 #endif
 
-    stream = fopen(fullpath, "rb");
+    stream = FOPEN(fullpath, "rb");
     if(stream==NULL)return NULL;
   }
 

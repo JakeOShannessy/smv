@@ -83,9 +83,8 @@ int ReadSMV(char *smvfile){
 #define BUFFERSIZE 255
   char buffer[BUFFERSIZE];
 
-  igrid=0;
   ipdim=0;
-  stream=fopen(smvfile,"r");
+  stream=FOPEN(smvfile,"r");
   if(stream==NULL){
     PRINTF("The file: %s could not be opened\n",smvfile);
     return 1;
@@ -104,11 +103,7 @@ int ReadSMV(char *smvfile){
     ++++++++++++++++++++++ SMOKE3D ++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
-#ifdef pp_SMOKE3D_FORT
     if(Match(buffer,"SMOKE3D") == 1||Match(buffer, "SMOKF3D") == 1||Match(buffer, "SMOKG3D") == 1){
-#else
-    if(Match(buffer,"SMOKE3D") == 1){
-#endif
       nsmoke3dinfo++;
       continue;
     }
@@ -349,11 +344,7 @@ int ReadSMV(char *smvfile){
     ++++++++++++++++++++++ SMOKE3D ++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
-#ifdef pp_SMOKE3D_FORT
     if(Match(buffer,"SMOKE3D") == 1||Match(buffer, "SMOKF3D") == 1||Match(buffer, "SMOKG3D") == 1){
-#else
-    if(Match(buffer,"SMOKE3D") == 1){
-#endif
       smoke3d *smoke3di;
       FILE_SIZE filesize;
       int filelen;
@@ -364,12 +355,10 @@ int ReadSMV(char *smvfile){
       smoke3di->inuse=0;
       smoke3di->compressed=0;
       smoke3di->smokemesh=meshinfo + ioffset - 1;
-#ifdef pp_SMOKE3D_FORT
       smoke3di->file_type = C_FILE;
       if(Match(buffer, "SMOKF3D") == 1||Match(buffer, "SMOKG3D") == 1){
         smoke3di->file_type = FORTRAN_FILE;
       }
-#endif
 
       if(FGETS(buffer,BUFFERSIZE,streamsmv)==NULL)break;
       TrimBack(buffer);
@@ -820,7 +809,7 @@ void ReadINI2(char *inifile){
   char *type_buffer;
   FILE *stream;
 
-  stream=fopen(inifile,"r");
+  stream=FOPEN(inifile,"r");
   if(stream==NULL)return;
 
   while(!feof(stream)){
@@ -912,7 +901,7 @@ void ReadINI2(char *inifile){
       partpropdata *partpropi;
       int type=1;
 
-      
+
       if(Match(buffer,"V2_PARTICLES")==1)type = 1;
       fgets(buffer,BUFFERSIZE,stream);
       strcpy(buffer2,"");

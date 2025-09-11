@@ -12,6 +12,7 @@
 #include GLUT_H
 #include "gd.h"
 #include "IOscript.h"
+#include "paths.h"
 
 /* ------------------ PlayMovie ------------------------ */
 
@@ -141,10 +142,11 @@ void MakeMovie(void){
 
 // make movie
     if(output_ffmpeg_command==1){
-      if(global_scase.paths.ffmpeg_command_filename!=NULL){
         FILE *stream_ffmpeg=NULL;
 
-        stream_ffmpeg = fopen(global_scase.paths.ffmpeg_command_filename,"w");
+        char *ffmpeg_command_filename = CasePathFfmpegCommand(&global_scase);
+        stream_ffmpeg = FOPEN(ffmpeg_command_filename,"w");
+        FREEMEMORY(ffmpeg_command_filename);
         if(stream_ffmpeg!=NULL){
 #ifdef WIN32
           fprintf(stream_ffmpeg,"@echo off\n");
@@ -154,7 +156,6 @@ void MakeMovie(void){
           fprintf(stream_ffmpeg,"%s\n",command_line);
           fclose(stream_ffmpeg);
         }
-      }
       printf("%s\n", command_line);
       output_ffmpeg_command=0;
     }
@@ -441,7 +442,7 @@ void OutputSliceData(void){
     strcat(datafile, "_sf_");
     strcat(datafile, flabel);
     strcat(datafile, ".csv");
-    fileout = fopen(datafile, "a");
+    fileout = FOPEN(datafile, "a");
     if(fileout == NULL)continue;
     if(global_times != NULL)fprintf(fileout, "%f\n", global_times[itimes]);
     switch(sd->idir){
@@ -568,7 +569,7 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
   }
   strcat(renderfullfile,renderfile);
 
-  RENDERfile = fopen(renderfullfile, "wb");
+  RENDERfile = FOPEN(renderfullfile, "wb");
   if(RENDERfile == NULL){
     fprintf(stderr, "*** Error: unable to render screen image to %s", renderfullfile);
     return 1;
@@ -1000,7 +1001,7 @@ int MergeRenderScreenBuffers360(void){
   }
   strcat(renderfullfile,renderfile);
 
-  RENDERfile = fopen(renderfullfile, "wb");
+  RENDERfile = FOPEN(renderfullfile, "wb");
   if(RENDERfile == NULL){
     fprintf(stderr, "*** Error: unable to render screen image to %s", renderfullfile);
     return 1;
@@ -1178,7 +1179,7 @@ int SmokeviewImage2File(char *directory, char *RENDERfilename, int rendertype, i
     fprintf(stderr,"*** Error: unable to render screen image to %s", RENDERfilename);
     return 1;
   }
-  RENDERfile = fopen(renderfile, "wb");
+  RENDERfile = FOPEN(renderfile, "wb");
   if(RENDERfile == NULL){
     fprintf(stderr,"*** Error: unable to render screen image to %s", renderfile);
     return 1;
@@ -1233,91 +1234,3 @@ int SmokeviewImage2File(char *directory, char *RENDERfilename, int rendertype, i
   PRINTF(" Completed.\n");
   return 0;
 }
-
-/* ------------------ SVimage2var ------------------------ */
-#ifdef pp_LUA
-int SVimage2var(int rendertype,
-    int woffset, int width, int hoffset, int height, gdImagePtr *RENDERimage){
-
-  GLubyte *OpenGLimage, *p;
-  unsigned int r, g, b;
-  int i,j,rgb_local;
-  int width_beg, width_end, height_beg, height_end;
-  int width2, height2;
-
-  width_beg=woffset;
-  width_end=width+woffset;
-  height_beg=hoffset;
-  height_end=hoffset+height;
-  if(clip_rendered_scene==1){
-    width_beg+=render_clip_left;
-    width_end-=render_clip_right;
-    height_beg+=render_clip_bottom;
-    height_end-=render_clip_top;
-  }
-  width2 = width_end-width_beg;
-  height2 = height_end-height_beg;
-
-  NewMemory((void **)&OpenGLimage,width2 * height2 * sizeof(GLubyte) * 3);
-  if(OpenGLimage == NULL){
-    fprintf(stderr,"*** Error allocating memory buffer for render var\n");
-    return 1;
-  }
-  glPixelStorei(GL_PACK_ALIGNMENT, 1);
-
-  /* get the image from the OpenGL frame buffer */
-
-  glReadPixels(width_beg, height_beg, width2, height2, GL_RGB, GL_UNSIGNED_BYTE, OpenGLimage);
-
-  /* copy the image from OpenGL memory to GIF memory */
-
-  p = OpenGLimage;
-
-  *RENDERimage = gdImageCreateTrueColor(width2,height2);
-
-  for(i = height2-1; i>=0; i--){
-    for(j=0;j<width2;j++){
-      r=*p++; g=*p++; b=*p++;
-      rgb_local = (r<<16)|(g<<8)|b;
-      gdImageSetPixel(*RENDERimage,j,i,rgb_local);
-    }
-  }
-  if(test_smokesensors==1&&active_smokesensors==1&&show_smokesensors!=SMOKESENSORS_HIDDEN){
-    int idev;
-
-    for(idev=0;idev<ndeviceinfo;idev++){
-      devicedata *devicei;
-      int idev_col, idev_row;
-      int col_offset, row_offset;
-      unsigned int red=255<<16;
-
-      devicei = deviceinfo + idev;
-
-      if(devicei->object->visible == 0 || devicei->show == 0)continue;
-      if(strcmp(devicei->object->label,"smokesensor")!=0)continue;
-      idev_row = devicei->screenijk[0];
-      idev_col = devicei->screenijk[1];
-      for(col_offset=-3;col_offset<4;col_offset++){
-        for(row_offset=-3;row_offset<4;row_offset++){
-          int irow, icol;
-
-          irow = idev_row+row_offset;
-          if(irow<0)irow=0;
-          if(irow>width-1)irow=width-1;
-
-          icol = height - 1 - (idev_col+col_offset);
-          if(icol<0)icol=0;
-          if(icol>height-1)icol=height-1;
-
-          gdImageSetPixel(*RENDERimage,irow,icol,red);
-        }
-      }
-    }
-  }
-
-  /* free up memory used by OpenGL image */
-  FREEMEMORY(OpenGLimage);
-  PRINTF(" Completed.\n");
-  return 0;
-}
-#endif

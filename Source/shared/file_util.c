@@ -9,9 +9,6 @@
 #include <stdlib.h>
 #ifdef pp_OSX
 #include <unistd.h>
-#ifdef pp_LUA
-#include <sys/syslimits.h>
-#endif
 #endif
 #include <math.h>
 #ifdef WIN32
@@ -28,6 +25,15 @@
 #include <dirent_win.h>
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
+
+#include <windows.h>
+#include <pathcch.h>
+#include <tchar.h>
+#include <stdio.h>
+#include <strsafe.h>
+#pragma comment(lib, "User32.lib")
+#pragma comment(lib, "PathCch.lib")
+
 #else
 #include <dirent.h>
 #include <libgen.h>
@@ -38,6 +44,102 @@
 #include "threader.h"
 
 FILE *alt_stdout=NULL;
+
+/* ------------------ FOPEN  ------------------------ */
+
+FILE *FOPEN(const char *file, const char *mode) {
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+  wchar_t *path = convert_utf8_to_utf16(file);
+  wchar_t *wmode = convert_utf8_to_utf16(mode);
+  FILE *stream = _wfsopen(path, wmode, _SH_DENYNO);
+  FREEMEMORY(path);
+  FREEMEMORY(wmode);
+  return stream;
+#elif defined(_WIN32)
+  return _fsopen(file, mode, _SH_DENYNO);
+#else
+  return fopen(file, mode);
+#endif
+}
+
+/* ------------------ MKDIR  ------------------------ */
+
+int MKDIR(const char *file) {
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+  wchar_t *path = convert_utf8_to_utf16(file);
+  int r = CreateDirectoryW(path, NULL);
+  FREEMEMORY(path);
+  return r;
+#elif defined(_WIN32)
+  return CreateDirectoryA(file, NULL);
+#else
+  return mkdir(file, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+#endif
+}
+
+/* ------------------ ACCESS  ------------------------ */
+
+int ACCESS(const char *file, int mode) {
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+  wchar_t *path = convert_utf8_to_utf16(file);
+  int r = _waccess(path, mode);
+  FREEMEMORY(path);
+  return r;
+#elif defined(_WIN32)
+  return _access(file, mode);
+#else
+  return access(file, mode);
+#endif
+}
+
+/* ------------------ STAT  ------------------------ */
+
+int STAT(const char *file, STRUCTSTAT *buffer) {
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+  wchar_t *path = convert_utf8_to_utf16(file);
+  int r = _wstat64(path, buffer);
+  FREEMEMORY(path);
+  return r;
+#elif defined(_WIN32)
+  return _stat64(file, buffer);
+#else
+#ifdef X64
+  return _stat64(file, buffer);
+#else
+  return stat(file, buffer);
+#endif
+#endif
+}
+
+/* ------------------ CHDIR  ------------------------ */
+
+int CHDIR(const char *file) {
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+  wchar_t *path = convert_utf8_to_utf16(file);
+  int r = SetCurrentDirectoryW(path);
+  FREEMEMORY(path);
+  return r;
+#elif defined(_WIN32)
+  return SetCurrentDirectoryA(file);
+#else
+  return chdir(file);
+#endif
+}
+
+/* ------------------ UNLINK  ----------------------- */
+
+int UNLINK(const char *file) {
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+  wchar_t *path = convert_utf8_to_utf16(file);
+  int r = _wunlink(path);
+  FREEMEMORY(path);
+  return r;
+#elif defined(_WIN32)
+  return _unlink(file);
+#else
+  return unlink(file);
+#endif
+}
 
 /* ------------------ TestWrite ------------------------ */
 
@@ -100,7 +202,7 @@ void CopyFILE(char *destdir, char *file_in, char *file_out, int mode){
   size_t chars_in;
 
   if(destdir==NULL||file_in==NULL)return;
-  streamin=fopen(file_in,"rb");
+  streamin=FOPEN(file_in,"rb");
   if(streamin==NULL)return;
 
   full_file_out=NULL;
@@ -112,13 +214,13 @@ void CopyFILE(char *destdir, char *file_in, char *file_out, int mode){
   strcat(full_file_out,file_out);
 
   if(mode==REPLACE_FILE){
-    streamout=fopen(full_file_out,"wb");
+    streamout=FOPEN(full_file_out,"wb");
   }
   else if(mode==APPEND_FILE){
-    streamout=fopen(full_file_out,"ab");
+    streamout=FOPEN(full_file_out,"ab");
   }
   else{
-    assert(0);
+    assert(FFALSE);
   }
 
   if(streamout==NULL){
@@ -219,7 +321,7 @@ char *GetFileName(char *temp_dir, char *file, int force_in_temp_dir){
   TrimBack(file);
   file2=TrimFront(file);
   if(force_in_temp_dir==NOT_FORCE_IN_DIR){
-    stream=fopen(file2,"r");
+    stream=FOPEN(file2,"r");
     if(Writable(".")==YES||stream!=NULL){
       NewMemory((void **)&file_out,strlen(file2)+1);
       strcpy(file_out,file2);
@@ -284,9 +386,9 @@ void FileCopy(char *file_in, char *file_out){
   int c;
 
   if(file_in == NULL || file_out == NULL)return;
-  stream_in = fopen(file_in, "rb");
+  stream_in = FOPEN(file_in, "rb");
   if(stream_in == NULL)return;
-  stream_out = fopen(file_out, "wb");
+  stream_out = FOPEN(file_out, "wb");
   if(stream_out == NULL){
     fclose(stream_in);
     return;
@@ -311,16 +413,16 @@ int FileCat(char *file_in1, char *file_in2, char *file_out){
   if(file_in1==NULL||file_in2==NULL)return -1;
   if(file_out==NULL)return -2;
 
-  stream_in1=fopen(file_in1,"r");
+  stream_in1=FOPEN(file_in1,"r");
   if(stream_in1==NULL)return -1;
 
-  stream_in2=fopen(file_in2,"r");
+  stream_in2=FOPEN(file_in2,"r");
   if(stream_in2==NULL){
     fclose(stream_in1);
     return -1;
   }
 
-  stream_out=fopen(file_out,"w");
+  stream_out=FOPEN(file_out,"w");
   if(stream_out==NULL){
     fclose(stream_in1);
     fclose(stream_in2);
@@ -390,20 +492,19 @@ int Writable(char *dir){
   }
 #else
   {
-    char tempfullfile[100], tempfile[40];
-    FILE *stream;
-
-    strcpy(tempfullfile,dir);
-    strcat(tempfullfile,dirseparator);
-    RandStr(tempfile,35);
-    strcat(tempfullfile,tempfile);
-    stream = fopen(tempfullfile,"w");
-    if(stream==NULL){
-      UNLINK(tempfullfile);
+#define tempfile_length 35
+    char tempfile[tempfile_length+1];
+    RandStr(tempfile, tempfile_length);
+    char *temp_path = CombinePaths(dir, tempfile);
+    FILE *stream = fopen(temp_path, "w");
+    if(stream == NULL) {
+      UNLINK(temp_path);
+      FREEMEMORY(temp_path);
       return NO;
     }
     fclose(stream);
-    UNLINK(tempfullfile);
+    UNLINK(temp_path);
+    FREEMEMORY(temp_path);
     return YES;
   }
 #endif
@@ -425,7 +526,7 @@ int IfFirstLineBlank(char *file){
   statfile1 = STAT(file, &statbuff1);
   if(statfile1!=0)return 1;
 
-  stream = fopen(file, "r");
+  stream = FOPEN(file, "r");
   if(stream==NULL||fgets(buffer, 255, stream)==NULL){
     if(stream!=NULL)fclose(stream);
     return 1;
@@ -520,7 +621,7 @@ void *fread_mt(void *mtfileinfo){
     file_end    = file_size - 1;
     buffer_size = file_end + 1 - file_beg;
   }
-  stream = fopen(file, "rb");
+  stream = FOPEN(file, "rb");
   if(stream == NULL){
 #ifdef pp_THREAD
     if(nthreads>1)pthread_exit(NULL);
@@ -570,7 +671,7 @@ int MakeFile(char *file, int size){
   int i;
 
   if(file == NULL || strlen(file) == 0)return 0;
-  stream = fopen(file, "w");
+  stream = FOPEN(file, "w");
   if(stream == NULL)return 0;
 
   NewMemory((void **)&buffer, BUFFERSIZE);
@@ -596,7 +697,7 @@ FILE_SIZE fread_p(char *file, unsigned char *buffer, FILE_SIZE offset, FILE_SIZE
   if(nthreads == 1){
     FILE *stream;
 
-    stream = fopen(file, "rb");
+    stream = FOPEN(file, "rb");
     if(stream == NULL)return 0;
     chars_read = fread(buffer, 1, mtfileinfo->file_size, stream);
     fclose(stream);
@@ -735,19 +836,15 @@ bufferdata *File2Buffer(char *file, char *size_file, int *options, bufferdata *b
   }
 //  nread = fread_p(file, buffer, offset, delta, nthreads);
 
-//#define XXX
-#ifdef XXX
+//#define XXXX
+#ifdef XXXX
   FILE *stream;
-#ifdef WIN32
-  stream = _fsopen(file, "rb", _SH_DENYNO);
-#else
-  stream = fopen(file, "rb");
-#endif
+  stream = FOPEN(file, "rb");
 #endif
 
-#ifndef XXX
+#ifndef XXXX
   FILE *stream;
-  stream = fopen(file, "rb");
+  stream = FOPEN(file, "rb");
 #endif
   if(stream == NULL){
     FreeBufferInfo(bufferinfo);
@@ -809,6 +906,7 @@ void FreeFileList(filelistdata *filelist, int *nfilelist){
 
 /* ------------------ GetFileListSize ------------------------ */
 
+#if !(defined(_WIN32) && defined(pp_UNICODE_PATHS))
 int GetFileListSize(const char *path, char *filter, int mode){
   struct dirent *entry;
   DIR *dp;
@@ -829,6 +927,7 @@ int GetFileListSize(const char *path, char *filter, int mode){
   closedir(dp);
   return maxfiles;
 }
+#endif
 
 /* ------------------ fopen_indir  ------------------------ */
 
@@ -837,11 +936,7 @@ FILE *fopen_indir(char *dir, char *file, char *mode){
 
   if(file==NULL||strlen(file)==0)return NULL;
   if(dir==NULL||strlen(dir)==0){
-#ifdef WIN32
-    stream = _fsopen(file, mode, _SH_DENYNO);
-#else
-    stream = fopen(file,mode);
-#endif
+  stream = FOPEN(file, mode);
   }
   else{
     char *filebuffer;
@@ -852,11 +947,7 @@ FILE *fopen_indir(char *dir, char *file, char *mode){
     strcpy(filebuffer,dir);
     strcat(filebuffer,dirseparator);
     strcat(filebuffer,file);
-#ifdef WIN32
-    stream = _fsopen(filebuffer, mode, _SH_DENYNO);
-#else
-    stream = fopen(filebuffer, mode);
-#endif
+    stream = FOPEN(filebuffer, mode);
     FREEMEMORY(filebuffer);
   }
   return stream;
@@ -892,17 +983,60 @@ FILE *fopen_2dir_scratch(char *file, char *mode) {
   return f;
 }
 
+/* ------------------ fopen_3dir ------------------------ */
+
+FILE *fopen_3dir(char *file, char *mode, char *dir1, char *dir2, char *dir3){
+  FILE *stream = NULL;
+  char buffer[4096];
+  // try opening file in the current directory, dir1 then in dir2 then in dir3
+  // (currently results direcrory defined by fds, current directory, scratch directory)
+
+  if(file == NULL)return NULL;
+  if(dir1 != NULL){
+    strcpy(buffer, dir1);
+    strcat(buffer, dirseparator);
+    strcat(buffer, file);
+    stream = FOPEN(buffer, mode);
+    if(stream!=NULL)return stream;
+  }
+  if(dir2 != NULL){
+    strcpy(buffer, dir2);
+    strcat(buffer, dirseparator);
+    strcat(buffer, file);
+    stream = FOPEN(buffer, mode);
+    if(stream != NULL) return stream;
+  }
+  if(dir3 != NULL){
+    strcpy(buffer, dir3);
+    strcat(buffer, dirseparator);
+    strcat(buffer, file);
+    stream = FOPEN(buffer, mode);
+  }
+  return stream;
+}
+
+/* ------------------ SetResultsDir ------------------------ */
+
+char *SetResultsDir(char *file){
+  char *dirsep, filecopy[1024], *results_dir;
+
+  if(file==NULL)return NULL;
+  strcpy(filecopy, file);
+  dirsep = strrchr(filecopy, '/');
+  if(dirsep == NULL)return NULL;
+  dirsep[0] = 0;
+  NewMemory((void **)&results_dir,strlen(filecopy)+1);
+  strcpy(results_dir, filecopy);
+  return results_dir;
+}
+
 /* ------------------ fopen_2dir ------------------------ */
 
 FILE *fopen_2dir(char *file, char *mode, char *scratch_dir){
   FILE *stream;
 
   if(file == NULL)return NULL;
-#ifdef WIN32
-  stream = _fsopen(file,mode,_SH_DENYNO);
-#else
-  stream = fopen(file,mode);
-#endif
+  stream = FOPEN(file, mode);
   if(stream == NULL && scratch_dir != NULL){
     stream = fopen_indir(scratch_dir, file, mode);
   }
@@ -938,6 +1072,137 @@ filelistdata *FileInList(char *file, filelistdata *filelist, int nfiles, filelis
   }
   return entry;
 }
+
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+
+/// @brief Print an error from the windows API to stderr
+/// @param lpszFunction
+void DisplayErrorBox(LPTSTR lpszFunction) {
+  WCHAR *lpMsgBuf = NULL;
+  WCHAR *lpDisplayBuf = NULL;
+  DWORD dw = GetLastError();
+  FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                     FORMAT_MESSAGE_IGNORE_INSERTS,
+                 NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), lpMsgBuf,
+                 0, NULL);
+  lpDisplayBuf =
+      (LPVOID)LocalAlloc(LMEM_ZEROINIT, (lstrlen((LPCTSTR)lpMsgBuf) +
+                                         lstrlen((LPCTSTR)lpszFunction) + 40) *
+                                            sizeof(WCHAR));
+  StringCchPrintfW((LPWSTR)lpDisplayBuf,
+                   LocalSize(lpDisplayBuf) / sizeof(WCHAR),
+                   L"%s failed with error %d: %s", lpszFunction, dw, lpMsgBuf);
+  fwprintf(stderr, L"%s", lpDisplayBuf);
+
+  LocalFree(lpMsgBuf);
+  LocalFree(lpDisplayBuf);
+}
+
+int MakeFileList(const char *path, char *filter, int maxfiles, int sort_files,
+                  filelistdata **filelist, int mode) {
+  int nfiles = 0;
+  filelistdata *flist;
+
+  if(maxfiles == 0 || path == NULL || filter == NULL) {
+    *filelist = NULL;
+    return 0;
+  }
+
+  wchar_t *pathw = convert_utf8_to_utf16(path);
+
+  WIN32_FIND_DATAW ffd;
+  WCHAR szDir[MAX_PATH];
+  size_t length_of_arg;
+  HANDLE hFind = INVALID_HANDLE_VALUE;
+  StringCchLengthW(pathw, MAX_PATH, &length_of_arg);
+  if(length_of_arg > (MAX_PATH - 3)) {
+    fprintf(stderr, "Directory path is too long.\n");
+    return (-1);
+  }
+  StringCchCopyW(szDir, MAX_PATH, pathw);
+  StringCchCatW(szDir, MAX_PATH, L"\\*");
+  FREEMEMORY(pathw);
+
+  hFind = FindFirstFileW(szDir, &ffd);
+
+  if(INVALID_HANDLE_VALUE == hFind) {
+    fwprintf(stderr, L"Unable to open path %s\n", szDir);
+    return (0);
+  }
+  if(maxfiles > 0) {
+    *filelist = NULL;
+    // If maxfiles is less than zero we're only in count mode and don't need to
+    // allocate an array.
+    NewMemory((void **)&flist, maxfiles * sizeof(filelistdata));
+  }
+  do {
+    int is_dir = (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+    int rel_type =
+        (mode == DIR_MODE && is_dir) || (mode == FILE_MODE && !is_dir);
+    if(wcsncmp(ffd.cFileName, L".", 4) == 0 ||
+       wcsncmp(ffd.cFileName, L"..", 4) == 0)
+      continue;
+    char *fileNameA = convert_utf16_to_utf8(ffd.cFileName);
+    int cRes = MatchWild(fileNameA, filter);
+    if(rel_type && cRes == 1) {
+      LPWSTR file;
+      filelistdata *flisti;
+      if(maxfiles > 0) {
+        // If maxfiles is less than zero we're only in count mode and don't need
+        // to record file names
+        flisti = flist + nfiles;
+        if(mode == DIR_MODE) {
+          size_t l1 = wcslen(szDir);
+          size_t l2 = wcslen(ffd.cFileName);
+#ifdef pp_UNICODE_PATHS
+          NEWMEMORY(file, l1 * sizeof(WCHAR) + l2 * sizeof(WCHAR) + 4);
+#else
+          NEWMEMORY(file, l1 + l2 + 2);
+#endif
+#pragma warning(suppress : 4995)
+          PathCombineW(file, szDir, ffd.cFileName);
+        }
+        else {
+          size_t l;
+          StringCchLengthW(ffd.cFileName, MAX_PATH, &l);
+          NEWMEMORY(file, l * sizeof(WCHAR) + 4);
+#pragma warning(suppress : 4995)
+          PathCombineW(file, NULL, ffd.cFileName);
+        }
+#if pp_UNICODE_PATHS
+        flisti->file = convert_utf16_to_utf8(file);
+#else
+        flisti->file = file;
+#endif
+        flisti->type = 0;
+        FREEMEMORY(file);
+      }
+      nfiles++;
+    }
+    FREEMEMORY(fileNameA);
+  } while(FindNextFileW(hFind, &ffd) != 0);
+  DWORD dwError = 0;
+  dwError = GetLastError();
+  if(dwError != ERROR_NO_MORE_FILES) {
+    DisplayErrorBox(TEXT("FindFirstFile"));
+  }
+  FindClose(hFind);
+  if(sort_files == YES && nfiles > 0) {
+    qsort((filelistdata *)flist, (size_t)nfiles, sizeof(filelistdata),
+          CompareFileList);
+  }
+  if(maxfiles > 0) {
+    // If maxfiles is less than zero we're only in count mode and don't need
+    // to record file names
+    *filelist = flist;
+  }
+  return nfiles;
+}
+
+int GetFileListSize(const char *dir, char *filter, int mode) {
+  return MakeFileList(dir, filter, -1, 0, NULL, mode);
+}
+#else
 
 /* ------------------ MakeFileList ------------------------ */
 
@@ -992,6 +1257,8 @@ int MakeFileList(const char *path, char *filter, int maxfiles, int sort_files, f
   *filelist=flist;
   return nfiles;
 }
+
+#endif
 
 /* ------------------ GetFileSizeLabel ------------------------ */
 
@@ -1083,43 +1350,37 @@ char *GetFloatFileSizeLabel(float size, char *sizelabel){
   return sizelabel;
 }
 
-// Only allows something from NEWMEMORY
-char *JoinPath(const char *path, const char *segment) {
-  // TODO: replace with platform-specific functions
-  char *new_path;
-  if (path == NULL) {
-    if (segment == NULL) return NULL;
-    NEWMEMORY(new_path, (strlen(segment) + 1) * sizeof(char));
-    STRCPY(new_path, segment);
-    return new_path;
-  };
-  if (segment == NULL) {
-    NEWMEMORY(new_path, (strlen(path) + 1) * sizeof(char));
-    STRCPY(new_path, path);
-    return new_path;
-  };
-  int path_len = strlen(path);
-  int newlen = path_len + strlen(dirseparator) + strlen(segment) + 1;
-  NEWMEMORY(new_path, (newlen + 1) * sizeof(char));
-  strcpy(new_path, path);
-  int new_path_len;
-  new_path_len = strlen(new_path);
-  if(strcmp(new_path + new_path_len - 1, dirseparator) == 0){
-    strcat(new_path, segment);
-  }
-  else{
-    strcat(new_path, dirseparator);
-    strcat(new_path, segment);
-  }
-  return new_path;
-}
-
 #ifdef _WIN32
+char *CombinePaths(const char *path_a, const char *path_b){
+  char *path_out;
+  NEWMEMORY(path_out, sizeof(char) * MAX_PATH);
+  // NB: This uses on older function in order to support "char *".
+  // PathAllocCombine would be better but requires switching to "wchar *".
+#pragma warning(suppress : 4995)
+  char *result = PathCombineA(path_out, path_a, path_b);
+  if(result == NULL) FREEMEMORY(path_out);
+  return result;
+}
+#else
+char *CombinePaths(const char *path_a, const char *path_b) {
+  char *path_out;
+  size_t path_a_len = strlen(path_a);
+  size_t path_b_len = strlen(path_b);
+  size_t new_len = path_a_len + 1 + path_b_len;
+  NEWMEMORY(path_out, sizeof(char) * (new_len + 1));
+  STRCPY(path_out, path_a);
+  path_out[path_a_len] = '/';
+  path_out[path_a_len+1] = '\0';
+  STRCAT(path_out, path_b);
+  path_out[new_len] = '\0';
+  return path_out;
+}
+#endif
 
-/* ------------------ GetBinPath - windows ------------------------ */
-
+/* ------------------ GetBinPath ------------------------ */
+#ifdef _WIN32
 char *GetBinPath(){
-  size_t MAX_BUFFER_SIZE = MAX_PATH * 20;
+  size_t max_buffer_size = MAX_PATH * 20;
   char *buffer;
   size_t buffer_size = MAX_PATH * sizeof(char);
   NEWMEMORY(buffer, buffer_size);
@@ -1129,7 +1390,7 @@ char *GetBinPath(){
     if(dw == ERROR_SUCCESS){
       return buffer;
     }
-    else if(dw == ERROR_INSUFFICIENT_BUFFER && buffer_size < MAX_BUFFER_SIZE){
+    else if(dw == ERROR_INSUFFICIENT_BUFFER && buffer_size < max_buffer_size){
       // increase buffer size by a factor of 2
       buffer_size *= 2;
       RESIZEMEMORY(buffer, buffer_size);
@@ -1140,23 +1401,9 @@ char *GetBinPath(){
     }
   }
 }
-
-/* ------------------ GetBinDir - windows ------------------------ */
-
-char *GetBinDir(){
-  char *buffer = GetBinPath();
-  // NB: This uses on older function in order to support "char *".
-  // PathCchRemoveFileSpec would be better but requires switching to "wchar *".
-  PathRemoveFileSpecA(buffer);
-  PathAddBackslashA(buffer);
-  return buffer;
-}
 #elif __linux__
-
-/* ------------------ GetBinPath - linux ------------------------ */
-
 char *GetBinPath(){
-  size_t MAX_BUFFER_SIZE = 2048 * 20;
+  size_t max_buffer_size = 2048 * 20;
   char *buffer;
   size_t buffer_size = 256 * sizeof(char);
   NEWMEMORY(buffer, buffer_size);
@@ -1166,7 +1413,7 @@ char *GetBinPath(){
       buffer[ret] = '\0';
       return buffer;
     }
-    else if(ret == buffer_size && buffer_size < MAX_BUFFER_SIZE){
+    else if(ret == buffer_size && buffer_size < max_buffer_size) {
       // increase buffer size by a factor of 2
       buffer_size *= 2;
       RESIZEMEMORY(buffer, buffer_size);
@@ -1177,24 +1424,9 @@ char *GetBinPath(){
     }
   }
 }
-
-/* ------------------ GetBinDir - linux ------------------------ */
-
-char *GetBinDir(){
-  char *buffer = GetBinPath();
-  dirname(buffer);
-  int pathlen = strlen(buffer);
-  RESIZEMEMORY(buffer, pathlen + 2);
-  buffer[pathlen] = '/';
-  buffer[pathlen + 1] = '\0';
-  return buffer;
-}
 #else
-
-/* ------------------ GetBinPath - osx ------------------------ */
-
 char *GetBinPath(){
-  uint32_t  MAX_BUFFER_SIZE = 2048 * 20;
+  uint32_t  max_buffer_size = 2048 * 20;
   char *buffer;
   uint32_t buffer_size = 256 * sizeof(char);
   NEWMEMORY(buffer, buffer_size);
@@ -1203,7 +1435,7 @@ char *GetBinPath(){
     if(ret == 0){
       return buffer;
     }
-    else if(ret == -1 && buffer_size < MAX_BUFFER_SIZE){
+    else if(ret == -1 && buffer_size < max_buffer_size){
       // buffer_size has been set to the required buffer size by
       // _NSGetExecutablePath
       RESIZEMEMORY(buffer, buffer_size);
@@ -1214,9 +1446,30 @@ char *GetBinPath(){
     }
   }
 }
+#endif
 
-/* ------------------ GetBinDir - osx ------------------------ */
-
+/* ------------------ GetBinDir ------------------------ */
+#ifdef _WIN32
+char *GetBinDir(){
+  char *buffer = GetBinPath();
+  // NB: This uses on older function in order to support "char *".
+  // PathCchRemoveFileSpec would be better but requires switching to "wchar *".
+  PathRemoveFileSpecA(buffer);
+  #pragma warning(suppress : 4995)
+  PathAddBackslashA(buffer);
+  return buffer;
+}
+#elif __linux__
+char *GetBinDir(){
+  char *buffer = GetBinPath();
+  dirname(buffer);
+  int pathlen = strlen(buffer);
+  RESIZEMEMORY(buffer, pathlen + 2);
+  buffer[pathlen] = '/';
+  buffer[pathlen + 1] = '\0';
+  return buffer;
+}
+#else
 char *GetBinDir(){
   char *buffer = GetBinPath();
   // The BSD and OSX version of dirname uses an internal buffer, therefore we
@@ -1266,7 +1519,7 @@ char *GetSmvRootDir(){
   else if(envar_path != NULL){
     // Take the SMV_ROOT as defined by the SMV_ROOT_OVERRIDE environment
     // variable
-    
+
     len = strlen(envar_path);
     NEWMEMORY(buffer, (len + 2) * sizeof(char));
     STRCPY(buffer, envar_path);
@@ -1280,14 +1533,46 @@ char *GetSmvRootDir(){
 #else
     // Otherwise simply return the directory of the running executable (using
     // the platform-dependent code).
-    char *bindir;
+    char *bindir, repo_bindir[1024];
+    FILE *stream1=NULL, *stream2=NULL;
 
     bindir =  GetBinDir();
     if(bindir == NULL)return NULL;
 
-    len = strlen(bindir);
-    NEWMEMORY(buffer, (len + 2) * sizeof(char));
-    STRCPY(buffer, bindir);
+    strcpy(repo_bindir, bindir);
+    if(strcmp(bindir+strlen(bindir)-1,dirseparator)!=0)STRCAT(repo_bindir, dirseparator);
+
+    int i, count=0;
+
+    for(i = strlen(repo_bindir) - 1;i >= 0;i--){
+      if(repo_bindir[i] == dirseparator[0]){
+        count++;
+        if(count == 3){
+          repo_bindir[i] = 0;
+          strcat(repo_bindir, dirseparator);
+          strcat(repo_bindir, "for_bundle");
+          strcat(repo_bindir, dirseparator);
+          break;
+        }
+      }
+    }
+
+    stream1 = fopen_indir(bindir, ".smokeview_bin", "r");
+    if(stream1 == NULL && count==3)stream2 = fopen_indir(repo_bindir, ".smokeview_bin", "r");
+
+    if(stream1 != NULL || stream2 == NULL){
+      len = strlen(bindir);
+      NEWMEMORY(buffer, len + 2);
+      STRCPY(buffer, bindir);
+    }
+    else{ // look for root directory in ../../for_bundle
+          //  this is used when using smokeview located in the build directory
+      len = strlen(repo_bindir);
+      NEWMEMORY(buffer, len + 2);
+      STRCPY(buffer, repo_bindir);
+    }
+    if(stream1!=NULL)fclose(stream1);
+    if(stream2!=NULL)fclose(stream2);
 #endif
   }
   len = strlen(buffer);
@@ -1300,18 +1585,22 @@ char *GetSmvRootDir(){
 char *GetSmvRootSubPath(const char *subdir) {
   char *root_dir = GetSmvRootDir();
   if (root_dir == NULL || subdir == NULL) return NULL;
-  return JoinPath(root_dir,subdir);
+  return CombinePaths(root_dir,subdir);
 }
 
 /* ------------------ GetHomeDir ------------------------ */
 
 char *GetHomeDir() {
 #ifdef WIN32
-  char *homedir = getenv("userprofile");
+  char *homedir_env = getenv("userprofile");
 #else
-  char *homedir = getenv("HOME");
+  char *homedir_env = getenv("HOME");
 #endif
-  if (homedir == NULL) return ".";
+  if(homedir_env == NULL) homedir_env = ".";
+  // For consistency allocate path using NEWMEMORY
+  char *homedir;
+  NEWMEMORY(homedir, sizeof(char) * (strlen(homedir_env) + 1));
+  STRCPY(homedir, homedir_env);
   return homedir;
 }
 
@@ -1319,14 +1608,9 @@ char *GetHomeDir() {
 
 char *GetUserConfigDir() {
   char *homedir = GetHomeDir();
-  if (homedir == NULL) return NULL;
-
-  char *config_path;
-  NEWMEMORY(config_path,
-            strlen(homedir) + strlen(dirseparator) + strlen(".smokeview") + 1);
-  strcpy(config_path, homedir);
-  strcat(config_path, dirseparator);
-  strcat(config_path, ".smokeview");
+  if(homedir == NULL) return NULL;
+  char *config_path = CombinePaths(homedir, ".smokeview");
+  FREEMEMORY(homedir);
   return config_path;
 }
 
@@ -1335,7 +1619,7 @@ char *GetUserConfigDir() {
 char *GetUserConfigSubPath(const char *subdir) {
   char *config_dir = GetUserConfigDir();
   if (config_dir == NULL || subdir == NULL) return NULL;
-  return JoinPath(config_dir,subdir);
+  return CombinePaths(config_dir,subdir);
 }
 
 /* ------------------ GetSystemIniPath ------------------------ */
@@ -1376,6 +1660,36 @@ char *GetSmvScreenIni() {
   return GetSmvRootSubPath("smv_screen.ini");
 }
 
+
+
+/* ------------------ GetSmvRootFile ----------------------- */
+
+char *GetSmvRootFile(const char *path) {
+  char *root_path = GetSmvRootDir();
+  char *result = CombinePaths(root_path, path);
+  FREEMEMORY(root_path);
+  return result;
+}
+
+/* ------------------ GetSmvUserDir ------------------------ */
+
+char *GetSmvUserDir() {
+  char *home_path = GetHomeDir();
+  char *result = CombinePaths(home_path, ".smokeview");
+  FREEMEMORY(home_path);
+  return result;
+}
+
+/* ------------------ GetSmvUserFile ----------------------- */
+
+char *GetSmvUserFile(const char *path) {
+  char *user_path = GetSmvUserDir();
+  char *result = CombinePaths(user_path, path);
+  FREEMEMORY(user_path);
+  return result;
+}
+
+
 /* ------------------ IsSootFile ------------------------ */
 
 int IsSootFile(char *shortlabel, char *longlabel){
@@ -1401,8 +1715,8 @@ char *LastName(char *argi){
     dir=argi;
     filename=lastdirsep+1;
     lastdirsep[0]=0;
-    GETCWD(cwdpath,1000);
-    if(strcmp(cwdpath,dir)!=0){
+    GETCWD(cwdpath, 1000);
+    if(strcmp(cwdpath, dir) != 0) {
       CHDIR(dir);
     }
   }

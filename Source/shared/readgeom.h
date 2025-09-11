@@ -1,7 +1,6 @@
 #ifndef READGEOM_H_DEFINED
 #define READGEOM_H_DEFINED
 #include "dmalloc.h"
-#include "gd.h"
 #include "options.h"
 #include "string_util.h"
 
@@ -40,16 +39,6 @@ void AverageVerts2(float v1[3], int v1type, float v2[3], int v2type,
                    float mesh_bounds[6], float *vavg);
 void AverageVerts3(float v1[3], int v1type, float v2[3], int v2type,
                    float v3[3], int v3type, float mesh_bounds[6], float *vavg);
-
-#ifdef pp_DECIMATE
-#define IJNODE(i, j) ((j) * nx + (i))
-int PtInTriangle(float *xy, float *v0, float *v1, float *v2, float *zval);
-void DecimateTerrain(vertdata *verts, int nverts, tridata *triangles,
-                     int ntriangles, vertdata **verts_new, int *nverts_new,
-                     tridata **triangles_new, int *ntriangles_new,
-                     float *boxmin, float *boxmax, int nx, int ny);
-void DecimateAllTerrains(void);
-#endif
 
 void GetTriangleNormal(float *v1, float *v2, float *v3, float *normal,
                        float *area);

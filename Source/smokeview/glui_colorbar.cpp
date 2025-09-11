@@ -286,7 +286,6 @@ extern "C" void GLUIUpdateColorbarType(void){
 extern "C" void GLUIHideColorbar(void){
   GLUICloseRollouts(glui_colorbar);
   viscolorbarpath=0;
-  showcolorbar_dialog=0;
   if(show_extreme_mindata_save==1){
     show_extreme_mindata=1;
     GLUIUpdateExtreme();
@@ -310,7 +309,6 @@ extern "C" void GLUIHideColorbar(void){
 
 extern "C" void GLUIShowColorbar(void){
 // show colorbar dialog box and redefine initial view point
-  showcolorbar_dialog=1;
   viscolorbarpath=1;
   show_extreme_mindata_save = show_extreme_mindata;
   if(show_extreme_mindata==1){
@@ -343,7 +341,7 @@ void Colorbar2File(colorbardata *cbi, char *file, char *label){
 
   // values consistent with http://colormine.org/convert/rgb-to-lab
 
-  if(file != NULL && strlen(file) > 0 && label != NULL && strlen(label) > 0)stream = fopen(file, "w");
+  if(file != NULL && strlen(file) > 0 && label != NULL && strlen(label) > 0)stream = FOPEN(file, "w");
   if(stream == NULL)return;
   fprintf(stream, "name,%s\n", label);
   for(i = 0;i < 256;i++){
@@ -367,18 +365,20 @@ void Colorbar2File(colorbardata *cbi, char *file, char *label){
 
 /* ------------------ GetNewColorbarName ------------------------ */
 
-void GetNewColorbarName(char *base, char *label){
+void GetNewColorbarName(char *base, char *label, int labellen){
   int i;
+  char labelcopy[sizeof(GLUI_String)];
 
   for(i = 1;;i++){
     int j;
 
     if(i == 1){
-      snprintf(label, sizeof(base), "%s", base);
+      snprintf(labelcopy, sizeof(GLUI_String), "%s", base);
     }
     else{
-      snprintf(label, sizeof(base), "%s %i", base, i);
+      snprintf(labelcopy, sizeof(GLUI_String), "%s %i", base, i);
     }
+    strcpy(label, labelcopy);
 
     int dup = 0;
     for(j = 0;j < colorbars.ncolorbars;j++){
@@ -835,7 +835,7 @@ extern "C" void GLUIColorbarCB(int var){
     GLUIColorbarCB(COLORBAR_COPY);
     char newlabel[sizeof(GLUI_String)], temp_label[sizeof(GLUI_String)];
     strcpy(temp_label, "new");
-    GetNewColorbarName(temp_label, newlabel);
+    GetNewColorbarName(temp_label, newlabel, sizeof(GLUI_String));
     EDITTEXT_cb_label->set_text(newlabel);
     GLUIColorbarCB(COLORBAR_LABEL);
     GLUIUpdateColorbarType();
@@ -993,7 +993,7 @@ extern "C" void GLUIColorbarSetup(int main_window){
     glui_colorbar=NULL;
   }
   glui_colorbar = GLUI_Master.create_glui(_("Edit Colorbar"),0,dialogX0,dialogY0);
-  if(showcolorbar_dialog==0)glui_colorbar->hide();
+  glui_colorbar->hide();
 
   PANEL_cb_select = glui_colorbar->add_panel(_("Colorbar"));
   PANEL_cb_select1 = glui_colorbar->add_panel_to_panel(PANEL_cb_select,"",GLUI_PANEL_NONE);
