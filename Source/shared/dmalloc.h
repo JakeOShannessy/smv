@@ -2,7 +2,7 @@
 #define dmalloc_H_DEFINED
 
 #ifdef __MINGW32__
-#include "options.h"
+#include "options_common.h"
 #endif
 
 #ifdef pp_THREAD

@@ -1,6 +1,6 @@
 #ifndef READSMOKE_H_DEFINED
 #define READSMOKE_H_DEFINED
-#include "options.h"
+#include "options_common.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>

@@ -2,7 +2,7 @@
 #ifndef COLORBARS_H_DEFINED
 #define COLORBARS_H_DEFINED
 
-#include "options.h"
+#include "options_common.h"
 #if defined(WIN32)
 #include <windows.h>
 #endif
