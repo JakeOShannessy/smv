@@ -39,6 +39,7 @@ target_include_directories(libsmv PUBLIC
     #TODO: this is a bit of a hack, it shouldn't really use options.h
     ../smokeview
 )
+# target_compile_definitions(libsmv PUBLIC pp_THREAD)
 if(WIN32)
     target_link_libraries(libsmv PRIVATE PThreads4W::PThreads4W)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -63,4 +64,3 @@ if (SMV_ROOT_OVERRIDE)
     target_compile_definitions(libsmv PRIVATE SMV_ROOT_OVERRIDE="${SMV_ROOT_OVERRIDE}")
 endif()
 target_link_libraries(libsmv PRIVATE OpenGL::GL OpenGL::GLU)
-target_compile_definitions(libsmv PRIVATE ASLIB)

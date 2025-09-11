@@ -35,7 +35,7 @@ GITINFO=-Dpp_GITHASH=\"$(GIT_HASH)\" -Dpp_GITDATE=\""$(GIT_DATE)\""
 # Definition of the object variables
 
 csrc = dmalloc.c main.c md5.c sha1.c sha256.c readimage.c \
-      file_util.c string_util.c stdio_buffer.c
+      file_util.c string_util.c stdio_buffer.c threader.c
 
 obj = $(csrc:.c=.o)
 objwin = $(obj:.o=.obj)
@@ -114,7 +114,7 @@ intel_win_64 : $(objwin)
 
 # ------------- gnu win 64 ----------------
 
-gnu_win_64 : CFLAGS    = -O0 -m64 -D WIN32 -D pp_GCC -D __MINGW32__ 
+gnu_win_64 : CFLAGS    = -O0 -m64 -D WIN32 -D pp_GCC -D __MINGW32__
 gnu_win_64 : LFLAGS    = -m64
 gnu_win_64 : CC        = gcc
 gnu_win_64 : exe       = pnginfo_win_64.exe
@@ -130,7 +130,7 @@ gnu_linux_64 : CC        = gcc
 gnu_linux_64 : exe       = pnginfo_linux_64
 
 gnu_linux_64 : $(obj)
-	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS) 
+	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
 
 # ------------- gnu linux 64 ----------------
 

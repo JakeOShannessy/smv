@@ -13,7 +13,7 @@ extern int show_timings;
 #include "options_common.h"
 #include <time.h>
 #ifdef __MINGW32__
-#include "options.h"
+#include "options_common.h"
 #include <stdio.h>
 #endif
 #ifdef pp_GCC
