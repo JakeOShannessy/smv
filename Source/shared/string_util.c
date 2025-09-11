@@ -142,8 +142,9 @@ char *GetCharPtr(char *label) {
 
 /* ----------------------- AppendString ----------------------------- */
 
-char *AppendString(char *S1, char *S2){
-  static char append_string[1024];
+char *AppendString(const char *S1, const char *S2){
+#define APPEND_BUFFER_SIZE 1024
+  static char append_string[APPEND_BUFFER_SIZE];
   strcpy(append_string, S1);
   strcat(append_string, S2);
   return append_string;

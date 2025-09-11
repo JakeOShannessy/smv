@@ -103,7 +103,7 @@ EXTERNCPP char          *GetStringPtr(char *buffer);
 EXTERNCPP char          *GetStringPtr(char *buffer);
 EXTERNCPP char          *GetFloatLabel(float val, char *label);
 EXTERNCPP char          *GetIntLabel(int val, char *label);
-EXTERNCPP char          *AppendString(char *S1, char *S2);
+EXTERNCPP char          *AppendString(const char *S1, const char *S2);
 EXTERNCPP void           UsageCommon(int option);
 EXTERNCPP common_opts    ParseCommonOptions(int argc, char **argv);
 EXTERNCPP void           InitRandAB(int size);
