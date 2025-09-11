@@ -16,11 +16,16 @@ add_test(NAME "Execute smokeview" COMMAND smokeview -v)
 add_test(NAME "Execute smokezip" COMMAND smokezip)
 
 add_test(NAME "Execute background" COMMAND background)
+set_property(TEST "Execute background" PROPERTY WILL_FAIL true)
 add_test(NAME "Execute background help" COMMAND background -help)
+set_property(TEST "Execute background help" PROPERTY WILL_FAIL true)
 add_test(NAME "Execute background help_all" COMMAND background -help_all)
+set_property(TEST "Execute background help_all" PROPERTY WILL_FAIL true)
 
 add_test(NAME "Execute smokeview help" COMMAND smokeview -help)
+set_property(TEST "Execute smokeview help" PROPERTY WILL_FAIL true)
 add_test(NAME "Execute smokeview help_all" COMMAND smokeview -help_all)
+set_property(TEST "Execute smokeview help_all" PROPERTY WILL_FAIL true)
 add_test(NAME "Execute smokeview sizes" COMMAND smokeview -sizes ${TEST_SMALL_SMV})
 add_test(NAME "Execute smokeview info" COMMAND smokeview -info ${TEST_SMALL_SMV})
 

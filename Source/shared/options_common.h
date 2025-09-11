@@ -157,7 +157,6 @@
 #include "lint.h"
 
 #define pp_GPU              // support the GPU
-#define pp_THREAD           // turn on multi-threading
 
 //*** options: windows
 
