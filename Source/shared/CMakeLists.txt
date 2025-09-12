@@ -36,7 +36,8 @@ set(SRC_FILES
     "paths.c"
 )
 
-if (BUILD_SHARED_LIBS)
+# Building libsmv as a shared library is not currently supported on Windows
+if (BUILD_SHARED_LIBS AND (NOT WIN32))
     add_library(smv SHARED ${SRC_FILES})
 else()
     add_library(smv STATIC ${SRC_FILES})
