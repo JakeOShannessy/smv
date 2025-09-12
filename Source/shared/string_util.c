@@ -34,7 +34,7 @@
 #include "mbedtls/sha256.h"
 #include "mbedtls/sha1.h"
 
-unsigned int *random_ints, nrandom_ints;
+static unsigned int *random_ints, nrandom_ints;
 
 #if defined(_WIN32) && defined(pp_UNICODE_PATHS)
 /// @brief Given a UTF-8 (or ASCII) string, convert it to Windows UTF-16.
