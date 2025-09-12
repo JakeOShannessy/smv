@@ -1,5 +1,6 @@
-# libsmv
-add_library(libsmv STATIC
+# smv
+
+set(SRC_FILES
     isobox.c
     dmalloc.c
     compress.c
@@ -34,13 +35,19 @@ add_library(libsmv STATIC
     readsmvfile.c
     "paths.c"
 )
-target_include_directories(libsmv PUBLIC
+
+if (BUILD_SHARED_LIBS)
+    add_library(smv SHARED ${SRC_FILES})
+else()
+    add_library(smv STATIC ${SRC_FILES})
+endif()
+target_include_directories(smv PUBLIC
     .
     #TODO: this is a bit of a hack, it shouldn't really use options.h
     ../smokeview
 )
 if(WIN32)
-    target_link_libraries(libsmv PRIVATE PThreads4W::PThreads4W)
+    target_link_libraries(smv PUBLIC PThreads4W::PThreads4W)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         install(DIRECTORY ${PThreads4W_DEBUG_DLL_DIR}/
             DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -51,16 +58,17 @@ if(WIN32)
                 FILES_MATCHING PATTERN "*.dll")
     endif()
 endif()
-target_link_libraries(libsmv PRIVATE JPEG::JPEG)
-target_link_libraries(libsmv PRIVATE PNG::PNG)
+target_link_libraries(libsmv PUBLIC JPEG::JPEG)
+target_link_libraries(libsmv PUBLIC PNG::PNG)
 target_link_libraries(libsmv PUBLIC ZLIB::ZLIB)
-target_link_libraries(libsmv PRIVATE OpenGL::GL OpenGL::GLU)
-target_link_libraries(libsmv PRIVATE PkgConfig::LIBGD)
+target_link_libraries(libsmv PUBLIC OpenGL::GL OpenGL::GLU)
+target_link_libraries(libsmv PUBLIC PkgConfig::LIBGD)
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(libsmv PUBLIC m)
+    target_link_libraries(smv PUBLIC m)
 endif()
 if (SMV_ROOT_OVERRIDE)
-    target_compile_definitions(libsmv PRIVATE SMV_ROOT_OVERRIDE="${SMV_ROOT_OVERRIDE}")
+    target_compile_definitions(smv PRIVATE SMV_ROOT_OVERRIDE="${SMV_ROOT_OVERRIDE}")
 endif()
-target_link_libraries(libsmv PRIVATE OpenGL::GL OpenGL::GLU)
-target_compile_definitions(libsmv PRIVATE ASLIB)
+target_link_libraries(smv PRIVATE OpenGL::GL OpenGL::GLU)
+target_compile_definitions(smv PRIVATE ASLIB)
+install(TARGETS smv)
