@@ -172,8 +172,8 @@ EXTERNCPP void           PRINTversion(char *progname, int hash_option);
 // vvvvvvvvvvvvvvvvvvvvvvvv variables vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 #ifdef _WIN32
-STREXTERN char STRDECL(dirseparator[],"\\");
+STREXTERN const char STRDECL(dirseparator[],"\\");
 #else
-STREXTERN char STRDECL(dirseparator[],"/");
+STREXTERN const char STRDECL(dirseparator[],"/");
 #endif
 #endif

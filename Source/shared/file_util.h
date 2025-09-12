@@ -293,14 +293,4 @@ EXTERNCPP int IsSootFile(char *shortlabel, char *longlabel);
 
 EXTERNCPP char *LastName(char *argi);
 
-// vvvvvvvvvvvvvvvvvvvvvvvv variables vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
-#ifndef STREXTERN
-#ifdef _WIN32
-STREXTERN char STRDECL(dirseparator[], "\\");
-#else
-STREXTERN char STRDECL(dirseparator[], "/");
-#endif
-#endif
-
 #endif
