@@ -70,11 +70,6 @@ int main(int argc, char **argv){
   display_warnings=1;
   SetStdOut(stdout);
   initMALLOC();
-#ifdef WIN32
-  strcpy(dirseparator,"\\");
-#else
-  strcpy(dirseparator,"/");
-#endif
   strcpy(pp,"%");
 
   common_opts opts = ParseCommonOptions(argc, argv);
