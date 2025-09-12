@@ -43,7 +43,7 @@
 #include "file_util.h"
 #include "threader.h"
 
-FILE *alt_stdout=NULL;
+static FILE *alt_stdout=NULL;
 
 /* ------------------ FOPEN  ------------------------ */
 
@@ -1487,7 +1487,7 @@ char *GetBinDir(){
 /// @brief Stored the value of the -bindir commandline option. NULL if that
 /// options is not used. Only referenced by @ref SetSmvRootOverride and @ref
 /// GetSmvRootDir.
-char *smv_root_override = NULL;
+static char *smv_root_override = NULL;
 
 /* ------------------ SetSmvRootOverride ------------------------ */
 

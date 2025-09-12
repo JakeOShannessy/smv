@@ -35,7 +35,7 @@
 #endif
 
 
-unsigned int *random_ints, nrandom_ints;
+static unsigned int *random_ints, nrandom_ints;
 
 #if defined(_WIN32) && defined(pp_UNICODE_PATHS)
 /// @brief Given a UTF-8 (or ASCII) string, convert it to Windows UTF-16.
