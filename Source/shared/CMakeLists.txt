@@ -37,7 +37,16 @@ set(SRC_FILES
 )
 
 if (BUILD_SHARED_LIBS)
+    if (WIN32)
+        # On Windows, no symbols of a shared library are exported unless marked
+        # as needing to be public (in contrast to other platforms where all
+        # symbols are exported by default). Rather than adapt the code, this
+        # options sets all symbols to be exported. This approximately matches
+        # the behaviour on Linux.
+        set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    endif()
     add_library(smv SHARED ${SRC_FILES})
+    target_compile_definitions(smv PRIVATE BUILDING_SMV_LIB)
 else()
     add_library(smv STATIC ${SRC_FILES})
 endif()

@@ -10,7 +10,7 @@
  * compilation unit rather than compiled into a library.
  *
  */
-extern CCC parse_options parse_opts;
+extern CCC DLL parse_options parse_opts;
 EXTERNCPP int GetNDevices(char *file);
 EXTERNCPP void AddCfastCsvf(smv_case *scase);
 EXTERNCPP int ReadSMV_Init(smv_case *scase);

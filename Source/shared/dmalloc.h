@@ -25,9 +25,9 @@ typedef char bbyte;
 #endif
 
 #ifdef INDMALLOC
-#define MMEXTERN
+#define MMEXTERN __declspec(dllexport)
 #else
-#define MMEXTERN extern MMCCC
+#define MMEXTERN extern MMCCC __declspec(dllimport)
 #endif
 
 #define MMsize unsigned long long

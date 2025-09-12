@@ -2,12 +2,11 @@
 #define STRING_UTIL_H_DEFINED
 
 #ifdef IN_STRING_UTIL
-#define STREXTERN
-#define STRDECL(var,val)  var=val
+#define STREXTERN __declspec(dllexport)
 #else
-#define STREXTERN extern CCC
-#define STRDECL(var,val)  var
+#define STREXTERN extern CCC __declspec(dllimport)
 #endif
+
 #include "stdio_buffer.h"
 
 // vvvvvvvvvvvvvvvvvvvvvvvv header files vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -180,9 +179,5 @@ EXTERNCPP void           PRINTversion(char *progname);
 
 // vvvvvvvvvvvvvvvvvvvvvvvv variables vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-#ifdef WIN32
-STREXTERN char STRDECL(dirseparator[],"\\");
-#else
-STREXTERN char STRDECL(dirseparator[],"/");
-#endif
+STREXTERN char dirseparator[];
 #endif

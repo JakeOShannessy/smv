@@ -44,6 +44,7 @@
 #include "threader.h"
 
 FILE *alt_stdout=NULL;
+int show_timings = 0;
 
 /* ------------------ FOPEN  ------------------------ */
 

@@ -34,6 +34,12 @@
 #include "mbedtls/sha1.h"
 #endif
 
+#ifdef WIN32
+char dirseparator[] = "\\";
+#else
+char dirseparator[] = "/";
+#endif
+
 
 unsigned int *random_ints, nrandom_ints;
 

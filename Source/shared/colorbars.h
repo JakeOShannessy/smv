@@ -22,11 +22,11 @@
 #define INTERP_LAB 1
 
 // Declares a number of readonly color defaults.
-extern CCC float mat_ambient_orig[4];
-extern CCC float mat_specular_orig[4];
-extern CCC float ventcolor_orig[4];
-extern CCC float block_ambient_orig[4];
-extern CCC float block_specular_orig[4];
+extern CCC DLL float mat_ambient_orig[4];
+extern CCC DLL float mat_specular_orig[4];
+extern CCC DLL float ventcolor_orig[4];
+extern CCC DLL float block_ambient_orig[4];
+extern CCC DLL float block_specular_orig[4];
 
 /* --------------------------  colordata ------------------------------------ */
 

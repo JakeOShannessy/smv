@@ -1,11 +1,7 @@
 #ifndef FILE_UTIL_H_DEFINED
 #define FILE_UTIL_H_DEFINED
 
-#ifdef IN_FILE_UTIL
-int show_timings = 0;
-#else
-extern int show_timings;
-#endif
+extern DLL int show_timings;
 
 // vvvvvvvvvvvvvvvvvvvvvvvv header files vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #include <stddef.h>
@@ -299,15 +295,5 @@ EXTERNCPP void PrintTime(const char *tag, int line, float *timer,
 EXTERNCPP int IsSootFile(char *shortlabel, char *longlabel);
 
 EXTERNCPP char *LastName(char *argi);
-
-// vvvvvvvvvvvvvvvvvvvvvvvv variables vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
-#ifndef STREXTERN
-#ifdef WIN32
-STREXTERN char STRDECL(dirseparator[], "\\");
-#else
-STREXTERN char STRDECL(dirseparator[], "/");
-#endif
-#endif
 
 #endif

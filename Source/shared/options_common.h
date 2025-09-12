@@ -96,6 +96,24 @@
 
 #define FILE_SIZE unsigned long long
 
+#ifdef _WIN32
+#define DLLIMPORT __declspec(dllimport)
+#define DLLEXPORT __declspec(dllexport)
+#else
+#define DLLIMPORT
+#define DLLEXPORT
+#endif
+
+#ifdef _WIN32
+#ifdef BUILDING_SMV_LIB
+#define DLL DLLEXPORT
+#else
+#define DLL DLLIMPORT
+#endif
+#else
+#define DLL
+#endif
+
 #ifdef CPP
 #define CCC "C"
 #define EXTERNCPP extern "C"
