@@ -25,8 +25,8 @@
         <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' />
         <Property Id='DiskPrompt' Value="Smokeview Lua Installer" />
         <Upgrade Id="$(var.ProductUpgradeCode)">
-            <UpgradeVersion Minimum="$(var.ProductVersion)" OnlyDetect="yes"
-                Property="NEWERVERSIONDETECTED" />
+            <!-- <UpgradeVersion Minimum="$(var.ProductVersion)" OnlyDetect="yes"
+                Property="NEWERVERSIONDETECTED" /> -->
             <UpgradeVersion Minimum="0.0.0" Maximum="$(var.ProductVersion)" IncludeMinimum="yes"
                 IncludeMaximum="no" Property="OLDERVERSIONBEINGUPGRADED" />
         </Upgrade>
@@ -81,12 +81,12 @@
                                 </File>
                                 <File Name='getopt.dll' Source='dist/getopt.dll'> </File>
 
-                                <RegistryValue Root="HKMU"
+                                <!-- <RegistryValue Root="HKMU"
                                     Key="SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\smvlua.exe"
                                     Value="[!SMVLuaEXE]" Type="string" />
                                 <RegistryValue Root="HKMU"
                                     Key="SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\smvlua.exe"
-                                    Name="Path" Value="[BINDIR]" Type="string" />
+                                    Name="Path" Value="[BINDIR]" Type="string" /> -->
 
                                 <!-- <RegistryValue Root="HKMU" Key="SOFTWARE\Classes\Smv.Document"
                                 Name="Smokeview File" Value="!(loc.DescXYZ)" Type="string" /> -->
@@ -96,11 +96,11 @@
                                     <Extension Id="smv">
                                         <Verb Id="open" Command="open" TargetFile="SMVLuaEXE"
                                             Argument="&quot;%1&quot;" />
-                                        <MIME ContentType="application/smv"
-                                            Default="yes" />
+                                        <!-- <MIME ContentType="application/smv"
+                                            Default="yes" /> -->
                                     </Extension>
                                 </ProgId>
-                                <RegistryValue Root="HKMU"
+                                <!-- <RegistryValue Root="HKMU"
                                     Key="SOFTWARE\smvlua\Capabilities\FileAssociations" Name=".smv"
                                     Value="Smokeview.Document" Type="string" />
                                 <RegistryValue Root="HKMU"
@@ -109,7 +109,7 @@
                                 <RegistryValue Root="HKMU"
                                     Key="SOFTWARE\smvlua\Capabilities\shell\Open\command"
                                     Value="&quot;[BINDIR]smvlua.exe&quot; &quot;%1&quot;"
-                                    Type="string" />
+                                    Type="string" /> -->
                                 <!-- <RegistryKey Root="HKCR" Key="SmvLua.smv\shell\open\command">
                                     <RegistryValue Type="string"
                                         Value="[INSTALLDIR]bin\smokeview.exe &quot;%1&quot;" />
