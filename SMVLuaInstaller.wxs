@@ -34,6 +34,8 @@
             NEWERVERSIONDETECTED</Condition>
         <Property Id="ALLUSERS" Secure="yes" Value="2" />
         <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1" />
+        <Icon Id="icon.ico" SourceFile="Build\for_bundle\icon.ico" />
+        <Property Id="ARPPRODUCTICON" Value="icon.ico" />
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id='ProgramFiles64Folder' Name='PFiles'>
                 <Directory Id='Fireng' Name='Fireng'>
@@ -78,6 +80,57 @@
                                 <File Name='libpng16.dll' Source='dist/libpng16.dll'>
                                 </File>
                                 <File Name='getopt.dll' Source='dist/getopt.dll'> </File>
+
+                                <RegistryValue Root="HKMU"
+                                    Key="SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\smvlua.exe"
+                                    Value="[!SMVLuaEXE]" Type="string" />
+                                <RegistryValue Root="HKMU"
+                                    Key="SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\smvlua.exe"
+                                    Name="Path" Value="[BINDIR]" Type="string" />
+
+                                <!-- <RegistryValue Root="HKMU" Key="SOFTWARE\Classes\Smv.Document"
+                                Name="Smokeview File" Value="!(loc.DescXYZ)" Type="string" /> -->
+
+                                <ProgId Id="Firemodels.Smokeview.1" Description="Smokeview Lua"
+                                >
+                                    <Extension Id="smv">
+                                        <Verb Id="open" Command="open" TargetFile="SMVLuaEXE"
+                                            Argument="&quot;%1&quot;" />
+                                        <MIME ContentType="application/smv"
+                                            Default="yes" />
+                                    </Extension>
+                                </ProgId>
+                                <RegistryValue Root="HKMU"
+                                    Key="SOFTWARE\smvlua\Capabilities\FileAssociations" Name=".smv"
+                                    Value="Smokeview.Document" Type="string" />
+                                <RegistryValue Root="HKMU"
+                                    Key="SOFTWARE\smvlua\Capabilities\MIMEAssociations"
+                                    Name="application/smv" Value="Smokeview.Document" Type="string" />
+                                <RegistryValue Root="HKMU"
+                                    Key="SOFTWARE\smvlua\Capabilities\shell\Open\command"
+                                    Value="&quot;[BINDIR]smvlua.exe&quot; &quot;%1&quot;"
+                                    Type="string" />
+                                <!-- <RegistryKey Root="HKCR" Key="SmvLua.smv\shell\open\command">
+                                    <RegistryValue Type="string"
+                                        Value="[INSTALLDIR]bin\smokeview.exe &quot;%1&quot;" />
+                                </RegistryKey> -->
+                                <!-- <RegistryValue Root="HKCR" Key=".smv" Value="SmvLua.ProgId"
+                                    Type="string" /> -->
+
+
+                                <!-- <RegistryValue Root="HKLM" Key="SOFTWARE\Classes\Smv.Document"
+                                    Name="FriendlyTypeName" Value="!(loc.DescXYZ)" Type="string" />
+                                <ProgId Id="MyApp.Document" Description="!(loc.DescXYZ)"
+                                    Icon="icon.ico" Advertise="yes">
+                                    <Extension Id="xyz">
+                                        <Verb Id="open" Command="!(loc.ExplorerMenuOpenXYZ)"
+                                            Argument="&quot;%1&quot;" />
+                                        <MIME Advertise="yes" ContentType="application/xyz"
+                                            Default="yes" />
+                                    </Extension>
+                                </ProgId> -->
+
+
                             </Component>
                         </Directory>
                     </Directory>
