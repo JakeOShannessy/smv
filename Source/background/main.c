@@ -123,7 +123,14 @@ int main(int argc, char **argv){
 #endif
 
   if(argc==1){
-    PRINTVERSION("background ");
+    common_opts opts = {
+#ifdef pp_HASH
+        .hash_option = HASH_SHA1,
+#else
+        0
+#endif
+    };
+    PRINTVERSION("background ", &opts);
     return 1;
   }
 
@@ -133,7 +140,7 @@ int main(int argc, char **argv){
     return 1;
   }
   if(opts.show_version==1){
-    PRINTVERSION("background");
+    PRINTVERSION("background", &opts);
     return 1;
   }
 

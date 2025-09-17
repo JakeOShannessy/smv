@@ -130,7 +130,7 @@ int main(int argc, char **argv){
     return 1;
   }
   if(opts.show_version==1){
-    PRINTVERSION("set_path");
+    PRINTVERSION("set_path", &opts);
     return 1;
   }
 

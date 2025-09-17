@@ -47,7 +47,7 @@ int main(int argc, char **argv){
     return 1;
   }
   if(opts.show_version==1){
-    PRINTVERSION("makepo");
+    PRINTVERSION("makepo", &opts);
     return 1;
   }
   for(i=1;i<argc;i++){

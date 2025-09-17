@@ -89,7 +89,7 @@ int main(int argc, char **argv){
     return 0;
   }
   if(opts.show_version==1){
-    PRINTVERSION("smokezip");
+    PRINTVERSION("smokezip", &opts);
     return 0;
   }
 
@@ -143,7 +143,7 @@ int main(int argc, char **argv){
 
   filebase=NULL;
   if(argc==1){
-    PRINTVERSION("Smokezip ");
+    PRINTVERSION("Smokezip ", &opts);
     return 0;
   }
 

@@ -82,7 +82,7 @@ int main(int argc, char **argv){
     return 1;
   }
   if(opts.show_version==1){
-    PRINTVERSION("flushcache");
+    PRINTVERSION("flushcache", &opts);
     return 1;
   }
 

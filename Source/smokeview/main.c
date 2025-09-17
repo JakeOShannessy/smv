@@ -101,9 +101,9 @@ void Usage(int option){
   }
 }
 
-char *ProcessCommandLine(CommandlineArgs *args);
+char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts);
 
-char *ParseCommandline(int argc, char **argv){
+char *ParseCommandline(int argc, char **argv, common_opts *opts){
   enum CommandLineError error;
   char message[256];
 
@@ -115,7 +115,7 @@ char *ParseCommandline(int argc, char **argv){
     }
     SMV_EXIT(0);
   }
-  return ProcessCommandLine(&args);
+  return ProcessCommandLine(&args, opts);
 }
 
 /// @brief Once the commandline arguments ahve been parsed, they can be passed
@@ -123,7 +123,7 @@ char *ParseCommandline(int argc, char **argv){
 /// @param args The args which were previously parsed. All commandline arguments
 /// are parsed into @ref CommandlineArgs.
 /// @return The iput file name (the SMV file).
-char *ProcessCommandLine(CommandlineArgs *args){
+char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
   int len_casename;
   size_t len_memory;
   char *argi, *smv_ext;
@@ -198,7 +198,7 @@ char *ProcessCommandLine(CommandlineArgs *args){
     if(args->bindir != NULL){
       SetSmvRootOverride(args->bindir);
     }
-    show_version = 1;
+    opts->show_version = 1;
   }
   strcpy(SMVFILENAME, "");
   if(args->input_file != NULL){
@@ -231,7 +231,7 @@ char *ProcessCommandLine(CommandlineArgs *args){
   }
   else{
 #ifdef WIN32
-    if(show_version == 0){
+    if(opts->show_version == 0){
       int openfile, filelength;
 
       openfile = 0;
@@ -710,7 +710,7 @@ int main(int argc, char **argv){
   GetArgs(argc, argv, &n_args, &utf8_args);
 
   common_opts opts = ParseCommonOptions(n_args, utf8_args);
-  if(show_help==1){
+  if(opts.show_help==1){
     Usage(HELP_SUMMARY);
     return 1;
   }
@@ -719,11 +719,10 @@ int main(int argc, char **argv){
     return 1;
   }
 
-
-  smv_filename = ParseCommandline(n_args, utf8_args);
+  smv_filename = ParseCommandline(n_args, utf8_args, &opts);
   if(smv_filename == NULL || opts.show_version == 1) {
     InitStartupDirs();
-    DisplayVersionInfo("Smokeview ");
+    DisplayVersionInfo("Smokeview ", &opts);
     SMV_EXIT(0);
   }
   if(CheckSMVFile(smv_filename, smokeview_casedir)==0){
@@ -737,7 +736,7 @@ int main(int argc, char **argv){
   smokezippath= GetSmokeZipPath(smv_bindir);
   FREEMEMORY(smv_bindir);
   InitStartupDirs();
-  DisplayVersionInfo("Smokeview ");
+  DisplayVersionInfo("Smokeview ", &opts);
   SetupGlut(n_args,utf8_args);
   FreeArgs(n_args, utf8_args);
   START_TIMER(startup_time);

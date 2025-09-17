@@ -46,11 +46,11 @@ int main(int argc, char **argv){
     return 0;
   }
   if(opts.show_version==1){
-    PRINTVERSION("fds2fed");
+    PRINTVERSION("fds2fed", &opts);
     return 0;
   }
     if(argc==1){
-    PRINTVERSION("fds2fed ");
+    PRINTVERSION("fds2fed ", &opts);
     return 0;
   }
   for(i=1;i<argc;i++){

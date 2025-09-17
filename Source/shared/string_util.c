@@ -2053,7 +2053,14 @@ void UsageCommon(int option){
 
 common_opts ParseCommonOptions(int argc, char **argv){
   int i, no_minus,first_arg=0;
-  common_opts opts = {0};
+  common_opts opts = {
+#ifdef pp_HASH
+    .hash_option = HASH_SHA1,
+#else
+    0
+#endif
+  };
+
   no_minus = 0;
   for(i = 1; i<argc; i++){
     char *argi;
@@ -2167,4 +2174,106 @@ void PRINTversion(char *progname){
   PRINTF("Platform         : LINUX64\n");
 #endif
   FREEMEMORY(progfullpath);
+}
+
+#define GETBIT(val, ibit)         (((val) >> (ibit)) &1)
+#define SETBIT(val, bitval, ibit) (val |= ((bitval) << (ibit)))
+
+/* ------------------ DecodeData ------------------------ */
+
+unsigned char *DecodeData(unsigned char *buffer, int nbuffer, int *ndataptr, int skip, int channel){
+  int i, signature_base = 314159, signature=0, ndata=0;
+  unsigned char *dataptr = NULL;
+
+  // decode signature
+
+  for(i = 0; i < 32; i++){
+    unsigned char *c, bitval;
+
+    c = buffer + skip*i+channel;
+    bitval = GETBIT(*c, 0);
+    SETBIT(signature, bitval, i);
+  }
+  if(signature != signature_base)return NULL;
+
+  // decode ndata
+
+  buffer += 32*skip;
+  for(i = 0; i < 32; i++){
+    unsigned char *c, bitval;
+
+    c = buffer + skip*i+channel;
+    bitval = GETBIT(*c, 0);
+    SETBIT(ndata, bitval, i);
+  }
+  if(ndata <= 0)return NULL;
+
+  // decode data
+
+  *ndataptr = ndata;
+  if(NewMemory(( void ** )&dataptr, ndata+1) == 0){
+    return NULL;
+  }
+
+  buffer += 32*skip;
+  for(i = 0; i < ndata; i++){
+    int j;
+    unsigned char *data;
+
+    data = dataptr + i;
+    *data = 0;
+    for(j = 0; j < 8; j++){
+      unsigned char *c, bitval;
+
+      c = buffer + skip*(8*i + j)+channel;
+      bitval = GETBIT(*c, 0);
+      SETBIT(*data, bitval, j);
+    }
+  }
+  dataptr[ndata] = 0;
+  return dataptr;
+}
+
+  /* ------------------ EncodeData ------------------------ */
+
+void EncodeData(unsigned char *buffer, int nbuffer, unsigned char *data, int ndata, int skip, int channel){
+  int signature = 314159, i;
+
+  // encode signature
+
+  for(i = 0;i < 32;i++){
+    unsigned char *c;
+
+    c = buffer + skip*i + channel;
+    *c &= 0xFE;
+    *c |= GETBIT(signature,i);
+  }
+
+  // encode ndata
+
+  buffer += 32*skip;
+  for(i = 0; i < 32; i++){
+    unsigned char *c;
+
+    c = buffer + skip*i+channel;
+    *c &= 0xFE;
+    *c |= GETBIT(ndata, i);
+  }
+
+  // encode data
+
+  buffer += 32*skip;
+  for(i = 0; i < ndata; i++){
+    int j;
+    unsigned char *dataptr;
+
+    dataptr = data + i;
+    for(j = 0; j < 8; j++){
+      unsigned char *c;
+
+      c = buffer + skip*(8*i + j)+channel;
+      *c &= 0xFE;
+      *c |= GETBIT(*dataptr, j);
+    }
+  }
 }

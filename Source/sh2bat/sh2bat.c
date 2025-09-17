@@ -39,11 +39,11 @@ int main(int argc, char **argv){
 
   common_opts opts = ParseCommonOptions(argc, argv);
   if(opts.show_help!=0){
-    Usage("sh2bat",opts.show_help);
+    Usage(opts.show_help);
     return 1;
   }
   if(opts.show_version==1){
-    PRINTVERSION("sh2bat");
+    PRINTVERSION("sh2bat", &opts);
     return 1;
   }
 

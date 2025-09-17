@@ -101,7 +101,7 @@ int main(int argc, char **argv){
     return 1;
   }
   if(opts.show_version==1){
-    PRINTVERSION("wind2fds");
+    PRINTVERSION("wind2fds", &opts);
     return 1;
   }
 
@@ -109,7 +109,7 @@ int main(int argc, char **argv){
   strcpy(prefix,"");
 
   if(argc==1){
-    PRINTVERSION("wind2fds ");
+    PRINTVERSION("wind2fds ", &opts);
    return 1;
   }
 

@@ -83,7 +83,7 @@ int main(int argc, char **argv){
     return 0;
   }
   if(opts.show_version==1){
-    PRINTVERSION("smokediff");
+    PRINTVERSION("smokediff", &opts);
     return 0;
   }
 
@@ -98,7 +98,7 @@ int main(int argc, char **argv){
   strcpy(type_label,"");
 
   if(argc==1){
-    PRINTVERSION("Smokediff ");
+    PRINTVERSION("Smokediff ", &opts);
     return 0;
   }
 

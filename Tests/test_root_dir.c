@@ -10,10 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-int show_help;
-int hash_option;
-int show_version;
-
 int main(int argc, char **argv) {
   initMALLOC();
   {
@@ -28,6 +24,38 @@ int main(int argc, char **argv) {
     assert(strcmp(path, "1234/abc/efg\\hij/klm") == 0);
 #else
     assert(strcmp(path, "1234/abc/efg/hij/klm") == 0);
+#endif
+  }
+  {
+    char *path = CombinePaths("1234/../efg", "hij/klm");
+#ifdef _WIN32
+    assert(strcmp(path, "1234/../efg\\hij/klm") == 0);
+#else
+    assert(strcmp(path, "1234/../efg/hij/klm") == 0);
+#endif
+  }
+  {
+    char *path = CombinePaths("../../1234/abc/efg", "hij/klm");
+#ifdef _WIN32
+    assert(strcmp(path, "../../1234/abc/efg\\hij/klm") == 0);
+#else
+    assert(strcmp(path, "../../1234/abc/efg/hij/klm") == 0);
+#endif
+  }
+  {
+    char *path = CombinePaths("../1234/abc/efg", "hij/klm");
+#ifdef _WIN32
+    assert(strcmp(path, "../1234/abc/efg\\hij/klm") == 0);
+#else
+    assert(strcmp(path, "../1234/abc/efg/hij/klm") == 0);
+#endif
+  }
+  {
+    char *path = CombinePaths("..\\1234\\abc\\efg", "hij\\klm");
+#ifdef _WIN32
+    assert(strcmp(path, "..\\1234\\abc\\efg\\hij\\klm") == 0);
+#else
+    assert(strcmp(path, "..\\1234\\abc\\efg/hij\\klm") == 0);
 #endif
   }
   {
