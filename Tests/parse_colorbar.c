@@ -10,7 +10,6 @@
 
 #include "colorbars.h"
 
-
 int main(int argc, char **argv) {
   initMALLOC();
   if(argc < 2) return 2;
