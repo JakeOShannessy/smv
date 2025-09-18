@@ -219,7 +219,3 @@ if (WIN32)
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/smvq.cmd" DESTINATION .)
     install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/smvlua.cmd" DESTINATION .)
 endif()
-
-# Install config files
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/smokeview.ini" DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/smokeview")
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/objects.svo" DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/smokeview")
