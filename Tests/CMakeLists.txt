@@ -19,6 +19,12 @@ add_test(NAME "Execute smvq" COMMAND smvq -V)
 add_test(NAME "Execute smokeview sizes" COMMAND smokeview -sizes ${TEST_SMALL_SMV})
 add_test(NAME "Execute smokeview info" COMMAND smokeview -info ${TEST_SMALL_SMV})
 
+if (DISPLAY_TESTS)
+    add_test(NAME "Execute smokeview good-script" COMMAND smokeview -script good-script.ssf ${CMAKE_SOURCE_DIR}/Tests/test_model_small/test_model_small.smv)
+    add_test(NAME "Execute smokeview bad-script" COMMAND smokeview -script bad-script.ssf ${CMAKE_SOURCE_DIR}/Tests/test_model_small/test_model_small.smv)
+    set_tests_properties("Execute smokeview bad-script" PROPERTIES WILL_FAIL TRUE)
+endif()
+
 # parse_simple_slice
 add_executable(parse_simple_slice parse_simple_slice.c)
 target_link_libraries(parse_simple_slice PRIVATE libsmv)
