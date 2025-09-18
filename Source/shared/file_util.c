@@ -24,6 +24,7 @@
 #include <direct.h>
 #include <dirent_win.h>
 #include <shlwapi.h>
+#include <shlobj.h>
 #pragma comment(lib, "shlwapi.lib")
 
 #include <windows.h>
@@ -1594,11 +1595,25 @@ char *GetHomeDir() {
 /* ------------------ GetUserConfigDir ------------------------ */
 
 char *GetUserConfigDir() {
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+  wchar_t *out;
+  HRESULT res = SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, &out);
+  switch(res) {
+  case S_OK:
+    char *r = convert_utf16_to_utf8(out);
+    CoTaskMemFree(out);
+    return r;
+  default:
+    CoTaskMemFree(out);
+    return NULL;
+  }
+#else
   char *homedir = GetHomeDir();
   if(homedir == NULL) return NULL;
   char *config_path = CombinePaths(homedir, ".smokeview");
   FREEMEMORY(homedir);
   return config_path;
+#endif
 }
 
 /* ------------------ GetUserConfigSubPath ------------------------ */
