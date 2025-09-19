@@ -373,6 +373,10 @@ void SetChidVisibility(int setting) { vis_title_CHID = setting; }
 
 int GetChidVisibility() { return vis_title_CHID; }
 
+void SetMeshLabelVisibility(int setting) { visMeshlabel = setting; }
+
+int GetMeshLabelVisibility() { return visMeshlabel; }
+
 void BlockagesHideAll() { BlockageMenu(visBLOCKHide); }
 // TODO: clarify behaviour under isZoneFireModel
 void OutlinesHide() {

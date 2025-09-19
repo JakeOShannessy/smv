@@ -614,10 +614,11 @@ json_object *jsonrpc_LoadSlices(jrpc_context *context, json_object *params,
   // specs: { index: number; frame?: number }[]
   int specs_found = json_object_object_get_ex(params, "specs", &specs);
   if(!specs_found) {
-      context->error_code = 117;
-      context->error_message = strdup("slice spec must include a value for specs");
-      return NULL;
-    }
+    context->error_code = 117;
+    context->error_message =
+        strdup("slice spec must include a value for specs");
+    return NULL;
+  }
   size_t n_files = json_object_array_length(specs);
   const char *json_output =
       json_object_to_json_string_ext(params, JSON_C_TO_STRING_PRETTY);
@@ -628,7 +629,8 @@ json_object *jsonrpc_LoadSlices(jrpc_context *context, json_object *params,
     int index_found = json_object_object_get_ex(spec, "index", &index_obj);
     if(!index_found) {
       context->error_code = 116;
-      context->error_message = strdup("slice spec must include a value for index");
+      context->error_message =
+          strdup("slice spec must include a value for index");
       return NULL;
     }
     int index = json_object_get_int(index_obj);
@@ -883,6 +885,26 @@ json_object *jsonrpc_SetChidVisibility(jrpc_context *context,
 json_object *jsonrpc_GetChidVisibility(jrpc_context *context,
                                        json_object *params, json_object *id) {
   int v = GetChidVisibility();
+  if(v) {
+    return json_object_new_boolean(1);
+  }
+  else {
+    return json_object_new_boolean(0);
+  }
+}
+
+json_object *jsonrpc_SetMeshLabelVisibility(jrpc_context *context,
+                                            json_object *params,
+                                            json_object *id) {
+  json_bool v = json_object_get_boolean(json_object_array_get_idx(params, 0));
+  SetMeshLabelVisibility(v ? 1 : 0);
+  return NULL;
+}
+
+json_object *jsonrpc_GetMeshLabelVisibility(jrpc_context *context,
+                                            json_object *params,
+                                            json_object *id) {
+  int v = GetMeshLabelVisibility();
   if(v) {
     return json_object_new_boolean(1);
   }

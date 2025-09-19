@@ -70,6 +70,10 @@ int GetSmvVersionVisibility();
 void SetChidVisibility(int setting);
 int GetChidVisibility();
 
+// mesh label
+void SetMeshLabelVisibility(int setting);
+int GetMeshLabelVisibility();
+
 // blockages
 void BlockagesHideAll();
 
