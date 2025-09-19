@@ -448,7 +448,7 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
   return mesh_array;
 }
 
-json_object *json_GetSmoke3ds(jrpc_context *context, json_object *params,
+json_object *jsonrpc_GetSmoke3ds(jrpc_context *context, json_object *params,
                               json_object *id) {
   struct json_object *smoke3ds = json_object_new_array();
   for(int i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++) {
@@ -997,75 +997,51 @@ json_object *jsonrpc_DevicesHideAll(jrpc_context *context, json_object *params,
   return NULL;
 }
 
+#define REG_RPC_COMMAND(func,name) jrpc_register_procedure(server_arg, &func, name, NULL)
+
 int register_procedures(struct jrpc_server *server_arg) {
-  jrpc_register_procedure(server_arg, &jsonrpc_SetFrame, "set_frame", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetTime, "set_time", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraAz, "set_camera_az",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraElev, "set_camera_elev",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraEye, "set_camera_eye",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraZoom, "set_camera_zoom",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetCameraViewDir,
-                          "set_camera_view_dir", NULL);
+  REG_RPC_COMMAND(jsonrpc_SetFrame,"set_frame");
+  REG_RPC_COMMAND(jsonrpc_SetTime,"set_time");
+  REG_RPC_COMMAND(jsonrpc_SetCameraAz,"set_camera_az");
+  REG_RPC_COMMAND(jsonrpc_SetCameraElev,"set_camera_elev");
+  REG_RPC_COMMAND(jsonrpc_SetCameraEye,"set_camera_eye");
+  REG_RPC_COMMAND(jsonrpc_SetCameraZoom,"set_camera_zoom");
+  REG_RPC_COMMAND(jsonrpc_SetCameraViewDir,"set_camera_view_dir");
 
-  jrpc_register_procedure(server_arg, &jsonrpc_GetNGlobalTimes,
-                          "get_n_global_times", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_GetTime, "get_time", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetClipping, "set_clipping",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_Render, "render", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_Unloadall, "unload_all", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetChidVisibility,
-                          "set_chid_visibility", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_ExitSmokeview, "exit", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetSliceBounds,
-                          "set_slice_bounds", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetWindowSize, "set_window_size",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_LoadSliceIndices,
-                          "load_slice_indices", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_LoadSlices, "load_slices", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_GetSlices, "get_slices", NULL);
-  jrpc_register_procedure(server_arg, &json_GetSmoke3ds, "get_smoke3ds", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_Load3dSmokeIndices,
-                          "load_smoke3d_indices", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetOrthoPreset,
-                          "set_ortho_preset", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_GetMeshes, "get_meshes", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_CameraSetProjectionType,
-                          "set_projection_type", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetNamedColorbar, "set_colorbar",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetRendertype, "set_render_type",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_Setrenderdir, "set_render_dir",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetFontSize, "set_font_size",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetTitleVisibility,
-                          "set_title_visibility", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_GetTitleVisibility,
-                          "get_title_visibility", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetSmvVersionVisibility,
-                          "set_smv_version_visibility", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_GetSmvVersionVisibility,
-                          "get_smv_version_visibility", NULL);
+  REG_RPC_COMMAND(jsonrpc_GetNGlobalTimes,"get_n_global_times");
+  REG_RPC_COMMAND(jsonrpc_GetTime,"get_time");
+  REG_RPC_COMMAND(jsonrpc_SetClipping,"set_clipping");
+  REG_RPC_COMMAND(jsonrpc_Render,"render");
+  REG_RPC_COMMAND(jsonrpc_Unloadall,"unload_all");
+  REG_RPC_COMMAND(jsonrpc_SetChidVisibility,"set_chid_visibility");
+  REG_RPC_COMMAND(jsonrpc_ExitSmokeview,"exit");
+  REG_RPC_COMMAND(jsonrpc_SetSliceBounds,"set_slice_bounds");
+  REG_RPC_COMMAND(jsonrpc_SetWindowSize,"set_window_size");
+  REG_RPC_COMMAND(jsonrpc_LoadSliceIndices,"load_slice_indices");
+  REG_RPC_COMMAND(jsonrpc_LoadSlices,"load_slices");
+  REG_RPC_COMMAND(jsonrpc_GetSlices,"get_slices");
+  REG_RPC_COMMAND(jsonrpc_GetSmoke3ds,"get_smoke3ds");
+  REG_RPC_COMMAND(jsonrpc_Load3dSmokeIndices,"load_smoke3d_indices");
+  REG_RPC_COMMAND(jsonrpc_SetOrthoPreset,"set_ortho_preset");
+  REG_RPC_COMMAND(jsonrpc_GetMeshes,"get_meshes");
+  REG_RPC_COMMAND(jsonrpc_CameraSetProjectionType,"set_projection_type");
+  REG_RPC_COMMAND(jsonrpc_SetNamedColorbar,"set_colorbar");
+  REG_RPC_COMMAND(jsonrpc_SetRendertype,"set_render_type");
+  REG_RPC_COMMAND(jsonrpc_Setrenderdir,"set_render_dir");
+  REG_RPC_COMMAND(jsonrpc_SetFontSize,"set_font_size");
+  REG_RPC_COMMAND(jsonrpc_SetTitleVisibility,"set_title_visibility");
+  REG_RPC_COMMAND(jsonrpc_GetTitleVisibility,"get_title_visibility");
+  REG_RPC_COMMAND(jsonrpc_SetMeshLabelVisibility,"set_mesh_label_visibility");
+  REG_RPC_COMMAND(jsonrpc_GetMeshLabelVisibility,"get_mesh_label_visibility");
+  REG_RPC_COMMAND(jsonrpc_SetSmvVersionVisibility,"set_smv_version_visibility");
+  REG_RPC_COMMAND(jsonrpc_GetSmvVersionVisibility,"get_smv_version_visibility");
 
-  jrpc_register_procedure(server_arg, &jsonrpc_BlockagesHideAll,
-                          "blockages_hide_all", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SurfacesHideAll,
-                          "surfaces_hide_all", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_OutlinesHide,
-                          "outlines_hide_all", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_DevicesHideAll,
-                          "devices_hide_all", NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_GetCsvVectors, "get_csv_vectors",
-                          NULL);
-  jrpc_register_procedure(server_arg, &jsonrpc_SetColorbarFlip,
-                          "set_colorbar_flip", NULL);
+  REG_RPC_COMMAND(jsonrpc_BlockagesHideAll,"blockages_hide_all");
+  REG_RPC_COMMAND(jsonrpc_SurfacesHideAll,"surfaces_hide_all");
+  REG_RPC_COMMAND(jsonrpc_OutlinesHide,"outlines_hide_all");
+  REG_RPC_COMMAND(jsonrpc_DevicesHideAll,"devices_hide_all");
+  REG_RPC_COMMAND(jsonrpc_GetCsvVectors,"get_csv_vectors");
+  REG_RPC_COMMAND(jsonrpc_SetColorbarFlip,"set_colorbar_flip");
 
   return 0;
 }
