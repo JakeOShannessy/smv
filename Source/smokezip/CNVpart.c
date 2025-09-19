@@ -63,7 +63,7 @@ void *ConvertParts2Iso(void *arg){
       if(stream!=NULL){
         fclose(stream);
         PRINTF("  Removing %s\n",GLOBsmvisofile);
-        unlink(GLOBsmvisofile);
+        UNLINK(GLOBsmvisofile);
         LOCK_COMPRESS;
         GLOBfilesremoved++;
         UNLOCK_COMPRESS;
@@ -89,7 +89,7 @@ void *ConvertParts2Iso(void *arg){
           if(stream!=NULL){
             fclose(stream);
             PRINTF("  Removing %s\n",isofilename);
-            unlink(isofilename);
+            UNLINK(isofilename);
             LOCK_COMPRESS;
             GLOBfilesremoved++;
             UNLOCK_COMPRESS;

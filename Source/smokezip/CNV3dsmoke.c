@@ -90,7 +90,7 @@ void Convert3DSmoke(smoke3d *smoke3di, int *thread_index){
     if(smoke3dstream!=NULL){
       fclose(smoke3dstream);
       PRINTF("  Removing %s\n",smoke3dfile_svz);
-      unlink(smoke3dfile_svz);
+      UNLINK(smoke3dfile_svz);
       LOCK_COMPRESS;
       GLOBfilesremoved++;
       UNLOCK_COMPRESS;
@@ -99,7 +99,7 @@ void Convert3DSmoke(smoke3d *smoke3di, int *thread_index){
     if(smoke3dsizestream!=NULL){
       fclose(smoke3dsizestream);
       PRINTF("  Removing %s\n",smoke3dsizefile_svz);
-      unlink(smoke3dsizefile_svz);
+      UNLINK(smoke3dsizefile_svz);
       LOCK_COMPRESS;
       GLOBfilesremoved++;
       UNLOCK_COMPRESS;
