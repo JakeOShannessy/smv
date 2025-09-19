@@ -575,7 +575,7 @@ int get_ncores(void){
 
 /* ------------------ get_host_ncores ------------------------ */
 
-int get_host_ncores(char *host_arg){
+int get_host_ncores(char *hosta){
   FILE *stream;
   char buffer[1024];
   char command[1024];
@@ -583,12 +583,12 @@ int get_host_ncores(char *host_arg){
   int ncores=0;
 
   strcpy(localfile,"/tmp/cpuinfo.");
-  strcat(localfile,host_arg);
+  strcat(localfile,hosta);
   strcat(localfile,".");
   strcat(localfile,pid);
 
   strcpy(command,"ssh ");
-  strcat(command,host_arg);
+  strcat(command,hosta);
   strcat(command," cat /proc/cpuinfo >");
   strcat(command,localfile);
 
