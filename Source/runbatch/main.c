@@ -2,13 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _WIN32
-  #include <io.h>
-  #define ACCESS _access
-#else
-  #include <unistd.h>
-  #define ACCESS access
-#endif
 
 void usage(void);
 int batchfile_exists(char *filename);
@@ -72,7 +65,7 @@ int batchfile_exists(char *filename){
   if(filename==NULL)return 0;
   strcpy(batchfilename,filename);
   if(strstr(filename,".bat")==NULL)strcat(batchfilename,".bat");
-  if(ACCESS(batchfilename,0)==-1){
+  if(_access(batchfilename,0)==-1){
     return 0;
   }
   else{
