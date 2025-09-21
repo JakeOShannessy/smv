@@ -34,7 +34,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libglew-dev libgd-dev libjson-c-dev
+          sudo apt-get install build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libglew-dev libgd-dev libjson-c-dev libmbedtls-dev
       # If we are building on macos configure the environment to use gcc-14 as
       # the compiler
       - name: set macos gcc
@@ -43,14 +43,14 @@ jobs:
         run: |
           echo "CC=gcc-14" >> $GITHUB_ENV
           echo "CXX=g++-14" >> $GITHUB_ENV
-          brew install glew gd zlib json-c
+          brew install glew gd zlib json-c mbedtls
       - name: set macos gcc
         if: runner.os == 'macOS' && matrix.compiler == 'clang'
         shell: bash
         run: |
           echo "CC=clang" >> $GITHUB_ENV
           echo "CXX=clang" >> $GITHUB_ENV
-          brew install glew gd zlib json-c
+          brew install glew gd zlib json-c mbedtls
       # If we are building on linux configure the environment to use gcc as the
       # compiler
       - name: set linux gcc

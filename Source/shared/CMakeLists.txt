@@ -9,9 +9,6 @@ add_library(smv STATIC
     histogram.c
     translate.c
     csphere.c
-    md5.c
-    sha1.c
-    sha256.c
     stdio_m.c
     stdio_buffer.c
     getdata.c
@@ -75,7 +72,7 @@ else()
 endif()
 
 target_link_libraries(smv PUBLIC OpenGL::GL OpenGL::GLU)
-
+target_link_libraries(smv PUBLIC MbedTLS::mbedtls)
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(smv PUBLIC m)
 endif()
