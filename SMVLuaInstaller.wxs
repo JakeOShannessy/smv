@@ -1,124 +1,172 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<?define ProductVersion = "1.21.9"?>
+<?define ProductVersion = "1.21.12"?>
 <?define ProductUpgradeCode = "1940d8a1-c842-442f-bf5d-00a570219bdb"?>
+<?define Manufacturer = "Smokeview"?>
 
-<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
-    <Product Name='Smokeview Lua'
-        Id='*'
-        UpgradeCode="$(var.ProductUpgradeCode)"
-        Language='1033'
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Package
+        Name="Smokeview Lua"
+        Id='Smokeview.Lua'
         Version='$(var.ProductVersion)'
-        Manufacturer='Smokeview'>
-        <Package Id='*'
-            InstallScope='perUser'
-            InstallPrivileges='limited'
-            Keywords='Installer'
-            Description="Smokeview Lua Installer"
-            Comments='A modified smokeview with the ability to run Lua scripts.'
-            Manufacturer='Smokeview'
-            InstallerVersion='200'
-            Languages='1033'
-            Platform='x64'
-            Compressed='yes' />
-        <!-- <Condition Message="You need to be an administrator to install this
-        product.">Privileged</Condition> -->
+        UpgradeCode="$(var.ProductUpgradeCode)"
+        Manufacturer="$(var.Manufacturer)"
+        InstallerVersion='200'
+        Scope="perUser"
+        Language="1033"
+        Compressed='yes'>
+        <SummaryInformation Keywords="Smokeview, FDS" Manufacturer="$(var.Manufacturer)" />
         <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' />
         <Property Id='DiskPrompt' Value="Smokeview Lua Installer" />
-        <Upgrade Id="$(var.ProductUpgradeCode)">
-            <UpgradeVersion Minimum="$(var.ProductVersion)" OnlyDetect="yes"
-                Property="NEWERVERSIONDETECTED" />
-            <UpgradeVersion Minimum="0.0.0" Maximum="$(var.ProductVersion)" IncludeMinimum="yes"
-                IncludeMaximum="no" Property="OLDERVERSIONBEINGUPGRADED" />
-        </Upgrade>
-        <Condition Message="A newer version of this software is already installed.">NOT
-            NEWERVERSIONDETECTED</Condition>
+        <MajorUpgrade AllowSameVersionUpgrades="yes"
+            DowngradeErrorMessage="A newer version of [ProductName] is already installed. If you are sure you want to downgrade, remove the existing installation via Programs and Features." />
         <Property Id="ALLUSERS" Secure="yes" Value="2" />
         <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1" />
         <Icon Id="icon.ico" SourceFile="Build\for_bundle\icon.ico" />
         <Property Id="ARPPRODUCTICON" Value="icon.ico" />
-        <Directory Id='TARGETDIR' Name='SourceDir'>
-            <Directory Id='AppDataFolder' Name='ConfigFiles'>
-                <!-- <Directory Id='FirengConfig' Name='Fireng'> -->
-                    <Directory Id='CONFIGDIR' Name='Smokeview Lua'>
-                        <Component Id='SMVConfig'
-                            Guid='3ca9df6e-ba72-4742-b4ad-58dff4d42b91' Win64="yes">
-                            <RegistryValue Root='HKCU' Key='Software\FireEng\SmvLua'
-                                Name='InstallFolder'
-                                Value='[INSTALLDIR]'
-                                Type='string'
-                                KeyPath='yes' />
-                            <File Name='objects.svo' Source='dist/etc/smokeview/objects.svo' />
-                            <File Name='smokeview.ini' Source='dist/etc/smokeview/smokeview.ini' />
-                            <!-- <RemoveFolder Id="FirengConfig" On="uninstall" /> -->
-                            <RemoveFolder Id="CONFIGDIR" On="uninstall" />
+        <StandardDirectory Id='AppDataFolder'>
+            <Directory Id='FirengConfig' Name='Fireng'>
+                <Directory Id='CONFIGDIR' Name='Smokeview Lua'>
+                    <Directory Id='COLORBARS' Name="colorbars">
+                        <Directory Name="circular">
+                            <Component Id='SMVColorbars_circular'
+                                Guid='69749713-aa72-462a-949f-fd1368169438'>
+                                <File Name='CET-C3.csv'
+                                    Source='Build\for_bundle\colorbars\circularBAK\CET-C3.csv' />
+                                <File Name='CET-C4.csv'
+                                    Source='Build\for_bundle\colorbars\circularBAK\CET-C4.csv' />
+                                <File Name='CET-C5.csv'
+                                    Source='Build\for_bundle\colorbars\circularBAK\CET-C5.csv' />
+                            </Component>
+                        </Directory>
+                        <Directory Name="divergent">
+                            <Component Id='SMVColorbars_divergent'
+                                Guid='2dadb8b5-95f5-44bf-a69f-0d1022b41b93'>
+                                <File Name='CET-D01.csv'
+                                    Source='Build\for_bundle\colorbars\divergent\CET-D01.csv' />
+                                <File Name='CET-D04.csv'
+                                    Source='Build\for_bundle\colorbars\divergent\CET-D04.csv' />
+                            </Component>
+                        </Directory>
+                        <Directory Name="linear">
+                            <Component Id='SMVColorbars_linear'
+                                Guid='ade130e5-af31-46b5-90f3-eb9c4248d9c4'>
+                                <File Name='CET-L03.csv'
+                                    Source='Build\for_bundle\colorbars\linear\CET-L03.csv' />
+                                <File Name='CET-L04.csv'
+                                    Source='Build\for_bundle\colorbars\linear\CET-L04.csv' />
+                                <File Name='Plasma.csv'
+                                    Source='Build\for_bundle\colorbars\linear\Plasma.csv' />
+                            </Component>
+                        </Directory>
+                        <Directory Name="rainbow">
+                            <Component Id='SMVColorbars_rainbow'
+                                Guid='2bdbf414-127f-4c06-9426-cd53c4b54894'>
+                                <File Name='CET-R2.csv'
+                                    Source='Build\for_bundle\colorbars\rainbow\CET-R2.csv' />
+                                <File Name='CET-R4.csv'
+                                    Source='Build\for_bundle\colorbars\rainbow\CET-R4.csv' />
+                            </Component>
+                        </Directory>
+                    </Directory>
+                    <Directory Id='TEXTURES' Name="textures">
+                        <Component Id='SMVTextures'
+                            Guid='de5ac485-9c14-4117-ab67-a810ef5dc577'>
+                            <File Name="Cb4052t.jpg" Source="Build\for_bundle\textures\Cb4052t.jpg" />
+                            <File Name="Csv2023t.jpg"
+                                Source="Build\for_bundle\textures\Csv2023t.jpg" />
+                            <File Name="day2.jpg" Source="Build\for_bundle\textures\day2.jpg" />
+                            <File Name="grass.jpg" Source="Build\for_bundle\textures\grass.jpg" />
+                            <File Name="nistleft.jpg"
+                                Source="Build\for_bundle\textures\nistleft.jpg" />
+                            <File Name="Peach254.jpg"
+                                Source="Build\for_bundle\textures\Peach254.jpg" />
+                            <File Name="Pine36.jpg" Source="Build\for_bundle\textures\Pine36.jpg" />
+                            <File Name="sphere_cover_01.png"
+                                Source="Build\for_bundle\textures\sphere_cover_01.png" />
+                            <File Name="sphere_cover_02.png"
+                                Source="Build\for_bundle\textures\sphere_cover_02.png" />
+                            <File Name="sphere_cover_03.png"
+                                Source="Build\for_bundle\textures\sphere_cover_03.png" />
+                            <File Name="sphere_cover_04.png"
+                                Source="Build\for_bundle\textures\sphere_cover_04.png" />
                         </Component>
                     </Directory>
-                <!-- </Directory> -->
+                    <Component Id='SMVConfig' Guid='3ca9df6e-ba72-4742-b4ad-58dff4d42b91'>
+                        <RegistryValue Root='HKCU' Key='Software\FireEng\SmvLua'
+                            Name='InstallFolder'
+                            Value='[INSTALLDIR]'
+                            Type='string'
+                            KeyPath='yes' />
+                        <File Name='objects.svo' Source='dist/etc/smokeview/objects.svo' />
+                        <File Name='smokeview.ini' Source='dist/etc/smokeview/smokeview.ini' />
+                        <RemoveFolder Id="CONFIGDIR" On="uninstall" />
+                    </Component>
+                </Directory>
             </Directory>
-            <Directory Id='ProgramFiles64Folder' Name='PFiles'>
-                <Directory Id='FirengBin' Name='Fireng'>
-                    <Directory Id='INSTALLDIR' Name='Smokeview Lua'>
-                        <Component Id='SMVLuaScript' Guid='69f8aba5-7eca-44e8-8319-9fd23d71af9b'
-                            Win64="yes">
-                            <Environment Id="PATH" Name="PATH" Value="[INSTALLDIR]" Permanent="yes"
-                                Part="last" Action="set" System="no" />
-                            <File Id='SMVLuaScriptCMD' Name='smvlua.cmd' Source='smvlua.cmd'
-                                KeyPath='yes'>
+        </StandardDirectory>
+        <StandardDirectory Id='ProgramFiles64Folder'>
+            <Directory Id='FirengBin' Name='Fireng'>
+                <Directory Id='INSTALLDIR' Name='Smokeview Lua'>
+                    <Component Id='SMVLuaScript' Guid='69f8aba5-7eca-44e8-8319-9fd23d71af9b'>
+                        <Environment Id="PATH" Name="PATH" Value="[INSTALLDIR]" Permanent="yes"
+                            Part="last" Action="set" System="no" />
+                        <File Id='SMVLuaScriptCMD' Name='smvlua.cmd' Source='smvlua.cmd'
+                            KeyPath='yes'>
+                        </File>
+                        <File Id='SMVQScriptCMD' Name='smvq.cmd' Source='smvq.cmd'>
+                        </File>
+                        <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File>
+                        <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File>
+                    </Component>
+                    <Directory Id='BINDIR' Name='bin'>
+                        <Component Id='SMVQComponent'
+                            Guid='c84dc251-0843-4520-95da-1aa889ebd874'>
+                            <Environment Id="SMVQ_PATH" Name="SMVQ_PATH"
+                                Value="[BINDIR]\smvq.exe"
+                                Permanent="no" Part="last" Action="set" System="no" />
+                            <File Id='SMVQEXE' Name='smvq.exe'
+                                Source='dist/bin/smvq.exe' KeyPath='yes'>
                             </File>
-                            <File Id='SMVQScriptCMD' Name='smvq.cmd' Source='smvq.cmd'>
-                            </File>
-                            <File Name='pthreadVC3.dll' Source='dist/bin/pthreadVC3.dll'> </File>
-                            <File Name='json-c.dll' Source='dist/bin/json-c.dll'> </File>
                         </Component>
-                        <Directory Id='BINDIR' Name='bin'>
-                            <Component Id='SMVQComponent'
-                                Guid='c84dc251-0843-4520-95da-1aa889ebd874' Win64="yes">
-                                <Environment Id="SMVQ_PATH" Name="SMVQ_PATH"
-                                    Value="[BINDIR]\smvq.exe"
-                                    Permanent="no" Part="last" Action="set" System="no" />
-                                <File Id='SMVQEXE' Name='smvq.exe'
-                                    Source='dist/bin/smvq.exe' KeyPath='yes'>
-                                </File>
-                            </Component>
-                            <Component Id='SMVLuaComponent'
-                                Guid='767754dc-8fe5-4cbf-920e-6051e321312f' Win64="yes">
-                                <Environment Id="SMOKEVIEW_PATH" Name="SMOKEVIEW_PATH"
-                                    Value="[BINDIR]\smvlua.exe"
-                                    Permanent="no" Part="last" Action="set" System="no" />
-                                <File Id='SMVLuaEXE' Name='smvlua.exe'
-                                    Source='dist/bin/smokeview.exe' KeyPath='yes'>
-                                </File>
-                                <File Name='jsonrpc.dll' Source='dist/bin/jsonrpc.dll'> </File>
-                                <File Name='glew32.dll' Source='dist/bin/glew32.dll'> </File>
-                                <File Name='zlib1.dll' Source='dist/bin/zlib1.dll'> </File>
-                                <File Name='libgd.dll' Source='dist/bin/libgd.dll'> </File>
-                                <File Name='freeglut.dll' Source='dist/bin/freeglut.dll'> </File>
-                                <File Name='jpeg62.dll' Source='dist/bin/jpeg62.dll'> </File>
-                                <File Name='glut32.dll' Source='dist/bin/glut32.dll'> </File>
-                                <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'>
-                                </File>
-                                <File Name='getopt.dll' Source='dist/bin/getopt.dll'> </File>
+                        <Component Id='SMVLuaComponent'
+                            Guid='767754dc-8fe5-4cbf-920e-6051e321312f'>
+                            <Environment Id="SMOKEVIEW_PATH" Name="SMOKEVIEW_PATH"
+                                Value="[BINDIR]\smvlua.exe"
+                                Permanent="no" Part="last" Action="set" System="no" />
+                            <File Id='SMVLuaEXE' Name='smvlua.exe'
+                                Source='dist/bin/smokeview.exe' KeyPath='yes'>
+                            </File>
+                            <File Name='jsonrpc.dll' Source='dist/bin/jsonrpc.dll'> </File>
+                            <File Name='glew32.dll' Source='dist/bin/glew32.dll'> </File>
+                            <File Name='zlib1.dll' Source='dist/bin/zlib1.dll'> </File>
+                            <File Name='libgd.dll' Source='dist/bin/libgd.dll'> </File>
+                            <File Name='freeglut.dll' Source='dist/bin/freeglut.dll'> </File>
+                            <File Name='jpeg62.dll' Source='dist/bin/jpeg62.dll'> </File>
+                            <File Name='glut32.dll' Source='dist/bin/glut32.dll'> </File>
+                            <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'>
+                            </File>
+                            <File Name='getopt.dll' Source='dist/bin/getopt.dll'> </File>
 
-                                <!-- <RegistryValue Root="HKMU"
+                            <!-- <RegistryValue Root="HKMU"
                                     Key="SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\smvlua.exe"
                                     Value="[!SMVLuaEXE]" Type="string" />
                                 <RegistryValue Root="HKMU"
                                     Key="SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\smvlua.exe"
                                     Name="Path" Value="[BINDIR]" Type="string" /> -->
 
-                                <!-- <RegistryValue Root="HKMU" Key="SOFTWARE\Classes\Smv.Document"
+                            <!-- <RegistryValue Root="HKMU" Key="SOFTWARE\Classes\Smv.Document"
                                 Name="Smokeview File" Value="!(loc.DescXYZ)" Type="string" /> -->
 
-                                <ProgId Id="Firemodels.Smokeview.1" Description="Smokeview Lua"
-                                >
-                                    <Extension Id="smv">
-                                        <Verb Id="open" Command="open" TargetFile="SMVLuaEXE"
-                                            Argument="&quot;%1&quot;" />
-                                        <!-- <MIME ContentType="application/smv"
+                            <ProgId Id="Firemodels.Smokeview.1" Description="Smokeview Lua"
+                            >
+                                <Extension Id="smv">
+                                    <Verb Id="open" Command="open" TargetFile="SMVLuaEXE"
+                                        Argument="&quot;%1&quot;" />
+                                    <!-- <MIME ContentType="application/smv"
                                             Default="yes" /> -->
-                                    </Extension>
-                                </ProgId>
-                                <!-- <RegistryValue Root="HKMU"
+                                </Extension>
+                            </ProgId>
+                            <!-- <RegistryValue Root="HKMU"
                                     Key="SOFTWARE\smvlua\Capabilities\FileAssociations" Name=".smv"
                                     Value="Smokeview.Document" Type="string" />
                                 <RegistryValue Root="HKMU"
@@ -128,15 +176,15 @@
                                     Key="SOFTWARE\smvlua\Capabilities\shell\Open\command"
                                     Value="&quot;[BINDIR]smvlua.exe&quot; &quot;%1&quot;"
                                     Type="string" /> -->
-                                <!-- <RegistryKey Root="HKCR" Key="SmvLua.smv\shell\open\command">
+                            <!-- <RegistryKey Root="HKCR" Key="SmvLua.smv\shell\open\command">
                                     <RegistryValue Type="string"
                                         Value="[INSTALLDIR]bin\smokeview.exe &quot;%1&quot;" />
                                 </RegistryKey> -->
-                                <!-- <RegistryValue Root="HKCR" Key=".smv" Value="SmvLua.ProgId"
+                            <!-- <RegistryValue Root="HKCR" Key=".smv" Value="SmvLua.ProgId"
                                     Type="string" /> -->
 
 
-                                <!-- <RegistryValue Root="HKLM" Key="SOFTWARE\Classes\Smv.Document"
+                            <!-- <RegistryValue Root="HKLM" Key="SOFTWARE\Classes\Smv.Document"
                                     Name="FriendlyTypeName" Value="!(loc.DescXYZ)" Type="string" />
                                 <ProgId Id="MyApp.Document" Description="!(loc.DescXYZ)"
                                     Icon="icon.ico" Advertise="yes">
@@ -149,20 +197,21 @@
                                 </ProgId> -->
 
 
-                            </Component>
-                        </Directory>
+                        </Component>
                     </Directory>
                 </Directory>
             </Directory>
-        </Directory>
-        <InstallExecuteSequence>
-            <RemoveExistingProducts After="InstallValidate" />
-        </InstallExecuteSequence>
+        </StandardDirectory>
         <Feature Id='SMVLuaFeature' Level='1'>
             <ComponentRef Id='SMVLuaScript' />
             <ComponentRef Id='SMVLuaComponent' />
             <ComponentRef Id='SMVQComponent' />
             <ComponentRef Id='SMVConfig' />
+            <ComponentRef Id='SMVColorbars_circular' />
+            <ComponentRef Id='SMVColorbars_divergent' />
+            <ComponentRef Id='SMVColorbars_linear' />
+            <ComponentRef Id='SMVColorbars_rainbow' />
+            <ComponentRef Id='SMVTextures' />
         </Feature>
-    </Product>
+    </Package>
 </Wix>

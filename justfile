@@ -58,8 +58,7 @@ build-intel-internal:
 
 # Build release and create MSI package
 package-windows: build-release-win
-    candle "SMVLuaInstaller.wxs"
-    light "SMVLuaInstaller.wixobj" -ext WixUIExtension -out SMVLuaInstaller_unsigned.msi
+    wix build .\SMVLuaInstaller.wxs  -out SMVLuaInstaller_unsigned.msi
 
 sign:
     &'C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe'  sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a .\SMVLuaInstaller_unsigned.msi
