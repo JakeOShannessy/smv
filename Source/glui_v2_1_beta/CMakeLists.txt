@@ -47,7 +47,8 @@ endif ()
 if (MACOSX)
   add_compile_options($<$<CXX_COMPILER_ID:Clang>:-Wno-deprecated-declarations>)
 endif()
-
+# Create dialog boxes without close buttons
+target_compile_definitions(glui_static PRIVATE pp_NOCLOSE)
 # Warnings for everything except MSVC
 target_compile_options(glui_static PRIVATE $<$<NOT:$<C_COMPILER_ID:MSVC>>: -Wno-write-strings>)
 if (NOT(WIN32))

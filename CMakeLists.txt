@@ -20,10 +20,9 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 # Requires adherence to this standard
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
+# GNUInstallDirs is used to set the appropriate paths for install artefacts.
+# Despite the name it's still useful on Windows.
 include(GNUInstallDirs)
-# Pass a flag to to the source code. There's no great need for this but allows
-# us to have conditional code based on the build method.
-# add_definitions(-Dpp_CMAKE)
 add_compile_definitions(pp_GITHASH="${PROJECT_VERSION}+sc2")
 
 include(InstallRequiredSystemLibraries)

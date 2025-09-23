@@ -1,5 +1,5 @@
-# libsmv
-add_library(libsmv STATIC
+# smv
+add_library(smv STATIC
     isobox.c
     dmalloc.c
     compress.c
@@ -34,13 +34,13 @@ add_library(libsmv STATIC
     readsmvfile.c
     "paths.c"
 )
-target_include_directories(libsmv PUBLIC
+target_include_directories(smv PUBLIC
     .
     #TODO: this is a bit of a hack, it shouldn't really use options.h
     ../smokeview
 )
 if(WIN32)
-    target_link_libraries(libsmv PRIVATE PThreads4W::PThreads4W)
+    target_link_libraries(smv PRIVATE PThreads4W::PThreads4W)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         install(DIRECTORY ${PThreads4W_DEBUG_DLL_DIR}/
             DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -61,9 +61,8 @@ else()
 endif()
 target_link_libraries(libsmv PUBLIC PkgConfig::LIBGD)
 if ((NOT MACOSX) AND UNIX)
-    target_link_libraries(libsmv PUBLIC m)
+    target_link_libraries(smv PUBLIC m)
 endif()
 if (SMV_ROOT_OVERRIDE)
-    target_compile_definitions(libsmv PUBLIC SMV_ROOT_OVERRIDE="${SMV_ROOT_OVERRIDE}")
+    target_compile_definitions(smv PUBLIC SMV_ROOT_OVERRIDE="${SMV_ROOT_OVERRIDE}")
 endif()
-target_compile_definitions(libsmv PRIVATE ASLIB)
