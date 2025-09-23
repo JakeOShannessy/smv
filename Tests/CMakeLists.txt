@@ -72,8 +72,7 @@ target_link_libraries(mem_test PRIVATE smv)
 # We don't have headless GL setup on windows so we skip it for now
 # test_image_render
 add_executable(test_image_render test_image_render.c )
-target_link_libraries(test_image_render PRIVATE PkgConfig::LIBGD)
-target_link_libraries(test_image_render PRIVATE libsmv)
+target_link_libraries(test_image_render PRIVATE smv)
 
 # test_root_dir
 add_executable(test_root_dir test_root_dir.c)
