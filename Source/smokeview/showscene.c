@@ -160,7 +160,7 @@ void ShowScene2(int mode){
     if(global_scase.obstcoll.nobstinfo>0&&blocklocation!=BLOCKlocation_grid){
       if(visBlocks==visBLOCKOutline||visBlocks==visBLOCKAsInputOutline||
          visBlocks==visBLOCKSolidOutline||visBlocks==visBLOCKAddOutline){
-        DrawOrigObstOutlines();
+        DrawOrigObstOutlines(&global_scase);
       }
     }
 

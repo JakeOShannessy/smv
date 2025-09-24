@@ -765,22 +765,22 @@ void DrawObstOutlines(smv_case *scase){
 
 /* ------------------ DrawOrigObstOutlines ------------------------ */
 
-void DrawOrigObstOutlines(void){
+void DrawOrigObstOutlines(smv_case *scase){
   int i;
   float *color, *oldcolor=NULL;
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-global_scase.xbar0,-global_scase.ybar0,-global_scase.zbar0);
+  glTranslatef(-scase->xbar0,-scase->ybar0,-scase->zbar0);
   AntiAliasLine(ON);
-  glLineWidth(global_scase.linewidth);
+  glLineWidth(scase->linewidth);
   glBegin(GL_LINES);
-  for(i=0; i<global_scase.obstcoll.nobstinfo; i++){
+  for(i=0; i<scase->obstcoll.nobstinfo; i++){
     xbdata *obi;
     float *xyz;
     float xmin, xmax, ymin, ymax, zmin, zmax;
 
-    obi = global_scase.obstcoll.obstinfo + i;
+    obi = scase->obstcoll.obstinfo + i;
     color = foregroundcolor;
     if(obi->bc!=NULL&&obi->bc->showtimelist!=NULL&&obi->bc->showtimelist[iglobal_times]==0)continue;
     if(obi->color!=NULL)color = obi->color;
