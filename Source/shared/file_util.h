@@ -16,7 +16,7 @@ extern int show_timings;
 #include "options.h"
 #include <stdio.h>
 #endif
-#ifdef pp_GCC
+#ifdef __GNU__
 #include <unistd.h>
 #endif
 
@@ -25,8 +25,10 @@ extern int show_timings;
 #include <unistd.h>
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
+#ifndef __MINGW32__
 #define PATH_MAX MAX_PATH
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #elif defined(__linux__)
@@ -70,7 +72,7 @@ typedef struct {
 // vvvvvvvvvvvvvvvvvvvvvvvv preprocessing directives
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-#ifdef X64
+#ifdef _WIN64
 #define FSEEK(a, b, c) _fseeki64(a, b, c)
 #define FTELL(a) _ftelli64(a)
 #else
@@ -104,17 +106,13 @@ typedef struct {
 
 #define BFILE bufferstreamdata
 
-#ifdef X64
-  #ifdef WIN32
-    #define LINT __int64
-  #else
-    #define LINT long long int
-  #endif
+#ifdef _WIN64
+  #define LINT __int64
 #else
-  #define LINT long int
+  #define LINT long long int
 #endif
 
-#ifdef X64
+#ifdef _WIN64
   #define STRUCTSTAT struct __stat64
 #else
   #define STRUCTSTAT struct stat
@@ -123,7 +121,7 @@ typedef struct {
 #define FILE_EXISTS(a) FileExists(a, NULL, 0, NULL, 0)
 int FileExistsOrig(char *filename);
 
-#ifdef WIN32
+#ifdef _WIN32
 #define F_OK 0
 #define W_OK 2
 #endif
@@ -136,7 +134,7 @@ int FileExistsOrig(char *filename);
 #define YES 1
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define GETCWD _getcwd
 #define SEP '\\'
 #else
@@ -303,7 +301,7 @@ EXTERNCPP char *LastName(char *argi);
 // vvvvvvvvvvvvvvvvvvvvvvvv variables vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 #ifndef STREXTERN
-#ifdef WIN32
+#ifdef _WIN32
 STREXTERN char STRDECL(dirseparator[], "\\");
 #else
 STREXTERN char STRDECL(dirseparator[], "/");

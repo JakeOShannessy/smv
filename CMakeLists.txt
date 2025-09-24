@@ -23,23 +23,10 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 # Requires adherence to this standard
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
-if(WIN32)
-    # Set the folder for executables and libraries as the install directory.
-    # Using the same conventions as  GNUInstallDirs may be better but this
-    # matches the current setup.
-    set(CMAKE_INSTALL_BINDIR ".")
-    set(CMAKE_INSTALL_LIBDIR ".")
-    set(CMAKE_INSTALL_SYSCONFDIR ".")
-else()
-    # GNUInstallDirs is used to set the appropriate paths on linux (/usr/lib64
-    # etc).
-    include(GNUInstallDirs)
-endif()
-# Pass a flag to to the source code. There's no great need for this but allows
-# us to have conditional code based on the build method.
-# add_definitions(-Dpp_CMAKE)
+# GNUInstallDirs is used to set the appropriate paths for install artefacts.
+# Despite the name it's still useful on Windows.
+include(GNUInstallDirs)
 add_compile_definitions(pp_GITHASH="${PROJECT_VERSION}+sc2")
-
 
 include(InstallRequiredSystemLibraries)
 configure_file(LICENSE.md LICENSE.txt)
@@ -65,6 +52,7 @@ option(BETA "Include beta functionality" OFF)
 option(STRICT_CHECKS "Run additional strict checks" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(UNICODE "Enable Unicode on Windows" ON)
+option(DISPLAY_TESTS "Enable tests which require a display to run" OFF)
 
 # Ensure all files are in the right place to run the tests
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
@@ -72,24 +60,19 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 # Detect and set flags for Mac
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
-    add_definitions(-Dpp_OSX)
 endif()
 if (UNIX AND NOT MACOSX)
     set(LINUX TRUE)
 endif()
 # Set flags for Windows
 if (WIN32)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_WIN32)
-    add_compile_definitions(PTW32_BUILD PTW32_STATIC_LIB   X64 _WIN32 WIN32 _CONSOLE)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    add_compile_definitions(PTW32_BUILD PTW32_STATIC_LIB _CONSOLE)
     if (UNICODE)
         # We only define pp_UNICODE_PATHS (which is specific to SMV) and not
         # _UNICODE as the vendored version of GLUT doesn't support Unicode
         add_compile_definitions(pp_UNICODE_PATHS)
     endif()
-endif()
-# Set flags for Linux
-if (LINUX)
-    add_definitions(-Dpp_LINUX)
 endif()
 
 add_compile_definitions(GL_SILENCE_DEPRECATION)
@@ -119,10 +102,14 @@ endif()
 
 # This is a set of warnings that are not enabled by default but it would be good
 # to satisfy these.
-if(STRICT_CHECKS AND (NOT MSVC))
-    # set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=clang-diagnostic-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.*")
-    # set(CMAKE_C_CLANG_TIDY "clang-tidy;-checks=clang-diagnostic-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.*")
+if(STRICT_CHECKS)
     set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+endif()
+if(STRICT_CHECKS AND (NOT MSVC))
+    if ((NOT MACOSX) AND (CMAKE_C_COMPILER_ID STREQUAL Clang))
+        set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
+        set(CMAKE_C_CLANG_TIDY "clang-tidy")
+    endif()
     add_compile_options(-O2)
     add_compile_options(-fexceptions)
     add_compile_options(-grecord-gcc-switches)
@@ -131,26 +118,27 @@ if(STRICT_CHECKS AND (NOT MSVC))
     add_compile_options(-Wp,-D_GLIBCXX_ASSERTIONS )
     add_compile_options(-fstack-protector-strong)
     add_compile_options(-fasynchronous-unwind-tables)
-    add_compile_options(-fstack-clash-protection)
     if (NOT MACOSX)
         add_compile_options(-fcf-protection)
+        add_compile_options(-fstack-clash-protection)
+        # Options to apply to all compilers except IntelLLVM
+        add_compile_options($<$<NOT:$<C_COMPILER_ID:IntelLLVM>>:-ffat-lto-objects>)
+        add_compile_options($<$<NOT:$<C_COMPILER_ID:IntelLLVM>>:-flto=auto>)
     endif()
     add_compile_options(-Wno-unused-result)
+    add_compile_options(-Wno-unused-but-set-variable)
     add_compile_options(-Wno-unknown-pragmas)
     add_compile_options(-Wno-uninitialized)
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:$<BUILD_INTERFACE:-Wno-overloaded-virtual;-Wno-unused-comparison>>")
     add_compile_options(-Wno-comment)
-    # Options to apply to all compilers except IntelLLVM
-    add_compile_options($<$<NOT:$<C_COMPILER_ID:IntelLLVM>>:-ffat-lto-objects>)
-    add_compile_options($<$<NOT:$<C_COMPILER_ID:IntelLLVM>>:-flto=auto>)
     # Options to apply only to GNU (gcc)
     add_compile_options($<$<C_COMPILER_ID:GNU>:-Wno-stringop-truncation>)
     # Options to apply only to IntelLLVM
     add_compile_options($<$<C_COMPILER_ID:IntelLLVM>:-Wno-tautological-constant-compare>)
     add_compile_options($<$<C_COMPILER_ID:IntelLLVM>:-Wno-for-loop-analysis>)
-elseif(STRICT_CHECKS AND (NOT MSVC))
-    add_compile_options(/Wall)
-    add_compile_options(/Werror)
+    if (MACOSX)
+        add_compile_options(-Wno-deprecated-declarations)
+    endif()
 endif()
 
 
@@ -180,6 +168,7 @@ if (pp_HASH)
 endif()
 add_subdirectory(Source/makepo)
 add_subdirectory(Source/mergepo)
+add_subdirectory(Source/pnginfo)
 add_subdirectory(Source/smokediff)
 add_subdirectory(Source/smokeview)
 add_subdirectory(Source/smokezip)

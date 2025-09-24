@@ -11,7 +11,7 @@
 #include <unistd.h>
 #endif
 #include <math.h>
-#ifdef WIN32
+#ifdef _WIN32
 #ifdef __MINGW32__
 #undef S_IFBLK
 #undef S_ISBLK
@@ -100,14 +100,10 @@ int STAT(const char *file, STRUCTSTAT *buffer) {
   int r = _wstat64(path, buffer);
   FREEMEMORY(path);
   return r;
-#elif defined(_WIN32)
-  return _stat64(file, buffer);
-#else
-#ifdef X64
+#elif defined(_WIN64)
   return _stat64(file, buffer);
 #else
   return stat(file, buffer);
-#endif
 #endif
 }
 
@@ -266,7 +262,7 @@ char *GetSmokeZipPath(char *progdir){
   }
 
   strcat(zip_path,"smokezip");
-#ifdef WIN32
+#ifdef _WIN32
   strcat(zip_path,".exe");
 #endif
   if(FILE_EXISTS(zip_path)==YES)return zip_path;
@@ -295,7 +291,7 @@ char *GetBaseFileName(char *buffer, const char *file){
   char *filebase,*ext;
 
   strcpy(buffer,file);
-#ifdef WIN32
+#ifdef _WIN32
   filebase=strrchr(buffer,'\\');
 #else
   filebase=strrchr(buffer,'/');
@@ -483,7 +479,7 @@ int Writable(char *dir){
 
   if(dir == NULL || strlen(dir) == 0)return NO;
 
-#ifdef pp_LINUX
+#ifdef __linux__
   if(ACCESS(dir,F_OK|W_OK)==-1){
     return NO;
   }
@@ -1350,18 +1346,6 @@ char *GetFloatFileSizeLabel(float size, char *sizelabel){
   return sizelabel;
 }
 
-#ifdef _WIN32
-char *CombinePaths(const char *path_a, const char *path_b){
-  char *path_out;
-  NEWMEMORY(path_out, sizeof(char) * MAX_PATH);
-  // NB: This uses on older function in order to support "char *".
-  // PathAllocCombine would be better but requires switching to "wchar *".
-#pragma warning(suppress : 4995)
-  char *result = PathCombineA(path_out, path_a, path_b);
-  if(result == NULL) FREEMEMORY(path_out);
-  return result;
-}
-#else
 char *CombinePaths(const char *path_a, const char *path_b) {
   char *path_out;
   size_t path_a_len = strlen(path_a);
@@ -1369,13 +1353,12 @@ char *CombinePaths(const char *path_a, const char *path_b) {
   size_t new_len = path_a_len + 1 + path_b_len;
   NEWMEMORY(path_out, sizeof(char) * (new_len + 1));
   STRCPY(path_out, path_a);
-  path_out[path_a_len] = '/';
-  path_out[path_a_len+1] = '\0';
+  STRCAT(path_out, dirseparator);
+  path_out[path_a_len + 1] = '\0';
   STRCAT(path_out, path_b);
   path_out[new_len] = '\0';
   return path_out;
 }
-#endif
 
 /* ------------------ GetBinPath ------------------------ */
 #ifdef _WIN32
@@ -1591,7 +1574,7 @@ char *GetSmvRootSubPath(const char *subdir) {
 /* ------------------ GetHomeDir ------------------------ */
 
 char *GetHomeDir() {
-#ifdef WIN32
+#ifdef _WIN32
   char *homedir_env = getenv("userprofile");
 #else
   char *homedir_env = getenv("HOME");
@@ -1783,7 +1766,7 @@ char *Which(char *progname, char **fullprognameptr){
   char *dir,*pathentry;
   char pathsep[2], dirsep[2];
 
-#ifdef WIN32
+#ifdef _WIN32
   strcpy(pathsep,";");
   strcpy(dirsep,"\\");
 #else
@@ -1800,7 +1783,7 @@ char *Which(char *progname, char **fullprognameptr){
   NewMemory((void **)&pathlistcopy, (unsigned int)(strlen(pathlist)+1));
   strcpy(pathlistcopy, pathlist);
 
-#ifdef WIN32
+#ifdef _WIN32
   {
     const char *ext;
 

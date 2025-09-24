@@ -1,13 +1,18 @@
 #ifndef OPTIONS_COMMON_H_DEFINED
 #define OPTIONS_COMMON_H_DEFINED
 
+#if defined(__APPLE__) && defined(__MACH__)
+#define pp_OSX
+#endif
+
 //*** options: all platforms
 
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
 #endif
 #ifndef _DEBUG
-#define pp_HASH   // md5, sha1 and sha255 hashing
+// md5, sha1 and sha255 hashing
+#define pp_HASH
 #endif
 
 #ifdef __INTEL_COMPILER
@@ -29,7 +34,7 @@
 
 #ifdef INTEL_COMPILER_ANY
 #define pp_FSEEK
-#ifdef WIN32
+#ifdef _WIN32
 #define HAVE_MSVS
 #define INTEL_WIN_COMPILER
 #endif
@@ -51,7 +56,7 @@
 
 //*** options: windows
 
-#ifdef WIN32
+#ifdef _WIN32
 
 //*** needed when using Windows Intel compilers
 //    to prevent warnings/errors
@@ -88,14 +93,14 @@
 //*** hash output
 
 #ifdef pp_HASH
-#define PRINTVERSION(a) PRINTversion(a,hash_option)
+#define PRINTVERSION(a,opts) PRINTversion(a,(opts)->hash_option)
 #else
-#define PRINTVERSION(a) PRINTversion(a)
+#define PRINTVERSION(a,opts) PRINTversion(a)
 #endif
 
 #define FILE_SIZE unsigned long long
 
-#ifdef CPP
+#ifdef __cplusplus
 #define CCC "C"
 #define EXTERNCPP extern "C"
 #else

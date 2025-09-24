@@ -318,7 +318,6 @@ EXTERNCPP void GetBoundaryLabels(
               char **labels, float *boundaryvaluespatch, float *tvals256, int nlevel);
 EXTERNCPP void GetColorbarLabels(float tmin, float tmax, int nlevel,
               char labels[12][11],float *tlevels256);
-EXTERNCPP float *GetColorPtr(smv_case *scase, float *color);
 EXTERNCPP float *GetColorTranPtr(float *color, float transparency);
 EXTERNCPP void GetPartColors(partdata *parti, int nlevels, int flag);
 EXTERNCPP void GetPlot3DColors(int iplot, float *ttmin, float *ttmax,
@@ -664,7 +663,7 @@ EXTERNCPP void LoadVSliceMenu(int value);
 EXTERNCPP FILE_SIZE LoadVSliceMenu2(int val);
 EXTERNCPP void MenuStatusCB(int status, int x, int y);
 EXTERNCPP void *MtLoadAllPartFiles(void *arg);
-#ifdef WIN32
+#ifdef _WIN32
 EXTERNCPP void OpenSMVFile(char *filename,int filenamelength,int *openfile);
 #endif
 EXTERNCPP void ParticlePropShowMenu(int value);
@@ -800,7 +799,7 @@ EXTERNCPP void LoadSkyTexture(char *filebase, texturedata *texti);
 
 EXTERNCPP void AntiAliasLine(int flag);
 EXTERNCPP int BuildGbndFile(int file_type);
-EXTERNCPP void DisplayVersionInfo(char *progname);
+EXTERNCPP void DisplayVersionInfo(char *progname, common_opts *opts);
 EXTERNCPP void InitVolrenderScript(char *prefix, char *tour_label, int startframe, int skipframe);
 EXTERNCPP int IsFDSRunning(FILE_SIZE *last_size);
 EXTERNCPP void SetViewPoint(int option);

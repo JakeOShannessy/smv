@@ -13,6 +13,7 @@
 #include "gd.h"
 #include "IOscript.h"
 #include "paths.h"
+#include "readimage.h"
 
 /* ------------------ PlayMovie ------------------------ */
 
@@ -22,7 +23,7 @@ void *PlayMovie(void *arg){
   if(FILE_EXISTS(GetMovieFilePath(moviefile_path)) == YES){
     strcpy(command_line, "ffplay ");
     strcat(command_line, moviefile_path);
-#ifdef WIN32
+#ifdef _WIN32
     strcat(command_line, " 2>Nul ");
 #else
     strcat(command_line, " 2>/dev/null ");
@@ -42,7 +43,7 @@ void *PlayMovie(void *arg){
 void *SetupFF(void *arg){
   int have_ffmpeg_local, have_ffplay_local;
 
-#ifdef WIN32
+#ifdef _WIN32
   have_ffmpeg_local = HaveProg("ffmpeg -version> Nul 2>Nul");
   have_ffplay_local = HaveProg("ffplay -version> Nul 2>Nul");
 #else
@@ -148,7 +149,7 @@ void MakeMovie(void){
         stream_ffmpeg = FOPEN(ffmpeg_command_filename,"w");
         FREEMEMORY(ffmpeg_command_filename);
         if(stream_ffmpeg!=NULL){
-#ifdef WIN32
+#ifdef _WIN32
           fprintf(stream_ffmpeg,"@echo off\n");
 #else
           fprintf(stream_ffmpeg,"#!/bin/bash\n");
@@ -497,7 +498,7 @@ void RenderFrame(int view_mode){
   int woffset=0,hoffset=0;
   int screenH;
 
-#ifdef WIN32
+#ifdef _WIN32
   SetThreadExecutionState(ES_DISPLAY_REQUIRED); // reset display idle timer to prevent screen saver from activating
 #endif
 
@@ -603,31 +604,89 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
   RENDERimage = gdImageCreateTrueColor(width_hat,height_hat);
 
   for(irow=0;irow<nfactor;irow++){
-    int icol, imin, imax;
+    int icol, imin_height, imax_height;
 
-    imin = irow*screenHeight;
-    imax = (irow+1)*screenHeight;
+    imin_height = irow*screenHeight;
+    imax_height = (irow+1)*screenHeight;
 
     for(icol=0;icol<nfactor;icol++){
       GLubyte *p;
-      int jmin, jmax;
+      int jmin_width, jmax_width;
 
-      jmin = icol*screenWidth;
-      jmax = (icol+1)*screenWidth;
+      jmin_width = icol*screenWidth;
+      jmax_width = (icol+1)*screenWidth;
 
       p = *screenbuffers++;
       if(clip_rendered_scene==1&&
-            (jmax<clip_left_hat||jmin>clip_right_hat||imax<clip_bottom_hat||imin>clip_top_hat)){
+            (jmax_width<clip_left_hat|| jmin_width>clip_right_hat|| imax_height<clip_bottom_hat|| imin_height>clip_top_hat)){
             continue;
       }
 
-      for(i=imin; i<imax; i++){
-        for(j=jmin; j<jmax; j++){
-          r=*p++; g=*p++; b=*p++;
-          if(clip_rendered_scene==0||
-            (clip_left_hat<=j&&j<=clip_right_hat&&clip_bottom_hat<=i&&i<=clip_top_hat)){
-            rgb_local = (r<<16)|(g<<8)|b;
-            gdImageSetPixel(RENDERimage,j-clip_left_hat,clip_top_hat - i,rgb_local);
+      if(nfactor == 1 && encode_png == 1 && render_filetype == PNG){
+        unsigned char *rgb_locals=NULL;
+        int nrgb_locals, count = 0;
+
+        nrgb_locals = (imax_height + 1 - imin_height) * (jmax_width + 1 - jmin_width);
+        if(nrgb_locals > 0){
+          NewMemory(( void ** )&rgb_locals, 3*nrgb_locals);
+          for(i = imin_height; i < imax_height; i++){
+            for(j = jmin_width; j < jmax_width; j++){
+              r = *p++; g = *p++; b = *p++;
+              if(clip_rendered_scene==0 ||
+                (clip_left_hat<=j&&j<=clip_right_hat&&clip_bottom_hat<=i&&i<=clip_top_hat)){
+                rgb_locals[count++] = r;
+                rgb_locals[count++] = g;
+                rgb_locals[count++] = b;
+              }
+            }
+          }
+
+          char infobuffer[100];
+          int ninfobuffer;
+          int skip=3, channel=2;
+          char fds_label[256], smv_label[256];
+
+          strcpy(fds_label, global_scase.fds_githash);
+          if(strcmp(fds_label, "unknown") == 0){
+            if(global_scase.nzoneinfo == 0){
+              strcpy(fds_label, "FDS revision: unknown");
+            }
+            else{
+              strcpy(fds_label, "CFAST revision: unknown");
+            }
+          }
+          strcpy(smv_label, smv_githash);
+          if(strcmp(smv_githash, "unknown") == 0)strcpy(smv_label, "SMV revision: unknown");
+
+          sprintf(infobuffer, "%s\n%s", fds_label, smv_label);
+          ninfobuffer = strlen(infobuffer);
+          EncodePNGData(rgb_locals, nrgb_locals, (unsigned char *)infobuffer, ninfobuffer, skip, channel);
+          count = 0;
+          for(i = imin_height; i < imax_height; i++){
+            for(j = jmin_width; j < jmax_width; j++){
+              if(clip_rendered_scene==0 ||
+                 (clip_left_hat<=j&&j<=clip_right_hat&&clip_bottom_hat<=i&&i<=clip_top_hat)){
+                r = rgb_locals[count++];
+                g = rgb_locals[count++];
+                b = rgb_locals[count++];
+                rgb_local = (r << 16) | (g << 8) | b;
+                gdImageSetPixel(RENDERimage, j - clip_left_hat, clip_top_hat - i, rgb_local);
+              }
+            }
+          }
+          FREEMEMORY(rgb_locals);
+        }
+      }
+      else{
+        for(i = imin_height; i < imax_height; i++){
+          for(j = jmin_width; j < jmax_width; j++){
+            r = *p++; g = *p++; b = *p++;
+            if(clip_rendered_scene == 0 ||
+              ( clip_left_hat <= j && j <= clip_right_hat &&
+                clip_bottom_hat <= i && i <= clip_top_hat)){
+              rgb_local = (r << 16) | (g << 8) | b;
+              gdImageSetPixel(RENDERimage, j - clip_left_hat, clip_top_hat - i, rgb_local);
+            }
           }
         }
       }

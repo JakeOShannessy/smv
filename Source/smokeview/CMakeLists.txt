@@ -58,7 +58,7 @@ target_sources(smokeview PRIVATE
     glui_shooter.cpp
 )
 
-target_link_libraries(smokeview PRIVATE libsmv)
+target_link_libraries(smokeview PRIVATE smv)
 target_link_libraries(smokeview PRIVATE json-c::json-c)
 # if (BUILD_SHARED_LIBS)
 #     install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
@@ -79,7 +79,7 @@ endif()
 # build.
 if (MACOSX)
     add_definitions(-Dpp_NOQUARTZ)
-    target_link_libraries(smokeview PRIVATE "-framework OpenGL" "-framework GLUT")
+    target_link_libraries(smokeview PRIVATE "-framework OpenGL" "-framework GLUT" "-lc++")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 else()
     target_link_libraries(smokeview PRIVATE GLUT::GLUT)
@@ -118,6 +118,6 @@ if (MSVC)
     target_compile_options(smokeview PRIVATE /wd4005)
 endif()
 
-target_link_libraries(smokeview PRIVATE libsmv)
+target_link_libraries(smokeview PRIVATE smv)
 
 install(TARGETS smokeview)

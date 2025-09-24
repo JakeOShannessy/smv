@@ -1,4 +1,3 @@
-#define CPP
 #include "options.h"
 #include <assert.h>
 #include <stdio.h>
@@ -11,6 +10,7 @@
 #include "glui_motion.h"
 #include "colorbars.h"
 #include "readlabel.h"
+#include "readsmvfile.h"
 
 GLUI *glui_labels=NULL;
 

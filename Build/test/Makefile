@@ -35,7 +35,7 @@ no_target:
 
 # ------------- intel win 64 ----------------
 
-intel_win_64 : CFLAGS    = -Od -D WIN32 /nologo
+intel_win_64 : CFLAGS    = -Od /nologo
 intel_win_64 : CC        = $(I_CC)
 intel_win_64 : exe       = test_win_64.exe
 
@@ -88,4 +88,15 @@ gnu_osx_64 : CPP       = g++
 gnu_osx_64 : exe       = test_osx_64
 
 gnu_osx_64 : $(obj)
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+# ------------- clang osx 64 ----------------
+
+clang_osx_64 : CFLAGS    = -O0 -m64
+clang_osx_64 : LFLAGS    = -m64
+clang_osx_64 : CC        = clang
+clang_osx_64 : CPP       = clang++
+clang_osx_64 : exe       = test_osx_64
+
+clang_osx_64 : $(obj)
 	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)

@@ -471,8 +471,7 @@ int CheckScript(char *file){
         if(nparams > kw_last->nparams)printf("          invalid keyword: %s\n", keyword);
         return_val = 2;
       }
-      fclose(stream);
-      return return_val;
+      break;
     }
     line_number++;
     comment = strstr(param_buffer, "//");
@@ -935,7 +934,7 @@ int CompileScript(char *scriptfile){
         }
         len = strlen(param_buffer);
         if(len>0){
-#ifdef WIN32
+#ifdef _WIN32
           for(i=0;i<len;i++){
             if(param_buffer[i]=='/')param_buffer[i]='\\';
           }
@@ -1346,9 +1345,8 @@ int CompileScript(char *scriptfile){
           }
 
           for(i=0;i<ntokens;i++){
+            char label[100];
             switch(tokens[i]){
-              char label[100];
-
               case KW_QUANTITY:
                 scripti->quantity = ctokens[i];
                 break;
@@ -3992,6 +3990,7 @@ int RunScriptCommand(scriptdata *script_command){
         if(Writable(script_dir_path)==NO){
           fprintf(stderr,"*** Error: Cannot write to the RENDERDIR directory: %s\n",script_dir_path);
           if(stderr2!=NULL)fprintf(stderr2, "*** Error: Cannot write to the RENDERDIR directory: %s\n", script_dir_path);
+          SMV_EXIT(2);
         }
         PRINTF("script: setting render path to %s\n",script_dir_path);
       }
@@ -4005,6 +4004,7 @@ int RunScriptCommand(scriptdata *script_command){
         if(Writable(script_htmldir_path)==NO){
           fprintf(stderr, "*** Error: Cannot write to the RENDERHTMLDIR directory: %s\n", script_htmldir_path);
           if(stderr2!=NULL)fprintf(stderr2, "*** Error: Cannot write to the RENDERHTMLDIR directory: %s\n", script_htmldir_path);
+          SMV_EXIT(2);
         }
         PRINTF("script: setting html render path to %s\n", script_htmldir_path);
       }
@@ -4181,6 +4181,7 @@ int RunScriptCommand(scriptdata *script_command){
         dev_index = GetDeviceIndexFromLabel(scripti->cval);
         if(dev_index<0){
           printf("***error: device %s does not exist\n", scripti->cval);
+          SMV_EXIT(2);
           break;
         }
         dev_index += global_scase.devicecoll.ndeviceinfo;                                       // show device

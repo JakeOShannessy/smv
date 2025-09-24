@@ -1,4 +1,3 @@
-#define CPP
 #include "options.h"
 
 #include <assert.h>
@@ -3845,10 +3844,10 @@ void BoundsDlgCB(int var){
 #define HIDE_EDGES 2
 
 extern "C" void GLUIImmersedBoundCB(int var){
+  int i;
+
   updatemenu = 1;
   switch(var){
-    int i;
-
   case IMMERSED_SWITCH_CELLTYPE:
     glui_show_vector_slice   = show_vector_slice[slice_celltype];
     glui_slice_edgetype      = slice_edgetypes[slice_celltype];
@@ -4552,8 +4551,8 @@ void ScriptCB(int var){
     NewMemory((void **)&name_cp,len+sizeof(char));
     strcpy(name_cp,name );
     for(i = 0;i < len;i++){
-#ifdef WIN32
-      if(name_cp[i] == '/'){
+#ifdef _WIN32
+      if(name[i] == '/'){
         set_renderlabel = 1;
         name_cp[i] = '\\';
       }
@@ -4564,8 +4563,8 @@ void ScriptCB(int var){
       }
 #endif
     }
-#ifdef WIN32
-    if(name_cp[len - 1] != '\\'){
+#ifdef _WIN32
+    if(name[len - 1] != '\\'){
       set_renderlabel = 1;
       strcat(name_cp, dirseparator);
     }

@@ -1,9 +1,8 @@
-#define CPP
 #include "options.h"
 
 #include <assert.h>
 #include <stdio.h>
-#ifndef WIN32
+#ifndef _WIN32
 #include <unistd.h>
 #endif
 #include <string.h>
@@ -1479,6 +1478,8 @@ extern "C" void GLUIMotionSetup(int main_window){
   RADIO_render_label = glui_motion->add_radiogroup_to_panel(PANEL_file_suffix, &render_label_type, RENDER_LABEL, RenderCB);
   RADIOBUTTON_1f = glui_motion->add_radiobutton_to_group(RADIO_render_label, "frame number");
   RADIOBUTTON_1g = glui_motion->add_radiobutton_to_group(RADIO_render_label, "time (s)");
+
+  glui_motion->add_checkbox_to_panel(PANEL_render_file, "embed FDS/Smokeview version info", &encode_png);
 
   glui_motion->add_column_to_panel(PANEL_render_file, false);
 

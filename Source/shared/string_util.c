@@ -10,7 +10,7 @@
 #ifdef pp_OSX
 #include <unistd.h>
 #endif
-#ifdef WIN32
+#ifdef _WIN32
 #ifdef __MINGW32__
 #undef S_IFBLK
 #undef S_ISBLK
@@ -142,7 +142,9 @@ char *GetCharPtr(char *label) {
 
 /* ----------------------- AppendString ----------------------------- */
 
-char *AppendString(char *S1, char *S2){
+char *AppendString(const char *S1, const char *S2){
+#define APPEND_BUFFER_SIZE 1024
+  static char append_string[APPEND_BUFFER_SIZE];
   strcpy(append_string, S1);
   strcat(append_string, S2);
   return append_string;
@@ -353,7 +355,7 @@ int RandInt(int min, int max){
 
 /* ------------------ RandStr ------------------------ */
 
-#ifdef WIN32
+#ifdef _WIN32
 #define GETPID GetCurrentProcessId
 #else
 #define GETPID getpid
@@ -1353,7 +1355,7 @@ int MatchWild(char *pTameText, char *pWildText){
 //  formatting to be consistent with smokeview coding style)
 
   char cAltTerminator='\0';
-#ifdef WIN32
+#ifdef _WIN32
   int bCaseSensitive=0;
 #else
   int bCaseSensitive=1;
@@ -1880,7 +1882,7 @@ unsigned char *GetHashSHA1(char *file){
       strcpy(fullpath, pathentry);
     }
     strcat(fullpath, file);
-#ifdef WIN32
+#ifdef _WIN32
     {
       const char *ext;
 
@@ -1943,7 +1945,7 @@ unsigned char *GetHashMD5(char *file){
       strcpy(fullpath, pathentry);
     }
     strcat(fullpath, file);
-#ifdef WIN32
+#ifdef _WIN32
     {
       const char *ext;
 
@@ -1997,7 +1999,7 @@ unsigned char *GetHashSHA256(char *file){
       strcpy(fullpath, pathentry);
     }
     strcat(fullpath, file);
-#ifdef WIN32
+#ifdef _WIN32
     {
       const char *ext;
 
@@ -2049,8 +2051,15 @@ void UsageCommon(int option){
 
 /* ------------------ ParseCommonOptions ------------------------ */
 
-int ParseCommonOptions(int argc, char **argv){
+common_opts ParseCommonOptions(int argc, char **argv){
   int i, no_minus,first_arg=0;
+  common_opts opts = {
+#ifdef pp_HASH
+    .hash_option = HASH_SHA1,
+#else
+    0
+#endif
+  };
 
   no_minus = 0;
   for(i = 1; i<argc; i++){
@@ -2059,48 +2068,48 @@ int ParseCommonOptions(int argc, char **argv){
     argi = argv[i];
     if(argi==NULL||argi[0]!='-'){
       if(first_arg==0){
-        first_arg = i;
-        return first_arg;
+        opts.first_arg = i;
+        return opts;
       }
       no_minus = 1;
       continue;
     }
     if(STRCMP("-help", argi)==0||(STRCMP("-h", argi)==0&&STRCMP("-help_all",argi)!=0)){
-      show_help = 1;
+      opts.show_help = 1;
       continue;
     }
     if(STRCMP("-help_all", argi) == 0){
-      show_help = 2;
+      opts.show_help = 2;
       continue;
     }
     if(STRCMP("-version", argi)==0||STRCMP("-v", argi)==0){
-      if(no_minus==0)show_version = 1;
+      if(no_minus==0)opts.show_version = 1;
       continue;
     }
 #ifdef pp_HASH
     if(STRCMP("-sha256", argi)==0){
-      hash_option = HASH_SHA256;
+      opts.hash_option = HASH_SHA256;
       continue;
     }
     if(STRCMP("-sha1", argi)==0){
-      hash_option = HASH_SHA1;
+      opts.hash_option = HASH_SHA1;
       continue;
     }
     if(STRCMP("-md5", argi)==0){
-      hash_option = HASH_MD5;
+      opts.hash_option = HASH_MD5;
       continue;
     }
     if(STRCMP("-hash_all", argi)==0){
-      hash_option = HASH_ALL;
+      opts.hash_option = HASH_ALL;
       continue;
     }
     if(STRCMP("-hash_none", argi)==0){
-      hash_option = HASH_NONE;
+      opts.hash_option = HASH_NONE;
       continue;
     }
 #endif
   }
-  return first_arg;
+  return opts;
 }
 
 /* ------------------ version ------------------------ */
@@ -2151,7 +2160,7 @@ void PRINTversion(char *progname){
     FREEMEMORY(hash);
   }
 #endif
-#ifdef WIN32
+#ifdef _WIN32
   PRINTF("Platform         : WIN64 ");
 #ifdef INTEL_COMPILER_ANY
   PRINTF(" (Intel C/C++)");
@@ -2161,8 +2170,9 @@ void PRINTversion(char *progname){
 #ifdef pp_OSX
   PRINTF("Platform         : OSX64\n");
 #endif
-#ifdef pp_LINUX
+#ifdef __linux__
   PRINTF("Platform         : LINUX64\n");
 #endif
   FREEMEMORY(progfullpath);
 }
+
