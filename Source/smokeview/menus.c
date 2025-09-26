@@ -2104,9 +2104,8 @@ void RenderMenu(int value){
   case RenderStart360:
     RenderCB(RENDER_START_360);
     break;
-
-#if pp_GIF_ANIMATED
   case RenderStartGIF:
+    render_filetype = GIF;
     render_mode = RENDER_GIF;
     resolution_multiplier=1;
     {
@@ -2121,7 +2120,6 @@ void RenderMenu(int value){
     }
     RenderMenu(RenderStart);
     break;
-#endif
   case RenderStartORIGRES:
     render_mode = RENDER_NORMAL;
     resolution_multiplier=1;
@@ -2178,6 +2176,10 @@ void RenderMenu(int value){
      render_filetype=JPEG;
      updatemenu=1;
      break;
+  case RenderGIF:
+    render_filetype = GIF;
+    updatemenu = 1;
+    break;
   default:
      assert(FFALSE);
      break;
@@ -11468,16 +11470,24 @@ static int menu_count=0;
 
     CREATEMENU(render_filetypemenu, RenderMenu);
     if(render_filetype==PNG){
-      glutAddMenuEntry("  *PNG",RenderPNG);
-      glutAddMenuEntry("  JPEG",RenderJPEG);
+      glutAddMenuEntry("  *PNG", RenderPNG);
+      glutAddMenuEntry("  JPEG", RenderJPEG);
+      glutAddMenuEntry("   GIF", RenderGIF);
     }
     if(render_filetype==JPEG){
-      glutAddMenuEntry("  PNG",RenderPNG);
-      glutAddMenuEntry("  *JPEG",RenderJPEG);
+      glutAddMenuEntry("   PNG", RenderPNG);
+      glutAddMenuEntry(" *JPEG", RenderJPEG);
+      glutAddMenuEntry("   GIF", RenderGIF);
+    }
+    if(render_filetype == GIF){
+      glutAddMenuEntry("   PNG", RenderPNG);
+      glutAddMenuEntry("  JPEG", RenderJPEG);
+      glutAddMenuEntry("  *GIF", RenderGIF);
     }
     if(render_filetype==IMAGE_NONE){
-      glutAddMenuEntry("  PNG",RenderPNG);
-      glutAddMenuEntry("  JPEG",RenderJPEG);
+      glutAddMenuEntry("   PNG", RenderPNG);
+      glutAddMenuEntry("  JPEG", RenderJPEG);
+      glutAddMenuEntry("   GIF", RenderGIF);
     }
 
     CREATEMENU(render_startmenu,RenderMenu);

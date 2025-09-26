@@ -15,6 +15,7 @@
 #include "glui_bounds.h"
 #include "glui_smoke.h"
 #include "IOobjects.h"
+#include "gd.h"
 
 #include "IOscript.h"
 
@@ -4168,7 +4169,6 @@ void DoNonStereo(void){
         FREEMEMORY(screeni->screenbuffer);
       }
     }
-#if pp_GIF_ANIMATED
     if(render_mode == RENDER_GIF) {
       int i, ibuffer = 0;
       GLubyte **screenbuffers;
@@ -4196,7 +4196,6 @@ void DoNonStereo(void){
         GifEnd();
       }
     }
-#endif
     if(stop_rendering==1||stept==0){
       assert(render_skip>0);
       RenderState(RENDER_OFF);
