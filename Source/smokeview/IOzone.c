@@ -870,8 +870,8 @@ void GetSliceTempBounds(void){
     if(return_val!=0)NewResizeMemory(slicei->times, sizeof(float)*slicei->ntimes);
     qmin = 1.0e30;
     qmax = -1.0e30;
-    GetSliceData(slicei, slicei->file, ALL_FRAMES, &slicei->is1, &slicei->is2, &slicei->js1, &slicei->js2, &slicei->ks1, &slicei->ks2, &slicei->idir,
-      &qmin, &qmax, slicei->qslicedata, slicei->times, ntimes_slice_old, &slicei->ntimes,
+    GetSliceData(slicei, slicei->file, ALL_FRAMES,
+      &qmin, &qmax, ntimes_slice_old,
       tload_step, use_tload_begin, use_tload_end, global_scase.tload_begin, global_scase.tload_end
     );
     slicei->globalmin_slice = qmin;

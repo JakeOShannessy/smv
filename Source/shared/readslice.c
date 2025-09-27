@@ -2,6 +2,7 @@
 #include "dmalloc.h"
 #include "string_util.h"
 #include <math.h>
+#include <float.h>
 
 #include <string.h>
 #include "scontour2d.h"
@@ -129,10 +130,40 @@ void GetSliceSizes(const char *slicefilenameptr, int time_frame, int *nsliceiptr
 
 /* ------------------ GetSliceData ------------------------ */
 
-FILE_SIZE GetSliceData(slicedata *sd, const char *slicefilename, int time_frame, int *is1ptr, int *is2ptr, int *js1ptr, int *js2ptr, int *ks1ptr, int *ks2ptr, int *idirptr,
-  float *qminptr, float *qmaxptr, float *qdataptr, float *timesptr, int ntimes_old_arg, int *ntimesptr,
+/// @brief Load slice data from a slice file into a slicedata struct.
+/// @param[inout] sd The slice data struct to load data into.
+/// @param slicefilename The filename to open and read from
+/// @param time_frame
+/// @param[out] qminptr The minimum value parsed, if no values parsed this value
+/// is set to FLT_MIN.
+/// @param[out] qmaxptr The maximum value parsed, if no values parsed this value
+/// is set to FLT_MAX.
+/// @param ntimes_old_arg
+/// @param tload_step_arg Stride of frames to load, 1 means every frame, 2 every
+/// second frame, and so on...
+/// @param[in] settmin_s_arg Is the value of tmin_s_arg set
+/// @param[in] settmax_s_arg Is the value of tmax_s_arg set
+/// @param[in] tmin_s_arg The minimum time frame to parse (in seconds)
+/// @param[in] tmax_s_arg The maximum time frame to parse (in seconds)
+/// @return The size of a single frame of data
+FILE_SIZE GetSliceData(slicedata *sd, const char *slicefilename, int time_frame,
+  float *qminptr, float *qmaxptr, int ntimes_old_arg,
   int tload_step_arg, int settmin_s_arg, int settmax_s_arg, float tmin_s_arg, float tmax_s_arg
 ){
+  *qminptr = FLT_MIN;
+  *qmaxptr = FLT_MAX;
+  int *ntimesptr = &sd->ntimes;
+
+  float *qdataptr = sd->qslicedata;
+  float *timesptr = sd->times;
+
+  int *is1ptr = &sd->is1;
+  int *is2ptr = &sd->is2;
+  int *js1ptr = &sd->js1;
+  int *js2ptr = &sd->js2;
+  int *ks1ptr = &sd->ks1;
+  int *ks2ptr = &sd->ks2;
+  int *idirptr = &sd->idir;
 
   int i, j, k;
   int nsteps;

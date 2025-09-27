@@ -3522,8 +3522,8 @@ FILE_SIZE ReadSlice(const char *file, int ifile, int time_frame, float *time_val
         qmax = -1.0e30;
       }
       if(sd->ntimes > ntimes_slice_old){
-        file_size = GetSliceData(sd, file, time_frame, &sd->is1, &sd->is2, &sd->js1, &sd->js2, &sd->ks1, &sd->ks2, &sd->idir,
-            &qmin, &qmax, sd->qslicedata, sd->times, ntimes_slice_old, &sd->ntimes,
+        file_size = GetSliceData(sd, file, time_frame,
+            &qmin, &qmax, ntimes_slice_old,
             tload_step, use_tload_begin, use_tload_end, global_scase.tload_begin, global_scase.tload_end
           );
         MakeTimesMap(sd->times, &sd->times_map, sd->ntimes);

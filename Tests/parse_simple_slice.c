@@ -84,19 +84,9 @@ int main(int argc, char **argv) {
                   &framesizeptr);
   }
   {
-    int is1ptr = 0;
-    int is2ptr = 0;
-    int js1ptr = 0;
-    int js2ptr = 0;
-    int ks1ptr = 0;
-    int ks2ptr = 0;
-    int idirptr = 0;
     float qminptr = 0;
     float qmaxptr = 0;
-    float qdataptr = 0;
-    float timesptr = 0;
     int ntimes_old_arg = 0;
-    int ntimesptr = 0;
     int tload_step_arg = 1;
     int settmin_s_arg = 0;
     int settmax_s_arg = 0;
@@ -104,12 +94,10 @@ int main(int argc, char **argv) {
     float tmax_s_arg = 0;
 
     slicedata sd = {0};
-    FILE_SIZE r =
-        GetSliceData(&sd, argv[1], -1, &is1ptr, &is2ptr, &js1ptr, &js2ptr,
-                     &ks1ptr, &ks2ptr, &idirptr, &qminptr, &qmaxptr, &qdataptr,
-                     &timesptr, ntimes_old_arg, &ntimesptr, tload_step_arg,
-                     settmin_s_arg, settmax_s_arg, tmin_s_arg, tmax_s_arg);
-    fprintf(stderr, "slicedata: size: %llu ntimes: %d\n", r, ntimesptr);
+    FILE_SIZE r = GetSliceData(&sd, argv[1], -1, &qminptr, &qmaxptr,
+                               ntimes_old_arg, tload_step_arg, settmin_s_arg,
+                               settmax_s_arg, tmin_s_arg, tmax_s_arg);
+    fprintf(stderr, "slicedata: size: %llu\n", r);
     assert(r != 0);
   }
   return 0;
