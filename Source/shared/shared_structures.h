@@ -658,6 +658,20 @@ typedef struct _slicedata {
   float valmin_slice, valmax_slice;
   float diff_valmin,  diff_valmax;
   flowlabels label;
+  /// @brief Blanking data, one byte (unsigned char) for each point and frame.
+  /// Each point has 8 adjacent "cells" each of which may or may not be blanked.
+  /// Each bit in the unsigned char represents a boolean value. 1 means gas, 0
+  /// means solid. The order is (from highest bit to lowest bit):
+  ///  - imin,jmin,kmin
+  ///  - imin,jmin,kmax
+  ///  - imin,jmax,kmin
+  ///  - imin,jmax,kmax
+  ///  - imax,jmin,kmin
+  ///  - imax,jmin,kmax
+  ///  - imax,jmax,kmin
+  ///  - imax,jmax,kmax
+  /// Counted by \ref times multiplied by \ref nsliceijk.
+  unsigned char *blanking;
   /// @brief The raw slice data. Counted by \ref times multiplied by \ref
   /// nsliceijk.
   float *qslicedata;
