@@ -124,9 +124,15 @@ jobs:
           cmake -B ${{github.workspace}}\cbuild -DSTRICT_CHECKS=ON -DCMAKE_BUILD_TYPE=${{ matrix.build }} -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%/scripts/buildsystems/vcpkg.cmake
           cmake --build ${{github.workspace}}\cbuild -j4 --config ${{ matrix.build }}
           copy ${{github.workspace}}\cbuild\${{ matrix.build }}\smokeview.exe smokeview.exe
+      - name: Add msbuild to PATH
+        if: matrix.build == 'Release'
+        uses: microsoft/setup-msbuild@v1.1
+      - name: Install WiX
+        if: matrix.build == 'Release'
+        run: dotnet tool install --global wix
       - name: build installer
         if: matrix.build == 'Release'
-        run: just package-windows
+        run: wix build .\SMVLuaInstaller.wxs  -out SMVLuaInstaller_unsigned.msi
       - name: Test
         shell: bash
         working-directory: ${{github.workspace}}/cbuild
