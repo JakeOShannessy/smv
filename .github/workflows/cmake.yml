@@ -118,7 +118,6 @@ jobs:
       - name: build smokeview
         shell: cmd
         run: |
-          candle --version
           cmake --version
           cmake -B ${{github.workspace}}\cbuild -DSTRICT_CHECKS=ON -DCMAKE_BUILD_TYPE=${{ matrix.build }} -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%/scripts/buildsystems/vcpkg.cmake
           cmake --build ${{github.workspace}}\cbuild -j4 --config ${{ matrix.build }}
