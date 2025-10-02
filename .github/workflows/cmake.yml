@@ -125,11 +125,8 @@ jobs:
           cmake --build ${{github.workspace}}\cbuild -j4 --config ${{ matrix.build }}
           copy ${{github.workspace}}\cbuild\${{ matrix.build }}\smokeview.exe smokeview.exe
       - name: build installer
-        shell: cmd
-        run: |
-          set PATH=%PATH%;C:\Program Files (x86)\WiX Toolset v3.11\bin
-          cmake --install ${{github.workspace}}\cbuild --config ${{env.BUILD_TYPE}} --prefix dist
-          cpack --config ./cbuild/CPackConfig.cmake
+        if: matrix.build == 'Release'
+        run: just package-windows
       - name: Test
         shell: bash
         working-directory: ${{github.workspace}}/cbuild
