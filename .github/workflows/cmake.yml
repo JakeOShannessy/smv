@@ -129,21 +129,16 @@ jobs:
         if: matrix.build == 'Release'
         run: dotnet tool install --global wix
       - name: build installer
-        if: matrix.build == 'Release'
-        run: wix build SMVLuaInstaller.wxs  -out SMVLuaInstaller_unsigned.msi
+        run: |
+          cmake --install cbuild --config ${{ matrix.build }} --prefix dist
+          wix build SMVLuaInstaller.wxs  -out SMVLuaInstaller_unsigned.msi
       - name: Test
         shell: bash
         working-directory: ${{github.workspace}}/cbuild
         run: |
           ctest -j10 -C ${{ matrix.build }} --output-on-failure
-      - name: Archive production artifacts
-        if: matrix.build == 'Release'
-        uses: actions/upload-artifact@v4
-        with:
-          name: smokeview-windows-msvc
-          path: smokeview.exe
       - name: Archive installer
         uses: actions/upload-artifact@v4
         with:
-          name: smokeview-windows-msvc.msi
+          name: smokeview-windows-msvc-${{ matrix.build }}.msi
           path: Smokeview JSONRPC.msi
