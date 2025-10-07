@@ -136,4 +136,9 @@ endif()
 
 target_link_libraries(smokeview PRIVATE smv)
 
-install(TARGETS smokeview jsonrpc)
+if(WIN32)
+    install_dependencies(TARGETS jsonrpc)
+    install_dependencies(TARGETS smokeview)
+else()
+    install(TARGETS smokeview jsonrpc)
+endif()

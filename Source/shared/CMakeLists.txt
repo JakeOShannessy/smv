@@ -40,16 +40,7 @@ target_include_directories(smv PUBLIC
     ../smokeview
 )
 if(WIN32)
-    target_link_libraries(smv PRIVATE PThreads4W::PThreads4W)
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        install(DIRECTORY ${PThreads4W_DEBUG_DLL_DIR}/
-            DESTINATION ${CMAKE_INSTALL_BINDIR}
-            FILES_MATCHING PATTERN "*.dll")
-    else()
-        install(DIRECTORY ${PThreads4W_DLL_DIR}/
-                DESTINATION ${CMAKE_INSTALL_BINDIR}
-                FILES_MATCHING PATTERN "*.dll")
-    endif()
+    target_link_libraries(smv PUBLIC PThreads4W::PThreads4W)
 endif()
 target_link_libraries(smv PUBLIC JPEG::JPEG)
 target_link_libraries(smv PUBLIC PNG::PNG)

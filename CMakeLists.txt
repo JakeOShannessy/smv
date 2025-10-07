@@ -9,6 +9,57 @@ endif()
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.19")
     cmake_policy(SET CMP0110 NEW)
 endif()
+
+if(X_VCPKG_APPLOCAL_DEPS_INSTALL)
+    message(FATAL_ERROR "X_VCPKG_APPLOCAL_DEPS_INSTALL is not supported. Remove the setting from your cmake cache and use install_dependencies instead.")
+endif()
+
+# install_dependencies(TARGETS <target>... [DIRECTORIES directories...] [<other_args>...])
+#
+# Install given executable and any non-redistributable runtime libraries (DLLs)
+# which it depends on.
+#
+# Unparsed arguments are forwarded to both install(TARGETS) and install(RUNTIME_DEPENDENCY_SET)
+#
+# DIRECTORIES should be a list of folders containing these DLLs. Sometimes this
+# info is available from variables set by find_package. It includes the correct
+# vcpkg installation folder for the given config by default as well as Windows/System32
+function(install_dependencies)
+  cmake_parse_arguments(PARSE_ARGV 0 arg "" "TARGETS" "DIRECTORIES")
+
+  string(JOIN "_" _dependency_set_name ${arg_TARGETS} "rts")
+
+  if(NOT arg_TARGETS)
+    message(FATAL_ERROR "You must provide a target")
+  endif()
+
+  install(TARGETS ${arg_TARGETS}
+    RUNTIME_DEPENDENCY_SET ${_dependency_set_name}
+    ${arg_UNPARSED_ARGUMENTS}
+  )
+
+  install(CODE "message(STATUS \"Finding runtime dependencies for ${arg_TARGETS}...\")")
+
+  # setup
+  install(RUNTIME_DEPENDENCY_SET
+    ${_dependency_set_name}
+    PRE_EXCLUDE_REGEXES
+      "^(api|ext)-ms-.+$" # excludes windows API sets
+      "wpaxholder" # dunno why this is in there!
+      "azureattestmanager" # no idea why these azure dlls are linked but they definitely aren't needed!
+      "azureattestnormal"
+    POST_EXCLUDE_REGEXES
+      ".*system32.*" # C:/Windows/System32 means system libraries, which includes too many. Use include(InstallRequiredSystemLibraries) or a vcredist package instead.
+    DIRECTORIES
+      "${arg_DIRECTORIES}" # directories provided at call site
+      "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/bin" # vcpkg_installed/{debug/}bin
+      "${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}/bin" # for cuda dlls
+    ${arg_UNPARSED_ARGUMENTS}
+  )
+
+  install(CODE "message(STATUS \"...Done.\")")
+endfunction()
+
 include(FetchContent)
 
 # Selected the multithreaded runtime when using MSVC
