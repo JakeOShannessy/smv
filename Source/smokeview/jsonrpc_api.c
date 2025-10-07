@@ -45,6 +45,49 @@ json_object *jsonrpc_Render(jrpc_context *context, json_object *params,
   return NULL;
 }
 
+json_object *jsonrpc_CreateGif(jrpc_context *context, json_object *params,
+                               json_object *id) {
+  DisplayCB();
+
+  int errorcode = 0;
+  struct json_object *frames;
+  int has_frames = json_object_object_get_ex(params, "frames", &frames);
+  fprintf(stderr, "has_frames: %d\n", has_frames);
+  if(has_frames) {
+    size_t n_frames = json_object_array_length(frames);
+    GifSpec_Clear();
+    for(size_t n = 0; n < n_frames; n++) {
+      // TODO: improve error handling
+      struct json_object *frame = json_object_array_get_idx(frames, n);
+      if(frame == NULL) continue;
+      int frame_number =
+          json_object_get_int(json_object_object_get(frame, "frame_number"));
+      int duration =
+          json_object_get_int(json_object_object_get(frame, "duration"));
+      fprintf(stderr, "GIF Frame: #%d %d sms\n", frame_number, duration * 10);
+      GifSpec_PushFrame(frame_number, duration);
+
+      // ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
+      // if(errorcode) {
+      //   context->error_code = 117;
+      //   context->error_message = strdup("failed to load smoke3d");
+      // }
+    }
+  }
+  UpdateMovieType(MGIF);
+  RenderCB(MOVIE_FILETYPE);
+  HandleMakeMovie();
+
+  // const char *basename =
+  //     json_object_get_string(json_object_object_get(params, "basename"));
+  // int ret = CApiRender(basename);
+  // if(ret) {
+  //   context->error_code = 111;
+  //   context->error_message = strdup("render failure");
+  // }
+  return NULL;
+}
+
 /// @brief Return the current frame number which Smokeivew has loaded.
 json_object *jsonrpc_GetFrame(jrpc_context *context, json_object *params,
                               json_object *id) {
@@ -449,7 +492,7 @@ json_object *jsonrpc_GetMeshes(jrpc_context *context, json_object *params,
 }
 
 json_object *jsonrpc_GetSmoke3ds(jrpc_context *context, json_object *params,
-                              json_object *id) {
+                                 json_object *id) {
   struct json_object *smoke3ds = json_object_new_array();
   for(int i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++) {
     smoke3ddata *val = &global_scase.smoke3dcoll.smoke3dinfo[i];
@@ -997,51 +1040,55 @@ json_object *jsonrpc_DevicesHideAll(jrpc_context *context, json_object *params,
   return NULL;
 }
 
-#define REG_RPC_COMMAND(func,name) jrpc_register_procedure(server_arg, &func, name, NULL)
+#define REG_RPC_COMMAND(func, name)                                            \
+  jrpc_register_procedure(server_arg, &func, name, NULL)
 
 int register_procedures(struct jrpc_server *server_arg) {
-  REG_RPC_COMMAND(jsonrpc_SetFrame,"set_frame");
-  REG_RPC_COMMAND(jsonrpc_SetTime,"set_time");
-  REG_RPC_COMMAND(jsonrpc_SetCameraAz,"set_camera_az");
-  REG_RPC_COMMAND(jsonrpc_SetCameraElev,"set_camera_elev");
-  REG_RPC_COMMAND(jsonrpc_SetCameraEye,"set_camera_eye");
-  REG_RPC_COMMAND(jsonrpc_SetCameraZoom,"set_camera_zoom");
-  REG_RPC_COMMAND(jsonrpc_SetCameraViewDir,"set_camera_view_dir");
+  REG_RPC_COMMAND(jsonrpc_SetFrame, "set_frame");
+  REG_RPC_COMMAND(jsonrpc_SetTime, "set_time");
+  REG_RPC_COMMAND(jsonrpc_SetCameraAz, "set_camera_az");
+  REG_RPC_COMMAND(jsonrpc_SetCameraElev, "set_camera_elev");
+  REG_RPC_COMMAND(jsonrpc_SetCameraEye, "set_camera_eye");
+  REG_RPC_COMMAND(jsonrpc_SetCameraZoom, "set_camera_zoom");
+  REG_RPC_COMMAND(jsonrpc_SetCameraViewDir, "set_camera_view_dir");
 
-  REG_RPC_COMMAND(jsonrpc_GetNGlobalTimes,"get_n_global_times");
-  REG_RPC_COMMAND(jsonrpc_GetTime,"get_time");
-  REG_RPC_COMMAND(jsonrpc_SetClipping,"set_clipping");
-  REG_RPC_COMMAND(jsonrpc_Render,"render");
-  REG_RPC_COMMAND(jsonrpc_Unloadall,"unload_all");
-  REG_RPC_COMMAND(jsonrpc_SetChidVisibility,"set_chid_visibility");
-  REG_RPC_COMMAND(jsonrpc_ExitSmokeview,"exit");
-  REG_RPC_COMMAND(jsonrpc_SetSliceBounds,"set_slice_bounds");
-  REG_RPC_COMMAND(jsonrpc_SetWindowSize,"set_window_size");
-  REG_RPC_COMMAND(jsonrpc_LoadSliceIndices,"load_slice_indices");
-  REG_RPC_COMMAND(jsonrpc_LoadSlices,"load_slices");
-  REG_RPC_COMMAND(jsonrpc_GetSlices,"get_slices");
-  REG_RPC_COMMAND(jsonrpc_GetSmoke3ds,"get_smoke3ds");
-  REG_RPC_COMMAND(jsonrpc_Load3dSmokeIndices,"load_smoke3d_indices");
-  REG_RPC_COMMAND(jsonrpc_SetOrthoPreset,"set_ortho_preset");
-  REG_RPC_COMMAND(jsonrpc_GetMeshes,"get_meshes");
-  REG_RPC_COMMAND(jsonrpc_CameraSetProjectionType,"set_projection_type");
-  REG_RPC_COMMAND(jsonrpc_SetNamedColorbar,"set_colorbar");
-  REG_RPC_COMMAND(jsonrpc_SetRendertype,"set_render_type");
-  REG_RPC_COMMAND(jsonrpc_Setrenderdir,"set_render_dir");
-  REG_RPC_COMMAND(jsonrpc_SetFontSize,"set_font_size");
-  REG_RPC_COMMAND(jsonrpc_SetTitleVisibility,"set_title_visibility");
-  REG_RPC_COMMAND(jsonrpc_GetTitleVisibility,"get_title_visibility");
-  REG_RPC_COMMAND(jsonrpc_SetMeshLabelVisibility,"set_mesh_label_visibility");
-  REG_RPC_COMMAND(jsonrpc_GetMeshLabelVisibility,"get_mesh_label_visibility");
-  REG_RPC_COMMAND(jsonrpc_SetSmvVersionVisibility,"set_smv_version_visibility");
-  REG_RPC_COMMAND(jsonrpc_GetSmvVersionVisibility,"get_smv_version_visibility");
+  REG_RPC_COMMAND(jsonrpc_GetNGlobalTimes, "get_n_global_times");
+  REG_RPC_COMMAND(jsonrpc_GetTime, "get_time");
+  REG_RPC_COMMAND(jsonrpc_SetClipping, "set_clipping");
+  REG_RPC_COMMAND(jsonrpc_Render, "render");
+  REG_RPC_COMMAND(jsonrpc_CreateGif, "create_gif");
+  REG_RPC_COMMAND(jsonrpc_Unloadall, "unload_all");
+  REG_RPC_COMMAND(jsonrpc_SetChidVisibility, "set_chid_visibility");
+  REG_RPC_COMMAND(jsonrpc_ExitSmokeview, "exit");
+  REG_RPC_COMMAND(jsonrpc_SetSliceBounds, "set_slice_bounds");
+  REG_RPC_COMMAND(jsonrpc_SetWindowSize, "set_window_size");
+  REG_RPC_COMMAND(jsonrpc_LoadSliceIndices, "load_slice_indices");
+  REG_RPC_COMMAND(jsonrpc_LoadSlices, "load_slices");
+  REG_RPC_COMMAND(jsonrpc_GetSlices, "get_slices");
+  REG_RPC_COMMAND(jsonrpc_GetSmoke3ds, "get_smoke3ds");
+  REG_RPC_COMMAND(jsonrpc_Load3dSmokeIndices, "load_smoke3d_indices");
+  REG_RPC_COMMAND(jsonrpc_SetOrthoPreset, "set_ortho_preset");
+  REG_RPC_COMMAND(jsonrpc_GetMeshes, "get_meshes");
+  REG_RPC_COMMAND(jsonrpc_CameraSetProjectionType, "set_projection_type");
+  REG_RPC_COMMAND(jsonrpc_SetNamedColorbar, "set_colorbar");
+  REG_RPC_COMMAND(jsonrpc_SetRendertype, "set_render_type");
+  REG_RPC_COMMAND(jsonrpc_Setrenderdir, "set_render_dir");
+  REG_RPC_COMMAND(jsonrpc_SetFontSize, "set_font_size");
+  REG_RPC_COMMAND(jsonrpc_SetTitleVisibility, "set_title_visibility");
+  REG_RPC_COMMAND(jsonrpc_GetTitleVisibility, "get_title_visibility");
+  REG_RPC_COMMAND(jsonrpc_SetMeshLabelVisibility, "set_mesh_label_visibility");
+  REG_RPC_COMMAND(jsonrpc_GetMeshLabelVisibility, "get_mesh_label_visibility");
+  REG_RPC_COMMAND(jsonrpc_SetSmvVersionVisibility,
+                  "set_smv_version_visibility");
+  REG_RPC_COMMAND(jsonrpc_GetSmvVersionVisibility,
+                  "get_smv_version_visibility");
 
-  REG_RPC_COMMAND(jsonrpc_BlockagesHideAll,"blockages_hide_all");
-  REG_RPC_COMMAND(jsonrpc_SurfacesHideAll,"surfaces_hide_all");
-  REG_RPC_COMMAND(jsonrpc_OutlinesHide,"outlines_hide_all");
-  REG_RPC_COMMAND(jsonrpc_DevicesHideAll,"devices_hide_all");
-  REG_RPC_COMMAND(jsonrpc_GetCsvVectors,"get_csv_vectors");
-  REG_RPC_COMMAND(jsonrpc_SetColorbarFlip,"set_colorbar_flip");
+  REG_RPC_COMMAND(jsonrpc_BlockagesHideAll, "blockages_hide_all");
+  REG_RPC_COMMAND(jsonrpc_SurfacesHideAll, "surfaces_hide_all");
+  REG_RPC_COMMAND(jsonrpc_OutlinesHide, "outlines_hide_all");
+  REG_RPC_COMMAND(jsonrpc_DevicesHideAll, "devices_hide_all");
+  REG_RPC_COMMAND(jsonrpc_GetCsvVectors, "get_csv_vectors");
+  REG_RPC_COMMAND(jsonrpc_SetColorbarFlip, "set_colorbar_flip");
 
   return 0;
 }
