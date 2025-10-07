@@ -1,13 +1,13 @@
 @echo off
-set arg1=%1
-
-Title Building wind2fds for 64 bit Windows
-
-:: build libraries if one is missing
-call ..\..\scripts\test_clang_libs.bat ..\..\LIBS\
-
-erase *.obj *.exe
-make SHELL="%ComSpec%" -f ..\Makefile clang_win_64
-if x%arg1% == xbot goto skip2
-pause
-:skip2
+cmake ^
+    -B cbuild ^
+    -S ../../.. ^
+    -DCMAKE_C_COMPILER=clang ^
+    -DCMAKE_CXX_COMPILER=clang++ ^
+    -GNinja ^
+    -DSTRICT_CHECKS=OFF ^
+    -DCMAKE_BUILD_TYPE=Release ^
+    -DVENDORED_UI_LIBS=ON ^
+    -DVENDORED_LIBS=ON
+cmake --build cbuild --config Release -j6 -v --target wind2fds
+cmake --install cbuild --config Release --prefix dist-debug --component wind2fds

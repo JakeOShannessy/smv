@@ -1,7 +1,13 @@
 @echo off
-
-:: build libraries if one is missing
-call ..\..\scripts\test_clang_libs.bat ..\..\LIBS\
-
-erase *.obj *.exe
-make -j 4 GLUT="%GLUT%" SHELL="%ComSpec%" SMV_TESTFLAG="%SMV_TESTFLAG% %OPT%" SMV_TESTSTRING="%SMV_TESTSTRING%" SMV_PROFILEFLAG="%SMV_PROFILEFLAG%" SMV_PROFILESTRING="%SMV_PROFILESTRING%" -f ..\Makefile clang_win_64%debug%
+cmake ^
+    -B cbuild ^
+    -S ../../.. ^
+    -DCMAKE_C_COMPILER=clang ^
+    -DCMAKE_CXX_COMPILER=clang++ ^
+    -GNinja ^
+    -DSTRICT_CHECKS=OFF ^
+    -DCMAKE_BUILD_TYPE=Release ^
+    -DVENDORED_UI_LIBS=ON ^
+    -DVENDORED_LIBS=ON
+cmake --build cbuild --config Release -j6 -v --target smokeview
+cmake --install cbuild --config Release --prefix dist-debug --component smokeview

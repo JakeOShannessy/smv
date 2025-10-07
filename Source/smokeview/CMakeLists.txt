@@ -125,4 +125,4 @@ endif()
 
 target_link_libraries(smokeview PRIVATE smv)
 
-install(TARGETS smokeview)
+install(TARGETS smokeview COMPONENT smokeview)

@@ -37,4 +37,7 @@ if (WIN32)
     #     install(IMPORTED_RUNTIME_ARTIFACTS unofficial::getopt-win32::getopt)
     # endif()
 endif()
-install(TARGETS smvq)
+
+
+target_link_libraries(smvq PUBLIC json-c::json-c)
+install(TARGETS smvq COMPONENT smvq)

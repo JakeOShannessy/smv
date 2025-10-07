@@ -1,13 +1,13 @@
 @echo off
-set arg1=%1
-
-Title Building pnginfo for 64 bit Windows
-
-:: build libraries if one is missing
-call ..\..\scripts\test_clang_libs.bat ..\..\LIBS\
-
-erase *.obj *.exe
-make SHELL="%ComSpec%" -f ..\Makefile clang_win_64
-if x%arg1% == xbot goto skip2
-pause
-:skip2
+cmake ^
+    -B cbuild ^
+    -S ../../.. ^
+    -DCMAKE_C_COMPILER=clang ^
+    -DCMAKE_CXX_COMPILER=clang++ ^
+    -GNinja ^
+    -DSTRICT_CHECKS=OFF ^
+    -DCMAKE_BUILD_TYPE=Debug ^
+    -DVENDORED_UI_LIBS=ON ^
+    -DVENDORED_LIBS=ON
+cmake --build cbuild --config Debug -j6 -v --target pnginfo
+cmake --install cbuild --config Debug --prefix dist-debug --component pnginfo

@@ -1,10 +1,13 @@
 @echo off
-set from=%1
-
-Title Building makepo for 64 bit Windows
-
-erase *.obj *.exe
-make -j 4 SHELL="%ComSpec%" -f ..\Makefile clang_win_64
-if x%from% == xbot goto skip2
-pause
-:skip2
+cmake ^
+    -B cbuild ^
+    -S ../../.. ^
+    -DCMAKE_C_COMPILER=clang ^
+    -DCMAKE_CXX_COMPILER=clang++ ^
+    -GNinja ^
+    -DSTRICT_CHECKS=OFF ^
+    -DCMAKE_BUILD_TYPE=Debug ^
+    -DVENDORED_UI_LIBS=ON ^
+    -DVENDORED_LIBS=ON
+cmake --build cbuild --config Debug -j6 -v --target makepo
+cmake --install cbuild --config Debug --prefix dist-debug --component makepo

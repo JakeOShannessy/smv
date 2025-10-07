@@ -12,4 +12,4 @@ add_executable(smokezip
 target_include_directories(smokezip PRIVATE .)
 target_link_libraries(smokezip PRIVATE smv)
 
-install(TARGETS smokezip)
+install(TARGETS smokezip COMPONENT smokezip)
