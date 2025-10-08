@@ -68,10 +68,10 @@ json_object *jsonrpc_CreateGif(jrpc_context *context, json_object *params,
       GifSpec_PushFrame(frame_number, duration);
 
       // ReadSmoke3D(ALL_SMOKE_FRAMES, i, LOAD, FIRST_TIME, &errorcode);
-      // if(errorcode) {
-      //   context->error_code = 117;
-      //   context->error_message = strdup("failed to load smoke3d");
-      // }
+      if(errorcode) {
+        context->error_code = 117;
+        context->error_message = strdup("failed to create GIF");
+      }
     }
   }
   UpdateMovieType(MGIF);
