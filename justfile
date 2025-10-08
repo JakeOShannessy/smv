@@ -11,7 +11,7 @@ test:
 
 # Build the debug binaries
 build-win:
-    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-windows -DVCPKG_HOST_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE="../vcpkg/scripts/buildsystems/vcpkg.cmake" -DVENDORED_UI_LIBS=ON
+    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-windows -DVCPKG_HOST_TRIPLET=x64-windows -DCMAKE_TOOLCHAIN_FILE="../vcpkg/scripts/buildsystems/vcpkg.cmake"
     cmake --build cbuild --config Debug -j6
     cmake --install cbuild --config Debug --prefix dist-debug
 
@@ -26,12 +26,12 @@ package-cmake-win: build-release-win
 
 # Build the debug binaries
 build:
-    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=ON
+    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug
     cmake --build cbuild --config Debug -j6
     cmake --install cbuild --config Debug --prefix dist-debug
 
 build-strict:
-    cmake -B cbuild -DSTRICT_CHECKS=ON -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=ON
+    cmake -B cbuild -DSTRICT_CHECKS=ON -DCMAKE_BUILD_TYPE=Debug
     cmake --build cbuild --config Debug -j6
     cmake --install cbuild --config Debug --prefix dist-debug
 
