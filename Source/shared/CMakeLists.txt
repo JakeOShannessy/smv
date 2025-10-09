@@ -21,24 +21,17 @@ add_library(smv STATIC
     readimage.c
     readcad.c
     readgeom.c
-    colorbars.c
-    colorbar_defs.c
     readhvac.c
     readslice.c
     readsmoke.c
     readobject.c
-    readcad.c
     readlabel.c
     readtour.c
     scontour2d.c
     readsmvfile.c
     "paths.c"
 )
-target_include_directories(smv PUBLIC
-    .
-    #TODO: this is a bit of a hack, it shouldn't really use options.h
-    ../smokeview
-)
+target_include_directories(smv PUBLIC .)
 if(WIN32)
     target_link_libraries(smv PUBLIC PThreads4W::PThreads4W)
 endif()
