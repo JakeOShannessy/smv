@@ -2,7 +2,7 @@
 #include "dmalloc.h"
 #include "string_util.h"
 #include <math.h>
-
+#include <stdbool.h>
 #include <string.h>
 #include "scontour2d.h"
 #include "isobox.h"
@@ -10,6 +10,34 @@
 #include "datadefs.h"
 #include "readslice.h"
 #include "getdata.h"
+
+
+/* ------------------ IsAutoFlip ------------------------ */
+
+/// @brief By default, should the colorbar associated with this quantity be
+/// flipped? This is generally true when low values have a negative implication
+/// (such as visibility) and false when high values have a negative implication
+/// (such as temperature).
+/// @return a boolean indicating if the colorbar should be flipped.
+bool IsAutoFlipQuantity(const char *quantity) {
+  if(strncmp(quantity, "SOOT VISIBILITY", 15) == 0) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+/* ------------------ IsAutoFlip ------------------------ */
+
+/// @brief By default, should the colorbar associated with this slice be
+/// flipped? This is generally true when low values have a negative implication
+/// (such as visibility) and false when high values have a negative implication
+/// (such as temperature).
+/// @return a boolean indicating if the colorbar should be flipped.
+bool IsAutoFlipSlice(slicedata *sd) {
+  return IsAutoFlipQuantity(sd->label.longlabel);
+}
 
 /* ------------------ GetSliceFileHeader ------------------------ */
 
