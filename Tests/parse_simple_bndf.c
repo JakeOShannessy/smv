@@ -1,13 +1,12 @@
-#include "options.h"
-// TODO: sort out imports
-#include "getdata.h"
 #include "dmalloc.h"
+#include "getdata.h"
+#include "smv.h"
 #include <stdint.h>
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
   initMALLOC();
-  if (argc < 3) return 2;
+  if(argc < 3) return 2;
   int error = 0;
   char *filename = argv[1];
   size_t n_expected_frames = atol(argv[2]);
@@ -18,7 +17,7 @@ int main(int argc, char **argv) {
   int *j2 = NULL;
   int *k1 = NULL;
   int *k2 = NULL;
-  int *patchdir = NULL;
+  int *patch_dir = NULL;
   FILE *file;
   int npatches = 0;
   int headersize = 0;
@@ -32,21 +31,21 @@ int main(int argc, char **argv) {
   NewMemory((void **)&j2, npatches * sizeof(*j2));
   NewMemory((void **)&k1, npatches * sizeof(*k1));
   NewMemory((void **)&k2, npatches * sizeof(*k2));
-  NewMemory((void **)&patchdir, npatches * sizeof(*k2));
+  NewMemory((void **)&patch_dir, npatches * sizeof(*k2));
 
   getpatchsizes2(file, boundary_version, npatches, &npatchsize, i1, i2, j1, j2,
-                 k1, k2, patchdir, &headersize, &framesize);
+                 k1, k2, patch_dir, &headersize, &framesize);
   fclose(file);
 
-  if (error) return error;
+  if(error) return error;
   file = openboundary(filename, boundary_version, &error);
-  if (error) return error;
+  if(error) return error;
   float patchtime = 0.0;
   int file_size = 0;
-  float *patchdata;
+  float *patch_data;
   int npatchdata = 0;
   int nsize = 0;
-  for (int i = 0; i < npatches; i++) {
+  for(int i = 0; i < npatches; i++) {
     int size = (i2[i] - i1[i] + 1) * (j2[i] - j1[i] + 1) * (k2[i] - k1[i] + 1);
     printf("patch[%d] %d-%d %d-%d %d-%d (%d)\n", i, i1[i], i2[i], j1[i], j2[i],
            k1[i], k2[i], size);
@@ -56,26 +55,26 @@ int main(int argc, char **argv) {
   // TODO: we need information about the patches first, including
   //  1. Number of patches.
   //  2. IJK values.
-  NewMemory((void **)&patchdata, nsize * sizeof(float));
+  NewMemory((void **)&patch_data, nsize * sizeof(float));
 
-  NewMemory((void **)&patchdir, npatches * sizeof(int));
+  NewMemory((void **)&patch_dir, npatches * sizeof(int));
 
   int i = 0;
-  while (1) {
-    getpatchdata(file, npatches, i1, i2, j1, j2, k1, k2, &patchtime, patchdata,
+  while(1) {
+    getpatchdata(file, npatches, i1, i2, j1, j2, k1, k2, &patchtime, patch_data,
                  &npatchdata, &file_size, &error);
-    if (error) break;
+    if(error) break;
     i++;
   }
 
-  FREEMEMORY(patchdata);
+  FREEMEMORY(patch_data);
   FREEMEMORY(i1);
   FREEMEMORY(i2);
   FREEMEMORY(j1);
   FREEMEMORY(j2);
   FREEMEMORY(k1);
   FREEMEMORY(k2);
-  if (i != n_expected_frames) {
+  if(i != n_expected_frames) {
     return 1;
   }
   closefortranfile(file);

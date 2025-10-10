@@ -1,11 +1,6 @@
-#include "options.h"
-
-#include "getdata.h"
-
 #include "dmalloc.h"
-
-#include "file_util.h"
-#include "string_util.h"
+#include "getdata.h"
+#include "smv.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>

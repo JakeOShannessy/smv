@@ -1,13 +1,12 @@
-#include "options.h"
-// TODO: sort out imports
-#include "getdata.h"
 #include "dmalloc.h"
+#include "getdata.h"
+#include "smv.h"
 #include <stdint.h>
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
   initMALLOC();
-  if (argc < 3) return 2;
+  if(argc < 3) return 2;
   int error = 0;
   char *filename = argv[1];
   size_t n_expected_frames = atol(argv[2]);
@@ -32,11 +31,11 @@ int main(int argc, char **argv) {
 
   getpartheader2(file, nclasses, nquantities, &size);
   int i = 0;
-  while (1) {
+  while(1) {
     float time;
     getpartdataframe(file, nclasses, nquantities, npoints, &time, tagdata,
                      pdata, &size, &error);
-    if (error != 0) break;
+    if(error != 0) break;
     i++;
   }
 
@@ -46,7 +45,7 @@ int main(int argc, char **argv) {
   FREEMEMORY(npoints);
   FREEMEMORY(pdata);
   FREEMEMORY(tagdata);
-  if (i != n_expected_frames) {
+  if(i != n_expected_frames) {
     return 1;
   }
   return 0;

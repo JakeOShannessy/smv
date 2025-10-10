@@ -1,10 +1,6 @@
-#include "options.h"
-
-// TODO: sort out imports
+#include "smv.h"
 #include "dmalloc.h"
-#include "getdata.h"
-#include <stdlib.h>
-
+#include "readhvac.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -12,17 +8,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#include "dmalloc.h"
-#include "datadefs.h"
-#include "histogram.h"
-#include "isobox.h"
-#include "string_util.h"
-
-#include "file_util.h"
-#include "stdio_buffer.h"
-
-#include "readhvac.h"
 
 void init_vals(hvacdatacollection *hvaccoll, const char *file) {
   NewMemory((void **)&(hvaccoll->hvacductvalsinfo), sizeof(hvacvalsdata));
@@ -35,7 +20,7 @@ void init_vals(hvacdatacollection *hvaccoll, const char *file) {
 
   hvaccoll->hvacductvalsinfo->n_duct_vars = 4;
 
-  if (hvaccoll->hvacductvalsinfo->n_duct_vars > 0) {
+  if(hvaccoll->hvacductvalsinfo->n_duct_vars > 0) {
     NewMemory((void **)&hvaccoll->hvacductvalsinfo->duct_vars,
               hvaccoll->hvacductvalsinfo->n_duct_vars * sizeof(hvacvaldata));
     {
@@ -82,14 +67,14 @@ int main(int argc, char **argv) {
 
   FILE_SIZE file_size;
   int ret = ReadHVACData0(&hvaccoll, 0, &file_size);
-  if (ret) return ret;
-  for (int i = 0; i < hvaccoll.hvacductvalsinfo->n_duct_vars; i++) {
+  if(ret) return ret;
+  for(int i = 0; i < hvaccoll.hvacductvalsinfo->n_duct_vars; i++) {
     hvacvaldata *hi = hvaccoll.hvacductvalsinfo->duct_vars + i;
     fprintf(stderr, "%s\n", hi->label.longlabel);
     fprintf(stderr, "  shortlabel: %s\n", hi->label.shortlabel);
     fprintf(stderr, "  units: %s\n", hi->label.unit);
     fprintf(stderr, "  nvals: %d\n", hi->nvals);
-    for (int j = 0; j < hi->nvals + 100; j++) {
+    for(int j = 0; j < hi->nvals + 100; j++) {
       fprintf(stderr, "    %d: %g\n", j, hi->vals[j]);
     }
   }

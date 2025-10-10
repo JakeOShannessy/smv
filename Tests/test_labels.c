@@ -1,15 +1,10 @@
-#include "options.h"
-
-#include "getdata.h"
-
 #include "dmalloc.h"
-
-#include "string_util.h"
+#include "getdata.h"
+#include "readlabel.h"
+#include "smv.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "readlabel.h"
 
 int main(int argc, char **argv) {
   initMALLOC();
@@ -39,7 +34,7 @@ int main(int argc, char **argv) {
     assert(coll->label_first.next != &coll->label_last);
     // Do something with all of the labels
     LabelPrint(coll);
-    FreeLabelsCollection(coll);
+    ClearLabelsCollection(coll);
     // Check that collection is empty
     assert(coll->label_first.next == &coll->label_last);
   }

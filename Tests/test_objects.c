@@ -1,13 +1,8 @@
-#include "options.h"
-
-#include "getdata.h"
-
 #include "dmalloc.h"
-
-#include "string_util.h"
-#include <stdlib.h>
-
+#include "getdata.h"
 #include "readobject.h"
+#include "smv.h"
+#include <stdlib.h>
 
 int main(int argc, char **argv) {
   initMALLOC();

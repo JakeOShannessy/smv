@@ -1,15 +1,22 @@
 #ifndef SHARED_STRUCTURES_H_DEFINED
 #define SHARED_STRUCTURES_H_DEFINED
-#include "isobox.h"
 #include "options_common.h"
-#include <stdio.h>
 
+#include "colorbars.h"
+#include "scontour2d.h"
+#include "csphere.h"
+#include "histogram.h"
+#include "isobox.h"
+#include "stdio_m.h"
+#include "string_util.h"
 #if defined(_WIN32)
 #include <windows.h>
 #endif
 #include GLU_H
-#include GL_H
-#include "string_util.h"
+
+#define MAXPLOT3DVARS   6
+#define MAXRGB        256
+#define MAXFILELEN    360
 
 #define PROPVARMAX 100
 
@@ -69,18 +76,6 @@ typedef struct _sv_object {
    * next sv_object in the list */
   struct _sv_object *next;
 } sv_object;
-
-#include "colorbars.h"
-#include "scontour2d.h"
-#include "csphere.h"
-#include "histogram.h"
-#include "isobox.h"
-#include "stdio_m.h"
-#include "string_util.h"
-
-#define MAXPLOT3DVARS   6
-#define MAXRGB        256
-#define MAXFILELEN    360
 
 /* --------------------------  outlinedata ---------------------------------- */
 

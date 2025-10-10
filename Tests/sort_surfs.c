@@ -1,7 +1,5 @@
-#define INMAIN
-#include "options.h"
 #include "dmalloc.h"
-#include "shared_structures.h"
+#include "smv.h"
 #include <assert.h>
 #include <string.h>
 

@@ -1,17 +1,13 @@
-#include "options.h"
-
 #include "dmalloc.h"
-
+#include "smv.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "colorbars.h"
-
 int main(int argc, char **argv) {
   initMALLOC();
-  if (argc < 2) return 2;
+  if(argc < 2) return 2;
   int error = 0;
   const char *filename = argv[1];
   colorbardata *cb;

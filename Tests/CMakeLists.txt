@@ -84,9 +84,10 @@ target_link_libraries(test_unicode_paths PRIVATE smv)
 add_executable(sort_surfs sort_surfs.c)
 target_link_libraries(sort_surfs PRIVATE smv)
 
-# # test_gif
-# add_executable(test_gif test_gif.c)
-# target_link_libraries(test_gif PRIVATE libsmv)
+# api_test
+add_executable(api_test api_test.c)
+target_link_libraries(api_test PRIVATE smv)
+
 
 # Arguments to this tests are <slice path> <number of frames in slice>
 # Simple slice is a finished slice file with 3 frames
@@ -148,3 +149,9 @@ add_test(NAME "Test Unicode Paths"
 
 add_test(NAME "Sort Surfs"
     COMMAND sort_surfs)
+
+add_test(NAME "smvq - parse smv file"
+    COMMAND smvq ${FIG_DIR}/smv/Tests/test_model_small/test_model_small.smv)
+
+add_test(NAME "api_test"
+    COMMAND api_test ${FIG_DIR}/smv/Tests/test_model_small/test_model_small.smv)

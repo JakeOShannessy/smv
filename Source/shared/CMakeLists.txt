@@ -31,7 +31,9 @@ add_library(smv STATIC
     readsmvfile.c
     "paths.c"
 )
+# TODO: eventually we want to make this PRIVATE and use a more explicit API
 target_include_directories(smv PUBLIC .)
+target_include_directories(smv INTERFACE include)
 if(WIN32)
     target_link_libraries(smv PRIVATE PThreads4W::PThreads4W)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -48,6 +50,7 @@ target_link_libraries(smv PUBLIC JPEG::JPEG)
 target_link_libraries(smv PUBLIC PNG::PNG)
 target_link_libraries(smv PUBLIC ZLIB::ZLIB)
 target_link_libraries(smv PUBLIC OpenGL::GL OpenGL::GLU)
+target_link_libraries(smv PUBLIC GLEW::GLEW)
 target_link_libraries(smv PUBLIC PkgConfig::LIBGD)
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(smv PUBLIC m)

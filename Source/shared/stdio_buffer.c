@@ -82,7 +82,7 @@ bufferstreamdata *CopySMVBuffer(bufferstreamdata *stream_in){
 
 /* ------------------ GetSMVBuffer ------------------------ */
 
-bufferstreamdata *GetSMVBuffer(char *file){
+bufferstreamdata *GetSMVBuffer(const char *file){
   bufferstreamdata *stream;
 
   NewMemory((void **)&stream, sizeof(bufferstreamdata));
@@ -229,7 +229,7 @@ void ReadBufferi(readbufferdata *readbufferi){
 
 /* ------------------ ReadBuffer ------------------------ */
 
-int ReadBuffer(char *filename, int filesize, char *buffer){
+int ReadBuffer(const char *filename, int filesize, char *buffer){
   int returnval;
   readbufferdata *readbufferinfo=NULL;
 
@@ -252,7 +252,7 @@ int ReadBuffer(char *filename, int filesize, char *buffer){
 
 /* ------------------ fopen_buffer ------------------------ */
 
-filedata *fopen_buffer(char *filename, char *mode, int nthreads, int use_multithread){
+filedata *fopen_buffer(const char *filename, char *mode, int nthreads, int use_multithread){
   FILE_SIZE i,filesize;
   filedata *fileinfo;
   char *buffer, **lines;
@@ -269,7 +269,7 @@ filedata *fopen_buffer(char *filename, char *mode, int nthreads, int use_multith
 
   if(NewMemory((void **)&buffer, filesize+1)==0)return NULL;
 
-  int ReadBuffer(char *filename, int filesize, char *buffer);
+  int ReadBuffer(const char *filename, int filesize, char *buffer);
 
   if(ReadBuffer(filename, filesize, buffer)==0){
     FREEMEMORY(buffer);

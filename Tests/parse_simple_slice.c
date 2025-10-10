@@ -1,8 +1,7 @@
-#include "options.h"
-// TODO: sort out imports
 #include "dmalloc.h"
 #include "getdata.h"
 #include "readslice.h"
+#include "smv.h"
 #include <assert.h>
 #include <float.h>
 #include <stdlib.h>
