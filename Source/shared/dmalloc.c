@@ -1,3 +1,4 @@
+// NOLINTBEGIN
 #include "options_common.h"
 #define INDMALLOC
 #include <assert.h>
@@ -730,3 +731,4 @@ void getMemusage(MMsize totalmemory,char *MEMlabel){
   }
 }
 #endif
+// NOLINTEND

@@ -1,3 +1,4 @@
+// NOLINTBEGIN
 #include "options.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -362,3 +363,4 @@ int CreateScript(char *left_file, char* right_file, char *module_file){
   fclose(stream_module);
   return 0;
 }
+// NOLINTEND

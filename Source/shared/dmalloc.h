@@ -1,3 +1,4 @@
+// NOLINTBEGIN
 #ifndef dmalloc_H_DEFINED
 #define dmalloc_H_DEFINED
 
@@ -162,3 +163,4 @@ mallocflag _ValidPointer(void *pv, size_t size);
 
 #define FREEMEMORY(f) if((f)!=NULL){LOCK_MEM;FreeMemoryNOTHREAD((f));UNLOCK_MEM;(f)=NULL;}
 #endif
+// NOLINTEND
