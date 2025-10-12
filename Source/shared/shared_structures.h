@@ -684,17 +684,19 @@ typedef struct _slicedata {
   /// @brief Boolean value, is this slice a volume slice? This is false if the
   /// slice is planar.
   int volslice;
+  /// @brief The bounding node numbers within the mesh, as defined in the slice file itself.
   int is1, is2, js1, js2, ks1, ks2;
   int iis1, iis2, jjs1, jjs2, kks1, kks2;
   int *imap, *jmap, *kmap;
   int n_imap, n_jmap, n_kmap;
   int plotx, ploty, plotz;
+  /// @brief The bounding node numbers within the mesh, as defined in the *.smv file.
   int ijk_min[3], ijk_max[3];
-  /// @brief The bounds of the slice. TODO: Do these differ from \ref xyz_min and \ref
-  /// xyz_max?
+  /// @brief The bounds of the slice. These are based on the node indices found
+  /// within the slice file (is1, is2, js1, js2, ks1, ks2) and the xyz offsets found in the *.smv file.
   float xmin,xmax,ymin,ymax,zmin,zmax;
-  /// @brief The bounds of the slice. TODO: Do these differ from \ref min, \ref
-  /// xmax, etc.?
+  /// @brief The bounds of the slice. These are based on the node indices found
+  /// within the *.smv file (ijk_min and ijk_max) and the xyz offsets found in the *.smv file.
   float xyz_min[3], xyz_max[3];
   /// @brief The number of nodes/datapoints in a single frame of this slice.
   /// Exactly equivalent to nslicei*nslicej*nslicek. TODO: we don't need to
