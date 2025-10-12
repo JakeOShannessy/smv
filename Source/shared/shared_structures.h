@@ -606,6 +606,18 @@ typedef struct _slicedata {
   /// file. NULL if this was not set.
   char *slicelabel;
   unsigned char *slice_mask;
+  /// @brief What type of compression is used on this slice?
+  ///
+  /// One of:
+  ///
+  ///  - COMPRESSED_UNKNOWN
+  ///
+  ///  - UNCOMPRESSED
+  ///
+  ///  - COMPRESSED_RLE
+  ///
+  ///  - COMPRESSED_ZLIB
+  ///
   int compression_type;
   /// @brief By default, should the colorbar associated with this slice be
   /// flipped? This is generally true when low values have a negative
@@ -628,6 +640,8 @@ typedef struct _slicedata {
   ///    - SLICE_GEOM
   int slice_filetype;
   struct _multislicedata *mslice;
+  /// @brief Boolean. Should this slice be shown on the menu? TODO: this is
+  /// never read so currently serves no purpose.
   int menu_show;
   float *constant_color;
   float qval256[256];
@@ -707,7 +721,29 @@ typedef struct _slicedata {
   /// how it's defined. TODO: This also probably doesn't need to be cached as
   /// it's really only used for constructing menus.
   char cdir[256];
-  int idir, fds_dir;
+
+  /// @brief The direction of the slice. This is determined when reading the
+  /// slice file but appears to ultimately just be set to \ref idir. TODO:
+  /// determine if there is any functional difference between idir and fds_dir.
+  ///
+  /// One of:
+  ///
+  ///   - XDIR
+  ///
+  ///   - YDIR
+  ///
+  ///   - ZDIR
+  int idir;
+  /// @brief The direction of the slice, as defined in the *.smv file.
+  ///
+  /// One of:
+  ///
+  ///   - XDIR
+  ///
+  ///   - YDIR
+  ///
+  ///   - ZDIR
+  int fds_dir;
   float sliceoffset;
   /// @brief Number of nodes along the I axis.
   int nslicei;
