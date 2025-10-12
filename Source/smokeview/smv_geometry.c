@@ -1354,7 +1354,9 @@ void SetHiddenBlockages(meshdata *meshi){
 
 int MakeIBlank(void){
   int ig;
-
+  // TODO: we need to do this on a frame-by-frame basis
+  // int chosen_frame = 0;
+  float show_time = 18.0;
   if(global_scase.use_iblank==0)return 0;
   for(ig=0;ig<global_scase.meshescoll.nmeshes;ig++){
     meshdata *meshi;
@@ -1388,9 +1390,11 @@ int MakeIBlank(void){
     meshi->c_iblank_y0_temp        = c_iblank_y;
     meshi->c_iblank_z0_temp        = c_iblank_z;
 
+    // Initially set all iblank cell values to GAS
     for(i=0;i<ibar*jbar*kbar;i++){
       iblank_cell[i]=GAS;
     }
+    // Initially set all iblank node, and xyz values to GAS
     for(i=0;i<ijksize;i++){
       c_iblank_node_html[i] = GAS;
       iblank_node[i]        = GAS;
@@ -1403,26 +1407,58 @@ int MakeIBlank(void){
     ny = jbar+1;
     nxy = nx*ny;
     ibarjbar = ibar*jbar;
-
+    fprintf(stderr, "MakeIBlank: %d\n", ig);
+    // USING IJKCELL
     for(ii=0;ii<meshi->nbptrs;ii++){
       blockagedata *bc;
 
       bc=meshi->blockageinfoptrs[ii];
+
+      // First get the most recent show setting. If there is no show setting, assume true.
+      int show = 1;
+      if(bc->nshowtime > 0) {
+        for(int n = 0; n < bc->nshowtime; n++) {
+          fprintf(stderr, "bc->showtimelist[%d] = %f\n", n,
+                  bc->showtime[n]);
+          if (bc->showtime[n] > show_time) {
+            continue;
+          } else {
+            show = (int)bc->showhide[n];
+          }
+        }
+      }
+      if(!show)continue;
       for(k = bc->ijk[KMIN]; k < bc->ijk[KMAX]; k++){
         for(j = bc->ijk[JMIN]; j < bc->ijk[JMAX]; j++){
           int ijk;
 
           ijk = IJKCELL(bc->ijk[IMIN], j, k);
           for(i = bc->ijk[IMIN]; i < bc->ijk[IMAX]; i++){
+            fprintf(stderr, "[%d,%d,%d]: SOLID\n", i,j,k);
             iblank_cell[ijk++] = SOLID;
           }
         }
       }
     }
+    // USING IJK
     for(ii = 0; ii<meshi->nbptrs; ii++){
       blockagedata *bc;
 
       bc = meshi->blockageinfoptrs[ii];
+      // First get the most recent show setting. If there is no show setting, assume true.
+      int show = 1;
+      if(bc->nshowtime > 0) {
+        for(int n = 0; n < bc->nshowtime; n++) {
+          fprintf(stderr, "bc->showtimelist[%d] = %f\n", n,
+                  bc->showtime[n]);
+          if (bc->showtime[n] > show_time) {
+            continue;
+          } else {
+            show = (int)bc->showhide[n];
+          }
+        }
+      }
+      if(!show)continue;
       for(k = bc->ijk[KMIN]; k<=bc->ijk[KMAX]; k++){
         for(j = bc->ijk[JMIN]; j<=bc->ijk[JMAX]; j++){
           int ijk;
@@ -1434,6 +1470,7 @@ int MakeIBlank(void){
         }
       }
     }
+    // Make fblank_cell the same as iblank_cell
     if(fblank_cell!=NULL){
       for(ii=0;ii<ibar*jbar*kbar;ii++){
         fblank_cell[ii]=iblank_cell[ii];

@@ -578,26 +578,73 @@ typedef struct _compdata {
 /* --------------------------  slicedata ------------------------------------ */
 
 typedef struct _slicedata {
-  int seq_id, autoload;
-  char *file, *size_file, *bound_file;
+  int seq_id;
+  /// @brief Should this file be automatically loaded. TODO: This value is never
+  /// actually read. The equivalent in \ref multislicedata is used.
+  int autoload;
+  char *file;
+  char *size_file;
+  char *bound_file;
+  /// @brief Does this slice have a boundary file at the path \ref bound_file.
   int have_bound_file;
-  char *comp_file, *reg_file, *vol_file;
+  char *comp_file;
+  char *reg_file;
+  char *vol_file;
   char *geom_file;
   int finalize;
+  /// @brief The index of the slice _as defined_, for example, each &SLCF in an
+  /// FDS input file will share the same index. An &SLCF entry of
+  /// QUANTITY='TEMPERATURE' and VECTOR=.TRUE. will result in 4 entries (temp,
+  /// u-vel, v-vel, and w-vel) _per mesh_. This is likely to match the order of
+  /// definition in an input file but that should not be relied upon.
   int slcf_index;
+  /// @brief The id of the slice as set by the 'ID=' parameter in the input
+  /// file. NULL if this was not set.
   char *slicelabel;
   unsigned char *slice_mask;
+  /// @brief What type of compression is used on this slice?
+  ///
+  /// One of:
+  ///
+  ///  - COMPRESSED_UNKNOWN
+  ///
+  ///  - UNCOMPRESSED
+  ///
+  ///  - COMPRESSED_RLE
+  ///
+  ///  - COMPRESSED_ZLIB
+  ///
   int compression_type;
+  /// @brief By default, should the colorbar associated with this slice be
+  /// flipped? This is generally true when low values have a negative
+  /// implication (such as visibility) and false when high values have a
+  /// negative implication (such as temperature).
   int colorbar_autoflip;
   FILE_SIZE ncompressed;
+  /// @brief What type of slice is this?
+  ///
+  /// One of:
+  ///
+  ///    - SLICE_UNKNOWN
+  ///
+  ///    - SLICE_NODE_CENTER
+  ///
+  ///    - SLICE_CELL_CENTER
+  ///
+  ///    - SLICE_TERRAIN
+  ///
+  ///    - SLICE_GEOM
   int slice_filetype;
   struct _multislicedata *mslice;
+  /// @brief Boolean. Should this slice be shown on the menu? TODO: this is
+  /// never read so currently serves no purpose.
   int menu_show;
   float *constant_color;
   float qval256[256];
   int loaded, loading, display;
   int loaded_save, display_save;
   float position_orig;
+  /// @brief The mesh this slicedata belongs to.
   int blocknumber;
   int cell_center_edge;
   int vec_comp;
@@ -607,41 +654,131 @@ typedef struct _slicedata {
   float valmin_slice, valmax_slice;
   float diff_valmin,  diff_valmax;
   flowlabels label;
-  float *qslicedata, *qsliceframe, *times, *qslice;
+  /// @brief Blanking data, one byte (unsigned char) for each point and frame.
+  /// Each point has 8 adjacent "cells" each of which may or may not be blanked.
+  /// Each bit in the unsigned char represents a boolean value. 1 means gas, 0
+  /// means solid. The order is (from highest bit to lowest bit):
+  ///
+  ///  - imin, jmin, kmin
+  ///
+  ///  - imin, jmin, kmax
+  ///
+  ///  - imin, jmax, kmin
+  ///
+  ///  - imin, jmax, kmax
+  ///
+  ///  - imax, jmin, kmin
+  ///
+  ///  - imax, jmin, kmax
+  ///
+  ///  - imax, jmax, kmin
+  ///
+  ///  - imax, jmax, kmax
+  ///
+  /// Counted by \ref times multiplied by \ref nsliceijk.
+  unsigned char *blanking;
+  /// @brief The raw slice data. Counted by \ref times multiplied by \ref
+  /// nsliceijk.
+  float *qslicedata;
+  /// @brief The data of the current frame. This is a pointer into \ref
+  /// qslicedate. TODO: Unclear what the difference is to \ref qslice.
+  float *qsliceframe;
+  /// @brief The time value (in seconds) for each frame of this slice data.
+  /// Counted by \ref ntimes.
+  float *times;
+  /// @brief The data of the current frame. This is a pointer into \ref
+  /// qslicedate. TODO: Unclear what the difference is to \ref qsliceframe.
+  float *qslice;
   unsigned char *times_map;
   unsigned char *qslicedata_compressed;
   unsigned char *slicecomplevel;
+  /// @brief Boolean value. TODO: unclear use.
   unsigned char full_mesh;
   contour *line_contours;
   int nline_contours;
   compdata *compindex;
   unsigned char *slicelevel;
+  /// @brief The name of this slice as show in the Load/Unload slice menu. TODO:
+  /// It's not necessary to cache this, can be replaced by function.
   char menulabel[128];
+  /// @brief The name of this slice as show in the Show/Hide slice menu. TODO:
+  /// It's not necessary to cache this, can be replaced by function.
   char menulabel2[128];
   float *rgb_slice_ptr[256];
-  int ntimes,ntimes_old,itime;
+  /// @brief Number of frames/times. TODO: Unclear what the difference is to
+  /// \ref nframes.
+  int ntimes;
+  int ntimes_old;
+  /// @brief The current frame as an index into this slices frames
+  int itime;
   unsigned char *iqsliceframe;
   float above_ground_level;
   int have_agl_data;
+  /// @brief Boolean value, is this slice a volume slice? This is false if the
+  /// slice is planar.
   int volslice;
+  /// @brief The bounding node numbers within the mesh, as defined in the slice file itself.
   int is1, is2, js1, js2, ks1, ks2;
   int iis1, iis2, jjs1, jjs2, kks1, kks2;
   int *imap, *jmap, *kmap;
   int n_imap, n_jmap, n_kmap;
   int plotx, ploty, plotz;
+  /// @brief The bounding node numbers within the mesh, as defined in the *.smv file.
   int ijk_min[3], ijk_max[3];
+  /// @brief The bounds of the slice. These are based on the node indices found
+  /// within the slice file (is1, is2, js1, js2, ks1, ks2) and the xyz offsets found in the *.smv file.
   float xmin,xmax,ymin,ymax,zmin,zmax;
+  /// @brief The bounds of the slice. These are based on the node indices found
+  /// within the *.smv file (ijk_min and ijk_max) and the xyz offsets found in the *.smv file.
   float xyz_min[3], xyz_max[3];
+  /// @brief The number of nodes/datapoints in a single frame of this slice.
+  /// Exactly equivalent to nslicei*nslicej*nslicek. TODO: we don't need to
+  /// store this, it would be cheaper to recalculate each time.
   int nsliceijk;
   int *timeslist;
+  /// @brief A string describing the location of this slice. Varies depending on
+  /// how it's defined. TODO: This also probably doesn't need to be cached as
+  /// it's really only used for constructing menus.
   char cdir[256];
-  int idir, fds_dir;
+
+  /// @brief The direction of the slice. This is determined when reading the
+  /// slice file but appears to ultimately just be set to \ref idir. TODO:
+  /// determine if there is any functional difference between idir and fds_dir.
+  ///
+  /// One of:
+  ///
+  ///   - XDIR
+  ///
+  ///   - YDIR
+  ///
+  ///   - ZDIR
+  int idir;
+  /// @brief The direction of the slice, as defined in the *.smv file.
+  ///
+  /// One of:
+  ///
+  ///   - XDIR
+  ///
+  ///   - YDIR
+  ///
+  ///   - ZDIR
+  int fds_dir;
   float sliceoffset;
-  int nslicei, nslicej, nslicek;
+  /// @brief Number of nodes along the I axis.
+  int nslicei;
+  /// @brief Number of nodes along the J axis.
+  int nslicej;
+  /// @brief Number of nodes along the K axis.
+  int nslicek;
   int nslicex, nslicey;
+  /// @brief The total number of nodes/datapoints across all loaded frames. This
+  /// is equivalent to ntimes*nsliceijk TODO: we don't need to
+  /// store this, it would be cheaper to recalculate each time.
   int nslicetotal;
   int slicefile_labelindex;
   int vloaded, uvw;
+  /// @brief Is this slice cell-centred. TODO: this overlaps with \ref
+  /// slice_filetype which also indicates whether a slice is cell-centred.
   int cell_center;
   float delta_orig, dplane_min, dplane_max;
   int extreme_min, extreme_max;
@@ -772,10 +909,18 @@ typedef struct _blockagedata {
   int del;
   int changed, changed_surface;
   int type;
+  /// @brief An array of times at which a show event happens (blockage turns on
+  /// or off). Has length nshowtime.
   float *showtime;
   int *showtimelist;
+  /// @brief An array of boolean values (represented by char). Has length
+  /// nshowtime.
   unsigned char *showhide;
-  int nshowtime, show;
+  /// @brief The number of show entries (i.e. the length of the showtime and
+  /// showhide arrays).
+  int nshowtime;
+  /// @brief Is the blockage currently visible?
+  int show;
   char *label, *id_label;
   float *color;
   int colorindex;

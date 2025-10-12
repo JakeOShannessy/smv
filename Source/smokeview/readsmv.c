@@ -2819,7 +2819,9 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "MakeIBlankSmoke3D");
 
   if(HaveCircularVents()==1|| global_scase.meshescoll.nmeshes < 100 || parse_opts.fast_startup == 0){
-    MakeIBlank();
+    // TODO: MakeIBlank is called here, but at this point we don't have time
+    // dependent blockage date
+    // MakeIBlank();
     PRINT_TIMER(timer_readsmv, "MakeIBlank");
   }
 

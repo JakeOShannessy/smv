@@ -4112,6 +4112,7 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int is1, int is2, int js1, 
         if(iblank_cell != NULL&&iblank_cell[IJKCELL(plotxm1, j, k)] != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
+        fprintf(stderr, "[%d,%d,%d]: %s\n", plotxm1, j,k, iblank_cell);
         if(iblank_cell!=NULL){
           if(show_slice_shaded[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_slice_shaded[IN_GAS_GLUI]==0   && in_gas==1)continue;
@@ -4233,6 +4234,7 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int is1, int is2, int js1, 
         if(iblank_cell != NULL&&iblank_cell[IJKCELL(i, j, plotz-1)] != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
+        fprintf(stderr, "b[%d,%d]: %s\n", i, j, iblank_cell);
         if(iblank_cell!=NULL){
           if(show_slice_shaded[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_slice_shaded[IN_GAS_GLUI]==0   && in_gas==1)continue;
@@ -6556,6 +6558,8 @@ void DrawSliceFrame(){
   int ii;
   int jjj, nslicemax=0, blend_mode;
   int draw_slice;
+
+  fprintf(stderr, "global_scase.slicecoll.sliceinfo[0].itime: %d\n", global_scase.slicecoll.sliceinfo[0].itime);
 
   if(plotstate != DYNAMIC_PLOTS) return;
   if(vis_slice_plot==1||vis_colorbar_dists_plot==1){

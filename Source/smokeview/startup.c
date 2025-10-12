@@ -255,6 +255,8 @@ int SetupCase(char *filename){
       assert(FFALSE);
   }
 
+  MakeIBlank();
+
   /* initialize units */
   INIT_PRINT_TIMER(timer_start);
   InitUnits();
