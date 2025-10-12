@@ -161,7 +161,7 @@
 // Define a NORETURN macro that marks a function as never returning. This is
 // needed to mark that SMV_EXIT never returns, otherwise tools like clang-tidy
 // would find spurious issues.
-#ifndef noreturn
+#ifndef NORETURN
 #  if (__STDC_VERSION__ >= 201112L) && !defined(_WIN32)
      // C11 provides a standard 'noreturn' macro that can be used. Conflicts
      // means this doesn't work well on windows
