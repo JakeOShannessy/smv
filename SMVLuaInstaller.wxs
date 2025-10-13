@@ -140,9 +140,9 @@
                             <File Name='glew32.dll' Source='dist/bin/glew32.dll'> </File>
                             <File Name='zlib1.dll' Source='dist/bin/zlib1.dll'> </File>
                             <File Name='libgd.dll' Source='dist/bin/libgd.dll'> </File>
-                            <!-- <File Name='freeglut.dll' Source='dist/bin/freeglut.dll'> </File> -->
+                            <File Name='freeglut.dll' Source='dist/bin/freeglut.dll'> </File>
                             <File Name='jpeg62.dll' Source='dist/bin/jpeg62.dll'> </File>
-                            <File Name='glut32.dll' Source='dist/bin/glut32.dll'> </File>
+                            <!-- <File Name='glut32.dll' Source='dist/bin/glut32.dll'> </File> -->
                             <File Name='libpng16.dll' Source='dist/bin/libpng16.dll'>
                             </File>
                             <File Name='getopt.dll' Source='dist/bin/getopt.dll'> </File>
