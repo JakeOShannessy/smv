@@ -183,7 +183,7 @@ if(STRICT_CHECKS AND (NOT MSVC))
     add_compile_options(-Wp,-D_GLIBCXX_ASSERTIONS )
     add_compile_options(-fstack-protector-strong)
     add_compile_options(-fasynchronous-unwind-tables)
-    if (NOT MACOSX)
+    if (CMAKE_C_COMPILER_ID STREQUAL GNU)
         add_compile_options(-fcf-protection)
         add_compile_options(-fstack-clash-protection)
         # Options to apply to all compilers except IntelLLVM
