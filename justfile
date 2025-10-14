@@ -31,7 +31,7 @@ build:
     cmake --install cbuild --config Debug --prefix dist-debug
 
 build-wasm:
-    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=ON -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
+    cmake -B cbuild -DCMAKE_BUILD_TYPE=Debug -DVENDORED_UI_LIBS=OFF -DVENDORED_GLUT=OFF -DVENDORED_LIBS=OFF -DCMAKE_TOOLCHAIN_FILE=~/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
     cmake --build cbuild --config Debug -j6 -v
     cmake --install cbuild --config Debug --prefix dist-wasm
 

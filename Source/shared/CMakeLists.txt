@@ -62,27 +62,27 @@ else()
 	else()
 	    target_link_libraries(smv PUBLIC jpeg_static)
 	endif()
-	
+
 	if (PNG_FOUND)
 	    target_link_libraries(smv PUBLIC PNG::PNG)
 	else()
 	    target_link_libraries(smv PUBLIC png_static)
 	endif()
-	
+
 	if (ZLIB_FOUND)
 	    target_link_libraries(smv PUBLIC ZLIB::ZLIB)
 	else()
 	    target_link_libraries(smv PUBLIC zlibstatic)
 	endif()
-	
+
 	if (LIBGD_FOUND AND (NOT VENDORED_LIBS))
 	    target_link_libraries(smv PUBLIC PkgConfig::LIBGD)
 	else()
 	    target_link_libraries(smv PUBLIC gd_static)
 	endif()
+    target_link_libraries(smv PUBLIC OpenGL::GL OpenGL::GLU)
 endif()
 
-target_link_libraries(smv PUBLIC OpenGL::GL OpenGL::GLU)
 
 if ((NOT MACOSX) AND UNIX)
     target_link_libraries(smv PUBLIC m)

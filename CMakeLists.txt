@@ -95,7 +95,7 @@ else()
     )
 endif()
 
-if (VENDORED_LIBS)
+if (VENDORED_LIBS AND NOT EMSCRIPTEN)
     set(BUILD_STATIC_LIBS ON)
     set(BUILD_SHARED_LIBS OFF)
     set(SKIP_INSTALL_ALL TRUE)
@@ -114,13 +114,15 @@ if (VENDORED_LIBS)
         add_subdirectory(Source/pthreads)
     endif()
 else()
-    find_package(GLEW REQUIRED)
     find_package(JPEG REQUIRED)
     find_package(PNG REQUIRED)
     find_package(ZLIB REQUIRED)
-    find_package(json-c CONFIG REQUIRED)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(LIBGD REQUIRED IMPORTED_TARGET gdlib)
+    if (NOT EMSCRIPTEN)
+        find_package(GLEW REQUIRED)
+        find_package(json-c CONFIG REQUIRED)
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(LIBGD REQUIRED IMPORTED_TARGET gdlib)
+    endif()
     if (WIN32)
         find_package(PThreads4W REQUIRED)
     endif()
@@ -185,6 +187,21 @@ if (NOT (CMAKE_BUILD_TYPE STREQUAL Release) AND NOT EMSCRIPTEN)
     endif()
 endif()
 
+if (EMSCRIPTEN)
+    FetchContent_Declare(
+        json-c
+        GIT_REPOSITORY https://github.com/json-c/json-c.git
+        GIT_TAG        ee83daa4093dfbc4bfd63468dcf2bd7c636d7a0e
+        OVERRIDE_FIND_PACKAGE
+    )
+    FetchContent_Declare(
+        libgd
+        GIT_REPOSITORY https://github.com/libgd/libgd.git
+        GIT_TAG        0e55e7c30ae976cac381092d5398f08a8ada19cf
+        OVERRIDE_FIND_PACKAGE
+    )
+endif()
+
 # Libraries to build (which may be dependencies of the programs below)
 add_subdirectory(Source/shared)
 
@@ -217,7 +234,6 @@ if (NOT EMSCRIPTEN)
         add_subdirectory(Source/smvq)
     endif()
 endif()
-
 
 # Install config files
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/smokeview.ini" DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/smokeview")

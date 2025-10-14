@@ -1409,7 +1409,7 @@ char *GetBinPath(){
     }
   }
 }
-#else
+#elif pp_OSX
 char *GetBinPath(){
   uint32_t  max_buffer_size = 2048 * 20;
   char *buffer;
