@@ -214,8 +214,13 @@ void ReadCAD2Geom(cadgeomdata *cd, GLfloat block_shininess) {
                 texti->file);
         continue;
       }
+#ifdef __EMSCRIPTEN__
+      errorcode = 1;
+#else
+      // TODO: replace with glGenerateMipmap
       errorcode = gluBuild2DMipmaps(GL_TEXTURE_2D, 4, texwid, texht, GL_RGBA,
                                     GL_UNSIGNED_BYTE, floortex);
+#endif
       if(errorcode != 0) {
         FREEMEMORY(floortex);
         PRINTF(" - failed\n");

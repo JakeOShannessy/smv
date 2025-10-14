@@ -317,6 +317,7 @@ int RunSmvq(char *input_file, const char *fdsprefix) {
   return 0;
 }
 
+#ifndef __EMSCRIPTEN__
 #if defined(_WIN32) && defined(pp_UNICODE_PATHS)
 int wmain(int argc, wchar_t **argv)
 #else
@@ -383,3 +384,4 @@ int main(int argc, char **argv)
 #endif
   return result;
 }
+#endif

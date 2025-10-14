@@ -2702,6 +2702,9 @@ void UpdateSortedSurfIdList(surf_collection *surfcoll){
   qsort_s(surfcoll->sorted_surfidlist, (size_t)surfcoll->nsurfinfo, sizeof(int), SurfIdCompare,(void *)surfcoll->surfinfo);
 #elif __linux__
   qsort_r(surfcoll->sorted_surfidlist, (size_t)surfcoll->nsurfinfo, sizeof(int), SurfIdCompare,(void *)surfcoll->surfinfo);
+#elif __EMSCRIPTEN__
+  // simply don't sort with emscripten
+  fprintf(stderr,"WARNING: not sorting surfaces\n");
 #else // assumed to be osx
   qsort_r(surfcoll->sorted_surfidlist, (size_t)surfcoll->nsurfinfo, sizeof(int), (void *)surfcoll->surfinfo, SurfIdCompare);
 #endif
@@ -2899,7 +2902,7 @@ void ParseSurfs(smv_case *scase, char *file){
     }
     scase->surfcoll.nsurfinfo += nsurfids_shown;
   }
-  UpdateSortedSurfIdList(&scase->surfcoll);
+    UpdateSortedSurfIdList(&scase->surfcoll);
 }
 
 /* ------------------ ReadZVentData ------------------------ */
