@@ -1088,7 +1088,6 @@ void InitMesh(meshdata *meshi){
   meshi->zplt_fds = NULL;
 
   meshi->f_iblank_cell = NULL;
-  meshi->c_iblank_cell = NULL;
   meshi->c_iblank_x = NULL;
   meshi->c_iblank_y = NULL;
   meshi->c_iblank_z = NULL;
@@ -1097,7 +1096,6 @@ void InitMesh(meshdata *meshi){
   meshi->block_zdist = NULL;
 
   meshi->f_iblank_cell0 = NULL;
-  meshi->c_iblank_cell0 = NULL;
   meshi->c_iblank_x0 = NULL;
   meshi->c_iblank_y0 = NULL;
   meshi->c_iblank_z0 = NULL;
