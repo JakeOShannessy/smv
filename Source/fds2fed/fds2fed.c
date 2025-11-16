@@ -465,7 +465,7 @@ void MakeFEDIso(feddata *fedi){
   float levels[3] = {0.3, 1.0, 3.0};
   int nlevels = 3;
   int error_local, reduce_triangles=1;
-  char *iblank=NULL;
+  struct blanking_flags *iblank=NULL;
   int nx=0, ny=0, nz=0;
   int i;
   meshdata *isomesh;

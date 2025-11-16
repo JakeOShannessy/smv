@@ -46,7 +46,7 @@ message("Package Name: ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SY
 
 # Options which can be configured (along with their defaults)
 option(BETA "Include beta functionality" OFF)
-option(STRICT_CHECKS "Run additional strict checks" OFF)
+option(STRICT_CHECKS "Run additional strict checks" ON)
 option(VENDORED_UI_LIBS "Use the vendored GLUT" ON)
 option(VENDORED_LIBS "Use the vendored libs" ON)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)

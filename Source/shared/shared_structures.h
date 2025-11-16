@@ -1,8 +1,8 @@
 #ifndef SHARED_STRUCTURES_H_DEFINED
 #define SHARED_STRUCTURES_H_DEFINED
+#include "blanking.h"
 #include "isobox.h"
 #include "options_common.h"
-#include <stdio.h>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -12,15 +12,6 @@
 #include "string_util.h"
 
 #define PROPVARMAX 100
-
-struct blanking_flags {
-    unsigned char node_html : 1;
-    unsigned char cell : 1;
-    unsigned char node : 1;
-    unsigned char node_x : 1;
-    unsigned char node_y : 1;
-    unsigned char node_z : 1;
-};
 
 /* --------------------------  tokendata ------------------------------------ */
 
@@ -249,6 +240,7 @@ typedef struct _meshdata {
 
   unsigned char *boundary_mask;
 
+  struct blanking_flags *compact_blank_temp;
   struct blanking_flags *compact_blank;
   char *c_iblank_node0,      *c_iblank_cell0,      *c_iblank_x0,      *c_iblank_y0,      *c_iblank_z0;
   char *c_iblank_node0_temp, *c_iblank_cell0_temp, *c_iblank_x0_temp, *c_iblank_y0_temp, *c_iblank_z0_temp;
@@ -262,6 +254,11 @@ typedef struct _meshdata {
   unsigned char *is_firenode, *is_firenodeptr;
 
   char *c_iblank_node,      *c_iblank_cell,      *c_iblank_x,      *c_iblank_y,      *c_iblank_z;
+  /**
+   * @brief These temp values are where values are stored as the are calculated.
+   * They are switched to the main values at a convenient moment for the display.
+   *
+   */
   char *c_iblank_node_temp, *c_iblank_cell_temp, *c_iblank_x_temp, *c_iblank_y_temp, *c_iblank_z_temp;
   float *f_iblank_cell;
   float *f_iblank_cell_temp;

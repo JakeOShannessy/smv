@@ -1,5 +1,6 @@
 #include "options.h"
 #include "glew.h"
+#include "shared_structures.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -534,7 +535,7 @@ void Temperature2Emission(float temperature, float *emission){
 
 /* ----------------------- GetFireEmission ----------------------------- */
 
-void GetFireEmission(float *smoke_tran, float *fire_emission, float dlength, float xyz[3], meshdata *meshi, int *inobst, char *blank_local){
+void GetFireEmission(float *smoke_tran, float *fire_emission, float dlength, float xyz[3], meshdata *meshi, int *inobst, struct blanking_flags *blank_local){
   int i, j, k;
   int ijk;
 
@@ -639,7 +640,7 @@ void GetFireEmission(float *smoke_tran, float *fire_emission, float dlength, flo
 
   if(blank_local!=NULL){
     ijkcell = IJKCELL(i, j, k);
-    if(blank_local[ijkcell]==SOLID){
+    if(blank_local[ijkcell].cell==SOLID){
       *inobst = 1;
       return;
     }
@@ -1458,7 +1459,7 @@ void IntegrateFireColors(float *integrated_firecolor, float *xyzvert, float dlen
   float *vert_beg=NULL, *vert_end=NULL;
   int iwall_min=0;
   float xyzvals[3];
-  char *blank_local;
+  struct blanking_flags *blank_local;
   float taun, alphan;
   meshdata *xyz_mesh=NULL;
 
@@ -1589,12 +1590,12 @@ void IntegrateFireColors(float *integrated_firecolor, float *xyzvert, float dlen
       xyz_mesh = GetMeshInSmesh(xyz_mesh,meshi->super,xyz);
       if(xyz_mesh==NULL)break;
       blank_local = NULL;
-      if(block_volsmoke==1)blank_local=xyz_mesh->c_iblank_cell;
+      if(block_volsmoke==1)blank_local=xyz_mesh->compact_blank;
       GetFireEmission(&taui, fire_emission, dlength, xyz, xyz_mesh, &inobst, blank_local);
     }
     else{
       blank_local = NULL;
-      if(block_volsmoke==1)blank_local=meshi->c_iblank_cell;
+      if(block_volsmoke==1)blank_local=meshi->compact_blank;
       GetFireEmission(&taui, fire_emission, dlength, xyz, meshi, &inobst, blank_local);
     }
     if(blank_local!=NULL&&inobst==1)break; // terminate ray when a blockage is encountered

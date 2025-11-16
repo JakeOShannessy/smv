@@ -2786,6 +2786,8 @@ void UpdateDisplay(void){
       meshi->c_iblank_x0        = meshi->c_iblank_x0_temp;
       meshi->c_iblank_y0        = meshi->c_iblank_y0_temp;
       meshi->c_iblank_z0        = meshi->c_iblank_z0_temp;
+
+      meshi->compact_blank = meshi->compact_blank_temp;
     }
     INIT_PRINT_TIMER(timer_hidden_blockages);
 #ifdef _DEBUG

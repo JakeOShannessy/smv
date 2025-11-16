@@ -949,14 +949,12 @@ void SetCVentDirs(void){
   for(ii=0;ii<global_scase.meshescoll.nmeshes;ii++){
     meshdata *meshi;
     int ibar, jbar;
-    char *c_iblank;
     int iv;
 
     meshi=global_scase.meshescoll.meshinfo+ii;
 
     ibar = meshi->ibar;
     jbar = meshi->jbar;
-    c_iblank = meshi->c_iblank_cell;
 
     for(iv=0;iv<meshi->ncvents;iv++){
       cventdata *cvi;
@@ -1007,9 +1005,9 @@ void SetCVentDirs(void){
             for(k=cvi->kmin;k<=cvi->kmax;k++){
               int state1, state2;
 
-              if(global_scase.use_iblank==1&&c_iblank!=NULL){
-                state1=c_iblank[IJKCELL(i-1,j,k)];
-                state2=c_iblank[IJKCELL(i,j,k)];
+              if(global_scase.use_iblank==1&&meshi->compact_blank!=NULL){
+                state1=meshi->compact_blank[IJKCELL(i-1,j,k)].cell;
+                state2=meshi->compact_blank[IJKCELL(i,j,k)].cell;
               }
               else{
                 state1=GAS;
@@ -1054,9 +1052,9 @@ void SetCVentDirs(void){
             for(k=cvi->kmin;k<=cvi->kmax;k++){
               int state1, state2;
 
-              if(global_scase.use_iblank==1&&c_iblank!=NULL){
-                state1=c_iblank[IJKCELL(i,j-1,k)];
-                state2=c_iblank[IJKCELL(i,j,k)];
+              if(global_scase.use_iblank==1&&meshi->compact_blank!=NULL){
+                state1=meshi->compact_blank[IJKCELL(i,j-1,k)].cell;
+                state2=meshi->compact_blank[IJKCELL(i,j,k)].cell;
               }
               else{
                 state1=GAS;
@@ -1101,9 +1099,9 @@ void SetCVentDirs(void){
             for(j=cvi->jmin;j<=cvi->jmax;j++){
               int state1, state2;
 
-              if(global_scase.use_iblank==1&&c_iblank!=NULL){
-                state1=c_iblank[IJKCELL(i,j,k-1)];
-                state2=c_iblank[IJKCELL(i,j,k)];
+              if(global_scase.use_iblank==1&&meshi->compact_blank!=NULL){
+                state1=meshi->compact_blank[IJKCELL(i,j,k-1)].cell;
+                state2=meshi->compact_blank[IJKCELL(i,j,k)].cell;
               }
               else{
                 state1=GAS;
@@ -1306,7 +1304,6 @@ void SetVentDirs(void){
     float *yplttemp;
     float *zplttemp;
     int ibar, jbar, kbar;
-    char *c_iblank;
     int orien;
     int iv;
     int dir;
@@ -1320,7 +1317,6 @@ void SetVentDirs(void){
     ibar = meshi->ibar;
     jbar = meshi->jbar;
     kbar = meshi->kbar;
-    c_iblank = meshi->c_iblank_cell;
     xplttemp=meshi->xplt_smv;
     yplttemp=meshi->yplt_smv;
     zplttemp=meshi->zplt_smv;
@@ -1356,9 +1352,9 @@ void SetVentDirs(void){
             for(k=vi->kmin;k<=MIN(vi->kmax,kbar-1);k++){
               int state1, state2;
 
-              if(global_scase.use_iblank==1&&c_iblank!=NULL){
-                state1=c_iblank[IJKCELL(i-1,j,k)];
-                state2=c_iblank[IJKCELL(i,j,k)];
+              if(global_scase.use_iblank==1&&meshi->compact_blank!=NULL){
+                state1=meshi->compact_blank[IJKCELL(i-1,j,k)].cell;
+                state2=meshi->compact_blank[IJKCELL(i,j,k)].cell;
               }
               else{
                 state1=GAS;
@@ -1409,9 +1405,9 @@ void SetVentDirs(void){
             for(k=vi->kmin;k<=MIN(vi->kmax,kbar-1);k++){
               int state1, state2;
 
-              if(global_scase.use_iblank==1&&c_iblank!=NULL){
-                state1=c_iblank[IJKCELL(i,j-1,k)];
-                state2=c_iblank[IJKCELL(i,j,k)];
+              if(global_scase.use_iblank==1&&meshi->compact_blank!=NULL){
+                state1=meshi->compact_blank[IJKCELL(i,j-1,k)].cell;
+                state2=meshi->compact_blank[IJKCELL(i,j,k)].cell;
               }
               else{
                 state1=GAS;
@@ -1462,9 +1458,9 @@ void SetVentDirs(void){
             for(j=vi->jmin;j<=MIN(vi->jmax,jbar-1);j++){
               int state1, state2;
 
-              if(global_scase.use_iblank==1&&c_iblank!=NULL){
-                state1=c_iblank[IJKCELL(i,j,k-1)];
-                state2=c_iblank[IJKCELL(i,j,k)];
+              if(global_scase.use_iblank==1&&meshi->compact_blank!=NULL){
+                state1=meshi->compact_blank[IJKCELL(i,j,k-1)].cell;
+                state2=meshi->compact_blank[IJKCELL(i,j,k)].cell;
               }
               else{
                 state1=GAS;

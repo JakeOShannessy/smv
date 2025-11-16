@@ -1002,15 +1002,13 @@ void GetSliceHists(slicedata *sd, int use_bounds, float valmin, float valmax){
   int istep;
   int nx, ny, nxy, ibar, jbar;
   int ntimes;
-  char *iblank_node, *iblank_cell, *slice_mask0;
+  char *slice_mask0;
   meshdata *meshi;
   float *slice_weight0;
   float *xplt, *yplt, *zplt;
 
   if(sd->histograms != NULL)return;
   meshi = global_scase.meshescoll.meshinfo + sd->blocknumber;
-  iblank_node = meshi->c_iblank_node;
-  iblank_cell = meshi->c_iblank_cell;
   xplt = meshi->xplt_fds;
   yplt = meshi->yplt_fds;
   zplt = meshi->zplt_fds;
@@ -1062,8 +1060,8 @@ void GetSliceHists(slicedata *sd, int use_bounds, float valmin, float valmax){
         if(sd->slice_filetype == SLICE_CELL_CENTER &&
           ((k == 0 && sd->nslicek != 1) || (j == 0 && sd->nslicej != 1) || (i == 0 && sd->nslicei != 1)))continue;
         if(global_scase.show_slice_in_obst == ONLY_IN_GAS){
-          if(sd->slice_filetype != SLICE_CELL_CENTER && iblank_node != NULL && iblank_node[IJKNODE(sd->is1 + i, sd->js1 + j, sd->ks1 + k)] == SOLID)continue;
-          if(sd->slice_filetype == SLICE_CELL_CENTER && iblank_cell != NULL && iblank_cell[IJKCELL(sd->is1 + i - 1, sd->js1 + j - 1, sd->ks1 + k - 1)] == EMBED_YES)continue;
+          if(sd->slice_filetype != SLICE_CELL_CENTER && meshi->compact_blank != NULL && meshi->compact_blank[IJKNODE(sd->is1 + i, sd->js1 + j, sd->ks1 + k)].node == SOLID)continue;
+          if(sd->slice_filetype == SLICE_CELL_CENTER && meshi->compact_blank != NULL && meshi->compact_blank[IJKCELL(sd->is1 + i - 1, sd->js1 + j - 1, sd->ks1 + k - 1)].cell == EMBED_YES)continue;
         }
         slice_mask0[n] = 1;
       }
@@ -2916,8 +2914,6 @@ void GetSliceDataBounds(slicedata *sd, float *pmin, float *pmax){
     return;
   }
   meshi = global_scase.meshescoll.meshinfo + sd->blocknumber;
-  iblank_node = meshi->c_iblank_node;
-  iblank_cell = meshi->c_iblank_cell;
 
   ibar = meshi->ibar;
   jbar = meshi->jbar;
@@ -2939,11 +2935,11 @@ void GetSliceDataBounds(slicedata *sd, float *pmin, float *pmax){
         n++;
         if(sd->slice_filetype==SLICE_CELL_CENTER&&((k==0&&sd->nslicek!=1)||(j==0&&sd->nslicej!=1)||(i==0&&sd->nslicei!=1)))continue;
         if(global_scase.show_slice_in_obst == ONLY_IN_GAS){
-          if(sd->slice_filetype!=SLICE_CELL_CENTER&& iblank_node!=NULL){
-            if(iblank_node[IJKNODE(sd->is1+i, sd->js1+j, sd->ks1+k)]==SOLID)continue;
+          if(sd->slice_filetype!=SLICE_CELL_CENTER&& meshi->compact_blank!=NULL){
+            if(meshi->compact_blank[IJKNODE(sd->is1+i, sd->js1+j, sd->ks1+k)].cell==SOLID)continue;
           }
-          if(sd->slice_filetype==SLICE_CELL_CENTER&& iblank_cell!=NULL){
-            if(iblank_cell[IJKCELL(sd->is1+i-1, sd->js1+j-1, sd->ks1+k-1)]==EMBED_YES)continue;
+          if(sd->slice_filetype==SLICE_CELL_CENTER&& meshi->compact_blank!=NULL){
+            if(meshi->compact_blank[IJKCELL(sd->is1+i-1, sd->js1+j-1, sd->ks1+k-1)].cell==EMBED_YES)continue;
           }
         }
         slice_mask0[n]=1;
@@ -4068,7 +4064,6 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int is1, int is2, int js1, 
   ibar = meshi->ibar;
   jbar = meshi->jbar;
 
-  iblank_cell = meshi->c_iblank_cell;
   iblank_embed = meshi->c_iblank_embed;
 
   if(cullfaces == 1)glDisable(GL_CULL_FACE);
@@ -4109,11 +4104,10 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int is1, int is2, int js1, 
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank_cell != NULL&&iblank_cell[IJKCELL(plotxm1, j, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(plotxm1, j, k)].cell != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        fprintf(stderr, "[%d,%d,%d]: %s\n", plotxm1, j,k, iblank_cell);
-        if(iblank_cell!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_slice_shaded[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_slice_shaded[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -4170,10 +4164,10 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int is1, int is2, int js1, 
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank_cell != NULL&&iblank_cell[IJKCELL(i, ploty-1, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(i, ploty-1, k)].cell != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank_cell!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_slice_shaded[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_slice_shaded[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -4231,11 +4225,10 @@ void DrawVolSliceCellFaceCenter(const slicedata *sd, int is1, int is2, int js1, 
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank_cell != NULL&&iblank_cell[IJKCELL(i, j, plotz-1)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(i, j, plotz-1)].cell != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        fprintf(stderr, "b[%d,%d]: %s\n", i, j, iblank_cell);
-        if(iblank_cell!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_slice_shaded[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_slice_shaded[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -4476,7 +4469,6 @@ void DrawVolSliceCellFaceCenterValues(const slicedata *sd){
   ibar = meshi->ibar;
   jbar = meshi->jbar;
 
-  iblank_cell = meshi->c_iblank_cell;
   iblank_embed = meshi->c_iblank_embed;
 
   if(cullfaces == 1)glDisable(GL_CULL_FACE);
@@ -4512,10 +4504,10 @@ void DrawVolSliceCellFaceCenterValues(const slicedata *sd){
           int in_solid, in_gas;
 
           in_gas=1;
-          if(iblank_cell != NULL&&iblank_cell[IJKCELL(plotxm1, j, k)] != GAS)in_gas=0;
+          if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(plotxm1, j, k)].cell != GAS)in_gas=0;
           in_solid = 1 - in_gas;
 
-          if(iblank_cell!=NULL){
+          if(meshi->compact_blank!=NULL){
             if(show_slice_values[IN_SOLID_GLUI]==0 && in_solid==1)continue;
             if(show_slice_values[IN_GAS_GLUI]==0   && in_gas==1)continue;
           }
@@ -4563,10 +4555,10 @@ void DrawVolSliceCellFaceCenterValues(const slicedata *sd){
           int in_solid, in_gas;
 
           in_gas=1;
-          if(iblank_cell != NULL&&iblank_cell[IJKCELL(i, ploty-1, k)] != GAS)in_gas=0;
+          if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(i, ploty-1, k)].cell != GAS)in_gas=0;
           in_solid = 1 - in_gas;
 
-          if(iblank_cell!=NULL){
+          if(meshi->compact_blank!=NULL){
             if(show_slice_values[IN_SOLID_GLUI]==0 && in_solid==1)continue;
             if(show_slice_values[IN_GAS_GLUI]==0   && in_gas==1)continue;
           }
@@ -4616,10 +4608,10 @@ void DrawVolSliceCellFaceCenterValues(const slicedata *sd){
           int in_solid, in_gas;
 
           in_gas=1;
-          if(iblank_cell != NULL&&iblank_cell[IJKCELL(i, j, plotz-1)] != GAS)in_gas=0;
+          if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(i, j, plotz-1)].cell != GAS)in_gas=0;
           in_solid = 1 - in_gas;
 
-          if(iblank_cell!=NULL){
+          if(meshi->compact_blank!=NULL){
             if(show_slice_values[IN_SOLID_GLUI]==0 && in_solid==1)continue;
             if(show_slice_values[IN_GAS_GLUI]==0   && in_gas==1)continue;
           }
@@ -6815,7 +6807,6 @@ void DrawVVolSliceCellCenter(const vslicedata *vd){
   meshdata *meshi;
   float *xplttemp, *yplttemp, *zplttemp;
   int plotx, ploty, plotz;
-  char *iblank_cell;
   int ibar, jbar;
 
   sd = global_scase.slicecoll.sliceinfo + vd->ival;
@@ -6835,7 +6826,6 @@ void DrawVVolSliceCellCenter(const vslicedata *vd){
   }
   ibar = meshi->ibar;
   jbar = meshi->jbar;
-  iblank_cell = meshi->c_iblank_cell;
   vel_max = max_velocity;
   if(vel_max<= 0.0)vel_max = 1.0;
   float scene_factor = SCENE_FACTOR;
@@ -6878,10 +6868,10 @@ void DrawVVolSliceCellCenter(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank_cell != NULL&&iblank_cell[IJKCELL(plotxm1, j, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(plotxm1, j, k)].cell != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank_cell!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_vector_slice[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_vector_slice[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -6943,10 +6933,10 @@ void DrawVVolSliceCellCenter(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank_cell != NULL&&iblank_cell[IJKCELL(plotxm1, j, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(plotxm1, j, k)].cell != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank_cell!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_vector_slice[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_vector_slice[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -7013,10 +7003,10 @@ void DrawVVolSliceCellCenter(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank_cell != NULL&&iblank_cell[IJKCELL(i, ploty-1, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(i, ploty-1, k)].cell != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank_cell!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_slice_shaded[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_slice_shaded[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -7072,10 +7062,10 @@ void DrawVVolSliceCellCenter(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank_cell != NULL&&iblank_cell[IJKCELL(i, ploty-1, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(i, ploty-1, k)].cell != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank_cell!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_vector_slice[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_vector_slice[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -7142,10 +7132,10 @@ void DrawVVolSliceCellCenter(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank_cell != NULL&&iblank_cell[IJKCELL(i, j, plotz-1)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(i, j, plotz-1)].cell != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank_cell!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_vector_slice[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_vector_slice[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -7203,10 +7193,10 @@ void DrawVVolSliceCellCenter(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank_cell != NULL&&iblank_cell[IJKCELL(i, j, plotz-1)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJKCELL(i, j, plotz-1)].cell != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank_cell!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_vector_slice[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_vector_slice[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }

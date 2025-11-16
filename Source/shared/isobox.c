@@ -1,4 +1,5 @@
 #include "options_common.h"
+#include "shared_structures.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -810,7 +811,7 @@ void ReduceToUnit(float v[3]){
 int GetIsoSurface(isosurface *surface,
                   const float *data,
                   const float *tdata,
-                  const char *iblank_cell,
+                  const struct blanking_flags *iblank,
                   float level,
                   const float *xplt, int nx,
                   const float *yplt, int ny,
@@ -856,7 +857,7 @@ int GetIsoSurface(isosurface *surface,
         ijp1kp1 = ijkbase + nx+nxy;
         ip1jp1kp1 = ijkbase + 1+nx+nxy;
 
-        if(iblank_cell==NULL||iblank_cell[IJKCELL(i,j,k)]!=SOLID){
+        if(iblank==NULL||iblank[IJKCELL(i,j,k)].cell!=SOLID){
           zz[0]=zplt[k];
           zz[1]=zplt[k+1];
 
@@ -1770,7 +1771,7 @@ void IsoOut(FILE *isostream,float t, int timeindex, isosurface *surface){
 
 /* ------------------ CCIsoSurface2File ------------------------ */
 
-void CCIsoSurface2File(char *isofile, float *t, float *data, char *iblank,
+void CCIsoSurface2File(char *isofile, float *t, float *data, const struct blanking_flags *iblank,
             float *level, int *nlevels,
                    float *xplt, int *nx,
                    float *yplt, int *ny,
@@ -1789,7 +1790,7 @@ void CCIsoSurface2File(char *isofile, float *t, float *data, char *iblank,
   for(i=0;i<*nlevels;i++){
     InitIsoSurface(&surface,level[i],NULL,i);
     surface.dataflag=0;
-    if(GetIsoSurface(&surface,data,NULL,(const char *)iblank,level[i],xplt,*nx,yplt,*ny,zplt,*nz)!=0){
+    if(GetIsoSurface(&surface,data,NULL,iblank,level[i],xplt,*nx,yplt,*ny,zplt,*nz)!=0){
       *error=1;
       fclose(isostream);
       return;
@@ -1819,7 +1820,7 @@ void CCIsoSurface2File(char *isofile, float *t, float *data, char *iblank,
 
 /* ------------------ CCIsoSurfaceT2File ------------------------ */
 
-void CCIsoSurfaceT2File(char *isofile, float *t, float *data, int *data2flag, float *data2, int *iblank,
+void CCIsoSurfaceT2File(char *isofile, float *t, float *data, int *data2flag, float *data2, const struct blanking_flags *iblank,
             float *level, int *nlevels,
                    float *xplt, int *nx,
                    float *yplt, int *ny,
@@ -1846,7 +1847,7 @@ void CCIsoSurfaceT2File(char *isofile, float *t, float *data, int *data2flag, fl
   for(i=0;i<*nlevels;i++){
     InitIsoSurface(&surface,level[i],NULL,i);
     surface.dataflag=dataflag;
-    if(GetIsoSurface(&surface,data,tdata,(const char *)iblank,level[i],xplt,*nx,yplt,*ny,zplt,*nz)!=0){
+    if(GetIsoSurface(&surface,data,tdata,iblank,level[i],xplt,*nx,yplt,*ny,zplt,*nz)!=0){
       *error=1;
       fclose(isostream);
       return;
