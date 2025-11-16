@@ -13,6 +13,15 @@
 
 #define PROPVARMAX 100
 
+struct blanking_flags {
+    unsigned char node_html : 1;
+    unsigned char cell : 1;
+    unsigned char node : 1;
+    unsigned char node_x : 1;
+    unsigned char node_y : 1;
+    unsigned char node_z : 1;
+};
+
 /* --------------------------  tokendata ------------------------------------ */
 
 typedef struct _tokendata {
@@ -239,6 +248,8 @@ typedef struct _meshdata {
   int n_imap, n_jmap, n_kmap;
 
   unsigned char *boundary_mask;
+
+  struct blanking_flags *compact_blank;
   char *c_iblank_node0,      *c_iblank_cell0,      *c_iblank_x0,      *c_iblank_y0,      *c_iblank_z0;
   char *c_iblank_node0_temp, *c_iblank_cell0_temp, *c_iblank_x0_temp, *c_iblank_y0_temp, *c_iblank_z0_temp;
   char *c_iblank_node_html;
@@ -2093,5 +2104,18 @@ typedef struct {
   int lookfor_compressed_files;
   int handle_slice_files;
 } parse_options;
+
+/**
+ * @brief Find the array offset of a given cell in a mesh.
+ *
+ * @param mesh The mesh.
+ * @param i
+ * @param j
+ * @param k
+ * @return The offset into the various arrays in @ref mesh.
+ */
+static inline int IjkCell(meshdata *mesh, int i, int j, int k) {
+  return i + j * mesh->ibar + k * mesh->ibar * mesh->jbar;
+}
 
 #endif

@@ -1374,6 +1374,7 @@ int MakeIBlank(void){
     kbar = meshi->kbar;
     ijksize=(ibar+1)*(jbar+1)*(kbar+1);
 
+    if(NewMemory((void **)meshi->compact_blank, ijksize*sizeof(struct blanking_flags))==0)return 1;
     if(NewMemory((void **)&c_iblank_node_html, ijksize*sizeof(char))==0)return 1;
     if(NewMemory((void **)&iblank_node,        ijksize*sizeof(char))==0)return 1;
     if(NewMemory((void **)&iblank_cell,        ibar*jbar*kbar*sizeof(char))==0)return 1;
@@ -1396,6 +1397,13 @@ int MakeIBlank(void){
     }
     // Initially set all iblank node, and xyz values to GAS
     for(i=0;i<ijksize;i++){
+      meshi->compact_blank[i].cell = GAS;
+      meshi->compact_blank[i].node_html = GAS;
+      meshi->compact_blank[i].node = GAS;
+      meshi->compact_blank[i].node_x = GAS;
+      meshi->compact_blank[i].node_y = GAS;
+      meshi->compact_blank[i].node_z = GAS;
+
       c_iblank_node_html[i] = GAS;
       iblank_node[i]        = GAS;
       c_iblank_x[i]         = GAS;
@@ -1436,6 +1444,11 @@ int MakeIBlank(void){
           for(i = bc->ijk[IMIN]; i < bc->ijk[IMAX]; i++){
             fprintf(stderr, "[%d,%d,%d]: SOLID\n", i,j,k);
             iblank_cell[ijk++] = SOLID;
+      // meshi->compact_blank[i].node_html = GAS;
+      // meshi->compact_blank[i].node = GAS;
+      // meshi->compact_blank[i].node_x = GAS;
+      // meshi->compact_blank[i].node_y = GAS;
+      // meshi->compact_blank[i].node_z = GAS;
           }
         }
       }
@@ -1465,6 +1478,12 @@ int MakeIBlank(void){
 
           ijk = IJK(bc->ijk[IMIN], j, k);
           for(i = bc->ijk[IMIN]; i<=bc->ijk[IMAX]; i++){
+      // meshi->compact_blank[i].cell = GAS;
+      meshi->compact_blank[ijk].node_html = SOLID;
+      // meshi->compact_blank[i].node = GAS;
+      // meshi->compact_blank[i].node_x = GAS;
+      // meshi->compact_blank[i].node_y = GAS;
+      // meshi->compact_blank[i].node_z = GAS;
             c_iblank_node_html[ijk++] = SOLID;
           }
         }
@@ -1517,6 +1536,13 @@ int MakeIBlank(void){
 
 //          if(test==0)iblank_node[IJKNODE(i,j,k)]=0;
             if(test == 0)iblank_node[ijknode] = 0;
+            if (test == 0)meshi->compact_blank[ijknode].node=0;
+      // meshi->compact_blank[i].cell = GAS;
+      // meshi->compact_blank[i].node_html = GAS;
+      // meshi->compact_blank[i].node = GAS;
+      // meshi->compact_blank[i].node_x = GAS;
+      // meshi->compact_blank[i].node_y = GAS;
+      // meshi->compact_blank[i].node_z = GAS;
             ijk++;
             ijknode++;
           }
@@ -1532,16 +1558,24 @@ int MakeIBlank(void){
         ijknode = IJKNODE(0, j, k);
 //        c_iblank_x[IJKNODE(0,j,k)]   =2*iblank_cell[IJKCELL(0,j,k)];
         c_iblank_x[ijknode] = 2 * iblank_cell[ijkcell];
+      // meshi->compact_blank[i].cell = GAS;
+      // meshi->compact_blank[i].node_html = GAS;
+      // meshi->compact_blank[i].node = GAS;
+      meshi->compact_blank[ijknode].node_x = 2*iblank_cell[ijkcell];
+      // meshi->compact_blank[i].node_y = GAS;
+      // meshi->compact_blank[i].node_z = GAS;
         for(i = 1; i<ibar; i++){
           ijknode++;
           ijkcell++;
 //          c_iblank_x[IJKNODE(i, j, k)] = iblank_cell[IJKCELL(i - 1, j, k)] + iblank_cell[IJKCELL(i, j, k)];
           c_iblank_x[ijknode] = iblank_cell[ijkcell-1] + iblank_cell[ijkcell];
+          meshi->compact_blank[ijknode].node_x = iblank_cell[ijkcell-1] + iblank_cell[ijkcell];
         }
         ijknode++;
         ijkcell++;
 //        c_iblank_x[IJKNODE(ibar, j, k)] = 2 * iblank_cell[IJKCELL(ibar - 1, j, k)];
         c_iblank_x[ijknode] = 2 * iblank_cell[ijkcell-1];
+        meshi->compact_blank[ijknode].node_x = 2 * iblank_cell[ijkcell-1];
       }
     }
     for(i=0;i<ibar;i++){
@@ -1552,16 +1586,19 @@ int MakeIBlank(void){
         ijknode = IJKNODE(i, 0, k);
 //        c_iblank_y[IJKNODE(i,0,k)]=2*iblank_cell[IJKCELL(i,0,k)];
         c_iblank_y[ijknode] = 2 * iblank_cell[ijkcell];
+        meshi->compact_blank[ijknode].node_y = 2 * iblank_cell[ijkcell];
         for(j = 1; j<jbar; j++){
           ijkcell += ibar;
           ijknode += nx;
 //          c_iblank_y[IJKNODE(i,j,k)]=iblank_cell[IJKCELL(i,j-1,k)]+iblank_cell[IJKCELL(i,j,k)];
           c_iblank_y[ijknode] = iblank_cell[ijkcell-ibar] + iblank_cell[ijkcell];
+          meshi->compact_blank[ijknode].node_y = iblank_cell[ijkcell-ibar] + iblank_cell[ijkcell];
         }
         ijkcell += ibar;
         ijknode += nx;
         //        c_iblank_y[IJKNODE(i,jbar,k)]=2*iblank_cell[IJKCELL(i,jbar-1,k)];
         c_iblank_y[ijknode] = 2 * iblank_cell[ijkcell-ibar];
+        meshi->compact_blank[ijknode].node_y = 2 * iblank_cell[ijkcell-ibar];
       }
     }
 
@@ -1573,16 +1610,19 @@ int MakeIBlank(void){
         ijknode = IJKNODE(i, j, 0);
 //        c_iblank_z[IJKNODE(i,j,0)]=2*iblank_cell[IJKCELL(i,j,0)];
         c_iblank_z[ijknode]=2*iblank_cell[ijkcell];
+        meshi->compact_blank[ijknode].node_z = 2 * iblank_cell[ijkcell];
         for(k=1;k<kbar;k++){
           ijkcell+=ibarjbar;
           ijknode+=nxy;
 //          c_iblank_z[IJKNODE(i,j,k)]=iblank_cell[IJKCELL(i,j,k-1)]+iblank_cell[IJKCELL(i,j,k)];
           c_iblank_z[ijknode]=iblank_cell[ijkcell-ibar*jbar]+iblank_cell[ijkcell];
+          meshi->compact_blank[ijknode].node_z = iblank_cell[ijkcell-ibar*jbar]+iblank_cell[ijkcell];
         }
         ijkcell+=ibarjbar;
         ijknode+=nxy;
 //        c_iblank_z[IJKNODE(i,j,kbar)]=2*iblank_cell[IJKCELL(i,j,kbar-1)];
         c_iblank_z[ijknode]=2*iblank_cell[ijkcell-ibar*jbar];
+        meshi->compact_blank[ijknode].node_z =2*iblank_cell[ijkcell-ibar*jbar];
       }
     }
   }
