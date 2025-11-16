@@ -2772,18 +2772,9 @@ void UpdateDisplay(void){
       meshdata *meshi;
 
       meshi = global_scase.meshescoll.meshinfo + ig;
-      meshi->c_iblank_node = meshi->c_iblank_node_temp;
       meshi->f_iblank_cell = meshi->f_iblank_cell_temp;
-      meshi->c_iblank_x    = meshi->c_iblank_x_temp;
-      meshi->c_iblank_y    = meshi->c_iblank_y_temp;
-      meshi->c_iblank_z    = meshi->c_iblank_z_temp;
 
-      meshi->c_iblank_node_html = meshi->c_iblank_node_html_temp;
-      meshi->c_iblank_node0     = meshi->c_iblank_node0_temp;
       meshi->f_iblank_cell0     = meshi->f_iblank_cell0_temp;
-      meshi->c_iblank_x0        = meshi->c_iblank_x0_temp;
-      meshi->c_iblank_y0        = meshi->c_iblank_y0_temp;
-      meshi->c_iblank_z0        = meshi->c_iblank_z0_temp;
 
       meshi->compact_blank = meshi->compact_blank_temp;
     }

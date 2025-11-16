@@ -4270,7 +4270,6 @@ void DrawVolSliceValues(slicedata *sd){
   meshdata *meshi;
   float *xplttemp, *yplttemp, *zplttemp;
   int plotx, ploty, plotz;
-  char *iblank;
   int nx, ny, nxy;
   float *rgb_ptr;
 
@@ -4290,7 +4289,6 @@ void DrawVolSliceValues(slicedata *sd){
     plotz = sd->ks1;
   }
 
-  iblank = meshi->c_iblank_node;
   nx = meshi->ibar + 1;
   ny = meshi->jbar + 1;
   nxy = nx*ny;
@@ -4322,10 +4320,10 @@ void DrawVolSliceValues(slicedata *sd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank != NULL&&iblank[IJK(plotx, j, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJK(plotx, j, k)].node != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_slice_values[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_slice_values[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -4368,10 +4366,10 @@ void DrawVolSliceValues(slicedata *sd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank != NULL&&iblank[IJK(i, ploty, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJK(i, ploty, k)].node != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_slice_values[IN_SOLID_GLUI] == 0 && in_solid == 1) continue;
           if(show_slice_values[IN_GAS_GLUI] == 0   && in_gas == 1) continue;
         }
@@ -4413,10 +4411,10 @@ void DrawVolSliceValues(slicedata *sd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank != NULL&&iblank[IJK(i, j, plotz)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJK(i, j, plotz)].node != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_slice_values[IN_SOLID_GLUI] == 0 && in_solid == 1) continue;
           if(show_slice_values[IN_GAS_GLUI] == 0   && in_gas == 1) continue;
         }
@@ -4794,7 +4792,6 @@ void DrawVolAllSlicesTextureDiag(const slicedata *sd, int direction){
   float *xplt, *yplt, *zplt;
   int ibar, jbar;
   int nx, ny, nxy;
-  char *c_iblank_x, *c_iblank_y;
   char *iblank_embed;
 
   meshdata *meshi;
@@ -4807,8 +4804,6 @@ void DrawVolAllSlicesTextureDiag(const slicedata *sd, int direction){
   zplt = meshi->zplt_smv;
   ibar = meshi->ibar;
   jbar = meshi->jbar;
-  c_iblank_x = meshi->c_iblank_x;
-  c_iblank_y = meshi->c_iblank_y;
   iblank_embed = meshi->c_iblank_embed;
   nx = ibar + 1;
   ny = jbar + 1;
@@ -4858,8 +4853,8 @@ void DrawVolAllSlicesTextureDiag(const slicedata *sd, int direction){
           float rmid, zmid;
 
           n++; n2++;ijk+=nxy;
-          if(global_scase.show_slice_in_obst==ONLY_IN_SOLID && c_iblank_x != NULL&&c_iblank_x[ijk]==GASGAS)continue;
-          if(global_scase.show_slice_in_obst==ONLY_IN_GAS   && c_iblank_x != NULL&&c_iblank_x[ijk]!=GASGAS)continue;
+          if(global_scase.show_slice_in_obst==ONLY_IN_SOLID && meshi->compact_blank != NULL&&meshi->compact_blank[ijk].node_x==GASGAS)continue;
+          if(global_scase.show_slice_in_obst==ONLY_IN_GAS   && meshi->compact_blank != NULL&&meshi->compact_blank[ijk].node_x!=GASGAS)continue;
           if(skip_slice_in_embedded_mesh==1&&iblank_embed!=NULL&&iblank_embed[ijk]==EMBED_YES)continue;
           r11 = (float)sd->iqsliceframe[n] / 255.0;
           r31 = (float)sd->iqsliceframe[n2] / 255.0;
@@ -4928,8 +4923,8 @@ void DrawVolAllSlicesTextureDiag(const slicedata *sd, int direction){
 
         for(k = sd->ks1; k<sd->ks2; k++){
           n++; n2++; ijk+=nxy;
-          if(global_scase.show_slice_in_obst==ONLY_IN_SOLID && c_iblank_y!=NULL&&c_iblank_y[ijk]==GASGAS)continue;
-          if(global_scase.show_slice_in_obst==ONLY_IN_GAS   && c_iblank_y!=NULL&&c_iblank_y[ijk]!=GASGAS)continue;
+          if(global_scase.show_slice_in_obst==ONLY_IN_SOLID && meshi->compact_blank!=NULL&&meshi->compact_blank[ijk].node_y==GASGAS)continue;
+          if(global_scase.show_slice_in_obst==ONLY_IN_GAS   && meshi->compact_blank!=NULL&&meshi->compact_blank[ijk].node_y!=GASGAS)continue;
           if(skip_slice_in_embedded_mesh==1&&iblank_embed!=NULL&&iblank_embed[ijk]==EMBED_YES)continue;
           r11 = (float)sd->iqsliceframe[n] / 255.0;
           r31 = (float)sd->iqsliceframe[n2] / 255.0;
@@ -4982,7 +4977,6 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
   float *xplt, *yplt, *zplt;
   int ibar, jbar;
   int nx, ny, nxy;
-  char *c_iblank_x, *c_iblank_y, *c_iblank_z;
   char *iblank_embed;
   int plotx, ploty, plotz;
 
@@ -5017,9 +5011,6 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
   }
   ibar = meshi->ibar;
   jbar = meshi->jbar;
-  c_iblank_x = meshi->c_iblank_x;
-  c_iblank_y = meshi->c_iblank_y;
-  c_iblank_z = meshi->c_iblank_z;
   iblank_embed = meshi->c_iblank_embed;
   nx = ibar + 1;
   ny = jbar + 1;
@@ -5060,12 +5051,12 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
         int in_solid, in_gas;
 
         in_gas=1;
-        if(c_iblank_x!=NULL&&c_iblank_x[IJK(plotx, j, k)]!=GASGAS)in_gas=0;
+        if(meshi->compact_blank!=NULL&&meshi->compact_blank[IJK(plotx, j, k)].node_x!=GASGAS)in_gas=0;
         in_solid = 1 - in_gas;
 
         k2 = MIN(k+slice_skipz, ks2);
         if(slice_skipz==1&&slice_skipy==1){
-          if(c_iblank_x!=NULL){
+          if(meshi->compact_blank!=NULL){
             if(show_slice_shaded[IN_SOLID_GLUI]==0&&in_solid==1)continue;
             if(show_slice_shaded[IN_GAS_GLUI]==0&&in_gas==1)continue;
           }
@@ -5151,12 +5142,12 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
         int in_solid, in_gas;
 
         in_gas=1;
-        if(c_iblank_y!=NULL&&c_iblank_y[IJK(i, ploty, k)]!=GASGAS)in_gas=0;
+        if(meshi->compact_blank!=NULL&&meshi->compact_blank[IJK(i, ploty, k)].node_x!=GASGAS)in_gas=0;
         in_solid = 1 - in_gas;
 
         k2 = MIN(k + slice_skipz, ks2);
         if(slice_skipx==1&&slice_skipz==1){
-          if(c_iblank_y!=NULL){
+          if(meshi->compact_blank!=NULL){
             if(show_slice_shaded[IN_SOLID_GLUI]==0   && in_solid==1)continue;
             if(show_slice_shaded[IN_GAS_GLUI]==0 && in_gas==1)continue;
           }
@@ -5238,12 +5229,12 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
         int in_solid, in_gas;
 
         in_gas=1;
-        if(c_iblank_z!=NULL&&c_iblank_z[IJK(i, j, plotz)] != GASGAS)in_gas=0;
+        if(meshi->compact_blank!=NULL&&meshi->compact_blank[IJK(i, j, plotz)].node_z != GASGAS)in_gas=0;
         in_solid = 1 - in_gas;
 
         j2 = MIN(j+slice_skipy, js2);
         if(slice_skipy==1&&slice_skipx==1){
-          if(c_iblank_z!=NULL){
+          if(meshi->compact_blank!=NULL){
             if(show_slice_shaded[IN_SOLID_GLUI]==0 && in_solid==1)continue;
             if(show_slice_shaded[IN_GAS_GLUI]==0   && in_gas==1)continue;
           }
@@ -5344,9 +5335,6 @@ void DrawVolSliceLines(const slicedata *sd){
   }
   ibar = meshi->ibar;
   jbar = meshi->jbar;
-  c_iblank_x = meshi->c_iblank_x;
-  c_iblank_y = meshi->c_iblank_y;
-  c_iblank_z = meshi->c_iblank_z;
   iblank_embed = meshi->c_iblank_embed;
   nx = ibar+1;
   ny = jbar+1;
@@ -5681,9 +5669,6 @@ void DrawVolSliceVerts(const slicedata *sd){
   }
   ibar = meshi->ibar;
   jbar = meshi->jbar;
-  c_iblank_x = meshi->c_iblank_x;
-  c_iblank_y = meshi->c_iblank_y;
-  c_iblank_z = meshi->c_iblank_z;
   iblank_embed = meshi->c_iblank_embed;
   nx = ibar+1;
   ny = jbar+1;
@@ -7473,7 +7458,6 @@ void DrawVVolSlice(const vslicedata *vd){
   meshdata *meshi;
   float *xplttemp, *yplttemp, *zplttemp;
   int plotx, ploty, plotz;
-  char *iblank;
   int nx, ny, nxy;
   float *rgb_ptr;
 
@@ -7502,7 +7486,6 @@ void DrawVVolSlice(const vslicedata *vd){
     plotz = sd->ks1;
   }
 
-  iblank = meshi->c_iblank_node;
   nx = meshi->ibar + 1;
   ny = meshi->jbar + 1;
   nxy = nx*ny;
@@ -7539,10 +7522,10 @@ void DrawVVolSlice(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank != NULL&&iblank[IJK(plotx, j, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJK(plotx, j, k)].node != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_vector_slice[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_vector_slice[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -7584,10 +7567,10 @@ void DrawVVolSlice(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank != NULL&&iblank[IJK(plotx, j, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJK(plotx, j, k)].node != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_vector_slice[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_vector_slice[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -7630,10 +7613,10 @@ void DrawVVolSlice(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank != NULL&&iblank[IJK(i, ploty, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJK(i, ploty, k)].node != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_vector_slice[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_vector_slice[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -7674,10 +7657,10 @@ void DrawVVolSlice(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank != NULL&&iblank[IJK(i, ploty, k)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJK(i, ploty, k)].node != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_vector_slice[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_vector_slice[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -7720,10 +7703,10 @@ void DrawVVolSlice(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank != NULL&&iblank[IJK(i, j, plotz)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJK(i, j, plotz)].node != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_vector_slice[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_vector_slice[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }
@@ -7765,10 +7748,10 @@ void DrawVVolSlice(const vslicedata *vd){
         int in_solid, in_gas;
 
         in_gas=1;
-        if(iblank != NULL&&iblank[IJK(i, j, plotz)] != GAS)in_gas=0;
+        if(meshi->compact_blank != NULL&&meshi->compact_blank[IJK(i, j, plotz)].node != GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
-        if(iblank!=NULL){
+        if(meshi->compact_blank!=NULL){
           if(show_vector_slice[IN_SOLID_GLUI]==0 && in_solid==1)continue;
           if(show_vector_slice[IN_GAS_GLUI]==0   && in_gas==1)continue;
         }

@@ -242,10 +242,6 @@ typedef struct _meshdata {
 
   struct blanking_flags *compact_blank_temp;
   struct blanking_flags *compact_blank;
-  char *c_iblank_node0,       *c_iblank_x0,      *c_iblank_y0,      *c_iblank_z0;
-  char *c_iblank_node0_temp,  *c_iblank_x0_temp, *c_iblank_y0_temp, *c_iblank_z0_temp;
-  char *c_iblank_node_html;
-  char *c_iblank_node_html_temp;
   float *f_iblank_cell0;
   float *f_iblank_cell0_temp;
   char *c_iblank_embed0;
@@ -253,13 +249,6 @@ typedef struct _meshdata {
   float *opacity_adjustments;
   unsigned char *is_firenode, *is_firenodeptr;
 
-  char *c_iblank_node,         *c_iblank_x,      *c_iblank_y,      *c_iblank_z;
-  /**
-   * @brief These temp values are where values are stored as the are calculated.
-   * They are switched to the main values at a convenient moment for the display.
-   *
-   */
-  char *c_iblank_node_temp,   *c_iblank_x_temp, *c_iblank_y_temp, *c_iblank_z_temp;
   float *f_iblank_cell;
   float *f_iblank_cell_temp;
   char *c_iblank_embed;

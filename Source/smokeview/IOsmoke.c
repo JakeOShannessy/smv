@@ -313,7 +313,7 @@ float GetSootDensity(float *xyz, int itime, meshdata **mesh_try){
   ijk = GetCellindex(xyz, mesh_try);
   if(mesh_try == NULL || *mesh_try == NULL|| ijk<0)return 0.0;
   mesh_soot = *mesh_try;
-  if(mesh_soot->c_iblank_node != NULL&&mesh_soot->c_iblank_node[ijk] == SOLID){
+  if(mesh_soot->compact_blank != NULL&&mesh_soot->compact_blank[ijk].node == SOLID){
     return 1000000.0;
   }
   vr = mesh_soot->volrenderinfo;

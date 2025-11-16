@@ -1,3 +1,4 @@
+#include "blanking.h"
 #include "options.h"
 #include <assert.h>
 #include <stdio.h>
@@ -178,7 +179,7 @@ void  UpdatePlot3DColors(plot3ddata *plot3di, int flag, int *errorcode){
 
 int GetPlot3DBounds(plot3ddata *plot3di){
   float valmin, valmax, *vals;
-  char *iblank;
+  struct blanking_flags *iblank;
   meshdata *meshi;
   int i, ntotal;
 
@@ -192,12 +193,12 @@ int GetPlot3DBounds(plot3ddata *plot3di){
     valmin = 1000000000.;
     valmax = -valmin;
     vals = meshi->qdata+i*ntotal;
-    iblank = meshi->c_iblank_node;
+    iblank = meshi->compact_blank;
     for(n = 0; n<ntotal; n++){
       float val;
 
       val = *vals++;
-      if(iblank==NULL||*iblank++==GAS){
+      if(iblank==NULL||(*iblank++).node==GAS){
         valmin = MIN(val, valmin);
         valmax = MAX(val, valmax);
       }
@@ -567,7 +568,6 @@ void DrawPlot3dTexture(meshdata *meshi){
   float *dx_xzcopy, *dy_xzcopy, *dz_xzcopy;
   float *dx_xycopy, *dy_xycopy, *dz_xycopy;
   int nx, ny, nz,nxy;
-  char *c_iblank_x, *c_iblank_y, *c_iblank_z, *iblank;
   float *vector_color;
   float *qdata;
   int nxyz;
@@ -593,10 +593,6 @@ void DrawPlot3dTexture(meshdata *meshi){
   xplt = meshi->xplt_smv;
   yplt = meshi->yplt_smv;
   zplt = meshi->zplt_smv;
-  c_iblank_x = meshi->c_iblank_x;
-  c_iblank_y = meshi->c_iblank_y;
-  c_iblank_z = meshi->c_iblank_z;
-  iblank = meshi->c_iblank_node;
 
 
   nx = ibar+1;
@@ -654,7 +650,7 @@ void DrawPlot3dTexture(meshdata *meshi){
       glBegin(GL_TRIANGLES);
       for(j=0; j<jbar; j++){
         for(k=0; k<kbar; k++){
-          if(c_iblank_x==NULL||c_iblank_x[IJKNODE(plotx,j,k)]==GASGAS){
+          if(meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(plotx,j,k)].node_x==GASGAS){
             float val[4];
 
             val[0] = GET_QDATA(plotx, j,   k,   plotn-1);
@@ -704,7 +700,7 @@ void DrawPlot3dTexture(meshdata *meshi){
           val = GET_QDATA(plotx, j,   k,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
           vector_color = rgb_plot3d + 4*colorindex;
-          if((iblank==NULL||iblank[IJKNODE(plotx,j,k)]==GAS)&&vector_color[3]>0.5){
+          if((meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(plotx,j,k)].node==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
             dx=*dx_yzcopy/2.0;
             dy=*dy_yzcopy/2.0;
@@ -734,7 +730,7 @@ void DrawPlot3dTexture(meshdata *meshi){
           val = GET_QDATA(plotx, j,   k,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
           vector_color = rgb_plot3d + 4*colorindex;
-          if((iblank==NULL||iblank[IJKNODE(plotx,j,k)]==GAS)&&vector_color[3]>0.5){
+          if((meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(plotx,j,k)].node==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
             glVertex3f(
               xplt[plotx]+*dx_yzcopy/(float)2.0,
@@ -768,7 +764,7 @@ void DrawPlot3dTexture(meshdata *meshi){
           val[1] = CLAMP(PLOT3DCONVERT(val[1], ttmin, ttmax), 0.0, 1.0);
           val[2] = CLAMP(PLOT3DCONVERT(val[2], ttmin, ttmax), 0.0, 1.0);
           val[3] = CLAMP(PLOT3DCONVERT(val[3], ttmin, ttmax), 0.0, 1.0);
-          if(c_iblank_y==NULL||c_iblank_y[IJKNODE(i, ploty, k)]==GASGAS){
+          if(meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(i, ploty, k)].node_y==GASGAS){
             if(ABS(val[0]-val[3])<ABS(val[1]-val[2])){
               glTexCoord1f(val[0]);  glVertex3f(xplt[i],   yplt[ploty], zplt[k]);
               glTexCoord1f(val[2]);  glVertex3f(xplt[i+1], yplt[ploty], zplt[k]);
@@ -810,7 +806,7 @@ void DrawPlot3dTexture(meshdata *meshi){
           val = GET_QDATA(i, ploty,   k,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
           vector_color = rgb_plot3d + 4*colorindex;
-          if((iblank==NULL||iblank[IJKNODE(i,ploty,k)]==GAS)&&vector_color[3]>0.5){
+          if((meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(i,ploty,k)].node==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
             dx=*dx_xzcopy/2.0;
             dy=*dy_xzcopy/2.0;
@@ -840,7 +836,7 @@ void DrawPlot3dTexture(meshdata *meshi){
           val = GET_QDATA(i, ploty,   k,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
           vector_color = rgb_plot3d + 4*colorindex;
-          if((iblank==NULL||iblank[IJKNODE(i,ploty,k)]==GAS)&&vector_color[3]>0.5){
+          if((meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(i,ploty,k)].node==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
             dx=*dx_xzcopy/2.0;
             dy=*dy_xzcopy/2.0;
@@ -881,7 +877,7 @@ void DrawPlot3dTexture(meshdata *meshi){
           val[1] = CLAMP(PLOT3DCONVERT(val[1], ttmin, ttmax), 0.0, 1.0);
           val[2] = CLAMP(PLOT3DCONVERT(val[2], ttmin, ttmax), 0.0, 1.0);
           val[3] = CLAMP(PLOT3DCONVERT(val[3], ttmin, ttmax), 0.0, 1.0);
-          if(c_iblank_z==NULL||c_iblank_z[IJKNODE(i, j, plotz)]==GASGAS){
+          if(meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(i, j, plotz)].node_z==GASGAS){
             if(ABS(val[0]-val[3])<ABS(val[1]-val[2])){
                glTexCoord1f(val[0]); glVertex3f(xplt[i],   yplt[j],   zplt[plotz]);
                glTexCoord1f(val[2]); glVertex3f(xplt[i+1], yplt[j],   zplt[plotz]);
@@ -923,7 +919,7 @@ void DrawPlot3dTexture(meshdata *meshi){
           val = GET_QDATA(i, j, plotz,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
           vector_color = rgb_plot3d + 4*colorindex;
-          if((iblank==NULL||iblank[IJKNODE(i,j,plotz)]==GAS)&&vector_color[3]>0.5){
+          if((meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(i,j,plotz)].node==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
             dx=*dx_xycopy/2.0;
             dy=*dy_xycopy/2.0;
@@ -953,7 +949,7 @@ void DrawPlot3dTexture(meshdata *meshi){
           val = GET_QDATA(i, j, plotz,   plotn-1);
           colorindex = 255*CLAMP(PLOT3DCONVERT(val, ttmin, ttmax), 0.0, 1.0);
           vector_color = rgb_plot3d + 4*colorindex;
-          if((iblank==NULL||iblank[IJKNODE(i,j,plotz)]==GAS)&&vector_color[3]>0.5){
+          if((meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(i,j,plotz)].node==GAS)&&vector_color[3]>0.5){
             glColor4fv(vector_color);
             glVertex3f(
               xplt[i]+*dx_xycopy/(float)2.0,
@@ -1231,7 +1227,6 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
   unsigned char *iqdata;
   char *iblank_xy = NULL, *iblank_xz = NULL, *iblank_yz = NULL;
   int nx, ny, nz, nxy, nxyz;
-  char *c_iblank_x, *c_iblank_y, *c_iblank_z;
   float qval=0.0;
 
   meshi = mesh_in;
@@ -1245,9 +1240,6 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
   xplt = meshi->xplt_smv;
   yplt = meshi->yplt_smv;
   zplt = meshi->zplt_smv;
-  c_iblank_x = meshi->c_iblank_x;
-  c_iblank_y = meshi->c_iblank_y;
-  c_iblank_z = meshi->c_iblank_z;
 
   yzcolorbase = meshi->yzcolorbase;
   xzcolorbase = meshi->xzcolorbase;
@@ -1304,11 +1296,11 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
     dy_yzcopy = dy_yz;
     dz_yzcopy = dz_yz;
     iblank_yz = NULL;
-    if(global_scase.use_iblank == 1 && c_iblank_x != NULL){
+    if(global_scase.use_iblank == 1 && meshi->compact_blank != NULL){
       NewMemory((void **)&iblank_yz, (jbar + 1)*(kbar + 1) * sizeof(char));
       for(j = 0;j < jbar;j++){
         for(k = 0;k < kbar;k++){
-          iblank_yz[k + j*kbar] = c_iblank_x[IJKNODE(plotx, j, k)];
+          iblank_yz[k + j*kbar] = meshi->compact_blank[IJKNODE(plotx, j, k)].node_x;
         }
       }
     }
@@ -1353,11 +1345,11 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
     dy_xzcopy = dy_xz;
     dz_xzcopy = dz_xz;
     iblank_xz = NULL;
-    if(global_scase.use_iblank == 1 && c_iblank_y != NULL){
+    if(global_scase.use_iblank == 1 && meshi->compact_blank != NULL){
       NewMemory((void **)&iblank_xz, (ibar + 1)*(kbar + 1) * sizeof(char));
       for(i = 0;i < ibar;i++){
         for(k = 0;k < kbar;k++){
-          iblank_xz[k + i*kbar] = c_iblank_y[IJKNODE(i, ploty, k)];
+          iblank_xz[k + i*kbar] = meshi->compact_blank[IJKNODE(i, ploty, k)].node_y;
         }
       }
     }
@@ -1402,11 +1394,11 @@ void UpdatePlotSliceMesh(meshdata *mesh_in, int slicedir){
     dy_xycopy = dy_xy;
     dz_xycopy = dz_xy;
     iblank_xy = NULL;
-    if(global_scase.use_iblank == 1 && c_iblank_z != NULL){
+    if(global_scase.use_iblank == 1 && meshi->compact_blank != NULL){
       NewMemory((void **)&iblank_xy, (ibar + 1)*(jbar + 1) * sizeof(char));
       for(i = 0;i < ibar;i++){
         for(j = 0;j < jbar;j++){
-          iblank_xy[j + i*jbar] = c_iblank_z[IJKNODE(i, j, plotz)];
+          iblank_xy[j + i*jbar] = meshi->compact_blank[IJKNODE(i, j, plotz)].node_z;
         }
       }
     }

@@ -1394,7 +1394,6 @@ int MakeIBlank(void){
     int nx, ny, nxy, ibarjbar;
     int ibar,jbar,kbar;
     float *fblank_cell=NULL;
-    char *iblank_node=NULL,*c_iblank_x=NULL,*c_iblank_y=NULL,*c_iblank_z=NULL,*c_iblank_node_html=NULL;
     int ii,ijksize;
     int i,j,k;
 
@@ -1409,23 +1408,14 @@ int MakeIBlank(void){
     // Allocate all the arrays. Keep in mind for this code, a cell is the
     // volumetric cell, and a node is a cell corner. Naturally there is an extra
     // element in each dimension for the nodes. The _x, _y, and _z values are the faces.
-    if(NewMemory((void **)&c_iblank_node_html, ijksize*sizeof(char))==0)return 1;
-    if(NewMemory((void **)&iblank_node,        ijksize*sizeof(char))==0)return 1;
+
     // fblank_cell is a float, it would seem this is used in the volsmoke shader
     // (or similar) to show/not-show smoke. Interesting technique, but may be
     // cheaper to generate on the fly then to keep around.
     if(NewMemory((void **)&fblank_cell,        ibar*jbar*kbar*sizeof(float))==0)return 1;
-    if(NewMemory((void **)&c_iblank_x,         ijksize*sizeof(char))==0)return 1;
-    if(NewMemory((void **)&c_iblank_y,         ijksize*sizeof(char))==0)return 1;
-    if(NewMemory((void **)&c_iblank_z,         ijksize*sizeof(char))==0)return 1;
 
     // Assign the newly allocated array to the mesh.
-    meshi->c_iblank_node_html_temp = c_iblank_node_html;
-    meshi->c_iblank_node0_temp     = iblank_node;
     meshi->f_iblank_cell0_temp     = fblank_cell;
-    meshi->c_iblank_x0_temp        = c_iblank_x;
-    meshi->c_iblank_y0_temp        = c_iblank_y;
-    meshi->c_iblank_z0_temp        = c_iblank_z;
 
     // Initially set all iblank cell values to GAS.
     // Initially set all iblank node, and xyz values to GAS.
@@ -1436,12 +1426,6 @@ int MakeIBlank(void){
       meshi->compact_blank_temp[i].node_x = GAS;
       meshi->compact_blank_temp[i].node_y = GAS;
       meshi->compact_blank_temp[i].node_z = GAS;
-
-      c_iblank_node_html[i] = GAS;
-      iblank_node[i]        = GAS;
-      c_iblank_x[i]         = GAS;
-      c_iblank_y[i]         = GAS;
-      c_iblank_z[i]         = GAS;
     }
 
     nx = ibar+1;
@@ -1573,7 +1557,6 @@ int MakeIBlank(void){
             if(i != ibar&&j != jbar&&k != kbar)    test += meshi->compact_blank_temp[ijk2+1+ibar].cell ;
 
 //          if(test==0)iblank_node[IJKNODE(i,j,k)]=0;
-            if(test == 0)iblank_node[ijknode] = 0;
             if (test == 0)meshi->compact_blank_temp[ijknode].node=0;
       // meshi->compact_blank[i].cell = GAS;
       // meshi->compact_blank[i].node_html = GAS;
@@ -1595,24 +1578,16 @@ int MakeIBlank(void){
         ijkcell = IJKCELL(0, j, k);
         ijknode = IJKNODE(0, j, k);
 //        c_iblank_x[IJKNODE(0,j,k)]   =2*iblank_cell[IJKCELL(0,j,k)];
-        c_iblank_x[ijknode] = 2 * meshi->compact_blank_temp[ijkcell].cell;
-      // meshi->compact_blank[i].cell = GAS;
-      // meshi->compact_blank[i].node_html = GAS;
-      // meshi->compact_blank[i].node = GAS;
       meshi->compact_blank_temp[ijknode].node_x = 2*meshi->compact_blank_temp[ijkcell].cell;
-      // meshi->compact_blank[i].node_y = GAS;
-      // meshi->compact_blank[i].node_z = GAS;
         for(i = 1; i<ibar; i++){
           ijknode++;
           ijkcell++;
 //          c_iblank_x[IJKNODE(i, j, k)] = iblank_cell[IJKCELL(i - 1, j, k)] + iblank_cell[IJKCELL(i, j, k)];
-          c_iblank_x[ijknode] = meshi->compact_blank_temp[ijkcell-1].cell+ meshi->compact_blank_temp[ijkcell].cell;
           meshi->compact_blank_temp[ijknode].node_x = meshi->compact_blank_temp[ijkcell-1].cell + meshi->compact_blank_temp[ijkcell].cell;
         }
         ijknode++;
         ijkcell++;
 //        c_iblank_x[IJKNODE(ibar, j, k)] = 2 * iblank_cell[IJKCELL(ibar - 1, j, k)];
-        c_iblank_x[ijknode] = 2 * meshi->compact_blank_temp[ijkcell-1].cell;
         meshi->compact_blank_temp[ijknode].node_x = 2 * meshi->compact_blank_temp[ijkcell-1].cell;
       }
     }
@@ -1628,13 +1603,11 @@ int MakeIBlank(void){
           ijkcell += ibar;
           ijknode += nx;
 //          c_iblank_y[IJKNODE(i,j,k)]=iblank_cell[IJKCELL(i,j-1,k)]+iblank_cell[IJKCELL(i,j,k)];
-          c_iblank_y[ijknode] = meshi->compact_blank_temp[ijkcell-ibar].cell + meshi->compact_blank_temp[ijkcell].cell;
           meshi->compact_blank_temp[ijknode].node_y = meshi->compact_blank_temp[ijkcell-ibar].cell + meshi->compact_blank_temp[ijkcell].cell;
         }
         ijkcell += ibar;
         ijknode += nx;
         //        c_iblank_y[IJKNODE(i,jbar,k)]=2*iblank_cell[IJKCELL(i,jbar-1,k)];
-        c_iblank_y[ijknode] = 2 * meshi->compact_blank_temp[ijkcell-ibar].cell;
         meshi->compact_blank_temp[ijknode].node_y = 2 * meshi->compact_blank_temp[ijkcell-ibar].cell;
       }
     }
@@ -1646,19 +1619,16 @@ int MakeIBlank(void){
         ijkcell = IJKCELL(i, j, 0);
         ijknode = IJKNODE(i, j, 0);
 //        c_iblank_z[IJKNODE(i,j,0)]=2*iblank_cell[IJKCELL(i,j,0)];
-        c_iblank_z[ijknode]=2*meshi->compact_blank_temp[ijkcell].cell;
         meshi->compact_blank_temp[ijknode].node_z = 2 * meshi->compact_blank_temp[ijkcell].cell;
         for(k=1;k<kbar;k++){
           ijkcell+=ibarjbar;
           ijknode+=nxy;
 //          c_iblank_z[IJKNODE(i,j,k)]=iblank_cell[IJKCELL(i,j,k-1)]+iblank_cell[IJKCELL(i,j,k)];
-          c_iblank_z[ijknode]=meshi->compact_blank_temp[ijkcell-ibar*jbar].cell+meshi->compact_blank_temp[ijkcell].cell;
           meshi->compact_blank_temp[ijknode].node_z = meshi->compact_blank_temp[ijkcell-ibar*jbar].cell+meshi->compact_blank_temp[ijkcell].cell;
         }
         ijkcell+=ibarjbar;
         ijknode+=nxy;
 //        c_iblank_z[IJKNODE(i,j,kbar)]=2*iblank_cell[IJKCELL(i,j,kbar-1)];
-        c_iblank_z[ijknode]=2*meshi->compact_blank_temp[ijkcell-ibar*jbar].cell;
         meshi->compact_blank_temp[ijknode].node_z =2*meshi->compact_blank_temp[ijkcell-ibar*jbar].cell;
       }
     }
@@ -1668,11 +1638,7 @@ int MakeIBlank(void){
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo + ig;
-    meshi->c_iblank_node_temp = meshi->c_iblank_node0_temp;
     meshi->f_iblank_cell_temp = meshi->f_iblank_cell0_temp;
-    meshi->c_iblank_x_temp    = meshi->c_iblank_x0_temp;
-    meshi->c_iblank_y_temp    = meshi->c_iblank_y0_temp;
-    meshi->c_iblank_z_temp    = meshi->c_iblank_z0_temp;
   }
 
   update_make_iblank = 1;

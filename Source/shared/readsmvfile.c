@@ -1088,19 +1088,10 @@ void InitMesh(meshdata *meshi){
   meshi->zplt_fds = NULL;
 
   meshi->f_iblank_cell = NULL;
-  meshi->c_iblank_x = NULL;
-  meshi->c_iblank_y = NULL;
-  meshi->c_iblank_z = NULL;
-  meshi->c_iblank_node = NULL;
   meshi->c_iblank_embed = NULL;
   meshi->block_zdist = NULL;
 
   meshi->f_iblank_cell0 = NULL;
-  meshi->c_iblank_x0 = NULL;
-  meshi->c_iblank_y0 = NULL;
-  meshi->c_iblank_z0 = NULL;
-  meshi->c_iblank_node0 = NULL;
-  meshi->c_iblank_node_html = NULL;
   meshi->c_iblank_embed0 = NULL;
   meshi->block_zdist0 = NULL;
 
