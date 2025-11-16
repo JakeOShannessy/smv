@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <process.h>
 #include <windows.h>
 #endif
@@ -13,28 +13,28 @@
 #include "string_util.h"
 #include "background.h"
 #include "datadefs.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "file_util.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 void GetSystemTimesAddress(void);
 int getnprocs(char *command);
 #endif
 unsigned char cpuusage(void);
 
-#ifdef pp_LINUX
+#ifdef __linux__
 int get_ncores(void);
 float get_load(void);
-float get_host_load(char *host);
-unsigned char cpuusage_host(char *host,int ncores);
+float get_host_load(char *hosta);
+int cpuusage_host(char *hosta,int ncores);
 #endif
-int get_host_ncores(char *host);
+int get_host_ncores(char *hosta);
 
 #ifdef pp_OSX
-unsigned char cpuusage_host(char *host,int ncores);
+int cpuusage_host(char *hosta,int ncores);
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 
 /* ------------------ Sleep ------------------------ */
 
@@ -48,28 +48,22 @@ void Sleep(int ticks){
 
 /* ------------------ Usage ------------------------ */
 
-void Usage(char *prog, int option){
-  char prog_version[100];
+void Usage(int option){
   char githash[100];
   char gitdate[100];
   char pp[] = "%";
 
-  GetProgVersion(prog_version);  // get version (ie 5.x.z)
   GetGitInfo(githash, gitdate);    // get githash
 
   printf("\n");
-  printf("background %s(%s) - %s\n", prog_version, githash, __DATE__);
-  printf("  Runs a program in the background when resources are available\n\nUsage:\n\n");
-  printf("  %s", prog);
-
-  printf(" [-d delay time (s) -h -u max_usage -v] prog [arguments]\n\n");
-
-  printf("where\n\n");
-
+  printf("background [-d delay time (s) -h -u max_usage -v] prog [arguments]\n");
+  printf("%s %s\n\n", githash, __DATE__);
+  printf("Runs a program in the background when resources are available\n\n");
+  printf("options:\n");
   printf("  -d dtime  - wait dtime seconds before running prog in the background\n");
   printf("  -m max    - wait to run prog until memory usage is less than max (25-100%s)\n", pp);
   printf("  -u max    - wait to run prog until cpu usage is less than max (25-100%s)\n", pp);
-#ifdef WIN32
+#ifdef _WIN32
   printf("  -U max    - wait to run prog until number of instances of prog is less than max \n");
 #endif
   UsageCommon(HELP_SUMMARY);
@@ -77,10 +71,10 @@ void Usage(char *prog, int option){
   printf("  arguments - command line arguments of prog\n\n");
   if(option == HELP_ALL){
     printf("  -debug    - display debug messages\n");
-#ifdef pp_LINUX
+#ifdef __linux__
     printf("  -hosts hostfiles - file containing a list of host names to run jobs on\n");
 #endif
-#ifdef pp_LINUX
+#ifdef __linux__
     printf("  -p path   - specify directory path to change to after ssh'ing to remote host\n");
 #endif
     UsageCommon(HELP_ALL);
@@ -94,7 +88,7 @@ void Usage(char *prog, int option){
 
 int main(int argc, char **argv){
   int i;
-#ifdef WIN32
+#ifdef _WIN32
   int nprocs;
 #else
   int debug=0;
@@ -106,19 +100,19 @@ int main(int argc, char **argv){
   int cpu_usage, cpu_usage_max=25;
   int mem_usage, mem_usage_max=75;
   int nprocs_max=-1;
-#ifdef pp_LINUX
+#ifdef __linux__
   FILE *stream=NULL;
 #endif
 
   int itime;
   char *arg;
-#ifdef WIN32
+#ifdef _WIN32
   char *command, *base;
 #endif
 
   SetStdOut(stdout);
   initMALLOC();
-#ifdef pp_LINUX
+#ifdef __linux__
   hostlistfile=NULL;
   host=NULL;
   strcpy(user_path,"");
@@ -129,17 +123,24 @@ int main(int argc, char **argv){
 #endif
 
   if(argc==1){
-    PRINTVERSION("background ", argv[0]);
+#ifdef pp_HASH
+    common_opts opts = {
+        .hash_option = HASH_SHA1,
+    };
+    PRINTVERSION("background ", &opts);
+#else
+    PRINTVERSION("background ", NULL);
+#endif
     return 1;
   }
 
-  ParseCommonOptions(argc, argv);
-  if(show_help!=0){
-    Usage("background",show_help);
+  common_opts opts = ParseCommonOptions(argc, argv);
+  if(opts.show_help!=0){
+    Usage(opts.show_help);
     return 1;
   }
-  if(show_version==1){
-    PRINTVERSION("background", argv[0]);
+  if(opts.show_version==1){
+    PRINTVERSION("background", &opts);
     return 1;
   }
 
@@ -160,13 +161,13 @@ int main(int argc, char **argv){
                 if(delay_time<0.0)delay_time=0.0;
               }
             }
-#ifndef WIN32
+#ifndef _WIN32
             else{
               debug=1;
             }
 #endif
             break;
-#ifdef pp_LINUX
+#ifdef __linux__
           case 'h':
             if(strcmp(arg,"-hosts")==0){
               i++;
@@ -215,7 +216,7 @@ int main(int argc, char **argv){
             break;
           default:
             printf("Unknown option: %s\n",arg);
-            Usage(argv[0],HELP_ALL);
+            Usage(HELP_ALL);
             return 1;
         }
       }
@@ -226,10 +227,10 @@ int main(int argc, char **argv){
 
     }
   }
-#ifdef pp_LINUX
+#ifdef __linux__
   nhostinfo=0;
   if(hostlistfile!=NULL){
-    stream=fopen(hostlistfile,"r");
+    stream=FOPEN(hostlistfile,"r");
   }
   if(hostlistfile!=NULL&&stream!=NULL){
     char buffer[255];
@@ -269,7 +270,7 @@ int main(int argc, char **argv){
     Sleep(itime);
   }
 
-#ifdef WIN32
+#ifdef _WIN32
   GetSystemTimesAddress();
   command=argv[argstart];
   base = strrchr(command,'\\');
@@ -288,8 +289,6 @@ int main(int argc, char **argv){
     }
   }
   else{
-    cpu_usage=cpuusage();
-    mem_usage=memusage();
     Sleep(200);
     cpu_usage=cpuusage();
     mem_usage=memusage();
@@ -303,8 +302,6 @@ int main(int argc, char **argv){
 #else
   strcpy(command_buffer,"");
   if(hostinfo==NULL){
-    cpu_usage=cpuusage();
-    mem_usage=memusage();
     Sleep(200);
     cpu_usage=cpuusage();
     mem_usage=memusage();
@@ -359,7 +356,7 @@ int main(int argc, char **argv){
   return 0;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 typedef BOOL ( __stdcall * pfnGetSystemTimes)( LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFILETIME lpUserTime );
 static pfnGetSystemTimes s_pfnGetSystemTimes = NULL;
 
@@ -381,7 +378,7 @@ void GetSystemTimesAddress(){
 
 /* ------------------ getnprocs ------------------------ */
 
-#ifdef WIN32
+#ifdef _WIN32
 int getnprocs(char *command){
   FILE *stream;
   int count=0;
@@ -389,7 +386,7 @@ int getnprocs(char *command){
 
   system("tasklist > process.out");
 
-  stream = fopen("process.out","r");
+  stream = FOPEN("process.out","r");
   if(stream==NULL)return 0;
 
   strcpy(com_copy, command);
@@ -434,9 +431,8 @@ unsigned char cpuusage(){
 
 // we cannot directly use GetSystemTimes on C language
 /* add this line :: pfnGetSystemTimes */
-  s_pfnGetSystemTimes(&ft_sys_idle,    /* System idle time */
-  &ft_sys_kernel,  /* system kernel time */
-  &ft_sys_user);   /* System user time */
+  if(s_pfnGetSystemTimes==NULL)return usage_local;
+  s_pfnGetSystemTimes(&ft_sys_idle,&ft_sys_kernel,&ft_sys_user);
 
   CopyMemory(&ul_sys_idle  , &ft_sys_idle  , sizeof(FILETIME)); // Could been optimized away...
   CopyMemory(&ul_sys_kernel, &ft_sys_kernel, sizeof(FILETIME)); // Could been optimized away...
@@ -474,7 +470,7 @@ unsigned char cpuusage(){
 
 /* ------------------ get_sysctl ------------------------ */
 
-void get_sysctl(char *host, char *var, int *ivar, float *fvar){
+void get_sysctl(char *hosta, char *var, int *ivar, float *fvar){
   char command[256];
   FILE *stream;
   char sysctl_file[256];
@@ -489,9 +485,9 @@ void get_sysctl(char *host, char *var, int *ivar, float *fvar){
   strcat(sysctl_file,pid);
 
   strcpy(command,"");
-  if(host!=NULL){
+  if(hosta!=NULL){
     strcat(command,"ssh ");
-    strcat(command,host);
+    strcat(command,hosta);
     strcat(command," ");
   }
   strcat(command,"sysctl -n ");
@@ -500,7 +496,7 @@ void get_sysctl(char *host, char *var, int *ivar, float *fvar){
   strcat(command,sysctl_file);
   system(command);
 
-  stream=fopen(sysctl_file,"r");
+  stream=FOPEN(sysctl_file,"r");
   if(stream!=NULL){
     char buffer[255];
 
@@ -530,10 +526,10 @@ int get_ncores(void){
 
 /* ------------------ get_host_ncores ------------------------ */
 
-int get_host_ncores(char *host){
+int get_host_ncores(char *hosta){
   int ncores=1;
 
-  get_sysctl(host,"hw.ncpu",&ncores,NULL);
+  get_sysctl(hosta,"hw.ncpu",&ncores,NULL);
   return ncores;
 }
 
@@ -548,14 +544,14 @@ float get_load(void){
 
 /* ------------------ get_host_load ------------------------ */
 
-float get_host_load(char *host){
+float get_host_load(char *hosta){
   float load;
 
-  get_sysctl(host,"vm.loadavg",NULL,&load);
+  get_sysctl(hosta,"vm.loadavg",NULL,&load);
   return load;
 }
 #endif
-#ifdef pp_LINUX
+#ifdef __linux__
 
 /* ------------------ get_ncores ------------------------ */
 
@@ -564,7 +560,7 @@ int get_ncores(void){
   int ncores=0;
   char buffer[255];
 
-  stream=fopen("/proc/cpuinfo","r");
+  stream=FOPEN("/proc/cpuinfo","r");
   if(stream==NULL)return 1;
   while(!feof(stream)){
     if(fgets(buffer,255,stream)==NULL)break;
@@ -579,7 +575,7 @@ int get_ncores(void){
 
 /* ------------------ get_host_ncores ------------------------ */
 
-int get_host_ncores(char *host){
+int get_host_ncores(char *hosta){
   FILE *stream;
   char buffer[1024];
   char command[1024];
@@ -587,18 +583,18 @@ int get_host_ncores(char *host){
   int ncores=0;
 
   strcpy(localfile,"/tmp/cpuinfo.");
-  strcat(localfile,host);
+  strcat(localfile,hosta);
   strcat(localfile,".");
   strcat(localfile,pid);
 
   strcpy(command,"ssh ");
-  strcat(command,host);
+  strcat(command,hosta);
   strcat(command," cat /proc/cpuinfo >");
   strcat(command,localfile);
 
   system(command);
 
-  stream=fopen(localfile,"r");
+  stream=FOPEN(localfile,"r");
   if(stream==NULL){
     printf("unable to open %s\n",localfile);
     return 1;
@@ -620,7 +616,7 @@ int get_host_ncores(char *host){
 
 /* ------------------ get_host_load ------------------------ */
 
-float get_host_load(char *host){
+float get_host_load(char *host_arg){
   FILE *stream;
   char buffer[1024];
   char command[1024];
@@ -628,18 +624,18 @@ float get_host_load(char *host){
   float load1;
 
   strcpy(localfile,"/tmp/loadavg.");
-  strcat(localfile,host);
+  strcat(localfile,host_arg);
   strcat(localfile,".");
   strcat(localfile,pid);
 
   strcpy(command,"ssh ");
-  strcat(command,host);
+  strcat(command,host_arg);
   strcat(command," cat /proc/loadavg >");
   strcat(command,localfile);
 
   system(command);
 
-  stream=fopen(localfile,"r");
+  stream=FOPEN(localfile,"r");
   if(stream==NULL)return 1.0;
   if(fgets(buffer,255,stream)==NULL){
     fclose(stream);
@@ -658,7 +654,7 @@ float get_load(void){
   char buffer[255];
   float load1;
 
-  stream=fopen("/proc/loadavg","r");
+  stream=FOPEN("/proc/loadavg","r");
   if(stream==NULL)return 1.0;
   if(fgets(buffer,255,stream)==NULL){
     fclose(stream);
@@ -670,17 +666,17 @@ float get_load(void){
 }
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 
 /* ------------------ cpuusage_host ------------------------ */
 
-unsigned char cpuusage_host(char *host, int ncores){
+int cpuusage_host(char *hostb, int ncores){
   float load;
-  unsigned char usage;
+  int usage;
 
-  load = get_host_load(host);
+  load = get_host_load(hostb);
   if(load>ncores)load=ncores;
-  usage = 100*(load/(float)ncores);
+  usage = MAX(0,100*(load/(float)ncores));
   return usage;
 }
 

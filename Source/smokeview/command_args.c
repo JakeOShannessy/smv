@@ -8,7 +8,7 @@
 #include <string.h>
 
 #include "options.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "command_args.h"
 
 /* ------------------ CLE_Message ------------------------ */
@@ -55,6 +55,7 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
   args.x1 = true;
   args.x2 = false;
 #endif
+  args.encode_png_commandline = false;
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-ini") == 0) {
       args.ini = true;
@@ -216,17 +217,17 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
       i++;
       sscanf(argv[i],"%f",&args.max_mem_GB);
       if(args.max_mem_GB<0.0)args.max_mem_GB = 0.0;
-    } 
+    }
     else if(strcmp(argv[i], "-x0") == 0) {
       args.have_x0 = true;
       i++;
       sscanf(argv[i],"%i",&args.x0);
-    } 
+    }
     else if(strcmp(argv[i], "-y0") == 0) {
       args.have_y0 = true;
       i++;
       sscanf(argv[i],"%i",&args.y0);
-    } 
+    }
     else if(strcmp(argv[i], "-X0") == 0) {
       args.have_X0 = true;
       i++;
@@ -241,7 +242,20 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
       args.geominfo = true;
     } else if (strcmp(argv[i], "-fast") == 0) {
       args.fast = true;
-    } else if(strcmp(argv[i], "-full") == 0) {
+    }
+    else if(strcmp(argv[i], "-load_co2") == 0) {
+      args.load_co2 = true;
+    }
+    else if(strcmp(argv[i], "-load_hrrpuv") == 0) {
+      args.load_hrrpuv = true;
+    }
+    else if(strcmp(argv[i], "-load_soot") == 0) {
+      args.load_soot = true;
+    }
+    else if(strcmp(argv[i], "-load_temp") == 0) {
+      args.load_temp = true;
+    }
+    else if(strcmp(argv[i], "-full") == 0) {
       args.full = true;
     } else if (strcmp(argv[i], "-blank") == 0) {
       args.blank = true;
@@ -254,22 +268,6 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
     } else if (strcmp(argv[i], "-runhtmlscript") == 0) {
       args.runhtmlscript = true;
     }
-#ifdef pp_LUA
-    else if (strcmp(argv[i], "-runluascript") == 0) {
-      args.runluascript = true;
-    } else if (strcmp(argv[i], "-killscript") == 0) {
-      args.killscript = true;
-    } else if (strcmp(argv[i], "-luascript") == 0) {
-      ++i;
-      if (i < argc) {
-        NewMemory((void **)&args.luascript, strlen(argv[i]) + 1);
-        strcpy(args.luascript, argv[i]);
-      } else {
-        *error = CLE_ARGUMENT_EXPECTED;
-        return args;
-      }
-    }
-#endif
     else if (strcmp(argv[i], "-scriptrenderdir") == 0) {
       i++;
       if (i < argc) {
@@ -354,7 +352,23 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
         *error = CLE_ARGUMENT_EXPECTED;
         return args;
       }
-    } else if (strcmp(argv[i], "-threads") == 0) {
+    }
+    else if(strcmp(argv[i], "-encode_png") == 0) {
+      int encode_png_local = 1;
+
+      ++i;
+      args.encode_png_commandline = true;
+      if(i < argc){
+        sscanf(argv[i],"%i", &encode_png_local);
+      }
+      if(encode_png_local == 1){
+        args.encode_png = true;
+      }
+      else{
+        args.encode_png = false;
+      }
+    }
+    else if(strcmp(argv[i], "-threads") == 0) {
       args.threads_defined = true;
       ++i;
       if (i < argc) {

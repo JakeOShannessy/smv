@@ -1,4 +1,3 @@
-#define CPP
 #include "options.h"
 
 #include <assert.h>
@@ -8,6 +7,7 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "glui_motion.h"
 
 GLUI *glui_clip=NULL;
 
@@ -70,6 +70,14 @@ extern "C" void GLUIUpdateShowRotationCenter2(void){
 /* ------------------ ClipCB ------------------------ */
 
 void ClipCB(int var){
+  meshdata *mesh0;
+  float dx, dy, dz;
+
+  mesh0 = global_scase.meshescoll.meshinfo;
+  dx = MAX(0.1, mesh0->boxeps_fds[0]);
+  dy = MAX(0.1, mesh0->boxeps_fds[1]);
+  dz = MAX(0.1, mesh0->boxeps_fds[2]);
+
   glutPostRedisplay();
   switch(var){
   case CLIP_ROTATE:
@@ -84,11 +92,11 @@ void ClipCB(int var){
     GLUIUpdateShowRotationCenter();
     break;
   case CLIP_MESH:
-    if(clip_mesh == 0){
+    if(global_scase.clip_mesh == 0){
       SetClipControls(DEFAULT_VALS);
     }
     else{
-      SetClipControls(clip_mesh);
+      SetClipControls(global_scase.clip_mesh);
     }
     break;
   case SAVE_SETTINGS_CLIP:
@@ -142,8 +150,7 @@ void ClipCB(int var){
       CHECKBOX_clip_xmax->enable();
       CHECKBOX_clip_ymax->enable();
       CHECKBOX_clip_zmax->enable();
-      show_bothsides_blockages = 1;
-      updatefaces = 1;
+      global_scase.updatefaces = 1;
     }
     else{
       SPINNER_clip_xmin->disable();
@@ -159,16 +166,56 @@ void ClipCB(int var){
       CHECKBOX_clip_xmax->disable();
       CHECKBOX_clip_ymax->disable();
       CHECKBOX_clip_zmax->disable();
+      global_scase.updatefaces = 1;
+    }
+ // draw both sides of blockage faces if clipping is on or if the case has removeable blokcages
+    if(clip_mode != CLIP_OFF || global_scase.have_removable_obsts == 1){
+      show_bothsides_blockages = 1;
+    }
+    else{
       show_bothsides_blockages = 0;
-      updatefaces = 1;
     }
     break;
   case SPINNER_xlower:
+    if(clipinfo.xmin < xbar0ORIG) {
+      clipinfo.xmin = xbar0ORIG - dx;
+      SPINNER_clip_xmin->set_float_val(clipinfo.xmin);
+    }
+    updatefacelists = 1;
+    break;
   case SPINNER_xupper:
+    if(clipinfo.xmax > xbarORIG) {
+      clipinfo.xmax = xbarORIG + dx;
+      SPINNER_clip_xmax->set_float_val(clipinfo.xmax);
+    }
+    updatefacelists = 1;
+    break;
   case SPINNER_ylower:
+    if(clipinfo.ymin < ybar0ORIG) {
+      clipinfo.ymin = ybar0ORIG - dy;
+      SPINNER_clip_ymin->set_float_val(clipinfo.ymin);
+    }
+    updatefacelists = 1;
+    break;
   case SPINNER_yupper:
+    if(clipinfo.ymax > ybarORIG) {
+      clipinfo.ymax = ybarORIG + dy;
+      SPINNER_clip_ymax->set_float_val(clipinfo.ymax);
+    }
+    updatefacelists = 1;
+    break;
   case SPINNER_zlower:
+    if(clipinfo.zmin < zbar0ORIG) {
+      clipinfo.zmin = zbar0ORIG - dz;
+      SPINNER_clip_zmin->set_float_val(clipinfo.zmin);
+    }
+    updatefacelists = 1;
+    break;
   case SPINNER_zupper:
+    if(clipinfo.zmax > zbarORIG) {
+      clipinfo.zmax = zbarORIG + dz;
+      SPINNER_clip_zmax->set_float_val(clipinfo.zmax);
+    }
     updatefacelists = 1;
     break;
   default:
@@ -203,8 +250,10 @@ void ClipCB(int var){
     camera_current->zmin = clipinfo.zmin;
     camera_current->zmax = clipinfo.zmax;
     break;
+  case CLIP_CLOSE:
   case CLIP_ROTATE:
   case CLIP_SHOW_ROTATE2:
+  case SAVE_SETTINGS_CLIP:
     break;
   default:
     assert(FFALSE);
@@ -229,7 +278,7 @@ void SetClipControls(int val){
     clipinfo.ymax = yclip_max;
     clipinfo.zmax = zclip_max;
   }
-  if(val >= 1 && val <= nmeshes){
+  if(val >= 1 && val <= global_scase.meshescoll.nmeshes){
     meshdata *meshi;
     float *xplt, *yplt, *zplt;
 
@@ -239,11 +288,11 @@ void SetClipControls(int val){
     dyclip = (ybarORIG - ybar0ORIG) / 1000.0;
     dzclip = (zbarORIG - zbar0ORIG) / 1000.0;
 
-    meshi = meshinfo + val - 1;
+    meshi = global_scase.meshescoll.meshinfo + val - 1;
 
-    xplt = meshi->xplt_orig;
-    yplt = meshi->yplt_orig;
-    zplt = meshi->zplt_orig;
+    xplt = meshi->xplt_fds;
+    yplt = meshi->yplt_fds;
+    zplt = meshi->zplt_fds;
 
     clipinfo.xmin = xplt[0] - dxclip;
     clipinfo.ymin = yplt[0] - dyclip;
@@ -271,7 +320,7 @@ extern "C" void GLUIClipSetup(int main_window){
   glui_clip->hide();
 
   PANEL_clip = glui_clip->add_panel("",GLUI_PANEL_NONE);
-  PANEL_clip_lower = glui_clip->add_panel_to_panel(PANEL_clip,_("Clip lower"));
+  PANEL_clip_lower = glui_clip->add_panel_to_panel(PANEL_clip,"Clip lower");
   PANEL_clipx = glui_clip->add_panel_to_panel(PANEL_clip_lower,"X",GLUI_PANEL_NONE);
   SPINNER_clip_xmin=glui_clip->add_spinner_to_panel(PANEL_clipx,"X",GLUI_SPINNER_FLOAT,&clipinfo.xmin,SPINNER_xlower,ClipCB);
   glui_clip->add_column_to_panel(PANEL_clipx,false);
@@ -288,15 +337,15 @@ extern "C" void GLUIClipSetup(int main_window){
   CHECKBOX_clip_zmin=glui_clip->add_checkbox_to_panel(PANEL_clipz,"",&clipinfo.clip_zmin,CLIP_zlower,ClipCB);
 
   radio_clip = glui_clip->add_radiogroup_to_panel(PANEL_clip,&clip_mode,CLIP_all,ClipCB);
-  RADIOBUTTON_clip_1a=glui_clip->add_radiobutton_to_group(radio_clip,_("Clipping disabled"));
-  RADIOBUTTON_clip_1b=glui_clip->add_radiobutton_to_group(radio_clip,_("Clip blockages and data"));
-  RADIOBUTTON_clip_1c=glui_clip->add_radiobutton_to_group(radio_clip,_("Clip blockages"));
-  RADIOBUTTON_clip_1c=glui_clip->add_radiobutton_to_group(radio_clip,_("Clip data"));
+  RADIOBUTTON_clip_1a=glui_clip->add_radiobutton_to_group(radio_clip,"Clipping disabled");
+  RADIOBUTTON_clip_1b=glui_clip->add_radiobutton_to_group(radio_clip,"Clip blockages and data");
+  RADIOBUTTON_clip_1c=glui_clip->add_radiobutton_to_group(radio_clip,"Clip blockages");
+  RADIOBUTTON_clip_1c=glui_clip->add_radiobutton_to_group(radio_clip,"Clip data");
   assert(CLIP_MAX==3);
 
   glui_clip->add_column_to_panel(PANEL_clip, false);
 
-  PANEL_clip_upper = glui_clip->add_panel_to_panel(PANEL_clip,_("Clip upper"));
+  PANEL_clip_upper = glui_clip->add_panel_to_panel(PANEL_clip,"Clip upper");
 
   PANEL_clipX = glui_clip->add_panel_to_panel(PANEL_clip_upper,"X",GLUI_PANEL_NONE);
   SPINNER_clip_xmax=glui_clip->add_spinner_to_panel(PANEL_clipX,"X",GLUI_SPINNER_FLOAT,&clipinfo.xmax,SPINNER_xupper,ClipCB);
@@ -321,11 +370,11 @@ extern "C" void GLUIClipSetup(int main_window){
 
   glui_clip->add_column_to_panel(panel_wrapup,false);
 
-  BUTTON_clip_1=glui_clip->add_button_to_panel(panel_wrapup,_("Save settings"),SAVE_SETTINGS_CLIP,ClipCB);
+  BUTTON_clip_1=glui_clip->add_button_to_panel(panel_wrapup,"Save settings",SAVE_SETTINGS_CLIP,ClipCB);
 
   glui_clip->add_column_to_panel(panel_wrapup,false);
 
-  BUTTON_clip_2=glui_clip->add_button_to_panel(panel_wrapup,_("Close"),CLIP_CLOSE,ClipCB);
+  BUTTON_clip_2=glui_clip->add_button_to_panel(panel_wrapup,"Close",CLIP_CLOSE,ClipCB);
 #ifdef pp_CLOSEOFF
   BUTTON_clip_2->disable();
 #endif
@@ -334,11 +383,11 @@ extern "C" void GLUIClipSetup(int main_window){
     SetClipControls(INI_VALS);  // clip vals from ini file
   }
   else{
-    if(clip_mesh==0){
+    if(global_scase.clip_mesh==0){
       SetClipControls(DEFAULT_VALS);  // clip vals from global scene
     }
     else{
-      SetClipControls(clip_mesh);  // clip vals from mesh clip_mesh
+      SetClipControls(global_scase.clip_mesh);  // clip vals from mesh clip_mesh
     }
   }
 
@@ -354,7 +403,9 @@ extern "C" void GLUIHideClip(void){
 /* ------------------ GLUIShowClip ------------------------ */
 
 extern "C" void GLUIShowClip(void){
-  if(glui_clip!=NULL)glui_clip->show();
+  if(glui_clip != NULL){
+    glui_clip->show();
+  }
 }
 
 /* ------------------ GLUIUpdateClip ------------------------ */

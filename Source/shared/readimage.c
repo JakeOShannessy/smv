@@ -1,5 +1,5 @@
-#include "options.h"
-#include "MALLOCC.h"
+#include "options_common.h"
+#include "dmalloc.h"
 #include "string_util.h"
 #include "gd.h"
 
@@ -19,7 +19,7 @@ unsigned char *ReadJPEG(const char *filename,int *width, int *height, int *is_tr
   unsigned int intrgb;
   int WIDTH, HEIGHT;
 
-  file = fopen(filename, "rb");
+  file = FOPEN(filename, "rb");
   if(file == NULL)return NULL;
   image = gdImageCreateFromJpeg(file);
   fclose(file);
@@ -64,7 +64,7 @@ unsigned char *ReadPNG(const char *filename,int *width, int *height, int *is_tra
   int i,j;
   unsigned int intrgb;
 
-  file = fopen(filename, "rb");
+  file = FOPEN(filename, "rb");
   if(file == NULL)return NULL;
   image = gdImageCreateFromPng(file);
   fclose(file);
@@ -127,7 +127,7 @@ unsigned char *ReadPicture(char *texturedir, char *filename, int *width, int *he
       strcpy(filebuffer,texturedir);
       strcat(filebuffer,dirseparator);
       strcat(filebuffer,filename);
-      stream=fopen(filebuffer,"rb");
+      stream=FOPEN(filebuffer,"rb");
       if(stream==NULL){
         if(printflag==1){
           fprintf(stderr,"*** Error: texture file: %s unavailable\n",filebuffer);
@@ -169,5 +169,107 @@ unsigned char *ReadPicture(char *texturedir, char *filename, int *width, int *he
     }
   }
   return returncode;
-
 }
+
+#define GETBIT(val, ibit)         (((val) >> (ibit)) &1)
+#define SETBIT(val, bitval, ibit) (val |= ((bitval) << (ibit)))
+
+/* ------------------ DecodePNGData ------------------------ */
+
+unsigned char *DecodePNGData(unsigned char *buffer, int nbuffer, int *ndataptr, int skip, int channel){
+  int i, signature_base = 314159, signature = 0, ndata = 0;
+  unsigned char *dataptr = NULL;
+
+  // decode signature
+
+  for(i = 0; i < 32; i++){
+    unsigned char *c, bitval;
+
+    c = buffer + skip * i + channel;
+    bitval = GETBIT(*c, 0);
+    SETBIT(signature, bitval, i);
+  }
+  if(signature != signature_base)return NULL;
+
+  // decode ndata
+
+  buffer += 32 * skip;
+  for(i = 0; i < 32; i++){
+    unsigned char *c, bitval;
+
+    c = buffer + skip * i + channel;
+    bitval = GETBIT(*c, 0);
+    SETBIT(ndata, bitval, i);
+  }
+  if(ndata <= 0)return NULL;
+
+  // decode data
+
+  *ndataptr = ndata;
+  if(NewMemory((void **)&dataptr, ndata + 1) == 0){
+    return NULL;
+  }
+
+  buffer += 32 * skip;
+  for(i = 0; i < ndata; i++){
+    int j;
+    unsigned char *data;
+
+    data = dataptr + i;
+    *data = 0;
+    for(j = 0; j < 8; j++){
+      unsigned char *c, bitval;
+
+      c = buffer + skip * (8 * i + j) + channel;
+      bitval = GETBIT(*c, 0);
+      SETBIT(*data, bitval, j);
+    }
+  }
+  dataptr[ndata] = 0;
+  return dataptr;
+}
+
+/* ------------------ EncodePNGData ------------------------ */
+
+void EncodePNGData(unsigned char *buffer, int nbuffer, unsigned char *data, int ndata, int skip, int channel){
+  int signature = 314159, i;
+
+  // encode signature
+
+  for(i = 0;i < 32;i++){
+    unsigned char *c;
+
+    c = buffer + skip * i + channel;
+    *c &= 0xFE;
+    *c |= GETBIT(signature, i);
+  }
+
+  // encode ndata
+
+  buffer += 32 * skip;
+  for(i = 0; i < 32; i++){
+    unsigned char *c;
+
+    c = buffer + skip * i + channel;
+    *c &= 0xFE;
+    *c |= GETBIT(ndata, i);
+  }
+
+  // encode data
+
+  buffer += 32 * skip;
+  for(i = 0; i < ndata; i++){
+    int j;
+    unsigned char *dataptr;
+
+    dataptr = data + i;
+    for(j = 0; j < 8; j++){
+      unsigned char *c;
+
+      c = buffer + skip * (8 * i + j) + channel;
+      *c &= 0xFE;
+      *c |= GETBIT(*dataptr, j);
+    }
+  }
+}
+

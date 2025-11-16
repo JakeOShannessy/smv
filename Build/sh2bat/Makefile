@@ -2,6 +2,8 @@
 # sh2bat makefile
 
 SOURCE_DIR = ../../../Source/
+BUILD_DIR = ../../../Build
+LIB_DIR = $(BUILD_DIR)/LIBS
 INC_DIR = -I $(SOURCE_DIR)/zlib128 -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/sh2bat
 FILTERC =
 FILTERF =
@@ -21,19 +23,9 @@ else
 endif
 GITINFO=-Dpp_GITHASH=\"$(GIT_HASH)\" -Dpp_GITDATE=\""$(GIT_DATE)\""
 
-ifeq ($(shell echo "check_quotes"),"check_quotes")
-  INTEL_COMPVERSION := $(shell ..\..\..\Utilities\Scripts\intel_compversion)
-  GNU_COMPVERSION := $(shell ..\..\..\Utilities\Scripts\gnu_compversion)
-else
-  INTEL_COMPVERSION := $(shell ../../../Utilities/Scripts/intel_compversion.sh)
-  GNU_COMPVERSION := $(shell ../../../Utilities/Scripts/gnu_compversion.sh)
-endif
-INTEL_COMPINFO=-Dpp_COMPVER=\"$(INTEL_COMPVERSION)\"
-GNU_COMPINFO=-Dpp_COMPVER=\"$(GNU_COMPVERSION)\"
-
 # Definition of the object variables
 
-obj = sh2bat.o string_util.o dmalloc.o file_util.o md5.o sha1.o sha256.o stdio_buffer.o
+obj = sh2bat.o string_util.o dmalloc.o file_util.o md5.o sha1.o sha256.o stdio_buffer.o threader.o
 objwin = $(obj:.o=.obj)
 
 #*** General Purpose Rules ***
@@ -51,26 +43,31 @@ no_target:
 
 # ********  rules for each platform supported *************
 
+SMV_WIN_LIBDIR = $(LIB_DIR)/intel_win_64
+SMV_LIBS_WIN = $(SMV_WIN_LIBDIR)\pthreads.lib
+
+SMV_CLANG_LIBDIR = $(LIB_DIR)/clang_win_64
+SMV_LIBS_CLANG = $(SMV_CLANG_LIBDIR)\pthreads.lib
+
 # ------------- intel win 64 ----------------
 
-intel_win_64 : CFLAGS    = -I $(SOURCE_DIR)/pthreads -D X64 -D WIN32 -O2 /nologo $(GITINFO) $(INTEL_COMPINFO)
+intel_win_64 : CFLAGS    = -D PTW32_STATIC_LIB -I $(SOURCE_DIR)/pthreads -O2 /nologo $(GITINFO) $(INTEL_COMPINFO)
 intel_win_64 : CC        = $(I_CC)
 intel_win_64 : CPP       = $(I_CC)
-intel_win_64 : exe       = sh2bat_win_64.exe
+intel_win_64 : exe       = sh2bat_win_64.exe 
 
 intel_win_64 : $(objwin)
-	$(CPP) -o $(bin)/$(exe) $(objwin)
+	$(CPP) -o $(bin)/$(exe) $(objwin) $(SMV_LIBS_WIN)
 
-# ------------- gnu win 64 ----------------
+# ------------- clang win 64 ----------------
 
-gnu_win_64 : CFLAGS    = -D WIN32 -O2  $(GITINFO)
-gnu_win_64 : CC        = gcc
-gnu_win_64 : CPP       = g++
-gnu_win_64 : exe       = sh2bat_win_64.exe
+clang_win_64 : CFLAGS    = $(GITINFO) -I $(SOURCE_DIR)/pthreads -D PTW32_STATIC_LIB
+clang_win_64 : CC        = clang-cl
+clang_win_64 : CPP       = clang-cl
+clang_win_64 : exe       = sh2bat_win_64.exe
 
-gnu_win_64 : $(obj)
-	$(CPP) -o $(bin)/$(exe) $(obj)
-
+clang_win_64 : $(objwin)
+	$(CPP) -o $(bin)/$(exe) $(objwin) $(SMV_LIBS_CLANG)
 
 #-------------- Clean Target to remove Object and Module files -----------
 

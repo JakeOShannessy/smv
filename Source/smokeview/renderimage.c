@@ -6,12 +6,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <stdbool.h>
 
 #include "smokeviewvars.h"
 
 #include GLUT_H
 #include "gd.h"
 #include "IOscript.h"
+#include "paths.h"
+#include "readimage.h"
 
 /* ------------------ PlayMovie ------------------------ */
 
@@ -21,7 +24,7 @@ void *PlayMovie(void *arg){
   if(FILE_EXISTS(GetMovieFilePath(moviefile_path)) == YES){
     strcpy(command_line, "ffplay ");
     strcat(command_line, moviefile_path);
-#ifdef WIN32
+#ifdef _WIN32
     strcat(command_line, " 2>Nul ");
 #else
     strcat(command_line, " 2>/dev/null ");
@@ -41,7 +44,7 @@ void *PlayMovie(void *arg){
 void *SetupFF(void *arg){
   int have_ffmpeg_local, have_ffplay_local;
 
-#ifdef WIN32
+#ifdef _WIN32
   have_ffmpeg_local = HaveProg("ffmpeg -version> Nul 2>Nul");
   have_ffplay_local = HaveProg("ffplay -version> Nul 2>Nul");
 #else
@@ -49,7 +52,7 @@ void *SetupFF(void *arg){
   have_ffplay_local = HaveProg("ffplay -version >/dev/null 2>/dev/null");
 #endif
 
-  THREADcontrol(ffmpeg_threads, THREAD_LOCK);;
+  THREADcontrol(ffmpeg_threads, THREAD_LOCK);
   update_ff = 1;
   have_ffmpeg = have_ffmpeg_local;
   have_ffplay = have_ffplay_local;
@@ -93,6 +96,9 @@ void MakeMovie(void){
   if(render_filetype==JPEG){
     strcpy(image_ext, ".jpg");
   }
+  else if(render_filetype == RGIF){
+    strcpy(image_ext, ".gif");
+  }
   else{
     strcpy(image_ext, ".png");
   }
@@ -114,10 +120,15 @@ void MakeMovie(void){
     }
   }
 
-  if(make_movie_now==1||output_ffmpeg_command==1){
+  if(movie_filetype == MGIF){
+    void RenderCB(int var);
+    RenderCB(RENDER_START_GIF);
+  }
+  if(movie_filetype !=MGIF&&(make_movie_now==1||output_ffmpeg_command==1)){
     char power_label[100];
 // construct name of frames used to make movie
 
+    making_movie = 1;
     strcpy(movie_frames, render_file_base);
     strcat(movie_frames,"_%04d");
     strcat(movie_frames, image_ext);
@@ -141,12 +152,13 @@ void MakeMovie(void){
 
 // make movie
     if(output_ffmpeg_command==1){
-      if(ffmpeg_command_filename!=NULL){
         FILE *stream_ffmpeg=NULL;
 
-        stream_ffmpeg = fopen(ffmpeg_command_filename,"w");
+        char *ffmpeg_command_filename = CasePathFfmpegCommand(&global_scase);
+        stream_ffmpeg = FOPEN(ffmpeg_command_filename,"w");
+        FREEMEMORY(ffmpeg_command_filename);
         if(stream_ffmpeg!=NULL){
-#ifdef WIN32
+#ifdef _WIN32
           fprintf(stream_ffmpeg,"@echo off\n");
 #else
           fprintf(stream_ffmpeg,"#!/bin/bash\n");
@@ -154,24 +166,20 @@ void MakeMovie(void){
           fprintf(stream_ffmpeg,"%s\n",command_line);
           fclose(stream_ffmpeg);
         }
-      }
       printf("%s\n", command_line);
       output_ffmpeg_command=0;
     }
     if(make_movie_now==1)system(command_line);
+    making_movie = 0;
   }
 
 // enable movie making button
-
-  EnableDisableMakeMovie(ON);
   EnableDisablePlayMovie();
-
-  update_makemovie = 0;
 }
 
 /* ------------------ ResetRenderResolution ------------------------ */
 
-void ResetRenderResolution(int *width_low, int *height_low, int *width_high, int *height_high) {
+void ResetRenderResolution(int *width_low, int *height_low, int *width_high, int *height_high){
   *width_low = screenWidth;
   *height_low = screenHeight;
   *width_high = *width_low*MAX(2, resolution_multiplier);
@@ -180,12 +188,12 @@ void ResetRenderResolution(int *width_low, int *height_low, int *width_high, int
 
 /* ------------------ GetRenderResolution ------------------------ */
 
-void GetRenderResolution(int *width_low, int *height_low, int *width_high, int *height_high) {
-  if (render_status==RENDER_OFF||renderW == 0 || renderH == 0) {
+void GetRenderResolution(int *width_low, int *height_low, int *width_high, int *height_high){
+  if(render_status==RENDER_OFF||renderW == 0 || renderH == 0){
     *width_low = screenWidth;
     *height_low = screenHeight;
   }
-  else {
+  else{
     *width_low = renderW;
     *height_low = renderH;
   }
@@ -269,7 +277,7 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
       use_scriptfile = 1;
     }
     else{
-      strcpy(renderfile_name, fdsprefix);
+      strcpy(renderfile_name, global_scase.fdsprefix);
     }
     if(script_dir_path != NULL&&strlen(script_dir_path) > 0){
       if(strlen(script_dir_path) == 2 && script_dir_path[0] == '.'&&script_dir_path[1] == dirseparator[0]){
@@ -283,6 +291,7 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
   // directory
 
   if(Writable(renderfile_dir) == NO){
+    char *smokeview_scratchdir = GetUserConfigDir();
     if(Writable(smokeview_scratchdir) == YES){
       strcpy(renderfile_dir, smokeview_scratchdir);
     }
@@ -294,8 +303,10 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
       else{
         fprintf(stderr, "*** Error: unable to render screen image to directory %s \n",renderfile_dir);
       }
+      FREEMEMORY(smokeview_scratchdir);
       return 1;
     }
+    FREEMEMORY(smokeview_scratchdir);
   }
 
   // filename suffix
@@ -343,9 +354,10 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
       }
       code = GetPlot3dTime(&time_local);
       if(code == 1 && render_label_type == RENDER_LABEL_TIME){
-        char timelabel_local[20], *timelabelptr, dt = 1.0;
+        char timelabel_local[20], *timelabelptr;
+        float dt = 1.0, maxtime=100000.0;
 
-        timelabelptr = Time2TimeLabel(time_local, dt, timelabel_local, force_fixedpoint);
+        timelabelptr = Time2RenderLabel(time_local, dt, maxtime, timelabel_local);
         strcat(suffix, "_");
         strcat(suffix, timelabelptr);
         strcat(suffix, "s");
@@ -354,12 +366,16 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
     else{
       float time_local;
       char timelabel_local[20], *timelabelptr;
-      float dt;
+      float dt, maxtime;
 
       time_local = global_times[itimes];
-      dt = global_times[1] - global_times[0];
-      if(dt < 0.0)dt = -dt;
-      timelabelptr = Time2TimeLabel(time_local, dt, timelabel_local, force_fixedpoint);
+      dt = ABS(global_times[1] - global_times[0]);
+      maxtime = MAX(ABS(global_times[nglobal_times-1]), ABS(global_scase.global_tend));
+      maxtime = MAX(maxtime, ABS(global_scase.global_tbegin));
+      maxtime = MAX(maxtime, 10.0);
+      //allow space for minus sign
+      if(global_scase.global_tend<0.0 || global_scase.global_tbegin<0.0 || global_times[nglobal_times-1] < 0.0)maxtime *= 10.0;
+      timelabelptr = Time2RenderLabel(time_local, dt, maxtime, timelabel_local);
       strcpy(suffix, timelabelptr);
       strcat(suffix, "s");
     }
@@ -385,6 +401,9 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
     break;
   case JPEG:
     renderfile_ext = ext_jpg;
+    break;
+  case RGIF:
+    renderfile_ext = ext_gif;
     break;
   default:
     render_filetype = PNG;
@@ -416,9 +435,9 @@ void OutputSliceData(void){
 
   for(ii = 0; ii < nslice_loaded; ii++){
     i = slice_loaded_list[ii];
-    sd = sliceinfo + i;
+    sd = global_scase.slicecoll.sliceinfo + i;
     if(sd->display == 0 || sd->slicefile_labelindex != slicefile_labelindex)continue;
-    if(sd->times[0] > global_times[itimes])continue;
+    if(global_times!=NULL&&sd->times[0] > global_times[itimes])continue;
 
     if(sd->qslicedata == NULL){
       PRINTF("  Slice data unavailable for output\n");
@@ -435,10 +454,10 @@ void OutputSliceData(void){
     strcat(datafile, "_sf_");
     strcat(datafile, flabel);
     strcat(datafile, ".csv");
-    fileout = fopen(datafile, "a");
+    fileout = FOPEN(datafile, "a");
     if(fileout == NULL)continue;
     if(global_times != NULL)fprintf(fileout, "%f\n", global_times[itimes]);
-    switch (sd->idir){
+    switch(sd->idir){
     case XDIR:
       fprintf(fileout, "%i,%i\n", sd->ks2 + 1 - sd->ks1, sd->js2 + 1 - sd->js1);
       for(row = sd->ks1; row <= sd->ks2; row++){
@@ -482,6 +501,183 @@ void OutputSliceData(void){
   }
 }
 
+struct gif_spec_frame {
+  /// @brief The frame number to render.
+  int frame_number;
+  /// @brief Duration of the frame in hundredths of a second.
+  int duration;
+};
+
+struct gif_spec {
+  /// @brief The current capacity of the \ref gif_frames buffer (the capacity).
+  size_t capacity;
+  /// @brief The number of specified frames in the \ref gif_frames buffer (the
+  /// length).
+  size_t n_frames;
+  /// @brief A buffer holding the frame number and duration of each frame.
+  struct gif_spec_frame *gif_frames;
+};
+
+/// @brief The animated GIF file that is currently being created. NULL if there
+/// is no animated GIF creation in process.
+static FILE *out = NULL;
+/// @brief The current animated GIF frame specification. This sets out which
+/// frames are to be rendered, in which order and the duration of each frame.
+/// This is optional, if it is set to NULL all frames will be rendered using the
+/// framerate set by the GUI.
+static struct gif_spec *current_gif_spec = NULL;
+/// @brief The current GIF frame being rendered. This is an offset into the
+/// frames of the GIF frame specification.
+static size_t current_gif_frame = 0;
+
+/* -------------------------- GifSpec_Clear --------------------------------- */
+
+/// @brief Clear the animated GIF frame specification if one exists. Does
+/// nothing if there is no current frame specification.
+void GifSpec_Clear() {
+  if(current_gif_spec != NULL) {
+    if(current_gif_spec->gif_frames != NULL)
+      FREEMEMORY(current_gif_spec->gif_frames);
+    FREEMEMORY(current_gif_spec);
+  }
+  current_gif_frame = 0;
+}
+
+/* -------------------------- GifSpec_PushFrame ----------------------------- */
+
+/// @brief Set the frame specification to be used for animated GIFs. Will clear
+/// the current GIF specification if one already exists.
+/// @param gfs A pointer to a gif_frame spec. This must be allocated with
+/// NEWMEMORY. This pointer will be kept and later needs to be freed by calling
+/// GifSpec_Clear.
+void GifSpec_PushFrame(int frame_number, int duration) {
+  if(current_gif_spec == NULL) {
+    NEWMEMORY(current_gif_spec, sizeof(struct gif_spec));
+    current_gif_spec->n_frames = 0;
+    current_gif_spec->capacity = 2;
+    NEWMEMORY(current_gif_spec->gif_frames,
+              current_gif_spec->capacity * sizeof(struct gif_spec_frame));
+  }
+  if(current_gif_spec->n_frames >= current_gif_spec->capacity) {
+    current_gif_spec->capacity *= 2;
+    RESIZEMEMORY(current_gif_spec->gif_frames,
+                 current_gif_spec->capacity * sizeof(struct gif_spec_frame));
+  }
+  current_gif_spec->gif_frames[current_gif_spec->n_frames].frame_number =
+      frame_number;
+  current_gif_spec->gif_frames[current_gif_spec->n_frames].duration = duration;
+  current_gif_spec->n_frames++;
+}
+
+/* ------------------------------- GifStart --------------------------------- */
+
+/// @brief Open a gif file with the same dimensions as the current render window
+/// at a give path.
+/// @param[in] path The path at which to open the file
+/// @return zero on success, non-zero on failure
+int GifStart(const char *path) {
+  GLsizei width = screenWidth;
+  GLsizei height = screenHeight;
+
+  making_movie = 1;
+  gdImagePtr im = gdImageCreate(width, height);
+  if(!im) {
+    fprintf(stderr, "can't create image");
+    return 1;
+  }
+
+  out = fopen(path, "wb");
+  if(!out) {
+    fprintf(stderr, "can't create file %s", path);
+    return 1;
+  }
+
+  gdImageColorAllocate(im, 255, 255, 255); /* allocate white as side effect */
+  gdImageGifAnimBegin(im, out, 1, 0);
+  gdImageDestroy(im);
+  return 0;
+}
+
+/* ------------------------------- GifEnd ----------------------------------- */
+
+/// @brief Finalise a GIF which was started with GifStart and close the
+/// associated file.
+/// @return zero on success, non-zero on failure
+int GifEnd() {
+  gdImageGifAnimEnd(out);
+  fclose(out);
+  making_movie = 0;
+  return 0;
+}
+
+/* ------------------------------- GifAddFrame ------------------------------ */
+
+/// @brief Take the current render window and add it to a frame. A GIF must have
+/// already been started using GifStart.
+/// @param[in] delay
+/// @return zero on success, non-zero on failure
+int GifAddFrame(int delay) {
+  GLsizei width = screenWidth;
+  GLsizei height = screenHeight;
+  GLubyte *OpenGLimage;
+
+  NewMemory((void **)&OpenGLimage, width * height * sizeof(GLubyte) * 3);
+  gdImagePtr im = gdImageCreate(width, height);
+  gdImageColorAllocate(im, 255, 255, 255);
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, OpenGLimage);
+  GLubyte *p = OpenGLimage;
+  unsigned int r, g, b;
+  for(int i = height - 1; i >= 0; i--) {
+    for(int j = 0; j < width; j++) {
+      r = *p++;
+      g = *p++;
+      b = *p++;
+      int col = gdImageColorResolve(im, r, g, b);
+      gdImageSetPixel(im, j, i, col);
+    }
+  }
+  gdImageGifAnimAdd(im, out, 1, 0, 0, delay, gdDisposalNone, NULL);
+  FREEMEMORY(OpenGLimage);
+  return 0;
+}
+
+/* ----------------------------- GifAddFrameSpec ---------------------------- */
+
+/// @brief Add a frame to the current animated GIF (which must have been started
+/// with \ref GifStart). This will examine the current options and or
+/// specification to determine whether a frame should be rendered and for how
+/// long.
+/// @return zero on success, non-zero on failure
+int GifAddFrameSpec() {
+  // Should add the current frame? True by default.
+  bool render = true;
+  // How long should this frame be? Set the default based on framerate.
+  int delay = 100 / movie_framerate;
+  if(current_gif_spec != NULL) {
+    // If we've gone beyond the current frame spec, we don't need to render
+    if(current_gif_frame >= current_gif_spec->n_frames) {
+      render = false;
+    }
+    else {
+      struct gif_spec_frame this_frame =
+          current_gif_spec->gif_frames[current_gif_frame];
+      if(this_frame.frame_number == itimes) {
+        render = true;
+        delay = this_frame.duration;
+        current_gif_frame++;
+      }
+      else {
+        render = false;
+      }
+    }
+  }
+  if(render) {
+    GifAddFrame(delay);
+  }
+  return 0;
+}
+
 /* ------------------ RenderFrame ------------------------ */
 
 void RenderFrame(int view_mode){
@@ -490,7 +686,7 @@ void RenderFrame(int view_mode){
   int woffset=0,hoffset=0;
   int screenH;
 
-#ifdef WIN32
+#ifdef _WIN32
   SetThreadExecutionState(ES_DISPLAY_REQUIRED); // reset display idle timer to prevent screen saver from activating
 #endif
 
@@ -548,7 +744,7 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
   int clip_left_hat, clip_right_hat, clip_bottom_hat, clip_top_hat;
   int width_hat, height_hat;
 
-  if(render_filetype!=PNG&&render_filetype!=JPEG)render_filetype=PNG;
+  if(render_filetype!=PNG&&render_filetype!=JPEG&&render_filetype!=RGIF)render_filetype=PNG;
 
   if(GetRenderFileName(VIEW_CENTER, renderfile_dir, renderfile)!=0)return 1;
 
@@ -562,7 +758,7 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
   }
   strcat(renderfullfile,renderfile);
 
-  RENDERfile = fopen(renderfullfile, "wb");
+  RENDERfile = FOPEN(renderfullfile, "wb");
   if(RENDERfile == NULL){
     fprintf(stderr, "*** Error: unable to render screen image to %s", renderfullfile);
     return 1;
@@ -583,13 +779,8 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
     height_hat = clip_top_hat - clip_bottom_hat + 1;
   }
   else{
-    clip_left = 0;
-    clip_right = screenWidth - 1;
     clip_left_hat = 0;
     clip_right_hat = nfactor*screenWidth - 1;
-
-    clip_bottom = 0;
-    clip_top = screenHeight - 1;
     clip_bottom_hat = 0;
     clip_top_hat = nfactor*screenHeight - 1;
 
@@ -601,31 +792,89 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
   RENDERimage = gdImageCreateTrueColor(width_hat,height_hat);
 
   for(irow=0;irow<nfactor;irow++){
-    int icol, imin, imax;
+    int icol, imin_height, imax_height;
 
-    imin = irow*screenHeight;
-    imax = (irow+1)*screenHeight;
+    imin_height = irow*screenHeight;
+    imax_height = (irow+1)*screenHeight;
 
     for(icol=0;icol<nfactor;icol++){
       GLubyte *p;
-      int jmin, jmax;
+      int jmin_width, jmax_width;
 
-      jmin = icol*screenWidth;
-      jmax = (icol+1)*screenWidth;
+      jmin_width = icol*screenWidth;
+      jmax_width = (icol+1)*screenWidth;
 
       p = *screenbuffers++;
       if(clip_rendered_scene==1&&
-            (jmax<clip_left_hat||jmin>clip_right_hat||imax<clip_bottom_hat||imin>clip_top_hat)){
+            (jmax_width<clip_left_hat|| jmin_width>clip_right_hat|| imax_height<clip_bottom_hat|| imin_height>clip_top_hat)){
             continue;
       }
 
-      for(i=imin; i<imax; i++){
-        for(j=jmin; j<jmax; j++){
-          r=*p++; g=*p++; b=*p++;
-          if(clip_rendered_scene==0||
-            (clip_left_hat<=j&&j<=clip_right_hat&&clip_bottom_hat<=i&&i<=clip_top_hat)){
-            rgb_local = (r<<16)|(g<<8)|b;
-            gdImageSetPixel(RENDERimage,j-clip_left_hat,clip_top_hat - i,rgb_local);
+      if(nfactor == 1 && encode_png == 1 && render_filetype == PNG){
+        unsigned char *rgb_locals=NULL;
+        int nrgb_locals, count = 0;
+
+        nrgb_locals = (imax_height + 1 - imin_height) * (jmax_width + 1 - jmin_width);
+        if(nrgb_locals > 0){
+          NewMemory(( void ** )&rgb_locals, 3*nrgb_locals);
+          for(i = imin_height; i < imax_height; i++){
+            for(j = jmin_width; j < jmax_width; j++){
+              r = *p++; g = *p++; b = *p++;
+              if(clip_rendered_scene==0 ||
+                (clip_left_hat<=j&&j<=clip_right_hat&&clip_bottom_hat<=i&&i<=clip_top_hat)){
+                rgb_locals[count++] = r;
+                rgb_locals[count++] = g;
+                rgb_locals[count++] = b;
+              }
+            }
+          }
+
+          char infobuffer[100];
+          int ninfobuffer;
+          int skip=3, channel=2;
+          char fds_label[256], smv_label[256];
+
+          strcpy(fds_label, global_scase.fds_githash);
+          if(strcmp(fds_label, "unknown") == 0){
+            if(global_scase.nzoneinfo == 0){
+              strcpy(fds_label, "FDS revision: unknown");
+            }
+            else{
+              strcpy(fds_label, "CFAST revision: unknown");
+            }
+          }
+          strcpy(smv_label, smv_githash);
+          if(strcmp(smv_githash, "unknown") == 0)strcpy(smv_label, "SMV revision: unknown");
+
+          sprintf(infobuffer, "%s\n%s", fds_label, smv_label);
+          ninfobuffer = strlen(infobuffer);
+          EncodePNGData(rgb_locals, nrgb_locals, (unsigned char *)infobuffer, ninfobuffer, skip, channel);
+          count = 0;
+          for(i = imin_height; i < imax_height; i++){
+            for(j = jmin_width; j < jmax_width; j++){
+              if(clip_rendered_scene==0 ||
+                 (clip_left_hat<=j&&j<=clip_right_hat&&clip_bottom_hat<=i&&i<=clip_top_hat)){
+                r = rgb_locals[count++];
+                g = rgb_locals[count++];
+                b = rgb_locals[count++];
+                rgb_local = (r << 16) | (g << 8) | b;
+                gdImageSetPixel(RENDERimage, j - clip_left_hat, clip_top_hat - i, rgb_local);
+              }
+            }
+          }
+          FREEMEMORY(rgb_locals);
+        }
+      }
+      else{
+        for(i = imin_height; i < imax_height; i++){
+          for(j = jmin_width; j < jmax_width; j++){
+            r = *p++; g = *p++; b = *p++;
+            if(clip_rendered_scene == 0 ||
+              ( clip_left_hat <= j && j <= clip_right_hat &&
+                clip_bottom_hat <= i && i <= clip_top_hat)){
+              rgb_local = (r << 16) | (g << 8) | b;
+              gdImageSetPixel(RENDERimage, j - clip_left_hat, clip_top_hat - i, rgb_local);
+            }
           }
         }
       }
@@ -640,6 +889,9 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
     break;
   case JPEG:
     gdImageJpeg(RENDERimage,RENDERfile,-1);
+    break;
+  case RGIF:
+    gdImageGif(RENDERimage, RENDERfile);
     break;
   default:
     assert(FFALSE);
@@ -671,7 +923,7 @@ unsigned int GetScreenMap360(float *xyz, float *xx, float *yy){
   screendata *screeni;
   int ibuff;
   float xyznorm;
-  int maxbuff;
+  int maxbuff=0;
   float maxcos, cosangle;
   float *view, *up, *right, t;
   float A, B;
@@ -794,7 +1046,7 @@ void DrawScreenInfo(void){
       xyz[j+3] = view[j] + right[j]/2.0 - up[j]/2.0;
       xyz[j+6] = view[j] + right[j]/2.0 + up[j]/2.0;
       xyz[j+9] = view[j] - right[j]/2.0 + up[j]/2.0
-        ;
+       ;
     }
     glColor3f(0.0, 0.0, 0.0);
     glVertex3fv(xyz);
@@ -985,7 +1237,7 @@ int MergeRenderScreenBuffers360(void){
   int i, j, ijk360;
   int *screenbuffer360;
 
-  if(render_filetype!=PNG&&render_filetype!=JPEG)render_filetype=PNG;
+  if(render_filetype!=PNG&&render_filetype!=JPEG&&render_filetype!=RGIF)render_filetype=PNG;
 
   if(GetRenderFileName(VIEW_CENTER, renderfile_dir, renderfile)!=0)return 1;
 
@@ -999,7 +1251,7 @@ int MergeRenderScreenBuffers360(void){
   }
   strcat(renderfullfile,renderfile);
 
-  RENDERfile = fopen(renderfullfile, "wb");
+  RENDERfile = FOPEN(renderfullfile, "wb");
   if(RENDERfile == NULL){
     fprintf(stderr, "*** Error: unable to render screen image to %s", renderfullfile);
     return 1;
@@ -1082,12 +1334,15 @@ int MergeRenderScreenBuffers360(void){
 
   /* output the image */
 
-  switch (render_filetype){
+  switch(render_filetype){
   case PNG:
     gdImagePng(RENDERimage, RENDERfile);
     break;
   case JPEG:
     gdImageJpeg(RENDERimage, RENDERfile, -1);
+    break;
+  case RGIF:
+    gdImageGif(RENDERimage, RENDERfile);
     break;
   default:
     assert(FFALSE);
@@ -1109,13 +1364,13 @@ void SetSmokeSensor(gdImagePtr RENDERimage, int width, int height){
   if(test_smokesensors == 1 && active_smokesensors == 1 && show_smokesensors != SMOKESENSORS_HIDDEN){
     int idev;
 
-    for(idev = 0; idev < ndeviceinfo; idev++){
+    for(idev = 0; idev < global_scase.devicecoll.ndeviceinfo; idev++){
       devicedata *devicei;
       int idev_col, idev_row;
       int col_offset, row_offset;
       unsigned int red = 255 << 16;
 
-      devicei = deviceinfo + idev;
+      devicei = global_scase.devicecoll.deviceinfo + idev;
 
       if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(strcmp(devicei->object->label, "smokesensor") != 0)continue;
@@ -1166,7 +1421,9 @@ int SmokeviewImage2File(char *directory, char *RENDERfilename, int rendertype, i
   height2 = height_end-height_beg;
 
   if(directory==NULL){
+    char *smokeview_scratchdir = GetUserConfigDir();
     renderfile= GetFileName(smokeview_scratchdir,RENDERfilename,NOT_FORCE_IN_DIR);
+    FREEMEMORY(smokeview_scratchdir);
   }
   else{
     renderfile= GetFileName(directory,RENDERfilename,FORCE_IN_DIR); //force
@@ -1175,7 +1432,7 @@ int SmokeviewImage2File(char *directory, char *RENDERfilename, int rendertype, i
     fprintf(stderr,"*** Error: unable to render screen image to %s", RENDERfilename);
     return 1;
   }
-  RENDERfile = fopen(renderfile, "wb");
+  RENDERfile = FOPEN(renderfile, "wb");
   if(RENDERfile == NULL){
     fprintf(stderr,"*** Error: unable to render screen image to %s", renderfile);
     return 1;
@@ -1195,7 +1452,7 @@ int SmokeviewImage2File(char *directory, char *RENDERfilename, int rendertype, i
 
   RENDERimage = gdImageCreateTrueColor(width2,height2);
 
-  for(i = height2-1 ; i>=0; i--){
+  for(i = height2-1; i>=0; i--){
     for(j=0;j<width2;j++){
       unsigned int r, g, b;
       int rgb_local;
@@ -1217,6 +1474,9 @@ int SmokeviewImage2File(char *directory, char *RENDERfilename, int rendertype, i
   case JPEG:
     gdImageJpeg(RENDERimage,RENDERfile,-1);
     break;
+  case RGIF:
+    gdImageGif(RENDERimage, RENDERfile);
+    break;
   default:
     assert(FFALSE);
     break;
@@ -1230,91 +1490,3 @@ int SmokeviewImage2File(char *directory, char *RENDERfilename, int rendertype, i
   PRINTF(" Completed.\n");
   return 0;
 }
-
-/* ------------------ SVimage2var ------------------------ */
-#ifdef pp_LUA
-int SVimage2var(int rendertype,
-    int woffset, int width, int hoffset, int height, gdImagePtr *RENDERimage){
-
-  GLubyte *OpenGLimage, *p;
-  unsigned int r, g, b;
-  int i,j,rgb_local;
-  int width_beg, width_end, height_beg, height_end;
-  int width2, height2;
-
-  width_beg=woffset;
-  width_end=width+woffset;
-  height_beg=hoffset;
-  height_end=hoffset+height;
-  if(clip_rendered_scene==1){
-    width_beg+=render_clip_left;
-    width_end-=render_clip_right;
-    height_beg+=render_clip_bottom;
-    height_end-=render_clip_top;
-  }
-  width2 = width_end-width_beg;
-  height2 = height_end-height_beg;
-
-  NewMemory((void **)&OpenGLimage,width2 * height2 * sizeof(GLubyte) * 3);
-  if(OpenGLimage == NULL){
-    fprintf(stderr,"*** Error allocating memory buffer for render var\n");
-    return 1;
-  }
-  glPixelStorei(GL_PACK_ALIGNMENT, 1);
-
-  /* get the image from the OpenGL frame buffer */
-
-  glReadPixels(width_beg, height_beg, width2, height2, GL_RGB, GL_UNSIGNED_BYTE, OpenGLimage);
-
-  /* copy the image from OpenGL memory to GIF memory */
-
-  p = OpenGLimage;
-
-  *RENDERimage = gdImageCreateTrueColor(width2,height2);
-
-  for(i = height2-1 ; i>=0; i--){
-    for(j=0;j<width2;j++){
-      r=*p++; g=*p++; b=*p++;
-      rgb_local = (r<<16)|(g<<8)|b;
-      gdImageSetPixel(*RENDERimage,j,i,rgb_local);
-    }
-  }
-  if(test_smokesensors==1&&active_smokesensors==1&&show_smokesensors!=SMOKESENSORS_HIDDEN){
-    int idev;
-
-    for(idev=0;idev<ndeviceinfo;idev++){
-      devicedata *devicei;
-      int idev_col, idev_row;
-      int col_offset, row_offset;
-      unsigned int red=255<<16;
-
-      devicei = deviceinfo + idev;
-
-      if(devicei->object->visible == 0 || devicei->show == 0)continue;
-      if(strcmp(devicei->object->label,"smokesensor")!=0)continue;
-      idev_row = devicei->screenijk[0];
-      idev_col = devicei->screenijk[1];
-      for(col_offset=-3;col_offset<4;col_offset++){
-        for(row_offset=-3;row_offset<4;row_offset++){
-          int irow, icol;
-
-          irow = idev_row+row_offset;
-          if(irow<0)irow=0;
-          if(irow>width-1)irow=width-1;
-
-          icol = height - 1 - (idev_col+col_offset);
-          if(icol<0)icol=0;
-          if(icol>height-1)icol=height-1;
-
-          gdImageSetPixel(*RENDERimage,irow,icol,red);
-        }
-      }
-    }
-  }
-
-  /* free up memory used by OpenGL image */
-  FREEMEMORY(OpenGLimage);
-  PRINTF(" Completed.\n");
-  return 0;
-}
-#endif

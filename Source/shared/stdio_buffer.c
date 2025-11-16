@@ -1,8 +1,8 @@
-#include "options.h"
+#include "options_common.h"
 #include <stdio.h>
 #include <string.h>
 #include "stdio_buffer.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "string_util.h"
 
 /* ------------------ OutputFileBuffer ------------------------ */
@@ -16,7 +16,7 @@ void OutputFileBuffer(filedata *fileinfo){
 
     buffer = fileinfo->lines[i];
     if(buffer==NULL||strlen(buffer)==0)continue;
-    printf("%s\n", buffer);
+    fprintf(stderr, "%s\n", buffer);
   }
 }
 
@@ -34,7 +34,7 @@ bufferstreamdata *AppendFileBuffer(bufferstreamdata *stream, char *file){
 
   file1 = stream->fileinfo;
   file2 = stream2->fileinfo;
-  
+
   if(NewMemory((void **)&buffer, file1->filesize + file2->filesize)==0){
     return stream;
   }
@@ -216,7 +216,7 @@ FILE_SIZE freadptr_buffer(void **ptr, FILE_SIZE size, FILE_SIZE count, filedata 
 void ReadBufferi(readbufferdata *readbufferi){
   FILE *stream;
 
-  stream = fopen(readbufferi->filename, "rb");
+  stream = FOPEN(readbufferi->filename, "rb");
   if(stream==NULL){
     readbufferi->returnval = 0;
     return;

@@ -37,7 +37,7 @@ set(GLUI_SRCS
 add_library(glui_static STATIC ${GLUI_SRCS})
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(MACOSX TRUE)
-  add_definitions(-Dpp_OSX -Dpp_NOQUARTZ)
+  add_definitions(-Dpp_OSX)
 else ()
   target_include_directories(glui_static PRIVATE ../glui_gl)
 endif()
@@ -45,6 +45,10 @@ endif()
 if (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif ()
-
+if (MACOSX)
+  add_compile_options($<$<CXX_COMPILER_ID:Clang>:-Wno-deprecated-declarations>)
+endif()
+# Create dialog boxes without close buttons
+target_compile_definitions(glui_static PRIVATE pp_NOCLOSE)
 # Warnings for everything except MSVC
 target_compile_options(glui_static PRIVATE $<$<NOT:$<C_COMPILER_ID:MSVC>>: -Wno-write-strings>)

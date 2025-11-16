@@ -1,9 +1,9 @@
-#include "options.h"
+#include "options_common.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "compress.h"
 
 #define MARK 255

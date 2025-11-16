@@ -1,5 +1,5 @@
 #include "options.h"
-#ifdef WIN32
+#ifdef _WIN32
 #ifdef __MINGW32__
 #include <stddef.h>
 #endif
@@ -13,31 +13,11 @@
 
 #include "smokeviewvars.h"
 #include "glutbitmap.h"
+#include "paths.h"
 
 
 #define DENORMAL(x,i, n, min,max) ((min) + (i)*((max)-(min))/(n))
 #define NORMALH(x,min,max) (((x)-(min))/((max)-(min))   )
-
-/* ------------------ PrintTime ------------------------ */
-
-void PrintTime(const char *filepath, int line, float *timer, const char *label, int stop_flag){
-  char *file;
-
-  if(show_timings==0)return;
-  file = strrchr(filepath, '\\');
-  if(file==NULL)file = strrchr(filepath, '/');
-  if(file==NULL){
-    file = (char *)filepath;
-  }
-  else{
-    file++;
-  }
-  if(label!=NULL){
-    if(stop_flag==1)STOP_TIMER(*timer);
-    if(*timer>0.1)printf("%s/%i/%s %.1f s\n", file, line, label, *timer);
-  }
-  START_TIMER(*timer);
-}
 
 /* ------------------------ GetFontHeight ------------------------- */
 
@@ -69,14 +49,14 @@ void OutputAxisLabels(){
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-global_scase.xbar0,-global_scase.ybar0,-global_scase.zbar0);
 
-  x = (xbar0+xbarORIG)/2.0;
-  y = (ybar0+ybarORIG)/2.0;
-  z = (zbar0+zbarORIG)/2.0;
-  x0 = xbar0 - SCALE2FDS(0.02);
-  y0 = ybar0 - SCALE2FDS(0.02);
-  z0 = zbar0 - SCALE2FDS(0.02);
+  x = (global_scase.xbar0+xbarORIG)/2.0;
+  y = (global_scase.ybar0+ybarORIG)/2.0;
+  z = (global_scase.zbar0+zbarORIG)/2.0;
+  x0 = global_scase.xbar0 - SCALE2FDS(0.02);
+  y0 = global_scase.ybar0 - SCALE2FDS(0.02);
+  z0 = global_scase.zbar0 - SCALE2FDS(0.02);
 
   Output3Text(foregroundcolor,   x,y0, z0, "X");
   Output3Text(foregroundcolor, x0,  y, z0, "Y");
@@ -206,29 +186,6 @@ void Output3Text(float *color, float x, float y, float z, char *string){
   }
 }
 
-/* ------------------ GetCharAdvance ------------------------ */
-
-float GetCharAdvance(GLUTbitmapFont font, int c){
-  const BitmapCharRec *ch;
-  BitmapFontPtr fontinfo;
-
-#if defined(_WIN32)
-  extern void *__glutFont(void *font);
-  fontinfo = (BitmapFontPtr)__glutFont(font);
-#else
-  fontinfo = (BitmapFontPtr)font;
-#endif
-
-  if(c < fontinfo->first ||
-     c >= fontinfo->first + fontinfo->num_chars)
-    return 0.0;
-  ch = fontinfo->ch[c - fontinfo->first];
-  if(ch){
-    return ch->advance;
-  }
-  return 0.0;
-}
-
 /* ------------------ GetStringLength ------------------------ */
 
 float GetStringLength(char *string){
@@ -241,59 +198,53 @@ float GetStringLength(char *string){
     char *c;
 
     c = string + i;
-    length += GetCharAdvance(font_ptr, *c);
+    length += glutBitmapWidth(font_ptr, *c);
   }
   return length;
 }
 
-/* ------------------ glutBitmapCharacterShiftLeft ------------------------ */
+/* ------------------------ GetStringWidth ------------------------- */
 
-void glutBitmapCharacterShiftLeft(GLUTbitmapFont font, int c, float advance){
-  const BitmapCharRec *ch;
-  BitmapFontPtr fontinfo;
-  GLint swapbytes, lsbfirst, rowlength;
-  GLint skiprows, skippixels, alignment;
+int GetStringWidth(char *string){
+  char *c;
+  int length = 0;
 
-#if defined(_WIN32)
-  extern void *__glutFont(void *font);
-  fontinfo = (BitmapFontPtr)__glutFont(font);
-#else
-  fontinfo = (BitmapFontPtr)font;
-#endif
-
-  if(c < fontinfo->first ||
-     c >= fontinfo->first + fontinfo->num_chars)
-    return;
-  ch = fontinfo->ch[c - fontinfo->first];
-  if(ch){
-    /* Save current modes. */
-    glGetIntegerv(GL_UNPACK_SWAP_BYTES, &swapbytes);
-    glGetIntegerv(GL_UNPACK_LSB_FIRST, &lsbfirst);
-    glGetIntegerv(GL_UNPACK_ROW_LENGTH, &rowlength);
-    glGetIntegerv(GL_UNPACK_SKIP_ROWS, &skiprows);
-    glGetIntegerv(GL_UNPACK_SKIP_PIXELS, &skippixels);
-    glGetIntegerv(GL_UNPACK_ALIGNMENT, &alignment);
-    /* Little endian machines (DEC Alpha for example) could
-       benefit from setting GL_UNPACK_LSB_FIRST to GL_TRUE
-       instead of GL_FALSE, but this would require changing the
-       generated bitmaps too. */
-    glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
-    glPixelStorei(GL_UNPACK_LSB_FIRST, GL_FALSE);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glBitmap(ch->width, ch->height, ch->xorig, ch->yorig,
-             advance, 0, ch->bitmap);
-    /* Restore saved modes. */
-    glPixelStorei(GL_UNPACK_SWAP_BYTES, swapbytes);
-    glPixelStorei(GL_UNPACK_LSB_FIRST, lsbfirst);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, rowlength);
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, skiprows);
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, skippixels);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+  if(string == NULL)return 0;
+  switch(fontindex){
+  case SMALL_FONT:
+    for(c = string; *c != '\0'; c++){
+      length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, *c);
     }
+    length *= (288.0 / 235.0);
+#ifdef pp_OSX_HIGHRES
+    if(double_scale == 1){
+      length *= 2;
+    }
+#endif
+    break;
+  case LARGE_FONT:
+    for(c = string; *c != '\0'; c++){
+      length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_18, *c);
+    }
+    length *= (416.0 / 423.0);
+#ifdef pp_OSX_HIGHRES
+    if(double_scale == 1){
+      length *= 2;
+    }
+#endif
+    break;
+  case SCALED_FONT:
+    for(c = string; *c != '\0'; c++){
+      length += glutStrokeWidth(GLUT_STROKE_ROMAN, *c);
+    }
+    length *= (283.0 / 402.0) * scale_2d_x;
+    break;
+  default:
+    assert(FFALSE);
+    break;
   }
+  return length;
+}
 
 /* ------------------ Output3TextRight ------------------------ */
 
@@ -314,13 +265,13 @@ void Output3TextRight(float *color, float x, float y, float z, char *string, flo
 
     blank = ' ';
     glRasterPos3f(x, y, z);
-    blank_advance = GetCharAdvance(font_ptr, blank);
+    blank_advance = glutBitmapWidth(font_ptr, blank);
     int count;
 
     count = pad_length / blank_advance + 1;
     if(pad_length > 0.0){
       for(i = 0; i < count; i++){
-        glutBitmapCharacterShiftLeft(font_ptr, blank, -blank_advance);
+        glBitmap(0,0,0.0,0.0,-blank_advance,0.0,NULL);
       }
     }
     for(i = 0; i<strlen(string); i++){
@@ -330,16 +281,12 @@ void Output3TextRight(float *color, float x, float y, float z, char *string, flo
   }
 }
 
-/* ------------------ OutputLargeText ------------------------ */
-
-void OutputLargeText(float x, float y, char *string){
-  char *c;
-
-  if(string==NULL)return;
-  glColor3fv(foregroundcolor);
-  glRasterPos2f(x, y);
-  for(c=string; *c!='\0'; c++){
-    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18,(unsigned char)*c);
+void ScaleFont2D(void){
+  if(render_mode == RENDER_360){
+    glLineWidth(( float )resolution_multiplier * ( float )scaled_font2d_thickness);
+  }
+  else{
+    glLineWidth(( float )scaled_font2d_thickness);
   }
 }
 
@@ -408,16 +355,18 @@ void OutputBarText(float x, float y, const GLfloat *color, char *string){
 
 /* ------------------ WriteLabels ------------------------ */
 
-void WriteLabels(void){
+void WriteLabels(labels_collection *labelscoll_arg){
   labeldata *first_label, *thislabel;
   FILE *stream = NULL;
   char quote[2];
 
   if(event_file_exists==0)return;
-  stream = fopen(event_filename, "w");
+  char *event_filename = CasePathEvent(&global_scase);
+  stream = FOPEN(event_filename, "w");
+  FREEMEMORY(event_filename);
   if(stream==NULL)return;
 
-  first_label = label_first_ptr;
+  first_label = labelscoll_arg->label_first_ptr;
   strcpy(quote,"\"");
 
   for(thislabel = first_label->next; thislabel->next!=NULL; thislabel = thislabel->next){
@@ -439,14 +388,14 @@ void WriteLabels(void){
 
 /* ------------------ DrawLabels ------------------------ */
 
-void DrawLabels(void){
+void DrawLabels(labels_collection *labelscoll_arg){
   labeldata *first_label, *thislabel;
 
-  first_label = label_first_ptr;
+  first_label = labelscoll_arg->label_first_ptr;
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-global_scase.xbar0,-global_scase.ybar0,-global_scase.zbar0);
   for(thislabel=first_label->next;thislabel->next!=NULL;thislabel=thislabel->next){
     float *labelcolor,*tstart_stop,*xyz;
     int drawlabel;
@@ -491,204 +440,7 @@ void DrawLabels(void){
   glPopMatrix();
 }
 
-/* ------------------ LabelNext ------------------------ */
-
-labeldata *LabelNext(labeldata *label){
-  labeldata *thislabel;
-
-  if(label==NULL)return NULL;
-  if(label_first_ptr->next->next==NULL)return NULL;
-  for(thislabel=label->next;thislabel!=label;thislabel=thislabel->next){
-    if(thislabel->next==NULL)thislabel=label_first_ptr->next;
-    if(thislabel->labeltype==TYPE_SMV)continue;
-    return thislabel;
-  }
-  return NULL;
-}
-
-/* ------------------ LabelPrevious ------------------------ */
-
-labeldata *LabelPrevious(labeldata *label){
-  labeldata *thislabel;
-
-  if(label==NULL)return NULL;
-  if(label_last_ptr->prev->prev==NULL)return NULL;
-  for(thislabel=label->prev;thislabel!=label;thislabel=thislabel->prev){
-    if(thislabel->prev==NULL)thislabel=label_last_ptr->prev;
-    if(thislabel->labeltype==TYPE_SMV)continue;
-    return thislabel;
-  }
-  return NULL;
-}
-
-/* ------------------ LabelInit ------------------------ */
-
-int LabelInit(labeldata *gl){
-  labeldata *thislabel;
-
-  for(thislabel=label_first_ptr->next;thislabel->next!=NULL;thislabel=thislabel->next){
-    if(thislabel->labeltype==TYPE_SMV)continue;
-    LabelCopy(gl,thislabel);
-    return 1;
-  }
-  return 0;
-}
-
-/* ------------------ LabelGetNUserLabels ------------------------ */
-
-int LabelGetNUserLabels(void){
-  int count=0;
-  labeldata *thislabel;
-
-  for(thislabel=label_first_ptr->next;thislabel->next!=NULL;thislabel=thislabel->next){
-    if(thislabel->labeltype==TYPE_INI)count++;
-  }
-  return count;
-}
-
-/* ------------------ LabelGet ------------------------ */
-
-labeldata *LabelGet(char *name){
-  labeldata *thislabel;
-
-  if(name==NULL)return NULL;
-  for(thislabel=label_first_ptr->next;thislabel->next!=NULL;thislabel=thislabel->next){
-    if(strcmp(thislabel->name,name)==0)return thislabel;
-  }
-  return NULL;
-}
-
-/* ------------------ LabelInsertBefore ------------------------ */
-
-void LabelInsertBefore(labeldata *listlabel, labeldata *label){
-  labeldata *prev, *next;
-
-  prev        = listlabel->prev;
-  next        = listlabel;
-  prev->next  = label;
-  next->prev  = label;
-  label->prev = prev;
-  label->next = next;
-}
-
-/* ------------------ LabelDelete ------------------------ */
-
-void LabelDelete(labeldata *label){
-  labeldata *prev, *next;
-
-  prev = label->prev;
-  next =label->next;
-  CheckMemory;
-  FREEMEMORY(label);
-  prev->next=next;
-  next->prev=prev;
-}
-
-/* ------------------ LabelCopy ------------------------ */
-
-void LabelCopy(labeldata *label_to, labeldata *label_from){
-  labeldata *prev, *next;
-
-  prev=label_to->prev;
-  next=label_to->next;
-  memcpy(label_to,label_from,sizeof(labeldata));
-  label_to->prev=prev;
-  label_to->next=next;
-
-}
-
-/* ------------------ LabelResort ------------------------ */
-
-void LabelResort(labeldata *label){
-  labeldata labelcopy;
-
-  CheckMemory;
-  memcpy(&labelcopy,label,sizeof(labeldata));
-  CheckMemory;
-  LabelDelete(label);
-  LabelInsert(&labelcopy);
-}
-
-/* ------------------ LabelInsertAfter ------------------------ */
-
-void LabelInsertAfter(labeldata *listlabel, labeldata *label){
-  labeldata *prev, *next;
-
-  prev        = listlabel;
-  next        = listlabel->next;
-  prev->next  = label;
-  next->prev  = label;
-  label->prev = prev;
-  label->next = next;
-}
-
-/* ------------------ LabelPrint ------------------------ */
-
-void LabelPrint(void){
-  labeldata *thislabel;
-  float *xyz;
-
-  for(thislabel=label_first_ptr->next;thislabel->next!=NULL;thislabel=thislabel->next){
-    xyz = thislabel->xyz;
-    PRINTF("label: %s position: %f %f %f\n",thislabel->name,xyz[0],xyz[1],xyz[2]);
-  }
-}
-
-/* ------------------ LabelInsert ------------------------ */
-
-labeldata *LabelInsert(labeldata *labeltemp){
-  labeldata *newlabel, *thislabel;
-  labeldata *firstuserptr, *lastuserptr;
-
-  NewMemory((void **)&newlabel,sizeof(labeldata));
-  memcpy(newlabel,labeltemp,sizeof(labeldata));
-
-  thislabel = LabelGet(newlabel->name);
-  if(thislabel!=NULL){
-    LabelInsertAfter(thislabel->prev,newlabel);
-    return newlabel;
-  }
-
-  firstuserptr=label_first_ptr->next;
-  if(firstuserptr==label_last_ptr)firstuserptr=NULL;
-
-  lastuserptr=label_last_ptr->prev;
-  if(lastuserptr==label_first_ptr)lastuserptr=NULL;
-
-  if(firstuserptr!=NULL&&strcmp(newlabel->name,firstuserptr->name)<0){
-    LabelInsertBefore(firstuserptr,newlabel);
-    return newlabel;
-  }
-  if(lastuserptr!=NULL&&strcmp(newlabel->name,lastuserptr->name)>0){
-    LabelInsertAfter(lastuserptr,newlabel);
-    return newlabel;
-  }
-  if(firstuserptr==NULL&&lastuserptr==NULL){
-    LabelInsertAfter(label_first_ptr,newlabel);
-    return newlabel;
-  }
-  for(thislabel=label_first_ptr->next;thislabel->next!=NULL;thislabel=thislabel->next){
-    labeldata *nextlabel;
-
-    nextlabel=thislabel->next;
-    if(strcmp(thislabel->name,newlabel->name)<0&&strcmp(newlabel->name,nextlabel->name)<0){
-      LabelInsertAfter(thislabel,newlabel);
-      return newlabel;
-    }
-  }
-  return NULL;
-}
-
 /* ----------------------- ScaleFont2D ----------------------------- */
-
-void ScaleFont2D(void){
-  if(render_mode == RENDER_360){
-    glLineWidth((float)resolution_multiplier*(float)scaled_font2d_thickness);
-  }
-  else{
-    glLineWidth((float)scaled_font2d_thickness);
-  }
-}
 
 /* ----------------------- ScaleFont3D ----------------------------- */
 

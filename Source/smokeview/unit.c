@@ -52,10 +52,10 @@ void SetUnitVis(void){
     uci = unitclasses + i;
     uci->visible=0;
 
-    for(j=0;j<nsliceinfo;j++){
+    for(j=0;j<global_scase.slicecoll.nsliceinfo;j++){
       slicedata *slicej;
 
-      slicej = sliceinfo + j;
+      slicej = global_scase.slicecoll.sliceinfo + j;
       if(IsUnitPresent(slicej->label.unit,uci->units->unit)==1){
         uci->visible=1;
         break;
@@ -63,10 +63,10 @@ void SetUnitVis(void){
     }
     if(uci->visible==1)continue;
 
-    for(j=0;j<npatchinfo;j++){
+    for(j=0;j<global_scase.npatchinfo;j++){
       patchdata *patchj;
 
-      patchj = patchinfo + j;
+      patchj = global_scase.patchinfo + j;
       if(IsUnitPresent(patchj->label.unit,uci->units->unit)==1){
         uci->visible=1;
         break;
@@ -74,11 +74,11 @@ void SetUnitVis(void){
     }
     if(uci->visible==1)continue;
 
-    for(j=0;j<nplot3dinfo;j++){
+    for(j=0;j<global_scase.nplot3dinfo;j++){
       plot3ddata *plot3dj;
       int n;
 
-      plot3dj = plot3dinfo + j;
+      plot3dj = global_scase.plot3dinfo + j;
       for(n=0;n<5;n++){
         if(IsUnitPresent(plot3dj->label[n].unit,uci->units->unit)==1){
           uci->visible=1;
@@ -109,16 +109,16 @@ void InitUnitDefs(void){
 void UpdateUnitDefs(void){
   int i, j;
 
-  if(smokediff==0)return;
+  if(global_scase.smokediff==0)return;
   for(i=0;i<nunitclasses;i++){
     float valmin, valmax, diff_maxmin;
     int firstslice, firstpatch, firstplot3d, diff_index;
 
     firstpatch=1;
-    for(j=0;j<npatchinfo;j++){
+    for(j=0;j<global_scase.npatchinfo;j++){
       patchdata *patchj;
 
-      patchj = patchinfo + j;
+      patchj = global_scase.patchinfo + j;
       if(patchj->loaded==0||patchj->display==0)continue;
       if(UnitTypeMatch(patchj->label.unit,unitclasses+i)!=0)continue;
       if(firstpatch==1){
@@ -133,10 +133,10 @@ void UpdateUnitDefs(void){
     }
 
     firstslice=1;
-    for(j=0;j<nsliceinfo;j++){
+    for(j=0;j<global_scase.slicecoll.nsliceinfo;j++){
       slicedata *slicej;
 
-      slicej = sliceinfo + j;
+      slicej = global_scase.slicecoll.sliceinfo + j;
       if(slicej->loaded==0||slicej->display==0)continue;
       if(UnitTypeMatch(slicej->label.unit,unitclasses+i)!=0)continue;
       if(firstslice==1){
@@ -151,11 +151,11 @@ void UpdateUnitDefs(void){
     }
 
     firstplot3d=1;
-    for(j=0;j<nplot3dinfo;j++){
+    for(j=0;j<global_scase.nplot3dinfo;j++){
       plot3ddata *plot3dj;
       int n;
 
-      plot3dj = plot3dinfo + j;
+      plot3dj = global_scase.plot3dinfo + j;
       if(plot3dj->loaded==0||plot3dj->display==0)continue;
       for(n=0;n<5;n++){
         if(UnitTypeMatch(plot3dj->label[n].unit,unitclasses+i)!=0)continue;
@@ -256,12 +256,15 @@ void InitUnits(void){
 
   NewMemory((void **)&(ut->units),ut->nunits*sizeof(f_unit));
   units=ut->units;
+
   strcpy(units[0].unit,(const char *)degC);
   units[0].scale[0]=1.0;
   units[0].scale[1]=0.0;
+
   strcpy(units[1].unit,(const char *)degF);
   units[1].scale[0]=1.8;
   units[1].scale[1]=32.0;
+
   strcpy(units[2].unit,"K");
   units[2].scale[0]=1.0;
   units[2].scale[1]=273.15;
@@ -276,15 +279,19 @@ void InitUnits(void){
 
   NewMemory((void **)&(ut->units),ut->nunits*sizeof(f_unit));
   units=ut->units;
+
   strcpy(units[0].unit,"m/s");
   units[0].scale[0]=1.0;
   units[0].scale[1]=0.0;
+
   strcpy(units[1].unit,"mph");
   units[1].scale[0]=2.236931818;
   units[1].scale[1]=0.0;
+
   strcpy(units[2].unit,"ft/s");
   units[2].scale[0]=3.2808333333;
   units[2].scale[1]=0.0;
+
   CheckMemory;
 
   // distance units
@@ -297,9 +304,11 @@ void InitUnits(void){
 
   NewMemory((void **)&(ut->units),ut->nunits*sizeof(f_unit));
   units=ut->units;
+
   strcpy(units[0].unit,"m");
   units[0].scale[0]=1.0;
   units[0].scale[1]=0.0;
+
   strcpy(units[1].unit,"ft");
   units[1].scale[0]=3.280833333;
   units[1].scale[1]=0.0;
@@ -315,9 +324,11 @@ void InitUnits(void){
 
   NewMemory((void **)&(ut->units),ut->nunits*sizeof(f_unit));
   units=ut->units;
+
   strcpy(units[0].unit,"m^3/s");
   units[0].scale[0]=1.0;
   units[0].scale[1]=0.0;
+
   strcpy(units[1].unit,"cfm");
   units[1].scale[0]=2118.86720;
   units[1].scale[1]=0.0;
@@ -333,9 +344,11 @@ void InitUnits(void){
 
   NewMemory((void **)&(ut->units),ut->nunits*sizeof(f_unit));
   units=ut->units;
+
   strcpy(units[0].unit,"kg/kg");
   units[0].scale[0]=1.0;
   units[0].scale[1]=0.0;
+
   strcpy(units[1].unit,"g/kg");
   units[1].scale[0]=1000.0;
   units[1].scale[1]=0.0;
@@ -352,9 +365,11 @@ void InitUnits(void){
 
   NewMemory((void **)&(ut->units),ut->nunits*sizeof(f_unit));
   units=ut->units;
+
   strcpy(units[0].unit,"mol/mol");
   units[0].scale[0]=1.0;
   units[0].scale[1]=0.0;
+
   strcpy(units[1].unit,"ppm");
   units[1].scale[0]=1000000.0;
   units[1].scale[1]=0.0;

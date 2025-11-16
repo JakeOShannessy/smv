@@ -1,6 +1,6 @@
 #ifndef READOBJECT_H_DEFINED
 #define READOBJECT_H_DEFINED
-#include "options.h"
+#include "options_common.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -12,7 +12,7 @@
 
 #include "shared_structures.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <windows.h>
 #endif
 #include GLU_H
@@ -299,90 +299,20 @@
 // BEGIN MAIN API
 
 /**
- * @brief The graphical definition of an object. This represents a single state.
- * This can form a node in a linked-list.
- */
-typedef struct _sv_object_frame {
-  int use_bw;
-  int error;
-  int display_list_ID;
-  int *symbols, nsymbols;
-  tokendata *tokens, **command_list;
-  int ntokens, ncommands, ntextures;
-  struct _sv_object *device;
-  struct _sv_object_frame *prev, *next;
-} sv_object_frame;
-
-/**
- * @brief An object that can be rendered. This can form a node in a linked-list.
- */
-typedef struct _sv_object {
-  char label[256];
-  /** @brief Is this object an avatar? */
-  int type;
-  int visible;
-  int used, used_by_device;
-  int use_displaylist;
-  int select_mode;
-  /** @brief The number of frames (i.e., possible states) associated with this
-   * object. */
-  int nframes;
-  /** @brief A list of possible graphical representations of this object. While
-   * described as a series of frames this is used as a number of different
-   * possible states, not an animation. */
-  sv_object_frame **obj_frames, first_frame, last_frame;
-  /** @brief If this sv_object is part of a linked list, a pointer to the
-   * previous sv_object in the list */
-  struct _sv_object *prev;
-  /** @brief If this sv_object is part of a linked list, a pointer to the
-   * next sv_object in the list */
-  struct _sv_object *next;
-} sv_object;
-
-/**
- * @brief A number of standard objects to be used.
- *
- */
-typedef struct {
-  sv_object *thcp_object_backup;
-  sv_object *target_object_backup;
-  sv_object *heat_detector_object_backup;
-  sv_object *sprinkler_upright_object_backup;
-  sv_object *smoke_detector_object_backup;
-  sv_object *error_device;
-  sv_object *missing_device;
-} std_objects;
-
-/**
- * @brief A collection of object definitions. At it's core this collection
- * contains a linked list, but also an array of pointers into that linked list.
- *
- */
-typedef struct {
-  /** @brief The number object definitions in object_defs. */
-  int nobject_defs;
-  /** @brief An array of pointers object definitions. */
-  sv_object **object_defs;
-  /** @brief The start of a linked list of object definitions. This is a dummy
-   * object and isn't actually used. */
-  sv_object object_def_first;
-  /** @brief The end of a linked list of object definitions. This is a dummy
-   * object and isn't actually used. */
-  sv_object object_def_last;
-  /** @brief A number of standard objects to be used. */
-  std_objects std_object_defs;
-  int iavatar_types;
-  int navatar_types;
-  sv_object **avatar_types;
-  sv_object *avatar_defs_backup[2];
-} object_collection;
-
-/**
  * @brief Initialise an @ref object_collection.
  *
  * @returns A @ref object_collection which has been properly initialized.
  */
 object_collection *CreateObjectCollection(void);
+
+/**
+ * @brief Initialise an already allocated object_collection. This is useful
+ * when the collection is allocated as part of a larger data structure.
+ *
+ * @param[inout] coll
+ * @return int
+ */
+int InitObjectCollection(object_collection *coll);
 
 /**
  * @brief Read objects from the standard file locations, using fallback objects
@@ -391,25 +321,30 @@ object_collection *CreateObjectCollection(void);
  * @param[inout] objectscoll Pointer to the location of the @ref
  * object_collection to read object definitions into. This @ref
  * object_collection
- * @param[in] smokeview_bindir The path which contains the smokeview binary.
- * Object definition files from this directory are read. If NULL, this step is
- * skipped.
- * @param[in] setbw Set the colors to black and white.
  * @param[in] fdsprefix The fdsprefix. This is used to find case-specific object
  * files (e.g., "${fdsprefix}.svo"). If NULL, such files are never read.
  * @param[in] isZoneFireModel Is this model a zone fire model.
  */
 void ReadDefaultObjectCollection(object_collection *objectscoll,
-                                 const char *smokeview_bindir,
-                                 const char *fdsprefix, int setbw,
+                                 const char *fdsprefix,
                                  int isZoneFireModel);
+
 /**
- * @brief Free an @ref object_collection previously created by @ref
- * CreateObjectCollection.
+ * @brief Clear a @ref object_collection. This does not free the data structure
+ * itself but simply empties it.
+ *
+ * @param[inout] objectscoll The @ref object_collection to clear.
+ */
+void ClearObjectCollection(object_collection *objectscoll);
+
+/**
+ * @brief Free an @ref object_collection previously allocated with NewMemory or
+ * created by @ref CreateObjectCollection.
  *
  * @param[inout] objectscoll The @ref object_collection to free.
  */
 void FreeObjectCollection(object_collection *objectscoll);
+
 /**
  * @brief Given a label, find the @ref sv_object in the given @ref
  * object_collection.
@@ -420,6 +355,7 @@ void FreeObjectCollection(object_collection *objectscoll);
  * @return A pointer to the object if found, NULL if not found.
  */
 sv_object *GetSmvObject(object_collection *objectscoll, char *label);
+
 /**
  * @brief Given a label, find the @ref sv_object in the given @ref
  * object_collection.
@@ -443,7 +379,7 @@ sv_object *GetSmvObjectType(object_collection *objectscoll, char *olabel,
  *
  * @returns The number of objects read
  */
-int ReadObjectDefs(object_collection *objectscoll, const char *file, int setbw);
+int ReadObjectDefs(object_collection *objectscoll, const char *file);
 // END MAIN API
 
 // These still need to be documented.
@@ -453,8 +389,9 @@ void GetIndepVarIndices(sv_object *smv_object, char **var_indep_strings,
                         int nvars_indep, int *index);
 void UpdateDeviceTextures(object_collection *objectscoll, int ndeviceinfo,
                           devicedata *deviceinfo, int npropinfo,
-                          propdata *propinfo, int ndevice_texture_list,
-                          int *device_texture_list_index,
-                          char **device_texture_list);
+                          propdata *propinfo, int *ndevice_texture_list,
+                          int **device_texture_list_indexptr,
+                          char ***device_texture_listptr);
+EXTERNCPP void UpdatePartClassDepend(partclassdata *partclassi);
 
 #endif

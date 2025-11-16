@@ -2,6 +2,8 @@
 #define IGLUI_MOTION_H_DEFINED
 
 #define TRANSLATE_XY 101
+#define TRANSLATE_X  105
+#define TRANSLATE_Y  106
 #define ROTATE_2AXIS 102
 #define GLUI_Z         2
 #define ROTATE_ABOUT   4
@@ -25,7 +27,7 @@
 #define RESTORE_VIEW           8
 #define REPLACE_VIEW           9
 #define REPLACE_CURRENT_VIEW  44
-#define STARTUP               10
+#define MOTION_STARTUP        10
 #define CYCLEVIEWS_ALL        46
 #define CYCLEVIEWS_DEFAULT    47
 #define CYCLEVIEWS_USER       48
@@ -70,7 +72,7 @@
 #define RENDER_START_TOP 13
 #define RENDER_DEBUG_360 14
 
-#define SLICE_ROLLOUT           0
+#define SLICE_ROLLOUT_MOTION    0
 #define VIEWPOINTS_ROLLOUT      1
 #define WINDOW_ROLLOUT          2
 #define SCALING_ROLLOUT         3
@@ -90,8 +92,69 @@
 #define RENDER_SCREEN_ROLLOUT 2
 #define RENDER_CLIP_ROLLOUT   3
 
+#define LOWER_SCREEN_ROLLOUT  0
+#define MIDDLE_SCREEN_ROLLOUT 1
+#define UPPER_SCREEN_ROLLOUT  2
+
 #define RENDER_360CB 9
 #define RENDER_HTML 15
 
-#endif
+//*** glui_motion.cpp headers
 
+EXTERNCPP void GLUIMotionSetup(int main_window);
+EXTERNCPP void GLUIViewpointCB(int val);
+EXTERNCPP void GLUIUpdateMovieParms(void);
+EXTERNCPP void GLUISetCurrentViewPoint(char *viewpoint_label);
+EXTERNCPP void GLUIUpdateUseGeomFactors(void);
+EXTERNCPP void GLUIUpdateWindowAspect(void);
+EXTERNCPP void GLUIShrinkDialogs(void);
+#ifdef __cplusplus
+EXTERNCPP void GLUICloseRollouts(GLUI *dialog);
+EXTERNCPP void GLUIToggleRollout(procdata *procinfo, int nprocinfo, int motion_id);
+#endif
+EXTERNCPP void GLUIUpdatePosView(void);
+EXTERNCPP void GLUIUpdateRenderRadioButtons(int width_low, int height_low, int width_high, int height_high);
+EXTERNCPP void GLUIUpdateZAxisCustom(void);
+EXTERNCPP void GLUIUpdateShowGravityVector(void);
+EXTERNCPP void GLUIUpdateShowRotationCenter(void);
+EXTERNCPP void GLUIUpdateShowRotationCenter2(void);
+EXTERNCPP void GLUIUpdateRotationIndex(int val);
+EXTERNCPP void GLUIUpdateRender(void);
+EXTERNCPP void GLUIEnable360Zoom(void);
+EXTERNCPP void GLUIEnableDisableMakeMovieCPP(int onoff);
+EXTERNCPP void GLUIEnableDisablePlayMovieCPP(void);
+EXTERNCPP void GLUIAddListView(char *label_in);
+EXTERNCPP void GLUIUpdateViewpointList(void);
+EXTERNCPP void GLUIUpdateCameraLabel(void);
+EXTERNCPP void GLUISceneMotionCB(int var);
+EXTERNCPP void GLUIUpdateWindowSizeList(void);
+EXTERNCPP void GLUIUpdateGsliceParms(void);
+EXTERNCPP void GLUIUpdateResolutionMultiplier(void);
+EXTERNCPP void GLUISetColorControls(void);
+EXTERNCPP void GLUIShowMotion(int menu_id);
+EXTERNCPP void GLUIHideMotion(void);
+EXTERNCPP void GLUIUpdateZoom(void);
+EXTERNCPP void GLUISetPosXYZSMV(float *xyz);
+EXTERNCPP void GLUISetPosXYZFDS(float *xyz);
+EXTERNCPP void GLUIUpdateFileLabel(int var);
+EXTERNCPP void GLUIRotationTypeCB(int var);
+EXTERNCPP void GLUIUpdateRotationType(int val);
+EXTERNCPP void GLUIEnableResetSavedView(void);
+EXTERNCPP void GLUIResetView(int ival);
+EXTERNCPP void GLUIUpdateProjectionType(void);
+EXTERNCPP void GLUIUpdateMeshList1(int val);
+EXTERNCPP void GLUIUpdateTranslate(void);
+EXTERNCPP void GLUIShowHideTranslate(int var);
+EXTERNCPP void GLUISetStartupView(void);
+#ifdef __cplusplus
+EXTERNCPP void InsertRollout(GLUI_Rollout *rollout, GLUI *dialog);
+#endif
+EXTERNCPP void InitRolloutList(void);
+EXTERNCPP void UpdateRenderListSkip(void);
+EXTERNCPP void UpdateGluiRotateAbout(int val);
+EXTERNCPP void UpdateRenderStartButton(void);
+EXTERNCPP void UpdateRenderType(int type);
+EXTERNCPP void UpdateMovieType(int type);
+EXTERNCPP void RenderCB(int var);
+
+#endif

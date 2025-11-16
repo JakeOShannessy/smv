@@ -7,22 +7,20 @@
 #include <string.h>
 #include "string_util.h"
 #include "file_util.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 
 /* ------------------ Usage ------------------------ */
 
-void Usage(char *prog, int option){
+void Usage(int option){
  char githash[256];
  char gitdate[256];
 
   GetGitInfo(githash,gitdate);    // get githash
 
-  fprintf(stderr, "\n%s (%s) %s\n", prog, githash, __DATE__);
-  fprintf(stderr, "convert a bash script to a windows batch file\n\n");
-  fprintf(stderr, "Usage: %s file_in file_out\n\n",prog);
-  fprintf(stderr, " convert the Linux/OSX script file file_in to an equivalent windows batch\n");
-  fprintf(stderr, " file file_out by ignoring lines beginning with # and converting variables\n");
-  fprintf(stderr, " such as $var to %svar%s\n", "%", "%");
+  fprintf(stderr, "\nsh2bat [opttions] file_in file_out\n");
+  fprintf(stderr, "%s %s\n\n", githash, __DATE__);
+  fprintf(stderr, "convert a simple bash script to a windows batch file\n\n");
+  fprintf(stderr, "options:\n");
   UsageCommon(HELP_SUMMARY);
   if(option == HELP_ALL)UsageCommon(HELP_ALL);
 }
@@ -39,13 +37,13 @@ int main(int argc, char **argv){
   initMALLOC();
   prog=argv[0];
 
-  ParseCommonOptions(argc, argv);
-  if(show_help!=0){
-    Usage("sh2bat",show_help);
+  common_opts opts = ParseCommonOptions(argc, argv);
+  if(opts.show_help!=0){
+    Usage(opts.show_help);
     return 1;
   }
-  if(show_version==1){
-    PRINTVERSION("sh2bat", argv[0]);
+  if(opts.show_version==1){
+    PRINTVERSION("sh2bat", &opts);
     return 1;
   }
 
@@ -58,7 +56,7 @@ int main(int argc, char **argv){
     if(arg[0]=='-'&&lenarg>1){
       switch(arg[1]){
       default:
-        Usage(prog,HELP_ALL);
+        Usage(HELP_ALL);
         exit(1);
         break;
       }
@@ -75,11 +73,11 @@ int main(int argc, char **argv){
     }
   }
   if(filein==NULL||fileout==NULL){
-    Usage(prog,HELP_ALL);
+    Usage(HELP_ALL);
     exit(1);
   }
-  streamin=fopen(filein,"r");
-  streamout=fopen(fileout,"w");
+  streamin=FOPEN(filein,"r");
+  streamout=FOPEN(fileout,"w");
 
   if(streamin==NULL||streamout==NULL){
     if(streamin==NULL){

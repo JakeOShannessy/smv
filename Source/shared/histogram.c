@@ -1,4 +1,4 @@
-#include "options.h"
+#include "options_common.h"
 #include "lint.h"
 
 #include <sys/stat.h>
@@ -8,7 +8,7 @@
 #include <math.h>
 #include "histogram.h"
 #include "pragmas.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "datadefs.h"
 
 /* ------------------ GetHistogramCDF ------------------------ */

@@ -22,23 +22,34 @@ else
 endif
 GITINFO=-Dpp_GITHASH=\"$(GIT_HASH)\" -Dpp_GITDATE=\""$(GIT_DATE)\""
 
-ifeq ($(shell echo "check_quotes"),"check_quotes")
-  INTEL_COMPVERSION := $(shell ..\..\..\Utilities\Scripts\intel_compversion)
-  GNU_COMPVERSION := $(shell ..\..\..\Utilities\Scripts\gnu_compversion)
-else
-  INTEL_COMPVERSION := $(shell ../../../Utilities/Scripts/intel_compversion.sh)
-  GNU_COMPVERSION := $(shell ../../../Utilities/Scripts/gnu_compversion.sh)
-endif
-INTEL_COMPINFO=-Dpp_COMPVER=\"$(INTEL_COMPVERSION)\"
-GNU_COMPINFO=-Dpp_COMPVER=\"$(GNU_COMPVERSION)\"
-
 # Definition of the object variables
 
-obj =    main.o dmalloc.o string_util.o file_util.o  md5.o sha1.o sha256.o stdio_buffer.o
+csrc =    main.c dmalloc.c string_util.c file_util.c  md5.c sha1.c sha256.c stdio_buffer.c threader.c
+
+obj = $(csrc:.c=.o)
 objwin = $(obj:.o=.obj)
 
+# setup for analyzing source code using clang
+
+linux_osx_c_chk    = $(csrc:.c=.chk)
+linux_osx_chk      = $(linux_osx_c_chk)
+
+win_c_chk   = $(csrc:.c=.winchk)
+win_chk     = $(win_c_chk)
+
+#CLANGANALYZE=clang --analyze -Xanalyzer -analyzer-checker=core,deadcode
+CLANGANALYZE=clang --analyze
+CLANGSUMMARY=../../scripts/clang_summary.sh
+CLANGWINSUMMARY=..\..\scripts\clang_summary.bat
+
 # main has to be compiled without optimization (on a Windows PC) otherwise errors occcur
-main.obj: CFLAGS = -Od /nologo -D WIN32 -D pp_WIN_INTEL
+main.obj: CFLAGS = -Od /nologo -D pp_WIN_INTEL -D PTW32_STATIC_LIB -I $(SOURCE_DIR)/pthreads
+
+SMV_WIN_LIBDIR = $(LIB_DIR)/intel_win_64
+SMV_LIBS_WIN = $(SMV_WIN_LIBDIR)\pthreads.lib
+
+SMV_CLANG_LIBDIR = $(LIB_DIR)/clang_win_64
+SMV_LIBS_CLANG = $(SMV_CLANG_LIBDIR)\pthreads.lib
 
 #*** General Purpose Rules ***
 
@@ -46,34 +57,61 @@ no_target:
 	@echo \******** You did not specify a make target \********
 	@echo Use one of targets found in the Makefile
 
-.SUFFIXES: .c .obj .o .cpp
+.SUFFIXES: .c .obj .o .cpp   .chk .winchk
 
 .c.obj:
 	$(CC) -c $(CFLAGS) $(FILTERC) $(INC_DIR) $<
 .c.o:
 	$(CC) -c $(CFLAGS) $(FILTERC) $(INC_DIR) $<
 
+# ------------- linux and osx clang checks ----------------
+
+.c.chk:
+	$(CLANGANALYZE) $(CFLAGS) $(INC_DIR) $< 2> $@
+
+# ------------- windows clang checks ----------------
+
+.c.winchk:
+	$(CLANGANALYZE) $(CFLAGS) $(INC_DIR) $< 2> $@
+
+# VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+# VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV   check source   VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+# VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+
+# ------------- linux_osx_check ----------------
+
+linux_osx_check : CFLAGS    = $(SMV_TESTFLAG)
+linux_osx_check : $(linux_osx_chk)
+	$(CLANGSUMMARY) wind2fds.summary
+
+# ------------- win_check ----------------
+
+win_check : CFLAGS    = -D NDEBUG -D _CONSOLE -D GLEW_STATIC -D PTW32_STATIC_LIB
+win_check : INC_DIR += -I $(SOURCE_DIR)/pthreads
+win_check : $(win_chk)
+	$(CLANGWINSUMMARY) wind2fds.summary
+
 # ------------- intel win 64 ----------------
 
-intel_win_64 : CFLAGS    = -Od /nologo -I $(SOURCE_DIR)/pthreads -D WIN32 -D X64 $(GITINFO) $(INTEL_COMPINFO)
+intel_win_64 : CFLAGS    = -Od /nologo -D PTW32_STATIC_LIB $(GITINFO) $(INTEL_COMPINFO) -I $(SOURCE_DIR)/pthreads
 intel_win_64 : CC        = $(I_CC)
 intel_win_64 : exe       = wind2fds_win_64.exe
 
 intel_win_64 : $(objwin)
-	$(CC) -o $(bin)/$(exe) $(objwin)
+	$(CC) -o $(bin)/$(exe) $(objwin) $(SMV_LIBS_WIN)
 
-# ------------- gnu win 64 ----------------
+# ------------- clang win 64 ----------------
 
-gnu_win_64 : CFLAGS    = -O0 -m64 -D pp_LINUX -D GLEW_STATIC -D MINGW
-gnu_win_64 : CC        = gcc
-gnu_win_64 : exe       = wind2fds_win_64.exe
+clang_win_64 : CFLAGS    = -m64 -D PTW32_STATIC_LIB -I $(SOURCE_DIR)/pthreads
+clang_win_64 : CC        = clang-cl
+clang_win_64 : exe       = wind2fds_win_64.exe
 
-gnu_win_64 : $(obj)
-	$(CC) -o $(bin)/$(exe) $(obj)
+clang_win_64 : $(objwin)
+	$(CC) -o $(bin)/$(exe) $(objwin) $(SMV_LIBS_CLANG)
 
 # ------------- intel linux 64 ----------------
 
-intel_linux_64 : CFLAGS    = -O2 -m64 -D pp_LINUX $(GITINFO) $(GNU_COMPINFO)
+intel_linux_64 : CFLAGS    = -O2 -m64 $(GITINFO) $(GNU_COMPINFO)
 intel_linux_64 : CC        = $(I_ICC)
 intel_linux_64 : exe       = wind2fds_linux_64
 
@@ -82,7 +120,7 @@ intel_linux_64 : $(obj)
 
 # ------------- gnu linux 64 ----------------
 
-gnu_linux_64 : CFLAGS    = -O0 -m64 -D pp_GCC -Wall $(GITINFO) $(GNU_COMPINFO)
+gnu_linux_64 : CFLAGS    = -O0 -m64 -Wall $(GITINFO) $(GNU_COMPINFO)
 gnu_linux_64 : CC        = gcc
 gnu_linux_64 : exe       = wind2fds_linux_64
 
@@ -92,26 +130,38 @@ gnu_linux_64 : $(obj)
 
 # ------------- gnu linux 64 db ----------------
 
-gnu_linux_64_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG -D pp_LINUX -D pp_GCC $(GITINFO) $(GNU_COMPINFO)
-gnu_linux_64_db : CFLAGS    = -O0 -m64 -D pp_GCC -Wall $(GITINFO) $(GNU_COMPINFO)
+gnu_linux_64_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG $(GITINFO) $(GNU_COMPINFO)
+gnu_linux_64_db : CFLAGS    = -O0 -m64 -Wall $(GITINFO) $(GNU_COMPINFO)
 gnu_linux_64_db : CC        = gcc
 gnu_linux_64_db : exe       = wind2fds_linux_64_db
 
 gnu_linux_64_db : $(obj)
 	$(CC) -o $(bin)/$(exe) $(obj) -lm
 
-# ------------- intel osx 64 ----------------
+# ------------- clang linux 64 ----------------
 
-intel_osx_64 : CFLAGS    = -O2 -m64 -D pp_OSX $(GITINFO) $(INTEL_COMPINFO)
-intel_osx_64 : CC        = icc
-intel_osx_64 : exe       = wind2fds_osx_64
+clang_linux_64 : CFLAGS    = -O0 -m64 -D PTW32_STATIC_LIB -Wall $(GITINFO) $(GNU_COMPINFO)
+clang_linux_64 : CC        = clang
+clang_linux_64 : exe       = wind2fds_linux_64
 
-intel_osx_64 : $(obj)
-	$(CC) -o $(bin)/$(exe) -m64 $(obj)
+clang_linux_64 : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj) -lm -lpthread
+
+
+# ------------- gnu linux 64 db ----------------
+
+clang_linux_64_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D PTW32_STATIC_LIB -D _DEBUG $(GITINFO) $(GNU_COMPINFO)
+clang_linux_64_db : CFLAGS    = -O0 -m64 -Wall $(GITINFO) $(GNU_COMPINFO)
+clang_linux_64_db : CC        = clang
+clang_linux_64_db : exe       = wind2fds_linux_64_db
+
+clang_linux_64_db : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj) -lm -lpthread
+
 
 # ------------- gnu osx 64 ----------------
 
-gnu_osx_64 : CFLAGS    = -O0 -m64 -D pp_OSX $(GITINFO) $(GNU_COMPINFO)
+gnu_osx_64 : CFLAGS    = -O0 -m64 $(GITINFO) $(GNU_COMPINFO)
 gnu_osx_64 : CC        = gcc
 gnu_osx_64 : exe       = wind2fds_osx_64
 
@@ -120,11 +170,29 @@ gnu_osx_64 : $(obj)
 
 # ------------- gnu osx 64 db ----------------
 
-gnu_osx_64_db : CFLAGS    = -O0 -m64 -D pp_OSX -Wall $(GITINFO) $(GNU_COMPINFO)
+gnu_osx_64_db : CFLAGS    = -O0 -m64 -Wall $(GITINFO) $(GNU_COMPINFO)
 gnu_osx_64_db : CC        = gcc
 gnu_osx_64_db : exe       = wind2fds_osx_64_db
 
 gnu_osx_64_db : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj)
+
+# ------------- clang osx 64 ----------------
+
+clang_osx_64 : CFLAGS    = -O0 -m64 $(GITINFO) $(GNU_COMPINFO)
+clang_osx_64 : CC        = clang
+clang_osx_64 : exe       = wind2fds_osx_64
+
+clang_osx_64 : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj)
+
+# ------------- gnu osx 64 db ----------------
+
+clang_osx_64_db : CFLAGS    = -O0 -m64 -Wall $(GITINFO) $(GNU_COMPINFO)
+clang_osx_64_db : CC        = clang
+clang_osx_64_db : exe       = wind2fds_osx_64_db
+
+clang_osx_64_db : $(obj)
 	$(CC) -o $(bin)/$(exe) $(obj)
 
 #-------------- Clean Target to remove Object and Module files -----------

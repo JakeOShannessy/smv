@@ -9,54 +9,15 @@
 #include GLUT_H
 
 #include "smokeviewvars.h"
+#include "glui_bounds.h"
 #include "IOvolsmoke.h"
 #include "infoheader.h"
+#include "colorbars.h"
+#include "readtour.h"
+#include "readsmoke.h"
 
 #define CONV(p,pl,pr,pxl,pxr) ( (pxl) + ((pxr)-(pxl))*((p)-(pl))/((pr)-(pl)) )
 #define TIMEBAR_HEIGHT 20
-
-/* ------------------------ GetStringWidth ------------------------- */
-
-int GetStringWidth(char *string){
-  char *c;
-  int length=0;
-
-  if(string==NULL)return 0;
-  switch(fontindex){
-    case SMALL_FONT:
-      for(c=string;*c!='\0';c++){
-        length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, *c);
-      }
-      length *= (288.0/235.0);
-#ifdef pp_OSX_HIGHRES
-      if(double_scale==1){
-        length *= 2;
-      }
-#endif
-      break;
-    case LARGE_FONT:
-      for(c=string;*c!='\0';c++){
-        length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_18, *c);
-      }
-      length *= (416.0/423.0);
-#ifdef pp_OSX_HIGHRES
-      if(double_scale==1){
-        length *= 2;
-      }
-#endif
-      break;
-    case SCALED_FONT:
-      for(c=string;*c!='\0';c++){
-        length += glutStrokeWidth(GLUT_STROKE_ROMAN, *c);
-      }
-      length *= (283.0/402.0)*scale_2d_x;
-      break;
-    default:
-      assert(FFALSE);
-      break;
-  }
-  return length;
-}
 
 /* ------------------ GetColorbarLabelWidth ------------------------ */
 
@@ -90,7 +51,7 @@ void GetColorbarLabelWidth(int show_slice_colorbar_local, int showcfast_local,
     patchdata *patchi;
     char boundary_colorlabel[256];
 
-    patchi = patchinfo+boundarytypes[iboundarytype];
+    patchi = global_scase.patchinfo+global_scase.boundarytypes[iboundarytype];
 
     *boundary_label_width = MAX(*boundary_label_width, GetStringWidth("BNDRYA"));
 
@@ -274,7 +235,6 @@ void GetViewportInfo(void){
   VP_hrr_plot.right = VP_hrr_plot.left + plot_width + GetStringWidth("XXXXXX");
   VP_hrr_plot.down  = v_space;
   VP_hrr_plot.top   = VP_hrr_plot.down + v_space + plot_width  + 4*GetFontHeight();
-;
   VP_hrr_plot.doit  = vis_hrr_plot;
   VP_hrr_plot.text_height = text_height;
   VP_hrr_plot.text_width  = text_width;
@@ -317,17 +277,16 @@ void GetViewportInfo(void){
   doit=0;
   if(showtime==1){
     if(visTimelabel == 1 || visFramelabel == 1 || vis_hrr_label == 1 || visTimebar == 1)doit=1;
-    if(doit==0&&show_firecutoff==1&&current_mesh!=NULL){
-      if(hrrpuv_loaded==1||temp_loaded==1)doit=1;
-    }
     if(doit==0&&visFramerate==1)doit=1;
     if(doit==0&&vis_slice_average==1&&show_slice_average&&slice_average_flag==1)doit=1;
   }
   if(show_horizontal_colorbar == 1
-#ifdef pp_memstatus
-    ||visAvailmemory==1
+    ||vismemload==1
+#ifdef pp_memusage
+     || vismemusage == 1
 #endif
-    )doit=1;
+  )
+    doit = 1;
 
   VP_timebar.left = titlesafe_offset;
   if(vis_hrr_plot==1 || vis_slice_plot==1||vis_colorbar_dists_plot==1)VP_timebar.left = VP_hrr_plot.right;
@@ -350,10 +309,12 @@ void GetViewportInfo(void){
     if(vis_hrr_plot==1 || vis_slice_plot==1||vis_colorbar_dists_plot==1)VP_timebar.width -= (VP_hrr_plot.right - titlesafe_offset);
     temp_height = text_height + v_space;
     if(visFramelabel==1||vis_hrr_label==1
-#ifdef  pp_memstatus
-      ||visAvailmemory==1
+      ||vismemload==1
+#ifdef pp_memusage
+       || vismemusage == 1
 #endif
-      )temp_height += (text_height+v_space);
+    )
+      temp_height += (text_height + v_space);
     VP_timebar.height = MAX(timebar_height + 2*v_space, temp_height);
     if(show_horizontal_colorbar==1)VP_timebar.height += hbar_height;
   }
@@ -991,12 +952,11 @@ void ViewportInfo(int quad, GLint screen_left, GLint screen_down){
 
     if(mesh_xyz==NULL){
       sprintf(meshlabel,"mesh: %i",highlight_mesh+1);
-      mesh_xyz = meshinfo + highlight_mesh;
     }
     else{
       int imesh;
 
-      imesh = mesh_xyz-meshinfo+1;
+      imesh = mesh_xyz-global_scase.meshescoll.meshinfo+1;
       sprintf(meshlabel,"mesh: %i",imesh);
     }
     OutputText(VP_info.left+h_space,VP_info.down+v_space+info_lines*(v_space+VP_info.text_height), meshlabel);
@@ -1018,21 +978,21 @@ void ViewportHrrPlot(int quad, GLint screen_left, GLint screen_down){
     char *quantity2=NULL;
     float valmin, valmax;
 
-    if(hrr_col>=0&&mlr_col>=0&&hoc_hrr==1&&(glui_hrr==hrr_col||glui_hrr==mlr_col)){
-      hi        = hrrinfo + mlr_col;
-      hi2       = hrrinfo + hrr_col;
+    if(global_scase.hrr_col>=0&&global_scase.mlr_col>=0&&hoc_hrr==1&&(glui_hrr==global_scase.hrr_col||glui_hrr==global_scase.mlr_col)){
+      hi        = global_scase.hrr_coll.hrrinfo + global_scase.mlr_col;
+      hi2       = global_scase.hrr_coll.hrrinfo + global_scase.hrr_col;
       vals2     = hi2->vals;
       quantity2 = hi2->label.longlabel;
       valmin    = MIN(hi->valmin, hi2->valmin);
       valmax    = MAX(hi->valmax, hi2->valmax);
     }
     else{
-      hi     = hrrinfo+glui_hrr;
+      hi     = global_scase.hrr_coll.hrrinfo+glui_hrr;
       valmin = hi->valmin;
       valmax = hi->valmax;
     }
 
-    hitime = hrrinfo+time_col;
+    hitime = global_scase.hrr_coll.hrrinfo+global_scase.time_col;
 
     if(update_avg==1){
       TimeAveragePlot2DData(hitime->vals, hi->vals_orig, hi->vals, hi->nvals, plot2d_time_average);
@@ -1058,21 +1018,21 @@ void ViewportHrrPlot(int quad, GLint screen_left, GLint screen_down){
 /* ------------------------ OutputSlicePlot ------------------------- */
 
 void OutputSlicePlot(char *file){
-  int i, ntimes,first=1;
+  int i, ntimes=0,first=1;
   FILE *stream = NULL;
 
   if(file == NULL||strlen(file)==0)return;
-  stream = fopen(file, "w");
+  stream = FOPEN(file, "w");
   if(stream == NULL){
     printf("***error: %s not able to be opened for writing\n", file);
     return;
   }
 
-  for(i = 0; i < nsliceinfo; i++){
+  for(i = 0; i < global_scase.slicecoll.nsliceinfo; i++){
     slicedata *slicei;
     devicedata *devicei;
 
-    slicei = sliceinfo + i;
+    slicei = global_scase.slicecoll.sliceinfo + i;
     devicei = &(slicei->vals2d);
     if(slicei->loaded == 0 || devicei->valid == 0)continue;
     if(first == 1){
@@ -1087,11 +1047,11 @@ void OutputSlicePlot(char *file){
 
   for(j = -3;j < ntimes;j++){
     first = 1;
-    for(i = 0; i < nsliceinfo; i++){
+    for(i = 0; i < global_scase.slicecoll.nsliceinfo; i++){
       slicedata *slicei;
       devicedata *devicei;
 
-      slicei = sliceinfo + i;
+      slicei = global_scase.slicecoll.sliceinfo + i;
       devicei = &(slicei->vals2d);
       if(slicei->loaded == 0 || devicei->valid == 0)continue;
       if(j == -3){
@@ -1155,7 +1115,7 @@ void ViewportSlicePlot(int quad, GLint screen_left, GLint screen_down){
 
     position = 0;
 
-    cbi = colorbarinfo + colorbartype;
+    cbi = colorbars.colorbarinfo + colorbartype;
     strcpy(label, cbi->menu_label);
     strcat(label, "/CIELab delta");
 
@@ -1163,8 +1123,7 @@ void ViewportSlicePlot(int quad, GLint screen_left, GLint screen_down){
       xvals[i] = (float)i;
     }
 
-    void GetColorDist(colorbardata *cbi, int option, float *min, float *max);
-    GetColorDist(colorbarinfo + colorbartype, 1, &valmin, &valmax);
+    GetColorDist(colorbars.colorbarinfo + colorbartype, 1, &valmin, &valmax);
     DrawPlot2D(PLOT_ALL, xvals, cbi->colorbar_dist_delta, NULL, 254,
       0.0, cbi->colorbar_dist_delta[0], 0.0, 1, position, valmin, valmax,
       label, NULL, "",
@@ -1175,13 +1134,13 @@ void ViewportSlicePlot(int quad, GLint screen_left, GLint screen_down){
     int i, position;
 
     position = 0;
-    for(i = 0; i<nsliceinfo; i++){
+    for(i = 0; i<global_scase.slicecoll.nsliceinfo; i++){
       slicedata *slicei;
       devicedata *devicei;
       float valmin, valmax;
       float highlight_val;
 
-      slicei = sliceinfo+i;
+      slicei = global_scase.slicecoll.sliceinfo+i;
       devicei = &(slicei->vals2d);
       if(slicei->loaded==0||devicei->valid==0)continue;
 
@@ -1224,14 +1183,14 @@ void ViewportSlicePlot(int quad, GLint screen_left, GLint screen_down){
 /* ------------------------ ViewportTimebar ------------------------- */
 
 void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
-#ifdef pp_memstatus
-  unsigned int availmemory;
-  char percen[] = "%";
-#endif
   int right_label_pos, timebar_right_pos;
   int timebar_left_pos;
   int time_width=0, hrr_width=0, frame_width=0;
-  int framerate_width=0, memusage_width=0, memavail_width=0;
+  int framerate_width = 0;
+  int memload_width = 0;
+#ifdef pp_memusage
+  int memusage_width = 0;
+#endif
   int delta = TIMEBAR_HEIGHT;
 
 #ifdef pp_OSX_HIGHRES
@@ -1244,12 +1203,17 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
 
   timebar_right_width = 0;
   if(visFramerate==1&&showtime==1)framerate_width = GetStringWidth("Frame rate: 99.99");
-  if(visUsagememory == 1)memavail_width = GetStringWidth("9999 MBx");
-#ifdef pp_memstatus
-  if(visAvailmemory == 1)memusage_width = GetStringWidth("Mem Load: 100%x");
+  timebar_right_width = framerate_width;
+#ifdef pp_memusage
+  if(vismemusage == 1) {
+    memusage_width = GetStringWidth("Mem Usage: 9999 MBx");
+    timebar_right_width = MAX(timebar_right_width, memusage_width);
+  }
 #endif
-  timebar_right_width = MAX(MAX(framerate_width, memavail_width), memusage_width);
-  timebar_right_width = MAX(timebar_right_width, delta);
+  if(vismemload == 1){
+    memload_width = GetStringWidth("Mem Load: 100%x");
+    timebar_right_width = MAX(timebar_right_width, memload_width);
+  }
 
   if(vis_hrr_label==1)hrr_width = GetStringWidth("HRR: 1000.0kW");
   if(visFrameTimelabel==1){
@@ -1275,14 +1239,14 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
     DrawHorizontalColorbars();
   }
 
-  if((visTimelabel == 1 || visFramelabel == 1 || vis_hrr_label == 1 || visTimebar == 1) && showtime==1 && geom_bounding_box_mousedown==0){
+  if((visTimelabel == 1 || visFramelabel == 1 || vis_hrr_label == 1 || visTimebar == 1) && showtime==1){
     if(visTimelabel==1){
       OutputText(VP_timebar.left,v_space, timelabel);
     }
-    if(visFramelabel==1&&(vis_hrr_label==0||hrrptr==NULL)){
+    if(visFramelabel==1&&(vis_hrr_label==0||global_scase.hrrptr==NULL)){
       OutputText(VP_timebar.left,v_space+VP_timebar.text_height+v_space, framelabel);
     }
-    if(vis_hrr_label==1&&hrrptr!=NULL){
+    if(vis_hrr_label==1&&global_scase.hrrptr!=NULL){
       OutputText(VP_timebar.left,v_space+VP_timebar.text_height+v_space, hrrlabel);
     }
     if(visTimebar==1){
@@ -1299,90 +1263,36 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
   }
 
   if(visFramerate==1&&showtime==1){
+    char frameratelabel[30];
+
     sprintf(frameratelabel," Frame rate:%4.1f",framerate);
     OutputText(right_label_pos,v_space,frameratelabel);
   }
   if(show_slice_average==1&&vis_slice_average==1&&slice_average_flag==1){
-    sprintf(frameratelabel," AVG: %4.1f",slice_average_interval);
-    OutputText(right_label_pos,3*v_space+2*VP_timebar.text_height, frameratelabel); // test print
+    char sliceavglabel[30];
+
+    sprintf(sliceavglabel," AVG: %4.1f",slice_average_interval);
+    OutputText(right_label_pos,3*v_space+2*VP_timebar.text_height, sliceavglabel); // test print
   }
 
-  if((hrrpuv_loaded == 1 || temp_loaded == 1) && show_firecutoff == 1 && current_mesh != NULL){
-    char cutoff_label[256];
-    int i_cutoff;
-    float x1, x2, y1, y2;
-    float f_red, f_green, f_blue;
+  if(vismemload==1){
+    int loadmemory;
 
-    if(hrrpuv_loaded == 1 && show_firecutoff == 1){
-      i_cutoff = (int)(global_hrrpuv_cutoff + 0.5);
-      sprintf(cutoff_label, ">%i kW/m3", i_cutoff);
-    }
-    else {
-      i_cutoff = (int)(global_temp_cutoff + 0.5);
-      sprintf(cutoff_label, ">%i %s", i_cutoff,degC);
-    }
-    OutputText(right_label_pos+5+h_space,3*v_space+2*VP_timebar.text_height,cutoff_label);
+    loadmemory = MemoryLoad();
+    if(loadmemory >= 0){
+      char memloadlabel[30], percen[] = "%";
 
-    if(fire_colormap_type == 0){
-      f_red   = (float)fire_color_int255[0] / 255.0;
-      f_green = (float)fire_color_int255[1] / 255.0;
-      f_blue  = (float)fire_color_int255[2] / 255.0;
-      glColor3f(f_red, f_green, f_blue);
-    }
-    else{
-      float *colors;
-      int icolor;
-
-      if(strcmp(fire_colorbar->menu_label, "fire") == 0){
-        icolor = 192;
-      }
-      else if(strcmp(fire_colorbar->menu_label, "fire 2") == 0){
-        icolor = 128 + 127*(global_hrrpuv_cutoff - global_hrrpuv_min) / (global_hrrpuv_max - global_hrrpuv_min);
-        icolor = CLAMP((icolor + 1), 0, 255);
+      sprintf(memloadlabel, " Mem Load:%u%s", loadmemory, percen);
+      if(visFramerate == 1 && showtime == 1){
+        OutputText(right_label_pos, 2 * v_space + VP_timebar.text_height, memloadlabel);
       }
       else{
-        icolor = 255*(global_hrrpuv_cutoff-global_hrrpuv_min)/(global_hrrpuv_max-global_hrrpuv_min);
-        icolor = CLAMP((icolor + 1), 0, 255);
+        OutputText(right_label_pos, v_space, memloadlabel);
       }
-      colors = fire_colorbar->colorbar_rgb;
-      f_red = colors[3*icolor + 0];
-      f_green = colors[3*icolor + 1];
-      f_blue = colors[3*icolor + 2];
-      glColor3f(f_red, f_green, f_blue);
-    }
-
-    x1 = (float)(right_label_pos + h_space - 20);
-    x2 = x1 + (float)20;
-    y1 = (float)(5 + 2*VP_timebar.text_height);
-    y2 = y1 + (float)20;
-
-    glBegin(GL_TRIANGLES);
-    glVertex3f(x1,y1,0.0);
-    glVertex3f(x2,y1,0.0);
-    glVertex3f(x2,y2,0.0);
-    glVertex3f(x1, y1, 0.0);
-    glVertex3f(x2, y2, 0.0);
-    glVertex3f(x1, y2, 0.0);
-    glEnd();
-  }
-#ifdef pp_memstatus
-  if(visAvailmemory==1){
-    MEMSTATUS(0,&availmemory,NULL,NULL);
-    sprintf(frameratelabel," Mem Load:%u%s",availmemory,percen);
-    if(visFramerate==1&&showtime==1){
-      OutputText(right_label_pos,2*v_space+VP_timebar.text_height,frameratelabel);
-    }
-    else{
-      OutputText(right_label_pos,v_space,frameratelabel);
     }
   }
-#endif
-#ifdef pp_MEMDEBUG
-  if(visUsagememory==1
-#ifdef pp_memstatus
-     &&visAvailmemory==0
-#endif
-    ){
+#ifdef pp_memusage
+  if(vismemusage==1){
       char MEMlabel[128];
 
       getMemusage(MMtotalmemory,MEMlabel);
@@ -1435,13 +1345,13 @@ int CompareMeshes(const void *arg1, const void *arg2){
 
   smoke3di = *(smoke3ddata **)arg1;
   smoke3dj = *(smoke3ddata **)arg2;
-  meshi = meshinfo + smoke3di->blocknumber;
-  meshj = meshinfo + smoke3dj->blocknumber;
+  meshi = global_scase.meshescoll.meshinfo + smoke3di->blocknumber;
+  meshj = global_scase.meshescoll.meshinfo + smoke3dj->blocknumber;
   if(meshi == meshj)return 0;
-  xyzmini = meshi->boxmin;
-  xyzmaxi = meshi->boxmax;
-  xyzminj = meshj->boxmin;
-  xyzmaxj = meshj->boxmax;
+  xyzmini = meshi->boxmin_fds;
+  xyzmaxi = meshi->boxmax_fds;
+  xyzminj = meshj->boxmin_fds;
+  xyzmaxj = meshj->boxmax_fds;
   if(dir == 0){
     if(xyzmaxi[0] <= xyzminj[0])dir = 1;
     if(xyzmaxj[0] <= xyzmini[0])dir = -1;
@@ -1516,8 +1426,8 @@ int CompareMeshes(const void *arg1, const void *arg2){
 /* ------------------ SortSmoke3dinfo ------------------------ */
 
 void SortSmoke3dinfo(void){
-  if(nsmoke3dinfo > 1){
-    qsort((meshdata **)smoke3dinfo_sorted, (size_t)nsmoke3dinfo, sizeof(smoke3ddata *), CompareMeshes);
+  if(global_scase.smoke3dcoll.nsmoke3dinfo > 1){
+    qsort((meshdata **)global_scase.smoke3dcoll.smoke3dinfo_sorted, (size_t)global_scase.smoke3dcoll.nsmoke3dinfo, sizeof(smoke3ddata *), CompareMeshes);
   }
 }
 
@@ -1548,17 +1458,17 @@ void GetEyePos(float *mm){
   smv_eyepos[2] = -(mm[8]*mm[12] + mm[9]*mm[13] + mm[10]*mm[14])/mscale[2];
   SMV2FDS_XYZ(fds_eyepos, smv_eyepos);
 
-  for(i = 0; i<nmeshes; i++){
+  for(i = 0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
-    meshi = meshinfo+i;
-    scene_center[0] += meshi->boxmiddle[0];
-    scene_center[1] += meshi->boxmiddle[1];
-    scene_center[2] += meshi->boxmiddle[2];
+    meshi = global_scase.meshescoll.meshinfo+i;
+    scene_center[0] += meshi->boxmiddle_fds[0];
+    scene_center[1] += meshi->boxmiddle_fds[1];
+    scene_center[2] += meshi->boxmiddle_fds[2];
   }
-  scene_center[0] /= nmeshes;
-  scene_center[1] /= nmeshes;
-  scene_center[2] /= nmeshes;
+  scene_center[0] /= global_scase.meshescoll.nmeshes;
+  scene_center[1] /= global_scase.meshescoll.nmeshes;
+  scene_center[2] /= global_scase.meshescoll.nmeshes;
   fds_viewdir[0] = scene_center[0] - fds_eyepos[0];
   fds_viewdir[1] = scene_center[1] - fds_eyepos[1];
   fds_viewdir[2] = scene_center[2] - fds_eyepos[2];
@@ -1623,27 +1533,27 @@ void GetVolSmokeDir(float *mm){
   eye_position_smv[1] = -DOT3(mm + 4, mm + 12) / mscale[1];
   eye_position_smv[2] = -DOT3(mm + 8, mm + 12) / mscale[2];
 
-  for(j = 0;j<nmeshes;j++){
+  for(j = 0;j<global_scase.meshescoll.nmeshes;j++){
     meshdata *meshj;
     int *inside;
     int *drawsides;
     float x0, x1, yy0, yy1, z0, z1;
     float xcen, ycen, zcen;
 
-    meshj = meshinfo + j;
+    meshj = global_scase.meshescoll.meshinfo + j;
 
     inside = &meshj->inside;
     drawsides = meshj->drawsides;
 
-      x0 = meshj->x0;
-      x1 = meshj->x1;
-     yy0 = meshj->y0;
-     yy1 = meshj->y1;
-      z0 = meshj->z0;
-      z1 = meshj->z1;
-    xcen = meshj->xcen;
-    ycen = meshj->ycen;
-    zcen = meshj->zcen;
+      x0 = meshj->boxmin_fds[0];
+      x1 = meshj->boxmax_fds[0];
+     yy0 = meshj->boxmin_fds[1];
+     yy1 = meshj->boxmax_fds[1];
+      z0 = meshj->boxmin_fds[2];
+      z1 = meshj->boxmax_fds[2];
+    xcen = meshj->xcen_smv;
+    ycen = meshj->ycen_smv;
+    zcen = meshj->zcen_smv;
 
     *inside = 0;
     if(
@@ -1726,12 +1636,12 @@ void GetVolSmokeDir(float *mm){
 
   // turn off drawing for mesh sides that are on the inside of a supermesh
   if(combine_meshes == 1){
-    for(i = 0;i<nmeshes;i++){
+    for(i = 0;i<global_scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
       int *drawsides, *extsides;
       int jj;
 
-      meshi = meshinfo + i;
+      meshi = global_scase.meshescoll.meshinfo + i;
       drawsides = meshi->drawsides;
       extsides = meshi->extsides;
       for(jj = 0;jj<7;jj++){
@@ -1740,10 +1650,10 @@ void GetVolSmokeDir(float *mm){
         }
       }
     }
-    for(i = 0;i<nsupermeshinfo;i++){
+    for(i = 0;i<global_scase.nsupermeshinfo;i++){
       supermeshdata *smesh;
 
-      smesh = supermeshinfo + i;
+      smesh = global_scase.supermeshinfo + i;
       for(j = 0;j<7;j++){
         smesh->drawsides[j] = 0;
       }
@@ -1761,13 +1671,13 @@ void GetVolSmokeDir(float *mm){
 
   vi = volfacelistinfo;
   nvolfacelistinfo = 0;
-  for(i = 0;i<nmeshes;i++){
+  for(i = 0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int facemap[7] = {12,6,0,0,3,9,15};
     volrenderdata *vr;
     int *drawsides;
 
-    meshi = meshinfo + i;
+    meshi = global_scase.meshescoll.meshinfo + i;
 
     drawsides = meshi->drawsides;
 
@@ -1782,7 +1692,7 @@ void GetVolSmokeDir(float *mm){
       if(drawsides[j + 3] == 0)continue;
       vi->facemesh = meshi;
       vi->iwall = j;
-      xyz = meshi->face_centers + facemap[j + 3];
+      xyz = meshi->face_centers_smv + facemap[j + 3];
 
       dx = xyz[0] - eye_position_smv[0];
       dy = xyz[1] - eye_position_smv[1];
@@ -1826,16 +1736,16 @@ void GetSmokeDir(float *mm){
   eye_position_smv[1] = -DOT3(mm + 4, mm + 12) / mscale[1];
   eye_position_smv[2] = -DOT3(mm + 8, mm + 12) / mscale[2];
 
-  for(j = 0;j<nmeshes;j++){
+  for(j = 0;j<global_scase.meshescoll.nmeshes;j++){
     meshdata  *meshj;
     int i;
     float absangle, cosangle, minangle, mincosangle;
     int iminangle, alphadir, minalphadir;
 
-    meshj = meshinfo + j;
-    dx = meshj->boxmiddle_scaled[0] - eye_position_smv[0];
-    dy = meshj->boxmiddle_scaled[1] - eye_position_smv[1];
-    dz = meshj->boxmiddle_scaled[2] - eye_position_smv[2];
+    meshj = global_scase.meshescoll.meshinfo + j;
+    dx = meshj->boxmiddle_smv[0] - eye_position_smv[0];
+    dy = meshj->boxmiddle_smv[1] - eye_position_smv[1];
+    dz = meshj->boxmiddle_smv[2] - eye_position_smv[2];
     meshj->eyedist = sqrt(dx*dx + dy*dy + dz*dz);
 
     minalphadir = ALPHA_X;
@@ -1879,8 +1789,8 @@ void GetSmokeDir(float *mm){
         break;
       case 4:
         alphadir = ALPHA_XY;
-        dx = meshj->xplt_orig[1] - meshj->xplt_orig[0];
-        dy = meshj->yplt_orig[1] - meshj->yplt_orig[0];
+        dx = meshj->xplt_fds[1] - meshj->xplt_fds[0];
+        dy = meshj->yplt_fds[1] - meshj->yplt_fds[0];
         factor = dx*dx + dy*dy;
         if(factor == 0.0){
           factor = 1.0;
@@ -1899,8 +1809,8 @@ void GetSmokeDir(float *mm){
         break;
       case 5:
         alphadir = ALPHA_XY;
-        dx = meshj->xplt_orig[1] - meshj->xplt_orig[0];
-        dy = meshj->yplt_orig[1] - meshj->yplt_orig[0];
+        dx = meshj->xplt_fds[1] - meshj->xplt_fds[0];
+        dy = meshj->yplt_fds[1] - meshj->yplt_fds[0];
         factor = dx*dx + dy*dy;
         if(factor == 0.0){
           factor = 1.0;
@@ -1919,8 +1829,8 @@ void GetSmokeDir(float *mm){
         break;
       case 6:
         alphadir = ALPHA_YZ;
-        dy = meshj->yplt_orig[1] - meshj->yplt_orig[0];
-        dz = meshj->zplt_orig[1] - meshj->zplt_orig[0];
+        dy = meshj->yplt_fds[1] - meshj->yplt_fds[0];
+        dz = meshj->zplt_fds[1] - meshj->zplt_fds[0];
         factor = dz*dz + dy*dy;
         if(factor == 0.0){
           factor = 1.0;
@@ -1939,8 +1849,8 @@ void GetSmokeDir(float *mm){
         break;
       case 7:
         alphadir = ALPHA_YZ;
-        dy = meshj->yplt_orig[1] - meshj->yplt_orig[0];
-        dz = meshj->zplt_orig[1] - meshj->zplt_orig[0];
+        dy = meshj->yplt_fds[1] - meshj->yplt_fds[0];
+        dz = meshj->zplt_fds[1] - meshj->zplt_fds[0];
         factor = dz*dz + dy*dy;
         if(factor == 0.0){
           factor = 1.0;
@@ -1959,8 +1869,8 @@ void GetSmokeDir(float *mm){
         break;
       case 8:
         alphadir = ALPHA_XZ;
-        dx = meshj->xplt_orig[1] - meshj->xplt_orig[0];
-        dz = meshj->zplt_orig[1] - meshj->zplt_orig[0];
+        dx = meshj->xplt_fds[1] - meshj->xplt_fds[0];
+        dz = meshj->zplt_fds[1] - meshj->zplt_fds[0];
         factor = dz*dz + dx*dx;
         if(factor == 0.0){
           factor = 1.0;
@@ -1979,8 +1889,8 @@ void GetSmokeDir(float *mm){
         break;
       case 9:
         alphadir = ALPHA_XZ;
-        dx = meshj->xplt_orig[1] - meshj->xplt_orig[0];
-        dz = meshj->zplt_orig[1] - meshj->zplt_orig[0];
+        dx = meshj->xplt_fds[1] - meshj->xplt_fds[0];
+        dz = meshj->zplt_fds[1] - meshj->zplt_fds[0];
         factor = dx*dx + dz*dz;
         if(factor == 0.0){
           factor = 1.0;
@@ -2035,8 +1945,16 @@ void GetSmokeDir(float *mm){
       else{
         smoke_dist = meshj->smoke_dist[minalphadir];
       }
-      InitAlphas(soot->alphas_dir[minalphadir], soot->extinct, glui_smoke3d_extinct,
-        meshj->dxyz_orig[0], smoke_dist);
+      int use_soot_density;
+      float maxval;
+
+      use_soot_density = 0;
+      maxval = soot->maxval;
+      if(soot->soot_density_loaded == 1 && soot->maxvals!=NULL){
+        use_soot_density = 1;
+        maxval = soot->maxvals[soot->ismoke3d_time];
+      }
+      InitAlphas(soot->alphas_smokedir[minalphadir], soot->alphas_firedir[minalphadir], soot->extinct, use_soot_density, maxval, glui_mass_extinct, meshj->dxyz_fds[0], smoke_dist);
     }
     if(demo_mode != 0){
       meshj->smokedir = 1;
@@ -2072,10 +1990,10 @@ void GetZoneSmokeDir(float *mm){
   eye_position_smv[1] = -(mm[4] * mm[12] + mm[5] * mm[13] + mm[6] * mm[14]) / mscale[1];
   eye_position_smv[2] = -(mm[8] * mm[12] + mm[9] * mm[13] + mm[10] * mm[14]) / mscale[2];
 
-  for(j = 0;j<nrooms;j++){
+  for(j = 0;j<global_scase.nrooms;j++){
     roomdata *roomj;
 
-    roomj = roominfo + j;
+    roomj = global_scase.roominfo + j;
 
     roomj->zoneinside = 0;
     if(
@@ -2354,16 +2272,25 @@ void GetMinMaxDepth(float *min_depth, float *max_depth){
     *max_depth = MAX(*max_depth, maxdist);
   }
 
+  // get distance to each corner of the skybox
+  if(visSkysphere == 1){
+    float mindist, maxdist;
+
+    DistPointBox(smv_eyepos, box_sky_corners, &mindist, &maxdist);
+    *min_depth = MIN(*min_depth, mindist);
+    *max_depth = MAX(*max_depth, maxdist);
+  }
+
   // get distance to each tour node
 
   if(edittour==1){
     int i;
 
-    for(i = 0; i<ntourinfo; i++){
+    for(i = 0; i<global_scase.tourcoll.ntourinfo; i++){
       tourdata *touri;
       keyframe *keyj;
 
-      touri = tourinfo+i;
+      touri = global_scase.tourcoll.tourinfo+i;
       for(keyj = (touri->first_frame).next; keyj->next!=NULL; keyj = keyj->next){
         float dist, dx, dy, dz;
 
@@ -2374,6 +2301,29 @@ void GetMinMaxDepth(float *min_depth, float *max_depth){
         *min_depth = MIN(*min_depth, dist);
         *max_depth = MAX(*max_depth, dist);
       }
+    }
+  }
+}
+
+/* ------------------ UpdateMeshInFrustum ------------------------ */
+
+void UpdateMeshInFrustum(void) {
+  int i;
+
+  if(cull_meshes == 1){
+    for(i = 0; i < global_scase.meshescoll.nmeshes; i++) {
+      meshdata *meshi;
+
+      meshi = global_scase.meshescoll.meshinfo + i;
+      meshi->in_frustum = MeshInFrustum(meshi);
+    }
+  }
+  else {
+    for(i = 0; i < global_scase.meshescoll.nmeshes; i++) {
+      meshdata *meshi;
+
+      meshi = global_scase.meshescoll.meshinfo + i;
+      meshi->in_frustum = 1;
     }
   }
 }
@@ -2400,16 +2350,11 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
     VP_scene.width=screenWidth;
   }
   if(plotstate==DYNAMIC_PLOTS&&selected_tour!=NULL&&selected_tour->timeslist!=NULL){
-    if((tour_snap==1||viewtourfrompath==1)&&selectedtour_index>=0){
+    if(viewtourfrompath==1&&selectedtour_index>=0){
       tourdata *touri;
 
-      touri = tourinfo + selectedtour_index;
-      if(tour_snap==1){
-        SetTourXYZView(tour_snap_time, touri);
-      }
-      else{
-        SetTourXYZView(global_times[itimes], touri);
-      }
+      touri = global_scase.tourcoll.tourinfo + selectedtour_index;
+      SetTourXYZView(global_times[itimes], touri);
       memcpy(camera_current->eye, touri->xyz_smv, 3*sizeof(float));
       camera_current->az_elev[1]=0.0;
       camera_current->az_elev[0]=0.0;
@@ -2438,7 +2383,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
     float min_depth, max_depth;
 
     GetMinMaxDepth(&min_depth, &max_depth);
-    if(is_terrain_case==1){
+    if(global_scase.is_terrain_case==1){
       fnear = MAX(min_depth  -0.1,     0.00001);
       ffar  = MAX(max_depth + 0.1, fnear+2.0);
     }
@@ -2528,14 +2473,9 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       tourdata *touri;
 
       if(plotstate==DYNAMIC_PLOTS&&selected_tour!=NULL&&selected_tour->timeslist!=NULL){
-        if((tour_snap==1||viewtourfrompath==1)&&selectedtour_index>=0){
-          touri = tourinfo + selectedtour_index;
-          if(tour_snap==1){
-            SetTourXYZView(tour_snap_time, touri);
-          }
-          else{
-            SetTourXYZView(global_times[itimes], touri);
-          }
+        if(viewtourfrompath==1&&selectedtour_index>=0){
+          touri = global_scase.tourcoll.tourinfo + selectedtour_index;
+          SetTourXYZView(global_times[itimes], touri);
           viewx = touri->view_smv[0]+dEyeSeparation[0];
           viewy = touri->view_smv[1]-dEyeSeparation[1];
           viewz = touri->view_smv[2];
@@ -2595,7 +2535,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
 
     glMultMatrixf(modelview_identity);
 
-    glTranslatef(xcen,ycen,zcen);
+    glTranslatef(xcen*mscale[0],ycen*mscale[1],zcen*mscale[2]);
 
     // rotate scene
     if(rotation_type==ROTATION_3AXIS){
@@ -2649,7 +2589,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       glRotatef(zaxis_angles[2], u[0], u[1], u[2]);
     }
 
-    glTranslatef(-xcen*mscale[0],-ycen*mscale[1],-zcen*mscale[1]);
+    glTranslatef(-xcen*mscale[0],-ycen*mscale[1],-zcen*mscale[2]);
 
     glGetFloatv(GL_MODELVIEW_MATRIX,modelview_scratch);
     MatMultMat(inverse_modelview_setup,modelview_scratch,modelview_current);
@@ -2659,7 +2599,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
     if(show_gslice_triangles==1||SHOW_gslice_data==1){
       UpdateGslicePlanes();
     }
-    if(nrooms>0){
+    if(global_scase.nrooms>0){
       GetZoneSmokeDir(modelview_scratch);
     }
     if(nvolrenderinfo>0&&showvolrender==1&&usevolrender==1){
@@ -2671,7 +2611,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
       ComputeAllSmokecolors();
 #endif
     }
-    if(nsmoke3dinfo>0&&show3dsmoke==1){
+    if(global_scase.smoke3dcoll.nsmoke3dinfo>0&&show3dsmoke==1){
       SortSmoke3dinfo();
       GetSmokeDir(modelview_scratch);
       SNIFF_ERRORS("after GetSmokeDir");
@@ -2687,6 +2627,6 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
 
     glScalef(mscale[0],mscale[1],mscale[2]);
     ExtractFrustum();
-    SetCullVis();
+    UpdateMeshInFrustum();
   }
 }

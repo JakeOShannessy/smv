@@ -7,9 +7,13 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define SNIFF_ERRORS(f)
 #endif
 
+#define TOA_LIMIT 9.9E5 // time of arrival limit - for wui cases
+
 #define SLICE_LOAD_SPECIFIED    0
 #define SLICE_LOADALL_XorYorZ   1
 #define SLICE_LOADALL_XandYandZ 2
+
+#define VECLENGTH 0.1
 
 #define BOUND_UPDATE_COLORS       110
 #define BOUND_DONTUPDATE_COLORS   128
@@ -17,16 +21,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define MENU_HVAC_LOAD     0
 #define MENU_HVAC_UNLOAD   1
-
-#define HVAC_FILTER_NO  0
-#define HVAC_FILTER_YES 1
-#define HVAC_NONE    0
-#define HVAC_FAN     1
-#define HVAC_AIRCOIL 2
-#define HVAC_DAMPER  3
-
-#define HVAC_STATE_INACTIVE 0
-#define HVAC_STATE_ACTIVE   1
 
 #define SPLIT_COLORBAR         1
 
@@ -78,6 +72,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define VIEW_YMAX                   -3
 #define VIEW_ZMIN                   -4
 #define VIEW_ZMAX                   -5
+#define XYZ_CENTER                 -6
 
 #define DEVICE_devicetypes     28
 
@@ -114,15 +109,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MINMAX_LOADED 1
 #define MINMAX_INI    2
 
-#define CFACE_NORMALS_NO  0
-#define CFACE_NORMALS_YES 1
-
-#define SHOW_BOUNDING_BOX_ALWAYS     0
-#define SHOW_BOUNDING_BOX_MOUSE_DOWN 1
-#define SHOW_BOUNDING_BOX_NEVER      2
-
-#define ALL_FRAMES       -1
-
 #define COLORBAR_SHIFT_MIN          0.1
 #define COLORBAR_SHIFT_MAX         10.0
 
@@ -142,12 +128,9 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define COLORBAR_LISTA               30
 #define COLORBAR_LISTB               31
 
-
-#define MESH_INT  0
-#define MESH_EXT  1
-#define MESH_BOTH 2
-
+//*** need to consolidate these two parameters
 #define MESHEPS 0.001
+#define MESH_EPS 0.0001
 
 #define PART_BOUND_UNDEFINED 0
 #define PART_BOUND_COMPUTING 1
@@ -196,12 +179,17 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define PRINT    1
 #define NO_PRINT 0
 
+#define SKY_BOX      0
+#define SKY_SPHERE   1
+#define RESET_COLORS 2
+
 #define TIMEBAR_OVERLAP_ALWAYS 0
 #define TIMEBAR_OVERLAP_NEVER  1
 #define TIMEBAR_OVERLAP_AUTO   2
 
 #define RENDER_START         3
 #define RENDER_START_NORMAL 12
+#define RENDER_START_GIF    21
 #define RENDER_START_360    10
 
 #define RESEARCH_MODE 114
@@ -230,9 +218,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define COLORBAR_LIST2_PREV 128
 #define COLORBAR_LIST2_NEXT 129
 
-#define ZONEVENT_CIRCLE 1
-#define ZONEVENT_SQUARE 2
-
 #define ZONE_HIDDEN 0
 #define ZONE_XPLANE 1
 #define ZONE_YPLANE 2
@@ -242,40 +227,12 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define ROTATE_ABOUT_CLIPPING_CENTER -2
 #define ROTATE_ABOUT_FDS_CENTER      -3
 #define ROTATE_ABOUT_WORLD_CENTER    -4
-
-#define ONLY_IN_GAS           0
-#define GAS_AND_SOLID         1
-#define ONLY_IN_SOLID         2
-#define NEITHER_GAS_NOR_SOLID 3
+#define ROTATE_ABOUT_MESH_CENTER     -5
+#define MESH_INDEX                   -6
 
 #define UPDATE_WINDROSE_DEVICE   0
 #define UPDATE_WINDROSE_CHECKBOX 1
 #define UPDATE_WINDROSE_SHOWHIDE 2
-
-#ifndef START_TIMER
-#define START_TIMER(a) a = (float)clock()/(float)CLOCKS_PER_SEC
-#endif
-
-#ifndef STOP_TIMER
-#define STOP_TIMER(a) a = (float)clock()/(float)CLOCKS_PER_SEC - a
-#endif
-
-#ifndef CUM_TIMER
-#define CUM_TIMER(a,b) b += ((float)clock()/(float)CLOCKS_PER_SEC - a)
-#endif
-
-#ifndef INIT_PRINT_TIMER
-#define INIT_PRINT_TIMER(timer)   float timer;START_TIMER(timer)
-#endif
-
-#ifndef PRINT_TIMER
-#define PRINT_TIMER(timer, label) PrintTime(__FILE__, __LINE__, &timer, label, 1)
-#endif
-
-#ifndef PRINT_CUM_TIMER
-#define PRINT_CUM_TIMER(timer, label) PrintTime(__FILE__, __LINE__, &timer, label, 0)
-#endif
-
 
 #ifndef START_TICKS
 #define START_TICKS(a) a = glutGet(GLUT_ELAPSED_TIME)
@@ -283,8 +240,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #ifndef STOP_TICKS
 #define STOP_TICKS(a) a = glutGet(GLUT_ELAPSED_TIME) - a
 #endif
-
-#define TOBW(col) ( 0.299*(col)[0] + 0.587*(col)[1] + 0.114*(col)[2])
 
 #define TMAX 1000000000.0
 
@@ -320,14 +275,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define SHOWONLY_FILE 1
 #define HIDEALL_FILES 2
 
-#define UNCOMPRESSED_ALLFRAMES 0
-#define COMPRESSED_ALLFRAMES   1
-
-#define COMPRESSED_UNKNOWN -1
-#define UNCOMPRESSED        2
-#define COMPRESSED_RLE      0 // 3d smoke file format assumes rle parameter is 0
-#define COMPRESSED_ZLIB     1 // 3d smoke file format assumes zlib parameter is 1
-
 #define DISABLE 0
 #define ENABLE  1
 
@@ -342,13 +289,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define ZWALLMIN -3
 #define ZWALLMAX  3
 
-#define NOT_FDSBLOCK 0
-#define FDSBLOCK     1
-
-#define PATCH_STRUCTURED_NODE_CENTER 0
-#define PATCH_STRUCTURED_CELL_CENTER 1
-#define PATCH_GEOMETRY_BOUNDARY      2
-#define PATCH_GEOMETRY_SLICE         3
 
 #define NODATA  0
 #define HASDATA 1
@@ -358,18 +298,12 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define POLYGON_TEST     2
 #define TETRAHEDRON_TEST 3
 
-#ifndef UPDATE_SMOKEFIRE_COLORS
-#define UPDATE_SMOKEFIRE_COLORS 54
-#endif
-
 #define NELEV_ZONE 100
 
 #define UPDATE_ISO_OFF        0
 #define UPDATE_ISO_ONE_NOW    1
 #define UPDATE_ISO_ALL_NOW    2
 #define UPDATE_ISO_START_ALL -1
-
-#define MAX_ISO_COLORS 10
 
 #define ZONETEMP_COLOR   0
 #define ZONEHAZARD_COLOR 1
@@ -385,35 +319,22 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define PNG        0
 #define JPEG       1
-#define IMAGE_NONE 2
+#define RGIF       2
+#define IMAGE_NONE 3
 
-#define AVI 0
-#define MP4 1
-#define WMV 2
-#define MOV 3
+#define AVI  0
+#define MP4  1
+#define WMV  2
+#define MOV  3
+#define MGIF 4
 
 #define EXTERNAL_LIST_ID 1
-
-#define TEXTURE_SPHERICAL   0
-#define TEXTURE_RECTANGULAR 1
 
 #define ADD_KEYFRAME     1
 #define DELETE_KEYFRAME -1
 
-
-#define C_GENERATED       0
-#define FORTRAN_GENERATED 1
-
 #define SHOW_ALL_VENTS 10
 #define HIDE_ALL_VENTS 22
-
-#define VENT_SOLID   0
-#define VENT_OUTLINE 2
-#define VENT_HIDDEN -2
-
-#define HFLOW_VENT 0
-#define VFLOW_VENT 1
-#define MFLOW_VENT 2
 
 #define CLIP_ON_DENORMAL 2
 #define CLIP_ON          1
@@ -424,6 +345,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 // render_mode values:
 #define RENDER_NORMAL 0
 #define RENDER_360    1
+#define RENDER_GIF    2
 
 // render_times values:
 #define RENDER_SINGLETIME 0
@@ -431,13 +353,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define RENDER_LABEL_FRAMENUM 0
 #define RENDER_LABEL_TIME     1
-
-#ifndef TYPE_SMV
-#define TYPE_SMV 0
-#endif
-#ifndef TYPE_INI
-#define TYPE_INI 1
-#endif
 
 #define CLIP_UNDEFINED      -1
 #define CLIP_OFF            0
@@ -480,16 +395,16 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define MAX_CELL_TYPES 3
 
-#define OUTLINE_POLYGON  0
-#define OUTLINE_TRIANGLE 1
-#define OUTLINE_HIDDEN   2
+#define GEOM_OUTLINE_POLYGON  0
+#define GEOM_OUTLINE_TRIANGLE 1
+#define GEOM_OUTLINE_HIDDEN   2
+
+#define SCENE_OUTLINE_HIDDEN 0
+#define SCENE_OUTLINE_MESH   1
+#define SCENE_OUTLINE_SCENE  2
 
 #define EMBED_YES 0
 #define EMBED_NO  1
-
-#define XXX 0
-#define YYY 1
-#define ZZZ 2
 
 #define KEY_ALT   0
 #define KEY_CTRL  1
@@ -510,17 +425,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define STEPS_PER_DEG 10.0
 
-#define SLICE_UNKNOWN     -1
-#define SLICE_NODE_CENTER 1
-#define SLICE_CELL_CENTER 2
-#define SLICE_TERRAIN     4
-#define SLICE_GEOM        6
-
-#define TERRAIN_SURFACE    0
-#define TERRAIN_IMAGE      1
-#define TERRAIN_HIDDEN     2
-#define TERRAIN_TOP        3
-
 #define TERRAIN_TOP_SIDE      0
 #define TERRAIN_BOTTOM_SIDE   1
 #define TERRAIN_BOTH_SIDES    2
@@ -530,15 +434,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define CSV_EXP   2
 
 #define TEPS 0.00
-
-#define CSV_UNDEFINED 0
-#define CSV_DEFINED   1
-#define CSV_DEFINING  2
-
-#define PART_POINTS     1
-#define PART_SPHERES    2
-#define PART_LINES      3
-#define PART_SMV_DEVICE 4
 
 #define PART_MIN_SIZE    1.0
 #define PART_MAX_SIZE  100.0
@@ -563,10 +458,15 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define TOGGLE_TITLE_SAFE          5
 #define RESTORE_EXTERIOR_VIEW_ZOOM 6
 
+#define TRANSLATE_XY_option        0
+#define TRANSLATE_Y_option         1
+#define TRANSLATE_X_option         2
+
 #define ROTATION_2AXIS             0
 #define EYE_CENTERED               1
 #define ROTATION_1AXIS             2
 #define ROTATION_3AXIS             3
+
 #define MENU_MOTION_SETTINGS       4
 #define MENU_MOTION_GRAVITY_VECTOR 5
 #define MENU_MOTION_Z_VECTOR       6
@@ -588,14 +488,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define VENT_HIDE      2
 
 #define TETRA_CLIPPLANES 1
-
-#define DIR_UNDEFINED -1
-#define DOWN_Y 0
-#define UP_X   1
-#define UP_Y   2
-#define DOWN_X 3
-#define DOWN_Z 4
-#define UP_Z   5
 
 #define GEOM_STATIC  0
 #define GEOM_DYNAMIC 1
@@ -629,10 +521,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define GEOM_PROP_TRIANGLE 3
 #define GEOM_PROP_SURF     4
 
-#define TEMP_IGNITION_MAX 100000.
-#define SURFACE_TEMPMIN  -100000.
-#define SURFACE_TEMPMAX   100000.
-
 #define PERCENTILE_MIN    0
 #define SET_MIN           1
 #define GLOBAL_MIN        2
@@ -652,11 +540,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define SLICE_LINE_CONTOUR  0
 #define SLICE_SOLID_CONTOUR 1
 
-#define BLOCK_regular 0
-#define BLOCK_texture 1
-#define BLOCK_outline 2
-#define BLOCK_hidden -2
-
 #define BLOCK_face         0
 #define VENT_face          1
 #define OUTLINE_FRAME_face 2
@@ -668,7 +551,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define visBLOCKSolidOutline   12
 //#define visBLOCKFacet         3
 #define visBLOCKOutline         2
-#define visBLOCKHide            0
 #define visBLOCKTransparent    10
 #define visBLOCKAddOutline     14
 #define visBLOCKOnlyOutline    15
@@ -676,6 +558,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define visCADOpaque           17
 #define visLightFaces          18
 #define ANIMATE_BLOCKAGES      19
+#define visBLOCKHide            0
 
 #define OUTLINE_NONE     0
 #define OUTLINE_ONLY     1
@@ -688,33 +571,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define BLOCKlocation_exact 6
 #define BLOCKlocation_cad   7
 #define BLOCKtexture_cad   31
-
-#define WALL_1 0
-#define WALL_3 1
-#define WALL_6 2
-
-// (front wall = 1, right wall = 2, back wall = 3, left wall = 4)
-
-#define FRONT_WALL  1
-#define RIGHT_WALL  2
-#define BACK_WALL   3
-#define LEFT_WALL   4
-#define BOTTOM_WALL 5
-#define TOP_WALL    6
-
-#define XLEFT   -1
-#define XRIGHT   1
-#define YFRONT  -2
-#define YBACK    2
-#define ZBOTTOM -3
-#define ZTOP     3
-
-#define IMIN 0
-#define IMAX 1
-#define JMIN 2
-#define JMAX 3
-#define KMIN 4
-#define KMAX 5
 
 #define WINDROSE_USE_DT      0
 #define WINDROSE_USE_TMINMAX 1
@@ -761,7 +617,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define RELOAD_INCREMENTAL_NOW  -2
 #define RELOAD_SWITCH           -4
 #define STOP_RELOADING          -1
-#define RELOAD_MODE_INCREMENTAL -5
 #define RELOAD_MODE_ALL         -6
 #define RELOAD_SMV_FILE         -7
 
@@ -830,12 +685,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define HIDEALL_SMOKE3D     HIDE_ALL
 #define HIDEALL_VSLICE      HIDE_ALL
 #define SHOWALL_VSLICE      SHOW_ALL
-#ifdef pp_SMOKE16
-#define TOGGLE_SMOKE3D_8BIT      -3
-#define TOGGLE_SMOKE3D_16BIT     -5
-#else
 #define TOGGLE_SMOKE3D      -3
-#endif
 #define SET_SMOKE3D         -4
 #define GLUI_SHOWALL_VSLICE GLUI_SHOWALL
 #define GLUI_HIDEALL_VSLICE GLUI_HIDEALL
@@ -868,6 +718,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define RenderStart             990
 #define RenderStartHIGHRES      988
 #define RenderStartORIGRES      987
+#define RenderStartGIF          981
 #define RenderStart360          986
 #define Render360               989
 #define RENDER_CURRENT_SINGLE   998
@@ -875,6 +726,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define RENDER_CURRENT_360      991
 #define RenderJPEG              997
 #define RenderPNG               996
+#define RenderGIF               977
 #define Render320               995
 #define Render640               994
 #define RenderWindow            993
@@ -890,10 +742,12 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define HTML_CURRENT_TIME         0
 #define HTML_ALL_TIMES            1
 
-#define ShowEXTERIORwallmenu           -1
-#define HideEXTERIORwallmenu          -19
+#define SHOW_EXTERIOR_WALL_MENU           -1
+#define HIDE_EXTERIOR_WALL_MENU          -19
+#define SHOW_INTERIOR_WALL_MENU          -21
+#define HIDE_INTERIOR_WALL_MENU          -22
 #define INI_EXTERIORwallmenu          -20
-#define INTERIORwallmenu               -2
+#define INTERIOR_WALL_MENU               -2
 #define FRONTwallmenu                  -3
 #define BACKwallmenu                   -4
 #define LEFTwallmenu                   -5
@@ -911,18 +765,10 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define SHOWCUTCELLTRIANGLESpatchmenu -17
 #define HIDECUTCELLTRIANGLESpatchmenu -18
 
-#define INTERIORwall 0
-#define FRONTwall    1
-#define BACKwall     2
-#define LEFTwall     3
-#define RIGHTwall    4
-#define UPwall       5
-#define DOWNwall     6
-
 #define offsetscale 100
 
-#define FIRECOLORMAP_DIRECT     0
-#define FIRECOLORMAP_CONSTRAINT 1
+#define FIRECOLOR_RGB      0
+#define FIRECOLOR_COLORBAR 1
 
 #define CO2_RGB      0
 #define CO2_COLORBAR 1
@@ -947,13 +793,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MENU_COLORBAR_SETTINGS   -22
 #define USE_LIGHTING             -25
 #define TOGGLE_LIGHTING          -26
-
-#define LOAD        0
-#define UNLOAD      1
-#define RESETBOUNDS 2
-#define RELOAD      3
-#define UPDATE_HIST 4
-#define BOUNDS_ONLY 5
+#define COLORBAR_DECIMAL         -27
 
 #define FIRST_TIME  1
 #define LATER_TIME  0
@@ -961,16 +801,18 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MAKE_SIZEFILE 0
 #define GET_DATA      1
 
-#define MAXPLOT3DVARS 6
-#define NRGB         12
-
 #define SMALL_FONT         0
 #define LARGE_FONT         1
 #define SCALED_FONT        2
 #define MENU_FONT_SETTINGS 3
 
+#ifndef FFALSE
 #define FFALSE 0
+#endif
+
+#ifndef TTRUE
 #define TTRUE  1
+#endif
 
 #define BLOCKAGE_AS_INPUT  35
 #define BLOCKAGE_AS_INPUT2 36
@@ -1004,7 +846,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MENU_LABEL_hmslabel            11
 #define MENU_LABEL_grid                12
 #define MENU_LABEL_sliceaverage        13
-#define MENU_LABEL_firecutoff          14
 #define MENU_LABEL_userticks           15
 #define MENU_LABEL_ShowAll             16
 #define MENU_LABEL_HideAll             17
@@ -1042,8 +883,9 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define DIALOG_MOTION    29
 #define DIALOG_VIEW      30
 #define DIALOG_RENDER    31
-#define DIALOG_GEOMETRY  16
-#define DIALOG_SHOOTER   27
+#define DIALOG_GEOMETRY_OPEN  16
+#define DIALOG_GEOMETRY_CLOSE 50
+#define DIALOG_SHOOTER 27
 #define DIALOG_SMOKEZIP  24
 #define DIALOG_STEREO    19
 #define DIALOG_TOUR_SHOW 21
@@ -1053,12 +895,12 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define DIALOG_SCRIPT    32
 #define DIALOG_CONFIG    34
 #define DIALOG_FONTS     35
-#define DIALOG_TICKS     36
-#define DIALOG_LABELS    37
+#define DIALOG_USER_TICKS   36
+#define DIALOG_LABELS_TICKS 37
 #define DIALOG_AUTOLOAD  38
 #define DIALOG_TIME      39
 #define DIALOG_SCALING   41
-#define DIALOG_WINDOW    42
+#define DIALOG_WINDOW_PROPERTIES 42
 #define DIALOG_MOVIE     43
 #define DIALOG_MOVIE_BATCH 45
 #define DIALOG_SHRINKALL -3
@@ -1083,10 +925,8 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define MENU_SHOWHIDE_FLIP 15
 
-#define MAX_SMV_FILENAME_BUFFER 1024
+#define MAX_SMV_FILENAME_BUFFER       1024
 #define MAX_LUASCRIPT_FILENAME_BUFFER 1024
-// TODO: this was set to 256 in some parts of the code, but should probably be
-// increase (or dynamically allocated).
-#define MAX_SCRIPT_FILENAME_BUFFER 256
+#define MAX_SCRIPT_FILENAME_BUFFER    1024
 
 #endif

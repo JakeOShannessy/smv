@@ -22,12 +22,8 @@
 #define _GLUI_H_
 
 #ifdef pp_OSX
-#ifdef pp_QUARTZ
-#include <GL/glut.h>
-#else
 #include <GLUT/glut.h>
 #include "glutbitmap.h"  // only needed on non-quartz osx platforms
-#endif
 #else
 #include <GL/glut.h>
 #endif
@@ -1725,7 +1721,7 @@ extern "C" int double_scale;
 #endif
 #endif
 
-#ifdef CPP
+#ifdef __cplusplus
 #define CCCC "C"
 #else
 #define CCCC

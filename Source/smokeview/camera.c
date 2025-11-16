@@ -7,6 +7,9 @@
 
 
 #include "smokeviewvars.h"
+#include "glui_motion.h"
+#include "IOscript.h"
+#include "viewports.h"
 
 /* ------------------ Zoom2Aperture ------------------------ */
 
@@ -51,18 +54,17 @@ void InitCameraList(void){
 /* ------------------ AddDefaultViewpoints ------------------------ */
 
 void AddDefaultViewpoints(void){
-  cameradata *cfirst, *clast, *cnext;
+  cameradata *cfirst, *clast;
   int i;
 
   cfirst                = &camera_list_first;
   clast                 = cfirst->next;
-  cnext                 = cfirst->next;
   cfirst->next          = camera_external;
   camera_external->prev = cfirst;
   camera_external->next = clast;
   clast->prev           = camera_external;
   for(i = 0; i<6; i++){
-    cameradata *ca;
+    cameradata *ca, *cnext;
 
     ca           = camera_defaults[i];
     cnext        = cfirst->next;
@@ -96,12 +98,12 @@ void UpdateCameraYpos(cameradata *ci, int option){
     ci->zcen = FDS2SMV_Z((geom_zmin+geom_zmax)/2.0);
   }
   else{
-    dx = xbar;
-    dy = ybar;
-    dz = zbar;
-    ci->xcen = xbar/2.0;
-    ci->ycen = ybar/2.0;
-    ci->zcen = zbar/2.0;
+    dx = global_scase.xbar;
+    dy = global_scase.ybar;
+    dz = global_scase.zbar;
+    ci->xcen = global_scase.xbar/2.0;
+    ci->ycen = global_scase.ybar/2.0;
+    ci->zcen = global_scase.zbar/2.0;
   }
   switch(option){
     case 1:
@@ -159,7 +161,7 @@ void UpdateCameraYpos(cameradata *ci, int option){
   ci->isometric_y = (eyeyfactor-1.0)*xyzbox;
 }
 
-/* ------------------ SetCameraView ------------------------ */
+/* ------------------ SetCameraViewPersp ------------------------ */
 
 void SetCameraViewPersp(cameradata *ca, int option){
   float az = 0.0, elev = 0.0;
@@ -228,13 +230,13 @@ void SetCameraView(cameradata *ca, int option){
 
 void InitCamera(cameradata *ci,char *name){
   strcpy(ci->name,name);
-  ci->rotation_index=nmeshes;
+  ci->rotation_index=global_scase.meshescoll.nmeshes;
   ci->defined=1;
   ci->azimuth=0.0;
   ci->view_angle=0.0;
-  ci->eye[0]=eyexfactor*xbar;
+  ci->eye[0]=eyexfactor*global_scase.xbar;
   UpdateCameraYpos(ci, 2);
-  ci->eye[2]=eyezfactor*zbar;
+  ci->eye[2]=eyezfactor*global_scase.zbar;
   ci->eye_save[0]=ci->eye[0];
   ci->eye_save[1]=ci->eye[1];
   ci->eye_save[2]=ci->eye[2];
@@ -252,9 +254,9 @@ void InitCamera(cameradata *ci,char *name){
   ci->view[0]=0.0;
   ci->view[1]=0.0;
   ci->view[2]=0.0;
-  ci->xcen=xbar/2.0;
-  ci->ycen=ybar/2.0;
-  ci->zcen=zbar/2.0;
+  ci->xcen=global_scase.xbar/2.0;
+  ci->ycen=global_scase.ybar/2.0;
+  ci->zcen=global_scase.zbar/2.0;
   ci->rotation_type=rotation_type;
 
   ci->azimuth=0.0;
@@ -362,13 +364,13 @@ void CopyCamera(cameradata *to, cameradata *from){
 void UpdateCamera(cameradata *ca){
   if(ca==camera_current){
     rotation_type=ca->rotation_type;
-    if(ca->rotation_index>=0&&ca->rotation_index<nmeshes){
-      UpdateCurrentMesh(meshinfo + ca->rotation_index);
+    if(ca->rotation_index>=0&&ca->rotation_index<global_scase.meshescoll.nmeshes){
+      UpdateCurrentMesh(global_scase.meshescoll.meshinfo + ca->rotation_index);
     }
     else{
-      UpdateCurrentMesh(meshinfo);
+      UpdateCurrentMesh(global_scase.meshescoll.meshinfo);
     }
-    highlight_mesh = current_mesh-meshinfo;
+    highlight_mesh = current_mesh-global_scase.meshescoll.meshinfo;
     HandleRotationType(EYE_CENTERED);
     GLUIUpdateMeshList1(ca->rotation_index);
     GLUIUpdateTrainerMoves();
@@ -386,7 +388,7 @@ void UpdateCamera(cameradata *ca){
     ca->ymax=clipinfo.ymax;
     ca->zmax=clipinfo.zmax;
   }
-  GLUIUpdateSetViewXYZ(ca->eye);
+  GLUISetPosXYZSMV(ca->eye);
   ca->dirty=0;
 }
 
@@ -426,13 +428,12 @@ void SortCameras(void){
   cameradata *ca;
   int i;
 
-  FREEMEMORY(cameras_sorted);
   ncameras_sorted=0;
   for(ca = camera_list_first.next; ca->next != NULL; ca = ca->next){
     ncameras_sorted++;
   }
   if(ncameras_sorted == 0)return;
-  NewMemory((void **)&cameras_sorted, ncameras_sorted*sizeof(cameradata *));
+  NEWMEM(cameras_sorted, ncameras_sorted*sizeof(cameradata *));
   for(i=0,ca = camera_list_first.next; ca->next != NULL; ca = ca->next,i++){
     cameras_sorted[i] = ca;
   }
@@ -516,13 +517,12 @@ void SortCamerasID(void){
   cameradata *ca;
   int i;
 
-  FREEMEMORY(cameras_sorted);
   ncameras_sorted = 0;
   for(ca = camera_list_first.next; ca->next!=NULL; ca = ca->next){
     ncameras_sorted++;
   }
   if(ncameras_sorted==0)return;
-  NewMemory((void **)&cameras_sorted, ncameras_sorted*sizeof(cameradata *));
+  NEWMEM(cameras_sorted, ncameras_sorted*sizeof(cameradata *));
   for(i = 0, ca = camera_list_first.next; ca->next!=NULL; ca = ca->next, i++){
     cameras_sorted[i] = ca;
   }

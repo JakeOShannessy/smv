@@ -9,6 +9,7 @@
 #include "smokeviewvars.h"
 #include "glui_bounds.h"
 #include "getdata.h"
+#include "readsmvfile.h"
 
 /* ------------------ GetIsoLevels ------------------------ */
 
@@ -21,7 +22,7 @@ void GetIsoLevels(const char *isofile, int dataflag, float **levelsptr, float **
   int i;
   float **colorlevels=NULL;
 
-  isostreamptr=fopen(isofile,"rb");
+  isostreamptr=FOPEN(isofile,"rb");
 
   fread(&one,4,1,isostreamptr);
   if(dataflag!=0){
@@ -62,7 +63,7 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
   int skip_local;
   float ttmin, ttmax;
 
-  *isostreamptr=fopen(isofile,"rb");
+  *isostreamptr=FOPEN(isofile,"rb");
 
   *tmin_local=1000000000.;
   *tmax_local=-1000000000.;
@@ -133,8 +134,8 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
     if(skip_frame==1)continue;
     i++;
     if(i%tload_step!=0)continue;
-    if((use_tload_begin==1&&time_local<tload_begin))continue;
-    if((use_tload_end==1&&time_local>tload_end))continue;
+    if((use_tload_begin==1&&time_local<global_scase.tload_begin))continue;
+    if((use_tload_end==1&&time_local>global_scase.tload_end))continue;
 
     *nvertices += nvertices_i;
     *ntriangles += ntriangles_i;
@@ -158,7 +159,7 @@ void ReadIsoGeomWrapup(int flag){
   if(triangles_threads == NULL){
     triangles_threads = THREADinit(&n_triangles_threads, &use_triangles_threads, UpdateTrianglesAll);
   }
-  THREADrun(triangles_threads, NULL);
+  THREADrun(triangles_threads);
   if(flag == FOREGROUND)THREADcontrol(triangles_threads, THREAD_JOIN);
   UpdateTimes();
   GetFaceInfo();
@@ -200,7 +201,8 @@ void UnloadIso(meshdata *meshi){
   meshdata *meshi2;
 
   if(meshi->isofilenum == -1)return;
-  ib = isoinfo + meshi->isofilenum;
+  ib = global_scase.isoinfo + meshi->isofilenum;
+
   FreeAllMemory(ib->memory_id);
   meshi->iso_times = NULL;
   meshi->iso_times_map = NULL;
@@ -211,8 +213,8 @@ void UnloadIso(meshdata *meshi){
   ib->display = 0;
   plotstate = GetPlotState(DYNAMIC_PLOTS);
   meshi->isofilenum = -1;
-  for(i = 0;i < nmeshes;i++){
-    meshi2 = meshinfo + i;
+  for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+    meshi2 = global_scase.meshescoll.meshinfo + i;
     if(meshi2->isofilenum != -1)nloaded++;
   }
   if(nloaded == 0){
@@ -231,8 +233,8 @@ int GetIsoType(const isodata *isoi){
   isodata *isoi2;
   int j;
 
-  for(j = 0;j < nisotypes;j++){
-    isoi2 = isoinfo + isotypes[j];
+  for(j = 0;j < global_scase.nisotypes;j++){
+    isoi2 = global_scase.isoinfo + global_scase.isotypes[j];
 
     if(strcmp(isoi->surface_label.longlabel, isoi2->surface_label.longlabel) == 0)return j;
   }
@@ -251,7 +253,7 @@ void GetIsoDataBounds(isodata *isod, float *pmin, float *pmax){
   if(ndata > 0 && pdata != NULL){
     *pmin = pdata[0];
     *pmax = pdata[0];
-    for(i = 1; i < ndata; i++) {
+    for(i = 1; i < ndata; i++){
       *pmin = MIN(*pmin, pdata[i]);
       *pmax = MAX(*pmax, pdata[i]);
     }
@@ -273,7 +275,7 @@ void OutputIsoBounds(isodata *isoi){
   geomi = isoi->geominfo;
   strcpy(file, geomi->file);
   strcat(file, ".csv");
-  stream = fopen(file, "w");
+  stream = FOPEN(file, "w");
   if(stream == NULL)return;
   if(geomi->ntimes <= 0){
     fclose(stream);
@@ -320,10 +322,10 @@ void OutputIsoBounds(isodata *isoi){
 void OutputAllIsoBounds(void){
   int i;
 
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < global_scase.nisoinfo;i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = global_scase.isoinfo + i;
     if(isoi->loaded == 0||isoi->geominfo==NULL)continue;
     OutputIsoBounds(isoi);
   }
@@ -338,8 +340,8 @@ int GetIsoTType(const isodata *isoi){
 
   if(isoi->dataflag == 0)return -1;
   jj = 0;
-  for(j = 0;j < nisoinfo;j++){
-    isoi2 = isoinfo + j;
+  for(j = 0;j < global_scase.nisoinfo;j++){
+    isoi2 = global_scase.isoinfo + j;
 
     if(isoi2->dataflag == 0)continue;
     if(isoi2->firstshort_iso == 0)continue;
@@ -354,15 +356,15 @@ int GetIsoTType(const isodata *isoi){
 void SyncIsoBounds(){
   int i, ncount;
   int firsttime = 1;
-  float tmin_local, tmax_local;
+  float tmin_local=1.0, tmax_local=0.0;
 
   // find number of iso-surfaces with values
 
   ncount = 0;
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < global_scase.nisoinfo;i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = global_scase.isoinfo + i;
     if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
     ncount++;
   }
@@ -370,10 +372,10 @@ void SyncIsoBounds(){
 
   // find min and max bounds for valued iso-surfaces
 
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < global_scase.nisoinfo;i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = global_scase.isoinfo + i;
     if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
     if(firsttime == 1){
       firsttime = 0;
@@ -388,10 +390,10 @@ void SyncIsoBounds(){
 
   // set min and max bounds for valued iso-surfaces
 
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < global_scase.nisoinfo;i++){
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = global_scase.isoinfo + i;
     if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
     isoi->tmin = tmin_local;
     isoi->tmax = tmax_local;
@@ -399,17 +401,17 @@ void SyncIsoBounds(){
 
   // rescale all data
 
-  for(i = 0;i < nisoinfo;i++){
+  for(i = 0;i < global_scase.nisoinfo;i++){
     isodata *isoi;
     meshdata *meshi;
     int ii;
     isosurface *asurface;
 
-    isoi = isoinfo + i;
+    isoi = global_scase.isoinfo + i;
     if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
     if(iisottype != GetIsoTType(isoi))continue;
 
-    meshi = meshinfo + isoi->blocknumber;
+    meshi = global_scase.meshescoll.meshinfo + isoi->blocknumber;
     asurface = meshi->animatedsurfaces;
 
     for(ii = 0;ii < meshi->niso_times;ii++){
@@ -449,35 +451,20 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
   surfdata *surfi;
   FILE_SIZE return_filesize=0;
 
-  isoi = isoinfo + ifile;
-  if(load_flag==LOAD){
+  isoi = global_scase.isoinfo + ifile;
+  if(load_flag==LOAD||load_flag==RELOAD){
     THREADcontrol(isosurface_threads, THREAD_JOIN);
   }
   if(load_flag==UNLOAD){
     CancelUpdateTriangles();
-#ifdef pp_FRAME
-    if(isoi->frameinfo != NULL)FRAMEFree(&isoi->frameinfo);
-#endif
   }
-  meshi = meshinfo + isoi->blocknumber;
+  meshi = global_scase.meshescoll.meshinfo + isoi->blocknumber;
   geomi = isoi->geominfo;
   UnloadIso(meshi);
   FreeAllMemory(isoi->memory_id);
   meshi->showlevels = NULL;
   meshi->isolevels = NULL;
-#ifdef pp_FRAME
-  if(load_flag == LOAD){
-    if(isoi->frameinfo == NULL)isoi->frameinfo = FRAMEInit(isoi->file, NULL, FORTRAN_FILE, GetIsoFrameInfo);
-    if(isoi->frameinfo != NULL){
-      FRAMESetup(isoi->frameinfo);
-      FRAMEReadFrame(isoi->frameinfo, 0, isoi->frameinfo->nframes);
-      FRAMESetTimes(isoi->frameinfo, 0, isoi->frameinfo->nframes);
-      FRAMESetFramePtrs(isoi->frameinfo, 0, isoi->frameinfo->nframes);
-    }
-  }
-#endif
-
-  return_filesize=ReadGeom(geomi,load_flag,GEOM_ISO,geom_frame_index);
+  return_filesize = ReadGeom(geomi, NULL, 0, load_flag, GEOM_ISO, geom_frame_index);
 
   if(load_flag==UNLOAD){
     meshi->isofilenum = -1;
@@ -498,7 +485,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
       NewMemoryMemID((void **)&isoi->geom_vals,      isoi->geom_nvals*sizeof(float), isoi->memory_id);
     }
 
-    filesize = GetGeomData(isoi->tfile, ntimes_local, isoi->geom_nvals, isoi->geom_times,
+    filesize = GetGeomData(NULL, isoi->tfile, load_flag, ntimes_local, isoi->geom_nvals, isoi->geom_times,
                            isoi->geom_nstatics, isoi->geom_ndynamics, isoi->geom_vals,
                            ALL_FRAMES, NULL, NULL, &error);
     return_filesize += filesize;
@@ -516,10 +503,10 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     FREEMEMORY(isoi->geom_ndynamics);
   }
 
-  surfi = surfinfo + nsurfinfo+1;
+  surfi = global_scase.surfcoll.surfinfo + global_scase.surfcoll.nsurfinfo+1;
   UpdateIsoColors();
   if(strcmp(isoi->surface_label.shortlabel,"hrrpuv")==0){
-    surfi->color=GetColorPtr(hrrpuv_iso_color);
+    surfi->color=GetColorPtr(&global_scase, hrrpuv_iso_color);
   }
 
   meshi->isofilenum=ifile;
@@ -538,7 +525,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     meshi->iso_times[i]=geomi->times[i];
     meshi->iso_times_map[i] = 1;
   }
-  MakeTimesMap(meshi->iso_times, meshi->iso_times_map, geomi->ntimes);
+  MakeTimesMap(meshi->iso_times, &meshi->iso_times_map, geomi->ntimes);
   meshi->nisolevels=geomi->nfloat_vals;
   if(
     NewMemoryMemID((void **)&meshi->showlevels, sizeof(int)*meshi->nisolevels, isoi->memory_id) == 0 ||
@@ -555,7 +542,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
   isoi->loaded=1;
   isoi->display=1;
   loaded_isomesh= GetLoadedIsoMesh();
-  UpdateIsoShowLevels();
+  UpdateIsoShowLevels(&global_scase, loaded_isomesh);
   ReadIsoFile=1;
   plotstate=GetPlotState(DYNAMIC_PLOTS);
   updatemenu=1;
@@ -571,10 +558,10 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     if(isoi->finalize == 1){
       iso_global_min = 1.0;
       iso_global_max = 0.0;
-      for(i = 0;i < nisoinfo;i++){
+      for(i = 0;i < global_scase.nisoinfo;i++){
         isodata *isoj;
 
-        isoj = isoinfo + i;
+        isoj = global_scase.isoinfo + i;
         if(isoj->loaded == 0)continue;
         if(iso_global_min > iso_valmax){
           iso_global_min = isoj->globalmin_iso;
@@ -585,10 +572,10 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
           iso_global_max = MAX(iso_global_max, isoj->globalmax_iso);
         }
       }
-      for(i = 0;i < nisoinfo;i++){
+      for(i = 0;i < global_scase.nisoinfo;i++){
         isodata *isoj;
 
-        isoj = isoinfo + i;
+        isoj = global_scase.isoinfo + i;
         if(isoj->loaded == 0)continue;
         isoj->globalmin_iso = iso_global_min;
         isoj->globalmax_iso = iso_global_max;
@@ -637,12 +624,12 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
   if(flag==LOAD){
     THREADcontrol(isosurface_threads, THREAD_JOIN);
   }
-  assert(ifile>=0&&ifile<nisoinfo);
-  ib = isoinfo+ifile;
+  assert(ifile>=0&&ifile<global_scase.nisoinfo);
+  ib = global_scase.isoinfo+ifile;
   if(ib->loaded==0&&flag==UNLOAD)return;
   blocknumber=ib->blocknumber;
   ib->isoupdate_timestep=-1;
-  meshi = meshinfo+blocknumber;
+  meshi = global_scase.meshescoll.meshinfo+blocknumber;
   UnloadIso(meshi);
   UnloadIsoTrans();
   ib->loaded=0;
@@ -651,17 +638,11 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
   UpdateTimes();
   *errorcode = 0;
 
-#ifdef _DEBUG
-  if(flag==UNLOAD){
-    PRINTF("After iso unload: \n");
-    PrintAllMemoryInfo;
-  }
-#endif
   UpdateIsoType();
   if(flag==UNLOAD){
     updatemenu=1;
     loaded_isomesh= GetLoadedIsoMesh();
-    UpdateIsoShowLevels();
+    UpdateIsoShowLevels(&global_scase, loaded_isomesh);
     return;
   }
   meshi->isofilenum=ifile;
@@ -722,14 +703,14 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
     fclose(isostream);
     return;
   }
-  if(strcmp(ib->surface_label.shortlabel,"FED")==0){
+  {
     float fed_blue[]={0.0,0.0,1.0,1.0};
     float fed_yellow[]={1.0,1.0,0.0,1.0};
     float fed_red[]={1.0,0.0,0.0,1.0};
 
-    fed_colors[0]=GetColorPtr(fed_blue);
-    fed_colors[1]=GetColorPtr(fed_yellow);
-    fed_colors[2]=GetColorPtr(fed_red);
+    fed_colors[0]=GetColorPtr(&global_scase, fed_blue);
+    fed_colors[1]=GetColorPtr(&global_scase, fed_yellow);
+    fed_colors[2]=GetColorPtr(&global_scase, fed_red);
   }
   asurface=meshi->animatedsurfaces;
   break_frame=0;
@@ -742,7 +723,6 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
   for(;;){
     int skip_frame;
 
-    skip_frame=0;
     iitime++;
 
     fread(&time_local,4,1,isostream);
@@ -754,7 +734,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       time_max=time_local;
     }
     meshi->iso_times[itime]=time_local;
-    if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<tload_begin)||(use_tload_end==1&&time_local>tload_end)||skip_frame==1){
+    if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<global_scase.tload_begin)||(use_tload_end==1&&time_local>global_scase.tload_end)||skip_frame==1){
     }
     for(ilevel=0;ilevel<meshi->nisolevels;ilevel++){
       int nvertices_i, ntriangles_i;
@@ -776,7 +756,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       asurface->niso_triangles=ntriangles_i/3;
       asurface->niso_vertices=nvertices_i;
 
-      if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<tload_begin)||(use_tload_end==1&&time_local>tload_end)||skip_frame==1){
+      if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<global_scase.tload_begin)||(use_tload_end==1&&time_local>global_scase.tload_end)||skip_frame==1){
         skip_local=0;
         if(nvertices_i<=0||ntriangles_i<=0)continue;
         skip_local += (6*nvertices_i);
@@ -985,7 +965,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
 
           v1 = asurface->iso_vertices + ivert;
           ReduceToUnit(vertnorms+3*ivert);
-          v1->cnorm=(unsigned char)GetNormalIndex(sphereinfo,vertnorms+3*ivert);
+          v1->cnorm=(unsigned char)GetNormalIndex(global_scase.sphereinfo,vertnorms+3*ivert);
         }
         FREEMEMORY(vertnorms);
       }
@@ -997,7 +977,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
       meshi->niso_times=itime;
       break;
     }
-    if(skip_frame==1||iitime%tload_step!=0||(use_tload_begin==1&&time_local<tload_begin)||(use_tload_end==1&&time_local>tload_end)){
+    if(skip_frame==1||iitime%tload_step!=0||(use_tload_begin==1&&time_local<global_scase.tload_begin)||(use_tload_end==1&&time_local>global_scase.tload_end)){
     }
     else{
       itime++;
@@ -1021,7 +1001,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
   ib->loaded=1;
   ib->display=1;
   loaded_isomesh= GetLoadedIsoMesh();
-  UpdateIsoShowLevels();
+  UpdateIsoShowLevels(&global_scase, loaded_isomesh);
   ReadIsoFile=1;
   plotstate=GetPlotState(DYNAMIC_PLOTS);
   updatemenu=1;
@@ -1053,10 +1033,11 @@ FILE_SIZE ReadIso(const char *file, int ifile, int flag, int *geom_frame_index, 
   FILE_SIZE return_filesize=0;
 
   SetTimeState();
-  if(ifile>=0&&ifile<nisoinfo){
+  if(ifile>=0&&ifile<global_scase.nisoinfo){
 
-    isoi = isoinfo+ifile;
-    if(flag==LOAD)PRINTF("Loading %s(%s)", file,isoi->surface_label.shortlabel);
+    isoi = global_scase.isoinfo+ifile;
+    if(flag == UNLOAD && isoi->loaded == 0)return 0;
+    if(flag==LOAD)PRINTF("Loading %s(%s)\n", file,isoi->surface_label.shortlabel);
       if(isoi->geomflag==1){
         return_filesize=ReadIsoGeom(ifile,flag,geom_frame_index,errorcode);
       }
@@ -1076,12 +1057,14 @@ void DrawIsoOrig(int tranflag){
   meshdata *meshi;
 
   meshi = loaded_isomesh;
+  if(meshi->datavis == 0)return;
 
   CheckMemory;
   if(tranflag==DRAW_TRANSPARENT&&((visAIso&1)==0))return;
-  if(meshi->isofilenum>=0){
-    isoi = isoinfo + meshi->isofilenum;
+  if(meshi->isofilenum>=0&& global_scase.isoinfo!=NULL){
+    isoi = global_scase.isoinfo + meshi->isofilenum;
   }
+  if(isoi==NULL)return;
 
   iso_lighting=1;
 
@@ -1130,15 +1113,15 @@ void DrawIsoOrig(int tranflag){
         v3 = tri->v3;
 
         glTexCoord1f(v1->ctexturecolor/255.0);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v1->cnorm));
+        glNormal3fv(GetNormalVectorPtr(global_scase.sphereinfo,v1->cnorm));
         glVertex3fv(v1->xyz);
 
         glTexCoord1f(v2->ctexturecolor/255.0);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v2->cnorm));
+        glNormal3fv(GetNormalVectorPtr(global_scase.sphereinfo,v2->cnorm));
         glVertex3fv(v2->xyz);
 
         glTexCoord1f(v3->ctexturecolor/255.0);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v3->cnorm));
+        glNormal3fv(GetNormalVectorPtr(global_scase.sphereinfo,v3->cnorm));
         glVertex3fv(v3->xyz);
       }
     }
@@ -1154,15 +1137,15 @@ void DrawIsoOrig(int tranflag){
         v3 = tri->v3;
 
         glColor4fv(v1->color);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v1->cnorm));
+        glNormal3fv(GetNormalVectorPtr(global_scase.sphereinfo,v1->cnorm));
         glVertex3fv(v1->xyz);
 
         glColor4fv(v2->color);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v2->cnorm));
+        glNormal3fv(GetNormalVectorPtr(global_scase.sphereinfo,v2->cnorm));
         glVertex3fv(v2->xyz);
 
         glColor4fv(v3->color);
-        glNormal3fv(GetNormalVectorPtr(sphereinfo,v3->cnorm));
+        glNormal3fv(GetNormalVectorPtr(global_scase.sphereinfo,v3->cnorm));
         glVertex3fv(v3->xyz);
       }
     }
@@ -1296,8 +1279,8 @@ void DrawIsoOrig(int tranflag){
 
 void DrawIso(int tranflag){
   if(niso_opaques>0||niso_trans>0){
-    if(use_tload_begin==1&&global_times[itimes]<tload_begin)return;
-    if(use_tload_end==1&&global_times[itimes]>tload_end)return;
+    if(use_tload_begin==1&&global_times[itimes]<global_scase.tload_begin)return;
+    if(use_tload_end==1&&global_times[itimes]>global_scase.tload_end)return;
     DrawIsoOrig(tranflag);
   }
 }
@@ -1314,7 +1297,6 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
   unsigned short *v1, *v2, *v3;
   unsigned short *vertices_i=NULL;
   int *triangles_i=NULL;
-  int nvertices;
   int i1, i2, i3;
   short *norm1,*norm2,*norm3,*vertexnorm=NULL;
   int ntriangles;
@@ -1329,7 +1311,6 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
   xyzmin[2] = asurface->zmin;
   xyzmaxdiff_local = asurface->xyzmaxdiff;
 
-  nvertices=asurface->nvertices;
   ntriangles=asurface->ntriangles/3;
   if(ntriangles==0)return;
   if(surfacetype==SURFACE_SOLID||surfacetype==-1){
@@ -1465,6 +1446,8 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
   }
 
   if(surfacetype==SURFACE_POINTS){
+    int nvertices;
+
     glPushMatrix();
     AntiAliasLine(ON);
     glPointSize(plot3dpointsize);
@@ -1487,8 +1470,7 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
     glPopMatrix();
   }
 
-  if(show_iso_normal==1){
-
+  if(show_iso_normal==1&&triangles_i!=NULL){
     glPushMatrix();
     AntiAliasLine(ON);
     glLineWidth(line_width);
@@ -1508,13 +1490,20 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
       }
 
       if(smooth_iso_normal==1){
-        norm1 = vertexnorm+i1;
-        norm2 = vertexnorm+i2;
-        norm3 = vertexnorm+i3;
-        for(k=0;k<3;k++){
-          vv1n[k]=vv1[k]+norm1[k]/(8.*32768.)/4.0;
-          vv2n[k]=vv2[k]+norm2[k]/(8.*32768.)/4.0;
-          vv3n[k]=vv3[k]+norm3[k]/(8.*32768.)/4.0;
+        if(vertexnorm==NULL){
+          memcpy(vv1n, vv1, 3*sizeof(float));
+          memcpy(vv2n, vv2, 3*sizeof(float));
+          memcpy(vv3n, vv3, 3*sizeof(float));
+        }
+        else{
+          norm1 = vertexnorm+i1;
+          norm2 = vertexnorm+i2;
+          norm3 = vertexnorm+i3;
+          for(k=0;k<3;k++){
+            vv1n[k]=vv1[k]+norm1[k]/(8.*32768.)/4.0;
+            vv2n[k]=vv2[k]+norm2[k]/(8.*32768.)/4.0;
+            vv3n[k]=vv3[k]+norm3[k]/(8.*32768.)/4.0;
+          }
         }
 
         glVertex3fv(vv1);
@@ -1525,10 +1514,17 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
         glVertex3fv(vv3n);
       }
       else{
-        for(k=0;k<3;k++){
-          vv1n[k]=vv1[k]+norm[k]/(8.*32768.)/4.0;
-          vv2n[k]=vv2[k]+norm[k]/(8.*32768.)/4.0;
-          vv3n[k]=vv3[k]+norm[k]/(8.*32768.)/4.0;
+        if(norm==NULL){
+          memcpy(vv1n, vv1, 3*sizeof(float));
+          memcpy(vv2n, vv2, 3*sizeof(float));
+          memcpy(vv3n, vv3, 3*sizeof(float));
+        }
+        else{
+          for(k=0;k<3;k++){
+            vv1n[k]=vv1[k]+norm[k]/(8.*32768.)/4.0;
+            vv2n[k]=vv2[k]+norm[k]/(8.*32768.)/4.0;
+            vv3n[k]=vv3[k]+norm[k]/(8.*32768.)/4.0;
+          }
         }
 
         glVertex3fv(vv1);
@@ -1552,9 +1548,9 @@ int GetIsoIndex(const isodata *isoi){
   isodata *isoi2;
   int j;
 
-  for(j = 0;j < nisotypes;j++){
-    isoi2 = isoinfo + isotypes[j];
-    if(strcmp(isoi->surface_label.longlabel, isoi2->surface_label.longlabel) == 0)return isotypes[j];
+  for(j = 0;j < global_scase.nisotypes;j++){
+    isoi2 = global_scase.isoinfo + global_scase.isotypes[j];
+    if(strcmp(isoi->surface_label.longlabel, isoi2->surface_label.longlabel) == 0)return global_scase.isotypes[j];
   }
   return -1;
 }
@@ -1565,13 +1561,13 @@ void UpdateIsoTypes(void){
   int i;
   isodata *isoi;
 
-  nisotypes = 0;
-  for(i=0;i<nisoinfo;i++){
-    isoi = isoinfo+i;
-    if(GetIsoIndex(isoi)==-1)isotypes[nisotypes++]=i;
+  global_scase.nisotypes = 0;
+  for(i=0;i<global_scase.nisoinfo;i++){
+    isoi = global_scase.isoinfo+i;
+    if(GetIsoIndex(isoi)==-1)global_scase.isotypes[global_scase.nisotypes++]=i;
   }
-  for(i=0;i<nisoinfo;i++){
-    isoi = isoinfo+i;
+  for(i=0;i<global_scase.nisoinfo;i++){
+    isoi = global_scase.isoinfo+i;
     isoi->type= GetIsoType(isoi);
   }
 }
@@ -1583,14 +1579,14 @@ void UpdateIsoType(void){
   isodata *isoi;
 
 
-  for(i=0;i<nisoinfo;i++){
-    isoi = isoinfo + i;
+  for(i=0;i<global_scase.nisoinfo;i++){
+    isoi = global_scase.isoinfo + i;
     if(isoi->loaded==0)continue;
     if(isoi->display==1&&isoi->type==iisotype)return;
   }
 
-  for(i=0;i<nisoinfo;i++){
-    isoi = isoinfo + i;
+  for(i=0;i<global_scase.nisoinfo;i++){
+    isoi = global_scase.isoinfo + i;
     if(isoi->loaded==0)continue;
     if(isoi->display==1){
       iisotype = GetIsoIndex(isoi);
@@ -1603,11 +1599,11 @@ void UpdateIsoType(void){
 
 /* ------------------ IsoCompare ------------------------ */
 
-int IsoCompare( const void *arg1, const void *arg2 ){
+int IsoCompare(const void *arg1, const void *arg2){
   isodata *isoi, *isoj;
 
-  isoi = isoinfo + *(int *)arg1;
-  isoj = isoinfo + *(int *)arg2;
+  isoi = global_scase.isoinfo + *(int *)arg1;
+  isoj = global_scase.isoinfo + *(int *)arg2;
 
   if(strcmp(isoi->surface_label.longlabel,isoj->surface_label.longlabel)<0)return -1;
   if(strcmp(isoi->surface_label.longlabel,isoj->surface_label.longlabel)>0)return 1;
@@ -1623,21 +1619,21 @@ void UpdateIsoMenuLabels(void){
   isodata *isoi;
   char label[128];
 
-  if(nisoinfo>0){
+  if(global_scase.nisoinfo>0){
     FREEMEMORY(isoorderindex);
-    NewMemory((void **)&isoorderindex,sizeof(int)*nisoinfo);
-    for(i=0;i<nisoinfo;i++){
+    NewMemory((void **)&isoorderindex,sizeof(int)*global_scase.nisoinfo);
+    for(i=0;i<global_scase.nisoinfo;i++){
       isoorderindex[i]=i;
     }
-    qsort( (int *)isoorderindex, (size_t)nisoinfo, sizeof(int), IsoCompare);
+    qsort( (int *)isoorderindex, (size_t)global_scase.nisoinfo, sizeof(int), IsoCompare);
 
-    for(i=0;i<nisoinfo;i++){
-      isoi = isoinfo + i;
+    for(i=0;i<global_scase.nisoinfo;i++){
+      isoi = global_scase.isoinfo + i;
 
-      if(nmeshes>1){
+      if(global_scase.meshescoll.nmeshes>1){
         meshdata *isomesh;
 
-        isomesh = meshinfo + isoi->blocknumber;
+        isomesh = global_scase.meshescoll.meshinfo + isoi->blocknumber;
         sprintf(label,"%s",isomesh->label);
         STRCPY(isoi->menulabel,label);
       }
@@ -1654,19 +1650,19 @@ void UpdateIsoMenuLabels(void){
 
 /* ------------------ UpdateIsoShowLevels ------------------------ */
 
-void UpdateIsoShowLevels(void){
+void UpdateIsoShowLevels(smv_case *scase, meshdata *isomesh){
   int nisolevels;
   int *showlevels;
   int i, j;
   meshdata *meshi;
 
-  if(loaded_isomesh==NULL)return;
+  if(isomesh==NULL)return;
 
-  nisolevels=loaded_isomesh->nisolevels;
-  showlevels=loaded_isomesh->showlevels;
+  nisolevels=isomesh->nisolevels;
+  showlevels=isomesh->showlevels;
 
-  for(j=0;j<nmeshes;j++){
-    meshi = meshinfo+j;
+  for(j=0;j<scase->meshescoll.nmeshes;j++){
+    meshi = scase->meshescoll.meshinfo+j;
     if(meshi->isofilenum==-1)continue;
     for(i=0;i<nisolevels;i++){
       if(i<meshi->nisolevels)meshi->showlevels[i]=showlevels[i];
@@ -1687,12 +1683,12 @@ void SetIsoLabels(float smin, float smax,
 
   *errorcode=0;
   PRINTF("setting up iso labels \n");
-  GetColorbarLabels(smin,smax,nrgb,sb->colorlabels,sb->levels256);
+  GetColorbarLabels(smin,smax,global_scase.nrgb,sb->colorlabels,sb->levels256);
 }
 
 /* ------------------ CompareIsoTriangles ------------------------ */
 
-int CompareIsoTriangles( const void *arg1, const void *arg2 ){
+int CompareIsoTriangles(const void *arg1, const void *arg2){
   isotri *trii, *trij;
   float disti, distj;
 
@@ -1811,14 +1807,14 @@ void UpdateIsoTriangles(int flag){
       int i;
 
       ntris=0;
-      for(i=0;i<nisoinfo;i++){
+      for(i=0;i<global_scase.nisoinfo;i++){
         isodata *isoi;
         int ilev;
 
-        isoi = isoinfo+i;
+        isoi = global_scase.isoinfo+i;
         if(isoi->geomflag==1||isoi->loaded==0||isoi->display==0)continue;
 
-        meshi = meshinfo + isoi->blocknumber;
+        meshi = global_scase.meshescoll.meshinfo + isoi->blocknumber;
         asurface = meshi->animatedsurfaces + iitime*meshi->nisolevels;
         for(ilev=0;ilev<meshi->nisolevels;ilev++){
           asurfi = asurface + ilev;
@@ -1851,19 +1847,18 @@ void UpdateIsoTriangles(int flag){
   if(niso_trans==-1||niso_opaques==-1){
     int i;
 
-    flag=1;
     iso_trans_tmp=iso_trans;
     iso_opaques_tmp=iso_opaques;
     niso_trans=0;
     niso_opaques=0;
-    for(i=0;i<nisoinfo;i++){
+    for(i=0;i<global_scase.nisoinfo;i++){
       isodata *isoi;
 
-      isoi = isoinfo+i;
+      isoi = global_scase.isoinfo+i;
       if(isoi->geomflag==1||isoi->loaded==0||isoi->display==0)continue;
 
       CheckMemory;
-      meshi = meshinfo + isoi->blocknumber;
+      meshi = global_scase.meshescoll.meshinfo + isoi->blocknumber;
       asurface = meshi->animatedsurfaces + meshi->iso_itime*meshi->nisolevels;
       showlevels=meshi->showlevels;
 
@@ -1974,15 +1969,15 @@ meshdata *GetLoadedIsoMesh(void){
   meshdata *return_mesh;
   int i,nsteps=-1;
 
-  if(isoinfo==NULL)return NULL;
+  if(global_scase.isoinfo==NULL)return NULL;
   return_mesh=NULL;
-  for(i=0;i<nisoinfo;i++){
+  for(i=0;i<global_scase.nisoinfo;i++){
     meshdata *mesh2;
     isodata *isoi;
 
-    isoi = isoinfo + i;
+    isoi = global_scase.isoinfo + i;
     if(isoi->loaded==0)continue;
-    mesh2 = meshinfo + isoi->blocknumber;
+    mesh2 = global_scase.meshescoll.meshinfo + isoi->blocknumber;
     if(nsteps==-1||mesh2->niso_times<nsteps){
       return_mesh = mesh2;
       nsteps=mesh2->niso_times;
@@ -1999,7 +1994,7 @@ void UpdateIsoColors(void){
   for(i = 0; i < MAX_ISO_COLORS; i++){
     surfdata *surfi;
 
-    surfi = surfinfo + i + nsurfinfo + 1;
+    surfi = global_scase.surfcoll.surfinfo + i + global_scase.surfcoll.nsurfinfo + 1;
     surfi->transparent_level = iso_colors[4*i+3];
     if(setbwdata == 1){
       surfi->color = iso_colorsbw + 4*i;

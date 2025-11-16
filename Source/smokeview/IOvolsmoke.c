@@ -18,6 +18,13 @@
                            fread(var,4,size,SLICEFILE);\
                            FSEEK(SLICEFILE,TRAILER_SIZE,SEEK_CUR)
 
+#ifndef VEC4EQCONS
+#define VEC4EQCONS(y,x)\
+  (y)[0]=(x);\
+  (y)[1]=(x);\
+  (y)[2]=(x);\
+  (y)[3]=(x)
+#endif
 
 #define INTERP3D(data,value) \
     if(slicetype==SLICE_NODE_CENTER){\
@@ -219,43 +226,6 @@ int ConstrainRgb(float *rgb_arg){
        http://www.poynton.com/GammaFAQ.html
 */
 
-#ifdef pp_GAMMA
-/* ----------------------- GammaCorrect ----------------------------- */
-
-void GammaCorrect(const struct colourSystem *cs, float *c){
-  float gamma;
-
-  gamma = cs->gamma;
-
-  if(gamma == GAMMA_REC709){
-    /* Rec. 709 gamma correction. */
-    float cc = 0.018;
-
-    if(*c < cc){
-      float factor;
-
-      factor = ((1.099*pow(cc, 0.45)) - 0.099) / cc;
-      *c *= factor;
-    }
-    else{
-      *c = (1.099*pow(*c, 0.45)) - 0.099;
-    }
-  }
-  else{
-    /* Nonlinear colour = (Linear colour)^(1/gamma) */
-    *c = pow(*c, 1.0 / gamma);
-  }
-}
-
-/* ----------------------- GammaCorrectRgb ----------------------------- */
-
-void GammaCorrectRgb(const struct colourSystem *cs, float *rgb_arg){
-  GammaCorrect(cs, rgb_arg);
-  GammaCorrect(cs, rgb_arg + 1);
-  GammaCorrect(cs, rgb_arg + 2);
-}
-#endif
-
 /*                            BB_SPECTRUM
 
     Calculate, by Planck's radiation law, the emittance of a black body
@@ -416,7 +386,7 @@ float GetPlankVal(float lambda, float temp){
   //c2 = hc/k = 0.014388 m K
   c1 = 3.74183*pow(10.0, -16);
   c2 = 0.014388;
-  float return_val = (c1 / pow(lambda, 5.0)) / (exp(c2 / (lambda*temp)) - 1.0);;
+  float return_val = (c1 / pow(lambda, 5.0)) / (exp(c2 / (lambda*temp)) - 1.0);
   return return_val;
 }
 
@@ -463,7 +433,7 @@ void GetRGBFireVal(float temp, float *rgb_arg){
   valmax = 780.0;
   factor = pow(10.0, 9.0);
   n = 81;
-  dval = (valmax - valmin)/(float)(n-1);;
+  dval = (valmax - valmin)/(float)(n-1);
   rgb_arg[0] = 0.0;
   rgb_arg[1] = 0.0;
   rgb_arg[2] = 0.0;
@@ -499,10 +469,6 @@ void MakeFireColorsNew(float temp_min, float temp_max, int nfire_colors_arg){
   int i;
   float dtemp;
 
-#ifdef pp_BLACKBODY_OUT
-  FILE *stream;
-  stream = fopen("testfire.csv", "w");
-#endif
   dtemp = (temp_max - temp_min)/(float)(nfire_colors_arg -1);
   FREEMEMORY(fire_rgbs);
   NewMemory((void **)&fire_rgbs,3*nfire_colors_arg*sizeof(float));
@@ -517,13 +483,7 @@ void MakeFireColorsNew(float temp_min, float temp_max, int nfire_colors_arg){
 // NTSCsystem
     ConstrainRgb(fire_rgb);
     memcpy(fire_rgbs + 3*i, fire_rgb, 3*sizeof(float));
-#ifdef pp_BLACKBODY_OUT
-    fprintf(stream, "%f,%f,%f,%f\n", temp, fire_rgb[0], fire_rgb[1], fire_rgb[2]);
-#endif
   }
-#ifdef pp_BLACKBODY_OUT
-  fclose(stream);
-#endif
 }
 
 /* ----------------------- MakeFireColors ----------------------------- */
@@ -532,34 +492,19 @@ void MakeFireColors(float temp_min, float temp_max, int nfire_colors_arg){
   int i;
   float dtemp;
 
-#ifdef pp_BLACKBODY_OUT
-  FILE *stream;
-  stream = fopen("testfire.csv", "w");
-#endif
-  dtemp = (temp_max - temp_min) / ( float )(nfire_colors_arg - 1);
+  dtemp = (temp_max - temp_min) / (float)(nfire_colors_arg - 1);
   FREEMEMORY(fire_rgbs);
-  NewMemory(( void ** )&fire_rgbs, 3*nfire_colors_arg*sizeof(float));
+  NewMemory((void **)&fire_rgbs, 3*nfire_colors_arg*sizeof(float));
   for(i = 0; i < nfire_colors_arg; i++){
     float temp, fire_emission[3];
 
-    temp = temp_min + ( float )i*dtemp;
+    temp = temp_min + (float)i*dtemp;
     //float xyz[3];
     GetRGBFireVal(temp, fire_emission);
     //Xyz2Rgb(&HDTVsystem, xyz, fire_rgb);
     //ConstrainRgb(fire_rgb);
     memcpy(fire_rgbs + 3*i, fire_emission, 3*sizeof(float));
-#ifdef pp_BLACKBODY_OUT
-    if(stream != NULL){
-      float norm;
-
-      norm = sqrt(fire_emission[0]*fire_emission[0] + fire_emission[0]*fire_emission[0] + fire_emission[0]*fire_emission[0]);
-      fprintf(stream, "%f,%f,%f,%f,%f\n", temp, fire_emission[0], fire_emission[1], fire_emission[2], norm);
-    }
-#endif
   }
-#ifdef pp_BLACKBODY_OUT
-  if(stream!=NULL)fclose(stream);
-#endif
 }
 
 /* ----------------------- Temperature2Emission ----------------------------- */
@@ -611,14 +556,14 @@ void GetFireEmission(float *smoke_tran, float *fire_emission, float dlength, flo
 
   if(slicetype==SLICE_NODE_CENTER){
     // check this
-    xplt = meshi->xplt;
-    yplt = meshi->yplt;
-    zplt = meshi->zplt;
+    xplt = meshi->xplt_smv;
+    yplt = meshi->yplt_smv;
+    zplt = meshi->zplt_smv;
   }
   else{
-    xplt = meshi->xplt_cen;
-    yplt = meshi->yplt_cen;
-    zplt = meshi->zplt_cen;
+    xplt = meshi->xplt_cen_smv;
+    yplt = meshi->yplt_cen_smv;
+    zplt = meshi->zplt_cen_smv;
   }
   ibar = meshi->ibar;
   jbar = meshi->jbar;
@@ -707,12 +652,12 @@ void GetFireEmission(float *smoke_tran, float *fire_emission, float dlength, flo
       Temperature2Emission(temperature, fire_emission);
     }
     else{
-      if(temperature > global_temp_cutoff){
+      if(temperature > global_temp_cb_min){
         int index;
         float temp_factor;
 
-        temp_factor = (float)MAXSMOKERGB/(global_temp_max - global_temp_min);
-        index = CLAMP(temp_factor*(temperature - global_temp_min), 0, MAXSMOKERGB - 1);
+        temp_factor = (float)MAXSMOKERGB/(global_temp_cb_max - global_scase.temp_min);
+        index = CLAMP(temp_factor*(temperature - global_scase.temp_min), 0, MAXSMOKERGB - 1);
         memcpy(fire_emission, rgb_volsmokecolormap + 4*index, 3*sizeof(float));
       }
       else{
@@ -726,12 +671,12 @@ void GetFireEmission(float *smoke_tran, float *fire_emission, float dlength, flo
   *smoke_tran = 1.0;
   if(smokedata_local!=NULL){
     INTERP3D(smokedata_local, soot_density);
-    *smoke_tran = exp(-mass_extinct*soot_density*dlength);
-    if(firedata_local!=NULL&&temperature<=global_temp_cutoff){
+    *smoke_tran = exp(-glui_mass_extinct*soot_density*dlength);
+    if(firedata_local!=NULL&&temperature<=global_temp_cb_min){
       memcpy(fire_emission, black, 3*sizeof(float));
     }
   }
-  if(firedata_local!=NULL&&temperature>global_temp_cutoff){
+  if(firedata_local!=NULL&&temperature>global_temp_cb_min){
     if(use_opacity_depth==1){
       *smoke_tran = pow(0.5, dlength/fire_halfdepth);
     }
@@ -751,48 +696,48 @@ void GetFireEmission(float *smoke_tran, float *fire_emission, float dlength, flo
 void InitVolRenderSurface(int flag){
   int i;
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     int ii;
     float dx, dy, dz;
 
-    meshi = meshinfo + i;
+    meshi = global_scase.meshescoll.meshinfo + i;
     meshi->ivolbar=meshi->ibar*nongpu_vol_factor;
     meshi->jvolbar=meshi->jbar*nongpu_vol_factor;
     meshi->kvolbar=meshi->kbar*nongpu_vol_factor;
-    FREEMEMORY(meshi->xvolplt);
-    FREEMEMORY(meshi->yvolplt);
-    FREEMEMORY(meshi->zvolplt);
-    NewMemory((void **)&meshi->xvolplt,(meshi->ivolbar+1)*sizeof(float));
-    NewMemory((void **)&meshi->yvolplt,(meshi->jvolbar+1)*sizeof(float));
-    NewMemory((void **)&meshi->zvolplt,(meshi->kvolbar+1)*sizeof(float));
-    dx=(meshi->xplt[meshi->ibar]-meshi->xplt[0])/(float)meshi->ivolbar;
-    dy=(meshi->yplt[meshi->jbar]-meshi->yplt[0])/(float)meshi->jvolbar;
-    dz=(meshi->zplt[meshi->kbar]-meshi->zplt[0])/(float)meshi->kvolbar;
+    FREEMEMORY(meshi->xvolplt_smv);
+    FREEMEMORY(meshi->yvolplt_smv);
+    FREEMEMORY(meshi->zvolplt_smv);
+    NewMemory((void **)&meshi->xvolplt_smv,(meshi->ivolbar+1)*sizeof(float));
+    NewMemory((void **)&meshi->yvolplt_smv,(meshi->jvolbar+1)*sizeof(float));
+    NewMemory((void **)&meshi->zvolplt_smv,(meshi->kvolbar+1)*sizeof(float));
+    dx=(meshi->xplt_smv[meshi->ibar]-meshi->xplt_smv[0])/(float)meshi->ivolbar;
+    dy=(meshi->yplt_smv[meshi->jbar]-meshi->yplt_smv[0])/(float)meshi->jvolbar;
+    dz=(meshi->zplt_smv[meshi->kbar]-meshi->zplt_smv[0])/(float)meshi->kvolbar;
     for(ii=0;ii<=meshi->ivolbar;ii++){
-      meshi->xvolplt[ii]=meshi->xplt[0]+(float)ii*dx;
+      meshi->xvolplt_smv[ii]=meshi->xplt_smv[0]+(float)ii*dx;
     }
     for(ii=0;ii<=meshi->jvolbar;ii++){
-      meshi->yvolplt[ii]=meshi->yplt[0]+(float)ii*dy;
+      meshi->yvolplt_smv[ii]=meshi->yplt_smv[0]+(float)ii*dy;
     }
     for(ii=0;ii<=meshi->kvolbar;ii++){
-      meshi->zvolplt[ii]=meshi->zplt[0]+(float)ii*dz;
+      meshi->zvolplt_smv[ii]=meshi->zplt_smv[0]+(float)ii*dz;
     }
   }
   ijkbarmax=0;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = global_scase.meshescoll.meshinfo + i;
     ijkbarmax=MAX(ijkbarmax,meshi->ivolbar);
     ijkbarmax=MAX(ijkbarmax,meshi->jvolbar);
     ijkbarmax=MAX(ijkbarmax,meshi->kvolbar);
   }
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo + i;
+    meshi = global_scase.meshescoll.meshinfo + i;
     vr = meshi->volrenderinfo;
     if(flag==FIRSTCALL){
       vr->smokecolor_yz0=NULL;
@@ -912,8 +857,8 @@ int IsBottomMesh(meshdata *mesh_from){
   float *boxmax, *boxmin;
   int return_val;
 
-  boxmin = mesh_from->boxmin;
-  boxmax = mesh_from->boxmax;
+  boxmin = mesh_from->boxmin_fds;
+  boxmax = mesh_from->boxmax_fds;
   xyz[0] = (boxmin[0]+boxmax[0])/2.0;
   xyz[1] = (boxmin[1]+boxmax[1])/2.0;
   xyz[2] = boxmin[2]-(boxmax[2]-boxmin[2])/100.0;
@@ -928,56 +873,56 @@ int MeshConnect(meshdata *mesh_from, int val, meshdata *mesh_to){
 
   //  returns 1 if mesh_from  is 'val' of mesh_to (where val is MLEFT, MRIGHT, MFRONT, MBACK, MDOWN, MBACK )
 
-  eps = mesh_from->boxeps;
+  eps = mesh_from->boxeps_fds;
   switch(val){
   case MLEFT:
   case MRIGHT:
     if(mesh_from->jbar!=mesh_to->jbar)return 0;
     if(mesh_from->kbar!=mesh_to->kbar)return 0;
-    if(ABS(mesh_from->dbox[1]-mesh_to->dbox[1])>eps[1])return 0;
-    if(ABS(mesh_from->dbox[2]-mesh_to->dbox[2])>eps[2])return 0;
-    if(ABS(mesh_from->y0-mesh_to->y0)>eps[1])return 0;
-    if(ABS(mesh_from->z0-mesh_to->z0)>eps[2])return 0;
+    if(ABS(mesh_from->dbox_fds[1]-mesh_to->dbox_fds[1])>eps[1])return 0;
+    if(ABS(mesh_from->dbox_fds[2]-mesh_to->dbox_fds[2])>eps[2])return 0;
+    if(ABS(mesh_from->boxmin_fds[1]-mesh_to->boxmin_fds[1])>eps[1])return 0;
+    if(ABS(mesh_from->boxmin_fds[2]-mesh_to->boxmin_fds[2])>eps[2])return 0;
     break;
   case MFRONT:
   case MBACK:
     if(mesh_from->ibar!=mesh_to->ibar)return 0;
     if(mesh_from->kbar!=mesh_to->kbar)return 0;
-    if(ABS(mesh_from->dbox[0]-mesh_to->dbox[0])>eps[0])return 0;
-    if(ABS(mesh_from->dbox[2]-mesh_to->dbox[2])>eps[2])return 0;
-    if(ABS(mesh_from->x0-mesh_to->x0)>eps[0])return 0;
-    if(ABS(mesh_from->z0-mesh_to->z0)>eps[2])return 0;
+    if(ABS(mesh_from->dbox_fds[0]-mesh_to->dbox_fds[0])>eps[0])return 0;
+    if(ABS(mesh_from->dbox_fds[2]-mesh_to->dbox_fds[2])>eps[2])return 0;
+    if(ABS(mesh_from->boxmin_fds[0]-mesh_to->boxmin_fds[0])>eps[0])return 0;
+    if(ABS(mesh_from->boxmin_fds[2]-mesh_to->boxmin_fds[2])>eps[2])return 0;
     break;
   case MDOWN:
   case MUP:
     if(mesh_from->ibar!=mesh_to->ibar)return 0;
     if(mesh_from->jbar!=mesh_to->jbar)return 0;
-    if(ABS(mesh_from->dbox[0]-mesh_to->dbox[0])>eps[0])return 0;
-    if(ABS(mesh_from->dbox[1]-mesh_to->dbox[1])>eps[1])return 0;
-    if(ABS(mesh_from->x0-mesh_to->x0)>eps[0])return 0;
-    if(ABS(mesh_from->y0-mesh_to->y0)>eps[1])return 0;
+    if(ABS(mesh_from->dbox_fds[0]-mesh_to->dbox_fds[0])>eps[0])return 0;
+    if(ABS(mesh_from->dbox_fds[1]-mesh_to->dbox_fds[1])>eps[1])return 0;
+    if(ABS(mesh_from->boxmin_fds[0]-mesh_to->boxmin_fds[0])>eps[0])return 0;
+    if(ABS(mesh_from->boxmin_fds[1]-mesh_to->boxmin_fds[1])>eps[1])return 0;
     break;
   default:
     break;
   }
   switch(val){
   case MLEFT:
-    if(ABS(mesh_from->x1-mesh_to->x0)<eps[0])return 1;
+    if(ABS(mesh_from->boxmax_fds[0]-mesh_to->boxmin_fds[0])<eps[0])return 1;
     break;
   case MRIGHT:
-    if(ABS(mesh_from->x0-mesh_to->x1)<eps[0])return 1;
+    if(ABS(mesh_from->boxmin_fds[0]-mesh_to->boxmax_fds[0])<eps[0])return 1;
     break;
   case MFRONT:
-    if(ABS(mesh_from->y1-mesh_to->y0)<eps[1])return 1;
+    if(ABS(mesh_from->boxmax_fds[1]-mesh_to->boxmin_fds[1])<eps[1])return 1;
     break;
   case MBACK:
-    if(ABS(mesh_from->y0-mesh_to->y1)<eps[1])return 1;
+    if(ABS(mesh_from->boxmin_fds[1]-mesh_to->boxmax_fds[1])<eps[1])return 1;
     break;
   case MDOWN:
-    if(ABS(mesh_from->z1-mesh_to->z0)<eps[2])return 1;
+    if(ABS(mesh_from->boxmax_fds[2]-mesh_to->boxmin_fds[2])<eps[2])return 1;
     break;
   case MUP:
-    if(ABS(mesh_from->z0-mesh_to->z1)<eps[2])return 1;
+    if(ABS(mesh_from->boxmin_fds[2]-mesh_to->boxmax_fds[2])<eps[2])return 1;
     break;
   default:
     break;
@@ -994,13 +939,13 @@ meshdata *GetMinMesh(void){
 
   // find mesh closes to origin that is not already in a supermesh
 
-  for(i = 0;i<nmeshes;i++){
+  for(i = 0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     float dist2;
 
-    meshi = meshinfo+i;
+    meshi = global_scase.meshescoll.meshinfo+i;
     if(meshi->super!=NULL)continue;
-    dist2 = meshi->x0*meshi->x0+meshi->y0*meshi->y0+meshi->z0*meshi->z0;
+    dist2 = meshi->boxmin_fds[0]*meshi->boxmin_fds[0]+meshi->boxmin_fds[1]*meshi->boxmin_fds[1]+meshi->boxmin_fds[2]*meshi->boxmin_fds[2];
     if(mindist<0.0||dist2<mindist){
       mindist = dist2;
       minmesh = meshi;
@@ -1042,7 +987,7 @@ int ExtendMesh(supermeshdata *smesh, int direction){
 void MakeSMesh(supermeshdata *smesh, meshdata *firstmesh){
   meshdata **meshptrs;
 
-  NewMemory((void **)&meshptrs, nmeshes*sizeof(meshdata *));
+  NewMemory((void **)&meshptrs, global_scase.meshescoll.nmeshes*sizeof(meshdata *));
   smesh->meshes = meshptrs;
 
   smesh->meshes[0] = firstmesh;
@@ -1076,13 +1021,13 @@ int CompareSMeshes(const void *arg1, const void *arg2){
 
   meshi = *(meshdata **)arg1;
   meshj = *(meshdata **)arg2;
-  dcell = MIN(meshi->dcell, meshj->dcell)/2.0;
-  if(meshi->z0<meshj->z0-dcell)return -1;
-  if(meshi->z0>meshj->z0+dcell)return 1;
-  if(meshi->y0<meshj->y0-dcell)return -1;
-  if(meshi->y0>meshj->y0+dcell)return 1;
-  if(meshi->x0<meshj->x0-dcell)return -1;
-  if(meshi->x0>meshj->x0+dcell)return 1;
+  dcell = MIN(meshi->dcell_smv, meshj->dcell_smv)/2.0;
+  if(meshi->boxmin_fds[2]<meshj->boxmin_fds[2]-dcell)return -1;
+  if(meshi->boxmin_fds[2]>meshj->boxmin_fds[2]+dcell)return 1;
+  if(meshi->boxmin_fds[1]<meshj->boxmin_fds[1]-dcell)return -1;
+  if(meshi->boxmin_fds[1]>meshj->boxmin_fds[1]+dcell)return 1;
+  if(meshi->boxmin_fds[0]<meshj->boxmin_fds[0]-dcell)return -1;
+  if(meshi->boxmin_fds[0]>meshj->boxmin_fds[0]+dcell)return 1;
   return 0;
 }
 
@@ -1108,79 +1053,84 @@ void SetSuperIndex(meshdata *meshi, int dir){
 
 /* ------------------ InitNabors ------------------------ */
 
-void InitNabors(void){
+void *InitNabors(void *arg){
   int i;
 
-  for(i = 0;i<nmeshes;i++){
-    meshdata *meshi;
-    int j;
+  INIT_PRINT_TIMER(timer_init_nabors);
+  if(global_scase.have_mesh_nabors == 0){
+    for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+      meshdata *meshi;
+      int j;
 
-    meshi = meshinfo+i;
-    meshi->is_bottom = IsBottomMesh(meshi);
-    for(j = 0;j<nmeshes;j++){
-      meshdata *meshj;
+      meshi = global_scase.meshescoll.meshinfo + i;
+      meshi->is_bottom = IsBottomMesh(meshi);
+      for(j = 0;j < global_scase.meshescoll.nmeshes;j++){
+        meshdata *meshj;
 
-      if(i==j)continue;
+        if(i == j)continue;
 
-      meshj = meshinfo+j;
+        meshj = global_scase.meshescoll.meshinfo + j;
 
-      if(MeshConnect(meshi, MLEFT, meshj)==1){
-        meshi->nabors[MRIGHT] = meshj;
-        continue;
-      }
-      if(MeshConnect(meshi, MRIGHT, meshj)==1){
-        meshi->nabors[MLEFT] = meshj;
-        continue;
-      }
-      if(MeshConnect(meshi, MFRONT, meshj)==1){
-        meshi->nabors[MBACK] = meshj;
-        continue;
-      }
-      if(MeshConnect(meshi, MBACK, meshj)==1){
-        meshi->nabors[MFRONT] = meshj;
-        continue;
-      }
-      if(MeshConnect(meshi, MDOWN, meshj)==1){
-        meshi->nabors[MUP] = meshj;
-        continue;
-      }
-      if(MeshConnect(meshi, MUP, meshj)==1){
-        meshi->nabors[MDOWN] = meshj;
-        continue;
+        if(MeshConnect(meshi, MLEFT, meshj) == 1){
+          meshi->nabors[MRIGHT] = meshj;
+          continue;
+        }
+        if(MeshConnect(meshi, MRIGHT, meshj) == 1){
+          meshi->nabors[MLEFT] = meshj;
+          continue;
+        }
+        if(MeshConnect(meshi, MFRONT, meshj) == 1){
+          meshi->nabors[MBACK] = meshj;
+          continue;
+        }
+        if(MeshConnect(meshi, MBACK, meshj) == 1){
+          meshi->nabors[MFRONT] = meshj;
+          continue;
+        }
+        if(MeshConnect(meshi, MDOWN, meshj) == 1){
+          meshi->nabors[MUP] = meshj;
+          continue;
+        }
+        if(MeshConnect(meshi, MUP, meshj) == 1){
+          meshi->nabors[MDOWN] = meshj;
+          continue;
+        }
       }
     }
   }
-  for(i = 0;i < nmeshes;i++){
+  for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     float xyzmid[3], xyz[3];
 
-    meshi = meshinfo + i;
-    memcpy(xyzmid, meshi->boxmiddle, 3*sizeof(float));
+    meshi = global_scase.meshescoll.meshinfo + i;
+    memcpy(xyzmid, meshi->boxmiddle_fds, 3*sizeof(float));
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
-    xyz[0] = meshi->boxmin[0]- meshi->boxeps_fds[0];
+    xyz[0] = meshi->boxmin_fds[0]- meshi->boxeps_fds[0];
     meshi->skip_nabors[MLEFT] = GetMesh(xyz);
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
-    xyz[0] = meshi->boxmax[0] + meshi->boxeps_fds[0];
+    xyz[0] = meshi->boxmax_fds[0] + meshi->boxeps_fds[0];
     meshi->skip_nabors[MRIGHT] = GetMesh(xyz);
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
-    xyz[1] = meshi->boxmin[1] - meshi->boxeps_fds[1];
+    xyz[1] = meshi->boxmin_fds[1] - meshi->boxeps_fds[1];
     meshi->skip_nabors[MFRONT] = GetMesh(xyz);
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
-    xyz[1] = meshi->boxmax[0] + meshi->boxeps_fds[1];
+    xyz[1] = meshi->boxmax_fds[0] + meshi->boxeps_fds[1];
     meshi->skip_nabors[MBACK] = GetMesh(xyz);
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
-    xyz[2] = meshi->boxmin[2] - meshi->boxeps_fds[2];
+    xyz[2] = meshi->boxmin_fds[2] - meshi->boxeps_fds[2];
     meshi->skip_nabors[MDOWN] = GetMesh(xyz);
 
     memcpy(xyz, xyzmid, 3*sizeof(float));
-    xyz[2] = meshi->boxmax[2] + meshi->boxeps_fds[2];
+    xyz[2] = meshi->boxmax_fds[2] + meshi->boxeps_fds[2];
     meshi->skip_nabors[MUP] = GetMesh(xyz);
   }
+  PRINT_TIMER(timer_init_nabors, "InitNabors");
+  THREAD_EXIT(meshnabors_threads);
 }
 
 /* ------------------ InitSuperMesh ------------------------ */
@@ -1192,31 +1142,30 @@ void InitSuperMesh(void){
 
   // determine mesh connectivity
 
-  InitNabors();
+  THREADcontrol(meshnabors_threads, THREAD_JOIN);
 
   // merge connected meshes to form supermeshes
 
-  nsupermeshinfo = 0;
-  thismesh = GetMinMesh();
-  for(smesh = supermeshinfo, thismesh = GetMinMesh();thismesh!=NULL;thismesh = GetMinMesh(), smesh++){
+  global_scase.nsupermeshinfo = 0;
+  for(smesh = global_scase.supermeshinfo, thismesh = GetMinMesh();thismesh!=NULL;thismesh = GetMinMesh(), smesh++){
     MakeSMesh(smesh, thismesh);
-    nsupermeshinfo++;
+    global_scase.nsupermeshinfo++;
   }
 
-  for(smesh = supermeshinfo;smesh!=supermeshinfo+nsupermeshinfo;smesh++){
+  for(smesh = global_scase.supermeshinfo;smesh!=global_scase.supermeshinfo+global_scase.nsupermeshinfo;smesh++){
     meshdata *nab;
     float *smin, *smax;
     int nsize;
 
-    smin = smesh->boxmin_scaled;
-    smax = smesh->boxmax_scaled;
+    smin = smesh->boxmin_smv;
+    smax = smesh->boxmax_smv;
 
     for(i = 0;i<smesh->nmeshes;i++){
       int j;
       float *bmin, *bmax;
 
-      bmin = smesh->meshes[i]->boxmin_scaled;
-      bmax = smesh->meshes[i]->boxmax_scaled;
+      bmin = smesh->meshes[i]->boxmin_smv;
+      bmax = smesh->meshes[i]->boxmax_smv;
       if(i==0){
         memcpy(smin, bmin, 3*sizeof(float));
         memcpy(smax, bmax, 3*sizeof(float));
@@ -1290,8 +1239,8 @@ void InitSuperMesh(void){
   }
 #ifdef pp_GPU
   if(gpuactive==1){
-    for(i = 0;i<nsupermeshinfo;i++){
-      smesh = supermeshinfo+i;
+    for(i = 0;i<global_scase.nsupermeshinfo;i++){
+      smesh = global_scase.supermeshinfo+i;
       InitVolsmokeSuperTexture(smesh);
     }
   }
@@ -1310,7 +1259,7 @@ int GetVolsmokeNFrames(volrenderdata *vr){
 
   smokeslice = vr->smokeslice;
   if(load_volcompressed==1&&vr->smokeslice->vol_file!=NULL){
-    volstream = fopen(vr->smokeslice->vol_file, "rb");
+    volstream = FOPEN(vr->smokeslice->vol_file, "rb");
   }
   if(volstream==NULL){
     framesize = smokeslice->nslicei*smokeslice->nslicej*smokeslice->nslicek;
@@ -1353,11 +1302,11 @@ void InitVolRender(void){
   int i;
 
   nvolrenderinfo=0;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo + i;
+    meshi = global_scase.meshescoll.meshinfo + i;
     vr = meshi->volrenderinfo;
     vr->rendermeshlabel=meshi->label;
 
@@ -1374,23 +1323,23 @@ void InitVolRender(void){
     vr->is_compressed=0;
     vr->times_defined=0;
   }
-  for(i=0;i<nsliceinfo;i++){
+  for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
     slicedata *slicei;
     char *shortlabel, *longlabel;
     int blocknumber;
     meshdata *meshi;
     volrenderdata *vr;
 
-    slicei = sliceinfo + i;
+    slicei = global_scase.slicecoll.sliceinfo + i;
     blocknumber = slicei->blocknumber;
-    if(blocknumber<0||blocknumber>=nmeshes)continue;
+    if(blocknumber<0||blocknumber>=global_scase.meshescoll.nmeshes)continue;
     shortlabel = slicei->label.shortlabel;
     longlabel = slicei->label.longlabel;
     if(STRCMP(shortlabel, "temp")!=0&&IsSootFile(shortlabel, longlabel)==0&&STRCMP(shortlabel, "frac")!=0&&STRCMP(shortlabel, "X_CO2")!=0)continue;
     if(slicei->full_mesh==NO)continue;
     if(FILE_EXISTS(slicei->reg_file)==NO)continue;
 
-    meshi = meshinfo + blocknumber;
+    meshi = global_scase.meshescoll.meshinfo + blocknumber;
 
     vr = meshi->volrenderinfo;
 
@@ -1403,11 +1352,11 @@ void InitVolRender(void){
       continue;
     }
   }
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo + i;
+    meshi = global_scase.meshescoll.meshinfo + i;
     vr = meshi->volrenderinfo;
     vr->ntimes=0;
 
@@ -1451,8 +1400,8 @@ void InitVolRender(void){
     }
   }
   if(nvolrenderinfo>0){
-    NewMemory((void **)&volfacelistinfo,6*nmeshes*sizeof(volfacelistdata));
-    NewMemory((void **)&volfacelistinfoptrs,6*nmeshes*sizeof(volfacelistdata *));
+    NewMemory((void **)&volfacelistinfo,6*global_scase.meshescoll.nmeshes*sizeof(volfacelistdata));
+    NewMemory((void **)&volfacelistinfoptrs,6*global_scase.meshescoll.nmeshes*sizeof(volfacelistdata *));
   }
   if(nvolrenderinfo>0){
     InitSuperMesh();
@@ -1465,8 +1414,8 @@ meshdata *GetMeshInSmesh(meshdata *mesh_guess, supermeshdata *smesh, float *xyz)
   int i;
   float *smin, *smax;
 
-  smin = smesh->boxmin_scaled;
-  smax = smesh->boxmax_scaled;
+  smin = smesh->boxmin_smv;
+  smax = smesh->boxmax_smv;
 
   if(xyz[0]<smin[0]||xyz[1]<smin[1]||xyz[2]<smin[2])return NULL;
   if(xyz[0]>smax[0]||xyz[1]>smax[1]||xyz[2]>smax[2])return NULL;
@@ -1483,8 +1432,8 @@ meshdata *GetMeshInSmesh(meshdata *mesh_guess, supermeshdata *smesh, float *xyz)
       if(meshi==mesh_guess)continue;
     }
 
-    bmin = meshi->boxmin_scaled;
-    bmax = meshi->boxmax_scaled;
+    bmin = meshi->boxmin_smv;
+    bmax = meshi->boxmax_smv;
 
     if(
       bmin[0]<=xyz[0]&&xyz[0]<=bmax[0]&&
@@ -1506,7 +1455,7 @@ void IntegrateFireColors(float *integrated_firecolor, float *xyzvert, float dlen
   float dxyz[3];
   float distseg, dxseg, dyseg, dzseg;
   float xyz[3];
-  float *vert_beg, *vert_end;
+  float *vert_beg=NULL, *vert_end=NULL;
   int iwall_min=0;
   float xyzvals[3];
   char *blank_local;
@@ -1514,12 +1463,12 @@ void IntegrateFireColors(float *integrated_firecolor, float *xyzvert, float dlen
   meshdata *xyz_mesh=NULL;
 
   if(combine_meshes==1){
-    boxmin = meshi->super->boxmin_scaled;
-    boxmax = meshi->super->boxmax_scaled;
+    boxmin = meshi->super->boxmin_smv;
+    boxmax = meshi->super->boxmax_smv;
   }
   else{
-    boxmin = meshi->boxmin_scaled;
-    boxmax = meshi->boxmax_scaled;
+    boxmin = meshi->boxmin_smv;
+    boxmax = meshi->boxmax_smv;
   }
 
   if(meshi->inside==1){
@@ -1568,6 +1517,9 @@ void IntegrateFireColors(float *integrated_firecolor, float *xyzvert, float dlen
         }
       }
     }
+    vert_end[0] = 0.0;
+    vert_end[1] = 0.0;
+    vert_end[2] = 0.0;
     switch(iwall_min){
       case XWALLMIN:
         vert_end[0] = boxmin[0];
@@ -1619,8 +1571,6 @@ void IntegrateFireColors(float *integrated_firecolor, float *xyzvert, float dlen
   nsteps = 2*distseg/dlength;
   if(nsteps<1)nsteps=1;
   dlength=SCALE2FDS(distseg/(float)nsteps);
-  blank_local=NULL;
-  if(block_volsmoke==1)blank_local=meshi->c_iblank_cell;
   taun=1.0;
   alphan=0.0;
   for(i=0;i<nsteps;i++){
@@ -1685,9 +1635,7 @@ void IntegrateFireColors(float *integrated_firecolor, float *xyzvert, float dlen
  //   memcpy(fire_rgb_from, integrated_firecolor, 3*sizeof(float));
  //   Xyz2Rgb(&HDTVsystem, fire_rgb_from, fire_rgb_to);
  //   ConstrainRgb(fire_rgb_to);
-#ifdef pp_GAMMA
-    if(gamma_correction==1)GammaCorrectRgb(&HDTVsystem, integrated_firecolor);
-#endif
+
  //    memcpy(integrated_firecolor, fire_rgb_to, 3*sizeof(float));
     integrated_firecolor[3] = alphan;
     if(volbw==1){
@@ -1710,7 +1658,7 @@ void ComputeAllSmokecolors(void){
   int ii;
 
   if(freeze_volsmoke==1)return;
-  for(ii=0;ii<nmeshes;ii++){
+  for(ii=0;ii<global_scase.meshescoll.nmeshes;ii++){
     meshdata *meshi;
     volrenderdata *vr;
     int iwall;
@@ -1720,13 +1668,13 @@ void ComputeAllSmokecolors(void){
     int ibar, jbar, kbar;
     float *smokecolor;
 
-    meshi = meshinfo + ii;
+    meshi = global_scase.meshescoll.meshinfo + ii;
     vr = meshi->volrenderinfo;
     if(vr->loaded==0||vr->display==0)continue;
 
-    x = meshi->xvolplt;
-    y = meshi->yvolplt;
-    z = meshi->zvolplt;
+    x = meshi->xvolplt_smv;
+    y = meshi->yvolplt_smv;
+    z = meshi->zvolplt_smv;
     ibar = meshi->ivolbar;
     jbar = meshi->jvolbar;
     kbar = meshi->kvolbar;
@@ -1747,11 +1695,11 @@ void ComputeAllSmokecolors(void){
         case XWALLMAX:
           if(iwall<0){
             smokecolor=vr->smokecolor_yz0;
-            xyz[0] = meshi->x0;
+            xyz[0] = meshi->boxmin_fds[0];
           }
           else{
             smokecolor=vr->smokecolor_yz1;
-            xyz[0] = meshi->x1;
+            xyz[0] = meshi->boxmax_fds[0];
           }
           if(vr->firedataptr==NULL||vr->smokedataptr==NULL){
             for(i=0;i<=jbar;i++){
@@ -1779,11 +1727,11 @@ void ComputeAllSmokecolors(void){
         case YWALLMAX:
           if(iwall<0){
             smokecolor=vr->smokecolor_xz0;
-            xyz[1] = meshi->y0;
+            xyz[1] = meshi->boxmin_fds[1];
           }
           else{
             smokecolor=vr->smokecolor_xz1;
-            xyz[1] = meshi->y1;
+            xyz[1] = meshi->boxmax_fds[1];
           }
           if(vr->firedataptr==NULL||vr->smokedataptr==NULL){
             for(i=0;i<=ibar;i++){
@@ -1811,11 +1759,11 @@ void ComputeAllSmokecolors(void){
         case ZWALLMAX:
           if(iwall<0){
             smokecolor=vr->smokecolor_xy0;
-            xyz[2]=meshi->z0;
+            xyz[2]=meshi->boxmin_fds[2];
           }
           else{
             smokecolor=vr->smokecolor_xy1;
-            xyz[2]=meshi->z1;
+            xyz[2]=meshi->boxmax_fds[2];
           }
           if(vr->firedataptr==NULL||vr->smokedataptr==NULL){
             for(i=0;i<=ibar;i++){
@@ -1866,9 +1814,9 @@ void DrawSmoke3dVolDebug(void){
     sprintf(label,"*** %i %2.1f ***",ii,vi->dist2);
     iwall=vi->iwall;
     meshi = vi->facemesh;
-    xplt = meshi->xplt;
-    yplt = meshi->yplt;
-    zplt = meshi->zplt;
+    xplt = meshi->xplt_smv;
+    yplt = meshi->yplt_smv;
+    zplt = meshi->zplt_smv;
     ibar = meshi->ibar;
     jbar = meshi->jbar;
     kbar = meshi->kbar;
@@ -1878,11 +1826,11 @@ void DrawSmoke3dVolDebug(void){
       case XWALLMIN:
       case XWALLMAX:
         if(iwall<0){
-          x[0] = meshi->x0;
+          x[0] = meshi->boxmin_fds[0];
           x[1] = x[0];
         }
         else{
-          x[0]=meshi->x1;
+          x[0]=meshi->boxmax_fds[0];
           x[1]=x[0];
         }
         y[0] = yplt[0];
@@ -1894,11 +1842,11 @@ void DrawSmoke3dVolDebug(void){
       case YWALLMIN:
       case YWALLMAX:
         if(iwall<0){
-          y[0] = meshi->y0;
+          y[0] = meshi->boxmin_fds[1];
           y[1] = y[0];
         }
         else{
-          y[0] = meshi->y1;
+          y[0] = meshi->boxmax_fds[1];
           y[1] = y[0];
         }
         x[0] = xplt[0];
@@ -1910,11 +1858,11 @@ void DrawSmoke3dVolDebug(void){
       case ZWALLMIN:
       case ZWALLMAX:
         if(iwall<0){
-          z[0] = meshi->z0;
+          z[0] = meshi->boxmin_fds[2];
           z[1] = z[0];
         }
         else{
-          z[0] = meshi->z1;
+          z[0] = meshi->boxmax_fds[2];
           z[1] = z[0];
         }
         x[0] = xplt[0];
@@ -1943,9 +1891,9 @@ void DrawSmoke3dVolDebug(void){
     vi = volfacelistinfoptrs[ii];
     iwall=vi->iwall;
     meshi = vi->facemesh;
-    xplt = meshi->xplt;
-    yplt = meshi->yplt;
-    zplt = meshi->zplt;
+    xplt = meshi->xplt_smv;
+    yplt = meshi->yplt_smv;
+    zplt = meshi->zplt_smv;
     ibar = meshi->ibar;
     jbar = meshi->jbar;
     kbar = meshi->kbar;
@@ -1955,11 +1903,11 @@ void DrawSmoke3dVolDebug(void){
       case XWALLMIN:
       case XWALLMAX:
         if(iwall<0){
-          x[0] = meshi->x0;
+          x[0] = meshi->boxmin_fds[0];
           glColor3f(1.0,0.0,0.0);
         }
         else{
-          x[0]=meshi->x1;
+          x[0]=meshi->boxmax_fds[0];
           glColor3f(0.0,0.0,1.0);
         }
         y[0] = yplt[0];
@@ -1974,11 +1922,11 @@ void DrawSmoke3dVolDebug(void){
       case YWALLMIN:
       case YWALLMAX:
         if(iwall<0){
-          y[0] = meshi->y0;
+          y[0] = meshi->boxmin_fds[1];
           glColor3f(1.0,0.0,0.0);
         }
         else{
-          y[0] = meshi->y1;
+          y[0] = meshi->boxmax_fds[1];
           glColor3f(0.0,0.0,1.0);
         }
         x[0] = xplt[0];
@@ -1993,11 +1941,11 @@ void DrawSmoke3dVolDebug(void){
       case ZWALLMIN:
       case ZWALLMAX:
         if(iwall<0){
-          z[0] = meshi->z0;
+          z[0] = meshi->boxmin_fds[2];
           glColor3f(1.0,0.0,0.0);
         }
         else{
-          z[0] = meshi->z1;
+          z[0] = meshi->boxmax_fds[2];
           glColor3f(0.0,0.0,1.0);
         }
         x[0] = xplt[0];
@@ -2103,10 +2051,10 @@ void DrawSmoke3DVol(void){
     vi = volfacelistinfoptrs[ii];
     iwall=vi->iwall;
     meshi = vi->facemesh;
-    if(meshvisptr[meshi-meshinfo]==0)continue;
-    xplt = meshi->xvolplt;
-    yplt = meshi->yvolplt;
-    zplt = meshi->zvolplt;
+    if(meshvisptr[meshi-global_scase.meshescoll.meshinfo]==0)continue;
+    xplt = meshi->xvolplt_smv;
+    yplt = meshi->yvolplt_smv;
+    zplt = meshi->zvolplt_smv;
     ibar = meshi->ivolbar;
     jbar = meshi->jvolbar;
     kbar = meshi->kvolbar;
@@ -2116,17 +2064,17 @@ void DrawSmoke3DVol(void){
     if(vr->firedataptr==NULL&&vr->smokedataptr==NULL)continue;
 
     glBegin(GL_TRIANGLES);
-    switch(iwall){
-      float *smokecolor_base;
 
+    float *smokecolor_base;
+    switch(iwall){
       case XWALLMIN:
       case XWALLMAX:
         if(iwall<0){
-          xx = meshi->x0;
+          xx = meshi->boxmin_fds[0];
           smokecolor_base = vr->smokecolor_yz0;
         }
         else{
-          xx=meshi->x1;
+          xx=meshi->boxmax_fds[0];
           smokecolor_base = vr->smokecolor_yz1;
         }
         n00 = 0;
@@ -2200,11 +2148,11 @@ void DrawSmoke3DVol(void){
         zindex[3] = 1;
         if(iwall<0){
           smokecolor_base = vr->smokecolor_xz0;
-          yy=meshi->y0;
+          yy=meshi->boxmin_fds[1];
         }
         else{
           smokecolor_base = vr->smokecolor_xz1;
-          yy=meshi->y1;
+          yy=meshi->boxmax_fds[1];
         }
         for(i=0;i<ibar;i++){
           x[0] = xplt[i];
@@ -2261,11 +2209,11 @@ void DrawSmoke3DVol(void){
         yindex[3] = 1;
        if(iwall<0){
           smokecolor_base = vr->smokecolor_xy0;
-          zz=meshi->z0;
+          zz=meshi->boxmin_fds[2];
         }
         else{
           smokecolor_base = vr->smokecolor_xy1;
-          zz=meshi->z1;
+          zz=meshi->boxmax_fds[2];
         }
         for(i=0;i<ibar;i++){
           x[0] = xplt[i];
@@ -2333,8 +2281,8 @@ void UpdateVolsmokeSupertexture(supermeshdata *smesh){
     ni = meshi->ibar+1;
     nj = meshi->jbar+1;
     nk = meshi->kbar+1;
-#ifdef pp_GPUTHROTTLE
-  GPUnframes+=3*ni*nj*nk;
+#ifdef pp_GPU
+    GPUnframes += 3*ni*nj*nk;
 #endif
     glTexSubImage3D(GL_TEXTURE_3D,0,s_offset[0],s_offset[1],s_offset[2],ni,nj,nk,GL_RED, GL_FLOAT, smokedataptr);
   }
@@ -2356,8 +2304,8 @@ void UpdateVolsmokeSupertexture(supermeshdata *smesh){
     ni = meshi->ibar+1;
     nj = meshi->jbar+1;
     nk = meshi->kbar+1;
-#ifdef pp_GPUTHROTTLE
-    GPUnframes+=3*ni*nj*nk;
+#ifdef pp_GPU
+    GPUnframes += 3*ni*nj*nk;
 #endif
 
     glTexSubImage3D(GL_TEXTURE_3D,0,s_offset[0],s_offset[1],s_offset[2],ni,nj,nk,GL_RED, GL_FLOAT, firedataptr);
@@ -2380,8 +2328,8 @@ void UpdateVolsmokeSupertexture(supermeshdata *smesh){
     ni = meshi->ibar;
     nj = meshi->jbar;
     nk = meshi->kbar;
-#ifdef pp_GPUTHROTTLE
-    GPUnframes+=3*ni*nj*nk;
+#ifdef pp_GPU
+    GPUnframes += 3*ni*nj*nk;
 #endif
 
     if(meshi->f_iblank_cell != NULL){
@@ -2407,8 +2355,8 @@ void UpdateVolsmokeTexture(meshdata *meshi){
   ni = meshi->ibar+1;
   nj = meshi->jbar+1;
   nk = meshi->kbar+1;
-#ifdef pp_GPUTHROTTLE
-  GPUnframes+=3*ni*nj*nk;
+#ifdef pp_GPU
+  GPUnframes += 3*ni*nj*nk;
 #endif
   glActiveTexture(GL_TEXTURE0);
   glTexSubImage3D(GL_TEXTURE_3D,0,ijk_offset[0],ijk_offset[1],ijk_offset[2],ni,nj,nk,GL_RED, GL_FLOAT, smokedata_local);
@@ -2442,7 +2390,7 @@ void DrawSmoke3DGPUVol(void){
   float dcell;
 
 //  SVEXTERN int GPUload[30],GPUtime[30],SVDECL(nGPUframes,0),SVDECL(iGPUframes,0);
-#ifdef pp_GPUTHROTTLE
+#ifdef pp_GPU
   START_TIMER(thisGPUtime);
   if(thisGPUtime>lastGPUtime+0.25){
 #ifdef _DEBUG
@@ -2459,11 +2407,11 @@ void DrawSmoke3DGPUVol(void){
   glUniform1f(GPUvol_xyzmaxdiff,xyzmaxdiff);
   glUniform1f(GPUvol_gpu_vol_factor,gpu_vol_factor);
   glUniform1f(GPUvol_fire_opacity_factor,fire_opacity_factor);
-  glUniform1f(GPUvol_mass_extinct,mass_extinct);
+  glUniform1f(GPUvol_mass_extinct, glui_mass_extinct);
   glUniform1i(GPUvol_volbw,volbw);
-  glUniform1f(GPUvol_temperature_min, global_temp_min);
-  glUniform1f(GPUvol_temperature_cutoff, global_temp_cutoff);
-  glUniform1f(GPUvol_temperature_max, global_temp_max);
+  glUniform1f(GPUvol_temperature_min, global_scase.temp_min);
+  glUniform1f(GPUvol_temperature_cutoff, global_temp_cb_min);
+  glUniform1f(GPUvol_temperature_max, global_temp_cb_max);
   glUniform1i(GPUvol_block_volsmoke,block_volsmoke);
 
   SNIFF_ERRORS("after DrawSmoke3dGpuVol before update textures");
@@ -2479,7 +2427,7 @@ void DrawSmoke3DGPUVol(void){
     iwall=vi->iwall;
     meshi = vi->facemesh;
 
-    if(meshvisptr[meshi-meshinfo]==0)continue;
+    if(meshvisptr[meshi-global_scase.meshescoll.meshinfo]==0)continue;
     if(iwall==0||meshi->drawsides[iwall+3]==0)continue;
 
     vr = meshi->volrenderinfo;
@@ -2489,22 +2437,22 @@ void DrawSmoke3DGPUVol(void){
     // define parameters for smoke drawing
 
     if(iwall<0){
-      xx = meshi->x0;
-      yy = meshi->y0;
-      zz = meshi->z0;
+      xx = meshi->boxmin_fds[0];
+      yy = meshi->boxmin_fds[1];
+      zz = meshi->boxmin_fds[2];
     }
     else{
-      xx = meshi->x1;
-      yy = meshi->y1;
-      zz = meshi->z1;
+      xx = meshi->boxmax_fds[0];
+      yy = meshi->boxmax_fds[1];
+      zz = meshi->boxmax_fds[2];
     }
-    x1 = meshi->x0;
-    x2 = meshi->x1;
-    yy1 = meshi->y0;
-    yy2 = meshi->y1;
-    z1 = meshi->z0;
-    z2 = meshi->z1;
-    dcell = meshi->dcell;
+    x1 = meshi->boxmin_fds[0];
+    x2 = meshi->boxmax_fds[0];
+    yy1 = meshi->boxmin_fds[1];
+    yy2 = meshi->boxmax_fds[1];
+    z1 = meshi->boxmin_fds[2];
+    z2 = meshi->boxmax_fds[2];
+    dcell = meshi->dcell_smv;
     inside = meshi->inside;
     newmesh=0;
     if(combine_meshes==1){
@@ -2534,8 +2482,8 @@ void DrawSmoke3DGPUVol(void){
         float *smin, *smax;
         int *sdrawsides;
 
-        smin = meshi->super->boxmin_scaled;
-        smax = meshi->super->boxmax_scaled;
+        smin = meshi->super->boxmin_smv;
+        smax = meshi->super->boxmax_smv;
         sdrawsides = meshi->super->drawsides;
         glUniform3f(GPUvol_boxmin,smin[0],smin[1],smin[2]);
         glUniform3f(GPUvol_boxmax,smax[0],smax[1],smax[2]);
@@ -2553,7 +2501,7 @@ void DrawSmoke3DGPUVol(void){
         glUniform1i(GPUvol_havefire,0);
       }
       glUniform1i(GPUvol_slicetype,vr->smokeslice->slice_filetype);
-      glUniform3f(GPUvol_dcell3,meshi->dcell3[0],meshi->dcell3[1],meshi->dcell3[2]);
+      glUniform3f(GPUvol_dcell3,meshi->dcell3_smv[0],meshi->dcell3_smv[1],meshi->dcell3_smv[2]);
       glUniform1i(GPUvol_soot_density, 0);  // smokedata_local
       glUniform1i(GPUvol_fire,         1);  // firedata_local
       glUniform1i(GPUvol_smokecolormap,2);  // rgb_volsmokecolormap
@@ -2664,7 +2612,7 @@ float GetVolsmokeFrameTime(volrenderdata *vr, int framenum){
   skip_local += framenum*(HEADER_SIZE +4        +TRAILER_SIZE); // framenum time's
   skip_local += (LINT)framenum*(LINT)(HEADER_SIZE +4*framesize+TRAILER_SIZE); // framenum slice data's
 
-  SLICEFILE=fopen(smokeslice->reg_file,"rb");
+  SLICEFILE=FOPEN(smokeslice->reg_file,"rb");
   if(SLICEFILE==NULL)return time_local;
 
   FSEEK(SLICEFILE,skip_local,SEEK_SET); // skip from beginning of file
@@ -2681,7 +2629,7 @@ void GetVolsmokeAllTimes(volrenderdata *vr){
   FILE *volstream=NULL;
 
   if(load_volcompressed==1&&vr->smokeslice->vol_file!=NULL){
-    volstream=fopen(vr->smokeslice->vol_file,"rb");
+    volstream=FOPEN(vr->smokeslice->vol_file,"rb");
   }
 
   if(volstream==NULL){
@@ -2714,7 +2662,7 @@ void GetVolsmokeAllTimes(volrenderdata *vr){
 // fire positions
 
     volstream=NULL;
-    if(vr->fireslice->vol_file!=NULL)volstream=fopen(vr->fireslice->vol_file,"rb");
+    if(vr->fireslice->vol_file!=NULL)volstream=FOPEN(vr->fireslice->vol_file,"rb");
     if(volstream!=NULL){
       FSEEK(volstream,12,SEEK_SET);
       for(ii=0;ii<vr->ntimes;ii++){
@@ -2803,17 +2751,17 @@ void ReadVolsmokeFrame(volrenderdata *vr, int framenum, int *first){
   }
 
   if(load_volcompressed==1&&vr->smokeslice->vol_file!=NULL){
-    volstream=fopen(vr->smokeslice->vol_file,"rb");
+    volstream=FOPEN(vr->smokeslice->vol_file,"rb");
   }
-  if(volstream==NULL){
-    skip_local =           (HEADER_SIZE+30        +TRAILER_SIZE); // long label
-    skip_local +=          (HEADER_SIZE+30        +TRAILER_SIZE); // short label
-    skip_local +=          (HEADER_SIZE+30        +TRAILER_SIZE); // unit label
-    skip_local +=          (HEADER_SIZE+24        +TRAILER_SIZE); // is1, is2, js1, js2, ks1, ks2
-    skip_local += framenum*(HEADER_SIZE +4        +TRAILER_SIZE); // framenum time's
-    skip_local += (LINT)framenum*(LINT)(HEADER_SIZE +4*framesize+TRAILER_SIZE); // framenum slice data's
 
-    SLICEFILE=fopen(smokeslice->reg_file,"rb");
+  skip_local = (HEADER_SIZE + 30 + TRAILER_SIZE); // long label
+  skip_local += (HEADER_SIZE + 30 + TRAILER_SIZE); // short label
+  skip_local += (HEADER_SIZE + 30 + TRAILER_SIZE); // unit label
+  skip_local += (HEADER_SIZE + 24 + TRAILER_SIZE); // is1, is2, js1, js2, ks1, ks2
+  skip_local += framenum * (HEADER_SIZE + 4 + TRAILER_SIZE); // framenum time's
+  skip_local += ( LINT )framenum * ( LINT )(HEADER_SIZE + 4 * framesize + TRAILER_SIZE); // framenum slice data's
+  if(volstream==NULL){
+    SLICEFILE=FOPEN(smokeslice->reg_file,"rb");
     if(SLICEFILE==NULL)return;
 
     FSEEK(SLICEFILE,skip_local,SEEK_SET); // skip from beginning of file
@@ -2875,10 +2823,10 @@ void ReadVolsmokeFrame(volrenderdata *vr, int framenum, int *first){
 
   if(fireslice!=NULL){
     if(load_volcompressed==1&&vr->fireslice->vol_file!=NULL){
-      volstream=fopen(vr->fireslice->vol_file,"rb");
+      volstream=FOPEN(vr->fireslice->vol_file,"rb");
     }
     if(volstream==NULL){
-      SLICEFILE=fopen(fireslice->reg_file,"rb");
+      SLICEFILE=FOPEN(fireslice->reg_file,"rb");
       if(SLICEFILE!=NULL){
         FSEEK(SLICEFILE,skip_local,SEEK_SET); // skip from beginning of file
 
@@ -2940,11 +2888,11 @@ void UnloadVolsmokeFrameAllMeshes(int framenum){
   int i;
 
   PRINTF("Unloading smoke frame: %i\n",framenum);
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo + i;
+    meshi = global_scase.meshescoll.meshinfo + i;
     vr = meshi->volrenderinfo;
     if(vr->smokeslice==NULL||vr->fireslice==NULL||vr->loaded==0)continue;
     FREEMEMORY(vr->firedataptrs[framenum]);
@@ -3007,7 +2955,7 @@ void ReadVolsmokeFrameAllMeshes(int framenum, supermeshdata *smesh){
   int nm;
 
   if(smesh==NULL){
-    nm=nmeshes;
+    nm=global_scase.meshescoll.nmeshes;
   }
   else{
     nm=smesh->nmeshes;
@@ -3017,7 +2965,7 @@ void ReadVolsmokeFrameAllMeshes(int framenum, supermeshdata *smesh){
     volrenderdata *vr;
 
     if(smesh==NULL){
-      meshi = meshinfo + i;
+      meshi = global_scase.meshescoll.meshinfo + i;
     }
     else{
       meshi = smesh->meshes[i];
@@ -3033,7 +2981,7 @@ void ReadVolsmokeFrameAllMeshes(int framenum, supermeshdata *smesh){
     volrenderdata *vr;
 
     if(smesh==NULL){
-      meshi = meshinfo + i;
+      meshi = global_scase.meshescoll.meshinfo + i;
     }
     else{
       meshi = smesh->meshes[i];
@@ -3062,11 +3010,11 @@ void *ReadVolsmokeAllFramesAllMeshes2(void *arg){
   int i;
   int nframes=0;
 
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo + i;
+    meshi = global_scase.meshescoll.meshinfo + i;
     vr = meshi->volrenderinfo;
     if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
     if(read_vol_mesh!=VOL_READALL&&read_vol_mesh!=i)continue;
@@ -3088,10 +3036,10 @@ void UnloadVolsmokeSuperTextures(void){
   int i, doit;
 
   doit = 0;
-  for(i = 0;i<nsupermeshinfo;i++){
+  for(i = 0;i<global_scase.nsupermeshinfo;i++){
     supermeshdata *smesh;
 
-    smesh = supermeshinfo+i;
+    smesh = global_scase.supermeshinfo+i;
     if(smesh->volsmoke_texture_buffer!=NULL||smesh->volfire_texture_buffer!=NULL){
       doit = 1;
       break;
@@ -3099,10 +3047,10 @@ void UnloadVolsmokeSuperTextures(void){
   }
   if(doit==0)return;
   PRINTF("Unloading smoke and fire textures for each supermesh\n");
-  for(i = 0;i<nsupermeshinfo;i++){
+  for(i = 0;i<global_scase.nsupermeshinfo;i++){
     supermeshdata *smesh;
 
-    smesh = supermeshinfo+i;
+    smesh = global_scase.supermeshinfo+i;
     FREEMEMORY(smesh->volfire_texture_buffer);
     FREEMEMORY(smesh->volsmoke_texture_buffer);
   }
@@ -3210,19 +3158,19 @@ void DefineVolsmokeTextures(void){
 
   if(combine_meshes==1&&gpuactive==1){
 #ifdef pp_GPU
-    for(i=0;i<nsupermeshinfo;i++){
+    for(i=0;i<global_scase.nsupermeshinfo;i++){
       supermeshdata *smesh;
 
-      smesh = supermeshinfo + i;
+      smesh = global_scase.supermeshinfo + i;
       InitVolsmokeSuperTexture(smesh);
     }
 #endif
   }
   else{
-    for(i=0;i<nmeshes;i++){
+    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
 
-      meshi = meshinfo  + i;
+      meshi = global_scase.meshescoll.meshinfo  + i;
       InitVolsmokeTexture(meshi);
     }
   }
@@ -3235,11 +3183,11 @@ void ReadVolsmokeAllFramesAllMeshes(void){
 
   compress_volsmoke=glui_compress_volsmoke;
   load_volcompressed=glui_load_volcompressed;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
     volrenderdata *vr;
 
-    meshi = meshinfo + i;
+    meshi = global_scase.meshescoll.meshinfo + i;
     vr = meshi->volrenderinfo;
     if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
     if(read_vol_mesh!=VOL_READALL&&read_vol_mesh!=i)continue;
@@ -3264,7 +3212,7 @@ void ReadVolsmokeAllFramesAllMeshes(void){
   if(volsmokeload_threads == NULL){
     volsmokeload_threads = THREADinit(&n_volsmokeload_threads, &use_volsmokeload_threads, ReadVolsmokeAllFramesAllMeshes2);
   }
-  THREADrun(volsmokeload_threads, NULL);
+  THREADrun(volsmokeload_threads);
 }
 
 /* ------------------ UnloadVolsmokeTextures ------------------------ */
@@ -3274,10 +3222,10 @@ void UnloadVolsmokeTextures(void){
 
   PRINTF("Unloading smoke and fire textures for each mesh\n");
   FFLUSH();
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshinfo + i;
+    meshi = global_scase.meshescoll.meshinfo + i;
     FREEMEMORY(meshi->volsmoke_texture_buffer);
     FREEMEMORY(meshi->volfire_texture_buffer);
   }

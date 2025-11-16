@@ -2,13 +2,15 @@
 # getdate makefile
 
 SOURCE_DIR = ../../../Source/
+BUILD_DIR = ../../../Build
+LIB_DIR = $(BUILD_DIR)/LIBS
 FILTERC =
 FILTERF =
 
 # Intel compiler definitions
 include ../../scripts/intel_compiler.mak
 
-VPATH = $(SOURCE_DIR)/getdate  
+VPATH = $(SOURCE_DIR)/getdate
 bin = .
 
 ifeq ($(shell echo "check_quotes"),"check_quotes")
@@ -19,16 +21,6 @@ else
   GIT_DATE := $(shell git log -1 --format=%cd)
 endif
 GITINFO=-Dpp_GITHASH=\"$(GIT_HASH)\" -Dpp_GITDATE=\""$(GIT_DATE)\""
-
-ifeq ($(shell echo "check_quotes"),"check_quotes")
-  INTEL_COMPVERSION := $(shell ..\..\..\Utilities\Scripts\intel_compversion)
-  GNU_COMPVERSION := $(shell ..\..\..\Utilities\Scripts\gnu_compversion)
-else
-  INTEL_COMPVERSION := $(shell ../../../Utilities/Scripts/intel_compversion.sh)
-  GNU_COMPVERSION := $(shell ../../../Utilities/Scripts/gnu_compversion.sh)
-endif
-INTEL_COMPINFO=-Dpp_COMPVER=\"$(INTEL_COMPVERSION)\"
-GNU_COMPINFO=-Dpp_COMPVER=\"$(GNU_COMPVERSION)\"
 
 # Definition of the object variables
 
@@ -41,7 +33,7 @@ no_target:
 	@echo \******** You did not specify a make target \********
 	@echo Use one of targets found in the Makefile
 
-.SUFFIXES: .c .obj .o 
+.SUFFIXES: .c .obj .o
 
 .c.obj:
 	$(CC) -c $(CFLAGS) $(FILTERC) $<
@@ -61,14 +53,14 @@ intel_win_64 : exe       = getdate_win_64.exe
 intel_win_64 : $(objwin)
 	$(CC) -o $(bin)/$(exe) $(objwin)
 
-# ------------- gnu win 64 ----------------
+# ------------- clang win 64 ----------------
 
-gnu_win_64 : CFLAGS    = -O0 -m64 -D WIN32 -D _WIN32 -D GLEW_STATIC -D MINGW
-gnu_win_64 : CC        = gcc
-gnu_win_64 : exe       = getdate_win_64.exe
+clang_win_64 : CFLAGS    = -m64 -Wno-deprecated-declarations
+clang_win_64 : CC        = clang-cl
+clang_win_64 : exe       = getdate_win_64.exe
 
-gnu_win_64 : $(obj)
-	$(CC) -o $(bin)/$(exe) $(obj)
+clang_win_64 : $(objwin)
+	$(CC) -o $(bin)/$(exe) $(objwin)
 
 # ------------- intel linux 64 ----------------
 
@@ -77,13 +69,22 @@ intel_linux_64 : CC        = $(I_ICC)
 intel_linux_64 : exe       = getdate_linux_64
 
 intel_linux_64 : $(obj)
-	$(CC) -o $(bin)/$(exe) $(obj) 
+	$(CC) -o $(bin)/$(exe) $(obj)
 
-# ------------- intel osx 64 ----------------
+# ------------- gnu linux 64 ----------------
 
-intel_osx_64 : CFLAGS    = -O2 -m64 $(GITINFO) $(INTEL_COMPINFO)
-intel_osx_64 : CC        = icc
-intel_osx_64 : exe       = getdate_osx_64
+gnu_linux_64 : CFLAGS    = -O2 -m64 $(GITINFO)
+gnu_linux_64 : CC        = gcc
+gnu_linux_64 : exe       = getdate_linux_64
 
-intel_osx_64 : $(obj)
-	$(CC) -o $(bin)/$(exe) -m64 $(obj)
+gnu_linux_64 : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj)
+
+# ------------- clang linux 64 ----------------
+
+clang_linux_64 : CFLAGS    = -O2 -m64 $(GITINFO)
+clang_linux_64 : CC        = clang
+clang_linux_64 : exe       = getdate_linux_64
+
+clang_linux_64 : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj)

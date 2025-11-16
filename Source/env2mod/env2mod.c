@@ -5,7 +5,7 @@
 #include "env2mod.h"
 #include "datadefs.h"
 #include "string_util.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 
 /* ------------------ NextLine ------------------------ */
 
@@ -94,10 +94,10 @@ int CreateModule(char *left_file, char* right_file, char *module_file){
   if(right_file == NULL || strlen(right_file) == 0)return -1;
   if(module_file == NULL || strlen(module_file) == 0)return -1;
 
-  stream_left = fopen(left_file, "r");
+  stream_left = FOPEN(left_file, "r");
   if(stream_left == NULL)return -1;
 
-  stream_right = fopen(right_file, "r");
+  stream_right = FOPEN(right_file, "r");
   if(stream_right == NULL){
     fclose(stream_left);
     return -1;
@@ -107,7 +107,7 @@ int CreateModule(char *left_file, char* right_file, char *module_file){
     stream_module = stdout;
   }
   else{
-    stream_module = fopen(module_file, "w");
+    stream_module = FOPEN(module_file, "w");
   }
   if(stream_module==NULL){
     fclose(stream_left);
@@ -164,17 +164,17 @@ int CreateModule(char *left_file, char* right_file, char *module_file){
           }
         }
         else{
-          char *prepend_string, *append_string;
+          char *prepend_string, *append_string_local;
 
           prepend_string = val_right;
-          append_string = match+strlen(val_left);
+          append_string_local = match+strlen(val_left);
           match[0] = 0;
 
           prepend_string = TrimFrontBack(prepend_string);
           OutputPath(stream_module, ENV2MOD_PREPEND, key_right, prepend_string);
 
-          append_string = TrimFrontBack(append_string);
-          OutputPath(stream_module, ENV2MOD_APPEND, key_right, append_string);
+          append_string_local = TrimFrontBack(append_string_local);
+          OutputPath(stream_module, ENV2MOD_APPEND, key_right, append_string_local);
         }
       }
       read_left = NextLine(buffer_left, LEN_BUFFER, stream_left);
@@ -261,10 +261,10 @@ int CreateScript(char *left_file, char* right_file, char *module_file){
   if(right_file == NULL || strlen(right_file) == 0)return -1;
   if(module_file == NULL || strlen(module_file) == 0)return -1;
 
-  stream_left = fopen(left_file, "r");
+  stream_left = FOPEN(left_file, "r");
   if(stream_left == NULL)return -1;
 
-  stream_right = fopen(right_file, "r");
+  stream_right = FOPEN(right_file, "r");
   if(stream_right == NULL){
     fclose(stream_left);
     return -1;
@@ -274,7 +274,7 @@ int CreateScript(char *left_file, char* right_file, char *module_file){
     stream_module = stdout;
   }
   else{
-    stream_module = fopen(module_file, "w");
+    stream_module = FOPEN(module_file, "w");
   }
   if(stream_module==NULL){
     fclose(stream_left);
@@ -323,17 +323,17 @@ int CreateScript(char *left_file, char* right_file, char *module_file){
           }
         }
         else{
-          char *prepend_string, *append_string;
+          char *prepend_string, *append_string_local;
 
           prepend_string = val_right;
-          append_string = match+strlen(val_left);
+          append_string_local = match+strlen(val_left);
           match[0] = 0;
 
           prepend_string = TrimFrontBack(prepend_string);
           OutputScriptPath(stream_module, ENV2MOD_PREPEND, key_right, prepend_string);
 
-          append_string = TrimFrontBack(append_string);
-          OutputScriptPath(stream_module, ENV2MOD_APPEND, key_right, append_string);
+          append_string_local = TrimFrontBack(append_string_local);
+          OutputScriptPath(stream_module, ENV2MOD_APPEND, key_right, append_string_local);
         }
       }
       read_left = NextLine(buffer_left, LEN_BUFFER, stream_left);
@@ -362,4 +362,3 @@ int CreateScript(char *left_file, char* right_file, char *module_file){
   fclose(stream_module);
   return 0;
 }
-

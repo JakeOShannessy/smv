@@ -6,10 +6,15 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "glui_bounds.h"
 #include "IOscript.h"
 
-void BoundsUpdate(int file_type);
-int BoundsGet(char *file, globalboundsdata *globalboundsinfo, char **sorted_filenames, int n_sorted_filenames, int nbounds, float *valmin, float *valmax);
+#ifdef _DEBUG
+#define ASSERT_BOUND_TYPE assert(file_type == BOUND_SLICE || file_type == BOUND_PATCH || file_type == BOUND_PLOT3D)
+#else
+#define ASSERT_BOUND_TYPE
+#endif
+#define IJK_SLICE(i,j,k)  ( ((i)-sd->is1)*sd->nslicej*sd->nslicek + ((j)-sd->js1)*sd->nslicek + ((k)-sd->ks1) )
 
 /* ------------------ GetPartFileBounds ------------------------ */
 
@@ -71,13 +76,13 @@ int GetGlobalPartBounds(int flag){
   int nloaded_files = 0;
 
 
-  if(part_bound_buffer == NULL && npartinfo > 0 && npart5prop>0){
-    NewMemory(( void ** )&part_bound_buffer, 2*npartinfo*npart5prop*sizeof(float));
-    for(i = 0; i < npartinfo; i++){
+  if(part_bound_buffer == NULL && global_scase.npartinfo > 0 && npart5prop>0){
+    NewMemory((void **)&part_bound_buffer, 2*global_scase.npartinfo*npart5prop*sizeof(float));
+    for(i = 0; i < global_scase.npartinfo; i++){
       partdata *parti;
       int j;
 
-      parti = partinfo + i;
+      parti = global_scase.partinfo + i;
       if(parti->loaded == 1)nloaded_files++;
       parti->valmin_part = part_bound_buffer;
       part_bound_buffer += npart5prop;
@@ -98,12 +103,12 @@ int GetGlobalPartBounds(int flag){
     partmins[i] = 1.0;
     partmaxs[i] = 0.0;
   }
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<global_scase.npartinfo; i++){
     partdata *parti;
     int j;
     float *valmin_part, *valmax_part;
 
-    parti = partinfo+i;
+    parti = global_scase.partinfo+i;
     if(flag==LOADED_FILES&&parti->loaded==0)continue;
     valmin_part = parti->valmin_part;
     valmax_part = parti->valmax_part;
@@ -294,290 +299,6 @@ int GetBounds(char *file, float *valmin, float *valmax,
   return return_val;
 }
 
-/* ------------------ GetGlobalPatchBounds ------------------------ */
-
-void GetGlobalPatchBounds(int flag, int set_flag){
-  int i;
-
-  if(npatchinfo==0)return;
-  if(no_bounds == 1 && force_bounds==0)flag = 0;
-  for(i = 0; i < npatchbounds; i++){
-    boundsdata *boundi;
-
-    boundi = patchbounds + i;
-    boundi->dlg_global_valmin = 1.0;
-    boundi->dlg_global_valmax = 0.0;
-  }
-  if(flag==1)BoundsUpdate(BOUND_PATCH);
-  for(i = 0; i < npatchinfo; i++){
-    patchdata *patchi;
-    float valmin, valmax;
-    boundsdata *boundi;
-    int doit;
-
-    patchi = patchinfo + i;
-
-    doit = 0;
-    if(patchi->valmin_patch > patchi->valmax_patch ||
-      current_script_command == NULL || NOT_LOADRENDER)doit = 1;
-    if(flag == 0){
-      doit = 0;
-      patchi->valmin_patch = 0.0;
-      patchi->valmax_patch = 1.0;
-    }
-    if(force_bound_update == 1)doit = 1;
-    if(doit==1){
-      BoundsGet(patchi->reg_file, patchglobalboundsinfo, sorted_patch_filenames, npatchinfo, 1, &valmin, &valmax);
-      if(valmin > valmax)continue;
-      patchi->valmin_patch = valmin;
-      patchi->valmax_patch = valmax;
-      patch_bounds_defined = 1;
-    }
-    else{
-      valmin = patchi->valmin_patch;
-      valmax = patchi->valmax_patch;
-    }
-    boundi = GetPatchBoundsInfo(patchi->label.shortlabel);
-    if(boundi == NULL)continue;
-    if(boundi->dlg_global_valmin > boundi->dlg_global_valmax){
-      boundi->dlg_global_valmin = valmin;
-      boundi->dlg_global_valmax = valmax;
-    }
-    else{
-      boundi->dlg_global_valmin = MIN(boundi->dlg_global_valmin, valmin);
-      boundi->dlg_global_valmax = MAX(boundi->dlg_global_valmax, valmax);
-    }
-  }
-  for(i = 0; i < npatchbounds; i++){
-    boundsdata *boundi;
-    int j;
-
-    boundi = patchbounds + i;
-    boundi->dlg_valmin = boundi->dlg_global_valmin;
-    boundi->dlg_valmax = boundi->dlg_global_valmax;
-    for(j = 0; j < npatchinfo; j++){
-      patchdata *patchj;
-
-      patchj = patchinfo + j;
-      if(strcmp(patchj->label.shortlabel, boundi->shortlabel) == 0){
-        patchj->valmin_glui = boundi->dlg_global_valmin;
-        patchj->valmax_glui = boundi->dlg_global_valmax;
-      }
-    }
-  }
-
-  npatchbounds_cpp = npatchbounds;
-  if(npatchbounds_cpp>0){
-    if(patchbounds_cpp == NULL){
-      NewMemory((void **)&patchbounds_cpp, npatchbounds_cpp * sizeof(cpp_boundsdata));
-    }
-    for(i = 0; i<npatchbounds_cpp; i++){
-      cpp_boundsdata *boundscppi;
-      boundsdata *boundi;
-
-      boundscppi = patchbounds_cpp+i;
-      boundi = patchbounds+i;
-      strcpy(boundscppi->label, boundi->shortlabel);
-      strcpy(boundscppi->unit, boundi->label->unit);
-
-      boundscppi->cache = cache_boundary_data;
-      boundscppi->set_valtype = 0;
-
-      if(set_flag==1)boundscppi->set_valmin = 0;
-      boundscppi->valmin[BOUND_SET_MIN]        = boundi->dlg_global_valmin;
-      boundscppi->valmin[BOUND_LOADED_MIN]     = boundi->dlg_global_valmin;
-      boundscppi->valmin[BOUND_GLOBAL_MIN]     = boundi->dlg_global_valmin;
-      boundscppi->valmin[BOUND_PERCENTILE_MIN] = boundi->dlg_global_valmin;
-
-      boundscppi->valmax[BOUND_SET_MAX]        = boundi->dlg_global_valmax;
-      boundscppi->valmax[BOUND_LOADED_MAX]     = boundi->dlg_global_valmax;
-      boundscppi->valmax[BOUND_GLOBAL_MAX]     = boundi->dlg_global_valmax;
-      boundscppi->valmax[BOUND_PERCENTILE_MAX] = boundi->dlg_global_valmax;
-
-      if(bound_patch_init == 1){
-        boundscppi->set_chopmin = 0;
-        boundscppi->set_chopmax = 0;
-        boundscppi->chopmin     = 0.0;
-        boundscppi->chopmax     = 0.0;
-      }
-
-      if(set_flag==1)boundscppi->set_valmax = 0;
-      boundscppi->hist = NULL;
-    }
-  }
-  bound_patch_init = 0;
-}
-
-/* ------------------ GetGlobalPatchBoundsFull ------------------------ */
-
-void *GetGlobalPatchBoundsFull(void *arg){
-  THREADcontrol(patchbound_threads, THREAD_LOCK);
-  GetGlobalPatchBounds(1,SET_MINMAX_FLAG);
-  THREADcontrol(patchbound_threads, THREAD_UNLOCK);
-  THREAD_EXIT(patchbound_threads);
-}
-
-/* ------------------ GetGlobalPatchBoundsReduced ------------------------ */
-
-void GetGlobalPatchBoundsReduced(void){
-  GetGlobalPatchBounds(0,SET_MINMAX_FLAG);
-}
-
-/* ------------------ GetPlot3DFileBounds ------------------------ */
-
-int GetPlot3DFileBounds(char *file, float *valmin, float *valmax){
-  FILE *stream;
-  int i, compute_bounds = 0;
-  char buffer[255];
-
-  for(i = 0; i<MAXPLOT3DVARS; i++){
-    if(valmin[i]>valmax[i]){
-      compute_bounds = 1;
-      break;
-    }
-  }
-  if(compute_bounds==0)return 1;
-  if(file==NULL||strlen(file)==0)return 0;
-  stream = FOPEN_2DIR(file, "r");
-  if(stream==NULL)return 0;
-
-  CheckMemory;
-
-  for(i = 0; i<MAXPLOT3DVARS; i++){
-    if(fgets(buffer, 255, stream)==NULL)break;
-    sscanf(buffer, "%f %f", valmin+i, valmax+i);
-  }
-  fclose(stream);
-  return 1;
-}
-
-/* ------------------ GetGlobalPlot3DBounds ------------------------ */
-
-void GetGlobalPlot3DBounds(void){
-  int i;
-
-  if(nplot3dinfo <= 0)return;
-  if(no_bounds==0 || force_bounds==1)BoundsUpdate(BOUND_PLOT3D);
-  for(i = 0; i<nplot3dinfo; i++){
-    plot3ddata *plot3di;
-
-    plot3di = plot3dinfo+i;
-    plot3di->have_bound_file = BoundsGet(plot3di->reg_file, plot3dglobalboundsinfo, sorted_plot3d_filenames, nplot3dinfo, plot3di->nplot3dvars, plot3di->valmin_plot3d, plot3di->valmax_plot3d);
-  }
-  for(i = 0; i<MAXPLOT3DVARS; i++){
-    p3min_all[i] = 1.0;
-    p3max_all[i] = 0.0;
-  }
-  for(i = 0; i<nplot3dinfo; i++){
-    plot3ddata *plot3di;
-    int j;
-    float *valmin_fds, *valmax_fds;
-
-    plot3di = plot3dinfo+i;
-    if(plot3di->have_bound_file == 0)continue;
-    valmin_fds = plot3di->valmin_plot3d;
-    valmax_fds = plot3di->valmax_plot3d;
-    for(j = 0; j<MAXPLOT3DVARS; j++){
-      if(valmin_fds[j]<=valmax_fds[j]){
-        if(p3min_all[j]>p3max_all[j]){
-          p3min_all[j] = valmin_fds[j];
-          p3max_all[j] = valmax_fds[j];
-        }
-        else {
-          p3min_all[j] = MIN(valmin_fds[j], p3min_all[j]);
-          p3max_all[j] = MAX(valmax_fds[j], p3max_all[j]);
-        }
-      }
-    }
-  }
-  for(i = 0; i<MAXPLOT3DVARS; i++){
-    p3min_global[i] = p3min_all[i];
-    p3max_global[i] = p3max_all[i];
-  }
-
-  nplot3dbounds_cpp = 0;
-  if(nplot3dinfo>0&&plot3dbounds_cpp==NULL){ // only initialize once
-    nplot3dbounds_cpp = plot3dinfo[0].nplot3dvars;
-    NewMemory((void **)&plot3dbounds_cpp, nplot3dbounds_cpp*sizeof(cpp_boundsdata));
-    for(i = 0; i<nplot3dbounds_cpp; i++){
-      cpp_boundsdata *boundscppi;
-
-      boundscppi = plot3dbounds_cpp+i;
-      strcpy(boundscppi->label, plot3dinfo->label[i].shortlabel);
-      strcpy(boundscppi->unit, plot3dinfo->label[i].unit);
-
-      boundscppi->cache = cache_plot3d_data;
-      boundscppi->set_valtype = 0;
-
-      boundscppi->set_valmin = 0;
-      boundscppi->valmin[BOUND_SET_MIN]        = p3min_global[i];
-      boundscppi->valmin[BOUND_LOADED_MIN]     = p3min_global[i];
-      boundscppi->valmin[BOUND_GLOBAL_MIN]     = p3min_global[i];
-      boundscppi->valmin[BOUND_PERCENTILE_MIN] = p3min_global[i];
-
-      boundscppi->set_valmax = 0;
-      boundscppi->valmax[BOUND_SET_MAX]        = p3max_global[i];
-      boundscppi->valmax[BOUND_LOADED_MAX]     = p3max_global[i];
-      boundscppi->valmax[BOUND_GLOBAL_MAX]     = p3max_global[i];
-      boundscppi->valmax[BOUND_PERCENTILE_MAX] = p3max_global[i];
-
-      boundscppi->set_chopmin = 0;
-      boundscppi->set_chopmax = 0;
-      boundscppi->chopmin = p3max_global[0];
-      boundscppi->chopmax = p3max_global[0];
-    }
-  }
-  GLUISetGlobalMinMaxAll(BOUND_PLOT3D, p3min_global, p3max_global, plot3dinfo->nplot3dvars);
-}
-
-/* ------------------ GetLoadedPlot3dBounds ------------------------ */
-
-void GetLoadedPlot3dBounds(int *compute_loaded, float *loaded_min, float *loaded_max){
-  int i;
-  int plot3d_loaded = 0;
-
-#define BOUNDS_LOADED 1
-  for(i = 0; i<nplot3dinfo; i++) {
-    plot3ddata *plot3di;
-
-    plot3di = plot3dinfo+i;
-    if(plot3di->loaded==0)continue;
-    plot3d_loaded = 1;
-    break;
-  }
-  if(plot3d_loaded==0){
-    printf("***loaded plot3d bounds not available, using global bounds\n");
-    for(i = 0; i< MAXPLOT3DVARS; i++) {
-      loaded_min[i] = p3min_global[i];
-      loaded_max[i] = p3max_global[i];
-    }
-    return;
-  }
-  for(i = 0; i< MAXPLOT3DVARS; i++) {
-    if(compute_loaded!=NULL&&compute_loaded[i]!=BOUNDS_LOADED)continue;
-    loaded_min[i] = 1.0;
-    loaded_max[i] = 0.0;
-  }
-  for(i = 0; i<nplot3dinfo; i++){
-    plot3ddata *plot3di;
-    int j;
-
-    plot3di = plot3dinfo+i;
-    if(plot3di->loaded==0)continue;
-    for(j = 0; j< MAXPLOT3DVARS; j++){
-      if(compute_loaded!=NULL&&compute_loaded[j]!=BOUNDS_LOADED)continue;
-      if(loaded_min[j]>loaded_max[j]){
-        loaded_min[j] = plot3di->valmin_plot3d[j];
-        loaded_max[j] = plot3di->valmax_plot3d[j];
-      }
-      else{
-        loaded_min[j] = MIN(plot3di->valmin_plot3d[j], loaded_min[j]);
-        loaded_max[j] = MAX(plot3di->valmax_plot3d[j], loaded_max[j]);
-      }
-    }
-  }
-}
-
 /* ------------------ CompareBoundFileName ------------------------ */
 
 int CompareBoundFileName(const void *arg1, const void *arg2){
@@ -619,12 +340,6 @@ int BoundsGet(char *file, globalboundsdata *globalboundsinfo, char **sorted_file
   return defined;
 }
 
-#ifdef _DEBUG
-#define ASSERT_BOUND_TYPE assert(file_type == BOUND_SLICE || file_type == BOUND_PATCH || file_type == BOUND_PLOT3D)
-#else
-#define ASSERT_BOUND_TYPE
-#endif
-
 /* ------------------ GetNinfo ------------------------ */
 
 int GetNinfo(int file_type){
@@ -633,18 +348,18 @@ int GetNinfo(int file_type){
 
   ASSERT_BOUND_TYPE;
   if(file_type == BOUND_SLICE){
-    ninfo = nsliceinfo;
+    ninfo = global_scase.slicecoll.nsliceinfo;
   }
   else if(file_type == BOUND_PATCH){
-    ninfo = npatchinfo;
+    ninfo = global_scase.npatchinfo;
   }
   else if(file_type == BOUND_PLOT3D){
-    ninfo = nplot3dinfo;
+    ninfo = global_scase.nplot3dinfo;
   }
   return ninfo;
 }
 
-/* ------------------ GetNinfo ------------------------ */
+/* ------------------ GetGlobalBoundsinfo ------------------------ */
 
 globalboundsdata *GetGlobalBoundsinfo(int file_type){
   globalboundsdata *gi = NULL;
@@ -680,343 +395,23 @@ char **GetSortedFilenames(int file_type){
   return sorted_filenames;
 }
 
-/* ------------------ RmGbndFile ------------------------ */
-
-void RmGbndFile(int file_type){
-
-  ASSERT_BOUND_TYPE;
-  if(file_type == BOUND_SLICE){
-    UNLINK(slice_gbnd_filename);
-  }
-  else if(file_type==BOUND_PATCH){
-    UNLINK(patch_gbnd_filename);
-  }
-  else if(file_type == BOUND_PLOT3D){
-    UNLINK(plot3d_gbnd_filename);
-  }
-}
-
-/* ------------------ FopenGbndFile ------------------------ */
-
-FILE *FopenGbndFile(int file_type, char *mode){
-  FILE *stream = NULL;
-  char *file=NULL;
-
-  ASSERT_BOUND_TYPE;
-  if(file_type == BOUND_SLICE){
-    file = slice_gbnd_filename;
-  }
-  else if(file_type==BOUND_PATCH){
-    file = patch_gbnd_filename;
-  }
-  else if(file_type == BOUND_PLOT3D){
-    file = plot3d_gbnd_filename;
-  }
-  else{
-    file = NULL;
-  }
-  if(file != NULL){
-    stream = FOPEN_2DIR(file, mode);
-  }
-  return stream;
-}
-
-/* ------------------ GetGbndFilename ------------------------ */
-
-char *GetGbndFilename(int file_type){
-  char *filename=NULL;
-
-  ASSERT_BOUND_TYPE;
-  if(file_type == BOUND_SLICE){
-    filename = slice_gbnd_filename;
-  }
-  else if(file_type==BOUND_PATCH){
-    filename = patch_gbnd_filename;\
-  }
-  else if(file_type == BOUND_PLOT3D){
-    filename = plot3d_gbnd_filename;\
-  }
-  return filename;
-}
-
-/* ------------------ GetNBounds ------------------------ */
-
-int GetNBounds(int file_type){
-  int nbounds = 1;
-
-  ASSERT_BOUND_TYPE;
-  if(file_type == BOUND_SLICE){
-    nbounds = 1;
-  }
-  else if(file_type == BOUND_PATCH){
-    nbounds = 1;
-  }
-  else if(file_type == BOUND_PLOT3D){
-    if(plot3dinfo != NULL){
-      nbounds = plot3dinfo->nplot3dvars;
-    }
-    else{
-      nbounds = 5;
-    }
-  }
-  return nbounds;
-}
-
-/* ------------------ GetShortLabel ------------------------ */
-
-char *GetShortLabel(int file_type, int i, int ilabel){
-  char *shortlabel = NULL;;
-
-  ASSERT_BOUND_TYPE;
-  if(file_type == BOUND_SLICE){
-    shortlabel = sliceinfo[i].label.shortlabel;
-  }
-  else if(file_type == BOUND_PATCH){
-    shortlabel = patchinfo[i].label.shortlabel;
-  }
-  else if(file_type == BOUND_PLOT3D){
-    shortlabel = plot3dinfo[i].label[ilabel].shortlabel;
-  }
-  return shortlabel;
-}
-
 /* ------------------ GetRegFile ------------------------ */
 
 char *GetRegFile(int file_type, int i){
-  char *reg_file = NULL;;
+  char *reg_file = NULL;
 
   ASSERT_BOUND_TYPE;
   if(file_type == BOUND_SLICE){
-    reg_file = sliceinfo[i].reg_file;
+    reg_file = global_scase.slicecoll.sliceinfo[i].reg_file;
   }
   else if(file_type == BOUND_PATCH){
-    reg_file = patchinfo[i].reg_file;
+    reg_file = global_scase.patchinfo[i].reg_file;
   }
   else if(file_type == BOUND_PLOT3D){
-    reg_file = plot3dinfo[i].reg_file;
+    reg_file = global_scase.plot3dinfo[i].reg_file;
   }
   return reg_file;
 }
-
-/* ------------------ SaveSortedFilenames ------------------------ */
-
-void SaveSortedFilenames(int file_type, char **sorted_filenames){
-  ASSERT_BOUND_TYPE;
-  if(file_type == BOUND_SLICE){
-    sorted_slice_filenames = sorted_filenames;
-  }
-  else if(file_type==BOUND_PATCH){
-    sorted_patch_filenames = sorted_filenames;
-  }
-  else if(file_type == BOUND_PLOT3D){
-    sorted_plot3d_filenames = sorted_filenames;
-  }
-}
-
-/* ------------------ SaveGlobalBoundsinfo ------------------------ */
-
-void SaveGlobalBoundsinfo(int file_type, globalboundsdata *globalboundsinfo){
-  ASSERT_BOUND_TYPE;
-  if(file_type == BOUND_SLICE){
-    sliceglobalboundsinfo = globalboundsinfo;
-  }
-  else if(file_type==BOUND_PATCH){
-    patchglobalboundsinfo = globalboundsinfo;
-  }
-  else if(file_type==BOUND_PLOT3D){
-    plot3dglobalboundsinfo = globalboundsinfo;
-  }
-}
-
-/* ------------------ DefineGbndFilename ------------------------ */
-
-void DefineGbndFilename(int file_type){
-  ASSERT_BOUND_TYPE;
-  if(file_type == BOUND_SLICE){
-    if(slice_gbnd_filename == NULL){
-      NewMemory((void **)&slice_gbnd_filename, strlen(fdsprefix) + strlen(".sf.gbnd") + 1);
-      strcpy(slice_gbnd_filename, fdsprefix);
-      strcat(slice_gbnd_filename, ".sf.gbnd");
-    }
-  }
-  else if(file_type==BOUND_PATCH){
-    if(patch_gbnd_filename == NULL){
-      NewMemory((void **)&patch_gbnd_filename, strlen(fdsprefix) + strlen(".bf.gbnd") + 1);
-      strcpy(patch_gbnd_filename, fdsprefix);
-      strcat(patch_gbnd_filename, ".bf.gbnd");
-    }
-  }
-  else if(file_type==BOUND_PLOT3D){
-    if(plot3d_gbnd_filename == NULL){
-      NewMemory((void **)&plot3d_gbnd_filename, strlen(fdsprefix) + strlen(".q.gbnd") + 1);
-      strcpy(plot3d_gbnd_filename, fdsprefix);
-      strcat(plot3d_gbnd_filename, ".q.gbnd");
-    }
-  }
-}
-
-/* ------------------ GetBoundFile ------------------------ */
-
-char *GetBoundFile(int file_type, int i){
-  char *bound_file = NULL;
-
-  ASSERT_BOUND_TYPE;
-  if(file_type == BOUND_SLICE){
-    bound_file = sliceinfo[i].bound_file;
-  }
-  else if(file_type == BOUND_PATCH){
-    bound_file = patchinfo[i].bound_file;
-  }
-  else if(file_type == BOUND_PLOT3D){
-    bound_file = plot3dinfo[i].bound_file;
-  }
-  return bound_file;
-}
-
-/* ------------------ GetBoundLabel ------------------------ */
-
-char *GetBoundLabel(int file_type, int ifile, char *label){
-  int nbounds, i;
-
-  nbounds = GetNBounds(file_type);
-  strcpy(label, "");
-  for(i = 0;i < nbounds;i++){
-    char *shortlabel;
-
-    shortlabel = GetShortLabel(file_type, ifile, i);
-    if(shortlabel != NULL){
-      strcat(label, shortlabel);
-      if(i != nbounds - 1)strcat(label, ":");
-    }
-  }
-  if(strlen(label) == 0)return NULL;
-  return label;
-}
-
-/* ------------------ BoundsBnd2Gbnd ------------------------ */
-
-int BoundsBnd2Gbnd(int file_type){
-  int i, ninfo;
-  FILE *stream=NULL;
-
-  ninfo = GetNinfo(file_type);
-  for(i = 0;i < ninfo;i++){
-    float valmins[MAXPLOT3DVARS], valmaxs[MAXPLOT3DVARS];
-    char *reg_file, *bound_file;
-    int nbounds;
-
-    reg_file   = GetRegFile(file_type, i);
-    bound_file = GetBoundFile(file_type, i);
-    nbounds    = GetNBounds(file_type);
-    if(GetFileBounds(bound_file, nbounds, valmins, valmaxs) == 1){
-      char label[256];
-      int j;
-
-      if(stream == NULL){
-        stream = FopenGbndFile(file_type, "w");
-        if(stream == NULL)return 0;
-      }
-      fprintf(stream, "%s ", reg_file);
-      for(j = 0;j < nbounds;j++){
-        fprintf(stream, " %f %f ", valmins[j], valmaxs[j]);
-      }
-      if(GetBoundLabel(file_type, i, label) !=NULL)fprintf(stream, "! %s", label);
-      fprintf(stream, "\n");
-    }
-  }
-  if(stream!=NULL)fclose(stream);
-  return 1;
-}
-
-/* ------------------ SliceBoundsUpdateSetup ------------------------ */
-
-void BoundsUpdateSetup(int file_type){
-  int i;
-  FILE *stream = NULL;
-
-  int ninfo;
-  globalboundsdata *globalboundsinfo;
-  char **sorted_filenames;
-
-  ninfo = GetNinfo(file_type);
-  if(file_type == BOUND_PLOT3D){
-    FREEMEMORY(plot3dglobalboundsinfo);
-    FREEMEMORY(sorted_plot3d_filenames);
-    globalboundsinfo = NULL;
-    sorted_filenames = NULL;
-  }
-  else{
-    globalboundsinfo = GetGlobalBoundsinfo(file_type);
-    sorted_filenames = GetSortedFilenames(file_type);
-  }
-
-  if(sorted_filenames == NULL){
-    NewMemory((void **)&sorted_filenames, ninfo * sizeof(char *));
-    for(i = 0;i < ninfo;i++){
-      sorted_filenames[i] = GetRegFile(file_type, i);
-    }
-    qsort((char *)sorted_filenames, ninfo, sizeof(char *), CompareBoundFileName);
-    SaveSortedFilenames(file_type, sorted_filenames);
-  }
-  if(globalboundsinfo == NULL){
-    NewMemory((void **)&globalboundsinfo, ninfo * sizeof(globalboundsdata));
-    for(i = 0;i < ninfo;i++){
-      globalboundsinfo[i].file    = sorted_filenames[i];
-      globalboundsinfo[i].defined = 0;
-    }
-    SaveGlobalBoundsinfo(file_type, globalboundsinfo);
-  }
-  DefineGbndFilename(file_type);
-  if(no_bounds == 0 || force_bounds==1)BoundsBnd2Gbnd(file_type);
-  stream = FopenGbndFile(file_type, "r");
-  if(stream != NULL){
-    for(;;){
-      char buffer[255], file[255], *fileptr, **key_index;
-      float valmins[MAXPLOT3DVARS], valmaxs[MAXPLOT3DVARS];
-      globalboundsdata *fi;
-
-      if(fgets(buffer, 255, stream) == NULL)break;
-      if(file_type==BOUND_PLOT3D){
-        sscanf(buffer, "%s %f %f %f %f %f %f %f %f %f %f %f %f ", file, 
-          valmins + 0, valmaxs + 0,
-          valmins + 1, valmaxs + 1,
-          valmins + 2, valmaxs + 2,
-          valmins + 3, valmaxs + 3,
-          valmins + 4, valmaxs + 4,
-          valmins + 5, valmaxs + 5
-        );
-      }
-      else{
-        sscanf(buffer, "%s %f %f ", file, valmins + 0, valmaxs + 0);
-      }
-      fileptr = TrimFrontBack(file);
-      key_index = (char **)bsearch((char *)&fileptr, sorted_filenames, ninfo, sizeof(char *), CompareBoundFileName);
-      if(key_index != NULL){
-        int index;
-
-        index = (int)(key_index - sorted_filenames);
-        fi = globalboundsinfo + index;
-        fi->nbounds = 1;
-        if(file_type == BOUND_PLOT3D){
-          fi->nbounds = 5;
-          if(plot3dinfo != NULL)fi->nbounds = plot3dinfo->nplot3dvars;
-        }
-        memcpy(fi->valmins,      valmins, fi->nbounds * sizeof(float));
-        memcpy(fi->valmaxs,      valmaxs, fi->nbounds * sizeof(float));
-        memcpy(fi->valmins_save, valmins, fi->nbounds * sizeof(float));
-        memcpy(fi->valmaxs_save, valmaxs, fi->nbounds * sizeof(float));
-        fi->defined = 1;
-      }
-    }
-    fclose(stream);
-   // RmGbndFile(file_type);
-    if(no_bounds == 1 && force_bounds == 0){
-      assert(FFALSE); // global bounds file shouldn't exist if the no_bounds option was set
-    }
-  }
-}
-
-#define IJK_SLICE(i,j,k)  ( ((i)-sd->is1)*sd->nslicej*sd->nslicek + ((j)-sd->js1)*sd->nslicek + ((k)-sd->ks1) )
 
 /* ------------------ MakeSliceMask ------------------------ */
 
@@ -1024,11 +419,11 @@ void MakeSliceMask(slicedata *sd){
   int i;
   int iis1, iis2, jjs1, jjs2, kks1, kks2;
 
-  NewMemory((void **)&sd->slice_mask, sd->nsliceijk);
+  NewMemory(( void ** )&sd->slice_mask, sd->nsliceijk);
   memset(sd->slice_mask, 0, sd->nsliceijk);
 
-  iis1 = sd->iis1+1;
-  if(sd->iis2==sd->iis1)iis1 = sd->iis1;
+  iis1 = sd->iis1 + 1;
+  if(sd->iis2 == sd->iis1)iis1 = sd->iis1;
   iis2 = sd->iis2;
 
   jjs1 = sd->jjs1 + 1;
@@ -1042,21 +437,19 @@ void MakeSliceMask(slicedata *sd){
   for(i = iis1; i <= iis2; i++){
     int j;
 
-    for(j = jjs1;j <= jjs2;j++){
+    for(j = jjs1; j <= jjs2; j++){
       int k;
 
-      for(k = kks1;k <= kks2;k++){
+      for(k = kks1; k <= kks2; k++){
         int ival;
 
-        ival = IJK_SLICE(i,j,k);
-        assert(ival>=0&&ival<sd->nsliceijk);
+        ival = IJK_SLICE(i, j, k);
+        assert(ival >= 0 && ival < sd->nsliceijk);
         sd->slice_mask[ival] = 1;
       }
     }
   }
 }
-
-#define IJK_SLICE(i,j,k)  ( ((i)-sd->is1)*sd->nslicej*sd->nslicek + ((j)-sd->js1)*sd->nslicek + ((k)-sd->ks1) )
 
 /* ------------------ BoundsUpdateDoit ------------------------ */
 
@@ -1072,9 +465,9 @@ void BoundsUpdateDoit(int file_type){
   sorted_filenames = GetSortedFilenames(file_type);
 
   ASSERT_BOUND_TYPE;
-  if(file_type != BOUND_SLICE && file_type != BOUND_PATCH&& file_type != BOUND_PLOT3D)return;
+  if(file_type != BOUND_SLICE && file_type != BOUND_PATCH && file_type != BOUND_PLOT3D)return;
   is_fds_running = IsFDSRunning(&last_size_for_bound);
-  for(i = 0;i < ninfo;i++){
+  for(i = 0; i < ninfo; i++){
     globalboundsdata *fi;
     int index;
     float valmin, valmax;
@@ -1083,23 +476,26 @@ void BoundsUpdateDoit(int file_type){
     slicedata *slicei;
     plot3ddata *plot3di;
 
-    if(file_type == BOUND_SLICE){
-      slicei = sliceinfo + i;
+    if(file_type == BOUND_SLICE) {
+      if(global_scase.slicecoll.sliceinfo == NULL)continue;
+      slicei = global_scase.slicecoll.sliceinfo + i;
       if(slicei->loaded == 0)continue;
     }
-    else if(file_type == BOUND_PATCH){
-      patchi = patchinfo + i;
+    else if(file_type == BOUND_PATCH) {
+      if(global_scase.patchinfo == NULL)continue;
+      patchi = global_scase.patchinfo + i;
       if(patchi->loaded == 0)continue;
     }
-    else if(file_type == BOUND_PLOT3D){
-      plot3di = plot3dinfo + i;
+    else if(file_type == BOUND_PLOT3D) {
+      if(global_scase.plot3dinfo == NULL)continue;
+      plot3di = global_scase.plot3dinfo + i;
       if(plot3di->loaded == 0)continue;
     }
     reg_file = GetRegFile(file_type, i);
-    key_index = (char **)bsearch((char *)&reg_file, sorted_filenames, ninfo, sizeof(char *), CompareBoundFileName);
+    key_index = ( char ** )bsearch(( char * )&reg_file, sorted_filenames, ninfo, sizeof(char *), CompareBoundFileName);
     if(key_index == NULL)continue;
-    index = (int)(key_index - sorted_filenames);
-    if(index<0 || index>nsliceinfo - 1)continue;
+    index = ( int )(key_index - sorted_filenames);
+    if(index<0 || index>global_scase.slicecoll.nsliceinfo - 1)continue;
     fi = globalboundsinfo + index;
     if(fi->defined == 1 && is_fds_running == 0)continue;
     valmin = 0.0;
@@ -1116,7 +512,7 @@ void BoundsUpdateDoit(int file_type){
       valmax = -valmin;
       nsize = slicei->nslicei * slicei->nslicej * slicei->nslicek;
       if(slicei->slice_mask != NULL && slicei->slice_filetype == SLICE_CELL_CENTER){
-        for(j = 0;j < slicei->ntimes * slicei->nsliceijk;j++){
+        for(j = 0; j < slicei->ntimes * slicei->nsliceijk; j++){
           if(slicei->slice_mask[j % nsize] == 1){
             valmin = MIN(valmin, vals[j]);
             valmax = MAX(valmax, vals[j]);
@@ -1124,29 +520,29 @@ void BoundsUpdateDoit(int file_type){
         }
       }
       else{
-        for(j = 0;j < slicei->ntimes * slicei->nsliceijk;j++){
+        for(j = 0; j < slicei->ntimes * slicei->nsliceijk; j++){
           valmin = MIN(valmin, vals[j]);
           valmax = MAX(valmax, vals[j]);
         }
       }
       fi->defined = 1;
     }
-    else if(file_type==BOUND_PATCH){
+    else if(file_type == BOUND_PATCH){
       if(patchi->structured == 1){
         if(patchi->blocknumber >= 0){
           meshdata *meshi;
           float *vals;
           int j;
 
-          meshi = meshinfo + patchi->blocknumber;
-          if(meshi->boundary_mask == NULL&&patchi->patch_filetype==PATCH_STRUCTURED_CELL_CENTER){
+          meshi = global_scase.meshescoll.meshinfo + patchi->blocknumber;
+          if(meshi->boundary_mask == NULL && patchi->patch_filetype == PATCH_STRUCTURED_CELL_CENTER){
             MakeBoundaryMask(patchi);
           }
           vals = meshi->patchval;
           valmin = 10000000000.0;
           valmax = -valmin;
           if(meshi->boundary_mask != NULL && patchi->patch_filetype == PATCH_STRUCTURED_CELL_CENTER){
-            for(j = 0;j < meshi->npatch_times * meshi->npatchsize;j++){
+            for(j = 0; j < patchi->ntimes * meshi->npatchsize; j++){
               if(meshi->boundary_mask[j % meshi->npatchsize] == 1){
                 valmin = MIN(vals[j], valmin);
                 valmax = MAX(vals[j], valmax);
@@ -1154,7 +550,7 @@ void BoundsUpdateDoit(int file_type){
             }
           }
           else{
-            for(j = 0;j < meshi->npatch_times * meshi->npatchsize;j++){
+            for(j = 0; j < patchi->ntimes * meshi->npatchsize; j++){
               valmin = MIN(vals[j], valmin);
               valmax = MAX(vals[j], valmax);
             }
@@ -1171,7 +567,7 @@ void BoundsUpdateDoit(int file_type){
         vals = patchi->geom_vals;
         valmin = vals[0];
         valmax = valmin;
-        for(j = 1;j < patchi->ngeom_times;j++){
+        for(j = 1; j < patchi->ngeom_times; j++){
           valmin = MIN(vals[j], valmin);
           valmax = MAX(vals[j], valmax);
         }
@@ -1181,30 +577,30 @@ void BoundsUpdateDoit(int file_type){
       fi->valmins[0] = valmin;
       fi->valmaxs[0] = valmax;
     }
-    else if(file_type==BOUND_PLOT3D){
+    else if(file_type == BOUND_PLOT3D){
       meshdata *meshi;
       int nx, ny, nz, nxy, nxyz;
       int ii, jj, kk, nn;
       float valmins[MAXPLOT3DVARS], valmaxs[MAXPLOT3DVARS];
 
-      meshi = meshinfo + plot3di->blocknumber;
-      nx = meshi->ibar+1;
-      ny = meshi->jbar+1;
-      nz = meshi->kbar+1;
-      nxy = nx*ny;
-      nxyz = nx*ny*nz;
-      for(nn=0;nn<plot3di->nplot3dvars;nn++){
-        valmins[nn] = meshi->qdata[IJKN(0,0,0,nn)];
+      meshi = global_scase.meshescoll.meshinfo + plot3di->blocknumber;
+      nx = meshi->ibar + 1;
+      ny = meshi->jbar + 1;
+      nz = meshi->kbar + 1;
+      nxy = nx * ny;
+      nxyz = nx * ny * nz;
+      for(nn = 0; nn < plot3di->nplot3dvars; nn++){
+        valmins[nn] = meshi->qdata[IJKN(0, 0, 0, nn)];
         valmaxs[nn] = valmins[nn];
-        for(ii=0;ii<nx;ii++){
-          for(jj=0;jj<ny;jj++){
-            for(kk=0;kk<nz;kk++){
+        for(ii = 0; ii < nx; ii++){
+          for(jj = 0; jj < ny; jj++){
+            for(kk = 0; kk < nz; kk++){
               float val;
 
-              val = meshi->qdata[IJKN(ii,jj,kk,nn)];
+              val = meshi->qdata[IJKN(ii, jj, kk, nn)];
               valmins[nn] = MIN(val, valmins[nn]);
               valmaxs[nn] = MAX(val, valmaxs[nn]);
-              
+
             }
           }
         }
@@ -1213,9 +609,99 @@ void BoundsUpdateDoit(int file_type){
       }
       fi->defined = 1;
       fi->nbounds = 5;
-      if(plot3dinfo!=NULL)fi->nbounds = plot3di->nplot3dvars;
+      if(global_scase.plot3dinfo != NULL)fi->nbounds = plot3di->nplot3dvars;
     }
   }
+}
+
+/* ------------------ FopenGbndFile ------------------------ */
+
+FILE *FopenGbndFile(int file_type, char *mode){
+  FILE *stream = NULL;
+  char *file = NULL;
+
+  ASSERT_BOUND_TYPE;
+  if(file_type == BOUND_SLICE){
+    file = slice_gbnd_filename;
+  }
+  else if(file_type == BOUND_PATCH){
+    file = patch_gbnd_filename;
+  }
+  else if(file_type == BOUND_PLOT3D){
+    file = plot3d_gbnd_filename;
+  }
+  else{
+    file = NULL;
+  }
+  if(file != NULL){
+    char *smokeview_scratchdir = GetUserConfigDir();
+    char current_dir[3]=".";
+
+    stream = fopen_3dir(file, mode, global_scase.results_dir, current_dir, smokeview_scratchdir);
+  }
+  return stream;
+}
+
+/* ------------------ GetNBounds ------------------------ */
+
+int GetNBounds(int file_type){
+  int nbounds = 1;
+
+  ASSERT_BOUND_TYPE;
+  if(file_type == BOUND_SLICE){
+    nbounds = 1;
+  }
+  else if(file_type == BOUND_PATCH){
+    nbounds = 1;
+  }
+  else if(file_type == BOUND_PLOT3D){
+    if(global_scase.plot3dinfo != NULL){
+      nbounds = global_scase.plot3dinfo->nplot3dvars;
+    }
+    else{
+      nbounds = 5;
+    }
+  }
+  return nbounds;
+}
+
+/* ------------------ GetShortLabel ------------------------ */
+
+char *GetShortLabel(int file_type, int i, int ilabel){
+  char *shortlabel = NULL;
+
+  ASSERT_BOUND_TYPE;
+  if(file_type == BOUND_SLICE){
+    shortlabel = global_scase.slicecoll.sliceinfo[i].label.shortlabel;
+  }
+  else if(file_type == BOUND_PATCH){
+    shortlabel = global_scase.patchinfo[i].label.shortlabel;
+  }
+  else if(file_type == BOUND_PLOT3D){
+    shortlabel = global_scase.plot3dinfo[i].label[ilabel].shortlabel;
+  }
+  return shortlabel;
+}
+
+
+/* ------------------ GetBoundLabel ------------------------ */
+
+char *GetBoundLabel(int file_type, int ifile, char *label){
+  int nbounds, i;
+
+  nbounds = GetNBounds(file_type);
+  strcpy(label, "");
+  for(i = 0; i < nbounds; i++){
+    char *shortlabel;
+
+    shortlabel = GetShortLabel(file_type, ifile, i);
+    if(shortlabel != NULL){
+      strcat(label, shortlabel);
+      if(i != nbounds - 1)strcat(label, ":");
+    }
+  }
+  if(strlen(label) == 0)return NULL;
+  return label;
 }
 
 /* ------------------ BoundsGlobalBounds2Gbnd ------------------------ */
@@ -1225,24 +711,10 @@ void BoundsGlobalBounds2Gbnd(int file_type){
   FILE *stream = NULL;
   globalboundsdata *globalboundsinfo;
 
-#ifdef pp_BOUND_DEBUG
-  char label1[32];
-
-  strcpy(label1, "");
-  if(file_type == BOUND_SLICE){
-    strcat(label1, "SLICE");
-  }
-  else if(file_type==BOUND_PATCH){
-    strcat(label1, "PATCH");
-  }
-  else if(file_type == BOUND_PLOT3D){
-    strcat(label1, "PLOT3D");
-  }
-#endif
   ninfo = GetNinfo(file_type);
   globalboundsinfo = GetGlobalBoundsinfo(file_type);
   int changed = 0;
-  for(i = 0;i < ninfo;i++){
+  for(i = 0; i < ninfo; i++){
     globalboundsdata *fi;
     int j;
 
@@ -1255,7 +727,7 @@ void BoundsGlobalBounds2Gbnd(int file_type){
       }
     }
     else{
-      for(j = 0;j < fi->nbounds;j++){
+      for(j = 0; j < fi->nbounds; j++){
         if(fi->valmaxs[j] != fi->valmaxs_save[j] || fi->valmins[j] != fi->valmins_save[j]){
           changed = 1;
           break;
@@ -1266,9 +738,17 @@ void BoundsGlobalBounds2Gbnd(int file_type){
   }
   if(changed == 0)return;
 #ifdef pp_BOUND_DEBUG
-  printf("BoundsGlobalBounds2Gbnd(%s)\n", label1);
+  if(file_type == BOUND_SLICE){
+    printf("BoundsGlobalBounds2Gbnd(%s)\n", "SLICE");
+  }
+  else if(file_type == BOUND_PATCH){
+    printf("BoundsGlobalBounds2Gbnd(%s)\n", "PATCH");
+  }
+  else if(file_type == BOUND_PLOT3D){
+    printf("BoundsGlobalBounds2Gbnd(%s)\n", "PLOT3D");
+  }
 #endif
-  for(i = 0;i < ninfo;i++){
+  for(i = 0; i < ninfo; i++){
     globalboundsdata *fi;
 
     fi = globalboundsinfo + i;
@@ -1281,7 +761,7 @@ void BoundsGlobalBounds2Gbnd(int file_type){
         if(stream == NULL)return;
       }
       fprintf(stream, "%s ", fi->file);
-      for(j = 0;j < fi->nbounds;j++){
+      for(j = 0; j < fi->nbounds; j++){
         fprintf(stream, " %f %f ", fi->valmins[j], fi->valmaxs[j]);
       }
       if(GetBoundLabel(file_type, i, label) != NULL)fprintf(stream, " ! %s", label);
@@ -1304,38 +784,236 @@ void BoundsUpdateWrapup(int file_type){
   sorted_filenames = GetSortedFilenames(file_type);
   BoundsGlobalBounds2Gbnd(file_type);
 
-  for(i = 0;i < ninfo;i++){
+  for(i = 0; i < ninfo; i++){
     globalboundsdata *fi;
     char **key_index, *reg_file;
     int index;
 
     reg_file = GetRegFile(file_type, i);
-    key_index = (char **)bsearch((char *)&reg_file, sorted_filenames, ninfo, sizeof(char *), CompareBoundFileName);
+    key_index = ( char ** )bsearch(( char * )&reg_file, sorted_filenames, ninfo, sizeof(char *), CompareBoundFileName);
     if(key_index == NULL)continue;
-    index = (int)(key_index - sorted_filenames);
-    if(index<0 || index>nsliceinfo - 1)continue;
+    index = ( int )(key_index - sorted_filenames);
+    if(index<0 || index>global_scase.slicecoll.nsliceinfo - 1)continue;
     fi = globalboundsinfo + index;
     if(fi->defined == 0)continue;
     if(file_type == BOUND_SLICE){
       slicedata *slicei;
 
-      slicei = sliceinfo + i;
+      slicei = global_scase.slicecoll.sliceinfo + i;
       slicei->valmin_slice = fi->valmins[0];
       slicei->valmax_slice = fi->valmaxs[0];
     }
-    else if(file_type==BOUND_PATCH){
+    else if(file_type == BOUND_PATCH){
       patchdata *patchi;
 
-      patchi = patchinfo + i;
+      patchi = global_scase.patchinfo + i;
       patchi->valmin_patch = fi->valmins[0];
       patchi->valmax_patch = fi->valmaxs[0];
     }
-    else if(file_type==BOUND_PLOT3D){
+    else if(file_type == BOUND_PLOT3D){
       plot3ddata *plot3di;
 
-      plot3di = plot3dinfo + i;
+      plot3di = global_scase.plot3dinfo + i;
       memcpy(plot3di->valmin_plot3d, fi->valmins, plot3di->nplot3dvars * sizeof(float));
       memcpy(plot3di->valmax_plot3d, fi->valmaxs, plot3di->nplot3dvars * sizeof(float));
+    }
+  }
+}
+
+/* ------------------ SaveSortedFilenames ------------------------ */
+
+void SaveSortedFilenames(int file_type, char **sorted_filenames){
+  ASSERT_BOUND_TYPE;
+  if(file_type == BOUND_SLICE){
+    sorted_slice_filenames = sorted_filenames;
+  }
+  else if(file_type == BOUND_PATCH){
+    sorted_patch_filenames = sorted_filenames;
+  }
+  else if(file_type == BOUND_PLOT3D){
+    sorted_plot3d_filenames = sorted_filenames;
+  }
+}
+
+/* ------------------ SaveGlobalBoundsinfo ------------------------ */
+
+void SaveGlobalBoundsinfo(int file_type, globalboundsdata *globalboundsinfo){
+  ASSERT_BOUND_TYPE;
+  if(file_type == BOUND_SLICE){
+    sliceglobalboundsinfo = globalboundsinfo;
+  }
+  else if(file_type == BOUND_PATCH){
+    patchglobalboundsinfo = globalboundsinfo;
+  }
+  else if(file_type == BOUND_PLOT3D){
+    plot3dglobalboundsinfo = globalboundsinfo;
+  }
+}
+
+/* ------------------ DefineGbndFilename ------------------------ */
+
+void DefineGbndFilename(int file_type){
+  ASSERT_BOUND_TYPE;
+  if(file_type == BOUND_SLICE){
+    if(slice_gbnd_filename == NULL){
+      NewMemory(( void ** )&slice_gbnd_filename, strlen(global_scase.fdsprefix) + strlen(".sf.gbnd") + 1);
+      strcpy(slice_gbnd_filename, global_scase.fdsprefix);
+      strcat(slice_gbnd_filename, ".sf.gbnd");
+    }
+  }
+  else if(file_type == BOUND_PATCH){
+    if(patch_gbnd_filename == NULL){
+      NewMemory(( void ** )&patch_gbnd_filename, strlen(global_scase.fdsprefix) + strlen(".bf.gbnd") + 1);
+      strcpy(patch_gbnd_filename, global_scase.fdsprefix);
+      strcat(patch_gbnd_filename, ".bf.gbnd");
+    }
+  }
+  else if(file_type == BOUND_PLOT3D){
+    if(plot3d_gbnd_filename == NULL){
+      NewMemory(( void ** )&plot3d_gbnd_filename, strlen(global_scase.fdsprefix) + strlen(".q.gbnd") + 1);
+      strcpy(plot3d_gbnd_filename, global_scase.fdsprefix);
+      strcat(plot3d_gbnd_filename, ".q.gbnd");
+    }
+  }
+}
+
+/* ------------------ GetBoundFile ------------------------ */
+
+char *GetBoundFile(int file_type, int i){
+  char *bound_file = NULL;
+
+  ASSERT_BOUND_TYPE;
+  if(file_type == BOUND_SLICE){
+    bound_file = global_scase.slicecoll.sliceinfo[i].bound_file;
+  }
+  else if(file_type == BOUND_PATCH){
+    bound_file = global_scase.patchinfo[i].bound_file;
+  }
+  else if(file_type == BOUND_PLOT3D){
+    bound_file = global_scase.plot3dinfo[i].bound_file;
+  }
+  return bound_file;
+}
+
+/* ------------------ BoundsBnd2Gbnd ------------------------ */
+
+int BoundsBnd2Gbnd(int file_type){
+  int i, ninfo;
+  FILE *stream = NULL;
+
+  ninfo = GetNinfo(file_type);
+  for(i = 0; i < ninfo; i++){
+    float valmins[MAXPLOT3DVARS], valmaxs[MAXPLOT3DVARS];
+    char *reg_file, *bound_file;
+    int nbounds;
+
+    reg_file = GetRegFile(file_type, i);
+    bound_file = GetBoundFile(file_type, i);
+    nbounds = GetNBounds(file_type);
+    if(GetFileBounds(bound_file, nbounds, valmins, valmaxs) == 1){
+      char label[256];
+      int j;
+
+      if(stream == NULL){
+        stream = FopenGbndFile(file_type, "w");
+        if(stream == NULL)return 0;
+      }
+      fprintf(stream, "%s ", reg_file);
+      for(j = 0; j < nbounds; j++){
+        fprintf(stream, " %g %g ", valmins[j], valmaxs[j]);
+      }
+      if(GetBoundLabel(file_type, i, label) != NULL)fprintf(stream, "! %s", label);
+      fprintf(stream, "\n");
+    }
+  }
+  if(stream != NULL)fclose(stream);
+  return 1;
+}
+
+/* ------------------ BoundsUpdateSetup ------------------------ */
+
+void BoundsUpdateSetup(int file_type){
+  int i;
+  FILE *stream = NULL;
+
+  int ninfo;
+  globalboundsdata *globalboundsinfo;
+  char **sorted_filenames;
+
+  ninfo = GetNinfo(file_type);
+  if(file_type == BOUND_PLOT3D){
+    FREEMEMORY(plot3dglobalboundsinfo);
+    FREEMEMORY(sorted_plot3d_filenames);
+    globalboundsinfo = NULL;
+    sorted_filenames = NULL;
+  }
+  else{
+    globalboundsinfo = GetGlobalBoundsinfo(file_type);
+    sorted_filenames = GetSortedFilenames(file_type);
+  }
+
+  if(sorted_filenames == NULL){
+    NewMemory(( void ** )&sorted_filenames, ninfo * sizeof(char *));
+    for(i = 0; i < ninfo; i++){
+      sorted_filenames[i] = GetRegFile(file_type, i);
+    }
+    qsort(( char * )sorted_filenames, ninfo, sizeof(char *), CompareBoundFileName);
+    SaveSortedFilenames(file_type, sorted_filenames);
+  }
+  if(globalboundsinfo == NULL){
+    NewMemory(( void ** )&globalboundsinfo, ninfo * sizeof(globalboundsdata));
+    for(i = 0; i < ninfo; i++){
+      globalboundsinfo[i].file = sorted_filenames[i];
+      globalboundsinfo[i].defined = 0;
+    }
+    SaveGlobalBoundsinfo(file_type, globalboundsinfo);
+  }
+  DefineGbndFilename(file_type);
+  if(no_bounds == 0 || force_bounds == 1)BoundsBnd2Gbnd(file_type);
+  stream = FopenGbndFile(file_type, "r");
+  if(stream != NULL){
+    for(;;){
+      char buffer[255], file[255], *fileptr, **key_index;
+      float valmins[MAXPLOT3DVARS], valmaxs[MAXPLOT3DVARS];
+      globalboundsdata *fi;
+
+      if(fgets(buffer, 255, stream) == NULL)break;
+      if(file_type == BOUND_PLOT3D){
+        sscanf(buffer, "%s %f %f %f %f %f %f %f %f %f %f %f %f ", file,
+          valmins + 0, valmaxs + 0,
+          valmins + 1, valmaxs + 1,
+          valmins + 2, valmaxs + 2,
+          valmins + 3, valmaxs + 3,
+          valmins + 4, valmaxs + 4,
+          valmins + 5, valmaxs + 5
+        );
+      }
+      else{
+        sscanf(buffer, "%s %f %f ", file, valmins + 0, valmaxs + 0);
+      }
+      fileptr = TrimFrontBack(file);
+      key_index = ( char ** )bsearch(( char * )&fileptr, sorted_filenames, ninfo, sizeof(char *), CompareBoundFileName);
+      if(key_index != NULL){
+        int index;
+
+        index = ( int )(key_index - sorted_filenames);
+        fi = globalboundsinfo + index;
+        fi->nbounds = 1;
+        if(file_type == BOUND_PLOT3D){
+          fi->nbounds = 5;
+          if(global_scase.plot3dinfo != NULL)fi->nbounds = global_scase.plot3dinfo->nplot3dvars;
+        }
+        memcpy(fi->valmins, valmins, fi->nbounds * sizeof(float));
+        memcpy(fi->valmaxs, valmaxs, fi->nbounds * sizeof(float));
+        memcpy(fi->valmins_save, valmins, fi->nbounds * sizeof(float));
+        memcpy(fi->valmaxs_save, valmaxs, fi->nbounds * sizeof(float));
+        fi->defined = 1;
+      }
+    }
+    fclose(stream);
+    // RmGbndFile(file_type);
+    if(no_bounds == 1 && force_bounds == 0){
+      assert(FFALSE); // global bounds file shouldn't exist if the no_bounds option was set
     }
   }
 }
@@ -1354,15 +1032,15 @@ void BoundsUpdate(int file_type){
     strcat(label2, "SLICE");
     strcat(label3, "SLICE");
 #ifdef pp_BOUND_DEBUG
-    printf("BoundsUpdate(SLICE)\n");
+    fprintf(stderr, "BoundsUpdate(SLICE)\n");
 #endif
   }
-  else if(file_type==BOUND_PATCH){
+  else if(file_type == BOUND_PATCH){
     strcat(label1, "PATCH");
     strcat(label2, "PATCH");
     strcat(label3, "PATCH");
 #ifdef pp_BOUND_DEBUG
-    printf("BoundsUpdate(PATCH)\n");
+    fprintf(stderr, "BoundsUpdate(PATCH)\n");
 #endif
   }
   else if(file_type == BOUND_PLOT3D){
@@ -1370,7 +1048,7 @@ void BoundsUpdate(int file_type){
     strcat(label2, "PLOT3D");
     strcat(label3, "PLOT3D");
 #ifdef pp_BOUND_DEBUG
-    printf("BoundsUpdate(PLOT3D)\n");
+    fprintf(stderr, "BoundsUpdate(PLOT3D)\n");
 #endif
   }
   INIT_PRINT_TIMER(bound_setup);
@@ -1384,13 +1062,348 @@ void BoundsUpdate(int file_type){
   PRINT_TIMER(bound_wrapup, label3);
 }
 
+/* ------------------ GetGlobalPatchBounds ------------------------ */
+
+void GetGlobalPatchBounds(int flag, int set_flag, char *label){
+  int i;
+
+  if(global_scase.npatchinfo==0)return;
+  if(no_bounds == 1 && force_bounds==0)flag = 0;
+  for(i = 0; i < npatchbounds; i++){
+    boundsdata *boundi;
+
+    boundi = patchbounds + i;
+    boundi->dlg_global_valmin = 1.0;
+    boundi->dlg_global_valmax = 0.0;
+  }
+  if(flag==1)BoundsUpdate(BOUND_PATCH);
+  for(i = 0; i < global_scase.npatchinfo; i++){
+    patchdata *patchi;
+    float valmin, valmax;
+    boundsdata *boundi;
+    int doit;
+
+    patchi = global_scase.patchinfo + i;
+
+    doit = 0;
+    if(patchi->valmin_patch > patchi->valmax_patch ||
+      current_script_command == NULL || NOT_LOADRENDER)doit = 1;
+    if(flag == 0){
+      doit = 0;
+      patchi->valmin_patch = 0.0;
+      patchi->valmax_patch = 1.0;
+    }
+    if(force_bound_update == 1)doit = 1;
+    if(label != NULL && strcmp(patchi->label.shortlabel, label) != 0)doit = 0;
+    if(doit==1){
+      BoundsGet(patchi->reg_file, patchglobalboundsinfo, sorted_patch_filenames, global_scase.npatchinfo, 1, &valmin, &valmax);
+      if(valmin > valmax)continue;
+      patchi->valmin_patch = valmin;
+      patchi->valmax_patch = valmax;
+      patch_bounds_defined = 1;
+    }
+    else{
+      valmin = patchi->valmin_patch;
+      valmax = patchi->valmax_patch;
+    }
+    boundi = GetPatchBoundsInfo(patchi->label.shortlabel);
+    if(boundi == NULL)continue;
+    if(boundi->dlg_global_valmin > boundi->dlg_global_valmax){
+      boundi->dlg_global_valmin = valmin;
+      boundi->dlg_global_valmax = valmax;
+    }
+    else{
+      boundi->dlg_global_valmin = MIN(boundi->dlg_global_valmin, valmin);
+      boundi->dlg_global_valmax = MAX(boundi->dlg_global_valmax, valmax);
+    }
+  }
+  for(i = 0; i < npatchbounds; i++){
+    boundsdata *boundi;
+    int j;
+
+    boundi = patchbounds + i;
+    if(label != NULL && strcmp(boundi->label->shortlabel, label) != 0)continue;
+    boundi->dlg_valmin = boundi->dlg_global_valmin;
+    boundi->dlg_valmax = boundi->dlg_global_valmax;
+    for(j = 0; j < global_scase.npatchinfo; j++){
+      patchdata *patchj;
+
+      patchj = global_scase.patchinfo + j;
+      if(strcmp(patchj->label.shortlabel, boundi->shortlabel) == 0){
+        patchj->valmin_glui = boundi->dlg_global_valmin;
+        patchj->valmax_glui = boundi->dlg_global_valmax;
+      }
+    }
+  }
+
+  npatchbounds_cpp = npatchbounds;
+  if(npatchbounds_cpp>0){
+    if(patchbounds_cpp == NULL){
+      NewMemory((void **)&patchbounds_cpp, npatchbounds_cpp * sizeof(cpp_boundsdata));
+    }
+    for(i = 0; i<npatchbounds_cpp; i++){
+      cpp_boundsdata *boundscppi;
+      boundsdata *boundi;
+
+      boundscppi = patchbounds_cpp+i;
+      boundi = patchbounds+i;
+      if(label != NULL && strcmp(boundi->label->shortlabel, label) != 0)continue;
+      strcpy(boundscppi->label, boundi->shortlabel);
+      strcpy(boundscppi->unit, boundi->label->unit);
+
+      boundscppi->cache = cache_boundary_data;
+      boundscppi->set_valtype = 0;
+
+      if(set_flag==1)boundscppi->set_valmin = 0;
+      boundscppi->valmin[BOUND_SET_MIN]        = boundi->dlg_global_valmin;
+      boundscppi->valmin[BOUND_LOADED_MIN]     = boundi->dlg_global_valmin;
+      boundscppi->valmin[BOUND_GLOBAL_MIN]     = boundi->dlg_global_valmin;
+      boundscppi->valmin[BOUND_PERCENTILE_MIN] = boundi->dlg_global_valmin;
+
+      boundscppi->valmax[BOUND_SET_MAX]        = boundi->dlg_global_valmax;
+      boundscppi->valmax[BOUND_LOADED_MAX]     = boundi->dlg_global_valmax;
+      boundscppi->valmax[BOUND_GLOBAL_MAX]     = boundi->dlg_global_valmax;
+      boundscppi->valmax[BOUND_PERCENTILE_MAX] = boundi->dlg_global_valmax;
+
+      if(bound_patch_init == 1){
+        boundscppi->set_chopmin = 0;
+        boundscppi->set_chopmax = 0;
+        boundscppi->chopmin     = 0.0;
+        boundscppi->chopmax     = 0.0;
+      }
+
+      if(set_flag==1)boundscppi->set_valmax = 0;
+      boundscppi->hist = NULL;
+    }
+  }
+  bound_patch_init = 0;
+}
+
+/* ------------------ GetGlobalPatchBoundsFull ------------------------ */
+
+void *GetGlobalPatchBoundsFull(void *arg){
+  THREADcontrol(patchbound_threads, THREAD_LOCK);
+  GetGlobalPatchBounds(1,SET_MINMAX_FLAG,NULL);
+  THREADcontrol(patchbound_threads, THREAD_UNLOCK);
+  THREAD_EXIT(patchbound_threads);
+}
+
+/* ------------------ GetGlobalPatchBoundsReduced ------------------------ */
+
+void GetGlobalPatchBoundsReduced(void){
+  GetGlobalPatchBounds(0,SET_MINMAX_FLAG,NULL);
+}
+
+/* ------------------ GetPlot3DFileBounds ------------------------ */
+
+int GetPlot3DFileBounds(char *file, float *valmin, float *valmax){
+  FILE *stream;
+  int i, compute_bounds = 0;
+  char buffer[255];
+
+  for(i = 0; i<MAXPLOT3DVARS; i++){
+    if(valmin[i]>valmax[i]){
+      compute_bounds = 1;
+      break;
+    }
+  }
+  if(compute_bounds==0)return 1;
+  if(file==NULL||strlen(file)==0)return 0;
+  stream = FOPEN_2DIR(file, "r");
+  if(stream==NULL)return 0;
+
+  CheckMemory;
+
+  for(i = 0; i<MAXPLOT3DVARS; i++){
+    if(fgets(buffer, 255, stream)==NULL)break;
+    sscanf(buffer, "%f %f", valmin+i, valmax+i);
+  }
+  fclose(stream);
+  return 1;
+}
+
+/* ------------------ GetGlobalPlot3DBounds ------------------------ */
+
+void GetGlobalPlot3DBounds(void){
+  int i;
+
+  if(global_scase.nplot3dinfo <= 0)return;
+  if(no_bounds==0 || force_bounds==1)BoundsUpdate(BOUND_PLOT3D);
+  for(i = 0; i<global_scase.nplot3dinfo; i++){
+    plot3ddata *plot3di;
+
+    plot3di = global_scase.plot3dinfo+i;
+    plot3di->have_bound_file = BoundsGet(plot3di->reg_file, plot3dglobalboundsinfo, sorted_plot3d_filenames, global_scase.nplot3dinfo, plot3di->nplot3dvars, plot3di->valmin_plot3d, plot3di->valmax_plot3d);
+  }
+  for(i = 0; i<MAXPLOT3DVARS; i++){
+    p3min_all[i] = 1.0;
+    p3max_all[i] = 0.0;
+  }
+  for(i = 0; i<global_scase.nplot3dinfo; i++){
+    plot3ddata *plot3di;
+    int j;
+    float *valmin_fds, *valmax_fds;
+
+    plot3di = global_scase.plot3dinfo+i;
+    if(plot3di->have_bound_file == 0)continue;
+    valmin_fds = plot3di->valmin_plot3d;
+    valmax_fds = plot3di->valmax_plot3d;
+    for(j = 0; j<MAXPLOT3DVARS; j++){
+      if(valmin_fds[j]<=valmax_fds[j]){
+        if(p3min_all[j]>p3max_all[j]){
+          p3min_all[j] = valmin_fds[j];
+          p3max_all[j] = valmax_fds[j];
+        }
+        else{
+          p3min_all[j] = MIN(valmin_fds[j], p3min_all[j]);
+          p3max_all[j] = MAX(valmax_fds[j], p3max_all[j]);
+        }
+      }
+    }
+  }
+  for(i = 0; i<MAXPLOT3DVARS; i++){
+    p3min_global[i] = p3min_all[i];
+    p3max_global[i] = p3max_all[i];
+  }
+
+  nplot3dbounds_cpp = 0;
+  if(global_scase.nplot3dinfo>0&&plot3dbounds_cpp==NULL){ // only initialize once
+    nplot3dbounds_cpp = global_scase.plot3dinfo[0].nplot3dvars;
+    NewMemory((void **)&plot3dbounds_cpp, nplot3dbounds_cpp*sizeof(cpp_boundsdata));
+    for(i = 0; i<nplot3dbounds_cpp; i++){
+      cpp_boundsdata *boundscppi;
+
+      boundscppi = plot3dbounds_cpp+i;
+      strcpy(boundscppi->label, global_scase.plot3dinfo->label[i].shortlabel);
+      strcpy(boundscppi->unit, global_scase.plot3dinfo->label[i].unit);
+
+      boundscppi->cache = cache_plot3d_data;
+      boundscppi->set_valtype = 0;
+
+      boundscppi->set_valmin = 0;
+      boundscppi->valmin[BOUND_SET_MIN]        = p3min_global[i];
+      boundscppi->valmin[BOUND_LOADED_MIN]     = p3min_global[i];
+      boundscppi->valmin[BOUND_GLOBAL_MIN]     = p3min_global[i];
+      boundscppi->valmin[BOUND_PERCENTILE_MIN] = p3min_global[i];
+
+      boundscppi->set_valmax = 0;
+      boundscppi->valmax[BOUND_SET_MAX]        = p3max_global[i];
+      boundscppi->valmax[BOUND_LOADED_MAX]     = p3max_global[i];
+      boundscppi->valmax[BOUND_GLOBAL_MAX]     = p3max_global[i];
+      boundscppi->valmax[BOUND_PERCENTILE_MAX] = p3max_global[i];
+
+      boundscppi->set_chopmin = 0;
+      boundscppi->set_chopmax = 0;
+      boundscppi->chopmin = p3max_global[0];
+      boundscppi->chopmax = p3max_global[0];
+    }
+  }
+  GLUISetGlobalMinMaxAll(BOUND_PLOT3D, p3min_global, p3max_global, global_scase.plot3dinfo->nplot3dvars);
+}
+
+/* ------------------ GetLoadedPlot3dBounds ------------------------ */
+
+void GetLoadedPlot3dBounds(int *compute_loaded, float *loaded_min, float *loaded_max){
+  int i;
+  int plot3d_loaded = 0;
+
+#define BOUNDS_LOADED 1
+  for(i = 0; i<global_scase.nplot3dinfo; i++){
+    plot3ddata *plot3di;
+
+    plot3di = global_scase.plot3dinfo+i;
+    if(plot3di->loaded==0)continue;
+    plot3d_loaded = 1;
+    break;
+  }
+  if(plot3d_loaded==0){
+    printf("***loaded plot3d bounds not available, using global bounds\n");
+    for(i = 0; i< MAXPLOT3DVARS; i++){
+      loaded_min[i] = p3min_global[i];
+      loaded_max[i] = p3max_global[i];
+    }
+    return;
+  }
+  for(i = 0; i< MAXPLOT3DVARS; i++){
+    if(compute_loaded!=NULL&&compute_loaded[i]!=BOUNDS_LOADED)continue;
+    loaded_min[i] = 1.0;
+    loaded_max[i] = 0.0;
+  }
+  for(i = 0; i<global_scase.nplot3dinfo; i++){
+    plot3ddata *plot3di;
+    int j;
+
+    plot3di = global_scase.plot3dinfo+i;
+    if(plot3di->loaded==0)continue;
+    for(j = 0; j< MAXPLOT3DVARS; j++){
+      if(compute_loaded!=NULL&&compute_loaded[j]!=BOUNDS_LOADED)continue;
+      if(loaded_min[j]>loaded_max[j]){
+        loaded_min[j] = plot3di->valmin_plot3d[j];
+        loaded_max[j] = plot3di->valmax_plot3d[j];
+      }
+      else{
+        loaded_min[j] = MIN(plot3di->valmin_plot3d[j], loaded_min[j]);
+        loaded_max[j] = MAX(plot3di->valmax_plot3d[j], loaded_max[j]);
+      }
+    }
+  }
+}
+
+/* ------------------ RmGbndFile ------------------------ */
+
+void RmGbndFile(int file_type){
+
+  ASSERT_BOUND_TYPE;
+  if(file_type == BOUND_SLICE){
+    UNLINK(slice_gbnd_filename);
+  }
+  else if(file_type==BOUND_PATCH){
+    UNLINK(patch_gbnd_filename);
+  }
+  else if(file_type == BOUND_PLOT3D){
+    UNLINK(plot3d_gbnd_filename);
+  }
+}
+
+/* ------------------ GetGbndFilename ------------------------ */
+
+char *GetGbndFilename(int file_type){
+  char *filename=NULL;
+
+  ASSERT_BOUND_TYPE;
+  if(file_type == BOUND_SLICE){
+    filename = slice_gbnd_filename;
+  }
+  else if(file_type==BOUND_PATCH){
+    filename = patch_gbnd_filename;\
+  }
+  else if(file_type == BOUND_PLOT3D){
+    filename = plot3d_gbnd_filename;\
+  }
+  return filename;
+}
+
+/* ------------------ GetSliceBoundsInfo ------------------------ */
+
+boundsdata *GetSliceBoundsInfo(char *shortlabel){
+  int i;
+
+  for(i = 0; i < nslicebounds; i++){
+    boundsdata *boundi;
+
+    boundi = slicebounds + i;
+    if(strcmp(boundi->shortlabel, shortlabel) == 0)return boundi;
+  }
+  return NULL;
+}
+
 /* ------------------ GetGlobalSliceBounds ------------------------ */
 
-void GetGlobalSliceBounds(int flag, int set_flag){
+void GetGlobalSliceBounds(int flag, int set_flag, char *label){
   int i;
 
   if(no_bounds == 1 && force_bounds==0)flag = 0;
-  if(nsliceinfo==0)return;
+  if(global_scase.slicecoll.nsliceinfo==0)return;
   for(i = 0;i<nslicebounds;i++){
     boundsdata *boundi;
 
@@ -1400,13 +1413,14 @@ void GetGlobalSliceBounds(int flag, int set_flag){
   }
   if(no_bounds==0 || force_bounds==1)BoundsUpdate(BOUND_SLICE);
   INIT_PRINT_TIMER(slicebounds_timer);
-  for(i = 0;i<nsliceinfo;i++){
+  for(i = 0;i<global_scase.slicecoll.nsliceinfo;i++){
     slicedata *slicei;
     float valmin, valmax;
     boundsdata *boundi;
     int doit;
 
-    slicei = sliceinfo+i;
+    slicei = global_scase.slicecoll.sliceinfo+i;
+    if(label != NULL && strcmp(slicei->label.shortlabel, label) != 0)continue;
     if(slicei->valmin_slice>slicei->valmax_slice ||
        current_script_command==NULL || NOT_LOADRENDER)doit=1;
     if(flag==0){
@@ -1414,10 +1428,10 @@ void GetGlobalSliceBounds(int flag, int set_flag){
        slicei->valmin_slice = 0.0;
        slicei->valmax_slice = 1.0;
     }
-    if(force_bound_update == 1||nzoneinfo>0)doit = 1;
+    if(force_bound_update == 1||global_scase.nzoneinfo>0)doit = 1;
 
     if(doit==1){
-      BoundsGet(slicei->reg_file, sliceglobalboundsinfo, sorted_slice_filenames, nsliceinfo, 1, &valmin, &valmax);
+      BoundsGet(slicei->reg_file, sliceglobalboundsinfo, sorted_slice_filenames, global_scase.slicecoll.nsliceinfo, 1, &valmin, &valmax);
       if(valmin>valmax)continue;
       slicei->valmin_slice = valmin;
       slicei->valmax_slice = valmax;
@@ -1442,6 +1456,7 @@ void GetGlobalSliceBounds(int flag, int set_flag){
     boundsdata *boundi;
 
     boundi = slicebounds+i;
+    if(label!=NULL&&strcmp(boundi->label->shortlabel, label) != 0)continue;
     boundi->dlg_valmin = boundi->dlg_global_valmin;
     boundi->dlg_valmax = boundi->dlg_global_valmax;
   }
@@ -1456,6 +1471,7 @@ void GetGlobalSliceBounds(int flag, int set_flag){
 
       boundscppi = slicebounds_cpp + i;
       boundi     = slicebounds + i;
+      if(label != NULL && strcmp(boundi->label->shortlabel, label) != 0)continue;
       strcpy(boundscppi->label, boundi->shortlabel);
       strcpy(boundscppi->unit, boundi->label->unit);
 
@@ -1476,7 +1492,6 @@ void GetGlobalSliceBounds(int flag, int set_flag){
       boundscppi->hist = NULL;
 
       if(bound_slice_init == 1){
-        boundscppi->chop_hide = 0;
         boundscppi->set_chopmin = 0;
         boundscppi->set_chopmax = 0;
         boundscppi->chopmin = 0.0;
@@ -1492,7 +1507,7 @@ void GetGlobalSliceBounds(int flag, int set_flag){
 
 void *GetGlobalSliceBoundsFull(void *arg){
   THREADcontrol(slicebound_threads, THREAD_LOCK);
-  GetGlobalSliceBounds(1,SET_MINMAX_FLAG);
+  GetGlobalSliceBounds(1,SET_MINMAX_FLAG,NULL);
   THREADcontrol(slicebound_threads, THREAD_UNLOCK);
   THREAD_EXIT(slicebound_threads);
 }
@@ -1500,7 +1515,7 @@ void *GetGlobalSliceBoundsFull(void *arg){
 /* ------------------ GetGlobalSliceBoundsReduced ------------------------ */
 
 void GetGlobalSliceBoundsReduced(void){
-  GetGlobalSliceBounds(0,SET_MINMAX_FLAG);
+  GetGlobalSliceBounds(0,SET_MINMAX_FLAG,NULL);
 }
 
 /* ------------------ GetHVACDuctBounds ------------------------ */
@@ -1511,10 +1526,10 @@ void GetHVACDuctBounds(char *shortlabel, float *valminptr, float *valmaxptr){
 
   *valminptr = 1.0;
   *valmaxptr = 0.0;
-  for(i=0;i< hvacductvalsinfo->n_duct_vars;i++){
+  for(i=0;i< global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars;i++){
     hvacvaldata *hi;
 
-    hi = hvacductvalsinfo->duct_vars + i;
+    hi = global_scase.hvaccoll.hvacductvalsinfo->duct_vars + i;
     if(strcmp(shortlabel, hi->label.shortlabel)!=0)continue;
     if(valmin<valmax){
       valmin = MIN(valmin,hi->valmin);
@@ -1537,10 +1552,10 @@ void GetHVACNodeBounds(char *shortlabel, float *valminptr, float *valmaxptr){
 
   *valminptr = 1.0;
   *valmaxptr = 0.0;
-  for(i = 0;i < hvacnodevalsinfo->n_node_vars;i++){
+  for(i = 0;i < global_scase.hvaccoll.hvacnodevalsinfo->n_node_vars;i++){
     hvacvaldata *hi;
 
-    hi = hvacnodevalsinfo->node_vars + i;
+    hi = global_scase.hvaccoll.hvacnodevalsinfo->node_vars + i;
     if(strcmp(shortlabel, hi->label.shortlabel) != 0)continue;
     if(valmin < valmax){
       valmin = MIN(valmin, hi->valmin);
@@ -1562,7 +1577,7 @@ void GetGlobalHVACDuctBounds(int flag){
 
   if(no_bounds == 1 && force_bounds==0)flag = 0;
   int nhvacboundsmax = 0;
-  if(hvacductvalsinfo != NULL)nhvacboundsmax = hvacductvalsinfo->n_duct_vars;
+  if(global_scase.hvaccoll.hvacductvalsinfo != NULL)nhvacboundsmax = global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars;
   if(nhvacboundsmax == 0)return;
   if(flag==0)ReadHVACData(BOUNDS_ONLY);
   for(i = 0;i < nhvacductbounds;i++){
@@ -1623,7 +1638,7 @@ void GetGlobalHVACNodeBounds(int flag){
 
   if(no_bounds == 1 && force_bounds==0)flag = 0;
   int nhvacboundsmax = 0;
-  if(hvacnodevalsinfo != NULL)nhvacboundsmax = hvacnodevalsinfo->n_duct_vars + hvacnodevalsinfo->n_node_vars;
+  if(global_scase.hvaccoll.hvacnodevalsinfo != NULL)nhvacboundsmax = global_scase.hvaccoll.hvacnodevalsinfo->n_duct_vars + global_scase.hvaccoll.hvacnodevalsinfo->n_node_vars;
   if(nhvacboundsmax == 0)return;
   if(flag == 0)ReadHVACData(BOUNDS_ONLY);
   for(i = 0;i < nhvacnodebounds;i++){
@@ -1675,20 +1690,6 @@ void GetGlobalHVACNodeBounds(int flag){
     }
   }
   bound_hvacnode_init = 0;
-}
-
-/* ------------------ GetSliceBoundsInfo ------------------------ */
-
-boundsdata *GetSliceBoundsInfo(char *shortlabel){
-  int i;
-
-  for(i = 0; i<nslicebounds; i++){
-    boundsdata *boundi;
-
-    boundi = slicebounds+i;
-    if(strcmp(boundi->shortlabel, shortlabel)==0)return boundi;
-  }
-  return NULL;
 }
 
 /* ------------------ AdjustPart5Chops ------------------------ */
@@ -1770,7 +1771,7 @@ int ReadPartBounds(partdata *parti,int read_bounds_arg){
 
   if(read_bounds_arg==1){
     parti->bounds_set = 1;
-    fclose(stream);
+    if(stream!=NULL)fclose(stream);
     return 0;
   }
 
@@ -1837,11 +1838,11 @@ void MergeAllPartBounds(void){
 
   // find min/max over all particle files
 
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<global_scase.npartinfo; i++){
     partdata *parti;
     int j;
 
-    parti = partinfo+i;
+    parti = global_scase.partinfo+i;
     if(parti->bounds_set==0)continue;
     for(j = 0; j<npart5prop; j++){
       partpropdata *propj;
@@ -1858,7 +1859,7 @@ void MergeAllPartBounds(void){
     stream = FOPEN_2DIR(part_globalbound_filename, "w");
     if(stream!=NULL){
       global_have_global_bound_file = 1;
-      global_part_boundsize = GetFileSizeSMV(partinfo->bound_file);
+      global_part_boundsize = GetFileSizeSMV(global_scase.partinfo->bound_file);
       fprintf(stream,"%i %i\n",npart5prop,(int)global_part_boundsize);
       for(i=0;i<npart5prop;i++){
         partpropdata *propi;
@@ -1885,10 +1886,10 @@ void PrintPartLoadSummary(int option_arg,int type_arg){
   int j;
 
   nsize_local = 0;
-  for(j = 0; j<npartinfo; j++){
+  for(j = 0; j<global_scase.npartinfo; j++){
     partdata *partj;
 
-    partj = partinfo+j;
+    partj = global_scase.partinfo+j;
     if(type_arg==PART_SIZING&&partj->boundstatus==PART_BOUND_COMPUTING)nsize_local++;
     if(type_arg==PART_LOADING&&partj->loadstatus==FILE_LOADING)nsize_local++;
   }
@@ -1897,11 +1898,11 @@ void PrintPartLoadSummary(int option_arg,int type_arg){
 
     if(type_arg==PART_LOADING)printf("loading: ");
     isize_local = 0;
-    for(j = 0; j<npartinfo; j++){
+    for(j = 0; j<global_scase.npartinfo; j++){
       partdata *partj;
       int doit;
 
-      partj = partinfo+j;
+      partj = global_scase.partinfo+j;
       doit = 0;
       if(type_arg==PART_LOADING&&partj->loadstatus==FILE_LOADING)doit = 1;
       if(doit==1){
@@ -1930,7 +1931,7 @@ void GetAllPartBounds(void){
 
   // find min/max for each particle file
 
-  if(global_part_boundsize==0)global_part_boundsize = GetFileSizeSMV(partinfo->bound_file);
+  if(global_part_boundsize==0)global_part_boundsize = GetFileSizeSMV(global_scase.partinfo->bound_file);
 
   stream = FOPEN_2DIR(part_globalbound_filename, "r");
   if(stream!=NULL){
@@ -1952,9 +1953,9 @@ void GetAllPartBounds(void){
         propi->dlg_global_valmax = valmax;
       }
       fclose(stream);
-      for(i = 0; i<npartinfo; i++){
+      for(i = 0; i<global_scase.npartinfo; i++){
         partdata *parti;
-        parti              = partinfo+i;
+        parti              = global_scase.partinfo+i;
         parti->boundstatus = PART_BOUND_DEFINED;
         parti->bounds_set  = 1;
       }
@@ -1972,10 +1973,10 @@ void GetAllPartBounds(void){
   }
   THREADcontrol(partload_threads, THREAD_UNLOCK);
 
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<global_scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo+i;
+    parti = global_scase.partinfo+i;
     THREADcontrol(partload_threads, THREAD_LOCK);
     if(parti->boundstatus!=PART_BOUND_UNDEFINED){
       THREADcontrol(partload_threads, THREAD_UNLOCK);

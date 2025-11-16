@@ -5,7 +5,7 @@
 #include <math.h>
 #include <string.h>
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <windows.h>
 #endif
 #include GLU_H
@@ -17,8 +17,10 @@
 
 #include "readobject.h"
 #include "readgeom.h"
+#include "readsmvfile.h"
 
 static float *cos_long = NULL, *sin_long = NULL, *cos_lat = NULL, *sin_lat = NULL;
+static float *sphere_coords = NULL;
 static float specular[4] = {0.4,0.4,0.4,1.0};
 unsigned char *rgbimage = NULL;
 int rgbsize = 0;
@@ -37,6 +39,43 @@ int rgbsize = 0;
     return devicei->val;\
   }
 
+/* ----------------------- DrawSphereArray ----------------------------- */
+
+void DrawSphereArray(void){
+  int i;
+  unsigned char sphere_rgb_local[3];
+
+  sphere_rgb_local[0] = (unsigned char)sphere_rgb[0];
+  sphere_rgb_local[1] = (unsigned char)sphere_rgb[1];
+  sphere_rgb_local[2] = (unsigned char)sphere_rgb[2];
+
+  glPushMatrix();
+  glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
+  glTranslatef(-global_scase.xbar0,-global_scase.ybar0,-global_scase.zbar0);
+  for(i = 0;i < sphere_nxyz[0];i++){
+    int j;
+    float x;
+
+    x = sphere_xyz0[0] + i * sphere_dxyz[0];
+    for(j = 0;j < sphere_nxyz[1];j++){
+      int k;
+      float y;
+
+      y = sphere_xyz0[1] + j * sphere_dxyz[1];
+      for(k = 0;k < sphere_nxyz[2];k++){
+        float z;
+
+        z = sphere_xyz0[2] + k * sphere_dxyz[2];
+        glPushMatrix();
+        glTranslatef(x,y,z);
+        DrawSphere(sphere_diameter, sphere_rgb_local);
+        glPopMatrix();
+      }
+    }
+  }
+  glPopMatrix();
+}
+
 /* ----------------------- GetSmokeSensors ----------------------------- */
 
 void GetSmokeSensors(void){
@@ -47,11 +86,11 @@ void GetSmokeSensors(void){
   height = screenHeight;
 
   doit=0;
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
     char *label;
 
-    devicei = deviceinfo + i;
+    devicei = global_scase.devicecoll.deviceinfo + i;
     label = devicei->object->label;
     if(STRCMP(label,"smokesensor")!=0)continue;
     doit=1;
@@ -69,13 +108,13 @@ void GetSmokeSensors(void){
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glReadPixels(0,0,width,height, GL_RGB, GL_UNSIGNED_BYTE, rgbimage);
 
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
     char *label;
     int row, col;
     int index,val;
 
-    devicei = deviceinfo + i;
+    devicei = global_scase.devicecoll.deviceinfo + i;
     label = devicei->object->label;
 
 
@@ -166,10 +205,10 @@ void RGBTest(void){
 int HaveSmokeSensor(void){
   int i;
 
-  for(i = 0; i<ndeviceinfo; i++){
+  for(i = 0; i<global_scase.devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
 
-    devicei = deviceinfo+i;
+    devicei = global_scase.devicecoll.deviceinfo+i;
     if(STRCMP(devicei->object->label, "smokesensor")==0)return 1;
   }
   return 0;
@@ -179,7 +218,7 @@ int HaveSmokeSensor(void){
 /* ----------------------- GetPoint2BoxDist ----------------------------- */
 
 float GetPoint2BoxDist(float boxmin[3], float boxmax[3], float p1[3],
-                       float p2orig[3]) {
+                       float p2orig[3]){
   int i;
   float tt;
   int doit = 0;
@@ -191,38 +230,38 @@ float GetPoint2BoxDist(float boxmin[3], float boxmax[3], float p1[3],
 
   // if p1 is outside of box then return Dist(p1,p2)
 
-  for (i = 0; i < 3; i++) {
-    if (p1[i] < boxmin[i]) return Dist(p1, p2orig);
-    if (p1[i] > boxmax[i]) return Dist(p1, p2orig);
+  for(i = 0; i < 3; i++){
+    if(p1[i] < boxmin[i]) return Dist(p1, p2orig);
+    if(p1[i] > boxmax[i]) return Dist(p1, p2orig);
     p2[i] = p2orig[i];
   }
 
   // if p1 and p2 are both inside box then return Dist(p1,p2)
 
-  for (i = 0; i < 3; i++) {
-    if (p2[i] < boxmin[i]) {
+  for(i = 0; i < 3; i++){
+    if(p2[i] < boxmin[i]){
       doit = 1;
       break;
     }
-    if (p2[i] > boxmax[i]) {
+    if(p2[i] > boxmax[i]){
       doit = 1;
       break;
     }
   }
-  if (doit == 0) return Dist(p1, p2);
+  if(doit == 0) return Dist(p1, p2);
 
   dx = p2[0] - p1[0];
   dy = p2[1] - p1[1];
   dz = p2[2] - p1[2];
 
-  if (p1[0] >= boxmin[0] && boxmin[0] >= p2[0]) {
-    if (dx != 0.0) {
+  if(p1[0] >= boxmin[0] && boxmin[0] >= p2[0]){
+    if(dx != 0.0){
       tt = (boxmin[0] - p1[0]) / dx;
       xx = boxmin[0];
       yy = p1[1] + tt * dy;
       zz = p1[2] + tt * dz;
-      if (boxmin[1] <= yy && yy <= boxmax[1] && boxmin[2] <= zz &&
-          zz <= boxmax[2]) {
+      if(boxmin[1] <= yy && yy <= boxmax[1] && boxmin[2] <= zz &&
+          zz <= boxmax[2]){
         p2[0] = xx;
         p2[1] = yy;
         p2[2] = zz;
@@ -230,14 +269,14 @@ float GetPoint2BoxDist(float boxmin[3], float boxmax[3], float p1[3],
       }
     }
   }
-  if (p1[0] <= boxmax[0] && boxmax[0] <= p2[0]) {
-    if (dx != 0.0) {
+  if(p1[0] <= boxmax[0] && boxmax[0] <= p2[0]){
+    if(dx != 0.0){
       tt = (boxmax[0] - p1[0]) / dx;
       xx = boxmax[0];
       yy = p1[1] + tt * dy;
       zz = p1[2] + tt * dz;
-      if (boxmin[1] <= yy && yy <= boxmax[1] && boxmin[2] <= zz &&
-          zz <= boxmax[2]) {
+      if(boxmin[1] <= yy && yy <= boxmax[1] && boxmin[2] <= zz &&
+          zz <= boxmax[2]){
         p2[0] = xx;
         p2[1] = yy;
         p2[2] = zz;
@@ -245,14 +284,14 @@ float GetPoint2BoxDist(float boxmin[3], float boxmax[3], float p1[3],
       }
     }
   }
-  if (p1[1] >= boxmin[1] && boxmin[1] >= p2[1]) {
-    if (dy != 0.0) {
+  if(p1[1] >= boxmin[1] && boxmin[1] >= p2[1]){
+    if(dy != 0.0){
       tt = (boxmin[1] - p1[1]) / dy;
       xx = p1[0] + tt * dx;
       yy = boxmin[1];
       zz = p1[2] + tt * dz;
-      if (boxmin[0] <= xx && xx <= boxmax[0] && boxmin[2] <= zz &&
-          zz <= boxmax[2]) {
+      if(boxmin[0] <= xx && xx <= boxmax[0] && boxmin[2] <= zz &&
+          zz <= boxmax[2]){
         p2[0] = xx;
         p2[1] = yy;
         p2[2] = zz;
@@ -260,14 +299,14 @@ float GetPoint2BoxDist(float boxmin[3], float boxmax[3], float p1[3],
       }
     }
   }
-  if (p1[1] <= boxmax[1] && boxmax[1] <= p2[1]) {
-    if (dy != 0.0) {
+  if(p1[1] <= boxmax[1] && boxmax[1] <= p2[1]){
+    if(dy != 0.0){
       tt = (boxmax[1] - p1[1]) / dy;
       xx = p1[0] + tt * dx;
       yy = boxmax[1];
       zz = p1[2] + tt * dz;
-      if (boxmin[0] <= xx && xx <= boxmax[0] && boxmin[2] <= zz &&
-          zz <= boxmax[2]) {
+      if(boxmin[0] <= xx && xx <= boxmax[0] && boxmin[2] <= zz &&
+          zz <= boxmax[2]){
         p2[0] = xx;
         p2[1] = yy;
         p2[2] = zz;
@@ -275,14 +314,14 @@ float GetPoint2BoxDist(float boxmin[3], float boxmax[3], float p1[3],
       }
     }
   }
-  if (p1[2] >= boxmin[2] && boxmin[2] >= p2[2]) {
-    if (dz != 0.0) {
+  if(p1[2] >= boxmin[2] && boxmin[2] >= p2[2]){
+    if(dz != 0.0){
       tt = (boxmin[2] - p1[2]) / dz;
       xx = p1[0] + tt * dx;
       yy = p1[1] + tt * dy;
       zz = boxmin[2];
-      if (boxmin[0] <= xx && xx <= boxmax[0] && boxmin[1] <= yy &&
-          yy <= boxmax[1]) {
+      if(boxmin[0] <= xx && xx <= boxmax[0] && boxmin[1] <= yy &&
+          yy <= boxmax[1]){
         p2[0] = xx;
         p2[1] = yy;
         p2[2] = zz;
@@ -290,14 +329,14 @@ float GetPoint2BoxDist(float boxmin[3], float boxmax[3], float p1[3],
       }
     }
   }
-  if (p1[2] <= boxmax[2] && boxmax[2] <= p2[2]) {
-    if (dz != 0.0) {
+  if(p1[2] <= boxmax[2] && boxmax[2] <= p2[2]){
+    if(dz != 0.0){
       tt = (boxmax[2] - p1[2]) / dz;
       xx = p1[0] + tt * dx;
       yy = p1[1] + tt * dy;
       zz = boxmin[2];
-      if (boxmin[0] <= xx && xx <= boxmax[0] && boxmin[1] <= yy &&
-          yy <= boxmax[1]) {
+      if(boxmin[0] <= xx && xx <= boxmax[0] && boxmin[1] <= yy &&
+          yy <= boxmax[1]){
         p2[0] = xx;
         p2[1] = yy;
         p2[2] = zz;
@@ -319,11 +358,11 @@ void GetDeviceScreenCoords(void){
   int doit;
 
   doit=0;
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
     char *label;
 
-    devicei = deviceinfo + i;
+    devicei = global_scase.devicecoll.deviceinfo + i;
     label = devicei->object->label;
     if(STRCMP(label,"smokesensor")==0){
       doit=1;
@@ -335,7 +374,7 @@ void GetDeviceScreenCoords(void){
   glGetDoublev(GL_MODELVIEW_MATRIX,mv_setup);
   glGetDoublev(GL_PROJECTION_MATRIX,projection_setup);
   glGetIntegerv(GL_VIEWPORT, viewport_setup);
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
     float *xyz;
     double d_ijk[3];
     devicedata *devicei;
@@ -343,13 +382,13 @@ void GetDeviceScreenCoords(void){
     char *label;
     meshdata *device_mesh;
 
-    devicei = deviceinfo + i;
+    devicei = global_scase.devicecoll.deviceinfo + i;
     label = devicei->object->label;
 
     if(STRCMP(label,"smokesensor")!=0)continue;
     xyz = devicei->xyz;
     device_mesh = devicei->device_mesh;
-    devicei->eyedist = GetPoint2BoxDist(device_mesh->boxmin,device_mesh->boxmax,xyz,fds_eyepos);
+    devicei->eyedist = GetPoint2BoxDist(device_mesh->boxmin_fds,device_mesh->boxmax_fds,xyz,fds_eyepos);
     ijk = devicei->screenijk;
     gluProject(xyz[0],xyz[1],xyz[2],mv_setup,projection_setup,viewport_setup,d_ijk,d_ijk+1,d_ijk+2);
     ijk[0] = d_ijk[0];
@@ -371,12 +410,12 @@ void DrawDevicesVal(void){
   if(fontindex==SCALED_FONT)ScaleFont3D();
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-  glTranslatef(-xbar0,-ybar0,-zbar0);
+  glTranslatef(-global_scase.xbar0,-global_scase.ybar0,-global_scase.zbar0);
   if(active_smokesensors==1&&show_smokesensors!=SMOKESENSORS_HIDDEN){
     GetDeviceScreenCoords();
   }
-  for(i=0;i<ndeviceinfo;i++){
-    devicei = deviceinfo + i;
+  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
+    devicei = global_scase.devicecoll.deviceinfo + i;
 
     if(devicei->object->visible==0||devicei->show == 0)continue;
     xyz = devicei->xyz;
@@ -641,8 +680,8 @@ void DrawWindRose(windrosedata *wr,int orientation){
     maxr = maxr_windrose;
   }
   ENABLE_LIGHTING;
-  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, block_ambient2);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &global_scase.color_defs.block_shininess);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, global_scase.color_defs.block_ambient2);
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
   glEnable(GL_COLOR_MATERIAL);
 
@@ -769,13 +808,13 @@ void DrawWindRosesDevices(void){
   int i;
 
   if(windrose_xy_vis==0&&windrose_xz_vis==0&&windrose_yz_vis==0)return;
-  for(i = 0;i<nvdeviceinfo;i++){
+  for(i = 0;i<global_scase.devicecoll.nvdeviceinfo;i++){
     vdevicedata *vdevi;
     windrosedata *wr;
     int itime;
 
 
-    vdevi = vdeviceinfo + i;
+    vdevi = global_scase.devicecoll.vdeviceinfo + i;
     if(vdevi->display==0||vdevi->unique==0)continue;
     itime = 0;
     if(global_times!=NULL)itime = CLAMP(itimes, 0, vdevi->nwindroseinfo-1);
@@ -803,20 +842,20 @@ void DrawTargetNorm(void){
   devicedata *devicei;
   float *xyz, *xyznorm;
 
-  if(isZoneFireModel==1&&hasSensorNorm==1&&visSensor==1&&visSensorNorm==1){
+  if(global_scase.isZoneFireModel==1&&global_scase.hasSensorNorm==1&&visSensor==1&&visSensorNorm==1){
     glPushMatrix();
     glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
     glBegin(GL_LINES);
     glColor4fv(sensornormcolor);
 
-    for(i=0;i<ndeviceinfo;i++){
+    for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
       float xyz2[3];
 
-      devicei = deviceinfo + i;
+      devicei = global_scase.devicecoll.deviceinfo + i;
 
       if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(STRCMP(devicei->object->label,"sensor")==0&&visSensor==0)continue;
-      if(isZoneFireModel==1&&STRCMP(devicei->object->label,"target")==0&&visSensor==0)continue;
+      if(global_scase.isZoneFireModel==1&&STRCMP(devicei->object->label,"target")==0&&visSensor==0)continue;
       xyz = devicei->xyz;
       xyznorm = devicei->xyznorm;
       glVertex3fv(xyz);
@@ -1083,11 +1122,11 @@ void DrawCDisk(float diameter, float height, unsigned char *rgbcolor){
 void DrawTSphere(int texture_index,float diameter, unsigned char *rgbcolor){
   texturedata *texti;
 
-  if(texture_index<0||texture_index>ntextureinfo-1){
+  if(texture_index<0||texture_index>global_scase.texture_coll.ntextureinfo-1){
     texti=NULL;
   }
   else{
-    texti = textureinfo + texture_index;
+    texti = global_scase.texture_coll.textureinfo + texture_index;
     if(texti->loaded==0||texti->display==0)texti=NULL;
   }
   if(texti!=NULL&&object_outlines==0){
@@ -1281,11 +1320,8 @@ void DrawSphereSeg(float anglemin, float anglemax, float rmin, float rmax){
   sini = sin(ai);
   for(j=0;j<NLONG;j++){
     aj = j*danglej;
-    ajp1 = (j+1)*danglej;
     cosj = cos(aj);
-    cosjp1 = cos(ajp1);
     sinj = sin(aj);
-    sinjp1 = sin(ajp1);
     glVertex3f(rmin*sini*cosj,rmin*sini*sinj,cosi*rmin);
 
     glVertex3f(rmax*sini*cosj,rmax*sini*sinj,cosi*rmax);
@@ -1555,6 +1591,209 @@ void DrawHSphere(float diameter, unsigned char *rgbcolor){
   glPopMatrix();
 }
 
+/* ----------------------- DrawHalfSphere ----------------------------- */
+
+void DrawHalfSphere(void){
+  int i, j;
+  float dxFDS, dyFDS, dzFDS, diameter;
+  float *c_lat, *s_lat, *c_long, *s_long;
+
+  dxFDS = xbarFDS - xbar0FDS;
+  dyFDS = ybarFDS - ybar0FDS;
+  dzFDS = zbarFDS - zbar0FDS;
+  diameter = sky_diam*sqrt(dxFDS*dxFDS + dyFDS*dyFDS + dzFDS*dzFDS);
+
+  if(sphere_coords == NULL)sphere_coords = InitSphere2(nlat_hsphere, nlong_hsphere);
+  c_lat  = sphere_coords;
+  s_lat  = c_lat  + nlat_hsphere  + 1;
+  c_long = s_lat  + nlat_hsphere  + 1;
+  s_long = c_long + nlong_hsphere + 1;
+
+  glPushMatrix();
+  glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
+  glTranslatef(-global_scase.xbar0, -global_scase.ybar0, -global_scase.zbar0);
+  glTranslatef(dxFDS/2.0,dyFDS/2.0,0.0);
+  glScalef(diameter/2.0, diameter/2.0, diameter/2.0);
+  if(mscale[0]>0.0&&mscale[1]>0.0&&mscale[2]>0.0){
+    glScalef(1.0/mscale[0], 1.0/mscale[1], 1.0/mscale[2]);
+  }
+
+  if(visSkyground == 1){
+    unsigned char ground_color_uc[3];
+
+    j = nlat_hsphere / 2;
+    glBegin(GL_TRIANGLES);
+    ground_color_uc[0] = (unsigned char)ground_color[0];
+    ground_color_uc[1] = (unsigned char)ground_color[1];
+    ground_color_uc[2] = (unsigned char)ground_color[2];
+    glColor3ubv(ground_color_uc);
+    for(i = 0; i < nlong_hsphere; i++){
+      int ip1;
+      float x[2], y[2], z[2];
+
+      ip1 = i + 1;
+      x[0] = c_long[i] * c_lat[j];
+      y[0] = s_long[i] * c_lat[j];
+      z[0] = s_lat[j];
+
+      x[1] = c_long[ip1] * c_lat[j];
+      y[1] = s_long[ip1] * c_lat[j];
+      z[1] = s_lat[j];
+      glVertex3f(0.0,0.0,0.0);
+      glVertex3f(x[0], y[0], z[0]);
+      glVertex3f(x[1], y[1], z[1]);
+      glVertex3f(0.0, 0.0, 0.0);
+      glVertex3f(x[1], y[1], z[1]);
+      glVertex3f(x[0], y[0], z[0]);
+    }
+    glEnd();
+  }
+
+  int use_sky;
+
+  use_sky = 0;
+  if(global_scase.nsky_texture > 0 && global_scase.sky_texture != NULL && global_scase.sky_texture->loaded == 1 && global_scase.sky_texture->display == 1&& visSkySpheretexture==1)use_sky = 1;
+  if(use_sky == 1){
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, global_scase.sky_texture->name);
+  }
+
+  glBegin(GL_QUADS);
+  if(use_sky == 0)glColor3f(0.0, 0.0, 1.0);
+  int nlats;
+
+  nlats = nlat_hsphere - 1 - nlat_hsphere / 2;
+  for(j = nlat_hsphere/2; j < nlat_hsphere; j++){
+    float r[2], g[2], b[2];
+    float tj, tjp1;
+
+    tj   = (float)(j-nlat_hsphere/2)/(float)(nlats+1);
+    tjp1 = (float)(j+1-nlat_hsphere/2)/(float)(nlats+1);
+
+    if(use_sky == 0){
+      float f1, f2;
+
+      f1 = (float)(j - nlat_hsphere / 2)/(float)nlats;
+      f2 = 1.0 - f1;
+      r[0] = (f1*zenith_color[0] + f2*horizon_color[0])/255.0;
+      g[0] = (f1*zenith_color[1] + f2*horizon_color[1])/255.0;
+      b[0] = (f1*zenith_color[2] + f2*horizon_color[2])/255.0;
+
+      f1 = (float)(j+1 - nlat_hsphere / 2)/(float)nlats;
+      f2 = 1.0 - f1;
+      r[1] = (f1 * zenith_color[0] + f2 * horizon_color[0])/255.0;
+      g[1] = (f1 * zenith_color[1] + f2 * horizon_color[1])/255.0;
+      b[1] = (f1 * zenith_color[2] + f2 * horizon_color[2])/255.0;
+    }
+    for(i = 0; i < nlong_hsphere; i++){
+      float x[4], y[4], z[4];
+      int ip1;
+
+      ip1 = i + 1;
+
+      x[0] = c_long[i]*c_lat[j];
+      y[0] = s_long[i]*c_lat[j];
+      z[0] = s_lat[j];
+
+      x[1] = c_long[ip1]*c_lat[j];
+      y[1] = s_long[ip1]*c_lat[j];
+      z[1] = s_lat[j];
+
+      x[2] = c_long[ip1]*c_lat[j + 1];
+      y[2] = s_long[ip1]*c_lat[j + 1];
+      z[2] = s_lat[j + 1];
+
+      x[3] = c_long[i]*c_lat[j + 1];
+      y[3] = s_long[i]*c_lat[j + 1];
+      z[3] = s_lat[j + 1];
+
+      if(use_sky == 1){
+        float tx[4], ty[4];
+
+        tx[0] = (float)i/(float)nlong_hsphere;
+        ty[0] = tj;
+
+        tx[1] = (float)(ip1)/(float)nlong_hsphere;
+        ty[1] = tj;
+
+        tx[2] = (float)(ip1)/(float)nlong_hsphere;
+        ty[2] = tjp1;
+
+        tx[3] = (float)i/(float)nlong_hsphere;
+        ty[3] = tjp1;
+
+        glNormal3f(x[0], y[0], z[0]);
+        glTexCoord2f(tx[0],ty[0]);
+        glVertex3f(x[0], y[0], z[0]);
+
+        glNormal3f(x[1], y[1], z[1]);
+        glTexCoord2f(tx[1], ty[1]);
+        glVertex3f(x[1], y[1], z[1]);
+
+        glNormal3f(x[2], y[2], z[2]);
+        glTexCoord2f(tx[2], ty[2]);
+        glVertex3f(x[2], y[2], z[2]);
+
+        glNormal3f(x[3], y[3], z[3]);
+        glTexCoord2f(tx[3], ty[3]);
+        glVertex3f(x[3], y[3], z[3]);
+
+        glNormal3f(-x[0], -y[0], -z[0]);
+        glTexCoord2f(tx[0], ty[0]);
+        glVertex3f(x[0], y[0], z[0]);
+
+        glNormal3f(-x[3], -y[3], -z[3]);
+        glTexCoord2f(tx[3], ty[3]);
+        glVertex3f(x[3], y[3], z[3]);
+
+        glNormal3f(-x[2], -y[2], -z[2]);
+        glTexCoord2f(tx[2], ty[2]);
+        glVertex3f(x[2], y[2], z[2]);
+
+        glNormal3f(-x[1], -y[1], -z[1]);
+        glTexCoord2f(tx[1], ty[1]);
+        glVertex3f(x[1], y[1], z[1]);
+      }
+      else{
+        glColor3f(r[0], g[0], b[0]);
+        glNormal3f(x[0], y[0], z[0]);
+        glVertex3f(x[0], y[0], z[0]);
+
+        glNormal3f(x[1], y[1], z[1]);
+        glVertex3f(x[1], y[1], z[1]);
+
+        glColor3f(r[1], g[1], b[1]);
+        glNormal3f(x[2], y[2], z[2]);
+        glVertex3f(x[2], y[2], z[2]);
+
+        glNormal3f(x[3], y[3], z[3]);
+        glVertex3f(x[3], y[3], z[3]);
+
+        glColor3f(r[0], g[0], b[0]);
+        glNormal3f(-x[0], -y[0], -z[0]);
+        glVertex3f(x[0], y[0], z[0]);
+
+        glColor3f(r[1], g[1], b[1]);
+        glNormal3f(-x[3], -y[3], -z[3]);
+        glVertex3f(x[3], y[3], z[3]);
+
+        glNormal3f(-x[2], -y[2], -z[2]);
+        glVertex3f(x[2], y[2], z[2]);
+
+        glColor3f(r[0], g[0], b[0]);
+        glNormal3f(-x[1], -y[1], -z[1]);
+        glVertex3f(x[1], y[1], z[1]);
+      }
+    }
+  }
+  glEnd();
+  if(use_sky == 1){
+    glDisable(GL_TEXTURE_2D);
+  }
+  glPopMatrix();
+}
+
 /* ----------------------- DrawPoint ----------------------------- */
 
 void DrawPoint(unsigned char *rgbcolor){
@@ -1695,6 +1934,17 @@ void DrawCircle(float diameter,unsigned char *rgbcolor, circdata *circinfo){
 }
 
 /* ----------------------- DrawCuboid ----------------------------- */
+
+//     7--------6
+//    /|       /
+//   / |      / |
+//  4--------5  |
+//  |  |     |  |
+//  |  |     |  |
+//  |  3--------2
+//  | /      | /
+//  |/       |/
+//  0--------1
 
 void DrawCuboid(float *origin, float verts[8][3], unsigned char *rgbcolor, int draw_outline){
   if(origin!=NULL){
@@ -1856,7 +2106,7 @@ void DrawCubeC(float size, unsigned char *rgbcolor){
   float s1=size/2.0;
   float verts[8][3]={
     {-s1,-s1,-s1},{s1,-s1,-s1},{s1,s1,-s1},{-s1,s1,-s1},
-    {-s1,-s1,-s1},{s1,-s1,-s1},{s1,s1,-s1},{-s1,s1,-s1}
+    {-s1,-s1, s1},{s1,-s1, s1},{s1,s1, s1},{-s1,s1, s1}
   };
 
   DrawCuboid(NULL,verts,rgbcolor,object_outlines);
@@ -3170,6 +3420,48 @@ void InitSphere(int nlat, int nlong){
   sin_long[nlong]=sin_long[0];
 }
 
+/* ----------------------- InitSphere2 ----------------------------- */
+
+float *InitSphere2(int nlat, int nlong){
+  int i;
+  int ntotal;
+  float *sphere;
+  float *c_lat, *s_lat, *c_long, *s_long;
+
+  ntotal = 2*(nlat + 1) + 2*(nlong + 1);
+  NewMemory( (void **)&sphere, ntotal*sizeof(float));
+  c_lat  = sphere;
+  s_lat  = c_lat  + nlat + 1;
+  c_long = s_lat  + nlat + 1;
+  s_long = c_long + nlong + 1;
+
+  c_lat[0] =  0.0;
+  s_lat[0] = -1.0;
+  for(i=1;i<nlat;i++){
+    float angle;
+
+    angle = -PI/2.0 + (float)i*PI/(float)nlat;
+    c_lat[i] = cos(angle);
+    s_lat[i] = sin(angle);
+  }
+  c_lat[nlat] = 0.0;
+  s_lat[nlat] = 1.0;
+
+  c_long[0] = 1.0;
+  s_long[0] = 0.0;
+  for(i=1;i<nlong;i++){
+    float angle;
+
+    angle = (float)i*2.0*PI/(float)nlong;
+    c_long[i] = cos(angle);
+    s_long[i] = sin(angle);
+  }
+  c_long[nlong] = 1.0;
+  s_long[nlong] = 0.0;
+
+  return sphere;
+}
+
 /* ----------------------- GetGlobalDeviceBounds ----------------------------- */
 
 void GetGlobalDeviceBounds(int type){
@@ -3178,9 +3470,9 @@ void GetGlobalDeviceBounds(int type){
 
   valmin = 1.0;
   valmax = 0.0;
-  for(i = 0; i<ndeviceinfo; i++){
+  for(i = 0; i<global_scase.devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
-    devicei = deviceinfo+i;
+    devicei = global_scase.devicecoll.deviceinfo+i;
     if(devicei->type2==type){
       int j;
       float *vals;
@@ -3198,9 +3490,9 @@ void GetGlobalDeviceBounds(int type){
       }
     }
   }
-  for(i = 0; i<ndeviceinfo; i++){
+  for(i = 0; i<global_scase.devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
-    devicei = deviceinfo+i;
+    devicei = global_scase.devicecoll.deviceinfo+i;
     if(devicei->type2==type){
       devicei->global_valmin = valmin;
       devicei->global_valmax = valmax;
@@ -3220,20 +3512,20 @@ void DrawDevices(int mode){
     if(object_box==1){
       if(object_outlines==0){
         ENABLE_LIGHTING;
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, block_ambient2);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &global_scase.color_defs.block_shininess);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, global_scase.color_defs.block_ambient2);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
         glEnable(GL_COLOR_MATERIAL);
       }
 
       glPushMatrix();
       glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-      glTranslatef(-xbar0, -ybar0, -zbar0);
-      for(i = 0; i<ndeviceinfo; i++){
+      glTranslatef(-global_scase.xbar0, -global_scase.ybar0, -global_scase.zbar0);
+      for(i = 0; i<global_scase.devicecoll.ndeviceinfo; i++){
         devicedata *devicei;
         float *xyz1, *xyz2, dxyz[3];
 
-        devicei = deviceinfo+i;
+        devicei = global_scase.devicecoll.deviceinfo+i;
         if(devicei->object->visible == 0 || devicei->show == 0)continue;
         xyz1 = devicei->xyz1;
         xyz2 = devicei->xyz2;
@@ -3248,16 +3540,16 @@ void DrawDevices(int mode){
       }
     }
 
-    for(i = 0;i < ndeviceinfo;i++){
+    for(i = 0;i < global_scase.devicecoll.ndeviceinfo;i++){
       devicedata *devicei;
 
-      devicei = deviceinfo + i;
+      devicei = global_scase.devicecoll.deviceinfo + i;
       if(devicei->object->visible == 0 || devicei->show == 0)continue;
       if(devicei->in_zone_csv == 1)continue;
       if(devicei->plane_surface != NULL){
         int j;
 
-        for(j = 0;j < nmeshes;j++){
+        for(j = 0;j < global_scase.meshescoll.nmeshes;j++){
           DrawStaticIso(devicei->plane_surface[j], -1, 0, 2, 0, devicei->line_width);
           DrawStaticIso(devicei->plane_surface[j], 2, 0, 2, 0, devicei->line_width);
         }
@@ -3266,20 +3558,20 @@ void DrawDevices(int mode){
     }
   }
   drawobjects_as_vectors = 0;
-  if(showtime == 1 && itimes >= 0 && itimes < nglobal_times&&showvdevice_val == 1 && nvdeviceinfo>0){
+  if(showtime == 1 && itimes >= 0 && itimes < nglobal_times&&showvdevice_val == 1 && global_scase.devicecoll.nvdeviceinfo>0){
     unsigned char arrow_color[4];
     float arrow_color_float[4];
     int j;
 
     ENABLE_LIGHTING;
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, block_ambient2);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &global_scase.color_defs.block_shininess);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, global_scase.color_defs.block_ambient2);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
     glEnable(GL_COLOR_MATERIAL);
 
     glPushMatrix();
     glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-    glTranslatef(-xbar0, -ybar0, -zbar0);
+    glTranslatef(-global_scase.xbar0, -global_scase.ybar0, -global_scase.zbar0);
     glPointSize(vectorpointsize);
     arrow_color[0] = 255 * foregroundcolor[0];
     arrow_color[1] = 255 * foregroundcolor[1];
@@ -3301,7 +3593,7 @@ void DrawDevices(int mode){
         int velocity_type;
         vdevicesortdata *vdevsorti;
 
-        vdevsorti = vdevices_sorted + i;
+        vdevsorti = global_scase.devicecoll.vdevices_sorted + i;
         if(vectortype == VECTOR_PROFILE){
           if(vdevsorti->dir == XDIR && vis_xtree == 0)continue;
           if(vdevsorti->dir == YDIR && vis_ytree == 0)continue;
@@ -3616,26 +3908,23 @@ void DrawDevices(int mode){
   glPushMatrix();
   glPushAttrib(GL_POINT_BIT | GL_LINE_BIT);
   glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
-  glTranslatef(-xbar0, -ybar0, -zbar0);
-  for(ii = 0;ii < ndeviceinfo;ii++){
+  glTranslatef(-global_scase.xbar0, -global_scase.ybar0, -global_scase.zbar0);
+  for(ii = 0;ii < global_scase.devicecoll.ndeviceinfo;ii++){
     devicedata *devicei;
     int tagval;
-    int save_use_displaylist;
     propdata *prop;
     int j;
     float dpsi;
     float *xyz;
 
-    devicei = deviceinfo + ii;
-    prop = devicei->prop;
+    devicei = global_scase.devicecoll.deviceinfo + ii;
 
     if(devicei->object->visible == 0 || (devicei->prop != NULL&&devicei->prop->smv_object->visible == 0))continue;
     if(devicei->plane_surface != NULL)continue;
     if(devicei->show == 0)continue;
-    if(isZoneFireModel == 1 && STRCMP(devicei->object->label, "target") == 0 && visSensor == 0)continue;
+    if(global_scase.isZoneFireModel == 1 && STRCMP(devicei->object->label, "target") == 0 && visSensor == 0)continue;
     if(devicei->in_zone_csv == 1&&strcmp(devicei->deviceID,"TARGET")!=0)continue;
-    if(isZoneFireModel == 1 && STRCMP(devicei->deviceID, "TIME") == 0)continue;
-    save_use_displaylist = devicei->object->use_displaylist;
+    if(global_scase.isZoneFireModel == 1 && STRCMP(devicei->deviceID, "TIME") == 0)continue;
     tagval = ii + 1;
     if(select_device == 1 && show_mode == SELECTOBJECT){
 
@@ -3643,7 +3932,6 @@ void DrawDevices(int mode){
       select_device_color[1] = tagval >> nbluebits;
       select_device_color[2] = tagval&rgbmask[nbluebits - 1];
       select_device_color_ptr = select_device_color;
-      devicei->object->use_displaylist = 0;
     }
     else{
       if(devicei->selected==1 && select_device == 1){
@@ -3651,7 +3939,6 @@ void DrawDevices(int mode){
         select_device_color[0] = 255;
         select_device_color[1] = 0;
         select_device_color[2] = 0;
-        devicei->object->use_displaylist = 0;
       }
       else{
         select_device_color_ptr = NULL;
@@ -3795,7 +4082,6 @@ void DrawDevices(int mode){
     if(devicei->nparams > 0 && prop != NULL){
       prop->nvars_indep = 0;
     }
-    devicei->object->use_displaylist = save_use_displaylist;
     glPopMatrix();
   }
 
@@ -3811,7 +4097,6 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
   tokendata *toknext;
   unsigned char *rgbptr_local;
   unsigned char rgbcolor[4];
-  int displaylist_id = 0;
   int ii;
   sv_object *object;
   int use_material;
@@ -3823,15 +4108,14 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
     object = object_dev;
   }
   if(object->visible == 0 && vis_override == 0)return;
-  if(object == objectscoll->std_object_defs.missing_device&&show_missing_objects == 0)return;
+  if(object == global_scase.objectscoll.std_object_defs.missing_device&&show_missing_objects == 0)return;
   if(iframe_local > object->nframes - 1 || iframe_local < 0)iframe_local = 0;
   framei = object->obj_frames[iframe_local];
 
   assert(framei->error == 0 || framei->error == 1);
 
   if(framei->error == 1){
-    object = objectscoll->std_object_defs.error_device;
-    framei = objectscoll->std_object_defs.error_device->obj_frames[0];
+    framei = global_scase.objectscoll.std_object_defs.error_device->obj_frames[0];
     prop = NULL;
   }
 
@@ -3839,7 +4123,6 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
   rgbcolor[1] = 0;
   rgbcolor[2] = 0;
   rgbcolor[3] = 255;
-  rgbptr_local = rgbcolor;
   glPushMatrix();
 
   // copy in default values ( :var=value in objects.svo file )
@@ -3892,31 +4175,12 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
 
   }
 
-  if(framei->display_list_ID != -1 && object->use_displaylist == 1){
-    if(framei->use_bw == setbw){
-      glCallList(framei->display_list_ID);
-      glPopMatrix();
-      return;
-    }
-    framei->use_bw = setbw;
-    glDeleteLists(framei->display_list_ID, 1);
-    framei->display_list_ID = -1;
-  }
-
-  if(object->use_displaylist == 1){
-    displaylist_id = glGenLists(1);
-    if(displaylist_id != 0){
-      framei->display_list_ID = displaylist_id;
-      glNewList(displaylist_id, GL_COMPILE_AND_EXECUTE);
-    }
-  }
-
   use_material = 0;
   if(select_device_color_ptr == NULL&&recurse_level == 0){
     ENABLE_LIGHTING;
 
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &block_shininess);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, block_ambient2);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &global_scase.color_defs.block_shininess);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, global_scase.color_defs.block_ambient2);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
 
     glEnable(GL_COLOR_MATERIAL);
@@ -3929,6 +4193,9 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
     float arg[NARGVAL], *argptr;
     int j;
 
+    for(j=0;j<NARGVAL;j++){
+      arg[j] = 0.0;
+    }
     if(ii == 0){
       toki = framei->command_list[0];
     }
@@ -4059,7 +4326,7 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
           iframe_local2 = 0;
         }
         object_name = (toki - 1)->string;
-        included_object = GetSmvObjectType(objectscoll, object_name, objectscoll->std_object_defs.missing_device);
+        included_object = GetSmvObjectType(&global_scase.objectscoll, object_name, global_scase.objectscoll.std_object_defs.missing_device);
         toki->included_frame = iframe_local2;
         toki->included_object = included_object;
       }
@@ -4245,7 +4512,6 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
       valmax_rel = valmax - valmin;
 
       val_rel = fmod(val_rel, valmax_rel);
-      if(val_rel < 0.0)val += valmax_rel;
 
       *argptr = val_rel + valmin;
     }
@@ -4484,8 +4750,8 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
 
       texturefile = (toki - 2)->stringptr;
 
-      for(i = 0;i < ndevice_texture_list;i++){
-        if(strcmp(device_texture_list[i], texturefile) == 0){
+      for(i = 0;i < global_scase.device_texture_list_coll.ndevice_texture_list;i++){
+        if(strcmp(global_scase.device_texture_list_coll.device_texture_list[i], texturefile) == 0){
           textureindex = i;
           break;
         }
@@ -4527,12 +4793,6 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
         rgbcolor[2] = arg[2];
         rgbcolor[3] = 255;
       }
-      if(select_device_color_ptr == NULL){
-        rgbptr_local = rgbcolor;
-      }
-      else{
-        rgbptr_local = select_device_color_ptr;
-      }
       break;
     case SV_SETLINEWIDTH:
     {
@@ -4550,12 +4810,6 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
       rgbcolor[1] = 255 * arg[0];
       rgbcolor[2] = 255 * arg[0];
       rgbcolor[3] = 255;
-      if(select_device_color_ptr == NULL){
-        rgbptr_local = rgbcolor;
-      }
-      else{
-        rgbptr_local = select_device_color_ptr;
-      }
     }
     break;
     case SV_DRAWLINE:
@@ -4580,10 +4834,6 @@ void DrawSmvObject(sv_object *object_dev, int iframe_local, propdata *prop, int 
   if(use_material == 1 && recurse_level == 0){
     glDisable(GL_COLOR_MATERIAL);
     DISABLE_LIGHTING;
-  }
-
-  if(object->use_displaylist == 1 && displaylist_id != 0){
-    glEndList();
   }
 
   glPopMatrix();
@@ -4613,14 +4863,14 @@ tokendata *GetTokenPtr(char *var,sv_object_frame *frame){
 devicedata *GetCSVDeviceFromLabel(char *label, int index){
   int i;
 
-  if(strlen(label)>=4&&strncmp(label, "null", 4)==0&&index>=0&&index<ndeviceinfo){
-    return deviceinfo+index;
+  if(strlen(label)>=4&&strncmp(label, "null", 4)==0&&index>=0&&index<global_scase.devicecoll.ndeviceinfo){
+    return global_scase.devicecoll.deviceinfo+index;
   }
-  for(i = 0; i<ndeviceinfo; i++){
+  for(i = 0; i<global_scase.devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
 
-    devicei = deviceinfo+i;
-    if(nzoneinfo==0){
+    devicei = global_scase.devicecoll.deviceinfo+i;
+    if(global_scase.nzoneinfo==0){
       if(STRCMP(devicei->labelptr, label)==0)return devicei;
     }
     else{
@@ -4635,10 +4885,10 @@ devicedata *GetCSVDeviceFromLabel(char *label, int index){
 int GetDeviceIndexFromLabel(char *label){
   int i;
 
-  for(i = 0;i < ndeviceinfo;i++){
+  for(i = 0;i < global_scase.devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = deviceinfo + i;
+    devicei = global_scase.devicecoll.deviceinfo + i;
     if(STRCMP(devicei->deviceID, label) == 0)return i;
   }
   return -1;
@@ -4649,13 +4899,13 @@ int GetDeviceIndexFromLabel(char *label){
 devicedata *GetDeviceFromLabel(char *label,int index){
   int i;
 
-  if(strlen(label)>=4&&strncmp(label,"null",4)==0&&index>=0&&index<ndeviceinfo){
-    return deviceinfo + index;
+  if(strlen(label)>=4&&strncmp(label,"null",4)==0&&index>=0&&index<global_scase.devicecoll.ndeviceinfo){
+    return global_scase.devicecoll.deviceinfo + index;
   }
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
     devicedata *devicei;
 
-    devicei = deviceinfo + i;
+    devicei = global_scase.devicecoll.deviceinfo + i;
     if(STRCMP(devicei->deviceID,label)==0)return devicei;
   }
   return NULL;
@@ -4706,7 +4956,7 @@ int CompareV2Devices(const void *arg1, const void *arg2){
 
 /* ------------------ CompareV3Devices ------------------------ */
 
-int CompareV3Devices( const void *arg1, const void *arg2 ){
+int CompareV3Devices(const void *arg1, const void *arg2){
   vdevicesortdata *vdevi, *vdevj;
   float *xyzi, *xyzj;
   int diri, dirj;
@@ -4813,16 +5063,16 @@ void SetupZTreeDevices(void){
     FREEMEMORY(deviceinfo_sortedz);
     nztreedeviceinfo=0;
   }
-  NewMemory((void **)&ztreedeviceinfo, ndeviceinfo*sizeof(ztreedevicedata));
-  NewMemory((void **)&deviceinfo_sortedz, ndeviceinfo*sizeof(devicedata *));
-  for(i = 0; i<ndeviceinfo; i++){
-    deviceinfo_sortedz[i] = deviceinfo+i;
+  NewMemory((void **)&ztreedeviceinfo, global_scase.devicecoll.ndeviceinfo*sizeof(ztreedevicedata));
+  NewMemory((void **)&deviceinfo_sortedz, global_scase.devicecoll.ndeviceinfo*sizeof(devicedata *));
+  for(i = 0; i<global_scase.devicecoll.ndeviceinfo; i++){
+    deviceinfo_sortedz[i] = global_scase.devicecoll.deviceinfo+i;
   }
-  qsort((devicedata **)deviceinfo_sortedz, (size_t)ndeviceinfo, sizeof(devicedata *), CompareZ3Devices);
+  qsort((devicedata **)deviceinfo_sortedz, (size_t)global_scase.devicecoll.ndeviceinfo, sizeof(devicedata *), CompareZ3Devices);
 
   nztreedeviceinfo = 1;
   ztreedeviceinfo->first = 0;
-  for(i = 1; i<ndeviceinfo; i++){
+  for(i = 1; i<global_scase.devicecoll.ndeviceinfo; i++){
     if(CompareZ2Devices(deviceinfo_sortedz+i, deviceinfo_sortedz+i-1)!=0){
       ztreedevicedata *ztreei;
 
@@ -4840,9 +5090,9 @@ void SetupZTreeDevices(void){
     ztreedevicedata *ztreei;
 
     ztreei           = ztreedeviceinfo+nztreedeviceinfo-1;
-    ztreei->quantity = deviceinfo_sortedz[ndeviceinfo-1]->quantity;
-    ztreei->unit     = deviceinfo_sortedz[ndeviceinfo-1]->unit;
-    ztreei->n        = ndeviceinfo-ztreei->first;
+    ztreei->quantity = deviceinfo_sortedz[global_scase.devicecoll.ndeviceinfo-1]->quantity;
+    ztreei->unit     = deviceinfo_sortedz[global_scase.devicecoll.ndeviceinfo-1]->unit;
+    ztreei->n        = global_scase.devicecoll.ndeviceinfo-ztreei->first;
   }
   ResizeMemory((void **)&ztreedeviceinfo, nztreedeviceinfo*sizeof(ztreedevicedata));
 }
@@ -4853,7 +5103,7 @@ void SetupWindTreeDevices(void){
   int i;
   treedevicedata *treei;
 
-  if(nvdeviceinfo==0)return;
+  if(global_scase.devicecoll.nvdeviceinfo==0)return;
   if(ntreedeviceinfo>0){
     FREEMEMORY(treedeviceinfo);
     ntreedeviceinfo=0;
@@ -4864,11 +5114,11 @@ void SetupWindTreeDevices(void){
     nzwindtreeinfo = 0;
   }
 
-  qsort((vdevicedata **)vdevices_sorted,3*(size_t)nvdeviceinfo,sizeof(vdevicesortdata), CompareV3Devices);
+  qsort((vdevicedata **)global_scase.devicecoll.vdevices_sorted,3*(size_t)global_scase.devicecoll.nvdeviceinfo,sizeof(vdevicesortdata), CompareV3Devices);
 
   ntreedeviceinfo = 1;
-  for(i = 1; i < 3*nvdeviceinfo; i++){
-    if(CompareV2Devices(vdevices_sorted+i, vdevices_sorted+i-1) != 0)ntreedeviceinfo++;
+  for(i = 1; i < 3*global_scase.devicecoll.nvdeviceinfo; i++){
+    if(CompareV2Devices(global_scase.devicecoll.vdevices_sorted+i, global_scase.devicecoll.vdevices_sorted+i-1) != 0)ntreedeviceinfo++;
   }
 
   NewMemory((void **)&treedeviceinfo,ntreedeviceinfo*sizeof(treedevicedata));
@@ -4876,15 +5126,15 @@ void SetupWindTreeDevices(void){
   ntreedeviceinfo = 1;
   treei = treedeviceinfo;
   treei->first = 0;
-  for(i = 1; i < 3*nvdeviceinfo; i++){
-    if(CompareV2Devices(vdevices_sorted + i, vdevices_sorted + i - 1) != 0){
+  for(i = 1; i < 3*global_scase.devicecoll.nvdeviceinfo; i++){
+    if(CompareV2Devices(global_scase.devicecoll.vdevices_sorted + i, global_scase.devicecoll.vdevices_sorted + i - 1) != 0){
       treei->last = i-1;
       treei = treedeviceinfo + ntreedeviceinfo;
       treei->first = i;
       ntreedeviceinfo++;
     }
   }
-  treei->last = 3*nvdeviceinfo - 1;
+  treei->last = 3*global_scase.devicecoll.nvdeviceinfo - 1;
 
   max_device_tree=0;
   for(i = 0; i < ntreedeviceinfo; i++){
@@ -4896,7 +5146,7 @@ void SetupWindTreeDevices(void){
       vdevicedata *vdevi;
       vdevicesortdata *vdevsorti;
 
-      vdevsorti = vdevices_sorted + j;
+      vdevsorti = global_scase.devicecoll.vdevices_sorted + j;
       vdevi = vdevsorti->vdeviceinfo;
       if(vdevi->unique != 0)n++;
     }
@@ -4914,7 +5164,7 @@ void SetupWindTreeDevices(void){
     for(j = treei->first; j<=treei->last; j++){
       vdevicesortdata *vdevsorti;
 
-      vdevsorti = vdevices_sorted + j;
+      vdevsorti = global_scase.devicecoll.vdevices_sorted + j;
       if(vdevsorti->dir==ZDIR){
         vd = vdevsorti->vdeviceinfo;
         if(vd->unique==0)continue;
@@ -4946,7 +5196,7 @@ void SetupWindTreeDevices(void){
     for(j = treei->first; j<=treei->last; j++){
       vdevicesortdata *vdevsorti;
 
-      vdevsorti = vdevices_sorted + j;
+      vdevsorti = global_scase.devicecoll.vdevices_sorted + j;
       if(vdevsorti->dir==ZDIR){
         vd = vdevsorti->vdeviceinfo;
         if(vd->unique==0)continue;
@@ -4965,7 +5215,7 @@ void SetupZoneDevs(void){
   int i;
 
   show_missing_objects = 0;
-  for(i=0;i<nzoneinfo;i++){
+  for(i=0;i<global_scase.nzoneinfo;i++){
     FILE *stream;
     char *file;
     int nrows, ncols, buffer_len,ntokens;
@@ -4973,11 +5223,11 @@ void SetupZoneDevs(void){
     zonedata *zonei;
     int j;
 
-    zonei = zoneinfo + i;
+    zonei = global_scase.zoneinfo + i;
     if(zonei->csv!=1)continue;
     file = zonei->file;
 
-    stream=fopen(file,"r");
+    stream=FOPEN(file,"r");
     if(stream==NULL)continue;
     buffer_len=GetRowCols(stream,&nrows,&ncols);
     buffer_len += ncols;
@@ -5010,12 +5260,12 @@ void SetupZoneDevs(void){
 
 /* ----------------------- GetDeviceLabel ----------------------------- */
 
-char *GetDeviceLabel(char *buffer) {
+char *GetDeviceLabel(char *buffer){
   char *label_present;
 
   label_present = strstr(buffer, "#");
-  if (label_present == NULL) return NULL;
-  if (strlen(label_present) <= 1) {
+  if(label_present == NULL) return NULL;
+  if(strlen(label_present) <= 1){
     label_present[0] = 0;
     return NULL;
   }
@@ -5023,70 +5273,34 @@ char *GetDeviceLabel(char *buffer) {
   label_present++;
   label_present = TrimFront(label_present);
   TrimBack(label_present);
-  if (strlen(label_present) == 0) return NULL;
+  if(strlen(label_present) == 0) return NULL;
   return label_present;
 }
 
-
-/* ----------------------- GetNDevices ----------------------------- */
-#define BUFFER_LEN 255
-int GetNDevices(char *file) {
-  FILE *stream;
-  char buffer[BUFFER_LEN], *comma;
-  int buffer_len = BUFFER_LEN, nd = 0;
-
-  if (file == NULL) return 0;
-  stream = fopen(file, "r");
-  if (stream == NULL) return 0;
-  fgets(buffer, buffer_len, stream);
-  comma = strchr(buffer, ',');
-  if (comma != NULL) *comma = 0;
-  TrimBack(buffer);
-  if (strcmp(buffer, "//HEADER") != 0) {
-    fclose(stream);
-    return 0;
-  }
-
-  while (!feof(stream)) {
-    fgets(buffer, buffer_len, stream);
-    comma = strchr(buffer, ',');
-    if (comma != NULL) *comma = 0;
-    TrimBack(buffer);
-    if (strcmp(buffer, "//DATA") == 0) {
-      break;
-    }
-    if (strcmp(buffer, "DEVICE") == 0) {
-      nd++;
-    }
-  }
-  fclose(stream);
-  return nd;
-}
-
-void RewindDeviceFile(FILE *stream) {
+void RewindDeviceFile(FILE *stream){
 #define BUFFER_LEN 255
   char buffer[BUFFER_LEN], *comma;
   int found_data = 0, buffer_len = BUFFER_LEN;
 
   fgets(buffer, buffer_len, stream);
   comma = strchr(buffer, ',');
-  if (comma != NULL) *comma = 0;
+  if(comma != NULL) *comma = 0;
   TrimBack(buffer);
-  if (strcmp(buffer, "//HEADER") != 0) {
+  if(strcmp(buffer, "//HEADER") != 0){
     rewind(stream);
     return;
   }
-  while (!feof(stream)) {
+  while(!feof(stream)){
     fgets(buffer, buffer_len, stream);
     comma = strchr(buffer, ',');
-    if (comma != NULL) *comma = 0;
+    if(comma != NULL) *comma = 0;
     TrimBack(buffer);
-    if (strcmp(buffer, "//DATA") == 0) {
+    if(strcmp(buffer, "//DATA") == 0){
       found_data = 1;
       break;
     }
   }
-  if (found_data == 0) {
+  if(found_data == 0){
     fprintf(stderr,
             "*** Warning //DATA keyword not found in spreadsheet file\n");
   }
@@ -5112,27 +5326,27 @@ FILE_SIZE ReadDeviceData(char *file, int filetype, int loadstatus){
 // unload data
 
   if(loadstatus==UNLOAD){
-    for(i=0;i<ndeviceinfo;i++){
+    for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
       devicedata *devicei;
 
-      devicei = deviceinfo + i;
+      devicei = global_scase.devicecoll.deviceinfo + i;
       if(devicei->filetype!=filetype)continue;
       FREEMEMORY(devicei->vals);
       FREEMEMORY(devicei->vals_orig);
       FREEMEMORY(devicei->valids);
     }
-    for(i=0;i<ndeviceinfo;i++){
+    for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
       devicedata *devicei;
       int j;
 
-      devicei = deviceinfo + i;
+      devicei = global_scase.devicecoll.deviceinfo + i;
       if(devicei->filetype!=filetype||devicei->times==NULL)continue;
       times_local = devicei->times;
       FREEMEMORY(devicei->times);
-      for(j=i+1;j<ndeviceinfo;j++){
+      for(j=i+1;j<global_scase.devicecoll.ndeviceinfo;j++){
         devicedata *devicej;
 
-        devicej = deviceinfo + j;
+        devicej = global_scase.devicecoll.deviceinfo + j;
         if(devicej->filetype!=filetype)continue;
         if(times_local==devicej->times)devicej->times=NULL;
       }
@@ -5142,7 +5356,7 @@ FILE_SIZE ReadDeviceData(char *file, int filetype, int loadstatus){
 
   // find number of rows and columns
 
-  stream=fopen(file,"r");
+  stream=FOPEN(file,"r");
   if(stream==NULL)return 0;
   RewindDeviceFile(stream);
   buffer_len=GetRowCols(stream,&nrows,&ncols);
@@ -5242,11 +5456,11 @@ FILE_SIZE ReadDeviceData(char *file, int filetype, int loadstatus){
 vdevicedata *GetVDevice(float *xyzval){
   int j;
 
-  for(j=0;j<nvdeviceinfo;j++){
+  for(j=0;j<global_scase.devicecoll.nvdeviceinfo;j++){
     vdevicedata *vdevj;
     float *xyzj;
 
-    vdevj = vdeviceinfo + j;
+    vdevj = global_scase.devicecoll.vdeviceinfo + j;
 
     xyzj = vdevj->valdev->xyz;
     if(ABS(xyzval[0]-xyzj[0])>EPSDEV)continue;
@@ -5262,11 +5476,11 @@ vdevicedata *GetVDevice(float *xyzval){
 devicedata *GetDeviceFromPosition(float *xyzval, char *device_label, int device_type){
   int j;
 
-  for(j=0;j<ndeviceinfo;j++){
+  for(j=0;j<global_scase.devicecoll.ndeviceinfo;j++){
     devicedata *devj;
     float *xyz;
 
-    devj = deviceinfo + j;
+    devj = global_scase.devicecoll.deviceinfo + j;
     if(devj->filetype!=device_type)continue;
     xyz = devj->xyz;
     if(strcmp(devj->quantity,device_label)!=0)continue;
@@ -5286,16 +5500,16 @@ void UpdateColorDevices(void){
 
   colordev = devicetypes[devicetypes_index];
 
-  for(i=0;i<nvdeviceinfo;i++){
+  for(i=0;i<global_scase.devicecoll.nvdeviceinfo;i++){
     vdevicedata *vdevi;
 
-    vdevi = vdeviceinfo + i;
+    vdevi = global_scase.devicecoll.vdeviceinfo + i;
     vdevi->colordev=NULL;
   }
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
     devicedata *devi;
     vdevicedata *vdevi;
-    devi = deviceinfo + i;
+    devi = global_scase.devicecoll.deviceinfo + i;
     vdevi = devi->vdevice;
     if(vdevi==NULL)continue;
     if(strcmp(colordev->quantity,devi->quantity)==0){
@@ -5318,15 +5532,15 @@ int IsDupDeviceLabel(int index, int direction){
   }
   else{
     i1=index+1;
-    i2=ndeviceinfo;
+    i2=global_scase.devicecoll.ndeviceinfo;
   }
-  dev_index = deviceinfo + index;
-  if(index<0||index>=ndeviceinfo||STRCMP(dev_index->deviceID,"null")==0||dev_index->in_devc_csv==0)return 0;
+  dev_index = global_scase.devicecoll.deviceinfo + index;
+  if(index<0||index>=global_scase.devicecoll.ndeviceinfo||STRCMP(dev_index->deviceID,"null")==0||dev_index->in_devc_csv==0)return 0;
 
   for(i=i1;i<i2;i++){
     devicedata *devi;
 
-    devi = deviceinfo + i;
+    devi = global_scase.devicecoll.deviceinfo + i;
     if(STRCMP(devi->deviceID, "null")==0)continue;
     if(STRCMP(dev_index->deviceID,devi->deviceID)==0)return 1;
   }
@@ -5341,7 +5555,7 @@ void DeviceData2WindRose(int nr, int ntheta){
   int i;
 
   maxr_windrose = 0.0;
-  for(i = 0; i < nvdeviceinfo; i++){
+  for(i = 0; i < global_scase.devicecoll.nvdeviceinfo; i++){
     vdevicedata *vdevicei;
     windrosedata *windroseinfo;
     devicedata *udev, *vdev, *wdev;
@@ -5351,7 +5565,7 @@ void DeviceData2WindRose(int nr, int ntheta){
     int use_uvw_dev = 0, use_angle_dev=0;
     int k;
 
-    vdevicei = vdeviceinfo + i;
+    vdevicei = global_scase.devicecoll.vdeviceinfo + i;
     udev = vdevicei->udev;
     vdev = vdevicei->vdev;
     wdev = vdevicei->wdev;
@@ -5478,7 +5692,7 @@ void DeviceData2WindRose(int nr, int ntheta){
       }
     }
     if(use_angle_dev==1){
-      float rmin, rmax;
+      float rmin=0.0, rmax=1.0;
 
       nvals = MIN(angledev->nvals, veldev->nvals);
       windrose_xy_active = 1;
@@ -5492,22 +5706,22 @@ void DeviceData2WindRose(int nr, int ntheta){
         windrosei->xyz = angledev->xyz;
         histogram = windrosei->histogram;
         InitHistogramPolar(histogram, nr, ntheta, NULL, NULL);
-        if(windrose_merge_type==WINDROSE_POINT) {
+        if(windrose_merge_type==WINDROSE_POINT){
           GetPolarBounds(veldev->vals, nvals, &rmin, &rmax);
           CopyPolar2Histogram(veldev->vals, angledev->vals, nvals, rmin, rmax, histogram);
         }
-        else {
+        else{
           float *xyzi;
           int first = 1;
 
           xyzi = veldev->xyz;
           // find min rmin and max rmax
-          for(j = 0; j<nvdeviceinfo; j++) {
+          for(j = 0; j<global_scase.devicecoll.nvdeviceinfo; j++){
             vdevicedata *vdevicej;
             devicedata *angledevj, *veldevj;
             float *xyzj, rminj, rmaxj;
 
-            vdevicej = vdeviceinfo+j;
+            vdevicej = global_scase.devicecoll.vdeviceinfo+j;
             angledevj = vdevicej->angledev;
             veldevj = vdevicej->veldev;
             if(angledevj==NULL||veldevj==NULL)continue;
@@ -5531,12 +5745,12 @@ void DeviceData2WindRose(int nr, int ntheta){
             }
           }
           // update windrose
-          for(j = 0; j<nvdeviceinfo; j++) {
+          for(j = 0; j<global_scase.devicecoll.nvdeviceinfo; j++){
             vdevicedata *vdevicej;
             devicedata *angledevj, *veldevj;
             float *xyzj;
 
-            vdevicej = vdeviceinfo+j;
+            vdevicej = global_scase.devicecoll.vdeviceinfo+j;
             angledevj = vdevicej->angledev;
             veldevj = vdevicej->veldev;
             if(angledevj==NULL||veldevj==NULL)continue;
@@ -5566,23 +5780,23 @@ void SetupDeviceData(void){
   char **devcunits=NULL, **devclabels=NULL;
   int is_dup;
 
-  if(ndeviceinfo==0)return; // only setup device data once
+  if(global_scase.devicecoll.ndeviceinfo==0)return; // only setup device data once
   devices_setup = 1;
-  FREEMEMORY(vdeviceinfo);
-  NewMemory((void **)&vdeviceinfo,ndeviceinfo*sizeof(vdevicedata));
-  FREEMEMORY(vdevices_sorted);
-  NewMemory((void **)&vdevices_sorted,3*ndeviceinfo*sizeof(vdevicesortdata));
-  nvdeviceinfo=0;
-  for(i=0;i<ndeviceinfo;i++){
+  FREEMEMORY(global_scase.devicecoll.vdeviceinfo);
+  NewMemory((void **)&global_scase.devicecoll.vdeviceinfo,global_scase.devicecoll.ndeviceinfo*sizeof(vdevicedata));
+  FREEMEMORY(global_scase.devicecoll.vdevices_sorted);
+  NewMemory((void **)&global_scase.devicecoll.vdevices_sorted,3*global_scase.devicecoll.ndeviceinfo*sizeof(vdevicesortdata));
+  global_scase.devicecoll.nvdeviceinfo=0;
+  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
     vdevicedata *vdevi;
     devicedata *devi,*devj;
     float *xyzval;
 
-    devi = deviceinfo+i;
+    devi = global_scase.devicecoll.deviceinfo+i;
     xyzval = devi->xyz;
     devi->vdevice = NULL;
 
-    vdevi = vdeviceinfo+nvdeviceinfo;
+    vdevi = global_scase.devicecoll.vdeviceinfo+global_scase.devicecoll.nvdeviceinfo;
     vdevi->valdev = devi;
     vdevi->udev = NULL;
     vdevi->vdev = NULL;
@@ -5639,17 +5853,17 @@ void SetupDeviceData(void){
       vdevi->angledev!=NULL||vdevi->veldev!=NULL){
       vdevi->unique=1;
       vdevi->display = 1;
-      nvdeviceinfo++;
+      global_scase.devicecoll.nvdeviceinfo++;
     }
   }
 
   // look for duplicate device labels
 
   is_dup=0;
-  for(i=0;i<ndeviceinfo;i++){
+  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
     devicedata *devi;
 
-    devi = deviceinfo + i;
+    devi = global_scase.devicecoll.deviceinfo + i;
     if(STRCMP(devi->deviceID,"null")==0)continue;
     if(IsDupDeviceLabel(i,AFTER)==1){
       is_dup=1;
@@ -5660,29 +5874,29 @@ void SetupDeviceData(void){
     int ii;
 
     fprintf(stderr,"*** Warning: Duplicate device labels: ");
-    for(ii=0;ii<ndeviceinfo;ii++){
+    for(ii=0;ii<global_scase.devicecoll.ndeviceinfo;ii++){
       devicedata *devi;
 
-      devi = deviceinfo + ii;
+      devi = global_scase.devicecoll.deviceinfo + ii;
       if(STRCMP(devi->deviceID,"null")==0)continue;
       if(IsDupDeviceLabel(ii,BEFORE)==0&& IsDupDeviceLabel(ii,AFTER)==1){
         fprintf(stderr," %s,",devi->deviceID);
       }
     }
-    fprintf(stderr," found in %s\n",fds_filein);
+    fprintf(stderr," found in %s\n",global_scase.fds_filein);
   }
-  for(i=0;i<nvdeviceinfo;i++){
+  for(i=0;i<global_scase.devicecoll.nvdeviceinfo;i++){
     vdevicedata *vdevi;
     int j;
     float *xyzi;
 
-    vdevi = vdeviceinfo + i;
+    vdevi = global_scase.devicecoll.vdeviceinfo + i;
     xyzi = vdevi->valdev->xyz;
-    for(j=i+1;j<nvdeviceinfo;j++){
+    for(j=i+1;j<global_scase.devicecoll.nvdeviceinfo;j++){
       vdevicedata *vdevj;
       float *xyzj;
 
-      vdevj = vdeviceinfo + j;
+      vdevj = global_scase.devicecoll.vdeviceinfo + j;
       if(vdevj->unique==0)continue;
       xyzj = vdevj->valdev->xyz;
       if(ABS(xyzi[0]-xyzj[0])>EPSDEV)continue;
@@ -5692,12 +5906,12 @@ void SetupDeviceData(void){
     }
   }
   max_dev_vel=-1.0;
-  for(i=0;i<nvdeviceinfo;i++){
+  for(i=0;i<global_scase.devicecoll.nvdeviceinfo;i++){
     vdevicedata *vdevi;
     devicedata *devval;
     int j;
 
-    vdevi = vdeviceinfo + i;
+    vdevi = global_scase.devicecoll.vdeviceinfo + i;
     if(vdevi->unique==0)continue;
     devval = vdevi->valdev;
     if(vdevi->udev!=NULL)vdevi->udev->vdevice=vdevi;
@@ -5739,13 +5953,13 @@ void SetupDeviceData(void){
 
   // find devices linked with each vdevice
 
-  if(ndeviceinfo>0){
-    for(i=0;i<ndeviceinfo;i++){
+  if(global_scase.devicecoll.ndeviceinfo>0){
+    for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
       devicedata *devi;
       float *xyzi;
       vdevicedata *vdevj;
 
-      devi = deviceinfo + i;
+      devi = global_scase.devicecoll.deviceinfo + i;
       if(devi->vdevice!=NULL)continue;
       xyzi = devi->xyz;
       vdevj = GetVDevice(xyzi);
@@ -5754,29 +5968,29 @@ void SetupDeviceData(void){
   }
 
   //setup devicetypes
-  if(ndeviceinfo>0){
+  if(global_scase.devicecoll.ndeviceinfo>0){
     ndevicetypes=0;
     FREEMEMORY(devicetypes);
-    NewMemory((void **)&devicetypes,ndeviceinfo*sizeof(devicedata *));
-    for(i=0;i<ndeviceinfo;i++){
+    NewMemory((void **)&devicetypes,global_scase.devicecoll.ndeviceinfo*sizeof(devicedata *));
+    for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
       devicedata *devi;
 
-      devi = deviceinfo + i;
+      devi = global_scase.devicecoll.deviceinfo + i;
       devi->type2=-1;
     }
-    for(i=0;i<ndeviceinfo;i++){
+    for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
       int j;
       devicedata *devi;
 
-      devi = deviceinfo + i;
+      devi = global_scase.devicecoll.deviceinfo + i;
       if(devi->type2>=0||devi->nvals==0||strlen(devi->quantity)==0)continue;
       devi->type2=ndevicetypes;
       devi->type2vis=0;
       devicetypes[ndevicetypes++]=devi;
-      for(j=i+1;j<ndeviceinfo;j++){
+      for(j=i+1;j<global_scase.devicecoll.ndeviceinfo;j++){
         devicedata *devj;
 
-        devj = deviceinfo + j;
+        devj = global_scase.devicecoll.deviceinfo + j;
         if(devj->type2<0&&strcmp(devi->quantity,devj->quantity)==0){
           devj->type2=devi->type2;
         }
@@ -5784,25 +5998,25 @@ void SetupDeviceData(void){
     }
     if(ndevicetypes>0)devicetypes[0]->type2vis=1;
   }
-  for(i=0;i<nvdeviceinfo;i++){
+  for(i=0;i<global_scase.devicecoll.nvdeviceinfo;i++){
     vdevicesortdata *vdevsorti;
 
-    vdevsorti = vdevices_sorted + i;
-    vdevsorti->vdeviceinfo = vdeviceinfo + i;
+    vdevsorti = global_scase.devicecoll.vdevices_sorted + i;
+    vdevsorti->vdeviceinfo = global_scase.devicecoll.vdeviceinfo + i;
     vdevsorti->dir = XDIR;
 
-    vdevsorti = vdevices_sorted + nvdeviceinfo + i;
-    vdevsorti->vdeviceinfo = vdeviceinfo + i;
+    vdevsorti = global_scase.devicecoll.vdevices_sorted + global_scase.devicecoll.nvdeviceinfo + i;
+    vdevsorti->vdeviceinfo = global_scase.devicecoll.vdeviceinfo + i;
     vdevsorti->dir = YDIR;
 
-    vdevsorti = vdevices_sorted + 2*nvdeviceinfo + i;
-    vdevsorti->vdeviceinfo = vdeviceinfo + i;
+    vdevsorti = global_scase.devicecoll.vdevices_sorted + 2*global_scase.devicecoll.nvdeviceinfo + i;
+    vdevsorti->vdeviceinfo = global_scase.devicecoll.vdeviceinfo + i;
     vdevsorti->dir = ZDIR;
   }
-  for(i = 0; i<nvdeviceinfo; i++){
+  for(i = 0; i<global_scase.devicecoll.nvdeviceinfo; i++){
     vdevicedata *vdevicei;
 
-    vdevicei = vdeviceinfo+i;
+    vdevicei = global_scase.devicecoll.vdeviceinfo+i;
     vdevicei->nwindroseinfo = 0;
     vdevicei->windroseinfo = NULL;
   }
@@ -5831,10 +6045,10 @@ void InitializeDeviceCsvData(int flag){
   INIT_PRINT_TIMER(device_timer);
   ReadDeviceData(NULL, CSV_FDS, UNLOAD);
   ReadDeviceData(NULL, CSV_EXP, UNLOAD);
-  for(i = 0; i < ncsvfileinfo; i++){
+  for(i = 0; i < global_scase.csvcoll.ncsvfileinfo; i++){
     csvfiledata *csvi;
 
-    csvi = csvfileinfo + i;
+    csvi = global_scase.csvcoll.csvfileinfo + i;
     if(strcmp(csvi->c_type, "devc") == 0)file_size += ReadDeviceData(csvi->file, CSV_FDS, flag);
     if(strcmp(csvi->c_type, "ext") == 0)file_size += ReadDeviceData(csvi->file, CSV_EXP, flag);
   }
@@ -5863,18 +6077,18 @@ void InitializeDeviceCsvData(int flag){
 void UpdateObjectUsed(void){
   int i;
 
-  for(i = 0; i<objectscoll->nobject_defs; i++){
+  for(i = 0; i<global_scase.objectscoll.nobject_defs; i++){
     sv_object *obj_typei;
 
-    obj_typei = objectscoll->object_defs[i];
+    obj_typei = global_scase.objectscoll.object_defs[i];
     obj_typei->used_by_device = 0;
   }
-  for(i = 0; i<ndeviceinfo; i++){
+  for(i = 0; i<global_scase.devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
     propdata *propi;
     int jj;
 
-    devicei = deviceinfo+i;
+    devicei = global_scase.devicecoll.deviceinfo+i;
     propi = devicei->prop;
     if(propi==NULL)continue;
     for(jj = 0; jj<propi->nsmokeview_ids; jj++){
@@ -5889,13 +6103,13 @@ void UpdateObjectUsed(void){
     int j;
 
     partpropi = part5propinfo+i;
-    for(j = 0; j<npartclassinfo; j++){
+    for(j = 0; j<global_scase.npartclassinfo; j++){
       partclassdata *partclassj;
       propdata *propi;
       int jj;
 
       if(partpropi->class_present[j]==0)continue;
-      partclassj = partclassinfo+j;
+      partclassj = global_scase.partclassinfo+j;
       propi = partclassj->prop;
       if(propi==NULL)continue;
       for(jj = 0; jj<propi->nsmokeview_ids; jj++){
@@ -5906,6 +6120,23 @@ void UpdateObjectUsed(void){
       }
     }
   }
+}
+
+/* ----------------------- Dist2Plane ------------------------ */
+
+float Dist2Plane(float x, float y, float z, float xyzp[3], float xyzpn[3]){
+  float return_val;
+  float xyz[3];
+  int i;
+
+  xyz[0]=x;
+  xyz[1]=y;
+  xyz[2]=z;
+  return_val=0.0;
+  for(i=0;i<3;i++){
+    return_val+=(xyz[i]-xyzp[i])*xyzpn[i];
+  }
+  return return_val;
 }
 
 /* ----------------------- InitDevicePlane ------------------------ */
@@ -5938,10 +6169,10 @@ void InitDevicePlane(devicedata *devicei){
     rgbcolor[1]=0.0;
     rgbcolor[2]=0.0;
     rgbcolor[3]=1.0;
-    devicei->color=GetColorPtr(rgbcolor);
+    devicei->color=GetColorPtr(&global_scase, rgbcolor);
   }
   colorindex=0;
-  for(i=0;i<nmeshes;i++){
+  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
     int j;
     meshdata *meshi;
     float xvert[12], yvert[12], zvert[12];
@@ -5953,7 +6184,7 @@ void InitDevicePlane(devicedata *devicei){
     InitIsoSurface(devicei->plane_surface[i],level,devicei->color,colorindex);
     devicei->plane_surface[i]->cullfaces=1;
 
-    meshi = meshinfo + i;
+    meshi = global_scase.meshescoll.meshinfo + i;
 
     xx[0]=meshi->xyz_bar0[XXX];
     xx[1]=SMV2FDS_X(meshi->xyz_bar[XXX]);
@@ -5990,31 +6221,8 @@ void InitDevicePlane(devicedata *devicei){
                      closestnodes, nvert, triangles, ntriangles);
     GetNormalSurface(devicei->plane_surface[i]);
     CompressIsoSurface(devicei->plane_surface[i],1,
-          xbar0,2*xbar,ybar0,2*ybar,zbar0,zbar);
+          global_scase.xbar0,2*global_scase.xbar,global_scase.ybar0,2*global_scase.ybar,global_scase.zbar0,global_scase.zbar);
     SmoothIsoSurface(devicei->plane_surface[i]);
   }
 
-}
-
-/* ----------------------- UpdatePartClassDepend ----------------------------- */
-
-void UpdatePartClassDepend(partclassdata *partclassi){
-  int i;
-
-  if(partclassi->prop!=NULL){
-    sv_object_frame *obj_frame;
-    int nvar;
-
-    obj_frame=partclassi->prop->smv_object->obj_frames[0];
-    for(i=0;i<partclassi->nvars_dep-3;i++){
-      char *var;
-
-      var=partclassi->vars_dep[i];
-      partclassi->vars_dep_index[i]= GetObjectFrameTokenLoc(var,obj_frame);
-    }
-    nvar = partclassi->nvars_dep;
-    partclassi->vars_dep_index[nvar-3]= GetObjectFrameTokenLoc("R",obj_frame);
-    partclassi->vars_dep_index[nvar-2]= GetObjectFrameTokenLoc("G",obj_frame);
-    partclassi->vars_dep_index[nvar-1]= GetObjectFrameTokenLoc("B",obj_frame);
-  }
 }

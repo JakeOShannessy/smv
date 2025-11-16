@@ -26,7 +26,7 @@ void LoadSkyTexture(char *filebase, texturedata *texti){
 
   glGenTextures(1,&texti->name);
   glBindTexture(GL_TEXTURE_2D,texti->name);
-  floortex=ReadPicture(texturedir, filebuffer,&texwid,&texht,&is_transparent,0);
+  floortex=ReadPicture(global_scase.texturedir, filebuffer,&texwid,&texht,&is_transparent,0);
   texti->is_transparent = is_transparent;
   if(floortex==NULL){
     FREEMEMORY(filebuffer);
@@ -58,6 +58,7 @@ void LoadSkyTexture(char *filebase, texturedata *texti){
   texti->loaded=1;
   return;
 }
+
 /* ------------------ FreeSkybox ------------------------ */
 
 void FreeSkybox(void){
@@ -76,99 +77,6 @@ void FreeSkybox(void){
   nskyboxinfo=0;
 }
 
-/* ------------------ DrawFloor ------------------------ */
-
-void DrawFloor(void){
-  int i;
-
-/* stuff min and max grid data into a more convenient form
-  assuming the following grid numbering scheme
-
-       5-------6
-     / |      /|
-   /   |     / |
-  4 -------7   |
-  |    |   |   |
-  Z    1---|---2
-  |  Y     |  /
-  |/       |/
-  0--X-----3
-
-  */
-  float points[]={
-    0.0,0.0,0.0,
-    0.0,1.0,0.0,
-    1.0,1.0,0.0,
-    1.0,0.0,0.0,
-    0.0,0.0,1.0,
-    0.0,1.0,1.0,
-    1.0,1.0,1.0,
-    1.0,0.0,1.0
-  };
-  float normals[]={
-     0.0,-1.0, 0.0,
-    -1.0, 0.0, 0.0,
-     0.0, 1.0, 0.0,
-     1.0, 0.0, 0.0,
-     0.0, 0.0, 1.0,
-     0.0, 0.0,-1.0
-  };
-  int faces[]={
-    1,2,6,5,
-    2,3,7,6,
-    3,0,4,7,
-    0,1,5,4,
-    0,3,2,1,
-    5,6,7,4
-  };
-  float *xyz;
-  float *normal;
-  int *faceptr;
-
-  for(i=0;i<8;i++){
-    xyz = points + 3*i;
-    xyz[0] = 5.0*(xyz[0]-0.5);
-    xyz[1] = 5.0*(xyz[1]-0.5);
-    xyz[2] = 0.0;
-  }
-
-  glDisable(GL_BLEND);
-  glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
-  glEnable(GL_TEXTURE_2D);
-
-  for(i=4;i<5;i++){
-
-    if(skyboxinfo->face[i].file==NULL)continue;
-
-    glBindTexture(GL_TEXTURE_2D,skyboxinfo->face[i].name);
-    glBegin(GL_QUADS);
-
-    normal = normals + 3*i;
-    faceptr = faces + 4*i;
-
-    glNormal3fv(normal);
-    glTexCoord2f(0.0,0.0);
-    xyz = points + 3*faceptr[0];
-    glVertex3fv(xyz);
-
-    glTexCoord2f(1.0,0.0);
-    xyz = points + 3*faceptr[1];
-    glVertex3fv(xyz);
-
-    glTexCoord2f(1.0,1.0);
-    xyz = points + 3*faceptr[2];
-    glVertex3fv(xyz);
-
-    glTexCoord2f(0.0,1.0);
-    xyz = points + 3*faceptr[3];
-    glVertex3fv(xyz);
-    glEnd();
-
-  }
-  glDisable(GL_TEXTURE_2D);
-  glEnable(GL_BLEND);
-}
-
 /* ------------------ DrawSkybox ------------------------ */
 
 void DrawSkybox(void){
@@ -177,12 +85,12 @@ void DrawSkybox(void){
   /* stuff min and max grid data into a more convenient form
   assuming the following grid numbering scheme
 
-  5-------6
-  / |      /|
-  /   |     / |
-  4 -------7   |
-  |    |   |   |
-  Z    1---|---2
+      5--------6
+    / |      / |
+   /  |     /  |
+  4--------7   |
+  |   |    |   |
+  Z   1----|---2
   |  Y     |  /
   |/       |/
   0--X-----3
@@ -199,12 +107,12 @@ void DrawSkybox(void){
     1.0, 0.0, 1.0
   };
   float normals[] = {
-    0.0, -1.0, 0.0,
-    -1.0, 0.0, 0.0,
-    0.0, 1.0, 0.0,
-    1.0, 0.0, 0.0,
-    0.0, 0.0, 1.0,
-    0.0, 0.0, -1.0
+    0.0, -1.0, 0.0,  // ymax
+    -1.0, 0.0, 0.0,  // xmax
+    0.0, 1.0, 0.0,   // ymin
+    1.0, 0.0, 0.0,   // xmin
+    0.0, 0.0, 1.0,   // zmin
+    0.0, 0.0, -1.0   // zmax
   };
   int faces[] = {
     1, 2, 6, 5,
@@ -214,17 +122,16 @@ void DrawSkybox(void){
     0, 3, 2, 1,
     5, 6, 7, 4
   };
-  float *xyz;
-  float *normal;
   int *faceptr;
 
-  float increment = 0.0;
-
   for(i = 0; i<8; i++){
+    float *xyz;
+    float skybox_diam=3.0;
+
     xyz = points+3*i;
-    xyz[0] = 3.0*(xyz[0]-0.5)+camera_current->eye[0];
-    xyz[1] = 3.0*(xyz[1]-0.5)+camera_current->eye[1];
-    xyz[2] = 3.0*(xyz[2]-0.5+increment)+camera_current->eye[2];
+    xyz[0] = skybox_diam*(xyz[0]-0.5)+camera_current->eye[0];
+    xyz[1] = skybox_diam*(xyz[1]-0.5)+camera_current->eye[1];
+    xyz[2] = skybox_diam*(xyz[2]-0.5)+camera_current->eye[2];
   }
 
   glDisable(GL_BLEND);
@@ -234,6 +141,7 @@ void DrawSkybox(void){
   glEnable(GL_TEXTURE_2D);
 
   for(i = 0; i<6; i++){
+    float *normal, *xyz;
 
     if(skyboxinfo->face[i].file==NULL)continue;
 
@@ -266,5 +174,24 @@ void DrawSkybox(void){
   glEnable(GL_DEPTH_TEST);
   glDepthMask(GL_TRUE);
   glEnable(GL_BLEND);
-  DrawFloor();
+
+  if(visSkyboxoutline == 1){
+    glBegin(GL_LINES);
+    glColor3fv(foregroundcolor);
+    for(i = 0; i < 6; i++){
+      float *xyz[4];
+
+      if(skyboxinfo->face[i].file == NULL)continue;
+      faceptr = faces + 4 * i;
+      xyz[0] = points + 3 * faceptr[0];
+      xyz[1] = points + 3 * faceptr[1];
+      xyz[2] = points + 3 * faceptr[2];
+      xyz[3] = points + 3 * faceptr[3];
+      glVertex3fv(xyz[0]); glVertex3fv(xyz[1]);
+      glVertex3fv(xyz[1]); glVertex3fv(xyz[2]);
+      glVertex3fv(xyz[2]); glVertex3fv(xyz[3]);
+      glVertex3fv(xyz[3]); glVertex3fv(xyz[0]);
+    }
+    glEnd();
+  }
 }

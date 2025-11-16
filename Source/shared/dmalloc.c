@@ -1,22 +1,25 @@
-#include "options.h"
+#include "options_common.h"
 #define INDMALLOC
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #ifdef pp_MEMDEBUG
 static int checkmemoryflag=1;
 #endif
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
+#endif
+#ifdef pp_OSX
+#include <mach/mach.h>
 #endif
 
 #ifdef pp_MEMDEBUG
 static blockinfo *GetBlockInfo(bbyte *pb);
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 
 /* ------------------ memusage ------------------------ */
 
@@ -39,24 +42,64 @@ int memusage(void){
 }
 #endif
 
-/* ------------------ _memorystatus ------------------------ */
+/* ------------------ MemoryLoad ------------------------ */
 
-#ifdef pp_memstatus
-#ifdef WIN32
-void _memorystatus(unsigned int size,unsigned int *availmem,unsigned int *physmemused, unsigned int *totalmem){
+#ifdef _WIN32
+int MemoryLoad(void){
   MEMORYSTATUS stat;
 
-    GlobalMemoryStatus(&stat);
-    if(availmem!=NULL)*availmem=stat.dwMemoryLoad;
-    if(totalmem!=NULL)*totalmem=stat.dwTotalPhys/(1024*1024);
-    if(physmemused!=NULL)*physmemused=(stat.dwTotalPhys-stat.dwAvailPhys)/(1024*1024);
-    if(size!=0&&size>stat.dwAvailPhys-0.1*stat.dwTotalPhys){
-      fprintf(stderr,"*** Warning: Low Memory. Only %i M available for viewing data.\n",
-           (int)stat.dwAvailPhys/(1024*1024));
-      fprintf(stderr,"    Unload datafiles or system performance may degrade.\n");
-    }
+  GlobalMemoryStatus(&stat);
+  return (int)stat.dwMemoryLoad;
 }
 #endif
+#ifdef __linux__
+int MemoryLoad(void){
+  FILE *fp = fopen("/proc/meminfo", "r");
+  if(fp == NULL)return -1;
+
+  long memTotal = 0, memAvailable = 0;
+  char label[64];
+  long value;
+  char unit[32];
+
+  while(fscanf(fp, "%63s %ld %31s\n", label, &value, unit) == 3) {
+    if(strcmp(label, "MemTotal:") == 0) {
+      memTotal = value;
+    }
+    else if(strcmp(label, "MemAvailable:") == 0) {
+      memAvailable = value;
+      break; // we got what we need
+    }
+  }
+  fclose(fp);
+
+  if(memTotal <= 0)return -1;
+
+  long used = memTotal - memAvailable;
+  return (int)((double)used / (double)memTotal * 100.0);
+}
+#endif
+#ifdef pp_OSX
+int MemoryLoad(void){
+  mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+  vm_statistics64_data_t vmstat;
+  kern_return_t kr = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&vmstat, &count);
+
+  if (kr != KERN_SUCCESS)return -1;
+
+  int64_t pageSize;
+  host_page_size(mach_host_self(), (vm_size_t*)&pageSize);
+
+  int64_t free     = (int64_t)vmstat.free_count   * pageSize;
+  int64_t active   = (int64_t)vmstat.active_count * pageSize;
+  int64_t inactive = (int64_t)vmstat.inactive_count * pageSize;
+  int64_t wired    = (int64_t)vmstat.wire_count   * pageSize;
+
+  int64_t used = active + inactive + wired;
+  int64_t total = used + free;
+
+  return (int)((double)used / (double)total * 100.0);
+}
 #endif
 
 /* ------------------ initMALLOC ------------------------ */
@@ -99,7 +142,7 @@ void PrintMemoryError(size_t size, const char *varname, const char *file, int li
     if(file2 != NULL)file = file2+1;
     fprintf(stderr," at %s(%i)\n",file,linenumber);
   }
-  printf("\n");
+  fprintf(stderr, "\n");
   assert(1==0); // force smokeview to abort when in debug mode
 }
 
@@ -134,7 +177,7 @@ mallocflag _NewMemoryNOTHREAD(void **ppv, size_t size, int memory_id){
   //  float total, maxmem;
   //  total = MMtotalmemory/1000000000.0;
   //  maxmem = MMmaxmemory / 1000000000.0;
-  //  printf("memory allocated: %f GB out of %f GB\n",total,maxmem);
+  //  fprintf(stderr, "memory allocated: %f GB out of %f GB\n",total,maxmem);
   if(MMmaxmemory == 0 || MMtotalmemory + size <= MMmaxmemory){
     this_ptr = (void *)malloc(infoblocksize + size + sizeofDebugByte);
   }
@@ -357,12 +400,15 @@ mallocflag __NewMemory(void **ppv, size_t size, int memory_id, const char *varna
   const char *varname2;
   const char *file2;
   char ampersand='&';
-#ifdef WIN32
+#ifdef _WIN32
   char dirsep='\\';
 #else
   char dirsep='/';
 #endif
 
+#ifdef pp_MEM_DEBUG_PRINT
+  fprintf(stderr, "file: %s line: %i\n", file, linenumber);
+#endif
   LOCK_MEM;
   return_code=_NewMemoryNOTHREAD(ppb,size,memory_id);
   if(return_code != 1){
@@ -476,17 +522,17 @@ void _PrintAllMemoryInfo(void){
   blockinfo *pbi;
   int n=0,size=0;
 
-  printf("\n\n");
-  printf("********************************************\n");
-  printf("********************************************\n");
-  printf("********************************************\n");
+  fprintf(stderr, "\n\n");
+  fprintf(stderr, "********************************************\n");
+  fprintf(stderr, "********************************************\n");
+  fprintf(stderr, "********************************************\n");
   for(pbi = pbiHead; pbi != NULL; pbi = pbi->pbiNext)
   {
     n++;
     size += pbi->size;
-    printf("%s allocated in %s at line %i\n",pbi->varname,pbi->filename,pbi->linenumber);
+    fprintf(stderr, "%s allocated in %s at line %i\n",pbi->varname,pbi->filename,pbi->linenumber);
   }
-  printf("nblocks=%i sizeblocks=%i\n",n,size);
+  fprintf(stderr, "nblocks=%i sizeblocks=%i\n",n,size);
 }
 
 /* ------------------ GetBlockInfo_nofail ------------------------ */
@@ -676,11 +722,11 @@ void getMemusage(MMsize totalmemory,char *MEMlabel){
 
   if(totalmemory<1000000000){
     size = totalmemory/1000000;
-    sprintf(MEMlabel,"%i MB",size);
+    sprintf(MEMlabel,"Mem Usage: %i MB",size);
   }
   else{
     rsize = totalmemory/1000000000.0;
-    sprintf(MEMlabel,"%4.2f GB",rsize);
+    sprintf(MEMlabel,"Mem Usage: %4.2f GB",rsize);
   }
 }
 #endif

@@ -10,7 +10,7 @@ if exist %userprofile%\.bundle\smv_revision.txt (
 
 :: ---- log entry date ----
 
-set smvlogdate="28-May-2024"
+set smvlogdate="15-September-2025"
 
 :: ---- repo locations ----
 
@@ -19,15 +19,10 @@ if "x%git_root%" NEQ "x" goto skipgit
 set git_root=%userprofile%\FireModels_fork
 :skipgit
 
-set fdswikirepo=%git_root%\wikis
 set git_drive=c:
 
-::*** Linux/OSX
-set userhome=/home/gforney
-set bot_home=/home4/gforney
+::*** linux/osx - note: osx root uses linux_git_root variable
 set linux_git_root=FireModels_fork
-set compiler_dir=fire-notes/INSTALL/LINUX/INTEL_19u1
-set misc_dir=fire-notes/INSTALL/LIBS/LINUX/LIB64
 
 :: ---- MPI library locations ----
 
@@ -35,37 +30,12 @@ set misc_dir=fire-notes/INSTALL/LIBS/LINUX/LIB64
 set linux_mpi_version=INTEL
 set linux_intel_mpi_version=oneapi
 
-
 set osx_mpi_version=4.1.0
-set osx_openmpi_dir=/opt/openmpi410_oneapi_64
-::set osx_mpi_version=1.8.4
-
-set linux_comp_version=20u1
 set osx_comp_version=oneapi
 
 :: ---- INTEL compiler version ----
 
 set INTELVERSION=INTELoneapi1p6
-
-:: ---- Guide locations ----
-
-set GUIDE_DIR=.bundle/pubs
-
-:: ---- openmpi library locations ----
-
-set OPENMPI_DIR=.bundle/OPENMPI
-
-:: ---- bundle locations ----
-
-::set BUNDLE_DIR=.bundle/BUNDLE
-
-:: ---- bot locations ----
-
-set firebotrepo=/home2/smokevis2/firebot/FireModels_clone
-set firebothome=/home2/smokevis2/firebot
-
-set smokebotrepo=/home2/smokevis2/smokebot/FireModels_clone
-set smokebothome=/home2/smokevis2/smokebot
 
 :: plink options
 set plink_options=-no-antispoof
@@ -73,13 +43,11 @@ set plink_options=-no-antispoof
 :: ---- hostnames ----
 
 ::*** linux
-set linux_hostname=blaze.el.nist.gov
-::set linux_hostname=192.168.1.14
+set linux_hostname=spark.nist.gov
 set linux_username=%username%
 set linux_logon=%linux_username%@%linux_hostname%
 
 ::*** OSX
 set osx_hostname=excess.el.nist.gov
-::set osx_hostname=192.168.1.125
 set osx_username=%username%
 set osx_logon=%osx_username%@%osx_hostname%

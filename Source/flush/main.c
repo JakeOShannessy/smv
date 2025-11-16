@@ -7,8 +7,8 @@
 #include <math.h>
 #include "string_util.h"
 #include "file_util.h"
-#include "MALLOCC.h"
-#ifdef WIN32
+#include "dmalloc.h"
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -24,14 +24,17 @@ int write_buffer=0;
 
 /* ------------------ Usage ------------------------ */
 
-void Usage(char *prog, int option){
+void Usage(int option){
  char githash[LEN_BUFFER];
  char gitdate[LEN_BUFFER];
 
   GetGitInfo(githash,gitdate);    // get githash
 
-  fprintf(stdout, "\n%s (%s) %s\n", prog, githash, __DATE__);
-  fprintf(stdout, "flush the cache\n");
+
+  fprintf(stdout, "\nflush [options]\n");
+  fprintf(stdout, "%s %s\n\n", githash, __DATE__);
+  fprintf(stdout, "flush the cache\n\n");
+  PRINTF("options:\n");
   PRINTF("%s\n", " -g size - allocate a memory buffer of 'size' GB");
   PRINTF("%s\n", " -w      - initialize buffer");
   UsageCommon(HELP_SUMMARY);
@@ -42,10 +45,10 @@ void Usage(char *prog, int option){
 
 /* ------------------ FlushCache ------------------------ */
 #define BUFFERSIZE 250000000
-void FlushCache(float flush_size){
+void FlushCache(float flush_size_arg){
   int i, nbuffers;
 
-  nbuffers = (int)(flush_size+0.5);
+  nbuffers = (int)(flush_size_arg+0.5);
   for(i = 0;i<nbuffers;i++){
     int *buffptr;
     int j;
@@ -73,13 +76,13 @@ int main(int argc, char **argv){
   initMALLOC();
   SetStdOut(stdout);
 
-  ParseCommonOptions(argc, argv);
-  if(show_help!=0){
-    Usage("flushcache",show_help);
+  common_opts opts = ParseCommonOptions(argc, argv);
+  if(opts.show_help!=0){
+    Usage(opts.show_help);
     return 1;
   }
-  if(show_version==1){
-    PRINTVERSION("flushcache", argv[0]);
+  if(opts.show_version==1){
+    PRINTVERSION("flushcache", &opts);
     return 1;
   }
 

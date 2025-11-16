@@ -1,4 +1,10 @@
 #!/bin/bash
+
+CURDIR=`pwd`
+cd  ../../../Source
+SOURCE_DIR=`pwd`
+cd $CURDIR
+
 SMV_MAKE_OPTS=
 TEST=
 TESTFLAG=
@@ -12,8 +18,13 @@ if [ "`uname`" == "Darwin" ]; then
 else
   GLUT=glut
 fi
-QUARTZSMV=framework
-NOQUARTZ=1
+
+# define INTEL_ICC, INTEL_ICPP, GCC and GXX variables
+source $SOURCE_DIR/scripts/set_compilers.sh
+
+export COMPILER=$INTEL_ICC
+export COMPILER2=$INTEL_ICPP
+
 inc=
 BUILD_LIBS=
 BUILD_ALL=1
@@ -22,14 +33,22 @@ if [ "$BUILD_ALL" == "1" ]; then
   FULL_BUILD="[default]"
 fi
 TESTOPT=
-while getopts 'AfhiLmpqQrStT' OPTION
+while getopts 'AfCGhiLmprStT' OPTION
 do
 case $OPTION in
   A)
    BUILD_ALL=1
   ;;
+  C)
+   COMPILER=clang
+   COMPILER2=clang++
+  ;;
   f)
    GLUT=freeglut
+  ;;
+  G)
+   COMPILER=$GCC
+   COMPILER2=$GXX
   ;;
   h)
   echo ""
@@ -55,14 +74,6 @@ case $OPTION in
    SMV_MAKE_OPTS=$SMV_MAKE_OPTS"SMV_PROFILEFLAG=\"-pg\" "
    SMV_MAKE_OPTS=$SMV_MAKE_OPTS"SMV_PROFILESTRING=\"p\" "
   ;;
-  q)
-   QUARTZSMV="use_quartz"
-   NOQUARTZ=
-   SMV_MAKE_OPTS=$SMV_MAKE_OPTS"-I /opt/X11/include -Wno-unknown-pragmas"
-  ;;
-  Q)
-   DUMMY=1
-  ;;
   r)
   ;;
   S)
@@ -86,20 +97,11 @@ export SMV_MAKE_OPTS
 export GLUT
 export TEST
 export SANITIZE
-if [ "$NOQUARTZ" != "" ]; then
-  TESTFLAG="$TESTFLAG -D pp_NOQUARTZ"
-  SMV_MAKE_OPTS="$SMV_MAKE_OPTS NOQUARTZ=\"\" "
-else
-  SMV_MAKE_OPTS="$SMV_MAKE_OPTS NOQUARTZ=\"q_\" "
-fi
 if [ "$TESTFLAG" != "" ]; then
    SMV_MAKE_OPTS="$SMV_MAKE_OPTS SMV_TESTFLAG=\"$TESTFLAG\" "
 fi
 
 # this parameter is only for the mac
 if [ "`uname`" == "Darwin" ]; then
-  export QUARTZSMV
   export GLIBDIROPT
-else
-  QUARTZSMV=
 fi

@@ -1,16 +1,16 @@
-#include "options.h"
+#include "options_common.h"
 #define IN_TRANSLATE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "string_util.h"
 #include "translate.h"
 
 /* ------------------ CompareTrdata ------------------------ */
 
-int CompareTrdata( const void *arg1, const void *arg2 ){
+int CompareTrdata(const void *arg1, const void *arg2){
   trdata *tri, *trj;
 
   tri = (trdata *)arg1;
@@ -50,7 +50,7 @@ int ParseLang(char *file, trdata **trinfoptr, int *ntrinfoptr){
 
   ntrinfo_local=0;
   if(file==NULL)return 0;
-  stream=fopen(file,"r");
+  stream=FOPEN(file,"r");
   if(stream==NULL)return 0;
 
   while(!feof(stream)){
@@ -157,7 +157,7 @@ void InitTranslate(char *bindir, char *tr_name){
     STRCAT(smokeview_lang,lang);
     STRCAT(smokeview_lang,".po");
 
-    stream=fopen(smokeview_lang,"r");
+    stream=FOPEN(smokeview_lang,"r");
     if(stream!=NULL){
       fclose(stream);
       tr_otherlang=1;

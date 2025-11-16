@@ -3,10 +3,11 @@ PLATFORM=
 SIZE=-m64
 COMPILER=icx
 CC=$(COMPILER) $(SIZE)
+LIB=lib
 
 #FILTERC=-D NDEBUG -D FREEGLUT_STATIC -D NEED_XPARSEGEOMETRY_IMPL -D GLUT_DISABLE_ATEXIT_HACK -D _LIB -D FREEGLUT_LIB_PRAGMAS=0
 FILTERC=-D FREEGLUT_STATIC -D NEED_XPARSEGEOMETRY_IMPL -D GLUT_DISABLE_ATEXIT_HACK
-INC=-I $(SOURCE_DIR) -I $(SOURCE_DIR)/include 
+INC=-I $(SOURCE_DIR) -I $(SOURCE_DIR)/include
 
 .c.obj:
 	$(CC) -c $(SIZE) $(CFLAGS) $(INC) $(FILTERC) $<
@@ -53,7 +54,7 @@ OBJSWINS_WIN = $(OBJSWINS:.o=.obj)
 
 # intel linux 64
 
-intel_linux_64 : INC+=-I $(SOURCE_DIR)/x11 
+intel_linux_64 : INC+=-I $(SOURCE_DIR)/x11
 intel_linux_64 : CC=icx
 intel_linux_64 : $(OBJS)
 	ar rcs libglut.a $(OBJS)
@@ -65,14 +66,6 @@ gnu_linux_64 : CC=gcc
 gnu_linux_64 : $(OBJS)
 	ar rcs libglut.a $(OBJS)
 
-# intel osx 64
-
-intel_osx_64 : INC+=-I $(SOURCE_DIR)/x11  -I /opt/X11/include
-intel_osx_64 : CFLAGS=-Wno-unknown-pragmas
-intel_osx_64 : CC=icc
-intel_osx_64 : $(OBJS)
-	ar rcs libglut.a $(OBJS)
-
 # gnu osx 64
 
 gnu_osx_64 : INC+=-I $(SOURCE_DIR)/x11  -I /opt/X11/include
@@ -82,20 +75,19 @@ gnu_osx_64 : $(OBJS)
 
 # intel win 64
 
-intel_win_64 : INC+=-I $(SOURCE_DIR)/mswin 
-intel_win_64 : SIZE= 
+intel_win_64 : INC+=-I $(SOURCE_DIR)/mswin
+intel_win_64 : SIZE=
 intel_win_64 : CC=icl
 intel_win_64 : $(OBJSWINS_WIN)
-	lib  $(OBJSWINS_WIN) -OUT:freeglut_staticd.lib
+	$(LIB)  $(OBJSWINS_WIN) -OUT:freeglut_staticd.lib
 
-# gnu win 64
+# clang win 64
 
-gnu_win_64 : INC+=-I $(SOURCE_DIR)/mswin 
-gnu_win_64 : FILTERC+=-D __MINGW32__
-gnu_win_64 : CFLAGS=-Wno-shift-count-overflow
-gnu_win_64 : CC=gcc
-gnu_win_64 : $(OBJSWINS)
-	ar rcs freeglut_staticd.a $(OBJSWINS) 
+clang_win_64 : INC+=-I $(SOURCE_DIR)/mswin
+clang_win_64 : SIZE=
+clang_win_64 : CC=clang-cl
+clang_win_64 : $(OBJSWINS_WIN)
+	$(LIB)  $(OBJSWINS_WIN) -OUT:freeglut_staticd.lib
 
 #-------------- Clean Target to remove Object and Module files -----------
 

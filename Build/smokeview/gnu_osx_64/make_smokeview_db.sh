@@ -1,5 +1,5 @@
 #!/bin/bash
-OPTS="$*"
+OPTS="-G $*"
 source ../../scripts/setopts.sh $OPTS
 
 LIBDIR=../../LIBS/gnu_osx_64
@@ -8,11 +8,6 @@ CURDIR=`pwd`
 cd $LIBDIR
 build_libs=
 LIBS="libgd.a libglui.a libjpeg.a libpng.a libz.a"
-
-# build glut if using the quartz library
-if [ "$QUARTZSMV" == "use_quartz" ]; then
-  LIBS="$LIBS libglut.a"
-fi
 
 for f in $LIBS
 do
@@ -32,4 +27,4 @@ cd $CURDIR
 if [ "$BUILD_ALL" == "1" ]; then
   rm -f *.o *.mod smokeview_osx_64*
 fi
-eval make QUARTZ="$QUARTZSMV" GLUT="$GLUT" ${SMV_MAKE_OPTS} -f ../Makefile gnu_osx_64_db
+eval make COMPILER=${COMPILER} COMPILER2=${COMPILER2} GLUT="$GLUT" ${SMV_MAKE_OPTS} -f ../Makefile gnu_osx_64_db

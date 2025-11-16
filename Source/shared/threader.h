@@ -1,6 +1,9 @@
 #ifndef THREADER_H_DEFINED
 #define THREADER_H_DEFINED
+#ifdef pp_THREAD
 #include <pthread.h>
+#endif
+#include "file_util.h"
 
 //*** parameters
 
@@ -29,8 +32,8 @@ typedef struct _threaderdata{
 //*** routines
 
 EXTERNCPP void THREADcontrol(threaderdata *thi, int var);
-EXTERNCPP void THREADrun(threaderdata *thi, void *arg);
-EXTERNCPP void THREADruni(threaderdata *thi, int *args);
+EXTERNCPP void THREADrun(threaderdata *thi);
+EXTERNCPP void THREADruni(threaderdata *thi, unsigned char *datainfo, int sizedatai);
 EXTERNCPP threaderdata *THREADinit(int *nthreads_arg, int *threading_on_arg, void *(*run_arg)(void *arg));
 
 //*** threader controls

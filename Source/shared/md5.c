@@ -1,5 +1,5 @@
 // NOLINTBEGIN
-#include "options.h"
+#include "options_common.h"
 #ifdef pp_HASH
 /*
  *  RFC 1321 compliant MD5 implementation
@@ -51,7 +51,7 @@
 #if !defined(MBEDTLS_MD5_ALT)
 
 /* Implementation that should never be optimized out by the compiler */
-static void mbedtls_zeroize( void *v, size_t n ) {
+static void mbedtls_zeroize( void *v, size_t n ){
     volatile unsigned char *p = v; while( n-- ) *p++ = 0;
 }
 

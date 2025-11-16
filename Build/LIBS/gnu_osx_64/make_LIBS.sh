@@ -1,6 +1,7 @@
 #!/bin/bash
 # use -G to force use of the gnu compiler
 OPTS="-G $*"
+
 source ../../../Source/scripts/setopts.sh $OPTS
 
 LIBDIR=`pwd`
@@ -16,7 +17,7 @@ cd $SRCDIR
 SRCDIR=`pwd`
 
 # GD
-cd $SRCDIR/gd-2.0.15
+cd $SRCDIR/gd-2.3.3
 ./makelib.sh $OPTS
 cp libgd.a $LIBDIR/.
 
@@ -35,11 +36,7 @@ if [ "$GLUT" == "freeglut" ]; then
   ./make_freeglut.sh $OPTS
   cp libglut.a $LIBDIR/.
 else
-  if [ "$QUARTZ" != "framework" ]; then
-    cd $SRCDIR/glut-3.7.6
-    ./makelib.sh $OPTS -q
-    cp libglut.a $LIBDIR/.
-  fi
+  echo ***using OSX provided glut
 fi
 
 # JPEG
@@ -48,11 +45,11 @@ cd $SRCDIR/jpeg-9b
 cp libjpeg.a $LIBDIR/.
 
 # PNG
-cd $SRCDIR/png-1.6.21
+cd $SRCDIR/png-1.6.48
 ./makelib.sh $OPTS
 cp libpng.a $LIBDIR/.
 
 # ZLIB
-cd $SRCDIR/zlib128
+cd $SRCDIR/zlib131
 ./makelib.sh $OPTS
 cp libz.a $LIBDIR/.

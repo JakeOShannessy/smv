@@ -44,16 +44,12 @@ QSMV=$0
 QSMV_PATH=$(dirname `which $0`)
 cd $QSMV_PATH/../../..
 REPOROOT=`pwd`
-SHARE="--exclusive"
+
+if [ ! -e $HOME/.smokebot ]; then
+  mkdir $HOME/.smokebot
+fi
 
 cd $CURDIR
-
-#*** define xstart and xstop scripts used to start and stop X11 environment
-
-XSTART=$REPOROOT/smv/Utilities/Scripts/startXserver.sh
-XSTOP=$REPOROOT/smv/Utilities/Scripts/stopXserver.sh
-
-#*** define resource manager that is used
 
 missing_slurm=`srun -V |& tail -1 | grep "not found" | wc -l`
 RESOURCE_MANAGER="NONE"
@@ -126,7 +122,7 @@ commandline=`echo $* | sed 's/-V//' | sed 's/-v//'`
 
 #*** read in parameters from command line
 
-while getopts 'Ab:Bc:C:d:e:fFhHij:n:N:Op:P:q:rs:S:tTv' OPTION
+while getopts 'Ab:Bc:C:d:D:e:fFhHij:n:N:Op:P:q:rs:S:tv' OPTION
 do
 case $OPTION  in
   A)
@@ -212,10 +208,6 @@ case $OPTION  in
    ;;
   t)
    dummy=1
-   ;;
-  T)
-   SHARE=
-   T_arg="-T"
    ;;
   v)
    showinput=1
@@ -315,7 +307,7 @@ else
     exe=$REPOROOT/smv/Build/smokeview/intel_linux_64/smokeview_linux_64
     smvdir=$(dirname "${smvpath}")
     if [ "$SMVBINDIR" == "" ]; then
-      SMVBINDIR="-bindir $REPOROOT/bot/Bundlebot/smv/for_bundle"
+      SMVBINDIR="-bindir $REPOROOT/smv/Build/for_bundle"
     fi
   fi
 fi
@@ -380,7 +372,8 @@ QSUB="qsub -q $queue"
 #*** setup for SLURM (alternative to torque)
 
 if [ "$RESOURCE_MANAGER" == "SLURM" ]; then
-  QSUB="sbatch -p $queue --ignore-pbs $SHARE"
+#  QSUB="sbatch --cpus-per-task=16 -p $queue --ignore-pbs "
+  QSUB="sbatch -p $queue --ignore-pbs "
 fi
 
 if [ "$queue" == "terminal" ]; then
@@ -414,6 +407,7 @@ if [ "$queue" != "none" ]; then
 #SBATCH -o $outlog
 #SBATCH -p $queue
 #SBATCH --nodes=1
+#SBATCH --exclusive
 
 
 $SLURM_MEM
@@ -457,10 +451,7 @@ echo "      Run command: $exe $script_file $smv_script $NOBOUNDS $FED $redirect 
 echo "            Queue: $queue"
 echo ""
 
-source $XSTART
-$exe $script_file $smv_script $NOBOUNDS $FED $redirect $render_opts $SMVBINDIR $infile
-source $XSTOP
-
+$QSMV_PATH/XVFB-RUN.sh $exe $script_file $smv_script $NOBOUNDS $FED $redirect $render_opts $SMVBINDIR $infile
 EOF
 else
 cat << EOF >> $scriptfile

@@ -1,8 +1,7 @@
 #ifndef READGEOM_H_DEFINED
 #define READGEOM_H_DEFINED
-#include "MALLOCC.h"
-#include "gd.h"
-#include "options.h"
+#include "dmalloc.h"
+#include "options_common.h"
 #include "string_util.h"
 
 #include "shared_structures.h"
@@ -20,97 +19,12 @@
 #define FORTREAD(var, size, count, STREAM)                                     \
   FSEEK(STREAM, HEADER_SIZE, SEEK_CUR);                                        \
   returncode = fread(var, size, count, STREAM);                                \
-  if (returncode != count) returncode = 0;                                     \
+  if(returncode != count) returncode = 0;                                     \
   FSEEK(STREAM, TRAILER_SIZE, SEEK_CUR)
 
 #define FORTREADBR(var, count, STREAM)                                         \
   FORTREAD(var, 4, (count), STREAM);                                           \
-  if (returncode == 0) break;
-
-/* --------------------------  vertdata ------------------------------------ */
-
-typedef struct _vertdata {
-  float xyz[3], vert_norm[3], texture_xy[3];
-  int itriangle, ntriangles, nused;
-  unsigned char on_mesh_boundary;
-  int geomtype;
-  int isdup;
-  struct _tridata **triangles, *triangle1;
-} vertdata;
-
-/* --------------------------  edgedata ------------------------------------ */
-
-typedef struct _edgedata {
-  int ntriangles;
-  int vert_index[2], itri;
-  vertdata *verts[2];
-  struct _tridata *triangles[2];
-} edgedata;
-
-/* --------------------------  tridata ------------------------------------ */
-
-typedef struct _tridata {
-  unsigned char skinny;
-  float distance, *color, tverts[6], tri_norm[3], vert_norm[9], area;
-  float cface_norm1[3], cface_norm2[3];
-  struct _texturedata *textureinfo;
-  struct _surfdata *geomsurf;
-  struct _geomlistdata *geomlisti;
-  struct _geomobjdata *geomobj;
-  int vert_index[3], exterior, geomtype, insolid, outside_domain;
-  vertdata *verts[3];
-  edgedata *edges[3];
-} tridata;
-
-/* --------------------------  geomlistdata ------------------------------------
- */
-
-typedef struct _geomlistdata {
-  int nverts, nedges, ntriangles, norms_defined;
-  float *zORIG;
-  vertdata *verts;
-  float *vertvals;
-  tridata *triangles, **triangleptrs, **connected_triangles;
-  edgedata *edges;
-} geomlistdata;
-
-/* --------------------------  geomobjdata ------------------------------------
- */
-
-typedef struct _geomobjdata {
-  struct _surfdata *surf;
-  struct _texturedata *texture;
-  float *bounding_box, *color;
-  char *texture_name;
-  float texture_width, texture_height, texture_center[3];
-  int texture_mapping;
-  int use_geom_color, ntriangles;
-} geomobjdata;
-
-/* --------------------------  geomdata ------------------------------------ */
-
-typedef struct _geomdata {
-  char *file, *file2, *topo_file;
-  int read_status;
-  int cache_defined;
-  int memory_id, loaded, display;
-  int is_terrain;
-  int block_number;
-  int have_cface_normals, ncface_normals;
-  float *cface_normals;
-  float *float_vals;
-  float bounding_box[6];
-  int *file2_tris, nfile2_tris;
-  int *int_vals, nfloat_vals, nint_vals;
-  float *times;
-  int ntimes, itime, *timeslist;
-  int ngeomobjinfo, geomtype, patchactive, fdsblock;
-  struct _surfdata *surfgeom;
-  geomlistdata *geomlistinfo, *geomlistinfo_0, *currentframe;
-  geomobjdata *geomobjinfo;
-  int *geomobj_offsets;
-  int ngeomobj_offsets;
-} geomdata;
+  if(returncode == 0) break;
 
 void InitGeom(geomdata *geomi, int geomtype, int fdsblock,
               int have_cface_normals_arg, int block_number);
@@ -125,16 +39,6 @@ void AverageVerts2(float v1[3], int v1type, float v2[3], int v2type,
                    float mesh_bounds[6], float *vavg);
 void AverageVerts3(float v1[3], int v1type, float v2[3], int v2type,
                    float v3[3], int v3type, float mesh_bounds[6], float *vavg);
-
-#ifdef pp_DECIMATE
-#define IJNODE(i, j) ((j) * nx + (i))
-int PtInTriangle(float *xy, float *v0, float *v1, float *v2, float *zval);
-void DecimateTerrain(vertdata *verts, int nverts, tridata *triangles,
-                     int ntriangles, vertdata **verts_new, int *nverts_new,
-                     tridata **triangles_new, int *ntriangles_new,
-                     float *boxmin, float *boxmax, int nx, int ny);
-void DecimateAllTerrains(void);
-#endif
 
 void GetTriangleNormal(float *v1, float *v2, float *v3, float *normal,
                        float *area);
@@ -154,4 +58,5 @@ void InitBoxClipInfo(clipdata *ci, float xmin, float xmax, float ymin,
                      float ymax, float zmin, float zmax);
 void InitCircle(unsigned int npoints, circdata *circinfo);
 float Dist(float v1[3], float v2[3]);
+int GetInterval(float val, float *array, int n);
 #endif

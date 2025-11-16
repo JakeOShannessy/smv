@@ -3,6 +3,7 @@
 
 SOURCE_DIR = ../../../Source/
 BUILD_DIR = ../../../Build
+LIB_DIR = $(BUILD_DIR)/LIBS
 
 
 FILTERC =
@@ -35,25 +36,25 @@ no_target:
 
 # ------------- intel win 64 ----------------
 
-intel_win_64 : CFLAGS    = -Od -D WIN32 /nologo
+intel_win_64 : CFLAGS    = -Od /nologo
 intel_win_64 : CC        = $(I_CC)
 intel_win_64 : exe       = test_win_64.exe
 
 intel_win_64 : $(objwin)
 	$(CC) -o $(bin)/$(exe) $(objwin)
 
-# ------------- gnu win 64 ----------------
+# ------------- clang win 64 ----------------
 
-gnu_win_64 : CFLAGS    = -O0 -m64
-gnu_win_64 : CC        = gcc
-gnu_win_64 : exe       = test_win_64.exe
+clang_win_64 : CFLAGS    = -m64
+clang_win_64 : LFLAGS    = -m64
+clang_win_64 : CC        = clang-cl
+clang_win_64 : exe       = test_win_64.exe
 
-gnu_win_64 : $(obj)
-	$(CC) -o $(bin)/$(exe) $(obj)
+clang_win_64 : $(objwin)
+	$(CC) -o $(bin)/$(exe) $(LFLAGS) $(objwin)
 
 # ------------- gnu linux 64----------------
 
-gnu_linux_64 : LIB_DIR_PLAT = $(LIB_DIR)/gnu_linux_64
 gnu_linux_64 : CFLAGS    = -O2 -m64 -Wall
 gnu_linux_64 : LFLAGS    =
 gnu_linux_64 : CC        = gcc
@@ -71,22 +72,12 @@ gnu_linux_64_format: $(srcs)
 
 # ------------- intel linux 64 ----------------
 
-intel_linux_64 : LIB_DIR_PLAT = $(LIB_DIR)/intel_linux_64
 intel_linux_64 : CFLAGS    = -O2 -m64
 intel_linux_64 : CC        = $(I_ICC)
 intel_linux_64 : exe       = test_linux_64
 
 intel_linux_64 : $(obj)
 	$(CC) -o $(bin)/$(exe) $(obj)
-
-# ------------- intel osx 64 ----------------
-
-intel_osx_64 : CFLAGS    = -O2 -m64
-intel_osx_64 : CC        = icc
-intel_osx_64 : exe       = test_osx_64
-
-intel_osx_64 : $(obj)
-	$(CC) -o $(bin)/$(exe) -m64 $(obj)
 
 # ------------- gnu osx 64 ----------------
 
@@ -97,4 +88,15 @@ gnu_osx_64 : CPP       = g++
 gnu_osx_64 : exe       = test_osx_64
 
 gnu_osx_64 : $(obj)
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+# ------------- clang osx 64 ----------------
+
+clang_osx_64 : CFLAGS    = -O0 -m64
+clang_osx_64 : LFLAGS    = -m64
+clang_osx_64 : CC        = clang
+clang_osx_64 : CPP       = clang++
+clang_osx_64 : exe       = test_osx_64
+
+clang_osx_64 : $(obj)
 	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)

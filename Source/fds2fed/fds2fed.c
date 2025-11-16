@@ -5,7 +5,7 @@
 #include <math.h>
 #include "fds2fed.h"
 #include "getdata.h"
-#include "isodefs.h"
+#include "isobox.h"
 
 /* ------------------ ReadSMV ------------------------ */
 
@@ -16,7 +16,7 @@ int ReadSMV(char *smvfile){
 #define BUFFERSIZE 255
   char buffer[BUFFERSIZE];
 
-  stream=fopen(smvfile,"r");
+  stream=FOPEN(smvfile,"r");
   if(stream==NULL){
     PRINTF("The file: %s could not be opened\n",smvfile);
     return 1;
@@ -68,7 +68,7 @@ int ReadSMV(char *smvfile){
   if(nmeshinfo > 0){
     int i;
 
-    NewMemory(( void ** )&meshinfo, nmeshinfo * sizeof(meshdata));
+    NewMemory((void **)&meshinfo, nmeshinfo * sizeof(meshdata));
     for(i = 0; i < nmeshinfo; i++){
       meshdata *meshi;
 
@@ -107,9 +107,9 @@ int ReadSMV(char *smvfile){
       meshi->ibar = ibar;
       meshi->jbar = jbar;
       meshi->kbar = kbar;
-      if(meshi->ibar>0)NewMemory(( void ** )&meshi->xplt, (ibar+1)*sizeof(float));
-      if(meshi->jbar > 0)NewMemory(( void ** )&meshi->yplt, (jbar + 1) * sizeof(float));
-      if(meshi->kbar > 0)NewMemory(( void ** )&meshi->zplt, (kbar + 1) * sizeof(float));
+      if(meshi->ibar>0)NewMemory((void **)&meshi->xplt, (ibar+1)*sizeof(float));
+      if(meshi->jbar > 0)NewMemory((void **)&meshi->yplt, (jbar + 1) * sizeof(float));
+      if(meshi->kbar > 0)NewMemory((void **)&meshi->zplt, (kbar + 1) * sizeof(float));
       continue;
     }
     if(Match(buffer, "TRNX") == 1|| Match(buffer, "TRNY") == 1|| Match(buffer, "TRNZ") == 1){
@@ -144,7 +144,7 @@ int ReadSMV(char *smvfile){
     if(Match(buffer, "SLCF") == 1 || Match(buffer, "SLCC") == 1 || Match(buffer, "SLCD") == 1 || Match(buffer,"SLCT") == 1){
       int version_local=0,dummy;
       char *buffer2, *sliceparms, *shortlabel;
-      int len, blocknumber, slicetype;
+      int len, blocknumber, slicetype=SLCF;
       int ii1, ii2, jj1, jj2, kk1, kk2;
       slicedata *slicei;
 
@@ -167,11 +167,10 @@ int ReadSMV(char *smvfile){
       blocknumber--;
 
       slicei = sliceinfo + islice;
-      strcpy(slicei->kwlabel, buffer);
-      char *exclame;
-      exclame = strchr(slicei->kwlabel, '!');
-      if(exclame != NULL)exclame[0] = 0;
-      TrimBack(slicei->kwlabel);
+
+      strcpy(slicei->keyword_label, buffer);
+      TrimBack(slicei->keyword_label);
+
       slicei->slicetype = slicetype;
       slicei->blocknumber=blocknumber;
       sliceparms = strchr(buffer, '&');
@@ -270,36 +269,36 @@ void AddSlice(slicedata *slicei){
   for(i = 0;i < nfedinfo;i++){
     fedi = fedinfo + i;
     if(fedi->co != NULL && slicei != fedi->co && MatchFED(slicei, fedi->co)==1){
-      if(slicei->quant == O2)fedi->o2 = slicei;;
+      if(slicei->quant == O2)fedi->o2 = slicei;
       if(slicei->quant == CO2)fedi->co2 = slicei;
-      fedi->kwlabel = slicei->kwlabel;
+      fedi->keyword_label = slicei->keyword_label;
       MakeFEDFileNames(fedi->sf_file, fedi->iso_file, fedi->bndfile, slicei->file);
       slicei->in_fed = 1;
       return;
     }
     if(fedi->co2 != NULL && slicei != fedi->co2 && MatchFED(slicei, fedi->co2)==1){
-      if(slicei->quant == O2)fedi->o2 = slicei;;
+      if(slicei->quant == O2)fedi->o2 = slicei;
       if(slicei->quant == CO)fedi->co = slicei;
-      fedi->kwlabel = slicei->kwlabel;
+      fedi->keyword_label = slicei->keyword_label;
       MakeFEDFileNames(fedi->sf_file, fedi->iso_file, fedi->bndfile, slicei->file);
       slicei->in_fed = 1;
       return;
     }
     if(fedi->o2 != NULL && slicei != fedi->o2 && MatchFED(slicei, fedi->o2)==1){
-      if(slicei->quant == CO2)fedi->co2 = slicei;;
+      if(slicei->quant == CO2)fedi->co2 = slicei;
       if(slicei->quant == CO)fedi->co = slicei;
-      fedi->kwlabel = slicei->kwlabel;
+      fedi->keyword_label = slicei->keyword_label;
       MakeFEDFileNames(fedi->sf_file, fedi->iso_file, fedi->bndfile, slicei->file);
       slicei->in_fed = 1;
       return;
     }
   }
   fedi = fedinfo + nfedinfo++;
-  if(slicei->quant == CO2)fedi->co2 = slicei;;
+  if(slicei->quant == CO2)fedi->co2 = slicei;
   if(slicei->quant == CO)fedi->co = slicei;
   if(slicei->quant == O2)fedi->o2 = slicei;
   MakeFEDFileNames(fedi->sf_file, fedi->iso_file, fedi->bndfile, slicei->file);
-  fedi->kwlabel = slicei->kwlabel;
+  fedi->keyword_label = slicei->keyword_label;
   slicei->in_fed = 1;
 }
 
@@ -309,17 +308,17 @@ void MakeFEDSmv(char *file){
   int i;
   FILE *stream;
 
-  if(nfedinfo == 0)return;
-  stream = fopen(file, "w");
+  if(nfedinfo == 0||fedinfo==NULL)return;
+  stream = FOPEN(file, "w");
   if(stream == NULL)return;
 
   nfedisos = 0;
   for(i = 0;i < nfedinfo;i++){
     feddata *fedi;
-    slicedata *fed;
+    slicedata *fed=NULL;
 
     fedi = fedinfo + i;
-    fprintf(stream, "%s\n", fedi->kwlabel);
+    fprintf(stream, "%s\n", fedi->keyword_label);
     fprintf(stream, " %s\n", fedi->sf_file);
     fprintf(stream, " Fractional effective dose\n");
     fprintf(stream, " FED\n");
@@ -328,7 +327,7 @@ void MakeFEDSmv(char *file){
     if(fedi->co  != NULL)fed = fedi->co;
     if(fedi->co2 != NULL)fed = fedi->co2;
     if(fedi->o2  != NULL)fed = fedi->o2;
-    if(fed->vol == 1){
+    if(fed != NULL && fed->vol == 1){
       fprintf(stream, "%s %i\n", "ISOF", fed->blocknumber+1);
       fprintf(stream, " %s\n", fedi->iso_file);
       fprintf(stream, " Fractional Effective Dose\n");
@@ -374,8 +373,8 @@ void GetSliceInfo(slicedata *slicei){
   int ijk[6];
   int ip1, ip2, jp1, jp2, kp1, kp2;
   int nxsp, nysp, nzsp;
-  
-  stream = fopen(slicei->file, "rb");
+
+  stream = FOPEN(slicei->file, "rb");
   if(stream == NULL)return;
 
   headersize = 3*(4+30+4);
@@ -423,7 +422,7 @@ void ReadSlice(slicedata *slicei){
   FREEMEMORY(slicei->vals);
   FREEMEMORY(slicei->times);
   GetSliceInfo(slicei);
-  STREAM = fopen(slicei->file, "rb");
+  STREAM = FOPEN(slicei->file, "rb");
   if(STREAM == NULL)return;
   FSEEK(STREAM, slicei->headersize, SEEK_CUR);
   for(i = 0; i < slicei->nframes; i++){
@@ -453,7 +452,7 @@ void FreeFEDData(feddata *fedi){
 /* ------------------ OutputFEDSlice ------------------------ */
 
 void OutputFEDSlice(feddata *fedi){
-  writeslicedata(fedi->sf_file, 
+  writeslicedata(fedi->sf_file,
     fedi->fed->is1, fedi->fed->is2,
     fedi->fed->js1, fedi->fed->js2,
     fedi->fed->ks1, fedi->fed->ks2,
@@ -520,6 +519,7 @@ void MakeFEDSlice(feddata *fedi){
     timesfrom = fedi->o2->times;
     fedi->fed = fedi->o2;
   }
+  if(timesfrom==NULL)return;
   if(fedi->co != NULL)nframes = MIN(nframes, fedi->co->nframes);
   if(fedi->co2 != NULL)nframes = MIN(nframes, fedi->co2->nframes);
   if(fedi->o2 != NULL)nframes = MIN(nframes, fedi->o2->nframes);
@@ -531,12 +531,12 @@ void MakeFEDSlice(feddata *fedi){
     int i;
     float fedo20, hvco20, fedco0;
 
-    NewMemory(( void ** )&times, fedi->nframes * sizeof(float));
-    NewMemory(( void ** )&vals, fedi->nframes * fedi->memframesize * sizeof(float));
+    NewMemory((void **)&times, fedi->nframes * sizeof(float));
+    NewMemory((void **)&vals, fedi->nframes * fedi->memframesize * sizeof(float));
     fedi->times = times;
     fedi->vals = vals;
     for(i = 0; i < fedi->memframesize; i++){
-      vals[0] = 0.0;
+      vals[i] = 0.0;
     }
     valmin  = 0.0;
     valmax  = 0.0;
@@ -575,7 +575,7 @@ void MakeFEDSlice(feddata *fedi){
     }
     FILE *stream;
 
-    stream = fopen(fedi->bndfile, "w");
+    stream = FOPEN(fedi->bndfile, "w");
     fprintf(stream, "%f %f %f\n", 0.0, valmin, valmax);
     OutputFEDSlice(fedi);
   }

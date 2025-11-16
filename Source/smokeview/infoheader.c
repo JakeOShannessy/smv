@@ -4,7 +4,7 @@
 #include <string.h>
 #include GLUT_H
 
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "infoheader.h"
 #include "smokeviewvars.h"
 
@@ -13,18 +13,18 @@ titledata titleinfo;
 
  /* ------------------------ addTitleLine ------------------------- */
 // handles heap allocation and bookkeeping for adding a line to the title box
-int addTitleLine(titledata *titleinfo_ptr, const char *string) {
+int addTitleLine(titledata *titleinfo_ptr, const char *string){
   char *line;
-  if (titleinfo_ptr->nlines >= MAX_TITLE_LINES) {
+  if(titleinfo_ptr->nlines >= MAX_TITLE_LINES){
     PRINTF("MAX_TITLE_LINES exceeded\n");
     return 2;
   }
   int string_length = strlen(string);
-  if (string_length >= MAX_TITLE_LINE_LENGTH) {
+  if(string_length >= MAX_TITLE_LINE_LENGTH){
     PRINTF("MAX_TITLE_LINE_LENGTH exceeded\n");
   }
   NewMemory((void **)&line, (string_length+1)*sizeof(char));
-  if (line==NULL) {
+  if(line==NULL){
     PRINTF("addTitleLine: memory allocation failed\n");
     return 1;
   }
@@ -37,9 +37,9 @@ int addTitleLine(titledata *titleinfo_ptr, const char *string) {
 
  /* ------------------------ clearTitleLines ------------------------- */
 // walk through all the title lines and clear them
-int clearTitleLines(titledata *titleinfo_ptr) {
+int clearTitleLines(titledata *titleinfo_ptr){
   int i;
-  for (i = 0; i < titleinfo_ptr->nlines; i++) {
+  for(i = 0; i < titleinfo_ptr->nlines; i++){
     FREEMEMORY(titleinfo_ptr->lines[i]);
     titleinfo_ptr->lines[i]=NULL;
   }
@@ -51,7 +51,7 @@ int clearTitleLines(titledata *titleinfo_ptr) {
 
 int initialiseInfoHeader(titledata *titleinfo_ptr,
                          char *release_title_string, char *smv_githash_string,
-                         char *fds_githash_string, char *chidfilebase_string, char *fds_title_arg) {
+                         char *fds_githash_string, char *chidfilebase_string, char *fds_title_arg){
   char line[MAX_TITLE_LINE_LENGTH];
 
   strncpy(titleinfo_ptr->titleline, release_title_string, MAX_TITLE_LINE_LENGTH);
@@ -59,7 +59,7 @@ int initialiseInfoHeader(titledata *titleinfo_ptr,
   snprintf(line,MAX_TITLE_LINE_LENGTH,"Smokeview build: %s",smv_githash_string);
   strncpy(titleinfo_ptr->smvbuildline, line, MAX_TITLE_LINE_LENGTH);
 
-  if(fds_githash!=NULL){
+  if(global_scase.fds_githash!=NULL){
     snprintf(line,MAX_TITLE_LINE_LENGTH,"FDS build: %s",fds_githash_string);
     strncpy(titleinfo_ptr->fdsbuildline, line, MAX_TITLE_LINE_LENGTH);
   }
@@ -80,7 +80,7 @@ int initialiseInfoHeader(titledata *titleinfo_ptr,
 
  /* ------------------------ renderInfoHeader --------------------------- */
 
-int renderInfoHeader(titledata *titleinfo_ptr) {
+int renderInfoHeader(titledata *titleinfo_ptr){
   float left, textdown;
 
   left=0;
@@ -116,7 +116,7 @@ int renderInfoHeader(titledata *titleinfo_ptr) {
   }
 
   int i;
-  for (i = 0; i < titleinfo_ptr->nlines; i++) {
+  for(i = 0; i < titleinfo_ptr->nlines; i++){
     OutputText(left, pen_pos, titleinfo_ptr->lines[i]);
     pen_pos -= titleinfo_ptr->text_height;
     pen_pos -= titleinfo_ptr->line_space;

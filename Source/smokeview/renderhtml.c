@@ -34,10 +34,10 @@ void GetPartVerts(int option, int option2, int *offset,
 
   *nverts = 0;
   *nindices  = 0;
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<global_scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo+i;
+    parti = global_scase.partinfo+i;
     if(parti->loaded==0||parti->display==0)continue;
     parttime = parti;
     if(first==1){
@@ -59,10 +59,10 @@ void GetPartVerts(int option, int option2, int *offset,
     iend = parttime->itime+1;
   }
   for(itime = ibeg; itime<iend; itime++){
-    for(i = 0; i<npartinfo; i++){
+    for(i = 0; i<global_scase.npartinfo; i++){
       partdata *parti;
 
-      parti = partinfo+i;
+      parti = global_scase.partinfo+i;
       if(parti->loaded==0||parti->display==0||part5show==0)continue;
       if(streak5show == 0 || (streak5show == 1 && showstreakhead == 1)){
         part5data *datacopy;
@@ -76,32 +76,32 @@ void GetPartVerts(int option, int option2, int *offset,
   if(option==0)return;
   for(itime = ibeg; itime<iend; itime++){
     frame_sizes[itime-ibeg] = 0;
-    for(i = 0; i<npartinfo; i++){
+    for(i = 0; i<global_scase.npartinfo; i++){
       partdata *parti;
       int j;
 
-      parti = partinfo+i;
+      parti = global_scase.partinfo+i;
       if(parti->loaded==0||parti->display==0||part5show==0)continue;
       if(streak5show==0||(streak5show==1&&showstreakhead==1)){
         part5data *datacopy;
-        short *sx, *sy, *sz;
+        float *xpos, *ypos, *zpos;
         partclassdata *partclassi;
         int partclass_index, itype;
 
         datacopy = parti->data5+parti->nclasses*itime;
         frame_sizes[itime-ibeg] += datacopy->npoints_file;
-        sx = datacopy->sx;
-        sy = datacopy->sy;
-        sz = datacopy->sz;
+        xpos = datacopy->xpos;
+        ypos = datacopy->ypos;
+        zpos = datacopy->zpos;
 
         partclassi = parti->partclassptr[i];
-        partclass_index = partclassi - partclassinfo;
+        partclass_index = partclassi - global_scase.partclassinfo;
         itype = current_property->class_types[partclass_index];
 
         for(j=0;j<datacopy->npoints_file;j++){
-          *verts++   = xplts[sx[j]];
-          *verts++   = yplts[sy[j]];
-          *verts++   = zplts[sz[j]];
+          *verts++   = xpos[j];
+          *verts++   = ypos[j];
+          *verts++   = zpos[j];
           if(itype==-1){
             *colors++   = 0.0;
             *colors++   = 0.0;
@@ -142,13 +142,13 @@ void GetBndfNodeVerts(int option, int option2, int *offset,
   *nframes = 0;
   *nverts = 0;
   *ntris = 0;
-  for(i = 0;i<npatchinfo;i++){
+  for(i = 0;i<global_scase.npatchinfo;i++){
     patchdata *patchi;
 
-    patchi = patchinfo+i;
+    patchi = global_scase.patchinfo+i;
     if(patchi->loaded==0||patchi->display==0||patchi->structured==NO)continue;
     if(patchi->patch_filetype!=PATCH_STRUCTURED_NODE_CENTER)continue;
-    meshpatch0 = meshinfo+patchi->blocknumber;
+    meshpatch0 = global_scase.meshescoll.meshinfo+patchi->blocknumber;
     if(first==1){
       first = 0;
       minsteps = patchi->ntimes;
@@ -175,40 +175,36 @@ void GetBndfNodeVerts(int option, int option2, int *offset,
   for(itime = ibeg; itime<iend; itime++){
     int j;
 
-    for(j = 0;j<npatchinfo;j++){
+    for(j = 0;j<global_scase.npatchinfo;j++){
       patchdata *patchi;
       meshdata *meshpatch;
-      int n, *vis_boundaries, *patchdir, *boundarytype, *boundary_row, *boundary_col, *blockstart;
+      int n;
       unsigned char *cpatch_time;
 
-      patchi = patchinfo+j;
+      patchi = global_scase.patchinfo + j;
       if(patchi->loaded==0||patchi->display==0||patchi->structured==NO)continue;
       if(patchi->patch_filetype!=PATCH_STRUCTURED_NODE_CENTER)continue;
 
-      meshpatch = meshinfo+patchi->blocknumber;
-      patchdir = meshpatch->patchdir;
-      vis_boundaries = meshpatch->vis_boundaries;
-      boundarytype = meshpatch->boundarytype;
-      boundary_row = meshpatch->boundary_row;
-      boundary_col = meshpatch->boundary_col;
-      blockstart = meshpatch->blockstart;
+      meshpatch = global_scase.meshescoll.meshinfo+patchi->blocknumber;
 
       cpatch_time = meshpatch->cpatchval+itime*meshpatch->npatchsize;
       if(itime==ibeg){
-        for(n = 0;n<meshpatch->npatches;n++){
+        for(n = 0;n<patchi->npatches;n++){
           int drawit;
+          patchfacedata *pfi;
 
+          pfi = patchi->patchfaceinfo + n;
           drawit = 0;
-          if(vis_boundaries[n]==1&&patchdir[n]>0){
-            if(boundarytype[n]==INTERIORwall||showpatch_both==0){
+          if(pfi->vis==1&&pfi->dir>0){
+            if(pfi->type ==INTERIORwall||showpatch_both==0){
               drawit = 1;
             }
           }
           if(drawit==1){
             int nrow, ncol;
 
-            nrow = boundary_row[n];
-            ncol = boundary_col[n];
+            nrow = pfi->nrow;
+            ncol = pfi->ncol;
             nv += nrow*ncol;
             nt += 2*(nrow-1)*(ncol-1);
           }
@@ -218,22 +214,24 @@ void GetBndfNodeVerts(int option, int option2, int *offset,
         *frame_size += nv;
       }
       if(option==1){
-        for(n = 0;n<meshpatch->npatches;n++){
+        for(n = 0;n<patchi->npatches;n++){
           int drawit, irow, nrow, ncol;
+          patchfacedata *pfi;
 
+          pfi = patchi->patchfaceinfo + n;
           drawit = 0;
-          if(vis_boundaries[n]==1&&patchdir[n]>0){
-            if(boundarytype[n]==INTERIORwall||showpatch_both==0){
+          if(pfi->vis==1&&pfi->dir>0){
+            if(pfi->type ==INTERIORwall||showpatch_both==0){
               drawit = 1;
             }
           }
           if(drawit==0)continue;
-          nrow = boundary_row[n];
-          ncol = boundary_col[n];
+          nrow = pfi->nrow;
+          ncol = pfi->ncol;
           if(itime==ibeg){
             float *xyzpatchcopy;
 
-            xyzpatchcopy = meshpatch->xyzpatch+3*blockstart[n];
+            xyzpatchcopy = GetPatchXYZ(meshpatch)+3*pfi->start;
             for(irow = 0;irow<nrow;irow++){
               int icol;
               float *xyz;
@@ -264,7 +262,7 @@ void GetBndfNodeVerts(int option, int option2, int *offset,
             int icol;
             unsigned char *cpatchval1;
 
-            cpatchval1 = cpatch_time + blockstart[n] + irow*ncol;
+            cpatchval1 = cpatch_time + pfi->start + irow*ncol;
             for(icol = 0;icol<ncol;icol++){
               *textures++ = *cpatchval1++;
             }
@@ -282,10 +280,10 @@ void GetSliceCellVerts(int option, int option2, int *offset, float *verts, unsig
   int ibeg, iend, itime, first=1, minsteps;
   slicedata *slicetime=NULL;
 
-  for(islice = 0; islice<nsliceinfo; islice++){
+  for(islice = 0; islice<global_scase.slicecoll.nsliceinfo; islice++){
     slicedata *slicei;
 
-    slicei = sliceinfo+islice;
+    slicei = global_scase.slicecoll.sliceinfo+islice;
     if(slicei->loaded==0||slicei->display==0||slicei->slice_filetype!=SLICE_CELL_CENTER||slicei->volslice==1)continue;
     if(slicei->idir!=XDIR&&slicei->idir!=YDIR&&slicei->idir!=ZDIR)continue;
     slicetime = slicei;
@@ -318,12 +316,12 @@ void GetSliceCellVerts(int option, int option2, int *offset, float *verts, unsig
   *frame_size = 0;
   for(itime = ibeg; itime<iend; itime++){
 
-    for(islice = 0; islice<nsliceinfo; islice++){
+    for(islice = 0; islice<global_scase.slicecoll.nsliceinfo; islice++){
       slicedata *slicei;
       int nrows=1, ncols=1;
       unsigned char *iq;
 
-      slicei = sliceinfo+islice;
+      slicei = global_scase.slicecoll.sliceinfo+islice;
 
       if(slicei->loaded==0||slicei->display==0||slicei->slice_filetype!=SLICE_CELL_CENTER||slicei->volslice==1)continue;
       if(slicei->idir!=XDIR&&slicei->idir!=YDIR&&slicei->idir!=ZDIR)continue;
@@ -363,11 +361,11 @@ void GetSliceCellVerts(int option, int option2, int *offset, float *verts, unsig
           float  constval;
           int n, i, j, k;
 
-          meshi = meshinfo+slicei->blocknumber;
+          meshi = global_scase.meshescoll.meshinfo+slicei->blocknumber;
 
-          xplt = meshi->xplt;
-          yplt = meshi->yplt;
-          zplt = meshi->zplt;
+          xplt = meshi->xplt_smv;
+          yplt = meshi->yplt_smv;
+          zplt = meshi->zplt_smv;
           plotx = slicei->is1;
           ploty = slicei->js1;
           plotz = slicei->ks1;
@@ -518,10 +516,10 @@ void GetSliceGeomVerts(int option, int option2, int *offset, float *verts, unsig
   int ibeg, iend, itime, first = 1, minsteps;
   slicedata *slicetime = NULL;
 
-  for(islice = 0; islice<nsliceinfo; islice++){
+  for(islice = 0; islice<global_scase.slicecoll.nsliceinfo; islice++){
     slicedata *slicei;
 
-    slicei = sliceinfo+islice;
+    slicei = global_scase.slicecoll.sliceinfo+islice;
     if(slicei->loaded==0||slicei->display==0||slicei->slice_filetype!=SLICE_GEOM||slicei->volslice==1)continue;
     if(slicei->idir!=XDIR&&slicei->idir!=YDIR&&slicei->idir!=ZDIR)continue;
     slicetime = slicei;
@@ -554,14 +552,14 @@ void GetSliceGeomVerts(int option, int option2, int *offset, float *verts, unsig
   *frame_size = 0;
   for(itime = ibeg; itime<iend; itime++){
 
-    for(islice = 0; islice<nsliceinfo; islice++){
+    for(islice = 0; islice<global_scase.slicecoll.nsliceinfo; islice++){
       slicedata *slicei;
       geomdata *geomi;
       geomlistdata *geomlisti;
       patchdata *patchi;
       unsigned char *ivals;
 
-      slicei = sliceinfo+islice;
+      slicei = global_scase.slicecoll.sliceinfo+islice;
 
       if(slicei->loaded==0||slicei->display==0||slicei->slice_filetype!=SLICE_GEOM||slicei->volslice==1)continue;
       if(slicei->idir!=XDIR&&slicei->idir!=YDIR&&slicei->idir!=ZDIR)continue;
@@ -633,10 +631,10 @@ void GetSliceNodeVerts(int option, int option2,
   int ibeg, iend, itime, first=1, minsteps;
   slicedata *slicetime=NULL;
 
-  for(islice = 0; islice<nsliceinfo; islice++){
+  for(islice = 0; islice<global_scase.slicecoll.nsliceinfo; islice++){
     slicedata *slicei;
 
-    slicei = sliceinfo+islice;
+    slicei = global_scase.slicecoll.sliceinfo+islice;
     if(slicei->loaded==0||slicei->display==0||(slicei->slice_filetype!=SLICE_NODE_CENTER&&slicei->slice_filetype!=SLICE_TERRAIN)||slicei->volslice==1)continue;
     if(slicei->idir!=XDIR&&slicei->idir!=YDIR&&slicei->idir!=ZDIR)continue;
     slicetime = slicei;
@@ -669,12 +667,12 @@ void GetSliceNodeVerts(int option, int option2,
   *frame_size = 0;
   for(itime = ibeg; itime<iend; itime++){
 
-    for(islice = 0; islice<nsliceinfo; islice++){
+    for(islice = 0; islice<global_scase.slicecoll.nsliceinfo; islice++){
       slicedata *slicei;
       int nrows=1, ncols=1;
       unsigned char *iq;
 
-      slicei = sliceinfo+islice;
+      slicei = global_scase.slicecoll.sliceinfo+islice;
 
       if(slicei->loaded==0||slicei->display==0||(slicei->slice_filetype!=SLICE_NODE_CENTER&&slicei->slice_filetype!=SLICE_TERRAIN)||slicei->volslice==1)continue;
       if(slicei->idir!=XDIR&&slicei->idir!=YDIR&&slicei->idir!=ZDIR)continue;
@@ -714,19 +712,19 @@ void GetSliceNodeVerts(int option, int option2,
           int nx, ny, nxy;
           float agl;
 
-          meshi = meshinfo+slicei->blocknumber;
+          meshi = global_scase.meshescoll.meshinfo+slicei->blocknumber;
           nx = meshi->ibar+1;
           ny = meshi->jbar+1;
           nxy = nx*ny;
           iblank = meshi->c_iblank_node_html;
-          xplt = meshi->xplt;
-          yplt = meshi->yplt;
+          xplt = meshi->xplt_smv;
+          yplt = meshi->yplt_smv;
           if(slicei->slice_filetype==SLICE_TERRAIN){
             agl = SCALE2FDS(.005) + slicei->above_ground_level;
             zplt = meshi->terrain->znode;
           }
           else{
-            zplt = meshi->zplt;
+            zplt = meshi->zplt_smv;
           }
           plotx = slicei->is1;
           ploty = slicei->js1;
@@ -1030,9 +1028,9 @@ void GetBlockNodes(const meshdata *meshi, blockagedata *bc, float *xyz, float *n
     0, 2, 1, 0, 3, 2
   };
 
-  xplt = meshi->xplt;
-  yplt = meshi->yplt;
-  zplt = meshi->zplt;
+  xplt = meshi->xplt_smv;
+  yplt = meshi->yplt_smv;
+  zplt = meshi->zplt_smv;
 
   xminmax[0] = xplt[bc->ijk[IMIN]];
   xminmax[1] = xplt[bc->ijk[IMAX]];
@@ -1127,33 +1125,33 @@ void Lines2Geom(float **vertsptr, float **colorsptr, int *n_verts, int **linespt
   *verts++ = 0.0;
   *verts++ = 0.0;
 
-  *verts++ = xbar;
+  *verts++ = global_scase.xbar;
   *verts++ = 0.0;
   *verts++ = 0.0;
 
-  *verts++ = xbar;
-  *verts++ = ybar;
+  *verts++ = global_scase.xbar;
+  *verts++ = global_scase.ybar;
   *verts++ = 0.0;
 
   *verts++ = 0.0;
-  *verts++ = ybar;
+  *verts++ = global_scase.ybar;
   *verts++ = 0.0;
 
   *verts++ = 0.0;
   *verts++ = 0.0;
-  *verts++ = zbar;
+  *verts++ = global_scase.zbar;
 
-  *verts++ = xbar;
+  *verts++ = global_scase.xbar;
   *verts++ = 0.0;
-  *verts++ = zbar;
+  *verts++ = global_scase.zbar;
 
-  *verts++ = xbar;
-  *verts++ = ybar;
-  *verts++ = zbar;
+  *verts++ = global_scase.xbar;
+  *verts++ = global_scase.ybar;
+  *verts++ = global_scase.zbar;
 
   *verts++ = 0.0;
-  *verts++ = ybar;
-  *verts++ = zbar;
+  *verts++ = global_scase.ybar;
+  *verts++ = global_scase.zbar;
 
   for(i = 0; i<24; i++){
     *colors++ = 0.0;
@@ -1202,7 +1200,7 @@ void BndfNodeTriangles2Geom(webgeomdata *bndf_node_web, int option){
   unsigned char *textures, *textures_save;
   int *indices, *indices_save;
 
-  if(npatchinfo>0){
+  if(global_scase.npatchinfo>0){
     int nbndf_node_verts, nbndf_node_tris;
 
     GetBndfNodeVerts(0, option, NULL, NULL, NULL, &nbndf_node_verts,
@@ -1231,14 +1229,12 @@ void BndfNodeTriangles2Geom(webgeomdata *bndf_node_web, int option){
 
   // load slice file data into data structures
 
-  if(npatchinfo>0){
+  if(global_scase.npatchinfo>0){
     int nbndf_node_verts, nbndf_node_tris;
 
     GetBndfNodeVerts(1, option, &offset, verts, textures, &nbndf_node_verts,
       indices, &nbndf_node_tris,
       &(bndf_node_web->framesize), &(bndf_node_web->nframes));
-    verts     += 3*nbndf_node_verts;
-    indices += 3*nbndf_node_tris;
   }
 
   bndf_node_web->nverts   = nverts;
@@ -1256,7 +1252,7 @@ void PartNodeVerts2Geom(webgeomdata *part_node_web, int option){
   float *verts, *verts_save, *colors, *colors_save;
   int *indices, *indices_save, *framesizes;
 
-  if(npartinfo>0){
+  if(global_scase.npartinfo>0){
     int npart_verts, npart_indices;
 
     GetPartVerts(0, option, NULL, NULL, NULL, &npart_verts, NULL, &npart_indices, NULL, &(part_node_web->nframes));
@@ -1287,7 +1283,7 @@ void PartNodeVerts2Geom(webgeomdata *part_node_web, int option){
 
   // load particle file data into data structures
 
-  if(npartinfo>0){
+  if(global_scase.npartinfo>0){
     int npart_verts, npart_indices;
 
 
@@ -1295,8 +1291,6 @@ void PartNodeVerts2Geom(webgeomdata *part_node_web, int option){
       verts, colors, &npart_verts,
       indices, &npart_indices,
       framesizes, &(part_node_web->nframes));
-    verts   += 3*npart_verts;
-    indices += npart_indices;
   }
 
   part_node_web->nverts     = nverts;
@@ -1316,7 +1310,7 @@ int SliceCellTriangles2Geom(webgeomdata *slice_cell_web, int option){
   unsigned char *textures, *textures_save;
   int *indices, *indices_save;
 
-  if(nsliceinfo>0){
+  if(global_scase.slicecoll.nsliceinfo>0){
     int nslice_verts, nslice_tris;
 
     GetSliceCellVerts(0, option, NULL, NULL, NULL, &nslice_verts, NULL, &nslice_tris, &(slice_cell_web->framesize), &(slice_cell_web->nframes));
@@ -1343,15 +1337,13 @@ int SliceCellTriangles2Geom(webgeomdata *slice_cell_web, int option){
 
   // load slice file data into data structures
 
-  if(nsliceinfo>0){
+  if(global_scase.slicecoll.nsliceinfo>0){
     int nslice_verts, nslice_tris;
 
     GetSliceCellVerts(1, option, &offset,
       verts, textures, &nslice_verts,
       indices, &nslice_tris,
       &(slice_cell_web->framesize), &(slice_cell_web->nframes));
-    verts   += 3*nslice_verts;
-    indices += 3*nslice_tris;
   }
 
   slice_cell_web->nverts   = nverts;
@@ -1371,7 +1363,7 @@ int SliceNodeTriangles2Geom(webgeomdata *slice_node_web, int option){
   int *indices, *indices_save;
   int *blank, *blank_save;
 
-  if(nsliceinfo>0){
+  if(global_scase.slicecoll.nsliceinfo>0){
     int nslice_verts, nslice_tris;
 
     GetSliceNodeVerts(0, option, NULL, NULL, NULL, &nslice_verts, NULL, NULL, &nslice_tris, &(slice_node_web->framesize), &(slice_node_web->nframes));
@@ -1403,13 +1395,10 @@ int SliceNodeTriangles2Geom(webgeomdata *slice_node_web, int option){
 
   // load slice file data into data structures
 
-  if(nsliceinfo>0){
+  if(global_scase.slicecoll.nsliceinfo>0){
     int nslice_verts, nslice_tris;
 
     GetSliceNodeVerts(1, option, &offset, verts, textures, &nslice_verts, indices, blank, &nslice_tris, &(slice_node_web->framesize), &(slice_node_web->nframes));
-    verts   += 3*nslice_verts;
-    indices += 3*nslice_tris;
-    blank   += nslice_verts/3;
   }
 
   slice_node_web->nverts     = nverts;
@@ -1430,7 +1419,7 @@ void SliceGeomTriangles2Geom(webgeomdata *slice_geom_web, int option){
   unsigned char *textures, *textures_save;
   int *indices, *indices_save;
 
-  if(nsliceinfo>0){
+  if(global_scase.slicecoll.nsliceinfo>0){
     int nslice_verts, nslice_tris;
 
     GetSliceGeomVerts(0, option, NULL, NULL, NULL, &nslice_verts, NULL, &nslice_tris, &(slice_geom_web->framesize), &(slice_geom_web->nframes));
@@ -1457,12 +1446,10 @@ void SliceGeomTriangles2Geom(webgeomdata *slice_geom_web, int option){
 
   // load slice file data into data structures
 
-  if(nsliceinfo>0){
+  if(global_scase.slicecoll.nsliceinfo>0){
     int nslice_verts, nslice_tris;
 
     GetSliceGeomVerts(1, option, &offset, verts, textures, &nslice_verts, indices, &nslice_tris, &(slice_geom_web->framesize), &(slice_geom_web->nframes));
-    verts   += 3*nslice_verts;
-    indices += 3*nslice_tris;
   }
 
   slice_geom_web->nverts   = nverts;
@@ -1486,10 +1473,10 @@ void ObstLitTriangles2Geom(float **vertsptr, float **normalsptr, float **colorsp
 
   // count triangle vertices and indices for blockes
 
-  for(j = 0; j<nmeshes; j++){
+  for(j = 0; j<global_scase.meshescoll.nmeshes; j++){
     meshdata *meshi;
 
-    meshi     = meshinfo+j;
+    meshi     = global_scase.meshescoll.meshinfo+j;
     nverts   += meshi->nbptrs*24*3;    // 24 vertices per blockages * 3 coordinates per vertex
     n4verts  += meshi->nbptrs*24*4;    // 24 vertices per blockages * 4 coordinates per vertex
     nindices += meshi->nbptrs*6*2*3;   // 6 faces per blockage * 2 triangles per face * 3 indicies per triangle
@@ -1520,11 +1507,11 @@ void ObstLitTriangles2Geom(float **vertsptr, float **normalsptr, float **colorsp
 
   // load blockage info into data structures
 
-  for(j = 0; j<nmeshes; j++){
+  for(j = 0; j<global_scase.meshescoll.nmeshes; j++){
     meshdata *meshi;
     int i;
 
-    meshi = meshinfo+j;
+    meshi = global_scase.meshescoll.meshinfo+j;
     for(i = 0; i<meshi->nbptrs; i++){
       blockagedata *bc;
       float xyz[72];
@@ -1613,9 +1600,6 @@ void GeomLitTriangles2Geom(float **vertsptr, float **normalsptr, float **colorsp
     int ngeom_verts, ngeom_tris;
 
     GetGeometryNodes(1, &offset, verts, normals, colors, &ngeom_verts, indices, &ngeom_tris);
-    verts   += 3*ngeom_verts;
-    normals += 3*ngeom_verts;
-    indices += 3*ngeom_tris;
   }
 
   *n_verts     = nverts;
@@ -1640,6 +1624,7 @@ int GetHtmlFileName(char *htmlfile_full, int option){
   // directory - put files in '.' or smokevewtempdir
 
   if(Writable(htmlfile_dir)==NO){
+    char *smokeview_scratchdir = GetUserConfigDir();
     if(Writable(smokeview_scratchdir)==YES){
       strcpy(htmlfile_dir, smokeview_scratchdir);
     }
@@ -1653,6 +1638,7 @@ int GetHtmlFileName(char *htmlfile_full, int option){
       }
       return 1;
     }
+    FREEMEMORY(smokeview_scratchdir);
   }
 
   // filename suffix
@@ -1719,7 +1705,7 @@ void OutputFixedFrameData(char *html_file, webgeomdata *webgi ,float *colorbar){
   FILE *stream_out = NULL;
 
   if(webgi->nframes<=0||webgi->nverts<=0||webgi->framesize<=0||webgi->nindices<=0)return;
-  stream_out = fopen(html_file, "w");
+  stream_out = FOPEN(html_file, "w");
   if(stream_out==NULL)return;
 
   fprintf(stream_out, "{\n");
@@ -2039,7 +2025,7 @@ int Obst2Data(char *html_file){
     FREEMEMORY(facesObstLit);
     return 0;
   }
-  stream_out = fopen(html_file, "w");
+  stream_out = FOPEN(html_file, "w");
   if(stream_out==NULL)return 0;
 
   fprintf(stream_out,"{\n");
@@ -2098,7 +2084,7 @@ int Smv2Geom(char *html_file){
   FILE *stream_out;
   int i;
 
-  stream_out = fopen(html_file, "w");
+  stream_out = FOPEN(html_file, "w");
   if(stream_out != NULL){
     GeomLitTriangles2Geom(&vertsGeomLit, &normalsGeomLit, &colorsGeomLit, &nvertsGeomLit, &facesGeomLit, &nfacesGeomLit);
 
@@ -2188,12 +2174,13 @@ int Smv2Html(char *html_file, int option, int from_where){
   int copy_html, i;
   webgeomdata slice_node_web, slice_cell_web, slice_geom_web, bndf_node_web, part_node_web;
 
-  template_file = smokeview_html;
-  stream_in = fopen(template_file, "r");
+  template_file = GetSmokeviewHtmlPath();
+  stream_in = FOPEN(template_file, "r");
   if(stream_in==NULL){
     printf("***error: smokeview html template file %s failed to open\n", template_file);
     return 1;
   }
+  FREEMEMORY(template_file);
 
   if(from_where==FROM_SCRIPT){
     strcpy(html_fullfile, html_file);
@@ -2207,7 +2194,7 @@ int Smv2Html(char *html_file, int option, int from_where){
       return 1;
     }
   }
-  stream_out = fopen(html_fullfile, "w");
+  stream_out = FOPEN(html_fullfile, "w");
   if(stream_out==NULL){
     printf("***error: html output file %s failed to open for output\n", html_fullfile);
     fclose(stream_in);
@@ -2235,10 +2222,10 @@ int Smv2Html(char *html_file, int option, int from_where){
   GeomLitTriangles2Geom(&vertsGeomLit, &normalsGeomLit, &colorsGeomLit, &nvertsGeomLit, &facesGeomLit, &nfacesGeomLit);
   Lines2Geom(&vertsLine, &colorsLine, &nvertsLine, &facesLine, &nfacesLine);
 
-  for(i = 0;i<nmeshes;i++){
+  for(i = 0;i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
 
-    meshi = meshinfo+i;
+    meshi = global_scase.meshescoll.meshinfo+i;
     if(meshi->nbptrs>0){
       have_blockages = 1;
       break;
@@ -2308,9 +2295,9 @@ int Smv2Html(char *html_file, int option, int from_where){
     }
     else if(Match(buffer, "//***VERTS")==1){
       // center of scene
-      fprintf(stream_out, "         var xcen=%f;\n", xbar/2.0);
-      fprintf(stream_out, "         var ycen=%f;\n", ybar/2.0);
-      fprintf(stream_out, "         var zcen=%f;\n", zbar/2.0);
+      fprintf(stream_out, "         var xcen=%f;\n", global_scase.xbar/2.0);
+      fprintf(stream_out, "         var ycen=%f;\n", global_scase.ybar/2.0);
+      fprintf(stream_out, "         var zcen=%f;\n", global_scase.zbar/2.0);
       if(option==HTML_ALL_TIMES){
         fprintf(stream_out, "         document.getElementById(\"buttonPauseResume\").style.width = \"75px\";\n");
       }

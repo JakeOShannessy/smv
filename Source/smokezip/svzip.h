@@ -38,24 +38,6 @@
 #define GETINDEX(xval,xmin,dx,nx) CLAMP(((xval)-(xmin))/(dx),0,(nx)-1)
 #endif
 
-
-#ifdef X64
-#ifndef STRUCTSTAT
-#define STRUCTSTAT struct __stat64
-#endif
-#ifndef STAT
-#define STAT _stat64
-#endif
-#else
-#ifndef STRUCTSTAT
-#define STRUCTSTAT struct stat
-#endif
-#ifndef STAT
-#define STAT stat
-#endif
-#endif
-
-#ifdef pp_SMOKE3D_FORT
 #ifndef C_FILE
 #define C_FILE 0
 #endif
@@ -75,16 +57,6 @@
                            returncode=fread(var,size,count,STREAM);\
                            if(returncode!=count||returncode==0)break;\
                            if(option==1){FSEEK(STREAM,4,SEEK_CUR);}
-#else
-#define FORTSMOKEREAD(var,size, count,STREAM,option) \
-                           fread(var,size,count,STREAM)
-
-#define FORTSMOKEREADBR(var,size, count,STREAM,option) \
-                           returncode=fread(var,size,count,STREAM);\
-                           if(returncode!=count||returncode==0){
-                             break;\
-                           }
-#endif
 
 
 //***********************
@@ -170,9 +142,7 @@ typedef struct {
 typedef struct {
   char *file,*filebase;
   int unit_start;
-#ifdef pp_SMOKE3D_FORT
   int file_type;
-#endif
   char summary[1024];
   int compressed;
   int inuse,is_soot;

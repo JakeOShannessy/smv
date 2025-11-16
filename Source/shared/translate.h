@@ -1,6 +1,8 @@
 #ifndef TRANSLATE_H_DEFINED
 #define TRANSLATE_H_DEFINED
 
+#include "options_common.h"
+
 #ifdef IN_TRANSLATE
 #define TREXTERN
 #define TRDECL(var,val)  var=val
@@ -19,7 +21,7 @@ typedef struct {
 
 //************************** headers ****************************************
 
-TREXTERN int CompareTrdata( const void *arg1, const void *arg2 );
+TREXTERN int CompareTrdata(const void *arg1, const void *arg2 );
 TREXTERN char *Translate(char *string);
 TREXTERN void InitTranslate(char *bindir, char *tr_name);
 TREXTERN int ParseLang(char *file, trdata **trinfoptr, int *ntrinfoptr);
@@ -35,4 +37,3 @@ TREXTERN char TRDECL(*smokeview_lang,NULL);
 TREXTERN trdata TRDECL(*trinfo,NULL);
 TREXTERN int TRDECL(ntrinfo,0);
 #endif
-

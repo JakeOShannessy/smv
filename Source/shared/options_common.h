@@ -1,13 +1,18 @@
 #ifndef OPTIONS_COMMON_H_DEFINED
 #define OPTIONS_COMMON_H_DEFINED
 
+#if defined(__APPLE__) && defined(__MACH__)
+#define pp_OSX
+#endif
+
 //*** options: all platforms
 
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
 #endif
 #ifndef _DEBUG
-#define pp_HASH   // md5, sha1 and sha255 hashing
+// md5, sha1 and sha255 hashing
+#define pp_HASH
 #endif
 
 #ifdef __INTEL_COMPILER
@@ -29,7 +34,7 @@
 
 #ifdef INTEL_COMPILER_ANY
 #define pp_FSEEK
-#ifdef WIN32
+#ifdef _WIN32
 #define HAVE_MSVS
 #define INTEL_WIN_COMPILER
 #endif
@@ -51,7 +56,7 @@
 
 //*** options: windows
 
-#ifdef WIN32
+#ifdef _WIN32
 
 //*** needed when using Windows Intel compilers
 //    to prevent warnings/errors
@@ -81,49 +86,21 @@
 //#define pp_MEMPRINT     // output memory allocation info
 #define pp_MEMDEBUG     // comment this line when debugging REALLY large cases (to avoid memory checks)
 #endif
+#ifdef pp_MEMDEBUG
+#define pp_memusage
+#endif
 
 //*** hash output
 
 #ifdef pp_HASH
-#define PRINTVERSION(a,b) PRINTversion(a,b,hash_option)
+#define PRINTVERSION(a,opts) PRINTversion(a,(opts)->hash_option)
 #else
-#define PRINTVERSION(a,b) PRINTversion(a)
-#endif
-
-// debugging macros
-
-#ifdef pp_TRACE
-#define BTRACE \
-  printf("entering, file: %s, line: %d\n",__FILE__,__LINE__)
-#define TTRACE \
-  printf("in, file: %s, line: %d\n",__FILE__,__LINE__)
-#define ETRACE \
-  printf("leaving, file: %s, line: %d\n",__FILE__,__LINE__)
-#else
-#define BTRACE
-#define TTRACE
-#define ETRACE
+#define PRINTVERSION(a,opts) PRINTversion(a)
 #endif
 
 #define FILE_SIZE unsigned long long
 
-#ifdef X64
-  #define STRUCTSTAT struct __stat64
-  #define STAT _stat64
-
-  #ifdef WIN32
-    #define LINT __int64
-  #else
-    #define LINT long long int
-  #endif
-#else
-  #define STRUCTSTAT struct stat
-  #define STAT stat
-
-  #define LINT long int
-#endif
-
-#ifdef CPP
+#ifdef __cplusplus
 #define CCC "C"
 #define EXTERNCPP extern "C"
 #else
@@ -144,10 +121,6 @@
 #undef  GLUT_H
 #define GLUT_H <GLUT/glut.h>
 #endif
-#ifdef pp_QUARTZ
-#undef  GLUT_H
-#define GLUT_H <GL/glut.h>
-#endif
 
 #define GL_H <GL/gl.h>
 #ifdef pp_OSX
@@ -161,6 +134,79 @@
 #define GLU_H <OpenGL/glu.h>
 #endif
 
+#ifndef START_TIMER
+#define START_TIMER(a) a = (float)clock()/(float)CLOCKS_PER_SEC
+#endif
+
+#ifndef STOP_TIMER
+#define STOP_TIMER(a) a = (float)clock()/(float)CLOCKS_PER_SEC - a
+#endif
+
+#ifndef CUM_TIMER
+#define CUM_TIMER(a,b) b += ((float)clock()/(float)CLOCKS_PER_SEC - a)
+#endif
+
+#ifndef INIT_PRINT_TIMER
+#define INIT_PRINT_TIMER(timer)   float timer;START_TIMER(timer)
+#endif
+
+#ifndef PRINT_TIMER
+#define PRINT_TIMER(timer, label) PrintTime(__FILE__, __LINE__, &timer, label, 1)
+#endif
+
+#ifndef PRINT_CUM_TIMER
+#define PRINT_CUM_TIMER(timer, label) PrintTime(__FILE__, __LINE__, &timer, label, 0)
+#endif
+
+// Define a NORETURN macro that marks a function as never returning. This is
+// needed to mark that SMV_EXIT never returns, otherwise tools like clang-tidy
+// would find spurious issues.
+#ifndef noreturn
+#  if (__STDC_VERSION__ >= 201112L) && !defined(_WIN32)
+     // C11 provides a standard 'noreturn' macro that can be used. Conflicts
+     // means this doesn't work well on windows
+#    include <stdnoreturn.h>
+#    define NORETURN noreturn
+#  elif defined(_WIN32)
+     // noreturn as defined on windows
+#    define NORETURN _declspec(noreturn)
+#  else
+     // noreturn as defined on other platforms
+#    define NORETURN __attribute__((noreturn))
+#  endif
+#endif
+
 #include "lint.h"
+
+#define pp_GPU              // support the GPU
+#define pp_THREAD           // turn on multi-threading
+
+//*** options: windows
+
+#ifdef WIN32
+#ifdef pp_GPU
+#define pp_WINGPU           // only draw 3d slices with the GPU on windows
+#endif
+#endif
+
+//*** options: OSX
+
+#ifdef pp_OSX
+#define pp_SMOKE3D_FORCE        // always have at least one smoke3d entry to prevent crash when unloading slices
+#ifndef GL_SILENCE_DEPRECATION
+#define GL_SILENCE_DEPRECATION
+#endif
+#endif
+
+#undef pp_OSX_HIGHRES
+#ifdef pp_OSX
+#define pp_OSX_HIGHRES
+#endif
+
+//*** options: for debugging
+
+#ifdef _DEBUG
+//#define pp_MEM_DEBUG_PRINT // output file/line number for each memory allocation call
+#endif
 
 #endif

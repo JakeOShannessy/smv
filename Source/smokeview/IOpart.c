@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
+#include "glui_bounds.h"
 #include "histogram.h"
 #include "compress.h"
 #include "IOobjects.h"
@@ -18,49 +19,17 @@
 #define LOADING 0
 #define DRAWING 1
 
-#define FORTPART5READ_mv(var,size) \
-fseek_m(PART5FILE,4,SEEK_CUR);\
-fread_mv(var,4,size,PART5FILE);\
-fseek_m(PART5FILE,4,SEEK_CUR);\
-returncode=feof_m(PART5FILE)
-
-#define FORTPART5READ_m(var,size) \
-fseek_m(PART5FILE,4,SEEK_CUR);\
-fread_m(var,4,size,PART5FILE);\
-fseek_m(PART5FILE,4,SEEK_CUR);\
-returncode = feof_m(PART5FILE)
-
-#define FCLOSE_m(a) fclose_m((a))
-
-#define FSEEK_m(a,b,c) \
-  fseek_m((a),(b),(c));\
-  returncode = feof_m(PART5FILE)
-
-#define FREAD_m(a,b,c,d) fread_m((a),(b),(c),(d))
-
-#define FORTPART5READ(var,size) \
-returncode=PASS_m;\
-FSEEK(PART5FILE,4,SEEK_CUR);if(ferror(PART5FILE)==1||feof(PART5FILE)==1)returncode=FAIL_m;\
-if(returncode==PASS_m){\
-  fread(var,4,size,PART5FILE);\
-  if(ferror(PART5FILE)==1||feof(PART5FILE)==1)returncode=FAIL_m;\
-}\
-if(returncode==PASS_m){\
-  FSEEK(PART5FILE,4,SEEK_CUR);\
-  if(ferror(PART5FILE)==1||feof(PART5FILE)==1)returncode=FAIL_m;\
-}
-
 /* ------------------ ClosePartFiles ------------------------ */
 
 void ClosePartFiles(void){
   int i;
 
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<global_scase.npartinfo; i++){
     partdata *parti;
 
-    parti = partinfo+i;
+    parti = global_scase.partinfo+i;
     if(parti->loaded==1&&parti->stream!=NULL){
-      FCLOSE_m(parti->stream);
+      fclose_m(parti->stream);
       parti->stream = NULL;
     }
   }
@@ -182,9 +151,14 @@ int GetTagIndex(const partdata *partin_arg, part5data **datain_arg, int tagval_a
   part5data *data_local;
   int i;
 
+  assert(sorting_tags == 0);
+  if(sorting_tags == 1){
+    printf("***error: particle tags accessed while being sorted\n");
+    SMV_EXIT(1);
+  }
   if(flag==LOADING&&partfast==YES)return -1;
 
-  for(i = -1; i < npartinfo; i++){
+  for(i = -1; i < global_scase.npartinfo; i++){
     const partdata *parti_local;
 
     if(i == -1){
@@ -192,7 +166,7 @@ int GetTagIndex(const partdata *partin_arg, part5data **datain_arg, int tagval_a
       data_local = *datain_arg;
     }
     else{
-      parti_local = partinfo + i;
+      parti_local = global_scase.partinfo + i;
       if(parti_local== partin_arg)continue;
       if(parti_local->loaded == 0 || parti_local->display == 0)continue;
       data_local = parti_local->data5 + (*datain_arg- partin_arg->data5);
@@ -229,7 +203,7 @@ void DrawPart(const partdata *parti, int mode){
   float valmin, valmax;
 
   if(nglobal_times<1||parti->times[0] > global_times[itimes])return;
-  if(nterraininfo > 0 && ABS(vertical_factor - 1.0) > 0.01){
+  if(global_scase.nterraininfo > 0 && ABS(vertical_factor - 1.0) > 0.01){
     offset_terrain = 1;
   }
   else{
@@ -250,17 +224,20 @@ void DrawPart(const partdata *parti, int mode){
   nclasses = parti->nclasses;
   datacopy = parti->data5 + nclasses*ipframe;
   CheckMemory;
+  glPushMatrix();
+  glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
+  glTranslatef(-global_scase.xbar0, -global_scase.ybar0, -global_scase.zbar0);
   if(part5show == 1){
     if(streak5show == 0 || (streak5show == 1 && showstreakhead == 1)){
       for(i = 0;i < parti->nclasses;i++){
-        short *sx, *sy, *sz;
+        float *xpos, *ypos, *zpos;
         unsigned char *vis, *color;
         partclassdata *partclassi;
         int partclass_index, itype, vistype, class_vis;
         int show_default;
 
         partclassi = parti->partclassptr[i];
-        partclass_index = partclassi - partclassinfo;
+        partclass_index = partclassi - global_scase.partclassinfo;
 
         vistype = current_property->class_present[partclass_index];
         class_vis = current_property->class_vis[partclass_index];
@@ -278,9 +255,9 @@ void DrawPart(const partdata *parti, int mode){
           show_default = 1;
         }
 
-        sx = datacopy->sx;
-        sy = datacopy->sy;
-        sz = datacopy->sz;
+        xpos = datacopy->xpos;
+        ypos = datacopy->ypos;
+        zpos = datacopy->zpos;
         vis = datacopy->vis_part;
         {
           glPointSize(partpointsize);
@@ -290,12 +267,21 @@ void DrawPart(const partdata *parti, int mode){
 
             if(datacopy->partclassbase->vis_type == PART_POINTS){
               if(select_part == 1 && selected_part_index > 0 && mode == DRAWSCENE){
+                float *rvals=NULL;
+
+                if(itype>=0)rvals = datacopy->rvals + itype*datacopy->npoints_file;
                 for(j = 0; j < datacopy->npoints_file; j += partdrawskip){
                   if(vis[j] == 1 && datacopy->tags[j]==selected_part_index){
-                    char taglabel[32];
+                    char taglabel[64];
 
-                    sprintf(taglabel, "%i", selected_part_index);
-                    Output3Text(foregroundcolor, xplts[sx[j]], yplts[sy[j]], zplts[sz[j]], taglabel);
+
+                    if(itype >= 0){
+                      sprintf(taglabel, "%i: %f", selected_part_index, rvals[j]);
+                    }
+                    else{
+                      sprintf(taglabel, "%i", selected_part_index);
+                    }
+                    Output3Text(foregroundcolor, xpos[j], ypos[j], zpos[j], taglabel);
                   }
                 }
               }
@@ -305,7 +291,7 @@ void DrawPart(const partdata *parti, int mode){
                   glColor4fv(datacopy->partclassbase->rgb);
                   for(j = 0; j < datacopy->npoints_file; j += partdrawskip){
                     if(vis[j] == 1){
-                      glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                      glVertex3f(xpos[j], ypos[j], zpos[j]);
                     }
                   }
                 }
@@ -316,7 +302,7 @@ void DrawPart(const partdata *parti, int mode){
 
                       GetRGB((unsigned int)datacopy->tags[j], &r, &g, &b);
                       glColor3ub(r, g, b);
-                      glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                      glVertex3f(xpos[j], ypos[j], zpos[j]);
                     }
                   }
                 }
@@ -335,7 +321,7 @@ void DrawPart(const partdata *parti, int mode){
                       if(current_property != NULL && (colorj > current_property->imax || colorj < current_property->imin))continue;
                       if(rgb_part[4 * colorj + 3] == 0.0)continue;
                       glColor4fv(rgb_part + 4 * colorj);
-                      glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                      glVertex3f(xpos[j], ypos[j], zpos[j]);
                     }
                   }
                 }
@@ -352,7 +338,7 @@ void DrawPart(const partdata *parti, int mode){
 
                       GetRGB((unsigned int)datacopy->tags[j], &r, &g, &b);
                       glColor3ub(r, g, b);
-                      glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                      glVertex3f(xpos[j], ypos[j], zpos[j]);
                     }
                   }
                 }
@@ -373,7 +359,7 @@ void DrawPart(const partdata *parti, int mode){
                 if(vis[j] != 1)continue;
 
                 glPushMatrix();
-                glTranslatef(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                glTranslatef(xpos[j], ypos[j], zpos[j]);
 
                 glRotatef(-datacopy->partclassbase->elevation, 0.0, 1.0, 0.0);
                 glRotatef(datacopy->partclassbase->azimuth, 0.0, 0.0, 1.0);
@@ -396,9 +382,9 @@ void DrawPart(const partdata *parti, int mode){
                 CopyDepVals(partclassi, datacopy, colorptr, prop, j);
                 glScalef(SCALE2SMV(1.0), SCALE2SMV(1.0), SCALE2SMV(1.0));
 
-                partfacedir[0] = xbar0 + SCALE2SMV(fds_eyepos[0]) - xplts[sx[j]];
-                partfacedir[1] = ybar0 + SCALE2SMV(fds_eyepos[1]) - yplts[sy[j]];
-                partfacedir[2] = zbar0 + SCALE2SMV(fds_eyepos[2]) - zplts[sz[j]];
+                partfacedir[0] = global_scase.xbar0 + SCALE2SMV(fds_eyepos[0]) - xpos[j];
+                partfacedir[1] = global_scase.ybar0 + SCALE2SMV(fds_eyepos[1]) - ypos[j];
+                partfacedir[2] = global_scase.zbar0 + SCALE2SMV(fds_eyepos[2]) - zpos[j];
 
                 DrawSmvObject(prop->smv_object, 0, prop, 0, NULL, 0);
                 glPopMatrix();
@@ -435,8 +421,8 @@ void DrawPart(const partdata *parti, int mode){
                       dy = dyv[j];
                       dz = dzv[j];
                     }
-                    glVertex3f(xplts[sx[j]] - dx, yplts[sy[j]] - dy, zplts[sz[j]] - dz);
-                    glVertex3f(xplts[sx[j]] + dx, yplts[sy[j]] + dy, zplts[sz[j]] + dz);
+                    glVertex3f(xpos[j] - dx, ypos[j] - dy, zpos[j] - dz);
+                    glVertex3f(xpos[j] + dx, ypos[j] + dy, zpos[j] + dz);
                   }
                 }
               }
@@ -450,8 +436,8 @@ void DrawPart(const partdata *parti, int mode){
                       dy = dyv[j];
                       dz = dzv[j];
                     }
-                    glVertex3f(xplts[sx[j]] - dx, yplts[sy[j]] - dy, zplts[sz[j]] - dz);
-                    glVertex3f(xplts[sx[j]] + dx, yplts[sy[j]] + dy, zplts[sz[j]] + dz);
+                    glVertex3f(xpos[j] - dx, ypos[j] - dy, zpos[j] - dz);
+                    glVertex3f(xpos[j] + dx, ypos[j] + dy, zpos[j] + dz);
                   }
                 }
               }
@@ -464,15 +450,10 @@ void DrawPart(const partdata *parti, int mode){
               glColor4fv(datacopy->partclassbase->rgb);
               for(j = 0;j < datacopy->npoints_file;j+=partdrawskip){
                 float zoffset;
-                float xx, yy, zz;
                 int loc;
 
-                xx = xplts[sx[j]];
-                yy = yplts[sy[j]];
-                zz = zplts[sz[j]];
-
-                zoffset = GetZCellValOffset(meshinfo, xx, yy, &loc);
-                if(vis[j] == 1)glVertex3f(xx, yy, zz + zoffset);
+                zoffset = GetZCellValOffset(global_scase.meshescoll.meshinfo, xpos[j], ypos[j], &loc);
+                if(vis[j] == 1)glVertex3f(xpos[j], ypos[j], zpos[j] + zoffset);
               }
             }
             else{
@@ -480,7 +461,7 @@ void DrawPart(const partdata *parti, int mode){
               for(j = 0;j < datacopy->npoints_file;j+=partdrawskip){
                 if(vis[j] == 1){
                   glColor4fv(rgb_full[color[j]]);
-                  glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+                  glVertex3f(xpos[j], ypos[j], zpos[j]);
                 }
               }
             }
@@ -498,8 +479,7 @@ void DrawPart(const partdata *parti, int mode){
 
   if(streak5show == 1){
     for(i = 0;i < parti->nclasses;i++){
-      short *sx, *sy, *sz;
-      short *sxx, *syy, *szz;
+      float *xpos, *ypos, *zpos;
       unsigned char *vis;
       int k;
       int show_default;
@@ -509,7 +489,7 @@ void DrawPart(const partdata *parti, int mode){
       int partclass_index, itype, vistype, class_vis;
 
       partclassi = parti->partclassptr[i];
-      partclass_index = partclassi - partclassinfo;
+      partclass_index = partclassi - global_scase.partclassinfo;
 
       vistype = current_property->class_present[partclass_index];
       class_vis = current_property->class_vis[partclass_index];
@@ -527,9 +507,9 @@ void DrawPart(const partdata *parti, int mode){
         show_default = 1;
       }
 
-      sx = datacopy->sx;
-      sy = datacopy->sy;
-      sz = datacopy->sz;
+      xpos = datacopy->xpos;
+      ypos = datacopy->ypos;
+      zpos = datacopy->zpos;
       vis = datacopy->vis_part;
 
       if(show_default == 1){
@@ -546,18 +526,19 @@ void DrawPart(const partdata *parti, int mode){
           tagval = datacopy->tags[j];
           if(vis[j] == 0)continue;
           glBegin(GL_LINE_STRIP);
-          glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+          glVertex3f(xpos[j], ypos[j], zpos[j]);
           for(k = 1;k < streak5step;k++){
             int jj;
+            float *xxpos, *yypos, *zzpos;
 
             if(ipframe - k < 0)break;
             datapast = parti->data5 + nclasses*(ipframe - k) + i;
             jj = GetTagIndex(parti, &datapast, tagval, DRAWING);
             if(jj < 0)break;
-            sxx = datapast->sx;
-            syy = datapast->sy;
-            szz = datapast->sz;
-            glVertex3f(xplts[sxx[jj]], yplts[syy[jj]], zplts[szz[jj]]);
+            xxpos = datapast->xpos;
+            yypos = datapast->ypos;
+            zzpos = datapast->zpos;
+            glVertex3f(xxpos[jj], yypos[jj], zzpos[jj]);
           }
           glEnd();
         }
@@ -578,21 +559,22 @@ void DrawPart(const partdata *parti, int mode){
 
           glBegin(GL_LINE_STRIP);
           glColor4fv(colorptr);
-          glVertex3f(xplts[sx[j]], yplts[sy[j]], zplts[sz[j]]);
+          glVertex3f(xpos[j], ypos[j], zpos[j]);
           for(k = 1;k < streak5step;k++){
             int jj;
+            float *xxpos, *yypos, *zzpos;
 
             if(ipframe - k < 0)break;
             datapast = parti->data5 + nclasses*(ipframe - k) + i;
             jj = GetTagIndex(parti, &datapast, tagval, DRAWING);
             if(jj < 0 || datapast->irvals == NULL)break;
-            sxx = datapast->sx;
-            syy = datapast->sy;
-            szz = datapast->sz;
+            xxpos = datapast->xpos;
+            yypos = datapast->ypos;
+            zzpos = datapast->zpos;
 
             GetPartColor(&colorptr, datacopy, show_default, jj, itype, valmin, valmax);
             glColor4fv(colorptr);
-            glVertex3f(xplts[sxx[jj]], yplts[syy[jj]], zplts[szz[jj]]);
+            glVertex3f(xxpos[jj], yypos[jj], zzpos[jj]);
           }
           glEnd();
         }
@@ -601,21 +583,25 @@ void DrawPart(const partdata *parti, int mode){
       datacopy++;
     }
   }
-
+  glPopMatrix();
 }
 
 /* ------------------ DrawPartFrame ------------------------ */
 
 void DrawPartFrame(int mode){
-  partdata *parti;
   int i;
 
-  if(use_tload_begin==1&&global_times[itimes]<tload_begin)return;
-  if(use_tload_end==1&&global_times[itimes]>tload_end)return;
-  for(i=0;i<npartinfo;i++){
-    parti = partinfo + i;
+  if(use_tload_begin==1&&global_times[itimes]<global_scase.tload_begin)return;
+  if(use_tload_end==1&&global_times[itimes]>global_scase.tload_end)return;
+  for(i=0;i<global_scase.npartinfo;i++){
+    partdata *parti;
+    meshdata *meshi;
+
+    parti = global_scase.partinfo + i;
     if(parti->loaded==0||parti->display==0)continue;
     IF_NOT_USEMESH_CONTINUE(USEMESH_DRAW,parti->blocknumber);
+    meshi = global_scase.meshescoll.meshinfo + parti->blocknumber;
+    if(meshi->datavis == 0)continue;
     DrawPart(parti, mode);
     SNIFF_ERRORS("after DrawPart");
   }
@@ -636,7 +622,7 @@ void FreePart5Data(part5data *datacopy_arg){
 
 /* ------------------ FreeAllPart5Data ------------------------ */
 
-void FreeAllPart5Data(partdata *parti){
+void FreeAllPart5Data(partdata * parti){
   int i;
   part5data *datacopy_local;
 
@@ -648,11 +634,7 @@ void FreeAllPart5Data(partdata *parti){
   }
   FREEMEMORY(parti->data5);
   FREEMEMORY(parti->vis_part);
-  FREEMEMORY(parti->tags);
   FREEMEMORY(parti->sort_tags);
-  FREEMEMORY(parti->sx);
-  FREEMEMORY(parti->sy);
-  FREEMEMORY(parti->sz);
   FREEMEMORY(parti->irvals);
 }
 
@@ -661,9 +643,9 @@ void FreeAllPart5Data(partdata *parti){
 void InitPart5Data(part5data *datacopy, partclassdata *partclassi){
   datacopy->cvals=NULL;
   datacopy->partclassbase=partclassi;
-  datacopy->sx=NULL;
-  datacopy->sy=NULL;
-  datacopy->sz=NULL;
+  datacopy->xpos=NULL;
+  datacopy->ypos=NULL;
+  datacopy->zpos=NULL;
   datacopy->dsx=NULL;
   datacopy->dsy=NULL;
   datacopy->dsz=NULL;
@@ -687,8 +669,8 @@ int ComparePart(const void *arg1, const void *arg2){
   i = *(int *)arg1;
   j = *(int *)arg2;
 
-  parti = partinfo + i;
-  partj = partinfo + j;
+  parti = global_scase.partinfo + i;
+  partj = global_scase.partinfo + j;
 
   if(parti->blocknumber<partj->blocknumber)return -1;
   if(parti->blocknumber>partj->blocknumber)return 1;
@@ -846,46 +828,46 @@ void CreatePartSizeFileFromBound(char *part5boundfile_arg, char *part5sizefile_a
 /* ------------------ CreatePartSizeFileFromPart ------------------------ */
 
 void CreatePartSizeFileFromPart(char *part5file_arg, char *part5sizefile_arg, LINT file_offset_arg){
-  FILE *PART5FILE, *streamout_local;
-  int returncode=0;
+  FILE *streamout_local;
+  FILE_m *stream;
+  int count_read;
   int one_local, version_local, nclasses_local=0;
   int i;
   int *numtypes_local, *numpoints_local;
   int skip_local, numvals_local;
 
-  PART5FILE       = fopen(part5file_arg, "rb");
+  stream       = fopen_b(part5file_arg, NULL, 0, "rb");
   streamout_local = FOPEN_2DIR(part5sizefile_arg, "w");
 
-  FSEEK(PART5FILE, 4, SEEK_CUR); fread(&one_local, 4, 1, PART5FILE); FSEEK(PART5FILE, 4, SEEK_CUR);
-  FORTPART5READ(&version_local, 1);
-
-  FORTPART5READ(&nclasses_local, 1);
+  FORTREAD_m(&one_local, 4, 1, stream);
+  FORTREAD_m(&version_local, 4, 1, stream);
+  FORTREAD_m(&nclasses_local, 4, 1, stream);
   NewMemory((void **)&numtypes_local, 2*nclasses_local* sizeof(int));
   NewMemory((void **)&numpoints_local, nclasses_local* sizeof(int));
-  for (i = 0; i < nclasses_local; i++){
-    FORTPART5READ(numtypes_local+2*i, 2);
+  for(i = 0; i < nclasses_local; i++){
+    FORTREAD_m(numtypes_local+2*i, 4, 2, stream);
     numvals_local = numtypes_local[2 * i] + numtypes_local[2 * i + 1];
     skip_local = 2*numvals_local*(4 + 30 + 4);
-    FSEEK(PART5FILE, skip_local, SEEK_CUR);
+    fseek_m(stream, skip_local, SEEK_CUR);
   }
-  while (!feof(PART5FILE)){
+  while(!feof_m(stream)){
     float time_local;
     LINT frame_size_local;
     char format[128];
 
     frame_size_local =0;
 
-    FORTPART5READ(&time_local, 1);
+    FORTREAD_m(&time_local, 4, 1, stream);
     frame_size_local += 12;
-    if(returncode == FAIL_m)break;
-    for (i = 0; i < nclasses_local; i++){
-      FORTPART5READ(numpoints_local+ i, 1);
+    if(count_read != 1)break;
+    for(i = 0; i < nclasses_local; i++){
+      FORTREAD_m(numpoints_local+ i, 4, 1, stream);
       frame_size_local += 12;
       skip_local = 4+4*NXYZ_COMP_PART*numpoints_local[i]+4;
       skip_local += 4 + 4 * numpoints_local[i] + 4;
       if(numtypes_local[2 * i] > 0)    skip_local += 4 + 4 * numpoints_local[i] * numtypes_local[2 * i] + 4;
       if(numtypes_local[2 * i + 1] > 0)skip_local += 4 + 4 * numpoints_local[i] * numtypes_local[2 * i + 1] + 4;
-      FSEEK(PART5FILE, skip_local, SEEK_CUR);
+      fseek_m(stream, skip_local, SEEK_CUR);
       frame_size_local +=skip_local;
     }
 #ifdef INTEL_WIN_COMPILER
@@ -896,11 +878,11 @@ void CreatePartSizeFileFromPart(char *part5file_arg, char *part5sizefile_arg, LI
     fprintf(streamout_local, format, time_local, file_offset_arg);
     fprintf(streamout_local, "\n");
     file_offset_arg += frame_size_local;
-    for (i = 0; i < nclasses_local; i++){
+    for(i = 0; i < nclasses_local; i++){
       fprintf(streamout_local, " %i\n", numpoints_local[i]);
     }
   }
-  fclose(PART5FILE);
+  fclose_m(stream);
   fclose(streamout_local);
   FREEMEMORY(numtypes_local);
   FREEMEMORY(numpoints_local);
@@ -911,26 +893,26 @@ void CreatePartSizeFileFromPart(char *part5file_arg, char *part5sizefile_arg, LI
 LINT GetPartHeaderOffset(partdata *parti_arg){
   LINT file_offset_local=0;
   int nclasses_local, one_local;
-  FILE *PART5FILE=NULL;
+  FILE_m *stream=NULL;
   int version_local;
-  int returncode=0;
+  int count_read;
   int skip_local;
   int i;
   int *numtypes_local = NULL, *numtypescopy_local, *numpoints_local = NULL;
   int numtypes_temp_local[2];
 
-  PART5FILE = fopen(parti_arg->reg_file,"rb");
-  if(PART5FILE==NULL)return 0;
+  stream = fopen_b(parti_arg->reg_file, NULL, 0, "rb");
+  if(stream==NULL)return 0;
 
-  FSEEK(PART5FILE,4,SEEK_CUR);fread(&one_local,4,1,PART5FILE);FSEEK(PART5FILE,4,SEEK_CUR);
+  FORTREAD_m(&one_local, 4, 1, stream);
   file_offset_local += 12;
 
-  FORTPART5READ(&version_local, 1);
-  if(returncode == FAIL_m)goto wrapup;
+  FORTREAD_m(&version_local, 4, 1, stream);
+  if(count_read != 1)goto wrapup;
   file_offset_local += 12;
 
-  FORTPART5READ(&nclasses_local,1);
-  if(returncode == FAIL_m)goto wrapup;
+  FORTREAD_m(&nclasses_local, 4, 1, stream);
+  if(count_read != 1)goto wrapup;
   file_offset_local += 12;
 
   NewMemory((void **)&numtypes_local,2*nclasses_local*sizeof(int));
@@ -940,54 +922,54 @@ LINT GetPartHeaderOffset(partdata *parti_arg){
   numtypes_temp_local[1]=0;
   CheckMemory;
   for(i=0;i<nclasses_local;i++){
-    FORTPART5READ(numtypes_temp_local,2);
+    int returncode;
+
+    FORTREAD_m(numtypes_local, 4, 2, stream);
+    if(count_read != 2)goto wrapup;
     file_offset_local += 16;
-    if(returncode == FAIL_m)goto wrapup;
     *numtypescopy_local++=numtypes_temp_local[0];
     *numtypescopy_local++=numtypes_temp_local[1];
     skip_local = 2*(numtypes_temp_local[0]+numtypes_temp_local[1])*(8 + 30);
     file_offset_local +=skip_local;
-    returncode=FSEEK(PART5FILE,skip_local,SEEK_CUR);
-    if(returncode == FAIL_m)goto wrapup;
+    returncode=fseek_m(stream,skip_local,SEEK_CUR);
+    if(returncode != PASS_m)goto wrapup;
   }
   CheckMemory;
 
   wrapup:
   FREEMEMORY(numtypes_local);
   FREEMEMORY(numpoints_local);
-  fclose(PART5FILE);
+  fclose_b(stream);
   return file_offset_local;
 }
 
 /* ------------------ CreatePartBoundFile ------------------------ */
 
 void CreatePartBoundFile(partdata *parti){
-  FILE_m *PART5FILE=NULL;
+  FILE_m *stream=NULL;
   int one_local, version_local, nclasses_local;
   int i;
+  int count_read;
   size_t returncode;
   float time_local;
   int nparts_local, *numtypes_local = NULL, numtypes_temp_local[2];
   FILE *stream_out_local=NULL;
 
-  
-  if(parti->reg_file!=NULL)PART5FILE = fopen_m(parti->reg_file, "rbm");
-  if(parti->reg_file==NULL||PART5FILE==NULL)return;
+  if(parti->reg_file == NULL)return;
+  stream = fopen_b(parti->reg_file, NULL, 0, "rb");
+  if(stream==NULL)return;
   if(parti->bound_file!=NULL)stream_out_local = FOPEN_2DIR(parti->bound_file, "w");
   if(stream_out_local==NULL){
-    FCLOSE_m(PART5FILE);
+    fclose_b(stream);
     return;
   }
 
-  FSEEK_m(PART5FILE, 4, SEEK_CUR);
-  FREAD_m(&one_local, 4, 1, PART5FILE);
-  FSEEK_m(PART5FILE, 4, SEEK_CUR);
+  FORTREAD_m(&one_local, 4, 1, stream);
+  FORTREAD_m(&version_local, 4, 1, stream);
+  if(count_read != 1)goto wrapup;
 
-  FORTPART5READ_m(&version_local, 1);
-  if(returncode == FAIL_m)goto wrapup;
-
-  FORTPART5READ_m(&nclasses_local, 1);
-  if(returncode == FAIL_m)goto wrapup;
+  FORTREAD_m(&nclasses_local, 4, 1, stream);
+  if(count_read != 1)goto wrapup;
 
   NewMemory((void **)&numtypes_local, 2*nclasses_local*sizeof(int));
   numtypes_temp_local[0] = 0;
@@ -996,15 +978,13 @@ void CreatePartBoundFile(partdata *parti){
   for(i = 0; i<nclasses_local; i++){
     int skip_local;
 
-    FORTPART5READ_m(numtypes_temp_local, 2);
-    if(returncode == FAIL_m)goto wrapup;
+    FORTREAD_m(numtypes_temp_local, 4, 2, stream);
+    if(count_read != 2)goto wrapup;
     numtypes_local[2*i+0] = numtypes_temp_local[0];
     numtypes_local[2*i+1] = numtypes_temp_local[1];
     skip_local = 2*(numtypes_temp_local[0]+numtypes_temp_local[1])*(8+30);
-    FSEEK_m(PART5FILE, skip_local, SEEK_CUR);
-    if(returncode == FAIL_m){
-      goto wrapup;
-    }
+    returncode = fseek_m(stream, skip_local, SEEK_CUR);
+    if(returncode != PASS_m)goto wrapup;
   }
   CheckMemory;
 
@@ -1012,28 +992,28 @@ void CreatePartBoundFile(partdata *parti){
     int jj;
 
     CheckMemory;
-    FORTPART5READ_m(&time_local, 1);
-    if(returncode == FAIL_m)goto wrapup;
+    FORTREAD_m(&time_local, 4, 1, stream);
+    if(count_read != 1)goto wrapup;
     fprintf(stream_out_local, "%f %i 1\n", time_local, nclasses_local);
 
     for(jj = 0; jj<nclasses_local; jj++){
       int skip_local, kk;
       float *rvals_local;
 
-      FORTPART5READ_m(&nparts_local, 1);
-      if(returncode == FAIL_m)goto wrapup;
+      FORTREAD_m(&nparts_local, 4, 1, stream);
+      if(count_read != 1)goto wrapup;
 
       fprintf(stream_out_local, "%i %i\n", numtypes_local[2*jj], nparts_local);
       CheckMemory;
 
       skip_local = 4+NXYZ_COMP_PART*nparts_local*sizeof(float)+4; // skip over particle xyz coords
       skip_local += 4+nparts_local*sizeof(int)+4;                   // skip over tags
-      FSEEK_m(PART5FILE, skip_local, SEEK_CUR);
-      if(returncode == FAIL_m)goto wrapup;
+      returncode = fseek_m(stream, skip_local, SEEK_CUR);
+      if(returncode != PASS_m)goto wrapup;
       CheckMemory;
       if(numtypes_local[2*jj]>0){
-        FORTPART5READ_mv((void **)&rvals_local, nparts_local*numtypes_local[2*jj]);
-        if(returncode == FAIL_m)goto wrapup;
+        FORTREAD_mv((void **)&rvals_local, 4, nparts_local*numtypes_local[2*jj], stream);
+        if(count_read != nparts_local * numtypes_local[2 * jj])goto wrapup;
       }
       CheckMemory;
       for(kk = 0; kk<numtypes_local[2*jj]; kk++){
@@ -1058,19 +1038,19 @@ void CreatePartBoundFile(partdata *parti){
     CheckMemory;
   }
 wrapup:
-  FCLOSE_m(PART5FILE);
+  fclose_b(stream);
   fclose(stream_out_local);
   CheckMemory;
   FREEMEMORY(numtypes_local);
 }
 
 /* ------------------ CreatePartSizeFile ------------------------ */
-
 void CreatePartSizeFile(partdata *parti){
   FILE *stream_local=NULL;
   LINT header_offset_local;
+  char *smokeview_scratchdir = GetUserConfigDir();
 
-  if(parti->reg_file!=NULL)stream_local = fopen(parti->reg_file, "rb");
+  if(parti->reg_file!=NULL)stream_local = FOPEN(parti->reg_file, "rb");
   if(parti->reg_file==NULL||stream_local==NULL)return;
   fclose(stream_local);
   header_offset_local =GetPartHeaderOffset(parti);
@@ -1084,12 +1064,14 @@ void CreatePartSizeFile(partdata *parti){
     fclose(stream_local);
     TestWrite(smokeview_scratchdir, &(parti->size_file));
     CreatePartSizeFileFromBound(parti->bound_file, parti->size_file, header_offset_local);
+    FREEMEMORY(smokeview_scratchdir);
     return;
   }
   printf("***warning: particle bound/size file %s could not be opened\n", parti->bound_file);
   printf("            particle sizing proceeding using the full particle file: %s\n", parti->reg_file);
   TestWrite(smokeview_scratchdir, &(parti->size_file));
   CreatePartSizeFileFromPart(parti->reg_file, parti->size_file, header_offset_local);
+  FREEMEMORY(smokeview_scratchdir);
 }
 
   /* ------------------ GetPartHistogramFile ------------------------ */
@@ -1155,11 +1137,11 @@ void MergePartHistograms(void){
   for(i=0;i<npart5prop;i++){
     InitHistogram(full_part_histogram+i, NHIST_BUCKETS, NULL, NULL);
   }
-  for(i = 0; i<npartinfo; i++){
+  for(i = 0; i<global_scase.npartinfo; i++){
     partdata *parti;
     int j;
 
-    parti = partinfo + i;
+    parti = global_scase.partinfo + i;
     if(parti->loaded==0)continue;
     for(j = 0; j < parti->nclasses; j++){
       partclassdata *partclassi;
@@ -1185,10 +1167,10 @@ void MergePartHistograms(void){
 void GeneratePartHistograms(void){
   int i;
 
-  for(i=0;i<npartinfo;i++){
+  for(i=0;i<global_scase.npartinfo;i++){
     partdata *parti;
 
-    parti = partinfo + i;
+    parti = global_scase.partinfo + i;
     if(parti->loaded==1){
       GetPartHistogramFile(parti);
     }
@@ -1200,39 +1182,73 @@ void GeneratePartHistograms(void){
   }
 }
 
+/* ------------------ SortPartTags ------------------------ */
+
+void SortPartTags(partdata *parti){
+  int i;
+  part5data *datacopy_local;
+
+  datacopy_local = parti->data5;
+  for(i = 0; i < parti->ntimes; i++){
+    int class_index;
+
+    for(class_index = 0; class_index < parti->nclasses; class_index++){
+      qsort(datacopy_local->sort_tags, ( size_t )datacopy_local->npoints_file, 2*sizeof(int), CompareTags);
+      datacopy_local++;
+    }
+  }
+}
+
+/* ------------------ SortAllPartTags ------------------------ */
+
+void *SortAllPartTags(void *arg){
+  int i;
+
+  INIT_PRINT_TIMER(timer_sortparttags);
+  for(i = 0; i < global_scase.npartinfo; i++){
+    partdata *parti;
+
+    parti = global_scase.partinfo + i;
+    if(parti->loaded == 0)continue;
+    SortPartTags(parti);
+  }
+  PRINT_TIMER(timer_sortparttags, "SortPartTags");
+  sorting_tags = 0;
+  THREAD_EXIT(sorttags_threads);
+}
+
 /* ------------------ GetPartData ------------------------ */
 
 void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
-  FILE_m *PART5FILE;
+  FILE_m *stream;
   int class_index;
   int one_local, version_local, nclasses_local;
   int skip_local, nparts_local;
   int *numtypes_local = NULL, *numtypescopy_local, *numpoints_local = NULL;
   int numtypes_temp_local[2];
   int count_local, count2_local, first_frame_local = 1;
+  int count_read;
   size_t returncode;
   float time_local;
   part5data *datacopy_local;
 
-  *file_size_arg = GetFileSizeSMV(parti->reg_file);
-
   if(parti->stream!=NULL){
-    FCLOSE_m(parti->stream);
+    fclose_m(parti->stream);
     parti->stream = NULL;
   }
-  PART5FILE = fopen_m(parti->reg_file, "rbm");
-  parti->stream = PART5FILE;
-  if(PART5FILE==NULL)return;
+  stream = fopen_m(parti->reg_file, "rbm");
+  *file_size_arg = GetFileSizeSMV(parti->reg_file);
+  parti->stream = stream;
+  if(stream==NULL)return;
 
-  FSEEK_m(PART5FILE,4,SEEK_CUR);
-  FREAD_m(&one_local,4,1,PART5FILE);
-  FSEEK_m(PART5FILE,4,SEEK_CUR);
+  FORTREAD_m(&one_local,4,1,stream);
+  if(count_read!=1)goto wrapup;
 
-  FORTPART5READ_m(&version_local, 1);
-  if(returncode==FAIL_m)goto wrapup;
+  FORTREAD_m(&version_local, 4, 1, stream);
+  if(count_read!=1)goto wrapup;
 
-  FORTPART5READ_m(&nclasses_local,1);
-  if(returncode==FAIL_m)goto wrapup;
+  FORTREAD_m(&nclasses_local,4, 1, stream);
+  if(count_read!=1)goto wrapup;
 
   NewMemory((void **)&numtypes_local,2*nclasses_local*sizeof(int));
   NewMemory((void **)&numpoints_local,nclasses_local*sizeof(int));
@@ -1241,13 +1257,14 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
   numtypes_temp_local[1]=0;
   CheckMemory;
   for(class_index=0;class_index<nclasses_local;class_index++){
-    FORTPART5READ_m(numtypes_temp_local,2);
-    if(returncode==FAIL_m)goto wrapup;
+    FORTREAD_m(numtypes_temp_local,4,2,stream);
+    if(count_read!=2)goto wrapup;
+
     *numtypescopy_local++=numtypes_temp_local[0];
     *numtypescopy_local++=numtypes_temp_local[1];
     skip_local = 2*(numtypes_temp_local[0]+numtypes_temp_local[1])*(8 + 30);
-    FSEEK_m(PART5FILE,skip_local,SEEK_CUR);
-    if(returncode==FAIL_m)goto wrapup;
+    returncode = fseek_m(stream,skip_local,SEEK_CUR);
+    if(returncode!=PASS_m)goto wrapup;
   }
   CheckMemory;
 
@@ -1260,12 +1277,12 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
 
     CheckMemory;
     if(count_local>=nf_all_arg)break;
-    FORTPART5READ_m(&time_local,1);
-    if(returncode==FAIL_m)break;
+    FORTREAD_m(&time_local,4,1,stream);
+    if(count_read!=1)goto wrapup;
 
     if((tload_step>1       && count_local%tload_step!=0)||
-       (use_tload_begin==1 && time_local<tload_begin-TEPS)||
-       (use_tload_end==1   && time_local>tload_end+TEPS)){
+       (use_tload_begin==1 && time_local<global_scase.tload_begin-TEPS)||
+       (use_tload_end==1   && time_local>global_scase.tload_end+TEPS)){
       doit_local=0;
     }
     else{
@@ -1279,42 +1296,20 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
       parti->ntimes = count2_local+1;
     }
     for(class_index=0;class_index<nclasses_local;class_index++){
-      FORTPART5READ_m(&nparts_local,1);
-      if(returncode==FAIL_m)goto wrapup;
+      FORTREAD_m(&nparts_local,4,1,stream);
+      if(count_read!=1)goto wrapup;
       numpoints_local[class_index] = nparts_local;
       skip_local=0;
       CheckMemory;
       if(doit_local==1){
         float *xyz;
-        int j;
 
-        FORTPART5READ_mv((void **)&xyz, NXYZ_COMP_PART*nparts_local);
-        if(returncode==FAIL_m)goto wrapup;
+        FORTREAD_mv((void **)&xyz, 4, NXYZ_COMP_PART*nparts_local, stream);
+        datacopy_local->xpos = xyz;
+        datacopy_local->ypos = xyz +   nparts_local;
+        datacopy_local->zpos = xyz + 2*nparts_local;
+        if(count_read!=NXYZ_COMP_PART*nparts_local)goto wrapup;
         CheckMemory;
-        if(nparts_local>0){
-          float *x_local, *y_local, *z_local;
-          short *sx_local, *sy_local, *sz_local;
-
-          x_local = xyz;
-          y_local = xyz+nparts_local;
-          z_local = xyz+2*nparts_local;
-          sx_local = datacopy_local->sx;
-          sy_local = datacopy_local->sy;
-          sz_local = datacopy_local->sz;
-          for(j=0;j<nparts_local;j++){
-            float xx_local, yy_local, zz_local;
-            int factor_local=256*128-1;
-
-            xx_local = FDS2SMV_X(x_local[j])/xbar;
-            yy_local = FDS2SMV_Y(y_local[j])/ybar;
-            zz_local = FDS2SMV_Z(z_local[j])/zbar;
-
-            sx_local[j] = factor_local*xx_local;
-            sy_local[j] = factor_local*yy_local;
-            sz_local[j] = factor_local*zz_local;
-          }
-          CheckMemory;
-        }
       }
       else{
         skip_local += 4+NXYZ_COMP_PART*nparts_local*sizeof(float)+4;
@@ -1325,15 +1320,14 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
         int j;
 
         sort_tags_local = datacopy_local->sort_tags;
-        FORTPART5READ_m(datacopy_local->tags,nparts_local);
-        if(returncode==FAIL_m)goto wrapup;
+        FORTREAD_mv((void **)&(datacopy_local->tags),4, nparts_local, stream);
+        if(count_read!=nparts_local)goto wrapup;
         CheckMemory;
         if(nparts_local>0){
           for(j=0;j<nparts_local;j++){
             sort_tags_local[2*j]=datacopy_local->tags[j];
             sort_tags_local[2*j+1]=j;
           }
-          qsort( sort_tags_local, (size_t)nparts_local, 2*sizeof(int), CompareTags);
         }
       }
       else{
@@ -1345,8 +1339,8 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
         if(numtypes_local[2*class_index]>0){
           float *valmin_part, *valmax_part;
 
-          FORTPART5READ_mv((void **)&(datacopy_local->rvals), nparts_local*numtypes_local[2*class_index]);
-          if(returncode==FAIL_m)goto wrapup;
+          FORTREAD_mv((void **)&(datacopy_local->rvals), 4, nparts_local*numtypes_local[2*class_index], stream);
+          if(count_read!=nparts_local*numtypes_local[2*class_index])goto wrapup;
 
           valmin_part = parti->valmin_part;
           valmax_part = parti->valmax_part;
@@ -1370,7 +1364,6 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
               }
             }
           }
-          if(returncode==FAIL_m)goto wrapup;
         }
       }
       else{
@@ -1381,8 +1374,8 @@ void GetPartData(partdata *parti, int nf_all_arg, FILE_SIZE *file_size_arg){
       CheckMemory;
 
       if(skip_local>0){
-        FSEEK_m(PART5FILE,skip_local,SEEK_CUR);
-        if(returncode==FAIL_m)goto wrapup;
+        returncode = fseek_m(stream,skip_local,SEEK_CUR);
+        if(returncode!=PASS_m)goto wrapup;
       }
       else{
         datacopy_local++;
@@ -1444,9 +1437,9 @@ int GetPartPropIndex(int class_i, int class_i_j){
   partclassdata *partclassi;
   flowlabels *labels, *labelj;
 
-  assert(class_i>=0&&class_i<npartclassinfo);
-  class_i = CLAMP(class_i,0, npartclassinfo-1);
-  partclassi = partclassinfo+class_i;
+  assert(class_i>=0&&class_i<global_scase.npartclassinfo);
+  class_i = CLAMP(class_i,0, global_scase.npartclassinfo-1);
+  partclassi = global_scase.partclassinfo+class_i;
 
   labels = partclassi->labels;
   assert(class_i_j>=0&&class_i_j<partclassi->ntypes);
@@ -1468,6 +1461,7 @@ int GetPartPropIndex(int class_i, int class_i_j){
 partpropdata *GetPartProp(char *label){
   int i;
 
+  if(part5propinfo == NULL)return NULL;
   for(i=0;i<npart5prop;i++){
     partpropdata *propi;
 
@@ -1475,6 +1469,15 @@ partpropdata *GetPartProp(char *label){
     if(strcmp(propi->label->longlabel,label)==0)return propi;
   }
   return NULL;
+}
+
+/* ------------------ SetStreakShow ------------------------ */
+
+void SetStreakShow(int show){
+  if(show == 1 && sorting_tags==1){
+    THREADcontrol(sorttags_threads, THREAD_JOIN);
+  }
+  streak5show = show;
 }
 
 /* ------------------ InitPartProp ------------------------ */
@@ -1490,10 +1493,10 @@ void InitPartProp(void){
 
   // 1.  count max number of distinct variables
 
-  for(i=0;i<npartclassinfo;i++){
+  for(i=0;i<global_scase.npartclassinfo;i++){
     partclassdata *partclassi;
 
-    partclassi = partclassinfo + i;
+    partclassi = global_scase.partclassinfo + i;
     npart5prop+=(partclassi->ntypes-1);  // don't include first type which is hidden
   }
 
@@ -1503,10 +1506,10 @@ void InitPartProp(void){
     NewMemory((void **)&part5propinfo,npart5prop*sizeof(partpropdata));
     npart5prop=0;
 
-    for(i=0;i<npartclassinfo;i++){
+    for(i=0;i<global_scase.npartclassinfo;i++){
       partclassdata *partclassi;
 
-      partclassi = partclassinfo + i;
+      partclassi = global_scase.partclassinfo + i;
       for(j=1;j<partclassi->ntypes;j++){ // skip over first type which is hidden
         flowlabels *flowlabel;
         int define_it;
@@ -1564,19 +1567,19 @@ void InitPartProp(void){
     propi->class_present=NULL;
     propi->class_vis=NULL;
     propi->class_types=NULL;
-    NewMemory((void **)&propi->class_types,npartclassinfo*sizeof(unsigned int));
-    NewMemory((void **)&propi->class_present,npartclassinfo*sizeof(unsigned char));
-    NewMemory((void **)&propi->class_vis,npartclassinfo*sizeof(unsigned char));
-    for(ii=0;ii<npartclassinfo;ii++){
+    NewMemory((void **)&propi->class_types,global_scase.npartclassinfo*sizeof(unsigned int));
+    NewMemory((void **)&propi->class_present,global_scase.npartclassinfo*sizeof(unsigned char));
+    NewMemory((void **)&propi->class_vis,global_scase.npartclassinfo*sizeof(unsigned char));
+    for(ii=0;ii<global_scase.npartclassinfo;ii++){
       propi->class_vis[ii]=1;
       propi->class_present[ii]=0;
       propi->class_types[ii]=0;
     }
   }
-  for(i=0;i<npartclassinfo;i++){
+  for(i=0;i<global_scase.npartclassinfo;i++){
     partclassdata *partclassi;
 
-    partclassi = partclassinfo + i;
+    partclassi = global_scase.partclassinfo + i;
     for(j=1;j<partclassi->ntypes;j++){
       flowlabels *flowlabel;
       partpropdata *classprop;
@@ -1659,11 +1662,12 @@ int GetMinPartFrames(int flag){
   int i;
   int min_frames=-1;
 
-  for(i=0;i<npartinfo;i++){
+  INIT_PRINT_TIMER(timer_nparts);
+  for(i=0;i<global_scase.npartinfo;i++){
     partdata *parti;
     int nframes;
 
-    parti = partinfo + i;
+    parti = global_scase.partinfo + i;
     if(flag == PARTFILE_LOADALL ||
       (flag == PARTFILE_RELOADALL&&parti->loaded == 1) ||
       (flag >= 0 && i == flag)){
@@ -1679,6 +1683,7 @@ int GetMinPartFrames(int flag){
       }
     }
   }
+  PRINT_TIMER(timer_nparts, "GetMinPartFrames");
   return min_frames;
 }
 
@@ -1687,7 +1692,7 @@ int GetMinPartFrames(int flag){
 
 /* ------------------ GetPartHeader ------------------------ */
 
-int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option_arg){
+int GetPartHeader(partdata * parti, int *nf_all, int option_arg, int print_option_arg){
   FILE *stream;
   char buffer_local[256];
   float time_local;
@@ -1710,6 +1715,7 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
     // pass 1: count frames
 
   nframes_all_local =0;
+  parti->ntimes = 0;
   for(;;){
     int exitloop_local;
 
@@ -1717,20 +1723,20 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
     sscanf(buffer_local,"%f",&time_local);
     exitloop_local =0;
     for(i=0;i<parti->nclasses;i++){
-      if(fgets(buffer_local,255,stream)==NULL||(npartinfo>1&&npartframes_max!=-1&&nframes_all_local+1>npartframes_max)){
+      if(fgets(buffer_local,255,stream)==NULL||(global_scase.npartinfo>1&&npartframes_max!=-1&&nframes_all_local+1>npartframes_max)){
         exitloop_local =1;
         break;
       }
     }
-    if(exitloop_local==1)break;
+    if(exitloop_local == 1)break;
     nframes_all_local++;
     if(tload_step>1       && (nframes_all_local-1)%tload_step!=0)continue;
-    if(use_tload_begin==1 && time_local<tload_begin-TEPS)continue;
-    if(use_tload_end==1   && time_local>tload_end+TEPS)break;
+    if(use_tload_begin==1 && time_local<global_scase.tload_begin-TEPS)continue;
+    if(use_tload_end==1   && time_local>global_scase.tload_end+TEPS)break;
     (parti->ntimes)++;
   }
   rewind(stream);
-  *nf_all = nframes_all_local;
+  *nf_all       = nframes_all_local;
   if(parti->ntimes==0){
     fclose(stream);
     return 0;
@@ -1786,8 +1792,8 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
       parti->filepos[count_local] = filepos_local;               // record file position for every frame
       skipit = 0;
       if(tload_step>1       && count_local%tload_step!=0)skipit = 1;
-      if(use_tload_begin==1 && time_local<tload_begin-TEPS)skipit = 1;
-      if(use_tload_end==1   && time_local>tload_end+TEPS)break;
+      if(use_tload_begin==1 && time_local<global_scase.tload_begin-TEPS)skipit = 1;
+      if(use_tload_end==1   && time_local>global_scase.tload_end+TEPS)break;
       if(skipit == 1){
         for(j=0;j<parti->nclasses;j++){
           if(fgets(buffer_local,255,stream)==NULL){
@@ -1842,18 +1848,10 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
       }
     }
     FREEMEMORY(parti->vis_part);
-    FREEMEMORY(parti->tags);
     FREEMEMORY(parti->sort_tags);
-    FREEMEMORY(parti->sx);
-    FREEMEMORY(parti->sy);
-    FREEMEMORY(parti->sz);
 
     NewMemory((void **)&parti->vis_part,    MAX(nall_points_local, 1)*sizeof(unsigned char));
-    NewMemory((void **)&parti->tags,        MAX(nall_points_local, 1)*sizeof(int));
     NewMemory((void **)&parti->sort_tags, 2*MAX(nall_points_local, 1)*sizeof(int));
-    NewMemory((void **)&parti->sx,          MAX(nall_points_local, 1)*sizeof(short));
-    NewMemory((void **)&parti->sy,          MAX(nall_points_local, 1)*sizeof(short));
-    NewMemory((void **)&parti->sz,          MAX(nall_points_local, 1)*sizeof(short));
 
     FREEMEMORY(parti->irvals);
     NewMemory((void **)&parti->irvals, MAX(nall_points_types_local,1)*sizeof(unsigned char));
@@ -1869,11 +1867,7 @@ int GetPartHeader(partdata *parti, int *nf_all, int option_arg, int print_option
 
         datacopy_local->irvals    = parti->irvals    +     nall_points_types_local;
         datacopy_local->vis_part  = parti->vis_part  +     nall_points_local;
-        datacopy_local->tags      = parti->tags      +     nall_points_local;
         datacopy_local->sort_tags = parti->sort_tags +   2*nall_points_local;
-        datacopy_local->sx        = parti->sx        +     nall_points_local;
-        datacopy_local->sy        = parti->sy        +     nall_points_local;
-        datacopy_local->sz        = parti->sz        +     nall_points_local;
 
         npoints_local            = datacopy_local->npoints_file;
         ntypes_local             = datacopy_local->partclassbase->ntypes;
@@ -1902,7 +1896,7 @@ void UpdatePartColors(partdata *parti, int flag){
       for(n = 0; n<MAXRGB; n++){
         colorlabelpart[n] = NULL;
       }
-      for(n = 0; n<nrgb; n++){
+      for(n = 0; n<global_scase.nrgb; n++){
         NewMemory((void **)&colorlabelpart[n], 11);
       }
     }
@@ -1910,7 +1904,7 @@ void UpdatePartColors(partdata *parti, int flag){
   if(parti!=NULL){
     if(parti->loaded==1&&parti->display==1){
       if(parti->stream!=NULL){
-        GetPartColors(parti, nrgb, flag);
+        GetPartColors(parti, global_scase.nrgb, flag);
       }
       else{
         printf("***warning: particle data in %s was unloaded, colors not updated\n",parti->file);
@@ -1918,10 +1912,10 @@ void UpdatePartColors(partdata *parti, int flag){
     }
   }
   else{
-    for(j = 0; j<npartinfo; j++){
+    for(j = 0; j<global_scase.npartinfo; j++){
       partdata *partj;
 
-      partj = partinfo+j;
+      partj = global_scase.partinfo+j;
       if(partj->loaded==1&&partj->display==1){
         if(partj->stream==NULL){
           printf("***warning: particle data in one or more particle files was unloaded, colors not updated\n");
@@ -1929,12 +1923,12 @@ void UpdatePartColors(partdata *parti, int flag){
         }
       }
     }
-    for(j = 0; j<npartinfo; j++){
+    for(j = 0; j<global_scase.npartinfo; j++){
       partdata *partj;
 
-      partj = partinfo+j;
+      partj = global_scase.partinfo+j;
       if(partj->loaded==1&&partj->display==1){
-        GetPartColors(partj, nrgb, flag);
+        GetPartColors(partj, global_scase.nrgb, flag);
       }
     }
   }
@@ -1945,18 +1939,23 @@ void UpdatePartColors(partdata *parti, int flag){
 void FinalizePartLoad(partdata *parti){
   int j;
 
-  for(j = 0; j<npartinfo; j++){
+  for(j = 0; j<global_scase.npartinfo; j++){
     partdata *partj;
 
-    partj = partinfo+j;
+    partj = global_scase.partinfo+j;
     if(partj->request_load==1){
-      MakeTimesMap(partj->times, partj->times_map, partj->ntimes);
+      MakeTimesMap(partj->times, &partj->times_map, partj->ntimes);
       partj->request_load = 0;
       partj->loaded = 1;
       partj->display = 1;
     }
   }
   visParticles = 1;
+  sorting_tags = 1;
+  THREADrun(sorttags_threads);
+  if(runscript == 1 || streak5show == 1){
+    THREADcontrol(sorttags_threads, THREAD_JOIN);
+  }
 
   // generate histograms now rather than in the background if a script is running
 
@@ -1966,10 +1965,10 @@ void FinalizePartLoad(partdata *parti){
   PRINT_TIMER(part_time1, "particle get bounds time");
   if(cache_part_data==1){
     INIT_PRINT_TIMER(part_time2);
-    for(j = 0; j<npartinfo; j++){
+    for(j = 0; j<global_scase.npartinfo; j++){
       partdata *partj;
 
-      partj = partinfo+j;
+      partj = global_scase.partinfo+j;
       if(partj->loaded==1){
         UpdatePartColors(partj, 0);
       }
@@ -1990,7 +1989,7 @@ void FinalizePartLoad(partdata *parti){
 
 /* -----  ------------- ReadPart ------------------------ */
 
-FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int loadflag_arg, int *errorcode_arg){
+FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int load_flag, int *errorcode_arg){
   size_t lenfile_local;
   int error_local=0, nf_all_local;
   partdata *parti;
@@ -1999,53 +1998,32 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int loadflag_arg, int *errorco
 
   SetTimeState();
   START_TIMER(load_time_local);
-  assert(ifile_arg>=0&&ifile_arg<npartinfo);
-  parti=partinfo+ifile_arg;
+  assert(ifile_arg>=0&&ifile_arg<global_scase.npartinfo);
+  parti=global_scase.partinfo+ifile_arg;
 
   FreeAllPart5Data(parti);
 
-  if(parti->loaded==0&&loadflag_arg==UNLOAD)return 0.0;
+  if(load_flag==UNLOAD)parti->skipload = 1;
+  if(parti->loaded==0&&load_flag==UNLOAD)return 0.0;
 
   *errorcode_arg =0;
   parti->loaded = 0;
   parti->display=0;
 
-#ifndef pp_PART_SPEEDUP
-  THREADcontrol(partload_threads, THREAD_LOCK);
-  plotstate=GetPlotState(DYNAMIC_PLOTS);
-  updatemenu=1;
-  THREADcontrol(partload_threads, THREAD_UNLOCK);
-#endif
-
-#ifdef pp_FRAME
-  if(parti->frameinfo == NULL)parti->frameinfo = FRAMEInit(file_arg, NULL, FORTRAN_FILE, GetPartFrameInfo);
-  if(parti->frameinfo != NULL){
-   // float valmin, valmax;
-
-    FRAMESetup(parti->frameinfo);
-    FRAMEReadFrame(parti->frameinfo, 0, parti->frameinfo->nframes);
-    FRAMESetTimes(parti->frameinfo, 0, parti->frameinfo->nframes);
-    FRAMESetFramePtrs(parti->frameinfo, 0, parti->frameinfo->nframes);
-   // FRAMEGetMinMax(sd->frameinfo, &valmin, &valmax);
-  }
-#endif
-
   FREEMEMORY(parti->times);
   FREEMEMORY(parti->times_map);
   FREEMEMORY(parti->filepos);
 
-  if(loadflag_arg==UNLOAD){
+  if(load_flag == UNLOAD){
     if(parti->finalize == 1){
       UpdatePartColors(parti, 0);
       UpdateTimes();
       updatemenu = 1;
       UpdatePart5Extremes();
       PrintMemoryInfo;
-#ifdef pp_PART_SPEEDUP
       THREADcontrol(partload_threads, THREAD_LOCK);
-      plotstate=GetPlotState(DYNAMIC_PLOTS);
+      plotstate = GetPlotState(DYNAMIC_PLOTS);
       THREADcontrol(partload_threads, THREAD_UNLOCK);
-#endif
     }
     return 0.0;
   }
@@ -2073,7 +2051,9 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int loadflag_arg, int *errorco
     return 0.0;
   }
   CheckMemory;
+  INIT_PRINT_TIMER(timer_getpartdata);
   GetPartData(parti, nf_all_local, &file_size_local);
+  PRINT_TIMER(timer_getpartdata, "GetPartData");
   CheckMemory;
   THREADcontrol(partload_threads, THREAD_LOCK);
   parti->loaded = 1;
@@ -2084,7 +2064,7 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int loadflag_arg, int *errorco
   }
   THREADcontrol(partload_threads, THREAD_UNLOCK);
   if(cache_part_data==0){
-    FCLOSE_m(parti->stream);
+    fclose_m(parti->stream);
     parti->stream = NULL;
   }
 
@@ -2092,7 +2072,7 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int loadflag_arg, int *errorco
 
   parti->request_load = 1;
   if(use_partload_threads==1){
-    if(npartinfo>1){
+    if(global_scase.npartinfo>1){
       THREADcontrol(partload_threads, THREAD_LOCK);
       PrintPartLoadSummary(PART_AFTER, PART_LOADING);
       THREADcontrol(partload_threads, THREAD_UNLOCK);
@@ -2102,7 +2082,7 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int loadflag_arg, int *errorco
     if(parti->finalize == 1){
       INIT_PRINT_TIMER(finalize_part);
       FinalizePartLoad(parti);
-      PRINT_TIMER(finalize_part, "finalize particle time");
+      PRINT_TIMER(finalize_part, "FinalizePartLoad");
     }
     STOP_TIMER(load_time_local);
     if(file_size_local>1000000000){
@@ -2127,29 +2107,29 @@ void UpdatePartMenuLabels(void){
   char label[128];
   int lenlabel;
 
-  if(npartinfo>0){
+  if(global_scase.npartinfo>0){
     FREEMEMORY(partorderindex);
-    NewMemory((void **)&partorderindex,sizeof(int)*npartinfo);
-    for(i=0;i<npartinfo;i++){
+    NewMemory((void **)&partorderindex,sizeof(int)*global_scase.npartinfo);
+    for(i=0;i<global_scase.npartinfo;i++){
       partorderindex[i]=i;
     }
-    qsort( (int *)partorderindex, (size_t)npartinfo, sizeof(int), ComparePart);
+    qsort( (int *)partorderindex, (size_t)global_scase.npartinfo, sizeof(int), ComparePart);
 
-    for(i=0;i<npartinfo;i++){
-      parti = partinfo + i;
+    for(i=0;i<global_scase.npartinfo;i++){
+      parti = global_scase.partinfo + i;
       STRCPY(parti->menulabel,"");
       STRCAT(parti->menulabel, "particles");
       lenlabel=strlen(parti->menulabel);
-      if(nmeshes>1){
+      if(global_scase.meshescoll.nmeshes>1){
         meshdata *partmesh;
 
-        partmesh = meshinfo + parti->blocknumber;
+        partmesh = global_scase.meshescoll.meshinfo + parti->blocknumber;
         sprintf(label,"%s",partmesh->label);
         if(lenlabel>0)STRCAT(parti->menulabel,", ");
         STRCAT(parti->menulabel,label);
       }
       if(showfiles==1||lenlabel==0){
-        if(nmeshes>1||lenlabel>0)STRCAT(parti->menulabel,", ");
+        if(global_scase.meshescoll.nmeshes>1||lenlabel>0)STRCAT(parti->menulabel,", ");
         STRCAT(parti->menulabel,parti->file);
       }
     }

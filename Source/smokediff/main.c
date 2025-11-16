@@ -6,33 +6,32 @@
 #include <math.h>
 #include "svdiff.h"
 #include "string_util.h"
-#include "MALLOCC.h"
+#include "dmalloc.h"
 #include "stdio_buffer.h"
 
 /* ------------------ usage ------------------------ */
 
-void Usage(char *prog, int option){
-  char smv_version[100];
+void Usage(int option){
   char githash[100];
   char gitdate[100];
 
-  GetProgVersion(smv_version);  // get Smokeview version (ie 5.x.z)
   GetGitInfo(githash, gitdate);    // get githash
 
   PRINTF("\n");
-  PRINTF("  %s [options] smv_case1 smv_case2\n", prog);
-  PRINTF("    version: %s (githash %s) - %s\n\n", smv_version, githash, __DATE__);
+  PRINTF("smokediff [options] smv_case1 smv_case2\n");
+  PRINTF("%s - %s\n\n", githash, __DATE__);
 
-  PRINTF("  smokediff compares two FDS cases by subtracting data referenced in smv_case2 from\n");
-  PRINTF("  corresponding data referenced in smv_case1 (smv_case1 - smv_case2).  Slice, PLOT3d\n");
-  PRINTF("  and boundary files are supported.  Differenced results may be viewed by opening\n");
-  PRINTF("  smv_case1_diff.smv in Smokeview or by using the -smv option when running smokediff.\n\n");
+  PRINTF("smokediff compares two FDS cases by subtracting data referenced in smv_case2 from\n");
+  PRINTF("corresponding data referenced in smv_case1 (smv_case1 - smv_case2).  Slice, PLOT3d\n");
+  PRINTF("and boundary files are supported.  Differenced results may be viewed by opening\n");
+  PRINTF("smv_case1_diff.smv in Smokeview or by using the -smv option when running smokediff.\n\n");
 
-  PRINTF("  Mesh bounds must be identical for corresponding meshes.  Mesh resolutions must be\n");
-  PRINTF("  identical when differencing boundary and PLOT3D files.  The x, y, and z mesh\n");
-  PRINTF("  resolutions in smv_case2 must be integer multiples of the corresponding x, y, z mesh\n");
-  PRINTF("  resolutions in smv_case1 when differencing slice files.\n\n");
+  PRINTF("Mesh bounds must be identical for corresponding meshes.  Mesh resolutions must be\n");
+  PRINTF("identical when differencing boundary and PLOT3D files.  The x, y, and z mesh\n");
+  PRINTF("resolutions in smv_case2 must be integer multiples of the corresponding x, y, z mesh\n");
+  PRINTF("resolutions in smv_case1 when differencing slice files.\n\n");
 
+  printf("options:\n");
   UsageCommon(HELP_SUMMARY);
 
   if(option == HELP_ALL){
@@ -57,7 +56,7 @@ int main(int argc, char **argv){
   bufferstreamdata *smv_buffer1, *smv_buffer2;
   char smv1_out[1024];
   char svdlogfile[1024];
-  char *smoke1, *smoke2, smv_out[1024];
+  char *smoke1=NULL, *smoke2=NULL, smv_out[1024];
   char smoke1a[1024], smoke2a[1024];
   char smoke1b[1024], smoke2b[1024];
   char fed_smoke1[1024], fed_smoke2[1024];
@@ -71,20 +70,20 @@ int main(int argc, char **argv){
   display_warnings=1;
   SetStdOut(stdout);
   initMALLOC();
-#ifdef WIN32
+#ifdef _WIN32
   strcpy(dirseparator,"\\");
 #else
   strcpy(dirseparator,"/");
 #endif
   strcpy(pp,"%");
 
-  ParseCommonOptions(argc, argv);
-  if(show_help!=0){
-    Usage("smokediff",show_help);
+  common_opts opts = ParseCommonOptions(argc, argv);
+  if(opts.show_help!=0){
+    Usage(opts.show_help);
     return 0;
   }
-  if(show_version==1){
-    PRINTVERSION("smokediff", argv[0]);
+  if(opts.show_version==1){
+    PRINTVERSION("smokediff", &opts);
     return 0;
   }
 
@@ -99,7 +98,7 @@ int main(int argc, char **argv){
   strcpy(type_label,"");
 
   if(argc==1){
-    PRINTVERSION("Smokediff ",argv[0]);
+    PRINTVERSION("Smokediff ", &opts);
     return 0;
   }
 
@@ -139,7 +138,7 @@ int main(int argc, char **argv){
           no_boundary=1;
         }
         else{
-          Usage("smokediff",HELP_ALL);
+          Usage(HELP_ALL);
           return 1;
         }
         break;
@@ -173,7 +172,7 @@ int main(int argc, char **argv){
         display_warnings=0;
         break;
       default:
-        Usage("smokediff",HELP_ALL);
+        Usage(HELP_ALL);
         return 1;
       }
     }
@@ -231,9 +230,9 @@ int main(int argc, char **argv){
   if(redirect==1){
     strcpy(svdlogfile,"");
     if(destdir!=NULL)strcat(svdlogfile,destdir);
-    strcat(svdlogfile,smv1);
+    if(smv1!=NULL)strcat(svdlogfile,smv1);
     strcat(svdlogfile,"_diff.svdlog");
-    LOG_FILENAME=fopen(svdlogfile,"w");
+    LOG_FILENAME=FOPEN(svdlogfile,"w");
     if(LOG_FILENAME!=NULL){
       SetStdOut(LOG_FILENAME);
     }
@@ -249,15 +248,15 @@ int main(int argc, char **argv){
   }
   MakeOutFile(smv_out,destdir,smv1_out,".smv");
 
-  stream_out=fopen(smv_out,"w");
+  stream_out=FOPEN(smv_out,"w");
   if(stream_out==NULL){
     fprintf(stderr,"*** Error The .smv file, %s, could not be opened for output.\n",smv_out);
   }
-  stream_in1=fopen(smoke1,"r");
+  stream_in1=FOPEN(smoke1,"r");
   if(stream_in1==NULL){
     fprintf(stderr,"*** Error The .smv file, %s, could not be opened for input\n",smoke1);
   }
-  stream_in2=fopen(smoke2,"r");
+  stream_in2=FOPEN(smoke2,"r");
   if(stream_in2==NULL){
     fprintf(stderr,"*** Error The .smv file, %s, could not be opened for input.\n",smoke2);
   }
