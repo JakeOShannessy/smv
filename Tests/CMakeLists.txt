@@ -6,6 +6,7 @@ FetchContent_Declare(
     test_data
     GIT_REPOSITORY https://github.com/firemodels/fig.git
     GIT_TAG        ${FIG_COMMIT}
+    GIT_SHALLOW    1
 )
 FetchContent_MakeAvailable(test_data)
 set(FIG_DIR ${test_data_SOURCE_DIR})
@@ -69,10 +70,10 @@ target_link_libraries(parse_colorbar PRIVATE smv)
 add_executable(mem_test mem_test.c)
 target_link_libraries(mem_test PRIVATE smv)
 
-# We don't have headless GL setup on windows so we skip it for now
-# test_image_render
-add_executable(test_image_render test_image_render.c )
-target_link_libraries(test_image_render PRIVATE smv)
+# # We don't have headless GL setup on windows so we skip it for now
+# # test_image_render
+# add_executable(test_image_render test_image_render.c )
+# target_link_libraries(test_image_render PRIVATE smv)
 
 # test_root_dir
 add_executable(test_root_dir test_root_dir.c)
@@ -158,5 +159,5 @@ add_test(NAME "Sort Surfs"
 add_test(NAME "smvq - parse smv file"
     COMMAND smvq ${FIG_DIR}/smv/Tests/test_model_small/test_model_small.smv)
 
-add_test(NAME "Test Image Render"
-    COMMAND test_image_render ${CMAKE_SOURCE_DIR}/Build/for_bundle/textures/nistleft.jpg)
+# add_test(NAME "Test Image Render"
+#     COMMAND test_image_render ${CMAKE_SOURCE_DIR}/Build/for_bundle/textures/nistleft.jpg)
