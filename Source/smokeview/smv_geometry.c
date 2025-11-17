@@ -1404,7 +1404,7 @@ int MakeIBlank(void){
     kbar = meshi->kbar;
     ijksize=(ibar+1)*(jbar+1)*(kbar+1);
 
-    if(NewMemory((void **)meshi->compact_blank_temp, ijksize*sizeof(struct blanking_flags))==0)return 1;
+    if(NewMemory((void **)&meshi->compact_blank_temp, ijksize*sizeof(struct blanking_flags))==0)return 1;
     // Allocate all the arrays. Keep in mind for this code, a cell is the
     // volumetric cell, and a node is a cell corner. Naturally there is an extra
     // element in each dimension for the nodes. The _x, _y, and _z values are the faces.
