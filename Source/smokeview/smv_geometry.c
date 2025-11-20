@@ -1387,7 +1387,7 @@ int MakeIBlank(void){
   int ig;
   // TODO: we need to do this on a frame-by-frame basis
   // int chosen_frame = 0;
-  float show_time = 18.0;
+  // float show_time = 18.0;
   if(global_scase.use_iblank==0)return 0;
   for(ig=0;ig<global_scase.meshescoll.nmeshes;ig++){
     meshdata *meshi;
@@ -1442,19 +1442,19 @@ int MakeIBlank(void){
       bc=meshi->blockageinfoptrs[ii];
 
       // First get the most recent show setting. If there is no show setting, assume true.
-      int show = 1;
-      if(bc->nshowtime > 0) {
-        for(int n = 0; n < bc->nshowtime; n++) {
-          fprintf(stderr, "bc->showtimelist[%d] = %f\n", n,
-                  bc->showtime[n]);
-          if (bc->showtime[n] > show_time) {
-            continue;
-          } else {
-            show = (int)bc->showhide[n];
-          }
-        }
-      }
-      if(!show)continue;
+      // int show = 1;
+      // if(bc->nshowtime > 0) {
+      //   for(int n = 0; n < bc->nshowtime; n++) {
+      //     fprintf(stderr, "bc->showtimelist[%d] = %f\n", n,
+      //             bc->showtime[n]);
+      //     if (bc->showtime[n] > show_time) {
+      //       continue;
+      //     } else {
+      //       show = (int)bc->showhide[n];
+      //     }
+      //   }
+      // }
+      // if(!show)continue;
       for(k = bc->ijk[KMIN]; k < bc->ijk[KMAX]; k++){
         for(j = bc->ijk[JMIN]; j < bc->ijk[JMAX]; j++){
           int ijk;
@@ -1478,19 +1478,19 @@ int MakeIBlank(void){
 
       bc = meshi->blockageinfoptrs[ii];
       // First work out if this blockage is being shown or if it is hidden.
-      int show = 1;
-      if(bc->nshowtime > 0) {
-        for(int n = 0; n < bc->nshowtime; n++) {
-          fprintf(stderr, "bc->showtimelist[%d] = %f\n", n,
-                  bc->showtime[n]);
-          if (bc->showtime[n] > show_time) {
-            continue;
-          } else {
-            show = (int)bc->showhide[n];
-          }
-        }
-      }
-      if(!show)continue;
+      // int show = 1;
+      // if(bc->nshowtime > 0) {
+      //   for(int n = 0; n < bc->nshowtime; n++) {
+      //     fprintf(stderr, "bc->showtimelist[%d] = %f\n", n,
+      //             bc->showtime[n]);
+      //     if (bc->showtime[n] > show_time) {
+      //       continue;
+      //     } else {
+      //       show = (int)bc->showhide[n];
+      //     }
+      //   }
+      // }
+      // if(!show)continue;
       for(k = bc->ijk[KMIN]; k<=bc->ijk[KMAX]; k++){
         for(j = bc->ijk[JMIN]; j<=bc->ijk[JMAX]; j++){
           int ijk;
@@ -1578,7 +1578,9 @@ int MakeIBlank(void){
         ijkcell = IJKCELL(0, j, k);
         ijknode = IJKNODE(0, j, k);
 //        c_iblank_x[IJKNODE(0,j,k)]   =2*iblank_cell[IJKCELL(0,j,k)];
-      meshi->compact_blank_temp[ijknode].node_x = 2*meshi->compact_blank_temp[ijkcell].cell;
+        fprintf(stderr, "2*meshi->compact_blank_temp[ijkcell].cell; %d\n",2*meshi->compact_blank_temp[ijkcell].cell);
+      meshi->compact_blank_temp[ijknode].node_x = meshi->compact_blank_temp[ijkcell].cell;
+        fprintf(stderr, "2meshi->compact_blank_temp[ijknode].node_x: %d\n",meshi->compact_blank_temp[ijknode].node_x);
         for(i = 1; i<ibar; i++){
           ijknode++;
           ijkcell++;
@@ -1588,7 +1590,7 @@ int MakeIBlank(void){
         ijknode++;
         ijkcell++;
 //        c_iblank_x[IJKNODE(ibar, j, k)] = 2 * iblank_cell[IJKCELL(ibar - 1, j, k)];
-        meshi->compact_blank_temp[ijknode].node_x = 2 * meshi->compact_blank_temp[ijkcell-1].cell;
+        meshi->compact_blank_temp[ijknode].node_x = meshi->compact_blank_temp[ijkcell-1].cell;
       }
     }
     for(i=0;i<ibar;i++){
@@ -1598,7 +1600,7 @@ int MakeIBlank(void){
         ijkcell = IJKCELL(i, 0, k);
         ijknode = IJKNODE(i, 0, k);
 //        c_iblank_y[IJKNODE(i,0,k)]=2*iblank_cell[IJKCELL(i,0,k)];
-        meshi->compact_blank_temp[ijknode].node_y = 2 * meshi->compact_blank_temp[ijkcell].cell;
+        meshi->compact_blank_temp[ijknode].node_y =  meshi->compact_blank_temp[ijkcell].cell;
         for(j = 1; j<jbar; j++){
           ijkcell += ibar;
           ijknode += nx;
@@ -1608,7 +1610,7 @@ int MakeIBlank(void){
         ijkcell += ibar;
         ijknode += nx;
         //        c_iblank_y[IJKNODE(i,jbar,k)]=2*iblank_cell[IJKCELL(i,jbar-1,k)];
-        meshi->compact_blank_temp[ijknode].node_y = 2 * meshi->compact_blank_temp[ijkcell-ibar].cell;
+        meshi->compact_blank_temp[ijknode].node_y = meshi->compact_blank_temp[ijkcell-ibar].cell;
       }
     }
 
@@ -1619,7 +1621,7 @@ int MakeIBlank(void){
         ijkcell = IJKCELL(i, j, 0);
         ijknode = IJKNODE(i, j, 0);
 //        c_iblank_z[IJKNODE(i,j,0)]=2*iblank_cell[IJKCELL(i,j,0)];
-        meshi->compact_blank_temp[ijknode].node_z = 2 * meshi->compact_blank_temp[ijkcell].cell;
+        meshi->compact_blank_temp[ijknode].node_z =  meshi->compact_blank_temp[ijkcell].cell;
         for(k=1;k<kbar;k++){
           ijkcell+=ibarjbar;
           ijknode+=nxy;
@@ -1629,7 +1631,7 @@ int MakeIBlank(void){
         ijkcell+=ibarjbar;
         ijknode+=nxy;
 //        c_iblank_z[IJKNODE(i,j,kbar)]=2*iblank_cell[IJKCELL(i,j,kbar-1)];
-        meshi->compact_blank_temp[ijknode].node_z =2*meshi->compact_blank_temp[ijkcell-ibar*jbar].cell;
+        meshi->compact_blank_temp[ijknode].node_z =meshi->compact_blank_temp[ijkcell-ibar*jbar].cell;
       }
     }
   }
@@ -1639,7 +1641,9 @@ int MakeIBlank(void){
 
     meshi = global_scase.meshescoll.meshinfo + ig;
     meshi->f_iblank_cell_temp = meshi->f_iblank_cell0_temp;
+    meshi->compact_blank = meshi->compact_blank_temp;
   }
+  fprintf(stderr, "global_scase.meshescoll.meshinfo[0].compact_blank[0].node: %d\n", global_scase.meshescoll.meshinfo[0].compact_blank[0].node);
 
   update_make_iblank = 1;
   return 0;

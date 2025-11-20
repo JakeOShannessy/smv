@@ -650,7 +650,7 @@ void DrawPlot3dTexture(meshdata *meshi){
       glBegin(GL_TRIANGLES);
       for(j=0; j<jbar; j++){
         for(k=0; k<kbar; k++){
-          if(meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(plotx,j,k)].node_x==GASGAS){
+          if(meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(plotx,j,k)].node_x==GAS){
             float val[4];
 
             val[0] = GET_QDATA(plotx, j,   k,   plotn-1);

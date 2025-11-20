@@ -380,6 +380,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define GAS        1
 #define SOLID      0
+// Values for faces
 #define GASGAS     2
 #define SOLIDSOLID 0
 #define SOLIDGAS   1

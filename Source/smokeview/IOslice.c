@@ -4853,8 +4853,8 @@ void DrawVolAllSlicesTextureDiag(const slicedata *sd, int direction){
           float rmid, zmid;
 
           n++; n2++;ijk+=nxy;
-          if(global_scase.show_slice_in_obst==ONLY_IN_SOLID && meshi->compact_blank != NULL&&meshi->compact_blank[ijk].node_x==GASGAS)continue;
-          if(global_scase.show_slice_in_obst==ONLY_IN_GAS   && meshi->compact_blank != NULL&&meshi->compact_blank[ijk].node_x!=GASGAS)continue;
+          if(global_scase.show_slice_in_obst==ONLY_IN_SOLID && meshi->compact_blank != NULL&&meshi->compact_blank[ijk].node_x==GAS)continue;
+          if(global_scase.show_slice_in_obst==ONLY_IN_GAS   && meshi->compact_blank != NULL&&meshi->compact_blank[ijk].node_x!=GAS)continue;
           if(skip_slice_in_embedded_mesh==1&&iblank_embed!=NULL&&iblank_embed[ijk]==EMBED_YES)continue;
           r11 = (float)sd->iqsliceframe[n] / 255.0;
           r31 = (float)sd->iqsliceframe[n2] / 255.0;
@@ -4923,6 +4923,7 @@ void DrawVolAllSlicesTextureDiag(const slicedata *sd, int direction){
 
         for(k = sd->ks1; k<sd->ks2; k++){
           n++; n2++; ijk+=nxy;
+          // Work out if this element should be shown
           if(global_scase.show_slice_in_obst==ONLY_IN_SOLID && meshi->compact_blank!=NULL&&meshi->compact_blank[ijk].node_y==GASGAS)continue;
           if(global_scase.show_slice_in_obst==ONLY_IN_GAS   && meshi->compact_blank!=NULL&&meshi->compact_blank[ijk].node_y!=GASGAS)continue;
           if(skip_slice_in_embedded_mesh==1&&iblank_embed!=NULL&&iblank_embed[ijk]==EMBED_YES)continue;
@@ -5051,7 +5052,7 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
         int in_solid, in_gas;
 
         in_gas=1;
-        if(meshi->compact_blank!=NULL&&meshi->compact_blank[IJK(plotx, j, k)].node_x!=GASGAS)in_gas=0;
+        if(meshi->compact_blank!=NULL&&meshi->compact_blank[IJK(plotx, j, k)].node_x!=GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
         k2 = MIN(k+slice_skipz, ks2);
@@ -5142,7 +5143,7 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
         int in_solid, in_gas;
 
         in_gas=1;
-        if(meshi->compact_blank!=NULL&&meshi->compact_blank[IJK(i, ploty, k)].node_x!=GASGAS)in_gas=0;
+        if(meshi->compact_blank!=NULL&&meshi->compact_blank[IJK(i, ploty, k)].node_x!=GAS)in_gas=0;
         in_solid = 1 - in_gas;
 
         k2 = MIN(k + slice_skipz, ks2);
@@ -6531,6 +6532,10 @@ int SetupSlice(slicedata *sd){
 
 /* ------------------ DrawSliceFrame ------------------------ */
 
+// Draw slice data. This
+//   1. Draws plots
+//   2. Sorts the loaded lists
+//   3.
 void DrawSliceFrame(){
   int ii;
   int jjj, nslicemax=0, blend_mode;
@@ -6543,6 +6548,9 @@ void DrawSliceFrame(){
     DrawSlicePlots();
   }
 
+  // If we have specified a start time (tload_begin) or an end time (tload_end),
+  // check if the current time (global_times[itimes]) lies within those bounds.
+  // If it does not, return early.
   if(use_tload_begin==1 && global_times[itimes]<global_scase.tload_begin)return;
   if(use_tload_end==1   && global_times[itimes]>global_scase.tload_end)return;
   SortLoadedSliceList();
@@ -6555,6 +6563,7 @@ void DrawSliceFrame(){
       DrawSortSlices();
     }
   }
+  // Iterate through each of the loaded slices and draw
   for(ii = 0; ii<nslice_loaded; ii++){
     slicedata *sd;
     int i;
@@ -6596,30 +6605,31 @@ void DrawSliceFrame(){
         slice_normal[0] = -direction*slicemesh->dyDdx;
         slice_normal[1] =  direction*slicemesh->dxDdx;
         break;
-        // x direction
+      // x direction
       case 1:
       case 8:
       case 9:
-      visx_all = 1;
-      nslicemax = nplotx_list;
-      slice_normal[0] = direction;
-      break;
+        visx_all = 1;
+        nslicemax = nplotx_list;
+        slice_normal[0] = direction;
+        break;
       // y direction
       case 2:
       case 6:
       case 7:
-      visy_all = 1;
-      nslicemax = nploty_list;
-      slice_normal[1] = direction;
-      break;
+        visy_all = 1;
+        nslicemax = nploty_list;
+        slice_normal[1] = direction;
+        break;
+      // z direction
       case 3:
-      visz_all = 1;
-      nslicemax = nplotz_list;
-      slice_normal[2] = direction;
-      break;
+        visz_all = 1;
+        nslicemax = nplotz_list;
+        slice_normal[2] = direction;
+        break;
       default:
-      assert(FFALSE);
-      break;
+        assert(FFALSE);
+        break;
       }
       nslicemax = MAX(nslicemax, 1);
       if(slices3d_max_blending==1){
@@ -6660,6 +6670,7 @@ void DrawSliceFrame(){
       }
 
       switch(sd->slice_filetype){
+      // NODE_CENTER is the default
       case SLICE_NODE_CENTER:
         if(orien==0){
           int is2;
@@ -6671,6 +6682,7 @@ void DrawSliceFrame(){
             is2 = sd->is2;
           }
           if(sortslices==0||(sd->volslice == 1 && showall_3dslices == 1)){
+            // This sis the main render function
             DrawVolSliceTexture(sd, sd->is1, is2, sd->js1, sd->js2, sd->ks1, sd->ks2, 0);
           }
           SNIFF_ERRORS("after DrawVolSliceTexture");
