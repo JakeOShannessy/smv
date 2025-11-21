@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1420,7 +1421,7 @@ int MakeIBlank(void){
     // Initially set all iblank cell values to GAS.
     // Initially set all iblank node, and xyz values to GAS.
     for(i=0;i<ijksize;i++){
-      meshi->compact_blank_temp[i].cell = GAS;
+      meshi->compact_blank_temp[i].cell = true;
       meshi->compact_blank_temp[i].node_html = GAS;
       meshi->compact_blank_temp[i].node = GAS;
       meshi->compact_blank_temp[i].node_x = GAS;
@@ -1585,7 +1586,7 @@ int MakeIBlank(void){
           ijknode++;
           ijkcell++;
 //          c_iblank_x[IJKNODE(i, j, k)] = iblank_cell[IJKCELL(i - 1, j, k)] + iblank_cell[IJKCELL(i, j, k)];
-          meshi->compact_blank_temp[ijknode].node_x = meshi->compact_blank_temp[ijkcell-1].cell + meshi->compact_blank_temp[ijkcell].cell;
+          meshi->compact_blank_temp[ijknode].node_x = meshi->compact_blank_temp[ijkcell-1].cell && meshi->compact_blank_temp[ijkcell].cell;
         }
         ijknode++;
         ijkcell++;
@@ -1605,7 +1606,7 @@ int MakeIBlank(void){
           ijkcell += ibar;
           ijknode += nx;
 //          c_iblank_y[IJKNODE(i,j,k)]=iblank_cell[IJKCELL(i,j-1,k)]+iblank_cell[IJKCELL(i,j,k)];
-          meshi->compact_blank_temp[ijknode].node_y = meshi->compact_blank_temp[ijkcell-ibar].cell + meshi->compact_blank_temp[ijkcell].cell;
+          meshi->compact_blank_temp[ijknode].node_y = meshi->compact_blank_temp[ijkcell-ibar].cell && meshi->compact_blank_temp[ijkcell].cell;
         }
         ijkcell += ibar;
         ijknode += nx;
@@ -1626,7 +1627,7 @@ int MakeIBlank(void){
           ijkcell+=ibarjbar;
           ijknode+=nxy;
 //          c_iblank_z[IJKNODE(i,j,k)]=iblank_cell[IJKCELL(i,j,k-1)]+iblank_cell[IJKCELL(i,j,k)];
-          meshi->compact_blank_temp[ijknode].node_z = meshi->compact_blank_temp[ijkcell-ibar*jbar].cell+meshi->compact_blank_temp[ijkcell].cell;
+          meshi->compact_blank_temp[ijknode].node_z = meshi->compact_blank_temp[ijkcell-ibar*jbar].cell&&meshi->compact_blank_temp[ijkcell].cell;
         }
         ijkcell+=ibarjbar;
         ijknode+=nxy;

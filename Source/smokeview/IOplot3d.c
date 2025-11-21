@@ -764,7 +764,7 @@ void DrawPlot3dTexture(meshdata *meshi){
           val[1] = CLAMP(PLOT3DCONVERT(val[1], ttmin, ttmax), 0.0, 1.0);
           val[2] = CLAMP(PLOT3DCONVERT(val[2], ttmin, ttmax), 0.0, 1.0);
           val[3] = CLAMP(PLOT3DCONVERT(val[3], ttmin, ttmax), 0.0, 1.0);
-          if(meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(i, ploty, k)].node_y==GASGAS){
+          if(meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(i, ploty, k)].node_y){
             if(ABS(val[0]-val[3])<ABS(val[1]-val[2])){
               glTexCoord1f(val[0]);  glVertex3f(xplt[i],   yplt[ploty], zplt[k]);
               glTexCoord1f(val[2]);  glVertex3f(xplt[i+1], yplt[ploty], zplt[k]);
@@ -877,7 +877,7 @@ void DrawPlot3dTexture(meshdata *meshi){
           val[1] = CLAMP(PLOT3DCONVERT(val[1], ttmin, ttmax), 0.0, 1.0);
           val[2] = CLAMP(PLOT3DCONVERT(val[2], ttmin, ttmax), 0.0, 1.0);
           val[3] = CLAMP(PLOT3DCONVERT(val[3], ttmin, ttmax), 0.0, 1.0);
-          if(meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(i, j, plotz)].node_z==GASGAS){
+          if(meshi->compact_blank==NULL||meshi->compact_blank[IJKNODE(i, j, plotz)].node_z){
             if(ABS(val[0]-val[3])<ABS(val[1]-val[2])){
                glTexCoord1f(val[0]); glVertex3f(xplt[i],   yplt[j],   zplt[plotz]);
                glTexCoord1f(val[2]); glVertex3f(xplt[i+1], yplt[j],   zplt[plotz]);

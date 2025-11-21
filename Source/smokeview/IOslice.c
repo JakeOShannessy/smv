@@ -4924,8 +4924,8 @@ void DrawVolAllSlicesTextureDiag(const slicedata *sd, int direction){
         for(k = sd->ks1; k<sd->ks2; k++){
           n++; n2++; ijk+=nxy;
           // Work out if this element should be shown
-          if(global_scase.show_slice_in_obst==ONLY_IN_SOLID && meshi->compact_blank!=NULL&&meshi->compact_blank[ijk].node_y==GASGAS)continue;
-          if(global_scase.show_slice_in_obst==ONLY_IN_GAS   && meshi->compact_blank!=NULL&&meshi->compact_blank[ijk].node_y!=GASGAS)continue;
+          if(global_scase.show_slice_in_obst==ONLY_IN_SOLID && meshi->compact_blank!=NULL&&meshi->compact_blank[ijk].node_y)continue;
+          if(global_scase.show_slice_in_obst==ONLY_IN_GAS   && meshi->compact_blank!=NULL&&!meshi->compact_blank[ijk].node_y)continue;
           if(skip_slice_in_embedded_mesh==1&&iblank_embed!=NULL&&iblank_embed[ijk]==EMBED_YES)continue;
           r11 = (float)sd->iqsliceframe[n] / 255.0;
           r31 = (float)sd->iqsliceframe[n2] / 255.0;
@@ -5230,7 +5230,7 @@ void DrawVolSliceTexture(const slicedata *sd, int is1, int is2, int js1, int js2
         int in_solid, in_gas;
 
         in_gas=1;
-        if(meshi->compact_blank!=NULL&&meshi->compact_blank[IJK(i, j, plotz)].node_z != GASGAS)in_gas=0;
+        if(meshi->compact_blank!=NULL&&!meshi->compact_blank[IJK(i, j, plotz)].node_z)in_gas=0;
         in_solid = 1 - in_gas;
 
         j2 = MIN(j+slice_skipy, js2);
