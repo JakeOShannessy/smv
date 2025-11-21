@@ -378,8 +378,8 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
     else if( clipon==1&&clip_data==0){UNCLIP;}\
   }
 
-#define GAS        1
-#define SOLID      0
+#define GAS        true
+#define SOLID      false
 // Values for faces
 #define GASGAS     2
 #define SOLIDSOLID 0
