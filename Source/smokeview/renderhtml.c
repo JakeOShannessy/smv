@@ -1,4 +1,5 @@
 #include "options.h"
+#ifdef pp_HTML
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -2539,3 +2540,4 @@ int Smv2Html(char *html_file, int option, int from_where){
   printf(" - complete\n");
   return 0;
 }
+#endif

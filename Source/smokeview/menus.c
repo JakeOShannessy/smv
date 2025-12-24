@@ -248,7 +248,8 @@ float     part_load_time;
 #define MENU_HELP_DOCUMENTATION -4
 #define MENU_HELP_FDSWEB        -5
 #define MENU_HELP_FORUM         -6
-#define MENU_HELP_RELEASENOTES  -7
+#define MENU_HELP_SMOKEVIEW_RELEASENOTES -7
+#define MENU_HELP_FDS_RELEASENOTES       -8
 
 #define GRID_yz 1
 #define GRID_xz 2
@@ -838,7 +839,6 @@ void LabelMenu(int value){
     visFramelabel=1;
     visLabels=1;
     visMeshlabel=1;
-    vis_slice_average=1;
     if(global_scase.ntickinfo>0)visFDSticks=1;
     visgridloc=1;
     vis_hrr_label=1;
@@ -863,7 +863,6 @@ void LabelMenu(int value){
     vis_hrr_label=0;
     if(global_scase.ntickinfo>0)visFDSticks=0;
     visgridloc=0;
-    vis_slice_average=0;
     vismemload=0;
 #ifdef pp_memusage
     vismemusage = 0;
@@ -918,9 +917,6 @@ void LabelMenu(int value){
      break;
    case MENU_LABEL_grid:
      visgridloc = 1 - visgridloc;
-     break;
-   case MENU_LABEL_sliceaverage:
-     vis_slice_average = 1 - vis_slice_average;
      break;
    case MENU_LABEL_hrr:
      vis_hrr_label=1-vis_hrr_label;
@@ -2046,11 +2042,12 @@ void RenderMenu(int value){
     }
     Keyboard('R',FROM_SMOKEVIEW);
     break;
+#ifdef pp_HTML
   case RenderJSON:
   case RenderJSONALL:
     {
 
-      char *htmlobst_filename = CasePathHtmlObst(&global_scase);
+      char *htmlobst_filename      = CasePathHtmlObst(&global_scase);
       char *htmlslicenode_filename = CasePathHtmlSliceNode(&global_scase);
       char *htmlslicecell_filename = CasePathHtmlSliceCell(&global_scase);
       int json_option;
@@ -2094,6 +2091,7 @@ void RenderMenu(int value){
       FREEMEMORY(html_filename);
 
     } break;
+#endif
   case RenderCancel:
     RenderState(RENDER_OFF);
     break;
@@ -2440,7 +2438,10 @@ void HelpMenu(int value){
     case MENU_HELP_DOWNLOADS:
       OPENURL("https://pages.nist.gov/fds-smv/downloads.html");
       break;
-    case MENU_HELP_RELEASENOTES:
+    case MENU_HELP_FDS_RELEASENOTES:
+      OPENURL("https://github.com/firemodels/fds/wiki/FDS-Release-Notes");
+      break;
+    case MENU_HELP_SMOKEVIEW_RELEASENOTES:
       OPENURL("https://pages.nist.gov/fds-smv/smv_readme.html");
       break;
     case MENU_HELP_DOCUMENTATION:
@@ -4313,6 +4314,7 @@ void LoadParticleMenu(int value){
             }
           }
           STOP_TIMER(part_load_time);
+          printf("\n");
           PrintFileLoadTimes(part_file_count,part_load_size,part_load_time);
           if(have_particles==0)printf("***warning: particle files have no particles\n");
         }
@@ -5143,6 +5145,7 @@ void LoadMultiVSliceMenu(int value){
         if(vslicei->skip==1&&vslicei->loaded==1)UnloadVSliceMenu(mvslicei->ivslices[i]);
       }
       STOP_TIMER(load_time);
+      printf("\n");
       PrintFileLoadTimes(file_count,load_size,load_time);
     }
     script_multivslice=0;
@@ -5176,6 +5179,7 @@ void LoadMultiVSliceMenu(int value){
       file_count++;
     }
     STOP_TIMER(load_time);
+    printf("\n");
     PrintFileLoadTimes(file_count,load_size,load_time);
   }
   else{
@@ -5268,6 +5272,7 @@ FILE_SIZE LoadAllMSlices(int last_slice, multislicedata *mslicei){
   SetLoadedSliceBounds(mslicei->islices, mslicei->nslices);
   file_size = LoadAllMSlicesMT(last_slice, mslicei, &file_count);
   STOP_TIMER(load_time);
+  printf("\n");
   PrintFileLoadTimes(file_count,(float)file_size,load_time);
   return file_size;
 }
@@ -5789,7 +5794,7 @@ FILE_SIZE LoadIsoI(int value){
   }
   isoi->loading=0;
   STOP_TIMER(total_time);
-  PRINTF(" - %.1f MB/%.1f s\n",(float)return_filesize/1000000.,total_time);
+  PRINTF("Loaded %.1f MB/%.1f s\n",(float)return_filesize/1000000.,total_time);
   return return_filesize;
 }
 
@@ -5843,6 +5848,7 @@ void LoadAllIsos(int iso_type){
     }
   }
   STOP_TIMER(load_time);
+  printf("\n");
   PrintFileLoadTimes(file_count,load_size,load_time);
 }
 
@@ -5955,7 +5961,7 @@ void LoadBoundaryMenu(int value){
         THREADcontrol(compress_threads, THREAD_LOCK);
         SetLoadedPatchBounds(&value, 1);
         if(patchi->structured == YES){
-          PRINTF("Loading %s(%s)", patchi->file, patchi->label.shortlabel);
+          PRINTF("\nLoading %s(%s)\n", patchi->file, patchi->label.shortlabel);
         }
         ReadBoundary(value, LOAD, &errorcode);
         THREADcontrol(compress_threads, THREAD_UNLOCK);
@@ -6025,7 +6031,7 @@ void LoadBoundaryMenu(int value){
         if(InPatchList(patchj, patchi)==1){
           THREADcontrol(compress_threads, THREAD_LOCK);
           if(patchi->structured == YES){
-            PRINTF("Loading %s(%s)", patchi->file, patchi->label.shortlabel);
+            PRINTF("\nLoading %s(%s)\n", patchi->file, patchi->label.shortlabel);
           }
           load_size+=ReadBoundary(i, LOAD, &errorcode);
           if(patchi->structured!=NO&&patchi->finalize==1){
@@ -6036,6 +6042,7 @@ void LoadBoundaryMenu(int value){
         }
       }
       STOP_TIMER(load_time);
+      printf("\n");
       PrintFileLoadTimes(file_count,load_size,load_time);
     }
     force_redisplay=1;
@@ -10280,8 +10287,6 @@ static int menu_count=0;
 #endif
   if(visMeshlabel == 1)glutAddMenuEntry("*Mesh", MENU_LABEL_meshlabel);
   if(visMeshlabel == 0)glutAddMenuEntry("Mesh", MENU_LABEL_meshlabel);
-  if(vis_slice_average == 1)glutAddMenuEntry("*Slice average", MENU_LABEL_sliceaverage);
-  if(vis_slice_average == 0)glutAddMenuEntry("Slice average", MENU_LABEL_sliceaverage);
   if(LabelGetNUserLabels(&global_scase.labelscoll) > 0){
     if(visLabels == 1)glutAddMenuEntry("*Text labels", MENU_LABEL_textlabels);
     if(visLabels == 0)glutAddMenuEntry("Text labels", MENU_LABEL_textlabels);
@@ -11480,25 +11485,25 @@ static int menu_count=0;
     }
 
     CREATEMENU(render_filetypemenu, RenderMenu);
-    if(render_filetype==PNG){
+    switch(render_filetype){
+    case PNG:
       glutAddMenuEntry("  *PNG", RenderPNG);
       glutAddMenuEntry("  JPEG", RenderJPEG);
       glutAddMenuEntry("   GIF", RenderGIF);
-    }
-    if(render_filetype==JPEG){
+      break;
+    case JPEG:
       glutAddMenuEntry("   PNG", RenderPNG);
       glutAddMenuEntry(" *JPEG", RenderJPEG);
       glutAddMenuEntry("   GIF", RenderGIF);
-    }
-    if(render_filetype == RGIF){
+      break;
+    case RGIF:
       glutAddMenuEntry("   PNG", RenderPNG);
       glutAddMenuEntry("  JPEG", RenderJPEG);
       glutAddMenuEntry("  *GIF", RenderGIF);
-    }
-    if(render_filetype==IMAGE_NONE){
-      glutAddMenuEntry("   PNG", RenderPNG);
-      glutAddMenuEntry("  JPEG", RenderJPEG);
-      glutAddMenuEntry("   GIF", RenderGIF);
+      break;
+    default:
+      assert(FFALSE);
+      break;
     }
 
     CREATEMENU(render_startmenu,RenderMenu);
@@ -11537,11 +11542,13 @@ static int menu_count=0;
     CREATEMENU(rendermenu,RenderMenu);
     GLUTADDSUBMENU("Start rendering",  render_startmenu);
     glutAddMenuEntry("Stop rendering", RenderCancel);
+#ifdef pp_HTML
     glutAddMenuEntry("-", MENU_DUMMY);
     glutAddMenuEntry("Render html(current)", RenderHTML);
     glutAddMenuEntry("Render html(all)",     RenderHTMLALL);
     glutAddMenuEntry("Render json(current)",  RenderJSON);
     glutAddMenuEntry("Render json(all)",     RenderJSONALL);
+#endif
 
     glutAddMenuEntry("-", MENU_DUMMY);
 
@@ -11857,7 +11864,8 @@ static int menu_count=0;
   glutAddMenuEntry("Discussion forum",        MENU_HELP_FORUM);
   glutAddMenuEntry("FDS issue tracker",       MENU_HELP_FDS_ISSUES);
   glutAddMenuEntry("Smokeview issue tracker", MENU_HELP_SMV_ISSUES);
-  glutAddMenuEntry("Release notes",           MENU_HELP_RELEASENOTES);
+  glutAddMenuEntry("FDS Release notes",       MENU_HELP_FDS_RELEASENOTES);
+  glutAddMenuEntry("Smokeview Release notes", MENU_HELP_SMOKEVIEW_RELEASENOTES);
   glutAddMenuEntry("Home page",               MENU_HELP_FDSWEB);
 #endif
 #ifdef pp_OSX
@@ -11866,7 +11874,8 @@ static int menu_count=0;
   glutAddMenuEntry("Discussion forum",        MENU_HELP_FORUM);
   glutAddMenuEntry("FDS issue tracker",       MENU_HELP_FDS_ISSUES);
   glutAddMenuEntry("Smokeview issue tracker", MENU_HELP_SMV_ISSUES);
-  glutAddMenuEntry("Release notes",           MENU_HELP_RELEASENOTES);
+  glutAddMenuEntry("FDS Release notes",       MENU_HELP_FDS_RELEASENOTES);
+  glutAddMenuEntry("Smokeview Release notes", MENU_HELP_SMOKEVIEW_RELEASENOTES);
   glutAddMenuEntry("Home page",               MENU_HELP_FDSWEB);
 #endif
 #ifdef __linux__
@@ -11875,7 +11884,8 @@ static int menu_count=0;
   glutAddMenuEntry("Discussion forum: https://github.com/firemodels/fds/discussions",              MENU_HELP_FORUM);
   glutAddMenuEntry("FDS issue tracker: https://github.com/firemodels/fds/issues",                  MENU_HELP_FDS_ISSUES);
   glutAddMenuEntry("Smokeview issue tracker: https://github.com/firemodels/smv/issues",            MENU_HELP_SMV_ISSUES);
-  glutAddMenuEntry("Release notes: https://pages.nist.gov/fds-smv/smv_readme.html",                MENU_HELP_RELEASENOTES);
+  glutAddMenuEntry("FDS Release notes: https://github.com/firemodels/fds/wiki/FDS-Release-Notes",  MENU_HELP_FDS_RELEASENOTES);
+  glutAddMenuEntry("Smokeview Release notes: https://pages.nist.gov/fds-smv/smv_readme.html",      MENU_HELP_SMOKEVIEW_RELEASENOTES);
   glutAddMenuEntry("Home page: https://pages.nist.gov/fds-smv/",                                   MENU_HELP_FDSWEB);
 #endif
 

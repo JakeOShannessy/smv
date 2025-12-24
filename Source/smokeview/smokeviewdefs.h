@@ -734,10 +734,12 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define RenderLABELframenumber  980
 #define RenderLABELtime         979
 #define MENU_RENDER_SETTINGS    900
+#ifdef pp_HTML
 #define RenderJSON              982
 #define RenderJSONALL           983
 #define RenderHTML              984
 #define RenderHTMLALL           985
+#endif
 #define HTML_CURRENT_TIME         0
 #define HTML_ALL_TIMES            1
 
@@ -844,7 +846,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define MENU_LABEL_fdsticks            10
 #define MENU_LABEL_hmslabel            11
 #define MENU_LABEL_grid                12
-#define MENU_LABEL_sliceaverage        13
 #define MENU_LABEL_userticks           15
 #define MENU_LABEL_ShowAll             16
 #define MENU_LABEL_HideAll             17

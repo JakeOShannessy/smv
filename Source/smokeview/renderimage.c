@@ -93,16 +93,19 @@ void MakeMovie(void){
 
   if(render_status == RENDER_ON)return;
 
-  if(render_filetype==JPEG){
-    strcpy(image_ext, ".jpg");
-  }
-  else if(render_filetype == RGIF){
-    strcpy(image_ext, ".gif");
-  }
-  else{
+  switch(render_filetype){
+  case PNG:
     strcpy(image_ext, ".png");
+    break;
+  case JPEG:
+    strcpy(image_ext, ".jpg");
+    break;
+  case RGIF:
+    strcpy(image_ext, ".gif");
+    break;
+  default:
+    assert(FFALSE);
   }
-
 // construct full pathname of movie
 
   GetMovieFilePath(moviefile_path);
@@ -744,7 +747,11 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
   int clip_left_hat, clip_right_hat, clip_bottom_hat, clip_top_hat;
   int width_hat, height_hat;
 
-  if(render_filetype!=PNG&&render_filetype!=JPEG&&render_filetype!=RGIF)render_filetype=PNG;
+  if(
+    render_filetype!=PNG&&
+    render_filetype!=JPEG&&
+    render_filetype!=RGIF
+    )render_filetype=PNG;
 
   if(GetRenderFileName(VIEW_CENTER, renderfile_dir, renderfile)!=0)return 1;
 
@@ -1237,7 +1244,10 @@ int MergeRenderScreenBuffers360(void){
   int i, j, ijk360;
   int *screenbuffer360;
 
-  if(render_filetype!=PNG&&render_filetype!=JPEG&&render_filetype!=RGIF)render_filetype=PNG;
+  if(
+    render_filetype!=PNG&&
+    render_filetype!=JPEG&&
+    render_filetype!=RGIF)render_filetype=PNG;
 
   if(GetRenderFileName(VIEW_CENTER, renderfile_dir, renderfile)!=0)return 1;
 
@@ -1471,9 +1481,11 @@ int SmokeviewImage2File(char *directory, char *RENDERfilename, int rendertype, i
   case PNG:
     gdImagePng(RENDERimage,RENDERfile);
     break;
+#ifdef p_JPEG
   case JPEG:
     gdImageJpeg(RENDERimage,RENDERfile,-1);
     break;
+#endif
   case RGIF:
     gdImageGif(RENDERimage, RENDERfile);
     break;

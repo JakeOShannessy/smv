@@ -533,7 +533,7 @@ EXTERNCPP FILE_SIZE ReadVSlice(int ivslice, int time_frame, float *time_value, i
 EXTERNCPP void SetSliceColors(float smin, float smax, slicedata *sd, int flag, int *errorcode);
 EXTERNCPP void Slice2Device(void);
 EXTERNCPP void SortSlices(void);
-EXTERNCPP int  TimeAverageData(float **data_out, float **data_in, int ndata, int data_per_timestep, float *times_local, int ntimes_local, float average_time);
+EXTERNCPP int  TimeAverageData(char *label, float **data_out, float **data_in, int ndata, int data_per_timestep, float *times_local, int ntimes_local, float average_time);
 EXTERNCPP void UpdateAllSliceColors(int slicetype, int *errorcode);
 EXTERNCPP void UpdateAllSliceLabels(int slicetype, int *errorcode);
 EXTERNCPP void UpdateGslicePlanes(void);
@@ -741,6 +741,7 @@ EXTERNCPP void UpdateUseTextures(void);
 EXTERNCPP void UpdateVentOffset(void);
 EXTERNCPP void WriteIni(int flag,char *file);
 
+#ifdef pp_HTML
 //*** renderhtml.c headers
 
 EXTERNCPP int Obst2Data(char *html_file);
@@ -748,6 +749,7 @@ EXTERNCPP int SliceNode2Data(char *html_file, int option);
 EXTERNCPP int SliceCell2Data(char *html_file, int option);
 EXTERNCPP int Smv2Html(char *html_out, int option, int from_where);
 EXTERNCPP int Smv2Geom(char *html_file);
+#endif
 
 //*** renderimage.c headers
 
