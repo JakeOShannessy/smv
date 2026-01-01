@@ -37,7 +37,7 @@ void Usage(int option){
   char githash[100];
   char gitdate[100];
 
-  GetGitInfo(githash, gitdate);    // get githash
+  GetGitInfo(githash, gitdate, NULL);    // get githash
 
   PRINTF("\nsmokeview [options] casename\n");
   PRINTF("%s - %s\n\n", githash, __DATE__);
@@ -50,7 +50,7 @@ void Usage(int option){
   UsageCommon(HELP_SUMMARY);
   if(option==HELP_ALL){
     PRINTF("\n%s\n", "Other options:");
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     PRINTF("%s\n", " -1x            - turn off 2x scene scaling (do not scale scene).");
     PRINTF("%s\n", " -2x            - turn on 2x scene scaling.");
 #endif
@@ -304,7 +304,7 @@ char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
     }
   }
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(args->x1){
       double_scale = 0;
       force_scale  = 1;
@@ -680,13 +680,6 @@ void FreeArgs(int n_args, char **args) {
 
 int main(int argc, char **argv){
   int return_code;
-
-#ifdef TEST
-  int nnn;
-
-  nnn = global_scase.smoke3dcoll.nsmoke3dinfo;
-  printf("nsmoke3dinfo=%i\n", nnn);
-#endif
 
   START_TIMER(timer_startup);
   // uncomment following block of code to test crash detection

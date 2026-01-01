@@ -9,6 +9,7 @@
 
 #include "options.h"
 #include "dmalloc.h"
+#include "string_util.h"
 #include "command_args.h"
 
 /* ------------------ CLE_Message ------------------------ */
@@ -51,12 +52,13 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
     strcpy(args.prog, argv[0]);
   }
   int i;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
   args.x1 = true;
   args.x2 = false;
 #endif
   args.encode_png_commandline = false;
   for (i = 1; i < argc; i++) {
+    if(IsCommonOption(argv[i])==1)continue;
     if (strcmp(argv[i], "-ini") == 0) {
       args.ini = true;
     } else if (strcmp(argv[i], "-ng_ini") == 0) {
@@ -67,7 +69,7 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
     else if (strcmp(argv[i], "-version") == 0 || strcmp(argv[i], "-v") == 0) {
       args.print_version = true;
     }
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     else if (strcmp(argv[i], "-1x") == 0) {
       args.x1 = true;
       args.x2 = false;

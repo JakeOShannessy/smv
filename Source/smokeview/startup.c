@@ -318,7 +318,7 @@ int SetupCase(char *filename){
     GLUIShowAlert();
   }
   // initialize info header
-  initialiseInfoHeader(&titleinfo, release_title, smv_githash, global_scase.fds_githash, global_scase.chidfilebase, global_scase.fds_title);
+  initialiseInfoHeader(&titleinfo, release_title, smv_githash, global_scase.fds_version, global_scase.chidfilebase, global_scase.fds_title);
   PRINT_TIMER(timer_start, "glut routines");
   return 0;
 }
@@ -380,9 +380,11 @@ void InitStartupDirs(void){
   monitor_screen_height = GetScreenHeight();
 #endif
 
-#ifdef pp_BETA
-  fprintf(stderr, "%s\n", "\n*** This version of Smokeview is intended for review and testing ONLY. ***");
-#endif
+  int is_beta;
+  GetGitInfo(NULL, NULL, &is_beta);
+  if(is_beta == 1){
+    fprintf(stderr, "%s\n", "\n*** This version of Smokeview is intended for review and testing ONLY. ***");
+  }
 }
 
 /* ------------------ GLUTGetScreenWidth ------------------------ */
@@ -436,7 +438,7 @@ void SetupGlut(int argc, char **argv){
 
     max_screenWidth =  GLUTGetScreenWidth();
     max_screenHeight = GLUTGetScreenHeight();
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(force_scale==0){
       if(monitor_screen_height!=max_screenHeight)double_scale=1;
       if(monitor_screen_height==max_screenHeight)double_scale=0;
@@ -448,7 +450,7 @@ void SetupGlut(int argc, char **argv){
 #endif
     font_ptr          = GLUT_BITMAP_HELVETICA_12;
     colorbar_font_ptr = GLUT_BITMAP_HELVETICA_10;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
       font_ptr = (void *)GLUT_BITMAP_HELVETICA_24;
       colorbar_font_ptr = (void *)GLUT_BITMAP_HELVETICA_20;
@@ -462,7 +464,7 @@ void SetupGlut(int argc, char **argv){
 
       TRAINER_WIDTH=300;
       TRAINER_HEIGHT=50;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
       if(double_scale==1){
         TRAINER_WIDTH  *= 2;
         TRAINER_HEIGHT *= 2;
@@ -1245,7 +1247,7 @@ void InitVars(void){
 
   InitScase(&global_scase);
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
   double_scale = 1;
 #endif
   global_scase.curdir_writable = Writable(".");
@@ -1258,7 +1260,7 @@ void InitVars(void){
 //*** define slurm queues
 
   queue_list = getenv("SMV_QUEUES");
-#ifdef pp_MOVIE_BATCH_DEBUG
+#ifdef _DEBUG
   if(queue_list==NULL)queue_list = "batch"; // placeholder for debugging slurm queues on the PC
 #endif
 
@@ -1317,12 +1319,10 @@ void InitVars(void){
     strcpy(movie_email, "");
   }
 
-#ifdef pp_RENDER360_DEBUG
   NewMemory((void **)&screenvis, nscreeninfo * sizeof(int));
   for(i = 0; i < nscreeninfo; i++){
     screenvis[i] = 1;
   }
-#endif
 
   beam_color[0] = 255 * foregroundcolor[0];
   beam_color[1] = 255 * foregroundcolor[1];
@@ -1411,7 +1411,7 @@ void InitVars(void){
   direction_color[3]=1.0;
   direction_color_ptr=GetColorPtr(&global_scase, direction_color);
 
-  GetGitInfo(smv_githash,smv_gitdate);
+  GetGitInfo(smv_githash,smv_gitdate, NULL );
 
   rgb_terrain[0][0]=1.0;
   rgb_terrain[0][1]=0.0;
@@ -1490,7 +1490,7 @@ void InitVars(void){
   strcpy(emptylabel,"");
   font_ptr          = GLUT_BITMAP_HELVETICA_12;
   colorbar_font_ptr = GLUT_BITMAP_HELVETICA_10;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
       font_ptr = (void *)GLUT_BITMAP_HELVETICA_24;
       colorbar_font_ptr = (void *)GLUT_BITMAP_HELVETICA_20;

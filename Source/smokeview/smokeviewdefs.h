@@ -1,6 +1,6 @@
 #ifndef SMOKEVIEWDEFS_H_DEFINED
 #define SMOKEVIEWDEFS_H_DEFINED
-#ifdef pp_SNIFF_ERROR
+#ifdef _DEBUG
 EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define SNIFF_ERRORS(f) _Sniff_Errors(f,__FILE__,__LINE__)
 #else
@@ -52,7 +52,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define DEVICE_RADIUS                  7
 #define DEVICE_TIMEAVERAGE            32
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
 #define GLUT_BITMAP_HELVETICA_20	(&glutBitmapHelvetica20)
 #define GLUT_BITMAP_HELVETICA_24	(&glutBitmapHelvetica24)
 #define GLUT_BITMAP_HELVETICA_36	(&glutBitmapHelvetica36)
@@ -734,12 +734,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define RenderLABELframenumber  980
 #define RenderLABELtime         979
 #define MENU_RENDER_SETTINGS    900
-#ifdef pp_HTML
-#define RenderJSON              982
-#define RenderJSONALL           983
-#define RenderHTML              984
-#define RenderHTMLALL           985
-#endif
 #define HTML_CURRENT_TIME         0
 #define HTML_ALL_TIMES            1
 

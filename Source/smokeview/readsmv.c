@@ -7916,7 +7916,7 @@ void WriteIni(int flag,char *filename){
   }
   else{
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
       fprintf(fileout,"WINDOWWIDTH\n");
       fprintf(fileout," %i\n",screenWidth/2);
@@ -8466,17 +8466,14 @@ void WriteIni(int flag,char *filename){
     char githash[256];
     char gitdate[256];
 
-    GetGitInfo(githash,gitdate);    // get githash
+    GetGitInfo(githash,gitdate, NULL);    // get githash
     fprintf(fileout,"\n\n");
     fprintf(fileout,"# FDS/Smokeview Environment\n");
     fprintf(fileout,"# -------------------------\n\n");
-    fprintf(fileout,"# Smokeview Build: %s\n",githash);
+    fprintf(fileout,"# Smokeview version: %s\n",githash);
     fprintf(fileout,"# Smokeview Build Date: %s\n",__DATE__);
     if(global_scase.fds_version!=NULL){
       fprintf(fileout,"# FDS Version: %s\n",global_scase.fds_version);
-    }
-    if(global_scase.fds_githash!=NULL){
-      fprintf(fileout, "# FDS Build: %s\n", global_scase.fds_githash);
     }
     fprintf(fileout,"# Platform: WIN64\n");
 #ifdef pp_OSX

@@ -831,7 +831,7 @@ void LabelMenu(int value){
     vis_title_gversion =1;
     visFramerate=1;
     vismemload = 1;
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
     vismemusage = 0;
 #endif
     visaxislabels=1;
@@ -864,7 +864,7 @@ void LabelMenu(int value){
     if(global_scase.ntickinfo>0)visFDSticks=0;
     visgridloc=0;
     vismemload=0;
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
     vismemusage = 0;
 #endif
     break;
@@ -899,11 +899,11 @@ void LabelMenu(int value){
      break;
    case MENU_LABEL_memload:
      vismemload = 1 - vismemload;
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
      if(vismemload==1)vismemusage=0;
 #endif
      break;
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
    case MENU_LABEL_memusage:
      vismemusage = 1 - vismemusage;
      if(vismemusage==1)vismemload=0;
@@ -1613,12 +1613,10 @@ void DialogMenu(int value){
     break;
   }
   updatemenu=1;
-#ifdef pp_REFRESH
   refresh_glui_dialogs = 1;
   SetMainWindow();
   GLUIRefreshDialogs();
   glutPostRedisplay();
-#endif
 }
 
 /* ------------------ ZoomMenu ------------------------ */
@@ -1691,7 +1689,7 @@ void FontMenu(int value){
     break;
   case SMALL_FONT:
     fontindex=SMALL_FONT;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
       font_ptr          = (void *)GLUT_BITMAP_HELVETICA_24;
       colorbar_font_ptr = (void *)GLUT_BITMAP_HELVETICA_20;
@@ -1709,7 +1707,7 @@ void FontMenu(int value){
     break;
   case LARGE_FONT:
     fontindex=LARGE_FONT;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
       font_ptr          = (void *)GLUT_BITMAP_HELVETICA_36;
       colorbar_font_ptr = (void *)GLUT_BITMAP_HELVETICA_36;
@@ -1938,7 +1936,7 @@ void RenderState(int onoff){
     update_screeninfo = 1;
     saveW=screenWidth;
     saveH=screenHeight;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
       scale = 2;
     }
@@ -2042,56 +2040,6 @@ void RenderMenu(int value){
     }
     Keyboard('R',FROM_SMOKEVIEW);
     break;
-#ifdef pp_HTML
-  case RenderJSON:
-  case RenderJSONALL:
-    {
-
-      char *htmlobst_filename      = CasePathHtmlObst(&global_scase);
-      char *htmlslicenode_filename = CasePathHtmlSliceNode(&global_scase);
-      char *htmlslicecell_filename = CasePathHtmlSliceCell(&global_scase);
-      int json_option;
-
-      json_option = HTML_CURRENT_TIME;
-      if(value==RenderJSONALL)json_option = HTML_ALL_TIMES;
-      if(Obst2Data(htmlobst_filename)!=0){
-        printf("blockage data output to %s\n",htmlobst_filename);
-      }
-      else{
-        printf("no blockage data to output\n");
-      }
-      if(SliceNode2Data(htmlslicenode_filename, json_option)!=0){
-        printf("node centered slice file data output to %s\n", htmlslicenode_filename);
-      }
-      else{
-        printf("no node centered slice file data to output\n");
-      }
-      if(SliceCell2Data(htmlslicecell_filename, json_option)!=0){
-        printf("cell centered slice file data output to %s\n", htmlslicecell_filename);
-      }
-      else{
-        printf("no cell centered slice file data to output\n");
-      }
-      FREEMEMORY(htmlobst_filename);
-      FREEMEMORY(htmlslicenode_filename);
-      FREEMEMORY(htmlslicecell_filename);
-      break;
-    }
-    break;
-    case RenderHTML: {
-      char *html_filename = CasePathHtml(&global_scase);
-      Smv2Html(html_filename, HTML_CURRENT_TIME,
-               FROM_SMOKEVIEW);
-      FREEMEMORY(html_filename);
-    }
-    break;
-    case RenderHTMLALL: {
-      char *html_filename = CasePathHtml(&global_scase);
-      Smv2Html(html_filename, HTML_ALL_TIMES, FROM_SMOKEVIEW);
-      FREEMEMORY(html_filename);
-
-    } break;
-#endif
   case RenderCancel:
     RenderState(RENDER_OFF);
     break;
@@ -2833,7 +2781,6 @@ void PeriodicReloads(int value){
   }
 }
 
-#ifdef pp_REFRESH
 /* ------------------ PeriodicRefresh ------------------------ */
 
 void PeriodicRefresh(int value){
@@ -2845,7 +2792,6 @@ void PeriodicRefresh(int value){
     }
   }
 }
-#endif
 
 /* ------------------ ScriptMenu2 ------------------------ */
 
@@ -10281,7 +10227,7 @@ static int menu_count=0;
   }
   if(vismemload == 1)glutAddMenuEntry("*Memory load", MENU_LABEL_memload);
   if(vismemload == 0)glutAddMenuEntry("Memory load", MENU_LABEL_memload);
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
   if(vismemusage == 1)glutAddMenuEntry("*Memory usage", MENU_LABEL_memusage);
   if(vismemusage == 0)glutAddMenuEntry("Memory usage", MENU_LABEL_memusage);
 #endif
@@ -11542,13 +11488,6 @@ static int menu_count=0;
     CREATEMENU(rendermenu,RenderMenu);
     GLUTADDSUBMENU("Start rendering",  render_startmenu);
     glutAddMenuEntry("Stop rendering", RenderCancel);
-#ifdef pp_HTML
-    glutAddMenuEntry("-", MENU_DUMMY);
-    glutAddMenuEntry("Render html(current)", RenderHTML);
-    glutAddMenuEntry("Render html(all)",     RenderHTMLALL);
-    glutAddMenuEntry("Render json(current)",  RenderJSON);
-    glutAddMenuEntry("Render json(all)",     RenderJSONALL);
-#endif
 
     glutAddMenuEntry("-", MENU_DUMMY);
 
@@ -11584,11 +11523,7 @@ static int menu_count=0;
   CREATEMENU(filesdialogmenu, DialogMenu);
   glutAddMenuEntry("Auto load data files...", DIALOG_AUTOLOAD);
   if(smokezippath!=NULL&&(global_scase.npatchinfo>0||global_scase.smoke3dcoll.nsmoke3dinfo>0||global_scase.slicecoll.nsliceinfo>0)){
-#ifdef pp_DIALOG_SHORTCUTS
     glutAddMenuEntry("Compress data files...  ALT z", DIALOG_SMOKEZIP);
-#else
-    glutAddMenuEntry("Compress data files...", DIALOG_SMOKEZIP);
-#endif
   }
   glutAddMenuEntry("Save/load configuration files...", DIALOG_CONFIG);
   glutAddMenuEntry("Render images...", DIALOG_RENDER);
@@ -11606,21 +11541,12 @@ static int menu_count=0;
   /* --------------------------------viewdialog menu -------------------------- */
 
   CREATEMENU(viewdialogmenu, DialogMenu);
-#ifdef pp_DIALOG_SHORTCUTS
   glutAddMenuEntry("Clipping...  ALT c", DIALOG_CLIP);
   glutAddMenuEntry("Tours...  ALT t", DIALOG_TOUR_SHOW);
   glutAddMenuEntry("Edit Colorbar...  ALT C", DIALOG_COLORBAR);
   if(global_scase.isZoneFireModel==0 && have_geometry_dialog==1){
     glutAddMenuEntry("Examine geometry...  ALT e", DIALOG_GEOMETRY_OPEN);
   }
-#else
-  glutAddMenuEntry("Clip scene...", DIALOG_CLIP);
-  glutAddMenuEntry("Tours...", DIALOG_TOUR_SHOW);
-  glutAddMenuEntry("Edit Colorbar...  ", DIALOG_COLORBAR);
-  if(global_scase.isZoneFireModel == 0 && have_geometry_dialog == 1){
-    glutAddMenuEntry("Examine geometry...  ", DIALOG_GEOMETRY_OPEN);
-  }
-#endif
   if(global_scase.nterraininfo>0&&global_scase.ngeominfo==0){
     glutAddMenuEntry("Terrain...", DIALOG_TERRAIN);
   }
@@ -11677,13 +11603,8 @@ static int menu_count=0;
   GLUTADDSUBMENU("Window", windowdialogmenu);
 
   glutAddMenuEntry("-",MENU_DUMMY2);
-#ifdef pp_DIALOG_SHORTCUTS
   glutAddMenuEntry("Shrink all dialogs ALT X", DIALOG_SHRINKALL);
   glutAddMenuEntry("Close all dialogs  ALT x", DIALOG_HIDEALL);
-#else
-  glutAddMenuEntry("Shrink all dialogs ", DIALOG_SHRINKALL);
-  glutAddMenuEntry("Close all dialogs  ", DIALOG_HIDEALL);
-#endif
 
   /* -------------------------------- font menu -------------------------- */
 
@@ -11794,61 +11715,59 @@ static int menu_count=0;
   CREATEMENU(aboutmenu,AboutMenu);
   glutAddMenuEntry(release_title,1);
   {
-#ifdef pp_GPU
-    char version_label[256];
-#endif
     char menulabel[1024];
     char compiler_version_label[1024];
 
-    sprintf(menulabel,"  Smokeview build: %s",smv_githash);
+    sprintf(menulabel,"Smokeview version: %s",smv_githash);
     glutAddMenuEntry(menulabel,1);
-    strcpy(compiler_version_label, "    Compiler version:");
+
+    if(global_scase.fds_version!=NULL){
+      sprintf(menulabel, "FDS version: %s", global_scase.fds_version);
+      glutAddMenuEntry(menulabel, 1);
+    }
+
+    strcpy(compiler_version_label, "Compiler version:");
     strcat(compiler_version_label, " ");
     strcat(compiler_version_label, pp_COMPVER);
     glutAddMenuEntry(compiler_version_label, 1);
-    if(global_scase.fds_version!=NULL){
-      sprintf(menulabel, "  FDS version: %s", global_scase.fds_version);
-      glutAddMenuEntry(menulabel, 1);
-    }
-    if(global_scase.fds_githash!=NULL){
-      sprintf(menulabel,"  FDS build: %s",global_scase.fds_githash);
-      glutAddMenuEntry(menulabel,1);
-    }
+
 #ifdef pp_GPU
-    strcpy(version_label,"  OpenGL version:");
+    char version_label[256];
+    strcpy(version_label,"OpenGL version:");
     strcat(version_label," ");
     strcat(version_label,(char *)glGetString(GL_VERSION));
     glutAddMenuEntry(version_label,1);
+
     if(gpuactive==1){
       if(usegpu==1){
-        strcpy(menulabel,"  GPU activated. (Press G to deactivate)");
+        strcpy(menulabel,"GPU activated. (Press G to deactivate)");
       }
       else{
-        strcpy(menulabel,"  GPU available but not in use. (Press G to activate)");
+        strcpy(menulabel,"GPU available but not in use. (Press G to activate)");
       }
     }
     else{
-      strcpy(menulabel,"  GPU not available");
+      strcpy(menulabel,"GPU not available");
     }
     glutAddMenuEntry(menulabel,1);
 #endif
 #ifdef _WIN32
-    glutAddMenuEntry("  Platform: WIN64", 1);
+    glutAddMenuEntry("Platform: WIN64", 1);
 #endif
 #ifdef pp_OSX
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
-      glutAddMenuEntry("  Platform: OSX64(high res fonts)", 1);
+      glutAddMenuEntry("Platform: OSX64(high res fonts)", 1);
     }
     else{
-      glutAddMenuEntry("  Platform: OSX64", 1);
+      glutAddMenuEntry("Platform: OSX64", 1);
     }
 #else
-    glutAddMenuEntry("  Platform: OSX64", 1);
+    glutAddMenuEntry("Platform: OSX64", 1);
 #endif
 #endif
 #ifdef __linux__
-    glutAddMenuEntry("  Platform: LINUX64", 1);
+    glutAddMenuEntry("Platform: LINUX64", 1);
 #endif
     GLUTADDSUBMENU("Disclaimer",disclaimermenu);
     glutAddMenuEntry("Data transfer test", ABOUT_DATA_TRANSFER_TEST);

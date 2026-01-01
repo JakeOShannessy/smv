@@ -663,9 +663,7 @@ EXTERNCPP void OpenSMVFile(char *filename,int filenamelength,int *openfile);
 EXTERNCPP void ParticlePropShowMenu(int value);
 EXTERNCPP void ParticleShowMenu(int value);
 EXTERNCPP void ParticleStreakShowMenu(int var);
-#ifdef pp_REFRESH
 EXTERNCPP void PeriodicRefresh(int var);
-#endif
 EXTERNCPP void Plot3DListMenu(int value);
 EXTERNCPP void Plot3DShowMenu(int value);
 EXTERNCPP void PrintFileLoadTimes(int file_count, FILE_SIZE load_size, float load_time);
@@ -741,21 +739,9 @@ EXTERNCPP void UpdateUseTextures(void);
 EXTERNCPP void UpdateVentOffset(void);
 EXTERNCPP void WriteIni(int flag,char *file);
 
-#ifdef pp_HTML
-//*** renderhtml.c headers
-
-EXTERNCPP int Obst2Data(char *html_file);
-EXTERNCPP int SliceNode2Data(char *html_file, int option);
-EXTERNCPP int SliceCell2Data(char *html_file, int option);
-EXTERNCPP int Smv2Html(char *html_out, int option, int from_where);
-EXTERNCPP int Smv2Geom(char *html_file);
-#endif
-
 //*** renderimage.c headers
 
-#ifdef pp_RENDER360_DEBUG
 EXTERNCPP void DrawScreenInfo(void);
-#endif
 EXTERNCPP char *GetMovieFilePath(char *moviefile_path);
 EXTERNCPP void GetRenderResolution(int *width_low, int *height_low, int *width_high, int *height_high);
 EXTERNCPP GLubyte *GetScreenBuffer(void);

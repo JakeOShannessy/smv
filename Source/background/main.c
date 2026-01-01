@@ -53,7 +53,7 @@ void Usage(int option){
   char gitdate[100];
   char pp[] = "%";
 
-  GetGitInfo(githash, gitdate);    // get githash
+  GetGitInfo(githash, gitdate, NULL);    // get githash
 
   printf("\n");
   printf("background [-d delay time (s) -h -u max_usage -v] prog [arguments]\n");
@@ -123,14 +123,10 @@ int main(int argc, char **argv){
 #endif
 
   if(argc==1){
-#ifdef pp_HASH
     common_opts opts = {
         .hash_option = HASH_SHA1,
     };
     PRINTVERSION("background ", &opts);
-#else
-    PRINTVERSION("background ", NULL);
-#endif
     return 1;
   }
 

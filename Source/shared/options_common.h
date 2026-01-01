@@ -7,14 +7,8 @@
 
 //*** options: all platforms
 
-//#define pp_HTML             // add option to render to html (html render not working)
-
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
-#endif
-#ifndef _DEBUG
-// md5, sha1 and sha255 hashing
-#define pp_HASH
 #endif
 
 #ifdef __INTEL_COMPILER
@@ -42,19 +36,14 @@
 #endif
 #endif
 
-#ifdef pp_BETA
-#define PROGVERSION "Test"
-#else
-#define PROGVERSION ""
-#endif
-
-
 // Microsofts MSVC has timespec defined
 #ifdef _MSC_VER
 #ifndef HAVE_STRUCT_TIMESPEC
 #define HAVE_STRUCT_TIMESPEC
 #endif
 #endif
+
+//#define pp_UNICODE_PATHS
 
 //*** options: windows
 
@@ -88,17 +77,10 @@
 //#define pp_MEMPRINT     // output memory allocation info
 #define pp_MEMDEBUG     // comment this line when debugging REALLY large cases (to avoid memory checks)
 #endif
-#ifdef pp_MEMDEBUG
-#define pp_memusage
-#endif
 
 //*** hash output
 
-#ifdef pp_HASH
 #define PRINTVERSION(a,opts) PRINTversion(a,(opts)->hash_option)
-#else
-#define PRINTVERSION(a,opts) PRINTversion(a)
-#endif
 
 #if GD_MAJOR_VERSION >= 2 && GD_MINOR_VERSION >= 1
 #define pp_GIF_ANIMATED
@@ -202,17 +184,6 @@
 #ifndef GL_SILENCE_DEPRECATION
 #define GL_SILENCE_DEPRECATION
 #endif
-#endif
-
-#undef pp_OSX_HIGHRES
-#ifdef pp_OSX
-#define pp_OSX_HIGHRES
-#endif
-
-//*** options: for debugging
-
-#ifdef _DEBUG
-//#define pp_MEM_DEBUG_PRINT // output file/line number for each memory allocation call
 #endif
 
 #endif

@@ -25,7 +25,7 @@
 #endif
 #include "smokeheaders.h"
 #include "threader.h"
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
 #include "glutbitmap.h"
 #endif
 
@@ -214,10 +214,8 @@ SVEXTERN float SVDECL(timer_startup, 0.0), SVDECL(timer_render, -1.0);
 SVEXTERN int SVDECL(frames_total, 0 );
 SVEXTERN int SVDECL(open_movie_dialog, 0);
 SVEXTERN float SVDECL(plot2d_time_average, 0.0);
-#ifdef pp_REFRESH
 SVEXTERN int SVDECL(periodic_refresh, 0), SVDECL(update_refresh, 1);
 SVEXTERN int SVDECL(glui_refresh_rate, 10), SVDECL(glui_refresh_rate_old, 10), SVDECL(refresh_interval, 100);
-#endif
 SVEXTERN int SVDECL(nslicemenuinfo, 0);
 
 // movie batch variables
@@ -247,7 +245,7 @@ SVEXTERN int SVDECL(show_trirates, 0);
 
 SVEXTERN float SVDECL(pixel_dens, 1.0);
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
 SVEXTERN int SVDECL(force_scale, 0);
 extern CCC const BitmapFontRec glutBitmapHelvetica20;
 extern CCC const BitmapFontRec glutBitmapHelvetica24;
@@ -329,9 +327,7 @@ SVEXTERN int SVDECL(vis_title_smv_version, 1);
 SVEXTERN int SVDECL(vis_title_fds, 0);
 SVEXTERN int SVDECL(vis_title_CHID,0);
 
-#ifdef pp_REFRESH
 SVEXTERN int SVDECL(refresh_glui_dialogs, 0);
-#endif
 
 SVEXTERN float SVDECL(colorbar_shift, 1.0);
 
@@ -430,9 +426,7 @@ SVEXTERN int SVDECL(use_light0, 1), SVDECL(use_light1, 1);
 SVEXTERN int SVDECL(iso_transparency_option, 1);
 SVEXTERN int SVDECL(iso_opacity_change, 1);
 
-#ifdef pp_RENDER360_DEBUG
 SVEXTERN int SVDECL(debug_360, 0), SVDECL(debug_360_skip_x,25), SVDECL(debug_360_skip_y,25);
-#endif
 SVEXTERN int SVDECL(output_ffmpeg_command, 0);
 SVEXTERN int SVDECL(margin360_size, 0);
 
@@ -612,10 +606,8 @@ SVEXTERN int SVDECL(movie_bitrate, 5000);
 SVEXTERN int SVDECL(disable_reshape, 0);
 
 SVEXTERN int SVDECL(nscreeninfo,26);
-#ifdef pp_RENDER360_DEBUG
 SVEXTERN int SVDECL(screenview, 0);
 SVEXTERN int SVDECL(*screenvis,NULL);
-#endif
 SVEXTERN int SVDECL(update_screeninfo, 0);
 SVEXTERN screendata SVDECL(*screeninfo,NULL);
 SVEXTERN int SVDECL(nwidth360,1024), SVDECL(nheight360,512);
@@ -1590,7 +1582,7 @@ SVEXTERN int SVDECL(ntargets,0);
 SVEXTERN int SVDECL(mainwindow_id,0);
 
 SVEXTERN float SVDECL(max_mem_GB,0.0);
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
 SVEXTERN int SVDECL(vismemusage,0);
 #endif
 SVEXTERN int SVDECL(vismemload, 0);
