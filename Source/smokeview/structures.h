@@ -4,6 +4,7 @@
 #if defined(_WIN32)
 #include <windows.h>
 #endif
+#include <options_common.h>
 #include GL_H
 
 #include "stdio_m.h"
