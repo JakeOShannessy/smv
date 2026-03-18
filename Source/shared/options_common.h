@@ -10,6 +10,8 @@
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
 #endif
+//#define pp_VCELLUVW           // add add uvw to menu label for CELL U/V/W vector slice files
+
 
 #ifdef __INTEL_COMPILER
 #define INTEL_COMPILER_ANY
@@ -104,10 +106,16 @@
 #define SVDECL(var,val)  var
 #endif
 
+#ifndef GLUT_H
 #define GLUT_H <GL/glut.h>
 #ifdef pp_OSX
 #undef  GLUT_H
 #define GLUT_H <GLUT/glut.h>
+#endif
+#ifdef pp_FREEGLUT
+#undef  GLUT_H
+#define GLUT_H <GL/freeglut.h>
+#endif
 #endif
 
 #define GL_H <GL/gl.h>

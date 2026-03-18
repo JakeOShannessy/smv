@@ -148,6 +148,19 @@ SVEXTERN int SVDECL(clip_commandline, 0), SVDECL(special_modifier, 0);
 SVEXTERN int SVDECL(update_slicexyz, 0);
 SVEXTERN int SVDECL(update_splitcolorbar, 0);
 SVEXTERN int SVDECL(slice_plot_bound_option, 1);
+
+#ifdef pp_GLUT_DEBUG
+#ifdef INMAIN
+#ifdef _WIN32
+char glut_debug_sep = '\\';
+#else
+char glut_debug_sep = '/';
+#endif
+#else
+SVEXTERN char glut_debug_sep;
+#endif
+#endif
+
 #ifdef INMAIN
 SVEXTERN float geom_bounding_box[6] = {1000000000.0, -1000000000.0,
                                        1000000000.0, -1000000000.0,
@@ -798,10 +811,11 @@ SVEXTERN int SVDECL(ngeominfoptrs,0);
 
 SVEXTERN char startup_lang_code[3];
 
+SVEXTERN int SVDECL(MOTIONnframes,0);
+SVEXTERN float SVDECL(thisMOTIONtime,0.0), SVDECL(lastMOTIONtime,0.0);
 #ifdef pp_GPU
   SVEXTERN float SVDECL(thisGPUtime,0.0), SVDECL(lastGPUtime,0.0);
-  SVEXTERN float SVDECL(thisMOTIONtime,0.0), SVDECL(lastMOTIONtime,0.0);
-  SVEXTERN int SVDECL(GPUnframes,0),SVDECL(MOTIONnframes,0);
+  SVEXTERN int SVDECL(GPUnframes,0);
 #endif
 SVEXTERN int SVDECL(mouse_down,0);
 SVEXTERN int SVDECL(show_volsmoke_moving,1);
@@ -833,7 +847,7 @@ SVEXTERN int SVDECL(show_boundary_outline, 0);
 SVEXTERN int SVDECL(show_boundary_points, 0);
 
 SVEXTERN int SVDECL(show_iso_shaded,1);
-SVEXTERN int SVDECL(show_iso_outline,1);
+SVEXTERN int SVDECL(show_iso_outline,0);
 SVEXTERN int SVDECL(show_iso_points,0);
 
 SVEXTERN int SVDECL(show_faces_shaded, 1);
@@ -954,8 +968,9 @@ SVEXTERN char opengl_version_label[256];
 SVEXTERN int SVDECL(cull_meshes, 1);
 
 SVEXTERN int SVDECL(usevolrender,1);
+SVEXTERN int SVDECL(gpuactive, 0);
 #ifdef pp_GPU
-SVEXTERN int SVDECL(usegpu,0),SVDECL(gpuactive,0);
+SVEXTERN int SVDECL(usegpu, 0);
 SVEXTERN int GPU_skip, GPU_hrrcutoff, GPU_hrr, GPU_global_hrrpuv_max, GPU_global_hrrpuv_cb_min;
 SVEXTERN int GPU_fire_alpha, GPU_firecolor, GPU_force_alpha_opaque, GPU_have_smoke, GPU_smokecolormap;
 SVEXTERN int GPU_have_fire;
@@ -1479,6 +1494,8 @@ SVEXTERN int SVDECL(visTimeIso,1);
 SVEXTERN int SVDECL(vishmsTimelabel,0), SVDECL(visTimebar,1);
 SVEXTERN int SVDECL(visColorbarVertical,1), SVDECL(visColorbarVertical_save,1);
 SVEXTERN int SVDECL(update_visColorbars,0), visColorbarVertical_val, visColorbarHorizontal_val;
+SVEXTERN int SVDECL(update_idle, 0);
+SVEXTERN int SVDECL(update_setmainwindow, 0);
 
 SVEXTERN int SVDECL(visColorbarHorizontal, 0), SVDECL(visColorbarHorizontal_save, 0);
 SVEXTERN int SVDECL(visFullTitle, 1), SVDECL(visFramerate, 0);
@@ -2112,7 +2129,7 @@ SVEXTERN float SVDECL(*plot3dtimelist,NULL);
 SVEXTERN blockagedata SVDECL(*bchighlight,NULL),SVDECL(*bchighlight_old,NULL);
 
 SVEXTERN int SVDECL(buffertype,DOUBLE_BUFFER);
-SVEXTERN int SVDECL(opengldefined,0);
+SVEXTERN int SVDECL(opengl_finalized,0);
 SVEXTERN int SVDECL(restart_time,0);
 SVEXTERN int SVDECL(*isosubmenus,NULL), nisosubmenus;
 SVEXTERN int SVDECL(*loadpatchsubmenus,NULL), nloadpatchsubmenus;

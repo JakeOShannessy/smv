@@ -2178,9 +2178,9 @@ extern "C" void GLUIPartBoundsCPP_CB(int var){
   }
 }
 
-/* ------------------ HavePatchData ------------------------ */
+/* ------------------ HaveAnyPatchData ------------------------ */
 
-int HavePatchData(void){
+int HaveAnyPatchData(void){
   int i;
 
   for(i = 0; i<global_scase.npatchinfo; i++){
@@ -2193,10 +2193,10 @@ int HavePatchData(void){
       case PATCH_STRUCTURED_NODE_CENTER:
       case PATCH_STRUCTURED_CELL_CENTER:
         meshi = global_scase.meshescoll.meshinfo+patchi->blocknumber;
-        if(meshi->patchval==NULL||meshi->cpatchval==NULL)return 0;
+        if(meshi->patchval!=NULL||meshi->cpatchval!=NULL)return 1;
         break;
       case PATCH_GEOMETRY_BOUNDARY:
-        if(patchi->geom_vals==NULL)return 0;
+        if(patchi->geom_vals!=NULL)return 1;
         break;
       case PATCH_GEOMETRY_SLICE:
         break;
@@ -2205,7 +2205,7 @@ int HavePatchData(void){
       break;
     }
   }
-  return 1;
+  return 0;
 }
 
 /* ------------------ patch callback: GLUIPatchBoundsCPP_CB ------------------------ */
@@ -2252,7 +2252,7 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
       break;
     case BOUND_DONTUPDATE_COLORS:
     case BOUND_UPDATE_COLORS:
-      if(HavePatchData()==1){
+      if(HaveAnyPatchData()==1){
         SetLoadedPatchBounds(NULL, 0);
         if(var==BOUND_DONTUPDATE_COLORS){
           UpdateAllBoundaryColors(0);
@@ -2260,9 +2260,6 @@ extern "C" void GLUIPatchBoundsCPP_CB(int var){
         else{
           UpdateAllBoundaryColors(1);
         }
-      }
-      else{
-        GLUIPatchBoundsCPP_CB(BOUND_RELOAD_DATA);
       }
       break;
     case BOUND_RELOAD_DATA:
@@ -5975,7 +5972,7 @@ extern "C" void GLUIPlot3DBoundCB(int var){
   case PLOTISO:
     visiso = 1 - visiso;
     HandleIso();
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case PLOTISOTYPE:
     updatemenu=1;
@@ -5983,7 +5980,7 @@ extern "C" void GLUIPlot3DBoundCB(int var){
   case UPDATEPLOT:
     UpdateRGBColors(colorbar_select_index);
     updatemenu=1;
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case FILETYPE_INDEX:
    p3min_all[list_p3_index_old]=glui_p3min;
@@ -6271,7 +6268,7 @@ extern "C" void GLUIIsoBoundCB(int var){
     sb->dlg_setvalmin = setisomin;
     glui_iso_valmin=iso_valmin;
     EDIT_iso_valmin->set_float_val(glui_iso_valmin);
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
 
   case ISO_SETVALMAX:
@@ -6295,7 +6292,7 @@ extern "C" void GLUIIsoBoundCB(int var){
     sb->dlg_setvalmax = setisomax;
     glui_iso_valmax = iso_valmax;
     EDIT_iso_valmax->set_float_val(glui_iso_valmax);
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case ISO_VALMIN:
     if(setisomin==1){
@@ -6304,7 +6301,7 @@ extern "C" void GLUIIsoBoundCB(int var){
     }
     iso_valmin=glui_iso_valmin;
     sb->dlg_valmin = iso_valmin;
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case ISO_VALMAX:
     if(setisomax==1){
@@ -6313,7 +6310,7 @@ extern "C" void GLUIIsoBoundCB(int var){
     }
     iso_valmax=glui_iso_valmax;
     sb->dlg_valmax = iso_valmax;
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   default:
     assert(FFALSE);

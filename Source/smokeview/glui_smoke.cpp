@@ -110,7 +110,9 @@ GLUI_Checkbox *CHECKBOX_plane_single = NULL;
 GLUI_Checkbox *CHECKBOX_freeze = NULL;
 GLUI_Checkbox *CHECKBOX_combine_meshes = NULL;
 GLUI_Checkbox *CHECKBOX_test_smokesensors = NULL;
+#ifdef pp_GPU
 GLUI_Checkbox *CHECKBOX_smokeGPU = NULL;
+#endif
 GLUI_Checkbox *CHECKBOX_zlib = NULL;
 GLUI_Checkbox **CHECKBOX_meshvisptr = NULL;
 GLUI_Checkbox *CHECKBOX_meshvis = NULL;
@@ -328,6 +330,14 @@ extern "C" void GLUICreateVolTourList(void){
   }
 }
 
+#ifdef pp_OPACITY_SHORTCUTS
+/* ------------------ GLUIUpdateUseOpacityDepth ------------------------ */
+
+extern "C" void GLUIUpdateUseOpacityDepth(void){
+  CHECKBOX_use_opacity_depth->set_int_val(use_opacity_depth);
+}
+#endif
+
 /* ------------------ UpdateCombineMeshes ------------------------ */
 
 void UpdateCombineMeshes(void){
@@ -342,7 +352,7 @@ extern "C" void GLUIUpdateSmoke3dFlags(void){
 #endif
   if(SPINNER_smoke3d_frame_inc!=NULL)SPINNER_smoke3d_frame_inc->set_int_val(smoke3d_frame_inc);
   GLUISmoke3dCB(VOL_SMOKE);
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }
 
 /* ------------------ GLUISmoke3dColorbarCB ------------------------ */
@@ -445,7 +455,7 @@ extern "C" void GLUISmoke3dColorbarCB(int var){
   }
   ForceIdle();
   UpdateSmokeColormap();
-  glutPostRedisplay();
+  GLUTPOSTREDISPLAY;
 }
 
 /* ------------------ GLUI3dSmokeSetup ------------------------ */
@@ -610,7 +620,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   SPINNER_emission_factor = glui_3dsmoke->add_spinner_to_panel(PANEL_fire_opacity, "opacity multiplier:", GLUI_SPINNER_FLOAT, &emission_factor, USE_FIRE_ALPHA, GLUISmoke3dCB);
   glui_3dsmoke->add_checkbox_to_panel(PANEL_fire_opacity, "off axis planes", &smoke_offaxis);
   glui_3dsmoke->add_checkbox_to_panel(PANEL_fire_opacity, "adjust opacities", &smoke_adjust);
-  SPINNER_smoke3d_fire_halfdepth->set_float_limits(0.01, 100.0);
+  SPINNER_smoke3d_fire_halfdepth->set_float_limits(0.001, 1000.0);
   CHECKBOX_force_alpha_opaque = glui_3dsmoke->add_checkbox_to_panel(PANEL_fire_opacity, "force opaque", &force_alpha_opaque, FORCE_ALPHA_OPAQUE, GLUISmoke3dCB);
   GLUISmoke3dCB(USE_OPACITY_DEPTH);
 
@@ -687,7 +697,7 @@ extern "C" void GLUI3dSmokeSetup(int main_window){
   ROLLOUT_skip = glui_3dsmoke->add_rollout_to_panel(ROLLOUT_smoke3d, "Planes", false, SKIP_ROLLOUT, SmokeRolloutCB);
   TOGGLE_ROLLOUT(smokeprocinfo, nsmokeprocinfo, ROLLOUT_skip, SKIP_ROLLOUT, glui_3dsmoke);
 
-  
+
   PANEL_skip_planes = glui_3dsmoke->add_panel_to_panel(ROLLOUT_skip, "skip planes");
   SPINNER_smoke3d_skip   = glui_3dsmoke->add_spinner_to_panel(PANEL_skip_planes, "yz/xz/xy", GLUI_SPINNER_INT, &smoke3d_skip,   SMOKE_SKIP_XYZ, GLUISmoke3dCB);
   SPINNER_smoke3d_skipxy = glui_3dsmoke->add_spinner_to_panel(PANEL_skip_planes, "yz/xz",   GLUI_SPINNER_INT, &smoke3d_skipxy, SMOKE_SKIP_XY,  GLUISmoke3dCB);
@@ -911,7 +921,7 @@ extern "C" void GLUISmoke3dCB(int var){
       SPINNER_emission_factor->set_float_val(emission_factor);
     }
     GLUISmoke3dCB(UPDATE_SMOKEFIRE_COLORS_COMMON);
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case USE_OPACITY_DEPTH_CHECK:
     use_opacity_ini = 0;
@@ -1004,7 +1014,7 @@ extern "C" void GLUISmoke3dCB(int var){
     UpdateCO2Colormap();
     GLUISmoke3dCB(CO2COLORMAP_TYPE);
     GLUISmoke3dCB(UPDATE_SMOKECOLORS);
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
   case LOAD_SMOKEFRAME:
     LoadSmokeFrame(-1, smoke_framenumber);
@@ -1059,7 +1069,9 @@ extern "C" void GLUISmoke3dCB(int var){
   case GPU_VOL_FACTOR:
     break;
   case COMBINE_MESHES:
+#ifdef pp_GPU
     DefineVolsmokeTextures();
+#endif
     break;
   case SHOW_FIRECOLORMAP:
     UpdateSmokeColormap();
@@ -1323,7 +1335,7 @@ extern "C" void GLUISmoke3dCB(int var){
     GLUISmoke3dCB(UPDATE_SMOKEFIRE_COLORS_COMMON);
     break;
   case UPDATE_SMOKEFIRE_COLORS_COMMON:
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     force_redisplay = 1;
     UpdateRGBColors(colorbar_select_index);
     UpdateSmokeColormap();
@@ -1337,7 +1349,7 @@ extern "C" void GLUISmoke3dCB(int var){
       meshi = global_scase.meshescoll.meshinfo + i;
       meshi->update_smoke3dcolors=1;
     }
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     force_redisplay=1;
     UpdateSmokeColormap();
     IdleCB();
@@ -1370,14 +1382,13 @@ extern "C" void GLUISmoke3dCB(int var){
      break;
 #ifdef pp_GPU
   case SMOKE_RTHICK:
-
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     force_redisplay=1;
     IdleCB();
     break;
 #endif
   case VOL_NGRID:
-    glutPostRedisplay();
+    GLUTPOSTREDISPLAY;
     break;
 
   case VOL_SMOKE:
@@ -1386,12 +1397,18 @@ extern "C" void GLUISmoke3dCB(int var){
 
       vr = global_scase.meshescoll.meshinfo->volrenderinfo;
       if(vr!=NULL&&vr->smokeslice!=NULL&&vr->smokeslice->slice_filetype==SLICE_CELL_CENTER){
-        if(usegpu==1&&combine_meshes==1){
+#ifdef pp_GPU
+        if(usegpu == 1 && combine_meshes == 1){
           combine_meshes=0;
           UpdateCombineMeshes();
           GLUISmoke3dCB(COMBINE_MESHES);
         }
+#endif
+#ifdef pp_GPU
         if(usegpu==0&&combine_meshes==0){
+#else
+        if(combine_meshes == 0){
+#endif
           combine_meshes=1;
           UpdateCombineMeshes();
           GLUISmoke3dCB(COMBINE_MESHES);

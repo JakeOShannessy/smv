@@ -1631,11 +1631,30 @@ int ReadLabels(flowlabels *flowlabel, BFILE *stream, char *suffix_label){
   TrimBack(buffer);
   len = strlen(buffer);
   if(suffix_label!=NULL)len_suffix_label = strlen(suffix_label);
+#ifdef pp_VCELLUVW
+  if(flowlabel!=NULL){
+    if(NewMemory((void **)&flowlabel->longlabel, (unsigned int)(len+len_suffix_label+4+len_skip_label+1))==0)return LABEL_ERR;
+    STRCPY(flowlabel->longlabel, buffer);
+    if(suffix_label != NULL && strlen(suffix_label) > 0){
+      int appended = 0;
+
+      if(strcmp(buffer, "CELL U") == 0 || 
+         strcmp(buffer, "CELL V") == 0 || 
+         strcmp(buffer, "CELL W") == 0){
+        if(strcmp(suffix_label, "(cell centered)") == 0){
+          STRCAT(flowlabel->longlabel, "(cell uvw centered)");
+          appended = 1;
+        }
+      }
+      if(appended==0)STRCAT(flowlabel->longlabel, suffix_label);
+    }
+#else
   if(flowlabel!=NULL){
     if(NewMemory((void **)&flowlabel->longlabel, (unsigned int)(len+len_suffix_label+len_skip_label+1))==0)return LABEL_ERR;
     STRCPY(flowlabel->longlabel, buffer);
     if(suffix_label!=NULL&&strlen(suffix_label)>0)STRCAT(flowlabel->longlabel, suffix_label);
   }
+#endif
 
   if(FGETS(buffer2, 255, stream)==NULL){
     strcpy(buffer2, "**");
@@ -2081,7 +2100,7 @@ int IsCommonOption(char *argi){
 
 common_opts ParseCommonOptions(int argc, char **argv){
   int i, no_minus,first_arg=0;
-  common_opts opts = {.hash_option = HASH_SHA1,};
+  common_opts opts = {.hash_option = HASH_SHA256,};
 
   no_minus = 0;
   for(i = 1; i<argc; i++){
@@ -2175,17 +2194,17 @@ void PRINTversion(char *progname, int option){
     FREEMEMORY(hash);
   }
 #ifdef _WIN32
-  PRINTF("Platform         : WIN64 ");
-#ifdef INTEL_COMPILER_ANY
-  PRINTF(" (Intel C/C++)");
-#endif
-  PRINTF("\n");
+  PRINTF("Platform         : WIN64");
 #endif
 #ifdef pp_OSX
-  PRINTF("Platform         : OSX64\n");
+  PRINTF("Platform         : OSX64");
 #endif
 #ifdef __linux__
-  PRINTF("Platform         : LINUX64\n");
+  PRINTF("Platform         : LINUX64");
 #endif
+#ifdef pp_CPUINFO
+  PRINTF("/%s", pp_CPUINFO);
+#endif
+  PRINTF("\n");
   FREEMEMORY(progfullpath);
 }

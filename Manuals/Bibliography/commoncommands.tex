@@ -52,6 +52,10 @@
 \usepackage{upquote}
 \usepackage{moreverb}
 \usepackage{morefloats}
+\usepackage[backend=biber, style=phys, sorting=none, backref=true, giveninits=true, maxbibnames=99]{biblatex}
+\ExecuteBibliographyOptions[report]{doi=true, url=true}
+\renewbibmacro{in:}{}
+\DeclareFieldFormat{titlecase}{#1}
 
 % Smokeview Version String
 \newcommand{\smvversion}{6.6.0}
@@ -67,8 +71,6 @@
 \newcommand{\ct}{\tt\small} % eventually will be deprecated due to http://www.tex.ac.uk/cgi-bin/texfaq2html?label=2letterfontcmd
 \newcommand{\textct}[1]{\texttt{\small #1}}
 
-\usepackage{tocstyle} % Fix table of contents sections from overlapping section titles
-\usetocstyle{standard}
 \usepackage{siunitx}
 \sisetup{
     detect-all = true,
@@ -114,7 +116,6 @@
         citecolor=linkred,     % citation number colors
         linkcolor=linknavy,    % \ref{...} and \pageref{...}
         pdfproducer={pdflatex},
-        pagebackref,
         pdfpagemode=UseNone,
         bookmarksopen=true,
         plainpages=false,
