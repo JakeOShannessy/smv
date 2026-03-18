@@ -381,6 +381,7 @@ void BlockagesHideAll() { BlockageMenu(visBLOCKHide); }
 // TODO: clarify behaviour under isZoneFireModel
 void OutlinesHide() {
   if(global_scase.isZoneFireModel == 0) global_scase.visFrame = 0;
+  outline_mode = SCENE_OUTLINE_HIDDEN;
 }
 
 void SurfacesHideAll() {
