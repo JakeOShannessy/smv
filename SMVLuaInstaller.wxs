@@ -6,7 +6,6 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
     <Package
         Name="Smokeview Lua"
-        Id='Smokeview.Lua'
         Version='$(var.ProductVersion)'
         UpgradeCode="$(var.ProductUpgradeCode)"
         Manufacturer="$(var.Manufacturer)"
