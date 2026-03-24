@@ -2,6 +2,8 @@
 # getdate makefile
 
 SOURCE_DIR = ../../../Source/
+BUILD_DIR = ../../../Build
+LIB_DIR = $(BUILD_DIR)/LIBS
 FILTERC =
 FILTERF =
 
@@ -42,29 +44,47 @@ no_target:
 
 # ********  rules for each platform supported *************
 
-# ------------- intel win 64 ----------------
+# ------------- intel win ----------------
 
-intel_win_64 : CFLAGS    = -Od /nologo $(GITINFO) $(INTEL_COMPINFO)
-intel_win_64 : CC        = $(I_CC)
-intel_win_64 : exe       = getdate_win_64.exe
+intel_win : CFLAGS    = -Od /nologo $(GITINFO) $(INTEL_COMPINFO)
+intel_win : CC        = $(I_CC)
+intel_win : exe       = getdate_win.exe
 
-intel_win_64 : $(objwin)
+intel_win : $(objwin)
 	$(CC) -o $(bin)/$(exe) $(objwin)
 
-# ------------- gnu win 64 ----------------
+# ------------- clang win ----------------
 
-gnu_win_64 : CFLAGS    = -O0 -m64 -D GLEW_STATIC -D MINGW
-gnu_win_64 : CC        = gcc
-gnu_win_64 : exe       = getdate_win_64.exe
+clang_win : CFLAGS    = -m64 -Wno-deprecated-declarations
+clang_win : CC        = clang-cl
+clang_win : exe       = getdate_win.exe
 
-gnu_win_64 : $(obj)
+clang_win : $(objwin)
+	$(CC) -o $(bin)/$(exe) $(objwin)
+
+# ------------- intel linux ----------------
+
+intel_linux : CFLAGS    = -O2 -m64 $(GITINFO) $(INTEL_COMPINFO)
+intel_linux : CC        = $(I_ICC)
+intel_linux : exe       = getdate_linux
+
+intel_linux : $(obj)
 	$(CC) -o $(bin)/$(exe) $(obj)
 
-# ------------- intel linux 64 ----------------
+# ------------- gnu linux ----------------
 
-intel_linux_64 : CFLAGS    = -O2 -m64 $(GITINFO) $(INTEL_COMPINFO)
-intel_linux_64 : CC        = $(I_ICC)
-intel_linux_64 : exe       = getdate_linux_64
+gnu_linux : CFLAGS    = -O2 -m64 $(GITINFO)
+gnu_linux : CC        = gcc
+gnu_linux : exe       = getdate_linux
 
-intel_linux_64 : $(obj)
+gnu_linux : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj)
+
+# ------------- clang linux ----------------
+
+clang_linux : CFLAGS    = -O2 -m64 $(GITINFO)
+clang_linux : CC        = clang
+clang_linux : exe       = getdate_linux
+
+clang_linux : $(obj)
 	$(CC) -o $(bin)/$(exe) $(obj)

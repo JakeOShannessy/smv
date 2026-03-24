@@ -2,6 +2,8 @@
 # fds2fed makefile
 
 SOURCE_DIR = ../../../Source
+BUILD_DIR = ../../../Build
+LIB_DIR = $(BUILD_DIR)/LIBS
 INC_DIR = -I $(SOURCE_DIR)/shared -I $(SOURCE_DIR)/fds2fed
 FILTERC =
 FILTERF =
@@ -25,7 +27,7 @@ GITINFO=-Dpp_GITHASH=\"$(GIT_HASH)\" -Dpp_GITDATE=\""$(GIT_DATE)\""
 
 # Definition of the object variables
 
-csrc = main.c fds2fed.c getdata.c string_util.c dmalloc.c file_util.c sha1.c sha256.c md5.c stdio_buffer.c isobox.c
+csrc = main.c fds2fed.c getdata.c string_util.c dmalloc.c file_util.c sha1.c sha256.c md5.c stdio_buffer.c isobox.c threader.o
 obj = $(csrc:.c=.o)
 
 objwin = $(obj:.o=.obj)
@@ -42,6 +44,13 @@ win_chk     = $(win_c_chk)
 CLANGANALYZE=clang --analyze
 CLANGSUMMARY=../../scripts/clang_summary.sh
 CLANGWINSUMMARY=..\..\scripts\clang_summary.bat
+
+SMV_WIN_LIBDIR = $(LIB_DIR)/intel_win
+SMV_LIBS_WIN = $(SMV_WIN_LIBDIR)\pthreads.lib
+
+SMV_CLANG_LIBDIR = $(LIB_DIR)/clang_win
+SMV_LIBS_CLANG = $(SMV_CLANG_LIBDIR)\pthreads.lib
+
 
 #*** General Purpose Rules ***
 
@@ -83,112 +92,133 @@ win_check : INC_DIR += -I $(SOURCE_DIR)/pthreads
 win_check : $(win_chk)
 	$(CLANGWINSUMMARY) fds2fed.summary
 
-# ------------- intel winx 64 db ----------------
+# ------------- intel win db ----------------
 
-intel_win_64_db : CFLAGS    = /Od /Wall /debug:full /W4 /ZI -I $(SOURCE_DIR)/pthreads -D _CONSOLE -D GLEW_STATIC -D PTW32_STATIC_LIB $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO)
-intel_win_64_db : CC        = $(I_CC)
-intel_win_64_db : exe       = fds2fed_win_64_db.exe
+intel_win_db : CFLAGS    = /Od /Wall /debug:full /W4 /ZI -I $(SOURCE_DIR)/pthreads -D _CONSOLE -D GLEW_STATIC -D PTW32_STATIC_LIB $(SMV_TESTFLAG) $(GITINFO) $(INTEL_COMPINFO)
+intel_win_db : CC        = $(I_CC)
+intel_win_db : exe       = fds2fed_win_db.exe
 
-intel_win_64_db : $(objwin)
-	$(CC) -o $(bin)/$(exe) $(objwin)
+intel_win_db : $(objwin)
+	$(CC) -o $(bin)/$(exe) $(objwin) $(SMV_LIBS_WIN)
 
-# ------------- intel win 64 ----------------
+# ------------- intel win ----------------
 
-intel_win_64 : CFLAGS    = /O2 /nologo -I $(SOURCE_DIR)/pthreads $(GITINFO) $(SMV_TESTFLAG) $(INTEL_COMPINFO)
-intel_win_64 : CC        = $(I_CC)
-intel_win_64 : exe       = fds2fed_win_64.exe
+intel_win : CFLAGS    = /O2 /nologo -D PTW32_STATIC_LIB -I $(SOURCE_DIR)/pthreads $(GITINFO) $(SMV_TESTFLAG) $(INTEL_COMPINFO)
+intel_win : CC        = $(I_CC)
+intel_win : exe       = fds2fed_win.exe
 
-intel_win_64 : $(objwin)
-	$(CC) -o $(bin)/$(exe) $(objwin)
+intel_win : $(objwin)
+	$(CC) -o $(bin)/$(exe) $(objwin) $(SMV_LIBS_WIN)
 
-# ------------- gnu win 64 ----------------
+# ------------- clang win ----------------
 
-gnu_win_64 : CFLAGS    = -O0 -m64 -D GLEW_STATIC -D MINGW $(SMV_TESTFLAG)
-gnu_win_64 : LFLAGS    = -m64
-gnu_win_64 : CC        = gcc
-gnu_win_64 : exe       = fds2fed_win_64.exe
+clang_win : CFLAGS    = -m64 -D PTW32_STATIC_LIB -I $(SOURCE_DIR)/pthreads
+clang_win : LFLAGS    = -m64
+clang_win : CC        = clang-cl
+clang_win : exe       = fds2fed_win.exe
 
-gnu_win_64 : $(obj)
-	$(FC) -o $(bin)/$(exe) $(LFLAGS) $(obj)
+clang_win : $(objwin)
+	$(CC) -o $(bin)/$(exe) $(LFLAGS) $(objwin) $(SMV_LIBS_CLANG)
 
-# ------------- gnu linux 64 ----------------
+# ------------- gnu linux ----------------
 
-gnu_linux_64 : CFLAGS    = -O0 -m64 $(GITINFO) $(GNU_COMPINFO) $(SMV_TESTFLAG)
-gnu_linux_64 : LFLAGS    = -m64 -lm
-gnu_linux_64 : CC        = gcc
-gnu_linux_64 : exe       = fds2fed_linux_64
+clang_linux : CFLAGS    = -O0 -m64 -D PTW32_STATIC_LIB $(GITINFO) $(GNU_COMPINFO) $(SMV_TESTFLAG)
+clang_linux : LFLAGS    = -m64 -lm -lpthread
+clang_linux : CC        = clang
+clang_linux : exe       = fds2fed_linux
 
-gnu_linux_64 : $(obj)
+clang_linux : $(obj)
 	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
 
-# ------------- gnu linux 64 db ----------------
+# ------------- gnu linux db ----------------
 
-gnu_linux_64_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG $(GITINFO) $(GNU_COMPINFO) $(SMV_TESTFLAG)
-gnu_linux_64_db : LFLAGS    = -m64 -lm
-gnu_linux_64_db : CC        = gcc
-gnu_linux_64_db : exe       = fds2fed_linux_64_db
+clang_linux_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D PTW32_STATIC_LIB -D _DEBUG $(GITINFO) $(GNU_COMPINFO) $(SMV_TESTFLAG)
+clang_linux_db : LFLAGS    = -m64 -lm -lpthread
+clang_linux_db : CC        = clang
+clang_linux_db : exe       = fds2fed_linux_db
 
-gnu_linux_64_db : $(obj)
-	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
-
-
-# ------------- gnu osx 64 ----------------
-
-gnu_osx_64 : CFLAGS    = -O0 -m64 $(GITINFO) $(GNU_COMPINFO) $(SMV_TESTFLAG) -Wno-unknown-pragmas
-gnu_osx_64 : LFLAGS    = -m64
-gnu_osx_64 : CC        = gcc
-gnu_osx_64 : exe       = fds2fed_osx_64
-
-gnu_osx_64 : $(obj)
-	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
-
-# ------------- gnu osx 64 db ----------------
-
-gnu_osx_64_db : CFLAGS    = -O0 -m64 -Wall -D _DEBUG -Wno-deprecated-declarations -Wno-write-strings $(GNU_COMPINFO) $(GITINFO) $(SMV_TESTFLAG)
-gnu_osx_64_db : LFLAGS    = -m64
-gnu_osx_64_db : CC        = gcc
-gnu_osx_64_db : exe       = fds2fed_osx_64_db
-
-gnu_osx_64_db : $(obj)
-	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
-
-# ------------- clang osx 64 ----------------
-
-clang_osx_64 : CFLAGS    = -O0 -m64 $(GITINFO) $(GNU_COMPINFO) $(SMV_TESTFLAG) -Wno-unknown-pragmas
-clang_osx_64 : LFLAGS    = -m64
-clang_osx_64 : CC        = clang
-clang_osx_64 : exe       = fds2fed_osx_64
-
-clang_osx_64 : $(obj)
-	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
-
-# ------------- gnu osx 64 db ----------------
-
-clang_osx_64_db : CFLAGS    = -O0 -m64 -Wall -D _DEBUG -Wno-deprecated-declarations -Wno-write-strings $(GNU_COMPINFO) $(GITINFO) $(SMV_TESTFLAG)
-clang_osx_64_db : LFLAGS    = -m64
-clang_osx_64_db : CC        = clang
-clang_osx_64_db : exe       = fds2fed_osx_64_db
-
-clang_osx_64_db : $(obj)
+clang_linux_db : $(obj)
 	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
 
 
-# ------------- intel linux 64 ----------------
+# ------------- gnu linux ----------------
 
-intel_linux_64 : CFLAGS    = -O2 -m64 $(GITINFO) $(INTEL_COMPINFO) $(SMV_TESTFLAG)
-intel_linux_64 : CC        = $(I_ICC)
-intel_linux_64 : exe       = fds2fed_linux_64
+gnu_linux : CFLAGS    = -O0 -m64 $(GITINFO) $(GNU_COMPINFO) $(SMV_TESTFLAG)
+gnu_linux : LFLAGS    = -m64 -lm
+gnu_linux : CC        = gcc
+gnu_linux : exe       = fds2fed_linux
 
-intel_linux_64 : $(obj)
+gnu_linux : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+# ------------- gnu linux db ----------------
+
+gnu_linux_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG $(GITINFO) $(GNU_COMPINFO) $(SMV_TESTFLAG)
+gnu_linux_db : LFLAGS    = -m64 -lm
+gnu_linux_db : CC        = gcc
+gnu_linux_db : exe       = fds2fed_linux_db
+
+gnu_linux_db : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+
+# ------------- gnu osx ----------------
+
+gnu_osx : CFLAGS    = -O0 -m64 $(GITINFO) $(GNU_COMPINFO) $(SMV_TESTFLAG) -Wno-unknown-pragmas
+gnu_osx : LFLAGS    = -m64
+gnu_osx : CC        = gcc
+gnu_osx : exe       = fds2fed_osx
+
+gnu_osx : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+# ------------- gnu osx db ----------------
+
+gnu_osx_db : CFLAGS    = -O0 -m64 -Wall -D _DEBUG -Wno-deprecated-declarations -Wno-write-strings $(GNU_COMPINFO) $(GITINFO) $(SMV_TESTFLAG)
+gnu_osx_db : LFLAGS    = -m64
+gnu_osx_db : CC        = gcc
+gnu_osx_db : exe       = fds2fed_osx_db
+
+gnu_osx_db : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+# ------------- clang osx ----------------
+
+clang_osx : CFLAGS    = -O0 -m64 $(GITINFO) $(GNU_COMPINFO) $(SMV_TESTFLAG) -Wno-unknown-pragmas
+clang_osx : LFLAGS    = -m64
+clang_osx : CC        = clang
+clang_osx : exe       = fds2fed_osx
+
+clang_osx : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+# ------------- gnu osx db ----------------
+
+clang_osx_db : CFLAGS    = -O0 -m64 -Wall -D _DEBUG -Wno-deprecated-declarations -Wno-write-strings $(GNU_COMPINFO) $(GITINFO) $(SMV_TESTFLAG)
+clang_osx_db : LFLAGS    = -m64
+clang_osx_db : CC        = clang
+clang_osx_db : exe       = fds2fed_osx_db
+
+clang_osx_db : $(obj)
+	$(CC) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+
+# ------------- intel linux ----------------
+
+intel_linux : CFLAGS    = -O2 -m64 $(GITINFO) $(INTEL_COMPINFO) $(SMV_TESTFLAG)
+intel_linux : CC        = $(I_ICC)
+intel_linux : exe       = fds2fed_linux
+
+intel_linux : $(obj)
 	$(CC) -o $(bin)/$(exe) -static-intel $(obj)
 
-# ------------- intel linux 64 db ----------------
+# ------------- intel linux db ----------------
 
-intel_linux_64_db : CFLAGS    = -O0 -m64 -g -check=stack,uninit -fp-stack-check -fp-trap-all=divzero,invalid,overflow -ftrapuv -Wuninitialized -Wunused-function -Wunused-variable $(GITINFO) $(INTEL_COMPINFO) $(SMV_TESTFLAG)
-intel_linux_64_db : CC        = $(I_ICC)
-intel_linux_64_db : exe       = fds2fed_linux_64_db
+intel_linux_db : CFLAGS    = -O0 -m64 -g -check=stack,uninit -fp-stack-check -fp-trap-all=divzero,invalid,overflow -ftrapuv -Wuninitialized -Wunused-function -Wunused-variable $(GITINFO) $(INTEL_COMPINFO) $(SMV_TESTFLAG)
+intel_linux_db : CC        = $(I_ICC)
+intel_linux_db : exe       = fds2fed_linux_db
 
-intel_linux_64_db : $(obj)
+intel_linux_db : $(obj)
 	$(CC) -o $(bin)/$(exe) -static-intel $(obj)
 
 

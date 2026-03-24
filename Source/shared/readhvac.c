@@ -654,6 +654,8 @@ int ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
 
   ducttimes = hvaccoll->hvacductvalsinfo->times;
   nodetimes = hvaccoll->hvacnodevalsinfo->times;
+  max_node_buffer = 100;
+  NewMemory((void **)&node_buffer, max_node_buffer * sizeof(float));
   for(iframe = 0; iframe < nframes; iframe++) {
     int j;
     float time;
@@ -665,8 +667,8 @@ int ReadHVACData0(hvacdatacollection *hvaccoll, int flag,
     nodetimes[iframe] = time;
     if(n_node_vars > max_node_buffer) {
       FREEMEMORY(node_buffer);
-      NewMemory((void **)&node_buffer, (n_node_vars + 100) * sizeof(float));
       max_node_buffer = n_node_vars + 100;
+      NewMemory((void **)&node_buffer, max_node_buffer * sizeof(float));
     }
     for(j = 0; j < n_nodes; j++) {
       int k;
@@ -804,7 +806,7 @@ int ParseHVACEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream,
     connect_id = strtok(NULL, "%");
     nodei->node_name = GetCharPtr(node_label);
     network_label = TrimFrontBack(network_label);
-    if(strcmp(network_label, "null") == 0) {
+    if(strcmp(network_label, "null") == 0 || strlen(network_label)==0){
       nodei->network_name = GetCharPtr("Unassigned");
     }
     else {
@@ -871,7 +873,7 @@ int ParseHVACEntry(hvacdatacollection *hvaccoll, bufferstreamdata *stream,
     connect_id = strtok(NULL, "%");
     ducti->duct_name = GetCharPtr(duct_label);
     network_label = TrimFrontBack(network_label);
-    if(strcmp(network_label, "null") == 0) {
+    if(strcmp(network_label, "null")==0 || strlen(network_label)==0){
       ducti->network_name = GetCharPtr("Unassigned");
     }
     else {

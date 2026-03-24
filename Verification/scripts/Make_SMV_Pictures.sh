@@ -131,8 +131,9 @@ use_installed=
 RUN_SMV=1
 RUN_WUI=1
 QUEUE=batch
+CPUS_PER_TASK=
 
-while getopts 'Cdghij:q:tWY' OPTION
+while getopts 'Cdghij:q:tT:WY' OPTION
 do
 case $OPTION  in
   C)
@@ -156,6 +157,9 @@ case $OPTION  in
   t)
    TEST=_test
   ;;
+  T)
+   CPUS_PER_TASK="-T $OPTARG" 
+   ;;
   W)
    RUN_SMV=0
    RUN_WUI=1
@@ -172,8 +176,8 @@ if [ "$JOBPREFIX" == "" ]; then
   JOBPREFIX=SMV_
 fi
 
-VERSION=$PLATFORM${TEST}_64$DEBUG
-VERSION2=${PLATFORM}_64
+VERSION=$PLATFORM${TEST}$DEBUG
+VERSION2=${PLATFORM}
 CURDIR=`pwd`
 cd ../../..
 export GITROOT=`pwd`
@@ -229,7 +233,7 @@ echo
 if [ "$QUEUE" == "none" ]; then
   RUNSMV="$GITROOT/smv/Utilities/Scripts/runsmv.sh"
 else
-  RUNSMV="$GITROOT/smv/Utilities/Scripts/qsmv.sh -j $JOBPREFIX $use_installed -q $QUEUE"
+  RUNSMV="$GITROOT/smv/Utilities/Scripts/qsmv.sh $CPUS_PER_TASK -j $JOBPREFIX $use_installed -q $QUEUE"
 fi
 export QFDS=$RUNSMV
 export RUNCFAST=$RUNSMV
@@ -261,37 +265,60 @@ if [ "$RUN_SMV" == "1" ]; then
 
 # precompute FED slices
   cd $GITROOT/smv/Verification/Visualization
-  $FDS2FED plume5c
-  $FDS2FED plume5cdelta
-  $FDS2FED thouse5
-  $FDS2FED thouse5delta
-  $FDS2FED fed_test
+  $FDS2FED plume5c            &
+  pid_feda=$1
+  $FDS2FED plume5cdelta       &
+  pid_fedb=$1
+  $FDS2FED thouse5            &
+  pid_fedc=$1
+  $FDS2FED thouse5delta       &
+  pid_fedd=$1
+  $FDS2FED fed_test           &
+  pid_fede=$1
 
 # compute isosurface from particles
 
   cd $GITROOT/smv/Verification/Visualization
   echo Compressing sphere_propanec case
-  $SMOKEZIP -f sphere_propanec
+  $SMOKEZIP -f sphere_propanec &
+  pid_casea=$!
 
 # compute isosurface from particles
 
   cd $GITROOT/smv/Verification/Visualization
   echo Converting particles to isosurfaces in case plumeiso
-  $SMOKEZIP -f -part2iso plumeiso
+  $SMOKEZIP -f -part2iso plumeiso &
+  pid_caseb=$!
 
   cd $GITROOT/smv/Verification/WUI
-  echo Converting particles to isosurfaces in case pine_tree
   if  [ -e pine_tree.smv ]; then
-    $SMOKEZIP -f -part2iso pine_tree
+    echo Converting particles to isosurfaces in case pine_tree
+    $SMOKEZIP -f -part2iso pine_tree &
+    pid_casec=$!
   fi
 
 # difference plume5c and thouse5
 
   cd $GITROOT/smv/Verification/Visualization
+
   echo Differencing cases plume5c and plume5cdelta
-  $SMOKEDIFF -w -r plume5c plume5cdelta
+  $SMOKEDIFF -w -r plume5c plume5cdelta &
+  pid_cased=$!
   echo Differencing cases thouse5 and thouse5delta
-  $SMOKEDIFF -w -r thouse5 thouse5delta
+  $SMOKEDIFF -w -r thouse5 thouse5delta &
+  pid_cased=$!
+
+  wait $pid_feda
+  wait $pid_fedb
+  wait $pid_fedc
+  wait $pid_fedd
+  wait $pid_fede
+  wait $pid_casea
+  wait $pid_caseb
+  if  [ -e $GITROOT/smv/Verification/WUI/pine_tree.smv ]; then
+    wait $pid_casec
+  fi
+  wait $pid_cased
 
   echo Generating images
 

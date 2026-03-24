@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <stdbool.h>
 
 #include "smokeviewvars.h"
 
@@ -92,16 +93,19 @@ void MakeMovie(void){
 
   if(render_status == RENDER_ON)return;
 
-  if(render_filetype==JPEG){
-    strcpy(image_ext, ".jpg");
-  }
-  else if(render_filetype == GIF){
-    strcpy(image_ext, ".gif");
-  }
-  else{
+  switch(render_filetype){
+  case PNG:
     strcpy(image_ext, ".png");
+    break;
+  case JPEG:
+    strcpy(image_ext, ".jpg");
+    break;
+  case RGIF:
+    strcpy(image_ext, ".gif");
+    break;
+  default:
+    assert(FFALSE);
   }
-
 // construct full pathname of movie
 
   GetMovieFilePath(moviefile_path);
@@ -119,10 +123,15 @@ void MakeMovie(void){
     }
   }
 
-  if(make_movie_now==1||output_ffmpeg_command==1){
+  if(movie_filetype == MGIF){
+    void RenderCB(int var);
+    RenderCB(RENDER_START_GIF);
+  }
+  if(movie_filetype !=MGIF&&(make_movie_now==1||output_ffmpeg_command==1)){
     char power_label[100];
 // construct name of frames used to make movie
 
+    making_movie = 1;
     strcpy(movie_frames, render_file_base);
     strcat(movie_frames,"_%04d");
     strcat(movie_frames, image_ext);
@@ -164,11 +173,10 @@ void MakeMovie(void){
       output_ffmpeg_command=0;
     }
     if(make_movie_now==1)system(command_line);
+    making_movie = 0;
   }
 
 // enable movie making button
-
-  EnableDisableMakeMovie(ON);
   EnableDisablePlayMovie();
 }
 
@@ -397,7 +405,7 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
   case JPEG:
     renderfile_ext = ext_jpg;
     break;
-  case GIF:
+  case RGIF:
     renderfile_ext = ext_gif;
     break;
   default:
@@ -496,9 +504,73 @@ void OutputSliceData(void){
   }
 }
 
-static gdImagePtr im = NULL;
-static gdImagePtr prev = NULL;
+struct gif_spec_frame {
+  /// @brief The frame number to render.
+  int frame_number;
+  /// @brief Duration of the frame in hundredths of a second.
+  int duration;
+};
+
+struct gif_spec {
+  /// @brief The current capacity of the \ref gif_frames buffer (the capacity).
+  size_t capacity;
+  /// @brief The number of specified frames in the \ref gif_frames buffer (the
+  /// length).
+  size_t n_frames;
+  /// @brief A buffer holding the frame number and duration of each frame.
+  struct gif_spec_frame *gif_frames;
+};
+
+/// @brief The animated GIF file that is currently being created. NULL if there
+/// is no animated GIF creation in process.
 static FILE *out = NULL;
+/// @brief The current animated GIF frame specification. This sets out which
+/// frames are to be rendered, in which order and the duration of each frame.
+/// This is optional, if it is set to NULL all frames will be rendered using the
+/// framerate set by the GUI.
+static struct gif_spec *current_gif_spec = NULL;
+/// @brief The current GIF frame being rendered. This is an offset into the
+/// frames of the GIF frame specification.
+static size_t current_gif_frame = 0;
+
+/* -------------------------- GifSpec_Clear --------------------------------- */
+
+/// @brief Clear the animated GIF frame specification if one exists. Does
+/// nothing if there is no current frame specification.
+void GifSpec_Clear() {
+  if(current_gif_spec != NULL) {
+    if(current_gif_spec->gif_frames != NULL)
+      FREEMEMORY(current_gif_spec->gif_frames);
+    FREEMEMORY(current_gif_spec);
+  }
+  current_gif_frame = 0;
+}
+
+/* -------------------------- GifSpec_PushFrame ----------------------------- */
+
+/// @brief Set the frame specification to be used for animated GIFs. Will clear
+/// the current GIF specification if one already exists.
+/// @param gfs A pointer to a gif_frame spec. This must be allocated with
+/// NEWMEMORY. This pointer will be kept and later needs to be freed by calling
+/// GifSpec_Clear.
+void GifSpec_PushFrame(int frame_number, int duration) {
+  if(current_gif_spec == NULL) {
+    NEWMEMORY(current_gif_spec, sizeof(struct gif_spec));
+    current_gif_spec->n_frames = 0;
+    current_gif_spec->capacity = 2;
+    NEWMEMORY(current_gif_spec->gif_frames,
+              current_gif_spec->capacity * sizeof(struct gif_spec_frame));
+  }
+  if(current_gif_spec->n_frames >= current_gif_spec->capacity) {
+    current_gif_spec->capacity *= 2;
+    RESIZEMEMORY(current_gif_spec->gif_frames,
+                 current_gif_spec->capacity * sizeof(struct gif_spec_frame));
+  }
+  current_gif_spec->gif_frames[current_gif_spec->n_frames].frame_number =
+      frame_number;
+  current_gif_spec->gif_frames[current_gif_spec->n_frames].duration = duration;
+  current_gif_spec->n_frames++;
+}
 
 /* ------------------------------- GifStart --------------------------------- */
 
@@ -510,8 +582,8 @@ int GifStart(const char *path) {
   GLsizei width = screenWidth;
   GLsizei height = screenHeight;
 
-  prev = NULL;
-  im = gdImageCreate(width, height);
+  making_movie = 1;
+  gdImagePtr im = gdImageCreate(width, height);
   if(!im) {
     fprintf(stderr, "can't create image");
     return 1;
@@ -525,6 +597,7 @@ int GifStart(const char *path) {
 
   gdImageColorAllocate(im, 255, 255, 255); /* allocate white as side effect */
   gdImageGifAnimBegin(im, out, 1, 0);
+  gdImageDestroy(im);
   return 0;
 }
 
@@ -536,8 +609,7 @@ int GifStart(const char *path) {
 int GifEnd() {
   gdImageGifAnimEnd(out);
   fclose(out);
-  im = NULL;
-  prev = NULL;
+  making_movie = 0;
   return 0;
 }
 
@@ -550,10 +622,10 @@ int GifEnd() {
 int GifAddFrame(int delay) {
   GLsizei width = screenWidth;
   GLsizei height = screenHeight;
-  gdImagePtr im;
   GLubyte *OpenGLimage;
+
   NewMemory((void **)&OpenGLimage, width * height * sizeof(GLubyte) * 3);
-  im = gdImageCreate(width, height);
+  gdImagePtr im = gdImageCreate(width, height);
   gdImageColorAllocate(im, 255, 255, 255);
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, OpenGLimage);
@@ -568,12 +640,44 @@ int GifAddFrame(int delay) {
       gdImageSetPixel(im, j, i, col);
     }
   }
-  gdImageGifAnimAdd(im, out, 1, 0, 0, delay, gdDisposalNone, prev);
-  if(prev) {
-    gdImageDestroy(prev);
-  }
-  prev = im;
+  gdImageGifAnimAdd(im, out, 1, 0, 0, delay, gdDisposalNone, NULL);
   FREEMEMORY(OpenGLimage);
+  return 0;
+}
+
+/* ----------------------------- GifAddFrameSpec ---------------------------- */
+
+/// @brief Add a frame to the current animated GIF (which must have been started
+/// with \ref GifStart). This will examine the current options and or
+/// specification to determine whether a frame should be rendered and for how
+/// long.
+/// @return zero on success, non-zero on failure
+int GifAddFrameSpec() {
+  // Should add the current frame? True by default.
+  bool render = true;
+  // How long should this frame be? Set the default based on framerate.
+  int delay = 100 / movie_framerate;
+  if(current_gif_spec != NULL) {
+    // If we've gone beyond the current frame spec, we don't need to render
+    if(current_gif_frame >= current_gif_spec->n_frames) {
+      render = false;
+    }
+    else {
+      struct gif_spec_frame this_frame =
+          current_gif_spec->gif_frames[current_gif_frame];
+      if(this_frame.frame_number == itimes) {
+        render = true;
+        delay = this_frame.duration;
+        current_gif_frame++;
+      }
+      else {
+        render = false;
+      }
+    }
+  }
+  if(render) {
+    GifAddFrame(delay);
+  }
   return 0;
 }
 
@@ -643,7 +747,11 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
   int clip_left_hat, clip_right_hat, clip_bottom_hat, clip_top_hat;
   int width_hat, height_hat;
 
-  if(render_filetype!=PNG&&render_filetype!=JPEG&&render_filetype!=GIF)render_filetype=PNG;
+  if(
+    render_filetype!=PNG&&
+    render_filetype!=JPEG&&
+    render_filetype!=RGIF
+    )render_filetype=PNG;
 
   if(GetRenderFileName(VIEW_CENTER, renderfile_dir, renderfile)!=0)return 1;
 
@@ -728,12 +836,12 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
             }
           }
 
-          char infobuffer[100];
+          char infobuffer[512];
           int ninfobuffer;
           int skip=3, channel=2;
           char fds_label[256], smv_label[256];
 
-          strcpy(fds_label, global_scase.fds_githash);
+          strcpy(fds_label, global_scase.fds_version);
           if(strcmp(fds_label, "unknown") == 0){
             if(global_scase.nzoneinfo == 0){
               strcpy(fds_label, "FDS revision: unknown");
@@ -789,7 +897,7 @@ int MergeRenderScreenBuffers(int nfactor, GLubyte **screenbuffers){
   case JPEG:
     gdImageJpeg(RENDERimage,RENDERfile,-1);
     break;
-  case GIF:
+  case RGIF:
     gdImageGif(RENDERimage, RENDERfile);
     break;
   default:
@@ -915,7 +1023,6 @@ unsigned int GetScreenMap360LR(int side, float *xyz){
   return (unsigned int)(((ibuff + 1) << 24) | index);
 }
 
-#ifdef pp_RENDER360_DEBUG
 /* ------------------ DrawScreenInfo ------------------------ */
 
 void DrawScreenInfo(void){
@@ -964,7 +1071,6 @@ void DrawScreenInfo(void){
   glEnd();
   glPopMatrix();
 }
-#endif
 
 /* ------------------ SetupScreeninfo ------------------------ */
 
@@ -1136,7 +1242,10 @@ int MergeRenderScreenBuffers360(void){
   int i, j, ijk360;
   int *screenbuffer360;
 
-  if(render_filetype!=PNG&&render_filetype!=JPEG&&render_filetype!=GIF)render_filetype=PNG;
+  if(
+    render_filetype!=PNG&&
+    render_filetype!=JPEG&&
+    render_filetype!=RGIF)render_filetype=PNG;
 
   if(GetRenderFileName(VIEW_CENTER, renderfile_dir, renderfile)!=0)return 1;
 
@@ -1195,7 +1304,6 @@ int MergeRenderScreenBuffers360(void){
 #define AVG2(f,p0,p1) ((1.0-f)*(float)(p0) + (f)*(float)(p1))
 #define AVG4(fx,fy,p00,p01,p10,p11) ((1.0-fy)*AVG2(fx,p00,p10)+(fy)*AVG2(fx,p01,p11))
 
-#ifdef pp_RENDER360_DEBUG
       if(debug_360==1&&(j%debug_360_skip_y==0||i%debug_360_skip_x==0)){
         rgb_local = 128<<8|128;
       }
@@ -1209,16 +1317,6 @@ int MergeRenderScreenBuffers360(void){
         b = AVG4(fx,fy,p00[2],p01[2],p10[2],p11[2]);
         rgb_local = (r<<16)|(g<<8)|b;
       }
-#else
-      p00  = screeni->screenbuffer+3*(iy*screeni->nwidth + ix);
-      p01  = screeni->screenbuffer+3*(iy*screeni->nwidth + ix2);
-      p10  = screeni->screenbuffer+3*(iy2*screeni->nwidth + ix);
-      p11  = screeni->screenbuffer+3*(iy2*screeni->nwidth + ix2);
-      r = AVG4(fx,fy,p00[0],p01[0],p10[0],p11[0]);
-      g = AVG4(fx,fy,p00[1],p01[1],p10[1],p11[1]);
-      b = AVG4(fx,fy,p00[2],p01[2],p10[2],p11[2]);
-      rgb_local = (r<<16)|(g<<8)|b;
-#endif
       screenbuffer360[ijk360]=rgb_local;
       ijk360++;
     }
@@ -1240,7 +1338,7 @@ int MergeRenderScreenBuffers360(void){
   case JPEG:
     gdImageJpeg(RENDERimage, RENDERfile, -1);
     break;
-  case GIF:
+  case RGIF:
     gdImageGif(RENDERimage, RENDERfile);
     break;
   default:
@@ -1373,7 +1471,7 @@ int SmokeviewImage2File(char *directory, char *RENDERfilename, int rendertype, i
   case JPEG:
     gdImageJpeg(RENDERimage,RENDERfile,-1);
     break;
-  case GIF:
+  case RGIF:
     gdImageGif(RENDERimage, RENDERfile);
     break;
   default:

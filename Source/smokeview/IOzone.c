@@ -11,6 +11,7 @@
 #include "glui_bounds.h"
 #include "IOobjects.h"
 #include "getdata.h"
+#include "readslice.h"
 
 /* ------------------ GetZoneSizeCSV ------------------------ */
 
@@ -992,7 +993,7 @@ void ReadZone(int ifile, int flag, int *errorcode){
   }
   CheckMemory;
 
-  PRINTF("Loading zone data: %s\n",file);
+  PRINTF("\nLoading zone data: %s\n",file);
 
   ntotal_rooms = global_scase.nrooms*nzone_times;
   nzonetotal=ntotal_rooms;

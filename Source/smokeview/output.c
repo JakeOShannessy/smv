@@ -216,7 +216,7 @@ int GetStringWidth(char *string){
       length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_10, *c);
     }
     length *= (288.0 / 235.0);
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale == 1){
       length *= 2;
     }
@@ -227,7 +227,7 @@ int GetStringWidth(char *string){
       length += glutBitmapWidth(GLUT_BITMAP_HELVETICA_18, *c);
     }
     length *= (416.0 / 423.0);
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale == 1){
       length *= 2;
     }
@@ -280,6 +280,8 @@ void Output3TextRight(float *color, float x, float y, float z, char *string, flo
     }
   }
 }
+
+/* ------------------ ScaleFont2D ------------------------ */
 
 void ScaleFont2D(void){
   if(render_mode == RENDER_360){
@@ -439,8 +441,6 @@ void DrawLabels(labels_collection *labelscoll_arg){
   }
   glPopMatrix();
 }
-
-/* ----------------------- ScaleFont2D ----------------------------- */
 
 /* ----------------------- ScaleFont3D ----------------------------- */
 

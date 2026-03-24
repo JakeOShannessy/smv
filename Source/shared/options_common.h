@@ -10,10 +10,8 @@
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
 #endif
-#ifndef _DEBUG
-// md5, sha1 and sha255 hashing
-#define pp_HASH
-#endif
+//#define pp_VCELLUVW           // add add uvw to menu label for CELL U/V/W vector slice files
+
 
 #ifdef __INTEL_COMPILER
 #define INTEL_COMPILER_ANY
@@ -40,19 +38,14 @@
 #endif
 #endif
 
-#ifdef pp_BETA
-#define PROGVERSION "Test"
-#else
-#define PROGVERSION ""
-#endif
-
-
 // Microsofts MSVC has timespec defined
 #ifdef _MSC_VER
 #ifndef HAVE_STRUCT_TIMESPEC
 #define HAVE_STRUCT_TIMESPEC
 #endif
 #endif
+
+//#define pp_UNICODE_PATHS
 
 //*** options: windows
 
@@ -86,17 +79,10 @@
 //#define pp_MEMPRINT     // output memory allocation info
 #define pp_MEMDEBUG     // comment this line when debugging REALLY large cases (to avoid memory checks)
 #endif
-#ifdef pp_MEMDEBUG
-#define pp_memusage
-#endif
 
 //*** hash output
 
-#ifdef pp_HASH
 #define PRINTVERSION(a,opts) PRINTversion(a,(opts)->hash_option)
-#else
-#define PRINTVERSION(a,opts) PRINTversion(a)
-#endif
 
 #define FILE_SIZE unsigned long long
 
@@ -116,10 +102,16 @@
 #define SVDECL(var,val)  var
 #endif
 
+#ifndef GLUT_H
 #define GLUT_H <GL/glut.h>
 #ifdef pp_OSX
 #undef  GLUT_H
 #define GLUT_H <GLUT/glut.h>
+#endif
+#ifdef pp_FREEGLUT
+#undef  GLUT_H
+#define GLUT_H <GL/freeglut.h>
+#endif
 #endif
 
 #define GL_H <GL/gl.h>
@@ -158,6 +150,44 @@
 #define PRINT_CUM_TIMER(timer, label) PrintTime(__FILE__, __LINE__, &timer, label, 0)
 #endif
 
+// Define a NORETURN macro that marks a function as never returning. This is
+// needed to mark that SMV_EXIT never returns, otherwise tools like clang-tidy
+// would find spurious issues.
+#ifndef noreturn
+#  if (__STDC_VERSION__ >= 201112L) && !defined(_WIN32)
+     // C11 provides a standard 'noreturn' macro that can be used. Conflicts
+     // means this doesn't work well on windows
+#    include <stdnoreturn.h>
+#    define NORETURN noreturn
+#  elif defined(_WIN32)
+     // noreturn as defined on windows
+#    define NORETURN _declspec(noreturn)
+#  else
+     // noreturn as defined on other platforms
+#    define NORETURN __attribute__((noreturn))
+#  endif
+#endif
+
 #include "lint.h"
+
+#define pp_GPU              // support the GPU
+#define pp_THREAD           // turn on multi-threading
+
+//*** options: windows
+
+#ifdef WIN32
+#ifdef pp_GPU
+#define pp_WINGPU           // only draw 3d slices with the GPU on windows
+#endif
+#endif
+
+//*** options: OSX
+
+#ifdef pp_OSX
+#define pp_SMOKE3D_FORCE        // always have at least one smoke3d entry to prevent crash when unloading slices
+#ifndef GL_SILENCE_DEPRECATION
+#define GL_SILENCE_DEPRECATION
+#endif
+#endif
 
 #endif

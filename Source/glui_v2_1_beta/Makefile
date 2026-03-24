@@ -4,14 +4,18 @@ COMPILER=icx
 COMPILER2=icx
 CC=${COMPILER}
 CPP=${COMPILER2}
+LIB=lib
 
 ifeq ($(GLUT),freeglut)
-  INCS = -I ../freeglut3.0.0/include
-  NOCLOSE=-D FREEGLUT_STATIC
+  INCS += -I ../../../libs/freeglut/include
+  NOCLOSE=-D FREEGLUT_STATIC -D pp_FREEGLUT
 else
   INCS = -I ../glui_gl
   NOCLOSE=-D pp_NOCLOSE
 endif
+NOCLOSE += -D GL_SILENCE_DEPRECATION
+
+CFLAGS=-D_CRT_SECURE_NO_WARNINGS -Wno-deprecated-declarations -Wdeprecated-declarations
 
 .c.obj:
 	$(CC)  $(CFLAGS) $(INCS) $(FILTERC) -c $<
@@ -36,23 +40,27 @@ default: CFLAGS=-m64 $(INCS) $(PLATFORM) $(NOCLOSE) $(CFLAGOPT)
 default: $(GLUI_OBJS)
 	ar rcs libglui.a $(GLUI_OBJS)
 
-intel_linux_64: CPP_STANDARD = -std=c++11 -stdlib=libc++
-intel_linux_64: CFLAGS=-m64 $(INCS) $(PLATFORM) $(NOCLOSE) $(CFLAGOPT) -fpermissive
-intel_linux_64: $(GLUI_OBJS)
+intel_linux: CPP_STANDARD = -std=c++11 -stdlib=libc++
+intel_linux: CFLAGS=-m64 $(INCS) $(PLATFORM) $(NOCLOSE) $(CFLAGOPT) -fpermissive
+intel_linux: $(GLUI_OBJS)
 	ar rcs libglui.a $(GLUI_OBJS)
 
-intel_osx_64: CFLAGS=-m64 -stdlib=libc++ $(NOCLOSE) -fpermissive
-intel_osx_64: $(GLUI_OBJS)
+intel_osx: CFLAGS=-m64 -stdlib=libc++ $(NOCLOSE) -fpermissive
+intel_osx: $(GLUI_OBJS)
 	ar rcs libglui.a $(GLUI_OBJS)
 
-gnu_osx_64: CFLAGS=-m64 $(NOCLOSE) -fpermissive
-gnu_osx_64: $(GLUI_OBJS)
+gnu_osx: CFLAGS=-m64 $(NOCLOSE) -fpermissive
+gnu_osx: $(GLUI_OBJS)
 	ar rcs libglui.a $(GLUI_OBJS)
 
-intel_win_64: CFLAGS= $(NOCLOSE) /Wno-unused_parameter
-intel_win_64 : $(GLUI_OBJSWIN)
-	lib $(GLUI_OBJSWIN) -OUT:libglui.lib
+intel_win: CFLAGS+= $(NOCLOSE) -DNDEBUG -U_DEBUG
+intel_win : $(GLUI_OBJSWIN)
+	$(LIB) $(GLUI_OBJSWIN) -OUT:libglui.lib
 
-gnu_win_64: CFLAGS=$(NOCLOSE) $(INCS) -fpermissive -Wno-write-strings -Wno-int-to-pointer-cast
-gnu_win_64: $(GLUI_OBJS)
+clang_win: CFLAGS= $(NOCLOSE)  -DNDEBUG -U_DEBUG
+clang_win : $(GLUI_OBJSWIN)
+	$(LIB) $(GLUI_OBJSWIN) -OUT:libglui.lib
+
+gnu_win: CFLAGS=$(NOCLOSE) $(INCS) -fpermissive -Wno-write-strings -Wno-int-to-pointer-cast
+gnu_win: $(GLUI_OBJS)
 	ar rcs libglui.a $(GLUI_OBJS)

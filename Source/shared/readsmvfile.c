@@ -4,7 +4,7 @@
 #define _GNU_SOURCE
 #endif
 
-#include "options.h"
+#include "options_common.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -3994,7 +3994,6 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
   sd->cell_center = cellcenter;
   if(slicegeom==1&&cell_center_flag==1)sd->cell_center = 1;
  // sd->file_size = 0;
-  sd->nframes = 0;
   sd->reg_file = NULL;
   sd->comp_file = NULL;
   sd->vol_file = NULL;
@@ -4356,17 +4355,19 @@ blockagedata *GetBlockagePtr(smv_case *scase, float *xyz){
 
 /* ------------------ ReadSMVOrig ------------------------ */
 
-void ReadSMVOrig(smv_case *scase){
+void ReadSMVOrig(smv_case *scase, char *smvfile){
   FILE *stream=NULL;
+  char *smv_orig_filename;
 
-  char *smv_orig_filename = CasePathSmvOrig(scase);
+  smv_orig_filename = smvfile;
+  if(smv_orig_filename==NULL)smv_orig_filename = CasePathSmvOrig(scase);
   stream = FOPEN(smv_orig_filename, "r");
   if(stream == NULL) {
-    FREEMEMORY(smv_orig_filename);
+    if(smvfile==NULL)FREEMEMORY(smv_orig_filename);
     return;
   }
   PRINTF("reading  %s\n", smv_orig_filename);
-  FREEMEMORY(smv_orig_filename);
+  if(smvfile==NULL)FREEMEMORY(smv_orig_filename);
 
   for(;;){
     char buffer[255];
@@ -5182,15 +5183,11 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       lenbuffer = strlen(buffptr);
       if(lenbuffer>0){
         NewMemory((void **)&scase->fds_version,lenbuffer+1);
-        NewMemory((void **)&scase->fds_githash, lenbuffer+1);
         strcpy(scase->fds_version,buffer);
-        strcpy(scase->fds_githash, buffer);
       }
       else{
         NewMemory((void **)&scase->fds_version,7+1);
-        NewMemory((void **)&scase->fds_githash, 7+1);
         strcpy(scase->fds_version,"unknown");
-        strcpy(scase->fds_githash, "unknown");
       }
       continue;
     }
@@ -5417,10 +5414,6 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
  if(scase->fds_version==NULL){
    NewMemory((void **)&scase->fds_version,7+1);
    strcpy(scase->fds_version,"unknown");
- }
- if(scase->fds_githash==NULL){
-   NewMemory((void **)&scase->fds_githash,7+1);
-   strcpy(scase->fds_githash,"unknown");
  }
  if(scase->nisoinfo>0&&scase->meshescoll.nmeshes>0)nisos_per_mesh = MAX(scase->nisoinfo / scase->meshescoll.nmeshes,1);
  NewMemory((void **)&scase->csvcoll.csvfileinfo,(scase->csvcoll.ncsvfileinfo+CFAST_CSV_MAX+2)*sizeof(csvfiledata));
@@ -6562,7 +6555,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
         ReadCADGeomToCollection(&scase->cadgeomcoll, bufferptr, scase->color_defs.block_shininess);
       }
       else {
-        PRINTF(_("***Error: CAD geometry file: %s could not be opened"),
+        PRINTF("***Error: CAD geometry file: %s could not be opened",
                bufferptr);
         PRINTF("\n");
       }

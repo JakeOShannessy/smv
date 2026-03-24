@@ -1,4 +1,6 @@
 SOURCE_DIR = ..\..\..\Source\get_time
+BUILD_DIR = ../../../Build
+LIB_DIR = $(BUILD_DIR)/LIBS
 INC_DIR =  -I $(SOURCE_DIR)
 FILTERC =
 FILTERF =
@@ -32,22 +34,22 @@ no_target:
 
 # ********  rules for each platform supported *************
 
-# ------------- intel win 64 ----------------
+# ------------- intel win ----------------
 
-intel_win_64 : CFLAGS    = -Od /nologo
-intel_win_64 : CC        = $(I_CC)
-intel_win_64 : CPP       = $(I_CC)
-intel_win_64 : exe       = get_time_win_64.exe
+intel_win : CFLAGS    = -Od /nologo
+intel_win : CC        = $(I_CC)
+intel_win : CPP       = $(I_CC)
+intel_win : exe       = get_time_win.exe
 
-intel_win_64 : $(objwin)
+intel_win : $(objwin)
 	$(CPP) -o $(bin)/$(exe) $(objwin)
 
-# ------------- gnu win 64 ----------------
+# ------------- clang win ----------------
 
-gnu_win_64 : CFLAGS    = -O0 -m64 -D GLEW_STATIC -D MINGW
-gnu_win_64 : CC        = gcc
-gnu_win_64 : CPP       = g++
-gnu_win_64 : exe       = get_time_win_64.exe
+clang_win : CFLAGS    = -m64
+clang_win : CC        = clang-cl
+clang_win : CPP       = clang-cl
+clang_win : exe       = get_time_win.exe
 
-gnu_win_64 : $(obj)
-	$(CPP) -o $(bin)/$(exe) $(obj)
+clang_win : $(objwin)
+	$(CPP) -o $(bin)/$(exe) $(objwin)

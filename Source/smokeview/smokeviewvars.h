@@ -22,7 +22,7 @@
 #endif
 #include "smokeheaders.h"
 #include "threader.h"
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
 #include "glutbitmap.h"
 #endif
 
@@ -143,6 +143,19 @@ SVEXTERN int SVDECL(clip_commandline, 0), SVDECL(special_modifier, 0);
 SVEXTERN int SVDECL(update_slicexyz, 0);
 SVEXTERN int SVDECL(update_splitcolorbar, 0);
 SVEXTERN int SVDECL(slice_plot_bound_option, 1);
+
+#ifdef pp_GLUT_DEBUG
+#ifdef INMAIN
+#ifdef _WIN32
+char glut_debug_sep = '\\';
+#else
+char glut_debug_sep = '/';
+#endif
+#else
+SVEXTERN char glut_debug_sep;
+#endif
+#endif
+
 #ifdef INMAIN
 SVEXTERN float geom_bounding_box[6] = {1000000000.0, -1000000000.0,
                                        1000000000.0, -1000000000.0,
@@ -209,10 +222,8 @@ SVEXTERN float SVDECL(timer_startup, 0.0), SVDECL(timer_render, -1.0);
 SVEXTERN int SVDECL(frames_total, 0 );
 SVEXTERN int SVDECL(open_movie_dialog, 0);
 SVEXTERN float SVDECL(plot2d_time_average, 0.0);
-#ifdef pp_REFRESH
 SVEXTERN int SVDECL(periodic_refresh, 0), SVDECL(update_refresh, 1);
 SVEXTERN int SVDECL(glui_refresh_rate, 10), SVDECL(glui_refresh_rate_old, 10), SVDECL(refresh_interval, 100);
-#endif
 SVEXTERN int SVDECL(nslicemenuinfo, 0);
 
 // movie batch variables
@@ -222,6 +233,7 @@ SVEXTERN int SVDECL(movie_slice_index, 0), SVDECL(movie_queue_index, 0), SVDECL(
 SVEXTERN char SVDECL(**movie_queues, NULL), movie_htmldir[256], movie_email[256], movie_queue_list[256], movie_url[256];
 SVEXTERN char movie_basename[256], movie_ssf_script[256], movie_bash_script[256], movie_ini_filename[256];
 SVEXTERN slicedata SVDECL(*movie_sliceinfo, NULL);
+SVEXTERN int SVDECL(making_movie, 0), SVDECL(making_movie_enabled,1);
 
 SVEXTERN subslicemenudata SVDECL(*subslicemenuinfo, NULL), SVDECL(*subvectorslicemenuinfo, NULL);
 SVEXTERN int SVDECL(nsubslicemenuinfo, 0), SVDECL(nsubvectorslicemenuinfo, 0);
@@ -241,7 +253,7 @@ SVEXTERN int SVDECL(show_trirates, 0);
 
 SVEXTERN float SVDECL(pixel_dens, 1.0);
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
 SVEXTERN int SVDECL(force_scale, 0);
 extern CCC const BitmapFontRec glutBitmapHelvetica20;
 extern CCC const BitmapFontRec glutBitmapHelvetica24;
@@ -323,9 +335,7 @@ SVEXTERN int SVDECL(vis_title_smv_version, 1);
 SVEXTERN int SVDECL(vis_title_fds, 0);
 SVEXTERN int SVDECL(vis_title_CHID,0);
 
-#ifdef pp_REFRESH
 SVEXTERN int SVDECL(refresh_glui_dialogs, 0);
-#endif
 
 SVEXTERN float SVDECL(colorbar_shift, 1.0);
 
@@ -424,9 +434,7 @@ SVEXTERN int SVDECL(use_light0, 1), SVDECL(use_light1, 1);
 SVEXTERN int SVDECL(iso_transparency_option, 1);
 SVEXTERN int SVDECL(iso_opacity_change, 1);
 
-#ifdef pp_RENDER360_DEBUG
 SVEXTERN int SVDECL(debug_360, 0), SVDECL(debug_360_skip_x,25), SVDECL(debug_360_skip_y,25);
-#endif
 SVEXTERN int SVDECL(output_ffmpeg_command, 0);
 SVEXTERN int SVDECL(margin360_size, 0);
 
@@ -606,10 +614,8 @@ SVEXTERN int SVDECL(movie_bitrate, 5000);
 SVEXTERN int SVDECL(disable_reshape, 0);
 
 SVEXTERN int SVDECL(nscreeninfo,26);
-#ifdef pp_RENDER360_DEBUG
 SVEXTERN int SVDECL(screenview, 0);
 SVEXTERN int SVDECL(*screenvis,NULL);
-#endif
 SVEXTERN int SVDECL(update_screeninfo, 0);
 SVEXTERN screendata SVDECL(*screeninfo,NULL);
 SVEXTERN int SVDECL(nwidth360,1024), SVDECL(nheight360,512);
@@ -800,10 +806,11 @@ SVEXTERN int SVDECL(ngeominfoptrs,0);
 
 SVEXTERN char startup_lang_code[3];
 
+SVEXTERN int SVDECL(MOTIONnframes,0);
+SVEXTERN float SVDECL(thisMOTIONtime,0.0), SVDECL(lastMOTIONtime,0.0);
 #ifdef pp_GPU
   SVEXTERN float SVDECL(thisGPUtime,0.0), SVDECL(lastGPUtime,0.0);
-  SVEXTERN float SVDECL(thisMOTIONtime,0.0), SVDECL(lastMOTIONtime,0.0);
-  SVEXTERN int SVDECL(GPUnframes,0),SVDECL(MOTIONnframes,0);
+  SVEXTERN int SVDECL(GPUnframes,0);
 #endif
 SVEXTERN int SVDECL(mouse_down,0);
 SVEXTERN int SVDECL(show_volsmoke_moving,1);
@@ -835,7 +842,7 @@ SVEXTERN int SVDECL(show_boundary_outline, 0);
 SVEXTERN int SVDECL(show_boundary_points, 0);
 
 SVEXTERN int SVDECL(show_iso_shaded,1);
-SVEXTERN int SVDECL(show_iso_outline,1);
+SVEXTERN int SVDECL(show_iso_outline,0);
 SVEXTERN int SVDECL(show_iso_points,0);
 
 SVEXTERN int SVDECL(show_faces_shaded, 1);
@@ -956,8 +963,9 @@ SVEXTERN char opengl_version_label[256];
 SVEXTERN int SVDECL(cull_meshes, 1);
 
 SVEXTERN int SVDECL(usevolrender,1);
+SVEXTERN int SVDECL(gpuactive, 0);
 #ifdef pp_GPU
-SVEXTERN int SVDECL(usegpu,0),SVDECL(gpuactive,0);
+SVEXTERN int SVDECL(usegpu, 0);
 SVEXTERN int GPU_skip, GPU_hrrcutoff, GPU_hrr, GPU_global_hrrpuv_max, GPU_global_hrrpuv_cb_min;
 SVEXTERN int GPU_fire_alpha, GPU_firecolor, GPU_force_alpha_opaque, GPU_have_smoke, GPU_smokecolormap;
 SVEXTERN int GPU_have_fire;
@@ -1263,9 +1271,12 @@ SVEXTERN int SVDECL(trainerload,0),SVDECL(trainerload_old,0);
 SVEXTERN int SVDECL(fontsize_save, 0);
 SVEXTERN int SVDECL(trainer_mode,0);
 SVEXTERN int SVDECL(trainer_active,0);
-SVEXTERN int SVDECL(slice_average_flag,0);
-SVEXTERN int SVDECL(show_slice_average, 0), SVDECL(vis_slice_average, 1);
+
+SVEXTERN int SVDECL(slice_average_flag,0), SVDECL(show_slice_average, 0);
 SVEXTERN float SVDECL(slice_average_interval,10.0);
+
+SVEXTERN int SVDECL(boundary_average_flag, 0), SVDECL(show_boundary_average,0);
+SVEXTERN float SVDECL(boundary_average_interval, 10.0);
 
 SVEXTERN int SVDECL(maxtourframes,500);
 SVEXTERN int SVDECL(blockageSelect,0);
@@ -1478,6 +1489,8 @@ SVEXTERN int SVDECL(visTimeIso,1);
 SVEXTERN int SVDECL(vishmsTimelabel,0), SVDECL(visTimebar,1);
 SVEXTERN int SVDECL(visColorbarVertical,1), SVDECL(visColorbarVertical_save,1);
 SVEXTERN int SVDECL(update_visColorbars,0), visColorbarVertical_val, visColorbarHorizontal_val;
+SVEXTERN int SVDECL(update_idle, 0);
+SVEXTERN int SVDECL(update_setmainwindow, 0);
 
 SVEXTERN int SVDECL(visColorbarHorizontal, 0), SVDECL(visColorbarHorizontal_save, 0);
 SVEXTERN int SVDECL(visFullTitle, 1), SVDECL(visFramerate, 0);
@@ -1581,7 +1594,7 @@ SVEXTERN int SVDECL(ntargets,0);
 SVEXTERN int SVDECL(mainwindow_id,0);
 
 SVEXTERN float SVDECL(max_mem_GB,0.0);
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
 SVEXTERN int SVDECL(vismemusage,0);
 #endif
 SVEXTERN int SVDECL(vismemload, 0);
@@ -2109,7 +2122,7 @@ SVEXTERN float SVDECL(*plot3dtimelist,NULL);
 SVEXTERN blockagedata SVDECL(*bchighlight,NULL),SVDECL(*bchighlight_old,NULL);
 
 SVEXTERN int SVDECL(buffertype,DOUBLE_BUFFER);
-SVEXTERN int SVDECL(opengldefined,0);
+SVEXTERN int SVDECL(opengl_finalized,0);
 SVEXTERN int SVDECL(restart_time,0);
 SVEXTERN int SVDECL(*isosubmenus,NULL), nisosubmenus;
 SVEXTERN int SVDECL(*loadpatchsubmenus,NULL), nloadpatchsubmenus;

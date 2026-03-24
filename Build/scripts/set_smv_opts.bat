@@ -31,6 +31,10 @@ goto eof
    set valid=1
    set from=bot
  )
+ if /I "%1" EQU "bot" (
+   set valid=1
+   set from=bot
+ )
  if /I "%1" EQU "-debug" (
    set valid=1
    set debug=_db
@@ -68,13 +72,6 @@ goto eof
    set SMV_PROFILEFLAG=-pg
    set SMV_PROFILESTRING=p
  )
- if /I "%1" EQU "-release" (
-   set valid=1
-   set release=-r
- )
- if /I "%1" EQU "-test" (
-   set valid=1
- )
  shift
  if %valid% == 0 (
    echo.
@@ -100,10 +97,8 @@ echo -glut     - build smokeview using the glut library
 echo -help     - display this message
 echo -icon     - ceate an icon
 echo -inc      - incremental build
-echo -release  - release version
 echo -sanitize - build using sanitize options for debugging
 echo             (-fsanitize=address -fsanitize=undefined -fsanitize=memory)
-echo -test     - build a test version of smokeview
 exit /b 0
 
 

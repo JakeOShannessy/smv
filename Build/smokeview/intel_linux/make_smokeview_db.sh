@@ -1,0 +1,16 @@
+#!/bin/bash
+CURDIR=`pwd`
+DIR=${CURDIR##*/}
+OPTS="-I -l $DIR $*"
+
+source ../../scripts/setopts.sh $OPTS
+
+if [ "$BUILD_LIBS" == "1" ]; then
+  rm -f $SMV_LIBDIR/*.a
+fi
+../../scripts/test_libs.sh $OPTS
+if [ "$BUILD_ALL" == "1" ]; then
+  rm -f *.o smokeview*
+fi
+
+eval make -j 4 ${SMV_MAKE_OPTS} -f ../Makefile intel_linux_db

@@ -64,11 +64,14 @@
 \newcommand{\hitemNULL}[1]{}
 \newcommand{\hhitem}[2]{\item[{\bf #1}\ ({\em #2}) \hfill]}
 
-% command to double space
-%\linespread{2.0}
+\addbibresource{../../../fds/Manuals/Bibliography/FDS_refs.bib}
+\addbibresource{../../../fds/Manuals/Bibliography/FDS_general.bib}
+\addbibresource{../../../fds/Manuals/Bibliography/FDS_mathcomp.bib}
+\addbibresource{../Bibliography/sv_fire.bib}
+\addbibresource{../Bibliography/sv_graphics.bib}
+
 \begin{document}
 
-\bibliographystyle{unsrt}
 \pagestyle{empty}
 
 %
@@ -594,7 +597,7 @@ dialog box.
 \subsubsection{Virtual Tour}\   A series of checkpoints or keyframes
 specifying position and view direction may be specified. (Chapter
 \ref{chapter:touring}) A smooth path is computed using
-Kochanek-Bartels splines~\cite{Moller:02}\ to go through these key
+Kochanek-Bartels splines~\cite{moller:02}\ to go through these key
 frames so that one may control the position and view direction of
 an observer as they move through the simulation. One can then see
 the simulation as the observer would. This option is available
@@ -894,6 +897,14 @@ then select and move the mouse in the  rotation control.  One may also select wh
 
 \chapter{Visualizing Smoke}
 
+FDS generates several data files
+visualized by Smokeview. Each file type may be loaded or unloaded
+using the {\em Load/Unload}\ menu described in Appendix
+\ref{sectload}. Visualizations produced by these data files are
+described in this and the following sections. The format used to
+store each of the data files is given in the FDS User's
+Guide~\cite{FDS_Users_Guide}.
+
 \section{Tracers and Streaklines}
 
 \renewcommand{\figheight}{1.4in}
@@ -901,10 +912,10 @@ then select and move the mouse in the  rotation control.  One may also select wh
 \label{section:particles}\ Particle files contain the locations of
 tracer particles used to visualize the flow field. Figure
 \ref{figparticle}\ shows several snapshots of a developing kitchen
-fire visualized by using particles where particles are colored
-black. If present, sprinkler water droplets would be colored blue.
-Particles are stored in files ending with the extension {\tt
-.prt5}\ and are displayed by selecting the particle file entry from
+fire visualized using particles colored black.
+If present, sprinkler water droplets are colored blue.
+Particles are stored in files having the extension {\tt .prt5}\
+and are displayed by selecting the particle file entry from
 the {\em Load/Unload}\ menu.
 
 Streaklines are a technique for showing motion in a still image.
@@ -954,15 +965,7 @@ files and Section \ref{section:isosurface}\ for some examples.
 %---------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------
 \section{Realistic}
-\label{section:volsmoke}\ FDS generates several data files
-visualized by Smokeview. Each file type may be loaded or unloaded
-using the {\em Load/Unload}\ menu described in Appendix
-\ref{sectload}. Visualizations produced by these data files are
-described in this and the following sections. The format used to
-store each of the data files is given in the FDS User's
-Guide~\cite{FDS_Users_Guide}.
-
-Visualizing smoke realistically is a daunting challenge for at
+\label{section:volsmoke}\ Visualizing smoke realistically is a daunting challenge for at
 least three reasons. First, the storage requirements for
 describing smoke can easily exceed the disk capacities of present
 32 bit operating systems such as Linux, i.e., file sizes can easily
@@ -1360,7 +1363,7 @@ FDS also outputs duplicate slices when two or more identical {\tt \&SLCF}\ entri
 \section{2D Shaded Contours on Solid Surfaces - Boundary Files}
 \label{section:bf}
 Boundary files contain simulation data recorded at blockage or
-wall surfaces. Continuously shaded contours are drawn for
+wall surfaces. Shaded contours are drawn for
 quantities such as wall surface temperature, radiative flux, etc.
 Figure \ref{figboundary}\ shows several snapshots of a boundary
 file animation where the surfaces are colored according to their
@@ -1437,15 +1440,33 @@ by using:
 \begin{lstlisting}
 &BNDF QUANTITY='WALL TEMPERATURE' /
 \end{lstlisting}
-Loading a boundary file is a memory intensive operation.  The
+Loading a boundary file is memory intensive.  The
 entire boundary file is read in to determine the minimum and
 maximum data values.  These bounds are then used to convert four
-byte floats to one byte color indices.  To drastically reduce the
-memory requirements, simply specify the minimum and maximum data
+byte floats to one byte color indices.  To reduce
+memory requirements, specify the minimum and maximum data
 bounds using the Set Bounds dialog box.  This should be
 done before loading the boundary file data.  When this is done,
 memory for the boundary file data is allocated for only one time
 step rather than for all time steps.
+
+%---------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------
+\section{Time Averaging Slice and Boundary File Data}
+Slice and boundary files may be time averaged when loaded by specifying the time interval
+over which the averaging occurs. Figure \ref{figsliceaverage}\ show a dialog box
+for specifying the time interval used to time average slice file data. Click on the
+Average slice data checkbox and the Reload button for the time averaging to take effect.
+The dialog box for specifying boundary file averaging is identical.
+
+\begin{figure}[bph]
+\centerline{
+\includegraphics[width=2.5in]{\SMVfigdir/slice_time_average}}
+\caption
+[Time Average Dialog Box]
+{Dialog box for time averaging slice file data.}
+\label{figsliceaverage}%
+\end{figure}
 
 %---------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------
@@ -3825,6 +3846,14 @@ If the mesh\_index is positive then volume rendered smoke for that
 mesh index is loaded. If the mesh\_index is negative then volume
 rendered smoke for all meshes is loaded.
 
+%%+++++++++++++++++++++++
+\hitemssf{SMOKEPROP}Set the smoke mass extinction coefficient.
+Usage:
+\begin{lstlisting}
+SMOKEPROP
+  fval (float)
+\end{lstlisting}
+
 \elist
 
 \subsubsection{Boundary Files}
@@ -3832,14 +3861,20 @@ rendered smoke for all meshes is loaded.
 \blist
 
 %%+++++++++++++++++++++++
-\hitemssf{LOADBOUNDARY, LOADBOUNDARYM}\ Load a boundary file of a particular type.
+\hitemssf{LOADBOUNDARY}\ Load a boundary file of a particular type.
 The type is the same as what Smokeview displays in the Load menus for boundary files.
-{\tt LOADBOUNDARY}\ loads boundary files for all meshes, {\tt LOADBOUNDARYM}\
-loads a boundary file for one mesh.
+{\tt LOADBOUNDARY}\ loads boundary files for all meshes.
 Usage:
 \begin{lstlisting}
 LOADBOUNDARY
    type (char)
+\end{lstlisting}
+
+\hitemssf{LOADBOUNDARYM}\ Load a boundary file of a particular type.
+The type is the same as what Smokeview displays in the Load menus for boundary files.
+{\tt LOADBOUNDARYM}\ loads a boundary file for one mesh.
+Usage:
+\begin{lstlisting}
 LOADBOUNDARYM
    type (char)
    mesh_number (int)
@@ -3885,6 +3920,15 @@ Use LOADINIFILE to load a configuration ({\tt .ini}) file.
 Usage:
 \begin{lstlisting}
 LOADINIFILE
+  file (char)
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
+\hitemssf{LOADSMV}
+Load an smv file.
+Usage:
+\begin{lstlisting}
+LOADSMV
   file (char)
 \end{lstlisting}
 
@@ -4003,14 +4047,16 @@ LOADSLCF
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
-\hitemssf{LOADSLICE, LOADSLICEM} Loads slice files.  The LOADSLICE keyword loads slice files for
-all meshes where the slice occurs.  The LOADSLICEM keyword loads the slice for a specified mesh. LOADSLICE usage:
+\hitemssf{LOADSLICE} Loads slice files.  The LOADSLICE keyword loads slice files for
+all meshes where the slice occurs.
+LOADSLICE usage:
 \begin{lstlisting}
 LOADSLICE
   quantity (char)
   1/2/3 (int)dir  (float)position
 \end{lstlisting}
 
+\hitemssf{LOADSLICEM} Loads slice files.  The LOADSLICEM keyword loads the slice for a specified mesh.
 \noindent LOADSLICEM usage:
 \begin{lstlisting}
 LOADSLICEM
@@ -4030,12 +4076,14 @@ LOADVFILE
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
-\hitemssf{LOADVSLICE, LOADVSLICEM}Loads vector slice files.  The LOADVSLICE keyword loads vector slice files for all meshes where the vector slice occurs.  The LOADVSLICDM keyword loads the vector slice for a specified mesh. LOADVSLICE usage:
+\hitemssf{LOADVSLICE}Loads vector slice files.  The LOADVSLICE keyword loads vector slice files for all meshes where the vector slice occurs.  LOADVSLICE usage:
 \begin{lstlisting}
 LOADVSLICE
   quantity (char)
   1/2/3 (int)dir  (float)position
 \end{lstlisting}
+
+\hitemssf{LOADVSLICEM}Loads vector slice files.  The LOADVSLICDM keyword loads the vector slice for a specified mesh.
 
 \noindent LOADVSLICEM usage:
 \begin{lstlisting}
@@ -4181,14 +4229,19 @@ If 6 is specified then smokeview constructs a velocity component if any of the U
 \blist
 
 %%+++++++++++++++++++++++
-\hitemssf{LOADISO, LOADISOM}Load iso-surface files for a specified type for all meshes if LOADISO is used and for
-a specified mesh if LOADISOM is used.
+\hitemssf{LOADISO}Load iso-surface files for a specified type for all meshes.
 The type is the same as what Smokeview displays in the Load menus for iso-surface files.
 Usage:
 \begin{lstlisting}
 LOADISO
   type (char)
+\end{lstlisting}
 
+%%+++++++++++++++++++++++
+\hitemssf{LOADISOM}Load iso-surface files for a specified mesh.
+The type is the same as what Smokeview displays in the Load menus for iso-surface files.
+Usage:
+\begin{lstlisting}
 LOADISOM
   type (char)
   mesh number (int)
@@ -4202,33 +4255,41 @@ LOADISOM
 \blist
 
 %%+++++++++++++++++++++++
-\hitemssf{HIDEALLDEVS, SHOWALLDEVS}Hides or shows all devices.
+\hitemssf{HIDEALLDEVS}Hides all devices.
 Usage:
 \begin{lstlisting}
  HIDEALLDEVS
- SHOWALLDEVS
-
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
-\hitemssf{HIDEDEV, SHOWDEV}Hide or shows a device with specified device id.
+\hitemssf{HIDEDEV}Hides a device with specified device id.
 Usage:
 \begin{lstlisting}
  HIDEALLDEVS
    device_id
+\end{lstlisting}
 
+%%+++++++++++++++++++++++
+\hitemssf{SHOWALLDEVS}Shows all devices.
+Usage:
+\begin{lstlisting}
+ SHOWALLDEVS
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
+\hitemssf{SHOWDEV}Shows a device with specified device id.
+Usage:
+\begin{lstlisting}
  SHOWDEV
    device_id
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
-\hitemssf{OUTPUTSMOKESENSORS}Output smoke sensor data to a csv file named casename\_ss.csv.
+\hitemssf{SHOWSMOKESENSORS}Output smoke sensor data to a csv file named casename\_ss.csv.
 Usage:
 \begin{lstlisting}
- OUTPUTSMOKESENSORS
+ SHOWSMOKESENSORS
 \end{lstlisting}
-
-
 \elist
 %%-----------------------------------------------------------------------
 \subsection{Controlling Colorbars}
@@ -4290,16 +4351,24 @@ Usage:
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
-\hitemssf{SHOWCBAREDIT, HIDECBAREDIT}Show or hide the colorbar edit dialog box.
+\hitemssf{HIDECBAREDIT}Hides the colorbar edit dialog box.
 Usage:
 \begin{lstlisting}
- SHOWCBAREDIT
-
  HIDECBAREDIT
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
-\hitemssfN{SETCBARLAB, SETCBARRGB}
+\hitemssf{SHOWCBAREDIT}Shows the colorbar edit dialog box.
+Usage:
+\begin{lstlisting}
+ SHOWCBAREDIT
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
+\hitemssfN{SETCBARLAB}
+
+%%+++++++++++++++++++++++
+\hitemssfN{SETCBARRGB}
 
 \elist
 
@@ -4407,7 +4476,16 @@ Usage:
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
-\hitemssf{SETCLIPMODE, SCENECLIP}Sets clipping mode 0 - clipping off, 1 - clip blockages and data,
+\hitemssf{SETCLIPMODE}Sets clipping mode 0 - clipping off, 1 - clip blockages and data,
+2 - clip only blockages, 3 - clip only data.
+Usage:
+\begin{lstlisting}
+ SETCLIPMODE
+  (0/1/2/3)
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
+\hitemssf{SCENECLIP}Sets clipping mode 0 - clipping off, 1 - clip blockages and data,
 2 - clip only blockages, 3 - clip only data.
 Usage:
 \begin{lstlisting}
@@ -4417,13 +4495,36 @@ Usage:
 
 
 %%+++++++++++++++++++++++
-\hitemssf{SETCLIPX, SETCLIPY, SETCLIPZ}Set or unset the x, y, z min or max clipping plane positions.
+\hitemssf{SETCLIPX}Set or unset the x  min or max clipping plane positions.
 Usage:
 \begin{lstlisting}
  SETCLIPX
   0/1 min position (float) 0/1 max position (float)
 \end{lstlisting}
-The SETCLIPY and SETCLIPZ are defined similarly.
+
+%%+++++++++++++++++++++++
+\hitemssf{SETCLIPY}Set or unset the y  min or max clipping plane positions.
+Usage:
+\begin{lstlisting}
+ SETCLIPY
+  0/1 min position (float) 0/1 max position (float)
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
+\hitemssf{SETCLIPZ}Set or unset the z  min or max clipping plane positions.
+Usage:
+\begin{lstlisting}
+ SETCLIPZ
+  0/1 min position (float) 0/1 max position (float)
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
+\hitemssf{SETDEMOMODE}Set demo mode from 0 to 5.
+Usage:
+\begin{lstlisting}
+ SETDEMOMODE
+  mode (int)
+\end{lstlisting}
 
 %%+++++++++++++++++++++++
 \hitemssf{SETTIMEVAL}Set the time for displaying data to a specified value.
@@ -4451,13 +4552,41 @@ XYZVIEW
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
-\hitemssf{VIEWXMIN,VIEWYMIN,VIEWZMIN}The {\tt VIEWXMIN}\ script keyword sets the view so that the scene
+\hitemssf{VIEWXMAX}The {\tt VIEWXMAX}\ script keyword sets the view so that the scene
+is viewed towards the XMAX direction.  It sets
+the scene view location to (x,ymid,zmid)
+and the scene view direction to $(+1.0,0.0,0.0)$ where
+x is chosen so that the entire scene is in view and ymid, zmid
+are the middle of the scene along y and z directions.
+Usage:
+\begin{lstlisting}
+VIEWXMAX
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
+\hitemssf{VIEWYMAX}Same as the {\tt VIEWXMAX}\ script keyword but sets the view so that the scene
+is viewed towards the YMAX direction.
+Usage:
+\begin{lstlisting}
+VIEWYMAX
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
+\hitemssf{VIEWZMAX}Same as the {\tt VIEWXMAX}\ script keyword but sets the view so that the scene
+is viewed towards the ZMAX direction.
+Usage:
+\begin{lstlisting}
+VIEWZMAX
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
+\hitemssf{VIEWXMIN}The {\tt VIEWXMIN}\ script keyword sets the view so that the scene
 is viewed towards the XMIN direction.  It sets
 the scene view location to (x,ymid,zmid)
 and the scene view direction to $(-1.0,0.0,0.0)$ where
 x is chosen so that the entire scene is in view and ymid, zmid
-are the middle of the scene along y and z directions.  The {\tt VIEWYMIN}\ and {\tt VIEWZMIN}\ script
-keywords are defined similarly.  Usage:
+are the middle of the scene along y and z directions.
+Usage:
 \begin{lstlisting}
 VIEWXMIN
 VIEWYMIN
@@ -4465,35 +4594,46 @@ VIEWZMIN
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
-\hitemssf{VIEWXMAX,VIEWYMAX,VIEWZMAX}The {\tt VIEWXMAX}\ script keyword sets the view so that the scene
-is viewed towards the XMAX direction.  It sets
-the scene view location to (x,ymid,zmid)
-and the scene view direction to $(+1.0,0.0,0.0)$ where
-x is chosen so that the entire scene is in view and ymid, zmid
-are the middle of the scene along y and z directions.  The {\tt VIEWYMAX}\ and {\tt VIEWZMAX}\ script
-keywords are defined similarly.  Usage:
+\hitemssf{VIEWYMIN}Same as the {\tt VIEWXMIN}\ script keyword but sets the view so that the scene
+is viewed towards the YMIN direction.
+Usage:
 \begin{lstlisting}
-VIEWXMAX
-VIEWYMAX
-VIEWZMAX
+VIEWYMIN
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
-\hitemssf{XSCENECLIP, YSCENECLIP, ZSCENECLIP}\ Sets clipping planes along the X, Y or Z axis.
+\hitemssf{VIEWZMIN}Same as the {\tt VIEWXMIN}\ script keyword but sets the view so that the scene
+is viewed towards the ZMIN direction.
+Usage:
+\begin{lstlisting}
+VIEWZMIN
+\end{lstlisting}
+
+%%+++++++++++++++++++++++
+\hitemssf{XSCENECLIP}\ Sets clipping planes along the X axis.
 Portions of the scene before {\tt min}\
 or after {\tt max}\ planes are hidden if the corresponding setmin or setmax are set to 1 respectively.
 Usage:
 \begin{lstlisting}
   XSCENECLIP
     setxmin xmin setxmax xmax
+\end{lstlisting}
 
+%%+++++++++++++++++++++++
+\hitemssf{YSCENECLIP}\ Same as the XSCENECLIP keyword but sets clipping planes along the Y axis.
+Usage:
+\begin{lstlisting}
   YSCENECLIP
     setymin ymin setymax ymax
+\end{lstlisting}
 
+%%+++++++++++++++++++++++
+\hitemssf{ZSCENECLIP}\ Same as the XSCENECLIP keyword but sets clipping planes along the Z axis.
+Usage:
+\begin{lstlisting}
   ZSCENECLIP
     setzmin zmin setzmax zmax
 \end{lstlisting}
-
 \elist
 
 %%-----------------------------------------------------------------------
@@ -4504,8 +4644,8 @@ Usage:
 \blist
 
 %%+++++++++++++++++++++++
-\hitemssf{ISORENDERALL, LOADSLICERENDER, LOADSMOKERENDER}\ Render a sequence
-of isosurface, slice or 3D smoke frames. As with {\tt RENDERALL}, this command by default
+\hitemssf{ISORENDERALL}\ Render a sequence
+of isosurface frames. As with {\tt RENDERALL}, this command by default
 renders every frame starting with the first. One may also specify
 a starting frame index (default: 0) and a skip value (default: 1)
 indicating the difference in indices between rendered frames.
@@ -4522,6 +4662,9 @@ ISORENDERALL
   file name base (char)
 \end{lstlisting}
 
+%%+++++++++++++++++++++++
+\hitemssf{LOADSLICERENDER}\ This command is the same as ISORENDERALL but for slice files.
+
 \begin{lstlisting}
 LOADSLICERENDER
   quantity (char)
@@ -4530,8 +4673,11 @@ LOADSLICERENDER
   skip (int) first (int)
 \end{lstlisting}
 
+%%+++++++++++++++++++++++
+\hitemssf{LOADSMOKERENDER}\ This command is the same as ISORENDERALL but for 3D smoke files.
+
 \begin{lstlisting}
-LOADSLICERENDER
+LOADSMOKERENDER
   quantity (char)
   1/2/3 position(float)
   file name base (char)
@@ -4633,31 +4779,6 @@ As with {\tt RENDERONCE}, Smokeview will assign the filename
 automatically if the entry after the {\tt RENDERDOUBLEONCE}\ keyword is blank.
 
 %%+++++++++++++++++++++++
-\hitemssf{RENDERHTMLALL, RENDERHTMLONCE}Render scene in html format.
-RENDERHTMLALL renders all times frames, RENDERHTMLONCE renders the current time frame.
-Usage:
-\begin{lstlisting}
-RENDERHTMLALL
-  base file name (char)
-
-RENDERHTMLONCE
-  base file name (char)
-\end{lstlisting}
-
-%%+++++++++++++++++++++++
-\hitemssf{RENDERHTMLDIR}Set the directory containing html files to be rendered. Usage:
-\begin{lstlisting}
-RENDERHTMLDIR
-  directory name (char) (where rendered files will go)
-\end{lstlisting}
-
-%%+++++++++++++++++++++++
-\hitemssfN{RENDERHTMLGEOM}
-\hitemssfN{RENDERHTMLOBST}
-\hitemssfN{RENDERHTMLSLICECELL}
-\hitemssfN{RENDERHTMLSLICENODE}
-
-%%+++++++++++++++++++++++
 \hitemssf{RENDERSIZE}Set the width and height of rendered images.
 Usage:
 \begin{lstlisting}
@@ -4707,7 +4828,7 @@ VOLSMOKERENDERALL
 \blist
 
 %%+++++++++++++++++++++++
-\hitemssf{GPUOFF}Turn off the GPU if is active and being used (in smokeview)
+\hitemssf{GPUOFF}Disable the GPU.
 \begin{lstlisting}
   GPUOFF
 \end{lstlisting}
@@ -4720,7 +4841,7 @@ LABEL
 \end{lstlisting}
 
 %%+++++++++++++++++++++++
-\hitemssf{RGBTEST}Test color value at an $(x,y,z)$ location. Usage:
+\hitemssf{RGBTEST}Test color value at the location $(x,y,z)$ location. Usage:
 \begin{lstlisting}
 RGBTEST
   x y z r g b delta
@@ -4729,10 +4850,9 @@ RGBTEST
 If any color component difference is found to be greater than delta, a warning message is output.
 
 %%+++++++++++++++++++++++
-\hitemssf{SETTOURKEYFRAME}Set the time position along the current tour to time. Usage:
+\hitemssf{UNLOADPLOT2D}Unload 2D plots if they are visible. Usage:
 \begin{lstlisting}
-SETTOURKEYFRAME
-  time (float)
+UNLOADPLOT2D
 \end{lstlisting}
 
 \elist
@@ -5617,10 +5737,9 @@ flow are discussed in more detail in the
 Smokeview Technical Guide~\cite{Smokeview_Tech_Guide}.
 
 
+\printbibliography[heading=bibintoc,title={References}]
 
 
-\bibliography{../../../fds/Manuals/Bibliography/FDS_general,../../../fds/Manuals/Bibliography/FDS_refs,../../../fds/Manuals/Bibliography/FDS_mathcomp,../Bibliography/sv_fire,../Bibliography/sv_graphics}
-\addcontentsline{toc}{chapter}{References}
 
 \part{Appendices}
 \appendix
@@ -6005,11 +6124,17 @@ grid perpendicular to the x, y and z axes respectively.
 
 \kitem{ALT j}Decrease size of Smokeview objects (use 'j' to increase the size).
 
-\kitem{k}Toggle timebar visibility.
+\kitem{k}Decrease distance by 25 percent at which fire opacity is one half. This increases fire opaqueness.
 
-\kitem{K}Toggle fixing the window aspect ratio when changing its size.
+\kitem{K}Increase distance by 25 percent at which fire opacity is one half. This decreases fire opaqueness.
+
+\kitem{CTRL k}Toggle timebar visibility.
 
 \kitem{ALT k}Toggle device selection.
+
+\kitem{l}Increase the mass extinction coefficient by 25 percent.  This increases smoke opaqueness.
+
+\kitem{L, ALT l}Decrease the mass extinction coefficient by 25 percent.  This decreases smoke opaqueness.
 
 \kitem{m}Switch between meshes in multiple mesh cases.
 

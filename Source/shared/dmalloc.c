@@ -1,4 +1,4 @@
-#include "options.h"
+#include "options_common.h"
 #define INDMALLOC
 #include <assert.h>
 #include <stdlib.h>
@@ -406,7 +406,7 @@ mallocflag __NewMemory(void **ppv, size_t size, int memory_id, const char *varna
   char dirsep='/';
 #endif
 
-#ifdef pp_MEM_DEBUG_PRINT
+#ifdef pp_MEMPRINT
   fprintf(stderr, "file: %s line: %i\n", file, linenumber);
 #endif
   LOCK_MEM;

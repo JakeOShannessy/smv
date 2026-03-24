@@ -32,16 +32,13 @@ void DrawCircVentsApproxSolid(int option){
     int j;
     meshdata *meshi;
     float *xplt, *yplt, *zplt;
-    float dx, dy, dz, dxyz;
+    float dx, dxyz;
 
     meshi = global_scase.meshescoll.meshinfo + i;
     xplt = meshi->xplt_smv;
     yplt = meshi->yplt_smv;
     zplt = meshi->zplt_smv;
-    dx = xplt[1] - xplt[0];
-    dy = yplt[1] - yplt[0];
-    dz = zplt[1] - zplt[0];
-    dxyz = MIN(MIN(dx, dy), dz)/10.0;
+    dxyz = SCALE2SMV(xyzmaxdiff/400.0);
 
     for(j=0;j<meshi->ncvents;j++){
       cventdata *cvi;
@@ -185,17 +182,14 @@ void DrawCircVentsApproxOutline(int option){
     int j;
     meshdata *meshi;
     float *xplt, *yplt, *zplt;
-    float dx, dy, dz, dxyz;
+    float dx, dxyz;
 
     meshi = global_scase.meshescoll.meshinfo + i;
     xplt = meshi->xplt_smv;
     yplt = meshi->yplt_smv;
     zplt = meshi->zplt_smv;
 
-    dx = xplt[1] - xplt[0];
-    dy = yplt[1] - yplt[0];
-    dz = zplt[1] - zplt[0];
-    dxyz = MIN(MIN(dx, dy), dz)/10.0;
+    dxyz = SCALE2SMV(xyzmaxdiff/400.0);
 
     for(j=0;j<meshi->ncvents;j++){
       cventdata *cvi;
@@ -374,7 +368,6 @@ void DrawCircVentsExactSolid(int option){
       cventdata *cvi;
       float x0, yy0, z0;
       unsigned char vcolor[3];
-      float delta;
       float *color;
       float width, height;
 
@@ -396,14 +389,40 @@ void DrawCircVentsExactSolid(int option){
         z0 = cvi->zmin;
       }
 
-      delta=0.001;
+      float delta, deltax = 0.0, deltay = 0.0, deltaz = 0.0;
+        
+      delta = xyzmaxdiff / 400.0;
+      switch(cvi->dir){
+      case DOWN_X:
+        deltax = -delta;
+        break;
+      case UP_X:
+        deltax = delta;
+        break;
+      case DOWN_Y:
+        deltay = -delta;
+        break;
+      case UP_Y:
+        deltay = delta;
+        break;
+      case DOWN_Z:
+        deltaz = -delta;
+        break;
+      case UP_Z:
+        deltaz = delta;
+        break;
+      default:
+        assert(0);
+        break;
+      }
       color=cvi->color;
       vcolor[0]=color[0]*255;
       vcolor[1]=color[1]*255;
       vcolor[2]=color[2]*255;
       glPushMatrix();
       glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-      glTranslatef(-global_scase.xbar0,-global_scase.ybar0,-global_scase.zbar0);
+      glTranslatef(-global_scase.xbar0+deltax,
+        -global_scase.ybar0+deltay,-global_scase.zbar0+deltaz);
       if(option==VENT_CIRCLE){
         clipdata circleclip;
         float *ventmin, *ventmax;
@@ -420,36 +439,30 @@ void DrawCircVentsExactSolid(int option){
       height = 0.0;
       switch(cvi->dir){
         case DOWN_X:
-          glTranslatef(-delta,0.0,0.0);
           glRotatef(-90.0,0.0,1.0,0.0);
           width  += cvi->ymax-cvi->ymin;
           height += cvi->zmax-cvi->zmin;
           break;
         case UP_X:
-          glTranslatef(delta,0.0,0.0);
           glRotatef(-90.0,0.0,1.0,0.0);
           width  += cvi->ymax-cvi->ymin;
           height += cvi->zmax-cvi->zmin;
           break;
         case DOWN_Y:
-          glTranslatef(0.0,-delta,0.0);
           glRotatef(90.0,1.0,0.0,0.0);
           width  += cvi->xmax-cvi->xmin;
           height += cvi->zmax-cvi->zmin;
           break;
         case UP_Y:
-          glTranslatef(0.0,delta,0.0);
           glRotatef(90.0,1.0,0.0,0.0);
           width  += cvi->xmax-cvi->xmin;
           height += cvi->zmax-cvi->zmin;
           break;
         case DOWN_Z:
-          glTranslatef(0.0,0.0,-delta);
           width  += cvi->xmax-cvi->xmin;
           height += cvi->ymax-cvi->ymin;
           break;
         case UP_Z:
-          glTranslatef(0.0,0.0,delta);
           width  += cvi->xmax-cvi->xmin;
           height += cvi->ymax-cvi->ymin;
           break;
@@ -487,7 +500,6 @@ void DrawCircVentsExactOutline(int option){
       cventdata *cvi;
       float x0, yy0, z0;
       unsigned char vcolor[3];
-      float delta;
       float *color;
       float width, height;
 
@@ -509,14 +521,39 @@ void DrawCircVentsExactOutline(int option){
         z0 = cvi->zmin;
       }
 
-      delta=0.001;
+      float delta, deltax = 0.0, deltay = 0.0, deltaz = 0.0;
+        
+      delta = xyzmaxdiff / 400.0;
+      switch(cvi->dir){
+      case DOWN_X:
+        deltax = -delta;
+        break;
+      case UP_X:
+        deltax = delta;
+        break;
+      case DOWN_Y:
+        deltay = -delta;
+        break;
+      case UP_Y:
+        deltay = delta;
+        break;
+      case DOWN_Z:
+        deltaz = -delta;
+        break;
+      case UP_Z:
+        deltaz = delta;
+        break;
+      default:
+        assert(0);
+        break;
+      }
       color=cvi->color;
       vcolor[0]=color[0]*255;
       vcolor[1]=color[1]*255;
       vcolor[2]=color[2]*255;
       glPushMatrix();
       glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
-      glTranslatef(-global_scase.xbar0,-global_scase.ybar0,-global_scase.zbar0);
+      glTranslatef(-global_scase.xbar0+deltax,-global_scase.ybar0+deltay,-global_scase.zbar0+deltaz);
       if(option==VENT_CIRCLE){
         clipdata circleclip;
         float *ventmin, *ventmax;
@@ -2046,7 +2083,7 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
         }
       }
       if(vi!=NULL){
-        if(ABS(vi->type)==99){
+        if(ABS(vi->type)==99||vi->type==-1){
           faceptr->type=face_surf->type;
         }
         else{
@@ -2649,9 +2686,7 @@ void UpdateFaceListsWorker(void){
   nface_textures=0;
   nface_outlines=0;
   nface_transparent=0;
-  if(opengldefined==1){
-    glutPostRedisplay();
-  }
+  GLUTPOSTREDISPLAY;
 
   int show;
   show = GetInternalFaceShow();
@@ -4656,7 +4691,7 @@ void DrawUserTicks(void){
     glBegin(GL_LINES);
     glColor3fv(foregroundcolor);
     for(i=0;i<user_tick_nxyz[0];i++){
-      xyz[0]=tick_origin[0] + i*step[0];
+      xyz[0]=user_tick_min[0] + i*step[0];
       if(
         (step[0]>0.0&&xyz[0]>user_tick_max[0])||
         (step[0]<0.0&&xyz[0]<user_tick_min[0])
@@ -4691,7 +4726,7 @@ void DrawUserTicks(void){
     if(user_tick_sub>1){
       for(i=1;i<user_tick_nxyz[0]*user_tick_sub;i++){
         if(i%user_tick_sub==0)continue;
-        xyz[0]=tick_origin[0] + i*step[0]/(float)user_tick_sub;
+        xyz[0]=user_tick_min[0] + i*step[0]/(float)user_tick_sub;
         if(
           (step[0]>0.0&&xyz[0]>user_tick_max[0])||
           (step[0]<0.0&&xyz[0]<user_tick_min[0])
@@ -4717,7 +4752,7 @@ void DrawUserTicks(void){
     for(i=0;i<user_tick_nxyz[0];i++){
       char label[128];
 
-      xyz[0]=tick_origin[0] + i*step[0];
+      xyz[0]=user_tick_min[0] + i*step[0];
       if((step[0]>0.0&&xyz[0]>user_tick_max[0])||(step[0]<0.0&&xyz[0]<user_tick_min[0]))continue;
       xyz[1]=tick_origin[1];
       xyz[2]=tick_origin[2];
@@ -4754,7 +4789,7 @@ void DrawUserTicks(void){
     glColor3fv(foregroundcolor);
     for(i=0;i<user_tick_nxyz[1];i++){
       xyz[0]=tick_origin[0];
-      xyz[1]=tick_origin[1] + i*step[1];
+      xyz[1]=user_tick_min[1] + i*step[1];
       if(
         (step[1]>0.0&&xyz[1]>user_tick_max[1])||
         (step[1]<0.0&&xyz[1]<user_tick_min[1])
@@ -4789,7 +4824,7 @@ void DrawUserTicks(void){
       for(i=1;i<user_tick_nxyz[1]*user_tick_sub;i++){
         if(i%user_tick_sub==0)continue;
         xyz[0]=tick_origin[0];
-        xyz[1]=tick_origin[1] + i*step[1]/(float)user_tick_sub;
+        xyz[1]=user_tick_min[1] + i*step[1]/(float)user_tick_sub;
         if(
           (step[1]>0.0&&xyz[1]>user_tick_max[1])||
           (step[1]<0.0&&xyz[1]<user_tick_min[1])
@@ -4815,7 +4850,7 @@ void DrawUserTicks(void){
       char label[128];
 
       xyz[0]=tick_origin[0];
-      xyz[1]=tick_origin[1] + i*step[1];
+      xyz[1]=user_tick_min[1] + i*step[1];
       if(
         (step[1]>0.0&&xyz[1]>user_tick_max[1])||
         (step[1]<0.0&&xyz[1]<user_tick_min[1])
@@ -4855,7 +4890,7 @@ void DrawUserTicks(void){
     for(i=0;i<user_tick_nxyz[2];i++){
       xyz[0]=tick_origin[0];
       xyz[1]=tick_origin[1];
-      xyz[2]=tick_origin[2] + i*step[2];
+      xyz[2]=user_tick_min[2] + i*step[2];
       if(
         (step[2]>0.0&&xyz[2]>user_tick_max[2])||
         (step[2]<0.0&&xyz[2]<user_tick_min[2])
@@ -4889,7 +4924,7 @@ void DrawUserTicks(void){
         if(i%user_tick_sub==0)continue;
         xyz[0]=tick_origin[0];
         xyz[1]=tick_origin[1];
-        xyz[2]=tick_origin[2] + i*step[2]/(float)user_tick_sub;
+        xyz[2]=user_tick_min[2] + i*step[2]/(float)user_tick_sub;
         if(
           (step[2]>0.0&&xyz[2]>user_tick_max[2])||
           (step[2]<0.0&&xyz[2]<user_tick_min[2])
@@ -4914,7 +4949,7 @@ void DrawUserTicks(void){
 
       xyz[0]=tick_origin[0];
       xyz[1]=tick_origin[1];
-      xyz[2]=tick_origin[2] + i*step[2];
+      xyz[2]=user_tick_min[2] + i*step[2];
       if(
         (step[2]>0.0&&xyz[2]>user_tick_max[2])||
         (step[2]<0.0&&xyz[2]<user_tick_min[2])

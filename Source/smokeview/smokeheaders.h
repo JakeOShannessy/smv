@@ -522,14 +522,8 @@ EXTERNCPP void GetGSliceParams(void);
 EXTERNCPP void GetHistogramValProc(histogramdata *histogram, float cdf, float *val);
 EXTERNCPP int  GetSliceBoundsIndex(const slicedata *sd);
 EXTERNCPP int  GetSliceBoundsIndexFromLabel(char *label);
-EXTERNCPP FILE_SIZE GetSliceData(slicedata *sd, const char *slicefilename, int time_frame, int *is1ptr, int *is2ptr, int *js1ptr, int *js2ptr, int *ks1ptr, int *ks2ptr, int *idirptr,
-  float *qminptr, float *qmaxptr, float *qdataptr, float *timesptr, int ntimes_old_arg, int *ntimesptr,
-  int tload_step_arg, int tload_beg_arg, int settmax_s_arg, float tmin_s_arg, float tmax_s_arg);
 EXTERNCPP void GetSliceDataBounds(slicedata *sd, float *pmin, float *pmax);
-EXTERNCPP int  GetNSliceFrames(char *file, float *stime_min, float *stime_max);
 EXTERNCPP void GetSliceParams2(void);
-EXTERNCPP void GetSliceSizes(const char *slicefilenameptr, int time_frame, int *nsliceiptr, int *nslicejptr, int *nslicekptr, int *ntimesptr, int tload_step_arg,
-  int *errorptr, int tload_beg_arg, int settmax_s_arg, float tmin_s_arg, float tmax_s_arg, int *headersizeptr, int *framesizeptr);
 EXTERNCPP void HideSlices(char *longlabel);
 EXTERNCPP void InitSliceData(void);
 EXTERNCPP void MergeLoadedSliceHist(char *label, histogramdata **histptr);
@@ -539,7 +533,7 @@ EXTERNCPP FILE_SIZE ReadVSlice(int ivslice, int time_frame, float *time_value, i
 EXTERNCPP void SetSliceColors(float smin, float smax, slicedata *sd, int flag, int *errorcode);
 EXTERNCPP void Slice2Device(void);
 EXTERNCPP void SortSlices(void);
-EXTERNCPP int  TimeAverageData(float **data_out, float **data_in, int ndata, int data_per_timestep, float *times_local, int ntimes_local, float average_time);
+EXTERNCPP int  TimeAverageData(char *label, float **data_out, float **data_in, int ndata, int data_per_timestep, float *times_local, int ntimes_local, float average_time);
 EXTERNCPP void UpdateAllSliceColors(int slicetype, int *errorcode);
 EXTERNCPP void UpdateAllSliceLabels(int slicetype, int *errorcode);
 EXTERNCPP void UpdateGslicePlanes(void);
@@ -669,9 +663,7 @@ EXTERNCPP void OpenSMVFile(char *filename,int filenamelength,int *openfile);
 EXTERNCPP void ParticlePropShowMenu(int value);
 EXTERNCPP void ParticleShowMenu(int value);
 EXTERNCPP void ParticleStreakShowMenu(int var);
-#ifdef pp_REFRESH
 EXTERNCPP void PeriodicRefresh(int var);
-#endif
 EXTERNCPP void Plot3DListMenu(int value);
 EXTERNCPP void Plot3DShowMenu(int value);
 EXTERNCPP void PrintFileLoadTimes(int file_count, FILE_SIZE load_size, float load_time);
@@ -747,19 +739,9 @@ EXTERNCPP void UpdateUseTextures(void);
 EXTERNCPP void UpdateVentOffset(void);
 EXTERNCPP void WriteIni(int flag,char *file);
 
-//*** renderhtml.c headers
-
-EXTERNCPP int Obst2Data(char *html_file);
-EXTERNCPP int SliceNode2Data(char *html_file, int option);
-EXTERNCPP int SliceCell2Data(char *html_file, int option);
-EXTERNCPP int Smv2Html(char *html_out, int option, int from_where);
-EXTERNCPP int Smv2Geom(char *html_file);
-
 //*** renderimage.c headers
 
-#ifdef pp_RENDER360_DEBUG
 EXTERNCPP void DrawScreenInfo(void);
-#endif
 EXTERNCPP char *GetMovieFilePath(char *moviefile_path);
 EXTERNCPP void GetRenderResolution(int *width_low, int *height_low, int *width_high, int *height_high);
 EXTERNCPP GLubyte *GetScreenBuffer(void);
@@ -769,9 +751,13 @@ EXTERNCPP int  MergeRenderScreenBuffers360(void);
 EXTERNCPP void *PlayMovie(void *arg);
 EXTERNCPP void Render(int view_mode);
 EXTERNCPP void RenderFrame(int view_mode);
+// BEGIN Animated GIF API
 EXTERNCPP int  GifStart(const char *path);
 EXTERNCPP int  GifEnd();
-EXTERNCPP int  GifAddFrame(int delay);
+EXTERNCPP int  GifAddFrameSpec();
+EXTERNCPP void GifSpec_Clear();
+EXTERNCPP void GifSpec_PushFrame(int frame_number, int duration);
+// END Animated GIF API
 EXTERNCPP void ResetRenderResolution(int *width_low, int *height_low, int *width_high, int *height_high);
 EXTERNCPP void *SetupFF(void *arg);
 EXTERNCPP void SetupScreeninfo(void);
@@ -806,7 +792,7 @@ EXTERNCPP void DisplayVersionInfo(char *progname, common_opts *opts);
 EXTERNCPP void InitVolrenderScript(char *prefix, char *tour_label, int startframe, int skipframe);
 EXTERNCPP int IsFDSRunning(FILE_SIZE *last_size);
 EXTERNCPP void SetViewPoint(int option);
-EXTERNCPP void SMV_EXIT(int code);
+EXTERNCPP NORETURN void SMV_EXIT(int code);
 EXTERNCPP void StartTimer(float *timerptr);
 EXTERNCPP void TransparentOff(void);
 EXTERNCPP void TransparentOn(void);

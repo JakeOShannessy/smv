@@ -1,6 +1,6 @@
 # Makefile for zlib
 # Copyright (C) 1995-2002 Jean-loup Gailly.
-# For conditions of distribution and use, see copyright notice in zlib.h 
+# For conditions of distribution and use, see copyright notice in zlib.h
 
 # To compile and test, type:
 #   ./configure; make test
@@ -16,7 +16,8 @@ COMPILER=icx
 SIZE=-m64
 CC=$(COMPILER)
 
-CFLAGS=-O2 $(SIZE) -Wno-deprecated-non-prototype -Wno-implicit-function-declaration
+CFLAGS=-O2 $(SIZE) -Wno-implicit-function-declaration
+CFLAGSWIN=-O2 $(SIZE) -Wno-deprecated-non-prototype
 
 VER=1.1.4
 
@@ -26,7 +27,7 @@ RANLIB=ranlib
 .SUFFIXES:      .c .o .obj
 
 .c.obj:
-	$(CC) -c $(CFLAGS) $<
+	$(CC) -c $(CFLAGS) $CFLAGSWIN $<
 .c.o:
 	$(CC) -c $(CFLAGS) $<
 
@@ -40,4 +41,4 @@ libz.a: $(OBJS)
 	$(RANLIB) $@
 
 libz.lib: $(OBJSWIN)
-	lib $(OBJSWIN) -OUT:$@ 
+	$(LIB) $(OBJSWIN) -OUT:$@

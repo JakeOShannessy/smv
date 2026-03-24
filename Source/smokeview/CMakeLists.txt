@@ -14,7 +14,6 @@ add_executable(smokeview
     smokeview.c
     output.c
     renderimage.c
-    renderhtml.c
     getdatabounds.c
     readsmv.c
     IOvolsmoke.c
@@ -59,7 +58,7 @@ target_sources(smokeview PRIVATE
 )
 
 target_link_libraries(smokeview PRIVATE smv)
-target_link_libraries(smokeview PRIVATE json-c::json-c)
+# target_link_libraries(smokeview PRIVATE json-c::json-c)
 # if (BUILD_SHARED_LIBS)
 #     install(IMPORTED_RUNTIME_ARTIFACTS json-c::json-c)
 # endif()
@@ -84,21 +83,16 @@ if (MACOSX)
 else()
     target_link_libraries(smokeview PRIVATE GLUT::GLUT)
 endif ()
-target_link_libraries(smokeview PRIVATE GLEW::GLEW)
 if (GLEW_FOUND)
+    target_link_libraries(smokeview PRIVATE GLEW::GLEW)
     # This line is a hack to work around the fact the code includes "glew.h"
     # rather than <GL/glew.h> TODO: just change this
     target_include_directories(smokeview PRIVATE ${GLEW_INCLUDE_DIRS}/GL)
+else()
+    target_link_libraries(smokeview PRIVATE glew_static)
 endif()
 
-target_include_directories(smokeview PRIVATE
-    .
-    ../shared
-)
-
-if (BETA)
-    add_compile_definitions(pp_BETA)
-endif ()
+target_include_directories(smokeview PRIVATE .)
 
 if (SMV_ROOT_OVERRIDE)
     target_compile_definitions(smokeview PRIVATE SMV_ROOT_OVERRIDE="${SMV_ROOT_OVERRIDE}")

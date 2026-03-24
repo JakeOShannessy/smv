@@ -17,7 +17,7 @@
 #endif
 
 /* ------------------ _Sniff_Errors ------------------------ */
-#ifdef pp_SNIFF_ERROR
+#ifdef _DEBUG
 void _Sniff_Errors(const char *whereat, const char *file, int line){
   int error;
 
@@ -208,10 +208,14 @@ void InitVolrenderScript(char *prefix, char *tour_label, int startframe, int ski
 void DisplayVersionInfo(char *progname, common_opts *opts){
   PRINTVERSION(progname, opts);
   if(global_scase.fds_version!=NULL){
-    PRINTF("FDS Build        : %s\n",global_scase.fds_githash);
+    PRINTF("FDS Build        : %s\n",global_scase.fds_version);
   }
   char *smv_progname = GetBinPath();
+#ifdef _DEBUG
+  PRINTF("Smokeview        : %s(debug)\n",smv_progname);
+#else
   PRINTF("Smokeview        : %s\n",smv_progname);
+#endif
   FREEMEMORY(smv_progname);
   if(verbose_output == 1){
     if(smokezippath!=NULL)PRINTF("Smokezip path    : %s\n",smokezippath);

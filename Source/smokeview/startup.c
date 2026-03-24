@@ -230,7 +230,7 @@ int SetupCase(char *filename){
     }
 
   // read casename.smo (only OBST lines) to define a one mesh version of OBST's
-    ReadSMVOrig(&global_scase);
+    ReadSMVOrig(&global_scase, NULL);
   }
   if(return_code==0&&trainer_mode==1){
     GLUIShowTrainer();
@@ -281,6 +281,38 @@ int SetupCase(char *filename){
   PRINT_TIMER(timer_start, "InitTranslate");
 
   if(global_scase.tourcoll.ntourinfo==0)SetupTour();
+#ifdef pp_GLUT_DEBUG
+  printf("***before dialog setup\n");
+  printf("***before InitRolloutList\n");
+  InitRolloutList();
+  printf("***before GLUIColorbarSetup\n");
+  GLUIColorbarSetup(mainwindow_id);
+  printf("***before GLUIMotionSetup\n");
+  GLUIMotionSetup(mainwindow_id);
+  printf("***before GLUIBoundsSetup\n");
+  GLUIBoundsSetup(mainwindow_id);
+  printf("***before GLUIShooterSetup\n");
+  GLUIShooterSetup(mainwindow_id);
+  printf("***before GLUIGeometrySetup\n");
+  GLUIGeometrySetup(mainwindow_id);
+  printf("***before GLUIClipSetup\n");
+  GLUIClipSetup(mainwindow_id);
+  printf("***before GLUIDisplaySetup\n");
+  GLUIDisplaySetup(mainwindow_id);
+  printf("***before GLUIDeviceSetup\n");
+  GLUIDeviceSetup(mainwindow_id);
+  printf("***before GLUIPlot2DSetup\n");
+  GLUIPlot2DSetup(mainwindow_id);
+  printf("***before GLUITourSetup\n");
+  GLUITourSetup(mainwindow_id);
+  printf("***before GLUIAlertSetup\n");
+  GLUIAlertSetup(mainwindow_id);
+  printf("***before GLUIStereoSetup\n");
+  GLUIStereoSetup(mainwindow_id);
+  printf("***before GLUI3dSmokeSetup\n");
+  GLUI3dSmokeSetup(mainwindow_id);
+  printf("***after dialog setup\n");
+#else
   InitRolloutList();
   GLUIColorbarSetup(mainwindow_id);
   GLUIMotionSetup(mainwindow_id);
@@ -295,6 +327,9 @@ int SetupCase(char *filename){
   GLUIAlertSetup(mainwindow_id);
   GLUIStereoSetup(mainwindow_id);
   GLUI3dSmokeSetup(mainwindow_id);
+#endif
+
+  opengl_finalized = 1;
   PRINT_TIMER(timer_start, "all dialogs");
 
   UpdateLights(light_position0, light_position1);
@@ -306,19 +341,25 @@ int SetupCase(char *filename){
   glutSetWindowTitle(global_scase.fdsprefix);
   InitMisc();
   GLUITrainerSetup(mainwindow_id);
-  glutDetachMenu(GLUT_RIGHT_BUTTON);
+  if(opengl_finalized==1)glutDetachMenu(GLUT_RIGHT_BUTTON);
   attachmenu_status = 0;
   THREADcontrol(checkfiles_threads, THREAD_LOCK);
+#ifdef pp_GLUT_DEBUG
+  printf("\n***before menu setup\n");
+#endif
   InitMenus();
+#ifdef pp_GLUT_DEBUG
+  printf("***after menu setup\n\n");
+#endif
   THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
-  glutAttachMenu(GLUT_RIGHT_BUTTON);
+  if(opengl_finalized==1)glutAttachMenu(GLUT_RIGHT_BUTTON);
   attachmenu_status = 1;
   if(trainer_mode==1){
     GLUIShowTrainer();
     GLUIShowAlert();
   }
   // initialize info header
-  initialiseInfoHeader(&titleinfo, release_title, smv_githash, global_scase.fds_githash, global_scase.chidfilebase, global_scase.fds_title);
+  initialiseInfoHeader(&titleinfo, release_title, smv_githash, global_scase.fds_version, global_scase.chidfilebase, global_scase.fds_title);
   PRINT_TIMER(timer_start, "glut routines");
   return 0;
 }
@@ -380,9 +421,11 @@ void InitStartupDirs(void){
   monitor_screen_height = GetScreenHeight();
 #endif
 
-#ifdef pp_BETA
-  fprintf(stderr, "%s\n", "\n*** This version of Smokeview is intended for review and testing ONLY. ***");
-#endif
+  int is_beta;
+  GetGitInfo(NULL, NULL, &is_beta);
+  if(is_beta == 1){
+    fprintf(stderr, "%s\n", "\n*** This version of Smokeview is intended for review and testing ONLY. ***");
+  }
 }
 
 /* ------------------ GLUTGetScreenWidth ------------------------ */
@@ -415,7 +458,7 @@ void SetupGlut(int argc, char **argv){
 #ifdef pp_OSX
     if(verbose_output==1)PRINTF("(%i/%i)", GetScreenHeight(), GLUTGetScreenHeight());
 #endif
-    if(verbose_output==1)PRINTF("\n%s\n",_("complete"));
+    if(verbose_output==1)PRINTF("\n%s\n","complete");
 
   }
 #ifdef pp_OSX
@@ -424,19 +467,19 @@ void SetupGlut(int argc, char **argv){
 
   if(use_graphics==1){
 #ifdef _DEBUG
-    if(verbose_output==1)PRINTF("%s",_("initializing Smokeview graphics window - "));
+    if(verbose_output==1)PRINTF("%s","initializing Smokeview graphics window - ");
 #endif
     glutInitWindowSize(screenWidth, screenHeight);
     if(have_dialogX0 == 0)dialogX0 = screenX0;
     if(have_dialogY0 == 0)dialogY0 = screenY0;
     glutInitWindowPosition(screenX0, screenY0);
 #ifdef _DEBUG
-    if(verbose_output==1)PRINTF("%s\n",_("initialized"));
+    if(verbose_output==1)PRINTF("%s\n","initialized");
 #endif
 
     max_screenWidth =  GLUTGetScreenWidth();
     max_screenHeight = GLUTGetScreenHeight();
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(force_scale==0){
       if(monitor_screen_height!=max_screenHeight)double_scale=1;
       if(monitor_screen_height==max_screenHeight)double_scale=0;
@@ -448,7 +491,7 @@ void SetupGlut(int argc, char **argv){
 #endif
     font_ptr          = GLUT_BITMAP_HELVETICA_12;
     colorbar_font_ptr = GLUT_BITMAP_HELVETICA_10;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
       font_ptr = (void *)GLUT_BITMAP_HELVETICA_24;
       colorbar_font_ptr = (void *)GLUT_BITMAP_HELVETICA_20;
@@ -462,7 +505,7 @@ void SetupGlut(int argc, char **argv){
 
       TRAINER_WIDTH=300;
       TRAINER_HEIGHT=50;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
       if(double_scale==1){
         TRAINER_WIDTH  *= 2;
         TRAINER_HEIGHT *= 2;
@@ -532,7 +575,7 @@ void InitOpenGL(int option){
 #endif
 
   if(option==PRINT){
-    if(verbose_output==1)PRINTF("%s\n", _("initializing OpenGL"));
+    if(verbose_output==1)PRINTF("%s\n", "initializing OpenGL");
   }
 
   type = GLUT_RGB|GLUT_DEPTH;
@@ -556,24 +599,24 @@ void InitOpenGL(int option){
   }
 
 #ifdef _DEBUG
-  if(option==PRINT)PRINTF("%s",_("   Initializing Glut display mode - "));
+  if(option==PRINT)PRINTF("%s","   Initializing Glut display mode - ");
 #endif
   glutInitDisplayMode(type);
 #ifdef _DEBUG
-  if(option==PRINT)PRINTF("%s\n",_("initialized"));
+  if(option==PRINT)PRINTF("%s\n","initialized");
 #endif
 
   CheckMemory;
 #ifdef _DEBUG
-  if(option==PRINT)PRINTF("%s\n",_("   creating window"));
+  if(option==PRINT)PRINTF("%s\n","   creating window");
 #endif
   mainwindow_id = glutCreateWindow("");
 #ifdef _DEBUG
-  if(option==PRINT)PRINTF("%s\n",_("   window created"));
+  if(option==PRINT)PRINTF("%s\n","   window created");
 #endif
 
 #ifdef _DEBUG
-  if(option==PRINT)PRINTF("%s",_("   Initializing callbacks - "));
+  if(option==PRINT)PRINTF("%s","   Initializing callbacks - ");
 #endif
   glutSpecialUpFunc(SpecialKeyboardUpCB);
   glutKeyboardUpFunc(KeyboardUpCB);
@@ -586,7 +629,7 @@ void InitOpenGL(int option){
   glutVisibilityFunc(NULL);
   glutMenuStatusFunc(MenuStatusCB);
 #ifdef _DEBUG
-  if(option==PRINT)PRINTF("%s\n",_("initialized"));
+  if(option==PRINT)PRINTF("%s\n","initialized");
 #endif
 
   opengl_version = GetOpenGLVersion(opengl_version_label);
@@ -609,11 +652,11 @@ void InitOpenGL(int option){
     }
 #ifdef _DEBUG
     if(err==0&&option==PRINT){
-      PRINTF("%s\n",_("  GPU shader initialization succeeded"));
+      PRINTF("%s\n","  GPU shader initialization succeeded");
     }
 #endif
     if(err!=0&&option==PRINT){
-      PRINTF("%s\n",_("  GPU shader initialization failed"));
+      PRINTF("%s\n","  GPU shader initialization failed");
     }
   }
 #endif
@@ -640,9 +683,8 @@ void InitOpenGL(int option){
     nblueshift=8-nbluebits;
     if(nblueshift<0)nblueshift=0;
   }
-  opengldefined=1;
   if(option==PRINT){
-    if(verbose_output==1)PRINTF("%s\n\n", _("complete"));
+    if(verbose_output==1)PRINTF("%s\n\n", "complete");
   }
 }
 
@@ -1244,7 +1286,7 @@ void InitVars(void){
 
   InitScase(&global_scase);
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
   double_scale = 1;
 #endif
   global_scase.curdir_writable = Writable(".");
@@ -1257,7 +1299,7 @@ void InitVars(void){
 //*** define slurm queues
 
   queue_list = getenv("SMV_QUEUES");
-#ifdef pp_MOVIE_BATCH_DEBUG
+#ifdef _DEBUG
   if(queue_list==NULL)queue_list = "batch"; // placeholder for debugging slurm queues on the PC
 #endif
 
@@ -1316,12 +1358,10 @@ void InitVars(void){
     strcpy(movie_email, "");
   }
 
-#ifdef pp_RENDER360_DEBUG
   NewMemory((void **)&screenvis, nscreeninfo * sizeof(int));
   for(i = 0; i < nscreeninfo; i++){
     screenvis[i] = 1;
   }
-#endif
 
   beam_color[0] = 255 * foregroundcolor[0];
   beam_color[1] = 255 * foregroundcolor[1];
@@ -1410,7 +1450,7 @@ void InitVars(void){
   direction_color[3]=1.0;
   direction_color_ptr=GetColorPtr(&global_scase, direction_color);
 
-  GetGitInfo(smv_githash,smv_gitdate);
+  GetGitInfo(smv_githash,smv_gitdate, NULL );
 
   rgb_terrain[0][0]=1.0;
   rgb_terrain[0][1]=0.0;
@@ -1489,7 +1529,7 @@ void InitVars(void){
   strcpy(emptylabel,"");
   font_ptr          = GLUT_BITMAP_HELVETICA_12;
   colorbar_font_ptr = GLUT_BITMAP_HELVETICA_10;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
       font_ptr = (void *)GLUT_BITMAP_HELVETICA_24;
       colorbar_font_ptr = (void *)GLUT_BITMAP_HELVETICA_20;

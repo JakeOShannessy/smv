@@ -15,6 +15,8 @@
 #include "glui_smoke.h"
 #include "glui_bounds.h"
 #include "IOobjects.h"
+#include "readslice.h"
+#include "readsmvfile.h"
 
 static char param_buffer[1024];
 static int param_status, line_number;
@@ -266,135 +268,128 @@ void InitKeywords(void){
 
   InitKeyword("dummy", -999, 0);         // dummy entry used to report errors
 // 3d smoke
-  InitKeyword("LOAD3DSMOKE",         SCRIPT_LOAD3DSMOKE, 1);         // documented
-  InitKeyword("LOADVOLSMOKE",        SCRIPT_LOADVOLSMOKE, 1);        // documented
-  InitKeyword("LOADVOLSMOKEFRAME",   SCRIPT_LOADVOLSMOKEFRAME, 1);   // documented
+  InitKeyword("LOAD3DSMOKE",         SCRIPT_LOAD3DSMOKE, 1);
+  InitKeyword("LOADVOLSMOKE",        SCRIPT_LOADVOLSMOKE, 1);
+  InitKeyword("LOADVOLSMOKEFRAME",   SCRIPT_LOADVOLSMOKEFRAME, 1);
+  InitKeyword("SMOKEPROP",           SCRIPT_SMOKEPROP, 1);
 
 // boundary files
-  InitKeyword("LOADBOUNDARY",        SCRIPT_LOADBOUNDARY, 1);        // documented
-  InitKeyword("LOADBOUNDARYM",       SCRIPT_LOADBOUNDARYM, 2);       // documented
-  InitKeyword("SETBOUNDBOUNDS",      SCRIPT_SETBOUNDBOUNDS, 1);      // documented
+  InitKeyword("LOADBOUNDARY",        SCRIPT_LOADBOUNDARY, 1);
+  InitKeyword("LOADBOUNDARYM",       SCRIPT_LOADBOUNDARYM, 2);
+  InitKeyword("SETBOUNDBOUNDS",      SCRIPT_SETBOUNDBOUNDS, 1);
 
 // general files
-  InitKeyword("LOADFILE",            SCRIPT_LOADFILE, 1);            // documented
-  InitKeyword("LOADINIFILE",         SCRIPT_LOADINIFILE, 1);         // documented
-  InitKeyword("UNLOADALL",           SCRIPT_UNLOADALL, 0);           // documented
+  InitKeyword("LOADFILE",            SCRIPT_LOADFILE, 1);
+  InitKeyword("LOADINIFILE",         SCRIPT_LOADINIFILE, 1);
+  InitKeyword("LOADSMV",             SCRIPT_LOADSMV, 1);
+  InitKeyword("UNLOADALL",           SCRIPT_UNLOADALL, 0);
 
 // hvac files
 
-  InitKeyword("HIDEHVACVALS",        SCRIPT_HIDEHVACVALS, 0);        // documented
-  InitKeyword("SHOWHVACDUCTVAL",     SCRIPT_SHOWHVACDUCTVAL, 1);     // documented
-  InitKeyword("SHOWHVACNODEVAL",     SCRIPT_SHOWHVACNODEVAL, 1);     // documented
-  InitKeyword("LOADHVAC",            SCRIPT_LOADHVAC, 0);            // documented
+  InitKeyword("HIDEHVACVALS",        SCRIPT_HIDEHVACVALS, 0);
+  InitKeyword("LOADHVAC", SCRIPT_LOADHVAC, 0);
+  InitKeyword("SHOWHVACDUCTVAL",     SCRIPT_SHOWHVACDUCTVAL, 1);
+  InitKeyword("SHOWHVACNODEVAL",     SCRIPT_SHOWHVACNODEVAL, 1);
 
 // slice and vector slice files
-  InitKeyword("LOADSLCF",            SCRIPT_LOADSLCF, 1);            // documented
-  InitKeyword("LOADSLICE",           SCRIPT_LOADSLICE, 2);           // documented
-  InitKeyword("LOADSLICEM",          SCRIPT_LOADSLICEM, 3);          // documented
-  InitKeyword("LOADVFILE",           SCRIPT_LOADVFILE, 1);           // documented
-  InitKeyword("LOADVSLICE",          SCRIPT_LOADVSLICE, 2);          // documented
-  InitKeyword("LOADVSLICEM",         SCRIPT_LOADVSLICEM, 3);         // documented
-  InitKeyword("SETSLICEBOUNDS",      SCRIPT_SETSLICEBOUNDS, 1);      // documented
-  InitKeyword("SETSLICEAVERAGE",     SCRIPT_SETSLICEAVERAGE, 2);     // documented
-  InitKeyword("OUTPUTSLICEDATA",     SCRIPT_OUTPUTSLICEDATA, 1);     // documented
+  InitKeyword("LOADSLCF",            SCRIPT_LOADSLCF, 1);
+  InitKeyword("LOADSLICE",           SCRIPT_LOADSLICE, 2);
+  InitKeyword("LOADSLICEM",          SCRIPT_LOADSLICEM, 3);
+  InitKeyword("LOADVFILE",           SCRIPT_LOADVFILE, 1);
+  InitKeyword("LOADVSLICE",          SCRIPT_LOADVSLICE, 2);
+  InitKeyword("LOADVSLICEM",         SCRIPT_LOADVSLICEM, 3);
+  InitKeyword("OUTPUTSLICEDATA",     SCRIPT_OUTPUTSLICEDATA, 1);
+  InitKeyword("SETSLICEAVERAGE",     SCRIPT_SETSLICEAVERAGE, 2);
+  InitKeyword("SETSLICEBOUNDS",      SCRIPT_SETSLICEBOUNDS, 1);
 
 // particle files
-  InitKeyword("LOADPARTICLES",       SCRIPT_LOADPARTICLES, 0);       // documented
-  InitKeyword("PARTCLASSCOLOR",      SCRIPT_PARTCLASSCOLOR, 1);      // documented
-  InitKeyword("PARTCLASSTYPE",       SCRIPT_PARTCLASSTYPE, 1);       // documented
+  InitKeyword("LOADPARTICLES",       SCRIPT_LOADPARTICLES, 0);
+  InitKeyword("PARTCLASSCOLOR",      SCRIPT_PARTCLASSCOLOR, 1);
+  InitKeyword("PARTCLASSTYPE",       SCRIPT_PARTCLASSTYPE, 1);
 
 // plot3d files
-  InitKeyword("LOADPLOT3D",          SCRIPT_LOADPLOT3D, 1);          // documented
-  InitKeyword("PLOT3DPROPS",         SCRIPT_PLOT3DPROPS, 1);         // documented
-  InitKeyword("SHOWPLOT3DDATA",      SCRIPT_SHOWPLOT3DDATA, 1);      // documented
+  InitKeyword("LOADPLOT3D",          SCRIPT_LOADPLOT3D, 1);
+  InitKeyword("PLOT3DPROPS",         SCRIPT_PLOT3DPROPS, 1);
+  InitKeyword("SHOWPLOT3DDATA",      SCRIPT_SHOWPLOT3DDATA, 1);
 
 // isosurface files
-  InitKeyword("LOADISO",             SCRIPT_LOADISO, 1);             // documented
-  InitKeyword("LOADISOM",            SCRIPT_LOADISOM, 2);            // documented
+  InitKeyword("LOADISO",             SCRIPT_LOADISO, 1);
+  InitKeyword("LOADISOM",            SCRIPT_LOADISOM, 2);
 
 // show/hide devices
-  InitKeyword("HIDEALLDEVS",         SCRIPT_HIDEALLDEVS, 0);         // documented
-  InitKeyword("HIDEDEV",             SCRIPT_HIDEDEV, 1);             // documented
-  InitKeyword("SHOWALLDEVS",         SCRIPT_SHOWALLDEVS, 0);         // documented
-  InitKeyword("SHOWDEV",             SCRIPT_SHOWDEV, 1);             // documented
-  InitKeyword("SHOWSMOKESENSORS",    SCRIPT_OUTPUTSMOKESENSORS, 0);  // documented
-  InitKeyword("OUTPUTSMOKESENSORS",  SCRIPT_OUTPUTSMOKESENSORS, 0);  // documented
+  InitKeyword("HIDEALLDEVS",         SCRIPT_HIDEALLDEVS, 0);
+  InitKeyword("HIDEDEV",             SCRIPT_HIDEDEV, 1);
+  InitKeyword("SHOWALLDEVS",         SCRIPT_SHOWALLDEVS, 0);
+  InitKeyword("SHOWDEV",             SCRIPT_SHOWDEV, 1);
+  InitKeyword("SHOWSMOKESENSORS",    SCRIPT_SHOWSMOKESENSORS, 0);
 
 // colorbar
-  InitKeyword("CBARNORMAL",          SCRIPT_CBARNORMAL, 0);          // documented
-  InitKeyword("CBARFLIP",            SCRIPT_CBARFLIP, 0);            // documented
-  InitKeyword("HIDECBAREDIT",        SCRIPT_HIDECBAREDIT, 0);        // documented
-  InitKeyword("SHOWCBAREDIT",        SCRIPT_SHOWCBAREDIT, 0);        // documented
-  InitKeyword("SETCBAR",             SCRIPT_SETCBAR, 1);             // documented
-  InitKeyword("SETCBARLAB",          SCRIPT_SETCBARLAB, 0);          // documented
-  InitKeyword("SETCBARRGB",          SCRIPT_SETCBARRGB, 0);          // documented
-  InitKeyword("HILIGHTMINVALS",      SCRIPT_HILIGHTMINVALS, 4);      // documented
-  InitKeyword("HILIGHTMAXVALS",      SCRIPT_HILIGHTMAXVALS, 4);      // documented
+  InitKeyword("CBARFLIP",            SCRIPT_CBARFLIP, 0);
+  InitKeyword("CBARNORMAL",          SCRIPT_CBARNORMAL, 0);
+  InitKeyword("HILIGHTMINVALS",      SCRIPT_HILIGHTMINVALS, 4);
+  InitKeyword("HILIGHTMAXVALS",      SCRIPT_HILIGHTMAXVALS, 4);
+  InitKeyword("HIDECBAREDIT",        SCRIPT_HIDECBAREDIT, 0);
+  InitKeyword("SHOWCBAREDIT",        SCRIPT_SHOWCBAREDIT, 0);
+  InitKeyword("SETCBAR",             SCRIPT_SETCBAR, 1);
+  InitKeyword("SETCBARLAB",          SCRIPT_SETCBARLAB, 0);
+  InitKeyword("SETCBARRGB",          SCRIPT_SETCBARRGB, 0);
 
 // tour
-  InitKeyword("LOADTOUR",            SCRIPT_LOADTOUR, 1);            // documented
-  InitKeyword("SETTOURKEYFRAME",     SCRIPT_SETTOURKEYFRAME, 1);     // documented
-  InitKeyword("SETTOURVIEW",         SCRIPT_SETTOURVIEW, 1);         // documented
-  InitKeyword("UNLOADTOUR",          SCRIPT_UNLOADTOUR, 0);          // documented
+  InitKeyword("LOADTOUR",            SCRIPT_LOADTOUR, 1);
+  InitKeyword("SETTOURKEYFRAME",     SCRIPT_SETTOURKEYFRAME, 1);
+  InitKeyword("SETTOURVIEW",         SCRIPT_SETTOURVIEW, 1);
+  InitKeyword("UNLOADTOUR",          SCRIPT_UNLOADTOUR, 0);
 
 // controlling the scene
-  InitKeyword("EXIT",                SCRIPT_EXIT, 0);                // documented
-  InitKeyword("NOEXIT",              SCRIPT_NOEXIT, 0);              // documented
-  InitKeyword("GSLICEORIEN",         SCRIPT_GSLICEORIEN, 1);         // documented
-  InitKeyword("GSLICEPOS",           SCRIPT_GSLICEPOS, 1);           // documented
-  InitKeyword("GSLICEVIEW",          SCRIPT_GSLICEVIEW, 1);          // documented
-  InitKeyword("KEYBOARD",            SCRIPT_KEYBOARD, 1);            // documented
-  InitKeyword("PROJECTION",          SCRIPT_PROJECTION, 1);          // documented
-  InitKeyword("SCENECLIP",           SCRIPT_SCENECLIP, 1);           // documented
-  InitKeyword("SETCLIPMODE",         SCRIPT_SETCLIPMODE, 1);         // documented
-  InitKeyword("SETCLIPX",            SCRIPT_SETCLIPX, 1);            // documented
-  InitKeyword("SETCLIPY",            SCRIPT_SETCLIPY, 1);            // documented
-  InitKeyword("SETCLIPZ",            SCRIPT_SETCLIPZ, 1);            // documented
+  InitKeyword("EXIT",                SCRIPT_EXIT, 0);
+  InitKeyword("GSLICEORIEN",         SCRIPT_GSLICEORIEN, 1);
+  InitKeyword("GSLICEPOS",           SCRIPT_GSLICEPOS, 1);
+  InitKeyword("GSLICEVIEW",          SCRIPT_GSLICEVIEW, 1);
+  InitKeyword("KEYBOARD",            SCRIPT_KEYBOARD, 1);
+  InitKeyword("NOEXIT",              SCRIPT_NOEXIT, 0);
+  InitKeyword("PROJECTION",          SCRIPT_PROJECTION, 1);
+  InitKeyword("SCENECLIP",           SCRIPT_SCENECLIP, 1);
+  InitKeyword("SETCLIPMODE",         SCRIPT_SETCLIPMODE, 1);
+  InitKeyword("SETCLIPX",            SCRIPT_SETCLIPX, 1);
+  InitKeyword("SETCLIPY",            SCRIPT_SETCLIPY, 1);
+  InitKeyword("SETCLIPZ",            SCRIPT_SETCLIPZ, 1);
   InitKeyword("SETDEMOMODE",         SCRIPT_SETDEMOMODE, 1);
-  InitKeyword("SMOKEPROP",           SCRIPT_SMOKEPROP, 1);
-  InitKeyword("SETTIMEVAL",          SCRIPT_SETTIMEVAL, 1);          // documented
-  InitKeyword("SETVIEWPOINT",        SCRIPT_SETVIEWPOINT, 1);        // documented
-  InitKeyword("VIEWXMIN",            SCRIPT_VIEWXMIN, 0);            // documented
-  InitKeyword("VIEWXMAX",            SCRIPT_VIEWXMAX, 0);            // documented
-  InitKeyword("VIEWYMIN",            SCRIPT_VIEWYMIN, 0);            // documented
-  InitKeyword("VIEWYMAX",            SCRIPT_VIEWYMAX, 0);            // documented
-  InitKeyword("VIEWZMIN",            SCRIPT_VIEWZMIN, 0);            // documented
-  InitKeyword("VIEWZMAX",            SCRIPT_VIEWZMAX, 0);            // documented
-  InitKeyword("XYZVIEW",             SCRIPT_XYZVIEW, 1);             // documented
-  InitKeyword("XSCENECLIP",          SCRIPT_XSCENECLIP, 1);          // documented
-  InitKeyword("YSCENECLIP",          SCRIPT_YSCENECLIP, 1);          // documented
-  InitKeyword("ZSCENECLIP",          SCRIPT_ZSCENECLIP, 1);          // documented
+  InitKeyword("SETTIMEVAL",          SCRIPT_SETTIMEVAL, 1);
+  InitKeyword("SETVIEWPOINT",        SCRIPT_SETVIEWPOINT, 1);
+  InitKeyword("VIEWXMIN",            SCRIPT_VIEWXMIN, 0);
+  InitKeyword("VIEWXMAX",            SCRIPT_VIEWXMAX, 0);
+  InitKeyword("VIEWYMIN",            SCRIPT_VIEWYMIN, 0);
+  InitKeyword("VIEWYMAX",            SCRIPT_VIEWYMAX, 0);
+  InitKeyword("VIEWZMIN",            SCRIPT_VIEWZMIN, 0);
+  InitKeyword("VIEWZMAX",            SCRIPT_VIEWZMAX, 0);
+  InitKeyword("XSCENECLIP",          SCRIPT_XSCENECLIP, 1);
+  InitKeyword("XYZVIEW",             SCRIPT_XYZVIEW, 1);
+  InitKeyword("YSCENECLIP",          SCRIPT_YSCENECLIP, 1);
+  InitKeyword("ZSCENECLIP",          SCRIPT_ZSCENECLIP, 1);
 
 // rendering images
 
-  InitKeyword("ISORENDERALL",        SCRIPT_ISORENDERALL, 2);        // documented
-  InitKeyword("LOADSLICERENDER",     SCRIPT_LOADSLICERENDER, 4);     // documented
-  InitKeyword("LOADSMOKERENDER",     SCRIPT_LOADSMOKERENDER, 3);     // documented
-  InitKeyword("MAKEMOVIE",           SCRIPT_MAKEMOVIE, 3);           // documented
-  InitKeyword("MOVIETYPE",           SCRIPT_MOVIETYPE, 1);           // documented
-  InitKeyword("RENDER360ALL",        SCRIPT_RENDER360ALL, 2);        // documented
-  InitKeyword("RENDERALL",           SCRIPT_RENDERALL, 2);           // documented
-  InitKeyword("RENDERCLIP",          SCRIPT_RENDERCLIP, 1);          // documented
-  InitKeyword("RENDERDIR",           SCRIPT_RENDERDIR, 1);           // documented
-  InitKeyword("RENDERDOUBLEONCE",    SCRIPT_RENDERDOUBLEONCE, 1);    // documented
-  InitKeyword("RENDERHTMLALL",       SCRIPT_RENDERHTMLALL, 1);       // documented
-  InitKeyword("RENDERHTMLDIR",       SCRIPT_RENDERHTMLDIR, 1);       // documented
-  InitKeyword("RENDERHTMLGEOM",      SCRIPT_RENDERHTMLGEOM, 1);
-  InitKeyword("RENDERHTMLOBST",      SCRIPT_RENDERHTMLOBST, 1);
-  InitKeyword("RENDERHTMLONCE",      SCRIPT_RENDERHTMLONCE, 1);      // documented
-  InitKeyword("RENDERHTMLSLICECELL", SCRIPT_RENDERHTMLSLICECELL, 2);
-  InitKeyword("RENDERHTMLSLICENODE", SCRIPT_RENDERHTMLSLICENODE, 2);
-  InitKeyword("RENDERONCE",          SCRIPT_RENDERONCE, 1);          // documented
-  InitKeyword("RENDERSIZE",          SCRIPT_RENDERSIZE, 1);          // documented
-  InitKeyword("RENDERSTART",         SCRIPT_RENDERSTART, 1);         // documented
-  InitKeyword("RENDERTYPE",          SCRIPT_RENDERTYPE, 1);          // documented
-  InitKeyword("VOLSMOKERENDERALL",   SCRIPT_VOLSMOKERENDERALL, 2);   // documented
+  InitKeyword("ISORENDERALL",        SCRIPT_ISORENDERALL, 2);
+  InitKeyword("LOADSLICERENDER",     SCRIPT_LOADSLICERENDER, 4);
+  InitKeyword("LOADSMOKERENDER",     SCRIPT_LOADSMOKERENDER, 3);
+  InitKeyword("MAKEMOVIE",           SCRIPT_MAKEMOVIE, 3);
+  InitKeyword("MOVIETYPE",           SCRIPT_MOVIETYPE, 1);
+  InitKeyword("RENDER360ALL",        SCRIPT_RENDER360ALL, 2);
+  InitKeyword("RENDERALL",           SCRIPT_RENDERALL, 2);
+  InitKeyword("RENDERCLIP",          SCRIPT_RENDERCLIP, 1);
+  InitKeyword("RENDERDIR",           SCRIPT_RENDERDIR, 1);
+  InitKeyword("RENDERDOUBLEONCE",    SCRIPT_RENDERDOUBLEONCE, 1);
+  InitKeyword("RENDERONCE",          SCRIPT_RENDERONCE, 1);
+  InitKeyword("RENDERSIZE",          SCRIPT_RENDERSIZE, 1);
+  InitKeyword("RENDERSTART",         SCRIPT_RENDERSTART, 1);
+  InitKeyword("RENDERTYPE",          SCRIPT_RENDERTYPE, 1);
+  InitKeyword("VOLSMOKERENDERALL",   SCRIPT_VOLSMOKERENDERALL, 2);
 
 // miscellaneous
 
-  InitKeyword("GPUOFF",              SCRIPT_GPUOFF, 0);              // documented
-  InitKeyword("LABEL",               SCRIPT_LABEL, 1);               // documented
-  InitKeyword("RGBTEST",             SCRIPT_RGBTEST, 1);             // documented
+  InitKeyword("GPUOFF",              SCRIPT_GPUOFF, 0);
+  InitKeyword("LABEL",               SCRIPT_LABEL, 1);
+  InitKeyword("RGBTEST",             SCRIPT_RGBTEST, 1);
   InitKeyword("UNLOADPLOT2D",        SCRIPT_UNLOADPLOT2D, 0);
 
   ResizeMemory((void **)&keywordinfo, nkeywordinfo * sizeof(keyworddata));
@@ -799,8 +794,8 @@ int CompileScript(char *scriptfile){
       case SCRIPT_CBARNORMAL:
         break;
 
-// OUTPUTSMOKESENSORS
-      case SCRIPT_OUTPUTSMOKESENSORS:
+// SHOWSMOKESENSORS
+      case SCRIPT_SHOWSMOKESENSORS:
         break;
 
 // SHOWHVACDUCTVAL
@@ -849,7 +844,7 @@ int CompileScript(char *scriptfile){
         SETfval;
         break;
 
-        // SHOWALLDEVS
+// SHOWALLDEVS
       case SCRIPT_SHOWALLDEVS:
         break;
 
@@ -897,37 +892,39 @@ int CompileScript(char *scriptfile){
         if(STRCMP(scripti->cval, "PNG") == 0){
           scripti->ival = PNG;
         }
-        else{
+        else if(STRCMP(scripti->cval, "JPEG") == 0){
           scripti->ival = JPEG;
+        }
+        else{
+          scripti->ival = RGIF;
         }
         break;
 
 // MOVIETYPE
-//  jpg, png or wmv  (char)
+//  wmv, mp4, gif or avi  (char)
       case SCRIPT_MOVIETYPE:
         SETcval;
         if(STRCMP(scripti->cval, "WMV") == 0){
           scripti->ival = WMV;
         }
-        if(STRCMP(scripti->cval, "MP4") == 0){
+        else if(STRCMP(scripti->cval, "MP4") == 0){
           scripti->ival = MP4;
+        }
+        else if(STRCMP(scripti->cval, "GIF") == 0){
+          scripti->ival = MGIF;
         }
         else{
           scripti->ival = AVI;
         }
         break;
-
 // RENDERDIR
-// RENDERHTMLDIR
 //  directory name (char) (where rendered files will go)
       case SCRIPT_RENDERDIR:
-      case SCRIPT_RENDERHTMLDIR:
       {
         int len;
         int i;
 
         scripti->need_graphics = 1;
-        if(kw->index==SCRIPT_RENDERHTMLDIR)scripti->need_graphics = 0;
         SETbuffer;
         if(script_renderdir_cmd!=NULL&&strlen(script_renderdir_cmd)>0){
           strcpy(param_buffer, script_renderdir_cmd);
@@ -986,29 +983,6 @@ int CompileScript(char *scriptfile){
       case SCRIPT_RENDERDOUBLEONCE:
         SETcval2;
         break;
-
-// RENDERHTMLONCE
-// RENDERHTMLALL
-// file name base (char) (or blank to use smokeview default)
-      case SCRIPT_RENDERHTMLONCE:
-      case SCRIPT_RENDERHTMLALL:
-      case SCRIPT_RENDERHTMLGEOM:
-      case SCRIPT_RENDERHTMLOBST:
-        scripti->need_graphics = 0;
-        SETcval2;
-        break;
-      case SCRIPT_RENDERHTMLSLICENODE:
-      case SCRIPT_RENDERHTMLSLICECELL:
-        //  0 current frame, 1 all frames
-        // file name base (char) (or blank to use smokeview default)
-        SETbuffer;
-        scripti->ival = 1;   // skip
-        sscanf(param_buffer, "%i", &scripti->ival);
-
-        SETcval2;
-        scripti->need_graphics = 0;
-        break;
-
 // RENDERSTART
 //  start_frame (int) skip_frame (int)
       case SCRIPT_RENDERSTART:
@@ -1149,9 +1123,13 @@ int CompileScript(char *scriptfile){
         SETcval;
         break;
 
- // LOADFILE
+// LOADFILE
 //  file (char)
       case SCRIPT_LOADFILE:
+
+// LOADSMV
+//  file (char)
+case SCRIPT_LOADSMV:
 
 // LOADVFILE
 //  file (char)
@@ -1558,83 +1536,6 @@ int CompileScript(char *scriptfile){
   }
   fclose(stream);
   return return_val;
-}
-
-/* ------------------ GetWebFileName ------------------------ */
-
-void GetWebFileName(char *web_filename, scriptdata *scripti){
-  strcpy(web_filename, "");
-  if(script_htmldir_path!=NULL){
-    if(strlen(script_htmldir_path)!=2||
-      script_htmldir_path[0]!='.'||
-      script_htmldir_path[1]!=dirseparator[0]){
-      strcat(web_filename, script_htmldir_path);
-      strcat(web_filename, dirseparator);
-    }
-  }
-  if(scripti->cval2 != NULL){
-    strcat(web_filename, scripti->cval2);
-  }
-}
-
-/* ------------------ ScriptRenderSliceNode ------------------------ */
-
-void ScriptRenderSliceNode(scriptdata *scripti){
-  char web_filename[1024];
-
-  GetWebFileName(web_filename, scripti);
-  if(scripti->ival==0){
-    SliceNode2Data(web_filename, HTML_CURRENT_TIME);
-  }
-  else{
-    SliceNode2Data(web_filename, HTML_ALL_TIMES);
-  }
-}
-
-/* ------------------ ScriptRenderSliceCell ------------------------ */
-
-void ScriptRenderSliceCell(scriptdata *scripti){
-  char web_filename[1024];
-
-  GetWebFileName(web_filename, scripti);
-  if(scripti->ival==0){
-    SliceCell2Data(web_filename, HTML_CURRENT_TIME);
-  }
-  else{
-    SliceCell2Data(web_filename, HTML_ALL_TIMES);
-  }
-}
-
-/* ------------------ ScriptRenderObst ------------------------ */
-
-void ScriptRenderObst(scriptdata *scripti){
-  char web_filename[1024];
-
-  GetWebFileName(web_filename, scripti);
-  Obst2Data(web_filename);
-}
-
-/* ------------------ ScriptRenderGeom ------------------------ */
-
-void ScriptRenderGeom(scriptdata *scripti){
-  char web_filename[1024];
-
-  GetWebFileName(web_filename, scripti);
-  Smv2Geom(web_filename);
-}
-
-/* ------------------ ScriptRenderHtml ------------------------ */
-
-void ScriptRenderHtml(scriptdata *scripti, int option){
-  char web_filename[1024];
-  char webvr_filename[1024];
-
-  GetWebFileName(web_filename, scripti);
-  strcat(web_filename,".html");
-  Smv2Html(web_filename, option, FROM_SCRIPT);
-
-  GetWebFileName(webvr_filename, scripti);
-  strcat(webvr_filename,"_vr.html");
 }
 
 /* ------------------ ScriptRenderStart ------------------------ */
@@ -2424,21 +2325,21 @@ int GetNSliceGeomFrames(scriptdata *scripti){
 
     for(j = 0; j<mslicei->nslices; j++){
       slicei = global_scase.slicecoll.sliceinfo+mslicei->islices[j];
-      if(slicei->nframes==0){
+      if(slicei->ntimes==0){
         if(slicei->slice_filetype==SLICE_GEOM){
           int nvals, error;
 
-          slicei->nframes = GetGeomDataSize(slicei->file, &nvals, ALL_FRAMES, NULL, NULL, NULL, NULL, NULL, &error);
+          slicei->ntimes = GetGeomDataSize(slicei->file, &nvals, ALL_FRAMES, NULL, NULL, NULL, NULL, NULL, &error);
         }
         else{
-          slicei->nframes = GetNSliceFrames(slicei->file, &scripti->fval2, &scripti->fval3);
+          slicei->ntimes = GetNSliceFrames(slicei->file, &scripti->fval2, &scripti->fval3);
         }
       }
       if(nframes==-1){
-        nframes = slicei->nframes;
+        nframes = slicei->ntimes;
       }
       else{
-        nframes = MIN(nframes, slicei->nframes);
+        nframes = MIN(nframes, slicei->ntimes);
       }
     }
   }
@@ -3043,9 +2944,9 @@ void ScriptHideHVACVals(void){
   HVACMenu(MENU_HVAC_HIDE_ALL_VALUES);
 }
 
-/* ------------------ ScriptOutputSmokeSensors ------------------------ */
+/* ------------------ ScriptShowSmokeSensors ------------------------ */
 
-void ScriptOutputSmokeSensors(void){
+void ScriptShowSmokeSensors(void){
   int i,j;
   FILE *stream_smokesensors;
   int nsmokesensors;
@@ -3345,6 +3246,15 @@ void ScriptLoadFile(scriptdata *scripti){
 
   fprintf(stderr,"*** Error: file %s failed to load\n",scripti->cval);
   if(stderr2!=NULL)fprintf(stderr2, "*** Error: file %s failed to load\n", scripti->cval);
+}
+
+/* ------------------ ScriptLoadSMV ------------------------ */
+
+void ScriptLoadSMV(scriptdata *scripti){
+  if(scripti->cval != NULL){
+    PRINTF("script: loading file %s\n\n", scripti->cval);
+    ReadSMVOrig(&global_scase, scripti->cval);
+  }
 }
 
 /* ------------------ ScriptLabel ------------------------ */
@@ -3960,11 +3870,14 @@ int RunScriptCommand(scriptdata *script_command){
       RenderMenu(RenderCustom);
       break;
     case SCRIPT_RENDERTYPE:
-      if(STRCMP(scripti->cval, "JPG")==0){
+      if(STRCMP(scripti->cval, "JPEG") == 0){
         UpdateRenderType(JPEG);
       }
-      else{
+      else if(STRCMP(scripti->cval, "PNG") == 0){
         UpdateRenderType(PNG);
+      }
+      else{
+        UpdateRenderType(RGIF);
       }
       break;
     case SCRIPT_HILIGHTMINVALS:
@@ -3996,20 +3909,6 @@ int RunScriptCommand(scriptdata *script_command){
       }
       else{
         script_dir_path=NULL;
-      }
-      break;
-    case SCRIPT_RENDERHTMLDIR:
-      if(scripti->cval!=NULL&&strlen(scripti->cval)>0){
-        script_htmldir_path = scripti->cval;
-        if(Writable(script_htmldir_path)==NO){
-          fprintf(stderr, "*** Error: Cannot write to the RENDERHTMLDIR directory: %s\n", script_htmldir_path);
-          if(stderr2!=NULL)fprintf(stderr2, "*** Error: Cannot write to the RENDERHTMLDIR directory: %s\n", script_htmldir_path);
-          SMV_EXIT(2);
-        }
-        PRINTF("script: setting html render path to %s\n", script_htmldir_path);
-      }
-      else{
-        script_htmldir_path = NULL;
       }
       break;
     case SCRIPT_KEYBOARD:
@@ -4063,30 +3962,6 @@ int RunScriptCommand(scriptdata *script_command){
       Keyboard('r',FROM_SMOKEVIEW);
       returnval=1;
       break;
-    case SCRIPT_RENDERHTMLALL:
-      ScriptRenderHtml(scripti, HTML_ALL_TIMES);
-      returnval = 1;
-      break;
-    case SCRIPT_RENDERHTMLONCE:
-      ScriptRenderHtml(scripti, HTML_CURRENT_TIME);
-      returnval = 1;
-      break;
-    case SCRIPT_RENDERHTMLGEOM:
-      ScriptRenderGeom(scripti);
-      returnval = 1;
-      break;
-    case SCRIPT_RENDERHTMLOBST:
-      ScriptRenderObst(scripti);
-      returnval = 1;
-      break;
-    case SCRIPT_RENDERHTMLSLICENODE:
-      ScriptRenderSliceNode(scripti);
-      returnval = 1;
-      break;
-    case SCRIPT_RENDERHTMLSLICECELL:
-      ScriptRenderSliceCell(scripti);
-      returnval = 1;
-      break;
     case SCRIPT_RENDERDOUBLEONCE:
       Keyboard('R',FROM_SMOKEVIEW);
       returnval=1;
@@ -4112,6 +3987,9 @@ int RunScriptCommand(scriptdata *script_command){
     case SCRIPT_LOADFILE:
       ScriptLoadFile(scripti);
       break;
+    case SCRIPT_LOADSMV:
+      ScriptLoadSMV(scripti);
+      break;
     case SCRIPT_LABEL:
       ScriptLabel(scripti);
       break;
@@ -4119,7 +3997,9 @@ int RunScriptCommand(scriptdata *script_command){
       ScriptLoadIniFile(scripti);
       break;
     case SCRIPT_GPUOFF:
+#ifdef pp_GPOU
       usegpu = 0;
+#endif
       gpuactive = 0;
       break;
     case SCRIPT_LOADVFILE:
@@ -4164,8 +4044,8 @@ int RunScriptCommand(scriptdata *script_command){
     case SCRIPT_HIDEHVACVALS:
       ScriptHideHVACVals();
       break;
-    case SCRIPT_OUTPUTSMOKESENSORS:
-      ScriptOutputSmokeSensors();
+    case SCRIPT_SHOWSMOKESENSORS:
+      ScriptShowSmokeSensors();
       break;
     case SCRIPT_SHOWALLDEVS:
       ShowDevicesMenu(MENU_DEVICES_SHOWALL);
@@ -4346,3 +4226,4 @@ int RunScriptCommand(scriptdata *script_command){
   GLUTPOSTREDISPLAY;
   return returnval;
 }
+ 

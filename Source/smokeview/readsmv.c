@@ -1714,8 +1714,7 @@ void InitCellMeshInfo(void){
   int i, *nxyz, ntotal;
   float *xyzminmax, *dxyz;
   float *x, *y, *z;
-  meshdata **cellmeshes;
-
+  meshdata **cellmeshes, *mesh0;
   if(cellmeshinfo!=NULL){
     nxyz = cellmeshinfo->nxyz;
     ntotal = nxyz[0]*nxyz[1]*nxyz[2];
@@ -1734,19 +1733,20 @@ void InitCellMeshInfo(void){
   dxyz      = cellmeshinfo->dxyz;
   nxyz      = cellmeshinfo->nxyz;
 
-  x = global_scase.meshescoll.meshinfo->xplt_fds;
-  y = global_scase.meshescoll.meshinfo->yplt_fds;
-  z = global_scase.meshescoll.meshinfo->zplt_fds;
+  mesh0 = global_scase.meshescoll.meshinfo;
+  x = mesh0->xplt_fds;
+  y = mesh0->yplt_fds;
+  z = mesh0->zplt_fds;
 
   xyzminmax[0] = x[0];
-  xyzminmax[1] = x[global_scase.meshescoll.meshinfo->ibar];
+  xyzminmax[1] = x[mesh0->ibar];
   xyzminmax[2] = y[0];
-  xyzminmax[3] = y[global_scase.meshescoll.meshinfo->jbar];
+  xyzminmax[3] = y[mesh0->jbar];
   xyzminmax[4] = z[0];
-  xyzminmax[5] = z[global_scase.meshescoll.meshinfo->kbar];
-  dxyz[0] = x[global_scase.meshescoll.meshinfo->ibar] - x[0];
-  dxyz[1] = y[global_scase.meshescoll.meshinfo->jbar] - y[0];
-  dxyz[2] = z[global_scase.meshescoll.meshinfo->kbar] - z[0];
+  xyzminmax[5] = z[mesh0->kbar];
+  dxyz[0] = x[mesh0->ibar] - x[0];
+  dxyz[1] = y[mesh0->jbar] - y[0];
+  dxyz[2] = z[mesh0->kbar] - z[0];
 
   for(i = 1; i<global_scase.meshescoll.nmeshes;i++){
     meshdata *meshi;
@@ -1757,14 +1757,14 @@ void InitCellMeshInfo(void){
     z = meshi->zplt_fds;
 
     xyzminmax[0] = MIN(xyzminmax[0], x[0]);
-    xyzminmax[1] = MAX(xyzminmax[1], x[global_scase.meshescoll.meshinfo->ibar]);
+    xyzminmax[1] = MAX(xyzminmax[1], x[meshi->ibar]);
     xyzminmax[2] = MIN(xyzminmax[2], y[0]);
-    xyzminmax[3] = MAX(xyzminmax[3], y[global_scase.meshescoll.meshinfo->jbar]);
+    xyzminmax[3] = MAX(xyzminmax[3], y[meshi->jbar]);
     xyzminmax[4] = MIN(xyzminmax[4], z[0]);
-    xyzminmax[5] = MAX(xyzminmax[5], z[global_scase.meshescoll.meshinfo->kbar]);
-    dxyz[0] = MIN(dxyz[0], x[global_scase.meshescoll.meshinfo->ibar] - x[0]);
-    dxyz[1] = MIN(dxyz[1], y[global_scase.meshescoll.meshinfo->jbar] - y[0]);
-    dxyz[2] = MIN(dxyz[2], z[global_scase.meshescoll.meshinfo->kbar] - z[0]);
+    xyzminmax[5] = MAX(xyzminmax[5], z[meshi->kbar]);
+    dxyz[0] = MIN(dxyz[0], x[meshi->ibar] - x[0]);
+    dxyz[1] = MIN(dxyz[1], y[meshi->jbar] - y[0]);
+    dxyz[2] = MIN(dxyz[2], z[meshi->kbar] - z[0]);
   }
   dxyz[0] /= (float)CELLMESH_FACTOR;
   dxyz[1] /= (float)CELLMESH_FACTOR;
@@ -2984,7 +2984,7 @@ int ReadSMV_Configure(){
     global_hrrpuv_cb_min = global_hrrpuv_cb_min_default;
   }
 
-  PRINTF("%s", _("complete"));
+  PRINTF("%s", "complete");
   PRINTF("\n\n");
   PrintMemoryInfo;
 
@@ -4201,10 +4201,21 @@ int ReadIni2(const char *inifile, int localfile){
       continue;
     }
     if(MatchINI(buffer, "SLICEAVERAGE") == 1){
+      int dummy;
+
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %f %i", &slice_average_flag, &slice_average_interval, &vis_slice_average);
+      sscanf(buffer, "%i %f %i", &slice_average_flag, &slice_average_interval, &dummy);
       ONEORZERO(slice_average_flag);
       if(slice_average_interval<0.0)slice_average_interval = 0.0;
+      continue;
+    }
+    if(MatchINI(buffer, "BOUNDAVERAGE") == 1){
+      int dummy;
+
+      fgets(buffer, 255, stream);
+      sscanf(buffer, "%i %f %i", &boundary_average_flag, &boundary_average_interval, &dummy);
+      ONEORZERO(boundary_average_flag);
+      if(boundary_average_interval<0.0)boundary_average_interval = 0.0;
       continue;
     }
     if(MatchINI(buffer, "SKYBOX") == 1){
@@ -7905,7 +7916,7 @@ void WriteIni(int flag,char *filename){
   }
   else{
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
       fprintf(fileout,"WINDOWWIDTH\n");
       fprintf(fileout," %i\n",screenWidth/2);
@@ -7928,6 +7939,8 @@ void WriteIni(int flag,char *filename){
 
   fprintf(fileout, "\n *** DATA LOADING ***\n\n");
 
+  fprintf(fileout, "BOUNDAVERAGE\n");
+  fprintf(fileout, " %i %f %i\n", boundary_average_flag, boundary_average_interval, 1);
   fprintf(fileout, "CSV\n");
   fprintf(fileout, " %i\n", csv_loaded);
   fprintf(fileout, "LOADINC\n");
@@ -7939,7 +7952,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "RESEARCHMODE\n");
   fprintf(fileout, " %i %i %f %i %i %i %i %i %i %i\n", research_mode, 1, colorbar_shift, ncolorlabel_digits, force_fixedpoint, ngridloc_digits, sliceval_ndigits, force_exponential, force_decimal, force_zero_pad);
   fprintf(fileout, "SLICEAVERAGE\n");
-  fprintf(fileout, " %i %f %i\n", slice_average_flag, slice_average_interval, vis_slice_average);
+  fprintf(fileout, " %i %f %i\n", slice_average_flag, slice_average_interval, 1);
   fprintf(fileout, "SLICEDATAOUT\n");
   fprintf(fileout, " %i \n", output_slicedata);
   fprintf(fileout, "USER_ROTATE\n");
@@ -8453,17 +8466,14 @@ void WriteIni(int flag,char *filename){
     char githash[256];
     char gitdate[256];
 
-    GetGitInfo(githash,gitdate);    // get githash
+    GetGitInfo(githash,gitdate, NULL);    // get githash
     fprintf(fileout,"\n\n");
     fprintf(fileout,"# FDS/Smokeview Environment\n");
     fprintf(fileout,"# -------------------------\n\n");
-    fprintf(fileout,"# Smokeview Build: %s\n",githash);
+    fprintf(fileout,"# Smokeview version: %s\n",githash);
     fprintf(fileout,"# Smokeview Build Date: %s\n",__DATE__);
     if(global_scase.fds_version!=NULL){
       fprintf(fileout,"# FDS Version: %s\n",global_scase.fds_version);
-    }
-    if(global_scase.fds_githash!=NULL){
-      fprintf(fileout, "# FDS Build: %s\n", global_scase.fds_githash);
     }
     fprintf(fileout,"# Platform: WIN64\n");
 #ifdef pp_OSX

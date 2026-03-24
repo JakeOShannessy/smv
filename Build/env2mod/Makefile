@@ -26,8 +26,15 @@ GITINFO=-Dpp_GITHASH=\"$(GIT_HASH)\" -Dpp_GITDATE=\""$(GIT_DATE)\""
 
 # Definition of the object variables
 
-obj = file_util.o md5.o sha1.o sha256.o dmalloc.o string_util.o stdio_buffer.o env2mod.o main.o
+obj = file_util.o md5.o sha1.o sha256.o dmalloc.o string_util.o stdio_buffer.o env2mod.o main.o threader.o
 objwin = $(obj:.o=.obj)
+
+SMV_WIN_LIBDIR = $(LIB_DIR)/intel_win
+SMV_LIBS_WIN = $(SMV_WIN_LIBDIR)\pthreads.lib
+
+SMV_CLANG_LIBDIR = $(LIB_DIR)/clang_win
+SMV_LIBS_CLANG = $(SMV_CLANG_LIBDIR)\pthreads.lib
+
 
 #*** General Purpose Rules ***
 
@@ -42,77 +49,100 @@ no_target:
 .c.o:
 	$(CC) -c $(CFLAGS) $(FILTERC) $(INC_DIR) $<
 
-# ------------- intel win 64 ----------------
+# ------------- intel win ----------------
 
-intel_win_64 : CFLAGS    = -Od -I $(SOURCE_DIR)/pthreads /nologo $(GITINFO) $(INTEL_COMPINFO)
-intel_win_64 : CC        = $(I_CC)
-intel_win_64 : exe       = env2mod_win_64.exe
+intel_win : CFLAGS    = -Od -D PTW32_STATIC_LIB -I $(SOURCE_DIR)/pthreads /nologo $(GITINFO) $(INTEL_COMPINFO)
+intel_win : CC        = $(I_CC)
+intel_win : exe       = env2mod_win.exe
 
-intel_win_64 : $(objwin)
-	$(CC) -o $(bin)/$(exe) $(objwin)
+intel_win : $(objwin)
+	$(CC) -o $(bin)/$(exe) $(objwin) $(SMV_LIBS_WIN)
 
-# ------------- gnu win 64 ----------------
+# ------------- clang win ----------------
 
-gnu_win_64 : CFLAGS    = -O0 -m64 -D GLEW_STATIC -D MINGW
-gnu_win_64 : CC        = Gcc
-gnu_win_64 : exe       = env2mod_win_64.exe
+clang_win : CFLAGS    = -m64 -D PTW32_STATIC_LIB -I $(SOURCE_DIR)/pthreads
+clang_win : CC        = clang-cl
+clang_win : exe       = env2mod_win.exe
 
-gnu_win_64 : $(obj)
+clang_win : $(objwin)
+	$(CC) -o $(bin)/$(exe) $(objwin) $(SMV_LIBS_CLANG)
+
+# ------------- gnu linux ----------------
+
+gnu_linux : CFLAGS    = -O0 -m64 -Wno-write-strings $(GNU_COMPINFO)
+gnu_linux : LFLAGS    = -m64
+gnu_linux : CC        = gcc
+gnu_linux : CPP       = g++
+gnu_linux : exe       = env2mod_linux
+
+gnu_linux : $(obj)
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+
+# ------------- gnu linux ----------------
+
+gnu_linux_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG $(GITINFO) $(GNU_COMPINFO)
+gnu_linux_db : LFLAGS    = -m64
+gnu_linux_db : CC        = gcc
+gnu_linux_db : CPP       = g++
+gnu_linux_db : exe       = env2mod_linux_db
+
+gnu_linux_db : $(obj)
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+# ------------- clang linux ----------------
+
+clang_linux : CFLAGS    = -O0 -m64 -Wno-write-strings -D PTW32_STATIC_LIB $(GNU_COMPINFO)
+clang_linux : LFLAGS    = -m64 -lpthread
+clang_linux : CC        = clang
+clang_linux : CPP       = clang++
+clang_linux : exe       = env2mod_linux
+
+clang_linux : $(obj)
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+
+# ------------- clang linux ----------------
+
+clang_linux_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D PTW32_STATIC_LIB -D _DEBUG $(GITINFO) $(GNU_COMPINFO)
+clang_linux_db : LFLAGS    = -m64 -lpthread
+clang_linux_db : CC        = clang
+clang_linux_db : CPP       = clang++
+clang_linux_db : exe       = env2mod_linux_db
+
+clang_linux_db : $(obj)
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)
+
+# ------------- intel linux ----------------
+
+intel_linux : LIB_DIR_PLAT = $(LIB_DIR)/intel_linux
+intel_linux : CFLAGS    = -O2 -m64 $(GITINFO) $(INTEL_COMPINFO)
+intel_linux : CC        = $(I_ICC)
+intel_linux : exe       = env2mod_linux
+
+intel_linux : $(obj)
 	$(CC) -o $(bin)/$(exe) $(obj)
 
-# ------------- gnu linux 64 ----------------
+# ------------- gnu osx ----------------
 
-gnu_linux_64 : CFLAGS    = -O0 -m64 -Wno-write-strings $(GNU_COMPINFO)
-gnu_linux_64 : LFLAGS    = -m64
-gnu_linux_64 : CC        = gcc
-gnu_linux_64 : CPP       = g++
-gnu_linux_64 : exe       = env2mod_linux_64
+gnu_osx : CFLAGS    = -O0 -m64 -Wno-write-strings $(GNU_COMPINFO)
+gnu_osx : LFLAGS    = -m64
+gnu_osx : CC        = gcc
+gnu_osx : CPP       = g++
+gnu_osx : exe       = env2mod_osx
 
-gnu_linux_64 : $(obj)
+gnu_osx : $(obj)
 	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)
 
+# ------------- clang osx ----------------
 
-# ------------- gnu linux 64 ----------------
+clang_osx : CFLAGS    = -O0 -m64 -Wno-write-strings $(GNU_COMPINFO)
+clang_osx : LFLAGS    = -m64
+clang_osx : CC        = clang
+clang_osx : CPP       = clang
+clang_osx : exe       = env2mod_osx
 
-gnu_linux_64_db : CFLAGS    = -O0 -m64 -ggdb -Wall -Wno-parentheses -Wno-unknown-pragmas -Wno-comment -Wno-write-strings -D _DEBUG $(GITINFO) $(GNU_COMPINFO)
-gnu_linux_64_db : LFLAGS    = -m64
-gnu_linux_64_db : CC        = gcc
-gnu_linux_64_db : CPP       = g++
-gnu_linux_64_db : exe       = env2mod_linux_64_db
-
-gnu_linux_64_db : $(obj)
-	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)
-
-# ------------- intel linux 64 ----------------
-
-intel_linux_64 : LIB_DIR_PLAT = $(LIB_DIR)/intel_linux_64
-intel_linux_64 : CFLAGS    = -O2 -m64 $(GITINFO) $(INTEL_COMPINFO)
-intel_linux_64 : CC        = $(I_ICC)
-intel_linux_64 : exe       = env2mod_linux_64
-
-intel_linux_64 : $(obj)
-	$(CC) -o $(bin)/$(exe) $(obj)
-
-# ------------- gnu osx 64 ----------------
-
-gnu_osx_64 : CFLAGS    = -O0 -m64 -Wno-write-strings $(GNU_COMPINFO)
-gnu_osx_64 : LFLAGS    = -m64
-gnu_osx_64 : CC        = gcc
-gnu_osx_64 : CPP       = g++
-gnu_osx_64 : exe       = env2mod_osx_64
-
-gnu_osx_64 : $(obj)
-	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)
-
-# ------------- clang osx 64 ----------------
-
-clang_osx_64 : CFLAGS    = -O0 -m64 -Wno-write-strings $(GNU_COMPINFO)
-clang_osx_64 : LFLAGS    = -m64
-clang_osx_64 : CC        = clang
-clang_osx_64 : CPP       = clang
-clang_osx_64 : exe       = env2mod_osx_64
-
-clang_osx_64 : $(obj)
+clang_osx : $(obj)
 	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS)
 
 .PHONY : clean

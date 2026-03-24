@@ -159,7 +159,7 @@ void GetViewportInfo(void){
   v_space     = 2;
   text_height = font_height;
   text_width  = 18;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
   if(double_scale==1){
     text_height *= 2;
     text_width  *= 2;
@@ -277,12 +277,13 @@ void GetViewportInfo(void){
   doit=0;
   if(showtime==1){
     if(visTimelabel == 1 || visFramelabel == 1 || vis_hrr_label == 1 || visTimebar == 1)doit=1;
-    if(doit==0&&visFramerate==1)doit=1;
-    if(doit==0&&vis_slice_average==1&&show_slice_average&&slice_average_flag==1)doit=1;
+    if(doit==0 && visFramerate==1)doit=1;
+    if(doit==0 && show_slice_average==1 && slice_average_flag==1)doit=1;
+    if(doit==0 && show_boundary_average==1 && boundary_average_flag==1)doit = 1;
   }
   if(show_horizontal_colorbar == 1
     ||vismemload==1
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
      || vismemusage == 1
 #endif
   )
@@ -300,7 +301,7 @@ void GetViewportInfo(void){
   if(doit==1){
     int temp_height, timebar_height = TIMEBAR_HEIGHT;
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
   if(double_scale==1){
     timebar_height *= 2;
   }
@@ -310,7 +311,7 @@ void GetViewportInfo(void){
     temp_height = text_height + v_space;
     if(visFramelabel==1||vis_hrr_label==1
       ||vismemload==1
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
        || vismemusage == 1
 #endif
     )
@@ -322,11 +323,6 @@ void GetViewportInfo(void){
     VP_timebar.width = 0;
     VP_timebar.height = 0;
   }
-//#ifdef pp_OSX_HIGHRES
-//  if(double_scale==1){
-//    VP_timebar.height *= 2;
-//  }
-//#endif
   VP_timebar.right = VP_timebar.left + VP_timebar.width;
   VP_timebar.top   = VP_timebar.down + VP_timebar.height;
 
@@ -1188,12 +1184,12 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
   int time_width=0, hrr_width=0, frame_width=0;
   int framerate_width = 0;
   int memload_width = 0;
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
   int memusage_width = 0;
 #endif
   int delta = TIMEBAR_HEIGHT;
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
   if(double_scale==1){
     delta *= 2;
   }
@@ -1204,7 +1200,7 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
   timebar_right_width = 0;
   if(visFramerate==1&&showtime==1)framerate_width = GetStringWidth("Frame rate: 99.99");
   timebar_right_width = framerate_width;
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
   if(vismemusage == 1) {
     memusage_width = GetStringWidth("Mem Usage: 9999 MBx");
     timebar_right_width = MAX(timebar_right_width, memusage_width);
@@ -1253,7 +1249,7 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
       int timebar_height;
 
       timebar_height = TIMEBAR_HEIGHT;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
       if(double_scale==1){
         timebar_height *= 2;
       }
@@ -1268,7 +1264,7 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
     sprintf(frameratelabel," Frame rate:%4.1f",framerate);
     OutputText(right_label_pos,v_space,frameratelabel);
   }
-  if(show_slice_average==1&&vis_slice_average==1&&slice_average_flag==1){
+  if(show_slice_average==1&&slice_average_flag==1){
     char sliceavglabel[30];
 
     sprintf(sliceavglabel," AVG: %4.1f",slice_average_interval);
@@ -1291,7 +1287,7 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
       }
     }
   }
-#ifdef pp_memusage
+#ifdef pp_MEMDEBUG
   if(vismemusage==1){
       char MEMlabel[128];
 
@@ -2338,12 +2334,10 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
   float widthdiv2;
   float eyexINI, eyeyINI, eyezINI;
 
-#ifdef pp_REFRESH
   if(refresh_glui_dialogs==1){
     refresh_glui_dialogs=0;
     GLUIRefreshDialogs();
   }
-#endif
 
   if(stereotype==STEREO_LR){
     VP_scene.left=screen_left;
@@ -2549,21 +2543,12 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
 // Y axis fixed
 // Z axis -> X axis
 
-#ifdef pp_WIN_CLANG
-      float     x_axis[3] = {0.0,  0.0, -1.0};
-      float neg_x_axis[3] = {0.0,  0.0,  1.0};
-      float     z_axis[3] = {1.0,  0.0,  0.0};
-#else
       float     x_axis[3] = { 1.0, 0.0, 0.0};
       float neg_x_axis[3] = {-1.0, 0.0, 0.0};
       float     z_axis[3] = { 0.0, 0.0, 1.0};
-#endif
       float     y_axis[3] = {0.0,  1.0,  0.0};
       float neg_y_axis[3] = {0.0, -1.0,  0.0};
 
-#ifdef pp_WIN_CLANG
-      glRotatef(-90.0, y_axis[0], y_axis[1], y_axis[2]);
-#endif
       if(use_tour == 0){
         float azimuth, elevation;
 

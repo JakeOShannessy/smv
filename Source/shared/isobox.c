@@ -1,14 +1,7 @@
-#include "options.h"
+#include "options_common.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef pp_DRAWISO
-#ifdef pp_OSX
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
-#endif
 #include <math.h>
 #include <stdio.h>
 #include "dmalloc.h"
@@ -19,7 +12,6 @@
 
 #define GAS 1
 #define SOLID 0
-#define UNCOMPRESSED 0
 
 /* ------------------ VolTetra ------------------------ */
 

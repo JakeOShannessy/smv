@@ -1,5 +1,5 @@
 #define INMAIN
-#include "options.h"
+#include "options_common.h"
 #include <ctype.h>
 #include <getopt.h>
 #include <stdbool.h>
@@ -15,7 +15,6 @@
 
 #include "readlabel.h"
 #include "readsmvfile.h"
-#include "smokeviewdefs.h"
 #include "string_util.h"
 #include <math.h>
 
@@ -28,7 +27,7 @@
 int ReadSMV_Init(smv_case *scase);
 int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream);
 void ReadSMVDynamic(smv_case *scase, char *file);
-void ReadSMVOrig(smv_case *scase);
+void ReadSMVOrig(smv_case *scase, char *smvfile);
 smv_case *CreateScase();
 
 /// @brief Given a file path, get the filename excluding the final extension.
@@ -306,7 +305,7 @@ int RunSmvq(char *input_file, const char *fdsprefix) {
     if(return_code) return return_code;
   }
   show_timings = 1;
-  ReadSMVOrig(scase);
+  ReadSMVOrig(scase, NULL);
   INIT_PRINT_TIMER(ReadSMVDynamic_time);
   ReadSMVDynamic(scase, input_file);
   STOP_TIMER(ReadSMVDynamic_time);
@@ -356,7 +355,7 @@ int main(int argc, char **argv)
       abort();
     }
   if(print_help) {
-    printf("smvq-%s\n", PROGVERSION);
+    printf("smvq\n");
     printf("\nUsage:  smvq [OPTIONS] <FILE>\n");
     printf("\nOptions:\n");
     printf("  -h Print help\n");
@@ -364,7 +363,7 @@ int main(int argc, char **argv)
     return 0;
   }
   if(print_version) {
-    printf("smvq - smv query processor (v%s)\n", PROGVERSION);
+    printf("smvq - smv query processor\n");
     return 0;
   }
 #if defined(_WIN32) && defined(pp_UNICODE_PATHS)

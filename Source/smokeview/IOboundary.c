@@ -1091,6 +1091,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
   }
 
   START_TIMER(total_time);
+  show_boundary_average = 0;
   local_first=1;
   hide_internal_blockages = 0;
   CheckMemory;
@@ -1789,6 +1790,33 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
   STOP_TIMER(read_time);
   CheckMemory;
 
+  if(boundary_average_flag == 1){
+    int data_per_timestep;
+    int ndata;
+    int ntimes_local;
+    float **qvalptrs;
+    char average_label[256];
+
+    data_per_timestep = meshi->npatchsize;
+    ntimes_local = patchi->ntimes;
+    ndata = data_per_timestep * ntimes_local;
+    show_boundary_average = 1;
+
+    int i;
+    NewMemory((void **)&qvalptrs, patchi->ntimes * sizeof(float *));
+    for(i = 0; i < patchi->ntimes; i++){
+      qvalptrs[i] = meshi->patchval + i * data_per_timestep;
+    }
+    sprintf(average_label, "averaging boundary file data - mesh: %i", blocknumber+1);
+    if(TimeAverageData(average_label, qvalptrs, qvalptrs, ndata,
+          data_per_timestep, meshi->patch_times, ntimes_local,
+          boundary_average_interval) == 1
+      ){
+      show_boundary_average = 0; // averaging failed
+    }
+    FREEMEMORY(qvalptrs);
+  }
+
   if(loadpatchbysteps==UNCOMPRESSED_ALLFRAMES){
     npatchvals = patchi->ntimes*meshi->npatchsize;
     if(npatchvals==0||NewResizeMemory(meshi->cpatchval,sizeof(unsigned char)*npatchvals)==0){
@@ -1879,7 +1907,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
   patchi->display = 1;
   patchi->hist_update = 1;
 
-#ifdef pp_RECOMPUTE_DEBUG
+#ifdef pp_BOUND_DEBUG
   int recompute = 0;
 #endif
   if(patchi->finalize==1){
@@ -1920,7 +1948,7 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
       GetGlobalPatchBounds(1,DONOT_SET_MINMAX_FLAG,patchi->label.shortlabel);
       SetLoadedPatchBounds(NULL, 0);
       GLUIPatchBoundsCPP_CB(BOUND_DONTUPDATE_COLORS);
-#ifdef pp_RECOMPUTE_DEBUG
+#ifdef pp_BOUND_DEBUG
       recompute = 1;
 #endif
     }
@@ -2080,15 +2108,15 @@ FILE_SIZE ReadBoundaryBndf(int ifile, int load_flag, int *errorcode){
   STOP_TIMER(total_time);
 
   if(return_filesize > 1000000000){
-    PRINTF(" - %.1f GB in %.1f s\n", (float)return_filesize / 1000000000., total_time);
+    PRINTF("Loaded %.1f GB in %.1f s\n", (float)return_filesize / 1000000000., total_time);
   }
   else if(return_filesize > 1000000){
-    PRINTF(" - %.1f MB in %.1f s\n", (float)return_filesize / 1000000., total_time);
+    PRINTF("Loaded %.1f MB in %.1f s\n", (float)return_filesize / 1000000., total_time);
   }
  else{
-   PRINTF(" - %.0f kB in %.1f s\n", (float)return_filesize / 1000., total_time);
+   PRINTF("Loaded %.0f kB in %.1f s\n", (float)return_filesize / 1000., total_time);
   }
-#ifdef pp_RECOMPUTE_DEBUG
+#ifdef pp_BOUND_DEBUG
   if(recompute == 1)printf("***recomputing bounds\n");
 #endif
 
@@ -2289,7 +2317,8 @@ void DrawBoundaryTexture(const meshdata *meshi){
   int is_time_arrival = 0;
 
   if(strcmp(patchi->label.shortlabel, "t_a") == 0)is_time_arrival = 1;
-  if(patch_times[0]>global_times[itimes]||patchi->display==0)return;
+  if(global_times!=NULL&&patch_times[0]>global_times[itimes])return;
+  if(patchi->display == 0)return;
   if(cullfaces==1)glDisable(GL_CULL_FACE);
 
   /* if a contour boundary does not match a blockage face then draw "both sides" of boundary */

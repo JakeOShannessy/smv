@@ -21,12 +21,23 @@
 #ifndef _GLUI_H_
 #define _GLUI_H_
 
+#ifndef GLUT_H
+#define GLUT_H <GL/glut.h>
 #ifdef pp_OSX
-#include <GLUT/glut.h>
-#include "glutbitmap.h"  // only needed on non-quartz osx platforms
-#else
-#include <GL/glut.h>
+#undef  GLUT_H
+#define GLUT_H <GLUT/glut.h>
 #endif
+#ifdef pp_FREEGLUT
+#undef  GLUT_H
+#define GLUT_H <GL/freeglut.h>
+#endif
+#endif
+
+#include GLUT_H
+#ifdef pp_OSX
+#include "glutbitmap.h"  // only needed on non-quartz osx platforms
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -376,7 +387,7 @@ extern int glui_img_listbox_up_dis[];
 
 extern int *bitmap_arrays[];
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
 #define GLUT_BITMAP_HELVETICA_20        (&glutBitmapHelvetica20)
 #define GLUT_BITMAP_HELVETICA_24        (&glutBitmapHelvetica24)
 #define GLUT_BITMAP_HELVETICA_36        (&glutBitmapHelvetica36)
@@ -391,7 +402,7 @@ class GLUI_Bitmap
 {
 public:
   unsigned char *pixels;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
   unsigned char *pixels_highres;
 #endif
   int            w, h;
@@ -400,7 +411,7 @@ public:
 
   GLUI_Bitmap( void ) {
     pixels = NULL;
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     pixels_highres = NULL;
 #endif
     w      = 0;
@@ -1713,7 +1724,7 @@ void glui_parent_window_keyboard_func(unsigned char key, int x, int y);
 void glui_parent_window_mouse_func(int, int, int, int );
 void glui_parent_window_special_func(int key, int x, int y);
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
 #ifdef IN_GLUICPP
 int double_scale=1;
 #else
@@ -1734,7 +1745,7 @@ extern "C" int double_scale;
 #define GLUTEXTERN extern CCCC
 #endif
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
 GLUTEXTERN const BitmapFontRec glutBitmapHelvetica20;
 GLUTEXTERN const BitmapFontRec glutBitmapHelvetica24;
 GLUTEXTERN const BitmapFontRec glutBitmapHelvetica36;

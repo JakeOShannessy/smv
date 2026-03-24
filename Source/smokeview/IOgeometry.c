@@ -2003,90 +2003,6 @@ void UpdateTriangles(int flag,int update){
     FREEMEMORY(surface_verts);
     FREEMEMORY(match_verts);
   }
-
-  // update cache
-
-#ifdef XXXDISABLE
-  if(0==1){   // don't execute this code yet
-    int nverts_max=0, ntriangles_max=0;
-    float *vertnormals=NULL, *trinormals = NULL;
-
-    nverts_max = 0;
-    ntriangles_max = 0;
-    for(j = 0; j<ngeominfoptrs; j++){
-      geomdata *geomi;
-      FILE *stream = NULL;
-
-      geomi = geominfoptrs[j];
-      if(geomi->geomtype!=GEOM_ISO||geomi->cache_defined==1)continue;
-
-      stream = FOPEN(geomi->topo_file, "wb");
-      if(stream==NULL)continue;
-      for(ii = 0; ii<geomi->ntimes; ii++){
-        geomlistdata *geomlisti;
-        int ntriangles, nverts;
-        int jj;
-
-        geomlisti = geomi->geomlistinfo+ii;
-        fwrite(geomi->times+ii, sizeof(float), 1, stream);
-
-        ntriangles = geomlisti->ntriangles;
-        if(ntriangles>ntriangles_max){
-          FREEMEMORY(trinormals);
-          ntriangles_max = ntriangles+100;
-          NewMemory((void **)&trinormals, 3*ntriangles_max*sizeof(float));
-        }
-
-        fwrite(&ntriangles, sizeof(int), 1, stream);
-        if(ntriangles>0){
-          float *trinormals_copy;
-
-          trinormals_copy = trinormals;
-          for(jj = 0; jj<ntriangles; jj++){
-            tridata *trianglei;
-            float *tri_norm;
-
-            trianglei = geomlisti->triangles+jj;
-            tri_norm = trianglei->tri_norm;
-            *trinormals_copy++ = *tri_norm++;
-            *trinormals_copy++ = *tri_norm++;
-            *trinormals_copy++ = *tri_norm++;
-          }
-          fwrite(trinormals, sizeof(float), 3*ntriangles, stream);
-        }
-
-        nverts = geomlisti->nverts;
-        if(nverts>nverts_max){
-          FREEMEMORY(vertnormals);
-          nverts_max = nverts+100;
-          NewMemory((void **)&vertnormals, 3*nverts_max*sizeof(float));
-        }
-        fwrite(&nverts, sizeof(int), 1, stream);
-        if(nverts>0){
-          float *vertnormals_copy;
-
-          vertnormals_copy = vertnormals;
-          for(jj = 0; jj<nverts; jj++){
-            vertdata *verti;
-            float *vert_norm;
-
-            verti = geomlisti->verts+jj;
-            vert_norm = verti->vert_norm;
-            *vertnormals_copy++ = *vert_norm++;
-            *vertnormals_copy++ = *vert_norm++;
-            *vertnormals_copy++ = *vert_norm++;
-          }
-          fwrite(vertnormals, sizeof(float), 3*nverts, stream);
-        }
-      }
-      geomi->cache_defined = 1;
-      fclose(stream);
-      stream = NULL;
-    }
-    FREEMEMORY(vertnormals);
-    FREEMEMORY(trinormals);
-  }
-#endif
   updating_triangles = 0;
 }
 
@@ -2553,7 +2469,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
   int filesize;
 
   if(current_script_command==NULL||NOT_LOADRENDER){
-    PRINTF("Loading %s(%s)", patchi->file, patchi->label.shortlabel);
+    PRINTF("\nLoading %s(%s)\n", patchi->file, patchi->label.shortlabel);
   }
   filesize=GetGeomData(patchi, patchi->file, load_flag, ntimes_local, nvals, patchi->geom_times,
     patchi->geom_nstatics, patchi->geom_ndynamics, patchi->geom_vals, time_frame, time_value, geom_offsets, &error);
@@ -2676,6 +2592,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
     if(slice_average_flag==1){
       int data_per_timestep, nvals2, ntimes;
       float *times, **qvalptrs;
+      char slice_label[256];
 
       show_slice_average = 1;
       nvals2 = slicei->patchgeom->geom_nvals;
@@ -2686,7 +2603,8 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
       for(i = 0; i < ntimes; i++){
         qvalptrs[i] = slicei->patchgeom->geom_vals + i*data_per_timestep;
       }
-      if(TimeAverageData(qvalptrs, qvalptrs, nvals2, data_per_timestep, times, ntimes, slice_average_interval)==1){
+      sprintf(slice_label, "averaging data - mesh %i", slicei->blocknumber+1);
+      if(TimeAverageData(slice_label, qvalptrs, qvalptrs, nvals2, data_per_timestep, times, ntimes, slice_average_interval)==1){
         show_slice_average = 0;
       }
     }
@@ -2715,7 +2633,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
   else{
     slicefile_labelindex = GetSliceBoundsIndexFromLabel(patchi->label.shortlabel);
   }
-#ifdef pp_RECOMPUTE_DEBUG
+#ifdef pp_BOUND_DEBUG
   int recompute = 0;
 #endif
   if(current_script_command!=NULL||(slicei==NULL&&patchi->finalize==1)||(slicei!=NULL&&slicei->finalize==1)){
@@ -2743,7 +2661,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
         GetGlobalPatchBounds(1,DONOT_SET_MINMAX_FLAG,patchi->label.shortlabel);
         SetLoadedPatchBounds(NULL, 0);
         GLUIPatchBoundsCPP_CB(BOUND_DONTUPDATE_COLORS);
-#ifdef pp_RECOMPUTE_DEBUG
+#ifdef pp_BOUND_DEBUG
         recompute = 1;
 #endif
       }
@@ -2752,7 +2670,7 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
       if(bound_update==1||slice_bounds_defined==0|| BuildGbndFile(BOUND_SLICE) ==1){
         GetGlobalSliceBounds(1, DONOT_SET_MINMAX_FLAG,patchi->label.shortlabel);
         SetLoadedSliceBounds(NULL, 0);
-#ifdef pp_RECOMPUTE_DEBUG
+#ifdef pp_BOUND_DEBUG
         recompute = 1;
 #endif
       }
@@ -2789,10 +2707,10 @@ FILE_SIZE ReadGeomData(patchdata *patchi, slicedata *slicei, int load_flag, int 
   updatemenu = 1;
   STOP_TIMER(total_time);
   if(current_script_command==NULL||NOT_LOADRENDER){
-    PRINTF(" - %.1f MB/%.1f s\n", (float)return_filesize/1000000., total_time);
+    PRINTF("Loaded %.1f MB/%.1f s\n", (float)return_filesize/1000000., total_time);
   }
   PrintMemoryInfo;
-#ifdef pp_RECOMPUTE_DEBUG
+#ifdef pp_BOUND_DEBUG
   if(recompute == 1)printf("***recomputing bounds\n");
 #endif
   return return_filesize;

@@ -365,7 +365,9 @@ void UpdateShow(void){
   int showhvacflag;
 
   UpdateFileLoad();
-  if(nplot3dloaded > 0 || npatchloaded > 0)updatefacelists = 1;
+  if(global_scase.have_removable_obsts==1){
+    if(nplot3dloaded > 0 || npatchloaded > 0)updatefacelists = 1;
+  }
   showtime             = 0;
   showtime2            = 0;
   showplot3d           = 0;
@@ -722,7 +724,7 @@ void UpdateShow(void){
   }
 
   if(showtime2==1)showtime=1;
-  if(use_graphics==1){
+  if(use_graphics==1&&opengl_finalized==1){
     if(plotstate==DYNAMIC_PLOTS&&stept==1){
       glutIdleFunc(IdleCB);
     }
@@ -1821,7 +1823,6 @@ int GetPlotState(int choice){
   int plot_state;
 
   plot_state = GetPlotStateSub(choice);
-#ifdef pp_REFRESH
   if(plot_state==DYNAMIC_PLOTS){
     periodic_refresh = 0;
   }
@@ -1831,7 +1832,6 @@ int GetPlotState(int choice){
       PeriodicRefresh(refresh_interval);
     }
   }
-#endif
   if(plot_state!=DYNAMIC_PLOTS&&last_time_paused==1){
     last_time_paused = 0;
   }
@@ -2066,11 +2066,27 @@ void UpdateShowScene(void){
     update_fire_histogram_now = 0;
     if(update_fire_histogram==1)GLUISmoke3dCB(UPDATE_FIRE_HISTOGRAM);
   }
-#define SHOW_EXTERIOR_PATCH_DATA     32
-void BoundBoundCB(int var);
+  if(update_idle == 1){
+    IdleCB();
+    update_idle = 0;
+  }
+  if(update_setmainwindow == 1){
+    SetMainWindow();
+    update_setmainwindow = 0;
+  }
   if(update_patch_vis == 1){
+#define SHOW_EXTERIOR_PATCH_DATA     32
+    void BoundBoundCB(int var);
     BoundBoundCB(SHOW_EXTERIOR_PATCH_DATA);
     update_patch_vis = 0;
+  }
+  if(making_movie==1&&making_movie_enabled==1){
+    making_movie_enabled = 0;
+    EnableDisableMakeMovie(OFF);
+  }
+  if(making_movie == 0 && making_movie_enabled == 0){
+    making_movie_enabled = 1;
+    EnableDisableMakeMovie(ON);
   }
   if(update_smoke3dmenulabels == 1){
     SHOW_UPDATE(update_smoke3dmenulabels);
@@ -2213,14 +2229,12 @@ void BoundBoundCB(int var);
     GLUIUpdateMovieParms();
     END_SHOW_UPDATE(update_movie_parms);
   }
-#ifdef pp_REFRESH
   if(update_refresh==1){
     SHOW_UPDATE(update_refresh);
     update_refresh = 0;
     PeriodicRefresh(refresh_interval);
     END_SHOW_UPDATE(update_refresh);
   }
-#endif
   if(update_glui_devices==1){
     SHOW_UPDATE(update_glui_devices);
     update_glui_devices = 0;
@@ -2922,7 +2936,7 @@ void UpdateDisplay(void){
   if(update_screensize == 1){
     update_screensize = 0;
     GLUIUpdateWindowSizeList();
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
       screenWidthINI  /= 2;
       screenHeightINI /= 2;
@@ -2931,13 +2945,20 @@ void UpdateDisplay(void){
     ResizeWindow(screenWidthINI, screenHeightINI);
   }
   if(updatemenu == 1 && usemenu == 1 && menustatus == GLUT_MENU_NOT_IN_USE){
+    assert(opengl_finalized == 1);
     INIT_PRINT_TIMER(timer_update_menus);
-    glutDetachMenu(GLUT_RIGHT_BUTTON);
+    if(opengl_finalized==1)glutDetachMenu(GLUT_RIGHT_BUTTON);
     attachmenu_status = 0;
     THREADcontrol(checkfiles_threads, THREAD_LOCK);
+#ifdef pp_GLUT_DEBUG
+    printf("\n***before menu setup\n");
+#endif
     InitMenus();
+#ifdef pp_GLUT_DEBUG
+    printf("***after menu setup\n\n");
+#endif
     THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
-    glutAttachMenu(GLUT_RIGHT_BUTTON);
+    if(opengl_finalized==1)glutAttachMenu(GLUT_RIGHT_BUTTON);
     attachmenu_status = 1;
     updatemenu = 0;
     PRINT_TIMER(timer_update_menus, "update menus");
@@ -2994,12 +3015,10 @@ void UpdateDisplay(void){
     update_windrose = 0;
     DeviceData2WindRose(nr_windrose, ntheta_windrose);
   }
-#ifdef pp_REFRESH
   if(refresh_glui_dialogs>=-1){
     refresh_glui_dialogs--;
     GLUIRefreshDialogs();
   }
-#endif
 }
 
 /* ------------------ ShiftColorbars ------------------------ */
@@ -3037,6 +3056,7 @@ void PauseTime(float pause_time){
   float start_time;
 
   // pause no more than 60 s
+  assert(opengl_finalized == 1);
   start_time = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
   for(;;){
     float delta_time;

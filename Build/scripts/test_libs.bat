@@ -1,25 +1,21 @@
 @echo off
 setlocal
 set LIBDIR=%1
-
-set BUILDLIBS=0
+set GLUTTYPE=%2
 set CURDIR=%CD%
+
 cd %LIBDIR%
-set LIBDIR=%CD%
+if NOT exist %LIBDIR%\gd.lib       goto BUILDLIBS
+if NOT exist %LIBDIR%\glui.lib     goto BUILDLIBS
+if NOT exist %LIBDIR%\freeglut_static.lib if     "x%GLUTTYPE%" == "xfreeglut" goto BUILDLIBS
+if NOT exist %LIBDIR%\glut32.lib          if NOT "x%GLUTTYPE%" == "xfreeglut" goto BUILDLIBS
+if NOT exist %LIBDIR%\jpeg.lib     goto BUILDLIBS
+if NOT exist %LIBDIR%\png.lib      goto BUILDLIBS
+if NOT exist %LIBDIR%\pthreads.lib goto BUILDLIBS
+if NOT exist %LIBDIR%\zlib.lib     goto BUILDLIBS
 cd %CURDIR%
+exit /b
 
-if NOT exist %LIBDIR%\intel_win_64\gd.lib set BUILDLIBS=1
-if NOT exist %LIBDIR%\intel_win_64\glui.lib set BUILDLIBS=1
-if NOT exist %LIBDIR%\intel_win_64\glut32.lib set BUILDLIBS=1
-if NOT exist %LIBDIR%\intel_win_64\jpeg.lib set BUILDLIBS=1
-if NOT exist %LIBDIR%\intel_win_64\png.lib set BUILDLIBS=1
-if NOT exist %LIBDIR%\intel_win_64\pthreads.lib set BUILDLIBS=1
-if NOT exist %LIBDIR%\intel_win_64\zlib.lib set BUILDLIBS=1
-
-if %BUILDLIBS% == 0 goto eof
-
-cd %LIBDIR%\intel_win_64
-call make_LIBS_bot 
+:BUILDLIBS
+call make_LIBS %GLUT%
 cd %CURDIR%
-
-:eof

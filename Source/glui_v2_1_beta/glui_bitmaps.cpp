@@ -18,12 +18,6 @@
 
 #include "glui.h"
 #include "stdinc.h"
-#ifdef pp_OSX
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
-
 
 int *bitmap_arrays[] = {
   glui_img_checkbox_0,
@@ -71,7 +65,7 @@ void GLUI_Bitmap::load_from_array( int *array )
     pixels[i] = (unsigned char) array[i+2];
 
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
 #define IJFROM(i,j) (3*((i)*w+(j)))
 #define IJTO(i,j) (3*((i)*(2*w)+(j)))
 
@@ -123,7 +117,7 @@ void GLUI_StdBitmaps::draw( int bitmap_num, int x, int y )
     glRasterPos2f( (float)x+.5, (float)y + (float)bitmaps[bitmap_num].h + .5);
     glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
     if(double_scale==1){
     glDrawPixels(2*bitmaps[bitmap_num].w, 2*bitmaps[bitmap_num].h,
                  GL_RGB, GL_UNSIGNED_BYTE, bitmaps[bitmap_num].pixels_highres);

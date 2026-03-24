@@ -13,7 +13,7 @@
 // vvvvvvvvvvvvvvvvvvvvvvvv header files vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 #include <stdio.h>
-#include "options.h"
+#include "options_common.h"
 #include "file_util.h"
 
 // vvvvvvvvvvvvvvvvvvvvvvvv structures vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -38,7 +38,7 @@ typedef struct {
 // avoid compiler warnings on C11 and later
 #ifdef pp_C11
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
 // 90 - 256
 #define DEG_SYMBOL -160
 #else
@@ -48,7 +48,7 @@ typedef struct {
 
 #else
 
-#ifdef pp_OSX_HIGHRES
+#ifdef pp_OSX
 #define DEG_SYMBOL 96
 #else
 #define DEG_SYMBOL 176
@@ -56,13 +56,11 @@ typedef struct {
 
 #endif
 
-#ifdef pp_HASH
 #define HASH_NONE   0
 #define HASH_MD5    1
 #define HASH_SHA1   2
 #define HASH_SHA256 3
 #define HASH_ALL    4
-#endif
 #define HELP_SUMMARY 1
 #define HELP_ALL 2
 
@@ -87,9 +85,7 @@ typedef struct {
   int show_help;
   int show_version;
   int first_arg;
-#ifdef pp_HASH
   int hash_option;
-#endif
 } common_opts;
 
 // vvvvvvvvvvvvvvvvvvvvvvvv headers vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -105,6 +101,7 @@ EXTERNCPP char          *GetFloatLabel(float val, char *label);
 EXTERNCPP char          *GetIntLabel(int val, char *label);
 EXTERNCPP char          *AppendString(const char *S1, const char *S2);
 EXTERNCPP void           UsageCommon(int option);
+EXTERNCPP int            IsCommonOption(char *argi);
 EXTERNCPP common_opts    ParseCommonOptions(int argc, char **argv);
 EXTERNCPP void           InitRandAB(int size);
 EXTERNCPP float          RandAB(int seed, float minval, float maxval);
@@ -121,11 +118,9 @@ EXTERNCPP int            ReadLabelsBNDS(flowlabels *flowlabel, BFILE *stream, ch
 EXTERNCPP int            ReadLabels(flowlabels *flow_label, BFILE *stream, char *suffix_label);
 EXTERNCPP int            AppendLabels(flowlabels *flow_label, char *suffix_label);
 
-#ifdef pp_HASH
 EXTERNCPP unsigned char *GetHashMD5(char *file);
 EXTERNCPP unsigned char *GetHashSHA256(char *file);
 EXTERNCPP unsigned char *GetHashSHA1(char *file);
-#endif
 EXTERNCPP int            MatchWild(char *pTameText, char *pWildText);
 EXTERNCPP int            Match(char *buffer, const char *key);
 EXTERNCPP int            MatchINI(char *buffer, const char *key);
@@ -165,18 +160,14 @@ EXTERNCPP int            LogBase2(float xx);
 #endif
 EXTERNCPP void           Array2String(float *vals, int nvals, char *string);
 EXTERNCPP float          GetMantissaExponent(float x, int *exp10);
-EXTERNCPP void           GetGitInfo(char *githash, char *gitdate);
+EXTERNCPP void           GetGitInfo(char *githash, char *gitdate, int *gettest);
 EXTERNCPP char          *GetString(char *buffer);
 EXTERNCPP char          *Time2TimeLabel(float time, float dt, char *timelabel, int fixed_point);
 EXTERNCPP char          *Time2RenderLabel(float time, float dt, float maxtime, char *timelabel);
 EXTERNCPP char          *RandStr(char* str, int length);
 EXTERNCPP void           GetBaseTitle(char *progname, char *title_base);
 EXTERNCPP void           GetTitle(char *progname, char *fulltitle);
-#ifdef pp_HASH
 EXTERNCPP void           PRINTversion(char *progname, int hash_option);
-#else
-EXTERNCPP void           PRINTversion(char *progname);
-#endif
 
 // vvvvvvvvvvvvvvvvvvvvvvvv variables vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 

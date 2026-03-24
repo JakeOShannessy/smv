@@ -6,8 +6,9 @@
 SIZE=-m32
 COMPILER=icx
 CC=$(COMPILER) $(SIZE)
+LIB=lib
 
-FILTERC=-Wno-implicit-int -Wno-implicit-function-declaration -Wint-to-pointer-cast
+FILTERC=-Wno-implicit-int -Wno-implicit-function-declaration -Wno-int-to-pointer-cast
 # FILTERC= -D WIN32 -D _LIB
 
 .c.obj:
@@ -16,7 +17,7 @@ FILTERC=-Wno-implicit-int -Wno-implicit-function-declaration -Wint-to-pointer-ca
 	$(CC) -c $(CFLAGS) $(INC) $(FILTERC) $<
 
 
-CFLAGS= -O2 -I ../glut_gl $(PLATFORM) 
+CFLAGS= -O2 -I ../glut_gl $(PLATFORM)
 
 RANLIB=ranlib
 
@@ -47,4 +48,4 @@ libglutwin.a: $(OBJWINS)
 	$(RANLIB) $@
 
 libglutwin.lib: $(OBJWINSWIN)
-	lib  $(OBJWINSWIN) -OUT:$@
+	$(LIB)  $(OBJWINSWIN) -OUT:$@
