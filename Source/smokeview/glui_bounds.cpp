@@ -5739,7 +5739,7 @@ extern "C" void GLUIBoundsSetup(int main_window){
   // -------------- Data coloring -------------------
 
   ROLLOUT_coloring = glui_bounds->add_rollout("Coloring", false, COLORING_ROLLOUT);
-  TOGGLE_ROLLOUT(fileprocinfo, nfileprocinfo, ROLLOUT_coloring, COLORING_ROLLOUT, glui_bounds);
+  TOGGLE_ROLLOUT(filedatacolprocinfo, nfiledatacolprocinfo, ROLLOUT_coloring, COLORING_ROLLOUT, glui_bounds);
 
   PANEL_cb11 = glui_bounds->add_panel_to_panel(ROLLOUT_coloring, "", GLUI_PANEL_NONE);
 
