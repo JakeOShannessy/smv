@@ -70,7 +70,7 @@
 #define HAVE_STRUCT_TIMESPEC
 #endif
 
-#include "pragmas.h"
+#include "pragmas.h" // IWYU pragma: keep
 #endif
 
 //*** options: debug options
@@ -172,7 +172,7 @@
 #  endif
 #endif
 
-#include "lint.h"
+#include "lint.h" // IWYU pragma: keep
 
 #define pp_GPU              // support the GPU
 #define pp_THREAD           // turn on multi-threading

@@ -14,7 +14,7 @@
 #include "infoheader.h"
 #include "colorbars.h"
 #include "readtour.h"
-#include "readsmoke.h"
+#include "readgeom.h"
 
 #define CONV(p,pl,pr,pxl,pxr) ( (pxl) + ((pxr)-(pxl))*((p)-(pl))/((pr)-(pl)) )
 #define TIMEBAR_HEIGHT 20

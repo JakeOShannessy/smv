@@ -4,14 +4,9 @@
 #if defined(_WIN32)
 #include <windows.h>
 #endif
+#include "options_common.h"
 #include GL_H
 
-#include "stdio_m.h"
-#include "string_util.h" // necessary for flowlabels
-
-#include "readcad.h"
-#include "readgeom.h"
-#include "readobject.h"
 #include "shared_structures.h"
 
 /* --------------------------  langlistdata --------------------------------- */

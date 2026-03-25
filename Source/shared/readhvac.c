@@ -10,8 +10,6 @@
 
 #include "dmalloc.h"
 #include "datadefs.h"
-#include "histogram.h"
-#include "isobox.h"
 #include "string_util.h"
 
 #include "file_util.h"

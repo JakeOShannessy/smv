@@ -5,12 +5,10 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <ctype.h>
 #include <stdlib.h>
 #ifdef pp_OSX
 #include <unistd.h>
 #endif
-#include <math.h>
 #ifdef _WIN32
 #ifdef __MINGW32__
 #undef S_IFBLK

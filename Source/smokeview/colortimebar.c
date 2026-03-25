@@ -11,6 +11,7 @@
 #include "string_util.h"
 #include "IOscript.h"
 #include "viewports.h"
+#include "readgeom.h"
 
 #include "colorbars.h"
 

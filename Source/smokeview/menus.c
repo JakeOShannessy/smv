@@ -26,6 +26,8 @@
 #include "viewports.h"
 #include "colorbars.h"
 #include "paths.h"
+#include "readcad.h"
+#include "readgeom.h"
 
 void LoadHVACMenu(int value);
 void LoadPlot2DMenu(int value);

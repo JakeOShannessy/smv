@@ -12,6 +12,7 @@
 #include "readcad.h"
 #include "readobject.h"
 #include "readsmvfile.h"
+#include "readgeom.h"
 
 #define DRAW_OBSTS_AND_VENTS 0
 #define DRAW_OBSTS           1
@@ -390,7 +391,7 @@ void DrawCircVentsExactSolid(int option){
       }
 
       float delta, deltax = 0.0, deltay = 0.0, deltaz = 0.0;
-        
+
       delta = xyzmaxdiff / 400.0;
       switch(cvi->dir){
       case DOWN_X:
@@ -522,7 +523,7 @@ void DrawCircVentsExactOutline(int option){
       }
 
       float delta, deltax = 0.0, deltay = 0.0, deltaz = 0.0;
-        
+
       delta = xyzmaxdiff / 400.0;
       switch(cvi->dir){
       case DOWN_X:

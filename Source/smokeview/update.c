@@ -17,6 +17,7 @@
 #include "glui_bounds.h"
 #include "IOobjects.h"
 #include "readsmvfile.h"
+#include "readgeom.h"
 
 /* ------------------ CompareFloat ------------------------ */
 

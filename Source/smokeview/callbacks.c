@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <math.h>
 #include GLUT_H
@@ -15,7 +14,8 @@
 #include "glui_bounds.h"
 #include "glui_smoke.h"
 #include "IOobjects.h"
-#include "gd.h"
+#include "readgeom.h"
+#include "readcad.h"
 
 #include "IOscript.h"
 

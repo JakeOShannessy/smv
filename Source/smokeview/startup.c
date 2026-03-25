@@ -1,15 +1,14 @@
-#include "options.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <math.h>
 
 
 #ifdef pp_OSX
 #include <unistd.h>
 #endif
 #include "glew.h"
+#include "options_common.h"
 #include GLUT_H
 
 #include "infoheader.h"
@@ -22,6 +21,7 @@
 #include "glui_motion.h"
 #include "glui_smoke.h"
 #include "paths.h"
+#include "readgeom.h"
 
 /* ------------------ InitDefaultCameras ------------------------ */
 

@@ -11,6 +11,7 @@
 #include "IOobjects.h"
 
 #include "readhvac.h"
+#include "readgeom.h"
 
 #define HVAC_MAXCELLS global_scase.hvaccoll.hvac_maxcells
 #define HVAC_N_DUCTS  global_scase.hvaccoll.hvac_n_ducts

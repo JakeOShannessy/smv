@@ -11,6 +11,7 @@
 #include "glui_motion.h"
 #include "IOscript.h"
 #include "paths.h"
+#include "readgeom.h"
 
 #ifdef _WIN32
 #include <direct.h>

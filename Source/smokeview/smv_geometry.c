@@ -11,6 +11,7 @@
 #include "smokeviewvars.h"
 #include "IOvolsmoke.h"
 #include "interp.h"
+#include "readgeom.h"
 
 /* ------------------ Slerp ------------------------ */
 

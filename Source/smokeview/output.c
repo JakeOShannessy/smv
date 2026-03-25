@@ -14,6 +14,7 @@
 #include "smokeviewvars.h"
 #include "glutbitmap.h"
 #include "paths.h"
+#include "readgeom.h"
 
 
 #define DENORMAL(x,i, n, min,max) ((min) + (i)*((max)-(min))/(n))

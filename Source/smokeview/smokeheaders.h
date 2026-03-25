@@ -6,6 +6,7 @@
 #endif
 
 #include "shared_structures.h"
+#include "structures.h"
 
 //*** glui_clip.cpp headers
 
