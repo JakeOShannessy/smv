@@ -81,6 +81,10 @@ endif()
 
 add_compile_definitions(GL_SILENCE_DEPRECATION)
 
+if(IMGUI)
+    add_compile_definitions(pp_IMGUI)
+endif()
+
 find_package(OpenGL REQUIRED)
 if (VENDORED_UI_LIBS)
     if (NOT MACOSX)
