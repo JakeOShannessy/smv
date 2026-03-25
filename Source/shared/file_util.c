@@ -1508,6 +1508,21 @@ char *GetSmvRootDir(){
     NEWMEMORY(buffer, (len + 2) * sizeof(char));
     STRCPY(buffer, SMV_ROOT_OVERRIDE);
 #else
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+  wchar_t *out;
+  HRESULT res = SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, &out);
+  switch(res) {
+  case S_OK:
+    char *r = convert_utf16_to_utf8(out);
+    CoTaskMemFree(out);
+    buffer = CombinePaths(r, "Fireng\\Smokeview Lua\\");
+    FREEMEMORY(r);
+    return buffer;
+  default:
+    CoTaskMemFree(out);
+    return NULL;
+  }
+#else
     // Otherwise simply return the directory of the running executable (using
     // the platform-dependent code).
     char *bindir, repo_bindir[1024];
@@ -1551,6 +1566,7 @@ char *GetSmvRootDir(){
     if(stream1!=NULL)fclose(stream1);
     if(stream2!=NULL)fclose(stream2);
 #endif
+#endif
   }
   len = strlen(buffer);
   if(strcmp(buffer+len-1,dirseparator)!=0)STRCAT(buffer, dirseparator);
@@ -1568,7 +1584,19 @@ char *GetSmvRootSubPath(const char *subdir) {
 /* ------------------ GetHomeDir ------------------------ */
 
 char *GetHomeDir() {
-#ifdef _WIN32
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+  char *homedir_env = NULL;
+  wchar_t *out;
+  HRESULT res = SHGetKnownFolderPath(&FOLDERID_Profile, 0, NULL, &out);
+  switch(res) {
+  case S_OK:
+    homedir_env = convert_utf16_to_utf8(out);
+    CoTaskMemFree(out);
+    break;
+  default:
+    CoTaskMemFree(out);
+  }
+#elif defined(_WIN32)
   char *homedir_env = getenv("userprofile");
 #else
   char *homedir_env = getenv("HOME");
@@ -1584,25 +1612,11 @@ char *GetHomeDir() {
 /* ------------------ GetUserConfigDir ------------------------ */
 
 char *GetUserConfigDir() {
-#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
-  wchar_t *out;
-  HRESULT res = SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, &out);
-  switch(res) {
-  case S_OK:
-    char *r = convert_utf16_to_utf8(out);
-    CoTaskMemFree(out);
-    return r;
-  default:
-    CoTaskMemFree(out);
-    return NULL;
-  }
-#else
   char *homedir = GetHomeDir();
   if(homedir == NULL) return NULL;
   char *config_path = CombinePaths(homedir, ".smokeview");
   FREEMEMORY(homedir);
   return config_path;
-#endif
 }
 
 /* ------------------ GetUserConfigSubPath ------------------------ */

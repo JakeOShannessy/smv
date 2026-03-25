@@ -253,6 +253,11 @@ void DisplayVersionInfo(char *progname, common_opts *opts){
       if(FileExistsOrig(fullini_filename)==0)strcpy(fullini_filename, "");
     }
   }
+  if(smokeview_scratchdir!=NULL) {
+    PRINTF("Scratch dir      : %s\n", smokeview_scratchdir);
+  } else {
+    PRINTF("Scratch dir      : not found\n");
+  }
   FREEMEMORY(caseini_filename);
   FREEMEMORY(smokeview_scratchdir);
   if(smv_filename != NULL || opts->show_version == 0){

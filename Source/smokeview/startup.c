@@ -424,7 +424,7 @@ void InitStartupDirs(void){
   int is_beta;
   GetGitInfo(NULL, NULL, &is_beta);
   if(is_beta == 1){
-    fprintf(stderr, "%s\n", "\n*** This version of Smokeview is intended for review and testing ONLY. ***");
+    // fprintf(stderr, "%s\n", "\n*** This version of Smokeview is intended for review and testing ONLY. ***");
   }
 }
 
