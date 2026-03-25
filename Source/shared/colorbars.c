@@ -622,7 +622,7 @@ colorbardata *NewColorbar(colorbar_collection *colorbars){
 }
 
 /* ------------------ GetColorbarsSubDir ------------------------ */
-
+// TODO: need to add in config as well
 /**
  * @brief Get a path for a colorbar subdir. This is generally in the form
  * ${SMV_ROOT_DIR}/colorbars/${subdir}.
