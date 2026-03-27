@@ -29,6 +29,7 @@ add_library(smv STATIC
     readtour.c
     scontour2d.c
     readsmvfile.c
+    winpaths.c
     "paths.c"
 )
 set_source_files_properties(dmalloc.c PROPERTIES SKIP_LINTING ON)
