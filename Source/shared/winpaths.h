@@ -15,5 +15,6 @@ int WinChDir(const char *file);
 int WinUnlink(const char *file);
 int WinMakeFileList(const char *path, char *filter, int maxfiles,
                     int sort_files, filelistdata **filelist, int mode);
+char *WinGetBinPath();
 #endif
 #endif

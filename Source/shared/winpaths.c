@@ -1,3 +1,4 @@
+/// @file winpaths.h
 #if defined(_WIN32) && defined(pp_UNICODE_PATHS)
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +34,6 @@
 #include "dmalloc.h"
 #include "file_util.h"
 #include "string_util.h"
-
 
 char *WinGetHomeDir() {
   char *homedir = NULL;
@@ -134,7 +134,7 @@ void DisplayErrorBox(LPTSTR lpszFunction) {
   LocalFree(lpDisplayBuf);
 }
 
-int WinCompareFileList(const void *arg1, const void *arg2){
+int WinCompareFileList(const void *arg1, const void *arg2) {
   filelistdata *x, *y;
 
   x = (filelistdata *)arg1;
@@ -244,4 +244,26 @@ int WinMakeFileList(const char *path, char *filter, int maxfiles,
   return nfiles;
 }
 
+char *WinGetBinPath() {
+  size_t max_buffer_size = MAX_PATH * 20;
+  char *buffer;
+  size_t buffer_size = MAX_PATH * sizeof(char);
+  NEWMEMORY(buffer, buffer_size);
+  for(;;) {
+    GetModuleFileNameA(NULL, buffer, buffer_size);
+    DWORD dw = GetLastError();
+    if(dw == ERROR_SUCCESS) {
+      return buffer;
+    }
+    else if(dw == ERROR_INSUFFICIENT_BUFFER && buffer_size < max_buffer_size) {
+      // increase buffer size by a factor of 2
+      buffer_size *= 2;
+      RESIZEMEMORY(buffer, buffer_size);
+    }
+    else {
+      FREEMEMORY(buffer);
+      return NULL;
+    }
+  }
+}
 #endif

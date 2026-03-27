@@ -1205,8 +1205,10 @@ char *CombinePaths(const char *path_a, const char *path_b) {
 }
 
 /* ------------------ GetBinPath ------------------------ */
-#ifdef _WIN32
 char *GetBinPath(){
+#if defined(_WIN32) && defined(pp_UNICODE_PATHS)
+  return WinGetBinPath();
+#elif defined(_WIN32)
   size_t max_buffer_size = MAX_PATH * 20;
   char *buffer;
   size_t buffer_size = MAX_PATH * sizeof(char);
@@ -1227,9 +1229,7 @@ char *GetBinPath(){
       return NULL;
     }
   }
-}
 #elif __linux__
-char *GetBinPath(){
   size_t max_buffer_size = 2048 * 20;
   char *buffer;
   size_t buffer_size = 256 * sizeof(char);
@@ -1250,9 +1250,7 @@ char *GetBinPath(){
       return NULL;
     }
   }
-}
 #else
-char *GetBinPath(){
   uint32_t  max_buffer_size = 2048 * 20;
   char *buffer;
   uint32_t buffer_size = 256 * sizeof(char);
@@ -1272,8 +1270,8 @@ char *GetBinPath(){
       return NULL;
     }
   }
-}
 #endif
+}
 
 /* ------------------ GetBinDir ------------------------ */
 #ifdef _WIN32
