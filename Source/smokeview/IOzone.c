@@ -1409,10 +1409,10 @@ void DrawZoneRoomGeom(void){
         glPushMatrix();
         if(zvi->wall==TOP_WALL){
           glTranslatef(FDS2SMV_X(zvi->xcen), FDS2SMV_Y(zvi->ycen), z2);
-	}
-	else{
+        }
+        else{
           glTranslatef(FDS2SMV_X(zvi->xcen), FDS2SMV_Y(zvi->ycen), z1);
-	}
+        }
         uc_color[0] = zvi->color[0]*255;
         uc_color[1] = zvi->color[1]*255;
         uc_color[2] = zvi->color[2]*255;
@@ -1515,7 +1515,8 @@ void DrawZoneVentDataProfile(void){
     zventdata *zvi;
     int j;
     float zelev[NELEV_ZONE];
-    float *vcolor1,*vcolor2;
+    
+    float *vcolor1;
     float xmid, ymid;
 
     zvi = global_scase.zventinfo + i;
@@ -1545,8 +1546,8 @@ void DrawZoneVentDataProfile(void){
         ywall = zvi->y1;
         break;
       default:
-	    assert(FFALSE);
-	    break;
+        assert(FFALSE);
+        break;
       }
       dvent1 = factor*zvi->area_fraction*zvi->vdata[j];
       dvent2 = factor*zvi->area_fraction*zvi->vdata[j+1];
@@ -1556,16 +1557,14 @@ void DrawZoneVentDataProfile(void){
         dvent2=-dvent2;
       }
       vcolor1=rgb_full[zvi->itempdata[j]];
-      vcolor2=vcolor1;
       switch(zvi->wall){
       case LEFT_WALL:
       case RIGHT_WALL:
         if(dvent1*dvent2>=0.0){
-          glColor3fv(vcolor1);
+          glColor4fv(vcolor1);
           glVertex3f(xwall,       ymid,zelev[j]);
           glVertex3f(xwall+dvent1,ymid,zelev[j]);
 
-          glColor3fv(vcolor2);
           glVertex3f(xwall+dvent2,ymid,zelev[j+1]);
           glVertex3f(xwall,       ymid,zelev[j+1]);
         }
@@ -1573,13 +1572,12 @@ void DrawZoneVentDataProfile(void){
           float dvent;
 
           dvent =  dvent1*(zelev[j+1]-zelev[j])/(dvent2-dvent1);
-          glColor3fv(vcolor1);
+          glColor4fv(vcolor1);
           glVertex3f(xwall,          ymid, zelev[j]);
           glVertex3f(xwall + dvent1, ymid, zelev[j]);
           glVertex3f(xwall,          ymid, zelev[j] - dvent);
           glVertex3f(xwall,          ymid, zelev[j] - dvent);
 
-          glColor3fv(vcolor2);
           glVertex3f(xwall,          ymid, zelev[j] - dvent);
           glVertex3f(xwall,          ymid, zelev[j] - dvent);
           glVertex3f(xwall + dvent2, ymid, zelev[j + 1]);
@@ -1589,11 +1587,10 @@ void DrawZoneVentDataProfile(void){
       case BACK_WALL:
       case FRONT_WALL:
         if(dvent1*dvent2>=0.0){
-          glColor3fv(vcolor1);
+          glColor4fv(vcolor1);
           glVertex3f(xmid, ywall,          zelev[j]);
           glVertex3f(xmid, ywall + dvent1, zelev[j]);
 
-          glColor3fv(vcolor2);
           glVertex3f(xmid, ywall + dvent2, zelev[j + 1]);
           glVertex3f(xmid, ywall,          zelev[j + 1]);
         }
@@ -1601,13 +1598,12 @@ void DrawZoneVentDataProfile(void){
           float dvent;
 
           dvent =  dvent1*(zelev[j+1]-zelev[j])/(dvent2-dvent1);
-          glColor3fv(vcolor1);
+          glColor4fv(vcolor1);
           glVertex3f(xmid, ywall,          zelev[j]);
           glVertex3f(xmid, ywall + dvent1, zelev[j]);
           glVertex3f(xmid, ywall,          zelev[j] - dvent);
           glVertex3f(xmid, ywall,          zelev[j] - dvent);
 
-          glColor3fv(vcolor2);
           glVertex3f(xmid, ywall,          zelev[j] - dvent);
           glVertex3f(xmid, ywall,          zelev[j] - dvent);
           glVertex3f(xmid, ywall + dvent2, zelev[j + 1]);
@@ -2268,7 +2264,7 @@ void DrawZoneFireData(void){
   int i;
   float *zoneqfirebase, *zonefheightbase, *zonefdiambase, *zonefbasebase;
 
-  if(zone_times[0]>global_times[itimes])return;
+  if(zone_times[0]>GetTime())return;
   if(cullfaces==1)glDisable(GL_CULL_FACE);
 
   zoneqfirebase = zoneqfire + izone*global_scase.nfires;
@@ -2287,48 +2283,39 @@ void DrawZoneFireData(void){
           firedata *firei;
           roomdata *roomi;
           float deltaz;
-          meshdata *meshi;
 
           // radius/plumeheight = .268 = atan(15 degrees)
           firei = global_scase.fireinfo + i;
           roomi = global_scase.roominfo + firei->roomnumber-1;
-          meshi = global_scase.meshescoll.meshinfo + firei->roomnumber-1;
           diameter = SCALE2SMV(zonefdiambase[i]);
           deltaz = SCALE2SMV(zonefbasebase[i]);
           maxheight=roomi->z1-roomi->z0-deltaz;
           flameheight = SCALE2SMV(zonefheightbase[i]);
-          SetClipPlanes(meshi->box_clipinfo,CLIP_ON);
           glPushMatrix();
           glTranslatef(firei->absx,firei->absy,roomi->z0+deltaz);
           DrawZoneFirePlume(diameter,flameheight,maxheight);
           glPopMatrix();
-          SetClipPlanes(meshi->box_clipinfo,CLIP_OFF);
         }
       }
       else{
         if(qdot>0.0f){
           firedata *firei;
           roomdata *roomi;
-          meshdata *meshi;
 
           // radius/plumeheight = .268 = atan(15 degrees)
           firei = global_scase.fireinfo + i;
           roomi = global_scase.roominfo + firei->roomnumber-1;
-          meshi = global_scase.meshescoll.meshinfo + firei->roomnumber-1;
           maxheight=roomi->z1-firei->absz;
           flameheight = SCALE2SMV((0.23f*pow((double)qdot,(double)0.4)/(1.0f+2.0f*0.268f)));
           diameter = 2.0*flameheight*0.268f;
-          SetClipPlanes(meshi->box_clipinfo,CLIP_ON);
           glPushMatrix();
           glTranslatef(firei->absx,firei->absy,firei->absz);
           DrawZoneFirePlume(diameter,flameheight,maxheight);
           glPopMatrix();
-          SetClipPlanes(meshi->box_clipinfo,CLIP_OFF);
         }
       }
     }
   }
-  if(use_transparency_data==1)TransparentOff();
   if(cullfaces==1)glEnable(GL_CULL_FACE);
 }
 
@@ -2346,10 +2333,9 @@ void DrawZoneRoomData(void){
   float *colorvL;
   int i;
 
-  if(zone_times[0]>global_times[itimes])return;
+  if(zone_times[0]>GetTime())return;
 
   if(cullfaces==1)glDisable(GL_CULL_FACE);
-  if(use_transparency_data==1)TransparentOn();
 
   izonetubase = izonetu + izone*global_scase.nrooms;
   izonetlbase = izonetl + izone*global_scase.nrooms;
@@ -2461,6 +2447,5 @@ void DrawZoneRoomData(void){
   }
 #endif
 
-  if(use_transparency_data==1)TransparentOff();
   if(cullfaces==1)glEnable(GL_CULL_FACE);
 }

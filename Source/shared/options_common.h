@@ -11,6 +11,7 @@
 #define _DEFAULT_SOURCE
 #endif
 //#define pp_VCELLUVW           // add add uvw to menu label for CELL U/V/W vector slice files
+//#define pp_SLFC                 // turn on face centered slice files
 
 
 #ifdef __INTEL_COMPILER
@@ -150,6 +151,10 @@
 #define PRINT_TIMER(timer, label) PrintTime(__FILE__, __LINE__, &timer, label, 1)
 #endif
 
+#ifndef PRINT_TIMER_LF
+#define PRINT_TIMER_LF(timer) if(show_timings==1 && timer>0.1)printf("\n")
+#endif
+
 #ifndef PRINT_CUM_TIMER
 #define PRINT_CUM_TIMER(timer, label) PrintTime(__FILE__, __LINE__, &timer, label, 0)
 #endif
@@ -192,6 +197,12 @@
 #ifndef GL_SILENCE_DEPRECATION
 #define GL_SILENCE_DEPRECATION
 #endif
+#endif
+
+#ifdef pp_GETMESH_TEST
+#define GETMESH GetMeshTest
+#else
+#define GETMESH GetMesh
 #endif
 
 #endif

@@ -52,7 +52,7 @@ void DrawCircVentsApproxSolid(int option){
 
       // check for visibility
 
-      if(cvi->showtimelist!=NULL&&cvi->showtimelist[itimes]==0)continue;
+      if(cvi->showtimelist!=NULL&&cvi->showtimelist[iglobal_times]==0)continue;
 
       glColor3fv(cvi->color);
       if(cvi->dir==UP_X||cvi->dir==UP_Y||cvi->dir==UP_Z){
@@ -205,7 +205,7 @@ void DrawCircVentsApproxOutline(int option){
 
       // check for visibility
 
-      if(cvi->showtimelist!=NULL&&cvi->showtimelist[itimes]==0)continue;
+      if(cvi->showtimelist!=NULL&&cvi->showtimelist[iglobal_times]==0)continue;
       if(showpatch==1 && cvi->have_boundary_file == 1)continue;
 
       glColor3fv(cvi->color);
@@ -376,7 +376,7 @@ void DrawCircVentsExactSolid(int option){
 
       // check for visibility
 
-      if(cvi->showtimelist!=NULL&&cvi->showtimelist[itimes]==0)continue;
+      if(cvi->showtimelist!=NULL&&cvi->showtimelist[iglobal_times]==0)continue;
       if(showpatch==1 && cvi->have_boundary_file == 1)continue;
 
       if(option==VENT_CIRCLE){
@@ -508,7 +508,7 @@ void DrawCircVentsExactOutline(int option){
 
       // check for visibility
 
-      if(cvi->showtimelist!=NULL&&cvi->showtimelist[itimes]==0)continue;
+      if(cvi->showtimelist!=NULL&&cvi->showtimelist[iglobal_times]==0)continue;
       if(showpatch==1 && cvi->have_boundary_file == 1)continue;
 
       if(option==VENT_CIRCLE){
@@ -720,7 +720,7 @@ void DrawObstOutlines(void){
 
       bc = meshi->blockageinfoptrs[i];
       if(bc == NULL)continue;
-      if(bc->showtimelist != NULL && bc->showtimelist[itimes] == 0)continue;
+      if(bc->showtimelist != NULL && bc->showtimelist[iglobal_times] == 0)continue;
       color = bc->color;
       if(color != oldcolor){
         glColor3fv(color);
@@ -785,7 +785,7 @@ void DrawOrigObstOutlines(void){
 
     obi = global_scase.obstcoll.obstinfo + i;
     color = foregroundcolor;
-    if(obi->bc!=NULL&&obi->bc->showtimelist!=NULL&&obi->bc->showtimelist[itimes]==0)continue;
+    if(obi->bc!=NULL&&obi->bc->showtimelist!=NULL&&obi->bc->showtimelist[iglobal_times]==0)continue;
     if(obi->color!=NULL)color = obi->color;
     if(obi->color==NULL&&obi->surfs[0]->color!=NULL)color = obi->surfs[0]->color;
     if(color!=oldcolor){
@@ -1797,8 +1797,8 @@ void DrawCAD2Geom(const cadgeomdata *cd, int trans_flag){
     if(global_times!=NULL){
       float timeval;
 
-      timeval=global_times[itimes];
-      if(quadi->time_show>=0.0&&timeval<quadi->time_show)continue;
+      timeval=GetTime();
+      if(quadi->time_show>=0.0&&timeval< quadi->time_show)continue;
       if(quadi->time_show <0.0&&timeval>-quadi->time_show)continue;
     }
     if(visCadTextures==1&&texti->loaded==1)continue;
@@ -2798,7 +2798,11 @@ void UpdateFaceListsWorker(void){
          (facej->type==BLOCK_outline&&visBlocks==visBLOCKAsInput)||
          ((j>=vent_offset&&j<vent_offset+meshi->nvents)&&vi->isOpenvent==1&&visOpenVentsAsOutline==1)
         ){
-        if(global_scase.obstcoll.nobstinfo==0||(global_scase.obstcoll.nobstinfo>0&&blocklocation==BLOCKlocation_grid))meshi->face_outlines[n_outlines++]=facej;
+        if(global_scase.obstcoll.nobstinfo == 0 ||
+          (global_scase.obstcoll.nobstinfo > 0 && blocklocation == BLOCKlocation_grid)
+          ){
+          if(meshface_horiz == 0 || facej->kmin == facej->kmax)meshi->face_outlines[n_outlines++] = facej;
+        }
         if(visBlocks!=visBLOCKSolidOutline&&visBlocks!=visBLOCKAsInputOutline)continue;
       }
       if(j<vent_offset){
@@ -3062,7 +3066,7 @@ void DrawSelectFaces(){
  \
         showtimelist_handle = facei->showtimelist_handle;\
         showtimelist = *showtimelist_handle;\
-        if(showtimelist!=NULL&&showtimelist[itimes]==0)continue;\
+        if(showtimelist!=NULL&&showtimelist[iglobal_times]==0)continue;\
         if(showedit_dialog==0){\
           new_color=facei->color;\
         }\
@@ -3180,7 +3184,7 @@ void DrawFacesOLD(int option){
         }
         showtimelist_handle = facei->showtimelist_handle;
         showtimelist = *showtimelist_handle;
-        if(showtimelist != NULL && showtimelist[itimes] == 0)continue;
+        if(showtimelist != NULL && showtimelist[iglobal_times] == 0)continue;
         if(showedit_dialog == 0){
           new_color = facei->color;
         }
@@ -3263,7 +3267,7 @@ void DrawFacesOLD(int option){
         }
         showtimelist_handle = facei->showtimelist_handle;
         showtimelist = *showtimelist_handle;
-        if(showtimelist != NULL && showtimelist[itimes] == 0)continue;
+        if(showtimelist != NULL && showtimelist[iglobal_times] == 0)continue;
         if(showedit_dialog == 0){
           new_color = facei->color;
         }
@@ -3335,7 +3339,7 @@ void DrawFacesOLD(int option){
         if(facei->hidden == 1)continue;
         showtimelist_handle = facei->showtimelist_handle;
         showtimelist = *showtimelist_handle;
-        if(showtimelist != NULL && showtimelist[itimes] == 0 && facei->type2 == BLOCK_face)continue;
+        if(showtimelist != NULL && showtimelist[iglobal_times] == 0 && facei->type2 == BLOCK_face)continue;
         if(blocklocation == BLOCKlocation_grid){
           vertices = facei->approx_vertex_coords;
         }
@@ -3362,7 +3366,7 @@ void DrawFacesOLD(int option){
           glVertex3fv(vertices + 9);
           glVertex3fv(vertices + 9);
           glVertex3fv(vertices);
-          if(showtimelist != NULL && showtimelist[itimes] == 0){
+          if(showtimelist != NULL && showtimelist[iglobal_times] == 0){
             glVertex3fv(vertices);
             glVertex3fv(vertices + 6);
             glVertex3fv(vertices + 3);
@@ -3409,7 +3413,7 @@ void DrawFacesOLD(int option){
         if(facei->hidden == 1)continue;
         showtimelist_handle = facei->showtimelist_handle;
         showtimelist = *showtimelist_handle;
-        if(showtimelist != NULL && showtimelist[itimes] == 0)continue;
+        if(showtimelist != NULL && showtimelist[iglobal_times] == 0)continue;
         texti = facei->textureinfo;
         if(blocklocation == BLOCKlocation_grid){
           vertices = facei->approx_vertex_coords;
@@ -3577,7 +3581,7 @@ void DrawFaces(){
         }
         showtimelist_handle = facei->showtimelist_handle;
         showtimelist = *showtimelist_handle;
-        if(showtimelist!=NULL&&showtimelist[itimes]==0)continue;
+        if(showtimelist!=NULL&&showtimelist[iglobal_times]==0)continue;
         if(showedit_dialog == 0){
           new_color=facei->color;
         }
@@ -3642,7 +3646,7 @@ void DrawFaces(){
         facei = meshi->face_outlines[i];
         showtimelist_handle = facei->showtimelist_handle;
         showtimelist = *showtimelist_handle;
-        if(showtimelist!=NULL&&showtimelist[itimes]==0&&facei->type2==BLOCK_face)continue;
+        if(showtimelist!=NULL&&showtimelist[iglobal_times]==0&&facei->type2==BLOCK_face)continue;
         if(blocklocation==BLOCKlocation_grid){
           vertices = facei->approx_vertex_coords;
         }
@@ -3668,7 +3672,7 @@ void DrawFaces(){
           glVertex3fv(vertices+9);
           glVertex3fv(vertices+9);
           glVertex3fv(vertices);
-          if(showtimelist!=NULL&&showtimelist[itimes]==0){
+          if(showtimelist!=NULL&&showtimelist[iglobal_times]==0){
             glVertex3fv(vertices);
             glVertex3fv(vertices+6);
             glVertex3fv(vertices+3);
@@ -3704,7 +3708,7 @@ void DrawFaces(){
         facei=meshi->face_textures[i];
         showtimelist_handle = facei->showtimelist_handle;
         showtimelist = *showtimelist_handle;
-        if(showtimelist!=NULL&&showtimelist[itimes]==0)continue;
+        if(showtimelist!=NULL&&showtimelist[iglobal_times]==0)continue;
         texti=facei->textureinfo;
         if(blocklocation==BLOCKlocation_grid){
            vertices = facei->approx_vertex_coords;
@@ -3822,7 +3826,7 @@ void DrawTransparentFaces(){
       }
       showtimelist_handle = facei->showtimelist_handle;
       showtimelist = *showtimelist_handle;
-      if(showtimelist!=NULL&&showtimelist[itimes]==0)continue;
+      if(showtimelist!=NULL&&showtimelist[iglobal_times]==0)continue;
       if(showedit_dialog == 0){
         new_color=facei->color;
       }
@@ -3902,7 +3906,7 @@ void DrawTransparentFaces(){
         }
         showtimelist_handle = facei->showtimelist_handle;
         showtimelist = *showtimelist_handle;
-        if(showtimelist!=NULL&&showtimelist[itimes]==0)continue;
+        if(showtimelist!=NULL&&showtimelist[iglobal_times]==0)continue;
         new_color=facei->color;
         if(
          ABS(new_color[0]-old_color[0])>0.0001||

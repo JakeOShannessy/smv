@@ -58,13 +58,7 @@ void ShowScene2(int mode){
     UpdateLights(light_position0, light_position1);
     if(drawlights==1)DrawLights(light_position0, light_position1);
 
-
- // if(render_status==RENDER_ON&&render_mode==RENDER_360){
- //   UpdateLights(light_position0, light_position1);
- // }
-
     glPointSize((float)1.0);
-
 
     /* ++++++++++++++++++++++++ DrawNorth  +++++++++++++++++++++++++ */
 
@@ -87,6 +81,7 @@ void ShowScene2(int mode){
     if(showsmoke == 1 && (hide_scene==0||mouse_down==0)){
       CLIP_VALS;
       DrawPartFrame(DRAWSCENE);
+      BREAK_VIS(VIS_CONTINUE);
     }
 
     /* ++++++++++++++++++++++++ draw screeninfo +++++++++++++++++++++++++ */
@@ -152,7 +147,7 @@ void ShowScene2(int mode){
       SNIFF_ERRORS("after drawaxis");
     }
 
-    /* ++++++++++++++++++++++++ draw outlnes when boundary files are displayed +++++++++++++++++++++++++ */
+    /* ++++++++++++++++++++++++ draw outlines when boundary files are displayed +++++++++++++++++++++++++ */
 
     if(hide_internal_blockages == 1){
       if(outline_state == OUTLINE_ONLY || outline_state == OUTLINE_ADDED){
@@ -259,6 +254,7 @@ void ShowScene2(int mode){
       CLIP_VALS;
       DrawPartFrame(SELECTOBJECT);
       SNIFF_ERRORS("after DrawPartFrame(SELECTOBJECT)");
+      BREAK_VIS(VIS_CONTINUE);
       return;
     }
   }
@@ -428,6 +424,7 @@ void ShowScene2(int mode){
     CLIP_VALS;
     if(hide_scene==0||mouse_down==0){
       DrawSliceFrame();
+      BREAK_VIS(VIS_CONTINUE);
     }
   }
 
@@ -436,6 +433,7 @@ void ShowScene2(int mode){
   if(showpatch == 1 && (hide_scene==0||mouse_down==0)){
     CLIP_VALS;
     DrawBoundaryFrame(DRAW_OPAQUE);
+    BREAK_VIS(VIS_CONTINUE);
   }
 
   /* ++++++++++++++++++++++++ draw labels +++++++++++++++++++++++++ */
@@ -458,21 +456,9 @@ void ShowScene2(int mode){
     CLIP_GEOMETRY;
     DrawZoneRoomGeom();
     SNIFF_ERRORS("after DrawZoneRoomGeom");
-
-    if(showzone == 1){
-      CLIP_VALS;
+    if(showzone==1){
       DrawZoneFireData();
       SNIFF_ERRORS("after DrawZoneFireData");
-      if(ReadZoneFile == 1){
-        if(global_scase.nzvents>0){
-          DrawZoneVentData();
-          SNIFF_ERRORS("after DrawZoneVentData");
-        }
-        if(have_wall_data==1&&vis_wall_data==1){
-          DrawZoneWallData();
-          SNIFF_ERRORS("after DrawZoneWallData");
-        }
-      }
     }
   }
 
@@ -527,16 +513,16 @@ void ShowScene2(int mode){
 
   if(show3dsmoke == 1 && (hide_scene == 0 || mouse_down == 0)){
     CLIP_VALS;
+    INIT_PRINT_TIMER(timer_drawsmoke);
     DrawSmokeFrame();
+    if(show_timings != 0){
+      char label[256];
+
+      sprintf(label, "DrawSmokeFrame(%i)", iglobal_times);
+      PRINT_TIMER(timer_drawsmoke, label);
+    }
+    BREAK_VIS(VIS_CONTINUE);
   }
-
-  /* ++++++++++++++++++++++++ draw vol smoke +++++++++++++++++++++++++ */
-
-  if(showvolrender == 1 && show3dsmoke==0 && (hide_scene == 0 || mouse_down == 0)){
-    CLIP_VALS;
-    DrawVolSmokeFrame();
-  }
-
   if(active_smokesensors == 1 && show_smokesensors != SMOKESENSORS_HIDDEN && (hide_scene == 0 || mouse_down == 0)){
     CLIP_VALS;
     GetSmokeSensors();
@@ -566,8 +552,20 @@ void ShowScene2(int mode){
 
   if(global_scase.nrooms>0 && showzone == 1){
     CLIP_VALS;
+    if(use_transparency_data == 1)TransparentOn();
     DrawZoneRoomData();
     SNIFF_ERRORS("after DrawZoneRoomData");
+    if(ReadZoneFile == 1){
+      if(global_scase.nzvents > 0){
+        DrawZoneVentData();
+        SNIFF_ERRORS("after DrawZoneVentData");
+      }
+      if(have_wall_data == 1 && vis_wall_data == 1){
+        DrawZoneWallData();
+        SNIFF_ERRORS("after DrawZoneWallData");
+      }
+    }
+    if(use_transparency_data==1)TransparentOff();
   }
 
   /* ++++++++++++++++++++++++ draw boundary files +++++++++++++++++++++++++ */
@@ -576,6 +574,7 @@ void ShowScene2(int mode){
     CLIP_VALS;
     DrawBoundaryFrame(DRAW_TRANSPARENT);
     SNIFF_ERRORS("after DrawBoundaryFrame");
+    BREAK_VIS(VIS_CONTINUE);
   }
 
   /* ++++++++++++++++++++++++ draw slice files +++++++++++++++++++++++++ */
@@ -587,6 +586,8 @@ void ShowScene2(int mode){
         DrawSliceFrame();
       }
       SNIFF_ERRORS("after DrawSliceFrame");
+      BREAK_VIS(VIS_CONTINUE);
+
     }
   }
 
@@ -605,6 +606,7 @@ void ShowScene2(int mode){
   if(showvslice == 1 && (hide_scene == 0 || mouse_down == 0)){
     CLIP_VALS;
     DrawVSliceFrame();
+    BREAK_VIS(VIS_CONTINUE);
     SNIFF_ERRORS("after drawvslice");
   }
 
@@ -613,6 +615,7 @@ void ShowScene2(int mode){
   if(showplot3d == 1 && (hide_scene == 0 || mouse_down == 0)){
     CLIP_VALS;
     DrawPlot3dFrame();
+    BREAK_VIS(VIS_CONTINUE);
     SNIFF_ERRORS("after DrawPlot3dFrame");
   }
 }
@@ -630,7 +633,13 @@ void ShowScene(int mode, int view_mode, int quad, GLint s_left, GLint s_down, sc
 
   INIT_PRINT_TIMER(timer_showscene);
   UpdateShowScene();
-  PRINT_TIMER(timer_showscene, "UpdateShowScene");
+
+  if(show_timings != 0){
+    char label[256];
+
+    sprintf(label, "UpdateShowScene(%i)", iglobal_times);
+    PRINT_TIMER(timer_showscene, label);
+  }
   if(stereotype == STEREO_NONE || stereotype == STEREO_TIME)ClearBuffers(mode);
 
   /* ++++++++++++++++++++++++ setup viewports +++++++++++++++++++++++++ */
@@ -694,11 +703,5 @@ void ShowScene(int mode, int view_mode, int quad, GLint s_left, GLint s_down, sc
     }
   }
   if(viscolorbarpath==0||colorbar_showscene==1)ShowScene2(mode);
-
-/* ++++++++++++++++++++++++ render scene +++++++++++++++++++++++++ */
-// if rendering is not working remove following comment
-// then determine where Render should have been called
-//  Render(view_mode);
-
   SNIFF_ERRORS("end of ShowScene");
 }

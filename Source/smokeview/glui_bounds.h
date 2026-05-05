@@ -54,7 +54,10 @@
 #define SET_GLOBAL_BOUNDS 27
 #define PARTSKIP 28
 #define UNLOAD_QDATA 203
-#define SET_TIME 204
+#define SET_TIME_VAL   204
+#define SET_TIME_FRAME 229
+#define PREV_FRAME 230
+#define NEXT_FRAME 231
 #define TBOUNDS 205
 #define TBOUNDS_USE 206
 #define RELOAD_ALL_DATA 207
@@ -113,10 +116,6 @@
 
 #define SAVE_SETTINGS_BOUNDS 99
 #define CLOSE_BOUNDS 98
-#define COMPRESS_FILES 97
-#define OVERWRITE 96
-#define COMPRESS_AUTOLOADED 91
-#define ERASE 95
 #define BOUND_STARTUP 94
 #define SAVE_FILE_LIST 93
 #define LOAD_FILES 92
@@ -165,6 +164,7 @@ EXTERNCPP int  GLUIGetChopMin(int type, char *label, int *set_valmin, float *val
 EXTERNCPP int  GLUIGetChopMax(int type, char *label, int *set_valmax, float *valmax);
 EXTERNCPP int  GLUISetChopMin(int type, char *label, int set_chopmin, float chopmin);
 EXTERNCPP int  GLUISetChopMax(int type, char *label, int set_chopmax, float chopmax);
+EXTERNCPP void GLUISetTimeVal(float timeval);
 
 EXTERNCPP void GLUIUpdateTextureDisplay(void);
 EXTERNCPP void GLUIUpdateLoadAllSlices(void);
@@ -244,10 +244,8 @@ EXTERNCPP void GLUIUpdateScriptStop(void);
 EXTERNCPP void GLUIUpdateTBounds(void);
 EXTERNCPP void GLUIUpdateTimeBounds(float time_min, float time_max);
 EXTERNCPP void GLUIUpdateColorbarFlip(void);
-EXTERNCPP void GLUICompressOnOff(int flag);
 EXTERNCPP void GLUIUpdateColorbarListBound(int flag);
 EXTERNCPP void GLUIUpdateColorbarBound(void);
-EXTERNCPP void GLUIUpdateOverwrite(void);
 EXTERNCPP void GLUIUpdatePlot3dDisplay(void);
 EXTERNCPP void GLUIUpdateSortSlices(void);
 EXTERNCPP void GLUIUpdateExtreme(void);

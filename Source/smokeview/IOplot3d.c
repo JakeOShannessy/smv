@@ -991,6 +991,7 @@ void DrawPlot3dFrame(void){
     if(meshi->use == 0)continue;
     if(meshi->plot3dfilenum==-1)continue;
     if(global_scase.plot3dinfo[meshi->plot3dfilenum].display==0)continue;
+    BREAK_VIS(VIS_RETURN);
     DrawPlot3dTexture(meshi);
   }
 }
@@ -1600,6 +1601,11 @@ void DrawGrid(const meshdata *meshi){
       skipi = ibar;
       skipj = jbar;
       skipk = kbar;
+    }
+    if(use_smoke_grid == 1){
+      skipi = smoke3d_skip_horiz;
+      skipj = smoke3d_skip_frontback;
+      skipk = smoke3d_skip_vert;
     }
 
     glBegin(GL_LINES);

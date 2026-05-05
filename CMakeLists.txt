@@ -248,9 +248,7 @@ add_subdirectory(Source/shared)
 add_subdirectory(Source/jsonrpc)
 
 # The programs to build
-add_subdirectory(Source/background)
 add_subdirectory(Source/convert)
-add_subdirectory(Source/env2mod)
 add_subdirectory(Source/fds2fed)
 add_subdirectory(Source/flush)
 add_subdirectory(Source/get_time)

@@ -9,46 +9,54 @@
 
 #define MAX_THREADS 16
 
-enum threaderparms {
-  THREAD_UPDATE,
-  THREAD_LOCK,
-  THREAD_FORCE_UNLOCK,
-  THREAD_UNLOCK,
-  THREAD_JOIN
-};
-
 //*** structure
 
 typedef struct _threaderdata{
-  int n_threads,   *n_threads_ptr;
-  int use_threads, *use_threads_ptr;
+  int n_threads, use_threads;
 #ifdef pp_THREAD
   pthread_t *thread_ids;
   pthread_mutex_t mutex;
 #endif
   void *(*run)(void *arg);
+  struct _threaderdata *prev, *next, **address;
 } threaderdata;
+
+#ifndef CCC
+#ifdef __cplusplus
+#define CCC "C"
+#else
+#define CCC
+#endif
+#endif
+
+#ifdef INTHREADER
+threaderdata threadfirst, threadlast;
+int thread_ids[MAX_THREADS];
+#else
+extern CCC threaderdata threadfirst, threadlast;
+extern CCC int thread_ids[MAX_THREADS];
+#endif
 
 //*** routines
 
-EXTERNCPP void THREADcontrol(threaderdata *thi, int var);
-EXTERNCPP void THREADrun(threaderdata *thi);
-EXTERNCPP void THREADruni(threaderdata *thi, unsigned char *datainfo, int sizedatai);
-EXTERNCPP threaderdata *THREADinit(int *nthreads_arg, int *threading_on_arg, void *(*run_arg)(void *arg));
+EXTERNCPP void ThreadSetup(void);
+EXTERNCPP void ThreadLock(threaderdata *thi);
+EXTERNCPP void ThreadUnlock(threaderdata *thi);
+EXTERNCPP void ThreadRun(threaderdata *thi);
+EXTERNCPP void ThreadRunLoop(threaderdata *thi);
+EXTERNCPP void ThreadRuni(threaderdata * thi, unsigned char *datainfo, int sizedatai);
+EXTERNCPP void ThreadInit(threaderdata **thiptr, int nthreads_arg, int threading_on_arg, int run_serial_override, void *(*run_arg)(void *arg));
+EXTERNCPP void ThreadJoin(threaderdata **thiptr);
+EXTERNCPP void ThreadJoinAll(void);
+EXTERNCPP int  ThreadCount(void);
 
 //*** threader controls
 
 #ifdef pp_THREAD
-#define LOCK_THREADS(thi)   THREADcontrol(thi, THEAD_LOCK)
-#define UNLOCK_THREADS(thi) THREADcontrol(thi, THEAD_UNLOCK)
-#define JOIN_THREADS(thi)   THREADcontrol(thi, THEAD_JOIN)
 #define THREAD_EXIT(threads)  \
-    if(use_ ## threads==1)pthread_exit(NULL);\
+    if(threads!=NULL&&threads->use_threads==1)pthread_exit(NULL);\
     return NULL
 #else
-#define LOCK_THREADS(thi)
-#define UNLOCK_THREADS(thi)
-#define JOIN_THREADS(thi)
 #define THREAD_EXIT(threads) return NULL
 #endif
 

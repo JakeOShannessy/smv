@@ -33,30 +33,19 @@
 #define SMOKE_RTHICK 8
 #endif
 #define SAVE_SETTINGS_SMOKE 9
-#define VOL_SMOKE 13
-#define VOL_NGRID 18
 #define SMOKE_OPTIONS 19
 #define TEMP_MIN 21
-#define COMBINE_MESHES 24
 #define MASS_EXTINCTION 85
-#define NONGPU_VOL_FACTOR 26
-#define GPU_VOL_FACTOR 27
 #define GENERATE_IMAGES 28
 #define START_FRAME 29
 #define SKIP_FRAME 30
 #define CANCEL_GENERATE_IMAGES 31
-#define VOL_TOUR_LIST 46
-#define VOL_PREFIX 47
-#define VOL_UNLOAD_ALL 48
-#define LOAD_SMOKEFRAME 55
-#define LOAD_TIMEFRAME 58
 #define SMOKE3D_LOAD_INCREMENTAL 18
 #define CO2_COLOR 71
-#define SMOKE_SKIP_XYZ 107
-#define SMOKE_SKIP_XY  108
-#define SMOKE_SKIP_X   109
-#define SMOKE_SKIP_Y   110
-#define SMOKE_SKIP_Z   111
+#define SMOKE_SKIP_ALL       107
+#define SMOKE_SKIP_HORIZ     109
+#define SMOKE_SKIP_VERT      110
+#define SMOKE_SKIP_FRONTBACK 111
 #define SMOKE_BLACK 75
 #define SMOKE_DELTA_PAR 76
 #define SMOKE_NEW 77
@@ -64,22 +53,22 @@
 #define SMOKEBOX_BUFFER 79
 #define SMOKE_NUM 80
 #define BACKGROUND_FLIP 81
-#define USE_FIRE_ALPHA 84
-#define USE_OPACITY_DEPTH 93
+#define SHOW_SMOKEMESH 118
+#define SHOW_ONLY_SMOKEMESH 119
 // #define USE_OPACITY_MULTIPLIER 94 // defined now in smokeviewdefs.h
-#define USE_OPACITY_DEPTH_CHECK 99
-#define USE_OPACITY_MULTIPLIER_CHECK 100
 #define SMOKE_EXTINCT 95
 #define CUTOFF_RESET 96
 #define EXTINCTION_RESET_FDS 97
 #define EXTINCTION_RESET_SMV 98
 #define BLACKBODY_TEMPS      101
-#define VOLTEST_DEPTH 102
-#define VOLTEST_UPDATE 103
 #define FORCE_ALPHA_OPAQUE 104
 #define SMOKE_FRAME_INC 113
 #define REFRESH_FIRE       114
 #define SMOKE_DEMO_MODE    117
+#define USE_SOOT_MULTIPLIER 121
+#define FIRE_HALFDEPTH    122 
+#define SOOT_MULTIPLIER      123
+#define SET_SMOKE_THREADS  124
 
 #define GLOBAL_HRRPUV_MIN  101
 #define GLOBAL_HRRPUV_MAX  102
@@ -102,13 +91,7 @@ EXTERNCPP void GLUIUpdateTimeFrameBounds(float time_min, float time_max);
 EXTERNCPP void GLUIUpdateLoadFrameVal(int frames);
 EXTERNCPP void GLUIUpdateLoadFrameMax(int max_frames);
 EXTERNCPP void GLUISmoke3dCB(int var);
-EXTERNCPP void GLUIUpdateFireAlpha(void);
 EXTERNCPP void GLUIUpdateSmoke3dFlags(void);
-EXTERNCPP void GLUICreateVolTourList(void);
-EXTERNCPP void GLUIDeleteVolTourList(void);
-#ifdef pp_OPACITY_SHORTCUTS
-EXTERNCPP void GLUIUpdateUseOpacityDepth(void);
-#endif
 
 #endif
 

@@ -13,20 +13,24 @@
 #include <math.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <pthread.h>
+// #ifdef _WIN32
+// #include <conio.h>
+// #include <windows.h>
+// #else
+// #include <unistd.h>
+// #include <sys/select.h>
+// #endif
 
 #include "glew.h"
 #include "smokeviewvars.h"
-#include "IOvolsmoke.h"
 #include "stdio_buffer.h"
 #include "glui_motion.h"
 #include "glui_bounds.h"
 #include "shared_structures.h"
 #include "IOobjects.h"
 #include "IOscript.h"
-
 
 #include "translate.h"
 #include "file_util.h"
@@ -351,17 +355,6 @@ void InitTextures0(void){
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 #endif
   glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,256,0,GL_RGBA,GL_FLOAT,rgb_iso);
-
-  glGenTextures(1,&volsmoke_colormap_id);
-  glBindTexture(GL_TEXTURE_1D,volsmoke_colormap_id);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-#ifdef pp_GPU
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-#else
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-#endif
-  glTexImage1D(GL_TEXTURE_1D,0,GL_RGBA,MAXSMOKERGB,0,GL_RGBA,GL_FLOAT,rgb_volsmokecolormap);
 
   if(gpuactive == 1){
     glActiveTexture(GL_TEXTURE2);
@@ -729,17 +722,13 @@ void UpdateBoundInfo(void){
   PRINT_TIMER(bound_timer, "GetGlobalPartBounds");
 
   GetGlobalSliceBoundsReduced();
-  if(slicebound_threads == NULL){
-    slicebound_threads = THREADinit(&n_slicebound_threads, &use_slicebound_threads, GetGlobalSliceBoundsFull);
-  }
-  THREADrun(slicebound_threads);
+  ThreadInit(&slicebound_threads, n_slicebound_threads, use_slicebound_threads, serial_override, GetGlobalSliceBoundsFull);
+  ThreadRun(slicebound_threads);
   PRINT_TIMER(bound_timer, "GetGlobalSliceBounds");
 
   GetGlobalPatchBoundsReduced();
-  if(patchbound_threads == NULL){
-    patchbound_threads = THREADinit(&n_patchbound_threads, &use_patchbound_threads, GetGlobalPatchBoundsFull);
-  }
-  THREADrun(patchbound_threads);
+  ThreadInit(&patchbound_threads, n_patchbound_threads, use_patchbound_threads, serial_override, GetGlobalPatchBoundsFull);
+  ThreadRun(patchbound_threads);
   PRINT_TIMER(bound_timer, "GetGlobalPatchBounds");
 
   GetGlobalHVACDuctBounds(0);
@@ -1116,15 +1105,6 @@ void UpdateSmoke3DTypes(void){
       }
     }
   }
-  for(i = 0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
-    smoke3ddata *smoke3di;
-
-    smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
-    if(smoke3di->type == SOOT_index && FileExistsCaseDir(&global_scase, smoke3di->smoke_density_file)==YES){
-      smoke3di->is_smoke_density = 1;
-      have_smoke_density = 1;
-    }
-  }
 }
 
 /* ------------------ UpdateMeshCoords ------------------------ */
@@ -1137,6 +1117,24 @@ void UpdateMeshCoords(void){
 
   if(current_mesh == NULL)current_mesh = global_scase.meshescoll.meshinfo;
   if(global_scase.setPDIM==0&&current_mesh!=NULL){
+    float *xplt_smv, *yplt_smv, *zplt_smv;
+
+    xplt_smv = current_mesh->xplt_smv;
+    if(xplt_smv == NULL){
+      NewMemory(( void ** )&xplt_smv, sizeof(float) * (current_mesh->ibar + 1));
+      current_mesh->xplt_smv = xplt_smv;
+    }
+    yplt_smv = current_mesh->yplt_smv;
+    if(yplt_smv == NULL){
+      NewMemory(( void ** )&yplt_smv, sizeof(float) * (current_mesh->jbar + 1));
+      current_mesh->yplt_smv = yplt_smv;
+    }
+    zplt_smv = current_mesh->zplt_smv;
+    if(zplt_smv == NULL){
+      NewMemory(( void ** )&zplt_smv, sizeof(float) * (current_mesh->kbar + 1));
+      current_mesh->zplt_smv = zplt_smv;
+    }
+
     for(nn=0;nn<=current_mesh->ibar;nn++){
       current_mesh->xplt_smv[nn]=global_scase.xbar0+(float)nn*(global_scase.xbar-global_scase.xbar0)/(float)current_mesh->ibar;
     }
@@ -1355,6 +1353,9 @@ void UpdateMeshCoords(void){
   float dy_scene   = global_scase.ybar - global_scase.ybar0;
   float dz_scene   = global_scase.zbar - global_scase.zbar0;
   xyzmaxdiff = MAX(MAX(dx_scene,dy_scene),dz_scene);
+  // set fire_half depth to max of 1/40 domain size (rounded to 0.1 m) and 0.3
+  fire_halfdepth = (float)((int)(100.0*xyzmaxdiff/40.0+0.5))/100.0;
+  fire_halfdepth = MAX(fire_halfdepth, 0.05);
   vector_scalelength = MIN(dx_scene, dz_scene);
   if(global_scase.meshescoll.meshinfo[0].jbar > 1) {
     vector_scalelength = MIN(vector_scalelength, dy_scene);
@@ -1692,16 +1693,10 @@ void UpdateMeshCoords(void){
     meshi->dxDdx  = 1.0;
     meshi->dyDdx  = dy/dx;
     meshi->dzDdx  = dz/dx;
-    meshi->dxyDdx = dy/sqrt(dx*dx+dy*dy);
-    meshi->dxzDdx = dz/sqrt(dx*dx+dz*dz);
-    meshi->dyzDdx = (dy*dz/dx)/sqrt(dy*dy+dz*dz);
 
     meshi->smoke_dist[ALPHA_X]  = dx;
     meshi->smoke_dist[ALPHA_Y]  = dy;
     meshi->smoke_dist[ALPHA_Z]  = dz;
-    meshi->smoke_dist[ALPHA_XY] = dx*dy/sqrt(dx*dx + dy*dy);
-    meshi->smoke_dist[ALPHA_YZ] = dy*dz/sqrt(dy*dy + dz*dz);
-    meshi->smoke_dist[ALPHA_XZ] = dx*dz/sqrt(dx*dx + dz*dz);
   }
 }
 
@@ -2212,63 +2207,130 @@ void UpdateEvents(void){
   }
   fclose(stream);
 }
-/* ------------------ Compress ------------------------ */
 
-void *Compress(void *arg){
-  char shellcommand[1024];
+#ifdef pp_READ_KEYBOARD
 
-  PRINTF("Compressing...\n");
-  GLUICompressOnOff(OFF);
+/* ------------------ IsMouseInWindow ------------------------ */
 
-  WriteIni(LOCAL_INI, NULL);
-
-  // surround smokezip path name with "'s so that the system call can handle embedded blanks
-
-  strcpy(shellcommand, "\"");
-  strcat(shellcommand, smokezippath);
-  strcat(shellcommand, "\" ");
-  if(overwrite_all == 1){
-    strcat(shellcommand, " -f ");
-  }
-  if(erase_all == 1){
-    strcat(shellcommand, " -c ");
-  }
-  if(compress_autoloaded == 1){
-    strcat(shellcommand, " -auto ");
-  }
-  strcat(shellcommand, " ");
-  strcat(shellcommand, smv_filename);
-
-  PRINTF("Executing shell command: %s\n", shellcommand);
-  system(shellcommand);
-  UpdateSmoke3dMenuLabels();
-  UpdateBoundaryMenuLabels();
-  GLUICompressOnOff(ON);
-  updatemenu = 1;
-  PRINTF("Compression completed\n");
-  THREAD_EXIT(compress_threads);
+int IsMouseInWindow(void){
+#ifdef _WIN32
+  int width = glutGet(GLUT_WINDOW_WIDTH);
+  int height = glutGet(GLUT_WINDOW_HEIGHT);
+  int x = glutGet(GLUT_WINDOW_X);
+  int y = glutGet(GLUT_WINDOW_Y);
+  POINT p;
+  GetCursorPos(&p);
+  if(p.x<x || p.x>x + width)return 0;
+  if(p.y<y || p.y>y + height)return 0;
+  return 1;
+#elif defined(__APPLE__)
+return 0;
+#elif defined(__linux__)
+return 0;
+#endif
 }
+
+/* ------------------ ReadCharNonblocking ------------------------ */
+
+int ReadCharNonblocking(char *out) {
+
+#ifdef _WIN32
+
+    if (_kbhit()) {
+        *out = _getch();   // reads immediately (no Enter actually required on Windows)
+        return 1;
+    }
+    return 0;
+
+#else
+
+    fd_set set;
+    struct timeval timeout;
+
+    FD_ZERO(&set);
+    FD_SET(STDIN_FILENO, &set);
+
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;   // no wait
+
+    int rv = select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout);
+
+    if (rv > 0) {
+        return read(STDIN_FILENO, out, 1) == 1;
+    }
+    return 0;
+
+#endif
+}
+
+/* ------------------ IsLeftMousePressed ------------------------ */
+#ifdef _WIN32
+static float mouse_timer = 0.0;
+#endif
+int IsLeftMousePressed(void){
+#ifdef _WIN32
+    if(GetAsyncKeyState(VK_LBUTTON) & 0x8000){
+      int returnval = 0;
+
+      STOP_TIMER(mouse_timer);
+      if(mouse_timer > 0.5)returnval = 1;
+      START_TIMER(mouse_timer);
+      return returnval;
+    }
+    return 0;
+#elif defined(__APPLE__)
+    return 0;
+#elif defined(__linux__)
+    return 0;
+#endif
+}
+
+/* ------------------ ReadKeyboard ------------------------ */
+
+void *ReadKeyboard(void *arg){
+  for(;;){
+    char key_char;
+
+    ThreadLock(readkeyboard_threads);
+    if(runscript==0&&abort_vis==0){
+      if(ReadCharNonblocking(&key_char)==1 ||
+        (IsMouseInWindow()==1&&IsLeftMousePressed()==1)
+        ){
+        abort_vis = 1;
+        Keyboard('t', FROM_SMOKEVIEW);
+      }
+    }
+    ThreadUnlock(readkeyboard_threads);
+#ifdef _WIN32
+    Sleep(100);
+#else
+    usleep(100000);
+#endif
+  }
+  THREAD_EXIT(readkeyboard_threads);
+}
+#endif
 
 /* ------------------ CheckFiles ------------------------ */
 
 void *CheckFiles(void *arg){
   int i;
 
-  THREADcontrol(checkfiles_threads, THREAD_LOCK);
+  ThreadLock(checkfiles_threads);
   global_scase.have_compressed_files = 0;
-  THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
+  ThreadUnlock(checkfiles_threads);
   for(i = 0;i < global_scase.npatchinfo;i++){
     patchdata *patchi;
     int have_file;
 
     patchi = global_scase.patchinfo + i;
     have_file = FileExistsCaseDir(&global_scase, patchi->comp_file);
-    THREADcontrol(checkfiles_threads, THREAD_LOCK);
+    ThreadLock(checkfiles_threads);
     if(have_file == YES){
       patchi->compression_type_temp = COMPRESSED_ZLIB;
       global_scase.have_compressed_files = 1;
     }
-    THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
+    ThreadUnlock(checkfiles_threads);
   }
   for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
     smoke3ddata *smoke3di;
@@ -2276,17 +2338,17 @@ void *CheckFiles(void *arg){
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
     have_file = FileExistsCaseDir(&global_scase, smoke3di->comp_file);
-    THREADcontrol(checkfiles_threads, THREAD_LOCK);
+    ThreadLock(checkfiles_threads);
     if(have_file == YES){
       smoke3di->compression_type_temp = COMPRESSED_ZLIB;
       global_scase.have_compressed_files = 1;
     }
-    THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
+    ThreadUnlock(checkfiles_threads);
   }
   if(global_scase.have_compressed_files == 0){
     THREAD_EXIT(checkfiles_threads);
   }
-  THREADcontrol(checkfiles_threads, THREAD_LOCK);
+  ThreadLock(checkfiles_threads);
   for(i = 0; i < global_scase.npatchinfo; i++){
     patchdata *patchi;
 
@@ -2307,7 +2369,7 @@ void *CheckFiles(void *arg){
     }
   }
   updatemenu = 1;
-  THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
+  ThreadUnlock(checkfiles_threads);
   THREAD_EXIT(checkfiles_threads);
 }
 
@@ -2602,10 +2664,8 @@ int ReadSMV_Configure(){
     }
   }
 
-  if(checkfiles_threads != NULL){
-    checkfiles_threads = THREADinit(&n_checkfiles_threads, &use_checkfiles_threads, CheckFiles);
-  }
-  THREADrun(checkfiles_threads);
+  ThreadInit(&checkfiles_threads, n_checkfiles_threads, use_checkfiles_threads, serial_override, CheckFiles);
+  ThreadRun(checkfiles_threads);
   PRINT_TIMER(timer_readsmv, "CheckFiles");
   CheckMemory;
   UpdateIsoColors();
@@ -2678,11 +2738,9 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "UpdateMeshBoxBounds");
 
   SetupReadAllGeom();
-  if(readallgeom_threads == NULL){
-    readallgeom_threads = THREADinit(&n_readallgeom_threads, &use_readallgeom_threads, ReadAllGeom);
-  }
-  THREADrun(readallgeom_threads);
-  THREADcontrol(readallgeom_threads, THREAD_JOIN);
+  ThreadInit(&readallgeom_threads, n_readallgeom_threads, use_readallgeom_threads, serial_override, ReadAllGeom);
+  ThreadRun(readallgeom_threads);
+  ThreadJoin(&readallgeom_threads);
   PRINT_TIMER(timer_readsmv, "ReadAllGeomMT");
 
   UpdateMeshCoords();
@@ -2712,13 +2770,11 @@ int ReadSMV_Configure(){
     partclassi = global_scase.partclassinfo + i;
 
     if(partclassi->device_name!=NULL){
-        float length, azimuth, elevation;
+        float length, azimuth=0.0, elevation=0.0;
 
         partclassi->diameter=SCALE2SMV(partclassi->diameter);
         partclassi->length=SCALE2SMV(partclassi->length);
         length=partclassi->length;
-        azimuth = partclassi->azimuth*DEG2RAD;
-        elevation = partclassi->elevation*DEG2RAD;
         partclassi->dx = cos(azimuth)*cos(elevation)*length/2.0;
         partclassi->dy = sin(azimuth)*cos(elevation)*length/2.0;
         partclassi->dz =              sin(elevation)*length/2.0;
@@ -2751,11 +2807,9 @@ int ReadSMV_Configure(){
   global_scase.slicecoll.nmultisliceinfo       = 0;
   global_scase.slicecoll.nmultivsliceinfo      = 0;
   global_scase.slicecoll.nvsliceinfo           = 0;
-  if(sliceparms_threads == NULL){
-    sliceparms_threads = THREADinit(&n_sliceparms_threads, &use_sliceparms_threads, UpdateVSlices);
-  }
-  THREADruni(sliceparms_threads, (unsigned char *)&sliceparminfo, 0);
-  THREADcontrol(sliceparms_threads, THREAD_JOIN);
+  ThreadInit(&sliceparms_threads, n_sliceparms_threads, use_sliceparms_threads, serial_override, UpdateVSlices);
+  ThreadRuni(sliceparms_threads, (unsigned char *)&sliceparminfo, 0);
+  ThreadJoin(&sliceparms_threads);
   PRINT_TIMER(timer_readsmv, "UpdateVSlices");
 
   GetSliceParmInfo(&sliceparminfo);
@@ -2792,36 +2846,43 @@ int ReadSMV_Configure(){
     }
   }
 
+#ifdef pp_GETMESH_TEST
+  scenedata *InitSceneInfo(void);
+  INIT_PRINT_TIMER(timer_sceneinfo);
+  sceneinfo = InitSceneInfo();
+  PRINT_TIMER(timer_sceneinfo, "sceneinfo");
+#endif
+
   START_TIMER(timer_readsmv);
 
   MakeIBlankCarve();
   PRINT_TIMER(timer_readsmv, "MakeIBlankCarve");
 
-  if(ffmpeg_threads == NULL){
-    ffmpeg_threads = THREADinit(&n_ffmpeg_threads, &use_ffmpeg_threads, SetupFF);
-  }
-  THREADrun(ffmpeg_threads);
+  ThreadInit(&ffmpeg_threads, n_ffmpeg_threads, use_ffmpeg_threads, serial_override, SetupFF);
+  ThreadRun(ffmpeg_threads);
   PRINT_TIMER(timer_readsmv, "SetupFFMT");
 
-  if(sorttags_threads == NULL){
-    if(runscript==1)use_sorttags_threads = 0;
-    sorttags_threads = THREADinit(&n_sorttags_threads, &use_sorttags_threads, SortAllPartTags);
-  }
-
-  if(isosurface_threads == NULL){
-    isosurface_threads = THREADinit(&n_isosurface_threads, &use_isosurface_threads, SetupAllIsosurfaces);
-  }
-  THREADrun(isosurface_threads);
-  THREADcontrol(isosurface_threads, THREAD_JOIN);
+  ThreadInit(&isosurface_threads, n_isosurface_threads, use_isosurface_threads, runscript, SetupAllIsosurfaces);
+  ThreadRun(isosurface_threads);
+  ThreadJoin(&isosurface_threads);
   PRINT_TIMER(timer_readsmv, "SetupAllIsosurfaces");
 
   MakeIBlankSmoke3D();
   PRINT_TIMER(timer_readsmv, "MakeIBlankSmoke3D");
 
-  if(HaveCircularVents()==1|| global_scase.meshescoll.nmeshes < 100 || parse_opts.fast_startup == 0){
-    MakeIBlank();
-    PRINT_TIMER(timer_readsmv, "MakeIBlank");
+#ifdef pp_READ_KEYBOARD
+  if(runscript == 0){
+    ThreadInit(&readkeyboard_threads, n_readkeyboard_threads, use_readkeyboard_threads, serial_override, ReadKeyboard);
+    ThreadRun(readkeyboard_threads);
   }
+#endif
+#ifdef pp_SPEEDUP
+  ThreadInit(&makeiblank_threads, n_makeiblank_threads, use_makeiblank_threads, serial_override, MakeIBlank);
+  ThreadRun(makeiblank_threads);
+#else
+  MakeIBlank();
+#endif
+  PRINT_TIMER(timer_readsmv, "MakeIBlank");
 
   SetCVentDirs();
   PRINT_TIMER(timer_readsmv, "SetCVentDirs");
@@ -2861,10 +2922,8 @@ int ReadSMV_Configure(){
   UpdateBoundaryTypes();
   PRINT_TIMER(timer_readsmv, "UpdateBoundaryTypes");
 
-  if(meshnabors_threads == NULL){
-    meshnabors_threads = THREADinit(&n_meshnabors_threads, &use_meshnabors_threads, InitNabors);
-  }
-  THREADrun(meshnabors_threads);
+  ThreadInit(&meshnabors_threads, n_meshnabors_threads, use_meshnabors_threads, serial_override, InitNabors);
+  ThreadRun(meshnabors_threads);
 
   UpdateTerrain(1); // xxslow
   UpdateTerrainColors();
@@ -2917,18 +2976,14 @@ int ReadSMV_Configure(){
   }
 
   START_TIMER(timer_readsmv);
-  InitVolRender();
-  InitVolRenderSurface(FIRSTCALL);
   radius_windrose = 0.2*xyzmaxdiff;
   PRINT_TIMER(timer_readsmv, "InitVolRender");
 
   if(large_case==0){
     SetupReadAllGeom();
 
-    if(classifyallgeom_threads == NULL){
-      classifyallgeom_threads = THREADinit(&n_readallgeom_threads, &use_readallgeom_threads, ClassifyAllGeom);
-    }
-    THREADrun(classifyallgeom_threads);
+    ThreadInit(&classifyallgeom_threads, n_readallgeom_threads, use_readallgeom_threads, serial_override, ClassifyAllGeom);
+    ThreadRun(classifyallgeom_threads);
   }
   PRINT_TIMER(timer_readsmv, "ClassifyGeom");
 
@@ -2940,10 +2995,12 @@ int ReadSMV_Configure(){
   //*** hide_scene when moving objects if there are are lot of OBSTs or geometry triangles
   if(global_scase.ntotal_blockages > 250000 || GetNCGeomTriangles() > 250000)hide_scene = 1;
 
+#ifdef pp_GEOM_EXACT
   if(global_scase.meshescoll.nmeshes > 100){
     blocklocation   = BLOCKlocation_exact;
     glui_use_cfaces = 0;
   }
+#endif
 
   PRINT_TIMER(timer_readsmv, "update trianglesfaces");
 
@@ -3018,14 +3075,6 @@ int ReadSMV(bufferstreamdata *stream) {
   // currenly initialised in InitVars for a few compatability reasons. This
   // would be a better location when those compatbilities are resolved.
   // InitScase(&global_scase);
-  //** initialize multi-threading
-  if(runscript == 1){
-    use_checkfiles_threads  = 0;
-    use_ffmpeg_threads      = 0;
-    use_readallgeom_threads = 0;
-    use_isosurface_threads  = 0;
-    use_meshnabors_threads  = 0;
-  }
   ReadSMV_Init(&global_scase);
   ReadSMV_Parse(&global_scase, stream);
   ReadSMV_Configure();
@@ -3421,11 +3470,6 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i %i,%i", &slices3d_max_blending, &hrrpuv_max_blending,&showall_3dslices);
     }
-    if(MatchINI(buffer, "FREEZEVOLSMOKE")==1){
-      fgets(buffer, 255, stream);
-      sscanf(buffer, " %i %i", &freeze_volsmoke,&autofreeze_volsmoke);
-      continue;
-    }
     if(MatchINI(buffer, "VISBOUNDARYTYPE")==1){
       int *vbt = vis_boundary_type;
 
@@ -3793,25 +3837,6 @@ int ReadIni2(const char *inifile, int localfile){
       sscanf(buffer, "%i %f %i %f %i %i", &use_tload_begin, &global_scase.tload_begin, &use_tload_end, &global_scase.tload_end, &use_tload_skip, &tload_skip);
       continue;
     }
-    if(MatchINI(buffer, "VOLSMOKE") == 1){
-      fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %i %i %i %i",
-        &glui_compress_volsmoke, &use_multi_threading, &load_at_rendertimes, &volbw, &show_volsmoke_moving);
-      fgets(buffer, 255, stream);
-      sscanf(buffer, "%f %f %f %f %f %f %f", &global_scase.temp_min,
-             &global_temp_cb_min_default, &global_temp_cb_max_default,
-             &fire_opacity_factor, &glui_mass_extinct, &gpu_vol_factor,
-             &nongpu_vol_factor);
-      global_temp_cb_min = global_temp_cb_min_default;
-      global_temp_cb_max = global_temp_cb_max_default;
-      ONEORZERO(glui_compress_volsmoke);
-      ONEORZERO(use_multi_threading);
-      ONEORZERO(load_at_rendertimes);
-      fire_opacity_factor = CLAMP(fire_opacity_factor, 1.0, 10.0);
-      glui_mass_extinct = CLAMP(glui_mass_extinct, 100.0, 100000.0);
-      InitVolRenderSurface(NOT_FIRSTCALL);
-      continue;
-    }
     if(MatchINI(buffer, "WINDROSEMERGE")==1){
       float *xyzt;
 
@@ -3887,11 +3912,12 @@ int ReadIni2(const char *inifile, int localfile){
       continue;
     }
     if(MatchINI(buffer, "MESHVIS") == 1){
-      int nm;
+      int nm, meshface_horiz_input=0;
       meshdata *meshi;
 
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &nm);
+      sscanf(buffer, "%i %i", &nm, &meshface_horiz_input);
+      meshface_horiz = CLAMP(meshface_horiz_input, 0, 1);
       for(i = 0; i<nm; i++){
         if(i>global_scase.meshescoll.nmeshes - 1)break;
         meshi = global_scase.meshescoll.meshinfo + i;
@@ -4294,11 +4320,6 @@ int ReadIni2(const char *inifile, int localfile){
     if(MatchINI(buffer, "TRAINERMODE") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &trainer_mode);
-      continue;
-    }
-    if(MatchINI(buffer, "COMPRESSAUTO") == 1){
-      fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &compress_autoloaded);
       continue;
     }
     if(MatchINI(buffer, "PLOT3DAUTO") == 1){
@@ -4892,17 +4913,6 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &output_slicedata);
       ONEORZERO(output_slicedata);
-      continue;
-    }
-    if(MatchINI(buffer, "SMOKE3DZIPSTEP") == 1 ||
-       MatchINI(buffer, "SLICEZIPSTEP")   == 1 ||
-       MatchINI(buffer, "ISOZIPSTEP")     == 1 ||
-       MatchINI(buffer, "BOUNDZIPSTEP")   == 1 ||
-       MatchINI(buffer, "ZIPSTEP")        == 1){
-      fgets(buffer, 255, stream);
-      sscanf(buffer, "%i", &tload_zipstep);
-      tload_zipstep = MAX(tload_zipstep, 1);
-      tload_zipskip = tload_zipstep - 1;
       continue;
     }
     if(MatchINI(buffer, "LOADINC") == 1){
@@ -6089,13 +6099,13 @@ int ReadIni2(const char *inifile, int localfile){
         int smokeskippm1_local;
 
         if(fgets(buffer, 255, stream) == NULL)break;
-        sscanf(buffer, "%i %i %i %i %i", &smokeskippm1_local, &smoke3d_skip, &smoke3d_skipx, &smoke3d_skipy, &smoke3d_skipz);
+        sscanf(buffer, "%i %i %i %i %i", &smokeskippm1_local, &smoke3d_skip_all, &smoke3d_skip_horiz, &smoke3d_skip_vert, &smoke3d_skip_frontback);
         if(smokeskippm1_local<0)smokeskippm1_local = 0;
-        smoke3d_frame_inc = smokeskippm1_local + 1;
-        smoke3d_skip  = CLAMP(smoke3d_skip,1,10);
-        smoke3d_skipx = CLAMP(smoke3d_skipx, 1, 10);
-        smoke3d_skipy = CLAMP(smoke3d_skipy, 1, 10);
-        smoke3d_skipz = CLAMP(smoke3d_skipz, 1, 10);
+        smoke3d_frame_inc      = smokeskippm1_local + 1;
+        smoke3d_skip_all       = CLAMP(smoke3d_skip_all,1,20);
+        smoke3d_skip_horiz     = CLAMP(smoke3d_skip_horiz, 1, 20);
+        smoke3d_skip_vert      = CLAMP(smoke3d_skip_vert, 1, 20);
+        smoke3d_skip_frontback = CLAMP(smoke3d_skip_frontback, 1, 20);
         update_smoke3d_frame_inc = 1;
         continue;
       }
@@ -6114,10 +6124,12 @@ int ReadIni2(const char *inifile, int localfile){
         global_scase.smoke_albedo = CLAMP(global_scase.smoke_albedo, 0.0, 1.0);
         continue;
       }
-      if(MatchINI(buffer, "SMOKEFIREPROP") == 1){
+      if(MatchINI(buffer, "FIREPROP") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
-        sscanf(buffer, "%i %i", &use_opacity_depth_ini, &use_opacity_multiplier_ini);
-        use_opacity_ini = 1;
+        sscanf(buffer, "%i %f", &use_soot_multiplier, &soot_multiplier);
+        use_soot_multiplier = CLAMP(use_soot_multiplier, 0, 1);
+        soot_multiplier = CLAMP(soot_multiplier, MIN_SOOT_MULTIPLIER, MAX_SOOT_MULTIPLIER);
+        update_use_soot_multiplier = 1;
         continue;
       }
       if(MatchINI(buffer, "SMOKEPROP")==1){
@@ -6166,9 +6178,9 @@ int ReadIni2(const char *inifile, int localfile){
         global_cb_max_index  = global_cb_max_index_default;
         continue;
       }
-      if(MatchINI(buffer, "FDEPTH") == 1){
+      if(MatchINI(buffer, "FDEPTH2") == 1){
         if(fgets(buffer, 255, stream) == NULL)break;
-        sscanf(buffer, "%f %f %f %i %i", &fire_halfdepth,&co2_halfdepth,&emission_factor,&use_fire_alpha, &force_alpha_opaque);
+        sscanf(buffer, "%f %f %f %i %i", &fire_halfdepth, &co2_halfdepth, &soot_multiplier, &use_fire_alpha, &force_alpha_opaque);
         continue;
       }
       if(MatchINI(buffer, "VIEWTOURFROMPATH") == 1){
@@ -7957,8 +7969,6 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i \n", output_slicedata);
   fprintf(fileout, "USER_ROTATE\n");
   fprintf(fileout, " %i %i %f %f %f\n", glui_rotation_index, show_rotation_center, xcenCUSTOM, ycenCUSTOM, zcenCUSTOM);
-  fprintf(fileout, "ZIPSTEP\n");
-  fprintf(fileout, " %i\n", tload_zipstep);
 
   fprintf(fileout,"\n *** VIEW PARAMETERS ***\n\n");
 
@@ -7993,8 +8003,6 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i\n", fontindex);
   fprintf(fileout, "FRAMERATEVALUE\n");
   fprintf(fileout, " %i\n", frameratevalue);
-  fprintf(fileout, "FREEZEVOLSMOKE\n");
-  fprintf(fileout, " %i %i\n", freeze_volsmoke, autofreeze_volsmoke);
   fprintf(fileout, "GEOMBOUNDARYPROPS\n");
   fprintf(fileout, " %i %i %i %f %f %i\n",show_boundary_shaded, show_boundary_outline, show_boundary_points, geomboundary_linewidth, geomboundary_pointsize, boundary_edgetype);
   if(global_scase.hvaccoll.nhvacinfo > 0){
@@ -8058,7 +8066,7 @@ void WriteIni(int flag,char *filename){
   }
   if(global_scase.meshescoll.nmeshes>1){
     fprintf(fileout,"MESHVIS\n");
-    fprintf(fileout," %i\n",global_scase.meshescoll.nmeshes);
+    fprintf(fileout," %i %i\n",global_scase.meshescoll.nmeshes, meshface_horiz);
 
     for(i=0;i<global_scase.meshescoll.nmeshes;i++){
       meshdata *meshi;
@@ -8109,14 +8117,6 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i\n", visDummyVents);
   fprintf(fileout, "SHOWFLOOR\n");
   fprintf(fileout, " %i\n", global_scase.visFloor);
-  if(outline_mode == SCENE_OUTLINE_HIDDEN){
-    fprintf(fileout, "SHOWFRAME\n");
-    fprintf(fileout, " 0\n");
-  }
-  else{
-    fprintf(fileout, "SHOWFRAME\n");
-    fprintf(fileout, " 1\n");
-  }
   fprintf(fileout, "SHOWFRAMELABEL\n");
   fprintf(fileout, " %i\n", visFramelabel);
   fprintf(fileout, "SHOWFRAMETIMELABEL\n");
@@ -8343,16 +8343,16 @@ void WriteIni(int flag,char *filename){
       mmin[0], mmin[1], mmin[2],
       mmax[0], mmax[1], mmax[2]);
   }
+  fprintf(fileout, "FDEPTH2\n");
+  fprintf(fileout, " %f %f %f %i %i\n", fire_halfdepth, co2_halfdepth, soot_multiplier, use_fire_alpha, force_alpha_opaque);
   fprintf(fileout, "FIRECOLOR\n");
   fprintf(fileout, " %i %i %i\n", fire_color_int255[0], fire_color_int255[1], fire_color_int255[2]);
   if(colorbars.fire_colorbar_index >= 0 && colorbars.fire_colorbar_index < colorbars.ncolorbars){
     fprintf(fileout, "FIRECOLORMAP\n");
     fprintf(fileout, " FIRE %i %s\n", fire_colormap_type, colorbars.colorbarinfo[colorbars.fire_colorbar_index].menu_label);
   }
-  fprintf(fileout, "FIREDEPTH\n");
-  fprintf(fileout, " %f %f %f %i %i\n", fire_halfdepth, co2_halfdepth, emission_factor, use_fire_alpha, force_alpha_opaque);
-  fprintf(fileout, "FDEPTH\n");
-  fprintf(fileout, " %f %f %f %i %i\n", fire_halfdepth, co2_halfdepth, emission_factor, use_fire_alpha, force_alpha_opaque);
+  fprintf(fileout, "FIREPROP\n");
+  fprintf(fileout, " %i %f\n", use_soot_multiplier, soot_multiplier);
   if(colorbars.ncolorbars > colorbars.ndefaultcolorbars){
     colorbardata *cbi;
     unsigned char *rrgb;
@@ -8388,26 +8388,15 @@ void WriteIni(int flag,char *filename){
     fprintf(fileout, "SMOKEALBEDO\n");
     fprintf(fileout, " %f\n", global_scase.smoke_albedo);
   }
-  if((have_fire == NO_FIRE && have_smoke == NO_SMOKE)||(have_fire != NO_FIRE && have_smoke != NO_SMOKE)){
-    fprintf(fileout, "SMOKEFIREPROP\n");
-    fprintf(fileout, " %i %i\n", use_opacity_depth, use_opacity_multiplier);
-  }
   fprintf(fileout, "SMOKEPROP\n");
   fprintf(fileout, " %f\n", glui_mass_extinct);
   glui_mass_extinct_default = glui_mass_extinct;
   fprintf(fileout, "SMOKESKIP\n");
-  fprintf(fileout," %i %i %i %i %i\n", smoke3d_frame_inc-1,smoke3d_skip, smoke3d_skipx, smoke3d_skipy, smoke3d_skipz);
+  fprintf(fileout," %i %i %i %i %i\n", smoke3d_frame_inc-1,smoke3d_skip_all, smoke3d_skip_horiz, smoke3d_skip_vert, smoke3d_skip_frontback);
 #ifdef pp_GPU
   fprintf(fileout, "USEGPU\n");
   fprintf(fileout, " %i\n", usegpu);
 #endif
-  fprintf(fileout, "VOLSMOKE\n");
-  fprintf(fileout, " %i %i %i %i %i\n",
-    glui_compress_volsmoke, use_multi_threading, load_at_rendertimes, volbw, show_volsmoke_moving);
-  fprintf(fileout, " %f %f %f %f %f %f %f\n", global_scase.temp_min,
-          global_temp_cb_min, global_temp_cb_max, fire_opacity_factor,
-          glui_mass_extinct, gpu_vol_factor, nongpu_vol_factor);
-
   fprintf(fileout, "\n *** ZONE FIRE PARAMETRES ***\n\n");
 
   fprintf(fileout, "SHOWHAZARDCOLORS\n");
@@ -8550,19 +8539,5 @@ void UpdateLoadedLists(void){
   for(i=0;i<global_scase.npatchinfo;i++){
     patchi = global_scase.patchinfo + i;
     if(patchi->loaded==1&&patchi->boundary == 0)ngeomslice_loaded++;
-  }
-
-  nvolsmoke_loaded = 0;
-  if(nvolrenderinfo>0){
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
-      meshdata *meshi;
-      volrenderdata *vr;
-
-      meshi = global_scase.meshescoll.meshinfo + i;
-      vr = meshi->volrenderinfo;
-      if(vr==NULL||vr->fireslice==NULL||vr->smokeslice==NULL)continue;
-      if(vr->loaded==0||vr->display==0)continue;
-      nvolsmoke_loaded++;
-    }
   }
 }

@@ -151,6 +151,7 @@ int GetTagIndex(const partdata *partin_arg, part5data **datain_arg, int tagval_a
   part5data *data_local;
   int i;
 
+  ThreadJoin(&sorttags_threads);
   assert(sorting_tags == 0);
   if(sorting_tags == 1){
     printf("***error: particle tags accessed while being sorted\n");
@@ -202,7 +203,7 @@ void DrawPart(const partdata *parti, int mode){
   propdata *prop;
   float valmin, valmax;
 
-  if(nglobal_times<1||parti->times[0] > global_times[itimes])return;
+  if(nglobal_times<1||parti->times[0] > GetTime())return;
   if(global_scase.nterraininfo > 0 && ABS(vertical_factor - 1.0) > 0.01){
     offset_terrain = 1;
   }
@@ -360,9 +361,6 @@ void DrawPart(const partdata *parti, int mode){
 
                 glPushMatrix();
                 glTranslatef(xpos[j], ypos[j], zpos[j]);
-
-                glRotatef(-datacopy->partclassbase->elevation, 0.0, 1.0, 0.0);
-                glRotatef(datacopy->partclassbase->azimuth, 0.0, 0.0, 1.0);
 
                 //  0->2   color
                 //  3      diameter
@@ -591,12 +589,13 @@ void DrawPart(const partdata *parti, int mode){
 void DrawPartFrame(int mode){
   int i;
 
-  if(use_tload_begin==1&&global_times[itimes]<global_scase.tload_begin)return;
-  if(use_tload_end==1&&global_times[itimes]>global_scase.tload_end)return;
+  if(use_tload_begin==1&&GetTime()<global_scase.tload_begin)return;
+  if(  use_tload_end==1&&GetTime()>global_scase.tload_end)return;
   for(i=0;i<global_scase.npartinfo;i++){
     partdata *parti;
     meshdata *meshi;
 
+    BREAK_VIS(VIS_RETURN);
     parti = global_scase.partinfo + i;
     if(parti->loaded==0||parti->display==0)continue;
     IF_NOT_USEMESH_CONTINUE(USEMESH_DRAW,parti->blocknumber);
@@ -1475,7 +1474,7 @@ partpropdata *GetPartProp(char *label){
 
 void SetStreakShow(int show){
   if(show == 1 && sorting_tags==1){
-    THREADcontrol(sorttags_threads, THREAD_JOIN);
+    ThreadJoin(&sorttags_threads);
   }
   streak5show = show;
 }
@@ -1952,9 +1951,10 @@ void FinalizePartLoad(partdata *parti){
   }
   visParticles = 1;
   sorting_tags = 1;
-  THREADrun(sorttags_threads);
-  if(runscript == 1 || streak5show == 1){
-    THREADcontrol(sorttags_threads, THREAD_JOIN);
+  ThreadInit(&sorttags_threads, n_sorttags_threads, use_sorttags_threads, serial_override, SortAllPartTags);
+  ThreadRun(sorttags_threads);
+  if(runscript != 0 || streak5show == 1){
+    ThreadJoin(&sorttags_threads);
   }
 
   // generate histograms now rather than in the background if a script is running
@@ -2021,9 +2021,9 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int load_flag, int *errorcode_
       updatemenu = 1;
       UpdatePart5Extremes();
       PrintMemoryInfo;
-      THREADcontrol(partload_threads, THREAD_LOCK);
+      ThreadLock(partload_threads);
       plotstate = GetPlotState(DYNAMIC_PLOTS);
-      THREADcontrol(partload_threads, THREAD_UNLOCK);
+      ThreadUnlock(partload_threads);
     }
     return 0.0;
   }
@@ -2036,9 +2036,9 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int load_flag, int *errorcode_
   }
 
   if(use_partload_threads==1){
-    THREADcontrol(partload_threads, THREAD_LOCK);
+    ThreadLock(partload_threads);
     PrintPartLoadSummary(PART_BEFORE, PART_LOADING);
-    THREADcontrol(partload_threads, THREAD_UNLOCK);
+    ThreadUnlock(partload_threads);
   }
   else{
     PRINTF("\nLoading %s\n", file_arg);
@@ -2055,14 +2055,14 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int load_flag, int *errorcode_
   GetPartData(parti, nf_all_local, &file_size_local);
   PRINT_TIMER(timer_getpartdata, "GetPartData");
   CheckMemory;
-  THREADcontrol(partload_threads, THREAD_LOCK);
+  ThreadLock(partload_threads);
   parti->loaded = 1;
   parti->display = 1;
   parti->hist_update=1;
   if(cache_part_data==0){
     UpdatePartColors(parti, 0);
   }
-  THREADcontrol(partload_threads, THREAD_UNLOCK);
+  ThreadUnlock(partload_threads);
   if(cache_part_data==0){
     fclose_m(parti->stream);
     parti->stream = NULL;
@@ -2073,9 +2073,9 @@ FILE_SIZE ReadPart(char *file_arg, int ifile_arg, int load_flag, int *errorcode_
   parti->request_load = 1;
   if(use_partload_threads==1){
     if(global_scase.npartinfo>1){
-      THREADcontrol(partload_threads, THREAD_LOCK);
+      ThreadLock(partload_threads);
       PrintPartLoadSummary(PART_AFTER, PART_LOADING);
-      THREADcontrol(partload_threads, THREAD_UNLOCK);
+      ThreadUnlock(partload_threads);
     }
   }
   else{

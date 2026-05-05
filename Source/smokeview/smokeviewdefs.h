@@ -53,9 +53,9 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define DEVICE_TIMEAVERAGE            32
 
 #ifdef pp_OSX
-#define GLUT_BITMAP_HELVETICA_20	(&glutBitmapHelvetica20)
-#define GLUT_BITMAP_HELVETICA_24	(&glutBitmapHelvetica24)
-#define GLUT_BITMAP_HELVETICA_36	(&glutBitmapHelvetica36)
+#define GLUT_BITMAP_HELVETICA_20  (&glutBitmapHelvetica20)
+#define GLUT_BITMAP_HELVETICA_24  (&glutBitmapHelvetica24)
+#define GLUT_BITMAP_HELVETICA_36  (&glutBitmapHelvetica36)
 #endif
 
 #define MENU_VIEW_XMIN            -109
@@ -162,6 +162,17 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define NO_SMOKE -1
 #define NO_FIRE  -1
 
+#define VIS_RETURN   1
+#define VIS_CONTINUE 0
+#ifdef pp_READ_KEYBOARD
+#ifndef BREAK_VIS
+#define BREAK_VIS(check_state) if(runscript == 0 && check_state == VIS_RETURN && abort_vis==1)return
+#endif
+#else
+#undef  BREAK_VIS
+#define BREAK_VIS(check_state) ((void)0)
+#endif
+
 #ifdef pp_GLUT_DEBUG
   #define BEFOREGLUT(s)\
   {\
@@ -182,7 +193,7 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #endif
 
 #ifdef pp_GLUT_DEBUG
-#define GLUTPOSTREDISPLAY  if(use_graphics==1&&opengl_finalized==1){\
+#define GLUTPOSTREDISPLAY  if(glui_post_redisplay_on==1&&use_graphics==1&&opengl_finalized==1){\
   char *filebeg;\
   filebeg=(char *)strrchr(__FILE__,glut_debug_sep);\
   if(filebeg==NULL){\
@@ -191,12 +202,12 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
   else{\
     filebeg++;\
   }\
-  printf("***before glutPostRedisplay: file: %s, line: %i",filebeg,__LINE__);\
+  printf("------before glutPostRedisplay: file: %s, line: %i",filebeg,__LINE__);\
   glutPostRedisplay();\
-  printf(" after***\n");\
+  printf(" after------\n");\
 }
 #else
-#define GLUTPOSTREDISPLAY  if(use_graphics==1&&opengl_finalized==1){\
+#define GLUTPOSTREDISPLAY  if(glui_post_redisplay_on==1&&use_graphics==1&&opengl_finalized==1){\
   glutPostRedisplay();\
 }
 #endif
@@ -241,6 +252,9 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define TIMEBAR_OVERLAP_ALWAYS 0
 #define TIMEBAR_OVERLAP_NEVER  1
 #define TIMEBAR_OVERLAP_AUTO   2
+
+#define    PAUSE_TIME 0
+#define NO_PAUSE_TIME 1
 
 #define RENDER_START         3
 #define RENDER_START_NORMAL 12
@@ -506,8 +520,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define LOCAL_INI  2
 #define SCRIPT_INI 3
 
-#define USE_OPACITY_MULTIPLIER 94
-
 #define RESTORE_EXTERIOR_VIEW      0
 #define SAVE_VIEW                  3
 #define TOGGLE_TITLE_SAFE          5
@@ -759,10 +771,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define SMOKE3D_ZEROS_ALL     1
 #define SMOKE3D_ZEROS_UNKNOWN 2
 
-#define SHOW_VOLSMOKE   -2
-#define HIDE_VOLSMOKE   -1
-#define TOGGLE_VOLSMOKE -3
-
 #define MAXPOINTS          50000000
 #define INCFRAMES                20
 #define MAXFRAMES              5001
@@ -824,7 +832,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define CO2_COLORBAR 1
 
 #define RENDER_SLICE  0
-#define RENDER_VOLUME 1
 
 #define COLORBAR_FLIP             -2
 #define COLORBAR_AUTOFLIP         -6
@@ -877,10 +884,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 
 #define DRAW_OPAQUE      0
 #define DRAW_TRANSPARENT 1
-
-#define VOL_READALL  -1
-#define VOL_UNLOAD   -2
-#define VOL_READNONE -3
 
 #define MENU_LABEL_colorbar_vertical    0
 #define MENU_LABEL_colorbar_horizontal  1
@@ -935,7 +938,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define DIALOG_GEOMETRY_OPEN  16
 #define DIALOG_GEOMETRY_CLOSE 50
 #define DIALOG_SHOOTER 27
-#define DIALOG_SMOKEZIP  24
 #define DIALOG_STEREO    19
 #define DIALOG_TOUR_SHOW 21
 #define DIALOG_TOUR_HIDE 44

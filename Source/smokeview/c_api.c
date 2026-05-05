@@ -10,7 +10,6 @@
 #include "smokeviewvars.h"
 
 #include "IOscript.h"
-#include "IOvolsmoke.h"
 #include "c_api.h"
 #include "gd.h"
 #include "glui_bounds.h"
@@ -277,13 +276,13 @@ void LoadCsv(csvfiledata *csventry) {
 /// @brief Get the current frame number.
 /// @return Time value in seconds.
 int Getframe() {
-  int framenumber = itimes;
+  int framenumber = iglobal_times;
   return framenumber;
 }
 
 /// @brief Get the time value of the current frame.
 /// @return
-float Gettime() { return global_times[itimes]; }
+float Gettime() { return GetTime(); }
 
 /// @brief Set the currrent time.
 ///
@@ -320,7 +319,7 @@ int Settime(float timeval) {
         imin = i;
       }
     }
-    itimes = imin;
+    iglobal_times = imin;
     script_itime = imin;
     stept = 0;
     force_redisplay = 1;
@@ -400,8 +399,8 @@ void DevicesHideAll() {
 }
 
 void Setframe(int framenumber) {
-  itimes = framenumber;
-  script_itime = itimes;
+  iglobal_times = framenumber;
+  script_itime = iglobal_times;
   stept = 0;
   force_redisplay = 1;
   UpdateFrameNumber(0);
@@ -456,9 +455,6 @@ int Unloadall() {
     ReadHRR(&global_scase, UNLOAD);
   }
   FREEMEMORY(hrr_csv_filename);
-  if(nvolrenderinfo > 0) {
-    LoadVolsmoke3DMenu(UNLOAD_ALL);
-  }
   for(size_t i = 0; i < global_scase.slicecoll.nsliceinfo; i++) {
     slicedata *slicei;
 
@@ -491,9 +487,6 @@ int Unloadall() {
   }
   for(size_t i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++) {
     ReadSmoke3D(ALL_SMOKE_FRAMES, i, UNLOAD, FIRST_TIME, &errorcode);
-  }
-  if(nvolrenderinfo > 0) {
-    UnLoadVolsmoke3DMenu(UNLOAD_ALL);
   }
   updatemenu = 1;
   GLUTPOSTREDISPLAY;

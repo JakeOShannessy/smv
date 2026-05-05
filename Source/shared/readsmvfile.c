@@ -17,7 +17,6 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
-
 #include "translate.h"
 #include "file_util.h"
 #include "datadefs.h"
@@ -912,12 +911,9 @@ void InitMesh(meshdata *meshi){
   memset(meshi->currentsurf, 0, sizeof(isosurface));
   NewMemory((void **)&meshi->currentsurf2, sizeof(isosurface));
   memset(meshi->currentsurf2, 0, sizeof(isosurface));
-  NewMemory((void **)&meshi->box_clipinfo, sizeof(clipdata));
-  memset(meshi->box_clipinfo, 0, sizeof(clipdata));
+  meshi->box_clipinfo = NULL;
   NewMemory((void **)&meshi->gsliceinfo, sizeof(meshplanedata));
   memset(meshi->gsliceinfo, 0, sizeof(meshplanedata));
-  NewMemory((void **)&meshi->volrenderinfo, sizeof(volrenderdata));
-  memset(meshi->volrenderinfo, 0, sizeof(volrenderdata));
   for(i=0; i<6; i++){
     meshi->bc_faces[i]   = NULL;
     meshi->n_bc_faces[i] = 0;
@@ -960,19 +956,11 @@ void InitMesh(meshdata *meshi){
   meshi->s_offset[0] = -1;
   meshi->s_offset[1] = -1;
   meshi->s_offset[2] = -1;
-  meshi->super = NULL;
   meshi->update_smoke3dcolors = 0;
   meshi->iplotx_all = NULL;
   meshi->iploty_all = NULL;
   meshi->iplotz_all = NULL;
 #ifdef pp_GPU
-
-  meshi->volsmoke_texture_buffer = NULL;
-  meshi->volsmoke_texture_id = 0;
-  meshi->voltest_update = 0;
-
-  meshi->volfire_texture_buffer = NULL;
-  meshi->volfire_texture_id = 0;
 
 #ifdef pp_WINGPU
   meshi->slice3d_texture_buffer = NULL;
@@ -997,9 +985,6 @@ void InitMesh(meshdata *meshi){
   meshi->dxDdx  = 1.0;
   meshi->dyDdx  = 1.0;
   meshi->dzDdx  = 1.0;
-  meshi->dxyDdx = 1.0;
-  meshi->dxzDdx = 1.0;
-  meshi->dyzDdx = 1.0;
   meshi->label = NULL;
   meshi->maxtimes_boundary = 0;
   meshi->slicedir = YDIR;
@@ -1077,9 +1062,6 @@ void InitMesh(meshdata *meshi){
   meshi->xplt_smv = NULL;
   meshi->yplt_smv = NULL;
   meshi->zplt_smv = NULL;
-  meshi->xvolplt_smv = NULL;
-  meshi->yvolplt_smv = NULL;
-  meshi->zvolplt_smv = NULL;
   meshi->xplt_cen_smv = NULL;
   meshi->yplt_cen_smv = NULL;
   meshi->zplt_cen_smv = NULL;
@@ -2414,7 +2396,7 @@ int IsSliceDup(smv_case *scase, slicedata *sd, int nslice){
     if(strcmp(slicei->label.longlabel,sd->label.longlabel)!=0)continue;
     if(slicei->slice_filetype!=sd->slice_filetype)continue;
     if(slicei->blocknumber!=sd->blocknumber)continue;
-    if(slicei->volslice!=sd->volslice)continue;
+    if(slicei->slice3d!=sd->slice3d)continue;
     if(slicei->idir!=sd->idir)continue;
     return 1;
   }
@@ -3705,8 +3687,7 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
     smoke3di->ntimes_old = 0;
     smoke3di->filetype = filetype;
     smoke3di->is_zlib = 0;
-    smoke3di->is_smoke_density    = 0;
-    smoke3di->soot_density_loaded = 0;
+    smoke3di->soot_loaded = 0;
     smoke3di->seq_id = nn_smoke3d;
     smoke3di->autoload = 0;
     smoke3di->compression_type = COMPRESSED_UNKNOWN;
@@ -3738,7 +3719,6 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
     smoke3di->is_fire = 0;
     smoke3di->file_size = 0;
     smoke3di->blocknumber = blocknumber;
-    smoke3di->lastiframe = -999;
     smoke3di->ismoke3d_time = 0;
     STRCPY(buffer2, bufferptr);
     STRCAT(buffer2, ".svz");
@@ -3754,6 +3734,7 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
     }
     else{
       smoke3di->file = smoke3di->reg_file;
+      smoke3di->compression_type = COMPRESSED_RLE;
     }
 #ifdef pp_SMOKE3D_FORCE
     if(strcmp(smoke3di->file, "dummy.xyz") == 0){
@@ -3776,6 +3757,7 @@ int ParseSMOKE3DProcess(smv_case *scase, bufferstreamdata *stream, char *buffer,
       if(ReadLabels(&smoke3di->label, stream, NULL)==LABEL_ERR)return RETURN_TWO;
       if(strcmp(smoke3di->label.longlabel, "SOOT DENSITY") == 0){
         smoke3di->is_smoke = 1;
+        smoke3di->reg_file = smoke3di->smoke_density_file;
       }
       if(strcmp(smoke3di->label.longlabel, "HRRPUV")==0){
         scase->show_hrrcutoff_active = 1;
@@ -3820,9 +3802,12 @@ int ParseSLCFCount(smv_case *scase, int option, bufferstreamdata *stream, char *
       if(FGETS(buffer, 255, stream)==NULL){
         return RETURN_BREAK;
       }
-      if((Match(buffer, "SLCF")==1)||
-        (Match(buffer, "SLCC")==1)||
-        (Match(buffer, "SLCT")==1)||
+      if((Match(buffer, "SLCF")==1) ||
+        (Match(buffer, "SLCC")==1)  ||
+#ifdef pp_SLFC
+        (Match(buffer, "SLFC")==1)  ||
+#endif
+        (Match(buffer, "SLCT")==1)  ||
         (Match(buffer, "BNDS")==1)
         ){
         break;
@@ -3860,6 +3845,9 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
   char *slicelabelptr, slicelabel[256], *sliceparms;
   float above_ground_level = 0.0;
   int terrain = 0, cellcenter = 0;
+#ifdef pp_SLFC
+  int facecenter = 0;
+#endif
   int slicegeom = 0;
   int slcf_index = 0;
   char *char_slcf_index;
@@ -3883,9 +3871,12 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
       if(FGETS(buffer, 255, stream)==NULL){
         return RETURN_BREAK;
       }
-      if( (Match(buffer, "SLCF") == 1)  ||
-          (Match(buffer, "SLCC") == 1)  ||
-          (Match(buffer, "SLCT") == 1)  ||
+      if( (Match(buffer, "SLCF") == 1) ||
+          (Match(buffer, "SLCC") == 1) ||
+#ifdef pp_SLFC
+          (Match(buffer, "SLFC") == 1) ||
+#endif
+          (Match(buffer, "SLCT") == 1) ||
           (Match(buffer, "BNDS") == 1)
         ){
         break;
@@ -3938,6 +3929,11 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
     scase->cellcenter_slice_active = 1;
     cellcenter = 1;
   }
+#ifdef pp_SLFC
+  if(Match(buffer, "SLFC")==1){
+    facecenter = 1;
+  }
+#endif
   TrimBack(buffer);
   len = strlen(buffer);
   if(scase->meshescoll.nmeshes>1){
@@ -3991,12 +3987,14 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
   sd->n_imap=0;
   sd->n_jmap=0;
   sd->n_kmap=0;
+#ifdef pp_SLFC
+  sd->face_center = facecenter;
+#endif
   sd->cell_center = cellcenter;
   if(slicegeom==1&&cell_center_flag==1)sd->cell_center = 1;
  // sd->file_size = 0;
   sd->reg_file = NULL;
   sd->comp_file = NULL;
-  sd->vol_file = NULL;
   sd->slicelabel = NULL;
   sd->cell_center_edge = 0;
   sd->file_size = 0;
@@ -4016,6 +4014,11 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
   if(cellcenter==1){
     sd->slice_filetype = SLICE_CELL_CENTER;
   }
+#ifdef pp_SLFC
+  if(facecenter == 1){
+    sd->slice_filetype = SLICE_FACE_CENTER;
+  }
+#endif
 
   strcpy(zlib_file, bufferptr);
   strcat(zlib_file, ".svz");
@@ -4103,6 +4106,11 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
   else if(sd->slice_filetype==SLICE_CELL_CENTER){
     if(ReadLabels(&sd->label, stream, "(cell centered)")==LABEL_ERR)return RETURN_TWO;
   }
+#ifdef pp_SLFC
+  else if(sd->slice_filetype == SLICE_FACE_CENTER){
+    if(ReadLabels(&sd->label, stream, "(face centered)") == LABEL_ERR)return RETURN_TWO;
+  }
+#endif
   else if(sd->slice_filetype==SLICE_GEOM){
     char geom_label[20];
 
@@ -4187,10 +4195,10 @@ int ParseSLCFProcess(smv_case *scase, int option, bufferstreamdata *stream, char
   sd->slicecomplevel = NULL;
   sd->qslicedata_compressed = NULL;
   if(sd->is1!=sd->is2&&sd->js1!=sd->js2&&sd->ks1!=sd->ks2){
-    sd->volslice = 1;
+    sd->slice3d = 1;
   }
   else{
-    sd->volslice = 0;
+    sd->slice3d = 0;
   }
   sd->times = NULL;
   sd->times_map = NULL;
@@ -4840,7 +4848,11 @@ int HaveSmoke3D(bufferstreamdata *stream){
     }
     TrimBack(buffer);
     if(strncmp(buffer, " ", 1) == 0 || buffer[0] == 0)continue;
-    if(MatchSMV(buffer,"SMOKE3D") == 1 || MatchSMV(buffer,"SMOKF3D") == 1 || MatchSMV(buffer, "SMOKG3D") == 1){
+    if(
+      MatchSMV(buffer,"SMOKE3D") == 1 || 
+      MatchSMV(buffer,"SMOKF3D") == 1 || 
+      MatchSMV(buffer, "SMOKG3D") == 1
+      ){
       rewind_buffer(stream->fileinfo);
       return 1;
       }
@@ -5318,10 +5330,12 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
 
 //*** SLCF
 
-    if( (MatchSMV(buffer,"SLCF") == 1)  ||
-        (MatchSMV(buffer,"SLCC") == 1)  ||
-        (MatchSMV(buffer, "SLCD") == 1) ||
-        (MatchSMV(buffer,"SLCT") == 1)  ||
+    if( (MatchSMV(buffer, "SLCF") == 1) ||
+        (MatchSMV(buffer, "SLCC") == 1) ||
+#ifdef pp_SLFC
+        (MatchSMV(buffer, "SLFC") == 1) ||
+#endif
+        (MatchSMV(buffer, "SLCT") == 1) ||
         (MatchSMV(buffer, "BNDS") == 1)
       ){
       int return_val;
@@ -5516,26 +5530,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
     meshi = scase->meshescoll.meshinfo + i;
     InitMesh(meshi); // initialize mesh here so order of order GRID/TERRAIN keywords won't cause a problem
   }
-  FREEMEMORY(scase->supermeshinfo);
-  if(NewMemory((void **)&scase->supermeshinfo,scase->meshescoll.nmeshes*sizeof(supermeshdata))==0)return 2;
   scase->meshescoll.meshinfo->plot3dfilenum=-1;
-  for(i=0;i<scase->meshescoll.nmeshes;i++){
-    meshdata *meshi;
-    supermeshdata *smeshi;
-
-    smeshi = scase->supermeshinfo + i;
-    smeshi->nmeshes=0;
-
-    meshi=scase->meshescoll.meshinfo+i;
-    meshi->ibar=0;
-    meshi->jbar=0;
-    meshi->kbar=0;
-    meshi->nbptrs=0;
-    meshi->nvents=0;
-    meshi->ncvents=0;
-    meshi->plotn=1;
-    meshi->itextureoffset=0;
-  }
   if(scase->setPDIM==0){
     meshdata *meshi;
 
@@ -6291,9 +6286,7 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
         strcpy(labelj->shortlabel,shortdefaultlabel);
         labelj->unit=NULL;
 
-        partclassi->col_azimuth=-1;
         partclassi->col_diameter=-1;
-        partclassi->col_elevation=-1;
         partclassi->col_length=-1;
         partclassi->col_u_vel=-1;
         partclassi->col_v_vel=-1;
@@ -6312,12 +6305,6 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
           if(strcmp(labelj->shortlabel,"LENGTH")==0){
             partclassi->col_length=j-2;
           }
-          if(strcmp(labelj->shortlabel,"AZIMUTH")==0){
-            partclassi->col_azimuth=j-2;
-          }
-          if(strcmp(labelj->shortlabel,"ELEVATION")==0){
-            partclassi->col_elevation=j-2;
-          }
           if(STRCMP(labelj->shortlabel,"U-VEL")==0){
             partclassi->col_u_vel=j-2;
           }
@@ -6331,20 +6318,16 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       }
       partclassi->diameter=1.0;
       partclassi->length=1.0;
-      partclassi->azimuth=0.0;
-      partclassi->elevation=0.0;
       partclassi->dx=0.0;
       partclassi->dy=0.0;
       partclassi->dz=0.0;
       if(device_ptr!=NULL){
-        float diameter, length, azimuth, elevation;
+        float diameter, length;
 
         FGETS(buffer,255,stream);
-        sscanf(buffer,"%f %f %f %f",&diameter,&length,&azimuth,&elevation);
+        sscanf(buffer,"%f %f",&diameter,&length);
         partclassi->diameter=diameter;
         partclassi->length=length;
-        partclassi->azimuth=azimuth;
-        partclassi->elevation=elevation;
       }
       scase->npartclassinfo++;
       continue;
@@ -7575,6 +7558,10 @@ int ReadSMV_Parse(smv_case *scase, bufferstreamdata *stream){
       meshi->xyz_bar0[ZZZ]=scase->zbar0;
       meshi->xyz_bar[ZZZ] =scase->zbar;
       meshi->zcen_smv =(scase->zbar+scase->zbar0)/2.0;
+      if(meshi->box_clipinfo == NULL){
+        NewMemory(( void ** )&meshi->box_clipinfo, sizeof(clipdata));
+        memset(meshi->box_clipinfo, 0, sizeof(clipdata));
+      }
       InitBoxClipInfo(meshi->box_clipinfo,scase->xbar0,scase->xbar,scase->ybar0,scase->ybar,scase->zbar0,scase->zbar);
       if(scase->ntrnx==0){
         int nn;
@@ -8639,10 +8626,12 @@ typedef struct {
     ++++++++++++++++++++++ SLCF ++++++++++++++++++++++++++++++
     +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   */
-    if( (MatchSMV(buffer,"SLCF") == 1)  ||
-        (MatchSMV(buffer,"SLCC") == 1)  ||
-        (MatchSMV(buffer, "SLCD") == 1) ||
-        (MatchSMV(buffer,"SLCT") == 1)  ||
+    if( (MatchSMV(buffer, "SLCF") == 1) ||
+        (MatchSMV(buffer, "SLCC") == 1) ||
+#ifdef pp_SLFC
+        (MatchSMV(buffer, "SLFC") == 1) ||
+#endif
+        (MatchSMV(buffer, "SLCT") == 1) ||
         (MatchSMV(buffer, "BNDS") == 1)
       ){
       int return_val;

@@ -18,7 +18,6 @@
 #include "jsonrpc_api.h"
 
 #include "IOscript.h"
-#include "IOvolsmoke.h"
 #include "readlabel.h"
 
 #ifdef _WIN32
@@ -490,13 +489,11 @@ char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
     }
     if(args->runscript){
       from_commandline = 1;
-      use_iso_threads=0;
-      runscript = 1;
+      SetRunScriptVal(1);
     }
     if(args->runhtmlscript){
       from_commandline = 1;
       use_graphics = 0;
-      use_iso_threads = 0;
       runhtmlscript = 1;
     }
     if(args->scriptrenderdir != NULL){
@@ -514,10 +511,6 @@ char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
       from_commandline = 1;
       render_startframe0 = args->startframe;
     }
-    if(args->volrender){
-      from_commandline = 1;
-      make_volrender_script = 1;
-    }
     if(args->script!=NULL||args->htmlscript!=NULL){
       char scriptbuffer[MAX_SCRIPT_FILENAME_BUFFER];
       scriptfiledata *sfd;
@@ -528,7 +521,6 @@ char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
         runhtmlscript = 1;
       }
       from_commandline = 1;
-      use_iso_threads=0;
       if(args->script != NULL){
         if(strlen(args->script) < MAX_SCRIPT_FILENAME_BUFFER){
           strcpy(scriptbuffer, args->script);
@@ -549,7 +541,7 @@ char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
       sfd = InsertScriptFile(scriptbuffer);
       if(sfd != NULL)default_script = sfd;
       if(!is_htmlscript){
-        runscript = 1;
+      SetRunScriptVal(1);
       }
     }
     if(args->noexit){
@@ -582,14 +574,6 @@ char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
     NewMemory((void **)&ssf_to, len_prefix + 4 + 1);
     strcpy(ssf_to, global_scase.fdsprefix);
     strcat(ssf_to, ".ssf");
-  }
-  if(make_volrender_script == 1){
-
-    NewMemory((void **)&volrender_scriptname, (unsigned int)(len_casename + 14 + 1));
-    STRCPY(volrender_scriptname, global_scase.fdsprefix);
-    STRCAT(volrender_scriptname, "_volrender.ssf");
-
-    InitVolrenderScript(global_scase.fdsprefix, NULL, vol_startframe0, vol_skipframe0);
   }
   return filename_local;
 }
@@ -699,10 +683,12 @@ int main(int argc, char **argv){
   x[0] = 1.0;
   printf("after accessing null variable: %f\n", x[0]);
 */
+  GluiPostRedisplayOff();
   SetStdOut(stdout);
   initMALLOC();
   InitRandAB(1000000);
   InitVars();
+  ThreadSetup();
 
   // The number of commandline arguments
   int n_args = 0;
@@ -734,9 +720,6 @@ int main(int argc, char **argv){
 
   InitTextureDir();
   InitScriptErrorFiles();
-  char *smv_bindir = GetSmvRootDir();
-  smokezippath= GetSmokeZipPath(smv_bindir);
-  FREEMEMORY(smv_bindir);
   InitStartupDirs();
   DisplayVersionInfo("Smokeview ", &opts);
   SetupGlut(n_args,utf8_args);
@@ -762,6 +745,11 @@ int main(int argc, char **argv){
   }
   PRINTF("Startup time: %.1f s\n", startup_time);
 
+  GluiPostRedisplayOn();
+  glui_post_redisplay_on = 1;
+#ifdef pp_GLUT_DEBUG
+  printf("***before glutMainLoop\n");
+#endif
   pthread_t socket_thread;
   server = jrpc_server_create();
   jrpc_register_procedure(&server, &subtract, "subtract", NULL);
@@ -777,7 +765,9 @@ int main(int argc, char **argv){
   jrpc_server_destroy(&server);
 
   pthread_join(socket_thread, NULL);
-
+#ifdef pp_GLUT_DEBUG
+  printf("***after glutMainLoop\n");
+#endif
   FreeVars();
   return 0;
 }

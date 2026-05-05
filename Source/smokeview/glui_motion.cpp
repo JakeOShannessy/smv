@@ -10,7 +10,6 @@
 #include <math.h>
 
 #include "smokeviewvars.h"
-#include "IOvolsmoke.h"
 #include "glui_motion.h"
 #include "readgeom.h"
 #include "paths.h"
@@ -1080,7 +1079,7 @@ extern "C" void GLUIUpdateZoom(void){
 /* ------------------ GLUIUpdateCameraLabel ------------------------ */
 
 extern "C" void GLUIUpdateCameraLabel(void){
-  EDIT_view_label->set_text(camera_label);
+  if(EDIT_view_label!=NULL)EDIT_view_label->set_text(camera_label);
 }
 
 /* ------------------ GLUIUpdateViewpointList ------------------------ */
@@ -1490,9 +1489,9 @@ extern "C" void GLUIMotionSetup(int main_window){
   render_size_index = RenderWindow;
   RenderCB(RENDER_RESOLUTION);
 
-  glui_resolution_multiplier=CLAMP(resolution_multiplier,2,10);
+  glui_resolution_multiplier=CLAMP(resolution_multiplier,1,10);
   SPINNER_resolution_multiplier = glui_motion->add_spinner_to_panel(ROLLOUT_image_size, "multiplier:", GLUI_SPINNER_INT, &glui_resolution_multiplier, RENDER_MULTIPLIER, RenderCB);
-  SPINNER_resolution_multiplier->set_int_limits(2, 10);
+  SPINNER_resolution_multiplier->set_int_limits(1, 10);
   RenderCB(RENDER_MULTIPLIER);
 
   PANEL_360 = glui_motion->add_panel_to_panel(ROLLOUT_image_size, (char *)deg360, true);
@@ -2009,27 +2008,6 @@ extern "C" void GLUISceneMotionCB(int var){
     GLUIUpdateShowRotationCenter2();
     return;
   }
-
-#ifdef pp_GPU
-  if(usegpu==1&&showvolrender==1&&show_volsmoke_moving==1&&
-     (var==EYE_ROTATE||var==EYE_ROTATE_90||var==ROTATE_2AXIS||
-      var==TRANSLATE_XY||var==TRANSLATE_X||TRANSLATE_Y||
-      var==GLUI_Z)
-    ){
-    float fps;
-
-    START_TIMER(thisMOTIONtime);
-    fps = MOTIONnframes/(thisMOTIONtime-lastMOTIONtime);
-    if(fps>GPU_VOLframemax)return;
-    MOTIONnframes++;
-    if(thisMOTIONtime>lastMOTIONtime+0.25){
-      PRINTF("MOTION: %4.1f fps\n",fps);
-      lastMOTIONtime=thisMOTIONtime;
-      MOTIONnframes=0;
-    }
-  }
-#endif
-
   if(var==CURSOR){
     updatemenu=1;
     return;
@@ -2638,10 +2616,8 @@ void RenderCB(int var){
       EnableDisablePlayMovie();
       break;
     case PLAY_MOVIE:
-      if(playmovie_threads == NULL){
-        playmovie_threads = THREADinit(&n_playmovie_threads, &use_playmovie_threads, PlayMovie);
-      }
-      THREADrun(playmovie_threads);
+      ThreadInit(&playmovie_threads, n_playmovie_threads, use_playmovie_threads, serial_override, PlayMovie);
+      ThreadRun(playmovie_threads);
       break;
     case OUTPUT_FFMPEG:
       output_ffmpeg_command=1;
@@ -2783,8 +2759,8 @@ void RenderCB(int var){
         RenderCB(RENDER_START_360);
         break;
       default:
-	assert(FFALSE);
-	break;
+        assert(FFALSE);
+        break;
       }
     break;
     case RENDER_START_HIGHRES:

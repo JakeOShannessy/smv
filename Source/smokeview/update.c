@@ -34,81 +34,18 @@ int CompareFloat(const void *arg1, const void *arg2){
 /* ------------------ UpdateFrameNumber ------------------------ */
 
 void UpdateFrameNumber(int changetime){
-  if(force_redisplay==1||(itimeold!=itimes&&changetime==1)){
+  if(force_redisplay==1||(itimeold!=iglobal_times&&changetime==1)){
     int i;
 
     force_redisplay=0;
-    itimeold=itimes;
+    itimeold=iglobal_times;
     if(showsmoke==1){
       for(i=0;i<global_scase.npartinfo;i++){
         partdata *parti;
 
         parti = global_scase.partinfo+i;
         if(parti->loaded==0||parti->timeslist==NULL)continue;
-        parti->itime=parti->timeslist[itimes];
-      }
-    }
-    if(showvolrender==1){
-      int imesh;
-
-      for(imesh=0;imesh<global_scase.meshescoll.nmeshes;imesh++){
-        meshdata *meshi;
-        volrenderdata *vr;
-        slicedata *fireslice, *smokeslice;
-        int j;
-
-        meshi = global_scase.meshescoll.meshinfo + imesh;
-        vr = meshi->volrenderinfo;
-        fireslice=vr->fireslice;
-        smokeslice=vr->smokeslice;
-        if(fireslice==NULL||smokeslice==NULL)continue;
-        if(vr->loaded==0||vr->display==0)continue;
-        vr->itime = vr->timeslist[itimes];
-        for(j=vr->itime;j>=0;j--){
-          if(vr->dataready[j]==1)break;
-        }
-        vr->itime=j;
-
-        if(smokeslice!=NULL&&vr->itime>=0){
-          if(vr->is_compressed==1||load_volcompressed==1){
-            unsigned char *c_smokedata_compressed;
-            uLongf framesize;
-            float timeval;
-
-            c_smokedata_compressed = vr->smokedataptrs[vr->itime];
-            framesize = smokeslice->nslicei*smokeslice->nslicej*smokeslice->nslicek;
-            UnCompressVolSliceFrame(c_smokedata_compressed,
-                           vr->smokedata_view, framesize, &timeval,
-                           vr->c_smokedata_view);
-
-            vr->smokedataptr = vr->smokedata_view;
-          }
-          else{
-            if(runscript==0)vr->smokedataptr = vr->smokedataptrs[vr->itime];
-          }
-          CheckMemory;
-        }
-
-        if(fireslice!=NULL&&vr->itime>=0){
-          if(vr->is_compressed==1||load_volcompressed==1){
-            unsigned char *c_firedata_compressed;
-            uLongf framesize;
-            float timeval;
-
-            c_firedata_compressed = vr->firedataptrs[vr->itime];
-            framesize = fireslice->nslicei*fireslice->nslicej*fireslice->nslicek;
-            UnCompressVolSliceFrame(c_firedata_compressed,
-                           vr->firedata_view, framesize, &timeval,
-                           vr->c_firedata_view);
-
-            vr->firedataptr = vr->firedata_view;
-            CheckMemory;
-          }
-          else{
-            if(runscript==0)vr->firedataptr = vr->firedataptrs[vr->itime];
-          }
-          CheckMemory;
-        }
+        parti->itime=parti->timeslist[iglobal_times];
       }
     }
     for(i=0;i<ngeominfoptrs;i++){
@@ -116,7 +53,7 @@ void UpdateFrameNumber(int changetime){
 
       geomi = geominfoptrs[i];
       if(geomi->loaded==0||geomi->timeslist==NULL)continue;
-      geomi->itime=geomi->timeslist[itimes];
+      geomi->itime=geomi->timeslist[iglobal_times];
     }
     if(showslice==1||showvslice==1){
       int ii;
@@ -136,7 +73,7 @@ void UpdateFrameNumber(int changetime){
             patchi->geom_itime = 0; // only one frame loaded at a time when using LOADSLICERNDER
           }
           else{
-            patchi->geom_itime = patchi->geom_timeslist[itimes];
+            patchi->geom_itime = patchi->geom_timeslist[iglobal_times];
           }
           patchi->geom_val_static   = patchi->geom_vals  + patchi->geom_vals_static_offset[patchi->geom_itime];
           patchi->geom_ival_static  = patchi->geom_ivals + patchi->geom_ivals_static_offset[patchi->geom_itime];
@@ -145,12 +82,12 @@ void UpdateFrameNumber(int changetime){
           patchi->geom_val_dynamic  = patchi->geom_vals  + patchi->geom_vals_dynamic_offset[patchi->geom_itime];
           patchi->geom_nval_static  = patchi->geom_nstatics[patchi->geom_itime];
           patchi->geom_nval_dynamic = patchi->geom_ndynamics[patchi->geom_itime];
-          sd->itime                 = patchi->geom_timeslist[itimes];
+          sd->itime                 = patchi->geom_timeslist[iglobal_times];
           slice_time                = sd->itime;
         }
         else{
           if(sd->timeslist == NULL)continue;
-          sd->itime = sd->timeslist[itimes];
+          sd->itime = sd->timeslist[iglobal_times];
 
           assert(sd->times_map == NULL || sd->times_map[sd->itime] == 1);
           slice_time = sd->itime;
@@ -161,7 +98,7 @@ void UpdateFrameNumber(int changetime){
 
         patchi = global_scase.patchinfo + i;
         if(patchi->structured == YES || patchi->boundary == 1 || patchi->geom_times == NULL || patchi->geom_timeslist == NULL)continue;
-        patchi->geom_itime = patchi->geom_timeslist[itimes];
+        patchi->geom_itime = patchi->geom_timeslist[iglobal_times];
         patchi->geom_ival_static  = patchi->geom_ivals + patchi->geom_ivals_static_offset[patchi->geom_itime];
         patchi->geom_ival_dynamic = patchi->geom_ivals + patchi->geom_ivals_dynamic_offset[patchi->geom_itime];
         patchi->geom_val_static   = patchi->geom_vals  + patchi->geom_vals_static_offset[patchi->geom_itime];
@@ -171,10 +108,28 @@ void UpdateFrameNumber(int changetime){
       }
     }
     if(show3dsmoke==1 && global_scase.smoke3dcoll.nsmoke3dinfo > 0){
+#ifdef pp_SPEEDUP
+      INIT_PRINT_TIMER(update_smoke_time);
+      ThreadInit(&uncompresssmoke3d_threads, n_uncompresssmoke3d_threads, use_uncompresssmoke3d_threads, serial_override, UncompressSmoke3DAll);
+      ThreadRunLoop(uncompresssmoke3d_threads);
+      ThreadJoin(&uncompresssmoke3d_threads);
+      PRINT_TIMER(update_smoke_time, "UncompressSmoke3D");
+
+      INIT_PRINT_TIMER(merge_smoke_time);
+      ThreadInit(&mergesmoke3d_threads, n_mergesmoke3d_threads, use_mergesmoke3d_threads, serial_override, MergeSmoke3DAll);
+      ThreadRunLoop(mergesmoke3d_threads);
+      ThreadJoin(&mergesmoke3d_threads);
+      PRINT_TIMER(merge_smoke_time, "MergeSmoke3D");
+#else
+      INIT_PRINT_TIMER(update_smoke_time);
+      UncompressSmoke3DAll();
+      PRINT_TIMER(update_smoke_time, "UncompressSmoke3D");
+
       INIT_PRINT_TIMER(merge_smoke_time);
       MergeSmoke3DAll();
+      PRINT_TIMER(merge_smoke_time, "MergeSmoke3D");
+#endif
       PrintMemoryInfo;
-      PRINT_TIMER(merge_smoke_time, "UpdateSmoke3D + MergeSmoke3D");
     }
     if(showpatch==1){
       for(i=0;i<global_scase.npatchinfo;i++){
@@ -182,7 +137,7 @@ void UpdateFrameNumber(int changetime){
 
         patchi = global_scase.patchinfo + i;
         if(patchi->structured == YES||patchi->boundary==0||patchi->geom_times==NULL||patchi->geom_timeslist==NULL)continue;
-        patchi->geom_itime=patchi->geom_timeslist[itimes];
+        patchi->geom_itime=patchi->geom_timeslist[iglobal_times];
         if(patchi->geom_ivals != NULL){
           patchi->geom_ival_static = patchi->geom_ivals + patchi->geom_ivals_static_offset[patchi->geom_itime];
           patchi->geom_ival_dynamic = patchi->geom_ivals + patchi->geom_ivals_dynamic_offset[patchi->geom_itime];
@@ -199,7 +154,7 @@ void UpdateFrameNumber(int changetime){
         if(meshi->patchfilenum < 0||meshi->patchfilenum>global_scase.npatchinfo-1)continue;
         patchi=global_scase.patchinfo + meshi->patchfilenum;
         if(patchi->structured == NO||meshi->patch_times==NULL||meshi->patch_timeslist==NULL)continue;
-        meshi->patch_itime=meshi->patch_timeslist[itimes];
+        meshi->patch_itime=meshi->patch_timeslist[iglobal_times];
         if(patchi->compression_type==UNCOMPRESSED){
 
           meshi->patchval_iframe  = meshi->patchval  + meshi->patch_itime*meshi->npatchsize;
@@ -219,11 +174,11 @@ void UpdateFrameNumber(int changetime){
         isoi = global_scase.isoinfo + i;
         meshi = global_scase.meshescoll.meshinfo + isoi->blocknumber;
         if(isoi->loaded==0||meshi->iso_times==NULL||meshi->iso_timeslist==NULL)continue;
-        meshi->iso_itime=meshi->iso_timeslist[itimes];
+        meshi->iso_itime=meshi->iso_timeslist[iglobal_times];
       }
     }
     if(showzone==1){
-      izone=zone_timeslist[itimes];
+      izone=zone_timeslist[iglobal_times];
     }
   }
 }
@@ -304,22 +259,6 @@ void UpdateFileLoad(void){
       if(plot3di->display==1)nplot3dvis++;
     }
   }
-
-  nvolsmoke3dloaded = 0;
-  nvolsmoke3dvis = 0;
-  for(i = 0; i<global_scase.meshescoll.nmeshes; i++){
-    meshdata *meshi;
-    volrenderdata *vr;
-
-    meshi = global_scase.meshescoll.meshinfo+i;
-    vr = meshi->volrenderinfo;
-    if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
-    if(vr->loaded==1){
-      nvolsmoke3dloaded++;
-      if(vr->display==1)nvolsmoke3dvis++;
-    }
-  }
-
   npart5loaded = 0;
   npartloaded = 0;
   npart5vis = 0;
@@ -341,7 +280,7 @@ void UpdateFileLoad(void){
   if(nplot3dloaded_old != nplot3dloaded         || nsmoke3dloaded_old != nsmoke3dloaded ||
      nisoloaded_old != nisoloaded               || nsliceloaded_old != nsliceloaded ||
      nvsliceloaded_old != nvsliceloaded         || npatchloaded_old != npatchloaded ||
-     nvolsmoke3dloaded_old != nvolsmoke3dloaded || npart5loaded_old != npart5loaded ||
+    npart5loaded_old != npart5loaded ||
     npartloaded_old != npartloaded)updatefacelists=1;
 
   nplot3dloaded_old     = nplot3dloaded;
@@ -350,7 +289,6 @@ void UpdateFileLoad(void){
   nsliceloaded_old      = nsliceloaded;
   nvsliceloaded_old     = nvsliceloaded;
   npatchloaded_old      = npatchloaded;
-  nvolsmoke3dloaded_old = nvolsmoke3dloaded;
   npart5loaded_old      = npart5loaded;
   npartloaded_old       = npartloaded;
 }
@@ -378,7 +316,6 @@ void UpdateShow(void){
   showsmoke            = 0;
   showzone             = 0;
   showiso              = 0;
-  showvolrender        = 0;
   have_extreme_mindata = 0;
   have_extreme_maxdata = 0;
   showshooter          = 0;
@@ -438,20 +375,6 @@ void UpdateShow(void){
       }
     }
   }
-  if(nvolrenderinfo>0&&usevolrender==1){
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
-      meshdata *meshi;
-      volrenderdata *vr;
-
-      meshi = global_scase.meshescoll.meshinfo + i;
-      vr = meshi->volrenderinfo;
-      if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
-      if(vr->loaded==0||vr->display==0)continue;
-      showvolrender=1;
-      break;
-    }
-  }
-
   sliceflag=0;
   slicecolorbarflag=0;
   SHOW_gslice_data=0;
@@ -464,7 +387,7 @@ void UpdateShow(void){
       i=slice_loaded_list[ii];
       sd = global_scase.slicecoll.sliceinfo+i;
       if(sd->display==0||sd->slicefile_labelindex!=slicefile_labelindex)continue;
-      if(sd->volslice==1&&sd->slice_filetype==SLICE_NODE_CENTER&&vis_gslice_data==1)SHOW_gslice_data=1;
+      if(sd->slice3d==1&&sd->slice_filetype==SLICE_NODE_CENTER&&vis_gslice_data==1)SHOW_gslice_data=1;
       if(sd->ntimes>0){
         sliceflag=1;
         break;
@@ -558,7 +481,7 @@ void UpdateShow(void){
       sd = global_scase.slicecoll.sliceinfo + vd->ival;
 
       if(sd->slicefile_labelindex!=slicefile_labelindex)continue;
-      if(sd->volslice==1&&sd->slice_filetype==SLICE_NODE_CENTER&&vis_gslice_data==1)SHOW_gslice_data=1;
+      if(sd->slice3d==1&&sd->slice_filetype==SLICE_NODE_CENTER&&vis_gslice_data==1)SHOW_gslice_data=1;
       vsliceflag=1;
       break;
     }
@@ -629,7 +552,7 @@ void UpdateShow(void){
   if( plotstate==DYNAMIC_PLOTS &&
     ( showdeviceflag==1 || showhrrflag==1 || sliceflag==1 || vsliceflag==1 || partflag==1 || patchflag==1 ||
     shooter_flag==1|| smoke3dflag==1 || showtours==1 || showhvacflag == 1 || plot2dflag == 1 ||
-    (ReadZoneFile==1&&visZone==1&&visTimeZone==1)||showvolrender==1
+    (ReadZoneFile==1&&visZone==1&&visTimeZone==1)
     )
     )showtime=1;
   if(plotstate==DYNAMIC_PLOTS&&ReadIsoFile==1&&visAIso!=0&&isoflag==1)showtime2=1;
@@ -667,7 +590,7 @@ void UpdateShow(void){
     if(shooter_flag==1)showshooter=1;
   }
   if(showsmoke==1||showpatch==1||showslice==1||showvslice==1||showzone==1||showiso==1)RenderTime=1;
-  if(showtours==1||show3dsmoke==1||touring==1||showvolrender==1)RenderTime=1;
+  if(showtours==1||show3dsmoke==1||touring==1)RenderTime=1;
   if(showhvacflag == 1)RenderTime = 1;
   if(showshooter==1)RenderTime=1;
   if(plotstate==STATIC_PLOTS&&nplot3dloaded>0&&plotn>0&&plotn<=numplot3dvars)showplot3d=1;
@@ -871,21 +794,6 @@ void SynchTimes(void){
       meshi->iso_timeslist[n] = GetDataTimeFrame(global_times[n], meshi->iso_times_map, meshi->iso_times,meshi->niso_times);
     }
 
-  /* synchronize volume render times */
-
-    if(nvolrenderinfo>0){
-      for(igrid=0;igrid<global_scase.meshescoll.nmeshes;igrid++){
-        volrenderdata *vr;
-        meshdata *meshi;
-
-        meshi=global_scase.meshescoll.meshinfo+igrid;
-        vr = meshi->volrenderinfo;
-        if(vr->smokeslice==NULL)continue;
-        if(vr->loaded==0||vr->display==0)continue;
-        if(vr->times==NULL)continue;
-        vr->timeslist[n] = GetDataTimeFrame(global_times[n], vr->smokeslice->times_map, vr->times,vr->ntimes);
-      }
-    }
     /* synchronize zone times */
 
     if(showzone==1){
@@ -913,7 +821,7 @@ int GetLoadvfileinfo(FILE *stream, char *filename){
       fprintf(stream, "//  %s\n", slicei->file);
       fprintf(stream, "LOADVSLICEM\n");
       fprintf(stream, " %s\n", slicei->label.longlabel);
-      if(slicei->volslice==1){
+      if(slicei->slice3d==1){
         fprintf(stream, " %i %f\n", 0, slicei->position_orig);
       }
       else{
@@ -943,7 +851,7 @@ int GetLoadfileinfo(FILE *stream, char *filename){
       fprintf(stream, "//  %s\n", slicei->file);
       fprintf(stream, "LOADSLICEM\n");
       fprintf(stream, " %s\n", slicei->label.longlabel);
-      if(slicei->volslice==1){
+      if(slicei->slice3d==1){
         fprintf(stream, " %i %f\n", 0, slicei->position_orig);
       }
       else{
@@ -1052,7 +960,7 @@ void ConvertSsf(void){
 /* ------------------ GetTime ------------------------ */
 
 float GetTime(void){
-  if(global_times != NULL)return global_times[CLAMP(itimes,0,nglobal_times)];
+  if(global_times != NULL)return global_times[CLAMP(iglobal_times,0,nglobal_times-1)];
   return 0.0;
 }
 
@@ -1354,18 +1262,6 @@ void UpdateTimes(void){
     }
     PRINT_TIMER(iso_timer, "UpdateTimes: iso");
   }
-  if(nvolrenderinfo>0){
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
-      volrenderdata *vr;
-      meshdata *meshi;
-
-      meshi=global_scase.meshescoll.meshinfo+i;
-      vr = meshi->volrenderinfo;
-      if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
-      if(vr->loaded==0||vr->display==0)continue;
-      MergeGlobalTimes(vr->times, vr->ntimes);
-    }
-  }
   {
     smoke3ddata *smoke3di;
 
@@ -1446,19 +1342,6 @@ void UpdateTimes(void){
       if(nglobal_times > 0)NewMemory((void **)&sd->timeslist, nglobal_times * sizeof(int));
     }
   }
-  if(nvolrenderinfo>0){
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
-      meshdata *meshi;
-      volrenderdata *vr;
-
-      meshi = global_scase.meshescoll.meshinfo + i;
-      vr = meshi->volrenderinfo;
-      if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
-      if(vr->loaded==0||vr->display==0)continue;
-      FREEMEMORY(vr->timeslist);
-      if(nglobal_times>0)NewMemory((void **)&vr->timeslist,nglobal_times*sizeof(int));
-    }
-  }
   {
     smoke3ddata *smoke3di;
 
@@ -1502,7 +1385,8 @@ void UpdateTimes(void){
   CheckMemory;
 
   if(current_script_command!=NULL&&
-    (current_script_command->command==SCRIPT_VOLSMOKERENDERALL||current_script_command->command==SCRIPT_ISORENDERALL)
+    (
+      current_script_command->command==SCRIPT_ISORENDERALL)
     ){
     if(current_script_command->first==1){
       current_script_command->first=0;
@@ -1793,18 +1677,6 @@ int GetPlotStateSub(int choice){
         if(smoke3di->loaded==0||smoke3di->display==0)continue;
         return DYNAMIC_PLOTS;
       }
-      if(nvolrenderinfo>0){
-        for(i=0;i<global_scase.meshescoll.nmeshes;i++){
-          meshdata *meshi;
-          volrenderdata *vr;
-
-          meshi = global_scase.meshescoll.meshinfo + i;
-          vr = meshi->volrenderinfo;
-          if(vr->fireslice==NULL||vr->smokeslice==NULL)continue;
-          if(vr->loaded==0||vr->display==0)continue;
-          return DYNAMIC_PLOTS;
-        }
-      }
       if(visShooter!=0&&shooter_active==1){
         return DYNAMIC_PLOTS;
       }
@@ -1887,8 +1759,10 @@ int ISearch(float *list, int nlist, float key, int guess){
 /* ------------------ ResetItimes0 ------------------------ */
 
 void ResetItimes0(void){
-  if(current_script_command==NULL||(current_script_command->command!=SCRIPT_VOLSMOKERENDERALL&&current_script_command->command!=SCRIPT_ISORENDERALL)){
-    itimes=first_frame_index;
+  if(current_script_command==NULL||
+    (
+      current_script_command->command!=SCRIPT_ISORENDERALL)){
+    iglobal_times=first_frame_index;
   }
 }
 
@@ -2061,6 +1935,9 @@ void UpdateShowScene(void){
   int updating = 0;
 #endif
 
+#ifdef pp_READ_KEYBOARD
+  abort_vis = 0;
+#endif
   have_fire  = HaveFireLoaded();
   have_smoke = HaveSootLoaded();
   if(update_fire_histogram_now == 1){
@@ -2070,6 +1947,24 @@ void UpdateShowScene(void){
   if(update_idle == 1){
     IdleCB();
     update_idle = 0;
+  }
+  if(update_set_clipplanes == 1){
+    int i;
+
+    update_set_clipplanes = 0;
+    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+      meshdata *meshi;
+
+      meshi = global_scase.meshescoll.meshinfo + i;
+      if(meshi->box_clipinfo == NULL){
+        NewMemory(( void ** )&meshi->box_clipinfo, sizeof(clipdata));
+        memset(meshi->box_clipinfo, 0, sizeof(clipdata));
+        InitBoxClipInfo(meshi->box_clipinfo,
+          global_scase.xbar0, global_scase.xbar,
+          global_scase.ybar0, global_scase.ybar,
+          global_scase.zbar0, global_scase.zbar);
+      }
+    }
   }
   if(update_setmainwindow == 1){
     SetMainWindow();
@@ -2149,6 +2044,10 @@ void UpdateShowScene(void){
     GLUIDeviceCB(DEVICE_TIMEAVERAGE);
     END_SHOW_UPDATE(update_device_timeaverage);
   }
+  if(update_smoke_opacity == 1){
+    update_smoke_opacity = 0;
+    GLUISmoke3dCB(FIRE_HALFDEPTH);
+  }
   if(global_scase.update_smoke_alphas==1){
     SHOW_UPDATE(update_smoke_alphas);
     global_scase.update_smoke_alphas = 0;
@@ -2205,7 +2104,6 @@ void UpdateShowScene(void){
     update_smokefire_colors = 0;
     GLUISmoke3dCB(UPDATE_SMOKEFIRE_COLORS);
     GLUISmoke3dCB(UPDATE_CO2_COLORS);
-    GLUISmoke3dCB(USE_OPACITY_DEPTH);
     END_SHOW_UPDATE(update_smokefire_colors);
   }
   if(update_smoke3d_frame_inc == 1){
@@ -2221,7 +2119,7 @@ void UpdateShowScene(void){
   if(update_stept==1){
     SHOW_UPDATE(update_stept);
     update_stept = 0;
-    SetTimeVal(time_paused);
+    GLUISetTimeVal(time_paused);
     END_SHOW_UPDATE(update_stept);
   }
   if(update_movie_parms==1){
@@ -2407,6 +2305,10 @@ void UpdateShowScene(void){
     UpdateFaceLists();
     PRINT_TIMER(timer_update_facelists, "UpdateFaceLists");
     END_SHOW_UPDATE(updatefacelists);
+  }
+  if(global_times != NULL && iglobal_times != iglobal_times_last){
+    iglobal_times_last = iglobal_times;
+    GLUIUpdateTime();
   }
 #ifdef pp_SHOW_UPDATE
   if(updating==1){
@@ -2718,31 +2620,31 @@ void OutputBounds(void){
 /* ------------------ HandleMakeMovie ------------------------ */
 
 void HandleMakeMovie(void){
-  THREADcontrol(ffmpeg_threads, THREAD_LOCK);
+  ThreadLock(ffmpeg_threads);
   if(have_ffmpeg == 0){
     PRINTF("*** Error: The movie generating program ffmpeg is not available\n");
-    THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
+    ThreadUnlock(ffmpeg_threads);
     return;
   }
   GLUIEnableDisableMakeMovieCPP(OFF);
   update_makemovie = 1;
-  THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
+  ThreadUnlock(ffmpeg_threads);
 }
 
 /* ------------------ EnableDisableMakeMovie ------------------------ */
 
 void EnableDisableMakeMovie(int onoff){
-  THREADcontrol(ffmpeg_threads, THREAD_LOCK);
+  ThreadLock(ffmpeg_threads);
   GLUIEnableDisableMakeMovieCPP(onoff);
-  THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
+  ThreadUnlock(ffmpeg_threads);
 }
 
 /* ------------------ EnableDisablePlayMovie ------------------------ */
 
 void EnableDisablePlayMovie(void){
-  THREADcontrol(ffmpeg_threads, THREAD_LOCK);
+  ThreadLock(ffmpeg_threads);
   GLUIEnableDisablePlayMovieCPP();
-  THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
+  ThreadUnlock(ffmpeg_threads);
 }
 
 /* ------------------ UpdateDisplay ------------------------ */
@@ -2768,9 +2670,9 @@ void UpdateDisplay(void){
     ShowBoundaryMenu(INTERIOR_WALL_MENU);
     ShowBoundaryMenu(INTERIOR_WALL_MENU);
   }
-  if(update_fire_alpha==1){
-    update_fire_alpha=0;
-    GLUIUpdateFireAlpha();
+  if(update_use_soot_multiplier == 1){
+    update_use_soot_multiplier = 0;
+    GLUIUpdateFireParms();
   }
   if(update_texturebar==1){
     update_texturebar = 0;
@@ -2836,6 +2738,9 @@ void UpdateDisplay(void){
     update_make_iblank = 0;
     update_setvents    = 1;
     update_setcvents   = 1;
+#ifdef pp_SPEEDUP
+    printf("blanking data structures updated\n");
+#endif
   }
   if(update_setvents==1){
     SetVentDirs();
@@ -2845,7 +2750,7 @@ void UpdateDisplay(void){
     SetCVentDirs();
     update_setcvents = 0;
   }
-  THREADcontrol(ffmpeg_threads, THREAD_LOCK);
+  ThreadLock(ffmpeg_threads);
   if(update_ff == 1){
     update_ff = 0;
     if(have_ffmpeg == 1){
@@ -2855,7 +2760,7 @@ void UpdateDisplay(void){
       GLUIEnableDisableMakeMovieCPP(OFF);
     }
   }
-  THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
+  ThreadUnlock(ffmpeg_threads);
   if(update_ini==1){
     update_ini = 0;
     ReadIni(NULL);
@@ -2950,7 +2855,7 @@ void UpdateDisplay(void){
     INIT_PRINT_TIMER(timer_update_menus);
     if(opengl_finalized==1)glutDetachMenu(GLUT_RIGHT_BUTTON);
     attachmenu_status = 0;
-    THREADcontrol(checkfiles_threads, THREAD_LOCK);
+    ThreadLock(checkfiles_threads);
 #ifdef pp_GLUT_DEBUG
     printf("\n***before menu setup\n");
 #endif
@@ -2958,7 +2863,7 @@ void UpdateDisplay(void){
 #ifdef pp_GLUT_DEBUG
     printf("***after menu setup\n\n");
 #endif
-    THREADcontrol(checkfiles_threads, THREAD_UNLOCK);
+    ThreadUnlock(checkfiles_threads);
     if(opengl_finalized==1)glutAttachMenu(GLUT_RIGHT_BUTTON);
     attachmenu_status = 1;
     updatemenu = 0;
@@ -3002,6 +2907,14 @@ void UpdateDisplay(void){
     update_colorbar_digits = 0;
     GLUISetColorbarDigitsCPP(ncolorlabel_digits);
     GLUISetColorbarDigits();
+  }
+  if(update_viewpoint_list == 1){
+    update_viewpoint_list = 0;
+    GLUIUpdateViewpointList();
+  }
+  if(update_camera_label == 1){
+    update_camera_label = 0;
+    GLUIUpdateCameraLabel();
   }
   if(update_visColorbars==1){
     update_visColorbars = 0;

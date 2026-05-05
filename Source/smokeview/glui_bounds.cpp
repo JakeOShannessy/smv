@@ -1880,11 +1880,9 @@ extern "C" void GLUIHVACSliceBoundsCPP_CB(int var){
       break;
     case BOUND_RELOAD_DATA:
       SetLoadedSliceBounds(NULL, 0);
-      THREADcontrol(compress_threads, THREAD_LOCK);
       SetLoadedSliceBounds(NULL, 0);
       ReloadAllVectorSliceFiles(LOAD);
       ReloadAllSliceFiles(LOAD);
-      THREADcontrol(compress_threads, THREAD_UNLOCK);
       GLUIHVACSliceBoundsCPP_CB(BOUND_UPDATE_COLORS);
       break;
     case BOUND_RESEARCH_MODE:
@@ -2653,7 +2651,6 @@ extern GLUI *glui_shooter, *glui_tour, *glui_stereo, *glui_trainer;
 
 GLUI_Button *BUTTON_globalalpha = NULL;
 GLUI_Button *BUTTON_updatebound = NULL;
-GLUI_Button *BUTTON_compress=NULL;
 GLUI_Button *BUTTON_step=NULL;
 GLUI_Button *BUTTON_script_stop=NULL;
 GLUI_Button *BUTTON_script_start=NULL;
@@ -2664,6 +2661,7 @@ GLUI_Button *BUTTON_ini_load=NULL;
 GLUI_Button *BUTTON_script_setsuffix=NULL;
 GLUI_Button *BUTTON_script_runscript=NULL;
 GLUI_Button *BUTTON_SETTIME=NULL;
+GLUI_Button *BUTTON_SETFRAME = NULL;
 GLUI_Button *BUTTON_PART = NULL;
 GLUI_Button *BUTTON_SLICE = NULL;
 GLUI_Button *BUTTON_VSLICE = NULL;
@@ -2689,7 +2687,6 @@ GLUI_Rollout *ROLLOUT_iso_bounds;
 GLUI_Rollout *ROLLOUT_iso_color;
 GLUI_Rollout *ROLLOUT_script = NULL;
 GLUI_Rollout *ROLLOUT_config = NULL;
-GLUI_Rollout *ROLLOUT_compress=NULL;
 GLUI_Rollout *ROLLOUT_plot3d=NULL,*ROLLOUT_part=NULL,*ROLLOUT_slice=NULL,*ROLLOUT_bound=NULL,*ROLLOUT_iso=NULL;
 GLUI_Rollout *ROLLOUT_hvacduct=NULL, *ROLLOUT_hvacnode=NULL;
 GLUI_Rollout *ROLLOUT_iso_colors = NULL;
@@ -2734,6 +2731,9 @@ GLUI_Panel *PANEL_addremovemesh = NULL;
 GLUI_Panel *PANEL_boundary_temp_threshold=NULL;
 GLUI_Panel *PANEL_boundary_exterior_data = NULL;
 GLUI_Panel *PANEL_boundary_interior_data = NULL;
+#ifdef pp_BNDF_DEBUG
+GLUI_Panel *PANEL_boundary_patch_debug=NULL;
+#endif
 GLUI_Panel *PANEL_slice_buttonsA = NULL;
 GLUI_Panel *PANEL_boundary_outline_type = NULL;
 GLUI_Panel *PANEL_iso1 = NULL;
@@ -2806,14 +2806,14 @@ GLUI_Spinner *SPINNER_line_contour_num=NULL;
 GLUI_Spinner *SPINNER_line_contour_width=NULL;
 GLUI_Spinner *SPINNER_line_contour_min=NULL;
 GLUI_Spinner *SPINNER_line_contour_max=NULL;
-GLUI_Spinner *SPINNER_timebounds=NULL;
+GLUI_Spinner *SPINNER_timeval=NULL;
+GLUI_Spinner *SPINNER_timeindex=NULL;
 GLUI_Spinner *SPINNER_tload_begin=NULL;
 GLUI_Spinner *SPINNER_tload_end=NULL;
 GLUI_Spinner *SPINNER_tload_skip=NULL;
 GLUI_Spinner *SPINNER_plot3d_vectorpointsize=NULL,*SPINNER_plot3d_vectorlinewidth=NULL,*SPINNER_plot3d_vectorlinelength=NULL;
 GLUI_Spinner *SPINNER_sliceaverage=NULL;
 GLUI_Spinner *SPINNER_boundaryaverage=NULL;
-GLUI_Spinner *SPINNER_zipstep=NULL;
 GLUI_Spinner *SPINNER_partstreaklength=NULL;
 GLUI_Spinner *SPINNER_partpointsize=NULL;
 GLUI_Spinner *SPINNER_isopointsize=NULL;
@@ -2863,6 +2863,9 @@ GLUI_Checkbox *CHECKBOX_show_exterior_walls[7];
 GLUI_Checkbox *CHECKBOX_show_mesh_geom[256];
 GLUI_Checkbox *CHECKBOX_show_mesh_data[256];
 
+#ifdef pp_BNDF_DEBUG
+GLUI_Checkbox *CHECKBOX_patch_debug[NPATCHES_DEBUG];
+#endif
 GLUI_Checkbox *CHECKBOX_use_partload_threads = NULL;
 GLUI_Checkbox *CHECKBOX_partfast = NULL;
 GLUI_Checkbox *CHECKBOX_show_slice_shaded = NULL;
@@ -2899,9 +2902,6 @@ GLUI_Checkbox *CHECKBOX_constant_coloring=NULL;
 GLUI_Checkbox *CHECKBOX_data_coloring=NULL;
 GLUI_Checkbox *CHECKBOX_sort2=NULL;
 GLUI_Checkbox *CHECKBOX_smooth2=NULL;
-GLUI_Checkbox *CHECKBOX_overwrite_all=NULL;
-GLUI_Checkbox *CHECKBOX_compress_autoloaded=NULL;
-GLUI_Checkbox *CHECKBOX_erase_all=NULL;
 GLUI_Checkbox *CHECKBOX_multi_task=NULL;
 GLUI_Checkbox *CHECKBOX_showtracer=NULL;
 GLUI_Checkbox *CHECKBOX_cellcenter_slice_interp=NULL;
@@ -3050,11 +3050,10 @@ int      nfiledatacolprocinfo = 0;
 
 //*** fileprocinfo entries
 #define SHOWHIDE_ROLLOUT   0
-#define COMPRESS_ROLLOUT   1
-#define SCRIPT_ROLLOUT     2
-#define CONFIG_ROLLOUT     3
+#define SCRIPT_ROLLOUT     1
+#define CONFIG_ROLLOUT     2
+procdata  fileprocinfo[3];
 
-procdata  fileprocinfo[4];
 int      nfileprocinfo = 0;
 
 //*** particleprocinfo entries
@@ -3822,9 +3821,6 @@ void BoundsDlgCB(int var){
   case SAVE_SETTINGS_BOUNDS:
     WriteIni(LOCAL_INI, NULL);
     break;
-  case COMPRESS_FILES:
-    PRINTF("compressing\n");
-    break;
   default:
     assert(FFALSE);
     break;
@@ -3858,9 +3854,9 @@ extern "C" void GLUIImmersedBoundCB(int var){
         case GEOM_OUTLINE_HIDDEN:
           show_slice_outlines[i]=0;
           break;
-	      default:
-	        assert(FFALSE);
-	        break;
+        default:
+          assert(FFALSE);
+          break;
       }
     }
     if(RADIO_slice_edgetype!=NULL)RADIO_slice_edgetype->set_int_val(glui_slice_edgetype);
@@ -4147,27 +4143,6 @@ extern "C" void BoundBoundCB(int var){
       }
     }
     break;
-  case COMPRESS_FILES:
-    if(compress_threads == NULL){
-      compress_threads = THREADinit(&n_compress_threads, &use_compress_threads, Compress);
-    }
-    THREADrun(compress_threads);
-    break;
-  case COMPRESS_AUTOLOADED:
-    updatemenu = 1;
-    break;
-  case OVERWRITE:
-    if(overwrite_all == 1){
-      CHECKBOX_erase_all->set_int_val(0);
-    }
-    updatemenu = 1;
-    break;
-  case ERASE:
-    if(erase_all == 1){
-      CHECKBOX_overwrite_all->set_int_val(0);
-    }
-    updatemenu = 1;
-    break;
   case BOUND_STARTUP:
     BoundsDlgCB(SAVE_SETTINGS_BOUNDS);
     break;
@@ -4447,14 +4422,67 @@ extern "C" void GLUIUpdateMeshBounds(void){
   MeshBoundCB(USEMESH_USE_XYZ);
 }
 
+/* ------------------ GLUISetTimeVal ------------------------ */
+
+void GLUISetTimeVal(float timeval){
+  int i;
+
+  if(global_times != NULL && nglobal_times > 0){
+    if(timeval < global_times[0])timeval = global_times[0];
+    if(timeval > global_times[nglobal_times - 1] - 0.0001)timeval = global_times[nglobal_times - 1] - 0.0001;
+    for(i = 0; i < nglobal_times; i++){
+      float tlow, thigh;
+
+      if(i == 0){
+        tlow = global_times[i];
+        thigh = (global_times[i] + global_times[i + 1]) / 2.0;
+      }
+      else if(i == nglobal_times - 1){
+        tlow = (global_times[i - 1] + global_times[i]) / 2.0;
+        thigh = global_times[i];
+      }
+      else{
+        tlow = (global_times[i - 1] + global_times[i]) / 2.0;
+        thigh = (global_times[i] + global_times[i + 1]) / 2.0;
+      }
+      if(tlow <= timeval && timeval < thigh){
+        iglobal_times = i;
+        stept = 1;
+        force_redisplay = 1;
+        UpdateFrameNumber(0);
+        UpdateTimeLabels();
+        Keyboard('t', FROM_SMOKEVIEW);
+        SPINNER_timeindex->set_int_val(iglobal_times);
+        break;
+      }
+    }
+  }
+}
+
 /* ------------------ TimeBoundCB ------------------------ */
 
 void TimeBoundCB(int var){
 
   updatemenu = 1;
   switch(var){
-  case SET_TIME:
-    SetTimeVal(glui_time);
+  case SET_TIME_FRAME:
+    SetTimeFrameIndex(glui_frame,PAUSE_TIME);
+    break;
+  case PREV_FRAME:
+    glui_frame--;
+    if(glui_frame<0)glui_frame = nglobal_times-1;
+    SetTimeFrameIndex(glui_frame,PAUSE_TIME);
+    SPINNER_timeindex->set_int_val(glui_frame);
+    break;
+  case NEXT_FRAME:
+    glui_frame++;
+    if(glui_frame>nglobal_times-1)glui_frame=0;
+    SetTimeFrameIndex(glui_frame,PAUSE_TIME);
+    SPINNER_timeindex->set_int_val(glui_frame);
+    break;
+  case SET_TIME_VAL:
+    GLUISetTimeVal(glui_time);
+    GLUISetTimeVal(glui_time);
     break;
   case TBOUNDS_USE:
     GLUIUpdatePlot2DTbounds();
@@ -4525,7 +4553,7 @@ void ScriptCB(int var){
     break;
   case SCRIPT_CANCEL_NOW:
     current_script_command = NULL;
-    runscript = 0;
+    SetRunScriptVal(0);
     first_frame_index = 0;
     script_startframe = -1;
     script_skipframe = -1;
@@ -4858,6 +4886,36 @@ void AddMeshCheckbox(int icol,int nm, GLUI_Panel *PANEL, GLUI_Checkbox **CHECKBO
   }
 }
 
+#ifdef pp_BNDF_DEBUG
+#define SHOW_ALL_PATCHES 0
+#define HIDE_ALL_PATCHES 1
+/* ------------------ BoundDebugCB ------------------------ */
+
+
+void BoundDebugCB(int var){
+  int i;
+  
+  switch(var){
+    case SHOW_ALL_PATCHES:
+      for(i=0;i<NPATCHES_DEBUG;i++){
+        bndf_vis_patch[i] = 1;
+      }
+      break;
+    case HIDE_ALL_PATCHES:
+      for(i=0;i<NPATCHES_DEBUG;i++){
+        bndf_vis_patch[i] = 0;
+      }
+      break;
+    default:
+      assert(FFALSE);
+      break;
+  }
+  for(i=0;i<NPATCHES_DEBUG;i++){
+    CHECKBOX_patch_debug[i]->set_int_val(bndf_vis_patch[i]);
+  }
+}
+#endif
+
 /* ------------------ GLUIBoundsSetup ------------------------ */
 
 extern "C" void GLUIBoundsSetup(int main_window){
@@ -4897,22 +4955,6 @@ extern "C" void GLUIBoundsSetup(int main_window){
     if(global_scase.nplot3dinfo > 0)BUTTON_PLOT3D = glui_bounds->add_button_to_panel(ROLLOUT_showhide, "Plot3D", FILESHOW_plot3d, FileShowCB);
     glui_bounds->add_button_to_panel(ROLLOUT_showhide, "File Sizes", FILESHOW_sizes, FileShowCB);
     GLUIUpdateShowHideButtons();
-  }
-
-  if(smokezippath != NULL && (global_scase.npatchinfo > 0 || global_scase.smoke3dcoll.nsmoke3dinfo > 0 || global_scase.slicecoll.nsliceinfo > 0)){
-    ROLLOUT_compress = glui_bounds->add_rollout_to_panel(ROLLOUT_files, "Compress", false, COMPRESS_ROLLOUT, FileRolloutCB);
-    TOGGLE_ROLLOUT(fileprocinfo, nfileprocinfo, ROLLOUT_compress, COMPRESS_ROLLOUT, glui_bounds);
-
-    CHECKBOX_erase_all = glui_bounds->add_checkbox_to_panel(ROLLOUT_compress, "Erase compressed files",
-      &erase_all, ERASE, BoundBoundCB);
-    CHECKBOX_overwrite_all = glui_bounds->add_checkbox_to_panel(ROLLOUT_compress, "Overwrite compressed files",
-      &overwrite_all, OVERWRITE, BoundBoundCB);
-    CHECKBOX_compress_autoloaded = glui_bounds->add_checkbox_to_panel(ROLLOUT_compress, "Compress only autoloaded files",
-      &compress_autoloaded, COMPRESS_AUTOLOADED, BoundBoundCB);
-    SPINNER_zipstep = glui_bounds->add_spinner_to_panel(ROLLOUT_compress, "Frame Skip", GLUI_SPINNER_INT, &tload_zipskip,
-        FRAMELOADING, GLUISliceBoundCB);
-    SPINNER_zipstep->set_int_limits(0, 100);
-    BUTTON_compress = glui_bounds->add_button_to_panel(ROLLOUT_compress, "Run smokezip", COMPRESS_FILES, BoundBoundCB);
   }
 
   ROLLOUT_script = glui_bounds->add_rollout_to_panel(ROLLOUT_files, "Scripts", false, SCRIPT_ROLLOUT, FileRolloutCB);
@@ -5033,7 +5075,8 @@ extern "C" void GLUIBoundsSetup(int main_window){
   // ----------------------------------- 3D smoke ----------------------------------------
 
 
-  if(global_scase.smoke3dcoll.nsmoke3dinfo > 0 || nvolrenderinfo > 0){
+  if(global_scase.smoke3dcoll.nsmoke3dinfo > 0 
+    ){
     ROLLOUT_smoke3d = glui_bounds->add_rollout_to_panel(ROLLOUT_filebounds, "3D smoke", false, SMOKE3D_ROLLOUT, BoundRolloutCB);
     TOGGLE_ROLLOUT(boundprocinfo, nboundprocinfo, ROLLOUT_smoke3d, SMOKE3D_ROLLOUT, glui_bounds);
   }
@@ -5061,6 +5104,10 @@ extern "C" void GLUIBoundsSetup(int main_window){
     TOGGLE_ROLLOUT(subboundprocinfo, nsubboundprocinfo, ROLLOUT_outputpatchdata, BOUNDARY_OUTPUT_ROLLOUT, glui_bounds);
 
     glui_bounds->add_checkbox_to_panel(ROLLOUT_outputpatchdata, "Output data to file", &output_patchdata);
+#ifdef pp_BNDF_DEBUG
+    glui_bounds->add_checkbox_to_panel(ROLLOUT_outputpatchdata, "Output patch", &glui_output_patch);
+    glui_bounds->add_spinner_to_panel(ROLLOUT_outputpatchdata, "patch index", GLUI_SPINNER_INT, &glui_output_ipatch);
+#endif
 
     PANEL_outputpatchdata = glui_bounds->add_panel_to_panel(ROLLOUT_outputpatchdata, "", GLUI_PANEL_NONE);
 
@@ -5129,6 +5176,24 @@ extern "C" void GLUIBoundsSetup(int main_window){
     CHECKBOX_hide_all_interior_patch_data = glui_bounds->add_checkbox_to_panel(PANEL_boundary_interior_data, "Hide all", &show_all_interior_patch_data, HIDE_ALL_INTERIOR_PATCH_DATA, BoundBoundCB);
 
     glui_bounds->add_checkbox_to_panel(ROLLOUT_boundary_settings, "output patch info when loading", &outout_patch_faces);
+#ifdef pp_BNDF_DEBUG
+    PANEL_boundary_patch_debug = glui_bounds->add_panel_to_panel(ROLLOUT_boundary_settings, "debug settings");
+    glui_bounds->add_checkbox_to_panel(PANEL_boundary_patch_debug, "draw 1", &bf_patch1);
+    glui_bounds->add_checkbox_to_panel(PANEL_boundary_patch_debug, "draw 2", &bf_patch2);
+    glui_bounds->add_checkbox_to_panel(PANEL_boundary_patch_debug, "draw 3", &bf_patch3);
+    glui_bounds->add_separator_to_panel(PANEL_boundary_patch_debug);
+
+    for(i = 0; i < NPATCHES_DEBUG; i++){
+      char vislabel[50];
+
+      bndf_vis_patch[i] = 1;
+      sprintf(vislabel, "patch %i", i+1);
+      CHECKBOX_patch_debug[i] = glui_bounds->add_checkbox_to_panel(PANEL_boundary_patch_debug, vislabel, bndf_vis_patch+i);
+
+    }
+    glui_bounds->add_button_to_panel(PANEL_boundary_patch_debug, "Show all patches", SHOW_ALL_PATCHES, BoundDebugCB);
+    glui_bounds->add_button_to_panel(PANEL_boundary_patch_debug, "Hide all patches", HIDE_ALL_PATCHES, BoundDebugCB);
+#endif
 
     if(nboundaryslicedups > 0){
       ROLLOUT_boundary_duplicates = glui_bounds->add_rollout_to_panel(ROLLOUT_bound, "Duplicates", false, BOUNDARY_DUPLICATE_ROLLOUT, SubBoundRolloutCB);
@@ -5240,7 +5305,6 @@ extern "C" void GLUIBoundsSetup(int main_window){
 
     CHECKBOX_sort2 = glui_bounds->add_checkbox_to_panel(ROLLOUT_iso_settings, "Sort transparent surfaces:", &sort_iso_triangles, SORT_SURFACES, GLUISliceBoundCB);
     CHECKBOX_smooth2 = glui_bounds->add_checkbox_to_panel(ROLLOUT_iso_settings, "Smooth isosurfaces", &smooth_iso_normal, SMOOTH_SURFACES, GLUISliceBoundCB);
-    glui_bounds->add_checkbox_to_panel(ROLLOUT_iso_settings, "wrapup in background", &use_iso_threads);
     glui_bounds->add_button_to_panel(ROLLOUT_iso_settings, "Output isosurface bounds", ISO_BOUNDS_OUTPUT, GLUISliceBoundCB);
   }
 
@@ -5589,6 +5653,9 @@ extern "C" void GLUIBoundsSetup(int main_window){
     RADIO_filetype = glui_bounds->add_radiogroup_to_panel(PANEL_slice_filetype, &sliceload_filetype);
     glui_bounds->add_radiobutton_to_group(RADIO_filetype, "node centered");
     glui_bounds->add_radiobutton_to_group(RADIO_filetype, "cell centered");
+#ifdef pp_SLFC
+    glui_bounds->add_radiobutton_to_group(RADIO_filetype, "face centered");
+#endif
     LISTBOX_sliceload = glui_bounds->add_listbox_to_panel(PANEL_sliceload_option, "quantity:", &sliceload_boundtype);
     for(i = 0;i < nslicebounds_cpp;i++){
       LISTBOX_sliceload->add_item(i, slicebounds_cpp[i].label);
@@ -5610,12 +5677,18 @@ extern "C" void GLUIBoundsSetup(int main_window){
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, "Save auto load file list", SAVE_FILE_LIST, BoundBoundCB);
   glui_bounds->add_button_to_panel(ROLLOUT_autoload, "Auto load now", LOAD_FILES, BoundBoundCB);
 
-  ROLLOUT_time1a = glui_bounds->add_rollout_to_panel(PANEL_loadbounds, "Set time", false, LOAD_TIMESET_ROLLOUT, LoadRolloutCB);
+  ROLLOUT_time1a = glui_bounds->add_rollout_to_panel(PANEL_loadbounds, "Set time/frame", false, LOAD_TIMESET_ROLLOUT, LoadRolloutCB);
   TOGGLE_ROLLOUT(loadprocinfo, nloadprocinfo, ROLLOUT_time1a, LOAD_TIMESET_ROLLOUT, glui_bounds);
 
-  SPINNER_timebounds = glui_bounds->add_spinner_to_panel(ROLLOUT_time1a, "Time:", GLUI_SPINNER_FLOAT, &glui_time);
+  SPINNER_timeval = glui_bounds->add_spinner_to_panel(ROLLOUT_time1a, "Time:", GLUI_SPINNER_FLOAT, &glui_time, SET_TIME_VAL, TimeBoundCB);
+  BUTTON_SETTIME = glui_bounds->add_button_to_panel(ROLLOUT_time1a, "Set time", SET_TIME_VAL, TimeBoundCB);
+
+  SPINNER_timeindex = glui_bounds->add_spinner_to_panel(ROLLOUT_time1a, "Frame:", GLUI_SPINNER_INT, &glui_frame, SET_TIME_FRAME, TimeBoundCB);
+  BUTTON_SETFRAME = glui_bounds->add_button_to_panel(ROLLOUT_time1a, "Set frame", SET_TIME_FRAME, TimeBoundCB);
+  glui_bounds->add_button_to_panel(ROLLOUT_time1a, "Prev frame", PREV_FRAME, TimeBoundCB);
+  glui_bounds->add_button_to_panel(ROLLOUT_time1a, "Next frame", NEXT_FRAME, TimeBoundCB);
+
   glui_bounds->add_spinner_to_panel(ROLLOUT_time1a, "Offset:", GLUI_SPINNER_FLOAT, &timeoffset);
-  BUTTON_SETTIME = glui_bounds->add_button_to_panel(ROLLOUT_time1a, "Set", SET_TIME, TimeBoundCB);
 
   ROLLOUT_time2 = glui_bounds->add_rollout_to_panel(PANEL_loadbounds, "Set time limits", false, LOAD_TIMEBOUND_ROLLOUT, LoadRolloutCB);
   TOGGLE_ROLLOUT(loadprocinfo, nloadprocinfo, ROLLOUT_time2, LOAD_TIMEBOUND_ROLLOUT, glui_bounds);
@@ -5892,28 +5965,6 @@ extern "C" void GLUIBoundsSetup(int main_window){
   glui_bounds->set_main_gfx_window( main_window );
 }
 
-/* ------------------ GLUICompressOnOff ------------------------ */
-
-extern "C" void GLUICompressOnOff(int flag){
-  switch(flag){
-    case OFF:
-      if(BUTTON_compress!=NULL)BUTTON_compress->disable();
-      if(CHECKBOX_overwrite_all!=NULL)CHECKBOX_overwrite_all->disable();
-      if(CHECKBOX_erase_all!=NULL)CHECKBOX_erase_all->disable();
-      if(CHECKBOX_multi_task!=NULL)CHECKBOX_multi_task->disable();
-      break;
-    case ON:
-      if(BUTTON_compress!=NULL)BUTTON_compress->enable();
-      if(CHECKBOX_overwrite_all!=NULL)CHECKBOX_overwrite_all->enable();
-      if(CHECKBOX_erase_all!=NULL)CHECKBOX_erase_all->enable();
-      if(CHECKBOX_multi_task!=NULL)CHECKBOX_multi_task->enable();
-      break;
-    default:
-      assert(FFALSE);
-      break;
-  }
-}
-
 /* ------------------ GLUIPlot3DBoundCB ------------------------ */
 
 extern "C" void GLUIPlot3DBoundCB(int var){
@@ -6166,8 +6217,8 @@ extern "C" void GLUIIsoBoundCB(int var){
         iso_opacity_change=1;
         break;
       default:
-	assert(FFALSE);
-	break;
+        assert(FFALSE);
+        break;
     }
     GLUISliceBoundCB(DATA_transparent);
     break;
@@ -6881,7 +6932,6 @@ extern "C" void GLUISliceBoundCB(int var){
     }
     break;
   case FRAMELOADING:
-    tload_zipstep = tload_zipskip + 1;
     if(use_tload_skip==0){
       tload_step = 1;
     }
@@ -7031,12 +7081,6 @@ extern "C" void GLUIShowBounds(int menu_id){
   case DIALOG_SCRIPT:
     FileRolloutCB(SCRIPT_ROLLOUT);
     break;
-  case DIALOG_SMOKEZIP:
-    if(ROLLOUT_files->is_open == 0) {
-      FileDataColRolloutCB(FILE_ROLLOUT);
-    }
-    FileRolloutCB(COMPRESS_ROLLOUT);
-    break;
   case DIALOG_3DSMOKE:
     FileDataColRolloutCB(DATA_ROLLOUT);
     BoundRolloutCB(SMOKE3D_ROLLOUT);
@@ -7097,13 +7141,6 @@ extern "C" void GLUIShowBoundsDialog(int type){
   }
 }
 
-/* ------------------ GLUIUpdateOverwrite ------------------------ */
-
-extern "C" void GLUIUpdateOverwrite(void){
-  if(CHECKBOX_overwrite_all!=NULL)CHECKBOX_overwrite_all->set_int_val(overwrite_all);
-  if(CHECKBOX_compress_autoloaded!=NULL)CHECKBOX_compress_autoloaded->set_int_val(compress_autoloaded);
-}
-
 /* ------------------ GLUIHideBounds ------------------------ */
 
 extern "C" void GLUIHideBounds(void){
@@ -7123,11 +7160,21 @@ extern "C" void GLUIUpdatePlot3dDisplay(void){
   if(RADIO_plot3d_display!=NULL)RADIO_plot3d_display->set_int_val(contour_type);
 }
 
+  /* ------------------ GLUIUpdateTime ------------------------ */
+
+void GLUIUpdateTime(void){
+  if(SPINNER_timeval!=NULL)SPINNER_timeval->set_float_val(GetTime());
+  if(SPINNER_timeindex!=NULL)SPINNER_timeindex->set_int_val(iglobal_times);
+}
+
 /* ------------------ GLUIUpdateTimeBounds ------------------------ */
 
 extern "C" void GLUIUpdateTimeBounds(float time_min, float time_max){
-  if(SPINNER_timebounds!=NULL){
-    SPINNER_timebounds->set_float_limits(time_min,time_max);
+  if(SPINNER_timeval!=NULL){
+    SPINNER_timeval->set_float_limits(time_min,time_max);
+  }
+  if(SPINNER_timeindex!=NULL && nglobal_times>0){
+    SPINNER_timeindex->set_int_limits(0,nglobal_times);
   }
 }
 

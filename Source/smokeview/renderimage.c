@@ -52,11 +52,11 @@ void *SetupFF(void *arg){
   have_ffplay_local = HaveProg("ffplay -version >/dev/null 2>/dev/null");
 #endif
 
-  THREADcontrol(ffmpeg_threads, THREAD_LOCK);
+  ThreadLock(ffmpeg_threads);
   update_ff = 1;
   have_ffmpeg = have_ffmpeg_local;
   have_ffplay = have_ffplay_local;
-  THREADcontrol(ffmpeg_threads, THREAD_UNLOCK);
+  ThreadUnlock(ffmpeg_threads);
   THREAD_EXIT(ffmpeg_threads);
 }
 
@@ -208,22 +208,25 @@ void GetRenderResolution(int *width_low, int *height_low, int *width_high, int *
 
 void Render(int view_mode){
   if(render_status == RENDER_OFF)return;
-  if(current_script_command!=NULL&&(current_script_command->command==SCRIPT_VOLSMOKERENDERALL||current_script_command->command==SCRIPT_ISORENDERALL)){
+  if(current_script_command!=NULL&&
+    (
+      current_script_command->command==SCRIPT_ISORENDERALL)){
     int command;
 
     command = current_script_command->command;
-    if(command == SCRIPT_VOLSMOKERENDERALL || command == SCRIPT_ISORENDERALL){
-      if(itimes == 0){
-        current_script_command->remove_frame = itimes;
+    if(
+      command == SCRIPT_ISORENDERALL){
+      if(iglobal_times == 0){
+        current_script_command->remove_frame = iglobal_times;
         current_script_command->exit = 1;
         stept = 0;
         return;
       }
-      current_script_command->remove_frame = itimes;
+      current_script_command->remove_frame = iglobal_times;
     }
   }
   if(render_times == RENDER_ALLTIMES && render_status == RENDER_ON&&render_mode == RENDER_NORMAL && plotstate == DYNAMIC_PLOTS && nglobal_times > 0){
-    if(itimes>=0&&itimes<nglobal_times){
+    if(iglobal_times>=0&&iglobal_times<nglobal_times){
       RenderFrame(view_mode);
     }
     else{
@@ -270,7 +273,7 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
 
     if(
       ( command == SCRIPT_RENDERONCE   || command == SCRIPT_RENDERALL         ||
-        command == SCRIPT_RENDER360ALL || command == SCRIPT_VOLSMOKERENDERALL ||
+        command == SCRIPT_RENDER360ALL || 
         command == SCRIPT_ISORENDERALL || command == SCRIPT_LOADSLICERENDER   || command == SCRIPT_LOADSMOKERENDER ||
         command == SCRIPT_RENDERDOUBLEONCE
         ) &&
@@ -318,7 +321,6 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
     (current_script_command != NULL &&
     (current_script_command->command == SCRIPT_RENDERALL ||
       current_script_command->command == SCRIPT_RENDER360ALL ||
-      current_script_command->command == SCRIPT_VOLSMOKERENDERALL ||
       current_script_command->command == SCRIPT_LOADSLICERENDER || current_script_command->command == SCRIPT_LOADSMOKERENDER ||
       current_script_command->command == SCRIPT_ISORENDERALL
       ))){
@@ -331,10 +333,10 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
     }
     else{
       if(render_skip == 1 || render_skip == RENDER_CURRENT_SINGLE){
-        image_num = itimes;
+        image_num = iglobal_times;
       }
       else{
-        image_num = itimes / render_skip;
+        image_num = iglobal_times / render_skip;
       }
     }
     if(current_script_command!=NULL && IS_LOADRENDER){
@@ -371,7 +373,7 @@ int GetRenderFileName(int view_mode, char *renderfile_dir, char *renderfile_full
       char timelabel_local[20], *timelabelptr;
       float dt, maxtime;
 
-      time_local = global_times[itimes];
+      time_local = GetTime();
       dt = ABS(global_times[1] - global_times[0]);
       maxtime = MAX(ABS(global_times[nglobal_times-1]), ABS(global_scase.global_tend));
       maxtime = MAX(maxtime, ABS(global_scase.global_tbegin));
@@ -440,7 +442,7 @@ void OutputSliceData(void){
     i = slice_loaded_list[ii];
     sd = global_scase.slicecoll.sliceinfo + i;
     if(sd->display == 0 || sd->slicefile_labelindex != slicefile_labelindex)continue;
-    if(global_times!=NULL&&sd->times[0] > global_times[itimes])continue;
+    if(global_times!=NULL&&sd->times[0] > GetTime())continue;
 
     if(sd->qslicedata == NULL){
       PRINTF("  Slice data unavailable for output\n");
@@ -452,14 +454,14 @@ void OutputSliceData(void){
     if(ext != NULL){
       ext[0] = 0;
     }
-    sprintf(flabel, "%i", itimes);
+    sprintf(flabel, "%i", iglobal_times);
     TrimBack(flabel);
     strcat(datafile, "_sf_");
     strcat(datafile, flabel);
     strcat(datafile, ".csv");
     fileout = FOPEN(datafile, "a");
     if(fileout == NULL)continue;
-    if(global_times != NULL)fprintf(fileout, "%f\n", global_times[itimes]);
+    if(global_times != NULL)fprintf(fileout, "%f\n", GetTime());
     switch(sd->idir){
     case XDIR:
       fprintf(fileout, "%i,%i\n", sd->ks2 + 1 - sd->ks1, sd->js2 + 1 - sd->js1);
@@ -665,7 +667,7 @@ int GifAddFrameSpec() {
     else {
       struct gif_spec_frame this_frame =
           current_gif_spec->gif_frames[current_gif_frame];
-      if(this_frame.frame_number == itimes) {
+      if(this_frame.frame_number == iglobal_times) {
         render = true;
         delay = this_frame.duration;
         current_gif_frame++;

@@ -320,39 +320,39 @@ void *ClassifyAllGeom(void *arg){
     geomdata *geomi;
 
     geomi = global_scase.geominfo + i;
-    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    ThreadLock(readallgeom_threads);
     if(geomi->read_status != 0){
-      THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+      ThreadUnlock(readallgeom_threads);
       continue;
     }
     geomi->read_status = 1;
-    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+    ThreadUnlock(readallgeom_threads);
 
     if(geomi->geomtype != GEOM_ISO){
       ClassifyGeom(geomi, NULL);
     }
-    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    ThreadLock(readallgeom_threads);
     geomi->read_status = 2;
-    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+    ThreadUnlock(readallgeom_threads);
   }
   for(i = 0; i < global_scase.ncgeominfo; i++){
     geomdata *geomi;
 
     geomi = global_scase.cgeominfo + i;
-    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    ThreadLock(readallgeom_threads);
     if(geomi->read_status != 0){
-      THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+      ThreadUnlock(readallgeom_threads);
       continue;
     }
     geomi->read_status = 1;
-    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+    ThreadUnlock(readallgeom_threads);
 
     if(geomi->geomtype != GEOM_ISO){
       ClassifyGeom(geomi, NULL);
     }
-    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    ThreadLock(readallgeom_threads);
     geomi->read_status = 2;
-    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+    ThreadUnlock(readallgeom_threads);
   }
   THREAD_EXIT(readallgeom_threads);
 }
@@ -2849,36 +2849,36 @@ void *ReadAllGeom(void *arg){
     geomdata *geomi;
 
     geomi = global_scase.geominfo + i;
-    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    ThreadLock(readallgeom_threads);
     if(geomi->read_status!=0){
-      THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+      ThreadUnlock(readallgeom_threads);
       continue;
     }
     geomi->read_status = 1;
-    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+    ThreadUnlock(readallgeom_threads);
 
     ReadGeom(geomi, NULL, 0, LOAD, GEOM_GEOM, NULL);
-    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    ThreadLock(readallgeom_threads);
     geomi->read_status = 2;
-    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+    ThreadUnlock(readallgeom_threads);
   }
   for(i = 0; i<global_scase.ncgeominfo; i++){
     geomdata *geomi;
 
     geomi = global_scase.cgeominfo+i;
-    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    ThreadLock(readallgeom_threads);
     if(geomi->read_status!=0){
-      THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+      ThreadUnlock(readallgeom_threads);
       continue;
     }
     geomi->read_status = 1;
-    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+    ThreadUnlock(readallgeom_threads);
 
     ReadGeom(geomi, NULL, 0, LOAD, GEOM_CGEOM, NULL);
     UpdateGeomTriangles(geomi, GEOM_STATIC);
-    THREADcontrol(readallgeom_threads, THREAD_LOCK);
+    ThreadLock(readallgeom_threads);
     geomi->read_status = 2;
-    THREADcontrol(readallgeom_threads, THREAD_UNLOCK);
+    ThreadUnlock(readallgeom_threads);
   }
   THREAD_EXIT(readallgeom_threads);
 }
@@ -3499,9 +3499,9 @@ FILE_SIZE ReadGeom2(geomdata *geomi, int load_flag, int type){
           surfi=global_scase.surfcoll.surfinfo;
           triangles[ii].insolid = 0;
           break;
-	      default:
-	      assert(FFALSE);
-	      break;
+        default:
+          assert(FFALSE);
+          break;
         }
         switch(type){
         case GEOM_CGEOM:
@@ -3520,8 +3520,8 @@ FILE_SIZE ReadGeom2(geomdata *geomi, int load_flag, int type){
           triangles[ii].outside_domain = OutSideDomain(triangles[ii].verts);
           break;
         default:
-	      assert(FFALSE);
-	      break;
+          assert(FFALSE);
+          break;
         }
       }
       FREEMEMORY(ijk);
@@ -3578,7 +3578,7 @@ void ReorderFace(int *faces){
 
 void CancelUpdateTriangles(void){
   cancel_update_triangles = 1;
-  THREADcontrol(triangles_threads, THREAD_JOIN);
+  ThreadJoin(&triangles_threads);
   cancel_update_triangles = 0;
 }
 
@@ -4851,8 +4851,8 @@ void ShowHideSortGeometry(int sort_geom, float *mm){
         }
         if(itime==1&&geomi->geomtype==GEOM_ISO){
           if(plotstate != DYNAMIC_PLOTS)continue;
-          if(use_tload_begin==1&&global_times[itimes]<global_scase.tload_begin)continue;
-          if(use_tload_end==1&&global_times[itimes]>global_scase.tload_end)continue;
+          if(use_tload_begin==1&&GetTime()<global_scase.tload_begin)continue;
+          if(  use_tload_end==1&&GetTime()>global_scase.tload_end)continue;
         }
 
         for(j = 0; j < geomlisti->ntriangles; j++){

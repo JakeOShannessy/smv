@@ -8,6 +8,11 @@
 #include "shared_structures.h"
 #include "structures.h"
 
+//*** glui_bounds.cpp headers
+
+EXTERNCPP void SetTimeFrameIndex(int frameval, int stept_arg);
+EXTERNCPP void GLUIUpdateTime(void);
+
 //*** glui_clip.cpp headers
 
 EXTERNCPP void GLUIClipSetup(int main_window);
@@ -51,12 +56,15 @@ EXTERNCPP void GLUILabelsCB(int value);
 EXTERNCPP void GLUIUpdateVisSkyboxOutline(void);
 EXTERNCPP void GLUISkyCB(int var);
 
-
 //*** glui_shooter.cpp headers
 
 EXTERNCPP void GLUIShooterSetup(int main_window);
 EXTERNCPP void GLUIShowShooter(void);
 EXTERNCPP void GLUIHideShooter(void);
+
+//*** glui_smoke.cpp headers
+
+EXTERNCPP void GLUIUpdateFireParms(void);
 
 //*** glui_geometry.cpp headers
 
@@ -554,9 +562,9 @@ EXTERNCPP void UpdateVSliceBoundIndexes(void);
 
 //*** IOsmoke.c headers
 
+EXTERNCPP void *InitNabors(void *arg);
+EXTERNCPP void MakeFireColors(float temp_min, float temp_max, int nfire_colors_arg);
 EXTERNCPP void DrawSmokeFrame(void);
-EXTERNCPP void DrawVolSmokeFrame(void);
-EXTERNCPP void GetSmoke3DTimeSteps(int fortran_skip, char *smokefile, int version, int *ntimes_found, int *ntimes_full);
 EXTERNCPP int GetSmokeNFrames(int type, float *tmin, float *tmax);
 EXTERNCPP void InitAlphas(unsigned char *smokealphanew,  unsigned char *firealphanew,
                           float base_extinct, int use_smoke_density, float maxval, float new_extinct,
@@ -566,11 +574,17 @@ EXTERNCPP int  IsSmokeLoaded(smv_case *scase);
 EXTERNCPP void MakeIBlankSmoke3D(void);
 EXTERNCPP void MakeTimesMap(float *times, unsigned char **times_map_ptr, int n);
 EXTERNCPP void MergeSmoke3D(smoke3ddata *smoke3dset);
+#ifdef pp_SPEEDUP
+EXTERNCPP void *MergeSmoke3DAll(void *arg);
+EXTERNCPP void *UncompressSmoke3DAll(void *arg);
+#else
+EXTERNCPP void UncompressSmoke3DAll(void);
 EXTERNCPP void MergeSmoke3DAll(void);
+#endif
 EXTERNCPP FILE_SIZE ReadSmoke3D(int iframe, int ifile, int flag, int first_time, int *errorcode);
 EXTERNCPP void ReadSmoke3DAllMeshes(int iframe, int smoketype, int *errorcode);
 EXTERNCPP void SmokeWrapup(void);
-EXTERNCPP int   UpdateSmoke3D(smoke3ddata *smoke3di);
+EXTERNCPP int  UpdateSmoke3D(smoke3ddata *smoke3di);
 EXTERNCPP void UpdateSmoke3dFileParms(void);
 EXTERNCPP void UpdateSmoke3dMenuLabels(void);
 EXTERNCPP void UpdateSmokeAlphas(void);
@@ -692,7 +706,6 @@ EXTERNCPP void TrainerViewMenu(int var);
 EXTERNCPP void TextureShowMenu(int value);
 EXTERNCPP void UnloadAllSliceFiles(char *longlabel);
 EXTERNCPP void UnloadSliceMenu(int value);
-EXTERNCPP void UnLoadVolsmoke3DMenu(int value);
 EXTERNCPP void UpdateMenu(void);
 EXTERNCPP void UnloadVSliceMenu(int value);
 EXTERNCPP void UpdateStreakValue(float value);
@@ -771,7 +784,6 @@ EXTERNCPP int  InitShaders(void);
 EXTERNCPP void LoadSmokeShaders(void);
 EXTERNCPP void Load3DSliceShaders(void);
 EXTERNCPP void LoadZoneSmokeShaders(void);
-EXTERNCPP void LoadVolsmokeShaders(void);
 EXTERNCPP void UnLoadShaders(void);
 #endif
 
@@ -790,7 +802,6 @@ EXTERNCPP void LoadSkyTexture(char *filebase, texturedata *texti);
 EXTERNCPP void AntiAliasLine(int flag);
 EXTERNCPP int BuildGbndFile(int file_type);
 EXTERNCPP void DisplayVersionInfo(char *progname, common_opts *opts);
-EXTERNCPP void InitVolrenderScript(char *prefix, char *tour_label, int startframe, int skipframe);
 EXTERNCPP int IsFDSRunning(FILE_SIZE *last_size);
 EXTERNCPP void SetViewPoint(int option);
 EXTERNCPP NORETURN void SMV_EXIT(int code);
@@ -817,7 +828,11 @@ EXTERNCPP int  InExterior(float *xyz);
 EXTERNCPP void InitClip(void);
 EXTERNCPP void InitTetraClipInfo(clipdata *ci,float *v1, float *v2, float *v3, float *v4);
 EXTERNCPP void MatMultMat(float *m1, float *m2, float *m3);
-EXTERNCPP int  MakeIBlank(void);
+#ifdef pp_SPEEDUP
+EXTERNCPP void *MakeIBlank(void *arg);
+#else
+EXTERNCPP int MakeIBlank(void);
+#endif
 EXTERNCPP int  MakeIBlankCarve(void);
 EXTERNCPP void MergeClipPlanes(clipdata *ci, clipdata *cj);
 EXTERNCPP int  MeshInFrustum(meshdata *meshi);
@@ -849,6 +864,9 @@ EXTERNCPP void PutStartupSmoke3D(FILE *fileout);
 EXTERNCPP void Set3DSmokeStartup(void);
 EXTERNCPP void SetupGlut(int argc, char **argv);
 EXTERNCPP int  SetupCase(char *file);
+EXTERNCPP void GluiPostRedisplayOn(void);
+EXTERNCPP void GluiPostRedisplayOff(void);
+
 
 //*** unit.c headers
 

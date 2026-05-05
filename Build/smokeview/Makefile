@@ -45,13 +45,13 @@ bin = .
 
 # Definition of the object variables
 
-csrc = callbacks.c camera.c color2rgb.c readimage.c readgeom.c readobject.c readcad.c colortimebar.c  \
-       compress.c csphere.c dmalloc.c  drawGeometry.c file_util.c getdata.c getdatabounds.c \
-       getdatacolors.c glew.c histogram.c infoheader.c readlabel.c readtour.c readhvac.c readslice.c  \
-       readsmoke.c colorbars.c colorbar_defs.c IOboundary.c IOgeometry.c IOhvac.c IOiso.c IOobjects.c \
-       IOpart.c IOplot2d.c IOplot3d.c IOscript.c IOshooter.c IOslice.c IOsmoke.c IOtour.c IOvolsmoke.c \
-       IOwui.c IOzone.c isobox.c main.c md5.c menus.c output.c readsmvfile.c readsmv.c  \
-       renderimage.c scontour2d.c sha1.c sha256.c shaders.c showscene.c skybox.c \
+csrc = callbacks.c camera.c color2rgb.c colorbars.c colorbar_defs.c colortable.c colortimebar.c \
+       command_args.c compress.c csphere.c dmalloc.c  drawGeometry.c file_util.c getdata.c getdatabounds.c \
+       getdatacolors.c glew.c histogram.c infoheader.c IOboundary.c IOgeometry.c IOhvac.c IOiso.c \
+       IOobjects.c  IOpart.c IOplot2d.c IOplot3d.c IOscript.c IOshooter.c IOslice.c IOsmoke.c IOtour.c  \
+       IOwui.c IOzone.c isobox.c main.c md5.c menus.c output.c paths.c  readcad.c readgeom.c readhvac.c \
+       readimage.c  readlabel.c readobject.c readslice.c  readsmoke.c  readsmvfile.c readsmv.c \
+       readtour.c renderimage.c  scontour2d.c sha1.c sha256.c shaders.c showscene.c skybox.c \
        smokeview.c smv_geometry.c startup.c stdio_buffer.c stdio_m.c string_util.c threader.c  \
        translate.c unit.c update.c viewports.c colortable.c command_args.c paths.c winpaths.c
 
@@ -74,14 +74,14 @@ win_c_chk   = $(csrc:.c=.winchk)
 win_cpp_chk = $(cppsrc:.cpp=.winchk)
 win_chk     = $(win_c_chk) $(win_cpp_chk)
 
-#CLANGANALYZE=clang --analyze -Xanalyzer -analyzer-checker=core,deadcode
-CLANGANALYZE=clang --analyze
+CLANGANALYZE=clang --analyze -Xanalyzer -analyzer-checker=core,deadcode
+#CLANGANALYZE=clang --analyze
 CLANGSUMMARY=../../scripts/clang_summary.sh
 CLANGWINSUMMARY=..\..\scripts\clang_summary.bat
 
 incs = compress.h scontour2d.h csphere.h datadefs.h dirent_win.h file_util.h glui_bounds.h \
        glui_motion.h glui_smoke.h glui_tour.h histogram.h infoheader.h interp.h isobox.h \
-       IOobjects.h IOscript.h IOvolsmoke.h lint.h dmalloc.h options.h options_common.h \
+       IOobjects.h IOscript.h lint.h dmalloc.h options.h options_common.h \
        pragmas.h smokeheaders.h smokeviewdefs.h smokeviewvars.h \
        stdio_buffer.h stdio_m.h string_util.h structures.h translate.h threader.h viewports.h command_args.h
 
@@ -304,8 +304,8 @@ gnu_linux : $(obj)
 
 # ------------- clang_linux_db ----------------
 
-clang_linux_db : CFLAGS    = -O0 -ggdb -Wall -Wunreachable-code -Wswitch-default \
-                             -Wshadow -Winit-self -Wundef -Wpointer-arith -Wuninitialized \
+clang_linux_db : CFLAGS    = -O0 -ggdb -Wall -Wextra -Wunused-variable -Wunreachable-code -Wno-unused-parameter -Wswitch-default \
+                             -Wshadow -Winit-self -Wundef -Wpointer-arith -Wuninitialized -Wno-sign-compare\
                              -Wno-address -Wno-undef -Wno-parentheses -Wno-unknown-pragmas \
                              -D _DEBUG $(CFLAGS_COM)
 clang_linux_db : CC        = clang
@@ -387,13 +387,13 @@ gnu_osx : $(obj)
 
 # ------------- clang_osx_db ----------------
 
-clang_osx_db : CFLAGS    = -O0 -ggdb -D _DEBUG -Wall -Wno-deprecated-declarations $(CFLAGS_COM)
+clang_osx_db : CFLAGS    = -O0 -ggdb -D _DEBUG -fsanitize=thread -pthread -Wall -Wno-deprecated-declarations $(CFLAGS_COM)
 clang_osx_db : CC        = ${COMPILER}
 clang_osx_db : CPP       = ${COMPILER2}
 clang_osx_db : exe       = smokeview_osx$(SMV_TESTSTRING)_db$(SMV_PROFILESTRING)
 
 clang_osx_db : $(obj)
-	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS_COM) $(LFLAGS_OSX) -L$(LIB_DIR)/clang_osx $(SMV_LIBS_OSX)
+	$(CPP) -o $(bin)/$(exe) $(obj) $(LFLAGS_COM) $(LFLAGS_OSX) -fsanitize=thread -pthread -L$(LIB_DIR)/clang_osx $(SMV_LIBS_OSX)
 
 # ------------- clang_osx ----------------
 
