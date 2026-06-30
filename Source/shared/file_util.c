@@ -1189,6 +1189,7 @@ char *GetBinPath(){
   size_t buffer_size = MAX_PATH * sizeof(char);
   NEWMEMORY(buffer, buffer_size);
   for(;;){
+    // TODO: use GetModuleFilenameW to support unicode paths
     GetModuleFileNameA(NULL, buffer, buffer_size);
     DWORD dw = GetLastError();
     if(dw == ERROR_SUCCESS){
