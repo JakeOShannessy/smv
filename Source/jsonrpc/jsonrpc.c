@@ -619,11 +619,8 @@ DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
         conn->extra_chars_n = 0;
         return NULL;
       }
-      stringlen = strlen(conn->buffer);
-      char g[100];
-      strncpy(g, conn->buffer, stringlen);
-      g[stringlen] = '\0';
-      // fprintf(stderr, ">>[%03d/%03d]: %s\n", stringlen, n, conn->buffer);
+      stringlen = strlen_s(conn->buffer,sizeof(conn->buffer));
+      fprintf(stderr, ">>[%03d/%03d]: %.*s\n", stringlen, n, n, conn->buffer);
       // if stringlen is less than n, it's because there was a '\0' in the
       // string indicating we should start again.
       if(stringlen < n) {
@@ -646,6 +643,7 @@ DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
   } while((jerr = json_tokener_get_error(tok)) == json_tokener_continue &&
           done == 0);
   if(jerr != json_tokener_success) {
+    // TOOD: respond properly stating malformed message or similar (error code -32700)
     fprintf(stderr, "Error: %s\n", json_tokener_error_desc(jerr));
     fprintf(stderr, "Buffer: %s\n", conn->buffer);
     // Handle errors, as appropriate for your application.
@@ -739,6 +737,7 @@ void send_request(struct jrpc_connection *conn, json_object *request_object) {
   const char *str =
       json_object_to_json_string_ext(request_object, JSON_C_TO_STRING_PRETTY);
   // fprintf(stderr, "sending %s\n", str);
+  // TODO: this sends a null at the end
   int r = send(conn->fd, str, (int)(strlen(str) + 1), 0);
   if(r == -1) {
     sock_error("send");
