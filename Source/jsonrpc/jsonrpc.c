@@ -619,7 +619,7 @@ DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
         conn->extra_chars_n = 0;
         return NULL;
       }
-      stringlen = strlen_s(conn->buffer,sizeof(conn->buffer));
+      stringlen = strnlen(conn->buffer,sizeof(conn->buffer));
       fprintf(stderr, ">>[%03d/%03d]: %.*s\n", stringlen, n, n, conn->buffer);
       // if stringlen is less than n, it's because there was a '\0' in the
       // string indicating we should start again.
