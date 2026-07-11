@@ -17,7 +17,6 @@
 #include <unistd.h>
 #endif
 
-#include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -101,12 +100,21 @@ typedef struct circular_buffer {
   void *head;       // pointer to head
   void *tail;       // pointer to tail
 } circular_buffer;
+
+enum jrpc_server_type {
+  TCP_CONN,
+  UNIX_CONN,
+};
+
 struct jrpc_server {
 #ifdef _WIN32
   WSADATA wsa_data;
 #endif
+  enum jrpc_server_type server_type;
   struct sockaddr_un socket;
   struct sockaddr_un remote;
+  struct sockaddr_in socket_in;
+  struct sockaddr_in remote_in;
 #ifdef _WIN32
   SOCKET fd;
 #else
@@ -125,7 +133,7 @@ struct kickoff_info {
   struct jrpc_server *server;
   char *sock_path;
 };
-DLLEXPORT struct jrpc_server jrpc_server_create();
+DLLEXPORT struct jrpc_server jrpc_server_create(enum jrpc_server_type server_type);
 DLLEXPORT struct jrpc_connection
 jrpc_server_connect(struct jrpc_server *server);
 DLLEXPORT int jrpc_register_procedure(struct jrpc_server *server,

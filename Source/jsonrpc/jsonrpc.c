@@ -1,8 +1,13 @@
+#include "jsonrpc.h"
 #include "jsonrpc_internal.h"
+#include <errno.h>
 #include <json-c/json_object.h>
+#include <netinet/in.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 #ifdef _WIN32
 #define UNLINK _unlink
@@ -449,10 +454,13 @@ err:
   return -1;
 }
 
-struct jrpc_server jrpc_server_create() {
+struct jrpc_server jrpc_server_create(enum jrpc_server_type server_type) {
   struct jrpc_server server = {0};
+  server.server_type = server_type;
   server.socket.sun_family = AF_UNIX;
   server.remote.sun_family = AF_UNIX;
+  server.socket_in.sin_family = AF_INET;
+  server.remote_in.sin_family = AF_INET;
   server.debug_level = 1;
   // TODO: what happens when the buffer limit is exceeded?
   CbInit(&server.rpc_buffer, 100, sizeof(json_object *));
@@ -469,7 +477,48 @@ struct jrpc_server jrpc_server_create() {
   return server;
 }
 
-int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
+int jrpc_server_listen_tcp(struct jrpc_server *server, const char *sock_path) {
+  if((server->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    sock_error("socket");
+    exit(1);
+  }
+  fprintf(stdout, "tcp file: %s\n", sock_path);
+  strcpy(server->socket.sun_path, sock_path);
+  UNLINK(server->socket.sun_path);
+
+  server->socket_in.sin_family = AF_INET;
+  server->socket_in.sin_addr.s_addr = INADDR_ANY;
+  server->socket_in.sin_port = 0;
+  if(bind(server->fd, (struct sockaddr *)&server->socket_in,
+          sizeof(struct sockaddr_in)) == -1) {
+    sock_error("bind");
+    exit(1);
+  }
+  // Print address
+  {
+
+    struct sockaddr_in serv_addr = {0};
+    socklen_t len_inet = sizeof(serv_addr);
+    if(getsockname(server->fd, (struct sockaddr *)&serv_addr, &len_inet) ==
+       -1) {
+      sock_error("getsockname");
+      exit(1);
+    }
+    char *ip = inet_ntoa(serv_addr.sin_addr);
+    fprintf(stdout, "tcp address: %s:%d\n", ip, ntohs(serv_addr.sin_port));
+    FILE *f = fopen(sock_path, "w");
+    fprintf(f, "%s:%d\n", ip, ntohs(serv_addr.sin_port));
+    fclose(f);
+  }
+
+  if(listen(server->fd, 5) == -1) {
+    sock_error("listen");
+    exit(1);
+  }
+  return 0;
+}
+
+int jrpc_server_listen_unix(struct jrpc_server *server, const char *sock_path) {
   if((server->fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
     sock_error("socket");
     exit(1);
@@ -490,19 +539,50 @@ int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
   return 0;
 }
 
+int jrpc_server_listen(struct jrpc_server *server, const char *sock_path) {
+  switch(server->server_type) {
+  case TCP_CONN:
+    return jrpc_server_listen_tcp(server, sock_path);
+  case UNIX_CONN:
+  default:
+    return jrpc_server_listen_unix(server, sock_path);
+  }
+}
+
 struct jrpc_connection jrpc_server_connect(struct jrpc_server *server) {
   struct jrpc_connection conn = connection_create(100);
   // TODO: consider handling multiple remotes
 #ifdef _WIN32
   int slen = (int)sizeof(server->remote);
 #else
-  socklen_t slen = (socklen_t)sizeof(server->remote);
-#endif
-  if((conn.fd = accept(server->fd, (struct sockaddr *)&server->remote,
-                       &slen)) == -1) {
-    sock_error("accept");
-    exit(1);
+  socklen_t slen;
+  switch(server->server_type) {
+  case TCP_CONN:
+    slen = (socklen_t)sizeof(server->remote_in);
+    break;
+  case UNIX_CONN:
+  default:
+    slen = (socklen_t)sizeof(server->remote);
   }
+#endif
+  fprintf(stderr, "accepting...\n");
+  switch(server->server_type) {
+  case TCP_CONN:
+    if((conn.fd = accept(server->fd, (struct sockaddr *)&server->remote_in,
+                         &slen)) == -1) {
+      sock_error("accept");
+      exit(1);
+    }
+    break;
+  case UNIX_CONN:
+  default:
+    if((conn.fd = accept(server->fd, (struct sockaddr *)&server->remote,
+                         &slen)) == -1) {
+      sock_error("accept");
+      exit(1);
+    }
+  }
+
   return conn;
 }
 
@@ -619,8 +699,8 @@ DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
         conn->extra_chars_n = 0;
         return NULL;
       }
-      stringlen = strnlen(conn->buffer,sizeof(conn->buffer));
-      fprintf(stderr, ">>[%03d/%03d]: %.*s\n", stringlen, n, n, conn->buffer);
+      stringlen = strnlen(conn->buffer, sizeof(conn->buffer));
+      fprintf(stderr, ">>[%03ld/%03d]: %.*s\n", stringlen, n, n, conn->buffer);
       // if stringlen is less than n, it's because there was a '\0' in the
       // string indicating we should start again.
       if(stringlen < n) {
@@ -643,7 +723,8 @@ DLLEXPORT json_object *pop_or_block(struct jrpc_connection *conn) {
   } while((jerr = json_tokener_get_error(tok)) == json_tokener_continue &&
           done == 0);
   if(jerr != json_tokener_success) {
-    // TOOD: respond properly stating malformed message or similar (error code -32700)
+    // TOOD: respond properly stating malformed message or similar (error code
+    // -32700)
     fprintf(stderr, "Error: %s\n", json_tokener_error_desc(jerr));
     fprintf(stderr, "Buffer: %s\n", conn->buffer);
     // Handle errors, as appropriate for your application.

@@ -92,6 +92,10 @@ typedef struct CommandlineArgs {
   char *htmlscript;
   /// @brief Create a socket for IPC.
   char *socket;
+  /// @brief Use TCP IPC. Incompatible with -socket.
+  bool use_tcp;
+  /// @brief Save address and port information to a file for TCP IPC.
+  char *tcp_file;
   /// @brief set directory containing script rendered images (override directory
   /// specified by RENDERDIR script keyword)
   char *scriptrenderdir;

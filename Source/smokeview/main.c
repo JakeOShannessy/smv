@@ -18,7 +18,6 @@
 #include "jsonrpc_api.h"
 
 #include "IOscript.h"
-#include "readlabel.h"
 
 #ifdef _WIN32
 #include <direct.h>
@@ -155,6 +154,12 @@ char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
   }
   if(args->socket){
     socket_path = args->socket;
+  }
+  if(args->use_tcp) {
+    use_tcp = 1;
+  }
+  if(args->tcp_file){
+    socket_path = args->tcp_file;
   }
   if(args->have_x0){
     use_commandline_origin = 1;
@@ -751,7 +756,12 @@ int main(int argc, char **argv){
   printf("***before glutMainLoop\n");
 #endif
   pthread_t socket_thread;
-  server = jrpc_server_create();
+  if(use_tcp) {
+    server = jrpc_server_create(TCP_CONN);
+  }
+  else {
+    server = jrpc_server_create(UNIX_CONN);
+  }
   jrpc_register_procedure(&server, &subtract, "subtract", NULL);
   register_procedures(&server);
   struct kickoff_info koi = {0};
@@ -808,16 +818,16 @@ int FGAPIENTRY glutGameModeGet(GLenum query)
 {
     return 0;
 }
-#ifdef __cplusplus 
-extern "C" { 
-#endif 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int fgPlatformGetGameModeVMaxExtent(void){
-  return 0; 
-} 
-int fgPlatformGetGameModeHMaxExtent(void){ 
-  return 0; 
-} 
-#ifdef __cplusplus 
-  } 
+  return 0;
+}
+int fgPlatformGetGameModeHMaxExtent(void){
+  return 0;
+}
+#ifdef __cplusplus
+  }
 #endif
 #endif

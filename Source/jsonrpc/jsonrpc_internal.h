@@ -17,7 +17,6 @@
 #include <unistd.h>
 #endif
 
-#include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +58,7 @@ static int invoke_procedure(struct jrpc_server *server,
 static int eval_request(struct jrpc_server *server,
                         struct jrpc_connection *conn, json_object *jobj);
 
-struct jrpc_server jrpc_server_create();
+struct jrpc_server jrpc_server_create(enum jrpc_server_type server_type);
 struct jrpc_client jrpc_client_create();
 
 int jrpc_server_listen(struct jrpc_server *server, const char *sock_path);

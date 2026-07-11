@@ -269,26 +269,45 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
       args.runscript = true;
     } else if (strcmp(argv[i], "-runhtmlscript") == 0) {
       args.runhtmlscript = true;
-    } else if (strcmp(argv[i], "-socket") == 0) {
+    }
+    else if(strcmp(argv[i], "-socket") == 0) {
       ++i;
-      if (i < argc) {
+      if(i < argc) {
         NewMemory((void **)&args.socket, strlen(argv[i]) + 1);
         strcpy(args.socket, argv[i]);
-      } else {
+      }
+      else {
         *error = CLE_ARGUMENT_EXPECTED;
         return args;
       }
     }
-    else if (strcmp(argv[i], "-scriptrenderdir") == 0) {
-      i++;
-      if (i < argc) {
-        NewMemory((void **)&args.scriptrenderdir, strlen(argv[i]) + 1);
-        strcpy(args.scriptrenderdir, argv[i]);
-      } else {
+    else if(strcmp(argv[i], "-tcp") == 0) {
+      args.use_tcp = true;
+    }
+    else if(strcmp(argv[i], "-tcp-file") == 0) {
+      args.use_tcp = true;
+      ++i;
+      if(i < argc) {
+        NewMemory((void **)&args.tcp_file, strlen(argv[i]) + 1);
+        strcpy(args.tcp_file, argv[i]);
+      }
+      else {
         *error = CLE_ARGUMENT_EXPECTED;
         return args;
       }
-    } else if (strcmp(argv[i], "-skipframe") == 0) {
+    }
+    else if(strcmp(argv[i], "-scriptrenderdir") == 0) {
+      i++;
+      if(i < argc) {
+        NewMemory((void **)&args.scriptrenderdir, strlen(argv[i]) + 1);
+        strcpy(args.scriptrenderdir, argv[i]);
+      }
+      else {
+        *error = CLE_ARGUMENT_EXPECTED;
+        return args;
+      }
+    }
+    else if(strcmp(argv[i], "-skipframe") == 0) {
       args.skipframe_defined = true;
       ++i;
       if (i < argc) {
@@ -297,7 +316,8 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
         *error = CLE_ARGUMENT_EXPECTED;
         return args;
       }
-    } else if (strcmp(argv[i], "-startframe") == 0) {
+    }
+    else if(strcmp(argv[i], "-startframe") == 0) {
       args.startframe_defined = true;
       ++i;
       if (i < argc) {
@@ -306,9 +326,11 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
         *error = CLE_ARGUMENT_EXPECTED;
         return args;
       }
-    } else if (strcmp(argv[i], "-volrender") == 0) {
+    }
+    else if(strcmp(argv[i], "-volrender") == 0) {
       args.volrender = true;
-    } else if (strcmp(argv[i], "-script") == 0) {
+    }
+    else if(strcmp(argv[i], "-script") == 0) {
       ++i;
       if (i < argc) {
         NewMemory((void **)&args.script, strlen(argv[i]) + 1);
@@ -317,7 +339,8 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
         *error = CLE_ARGUMENT_EXPECTED;
         return args;
       }
-    } else if (strcmp(argv[i], "-checkscript") == 0) {
+    }
+    else if(strcmp(argv[i], "-checkscript") == 0) {
       ++i;
       if (i < argc) {
         NewMemory((void **)&args.script, strlen(argv[i]) + 1);

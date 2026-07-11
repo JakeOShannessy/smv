@@ -1321,6 +1321,7 @@ SVEXTERN int SVDECL(screenX0, 0), SVDECL(screenY0, 0);
 SVEXTERN int SVDECL(dialogX0, 0), SVDECL(dialogY0, 0);
 SVEXTERN int SVDECL(have_dialogX0, 0), SVDECL(have_dialogY0, 0);
 SVEXTERN int SVDECL(use_commandline_origin, 0);
+SVEXTERN int SVDECL(use_tcp, 0);
 SVEXTERN int screenWidth_save, screenHeight_save;
 SVEXTERN int SVDECL(screenWidthINI,640), SVDECL(screenHeightINI,480);
 SVEXTERN int SVDECL(glui_screenWidth,640), SVDECL(glui_screenHeight,480);
