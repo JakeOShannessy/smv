@@ -23,13 +23,6 @@
 #endif
 
 #ifdef _WIN32
-//
-//  This application opens a file specified by the user and uses
-//  a temporary file to convert the file to upper case letters.
-//  Note that the given source file is assumed to be an ASCII text file
-//  and the new file created is overwritten each time the application is
-//  run.
-//
 
 #include <stdio.h>
 #include <tchar.h>
@@ -39,6 +32,7 @@
 
 void PrintError(LPCTSTR errDesc);
 
+/// @brief Create a temporary file path.
 TCHAR *CreateTempPath() {
   HANDLE h_file = INVALID_HANDLE_VALUE;
   UINT u_ret_val = 0;
@@ -74,9 +68,8 @@ TCHAR *CreateTempPath() {
   return sz_temp_file_name;
 }
 
-//  ErrorMessage support function.
-//  Retrieves the system error message for the GetLastError() code.
-//  Note: caller must use LocalFree() on the returned LPCTSTR buffer.
+/// @brief Retrieves the system error message for the GetLastError() code. Note:
+/// caller must use LocalFree() on the returned LPCTSTR buffer.
 LPCTSTR ErrorMessage(DWORD error) {
   LPVOID lp_msg_buf;
 
@@ -96,6 +89,7 @@ void PrintError(LPCTSTR errDesc) {
   LocalFree((LPVOID)err_msg);
 }
 #else
+/// @brief Create a temporary file path.
 char *CreateTempPath() {
   const char *template_basis = "/tmp/smv_socket.XXXXXX";
   const char *file_add = "/smv.sock";
