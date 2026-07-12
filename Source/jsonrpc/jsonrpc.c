@@ -40,14 +40,7 @@ void PrintError(LPCTSTR errDesc);
 
 TCHAR *CreateTempPath() {
   HANDLE h_file = INVALID_HANDLE_VALUE;
-  HANDLE h_temp_file = INVALID_HANDLE_VALUE;
-
-  BOOL f_success = FALSE;
   UINT u_ret_val = 0;
-
-  DWORD dw_bytes_read = 0;
-  DWORD dw_bytes_written = 0;
-
   TCHAR *sz_temp_file_name = malloc(MAX_PATH * sizeof(TCHAR));
   TCHAR lp_temp_path_buffer[MAX_PATH];
 
@@ -611,7 +604,6 @@ DLLEXPORT struct jrpc_client jrpc_client_create() {
   client.debug_level = 1;
   fprintf(stderr, "struct created\n");
 #ifdef _WIN32
-  WSADATA wsa_data = {0};
   fprintf(stderr, "pre WSAStartup\n");
   int rc = WSAStartup(MAKEWORD(2, 2), &client.wsa_data);
   fprintf(stderr, "post WSAStartup\n");
