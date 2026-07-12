@@ -3,7 +3,6 @@
 
 #ifdef _WIN32
 // clang-format off
-#include <stdio.h>
 #include <winsock2.h>
 #include <windows.h>
 #include <afunix.h>
@@ -18,9 +17,6 @@
 #endif
 
 #include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/types.h>
 
 #include <json-c/json_object.h>

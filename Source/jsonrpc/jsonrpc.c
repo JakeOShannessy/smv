@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #ifdef _WIN32
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #else
 #include <errno.h>
 #include <netinet/in.h>
@@ -491,22 +492,8 @@ int jrpc_server_listen_tcp(struct jrpc_server *server, const char *sock_path) {
     sock_error("bind");
     exit(1);
   }
-  // Print address
+  // Print address and store it in a file.
   {
-#ifdef _WIN32
-    struct sockaddr_in serv_addr = {0};
-    int len_inet = sizeof(serv_addr);
-    if(getsockname(server->fd, (struct sockaddr *)&serv_addr, &len_inet) ==
-       -1) {
-      sock_error("getsockname");
-      exit(1);
-    }
-    char *ip = inet_ntoa(serv_addr.sin_addr);
-    fprintf(stdout, "tcp address: %s:%d\n", ip, ntohs(serv_addr.sin_port));
-    FILE *f = fopen(sock_path, "w");
-    fprintf(f, "%s:%d\n", ip, ntohs(serv_addr.sin_port));
-    fclose(f);
-#else
     struct sockaddr_in serv_addr = {0};
     socklen_t len_inet = sizeof(serv_addr);
     if(getsockname(server->fd, (struct sockaddr *)&serv_addr, &len_inet) ==
@@ -514,12 +501,20 @@ int jrpc_server_listen_tcp(struct jrpc_server *server, const char *sock_path) {
       sock_error("getsockname");
       exit(1);
     }
+#ifdef _WIN32
+    CHAR ip[NI_MAXHOST] = {0};
+    if(!inet_ntop((INT)serv_addr.sin_family, &serv_addr.sin_addr, ip,
+                  sizeof ip)) {
+      sock_error("inet_ntop");
+      exit(1);
+    }
+#else
     char *ip = inet_ntoa(serv_addr.sin_addr);
+#endif
     fprintf(stdout, "tcp address: %s:%d\n", ip, ntohs(serv_addr.sin_port));
     FILE *f = fopen(sock_path, "w");
     fprintf(f, "%s:%d\n", ip, ntohs(serv_addr.sin_port));
     fclose(f);
-#endif
   }
 
   if(listen(server->fd, 5) == -1) {
