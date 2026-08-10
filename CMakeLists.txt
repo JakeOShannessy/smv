@@ -64,7 +64,7 @@ include(FetchContent)
 
 # Selected the multithreaded runtime when using MSVC
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-project(smv LANGUAGES C CXX VERSION 1.26.1)
+project(smv LANGUAGES C CXX VERSION 1.26.2)
 # Use C99
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
