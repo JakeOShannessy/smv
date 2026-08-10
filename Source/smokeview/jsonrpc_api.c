@@ -31,6 +31,9 @@
 #include <unistd.h>
 #endif
 
+void GifSpec_Clear();
+void GifSpec_PushFrame(int frame_number, int duration);
+
 /// @brief Render the current frame to a file.
 json_object *jsonrpc_Render(jrpc_context *context, json_object *params,
                             json_object *id) {

@@ -50,10 +50,8 @@ typedef struct CommandlineArgs {
   /// @brief show timings
   bool timings;
   bool convert_ini;
-  bool convert_ssf;
   /// @brief update case.ini to the current format
   bool update_ini;
-  bool update_ssf;
   bool isotest;
   /// @brief only show 3D smoke
   bool smoke3d;
@@ -84,6 +82,7 @@ typedef struct CommandlineArgs {
   bool redirect;
   /// @brief Run the default SSF script, i.e. CHID.ssf
   bool runscript;
+  bool render_overwrite;
   bool checkscript;
   bool runhtmlscript;
   /// @brief Run the SSF script at this path
@@ -123,8 +122,6 @@ typedef struct CommandlineArgs {
   char *lang;
   char *ini_from;
   char *ini_to;
-  char *ssf_from;
-  char *ssf_to;
   /// @brief initial screen coordinates
   bool have_x0, have_y0;
   int x0, y0;

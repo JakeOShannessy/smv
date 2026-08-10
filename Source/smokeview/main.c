@@ -27,8 +27,6 @@
 
 #include <assert.h>
 
-
-
 /* ------------------ Usage ------------------------ */
 
 void Usage(int option){
@@ -74,6 +72,7 @@ void Usage(int option){
     PRINTF("%s\n", " -max_mem mem   - specify maximum memory used in GB");
     PRINTF("%s\n", " -outline       - show geometry bound boxes instead of geometry");
     PRINTF("%s\n", " -ng_ini        - non-graphics version of -ini.");
+    PRINTF("%s\n", " -render_overwrite - allow rendered images to be overwritten");
     PRINTF("%s\n", " -scriptrenderdir dir - directory containing script rendered images");
     PRINTF("%s\n", "                  (override directory specified by RENDERDIR script keyword)");
     PRINTF("%s\n", " -setup         - only show geometry");
@@ -102,6 +101,8 @@ void Usage(int option){
 
 char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts);
 
+/* ------------------ ParseCommandline ------------------------ */
+
 char *ParseCommandline(int argc, char **argv, common_opts *opts){
   enum CommandLineError error;
   char message[256];
@@ -122,6 +123,8 @@ char *ParseCommandline(int argc, char **argv, common_opts *opts){
 /// @param args The args which were previously parsed. All commandline arguments
 /// are parsed into @ref CommandlineArgs.
 /// @return The iput file name (the SMV file).
+/* ------------------ ProcessCommandLine ------------------------ */
+
 char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
   int len_casename;
   size_t len_memory;
@@ -391,19 +394,6 @@ char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
         convert_ini = 1;
       }
     }
-    if(args->convert_ssf){
-      if(args->ssf_from != NULL&&args->ssf_to != NULL){
-        NewMemory((void **)&ssf_from, strlen(args->ssf_from) + 1);
-        strcpy(ssf_from, args->ssf_from);
-
-        NewMemory((void **)&ssf_to, strlen(args->ssf_to) + 1);
-        strcpy(ssf_to, args->ssf_to);
-        convert_ssf = 1;
-      }
-    }
-    if(args->update_ssf){
-      update_ssf = 1;
-    }
     if(args->update_ini){
       if(args->ini_from != NULL){
         NewMemory((void **)&ini_from, strlen(args->ini_from) + 1);
@@ -471,6 +461,9 @@ char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
     if(args->fast){
       parse_opts.fast_startup = 1;
       parse_opts.lookfor_compressed_files = 0;
+    }
+    if(args->render_overwrite){
+      render_overwrite_commandline = 1;
     }
     if(args->full){
       parse_opts.fast_startup = 0;
@@ -565,21 +558,6 @@ char *ProcessCommandLine(CommandlineArgs *args, common_opts *opts){
     if(args->threads_defined){
         n_readallgeom_threads = CLAMP(args->threads, 1, 16);
     }
-  if(update_ssf == 1){
-    int len_prefix = 0;
-
-    len_prefix = strlen(global_scase.fdsprefix);
-
-    FREEMEMORY(ssf_from);
-    NewMemory((void **)&ssf_from, len_prefix + 4 + 1);
-    strcpy(ssf_from, global_scase.fdsprefix);
-    strcat(ssf_from, ".ssf");
-
-    FREEMEMORY(ssf_to);
-    NewMemory((void **)&ssf_to, len_prefix + 4 + 1);
-    strcpy(ssf_to, global_scase.fdsprefix);
-    strcat(ssf_to, ".ssf");
-  }
   return filename_local;
 }
 
@@ -629,15 +607,17 @@ json_object *subtract(jrpc_context *context, json_object *params,
 /// @param[in] argv argc as defined as an argument to main
 /// @param[out] n_args The number of arguments in the array
 /// @param[out] utf8_args A pointer to where the new array will be allocated
+/* ------------------ GetArgs ------------------------ */
+
 void GetArgs(int argc, char **argv, int *n_args, char ***utf8_args) {
 #if defined(_WIN32) && defined(pp_UNICODE_PATHS)
   LPWSTR *utf16_args = CommandLineToArgvW(GetCommandLineW(), n_args);
-  if(NULL == utf16_args) {
+  if(NULL == utf16_args){
     fprintf(stderr, "CommandLineToArgvW failed\n");
     SMV_EXIT(1);
   }
   NEWMEMORY(*utf8_args, (*n_args) * sizeof(char *));
-  for(int i = 0; i < *n_args; i++) {
+  for(int i = 0; i < *n_args; i++){
     LPWSTR arg = utf16_args[i];
     char *conv = convert_utf16_to_utf8(arg);
     (*utf8_args)[i] = conv;
@@ -652,18 +632,19 @@ void GetArgs(int argc, char **argv, int *n_args, char ***utf8_args) {
 /// @brief Free an array previously allocated by GetArgs.
 /// @param[in] n_args The length of args
 /// @param[inout] args The array previously allocated by GetArgs
+/* ------------------ FreeArgs ------------------------ */
+
 void FreeArgs(int n_args, char **args) {
 #if defined(_WIN32) && defined(pp_UNICODE_PATHS)
   // We only need to free argument memory on windows as that's the only time we
   // allocate new memory. On other platforms the array returned by GetArgs is
   // readonly.
-  for(int i = 0; i < n_args; i++) {
+  for(int i = 0; i < n_args; i++){
     FREEMEMORY(args[i]);
   }
   FREEMEMORY(args);
 #endif
 }
-
 
 /* ------------------ main ------------------------ */
 
@@ -713,7 +694,7 @@ int main(int argc, char **argv){
   }
 
   smv_filename = ParseCommandline(n_args, utf8_args, &opts);
-  if(smv_filename == NULL || opts.show_version == 1) {
+  if(smv_filename == NULL || opts.show_version == 1){
     InitStartupDirs();
     DisplayVersionInfo("Smokeview ", &opts);
     SMV_EXIT(0);
@@ -801,18 +782,26 @@ int main(int argc, char **argv){
 
 /* Stub implementations to avoid GameMode backend */
 
+/* ------------------ glutEnterGameMode ------------------------ */
+
 int FGAPIENTRY glutEnterGameMode(void)
 {
     return 0;
 }
 
+/* ------------------ glutLeaveGameMode ------------------------ */
+
 void FGAPIENTRY glutLeaveGameMode(void)
 {
 }
 
+/* ------------------ glutGameModeString ------------------------ */
+
 void FGAPIENTRY glutGameModeString(const char *string)
 {
 }
+
+/* ------------------ glutGameModeGet ------------------------ */
 
 int FGAPIENTRY glutGameModeGet(GLenum query)
 {

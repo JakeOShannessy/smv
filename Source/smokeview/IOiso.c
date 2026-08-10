@@ -42,7 +42,7 @@ void GetIsoLevels(const char *isofile, int dataflag, float **levelsptr, float **
   fread(*levelsptr,4,(unsigned int)(nlevels),isostreamptr);
   fclose(isostreamptr);
   NewMemory((void **)&colorlevels,nlevels*sizeof(float *));
-  for(i=0;i<nlevels;i++){
+  for(i=0; i<nlevels; i++){
     colorlevels[i]=NULL;
   }
   *colorlevelsptr=colorlevels;
@@ -103,7 +103,7 @@ void GetIsoSizes(const char *isofile, int dataflag, FILE **isostreamptr, int *nv
     nvertices_i=0;
     ntriangles_i=0;
     if(feof(*isostreamptr)!=0)break;
-    for(n=0;n<nlevels;n++){
+    for(n=0; n<nlevels; n++){
       {fread(&nvertices_i,4,1,*isostreamptr);}
       if(feof(*isostreamptr)!=0)break;
       {fread(&ntriangles_i,4,1,*isostreamptr);}
@@ -171,7 +171,7 @@ void UnloadIsoTrans(void){
   if(iso_trans_list != NULL){
     int i;
 
-    for(i = 0;i < niso_timesteps;i++){
+    for(i = 0; i < niso_timesteps; i++){
       FREEMEMORY(iso_trans_list[i]);
     }
     FREEMEMORY(niso_trans_list);
@@ -180,7 +180,7 @@ void UnloadIsoTrans(void){
   if(iso_opaques_list != NULL){
     int i;
 
-    for(i = 0;i < niso_timesteps;i++){
+    for(i = 0; i < niso_timesteps; i++){
       FREEMEMORY(iso_opaques_list[i]);
     }
     FREEMEMORY(niso_opaques_list);
@@ -212,7 +212,7 @@ void UnloadIso(meshdata *meshi){
   ib->display = 0;
   plotstate = GetPlotState(DYNAMIC_PLOTS);
   meshi->isofilenum = -1;
-  for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+  for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
     meshi2 = global_scase.meshescoll.meshinfo + i;
     if(meshi2->isofilenum != -1)nloaded++;
   }
@@ -232,7 +232,7 @@ int GetIsoType(const isodata *isoi){
   isodata *isoi2;
   int j;
 
-  for(j = 0;j < global_scase.nisotypes;j++){
+  for(j = 0; j < global_scase.nisotypes; j++){
     isoi2 = global_scase.isoinfo + global_scase.isotypes[j];
 
     if(strcmp(isoi->surface_label.longlabel, isoi2->surface_label.longlabel) == 0)return j;
@@ -282,7 +282,7 @@ void OutputIsoBounds(isodata *isoi){
   }
   fprintf(stream,"%s\n", isoi->surface_label.longlabel);
   fprintf(stream, "t,xmin,xmax,ymin,ymax,zmin,zmaz\n");
-  for(i = 0;i < geomi->ntimes;i++){
+  for(i = 0; i < geomi->ntimes; i++){
     int j;
     float xmin, xmax, ymin, ymax, zmin, zmax;
     geomlistdata *geomlisti;
@@ -298,7 +298,7 @@ void OutputIsoBounds(isodata *isoi){
       ymax = ymin;
       zmin = xyz[2];
       zmax = zmin;
-      for(j = 1;j < geomlisti->nverts;j++){
+      for(j = 1; j < geomlisti->nverts; j++){
         vertdata *vertj;
 
         vertj = geomlisti->verts+j;
@@ -321,7 +321,7 @@ void OutputIsoBounds(isodata *isoi){
 void OutputAllIsoBounds(void){
   int i;
 
-  for(i = 0;i < global_scase.nisoinfo;i++){
+  for(i = 0; i < global_scase.nisoinfo; i++){
     isodata *isoi;
 
     isoi = global_scase.isoinfo + i;
@@ -339,7 +339,7 @@ int GetIsoTType(const isodata *isoi){
 
   if(isoi->dataflag == 0)return -1;
   jj = 0;
-  for(j = 0;j < global_scase.nisoinfo;j++){
+  for(j = 0; j < global_scase.nisoinfo; j++){
     isoi2 = global_scase.isoinfo + j;
 
     if(isoi2->dataflag == 0)continue;
@@ -348,95 +348,6 @@ int GetIsoTType(const isodata *isoi){
     jj++;
   }
   return -1;
-}
-
-/* ------------------ SyncIsoBounds ------------------------ */
-
-void SyncIsoBounds(){
-  int i, ncount;
-  int firsttime = 1;
-  float tmin_local=1.0, tmax_local=0.0;
-
-  // find number of iso-surfaces with values
-
-  ncount = 0;
-  for(i = 0;i < global_scase.nisoinfo;i++){
-    isodata *isoi;
-
-    isoi = global_scase.isoinfo + i;
-    if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
-    ncount++;
-  }
-  if(ncount <= 1)return;
-
-  // find min and max bounds for valued iso-surfaces
-
-  for(i = 0;i < global_scase.nisoinfo;i++){
-    isodata *isoi;
-
-    isoi = global_scase.isoinfo + i;
-    if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
-    if(firsttime == 1){
-      firsttime = 0;
-      tmin_local = isoi->tmin;
-      tmax_local = isoi->tmax;
-    }
-    else{
-      if(tmin_local < isoi->tmin)isoi->tmin = tmin_local;
-      if(tmax_local > isoi->tmax)isoi->tmax = tmax_local;
-    }
-  }
-
-  // set min and max bounds for valued iso-surfaces
-
-  for(i = 0;i < global_scase.nisoinfo;i++){
-    isodata *isoi;
-
-    isoi = global_scase.isoinfo + i;
-    if(isoi->type != iisotype || isoi->dataflag == 0 || iisottype != GetIsoTType(isoi))continue;
-    isoi->tmin = tmin_local;
-    isoi->tmax = tmax_local;
-  }
-
-  // rescale all data
-
-  for(i = 0;i < global_scase.nisoinfo;i++){
-    isodata *isoi;
-    meshdata *meshi;
-    int ii;
-    isosurface *asurface;
-
-    isoi = global_scase.isoinfo + i;
-    if(isoi->loaded == 0 || isoi->type != iisotype || isoi->dataflag == 0)continue;
-    if(iisottype != GetIsoTType(isoi))continue;
-
-    meshi = global_scase.meshescoll.meshinfo + isoi->blocknumber;
-    asurface = meshi->animatedsurfaces;
-
-    for(ii = 0;ii < meshi->niso_times;ii++){
-      int j;
-
-      for(j = 0;j < meshi->nisolevels;j++){
-        float tcolor, tcolor0, tcolorfactor;
-        int kk;
-
-        if(isoi->tmax > isoi->tmin){
-          tcolor0 = (asurface->tmin - isoi->tmin) / (isoi->tmax - isoi->tmin);
-          tcolorfactor = (asurface->tmax - asurface->tmin) / 65535.;
-          tcolorfactor /= (isoi->tmax - isoi->tmin);
-        }
-        else{
-          tcolor0 = 0.5;
-          tcolorfactor = 0.0;
-        }
-        for(kk = 0;kk < asurface->nvertices;kk++){
-          tcolor = tcolor0 + asurface->tvertices[kk] * tcolorfactor;
-          asurface->color8[kk] = (unsigned char)(CLAMP(tcolor, 0.0, 1.0) * 255);
-        }
-        asurface++;
-      }
-    }
-  }
 }
 
 /* ------------------ ReadIsoGeom ------------------------ */
@@ -520,7 +431,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     *errorcode = 1;
     return 0;
   }
-  for(i=0;i<geomi->ntimes;i++){
+  for(i=0; i<geomi->ntimes; i++){
     meshi->iso_times[i]=geomi->times[i];
     meshi->iso_times_map[i] = 1;
   }
@@ -534,7 +445,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     ReadIso("",ifile,UNLOAD,geom_frame_index,&error);
     return 0;
   }
-  for(ilevel=0;ilevel<meshi->nisolevels;ilevel++){
+  for(ilevel=0; ilevel<meshi->nisolevels; ilevel++){
     meshi->showlevels[ilevel]=1;
     meshi->isolevels[ilevel]=geomi->float_vals[ilevel];
   }
@@ -557,7 +468,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
     if(isoi->finalize == 1){
       iso_global_min = 1.0;
       iso_global_max = 0.0;
-      for(i = 0;i < global_scase.nisoinfo;i++){
+      for(i = 0; i < global_scase.nisoinfo; i++){
         isodata *isoj;
 
         isoj = global_scase.isoinfo + i;
@@ -571,7 +482,7 @@ FILE_SIZE ReadIsoGeom(int ifile, int load_flag, int *geom_frame_index, int *erro
           iso_global_max = MAX(iso_global_max, isoj->globalmax_iso);
         }
       }
-      for(i = 0;i < global_scase.nisoinfo;i++){
+      for(i = 0; i < global_scase.nisoinfo; i++){
         isodata *isoj;
 
         isoj = global_scase.isoinfo + i;
@@ -672,14 +583,14 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
     fclose(isostream);
     return;
   }
-  for(ilevel=0;ilevel<meshi->nisolevels;ilevel++){
+  for(ilevel=0; ilevel<meshi->nisolevels; ilevel++){
     meshi->showlevels[ilevel]=1;
   }
   isomin=meshi->isolevels[0];
   isomax=meshi->isolevels[0];
   meshi->isomin_index=0;
   meshi->isomax_index=0;
-  for(ilevel=1;ilevel<meshi->nisolevels;ilevel++){
+  for(ilevel=1; ilevel<meshi->nisolevels; ilevel++){
     if(meshi->isolevels[ilevel]<isomin){
       isomin=meshi->isolevels[ilevel];
       meshi->isomin_index=ilevel;
@@ -735,7 +646,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
     meshi->iso_times[itime]=time_local;
     if(iitime%tload_step!=0||(use_tload_begin==1&&time_local<global_scase.tload_begin)||(use_tload_end==1&&time_local>global_scase.tload_end)||skip_frame==1){
     }
-    for(ilevel=0;ilevel<meshi->nisolevels;ilevel++){
+    for(ilevel=0; ilevel<meshi->nisolevels; ilevel++){
       int nvertices_i, ntriangles_i;
 
       asurface->dataflag=ib->dataflag;
@@ -790,7 +701,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
         verti = vertices_i;
         fread(vertices_i,2,(unsigned int)(3*nvertices_i),isostream);
         read_size+=4+3*nvertices_i*2+4;
-        for(ivert=0;ivert<nvertices_i;ivert++){
+        for(ivert=0; ivert<nvertices_i; ivert++){
           isovert *isoverti;
           float *xyz;
 
@@ -834,7 +745,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
           else{
             tcolorfactor2 = 1.0;
           }
-          for(ivert=0;ivert<nvertices_i;ivert++){
+          for(ivert=0; ivert<nvertices_i; ivert++){
             isovert *isoverti;
             unsigned char colorindex;
             float tcolor;
@@ -866,7 +777,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
           }
           fread(triangles1_i,1,(unsigned int)ntriangles_i,isostream);
           read_size+=4+ntriangles_i+4;
-          for(itri=0;itri<ntriangles_i;itri++){
+          for(itri=0; itri<ntriangles_i; itri++){
             triangles_i[itri]=triangles1_i[itri];
           }
           FREEMEMORY(triangles1_i);
@@ -878,7 +789,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
           }
           fread(triangles2_i,2,(unsigned int)ntriangles_i,isostream);
           read_size+=4+2*ntriangles_i+4;
-          for(itri=0;itri<ntriangles_i;itri++){
+          for(itri=0; itri<ntriangles_i; itri++){
             triangles_i[itri]=triangles2_i[itri];
           }
           FREEMEMORY(triangles2_i);
@@ -891,7 +802,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
           break_frame=1;
           break;
         }
-        for(itri=0;itri<ntriangles_i/3;itri++){
+        for(itri=0; itri<ntriangles_i/3; itri++){
           isotri *isotrii;
           float **color;
 
@@ -926,12 +837,12 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
           break_frame=1;
           break;
         }
-        for(ivert=0;ivert<nvertices_i;ivert++){
+        for(ivert=0; ivert<nvertices_i; ivert++){
           vertnorms[3*ivert]=0.0;
           vertnorms[3*ivert+1]=0.0;
           vertnorms[3*ivert+2]=0.0;
         }
-        for(itri=0;itri<ntriangles_i/3;itri++){
+        for(itri=0; itri<ntriangles_i/3; itri++){
           isotri *isotrii;
           float *v1, *v2, *v3;
           float *vertnorm;
@@ -959,7 +870,7 @@ void ReadIsoOrig(const char *file, int ifile, int flag, int *errorcode){
           vertnorm[1] += out[1]*area;
           vertnorm[2] += out[2]*area;
         }
-        for(ivert=0;ivert<nvertices_i;ivert++){
+        for(ivert=0; ivert<nvertices_i; ivert++){
           isovert *v1;
 
           v1 = asurface->iso_vertices + ivert;
@@ -1101,7 +1012,7 @@ void DrawIsoOrig(int tranflag){
     }
     CheckMemory;
     if(isoi->dataflag==1){
-      for(i=0;i<niso_list_start;i++){
+      for(i=0; i<niso_list_start; i++){
         isotri *tri;
         isovert *v1, *v2, *v3;
 
@@ -1125,7 +1036,7 @@ void DrawIsoOrig(int tranflag){
       }
     }
     else{
-      for(i=0;i<niso_list_start;i++){
+      for(i=0; i<niso_list_start; i++){
         isotri *tri;
         isovert *v1, *v2, *v3;
 
@@ -1153,7 +1064,6 @@ void DrawIsoOrig(int tranflag){
     glPopAttrib();
     if(isoi->dataflag==1)glDisable(GL_TEXTURE_1D);
 
-
     if(tranflag==DRAW_TRANSPARENT)TransparentOff();
     if(cullfaces==1)glEnable(GL_CULL_FACE);
     CheckMemory;
@@ -1164,7 +1074,7 @@ void DrawIsoOrig(int tranflag){
     AntiAliasLine(ON);
     glLineWidth(isolinewidth);
     glBegin(GL_LINES);
-    for(i=0;i<niso_trans;i++){
+    for(i=0; i<niso_trans; i++){
       isotri *tri;
       float *xyz1, *xyz2, *xyz3;
       float *color1, *color2, *color3;
@@ -1191,7 +1101,7 @@ void DrawIsoOrig(int tranflag){
       glColor3fv(color1);
       glVertex3fv(xyz1);
     }
-    for(i=0;i<niso_opaques;i++){
+    for(i=0; i<niso_opaques; i++){
       isotri *tri;
       float *xyz1, *xyz2, *xyz3;
       float *color1, *color2, *color3;
@@ -1227,7 +1137,7 @@ void DrawIsoOrig(int tranflag){
     AntiAliasLine(ON);
     glPointSize(isopointsize);
     glBegin(GL_POINTS);
-    for(i=0;i<niso_trans;i++){
+    for(i=0; i<niso_trans; i++){
       isotri *tri;
       float *xyz1, *xyz2, *xyz3;
       float *color1, *color2, *color3;
@@ -1248,7 +1158,7 @@ void DrawIsoOrig(int tranflag){
       glColor3fv(color3);
       glVertex3fv(xyz3);
     }
-    for(i=0;i<niso_opaques;i++){
+    for(i=0; i<niso_opaques; i++){
       isotri *tri;
       float *xyz1, *xyz2, *xyz3;
       float *color1, *color2, *color3;
@@ -1279,7 +1189,7 @@ void DrawIsoOrig(int tranflag){
 void DrawIso(int tranflag){
   if(niso_opaques>0||niso_trans>0){
     if(use_tload_begin==1&&GetTime()<global_scase.tload_begin)return;
-    if(  use_tload_end==1&&GetTime()>global_scase.tload_end)return;
+    if(use_tload_end==1&&GetTime()>global_scase.tload_end)return;
     DrawIsoOrig(tranflag);
   }
 }
@@ -1370,14 +1280,14 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
     triangles_i=asurface->triangles;
     norm=asurface->norm;
     vertexnorm=asurface->vertexnorm;
-    for(j=0;j<ntriangles;j++){
+    for(j=0; j<ntriangles; j++){
       i1=3*triangles_i[3*j];
       i2=3*triangles_i[3*j+1];
       i3=3*triangles_i[3*j+2];
       v1=vertices_i+i1;
       v2=vertices_i+i2;
       v3=vertices_i+i3;
-      for(k=0;k<3;k++){
+      for(k=0; k<3; k++){
         vv1[k]=xyzmin[k]+SCALE2FDSL(v1[k]/65535.);
         vv2[k]=xyzmin[k]+SCALE2FDSL(v2[k]/65535.);
         vv3[k]=xyzmin[k]+SCALE2FDSL(v3[k]/65535.);
@@ -1420,14 +1330,14 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
     glColor3fv(asurface->color);
     vertices_i=asurface->vertices;
     triangles_i=asurface->triangles;
-    for(j=0;j<ntriangles;j++){
+    for(j=0; j<ntriangles; j++){
       i1=3*triangles_i[3*j];
       i2=3*triangles_i[3*j+1];
       i3=3*triangles_i[3*j+2];
       v1=vertices_i+i1;
       v2=vertices_i+i2;
       v3=vertices_i+i3;
-      for(k=0;k<3;k++){
+      for(k=0; k<3; k++){
         vv1[k]=xyzmin[k]+SCALE2FDSL(v1[k]/65535.);
         vv2[k]=xyzmin[k]+SCALE2FDSL(v2[k]/65535.);
         vv3[k]=xyzmin[k]+SCALE2FDSL(v3[k]/65535.);
@@ -1456,9 +1366,9 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
     ntriangles=asurface->ntriangles/3;
     vertices_i=asurface->vertices;
     triangles_i=asurface->triangles;
-    for(j=0;j<nvertices;j++){
+    for(j=0; j<nvertices; j++){
       v1=vertices_i+3*j;
-      for(k=0;k<3;k++){
+      for(k=0; k<3; k++){
         vv1[k]=xyzmin[k]+SCALE2FDSL(v1[k]/65535.);
       }
 
@@ -1475,14 +1385,14 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
     glLineWidth(line_width);
     glBegin(GL_LINES);
     glColor3f((float)1.,(float)1.,(float)1.);
-    for(j=0;j<ntriangles;j++){
+    for(j=0; j<ntriangles; j++){
       i1=3*triangles_i[3*j];
       i2=3*triangles_i[3*j+1];
       i3=3*triangles_i[3*j+2];
       v1=vertices_i+i1;
       v2=vertices_i+i2;
       v3=vertices_i+i3;
-      for(k=0;k<3;k++){
+      for(k=0; k<3; k++){
         vv1[k]=xyzmin[k]+SCALE2FDSL(v1[k]/65535.);
         vv2[k]=xyzmin[k]+SCALE2FDSL(v2[k]/65535.);
         vv3[k]=xyzmin[k]+SCALE2FDSL(v3[k]/65535.);
@@ -1498,7 +1408,7 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
           norm1 = vertexnorm+i1;
           norm2 = vertexnorm+i2;
           norm3 = vertexnorm+i3;
-          for(k=0;k<3;k++){
+          for(k=0; k<3; k++){
             vv1n[k]=vv1[k]+norm1[k]/(8.*32768.)/4.0;
             vv2n[k]=vv2[k]+norm2[k]/(8.*32768.)/4.0;
             vv3n[k]=vv3[k]+norm3[k]/(8.*32768.)/4.0;
@@ -1519,7 +1429,7 @@ void DrawStaticIso(const isosurface *asurface,int surfacetype,
           memcpy(vv3n, vv3, 3*sizeof(float));
         }
         else{
-          for(k=0;k<3;k++){
+          for(k=0; k<3; k++){
             vv1n[k]=vv1[k]+norm[k]/(8.*32768.)/4.0;
             vv2n[k]=vv2[k]+norm[k]/(8.*32768.)/4.0;
             vv3n[k]=vv3[k]+norm[k]/(8.*32768.)/4.0;
@@ -1547,7 +1457,7 @@ int GetIsoIndex(const isodata *isoi){
   isodata *isoi2;
   int j;
 
-  for(j = 0;j < global_scase.nisotypes;j++){
+  for(j = 0; j < global_scase.nisotypes; j++){
     isoi2 = global_scase.isoinfo + global_scase.isotypes[j];
     if(strcmp(isoi->surface_label.longlabel, isoi2->surface_label.longlabel) == 0)return global_scase.isotypes[j];
   }
@@ -1561,11 +1471,11 @@ void UpdateIsoTypes(void){
   isodata *isoi;
 
   global_scase.nisotypes = 0;
-  for(i=0;i<global_scase.nisoinfo;i++){
+  for(i=0; i<global_scase.nisoinfo; i++){
     isoi = global_scase.isoinfo+i;
     if(GetIsoIndex(isoi)==-1)global_scase.isotypes[global_scase.nisotypes++]=i;
   }
-  for(i=0;i<global_scase.nisoinfo;i++){
+  for(i=0; i<global_scase.nisoinfo; i++){
     isoi = global_scase.isoinfo+i;
     isoi->type= GetIsoType(isoi);
   }
@@ -1577,14 +1487,13 @@ void UpdateIsoType(void){
   int i;
   isodata *isoi;
 
-
-  for(i=0;i<global_scase.nisoinfo;i++){
+  for(i=0; i<global_scase.nisoinfo; i++){
     isoi = global_scase.isoinfo + i;
     if(isoi->loaded==0)continue;
     if(isoi->display==1&&isoi->type==iisotype)return;
   }
 
-  for(i=0;i<global_scase.nisoinfo;i++){
+  for(i=0; i<global_scase.nisoinfo; i++){
     isoi = global_scase.isoinfo + i;
     if(isoi->loaded==0)continue;
     if(isoi->display==1){
@@ -1621,12 +1530,12 @@ void UpdateIsoMenuLabels(void){
   if(global_scase.nisoinfo>0){
     FREEMEMORY(isoorderindex);
     NewMemory((void **)&isoorderindex,sizeof(int)*global_scase.nisoinfo);
-    for(i=0;i<global_scase.nisoinfo;i++){
+    for(i=0; i<global_scase.nisoinfo; i++){
       isoorderindex[i]=i;
     }
     qsort( (int *)isoorderindex, (size_t)global_scase.nisoinfo, sizeof(int), IsoCompare);
 
-    for(i=0;i<global_scase.nisoinfo;i++){
+    for(i=0; i<global_scase.nisoinfo; i++){
       isoi = global_scase.isoinfo + i;
 
       if(global_scase.meshescoll.nmeshes>1){
@@ -1660,10 +1569,10 @@ void UpdateIsoShowLevels(smv_case *scase, meshdata *isomesh){
   nisolevels=isomesh->nisolevels;
   showlevels=isomesh->showlevels;
 
-  for(j=0;j<scase->meshescoll.nmeshes;j++){
+  for(j=0; j<scase->meshescoll.nmeshes; j++){
     meshi = scase->meshescoll.meshinfo+j;
     if(meshi->isofilenum==-1)continue;
-    for(i=0;i<nisolevels;i++){
+    for(i=0; i<nisolevels; i++){
       if(i<meshi->nisolevels)meshi->showlevels[i]=showlevels[i];
     }
   }
@@ -1690,7 +1599,6 @@ int CompareIsoTriangles(const void *arg1, const void *arg2){
   isotri *trii, *trij;
   float disti, distj;
 
-
   trii = *(isotri **)arg1;
   trij = *(isotri **)arg2;
 
@@ -1711,7 +1619,7 @@ void SortIsoTriangles(float *mm){
 
   if(niso_trans==0)return;
   newflag=1-iso_trans[0]->v1->flag;
-  for(itri=0;itri<niso_trans;itri++){
+  for(itri=0; itri<niso_trans; itri++){
     isotri *tri;
     float xyzeye[3];
     float *xyz;
@@ -1788,7 +1696,7 @@ void UpdateIsoTriangles(int flag){
 
       NewMemory((void **)&niso_trans_list,niso_timesteps*sizeof(int));
       NewMemory((void **)&iso_trans_list,niso_timesteps*sizeof(isotri **));
-      for(i=0;i<niso_timesteps;i++){
+      for(i=0; i<niso_timesteps; i++){
         iso_trans_list[i]=NULL;
       }
     }
@@ -1797,15 +1705,15 @@ void UpdateIsoTriangles(int flag){
 
       NewMemory((void **)&niso_opaques_list,niso_timesteps*sizeof(int));
       NewMemory((void **)&iso_opaques_list,niso_timesteps*sizeof(isotri **));
-      for(i=0;i<niso_timesteps;i++){
+      for(i=0; i<niso_timesteps; i++){
         iso_opaques_list[i]=NULL;
       }
     }
-    for(iitime=0;iitime<niso_timesteps;iitime++){
+    for(iitime=0; iitime<niso_timesteps; iitime++){
       int i;
 
       ntris=0;
-      for(i=0;i<global_scase.nisoinfo;i++){
+      for(i=0; i<global_scase.nisoinfo; i++){
         isodata *isoi;
         int ilev;
 
@@ -1814,7 +1722,7 @@ void UpdateIsoTriangles(int flag){
 
         meshi = global_scase.meshescoll.meshinfo + isoi->blocknumber;
         asurface = meshi->animatedsurfaces + iitime*meshi->nisolevels;
-        for(ilev=0;ilev<meshi->nisolevels;ilev++){
+        for(ilev=0; ilev<meshi->nisolevels; ilev++){
           asurfi = asurface + ilev;
           ntris+=asurfi->niso_triangles;
         }
@@ -1831,7 +1739,7 @@ void UpdateIsoTriangles(int flag){
   if(flag==1){
     int iitime;
 
-    for(iitime=0;iitime<niso_timesteps;iitime++){
+    for(iitime=0; iitime<niso_timesteps; iitime++){
       niso_trans_list[iitime]=-1;
       niso_opaques_list[iitime]=-1;
     }
@@ -1849,7 +1757,7 @@ void UpdateIsoTriangles(int flag){
     iso_opaques_tmp=iso_opaques;
     niso_trans=0;
     niso_opaques=0;
-    for(i=0;i<global_scase.nisoinfo;i++){
+    for(i=0; i<global_scase.nisoinfo; i++){
       isodata *isoi;
 
       isoi = global_scase.isoinfo+i;
@@ -1863,12 +1771,12 @@ void UpdateIsoTriangles(int flag){
       if(transparent_state==ALL_TRANSPARENT){
         int ilev;
 
-        for(ilev=0;ilev<meshi->nisolevels;ilev++){
+        for(ilev=0; ilev<meshi->nisolevels; ilev++){
           if(showlevels[ilev]==0)continue;
           asurfi = asurface + ilev;
           if(asurfi->niso_triangles>0){
             niso_trans += asurfi->niso_triangles;
-            for(itri=0;itri<asurfi->niso_triangles;itri++){
+            for(itri=0; itri<asurfi->niso_triangles; itri++){
               *iso_trans_tmp++=asurfi->iso_triangles+itri;
             }
             colorptr=isoi->colorlevels[ilev];
@@ -1879,24 +1787,24 @@ void UpdateIsoTriangles(int flag){
       else if(transparent_state==MIN_SOLID){
         int ilev;
 
-        for(ilev=0;ilev<1;ilev++){
+        for(ilev=0; ilev<1; ilev++){
           if(showlevels[ilev]==0)continue;
           asurfi = asurface + ilev;
           if(asurfi->niso_triangles>0){
             niso_opaques += asurfi->niso_triangles;
-            for(itri=0;itri<asurfi->niso_triangles;itri++){
+            for(itri=0; itri<asurfi->niso_triangles; itri++){
               *iso_opaques_tmp++=asurfi->iso_triangles+itri;
             }
             colorptr=isoi->colorlevels[ilev];
             colorptr[3]=1.0;
           }
         }
-        for(ilev=1;ilev<meshi->nisolevels;ilev++){
+        for(ilev=1; ilev<meshi->nisolevels; ilev++){
           if(showlevels[ilev]==0)continue;
           asurfi = asurface + ilev;
           if(asurfi->niso_triangles>0){
             niso_trans += asurfi->niso_triangles;
-            for(itri=0;itri<asurfi->niso_triangles;itri++){
+            for(itri=0; itri<asurfi->niso_triangles; itri++){
               *iso_trans_tmp++=asurfi->iso_triangles+itri;
             }
             colorptr=isoi->colorlevels[ilev];
@@ -1907,24 +1815,24 @@ void UpdateIsoTriangles(int flag){
       else if(transparent_state==MAX_SOLID){
         int ilev;
 
-        for(ilev=0;ilev<meshi->nisolevels-1;ilev++){
+        for(ilev=0; ilev<meshi->nisolevels-1; ilev++){
           if(showlevels[ilev]==0)continue;
           asurfi = asurface + ilev;
           if(asurfi->niso_triangles>0){
             niso_trans += asurfi->niso_triangles;
-            for(itri=0;itri<asurfi->niso_triangles;itri++){
+            for(itri=0; itri<asurfi->niso_triangles; itri++){
               *iso_trans_tmp++=asurfi->iso_triangles+itri;
             }
             colorptr=isoi->colorlevels[ilev];
             colorptr[3]=transparent_level;
           }
         }
-        for(ilev=meshi->nisolevels-1;ilev<meshi->nisolevels;ilev++){
+        for(ilev=meshi->nisolevels-1; ilev<meshi->nisolevels; ilev++){
           if(showlevels[ilev]==0)continue;
           asurfi = asurface + ilev;
           if(asurfi->niso_triangles>0){
             niso_opaques += asurfi->niso_triangles;
-            for(itri=0;itri<asurfi->niso_triangles;itri++){
+            for(itri=0; itri<asurfi->niso_triangles; itri++){
               *iso_opaques_tmp++=asurfi->iso_triangles+itri;
             }
             colorptr=isoi->colorlevels[ilev];
@@ -1935,13 +1843,13 @@ void UpdateIsoTriangles(int flag){
       else if(transparent_state==ALL_SOLID){
         int ilev;
 
-        for(ilev=0;ilev<meshi->nisolevels;ilev++){
+        for(ilev=0; ilev<meshi->nisolevels; ilev++){
           CheckMemory;
           if(showlevels[ilev]==0)continue;
           asurfi = asurface + ilev;
           if(asurfi->niso_triangles>0){
             niso_opaques += asurfi->niso_triangles;
-            for(itri=0;itri<asurfi->niso_triangles;itri++){
+            for(itri=0; itri<asurfi->niso_triangles; itri++){
               *iso_opaques_tmp++=asurfi->iso_triangles+itri;
             }
             colorptr=isoi->colorlevels[ilev];
@@ -1969,7 +1877,7 @@ meshdata *GetLoadedIsoMesh(void){
 
   if(global_scase.isoinfo==NULL)return NULL;
   return_mesh=NULL;
-  for(i=0;i<global_scase.nisoinfo;i++){
+  for(i=0; i<global_scase.nisoinfo; i++){
     meshdata *mesh2;
     isodata *isoi;
 

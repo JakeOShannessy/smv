@@ -248,11 +248,7 @@ add_subdirectory(Source/shared)
 add_subdirectory(Source/jsonrpc)
 
 # The programs to build
-add_subdirectory(Source/convert)
 add_subdirectory(Source/fds2fed)
-add_subdirectory(Source/flush)
-add_subdirectory(Source/get_time)
-add_subdirectory(Source/getdate)
 add_subdirectory(Source/pnginfo)
 add_subdirectory(Source/smokediff)
 add_subdirectory(Source/smokeview)
@@ -260,13 +256,7 @@ add_subdirectory(Source/smokezip)
 if (NOT VENDORED_LIBS)
     add_subdirectory(Source/smvq)
 endif()
-add_subdirectory(Source/timep)
 add_subdirectory(Source/wind2fds)
-
-# The programs to build on Windows only
-if(WIN32)
-    add_subdirectory(Source/set_path)
-endif()
 
 # Install config files
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/Build/for_bundle/smokeview.ini" DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/smokeview")

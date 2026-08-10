@@ -29,7 +29,7 @@ void DrawCircVentsApproxSolid(int option){
   assert(option==VENT_CIRCLE||option==VENT_RECTANGLE);
 
   glBegin(GL_TRIANGLES);
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
     float *xplt, *yplt, *zplt;
@@ -41,7 +41,7 @@ void DrawCircVentsApproxSolid(int option){
     zplt = meshi->zplt_smv;
     dxyz = SCALE2SMV(xyzmaxdiff/400.0);
 
-    for(j=0;j<meshi->ncvents;j++){
+    for(j=0; j<meshi->ncvents; j++){
       cventdata *cvi;
       int ii, jj, kk;
       float xx, yy, zz;
@@ -65,10 +65,10 @@ void DrawCircVentsApproxSolid(int option){
         case UP_X:
         case DOWN_X:
           xx=xplt[cvi->imin]+dx;
-          for(kk=cvi->kmin;kk<cvi->kmax;kk++){
+          for(kk=cvi->kmin; kk<cvi->kmax; kk++){
             zz = zplt[kk];
             zz2 = zplt[kk+1];
-            for(jj=cvi->jmin;jj<cvi->jmax;jj++){
+            for(jj=cvi->jmin; jj<cvi->jmax; jj++){
               int in_circle;
 
               yy = yplt[jj];
@@ -98,10 +98,10 @@ void DrawCircVentsApproxSolid(int option){
         case UP_Y:
         case DOWN_Y:
           yy=yplt[cvi->jmin]+dx;
-          for(kk=cvi->kmin;kk<cvi->kmax;kk++){
+          for(kk=cvi->kmin; kk<cvi->kmax; kk++){
             zz = zplt[kk];
             zz2 = zplt[kk+1];
-            for(ii=cvi->imin;ii<cvi->imax;ii++){
+            for(ii=cvi->imin; ii<cvi->imax; ii++){
               int in_circle;
 
               xx = xplt[ii];
@@ -131,10 +131,10 @@ void DrawCircVentsApproxSolid(int option){
         case UP_Z:
         case DOWN_Z:
           zz=zplt[cvi->kmin]+dx;
-          for(jj=cvi->jmin;jj<cvi->jmax;jj++){
+          for(jj=cvi->jmin; jj<cvi->jmax; jj++){
             yy = yplt[jj];
             yy2 = yplt[jj+1];
-            for(ii=cvi->imin;ii<cvi->imax;ii++){
+            for(ii=cvi->imin; ii<cvi->imax; ii++){
               int in_circle;
 
               xx = xplt[ii];
@@ -179,7 +179,7 @@ void DrawCircVentsApproxOutline(int option){
   assert(option==VENT_CIRCLE||option==VENT_RECTANGLE);
 
   glBegin(GL_LINES);
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
     float *xplt, *yplt, *zplt;
@@ -192,7 +192,7 @@ void DrawCircVentsApproxOutline(int option){
 
     dxyz = SCALE2SMV(xyzmaxdiff/400.0);
 
-    for(j=0;j<meshi->ncvents;j++){
+    for(j=0; j<meshi->ncvents; j++){
       cventdata *cvi;
       int ii, jj, kk;
       float xx0, yy0, zz0;
@@ -219,12 +219,12 @@ void DrawCircVentsApproxOutline(int option){
         case UP_X:
         case DOWN_X:
           xx=xplt[cvi->imin]+dx;
-          for(kk=cvi->kmin;kk<cvi->kmax;kk++){
+          for(kk=cvi->kmin; kk<cvi->kmax; kk++){
             zz0 = zplt[MAX(kk-1,cvi->kmin)];
             zz = zplt[kk];
             zz2 = zplt[kk+1];
             zz3 = zplt[MIN(kk+2,cvi->kmax)];
-            for(jj=cvi->jmin;jj<cvi->jmax;jj++){
+            for(jj=cvi->jmin; jj<cvi->jmax; jj++){
               yy0 = yplt[MAX(jj-1,cvi->jmin)];
               yy = yplt[jj];
               yy2 = yplt[jj+1];
@@ -261,12 +261,12 @@ void DrawCircVentsApproxOutline(int option){
         case UP_Y:
         case DOWN_Y:
           yy=yplt[cvi->jmin]+dx;
-          for(kk=cvi->kmin;kk<cvi->kmax;kk++){
+          for(kk=cvi->kmin; kk<cvi->kmax; kk++){
             zz0 = zplt[MAX(kk-1,cvi->kmin)];
             zz = zplt[kk];
             zz2 = zplt[kk+1];
             zz3 = zplt[MIN(kk+2,cvi->kmax)];
-            for(ii=cvi->imin;ii<cvi->imax;ii++){
+            for(ii=cvi->imin; ii<cvi->imax; ii++){
               xx0 = xplt[MAX(ii-1,cvi->imin)];
               xx = xplt[ii];
               xx2 = xplt[ii+1];
@@ -304,12 +304,12 @@ void DrawCircVentsApproxOutline(int option){
         case UP_Z:
         case DOWN_Z:
           zz=zplt[cvi->kmin]+dx;
-          for(jj=cvi->jmin;jj<cvi->jmax;jj++){
+          for(jj=cvi->jmin; jj<cvi->jmax; jj++){
             yy0 = yplt[MAX(jj-1,cvi->jmin)];
             yy = yplt[jj];
             yy2 = yplt[jj+1];
             yy3 = yplt[MIN(jj+2,cvi->jmax)];
-            for(ii=cvi->imin;ii<cvi->imax;ii++){
+            for(ii=cvi->imin; ii<cvi->imax; ii++){
               xx0 = xplt[MAX(ii-1,cvi->imin)];
               xx = xplt[ii];
               xx2 = xplt[ii+1];
@@ -360,12 +360,12 @@ void DrawCircVentsExactSolid(int option){
 
   if(option==VENT_HIDE)return;
   assert(option==VENT_CIRCLE||option==VENT_RECTANGLE);
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo + i;
-    for(j=0;j<meshi->ncvents;j++){
+    for(j=0; j<meshi->ncvents; j++){
       cventdata *cvi;
       float x0, yy0, z0;
       unsigned char vcolor[3];
@@ -413,7 +413,7 @@ void DrawCircVentsExactSolid(int option){
         deltaz = delta;
         break;
       default:
-        assert(0);
+        assert(FFALSE);
         break;
       }
       color=cvi->color;
@@ -492,12 +492,12 @@ void DrawCircVentsExactOutline(int option){
 
   if(option==VENT_HIDE)return;
   assert(option==VENT_CIRCLE||option==VENT_RECTANGLE);
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo + i;
-    for(j=0;j<meshi->ncvents;j++){
+    for(j=0; j<meshi->ncvents; j++){
       cventdata *cvi;
       float x0, yy0, z0;
       unsigned char vcolor[3];
@@ -545,7 +545,7 @@ void DrawCircVentsExactOutline(int option){
         deltaz = delta;
         break;
       default:
-        assert(0);
+        assert(FFALSE);
         break;
       }
       color=cvi->color;
@@ -647,7 +647,7 @@ void UpdateIndexColors(void){
   if(strcmp(global_scase.surfacedefault->surfacelabel,"INERT")==0){
     global_scase.surfacedefault->color=global_scase.color_defs.block_ambient2;
   }
-  for(i=0;i<global_scase.surfcoll.nsurfinfo;i++){
+  for(i=0; i<global_scase.surfcoll.nsurfinfo; i++){
     surfdata *surfi;
 
     surfi = global_scase.surfcoll.surfinfo + i;
@@ -659,11 +659,11 @@ void UpdateIndexColors(void){
     }
   }
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo + i;
-    for(j=0;j<meshi->nbptrs;j++){
+    for(j=0; j<meshi->nbptrs; j++){
       blockagedata *bc;
 
       bc = meshi->blockageinfoptrs[j];
@@ -674,7 +674,7 @@ void UpdateIndexColors(void){
         }
       }
     }
-    for(j=0;j<meshi->nvents;j++){
+    for(j=0; j<meshi->nvents; j++){
       ventdata *vi;
 
       vi = meshi->ventinfo + j;
@@ -691,7 +691,6 @@ void UpdateIndexColors(void){
   }
   global_scase.updatefaces=1;
 }
-
 
 /* ------------------ DrawObstOutlines ------------------------ */
 
@@ -715,7 +714,7 @@ void DrawObstOutlines(void){
     xplt = meshi->xplt_fds;
     yplt = meshi->yplt_fds;
     zplt = meshi->zplt_fds;
-    for(i = 0;i < meshi->nbptrs;i++){
+    for(i = 0; i < meshi->nbptrs; i++){
       blockagedata *bc;
 
       bc = meshi->blockageinfoptrs[i];
@@ -770,7 +769,6 @@ void DrawObstOutlines(void){
 void DrawOrigObstOutlines(void){
   int i;
   float *color, *oldcolor=NULL;
-
 
   glPushMatrix();
   glScalef(SCALE2SMV(1.0),SCALE2SMV(1.0),SCALE2SMV(1.0));
@@ -841,7 +839,7 @@ void DrawOutlines(void){
   glLineWidth(global_scase.linewidth);
   glBegin(GL_LINES);
   glColor3fv(foregroundcolor);
-  for(i=0;i<global_scase.noutlineinfo;i++){
+  for(i=0; i<global_scase.noutlineinfo; i++){
     outlinedata *outlinei;
     float *xx1, *yy1, *zz1;
     float *xx2, *yy2, *zz2;
@@ -854,67 +852,13 @@ void DrawOutlines(void){
     yy2 = outlinei->y2;
     zz1 = outlinei->z1;
     zz2 = outlinei->z2;
-    for(j=0;j<outlinei->nlines;j++){
+    for(j=0; j<outlinei->nlines; j++){
       glVertex3f(*xx1++,*yy1++,*zz1++);
       glVertex3f(*xx2++,*yy2++,*zz2++);
     }
   }
   glEnd();
   AntiAliasLine(OFF);
-}
-
-/* ------------------ DrawCBox ------------------------ */
-
-void DrawCBox(float x, float y, float z, float size){
-  float xx[8], yy[8], zz[8];
-  float xbound[2],ybound[2],zbound[2];
-  int i;
-  int ix[8]={0,1,1,0,0,1,1,0};
-  int iy[8]={0,0,0,0,1,1,1,1};
-  int iz[8]={0,0,1,1,0,0,1,1};
-  float dsize=SCALE2SMV(size);
-
-  xbound[0]=x-dsize/2.0;
-  ybound[0]=y-dsize/2.0;
-  zbound[0]=z-dsize/2.0;
-  xbound[1]=x+dsize/2.0;
-  ybound[1]=y+dsize/2.0;
-  zbound[1]=z+dsize/2.0;
-  for(i=0;i<8;i++){
-    xx[i]=xbound[ix[i]];
-    yy[i]=ybound[iy[i]];
-    zz[i]=zbound[iz[i]];
-  }
-
-  glVertex3f(xx[0],yy[0],zz[0]);
-  glVertex3f(xx[1],yy[1],zz[1]);
-  glVertex3f(xx[5],yy[5],zz[5]);
-  glVertex3f(xx[4],yy[4],zz[4]);
-
-  glVertex3f(xx[1],yy[1],zz[1]);
-  glVertex3f(xx[2],yy[2],zz[2]);
-  glVertex3f(xx[6],yy[6],zz[6]);
-  glVertex3f(xx[5],yy[5],zz[5]);
-
-  glVertex3f(xx[2],yy[2],zz[2]);
-  glVertex3f(xx[3],yy[3],zz[3]);
-  glVertex3f(xx[7],yy[7],zz[7]);
-  glVertex3f(xx[6],yy[6],zz[6]);
-
-  glVertex3f(xx[3],yy[3],zz[3]);
-  glVertex3f(xx[0],yy[0],zz[0]);
-  glVertex3f(xx[4],yy[4],zz[4]);
-  glVertex3f(xx[7],yy[7],zz[7]);
-
-  glVertex3f(xx[0],yy[0],zz[0]);
-  glVertex3f(xx[3],yy[3],zz[3]);
-  glVertex3f(xx[2],yy[2],zz[2]);
-  glVertex3f(xx[1],yy[1],zz[1]);
-
-  glVertex3f(xx[4],yy[4],zz[4]);
-  glVertex3f(xx[5],yy[5],zz[5]);
-  glVertex3f(xx[6],yy[6],zz[6]);
-  glVertex3f(xx[7],yy[7],zz[7]);
 }
 
 /* ------------------ GetBlockVals ------------------------ */
@@ -963,28 +907,13 @@ void GetBlockVals(  float *xmin, float *xmax,
 
 }
 
-/* ------------------ HaveCircularVents ------------------------ */
-
-int HaveCircularVents(void){
-  int i;
-
-  for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
-    meshdata* meshi;
-
-    meshi = global_scase.meshescoll.meshinfo + i;
-
-    if(meshi->ncvents > 0)return 1;
-  }
-  return 0;
-}
-
-      /* ------------------ SetCVentDirs ------------------------ */
+/* ------------------ SetCVentDirs ------------------------ */
 
 void SetCVentDirs(void){
   int ii;
 
   InitCircle(90,&cvent_circ);
-  for(ii=0;ii<global_scase.meshescoll.nmeshes;ii++){
+  for(ii=0; ii<global_scase.meshescoll.nmeshes; ii++){
     meshdata *meshi;
     int ibar, jbar;
     char *c_iblank;
@@ -996,7 +925,7 @@ void SetCVentDirs(void){
     jbar = meshi->jbar;
     c_iblank = meshi->c_iblank_cell;
 
-    for(iv=0;iv<meshi->ncvents;iv++){
+    for(iv=0; iv<meshi->ncvents; iv++){
       cventdata *cvi;
       int dir;
       int orien;
@@ -1039,10 +968,10 @@ void SetCVentDirs(void){
           orien=1;
           i=cvi->imin;
           breakloop=0;
-          for(j=cvi->jmin;j<=cvi->jmax;j++){
+          for(j=cvi->jmin; j<=cvi->jmax; j++){
             int k;
 
-            for(k=cvi->kmin;k<=cvi->kmax;k++){
+            for(k=cvi->kmin; k<=cvi->kmax; k++){
               int state1, state2;
 
               if(global_scase.use_iblank==1&&c_iblank!=NULL){
@@ -1086,10 +1015,10 @@ void SetCVentDirs(void){
           orien=1;
           j=cvi->jmin;
           breakloop=0;
-          for(i=cvi->imin;i<=cvi->imax;i++){
+          for(i=cvi->imin; i<=cvi->imax; i++){
             int k;
 
-            for(k=cvi->kmin;k<=cvi->kmax;k++){
+            for(k=cvi->kmin; k<=cvi->kmax; k++){
               int state1, state2;
 
               if(global_scase.use_iblank==1&&c_iblank!=NULL){
@@ -1133,10 +1062,10 @@ void SetCVentDirs(void){
           orien=1;
           k=cvi->kmin;
           breakloop=0;
-          for(i=cvi->imin;i<=cvi->imax;i++){
+          for(i=cvi->imin; i<=cvi->imax; i++){
             int j;
 
-            for(j=cvi->jmin;j<=cvi->jmax;j++){
+            for(j=cvi->jmin; j<=cvi->jmax; j++){
               int state1, state2;
 
               if(global_scase.use_iblank==1&&c_iblank!=NULL){
@@ -1175,7 +1104,7 @@ void SetCVentDirs(void){
 
   // set up blanking arrays for circular vents
 
-  for(ii=0;ii<global_scase.meshescoll.nmeshes;ii++){
+  for(ii=0; ii<global_scase.meshescoll.nmeshes; ii++){
     meshdata *meshi;
     int iv,i,j,k;
     unsigned char *blank;
@@ -1186,7 +1115,7 @@ void SetCVentDirs(void){
     xplt = meshi->xplt_cen_smv;
     yplt = meshi->yplt_cen_smv;
     zplt = meshi->zplt_cen_smv;
-    for(iv = 0;iv < meshi->ncvents;iv++){
+    for(iv = 0; iv < meshi->ncvents; iv++){
       cventdata *cvi;
       int nx=0, ny=0;
 
@@ -1216,8 +1145,8 @@ void SetCVentDirs(void){
       ny += 2;
       NewMemory((void **)&cvi->blank, nx * ny * sizeof(unsigned char));
       blank = cvi->blank;
-      for(j = 0;j < ny;j++){
-        for(i = 0;i < nx;i++){
+      for(j = 0; j < ny; j++){
+        for(i = 0; i < nx; i++){
           if(i == 0 || j == 0 || i == nx - 1 || j == ny - 1){
             blank[IJCIRC(i - 1, j - 1)] = 0;
           }
@@ -1232,11 +1161,11 @@ void SetCVentDirs(void){
         switch(cvi->dir){
         case DOWN_X:
         case UP_X:
-          for(k = cvi->kmin;k < cvi->kmax;k++){
+          for(k = cvi->kmin; k < cvi->kmax; k++){
             float dz;
 
             dz = zplt[k] - FDS2SMV_Z(cvi->origin[2]);
-            for(j = cvi->jmin;j < cvi->jmax;j++){
+            for(j = cvi->jmin; j < cvi->jmax; j++){
               float dy;
               float drad;
 
@@ -1250,11 +1179,11 @@ void SetCVentDirs(void){
           break;
         case DOWN_Y:
         case UP_Y:
-          for(k = cvi->kmin;k < cvi->kmax;k++){
+          for(k = cvi->kmin; k < cvi->kmax; k++){
             float dz;
 
             dz = zplt[k] - FDS2SMV_Z(cvi->origin[2]);
-            for(i = cvi->imin;i < cvi->imax;i++){
+            for(i = cvi->imin; i < cvi->imax; i++){
               float dx;
               float drad;
 
@@ -1268,11 +1197,11 @@ void SetCVentDirs(void){
           break;
         case DOWN_Z:
         case UP_Z:
-          for(j = cvi->jmin;j < cvi->jmax;j++){
+          for(j = cvi->jmin; j < cvi->jmax; j++){
             float dy;
 
             dy = yplt[j] - FDS2SMV_Y(cvi->origin[1]);
-            for(i = cvi->imin;i < cvi->imax;i++){
+            for(i = cvi->imin; i < cvi->imax; i++){
               float dx;
               float drad;
 
@@ -1338,7 +1267,7 @@ void SetVentDirs(void){
   INIT_PRINT_TIMER(vent_setup_timer);
   n_mirrorvents = 0;
   n_openvents = 0;
-  for(ii=0;ii<global_scase.meshescoll.nmeshes;ii++){
+  for(ii=0; ii<global_scase.meshescoll.nmeshes; ii++){
     meshdata *meshi;
     float *xplttemp;
     float *yplttemp;
@@ -1363,7 +1292,7 @@ void SetVentDirs(void){
     yplttemp=meshi->yplt_smv;
     zplttemp=meshi->zplt_smv;
 
-    for(iv=0;iv<meshi->nvents+12;iv++){
+    for(iv=0; iv<meshi->nvents+12; iv++){
       ventdata *vi;
 
       vi=meshi->ventinfo+iv;
@@ -1390,8 +1319,8 @@ void SetVentDirs(void){
           orien=1;
           i=vi->imin;
           breakloop=0;
-          for(j=vi->jmin;j<=MIN(vi->jmax,jbar-1);j++){
-            for(k=vi->kmin;k<=MIN(vi->kmax,kbar-1);k++){
+          for(j=vi->jmin; j<=MIN(vi->jmax,jbar-1); j++){
+            for(k=vi->kmin; k<=MIN(vi->kmax,kbar-1); k++){
               int state1, state2;
 
               if(global_scase.use_iblank==1&&c_iblank!=NULL){
@@ -1443,8 +1372,8 @@ void SetVentDirs(void){
           orien=1;
           j=vi->jmin;
           breakloop=0;
-          for(i=vi->imin;i<=MIN(vi->imax,ibar-1);i++){
-            for(k=vi->kmin;k<=MIN(vi->kmax,kbar-1);k++){
+          for(i=vi->imin; i<=MIN(vi->imax,ibar-1); i++){
+            for(k=vi->kmin; k<=MIN(vi->kmax,kbar-1); k++){
               int state1, state2;
 
               if(global_scase.use_iblank==1&&c_iblank!=NULL){
@@ -1496,8 +1425,8 @@ void SetVentDirs(void){
           orien=1;
           k=vi->kmin;
           breakloop=0;
-          for(i=vi->imin;i<=MIN(vi->imax,ibar-1);i++){
-            for(j=vi->jmin;j<=MIN(vi->jmax,jbar-1);j++){
+          for(i=vi->imin; i<=MIN(vi->imax,ibar-1); i++){
+            for(j=vi->jmin; j<=MIN(vi->jmax,jbar-1); j++){
               int state1, state2;
 
               if(global_scase.use_iblank==1&&c_iblank!=NULL){
@@ -1555,7 +1484,7 @@ int InBlockage(const meshdata *meshi,float x, float y, float z){
   yplt=meshi->yplt_smv;
   zplt=meshi->zplt_smv;
 
-  for(i=0;i<meshi->nbptrs;i++){
+  for(i=0; i<meshi->nbptrs; i++){
     blockagedata *bc;
     float xmin, xmax, ymin, ymax, zmin, zmax;
 
@@ -1646,7 +1575,7 @@ void SetInteriorBlockages(void){
 
       bc = meshi->blockageinfoptrs[j];
       if(bc->transparent==0)continue;
-      for(k=0;k<6;k++){
+      for(k=0; k<6; k++){
         bc->interior[k] = InAnyBlockage(bc->xyzDELTA+3*k);
       }
     }
@@ -1678,7 +1607,7 @@ void UpdateCADTextCoords(cadquad *quadi){
   l1 = sqrt(nx*nx+ny*ny);
   l2 = l1*sqrt(nx*nx+ny*ny+nz*nz);
 
-  for(i=0;i<4;i++){
+  for(i=0; i<4; i++){
     float qx, qy, qz;
 
     qx=SMV2FDS_X(xyz[3*i+0]) - t_origin[0];
@@ -1716,7 +1645,7 @@ void DrawCADGeom(const cadgeomdata *cd){
   glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,global_scase.color_defs.block_specular2);
   glEnable(GL_COLOR_MATERIAL);
   glBegin(GL_QUADS);
-  for(i=0;i<cd->nquads;i++){
+  for(i=0; i<cd->nquads; i++){
     float *xyzpoint, *normal;
     int colorindex;
     int colorindex2;
@@ -1780,7 +1709,7 @@ void DrawCAD2Geom(const cadgeomdata *cd, int trans_flag){
   if(trans_flag==DRAW_TRANSPARENT)TransparentOn();
   glBegin(GL_QUADS);
   colorindex=0;
-  for(ii=0;ii<cd->nquads;ii++){
+  for(ii=0; ii<cd->nquads; ii++){
     float *xyzpoint;
     texturedata *texti;
     float this_block_shininess;
@@ -1802,7 +1731,6 @@ void DrawCAD2Geom(const cadgeomdata *cd, int trans_flag){
       if(quadi->time_show <0.0&&timeval>-quadi->time_show)continue;
     }
     if(visCadTextures==1&&texti->loaded==1)continue;
-
 
     thiscolor=quadi->cadlookq->rgb;
     if(thiscolor!=lastcolor){
@@ -1863,7 +1791,7 @@ void DrawCAD2Geom(const cadgeomdata *cd, int trans_flag){
     last_block_shininess=-1.0;
     lasttexture=NULL;
     glBegin(GL_QUADS);
-    for(ii=0;ii<cd->nquads;ii++){
+    for(ii=0; ii<cd->nquads; ii++){
       float this_block_shininess;
       float *xyzpoint;
       texturedata *texti;
@@ -2022,8 +1950,7 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
     zminmax2[1] = vi->zmax;
   }
 
-
-  for(n=0;n<8;n++){
+  for(n=0; n<8; n++){
     xx[n]=xminmax[ii[n]];
     yy[n]=yminmax[jj[n]];
     zz[n]=zminmax[kk[n]];
@@ -2032,7 +1959,7 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
     zz2[n]=zminmax2[kk[n]];
   }
 
-  for(j=0;j<jend;j++){
+  for(j=0; j<jend; j++){
     faceptr->meshindex=meshi-global_scase.meshescoll.meshinfo;
     faceptr->type2=facetype;
     faceptr->show_bothsides=0;
@@ -2147,7 +2074,6 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
       }
       faceptr->linecolor=faceptr->color;
     }
-
 
     if(bc!=NULL){
       faceptr->textureinfo=bc->surf[j]->textureinfo;
@@ -2277,7 +2203,7 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
     faceptr->xmax=xx2[bfi[0]]+offset[XXX];
     faceptr->ymax=yy2[bfi[0]]+offset[YYY];
     faceptr->zmax=zz2[bfi[0]]+offset[ZZZ];
-    for(k=0;k<4;k++){
+    for(k=0; k<4; k++){
       float xvert, yvert, zvert;
 
       jjj = bfi[k];
@@ -2293,7 +2219,6 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
       faceptr->approx_center_coord[1]+=yvert;
       faceptr->approx_center_coord[2]+=zvert;
 
-
       faceptr->exact_vertex_coords[3*k]  =xx2[jjj]+offset[XXX];
       faceptr->exact_vertex_coords[3*k+1]=yy2[jjj]+offset[YYY];
       faceptr->exact_vertex_coords[3*k+2]=zz2[jjj]+offset[ZZZ];
@@ -2307,7 +2232,6 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
     faceptr->approx_center_coord[0]/=4.0;
     faceptr->approx_center_coord[1]/=4.0;
     faceptr->approx_center_coord[2]/=4.0;
-
 
     {
       float xa_texture[4], ya_texture[4];
@@ -2370,7 +2294,7 @@ void ObstOrVent2Faces(const meshdata *meshi, blockagedata *bc,
       ya_texture[2] = ya_texture[1] + dy_a;
       ya_texture[3] = ya_texture[2];
 
-      for(k=0;k<4;k++){
+      for(k=0; k<4; k++){
         faceptr->approx_texture_coords[2*k]=xa_texture[k]/t_width;
         faceptr->approx_texture_coords[2*k+1]=ya_texture[k]/t_height;
         faceptr->exact_texture_coords[2*k]=xe_texture[k]/t_width;
@@ -2393,14 +2317,15 @@ void UpdateFacesWorker(void){
   have_vents_int=0;
 
   INIT_PRINT_TIMER(timer_update_faces_1);
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     facedata *faceptr;
     int j;
 
     meshi = global_scase.meshescoll.meshinfo + i;
     faceptr = meshi->faceinfo;
-    for(j=0;j<meshi->nbptrs;j++){
+    if(faceptr == NULL)continue;
+    for(j=0; j<meshi->nbptrs; j++){
       blockagedata *bc;
 
       bc = meshi->blockageinfoptrs[j];
@@ -2408,14 +2333,14 @@ void UpdateFacesWorker(void){
       ObstOrVent2Faces(meshi,bc,NULL,faceptr,BLOCK_face);
       faceptr += 6;
     }
-    for(j=0;j<meshi->nvents;j++){
+    for(j=0; j<meshi->nvents; j++){
       ventdata *vi;
 
       vi = meshi->ventinfo+j;
       ObstOrVent2Faces(meshi,NULL,vi,faceptr,VENT_face);
       faceptr++;
     }
-    for(j=meshi->nvents;j<meshi->nvents+6;j++){
+    for(j=meshi->nvents; j<meshi->nvents+6; j++){
       ventdata *vi;
 
       vi = meshi->ventinfo+j;
@@ -2423,7 +2348,7 @@ void UpdateFacesWorker(void){
       assert(faceptr->color!=NULL);
       faceptr++;
     }
-    for(j=meshi->nvents+6;j<meshi->nvents+12;j++){
+    for(j=meshi->nvents+6; j<meshi->nvents+12; j++){
       ventdata *vi;
 
       vi = meshi->ventinfo+j;
@@ -2603,7 +2528,7 @@ int CompareColorFaces(const void *arg1, const void *arg2){
 void ShowHideInternalFaces(meshdata *meshi, int show){
   int j;
 
-  for(j = 0;j < meshi->nbptrs;j++){
+  for(j = 0; j < meshi->nbptrs; j++){
     facedata *facej;
 
     facej = meshi->faceinfo + 6 * j;
@@ -2665,7 +2590,7 @@ int IsVentVisible(ventdata *vi){
   if(vi->wall_type == FRONTwall)return 1 - vis_boundary_type[FRONTwall];
   if(vi->wall_type == BACKwall)return  1 - vis_boundary_type[BACKwall];
   if(vi->wall_type == DOWNwall)return  1 - vis_boundary_type[DOWNwall];
-  if(vi->wall_type == UPwall  )return  1 - vis_boundary_type[UPwall];
+  if(vi->wall_type == UPwall)return  1 - vis_boundary_type[UPwall];
 
   return 0; //boundary file is visible so hide vent
 }
@@ -2693,7 +2618,7 @@ void UpdateFaceListsWorker(void){
   show = GetInternalFaceShow();
 
   // if we are not showing boundary files then don't try to hide blockages
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int patchfilenum;
     int j;
@@ -2717,7 +2642,7 @@ void UpdateFaceListsWorker(void){
     outline_offset = vent_offset + meshi->nvents;
     exteriorsurface_offset = outline_offset + 6;
 
-    for(j=0;j<meshi->nfaces;j++){
+    for(j=0; j<meshi->nfaces; j++){
       facedata *facej;
       ventdata *vi;
 
@@ -2900,7 +2825,7 @@ void UpdateFaceListsWorker(void){
       nhidden=0;
       qsort((facedata **)meshi->face_normals_single,(size_t)n_normals_single,sizeof(facedata *),CompareSingleFaces0);
       meshi->face_normals_single[0]->dup=0;
-      for(iface=1;iface<meshi->nface_normals_single;iface++){
+      for(iface=1; iface<meshi->nface_normals_single; iface++){
         facedata *facei;
         facedata *faceim1;
 
@@ -2927,7 +2852,7 @@ void UpdateFaceListsWorker(void){
       }
       if(nhidden>0){
         n_normals_single=0;
-        for(iface=0;iface<meshi->nface_normals_single;iface++){
+        for(iface=0; iface<meshi->nface_normals_single; iface++){
           facedata *facei;
 
           facei=meshi->face_normals_single[iface];
@@ -2937,7 +2862,7 @@ void UpdateFaceListsWorker(void){
       }
 
       qsort((facedata **)meshi->face_normals_single,(size_t)n_normals_single,sizeof(facedata *),CompareSingleFaces);
-      for(iface=0;iface<meshi->nface_normals_single;iface++){
+      for(iface=0; iface<meshi->nface_normals_single; iface++){
         facedata *facei;
 
         facei=meshi->face_normals_single[iface];
@@ -2998,7 +2923,7 @@ void UpdateFaceListsWorker(void){
     }
   }
   n_geom_triangles=0;
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo  + i;
@@ -3022,15 +2947,15 @@ void DrawSelectFaces(){
 
   DISABLE_LIGHTING;
   glBegin(GL_QUADS);
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo + i;
-    for(j=0;j<meshi->nbptrs;j++){
+    for(j=0; j<meshi->nbptrs; j++){
       int k;
 
-      for(k=0;k<6;k++){
+      for(k=0; k<6; k++){
         unsigned char r, g, b;
         facedata *facek;
         float *vertices;
@@ -3426,7 +3351,6 @@ void DrawFacesOLD(int option){
 
         if(facei->type2 == BLOCK_face && cullfaces == 0)glDisable(GL_CULL_FACE);
 
-
         glBindTexture(GL_TEXTURE_2D, texti->name);
         glBegin(GL_QUADS);
 
@@ -3445,7 +3369,6 @@ void DrawFacesOLD(int option){
         glEnd();
       }
       if(cullfaces == 1)glEnable(GL_CULL_FACE);
-
 
     }
     glDisable(GL_TEXTURE_2D);
@@ -3480,7 +3403,7 @@ void DrawFaces(){
     glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,global_scase.color_defs.block_specular2);
     glEnable(GL_COLOR_MATERIAL);
     glBegin(GL_TRIANGLES);
-    for(j=0;j<global_scase.meshescoll.nmeshes;j++){
+    for(j=0; j<global_scase.meshescoll.nmeshes; j++){
       meshdata *meshi;
       int i;
 
@@ -3490,7 +3413,7 @@ void DrawFaces(){
       // DOWN_X faces
 
       glNormal3f(-1.0,0.0,0.0);
-      for(i=0;i<meshi->nface_normals_single_DOWN_X;i++){
+      for(i=0; i<meshi->nface_normals_single_DOWN_X; i++){
         facedata *facei;
 
         facei = meshi->face_normals_single_DOWN_X[i];
@@ -3500,7 +3423,7 @@ void DrawFaces(){
       // UP_X faces
 
       glNormal3f(1.0,0.0,0.0);
-      for(i=0;i<meshi->nface_normals_single_UP_X;i++){
+      for(i=0; i<meshi->nface_normals_single_UP_X; i++){
         facedata *facei;
 
         facei = meshi->face_normals_single_UP_X[i];
@@ -3510,7 +3433,7 @@ void DrawFaces(){
       // DOWN_Y faces
 
       glNormal3f(0.0,-1.0,0.0);
-      for(i=0;i<meshi->nface_normals_single_DOWN_Y;i++){
+      for(i=0; i<meshi->nface_normals_single_DOWN_Y; i++){
         facedata *facei;
 
         facei = meshi->face_normals_single_DOWN_Y[i];
@@ -3520,7 +3443,7 @@ void DrawFaces(){
       // UP_Y faces
 
       glNormal3f(0.0,1.0,0.0);
-      for(i=0;i<meshi->nface_normals_single_UP_Y;i++){
+      for(i=0; i<meshi->nface_normals_single_UP_Y; i++){
         facedata *facei;
 
         facei = meshi->face_normals_single_UP_Y[i];
@@ -3530,7 +3453,7 @@ void DrawFaces(){
       // DOWN_Z faces
 
       glNormal3f(0.0,0.0,-1.0);
-      for(i=0;i<meshi->nface_normals_single_DOWN_Z;i++){
+      for(i=0; i<meshi->nface_normals_single_DOWN_Z; i++){
         facedata *facei;
 
         facei = meshi->face_normals_single_DOWN_Z[i];
@@ -3540,7 +3463,7 @@ void DrawFaces(){
       // UP_Z faces
 
       glNormal3f(0.0,0.0,1.0);
-      for(i=0;i<meshi->nface_normals_single_UP_Z;i++){
+      for(i=0; i<meshi->nface_normals_single_UP_Z; i++){
         facedata *facei;
 
         facei = meshi->face_normals_single_UP_Z[i];
@@ -3563,12 +3486,12 @@ void DrawFaces(){
     glEnable(GL_COLOR_MATERIAL);
     if(cullfaces==1)glDisable(GL_CULL_FACE);
     glBegin(GL_QUADS);
-    for(j=0;j<global_scase.meshescoll.nmeshes;j++){
+    for(j=0; j<global_scase.meshescoll.nmeshes; j++){
       meshdata *meshi;
       int i;
 
       meshi=global_scase.meshescoll.meshinfo + j;
-      for(i=0;i<meshi->nface_normals_double;i++){
+      for(i=0; i<meshi->nface_normals_double; i++){
         facedata *facei;
         float *vertices;
 
@@ -3633,13 +3556,13 @@ void DrawFaces(){
     AntiAliasLine(ON);
     glLineWidth(global_scase.linewidth);
     glBegin(GL_LINES);
-    for(j=0;j<global_scase.meshescoll.nmeshes;j++){
+    for(j=0; j<global_scase.meshescoll.nmeshes; j++){
       meshdata *meshi;
       int i;
 
       meshi = global_scase.meshescoll.meshinfo + j;
       if(meshi->blockvis==0)continue;
-      for(i=0;i<meshi->nface_outlines;i++){
+      for(i=0; i<meshi->nface_outlines; i++){
         facedata *facei;
         float *vertices;
 
@@ -3693,13 +3616,13 @@ void DrawFaces(){
     glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,global_scase.color_defs.block_specular2);
     glEnable(GL_TEXTURE_2D);
     glColor4ub(255, 255, 255, 255);
-    for(j=0;j<global_scase.meshescoll.nmeshes;j++){
+    for(j=0; j<global_scase.meshescoll.nmeshes; j++){
       meshdata *meshi;
       int i;
 
       meshi = global_scase.meshescoll.meshinfo + j;
       if(meshi->blockvis==0)continue;
-      for(i=0;i<meshi->nface_textures;i++){
+      for(i=0; i<meshi->nface_textures; i++){
         facedata *facei;
         float *tvertices;
         float *vertices;
@@ -3721,7 +3644,6 @@ void DrawFaces(){
 
         if(facei->type2==BLOCK_face&&cullfaces==0)glDisable(GL_CULL_FACE);
 
-
         glBindTexture(GL_TEXTURE_2D,texti->name);
         glBegin(GL_QUADS);
 
@@ -3740,7 +3662,6 @@ void DrawFaces(){
         glEnd();
       }
       if(cullfaces==1)glEnable(GL_CULL_FACE);
-
 
     }
     glDisable(GL_COLOR_MATERIAL);
@@ -3767,7 +3688,7 @@ int CompareTransparentFaces(const void *arg1, const void *arg2){
 void SortTransparentFaces(float *mm){
   int i;
 
-  for(i=0;i<nface_transparent;i++){
+  for(i=0; i<nface_transparent; i++){
     facedata *facei;
     float *xyzface;
     float xyzeye[3];
@@ -3813,7 +3734,7 @@ void DrawTransparentFaces(){
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,global_scase.color_defs.block_ambient2);
     glEnable(GL_COLOR_MATERIAL);
     glBegin(GL_QUADS);
-    for(i=0;i<nface_transparent;i++){
+    for(i=0; i<nface_transparent; i++){
       facedata *facei;
       float *vertices;
 
@@ -3888,12 +3809,12 @@ void DrawTransparentFaces(){
     glEnable(GL_COLOR_MATERIAL);
     if(cullfaces==1)glDisable(GL_CULL_FACE);
     glBegin(GL_QUADS);
-    for(j=0;j<global_scase.meshescoll.nmeshes;j++){
+    for(j=0; j<global_scase.meshescoll.nmeshes; j++){
       meshdata *meshi;
       int i;
 
       meshi=global_scase.meshescoll.meshinfo + j;
-      for(i=0;i<meshi->nface_transparent_double;i++){
+      for(i=0; i<meshi->nface_transparent_double; i++){
         facedata *facei;
         float *vertices;
 
@@ -3936,94 +3857,6 @@ void DrawTransparentFaces(){
   if(drawing_transparent==1)TransparentOff();
 }
 
-/* ------------------ GetFaceNabor ------------------------ */
-
-facedata *GetFaceNabor(meshdata *meshi, facedata *facei, int dir){
-  meshdata *meshj;
-  int j;
-
-  meshj = meshi->nabors[dir];
-  if(meshj == NULL)return NULL;
-  switch(dir){
-  case MDOWN:
-    if(facei->kmin != 0 || facei->kmin != facei->kmax)return NULL;
-    for(j = 5; j < 6 * meshj->nbptrs; j += 6){
-      facedata *facej;
-
-      facej = meshj->faceinfo + j;
-      if(facej->kmin != meshj->kbar || facej->kmax != facej->kmin)continue;
-      if(facei->imin != facej->imin || facei->jmin != facej->jmin)continue;
-      if(facei->imax != facej->imax || facei->jmax != facej->jmax)continue;
-      return facej;
-    }
-    break;
-  case MUP:
-    if(facei->kmin != meshi->kbar || facei->kmax != facei->kmin)return NULL;
-    for(j = 4; j < 6 * meshj->nbptrs; j += 6){
-      facedata *facej;
-
-      facej = meshj->faceinfo + j;
-      if(facej->kmin != meshj->kbar || facej->kmax != facej->kmin)continue;
-      if(facei->imin != facej->imin || facei->jmin != facej->jmin)continue;
-      if(facei->imax != facej->imax || facei->jmax != facej->jmax)continue;
-      return facej;
-    }
-    break;
-  case MFRONT:
-    if(facei->jmin != 0 || facei->jmin != facei->jmax)return NULL;
-    for(j = 2; j < 6 * meshj->nbptrs; j += 6){
-      facedata *facej;
-
-      facej = meshj->faceinfo + j;
-      if(facej->jmin != meshj->jbar || facej->jmax != facej->jmin)continue;
-      if(facei->imin != facej->imin || facei->kmin != facej->kmin)continue;
-      if(facei->imax != facej->imax || facei->kmax != facej->kmax)continue;
-      return facej;
-    }
-    break;
-  case MBACK:
-    if(facei->jmin != meshi->jbar || facei->jmax != facei->jmin)return NULL;
-    for(j = 0; j < 6 * meshj->nbptrs; j += 6){
-      facedata *facej;
-
-      facej = meshj->faceinfo + j;
-      if(facej->jmin != meshj->jbar || facej->jmax != facej->jmin)continue;
-      if(facei->imin != facej->imin || facei->kmin != facej->kmin)continue;
-      if(facei->imax != facej->imax || facei->kmax != facej->kmax)continue;
-      return facej;
-    }
-    break;
-  case MLEFT:
-    if(facei->imin != 0 || facei->imin != facei->imax)return NULL;
-    for(j = 1; j < 6 * meshj->nbptrs; j += 6){
-      facedata *facej;
-
-      facej = meshj->faceinfo + j;
-      if(facej->imin != meshj->ibar || facej->imax != facej->imin)continue;
-      if(facei->kmin != facej->kmin || facei->jmin != facej->jmin)continue;
-      if(facei->kmax != facej->kmax || facei->jmax != facej->jmax)continue;
-      return facej;
-    }
-    break;
-  case MRIGHT:
-    if(facei->imin != meshi->ibar || facei->imax != facei->imin)return NULL;
-    for(j = 3; j < 6 * meshj->nbptrs; j += 6){
-      facedata *facej;
-
-      facej = meshj->faceinfo + j;
-      if(facej->imin != meshj->ibar || facej->imax != facej->imin)continue;
-      if(facei->kmin != facej->kmin || facei->jmin != facej->kmin)continue;
-      if(facei->kmax != facej->kmax || facei->jmax != facej->kmax)continue;
-      return facej;
-    }
-    break;
-  default:
-    assert(FFALSE);
-    break;
-  }
-  return NULL;
-}
-
 /* ------------------ AllocateFaces ------------------------ */
 
 void AllocateFaces(){
@@ -4032,7 +3865,7 @@ void AllocateFaces(){
   int abortflag=0;
 
   FREEMEMORY(face_transparent);
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int ntotal;
 
@@ -4074,7 +3907,7 @@ void AllocateFaces(){
     mem_sum=0;
     nfaces_temp=0;
     ntotal2=0;
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0; i<global_scase.meshescoll.nmeshes; i++){
       int ntotal;
       meshdata *meshi;
 
@@ -4133,7 +3966,7 @@ void UpdateSelectBlocks(void){
   int ntotal=0;
   int local_count=0;
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo + i;
@@ -4146,15 +3979,15 @@ void UpdateSelectBlocks(void){
   NewMemory((void **)&selectblockinfo,sizeof(blockagedata *)*ntotal);
   NewMemory((void **)&sortedblocklist,sizeof(int)*ntotal);
 
-  for(i=0;i<ntotal;i++){
+  for(i=0; i<ntotal; i++){
     sortedblocklist[i]=i;
   }
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int j;
 
     meshi = global_scase.meshescoll.meshinfo + i;
-    for(j=0;j<meshi->nbptrs;j++){
+    for(j=0; j<meshi->nbptrs; j++){
       blockagedata *bc;
 
       bc = meshi->blockageinfoptrs[j];
@@ -4177,7 +4010,7 @@ void UpdateSelectFaces(void){
   FREEMEMORY(selectfaceinfo);
 
   ntotalfaces=0;
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo + i;
@@ -4195,15 +4028,15 @@ void UpdateSelectFaces(void){
      up z */
   ntotalfaces=0;
   sd = selectfaceinfo;
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int j;
 
     meshi=global_scase.meshescoll.meshinfo + i;
-    for(j=0;j<meshi->nbptrs;j++){
+    for(j=0; j<meshi->nbptrs; j++){
       int k;
 
-      for(k=0;k<6;k++){
+      for(k=0; k<6; k++){
         facedata *facek;
         int sides[]={DOWN_Y,UP_X,UP_Y,DOWN_X,DOWN_Z,UP_Z};
 
@@ -4223,240 +4056,6 @@ void UpdateSelectFaces(void){
   }
 }
 
-/* ------------------ InitDemo ------------------------ */
-
-void InitDemo(float rad, int nlat, int nlong){
-  int i,j;
-  float phi, psi;
-  extern float *sphere_xyz;
-  extern int update_demo;
-  float *s_xyz;
-
-  if(nlat<=0||nlong<=0)return;
-  update_demo=0;
-  FREEMEMORY(sphere_xyz);
-  NewMemory((void **)&sphere_xyz,3*nlat*(nlong+1)*sizeof(float));
-  s_xyz=sphere_xyz;
-  for(j=0;j<nlong+1;j++){
-    phi=-PI + 2.0*PI*j/nlong;
-    for(i=0;i<nlat;i++){
-      psi = -PI/2.0 + i*PI/(nlat-1);
-      *s_xyz++ = 0.2143 + rad*cos(psi)*cos(phi);
-      *s_xyz++ = 0.2143 + rad*cos(psi)*sin(phi);
-      *s_xyz++ = 0.5 + rad*sin(psi);
-    }
-  }
-}
-
-/* ------------------ CalcNormal3 ------------------------ */
-
-void CalcNormal3(const float *v1,
-                 const float *v2,
-                 const float *v3,
-                 float *out){
-  float u[3], v[3];
-  int i;
-
-
-  for(i=0;i<3;i++){
-    u[i]=v2[i]-v1[i];
-    v[i]=v3[i]-v1[i];
-  }
-
-
-  out[0] = u[1]*v[2] - u[2]*v[1];
-  out[1] = u[2]*v[0] - u[0]*v[2];
-  out[2] = u[0]*v[1] - u[1]*v[0];
-
-  ReduceToUnit(out);
-
-}
-
-/* ------------------ CalcNormal4 ------------------------ */
-
-void CalcNormal4(const float *v1,
-                 float *out){
-  out[0]=v1[0]-0.2143;
-  out[1]=v1[1]-0.2143;
-  out[2]=v1[2]-0.5;
-
-
-
-  ReduceToUnit(out);
-
-}
-
-/* ------------------ DrawDemo2 ------------------------ */
-
-void DrawDemo2(void){
-      demo_mode++;
-      glBegin(GL_QUADS);
-      if(demo_mode%2==0){
-        glColor3f(1.0,0.0,0.0);
-      }
-      else{
-        glColor3f(0.0,0.0,1.0);
-      }
-      glVertex3f(0.0,0.3,0.0);
-      glVertex3f(0.0,0.6,0.0);
-      glVertex3f(1.0,0.6,0.0);
-      glVertex3f(1.0,0.3,0.0);
-      glEnd();
-}
-
-/* ------------------ DrawDemo ------------------------ */
-
-void DrawDemo(int nlat, int nlong){
-  int i, j;
-  extern float *sphere_xyz;
-  extern int update_demo,demo_mode;
-  float red, green;
-//  float blue;
-  float *xyz;
-  float *xyz00,*xyz01,*xyz10,*xyz11;
-  float norm[3];
-//  float norm1[3],norm2[3],norm3[3];
-//  float denom;
-  float specular[4]={0.8,0.8,0.8,1.0};
-#define sphere_index(ilat,ilong) (3*((ilong)*nlat + (ilat)))
-
-  if(nlat<=0||nlong<=0)return;
-  if(update_demo==1)InitDemo(0.4,nlat,nlong);
-  switch(demo_mode){
-    case 0:
-      glPointSize(6.0);
-      glColor3f(0.0,0.0,1.0);
-      glBegin(GL_POINTS);
-      for(j=0;j<nlong;j++){
-        for(i=0;i<nlat;i++){
-          xyz = sphere_xyz + sphere_index(i,j);
-          glVertex3fv(xyz);
-        }
-      }
-      glEnd();
-      break;
-    case 1:
-      glLineWidth(2.0);
-      glBegin(GL_LINES);
-      glColor3f(0.0,0.0,1.0);
-      for(j=0;j<nlong;j++){
-        for(i=0;i<nlat-1;i++){
-          xyz00 = sphere_xyz + sphere_index(i,j);
-          xyz10 = sphere_xyz + sphere_index(i,j+1);
-          xyz01 = sphere_xyz + sphere_index(i+1,j);
-          glVertex3fv(xyz00);
-          glVertex3fv(xyz01);
-          glVertex3fv(xyz00);
-          glVertex3fv(xyz10);
-        }
-      }
-      glEnd();
-      break;
-    case 2:
-      glBegin(GL_TRIANGLES);
-      glColor3f(0.0,0.0,1.0);
-      for(j=0;j<nlong;j++){
-        for(i=0;i<nlat-1;i++){
-          xyz00 = sphere_xyz + sphere_index(i,j);
-          xyz10 = sphere_xyz + sphere_index(i,j+1);
-          xyz01 = sphere_xyz + sphere_index(i+1,j);
-          xyz11 = sphere_xyz + sphere_index(i+1,j+1);
-          glVertex3fv(xyz00);
-          glVertex3fv(xyz01);
-          glVertex3fv(xyz11);
-          glVertex3fv(xyz00);
-          glVertex3fv(xyz11);
-          glVertex3fv(xyz10);
-        }
-      }
-      glEnd();
-      break;
-    case 3:
-    case 4:
-    case 5:
-//#define COLOR(x) (1.0+((x)-0.2143)/0.3)/2.0
-#define COLOR(x) 0.0
-      ENABLE_LIGHTING;
-      glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&global_scase.color_defs.block_shininess);
-      glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,global_scase.color_defs.block_ambient2);
-      glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,specular);
-      glEnable(GL_COLOR_MATERIAL);
-      for(j=0;j<nlong;j++){
-        for(i=0;i<nlat-1;i++){
-          xyz00 = sphere_xyz + sphere_index(i,j);
-          xyz10 = sphere_xyz + sphere_index(i,j+1);
-          xyz01 = sphere_xyz + sphere_index(i+1,j);
-          xyz11 = sphere_xyz + sphere_index(i+1,j+1);
-
-          if(demo_mode==3)CalcNormal3(xyz00,xyz11,xyz01,norm);
-          glBegin(GL_TRIANGLES);
-          if(demo_mode!=3)CalcNormal4(xyz00,norm);
-          glNormal3fv(norm);
-          red = COLOR(xyz00[0]);
-          green = COLOR(xyz00[1]);
-          glColor3f(red,green,1.0);
-          glVertex3fv(xyz00);
-
-          red = COLOR(xyz11[0]);
-          green = COLOR(xyz11[1]);
-          if(demo_mode!=3)CalcNormal4(xyz11,norm);
-          glNormal3fv(norm);
-          glColor3f(red,green,1.0);
-          glVertex3fv(xyz11);
-
-          red = COLOR(xyz01[0]);
-          green = COLOR(xyz01[1]);
-          glColor3f(red,green,1.0);
-          if(demo_mode!=3)CalcNormal4(xyz01,norm);
-          glNormal3fv(norm);
-          glVertex3fv(xyz01);
-
-          glEnd();
-          if(demo_mode==5){
-            glLineWidth(2.0);
-            glBegin(GL_LINES);
-            glColor3f(0.0,0.0,0.0);
-            glVertex3fv(xyz00);
-            glVertex3f(xyz00[0]+norm[0]/10.0,xyz00[1]+norm[1]/10.0,xyz00[2]+norm[2]/10.0);
-            glEnd();
-          }
-
-          if(demo_mode==3)CalcNormal3(xyz00,xyz11,xyz01,norm);
-          glBegin(GL_TRIANGLES);
-          if(demo_mode==3)CalcNormal3(xyz00,xyz11,xyz01,norm);
-          red = COLOR(xyz00[0]);
-          green = COLOR(xyz00[1]);
-          glColor3f(red,green,1.0);
-          if(demo_mode!=3)CalcNormal4(xyz00,norm);
-          glNormal3fv(norm);
-          glVertex3fv(xyz00);
-
-          red = COLOR(xyz10[0]);
-          green = COLOR(xyz10[1]);
-          glColor3f(red,green,1.0);
-          if(demo_mode!=3)CalcNormal4(xyz10,norm);
-          glNormal3fv(norm);
-          glVertex3fv(xyz10);
-
-          red = COLOR(xyz11[0]);
-          green = COLOR(xyz11[1]);
-          glColor3f(red,green,1.0);
-          if(demo_mode!=3)CalcNormal4(xyz11,norm);
-          glNormal3fv(norm);
-          glVertex3fv(xyz11);
-
-          glEnd();
-        }
-      }
-      DISABLE_LIGHTING;
-      glDisable(GL_COLOR_MATERIAL);
-      break;
-    default:
-      assert(FFALSE);
-      break;
-  }
-}
-
 /* ------------------ InitUserTicks ------------------------ */
 
 void InitUserTicks(void){
@@ -4469,7 +4068,7 @@ void InitUserTicks(void){
   user_tick_max[1]=-1000000000.0;
   user_tick_max[2]=-1000000000.0;
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo + i;
@@ -4527,7 +4126,7 @@ int GetTickDir(float *mm){
 
   minangle = 1000000.0;
 
-  for(i = -3;i <= 3;i++){
+  for(i = -3; i <= 3; i++){
     if(i == 0)continue;
     ii = ABS(i);
     norm[0] = 0.0;
@@ -4695,7 +4294,7 @@ void DrawUserTicks(void){
     glLineWidth(user_tick_width);
     glBegin(GL_LINES);
     glColor3fv(foregroundcolor);
-    for(i=0;i<user_tick_nxyz[0];i++){
+    for(i=0; i<user_tick_nxyz[0]; i++){
       xyz[0]=user_tick_min[0] + i*step[0];
       if(
         (step[0]>0.0&&xyz[0]>user_tick_max[0])||
@@ -4729,7 +4328,7 @@ void DrawUserTicks(void){
 // minor ticks
 
     if(user_tick_sub>1){
-      for(i=1;i<user_tick_nxyz[0]*user_tick_sub;i++){
+      for(i=1; i<user_tick_nxyz[0]*user_tick_sub; i++){
         if(i%user_tick_sub==0)continue;
         xyz[0]=user_tick_min[0] + i*step[0]/(float)user_tick_sub;
         if(
@@ -4754,7 +4353,7 @@ void DrawUserTicks(void){
     }
     glEnd();
     if(fontindex==SCALED_FONT)ScaleFont3D();
-    for(i=0;i<user_tick_nxyz[0];i++){
+    for(i=0; i<user_tick_nxyz[0]; i++){
       char label[128];
 
       xyz[0]=user_tick_min[0] + i*step[0];
@@ -4792,7 +4391,7 @@ void DrawUserTicks(void){
     glLineWidth(user_tick_width);
     glBegin(GL_LINES);
     glColor3fv(foregroundcolor);
-    for(i=0;i<user_tick_nxyz[1];i++){
+    for(i=0; i<user_tick_nxyz[1]; i++){
       xyz[0]=tick_origin[0];
       xyz[1]=user_tick_min[1] + i*step[1];
       if(
@@ -4826,7 +4425,7 @@ void DrawUserTicks(void){
 // minor ticks
 
     if(user_tick_sub>1){
-      for(i=1;i<user_tick_nxyz[1]*user_tick_sub;i++){
+      for(i=1; i<user_tick_nxyz[1]*user_tick_sub; i++){
         if(i%user_tick_sub==0)continue;
         xyz[0]=tick_origin[0];
         xyz[1]=user_tick_min[1] + i*step[1]/(float)user_tick_sub;
@@ -4851,7 +4450,7 @@ void DrawUserTicks(void){
     }
     glEnd();
     if(fontindex==SCALED_FONT)ScaleFont3D();
-    for(i=0;i<user_tick_nxyz[1];i++){
+    for(i=0; i<user_tick_nxyz[1]; i++){
       char label[128];
 
       xyz[0]=tick_origin[0];
@@ -4892,7 +4491,7 @@ void DrawUserTicks(void){
     glLineWidth(user_tick_width);
     glBegin(GL_LINES);
     glColor3fv(foregroundcolor);
-    for(i=0;i<user_tick_nxyz[2];i++){
+    for(i=0; i<user_tick_nxyz[2]; i++){
       xyz[0]=tick_origin[0];
       xyz[1]=tick_origin[1];
       xyz[2]=user_tick_min[2] + i*step[2];
@@ -4925,7 +4524,7 @@ void DrawUserTicks(void){
 // minor ticks
 
     if(user_tick_sub>1){
-      for(i=1;i<user_tick_nxyz[2]*user_tick_sub;i++){
+      for(i=1; i<user_tick_nxyz[2]*user_tick_sub; i++){
         if(i%user_tick_sub==0)continue;
         xyz[0]=tick_origin[0];
         xyz[1]=tick_origin[1];
@@ -4949,7 +4548,7 @@ void DrawUserTicks(void){
     }
     glEnd();
     if(fontindex==SCALED_FONT)ScaleFont3D();
-    for(i=0;i<user_tick_nxyz[2];i++){
+    for(i=0; i<user_tick_nxyz[2]; i++){
       char label[128];
 
       xyz[0]=tick_origin[0];
@@ -5024,7 +4623,7 @@ void DrawTicks(void){
   tickdata *ticki;
   float *dxyz,xyz[3],xyz2[3],*begt,*endt,dbar[3];
 
-  for(i=0;i<global_scase.ntickinfo;i++){
+  for(i=0; i<global_scase.ntickinfo; i++){
     ticki = global_scase.tickinfo + i;
     begt = ticki->begin;
     endt = ticki->end;
@@ -5050,7 +4649,7 @@ void DrawTicks(void){
       dbar[2] = 0.0;
     }
 
-    for(j=0;j<ticki->nbars;j++){
+    for(j=0; j<ticki->nbars; j++){
       xyz[0]=begt[0] + j*dbar[0];
       xyz[1]=begt[1] + j*dbar[1];
       xyz[2]=begt[2] + j*dbar[2];
@@ -5109,7 +4708,7 @@ void DrawBlockages(int mode, int trans_flag){
     int ntriangles=0;
 
     DrawFacesOLD(DRAW_VENTS);
-    for(i=0;i<NCADGeom(&global_scase.cadgeomcoll);i++){
+    for(i=0; i<NCADGeom(&global_scase.cadgeomcoll); i++){
       cd=global_scase.cadgeomcoll.cadgeominfo+i;
       if(cd->version==1){
         if(trans_flag==DRAW_TRANSPARENT)continue;
@@ -5174,7 +4773,7 @@ void SnapScene(int delta){
     *elev = 0.0;
   }
   else{
-    if(*az > 0.0) {
+    if(*az > 0.0){
       iaz = (*az+DELTA/2.0)/DELTA;
     }
     else{
@@ -5196,12 +4795,12 @@ void SnapScene(int delta){
   if(rotation_type==ROTATION_3AXIS&&key_state == KEY_NONE){
     float angle;
 
-    if(delta == 0) {
+    if(delta == 0){
       angle = 0.0;
     }
     else {
       angle = 2.0 * RAD2DEG * acos(quat_general[0]);
-      if(angle > 0.0) {
+      if(angle > 0.0){
         iaz = (angle + DELTA / 2.0) / DELTA;
       }
       else {
@@ -5239,82 +4838,6 @@ void GetDrawingParms(int *drawing_transparent, int *drawing_blockage_transparent
   }
 }
 
-/* ------------------ CompareBlockage ------------------------ */
-
-int CompareBlockage(const void *arg1, const void *arg2){
-  blockagedata *bc1, *bc2;
-  int *ijk1, *ijk2;
-
-  bc1 = *(blockagedata **)arg1;
-  bc2 = *(blockagedata **)arg2;
-
-  ijk1 = bc1->ijk;
-  ijk2 = bc2->ijk;
-
-  if(ijk1[0]<ijk2[0])return -1;
-  if(ijk1[0]>ijk2[0])return 1;
-  if(ijk1[1]<ijk2[1])return -1;
-  if(ijk1[1]>ijk2[1])return 1;
-  if(ijk1[2]<ijk2[2])return -1;
-  if(ijk1[2]>ijk2[2])return 1;
-  if(ijk1[3]<ijk2[3])return -1;
-  if(ijk1[3]>ijk2[3])return 1;
-  if(ijk1[4]<ijk2[4])return -1;
-  if(ijk1[4]>ijk2[4])return 1;
-  if(ijk1[5]<ijk2[5])return -1;
-  if(ijk1[5]>ijk2[5])return 1;
-  return 0;
-}
-
-/* ------------------ RemoveDupBlockages ------------------------ */
-
-void RemoveDupBlockages(void){
-  int i;
-
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
-    meshdata *meshi;
-
-    meshi = global_scase.meshescoll.meshinfo + i;
-
-    if(meshi->nbptrs>1){
-      blockagedata **bclist;
-      int jj,j;
-
-      bclist=meshi->blockageinfoptrs;
-      qsort(bclist,(size_t)meshi->nbptrs,sizeof(blockagedata *),CompareBlockage);
-      for(j=1;j<meshi->nbptrs;j++){
-        blockagedata *bc, *bcm1;
-        int *ijk1, *ijk2;
-
-        bc = bclist[j];
-        bcm1 = bclist[j-1];
-        if(bc->nshowtime>0)continue;
-        if(bcm1->nshowtime>0)continue;
-        ijk1=bcm1->ijk;
-        ijk2=bc->ijk;
-        if(ijk1[1]-ijk1[0]>1)continue; // only consider removing one cell blockages
-        if(ijk1[3]-ijk1[2]>1)continue;
-        if(ijk1[5]-ijk1[4]>1)continue;
-        if(ijk1[0]!=ijk2[0]||ijk1[1]!=ijk2[1])continue;
-        if(ijk1[2]!=ijk2[2]||ijk1[3]!=ijk2[3])continue;
-        if(ijk1[4]!=ijk2[4]||ijk1[5]!=ijk2[5])continue;
-        bcm1->dup=1;
-        bc->dup=2;
-      }
-      jj=0;
-      for(j=0;j<meshi->nbptrs;j++){
-        blockagedata *bc;
-
-        bc=bclist[j];
-        if(bc->dup==1)continue;
-        bclist[jj++]=bc;
-      }
-      meshi->nbptrs=jj;
-    }
-  }
-  updatefacelists=1;
-}
-
 /* ------------------ GetObstLabels ------------------------ */
 
 void GetObstLabels(const char *filein){
@@ -5340,7 +4863,7 @@ void GetObstLabels(const char *filein){
   nobstlabels=fdsobstcount;
   if(nobstlabels>0){
     NewMemory((void **)&obstlabels,nobstlabels*sizeof(char *));
-    for(i=0;i<nobstlabels;i++){
+    for(i=0; i<nobstlabels; i++){
       obstlabels[i]=NULL;
     }
   }
@@ -5369,12 +4892,12 @@ void GetObstLabels(const char *filein){
   }
   fclose(stream_in);
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int j;
 
     meshi = global_scase.meshescoll.meshinfo + i;
-    for(j=0;j<meshi->nbptrs;j++){
+    for(j=0; j<meshi->nbptrs; j++){
       blockagedata *bc;
       int id;
 
@@ -5391,7 +4914,7 @@ void GetObstLabels(const char *filein){
       }
     }
   }
-  for(i=0;i<nobstlabels;i++){
+  for(i=0; i<nobstlabels; i++){
     FREEMEMORY(obstlabels[i]);
   }
   FREEMEMORY(obstlabels);

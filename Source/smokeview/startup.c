@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
 #ifdef pp_OSX
 #include <unistd.h>
 #endif
@@ -85,7 +84,7 @@ void InitMisc(void){
     }
   }
 
-  for(i=0;i<16;i++){
+  for(i=0; i<16; i++){
     if(i%5==0){
       modelview_identity[i]=1.0;
     }
@@ -93,18 +92,18 @@ void InitMisc(void){
       modelview_identity[i]=0.0;
     }
   }
-  for(i=0;i<MAXPLOT3DVARS;i++){
+  for(i=0; i<MAXPLOT3DVARS; i++){
     plotiso[i]=global_scase.nrgb/2;
   }
 
-  for(i=0;i<16;i++){
+  for(i=0; i<16; i++){
     modelview_setup[i]=0.0;
   }
-  for(i=0;i<4;i++){
+  for(i=0; i<4; i++){
     modelview_setup[i+4*i]=1.0;
   }
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo+i;
@@ -113,7 +112,7 @@ void InitMisc(void){
     InitContour(meshi->plot3dcontour3,rgb_plot3d_contour,global_scase.nrgb);
   }
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo+i;
@@ -278,7 +277,7 @@ int SetupCase(char *filename){
   char *smv_bindir = GetSmvRootDir();
   InitTranslate(smv_bindir, tr_name);
   InitDefaultCameras();
-  
+
   FREEMEMORY(smv_bindir);
   PRINT_TIMER(timer_start, "InitTranslate");
 
@@ -532,11 +531,11 @@ void SetupGlut(int argc, char **argv){
   }
 
   NewMemory((void **)&rgbptr,MAXRGB*sizeof(float *));
-  for(i=0;i<MAXRGB;i++){
+  for(i=0; i<MAXRGB; i++){
     rgbptr[i]=&global_scase.rgb[i][0];
   }
   NewMemory((void **)&rgb_plot3d_contour,MAXRGB*sizeof(float *));
-  for(i=0;i<global_scase.nrgb-2;i++){
+  for(i=0; i<global_scase.nrgb-2; i++){
     int ii;
     float factor;
 
@@ -565,7 +564,7 @@ int GetOpenGLVersion(char *version_label){
   }
   strcpy(version_label2,(char *)version_string);
   strcpy(version_label,version_label2);
-  for(i=0;i<(int)strlen(version_label2);i++){
+  for(i=0; i<(int)strlen(version_label2); i++){
     if(version_label2[i]=='.')version_label2[i]=' ';
   }
   sscanf(version_label2,"%i %i %i",&major,&minor,&subminor);
@@ -749,7 +748,7 @@ void InitOpenGL(int option){
  void Set3DSmokeStartup(void){
    int i;
 
-    for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+    for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
       vslicedata *vslicei;
 
       vslicei = global_scase.slicecoll.vsliceinfo + i;
@@ -761,7 +760,7 @@ void InitOpenGL(int option){
         vslicei->autoload=0;
       }
     }
-    for(i=0;i<global_scase.npartinfo;i++){
+    for(i=0; i<global_scase.npartinfo; i++){
       partdata *parti;
 
       parti = global_scase.partinfo + i;
@@ -773,7 +772,7 @@ void InitOpenGL(int option){
         parti->autoload=0;
       }
     }
-    for(i=0;i<global_scase.nplot3dinfo;i++){
+    for(i=0; i<global_scase.nplot3dinfo; i++){
       plot3ddata *plot3di;
 
       plot3di = global_scase.plot3dinfo + i;
@@ -785,7 +784,7 @@ void InitOpenGL(int option){
         plot3di->autoload=0;
       }
     }
-    for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+    for(i=0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
       smoke3ddata *smoke3di;
 
       smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
@@ -797,7 +796,7 @@ void InitOpenGL(int option){
         smoke3di->autoload=0;
       }
     }
-    for(i=0;i<global_scase.npatchinfo;i++){
+    for(i=0; i<global_scase.npatchinfo; i++){
       patchdata *patchi;
 
       patchi = global_scase.patchinfo + i;
@@ -809,7 +808,7 @@ void InitOpenGL(int option){
         patchi->autoload=0;
       }
     }
-    for(i=0;i<global_scase.nisoinfo;i++){
+    for(i=0; i<global_scase.nisoinfo; i++){
       isodata *isoi;
 
       isoi = global_scase.isoinfo + i;
@@ -821,7 +820,7 @@ void InitOpenGL(int option){
         isoi->autoload=0;
       }
     }
-    for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+    for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
       slicedata *slicei;
 
       slicei = global_scase.slicecoll.sliceinfo + i;
@@ -843,11 +842,10 @@ void InitOpenGL(int option){
 
    if(fileout==NULL)return;
 
-
    // startup particle
 
    nstartup=0;
-   for(i=0;i<global_scase.npartinfo;i++){
+   for(i=0; i<global_scase.npartinfo; i++){
       partdata *parti;
 
       parti = global_scase.partinfo + i;
@@ -857,7 +855,7 @@ void InitOpenGL(int option){
    if(nstartup!=0){
      fprintf(fileout,"PARTAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<global_scase.npartinfo;i++){
+     for(i=0; i<global_scase.npartinfo; i++){
         partdata *parti;
 
         parti = global_scase.partinfo + i;
@@ -869,7 +867,7 @@ void InitOpenGL(int option){
    // startup plot3d
 
    nstartup=0;
-   for(i=0;i<global_scase.nplot3dinfo;i++){
+   for(i=0; i<global_scase.nplot3dinfo; i++){
       plot3ddata *plot3di;
 
       plot3di = global_scase.plot3dinfo + i;
@@ -879,7 +877,7 @@ void InitOpenGL(int option){
    if(nstartup!=0){
      fprintf(fileout,"PLOT3DAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<global_scase.nplot3dinfo;i++){
+     for(i=0; i<global_scase.nplot3dinfo; i++){
         plot3ddata *plot3di;
 
         plot3di = global_scase.plot3dinfo + i;
@@ -891,7 +889,7 @@ void InitOpenGL(int option){
    // startup iso
 
    nstartup=0;
-   for(i=0;i<global_scase.nisoinfo;i++){
+   for(i=0; i<global_scase.nisoinfo; i++){
       isodata *isoi;
 
       isoi = global_scase.isoinfo + i;
@@ -901,7 +899,7 @@ void InitOpenGL(int option){
    if(nstartup!=0){
      fprintf(fileout,"ISOAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<global_scase.nisoinfo;i++){
+     for(i=0; i<global_scase.nisoinfo; i++){
         isodata *isoi;
 
         isoi = global_scase.isoinfo + i;
@@ -913,7 +911,7 @@ void InitOpenGL(int option){
    // startup vslice
 
    nstartup=0;
-   for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+   for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
       vslicedata *vslicei;
 
       vslicei = global_scase.slicecoll.vsliceinfo + i;
@@ -923,7 +921,7 @@ void InitOpenGL(int option){
    if(nstartup!=0){
      fprintf(fileout,"VSLICEAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+     for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
         vslicedata *vslicei;
 
         vslicei = global_scase.slicecoll.vsliceinfo + i;
@@ -935,7 +933,7 @@ void InitOpenGL(int option){
    // startup slice
 
    nstartup=0;
-   for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+   for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
       slicedata *slicei;
 
       slicei = global_scase.slicecoll.sliceinfo + i;
@@ -945,7 +943,7 @@ void InitOpenGL(int option){
    if(nstartup!=0){
      fprintf(fileout,"SLICEAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+     for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
         slicedata *slicei;
 
         slicei = global_scase.slicecoll.sliceinfo + i;
@@ -956,7 +954,7 @@ void InitOpenGL(int option){
    // startup mslice
 
    nstartup=0;
-   for(i=0;i<global_scase.slicecoll.nmultisliceinfo;i++){
+   for(i=0; i<global_scase.slicecoll.nmultisliceinfo; i++){
       multislicedata *mslicei;
 
       mslicei = global_scase.slicecoll.multisliceinfo + i;
@@ -967,7 +965,7 @@ void InitOpenGL(int option){
    if(nstartup!=0){
      fprintf(fileout,"MSLICEAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<global_scase.slicecoll.nmultisliceinfo;i++){
+     for(i=0; i<global_scase.slicecoll.nmultisliceinfo; i++){
         multislicedata *mslicei;
 
         mslicei = global_scase.slicecoll.multisliceinfo + i;
@@ -979,7 +977,7 @@ void InitOpenGL(int option){
    // startup smoke
 
    nstartup=0;
-   for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+   for(i=0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
       smoke3ddata *smoke3di;
 
       smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
@@ -989,7 +987,7 @@ void InitOpenGL(int option){
    if(nstartup!=0){
      fprintf(fileout,"S3DAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+     for(i=0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
         smoke3ddata *smoke3di;
 
         smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
@@ -1001,7 +999,7 @@ void InitOpenGL(int option){
    // startup patch
 
    nstartup=0;
-   for(i=0;i<global_scase.npatchinfo;i++){
+   for(i=0; i<global_scase.npatchinfo; i++){
       patchdata *patchi;
 
       patchi = global_scase.patchinfo + i;
@@ -1011,7 +1009,7 @@ void InitOpenGL(int option){
    if(nstartup!=0){
      fprintf(fileout,"PATCHAUTO\n");
      fprintf(fileout," %i \n",nstartup);
-     for(i=0;i<global_scase.npatchinfo;i++){
+     for(i=0; i<global_scase.npatchinfo; i++){
         patchdata *patchi;
 
         patchi = global_scase.patchinfo + i;
@@ -1025,7 +1023,7 @@ void InitOpenGL(int option){
 
   void GetStartupPart(int seq_id){
     int i;
-    for(i=0;i<global_scase.npartinfo;i++){
+    for(i=0; i<global_scase.npartinfo; i++){
       partdata *parti;
 
       parti = global_scase.partinfo + i;
@@ -1040,7 +1038,7 @@ void InitOpenGL(int option){
 
   void GetStartupPlot3D(int seq_id){
     int i;
-    for(i=0;i<global_scase.nplot3dinfo;i++){
+    for(i=0; i<global_scase.nplot3dinfo; i++){
       plot3ddata *plot3di;
 
       plot3di = global_scase.plot3dinfo + i;
@@ -1055,7 +1053,7 @@ void InitOpenGL(int option){
 
   void GetStartupBoundary(int seq_id){
     int i;
-    for(i=0;i<global_scase.npatchinfo;i++){
+    for(i=0; i<global_scase.npatchinfo; i++){
       patchdata *patchi;
 
       patchi = global_scase.patchinfo + i;
@@ -1070,7 +1068,7 @@ void InitOpenGL(int option){
 
   void GetStartupSmoke(int seq_id){
     int i;
-    for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+    for(i=0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
       smoke3ddata *smoke3di;
 
       smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
@@ -1082,12 +1080,11 @@ void InitOpenGL(int option){
     }
   }
 
-
  /* ------------------ GetStartupISO ------------------------ */
 
   void GetStartupISO(int seq_id){
     int i;
-    for(i=0;i<global_scase.nisoinfo;i++){
+    for(i=0; i<global_scase.nisoinfo; i++){
       isodata *isoi;
 
       isoi = global_scase.isoinfo + i;
@@ -1103,7 +1100,7 @@ void InitOpenGL(int option){
 
   void GetStartupSlice(int seq_id){
     int i;
-    for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+    for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
       slicedata *slicei;
 
       slicei = global_scase.slicecoll.sliceinfo + i;
@@ -1119,7 +1116,7 @@ void InitOpenGL(int option){
 
   void GetStartupVSlice(int seq_id){
     int i;
-    for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+    for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
       vslicedata *vslicei;
 
       vslicei = global_scase.slicecoll.vsliceinfo + i;
@@ -1138,13 +1135,13 @@ void AutoLoadSmoke3D(int smoke3d_type){
   int nauto_loaded = 0;
 
   if(smoke3d_type < 0)return;
-  for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+  for(i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
     if(smoke3di->autoload == 0 && smoke3di->loaded == 1)ReadSmoke3D(ALL_SMOKE_FRAMES, i, UNLOAD, FIRST_TIME, &errorcode);
   }
-  for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+  for(i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
@@ -1154,7 +1151,7 @@ void AutoLoadSmoke3D(int smoke3d_type){
     }
   }
   if(nauto_loaded > 0){
-    for(i = global_scase.smoke3dcoll.nsmoke3dinfo - 1;i >= 0;i--){
+    for(i = global_scase.smoke3dcoll.nsmoke3dinfo - 1; i >= 0; i--){
       smoke3ddata *smoke3di;
 
       smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
@@ -1163,7 +1160,7 @@ void AutoLoadSmoke3D(int smoke3d_type){
         break;
       }
     }
-    for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+    for(i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++){
       smoke3ddata *smoke3di;
 
       smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
@@ -1186,7 +1183,7 @@ void AutoLoadSmoke3D(int smoke3d_type){
       plot3di = global_scase.plot3dinfo+i;
       plot3di->finalize = 0;
     }
-    for(i = global_scase.nplot3dinfo-1;i>=0; i--){
+    for(i = global_scase.nplot3dinfo-1; i>=0; i--){
       plot3ddata *plot3di;
 
       plot3di = global_scase.plot3dinfo+i;
@@ -1195,7 +1192,7 @@ void AutoLoadSmoke3D(int smoke3d_type){
         break;
       }
     }
-    for(i=0;i<global_scase.nplot3dinfo;i++){
+    for(i=0; i<global_scase.nplot3dinfo; i++){
       plot3ddata *plot3di;
 
       plot3di = global_scase.plot3dinfo + i;
@@ -1211,7 +1208,7 @@ void AutoLoadSmoke3D(int smoke3d_type){
 
     int autoload_parts=0;
 
-    for(i=0;i<global_scase.npartinfo;i++){
+    for(i=0; i<global_scase.npartinfo; i++){
       partdata *parti;
 
       parti = global_scase.partinfo + i;
@@ -1256,7 +1253,7 @@ void AutoLoadSmoke3D(int smoke3d_type){
 
     // note:  only slices that are NOT a part of a vector slice will be loaded here
 
-    for(i = 0;i<global_scase.slicecoll.nmultisliceinfo; i++){
+    for(i = 0; i<global_scase.slicecoll.nmultisliceinfo; i++){
       multislicedata *mslicei;
       slicedata *slicei;
 
@@ -1279,7 +1276,7 @@ void AutoLoadSmoke3D(int smoke3d_type){
 
 //*** autoload boundary files
 
-    for(i=0;i<global_scase.npatchinfo;i++){
+    for(i=0; i<global_scase.npatchinfo; i++){
       patchdata *patchi;
 
       patchi = global_scase.patchinfo + i;
@@ -1296,7 +1293,6 @@ void AutoLoadSmoke3D(int smoke3d_type){
     GLUIHideAlert();
    // TrainerViewMenu(trainerview); // this breaks auto slice loading
 }
-
 
 /* ------------------ InitTextureDir ------------------------ */
 
@@ -1430,15 +1426,12 @@ void InitVars(void){
   else{
     strcpy(movie_ext, ".avi");
   }
-  for(i=0;i<200;i++){
+  for(i=0; i<200; i++){
     face_id[i]=1;
   }
-  for(i=0;i<10;i++){
+  for(i=0; i<10; i++){
     face_vis[i]=1;
     face_vis_old[i]=1;
-  }
-  for(i=0;i<7;i++){
-    b_state[i]=-1;
   }
   strcpy((char *)degC,"C");
   strcpy((char *)degF,"F");
@@ -1476,7 +1469,7 @@ void InitVars(void){
 
   strcpy(startup_lang_code,"en");
 
-  for(i=0;i<256;i++){
+  for(i=0; i<256; i++){
     boundarylevels256[i]=(float)i/255.0;
   }
 
@@ -1597,7 +1590,7 @@ void InitVars(void){
   {
     int ii;
     rgbmask[0]=1;
-    for(ii=1;ii<16;ii++){
+    for(ii=1; ii<16; ii++){
       rgbmask[ii]=2*rgbmask[ii-1]+1;
     }
   }
@@ -1715,10 +1708,10 @@ void InitVars(void){
   {
     int iii;
 
-    for(iii=0;iii<7;iii++){
+    for(iii=0; iii<7; iii++){
       vis_boundary_type[iii]=1;
     }
-    for(iii=0;iii<MAXPLOT3DVARS;iii++){
+    for(iii=0; iii<MAXPLOT3DVARS; iii++){
       p3min_all[iii]    = 1.0f;
       p3chopmin[iii]    = 1.0f;
       p3max_all[iii]    = 1.0f;
