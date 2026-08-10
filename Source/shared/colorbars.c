@@ -662,13 +662,12 @@ void ReadColorbarDir(colorbar_collection *colorbars, const char *dir_path,
   int n_files = GetFileListSize(dir_path, "*.csv", FILE_MODE);
   MakeFileList(dir_path, "*.csv", n_files, NO, &filelist, FILE_MODE);
   for(int i = 0; i < n_files; i++){
-    colorbardata *cbi = NextColorbar(colorbars);
-
     if(filelist[i].file == NULL || strlen(filelist[i].file) == 0) return;
     if(dir_path == NULL || strlen(dir_path) == 0) return;
     char *filepath = CombinePaths(dir_path, filelist[i].file);
+
+    colorbardata *cbi = NewColorbar(colorbars);
     ReadCSVColorbar(cbi, filepath, label, type);
-    colorbars->ncolorbars++;
     cbi->can_adjust = 1;
     FREEMEMORY(filepath);
   }
