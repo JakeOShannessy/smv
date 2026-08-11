@@ -25,6 +25,7 @@
 #endif
 #include <shlwapi.h>
 #include <strsafe.h>
+#include "winpaths.h"
 
 #else
 #include <dirent.h>
@@ -34,7 +35,6 @@
 #include "string_util.h"
 #include "file_util.h"
 #include "threader.h"
-#include "winpaths.h"
 
 FILE *alt_stdout=NULL;
 
