@@ -8,6 +8,7 @@
 #include "smokeviewvars.h"
 #include "glui_motion.h"
 #include "IOscript.h"
+#include "structures.h"
 #include "viewports.h"
 
 /* ------------------ Zoom2Aperture ------------------------ */
@@ -38,6 +39,7 @@ void InitCameraList(void){
   if(init_camera_list==0)return;
   init_camera_list = 0;
 
+  // TODO: why can't we have an empty camera list, surely we don't use this cameras anyway.
   cb=&camera_list_first;
   ca=&camera_list_last;
   InitCamera(cb,"first");
@@ -226,7 +228,7 @@ void SetCameraView(cameradata *ca, int option){
 
 /* ------------------ InitCamera ------------------------ */
 
-void InitCamera(cameradata *ci,char *name){
+void InitCamera(cameradata *ci, const char *name){
   strcpy(ci->name,name);
   ci->rotation_index=global_scase.meshescoll.nmeshes;
   ci->defined=1;
@@ -439,7 +441,7 @@ void SortCameras(void){
 
 /* ------------------ InsertCamera ------------------------ */
 
-cameradata *InsertCamera(cameradata *cb,cameradata *source, char *name){
+cameradata *InsertCamera(cameradata *cb,cameradata *source, const char *name){
   cameradata *cam=NULL,*ca;
   int insert = 1;
 
@@ -541,10 +543,10 @@ void DeleteCamera(cameradata *cam){
 
 /* ------------------ GetCamera ------------------------ */
 
-cameradata *GetCamera(char *name){
+cameradata *GetCamera(cameradata *first_camera, char *name){
   cameradata *ca;
 
-  for(ca=camera_list_first.next; ca->next!=NULL; ca=ca->next){
+  for(ca=first_camera->next; ca->next!=NULL; ca=ca->next){
     if(strcmp(ca->name,name)==0){
       return ca;
     }
@@ -554,10 +556,10 @@ cameradata *GetCamera(char *name){
 
 /* ------------------ GetCameraLabel ------------------------ */
 
-char *GetCameraLabel(int index){
+char *GetCameraLabel(cameradata *first_camera, int index){
   cameradata *ca;
 
-  for(ca=camera_list_first.next; ca->next!=NULL; ca=ca->next){
+  for(ca=first_camera->next; ca->next!=NULL; ca=ca->next){
     if(ca->view_id==index){
       return ca->name;
     }

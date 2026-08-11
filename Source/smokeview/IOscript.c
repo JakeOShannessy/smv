@@ -3381,7 +3381,7 @@ void ScriptSetViewpoint(scriptdata *scripti){
   }
   viewpoint_script_ptr = NULL;
   PRINTF("script: set viewpoint to %s\n\n",viewpoint);
-  if(GetCamera(viewpoint) == NULL){
+  if(GetCamera(&camera_list_first, viewpoint) == NULL){
     fprintf(stderr, "*** Error: The viewpoint %s was not found\n", viewpoint);
     if(stderr2!=NULL)fprintf(stderr2, "*** Error: The viewpoint %s was not found\n", viewpoint);
   }

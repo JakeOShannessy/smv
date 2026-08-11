@@ -1743,7 +1743,7 @@ void GetNextViewLabel(char *label){
     char view[256];
 
     sprintf(view,"view %i",i);
-    if(GetCamera(view)==NULL){
+    if(GetCamera(&camera_list_first, view)==NULL){
       strcpy(label,view);
       return;
     }
@@ -1803,7 +1803,7 @@ void ResetMenu(int value){
         GetNextViewLabel(view_label);
       }
       GLUIAddListView(view_label);
-      ca = GetCamera(view_label);
+      ca = GetCamera(&camera_list_first, view_label);
       if(ca != NULL){
         ResetMenu(ca->view_id);
       }

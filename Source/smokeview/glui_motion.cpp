@@ -752,6 +752,7 @@ void EnableDisableViews(void){
     selected_view = ival;
 
     cex = &camera_list_first;
+    // TODO: why are we introducing dummy cameras that we skip?
     cex = cex->next; // skip over first
     cex = cex->next; // skip over external
     if(cex->next == NULL){
@@ -1010,7 +1011,7 @@ extern "C" void GLUIViewpointCB(int var){
     {
       char *cam_label;
 
-      cam_label = GetCameraLabel(startup_view_ini);
+      cam_label = GetCameraLabel(&camera_list_first, startup_view_ini);
       if(cam_label != NULL){
         strcpy(viewpoint_label_startup, cam_label);
       }
