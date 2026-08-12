@@ -802,3 +802,111 @@ float *GetColorPtr(smv_case *scase, float *color){
   lastcolor->nextcolor=NULL;
   return lastcolor->color;
 }
+
+/**
+ * @brief Create set of ticks for a scale bar. This will be a uniform
+ * distribution of ticks.
+ *
+ * @param sbt
+ * @param start
+ * @param end
+ * @param n_ticks
+ * @return zero on success, non-zero otherwise
+ */
+int MakeUniformScalebarTicks(scalebarticks *sbt, float start, float end,
+                             int n_ticks, int ndecimals, int fixed_point) {
+  float range = end - start;
+  if(n_ticks < 2) return 1;
+  float dt = range / (float)(n_ticks - 2);
+  NEWMEMORY(sbt->ticks, n_ticks * sizeof(float));
+  NEWMEMORY(sbt->tick_labels, n_ticks * sizeof(char *));
+  sbt->n_ticks = n_ticks;
+  for(int n = 0; n < n_ticks; n++) {
+    float tval = start + n * dt;
+    // Set the value in the value array
+    sbt->ticks[n] = tval;
+    NEWMEMORY(sbt->tick_labels[n], 11 * sizeof(char));
+    // Render the value to a string in the string array
+    Float2String(sbt->tick_labels[n], tval, ndecimals, fixed_point);
+  }
+  return 0;
+}
+
+void FreeScalebarTicks(scalebarticks *sbt) {
+  FREEMEMORY(sbt->ticks);
+  for(int i = 0; i < sbt->n_ticks; i++) {
+    FREEMEMORY(sbt->tick_labels[i]);
+  }
+  FREEMEMORY(sbt->tick_labels);
+  sbt->n_ticks = 0;
+}
+
+/**
+ * @brief
+ *
+ * @param sbt
+ * @param tick_values
+ * @param n_ticks
+ * @return  zero on success, non-zero otherwise
+ */
+int MakeNonUniformScalebarTicks(scalebarticks *sbt, float *tick_values,
+                                int n_ticks, int ndecimals, int fixed_point) {
+  int error = 0;
+  if(n_ticks < 2) return 1;
+  // Based on the first two values is the scalebar monotonically increasing?
+  int increasing = tick_values[1] > tick_values[0];
+  // TODO: handling of this list of strings is a little bit too much work.
+  float *ticks;
+  char **tick_labels;
+  NEWMEMORY(ticks, n_ticks * sizeof(float));
+  NEWMEMORY(tick_labels, n_ticks * sizeof(char *));
+  for(int n = 0; n < n_ticks; n++) {
+    float tval = tick_values[n];
+    if(n > 0) {
+      if(tick_values[n] == tick_values[n - 1]) {
+        fprintf(
+            stderr,
+            "ticks in a scalebar must be monotonically increasing or "
+            "decreasing, values %d (%f) and %d (%f) of the scalebar are equal",
+            n - 1, tick_values[n - 1], n, tick_values[n]);
+        return 2;
+        error = 2;
+        goto err;
+      }
+      else if(increasing && tick_values[n] < tick_values[n - 1]) {
+        fprintf(stderr,
+                "ticks in this scalebar must be monotonically increasing, "
+                "values %d (%f) and %d (%f) of the scalebar are decreasing",
+                n - 1, tick_values[n - 1], n, tick_values[n]);
+        return 2;
+        error = 2;
+        goto err;
+      }
+      else if(!increasing && tick_values[n] > tick_values[n - 1]) {
+        fprintf(stderr,
+                "ticks in this scalebar must be monotonically decreasing, "
+                "values %d (%f) and %d (%f) of the scalebar are increasing",
+                n - 1, tick_values[n - 1], n, tick_values[n]);
+        return 2;
+        error = 2;
+        goto err;
+      }
+    }
+    // Set the value in the value array
+    ticks[n] = tval;
+  }
+  for(int n = 0; n < n_ticks; n++) {
+    NEWMEMORY(tick_labels[n], 11 * sizeof(char));
+    // Render the value to a string in the string array
+    Float2String(tick_labels[n], ticks[n], ndecimals, fixed_point);
+  }
+  // Apply the new values to the struct
+  sbt->ticks = ticks;
+  sbt->tick_labels = tick_labels;
+  sbt->n_ticks = n_ticks;
+  return 0;
+err:
+  FREEMEMORY(ticks);
+  FREEMEMORY(tick_labels);
+  return error;
+}

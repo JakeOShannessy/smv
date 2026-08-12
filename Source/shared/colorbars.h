@@ -54,6 +54,27 @@ typedef struct _colorbardata {
   float colorbar_rgb[3 * 1024], colorbar_lab[3 * 1024];
 } colorbardata;
 
+typedef struct _scalebarticks {
+  /// @brief An allocated array of floats that correspond to the tick values
+  /// from the start of the scale bar to the end of the scale bar. Note that
+  /// this is not necessarily low to high but may also be high to low. The range
+  /// is from ticks[0] to ticks[n_ticks-1].
+  float *ticks;
+  /// @brief The labels for each of the tick values.
+  char **tick_labels;
+  /// @brief The number of ticks and the length of the ticks arrays. If zero,
+  /// this structure has not been initialized, otherwise the value must be at
+  /// least 2.
+  int n_ticks;
+} scalebarticks;
+
+typedef struct _scalebar {
+  /// @brief Ticks that will bar marked (with labels) on the scale bar.
+  scalebarticks ticks;
+  /// @brief The color scheme that will be used for the scale bar.
+  colorbardata *colorobar;
+} scalebar;
+
 typedef struct {
   /// @brief The capacity of the colorbarinfo array.
   int capacity;
