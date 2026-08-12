@@ -55,6 +55,10 @@ target_link_libraries(parse_hvac_vals PRIVATE smv)
 add_executable(test_labels test_labels.c)
 target_link_libraries(test_labels PRIVATE smv)
 
+# scalebar_ticks
+add_executable(scalebar_ticks scalebar_ticks.c)
+target_link_libraries(scalebar_ticks PRIVATE smv)
+
 # parse_objects
 add_executable(parse_objects parse_objects.c)
 target_link_libraries(parse_objects PRIVATE smv)
@@ -147,3 +151,7 @@ add_test(NAME "Test Unicode Paths"
 
 add_test(NAME "Sort Surfs"
     COMMAND sort_surfs)
+
+add_test(NAME "Test scalebar ticks"
+    COMMAND scalebar_ticks)
+
