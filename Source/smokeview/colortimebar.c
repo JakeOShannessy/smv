@@ -1611,43 +1611,30 @@ void DrawHorizontalColorbarRegLabelsTicks(scalebarticks *sbt) {
 }
 
 /**
- * @brief Draw the lines of text atop a vertical colorbar, handling the
- * location/translation of the text.
+ * @brief Draw the lines of text to the right of a horizontal colorbar, handling
+ * the location/translation of the text.
  *
  * @param[in] labels The text to be drawn.
  * @param[in] color The color in which to draw the text.
- * @param[in] left Horizontal position adjustment..
- * @param[in] with_histogram Should a histogram be accounted for? (boolean)
  */
-void DrawHorizontalTopLabels(top_labels *labels, const GLfloat *color, int left,
-                             int with_histogram) {
-  // int axis_label_left, axis_label_down;
-  // axis_label_left = -colorbar_label_width / 4;
-  // axis_label_down = hcolorbar_down_pos - (VP_vcolorbar.text_height +
-  // v_space);
+void DrawHorizontalTopLabels(top_labels *labels, const GLfloat *color ) {
   int type_label_left = hcolorbar_delta + hcolorbar_right_pos + h_space;
   int type_label_down = 1.5 * VP_vcolorbar.text_height;
 
   glPushMatrix();
   glTranslatef(type_label_left, type_label_down, 0.0);
-  // glTranslatef(-left * (colorbar_label_width + h_space), 0.0, 0.0);
-  // if(with_histogram) glTranslatef(colorbar_label_width / 2.0, 0.0, 0.0);
   DrawTopLabelsLines(labels, color);
   glPopMatrix();
 }
 
 /**
- * @brief Draw the lines of text atop a vertical colorbar, handling all of the
- * details. The drawn text will vary depending on what has been loaded.
+ * @brief Draw the lines of text to the right of a horizontal colorbar, handling
+ * all of the details. The drawn text will vary depending on what has been
+ * loaded.
  *
  * @param[in] labels The text to be drawn.
  */
 void DrawHorizontalColorbarRegLabelsTopLabels(top_labels *labels) {
-  int ileft = 0;
-  int leftzone,  leftslice, leftpatch, leftiso;
-  int lefthvacduct, lefthvacnode;
-
-  int dohist = 0;
 
   GLfloat *foreground_color ;
 
@@ -1661,70 +1648,45 @@ void DrawHorizontalColorbarRegLabelsTopLabels(top_labels *labels) {
   UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local,
     &show_hvacduct_colorbar_local, &show_hvacnode_colorbar_local);
 
-  // -------------- compute columns where left labels will occur ------------
-
-  lefthvacnode = 0;
-  lefthvacduct = 0;
-  leftslice    = 0;
-  leftpatch    = 0;
-  leftiso      = 0;
-  ileft        = 0;
-  if(showiso_colorbar == 1)leftiso = ileft++;
-  if(showsmoke == 1&&parttype != 0)  ileft++;
-  if(show_slice_colorbar_local == 1){
-    leftslice = ileft++;
-  }
-  if(showpatch == 1 && wall_cell_color_flag == 0)leftpatch = ileft++;
-  if(show_hvacnode_colorbar_local == 1)lefthvacnode = ileft++;
-  if(show_hvacduct_colorbar_local == 1)lefthvacduct = ileft++;
-  leftzone = ileft++;
 
   foreground_color = &(foregroundcolor[0]);
   // TODO: should these be mutually exclusive?
   // -------------- isosurface top labels ------------
   if(showiso_colorbar == 1) {
-    DrawHorizontalTopLabels(labels, foreground_color,
-                                                      leftiso, 0);
+    DrawHorizontalTopLabels(labels, foreground_color  );
   }
   // -------------- particle file top labels ------------
   if(showsmoke == 1 && parttype != 0) {
-    DrawHorizontalTopLabels(labels, foreground_color,
-                                                      leftslice, dohist == 1);
+    DrawHorizontalTopLabels(labels, foreground_color );
   }
   // -------------- slice file top labels ------------
   if(show_slice_colorbar_local == 1) {
-    DrawHorizontalTopLabels(labels, foreground_color,
-                                                      leftslice, 0);
+    DrawHorizontalTopLabels(labels, foreground_color );
   }
   // -------------- HVAC file node top labels ------------
   if(show_hvacnode_colorbar_local == 1 &&
      global_scase.hvaccoll.hvacnodevar_index >= 0) {
-    DrawHorizontalTopLabels(labels, foreground_color,
-                                                      lefthvacnode, 0);
+    DrawHorizontalTopLabels(labels, foreground_color );
   }
   // -------------- HVAC file duct top labels ------------
   if(show_hvacduct_colorbar_local == 1 &&
      global_scase.hvaccoll.hvacductvar_index >= 0) {
-    DrawHorizontalTopLabels(labels, foreground_color,
-                                                      lefthvacduct, 0);
+    DrawHorizontalTopLabels(labels, foreground_color );
   }
   // -------------- boundary file top labels ------------
   if(showpatch == 1 && wall_cell_color_flag == 0) {
-    DrawHorizontalTopLabels(labels, foreground_color,
-                                                      leftpatch, dohist == 1);
+    DrawHorizontalTopLabels(labels, foreground_color );
   }
   // -------------- zone top labels ------------
   if(showcfast_local == 1) {
-    DrawHorizontalTopLabels(labels, foreground_color,
-                                                      leftzone, 0);
+    DrawHorizontalTopLabels(labels, foreground_color );
     max_colorbar_label_width =
         MAX(max_colorbar_label_width, GetStringWidth(labels->scale_factor));
     SNIFF_ERRORS("After ZONE labels");
   }
   // -------------- plot3d top labels ------------
   if(showplot3d == 1) {
-    DrawHorizontalTopLabels(labels, foreground_color,
-                                                      leftslice, 0);
+    DrawHorizontalTopLabels(labels, foreground_color );
   }
 }
 
