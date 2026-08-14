@@ -1161,6 +1161,7 @@ int GetStartEnd(float *start, float *end) {
     *end = hi->levels256[255];
     return 0;
   }
+  // TODO: for some reason, showpatch isn't defined when we want it to be
   else if(showpatch == 1 && wall_cell_color_flag == 0) {
     /* -------------- boundary left labels ------------ */
     *start = boundarylevels256[0];
@@ -1489,7 +1490,9 @@ void CreateScalebar(scalebar *sbar) {
   float tttmin;
   float tttmax;
   // TODO: what if we can't get start and end
-  GetStartEnd(&tttmin, &tttmax);
+  if (!GetStartEnd(&tttmin, &tttmax)) {
+    fprintf(stderr, "could not load min/max");
+  }
   assert(!MakeUniformScalebarTicks(&sbt, tttmin, tttmax, global_scase.nrgb - 1,
                                    3, 0));
   top_labels tplbs = {0};

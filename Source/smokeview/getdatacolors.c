@@ -77,6 +77,17 @@ void GetBoundaryColors3(patchdata *patchi, float *t, int start, int nt, unsigned
   tval = new_tmax;
   Num2String(&patchlabels[nlevel-1][0],tval);
   patchvalues[nlevel-1] = tval;
+  UpdateShow();
+  // TODO: this shouldn't happen if smokeview isn't configured for it.
+  // Create or update the scalebar
+  // TODO: this is a hack to get around showpatch not being set at this point.
+  // It's not clear when it will be set.
+  int old_showpatch = showpatch;
+  showpatch = 1;
+  if(global_scalebar == NULL) NEWMEMORY(global_scalebar, sizeof(scalebar));
+  CreateScalebar(global_scalebar);
+  showpatch = old_showpatch;
+
 }
 
 /* ------------------ UpdateAllBoundaryColors ------------------------ */
@@ -154,6 +165,10 @@ void UpdateAllBoundaryColors(int flag){
     }
   }
   FREEMEMORY(list);
+  // TODO: this shouldn't happen if smokeview isn't configured for it.
+  // Create or update the scalebar
+  if(global_scalebar == NULL) NEWMEMORY(global_scalebar, sizeof(scalebar));
+  CreateScalebar(global_scalebar);
 }
 
 /* ------------------ GetBoundaryLabels ------------------------ */
