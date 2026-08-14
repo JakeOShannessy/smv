@@ -66,6 +66,8 @@ typedef struct _scalebarticks {
   /// this structure has not been initialized, otherwise the value must be at
   /// least 2.
   int n_ticks;
+  // A string describing the expoential factor used, e.g. "×10⁻³".
+  char exp_factor_label[256];
 } scalebarticks;
 
 typedef struct _scalebar {
@@ -73,6 +75,7 @@ typedef struct _scalebar {
   scalebarticks ticks;
   /// @brief The color scheme that will be used for the scale bar.
   colorbardata *colorobar;
+  char *units;
 } scalebar;
 
 typedef struct {

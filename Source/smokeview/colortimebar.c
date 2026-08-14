@@ -2468,3 +2468,108 @@ void DrawVerticalColorbarRegLabels(void){
     glPopMatrix();
   }
 }
+
+int GetStartEnd(float *start, float *end) {
+  int showcfast_local = 0;
+  int show_slice_colorbar_local = 0;
+  int show_hvacduct_colorbar_local = 0;
+  int show_hvacnode_colorbar_local = 0;
+
+  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local,
+                     &show_hvacduct_colorbar_local,
+                     &show_hvacnode_colorbar_local);
+
+  if(showiso_colorbar == 1) {
+    /* -------------- isosurface left labels ------------ */
+    *start = iso_valmin;
+    *end = iso_valmax;
+    return 0;
+  }
+  else if(showsmoke == 1 && parttype != 0) {
+    /* -------------- particle left labels ------------ */
+    *start = part5propinfo[global_prop_index].partlabelvals[0];
+    *end = part5propinfo[global_prop_index].partlabelvals[255];
+    return 0;
+  }
+  else if(show_slice_colorbar_local == 1) {
+    /* -------------- slice left labels ------------ */
+    boundsdata *sb = slicebounds + slicefile_labelindex;
+    *start = sb->levels256[0];
+    *end = sb->levels256[255];
+    return 0;
+  }
+  else if(show_hvacnode_colorbar_local == 1 &&
+          global_scase.hvaccoll.hvacnodevar_index >= 0) {
+    /* -------------- HVAC node left labels ------------ */
+    hvacvaldata *hi = global_scase.hvaccoll.hvacnodevalsinfo->node_vars +
+                      global_scase.hvaccoll.hvacnodevar_index;
+    *start = hi->levels256[0];
+    *end = hi->levels256[255];
+    return 0;
+  }
+  else if(show_hvacduct_colorbar_local == 1 &&
+          global_scase.hvaccoll.hvacductvar_index >= 0) {
+    /* -------------- HVAC duct left labels ------------ */
+    hvacvaldata *hi = global_scase.hvaccoll.hvacductvalsinfo->duct_vars +
+                      global_scase.hvaccoll.hvacductvar_index;
+    *start = hi->levels256[0];
+    *end = hi->levels256[255];
+    return 0;
+  }
+  else if(showpatch == 1 && wall_cell_color_flag == 0) {
+    /* -------------- boundary left labels ------------ */
+    *start = boundarylevels256[0];
+    *end = boundarylevels256[255];
+    return 0;
+  }
+  else if(showcfast_local == 1) {
+    /* -------------- zone left labels ------------ */
+    *start = zonelevels256[0];
+    *end = zonelevels256[255];
+    return 0;
+  }
+  else if(showplot3d == 1) {
+    /* -------------- plot3d left labels ------------ */
+    float *p3lev = p3levels256[plotn - 1];
+    *start = p3lev[0];
+    *end = p3lev[255];
+    return 0;
+  }
+  return 1;
+}
+
+void DrawVerticalColorbarRegLabelsTicks(scalebarticks *sbt) {
+  int leftslice;
+  int iposition;
+
+  // The foreground_color will be the color of the text
+  GLfloat *foreground_color;
+
+  char exp_factor_label[256];
+
+  max_colorbar_label_width = GetStringWidth("123456");
+
+  leftslice = 0;
+  foreground_color = &(foregroundcolor[0]);
+
+  iposition = -1;
+  glPushMatrix();
+  glTranslatef(vcolorbar_left_pos - colorbar_label_width,
+               -VP_vcolorbar.text_height / 2.0, 0.0);
+  glTranslatef(-leftslice * (colorbar_label_width + h_space), 0.0, 0.0);
+  {
+    max_colorbar_label_width =
+        MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
+    for(int i = 0; i < sbt->n_ticks; i++) {
+      // Get the vertical position based on the value
+      float vert_position = MIX2(sbt->ticks[i] - sbt->ticks[0],
+                                 sbt->ticks[sbt->n_ticks - 1] - sbt->ticks[0],
+                                 vcolorbar_top_pos, vcolorbar_down_pos);
+      if(iposition == i) continue;
+      OutputBarText(0.0, vert_position, foreground_color, sbt->tick_labels[i]);
+      max_colorbar_label_width =
+          MAX(max_colorbar_label_width, GetStringWidth(sbt->tick_labels[i]));
+    }
+  }
+  glPopMatrix();
+}

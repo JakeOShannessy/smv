@@ -815,9 +815,11 @@ float *GetColorPtr(smv_case *scase, float *color){
  */
 int MakeUniformScalebarTicks(scalebarticks *sbt, float start, float end,
                              int n_ticks, int ndecimals, int fixed_point) {
+  // TODO: need to account for exponents and scaling factors.
+  sbt->exp_factor_label[0] = '\0';
   float range = end - start;
   if(n_ticks < 2) return 1;
-  float dt = range / (float)(n_ticks - 2);
+  float dt = range / (float)(n_ticks - 1);
   NEWMEMORY(sbt->ticks, n_ticks * sizeof(float));
   NEWMEMORY(sbt->tick_labels, n_ticks * sizeof(char *));
   sbt->n_ticks = n_ticks;
@@ -851,6 +853,8 @@ void FreeScalebarTicks(scalebarticks *sbt) {
  */
 int MakeNonUniformScalebarTicks(scalebarticks *sbt, float *tick_values,
                                 int n_ticks, int ndecimals, int fixed_point) {
+  // TODO: need to account for exponents and scaling factors.
+  sbt->exp_factor_label[0] = '\0';
   int error = 0;
   if(n_ticks < 2) return 1;
   // Based on the first two values is the scalebar monotonically increasing?
