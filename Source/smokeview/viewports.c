@@ -1255,16 +1255,27 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
 #endif
 }
 
+void DrawVerticalColorbarRegLabelsTicks(scalebarticks *sbt);
+int GetStartEnd(float *start, float *end);
+void DrawVerticalColorbarRegLabelsTopLabels(top_labels *labels);
+
+
+void DrawVerticalScalebar(scalebar *sbar) {
+  // TODO: pass the colorbar in as well
+  DrawVerticalColorbars();
+  DrawVerticalColorbarRegLabelsTicks(&sbar->ticks);
+  DrawVerticalColorbarRegLabelsTopLabels(&sbar->labels);
+}
+
 /* --------------------- ViewportVerticalColorbar ------------------------- */
 
-void ViewportVerticalColorbar(int quad, GLint screen_left, GLint screen_down){
+void ViewportVerticalColorbar(int quad, GLint screen_left, GLint screen_down, scalebar *sbar){
   if(SubPortOrtho2(quad,&VP_vcolorbar,screen_left, screen_down)==0)return;
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  DrawVerticalColorbarRegLabels();
-  DrawVerticalColorbars();
+  DrawVerticalScalebar(sbar);
 }
 
     /* -------------------------- ViewportTitle -------------------------- */

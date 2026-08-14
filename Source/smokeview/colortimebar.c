@@ -4,6 +4,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+
 #include GLUT_H
 
 #include "smokeviewvars.h"
@@ -2538,7 +2539,196 @@ int GetStartEnd(float *start, float *end) {
   return 1;
 }
 
-void DrawVerticalColorbarRegLabelsTopLabels(scalebarticks *sbt) {
+/**
+ * @brief Create a Top Labels object
+ *
+ * @param[in] sbt
+ * @param[out] labels
+ */
+void CreateTopLabels(scalebarticks *sbt, top_labels *labels) {
+
+  int showcfast_local = 0;
+  int show_slice_colorbar_local = 0;
+  int show_hvacduct_colorbar_local = 0;
+  int show_hvacnode_colorbar_local = 0;
+
+  UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local,
+                     &show_hvacduct_colorbar_local,
+                     &show_hvacnode_colorbar_local);
+
+  if(showiso_colorbar == 1) {
+    // -------------- isosurface top labels ------------
+    boundsdata *sb = isobounds + iisottype;
+    int isounitclass, isounittype;
+
+    strcpy(labels->value_category, "Iso");
+    strcpy(labels->quantity, sb->label->shortlabel);
+    strcpy(labels->units, sb->label->unit);
+    GetUnitInfo(sb->label->unit, &isounitclass, &isounittype);
+    if(isounitclass >= 0 && isounitclass < nunitclasses) {
+      if(isounittype > 0) {
+        strcpy(sb->label->unit,
+               unitclasses[isounitclass].units[isounittype].unit);
+      }
+    }
+    strcpy(labels->scale_factor, "");
+  }
+  else if(showsmoke == 1 && parttype != 0) {
+    // -------------- particle file top labels ------------
+    char partunitlabel2[256], partshortlabel2[256];
+
+    strcpy(partshortlabel2, "");
+    strcpy(partunitlabel2, "");
+
+    if(parttype == -1) {
+      strcpy(partshortlabel2, "temp");
+      strcpy(partunitlabel2, (const char *)degC);
+    }
+    else if(parttype == -2) {
+      strcpy(partshortlabel2, "HRRPUV");
+      strcpy(partunitlabel2, "kW/m3");
+    }
+    else {
+      if(partshortlabel != NULL) strcpy(partshortlabel2, partshortlabel);
+      if(partunitlabel != NULL) strcpy(partunitlabel2, partunitlabel);
+    }
+    if(parttype != 0) {
+      int partunitclass, partunittype;
+
+      strcpy(labels->value_category, "Part");
+      strcpy(labels->quantity, partshortlabel);
+      strcpy(labels->units, partunitlabel2);
+      GetUnitInfo(partunitlabel, &partunitclass, &partunittype);
+      if(partunitclass >= 0 && partunitclass < nunitclasses) {
+        if(partunittype >= 0) {
+          strcpy(labels->units,
+                 unitclasses[partunitclass].units[partunittype].unit);
+        }
+      }
+      strcpy(labels->scale_factor, sbt->exp_factor_label);
+    }
+    // TODO: else clause needed
+  }
+  else if(show_slice_colorbar_local == 1) {
+    // -------------- slice file top labels ------------
+
+    int sliceunitclass, sliceunittype;
+    boundsdata *sb = slicebounds + slicefile_labelindex;
+
+    strcpy(labels->value_category, "Slice");
+    strcpy(labels->quantity, sb->label->shortlabel);
+    strcpy(labels->units, sb->label->unit);
+    GetUnitInfo(sb->label->unit, &sliceunitclass, &sliceunittype);
+    if(sliceunitclass >= 0 && sliceunitclass < nunitclasses) {
+      if(sliceunittype > 0) {
+        strcpy(labels->units,
+               unitclasses[sliceunitclass].units[sliceunittype].unit);
+      }
+    }
+    strcpy(labels->scale_factor, sbt->exp_factor_label);
+  }
+  else if(show_hvacnode_colorbar_local == 1 &&
+          // -------------- HVAC file node top labels ------------
+          global_scase.hvaccoll.hvacnodevar_index >= 0) {
+    hvacvaldata *hi = global_scase.hvaccoll.hvacnodevalsinfo->node_vars +
+                      global_scase.hvaccoll.hvacnodevar_index;
+    strcpy(labels->value_category, "HVAC");
+    strcpy(labels->subcategory, "node");
+    strcpy(labels->quantity, hi->label.shortlabel);
+    strcpy(labels->units, hi->label.unit);
+    strcpy(labels->scale_factor, sbt->exp_factor_label);
+  }
+  else if(show_hvacduct_colorbar_local == 1 &&
+          // -------------- HVAC file duct top labels ------------
+          global_scase.hvaccoll.hvacductvar_index >= 0) {
+    hvacvaldata *hi = global_scase.hvaccoll.hvacductvalsinfo->duct_vars +
+                      global_scase.hvaccoll.hvacductvar_index;
+    strcpy(labels->value_category, "HVAC");
+    strcpy(labels->subcategory, "duct");
+    strcpy(labels->quantity, hi->label.shortlabel);
+    strcpy(labels->units, hi->label.unit);
+    strcpy(labels->scale_factor, sbt->exp_factor_label);
+  }
+  else if(showpatch == 1 && wall_cell_color_flag == 0) {
+    // -------------- boundary file top labels ------------
+    int patchunitclass, patchunittype;
+    patchdata *patchi =
+        global_scase.patchinfo + global_scase.boundarytypes[iboundarytype];
+
+    strcpy(labels->value_category, "Bndry");
+    strcpy(labels->quantity, patchi->label.shortlabel);
+    strcpy(labels->units, patchi->label.unit);
+    GetUnitInfo(patchi->label.unit, &patchunitclass, &patchunittype);
+    if(patchunitclass >= 0 && patchunitclass < nunitclasses) {
+      if(patchunittype > 0) {
+        strcpy(labels->units,
+               unitclasses[patchunitclass].units[patchunittype].unit);
+      }
+    }
+    strcpy(labels->scale_factor, sbt->exp_factor_label);
+  }
+  else if(showcfast_local == 1) {
+    // -------------- zone top labels ------------
+    int zoneunitclass, zoneunittype;
+    strcpy(labels->value_category, "Zone");
+    strcpy(labels->quantity, "Temp");
+    strcpy(labels->units, (const char *)degC);
+    GetUnitInfo((const char *)degC, &zoneunitclass, &zoneunittype);
+    if(zoneunitclass >= 0 && zoneunitclass < nunitclasses) {
+      if(zoneunittype > 0) {
+        strcpy(labels->units,
+               unitclasses[zoneunitclass].units[zoneunittype].unit);
+      }
+    }
+    strcpy(labels->scale_factor, sbt->exp_factor_label);
+  }
+  else if(showplot3d == 1) {
+    // -------------- plot3d top labels ------------
+    int plot3dunitclass, plot3dunittype;
+    char *quantity_label =
+        global_scase.plot3dinfo[0].label[plotn - 1].shortlabel;
+    char *units_label = global_scase.plot3dinfo[0].label[plotn - 1].unit;
+
+    strcpy(labels->value_category, "Plot3D");
+    strcpy(labels->quantity, quantity_label);
+    strcpy(labels->units, units_label);
+    GetUnitInfo(units_label, &plot3dunitclass, &plot3dunittype);
+    if(plot3dunitclass >= 0 && plot3dunitclass < nunitclasses) {
+      if(plot3dunittype > 0) {
+        strcpy(labels->units,
+               unitclasses[plot3dunitclass].units[plot3dunittype].unit);
+      }
+    }
+    strcpy(labels->scale_factor, sbt->exp_factor_label);
+  }
+}
+
+void DrawVerticalColorbarRegLabelsTopLabels3or4(top_labels *labels,
+                                                const GLfloat *color) {
+  int offset = VP_vcolorbar.text_height + v_space;
+  int current_line = 3;
+  OutputBarText(0.0, current_line-- * offset, color, labels->value_category);
+  // Only draw the subcategory line if it has content
+  if(labels->subcategory[0] != '\0')
+    OutputBarText(0.0, current_line-- * offset, color, labels->subcategory);
+  OutputBarText(0.0, current_line-- * offset, color, labels->quantity);
+  OutputBarText(0.0, current_line-- * offset, color, labels->units);
+  OutputBarText(0.0, current_line-- * offset, color, labels->scale_factor);
+}
+
+void DrawVerticalColorbarRegLabelsTopLabelsWithPadding(top_labels *labels,
+                                                       const GLfloat *color,
+                                                       int leftslice,int with_histogram) {
+  glPushMatrix();
+  glTranslatef(vcolorbar_left_pos - colorbar_label_width,
+               vcolorbar_top_pos + v_space + vcolorbar_delta, 0.0);
+  glTranslatef(-leftslice * (colorbar_label_width + h_space), 0.0, 0.0);
+  if(with_histogram) glTranslatef(colorbar_label_width / 2.0, 0.0, 0.0);
+  DrawVerticalColorbarRegLabelsTopLabels3or4(labels, color);
+  glPopMatrix();
+}
+
+void DrawVerticalColorbarRegLabelsTopLabels(top_labels *labels) {
   int ileft = 0;
   int leftzone,  leftslice, leftpatch, leftiso;
   int lefthvacduct, lefthvacnode;
@@ -2576,245 +2766,67 @@ void DrawVerticalColorbarRegLabelsTopLabels(scalebarticks *sbt) {
   leftzone = ileft++;
 
   foreground_color = &(foregroundcolor[0]);
-
-  // -------------- isosurface left labels ------------
-
-  if(showiso_colorbar == 1){
-    boundsdata *sb;
-    int isounitclass, isounittype;
-    char unitlabel[256];
-
-    sb = isobounds + iisottype;
-    strcpy(unitlabel, sb->label->unit);
-    GetUnitInfo(sb->label->unit, &isounitclass, &isounittype);
-    if(isounitclass >= 0 && isounitclass < nunitclasses){
-      if(isounittype > 0){
-        strcpy(unitlabel, unitclasses[isounitclass].units[isounittype].unit);
-      }
-    }
+  // TODO: should these be mutually exclusive?
   // -------------- isosurface top labels ------------
-
-    glPushMatrix();
-    glTranslatef(
-      vcolorbar_left_pos - colorbar_label_width,
-      vcolorbar_top_pos + v_space + vcolorbar_delta,
-      0.0);
-    glTranslatef(-leftiso*(colorbar_label_width + h_space), 0.0, 0.0);
-    OutputBarText(0.0, 3 * (VP_vcolorbar.text_height + v_space), foreground_color, "Iso");
-    OutputBarText(0.0, 2 * (VP_vcolorbar.text_height + v_space), foreground_color, sb->label->shortlabel);
-    OutputBarText(0.0, (VP_vcolorbar.text_height + v_space),     foreground_color, unitlabel);
-    glPopMatrix();
+  if(showiso_colorbar == 1) {
+    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+                                                      leftiso, 0);
   }
-
-
   // -------------- particle file top labels ------------
-
-  if(showsmoke==1&&parttype!=0){
-    char partunitlabel2[256], partshortlabel2[256];
-
-    strcpy(partshortlabel2, "");
-    strcpy(partunitlabel2, "");
-
-    glPushMatrix();
-    glTranslatef(
-      vcolorbar_left_pos - colorbar_label_width,
-      vcolorbar_top_pos + v_space + vcolorbar_delta,
-      0.0);
-    if(dohist == 1)glTranslatef(colorbar_label_width / 2.0, 0.0, 0.0);
-
-    if(parttype != 0){
-      if(showsmoke == 1)OutputBarText(0.0, 3 * (VP_vcolorbar.text_height + v_space), foreground_color, "Part");
-    }
-    if(parttype == -1){
-      strcpy(partshortlabel2, "temp");
-      strcpy(partunitlabel2, (const char *)degC);
-    }
-    else if(parttype == -2){
-      strcpy(partshortlabel2, "HRRPUV");
-      strcpy(partunitlabel2, "kW/m3");
-    }
-    else{
-      if(partshortlabel != NULL)strcpy(partshortlabel2, partshortlabel);
-      if(partunitlabel != NULL)strcpy(partunitlabel2,   partunitlabel);
-    }
-    if(parttype != 0){
-      int partunitclass, partunittype;
-
-      GetUnitInfo(partunitlabel, &partunitclass, &partunittype);
-      if(partunitclass >= 0 && partunitclass < nunitclasses){
-        if(partunittype >= 0){
-          strcpy(partunitlabel2, unitclasses[partunitclass].units[partunittype].unit);
-        }
-      }
-      OutputBarText(0.0, 2 * (VP_vcolorbar.text_height + v_space),     foreground_color, partshortlabel);
-      OutputBarText(0.0, 1 * (VP_vcolorbar.text_height + v_space),     foreground_color, partunitlabel2);
-      OutputBarText(0.0, 0 * (VP_vcolorbar.text_height + v_space),     foreground_color, sbt->exp_factor_label);
-    }
-    glPopMatrix();
+  if(showsmoke == 1 && parttype != 0) {
+    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+                                                      leftslice, dohist == 1);
   }
-
-
   // -------------- slice file top labels ------------
-
-  if(show_slice_colorbar_local==1){
-    char unitlabel[256];
-    int sliceunitclass, sliceunittype;
-    boundsdata *sb;
-
-    sb = slicebounds + slicefile_labelindex;
-    strcpy(unitlabel, sb->label->unit);
-    GetUnitInfo(sb->label->unit, &sliceunitclass, &sliceunittype);
-    if(sliceunitclass >= 0 && sliceunitclass < nunitclasses){
-      if(sliceunittype > 0){
-        strcpy(unitlabel, unitclasses[sliceunitclass].units[sliceunittype].unit);
-      }
-    }
-    glPushMatrix();
-    glTranslatef(
-      vcolorbar_left_pos - colorbar_label_width,
-      vcolorbar_top_pos + v_space + vcolorbar_delta,
-      0.0);
-    glTranslatef(-leftslice*(colorbar_label_width + h_space), 0.0, 0.0);
-    OutputBarText(0.0, 3 * (VP_vcolorbar.text_height + v_space), foreground_color, "Slice");
-    OutputBarText(0.0, 2 * (VP_vcolorbar.text_height + v_space), foreground_color, sb->label->shortlabel);
-    OutputBarText(0.0,     (VP_vcolorbar.text_height + v_space), foreground_color, unitlabel);
-    OutputBarText(0.0, 0                                       , foreground_color, sbt->exp_factor_label);
-    glPopMatrix();
+  if(show_slice_colorbar_local == 1) {
+    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+                                                      leftslice, 0);
   }
-
   // -------------- HVAC file node top labels ------------
-
-  if(show_hvacnode_colorbar_local==1 && global_scase.hvaccoll.hvacnodevar_index>=0){
-    char *slabel, *unitlabel;
-    hvacvaldata *hi;
-
-    hi = global_scase.hvaccoll.hvacnodevalsinfo->node_vars + global_scase.hvaccoll.hvacnodevar_index;
-    slabel = hi->label.shortlabel;
-    unitlabel = hi->label.unit;
-
-    glPushMatrix();
-    glTranslatef(
-      vcolorbar_left_pos - colorbar_label_width,
-      vcolorbar_top_pos + v_space + vcolorbar_delta,
-      0.0);
-    glTranslatef(-lefthvacnode*(colorbar_label_width + h_space), 0.0, 0.0);
-    OutputBarText(0.0, 3 * (VP_vcolorbar.text_height + v_space), foreground_color, "HVAC");
-    OutputBarText(0.0, 2 * (VP_vcolorbar.text_height + v_space), foreground_color, "node");
-    OutputBarText(0.0, 1 * (VP_vcolorbar.text_height + v_space), foreground_color, slabel);
-    OutputBarText(0.0, 0 * (VP_vcolorbar.text_height + v_space), foreground_color, unitlabel);
-    OutputBarText(0.0,-1 * (VP_vcolorbar.text_height + v_space), foreground_color, sbt->exp_factor_label);
-    glPopMatrix();
+  if(show_hvacnode_colorbar_local == 1 &&
+     global_scase.hvaccoll.hvacnodevar_index >= 0) {
+    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+                                                      lefthvacnode, 0);
   }
-
   // -------------- HVAC file duct top labels ------------
-
-  if(show_hvacduct_colorbar_local==1 && global_scase.hvaccoll.hvacductvar_index >=0){
-    char *slabel, *unitlabel;
-    hvacvaldata *hi;
-
-    hi = global_scase.hvaccoll.hvacductvalsinfo->duct_vars + global_scase.hvaccoll.hvacductvar_index;
-    slabel = hi->label.shortlabel;
-    unitlabel = hi->label.unit;
-
-    glPushMatrix();
-    glTranslatef(
-      vcolorbar_left_pos - colorbar_label_width,
-      vcolorbar_top_pos + v_space + vcolorbar_delta,
-      0.0);
-    glTranslatef(-lefthvacduct*(colorbar_label_width + h_space), 0.0, 0.0);
-    OutputBarText(0.0, 3 * (VP_vcolorbar.text_height + v_space), foreground_color, "HVAC");
-    OutputBarText(0.0, 2 * (VP_vcolorbar.text_height + v_space), foreground_color, "duct");
-    OutputBarText(0.0, 1 * (VP_vcolorbar.text_height + v_space), foreground_color, slabel);
-    OutputBarText(0.0, 0 * (VP_vcolorbar.text_height + v_space), foreground_color, unitlabel);
-    OutputBarText(0.0,-1 * (VP_vcolorbar.text_height + v_space), foreground_color, sbt->exp_factor_label);
-    glPopMatrix();
+  if(show_hvacduct_colorbar_local == 1 &&
+     global_scase.hvaccoll.hvacductvar_index >= 0) {
+    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+                                                      lefthvacduct, 0);
   }
-
-
   // -------------- boundary file top labels ------------
-
-  if(showpatch == 1 && wall_cell_color_flag == 0){
-    char unitlabel[256];
-    patchdata *patchi;
-    int patchunitclass, patchunittype;
-
-    patchi = global_scase.patchinfo + global_scase.boundarytypes[iboundarytype];
-    strcpy(unitlabel, patchi->label.unit);
-    GetUnitInfo(patchi->label.unit, &patchunitclass, &patchunittype);
-    if(patchunitclass >= 0 && patchunitclass < nunitclasses){
-      if(patchunittype > 0){
-        strcpy(unitlabel, unitclasses[patchunitclass].units[patchunittype].unit);
-      }
-    }
-    glPushMatrix();
-    glTranslatef(
-      vcolorbar_left_pos - colorbar_label_width,
-      vcolorbar_top_pos + v_space + vcolorbar_delta,
-      0.0);
-    glTranslatef(-leftpatch*(colorbar_label_width + h_space), 0.0, 0.0);
-    if(dohist == 1)glTranslatef(colorbar_label_width / 2.0, 0.0, 0.0);
-
-    OutputBarText(0.0, 3 * (VP_vcolorbar.text_height + v_space), foreground_color, "Bndry");
-    OutputBarText(0.0, 2 * (VP_vcolorbar.text_height + v_space), foreground_color, patchi->label.shortlabel);
-    OutputBarText(0.0,     (VP_vcolorbar.text_height + v_space), foreground_color, unitlabel);
-    OutputBarText(0.0, 0                                       , foreground_color, sbt->exp_factor_label);
-    glPopMatrix();
+  if(showpatch == 1 && wall_cell_color_flag == 0) {
+    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+                                                      leftpatch, dohist == 1);
   }
-
-
   // -------------- zone top labels ------------
-
-  if(showcfast_local==1){
-    char unitlabel[256];
-    int zoneunitclass, zoneunittype;
-
-    strcpy(unitlabel, (const char *)degC);
-    GetUnitInfo(unitlabel, &zoneunitclass, &zoneunittype);
-    if(zoneunitclass >= 0 && zoneunitclass < nunitclasses){
-      if(zoneunittype > 0){
-        strcpy(unitlabel, unitclasses[zoneunitclass].units[zoneunittype].unit);
-      }
-    }
-    glPushMatrix();
-    glTranslatef(vcolorbar_left_pos - colorbar_label_width, vcolorbar_top_pos + v_space + vcolorbar_delta, 0.0);
-    glTranslatef(-leftzone*(colorbar_label_width + h_space), 0.0, 0.0);
-    OutputBarText(0.0, 3 * (VP_vcolorbar.text_height + v_space), foreground_color, "Zone");
-    OutputBarText(0.0, 2 * (VP_vcolorbar.text_height + v_space), foreground_color, "Temp");
-    OutputBarText(0.0,     (VP_vcolorbar.text_height + v_space), foreground_color, unitlabel);
-    OutputBarText(0.0, 0                                       , foreground_color, sbt->exp_factor_label);
-    max_colorbar_label_width = MAX(max_colorbar_label_width, GetStringWidth(sbt->exp_factor_label));
-    glPopMatrix();
+  if(showcfast_local == 1) {
+    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+                                                      leftzone, 0);
+    max_colorbar_label_width =
+        MAX(max_colorbar_label_width, GetStringWidth(labels->scale_factor));
     SNIFF_ERRORS("After ZONE labels");
   }
-
   // -------------- plot3d top labels ------------
-
-  if(showplot3d == 1){
-    char *p3label;
-    char *up3label;
-    char unitlabel[256];
-    int plot3dunitclass, plot3dunittype;
-
-    up3label = global_scase.plot3dinfo[0].label[plotn - 1].unit;
-    strcpy(unitlabel, up3label);
-    GetUnitInfo(up3label, &plot3dunitclass, &plot3dunittype);
-    if(plot3dunitclass >= 0 && plot3dunitclass < nunitclasses){
-      if(plot3dunittype > 0){
-        strcpy(unitlabel, unitclasses[plot3dunitclass].units[plot3dunittype].unit);
-      }
-    }
-    p3label = global_scase.plot3dinfo[0].label[plotn - 1].shortlabel;
-    glPushMatrix();
-    glTranslatef(
-      vcolorbar_left_pos - colorbar_label_width,
-      vcolorbar_top_pos + v_space + vcolorbar_delta,
-      0.0);
-    OutputBarText(0.0, 3 * (VP_vcolorbar.text_height + v_space), foreground_color, "Plot3D");
-    OutputBarText(0.0, 2 * (VP_vcolorbar.text_height + v_space), foreground_color, p3label);
-    OutputBarText(0.0,     (VP_vcolorbar.text_height + v_space), foreground_color, unitlabel);
-    OutputBarText(0.0, 0                                       , foreground_color, sbt->exp_factor_label);
-    glPopMatrix();
+  if(showplot3d == 1) {
+    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+                                                      leftslice, 0);
   }
+}
+
+void CreateScalebar(scalebar *sbar) {
+  scalebarticks sbt = {0};
+  float tttmin;
+  float tttmax;
+  // TODO: what if we can't get start and end
+  GetStartEnd(&tttmin, &tttmax);
+  assert(!MakeUniformScalebarTicks(&sbt, tttmin, tttmax, global_scase.nrgb - 1,
+                                   3, 0));
+  top_labels tplbs = {0};
+  CreateTopLabels(&sbt, &tplbs);
+
+  sbar->labels = tplbs;
+  sbar->ticks = sbt;
 }
 
 void DrawVerticalColorbarRegLabelsTicks(scalebarticks *sbt) {

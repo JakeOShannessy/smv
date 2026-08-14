@@ -214,6 +214,8 @@ EXTERNCPP float Zoom2Aperture(float zoom0);
 EXTERNCPP colortabledata *GetColorTable(char *label);
 EXTERNCPP int GetColorTableIndex(int *color);
 
+EXTERNCPP void CreateScalebar(scalebar *sbar);
+
 //*** colortimebar.c headers
 
 EXTERNCPP int  AddColorbar(int icolorbar);

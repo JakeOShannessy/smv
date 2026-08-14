@@ -70,7 +70,26 @@ typedef struct _scalebarticks {
   char exp_factor_label[256];
 } scalebarticks;
 
+#define MAX_TOP_LABEL_LENGTH 256
+typedef struct _top_labels {
+  /// @brief The type of value this data is, e.g.: slice, plot3d
+  char value_category[MAX_TOP_LABEL_LENGTH];
+  /// @brief Some categories have subcategories, e.g., HVAC has node and duct.
+  /// This is optional as it does not apply in all cases. Just leave as an empty
+  /// string when not in use.
+  char subcategory[MAX_TOP_LABEL_LENGTH];
+  /// @brief The quantity being shown, e.g., temp, VIS_C
+  char quantity[MAX_TOP_LABEL_LENGTH];
+  /// @brief The units of the quantity, e.g., C, K, m/s
+  char units[MAX_TOP_LABEL_LENGTH];
+  /// @brief Optionally, a scale factor, e.g., ×10⁻³
+  char scale_factor[MAX_TOP_LABEL_LENGTH];
+} top_labels;
+
 typedef struct _scalebar {
+  /// @brief Labels that appear at the top or end of the scale bar to describe
+  /// the scale bar.
+  top_labels labels;
   /// @brief Ticks that will bar marked (with labels) on the scale bar.
   scalebarticks ticks;
   /// @brief The color scheme that will be used for the scale bar.
@@ -160,6 +179,11 @@ EXTERNCPP void RemapColorbar(colorbardata *cbi, int show_extreme_mindata,
 EXTERNCPP void Lab2XYZ(float *xyz, float *lab);
 EXTERNCPP void CheckLab(void);
 EXTERNCPP void FRgb2Lab(float *rgb_arg, float *lab);
-EXTERNCPP void GetColorDist(colorbardata *cbi, int option, float *min, float *max);
+EXTERNCPP void GetColorDist(colorbardata *cbi, int option, float *min,
+                            float *max);
+
+EXTERNCPP int MakeUniformScalebarTicks(scalebarticks *sbt, float start,
+                                       float end, int n_ticks, int ndecimals,
+                                       int fixed_point);
 
 #endif
