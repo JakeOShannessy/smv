@@ -2607,7 +2607,11 @@ void CreateTopLabels(scalebarticks *sbt, top_labels *labels) {
       int partunitclass, partunittype;
 
       strcpy(labels->value_category, "Part");
-      strcpy(labels->quantity, partshortlabel);
+      if(partshortlabel != NULL) {
+        strcpy(labels->quantity, partshortlabel);
+      } else {
+        strcpy(labels->quantity, "");
+      }
       strcpy(labels->units, partunitlabel2);
       GetUnitInfo(partunitlabel, &partunitclass, &partunittype);
       if(partunitclass >= 0 && partunitclass < nunitclasses) {
