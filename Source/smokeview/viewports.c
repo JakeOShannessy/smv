@@ -1131,7 +1131,8 @@ void ViewportSlicePlot(int quad, GLint screen_left, GLint screen_down){
 
 /* ------------------------ ViewportTimebar ------------------------- */
 
-void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
+void ViewportTimebar(int quad, GLint screen_left, GLint screen_down,
+                     scalebar *sbar) {
   int right_label_pos, timebar_right_pos;
   int timebar_left_pos;
   int time_width=0, hrr_width=0, frame_width=0;
@@ -1184,8 +1185,7 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
   glLoadIdentity();
 
   if(visColorbarHorizontal == 1 && num_colorbars > 0 && (showtime == 1 || showplot3d == 1)){
-    DrawHorizontalColorbarRegLabels();
-    DrawHorizontalColorbars();
+    DrawHorizontalScalebar(sbar);
   }
 
   if((visTimelabel == 1 || visFramelabel == 1 || vis_hrr_label == 1 || visTimebar == 1) && showtime==1){
@@ -1255,26 +1255,11 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
 #endif
 }
 
-void DrawVerticalColorbarRegLabelsTicks(scalebarticks *sbt);
-int GetStartEnd(float *start, float *end);
-void DrawVerticalColorbarRegLabelsTopLabels(top_labels *labels);
-
-/**
- * @brief Draw a vertical scalebar.
- *
- * @param sbar The specifiction of the scalebar to draw.
- */
-void DrawVerticalScalebar(scalebar *sbar) {
-  // TODO: pass the colorbar in as well
-  DrawVerticalColorbars();
-  DrawVerticalColorbarRegLabelsTicks(&sbar->ticks);
-  DrawVerticalColorbarRegLabelsTopLabels(&sbar->labels);
-}
-
 /* --------------------- ViewportVerticalColorbar ------------------------- */
 
-void ViewportVerticalColorbar(int quad, GLint screen_left, GLint screen_down, scalebar *sbar){
-  if(SubPortOrtho2(quad,&VP_vcolorbar,screen_left, screen_down)==0)return;
+void ViewportVerticalColorbar(int quad, GLint screen_left, GLint screen_down,
+                              scalebar *sbar) {
+  if(SubPortOrtho2(quad, &VP_vcolorbar, screen_left, screen_down) == 0) return;
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();

@@ -214,8 +214,6 @@ EXTERNCPP float Zoom2Aperture(float zoom0);
 EXTERNCPP colortabledata *GetColorTable(char *label);
 EXTERNCPP int GetColorTableIndex(int *color);
 
-EXTERNCPP void CreateScalebar(scalebar *sbar);
-
 //*** colortimebar.c headers
 
 EXTERNCPP int  AddColorbar(int icolorbar);
@@ -228,7 +226,6 @@ EXTERNCPP void DrawColorbarPathRGB(void);
 EXTERNCPP void DrawHorizontalColorbars(void);
 EXTERNCPP void DrawHorizontalColorbarRegLabels(void);
 EXTERNCPP void DrawVerticalColorbars(void);
-EXTERNCPP void DrawVerticalColorbarRegLabels(void);
 EXTERNCPP int GetStartEnd(float *start, float *end);
 EXTERNCPP void DrawTimebar(float xleft, float xright, float ybot, float ytop);
 EXTERNCPP void FRgb2Lab(float *rgb_arg, float *lab);
@@ -244,6 +241,9 @@ EXTERNCPP void UpdateShowColorbar(int *showcfast_arg, int *show_slice_colorbar_a
   int *show_hvacduct_colorbar_arg, int *show_hvacnode_colorbar_arg);
 EXTERNCPP void UpdateTimeLabels(void);
 EXTERNCPP void UpdateOutlineMode(void);
+EXTERNCPP void CreateScalebar(scalebar *sbar);
+EXTERNCPP void DrawVerticalScalebar(scalebar *sbar);
+EXTERNCPP void DrawHorizontalScalebar(scalebar *sbar);
 
 //*** drawGeometry.c headers
 

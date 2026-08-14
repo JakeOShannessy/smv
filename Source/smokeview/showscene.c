@@ -653,8 +653,8 @@ void ShowScene(int mode, int view_mode, int quad, GLint s_left, GLint s_down, sc
       SNIFF_ERRORS("after ViewportInfo");
     }
 
-    if(VP_timebar.doit == 1){
-      ViewportTimebar(quad, s_left, s_down);
+    if(VP_timebar.doit == 1) {
+      ViewportTimebar(quad, s_left, s_down, global_vertical_sbar);
       SNIFF_ERRORS("after ViewportTimebar");
     }
 
