@@ -171,6 +171,10 @@ void  UpdatePlot3DColors(plot3ddata *plot3di, int flag, int *errorcode){
                     nrgb_full, global_scase.nrgb - 1, colorlabelp3[nn], colorlabeliso[nn], p3levels[nn], p3levels256[nn],
                     plot3di->extreme_min + nn, plot3di->extreme_max + nn, flag);
   }
+  // TODO: this shouldn't happen if smokeview isn't configured for it.
+  // Create or update the scalebar
+  if(global_scalebar == NULL) NEWMEMORY(global_scalebar, sizeof(scalebar));
+  CreateScalebar(global_scalebar);
 }
 
 /* ------------------ GetPlot3DBounds  ------------------------ */

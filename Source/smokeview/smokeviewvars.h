@@ -209,7 +209,7 @@ SVEXTERN int SOOT_index, HRRPUV_index, TEMP_index, CO2_index;
 
 SVEXTERN int SVDECL(agl_offset_actual, 1);
 
-SVEXTERN scalebar SVDECL(*global_vertical_sbar, NULL);
+SVEXTERN scalebar SVDECL(*global_scalebar, NULL);
 
 SVEXTERN int SVDECL(texture_showall, 0);
 SVEXTERN int SVDECL(texture_hideall, 0);

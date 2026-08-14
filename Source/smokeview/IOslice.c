@@ -1305,10 +1305,9 @@ void SetSliceColors(float smin, float smax, slicedata *sd, int flag, int *errorc
     );
   }
   // TODO: this shouldn't happen if smokeview isn't configured for it.
-  // Create a vertical scalebar
-  if(global_vertical_sbar == NULL)
-    NEWMEMORY(global_vertical_sbar, sizeof(scalebar));
-  CreateScalebar(global_vertical_sbar);
+  // Create or update the scalebar
+  if(global_scalebar == NULL) NEWMEMORY(global_scalebar, sizeof(scalebar));
+  CreateScalebar(global_scalebar);
 }
 
 /* ------------------ UpdateAllSliceColors ------------------------ */

@@ -654,7 +654,7 @@ void ShowScene(int mode, int view_mode, int quad, GLint s_left, GLint s_down, sc
     }
 
     if(VP_timebar.doit == 1) {
-      ViewportTimebar(quad, s_left, s_down, global_vertical_sbar);
+      ViewportTimebar(quad, s_left, s_down, global_scalebar);
       SNIFF_ERRORS("after ViewportTimebar");
     }
 
@@ -669,8 +669,8 @@ void ShowScene(int mode, int view_mode, int quad, GLint s_left, GLint s_down, sc
     }
 
     if(VP_vcolorbar.doit == 1) {
-      if (global_vertical_sbar != NULL) {
-        ViewportVerticalColorbar(quad, s_left, s_down, global_vertical_sbar);
+      if (global_scalebar != NULL) {
+        ViewportVerticalColorbar(quad, s_left, s_down, global_scalebar);
       }
       SNIFF_ERRORS("after ViewportVerticalColorbar");
     }
