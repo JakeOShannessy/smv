@@ -1259,7 +1259,11 @@ void DrawVerticalColorbarRegLabelsTicks(scalebarticks *sbt);
 int GetStartEnd(float *start, float *end);
 void DrawVerticalColorbarRegLabelsTopLabels(top_labels *labels);
 
-
+/**
+ * @brief Draw a vertical scalebar.
+ *
+ * @param sbar The specifiction of the scalebar to draw.
+ */
 void DrawVerticalScalebar(scalebar *sbar) {
   // TODO: pass the colorbar in as well
   DrawVerticalColorbars();

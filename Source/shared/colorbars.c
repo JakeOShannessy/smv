@@ -805,13 +805,16 @@ float *GetColorPtr(smv_case *scase, float *color){
 
 /**
  * @brief Create set of ticks for a scale bar. This will be a uniform
- * distribution of ticks.
+ * distribution of ticks between two numbers (inclusive). Note that the start
+ * and end can be in any order.
  *
- * @param sbt
- * @param start
- * @param end
- * @param n_ticks
- * @return zero on success, non-zero otherwise
+ * @param[out] sbt The scalebarticks into which to store the ticks.
+ * @param[in] start The value at the start of the ticks.
+ * @param[in] end The value at the end of the ticks.
+ * @param[in] n_ticks The number of ticks to produces (including the start and
+ * end).
+ * @return zero on success, non-zero otherwise. Returns 1 if the number of ticks
+ * requested is invalid.
  */
 int MakeUniformScalebarTicks(scalebarticks *sbt, float start, float end,
                              int n_ticks, int ndecimals, int fixed_point) {
@@ -843,13 +846,18 @@ void FreeScalebarTicks(scalebarticks *sbt) {
   sbt->n_ticks = 0;
 }
 
+
 /**
- * @brief
+ * @brief Create set of ticks for a scale bar. This will be a non-uniform
+ * distribution of ticks specified by the input array. There must be at least
+ * two ticks specified in the input array and they must all either be strictly
+ * monotonically increasing or  strictly monotonically decreasing. No two values
+ * may be the same.
  *
- * @param sbt
- * @param tick_values
- * @param n_ticks
- * @return  zero on success, non-zero otherwise
+ * @param[out] sbt The scalebarticks into which to store the ticks.
+ * @param[in] tick_values The tick values to use.
+ * @param[in] n_ticks The number of ticks in the tick_values array.
+ * @return zero on success, non-zero otherwise
  */
 int MakeNonUniformScalebarTicks(scalebarticks *sbt, float *tick_values,
                                 int n_ticks, int ndecimals, int fixed_point) {

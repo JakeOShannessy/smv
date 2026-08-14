@@ -181,9 +181,9 @@ EXTERNCPP void CheckLab(void);
 EXTERNCPP void FRgb2Lab(float *rgb_arg, float *lab);
 EXTERNCPP void GetColorDist(colorbardata *cbi, int option, float *min,
                             float *max);
-
 EXTERNCPP int MakeUniformScalebarTicks(scalebarticks *sbt, float start,
                                        float end, int n_ticks, int ndecimals,
                                        int fixed_point);
-
+EXTERNCPP int MakeNonUniformScalebarTicks(scalebarticks *sbt, float *tick_values,
+                                int n_ticks, int ndecimals, int fixed_point);
 #endif

@@ -2470,6 +2470,16 @@ void DrawVerticalColorbarRegLabels(void){
   }
 }
 
+// TODO: this should be able to handle multiple scale bars being set.
+/**
+ * @brief Depending on the loaded/selected data, determine the values of the
+ * data at the start and end of the shown range. This may be in the form lowest
+ * to highest or highest to lowest depending on the data and configuration.
+ *
+ * @param start A location to store the start value to.
+ * @param end A location to store the end value to.
+ * @return zero on success, non-zero on error.
+ */
 int GetStartEnd(float *start, float *end) {
   int showcfast_local = 0;
   int show_slice_colorbar_local = 0;
@@ -2540,10 +2550,11 @@ int GetStartEnd(float *start, float *end) {
 }
 
 /**
- * @brief Create a Top Labels object
+ * @brief Populate a top_labels struct with the basic information about a
+ * dataset that will be shown by the scale bar.
  *
- * @param[in] sbt
- * @param[out] labels
+ * @param[in] sbt The specification of the ticks.
+ * @param[out] labels A location to store the lavel data.
  */
 void CreateTopLabels(scalebarticks *sbt, top_labels *labels) {
 
@@ -2703,8 +2714,13 @@ void CreateTopLabels(scalebarticks *sbt, top_labels *labels) {
   }
 }
 
-void DrawVerticalColorbarRegLabelsTopLabels3or4(top_labels *labels,
-                                                const GLfloat *color) {
+/**
+ * @brief Draw the lines of text atop a vertical colorbar.
+ *
+ * @param labels The text to be drawn.
+ * @param color The color in which to draw the text.
+ */
+void DrawVerticalTopLabelsLines(top_labels *labels, const GLfloat *color) {
   int offset = VP_vcolorbar.text_height + v_space;
   int current_line = 3;
   OutputBarText(0.0, current_line-- * offset, color, labels->value_category);
@@ -2716,18 +2732,32 @@ void DrawVerticalColorbarRegLabelsTopLabels3or4(top_labels *labels,
   OutputBarText(0.0, current_line-- * offset, color, labels->scale_factor);
 }
 
-void DrawVerticalColorbarRegLabelsTopLabelsWithPadding(top_labels *labels,
-                                                       const GLfloat *color,
-                                                       int leftslice,int with_histogram) {
+/**
+ * @brief Draw the lines of text atop a vertical colorbar, handling the
+ * location/translation of the text.
+ *
+ * @param[in] labels The text to be drawn.
+ * @param[in] color The color in which to draw the text.
+ * @param[in] left Horizontal position adjustment..
+ * @param[in] with_histogram Should a histogram be accounted for? (boolean)
+ */
+void DrawVerticalTopLabels(top_labels *labels, const GLfloat *color,
+                           int left, int with_histogram) {
   glPushMatrix();
   glTranslatef(vcolorbar_left_pos - colorbar_label_width,
                vcolorbar_top_pos + v_space + vcolorbar_delta, 0.0);
-  glTranslatef(-leftslice * (colorbar_label_width + h_space), 0.0, 0.0);
+  glTranslatef(-left * (colorbar_label_width + h_space), 0.0, 0.0);
   if(with_histogram) glTranslatef(colorbar_label_width / 2.0, 0.0, 0.0);
-  DrawVerticalColorbarRegLabelsTopLabels3or4(labels, color);
+  DrawVerticalTopLabelsLines(labels, color);
   glPopMatrix();
 }
 
+/**
+ * @brief Draw the lines of text atop a vertical colorbar, handling all of the
+ * details. The drawn text will vary depending on what has been loaded.
+ *
+ * @param[in] labels The text to be drawn.
+ */
 void DrawVerticalColorbarRegLabelsTopLabels(top_labels *labels) {
   int ileft = 0;
   int leftzone,  leftslice, leftpatch, leftiso;
@@ -2769,39 +2799,39 @@ void DrawVerticalColorbarRegLabelsTopLabels(top_labels *labels) {
   // TODO: should these be mutually exclusive?
   // -------------- isosurface top labels ------------
   if(showiso_colorbar == 1) {
-    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+    DrawVerticalTopLabels(labels, foreground_color,
                                                       leftiso, 0);
   }
   // -------------- particle file top labels ------------
   if(showsmoke == 1 && parttype != 0) {
-    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+    DrawVerticalTopLabels(labels, foreground_color,
                                                       leftslice, dohist == 1);
   }
   // -------------- slice file top labels ------------
   if(show_slice_colorbar_local == 1) {
-    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+    DrawVerticalTopLabels(labels, foreground_color,
                                                       leftslice, 0);
   }
   // -------------- HVAC file node top labels ------------
   if(show_hvacnode_colorbar_local == 1 &&
      global_scase.hvaccoll.hvacnodevar_index >= 0) {
-    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+    DrawVerticalTopLabels(labels, foreground_color,
                                                       lefthvacnode, 0);
   }
   // -------------- HVAC file duct top labels ------------
   if(show_hvacduct_colorbar_local == 1 &&
      global_scase.hvaccoll.hvacductvar_index >= 0) {
-    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+    DrawVerticalTopLabels(labels, foreground_color,
                                                       lefthvacduct, 0);
   }
   // -------------- boundary file top labels ------------
   if(showpatch == 1 && wall_cell_color_flag == 0) {
-    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+    DrawVerticalTopLabels(labels, foreground_color,
                                                       leftpatch, dohist == 1);
   }
   // -------------- zone top labels ------------
   if(showcfast_local == 1) {
-    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+    DrawVerticalTopLabels(labels, foreground_color,
                                                       leftzone, 0);
     max_colorbar_label_width =
         MAX(max_colorbar_label_width, GetStringWidth(labels->scale_factor));
@@ -2809,7 +2839,7 @@ void DrawVerticalColorbarRegLabelsTopLabels(top_labels *labels) {
   }
   // -------------- plot3d top labels ------------
   if(showplot3d == 1) {
-    DrawVerticalColorbarRegLabelsTopLabelsWithPadding(labels, foreground_color,
+    DrawVerticalTopLabels(labels, foreground_color,
                                                       leftslice, 0);
   }
 }

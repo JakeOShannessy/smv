@@ -229,6 +229,7 @@ EXTERNCPP void DrawHorizontalColorbars(void);
 EXTERNCPP void DrawHorizontalColorbarRegLabels(void);
 EXTERNCPP void DrawVerticalColorbars(void);
 EXTERNCPP void DrawVerticalColorbarRegLabels(void);
+EXTERNCPP int GetStartEnd(float *start, float *end);
 EXTERNCPP void DrawTimebar(float xleft, float xright, float ybot, float ytop);
 EXTERNCPP void FRgb2Lab(float *rgb_arg, float *lab);
 EXTERNCPP int  IsColorbarSplit(colorbardata *cbi);
