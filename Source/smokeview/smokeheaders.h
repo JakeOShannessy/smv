@@ -225,7 +225,9 @@ EXTERNCPP void DrawColorbarPathCIELab(void);
 EXTERNCPP void DrawColorbarPathRGB(void);
 EXTERNCPP void DrawHorizontalColorbars(void);
 EXTERNCPP void DrawHorizontalColorbarRegLabels(void);
-EXTERNCPP void DrawVerticalColorbars(void);
+EXTERNCPP void DrawVerticalColorbars(int vcolorbar_top_pos,
+                                     int vcolorbar_down_pos, int nrgb_full,
+                                     float rgb_full[][4]);
 EXTERNCPP int GetStartEnd(float *start, float *end);
 EXTERNCPP void DrawTimebar(float xleft, float xright, float ybot, float ytop);
 EXTERNCPP void FRgb2Lab(float *rgb_arg, float *lab);

@@ -731,7 +731,8 @@ void DrawHorizontalColorbarReg(void){
 
 /* ------------------ DrawVerticalColorbarReg ------------------------ */
 
-void DrawVerticalColorbarReg(void){
+void DrawVerticalColorbarReg(int vcolorbar_down_pos, int vcolorbar_top_pos,
+                             int nrgb_full, float rgb_full[][4]) {
   int i;
 
   glBegin(GL_QUADS);
@@ -983,7 +984,8 @@ void DrawHorizontalColorbars(void){
 
 /* ------------------ DrawVerticalColorbars ------------------------ */
 
-void DrawVerticalColorbars(void){
+void DrawVerticalColorbars(int vcolorbar_top_pos, int vcolorbar_down_pos,
+                           int nrgb_full, float rgb_full[][4]) {
   int i;
   int showcfast_local = 0;
   int show_slice_colorbar_local = 0;
@@ -1072,7 +1074,8 @@ void DrawVerticalColorbars(void){
     else{
 
       // -------------- draw all other colorbars ------------
-      DrawVerticalColorbarReg();
+      DrawVerticalColorbarReg(vcolorbar_down_pos, vcolorbar_top_pos, nrgb_full,
+                              rgb_full);
     }
     if(show_extreme_mindata==1||show_extreme_maxdata==1){
       float barmid;
@@ -1495,6 +1498,8 @@ void CreateScalebar(scalebar *sbar) {
   }
   assert(!MakeUniformScalebarTicks(&sbt, tttmin, tttmax, global_scase.nrgb - 1,
                                    3, 0));
+  // float ticks[5] = {20.0, 100.0, 120.0, 160.0, 235.0};
+  // MakeNonUniformScalebarTicks(&sbt, ticks, 5, 20.0, 275.0, 3, 0);
   top_labels tplbs = {0};
   CreateTopLabels(&sbt, &tplbs);
 
@@ -1545,7 +1550,8 @@ void DrawVerticalColorbarRegLabelsTicks(scalebarticks *sbt) {
  */
 void DrawVerticalScalebar(scalebar *sbar) {
   // TODO: pass the colorbar in as well
-  DrawVerticalColorbars();
+  DrawVerticalColorbars(vcolorbar_top_pos, vcolorbar_down_pos, nrgb_full,
+                        rgb_full);
   DrawVerticalColorbarRegLabelsTicks(&sbar->ticks);
   DrawVerticalColorbarRegLabelsTopLabels(&sbar->labels);
 }

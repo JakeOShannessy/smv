@@ -94,8 +94,8 @@ typedef struct _scalebar {
   top_labels labels;
   /// @brief Ticks that will bar marked (with labels) on the scale bar.
   scalebarticks ticks;
-  /// @brief The color scheme that will be used for the scale bar.
-  colorbardata *colorobar;
+  /// @brief The color scheme that will be used for the scale bar (future use).
+  colorbardata *colorbar;
   char *units;
 } scalebar;
 
