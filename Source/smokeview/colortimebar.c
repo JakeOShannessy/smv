@@ -1526,8 +1526,8 @@ void DrawVerticalColorbarRegLabelsTicks(scalebarticks *sbt) {
         MAX(max_colorbar_label_width, GetStringWidth(exp_factor_label));
     for(int i = 0; i < sbt->n_ticks; i++) {
       // Get the vertical position based on the value
-      float vert_position = MIX2(sbt->ticks[i] - sbt->ticks[0],
-                                 sbt->ticks[sbt->n_ticks - 1] - sbt->ticks[0],
+      float vert_position = MIX2(sbt->ticks[i] - sbt->start_value,
+                                 sbt->end_value - sbt->start_value,
                                  vcolorbar_top_pos, vcolorbar_down_pos);
       if(iposition == i) continue;
       OutputBarText(0.0, vert_position, foreground_color, sbt->tick_labels[i]);
@@ -1603,8 +1603,8 @@ void DrawHorizontalColorbarRegLabelsTicks(scalebarticks *sbt) {
   }
   {
     for(int i = 0; i < sbt->n_ticks; i++) {
-      float horiz_position = MIX2(sbt->ticks[i] - sbt->ticks[0],
-                                  sbt->ticks[sbt->n_ticks - 1] - sbt->ticks[0],
+      float horiz_position = MIX2(sbt->ticks[i] - sbt->start_value,
+                                  sbt->end_value - sbt->start_value,
                                   hcolorbar_right_pos, hcolorbar_left_pos);
       if(iposition == i) continue;
       OutputBarText(horiz_position, 0.0, foreground_color, sbt->tick_labels[i]);

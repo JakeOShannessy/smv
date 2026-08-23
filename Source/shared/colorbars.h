@@ -60,6 +60,8 @@ typedef struct _scalebarticks {
   /// this is not necessarily low to high but may also be high to low. The range
   /// is from ticks[0] to ticks[n_ticks-1].
   float *ticks;
+  float start_value;
+  float end_value;
   /// @brief The labels for each of the tick values.
   char **tick_labels;
   /// @brief The number of ticks and the length of the ticks arrays. If zero,
@@ -184,6 +186,8 @@ EXTERNCPP void GetColorDist(colorbardata *cbi, int option, float *min,
 EXTERNCPP int MakeUniformScalebarTicks(scalebarticks *sbt, float start,
                                        float end, int n_ticks, int ndecimals,
                                        int fixed_point);
-EXTERNCPP int MakeNonUniformScalebarTicks(scalebarticks *sbt, float *tick_values,
-                                int n_ticks, int ndecimals, int fixed_point);
+EXTERNCPP int MakeNonUniformScalebarTicks(scalebarticks *sbt,
+                                          float *tick_values, int n_ticks,
+                                          float start, float end, int ndecimals,
+                                          int fixed_point);
 #endif

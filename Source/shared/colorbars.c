@@ -834,6 +834,8 @@ int MakeUniformScalebarTicks(scalebarticks *sbt, float start, float end,
     // Render the value to a string in the string array
     Float2String(sbt->tick_labels[n], tval, ndecimals, fixed_point);
   }
+  sbt->start_value = start;
+  sbt->end_value = end;
   return 0;
 }
 
@@ -845,7 +847,6 @@ void FreeScalebarTicks(scalebarticks *sbt) {
   FREEMEMORY(sbt->tick_labels);
   sbt->n_ticks = 0;
 }
-
 
 /**
  * @brief Create set of ticks for a scale bar. This will be a non-uniform
@@ -860,7 +861,8 @@ void FreeScalebarTicks(scalebarticks *sbt) {
  * @return zero on success, non-zero otherwise
  */
 int MakeNonUniformScalebarTicks(scalebarticks *sbt, float *tick_values,
-                                int n_ticks, int ndecimals, int fixed_point) {
+                                int n_ticks, float start, float end,
+                                int ndecimals, int fixed_point) {
   // TODO: need to account for exponents and scaling factors.
   sbt->exp_factor_label[0] = '\0';
   int error = 0;
@@ -916,6 +918,8 @@ int MakeNonUniformScalebarTicks(scalebarticks *sbt, float *tick_values,
   sbt->ticks = ticks;
   sbt->tick_labels = tick_labels;
   sbt->n_ticks = n_ticks;
+  sbt->start_value = start;
+  sbt->end_value = end;
   return 0;
 err:
   FREEMEMORY(ticks);
