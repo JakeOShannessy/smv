@@ -883,7 +883,6 @@ int MakeNonUniformScalebarTicks(scalebarticks *sbt, float *tick_values,
             "ticks in a scalebar must be monotonically increasing or "
             "decreasing, values %d (%f) and %d (%f) of the scalebar are equal",
             n - 1, tick_values[n - 1], n, tick_values[n]);
-        return 2;
         error = 2;
         goto err;
       }
@@ -892,7 +891,6 @@ int MakeNonUniformScalebarTicks(scalebarticks *sbt, float *tick_values,
                 "ticks in this scalebar must be monotonically increasing, "
                 "values %d (%f) and %d (%f) of the scalebar are decreasing",
                 n - 1, tick_values[n - 1], n, tick_values[n]);
-        return 2;
         error = 2;
         goto err;
       }
@@ -901,7 +899,6 @@ int MakeNonUniformScalebarTicks(scalebarticks *sbt, float *tick_values,
                 "ticks in this scalebar must be monotonically decreasing, "
                 "values %d (%f) and %d (%f) of the scalebar are increasing",
                 n - 1, tick_values[n - 1], n, tick_values[n]);
-        return 2;
         error = 2;
         goto err;
       }
