@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
   {
     scalebarticks sbt = {0};
     float ticks[3] = {5.0, 9.0, 10.0};
-    assert(!MakeNonUniformScalebarTicks(&sbt, ticks, 5.0, 10.0, 3, 3, 0));
+    assert(!MakeNonUniformScalebarTicks(&sbt, ticks, 3, 5.0, 10.0, 3, 0));
     assert(sbt.n_ticks == 3);
     for(int i = 0; i < sbt.n_ticks; i++) {
       fprintf(stderr, "[%d]: %f: %s\n", i, sbt.ticks[i], sbt.tick_labels[i]);
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     scalebarticks sbt = {0};
     // Monotonic decreasing is ok.
     float ticks[3] = {10.0, 9.0, 5.0};
-    assert(!MakeNonUniformScalebarTicks(&sbt, ticks, 10.0, 5.0, 3, 3, 0));
+    assert(!MakeNonUniformScalebarTicks(&sbt, ticks, 3, 10.0, 5.0, 3, 0));
     assert(sbt.n_ticks == 3);
     for(int i = 0; i < sbt.n_ticks; i++) {
       fprintf(stderr, "[%d]: %f: %s\n", i, sbt.ticks[i], sbt.tick_labels[i]);
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
   {
     scalebarticks sbt = {0};
     float ticks[3] = {5.0, 5.0, 10.0};
-    int ret = MakeNonUniformScalebarTicks(&sbt, ticks, 5.0, 10.0, 3, 3, 0);
+    int ret = MakeNonUniformScalebarTicks(&sbt, ticks, 3, 5.0, 10.0, 3, 0);
     // We've specified ticks where two values are the same, this should be
     // invalid. The return code should be 2.
     assert(ret == 2);
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
   {
     scalebarticks sbt = {0};
     float ticks[3] = {5.0, 4.0, 10.0};
-    int ret = MakeNonUniformScalebarTicks(&sbt, ticks, 5.0, 10.0, 3, 3, 0);
+    int ret = MakeNonUniformScalebarTicks(&sbt, ticks, 3, 5.0, 10.0, 3, 0);
     // We've specified ticks which are not monotonic, this should be
     // invalid. The return code should be 2.
     assert(ret == 2);
