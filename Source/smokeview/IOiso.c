@@ -1910,4 +1910,8 @@ void UpdateIsoColors(void){
     surfi->iso_level= i + 1;
   }
   CheckMemory;
+  // TODO: this shouldn't happen if smokeview isn't configured for it.
+  // Create or update the scalebar
+  if(global_scalebar == NULL) NEWMEMORY(global_scalebar, sizeof(scalebar));
+  CreateScalebar(global_scalebar);
 }

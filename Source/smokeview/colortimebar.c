@@ -1107,6 +1107,21 @@ void DrawVerticalColorbars(int vcolorbar_top_pos, int vcolorbar_down_pos,
   }
 }
 
+int tiso() {
+  if(visTimeIso == 1) {
+    for(int i = 0; i < global_scase.nisoinfo; i++) {
+      isodata *isoi = global_scase.isoinfo + i;
+      if(isoi->loaded == 0) continue;
+      if(isoi->display == 1 && isoi->type == iisotype) {
+        if(isoi->dataflag == 1) {
+          return 1;
+        }
+      }
+    }
+  }
+  return 0;
+}
+
 // TODO: this should be able to handle multiple scale bars being set.
 /**
  * @brief Depending on the loaded/selected data, determine the values of the
@@ -1127,10 +1142,16 @@ int GetStartEnd(float *start, float *end) {
                      &show_hvacduct_colorbar_local,
                      &show_hvacnode_colorbar_local);
 
-  if(showiso_colorbar == 1) {
+  // if(showiso_colorbar == 1) {
+    static float iso_valmin_prev=9999999;
+    static float iso_valmax_prev=-999999;
+  if(plotstate == DYNAMIC_PLOTS && tiso() == 1) {
     /* -------------- isosurface left labels ------------ */
-    *start = iso_valmin;
-    *end = iso_valmax;
+    // TODO: these will vary each time
+    iso_valmin_prev = MIN(iso_valmin_prev, iso_valmin);
+    iso_valmax_prev = MAX(iso_valmax_prev, iso_valmax);
+    *start = iso_valmin_prev;
+    *end = iso_valmax_prev;
     return 0;
   }
   else if(showsmoke == 1 && parttype != 0) {
@@ -1205,7 +1226,7 @@ void CreateTopLabels(scalebarticks *sbt, top_labels *labels) {
                      &show_hvacduct_colorbar_local,
                      &show_hvacnode_colorbar_local);
 
-  if(showiso_colorbar == 1) {
+  if(plotstate == DYNAMIC_PLOTS && tiso() == 1) {
     // -------------- isosurface top labels ------------
     boundsdata *sb = isobounds + iisottype;
     int isounitclass, isounittype;
