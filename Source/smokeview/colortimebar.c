@@ -1518,7 +1518,7 @@ void CreateScalebar(scalebar *sbar) {
     fprintf(stderr, "could not load min/max");
   }
   assert(!MakeUniformScalebarTicks(&sbt, tttmin, tttmax, global_scase.nrgb - 1,
-                                   3, 0));
+                                   4, 0));
   // float ticks[5] = {20.0, 100.0, 120.0, 160.0, 235.0};
   // MakeNonUniformScalebarTicks(&sbt, ticks, 5, 20.0, 275.0, 3, 0);
   top_labels tplbs = {0};

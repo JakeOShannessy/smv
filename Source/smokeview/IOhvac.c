@@ -33,6 +33,10 @@ void UpdateHVACDuctColorLabels(int index){
   hi = global_scase.hvaccoll.hvacductvalsinfo->duct_vars + index;
   GLUIGetMinMax(BOUND_HVACDUCT, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
   GetColorbarLabels(valmin, valmax, global_scase.nrgb, hi->colorlabels, hi->levels256);
+  // TODO: this shouldn't happen if smokeview isn't configured for it.
+  // Create or update the scalebar
+  if(global_scalebar == NULL) NEWMEMORY(global_scalebar, sizeof(scalebar));
+  CreateScalebar(global_scalebar);
 }
 
 /* ------------------ UpdateHVACColorNodeLabels ------------------------ */
@@ -45,6 +49,10 @@ void UpdateHVACNodeColorLabels(int index){
   hi = global_scase.hvaccoll.hvacnodevalsinfo->node_vars + index;
   GLUIGetMinMax(BOUND_HVACNODE, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
   GetColorbarLabels(valmin, valmax, global_scase.nrgb, hi->colorlabels, hi->levels256);
+  // TODO: this shouldn't happen if smokeview isn't configured for it.
+  // Create or update the scalebar
+  if(global_scalebar == NULL) NEWMEMORY(global_scalebar, sizeof(scalebar));
+  CreateScalebar(global_scalebar);
 }
 
 /* ------------------ UpdateAllHVACColorLabels ------------------------ */
@@ -70,6 +78,10 @@ void UpdateAllHVACColorLabels(void){
     GLUIGetMinMax(BOUND_HVACNODE, hi->label.shortlabel, &set_valmin, &valmin, &set_valmax, &valmax);
     GetColorbarLabels(valmin, valmax, global_scase.nrgb, hi->colorlabels, hi->levels256);
   }
+  // TODO: this shouldn't happen if smokeview isn't configured for it.
+  // Create or update the scalebar
+  if(global_scalebar == NULL) NEWMEMORY(global_scalebar, sizeof(scalebar));
+  CreateScalebar(global_scalebar);
 }
 
 /* ------------------ ReadHVACData ------------------------ */
