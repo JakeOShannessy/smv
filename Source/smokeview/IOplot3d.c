@@ -546,6 +546,10 @@ FILE_SIZE ReadPlot3D(char *file, int ifile, int flag, int *errorcode){
   }
   show_plot3dfiles = 1;
   GLUTPOSTREDISPLAY;
+  // TODO: this shouldn't happen if smokeview isn't configured for it.
+  // Create or update the scalebar
+  if(global_scalebar == NULL) NEWMEMORY(global_scalebar, sizeof(scalebar));
+  CreateScalebar(global_scalebar);
   return file_size;
 }
 
